@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(MSBuildToolsVersion)' == '3.5'">
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{627D14F5-41C3-465E-862B-3E5B93245AB5}</ProjectGuid>
+    <ProjectTypeGuids>{A1591282-1198-4647-A2B1-27E5FF5F6F3B};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Community.Imaging</RootNamespace>
+    <AssemblyName>Community.Imaging</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <SilverlightApplication>false</SilverlightApplication>
+    <ValidateXaml>true</ValidateXaml>
+    <ThrowErrorsInValidation>false</ThrowErrorsInValidation>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
+    <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;TRACE;SILVERLIGHT</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>Bin\Release</OutputPath>
+    <DefineConstants>TRACE;SILVERLIGHT</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="SharpZipLib.Silverlight4">
+      <HintPath>..\..\Referencies\Silverlight\SharpZipLib.Silverlight4.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows" />
+    <Reference Include="mscorlib" />
+    <Reference Include="system" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Net" />
+    <Reference Include="System.Windows.Browser" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Decoders\GifDecoder.cs" />
+    <Compile Include="Decoders\BmpDecoder.cs" />
+    <Compile Include="Decoders\Gif\LzwDecoder.cs" />
+    <Compile Include="Decoders\Gif\ApplicationEx.cs" />
+    <Compile Include="Decoders\Gif\Color32.cs" />
+    <Compile Include="Decoders\Gif\CommentEx.cs" />
+    <Compile Include="Decoders\Gif\DataStruct.cs" />
+    <Compile Include="Decoders\Gif\ExData.cs" />
+    <Compile Include="Decoders\Gif\GifFrame.cs" />
+    <Compile Include="Decoders\Gif\GifImage.cs" />
+    <Compile Include="Decoders\Gif\GifPaletteHelper.cs" />
+    <Compile Include="Decoders\Gif\GifUtility.cs" />
+    <Compile Include="Decoders\Gif\GraphicEx.cs" />
+    <Compile Include="Decoders\Gif\ImageDescriptor.cs" />
+    <Compile Include="Decoders\Gif\LogicalScreenDescriptor.cs" />
+    <Compile Include="Decoders\Gif\PlainTextEx.cs" />
+    <Compile Include="Decoders\Gif\StreamHelper.cs" />
+    <Compile Include="Decoders\Jpeg\BinaryReader.cs" />
+    <Compile Include="Decoders\Jpeg\DCT.cs" />
+    <Compile Include="Decoders\Jpeg\DecodedJpeg.cs" />
+    <Compile Include="Decoders\Jpeg\HuffmanTable.cs" />
+    <Compile Include="Decoders\Jpeg\JpegImage.cs" />
+    <Compile Include="Decoders\Jpeg\JpegBinaryReader.cs" />
+    <Compile Include="Decoders\Jpeg\JpegComponent.cs" />
+    <Compile Include="Decoders\JpegDecoder.cs" />
+    <Compile Include="Decoders\Jpeg\JpegFrame.cs" />
+    <Compile Include="Decoders\Jpeg\JpegHuffmanTable.cs" />
+    <Compile Include="Decoders\Jpeg\JpegMarker.cs" />
+    <Compile Include="Decoders\Jpeg\JpegQuantizationTable.cs" />
+    <Compile Include="Decoders\Jpeg\JpegScan.cs" />
+    <Compile Include="Decoders\Jpeg\YCbCr.cs" />
+    <Compile Include="Decoders\Jpeg\ZigZag.cs" />
+    <Compile Include="Decoders\Png\BigEndianBinaryReader.cs" />
+    <Compile Include="Decoders\Png\CrcInputStream.cs" />
+    <Compile Include="Decoders\Png\Defilterer.cs" />
+    <Compile Include="Decoders\Png\IPngImageOutput.cs" />
+    <Compile Include="Decoders\PngDecoder.cs" />
+    <Compile Include="Decoders\Png\SubInputStream.cs" />
+    <Compile Include="ClientImage.cs" />
+    <Compile Include="Encoders\PngEncoder.cs" />
+    <Compile Include="Decoders\Bmp\BmpFileHeader.cs" />
+    <Compile Include="Decoders\Bmp\BmpInfoHeader.cs" />
+    <Compile Include="Decoders\Png\PngImage.cs" />
+    <Compile Include="ImageType.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Licenses.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{A1591282-1198-4647-A2B1-27E5FF5F6F3B}">
+        <SilverlightProjectProperties />
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

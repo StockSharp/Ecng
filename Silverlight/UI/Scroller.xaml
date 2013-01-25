@@ -1,0 +1,35 @@
+﻿<UserControl x:Class="Ecng.UI.Scroller"
+    xmlns="http://schemas.microsoft.com/client/2007" 
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+	xmlns:UI="clr-namespace:Ecng.UI"
+    Width="Auto" Height="300">
+	<Grid x:Name="LayoutRoot" SizeChanged="LayoutRoot_SizeChanged">
+		<Grid.Resources>
+			<Storyboard x:Name="ScrollTimer" Duration="0:0:0.02" AutoReverse="True" Completed="ScrollTimer_Completed" />
+			<Storyboard x:Name="FirstScrollTimer" Duration="0:0:0.5" Completed="FirstScrollTimer_Completed" />
+		</Grid.Resources>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="22" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="22" />
+		</Grid.RowDefinitions>
+		
+		<UI:ButtonEx x:Name="Prev" Grid.Row="0" Canvas.ZIndex="1" MouseLeftButtonDown="OnMouseLeftButtonDown" MouseLeftButtonUp="OnMouseLeftButtonUp" MouseLeave="OnMouseLeave">
+            <Image Source="up.png" />
+		</UI:ButtonEx>
+		
+		<Rectangle x:Name="BodyRect" Grid.Row="1" Stroke="#FF8E8E8E" StrokeThickness="2" Width="68">
+		</Rectangle>
+
+		<Canvas x:Name="BodyContainer" Grid.Row="1">
+			<Canvas x:Name="Body" />
+            <Canvas.Clip>
+                <RectangleGeometry x:Name="BodyContainerGeometry" Rect="0,0,68,665"/>
+            </Canvas.Clip>
+        </Canvas>
+		
+		<UI:ButtonEx x:Name="Next" Grid.Row="2" MouseLeftButtonDown="OnMouseLeftButtonDown" MouseLeftButtonUp="OnMouseLeftButtonUp" MouseLeave="OnMouseLeave">
+            <Image Source="down.png" />
+		</UI:ButtonEx>
+	</Grid>
+</UserControl>

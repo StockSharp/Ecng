@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(MSBuildToolsVersion)' == '3.5'">
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{5FAD9A2A-7A08-4A1D-863C-44DF6AB8FADF}</ProjectGuid>
+    <ProjectTypeGuids>{A1591282-1198-4647-A2B1-27E5FF5F6F3B};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ICSharpCode.SharpZipLib.Silverlight</RootNamespace>
+    <AssemblyName>ICSharpCode.SharpZipLib.Silverlight</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <SilverlightApplication>false</SilverlightApplication>
+    <ValidateXaml>true</ValidateXaml>
+    <ThrowErrorsInValidation>false</ThrowErrorsInValidation>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
+    <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;TRACE;SILVERLIGHT</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>Bin\Release</OutputPath>
+    <DefineConstants>TRACE;SILVERLIGHT</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Windows" />
+    <Reference Include="mscorlib" />
+    <Reference Include="system" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Net" />
+    <Reference Include="System.Windows.Browser" />
+    <Reference Include="System.Xml.Linq, Version=2.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Checksums\Adler32.cs">
+      <Link>Checksums\Adler32.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Checksums\CRC32.cs">
+      <Link>Checksums\CRC32.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Checksums\IChecksum.cs">
+      <Link>Checksums\IChecksum.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Checksums\StrangeCRC.cs">
+      <Link>Checksums\StrangeCRC.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Compat\Extensions.cs">
+      <Link>Compat\Extensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Core\FileSystemScanner.cs">
+      <Link>Core\FileSystemScanner.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Core\INameTransform.cs">
+      <Link>Core\INameTransform.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Core\IScanFilter.cs">
+      <Link>Core\IScanFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Core\NameFilter.cs">
+      <Link>Core\NameFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Core\PathFilter.cs">
+      <Link>Core\PathFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Core\SharpZipBaseException.cs">
+      <Link>Core\SharpZipBaseException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Core\StreamUtils.cs">
+      <Link>Core\StreamUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Encryption\PkzipClassic.cs">
+      <Link>Encryption\PkzipClassic.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\GZip\GZIPConstants.cs">
+      <Link>GZip\GZIPConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\GZip\GZipException.cs">
+      <Link>GZip\GZipException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\GZip\GzipInputStream.cs">
+      <Link>GZip\GzipInputStream.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\GZip\GzipOutputStream.cs">
+      <Link>GZip\GzipOutputStream.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\Deflater.cs">
+      <Link>Zip\Compression\Deflater.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\DeflaterConstants.cs">
+      <Link>Zip\Compression\DeflaterConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\DeflaterEngine.cs">
+      <Link>Zip\Compression\DeflaterEngine.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\DeflaterHuffman.cs">
+      <Link>Zip\Compression\DeflaterHuffman.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\DeflaterPending.cs">
+      <Link>Zip\Compression\DeflaterPending.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\Inflater.cs">
+      <Link>Zip\Compression\Inflater.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\InflaterDynHeader.cs">
+      <Link>Zip\Compression\InflaterDynHeader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\InflaterHuffmanTree.cs">
+      <Link>Zip\Compression\InflaterHuffmanTree.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\PendingBuffer.cs">
+      <Link>Zip\Compression\PendingBuffer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\Streams\DeflaterOutputStream.cs">
+      <Link>Zip\Compression\Streams\DeflaterOutputStream.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\Streams\InflaterInputStream.cs">
+      <Link>Zip\Compression\Streams\InflaterInputStream.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\Streams\OutputWindow.cs">
+      <Link>Zip\Compression\Streams\OutputWindow.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\Compression\Streams\StreamManipulator.cs">
+      <Link>Zip\Compression\Streams\StreamManipulator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\FastZip.cs">
+      <Link>Zip\FastZip.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\IEntryFactory.cs">
+      <Link>Zip\IEntryFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\ZipConstants.cs">
+      <Link>Zip\ZipConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\ZipEntry.cs">
+      <Link>Zip\ZipEntry.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\ZipEntryFactory.cs">
+      <Link>Zip\ZipEntryFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\ZipException.cs">
+      <Link>Zip\ZipException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\ZipExtraData.cs">
+      <Link>Zip\ZipExtraData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\ZipFile.cs">
+      <Link>Zip\ZipFile.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\ZipHelperStream.cs">
+      <Link>Zip\ZipHelperStream.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\ZipInputStream.cs">
+      <Link>Zip\ZipInputStream.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\ZipNameTransform.cs">
+      <Link>Zip\ZipNameTransform.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ICSharpCode.SharpZipLib\Zip\ZipOutputStream.cs">
+      <Link>Zip\ZipOutputStream.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\System\SystemEx.csproj">
+      <Project>{24A7B2D5-3254-41C4-91D6-B54708076B20}</Project>
+      <Name>SystemEx</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{A1591282-1198-4647-A2B1-27E5FF5F6F3B}">
+        <SilverlightProjectProperties />
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

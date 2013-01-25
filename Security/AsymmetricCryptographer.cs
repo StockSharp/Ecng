@@ -1,0 +1,212 @@
+namespace Ecng.Security
+{
+	#region Using Directives
+
+	using System;
+	using System.Security.Cryptography;
+
+	using Ecng.Common;
+
+	using Microsoft.Practices.EnterpriseLibrary.Security.Cryptography;
+
+	#endregion
+
+	public class AsymmetricCryptographer : Disposable
+	{
+		private sealed class AsymmetricAlgorithmWrapper : Wrapper<AsymmetricAlgorithm>
+		{
+			public AsymmetricAlgorithmWrapper(Type algorithmType, ProtectedKey key)
+				: this(CreateAlgo(algorithmType, key))
+			{
+			}
+
+			public AsymmetricAlgorithmWrapper(AsymmetricAlgorithm value)
+				: base(value)
+			{
+			}
+
+			private static AsymmetricAlgorithm CreateAlgo(Type algorithmType, ProtectedKey key)
+			{
+				if (algorithmType == null)
+					throw new ArgumentNullException("algorithmType");
+
+				if (!typeof(AsymmetricAlgorithm).IsAssignableFrom(algorithmType))
+					throw new ArgumentException("algorithmType");
+
+				if (key == null)
+					throw new ArgumentNullException("key");
+
+				var retVal = algorithmType.CreateInstance<AsymmetricAlgorithm>();
+
+				if (typeof(RSACryptoServiceProvider).IsAssignableFrom(algorithmType))
+					((RSACryptoServiceProvider)retVal).ImportParameters(key.ToRsa());
+
+				return retVal;
+			}
+
+			public byte[] Encrypt(byte[] plainText)
+			{
+				if (Value is RSACryptoServiceProvider)
+					return ((RSACryptoServiceProvider)Value).Encrypt(plainText, false);
+
+				throw new NotImplementedException();
+			}
+
+			public byte[] Decrypt(byte[] encryptedText)
+			{
+				if (Value is RSACryptoServiceProvider)
+					return ((RSACryptoServiceProvider)Value).Decrypt(encryptedText, false);
+
+				throw new NotImplementedException();
+			}
+
+			public byte[] CreateSignature(byte[] data)
+			{
+				if (Value is RSACryptoServiceProvider)
+				{
+					using (var hash = new SHA1CryptoServiceProvider())
+						return ((RSACryptoServiceProvider)Value).SignData(data, hash);
+				}
+				else if (Value is DSACryptoServiceProvider)
+					return ((DSACryptoServiceProvider)Value).SignData(data);
+				else
+					throw new NotSupportedException();
+			}
+
+			public bool VerifySignature(byte[] data, byte[] signature)
+			{
+				if (Value is RSACryptoServiceProvider)
+				{
+					using (var hash = new SHA1CryptoServiceProvider())
+						return ((RSACryptoServiceProvider)Value).VerifyData(data, hash, signature);
+				}
+				else if (Value is DSACryptoServiceProvider)
+					return ((DSACryptoServiceProvider)Value).VerifySignature(data, signature);
+				else
+					throw new NotSupportedException();
+			}
+
+			public override Wrapper<AsymmetricAlgorithm> Clone()
+			{
+				throw new NotSupportedException();
+			}
+
+			protected override void DisposeManaged()
+			{
+				Value.Clear();
+				base.DisposeManaged();
+			}
+		}
+
+		#region Private Fields
+
+		private readonly AsymmetricAlgorithmWrapper _encryptor;
+		private readonly AsymmetricAlgorithmWrapper _decryptor;
+
+		#endregion
+
+		#region AsymmetricCryptographer.ctor()
+
+		/// <summary>
+		/// <para>Initalize a new instance of the <see cref="AsymmetricCryptographer"/> class with an algorithm type and a key.</para>
+		/// </summary>
+		/// <param name="algorithmType"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
+		/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
+		/// <param name="privateKey"><para>The private key for the algorithm.</para></param>
+		public AsymmetricCryptographer(Type algorithmType, ProtectedKey publicKey, ProtectedKey privateKey)
+			: this(publicKey == null ? null : new AsymmetricAlgorithmWrapper(algorithmType, publicKey), privateKey == null ? null : new AsymmetricAlgorithmWrapper(algorithmType, privateKey))
+		{
+		}
+
+		protected AsymmetricCryptographer(AsymmetricAlgorithm encryptor, AsymmetricAlgorithm decryptor)
+			: this(new AsymmetricAlgorithmWrapper(encryptor), new AsymmetricAlgorithmWrapper(decryptor))
+		{
+		}
+
+		private AsymmetricCryptographer(AsymmetricAlgorithmWrapper encryptor, AsymmetricAlgorithmWrapper decryptor)
+		{
+			if (encryptor == null && decryptor == null)
+				throw new ArgumentException();
+
+			_encryptor = encryptor;
+			_decryptor = decryptor;
+		}
+
+		#endregion
+
+		public static AsymmetricCryptographer CreateFromPublicKey(Type algorithmType, ProtectedKey publicKey)
+		{
+			return new AsymmetricCryptographer(new AsymmetricAlgorithmWrapper(algorithmType, publicKey), null);
+		}
+
+		public static AsymmetricCryptographer CreateFromPrivateKey(Type algorithmType, ProtectedKey privateKey)
+		{
+			return new AsymmetricCryptographer(null, new AsymmetricAlgorithmWrapper(algorithmType, privateKey));
+		}
+
+		#region Encrypt
+
+		/// <summary>
+		/// <para>Encrypts bytes with the initialized algorithm and key.</para>
+		/// </summary>
+		/// <param name="plainText"><para>The plaintext in which you wish to encrypt.</para></param>
+		/// <returns><para>The resulting ciphertext.</para></returns>
+		public byte[] Encrypt(byte[] plainText)
+		{
+			if (_encryptor == null)
+				throw new InvalidOperationException();
+
+			return _encryptor.Encrypt(plainText);
+		}
+
+		#endregion
+
+		#region Decrypt
+
+		/// <summary>
+		/// <para>Decrypts bytes with the initialized algorithm and key.</para>
+		/// </summary>
+		/// <param name="encryptedText"><para>The text which you wish to decrypt.</para></param>
+		/// <returns><para>The resulting plaintext.</para></returns>
+		public byte[] Decrypt(byte[] encryptedText)
+		{
+			if (_decryptor == null)
+				throw new InvalidOperationException();
+
+			return _decryptor.Decrypt(encryptedText);
+		}
+
+		#endregion
+
+		#region Disposable Members
+
+		protected override void DisposeManaged()
+		{
+			if (_encryptor != null)
+				_encryptor.Dispose();
+
+			if (_decryptor != null)
+				_decryptor.Dispose();
+
+			base.DisposeManaged();
+		}
+
+		#endregion
+
+		public byte[] CreateSignature(byte[] data)
+		{
+			if (_decryptor == null)
+				throw new InvalidOperationException();
+
+			return _decryptor.CreateSignature(data);
+		}
+
+		public bool VerifySignature(byte[] data, byte[] signature)
+		{
+			if (_encryptor == null)
+				throw new InvalidOperationException();
+
+			return _encryptor.VerifySignature(data, signature);
+		}
+	}
+}

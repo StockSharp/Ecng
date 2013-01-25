@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{CBCDC444-947A-48D5-884E-CB73A5ACD3F9}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Ecng.Forum.Components</RootNamespace>
+    <AssemblyName>Ecng.Forum.Components</AssemblyName>
+    <SignAssembly>false</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\Ecng.pfx</AssemblyOriginatorKeyFile>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'SocketServer|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\SocketServer\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="PowerCollections">
+      <HintPath>..\..\Referencies\PowerCollections.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Design" />
+    <Reference Include="System.Management.Automation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files\Reference Assemblies\Microsoft\WindowsPowerShell\v1.0\System.Management.Automation.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.Web.Extensions, Version=3.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Program Files\Reference Assemblies\Microsoft\Framework\ASP.NET 3.5 Extensions\System.Web.Extensions.dll</HintPath>
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\EcngForumAssemblyInfo.cs">
+      <Link>Properties\EcngForumAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="BaseEntityLink.cs" />
+    <Compile Include="Configuration\ForumSection.cs" />
+    <Compile Include="FeedLink.cs" />
+    <Compile Include="ForumDatabase.cs" />
+    <Compile Include="ForumFolderLink.cs" />
+    <Compile Include="ForumObjectModelDataSource.cs" />
+    <Compile Include="ForumObjectModelDataSourceView.cs" />
+    <Compile Include="ForumPager.cs" />
+    <Compile Include="ForumPermissionAttribute.cs" />
+    <Compile Include="ForumQueryStringParameter.cs" />
+    <Compile Include="ForumRoleSecurityPanel.cs" />
+    <Compile Include="ForumSecurityPanel.cs" />
+    <Compile Include="EntitySecurityBarrier.cs" />
+    <Compile Include="ForumHelper.cs">
+    </Compile>
+    <Compile Include="ForumMembershipProvider.cs" />
+    <Compile Include="ForumRoleProvider.cs" />
+    <Compile Include="ForumLink.cs" />
+    <Compile Include="ForumWebApplication.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="MessageWikiText.cs" />
+    <Compile Include="MessageLink.cs" />
+    <Compile Include="PollLink.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TopicLink.cs" />
+    <Compile Include="TopicTagLink.cs" />
+    <Compile Include="UserLink.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Ecng.pfx">
+      <Link>Ecng.pfx</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Collections\Collections.csproj">
+      <Project>{62A4ADD9-9D89-48E6-984B-73BF023D7E50}</Project>
+      <Name>Collections</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Common\Common.csproj">
+      <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Configuration\Configuration.csproj">
+      <Project>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</Project>
+      <Name>Configuration</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Data\Data.csproj">
+      <Project>{2FA3ACBD-8623-42D5-B5A5-F0DC2416F92A}</Project>
+      <Name>Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Logic\BusinessEntities\BusinessEntities.csproj">
+      <Project>{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A}</Project>
+      <Name>BusinessEntities %28Logic\BusinessEntities%29</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Reflection\Reflection.csproj">
+      <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
+      <Name>Reflection</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Security\Security.csproj">
+      <Project>{F99E753E-C8C8-4753-BA95-E656AAE55786}</Project>
+      <Name>Security</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Serialization\Serialization.csproj">
+      <Project>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</Project>
+      <Name>Serialization</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Transactions\Transactions.csproj">
+      <Project>{8DE0D8CB-561B-43E3-B89F-02CDEE71415B}</Project>
+      <Name>Transactions</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Web\Web.csproj">
+      <Project>{125B0185-1FE3-407B-A14C-AD5046A6B68C}</Project>
+      <Name>Web</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BusinessEntities\BusinessEntities.csproj">
+      <Project>{11FB7AAA-D0F0-4040-9315-75B15A528151}</Project>
+      <Name>BusinessEntities %28Forum\BusinessEntities%29</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
