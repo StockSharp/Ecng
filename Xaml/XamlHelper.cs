@@ -522,6 +522,12 @@ namespace Ecng.Xaml
 			return dispatcher.CheckAccess() ? func() : dispatcher.Invoke(func, priority).To<T>();
 		}
 
+		// http://stackoverflow.com/questions/4502037/where-is-the-application-doevents-in-wpf
+		public static void DoEvents()
+		{
+			Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new Action(delegate { }));
+		}
+
 		public static BitmapSource GetImage(this Window window)
 		{
 			if (window == null)
