@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Serialization
 {
 	using System;
+	using System.Collections.Generic;
 	using System.IO;
 #if !SILVERLIGHT
 	using System.Runtime.InteropServices;
@@ -142,6 +143,20 @@
 			}
 
 			return buffer;
+		}
+
+		public static IEnumerable<string> ReadLines(this Stream stream)
+		{
+			if (stream == null)
+				throw new ArgumentNullException("stream");
+
+			using (var reader = new StreamReader(stream))
+			{
+				while (reader.Peek() >= 0)
+				{
+					yield return reader.ReadLine();
+				}
+			}
 		}
 
 		#region Write
