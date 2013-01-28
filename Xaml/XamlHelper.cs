@@ -2,7 +2,6 @@ namespace Ecng.Xaml
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 	using System.Reflection;
 	using System.Windows;
 	using System.Windows.Controls;
@@ -12,6 +11,7 @@ namespace Ecng.Xaml
 	using System.Windows.Resources;
 	using System.Windows.Threading;
 #if !SILVERLIGHT
+	using System.Linq;
 	using System.Threading;
 	using System.ComponentModel;
 	using System.Windows.Data;
@@ -391,6 +391,38 @@ namespace Ecng.Xaml
 		{
 			return Assembly.GetEntryAssembly().GetResourceUrl(resName);
 		}
+
+		// Boilerplate code to register attached property "bool? DialogResult"
+		public static bool? GetDialogResult(DependencyObject obj)
+		{
+			if (obj == null)
+				throw new ArgumentNullException("obj");
+
+			return (bool?)obj.GetValue(DialogResultProperty);
+		}
+
+		public static void SetDialogResult(DependencyObject obj, bool? value)
+		{
+			if (obj == null)
+				throw new ArgumentNullException("obj");
+
+			obj.SetValue(DialogResultProperty, value);
+		}
+
+		// http://stackoverflow.com/questions/1759372/where-is-button-dialogresult-in-wpf
+		public static readonly DependencyProperty DialogResultProperty = DependencyProperty.RegisterAttached("DialogResult", typeof(bool?), typeof(XamlHelper), new UIPropertyMetadata
+		{
+			PropertyChangedCallback = (obj, e) =>
+			{
+				// Implementation of DialogResult functionality
+				var button = (Button)obj;
+
+				button.Click += (sender, e2) =>
+				{
+					button.GetWindow().DialogResult = GetDialogResult(button);
+				};
+			}
+		});
 #endif
 
 		public static Uri GetResourceUrl(this string resName, Type type)
