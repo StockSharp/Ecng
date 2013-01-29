@@ -135,6 +135,8 @@ namespace Ecng.Common
 		private static readonly Lazy<string> _applicationName = new Lazy<string>(() =>
 		{
 			var asm = Assembly.GetEntryAssembly();
+			if (asm == null)
+				return "None";
 			var attr = asm.GetAttribute<AssemblyProductAttribute>();
 			return attr != null ? attr.Product : asm.GetName().Name;
 		});
