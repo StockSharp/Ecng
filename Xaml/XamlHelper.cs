@@ -244,17 +244,16 @@ namespace Ecng.Xaml
 
 			foreach (var child in LogicalTreeHelper.GetChildren(obj).OfType<DependencyObject>())
 			{
-				if (child != null && child is T)
+				if (child is T)
 				{
 					return (T)child;
 				}
 				else
 				{
 					var childOfChild = FindLogicalChild<T>(child);
+				
 					if (childOfChild != null)
-					{
 						return childOfChild;
-					}
 				}
 			}
 
@@ -269,17 +268,17 @@ namespace Ecng.Xaml
 			for (var i = 0; i < count; i++)
 			{
 				var child = VisualTreeHelper.GetChild(obj, i);
-				if (child != null && child is T)
+
+				if (child is T)
 				{
 					return (T)child;
 				}
 				else
 				{
 					var childOfChild = FindVisualChild<T>(child);
+				
 					if (childOfChild != null)
-					{
 						return childOfChild;
-					}
 				}
 			}
 			return null;
