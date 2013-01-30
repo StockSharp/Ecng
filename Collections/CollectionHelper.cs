@@ -470,7 +470,7 @@
 
 			if (!dictionary.TryGetValue(key, out value))
 			{
-				var syncObj = dictionary is ISynchronizedCollection<KeyValuePair<TKey, TValue>> ? ((ISynchronizedCollection<KeyValuePair<TKey, TValue>>)dictionary).SyncRoot : dictionary;
+				var syncObj = dictionary is ISynchronizedCollection<KeyValuePair<TKey, TValue>> ? ((ISynchronizedCollection<KeyValuePair<TKey, TValue>>)dictionary).SyncRoot : (object)dictionary;
 
 				lock (syncObj)
 				{

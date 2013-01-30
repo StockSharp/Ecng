@@ -3,6 +3,8 @@
 	using System;
 	using System.Collections.Generic;
 
+	using Ecng.Common;
+
 	[Serializable]
 	public abstract class SynchronizedCollection<TItem, TCollection> : BaseCollection<TItem, TCollection>, ISynchronizedCollection<TItem>
 		where TCollection : ICollection<TItem>
@@ -12,9 +14,9 @@
 		{
 		}
 
-		private readonly object _syncRoot = new object();
+		private readonly SyncObject _syncRoot = new SyncObject();
 
-		public object SyncRoot
+		public SyncObject SyncRoot
 		{
 			get { return _syncRoot; }
 		}

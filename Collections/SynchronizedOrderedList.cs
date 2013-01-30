@@ -29,9 +29,9 @@
 			_inner = new OrderedBag<T>(comparison);
 		}
 
-		private readonly object _syncRoot = new object();
+		private readonly SyncObject _syncRoot = new SyncObject();
 
-		public object SyncRoot
+		public SyncObject SyncRoot
 		{
 			get { return _syncRoot; }
 		}

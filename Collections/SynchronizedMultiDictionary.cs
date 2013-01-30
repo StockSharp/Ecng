@@ -3,13 +3,14 @@ namespace Ecng.Collections
 	using System;
 	using System.Collections.Generic;
 
+	using Ecng.Common;
+
 	using Wintellect.PowerCollections;
 
 	[Serializable]
 	public class SynchronizedMultiDictionary<TKey, TValue> : MultiDictionaryBase<TKey, TValue>, ISynchronizedCollection<KeyValuePair<TKey, ICollection<TValue>>>
 	{
 		private readonly MultiDictionaryBase<TKey, TValue> _inner;
-		private readonly object _syncRoot = new object();
 
 		public SynchronizedMultiDictionary()
 		{
@@ -26,7 +27,12 @@ namespace Ecng.Collections
 			_inner = new OrderedMultiDictionary<TKey, TValue>(false, comparer.ToComparer());
 		}
 
-		public object SyncRoot { get { return _syncRoot; } }
+		private readonly SyncObject _syncRoot = new SyncObject();
+
+		public SyncObject SyncRoot
+		{
+			get { return _syncRoot; }
+		}
 
 		public override void Clear()
 		{

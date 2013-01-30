@@ -3,13 +3,15 @@
 	using System.Collections;
 	using System.Collections.Generic;
 
+	using Ecng.Common;
+
 	public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	{
 		private readonly LinkedList<T> _inner = new LinkedList<T>();
 
-		private readonly object _syncRoot = new object();
+		private readonly SyncObject _syncRoot = new SyncObject();
 
-		public object SyncRoot
+		public SyncObject SyncRoot
 		{
 			get { return _syncRoot; }
 		}

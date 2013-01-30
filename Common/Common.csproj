@@ -107,6 +107,7 @@
     <Compile Include="NullableHelper.cs" />
     <Compile Include="OrderedAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SyncObject.cs" />
     <Compile Include="XmlHelper.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

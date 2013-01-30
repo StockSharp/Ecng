@@ -11,6 +11,7 @@
 	using System.Runtime.Serialization;
 	using System.Runtime.Serialization.Formatters.Binary;
 	using System.ServiceModel;
+	using System.Threading;
 	using System.Web.UI.WebControls;
 	using System.Windows.Media;
 
@@ -121,6 +122,30 @@
 
 		static void Main()
 		{
+			var root = new object();
+
+			Console.WriteLine(Watch.Do(() =>
+			{
+				for (int i = 0; i < 100000000; i++)
+				{
+					if (Monitor.TryEnter(root))
+						Monitor.Exit(root);
+				}
+			}));
+
+
+			var syncObj = new SyncObject();
+
+			Console.WriteLine(Watch.Do(() =>
+			{
+				for (int i = 0; i < 100000000; i++)
+				{
+					if (syncObj.TryEnter())
+						syncObj.Exit();
+				}
+			}));
+			return;
+
 			var b23 = "true".To<bool?>();
 
 			var storage = new SettingsStorage();

@@ -3,6 +3,8 @@
 	using System;
 	using System.Collections.Generic;
 
+	using Ecng.Common;
+
 	[Serializable]
 	public abstract class SynchronizedKeyedCollection<TKey, TValue> : KeyedCollection<TKey, TValue>, ISynchronizedCollection<KeyValuePair<TKey, TValue>>
 	{
@@ -16,7 +18,7 @@
 			get { return (SynchronizedDictionary<TKey, TValue>)InnerDictionary; }
 		}
 
-		public object SyncRoot { get { return SyncDict.SyncRoot; } }
+		public SyncObject SyncRoot { get { return SyncDict.SyncRoot; } }
 
 		public override TValue this[TKey key]
 		{

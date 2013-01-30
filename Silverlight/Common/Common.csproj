@@ -146,6 +146,9 @@
     <Compile Include="..\..\Common\StringHelper.cs">
       <Link>StringHelper.cs</Link>
     </Compile>
+    <Compile Include="..\..\Common\SyncObject.cs">
+      <Link>SyncObject.cs</Link>
+    </Compile>
     <Compile Include="..\..\Common\ThreadingHelper.cs">
       <Link>ThreadingHelper.cs</Link>
     </Compile>

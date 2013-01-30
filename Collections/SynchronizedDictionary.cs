@@ -4,6 +4,8 @@ namespace Ecng.Collections
 	using System.Collections;
 	using System.Collections.Generic;
 
+	using Ecng.Common;
+
 	using Wintellect.PowerCollections;
 
 	[Serializable]
@@ -31,9 +33,9 @@ namespace Ecng.Collections
 		{
 		}
 
-		private readonly object _syncRoot = new object();
+		private readonly SyncObject _syncRoot = new SyncObject();
 
-		public object SyncRoot
+		public SyncObject SyncRoot
 		{
 			get { return _syncRoot; }
 		}

@@ -5,6 +5,8 @@
 	using System.Collections.Generic;
 	using System.Threading;
 
+	using Ecng.Common;
+
 	// http://stackoverflow.com/questions/530211/creating-a-blocking-queuet-in-net
 	public sealed class BlockingQueue<T> : ISynchronizedCollection<T>
 	{
@@ -25,9 +27,9 @@
 			}
 		}
 
-		private readonly object _syncRoot = new object();
+		private readonly SyncObject _syncRoot = new SyncObject();
 
-		public object SyncRoot
+		public SyncObject SyncRoot
 		{
 			get { return _syncRoot; }
 		}

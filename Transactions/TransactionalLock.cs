@@ -1,17 +1,14 @@
 namespace Ecng.Transactions
 {
-	#region Using Directives
-
 	using System;
 	using System.Collections.Generic;
 	using System.Threading;
 	using System.Transactions;
 
 	using Ecng.Collections;
+	using Ecng.Common;
 
-	#endregion
-
-	class TransactionalLock
+	class TransactionalLock : SyncObject
 	{
 		#region Private Fields
 
@@ -46,19 +43,19 @@ namespace Ecng.Transactions
 			if (transaction == null)
 				throw new ArgumentNullException("transaction");
 
-			Monitor.Enter(this);
+			Enter();
 
 			if (OwningTransaction == null)
 			{
 				//Acquire the transaction lock
 				OwningTransaction = transaction;
-				Monitor.Exit(this);
+				Exit();
 			}
 			else //Some transaction owns the lock
 			{
 				//We're done if it's the same one as the method parameter
 				if (OwningTransaction == transaction)
-					Monitor.Exit(this);
+					Exit();
 				else //Otherwise, need to acquire the transaction lock
 				{
 					var manualEvent = new ManualResetEvent(false);
@@ -81,7 +78,7 @@ namespace Ecng.Transactions
 						}
 					};
 
-					Monitor.Exit(this);
+					Exit();
 
 					//Block the transaction or the calling thread
 					manualEvent.WaitOne();
