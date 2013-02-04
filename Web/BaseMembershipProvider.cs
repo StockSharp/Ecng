@@ -397,13 +397,13 @@ namespace Ecng.Web
 				{
 					ValidatePasswordAttemts(user);
 					SecurityError(CreateException(userName, SecurityErrorTypes.InvalidPasswordAnswer));
-					throw new MembershipPasswordException("Answer is incorrect.");
+					throw new MembershipPasswordException("Answer for user {0} is incorrect.".Put(userName));
 				}
 			}
 			else
 			{
 				SecurityError(CreateException(userName, SecurityErrorTypes.InvalidName));
-				throw new ArgumentException("User not founded.", "userName");
+				throw new ArgumentException("User {0} not founded.".Put(userName), "userName");
 			}
 		}
 
@@ -416,7 +416,12 @@ namespace Ecng.Web
 
 			if (user != null)
 			{
-				if (IsAnswerValid(user, answer))
+				if (!user.IsApproved)
+				{
+					SecurityError(CreateException(userName, SecurityErrorTypes.UserNotApproved));
+					throw new MembershipPasswordException("User {0} not approved.".Put(userName));
+				}
+				else if (IsAnswerValid(user, answer))
 				{
 					var newPassword = Membership.GeneratePassword(MinRequiredPasswordLength, MinRequiredNonAlphanumericCharacters);
 
@@ -430,13 +435,13 @@ namespace Ecng.Web
 				{
 					ValidatePasswordAttemts(user);
 					SecurityError(CreateException(userName, SecurityErrorTypes.InvalidPasswordAnswer));
-					throw new MembershipPasswordException("Answer is incorrect.");
+					throw new MembershipPasswordException("Answer for user {0} is incorrect.".Put(userName));
 				}
 			}
 			else
 			{
 				SecurityError(CreateException(userName, SecurityErrorTypes.InvalidName));
-				throw new ArgumentException("User not founded.", "userName");
+				throw new ArgumentException("User {0} not founded.".Put(userName), "userName");
 			}
 		}
 
@@ -447,7 +452,11 @@ namespace Ecng.Web
 
 			if (user != null)
 			{
-				if (IsPasswordValid(user, oldPassword))
+				if (!user.IsApproved)
+				{
+					type = SecurityErrorTypes.UserNotApproved;
+				}
+				else if (IsPasswordValid(user, oldPassword))
 				{
 					user.Password = CreateSecret(newPassword, GenerateSalt());
 					user.LastPasswordChangedDate = DateTime.Now;
@@ -471,11 +480,16 @@ namespace Ecng.Web
 		public override bool ChangePasswordQuestionAndAnswer(string userName, string password, string newPasswordQuestion, string newPasswordAnswer)
 		{
 			var user = Users.GetByName(userName);
+			SecurityErrorTypes type;
 
 			if (user == null)
 				return false;
 
-			if (IsPasswordValid(user, password))
+			if (!user.IsApproved)
+			{
+				type = SecurityErrorTypes.UserNotApproved;
+			}
+			else if (IsPasswordValid(user, password))
 			{
 				user.PasswordQuestion = newPasswordQuestion;
 				user.PasswordAnswer = CreateSecret(newPasswordAnswer, GenerateSalt());
@@ -487,9 +501,11 @@ namespace Ecng.Web
 			else
 			{
 				ValidatePasswordAttemts(user);
-				SecurityError(CreateException(userName, SecurityErrorTypes.InvalidPasswordAnswer));
-				return false;
+				type = SecurityErrorTypes.InvalidPasswordAnswer;
 			}
+
+			SecurityError(CreateException(userName, type));
+			return false;
 		}
 
 		public override bool UnlockUser(string userName)
