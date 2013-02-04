@@ -132,6 +132,23 @@
 
 		#endregion
 
+		#region MaximumRows
+
+		private int _maximumRows;
+
+		[DefaultValue("")]
+		public int MaximumRows
+		{
+			get { return _maximumRows; }
+			set
+			{
+				_maximumRows = value;
+				GetView().MaximumRows = value;
+			}
+		}
+
+		#endregion
+
 		#region DataSourceControl Members
 
 		protected override DataSourceView GetView(string viewName)

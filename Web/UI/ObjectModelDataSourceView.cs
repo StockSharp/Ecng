@@ -131,6 +131,31 @@
 
 		#endregion
 
+		#region MaximumRows
+
+		public int MaximumRows
+		{
+			get
+			{
+				var rows = ViewState["MaximumRows"];
+
+				if (rows == null)
+					return HttpHelper.DefaultPageSize;
+
+				return (int)rows;
+			}
+			set
+			{
+				if (MaximumRows != value)
+				{
+					ViewState["MaximumRows"] = value;
+					base.OnDataSourceViewChanged(EventArgs.Empty);
+				}
+			}
+		}
+
+		#endregion
+
 		public string SortExpression { get; set; }
 
 		public SortDirection SortDirection { get; set; }
@@ -180,7 +205,7 @@
 					arguments.TotalRowCount = GetCount(list);
 
 				if (arguments.MaximumRows == 0 || arguments.MaximumRows == -1)
-					arguments.MaximumRows = HttpHelper.DefaultPageSize;
+					arguments.MaximumRows = MaximumRows;
 
 				string orderBy;
 				SortDirection direction;
