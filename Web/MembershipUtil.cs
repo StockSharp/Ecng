@@ -34,9 +34,29 @@
 			}
 		}
 
+		private static BaseMembershipProvider Provider
+		{
+			get { return (BaseMembershipProvider)Membership.Provider; }
+		}
+
 		public static SecurityErrorTypes? Validate(string userName, string password)
 		{
-			return ((BaseMembershipProvider)Membership.Provider).ValidateUserInternal(userName, password);
+			return Provider.ValidateUserInternal(userName, password);
+		}
+
+		public static void ChangePassword(this IWebUser user, string password)
+		{
+			Provider.ChangePassword(user, password);
+		}
+
+		public static void SetAuthCookie(this IWebUser user, bool createPersistentCookie)
+		{
+			FormsAuthentication.SetAuthCookie(user.Name, createPersistentCookie);
+		}
+
+		public static void RedirectFromLoginPage(this IWebUser user, bool createPersistentCookie)
+		{
+			FormsAuthentication.RedirectFromLoginPage(user.Name, createPersistentCookie);
 		}
 	}
 }

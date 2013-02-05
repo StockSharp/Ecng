@@ -458,10 +458,7 @@ namespace Ecng.Web
 				}
 				else if (IsPasswordValid(user, oldPassword))
 				{
-					user.Password = CreateSecret(newPassword, GenerateSalt());
-					user.LastPasswordChangedDate = DateTime.Now;
-
-					UpdateUser(user);
+					ChangePassword(user, newPassword);
 					return true;
 				}
 				else
@@ -475,6 +472,17 @@ namespace Ecng.Web
 
 			SecurityError(CreateException(userName, type));
 			return false;
+		}
+
+		internal void ChangePassword(IWebUser user, string password)
+		{
+			if (user == null)
+				throw new ArgumentNullException("user");
+
+			user.Password = CreateSecret(password, GenerateSalt());
+			user.LastPasswordChangedDate = DateTime.Now;
+
+			UpdateUser(user);
 		}
 
 		public override bool ChangePasswordQuestionAndAnswer(string userName, string password, string newPasswordQuestion, string newPasswordAnswer)
