@@ -270,15 +270,15 @@ namespace Ecng.Web
 			return value.To<T>();
 		}
 
-		public static void Download(this HttpContext context, IWebFile file)
+		public static void Download(this IWebFile file, HttpContext context = null)
 		{
-			context.Download(file, new Size<int>(), false);
+			file.Download(new Size<int>(), false, context);
 		}
 
-		public static void Download(this HttpContext context, IWebFile file, Size<int> size, bool embed)
+		public static void Download(this IWebFile file, Size<int> size, bool embed, HttpContext context = null)
 		{
 			if (context == null)
-				throw new ArgumentNullException("context");
+				context = HttpContext.Current;
 
 			if (file == null)
 				throw new ArgumentNullException("file");

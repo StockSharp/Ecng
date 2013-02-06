@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Web
 {
+	using System;
 	using System.Diagnostics;
 	using System.Web.Hosting;
 	using System.Web.Security;
@@ -51,12 +52,26 @@
 
 		public static void SetAuthCookie(this IWebUser user, bool createPersistentCookie)
 		{
+			if (user == null)
+				throw new ArgumentNullException("user");
+
 			FormsAuthentication.SetAuthCookie(user.Name, createPersistentCookie);
 		}
 
 		public static void RedirectFromLoginPage(this IWebUser user, bool createPersistentCookie)
 		{
+			if (user == null)
+				throw new ArgumentNullException("user");
+
 			FormsAuthentication.RedirectFromLoginPage(user.Name, createPersistentCookie);
+		}
+
+		public static MembershipUser ToMembership(this IWebUser user)
+		{
+			if (user == null)
+				throw new ArgumentNullException("user");
+
+			return Membership.GetUser(user.Name);
 		}
 	}
 }

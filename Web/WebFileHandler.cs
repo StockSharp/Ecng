@@ -16,7 +16,7 @@ namespace Ecng.Web
 
 		void IHttpHandler.ProcessRequest(HttpContext context)
 		{
-			context.Download(File, Size, Embed);
+			File.Download(Size, Embed, context);
 		}
 
 		private static bool Embed
