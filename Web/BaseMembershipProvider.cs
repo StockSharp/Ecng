@@ -607,8 +607,8 @@ namespace Ecng.Web
 		protected abstract IEnumerable<IWebUser> GetUserRangeByEmail(string emailToMatch, int pageIndex, int pageSize, out int totalRecords);
 		protected abstract void UpdateUser(IWebUser user);
 
-		protected abstract IWebRoleCollection Roles { get; }
-		protected abstract IWebUserCollection Users { get; }
+		protected internal abstract IWebRoleCollection Roles { get; }
+		protected internal abstract IWebUserCollection Users { get; }
 
 		protected abstract void SecurityError(UnauthorizedAccessException ex);
 

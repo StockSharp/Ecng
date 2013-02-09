@@ -73,5 +73,13 @@
 
 			return Membership.GetUser(user.Name);
 		}
+
+		public static IWebUser ToWeb(this MembershipUser user)
+		{
+			if (user == null)
+				throw new ArgumentNullException("user");
+
+			return Provider.Users.GetByName(user.UserName);
+		}
 	}
 }
