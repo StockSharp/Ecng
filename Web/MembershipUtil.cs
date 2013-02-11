@@ -71,7 +71,12 @@
 			if (user == null)
 				throw new ArgumentNullException("user");
 
-			return Membership.GetUser(user.Name);
+			var msUser = Membership.GetUser(user.Name);
+
+			if (msUser == null)
+				throw new ArgumentException("Membership user with name {0} doesn't exist.".Put(user.Name), "user");
+
+			return msUser;
 		}
 
 		public static IWebUser ToWeb(this MembershipUser user)
@@ -79,7 +84,12 @@
 			if (user == null)
 				throw new ArgumentNullException("user");
 
-			return Provider.Users.GetByName(user.UserName);
+			var webUser = Provider.Users.GetByName(user.UserName);
+
+			if (webUser == null)
+				throw new ArgumentException("Web user with name {0} doesn't exist.".Put(user.UserName), "user");
+
+			return webUser;
 		}
 	}
 }
