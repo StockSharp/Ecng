@@ -279,6 +279,9 @@ namespace Ecng.Web
 
 			var body = file.Body.To<Stream>();
 
+			if (body == null)
+				throw new ArgumentException("file");
+
 			if (size.Width > 0 && size.Height > 0)
 			{
 				using (var bmp = new Bitmap(body))
