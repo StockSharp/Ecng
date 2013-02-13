@@ -1,7 +1,5 @@
 namespace Ecng.Forum.Components
 {
-	#region Using Directives
-
 	using System;
 	using System.Diagnostics;
 	using System.Management.Automation;
@@ -9,10 +7,9 @@ namespace Ecng.Forum.Components
 
 	using Ecng.Common;
 	using Ecng.Forum.BusinessEntities;
+	using Ecng.Net;
 	using Ecng.Web;
 	using Ecng.Transactions;
-
-	#endregion
 
 	public class ClientException : Exception
 	{
@@ -76,7 +73,7 @@ namespace Ecng.Forum.Components
 					var message = new Message
 					{
 						Body = "{{{{{{{{{1}<nowiki>{0}</nowiki>{1}}}}}}}}}".Put(ex, Environment.NewLine),
-						IpAddress = HttpHelper.UserAddress
+						IpAddress = NetworkHelper.UserAddress
 					};
 					topic.Messages.Add(message);
 				});

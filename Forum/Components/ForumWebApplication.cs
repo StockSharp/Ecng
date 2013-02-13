@@ -7,6 +7,7 @@ namespace Ecng.Forum.Components
 
 	using Ecng.Common;
 	using Ecng.Collections;
+	using Ecng.Net;
 	using Ecng.Web;
 	using Ecng.Forum.BusinessEntities;
 
@@ -71,7 +72,7 @@ namespace Ecng.Forum.Components
 						_visits.Add(new Visit
 						{
 							PageId = pageId.Value,
-							IpAddress = HttpHelper.UserAddress,
+							IpAddress = NetworkHelper.UserAddress,
 							User = ForumHelper.CurrentUser ?? rootObject.Users.Null,
 							QueryString = Url.Current.QueryString.ToString(),
 							PrevPageId = prevPageId,

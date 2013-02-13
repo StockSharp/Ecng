@@ -10,7 +10,6 @@ namespace Ecng.Web
 	using System.Drawing;
 	using System.Drawing.Imaging;
 	using System.IO;
-	using System.Net;
 	using System.Reflection;
 	using System.Threading;
 	using System.Web.Compilation;
@@ -72,24 +71,6 @@ namespace Ecng.Web
 		}
 
 		public static SiteMapMapper DefaultMapper { get; private set; }
-
-		#region UserAddress
-
-		/// <summary>
-		/// Gets the user address.
-		/// </summary>
-		/// <value>The user address.</value>
-		public static IPAddress UserAddress
-		{
-			get
-			{
-				return HttpContext.Current != null ? HttpContext.Current.Request.UserHostAddress.To<IPAddress>() : (GetUserAddress != null ? (GetUserAddress() ?? IPAddress.Loopback) : IPAddress.Loopback);
-			}
-		}
-
-		#endregion
-
-		public static Func<IPAddress> GetUserAddress;
 
 		#region CurrentHandler
 

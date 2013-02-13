@@ -134,6 +134,10 @@
       <Project>{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A}</Project>
       <Name>BusinessEntities %28Logic\BusinessEntities%29</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Net\Net.csproj">
+      <Project>{685a7bf3-5c51-42ea-954f-1dec176f9dfc}</Project>
+      <Name>Net</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Reflection\Reflection.csproj">
       <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
       <Name>Reflection</Name>

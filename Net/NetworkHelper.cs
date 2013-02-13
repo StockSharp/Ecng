@@ -4,9 +4,24 @@ namespace Ecng.Net
 	using System.Linq;
 	using System.Net;
 	using System.Net.Sockets;
+	using System.Web;
+
+	using Ecng.Common;
 
 	public static class NetworkHelper
 	{
+		/// <summary>
+		/// Gets the user address.
+		/// </summary>
+		/// <value>The user address.</value>
+		public static IPAddress UserAddress
+		{
+			get
+			{
+				return (HttpContext.Current == null ? ChannelHelper.GetClientEndPoint().Address : HttpContext.Current.Request.UserHostAddress.To<IPAddress>());
+			}
+		}
+
 		public static bool IsLocalIpAddress(this EndPoint endPoint)
 		{
 			var host = endPoint.GetHost();
