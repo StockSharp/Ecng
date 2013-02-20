@@ -314,42 +314,38 @@ namespace Ecng.Web
 
 			var user = Users.GetByKey(providerUserKey);
 
-			if (user != null)
-			{
-				if (userIsOnline)
-				{
-					user.LastActivityDate = DateTime.Now;
-					UpdateUser(user);
-				}
-
-				return ConvertToMembershipUser(user);
-			}
-			else
+			if (user == null)
 				throw new ArgumentException("User not founded.", "providerUserKey");
+
+			if (userIsOnline)
+			{
+				user.LastActivityDate = DateTime.Now;
+				UpdateUser(user);
+			}
+
+			return ConvertToMembershipUser(user);
 		}
 
 		public override MembershipUser GetUser(string userName, bool userIsOnline)
 		{
-			if (!userName.IsEmpty())
+			if (userName.IsEmpty())
+				return null;
+
+			var user = Users.GetByName(userName);
+
+			if (user == null)
 			{
-				var user = Users.GetByName(userName);
-
-				if (user != null)
-				{
-					if (userIsOnline)
-					{
-						user.LastActivityDate = DateTime.Now;
-						UpdateUser(user);
-					}
-
-					return ConvertToMembershipUser(user);
-				}
-				else
-					SecurityError(CreateException(userName, SecurityErrorTypes.InvalidName));
+				SecurityError(userName, SecurityErrorTypes.InvalidName);
+				return null;
 			}
 
-			return null;
-			//throw new ArgumentException("User not founded.", "userName");
+			if (userIsOnline)
+			{
+				user.LastActivityDate = DateTime.Now;
+				UpdateUser(user);
+			}
+
+			return ConvertToMembershipUser(user);
 		}
 
 		public override MembershipUserCollection GetAllUsers(int pageIndex, int pageSize, out int totalRecords)
@@ -389,22 +385,20 @@ namespace Ecng.Web
 
 			var user = Users.GetByName(userName);
 
-			if (user != null)
+			if (user == null)
 			{
-				if (IsAnswerValid(user, answer))
-					return user.Password.ToString();
-				else
-				{
-					ValidatePasswordAttemts(user);
-					SecurityError(CreateException(userName, SecurityErrorTypes.InvalidPasswordAnswer));
-					throw new MembershipPasswordException("Answer for user {0} is incorrect.".Put(userName));
-				}
-			}
-			else
-			{
-				SecurityError(CreateException(userName, SecurityErrorTypes.InvalidName));
+				SecurityError(userName, SecurityErrorTypes.InvalidName);
 				throw new ArgumentException("User {0} not founded.".Put(userName), "userName");
 			}
+
+			if (!IsAnswerValid(user, answer))
+			{
+				ValidatePasswordAttemts(user);
+				SecurityError(userName, SecurityErrorTypes.InvalidPasswordAnswer);
+				throw new MembershipPasswordException("Answer for user {0} is incorrect.".Put(userName));
+			}
+			
+			return user.Password.ToString();
 		}
 
 		public override string ResetPassword(string userName, string answer)
@@ -414,64 +408,59 @@ namespace Ecng.Web
 
 			var user = Users.GetByName(userName);
 
-			if (user != null)
+			if (user == null)
 			{
-				if (!user.IsApproved)
-				{
-					SecurityError(CreateException(userName, SecurityErrorTypes.UserNotApproved));
-					throw new MembershipPasswordException("User {0} not approved.".Put(userName));
-				}
-				else if (IsAnswerValid(user, answer))
-				{
-					var newPassword = Membership.GeneratePassword(MinRequiredPasswordLength, MinRequiredNonAlphanumericCharacters);
-
-					user.Password = CreateSecret(newPassword, GenerateSalt());
-					user.LastPasswordChangedDate = DateTime.Now;
-
-					UpdateUser(user);
-					return newPassword;
-				}
-				else
-				{
-					ValidatePasswordAttemts(user);
-					SecurityError(CreateException(userName, SecurityErrorTypes.InvalidPasswordAnswer));
-					throw new MembershipPasswordException("Answer for user {0} is incorrect.".Put(userName));
-				}
-			}
-			else
-			{
-				SecurityError(CreateException(userName, SecurityErrorTypes.InvalidName));
+				SecurityError(userName, SecurityErrorTypes.InvalidName);
 				throw new ArgumentException("User {0} not founded.".Put(userName), "userName");
 			}
+
+			if (!user.IsApproved)
+			{
+				SecurityError(userName, SecurityErrorTypes.UserNotApproved);
+				throw new MembershipPasswordException("User {0} not approved.".Put(userName));
+			}
+
+			if (!IsAnswerValid(user, answer))
+			{
+				ValidatePasswordAttemts(user);
+				SecurityError(userName, SecurityErrorTypes.InvalidPasswordAnswer);
+				throw new MembershipPasswordException("Answer for user {0} is incorrect.".Put(userName));
+			}
+
+			var newPassword = Membership.GeneratePassword(MinRequiredPasswordLength, MinRequiredNonAlphanumericCharacters);
+
+			user.Password = CreateSecret(newPassword, GenerateSalt());
+			user.LastPasswordChangedDate = DateTime.Now;
+
+			UpdateUser(user);
+			return newPassword;
 		}
 
 		public override bool ChangePassword(string userName, string oldPassword, string newPassword)
 		{
 			var user = Users.GetByName(userName);
-			SecurityErrorTypes type;
 
-			if (user != null)
+			if (user == null)
 			{
-				if (!user.IsApproved)
-				{
-					type = SecurityErrorTypes.UserNotApproved;
-				}
-				else if (IsPasswordValid(user, oldPassword))
-				{
-					ChangePassword(user, newPassword);
-					return true;
-				}
-				else
-				{
-					ValidatePasswordAttemts(user);
-					type = SecurityErrorTypes.InvalidOldPassword;
-				}
+				SecurityError(userName, SecurityErrorTypes.InvalidName);
+				return false;
 			}
-			else
-				type = SecurityErrorTypes.InvalidName;
 
-			SecurityError(CreateException(userName, type));
-			return false;
+			if (!user.IsApproved)
+			{
+				SecurityError(userName, SecurityErrorTypes.UserNotApproved);
+				return false;
+			}
+
+			if (!IsPasswordValid(user, oldPassword))
+			{
+				ValidatePasswordAttemts(user);
+				SecurityError(userName, SecurityErrorTypes.InvalidOldPassword);
+				return false;
+			}
+
+			ChangePassword(user, newPassword);
+			return true;
 		}
 
 		internal void ChangePassword(IWebUser user, string password)
@@ -488,32 +477,29 @@ namespace Ecng.Web
 		public override bool ChangePasswordQuestionAndAnswer(string userName, string password, string newPasswordQuestion, string newPasswordAnswer)
 		{
 			var user = Users.GetByName(userName);
-			SecurityErrorTypes type;
 
 			if (user == null)
 				return false;
 
 			if (!user.IsApproved)
 			{
-				type = SecurityErrorTypes.UserNotApproved;
+				SecurityError(userName, SecurityErrorTypes.UserNotApproved);
+				return false;
 			}
-			else if (IsPasswordValid(user, password))
-			{
-				user.PasswordQuestion = newPasswordQuestion;
-				user.PasswordAnswer = CreateSecret(newPasswordAnswer, GenerateSalt());
-				user.LastPasswordChangedDate = DateTime.Now;
 
-				UpdateUser(user);
-				return true;
-			}
-			else
+			if (!IsPasswordValid(user, password))
 			{
 				ValidatePasswordAttemts(user);
-				type = SecurityErrorTypes.InvalidPasswordAnswer;
+				SecurityError(userName, SecurityErrorTypes.InvalidPasswordAnswer);
+				return false;
 			}
 
-			SecurityError(CreateException(userName, type));
-			return false;
+			user.PasswordQuestion = newPasswordQuestion;
+			user.PasswordAnswer = CreateSecret(newPasswordAnswer, GenerateSalt());
+			user.LastPasswordChangedDate = DateTime.Now;
+
+			UpdateUser(user);
+			return true;
 		}
 
 		public override bool UnlockUser(string userName)
@@ -563,7 +549,7 @@ namespace Ecng.Web
 			if (type == null)
 				return true;
 
-			SecurityError(CreateException(userName, (SecurityErrorTypes)type));
+			SecurityError(userName, (SecurityErrorTypes)type);
 			return false;
 		}
 
@@ -572,32 +558,25 @@ namespace Ecng.Web
 		internal SecurityErrorTypes? ValidateUserInternal(string userName, string password)
 		{
 			var user = Users.GetByName(userName);
-			if (user != null)
-			{
-				if (!user.IsLockedOut)
-				{
-					if (IsPasswordValid(user, password))
-					{
-						if (user.IsApproved)
-						{
-							user.LastLoginDate = DateTime.Now;
-							UpdateUser(user);
-							return null;
-						}
-						else
-							return SecurityErrorTypes.UserNotApproved;
-					}
-					else
-					{
-						ValidatePasswordAttemts(user);
-						return SecurityErrorTypes.InvalidPassword;
-					}
-				}
-				else
-					return SecurityErrorTypes.UserLockedOut;
-			}
-			else
+
+			if (user == null)
 				return SecurityErrorTypes.InvalidName;
+
+			if (user.IsLockedOut)
+				return SecurityErrorTypes.UserLockedOut;
+
+			if (!user.IsApproved)
+				return SecurityErrorTypes.UserNotApproved;
+
+			if (!IsPasswordValid(user, password))
+			{
+				ValidatePasswordAttemts(user);
+				return SecurityErrorTypes.InvalidPassword;
+			}
+
+			user.LastLoginDate = DateTime.Now;
+			UpdateUser(user);
+			return null;
 		}
 
 		protected abstract IWebUser CreateUser(string userName, Secret password, string email, string passwordQuestion, Secret passwordAnswer, bool isApproved, object providerUserKey);
@@ -609,6 +588,11 @@ namespace Ecng.Web
 
 		protected internal abstract IWebRoleCollection Roles { get; }
 		protected internal abstract IWebUserCollection Users { get; }
+
+		protected virtual void SecurityError(string userName, SecurityErrorTypes type)
+		{
+			SecurityError(new UnauthorizedAccessException("{0}{1}{2}".Put(userName, Environment.NewLine, type)));
+		}
 
 		protected abstract void SecurityError(UnauthorizedAccessException ex);
 
@@ -626,11 +610,6 @@ namespace Ecng.Web
 				throw new ArgumentNullException("user");
 
 			return user.Password.Equals(CreateSecret(password, user.Password.Salt));
-		}
-
-		private static UnauthorizedAccessException CreateException(string userName, SecurityErrorTypes type)
-		{
-			return new UnauthorizedAccessException("{0}{1}{2}".Put(userName, Environment.NewLine, type));
 		}
 
 		private MembershipUser ConvertToMembershipUser(IWebUser user)
