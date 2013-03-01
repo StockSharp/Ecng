@@ -87,6 +87,7 @@
     <Compile Include="AttributeHelper.cs" />
     <Compile Include="Cloneable.cs" />
     <Compile Include="CloneHelper.cs" />
+    <Compile Include="Compiler.cs" />
     <Compile Include="ConsoleHelper.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="CompareHelper.cs" />
