@@ -265,14 +265,14 @@ namespace Ecng.Web
 				throw new ArgumentNullException("file");
 
 			// http://stackoverflow.com/questions/994135/image-from-httphandler-wont-cache-in-browser
-			var body = FormatBody(file, size);
+			var body = file.ShrinkFile(size);
 			context.Response.ContentType = file.GetMimeType();
 			context.Response.AppendHeader("Content-Disposition", "{0}; filename=\"{1}\"".Put(embed ? "inline" : "attachment", file.Name));
 			context.Response.OutputStream.Write(body, 0, body.Length);
 			context.Response.End();
 		}
 
-		private static byte[] FormatBody(IWebFile file, Size<int> size)
+		public static byte[] ShrinkFile(this IWebFile file, Size<int> size)
 		{
 			if (file == null)
 				throw new ArgumentNullException("file");
