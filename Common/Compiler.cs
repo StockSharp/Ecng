@@ -42,6 +42,15 @@
 		public CompilationErrorTypes Type { get; private set; }
 	}
 
+	public class CompilationResult
+	{
+		public Assembly Assembly { get; set; }
+
+		public string AssemblyLocation { get; set; }
+
+		public IEnumerable<CompilationError> Errors { get; set; }
+	}
+
 	public sealed class Compiler
 	{
 		private Compiler(Languages language, string outputDir, string tempPath)
@@ -60,7 +69,7 @@
 			return new Compiler(language, outputDir, tempPath);
 		}
 
-		public IEnumerable<CompilationError> Compile(string name, string body, IEnumerable<string> refs, out Assembly assembly)
+		public CompilationResult Compile(string name, string body, IEnumerable<string> refs)
 		{
 			var providerOptions = new Dictionary<string, string> { { "CompilerVersion", "v4.0" } };
 
@@ -91,13 +100,20 @@
 			{
 				OutputAssembly = Path.Combine(OutputDir, name + Guid.NewGuid() + ".dll"),
 				CompilerOptions = "/t:library",
-				GenerateInMemory = true,
+				//GenerateInMemory = true,
 				GenerateExecutable = false,
 				IncludeDebugInformation = true,
 				TempFiles = new TempFileCollection(TempPath),
 			}, body);
-			assembly = result.Errors.HasErrors ? null : result.CompiledAssembly;
-			return result.Errors.Cast<CompilerError>().Select(e => new CompilationError(e)).ToArray();
+
+			var compilationResult = new CompilationResult
+			{
+				Assembly = result.Errors.HasErrors ? null : result.CompiledAssembly,
+				AssemblyLocation = result.Errors.HasErrors ? String.Empty : result.PathToAssembly,
+				Errors = result.Errors.Cast<CompilerError>().Select(e => new CompilationError(e)).ToArray(),
+			};
+
+			return compilationResult;
 		}
 	}
 }
