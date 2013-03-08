@@ -164,7 +164,7 @@
 		{
 			return new QueryString(_url)
 			{
-				_queryString = _queryString,
+				_queryString = new Dictionary<string, string>(_queryString),
 				_compiledString = _compiledString,
 			};
 		}
