@@ -1,66 +1,72 @@
 namespace Ecng.Web
 {
-	#region Using Directives
-	
 	using System;
 	using System.Web;
 	using System.IO;
-	
-	#endregion
 
 	public class WebApplication : HttpApplication
 	{
-		protected virtual void Application_Start(object sender, EventArgs e)
+		protected void Application_Start(object sender, EventArgs e)
 		{
 			OnAppStart(e);
 		}
 
-		protected virtual void Application_End(object sender, EventArgs e)
+		protected void Application_End(object sender, EventArgs e)
 		{
 			OnAppEnd(e);
 		}
 
-		protected virtual void Application_Init(object sender, EventArgs e)
+		protected void Application_Init(object sender, EventArgs e)
 		{
 			OnAppInit(e);
 		}
 
-		protected virtual void Application_Disposed(object sender, EventArgs e)
+		protected void Application_Disposed(object sender, EventArgs e)
 		{
 			OnAppDisposed(e);
 		}
 
-		protected virtual void Application_BeginRequest(object sender, EventArgs e)
+		protected void Application_BeginRequest(object sender, EventArgs e)
 		{
 			OnAppBeginRequest(e);
 		}
 
-		protected virtual void Application_EndRequest(object sender, EventArgs e)
+		protected void Application_EndRequest(object sender, EventArgs e)
 		{
 			OnAppEndRequest(e);
 		}
 
-		protected virtual void Application_AuthenticateRequest(object sender, EventArgs e)
+		protected void Application_AuthenticateRequest(object sender, EventArgs e)
 		{
 			OnAppAuthenticateRequest(e);
 		}
 
-		protected virtual void Application_AuthorizeRequest(object sender, EventArgs e)
+		protected void Application_AuthorizeRequest(object sender, EventArgs e)
 		{
 			OnAppAuthorizeRequest(e);
 		}
 
-		protected virtual void Application_Error(object sender, EventArgs e)
+		protected void Application_Error(object sender, EventArgs e)
 		{
 			OnError(new ErrorEventArgs(Context.Error));
 		}
 
-		protected virtual void Session_Start(object sender, EventArgs e)
+		protected void Application_AcquireRequestState(object sender, EventArgs e)
+		{
+			OnAcquireRequestState(e);
+		}
+
+		protected void Application_PostAcquireRequestState(object sender, EventArgs e)
+		{
+			OnPostAcquireRequestState(e);
+		}
+
+		protected void Session_Start(object sender, EventArgs e)
 		{
 			OnSessionStart(e);
 		}
 
-		protected virtual void Session_End(object sender, EventArgs e)
+		protected void Session_End(object sender, EventArgs e)
 		{
 			OnSessionEnd(e);
 		}
@@ -94,6 +100,14 @@ namespace Ecng.Web
 		}
 
 		protected virtual void OnAppAuthorizeRequest(EventArgs e)
+		{
+		}
+
+		protected virtual void OnAcquireRequestState(EventArgs e)
+		{
+		}
+
+		protected virtual void OnPostAcquireRequestState(EventArgs e)
 		{
 		}
 
