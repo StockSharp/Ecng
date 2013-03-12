@@ -26,10 +26,10 @@ namespace Ecng.Forum.Components
 			base.OnAppEnd(e);
 		}
 
-		protected override void OnError(ErrorEventArgs e)
+		protected override void OnAppError(ErrorEventArgs e)
 		{
 			ForumHelper.Logger.Log(new HttpException("Access to url '{0}' thrown exception.".Put(Url.Current), e.GetException()));
-			base.OnError(e);
+			base.OnAppError(e);
 		}
 
 		protected override void OnAppEndRequest(EventArgs e)

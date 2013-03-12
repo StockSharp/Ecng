@@ -48,17 +48,17 @@ namespace Ecng.Web
 
 		protected void Application_Error(object sender, EventArgs e)
 		{
-			OnError(new ErrorEventArgs(Context.Error));
+			OnAppError(new ErrorEventArgs(Context.Error));
 		}
 
 		protected void Application_AcquireRequestState(object sender, EventArgs e)
 		{
-			OnAcquireRequestState(e);
+			OnAppAcquireRequestState(e);
 		}
 
 		protected void Application_PostAcquireRequestState(object sender, EventArgs e)
 		{
-			OnPostAcquireRequestState(e);
+			OnAppPostAcquireRequestState(e);
 		}
 
 		protected void Session_Start(object sender, EventArgs e)
@@ -103,11 +103,15 @@ namespace Ecng.Web
 		{
 		}
 
-		protected virtual void OnAcquireRequestState(EventArgs e)
+		protected virtual void OnAppAcquireRequestState(EventArgs e)
 		{
 		}
 
-		protected virtual void OnPostAcquireRequestState(EventArgs e)
+		protected virtual void OnAppPostAcquireRequestState(EventArgs e)
+		{
+		}
+
+		protected virtual void OnAppError(ErrorEventArgs e)
 		{
 		}
 
@@ -116,10 +120,6 @@ namespace Ecng.Web
 		}
 
 		protected virtual void OnSessionEnd(EventArgs e)
-		{
-		}
-
-		protected virtual void OnError(ErrorEventArgs e)
 		{
 		}
 	}
