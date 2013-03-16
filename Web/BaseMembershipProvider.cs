@@ -544,7 +544,7 @@ namespace Ecng.Web
 
 		public override bool ValidateUser(string userName, string password)
 		{
-			var type = ValidateUserInternal(userName, password);
+			var type = password.IsEmpty() ? SecurityErrorTypes.InvalidPassword : ValidateUserInternal(userName, password);
 
 			if (type == null)
 				return true;
