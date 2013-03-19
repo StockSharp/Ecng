@@ -69,6 +69,7 @@
     <Reference Include="System.Xml, Version=2.0.3600.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs">

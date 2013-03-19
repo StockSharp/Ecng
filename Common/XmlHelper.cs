@@ -45,7 +45,39 @@ namespace Ecng.Common
 			if (writer == null)
 				throw new ArgumentNullException("writer");
 
-			writer.WriteAttributeString(name, value != null ? value.ToString() : string.Empty);
+			writer.WriteAttributeString(name, value != null ? value.ToString() : String.Empty);
 		}
+
+		/// <summary>
+		/// from StockSharp.Transaq
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <returns></returns>
+
+		public static string GetValue(this XAttribute obj)
+		{
+			if (obj == null)
+				return String.Empty;
+
+			return obj.Value;
+		}
+
+		public static T GetValue<T>(this XAttribute obj, T? defaultValue = null) where T:struct
+		{
+			if (obj == null && defaultValue.HasValue)
+				return defaultValue.Value;
+
+			return obj.Value.To<T>();
+		}
+
+		public static T GetValue<T>(this XElement obj, T? defaultValue = null) where T : struct
+		{
+			if (obj == null && defaultValue.HasValue)
+				return defaultValue.Value;
+
+			return obj.Value.To<T>();
+		}
+
+
 	}
 }
