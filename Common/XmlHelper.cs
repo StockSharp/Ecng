@@ -13,23 +13,20 @@ namespace Ecng.Common
 			return value == null ? defaultValue : value.To<T>();
 		}
 
-		public static string GetElementValue(this XElement elem, string name, string defaultValue = "")
+		public static string GetElementValue(this XElement elem, string name, string defaultValue = null)
 		{
 			if (elem == null)
 				throw new ArgumentNullException("elem");
 
 			var attr = elem.Element(name);
 
-			if (attr == null)
-			{
-				if(!string.IsNullOrEmpty(defaultValue))
-				{
-					return defaultValue;
-				}
-				throw new ArgumentException("Element '{0}' doesn't exist.".Put(name), "name");
-			}
+			if (attr != null)
+				return attr.Value;
 
-			return attr.Value;
+			if (!defaultValue.IsEmpty())
+				return defaultValue;
+
+			throw new ArgumentException("Element '{0}' doesn't exist.".Put(name), "name");
 		}
 
 		public static T GetAttributeValue<T>(this XElement elem, string name, T defaultValue = default(T))
