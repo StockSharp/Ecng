@@ -51,8 +51,6 @@ namespace Ecng.Common
 		/// <summary>
 		/// from StockSharp.Transaq
 		/// </summary>
-		/// <param name="obj"></param>
-		/// <returns></returns>
 
 		public static string GetValue(this XAttribute obj)
 		{
