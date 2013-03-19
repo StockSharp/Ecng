@@ -94,6 +94,7 @@
     <Compile Include="ExcelWorker.cs" />
     <Compile Include="GCHandle.cs" />
     <Compile Include="HardwareInfo.cs" />
+    <Compile Include="HGlobalSafeHandle.cs" />
     <Compile Include="IOHelper.cs" />
     <Compile Include="ManagedWinApiHelper.cs" />
     <Compile Include="Marshaler.cs" />
@@ -125,6 +126,10 @@
     <ProjectReference Include="..\Reflection\Reflection.csproj">
       <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
       <Name>Reflection</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Serialization\Serialization.csproj">
+      <Project>{408006c6-a8eb-43f8-9d0c-5a519dff5873}</Project>
+      <Name>Serialization</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -1,3 +1,6 @@
+using System.Text;
+using Ecng.Serialization;
+
 namespace Ecng.Interop
 {
 	#region Using Directives
@@ -306,6 +309,35 @@ namespace Ecng.Interop
 		{
 			return Marshal.StringToHGlobalUni(str);
 		}
+
+		public static HGlobalSafeHandle ToHGlobal(this Encoding encoding, string data)
+		{
+			if (encoding == null)
+				throw new ArgumentNullException("encoding");
+
+			var dataEncoded = encoding.GetBytes(data);
+			var size = typeof(byte).SizeOf() * dataEncoded.Length;
+			var pData = Marshal.AllocHGlobal(size);
+
+			Marshal.Copy(dataEncoded, 0, pData, dataEncoded.Length);
+
+			return new HGlobalSafeHandle(pData);
+		}
+
+		public static string ToString(this Encoding encoding, IntPtr pData)
+		{
+			if (encoding == null)
+				throw new ArgumentNullException("encoding");
+
+			var errStr = pData.ToAnsi();
+			var length = errStr.Length;
+
+			var data = new byte[length];
+			Marshal.Copy(pData, data, 0, length);
+
+			return encoding.GetString(data);
+		}
+
 #endif
 	}
 }
