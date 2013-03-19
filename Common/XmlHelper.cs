@@ -100,5 +100,13 @@ namespace Ecng.Common
 		{
 			return obj.GetValue<int>(defaultValue);
 		}
+
+		public static T? ToEnumNullable<T>(this XElement obj) where T : struct
+		{
+			if (obj == null)
+				return null;
+
+			return obj.Value.ToEnumNullable<T>();
+		}
 	}
 }

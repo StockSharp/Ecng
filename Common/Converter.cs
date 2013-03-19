@@ -654,6 +654,13 @@
 			return (T)To(value, typeof(T));
 		}
 
+		public static T? ToEnumNullable<T>(this string s) where T : struct
+		{
+			if (s.IsEmpty()) return null;
+
+			return s.To<T>();
+		}
+
 		public static DateTime ToDateTime(this string value, string format)
 		{
 			return DateTime.ParseExact(value, format, CultureInfo.InvariantCulture);
