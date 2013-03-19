@@ -48,10 +48,6 @@ namespace Ecng.Common
 			writer.WriteAttributeString(name, value != null ? value.ToString() : String.Empty);
 		}
 
-		/// <summary>
-		/// from StockSharp.Transaq
-		/// </summary>
-
 		public static string GetValue(this XAttribute obj)
 		{
 			if (obj == null)
