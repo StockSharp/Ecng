@@ -78,6 +78,29 @@ namespace Ecng.Common
 			return obj.Value.To<T>();
 		}
 
+		public static bool ToBool(this XAttribute obj, bool? defaultValue = null)
+		{
+			return obj.GetValue<bool>(defaultValue);
+		}
 
+		public static int ToInt(this XAttribute obj, int? defaultValue = null)
+		{
+			return obj.GetValue<int>(defaultValue);
+		}
+
+		public static long ToLong(this XAttribute obj, long? defaultValue = null)
+		{
+			return obj.GetValue<long>(defaultValue);
+		}
+
+		public static long ToLong(this XElement obj, long? defaultValue = null)
+		{
+			return obj.GetValue<long>(defaultValue);
+		}
+
+		public static int ToInt(this XElement obj, int? defaultValue = null)
+		{
+			return obj.GetValue<int>(defaultValue);
+		}
 	}
 }
