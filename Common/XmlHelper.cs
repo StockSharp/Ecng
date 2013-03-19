@@ -6,12 +6,14 @@ namespace Ecng.Common
 
 	public static class XmlHelper
 	{
-		public static T GetElementValue<T>(this XElement elem, string name)
+		public static T GetElementValue<T>(this XElement elem, string name, T defaultValue = default(T))
 		{
-			return elem.GetElementValue(name).To<T>();
+			var value =  elem.GetElementValue(name);
+
+			return value == null ? defaultValue : value.To<T>();
 		}
 
-		public static string GetElementValue(this XElement elem, string name)
+		public static string GetElementValue(this XElement elem, string name, string defaultValue = "")
 		{
 			if (elem == null)
 				throw new ArgumentNullException("elem");
@@ -19,7 +21,13 @@ namespace Ecng.Common
 			var attr = elem.Element(name);
 
 			if (attr == null)
+			{
+				if(!string.IsNullOrEmpty(defaultValue))
+				{
+					return defaultValue;
+				}
 				throw new ArgumentException("Element '{0}' doesn't exist.".Put(name), "name");
+			}
 
 			return attr.Value;
 		}
