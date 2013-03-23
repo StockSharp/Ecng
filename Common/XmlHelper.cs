@@ -53,36 +53,36 @@ namespace Ecng.Common
 			writer.WriteAttributeString(name, value != null ? value.ToString() : String.Empty);
 		}
 
-		public static string GetValue(this XAttribute obj)
-		{
-			if (obj == null)
-				return String.Empty;
+		//public static string GetValue(this XAttribute obj)
+		//{
+		//	if (obj == null)
+		//		return String.Empty;
 
-			return obj.Value;
-		}
+		//	return obj.Value;
+		//}
 
-		public static T GetValue<T>(this XAttribute obj, T? defaultValue = null) where T:struct
-		{
-			if (obj == null && defaultValue.HasValue)
-				return defaultValue.Value;
+		//public static T GetValue<T>(this XAttribute obj, T? defaultValue = null) where T:struct
+		//{
+		//	if (obj == null && defaultValue.HasValue)
+		//		return defaultValue.Value;
 
-			return obj.Value.To<T>();
-		}
+		//	return obj.Value.To<T>();
+		//}
 
-		public static T GetValue<T>(this XElement obj, T? defaultValue = null) where T : struct
-		{
-			if (obj == null && defaultValue.HasValue)
-				return defaultValue.Value;
+		//public static T GetValue<T>(this XElement obj, T? defaultValue = null) where T : struct
+		//{
+		//	if (obj == null && defaultValue.HasValue)
+		//		return defaultValue.Value;
 
-			return obj.Value.To<T>();
-		}
+		//	return obj.Value.To<T>();
+		//}
 
-		public static T? ToEnumNullable<T>(this XElement obj) where T : struct
-		{
-			if (obj == null)
-				return null;
+		//public static T? ToEnumNullable<T>(this XElement obj) where T : struct
+		//{
+		//	if (obj == null)
+		//		return null;
 
-			return obj.Value.ToEnumNullable<T>();
-		}
+		//	return obj.Value.ToEnumNullable<T>();
+		//}
 	}
 }
