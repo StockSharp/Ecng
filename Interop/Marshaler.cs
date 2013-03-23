@@ -1,21 +1,16 @@
-using System.Text;
-using Ecng.Serialization;
-
 namespace Ecng.Interop
 {
-	#region Using Directives
-
 	using System;
 #if !SILVERLIGHT
 	using System.Collections.Generic;
 	using System.Linq;
 #endif
+	using System.Text;
 	using System.Runtime.InteropServices;
 
 	using Ecng.Common;
 	using Ecng.Collections;
-
-	#endregion
+	using Ecng.Serialization;
 
 	/// <summary>
 	/// Provides a collection of extended methods, that manipulate with class <see cref="Marshal"/>.
@@ -310,6 +305,16 @@ namespace Ecng.Interop
 			return Marshal.StringToHGlobalUni(str);
 		}
 
+		public static HGlobalSafeHandle ToHGlobal(this int ptr)
+		{
+			return ((IntPtr)ptr).ToHGlobal();
+		}
+
+		public static HGlobalSafeHandle ToHGlobal(this IntPtr ptr)
+		{
+			return new HGlobalSafeHandle(Marshal.AllocHGlobal(ptr));
+		}
+
 		public static HGlobalSafeHandle ToHGlobal(this Encoding encoding, string data)
 		{
 			if (encoding == null)
@@ -317,11 +322,11 @@ namespace Ecng.Interop
 
 			var dataEncoded = encoding.GetBytes(data);
 			var size = typeof(byte).SizeOf() * dataEncoded.Length;
-			var pData = Marshal.AllocHGlobal(size);
+			var pData = size.ToHGlobal();
 
-			Marshal.Copy(dataEncoded, 0, pData, dataEncoded.Length);
+			Marshal.Copy(dataEncoded, 0, pData.DangerousGetHandle(), dataEncoded.Length);
 
-			return new HGlobalSafeHandle(pData);
+			return pData;
 		}
 
 		public static string ToString(this Encoding encoding, IntPtr pData)
@@ -337,7 +342,6 @@ namespace Ecng.Interop
 
 			return encoding.GetString(data);
 		}
-
 #endif
 	}
 }
