@@ -157,7 +157,7 @@ namespace Ecng.Web
 			if (url == null)
 				throw new ArgumentNullException("url");
 
-			HttpContext.Current.Response.Redirect(url.ToString(), endResponse);
+			HttpContext.Current.Response.Redirect(new Uri(url.Clone(), url.LocalPath).ToString() + url.QueryString, endResponse);
 		}
 
 		public static void RegisterScript<T>(this T control, string key, string script)
@@ -316,6 +316,11 @@ namespace Ecng.Web
 		public static string EncodeUrl(this string url)
 		{
 			return HttpUtility.UrlEncode(url, _urlEncoding);
+		}
+
+		public static string DecodeUrl(this string url)
+		{
+			return HttpUtility.UrlDecode(url, _urlEncoding);
 		}
 
 		public static NameValueCollection ParseUrl(this string url)

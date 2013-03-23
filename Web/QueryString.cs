@@ -12,16 +12,9 @@
 
 	public class QueryString : Equatable<QueryString>
 	{
-		#region Private Fields
-
-		private readonly Url _url;
 		private Dictionary<string, string> _queryString;
 
 		private string _compiledString;
-
-		#endregion
-
-		#region QueryString.ctor()
 
 		internal QueryString(Url url)
 			: this(url, url.Query.ParseUrl())
@@ -30,7 +23,7 @@
 
 		internal QueryString(Url url, NameValueCollection queryString)
 		{
-			_url = url;
+			Url = url;
 
 			_queryString = new Dictionary<string, string>(queryString.Count, StringComparer.InvariantCultureIgnoreCase);
 
@@ -40,27 +33,22 @@
 			_compiledString = url.Query;
 		}
 
-		#endregion
+		public Url Url { get; private set; }
 
-		#region Contains
+		public string Raw
+		{
+			get { return _queryString.Select(p => p.Key + "=" + p.Value).Join("&"); }
+		}
 
 		public bool Contains(string queryField)
 		{
 			return _queryString.ContainsKey(queryField);
 		}
 
-		#endregion
-
-		#region Count
-
 		public int Count
 		{
 			get { return _queryString.Count; }
 		}
-
-		#endregion
-
-		#region Item
 
 		public object this[string queryField]
 		{
@@ -80,18 +68,10 @@
 			}
 		}
 
-		#endregion
-
-		#region GetValue
-
 		public T GetValue<T>(string queryField)
 		{
 			return _queryString[queryField].To<T>();
 		}
-
-		#endregion
-
-		#region TryGetValue
 
 		public T TryGetValue<T>(string queryField)
 		{
@@ -102,8 +82,6 @@
 		{
 			return Contains(queryField) ? GetValue<T>(queryField) : defaultValue;
 		}
-
-		#endregion
 
 		public QueryString Append(string name, object value)
 		{
@@ -128,17 +106,6 @@
 
 		private void RefreshUri()
 		{
-			CompileString();
-			_url.SetValue("CreateUri", new object[] { _url.Clone(), _url.LocalPath + _compiledString, false });
-		}
-
-		public override string ToString()
-		{
-			return _compiledString;
-		}
-
-		private void CompileString()
-		{
 			if (_queryString.IsEmpty())
 				_compiledString = string.Empty;
 			else
@@ -152,6 +119,13 @@
 
 				_compiledString = queryString.ToString();
 			}
+
+			Url.SetValue("CreateUri", new object[] { Url.Clone(), Url.LocalPath + _compiledString, false });
+		}
+
+		public override string ToString()
+		{
+			return _compiledString;
 		}
 
 		/// <summary>
@@ -162,7 +136,7 @@
 		/// </returns>
 		public override QueryString Clone()
 		{
-			return new QueryString(_url)
+			return new QueryString(Url)
 			{
 				_queryString = new Dictionary<string, string>(_queryString),
 				_compiledString = _compiledString,

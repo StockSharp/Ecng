@@ -11,8 +11,6 @@ namespace Ecng.Web
 
 	public class Url : Uri, ICloneable<Url>
 	{
-		#region Url.ctor()
-
 #if !SILVERLIGHT
 		private static Uri GetUri(Type pageType)
 		{
@@ -50,20 +48,12 @@ namespace Ecng.Web
 		{
 		}
 
-		#endregion
-
-		#region QueryString
-
 		private QueryString _queryString;
 
 		public QueryString QueryString
 		{
 			get { return _queryString ?? (_queryString = new QueryString(this)); }
 		}
-
-		#endregion
-
-		#region Current
 
 		public static Url Current
 		{
@@ -78,24 +68,14 @@ namespace Ecng.Web
 			}
 		}
 
-		#endregion
-
-		#region ICloneable Members
-
 		object ICloneable.Clone()
 		{
 			return Clone();
 		}
 
-		#endregion
-
-		#region ICloneable<Url> Members
-
 		public Url Clone()
 		{
 			return new Url(this);
 		}
-
-		#endregion
 	}
 }
