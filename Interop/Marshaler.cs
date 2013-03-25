@@ -3,6 +3,7 @@ namespace Ecng.Interop
 	using System;
 #if !SILVERLIGHT
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Linq;
 #endif
 	using System.Text;
@@ -342,6 +343,26 @@ namespace Ecng.Interop
 
 			return encoding.GetString(data);
 		}
+
+		public static T GetHandler<T>(IntPtr library, string procName)
+		{
+			IntPtr addr = GetProcAddress(library, procName);
+
+			if (addr == IntPtr.Zero)
+				throw new ArgumentException("Ошибка в загрузке процедуры {0}.".Put(procName), "procName", new Win32Exception());
+
+			return Marshaler.GetDelegateForFunctionPointer<T>(addr);
+		}
+
+
+		[DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
+		public static extern IntPtr LoadLibrary([In] string dllname);
+
+		[DllImport("kernel32.dll")]
+		public static extern void FreeLibrary([In] IntPtr hModule);
+
+		[DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
+		public static extern IntPtr GetProcAddress([In] IntPtr hModule, [In] string procName);
 #endif
 	}
 }
