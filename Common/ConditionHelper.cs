@@ -12,5 +12,11 @@ namespace Ecng.Common
 			if(value.IsEmpty())
 				throw new ArgumentNullException("name");
 		}
+
+		public static void CheckNotNull(object value, string name)
+		{
+			if (value == null)
+				throw new ArgumentNullException("name");
+		}
 	}
 }
