@@ -90,6 +90,7 @@
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="NativeLibrary.cs" />
     <Compile Include="CustomMarshaler.cs" />
     <Compile Include="DisposableComObject.cs" />
     <Compile Include="ExcelWorker.cs" />
