@@ -15,7 +15,7 @@ namespace Ecng.Interop
 
 			DllPath = dllPath;
 
-			DllVersion = FileVersionInfo.GetVersionInfo(dllPath).ProductVersion.To<Version>();
+			DllVersion = FileVersionInfo.GetVersionInfo(dllPath).ProductVersion.Replace(',', '.').Replace(" ", "").To<Version>();
 
 			Handler = WinApi.LoadLibrary(dllPath);
 

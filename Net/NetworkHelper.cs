@@ -22,6 +22,19 @@ namespace Ecng.Net
 			}
 		}
 
+		public static bool IsLocal(this EndPoint endPoint)
+		{
+			if (endPoint == null)
+				throw new ArgumentNullException("endPoint");
+
+			if (endPoint is IPEndPoint)
+				return IPAddress.IsLoopback(((IPEndPoint)endPoint).Address);
+			else if (endPoint is DnsEndPoint)
+				return ((DnsEndPoint)endPoint).Host.CompareIgnoreCase("localhost");
+			else
+				throw new InvalidOperationException("Неизвестная информация об адресе.");
+		}
+
 		public static bool IsLocalIpAddress(this EndPoint endPoint)
 		{
 			var host = endPoint.GetHost();
