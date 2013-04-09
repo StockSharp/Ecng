@@ -5,6 +5,7 @@ namespace Ecng.Xaml
 	using System.Collections.ObjectModel;
 	using System.Collections.Specialized;
 	using System.ComponentModel;
+	using System.Linq;
 	using System.Threading;
 
 	using Ecng.Collections;
@@ -17,6 +18,8 @@ namespace Ecng.Xaml
 	public class ThreadSafeObservableCollection<T> : ObservableCollection<T>, ICollectionEx<T>
 	{
 		private readonly ReaderWriterLock _lock = new ReaderWriterLock();
+
+		public bool RaiseAddRemoveEvents { get; set; }
 
 		private GuiDispatcher _dispatcher = new GuiDispatcher();
 
@@ -45,14 +48,44 @@ namespace Ecng.Xaml
 				OnPropertyChanged(new PropertyChangedEventArgs("Count"));
 				OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
 
-				// http://stackoverflow.com/questions/670577/observablecollection-doesnt-support-addrange-method-so-i-get-notified-for-each
-				OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+				if (RaiseAddRemoveEvents)
+					OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, items.ToList()));
+				else
+					// http://stackoverflow.com/questions/670577/observablecollection-doesnt-support-addrange-method-so-i-get-notified-for-each
+					OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 				
 				_lock.DowngradeFromWriterLock(ref c);
 			}
 			else
 			{
 				_dispatcher.AddAction(() => AddRange(items));
+			}
+		}
+
+		public void RemoveRange(IEnumerable<T> items)
+		{
+			if (_dispatcher.Dispatcher.CheckAccess())
+			{
+				var c = _lock.UpgradeToWriterLock(-1);
+
+				CheckReentrancy();
+
+				((List<T>)Items).RemoveRange(items);
+
+				OnPropertyChanged(new PropertyChangedEventArgs("Count"));
+				OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+
+				if (RaiseAddRemoveEvents)
+					OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, items.ToList()));
+				else
+					// http://stackoverflow.com/questions/670577/observablecollection-doesnt-support-addrange-method-so-i-get-notified-for-each
+					OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+
+				_lock.DowngradeFromWriterLock(ref c);
+			}
+			else
+			{
+				_dispatcher.AddAction(() => RemoveRange(items));
 			}
 		}
 
