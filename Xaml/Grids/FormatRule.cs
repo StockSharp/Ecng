@@ -26,8 +26,8 @@
 		{
 			if (copyFromDefault)
 			{
-				Background = Default.Background != null ? Default.Background.Clone() : null;
-				Foreground = Default.Foreground != null ? Default.Foreground.Clone() : null;
+				Background = Default.Background != null ? Default.Background.Clone() : new SolidColorBrush(Colors.White);
+				Foreground = Default.Foreground != null ? Default.Foreground.Clone() : new SolidColorBrush(Colors.Black);
 				Font = Default.Font.Clone();
 			}
 

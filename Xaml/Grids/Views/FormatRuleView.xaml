@@ -63,7 +63,7 @@
 					FontStyle="{Binding Path=Font.Style, Mode=TwoWay}"
 					FontWeight="{Binding Path=Font.Weight, Mode=TwoWay}">Шрифт</Button>
 
-			<CheckBox Grid.Row="4" Margin="5" Content="Применять ко всей строке" Grid.ColumnSpan="2" IsChecked="{Binding Path=IsApplyToRow, Mode=TwoWay}" />
+			<!--<CheckBox Grid.Row="4" Margin="5" Content="Применять ко всей строке" Grid.ColumnSpan="2" IsChecked="{Binding Path=IsApplyToRow, Mode=TwoWay}" />-->
 		</Grid>
     </Border>
 </UserControl>
