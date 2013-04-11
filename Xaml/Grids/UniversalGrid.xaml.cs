@@ -87,6 +87,14 @@
 			set { SetValue(ShowHeaderInGroupTitleProperty, value); }
 		}
 
+		public static readonly DependencyProperty RowStyleProperty = DependencyProperty.Register("RowStyle", typeof(Style), typeof(UniversalGrid));
+
+		public Style RowStyle
+		{
+			get { return (Style)GetValue(RowStyleProperty); }
+			set { SetValue(RowStyleProperty, value); }
+		}
+
 		#endregion
 
 		public object SelectedItem
