@@ -17,7 +17,8 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type GroupItem}">
-                        <Expander IsExpanded="True" Margin="{Binding Converter={StaticResource groupItemToMarginConverter}, ConverterParameter='10, 0, 0, 0'}">
+                        <Expander IsExpanded="{Binding Path=IsGroupsExpanded, Mode=OneTime, RelativeSource={RelativeSource AncestorType={x:Type UniversalGrid:UniversalGrid}}}"
+                                  Margin="{Binding Converter={StaticResource groupItemToMarginConverter}, ConverterParameter='10, 0, 0, 0'}">
                             <Expander.Header>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{Binding Converter={StaticResource groupItemToGroupHeaderConverter}}" FontWeight="Bold" 

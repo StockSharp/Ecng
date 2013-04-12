@@ -95,6 +95,14 @@
 			set { SetValue(RowStyleProperty, value); }
 		}
 
+		public static readonly DependencyProperty IsGroupsExpandedProperty = DependencyProperty.Register("IsGroupsExpanded", typeof(bool), typeof(UniversalGrid), new PropertyMetadata(true));
+
+		public bool IsGroupsExpanded
+		{
+			get { return (bool)GetValue(IsGroupsExpandedProperty); }
+			set { SetValue(IsGroupsExpandedProperty, value); }
+		}
+
 		#endregion
 
 		public object SelectedItem
