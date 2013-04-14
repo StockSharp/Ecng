@@ -35,14 +35,14 @@
 				Monitor.PulseAll(this);
 		}
 
-		public void Wait(TimeSpan? timeOut = null)
+		public bool Wait(TimeSpan? timeOut = null)
 		{
 			lock (this)
 			{
 				if (timeOut == null)
-					Monitor.Wait(this);
+					return Monitor.Wait(this);
 				else
-					Monitor.Wait(this, timeOut.Value);
+					return Monitor.Wait(this, timeOut.Value);
 			}
 		}
 	}

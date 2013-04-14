@@ -55,6 +55,11 @@ namespace Ecng.Common
 		public const int Tick = 1;
 
 		/// <summary>
+		/// Represents the number of ticks in 1 microsecond. This field is constant.
+		/// </summary>
+		public const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
+
+		/// <summary>
 		/// Represents the number of ticks in 1 week. This field is constant.
 		/// </summary>
 		public const long TicksPerWeek = TimeSpan.TicksPerDay * 7;
