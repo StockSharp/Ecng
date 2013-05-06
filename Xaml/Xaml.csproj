@@ -77,6 +77,7 @@
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="AddressComboBox.cs" />
+    <Compile Include="Converters\ColorToBrushConverter.cs" />
     <Compile Include="Converters\EnumToStringConverter.cs" />
     <Compile Include="Converters\ListViewBackgroundConvertor.cs" />
     <Compile Include="BmpImage.cs" />

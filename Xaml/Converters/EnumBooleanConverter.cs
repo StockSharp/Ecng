@@ -7,6 +7,8 @@ namespace Ecng.Xaml.Converters
 
 	public class EnumBooleanConverter : IValueConverter
 	{
+		public bool DefaultValueWhenUnchecked { get; set; }
+
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			var parameterString = parameter as string;
@@ -17,7 +19,7 @@ namespace Ecng.Xaml.Converters
 			if (Enum.IsDefined(value.GetType(), value) == false)
 				return DependencyProperty.UnsetValue;
 
-			object parameterValue = Enum.Parse(value.GetType(), parameterString);
+			var parameterValue = Enum.Parse(value.GetType(), parameterString);
 
 			return parameterValue.Equals(value);
 		}
@@ -28,6 +30,9 @@ namespace Ecng.Xaml.Converters
 
 			if (parameterString == null)
 				return DependencyProperty.UnsetValue;
+
+			if (DefaultValueWhenUnchecked && !(bool)value)
+				return Enum.GetValues(targetType).GetValue(0);
 
 			return Enum.Parse(targetType, parameterString);
 		}
