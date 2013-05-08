@@ -807,6 +807,18 @@ namespace Ecng.Xaml
 		{
 			return app.GetActiveWindows().FirstOrDefault();
 		}
+
+		public static void SetBindings(this DependencyObject obj, DependencyProperty property, object dataObject, string propertyName, BindingMode mode = BindingMode.TwoWay, IValueConverter converter = null, object parameter = null)
+		{
+			var binding = new Binding(propertyName)
+			{
+				Source = dataObject,
+				Mode = mode,
+				Converter = converter,
+				ConverterParameter = parameter
+			};
+			BindingOperations.SetBinding(obj, property, binding);
+		}
 #endif
 	}
 }
