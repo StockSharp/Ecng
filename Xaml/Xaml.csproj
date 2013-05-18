@@ -123,6 +123,7 @@
     <Compile Include="HighlightingTextBlock.xaml.cs">
       <DependentUpon>HighlightingTextBlock.xaml</DependentUpon>
     </Compile>
+    <Compile Include="HyperlinkEx.cs" />
     <Compile Include="IFormAdapter.cs" />
     <Compile Include="IWin32WindowEx.cs" />
     <Compile Include="LoadingAnimation.xaml.cs">
