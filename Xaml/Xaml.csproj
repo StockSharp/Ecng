@@ -130,6 +130,7 @@
       <DependentUpon>LoadingAnimation.xaml</DependentUpon>
     </Compile>
     <Compile Include="MessageBoxBuilder.cs" />
+    <Compile Include="NonTopmostPopup.cs" />
     <Compile Include="NumberRangeRule.cs" />
     <Compile Include="ObservableDictionary.cs" />
     <Compile Include="ObservableHashSet.cs" />
