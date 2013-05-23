@@ -38,7 +38,8 @@
 			<!--<MenuItem Click="GroupMenu_Click" Header="Сгруппировать по столбцу" />
 			<MenuItem Click="UnGroupMenu_Click" Header="Сбросить группировку" IsEnabled="{Binding IsGroupingActive}" />-->
             <MenuItem Header="Группировка" />
-            <MenuItem Header="Показывать имя столбца в заголовке группы" Click="MenuItemClick"/>
+            <MenuItem Header="Показывать имя столбца в заголовке группы" IsCheckable="True"/>
+            <MenuItem Header="Автопрокрутка" IsCheckable="True"/>
 			<Separator />
 			<MenuItem Header="Столбцы" />
 			<Separator />
@@ -93,6 +94,7 @@
 				  LoadingRow="UnderlyingGrid_LoadingRow"
 				  UnloadingRow="UnderlyingGrid_UnloadingRow"
 				  SelectedCellsChanged="UnderlyingGrid_SelectedCellsChanged"
+                  ScrollViewer.ScrollChanged="UnderlyingGrid_ScrollChanged"
 				  RowHeaderWidth="0"
                   RowStyle="{Binding ElementName=_ctrl, Path=RowStyle}">
 				<DataGrid.ColumnHeaderStyle>

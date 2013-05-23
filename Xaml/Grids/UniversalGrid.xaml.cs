@@ -103,6 +103,33 @@
 			set { SetValue(IsGroupsExpandedProperty, value); }
 		}
 
+		/// <summary>
+		/// <see cref="DependencyProperty"/> для <see cref="AutoScroll"/>.
+		/// </summary>
+		public static readonly DependencyProperty AutoScrollProperty = DependencyProperty.Register("AutoScroll", typeof(bool), typeof(UniversalGrid), new PropertyMetadata(false, AutoScrollChanged));
+
+		private static void AutoScrollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		{
+			var ctrl = d.FindLogicalChild<UniversalGrid>();
+			var autoScroll = (bool)e.NewValue;
+
+			if (autoScroll)
+				GuiDispatcher.GlobalDispatcher.AddPeriodicalAction(ctrl.ScrollToEnd);
+			else
+				GuiDispatcher.GlobalDispatcher.RemovePeriodicalAction(ctrl.ScrollToEnd);
+
+			ctrl.PropertyChanged.SafeInvoke(ctrl, "AutoScroll");
+		}
+
+		/// <summary>
+		/// Автоматически скролировать контрол на последнюю добавленную строку. По умолчанию false.
+		/// </summary>
+		public bool AutoScroll
+		{
+			get { return (bool)GetValue(AutoScrollProperty); }
+			set { SetValue(AutoScrollProperty, value); }
+		}
+
 		#endregion
 
 		public object SelectedItem
@@ -316,10 +343,13 @@
 
 		private void GenerateMenuItems()
 		{
-			var items = ((MenuItem)((ContextMenu)FindResource("DataGridColumnHeaderContextMenu")).Items[3]).Items;
-			var groupItems = ((MenuItem)((ContextMenu)FindResource("DataGridColumnHeaderContextMenu")).Items[0]).Items;
+			var menu = (ContextMenu) FindResource("DataGridColumnHeaderContextMenu");
 
-			CreateShowHeaderMenuItemBinding((MenuItem)((ContextMenu)FindResource("DataGridColumnHeaderContextMenu")).Items[1]);
+			var items = ((MenuItem)menu.Items[4]).Items;
+			var groupItems = ((MenuItem)menu.Items[0]).Items;
+
+			((MenuItem)menu.Items[1]).SetBindings(MenuItem.IsCheckedProperty, this, "ShowHeaderInGroupTitle");
+			((MenuItem)menu.Items[2]).SetBindings(MenuItem.IsCheckedProperty, this, "AutoScroll");
 
 			if (items.Count != 0)
 				return;
@@ -331,33 +361,17 @@
 			}
 		}
 
-		private void CreateShowHeaderMenuItemBinding(MenuItem menuItem)
-		{
-			var binding = new Binding("ShowHeaderInGroupTitle")
-			{
-				Source = this,
-				Mode = BindingMode.TwoWay,
-			};
-			menuItem.SetBinding(MenuItem.IsCheckedProperty, binding);
-		}
-
 		private MenuItem CreateColumnMenuItem(DataGridColumn item)
 		{
 			var menuItem = new MenuItem
 			{
 				Header = item.Header,
+				IsCheckable = true,
 				Tag = item.SortMemberPath,
 			};
 
-			var binding = new Binding("Visibility")
-			{
-				Source = item,
-				Mode = BindingMode.TwoWay,
-				Converter = new VisibilityToBoolConverter(),
-			};
-			menuItem.SetBinding(MenuItem.IsCheckedProperty, binding);
+			menuItem.SetBindings(MenuItem.IsCheckedProperty, item, "Visibility", BindingMode.TwoWay, new VisibilityToBoolConverter());
 
-			menuItem.Click += MenuItemClick;
 			menuItem.Checked += ShowCheckedColumn;
 			menuItem.Unchecked += HideUncheckedColumn;
 
@@ -370,20 +384,14 @@
 			{
 				Header = item.Header,
 				IsChecked = GroupingMembers.Contains(item.SortMemberPath),
+				IsCheckable = true,
 				Tag = item.SortMemberPath,
 			};
 
-			menuItem.Click += MenuItemClick;
 			menuItem.Checked += GroupMenu_Click;
 			menuItem.Unchecked += GroupMenu_Click;
 
 			return menuItem;
-		}
-
-		private void MenuItemClick(object sender, RoutedEventArgs e)
-		{
-			var item = (MenuItem)sender;
-			item.IsChecked = !item.IsChecked;
 		}
 
 		private void HideUncheckedColumn(object sender, RoutedEventArgs e)
@@ -711,12 +719,35 @@
 			//e.Row.Background = null;
 		}
 
+		private void UnderlyingGrid_ScrollChanged(object sender, ScrollChangedEventArgs e)
+		{
+			if ((e.ExtentHeight - e.VerticalOffset - e.ViewportHeight).Abs() <= double.Epsilon)
+			{
+				AutoScroll = true;
+			}
+			else if (e.ExtentHeightChange < double.Epsilon)
+			{
+				AutoScroll = false;
+			}
+
+			//if (e.ExtentHeightChange > 0.0)
+			//	((ScrollViewer)e.OriginalSource).ScrollToEnd();
+		}
+
+		private void ScrollToEnd()
+		{
+			var scroll = UnderlyingGrid.FindVisualChild<ScrollViewer>();
+			if (scroll != null)
+				scroll.ScrollToEnd();
+		}
+
 		public void Load(SettingsStorage storage)
 		{
 			GroupingMembers.Clear();
 			GroupingMembers.AddRange(storage.GetValue("GroupingMembers", new string[0]));
 
 			ShowHeaderInGroupTitle = storage.GetValue("ShowHeaderInGroupTitle", true);
+			AutoScroll = storage.GetValue("AutoScroll", false);
 
 			FormatRules.Clear();
 
@@ -764,6 +795,7 @@
 				return colStorage;
 			}).ToArray());
 
+			storage.SetValue("AutoScroll", AutoScroll);
 			storage.SetValue("GroupingMembers", GroupingMembers.ToArray());
 			storage.SetValue("ShowHeaderInGroupTitle", ShowHeaderInGroupTitle);
 		}
