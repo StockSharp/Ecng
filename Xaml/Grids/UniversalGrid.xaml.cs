@@ -606,6 +606,20 @@
 					})
 				});
 
+				style.Triggers.Add(new DataTrigger
+				{
+					Binding = new Binding("IsSelected")
+					{
+						RelativeSource = new RelativeSource
+						{
+							Mode = RelativeSourceMode.FindAncestor,
+							AncestorType = typeof(DataGridRow)
+						}
+					},
+					Value = true,
+					Setters = { new Setter(Control.ForegroundProperty, SystemColors.HighlightTextBrush) }
+				});
+
 				column.CellStyle = style;
 			}
 			else if (column is DataGridTextColumn)
@@ -656,6 +670,20 @@
 						Path = new PropertyPath("Text"),
 						Converter = valueFontWeightConverter,
 					})
+				});
+
+				style.Triggers.Add(new DataTrigger
+				{
+					Binding = new Binding("IsSelected")
+					{
+						RelativeSource = new RelativeSource
+						{
+							Mode = RelativeSourceMode.FindAncestor,
+							AncestorType = typeof(DataGridRow)
+						}
+					},
+					Value = true,
+					Setters = { new Setter(TextBlock.ForegroundProperty, SystemColors.HighlightTextBrush) }
 				});
 
 				((DataGridTextColumn)column).ElementStyle = style;
