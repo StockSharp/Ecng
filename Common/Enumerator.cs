@@ -81,6 +81,10 @@
 			return source.Select(item => converter(item)).ToList();
 		}
 #endif
+		public static bool IsDefined<T>(this T enumValue)
+		{
+			return Enum.IsDefined(typeof(T), enumValue);
+		}
 
 		public static IEnumerable<T> SplitMask<T>(this T maskedValue)
 		{

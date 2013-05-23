@@ -15,7 +15,17 @@
 		}
 
 		public SynchronizedSet(bool allowIndexing)
-			: base(new HashSet<T>())
+			: this(allowIndexing, EqualityComparer<T>.Default)
+		{
+		}
+
+		public SynchronizedSet(IEqualityComparer<T> comparer)
+			: this(false, comparer)
+		{
+		}
+
+		public SynchronizedSet(bool allowIndexing, IEqualityComparer<T> comparer)
+			: base(new HashSet<T>(comparer))
 		{
 			if (allowIndexing)
 				_indecies = new PairSet<int, T>();
