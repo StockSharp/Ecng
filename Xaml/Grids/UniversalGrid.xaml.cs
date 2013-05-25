@@ -680,18 +680,44 @@
 					})
 				});
 
-				style.Triggers.Add(new DataTrigger
+				style.Triggers.AddRange(new[]
 				{
-					Binding = new Binding("IsSelected")
+					(TriggerBase) new DataTrigger
 					{
-						RelativeSource = new RelativeSource
+						Binding = new Binding("IsSelected")
 						{
-							Mode = RelativeSourceMode.FindAncestor,
-							AncestorType = typeof(DataGridRow)
-						}
+							RelativeSource = new RelativeSource
+							{
+								Mode = RelativeSourceMode.FindAncestor,
+								AncestorType = typeof (DataGridRow)
+							}
+						},
+						Value = true,
+						Setters = {new Setter(TextBlock.ForegroundProperty, SystemColors.HighlightTextBrush)}
 					},
-					Value = true,
-					Setters = { new Setter(TextBlock.ForegroundProperty, SystemColors.HighlightTextBrush) }
+					new MultiDataTrigger
+					{
+						Conditions =
+						{
+							new Condition(new Binding("IsSelected")
+							{
+								RelativeSource = new RelativeSource
+								{
+									Mode = RelativeSourceMode.FindAncestor,
+									AncestorType = typeof (DataGridRow)
+								}
+							}, true),
+							new Condition(new Binding("IsKeyboardFocusWithin")
+							{
+								RelativeSource = new RelativeSource
+								{
+									Mode = RelativeSourceMode.FindAncestor,
+									AncestorType = typeof (DataGrid)
+								}
+							}, false)
+						},
+						Setters = { new Setter(TextBlock.ForegroundProperty, SystemColors.ControlTextBrush) }
+					}
 				});
 
 				((DataGridTextColumn)column).ElementStyle = style;

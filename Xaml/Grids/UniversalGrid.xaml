@@ -97,11 +97,13 @@
                   ScrollViewer.ScrollChanged="UnderlyingGrid_ScrollChanged"
 				  RowHeaderWidth="0"
                   RowStyle="{Binding ElementName=_ctrl, Path=RowStyle}">
-				<DataGrid.ColumnHeaderStyle>
+                
+                <DataGrid.ColumnHeaderStyle>
 					<Style TargetType="{x:Type DataGridColumnHeader}">
 						<Setter Property="ContextMenu" Value="{StaticResource DataGridColumnHeaderContextMenu}" />
 					</Style>
 				</DataGrid.ColumnHeaderStyle>
+                
 				<DataGrid.GroupStyle>
 					<GroupStyle ContainerStyle="{StaticResource GroupHeaderStyle}">
 						<GroupStyle.Panel>
