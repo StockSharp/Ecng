@@ -8,12 +8,11 @@ namespace Ecng.Common
 	{
 		public static T GetElementValue<T>(this XElement elem, string name, T defaultValue = default(T))
 		{
-			var value =  elem.GetElementValue(name);
-
+			var value =  elem.GetElementValue(name, null, defaultValue.IsNull(true));
 			return value == null ? defaultValue : value.To<T>();
 		}
 
-		public static string GetElementValue(this XElement elem, string name, string defaultValue = null)
+		public static string GetElementValue(this XElement elem, string name, string defaultValue = null, bool throwIfNotExist = true)
 		{
 			if (elem == null)
 				throw new ArgumentNullException("elem");
@@ -23,19 +22,19 @@ namespace Ecng.Common
 			if (attr != null)
 				return attr.Value;
 
-			if (!defaultValue.IsEmpty())
-				return defaultValue;
+			if (!throwIfNotExist)
+				return null;
 
 			throw new ArgumentException("Element '{0}' doesn't exist.".Put(name), "name");
 		}
 
 		public static T GetAttributeValue<T>(this XElement elem, string name, T defaultValue = default(T))
 		{
-			var value = elem.GetAttributeValue(name);
+			var value = elem.GetAttributeValue(name, null, defaultValue.IsNull(true));
 			return value == null ? defaultValue : value.To<T>();
 		}
 
-		public static string GetAttributeValue(this XElement elem, string name, string defaultValue = null)
+		public static string GetAttributeValue(this XElement elem, string name, string defaultValue = null, bool throwIfNotExist = true)
 		{
 			if (elem == null)
 				throw new ArgumentNullException("elem");
