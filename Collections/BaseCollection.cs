@@ -236,11 +236,17 @@ namespace Ecng.Collections
 
 		bool IList.Contains(object value)
 		{
+			if (!IsCompatible(value))
+				return false;
+
 			return Contains((TItem)value);
 		}
 
 		int IList.Add(object value)
 		{
+			if (!IsCompatible(value))
+				throw new ArgumentNullException("value");
+
 			Add((TItem)value);
 			return Count;
 		}
@@ -253,7 +259,13 @@ namespace Ecng.Collections
 		object IList.this[int index]
 		{
 			get { return this[index]; }
-			set { this[index] = (TItem)value; }
+			set
+			{
+				if (!IsCompatible(value))
+					throw new ArgumentNullException("value");
+
+				this[index] = (TItem)value;
+			}
 		}
 
 		void IList.Clear()
@@ -263,16 +275,25 @@ namespace Ecng.Collections
 
 		int IList.IndexOf(object value)
 		{
+			if (!IsCompatible(value))
+				return -1;
+
 			return IndexOf((TItem)value);
 		}
 
 		void IList.Insert(int index, object value)
 		{
+			if (!IsCompatible(value))
+				throw new ArgumentNullException("value");
+
 			Insert(index, (TItem)value);
 		}
 
 		void IList.Remove(object value)
 		{
+			if (!IsCompatible(value))
+				return;
+
 			Remove((TItem)value);
 		}
 
@@ -287,5 +308,12 @@ namespace Ecng.Collections
 		}
 
 		#endregion
+
+		private static readonly bool _isValueType = typeof(TItem).IsValueType;
+
+		private static bool IsCompatible(object value)
+		{
+			return !_isValueType || value != null;
+		}
 	}
 }
