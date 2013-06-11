@@ -15,6 +15,12 @@ namespace Ecng.Xaml
 		private MessageBoxImage _icon = MessageBoxImage.None;
 		private string _description;
 
+		public MessageBoxBuilder Owner(DependencyObject owner)
+		{
+			_owner = owner.GetWindow();
+			return this;
+		}
+
 		public MessageBoxBuilder Owner(Window owner)
 		{
 			_owner = owner;
