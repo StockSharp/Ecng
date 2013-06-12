@@ -132,13 +132,32 @@
 				source.TryAdd(value);
 		}
 
-		public static void TryAdd<T>(this ICollection<T> source, T value)
+		public static bool TryAdd<T>(this ICollection<T> source, T value)
 		{
 			if (source == null)
 				throw new ArgumentNullException("source");
 
 			if (!source.Contains(value))
+			{
 				source.Add(value);
+				return true;
+			}
+
+			return false;
+		}
+
+		public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue value)
+		{
+			if (dict == null)
+				throw new ArgumentNullException("dict");
+
+			if (!dict.ContainsKey(key))
+			{
+				dict.Add(key, value);
+				return true;
+			}
+
+			return false;
 		}
 
 		public static T ConcatEx<T, TItem>(this T first, T second)
