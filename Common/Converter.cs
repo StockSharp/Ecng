@@ -99,6 +99,40 @@
 
 		#endregion
 
+		public static string GetHost(this EndPoint endPoint)
+		{
+			if (endPoint == null)
+				throw new ArgumentNullException("endPoint");
+
+			if (endPoint is IPEndPoint)
+			{
+				return ((IPEndPoint)endPoint).Address.ToString();
+			}
+			else if (endPoint is DnsEndPoint)
+			{
+				return ((DnsEndPoint)endPoint).Host;
+			}
+			else
+				throw new InvalidOperationException("Неизвестная информация об адресе.");
+		}
+
+		public static int GetPort(this EndPoint endPoint)
+		{
+			if (endPoint == null)
+				throw new ArgumentNullException("endPoint");
+
+			if (endPoint is IPEndPoint)
+			{
+				return ((IPEndPoint)endPoint).Port;
+			}
+			else if (endPoint is DnsEndPoint)
+			{
+				return ((DnsEndPoint)endPoint).Port;
+			}
+			else
+				throw new InvalidOperationException("Неизвестная информация об адресе.");
+		}
+
 		/// <summary>
 		/// Convert value into a instance of <paramref name="destinationType"/>.
 		/// </summary>
@@ -236,7 +270,10 @@
 					throw new FormatException("Invalid endpoint format.");
 			}
 			else if (destinationType == typeof(string) && value is EndPoint)
-				retVal = value.ToString();
+			{
+				var endPoint = (EndPoint)value;
+				retVal = endPoint.GetHost() + ":" + endPoint.GetPort();
+			}
 			else if (destinationType.IsEnum() && (value is string || sourceType.IsPrimitive))
 			{
 				if (value is string)
