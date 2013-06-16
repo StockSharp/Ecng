@@ -145,6 +145,21 @@ namespace Ecng.Common
 		{
 			get { return _applicationName.Value; }
 		}
+
+		private static readonly Lazy<string> _applicationNameWithVersion = new Lazy<string>(() =>
+		{
+			var asm = Assembly.GetEntryAssembly();
+
+			if (asm == null)
+				return "None";
+
+			return ApplicationName + " v" + asm.GetName().Version;
+		});
+
+		public static string ApplicationNameWithVersion
+		{
+			get { return _applicationNameWithVersion.Value; }
+		}
 #endif
 
 		// http://stackoverflow.com/questions/8517159/how-to-detect-at-runtime-that-net-version-4-5-currently-running-your-code
