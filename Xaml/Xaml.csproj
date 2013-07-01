@@ -139,6 +139,7 @@
     <Compile Include="ObservableHashSet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Proxy.cs" />
+    <Compile Include="ResizableContentControl.cs" />
     <Compile Include="StickyWindow.cs" />
     <Compile Include="ThreadSafeObservableCollection.cs" />
     <Compile Include="UniqueObservableCollection.cs" />
@@ -217,7 +218,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
