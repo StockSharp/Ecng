@@ -559,7 +559,13 @@ namespace Ecng.Data
 
 		public virtual TEntity Update<TEntity>(TEntity entity, FieldList valueFields)
 		{
-			return Update(entity, new FieldList(SchemaManager.GetSchema<TEntity>().Identity), valueFields);
+			var fields = new FieldList();
+
+			var identity = SchemaManager.GetSchema<TEntity>().Identity;
+			if (identity != null)
+				fields.Add(identity);
+
+			return Update(entity, fields, valueFields);
 		}
 
 		public virtual TEntity Update<TEntity>(TEntity entity, FieldList keyFields, FieldList valueFields)
@@ -590,7 +596,7 @@ namespace Ecng.Data
 
 				var readOnlyFields = valueFields.ReadOnlyFields;
 
-				if (!readOnlyFields.IsEmpty() && schema.Identity.IsReadOnly && !keyFields.Contains(schema.Identity))
+				if (!readOnlyFields.IsEmpty() && schema.Identity != null && schema.Identity.IsReadOnly && !keyFields.Contains(schema.Identity))
 					serializer.Serialize(entity, new FieldList(schema.Identity), input);
 
 				input = UngroupSource(schema.Fields, input);
@@ -865,6 +871,10 @@ namespace Ecng.Data
 			input = GroupSource(schema.Fields, input, Enumerable.Empty<PairSet<string, string>>());
 
 			var entity = schema.GetFactory<TEntity>().CreateEntity(serializer, input);
+
+			if (schema.Identity == null)
+				return serializer.Deserialize(input, schema.Fields.NonIdentityFields, entity);
+
 			var id = schema.Identity.Factory.CreateInstance(serializer, input[schema.Identity.Name]);
 			var key = CreateKey(schema.Identity, id);
 
