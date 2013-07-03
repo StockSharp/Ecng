@@ -21,6 +21,9 @@ namespace Ecng.Serialization
 
 		protected override I OnCreateInstance(ISerializer serializer, Stream source)
 		{
+			if (source.Length == 0)
+				return default(I);
+
 			return (I)new F().Deserialize(source);
 		}
 
@@ -28,6 +31,7 @@ namespace Ecng.Serialization
 		{
 			var stream = new MemoryStream();
 			new F().Serialize(stream, instance);
+			stream.Position = 0;
 			return stream;
 		}
 
