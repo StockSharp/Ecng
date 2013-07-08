@@ -513,5 +513,27 @@
 			if (stringToSplit.Length > 0)
 				yield return stringToSplit;
 		}
+
+		public static string TrimStart(this string str, string sStartValue)
+		{
+			return str.StartsWith(sStartValue) ? str.Remove(0, sStartValue.Length) : str;
+		}
+
+		public static string TrimEnd(this string str, string sEndValue)
+		{
+			return str.EndsWith(sEndValue) ? str.Remove(str.Length - sEndValue.Length, sEndValue.Length) : str;
+		}
+
+		public static bool CheckBrackets(this string str, string sStart, string sEnd)
+		{
+			return str.StartsWith(sStart) && str.EndsWith(sEnd);
+		}
+
+		public static string StripBrackets(this string str, string sStart, string sEnd)
+		{
+			return str.CheckBrackets(sStart, sEnd)
+				       ? str.Substring(sStart.Length, (str.Length - sStart.Length) - sEnd.Length)
+				       : str;
+		}
 	}
 }
