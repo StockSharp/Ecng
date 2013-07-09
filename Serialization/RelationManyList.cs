@@ -62,7 +62,6 @@
 		#endregion
 
 		private bool _bulkInitialized;
-		private readonly SynchronizedDictionary<object, TEntity> _cachedEntities = new SynchronizedDictionary<object, TEntity>();
 		private int? _count;
 
 		protected RelationManyList(IStorage storage)
@@ -80,6 +79,37 @@
 			get { return _schema ?? (_schema = SchemaManager.GetSchema<TEntity>()); }
 		}
 
+		private class StringIdComparer : IEqualityComparer<object>
+		{
+			bool IEqualityComparer<object>.Equals(object x, object y)
+			{
+				return StringComparer.InvariantCultureIgnoreCase.Equals(x, y);
+			}
+
+			int IEqualityComparer<object>.GetHashCode(object obj)
+			{
+				return StringComparer.InvariantCultureIgnoreCase.GetHashCode(obj);
+			}
+		}
+
+		private SynchronizedDictionary<object, TEntity> _cachedEntities;
+
+		private SynchronizedDictionary<object, TEntity> CachedEntities
+		{
+			get
+			{
+				if (_cachedEntities == null)
+				{
+					if (Schema.Identity != null && Schema.Identity.Type == typeof(string))
+						_cachedEntities = new SynchronizedDictionary<object, TEntity>(new StringIdComparer());
+					else
+						_cachedEntities = new SynchronizedDictionary<object, TEntity>();
+				}
+
+				return _cachedEntities;
+			}
+		}
+
 		public IStorage Storage { get; private set; }
 
 		public bool BulkLoad { get; set; }
@@ -92,9 +122,9 @@
 
 		public void ResetCache()
 		{
-			lock (_cachedEntities.SyncRoot)
+			lock (CachedEntities.SyncRoot)
 			{
-				_cachedEntities.Clear();
+				CachedEntities.Clear();
 				_bulkInitialized = false;
 			}
 
@@ -120,7 +150,7 @@
 			if (BulkLoad)
 			{
 				GetRange();
-				return _cachedEntities.TryGetValue(id);
+				return CachedEntities.TryGetValue(id);
 			}
 			else
 			{
@@ -141,9 +171,9 @@
 			{
 				var id = GetCacheId(entity);
 
-				if (!_cachedEntities.ContainsKey(id))
+				if (!CachedEntities.ContainsKey(id))
 				{
-					_cachedEntities.Add(id, entity);
+					CachedEntities.Add(id, entity);
 					_count++;
 				}
 			}
@@ -186,7 +216,7 @@
 					if (!_bulkInitialized)
 						GetRange(0, 1 /* passed count's value will be ingored and set into OnGetCount() */);
 
-					return _cachedEntities.Count;
+					return CachedEntities.Count;
 				}
 				else
 				{
@@ -207,10 +237,10 @@
 
 			if (BulkLoad)
 			{
-				lock (_cachedEntities.SyncRoot)
+				lock (CachedEntities.SyncRoot)
 				{
 					if (_bulkInitialized)
-						_cachedEntities.Add(GetCacheId(item), item);
+						CachedEntities.Add(GetCacheId(item), item);
 					else
 						GetRange();
 				}
@@ -231,7 +261,7 @@
 			if (BulkLoad)
 			{
 				GetRange();
-				_cachedEntities.Clear();
+				CachedEntities.Clear();
 			}
 
 			_count = 0;
@@ -258,10 +288,10 @@
 
 			if (BulkLoad)
 			{
-				lock (_cachedEntities.SyncRoot)
+				lock (CachedEntities.SyncRoot)
 				{
 					if (_bulkInitialized)
-						_cachedEntities.Remove(GetCacheId(item));
+						CachedEntities.Remove(GetCacheId(item));
 				}
 			}
 
@@ -410,7 +440,7 @@
 			{
 				if (_bulkInitialized)
 				{
-					IEnumerable<TEntity> source = _cachedEntities.Values;
+					IEnumerable<TEntity> source = CachedEntities.Values;
 
 					if (orderBy != null)
 					{
@@ -433,14 +463,14 @@
 
 			if (BulkLoad)
 			{
-				lock (_cachedEntities.SyncRoot)
+				lock (CachedEntities.SyncRoot)
 				{
 					if (!_bulkInitialized)
 					{
 						//_cachedEntities = new Dictionary<object, E>();
 
 						foreach (var entity in entities)
-							_cachedEntities.Add(GetCacheId(entity), entity);
+							CachedEntities.Add(GetCacheId(entity), entity);
 
 						_bulkInitialized = true;
 
