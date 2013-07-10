@@ -39,22 +39,7 @@ namespace Ecng.Xaml
 		{
 			if (_dispatcher.Dispatcher.CheckAccess())
 			{
-				var c = _lock.UpgradeToWriterLock(-1);
-
-				CheckReentrancy();
-				
-				((List<T>)Items).AddRange(items);
-
-				OnPropertyChanged(new PropertyChangedEventArgs("Count"));
-				OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
-
-				if (RaiseAddRemoveEvents)
-					OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, items.ToList()));
-				else
-					// http://stackoverflow.com/questions/670577/observablecollection-doesnt-support-addrange-method-so-i-get-notified-for-each
-					OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-				
-				_lock.DowngradeFromWriterLock(ref c);
+				OnAddRange(items);
 			}
 			else
 			{
@@ -66,22 +51,7 @@ namespace Ecng.Xaml
 		{
 			if (_dispatcher.Dispatcher.CheckAccess())
 			{
-				var c = _lock.UpgradeToWriterLock(-1);
-
-				CheckReentrancy();
-
-				((List<T>)Items).RemoveRange(items);
-
-				OnPropertyChanged(new PropertyChangedEventArgs("Count"));
-				OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
-
-				if (RaiseAddRemoveEvents)
-					OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, items.ToList()));
-				else
-					// http://stackoverflow.com/questions/670577/observablecollection-doesnt-support-addrange-method-so-i-get-notified-for-each
-					OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-
-				_lock.DowngradeFromWriterLock(ref c);
+				OnRemoveRange(items);
 			}
 			else
 			{
@@ -93,24 +63,69 @@ namespace Ecng.Xaml
 		{
 			if (_dispatcher.Dispatcher.CheckAccess())
 			{
-				var c = _lock.UpgradeToWriterLock(-1);
-
-				CheckReentrancy();
-
-				((List<T>)Items).RemoveRange(from, count);
-
-				OnPropertyChanged(new PropertyChangedEventArgs("Count"));
-				OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
-
-				// http://stackoverflow.com/questions/670577/observablecollection-doesnt-support-addrange-method-so-i-get-notified-for-each
-				OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-
-				_lock.DowngradeFromWriterLock(ref c);
+				OnRemoveRange(from, count);
 			}
 			else
 			{
 				_dispatcher.AddAction(() => RemoveRange(from, count));
 			}
+		}
+
+		protected virtual void OnAddRange(IEnumerable<T> items)
+		{
+			var c = _lock.UpgradeToWriterLock(-1);
+
+			CheckReentrancy();
+
+			((List<T>)Items).AddRange(items);
+
+			OnPropertyChanged(new PropertyChangedEventArgs("Count"));
+			OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+
+			if (RaiseAddRemoveEvents)
+				OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, items.ToList()));
+			else
+				// http://stackoverflow.com/questions/670577/observablecollection-doesnt-support-addrange-method-so-i-get-notified-for-each
+				OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+
+			_lock.DowngradeFromWriterLock(ref c);
+		}
+
+		protected virtual void OnRemoveRange(IEnumerable<T> items)
+		{
+			var c = _lock.UpgradeToWriterLock(-1);
+
+			CheckReentrancy();
+
+			((List<T>)Items).RemoveRange(items);
+
+			OnPropertyChanged(new PropertyChangedEventArgs("Count"));
+			OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+
+			if (RaiseAddRemoveEvents)
+				OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, items.ToList()));
+			else
+				// http://stackoverflow.com/questions/670577/observablecollection-doesnt-support-addrange-method-so-i-get-notified-for-each
+				OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+
+			_lock.DowngradeFromWriterLock(ref c);
+		}
+
+		protected virtual void OnRemoveRange(int from, int count)
+		{
+			var c = _lock.UpgradeToWriterLock(-1);
+
+			CheckReentrancy();
+
+			((List<T>)Items).RemoveRange(from, count);
+
+			OnPropertyChanged(new PropertyChangedEventArgs("Count"));
+			OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+
+			// http://stackoverflow.com/questions/670577/observablecollection-doesnt-support-addrange-method-so-i-get-notified-for-each
+			OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+
+			_lock.DowngradeFromWriterLock(ref c);
 		}
 
 		protected override void ClearItems()
