@@ -58,6 +58,10 @@ namespace Ecng.Xaml
 					var measureSizeV = fromDevice.Transform(pixelSize);
 					measureSize = new Size(measureSizeV.X, measureSizeV.Y);
 				}
+				else
+				{
+					measureSize = new Size(bitmapSource.PixelWidth, bitmapSource.PixelHeight);
+				}
 			}
 
 			return measureSize;
