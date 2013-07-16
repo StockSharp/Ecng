@@ -535,5 +535,64 @@
 				       ? str.Substring(sStart.Length, (str.Length - sStart.Length) - sEnd.Length)
 				       : str;
 		}
+
+		private static readonly Dictionary<char, string> _charMap = new Dictionary<char, string>
+		{
+			{ 'а', "a" },
+			{ 'б', "b" },
+			{ 'в', "v" },
+			{ 'г', "g" },
+			{ 'д', "d" },
+			{ 'е', "e" },
+			{ 'ё', "yo" },
+			{ 'ж', "zh" },
+			{ 'з', "z" },
+			{ 'и', "i" },
+			{ 'й', "i" },
+			{ 'к', "k" },
+			{ 'л', "l" },
+			{ 'м', "m" },
+			{ 'н', "n" },
+			{ 'о', "o" },
+			{ 'п', "p" },
+			{ 'р', "r" },
+			{ 'с', "s" },
+			{ 'т', "t" },
+			{ 'у', "u" },
+			{ 'ф', "f" },
+			{ 'х', "h" },
+			{ 'ц', "ts" },
+			{ 'ч', "ch" },
+			{ 'ш', "sh" },
+			{ 'щ', "shsh" },
+			{ 'ы', "y" },
+			{ 'э', "eh" },
+			{ 'ю', "yu" },
+			{ 'я', "ya" },
+			{ 'ь', "'" },
+			{ 'ъ', "'" },
+		};
+
+		public static string ToLatin(this string russianTitle)
+		{
+			var transliter = string.Empty;
+
+			foreach (var letter in russianTitle.ToLower())
+			{
+				string mappedLetter;
+
+				if (_charMap.TryGetValue(letter, out mappedLetter))
+					transliter += mappedLetter;
+				else
+					transliter += letter;
+			}
+
+			return transliter;
+		}
+
+		public static string LightScreening(this string text)
+		{
+			return text.Replace(' ', '-').Replace(".", string.Empty).Replace("#", string.Empty).Replace("?", string.Empty);
+		}
 	}
 }
