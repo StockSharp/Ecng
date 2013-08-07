@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Serialization
 {
+	using System;
 	using System.Collections.Generic;
 	using System.Web.UI.WebControls;
 
@@ -26,5 +27,9 @@
 		BatchContext BeginBatch();
 		void CommitBatch();
 		void EndBatch();
+
+		event Action<object> Added;
+		event Action<object> Updated;
+		event Action<object> Removed;
 	}
 }

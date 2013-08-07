@@ -61,6 +61,7 @@
 
 		#endregion
 
+		private readonly SynchronizedSet<TEntity> _cache = new SynchronizedSet<TEntity>();
 		private bool _bulkInitialized;
 		private int? _count;
 
@@ -70,6 +71,12 @@
 				throw new ArgumentNullException("storage");
 
 			Storage = storage;
+			Storage.Added += value => DoIf<TEntity>(value, entity =>
+			{
+				_cache.Remove(entity);
+				Added.SafeInvoke(entity);
+			});
+			Storage.Removed += value => DoIf<TEntity>(value, Removed.SafeInvoke);
 		}
 
 		private static Schema _schema;
@@ -111,6 +118,8 @@
 		}
 
 		public IStorage Storage { get; private set; }
+
+		public DelayAction DelayAction { get; set; }
 
 		public bool BulkLoad { get; set; }
 		public bool CacheCount { get; set; }
@@ -163,6 +172,21 @@
 			}
 		}
 
+		#region Save
+
+		public virtual void Save(TEntity item)
+		{
+			if (Schema.Identity == null)
+				throw new InvalidOperationException("Schema {0} doesn't have identity.".Put(Schema.Name));
+
+			if (!CheckExist(item))
+				Add(item);
+			else
+				Update(item);
+		}
+
+		#endregion
+
 		#region Update
 
 		public virtual void Update(TEntity entity)
@@ -178,7 +202,7 @@
 				}
 			}
 
-			OnUpdate(entity);
+			ProcessDelayed(() => OnUpdate(entity));
 		}
 
 		//public void Update(TEntity entity, Field valueField)
@@ -202,6 +226,32 @@
 		//}
 
 		#endregion
+
+		private void ProcessDelayed(Action action)
+		{
+			if (DelayAction != null)
+				DelayAction.Add(action);
+			else
+				action();
+		}
+
+		private bool CheckExist(TEntity item)
+		{
+			if (_cache.Contains(item))
+				return true;
+
+			var id = Schema.Identity.Accessor.GetValue(item);
+
+			return !ReadById(id).IsDefault();
+		}
+
+		private static void DoIf<T>(object obj, Action<T> action)
+		{
+			if (obj is T)
+			{
+				action((T)obj);
+			}
+		}
 
 		#region BaseListEx<E> Members
 
@@ -233,7 +283,9 @@
 			Adding.SafeInvoke(item);
 
 			ThrowIfStorageNull();
-			OnAdd(item);
+
+			_cache.Add(item);
+			ProcessDelayed(() => OnAdd(item));
 
 			if (BulkLoad)
 			{
@@ -247,16 +299,16 @@
 			}
 
 			_count++;
-
-			Added.SafeInvoke(item);
 		}
 
 		public override void Clear()
 		{
 			Clearing.SafeInvoke();
 
+			_cache.Clear();
+
 			ThrowIfStorageNull();
-			OnClear();
+			ProcessDelayed(OnClear);
 
 			if (BulkLoad)
 			{
@@ -284,7 +336,7 @@
 			Removing.SafeInvoke(item);
 
 			//ThrowExceptionIfReadOnly();
-			OnRemove(item);
+			ProcessDelayed(() => OnRemove(item));
 
 			if (BulkLoad)
 			{
@@ -294,8 +346,6 @@
 						CachedEntities.Remove(GetCacheId(item));
 				}
 			}
-
-			Removed.SafeInvoke(item);
 
 			return true;
 		}
@@ -479,10 +529,10 @@
 				}
 			}
 
-			var added = Added;
+			//var added = Added;
 
-			if (added != null)
-				entities.ForEach(added);
+			//if (added != null)
+			//	entities.ForEach(added);
 
 			return entities;
 		}

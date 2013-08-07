@@ -3,6 +3,7 @@ namespace Ecng.Common
 	#region Using Directives
 
 	using System;
+	using System.Collections.Generic;
 	using System.Net;
 	using System.Drawing;
 #if SILVERLIGHT
@@ -125,6 +126,11 @@ namespace Ecng.Common
 				return compare1.CompareTo(value2);
 
 			throw new ArgumentException("The values must be IComparable.");
+		}
+
+		public static bool IsDefault<T>(this T value)
+		{
+			return EqualityComparer<T>.Default.Equals(value, default(T));
 		}
 	}
 }

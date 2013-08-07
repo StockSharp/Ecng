@@ -104,6 +104,10 @@ namespace Ecng.Data
 
 		#endregion
 
+		public event Action<object> Added;
+		public event Action<object> Updated;
+		public event Action<object> Removed;
+
 		#region Database.ctor()
 
 		public Database(string name, string connectionString)
@@ -411,6 +415,8 @@ namespace Ecng.Data
 					entity = serializer.Deserialize(CreateSource(databaseFields), databaseFields, entity);
 
 				AddCache(entity, output);
+
+				Added.SafeInvoke(entity);
 			};
 
 			if (_batchInfo != null)
@@ -607,6 +613,8 @@ namespace Ecng.Data
 					entity = GetSerializer<TEntity>().Deserialize(output, readOnlyFields, entity);
 
 				UpdateCache(entity, output);
+
+				Updated.SafeInvoke(entity);
 			};
 
 			if (_batchInfo != null)

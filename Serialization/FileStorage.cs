@@ -78,6 +78,7 @@
 		{
 			var info = GetInfo<TEntity>();
 			info.Cache.Add(info.Serializer.GetId(entity), entity);
+			Added.SafeInvoke(entity);
 			return entity;
 		}
 
@@ -102,6 +103,7 @@
 		{
 			var info = GetInfo<TEntity>();
 			info.Save();
+			Updated.SafeInvoke(entity);
 			return entity;
 		}
 
@@ -110,6 +112,7 @@
 			var info = GetInfo<TEntity>();
 			info.Cache.Remove(info.Serializer.GetId(entity));
 			info.Save();
+			Removed.SafeInvoke(entity);
 		}
 
 		public void Clear<TEntity>()
@@ -140,5 +143,9 @@
 		public void EndBatch()
 		{
 		}
+
+		public event Action<object> Added;
+		public event Action<object> Updated;
+		public event Action<object> Removed;
 	}
 }

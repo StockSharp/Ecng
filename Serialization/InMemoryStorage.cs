@@ -6,6 +6,7 @@
 	using System.Web.UI.WebControls;
 
 	using Ecng.Collections;
+	using Ecng.Common;
 
 	public class InMemoryStorage : IStorage
 	{
@@ -19,6 +20,7 @@
 		public TEntity Add<TEntity>(TEntity entity)
 		{
 			_cache.Add(typeof(TEntity), entity);
+			Added.SafeInvoke(entity);
 			return entity;
 		}
 
@@ -34,11 +36,13 @@
 
 		public TEntity Update<TEntity>(TEntity entity)
 		{
+			Updated.SafeInvoke(entity);
 			return entity;
 		}
 
 		public void Remove<TEntity>(TEntity entity)
 		{
+			Removed.SafeInvoke(entity);
 			_cache.Remove(typeof(TEntity), entity);
 		}
 
@@ -66,6 +70,10 @@
 		{
 			
 		}
+
+		public event Action<object> Added;
+		public event Action<object> Updated;
+		public event Action<object> Removed;
 
 		public IEnumerable<TEntity> GetGroup<TEntity>(long startIndex, long count, Field orderBy, SortDirection direction)
 		{
