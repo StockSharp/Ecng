@@ -30,12 +30,12 @@
 			_errorHandler = errorHandler;
 		}
 
-		public void Add(Action action, bool breakBatchOnError = true)
+		public void Add(Action action, bool canBatch = true, bool breakBatchOnError = true)
 		{
 			// breakBatchOnError
 			// если мы сохраняем инструмент, то дать возможность сохраниться хоть каким-то инструментам, если среди них есть с ошибками
 
-			Add(action, null, true, breakBatchOnError);
+			Add(action, null, canBatch, breakBatchOnError);
 		}
 
 		public void Add(Action action, Action postAction, bool canBatch, bool breakBatchOnError)
