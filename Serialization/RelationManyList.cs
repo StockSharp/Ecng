@@ -73,8 +73,8 @@
 			Storage = storage;
 			Storage.Added += value => DoIf<TEntity>(value, entity =>
 			{
-				_cache.Remove(entity);
-				Added.SafeInvoke(entity);
+				if (_cache.Remove(entity))
+					Added.SafeInvoke(entity);
 			});
 			Storage.Removed += value => DoIf<TEntity>(value, Removed.SafeInvoke);
 		}
