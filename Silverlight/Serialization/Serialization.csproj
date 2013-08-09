@@ -99,6 +99,9 @@
     <Compile Include="..\..\Serialization\ComplexFieldFactory.cs">
       <Link>ComplexFieldFactory.cs</Link>
     </Compile>
+    <Compile Include="..\..\Serialization\DelayAction.cs">
+      <Link>DelayAction.cs</Link>
+    </Compile>
     <Compile Include="..\..\Serialization\DynamicFieldFactory.cs">
       <Link>DynamicFieldFactory.cs</Link>
     </Compile>

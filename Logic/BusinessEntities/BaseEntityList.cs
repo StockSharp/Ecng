@@ -254,7 +254,7 @@ namespace Ecng.Logic.BusinessEntities
 			return scope;
 		}
 
-		public void Save(TEntity entity)
+		public override void Save(TEntity entity)
 		{
 			if (entity.Id == -1)
 				Add(entity);
