@@ -69,6 +69,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Referencies\ManagedWinapi.dll</HintPath>
     </Reference>
+    <Reference Include="NDde">
+      <HintPath>..\Referencies\NDde.dll</HintPath>
+    </Reference>
     <Reference Include="NPOI">
       <HintPath>..\Referencies\NPOI.dll</HintPath>
     </Reference>
@@ -78,6 +81,7 @@
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -85,11 +89,18 @@
     <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.XML" />
+    <Reference Include="Xceed.Wpf.Toolkit">
+      <HintPath>..\Referencies\Xceed.Wpf.Toolkit.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Dde\XlsDdeClient.cs" />
+    <Compile Include="Dde\DdeSettings.cs" />
+    <Compile Include="Dde\XlsDdeSerializer.cs" />
+    <Compile Include="Dde\XlsDdeServer.cs" />
     <Compile Include="NativeLibrary.cs" />
     <Compile Include="CustomMarshaler.cs" />
     <Compile Include="DisposableComObject.cs" />
