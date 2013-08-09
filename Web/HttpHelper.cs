@@ -9,6 +9,7 @@ namespace Ecng.Web
 	using System.Collections;
 	using System.Drawing;
 	using System.Drawing.Imaging;
+	using System.Drawing.Drawing2D;
 	using System.IO;
 	using System.Reflection;
 	using System.Threading;
@@ -284,20 +285,36 @@ namespace Ecng.Web
 
 			if (size.Width > 0 && size.Height > 0)
 			{
-				using (var bmp = new Bitmap(body))
+				using (var srcImage = new Bitmap(body))
 				{
-					var coeff = (double)bmp.Width / size.Width;
+					var coeff = (double)srcImage.Width / size.Width;
 
 					if (coeff <= 1)
-						coeff = (double)bmp.Height / size.Height;
+						coeff = (double)srcImage.Height / size.Height;
 
 					if (coeff > 1)
 					{
-						using (var thumbnail = bmp.GetThumbnailImage((int)(bmp.Width / coeff), (int)(bmp.Height / coeff), () => false, IntPtr.Zero))
+						var newWidth = (int)(srcImage.Width / coeff);
+						var newHeight = (int)(srcImage.Height / coeff);
+
+						body = new MemoryStream();
+#if SILVERLIGHT
+						using (var newImage = srcImage.GetThumbnailImage(newWidth, newHeight, () => false, IntPtr.Zero))
 						{
-							body = new MemoryStream();
-							thumbnail.Save(body, ImageFormat.Png);
+#else
+						using (var newImage = new Bitmap(newWidth, newHeight))
+						{
+							using (var gr = Graphics.FromImage(newImage))
+							{
+								gr.SmoothingMode = SmoothingMode.HighQuality;
+								gr.InterpolationMode = InterpolationMode.HighQualityBicubic;
+								gr.PixelOffsetMode = PixelOffsetMode.HighQuality;
+								gr.DrawImage(srcImage, new Rectangle(0, 0, newWidth, newHeight));
+							}
+#endif
+							newImage.Save(body, ImageFormat.Png);
 						}
+
 					}
 				}
 			}
