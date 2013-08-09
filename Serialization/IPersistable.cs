@@ -62,6 +62,12 @@
 			return clone;
 		}
 
+		public static void Apply<T>(this T obj, T clone)
+			where T : IPersistable
+		{
+			obj.Load(clone.Save());
+		}
+
 		/// <summary>
 		/// Сохранить настройки.
 		/// </summary>

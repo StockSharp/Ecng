@@ -4,8 +4,11 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
+	using System.Collections.Specialized;
 	using System.ComponentModel;
+	using System.IO;
 	using System.Linq;
+	using System.Text;
 	using System.Windows;
 	using System.Windows.Controls;
 	using System.Windows.Controls.Primitives;
@@ -16,8 +19,12 @@
 	using Ecng.Common;
 	using Ecng.Collections;
 	using Ecng.ComponentModel;
+	using Ecng.Interop;
+	using Ecng.Interop.Dde;
 	using Ecng.Serialization;
 	using Ecng.Xaml.Converters;
+
+	using Ookii.Dialogs.Wpf;
 
 	using Wintellect.PowerCollections;
 
@@ -28,6 +35,8 @@
 		private DataGridCell _dragCell;
 		private DataGridColumn _contextColumn;
 		private GridLength _prevLength = GridLength.Auto;
+		private readonly XlsDdeClient _ddeClient = new XlsDdeClient(new DdeSettings());
+		private readonly BlockingQueue<IList<object>> _ddeQueue = new BlockingQueue<IList<object>>(); 
 
 		public static RoutedCommand AddRuleCommand = new RoutedCommand();
 		public static RoutedCommand RemoveRuleCommand = new RoutedCommand();
@@ -48,12 +57,14 @@
 			GroupingMemberConverters = new SynchronizedDictionary<string, IValueConverter>();
 
 			FormatRulesPanel.DataContext = this;
+
+			_ddeQueue.Close();
 		}
 
 		#region Dependency properties
 
 		public static readonly DependencyProperty DataProperty = DependencyProperty.Register("Data", typeof(IEnumerable), typeof(UniversalGrid), 
-			new PropertyMetadata(new PropertyChangedCallback(DataPropertyChangedCallback)));
+			new PropertyMetadata(DataPropertyChangedCallback));
 
 		public IEnumerable Data
 		{
@@ -68,7 +79,16 @@
 				return;
 
 			grid.ApplyFormatRules();
+
+			var notifyCollectionChanged = grid.UnderlyingGrid.DataContext as INotifyCollectionChanged;
+			if (notifyCollectionChanged != null)
+				notifyCollectionChanged.CollectionChanged -= grid.OnDataChanged;
+
 			grid.UnderlyingGrid.DataContext = e.NewValue;
+
+			notifyCollectionChanged = grid.UnderlyingGrid.DataContext as INotifyCollectionChanged;
+			if (notifyCollectionChanged != null)
+				notifyCollectionChanged.CollectionChanged += grid.OnDataChanged;
 		}
 
 		public static readonly DependencyProperty ColumnFormatRulesProperty = DependencyProperty.Register("ColumnFormatRules", typeof(ObservableCollection<FormatRule>), typeof(UniversalGrid), new PropertyMetadata());
@@ -231,6 +251,7 @@
 		public Func<DataGridCell, DataGridCell, bool> Dropping;
 		public Action<DataGridCell, MouseButtonEventArgs> CellMouseLeftButtonUp;
 		public Action<DataGridCell, MouseButtonEventArgs> CellMouseRightButtonUp;
+		public event Action<Exception> ErrorHandler; 
 
 		public ObservableCollection<DataGridColumn> Columns
 		{
@@ -770,10 +791,14 @@
 		public void Load(SettingsStorage storage)
 		{
 			GroupingMembers.Clear();
-			GroupingMembers.AddRange(storage.GetValue("GroupingMembers", new string[0]));
+			GroupingMembers.AddRange(storage.GetValue("GroupingMembers", Enumerable.Empty<string>()));
 
 			ShowHeaderInGroupTitle = storage.GetValue("ShowHeaderInGroupTitle", true);
 			AutoScroll = storage.GetValue("AutoScroll", false);
+
+			var ddeSettings = storage.GetValue<SettingsStorage>("DdeSettings");
+			if (ddeSettings != null)
+				_ddeClient.Settings.Load(ddeSettings);
 
 			FormatRules.Clear();
 
@@ -782,6 +807,7 @@
 			{
 				var column = Columns[index];
 
+				column.SortDirection = colStorage.GetValue<ListSortDirection?>("SortDirection");
 				column.Width = new DataGridLength(colStorage.GetValue("WidthValue", column.Width.Value), colStorage.GetValue("WidthType", column.Width.UnitType));
 				column.Visibility = colStorage.GetValue<Visibility>("Visibility");
 
@@ -807,6 +833,7 @@
 			{
 				var colStorage = new SettingsStorage();
 
+				colStorage.SetValue("SortDirection", column.SortDirection);
 				colStorage.SetValue("WidthType", column.Width.UnitType);
 				colStorage.SetValue("WidthValue", column.Width.Value);
 				colStorage.SetValue("Visibility", column.Visibility);
@@ -824,6 +851,231 @@
 			storage.SetValue("AutoScroll", AutoScroll);
 			storage.SetValue("GroupingMembers", GroupingMembers.ToArray());
 			storage.SetValue("ShowHeaderInGroupTitle", ShowHeaderInGroupTitle);
+			storage.SetValue("DdeSettings", _ddeClient.Settings.Save());
+		}
+
+		private string GetText(string separator)
+		{
+			var text = new StringBuilder();
+
+			text
+				.Append(UnderlyingGrid.Columns.Select(c => c.Header as string).Join(separator))
+				.AppendLine();
+
+			foreach (var i in UnderlyingGrid.Items)
+			{
+				var item = i;
+
+				text
+					.Append(UnderlyingGrid.Columns.Select(column =>
+					{
+						var tb = column.GetCellContent(item) as TextBlock;
+						return tb != null ? tb.Text : string.Empty;
+					}).Join(separator))
+					.AppendLine();
+			}
+
+			return text.ToString();
+		}
+
+		private void ExportClipBoardText_OnClick(object sender, RoutedEventArgs e)
+		{
+			Clipboard.SetText(GetText("\t"));
+		}
+
+		private void ExportClipBoardImage_OnClick(object sender, RoutedEventArgs e)
+		{
+			UnderlyingGrid.GetImage().CopyToClipboard();
+		}
+
+		private void ExportCsv_OnClick(object sender, RoutedEventArgs e)
+		{
+			var dlg = new VistaSaveFileDialog
+			{
+				RestoreDirectory = true,
+				Filter = @"CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+			};
+
+			if (dlg.ShowDialog(this.GetWindow()) == true)
+				File.WriteAllText(dlg.FileName, GetText(";"));
+		}
+
+		private void ExportExcel_OnClick(object sender, RoutedEventArgs e)
+		{
+			var dlg = new VistaSaveFileDialog
+			{
+				RestoreDirectory = true,
+				Filter = @"xls files (*.xls)|*.xls|All files (*.*)|*.*",
+			};
+
+			if (dlg.ShowDialog(this.GetWindow()) == true)
+			{
+				using (var worker = new ExcelWorker())
+				{
+					var colIndex = 0;
+
+					foreach (var column in UnderlyingGrid.Columns)
+					{
+						worker.SetCell(colIndex, 0, column.Header);
+						colIndex++;
+					}
+
+					var rowIndex = 1;
+
+					foreach (var item in UnderlyingGrid.Items)
+					{
+						colIndex = 0;
+
+						foreach (var column in UnderlyingGrid.Columns)
+						{
+							var tb = column.GetCellContent(item) as TextBlock;
+							worker.SetCell(colIndex, rowIndex, tb != null ? tb.Text : string.Empty);
+							colIndex++;
+						}
+
+						rowIndex++;
+					}
+
+					worker.Save(dlg.FileName);
+				}
+			}
+		}
+
+		private void ExportPng_OnClick(object sender, RoutedEventArgs e)
+		{
+			var dlg = new VistaSaveFileDialog
+			{
+				RestoreDirectory = true,
+				Filter = @"Image files (*.png)|*.png|All files (*.*)|*.*",
+			};
+
+			if (dlg.ShowDialog(this.GetWindow()) == true)
+				UnderlyingGrid.GetImage().SaveImage(dlg.FileName);
+		}
+
+		private readonly SyncObject _ddeLock = new SyncObject();
+		private bool _isDdeThreadExited;
+
+		private void ExportDde_OnClick(object sender, RoutedEventArgs e)
+		{
+			new DdeSettingsWindow
+			{
+				DdeClient = _ddeClient,
+				StartedAction = () =>
+				{
+					_ddeQueue.Open();
+					_isDdeThreadExited = false;
+
+					ThreadingHelper
+						.Thread(() =>
+						{
+							try
+							{
+								while (true)
+								{
+									IList<object> row;
+
+									if (!_ddeQueue.TryDequeue(out row))
+										break;
+
+									_ddeClient.Poke(new[] { row });
+								}
+							}
+							catch (Exception ex)
+							{
+								ErrorHandler.SafeInvoke(ex);
+							}
+
+							lock (_ddeLock)
+							{
+								_isDdeThreadExited = true;
+								_ddeLock.Pulse();
+							}
+						})
+						.Name("UG DDE")
+						.Launch();
+
+					var list = Data as IList;
+
+					if (list == null)
+						return;
+
+					foreach (var item in list)
+						_ddeQueue.Enqueue(ToRow(item));
+				},
+				StoppedAction = () =>
+				{
+					_ddeQueue.Close();
+
+					lock (_ddeLock)
+					{
+						if (_isDdeThreadExited)
+							return;
+
+						_ddeLock.Wait();
+					}
+				},
+				FlushAction = () =>
+				{
+					try
+					{
+						using (var client = new XlsDdeClient(_ddeClient.Settings))
+						{
+							client.Start();
+
+							var rows = new List<IList<object>>
+							{
+								UnderlyingGrid.Columns.Select(c => c.Header).ToList()
+							};
+
+							rows.AddRange(from object item in UnderlyingGrid.Items select ToRow(item));
+
+							client.Poke(rows);
+						}
+					}
+					catch (Exception ex)
+					{
+						MessageBox.Show(ex.ToString());
+					}
+				}
+			}.ShowModal(this);
+		}
+
+		private IList<object> ToRow(object item)
+		{
+			return UnderlyingGrid
+				.Columns
+				.Select(column => column.GetCellContent(item) as TextBlock)
+				.Select(tb => tb != null ? tb.Text : string.Empty)
+				.Cast<object>()
+				.ToList();
+		}
+
+		private void OnDataChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (_ddeQueue.IsClosed)
+				return;
+
+			switch (e.Action)
+			{
+				case NotifyCollectionChangedAction.Add:
+					if (e.NewItems != null)
+					{
+						foreach (var newItem in e.NewItems)
+							_ddeQueue.Enqueue(ToRow(newItem));
+					}
+					break;
+				case NotifyCollectionChangedAction.Remove:
+					break;
+				case NotifyCollectionChangedAction.Replace:
+					break;
+				case NotifyCollectionChangedAction.Move:
+					break;
+				case NotifyCollectionChangedAction.Reset:
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
 		}
 	}
 }

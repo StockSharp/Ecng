@@ -45,6 +45,9 @@
     <Reference Include="ClrPatch">
       <HintPath>..\Referencies\ClrPatch.dll</HintPath>
     </Reference>
+    <Reference Include="Ookii.Dialogs.Wpf">
+      <HintPath>..\Referencies\Ookii.Dialogs.Wpf.dll</HintPath>
+    </Reference>
     <Reference Include="PowerCollections, Version=1.0.2224.30206, Culture=neutral, PublicKeyToken=8d05ee679e87a45f, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Referencies\PowerCollections.dll</HintPath>
@@ -109,6 +112,9 @@
     <Compile Include="FixedWidthColumn.cs" />
     <Compile Include="Converters\FormattingConverter.cs" />
     <Compile Include="Grids\DataGridHelper.cs" />
+    <Compile Include="Grids\DdeSettingsWindow.xaml.cs">
+      <DependentUpon>DdeSettingsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Grids\FormatConverter.cs" />
     <Compile Include="Grids\FormatRule.cs" />
     <Compile Include="Grids\GroupItemToGroupHeaderConverter.xaml.cs" />
@@ -199,6 +205,10 @@
     <Page Include="Fonts\FontDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Grids\DdeSettingsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Grids\UniversalGrid.xaml">
       <Generator>MSBuild:Compile</Generator>

@@ -44,6 +44,15 @@
 			<MenuItem Header="Столбцы" />
 			<Separator />
 			<MenuItem Click="Format_Click" Header="Форматирование столбца" />
+			<Separator />
+			<MenuItem Header="Вывести">
+				<MenuItem Header="Буфер обмена (текст)" Click="ExportClipBoardText_OnClick" />
+				<MenuItem Header="Буфер обмена (изображение)" Click="ExportClipBoardImage_OnClick" />
+				<MenuItem Header="Файл CSV..." Click="ExportCsv_OnClick" />
+				<MenuItem Header="Файл Excel..." Click="ExportExcel_OnClick" />
+				<MenuItem Header="Файл PNG..." Click="ExportPng_OnClick" />
+				<MenuItem Header="DDE..." Click="ExportDde_OnClick" />
+			</MenuItem>
 		</ContextMenu>
 	</UserControl.Resources>
 	
