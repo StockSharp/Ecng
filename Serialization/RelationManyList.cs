@@ -158,7 +158,9 @@
 
 			if (BulkLoad)
 			{
-				GetRange();
+				if (!_bulkInitialized)
+					GetRange();
+
 				return CachedEntities.TryGetValue(id);
 			}
 			else
