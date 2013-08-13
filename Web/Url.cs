@@ -48,6 +48,8 @@ namespace Ecng.Web
 		{
 		}
 
+		public bool KeepDefaultPage { get; set; }
+
 		private QueryString _queryString;
 
 		public QueryString QueryString

@@ -158,7 +158,12 @@ namespace Ecng.Web
 			if (url == null)
 				throw new ArgumentNullException("url");
 
-			HttpContext.Current.Response.Redirect(new Uri(url.Clone(), url.LocalPath).ToString() + url.QueryString, endResponse);
+			var localPath = url.LocalPath;
+
+			if (localPath.EndsWith("Default.aspx", StringComparison.InvariantCultureIgnoreCase) && !url.KeepDefaultPage)
+				localPath = localPath.ReplaceIgnoreCase("Default.aspx", string.Empty);
+
+			HttpContext.Current.Response.Redirect(new Uri(url.Clone(), localPath).ToString() + url.QueryString, endResponse);
 		}
 
 		public static void RegisterScript<T>(this T control, string key, string script)
