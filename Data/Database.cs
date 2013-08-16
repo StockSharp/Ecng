@@ -688,6 +688,14 @@ namespace Ecng.Data
 			Action action = () =>
 			{
 				Delete(cmd, input);
+
+				IEnumerable<object> entities;
+
+				lock (_cacheManagerLock)
+					entities = by.Select(item => Cache.GetData(CreateKey(item.Field, item.Value)));
+
+				entities.ForEach(Removed.SafeInvoke);
+
 				DeleteCache(by);
 			};
 
