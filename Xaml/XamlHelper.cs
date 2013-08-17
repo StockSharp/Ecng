@@ -24,6 +24,7 @@ namespace Ecng.Xaml
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.Collections;
+	using Ecng.Serialization;
 
 	public static class XamlHelper
 	{
@@ -820,5 +821,34 @@ namespace Ecng.Xaml
 			BindingOperations.SetBinding(obj, property, binding);
 		}
 #endif
+
+		#region Color
+
+		public static SettingsStorage ToStorage(this Color color)
+		{
+			var storage = new SettingsStorage();
+
+			storage.SetValue("A", color.A);
+			storage.SetValue("R", color.R);
+			storage.SetValue("G", color.G);
+			storage.SetValue("B", color.B);
+
+			return storage;
+		}
+
+		public static Color ToTransparent(this Color color, byte alpha)
+		{
+			return Color.FromArgb(alpha, color.R, color.G, color.B);
+		}
+
+		public static Color ToColor(this SettingsStorage settings)
+		{
+			if (settings == null)
+				throw new ArgumentNullException("settings");
+
+			return Color.FromArgb(settings.GetValue<byte>("A"), settings.GetValue<byte>("R"), settings.GetValue<byte>("G"), settings.GetValue<byte>("B"));
+		}
+
+		#endregion
 	}
 }
