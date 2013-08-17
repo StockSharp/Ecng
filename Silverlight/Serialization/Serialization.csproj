@@ -168,6 +168,9 @@
     <Compile Include="..\..\Serialization\InnerSchemaFieldFactory.cs">
       <Link>InnerSchemaFieldFactory.cs</Link>
     </Compile>
+    <Compile Include="..\..\Serialization\IPersistable.cs">
+      <Link>IPersistable.cs</Link>
+    </Compile>
     <Compile Include="..\..\Serialization\ISerializable.cs">
       <Link>ISerializable.cs</Link>
     </Compile>
@@ -230,6 +233,9 @@
     </Compile>
     <Compile Include="..\..\Serialization\SerializerFieldFactory.cs">
       <Link>SerializerFieldFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Serialization\SettingsStorage.cs">
+      <Link>SettingsStorage.cs</Link>
     </Compile>
     <Compile Include="..\..\Serialization\TypeHelper.cs">
       <Link>TypeHelper.cs</Link>

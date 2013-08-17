@@ -123,6 +123,10 @@
       <Project>{51BC532A-A669-4B22-BC7D-92F3DD3A599C}</Project>
       <Name>PowerCollections</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Serialization\Serialization.csproj">
+      <Project>{2809ee24-7e7b-404b-9755-f7bfafc577bc}</Project>
+      <Name>Serialization %28Silverlight\Serialization%29</Name>
+    </ProjectReference>
     <ProjectReference Include="..\System\SystemEx.csproj">
       <Project>{24A7B2D5-3254-41C4-91D6-B54708076B20}</Project>
       <Name>SystemEx</Name>
