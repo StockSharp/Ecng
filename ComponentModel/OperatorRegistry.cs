@@ -1,37 +1,36 @@
 namespace Ecng.ComponentModel
 {
 	using System;
-	using System.Collections.Generic;
 
 	using Ecng.Collections;
 	using Ecng.Common;
 
 	public static class OperatorRegistry
 	{
-		private sealed class OperableOperator<T> : IOperator<T>
+		private sealed class OperableOperator<T> : BaseOperator<T>
 			where T : IOperable<T>
 		{
-			int IComparer<T>.Compare(T x, T y)
+			public override int Compare(T x, T y)
 			{
 				return x.CompareTo(y);
 			}
 
-			T IOperator<T>.Add(T first, T second)
+			public override T Add(T first, T second)
 			{
 				return first.Add(second);
 			}
 
-			T IOperator<T>.Subtract(T first, T second)
+			public override T Subtract(T first, T second)
 			{
 				return first.Subtract(second);
 			}
 
-			T IOperator<T>.Multiply(T first, T second)
+			public override T Multiply(T first, T second)
 			{
 				return first.Multiply(second);
 			}
 
-			T IOperator<T>.Divide(T first, T second)
+			public override T Divide(T first, T second)
 			{
 				return first.Divide(second);
 			}
@@ -64,16 +63,15 @@ namespace Ecng.ComponentModel
 			_operators.Add(typeof(T), @operator);
 		}
 
-		public static IOperator<T> GetOperator<T>()
+		public static IOperator GetOperator(Type type)
 		{
-			var type = typeof(T);
-			var @operator = (IOperator<T>)_operators.TryGetValue(type);
+			var @operator = (IOperator)_operators.TryGetValue(type);
 
 			if (@operator == null)
 			{
-				if (typeof(IOperable<T>).IsAssignableFrom(type))
+				if (typeof(IOperable<>).Make(type).IsAssignableFrom(type))
 				{
-					@operator = typeof(OperableOperator<>).Make(type).CreateInstance<IOperator<T>>();
+					@operator = typeof(OperableOperator<>).Make(type).CreateInstance<IOperator>();
 					_operators.Add(type, @operator);
 				}
 				else
@@ -81,6 +79,11 @@ namespace Ecng.ComponentModel
 			}
 
 			return @operator;
+		}
+
+		public static IOperator<T> GetOperator<T>()
+		{
+			return (IOperator<T>)GetOperator(typeof(T));
 		}
 
 		public static bool IsRegistered<T>()

@@ -3,7 +3,6 @@ namespace Ecng.Test.Data
 	#region Using Directives
 
 	using System;
-	using System.Collections.Generic;
 	using System.Drawing;
 	using System.Globalization;
 	using System.Net;
@@ -201,31 +200,31 @@ namespace Ecng.Test.Data
 		#endregion
 	}
 
-	public class IPAddressOperator : IOperator<IPAddress>
+	public class IPAddressOperator : BaseOperator<IPAddress>
 	{
 		#region Operator<IPAddress> Members
 
-		IPAddress IOperator<IPAddress>.Add(IPAddress first, IPAddress second)
+		public override IPAddress Add(IPAddress first, IPAddress second)
 		{
 			throw new NotSupportedException();
 		}
 
-		IPAddress IOperator<IPAddress>.Subtract(IPAddress first, IPAddress second)
+		public override IPAddress Subtract(IPAddress first, IPAddress second)
 		{
 			throw new NotSupportedException();
 		}
 
-		IPAddress IOperator<IPAddress>.Multiply(IPAddress first, IPAddress second)
+		public override IPAddress Multiply(IPAddress first, IPAddress second)
 		{
 			throw new NotSupportedException();
 		}
 
-		IPAddress IOperator<IPAddress>.Divide(IPAddress first, IPAddress second)
+		public override IPAddress Divide(IPAddress first, IPAddress second)
 		{
 			throw new NotSupportedException();
 		}
 
-		int IComparer<IPAddress>.Compare(IPAddress first, IPAddress second)
+		public override int Compare(IPAddress first, IPAddress second)
 		{
 			return first.Compare(second);
 		}
