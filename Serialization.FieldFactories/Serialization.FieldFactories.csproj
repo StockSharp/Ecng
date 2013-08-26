@@ -95,7 +95,6 @@
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="BitArrayFieldFactory.cs" />
-    <Compile Include="ColorFieldFactory.cs" />
     <Compile Include="CompressedFieldFactory.cs" />
     <Compile Include="CryptoFieldFactory.cs" />
     <Compile Include="CultureFieldFactory.cs" />

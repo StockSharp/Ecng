@@ -142,11 +142,17 @@
 					{
 						if (field.Type == typeof(object))
 							factoryType = typeof(DynamicFieldFactory);
+						else if (field.Type.IsWpfColor())
+							factoryType = typeof(WpfColorFieldFactory);
+#if !SILVERLIGHT
+						else if (field.Type.IsWinColor())
+							factoryType = typeof(WinColorFieldFactory);
+#endif
 						else if (field.Type.IsPrimitive())
 						{
 							factoryType = field.Type.IsEnum()
-						              	? typeof(EnumFieldFactory<,>).Make(field.Type, field.Type.GetEnumBaseType())
-						              	: typeof(PrimitiveFieldFactory<,>).Make(field.Type, field.Type);
+										? typeof(EnumFieldFactory<,>).Make(field.Type, field.Type.GetEnumBaseType())
+										: typeof(PrimitiveFieldFactory<,>).Make(field.Type, field.Type);
 						}
 						else
 						{

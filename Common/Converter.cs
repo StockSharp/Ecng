@@ -28,6 +28,12 @@
 
 	using Wintellect.PowerCollections;
 
+#if !SILVERLIGHT
+	using WinColor = System.Drawing.Color;
+#endif
+	using WpfColor = System.Windows.Media.Color;
+	using WpfColorConverter = System.Windows.Media.ColorConverter;
+
 	#endregion
 
 	public static class Converter
@@ -563,18 +569,34 @@
 				retVal = ((DateTime)value).ToOADate();
 			else if (value is double && destinationType == typeof(DateTime))
 				retVal = DateTime.FromOADate((double)value);
-			else if (value is Color && destinationType == typeof(int))
-				retVal = ((Color)value).ToArgb();
-			else if (value is int && destinationType == typeof(Color))
+#if !SILVERLIGHT
+			else if (value is WinColor && destinationType == typeof(int))
+				retVal = ((WinColor)value).ToArgb();
+			else if (value is int && destinationType == typeof(WinColor))
 			{
 				var intValue = (int)value;
-				retVal = Color.FromArgb((byte)((intValue >> 0x18) & 0xffL), (byte)((intValue >> 0x10) & 0xffL), (byte)((intValue >> 8) & 0xffL), (byte)(intValue & 0xffL));
+				retVal = WinColor.FromArgb((byte)((intValue >> 0x18) & 0xffL), (byte)((intValue >> 0x10) & 0xffL), (byte)((intValue >> 8) & 0xffL), (byte)(intValue & 0xffL));
 				//retVal = Color.FromArgb(intValue);
 			}
-			else if (value is Color && destinationType == typeof(string))
-				retVal = ColorTranslator.ToHtml((Color)value);
-			else if (value is string && destinationType == typeof(Color))
+			else if (value is WinColor && destinationType == typeof(string))
+				retVal = ColorTranslator.ToHtml((WinColor)value);
+			else if (value is string && destinationType == typeof(WinColor))
 				retVal = ColorTranslator.FromHtml((string)value);
+#endif
+			else if (value is WpfColor && destinationType == typeof (int))
+			{
+				var color = (WpfColor)value;
+				retVal = (color.A << 24) | (color.R << 16) | (color.G << 8) | color.B;
+			}
+			else if (value is int && destinationType == typeof(WpfColor))
+			{
+				var intValue = (int)value;
+				retVal = WpfColor.FromArgb((byte)(intValue >> 24), (byte)(intValue >> 16), (byte)(intValue >> 8), (byte)(intValue));
+			}
+			else if (value is WpfColor && destinationType == typeof(string))
+				retVal = ((WpfColor)value).ToString();
+			else if (value is string && destinationType == typeof(WpfColor))
+				retVal = WpfColorConverter.ConvertFromString((string)value);
 			else if (value is Uri && destinationType == typeof(string))
 				retVal = value.ToString();
 			else if (value is string && destinationType == typeof(Uri))

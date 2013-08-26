@@ -64,6 +64,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Referencies\PowerCollections.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationCore" />
     <Reference Include="SmartFormat">
       <HintPath>..\Referencies\SmartFormat.dll</HintPath>
     </Reference>

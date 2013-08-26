@@ -26,16 +26,35 @@
 		protected internal override SerializationItemCollection OnCreateSource(ISerializer serializer, object instance)
 		{
 			var instanceType = instance.GetType();
-
+			var valueType = instanceType;
+			
 			var type = instance as Type;
 
 			object value;
-
+			
 			if (type == null)
 			{
-				value = instanceType.IsPrimitive()
-					? instance
-					: GetInnerSchemaFactory(instanceType).OnCreateSource(serializer, instance);
+				var isColor = false;
+
+				if (instanceType.IsWpfColor())
+				{
+					isColor = true;
+				}
+#if !SILVERLIGHT
+				else if (instanceType.IsWinColor())
+				{
+					isColor = true;
+				}
+#endif
+				if (isColor)
+				{
+					value = instance.To<int>();
+					valueType = typeof(int);
+				}
+				else
+					value = instanceType.IsPrimitive()
+						        ? instance
+						        : GetInnerSchemaFactory(instanceType).OnCreateSource(serializer, instance);
 			}
 			else
 			{
@@ -45,7 +64,7 @@
 			return new SerializationItemCollection
 			{
 				new SerializationItem(new VoidField<string>("Type"), instanceType.GetTypeAsString()),
-				new SerializationItem(new VoidField("Value", instanceType), value)
+				new SerializationItem(new VoidField("Value", valueType), value)
 			};
 		}
 

@@ -60,11 +60,13 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Referencies\PowerCollections.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq">
@@ -80,6 +82,7 @@
     <Compile Include="BinarySerializer.cs" />
     <Compile Include="CloneFactory.cs" />
     <Compile Include="CollectionFieldFactory.cs" />
+    <Compile Include="ColorFieldFactory.cs" />
     <Compile Include="Configuration\ConfigFieldFactory.cs" />
     <Compile Include="Configuration\ConfigFieldFactoryCollection.cs" />
     <Compile Include="Configuration\SerializationSection.cs" />

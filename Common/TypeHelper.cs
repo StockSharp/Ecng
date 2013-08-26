@@ -120,6 +120,24 @@ namespace Ecng.Common
 			return type.BaseType == _enumType;
 		}
 
+		public static bool IsWpfColor(this Type type)
+		{
+			if (type == null)
+				throw new ArgumentNullException("type");
+
+			return type == typeof (System.Windows.Media.Color);
+		}
+
+#if !SILVERLIGHT
+		public static bool IsWinColor(this Type type)
+		{
+			if (type == null)
+				throw new ArgumentNullException("type");
+
+			return type == typeof(System.Drawing.Color);
+		}
+#endif
+
 		public static TEntity CreateUnitialized<TEntity>()
 		{
 			return (TEntity)typeof(TEntity).CreateUnitialized();
