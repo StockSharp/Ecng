@@ -143,10 +143,10 @@
 						if (field.Type == typeof(object))
 							factoryType = typeof(DynamicFieldFactory);
 						else if (field.Type.IsWpfColor())
-							factoryType = typeof(WpfColorFieldFactory);
+							factoryType = typeof(ColorFieldFactory<>).Make(field.Type);
 #if !SILVERLIGHT
 						else if (field.Type.IsWinColor())
-							factoryType = typeof(WinColorFieldFactory);
+							factoryType = typeof(ColorFieldFactory<>).Make(field.Type);
 #endif
 						else if (field.Type.IsPrimitive())
 						{

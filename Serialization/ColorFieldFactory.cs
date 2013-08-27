@@ -1,38 +1,22 @@
 namespace Ecng.Serialization
 {
-	using System.Windows.Media;
+	using System;
 
-	public class WpfColorFieldFactory : PrimitiveFieldFactory<Color, int>
+	using Ecng.Common;
+
+	public class ColorFieldFactory<T> : PrimitiveFieldFactory<T, int>
 	{
-		public WpfColorFieldFactory(Field field, int order)
+		public ColorFieldFactory(Field field, int order)
 			: base(field, order)
 		{
 		}
 	}
 
-	public sealed class WpfColorAttribute : ReflectionImplFieldFactoryAttribute
+	public sealed class ColorAttribute : ReflectionFieldFactoryAttribute
 	{
-		public WpfColorAttribute()
-			: base(typeof(WpfColorFieldFactory))
+		protected override Type GetFactoryType(Field field)
 		{
+			return typeof(ColorFieldFactory<>).Make(field.Type);
 		}
 	}
-
-#if !SILVERLIGHT
-	public class WinColorFieldFactory : PrimitiveFieldFactory<System.Drawing.Color, int>
-	{
-		public WinColorFieldFactory(Field field, int order)
-			: base(field, order)
-		{
-		}
-	}
-
-	public sealed class WinColorAttribute : ReflectionImplFieldFactoryAttribute
-	{
-		public WinColorAttribute()
-			: base(typeof(WinColorFieldFactory))
-		{
-		}
-	}
-#endif
 }

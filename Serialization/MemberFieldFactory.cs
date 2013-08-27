@@ -1,61 +1,62 @@
 namespace Ecng.Serialization
 {
-	#region Using Directives
-
 	using System;
 	using System.Reflection;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
 
-	#endregion
-
 	[Serializable]
 	public class MemberFieldFactory<T> : FieldFactory<T, string>
 		where T : MemberInfo
 	{
-		#region MemberFieldFactory.ctor()
+		private readonly bool _isAssemblyQualifiedName;
 
-		public MemberFieldFactory(Field field, int order)
+		public MemberFieldFactory(Field field, int order, bool isAssemblyQualifiedName)
 			: base(field, order)
 		{
+			_isAssemblyQualifiedName = isAssemblyQualifiedName;
 		}
-
-		#endregion
-
-		#region FieldFactory<T, string> Members
 
 		protected internal override T OnCreateInstance(ISerializer serializer, string source)
 		{
 			var parts = source.Split('/');
 
 			var type = parts[0].To<Type>();
-			if (parts.Length == 1)
-				return type.To<T>();
-			else
-				return type.GetMember<T>(parts[1]);
+			return parts.Length == 1 ? type.To<T>() : type.GetMember<T>(parts[1]);
 		}
 
 		protected internal override string OnCreateSource(ISerializer serializer, T instance)
 		{
 			if (instance.ReflectedType != null)
-				return instance.ReflectedType.AssemblyQualifiedName + "/" + instance.Name;
+				return GetTypeName(instance.ReflectedType) + "/" + instance.Name;
 			else
-				return instance.To<Type>().AssemblyQualifiedName;
+				return GetTypeName(instance.To<Type>());
 		}
 
-		#endregion
+		private string GetTypeName(Type type)
+		{
+			return _isAssemblyQualifiedName ? type.AssemblyQualifiedName : "{0}, {1}".Put(type.FullName, type.Assembly.GetName().Name);
+		}
 	}
 
 	public sealed class MemberAttribute : ReflectionFieldFactoryAttribute
 	{
-		#region ReflectionFieldFactoryAttribute Members
+		public MemberAttribute()
+		{
+			IsAssemblyQualifiedName = true;
+		}
+
+		public bool IsAssemblyQualifiedName { get; set; }
 
 		protected override Type GetFactoryType(Field field)
 		{
 			return typeof(MemberFieldFactory<>).Make(field.Type);
 		}
 
-		#endregion
+		protected override object[] GetArgs(Field field)
+		{
+			return new object[] { IsAssemblyQualifiedName };
+		}
 	}
 }

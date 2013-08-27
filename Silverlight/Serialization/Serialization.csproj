@@ -96,6 +96,9 @@
     <Compile Include="..\..\Serialization\CollectionFieldFactory.cs">
       <Link>CollectionFieldFactory.cs</Link>
     </Compile>
+    <Compile Include="..\..\Serialization\ColorFieldFactory.cs">
+      <Link>ColorFieldFactory.cs</Link>
+    </Compile>
     <Compile Include="..\..\Serialization\ComplexFieldFactory.cs">
       <Link>ComplexFieldFactory.cs</Link>
     </Compile>
