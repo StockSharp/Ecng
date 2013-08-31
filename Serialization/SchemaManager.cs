@@ -31,6 +31,14 @@
 					CustomFieldFactories.Add(new Tuple<Type, string>(factory.EntityType.To<Type>(), factory.FieldName), factory.FieldFactory.To<Type>());	
 			}
 #endif
+			GlobalFieldFactories = new Dictionary<Type, Type>
+			{
+				{ typeof(System.Windows.Media.Color), typeof(ColorFieldFactory<System.Windows.Media.Color>) },
+#if !SILVERLIGHT
+				{ typeof(System.Drawing.Color), typeof(ColorFieldFactory<System.Drawing.Color>) },
+#endif
+				{ typeof(System.Security.SecureString), typeof(PrimitiveFieldFactory<System.Security.SecureString, string>) },
+			};
 		}
 
 		public static IEnumerable<Schema> Schemas
@@ -40,6 +48,7 @@
 
 		public static IDictionary<Type, SchemaFactory> CustomSchemaFactories { get; private set; }
 		public static IDictionary<Tuple<Type, string>, Type> CustomFieldFactories { get; private set; }
+		public static IDictionary<Type, Type> GlobalFieldFactories { get; private set; }
 
 		#region GetSchema
 

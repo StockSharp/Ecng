@@ -142,22 +142,24 @@
 					{
 						if (field.Type == typeof(object))
 							factoryType = typeof(DynamicFieldFactory);
-						else if (field.Type.IsWpfColor())
-							factoryType = typeof(ColorFieldFactory<>).Make(field.Type);
-#if !SILVERLIGHT
-						else if (field.Type.IsWinColor())
-							factoryType = typeof(ColorFieldFactory<>).Make(field.Type);
-#endif
-						else if (field.Type.IsPrimitive())
-						{
-							factoryType = field.Type.IsEnum()
-										? typeof(EnumFieldFactory<,>).Make(field.Type, field.Type.GetEnumBaseType())
-										: typeof(PrimitiveFieldFactory<,>).Make(field.Type, field.Type);
-						}
 						else
 						{
-							factoryType = field.Type.IsCollection() ? typeof(CollectionFieldFactory<>) : typeof(InnerSchemaFieldFactory<>);
-							factoryType = factoryType.Make(field.Type);
+							factoryType = SchemaManager.GlobalFieldFactories.TryGetValue(field.Type);
+
+							if (factoryType == null)
+							{
+								if (field.Type.IsPrimitive())
+								{
+									factoryType = field.Type.IsEnum()
+												? typeof(EnumFieldFactory<,>).Make(field.Type, field.Type.GetEnumBaseType())
+												: typeof(PrimitiveFieldFactory<,>).Make(field.Type, field.Type);
+								}
+								else
+								{
+									factoryType = field.Type.IsCollection() ? typeof(CollectionFieldFactory<>) : typeof(InnerSchemaFieldFactory<>);
+									factoryType = factoryType.Make(field.Type);
+								}
+							}
 						}
 					}
 

@@ -8,7 +8,8 @@
 
 	public class DynamicFieldFactory : InnerSchemaFieldFactory<object>
 	{
-		private readonly Dictionary<Type, FieldFactory> _factories = new Dictionary<Type, FieldFactory>();
+		private readonly Dictionary<Type, FieldFactory> _factoriesByFieldType = new Dictionary<Type, FieldFactory>();
+		private readonly Dictionary<Type, FieldFactory> _factoriesByType = new Dictionary<Type, FieldFactory>();
 
 		public DynamicFieldFactory(Field field, int order)
 			: base(field, order)
@@ -34,22 +35,13 @@
 			
 			if (type == null)
 			{
-				var isColor = false;
+				var factoryType = SchemaManager.GlobalFieldFactories.TryGetValue(instanceType);
+				if (factoryType != null)
+				{
+					var factory = GetFactory(factoryType);
 
-				if (instanceType.IsWpfColor())
-				{
-					isColor = true;
-				}
-#if !SILVERLIGHT
-				else if (instanceType.IsWinColor())
-				{
-					isColor = true;
-				}
-#endif
-				if (isColor)
-				{
-					value = instance.To<int>();
-					valueType = typeof(int);
+					value = factory.CreateSource(serializer, instance).Value;
+					valueType = factory.SourceType;
 				}
 				else
 					value = instanceType.IsPrimitive()
@@ -70,7 +62,12 @@
 
 		private FieldFactory GetInnerSchemaFactory(Type type)
 		{
-			return _factories.SafeAdd(type, key => typeof(InnerSchemaFieldFactory<>).Make(type).CreateInstance<FieldFactory>(Field, Order));
+			return _factoriesByFieldType.SafeAdd(type, key => typeof(InnerSchemaFieldFactory<>).Make(type).CreateInstance<FieldFactory>(Field, Order));
+		}
+
+		private FieldFactory GetFactory(Type factoryType)
+		{
+			return _factoriesByType.SafeAdd(factoryType, key => factoryType.CreateInstance<FieldFactory>(Field, Order));
 		}
 	}
 
