@@ -95,5 +95,10 @@ namespace Ecng.Common
 		{
 			return time.AddTicks(-(time.Ticks % precision));
 		}
+
+		public static DateTime Truncate(this DateTime dateTime, TimeSpan timeSpan)
+		{
+			return dateTime.Truncate(timeSpan.Ticks);
+		}
 	}
 }
