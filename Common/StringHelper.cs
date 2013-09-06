@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Globalization;
+	using System.IO;
 	using System.Linq;
 	using System.Text;
 	using System.Text.RegularExpressions;
@@ -268,11 +269,7 @@
 
 		public static bool CompareIgnoreCase(this string str1, string str2)
 		{
-#if SILVERLIGHT
 			return string.Compare(str1, str2, StringComparison.InvariantCultureIgnoreCase) == 0;
-#else
-			return string.Compare(str1, str2, true) == 0;
-#endif
 		}
 
 		//
@@ -593,6 +590,12 @@
 		public static string LightScreening(this string text)
 		{
 			return text.Replace(' ', '-').Replace(".", string.Empty).Replace("#", string.Empty).Replace("?", string.Empty);
+		}
+
+		public static bool ComparePaths(this string path1, string path2)
+		{
+			// http://stackoverflow.com/questions/2281531/how-can-i-compare-directory-paths-in-c
+			return Path.GetFullPath(path1).TrimEnd('\\').CompareIgnoreCase(Path.GetFullPath(path2).TrimEnd('\\'));
 		}
 	}
 }
