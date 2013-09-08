@@ -2,8 +2,12 @@ namespace Ecng.Xaml.Fonts
 {
 	using System;
 	using System.Text;
+	using System.Windows;
 	using System.Windows.Controls;
 	using System.Windows.Media;
+
+	using Ecng.Common;
+	using Ecng.Reflection;
 
 	public static class FontHelper
 	{
@@ -14,10 +18,25 @@ namespace Ecng.Xaml.Fonts
 
 			var sb = new StringBuilder(ttf.Stretch.ToString());
 			sb.Append("-");
-			sb.Append(ttf.Weight.ToString());
+			sb.Append(ttf.Weight);
 			sb.Append("-");
-			sb.Append(ttf.Style.ToString());
+			sb.Append(ttf.Style);
 			return sb.ToString();
+		}
+
+		public static FamilyTypeface TypefaceFromString(this string str)
+		{
+			if (str.IsEmpty())
+				throw new ArgumentNullException("str");
+
+			var parts = str.Split('-');
+
+			return new FamilyTypeface
+			{
+				Stretch = typeof(FontStretches).GetValue<VoidType, FontStretch>(parts[0], null),
+				Weight = typeof(FontWeights).GetValue<VoidType, FontWeight>(parts[1], null),
+				Style = typeof(FontStyles).GetValue<VoidType, FontStyle>(parts[2], null),
+			};
 		}
 
 		public static void ApplyFont(this Control control, FontInfo font)

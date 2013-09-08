@@ -30,23 +30,15 @@
 
 	public partial class UniversalGrid : INotifyPropertyChanged, IPersistable
 	{
-		private DataGridColumnHeader _contextColumnHeader;
+		//private DataGridColumnHeader _contextColumnHeader;
 		private DataGridCell _contextCell;
 		private DataGridCell _dragCell;
-		private DataGridColumn _contextColumn;
-		private GridLength _prevLength = GridLength.Auto;
 		private readonly XlsDdeClient _ddeClient = new XlsDdeClient(new DdeSettings());
 		private readonly BlockingQueue<IList<object>> _ddeQueue = new BlockingQueue<IList<object>>(); 
-
-		public static RoutedCommand AddRuleCommand = new RoutedCommand();
-		public static RoutedCommand RemoveRuleCommand = new RoutedCommand();
-		public static RoutedCommand ApplyRulesCommand = new RoutedCommand();
 
 		public UniversalGrid()
 		{
 			InitializeComponent();
-
-			ColumnFormatRules = new ObservableCollection<FormatRule>();
 
 			var groupingMembers = new SynchronizedList<string>();
 			groupingMembers.Added += Group;
@@ -55,8 +47,6 @@
 			GroupingMembers = groupingMembers;
 
 			GroupingMemberConverters = new SynchronizedDictionary<string, IValueConverter>();
-
-			FormatRulesPanel.DataContext = this;
 
 			_ddeQueue.Close();
 		}
@@ -89,14 +79,6 @@
 			notifyCollectionChanged = grid.UnderlyingGrid.DataContext as INotifyCollectionChanged;
 			if (notifyCollectionChanged != null)
 				notifyCollectionChanged.CollectionChanged += grid.OnDataChanged;
-		}
-
-		public static readonly DependencyProperty ColumnFormatRulesProperty = DependencyProperty.Register("ColumnFormatRules", typeof(ObservableCollection<FormatRule>), typeof(UniversalGrid), new PropertyMetadata());
-
-		protected ObservableCollection<FormatRule> ColumnFormatRules
-		{
-			get { return (ObservableCollection<FormatRule>)GetValue(ColumnFormatRulesProperty); }
-			private set { SetValue(ColumnFormatRulesProperty, value); }
 		}
 
 		public static readonly DependencyProperty ShowHeaderInGroupTitleProperty = DependencyProperty.Register("ShowHeaderInGroupTitle", typeof(bool), typeof(UniversalGrid), new PropertyMetadata(true));
@@ -268,8 +250,8 @@
 		private void UnderlyingGrid_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
 		{
 			_contextCell = null;
-			_contextColumnHeader = null;
-			_contextColumn = null;
+			//_contextColumnHeader = null;
+			//_contextColumn = null;
 
 			var dependencyObject = (DependencyObject)e.OriginalSource;
 
@@ -278,16 +260,16 @@
 				dependencyObject = VisualTreeHelper.GetParent(dependencyObject);
 			}
 
-			if (dependencyObject is DataGridColumnHeader)
-			{
-				_contextColumnHeader = dependencyObject as DataGridColumnHeader;
-				_contextColumn = _contextColumnHeader.Column;
-			}
+			//if (dependencyObject is DataGridColumnHeader)
+			//{
+			//	_contextColumnHeader = dependencyObject as DataGridColumnHeader;
+			//	_contextColumn = _contextColumnHeader.Column;
+			//}
 
 			if (dependencyObject is DataGridCell)
 			{
 				_contextCell = dependencyObject as DataGridCell;
-				_contextColumn = _contextCell.Column;
+				//_contextColumn = _contextCell.Column;
 				CellMouseRightButtonUp.SafeInvoke(_contextCell, e);
 			}
 
@@ -348,23 +330,12 @@
 			var cells = UnderlyingGrid.SelectedCells;
 
 			SelectedColumn = cells.IsEmpty() ? null : cells.First().Column;
-
-			if (FormatRulesPanel.Visibility == Visibility.Visible)
-			{
-				FormatRulesPanel.IsEnabled = SelectedColumn != null;
-
-				if (FormatRulesPanel.IsEnabled)
-					ShowFormatRules();
-				else
-					ColumnFormatRules.Clear();
-			}
-
 			SelectionChanged.SafeInvoke(this);
 		}
 
 		private void GenerateMenuItems()
 		{
-			var menu = (ContextMenu) FindResource("DataGridColumnHeaderContextMenu");
+			var menu = (ContextMenu)FindResource("DataGridContextMenu");
 
 			var items = ((MenuItem)menu.Items[4]).Items;
 			var groupItems = ((MenuItem)menu.Items[0]).Items;
@@ -457,59 +428,16 @@
 
 		private void Format_Click(object sender, RoutedEventArgs e)
 		{
-			if (FormatRulesPanel.Visibility == Visibility.Collapsed)
+			var wnd = new FormattingWindow
 			{
-				ShowFormatRules();
-				FormatRulesPanel.Visibility = Visibility.Visible;
-				HidableColumnDef.Width = _prevLength;
-			}
-			else
-			{
-				FormatRulesPanel.Visibility = Visibility.Collapsed;
-				_prevLength = HidableColumnDef.Width;
-				HidableColumnDef.Width = GridLength.Auto;
-			}
-		}
+				FormatRules = FormatRules,
+				Columns = Columns,
+				SelectedColumn = SelectedColumn,
+				Applied = ApplyFormatRules
+			};
 
-		private void ShowFormatRules()
-		{
-			ColumnFormatRules.Clear();
-			ColumnFormatRules.AddRange(FormatRules[SelectedColumn]);
-		}
-
-		private void AddRuleExecuted(object sender, ExecutedRoutedEventArgs e)
-		{
-			var rule = new FormatRule();
-
-			FormatRules.Add(_contextColumn, rule);
-			ColumnFormatRules.Add(rule);
-		}
-
-		private void AddRuleCanExecute(object sender, CanExecuteRoutedEventArgs e)
-		{
-			e.CanExecute = true;
-		}
-
-		private void RemoveRuleExecuted(object sender, ExecutedRoutedEventArgs e)
-		{
-			FormatRules.Remove(SelectedColumn, ColumnFormatRules.Last());
-			ColumnFormatRules.Remove(ColumnFormatRules.Last());
-		}
-
-		private void RemoveRuleCanExecute(object sender, CanExecuteRoutedEventArgs e)
-		{
-			e.CanExecute = ColumnFormatRules != null && ColumnFormatRules.Count > 0;
-		}
-
-		private void ApplyRulesExecuted(object sender, ExecutedRoutedEventArgs e)
-		{
-			ApplyRules();
-			PropertyChanged.SafeInvoke(this, "FormatRules");
-		}
-
-		private void ApplyRulesCanExecute(object sender, CanExecuteRoutedEventArgs e)
-		{
-			e.CanExecute = true;
+			if (wnd.ShowModal(this))
+				ApplyFormatRules();
 		}
 
 		private T GetFormatterValue<T>(DataGridColumn column, object cellValue, Func<FormatRule, T> getPart)
@@ -561,190 +489,178 @@
 
 		public void ApplyFormatRules()
 		{
-			var selectedColumn = SelectedColumn;
-
-			foreach (var column in UnderlyingGrid.Columns)
+			foreach (var c in UnderlyingGrid.Columns)
 			{
-				SelectedColumn = column;
-				ApplyRules();
-			}
+				var column = c;
 
-			SelectedColumn = selectedColumn;
-		}
+				var valueBackgroundConverter = new FormatConverter<Brush>(v => GetFormatterValue(column, v, rule => rule.Background));
+				var textBlockBackgroundConverter = new FormatConverter<Brush>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Background));
+				var valueForegroundConverter = new FormatConverter<Brush>(v => GetFormatterValue(column, v, rule => rule.Foreground));
+				var textBlockForegroundConverter = new FormatConverter<Brush>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Foreground));
 
-		private void ApplyRules()
-		{
-			var column = SelectedColumn;
+				var valueFontFamilyConverter = new FormatConverter<FontFamily>(v => GetFormatterValue(column, v, rule => rule.Font.Family));
+				var textBlockFontFamilyConverter = new FormatConverter<FontFamily>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Font.Family));
+				var valueFontWeightConverter = new FormatConverter<FontWeight>(v => GetFormatterValue(column, v, rule => rule.Font.Weight));
+				var textBlockFontWeightConverter = new FormatConverter<FontWeight>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Font.Weight));
+				var valueFontSizeConverter = new FormatConverter<double>(v => GetFormatterValue(column, v, rule => rule.Font.Size));
+				var textBlockFontSizeConverter = new FormatConverter<double>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Font.Size));
+				var valueFontStyleConverter = new FormatConverter<FontStyle>(v => GetFormatterValue(column, v, rule => rule.Font.Style));
+				var textBlockFontStyleConverter = new FormatConverter<FontStyle>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Font.Style));
+				var valueFontStretchConverter = new FormatConverter<FontStretch>(v => GetFormatterValue(column, v, rule => rule.Font.Stretch));
+				var textBlockFontStretchConverter = new FormatConverter<FontStretch>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Font.Stretch));
 
-			var valueBackgroundConverter = new FormatConverter<Brush>(v => GetFormatterValue(column, v, rule => rule.Background));
-			var textBlockBackgroundConverter = new FormatConverter<Brush>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Background));
-			var valueForegroundConverter = new FormatConverter<Brush>(v => GetFormatterValue(column, v, rule => rule.Foreground));
-			var textBlockForegroundConverter = new FormatConverter<Brush>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Foreground));
-
-			var valueFontFamilyConverter = new FormatConverter<FontFamily>(v => GetFormatterValue(column, v, rule => rule.Font.Family));
-			var textBlockFontFamilyConverter = new FormatConverter<FontFamily>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Font.Family));
-			var valueFontWeightConverter = new FormatConverter<FontWeight>(v => GetFormatterValue(column, v, rule => rule.Font.Weight));
-			var textBlockFontWeightConverter = new FormatConverter<FontWeight>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Font.Weight));
-			var valueFontSizeConverter = new FormatConverter<double>(v => GetFormatterValue(column, v, rule => rule.Font.Size));
-			var textBlockFontSizeConverter = new FormatConverter<double>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Font.Size));
-			var valueFontStyleConverter = new FormatConverter<FontStyle>(v => GetFormatterValue(column, v, rule => rule.Font.Style));
-			var textBlockFontStyleConverter = new FormatConverter<FontStyle>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Font.Style));
-			var valueFontStretchConverter = new FormatConverter<FontStretch>(v => GetFormatterValue(column, v, rule => rule.Font.Stretch));
-			var textBlockFontStretchConverter = new FormatConverter<FontStretch>(v => GetFormatterValue(column, ((DataGridCell)v).GetValueFromCell(), rule => rule.Font.Stretch));
-
-			if (column is DataGridTemplateColumn)
-			{
-				var style = _columnStyles.SafeAdd(column, key => column.CellStyle).XamlClone();
-
-				style.Setters.AddRange(new[]
+				if (column is DataGridTemplateColumn)
 				{
-					new Setter(Control.BackgroundProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Converter = textBlockBackgroundConverter,
-					}),
-					new Setter(Control.ForegroundProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Converter = textBlockForegroundConverter,
-					}),
-					new Setter(Control.FontFamilyProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Converter = textBlockFontFamilyConverter,
-					}),
-					new Setter(Control.FontSizeProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Converter = textBlockFontSizeConverter,
-					}),
-					new Setter(Control.FontStretchProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Converter = textBlockFontStretchConverter,
-					}),
-					new Setter(Control.FontStyleProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Converter = textBlockFontStyleConverter,
-					}),
-					new Setter(Control.FontWeightProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Converter = textBlockFontWeightConverter,
-					})
-				});
+					var style = _columnStyles.SafeAdd(column, key => column.CellStyle).XamlClone();
 
-				style.Triggers.Add(new DataTrigger
-				{
-					Binding = new Binding("IsSelected")
+					style.Setters.AddRange(new[]
 					{
-						RelativeSource = new RelativeSource
+						new Setter(Control.BackgroundProperty, new Binding
 						{
-							Mode = RelativeSourceMode.FindAncestor,
-							AncestorType = typeof(DataGridRow)
-						}
-					},
-					Value = true,
-					Setters = { new Setter(Control.ForegroundProperty, SystemColors.HighlightTextBrush) }
-				});
+							RelativeSource = RelativeSource.Self,
+							Converter = textBlockBackgroundConverter,
+						}),
+						new Setter(Control.ForegroundProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Converter = textBlockForegroundConverter,
+						}),
+						new Setter(Control.FontFamilyProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Converter = textBlockFontFamilyConverter,
+						}),
+						new Setter(Control.FontSizeProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Converter = textBlockFontSizeConverter,
+						}),
+						new Setter(Control.FontStretchProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Converter = textBlockFontStretchConverter,
+						}),
+						new Setter(Control.FontStyleProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Converter = textBlockFontStyleConverter,
+						}),
+						new Setter(Control.FontWeightProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Converter = textBlockFontWeightConverter,
+						})
+					});
 
-				column.CellStyle = style;
-			}
-			else if (column is DataGridTextColumn)
-			{
-				var style = _columnStyles.SafeAdd(column, key => ((DataGridTextColumn)column).ElementStyle).XamlClone();
-
-				style.Setters.AddRange(new[]
-				{
-					new Setter(TextBlock.BackgroundProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Path = new PropertyPath("Text"),
-						Converter = valueBackgroundConverter,
-					}),
-					new Setter(TextBlock.ForegroundProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Path = new PropertyPath("Text"),
-						Converter = valueForegroundConverter,
-					}),
-					new Setter(TextBlock.FontFamilyProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Path = new PropertyPath("Text"),
-						Converter = valueFontFamilyConverter,
-					}),
-					new Setter(TextBlock.FontSizeProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Path = new PropertyPath("Text"),
-						Converter = valueFontSizeConverter,
-					}),
-					new Setter(TextBlock.FontStretchProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Path = new PropertyPath("Text"),
-						Converter = valueFontStretchConverter,
-					}),
-					new Setter(TextBlock.FontStyleProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Path = new PropertyPath("Text"),
-						Converter = valueFontStyleConverter,
-					}),
-					new Setter(TextBlock.FontWeightProperty, new Binding
-					{
-						RelativeSource = RelativeSource.Self,
-						Path = new PropertyPath("Text"),
-						Converter = valueFontWeightConverter,
-					})
-				});
-
-				style.Triggers.AddRange(new[]
-				{
-					(TriggerBase) new DataTrigger
+					style.Triggers.Add(new DataTrigger
 					{
 						Binding = new Binding("IsSelected")
 						{
 							RelativeSource = new RelativeSource
 							{
 								Mode = RelativeSourceMode.FindAncestor,
-								AncestorType = typeof (DataGridRow)
+								AncestorType = typeof(DataGridRow)
 							}
 						},
 						Value = true,
-						Setters = {new Setter(TextBlock.ForegroundProperty, SystemColors.HighlightTextBrush)}
-					},
-					new MultiDataTrigger
+						Setters = { new Setter(Control.ForegroundProperty, SystemColors.HighlightTextBrush) }
+					});
+
+					column.CellStyle = style;
+				}
+				else if (column is DataGridTextColumn)
+				{
+					var style = _columnStyles.SafeAdd(column, key => ((DataGridTextColumn)column).ElementStyle).XamlClone();
+
+					style.Setters.AddRange(new[]
 					{
-						Conditions =
+						new Setter(TextBlock.BackgroundProperty, new Binding
 						{
-							new Condition(new Binding("IsSelected")
+							RelativeSource = RelativeSource.Self,
+							Path = new PropertyPath("Text"),
+							Converter = valueBackgroundConverter,
+						}),
+						new Setter(TextBlock.ForegroundProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Path = new PropertyPath("Text"),
+							Converter = valueForegroundConverter,
+						}),
+						new Setter(TextBlock.FontFamilyProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Path = new PropertyPath("Text"),
+							Converter = valueFontFamilyConverter,
+						}),
+						new Setter(TextBlock.FontSizeProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Path = new PropertyPath("Text"),
+							Converter = valueFontSizeConverter,
+						}),
+						new Setter(TextBlock.FontStretchProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Path = new PropertyPath("Text"),
+							Converter = valueFontStretchConverter,
+						}),
+						new Setter(TextBlock.FontStyleProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Path = new PropertyPath("Text"),
+							Converter = valueFontStyleConverter,
+						}),
+						new Setter(TextBlock.FontWeightProperty, new Binding
+						{
+							RelativeSource = RelativeSource.Self,
+							Path = new PropertyPath("Text"),
+							Converter = valueFontWeightConverter,
+						})
+					});
+
+					style.Triggers.AddRange(new[]
+					{
+						(TriggerBase) new DataTrigger
+						{
+							Binding = new Binding("IsSelected")
 							{
 								RelativeSource = new RelativeSource
 								{
 									Mode = RelativeSourceMode.FindAncestor,
 									AncestorType = typeof (DataGridRow)
 								}
-							}, true),
-							new Condition(new Binding("IsKeyboardFocusWithin")
-							{
-								RelativeSource = new RelativeSource
-								{
-									Mode = RelativeSourceMode.FindAncestor,
-									AncestorType = typeof (DataGrid)
-								}
-							}, false)
+							},
+							Value = true,
+							Setters = {new Setter(TextBlock.ForegroundProperty, SystemColors.HighlightTextBrush)}
 						},
-						Setters = { new Setter(TextBlock.ForegroundProperty, SystemColors.ControlTextBrush) }
-					}
-				});
+						new MultiDataTrigger
+						{
+							Conditions =
+							{
+								new Condition(new Binding("IsSelected")
+								{
+									RelativeSource = new RelativeSource
+									{
+										Mode = RelativeSourceMode.FindAncestor,
+										AncestorType = typeof (DataGridRow)
+									}
+								}, true),
+								new Condition(new Binding("IsKeyboardFocusWithin")
+								{
+									RelativeSource = new RelativeSource
+									{
+										Mode = RelativeSourceMode.FindAncestor,
+										AncestorType = typeof (DataGrid)
+									}
+								}, false)
+							},
+							Setters = { new Setter(TextBlock.ForegroundProperty, SystemColors.ControlTextBrush) }
+						}
+					});
 
-				((DataGridTextColumn)column).ElementStyle = style;
+					((DataGridTextColumn)column).ElementStyle = style;
+				}
 			}
-
-			//_gridCollectionView.Refresh();
 		}
 
 		private void UnderlyingGrid_LoadingRow(object sender, DataGridRowEventArgs e)
@@ -908,36 +824,36 @@
 				Filter = @"xls files (*.xls)|*.xls|All files (*.*)|*.*",
 			};
 
-			if (dlg.ShowDialog(this.GetWindow()) == true)
+			if (dlg.ShowDialog(this.GetWindow()) != true)
+				return;
+
+			using (var worker = new ExcelWorker())
 			{
-				using (var worker = new ExcelWorker())
+				var colIndex = 0;
+
+				foreach (var column in UnderlyingGrid.Columns)
 				{
-					var colIndex = 0;
+					worker.SetCell(colIndex, 0, column.Header);
+					colIndex++;
+				}
+
+				var rowIndex = 1;
+
+				foreach (var item in UnderlyingGrid.Items)
+				{
+					colIndex = 0;
 
 					foreach (var column in UnderlyingGrid.Columns)
 					{
-						worker.SetCell(colIndex, 0, column.Header);
+						var tb = column.GetCellContent(item) as TextBlock;
+						worker.SetCell(colIndex, rowIndex, tb != null ? tb.Text : string.Empty);
 						colIndex++;
 					}
 
-					var rowIndex = 1;
-
-					foreach (var item in UnderlyingGrid.Items)
-					{
-						colIndex = 0;
-
-						foreach (var column in UnderlyingGrid.Columns)
-						{
-							var tb = column.GetCellContent(item) as TextBlock;
-							worker.SetCell(colIndex, rowIndex, tb != null ? tb.Text : string.Empty);
-							colIndex++;
-						}
-
-						rowIndex++;
-					}
-
-					worker.Save(dlg.FileName);
+					rowIndex++;
 				}
+
+				worker.Save(dlg.FileName);
 			}
 		}
 

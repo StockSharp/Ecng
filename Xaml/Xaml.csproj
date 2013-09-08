@@ -117,13 +117,16 @@
     </Compile>
     <Compile Include="Grids\FormatConverter.cs" />
     <Compile Include="Grids\FormatRule.cs" />
+    <Compile Include="Grids\FormattingWindow.xaml.cs">
+      <DependentUpon>FormattingWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Grids\GroupItemToGroupHeaderConverter.xaml.cs" />
     <Compile Include="Grids\PropertyGroupDescriptionEx.xaml.cs" />
     <Compile Include="Grids\UniversalGrid.xaml.cs">
       <DependentUpon>UniversalGrid.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\EnumBooleanConverter.cs" />
-    <Compile Include="Grids\Views\FormatRuleView.xaml.cs">
+    <Compile Include="Grids\FormatRuleView.xaml.cs">
       <DependentUpon>FormatRuleView.xaml</DependentUpon>
     </Compile>
     <Compile Include="GridViewRowPresenterWithGridLines.cs" />
@@ -210,11 +213,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Grids\FormattingWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Grids\UniversalGrid.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Grids\Views\FormatRuleView.xaml">
+    <Page Include="Grids\FormatRuleView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -233,7 +240,6 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -9,11 +9,11 @@
 	using Ecng.Serialization;
 	using Ecng.Xaml.Fonts;
 
-	public enum FormatRuleTypes
-	{
-		CellValue,
-		PropertyValue,
-	}
+	//public enum FormatRuleTypes
+	//{
+	//	CellValue,
+	//	PropertyValue,
+	//}
 
 	public class FormatRule : DependencyObject, IPersistable
 	{
@@ -31,7 +31,7 @@
 				Font = Default.Font.Clone();
 			}
 
-			Type = FormatRuleTypes.CellValue;
+			//Type = FormatRuleTypes.CellValue;
 			IsApplyToRow = false;
 		}
 
@@ -53,21 +53,21 @@
 			get { return _default.Value; }
 		}
 
-		public static readonly DependencyProperty TypeProperty = DependencyProperty.Register("Type", typeof(FormatRuleTypes), typeof(FormatRule), new PropertyMetadata());
+		//public static readonly DependencyProperty TypeProperty = DependencyProperty.Register("Type", typeof(FormatRuleTypes), typeof(FormatRule), new PropertyMetadata());
 
-		public FormatRuleTypes Type
-		{
-			get { return (FormatRuleTypes)GetValue(TypeProperty); }
-			set { SetValue(TypeProperty, value); }
-		}
+		//public FormatRuleTypes Type
+		//{
+		//	get { return (FormatRuleTypes)GetValue(TypeProperty); }
+		//	set { SetValue(TypeProperty, value); }
+		//}
 
-		public static readonly DependencyProperty PropertyNameProperty = DependencyProperty.Register("PropertyName", typeof(string), typeof(FormatRule), new PropertyMetadata());
+		//public static readonly DependencyProperty PropertyNameProperty = DependencyProperty.Register("PropertyName", typeof(string), typeof(FormatRule), new PropertyMetadata());
 
-		public string PropertyName
-		{
-			get { return (string)GetValue(PropertyNameProperty); }
-			set { SetValue(PropertyNameProperty, value); }
-		}
+		//public string PropertyName
+		//{
+		//	get { return (string)GetValue(PropertyNameProperty); }
+		//	set { SetValue(PropertyNameProperty, value); }
+		//}
 
 		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register("Value", typeof(object), typeof(FormatRule), new PropertyMetadata());
 
@@ -101,7 +101,7 @@
 			set { SetValue(ForegroundProperty, value); }
 		}
 
-		public static readonly DependencyProperty FontProperty = DependencyProperty.Register("Font", typeof(FontInfo), typeof(FormatRule), new PropertyMetadata());
+		public static readonly DependencyProperty FontProperty = DependencyProperty.Register("Font", typeof(FontInfo), typeof(FormatRule), new PropertyMetadata(new FontInfo()));
 
 		public FontInfo Font
 		{
@@ -121,24 +121,27 @@
 		{
 			Background = new SolidColorBrush(storage.GetValue("Background", Colors.Black));
 			Condition = storage.GetValue<ComparisonOperator>("Condition");
-			//Font = storage.GetValue<FontInfo>("Font");
 			Foreground = new SolidColorBrush(storage.GetValue("Foreground", Colors.Black));
 			IsApplyToRow = storage.GetValue<bool>("IsApplyToRow");
-			PropertyName = storage.GetValue<string>("PropertyName");
-			Type = storage.GetValue<FormatRuleTypes>("Type");
+			//PropertyName = storage.GetValue<string>("PropertyName");
+			//Type = storage.GetValue<FormatRuleTypes>("Type");
 			Value = storage.GetValue<object>("Value");
+
+			if (storage.ContainsKey("Font"))
+				Font.Load(storage.GetValue<SettingsStorage>("Font"));
 		}
 
 		void IPersistable.Save(SettingsStorage storage)
 		{
 			storage.SetValue("Background", Background != null ? Background.Color : Colors.Black);
 			storage.SetValue("Condition", Condition);
-			//storage.SetValue("Font", Font);
 			storage.SetValue("Foreground", Background != null ? Foreground.Color : Colors.Black);
 			storage.SetValue("IsApplyToRow", IsApplyToRow);
-			storage.SetValue("PropertyName", PropertyName);
-			storage.SetValue("Type", Type);
+			//storage.SetValue("PropertyName", PropertyName);
+			//storage.SetValue("Type", Type);
 			storage.SetValue("Value", Value);
+
+			storage.SetValue("Font", Font.Save());
 		}
 	}
 }

@@ -1,10 +1,9 @@
-﻿namespace Ecng.Xaml.Grids.Views
+﻿namespace Ecng.Xaml.Grids
 {
 	using System.Windows;
 
 	using Ecng.Collections;
 	using Ecng.ComponentModel;
-	using Ecng.Xaml.Fonts;
 
 	public partial class FormatRuleView
     {
@@ -37,13 +36,6 @@
 		{
 			get { return (FormatRule)GetValue(RuleProperty); }
 			set { SetValue(RuleProperty, value); }
-		}
-
-		private void FontBtn_Click(object sender, RoutedEventArgs e)
-		{
-			var wnd = new FontDialog { Font = FontBtn.GetFont() };
-			wnd.ShowModal(this);
-			FontBtn.ApplyFont(wnd.Font);
 		}
     }
 }

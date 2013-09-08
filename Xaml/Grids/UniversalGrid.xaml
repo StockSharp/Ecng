@@ -3,27 +3,26 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:Ecng.Xaml.Grids.Views"
-             xmlns:UniversalGrid="clr-namespace:Ecng.Xaml.Grids" Name="_ctrl"
-             xmlns:Converters="clr-namespace:Ecng.Xaml.Converters" mc:Ignorable="d" d:DesignHeight="500" d:DesignWidth="800">
+             xmlns:ug="clr-namespace:Ecng.Xaml.Grids" Name="_ctrl"
+             xmlns:converters="clr-namespace:Ecng.Xaml.Converters" mc:Ignorable="d" d:DesignHeight="500" d:DesignWidth="800">
     
     <UserControl.Resources>
 
-        <UniversalGrid:GroupItemToGroupHeaderConverter x:Key="groupItemToGroupHeaderConverter" />
-        <UniversalGrid:GroupItemToLeftMarginConverter x:Key="groupItemToMarginConverter" />
-        <Converters:BoolToVisibilityConverter x:Key="boolToVisibilityConverter" />
+		<ug:GroupItemToGroupHeaderConverter x:Key="GroupItemToGroupHeaderConverter" />
+		<ug:GroupItemToLeftMarginConverter x:Key="GroupItemToMarginConverter" />
+		<converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         
         <Style x:Key="GroupHeaderStyle" TargetType="{x:Type GroupItem}">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type GroupItem}">
-                        <Expander IsExpanded="{Binding Path=IsGroupsExpanded, Mode=OneTime, RelativeSource={RelativeSource AncestorType={x:Type UniversalGrid:UniversalGrid}}}"
-                                  Margin="{Binding Converter={StaticResource groupItemToMarginConverter}, ConverterParameter='10, 0, 0, 0'}">
+						<Expander IsExpanded="{Binding Path=IsGroupsExpanded, Mode=OneTime, RelativeSource={RelativeSource AncestorType={x:Type ug:UniversalGrid}}}"
+                                  Margin="{Binding Converter={StaticResource GroupItemToMarginConverter}, ConverterParameter='10, 0, 0, 0'}">
                             <Expander.Header>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Converter={StaticResource groupItemToGroupHeaderConverter}}" FontWeight="Bold" 
-                                               Visibility="{Binding Path=ShowHeaderInGroupTitle, RelativeSource={RelativeSource AncestorType={x:Type UniversalGrid:UniversalGrid}}, Converter={StaticResource boolToVisibilityConverter}}"/>
-                                    <TextBlock Text=" - " Visibility="{Binding Path=ShowHeaderInGroupTitle, RelativeSource={RelativeSource AncestorType={x:Type UniversalGrid:UniversalGrid}}, Converter={StaticResource boolToVisibilityConverter}}"/>
+                                    <TextBlock Text="{Binding Converter={StaticResource GroupItemToGroupHeaderConverter}}" FontWeight="Bold" 
+                                               Visibility="{Binding Path=ShowHeaderInGroupTitle, RelativeSource={RelativeSource AncestorType={x:Type ug:UniversalGrid}}, Converter={StaticResource BoolToVisibilityConverter}}"/>
+									<TextBlock Text=" - " Visibility="{Binding Path=ShowHeaderInGroupTitle, RelativeSource={RelativeSource AncestorType={x:Type ug:UniversalGrid}}, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                     <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
                                 </StackPanel>
                             </Expander.Header>
@@ -34,9 +33,26 @@
             </Setter>
         </Style>
 
-		<ContextMenu x:Key="DataGridColumnHeaderContextMenu">
-			<!--<MenuItem Click="GroupMenu_Click" Header="Сгруппировать по столбцу" />
-			<MenuItem Click="UnGroupMenu_Click" Header="Сбросить группировку" IsEnabled="{Binding IsGroupingActive}" />-->
+		<ContextMenu x:Key="DataGridContextMenu">
+			<MenuItem Header="Группировка" />
+			<MenuItem Header="Показывать имя столбца в заголовке группы" IsCheckable="True"/>
+			<MenuItem Header="Автопрокрутка" IsCheckable="True"/>
+			<Separator />
+			<MenuItem Header="Столбцы" />
+			<Separator />
+			<MenuItem Click="Format_Click" Header="Форматирование столбца" />
+			<Separator />
+			<MenuItem Header="Вывести">
+				<MenuItem Header="Буфер обмена (текст)" Click="ExportClipBoardText_OnClick" />
+				<MenuItem Header="Буфер обмена (изображение)" Click="ExportClipBoardImage_OnClick" />
+				<MenuItem Header="Файл CSV..." Click="ExportCsv_OnClick" />
+				<MenuItem Header="Файл Excel..." Click="ExportExcel_OnClick" />
+				<MenuItem Header="Файл PNG..." Click="ExportPng_OnClick" />
+				<MenuItem Header="DDE..." Click="ExportDde_OnClick" />
+			</MenuItem>
+		</ContextMenu>
+
+		<!--<ContextMenu x:Key="DataGridColumnHeaderContextMenu">
             <MenuItem Header="Группировка" />
             <MenuItem Header="Показывать имя столбца в заголовке группы" IsCheckable="True"/>
             <MenuItem Header="Автопрокрутка" IsCheckable="True"/>
@@ -53,24 +69,10 @@
 				<MenuItem Header="Файл PNG..." Click="ExportPng_OnClick" />
 				<MenuItem Header="DDE..." Click="ExportDde_OnClick" />
 			</MenuItem>
-		</ContextMenu>
+		</ContextMenu>-->
 	</UserControl.Resources>
 	
-	<UserControl.CommandBindings>
-		<CommandBinding Command="{x:Static UniversalGrid:UniversalGrid.AddRuleCommand}"
-                    Executed="AddRuleExecuted"
-                    CanExecute="AddRuleCanExecute" />
-
-		<CommandBinding Command="{x:Static UniversalGrid:UniversalGrid.RemoveRuleCommand}"
-                    Executed="RemoveRuleExecuted"
-                    CanExecute="RemoveRuleCanExecute" />
-
-		<CommandBinding Command="{x:Static UniversalGrid:UniversalGrid.ApplyRulesCommand}"
-                    Executed="ApplyRulesExecuted"
-                    CanExecute="ApplyRulesCanExecute" />
-	</UserControl.CommandBindings>
-
-	<Grid>
+	<!--<Grid>
 		<Grid.ColumnDefinitions >
 			<ColumnDefinition Width="*" />
 			<ColumnDefinition Width="Auto" />
@@ -81,7 +83,7 @@
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition />
 				<ColumnDefinition Width="Auto" />
-			</Grid.ColumnDefinitions>
+			</Grid.ColumnDefinitions>-->
 
 			<DataGrid x:Name="UnderlyingGrid"
                   ItemsSource="{Binding}"
@@ -105,11 +107,11 @@
 				  SelectedCellsChanged="UnderlyingGrid_SelectedCellsChanged"
                   ScrollViewer.ScrollChanged="UnderlyingGrid_ScrollChanged"
 				  RowHeaderWidth="0"
-                  RowStyle="{Binding ElementName=_ctrl, Path=RowStyle}">
+                  RowStyle="{Binding ElementName=_ctrl, Path=RowStyle}" ContextMenu="{StaticResource DataGridContextMenu}">
                 
                 <DataGrid.ColumnHeaderStyle>
 					<Style TargetType="{x:Type DataGridColumnHeader}">
-						<Setter Property="ContextMenu" Value="{StaticResource DataGridColumnHeaderContextMenu}" />
+						<Setter Property="ContextMenu" Value="{StaticResource DataGridContextMenu}" />
 					</Style>
 				</DataGrid.ColumnHeaderStyle>
                 
@@ -123,49 +125,9 @@
 					</GroupStyle>
 				</DataGrid.GroupStyle>
 			</DataGrid>
-		</Grid>
+		<!--</Grid>
 
 		<GridSplitter ResizeDirection="Columns" Grid.Column="1" Width="3" Height="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0" 
                       Visibility="{Binding ElementName=FormatRulesPanel, Path=Visibility}"/>
-
-		<ScrollViewer x:Name="FormatRulesPanel" Grid.Column="2" Visibility="Collapsed">
-			<Grid>
-				<Grid.Resources>
-					<Style TargetType="{x:Type GroupBox}">
-						<Setter Property="BorderBrush" Value="DarkGray" />
-						<Setter Property="Margin" Value="5,0" />
-					</Style>
-				</Grid.Resources>
-
-				<Grid.RowDefinitions>
-					<RowDefinition Height="Auto" />
-					<RowDefinition Height="Auto" />
-					<RowDefinition Height="Auto" />
-					<RowDefinition Height="Auto" />
-					<RowDefinition Height="Auto" />
-				</Grid.RowDefinitions>
-
-				<!--<TextBlock Text="Применять форматирование к строкам, значение в которых" Margin="5"/>-->
-
-				<ItemsControl Grid.Row="1" ItemsSource="{Binding Path=ColumnFormatRules}" HorizontalContentAlignment="Stretch">
-					<ItemsControl.ItemTemplate>
-						<DataTemplate>
-							<local:FormatRuleView Rule="{Binding}" />
-						</DataTemplate>
-					</ItemsControl.ItemTemplate>
-				</ItemsControl>
-
-				<StackPanel Grid.Row="4" Orientation="Horizontal">
-					<StackPanel Orientation="Horizontal" Margin="5" HorizontalAlignment="Center">
-						<Button Content="  +  "	Margin="5,0" Command="{x:Static UniversalGrid:UniversalGrid.AddRuleCommand}" />
-						<Button Content="  -  " Margin="5,0" Command="{x:Static UniversalGrid:UniversalGrid.RemoveRuleCommand}" />
-					</StackPanel>
-
-					<StackPanel Orientation="Horizontal" Margin="20,5">
-						<Button Content="Применить"	Margin="5,0" Command="{x:Static UniversalGrid:UniversalGrid.ApplyRulesCommand}" />
-					</StackPanel>
-				</StackPanel>
-			</Grid>
-		</ScrollViewer>
-	</Grid>
+	</Grid>-->
 </UserControl>
