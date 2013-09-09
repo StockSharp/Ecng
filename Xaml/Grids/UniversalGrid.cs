@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.Collections.ObjectModel;
 	using System.Collections.Specialized;
 	using System.ComponentModel;
 	using System.IO;
@@ -28,17 +27,42 @@
 
 	using Wintellect.PowerCollections;
 
-	public partial class UniversalGrid : INotifyPropertyChanged, IPersistable
+	public class UniversalGrid : DataGrid, INotifyPropertyChanged, IPersistable
 	{
 		//private DataGridColumnHeader _contextColumnHeader;
 		private DataGridCell _contextCell;
 		private DataGridCell _dragCell;
 		private readonly XlsDdeClient _ddeClient = new XlsDdeClient(new DdeSettings());
-		private readonly BlockingQueue<IList<object>> _ddeQueue = new BlockingQueue<IList<object>>(); 
+		private readonly BlockingQueue<IList<object>> _ddeQueue = new BlockingQueue<IList<object>>();
+
+		//static UniversalGrid()
+		//{
+		//	DefaultStyleKeyProperty.OverrideMetadata(typeof(UniversalGrid), new FrameworkPropertyMetadata(typeof(UniversalGrid)));
+		//}
 
 		public UniversalGrid()
 		{
-			InitializeComponent();
+			//InitializeComponent();
+
+			AutoGenerateColumns = false;
+			CanUserAddRows = false;
+			IsReadOnly = true;
+			SelectionMode = DataGridSelectionMode.Single;
+			SelectionUnit = DataGridSelectionUnit.FullRow;
+			EnableColumnVirtualization = EnableRowVirtualization = true;
+			HorizontalGridLinesBrush = Brushes.DarkGray;
+			VerticalGridLinesBrush = Brushes.DarkGray;
+			RowHeaderWidth = 0;
+
+			Loaded += UnderlyingGrid_Loaded;
+			MouseRightButtonUp += UnderlyingGrid_MouseRightButtonUp;
+			PreviewMouseLeftButtonDown += UnderlyingGrid_PreviewMouseLeftButtonDown;
+			PreviewMouseMove += UnderlyingGrid_PreviewMouseMove;
+			PreviewMouseLeftButtonUp += UnderlyingGrid_PreviewMouseLeftButtonUp;
+			LoadingRow += UnderlyingGrid_LoadingRow;
+			UnloadingRow += UnderlyingGrid_UnloadingRow;
+			SelectedCellsChanged += UnderlyingGrid_SelectedCellsChanged;
+			//ScrollViewer.ScrollChanged += UnderlyingGrid_ScrollChanged;
 
 			var groupingMembers = new SynchronizedList<string>();
 			groupingMembers.Added += Group;
@@ -49,37 +73,66 @@
 			GroupingMemberConverters = new SynchronizedDictionary<string, IValueConverter>();
 
 			_ddeQueue.Close();
+
+			ContextMenu = new ContextMenu();
+
+			ContextMenu.Items.Add(new MenuItem { Header = "Группировка" });
+			ContextMenu.Items.Add(new MenuItem { Header = "Показывать имя столбца в заголовке группы", IsCheckable = true });
+			ContextMenu.Items.Add(new MenuItem { Header = "Автопрокрутка", IsCheckable = true });
+			ContextMenu.Items.Add(new Separator());
+			ContextMenu.Items.Add(new MenuItem { Header = "Столбцы" });
+			ContextMenu.Items.Add(new Separator());
+
+			var formatMi = new MenuItem { Header = "Форматирование столбца" };
+			formatMi.Click += Format_Click;
+			ContextMenu.Items.Add(formatMi);
+
+			ContextMenu.Items.Add(new Separator());
+
+			var selectMi = new MenuItem { Header = "Вывести" };
+			ContextMenu.Items.Add(selectMi);
+
+			var clipboardTxtMi = new MenuItem { Header = "Буфер обмена (текст)" };
+			clipboardTxtMi.Click += ExportClipBoardText_OnClick;
+			selectMi.Items.Add(clipboardTxtMi);
+
+			var clipboardImageMi = new MenuItem { Header = "Буфер обмена (изображение)" };
+			clipboardImageMi.Click += ExportClipBoardImage_OnClick;
+			selectMi.Items.Add(clipboardImageMi);
+
+			var exportCsvMi = new MenuItem { Header = "Файл CSV..." };
+			exportCsvMi.Click += ExportCsv_OnClick;
+			selectMi.Items.Add(exportCsvMi);
+
+			var exportExcelMi = new MenuItem { Header = "Файл Excel..." };
+			exportExcelMi.Click += ExportExcel_OnClick;
+			selectMi.Items.Add(exportExcelMi);
+
+			var exportPngMi = new MenuItem { Header = "Файл PNG..." };
+			exportPngMi.Click += ExportPng_OnClick;
+			selectMi.Items.Add(exportPngMi);
+
+			var exportDdeMi = new MenuItem { Header = "DDE..." };
+			exportDdeMi.Click += ExportDde_OnClick;
+			selectMi.Items.Add(exportDdeMi);
+		}
+
+		protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
+		{
+			ApplyFormatRules();
+
+			var notifyCollectionChanged = oldValue as INotifyCollectionChanged;
+			if (notifyCollectionChanged != null)
+				notifyCollectionChanged.CollectionChanged -= OnDataChanged;
+
+			notifyCollectionChanged = newValue as INotifyCollectionChanged;
+			if (notifyCollectionChanged != null)
+				notifyCollectionChanged.CollectionChanged += OnDataChanged;
+
+			base.OnItemsSourceChanged(oldValue, newValue);
 		}
 
 		#region Dependency properties
-
-		public static readonly DependencyProperty DataProperty = DependencyProperty.Register("Data", typeof(IEnumerable), typeof(UniversalGrid), 
-			new PropertyMetadata(DataPropertyChangedCallback));
-
-		public IEnumerable Data
-		{
-			get { return (IEnumerable)GetValue(DataProperty); }
-			set { SetValue(DataProperty, value); }
-		}
-
-		private static void DataPropertyChangedCallback(DependencyObject sender, DependencyPropertyChangedEventArgs e)
-		{
-			var grid = sender as UniversalGrid;
-			if (grid == null)
-				return;
-
-			grid.ApplyFormatRules();
-
-			var notifyCollectionChanged = grid.UnderlyingGrid.DataContext as INotifyCollectionChanged;
-			if (notifyCollectionChanged != null)
-				notifyCollectionChanged.CollectionChanged -= grid.OnDataChanged;
-
-			grid.UnderlyingGrid.DataContext = e.NewValue;
-
-			notifyCollectionChanged = grid.UnderlyingGrid.DataContext as INotifyCollectionChanged;
-			if (notifyCollectionChanged != null)
-				notifyCollectionChanged.CollectionChanged += grid.OnDataChanged;
-		}
 
 		public static readonly DependencyProperty ShowHeaderInGroupTitleProperty = DependencyProperty.Register("ShowHeaderInGroupTitle", typeof(bool), typeof(UniversalGrid), new PropertyMetadata(true));
 
@@ -89,13 +142,13 @@
 			set { SetValue(ShowHeaderInGroupTitleProperty, value); }
 		}
 
-		public static readonly DependencyProperty RowStyleProperty = DependencyProperty.Register("RowStyle", typeof(Style), typeof(UniversalGrid));
+		//public static readonly DependencyProperty RowStyleProperty = DependencyProperty.Register("RowStyle", typeof(Style), typeof(UniversalGrid));
 
-		public Style RowStyle
-		{
-			get { return (Style)GetValue(RowStyleProperty); }
-			set { SetValue(RowStyleProperty, value); }
-		}
+		//public Style RowStyle
+		//{
+		//	get { return (Style)GetValue(RowStyleProperty); }
+		//	set { SetValue(RowStyleProperty, value); }
+		//}
 
 		public static readonly DependencyProperty IsGroupsExpandedProperty = DependencyProperty.Register("IsGroupsExpanded", typeof(bool), typeof(UniversalGrid), new PropertyMetadata(true));
 
@@ -134,15 +187,15 @@
 
 		#endregion
 
-		public object SelectedItem
-		{
-			get
-			{
-				//При SelectionUnit="Cell" SelectedItem не работает 
-				//http://stackoverflow.com/questions/4714325/wpf-datagrid-selectionchanged-event-isnt-raised-when-selectionunit-cell
-				return UnderlyingGrid.CurrentItem;
-			}
-		}
+		//public object SelectedItem
+		//{
+		//	get
+		//	{
+		//		//При SelectionUnit="Cell" SelectedItem не работает 
+		//		//http://stackoverflow.com/questions/4714325/wpf-datagrid-selectionchanged-event-isnt-raised-when-selectionunit-cell
+		//		return CurrentItem;
+		//	}
+		//}
 
 		#region Grouping
 
@@ -179,7 +232,7 @@
 			if (column == null)
 				return;
 
-			var collectionView = (CollectionView)CollectionViewSource.GetDefaultView(Data);
+			var collectionView = (CollectionView)CollectionViewSource.GetDefaultView(ItemsSource);
 			if (collectionView.GroupDescriptions == null)
 				return;
 
@@ -198,7 +251,7 @@
 			if (column == null)
 				return;
 
-			var collectionView = (CollectionView)CollectionViewSource.GetDefaultView(Data);
+			var collectionView = (CollectionView)CollectionViewSource.GetDefaultView(ItemsSource);
 			if (collectionView.GroupDescriptions == null)
 				return;
 
@@ -210,13 +263,13 @@
 
 		private void UnGroup()
 		{
-			var collectionView = (CollectionView)CollectionViewSource.GetDefaultView(Data);
+			var collectionView = (CollectionView)CollectionViewSource.GetDefaultView(ItemsSource);
 			if (collectionView.GroupDescriptions == null)
 				return;
 
 			collectionView.GroupDescriptions.Clear();
 
-			UnderlyingGrid.Columns.ForEach(c => c.Visibility = Visibility.Visible);
+			Columns.ForEach(c => c.Visibility = Visibility.Visible);
 			IsGroupingActive = false;
 		}
 
@@ -235,10 +288,10 @@
 		public Action<DataGridCell, MouseButtonEventArgs> CellMouseRightButtonUp;
 		public event Action<Exception> ErrorHandler; 
 
-		public ObservableCollection<DataGridColumn> Columns
-		{
-			get { return UnderlyingGrid.Columns; }
-		}
+		//public ObservableCollection<DataGridColumn> Columns
+		//{
+		//	get { return UnderlyingGrid.Columns; }
+		//}
 
 		private DataGridColumn SelectedColumn { get; set; }
 
@@ -327,15 +380,15 @@
 
 		private void UnderlyingGrid_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
 		{
-			var cells = UnderlyingGrid.SelectedCells;
+			var cells = SelectedCells;
 
 			SelectedColumn = cells.IsEmpty() ? null : cells.First().Column;
-			SelectionChanged.SafeInvoke(this);
+			//SelectionChanged.SafeInvoke(this);
 		}
 
 		private void GenerateMenuItems()
 		{
-			var menu = (ContextMenu)FindResource("DataGridContextMenu");
+			var menu = ContextMenu;
 
 			var items = ((MenuItem)menu.Items[4]).Items;
 			var groupItems = ((MenuItem)menu.Items[0]).Items;
@@ -346,7 +399,7 @@
 			if (items.Count != 0)
 				return;
 
-			foreach (var item in UnderlyingGrid.Columns)
+			foreach (var item in Columns)
 			{
 				items.Add(CreateColumnMenuItem(item));
 				groupItems.Add(CreateGroupMenuItem(item));
@@ -402,7 +455,7 @@
 
 		private DataGridColumn GetColumn(object member)
 		{
-			return UnderlyingGrid.Columns.Single(c => c.SortMemberPath == (string)member);
+			return Columns.Single(c => c.SortMemberPath == (string)member);
 		}
 
 		private static DataGridCell GetCell(RoutedEventArgs e)
@@ -424,7 +477,7 @@
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		public event EventHandler<EventArgs> SelectionChanged;
+		//public event EventHandler<EventArgs> SelectionChanged;
 
 		private void Format_Click(object sender, RoutedEventArgs e)
 		{
@@ -489,7 +542,7 @@
 
 		public void ApplyFormatRules()
 		{
-			foreach (var c in UnderlyingGrid.Columns)
+			foreach (var c in Columns)
 			{
 				var column = c;
 
@@ -699,7 +752,7 @@
 
 		private void ScrollToEnd()
 		{
-			var scroll = UnderlyingGrid.FindVisualChild<ScrollViewer>();
+			var scroll = this.FindVisualChild<ScrollViewer>();
 			if (scroll != null)
 				scroll.ScrollToEnd();
 		}
@@ -775,15 +828,15 @@
 			var text = new StringBuilder();
 
 			text
-				.Append(UnderlyingGrid.Columns.Select(c => c.Header as string).Join(separator))
+				.Append(Columns.Select(c => c.Header as string).Join(separator))
 				.AppendLine();
 
-			foreach (var i in UnderlyingGrid.Items)
+			foreach (var i in Items)
 			{
 				var item = i;
 
 				text
-					.Append(UnderlyingGrid.Columns.Select(column =>
+					.Append(Columns.Select(column =>
 					{
 						var tb = column.GetCellContent(item) as TextBlock;
 						return tb != null ? tb.Text : string.Empty;
@@ -801,7 +854,7 @@
 
 		private void ExportClipBoardImage_OnClick(object sender, RoutedEventArgs e)
 		{
-			UnderlyingGrid.GetImage().CopyToClipboard();
+			this.GetImage().CopyToClipboard();
 		}
 
 		private void ExportCsv_OnClick(object sender, RoutedEventArgs e)
@@ -831,7 +884,7 @@
 			{
 				var colIndex = 0;
 
-				foreach (var column in UnderlyingGrid.Columns)
+				foreach (var column in Columns)
 				{
 					worker.SetCell(colIndex, 0, column.Header);
 					colIndex++;
@@ -839,11 +892,11 @@
 
 				var rowIndex = 1;
 
-				foreach (var item in UnderlyingGrid.Items)
+				foreach (var item in Items)
 				{
 					colIndex = 0;
 
-					foreach (var column in UnderlyingGrid.Columns)
+					foreach (var column in Columns)
 					{
 						var tb = column.GetCellContent(item) as TextBlock;
 						worker.SetCell(colIndex, rowIndex, tb != null ? tb.Text : string.Empty);
@@ -866,7 +919,7 @@
 			};
 
 			if (dlg.ShowDialog(this.GetWindow()) == true)
-				UnderlyingGrid.GetImage().SaveImage(dlg.FileName);
+				this.GetImage().SaveImage(dlg.FileName);
 		}
 
 		private readonly SyncObject _ddeLock = new SyncObject();
@@ -911,7 +964,7 @@
 						.Name("UG DDE")
 						.Launch();
 
-					var list = Data as IList;
+					var list = ItemsSource;
 
 					if (list == null)
 						return;
@@ -941,10 +994,10 @@
 
 							var rows = new List<IList<object>>
 							{
-								UnderlyingGrid.Columns.Select(c => c.Header).ToList()
+								Columns.Select(c => c.Header).ToList()
 							};
 
-							rows.AddRange(from object item in UnderlyingGrid.Items select ToRow(item));
+							rows.AddRange(from object item in Items select ToRow(item));
 
 							client.Poke(rows);
 						}
@@ -959,8 +1012,7 @@
 
 		private IList<object> ToRow(object item)
 		{
-			return UnderlyingGrid
-				.Columns
+			return Columns
 				.Select(column => column.GetCellContent(item) as TextBlock)
 				.Select(tb => tb != null ? tb.Text : string.Empty)
 				.Cast<object>()
