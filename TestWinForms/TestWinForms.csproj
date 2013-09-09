@@ -42,10 +42,13 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
@@ -99,6 +102,26 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Collections\Collections.csproj">
+      <Project>{62a4add9-9d89-48e6-984b-73bf023d7e50}</Project>
+      <Name>Collections</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{725d5260-8208-4a39-843a-6b58606ed73b}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
+      <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
+      <Name>ComponentModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Serialization.FieldFactories\Serialization.FieldFactories.csproj">
+      <Project>{864e3014-6c0f-4a6e-b766-3ff37963ddfd}</Project>
+      <Name>Serialization.FieldFactories</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Serialization\Serialization.csproj">
+      <Project>{408006c6-a8eb-43f8-9d0c-5a519dff5873}</Project>
+      <Name>Serialization</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Xaml\Xaml.csproj">
       <Project>{90A23E0C-3329-4459-BB97-21CD84E5418A}</Project>
       <Name>Xaml</Name>

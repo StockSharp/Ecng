@@ -1,11 +1,52 @@
-﻿<UserControl x:Class="TestWinForms.UserControl1"
+﻿	<UserControl x:Class="TestWinForms.UserControl1"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ecngXaml="clr-namespace:Ecng.Xaml.Converters;assembly=Ecng.Xaml"
+             xmlns:ug="clr-namespace:Ecng.Xaml.Grids;assembly=Ecng.Xaml"
              mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="300">
-    <Grid>
-		<Button Click="Button_Click"></Button>
+             d:DesignHeight="300" d:DesignWidth="500">
+
+	<UserControl.Resources>
+		<ecngXaml:FormattingConverter x:Key="ValueConverter" />
+	</UserControl.Resources>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition></RowDefinition>
+			<RowDefinition Height="22"></RowDefinition>
+		</Grid.RowDefinitions>
+		
+		<ug:UniversalGrid x:Name="TradesGrid" IsGroupsExpanded="False">
+			<!--<ug:UniversalGrid.RowStyle>
+				<Style TargetType="{x:Type DataGridRow}">
+					<Style.Triggers>
+						<DataTrigger Binding="{Binding OrderDirection}" Value="Sell">
+							<Setter Property="Background" Value="LightPink"/>
+						</DataTrigger>
+						<DataTrigger Binding="{Binding OrderDirection}" Value="Buy">
+							<Setter Property="Background" Value="LightBlue"/>
+						</DataTrigger>
+					</Style.Triggers>
+				</Style>
+			</ug:UniversalGrid.RowStyle>-->
+			<ug:UniversalGrid.Columns>
+				<DataGridTextColumn Header="Инструмент" Width="70" Binding="{Binding Path=Security.Id}" SortMemberPath="Security.Id"/>
+				<DataGridTextColumn Header="Номер" Width="70" Binding="{Binding Path=Id}" SortMemberPath="Id"/>
+				<DataGridTextColumn Header="Время" Width="120" Binding="{Binding Path=Time, 
+                    Converter={StaticResource ValueConverter}, ConverterParameter='\{0:dd.MM.yyyy HH:mm:ss\}'}" SortMemberPath="Time"/>
+				<DataGridTextColumn Header="Цена" Width="60" Binding="{Binding Path=Price}" SortMemberPath="Price"/>
+				<DataGridTextColumn Header="Объем" Width="50" Binding="{Binding Path=Volume}" SortMemberPath="Volume"/>
+				<DataGridTextColumn Header="Направление" Width="60" Binding="{Binding Path=OrderDirection}" SortMemberPath="OrderDirection"/>
+			</ug:UniversalGrid.Columns>
+		</ug:UniversalGrid>
+
+		<StackPanel Grid.Row="1" Orientation="Horizontal">
+			<Button Click="Excel_OnClick">Excel</Button>
+			<Button Click="Clipboard_OnClick">Ctrl+C</Button>
+			<Button Click="Csv_OnClick">CSV</Button>
+			<Button Click="ReLoad_OnClick">ReLoad</Button>
+		</StackPanel>
 	</Grid>
 </UserControl>
