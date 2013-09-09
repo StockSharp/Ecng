@@ -62,8 +62,8 @@
 
 		public DataGridColumn SelectedColumn
 		{
-			get { return (DataGridColumn)ColumnsCtrl.SelectedValue; }
-			set { ColumnsCtrl.SelectedValue = value; }
+			get { return (DataGridColumn)ColumnsCtrl.SelectedItem; }
+			set { ColumnsCtrl.SelectedItem = value; }
 		}
 
 		private void AddRuleExecuted(object sender, ExecutedRoutedEventArgs e)
