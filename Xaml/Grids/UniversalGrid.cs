@@ -115,6 +115,17 @@
 			var exportDdeMi = new MenuItem { Header = "DDE..." };
 			exportDdeMi.Click += ExportDde_OnClick;
 			selectMi.Items.Add(exportDdeMi);
+
+			var dict = new ResourceDictionary
+			{
+				Source = new Uri("pack://application:,,,/Ecng.Xaml;component/Grids/UniversalGridRes.xaml")
+			};
+
+			GroupStyle.Add(new GroupStyle
+			{
+				ContainerStyle = (Style)dict["GroupHeaderStyle"],
+				Panel = new ItemsPanelTemplate(new FrameworkElementFactory(typeof(DataGridRowsPresenter)))
+			});
 		}
 
 		protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
