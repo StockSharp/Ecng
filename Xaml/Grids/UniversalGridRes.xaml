@@ -27,4 +27,9 @@
 			</Setter.Value>
 		</Setter>
 	</Style>
+
+	<Style x:Key="ColumnHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
+		<Setter Property="HorizontalAlignment" Value="Stretch"/>
+		<Setter Property="HorizontalContentAlignment" Value="Center"/>
+	</Style>
 </ResourceDictionary>

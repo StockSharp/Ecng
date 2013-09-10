@@ -119,6 +119,8 @@
 				ContainerStyle = (Style)dict["GroupHeaderStyle"],
 				Panel = new ItemsPanelTemplate(new FrameworkElementFactory(typeof(DataGridRowsPresenter)))
 			});
+
+			ColumnHeaderStyle = (Style)dict["ColumnHeaderStyle"];
 		}
 
 		protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
@@ -769,7 +771,7 @@
 				scroll.ScrollToEnd();
 		}
 
-		public void Load(SettingsStorage storage)
+		public virtual void Load(SettingsStorage storage)
 		{
 			ShowHeaderInGroupTitle = storage.GetValue("ShowHeaderInGroupTitle", true);
 			AutoScroll = storage.GetValue("AutoScroll", false);
@@ -810,7 +812,7 @@
 			ApplyFormatRules();
 		}
 
-		public void Save(SettingsStorage storage)
+		public virtual void Save(SettingsStorage storage)
 		{
 			storage.SetValue("Columns", Columns.Select(column =>
 			{
