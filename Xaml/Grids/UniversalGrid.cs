@@ -64,11 +64,11 @@
 			SelectedCellsChanged += UnderlyingGrid_SelectedCellsChanged;
 			//ScrollViewer.ScrollChanged += UnderlyingGrid_ScrollChanged;
 
-			var groupingMembers = new SynchronizedList<string>();
+			var groupingMembers = new SynchronizedList<DataGridColumn>();
 			groupingMembers.Added += Group;
 			groupingMembers.Removed += UnGroup;
 			groupingMembers.Cleared += UnGroup;
-			GroupingMembers = groupingMembers;
+			GroupingColumns = groupingMembers;
 
 			GroupingMemberConverters = new SynchronizedDictionary<string, IValueConverter>();
 
@@ -210,7 +210,7 @@
 
 		#region Grouping
 
-		public ICollection<string> GroupingMembers { get; private set; }
+		public ICollection<DataGridColumn> GroupingColumns { get; private set; }
 
 		public IDictionary<string, IValueConverter> GroupingMemberConverters { get; private set; }
 
@@ -229,20 +229,16 @@
 		private void GroupMenu_Click(object sender, RoutedEventArgs e)
 		{
 			var item = (MenuItem)sender;
-			var groupingMember = (string)item.Tag;
+			var groupingColumn = (DataGridColumn)item.Tag;
 
 			if (item.IsChecked)
-				GroupingMembers.Add(groupingMember);
+				GroupingColumns.Add(groupingColumn);
 			else
-				GroupingMembers.Remove(groupingMember);
+				GroupingColumns.Remove(groupingColumn);
 		}
 
-		private void Group(string member)
+		private void Group(DataGridColumn column)
 		{
-			var column = GetColumn(member);
-			if (column == null)
-				return;
-
 			var collectionView = (CollectionView)CollectionViewSource.GetDefaultView(ItemsSource);
 			if (collectionView.GroupDescriptions == null)
 				return;
@@ -256,17 +252,13 @@
 			IsGroupingActive = true;
 		}
 
-		private void UnGroup(string member)
+		private void UnGroup(DataGridColumn column)
 		{
-			var column = GetColumn(member);
-			if (column == null)
-				return;
-
 			var collectionView = (CollectionView)CollectionViewSource.GetDefaultView(ItemsSource);
 			if (collectionView.GroupDescriptions == null)
 				return;
 
-			collectionView.GroupDescriptions.RemoveWhere(g => ((PropertyGroupDescriptionEx)g).PropertyName == member);
+			collectionView.GroupDescriptions.RemoveWhere(g => ((PropertyGroupDescriptionEx)g).PropertyName == column.SortMemberPath);
 
 			column.Visibility = Visibility.Visible;
 			IsGroupingActive = false;
@@ -410,63 +402,48 @@
 			if (items.Count != 0)
 				return;
 
-			foreach (var item in Columns)
+			foreach (var column in Columns)
 			{
-				items.Add(CreateColumnMenuItem(item));
-				groupItems.Add(CreateGroupMenuItem(item));
+				var menuItem = new MenuItem
+				{
+					Header = column.Header,
+					IsCheckable = true,
+					Tag = column,
+				};
+
+				menuItem.SetBindings(MenuItem.IsCheckedProperty, column, "Visibility", BindingMode.TwoWay, new VisibilityToBoolConverter());
+
+				menuItem.Checked += ShowCheckedColumn;
+				menuItem.Unchecked += HideUncheckedColumn;
+
+				items.Add(menuItem);
+
+				var groupMenuItem = new MenuItem
+				{
+					Header = column.Header,
+					IsChecked = GroupingColumns.Contains(column),
+					IsCheckable = true,
+					Tag = column,
+				};
+
+				groupMenuItem.Checked += GroupMenu_Click;
+				groupMenuItem.Unchecked += GroupMenu_Click;
+				groupItems.Add(groupMenuItem);
 			}
-		}
-
-		private MenuItem CreateColumnMenuItem(DataGridColumn item)
-		{
-			var menuItem = new MenuItem
-			{
-				Header = item.Header,
-				IsCheckable = true,
-				Tag = item.SortMemberPath,
-			};
-
-			menuItem.SetBindings(MenuItem.IsCheckedProperty, item, "Visibility", BindingMode.TwoWay, new VisibilityToBoolConverter());
-
-			menuItem.Checked += ShowCheckedColumn;
-			menuItem.Unchecked += HideUncheckedColumn;
-
-			return menuItem;
-		}
-
-		private MenuItem CreateGroupMenuItem(DataGridColumn item)
-		{
-			var menuItem = new MenuItem
-			{
-				Header = item.Header,
-				IsChecked = GroupingMembers.Contains(item.SortMemberPath),
-				IsCheckable = true,
-				Tag = item.SortMemberPath,
-			};
-
-			menuItem.Checked += GroupMenu_Click;
-			menuItem.Unchecked += GroupMenu_Click;
-
-			return menuItem;
 		}
 
 		private void HideUncheckedColumn(object sender, RoutedEventArgs e)
 		{
-			var column = GetColumn(((MenuItem)sender).Tag);
+			var column = (DataGridColumn)((MenuItem)sender).Tag;
 			column.Visibility = Visibility.Collapsed;
 			PropertyChanged.SafeInvoke(column, "Visibility");
 		}
 
 		private void ShowCheckedColumn(object sender, RoutedEventArgs e)
 		{
-			var column = GetColumn(((MenuItem)sender).Tag);
+			var column = (DataGridColumn)((MenuItem)sender).Tag;
 			column.Visibility = Visibility.Visible;
 			PropertyChanged.SafeInvoke(column, "Visibility");
-		}
-
-		private DataGridColumn GetColumn(object member)
-		{
-			return Columns.Single(c => c.SortMemberPath == (string)member);
 		}
 
 		private static DataGridCell GetCell(RoutedEventArgs e)
@@ -770,9 +747,6 @@
 
 		public void Load(SettingsStorage storage)
 		{
-			GroupingMembers.Clear();
-			GroupingMembers.AddRange(storage.GetValue("GroupingMembers", Enumerable.Empty<string>()));
-
 			ShowHeaderInGroupTitle = storage.GetValue("ShowHeaderInGroupTitle", true);
 			AutoScroll = storage.GetValue("AutoScroll", false);
 
@@ -804,6 +778,11 @@
 				index++;
 			}
 
+			var colDict = Columns.ToDictionary(c => c.SortMemberPath, c => c);
+
+			GroupingColumns.Clear();
+			GroupingColumns.AddRange(storage.GetValue("GroupingColumns", storage.GetValue("GroupingMembers", Enumerable.Empty<string>()).Select(colDict.TryGetValue).Where(c => c != null)));
+
 			ApplyFormatRules();
 		}
 
@@ -829,7 +808,7 @@
 			}).ToArray());
 
 			storage.SetValue("AutoScroll", AutoScroll);
-			storage.SetValue("GroupingMembers", GroupingMembers.ToArray());
+			storage.SetValue("GroupingColumns", GroupingColumns.Select(c => c.SortMemberPath).ToArray());
 			storage.SetValue("ShowHeaderInGroupTitle", ShowHeaderInGroupTitle);
 			storage.SetValue("DdeSettings", _ddeClient.Settings.Save());
 		}
