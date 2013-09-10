@@ -167,5 +167,10 @@
 		{
 			TradesGrid.Load(TradesGrid.Save());
 		}
+
+		private void TradesGrid_OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			Changes.Items.Add(e.PropertyName);
+		}
 	}
 }

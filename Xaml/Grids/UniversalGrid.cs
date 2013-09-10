@@ -54,15 +54,8 @@
 			VerticalGridLinesBrush = Brushes.DarkGray;
 			RowHeaderWidth = 0;
 
-			Loaded += UnderlyingGrid_Loaded;
-			MouseRightButtonUp += UnderlyingGrid_MouseRightButtonUp;
-			PreviewMouseLeftButtonDown += UnderlyingGrid_PreviewMouseLeftButtonDown;
-			PreviewMouseMove += UnderlyingGrid_PreviewMouseMove;
-			PreviewMouseLeftButtonUp += UnderlyingGrid_PreviewMouseLeftButtonUp;
-			LoadingRow += UnderlyingGrid_LoadingRow;
-			UnloadingRow += UnderlyingGrid_UnloadingRow;
-			SelectedCellsChanged += UnderlyingGrid_SelectedCellsChanged;
-			//ScrollViewer.ScrollChanged += UnderlyingGrid_ScrollChanged;
+			Loaded += UniversalGrid_Loaded;
+			AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(UniversalGrid_ScrollChanged));
 
 			var groupingMembers = new SynchronizedList<DataGridColumn>();
 			groupingMembers.Added += Group;
@@ -298,12 +291,12 @@
 
 		private DataGridColumn SelectedColumn { get; set; }
 
-		private void UnderlyingGrid_Loaded(object sender, RoutedEventArgs e)
+		private void UniversalGrid_Loaded(object sender, RoutedEventArgs e)
 		{
 			GenerateMenuItems();
 		}
 
-		private void UnderlyingGrid_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+		protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
 		{
 			_contextCell = null;
 			//_contextColumnHeader = null;
@@ -330,9 +323,11 @@
 			}
 
 			//PropertyChanged.SafeInvoke(this, "IsColumnSelected");
+
+			base.OnMouseRightButtonDown(e);
 		}
 
-		private void UnderlyingGrid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+		protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
 		{
 			var cell = GetCell(e);
 
@@ -341,15 +336,19 @@
 
 			if (CanDrag == null || CanDrag(cell))
 				_dragCell = cell;
+
+			base.OnPreviewMouseLeftButtonDown(e);
 		}
 
-		private void UnderlyingGrid_PreviewMouseMove(object sender, MouseEventArgs e)
+		protected override void OnPreviewMouseMove(MouseEventArgs e)
 		{
 			if (e.LeftButton == MouseButtonState.Released)
 				_dragCell = null;
+
+			base.OnPreviewMouseMove(e);
 		}
 
-		private void UnderlyingGrid_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+		protected override void OnPreviewMouseLeftButtonUp(MouseButtonEventArgs e)
 		{
 			if (_dragCell == null)
 				return;
@@ -379,14 +378,30 @@
 			}
 
 			_dragCell = null;
+
+			base.OnPreviewMouseRightButtonDown(e);
 		}
 
-		private void UnderlyingGrid_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
+		protected override void OnSelectedCellsChanged(SelectedCellsChangedEventArgs e)
 		{
 			var cells = SelectedCells;
 
 			SelectedColumn = cells.IsEmpty() ? null : cells.First().Column;
 			//SelectionChanged.SafeInvoke(this);
+
+			base.OnSelectedCellsChanged(e);
+		}
+
+		protected override void OnSorting(DataGridSortingEventArgs eventArgs)
+		{
+			PropertyChanged.SafeInvoke(this, "Sorting");
+			base.OnSorting(eventArgs);
+		}
+
+		protected override void OnColumnReordered(DataGridColumnEventArgs e)
+		{
+			PropertyChanged.SafeInvoke(this, "Reordered");
+			base.OnColumnReordered(e);
 		}
 
 		private void GenerateMenuItems()
@@ -469,16 +484,22 @@
 
 		private void Format_Click(object sender, RoutedEventArgs e)
 		{
+			Action applied = () =>
+			{
+				ApplyFormatRules();
+				PropertyChanged.SafeInvoke(this, "FormatRules");
+			};
+
 			var wnd = new FormattingWindow
 			{
 				FormatRules = FormatRules,
 				Columns = Columns,
 				SelectedColumn = SelectedColumn,
-				Applied = ApplyFormatRules
+				Applied = applied
 			};
 
 			if (wnd.ShowModal(this))
-				ApplyFormatRules();
+				applied();
 		}
 
 		private T GetFormatterValue<T>(DataGridColumn column, object cellValue, Func<FormatRule, T> getPart)
@@ -704,26 +725,29 @@
 			}
 		}
 
-		private void UnderlyingGrid_LoadingRow(object sender, DataGridRowEventArgs e)
-		{
-			//var dataContext = e.Row.DataContext;
+		//protected override void OnLoadingRow(DataGridRowEventArgs e)
+		//{
+		//	var dataContext = e.Row.DataContext;
 
-			//if (dataContext == null)
-			//    return;
+		//	if (dataContext == null)
+		//		return;
 
-			//var t = dataContext.GetType();
-			//var p = t.GetProperty(_contextColumn.SortMemberPath);
-			//var v = (decimal)p.GetValue(dataContext, null);
+		//	var t = dataContext.GetType();
+		//	var p = t.GetProperty(_contextColumn.SortMemberPath);
+		//	var v = (decimal)p.GetValue(dataContext, null);
 
-			//e.Row.Background = GetFormatterValue(v, rule => rule.BackgroundColor) ?? new SolidColorBrush(Colors.White);
-		}
+		//	e.Row.Background = GetFormatterValue(v, rule => rule.BackgroundColor) ?? new SolidColorBrush(Colors.White);
 
-		private void UnderlyingGrid_UnloadingRow(object sender, DataGridRowEventArgs e)
-		{
-			//e.Row.Background = null;
-		}
+		//	base.OnLoadingRow(e);
+		//}
 
-		private void UnderlyingGrid_ScrollChanged(object sender, ScrollChangedEventArgs e)
+		//protected override void OnUnloadingRow(DataGridRowEventArgs e)
+		//{
+		//	e.Row.Background = null;
+		//	base.OnUnloadingRow(e);
+		//}
+
+		private void UniversalGrid_ScrollChanged(object sender, ScrollChangedEventArgs e)
 		{
 			if ((e.ExtentHeight - e.VerticalOffset - e.ViewportHeight).Abs() <= double.Epsilon)
 			{

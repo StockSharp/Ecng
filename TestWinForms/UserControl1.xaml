@@ -1,4 +1,4 @@
-﻿	<UserControl x:Class="TestWinForms.UserControl1"
+﻿<UserControl x:Class="TestWinForms.UserControl1"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -13,12 +13,16 @@
 	</UserControl.Resources>
 
 	<Grid>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition />
+			<ColumnDefinition Width="150"/>
+		</Grid.ColumnDefinitions>
 		<Grid.RowDefinitions>
 			<RowDefinition></RowDefinition>
 			<RowDefinition Height="22"></RowDefinition>
 		</Grid.RowDefinitions>
 		
-		<ug:UniversalGrid x:Name="TradesGrid" IsGroupsExpanded="False">
+		<ug:UniversalGrid x:Name="TradesGrid" IsGroupsExpanded="False" PropertyChanged="TradesGrid_OnPropertyChanged">
 			<!--<ug:UniversalGrid.RowStyle>
 				<Style TargetType="{x:Type DataGridRow}">
 					<Style.Triggers>
@@ -41,6 +45,8 @@
 				<DataGridTextColumn Header="Направление" Width="60" Binding="{Binding Path=OrderDirection}" SortMemberPath="OrderDirection"/>
 			</ug:UniversalGrid.Columns>
 		</ug:UniversalGrid>
+		
+		<ListBox x:Name="Changes" Grid.Column="1"></ListBox>
 
 		<StackPanel Grid.Row="1" Orientation="Horizontal">
 			<Button Click="Excel_OnClick">Excel</Button>
