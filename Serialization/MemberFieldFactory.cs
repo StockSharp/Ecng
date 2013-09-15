@@ -29,14 +29,9 @@ namespace Ecng.Serialization
 		protected internal override string OnCreateSource(ISerializer serializer, T instance)
 		{
 			if (instance.ReflectedType != null)
-				return GetTypeName(instance.ReflectedType) + "/" + instance.Name;
+				return instance.ReflectedType.GetTypeName(_isAssemblyQualifiedName) + "/" + instance.Name;
 			else
-				return GetTypeName(instance.To<Type>());
-		}
-
-		private string GetTypeName(Type type)
-		{
-			return _isAssemblyQualifiedName ? type.AssemblyQualifiedName : "{0}, {1}".Put(type.FullName, type.Assembly.GetName().Name);
+				return instance.To<Type>().GetTypeName(_isAssemblyQualifiedName);
 		}
 	}
 

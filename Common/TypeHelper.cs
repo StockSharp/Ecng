@@ -207,5 +207,13 @@ namespace Ecng.Common
 			// Class "ReflectionContext" exists from .NET 4.5 onwards.
 			return Type.GetType("System.Reflection.ReflectionContext", false) != null;
 		}
+
+		public static string GetTypeName(this Type type, bool isAssemblyQualifiedName)
+		{
+			if (type == null)
+				throw new ArgumentNullException("type");
+
+			return isAssemblyQualifiedName ? type.AssemblyQualifiedName : "{0}, {1}".Put(type.FullName, type.Assembly.GetName().Name);
+		}
 	}
 }

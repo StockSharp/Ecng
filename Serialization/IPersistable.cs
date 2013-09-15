@@ -40,13 +40,13 @@
 			return instance;
 		}
 
-		public static SettingsStorage SaveEntire(this IPersistable persistable)
+		public static SettingsStorage SaveEntire(this IPersistable persistable, bool isAssemblyQualifiedName)
 		{
 			if (persistable == null)
 				throw new ArgumentNullException("persistable");
 
 			var storage = new SettingsStorage();
-			storage.SetValue("type", persistable.GetType().AssemblyQualifiedName);
+			storage.SetValue("type", persistable.GetType().GetTypeName(isAssemblyQualifiedName));
 			storage.SetValue("settings", persistable.Save());
 			return storage;
 		}
