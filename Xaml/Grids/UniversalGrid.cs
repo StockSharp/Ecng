@@ -57,13 +57,13 @@
 			Loaded += UniversalGrid_Loaded;
 			AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(UniversalGrid_ScrollChanged));
 
-			var groupingMembers = new SynchronizedList<DataGridColumn>();
-			groupingMembers.Added += Group;
-			groupingMembers.Removed += UnGroup;
-			groupingMembers.Cleared += UnGroup;
-			GroupingColumns = groupingMembers;
+			var groupingColumns = new SynchronizedList<DataGridColumn>();
+			groupingColumns.Added += Group;
+			groupingColumns.Removed += UnGroup;
+			groupingColumns.Cleared += UnGroup;
+			GroupingColumns = groupingColumns;
 
-			GroupingMemberConverters = new SynchronizedDictionary<string, IValueConverter>();
+			GroupingColumnConverters = new SynchronizedDictionary<string, IValueConverter>();
 
 			_ddeQueue.Close();
 
@@ -121,6 +121,9 @@
 			});
 
 			ColumnHeaderStyle = (Style)dict["ColumnHeaderStyle"];
+
+			HorizontalGridLinesBrush = Brushes.LightGray;
+			VerticalGridLinesBrush = Brushes.LightGray;
 		}
 
 		protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
@@ -134,6 +137,9 @@
 			notifyCollectionChanged = newValue as INotifyCollectionChanged;
 			if (notifyCollectionChanged != null)
 				notifyCollectionChanged.CollectionChanged += OnDataChanged;
+
+			if (_isGroupingPending)
+				GroupingColumns.ForEach(Group);
 
 			base.OnItemsSourceChanged(oldValue, newValue);
 		}
@@ -207,19 +213,7 @@
 
 		public ICollection<DataGridColumn> GroupingColumns { get; private set; }
 
-		public IDictionary<string, IValueConverter> GroupingMemberConverters { get; private set; }
-
-		private bool _isGroupingActive;
-
-		public bool IsGroupingActive
-		{
-			get { return _isGroupingActive; }
-			private set
-			{
-				_isGroupingActive = value;
-				PropertyChanged.SafeInvoke(this, "IsGroupingActive");
-			}
-		}
+		public IDictionary<string, IValueConverter> GroupingColumnConverters { get; private set; }
 
 		private void GroupMenu_Click(object sender, RoutedEventArgs e)
 		{
@@ -232,43 +226,50 @@
 				GroupingColumns.Remove(groupingColumn);
 		}
 
-		private void Group(DataGridColumn column)
+		private bool _isGroupingPending;
+
+		private void ChangeView(Action<IList<GroupDescription>> handler)
 		{
-			var collectionView = (CollectionView)CollectionViewSource.GetDefaultView(ItemsSource);
-			if (collectionView.GroupDescriptions == null)
+			var view = (CollectionView)CollectionViewSource.GetDefaultView(ItemsSource);
+
+			_isGroupingPending = view == null || view.GroupDescriptions == null;
+
+			if (_isGroupingPending)
 				return;
 
-			var converter = GroupingMemberConverters.TryGetValue(column.SortMemberPath);
-			collectionView.GroupDescriptions.Add(converter == null 
-				? new PropertyGroupDescriptionEx(column.SortMemberPath, column.Header.ToString()) 
-				: new PropertyGroupDescriptionEx(column.SortMemberPath, column.Header.ToString(), converter));
+			handler(view.GroupDescriptions);
+			PropertyChanged.SafeInvoke(this, "GroupingColumns");
+		}
+
+		private void Group(DataGridColumn column)
+		{
+			if (column == null)
+				throw new ArgumentNullException("column");
 
 			column.Visibility = Visibility.Collapsed;
-			IsGroupingActive = true;
+
+			ChangeView(desc =>
+			{
+				var converter = GroupingColumnConverters.TryGetValue(column.SortMemberPath);
+				desc.Add(converter == null
+					? new PropertyGroupDescriptionEx(column.SortMemberPath, column.Header.ToString())
+					: new PropertyGroupDescriptionEx(column.SortMemberPath, column.Header.ToString(), converter));
+			});
 		}
 
 		private void UnGroup(DataGridColumn column)
 		{
-			var collectionView = (CollectionView)CollectionViewSource.GetDefaultView(ItemsSource);
-			if (collectionView.GroupDescriptions == null)
-				return;
-
-			collectionView.GroupDescriptions.RemoveWhere(g => ((PropertyGroupDescriptionEx)g).PropertyName == column.SortMemberPath);
+			if (column == null)
+				throw new ArgumentNullException("column");
 
 			column.Visibility = Visibility.Visible;
-			IsGroupingActive = false;
+			ChangeView(desc => desc.RemoveWhere(g => ((PropertyGroupDescriptionEx)g).PropertyName == column.SortMemberPath));
 		}
 
 		private void UnGroup()
 		{
-			var collectionView = (CollectionView)CollectionViewSource.GetDefaultView(ItemsSource);
-			if (collectionView.GroupDescriptions == null)
-				return;
-
-			collectionView.GroupDescriptions.Clear();
-
+			ChangeView(desc => desc.Clear());
 			Columns.ForEach(c => c.Visibility = Visibility.Visible);
-			IsGroupingActive = false;
 		}
 
 		#endregion
@@ -807,7 +808,9 @@
 			var colDict = Columns.ToDictionary(c => c.SortMemberPath, c => c);
 
 			GroupingColumns.Clear();
-			GroupingColumns.AddRange(storage.GetValue("GroupingColumns", storage.GetValue("GroupingMembers", Enumerable.Empty<string>()).Select(colDict.TryGetValue).Where(c => c != null)));
+			GroupingColumns.AddRange(storage.GetValue("GroupingColumns", storage.GetValue("GroupingMembers", Enumerable.Empty<string>()))
+				.Select(colDict.TryGetValue)
+				.Where(c => c != null));
 
 			ApplyFormatRules();
 		}

@@ -104,6 +104,9 @@
 		public UserControl1()
 		{
 			InitializeComponent();
+
+			TradesGrid.GroupingColumns.Add(TradesGrid.Columns[0]);
+
 			TradesGrid.ItemsSource = new[]
 			{
 				new Trade
