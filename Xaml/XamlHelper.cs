@@ -5,6 +5,7 @@ namespace Ecng.Xaml
 	using System.Reflection;
 	using System.Windows;
 	using System.Windows.Controls;
+	using System.Windows.Controls.Primitives;
 	using System.Windows.Markup;
 	using System.Windows.Media;
 	using System.Windows.Media.Imaging;
@@ -850,5 +851,26 @@ namespace Ecng.Xaml
 		}
 
 		#endregion
+
+		#region Menu
+
+		public static void AddSubItems(this ItemsControl item, IEnumerable<MenuItem> items, Action<MenuItem> clicked)
+		{
+			foreach (var menuItem in items)
+			{
+				menuItem.Click += (s, a) => clicked((MenuItem)a.OriginalSource);
+				item.Items.Add(menuItem);
+			}
+		}
+
+		public static void ShowMenu(this UIElement ctrl, ContextMenu menu)
+		{
+			menu.Placement = PlacementMode.Bottom;
+			menu.PlacementTarget = ctrl;
+			menu.IsOpen = true;
+		}
+
+		#endregion
+
 	}
 }
