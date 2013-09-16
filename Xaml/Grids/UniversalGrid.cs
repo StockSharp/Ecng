@@ -60,7 +60,7 @@
 			var groupingColumns = new SynchronizedList<DataGridColumn>();
 			groupingColumns.Added += Group;
 			groupingColumns.Removed += UnGroup;
-			groupingColumns.Cleared += UnGroup;
+			groupingColumns.Clearing += UnGroup;
 			GroupingColumns = groupingColumns;
 
 			GroupingColumnConverters = new SynchronizedDictionary<string, IValueConverter>();
@@ -269,7 +269,7 @@
 		private void UnGroup()
 		{
 			ChangeView(desc => desc.Clear());
-			Columns.ForEach(c => c.Visibility = Visibility.Visible);
+			GroupingColumns.ForEach(c => c.Visibility = Visibility.Visible);
 		}
 
 		#endregion
