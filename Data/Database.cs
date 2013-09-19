@@ -196,6 +196,8 @@ namespace Ecng.Data
 			}
 		}
 
+		public bool AllowDeleteAll { get; set; }
+
 		private DbConnection CreateConnection()
 		{
 			return Provider.CreateConnection(ConnectionString);
@@ -258,10 +260,10 @@ namespace Ecng.Data
 				? Query.Create(schema, type, keyFields, valueFields)
 				: Query.Execute(schema, type, keyFields, valueFields);
 
-			return GetCommand(commandQuery, keyFields, valueFields);
+			return GetCommand(commandQuery, schema, keyFields, valueFields);
 		}
 
-		public virtual DatabaseCommand GetCommand(Query commandQuery, FieldList keyFields, FieldList valueFields)
+		public virtual DatabaseCommand GetCommand(Query commandQuery, Schema schema, FieldList keyFields, FieldList valueFields)
 		{
 			if (commandQuery == null)
 				throw new ArgumentNullException("commandQuery");
@@ -304,7 +306,10 @@ namespace Ecng.Data
 								field = GetField(valueFields, fieldName, Enumerable.Empty<PairSet<string, string>>());
 
 								if (field == null)
-									throw new InvalidOperationException("Field {0} doesn't exist.".Put(fieldName));
+								{
+									field = schema.Fields[fieldName];
+									//throw new InvalidOperationException("Field {0} doesn't exist.".Put(fieldName));
+								}
 							}
 
 							var sourceType = field.Factory.SourceType;
@@ -749,6 +754,9 @@ namespace Ecng.Data
 
 			if (source == null)
 				throw new ArgumentNullException("source");
+
+			if (!AllowDeleteAll)
+				throw new NotSupportedException();
 
 			Action action = () => command.ExecuteNonQuery(source);
 

@@ -60,7 +60,7 @@
 
 		public override TEntity CreateEntity(ISerializer serializer, SerializationItemCollection source)
 		{
-			return (TEntity)source[Name].Value;
+			return source[Name].Value.To<TEntity>();
 		}
 	}
 

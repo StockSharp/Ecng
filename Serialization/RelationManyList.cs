@@ -64,6 +64,7 @@
 		private readonly SynchronizedSet<TEntity> _cache = new SynchronizedSet<TEntity>();
 		private bool _bulkInitialized;
 		private int? _count;
+		private readonly SynchronizedSet<TEntity> _pendingAdd = new SynchronizedSet<TEntity>(); 
 
 		protected RelationManyList(IStorage storage)
 		{
@@ -124,10 +125,10 @@
 		public bool BulkLoad { get; set; }
 		public bool CacheCount { get; set; }
 
-		public void ChangeCachedCount(int diff)
-		{
-			_count += diff;
-		}
+		//public void ChangeCachedCount(int diff)
+		//{
+		//	_count += diff;
+		//}
 
 		public void ResetCache()
 		{
@@ -200,11 +201,19 @@
 				if (!CachedEntities.ContainsKey(id))
 				{
 					CachedEntities.Add(id, entity);
-					_count++;
+					IncrementCount();
 				}
 			}
 
 			ProcessDelayed(() => OnUpdate(entity));
+		}
+
+		private void IncrementCount()
+		{
+			if (_count == null)
+				_count = (int)OnGetCount();
+
+			_count++;
 		}
 
 		//public void Update(TEntity entity, Field valueField)
@@ -229,10 +238,10 @@
 
 		#endregion
 
-		private void ProcessDelayed(Action action)
+		private void ProcessDelayed(Action action, Action<Exception> postAction = null)
 		{
 			if (DelayAction != null)
-				DelayAction.Add(action);
+				DelayAction.Add(action, postAction);
 			else
 				action();
 		}
@@ -287,7 +296,8 @@
 			ThrowIfStorageNull();
 
 			_cache.Add(item);
-			ProcessDelayed(() => OnAdd(item));
+			_pendingAdd.Add(item);
+			ProcessDelayed(() => OnAdd(item), err => _pendingAdd.Remove(item));
 
 			if (BulkLoad)
 			{
@@ -300,7 +310,7 @@
 				}
 			}
 
-			_count++;
+			IncrementCount();
 		}
 
 		public override void Clear()
@@ -511,7 +521,7 @@
 
 			ThrowIfStorageNull();
 
-			var entities = OnGetGroup(startIndex, count, orderBy ?? Schema.Identity, direction);
+			var entities = OnGetGroup(startIndex, count, orderBy ?? Schema.Identity, direction).ToList();
 
 			if (BulkLoad)
 			{
@@ -528,6 +538,16 @@
 
 						entities = entities.Skip((int)oldStartIndex).Take((int)oldCount).ToList();
 					}
+				}
+			}
+			else
+			{
+				if (_pendingAdd.Count > 0)
+				{
+					var set = new HashSet<TEntity>();
+					set.AddRange(entities);
+					set.AddRange(_pendingAdd);
+					entities = set.ToList();
 				}
 			}
 

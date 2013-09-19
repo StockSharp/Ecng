@@ -1,6 +1,5 @@
 ﻿namespace Ecng.Data
 {
-	using System;
 	using System.Data;
 	using System.Collections.Generic;
 	using System.Linq;
@@ -31,7 +30,7 @@
 						if (!Scope<HierarchicalDatabaseContext>.All.IsEmpty())
 						{
 							var morph = Scope<HierarchicalDatabaseContext>.All.Select(scope => scope.Value).Aggregate(string.Empty, (current, context) => current + context.Morph);
-							return base.GetCommand(Query.Execute(schema, type, morph, null), keyFields, valueFields);
+							return base.GetCommand(Query.Execute(schema, type, morph, null), schema, keyFields, valueFields);
 						}
 						else
 							break;
@@ -46,7 +45,7 @@
 					var query = context.Value.Query;
 
 					if (query != null)
-						return base.GetCommand(query, keyFields, valueFields);
+						return base.GetCommand(query, schema, keyFields, valueFields);
 				}
 			}
 
@@ -63,11 +62,6 @@
 		{
 			InitSource(source);
 			return base.ReadAll<TEntity>(command, source);
-		}
-
-		public override void DeleteAll(DatabaseCommand command, SerializationItemCollection source)
-		{
-			throw new NotSupportedException();
 		}
 
 		#endregion

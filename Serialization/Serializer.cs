@@ -43,7 +43,7 @@ namespace Ecng.Serialization
 					{
 						var type = typeof(T);
 
-						if (type.IsCollection() || type.IsPrimitive() || type == typeof(object))
+						if (type.IsCollection() || type.IsPrimitive() || type == typeof(object) || type == typeof(Type))
 						{
 							_schema = new Schema { EntityType = type };
 
@@ -56,6 +56,11 @@ namespace Ecng.Serialization
 							{
 								field.Factory = new PrimitiveFieldFactory<T, T>(field, 0);
 								_schema.Factory = (EntityFactory)typeof(PrimitiveEntityFactory<>).Make(type).CreateInstance(field.Name);
+							}
+							else if (type == typeof(Type))
+							{
+								field.Factory = new MemberFieldFactory<Type>(field, 0, false);
+								_schema.Factory = (EntityFactory)typeof(PrimitiveEntityFactory<Type>).CreateInstance(field.Name);
 							}
 							//else if (type == typeof(object))
 							//{

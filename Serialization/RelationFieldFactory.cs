@@ -90,6 +90,7 @@ namespace Ecng.Serialization
 			var list = ListCreator.Ctor(new[] { Storage, context.Entity });
 			list.BulkLoad = BulkLoad;
 			list.CacheCount = CacheCount;
+			list.DelayAction = SerializationContext.DelayAction;
 			return list;
 		}
 

@@ -10,13 +10,69 @@
 
 	public class DelayAction
 	{
+		private class Item
+		{
+			public Action Action { get; protected set; }
+			public Action<Exception> PostAction { get; protected set; }
+			public bool CanBatch { get; protected set; }
+			public bool BreakBatchOnError { get; protected set; }
+
+			protected Item()
+			{
+			}
+
+			public Item(Action action, Action<Exception> postAction, bool canBatch, bool breakBatchOnError)
+			{
+				Action = action;
+				PostAction = postAction;
+				CanBatch = canBatch;
+				BreakBatchOnError = breakBatchOnError;
+			}
+		}
+
+		private class FlushItem : Item
+		{
+			private readonly SyncObject _syncObject = new SyncObject();
+			private bool _isProcessed;
+			private Exception _err;
+
+			public FlushItem()
+			{
+				Action = () => {};
+				PostAction = err =>
+				{
+					_err = err;
+
+					lock (_syncObject)
+					{
+						_isProcessed = true;
+						_syncObject.Pulse();
+					}
+				};
+				CanBatch = true;
+				BreakBatchOnError = true;
+			}
+
+			public void Wait()
+			{
+				lock (_syncObject)
+				{
+					if (!_isProcessed)
+						_syncObject.Wait();
+				}
+
+				if (_err != null)
+					throw _err;
+			}
+		}
+
 		private readonly IStorage _storage;
 		private readonly Action<Exception> _errorHandler;
 
 		private Timer _flushTimer;
 		private readonly TimeSpan _flushInterval = TimeSpan.FromSeconds(1);
 		private bool _isFlushing;
-		private readonly SynchronizedList<Tuple<Action, Action, bool, bool>> _actions = new SynchronizedList<Tuple<Action, Action, bool, bool>>();
+		private readonly SynchronizedList<Item> _actions = new SynchronizedList<Item>();
 
 		public DelayAction(IStorage storage, Action<Exception> errorHandler)
 		{
@@ -30,22 +86,14 @@
 			_errorHandler = errorHandler;
 		}
 
-		public void Add(Action action, bool canBatch = true, bool breakBatchOnError = true)
-		{
-			// breakBatchOnError
-			// если мы сохраняем инструмент, то дать возможность сохраниться хоть каким-то инструментам, если среди них есть с ошибками
-
-			Add(action, null, canBatch, breakBatchOnError);
-		}
-
-		public void Add(Action action, Action postAction, bool canBatch, bool breakBatchOnError)
+		public void Add(Action action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true)
 		{
 			if (action == null)
 				throw new ArgumentNullException("action");
 
 			lock (_actions.SyncRoot)
 			{
-				_actions.Add(new Tuple<Action, Action, bool, bool>(action, postAction, canBatch, breakBatchOnError));
+				_actions.Add(new Item(action, postAction, canBatch, breakBatchOnError));
 
 				if (!_isFlushing && _flushTimer == null)
 				{
@@ -56,11 +104,18 @@
 			}
 		}
 
-		private void OnFlush()
+		public void WaitFlush()
+		{
+			var item = new FlushItem();
+			_actions.Add(item);
+			item.Wait();
+		}
+
+		public void OnFlush()
 		{
 			try
 			{
-				Tuple<Action, Action, bool, bool>[] actions;
+				Item[] actions;
 
 				lock (_actions.SyncRoot)
 				{
@@ -75,12 +130,12 @@
 				{
 					if (actions.Length > 0)
 					{
-						var list = new List<Tuple<Action, Action, bool, bool>>();
+						var list = new List<Item>();
 
 						var index = 0;
 						while (index < actions.Length)
 						{
-							if (!actions[index].Item3)
+							if (!actions[index].CanBatch)
 							{
 								BatchFlushAndClear(list);
 								list.Clear();
@@ -107,7 +162,10 @@
 				finally
 				{
 					lock (_actions.SyncRoot)
+					{
 						_isFlushing = false;
+						_actions.SyncRoot.PulseAll();
+					}
 				}
 			}
 			catch (Exception ex)
@@ -116,25 +174,31 @@
 			}
 		}
 
-		private void Flush(Tuple<Action, Action, bool, bool> action)
+		private void Flush(Item item)
 		{
+			Exception error;
+
 			try
 			{
-				action.Item1();
+				item.Action();
+				error = null;
 			}
 			catch (Exception ex)
 			{
 				_errorHandler(ex);
+				error = ex;
 			}
 
-			if (action.Item2 != null)
-				action.Item2();
+			if (item.PostAction != null)
+				item.PostAction(error);
 		}
 
-		private void BatchFlushAndClear(IEnumerable<Tuple<Action, Action, bool, bool>> actions)
+		private void BatchFlushAndClear(IEnumerable<Item> actions)
 		{
 			if (actions.IsEmpty())
 				return;
+
+			Exception error;
 
 			try
 			{
@@ -142,21 +206,26 @@
 				{
 					foreach (var action in actions)
 					{
-						if (action.Item4)
-							action.Item1();
+						if (action.BreakBatchOnError)
+							action.Action();
 						else
 							Flush(action);
 					}
 
 					batch.Commit();
 				}
+
+				error = null;
 			}
 			catch (Exception ex)
 			{
 				_errorHandler(ex);
+				error = ex;
 			}
 
-			actions.Where(a => a.Item2 != null).ForEach(a => a.Item2());
+			actions
+				.Where(a => a.PostAction != null)
+				.ForEach(a => a.PostAction(error));
 		}
 	}
 }

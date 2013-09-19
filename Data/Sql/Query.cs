@@ -582,6 +582,11 @@ namespace Ecng.Data.Sql
 			return Equals(new FieldList(field));
 		}
 
+		public Query Equals(params Field[] fields)
+		{
+			return Equals(new FieldList(fields));
+		}
+
 		public Query Equals(FieldList fields)
 		{
 			return AddAction((renderer, builder) =>
@@ -604,7 +609,8 @@ namespace Ecng.Data.Sql
 					builder.AppendFormat(" and ");
 				}
 
-				RemoveLastChars(builder, 5);
+				if (fields.Count > 0)
+					RemoveLastChars(builder, 5);
 			});
 		}
 

@@ -8,5 +8,7 @@
 		public Func<IEnumerable<Field>, IEnumerable<Field>> Filter { get; set; }
 
 		public object Entity { get; set; }
+
+		public static DelayAction DelayAction { get; set; }
 	}
 }

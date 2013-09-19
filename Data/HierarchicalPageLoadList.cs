@@ -31,10 +31,12 @@
 		public bool Recycle { get; set; }
 
 		public Query CreateQuery { get; set; }
+		public Query UpdateQuery { get; set; }
 		public Query RemoveQuery { get; set; }
 		public Query ReadAllQuery { get; set; }
 		public Query ReadByIdQuery { get; set; }
 		public Query CountQuery { get; set; }
+		public Query ClearQuery { get; set; }
 
 		#region AddFilter
 
@@ -146,7 +148,7 @@
 
 			FillEntity(entity);
 
-			using (CreateScope(RemoveQuery))
+			using (CreateScope(UpdateQuery))
 				base.OnUpdate(entity);
 		}
 
@@ -160,7 +162,11 @@
 			}
 			else
 			{
-				throw new NotSupportedException();
+				if (ClearQuery == null)
+					throw new NotSupportedException();
+
+				using (CreateScope(ClearQuery))
+					base.OnClear();
 			}
 		}
 
@@ -238,12 +244,12 @@
 
 		protected TScalar ExecuteScalar<TScalar>(string morph, SerializationItemCollection source)
 		{
-			return Database.GetCommand(Query.Execute(Schema, morph), null, null).ExecuteScalar<TScalar>(source);
+			return Database.GetCommand(Query.Execute(Schema, morph), Schema, null, null).ExecuteScalar<TScalar>(source);
 		}
 
 		protected int ExecuteNonQuery(string morph, SerializationItemCollection source)
 		{
-			return Database.GetCommand(Query.Execute(Schema, morph), null, null).ExecuteNonQuery(source);
+			return Database.GetCommand(Query.Execute(Schema, morph), Schema, null, null).ExecuteNonQuery(source);
 		}
 
 		private static IEnumerable<Tuple<Field, object>> ConvertToPairs(IEnumerable<object> entities)
@@ -253,7 +259,7 @@
 
 		private DatabaseCommand GetCommand(SqlCommandTypes commandType, string keyFieldsMorph, string valueFieldsMorph)
 		{
-			return Database.GetCommand(Query.Execute(Schema, commandType, keyFieldsMorph, valueFieldsMorph), null, null);
+			return Database.GetCommand(Query.Execute(Schema, commandType, keyFieldsMorph, valueFieldsMorph), Schema, null, null);
 		}
 	}
 }
