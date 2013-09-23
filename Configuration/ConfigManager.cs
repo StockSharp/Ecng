@@ -86,14 +86,22 @@
 
 			Trace.WriteLine("ConfigManager FilePath=" + InnerConfig.FilePath);
 
-			Action<ConfigurationSectionCollection> initSections = sections =>
-			{
-				foreach (ConfigurationSection section in sections)
-				{
-					if (!_sections.ContainsKey(section.GetType()))
-						_sections.Add(section.GetType(), section);
-				}
-			};
+		    Action<ConfigurationSectionCollection> initSections = sections =>
+		    {
+                // Из-за ошибки в велсе приходится оборачивать в try
+		        try
+		        {
+		            foreach (ConfigurationSection section in sections)
+		            {
+		                if (!_sections.ContainsKey(section.GetType()))
+		                    _sections.Add(section.GetType(), section);
+		            }
+		        }
+		        catch
+		        {
+
+		        }
+		    };
 
 			Action<ConfigurationSectionGroupCollection> initSectionGroups = null;
 			initSectionGroups = groups =>
