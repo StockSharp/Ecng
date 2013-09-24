@@ -335,7 +335,7 @@ namespace Ecng.Web
 
 			if (user == null)
 			{
-				SecurityError(userName, SecurityErrorTypes.InvalidName);
+				//SecurityError(userName, SecurityErrorTypes.InvalidName);
 				return null;
 			}
 
