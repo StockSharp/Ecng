@@ -31,15 +31,16 @@
 		/// <param name="culture">The culture to use in the converter.</param>
 		object IMultiValueConverter.Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
 		{
+			//TODO: esper, временный фикс падения при использовании MultiBindings с DataGridTemplateColumn
+			//При выделении ячейки обнуляется DataContext.
+			if (values[0] == null || values[0] == DependencyProperty.UnsetValue)
+				return Binding.DoNothing;
+
 			var date = (DateTime)values[0];
 
-			if (values[1] == DependencyProperty.UnsetValue)
-				return date.ToString();
-			else
-			{
-				var format = (string)values[1];
-				return date.ToString(format);
-			}
+			return values[1] == DependencyProperty.UnsetValue 
+				? date.ToString() 
+				: date.ToString((string)values[1]);
 		}
 
 		/// <summary>

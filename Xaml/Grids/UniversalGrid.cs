@@ -846,8 +846,13 @@
 		{
 			var text = new StringBuilder();
 
+			var columns = Columns
+				.Where(c => c.Visibility == Visibility.Visible)
+				.OrderBy(c => c.DisplayIndex)
+				.ToArray();
+
 			text
-				.Append(Columns.Select(c => c.Header as string).Join(separator))
+				.Append(columns.Select(c => c.Header as string).Join(separator))
 				.AppendLine();
 
 			foreach (var i in Items)
@@ -855,15 +860,44 @@
 				var item = i;
 
 				text
-					.Append(Columns.Select(column =>
-					{
-						var tb = column.GetCellContent(item) as TextBlock;
-						return tb != null ? tb.Text : string.Empty;
-					}).Join(separator))
+					.Append(GetText(item, columns, separator))
 					.AppendLine();
 			}
 
 			return text.ToString();
+		}
+
+		private string GetText(object item, string separator)
+		{
+			var columns = Columns
+				.Where(c => c.Visibility == Visibility.Visible)
+				.OrderBy(c => c.DisplayIndex)
+				.ToArray();
+
+			return GetText(item, columns, separator);
+		}
+
+		private static string GetText(object item, IEnumerable<DataGridColumn> columns, string separator)
+		{
+			return columns
+				.Select(column =>
+				{
+					var value = item.GetPropValue(column.SortMemberPath);
+					return value != null ? value.ToString() : string.Empty;
+				})
+				.Join(separator);
+		}
+
+		protected override void OnCopyingRowClipboardContent(DataGridRowClipboardEventArgs args)
+		{
+			args.ClipboardRowContent.Clear();
+
+			var item = SelectedItem;
+
+			if (item == null)
+				return;
+
+			args.ClipboardRowContent.Add(new DataGridClipboardCellContent(item, null, GetText(item, "\t")));
 		}
 
 		private void ExportClipBoardText_OnClick(object sender, RoutedEventArgs e)

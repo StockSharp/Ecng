@@ -109,6 +109,9 @@
     <Compile Include="Fonts\FontInfo.cs" />
     <Compile Include="DispatcherPropertyChangedEventManager.cs" />
     <Compile Include="EnumComboBox.cs" />
+    <Compile Include="EntityPropertyEditor.xaml.cs">
+      <DependentUpon>EntityPropertyEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="FixedWidthColumn.cs" />
     <Compile Include="Converters\FormattingConverter.cs" />
     <Compile Include="Grids\DataGridHelper.cs" />
@@ -210,6 +213,10 @@
     <Page Include="Grids\DdeSettingsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="EntityPropertyEditor.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Grids\FormattingWindow.xaml">
       <SubType>Designer</SubType>

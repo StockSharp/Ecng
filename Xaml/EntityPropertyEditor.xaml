@@ -1,0 +1,24 @@
+﻿<UserControl x:Class="Ecng.Xaml.EntityPropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             x:Name="Ctrl" MinHeight="22">
+
+    <xctk:DropDownButton HorizontalContentAlignment="Stretch">
+        <xctk:DropDownButton.Content>
+            <TextBlock Text="{Binding Path=SelectedValue.FullDisplayName, ElementName=Ctrl}"/>
+        </xctk:DropDownButton.Content>
+        <xctk:DropDownButton.DropDownContent>
+            <TreeView x:Name="TreeView" MaxHeight="300" MaxWidth="180" ItemsSource="{Binding Path=Items, ElementName=Ctrl}"
+                      SelectedValuePath="Name"
+                      ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto" 
+                      SelectedItemChanged="TreeView_OnSelectedItemChanged">
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding Properties}">
+                        <TextBlock Text="{Binding DisplayName}"/>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+        </xctk:DropDownButton.DropDownContent>
+    </xctk:DropDownButton>
+</UserControl>
