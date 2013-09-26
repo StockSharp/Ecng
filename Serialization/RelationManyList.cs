@@ -14,15 +14,16 @@
 
 		private sealed class RelationManyListEnumerator : BaseEnumerator<RelationManyList<TEntity>, TEntity>
 		{
-			private const long _bufferSize = 20;
+			private readonly long _bufferSize;
 
 			private long _startIndex;
 			private ICollection<TEntity> _temporaryBuffer;
 			private int _posInBuffer;
 
-			public RelationManyListEnumerator(RelationManyList<TEntity> list)
+			public RelationManyListEnumerator(RelationManyList<TEntity> list, int bufferSize)
 				: base(list)
 			{
+				_bufferSize = bufferSize;
 			}
 
 			public override void Reset()
@@ -368,9 +369,23 @@
 			return ReadAll(startIndex, count, orderBy, directions);
 		}
 
+		private int _bufferSize = 20;
+
+		public int BufferSize
+		{
+			get { return _bufferSize; }
+			set
+			{
+				if (value <= 0)
+					throw new ArgumentOutOfRangeException();
+
+				_bufferSize = value;
+			}
+		}
+
 		public override IEnumerator<TEntity> GetEnumerator()
 		{
-			return new RelationManyListEnumerator(this);
+			return new RelationManyListEnumerator(this, BufferSize);
 		}
 
 		public override int IndexOf(TEntity item)
