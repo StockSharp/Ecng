@@ -143,5 +143,48 @@
 
 			return newStyle;
 		}
+
+		public static void AddSelectionTriggers(this Style style)
+		{
+			style.Triggers.AddRange(new[]
+			{
+				(TriggerBase) new DataTrigger
+				{
+					Binding = new Binding("IsSelected")
+					{
+						RelativeSource = new RelativeSource
+						{
+							Mode = RelativeSourceMode.FindAncestor,
+							AncestorType = typeof (DataGridRow)
+						}
+					},
+					Value = true,
+					Setters = {new Setter(TextBlock.ForegroundProperty, SystemColors.HighlightTextBrush)}
+				},
+				new MultiDataTrigger
+				{
+					Conditions =
+					{
+						new Condition(new Binding("IsSelected")
+						{
+							RelativeSource = new RelativeSource
+							{
+								Mode = RelativeSourceMode.FindAncestor,
+								AncestorType = typeof (DataGridRow)
+							}
+						}, true),
+						new Condition(new Binding("IsKeyboardFocusWithin")
+						{
+							RelativeSource = new RelativeSource
+							{
+								Mode = RelativeSourceMode.FindAncestor,
+								AncestorType = typeof (DataGrid)
+							}
+						}, false)
+					},
+					Setters = {new Setter(TextBlock.ForegroundProperty, SystemColors.ControlTextBrush)}
+				}
+			});
+		}
 	}
 }
