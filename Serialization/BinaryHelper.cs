@@ -11,6 +11,18 @@
 
 	public static class BinaryHelper
 	{
+		public static IEnumerable<string> EnumerateLines(this Stream stream)
+		{
+			if (stream == null)
+				throw new ArgumentNullException("stream");
+
+			using (var sr = new StreamReader(stream, true))
+			{
+				while (!sr.EndOfStream)
+					yield return sr.ReadLine();
+			}
+		}
+
 		public static void Copy(this Stream source, Stream destination, Action completed, Action<Exception> error)
 		{
 			source.Copy(destination, (int)source.Length, completed, error);

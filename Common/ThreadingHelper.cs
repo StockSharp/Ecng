@@ -188,6 +188,24 @@ namespace Ecng.Common
 			return thread;
 		}
 
+		public static Thread STA(this Thread thread)
+		{
+			if (thread == null)
+				throw new ArgumentNullException("thread");
+
+			thread.SetApartmentState(ApartmentState.STA);
+			return thread;
+		}
+
+		public static Thread MTA(this Thread thread)
+		{
+			if (thread == null)
+				throw new ArgumentNullException("thread");
+
+			thread.SetApartmentState(ApartmentState.MTA);
+			return thread;
+		}
+
 		public static void InvokeAsSTA(this Action action)
 		{
 			if (action == null)
@@ -209,7 +227,7 @@ namespace Ecng.Common
 			var retVal = default(T);
 			Exception threadEx = null;
 
-			var staThread = new Thread(() =>
+			var staThread = Thread(() =>
 			{
 				try
 				{
@@ -219,10 +237,10 @@ namespace Ecng.Common
 				{
 					threadEx = ex;
 				}
-			});
+			})
+			.STA()
+			.Launch();
 
-			staThread.SetApartmentState(ApartmentState.STA);
-			staThread.Start();
 			staThread.Join();
 
 			if (threadEx != null)
