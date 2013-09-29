@@ -282,10 +282,15 @@
 				}
 				else
 				{
-					if ((CacheCount && _count == null) || !CacheCount)
-						_count = (int)OnGetCount();
+					if (CacheCount)
+					{
+						if (_count == null)
+							_count = (int)OnGetCount();
 
-					return _count ?? 0;
+						return _count.Value;
+					}
+					else
+						return (int)OnGetCount();
 				}
 			}
 		}
@@ -359,6 +364,9 @@
 						CachedEntities.Remove(GetCacheId(item));
 				}
 			}
+
+			if (_count != null)
+				_count--;
 
 			return true;
 		}
