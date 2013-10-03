@@ -65,7 +65,7 @@
 		private readonly SynchronizedSet<TEntity> _cache = new SynchronizedSet<TEntity>();
 		private bool _bulkInitialized;
 		private int? _count;
-		private readonly SynchronizedSet<TEntity> _pendingAdd = new SynchronizedSet<TEntity>(); 
+		private readonly CachedSynchronizedDictionary<object, TEntity> _pendingAdd = new CachedSynchronizedDictionary<object, TEntity>(); 
 
 		protected RelationManyList(IStorage storage)
 		{
@@ -167,6 +167,14 @@
 			}
 			else
 			{
+				if (DelayAction != null)
+				{
+					var item = _pendingAdd.TryGetValue(id);
+
+					if (!item.IsNull())
+						return item;
+				}
+
 				var identity = Schema.Identity;
 
 				if (identity == null)
@@ -302,8 +310,13 @@
 			ThrowIfStorageNull();
 
 			_cache.Add(item);
-			_pendingAdd.Add(item);
-			ProcessDelayed(() => OnAdd(item), err => _pendingAdd.Remove(item));
+
+			var id = GetCacheId(item);
+
+			if (DelayAction != null)
+				_pendingAdd.Add(id, item);
+
+			ProcessDelayed(() => OnAdd(item), err => _pendingAdd.Remove(id));
 
 			if (BulkLoad)
 			{
@@ -569,7 +582,7 @@
 				{
 					var set = new HashSet<TEntity>();
 					set.AddRange(entities);
-					set.AddRange(_pendingAdd);
+					set.AddRange(_pendingAdd.Values);
 					entities = set.ToList();
 				}
 			}
