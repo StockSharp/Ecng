@@ -104,10 +104,28 @@
 			}
 		}
 
+		private void Add(Item item)
+		{
+			if (item == null)
+				throw new ArgumentNullException("item");
+
+			lock (_actions.SyncRoot)
+			{
+				_actions.Add(item);
+
+				if (!_isFlushing && _flushTimer == null)
+				{
+					_flushTimer = ThreadingHelper
+						.Timer(OnFlush)
+						.Interval(_flushInterval);
+				}
+			}
+		}
+
 		public void WaitFlush()
 		{
 			var item = new FlushItem();
-			_actions.Add(item);
+			Add(item);
 			item.Wait();
 		}
 
@@ -164,7 +182,7 @@
 					lock (_actions.SyncRoot)
 					{
 						_isFlushing = false;
-						_actions.SyncRoot.PulseAll();
+						//_actions.SyncRoot.PulseAll();
 					}
 				}
 			}
@@ -193,7 +211,7 @@
 				item.PostAction(error);
 		}
 
-		private void BatchFlushAndClear(IEnumerable<Item> actions)
+		private void BatchFlushAndClear(ICollection<Item> actions)
 		{
 			if (actions.IsEmpty())
 				return;
