@@ -2,9 +2,13 @@ namespace Ecng.Data
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Data;
 	using System.Data.Common;
-	using System.Diagnostics;
 	using System.Linq;
+#if DEBUG
+	using System.Diagnostics;
+	using System.Text.RegularExpressions;
+#endif
 
 	using Ecng.Common;
 	using Ecng.Collections;
@@ -51,14 +55,36 @@ namespace Ecng.Data
 
 			lock (_syncObj)
 			{
-				Debug.WriteLine(_dbCommand.CommandText);
+				//Debug.WriteLine(_dbCommand.CommandText);
 
 				var result = default(TResult);
 
 				Database.GetConnection(connection =>
 				{
 					using (var cmd = CreateCommand(connection, input))
+					{
+#if DEBUG
+						var dbgStr = cmd.CommandText;
+
+						if (cmd.CommandType == CommandType.Text)
+						{
+							foreach (DbParameter parameter in cmd.Parameters)
+							{
+								dbgStr = Regex.Replace(dbgStr, parameter.ParameterName, parameter.Value.To<string>(), RegexOptions.IgnoreCase);
+							}
+						}
+						else
+						{
+							foreach (DbParameter parameter in cmd.Parameters)
+							{
+								dbgStr += "{0} = {1}, ".Put(parameter.ParameterName, parameter.Value.To<string>());
+							}
+						}
+
+						Debug.WriteLine(dbgStr);
+#endif
 						result = handler(cmd);
+					}
 				});
 
 				return result;
