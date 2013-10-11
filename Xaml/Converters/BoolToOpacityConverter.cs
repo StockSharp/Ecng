@@ -2,33 +2,32 @@
 {
 	using System;
 	using System.Globalization;
-	using System.Windows;
 	using System.Windows.Data;
 
 	using Ecng.Common;
 
-	public class BoolToVisibilityConverter : IValueConverter
+	public class BoolToOpacityConverter : IValueConverter
 	{
-		public BoolToVisibilityConverter()
+		public BoolToOpacityConverter()
 		{
-			TrueVisibilityValue = Visibility.Visible;
-			FalseVisibilityValue = Visibility.Collapsed;
+			FalseOpacityValue = 1.0;
+			TrueOpacityValue = 0.5;
 		}
 
-		public Visibility FalseVisibilityValue { get; set; }
-		public Visibility TrueVisibilityValue { get; set; }
+		public double TrueOpacityValue { get; set; }
+		public double FalseOpacityValue { get; set; }
 
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			var param = parameter == null || parameter.To<bool>();
 			var val = (bool)value;
 
-			return val == param ? TrueVisibilityValue : FalseVisibilityValue;
+			return val == param ? TrueOpacityValue : FalseOpacityValue;
 		}
 
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			return ((Visibility)value == TrueVisibilityValue);
+			throw new NotSupportedException();
 		}
 	}
 }

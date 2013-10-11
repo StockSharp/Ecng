@@ -4,22 +4,19 @@
 	using System.Globalization;
 	using System.Windows.Data;
 
+	using Ecng.Common;
+
 	public class NullToBoolConverter : IValueConverter
 	{
-		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			if (value == null)
 				return false;
 
-			string currentValue = value.ToString();
-
-			if (string.IsNullOrWhiteSpace(currentValue))
-				return false;
-
-			return true;
+			return !value.To<string>().IsEmptyOrWhiteSpace();
 		}
 
-		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			return Binding.DoNothing;
 		}

@@ -8,12 +8,12 @@
 
 	public class VisibilityToBoolConverter : IValueConverter
 	{
-		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			return (Visibility)value == Visibility.Visible;
 		}
 
-		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			return (bool)value ? Visibility.Visible : Visibility.Collapsed;
 		}

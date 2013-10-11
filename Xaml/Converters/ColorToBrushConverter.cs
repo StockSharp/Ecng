@@ -6,17 +6,13 @@ namespace Ecng.Xaml.Converters
 
 	public class ColorToBrushConverter : IValueConverter
 	{
-		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		object IValueConverter.Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
 			var brush = value as SolidColorBrush;
-
-			if (brush == null)
-				return Colors.Black;
-
-			return brush.Color;
+			return brush == null ? Colors.Black : brush.Color;
 		}
 
-		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
 			return new SolidColorBrush((Color)value);
 		}

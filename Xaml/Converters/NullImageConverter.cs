@@ -1,16 +1,15 @@
-namespace Ecng.Xaml.Converters
+﻿namespace Ecng.Xaml.Converters
 {
 	using System;
 	using System.Globalization;
+	using System.Windows;
 	using System.Windows.Data;
 
-	[ValueConversion(typeof(object), typeof(string))]
-	public class FormattingConverter : IValueConverter
+	public class NullImageConverter : IValueConverter
 	{
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			var s = parameter as string;
-			return s != null ? string.Format(culture, s, value) : value.ToString();
+			return value ?? DependencyProperty.UnsetValue;
 		}
 
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

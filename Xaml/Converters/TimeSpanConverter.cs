@@ -7,17 +7,15 @@ namespace Ecng.Xaml.Converters
 	[ValueConversion(typeof(TimeSpan), typeof(string))]
 	public class TimeSpanConverter : IValueConverter
 	{
-		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			if (parameter == null)
-				return ((TimeSpan)value).ToString();
-			else
-				return ((TimeSpan)value).ToString((string)parameter, culture);
+			var ts = (TimeSpan)value;
+			return parameter == null ? ts.ToString() : ts.ToString((string)parameter, culture);
 		}
 
-		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			return null;
+			throw new NotSupportedException();
 		}
 	}
 }

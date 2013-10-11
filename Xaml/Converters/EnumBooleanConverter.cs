@@ -2,8 +2,11 @@ namespace Ecng.Xaml.Converters
 {
 	using System;
 	using System.Globalization;
+	using System.Linq;
 	using System.Windows;
 	using System.Windows.Data;
+
+	using Ecng.Common;
 
 	public class EnumBooleanConverter : IValueConverter
 	{
@@ -19,7 +22,7 @@ namespace Ecng.Xaml.Converters
 			if (Enum.IsDefined(value.GetType(), value) == false)
 				return DependencyProperty.UnsetValue;
 
-			var parameterValue = Enum.Parse(value.GetType(), parameterString);
+			var parameterValue = parameterString.To(value.GetType());
 
 			return parameterValue.Equals(value);
 		}
@@ -32,9 +35,9 @@ namespace Ecng.Xaml.Converters
 				return DependencyProperty.UnsetValue;
 
 			if (DefaultValueWhenUnchecked && !(bool)value)
-				return Enum.GetValues(targetType).GetValue(0);
+				return targetType.GetValues().ElementAt(0);
 
-			return Enum.Parse(targetType, parameterString);
+			return parameterString.To(targetType);
 		}
 	}
 }
