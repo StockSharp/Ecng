@@ -12,6 +12,17 @@
 
 	public static class MailHelper
 	{
+		public static MailMessage Attach(this MailMessage message, IWebFile file)
+		{
+			if (message == null)
+				throw new ArgumentNullException("message");
+
+			if (file != null)
+				message.Attachments.Add(file.ToAttachment());
+
+			return message;
+		}
+
 		public static Attachment ToAttachment(this IWebFile file)
 		{
 			if (file == null)
@@ -88,6 +99,16 @@
 
 			if (dispose)
 				message.Dispose();
+		}
+
+		public static MailMessage AddHtml(this MailMessage message, string bodyHtml)
+		{
+			if (message == null)
+				throw new ArgumentNullException("message");
+
+			message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(bodyHtml, null, MediaTypeNames.Text.Html));
+
+			return message;
 		}
 	}
 }
