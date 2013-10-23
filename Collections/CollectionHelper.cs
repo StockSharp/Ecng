@@ -50,9 +50,9 @@
 
 		private sealed class Comparer<T> : IComparer<T>
 		{
-			private readonly Comparison<T> _comparer;
+			private readonly Func<T, T, int> _comparer;
 
-			public Comparer(Comparison<T> comparer)
+			public Comparer(Func<T, T, int> comparer)
 			{
 				if (comparer == null)
 					throw new ArgumentNullException("comparer");
@@ -73,15 +73,15 @@
 
 		public static IComparer<T> ToComparer<T>(this Func<T, T, int> comparer)
 		{
-			return comparer.ToComparison().ToComparer();
+			return new Comparer<T>(comparer);
 		}
 
 		public static IComparer<T> ToComparer<T>(this Comparison<T> comparer)
 		{
-			return new Comparer<T>(comparer);
+			return comparer.ToFunc().ToComparer();
 		}
 
-		public static Comparison<T> ToComparison<T>(this Func<T, T, int> comparer)
+		public static Func<T, T, int> ToFunc<T>(this Comparison<T> comparer)
 		{
 			return (t1, t2) => comparer(t1, t2);
 		}
@@ -93,7 +93,7 @@
 
 		public static IOrderedEnumerable<T> OrderBy<T>(this IEnumerable<T> collection, Comparison<T> comparison)
 		{
-			return collection.OrderBy(item => item, new Comparer<T>(comparison));
+			return collection.OrderBy(item => item, comparison.ToComparer());
 		}
 
 		public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
