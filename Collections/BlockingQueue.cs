@@ -77,14 +77,14 @@
 			}
 		}
 
-		public void Enqueue(T item)
+		public void Enqueue(T item, bool force = false)
 		{
 			lock (_syncRoot)
 			{
 				if (_isClosed)
 					return;
 
-				if (_maxSize != -1)
+				if (!force && _maxSize != -1)
 				{
 					if (_queue.Count >= _maxSize)
 						WaitWhileFull();
