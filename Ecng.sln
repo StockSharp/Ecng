@@ -98,7 +98,7 @@ Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 40
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://tfs.stocksharp.com:8080/tfs/defaultcollection
+		SccTeamFoundationServer = https://stocksharp.visualstudio.com/defaultcollection
 		SccLocalPath0 = .
 		SccProjectUniqueName1 = Collections\\Collections.csproj
 		SccProjectName1 = Collections
