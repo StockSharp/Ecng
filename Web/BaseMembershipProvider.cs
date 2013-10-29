@@ -294,7 +294,7 @@ namespace Ecng.Web
 
 		protected virtual Secret CreateSecret(string plainText, byte[] salt)
 		{
-			return new Secret(plainText.To<byte[]>(), CryptoAlgorithm, salt);
+			return new Secret(plainText.To<byte[]>(), salt, CryptoAlgorithm);
 		}
 
 		public override string GetUserNameByEmail(string email)

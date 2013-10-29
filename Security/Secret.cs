@@ -1,4 +1,3 @@
-
 namespace Ecng.Security
 {
 	using System;
@@ -14,6 +13,7 @@ namespace Ecng.Security
 		/// Initializes a new instance of the <see cref="Secret"/> class.
 		/// </summary>
 		public Secret()
+			: this(CryptoAlgorithm.Create(AlgorithmTypes.Hash))
 		{
 		}
 
@@ -23,7 +23,7 @@ namespace Ecng.Security
 		/// <param name="passwordBytes"></param>
 		/// <param name="salt">The salt.</param>
 		public Secret(byte[] passwordBytes, byte[] salt)
-			: this(passwordBytes, CryptoAlgorithm.Create(AlgorithmTypes.Hash), salt)
+			: this(passwordBytes, salt, CryptoAlgorithm.Create(AlgorithmTypes.Hash))
 		{
 		}
 
@@ -31,22 +31,27 @@ namespace Ecng.Security
 		/// Initializes a new instance of the <see cref="Secret"/> class.
 		/// </summary>
 		/// <param name="passwordBytes"></param>
-		/// <param name="algo"> </param>
 		/// <param name="salt">The salt.</param>
-		public Secret(byte[] passwordBytes, CryptoAlgorithm algo, byte[] salt)
+		/// <param name="algo"> </param>
+		public Secret(byte[] passwordBytes, byte[] salt, CryptoAlgorithm algo)
+			: this(algo)
 		{
 			if (passwordBytes == null)
 				throw new ArgumentNullException("passwordBytes");
 
-			if (algo == null)
-				throw new ArgumentNullException("algo");
-
 			if (salt == null)
 				throw new ArgumentNullException("salt");
 
-			Algo = algo;
 			Hash = algo.Encrypt(passwordBytes);
 			Salt = salt;
+		}
+
+		private Secret(CryptoAlgorithm algo)
+		{
+			if (algo == null)
+				throw new ArgumentNullException("algo");
+
+			Algo = algo;
 		}
 
 		public const int DefaultPasswordSize = 128;
@@ -69,7 +74,7 @@ namespace Ecng.Security
 
 		public bool IsValid(byte[] passwordBytes)
 		{
-			return this == new Secret(passwordBytes, Algo, Salt);
+			return this == new Secret(passwordBytes, Salt, Algo);
 		}
 
 		protected override bool OnEquals(Secret other)
