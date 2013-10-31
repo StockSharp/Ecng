@@ -838,16 +838,10 @@
 				.Join(separator);
 		}
 
-		protected override void OnCopyingRowClipboardContent(DataGridRowClipboardEventArgs args)
+		protected override void OnCopyingRowClipboardContent(DataGridRowClipboardEventArgs e)
 		{
-			args.ClipboardRowContent.Clear();
-
-			var item = SelectedItem;
-
-			if (item == null)
-				return;
-
-			args.ClipboardRowContent.Add(new DataGridClipboardCellContent(item, null, GetText(item, "\t")));
+			e.ClipboardRowContent.Clear();
+			e.ClipboardRowContent.Add(new DataGridClipboardCellContent(e.Item, null, GetText(e.Item, "\t")));
 		}
 
 		private void ExportClipBoardText_OnClick(object sender, RoutedEventArgs e)
