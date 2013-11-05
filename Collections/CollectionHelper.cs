@@ -168,6 +168,11 @@
 			return retVal;
 		}
 
+		public static IEnumerable<T> Concat<T>(this IEnumerable<T> items, T item)
+		{
+			return items.Concat(new[] { item });
+		}
+
 		public static void AddRange<T>(this ICollection<T> source, IEnumerable<T> items)
 		{
 			if (source == null)

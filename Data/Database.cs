@@ -349,7 +349,7 @@ namespace Ecng.Data
 
 				return fields
 					.Where(f => f.IsInnerSchema())
-					.Select(field => GetField(field.Type.GetSchema().Fields, paramName, innerSchemaNameOverrides.Concat(new[] { field.InnerSchemaNameOverrides })))
+					.Select(field => GetField(field.Type.GetSchema().Fields, paramName, innerSchemaNameOverrides.Concat(field.InnerSchemaNameOverrides)))
 					.FirstOrDefault(f => f != null);
 			}
 		}
@@ -1055,7 +1055,7 @@ namespace Ecng.Data
 					var field1 = field;
 					var innerSchemaSource = GroupSource(
 						innerSchema.Fields.Where(f => !field1.InnerSchemaIgnoreFields.Contains(f.Name)),
-						input, innerSchemaNameOverrides.Concat(new[] { field.InnerSchemaNameOverrides }));
+						input, innerSchemaNameOverrides.Concat(field.InnerSchemaNameOverrides));
 
 					output.Add(new SerializationItem(field, innerSchemaSource));
 				}

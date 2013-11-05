@@ -7,6 +7,8 @@
 	using System.Reflection.Emit;
 	using System.Linq;
 
+	using Ecng.Collections;
+
 	#endregion
 
 	public class PropertyGenerator : BaseGenerator<PropertyBuilder>
@@ -42,7 +44,7 @@
 
 		public MethodGenerator CreateSetMethod(MethodAttributes methodAttrs, params Type[] additionalTypes)
 		{
-			var generator = _typeGenerator.CreateMethod("set_" + Builder.Name, methodAttrs, typeof(void), additionalTypes.Concat(new[] { Builder.PropertyType }).ToArray());
+			var generator = _typeGenerator.CreateMethod("set_" + Builder.Name, methodAttrs, typeof(void), additionalTypes.Concat(Builder.PropertyType).ToArray());
 			Builder.SetSetMethod((MethodBuilder)generator.Builder);
 			return generator;
 		}
