@@ -717,6 +717,7 @@
 
 		private void ScrollToEnd()
 		{
+			return;
 			var scroll = this.FindVisualChild<ScrollViewer>();
 			if (scroll != null)
 				scroll.ScrollToEnd();
