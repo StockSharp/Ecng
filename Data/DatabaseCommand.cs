@@ -2,10 +2,11 @@ namespace Ecng.Data
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Data;
 	using System.Data.Common;
+	using System.IO;
 	using System.Linq;
 #if DEBUG
+	using System.Data;
 	using System.Diagnostics;
 	using System.Text.RegularExpressions;
 #endif
@@ -186,6 +187,10 @@ namespace Ecng.Data
 				command.Parameters.Add(clone);
 
 				clone.Value = dict.TryGetValue(clone.ParameterName) ?? DBNull.Value;
+
+				// некоторые БД не умеют работать с потоками
+				if (clone.Value is Stream)
+					clone.Value = clone.Value.To<byte[]>();
 			}
 
 			return command;
