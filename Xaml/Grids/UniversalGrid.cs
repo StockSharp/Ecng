@@ -55,7 +55,6 @@
 			RowHeaderWidth = 0;
 
 			Loaded += UniversalGrid_Loaded;
-			AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(UniversalGrid_ScrollChanged));
 
 			var groupingColumns = new SynchronizedList<DataGridColumn>();
 			groupingColumns.Added += Group;
@@ -178,12 +177,6 @@
 		private static void AutoScrollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
 			var ctrl = d.FindLogicalChild<UniversalGrid>();
-			var autoScroll = (bool)e.NewValue;
-
-			if (autoScroll)
-				GuiDispatcher.GlobalDispatcher.AddPeriodicalAction(ctrl.ScrollToEnd);
-			else
-				GuiDispatcher.GlobalDispatcher.RemovePeriodicalAction(ctrl.ScrollToEnd);
 
 			ctrl.PropertyChanged.SafeInvoke(ctrl, "AutoScroll");
 		}
@@ -700,27 +693,11 @@
 		//	base.OnUnloadingRow(e);
 		//}
 
-		private void UniversalGrid_ScrollChanged(object sender, ScrollChangedEventArgs e)
-		{
-			if ((e.ExtentHeight - e.VerticalOffset - e.ViewportHeight).Abs() <= double.Epsilon)
-			{
-				AutoScroll = true;
-			}
-			else if (e.ExtentHeightChange < double.Epsilon)
-			{
-				AutoScroll = false;
-			}
-
-			//if (e.ExtentHeightChange > 0.0)
-			//	((ScrollViewer)e.OriginalSource).ScrollToEnd();
-		}
-
 		private void ScrollToEnd()
 		{
-			return;
 			var scroll = this.FindVisualChild<ScrollViewer>();
 			if (scroll != null)
-				scroll.ScrollToEnd();
+				scroll.ScrollToVerticalOffset(double.PositiveInfinity);
 		}
 
 		public virtual void Load(SettingsStorage storage)
@@ -1019,14 +996,17 @@
 
 		private void OnDataChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
-			if (_ddeQueue.IsClosed)
-				return;
-
 			switch (e.Action)
 			{
 				case NotifyCollectionChangedAction.Add:
 					if (e.NewItems != null)
 					{
+						if(AutoScroll)
+							ScrollToEnd();
+
+						if (_ddeQueue.IsClosed)
+							break;
+
 						foreach (var newItem in e.NewItems)
 							_ddeQueue.Enqueue(ToRow(newItem));
 					}
@@ -1038,7 +1018,12 @@
 				case NotifyCollectionChangedAction.Move:
 					break;
 				case NotifyCollectionChangedAction.Reset:
+				{
+					if (AutoScroll)
+						ScrollToEnd();
+
 					break;
+				}
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
