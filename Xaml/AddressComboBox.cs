@@ -24,7 +24,7 @@
 					throw new ArgumentNullException("title");
 
 				Address = address;
-				Title = title + " ({0})".Put(address);
+				Title = title + " ({0})".Put(address.To<string>());
 			}
 
 			public EndPoint Address { get; set; }
