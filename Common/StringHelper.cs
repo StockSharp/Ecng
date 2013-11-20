@@ -597,5 +597,15 @@
 			// http://stackoverflow.com/questions/2281531/how-can-i-compare-directory-paths-in-c
 			return Path.GetFullPath(path1).TrimEnd('\\').CompareIgnoreCase(Path.GetFullPath(path2).TrimEnd('\\'));
 		}
+
+		public static bool Like(this string toSearch, string toFind, bool ignoreCase = true)
+		{
+			var option = RegexOptions.Singleline;
+
+			if (ignoreCase)
+				option = RegexOptions.IgnoreCase;
+
+			return new Regex(@"\A" + new Regex(@"\.|\$|\^|\{|\[|\(|\||\)|\*|\+|\?|\\").Replace(toFind, ch => @"\" + ch).Replace('_', '.').Replace("%", ".*") + @"\z", option).IsMatch(toSearch);
+		}
 	}
 }
