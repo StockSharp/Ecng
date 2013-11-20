@@ -538,7 +538,7 @@
 			{
 				if (_bulkInitialized)
 				{
-					IEnumerable<TEntity> source = CachedEntities.Values;
+					IEnumerable<TEntity> source = CachedEntities.SyncGet(d => d.Values.ToArray());
 
 					if (orderBy != null)
 					{
