@@ -749,6 +749,16 @@
 			return dt.ToString(format, CultureInfo.InvariantCulture);
 		}
 
+		public static TimeSpan ToTimeSpan(this string value, string format)
+		{
+			return TimeSpan.ParseExact(value, format, CultureInfo.InvariantCulture);
+		}
+
+		public static string ToTimeSpan(this TimeSpan ts, string format)
+		{
+			return ts.ToString(format, CultureInfo.InvariantCulture);
+		}
+
 		public static readonly DateTime GregorianStart = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
 		public static void AddAlias(Type type, string name)
