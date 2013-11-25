@@ -74,6 +74,7 @@
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="BackwardComparer.cs" />
+    <Compile Include="BaseBlockingQueue.cs" />
     <Compile Include="BaseEnumerator.cs" />
     <Compile Include="BaseListEx.cs" />
     <Compile Include="BaseCollection.cs" />
