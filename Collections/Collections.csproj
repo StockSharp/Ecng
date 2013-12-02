@@ -97,6 +97,7 @@
     <Compile Include="BlockingQueue.cs" />
     <Compile Include="ListEx.cs" />
     <Compile Include="ModifiedEnumerable.cs" />
+    <Compile Include="OrderedPriorityQueue.cs" />
     <Compile Include="PriorityQueue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueueEx.cs" />
