@@ -93,7 +93,7 @@
 
 		public static T JoinMask<T>()
 		{
-			return Enumerator.GetValues<T>().JoinMask();
+			return GetValues<T>().JoinMask();
 		}
 
 		public static T JoinMask<T>(this IEnumerable<T> values)

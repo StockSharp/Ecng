@@ -219,16 +219,23 @@
 						retVal = addr.GetAddressBytes();
 					else if (destinationType == typeof(long))
 					{
-						if (addr.AddressFamily == AddressFamily.InterNetworkV6)
-							retVal = addr.ScopeId;
-						else if (addr.AddressFamily == AddressFamily.InterNetwork)
+						switch (addr.AddressFamily)
 						{
-							var byteIp = addr.GetAddressBytes();
-							retVal = ((((byteIp[3] << 0x18) | (byteIp[2] << 0x10)) | (byteIp[1] << 8)) | byteIp[0]) & (0xffffffff);
-							//retVal = BitConverter.ToInt32(addr.GetAddressBytes(), 0);
+							case AddressFamily.InterNetworkV6:
+							{
+								retVal = addr.ScopeId;
+								break;
+							}
+							case AddressFamily.InterNetwork:
+							{
+								var byteIp = addr.GetAddressBytes();
+								retVal = ((((byteIp[3] << 0x18) | (byteIp[2] << 0x10)) | (byteIp[1] << 8)) | byteIp[0]) & (0xffffffff);
+								//retVal = BitConverter.ToInt32(addr.GetAddressBytes(), 0);
+								break;
+							}
+							default:
+								throw new ArgumentException("Can't convert IPAddress to long.", "value");
 						}
-						else
-							throw new ArgumentException("Can't convert IPAddress to long.", "value");
 					}
 					else
 						throw new ArgumentException("Can't convert IPAddress to type '{0}'.".Put(destinationType), "value");
@@ -544,7 +551,7 @@
 							((bytes[0] | (bytes[1] << 8)) | (bytes[2] << 0x10)) | (bytes[3] << 0x18), //lo
 							((bytes[4] | (bytes[5] << 8)) | (bytes[6] << 0x10)) | (bytes[7] << 0x18), //mid
 							((bytes[8] | (bytes[9] << 8)) | (bytes[10] << 0x10)) | (bytes[11] << 0x18), //hi
-							((bytes[12] | (bytes[13] << 8)) | (bytes[14] << 0x10)) | (bytes[15] << 0x18), //flags
+							((bytes[12] | (bytes[13] << 8)) | (bytes[14] << 0x10)) | (bytes[15] << 0x18) //flags
 						};
 
 						return new decimal(bits);
@@ -681,6 +688,8 @@
 				}
 				else if (value is XmlNode && destinationType == typeof(string))
 					retVal = ((XmlNode)value).OuterXml;
+				else if (value is string && destinationType == typeof(decimal))
+					retVal = decimal.Parse((string)value, NumberStyles.Any, null);
 				else
 				{
 					var attr = destinationType.GetAttribute<TypeConverterAttribute>();
