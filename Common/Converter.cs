@@ -741,16 +741,25 @@
 			return (T)To(value, typeof(T));
 		}
 
-		public static T? ToEnumNullable<T>(this string s) where T : struct
-		{
-			if (s.IsEmpty()) return null;
+		//public static T? ToEnumNullable<T>(this string s)
+		//	where T : struct
+		//{
+		//	if (s.IsEmpty())
+		//		return null;
 
-			return s.To<T>();
-		}
+		//	return s.To<T>();
+		//}
 
 		public static DateTime ToDateTime(this string value, string format)
 		{
-			return DateTime.ParseExact(value, format, CultureInfo.InvariantCulture);
+			try
+			{
+				return DateTime.ParseExact(value, format, CultureInfo.InvariantCulture);
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidCastException("Cannot convert {0} with format {1} to DateTime.".Put(value, format), ex);
+			}
 		}
 
 		public static string FromDateTime(this DateTime dt, string format)
@@ -760,7 +769,14 @@
 
 		public static TimeSpan ToTimeSpan(this string value, string format)
 		{
-			return TimeSpan.ParseExact(value, format, CultureInfo.InvariantCulture);
+			try
+			{
+				return TimeSpan.ParseExact(value, format, CultureInfo.InvariantCulture);
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidCastException("Cannot convert {0} with format {1} to TimeSpan.".Put(value, format), ex);
+			}
 		}
 
 		public static string ToTimeSpan(this TimeSpan ts, string format)
