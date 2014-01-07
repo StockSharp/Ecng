@@ -59,6 +59,9 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MoreLinq">
+      <HintPath>..\Referencies\MoreLinq.dll</HintPath>
+    </Reference>
     <Reference Include="PowerCollections, Version=1.0.2224.30206, Culture=neutral, PublicKeyToken=8d05ee679e87a45f, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Referencies\PowerCollections.dll</HintPath>

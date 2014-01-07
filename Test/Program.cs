@@ -3,6 +3,9 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Diagnostics;
+	using System.Drawing;
+	using System.Drawing.Drawing2D;
+	using System.Drawing.Imaging;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -34,6 +37,8 @@
 	using Microsoft.Practices.Unity.Configuration;
 
 	using Wintellect.PowerCollections;
+
+	using Rectangle = System.Windows.Shapes.Rectangle;
 
 	class TestEntity
 	{
@@ -78,7 +83,8 @@
 
 	enum F1 : long
 	{
-		
+		[Value("")]
+		F,
 	}
 
 	class Program
@@ -120,8 +126,41 @@
 			void Method1();
 		}
 
+
+
 		static void Main()
 		{
+			Console.WriteLine(new XmlSerializer<Type[]>().Deserialize(new XmlSerializer<Type[]>().Serialize(new[] { typeof(int) }))[0]);
+			return;
+			var body = File.ReadAllBytes("csharp.jpg").To<Stream>();
+			var srcImage = new Bitmap(body);
+
+			var coeff = (double)srcImage.Width / 500;
+
+			if (coeff <= 1)
+				coeff = (double)srcImage.Height / 500;
+
+			var newWidth = (int)(srcImage.Width / coeff);
+			var newHeight = (int)(srcImage.Height / coeff);
+
+			Bitmap newImage = new Bitmap(newWidth, newHeight);
+			using (Graphics gr = Graphics.FromImage(newImage))
+			{
+				gr.SmoothingMode = SmoothingMode.HighQuality;
+				gr.InterpolationMode = InterpolationMode.HighQualityBicubic;
+				gr.PixelOffsetMode = PixelOffsetMode.HighQuality;
+				gr.DrawImage(srcImage, new System.Drawing.Rectangle(0, 0, newWidth, newHeight));
+			}
+
+			body = new MemoryStream();
+			newImage.Save(body, ImageFormat.Png);
+
+			File.WriteAllBytes("csharp2.png", body.To<byte[]>());
+
+			Console.WriteLine("{0}x{1}", newImage.Width, newImage.Height);
+
+			return;
+
 			var root = new object();
 
 			Console.WriteLine(Watch.Do(() =>

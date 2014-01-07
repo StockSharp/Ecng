@@ -45,6 +45,9 @@
     <Reference Include="ClrPatch">
       <HintPath>..\Referencies\ClrPatch.dll</HintPath>
     </Reference>
+    <Reference Include="MoreLinq">
+      <HintPath>..\Referencies\MoreLinq.dll</HintPath>
+    </Reference>
     <Reference Include="Ookii.Dialogs.Wpf">
       <HintPath>..\Referencies\Ookii.Dialogs.Wpf.dll</HintPath>
     </Reference>
@@ -63,6 +66,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />

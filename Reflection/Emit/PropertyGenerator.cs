@@ -1,15 +1,15 @@
 ﻿namespace Ecng.Reflection.Emit
 {
-	#region Using Directives
-
 	using System;
 	using System.Reflection;
 	using System.Reflection.Emit;
 	using System.Linq;
 
+#if SILVERLIGHT
 	using Ecng.Collections;
-
-	#endregion
+#else
+	using MoreLinq;
+#endif
 
 	public class PropertyGenerator : BaseGenerator<PropertyBuilder>
 	{

@@ -17,6 +17,8 @@ namespace Ecng.Data
 	using Ecng.Data.Sql;
 	using Ecng.Transactions;
 
+	using MoreLinq;
+
 	using Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations;
 	using Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation;
 	using Microsoft.Practices.EnterpriseLibrary.Caching;

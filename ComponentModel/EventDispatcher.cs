@@ -5,6 +5,8 @@
 	using Ecng.Common;
 	using Ecng.Collections;
 
+	using MoreLinq;
+
 	public class EventDispatcher : Disposable
 	{
 		private readonly Action<Exception> _errorHandler;

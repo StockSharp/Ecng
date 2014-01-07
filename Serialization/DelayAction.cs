@@ -8,6 +8,10 @@
 	using Ecng.Collections;
 	using Ecng.Common;
 
+#if !SILVERLIGHT
+	using MoreLinq;
+#endif
+
 	public class DelayAction
 	{
 		private class Item

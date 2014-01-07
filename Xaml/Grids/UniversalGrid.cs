@@ -23,6 +23,8 @@
 	using Ecng.Serialization;
 	using Ecng.Xaml.Converters;
 
+	using MoreLinq;
+
 	using Ookii.Dialogs.Wpf;
 
 	using Wintellect.PowerCollections;
