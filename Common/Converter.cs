@@ -750,6 +750,14 @@
 		//	return s.To<T>();
 		//}
 
+		public static DateTime? TryToDateTime(this string value, string format)
+		{
+			if (value.IsEmpty())
+				return null;
+
+			return value.ToDateTime(format);
+		}
+
 		public static DateTime ToDateTime(this string value, string format)
 		{
 			try
@@ -765,6 +773,14 @@
 		public static string FromDateTime(this DateTime dt, string format)
 		{
 			return dt.ToString(format, CultureInfo.InvariantCulture);
+		}
+
+		public static TimeSpan? TryToTimeSpan(this string value, string format)
+		{
+			if (value.IsEmpty())
+				return null;
+
+			return value.ToTimeSpan(format);
 		}
 
 		public static TimeSpan ToTimeSpan(this string value, string format)

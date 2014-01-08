@@ -33,25 +33,22 @@
 		}
 #endif
 
-		public static string[] Split(this string str)
+		public static string[] Split(this string str, bool removeEmptyEntries = true)
 		{
-			return str.Split(Environment.NewLine);
+			return str.Split(Environment.NewLine, removeEmptyEntries);
 		}
 
-		public static string[] Split(this string str, string separator)
+		public static string[] Split(this string str, string separator, bool removeEmptyEntries = true)
 		{
 			if (str.IsEmpty())
 				throw new ArgumentNullException("str");
 
-			return str.Split(new[] { separator }, StringSplitOptions.RemoveEmptyEntries);
+			return str.Split(new[] { separator }, removeEmptyEntries ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
 		}
 
-		public static string[] CommaSplit(this string value)
+		public static string[] SplitByComma(this string str, string comma = ",", bool removeEmptyEntries = false)
 		{
-			if (value == null)
-				throw new ArgumentNullException("value");
-
-			return value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+			return str.Split(comma, removeEmptyEntries);
 		}
 
 		public static int LastIndexOf(this StringBuilder builder, char value)
