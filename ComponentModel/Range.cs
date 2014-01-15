@@ -327,10 +327,10 @@ namespace Ecng.ComponentModel
 			_max.Value = max;
 		}
 
-		private void ValidateBounds(T min, T max)
+		private static void ValidateBounds(T min, T max)
 		{
 			if (min.CompareTo(max) > 0)
-				throw new ArgumentOutOfRangeException("min");
+				throw new ArgumentOutOfRangeException("min", "Min value {0} is more than max value {1}.".Put(min, max));
 		}
 	}
 }
