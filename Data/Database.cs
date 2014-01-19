@@ -6,7 +6,9 @@ namespace Ecng.Data
 	using System.Data;
 	using System.Data.Common;
 	using System.Diagnostics;
+	using System.Globalization;
 	using System.IO;
+	using System.Threading;
 	using System.Web.UI.WebControls;
 	using System.Linq;
 	using System.Text.RegularExpressions;
@@ -121,6 +123,8 @@ namespace Ecng.Data
 			CommandType = CommandType.Text;
 			Cache = new Cache(new NullBackingStore(), new CachingInstrumentationProvider("Database cache", false, false, "database"));
 
+			CultureInfo = Thread.CurrentThread.CurrentCulture;
+
 			SupportParallelBatch = true;
 		}
 
@@ -183,6 +187,8 @@ namespace Ecng.Data
 				_cache = value;
 			}
 		}
+
+		public CultureInfo CultureInfo { get; set; }
 
 		private Type _serializerType = typeof(BinarySerializer<>);
 
@@ -1035,7 +1041,7 @@ namespace Ecng.Data
 		{
 		}
 
-		private static SerializationItemCollection GroupSource(IEnumerable<Field> fields, SerializationItemCollection input, IEnumerable<PairSet<string, string>> innerSchemaNameOverrides)
+		private SerializationItemCollection GroupSource(IEnumerable<Field> fields, SerializationItemCollection input, IEnumerable<PairSet<string, string>> innerSchemaNameOverrides)
 		{
 			if (fields == null)
 				throw new ArgumentNullException("fields");
@@ -1087,12 +1093,12 @@ namespace Ecng.Data
 
 							if (value is IList<object>)
 							{
-								value = ((IList<object>)value).AsParallel().Select(v =>
+								value = ((IList<object>)value).AsParallel().Select(v => CultureInfo.DoInCulture(() =>
 								{
 									var source = new SerializationItemCollection();
-									serializer.Deserialize(serializer.Encoding.GetBytes((string)v).To<Stream>(), source);
+									serializer.Deserialize(serializer.Encoding.GetBytes((string) v).To<Stream>(), source);
 									return source;
-								}).ToList();
+								})).ToList();
 							}
 							else
 							{
