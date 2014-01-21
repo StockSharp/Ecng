@@ -6,34 +6,29 @@
 	using System.Drawing;
 	using System.IO;
 	using System.Linq;
-
-	using NPOI.HSSF.Record;
-	using NPOI.SS.Util;
-
 	using Color = System.Windows.Media.Color;
 
 	using Ecng.Common;
 	using Ecng.Collections;
-	using Ecng.Reflection;
 
-	using NPOI.HSSF.UserModel;
-	using NPOI.HSSF.Util;
+	using NPOI.XSSF.UserModel;
 	using NPOI.SS.UserModel;
+	using NPOI.SS.Util;
 
 	public class ExcelWorker : Disposable
 	{
-		private static readonly SynchronizedPairSet<Color, short> _colors = new SynchronizedPairSet<Color, short>();
+		//private static readonly SynchronizedPairSet<Color, short> _colors = new SynchronizedPairSet<Color, short>();
 
-		static ExcelWorker()
-		{
-			var colors = typeof(HSSFColor).GetValue<VoidType, HSSFColor[]>("GetAllColors", null);
+		//static ExcelWorker()
+		//{
+		//	var colors = typeof(XSSFColor).GetValue<VoidType, XSSFColor[]>("GetAllColors", null);
 
-			foreach (var color in colors)
-			{
-				var rgb = color.GetTriplet();
-				_colors.Add(Color.FromRgb((byte)rgb[0], (byte)rgb[1], (byte)rgb[2]), color.GetIndex());
-			}
-		}
+		//	foreach (var color in colors)
+		//	{
+		//		var rgb = color.GetTriplet();
+		//		_colors.Add(Color.FromRgb((byte)rgb[0], (byte)rgb[1], (byte)rgb[2]), color.GetIndex());
+		//	}
+		//}
 
 		private ISheet _currentSheet;
 		private string _fileName;
@@ -45,7 +40,7 @@
 		/// </summary>
 		public ExcelWorker()
 		{
-			Workbook = new HSSFWorkbook();
+			Workbook = new XSSFWorkbook();
 			_currentSheet = Workbook.CreateSheet();
 		}
 
@@ -59,7 +54,7 @@
 			if (name.IsEmpty())
 				throw new ArgumentOutOfRangeException("name");
 
-			Workbook = new HSSFWorkbook(new FileStream(name, FileMode.Open, readOnly ? FileAccess.Read : FileAccess.ReadWrite));
+			Workbook = new XSSFWorkbook(new FileStream(name, FileMode.Open, readOnly ? FileAccess.Read : FileAccess.ReadWrite));
 		}
 
 		[CLSCompliant(false)]
@@ -195,15 +190,16 @@
 
 		public ExcelWorker SetConditionalFormatting(int colStart, int rowStart, int colEnd, int rowEnd, Ecng.ComponentModel.ComparisonOperator comparison, string formula1, string formula2, Color? bgColor, Color? fgColor)
 		{
-			var hscf = ((HSSFSheet)_currentSheet).SheetConditionalFormatting;
+			var hscf = _currentSheet.SheetConditionalFormatting;
 
 			var rule = hscf.CreateConditionalFormattingRule(ToExcelOperator(comparison), formula1, formula2);
 
-			if (bgColor != null)
-				rule.CreatePatternFormatting().FillBackgroundColor = _colors[(Color)bgColor];
+			// TODO
+			//if (bgColor != null)
+			//	rule.CreatePatternFormatting().FillBackgroundColor = _colors[(Color)bgColor];
 
-			if (fgColor != null)
-				rule.CreateFontFormatting().FontColorIndex = _colors[(Color)fgColor];
+			//if (fgColor != null)
+			//	rule.CreateFontFormatting().FontColorIndex = _colors[(Color)fgColor];
 
 			hscf.AddConditionalFormatting(new[] { new CellRangeAddress(rowStart, rowEnd, colStart, colEnd) }, new[] { rule });
 
@@ -215,19 +211,19 @@
 			switch (comparison)
 			{
 				case ComponentModel.ComparisonOperator.Equal:
-					return ComparisonOperator.EQUAL;
+					return ComparisonOperator.Equal;
 				case ComponentModel.ComparisonOperator.NotEqual:
-					return ComparisonOperator.NOT_EQUAL;
+					return ComparisonOperator.NotEqual;
 				case ComponentModel.ComparisonOperator.Greater:
-					return ComparisonOperator.GT;
+					return ComparisonOperator.GreaterThan;
 				case ComponentModel.ComparisonOperator.GreaterOrEqual:
-					return ComparisonOperator.GE;
+					return ComparisonOperator.GreaterThanOrEqual;
 				case ComponentModel.ComparisonOperator.Less:
-					return ComparisonOperator.LT;
+					return ComparisonOperator.LessThan;
 				case ComponentModel.ComparisonOperator.LessOrEqual:
-					return ComparisonOperator.LE;
+					return ComparisonOperator.LessThanOrEqual;
 				case ComponentModel.ComparisonOperator.Any:
-					return ComparisonOperator.NO_COMPARISON;
+					return ComparisonOperator.NoComparison;
 				default:
 					throw new ArgumentOutOfRangeException("comparison");
 			}
@@ -243,15 +239,15 @@
 		public ExcelWorker SetBackColor(int col, int row, Color color)
 		{
 			var cell = InternalGetCell(col, row);
-			var style = Workbook.CreateCellStyle();
-			style.FillBackgroundColor = _colors[color];
+			var style = (XSSFCellStyle)Workbook.CreateCellStyle();
+			style.FillBackgroundColorColor = ToExcelColor(color);
 			cell.CellStyle = style;
 			return this;
 		}
 
 		public Color GetBackColor(int col, int row)
 		{
-			return _colors[InternalGetCell(col, row).CellStyle.FillBackgroundColor];
+			return ToWpfColor((XSSFColor)InternalGetCell(col, row).CellStyle.FillBackgroundColorColor);
 		}
 
 		/// <summary>
@@ -286,17 +282,30 @@
 		public ExcelWorker SetForeColor(int col, int row, Color color)
 		{
 			var cell = InternalGetCell(col, row);
-			var style = Workbook.CreateCellStyle();
-			var font = Workbook.CreateFont();
-			font.Color = _colors[color];
-			style.SetFont(font);
+			var style = (XSSFCellStyle)Workbook.CreateCellStyle();
+			style.FillForegroundColorColor = ToExcelColor(color);
 			cell.CellStyle = style;
 			return this;
 		}
 
 		public Color GetForeColor(int col, int row)
 		{
-			return _colors[InternalGetCell(col, row).CellStyle.GetFont(Workbook).Color];
+			var color = (XSSFColor)InternalGetCell(col, row).CellStyle.FillForegroundColorColor;
+			return ToWpfColor(color);
+		}
+
+		private static IColor ToExcelColor(Color color)
+		{
+			return new XSSFColor(new[] { color.R, color.G, color.B });
+		}
+
+		private static Color ToWpfColor(XSSFColor color)
+		{
+			if (color == null)
+				throw new ArgumentNullException("color");
+
+			var argb = color.GetARgb();
+			return Color.FromArgb(argb[0], argb[1], argb[2], argb[3]);
 		}
 
 		/// <summary>
@@ -333,7 +342,8 @@
 				var style = _currentSheet.Workbook.CreateCellStyle();
 
 				// check if this is a built-in format
-				var builtinFormatId = HSSFDataFormat.GetBuiltinFormat(dataFormat);
+				// TODO
+				var builtinFormatId = (short)-1;//XSSFDataFormat.GetBuiltinFormat(dataFormat);
 
 				if (builtinFormatId != -1)
 				{
@@ -476,17 +486,17 @@
 				{
 					case CellType.Unknown:
 						return cell.RichStringCellValue.To<T>();
-					case CellType.NUMERIC:
+					case CellType.Numeric:
 						return cell.NumericCellValue.To<T>();
-					case CellType.STRING:
+					case CellType.String:
 						return cell.StringCellValue.To<T>();
-					case CellType.FORMULA:
+					case CellType.Formula:
 						return cell.CellFormula.To<T>();
-					case CellType.BLANK:
+					case CellType.Blank:
 						return default(T);
-					case CellType.BOOLEAN:
+					case CellType.Boolean:
 						return cell.BooleanCellValue.To<T>();
-					case CellType.ERROR:
+					case CellType.Error:
 						return cell.ErrorCellValue.To<T>();
 					default:
 						throw new ArgumentOutOfRangeException();
@@ -549,6 +559,15 @@
 			if (fileName.IsEmpty())
 				throw new ArgumentNullException("fileName");
 
+			for (var i = 0; i < Workbook.NumberOfSheets; i++)
+			{
+				var sheet = Workbook.GetSheetAt(i);
+
+				// TODO
+				for (var j = 0; j < 20; j++)
+					sheet.AutoSizeColumn(j);
+			}
+
 			using (var file = new FileStream(fileName, FileMode.Create))
 				Workbook.Write(file);
 
@@ -568,7 +587,7 @@
 
 		public ExcelWorker Protect(string password)
 		{
-			((HSSFSheet)_currentSheet).ProtectSheet(password);
+			_currentSheet.ProtectSheet(password);
 			return this;
 		}
 
@@ -578,15 +597,15 @@
 				throw new InvalidOperationException("Current sheet is empty.");
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		protected override void DisposeManaged()
-		{
-			//Workbook.Close();
-			//_excelEngine.Dispose();
-			Workbook.Dispose();
-			base.DisposeManaged();
-		}
+		///// <summary>
+		///// 
+		///// </summary>
+		//protected override void DisposeManaged()
+		//{
+		//	//Workbook.Close();
+		//	//_excelEngine.Dispose();
+		//	Workbook.Dispose();
+		//	base.DisposeManaged();
+		//}
 	}
 }
