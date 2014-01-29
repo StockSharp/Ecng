@@ -13,9 +13,12 @@
 	/// </summary>
 	public class AddressComboBox : ComboBox
 	{
-		private sealed class ComboItem
+		/// <summary>
+		/// Элемент списка <see cref="AddressComboBox"/>.
+		/// </summary>
+		public class ComboItem
 		{
-			public ComboItem(EndPoint address, string title)
+			internal ComboItem(EndPoint address, string title)
 			{
 				if (address == null)
 					throw new ArgumentNullException("address");
@@ -27,8 +30,15 @@
 				Title = title + " ({0})".Put(address.To<string>());
 			}
 
-			public EndPoint Address { get; set; }
-			public string Title { get; set; }
+			/// <summary>
+			/// Адрес.
+			/// </summary>
+			public EndPoint Address { get; private set; }
+
+			/// <summary>
+			/// Отображаемое имя.
+			/// </summary>
+			public string Title { get; private set; }
 		}
 
 		private readonly ObservableCollection<ComboItem> _items = new ObservableCollection<ComboItem>();
