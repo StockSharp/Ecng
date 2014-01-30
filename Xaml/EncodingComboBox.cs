@@ -74,7 +74,7 @@ namespace Ecng.Xaml
 	/// <summary>
 	/// <see cref="ITypeEditor"/> для <see cref="EncodingComboBox"/>.
 	/// </summary>
-	public class Level1FieldsComboBoxEditor : TypeEditor<EncodingComboBox>
+	public class EncodingComboBoxEditor : TypeEditor<EncodingComboBox>
 	{
 		/// <summary>
 		/// Установить <see cref="TypeEditor{T}.ValueProperty"/> значением <see cref="EncodingComboBox.SelectedEncodingProperty"/>.
