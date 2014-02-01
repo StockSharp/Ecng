@@ -37,9 +37,18 @@
 
 	public static class EnumDisplayNameAttributeExtensions
 	{
-		public static string GetDisplayName<T>(this T field)
+		public static string GetDisplayName(this object field)
 		{
-			var fieldInfo = typeof(T).GetField(field.ToString());
+			if (field == null)
+				throw new ArgumentNullException("field");
+
+			if (!(field is Enum))
+				throw new ArgumentException("field");
+
+			var fieldInfo = field.GetType().GetField(field.ToString());
+
+			if (fieldInfo == null)
+				throw new ArgumentException(field.ToString(), "field");
 
 			var name = fieldInfo.Name;
 

@@ -4,17 +4,39 @@
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Linq;
+	using System.Windows;
 	using System.Windows.Controls;
 
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 
-	public static class EnumComboBox
+	public class EnumComboBox : ComboBox
 	{
-		private static readonly Dictionary<Type, PairSet<object, string>> _names = new Dictionary<Type, PairSet<object, string>>();
-		private static readonly Dictionary<ComboBox, ObservableCollection<EnumerationMember>> _sources = new Dictionary<ComboBox,ObservableCollection<EnumerationMember>>();
+		/// <summary>
+		/// <see cref="DependencyProperty"/> для <see cref="EnumType"/>.
+		/// </summary>
+		public static readonly DependencyProperty EnumTypeProperty =
+			DependencyProperty.Register("EnumType", typeof(Type), typeof(EnumComboBox), new PropertyMetadata(EnumTypePropertyChanged));
 
+		private static void EnumTypePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		{
+			var ctrl = d as EnumComboBox;
+			if (ctrl == null)
+				return;
+
+			ctrl.SetDataSource((Type)e.NewValue);
+		}
+
+		public Type EnumType
+		{
+			get { return (Type)GetValue(EnumTypeProperty); }
+			set { SetValue(EnumTypeProperty, value); }
+		}
+	}
+
+	public static class EnumComboBoxHelper
+	{
 		public class EnumerationMember
 		{
 			public string Description { get; set; }
@@ -25,6 +47,9 @@
 				return Description;
 			}
 		}
+
+		private static readonly Dictionary<Type, PairSet<object, string>> _names = new Dictionary<Type, PairSet<object, string>>();
+		private static readonly Dictionary<ComboBox, ObservableCollection<EnumerationMember>> _sources = new Dictionary<ComboBox, ObservableCollection<EnumerationMember>>();
 
 		public static IEnumerable<T> GetDataSource<T>(this ComboBox comboBox)
 			where T : struct
@@ -38,11 +63,21 @@
 		public static void SetDataSource<T>(this ComboBox comboBox)
 			where T : struct
 		{
-			comboBox.SetDataSource(Enumerator.GetValues<T>());
+			comboBox.SetDataSource(typeof(T));
+		}
+
+		public static void SetDataSource(this ComboBox comboBox, Type enumType)
+		{
+			comboBox.SetDataSource(enumType, enumType.GetValues());
 		}
 
 		public static void SetDataSource<T>(this ComboBox comboBox, IEnumerable<T> dataSource)
 			where T : struct
+		{
+			comboBox.SetDataSource(typeof(T), dataSource.Cast<object>());
+		}
+
+		public static void SetDataSource(this ComboBox comboBox, Type enumType, IEnumerable<object> dataSource)
 		{
 			if (comboBox == null)
 				throw new ArgumentNullException("comboBox");
@@ -50,11 +85,11 @@
 			if (dataSource == null)
 				throw new ArgumentNullException("dataSource");
 
-			var set = _names.SafeAdd(typeof(T), key =>
+			var set = _names.SafeAdd(enumType, key =>
 			{
 				var retVal = new PairSet<object, string>();
 
-				foreach (var enumField in Enumerator.GetValues<T>())
+				foreach (var enumField in enumType.GetValues())
 					retVal.Add(enumField, enumField.GetDisplayName());
 
 				return retVal;
@@ -82,10 +117,15 @@
 		public static T? GetSelectedValue<T>(this ComboBox comboBox)
 			where T : struct
 		{
+			return (T?)comboBox.GetSelectedValue();
+		}
+
+		public static object GetSelectedValue(this ComboBox comboBox)
+		{
 			if (comboBox == null)
 				throw new ArgumentNullException("comboBox");
 
-			return comboBox.SelectedItem != null ? (T)((EnumerationMember)comboBox.SelectedItem).Value : (T?)null;
+			return comboBox.SelectedItem != null ? ((EnumerationMember)comboBox.SelectedItem).Value : null;
 		}
 
 		public static void SetSelectedValue<T>(this ComboBox comboBox, T? value)
