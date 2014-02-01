@@ -121,7 +121,7 @@
 		}
 
 		public static readonly DependencyProperty ItemsSourceProperty =
-			DependencyProperty.Register("ItemsSource", typeof(object), typeof(CheckComboBox), new UIPropertyMetadata(null));
+			DependencyProperty.Register("ItemsSource", typeof(object), typeof(CheckComboBox), new PropertyMetadata(null));
 
 		#endregion
 

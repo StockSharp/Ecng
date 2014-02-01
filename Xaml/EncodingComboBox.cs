@@ -41,7 +41,7 @@ namespace Ecng.Xaml
 		/// <see cref="DependencyProperty"/> для <see cref="SelectedEncoding"/>.
 		/// </summary>
 		public static readonly DependencyProperty SelectedEncodingProperty =
-			DependencyProperty.Register("SelectedEncoding", typeof(Encoding), typeof(EncodingComboBox), new UIPropertyMetadata(SelectedEncodingChanged));
+			DependencyProperty.Register("SelectedEncoding", typeof(Encoding), typeof(EncodingComboBox), new PropertyMetadata(SelectedEncodingChanged));
 
 		private static void SelectedEncodingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
