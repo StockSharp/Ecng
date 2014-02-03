@@ -55,6 +55,10 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PowerCollections, Version=1.0.2224.30206, Culture=neutral, PublicKeyToken=8d05ee679e87a45f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Referencies\PowerCollections.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -64,6 +68,7 @@
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="CsvLocalizer.cs" />
     <Compile Include="DisposableResourceManager.cs" />
     <Compile Include="LocalizationHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -92,6 +97,10 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Collections\Collections.csproj">
+      <Project>{62a4add9-9d89-48e6-984b-73bf023d7e50}</Project>
+      <Name>Collections</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
       <Name>Common</Name>

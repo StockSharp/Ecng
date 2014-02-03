@@ -10,8 +10,8 @@
 	using Ecng.Common;
 
 	#endregion
-    
-    public static class LocalizationHelper
+
+	public static class LocalizationHelper
 	{
 		#region GetResource
 
