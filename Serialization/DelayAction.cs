@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Globalization;
 	using System.Linq;
 	using System.Threading;
 
@@ -98,13 +99,7 @@
 			lock (_actions.SyncRoot)
 			{
 				_actions.Add(new Item(action, postAction, canBatch, breakBatchOnError));
-
-				if (!_isFlushing && _flushTimer == null)
-				{
-					_flushTimer = ThreadingHelper
-						.Timer(OnFlush)
-						.Interval(_flushInterval);
-				}
+				TryCreateTimer();
 			}
 		}
 
@@ -116,13 +111,17 @@
 			lock (_actions.SyncRoot)
 			{
 				_actions.Add(item);
+				TryCreateTimer();
+			}
+		}
 
-				if (!_isFlushing && _flushTimer == null)
-				{
-					_flushTimer = ThreadingHelper
-						.Timer(OnFlush)
-						.Interval(_flushInterval);
-				}
+		private void TryCreateTimer()
+		{
+			if (!_isFlushing && _flushTimer == null)
+			{
+				_flushTimer = ThreadingHelper
+					.Timer(() => CultureInfo.InvariantCulture.DoInCulture(OnFlush))
+					.Interval(_flushInterval);
 			}
 		}
 

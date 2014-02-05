@@ -123,7 +123,7 @@ namespace Ecng.Data
 			CommandType = CommandType.Text;
 			Cache = new Cache(new NullBackingStore(), new CachingInstrumentationProvider("Database cache", false, false, "database"));
 
-			CultureInfo = Thread.CurrentThread.CurrentCulture;
+			CultureInfo = CultureInfo.InvariantCulture;
 
 			SupportParallelBatch = true;
 		}
