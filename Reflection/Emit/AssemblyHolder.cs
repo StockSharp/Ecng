@@ -91,7 +91,7 @@ namespace Ecng.Reflection.Emit
 #if SILVERLIGHT
 						AssemblyBuilderAccess.Run;
 #else
-						(AssemblyHolder.NeedCache) ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run;
+						NeedCache ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run;
 #endif
 					_assembly = new AssemblyGenerator(new AssemblyName(Guid.NewGuid() + ".dll"), access, AssemblyHolder.AssemblyCachePath);
 				}
@@ -101,16 +101,16 @@ namespace Ecng.Reflection.Emit
 				{
 					lock (_initializeSync)
 					{
-						AssemblyHolder.CachedTypes.Add(e.Type);
+						CachedTypes.Add(e.Type);
 
-						if (AssemblyHolder.NeedCache)
+						if (NeedCache)
 						{
 							CompiledTypeCount++;
 
-							if (CompiledTypeCount > AssemblyHolder.CompiledTypeLimit)
+							if (CompiledTypeCount > CompiledTypeLimit)
 							{
 								var builder = (AssemblyBuilder)_assembly.Builder.Assembly;
-								builder.Save(builder.GetName().Name);
+								builder.Save(builder.GetName(false).Name);
 								_assembly = null;
 								CompiledTypeCount = 0;
 							}

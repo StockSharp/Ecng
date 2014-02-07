@@ -29,7 +29,11 @@ namespace Ecng.Common
 			}
 			else
 			{
+#if SILVERLIGHT
+				var dynMethod = new DynamicMethod("DM$OBJ_FACTORY_" + objType.Name, typeof(T), null);
+#else
 				var dynMethod = new DynamicMethod("DM$OBJ_FACTORY_" + objType.Name, objType, null, typeof(T), true);
+#endif
 				ILGenerator ilGen = dynMethod.GetILGenerator();
 				ilGen.Emit(OpCodes.Newobj, cinfo);
 				ilGen.Emit(OpCodes.Ret);

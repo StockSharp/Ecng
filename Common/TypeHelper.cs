@@ -213,7 +213,13 @@ namespace Ecng.Common
 			if (type == null)
 				throw new ArgumentNullException("type");
 
-			return isAssemblyQualifiedName ? type.AssemblyQualifiedName : "{0}, {1}".Put(type.FullName, type.Assembly.GetName().Name);
+			return isAssemblyQualifiedName ? type.AssemblyQualifiedName : "{0}, {1}".Put(type.FullName,
+#if SILVERLIGHT
+				new AssemblyName(type.Assembly.FullName).Name
+#else
+				type.Assembly.GetName().Name
+#endif
+			);
 		}
 	}
 }
