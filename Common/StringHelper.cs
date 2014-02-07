@@ -1,13 +1,21 @@
 ﻿namespace Ecng.Common
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
+	using System.Reflection;
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Threading;
+
+#if !SILVERLIGHT
+	using SmartFormat;
+	using SmartFormat.Core.Extensions;
+	using SmartFormat.Core.Parsing;
+#endif
 
 	public static class StringHelper
 	{
@@ -27,9 +35,68 @@
 		}
 
 #if !SILVERLIGHT
+		private class DictionarySourceEx : ISource
+		{
+			public void EvaluateSelector(object current, Selector selector, ref bool handled, ref object result, FormatDetails formatDetails)
+			{
+				var dictionary = current as IDictionary;
+
+				if (dictionary == null)
+					return;
+
+				var type = dictionary.GetType().GetGenericType(typeof(IDictionary<,>));
+
+				if (type == null)
+					return;
+
+				var key = selector.Text.To(type.GetGenericArguments()[0]);
+				result = dictionary[key];
+				handled = true;
+			}
+		}
+		static StringHelper()
+		{
+			Smart.Default.AddExtensions(new DictionarySourceEx());
+		}
+
 		public static string PutEx(this string str, params object[] args)
 		{
 			return SmartFormat.Smart.Format(str, args);
+		}
+
+		private static Type GetGenericType(this Type targetType, Type genericType)
+		{
+			if (targetType == null)
+				throw new ArgumentNullException("targetType");
+
+			if (genericType == null)
+				throw new ArgumentNullException("genericType");
+
+			if (!genericType.IsGenericTypeDefinition)
+				throw new ArgumentException("genericType");
+
+			if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == genericType)
+				return targetType;
+			else
+			{
+				if (genericType.IsInterface)
+				{
+					var findedInterfaces = targetType.GetInterfaces()
+						.Where(@interface => @interface.IsGenericType && @interface.GetGenericTypeDefinition() == genericType)
+						.ToList();
+
+					if (findedInterfaces.Count > 1)
+						throw new AmbiguousMatchException("Too many inerfaces was founded.");
+					else if (findedInterfaces.Count == 1)
+						return findedInterfaces[0];
+					else
+						return null;
+				}
+				else
+				{
+					return targetType.BaseType != null ? GetGenericType(targetType.BaseType, genericType) : null;
+				}
+			}
 		}
 #endif
 
