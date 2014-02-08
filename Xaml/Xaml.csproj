@@ -109,6 +109,12 @@
     <Compile Include="Converters\NullToVisibilityConvertor.cs" />
     <Compile Include="Converters\StringConverter.cs" />
     <Compile Include="Converters\VisibilityToBoolConverter.cs" />
+    <Compile Include="DatabaseConnectionComboBox.cs" />
+    <Compile Include="DatabaseConnectionStringCreateWindow.xaml.cs">
+      <DependentUpon>DatabaseConnectionStringCreateWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DatabaseConnectionEditor.cs" />
+    <Compile Include="DatabaseProviderComboBox.cs" />
     <Compile Include="EncodingComboBox.cs" />
     <Compile Include="Fonts\FontChooser.xaml.cs">
       <DependentUpon>FontChooser.xaml</DependentUpon>
@@ -183,6 +189,14 @@
       <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
       <Name>ComponentModel</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Data.Providers\Data.Providers.csproj">
+      <Project>{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}</Project>
+      <Name>Data.Providers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Data\Data.csproj">
+      <Project>{2FA3ACBD-8623-42D5-B5A5-F0DC2416F92A}</Project>
+      <Name>Data</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Interop\Interop.csproj">
       <Project>{6EACA7CE-0269-47A2-AE6A-3669738EE303}</Project>
       <Name>Interop</Name>
@@ -210,6 +224,10 @@
     <Page Include="CheckComboBox.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="DatabaseConnectionStringCreateWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

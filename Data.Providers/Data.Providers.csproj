@@ -48,11 +48,13 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="DatabaseProviderRegistry.cs" />
     <Compile Include="FirebirdRenderer.cs" />
     <Compile Include="JetRenderer.cs" />
     <Compile Include="MySqlRenderer.cs" />

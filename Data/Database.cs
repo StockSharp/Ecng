@@ -206,7 +206,7 @@ namespace Ecng.Data
 
 		public bool AllowDeleteAll { get; set; }
 
-		private DbConnection CreateConnection()
+		public DbConnection CreateConnection()
 		{
 			return Provider.CreateConnection(ConnectionString);
 		}
