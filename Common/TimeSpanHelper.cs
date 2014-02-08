@@ -1,6 +1,7 @@
 namespace Ecng.Common
 {
 	using System;
+	using System.Collections.Generic;
 
 	public static class TimeSpanHelper
 	{
@@ -99,6 +100,16 @@ namespace Ecng.Common
 		public static DateTime Truncate(this DateTime dateTime, TimeSpan timeSpan)
 		{
 			return dateTime.Truncate(timeSpan.Ticks);
+		}
+
+		public static IEnumerable<DateTime> Range(this DateTime from, DateTime to, TimeSpan interval)
+		{
+			while (from <= to)
+			{
+				yield return from;
+
+				from += interval;
+			}
 		}
 	}
 }
