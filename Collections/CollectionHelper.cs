@@ -847,7 +847,7 @@
 				_count = count;
 			}
 
-			int IEnumerableEx<T>.Count
+			int IEnumerableEx.Count
 			{
 				get { return _count; }
 			}
