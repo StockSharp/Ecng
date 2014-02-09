@@ -101,6 +101,7 @@
     <Compile Include="DataContractFieldFactory.cs" />
     <Compile Include="FileFieldFactory.cs" />
     <Compile Include="FormatterFieldFactory.cs" />
+    <Compile Include="GuidFieldFactory.cs" />
     <Compile Include="IpAddressFieldFactory.cs" />
     <Compile Include="LazyLoadFieldFactory.cs" />
     <Compile Include="LazyLoadObject.cs" />
