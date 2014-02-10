@@ -116,6 +116,7 @@
     <Compile Include="DatabaseConnectionEditor.cs" />
     <Compile Include="DatabaseProviderComboBox.cs" />
     <Compile Include="EncodingComboBox.cs" />
+    <Compile Include="Converters\EnumDisplayNameConverter.cs" />
     <Compile Include="Fonts\FontChooser.xaml.cs">
       <DependentUpon>FontChooser.xaml</DependentUpon>
     </Compile>
