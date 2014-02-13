@@ -34,6 +34,7 @@
 		private string _fileName;
 		private readonly Dictionary<int, HashSet<int>> _indecies = new Dictionary<int, HashSet<int>>();
 		private readonly Dictionary<string, ICellStyle> _cellStyleCache = new Dictionary<string, ICellStyle>();
+		private FileStream _stream;
 
 		/// <summary>
 		/// Create <see cref="ExcelWorker"/>.
@@ -54,7 +55,8 @@
 			if (name.IsEmpty())
 				throw new ArgumentOutOfRangeException("name");
 
-			Workbook = new XSSFWorkbook(new FileStream(name, FileMode.Open, readOnly ? FileAccess.Read : FileAccess.ReadWrite));
+			_stream = new FileStream(name, FileMode.Open, readOnly ? FileAccess.Read : FileAccess.ReadWrite);
+			Workbook = WorkbookFactory.Create(_stream);
 		}
 
 		[CLSCompliant(false)]
@@ -78,13 +80,13 @@
 		/// <returns>Exporter.</returns>
 		public ExcelWorker AddSheet(string sheetName)
 		{
-			if (!ContainsSheet(sheetName))
-			{
-				var sheet = Workbook.CreateSheet(sheetName);
+			if (ContainsSheet(sheetName))
+				return this;
 
-				if (_currentSheet == null)
-					_currentSheet = sheet;
-			}
+			var sheet = Workbook.CreateSheet(sheetName);
+
+			if (_currentSheet == null)
+				_currentSheet = sheet;
 
 			return this;
 		}
@@ -597,15 +599,18 @@
 				throw new InvalidOperationException("Current sheet is empty.");
 		}
 
-		///// <summary>
-		///// 
-		///// </summary>
-		//protected override void DisposeManaged()
-		//{
-		//	//Workbook.Close();
-		//	//_excelEngine.Dispose();
-		//	Workbook.Dispose();
-		//	base.DisposeManaged();
-		//}
+		/// <summary>
+		/// 
+		/// </summary>
+		protected override void DisposeManaged()
+		{
+			if (_stream != null)
+			{
+				_stream.Dispose();
+				_stream = null;
+			}
+
+			base.DisposeManaged();
+		}
 	}
 }
