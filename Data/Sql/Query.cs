@@ -398,6 +398,40 @@ namespace Ecng.Data.Sql
 			return AddAction((renderer, builder) => builder.AppendLine(" and "));
 		}
 
+		public Query Or()
+		{
+			return AddAction((renderer, builder) => builder.AppendLine(" or "));
+		}
+
+		public Query OpenBracket()
+		{
+			return AddAction((renderer, builder) => builder.AppendLine("("));
+		}
+
+		public Query CloseBracket()
+		{
+			return AddAction((renderer, builder) => builder.AppendLine(")"));
+		}
+
+		public Query Like(Field field)
+		{
+			return AddAction((renderer, builder) => builder.AppendLine("{0} like {1}".Put(renderer.FormatReserver(field.Name), renderer.FormatParameter(field.Name))));
+		}
+
+		#endregion
+
+		#region IsNull
+
+		public Query IsNull(Field field)
+		{
+			return AddAction((renderer, builder) => builder.AppendLine("{0} is null".Put(renderer.FormatReserver(field.Name))));
+		}
+
+		public Query IsParamNull(Field field)
+		{
+			return AddAction((renderer, builder) => builder.AppendLine("{0} is null".Put(renderer.FormatParameter(field.Name))));
+		}
+
 		#endregion
 
 		private static Query CreateQuery(Action<SqlRenderer, StringBuilder> action)
