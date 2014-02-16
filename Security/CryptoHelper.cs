@@ -13,7 +13,7 @@ namespace Ecng.Security
 
 	#endregion
 
-	public static class ProtectedKeyHelper
+	public static class CryptoHelper
 	{
 		public static byte[] ToBytes(this ProtectedKey key)
 		{
@@ -120,6 +120,16 @@ namespace Ecng.Security
 				Exponent = param.Exponent,
 				Modulus = param.Modulus,
 			};
+		}
+
+		public static byte[] GenerateSalt(int saltSize)
+		{
+			using (var saltGen = new RNGCryptoServiceProvider())
+			{
+				var salt = new byte[saltSize];
+				saltGen.GetBytes(salt);
+				return salt;	
+			}
 		}
 	}
 }

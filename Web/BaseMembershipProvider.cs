@@ -4,7 +4,6 @@ namespace Ecng.Web
 	using System.Collections.Generic;
 	using System.Collections.Specialized;
 	using System.ComponentModel;
-	using System.Security.Cryptography;
 	using System.Text.RegularExpressions;
 	using System.Web.Security;
 	using System.Linq;
@@ -280,16 +279,12 @@ namespace Ecng.Web
 			if (status != MembershipCreateStatus.Success)
 				return null;
 
-			return ConvertToMembershipUser(CreateUser(userName, CreateSecret(password, GenerateSalt()), email, passwordQuestion, RequiresQuestionAndAnswer ? CreateSecret(passwordAnswer, GenerateSalt()) : new Secret(), isApproved, providerUserKey));
+			return ConvertToMembershipUser(CreateUser(userName, CreateSecret(password), email, passwordQuestion, RequiresQuestionAndAnswer ? CreateSecret(passwordAnswer) : new Secret(), isApproved, providerUserKey));
 		}
 
-		private static readonly Lazy<RNGCryptoServiceProvider> _saltGen = new Lazy<RNGCryptoServiceProvider>(() => new RNGCryptoServiceProvider());
-
-		protected virtual byte[] GenerateSalt()
+		public Secret CreateSecret(string plainText)
 		{
-			var salt = new byte[SaltSize];
-			_saltGen.Value.GetBytes(salt);
-			return salt;
+			return CreateSecret(plainText, CryptoHelper.GenerateSalt(SaltSize));
 		}
 
 		protected virtual Secret CreateSecret(string plainText, byte[] salt)
@@ -429,7 +424,7 @@ namespace Ecng.Web
 
 			var newPassword = Membership.GeneratePassword(MinRequiredPasswordLength, MinRequiredNonAlphanumericCharacters);
 
-			user.Password = CreateSecret(newPassword, GenerateSalt());
+			user.Password = CreateSecret(newPassword);
 			user.LastPasswordChangedDate = DateTime.Now;
 
 			UpdateUser(user);
@@ -468,7 +463,7 @@ namespace Ecng.Web
 			if (user == null)
 				throw new ArgumentNullException("user");
 
-			user.Password = CreateSecret(password, GenerateSalt());
+			user.Password = CreateSecret(password);
 			user.LastPasswordChangedDate = DateTime.Now;
 
 			UpdateUser(user);
@@ -495,7 +490,7 @@ namespace Ecng.Web
 			}
 
 			user.PasswordQuestion = newPasswordQuestion;
-			user.PasswordAnswer = CreateSecret(newPasswordAnswer, GenerateSalt());
+			user.PasswordAnswer = CreateSecret(newPasswordAnswer);
 			user.LastPasswordChangedDate = DateTime.Now;
 
 			UpdateUser(user);

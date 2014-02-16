@@ -106,7 +106,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="ProtectedKeyHelper.cs" />
+    <Compile Include="CryptoHelper.cs" />
     <Compile Include="WindowsIdentityManager.cs" />
     <Compile Include="X509Cryptographer.cs" />
     <Compile Include="X509StoreEx.cs" />

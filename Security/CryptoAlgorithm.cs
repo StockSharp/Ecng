@@ -175,7 +175,7 @@ namespace Ecng.Security
 				case AlgorithmTypes.Symmetric:
 					return new[] { new SymmetricKeyGenerator().GenerateKey(type, DefaultScope) };
 				case AlgorithmTypes.Asymmetric:
-					var newParams = ProtectedKeyHelper.GenerateRsa();
+					var newParams = CryptoHelper.GenerateRsa();
 					return new[] { newParams.PublicPart().FromRsa(), newParams.FromRsa() };
 				case AlgorithmTypes.Dpapi:
 					return new ProtectedKey[0];
