@@ -13,6 +13,7 @@ namespace Ecng.Forum.Components
 	using Ecng.Configuration;
 	using Ecng.Forum.BusinessEntities;
 	using Ecng.Forum.Components.Configuration;
+	using Ecng.Logic.BusinessEntities;
 
 	#endregion
 
@@ -75,7 +76,7 @@ namespace Ecng.Forum.Components
 			//if (!type.IsSubclassOf(typeof(ForumBaseEntity)))
 			//	throw new ArgumentException("type");
 
-			_entityTypes.Add(type.Name + "Id", ForumHelper.GetIdentity(type));
+			_entityTypes.Add(type.Name + "Id", WebHelper.GetIdentity(type));
 		}
 	}
 }

@@ -1,34 +1,15 @@
 namespace Ecng.Logic.BusinessEntities
 {
 	using System;
-	using System.Linq;
 	using System.Reflection;
 	using System.Threading;
 
-	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Configuration;
 	using Ecng.Data;
 	using Ecng.Serialization;
 	using Ecng.Reflection;
 	using Ecng.Web;
-
-	public static class WebHelper
-	{
-		public static void Append<TEntity, TUser, TRole>(this QueryString queryString, TEntity entity)
-			where TEntity : BaseEntity<TUser, TRole>
-			where TUser : BaseUser<TUser, TRole>
-			where TRole : BaseRole<TUser, TRole>
-		{
-			if (queryString == null)
-				throw new ArgumentNullException("queryString");
-
-			if (entity == null)
-				throw new ArgumentNullException("entity");
-
-			queryString.Append(LogicHelper<TUser, TRole>.GetIdentity(entity.GetType()), entity.Id);
-		}
-	}
 
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
 	public class QueryStringIdAttribute : Attribute
@@ -45,8 +26,6 @@ namespace Ecng.Logic.BusinessEntities
 		where TUser : BaseUser<TUser, TRole>
 		where TRole : BaseRole<TUser, TRole>
 	{
-		private readonly static SynchronizedDictionary<Type, string> _identifiers = new SynchronizedDictionary<Type, string>();
-
 		#region GetRootObject
 
 		public static LogicRootObject<TUser, TRole> GetRootObject()
@@ -98,37 +77,12 @@ namespace Ecng.Logic.BusinessEntities
 			return new Scope<HierarchicalDatabaseContext>(new HierarchicalDatabaseContext(morph, schema, source));
 		}
 
-		public static string GetIdentity<T>()
-			where T : BaseEntity<TUser, TRole>
-		{
-			return GetIdentity(typeof(T));
-		}
-
-		public static string GetIdentity(Type type)
-		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-
-			return _identifiers.SafeAdd(type, delegate
-			{
-				var attr = type.GetAttribute<QueryStringIdAttribute>();
-
-				if (attr != null)
-					return attr.IdField;
-				else
-				{
-					var upperChars = type.Name.ToCharArray().Where(char.IsUpper).ToArray();
-					return new string(upperChars).ToLowerInvariant() + "id";
-				}
-			});
-		}
-
 		#region GetEntity
 
 		public static TEntity GetEntity<TEntity>()
 			where TEntity : BaseEntity<TUser, TRole>
 		{
-			return GetEntity<TEntity>(GetIdentity(typeof(TEntity)));
+			return GetEntity<TEntity>(WebHelper.GetIdentity<TEntity>());
 		}
 
 		public static TEntity GetEntity<TEntity>(string id)
@@ -152,16 +106,10 @@ namespace Ecng.Logic.BusinessEntities
 
 		#endregion
 
-		public static bool Contains<T>()
-			where T : BaseEntity<TUser, TRole>
-		{
-			return Url.Current.QueryString.Contains(GetIdentity(typeof(T)));
-		}
-
 		public static T GetOrCreateEntity<T>()
 			where T : BaseEntity<TUser, TRole>, new()
 		{
-			return Contains<T>() ? GetEntity<T>() : new T();
+			return WebHelper.Contains<T>() ? GetEntity<T>() : new T();
 		}
 	}
 }

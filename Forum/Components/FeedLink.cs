@@ -6,6 +6,7 @@
 
 	using Ecng.Common;
 	using Ecng.Forum.BusinessEntities;
+	using Ecng.Logic.BusinessEntities;
 	using Ecng.Web;
 
 	#endregion
@@ -49,7 +50,7 @@
 					if (value != null)
 					{
 						var baseUrl = _baseUrl.Clone();
-						baseUrl.QueryString.Append(ForumHelper.GetIdentity(value.GetType()), value.Id);
+						baseUrl.QueryString.Append(WebHelper.GetIdentity(value.GetType()), value.Id);
 						NavigateUrl = baseUrl.ToString();
 						ToolTip = "Subscribe on {0} message list".Put(value.GetType().Name.ToLower());
 						Text = value.GetType().Name.ToLower().Replace("link", string.Empty);

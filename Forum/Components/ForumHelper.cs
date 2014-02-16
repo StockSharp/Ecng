@@ -97,12 +97,6 @@ namespace Ecng.Forum.Components
 			GetIdentityUrl(entity).Redirect();
 		}
 
-		public static bool Contains<T>()
-			where T : BaseEntity<ForumUser, ForumRole>
-		{
-			return LogicHelper<ForumUser, ForumRole>.Contains<T>();
-		}
-
 		public static T GetOrCreateEntity<T>()
 			where T : BaseEntity<ForumUser, ForumRole>, new()
 		{
@@ -121,19 +115,8 @@ namespace Ecng.Forum.Components
 				throw new ArgumentNullException("entity");
 
 			var url = new Url(PageTypes[entity.GetType()]);
-			url.QueryString.Append(GetIdentity(entity.GetType()), entity.Id);
+			url.QueryString.Append(WebHelper.GetIdentity(entity.GetType()), entity.Id);
 			return url;
-		}
-
-		public static string GetIdentity<T>()
-			where T :BaseEntity<ForumUser, ForumRole>
-		{
-			return LogicHelper<ForumUser, ForumRole>.GetIdentity<T>();
-		}
-
-		public static string GetIdentity(Type type)
-		{
-			return LogicHelper<ForumUser, ForumRole>.GetIdentity(type);
 		}
 
 		//public static Scope<HierarchicalDatabaseContext> CreateScope(bool restrict)
