@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Web
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.Collections.Specialized;
 	using System.Linq;
@@ -10,7 +11,7 @@
 	using Ecng.Reflection;
 	using Ecng.Collections;
 
-	public class QueryString : Equatable<QueryString>
+	public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<string, string>>
 	{
 		private Dictionary<string, string> _queryString;
 
@@ -25,7 +26,7 @@
 		{
 			Url = url;
 
-			_queryString = new Dictionary<string, string>(queryString.Count, StringComparer.InvariantCultureIgnoreCase);
+			_queryString = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
 			foreach (var key in queryString.Cast<string>().Where(k => !k.IsEmpty()))
 				_queryString.Add(key, queryString[key]);
@@ -126,6 +127,16 @@
 		public override string ToString()
 		{
 			return _compiledString;
+		}
+
+		public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+		{
+			return _queryString.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
 		}
 
 		/// <summary>
