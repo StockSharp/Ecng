@@ -313,6 +313,10 @@
 
 			var id = GetCacheId(item);
 
+			// если в качестве ключа используется autoincrement значение, то ключ может совпадать для разных объектов
+			if (id.IsRuntimeDefault())
+				id = item;
+
 			if (DelayAction != null)
 				_pendingAdd.Add(id, item);
 

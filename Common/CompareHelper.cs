@@ -132,5 +132,10 @@ namespace Ecng.Common
 		{
 			return EqualityComparer<T>.Default.Equals(value, default(T));
 		}
+
+		public static bool IsRuntimeDefault<T>(this T value)
+		{
+			return EqualityComparer<T>.Default.Equals(value, (T)value.GetType().GetDefaultValue());
+		}
 	}
 }
