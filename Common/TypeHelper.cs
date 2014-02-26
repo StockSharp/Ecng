@@ -93,12 +93,12 @@ namespace Ecng.Common
 			}
 		}
 
-		public static string GetTypeAsString(this Type type)
+		public static string GetTypeAsString(this Type type, bool isAssemblyQualifiedName)
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
 
-			return Converter.GetAlias(type) ?? type.AssemblyQualifiedName /*"{0}, {1}".Put(type.FullName, type.Assembly.GetName().Name)*/;
+			return Converter.GetAlias(type) ?? type.GetTypeName(isAssemblyQualifiedName) /*"{0}, {1}".Put(type.FullName, type.Assembly.GetName().Name)*/;
 		}
 
 		public static bool IsStruct(this Type type)

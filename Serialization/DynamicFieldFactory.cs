@@ -50,12 +50,12 @@
 			}
 			else
 			{
-				value = type.GetTypeAsString();
+				value = type.GetTypeAsString(false);
 			}
 
 			return new SerializationItemCollection
 			{
-				new SerializationItem(new VoidField<string>("Type"), instanceType.GetTypeAsString()),
+				new SerializationItem(new VoidField<string>("Type"), instanceType.GetTypeAsString(false)),
 				new SerializationItem(new VoidField("Value", valueType), value)
 			};
 		}

@@ -153,7 +153,7 @@ namespace Ecng.Serialization
 				}
 
 				if (!IsCollection && !fields.Contains(item.Field.Name))
-					itemElem.Add(new XAttribute(_typeAttr, item.Field.Type.GetTypeAsString()));
+					itemElem.Add(new XAttribute(_typeAttr, item.Field.Type.GetTypeAsString(false)));
 
 				if (!isSignlePrimitive)
 					rootElem.Add(itemElem);
