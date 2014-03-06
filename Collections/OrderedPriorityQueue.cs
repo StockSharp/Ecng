@@ -128,6 +128,7 @@
 		public void Clear()
 		{
 			_dictionary.Clear();
+			Count = 0;
 		}
 
 		/// <summary>
