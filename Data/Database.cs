@@ -8,7 +8,6 @@ namespace Ecng.Data
 	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
-	using System.Threading;
 	using System.Web.UI.WebControls;
 	using System.Linq;
 	using System.Text.RegularExpressions;
@@ -1102,9 +1101,12 @@ namespace Ecng.Data
 							}
 							else
 							{
-								var source = new SerializationItemCollection();
-								serializer.Deserialize(serializer.Encoding.GetBytes((string)value).To<Stream>(), source);
-								value = source;
+								CultureInfo.DoInCulture(() =>
+								{
+									var source = new SerializationItemCollection();
+									serializer.Deserialize(serializer.Encoding.GetBytes((string)value).To<Stream>(), source);
+									value = source;
+								});
 							}
 						}
 
@@ -1116,7 +1118,7 @@ namespace Ecng.Data
 			return output;
 		}
 
-		private static SerializationItemCollection UngroupSource(FieldList fields, IEnumerable<SerializationItem> input)
+		private SerializationItemCollection UngroupSource(FieldList fields, IEnumerable<SerializationItem> input)
 		{
 			if (fields == null)
 				throw new ArgumentNullException("fields");
@@ -1126,8 +1128,10 @@ namespace Ecng.Data
 
 			var output = new SerializationItemCollection();
 
-			foreach (var item in input)
+			foreach (var tmpItem in input)
 			{
+				var item = tmpItem;
+
 				if (fields.Contains(item.Field.Name))
 				{
 					if (item.Field.IsInnerSchema())
@@ -1148,11 +1152,14 @@ namespace Ecng.Data
 						{
 							output.Remove(item);
 
-							var serializer = (IXmlSerializer)new XmlSerializer<int>().GetSerializer(item.Field.Type);
-							var stream = new MemoryStream();
-							serializer.Serialize((SerializationItemCollection)item.Value, stream);
+							CultureInfo.DoInCulture(() =>
+							{
+								var serializer = (IXmlSerializer)new XmlSerializer<int>().GetSerializer(item.Field.Type);
+								var stream = new MemoryStream();
+								serializer.Serialize((SerializationItemCollection)item.Value, stream);
 
-							output.Add(new SerializationItem<string>(new VoidField<string>(item.Field.Name), serializer.Encoding.GetString(stream.To<byte[]>())));
+								output.Add(new SerializationItem<string>(new VoidField<string>(item.Field.Name), serializer.Encoding.GetString(stream.To<byte[]>())));
+							});
 						}
 						else
 						{
