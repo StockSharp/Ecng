@@ -42,21 +42,19 @@
 					{
 						_temporaryBuffer = (ICollection<TEntity>)Source.GetRange(_startIndex, _bufferSize);
 
-						if (_temporaryBuffer.IsEmpty())
-							throw new InvalidOperationException();
-
-						_startIndex += _temporaryBuffer.Count;
-						_posInBuffer = 0;
-						return _temporaryBuffer.First();
-					}
-					else
-					{
-						canProcess = false;
-						return default(TEntity);
+						if (!_temporaryBuffer.IsEmpty())
+						{
+							_startIndex += _temporaryBuffer.Count;
+							_posInBuffer = 0;
+							return _temporaryBuffer.First();	
+						}
 					}
 				}
 				else
 					return _temporaryBuffer.ElementAt(++_posInBuffer);
+
+				canProcess = false;
+				return default(TEntity);
 			}
 		}
 
