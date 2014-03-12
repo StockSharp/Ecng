@@ -102,6 +102,16 @@ namespace Ecng.Common
 			return dateTime.Truncate(timeSpan.Ticks);
 		}
 
+		public static TimeSpan Truncate(this TimeSpan time, long precision)
+		{
+			return TimeSpan.FromTicks(time.Ticks - (time.Ticks % precision));
+		}
+
+		public static TimeSpan Truncate(this TimeSpan dateTime, TimeSpan timeSpan)
+		{
+			return dateTime.Truncate(timeSpan.Ticks);
+		}
+
 		public static IEnumerable<DateTime> Range(this DateTime from, DateTime to, TimeSpan interval)
 		{
 			while (from <= to)
