@@ -87,6 +87,7 @@
       <DependentUpon>AboutWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="AddressComboBox.cs" />
+    <Compile Include="AutoRefreshCollectionViewSource.cs" />
     <Compile Include="Converters\BoolToBrushConverter.cs" />
     <Compile Include="Converters\BoolToOpacityConverter.cs" />
     <Compile Include="Converters\ColorToBrushConverter.cs" />
