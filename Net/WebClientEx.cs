@@ -16,14 +16,39 @@
 
 		protected override WebRequest GetWebRequest(Uri address)
 		{
+			RequestedUri = address;
+			ResponseUri = null;
+
 			var request = base.GetWebRequest(address);
-			request.Timeout = (int)Timeout.TotalMilliseconds;
+
+			if (request != null)
+				request.Timeout = (int)Timeout.TotalMilliseconds;
 
 			var http = request as HttpWebRequest;
 			if (http != null)
 				http.AutomaticDecompression = DecompressionMethods;
 
 			return request;
+		}
+
+		public Uri RequestedUri { get; private set; }
+
+		// http://stackoverflow.com/questions/690587/using-webclient-in-c-sharp-is-there-a-way-to-get-the-url-of-a-site-after-being-r
+		public Uri ResponseUri { get; private set; }
+
+		protected override WebResponse GetWebResponse(WebRequest request)
+		{
+			var response = base.GetWebResponse(request);
+
+			if (response != null)
+				ResponseUri = response.ResponseUri;
+
+			return response;
+		}
+
+		public bool IsRedirected()
+		{
+			return RequestedUri != ResponseUri;
 		}
 	}
 }
