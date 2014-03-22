@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections.ObjectModel;
 	using System.Linq;
-	using System.Net;
 	using System.Windows.Controls;
 
 	using Ecng.Common;
@@ -11,14 +10,15 @@
 	/// <summary>
 	/// Выпадающий список для выбора адреса сервера.
 	/// </summary>
-	public class AddressComboBox : ComboBox
+	public class AddressComboBox<TAddress> : ComboBox
+		where TAddress : class
 	{
 		/// <summary>
-		/// Элемент списка <see cref="AddressComboBox"/>.
+		/// Элемент списка <see cref="AddressComboBox{TAddress}"/>.
 		/// </summary>
 		public class ComboItem
 		{
-			internal ComboItem(EndPoint address, string title)
+			internal ComboItem(TAddress address, string title)
 			{
 				if (address == null)
 					throw new ArgumentNullException("address");
@@ -33,7 +33,7 @@
 			/// <summary>
 			/// Адрес.
 			/// </summary>
-			public EndPoint Address { get; private set; }
+			public TAddress Address { get; private set; }
 
 			/// <summary>
 			/// Отображаемое имя.
@@ -44,7 +44,7 @@
 		private readonly ObservableCollection<ComboItem> _items = new ObservableCollection<ComboItem>();
 
 		/// <summary>
-		/// Создать <see cref="AddressComboBox"/>.
+		/// Создать <see cref="AddressComboBox{TAddress}"/>.
 		/// </summary>
 		public AddressComboBox()
 		{
@@ -59,7 +59,7 @@
 		/// </summary>
 		/// <param name="address">Адрес.</param>
 		/// <param name="title">Отображаемое имя.</param>
-		public void AddAddress(EndPoint address, string title)
+		public void AddAddress(TAddress address, string title)
 		{
 			_items.Add(new ComboItem(address, title));
 		}
@@ -67,7 +67,7 @@
 		/// <summary>
 		/// Выбранный адрес сервера.
 		/// </summary>
-		public EndPoint SelectedAddress
+		public TAddress SelectedAddress
 		{
 			get { return SelectedIndex == -1 ? null : ((ComboItem)SelectedItem).Address; }
 			set
