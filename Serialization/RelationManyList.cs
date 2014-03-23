@@ -63,7 +63,7 @@
 		private readonly SynchronizedSet<TEntity> _cache = new SynchronizedSet<TEntity>();
 		private bool _bulkInitialized;
 		private int? _count;
-		private readonly CachedSynchronizedDictionary<object, TEntity> _pendingAdd = new CachedSynchronizedDictionary<object, TEntity>(); 
+		private readonly CachedSynchronizedDictionary<TEntity, object> _pendingAdd = new CachedSynchronizedDictionary<TEntity, object>(); 
 
 		protected RelationManyList(IStorage storage)
 		{
@@ -165,12 +165,12 @@
 			}
 			else
 			{
-				if (DelayAction != null)
+				if (DelayAction != null && _pendingAdd.Count > 0)
 				{
-					var item = _pendingAdd.TryGetValue(id);
+					var pair = _pendingAdd.CachedPairs.FirstOrDefault(p => p.Value == id);
 
-					if (!item.IsNull())
-						return item;
+					if (!pair.Key.IsNull())
+						return pair.Key;
 				}
 
 				var identity = Schema.Identity;
@@ -311,14 +311,10 @@
 
 			var id = GetCacheId(item);
 
-			// если в качестве ключа используется autoincrement значение, то ключ может совпадать для разных объектов
-			if (id.IsRuntimeDefault())
-				id = item;
-
 			if (DelayAction != null)
-				_pendingAdd.Add(id, item);
+				_pendingAdd.Add(item, id);
 
-			ProcessDelayed(() => OnAdd(item), err => _pendingAdd.Remove(id));
+			ProcessDelayed(() => OnAdd(item), err => _pendingAdd.Remove(item));
 
 			if (BulkLoad)
 			{
@@ -559,6 +555,8 @@
 
 			ThrowIfStorageNull();
 
+			var pendingAdd = _pendingAdd.CachedKeys;
+
 			var entities = OnGetGroup(startIndex, count, orderBy ?? Schema.Identity, direction).ToList();
 
 			if (BulkLoad)
@@ -578,15 +576,13 @@
 					}
 				}
 			}
-			else
+
+			if (pendingAdd.Length > 0)
 			{
-				if (_pendingAdd.Count > 0)
-				{
-					var set = new HashSet<TEntity>();
-					set.AddRange(entities);
-					set.AddRange(_pendingAdd.Values);
-					entities = set.ToList();
-				}
+				var set = new HashSet<TEntity>();
+				set.AddRange(entities);
+				set.AddRange(pendingAdd);
+				entities = set.ToList();
 			}
 
 			//var added = Added;
