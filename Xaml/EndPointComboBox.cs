@@ -28,7 +28,7 @@ namespace Ecng.Xaml
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			var item = _comboBox.Items
-				.Cast<EndPointComboBox.ComboItem>()
+				.Cast<AddressComboBox<EndPoint>.ComboItem>()
 				.Where(t => t.Address.To<string>() == value.To<string>())
 				.Select(t => t.Title)
 				.FirstOrDefault();
@@ -39,7 +39,7 @@ namespace Ecng.Xaml
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			var address = _comboBox.Items
-				.Cast<EndPointComboBox.ComboItem>()
+				.Cast<AddressComboBox<EndPoint>.ComboItem>()
 				.Where(t => t.Title == (string)value)
 				.Select(t => t.Address)
 				.FirstOrDefault();
@@ -100,7 +100,7 @@ namespace Ecng.Xaml
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			var item = _comboBox.Items
-				.Cast<EndPointComboBox.ComboItem>()
+				.Cast<AddressComboBox<Uri>.ComboItem>()
 				.Where(t => t.Address.To<string>() == value.To<string>())
 				.Select(t => t.Title)
 				.FirstOrDefault();
@@ -111,7 +111,7 @@ namespace Ecng.Xaml
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			var address = _comboBox.Items
-				.Cast<EndPointComboBox.ComboItem>()
+				.Cast<AddressComboBox<Uri>.ComboItem>()
 				.Where(t => t.Title == (string)value)
 				.Select(t => t.Address)
 				.FirstOrDefault();

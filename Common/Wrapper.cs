@@ -147,10 +147,7 @@ namespace Ecng.Common
 		/// </returns>
 		public override string ToString()
 		{
-			if (HasValue)
-				return Value.ToString();
-			else
-				return string.Empty;
+			return HasValue ? Value.To<string>() : string.Empty;
 		}
 
 		#endregion

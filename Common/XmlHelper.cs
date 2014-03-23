@@ -49,7 +49,7 @@ namespace Ecng.Common
 			if (writer == null)
 				throw new ArgumentNullException("writer");
 
-			writer.WriteAttributeString(name, value != null ? value.ToString() : String.Empty);
+			writer.WriteAttributeString(name, value != null ? value.To<string>() : string.Empty);
 		}
 
 		//public static string GetValue(this XAttribute obj)

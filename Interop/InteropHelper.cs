@@ -1,11 +1,13 @@
 ﻿namespace Ecng.Interop
 {
+	using System;
+	using System.Diagnostics;
 	using System.IO;
 	using System.Threading;
 
 	using Ecng.Common;
 
-	public static class IOHelper
+	public static class InteropHelper
 	{
 		public static bool CreateDirIfNotExists(this string fullPath)
 		{
@@ -31,6 +33,14 @@
 				Thread.Sleep(sleep);
 
 			return Directory.Exists(dir);
+		}
+
+		public static void OpenLinkInBrowser(this Uri address)
+		{
+			if (address == null)
+				throw new ArgumentNullException("address");
+
+			Process.Start(new ProcessStartInfo(address.ToString()));
 		}
 	}
 }

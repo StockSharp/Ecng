@@ -6,6 +6,8 @@
 	using System.Windows.Media;
 	using System.Linq;
 
+	using Ecng.Common;
+
 	/// <summary>
 	/// A specialized highlighting text block control.
 	/// http://www.jeff.wilcox.name/2008/11/highlighting-autocompletebox/
@@ -123,7 +125,7 @@
 
 				foreach (var c in Text)
 				{
-					Inline run = new Run { Text = c.ToString() };
+					Inline run = new Run { Text = c.To<string>() };
 					Inlines.Add(run);
 				}
 

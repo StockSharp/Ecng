@@ -12,6 +12,7 @@
 	using System.Windows.Controls;
 	using System.Windows.Controls.Primitives;
 	using System.Windows.Data;
+	using System.Windows.Documents;
 	using System.Windows.Input;
 	using System.Windows.Media;
 
@@ -462,6 +463,9 @@
 		private static DataGridCell GetCell(RoutedEventArgs e)
 		{
 			var dependencyObject = (DependencyObject)e.OriginalSource;
+
+			if (dependencyObject is Hyperlink)
+				return null;
 
 			while ((dependencyObject != null) && !(dependencyObject is DataGridCell))
 			{

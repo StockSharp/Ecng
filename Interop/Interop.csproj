@@ -117,7 +117,7 @@
     <Compile Include="GCHandle.cs" />
     <Compile Include="HardwareInfo.cs" />
     <Compile Include="HGlobalSafeHandle.cs" />
-    <Compile Include="IOHelper.cs" />
+    <Compile Include="InteropHelper.cs" />
     <Compile Include="ManagedWinApiHelper.cs" />
     <Compile Include="Marshaler.cs" />
     <Compile Include="Messages.cs" />

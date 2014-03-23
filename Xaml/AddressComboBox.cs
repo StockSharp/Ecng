@@ -80,7 +80,7 @@
 
 					if (item == null)
 					{
-						item = new ComboItem(value, value.ToString());
+						item = new ComboItem(value, value.To<string>());
 						_items.Add(item);
 					}
 

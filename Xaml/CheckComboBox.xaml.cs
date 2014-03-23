@@ -21,7 +21,7 @@
 		private sealed class Node : NotifiableObject
 		{
 			private readonly object _item;
-			private readonly CheckComboBox _parent;
+			//private readonly CheckComboBox _parent;
 			private readonly string _title;
 
 			public Node(object item, CheckComboBox parent)
@@ -33,11 +33,11 @@
 					throw new ArgumentNullException("parent");
 
 				_item = item;
-				_parent = parent;
+				//_parent = parent;
 
-				_title = _parent.DisplayMemberPath.IsEmpty()
-					? item.ToString()
-					: item.GetValue<object, VoidType, string>(_parent.DisplayMemberPath, null);
+				_title = parent.DisplayMemberPath.IsEmpty()
+					? item.To<string>()
+					: item.GetValue<object, VoidType, string>(parent.DisplayMemberPath, null);
 			}
 
 			public object Item
