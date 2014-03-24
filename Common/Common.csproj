@@ -103,6 +103,7 @@
     <Compile Include="HexEncoding.cs" />
     <Compile Include="ICloneable.cs" />
     <Compile Include="IdGenerator.cs" />
+    <Compile Include="IReferenceCounter.cs" />
     <Compile Include="MathHelper.cs" />
     <Compile Include="NameAttribute.cs" />
     <Compile Include="NamedObject.cs" />
