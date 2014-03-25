@@ -795,9 +795,34 @@
 			}
 		}
 
-		public static string ToTimeSpan(this TimeSpan ts, string format)
+		public static string FromTimeSpan(this TimeSpan ts, string format)
 		{
 			return ts.ToString(format, CultureInfo.InvariantCulture);
+		}
+
+		public static DateTimeOffset? TryToDateTimeOffset(this string value, string format)
+		{
+			if (value.IsEmpty())
+				return null;
+
+			return value.ToDateTimeOffset(format);
+		}
+
+		public static DateTimeOffset ToDateTimeOffset(this string value, string format)
+		{
+			try
+			{
+				return DateTimeOffset.ParseExact(value, format, CultureInfo.InvariantCulture);
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidCastException("Cannot convert {0} with format {1} to TimeSpan.".Put(value, format), ex);
+			}
+		}
+
+		public static string FromDateTimeOffset(this DateTimeOffset dto, string format)
+		{
+			return dto.ToString(format, CultureInfo.InvariantCulture);
 		}
 
 		public static readonly DateTime GregorianStart = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);

@@ -71,6 +71,7 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq">
@@ -167,6 +168,7 @@
     <Compile Include="UnderlyingAttribute.cs" />
     <Compile Include="UnitializedEntityFactory.cs" />
     <Compile Include="VoidField.cs" />
+    <Compile Include="XmlReaderEx.cs" />
     <Compile Include="XmlSerializer.cs" />
     <AppDesigner Include="Properties\" />
   </ItemGroup>
