@@ -23,11 +23,15 @@
 				if (address == null)
 					throw new ArgumentNullException("address");
 
-				if (title.IsEmpty())
-					throw new ArgumentNullException("title");
+				//if (title.IsEmpty())
+				//	throw new ArgumentNullException("title");
 
 				Address = address;
-				Title = title + " ({0})".Put(address.To<string>());
+
+				Title = address.To<string>();
+
+				if (!title.IsEmpty())
+					Title = title + " ({0})".Put(Title);
 			}
 
 			/// <summary>
@@ -69,7 +73,27 @@
 		/// </summary>
 		public TAddress SelectedAddress
 		{
-			get { return SelectedIndex == -1 ? null : ((ComboItem)SelectedItem).Address; }
+			get
+			{
+				if (SelectedIndex != -1)
+					return ((ComboItem)SelectedItem).Address;
+				else
+				{
+					if (Text.IsEmpty())
+						return null;
+
+					try
+					{
+						var addr = Text.To<TAddress>();
+						_items.Add(new ComboItem(addr, string.Empty));
+						return addr;
+					}
+					catch (Exception)
+					{
+						return null;
+					}
+				}
+			}
 			set
 			{
 				if (value == null)
