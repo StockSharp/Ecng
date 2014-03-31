@@ -265,6 +265,13 @@
 			return retVal;
 		}
 
+		public static TValue GetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
+		{
+			var value = dict[key];
+			dict.Remove(key);
+			return value;
+		}
+
 		public static T ElementAtFromEnd<T>(this IEnumerable<T> source, int index)
 		{
 			return source.ElementAt(source.GetIndexFromEnd(index));
