@@ -105,10 +105,15 @@
 			return str.Split(Environment.NewLine, removeEmptyEntries);
 		}
 
+		private static readonly string[] _emptyArray = new string[0];
+
 		public static string[] Split(this string str, string separator, bool removeEmptyEntries = true)
 		{
-			if (str.IsEmpty())
+			if (str == null)
 				throw new ArgumentNullException("str");
+
+			if (str.Length == 0)
+				return _emptyArray;
 
 			return str.Split(new[] { separator }, removeEmptyEntries ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
 		}
