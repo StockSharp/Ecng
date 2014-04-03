@@ -1,6 +1,7 @@
 namespace Ecng.Common
 {
 	using System;
+	using System.Collections.Generic;
 
 	public static class MathHelper
 	{
@@ -677,6 +678,30 @@ namespace Ecng.Common
 				TrailingZeros = trailingZeros,
 				Scale = (int)scale,
 			};
+		}
+
+		private static readonly SyncObject _syncObject = new SyncObject();
+		private static readonly Dictionary<decimal, int> _decimalsCache = new Dictionary<decimal, int>(); 
+
+		public static int GetCachedDecimals(this decimal value)
+		{
+			int decimals;
+
+			lock (_syncObject)
+			{
+				if (_decimalsCache.TryGetValue(value, out decimals))
+					return decimals;
+			}
+
+			decimals = value.GetDecimalInfo().EffectiveScale;
+
+			lock (_syncObject)
+				_decimalsCache.Add(value, decimals);
+
+			if (_decimalsCache.Count > 10000000)
+				throw new InvalidOperationException();
+
+			return decimals;
 		}
 
 		/// <summary>
