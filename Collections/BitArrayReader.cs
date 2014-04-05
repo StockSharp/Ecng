@@ -96,8 +96,6 @@
 			return bits;
 		}
 
-
-
 		public long ReadLong(int count)
 		{
 			if (count <= 0 || count > 64)
@@ -119,6 +117,283 @@
 			value &= ulong.MaxValue >> (64 - count);
 
 			return (long)value;
+		}
+
+		public int ReadInt()
+		{
+			var offset = DataOffset;
+			var bits = Data[offset];
+			var bitOffset = BitOffset;
+
+			bits >>= bitOffset;
+
+			if (bitOffset > 0)
+				bits |= Data[offset + 1] << (64 - bitOffset); // честные 64 бита в битс
+
+			var value = 0;
+
+			int seek;
+
+			if ((bits & 1) == 0)
+			{
+				seek = 1;
+			}
+			else if ((bits & 4) == 0)
+			{
+				seek = 3;
+				value = 1;
+			}
+			else if ((bits & 8) == 0)
+			{
+				seek = 4 + 4;
+				value = ((int)(uint.MaxValue >> (32 - 4))) & (int)(bits >> 4);
+			}
+			else if ((bits & 16) == 0)
+			{
+				seek = 5 + 8;
+				value = ((int)(uint.MaxValue >> (32 - 8))) & (int)(bits >> 5);
+			}
+			else if ((bits & 32) == 0)
+			{
+				seek = 6 + 16;
+				value = ((int)(uint.MaxValue >> (32 - 16))) & (int)(bits >> 6);
+			}
+			else if ((bits & 64) == 0)
+			{
+				seek = 7 + 24;
+				value = ((int)(uint.MaxValue >> (32 - 24))) & (int)(bits >> 7);
+			}
+			else
+			{
+				seek = 7 + 32;
+				value = (int)(bits >> 7);
+			}
+
+			value = (bits & 2) != 0 ? value : -value;
+
+			bitOffset += seek;
+			DataOffset = offset + (bitOffset >> 6);
+			BitOffset = bitOffset & 63;
+
+			return value;
+		}
+
+		public long ReadLong()
+		{
+			var offset = DataOffset;
+			var bitOffset = BitOffset;
+			var bits = Data[offset] >> bitOffset;
+
+			if (bitOffset > 0)
+				bits |= Data[offset + 1] << (64 - bitOffset);
+
+			long value;
+			if ((bits & 1) != 0)
+			{
+				var isPositive = (bits & 2) != 0;
+
+				bitOffset += 2;
+
+				offset += bitOffset >> 6;
+				bitOffset &= 63;
+				bits = Data[offset] >> bitOffset;
+
+				if (bitOffset > 0)
+					bits |= Data[offset + 1] << (64 - bitOffset);
+
+				bitOffset += 63;
+
+				value = (long)(bits & (ulong.MaxValue >> (64 - 63)));
+
+				if (!isPositive)
+					value = -value;
+
+			}
+			else
+			{
+				bitOffset += 1;
+				bits >>= 1;
+
+				int seek;
+
+				value = 0;
+
+				if ((bits & 1) == 0)
+				{
+					seek = 1;
+				}
+				else if ((bits & 4) == 0)
+				{
+					seek = 3;
+					value = 1;
+				}
+				else if ((bits & 8) == 0)
+				{
+					seek = 4 + 4;
+					value = ((int)(uint.MaxValue >> (32 - 4))) & (int)(bits >> 4);
+				}
+				else if ((bits & 16) == 0)
+				{
+					seek = 5 + 8;
+					value = ((int)(uint.MaxValue >> (32 - 8))) & (int)(bits >> 5);
+				}
+				else if ((bits & 32) == 0)
+				{
+					seek = 6 + 16;
+					value = ((int)(uint.MaxValue >> (32 - 16))) & (int)(bits >> 6);
+				}
+				else if ((bits & 64) == 0)
+				{
+					seek = 7 + 24;
+					value = ((int)(uint.MaxValue >> (32 - 24))) & (int)(bits >> 7);
+				}
+				else
+				{
+					seek = 7 + 32;
+					value = (int)(bits >> 7);
+				}
+
+				value = (bits & 2) != 0 ? value : -value;
+				bitOffset += seek;
+			}
+
+			offset += bitOffset >> 6;
+			bitOffset &= 63;
+			DataOffset = offset;
+			BitOffset = bitOffset;
+
+			return value;
+		}
+
+		public DateTime ReadTime(DateTime date, DateTime prevTime)
+		{
+			var offset = DataOffset;
+			var bits = Data[offset];
+			var bitOffset = BitOffset;
+
+			bits >>= bitOffset;
+
+			if (bitOffset > 0)
+				bits |= Data[offset + 1] << (64 - bitOffset); // честные 64 бита в битс
+
+			int seek, value;
+
+			long addTicks = 0;
+
+			if ((bits & 1) != 0)
+			{
+				var h = (int)((bits >> 1) & (ulong.MaxValue >> 64 - 5));
+				var m = (int)((bits >> 6) & (ulong.MaxValue >> 64 - 6));
+				var s = (int)((bits >> 12) & (ulong.MaxValue >> 64 - 6));
+
+				bitOffset += 1 + 5 + 6 + 6;
+				prevTime = date + new TimeSpan(h, m, s);
+			}
+			else
+			{
+				bits >>= 1;
+				bitOffset += 1;
+
+				value = 0;
+				if ((bits & 1) == 0)
+				{
+					seek = 1;
+				}
+				else if ((bits & 4) == 0)
+				{
+					seek = 3;
+					value = 1;
+				}
+				else if ((bits & 8) == 0)
+				{
+					seek = 4 + 4;
+					value = ((int)(uint.MaxValue >> (32 - 4))) & (int)(bits >> 4);
+				}
+				else if ((bits & 16) == 0)
+				{
+					seek = 5 + 8;
+					value = ((int)(uint.MaxValue >> (32 - 8))) & (int)(bits >> 5);
+				}
+				else if ((bits & 32) == 0)
+				{
+					seek = 6 + 16;
+					value = ((int)(uint.MaxValue >> (32 - 16))) & (int)(bits >> 6);
+				}
+				else if ((bits & 64) == 0)
+				{
+					seek = 7 + 24;
+					value = ((int)(uint.MaxValue >> (32 - 24))) & (int)(bits >> 7);
+				}
+				else
+				{
+					seek = 7 + 32;
+					value = (int)(bits >> 7);
+				}
+				value = (bits & 2) != 0 ? value : -value;
+				bitOffset += seek;
+
+				//prevTime = prevTime.AddSeconds(value);
+				addTicks = value * TimeSpan.TicksPerSecond;
+			}
+
+			offset += bitOffset >> 6;
+
+			bitOffset &= 63;
+
+			bits = Data[offset] >> bitOffset;
+
+			if (bitOffset > 0)
+				bits |= Data[offset + 1] << (64 - bitOffset);
+
+			value = 0;
+			if ((bits & 1) == 0)
+			{
+				seek = 1;
+			}
+			else if ((bits & 4) == 0)
+			{
+				seek = 3;
+				value = 1;
+			}
+			else if ((bits & 8) == 0)
+			{
+				seek = 4 + 4;
+				value = ((int)(uint.MaxValue >> (32 - 4))) & (int)(bits >> 4);
+			}
+			else if ((bits & 16) == 0)
+			{
+				seek = 5 + 8;
+				value = ((int)(uint.MaxValue >> (32 - 8))) & (int)(bits >> 5);
+			}
+			else if ((bits & 32) == 0)
+			{
+				seek = 6 + 16;
+				value = ((int)(uint.MaxValue >> (32 - 16))) & (int)(bits >> 6);
+			}
+			else if ((bits & 64) == 0)
+			{
+				seek = 7 + 24;
+				value = ((int)(uint.MaxValue >> (32 - 24))) & (int)(bits >> 7);
+			}
+			else
+			{
+				seek = 7 + 32;
+				value = (int)(bits >> 7);
+			}
+
+			value = (bits & 2) != 0 ? value : -value;
+			bitOffset += seek;
+
+			addTicks += value * TimeSpan.TicksPerMillisecond;
+			//prevTime = prevTime.AddMilliseconds(value);
+			prevTime = prevTime.AddTicks(addTicks);
+
+			offset += bitOffset >> 6;
+			bitOffset &= 63;
+			DataOffset = offset;
+			BitOffset = bitOffset;
+
+			return prevTime;
 		}
 	}
 }
