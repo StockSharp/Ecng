@@ -1,6 +1,6 @@
 namespace Ecng.Common
 {
-	public interface IReferenceCounter
+	public interface ISmartPointer
 	{
 		void IncRef();
 

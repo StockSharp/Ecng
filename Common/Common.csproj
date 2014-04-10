@@ -86,6 +86,7 @@
     </Compile>
     <Compile Include="ArrayHelper.cs" />
     <Compile Include="AttributeHelper.cs" />
+    <Compile Include="SmartPointer.cs" />
     <Compile Include="Cloneable.cs" />
     <Compile Include="CloneHelper.cs" />
     <Compile Include="Compiler.cs" />
@@ -103,7 +104,7 @@
     <Compile Include="HexEncoding.cs" />
     <Compile Include="ICloneable.cs" />
     <Compile Include="IdGenerator.cs" />
-    <Compile Include="IReferenceCounter.cs" />
+    <Compile Include="ISmartPointer.cs" />
     <Compile Include="MathHelper.cs" />
     <Compile Include="NameAttribute.cs" />
     <Compile Include="NamedObject.cs" />
