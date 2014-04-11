@@ -22,12 +22,12 @@ namespace Ecng.Common
 
 		private int _counter;
 
-		void ISmartPointer.IncRef()
+		public void IncRef()
 		{
 			Interlocked.Increment(ref _counter);
 		}
 
-		void ISmartPointer.DecRef()
+		public void DecRef()
 		{
 			if (Interlocked.Decrement(ref _counter) == 0)
 				_release(_value);
