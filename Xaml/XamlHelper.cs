@@ -810,6 +810,11 @@ namespace Ecng.Xaml
 			return app.GetActiveWindows().FirstOrDefault();
 		}
 
+		public static Window GetActiveOrMainWindow(this Application app)
+		{
+			return app.GetActiveWindow() ?? app.MainWindow;
+		}
+
 		public static void SetBindings(this DependencyObject obj, DependencyProperty property, object dataObject, string propertyName, BindingMode mode = BindingMode.TwoWay, IValueConverter converter = null, object parameter = null)
 		{
 			var binding = new Binding(propertyName)
