@@ -141,10 +141,12 @@ namespace Ecng.Serialization
 
 				if (item.Value != null)
 				{
-					if (item.Value is SerializationItemCollection)
+					var items = item.Value as SerializationItemCollection;
+
+					if (items != null)
 					{
 						var serializer = (IXmlSerializer)GetSerializer(item.Field.Type);
-						serializer.Serialize((SerializationItemCollection)item.Value, itemElem);
+						serializer.Serialize(items, itemElem);
 					}
 					else
 					{
@@ -159,11 +161,11 @@ namespace Ecng.Serialization
 					rootElem.Add(itemElem);
 			}
 
-			if (_element == null)
-			{
-				using (var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true, Encoding = Encoding }))
-					doc.Save(writer);
-			}
+			if (doc == null)
+				return;
+
+			using (var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true, Encoding = Encoding }))
+				doc.Save(writer);
 		}
 
 		public override void Deserialize(Stream stream, FieldList fields, SerializationItemCollection source)
@@ -219,7 +221,7 @@ namespace Ecng.Serialization
 							value = serializer.Type.IsPrimitive() ? innerSource.First().Value : innerSource;
 						}
 
-						source.Add(new SerializationItem(new VoidField(i.ToString(), serializer.Type), value));
+						source.Add(new SerializationItem(new VoidField(i.To<string>(), serializer.Type), value));
 					}
 				}
 				else
@@ -259,7 +261,9 @@ namespace Ecng.Serialization
 
 							object value;
 
-							if (fieldType.IsPrimitive())
+							if (fieldType == typeof(byte[]))
+								value = element.Value.Base64();
+							else if (fieldType.IsPrimitive())
 								value = element.Value.To(fieldType);
 							else if (fieldType.IsRuntimeType())
 								value = element.Value.To<Type>();

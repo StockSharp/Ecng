@@ -21,7 +21,13 @@
 			var type = source["Type"].Value.To<Type>();
 			var value = source["Value"].Value;
 
-			return value.To(type);
+			var factoryType = SchemaManager.GlobalFieldFactories.TryGetValue(type);
+
+			if (factoryType == null)
+				return value.To(type);
+
+			var factory = GetFactory(factoryType);
+			return factory.CreateInstance(serializer, new SerializationItem(factory.Field, value));
 		}
 
 		protected internal override SerializationItemCollection OnCreateSource(ISerializer serializer, object instance)
@@ -44,9 +50,11 @@
 					valueType = factory.SourceType;
 				}
 				else
+				{
 					value = instanceType.IsPrimitive()
-						        ? instance
-						        : GetInnerSchemaFactory(instanceType).OnCreateSource(serializer, instance);
+								? instance
+								: GetInnerSchemaFactory(instanceType).OnCreateSource(serializer, instance);
+				}
 			}
 			else
 			{

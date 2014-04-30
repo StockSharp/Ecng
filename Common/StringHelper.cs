@@ -1,17 +1,19 @@
 ﻿namespace Ecng.Common
 {
 	using System;
-	using System.Collections;
 	using System.Collections.Generic;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
-	using System.Reflection;
+	using System.Security;
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Threading;
 
 #if !SILVERLIGHT
+	using System.Collections;
+	using System.Reflection;
+
 	using SmartFormat;
 	using SmartFormat.Core.Extensions;
 	using SmartFormat.Core.Parsing;
@@ -675,6 +677,16 @@
 				option = RegexOptions.IgnoreCase;
 
 			return new Regex(@"\A" + new Regex(@"\.|\$|\^|\{|\[|\(|\||\)|\*|\+|\?|\\").Replace(toFind, ch => @"\" + ch).Replace('_', '.').Replace("%", ".*") + @"\z", option).IsMatch(toSearch);
+		}
+
+		public static bool IsEmpty(this SecureString secureString)
+		{
+			return secureString == null
+#if SILVERLIGHT
+				;
+#else
+				|| secureString.Length == 0;
+#endif
 		}
 	}
 }

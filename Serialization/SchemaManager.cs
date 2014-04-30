@@ -36,8 +36,10 @@
 				{ typeof(System.Windows.Media.Color), typeof(ColorFieldFactory<System.Windows.Media.Color>) },
 #if !SILVERLIGHT
 				{ typeof(System.Drawing.Color), typeof(ColorFieldFactory<System.Drawing.Color>) },
-#endif
+				{ typeof(System.Security.SecureString), typeof(SecureStringFieldFactory) },
+#else
 				{ typeof(System.Security.SecureString), typeof(PrimitiveFieldFactory<System.Security.SecureString, string>) },
+#endif
 			};
 		}
 
