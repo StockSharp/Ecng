@@ -81,6 +81,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DpapiCryptographerEx.cs" />
+    <Compile Include="IAuthorization.cs" />
     <Compile Include="Secret.cs" />
     <Compile Include="PermissionBarrier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
