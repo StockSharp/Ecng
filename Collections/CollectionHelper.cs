@@ -895,7 +895,8 @@
 
 			if (syncDict == null)
 			{
-				syncDict = new SynchronizedDictionary<TKey, TValue>();
+				var typedDict = dict as Dictionary<TKey, TValue>;
+				syncDict = new SynchronizedDictionary<TKey, TValue>(typedDict == null ? null : typedDict.Comparer);
 				syncDict.AddRange(dict);
 			}
 
