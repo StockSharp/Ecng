@@ -137,5 +137,34 @@ namespace Ecng.Common
 		{
 			return EqualityComparer<T>.Default.Equals(value, (T)value.GetType().GetDefaultValue());
 		}
+
+		public static int Compare(this Version first, Version second)
+		{
+			if (first == null)
+				return -1;
+
+			if (second == null)
+				return 1;
+
+			var firstBuild = first.Build != -1 ? first.Build : 0;
+			var firstRevision = first.Revision != -1 ? first.Revision : 0;
+
+			var secondBuild = second.Build != -1 ? second.Build : 0;
+			var secondRevision = second.Revision != -1 ? second.Revision : 0;
+
+			if (first.Major != second.Major)
+				return first.Major > second.Major ? 1 : -1;
+			
+			if (first.Minor != second.Minor)
+				return first.Minor > second.Minor ? 1 : -1;
+
+			if (firstBuild != secondBuild)
+				return firstBuild > secondBuild ? 1 : -1;
+
+			if (firstRevision == secondRevision)
+				return 0;
+
+			return firstRevision > secondRevision ? 1 : -1;
+		}
 	}
 }
