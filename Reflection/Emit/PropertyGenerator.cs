@@ -5,11 +5,7 @@
 	using System.Reflection.Emit;
 	using System.Linq;
 
-#if SILVERLIGHT
-	using Ecng.Collections;
-#else
 	using MoreLinq;
-#endif
 
 	public class PropertyGenerator : BaseGenerator<PropertyBuilder>
 	{

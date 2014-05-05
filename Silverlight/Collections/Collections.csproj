@@ -185,6 +185,7 @@
     <Compile Include="..\..\Collections\SynchronizedStack.cs">
       <Link>SynchronizedStack.cs</Link>
     </Compile>
+    <Compile Include="MoreEnumerable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -9,9 +9,7 @@
 	using Ecng.Collections;
 	using Ecng.Common;
 
-#if !SILVERLIGHT
 	using MoreLinq;
-#endif
 
 	public class DelayAction
 	{
@@ -91,16 +89,26 @@
 			_errorHandler = errorHandler;
 		}
 
+		private int _maxBatchSize = 1000;
+
+		public int MaxBatchSize
+		{
+			get { return _maxBatchSize; }
+			set
+			{
+				if (value <= 0)
+					throw new ArgumentOutOfRangeException();
+
+				_maxBatchSize = value;
+			}
+		}
+
 		public void Add(Action action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true)
 		{
 			if (action == null)
 				throw new ArgumentNullException("action");
 
-			lock (_actions.SyncRoot)
-			{
-				_actions.Add(new Item(action, postAction, canBatch, breakBatchOnError));
-				TryCreateTimer();
-			}
+			Add(new Item(action, postAction, canBatch, breakBatchOnError));
 		}
 
 		private void Add(Item item)
@@ -173,11 +181,11 @@
 					}
 					else
 					{
-						if (_flushTimer != null)
-						{
-							_flushTimer.Dispose();
-							_flushTimer = null;
-						}
+						if (_flushTimer == null)
+							return;
+
+						_flushTimer.Dispose();
+						_flushTimer = null;
 					}
 				}
 				finally
@@ -219,24 +227,25 @@
 			if (actions.IsEmpty())
 				return;
 
-			Exception error;
+			Exception error = null;
 
 			try
 			{
-				using (var batch = _storage.BeginBatch())
+				foreach (var packet in actions.Batch(MaxBatchSize))
 				{
-					foreach (var action in actions)
+					using (var batch = _storage.BeginBatch())
 					{
-						if (action.BreakBatchOnError)
-							action.Action();
-						else
-							Flush(action);
-					}
+						foreach (var action in packet)
+						{
+							if (action.BreakBatchOnError)
+								action.Action();
+							else
+								Flush(action);
+						}
 
-					batch.Commit();
+						batch.Commit();
+					}	
 				}
-
-				error = null;
 			}
 			catch (Exception ex)
 			{

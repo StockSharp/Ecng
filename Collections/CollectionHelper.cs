@@ -96,20 +96,6 @@
 			return collection.OrderBy(item => item, comparison.ToComparer());
 		}
 
-#if SILVERLIGHT
-		public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
-		{
-			if (source == null)
-				throw new ArgumentNullException("source");
-
-			if (action == null)
-				throw new ArgumentNullException("action");
-
-			foreach (var t in source)
-				action(t);
-		}
-#endif
-
 		public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate)
 		{
 			var index = 0;
@@ -169,13 +155,6 @@
 			retVal.AddRange(first.Concat(second));
 			return retVal;
 		}
-
-#if SILVERLIGHT
-		public static IEnumerable<T> Concat<T>(this IEnumerable<T> items, T item)
-		{
-			return items.Concat(new[] { item });
-		}
-#endif
 
 		public static void AddRange<T>(this ICollection<T> source, IEnumerable<T> items)
 		{
