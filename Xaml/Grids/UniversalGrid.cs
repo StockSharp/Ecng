@@ -126,6 +126,58 @@
 
 			HorizontalGridLinesBrush = Brushes.LightGray;
 			VerticalGridLinesBrush = Brushes.LightGray;
+
+			Columns.CollectionChanged += ColumnsOnCollectionChanged;
+		}
+
+		private void ColumnsOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (!_loaded)
+				return;
+
+			switch (e.Action)
+			{
+				case NotifyCollectionChangedAction.Add:
+				{
+					if (e.NewItems == null)
+						return;
+
+					e.NewItems.Cast<DataGridColumn>().ForEach(GenerateColumnMenu);
+					break;
+				}
+				case NotifyCollectionChangedAction.Remove:
+				{
+					if (e.OldItems == null)
+						return;
+
+					var items = ((MenuItem)ContextMenu.Items[4]).Items;
+					var groupItems = ((MenuItem)ContextMenu.Items[0]).Items;
+
+					e.OldItems.Cast<DataGridColumn>().ForEach(c =>
+					{
+						var mi = items.OfType<MenuItem>().FirstOrDefault(i => i.Tag == c);
+
+						if (mi != null)
+						{
+							mi.Checked -= ShowCheckedColumn;
+							mi.Unchecked -= HideUncheckedColumn;
+
+							items.Remove(mi);
+						}
+
+						var groupMenuItem = groupItems.OfType<MenuItem>().FirstOrDefault(i => i.Tag == c);
+
+						if (groupMenuItem != null)
+						{
+							groupMenuItem.Checked -= GroupMenu_Click;
+							groupMenuItem.Unchecked -= GroupMenu_Click;
+
+							groupItems.Remove(groupMenuItem);
+						}
+					});
+					break;
+				}
+			}
 		}
 
 		protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
@@ -290,9 +342,13 @@
 
 		private DataGridColumn SelectedColumn { get; set; }
 
+		private bool _loaded;
+
 		private void UniversalGrid_Loaded(object sender, RoutedEventArgs e)
 		{
 			GenerateMenuItems();
+
+			_loaded = true;
 		}
 
 		protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
@@ -408,7 +464,6 @@
 			var menu = ContextMenu;
 
 			var items = ((MenuItem)menu.Items[4]).Items;
-			var groupItems = ((MenuItem)menu.Items[0]).Items;
 
 			((MenuItem)menu.Items[1]).SetBindings(MenuItem.IsCheckedProperty, this, "ShowHeaderInGroupTitle");
 			((MenuItem)menu.Items[2]).SetBindings(MenuItem.IsCheckedProperty, this, "AutoScroll");
@@ -418,32 +473,40 @@
 
 			foreach (var column in Columns)
 			{
-				var menuItem = new MenuItem
-				{
-					Header = column.Header,
-					IsCheckable = true,
-					Tag = column,
-				};
-
-				menuItem.SetBindings(MenuItem.IsCheckedProperty, column, "Visibility", BindingMode.TwoWay, new VisibilityToBoolConverter());
-
-				menuItem.Checked += ShowCheckedColumn;
-				menuItem.Unchecked += HideUncheckedColumn;
-
-				items.Add(menuItem);
-
-				var groupMenuItem = new MenuItem
-				{
-					Header = column.Header,
-					IsChecked = GroupingColumns.Contains(column),
-					IsCheckable = true,
-					Tag = column,
-				};
-
-				groupMenuItem.Checked += GroupMenu_Click;
-				groupMenuItem.Unchecked += GroupMenu_Click;
-				groupItems.Add(groupMenuItem);
+				GenerateColumnMenu(column);
 			}
+		}
+
+		private void GenerateColumnMenu(DataGridColumn column)
+		{
+			var items = ((MenuItem)ContextMenu.Items[4]).Items;
+			var groupItems = ((MenuItem)ContextMenu.Items[0]).Items;
+
+			var menuItem = new MenuItem
+			{
+				Header = column.Header,
+				IsCheckable = true,
+				Tag = column,
+			};
+
+			menuItem.SetBindings(MenuItem.IsCheckedProperty, column, "Visibility", BindingMode.TwoWay, new VisibilityToBoolConverter());
+
+			menuItem.Checked += ShowCheckedColumn;
+			menuItem.Unchecked += HideUncheckedColumn;
+
+			items.Add(menuItem);
+
+			var groupMenuItem = new MenuItem
+			{
+				Header = column.Header,
+				IsChecked = GroupingColumns.Contains(column),
+				IsCheckable = true,
+				Tag = column,
+			};
+
+			groupMenuItem.Checked += GroupMenu_Click;
+			groupMenuItem.Unchecked += GroupMenu_Click;
+			groupItems.Add(groupMenuItem);
 		}
 
 		private void HideUncheckedColumn(object sender, RoutedEventArgs e)
@@ -720,14 +783,14 @@
 			var index = 0;
 			foreach (var colStorage in storage.GetValue<SettingsStorage[]>("Columns"))
 			{
-				var column = Columns[index];
+				var column = SerializableColumns[index];
 
 				column.SortDirection = colStorage.GetValue<ListSortDirection?>("SortDirection");
 				column.Width = new DataGridLength(colStorage.GetValue("WidthValue", column.Width.Value), colStorage.GetValue("WidthType", column.Width.UnitType));
 				column.Visibility = colStorage.GetValue<Visibility>("Visibility");
 
 				var displayIndex = colStorage.GetValue<int>("DisplayIndex");
-				if (displayIndex > -1 && displayIndex < Columns.Count)
+				if (displayIndex > -1 && displayIndex < SerializableColumns.Count)
 					column.DisplayIndex = displayIndex;
 
 				var rules = colStorage.GetValue<SettingsStorage[]>("FormatRules");
@@ -749,9 +812,14 @@
 			ApplyFormatRules();
 		}
 
+		protected virtual IList<DataGridColumn> SerializableColumns
+		{
+			get { return Columns; }
+		}
+
 		public virtual void Save(SettingsStorage storage)
 		{
-			storage.SetValue("Columns", Columns.Select(column =>
+			storage.SetValue("Columns", SerializableColumns.Select(column =>
 			{
 				var colStorage = new SettingsStorage();
 
@@ -763,9 +831,7 @@
 
 				var rules = FormatRules.TryGetValue(column);
 				if (rules != null)
-				{
 					colStorage.SetValue("FormatRules", rules.Select(r => r.Save()).ToArray());
-				}
 
 				return colStorage;
 			}).ToArray());
