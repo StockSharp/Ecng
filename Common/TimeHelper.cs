@@ -3,7 +3,7 @@ namespace Ecng.Common
 	using System;
 	using System.Collections.Generic;
 
-	public static class TimeSpanHelper
+	public static class TimeHelper
 	{
 		/// <summary>
 		/// Gets the weeks.
@@ -120,6 +120,11 @@ namespace Ecng.Common
 
 				from += interval;
 			}
+		}
+
+		public static int DaysInMonth(this DateTime date)
+		{
+			return DateTime.DaysInMonth(date.Year, date.Month);
 		}
 	}
 }
