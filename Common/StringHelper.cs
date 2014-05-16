@@ -689,5 +689,10 @@
 				|| secureString.Length == 0;
 #endif
 		}
+
+		public static string Digest(this byte[] digest)
+		{
+			return BitConverter.ToString(digest).Replace("-", string.Empty);
+		}
 	}
 }
