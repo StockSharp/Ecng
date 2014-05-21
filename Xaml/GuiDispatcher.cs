@@ -78,7 +78,7 @@ namespace Ecng.Xaml
 		private bool _flushSignal;
 		private readonly TimeSpan _timeOut = TimeSpan.FromSeconds(30);
 		private readonly SynchronizedList<ActionInfo> _actions = new SynchronizedList<ActionInfo>();
-		private readonly CachedSynchronizedList<Action> _periodicalActions = new CachedSynchronizedList<Action>();
+		private readonly CachedSynchronizedDictionary<object, Action> _periodicalActions = new CachedSynchronizedDictionary<object, Action>();
 
 		/// <summary>
 		/// Создать <see cref="GuiDispatcher"/>.
@@ -132,13 +132,17 @@ namespace Ecng.Xaml
 			get { return _actions.Count + _periodicalActions.Count; }
 		}
 
-		public void AddPeriodicalAction(Action action)
+		public object AddPeriodicalAction(Action action)
 		{
 			if (action == null)
 				throw new ArgumentNullException("action");
 
-			_periodicalActions.Add(action);
+			var token = new object();
+
+			_periodicalActions.Add(token, action);
 			StartTimer();
+
+			return token;
 		}
 
 		/// <summary>
@@ -149,12 +153,12 @@ namespace Ecng.Xaml
 			_flushSignal = true;
 		}
 
-		public void RemovePeriodicalAction(Action action)
+		public void RemovePeriodicalAction(object token)
 		{
-			if (action == null)
-				throw new ArgumentNullException("action");
+			if (token == null)
+				throw new ArgumentNullException("token");
 
-			_periodicalActions.Remove(action);
+			_periodicalActions.Remove(token);
 		}
 
 		/// <summary>
@@ -248,7 +252,7 @@ namespace Ecng.Xaml
 				action.Process();
 			}
 
-			foreach (var action in _periodicalActions.Cache)
+			foreach (var action in _periodicalActions.CachedValues)
 			{
 				hasActions = true;
 				action();
