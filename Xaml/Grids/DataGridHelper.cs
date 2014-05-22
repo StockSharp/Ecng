@@ -1,4 +1,6 @@
-﻿namespace Ecng.Xaml.Grids
+﻿using System.ComponentModel;
+
+namespace Ecng.Xaml.Grids
 {
 	using System;
 	using System.IO;
@@ -53,6 +55,7 @@
 			{
 				Header = title,
 				Binding = new Binding(fieldName),
+				SortMemberPath = fieldName
 			};
 		}
 

@@ -322,6 +322,16 @@
 
 		#endregion
 
+		public void SetSort(DataGridColumn column, ListSortDirection sortDirection)
+		{
+			var dataView = CollectionViewSource.GetDefaultView(ItemsSource);
+			
+			dataView.SortDescriptions.Clear();
+			dataView.SortDescriptions.Add(new SortDescription(column.SortMemberPath, sortDirection));
+			
+			dataView.Refresh();
+		}
+
 		private readonly MultiDictionary<DataGridColumn, FormatRule> _formatRules = new MultiDictionary<DataGridColumn, FormatRule>(false);
 
 		public MultiDictionary<DataGridColumn, FormatRule> FormatRules
