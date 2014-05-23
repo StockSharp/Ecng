@@ -325,10 +325,22 @@
 		public void SetSort(DataGridColumn column, ListSortDirection sortDirection)
 		{
 			var dataView = CollectionViewSource.GetDefaultView(ItemsSource);
-			
+
+			column.SortDirection = sortDirection;
+
 			dataView.SortDescriptions.Clear();
 			dataView.SortDescriptions.Add(new SortDescription(column.SortMemberPath, sortDirection));
 			
+			dataView.Refresh();
+		}
+
+		public void RefreshSort()
+		{
+			var dataView = CollectionViewSource.GetDefaultView(ItemsSource);
+
+			if (dataView == null)
+				return;
+
 			dataView.Refresh();
 		}
 
