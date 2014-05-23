@@ -1,14 +1,14 @@
-﻿using System;
-using System.Globalization;
-using System.Windows;
-using System.Windows.Media.Imaging;
-using Ecng.Collections;
-using Ecng.Common;
-
-namespace Ecng.Xaml.Converters
+﻿namespace Ecng.Xaml.Converters
 {
+	using System;
+	using System.Globalization;
+	using System.Windows;
+	using System.Windows.Media.Imaging;
 	using System.Collections.Generic;
 	using System.Windows.Data;
+
+	using Ecng.Collections;
+	using Ecng.Common;
 
 	public sealed class CountryIdToFlagImageSourceConverter : IValueConverter
 	{
