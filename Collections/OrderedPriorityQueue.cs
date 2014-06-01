@@ -14,6 +14,11 @@
 			_dictionary = new SortedDictionary<TPriority, Queue<TValue>>();
 		}
 
+		public OrderedPriorityQueue(IComparer<TPriority> comparer)
+		{
+			_dictionary = new SortedDictionary<TPriority, Queue<TValue>>(comparer);
+		}
+
 		#region Priority queue operations
 
 		/// <summary>
@@ -40,7 +45,13 @@
 				throw new InvalidOperationException("Priority queue is empty");
 
 			var first = _dictionary.First();
-			var item = DequeueValue();
+
+			var item = first.Value.Dequeue();
+
+			if (first.Value.Count == 0)
+				_dictionary.Remove(first.Key);
+
+			Count--;
 
 			return new KeyValuePair<TPriority, TValue>(first.Key, item);
 		}
@@ -54,18 +65,7 @@
 		/// </remarks>
 		public TValue DequeueValue()
 		{
-			if (IsEmpty)
-				throw new InvalidOperationException("Priority queue is empty");
-
-			var first = _dictionary.First();
-			var item = first.Value.Dequeue();
-
-			if (!first.Value.Any())
-				_dictionary.Remove(first.Key);
-
-			Count--;
-
-			return item;
+			return Dequeue().Value;
 		}
 
 		/// <summary>
@@ -81,7 +81,7 @@
 				throw new InvalidOperationException("Priority queue is empty");
 
 			var first = _dictionary.First();
-			var item = PeekValue();
+			var item = first.Value.Peek();
 
 			return new KeyValuePair<TPriority, TValue>(first.Key, item);
 		}
@@ -95,10 +95,7 @@
 		/// </remarks>
 		public TValue PeekValue()
 		{
-			if (IsEmpty)
-				throw new InvalidOperationException("Priority queue is empty");
-
-			return _dictionary.First().Value.Peek();
+			return Peek().Value;
 		}
 
 		/// <summary>
