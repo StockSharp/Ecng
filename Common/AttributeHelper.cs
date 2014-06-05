@@ -28,16 +28,15 @@ namespace Ecng.Common
 
 		#region GetAttributes
 
-		public static TAttribute[] GetAttributes<TAttribute>(this ICustomAttributeProvider provider)
+		public static IEnumerable<TAttribute> GetAttributes<TAttribute>(this ICustomAttributeProvider provider, bool inherit = true)
 			where TAttribute : Attribute
 		{
-			return provider.GetAttributes<TAttribute>(true);
+			return provider.GetCustomAttributes(typeof(TAttribute), inherit).Cast<TAttribute>();
 		}
 
-		public static TAttribute[] GetAttributes<TAttribute>(this ICustomAttributeProvider provider, bool inherit)
-			where TAttribute : Attribute
+		public static IEnumerable<Attribute> GetAttributes(this ICustomAttributeProvider provider, bool inherit = true)
 		{
-			return (TAttribute[])provider.GetCustomAttributes(typeof(TAttribute), inherit);
+			return provider.GetCustomAttributes(inherit).Cast<Attribute>();
 		}
 
 		#endregion

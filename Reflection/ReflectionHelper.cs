@@ -333,13 +333,13 @@ namespace Ecng.Reflection
 		public static T GetMember<T>(this Type type, params Type[] additionalTypes)
 			where T : ConstructorInfo
 		{
-			return type.GetMember<T>(".ctor", ReflectionHelper.AllInstanceMembers, additionalTypes);
+			return type.GetMember<T>(".ctor", AllInstanceMembers, additionalTypes);
 		}
 
 		public static T GetMember<T>(this Type type, string memberName, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
-			return type.GetMember<T>(memberName, ReflectionHelper.AllMembers, additionalTypes);
+			return type.GetMember<T>(memberName, AllMembers, additionalTypes);
 		}
 
 		public static T GetMember<T>(this Type type, string memberName, BindingFlags flags, params Type[] additionalTypes)
@@ -778,8 +778,13 @@ namespace Ecng.Reflection
 					return ((FieldInfo)member).IsStatic;
 				else if (member is EventInfo)
 				{
-					var @event = (EventInfo)member;
-					return IsStatic(@event.GetAddMethod(true));
+					var evt = (EventInfo)member;
+					return IsStatic(evt.GetAddMethod(true));
+				}
+				else if (member is Type)
+				{
+					var type = (Type)member;
+					return type.IsAbstract && type.IsSealed;
 				}
 				else
 					throw new ArgumentException("member");
