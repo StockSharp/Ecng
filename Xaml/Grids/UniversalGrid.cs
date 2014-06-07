@@ -932,6 +932,7 @@
 			{
 				RestoreDirectory = true,
 				Filter = @"CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+				DefaultExt = "csv"
 			};
 
 			if (dlg.ShowDialog(this.GetWindow()) == true)
@@ -944,6 +945,7 @@
 			{
 				RestoreDirectory = true,
 				Filter = @"xls files (*.xls)|*.xls|All files (*.*)|*.*",
+				DefaultExt = "xls"
 			};
 
 			if (dlg.ShowDialog(this.GetWindow()) != true)
@@ -985,6 +987,7 @@
 			{
 				RestoreDirectory = true,
 				Filter = @"Image files (*.png)|*.png|All files (*.*)|*.*",
+				DefaultExt = "png"
 			};
 
 			if (dlg.ShowDialog(this.GetWindow()) == true)
