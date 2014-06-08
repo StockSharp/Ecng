@@ -16,5 +16,10 @@ namespace Ecng.Reflection.Path
 		public FastInvoker Invoker { get; private set; }
 
 		public abstract object Invoke(object instance, IDictionary<string, object> args);
+
+		public virtual void SetValue(object instance, object value)
+		{
+			throw new NotSupportedException();
+		}
 	}
 }

@@ -6,29 +6,35 @@ namespace Ecng.Reflection.Path
 
 	class FieldPropProxyItem : MemberProxyItem
 	{
+		private FastInvoker _setter;
+
 		public FieldPropProxyItem(MemberInfo member)
-			: base(Create(member))
+			: base(Create(member, true))
 		{
 		}
 
-		private static FastInvoker Create(MemberInfo member)
+		private static FastInvoker Create(MemberInfo member, bool isGetter)
 		{
 			if (member == null)
 				throw new ArgumentNullException("member");
 
 			if (member is PropertyInfo)
-				return FastInvoker.Create((PropertyInfo)member, true);
+				return FastInvoker.Create((PropertyInfo)member, isGetter);
 			else
-				return FastInvoker.Create((FieldInfo)member, true);
+				return FastInvoker.Create((FieldInfo)member, isGetter);
 		}
-
-		#region MemberProxyItem Members
 
 		public override object Invoke(object instance, IDictionary<string, object> args)
 		{
 			return Invoker.Member.IsStatic() ? Invoker.StaticGetValue() : Invoker.GetValue(instance);
 		}
 
-		#endregion
+		public override void SetValue(object instance, object value)
+		{
+			if (_setter == null)
+				_setter = Create(Invoker.Member, false);
+			
+			_setter.SetValue(instance, value);
+		}
 	}
 }

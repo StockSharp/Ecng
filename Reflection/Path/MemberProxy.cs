@@ -4,6 +4,7 @@
 
 	using System;
 	using System.Collections.Generic;
+	using System.Deployment.Internal;
 	using System.Globalization;
 	using System.Linq;
 	using System.Reflection;
@@ -86,6 +87,35 @@
 		}
 
 		#endregion
+
+		public void SetValue(object instance, object value)
+		{
+			if (Items.IsEmpty())
+				return;
+
+			foreach (var item in Items.Take(Items.Count() - 1))
+			{
+				if (instance == null && !item.Invoker.Member.IsStatic())
+				{
+					if (ThrowOnNull)
+						throw new InvalidOperationException();
+					else
+						break;
+				}
+
+				var newInstance = item.Invoke(instance, new Dictionary<string, object>());
+
+				if (newInstance == null)
+				{
+					newInstance = item.Invoker.Member.GetMemberType().CreateInstance();
+					item.SetValue(instance, newInstance);
+				}
+
+				instance = newInstance;
+			}
+
+			Items.Last().SetValue(instance, value);
+		}
 
 		#region Create
 
@@ -335,6 +365,11 @@
 		public override bool IsDefined(Type attributeType, bool inherit)
 		{
 			return false;
+		}
+
+		public override Type ReturnType
+		{
+			get { return Items.IsEmpty() ? typeof(void) : Items.Last().Invoker.Member.GetMemberType(); }
 		}
 
 		#endregion

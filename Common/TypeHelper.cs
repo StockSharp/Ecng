@@ -120,6 +120,16 @@ namespace Ecng.Common
 			return type.BaseType == _enumType;
 		}
 
+		public static bool IsAttribute(this Type type)
+		{
+			return typeof(Attribute).IsAssignableFrom(type);
+		}
+
+		public static bool IsDelegate(this Type type)
+		{
+			return typeof(Delegate).IsAssignableFrom(type);
+		}
+
 		public static bool IsWpfColor(this Type type)
 		{
 			if (type == null)
