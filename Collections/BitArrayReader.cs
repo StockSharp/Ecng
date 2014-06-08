@@ -14,11 +14,6 @@
 			bitArray.CopyTo(Data, 0);
 		}
 
-		protected int BitOffset;
-		protected int DataOffset;
-		[CLSCompliant(false)]
-		protected readonly ulong[] Data;
-
 		public BitArrayReader(byte[] bytes)
 		{
 			if (bytes == null)
@@ -27,6 +22,11 @@
 			Data = new ulong[bytes.Length / 8 + 2];
 			Buffer.BlockCopy(bytes, 0, Data, 0, bytes.Length);
 		}
+
+		protected int BitOffset;
+		protected int DataOffset;
+		[CLSCompliant(false)]
+		protected readonly ulong[] Data;
 
 		public int Offset
 		{
@@ -75,38 +75,38 @@
 
 		public void Seek(int offset)
 		{
-			int newOffset = BitOffset + offset;
+			var newOffset = BitOffset + offset;
 			DataOffset += newOffset >> 6;
 			BitOffset = newOffset & 63;
 		}
 
-		/// <summary>
-		/// Просмотреть ближайшие 16 бит. 
-		/// </summary>
-		/// <returns></returns>
-		[CLSCompliant(false)]
-		public ulong Lookahead()
-		{
-			int offset = DataOffset;
-			ulong bits = Data[offset];
-			int bo = BitOffset;
-			bits >>= bo;
-			if (bo > 0)
-				bits |= Data[offset + 1] << (64 - bo);
-			return bits;
-		}
+		///// <summary>
+		///// Просмотреть ближайшие 16 бит. 
+		///// </summary>
+		///// <returns></returns>
+		//[CLSCompliant(false)]
+		//public ulong Lookahead()
+		//{
+		//	int offset = DataOffset;
+		//	ulong bits = Data[offset];
+		//	int bo = BitOffset;
+		//	bits >>= bo;
+		//	if (bo > 0)
+		//		bits |= Data[offset + 1] << (64 - bo);
+		//	return bits;
+		//}
 
 		public long ReadLong(int count)
 		{
 			if (count <= 0 || count > 64)
 				throw new ArgumentOutOfRangeException("count", count, "Invalid count value.");
 
-			int offset = DataOffset;
-			int bitOffset = BitOffset;
+			var offset = DataOffset;
+			var bitOffset = BitOffset;
 
-			ulong value = Data[offset] >> bitOffset;
+			var value = Data[offset] >> bitOffset;
 
-			int shift = 64 - bitOffset;
+			var shift = 64 - bitOffset;
 			if (shift < count)
 				value |= Data[offset + 1] << shift;
 
