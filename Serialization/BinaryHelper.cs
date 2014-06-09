@@ -3,6 +3,9 @@
 	using System;
 	using System.Collections.Generic;
 	using System.IO;
+	using System.Text;
+
+	using Ecng.Reflection;
 #if !SILVERLIGHT
 	using System.Runtime.InteropServices;
 #endif
@@ -11,105 +14,96 @@
 
 	public static class BinaryHelper
 	{
-		public static IEnumerable<string> EnumerateLines(this Stream stream)
+		// убрать когда перейдем на 4.5 полностью
+		private class LeaveOpenStreamReader : StreamReader
+		{
+			public LeaveOpenStreamReader(Stream stream, Encoding encoding)
+				: base(stream, encoding ?? Encoding.UTF8)
+			{
+				this.SetValue("_closable", false);
+			}
+		}
+
+		public static IEnumerable<string> EnumerateLines(this Stream stream, Encoding encoding = null)
 		{
 			if (stream == null)
 				throw new ArgumentNullException("stream");
 
-			using (var sr = new StreamReader(stream, true))
+			using (var sr = new LeaveOpenStreamReader(stream, encoding ?? Encoding.UTF8))
 			{
 				while (!sr.EndOfStream)
 					yield return sr.ReadLine();
 			}
 		}
 
-		public static void Copy(this Stream source, Stream destination, Action completed, Action<Exception> error)
+		public static void CopyAsync(this Stream source, Stream destination, Action completed, Action<Exception> error)
 		{
-			source.Copy(destination, (int)source.Length, completed, error);
+			source.CopyAsync(destination, (int)source.Length, completed, error);
 		}
 
-		private sealed class AsyncCopier
+		public static void CopyAsync(this Stream source, Stream destination, int count, Action completed, Action<Exception> error)
 		{
-			private readonly Stream _source;
-			private readonly Stream _destination;
-			private readonly int _count;
-			private readonly Action _completed;
-			private readonly Action<Exception> _error;
-			private readonly byte[] _buffer;
+			if (source == null)
+				throw new ArgumentNullException("source");
 
-			private int _offset;
+			if (destination == null)
+				throw new ArgumentNullException("destination");
 
-			public AsyncCopier(Stream source, Stream destination, int count, Action completed, Action<Exception> error)
+			if (completed == null)
+				throw new ArgumentNullException("completed");
+
+			if (error == null)
+				throw new ArgumentNullException("error");
+
+			if (count < 0)
+				throw new ArgumentOutOfRangeException("count");
+
+			if (count == 0)
+				completed();
+			else
 			{
-				if (source == null)
-					throw new ArgumentNullException("source");
+				var buffer = new byte[count];
+				var offset = 0;
 
-				if (destination == null)
-					throw new ArgumentNullException("destination");
-
-				if (completed == null)
-					throw new ArgumentNullException("completed");
-
-				if (error == null)
-					throw new ArgumentNullException("error");
-
-				if (count < 0)
-					throw new ArgumentOutOfRangeException("count");
-
-				if (count == 0)
-					completed();
-				else
+				AsyncCallback callback = null;
+				callback = result =>
 				{
-					_source = source;
-					_destination = destination;
-					_count = count;
-					_completed = completed;
-					_error = error;
-
-					_buffer = new byte[_count];
-					_source.BeginRead(_buffer, 0, _count, OnBeginReadCallback, null);
-				}
-			}
-
-			private void OnBeginReadCallback(IAsyncResult result)
-			{
-				try
-				{
-					int read = _source.EndRead(result);
-					if (read > 0)
+					try
 					{
-						_destination.BeginWrite(_buffer, 0, read, writeResult =>
+						var read = source.EndRead(result);
+
+						if (read > 0)
 						{
-							_offset += read;
-
-							try
+							destination.BeginWrite(buffer, 0, read, writeResult =>
 							{
-								_destination.EndWrite(writeResult);
+								offset += read;
 
-								if (_offset < _count)
-									_source.BeginRead(_buffer, 0, _count - _offset, OnBeginReadCallback, null);
-								else
-									_completed();
-							}
-							catch (Exception exc)
-							{
-								_error(exc);
-							}
-						}, null);
+								try
+								{
+									destination.EndWrite(writeResult);
+
+									if (offset < count)
+										source.BeginRead(buffer, offset, count - offset, callback, null);
+									else
+										completed();
+								}
+								catch (Exception exc)
+								{
+									error(exc);
+								}
+							}, null);
+						}
+						else
+							error(new ArgumentException("Insufficient source stream."));
 					}
-					else
-						_error(new ArgumentException("Insufficient source stream."));
-				}
-				catch (Exception exc)
-				{
-					_error(exc);
-				}
-			}
-		}
+					catch (Exception exc)
+					{
+						error(exc);
+					}
+				};
 
-		public static void Copy(this Stream source, Stream destination, int count, Action completed, Action<Exception> error)
-		{
-			new AsyncCopier(source, destination, count, completed, error);
+				source.BeginRead(buffer, offset, count, callback, null);
+			}
 		}
 
 		public static byte[] ReadBuffer(this Stream stream)
