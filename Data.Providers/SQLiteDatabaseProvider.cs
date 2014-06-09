@@ -2,11 +2,11 @@
 {
 	using System;
 	using System.Data.Common;
-	using System.IO;
 
 	using Ecng.Common;
 	using Ecng.Data.Providers.Properties;
 	using Ecng.Reflection;
+	using Ecng.Serialization;
 
 	public class SQLiteDatabaseProvider : DatabaseProvider
 	{
@@ -14,7 +14,7 @@
 
 		static SQLiteDatabaseProvider()
 		{
-			File.WriteAllBytes("System.Data.SQLite.dll", Environment.Is64BitProcess ? Resources.SQLite64 : Resources.SQLite32);
+			(Environment.Is64BitProcess ? Resources.SQLite64 : Resources.SQLite32).Save("System.Data.SQLite.dll");
 
 			_factory = "System.Data.SQLite.SQLiteFactory, System.Data.SQLite"
 				.To<Type>()
