@@ -23,9 +23,9 @@
 		}
 
 		// http://social.msdn.microsoft.com/Forums/eu/windowssearch/thread/55582d9d-77ea-47d9-91ce-cff7ca7ef528
-		public static bool BlockDeleteDir(string dir, int iterCount = 1000, int sleep = 0)
+		public static bool BlockDeleteDir(string dir, bool isRecursive = false, int iterCount = 1000, int sleep = 0)
 		{
-			Directory.Delete(dir);
+			Directory.Delete(dir, isRecursive);
 
 			var limit = iterCount;
 
