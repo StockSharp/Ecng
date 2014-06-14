@@ -93,6 +93,7 @@
     <Compile Include="EnumDisplayNameAttribute.cs" />
     <Compile Include="EventDispatcher.cs" />
     <Compile Include="EventsContainer.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="FileSizeFormatProvider.cs" />
     <Compile Include="Circle.cs" />
     <Compile Include="INotifyPropertyChangedEx.cs" />

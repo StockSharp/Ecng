@@ -92,6 +92,9 @@
     <Compile Include="..\..\ComponentModel\EnumDisplayNameAttribute.cs">
       <Link>EnumDisplayNameAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\..\ComponentModel\Extensions.cs">
+      <Link>Extensions.cs</Link>
+    </Compile>
     <Compile Include="..\..\ComponentModel\INotifyPropertyChangedEx.cs">
       <Link>INotifyPropertyChangedEx.cs</Link>
     </Compile>
