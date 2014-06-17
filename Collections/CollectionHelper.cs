@@ -745,18 +745,6 @@
 			return bits;
 		}
 
-		public static void AddBits(this List<bool> list, int value, int bitCount)
-		{
-			for (var i = 0; i < bitCount; i++)
-				list.Add((value & (1 << i)) != 0);
-		}
-
-		public static void AddBits(this List<bool> list, long value, int bitCount)
-		{
-			for (var i = 0; i < bitCount; i++)
-				list.Add((value & (1L << i)) != 0);
-		}
-
 		public static int FromBits(this bool[] bits)
 		{
 			return bits.FromBits(0);

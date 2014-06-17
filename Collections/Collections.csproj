@@ -82,6 +82,7 @@
     <Compile Include="BaseListEx.cs" />
     <Compile Include="BaseCollection.cs" />
     <Compile Include="BitArrayReader.cs" />
+    <Compile Include="BitArrayWriter.cs" />
     <Compile Include="CachedSynchronizedList.cs" />
     <Compile Include="CachedSynchronizedOrderedDictionary.cs" />
     <Compile Include="CachedSynchronizedSet.cs" />
