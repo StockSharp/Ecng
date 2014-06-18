@@ -10,7 +10,7 @@
 	public abstract class DatabaseProvider : NamedObject
 	{
 		protected DatabaseProvider(DbProviderFactory factory, SqlRenderer renderer)
-			: this(factory, renderer, "{0} database provider".Put(renderer.GetType().Name.Replace("Renderer", string.Empty)))
+			: this(factory, renderer, renderer.GetType().Name.Replace("Renderer", string.Empty))
 		{
 		}
 

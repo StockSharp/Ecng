@@ -112,12 +112,15 @@
     <Compile Include="Converters\StringConverter.cs" />
     <Compile Include="Converters\TimeSpanToDateTimeConverter.cs" />
     <Compile Include="Converters\VisibilityToBoolConverter.cs" />
-    <Compile Include="DatabaseConnectionComboBox.cs" />
-    <Compile Include="DatabaseConnectionStringCreateWindow.xaml.cs">
-      <DependentUpon>DatabaseConnectionStringCreateWindow.xaml</DependentUpon>
+    <Compile Include="Database\DatabaseConnectionPair.cs" />
+    <Compile Include="Database\DatabaseConnectionPanel.xaml.cs">
+      <DependentUpon>DatabaseConnectionPanel.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DatabaseConnectionEditor.cs" />
-    <Compile Include="DatabaseProviderComboBox.cs" />
+    <Compile Include="Database\DatabaseConnectionCreateWindow.xaml.cs">
+      <DependentUpon>DatabaseConnectionCreateWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Database\DatabaseProviderComboBox.cs" />
+    <Compile Include="Database\DatabaseProviderEditor.cs" />
     <Compile Include="DelegateCommand.cs" />
     <Compile Include="EncodingComboBox.cs" />
     <Compile Include="Converters\EnumDisplayNameConverter.cs" />
@@ -245,7 +248,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="DatabaseConnectionStringCreateWindow.xaml">
+    <Page Include="Database\DatabaseConnectionPanel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Database\DatabaseConnectionCreateWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

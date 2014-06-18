@@ -1,4 +1,4 @@
-namespace Ecng.Xaml
+namespace Ecng.Xaml.Database
 {
 	using System.Windows.Controls;
 
