@@ -1,7 +1,11 @@
 namespace Ecng.Common
 {
-	public interface ISmartPointer
+	using System;
+
+	public interface ISmartPointer : IDisposable
 	{
+		int Counter { get; }
+
 		void IncRef();
 
 		void DecRef();

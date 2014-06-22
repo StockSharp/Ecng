@@ -22,6 +22,11 @@ namespace Ecng.Common
 
 		private int _counter;
 
+		public int Counter
+		{
+			get { return _counter; }
+		}
+
 		public void IncRef()
 		{
 			Interlocked.Increment(ref _counter);
@@ -30,7 +35,12 @@ namespace Ecng.Common
 		public void DecRef()
 		{
 			if (Interlocked.Decrement(ref _counter) == 0)
-				_release(_value);
+				Dispose();
+		}
+
+		public void Dispose()
+		{
+			_release(_value);
 		}
 	}
 }
