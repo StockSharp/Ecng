@@ -98,7 +98,7 @@ namespace Ecng.Data
 		private readonly SynchronizedDictionary<Query, DatabaseCommand> _commands = new SynchronizedDictionary<Query, DatabaseCommand>();
 		private readonly Dictionary<Type, ISerializer> _serializers = new Dictionary<Type, ISerializer>();
 
-		private readonly Regex _parameterRegex = new Regex("@(?<parameterName>[_a-zA-Z]+)", RegexOptions.Multiline);
+		private readonly Regex _parameterRegex = new Regex("@(?<parameterName>[_a-zA-Z0-9]+)", RegexOptions.Multiline);
 
 		[ThreadStatic]
 		private static BatchInfo _batchInfo;
