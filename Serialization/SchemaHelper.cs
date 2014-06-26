@@ -40,6 +40,11 @@
 			return field.MatchFactory(typeof(RelationManyFieldFactory<,>));
 		}
 
+		public static bool IsRelationSingle(this Field field)
+		{
+			return field.MatchFactory(typeof(RelationSingleFieldFactory<,>));
+		}
+
 		#region MatchFactory
 
 		private static readonly Dictionary<Tuple<Field, Type>, bool> _matchFactoryCache = new Dictionary<Tuple<Field, Type>, bool>();

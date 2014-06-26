@@ -20,12 +20,6 @@ namespace Ecng.Data
 
 	using MoreLinq;
 
-	using Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations;
-	using Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation;
-	using Microsoft.Practices.EnterpriseLibrary.Caching;
-
-	using Wintellect.PowerCollections;
-
 	public class Database : Disposable, IStorage
 	{
 		private sealed class BatchInfo : Disposable
@@ -93,8 +87,6 @@ namespace Ecng.Data
 
 		#region Private Fields
 
-		private readonly object _cacheManagerLock = new object();
-		private readonly SynchronizedDictionary<Type, string[]> _cacheKeys = new SynchronizedDictionary<Type, string[]>();
 		private readonly SynchronizedDictionary<Query, DatabaseCommand> _commands = new SynchronizedDictionary<Query, DatabaseCommand>();
 		private readonly Dictionary<Type, ISerializer> _serializers = new Dictionary<Type, ISerializer>();
 
@@ -120,7 +112,6 @@ namespace Ecng.Data
 			Name = name;
 			ConnectionString = connectionString;
 			CommandType = CommandType.Text;
-			Cache = new Cache(new NullBackingStore(), new CachingInstrumentationProvider("Database cache", false, false, "database"));
 
 			CultureInfo = CultureInfo.InvariantCulture;
 
@@ -173,18 +164,19 @@ namespace Ecng.Data
 
 		public CommandType CommandType { get; set; }
 
-		private Cache _cache;
+		//private readonly Dictionary<Type, string[]> _cacheKeys = new Dictionary<Type, string[]>();
+		private readonly SynchronizedDictionary<string, object> _cache = new SynchronizedDictionary<string, object>();
 
-		public Cache Cache
+		public IDictionary<string, object> Cache
 		{
 			get { return _cache; }
-			set
-			{
-				if (value == null)
-					throw new ArgumentNullException("value");
+			//set
+			//{
+			//	if (value == null)
+			//		throw new ArgumentNullException("value");
 
-				_cache = value;
-			}
+			//	_cache = value;
+			//}
 		}
 
 		public CultureInfo CultureInfo { get; set; }
@@ -338,7 +330,7 @@ namespace Ecng.Data
 			});
 		}
 
-		private Field GetField(FieldList fields, string paramName, IEnumerable<PairSet<string, string>> innerSchemaNameOverrides)
+		private static Field GetField(FieldList fields, string paramName, IEnumerable<PairSet<string, string>> innerSchemaNameOverrides)
 		{
 			var originalParamName = paramName;
 
@@ -394,7 +386,7 @@ namespace Ecng.Data
 
 		public virtual TEntity Create<TEntity>(TEntity entity)
 		{
-			if (entity.IsNull())
+			if (entity.IsNull(true))
 				throw new ArgumentNullException("entity");
 
 			var schema = SchemaManager.GetSchema<TEntity>();
@@ -472,14 +464,16 @@ namespace Ecng.Data
 			if (by.IsEmpty())
 				throw new ArgumentOutOfRangeException("by");
 
+			var schema = SchemaManager.GetSchema<TEntity>();
+
 			foreach (var item in by)
 			{
 				if (item.Field.IsIndex)
 				{
-					var entity = GetCache<TEntity>(item.Field, item.Value);
+					var entity = _cache.TryGetValue(CreateKey(schema, item.Field, item.Value));
 
-					if (!entity.IsNull())
-						return entity;
+					if (!entity.IsNull(true))
+						return (TEntity)entity;
 				}
 			}
 
@@ -494,7 +488,6 @@ namespace Ecng.Data
 				keyFields.Add(item.Field);
 			}
 
-			var schema = SchemaManager.GetSchema<TEntity>();
 			input = UngroupSource(schema.Fields, input);
 			var command = GetCommand(schema, SqlCommandTypes.ReadBy, keyFields, new FieldList());
 			return Read<TEntity>(command, input);
@@ -588,7 +581,7 @@ namespace Ecng.Data
 
 		public virtual TEntity Update<TEntity>(TEntity entity, FieldList keyFields, FieldList valueFields)
 		{
-			if (entity.IsNull())
+			if (entity.IsNull(true))
 				throw new ArgumentNullException("entity");
 
 			if (keyFields == null)
@@ -622,9 +615,9 @@ namespace Ecng.Data
 				var output = Update(command, input, !readOnlyFields.IsEmpty());
 
 				if (!readOnlyFields.IsEmpty())
-					entity = GetSerializer<TEntity>().Deserialize(output, readOnlyFields, entity);
+					entity = serializer.Deserialize(output, readOnlyFields, entity);
 
-				UpdateCache(entity, output);
+				UpdateCache(serializer, entity, output);
 
 				Updated.SafeInvoke(entity);
 			};
@@ -703,12 +696,14 @@ namespace Ecng.Data
 
 				IEnumerable<object> entities;
 
-				lock (_cacheManagerLock)
-					entities = by.Select(item => Cache.GetData(CreateKey(item.Field, item.Value)));
+				lock (_cache.SyncRoot)
+				{
+					entities = by.Select(item => _cache.TryGetValue(CreateKey(schema, item.Field, item.Value))).Where(o => o != null).ToArray();
+				}
 
 				entities.ForEach(Removed.SafeInvoke);
 
-				DeleteCache(by);
+				DeleteCache(schema, by);
 			};
 
 			if (_batchInfo != null)
@@ -779,8 +774,8 @@ namespace Ecng.Data
 
 		public void ClearCache()
 		{
-			lock (_cacheManagerLock)
-				Cache.Flush();
+			lock (_cache.SyncRoot)
+				_cache.Clear();
 
 			CacheCleared();
 		}
@@ -806,21 +801,18 @@ namespace Ecng.Data
 			return new SerializationItemCollection(fields.Select(field => new SerializationItem(field, null)));
 		}
 
-		private static string CreateKey(Field field, object fieldValue)
+		private static string CreateKey(Schema schema, Field field, object fieldValue)
 		{
+			if (schema == null)
+				throw new ArgumentNullException("schema");
+
 			if (field == null)
 				throw new ArgumentNullException("field");
 
 			if (fieldValue == null)
 				throw new ArgumentNullException("fieldValue");
 
-			return new Triple<Type, Field, object>(field.Schema.EntityType, field, fieldValue).ToString();
-		}
-
-		private TEntity GetCache<TEntity>(Field field, object value)
-		{
-			lock (_cacheManagerLock)
-				return (TEntity)Cache.GetData(CreateKey(field, value));
+			return Tuple.Create(schema.EntityType, field, fieldValue).ToString();
 		}
 
 		private IEnumerable<TEntity> GetOrAddCacheTable<TEntity>(SerializationItemCollection table)
@@ -838,7 +830,7 @@ namespace Ecng.Data
 				var entityCount = ((ICollection)table[0].Value).Count;
 				table = GroupSource(schema.Fields, table, Enumerable.Empty<PairSet<string, string>>());
 
-				lock (_cacheManagerLock)
+				lock (_cache.SyncRoot)
 				{
 					for (var i = 0; i < entityCount; i++)
 					{
@@ -847,11 +839,13 @@ namespace Ecng.Data
 						if (schema.Identity != null)
 						{
 							var id = schema.Identity.Factory.CreateInstance(serializer, source[schema.Identity.Name]);
-							var key = CreateKey(schema.Identity, id);
+							var key = CreateKey(schema, schema.Identity, id);
 
-							if (!Cache.Contains(key))
+							var entity = (TEntity)_cache.TryGetValue(key);
+
+							if (entity.IsNull(true))
 							{
-								var entity = schema.GetFactory<TEntity>().CreateEntity(serializer, source);
+								entity = schema.GetFactory<TEntity>().CreateEntity(serializer, source);
 								entities.Add(entity);
 
 								AddCache(entity, key, id, source, false, () =>
@@ -862,7 +856,7 @@ namespace Ecng.Data
 								});
 							}
 							else
-								entities.Add(GetCache<TEntity>(schema.Identity, id));
+								entities.Add(entity);
 						}
 						else
 						{
@@ -907,11 +901,11 @@ namespace Ecng.Data
 				return serializer.Deserialize(input, schema.Fields.NonIdentityFields, entity);
 
 			var id = schema.Identity.Factory.CreateInstance(serializer, input[schema.Identity.Name]);
-			var key = CreateKey(schema.Identity, id);
+			var key = CreateKey(schema, schema.Identity, id);
 
-			lock (_cacheManagerLock)
+			lock (_cache.SyncRoot)
 			{
-				if (!Cache.Contains(key))
+				if (!_cache.ContainsKey(key))
 				{
 					AddCache(entity, key, id, input, false, () =>
 					{
@@ -920,7 +914,7 @@ namespace Ecng.Data
 					});
 				}
 
-				return GetCache<TEntity>(schema.Identity, id);
+				return (TEntity)_cache.TryGetValue(CreateKey(schema, schema.Identity, id));
 			}
 		}
 
@@ -934,15 +928,15 @@ namespace Ecng.Data
 			var serializer = GetSerializer<TEntity>();
 
 			var id = serializer.GetId(entity);
-			var key = CreateKey(schema.Identity, id);
+			var key = CreateKey(schema, schema.Identity, id);
 
-			lock (_cacheManagerLock)
+			lock (_cache.SyncRoot)
 				AddCache(entity, key, id, source, true, () => { });
 		}
 
 		private void AddCache<TEntity>(TEntity entity, string key, object id, SerializationItemCollection source, bool newEntry, Action action)
 		{
-			if (entity.IsNull())
+			if (entity.IsNull(true))
 				throw new ArgumentNullException("entity");
 
 			if (key.IsEmpty())
@@ -960,13 +954,13 @@ namespace Ecng.Data
 			var schema = SchemaManager.GetSchema<TEntity>();
 			var serializer = GetSerializer<TEntity>();
 
-			Cache.Add(key, entity);
+			_cache.Add(key, entity);
 
 			try
 			{
 				entity = serializer.SetId(entity, id);
 
-				var keys = new List<string>();
+				//var keys = new List<string>();
 
 				using (new Scope<IStorage>(this, false))
 				{
@@ -975,55 +969,68 @@ namespace Ecng.Data
 					foreach (var field in schema.Fields.IndexFields)
 					{
 						if (!(field is IdentityField))
-							Cache.Add(CreateKey(field, field.GetAccessor<TEntity>().GetValue(entity)), entity);
+						{
+							var fieldValue = field.GetAccessor<TEntity>().GetValue(entity);
 
-						keys.Add(field.Name);
+							if (fieldValue == null)
+								continue;
+
+							_cache.Add(CreateKey(schema, field, fieldValue), entity);
+						}
+
+						//keys.Add(field.Name);
 					}
 				}
 
-				_cacheKeys.SafeAdd(schema.EntityType, k => keys.ToArray());
+				//lock (_cache.SyncRoot)
+				//	_cacheKeys.SafeAdd(schema.EntityType, k => keys.ToArray());
 			}
 			catch
 			{
-				Cache.Remove(key);
+				_cache.Remove(key);
 				throw;
 			}
 
 			CacheAdded(entity, source, newEntry);
 		}
 
-		private void UpdateCache<TEntity>(TEntity entity, SerializationItemCollection source)
+		private void UpdateCache<TEntity>(ISerializer serializer, TEntity entity, SerializationItemCollection source)
 		{
 			var schema = SchemaManager.GetSchema<TEntity>();
 
-			lock (_cacheManagerLock)
+			lock (_cache.SyncRoot)
 			{
-				var keys = _cacheKeys.TryGetValue(schema.EntityType);
+				//var keys = _cacheKeys.TryGetValue(schema.EntityType);
 
-				if (keys != null)
-				{
-					foreach (var key in keys)
-						Cache.Remove(key);
-				}
+				//if (keys != null)
+				//{
+				//	foreach (var key in keys)
+				//		_cache.Remove(key);
+				//}
 
 				foreach (var field in schema.Fields.IndexFields)
 				{
-					var key = CreateKey(field, field.GetAccessor<TEntity>().GetValue(entity));
-					Cache.Add(key, entity);
+					var fieldValue = field.GetAccessor<TEntity>().GetValue(entity);
+
+					if (fieldValue == null)
+						continue;
+
+					var key = CreateKey(schema, field, fieldValue);
+					_cache.TryAdd(key, entity);
 				}
 			}
 
 			CacheUpdated(entity, source);
 		}
 
-		private void DeleteCache(IEnumerable<SerializationItem> by)
+		private void DeleteCache(Schema schema, IEnumerable<SerializationItem> by)
 		{
-			lock (_cacheManagerLock)
+			lock (_cache.SyncRoot)
 			{
 				foreach (var item in by)
 				{
 					if (item.Field.IsIndex)
-						Cache.Remove(CreateKey(item.Field, item.Value));
+						_cache.Remove(CreateKey(schema, item.Field, item.Value));
 				}
 			}
 		}

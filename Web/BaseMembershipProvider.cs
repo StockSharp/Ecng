@@ -218,6 +218,9 @@ namespace Ecng.Web
 			}
 		}
 
+		[Ignore]
+		private readonly TimeSpan _timeDelta = TimeSpan.FromMinutes(10);
+
 		public override MembershipUser CreateUser(string userName, string password, string email, string passwordQuestion, string passwordAnswer, bool isApproved, object providerUserKey, out MembershipCreateStatus status)
 		{
 			status = MembershipCreateStatus.Success;
@@ -314,8 +317,11 @@ namespace Ecng.Web
 
 			if (userIsOnline)
 			{
+				var prev = user.LastActivityDate;
 				user.LastActivityDate = DateTime.Now;
-				UpdateUser(user);
+
+				if ((user.LastActivityDate - prev) > _timeDelta)
+					UpdateUser(user);
 			}
 
 			return ConvertToMembershipUser(user);
@@ -336,8 +342,11 @@ namespace Ecng.Web
 
 			if (userIsOnline)
 			{
+				var prev = user.LastActivityDate;
 				user.LastActivityDate = DateTime.Now;
-				UpdateUser(user);
+
+				if ((user.LastActivityDate - prev) > _timeDelta)
+					UpdateUser(user);
 			}
 
 			return ConvertToMembershipUser(user);
@@ -569,8 +578,12 @@ namespace Ecng.Web
 				return SecurityErrorTypes.InvalidPassword;
 			}
 
+			var prev = user.LastLoginDate;
 			user.LastLoginDate = DateTime.Now;
-			UpdateUser(user);
+
+			if ((user.LastLoginDate - prev) > _timeDelta)
+				UpdateUser(user);
+
 			return null;
 		}
 
