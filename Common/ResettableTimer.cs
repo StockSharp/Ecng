@@ -35,6 +35,8 @@
 
 		private void OnTimer()
 		{
+			var elapsed = false;
+
 			lock (_sync)
 			{
 				if (!_changed)
@@ -42,11 +44,14 @@
 					_timer.Dispose();
 					_timer = null;
 
-					Elapsed.SafeInvoke();
+					elapsed = true;
 				}
 				else
 					_changed = false;
 			}
+
+			if (elapsed)
+				Elapsed.SafeInvoke();
 		}
 
 		public void Flush()
@@ -57,7 +62,6 @@
 					return;
 
 				_changed = false;
-
 				_timer.Change(TimeSpan.Zero, _period);	
 			}
 		}
