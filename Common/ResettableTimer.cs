@@ -5,6 +5,7 @@
 
 	public class ResettableTimer
 	{
+		private readonly SyncObject _sync = new SyncObject();
 		private readonly TimeSpan _period;
 
 		private Timer _timer;
@@ -19,35 +20,46 @@
 
 		public void Reset()
 		{
-			if (_timer == null)
+			lock (_sync)
 			{
-				_timer = ThreadingHelper
-					.Timer(() =>
-					{
-						if (!_changed)
-						{
-							_timer.Dispose();
-							_timer = null;
-
-							Elapsed.SafeInvoke();
-						}
-						else
-							_changed = false;
-					})
-					.Interval(_period);
+				if (_timer == null)
+				{
+					_timer = ThreadingHelper
+						.Timer(OnTimer)
+						.Interval(_period);
+				}
+				else
+					_changed = true;
 			}
-			else
-				_changed = true;
+		}
+
+		private void OnTimer()
+		{
+			lock (_sync)
+			{
+				if (!_changed)
+				{
+					_timer.Dispose();
+					_timer = null;
+
+					Elapsed.SafeInvoke();
+				}
+				else
+					_changed = false;
+			}
 		}
 
 		public void Flush()
 		{
-			if (_timer == null)
-				return;
+			lock (_sync)
+			{
+				if (_timer == null)
+					return;
 
-			_changed = false;
+				_changed = false;
 
-			_timer.Change(TimeSpan.Zero, _period);
+				_timer.Change(TimeSpan.Zero, _period);	
+			}
 		}
 	}
 }
