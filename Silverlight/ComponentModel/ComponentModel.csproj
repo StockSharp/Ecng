@@ -110,6 +110,9 @@
     <Compile Include="..\..\ComponentModel\Line.cs">
       <Link>Line.cs</Link>
     </Compile>
+    <Compile Include="..\..\ComponentModel\NotifiableObject.cs">
+      <Link>NotifiableObject.cs</Link>
+    </Compile>
     <Compile Include="..\..\ComponentModel\OperatorRegistry.cs">
       <Link>OperatorRegistry.cs</Link>
     </Compile>

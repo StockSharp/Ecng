@@ -232,7 +232,6 @@ namespace Ecng.Common
 			handler(sender, new PropertyChangedEventArgs(name));
 		}
 
-#if !SILVERLIGHT
 		public static void SafeInvoke(this PropertyChangingEventHandler handler, object sender, string name)
 		{
 			if (handler == null)
@@ -240,7 +239,6 @@ namespace Ecng.Common
 
 			handler(sender, new PropertyChangingEventArgs(name));
 		}
-#endif
 
 		public static T CreateDelegate<T>(this MethodInfo method)
 		{

@@ -37,10 +37,31 @@
 
 	public static class EnumComboBoxHelper
 	{
-		public class EnumerationMember
+		public class EnumerationMember : NotifiableObject
 		{
-			public string Description { get; set; }
-			public object Value { get; set; }
+			private string _description;
+
+			public string Description
+			{
+				get { return _description; }
+				set
+				{
+					_description = value;
+					NotifyChanged("Description");
+				}
+			}
+
+			private object _value;
+
+			public object Value
+			{
+				get { return _value; }
+				set
+				{
+					_value = value;
+					NotifyChanged("Value");
+				}
+			}
 
 			public override string ToString()
 			{
