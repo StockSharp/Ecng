@@ -9,37 +9,32 @@ namespace Ecng.Common
 	{
 		private static readonly Dictionary<Tuple<Type, ICustomAttributeProvider>, Attribute> _attrCache = new Dictionary<Tuple<Type, ICustomAttributeProvider>, Attribute>();
 
-		#region GetAttribute
-
-		public static TAttribute GetAttribute<TAttribute>(this ICustomAttributeProvider provider)
+		public static TAttribute GetAttribute<TAttribute>(this ICustomAttributeProvider provider, bool inherit = true)
 			where TAttribute : Attribute
 		{
-			return provider.GetAttribute<TAttribute>(true);
-		}
+			if (provider == null)
+				throw new ArgumentNullException("provider");
 
-		public static TAttribute GetAttribute<TAttribute>(this ICustomAttributeProvider provider, bool inherit)
-			where TAttribute : Attribute
-		{
 			return (TAttribute)_attrCache.SafeAdd(new Tuple<Type, ICustomAttributeProvider>(typeof(TAttribute), provider),
 				key => provider.GetCustomAttributes(typeof(TAttribute), inherit).Cast<TAttribute>().FirstOrDefault());
 		}
 
-		#endregion
-
-		#region GetAttributes
-
 		public static IEnumerable<TAttribute> GetAttributes<TAttribute>(this ICustomAttributeProvider provider, bool inherit = true)
 			where TAttribute : Attribute
 		{
+			if (provider == null)
+				throw new ArgumentNullException("provider");
+
 			return provider.GetCustomAttributes(typeof(TAttribute), inherit).Cast<TAttribute>();
 		}
 
 		public static IEnumerable<Attribute> GetAttributes(this ICustomAttributeProvider provider, bool inherit = true)
 		{
+			if (provider == null)
+				throw new ArgumentNullException("provider");
+
 			return provider.GetCustomAttributes(inherit).Cast<Attribute>();
 		}
-
-		#endregion
 
 		private static V SafeAdd<K, V>(this IDictionary<K, V> dictionary, K key, Func<K, V> handler)
 		{
