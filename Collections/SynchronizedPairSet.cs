@@ -90,6 +90,12 @@
 				return _values.TryGetValue(value);
 		}
 
+		public bool TryGetKey(TValue value, out TKey key)
+		{
+			lock (SyncRoot)
+				return _values.TryGetValue(value, out key);
+		}
+
 		public bool RemoveByValue(TValue value)
 		{
 			lock (SyncRoot)
