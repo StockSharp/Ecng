@@ -101,9 +101,6 @@
       <DependentUpon>Block.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
-    <Compile Include="CheckComboBox.xaml.cs">
-      <DependentUpon>CheckComboBox.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Converters\DataTimeConverter.cs" />
     <Compile Include="Converters\MultiBoolToOpacityConverter.cs" />
     <Compile Include="Converters\NullImageConverter.cs" />
@@ -237,12 +234,6 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Block.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="CheckComboBox.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
