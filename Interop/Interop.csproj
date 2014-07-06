@@ -89,6 +89,9 @@
       <HintPath>..\References\PowerCollections.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
+    <Reference Include="SevenZipSharp">
+      <HintPath>..\References\SevenZip\SevenZipSharp.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core">
@@ -125,8 +128,14 @@
     <Compile Include="NativeObjectList.cs" />
     <Compile Include="Platforms.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="PtrReader.cs" />
     <Compile Include="SafeHandleCallbackMarshaler.cs" />
+    <Compile Include="SevenZip.cs" />
     <Compile Include="SystemMenu.cs" />
     <Compile Include="VirtualKeys.cs" />
     <Compile Include="WinApi.cs" />
@@ -159,6 +168,12 @@
     <None Include="..\Ecng.pfx">
       <Link>Ecng.pfx</Link>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
