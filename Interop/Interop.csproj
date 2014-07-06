@@ -67,26 +67,26 @@
   <ItemGroup>
     <Reference Include="ManagedWinapi, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Referencies\ManagedWinapi.dll</HintPath>
+      <HintPath>..\References\ManagedWinapi.dll</HintPath>
     </Reference>
     <Reference Include="NDde">
-      <HintPath>..\Referencies\NDde.dll</HintPath>
+      <HintPath>..\References\NDde.dll</HintPath>
     </Reference>
     <Reference Include="NPOI">
-      <HintPath>..\Referencies\NPOI.dll</HintPath>
+      <HintPath>..\References\NPOI.dll</HintPath>
     </Reference>
     <Reference Include="NPOI.OOXML">
-      <HintPath>..\Referencies\NPOI.OOXML.dll</HintPath>
+      <HintPath>..\References\NPOI.OOXML.dll</HintPath>
     </Reference>
     <Reference Include="NPOI.OpenXml4Net">
-      <HintPath>..\Referencies\NPOI.OpenXml4Net.dll</HintPath>
+      <HintPath>..\References\NPOI.OpenXml4Net.dll</HintPath>
     </Reference>
     <Reference Include="NPOI.OpenXmlFormats">
-      <HintPath>..\Referencies\NPOI.OpenXmlFormats.dll</HintPath>
+      <HintPath>..\References\NPOI.OpenXmlFormats.dll</HintPath>
     </Reference>
     <Reference Include="PowerCollections, Version=1.0.2224.30206, Culture=neutral, PublicKeyToken=8d05ee679e87a45f, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Referencies\PowerCollections.dll</HintPath>
+      <HintPath>..\References\PowerCollections.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
@@ -99,7 +99,7 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.XML" />
     <Reference Include="Xceed.Wpf.Toolkit">
-      <HintPath>..\Referencies\Xceed.Wpf.Toolkit.dll</HintPath>
+      <HintPath>..\References\Xceed.Wpf.Toolkit.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

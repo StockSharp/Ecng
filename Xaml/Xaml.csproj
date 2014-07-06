@@ -43,17 +43,17 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="ClrPatch">
-      <HintPath>..\Referencies\ClrPatch.dll</HintPath>
+      <HintPath>..\References\ClrPatch.dll</HintPath>
     </Reference>
     <Reference Include="MoreLinq">
-      <HintPath>..\Referencies\MoreLinq.dll</HintPath>
+      <HintPath>..\References\MoreLinq.dll</HintPath>
     </Reference>
     <Reference Include="Ookii.Dialogs.Wpf">
-      <HintPath>..\Referencies\Ookii.Dialogs.Wpf.dll</HintPath>
+      <HintPath>..\References\Ookii.Dialogs.Wpf.dll</HintPath>
     </Reference>
     <Reference Include="PowerCollections, Version=1.0.2224.30206, Culture=neutral, PublicKeyToken=8d05ee679e87a45f, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Referencies\PowerCollections.dll</HintPath>
+      <HintPath>..\References\PowerCollections.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
@@ -76,7 +76,7 @@
     </Reference>
     <Reference Include="Xceed.Wpf.Toolkit, Version=1.9.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Referencies\Xceed.Wpf.Toolkit.dll</HintPath>
+      <HintPath>..\References\Xceed.Wpf.Toolkit.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

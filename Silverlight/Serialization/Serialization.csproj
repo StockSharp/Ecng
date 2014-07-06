@@ -67,11 +67,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Practices.ServiceLocation">
-      <HintPath>..\..\Referencies\Silverlight\Microsoft.Practices.ServiceLocation.dll</HintPath>
+      <HintPath>..\..\References\Silverlight\Microsoft.Practices.ServiceLocation.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="SharpZipLib.Silverlight4">
-      <HintPath>..\..\Referencies\Silverlight\SharpZipLib.Silverlight4.dll</HintPath>
+      <HintPath>..\..\References\Silverlight\SharpZipLib.Silverlight4.dll</HintPath>
     </Reference>
     <Reference Include="system" />
     <Reference Include="System.Core" />
