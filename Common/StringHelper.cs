@@ -33,7 +33,10 @@
 
 		public static string Put(this string str, params object[] args)
 		{
-			return string.Format(str, args);
+			if (args == null)
+				throw new ArgumentNullException("args");
+
+			return args.Length == 0 ? str : string.Format(str, args);
 		}
 
 #if !SILVERLIGHT
@@ -56,6 +59,7 @@
 				handled = true;
 			}
 		}
+
 		static StringHelper()
 		{
 			Smart.Default.AddExtensions(new DictionarySourceEx());
@@ -63,7 +67,10 @@
 
 		public static string PutEx(this string str, params object[] args)
 		{
-			return SmartFormat.Smart.Format(str, args);
+			if (args == null)
+				throw new ArgumentNullException("args");
+
+			return args.Length == 0 ? str : Smart.Format(str, args);
 		}
 
 		private static Type GetGenericType(this Type targetType, Type genericType)
