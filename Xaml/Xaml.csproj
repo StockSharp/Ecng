@@ -93,7 +93,6 @@
     <Compile Include="Converters\ColorToBrushConverter.cs" />
     <Compile Include="Converters\CountryConverters.cs" />
     <Compile Include="Converters\DictionaryConverter.cs" />
-    <Compile Include="Converters\EnumToStringConverter.cs" />
     <Compile Include="Converters\InverseBooleanConverter.cs" />
     <Compile Include="Converters\ListViewBackgroundConvertor.cs" />
     <Compile Include="BmpImage.cs" />
@@ -119,6 +118,7 @@
     <Compile Include="Database\DatabaseProviderComboBox.cs" />
     <Compile Include="Database\DatabaseProviderEditor.cs" />
     <Compile Include="DelegateCommand.cs" />
+    <Compile Include="DependentObservableCollection.cs" />
     <Compile Include="EncodingComboBox.cs" />
     <Compile Include="Converters\EnumDisplayNameConverter.cs" />
     <Compile Include="EndPointComboBox.cs" />
