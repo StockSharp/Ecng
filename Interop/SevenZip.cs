@@ -57,7 +57,7 @@
 
 			Init();
 
-			using (var e = new SevenZipExtractor(from, password))
+			using (var e = password.IsEmpty() ? new SevenZipExtractor(from) : new SevenZipExtractor(from, password))
 				e.ExtractFile(0, to);
 		}
 
