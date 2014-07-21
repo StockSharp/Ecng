@@ -35,7 +35,7 @@ namespace Ecng.ComponentModel
 			var name = fieldInfo.Name;
 
 			var attr = fieldInfo.GetAttribute<EnumDisplayNameAttribute>();
-			if (attr != null && !attr.DisplayName.IsEmpty())
+			if (attr != null/* && !attr.DisplayName.IsEmpty()*/)
 				name = attr.DisplayName;
 
 			return name;
