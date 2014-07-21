@@ -60,7 +60,7 @@
 			/// <param name="sender">The object responsible for raising the event.</param>
 			/// <param name="e">A <see cref="RegisterInstanceEventArgs"/> containing the
 			/// event's data.</param>
-			private void PreRegisteringInstance(object sender, RegisterInstanceEventArgs e)
+			private static void PreRegisteringInstance(object sender, RegisterInstanceEventArgs e)
 			{
 				if (e.LifetimeManager is SynchronizedLifetimeManager)
 				{
@@ -234,9 +234,13 @@
 
 		public static UnityContainer UnityContainer { get; private set; }
 
+		public static event Action<Type, object> ServiceRegistered;
+
 		public static void RegisterService<T>(T service)
 		{
 			UnityContainer.RegisterInstance(service);
+
+			ServiceRegistered.SafeInvoke(typeof(T), service);
 		}
 
 		public static bool IsServiceRegistered<T>()
@@ -246,10 +250,7 @@
 
 		public static T TryGetService<T>()
 		{
-			if (IsServiceRegistered<T>())
-				return GetService<T>();
-
-			return default(T);
+			return IsServiceRegistered<T>() ? GetService<T>() : default(T);
 		}
 
 		public static void TryRegisterService<T>(T service)
