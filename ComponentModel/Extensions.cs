@@ -19,6 +19,12 @@ namespace Ecng.ComponentModel
 			return attr == null ? defaultValue : attr.Description;
 		}
 
+		public static string GetCategory(this Type type, string defaultValue = null)
+		{
+			var attr = type.GetAttribute<CategoryAttribute>();
+			return attr == null ? defaultValue : attr.Category;
+		}
+
 		public static string GetDisplayName(this object field)
 		{
 			if (field == null)
