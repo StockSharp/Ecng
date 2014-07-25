@@ -19,12 +19,15 @@ namespace Ecng.Xaml
 			Add,
 			Remove,
 			Clear,
+			Wait
 		}
 
 		private class CollectionAction
 		{
 			public ActionTypes Type { get; private set; }
 			public TItem Item { get; private set; }
+
+			public SyncObject SyncRoot { get; set; }
 
 			public CollectionAction(ActionTypes type, TItem item)
 			{
@@ -71,11 +74,23 @@ namespace Ecng.Xaml
 			}
 		}
 
+		public void Wait()
+		{
+			var syncRoot = new SyncObject();
+			AddAction(new CollectionAction(ActionTypes.Wait, default(TItem)) { SyncRoot = syncRoot });
+			syncRoot.Wait();
+		}
+
 		private void AddAction(ActionTypes type, TItem item)
+		{
+			AddAction(new CollectionAction(type, item));
+		}
+
+		private void AddAction(CollectionAction item)
 		{
 			lock (_pendingActions.SyncRoot)
 			{
-				_pendingActions.Add(new CollectionAction(type, item));
+				_pendingActions.Add(item);
 
 				if (_isTimerStarted)
 					return;
@@ -84,7 +99,7 @@ namespace Ecng.Xaml
 
 				ThreadingHelper
 					.Timer(OnFlush)
-					.Interval(TimeSpan.FromMilliseconds(300), new TimeSpan(-1));	
+					.Interval(TimeSpan.FromMilliseconds(300), new TimeSpan(-1));
 			}
 		}
 
@@ -148,6 +163,10 @@ namespace Ecng.Xaml
 						pendingRemove.Clear();
 						_convertedValues.Clear();
 						Clear();
+						break;
+					case ActionTypes.Wait:
+						var syncRoot = action.SyncRoot;
+						Dispatcher.AddAction(syncRoot.Pulse);
 						break;
 					default:
 						throw new ArgumentOutOfRangeException();
