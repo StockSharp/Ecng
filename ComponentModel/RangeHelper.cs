@@ -24,7 +24,15 @@ namespace Ecng.ComponentModel
 
 			for (var i = 0; i < orderedRanges.Count - 1; )
 			{
-				if (orderedRanges[i].Intersect(orderedRanges[i + 1]) != null)
+				if (orderedRanges[i].Contains(orderedRanges[i + 1]))
+				{
+					orderedRanges.RemoveAt(i + 1);
+				}
+				else if (orderedRanges[i + 1].Contains(orderedRanges[i]))
+				{
+					orderedRanges.RemoveAt(i);
+				}
+				else if (orderedRanges[i].Intersect(orderedRanges[i + 1]) != null)
 				{
 					orderedRanges[i] = new Range<T>(orderedRanges[i].Min, orderedRanges[i + 1].Max);
 					orderedRanges.RemoveAt(i + 1);
