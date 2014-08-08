@@ -6,7 +6,6 @@ namespace Ecng.Xaml
 
 	using Ecng.Collections;
 	using Ecng.Common;
-	using Ecng.Xaml;
 
 	using MoreLinq;
 
@@ -39,7 +38,7 @@ namespace Ecng.Xaml
 		private bool _isTimerStarted;
 		private readonly Func<TItem, TDisplay> _converter;
 		private readonly SynchronizedQueue<CollectionAction> _pendingActions = new SynchronizedQueue<CollectionAction>();
-		private readonly Dictionary<TItem, TDisplay> _convertedValues = new Dictionary<TItem, TDisplay>();
+		private readonly SynchronizedDictionary<TItem, TDisplay> _convertedValues = new SynchronizedDictionary<TItem, TDisplay>();
 		private int _safeCount;
 
 		public DependentObservableCollection(INotifyList<TItem> underlyingList, Func<TItem, TDisplay> converter)
@@ -184,20 +183,20 @@ namespace Ecng.Xaml
 					RemoveRange(pendingRemove);
 			});
 
-			if (MaxCount != -1 && _safeCount > 2 * MaxCount)
+			if (MaxCount == -1 || _safeCount <= 2 * MaxCount)
+				return;
+
+			if (_needConvert)
 			{
-				if (_needConvert)
-				{
-					var removePairs = _convertedValues.Take(_safeCount - MaxCount).ToArray();
-					_convertedValues.RemoveRange(removePairs);
+				var removePairs = _convertedValues.Take(_safeCount - MaxCount).ToArray();
+				_convertedValues.RemoveRange(removePairs);
 
-					Dispatcher.AddAction(() => RemoveRange(removePairs.Select(p => p.Value)));
-				}
-				else
-					Dispatcher.AddAction(() => RemoveRange(0, _safeCount - MaxCount));
-
-				_safeCount -= MaxCount;
+				Dispatcher.AddAction(() => RemoveRange(removePairs.Select(p => p.Value)));
 			}
+			else
+				Dispatcher.AddAction(() => RemoveRange(0, _safeCount - MaxCount));
+
+			_safeCount -= MaxCount;
 		}
 
 		public TDisplay TryGet(TItem item)
