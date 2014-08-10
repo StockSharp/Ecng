@@ -188,8 +188,13 @@ namespace Ecng.Xaml
 
 			if (_needConvert)
 			{
-				var removePairs = _convertedValues.Take(_safeCount - MaxCount).ToArray();
-				_convertedValues.RemoveRange(removePairs);
+				KeyValuePair<TItem, TDisplay>[] removePairs;
+
+				lock (_convertedValues.SyncRoot)
+				{
+					removePairs = _convertedValues.Take(_safeCount - MaxCount).ToArray();
+					_convertedValues.RemoveRange(removePairs);		
+				}
 
 				Dispatcher.AddAction(() => RemoveRange(removePairs.Select(p => p.Value)));
 			}
