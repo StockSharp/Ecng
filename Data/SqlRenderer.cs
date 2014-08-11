@@ -85,7 +85,7 @@ namespace Ecng.Data
 		public string GetTypeName(DbType type, Range<int> length)
 		{
 			if (!_typeNames.ContainsKey(type))
-				throw new ArgumentException("type");
+				throw new ArgumentException("Type {0} is not supported.".Put(type), "type");
 
 			return _typeNames[type](length);
 		}

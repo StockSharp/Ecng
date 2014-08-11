@@ -664,10 +664,55 @@ namespace Ecng.Data.Sql
 
 		public static Query CreateTable(Schema schema)
 		{
-			throw new NotImplementedException();
+			return CreateQuery((renderer, builder) =>
+			{
+				builder
+					.AppendFormat("create table {0}".Put(renderer.FormatReserver(schema.Name)))
+					.AppendLine();
+
+				builder.AppendLine("(");
+
+				var hasFields = false;
+
+				foreach (var field in schema.Fields)
+				{
+					builder
+						.AppendFormat("{0} {1},".Put(field.Name, renderer.GetTypeName(field.Type.To<DbType>(), new Range<int>())))
+						.AppendLine();
+
+					hasFields = true;
+				}
+
+				if (hasFields)
+					RemoveLastChars(builder, 1);
+
+				builder.Append(")");
+			});
 		}
 
 		#endregion
+
+		public static Query AlterTable(Type entityType)
+		{
+			return AlterTable(entityType.GetSchema());
+		}
+
+		public static Query AlterTable(Schema schema)
+		{
+			return CreateQuery((renderer, builder) => builder
+				.AppendFormat("alter table {0} ".Put(renderer.FormatReserver(schema.Name))));
+		}
+
+		public Query AddColumn(Field field)
+		{
+			return AddColumn(field.Name, field.Type.To<DbType>());
+		}
+
+		public Query AddColumn(string columnName, DbType type)
+		{
+			return AddAction((renderer, builder) => builder
+				.AppendFormat("add column {0} {1};".Put(columnName, renderer.GetTypeName(type, new Range<int>()))));
+		}
 
 		#region CreateProc
 
