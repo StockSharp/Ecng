@@ -317,6 +317,27 @@ namespace Ecng.Common
 
 			return culture;
 		}
+
+		public static bool TryGetUniqueMutex(string name, out Mutex mutex)
+		{
+			mutex = new Mutex(false, name);
+
+			try
+			{
+				if (!mutex.WaitOne(1))
+					return false;
+
+				mutex = new Mutex(true, name);
+			}
+			catch (AbandonedMutexException)
+			{
+				// http://stackoverflow.com/questions/15456986/how-to-gracefully-get-out-of-abandonedmutexexception
+				// пред процесс был закрыт, не освободив мьютекс. при получении исключения текущий
+				// процесс автоматически становится его владельцем
+			}
+
+			return true;
+		}
 #endif
 	}
 }
