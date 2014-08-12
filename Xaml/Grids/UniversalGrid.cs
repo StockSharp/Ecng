@@ -549,7 +549,7 @@
 		{
 			var dependencyObject = (DependencyObject)e.OriginalSource;
 
-			if (dependencyObject is Hyperlink)
+			if (dependencyObject is Hyperlink || dependencyObject is Run)
 				return null;
 
 			while ((dependencyObject != null) && !(dependencyObject is DataGridCell))
