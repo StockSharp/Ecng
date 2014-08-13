@@ -9,11 +9,9 @@ namespace Ecng.Net
 	using Ecng.Serialization;
 	using Ecng.Collections;
 
-	using Wintellect.PowerCollections;
-
 	class Context<T>
 	{
-		public Context(FastInvoker<T, object, object> invoker, Triple<ParameterInfo, ISerializer, ParamConverterAttribute>[] argDeserializers, ISerializer returnSerializer, bool isCached, bool isCompressed)
+		public Context(FastInvoker<T, object, object> invoker, Tuple<ParameterInfo, ISerializer, ParamConverterAttribute>[] argDeserializers, ISerializer returnSerializer, bool isCached, bool isCompressed)
 		{
 			if (invoker == null)
 				throw new ArgumentNullException("invoker");
@@ -32,7 +30,7 @@ namespace Ecng.Net
 		}
 
 		public FastInvoker<T, object, object> Invoker { get; private set; }
-		public Triple<ParameterInfo, ISerializer, ParamConverterAttribute>[] ArgDeserializers { get; private set; }
+		public Tuple<ParameterInfo, ISerializer, ParamConverterAttribute>[] ArgDeserializers { get; private set; }
 		public ISerializer ReturnSerializer { get; private set; }
 		public bool IsCached { get; private set; }
 		public bool IsCompressed { get; private set; }

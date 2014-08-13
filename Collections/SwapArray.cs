@@ -1,9 +1,11 @@
-namespace Ecng.Common
+namespace Ecng.Collections
 {
 	using System;
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Runtime.InteropServices;
+
+	using Ecng.Common;
 
 	using Wintellect.PowerCollections;
 

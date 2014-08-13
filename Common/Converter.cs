@@ -25,8 +25,6 @@
 	using System.Xml;
 	using System.Xml.Linq;
 
-	using Wintellect.PowerCollections;
-
 #if !SILVERLIGHT
 	using WinColor = System.Drawing.Color;
 	using WpfColorConverter = System.Windows.Media.ColorConverter;
@@ -39,7 +37,7 @@
 
 		private static readonly Dictionary<Type, DbType> _mappedTypes = new Dictionary<Type, DbType>();
 		private static readonly Dictionary<string, Type> _aliases = new Dictionary<string, Type>();
-		private static readonly MultiDictionary<Type, string> _aliasesByValue = new MultiDictionary<Type, string>(false);
+		private static readonly Dictionary<Type, List<string>> _aliasesByValue = new Dictionary<Type, List<string>>();
 		private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
 
 		#endregion
@@ -837,12 +835,22 @@
 				throw new ArgumentNullException("name");
 
 			_aliases.Add(name, type);
-			_aliasesByValue.Add(type, name);
+
+			List<string> aliases;
+
+			if (!_aliasesByValue.TryGetValue(type, out aliases))
+			{
+				aliases = new List<string>();
+				_aliasesByValue.Add(type, aliases);
+			}
+
+			aliases.Add(name);
 		}
 
 		public static string GetAlias(Type type)
 		{
-			return _aliasesByValue[type].FirstOrDefault();
+			List<string> aliases;
+			return _aliasesByValue.TryGetValue(type, out aliases) ? aliases.FirstOrDefault() : null;
 		}
 
 		public static T DoInCulture<T>(this CultureInfo cultureInfo, Func<T> func)

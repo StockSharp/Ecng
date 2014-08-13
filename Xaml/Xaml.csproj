@@ -51,10 +51,6 @@
     <Reference Include="Ookii.Dialogs.Wpf">
       <HintPath>..\References\Ookii.Dialogs.Wpf.dll</HintPath>
     </Reference>
-    <Reference Include="PowerCollections, Version=1.0.2224.30206, Culture=neutral, PublicKeyToken=8d05ee679e87a45f, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\References\PowerCollections.dll</HintPath>
-    </Reference>
     <Reference Include="PresentationCore">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>

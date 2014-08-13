@@ -62,10 +62,6 @@
     <Reference Include="MoreLinq">
       <HintPath>..\References\MoreLinq.dll</HintPath>
     </Reference>
-    <Reference Include="PowerCollections, Version=1.0.2224.30206, Culture=neutral, PublicKeyToken=8d05ee679e87a45f, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\References\PowerCollections.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -102,10 +98,45 @@
     <Compile Include="ListEx.cs" />
     <Compile Include="ModifiedEnumerable.cs" />
     <Compile Include="OrderedPriorityQueue.cs" />
+    <Compile Include="PowerCollections\Algorithms.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PowerCollections\CollectionBase.cs" />
+    <Compile Include="PowerCollections\Comparers.cs" />
+    <Compile Include="PowerCollections\Deque.cs" />
+    <Compile Include="PowerCollections\DictionaryBase.cs" />
+    <Compile Include="PowerCollections\Hash.cs" />
+    <Compile Include="PowerCollections\ListBase.cs" />
+    <Compile Include="PowerCollections\MultiDictionary.cs" />
+    <Compile Include="PowerCollections\MultiDictionaryBase.cs" />
+    <Compile Include="PowerCollections\OrderedBag.cs" />
+    <Compile Include="PowerCollections\OrderedDictionary.cs" />
+    <Compile Include="PowerCollections\OrderedMultiDictionary.cs" />
+    <Compile Include="PowerCollections\ReadOnlyCollectionBase.cs" />
+    <Compile Include="PowerCollections\ReadOnlyListBase.cs" />
+    <Compile Include="PowerCollections\RedBlack.cs" />
+    <Compile Include="PowerCollections\Strings.cs" />
+    <Compile Include="PowerCollections\Util.cs" />
     <Compile Include="PriorityQueue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueueEx.cs" />
     <Compile Include="StackEx.cs" />
+    <Compile Include="StringSearch\GlobalSuppressions.cs" />
+    <Compile Include="StringSearch\ITrie.cs" />
+    <Compile Include="StringSearch\_PatriciaTrie\MatchKind.cs" />
+    <Compile Include="StringSearch\_PatriciaTrie\PatriciaSuffixTrie.cs" />
+    <Compile Include="StringSearch\_PatriciaTrie\PatriciaTrie.cs" />
+    <Compile Include="StringSearch\_PatriciaTrie\PatriciaTrieNode.cs" />
+    <Compile Include="StringSearch\_PatriciaTrie\SplitResult.cs" />
+    <Compile Include="StringSearch\_PatriciaTrie\StringPartition.cs" />
+    <Compile Include="StringSearch\_PatriciaTrie\ZipResult.cs" />
+    <Compile Include="StringSearch\_Trie\ConcurrentTrie.cs" />
+    <Compile Include="StringSearch\_Trie\ConcurrentTrieNode.cs" />
+    <Compile Include="StringSearch\_Trie\SuffixTrie.cs" />
+    <Compile Include="StringSearch\_Trie\Trie.cs" />
+    <Compile Include="StringSearch\_Trie\TrieNode.cs" />
+    <Compile Include="StringSearch\_Trie\TrieNodeBase.cs" />
+    <Compile Include="SwapArray.cs" />
     <Compile Include="SynchronizedStack.cs" />
     <Compile Include="WrappedList.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -155,6 +186,9 @@
       <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
       <Name>Common</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="StringSearch\CustomDictionary.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
 </Project>

@@ -1,7 +1,5 @@
 namespace Ecng.Net
 {
-	#region Using Directives
-	
 	using System;
 	using System.Collections.Generic;
 	using System.IO;
@@ -13,10 +11,6 @@ namespace Ecng.Net
 	using Ecng.Serialization;
 
 	using ICSharpCode.SharpZipLib.GZip;
-
-	using Wintellect.PowerCollections;
-	
-	#endregion
 
 	public abstract class BehaviorServer<TBehavior, TId> : Disposable
 	{
@@ -38,7 +32,7 @@ namespace Ecng.Net
 				{
 					var invoker = FastInvoker<TBehavior, object, object>.Create(method);
 
-					var argDeserializers = new List<Triple<ParameterInfo, ISerializer, ParamConverterAttribute>>();
+					var argDeserializers = new List<Tuple<ParameterInfo, ISerializer, ParamConverterAttribute>>();
 
 					foreach (var parameter in method.GetParameters())
 					{
@@ -55,7 +49,7 @@ namespace Ecng.Net
 							paramAttr = new DefaultParamConverterAttribute(paramType);
 						}
 
-						argDeserializers.Add(new Triple<ParameterInfo, ISerializer, ParamConverterAttribute>(parameter, CreateSerializer(paramType), paramAttr));
+						argDeserializers.Add(new Tuple<ParameterInfo, ISerializer, ParamConverterAttribute>(parameter, CreateSerializer(paramType), paramAttr));
 					}
 
 					ISerializer returnSerializer = null;
@@ -109,7 +103,7 @@ namespace Ecng.Net
 				object[] args;
 
 				using (new Scope<SerializationContext>(new SerializationContext { Filter = Filter }))
-					args = context.ArgDeserializers.Select(deserializer => deserializer.Second.Deserialize(input)).ToArray();
+					args = context.ArgDeserializers.Select(deserializer => deserializer.Item2.Deserialize(input)).ToArray();
 
 				var cache = context.GetCache(args);
 
@@ -118,7 +112,7 @@ namespace Ecng.Net
 				else
 				{
 					for (var i = 0; i < args.Length; i++)
-						args[i] = context.ArgDeserializers[i].Third.Convert(args[i]);
+						args[i] = context.ArgDeserializers[i].Item3.Convert(args[i]);
 				}
 
 				var invoker = context.Invoker;

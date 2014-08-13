@@ -159,8 +159,7 @@ namespace Ecng.Reflection.Aspects
 		{
 			foreach (var field in context.TypeGenerator.Fields)
 			{
-				if (field.Attributes.Exists(arg =>
-					arg.Ctor.DeclaringType.IsAssignableFrom(typeof(WrapperAttribute))))
+				if (field.Attributes.Any(arg => arg.Ctor.DeclaringType.IsAssignableFrom(typeof(WrapperAttribute))))
 				{
 					ctorGen
 							.ldarg_0()

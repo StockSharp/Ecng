@@ -60,10 +60,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="PowerCollections, Version=1.0.2224.30206, Culture=neutral, PublicKeyToken=8d05ee679e87a45f, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\References\PowerCollections.dll</HintPath>
-    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="SmartFormat">
       <HintPath>..\References\SmartFormat.dll</HintPath>
@@ -143,7 +139,6 @@
     <Compile Include="Ref Tuples.cs" />
     <Compile Include="Scope.cs" />
     <Compile Include="StringHelper.cs" />
-    <Compile Include="SwapArray.cs" />
     <Compile Include="ThreadingHelper.cs" />
     <Compile Include="TimeHelper.cs" />
     <Compile Include="TypeHelper.cs" />
