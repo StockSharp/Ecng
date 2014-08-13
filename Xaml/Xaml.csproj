@@ -141,6 +141,12 @@
     </Compile>
     <Compile Include="FixedWidthColumn.cs" />
     <Compile Include="Converters\FormattingConverter.cs" />
+    <Compile Include="GenericTreeView\ItemMonitor.cs" />
+    <Compile Include="GenericTreeView\RoutedTreeItemEventArgs.cs" />
+    <Compile Include="GenericTreeView\TreeLayout.cs" />
+    <Compile Include="GenericTreeView\TreeUtil.cs" />
+    <Compile Include="GenericTreeView\TreeViewBase.cs" />
+    <Compile Include="GenericTreeView\TreeViewBase.Declarations.cs" />
     <Compile Include="Grids\DataGridHelper.cs" />
     <Compile Include="Grids\DdeSettingsWindow.xaml.cs">
       <DependentUpon>DdeSettingsWindow.xaml</DependentUpon>
@@ -559,6 +565,9 @@
     <Resource Include="Resources\Flags\SouthOssetia.png" />
     <Resource Include="Resources\Flags\UnitedNations.png" />
     <Resource Include="Resources\Flags\Wales.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="GenericTreeView\license.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
