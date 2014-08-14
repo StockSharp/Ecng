@@ -7,12 +7,13 @@ namespace Ecng.Interop.Dde
 
 	using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
+	[DisplayName("Настройки DDE")]
 	public class DdeSettings : Cloneable<DdeSettings>, IPersistable
 	{
 		public DdeSettings()
 		{
 			Server = "EXCEL";
-			Topic = "[Book1.xlsx].Sheet1";
+			Topic = "[Book1.xlsx]Sheet1";
 		}
 
 		[DisplayName("Сервер")]
