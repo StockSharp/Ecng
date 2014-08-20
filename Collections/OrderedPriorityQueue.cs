@@ -180,7 +180,44 @@
 		/// This method returns false if item is not found in the collection. </returns>
 		public bool Remove(KeyValuePair<TPriority, TValue> item)
 		{
-			throw new NotSupportedException();
+			return Remove(item.Key, new List<TValue> { item.Value });
+		}
+
+		public void RemoveRange(IEnumerable<KeyValuePair<TPriority, TValue>> items)
+		{
+			var groups = items.GroupBy(i => i.Key, i => i.Value);
+
+			foreach (var g in groups)
+			{
+				Remove(g.Key, g.ToList());
+			}
+		}
+
+		private bool Remove(TPriority key, ICollection<TValue> items)
+		{
+			var queue = _dictionary.TryGetValue(key);
+
+			if (queue == null)
+				return false;
+
+			_dictionary.Remove(key);
+
+			while (queue.Count > 0)
+			{
+				var queueItem = queue.Dequeue();
+
+				if (items.Contains(queueItem))
+				{
+					items.Remove(queueItem);
+					continue;
+				}
+
+				_dictionary.SafeAdd(key).Enqueue(queueItem);
+			}
+
+			Count -= items.Count;
+
+			return true;
 		}
 
 		/// <summary>
