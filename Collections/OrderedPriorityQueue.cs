@@ -209,13 +209,12 @@
 				if (items.Contains(queueItem))
 				{
 					items.Remove(queueItem);
+					Count--;
 					continue;
 				}
 
 				_dictionary.SafeAdd(key).Enqueue(queueItem);
 			}
-
-			Count -= items.Count;
 
 			return true;
 		}
