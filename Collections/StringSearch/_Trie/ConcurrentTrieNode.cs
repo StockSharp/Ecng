@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Gma.DataStructures.StringSearch
 {
-    public class ConcurrentTrieNode<TValue> : TrieNodeBase<TValue>
+	public class ConcurrentTrieNode<TValue> : TrieNodeBase<TValue>
     {
         private readonly ConcurrentDictionary<char, ConcurrentTrieNode<TValue>> m_Children;
         private readonly ConcurrentQueue<TValue> m_Values;
@@ -53,5 +53,53 @@ namespace Gma.DataStructures.StringSearch
                     ? childNode
                     : null;
         }
+
+		public void Remove(TValue value)
+		{
+			var temp = new HashSet<TValue>(m_Values);
+			temp.Remove(value);
+
+			while (!m_Values.IsEmpty)
+			{
+				TValue v;
+
+				if (!m_Values.TryDequeue(out v))
+					break;
+			}
+
+			foreach (var item in temp)
+				m_Values.Enqueue(item);
+
+			var emptyNodes = new List<char>();
+
+			foreach (var pair in m_Children)
+			{
+				var node = pair.Value;
+
+				node.Remove(value);
+
+				if (node.m_Values.IsEmpty)
+					emptyNodes.Add(pair.Key);
+			}
+
+			foreach (var emptyNode in emptyNodes)
+			{
+				ConcurrentTrieNode<TValue> node;
+				m_Children.TryRemove(emptyNode, out node);
+			}
+		}
+
+		public void Clear()
+		{
+			m_Children.Clear();
+
+			while (!m_Values.IsEmpty)
+			{
+				TValue value;
+
+				if (!m_Values.TryDequeue(out value))
+					break;
+			}
+		}
     }
 }

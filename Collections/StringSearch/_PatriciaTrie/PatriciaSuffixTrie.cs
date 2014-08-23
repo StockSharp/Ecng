@@ -44,7 +44,17 @@ namespace Gma.DataStructures.StringSearch
             }
         }
 
-        private static IEnumerable<StringPartition> GetAllSuffixes(int minSuffixLength, string word)
+	    public void Remove(TValue value)
+	    {
+			m_InnerTrie.Remove(value);
+	    }
+
+	    public void Clear()
+	    {
+			m_InnerTrie.Clear();
+	    }
+
+	    private static IEnumerable<StringPartition> GetAllSuffixes(int minSuffixLength, string word)
         {
             for (int i = word.Length - minSuffixLength; i >= 0; i--)
             {

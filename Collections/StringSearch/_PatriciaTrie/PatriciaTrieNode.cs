@@ -160,5 +160,39 @@ namespace Gma.DataStructures.StringSearch
                     Values().Count(),
                     String.Join(";", m_Children.Keys));
         }
+
+		public void Remove(TValue value)
+		{
+			var temp = new HashSet<TValue>(m_Values);
+			temp.Remove(value);
+
+			m_Values.Clear();
+
+			foreach (var item in temp)
+				m_Values.Enqueue(item);
+
+			var emptyNodes = new List<char>();
+
+			foreach (var pair in m_Children)
+			{
+				var node = pair.Value;
+
+				node.Remove(value);
+
+				if (node.m_Values.Count == 0)
+					emptyNodes.Add(pair.Key);
+			}
+
+			foreach (var emptyNode in emptyNodes)
+			{
+				m_Children.Remove(emptyNode);
+			}
+		}
+
+		public void Clear()
+		{
+			m_Children.Clear();
+			m_Values.Clear();
+		}
     }
 }
