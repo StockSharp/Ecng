@@ -144,6 +144,8 @@ namespace Ecng.Xaml
 						{
 							if (!_convertedValues.TryGetValue(action.Item, out display))
 								continue;
+
+							_convertedValues.Remove(action.Item);
 						}
 						else
 						{
