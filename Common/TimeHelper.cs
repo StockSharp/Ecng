@@ -2,9 +2,68 @@ namespace Ecng.Common
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 
 	public static class TimeHelper
 	{
+		private static readonly Stopwatch _timer;
+		private static readonly DateTime _start;
+		private static DateTime _startWithOffset;
+
+		static TimeHelper()
+		{
+			_timer = new Stopwatch();
+			_start = DateTime.Now;
+			_timer.Start();
+
+			NowOffset = TimeSpan.Zero;
+		}
+
+		/// <summary>
+		/// Текущее время.
+		/// </summary>
+		public static DateTime Now
+		{
+			get { return _startWithOffset + _timer.Elapsed; }
+		}
+
+		private static TimeSpan _nowOffset;
+
+		/// <summary>
+		/// Временное смещение. Неоходимо устанавливать, когда торговая программа работает с неточными настройками локального времени.
+		/// Значение <see cref="Now"/> будет корректироваться в зависимости от установленного значения.
+		/// </summary>
+		public static TimeSpan NowOffset
+		{
+			get { return _nowOffset; }
+			set
+			{
+				_nowOffset = value;
+				_startWithOffset = _start + value;
+			}
+		}
+
+		private static TimeSpan _timeZoneOffset = TimeZoneInfo.Local.BaseUtcOffset;
+
+		/// <summary>
+		/// Смещение временной зоны.
+		/// </summary>
+		public static TimeSpan TimeZoneOffset
+		{
+			get { return _timeZoneOffset; }
+			set { _timeZoneOffset = value; }
+		}
+
+		/// <summary>
+		/// Синхронизировать <see cref="NowOffset"/> между локальным временем на компьютере и NTP сервером в интернете.
+		/// </summary>
+		/// <param name="timeout">Таймаут синхронизации в милисекундах.</param>
+		public static void SyncMarketTime(int timeout = 5000)
+		{
+			var dtNow = _start + _timer.Elapsed;
+			NowOffset = new NtpClient().GetLocalTime(TimeZoneInfo.Local, timeout).Subtract(dtNow);
+		}
+
 		/// <summary>
 		/// Gets the weeks.
 		/// </summary>

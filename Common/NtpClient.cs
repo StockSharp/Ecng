@@ -1,10 +1,8 @@
-﻿using System;
-using System.Net;
-using System.Net.Sockets;
-
-namespace Ecng.Net
+﻿namespace Ecng.Common
 {
-	using Ecng.Common;
+	using System;
+	using System.Net;
+	using System.Net.Sockets;
 
 	public class NtpClient
 	{

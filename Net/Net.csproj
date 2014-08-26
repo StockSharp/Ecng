@@ -84,7 +84,6 @@
     <Compile Include="JsonDateTimeConverter.cs" />
     <Compile Include="MailHelper.cs" />
     <Compile Include="NetworkHelper.cs" />
-    <Compile Include="NtpClient.cs" />
     <Compile Include="ReferencePreservingDataContractFormatAttribute.cs" />
     <Compile Include="ServiceHost.cs" />
     <Compile Include="Transport\PipeClient.cs" />

@@ -83,6 +83,7 @@
     <Compile Include="ArrayHelper.cs" />
     <Compile Include="AttributeHelper.cs" />
     <Compile Include="CountryCodes.cs" />
+    <Compile Include="NtpClient.cs" />
     <Compile Include="ResettableTimer.cs" />
     <Compile Include="SmartPointer.cs" />
     <Compile Include="Cloneable.cs" />
