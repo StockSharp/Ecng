@@ -97,10 +97,22 @@ namespace Ecng.Xaml
 				_isTimerStarted = true;
 
 				ThreadingHelper
-					.Timer(OnFlush)
+					.Timer(() =>
+					{
+						try
+						{
+							OnFlush();
+						}
+						catch (Exception ex)
+						{
+							ErrorHandler.SafeInvoke(ex);
+						}
+					})
 					.Interval(TimeSpan.FromMilliseconds(300), new TimeSpan(-1));
 			}
 		}
+
+		public event Action<Exception> ErrorHandler;
 
 		private void OnFlush()
 		{
@@ -126,7 +138,15 @@ namespace Ecng.Xaml
 						if (_needConvert)
 						{
 							display = _converter(action.Item);
-							_convertedValues.Add(action.Item, display);
+
+							try
+							{
+								_convertedValues.Add(action.Item, display);
+							}
+							catch (ArgumentException)
+							{
+								System.Diagnostics.Trace.WriteLine(action.Item);
+							}
 						}
 						else
 						{
