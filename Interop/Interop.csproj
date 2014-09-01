@@ -65,13 +65,7 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ManagedWinapi, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\References\ManagedWinapi.dll</HintPath>
-    </Reference>
-    <Reference Include="NDde">
-      <HintPath>..\References\NDde.dll</HintPath>
-    </Reference>
+    <Reference Include="Accessibility" />
     <Reference Include="NPOI">
       <HintPath>..\References\NPOI.dll</HintPath>
     </Reference>
@@ -105,10 +99,119 @@
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Dde\Documentation\NamespaceDoc.cs" />
+    <Compile Include="Dde\Internal\Advanced\DdemlContext.cs" />
+    <Compile Include="Dde\Internal\Advanced\DdemlRegistrationEventArgs.cs" />
+    <Compile Include="Dde\Internal\Advanced\DdemlTransaction.cs" />
+    <Compile Include="Dde\Internal\Advanced\IDdemlTransactionFilter.cs" />
+    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlActivityEventArgs.cs" />
+    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlCallbackActivityEventArgs.cs" />
+    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlConversationActivityEventArgs.cs" />
+    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlErrorActivityEventArgs.cs" />
+    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlLinkActivityEventArgs.cs" />
+    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlMessageActivityEventArgs.cs" />
+    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlMonitor.cs" />
+    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlStringActivityEventArgs.cs" />
+    <Compile Include="Dde\Internal\Client\DdemlAdviseEventArgs.cs" />
+    <Compile Include="Dde\Internal\Client\DdemlClient.cs" />
+    <Compile Include="Dde\Internal\Client\DdemlDisconnectedEventArgs.cs" />
+    <Compile Include="Dde\Internal\Ddeml.cs" />
+    <Compile Include="Dde\Internal\DdemlEventArgs.cs" />
+    <Compile Include="Dde\Internal\DdemlException.cs" />
+    <Compile Include="Dde\Internal\Server\DdemlConversation.cs" />
+    <Compile Include="Dde\Internal\Server\DdemlServer.cs" />
+    <Compile Include="Dde\Internal\Utility\WeakReferenceDictionary.cs" />
+    <Compile Include="Dde\Public\Advanced\DdeContext.cs" />
+    <Compile Include="Dde\Public\Advanced\DdeMessageLoop.cs" />
+    <Compile Include="Dde\Public\Advanced\DdeRegistrationEventArgs.cs" />
+    <Compile Include="Dde\Public\Advanced\DdeTransaction.cs" />
+    <Compile Include="Dde\Public\Advanced\IDdeTransactionFilter.cs" />
+    <Compile Include="Dde\Public\Advanced\Monitor\DdeActivityEventArgs.cs" />
+    <Compile Include="Dde\Public\Advanced\Monitor\DdeCallbackActivityEventArgs.cs" />
+    <Compile Include="Dde\Public\Advanced\Monitor\DdeConversationActivityEventArgs.cs" />
+    <Compile Include="Dde\Public\Advanced\Monitor\DdeErrorActivityEventArgs.cs" />
+    <Compile Include="Dde\Public\Advanced\Monitor\DdeLinkActivityEventArgs.cs" />
+    <Compile Include="Dde\Public\Advanced\Monitor\DdeMessageActivityEventArgs.cs" />
+    <Compile Include="Dde\Public\Advanced\Monitor\DdeMonitor.cs" />
+    <Compile Include="Dde\Public\Advanced\Monitor\DdeStringActivityEventArgs.cs" />
+    <Compile Include="Dde\Public\Client\DdeAdviseEventArgs.cs" />
+    <Compile Include="Dde\Public\Client\DdeClient.cs" />
+    <Compile Include="Dde\Public\Client\DdeDisconnectedEventArgs.cs" />
+    <Compile Include="Dde\Public\DdeEventArgs.cs" />
+    <Compile Include="Dde\Public\DdeException.cs" />
+    <Compile Include="Dde\Public\Server\DdeConversation.cs" />
+    <Compile Include="Dde\Public\Server\DdeServer.cs" />
     <Compile Include="Dde\XlsDdeClient.cs" />
     <Compile Include="Dde\DdeSettings.cs" />
     <Compile Include="Dde\XlsDdeSerializer.cs" />
     <Compile Include="Dde\XlsDdeServer.cs" />
+    <Compile Include="ManagedWinapi\Accessibility\AccessibleObjectListener.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ManagedWinapi\Accessibility\SystemAccessibleObject.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ManagedWinapi\ApiHelper.cs" />
+    <Compile Include="ManagedWinapi\Audio\Mixer\Mixer.cs" />
+    <Compile Include="ManagedWinapi\Audio\Mixer\MixerControl.cs" />
+    <Compile Include="ManagedWinapi\Audio\Mixer\MixerLine.cs" />
+    <Compile Include="ManagedWinapi\BitmapDataHandler.cs" />
+    <Compile Include="ManagedWinapi\ClipboardNotifier.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ManagedWinapi\CodepointRange.cs" />
+    <Compile Include="ManagedWinapi\COMTypeInformation.cs" />
+    <Compile Include="ManagedWinapi\Crosshair.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ManagedWinapi\Crosshair.Designer.cs">
+      <DependentUpon>Crosshair.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ManagedWinapi\ExtendedFileInfo.cs" />
+    <Compile Include="ManagedWinapi\Hooks\Hook.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ManagedWinapi\Hooks\JournalHook.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ManagedWinapi\Hooks\LowLevelHook.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ManagedWinapi\Hotkey.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ManagedWinapi\InputBlocker.cs" />
+    <Compile Include="ManagedWinapi\KeyboardKey.cs" />
+    <Compile Include="ManagedWinapi\LockKeyResetter.cs" />
+    <Compile Include="ManagedWinapi\MachineIdentifiers.cs" />
+    <Compile Include="ManagedWinapi\PixelData.cs" />
+    <Compile Include="ManagedWinapi\PrivilegedActions.cs" />
+    <Compile Include="ManagedWinapi\ProcessMemoryChunk.cs" />
+    <Compile Include="ManagedWinapi\ProcessTree.cs" />
+    <Compile Include="ManagedWinapi\SendKeysEscaper.cs" />
+    <Compile Include="ManagedWinapi\ShortcutBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ManagedWinapi\ShortcutBox.Designer.cs">
+      <DependentUpon>ShortcutBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ManagedWinapi\TextCursor.cs" />
+    <Compile Include="ManagedWinapi\TextCursorProvider.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ManagedWinapi\Windows\Contents\AccessibleWindowParser.cs" />
+    <Compile Include="ManagedWinapi\Windows\Contents\ContentParserRegistry.cs" />
+    <Compile Include="ManagedWinapi\Windows\Contents\ListParser.cs" />
+    <Compile Include="ManagedWinapi\Windows\Contents\TextFieldParser.cs" />
+    <Compile Include="ManagedWinapi\Windows\Contents\WindowContent.cs" />
+    <Compile Include="ManagedWinapi\Windows\Contents\WindowContentParser.cs" />
+    <Compile Include="ManagedWinapi\Windows\EventDispatchingNativeWindow.cs" />
+    <Compile Include="ManagedWinapi\Windows\PInvokeTypes.cs" />
+    <Compile Include="ManagedWinapi\Windows\Screenshot.cs" />
+    <Compile Include="ManagedWinapi\Windows\SystemListBox.cs" />
+    <Compile Include="ManagedWinapi\Windows\SystemListView.cs" />
+    <Compile Include="ManagedWinapi\Windows\SystemTreeView.cs" />
+    <Compile Include="ManagedWinapi\Windows\SystemWindow.cs" />
     <Compile Include="NativeLibrary.cs" />
     <Compile Include="CustomMarshaler.cs" />
     <Compile Include="DisposableComObject.cs" />
@@ -166,10 +269,21 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="ManagedWinapi\Crosshair.resx">
+      <DependentUpon>Crosshair.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ManagedWinapi\ShortcutBox.resx">
+      <DependentUpon>ShortcutBox.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Dde\Documentation\Examples.xml" />
+    <Resource Include="ManagedWinapi\crosshair.cur" />
+    <Resource Include="ManagedWinapi\crosshair.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
