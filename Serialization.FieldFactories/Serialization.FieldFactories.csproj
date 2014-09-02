@@ -62,10 +62,6 @@
     <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>..\References\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Security.Cryptography, Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\References\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core">
@@ -104,6 +100,7 @@
     <Compile Include="NullableFieldFactory.cs" />
     <Compile Include="NullValueFieldFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SecureStringFieldFactory.cs" />
     <Compile Include="StreamFieldFactory.cs" />
     <Compile Include="TextFieldFactory.cs" />
     <Compile Include="TimeSpanFieldFactory.cs" />

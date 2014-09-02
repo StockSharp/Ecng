@@ -1,7 +1,5 @@
 namespace Ecng.Security
 {
-	#region Using Directives
-
 	using System;
 	using System.IO;
 	using System.Security.Cryptography;
@@ -10,8 +8,6 @@ namespace Ecng.Security
 	using Ecng.Serialization;
 
 	using Microsoft.Practices.EnterpriseLibrary.Security.Cryptography;
-
-	#endregion
 
 	public static class CryptoHelper
 	{
@@ -130,6 +126,16 @@ namespace Ecng.Security
 				saltGen.GetBytes(salt);
 				return salt;	
 			}
+		}
+
+		public static byte[] Protect(this byte[] plainText, byte[] entropy = null, DataProtectionScope scope = CryptoAlgorithm.DefaultScope)
+		{
+			return ProtectedData.Protect(plainText, entropy, scope);
+		}
+
+		public static byte[] Unprotect(this byte[] cipherText, byte[] entropy = null, DataProtectionScope scope = CryptoAlgorithm.DefaultScope)
+		{
+			return ProtectedData.Unprotect(cipherText, entropy, scope);
 		}
 	}
 }

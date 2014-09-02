@@ -114,4 +114,249 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3600.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AmbiguousInjectionConstructor" xml:space="preserve">
+    <value>The type {0} has multiple constructors of length {1}. Unable to disambiguate.</value>
+  </data>
+  <data name="ArgumentMustNotBeEmpty" xml:space="preserve">
+    <value>The provided string argument must not be empty.</value>
+  </data>
+  <data name="BuildFailedException" xml:space="preserve">
+    <value>The current build operation (build key {2}) failed: {3} (Strategy type {0}, index {1})</value>
+  </data>
+  <data name="CannotConstructAbstractClass" xml:space="preserve">
+    <value>The current type, {0}, is an abstract class and cannot be constructed. Are you missing a type mapping?</value>
+  </data>
+  <data name="CannotConstructDelegate" xml:space="preserve">
+    <value>The current type, {0}, is delegate and cannot be constructed. Unity only supports resolving Func&lt;T&gt; and Func&lt;IEnumerable&lt;T&gt;&gt; by default.</value>
+  </data>
+  <data name="CannotConstructInterface" xml:space="preserve">
+    <value>The current type, {0}, is an interface and cannot be constructed. Are you missing a type mapping?</value>
+  </data>
+  <data name="CannotExtractTypeFromBuildKey" xml:space="preserve">
+    <value>Cannot extract type from build key {0}.</value>
+  </data>
+  <data name="CannotInjectGenericMethod" xml:space="preserve">
+    <value>The method {0}.{1}({2}) is an open generic method. Open generic methods cannot be injected.</value>
+  </data>
+  <data name="CannotInjectIndexer" xml:space="preserve">
+    <value>The property {0} on type {1} is an indexer. Indexed properties cannot be injected.</value>
+  </data>
+  <data name="CannotInjectMethodWithOutParam" xml:space="preserve">
+    <value>The method {1} on type {0} has an out parameter. Injection cannot be performed.</value>
+  </data>
+  <data name="CannotInjectMethodWithOutParams" xml:space="preserve">
+    <value>The method {0}.{1}({2}) has at least one out parameter. Methods with out parameters cannot be injected.</value>
+  </data>
+  <data name="CannotInjectMethodWithRefParams" xml:space="preserve">
+    <value>The method {0}.{1}({2}) has at least one ref parameter.Methods with ref parameters cannot be injected.</value>
+  </data>
+  <data name="CannotInjectOpenGenericMethod" xml:space="preserve">
+    <value>The method {1} on type {0} is marked for injection, but it is an open generic method. Injection cannot be performed.</value>
+  </data>
+  <data name="CannotInjectStaticMethod" xml:space="preserve">
+    <value>The method {0}.{1}({2}) is static. Static methods cannot be injected.</value>
+  </data>
+  <data name="CannotResolveOpenGenericType" xml:space="preserve">
+    <value>The type {0} is an open generic type. An open generic type cannot be resolved.</value>
+  </data>
+  <data name="ConstructorArgumentResolveOperation" xml:space="preserve">
+    <value>Resolving parameter "{0}" of constructor {1}</value>
+  </data>
+  <data name="ConstructorParameterResolutionFailed" xml:space="preserve">
+    <value>The parameter {0} could not be resolved when attempting to call constructor {1}.</value>
+  </data>
+  <data name="ExceptionNullParameterValue" xml:space="preserve">
+    <value>Parameter type inference does not work for null values. Indicate the parameter type explicitly using a properly configured instance of the InjectionParameter or InjectionParameter&lt;T&gt; classes.</value>
+  </data>
+  <data name="InvokingConstructorOperation" xml:space="preserve">
+    <value>Calling constructor {0}</value>
+  </data>
+  <data name="InvokingMethodOperation" xml:space="preserve">
+    <value>Calling method {0}.{1}</value>
+  </data>
+  <data name="KeyAlreadyPresent" xml:space="preserve">
+    <value>An item with the given key is already present in the dictionary.</value>
+  </data>
+  <data name="LifetimeManagerInUse" xml:space="preserve">
+    <value>The lifetime manager is already registered. Lifetime managers cannot be reused, please create a new one.</value>
+  </data>
+  <data name="MarkerBuildPlanInvoked" xml:space="preserve">
+    <value>The override marker build plan policy has been invoked. This should never happen, looks like a bug in the container.</value>
+  </data>
+  <data name="MethodArgumentResolveOperation" xml:space="preserve">
+    <value>Resolving parameter "{0}" of method {1}.{2}</value>
+  </data>
+  <data name="MethodParameterResolutionFailed" xml:space="preserve">
+    <value>The value for parameter "{1}" of method {0} could not be resolved. </value>
+  </data>
+  <data name="MissingDependency" xml:space="preserve">
+    <value>Could not resolve dependency for build key {0}.</value>
+  </data>
+  <data name="MultipleInjectionConstructors" xml:space="preserve">
+    <value>The type {0} has multiple constructors marked with the InjectionConstructor attribute. Unable to disambiguate.</value>
+  </data>
+  <data name="MustHaveOpenGenericType" xml:space="preserve">
+    <value>The supplied type {0} must be an open generic type.</value>
+  </data>
+  <data name="MustHaveSameNumberOfGenericArguments" xml:space="preserve">
+    <value>The supplied type {0} does not have the same number of generic arguments as the target type {1}.</value>
+  </data>
+  <data name="NoConstructorFound" xml:space="preserve">
+    <value>The type {0} does not have an accessible constructor.</value>
+  </data>
+  <data name="NoMatchingGenericArgument" xml:space="preserve">
+    <value>The type {0} does not have a generic argument named "{1}"</value>
+  </data>
+  <data name="NoOperationExceptionReason" xml:space="preserve">
+    <value>while resolving</value>
+  </data>
+  <data name="NoSuchConstructor" xml:space="preserve">
+    <value>The type {0} does not have a constructor that takes the parameters ({1}).</value>
+  </data>
+  <data name="NoSuchMethod" xml:space="preserve">
+    <value>The type {0} does not have a public method named {1} that takes the parameters ({2}).</value>
+  </data>
+  <data name="NoSuchProperty" xml:space="preserve">
+    <value>The type {0} does not contain an instance property named {1}.</value>
+  </data>
+  <data name="NotAGenericType" xml:space="preserve">
+    <value>The type {0} is not a generic type, and you are attempting to inject a generic parameter named "{1}".</value>
+  </data>
+  <data name="NotAnArrayTypeWithRankOne" xml:space="preserve">
+    <value>The type {0} is not an array type with rank 1, and you are attempting to use a [DependencyArray] attribute on a parameter or property with this type.</value>
+  </data>
+  <data name="OptionalDependenciesMustBeReferenceTypes" xml:space="preserve">
+    <value>Optional dependencies must be reference types. The type {0} is a value type.</value>
+  </data>
+  <data name="PropertyNotSettable" xml:space="preserve">
+    <value>The property {0} on type {1} is not settable.</value>
+  </data>
+  <data name="PropertyTypeMismatch" xml:space="preserve">
+    <value>The property {0} on type {1} is of type {2}, and cannot be injected with a value of type {3}.</value>
+  </data>
+  <data name="PropertyValueResolutionFailed" xml:space="preserve">
+    <value>The value for the property "{0}" could not be resolved.</value>
+  </data>
+  <data name="ProvidedStringArgMustNotBeEmpty" xml:space="preserve">
+    <value>The provided string argument must not be empty.</value>
+  </data>
+  <data name="ResolutionFailed" xml:space="preserve">
+    <value>Resolution of the dependency failed, type = "{0}", name = "{1}".
+Exception occurred while: {2}.
+Exception is: {3} - {4}
+-----------------------------------------------
+At the time of the exception, the container was:
+</value>
+  </data>
+  <data name="ResolutionTraceDetail" xml:space="preserve">
+    <value>Resolving {0},{1}</value>
+  </data>
+  <data name="ResolutionWithMappingTraceDetail" xml:space="preserve">
+    <value>Resolving {0},{1} (mapped from {2}, {3})</value>
+  </data>
+  <data name="ResolvingPropertyValueOperation" xml:space="preserve">
+    <value>Resolving value for property {0}.{1}</value>
+  </data>
+  <data name="SelectedConstructorHasRefParameters" xml:space="preserve">
+    <value>The constructor {1} selected for type {0} has ref or out parameters. Such parameters are not supported for constructor injection.</value>
+  </data>
+  <data name="SettingPropertyOperation" xml:space="preserve">
+    <value>Setting value for property {0}.{1}</value>
+  </data>
+  <data name="TypeIsNotConstructable" xml:space="preserve">
+    <value>The type {0} cannot be constructed. You must configure the container to supply this value.</value>
+  </data>
+  <data name="TypesAreNotAssignable" xml:space="preserve">
+    <value>The type {1} cannot be assigned to variables of type {0}.</value>
+  </data>
+  <data name="UnknownType" xml:space="preserve">
+    <value>&lt;unknown&gt;</value>
+  </data>
+  <data name="CannotCreateContainerConfiguringElement" xml:space="preserve">
+    <value>An abstract ContainerConfiguringElement cannot be created. Please specify a concrete type.</value>
+  </data>
+  <data name="CannotCreateExtensionConfigurationElement" xml:space="preserve">
+    <value>An abstract ExtensionConfigurationElement object cannot be created. Please specify a concrete type.</value>
+  </data>
+  <data name="CannotCreateInjectionMemberElement" xml:space="preserve">
+    <value>An abstract InjectionMemberElement object cannot be created. Please specify a concrete type.</value>
+  </data>
+  <data name="CannotCreateParameterValueElement" xml:space="preserve">
+    <value>An abstract ParameterValueElement object cannot be created. Please specify a concrete type.</value>
+  </data>
+  <data name="CouldNotResolveType" xml:space="preserve">
+    <value>The type name or alias {0} could not be resolved. Please check your configuration file and verify this type name.</value>
+  </data>
+  <data name="DependencyForGenericParameterWithTypeSet" xml:space="preserve">
+    <value>The dependency element for generic parameter {0} must not have an explicit type name but has '{1}'.</value>
+  </data>
+  <data name="DependencyForOptionalGenericParameterWithTypeSet" xml:space="preserve">
+    <value>The optional dependency element for generic parameter {0} must not have an explicit type name but has '{1}'.</value>
+  </data>
+  <data name="DestinationNameFormat" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="DuplicateParameterValueElement" xml:space="preserve">
+    <value>The injection configuration for {0} has multiple values.</value>
+  </data>
+  <data name="ElementTypeNotRegistered" xml:space="preserve">
+    <value>The configuration element type {0} has not been registered with the section.</value>
+  </data>
+  <data name="ElementWithAttributesAndParameterValueElements" xml:space="preserve">
+    <value>The injection configuration for {0} is specified through both attributes and child value elements.</value>
+  </data>
+  <data name="ExtensionTypeNotFound" xml:space="preserve">
+    <value>Could not load section extension type {0}.</value>
+  </data>
+  <data name="ExtensionTypeNotValid" xml:space="preserve">
+    <value>The extension type {0} does not derive from SectionExtension.</value>
+  </data>
+  <data name="InvalidExtensionElementType" xml:space="preserve">
+    <value>The extension element type {0} that is being added does not derive from ContainerConfiguringElement, InjectionMemberElement, or ParameterValueElement. An extension element must derive from one of these types.</value>
+  </data>
+  <data name="InvalidValueAttributes" xml:space="preserve">
+    <value>No valid attributes were found to construct the value for the {0}. Please check the configuration file.</value>
+  </data>
+  <data name="NoMatchingConstructor" xml:space="preserve">
+    <value>Configuration is incorrect, the type {0} does not have a constructor that takes parameters named {1}.</value>
+  </data>
+  <data name="NoMatchingMethod" xml:space="preserve">
+    <value>Configuration is incorrect, the type {0} does not have a method named {1} that takes parameters named {2}.</value>
+  </data>
+  <data name="NoSuchContainer" xml:space="preserve">
+    <value>The container named "{0}" is not defined in this configuration section.</value>
+  </data>
+  <data name="NotAnArray" xml:space="preserve">
+    <value>The configuration is set to inject an array, but the type {0} is not an array type.</value>
+  </data>
+  <data name="Parameter" xml:space="preserve">
+    <value>parameter</value>
+  </data>
+  <data name="Property" xml:space="preserve">
+    <value>property</value>
+  </data>
+  <data name="RequiredPropertyMissing" xml:space="preserve">
+    <value>The attribute {0} must be present and non-empty.</value>
+  </data>
+  <data name="ValueNotAllowedForGenericArrayType" xml:space="preserve">
+    <value>The value element for {1} was specified for the generic array type {0}. Value elements are not allowed for generic array types.</value>
+  </data>
+  <data name="ValueNotAllowedForGenericParameterType" xml:space="preserve">
+    <value>The value element for {1} was specified for the generic parameter type {0}. Value elements are not allowed for generic parameter types.</value>
+  </data>
+  <data name="ValueNotAllowedForOpenGenericType" xml:space="preserve">
+    <value>The value element for {1} was specified for the generic type {0}. Value elements are not allowed for generic types.</value>
+  </data>
+  <data name="ActivateAllExceptionMessage" xml:space="preserve">
+    <value>Activation error occurred while trying to get all instances of type {0}</value>
+    <comment>Message shown if an exception occurs during a GetAllInstances call</comment>
+  </data>
+  <data name="ActivationExceptionMessage" xml:space="preserve">
+    <value>Activation error occurred while trying to get instance of type {0}, key "{1}"</value>
+    <comment>Message shown on exception in GetInstance method</comment>
+  </data>
+  <data name="ServiceLocationProviderNotSetMessage" xml:space="preserve">
+    <value>ServiceLocationProvider must be set.</value>
+    <comment>Message shown if ServiceLocator.Current called before ServiceLocationProvider is set.</comment>
+  </data>
 </root>

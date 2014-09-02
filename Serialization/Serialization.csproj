@@ -56,9 +56,6 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Security.Cryptography">
-      <HintPath>..\References\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll</HintPath>
-    </Reference>
     <Reference Include="MoreLinq">
       <HintPath>..\References\MoreLinq.dll</HintPath>
     </Reference>
@@ -113,7 +110,6 @@
     <Compile Include="RelationManyList.cs" />
     <Compile Include="SchemaHelper.cs" />
     <Compile Include="SchemaManager.cs" />
-    <Compile Include="SecureStringFieldFactory.cs" />
     <Compile Include="Serializable.cs">
       <SubType>Code</SubType>
     </Compile>

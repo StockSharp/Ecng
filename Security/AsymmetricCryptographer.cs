@@ -1,15 +1,11 @@
 namespace Ecng.Security
 {
-	#region Using Directives
-
 	using System;
 	using System.Security.Cryptography;
 
 	using Ecng.Common;
 
 	using Microsoft.Practices.EnterpriseLibrary.Security.Cryptography;
-
-	#endregion
 
 	public class AsymmetricCryptographer : Disposable
 	{

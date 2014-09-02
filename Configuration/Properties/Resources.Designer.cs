@@ -59,5 +59,721 @@ namespace Ecng.Configuration.Properties {
                 resourceCulture = value;
             }
         }
+
+	/// <summary>
+        ///   Looks up a localized string similar to The type {0} has multiple constructors of length {1}. Unable to disambiguate..
+        /// </summary>
+        internal static string AmbiguousInjectionConstructor {
+            get {
+                return ResourceManager.GetString("AmbiguousInjectionConstructor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The provided string argument must not be empty..
+        /// </summary>
+        internal static string ArgumentMustNotBeEmpty {
+            get {
+                return ResourceManager.GetString("ArgumentMustNotBeEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current build operation (build key {2}) failed: {3} (Strategy type {0}, index {1}).
+        /// </summary>
+        internal static string BuildFailedException {
+            get {
+                return ResourceManager.GetString("BuildFailedException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current type, {0}, is an abstract class and cannot be constructed. Are you missing a type mapping?.
+        /// </summary>
+        internal static string CannotConstructAbstractClass {
+            get {
+                return ResourceManager.GetString("CannotConstructAbstractClass", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current type, {0}, is delegate and cannot be constructed. Unity only supports resolving Func&lt;T&gt; and Func&lt;IEnumerable&lt;T&gt;&gt; by default..
+        /// </summary>
+        internal static string CannotConstructDelegate {
+            get {
+                return ResourceManager.GetString("CannotConstructDelegate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current type, {0}, is an interface and cannot be constructed. Are you missing a type mapping?.
+        /// </summary>
+        internal static string CannotConstructInterface {
+            get {
+                return ResourceManager.GetString("CannotConstructInterface", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot extract type from build key {0}..
+        /// </summary>
+        internal static string CannotExtractTypeFromBuildKey {
+            get {
+                return ResourceManager.GetString("CannotExtractTypeFromBuildKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The method {0}.{1}({2}) is an open generic method. Open generic methods cannot be injected..
+        /// </summary>
+        internal static string CannotInjectGenericMethod {
+            get {
+                return ResourceManager.GetString("CannotInjectGenericMethod", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The property {0} on type {1} is an indexer. Indexed properties cannot be injected..
+        /// </summary>
+        internal static string CannotInjectIndexer {
+            get {
+                return ResourceManager.GetString("CannotInjectIndexer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The method {1} on type {0} has an out parameter. Injection cannot be performed..
+        /// </summary>
+        internal static string CannotInjectMethodWithOutParam {
+            get {
+                return ResourceManager.GetString("CannotInjectMethodWithOutParam", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The method {0}.{1}({2}) has at least one out parameter. Methods with out parameters cannot be injected..
+        /// </summary>
+        internal static string CannotInjectMethodWithOutParams {
+            get {
+                return ResourceManager.GetString("CannotInjectMethodWithOutParams", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The method {0}.{1}({2}) has at least one ref parameter.Methods with ref parameters cannot be injected..
+        /// </summary>
+        internal static string CannotInjectMethodWithRefParams {
+            get {
+                return ResourceManager.GetString("CannotInjectMethodWithRefParams", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The method {1} on type {0} is marked for injection, but it is an open generic method. Injection cannot be performed..
+        /// </summary>
+        internal static string CannotInjectOpenGenericMethod {
+            get {
+                return ResourceManager.GetString("CannotInjectOpenGenericMethod", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The method {0}.{1}({2}) is static. Static methods cannot be injected..
+        /// </summary>
+        internal static string CannotInjectStaticMethod {
+            get {
+                return ResourceManager.GetString("CannotInjectStaticMethod", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type {0} is an open generic type. An open generic type cannot be resolved..
+        /// </summary>
+        internal static string CannotResolveOpenGenericType {
+            get {
+                return ResourceManager.GetString("CannotResolveOpenGenericType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resolving parameter &quot;{0}&quot; of constructor {1}.
+        /// </summary>
+        internal static string ConstructorArgumentResolveOperation {
+            get {
+                return ResourceManager.GetString("ConstructorArgumentResolveOperation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The parameter {0} could not be resolved when attempting to call constructor {1}..
+        /// </summary>
+        internal static string ConstructorParameterResolutionFailed {
+            get {
+                return ResourceManager.GetString("ConstructorParameterResolutionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parameter type inference does not work for null values. Indicate the parameter type explicitly using a properly configured instance of the InjectionParameter or InjectionParameter&lt;T&gt; classes..
+        /// </summary>
+        internal static string ExceptionNullParameterValue {
+            get {
+                return ResourceManager.GetString("ExceptionNullParameterValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Calling constructor {0}.
+        /// </summary>
+        internal static string InvokingConstructorOperation {
+            get {
+                return ResourceManager.GetString("InvokingConstructorOperation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Calling method {0}.{1}.
+        /// </summary>
+        internal static string InvokingMethodOperation {
+            get {
+                return ResourceManager.GetString("InvokingMethodOperation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An item with the given key is already present in the dictionary..
+        /// </summary>
+        internal static string KeyAlreadyPresent {
+            get {
+                return ResourceManager.GetString("KeyAlreadyPresent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The lifetime manager is already registered. Lifetime managers cannot be reused, please create a new one..
+        /// </summary>
+        internal static string LifetimeManagerInUse {
+            get {
+                return ResourceManager.GetString("LifetimeManagerInUse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The override marker build plan policy has been invoked. This should never happen, looks like a bug in the container..
+        /// </summary>
+        internal static string MarkerBuildPlanInvoked {
+            get {
+                return ResourceManager.GetString("MarkerBuildPlanInvoked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resolving parameter &quot;{0}&quot; of method {1}.{2}.
+        /// </summary>
+        internal static string MethodArgumentResolveOperation {
+            get {
+                return ResourceManager.GetString("MethodArgumentResolveOperation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The value for parameter &quot;{1}&quot; of method {0} could not be resolved. .
+        /// </summary>
+        internal static string MethodParameterResolutionFailed {
+            get {
+                return ResourceManager.GetString("MethodParameterResolutionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not resolve dependency for build key {0}..
+        /// </summary>
+        internal static string MissingDependency {
+            get {
+                return ResourceManager.GetString("MissingDependency", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type {0} has multiple constructors marked with the InjectionConstructor attribute. Unable to disambiguate..
+        /// </summary>
+        internal static string MultipleInjectionConstructors {
+            get {
+                return ResourceManager.GetString("MultipleInjectionConstructors", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The supplied type {0} must be an open generic type..
+        /// </summary>
+        internal static string MustHaveOpenGenericType {
+            get {
+                return ResourceManager.GetString("MustHaveOpenGenericType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The supplied type {0} does not have the same number of generic arguments as the target type {1}..
+        /// </summary>
+        internal static string MustHaveSameNumberOfGenericArguments {
+            get {
+                return ResourceManager.GetString("MustHaveSameNumberOfGenericArguments", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type {0} does not have an accessible constructor..
+        /// </summary>
+        internal static string NoConstructorFound {
+            get {
+                return ResourceManager.GetString("NoConstructorFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type {0} does not have a generic argument named &quot;{1}&quot;.
+        /// </summary>
+        internal static string NoMatchingGenericArgument {
+            get {
+                return ResourceManager.GetString("NoMatchingGenericArgument", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to while resolving.
+        /// </summary>
+        internal static string NoOperationExceptionReason {
+            get {
+                return ResourceManager.GetString("NoOperationExceptionReason", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type {0} does not have a constructor that takes the parameters ({1})..
+        /// </summary>
+        internal static string NoSuchConstructor {
+            get {
+                return ResourceManager.GetString("NoSuchConstructor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type {0} does not have a public method named {1} that takes the parameters ({2})..
+        /// </summary>
+        internal static string NoSuchMethod {
+            get {
+                return ResourceManager.GetString("NoSuchMethod", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type {0} does not contain an instance property named {1}..
+        /// </summary>
+        internal static string NoSuchProperty {
+            get {
+                return ResourceManager.GetString("NoSuchProperty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type {0} is not a generic type, and you are attempting to inject a generic parameter named &quot;{1}&quot;..
+        /// </summary>
+        internal static string NotAGenericType {
+            get {
+                return ResourceManager.GetString("NotAGenericType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type {0} is not an array type with rank 1, and you are attempting to use a [DependencyArray] attribute on a parameter or property with this type..
+        /// </summary>
+        internal static string NotAnArrayTypeWithRankOne {
+            get {
+                return ResourceManager.GetString("NotAnArrayTypeWithRankOne", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Optional dependencies must be reference types. The type {0} is a value type..
+        /// </summary>
+        internal static string OptionalDependenciesMustBeReferenceTypes {
+            get {
+                return ResourceManager.GetString("OptionalDependenciesMustBeReferenceTypes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The property {0} on type {1} is not settable..
+        /// </summary>
+        internal static string PropertyNotSettable {
+            get {
+                return ResourceManager.GetString("PropertyNotSettable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The property {0} on type {1} is of type {2}, and cannot be injected with a value of type {3}..
+        /// </summary>
+        internal static string PropertyTypeMismatch {
+            get {
+                return ResourceManager.GetString("PropertyTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The value for the property &quot;{0}&quot; could not be resolved..
+        /// </summary>
+        internal static string PropertyValueResolutionFailed {
+            get {
+                return ResourceManager.GetString("PropertyValueResolutionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The provided string argument must not be empty..
+        /// </summary>
+        internal static string ProvidedStringArgMustNotBeEmpty {
+            get {
+                return ResourceManager.GetString("ProvidedStringArgMustNotBeEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resolution of the dependency failed, type = &quot;{0}&quot;, name = &quot;{1}&quot;.
+        ///Exception occurred while: {2}.
+        ///Exception is: {3} - {4}
+        ///-----------------------------------------------
+        ///At the time of the exception, the container was:
+        ///.
+        /// </summary>
+        internal static string ResolutionFailed {
+            get {
+                return ResourceManager.GetString("ResolutionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resolving {0},{1}.
+        /// </summary>
+        internal static string ResolutionTraceDetail {
+            get {
+                return ResourceManager.GetString("ResolutionTraceDetail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resolving {0},{1} (mapped from {2}, {3}).
+        /// </summary>
+        internal static string ResolutionWithMappingTraceDetail {
+            get {
+                return ResourceManager.GetString("ResolutionWithMappingTraceDetail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resolving value for property {0}.{1}.
+        /// </summary>
+        internal static string ResolvingPropertyValueOperation {
+            get {
+                return ResourceManager.GetString("ResolvingPropertyValueOperation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The constructor {1} selected for type {0} has ref or out parameters. Such parameters are not supported for constructor injection..
+        /// </summary>
+        internal static string SelectedConstructorHasRefParameters {
+            get {
+                return ResourceManager.GetString("SelectedConstructorHasRefParameters", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Setting value for property {0}.{1}.
+        /// </summary>
+        internal static string SettingPropertyOperation {
+            get {
+                return ResourceManager.GetString("SettingPropertyOperation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type {0} cannot be constructed. You must configure the container to supply this value..
+        /// </summary>
+        internal static string TypeIsNotConstructable {
+            get {
+                return ResourceManager.GetString("TypeIsNotConstructable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type {1} cannot be assigned to variables of type {0}..
+        /// </summary>
+        internal static string TypesAreNotAssignable {
+            get {
+                return ResourceManager.GetString("TypesAreNotAssignable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;unknown&gt;.
+        /// </summary>
+        internal static string UnknownType {
+            get {
+                return ResourceManager.GetString("UnknownType", resourceCulture);
+            }
+        }
+
+	/// <summary>
+        ///   Looks up a localized string similar to An abstract ContainerConfiguringElement cannot be created. Please specify a concrete type..
+        /// </summary>
+        internal static string CannotCreateContainerConfiguringElement {
+            get {
+                return ResourceManager.GetString("CannotCreateContainerConfiguringElement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An abstract ExtensionConfigurationElement object cannot be created. Please specify a concrete type..
+        /// </summary>
+        internal static string CannotCreateExtensionConfigurationElement {
+            get {
+                return ResourceManager.GetString("CannotCreateExtensionConfigurationElement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An abstract InjectionMemberElement object cannot be created. Please specify a concrete type..
+        /// </summary>
+        internal static string CannotCreateInjectionMemberElement {
+            get {
+                return ResourceManager.GetString("CannotCreateInjectionMemberElement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An abstract ParameterValueElement object cannot be created. Please specify a concrete type..
+        /// </summary>
+        internal static string CannotCreateParameterValueElement {
+            get {
+                return ResourceManager.GetString("CannotCreateParameterValueElement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type name or alias {0} could not be resolved. Please check your configuration file and verify this type name..
+        /// </summary>
+        internal static string CouldNotResolveType {
+            get {
+                return ResourceManager.GetString("CouldNotResolveType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The dependency element for generic parameter {0} must not have an explicit type name but has &apos;{1}&apos;..
+        /// </summary>
+        internal static string DependencyForGenericParameterWithTypeSet {
+            get {
+                return ResourceManager.GetString("DependencyForGenericParameterWithTypeSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The optional dependency element for generic parameter {0} must not have an explicit type name but has &apos;{1}&apos;..
+        /// </summary>
+        internal static string DependencyForOptionalGenericParameterWithTypeSet {
+            get {
+                return ResourceManager.GetString("DependencyForOptionalGenericParameterWithTypeSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} {1}.
+        /// </summary>
+        internal static string DestinationNameFormat {
+            get {
+                return ResourceManager.GetString("DestinationNameFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The injection configuration for {0} has multiple values..
+        /// </summary>
+        internal static string DuplicateParameterValueElement {
+            get {
+                return ResourceManager.GetString("DuplicateParameterValueElement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The configuration element type {0} has not been registered with the section..
+        /// </summary>
+        internal static string ElementTypeNotRegistered {
+            get {
+                return ResourceManager.GetString("ElementTypeNotRegistered", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The injection configuration for {0} is specified through both attributes and child value elements..
+        /// </summary>
+        internal static string ElementWithAttributesAndParameterValueElements {
+            get {
+                return ResourceManager.GetString("ElementWithAttributesAndParameterValueElements", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not load section extension type {0}..
+        /// </summary>
+        internal static string ExtensionTypeNotFound {
+            get {
+                return ResourceManager.GetString("ExtensionTypeNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The extension type {0} does not derive from SectionExtension..
+        /// </summary>
+        internal static string ExtensionTypeNotValid {
+            get {
+                return ResourceManager.GetString("ExtensionTypeNotValid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The extension element type {0} that is being added does not derive from ContainerConfiguringElement, InjectionMemberElement, or ParameterValueElement. An extension element must derive from one of these types..
+        /// </summary>
+        internal static string InvalidExtensionElementType {
+            get {
+                return ResourceManager.GetString("InvalidExtensionElementType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No valid attributes were found to construct the value for the {0}. Please check the configuration file..
+        /// </summary>
+        internal static string InvalidValueAttributes {
+            get {
+                return ResourceManager.GetString("InvalidValueAttributes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configuration is incorrect, the type {0} does not have a constructor that takes parameters named {1}..
+        /// </summary>
+        internal static string NoMatchingConstructor {
+            get {
+                return ResourceManager.GetString("NoMatchingConstructor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configuration is incorrect, the type {0} does not have a method named {1} that takes parameters named {2}..
+        /// </summary>
+        internal static string NoMatchingMethod {
+            get {
+                return ResourceManager.GetString("NoMatchingMethod", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The container named &quot;{0}&quot; is not defined in this configuration section..
+        /// </summary>
+        internal static string NoSuchContainer {
+            get {
+                return ResourceManager.GetString("NoSuchContainer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The configuration is set to inject an array, but the type {0} is not an array type..
+        /// </summary>
+        internal static string NotAnArray {
+            get {
+                return ResourceManager.GetString("NotAnArray", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to parameter.
+        /// </summary>
+        internal static string Parameter {
+            get {
+                return ResourceManager.GetString("Parameter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to property.
+        /// </summary>
+        internal static string Property {
+            get {
+                return ResourceManager.GetString("Property", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The attribute {0} must be present and non-empty..
+        /// </summary>
+        internal static string RequiredPropertyMissing {
+            get {
+                return ResourceManager.GetString("RequiredPropertyMissing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The value element for {1} was specified for the generic array type {0}. Value elements are not allowed for generic array types..
+        /// </summary>
+        internal static string ValueNotAllowedForGenericArrayType {
+            get {
+                return ResourceManager.GetString("ValueNotAllowedForGenericArrayType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The value element for {1} was specified for the generic parameter type {0}. Value elements are not allowed for generic parameter types..
+        /// </summary>
+        internal static string ValueNotAllowedForGenericParameterType {
+            get {
+                return ResourceManager.GetString("ValueNotAllowedForGenericParameterType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The value element for {1} was specified for the generic type {0}. Value elements are not allowed for generic types..
+        /// </summary>
+        internal static string ValueNotAllowedForOpenGenericType {
+            get {
+                return ResourceManager.GetString("ValueNotAllowedForOpenGenericType", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Activation error occurred while trying to get all instances of type {0}.
+        /// </summary>
+        internal static string ActivateAllExceptionMessage {
+            get {
+                return ResourceManager.GetString("ActivateAllExceptionMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Activation error occurred while trying to get instance of type {0}, key &quot;{1}&quot;.
+        /// </summary>
+        internal static string ActivationExceptionMessage {
+            get {
+                return ResourceManager.GetString("ActivationExceptionMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ServiceLocationProvider must be set..
+        /// </summary>
+        internal static string ServiceLocationProviderNotSetMessage {
+            get {
+                return ResourceManager.GetString("ServiceLocationProviderNotSetMessage", resourceCulture);
+            }
+        }
     }
 }

@@ -1,7 +1,5 @@
 namespace Ecng.Security
 {
-	#region Using Directives
-
 	using System;
 	using System.Collections.Generic;
 	using System.Security.Cryptography;
@@ -11,8 +9,6 @@ namespace Ecng.Security
 	using Ecng.Serialization;
 
 	using Microsoft.Practices.EnterpriseLibrary.Security.Cryptography;
-
-	#endregion
 
 	public enum AlgorithmTypes
 	{
@@ -32,7 +28,7 @@ namespace Ecng.Security
 		private readonly AlgorithmTypes _type;
 		private readonly SymmetricCryptographer _symmetric;
 		private readonly AsymmetricCryptographer _asymmetric;
-		private readonly DpapiCryptographerEx _dpapi;
+		private readonly DpapiCryptographer _dpapi;
 		private readonly HashCryptographer _hash;
 
 		#endregion
@@ -76,7 +72,7 @@ namespace Ecng.Security
 			_asymmetric = asymmetric;
 		}
 
-		public CryptoAlgorithm(DpapiCryptographerEx dpapi)
+		public CryptoAlgorithm(DpapiCryptographer dpapi)
 		{
 			if (dpapi == null)
 				throw new ArgumentNullException("dpapi");
@@ -136,57 +132,57 @@ namespace Ecng.Security
 
 		#endregion
 
-		#region GenerateKeys
+		//#region GenerateKeys
 
-		public static ProtectedKey[] GenerateKeys(AlgorithmTypes type)
-		{
-			string name;
+		//public static ProtectedKey[] GenerateKeys(AlgorithmTypes type)
+		//{
+		//	string name;
 
-			switch (type)
-			{
-				case AlgorithmTypes.Symmetric:
-					name = DefaultSymmetricAlgoName;
-					break;
-				case AlgorithmTypes.Asymmetric:
-					name = DefaultAsymmetricAlgoName;
-					break;
-				case AlgorithmTypes.Dpapi:
-					name = DefaultDpapiAlgoName;
-					break;
-				case AlgorithmTypes.Hash:
-					name = DefaultHashAlgoName;
-					break;
-				default:
-					throw new ArgumentOutOfRangeException("type");
-			}
+		//	switch (type)
+		//	{
+		//		case AlgorithmTypes.Symmetric:
+		//			name = DefaultSymmetricAlgoName;
+		//			break;
+		//		case AlgorithmTypes.Asymmetric:
+		//			name = DefaultAsymmetricAlgoName;
+		//			break;
+		//		case AlgorithmTypes.Dpapi:
+		//			name = DefaultDpapiAlgoName;
+		//			break;
+		//		case AlgorithmTypes.Hash:
+		//			name = DefaultHashAlgoName;
+		//			break;
+		//		default:
+		//			throw new ArgumentOutOfRangeException("type");
+		//	}
 
-			return GenerateKeys(name);
-		}
+		//	return GenerateKeys(name);
+		//}
 
-		public static ProtectedKey[] GenerateKeys(string name)
-		{
-			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+		//public static ProtectedKey[] GenerateKeys(string name)
+		//{
+		//	if (name.IsEmpty())
+		//		throw new ArgumentNullException("name");
 
-			var type = _types[name];
+		//	var type = _types[name];
 
-			switch (GetAlgType(type))
-			{
-				case AlgorithmTypes.Symmetric:
-					return new[] { new SymmetricKeyGenerator().GenerateKey(type, DefaultScope) };
-				case AlgorithmTypes.Asymmetric:
-					var newParams = CryptoHelper.GenerateRsa();
-					return new[] { newParams.PublicPart().FromRsa(), newParams.FromRsa() };
-				case AlgorithmTypes.Dpapi:
-					return new ProtectedKey[0];
-				case AlgorithmTypes.Hash:
-					return new[] { new KeyedHashKeyGenerator().GenerateKey(type, DefaultScope) };
-				default:
-					throw new ArgumentException("name");
-			}
-		}
+		//	switch (GetAlgType(type))
+		//	{
+		//		case AlgorithmTypes.Symmetric:
+		//			return new[] { new SymmetricKeyGenerator().GenerateKey(type, DefaultScope) };
+		//		case AlgorithmTypes.Asymmetric:
+		//			var newParams = CryptoHelper.GenerateRsa();
+		//			return new[] { newParams.PublicPart().FromRsa(), newParams.FromRsa() };
+		//		case AlgorithmTypes.Dpapi:
+		//			return new ProtectedKey[0];
+		//		case AlgorithmTypes.Hash:
+		//			return new[] { new KeyedHashKeyGenerator().GenerateKey(type, DefaultScope) };
+		//		default:
+		//			throw new ArgumentException("name");
+		//	}
+		//}
 
-		#endregion
+		//#endregion
 
 		public static Type GetDefaultAlgo(AlgorithmTypes type)
 		{
@@ -237,7 +233,7 @@ namespace Ecng.Security
 				case AlgorithmTypes.Asymmetric:
 					return new CryptoAlgorithm(new AsymmetricCryptographer(type, keys[0], keys[1]));
 				case AlgorithmTypes.Dpapi:
-					return new CryptoAlgorithm(new DpapiCryptographerEx(DefaultScope));
+					return new CryptoAlgorithm(new DpapiCryptographer(DefaultScope));
 				case AlgorithmTypes.Hash:
 					return new CryptoAlgorithm(keys.Length == 0 ? new HashCryptographer(type) : new HashCryptographer(type, keys[0]));
 				default:

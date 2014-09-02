@@ -55,10 +55,6 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Security.Cryptography, Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\References\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core">
@@ -76,7 +72,10 @@
     <Compile Include="CryptoAlgorithm.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DpapiCryptographerEx.cs" />
+    <Compile Include="DpapiCryptographer.cs" />
+    <Compile Include="EntLib\HashCryptographer.cs" />
+    <Compile Include="EntLib\ProtectedKey.cs" />
+    <Compile Include="EntLib\SymmetricCryptographer.cs" />
     <Compile Include="IAuthorization.cs" />
     <Compile Include="Secret.cs" />
     <Compile Include="PermissionBarrier.cs" />

@@ -158,7 +158,7 @@ namespace Ecng.Serialization
 					throw new InvalidOperationException();
 			}
 
-			return ProtectedKey.CreateFromPlaintextKey(plainText, CryptoAlgorithm.DefaultScope);
+			return plainText.FromBytes();
 		}
 
 		#endregion

@@ -5,8 +5,6 @@
 #if !SILVERLIGHT
 	using System.Configuration;
 	using System.Diagnostics;
-	using System.Reflection;
-	using System.Threading;
 	using System.Web;
 	using System.Web.Configuration;
 
@@ -34,40 +32,6 @@
 			}
 		}
 #else
-		/// <summary>
-		/// Replaces <see cref="UnityDefaultBehaviorExtension"/> to eliminate 
-		/// <see cref="SynchronizationLockException"/> exceptions that would otherwise occur
-		/// when using <c>RegisterInstance</c>.
-		/// </summary>
-		private sealed class UnitySafeBehaviorExtension : UnityDefaultBehaviorExtension
-		{
-			/// <summary>
-			/// Adds this extension's behavior to the container.
-			/// </summary>
-			protected override void Initialize()
-			{
-				Context.RegisteringInstance += PreRegisteringInstance;
-
-				base.Initialize();
-			}
-
-			/// <summary>
-			/// Handles the <see cref="ExtensionContext.RegisteringInstance"/> event by
-			/// ensuring that, if the lifetime manager is a 
-			/// <see cref="SynchronizedLifetimeManager"/> that its 
-			/// <see cref="SynchronizedLifetimeManager.GetValue"/> method has been called.
-			/// </summary>
-			/// <param name="sender">The object responsible for raising the event.</param>
-			/// <param name="e">A <see cref="RegisterInstanceEventArgs"/> containing the
-			/// event's data.</param>
-			private static void PreRegisteringInstance(object sender, RegisterInstanceEventArgs e)
-			{
-				if (e.LifetimeManager is SynchronizedLifetimeManager)
-				{
-					e.LifetimeManager.GetValue();
-				}
-			}
-		}
 
 		private static readonly Dictionary<Type, ConfigurationSection> _sections = new Dictionary<Type, ConfigurationSection>();
 		private static readonly Dictionary<Type, ConfigurationSectionGroup> _sectionGroups = new Dictionary<Type, ConfigurationSectionGroup>();
@@ -120,28 +84,6 @@
 			initSectionGroups(InnerConfig.SectionGroups);
 
 			UnityContainer = new UnityContainer();
-
-
-			//
-			// mika 25.06.2012
-			// http://stackoverflow.com/questions/2873767/can-unity-be-made-to-not-throw-synchronizationlockexception-all-the-time
-			//
-			var extensionsField = UnityContainer.GetType().GetField("extensions", BindingFlags.Instance | BindingFlags.NonPublic);
-			if (extensionsField != null)
-			{
-				var existingExtensions = ((List<UnityContainerExtension>)extensionsField.GetValue(UnityContainer)).ToArray();
-
-				UnityContainer.RemoveAllExtensions();
-				UnityContainer.AddExtension(new UnitySafeBehaviorExtension());
-
-				foreach (var extension in existingExtensions)
-				{
-					if (!(extension is UnityDefaultBehaviorExtension))
-					{
-						UnityContainer.AddExtension(extension);
-					}
-				}
-			}
 
 			var unity = GetSection<UnityConfigurationSection>();
 			if (unity != null)

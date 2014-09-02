@@ -1,16 +1,12 @@
 namespace Ecng.Security
 {
-	#region Using Directives
-
 	using System;
 	using System.Globalization;
 	using System.Security;
 
 	using Ecng.Common;
 
-	#endregion
-
-	public abstract class CodeAccessPermission<T> : System.Security.CodeAccessPermission
+	public abstract class CodeAccessPermission<T> : CodeAccessPermission
 		where T : IPermission
 	{
 		public override IPermission Copy()
@@ -30,7 +26,7 @@ namespace Ecng.Security
 			if (className.IsEmpty())
 				throw new ArgumentException("elem");
 
-			if (className.IndexOf(GetType().FullName) < 0)
+			if (className.IndexOf(GetType().FullName, StringComparison.InvariantCultureIgnoreCase) < 0)
 				throw new ArgumentException("elem");
 
 			string unrestricted = elem.Attribute("Unrestricted");

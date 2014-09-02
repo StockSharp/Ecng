@@ -59,10 +59,6 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Logging, Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\References\Microsoft.Practices.EnterpriseLibrary.Logging.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core">
@@ -80,7 +76,6 @@
     <Compile Include="InterceptorAttribute.cs" />
     <Compile Include="InterceptorChain.cs" />
     <Compile Include="LazyInstanceAttribute.cs" />
-    <Compile Include="LogInterceptor.cs" />
     <Compile Include="MetaExtension.cs" />
     <Compile Include="MetaExtensionAttribute.cs" />
     <Compile Include="MetaExtensionContext.cs" />
