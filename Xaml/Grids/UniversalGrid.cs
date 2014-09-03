@@ -641,7 +641,7 @@
 			foreach (var c in Columns)
 			{
 				if (!FormatRules.ContainsKey(c))
-					return;
+					continue;
 
 				var column = c;
 
