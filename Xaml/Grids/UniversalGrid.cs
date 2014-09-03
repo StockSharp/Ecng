@@ -640,6 +640,9 @@
 		{
 			foreach (var c in Columns)
 			{
+				if (!FormatRules.ContainsKey(c))
+					return;
+
 				var column = c;
 
 				var valueBackgroundConverter = new FormatConverter<Brush>(v => GetFormatterValue(column, v, rule => rule.Background));
