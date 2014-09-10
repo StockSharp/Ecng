@@ -185,5 +185,10 @@ namespace Ecng.Common
 		{
 			return DateTime.DaysInMonth(date.Year, date.Month);
 		}
+
+		public static DateTime ChangeKind(this DateTime date, DateTimeKind kind = DateTimeKind.Unspecified)
+		{
+			return new DateTime(date.Year, date.Month, date.Day, date.Hour, date.Minute, date.Second, date.Millisecond, kind);
+		}
 	}
 }
