@@ -23,18 +23,21 @@
 		{
 			protected override object DoGetInstance(Type serviceType, string key)
 			{
-				throw new NotImplementedException();
+				throw new NotSupportedException();
 			}
 
 			protected override IEnumerable<object> DoGetAllInstances(Type serviceType)
 			{
-				throw new NotImplementedException();
+				throw new NotSupportedException();
 			}
 		}
 #else
 
 		private static readonly Dictionary<Type, ConfigurationSection> _sections = new Dictionary<Type, ConfigurationSection>();
 		private static readonly Dictionary<Type, ConfigurationSectionGroup> _sectionGroups = new Dictionary<Type, ConfigurationSectionGroup>();
+
+		private static readonly SyncObject _sync = new SyncObject();
+		private static readonly Dictionary<Type, object> _services = new Dictionary<Type, object>();
 #endif
 
 		#region ConfigManager.cctor()
@@ -61,9 +64,9 @@
 		                    _sections.Add(section.GetType(), section);
 		            }
 		        }
-		        catch
+		        catch (Exception ex)
 		        {
-
+					Trace.WriteLine(ex);
 		        }
 		    };
 
@@ -182,11 +185,22 @@
 		{
 			UnityContainer.RegisterInstance(service);
 
+			lock (_sync)
+				_services[typeof(T)] = service;
+
 			ServiceRegistered.SafeInvoke(typeof(T), service);
 		}
 
 		public static bool IsServiceRegistered<T>()
 		{
+			lock (_sync)
+			{
+				var isReg = _services.ContainsKey(typeof(T));
+
+				if (isReg)
+					return true;
+			}
+
 			return UnityContainer.IsRegistered<T>();
 		}
 
@@ -211,7 +225,24 @@
 
 		public static T GetService<T>()
 		{
-			return ServiceLocator.GetInstance<T>();
+			object service;
+
+			lock (_sync)
+			{
+				if (_services.TryGetValue(typeof(T), out service))
+					return (T)service;
+
+				service = ServiceLocator.GetInstance<T>();
+
+				if (service != null)
+				{
+					// service T can register itseft in the constructor
+					if (!_services.ContainsKey(typeof(T)))
+						_services.Add(typeof(T), service);
+				}
+			}
+
+			return (T)service;
 		}
 
 		public static T GetService<T>(string name)
