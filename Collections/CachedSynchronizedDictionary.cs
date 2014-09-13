@@ -66,7 +66,7 @@
 					_cachedValues = null;
 					_cachedPairs = null;
 
-					if (!ContainsKey(key))
+					if (_cachedKeys != null && !ContainsKey(key))
 						_cachedKeys = null;
 
 					base[key] = value;
