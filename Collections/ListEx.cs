@@ -2,10 +2,8 @@ namespace Ecng.Collections
 {
 	using System;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Linq;
-	using System.Web.UI.WebControls;
-
-	using Ecng.Common;
 
 	public class ListEx<T> : BaseListEx<T>
 	{
@@ -21,13 +19,13 @@ namespace Ecng.Collections
 			this.AddRange(items);
 		}
 
-		public override IEnumerable<T> GetRange(long startIndex, long count, string sortExpression, SortDirection directions)
+		public override IEnumerable<T> GetRange(long startIndex, long count, string sortExpression, ListSortDirection directions)
 		{
 			if (startIndex >= _innerList.Count)
-				return new T[0];
+				return Enumerable.Empty<T>();
 			else
 			{
-				if (StringHelper.IsEmpty(sortExpression))
+				if (sortExpression.IsEmpty())
 				{
 					if ((startIndex + count) > _innerList.Count)
 						count = _innerList.Count - startIndex;
@@ -40,7 +38,7 @@ namespace Ecng.Collections
 
 					var func = _properties.SafeAdd(sortExpression, key => i => typeof(T).GetProperty(key).GetValue(i, null));
 
-					items = directions == SortDirection.Ascending ? items.OrderBy(func) : items.OrderByDescending(func);
+					items = directions == ListSortDirection.Ascending ? items.OrderBy(func) : items.OrderByDescending(func);
 
 					items = items.Skip((int)startIndex);
 					

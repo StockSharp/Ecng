@@ -3,13 +3,13 @@ namespace Ecng.Collections
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.Web.UI.WebControls;
+	using System.ComponentModel;
 
 	public abstract class BaseListEx<T> : IListEx<T>, IListEx
 	{
 		#region IListEx Members
 
-		IEnumerable IListEx.GetRange(long startIndex, long count, string sortExpression, SortDirection directions)
+		IEnumerable IListEx.GetRange(long startIndex, long count, string sortExpression, ListSortDirection directions)
 		{
 			return GetRange(startIndex, count, sortExpression, directions);
 		}
@@ -18,7 +18,7 @@ namespace Ecng.Collections
 
 		#region IListEx<T> Members
 
-		public abstract IEnumerable<T> GetRange(long startIndex, long count, string sortExpression, SortDirection directions);
+		public abstract IEnumerable<T> GetRange(long startIndex, long count, string sortExpression, ListSortDirection directions);
 
 		#endregion
 

@@ -2,9 +2,9 @@
 {
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Reflection;
 	using System.Web;
-	using System.Web.UI.WebControls;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -62,12 +62,12 @@
 				return base.GetCount(list);
 		}
 
-		protected override IEnumerable GetRange(IListEx list, int startIndex, int count, string sortExpression, SortDirection direction)
+		protected override IEnumerable GetRange(IListEx list, int startIndex, int count, string sortExpression, ListSortDirection direction)
 		{
 			using (LogicHelper<TUser, TRole>.CreateScope(_schema, Restrict))
 			{
 				if (!sortExpression.IsEmpty() && !_schema.Fields.Contains(sortExpression))
-					return _getRangeMethod.GetValue<object[], IEnumerable>(new object[] { list, startIndex, count, new VoidField<SortDirection>(sortExpression), direction });
+					return _getRangeMethod.GetValue<object[], IEnumerable>(new object[] { list, startIndex, count, new VoidField<ListSortDirection>(sortExpression), direction });
 				else
 					return base.GetRange(list, startIndex, count, sortExpression, direction);
 			}
@@ -75,7 +75,7 @@
 
 		#endregion
 
-		private static IEnumerable<E> nGetRange<E>(RelationManyList<E> list, int startIndex, int count, VoidField field, SortDirection direction)
+		private static IEnumerable<E> nGetRange<E>(RelationManyList<E> list, int startIndex, int count, VoidField field, ListSortDirection direction)
 		{
 			return list.ReadAll(startIndex, count, field, direction);
 		}

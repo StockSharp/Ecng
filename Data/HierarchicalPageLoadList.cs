@@ -2,8 +2,8 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Linq;
-	using System.Web.UI.WebControls;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -135,7 +135,7 @@
 			}
 		}
 
-		protected override IEnumerable<TEntity> OnGetGroup(long startIndex, long count, Field orderBy, SortDirection direction)
+		protected override IEnumerable<TEntity> OnGetGroup(long startIndex, long count, Field orderBy, ListSortDirection direction)
 		{
 			using (CreateScope(ReadAllQuery))
 				return base.OnGetGroup(startIndex, count, orderBy, direction);

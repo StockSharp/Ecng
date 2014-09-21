@@ -5,6 +5,8 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using MoreLinq;
+
 	using Wintellect.PowerCollections;
 
 	using Ecng.Common;
@@ -928,6 +930,22 @@
 					previous = iterator.Current;
 				}
 			}
+		}
+
+		public static void Bind<T>(this INotifyList<T> source, IList<T> destination)
+		{
+			if (source == null)
+				throw new ArgumentNullException("source");
+
+			if (destination == null)
+				throw new ArgumentNullException("destination");
+
+			source.Added += destination.Add;
+			source.Removed += item => destination.Remove(item);
+			source.Inserted += destination.Insert;
+			source.Cleared += destination.Clear;
+
+			source.ForEach(destination.Add);
 		}
 	}
 }

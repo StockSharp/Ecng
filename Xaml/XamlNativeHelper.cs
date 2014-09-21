@@ -4,6 +4,7 @@
 	using System.Drawing;
 	using System.Drawing.Imaging;
 	using System.Runtime.InteropServices;
+	using System.Security.Cryptography;
 	using System.Windows;
 	using System.Windows.Forms;
 	using System.Windows.Interop;
@@ -196,6 +197,42 @@
 		public static System.Drawing.Color ToWin(this WpfColor c)
 		{
 			return WinColor.FromArgb(c.A, c.R, c.G, c.B);
+		}
+
+		public static bool Compare(this Image first, Image second)
+		{
+			if (first == null)
+				throw new ArgumentNullException("first");
+
+			if (second == null)
+				throw new ArgumentNullException("second");
+
+			if (first.Size == second.Size)
+			{
+				using (HashAlgorithm hashAlg = new SHA256Managed())
+				{
+					var converter = new ImageConverter();
+
+					var firstHash = hashAlg.ComputeHash((byte[])converter.ConvertTo(first, typeof(byte[])));
+					var secondHash = hashAlg.ComputeHash((byte[])converter.ConvertTo(second, typeof(byte[])));
+
+					if (firstHash.Length == secondHash.Length)
+					{
+						//Compare the hash values
+						for (var i = 0; i < firstHash.Length; i++)
+						{
+							if (firstHash[i] != secondHash[i])
+								return false;
+						}
+					}
+					else
+						return false;
+				}
+			}
+			else
+				return false;
+
+			return true;
 		}
 	}
 }

@@ -4,7 +4,7 @@ namespace Ecng.Collections
 	using System.Collections.Generic;
 
 	[Serializable]
-	public class SynchronizedList<T> : SynchronizedCollection<T, List<T>>
+	public class SynchronizedList<T> : SynchronizedCollection<T, List<T>>, ICollectionEx<T>
 	{
 		public SynchronizedList()
 			: this(0)
@@ -42,6 +42,26 @@ namespace Ecng.Collections
 		protected override int OnIndexOf(T item)
 		{
 			return InnerCollection.IndexOf(item);
+		}
+
+		// NOTE не вызывается нотификация Adding Added и т.д.
+
+		public void AddRange(IEnumerable<T> items)
+		{
+			lock (SyncRoot)
+				InnerCollection.AddRange(items);
+		}
+
+		public void RemoveRange(IEnumerable<T> items)
+		{
+			lock (SyncRoot)
+				InnerCollection.RemoveRange(items);
+		}
+
+		public IEnumerable<T> GetRange(int index, int count)
+		{
+			lock (SyncRoot)
+				return InnerCollection.GetRange(index, count);
 		}
 	}
 }

@@ -5,6 +5,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Web;
 	using System.Web.UI;
 	using System.Web.UI.WebControls;
@@ -158,7 +159,7 @@
 
 		public string SortExpression { get; set; }
 
-		public SortDirection SortDirection { get; set; }
+		public ListSortDirection SortDirection { get; set; }
 
 		#region DataSourceView Members
 
@@ -208,7 +209,7 @@
 					arguments.MaximumRows = MaximumRows;
 
 				string orderBy;
-				SortDirection direction;
+				ListSortDirection direction;
 
 				var sortExpression = arguments.SortExpression;
 
@@ -227,7 +228,7 @@
 						var parts = sortExpression.Split(' ');
 						orderBy = parts[0];
 
-                        direction = (parts[1] + "ending").To<SortDirection>();
+						direction = (parts[1] + "ending").To<ListSortDirection>();
 					}
 					else
 					{
@@ -255,7 +256,7 @@
 			return list.Count;
 		}
 
-		protected virtual IEnumerable GetRange(IListEx list, int startIndex, int count, string sortExpression, SortDirection direction)
+		protected virtual IEnumerable GetRange(IListEx list, int startIndex, int count, string sortExpression, ListSortDirection direction)
 		{
 			return list.GetRange(startIndex, count, sortExpression, direction);
 		}

@@ -1,71 +1,12 @@
 namespace Ecng.Common
 {
-	#region Using Directives
-
 	using System;
 	using System.Collections.Generic;
 	using System.Net;
 	using System.Drawing;
-#if SILVERLIGHT
-	using System.Windows.Media;
-#else
-	using System.Security.Cryptography;
-	using System.Xml;
-#endif
-
-	#endregion
 
 	public static class CompareHelper
 	{
-#if !SILVERLIGHT
-		public static bool Compare(this Image first, Image second)
-		{
-			if (first == null)
-				throw new ArgumentNullException("first");
-
-			if (second == null)
-				throw new ArgumentNullException("second");
-
-			if (first.Size == second.Size)
-			{
-				using (HashAlgorithm hashAlg = new SHA256Managed())
-				{
-					var converter = new ImageConverter();
-
-					var firstHash = hashAlg.ComputeHash((byte[])converter.ConvertTo(first, typeof(byte[])));
-					var secondHash = hashAlg.ComputeHash((byte[])converter.ConvertTo(second, typeof(byte[])));
-
-					if (firstHash.Length == secondHash.Length)
-					{
-						//Compare the hash values
-						for (var i = 0; i < firstHash.Length; i++)
-						{
-							if (firstHash[i] != secondHash[i])
-								return false;
-						}
-					}
-					else
-						return false;
-				}
-			}
-			else
-				return false;
-
-			return true;
-		}
-
-		public static bool Compare(this XmlNode first, XmlNode second)
-		{
-			if (first == null)
-				throw new ArgumentNullException("first");
-
-			if (second == null)
-				throw new ArgumentNullException("second");
-
-			return first.OuterXml == second.OuterXml;
-		}
-#endif
-
 		public static int Compare(this IPAddress first, IPAddress second)
 		{
 			return first.To<long>().CompareTo(second.To<long>());

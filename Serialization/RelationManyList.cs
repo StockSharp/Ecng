@@ -2,8 +2,8 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Linq;
-	using System.Web.UI.WebControls;
 
 	using Ecng.Common;
 	using Ecng.Collections;
@@ -382,7 +382,7 @@
 			return true;
 		}
 
-		public override IEnumerable<TEntity> GetRange(long startIndex, long count, string sortExpression = null, SortDirection directions = SortDirection.Ascending)
+		public override IEnumerable<TEntity> GetRange(long startIndex, long count, string sortExpression = null, ListSortDirection directions = ListSortDirection.Ascending)
 		{
 			var orderBy = sortExpression.IsEmpty() ? null : Schema.Fields[sortExpression];
 			return ReadAll(startIndex, count, orderBy, directions);
@@ -467,7 +467,7 @@
 			return Storage.GetBy<TEntity>(by);
 		}
 
-		protected virtual IEnumerable<TEntity> OnGetGroup(long startIndex, long count, Field orderBy, SortDirection direction)
+		protected virtual IEnumerable<TEntity> OnGetGroup(long startIndex, long count, Field orderBy, ListSortDirection direction)
 		{
 			ThrowIfStorageNull();
 			return Storage.GetGroup<TEntity>(startIndex, count, orderBy, direction);
@@ -495,12 +495,12 @@
 
 		public IEnumerable<TEntity> ReadFirsts(long count, Field orderBy)
 		{
-			return ReadAll(0, count, orderBy, SortDirection.Ascending);
+			return ReadAll(0, count, orderBy, ListSortDirection.Ascending);
 		}
 
 		public IEnumerable<TEntity> ReadLasts(long count, Field orderBy)
 		{
-			return ReadAll(0, count, orderBy, SortDirection.Descending);
+			return ReadAll(0, count, orderBy, ListSortDirection.Descending);
 		}
 
 		public TEntity Read(SerializationItem by)
@@ -521,7 +521,7 @@
 			return GetRange(0, Count);
 		}
 
-		public IEnumerable<TEntity> ReadAll(long startIndex, long count, Field orderBy, SortDirection direction)
+		public IEnumerable<TEntity> ReadAll(long startIndex, long count, Field orderBy, ListSortDirection direction)
 		{
 			//if (orderBy == null)
 			//	throw new ArgumentNullException("orderBy");
@@ -541,7 +541,7 @@
 					if (orderBy != null)
 					{
 						Func<TEntity, object> keySelector = entity => orderBy.GetAccessor<TEntity>().GetValue(entity);
-						source = direction == SortDirection.Ascending ? source.OrderBy(keySelector) : source.OrderByDescending(keySelector);
+						source = direction == ListSortDirection.Ascending ? source.OrderBy(keySelector) : source.OrderByDescending(keySelector);
 					}
 
 					return new ListEx<TEntity>(source.Skip((int)startIndex).Take((int)count));

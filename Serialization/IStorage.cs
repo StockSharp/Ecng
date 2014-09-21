@@ -2,7 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Web.UI.WebControls;
+	using System.ComponentModel;
 
 	public interface IStorage
 	{
@@ -14,7 +14,7 @@
 
 		TEntity GetById<TEntity>(object id);
 
-		IEnumerable<TEntity> GetGroup<TEntity>(long startIndex, long count, Field orderBy, SortDirection direction);
+		IEnumerable<TEntity> GetGroup<TEntity>(long startIndex, long count, Field orderBy, ListSortDirection direction);
 
 		TEntity Update<TEntity>(TEntity entity);
 

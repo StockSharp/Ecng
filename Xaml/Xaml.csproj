@@ -114,7 +114,7 @@
     <Compile Include="Database\DatabaseProviderComboBox.cs" />
     <Compile Include="Database\DatabaseProviderEditor.cs" />
     <Compile Include="DelegateCommand.cs" />
-    <Compile Include="DependentObservableCollection.cs" />
+    <Compile Include="ConvertibleObservableCollection.cs" />
     <Compile Include="EncodingComboBox.cs" />
     <Compile Include="Converters\EnumDisplayNameConverter.cs" />
     <Compile Include="EndPointComboBox.cs" />

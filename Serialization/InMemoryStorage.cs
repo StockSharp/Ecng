@@ -2,8 +2,8 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Linq;
-	using System.Web.UI.WebControls;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -75,7 +75,7 @@
 		public event Action<object> Updated;
 		public event Action<object> Removed;
 
-		public IEnumerable<TEntity> GetGroup<TEntity>(long startIndex, long count, Field orderBy, SortDirection direction)
+		public IEnumerable<TEntity> GetGroup<TEntity>(long startIndex, long count, Field orderBy, ListSortDirection direction)
 		{
 			return _cache[typeof(TEntity)].Skip((int)startIndex).Take((int)count).Cast<TEntity>();
 		}

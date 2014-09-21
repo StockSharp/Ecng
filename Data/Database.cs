@@ -3,12 +3,12 @@ namespace Ecng.Data
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Data;
 	using System.Data.Common;
 	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
-	using System.Web.UI.WebControls;
 	using System.Linq;
 	using System.Text.RegularExpressions;
 
@@ -517,7 +517,7 @@ namespace Ecng.Data
 			return ReadAll<TEntity>(startIndex, count, SchemaManager.GetSchema<TEntity>().Identity);
 		}
 
-		public virtual IEnumerable<TEntity> ReadAll<TEntity>(long startIndex, long count, Field orderBy, SortDirection direction = SortDirection.Ascending)
+		public virtual IEnumerable<TEntity> ReadAll<TEntity>(long startIndex, long count, Field orderBy, ListSortDirection direction = ListSortDirection.Ascending)
 		{
 			if (startIndex < 0)
 				throw new ArgumentOutOfRangeException("startIndex");
@@ -542,7 +542,7 @@ namespace Ecng.Data
 				};
 
 				if (orderBy != null)
-					input.Add(new SerializationItem(fields[2], "[{0}] {1}".Put(orderBy.Name, (direction == SortDirection.Ascending) ? "asc" : "desc")));
+					input.Add(new SerializationItem(fields[2], "[{0}] {1}".Put(orderBy.Name, (direction == ListSortDirection.Ascending) ? "asc" : "desc")));
 
 				return ReadAll<TEntity>(GetCommand(SchemaManager.GetSchema<TEntity>(), SqlCommandTypes.ReadAll, fields, new FieldList()), input);
 			}
@@ -1244,7 +1244,7 @@ namespace Ecng.Data
 			return Read<TEntity>(id);
 		}
 
-		IEnumerable<TEntity> IStorage.GetGroup<TEntity>(long startIndex, long count, Field orderBy, SortDirection direction)
+		IEnumerable<TEntity> IStorage.GetGroup<TEntity>(long startIndex, long count, Field orderBy, ListSortDirection direction)
 		{
 			return ReadAll<TEntity>(startIndex, count, orderBy, direction);
 		}

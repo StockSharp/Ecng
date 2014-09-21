@@ -2,9 +2,9 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.IO;
 	using System.Linq;
-	using System.Web.UI.WebControls;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -93,7 +93,7 @@
 			return (TEntity)info.Cache.TryGetValue(id);
 		}
 
-		public IEnumerable<TEntity> GetGroup<TEntity>(long startIndex, long count, Field orderBy, SortDirection direction)
+		public IEnumerable<TEntity> GetGroup<TEntity>(long startIndex, long count, Field orderBy, ListSortDirection direction)
 		{
 			var info = GetInfo<TEntity>();
 			return info.Cache.Values.Cast<TEntity>();

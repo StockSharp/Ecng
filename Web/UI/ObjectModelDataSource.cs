@@ -117,10 +117,10 @@
 
 		#region SortDirection
 
-		private SortDirection _sortDirection;
+		private ListSortDirection _sortDirection;
 
 		[DefaultValue("")]
-		public SortDirection SortDirection
+		public ListSortDirection SortDirection
 		{
 			get { return _sortDirection; }
 			set

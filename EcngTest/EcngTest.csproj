@@ -53,6 +53,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core">
@@ -62,7 +64,9 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Transactions" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.XML" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\ConverterTest.cs" />
@@ -191,6 +195,10 @@
     <ProjectReference Include="..\Web\Web.csproj">
       <Project>{125B0185-1FE3-407B-A14C-AD5046A6B68C}</Project>
       <Name>Web</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Xaml\Xaml.csproj">
+      <Project>{90a23e0c-3329-4459-bb97-21cd84e5418a}</Project>
+      <Name>Xaml</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
