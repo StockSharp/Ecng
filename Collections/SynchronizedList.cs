@@ -2,6 +2,9 @@ namespace Ecng.Collections
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
+
+	using MoreLinq;
 
 	[Serializable]
 	public class SynchronizedList<T> : SynchronizedCollection<T, List<T>>, ICollectionEx<T>
@@ -15,14 +18,6 @@ namespace Ecng.Collections
 			: base(new List<T>(capacity))
 		{
 		}
-
-		// mika может и нужен для перфоманса этот метод, но текущая реализация не вызывает нотификацию Adding Added и т.д.
-		//
-		//public virtual void AddRange(IEnumerable<T> items)
-		//{
-		//    lock (SyncRoot)
-		//        InnerCollection.AddRange(items);
-		//}
 
 		protected override T OnGetItem(int index)
 		{
@@ -44,18 +39,24 @@ namespace Ecng.Collections
 			return InnerCollection.IndexOf(item);
 		}
 
-		// NOTE не вызывается нотификация Adding Added и т.д.
-
 		public void AddRange(IEnumerable<T> items)
 		{
 			lock (SyncRoot)
-				InnerCollection.AddRange(items);
+			{
+				var filteredItems = items.Where(OnAdding).ToArray();
+				InnerCollection.AddRange(filteredItems);
+				filteredItems.ForEach(OnAdded);
+			}
 		}
 
 		public void RemoveRange(IEnumerable<T> items)
 		{
 			lock (SyncRoot)
-				InnerCollection.RemoveRange(items);
+			{
+				var filteredItems = items.Where(OnRemoving).ToArray();
+				InnerCollection.RemoveRange(filteredItems);
+				filteredItems.ForEach(OnRemoved);
+			}
 		}
 
 		public IEnumerable<T> GetRange(int index, int count)
