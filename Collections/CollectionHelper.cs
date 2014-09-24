@@ -177,13 +177,12 @@
 			}
 		}
 
-		public static void RemoveRange<T>(this ICollection<T> source, IEnumerable<T> items)
+		public static IEnumerable<T> RemoveRange<T>(this ICollection<T> source, IEnumerable<T> items)
 		{
 			if (items == null)
 				throw new ArgumentNullException("items");
 
-			foreach (var item in items)
-				source.Remove(item);
+			return items.Where(source.Remove).ToArray();
 		}
 
 		public static IEnumerable<T> RemoveWhere<T>(this ICollection<T> collection, Func<T, bool> filter)

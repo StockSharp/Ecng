@@ -49,7 +49,7 @@ namespace Ecng.Xaml
 		private const string _indexerName = "Item[]";
 
 		private readonly SynchronizedList<TItem> _items = new SynchronizedList<TItem>();
-		private readonly SynchronizedQueue<CollectionAction> _pendingActions = new SynchronizedQueue<CollectionAction>();
+		private readonly Queue<CollectionAction> _pendingActions = new Queue<CollectionAction>();
 		private bool _isTimerStarted;
 		private const int _maxDiff = 10;
 
@@ -107,15 +107,14 @@ namespace Ecng.Xaml
 			CheckCount();
 		}
 
-		public virtual void RemoveRange(IEnumerable<TItem> items)
+		public virtual IEnumerable<TItem> RemoveRange(IEnumerable<TItem> items)
 		{
-			var arr = items.ToArray();
+			var arr = _items.RemoveRange(items).ToArray();
 
-			if (arr.Length == 0)
-				return;
+			if (arr.Length > 0)
+				AddAction(new CollectionAction(ActionTypes.Remove, arr));
 
-			_items.RemoveRange(arr);
-			AddAction(new CollectionAction(ActionTypes.Remove, arr));
+			return arr;
 		}
 
 		/// <summary>
@@ -420,29 +419,29 @@ namespace Ecng.Xaml
 				return;
 			}
 
-			lock (_pendingActions.SyncRoot)
+			lock (SyncRoot)
 			{
-				_pendingActions.Add(item);
+				_pendingActions.Enqueue(item);
 
 				if (_isTimerStarted)
 					return;
 
 				_isTimerStarted = true;
-
-				ThreadingHelper
-					.Timer(() =>
-					{
-						try
-						{
-							OnFlush();
-						}
-						catch (Exception ex)
-						{
-							ErrorHandler.SafeInvoke(ex);
-						}
-					})
-					.Interval(TimeSpan.FromMilliseconds(300), new TimeSpan(-1));
 			}
+
+			ThreadingHelper
+				.Timer(() =>
+				{
+					try
+					{
+						OnFlush();
+					}
+					catch (Exception ex)
+					{
+						ErrorHandler.SafeInvoke(ex);
+					}
+				})
+				.Interval(TimeSpan.FromMilliseconds(300), new TimeSpan(-1));
 		}
 
 		public event Action<Exception> ErrorHandler;
@@ -455,10 +454,11 @@ namespace Ecng.Xaml
 
 			CollectionAction[] actions;
 
-			lock (_pendingActions.SyncRoot)
+			lock (SyncRoot)
 			{
 				_isTimerStarted = false;
-				actions = _pendingActions.CopyAndClear();
+				actions = _pendingActions.ToArray();
+				_pendingActions.Clear();
 			}
 
 			foreach (var action in actions)

@@ -5,6 +5,6 @@ namespace Ecng.Collections
 	public interface ICollectionEx<T> : ICollection<T>
 	{
 		void AddRange(IEnumerable<T> items);
-		void RemoveRange(IEnumerable<T> items);
+		IEnumerable<T> RemoveRange(IEnumerable<T> items);
 	}
 }

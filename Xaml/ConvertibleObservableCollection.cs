@@ -52,7 +52,7 @@ namespace Ecng.Xaml
 			}
 		}
 
-		public void RemoveRange(IEnumerable<TItem> items)
+		public IEnumerable<TItem> RemoveRange(IEnumerable<TItem> items)
 		{
 			lock (SyncRoot)
 			{
@@ -71,6 +71,9 @@ namespace Ecng.Xaml
 
 				RemoveRange(converted);
 			}
+
+			// TODO
+			return items;
 		}
 
 		public override void Clear()

@@ -49,14 +49,18 @@ namespace Ecng.Collections
 			}
 		}
 
-		public void RemoveRange(IEnumerable<T> items)
+		public IEnumerable<T> RemoveRange(IEnumerable<T> items)
 		{
+			IEnumerable<T> removedItems;
+
 			lock (SyncRoot)
 			{
 				var filteredItems = items.Where(OnRemoving).ToArray();
-				InnerCollection.RemoveRange(filteredItems);
+				removedItems = InnerCollection.RemoveRange(filteredItems);
 				filteredItems.ForEach(OnRemoved);
 			}
+
+			return removedItems;
 		}
 
 		public IEnumerable<T> GetRange(int index, int count)
