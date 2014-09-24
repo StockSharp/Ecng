@@ -324,7 +324,7 @@
 
 		public override ParameterInfo[] GetParameters()
 		{
-			return new ParameterInfo[0];
+			return ArrayHelper<ParameterInfo>.EmptyArray;
 		}
 
 		public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
@@ -354,12 +354,12 @@
 
 		public override object[] GetCustomAttributes(Type attributeType, bool inherit)
 		{
-			return new object[0];
+			return ArrayHelper<object>.EmptyArray;
 		}
 
 		public override object[] GetCustomAttributes(bool inherit)
 		{
-			return new object[0];
+			return ArrayHelper<object>.EmptyArray;
 		}
 
 		public override bool IsDefined(Type attributeType, bool inherit)

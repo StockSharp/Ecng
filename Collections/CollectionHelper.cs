@@ -624,6 +624,32 @@
 				return queue.IsEmpty() ? (T?)null : queue.Dequeue();
 		}
 
+		public static T FirstOr<T>(this IEnumerable<T> source, T alternate)
+		{
+			foreach (var t in source)
+				return t;
+
+			return alternate;
+		}
+
+		public static T? FirstOr<T>(this IEnumerable<T> source)
+			where T : struct
+		{
+			foreach (var t in source)
+				return t;
+
+			return null;
+		}
+
+		public static T? LastOr<T>(this IEnumerable<T> source)
+			where T : struct
+		{
+			foreach (var t in source)
+				return t;
+
+			return null;
+		}
+
 		public static bool IsEmpty<T>(this IEnumerable<T> source)
 		{
 			var col = source as ICollection<T>;

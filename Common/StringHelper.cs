@@ -26,6 +26,11 @@
 			return string.IsNullOrEmpty(str);
 		}
 
+		public static string IsEmpty(this string str, string defaultValue)
+		{
+			return str.IsEmpty() ? defaultValue : str;
+		}
+
 		public static bool IsEmptyOrWhiteSpace(this string str)
 		{
 			return string.IsNullOrWhiteSpace(str);
@@ -114,15 +119,13 @@
 			return str.Split(Environment.NewLine, removeEmptyEntries);
 		}
 
-		private static readonly string[] _emptyArray = new string[0];
-
 		public static string[] Split(this string str, string separator, bool removeEmptyEntries = true)
 		{
 			if (str == null)
 				throw new ArgumentNullException("str");
 
 			if (str.Length == 0)
-				return _emptyArray;
+				return ArrayHelper<string>.EmptyArray;
 
 			return str.Split(new[] { separator }, removeEmptyEntries ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
 		}

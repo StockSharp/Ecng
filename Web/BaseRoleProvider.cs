@@ -94,7 +94,7 @@ namespace Ecng.Web
 		public override string[] GetRolesForUser(string userName)
 		{
 			if (userName.IsEmpty())
-				return new string[0];
+				return ArrayHelper<string>.EmptyArray;
 
 			var roleNames = new List<string>();
 

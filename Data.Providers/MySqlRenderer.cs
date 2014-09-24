@@ -64,7 +64,7 @@ namespace Ecng.Data.Providers
 
 		protected override string[] ReservedWords
 		{
-			get { return new string[0]; }
+			get { return ArrayHelper<string>.EmptyArray; }
 		}
 
 		#endregion

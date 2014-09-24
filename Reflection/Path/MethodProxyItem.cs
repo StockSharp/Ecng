@@ -4,6 +4,8 @@ namespace Ecng.Reflection.Path
 	using System.Collections.Generic;
 	using System.Reflection;
 
+	using Ecng.Common;
+
 	class MethodProxyItem : MemberProxyItem
 	{
 		#region MethodProxyItem.ctor()
@@ -49,7 +51,7 @@ namespace Ecng.Reflection.Path
 				else if (methodArgs.Count == 1)
 					return Invoker.ReturnInvoke(methodArgs[0]);
 				else
-					return Invoker.ReturnInvoke(new object[0]);				
+					return Invoker.ReturnInvoke(ArrayHelper<object>.EmptyArray);				
 			}
 			else
 			{
@@ -58,7 +60,7 @@ namespace Ecng.Reflection.Path
 				else if (methodArgs.Count == 1)
 					return Invoker.ReturnInvoke(instance, methodArgs[0]);
 				else
-					return Invoker.ReturnInvoke(instance, new object[0]);	
+					return Invoker.ReturnInvoke(instance, ArrayHelper<object>.EmptyArray);	
 			}
 		}
 

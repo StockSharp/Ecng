@@ -29,7 +29,7 @@ namespace Ecng.Serialization
 
 		protected virtual object[] GetArgs(Field field)
 		{
-			return new object[0];
+			return ArrayHelper<object>.EmptyArray;
 		}
 	}
 

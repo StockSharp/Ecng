@@ -2,6 +2,11 @@
 {
 	using System;
 
+	public static class ArrayHelper<T>
+	{
+		public static T[] EmptyArray = new T[0];
+	}
+
 	/// <summary>
 	/// Class-helper that provided some routine extension based methods.
 	/// </summary>

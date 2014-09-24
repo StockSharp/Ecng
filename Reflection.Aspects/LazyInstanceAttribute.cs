@@ -25,7 +25,7 @@ namespace Ecng.Reflection.Aspects
 
 		public LazyInstanceAttribute()
 		{
-			_args = new object[0];
+			_args = ArrayHelper<object>.EmptyArray;
 		}
 
 		public LazyInstanceAttribute(params object[] args)
