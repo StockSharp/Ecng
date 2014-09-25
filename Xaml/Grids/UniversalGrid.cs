@@ -411,7 +411,8 @@
 			if (cell == null)
 				return;
 
-			if (CanDrag == null || CanDrag(cell))
+			var evt = CanDrag;
+			if (evt != null && evt(cell))
 				_dragCell = cell;
 
 			base.OnPreviewMouseLeftButtonDown(e);
@@ -435,7 +436,8 @@
 			if (dropCell == null)
 				return;
 
-			if (Dropping == null || Dropping(_dragCell, dropCell))
+			var evt = Dropping;
+			if (evt != null && evt(_dragCell, dropCell))
 			{
 				var dragValue = _dragCell.GetValueFromCell();
 				var dropValue = dropCell.GetValueFromCell();
