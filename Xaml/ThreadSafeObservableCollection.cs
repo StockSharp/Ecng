@@ -52,6 +52,7 @@ namespace Ecng.Xaml
 		private readonly Queue<CollectionAction> _pendingActions = new Queue<CollectionAction>();
 		private bool _isTimerStarted;
 		private const int _maxDiff = 10;
+		private int _guiCount;
 
 		private GuiDispatcher _dispatcher = GuiDispatcher.GlobalDispatcher;
 
@@ -199,6 +200,7 @@ namespace Ecng.Xaml
 		/// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only. </exception>
 		public virtual void Clear()
 		{
+			_items.Clear();
 			AddAction(ActionTypes.Clear);
 		}
 
@@ -270,7 +272,7 @@ namespace Ecng.Xaml
 		/// </returns>
 		public int Count
 		{
-			get { return _items.Count; }
+			get { return _guiCount; }
 		}
 
 		/// <summary>
@@ -509,6 +511,7 @@ namespace Ecng.Xaml
 		private void OnAdd(IList<TItem> items)
 		{
 			//_items.AddRange(items);
+			_guiCount += items.Count;
 
 			OnPropertyChanged(_countString);
 			OnPropertyChanged(_indexerName);
@@ -519,6 +522,10 @@ namespace Ecng.Xaml
 		private void OnRemove(IList<TItem> items)
 		{
 			//items.ForEach(i => _items.Remove(i));
+			_guiCount -= items.Count;
+
+			if (_guiCount < 0)
+				throw new InvalidOperationException();
 
 			OnPropertyChanged(_countString);
 			OnPropertyChanged(_indexerName);
@@ -533,7 +540,8 @@ namespace Ecng.Xaml
 
 		private void OnClear()
 		{
-			_items.Clear();
+			//_items.Clear();
+			_guiCount = 0;
 
 			OnPropertyChanged(_countString);
 			OnPropertyChanged(_indexerName);
