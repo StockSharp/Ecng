@@ -92,7 +92,7 @@ namespace Ecng.Xaml
 			if (diff <= 0)
 				return;
 
-			RemoveRange(GetRange(0, diff));
+			RemoveRange(0, diff);
 		}
 
 		public virtual void AddRange(IEnumerable<TItem> items)
@@ -116,6 +116,20 @@ namespace Ecng.Xaml
 				AddAction(new CollectionAction(ActionTypes.Remove, arr));
 
 			return arr;
+		}
+
+		public virtual void RemoveRange(int index, int count)
+		{
+			TItem[] items;
+
+			lock (SyncRoot)
+			{
+				items = _items.GetRange(index, count).ToArray();
+				_items.RemoveRange(index, count);
+			}
+
+			if (items.Length > 0)
+				AddAction(new CollectionAction(ActionTypes.Remove, items));
 		}
 
 		/// <summary>
@@ -533,10 +547,10 @@ namespace Ecng.Xaml
 			OnCollectionChanged(NotifyCollectionChangedAction.Remove, items);
 		}
 
-		protected virtual IEnumerable<TItem> GetRange(int index, int count)
-		{
-			return _items.GetRange(index, count);
-		}
+		//protected virtual IEnumerable<TItem> GetRange(int index, int count)
+		//{
+		//	return _items.GetRange(index, count);
+		//}
 
 		private void OnClear()
 		{

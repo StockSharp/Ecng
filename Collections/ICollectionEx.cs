@@ -6,5 +6,6 @@ namespace Ecng.Collections
 	{
 		void AddRange(IEnumerable<T> items);
 		IEnumerable<T> RemoveRange(IEnumerable<T> items);
+		void RemoveRange(int index, int count);
 	}
 }

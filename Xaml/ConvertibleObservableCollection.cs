@@ -76,6 +76,14 @@ namespace Ecng.Xaml
 			return items;
 		}
 
+		public override void RemoveRange(int index, int count)
+		{
+			lock (SyncRoot)
+			{
+				RemoveRange(_convertedValues.Keys.Skip(index).Take(count).ToArray());
+			}
+		}
+
 		public override void Clear()
 		{
 			lock (SyncRoot)
@@ -189,10 +197,10 @@ namespace Ecng.Xaml
 			set { throw new NotSupportedException(); }
 		}
 
-		protected override IEnumerable<TDisplay> GetRange(int index, int count)
-		{
-			lock (SyncRoot)
-				return _convertedValues.Values.Skip(index).Take(count);
-		}
+		//protected override IEnumerable<TDisplay> GetRange(int index, int count)
+		//{
+		//	lock (SyncRoot)
+		//		return _convertedValues.Values.Skip(index).Take(count);
+		//}
 	}
 }

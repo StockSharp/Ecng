@@ -63,6 +63,12 @@ namespace Ecng.Collections
 			return removedItems;
 		}
 
+		public void RemoveRange(int index, int count)
+		{
+			lock (SyncRoot)
+				InnerCollection.RemoveRange(index, count);
+		}
+
 		public IEnumerable<T> GetRange(int index, int count)
 		{
 			lock (SyncRoot)
