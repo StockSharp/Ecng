@@ -262,7 +262,7 @@ namespace Ecng.Data
 			return GetCommand(commandQuery, schema, keyFields, valueFields);
 		}
 
-		public virtual DatabaseCommand GetCommand(Query commandQuery, Schema schema, FieldList keyFields, FieldList valueFields)
+		public virtual DatabaseCommand GetCommand(Query commandQuery, Schema schema, FieldList keyFields, FieldList valueFields, bool parseParameters = true)
 		{
 			if (commandQuery == null)
 				throw new ArgumentNullException("commandQuery");
@@ -282,7 +282,7 @@ namespace Ecng.Data
 						Provider.DeriveParameters(dbCommand);
 					}
 				}
-				else
+				else if (parseParameters)
 				{
 					foreach (Match match in _parameterRegex.Matches(query))
 					{
