@@ -1,23 +1,34 @@
 namespace Ecng.Xaml
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
 
 	using Ecng.Collections;
 
-	public class ConvertibleObservableCollection<TItem, TDisplay> : ThreadSafeObservableCollection<TDisplay>, IList<TItem>, ICollectionEx<TItem>
-		where TDisplay : class
+	public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCollection, IList<TItem>, ICollectionEx<TItem>
+			where TDisplay : class
 	{
+		private readonly ICollection<TDisplay> _collection;
 		private readonly Func<TItem, TDisplay> _converter;
 		private readonly Dictionary<TItem, TDisplay> _convertedValues = new Dictionary<TItem, TDisplay>();
 
-		public ConvertibleObservableCollection(Func<TItem, TDisplay> converter)
+		public ConvertibleObservableCollection(ICollection<TDisplay> collection, Func<TItem, TDisplay> converter)
 		{
+			if (collection == null)
+				throw new ArgumentNullException("collection");
+
 			if (converter == null)
 				throw new ArgumentNullException("converter");
 
+			_collection = collection;
 			_converter = converter;
+		}
+
+		private object SyncRoot
+		{
+			get { return ((ICollection)_collection).SyncRoot; }
 		}
 
 		public TItem[] Items
@@ -48,8 +59,10 @@ namespace Ecng.Xaml
 					converted.Add(display);
 				}
 
-				AddRange(converted);
+				_collection.AddRange(converted);
 			}
+
+			CheckCount();
 		}
 
 		public IEnumerable<TItem> RemoveRange(IEnumerable<TItem> items)
@@ -69,7 +82,7 @@ namespace Ecng.Xaml
 					converted.Add(display);
 				}
 
-				RemoveRange(converted);
+				_collection.RemoveRange(converted);
 			}
 
 			// TODO
@@ -84,12 +97,12 @@ namespace Ecng.Xaml
 			}
 		}
 
-		public override void Clear()
+		public void Clear()
 		{
 			lock (SyncRoot)
 			{
 				_convertedValues.Clear();
-				base.Clear();
+				_collection.Clear();
 			}
 		}
 
@@ -99,7 +112,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.
 		/// </returns>
-		public new IEnumerator<TItem> GetEnumerator()
+		public IEnumerator<TItem> GetEnumerator()
 		{
 			lock (SyncRoot)
 				return _convertedValues.Keys.GetEnumerator();
@@ -115,8 +128,10 @@ namespace Ecng.Xaml
 			{
 				var display = _converter(item);
 				_convertedValues.Add(item, display);
-				Add(display);
+				_collection.Add(display);
 			}
+
+			CheckCount();
 		}
 
 		/// <summary>
@@ -135,9 +150,32 @@ namespace Ecng.Xaml
 				if (display == null)
 					return false;
 
-				Remove(display);
-				return true;	
+				_convertedValues.Remove(item);
+				_collection.Remove(display);
+				return true;
 			}
+		}
+
+		/// <summary>
+		/// Gets the number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"/>.
+		/// </summary>
+		/// <returns>
+		/// The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"/>.
+		/// </returns>
+		public override int Count
+		{
+			get { return _collection.Count; }
+		}
+
+		/// <summary>
+		/// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.
+		/// </summary>
+		/// <returns>
+		/// true if the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only; otherwise, false.
+		/// </returns>
+		bool ICollection<TItem>.IsReadOnly
+		{
+			get { return false; }
 		}
 
 		/// <summary>
@@ -185,22 +223,36 @@ namespace Ecng.Xaml
 		}
 
 		/// <summary>
+		/// Removes the <see cref="T:System.Collections.Generic.IList`1"/> item at the specified index.
+		/// </summary>
+		/// <param name="index">The zero-based index of the item to remove.</param><exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="T:System.Collections.Generic.IList`1"/>.</exception><exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.IList`1"/> is read-only.</exception>
+		public void RemoveAt(int index)
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
 		/// Gets or sets the element at the specified index.
 		/// </summary>
 		/// <returns>
 		/// The element at the specified index.
 		/// </returns>
 		/// <param name="index">The zero-based index of the element to get or set.</param><exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="T:System.Collections.Generic.IList`1"/>.</exception><exception cref="T:System.NotSupportedException">The property is set and the <see cref="T:System.Collections.Generic.IList`1"/> is read-only.</exception>
-		public new TItem this[int index]
+		public TItem this[int index]
 		{
 			get { throw new NotSupportedException(); }
 			set { throw new NotSupportedException(); }
 		}
 
-		//protected override IEnumerable<TDisplay> GetRange(int index, int count)
-		//{
-		//	lock (SyncRoot)
-		//		return _convertedValues.Values.Skip(index).Take(count);
-		//}
+		/// <summary>
+		/// Returns an enumerator that iterates through a collection.
+		/// </summary>
+		/// <returns>
+		/// An <see cref="T:System.Collections.IEnumerator"/> object that can be used to iterate through the collection.
+		/// </returns>
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
 	}
 }

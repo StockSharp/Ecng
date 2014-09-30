@@ -84,6 +84,7 @@
     </Compile>
     <Compile Include="AddressComboBox.cs" />
     <Compile Include="AutoRefreshCollectionViewSource.cs" />
+    <Compile Include="BaseObservableCollection.cs" />
     <Compile Include="Converters\BoolToBrushConverter.cs" />
     <Compile Include="Converters\BoolToOpacityConverter.cs" />
     <Compile Include="Converters\ColorToBrushConverter.cs" />

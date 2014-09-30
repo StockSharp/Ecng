@@ -11,12 +11,7 @@ namespace Ecng.Xaml
 	using Ecng.Collections;
 	using Ecng.Common;
 
-	/// <summary>
-	/// Provides a threadsafe ObservableCollection of T.
-	/// </summary>
-	/// <remarks>http://sachabarber.net/?p=418</remarks>
-	/// <typeparam name="TItem"></typeparam>
-	public class ThreadSafeObservableCollection<TItem> : ISynchronizedCollection<TItem>, IList<TItem>, ICollectionEx<TItem>, IList, INotifyCollectionChanged, INotifyPropertyChanged
+	public class ThreadSafeObservableCollection<TItem> : BaseObservableCollection, ISynchronizedCollection<TItem>, IList<TItem>, ICollectionEx<TItem>, IList, INotifyCollectionChanged, INotifyPropertyChanged
 	{
 		private enum ActionTypes
 		{
@@ -28,17 +23,19 @@ namespace Ecng.Xaml
 
 		private class CollectionAction
 		{
-			public CollectionAction(ActionTypes type, TItem[] items)
+			public CollectionAction(ActionTypes type, TItem[] items, int index)
 			{
 				if (items == null)
 					throw new ArgumentNullException("items");
 
 				Type = type;
 				Items = items;
+				Index = index;
 			}
 
 			public ActionTypes Type { get; private set; }
 			public TItem[] Items { get; private set; }
+			public int Index { get; private set; }
 			public SyncObject SyncRoot { get; set; }
 		}
 
@@ -68,33 +65,6 @@ namespace Ecng.Xaml
 			}
 		}
 
-		private int _maxCount = -1;
-
-		public int MaxCount
-		{
-			get { return _maxCount; }
-			set
-			{
-				if (value < -1 || value == 0)
-					throw new ArgumentOutOfRangeException();
-
-				_maxCount = value;
-			}
-		}
-
-		private void CheckCount()
-		{
-			if (MaxCount == -1)
-				return;
-
-			var diff = (int)(Count - 1.5 * MaxCount);
-
-			if (diff <= 0)
-				return;
-
-			RemoveRange(0, diff);
-		}
-
 		public virtual void AddRange(IEnumerable<TItem> items)
 		{
 			var arr = items.ToArray();
@@ -102,34 +72,57 @@ namespace Ecng.Xaml
 			if (arr.Length == 0)
 				return;
 
-			_items.AddRange(arr);
-			AddAction(new CollectionAction(ActionTypes.Add, arr));
+			try
+			{
+				int index;
 
-			CheckCount();
+				lock (SyncRoot)
+				{
+					index = _items.Count;
+
+					_items.AddRange(arr);
+
+					if (!Dispatcher.Dispatcher.CheckAccess())
+					{
+						AddAction(new CollectionAction(ActionTypes.Add, arr, index));
+						return;
+					}
+				}
+
+				OnAdd(arr, index);
+			}
+			finally
+			{
+				CheckCount();
+			}
 		}
 
 		public virtual IEnumerable<TItem> RemoveRange(IEnumerable<TItem> items)
 		{
-			var arr = _items.RemoveRange(items).ToArray();
-
-			if (arr.Length > 0)
-				AddAction(new CollectionAction(ActionTypes.Remove, arr));
-
-			return arr;
+			return CollectionHelper.RemoveRange(this, items);
 		}
 
-		public virtual void RemoveRange(int index, int count)
+		public override void RemoveRange(int index, int count)
 		{
 			TItem[] items;
 
 			lock (SyncRoot)
 			{
 				items = _items.GetRange(index, count).ToArray();
+
+				if (items.Length == 0)
+					return;
+
 				_items.RemoveRange(index, count);
+
+				if (!Dispatcher.Dispatcher.CheckAccess())
+				{
+					AddAction(new CollectionAction(ActionTypes.Remove, items, index));
+					return;
+				}
 			}
 
-			if (items.Length > 0)
-				AddAction(new CollectionAction(ActionTypes.Remove, items));
+			OnRemove(items, index);
 		}
 
 		/// <summary>
@@ -160,10 +153,28 @@ namespace Ecng.Xaml
 		/// <param name="item">The object to add to the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param><exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.</exception>
 		public virtual void Add(TItem item)
 		{
-			_items.Add(item);
-			AddAction(ActionTypes.Add, item);
+			try
+			{
+				int index;
 
-			CheckCount();
+				lock (SyncRoot)
+				{
+					index = _items.Count;
+					_items.Add(item);
+
+					if (!Dispatcher.Dispatcher.CheckAccess())
+					{
+						AddAction(ActionTypes.Add, -1, item);
+						return;
+					}
+				}
+
+				OnAdd(new[] { item }, index);
+			}
+			finally
+			{
+				CheckCount();
+			}
 		}
 
 		/// <summary>
@@ -175,12 +186,26 @@ namespace Ecng.Xaml
 		/// <param name="item">The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param><exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.</exception>
 		public virtual bool Remove(TItem item)
 		{
-			var removed = _items.Remove(item);
+			int index;
 
-			if (removed)
-				AddAction(ActionTypes.Remove, item);
+			lock (SyncRoot)
+			{
+				index = _items.IndexOf(item);
 
-			return removed;
+				if (index == -1)
+					return false;
+
+				_items.RemoveAt(index);
+
+				if (!Dispatcher.Dispatcher.CheckAccess())
+				{
+					AddAction(ActionTypes.Remove, index, item);
+					return true;
+				}
+			}
+
+			OnRemove(new[] { item }, index);
+			return true;
 		}
 
 		/// <summary>
@@ -214,8 +239,18 @@ namespace Ecng.Xaml
 		/// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only. </exception>
 		public virtual void Clear()
 		{
-			_items.Clear();
-			AddAction(ActionTypes.Clear);
+			lock (SyncRoot)
+			{
+				_items.Clear();
+
+				if (!Dispatcher.Dispatcher.CheckAccess())
+				{
+					AddAction(ActionTypes.Clear, -1);
+					return;
+				}
+			}
+
+			OnClear();
 		}
 
 		/// <summary>
@@ -284,7 +319,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"/>.
 		/// </returns>
-		public int Count
+		public override int Count
 		{
 			get { return _guiCount; }
 		}
@@ -395,13 +430,16 @@ namespace Ecng.Xaml
 		public void Wait()
 		{
 			var syncRoot = new SyncObject();
-			AddAction(new CollectionAction(ActionTypes.Wait, new TItem[0]) { SyncRoot = syncRoot });
+
+			lock (SyncRoot)
+				AddAction(new CollectionAction(ActionTypes.Wait, ArrayHelper<TItem>.EmptyArray, -1) { SyncRoot = syncRoot });
+
 			syncRoot.Wait();
 		}
 
-		private void AddAction(ActionTypes type, params TItem[] items)
+		private void AddAction(ActionTypes type, int index, params TItem[] items)
 		{
-			AddAction(new CollectionAction(type, items));
+			AddAction(new CollectionAction(type, items, index));
 		}
 
 		private void AddAction(CollectionAction item)
@@ -409,104 +447,89 @@ namespace Ecng.Xaml
 			if (item == null)
 				throw new ArgumentNullException("item");
 
-			if (item.Type != ActionTypes.Wait && Dispatcher.Dispatcher.CheckAccess())
-			{
-				switch (item.Type)
-				{
-					case ActionTypes.Add:
-					{
-						OnAdd(item.Items);
-						break;
-					}
-					case ActionTypes.Remove:
-					{
-						OnRemove(item.Items);
-						break;
-					}
-					case ActionTypes.Clear:
-					{
-						OnClear();
-						break;
-					}
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
+			//if (item.Type != ActionTypes.Wait && Dispatcher.Dispatcher.CheckAccess())
+			//{
+			//	switch (item.Type)
+			//	{
+			//		case ActionTypes.Add:
+			//			{
+			//				OnAdd(item.Items);
+			//				break;
+			//			}
+			//		case ActionTypes.Remove:
+			//			{
+			//				OnRemove(item.Items, item.Index);
+			//				break;
+			//			}
+			//		case ActionTypes.Clear:
+			//			{
+			//				OnClear();
+			//				break;
+			//			}
+			//		default:
+			//			throw new ArgumentOutOfRangeException();
+			//	}
 
+			//	return;
+			//}
+
+			//lock (SyncRoot)
+			//{
+			_pendingActions.Enqueue(item);
+
+			if (_isTimerStarted)
 				return;
-			}
 
-			lock (SyncRoot)
-			{
-				_pendingActions.Enqueue(item);
-
-				if (_isTimerStarted)
-					return;
-
-				_isTimerStarted = true;
-			}
+			_isTimerStarted = true;
+			//}
 
 			ThreadingHelper
-				.Timer(() =>
-				{
-					try
-					{
-						OnFlush();
-					}
-					catch (Exception ex)
-					{
-						ErrorHandler.SafeInvoke(ex);
-					}
-				})
+				.Timer(OnFlush)
 				.Interval(TimeSpan.FromMilliseconds(300), new TimeSpan(-1));
 		}
 
-		public event Action<Exception> ErrorHandler;
+		//public event Action<Exception> ErrorHandler;
 
 		private void OnFlush()
 		{
-			var pendingAdd = new List<TItem>();
-			var pendingRemove = new List<TItem>();
+			var pendingActions = new List<CollectionAction>();
 			var hasClear = false;
+			Exception error = null;
 
-			CollectionAction[] actions;
-
-			lock (SyncRoot)
+			try
 			{
-				_isTimerStarted = false;
-				actions = _pendingActions.ToArray();
-				_pendingActions.Clear();
-			}
+				CollectionAction[] actions;
 
-			foreach (var action in actions)
-			{
-				switch (action.Type)
+				lock (SyncRoot)
 				{
-					case ActionTypes.Add:
-						pendingAdd.AddRange(action.Items);
-						break;
-					case ActionTypes.Remove:
-					{
-						foreach (var item in action.Items)
-						{
-							if (pendingAdd.Contains(item))
-								pendingAdd.Remove(item);
-							else
-								pendingRemove.Add(item);
-						}
-
-						break;
-					}
-					case ActionTypes.Clear:
-						pendingAdd.Clear();
-						pendingRemove.Clear();
-						hasClear = true;
-						break;
-					case ActionTypes.Wait:
-						Dispatcher.AddAction(action.SyncRoot.Pulse);
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
+					_isTimerStarted = false;
+					actions = _pendingActions.ToArray();
+					_pendingActions.Clear();
 				}
+
+				foreach (var action in actions)
+				{
+					switch (action.Type)
+					{
+						case ActionTypes.Add:
+						case ActionTypes.Remove:
+							pendingActions.Add(action);
+							break;
+						case ActionTypes.Clear:
+							pendingActions.Clear();
+							hasClear = true;
+							break;
+						case ActionTypes.Wait:
+							Dispatcher.AddAction(action.SyncRoot.Pulse);
+							break;
+						default:
+							throw new ArgumentOutOfRangeException();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				error = ex;
 			}
 
 			Dispatcher.AddAction(() =>
@@ -514,28 +537,38 @@ namespace Ecng.Xaml
 				if (hasClear)
 					OnClear();
 
-				if (pendingAdd.Count > 0)
-					OnAdd(pendingAdd);
+				foreach (var action in pendingActions)
+				{
+					switch (action.Type)
+					{
+						case ActionTypes.Add:
+							OnAdd(action.Items, action.Index);
+							break;
+						case ActionTypes.Remove:
+							OnRemove(action.Items, action.Index);
+							break;
+						default:
+							throw new ArgumentOutOfRangeException();
+					}
+				}
 
-				if (pendingRemove.Count > 0)
-					OnRemove(pendingRemove);
+				if (error != null)
+					throw error;
 			});
 		}
 
-		private void OnAdd(IList<TItem> items)
+		private void OnAdd(IList<TItem> items, int index)
 		{
-			//_items.AddRange(items);
 			_guiCount += items.Count;
 
 			OnPropertyChanged(_countString);
 			OnPropertyChanged(_indexerName);
 
-			OnCollectionChanged(NotifyCollectionChangedAction.Add, items);
+			OnCollectionChanged(NotifyCollectionChangedAction.Add, items, index);
 		}
 
-		private void OnRemove(IList<TItem> items)
+		private void OnRemove(IList<TItem> items, int index)
 		{
-			//items.ForEach(i => _items.Remove(i));
 			_guiCount -= items.Count;
 
 			if (_guiCount < 0)
@@ -544,7 +577,7 @@ namespace Ecng.Xaml
 			OnPropertyChanged(_countString);
 			OnPropertyChanged(_indexerName);
 
-			OnCollectionChanged(NotifyCollectionChangedAction.Remove, items);
+			OnCollectionChanged(NotifyCollectionChangedAction.Remove, items, index);
 		}
 
 		//protected virtual IEnumerable<TItem> GetRange(int index, int count)
@@ -562,23 +595,23 @@ namespace Ecng.Xaml
 			OnCollectionReset();
 		}
 
-		/// <summary>
-		/// Raise CollectionChanged event to any listeners.
-		/// Properties/methods modifying this ObservableCollection will raise
-		/// a collection changed event through this virtual method.
-		/// </summary>
-		protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
-		{
-			var evt = CollectionChanged;
+		///// <summary>
+		///// Raise CollectionChanged event to any listeners.
+		///// Properties/methods modifying this ObservableCollection will raise
+		///// a collection changed event through this virtual method.
+		///// </summary>
+		//protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
+		//{
+		//	var evt = CollectionChanged;
 
-			if (evt != null)
-			{
-				//using (BlockReentrancy())
-				//{
-				evt(this, e);
-				//}
-			}
-		}
+		//	if (evt != null)
+		//	{
+		//		//using (BlockReentrancy())
+		//		//{
+		//		evt(this, e);
+		//		//}
+		//	}
+		//}
 
 		/// <summary>
 		/// Helper to raise a PropertyChanged event.
@@ -596,36 +629,41 @@ namespace Ecng.Xaml
 		/// <summary>
 		/// Helper to raise CollectionChanged event to any listeners
 		/// </summary>
-		private void OnCollectionChanged(NotifyCollectionChangedAction action, IList<TItem> items)
+		private void OnCollectionChanged(NotifyCollectionChangedAction action, IList<TItem> items, int index)
 		{
 			var evt = CollectionChanged;
 
-			if (evt != null)
+			if (evt == null)
+				return;
+
+			var e = new NotifyCollectionChangedEventArgs(action, (IList)items, index);
+
+			// http://geekswithblogs.net/NewThingsILearned/archive/2008/01/16/listcollectionviewcollectionview-doesnt-support-notifycollectionchanged-with-multiple-items.aspx
+
+			foreach (var handler in evt.GetInvocationList().Cast<NotifyCollectionChangedEventHandler>())
 			{
-				var e = new NotifyCollectionChangedEventArgs(action, (IList)items);
+				var view = handler.Target as CollectionView;
 
-				// http://geekswithblogs.net/NewThingsILearned/archive/2008/01/16/listcollectionviewcollectionview-doesnt-support-notifycollectionchanged-with-multiple-items.aspx
-
-				foreach (var handler in evt.GetInvocationList().Cast<NotifyCollectionChangedEventHandler>())
+				if (view != null)
 				{
-					var view = handler.Target as CollectionView;
-
-					if (view != null)
+					if (items.Count > _maxDiff)
+						view.Refresh();
+					else
 					{
-						if (items.Count > _maxDiff)
-							view.Refresh();
-						else
+						var localIndex = index;
+
+						foreach (var item in items)
 						{
-							foreach (var item in items)
-							{
-								// http://stackoverflow.com/questions/670577/observablecollection-doesnt-support-addrange-method-so-i-get-notified-for-each
-								OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, item));
-							}
+							// http://stackoverflow.com/questions/670577/observablecollection-doesnt-support-addrange-method-so-i-get-notified-for-each
+							handler(this, new NotifyCollectionChangedEventArgs(action, item, localIndex));
+
+							if (action == NotifyCollectionChangedAction.Add)
+								localIndex++;
 						}
 					}
-					else
-						handler(this, e);
 				}
+				else
+					handler(this, e);
 			}
 		}
 
@@ -634,7 +672,12 @@ namespace Ecng.Xaml
 		/// </summary>
 		private void OnCollectionReset()
 		{
-			OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+			var evt = CollectionChanged;
+
+			if (evt == null)
+				return;
+
+			evt(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 		}
 
 		public SyncObject SyncRoot
