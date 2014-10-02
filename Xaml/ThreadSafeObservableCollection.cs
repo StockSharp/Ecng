@@ -73,20 +73,14 @@ namespace Ecng.Xaml
 
 		public virtual void AddRange(IEnumerable<TItem> items)
 		{
-			try
+			if (!Dispatcher.Dispatcher.CheckAccess())
 			{
-				if (!Dispatcher.Dispatcher.CheckAccess())
-				{
-					AddAction(new CollectionAction(ActionTypes.Add, items.ToArray()));
-					return;
-				}
+				AddAction(new CollectionAction(ActionTypes.Add, items.ToArray()));
+				return;
+			}
 
-				_items.AddRange(items);
-			}
-			finally
-			{
-				CheckCount();
-			}
+			_items.AddRange(items);
+			CheckCount();
 		}
 
 		public virtual IEnumerable<TItem> RemoveRange(IEnumerable<TItem> items)
@@ -139,20 +133,14 @@ namespace Ecng.Xaml
 		/// <param name="item">The object to add to the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param><exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.</exception>
 		public virtual void Add(TItem item)
 		{
-			try
+			if (!Dispatcher.Dispatcher.CheckAccess())
 			{
-				if (!Dispatcher.Dispatcher.CheckAccess())
-				{
-					AddAction(new CollectionAction(ActionTypes.Add, item));
-					return;
-				}
+				AddAction(new CollectionAction(ActionTypes.Add, item));
+				return;
+			}
 
-				_items.Add(item);
-			}
-			finally
-			{
-				CheckCount();
-			}
+			_items.Add(item);
+			CheckCount();
 		}
 
 		/// <summary>
@@ -412,41 +400,10 @@ namespace Ecng.Xaml
 			syncRoot.Wait();
 		}
 
-		//private void AddAction(ActionTypes type, int index, params TItem[] items)
-		//{
-		//	AddAction(new CollectionAction(type, items, index));
-		//}
-
 		private void AddAction(CollectionAction item)
 		{
 			if (item == null)
 				throw new ArgumentNullException("item");
-
-			//if (item.Type != ActionTypes.Wait && Dispatcher.Dispatcher.CheckAccess())
-			//{
-			//	switch (item.Type)
-			//	{
-			//		case ActionTypes.Add:
-			//			{
-			//				OnAdd(item.Items);
-			//				break;
-			//			}
-			//		case ActionTypes.Remove:
-			//			{
-			//				OnRemove(item.Items, item.Index);
-			//				break;
-			//			}
-			//		case ActionTypes.Clear:
-			//			{
-			//				OnClear();
-			//				break;
-			//			}
-			//		default:
-			//			throw new ArgumentOutOfRangeException();
-			//	}
-
-			//	return;
-			//}
 
 			lock (SyncRoot)
 			{
@@ -462,8 +419,6 @@ namespace Ecng.Xaml
 				.Timer(OnFlush)
 				.Interval(TimeSpan.FromMilliseconds(300), new TimeSpan(-1));
 		}
-
-		//public event Action<Exception> ErrorHandler;
 
 		private void OnFlush()
 		{
@@ -518,6 +473,7 @@ namespace Ecng.Xaml
 					{
 						case ActionTypes.Add:
 							_items.AddRange(action.Items);
+							CheckCount();
 							break;
 						case ActionTypes.Remove:
 						{
