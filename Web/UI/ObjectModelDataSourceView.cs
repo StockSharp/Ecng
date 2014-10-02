@@ -197,13 +197,13 @@
 		{
 			if (LastItemType != ItemType)
 			{
-				var list = GetList();
+				var collection = GetCollection();
 
-				if (list == null)
+				if (collection == null)
 					return Enumerable.Empty<object>();
 
 				if (arguments.RetrieveTotalRowCount)
-					arguments.TotalRowCount = GetCount(list);
+					arguments.TotalRowCount = GetCount(collection);
 
 				if (arguments.MaximumRows == 0 || arguments.MaximumRows == -1)
 					arguments.MaximumRows = MaximumRows;
@@ -237,7 +237,7 @@
 					}
 				}
 
-				return GetRange(list, arguments.StartRowIndex, arguments.MaximumRows, orderBy, direction);
+				return GetRange(collection, arguments.StartRowIndex, arguments.MaximumRows, orderBy, direction);
 			}
 			else
 				return new[] { GetItem() };
@@ -251,14 +251,14 @@
 
 		#endregion
 
-		protected virtual int GetCount(IListEx list)
+		protected virtual int GetCount(IRangeCollection collection)
 		{
-			return list.Count;
+			return collection.Count;
 		}
 
-		protected virtual IEnumerable GetRange(IListEx list, int startIndex, int count, string sortExpression, ListSortDirection direction)
+		protected virtual IEnumerable GetRange(IRangeCollection collection, int startIndex, int count, string sortExpression, ListSortDirection direction)
 		{
-			return list.GetRange(startIndex, count, sortExpression, direction);
+			return collection.GetRange(startIndex, count, sortExpression, direction);
 		}
 
 		protected virtual object GetItem()
@@ -277,9 +277,9 @@
 
 		#region GetList
 
-		protected virtual IListEx GetList()
+		protected virtual IRangeCollection GetCollection()
 		{
-			return (IListEx)Invoke();
+			return (IRangeCollection)Invoke();
 		}
 
 		#endregion

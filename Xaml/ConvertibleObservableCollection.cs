@@ -7,7 +7,7 @@ namespace Ecng.Xaml
 
 	using Ecng.Collections;
 
-	public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCollection, IList<TItem>, ICollectionEx<TItem>
+	public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCollection, IListEx<TItem>
 			where TDisplay : class
 	{
 		private readonly ICollection<TDisplay> _collection;
@@ -164,7 +164,11 @@ namespace Ecng.Xaml
 		/// </returns>
 		public override int Count
 		{
-			get { return _collection.Count; }
+			get
+			{
+				lock (SyncRoot)
+					return _convertedValues.Count;
+			}
 		}
 
 		/// <summary>

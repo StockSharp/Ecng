@@ -56,20 +56,20 @@
 
 		#region ObjectModelDataSourceView Members
 
-		protected override int GetCount(IListEx list)
+		protected override int GetCount(IRangeCollection collection)
 		{
 			using (LogicHelper<TUser, TRole>.CreateScope(_schema, Restrict))
-				return base.GetCount(list);
+				return base.GetCount(collection);
 		}
 
-		protected override IEnumerable GetRange(IListEx list, int startIndex, int count, string sortExpression, ListSortDirection direction)
+		protected override IEnumerable GetRange(IRangeCollection collection, int startIndex, int count, string sortExpression, ListSortDirection direction)
 		{
 			using (LogicHelper<TUser, TRole>.CreateScope(_schema, Restrict))
 			{
 				if (!sortExpression.IsEmpty() && !_schema.Fields.Contains(sortExpression))
-					return _getRangeMethod.GetValue<object[], IEnumerable>(new object[] { list, startIndex, count, new VoidField<ListSortDirection>(sortExpression), direction });
+					return _getRangeMethod.GetValue<object[], IEnumerable>(new object[] { collection, startIndex, count, new VoidField<ListSortDirection>(sortExpression), direction });
 				else
-					return base.GetRange(list, startIndex, count, sortExpression, direction);
+					return base.GetRange(collection, startIndex, count, sortExpression, direction);
 			}
 		}
 

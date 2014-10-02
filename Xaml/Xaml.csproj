@@ -180,6 +180,7 @@
     <Compile Include="MessageBoxBuilder.cs" />
     <Compile Include="NonTopmostPopup.cs" />
     <Compile Include="NumberRangeRule.cs" />
+    <Compile Include="ObservableCollectionEx.cs" />
     <Compile Include="ObservableDictionary.cs" />
     <Compile Include="ObservableHashSet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -93,6 +93,7 @@
     <Compile Include="IEnumerableEx.cs" />
     <Compile Include="IListEx.cs" />
     <Compile Include="INotifyList.cs" />
+    <Compile Include="IRangeCollection.cs" />
     <Compile Include="ISynchronizedCollection.cs" />
     <Compile Include="KeyedCollection.cs" />
     <Compile Include="BlockingQueue.cs" />
