@@ -164,7 +164,7 @@ namespace Ecng.Xaml
 
 					if (!Dispatcher.Dispatcher.CheckAccess())
 					{
-						AddAction(ActionTypes.Add, -1, item);
+						AddAction(ActionTypes.Add, index, item);
 						return;
 					}
 				}
@@ -559,6 +559,9 @@ namespace Ecng.Xaml
 
 		private void OnAdd(IList<TItem> items, int index)
 		{
+			if (index < 0)
+				throw new ArgumentOutOfRangeException("index");
+
 			_guiCount += items.Count;
 
 			OnPropertyChanged(_countString);
@@ -631,6 +634,12 @@ namespace Ecng.Xaml
 		/// </summary>
 		private void OnCollectionChanged(NotifyCollectionChangedAction action, IList<TItem> items, int index)
 		{
+			if (items == null)
+				throw new ArgumentNullException("items");
+
+			if (index < 0)
+				throw new ArgumentOutOfRangeException("index");
+
 			var evt = CollectionChanged;
 
 			if (evt == null)
