@@ -20,7 +20,7 @@ namespace Ecng.Xaml
 
 		public abstract int Count { get; }
 
-		public abstract void RemoveRange(int index, int count);
+		public abstract int RemoveRange(int index, int count);
 
 		protected void CheckCount()
 		{

@@ -45,6 +45,7 @@ namespace Ecng.Xaml
 
 		private readonly IListEx<TItem> _items;
 		private readonly Queue<CollectionAction> _pendingActions = new Queue<CollectionAction>();
+		private int _pendingCount;
 		private bool _isTimerStarted;
 
 		public ThreadSafeObservableCollection(IListEx<TItem> items)
@@ -80,6 +81,7 @@ namespace Ecng.Xaml
 			}
 
 			_items.AddRange(items);
+			_pendingCount = _items.Count;
 			CheckCount();
 		}
 
@@ -91,18 +93,28 @@ namespace Ecng.Xaml
 				return Enumerable.Empty<TItem>();
 			}
 
-			return _items.RemoveRange(items);
+			var deleted = _items.RemoveRange(items);
+			_pendingCount = _items.Count;
+			return deleted;
 		}
 
-		public override void RemoveRange(int index, int count)
+		public override int RemoveRange(int index, int count)
 		{
+			if (index < -1)
+				throw new ArgumentOutOfRangeException("index");
+
+			if (count <= 0)
+				throw new ArgumentOutOfRangeException("count");
+
 			if (!Dispatcher.Dispatcher.CheckAccess())
 			{
+				var realCount = _pendingCount;
+				realCount -= index;
 				AddAction(new CollectionAction(index, count));
-				return;
+				return (realCount.Min(count)).Max(0);
 			}
 
-			_items.RemoveRange(index, count);
+			return _items.RemoveRange(index, count);
 		}
 
 		/// <summary>
@@ -140,6 +152,7 @@ namespace Ecng.Xaml
 			}
 
 			_items.Add(item);
+			_pendingCount = _items.Count;
 			CheckCount();
 		}
 
@@ -158,7 +171,9 @@ namespace Ecng.Xaml
 				return true;
 			}
 
-			return _items.Remove(item);
+			var removed = _items.Remove(item);
+			_pendingCount = _items.Count;
+			return removed;
 		}
 
 		/// <summary>
@@ -199,6 +214,7 @@ namespace Ecng.Xaml
 			}
 
 			_items.Clear();
+			_pendingCount = 0;
 		}
 
 		/// <summary>
@@ -407,6 +423,22 @@ namespace Ecng.Xaml
 
 			lock (SyncRoot)
 			{
+				switch (item.Type)
+				{
+					case ActionTypes.Add:
+						_pendingCount += item.Count;
+						break;
+					case ActionTypes.Remove:
+						if (item.Items == null)
+							_pendingCount -= item.Count;
+						else
+							_pendingCount -= item.Items.Length;
+						break;
+					case ActionTypes.Clear:
+						_pendingCount = 0;
+						break;
+				}
+
 				_pendingActions.Enqueue(item);
 
 				if (_isTimerStarted)

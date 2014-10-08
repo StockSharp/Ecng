@@ -4,6 +4,8 @@ namespace Ecng.Collections
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Ecng.Common;
+
 	using MoreLinq;
 
 	[Serializable]
@@ -63,10 +65,21 @@ namespace Ecng.Collections
 			return removedItems;
 		}
 
-		public void RemoveRange(int index, int count)
+		public int RemoveRange(int index, int count)
 		{
+			if (index < -1)
+				throw new ArgumentOutOfRangeException("index");
+
+			if (count <= 0)
+				throw new ArgumentOutOfRangeException("count");
+
 			lock (SyncRoot)
+			{
+				var realCount = Count;
+				realCount -= index;
 				InnerCollection.RemoveRange(index, count);
+				return (realCount.Min(count)).Max(0);
+			}
 		}
 
 		public IEnumerable<T> GetRange(int index, int count)

@@ -89,11 +89,13 @@ namespace Ecng.Xaml
 			return items;
 		}
 
-		public override void RemoveRange(int index, int count)
+		public override int RemoveRange(int index, int count)
 		{
 			lock (SyncRoot)
 			{
-				RemoveRange(_convertedValues.Keys.Skip(index).Take(count).ToArray());
+				var items = _convertedValues.Keys.Skip(index).Take(count).ToArray();
+				RemoveRange(items);
+				return items.Length;
 			}
 		}
 

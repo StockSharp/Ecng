@@ -46,16 +46,18 @@ namespace Ecng.Xaml
 			return CollectionHelper.RemoveRange(this, items);
 		}
 
-		public virtual void RemoveRange(int index, int count)
+		public virtual int RemoveRange(int index, int count)
 		{
 			var items = _items.GetRange(index, count).ToArray();
 
 			if (items.Length == 0)
-				return;
+				return 0;
 
 			_items.RemoveRange(index, count);
 
 			OnRemove(items, index);
+
+			return items.Length;
 		}
 
 		/// <summary>
