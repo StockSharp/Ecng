@@ -634,6 +634,9 @@
 		public static T? FirstOr<T>(this IEnumerable<T> source)
 			where T : struct
 		{
+			if (source == null)
+				throw new ArgumentNullException("source");
+
 			foreach (var t in source)
 				return t;
 
@@ -643,10 +646,26 @@
 		public static T? LastOr<T>(this IEnumerable<T> source)
 			where T : struct
 		{
-			foreach (var t in source)
-				return t;
+			if (source == null)
+				throw new ArgumentNullException("source");
 
-			return null;
+			var list = source as IList<T>;
+			if (list != null)
+			{
+				var count = list.Count;
+
+				if (count > 0)
+					return list[count - 1];
+
+				return null;
+			}
+
+			T? last = null;
+
+			foreach (var t in source)
+				last = t;
+
+			return last;
 		}
 
 		public static bool IsEmpty<T>(this IEnumerable<T> source)
