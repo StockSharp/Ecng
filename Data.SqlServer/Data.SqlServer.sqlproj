@@ -36,7 +36,7 @@
     <TargetFrameworkProfile />
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql110DatabaseSchemaProvider</DSP>
     <Name>Data.SqlServer</Name>
-    <ProjectVersion>4.0</ProjectVersion>
+    <ProjectVersion>4.1</ProjectVersion>
     <ProjectGuid>{ea46cece-72e4-4ccd-82db-4ca9e7507e02}</ProjectGuid>
     <IncludeSchemaNameInFileName>False</IncludeSchemaNameInFileName>
     <GenerateDatabaseFile>False</GenerateDatabaseFile>
@@ -96,7 +96,8 @@
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
   </PropertyGroup>
-  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <Import Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" Condition="'$(SQLDBExtensionsRefPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" Condition="'$(SQLDBExtensionsRefPath)' == ''" />
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
