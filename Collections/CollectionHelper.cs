@@ -926,29 +926,29 @@
 			return syncList;
 		}
 
-		// http://stackoverflow.com/questions/3683105/calculate-difference-from-previous-item-with-linq
-		public static IEnumerable<TResult> SelectWithPrevious<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TSource, TResult> projection)
-		{
-			if (source == null)
-				throw new ArgumentNullException("source");
+		//// http://stackoverflow.com/questions/3683105/calculate-difference-from-previous-item-with-linq
+		//public static IEnumerable<TResult> SelectWithPrevious<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TSource, TResult> projection)
+		//{
+		//	if (source == null)
+		//		throw new ArgumentNullException("source");
 
-			if (projection == null)
-				throw new ArgumentNullException("projection");
+		//	if (projection == null)
+		//		throw new ArgumentNullException("projection");
 
-			using (var iterator = source.GetEnumerator())
-			{
-				if (!iterator.MoveNext())
-					yield break;
+		//	using (var iterator = source.GetEnumerator())
+		//	{
+		//		if (!iterator.MoveNext())
+		//			yield break;
 
-				var previous = iterator.Current;
+		//		var previous = iterator.Current;
 
-				while (iterator.MoveNext())
-				{
-					yield return projection(previous, iterator.Current);
-					previous = iterator.Current;
-				}
-			}
-		}
+		//		while (iterator.MoveNext())
+		//		{
+		//			yield return projection(previous, iterator.Current);
+		//			previous = iterator.Current;
+		//		}
+		//	}
+		//}
 
 		public static IEnumerable<TSource> WhereWithPrevious<TSource>(this IEnumerable<TSource> source, Func<TSource, TSource, bool> predicate)
 		{
@@ -964,14 +964,17 @@
 					yield break;
 
 				var previous = iterator.Current;
+				yield return previous;
 
 				while (iterator.MoveNext())
 				{
-					if (!predicate(previous, iterator.Current))
+					var current = iterator.Current;
+
+					if (!predicate(previous, current))
 						continue;
 
-					yield return iterator.Current;
-					previous = iterator.Current;
+					yield return current;
+					previous = current;
 				}
 			}
 		}
