@@ -696,10 +696,15 @@ namespace Ecng.Common
 			decimals = value.GetDecimalInfo().EffectiveScale;
 
 			lock (_syncObject)
-				_decimalsCache.Add(value, decimals);
+			{
+				if (!_decimalsCache.ContainsKey(value))
+				{
+					_decimalsCache.Add(value, decimals);
 
-			if (_decimalsCache.Count > 10000000)
-				throw new InvalidOperationException();
+					if (_decimalsCache.Count > 10000000)
+						throw new InvalidOperationException();
+				}
+			}
 
 			return decimals;
 		}
