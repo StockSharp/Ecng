@@ -59,14 +59,21 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="Xceed.Wpf.Toolkit">
+      <HintPath>..\References\Xceed.Wpf.Toolkit.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="CsvLocalizer.cs" />
-    <Compile Include="DisposableResourceManager.cs" />
-    <Compile Include="LocalizationHelper.cs" />
+    <Compile Include="Attributes\CategoryLocAttribute.cs" />
+    <Compile Include="Attributes\CategoryOrderLocAttribute.cs" />
+    <Compile Include="Attributes\DescriptionLocAttribute.cs" />
+    <Compile Include="Attributes\DisplayNameLocAttribute.cs" />
+    <Compile Include="Attributes\EnumDisplayNameLocAttribute.cs" />
+    <Compile Include="CsvFile.cs" />
+    <Compile Include="LocalizedStringsBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -100,6 +107,10 @@
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
       <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
+      <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
+      <Name>ComponentModel</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
