@@ -78,7 +78,7 @@
 					using (var reader = new CsvFileReader(stream, EmptyLineBehavior.Ignore))
 						while(reader.ReadRow(list))
 						{
-							if (list.Count < 2 || list.Count > _numLanguages)
+							if (list.Count < 2 || list.Count > _numLanguages + 1)
 								throw new LocalizedStringsException("{0}: Unexpected number of columns in CSV ({1}): {2}".Put(name, list.Count, list.Join("|")));
 
 							var key = list[0];
