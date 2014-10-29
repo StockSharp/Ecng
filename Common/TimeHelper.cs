@@ -190,5 +190,16 @@ namespace Ecng.Common
 		{
 			return new DateTime(date.Year, date.Month, date.Day, date.Hour, date.Minute, date.Second, date.Millisecond, kind);
 		}
+
+		// http://stackoverflow.com/questions/38039/how-can-i-get-the-datetime-for-the-start-of-the-week
+		public static DateTime StartOfWeek(this DateTime date, DayOfWeek startOfWeek)
+		{
+			var diff = date.DayOfWeek - startOfWeek;
+
+			if (diff < 0)
+				diff += 7;
+
+			return date.AddDays(-1 * diff).Date;
+		}
 	}
 }
