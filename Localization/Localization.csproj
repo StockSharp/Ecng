@@ -59,19 +59,11 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="Xceed.Wpf.Toolkit">
-      <HintPath>..\References\Xceed.Wpf.Toolkit.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Attributes\CategoryLocAttribute.cs" />
-    <Compile Include="Attributes\CategoryOrderLocAttribute.cs" />
-    <Compile Include="Attributes\DescriptionLocAttribute.cs" />
-    <Compile Include="Attributes\DisplayNameLocAttribute.cs" />
-    <Compile Include="Attributes\EnumDisplayNameLocAttribute.cs" />
     <Compile Include="CsvFile.cs" />
     <Compile Include="LocalizedStringsBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
