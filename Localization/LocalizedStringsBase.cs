@@ -123,7 +123,7 @@
 			return "{0}.{1}".Put(assembly.GetName().Name, Path.GetFileName(fileName));
 		}
 
-		public static string GetString(string resourceId)
+		protected static string GetString(string resourceId)
 		{
 			if(!_initialized)
 				throw new InvalidOperationException("Localized strings were not initialized.");
