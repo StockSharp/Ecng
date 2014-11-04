@@ -188,7 +188,7 @@ namespace Ecng.Common
 
 		public static DateTime ChangeKind(this DateTime date, DateTimeKind kind = DateTimeKind.Unspecified)
 		{
-			return new DateTime(date.Year, date.Month, date.Day, date.Hour, date.Minute, date.Second, date.Millisecond, kind);
+			return DateTime.SpecifyKind(date, kind);
 		}
 
 		// http://stackoverflow.com/questions/38039/how-can-i-get-the-datetime-for-the-start-of-the-week
