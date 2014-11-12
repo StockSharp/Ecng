@@ -421,4 +421,32 @@ namespace Ecng.ComponentModel
 			return first.CompareTo(second);
 		}
 	}
+
+	class DateTimeOffsetOperator : BaseOperator<DateTimeOffset>
+	{
+		public override DateTimeOffset Add(DateTimeOffset first, DateTimeOffset second)
+		{
+			return new DateTimeOffset(first.UtcTicks + second.UtcTicks, first.Offset);
+		}
+
+		public override DateTimeOffset Subtract(DateTimeOffset first, DateTimeOffset second)
+		{
+			return new DateTimeOffset(first.UtcTicks - second.UtcTicks, first.Offset);
+		}
+
+		public override DateTimeOffset Multiply(DateTimeOffset first, DateTimeOffset second)
+		{
+			return new DateTimeOffset(first.UtcTicks * second.UtcTicks, first.Offset);
+		}
+
+		public override DateTimeOffset Divide(DateTimeOffset first, DateTimeOffset second)
+		{
+			return new DateTimeOffset(first.UtcTicks / second.UtcTicks, first.Offset);
+		}
+
+		public override int Compare(DateTimeOffset first, DateTimeOffset second)
+		{
+			return first.CompareTo(second);
+		}
+	}
 }

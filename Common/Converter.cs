@@ -569,6 +569,10 @@
 					retVal = ((DateTime)value).Ticks;
 				else if (value is long && destinationType == typeof(DateTime))
 					retVal = new DateTime((long)value);
+				else if (value is DateTimeOffset && destinationType == typeof(long))
+					retVal = ((DateTimeOffset)value).UtcTicks;
+				else if (value is long && destinationType == typeof(DateTimeOffset))
+					retVal = new DateTimeOffset((long)value, TimeSpan.Zero);
 				else if (value is DateTime && destinationType == typeof(double))
 					retVal = ((DateTime)value).ToOADate();
 				else if (value is double && destinationType == typeof(DateTime))
@@ -739,92 +743,6 @@
 		{
 			return (T)To(value, typeof(T));
 		}
-
-		//public static T? ToEnumNullable<T>(this string s)
-		//	where T : struct
-		//{
-		//	if (s.IsEmpty())
-		//		return null;
-
-		//	return s.To<T>();
-		//}
-
-		public static DateTime? TryToDateTime(this string value, string format)
-		{
-			if (value.IsEmpty())
-				return null;
-
-			return value.ToDateTime(format);
-		}
-
-		public static DateTime ToDateTime(this string value, string format)
-		{
-			try
-			{
-				return DateTime.ParseExact(value, format, CultureInfo.InvariantCulture);
-			}
-			catch (Exception ex)
-			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to DateTime.".Put(value, format), ex);
-			}
-		}
-
-		public static string FromDateTime(this DateTime dt, string format)
-		{
-			return dt.ToString(format, CultureInfo.InvariantCulture);
-		}
-
-		public static TimeSpan? TryToTimeSpan(this string value, string format)
-		{
-			if (value.IsEmpty())
-				return null;
-
-			return value.ToTimeSpan(format);
-		}
-
-		public static TimeSpan ToTimeSpan(this string value, string format)
-		{
-			try
-			{
-				return TimeSpan.ParseExact(value, format, CultureInfo.InvariantCulture);
-			}
-			catch (Exception ex)
-			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to TimeSpan.".Put(value, format), ex);
-			}
-		}
-
-		public static string FromTimeSpan(this TimeSpan ts, string format)
-		{
-			return ts.ToString(format, CultureInfo.InvariantCulture);
-		}
-
-		public static DateTimeOffset? TryToDateTimeOffset(this string value, string format)
-		{
-			if (value.IsEmpty())
-				return null;
-
-			return value.ToDateTimeOffset(format);
-		}
-
-		public static DateTimeOffset ToDateTimeOffset(this string value, string format)
-		{
-			try
-			{
-				return DateTimeOffset.ParseExact(value, format, CultureInfo.InvariantCulture);
-			}
-			catch (Exception ex)
-			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to TimeSpan.".Put(value, format), ex);
-			}
-		}
-
-		public static string FromDateTimeOffset(this DateTimeOffset dto, string format)
-		{
-			return dto.ToString(format, CultureInfo.InvariantCulture);
-		}
-
-		public static readonly DateTime GregorianStart = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
 		public static void AddAlias(Type type, string name)
 		{

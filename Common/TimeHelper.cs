@@ -3,6 +3,7 @@ namespace Ecng.Common
 	using System;
 	using System.Collections.Generic;
 	using System.Diagnostics;
+	using System.Globalization;
 
 	public static class TimeHelper
 	{
@@ -200,6 +201,128 @@ namespace Ecng.Common
 				diff += 7;
 
 			return date.AddDays(-1 * diff).Date;
+		}
+
+		public static readonly DateTime GregorianStart = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+
+		public static readonly TimeZoneInfo Est = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+		public static readonly TimeZoneInfo Moscow = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
+		//public static readonly TimeZoneInfo Gmt = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+
+		public static DateTime To(this DateTime time, TimeZoneInfo source = null, TimeZoneInfo destination = null)
+		{
+			if (source == null)
+				source = time.Kind == DateTimeKind.Utc ? TimeZoneInfo.Utc : TimeZoneInfo.Local;
+
+			return TimeZoneInfo.ConvertTime(time, source, destination ?? TimeZoneInfo.Utc);
+		}
+
+		public static DateTime? TryToDateTime(this string value, string format)
+		{
+			if (value.IsEmpty())
+				return null;
+
+			return value.ToDateTime(format);
+		}
+
+		public static DateTime ToDateTime(this string value, string format)
+		{
+			try
+			{
+				return DateTime.ParseExact(value, format, CultureInfo.InvariantCulture);
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidCastException("Cannot convert {0} with format {1} to DateTime.".Put(value, format), ex);
+			}
+		}
+
+		public static string FromDateTime(this DateTime dt, string format)
+		{
+			return dt.ToString(format, CultureInfo.InvariantCulture);
+		}
+
+		public static TimeSpan? TryToTimeSpan(this string value, string format)
+		{
+			if (value.IsEmpty())
+				return null;
+
+			return value.ToTimeSpan(format);
+		}
+
+		public static TimeSpan ToTimeSpan(this string value, string format)
+		{
+			try
+			{
+				return TimeSpan.ParseExact(value, format, CultureInfo.InvariantCulture);
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidCastException("Cannot convert {0} with format {1} to TimeSpan.".Put(value, format), ex);
+			}
+		}
+
+		public static string FromTimeSpan(this TimeSpan ts, string format)
+		{
+			return ts.ToString(format, CultureInfo.InvariantCulture);
+		}
+
+		public static DateTimeOffset? TryToDateTimeOffset(this string value, string format)
+		{
+			if (value.IsEmpty())
+				return null;
+
+			return value.ToDateTimeOffset(format);
+		}
+
+		public static DateTimeOffset ToDateTimeOffset(this string value, string format)
+		{
+			try
+			{
+				return DateTimeOffset.ParseExact(value, format, CultureInfo.InvariantCulture);
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidCastException("Cannot convert {0} with format {1} to TimeSpan.".Put(value, format), ex);
+			}
+		}
+
+		public static string FromDateTimeOffset(this DateTimeOffset dto, string format)
+		{
+			return dto.ToString(format, CultureInfo.InvariantCulture);
+		}
+
+		public static DateTimeOffset ApplyTimeZone(this DateTime dt, TimeZoneInfo zone)
+		{
+			if (zone == null)
+				throw new ArgumentNullException("zone");
+
+			return dt.ApplyTimeZone(zone.BaseUtcOffset);
+		}
+
+		public static DateTimeOffset ApplyTimeZone(this DateTime dt, TimeSpan offset)
+		{
+			return new DateTimeOffset(dt.ChangeKind(), offset);
+		}
+
+		public static DateTime ToLocalTime(this DateTimeOffset dto, TimeZoneInfo zone)
+		{
+			return dto.Convert(zone).LocalDateTime;
+		}
+
+		public static DateTimeOffset Convert(this DateTimeOffset dto, TimeZoneInfo zone)
+		{
+			return TimeZoneInfo.ConvertTime(dto, zone);
+		}
+
+		public static DateTimeOffset Truncate(this DateTimeOffset time, TimeSpan timeSpan)
+		{
+			return time.Truncate(timeSpan.Ticks);
+		}
+
+		public static DateTimeOffset Truncate(this DateTimeOffset time, long precision)
+		{
+			return new DateTimeOffset(time.UtcDateTime.Truncate(precision));
 		}
 	}
 }

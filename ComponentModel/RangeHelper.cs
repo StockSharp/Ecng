@@ -5,6 +5,7 @@ namespace Ecng.ComponentModel
 	using System.Linq;
 
 	using Ecng.Collections;
+	using Ecng.Common;
 
 	public static class RangeHelper
 	{
@@ -44,7 +45,21 @@ namespace Ecng.ComponentModel
 			return orderedRanges;
 		}
 
+		public static IEnumerable<Range<DateTimeOffset>> Exclude(this Range<DateTimeOffset> from, Range<DateTimeOffset> excludingRange)
+		{
+			return new Range<long>(from.Min.UtcTicks, from.Max.UtcTicks)
+				.Exclude(new Range<long>(excludingRange.Min.UtcTicks, excludingRange.Max.UtcTicks))
+				.Select(r => new Range<DateTimeOffset>(r.Min.To<DateTimeOffset>(), r.Max.To<DateTimeOffset>()));
+		}
+
 		public static IEnumerable<Range<DateTime>> Exclude(this Range<DateTime> from, Range<DateTime> excludingRange)
+		{
+			return new Range<long>(from.Min.Ticks, from.Max.Ticks)
+				.Exclude(new Range<long>(excludingRange.Min.Ticks, excludingRange.Max.Ticks))
+				.Select(r => new Range<DateTime>(r.Min.To<DateTime>(), r.Max.To<DateTime>()));
+		}
+
+		public static IEnumerable<Range<long>> Exclude(this Range<long> from, Range<long> excludingRange)
 		{
 			var intersectedRange = from.Intersect(excludingRange);
 
@@ -58,27 +73,41 @@ namespace Ecng.ComponentModel
 				if (from.Contains(intersectedRange))
 				{
 					if (from.Min != intersectedRange.Min)
-						yield return new Range<DateTime>(from.Min, intersectedRange.Min - TimeSpan.FromTicks(1));
+						yield return new Range<long>(from.Min, intersectedRange.Min - 1);
 
 					if (from.Max != intersectedRange.Max)
-						yield return new Range<DateTime>(intersectedRange.Max + TimeSpan.FromTicks(1), from.Max);
+						yield return new Range<long>(intersectedRange.Max + 1, from.Max);
 				}
 				else
 				{
 					if (from.Min < intersectedRange.Min)
-						yield return new Range<DateTime>(from.Min, intersectedRange.Min);
+						yield return new Range<long>(from.Min, intersectedRange.Min);
 					else
-						yield return new Range<DateTime>(intersectedRange.Max, from.Max);
+						yield return new Range<long>(intersectedRange.Max, from.Max);
 				}
 			}
 		}
 
+		public static IEnumerable<Range<DateTimeOffset>> GetRanges(this IEnumerable<DateTimeOffset> dates, DateTimeOffset from, DateTimeOffset to)
+		{
+			return dates.Select(d => d.To<long>())
+				.GetRanges(from.UtcTicks, to.UtcTicks)
+				.Select(r => new Range<DateTimeOffset>(r.Min.To<DateTimeOffset>(), r.Max.To<DateTimeOffset>()));
+		}
+
 		public static IEnumerable<Range<DateTime>> GetRanges(this IEnumerable<DateTime> dates, DateTime from, DateTime to)
+		{
+			return dates.Select(d => d.To<long>())
+				.GetRanges(from.Ticks, to.Ticks)
+				.Select(r => new Range<DateTime>(r.Min.To<DateTime>(), r.Max.To<DateTime>()));
+		}
+
+		public static IEnumerable<Range<long>> GetRanges(this IEnumerable<long> dates, long from, long to)
 		{
 			if (dates.IsEmpty())
 				yield break;
 
-			var step = TimeSpan.FromDays(1);
+			const long step = TimeSpan.TicksPerDay;
 
 			var beginDate = from;
 			var nextDate = beginDate + step;
@@ -87,14 +116,14 @@ namespace Ecng.ComponentModel
 			{
 				if (date != nextDate)
 				{
-					yield return new Range<DateTime>(beginDate, nextDate - TimeSpan.FromTicks(1));
+					yield return new Range<long>(beginDate, nextDate - 1);
 					beginDate = date;
 				}
 
 				nextDate = date + step;
 			}
 
-			yield return new Range<DateTime>(beginDate, nextDate - TimeSpan.FromTicks(1));
+			yield return new Range<long>(beginDate, nextDate - 1);
 		}
 	}
 }

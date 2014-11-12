@@ -20,7 +20,7 @@ namespace Ecng.Net
 
 			try
 			{
-				return Converter.GregorianStart.AddSeconds(reader.Value.To<long>());
+				return TimeHelper.GregorianStart.AddSeconds(reader.Value.To<long>());
 			}
 			catch (Exception ex)
 			{

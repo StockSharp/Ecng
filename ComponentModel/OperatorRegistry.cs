@@ -49,6 +49,7 @@ namespace Ecng.ComponentModel
 			AddOperator(new DecimalOperator());
 			AddOperator(new TimeSpanOperator());
 			AddOperator(new DateTimeOperator());
+			AddOperator(new DateTimeOffsetOperator());
 			AddOperator(new SByteOperator());
 			AddOperator(new UShortOperator());
 			AddOperator(new UIntOperator());
