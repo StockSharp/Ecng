@@ -89,6 +89,7 @@
     <Compile Include="Converters\BoolToOpacityConverter.cs" />
     <Compile Include="Converters\ColorToBrushConverter.cs" />
     <Compile Include="Converters\CountryConverters.cs" />
+    <Compile Include="Converters\DateTimeOffsetConverter.cs" />
     <Compile Include="Converters\DictionaryConverter.cs" />
     <Compile Include="Converters\InverseBooleanConverter.cs" />
     <Compile Include="Converters\ListViewBackgroundConvertor.cs" />

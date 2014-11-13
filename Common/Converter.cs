@@ -577,6 +577,17 @@
 					retVal = ((DateTime)value).ToOADate();
 				else if (value is double && destinationType == typeof(DateTime))
 					retVal = DateTime.FromOADate((double)value);
+				else if (value is DateTime && destinationType == typeof(DateTimeOffset))
+				{
+					var dt = (DateTime)value;
+
+					if (dt == DateTime.MinValue)
+						retVal = DateTimeOffset.MinValue;
+					else if (dt == DateTime.MaxValue)
+						retVal = DateTimeOffset.MaxValue;
+					else
+						retVal = new DateTimeOffset(dt);
+				}
 #if !SILVERLIGHT
 				else if (value is WinColor && destinationType == typeof(int))
 					retVal = ((WinColor)value).ToArgb();
