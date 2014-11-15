@@ -41,6 +41,7 @@ namespace Ecng.Data
 
 			AddTypeName(DbType.Date, "datetime");
 			AddTypeName(DbType.DateTime, "datetime");
+			AddTypeName(DbType.DateTimeOffset, "datetimeoffset");
 			AddTypeName(DbType.Time, "datetime");
 
 			AddTypeName(DbType.Single, "float");

@@ -35,7 +35,7 @@
 	{
 		#region Private Fields
 
-		private static readonly Dictionary<Type, DbType> _mappedTypes = new Dictionary<Type, DbType>();
+		private static readonly Dictionary<Type, DbType> _dbTypes = new Dictionary<Type, DbType>();
 		private static readonly Dictionary<string, Type> _aliases = new Dictionary<string, Type>();
 		private static readonly Dictionary<Type, List<string>> _aliasesByValue = new Dictionary<Type, List<string>>();
 		private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
@@ -46,25 +46,26 @@
 
 		static Converter()
 		{
-			_mappedTypes.Add(typeof(string), DbType.String);
-			_mappedTypes.Add(typeof(char), DbType.String);
-			_mappedTypes.Add(typeof(short), DbType.Int16);
-			_mappedTypes.Add(typeof(int), DbType.Int32);
-			_mappedTypes.Add(typeof(long), DbType.Int64);
-			_mappedTypes.Add(typeof(ushort), DbType.UInt16);
-			_mappedTypes.Add(typeof(uint), DbType.UInt32);
-			_mappedTypes.Add(typeof(ulong), DbType.UInt64);
-			_mappedTypes.Add(typeof(float), DbType.Single);
-			_mappedTypes.Add(typeof(double), DbType.Double);
-			_mappedTypes.Add(typeof(decimal), DbType.Decimal);
-			_mappedTypes.Add(typeof(DateTime), DbType.DateTime);
-			_mappedTypes.Add(typeof(TimeSpan), DbType.Time);
-			_mappedTypes.Add(typeof(Guid), DbType.Guid);
-			_mappedTypes.Add(typeof(byte[]), DbType.Binary);
-			_mappedTypes.Add(typeof(byte), DbType.Byte);
-			_mappedTypes.Add(typeof(sbyte), DbType.SByte);
-			_mappedTypes.Add(typeof(bool), DbType.Boolean);
-			_mappedTypes.Add(typeof(object), DbType.Object);
+			_dbTypes.Add(typeof(string), DbType.String);
+			_dbTypes.Add(typeof(char), DbType.String);
+			_dbTypes.Add(typeof(short), DbType.Int16);
+			_dbTypes.Add(typeof(int), DbType.Int32);
+			_dbTypes.Add(typeof(long), DbType.Int64);
+			_dbTypes.Add(typeof(ushort), DbType.UInt16);
+			_dbTypes.Add(typeof(uint), DbType.UInt32);
+			_dbTypes.Add(typeof(ulong), DbType.UInt64);
+			_dbTypes.Add(typeof(float), DbType.Single);
+			_dbTypes.Add(typeof(double), DbType.Double);
+			_dbTypes.Add(typeof(decimal), DbType.Decimal);
+			_dbTypes.Add(typeof(DateTime), DbType.DateTime);
+			_dbTypes.Add(typeof(DateTimeOffset), DbType.DateTimeOffset);
+			_dbTypes.Add(typeof(TimeSpan), DbType.Time);
+			_dbTypes.Add(typeof(Guid), DbType.Guid);
+			_dbTypes.Add(typeof(byte[]), DbType.Binary);
+			_dbTypes.Add(typeof(byte), DbType.Byte);
+			_dbTypes.Add(typeof(sbyte), DbType.SByte);
+			_dbTypes.Add(typeof(bool), DbType.Boolean);
+			_dbTypes.Add(typeof(object), DbType.Object);
 
 			AddAlias(typeof(object), "object");
 			AddAlias(typeof(bool), "bool");
@@ -173,13 +174,13 @@
 
 					DbType dbType;
 
-					if (_mappedTypes.TryGetValue(type, out dbType))
+					if (_dbTypes.TryGetValue(type, out dbType))
 						retVal = dbType;
 					else
 						throw new ArgumentException(".NET type {0} doesn't have associated db type.".Put(type));
 				}
 				else if (value is DbType && destinationType == typeof(Type))
-					retVal = _mappedTypes.Values.First(arg => ((DbType)value) == arg);
+					retVal = _dbTypes.Values.First(arg => ((DbType)value) == arg);
 				else if (value is string && destinationType == typeof(byte[]))
 				{
 					retVal = Encoding.Unicode.GetBytes((string)value);

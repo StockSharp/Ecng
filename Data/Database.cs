@@ -1102,7 +1102,7 @@ namespace Ecng.Data
 								value = ((IList<object>)value).AsParallel().Select(v => CultureInfo.DoInCulture(() =>
 								{
 									var source = new SerializationItemCollection();
-									serializer.Deserialize(serializer.Encoding.GetBytes((string) v).To<Stream>(), source);
+									serializer.Deserialize(serializer.Encoding.GetBytes((string)v).To<Stream>(), source);
 									return source;
 								})).ToList();
 							}

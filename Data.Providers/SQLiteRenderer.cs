@@ -27,6 +27,7 @@
 
 			AddTypeName(DbType.Date, "text");
 			AddTypeName(DbType.DateTime, "text");
+			AddTypeName(DbType.DateTimeOffset, "text");
 			AddTypeName(DbType.Time, "text");
 
 			AddTypeName(DbType.Single, "real");
@@ -38,7 +39,6 @@
 			AddTypeName(DbType.UInt16, "integer");
 			AddTypeName(DbType.UInt32, "integer");
 			AddTypeName(DbType.UInt64, "integer");
-
 		}
 
 		public override string GetIdentitySelect(Schema schema)

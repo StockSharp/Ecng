@@ -29,6 +29,7 @@ namespace Ecng.Data.Providers
 			
 			AddTypeName(DbType.Date, "timestamp");
 			AddTypeName(DbType.DateTime, "timestamp");
+			AddTypeName(DbType.DateTimeOffset, "timestamp");
 			AddTypeName(DbType.Time, "timestamp");
 
 			AddTypeName(DbType.Single, "float");
