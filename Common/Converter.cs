@@ -466,6 +466,8 @@
 						retVal = BitConverter.GetBytes((double)value);
 					else if (value is DateTime)
 						retVal = BitConverter.GetBytes(((DateTime)value).Ticks);
+					else if (value is DateTimeOffset)
+						retVal = BitConverter.GetBytes(((DateTimeOffset)value).UtcTicks);
 					else if (value is Guid)
 						retVal = ((Guid)value).ToByteArray();
 					else if (value is TimeSpan)
@@ -538,6 +540,8 @@
 						retVal = BitConverter.ToDouble((byte[])value, 0);
 					else if (destinationType == typeof(DateTime))
 						retVal = new DateTime(BitConverter.ToInt64((byte[])value, 0));
+					else if (destinationType == typeof(DateTimeOffset))
+						retVal = new DateTimeOffset(BitConverter.ToInt64((byte[])value, 0), TimeSpan.Zero);
 					else if (destinationType == typeof(Guid))
 						retVal = new Guid((byte[])value);
 					else if (destinationType == typeof(TimeSpan))
@@ -678,6 +682,14 @@
 				{
 					var date = (DateTime)value;
 					retVal = date.Millisecond > 0 ? date.ToString("o") : value.ToString();
+				}
+				else if (value is DateTimeOffset && destinationType == typeof(string))
+				{
+					retVal = value.ToString();
+				}
+				else if (value is string && destinationType == typeof(DateTimeOffset))
+				{
+					retVal = DateTimeOffset.Parse((string)value);
 				}
 #if !SILVERLIGHT
 				else if (value is string && destinationType == typeof(TimeZoneInfo))

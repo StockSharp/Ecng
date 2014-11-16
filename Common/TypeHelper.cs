@@ -66,6 +66,7 @@ namespace Ecng.Common
 						type == typeof(decimal) ||
 						type == typeof(string) ||
 						type == typeof(DateTime) ||
+						type == typeof(DateTimeOffset) ||
 						type == typeof(Guid) ||
 						type == typeof(byte[]) ||
 						type == typeof(TimeSpan)
