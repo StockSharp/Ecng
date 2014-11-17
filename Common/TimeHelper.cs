@@ -287,6 +287,11 @@ namespace Ecng.Common
 			}
 		}
 
+		public static DateTimeOffset ToDateTimeOffset(this DateTime date, TimeSpan offset)
+		{
+			return new DateTimeOffset(date.ChangeKind() + offset, offset);
+		}
+
 		public static string FromDateTimeOffset(this DateTimeOffset dto, string format)
 		{
 			return dto.ToString(format, CultureInfo.InvariantCulture);
