@@ -115,7 +115,7 @@
     <Compile Include="SerializationContext.cs" />
     <Compile Include="Serializer.cs" />
     <Compile Include="ISerializationTracking.cs" />
-    <Compile Include="ComplexFieldFactory.cs" />
+    <Compile Include="RealCollectionFieldFactory.cs" />
     <Compile Include="EntityFactory.cs" />
     <Compile Include="EntityFactoryAttribute.cs" />
     <Compile Include="FieldAttribute.cs" />

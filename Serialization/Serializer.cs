@@ -39,48 +39,48 @@ namespace Ecng.Serialization
 			{
 				lock (_schemaLock)
 				{
-					if (_schema == null)
+					if (_schema != null)
+						return _schema;
+
+					var type = typeof(T);
+
+					if (type.IsCollection() || type.IsPrimitive() || type == typeof(object) || type == typeof(Type))
 					{
-						var type = typeof(T);
+						_schema = new Schema { EntityType = type };
 
-						if (type.IsCollection() || type.IsPrimitive() || type == typeof(object) || type == typeof(Type))
+						var field = new VoidField<T>(type.Name);
+
+						field.Accessor = typeof(PrimitiveFieldAccessor<T>).CreateInstance<FieldAccessor>(field);
+
+						// NOTE:
+						if (type.IsPrimitive() || type == typeof(object))
 						{
-							_schema = new Schema { EntityType = type };
-
-							var field = new VoidField<T>(type.Name);
-
-							field.Accessor = typeof(PrimitiveFieldAccessor<T>).CreateInstance<FieldAccessor>(field);
-
-							// NOTE:
-							if (type.IsPrimitive() || type == typeof(object))
-							{
-								field.Factory = new PrimitiveFieldFactory<T, T>(field, 0);
-								_schema.Factory = (EntityFactory)typeof(PrimitiveEntityFactory<>).Make(type).CreateInstance(field.Name);
-							}
-							else if (type == typeof(Type))
-							{
-								field.Factory = new MemberFieldFactory<Type>(field, 0, false);
-								_schema.Factory = (EntityFactory)typeof(PrimitiveEntityFactory<Type>).CreateInstance(field.Name);
-							}
+							field.Factory = new PrimitiveFieldFactory<T, T>(field, 0);
+							_schema.Factory = (EntityFactory)typeof(PrimitiveEntityFactory<>).Make(type).CreateInstance(field.Name);
+						}
+						else if (type == typeof(Type))
+						{
+							field.Factory = new MemberFieldFactory<Type>(field, 0, false);
+							_schema.Factory = (EntityFactory)typeof(PrimitiveEntityFactory<Type>).CreateInstance(field.Name);
+						}
 							//else if (type == typeof(object))
 							//{
 							//    field.Factory = new DynamicFieldFactory(field, 0, false);
 							//    _schema.Factory = (EntityFactory)typeof(DynamicFieldFactory<>).Make(type).CreateInstance(field.Name);
 							//}
-							else
-							{
-								field.Factory = typeof(RealCollectionFieldFactory<,>)
-									.Make(type, type.GetItemType())
-									.CreateInstance<ComplexFieldFactory<T>>(field, 0);
-
-								_schema.Factory = (EntityFactory)typeof(CollectionEntityFactory<,>).Make(type, type.GetItemType()).CreateInstance<object>();
-							}
-
-							_schema.Fields.Add(field);
-						}
 						else
-							_schema = SchemaManager.GetSchema<T>();
+						{
+							field.Factory = typeof(RealCollectionFieldFactory<,>)
+								.Make(type, type.GetItemType())
+								.CreateInstance<FieldFactory<T, SerializationItemCollection>>(field, 0);
+
+							_schema.Factory = (EntityFactory)typeof(CollectionEntityFactory<,>).Make(type, type.GetItemType()).CreateInstance<object>();
+						}
+
+						_schema.Fields.Add(field);
 					}
+					else
+						_schema = SchemaManager.GetSchema<T>();
 
 					return _schema;
 				}

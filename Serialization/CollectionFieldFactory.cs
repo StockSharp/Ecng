@@ -4,7 +4,7 @@ namespace Ecng.Serialization
 
 	using Ecng.Common;
 
-	public class CollectionFieldFactory<TCollection> : ComplexFieldFactory<TCollection>
+	public class CollectionFieldFactory<TCollection> : FieldFactory<TCollection, SerializationItemCollection>
 	{
 		public CollectionFieldFactory(Field field, int order)
 			: base(field, order)

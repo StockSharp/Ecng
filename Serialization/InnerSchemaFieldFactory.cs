@@ -25,7 +25,7 @@ namespace Ecng.Serialization
 	}
 
 	[Serializable]
-	public class InnerSchemaFieldFactory<TEntity> : ComplexFieldFactory<TEntity>
+	public class InnerSchemaFieldFactory<TEntity> : FieldFactory<TEntity, SerializationItemCollection>
 	{
 		private readonly bool _nullWhenAllEmpty;
 

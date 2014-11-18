@@ -9,7 +9,7 @@
 		Schema Schema { get; }
 	}
 
-	public abstract class DynamicInnerSchemaFieldFactory<TEntity> : ComplexFieldFactory<TEntity>, IDynamicSchema
+	public abstract class DynamicInnerSchemaFieldFactory<TEntity> : FieldFactory<TEntity, SerializationItemCollection>, IDynamicSchema
 	{
 		protected DynamicInnerSchemaFieldFactory(Field field, int order)
 			: base(field, order)
