@@ -156,7 +156,12 @@
 								}
 								else
 								{
-									factoryType = field.Type.IsCollection() ? typeof(CollectionFieldFactory<>) : typeof(InnerSchemaFieldFactory<>);
+									factoryType = typeof(IPersistable).IsAssignableFrom(field.Type)
+										? typeof(PersistableFieldactory<>)
+										: (field.Type.IsCollection()
+											? typeof(CollectionFieldFactory<>)
+											: typeof(InnerSchemaFieldFactory<>));
+
 									factoryType = factoryType.Make(field.Type);
 								}
 							}

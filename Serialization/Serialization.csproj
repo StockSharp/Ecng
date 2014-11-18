@@ -99,6 +99,9 @@
     <Compile Include="ISerializer.cs" />
     <Compile Include="IStorage.cs" />
     <Compile Include="MemberFieldFactory.cs" />
+    <Compile Include="PersistableFieldactory.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PrimitiveFieldFactory.cs" />
     <Compile Include="EntityAttribute.cs" />
     <Compile Include="EnumFieldFactory.cs" />
