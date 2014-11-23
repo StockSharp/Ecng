@@ -6,6 +6,7 @@
 	using System.IO;
 	using System.Linq;
 	using System.Security;
+	using System.Security.Cryptography;
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Threading;
@@ -703,6 +704,49 @@
 		public static string Digest(this byte[] digest)
 		{
 			return BitConverter.ToString(digest).Replace("-", string.Empty);
+		}
+
+		private static readonly byte[] _initVectorBytes = Encoding.ASCII.GetBytes("ss14fgty650h8u82");
+		private const int _keysize = 256;
+
+		public static string Encrypt(this string data, string password)
+		{
+			using (var pwd = new Rfc2898DeriveBytes(password, _initVectorBytes))
+			{
+				var keyBytes = pwd.GetBytes(_keysize / 8);
+
+				using (var symmetricKey = new RijndaelManaged { Mode = CipherMode.CBC })
+				using (var encryptor = symmetricKey.CreateEncryptor(keyBytes, _initVectorBytes))
+				using (var memoryStream = new MemoryStream())
+				using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
+				{
+					var bytes = Encoding.UTF8.GetBytes(data);
+
+					cryptoStream.Write(bytes, 0, bytes.Length);
+					cryptoStream.FlushFinalBlock();
+
+					return Convert.ToBase64String(memoryStream.ToArray());
+				}
+			}
+		}
+
+		public static string Decrypt(this string data, string password)
+		{
+			using (var pwd = new Rfc2898DeriveBytes(password, _initVectorBytes))
+			{
+				var cipherTextBytes = Convert.FromBase64String(data);
+				var keyBytes = pwd.GetBytes(_keysize / 8);
+
+				using (var symmetricKey = new RijndaelManaged { Mode = CipherMode.CBC })
+				using (var decryptor = symmetricKey.CreateDecryptor(keyBytes, _initVectorBytes))
+				using (var memoryStream = new MemoryStream(cipherTextBytes))
+				using (var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read))
+				{
+					var plainTextBytes = new byte[cipherTextBytes.Length];
+					var decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
+					return Encoding.UTF8.GetString(plainTextBytes, 0, decryptedByteCount);
+				}
+			}
 		}
 	}
 }
