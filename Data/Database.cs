@@ -377,7 +377,7 @@ namespace Ecng.Data
 			if (command == null)
 				throw new ArgumentNullException("command");
 
-			return command.ExecuteScalar<long>(source);
+			return CultureInfo.DoInCulture(() => command.ExecuteScalar<long>(source));
 		}
 
 		#endregion
@@ -404,21 +404,24 @@ namespace Ecng.Data
 
 			Action action = () =>
 			{
-				var input = new SerializationItemCollection();
-				serializer.Serialize(entity, nonReadOnlyFields, input);
-				input = UngroupSource(schema.Fields, input);
+				CultureInfo.DoInCulture(() =>
+				{
+					var input = new SerializationItemCollection();
+					serializer.Serialize(entity, nonReadOnlyFields, input);
+					input = UngroupSource(schema.Fields, input);
 
-				var output = Create(command, input, !readOnlyFields.IsEmpty());
-				output = GroupSource(schema.Fields, output, Enumerable.Empty<PairSet<string, string>>());
+					var output = Create(command, input, !readOnlyFields.IsEmpty());
+					output = GroupSource(schema.Fields, output, Enumerable.Empty<PairSet<string, string>>());
 
-				if (!readOnlyFields.IsEmpty())
-					entity = GetSerializer<TEntity>().Deserialize(output, readOnlyFields, entity);
+					if (!readOnlyFields.IsEmpty())
+						entity = GetSerializer<TEntity>().Deserialize(output, readOnlyFields, entity);
 
-				var databaseFields = schema.Fields.RelationManyFields;
-				if (!databaseFields.IsEmpty())
-					entity = serializer.Deserialize(CreateSource(databaseFields), databaseFields, entity);
+					var databaseFields = schema.Fields.RelationManyFields;
+					if (!databaseFields.IsEmpty())
+						entity = serializer.Deserialize(CreateSource(databaseFields), databaseFields, entity);
 
-				AddCache(entity, output);
+					AddCache(entity, output);
+				});
 
 				Added.SafeInvoke(entity);
 			};
@@ -480,17 +483,20 @@ namespace Ecng.Data
 			var input = new SerializationItemCollection();
 			var keyFields = new FieldList();
 
-			var serializer = GetSerializer<TEntity>();
-
-			foreach (var item in by)
+			return CultureInfo.DoInCulture(() =>
 			{
-				input.Add(item.Field.Factory.CreateSource(serializer, item.Value));
-				keyFields.Add(item.Field);
-			}
+				var serializer = GetSerializer<TEntity>();
 
-			input = UngroupSource(schema.Fields, input);
-			var command = GetCommand(schema, SqlCommandTypes.ReadBy, keyFields, new FieldList());
-			return Read<TEntity>(command, input);
+				foreach (var item in by)
+				{
+					input.Add(item.Field.Factory.CreateSource(serializer, item.Value));
+					keyFields.Add(item.Field);
+				}
+
+				input = UngroupSource(schema.Fields, input);
+				var command = GetCommand(schema, SqlCommandTypes.ReadBy, keyFields, new FieldList());
+				return Read<TEntity>(command, input);
+			});
 		}
 
 		public virtual TEntity Read<TEntity>(DatabaseCommand command, SerializationItemCollection input)
@@ -498,9 +504,12 @@ namespace Ecng.Data
 			if (command == null)
 				throw new ArgumentNullException("command");
 
-			input = command.ExecuteRow(input);
+			return CultureInfo.DoInCulture(() =>
+			{
+				input = command.ExecuteRow(input);
 
-			return input != null ? GetOrAddCache<TEntity>(input) : default(TEntity);
+				return input != null ? GetOrAddCache<TEntity>(input) : default(TEntity);
+			});
 		}
 
 		#endregion
@@ -555,8 +564,11 @@ namespace Ecng.Data
 			if (command == null)
 				throw new ArgumentNullException("command");
 
-			input = UngroupSource(SchemaManager.GetSchema<TEntity>().Fields, input);
-			return GetOrAddCacheTable<TEntity>(command.ExecuteTable(input));
+			return CultureInfo.DoInCulture(() =>
+			{
+				input = UngroupSource(SchemaManager.GetSchema<TEntity>().Fields, input);
+				return GetOrAddCacheTable<TEntity>(command.ExecuteTable(input));
+			});
 		}
 
 		#endregion
@@ -594,30 +606,33 @@ namespace Ecng.Data
 			if (schema.ReadOnly)
 				throw new InvalidOperationException();
 
-			var command = GetCommand(schema, SqlCommandTypes.UpdateBy, keyFields, valueFields);
-
 			Action action = () =>
 			{
-				var input = new SerializationItemCollection();
+				CultureInfo.DoInCulture(() =>
+				{
+					var command = GetCommand(schema, SqlCommandTypes.UpdateBy, keyFields, valueFields);
 
-				var serializer = GetSerializer<TEntity>();
+					var input = new SerializationItemCollection();
 
-				serializer.Serialize(entity, keyFields, input);
-				serializer.Serialize(entity, valueFields.NonReadOnlyFields, input);
+					var serializer = GetSerializer<TEntity>();
 
-				var readOnlyFields = valueFields.ReadOnlyFields;
+					serializer.Serialize(entity, keyFields, input);
+					serializer.Serialize(entity, valueFields.NonReadOnlyFields, input);
 
-				if (!readOnlyFields.IsEmpty() && schema.Identity != null && schema.Identity.IsReadOnly && !keyFields.Contains(schema.Identity))
-					serializer.Serialize(entity, new FieldList(schema.Identity), input);
+					var readOnlyFields = valueFields.ReadOnlyFields;
 
-				input = UngroupSource(schema.Fields, input);
+					if (!readOnlyFields.IsEmpty() && schema.Identity != null && schema.Identity.IsReadOnly && !keyFields.Contains(schema.Identity))
+						serializer.Serialize(entity, new FieldList(schema.Identity), input);
 
-				var output = Update(command, input, !readOnlyFields.IsEmpty());
+					input = UngroupSource(schema.Fields, input);
 
-				if (!readOnlyFields.IsEmpty())
-					entity = serializer.Deserialize(output, readOnlyFields, entity);
+					var output = Update(command, input, !readOnlyFields.IsEmpty());
 
-				UpdateCache(serializer, entity, output);
+					if (!readOnlyFields.IsEmpty())
+						entity = serializer.Deserialize(output, readOnlyFields, entity);
+
+					UpdateCache(serializer, entity, output);
+				});
 
 				Updated.SafeInvoke(entity);
 			};
@@ -673,33 +688,36 @@ namespace Ecng.Data
 			if (by.IsEmpty())
 				throw new ArgumentOutOfRangeException("by");
 
-			var schema = by[0].Field.Schema;
-
-			var input = new SerializationItemCollection();
-			var keyFields = new FieldList();
-
-			var serializer = GetSerializer<SerializationItemCollection>();
-
-			foreach (var item in by)
-			{
-				input.Add(item.Field.Factory.CreateSource(serializer, item.Value));
-				keyFields.Add(item.Field);
-			}
-
-			input = UngroupSource(schema.Fields, input);
-
-			var cmd = GetCommand(schema, SqlCommandTypes.DeleteBy, keyFields, new FieldList());
-
 			Action action = () =>
 			{
-				Delete(cmd, input);
+				var schema = by[0].Field.Schema;
 
-				IEnumerable<object> entities;
+				IEnumerable<object> entities = null;
 
-				lock (_cache.SyncRoot)
+				CultureInfo.DoInCulture(() =>
 				{
-					entities = by.Select(item => _cache.TryGetValue(CreateKey(schema, item.Field, item.Value))).Where(o => o != null).ToArray();
-				}
+					var input = new SerializationItemCollection();
+					var keyFields = new FieldList();
+
+					var serializer = GetSerializer<SerializationItemCollection>();
+
+					foreach (var item in by)
+					{
+						input.Add(item.Field.Factory.CreateSource(serializer, item.Value));
+						keyFields.Add(item.Field);
+					}
+
+					input = UngroupSource(schema.Fields, input);
+
+					var cmd = GetCommand(schema, SqlCommandTypes.DeleteBy, keyFields, new FieldList());
+
+					Delete(cmd, input);
+
+					lock (_cache.SyncRoot)
+					{
+						entities = by.Select(item => _cache.TryGetValue(CreateKey(schema, item.Field, item.Value))).Where(o => o != null).ToArray();
+					}
+				});
 
 				entities.ForEach(Removed.SafeInvoke);
 
@@ -717,7 +735,7 @@ namespace Ecng.Data
 			if (command == null)
 				throw new ArgumentNullException("command");
 
-			command.ExecuteNonQuery(input);
+			CultureInfo.DoInCulture(() => command.ExecuteNonQuery(input));
 		}
 
 		#endregion
@@ -760,7 +778,7 @@ namespace Ecng.Data
 			if (!AllowDeleteAll)
 				throw new NotSupportedException();
 
-			Action action = () => command.ExecuteNonQuery(source);
+			Action action = () => CultureInfo.DoInCulture(() => command.ExecuteNonQuery(source));
 
 			if (_batchInfo != null)
 				_batchInfo.AddAction(action, source);
@@ -1108,12 +1126,9 @@ namespace Ecng.Data
 							}
 							else
 							{
-								CultureInfo.DoInCulture(() =>
-								{
-									var source = new SerializationItemCollection();
-									serializer.Deserialize(serializer.Encoding.GetBytes((string)value).To<Stream>(), source);
-									value = source;
-								});
+								var source = new SerializationItemCollection();
+								serializer.Deserialize(serializer.Encoding.GetBytes((string)value).To<Stream>(), source);
+								value = source;
 							}
 						}
 
@@ -1159,14 +1174,11 @@ namespace Ecng.Data
 						{
 							output.Remove(item);
 
-							CultureInfo.DoInCulture(() =>
-							{
-								var serializer = (IXmlSerializer)new XmlSerializer<int>().GetSerializer(item.Field.Type);
-								var stream = new MemoryStream();
-								serializer.Serialize((SerializationItemCollection)item.Value, stream);
+							var serializer = (IXmlSerializer)new XmlSerializer<int>().GetSerializer(item.Field.Type);
+							var stream = new MemoryStream();
+							serializer.Serialize((SerializationItemCollection)item.Value, stream);
 
-								output.Add(new SerializationItem<string>(new VoidField<string>(item.Field.Name), serializer.Encoding.GetString(stream.To<byte[]>())));
-							});
+							output.Add(new SerializationItem<string>(new VoidField<string>(item.Field.Name), serializer.Encoding.GetString(stream.To<byte[]>())));
 						}
 						else
 						{
