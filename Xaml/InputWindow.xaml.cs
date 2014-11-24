@@ -38,7 +38,7 @@
 
 		private void Ok_OnCanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = !string.IsNullOrWhiteSpace(TextBoxName.Text);
+			e.CanExecute = true;//!string.IsNullOrWhiteSpace(TextBoxName.Text);
 		}
 
 		private void Ok_OnExecuted(object sender, ExecutedRoutedEventArgs e)
