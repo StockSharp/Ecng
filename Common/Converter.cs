@@ -685,7 +685,8 @@
 				}
 				else if (value is DateTimeOffset && destinationType == typeof(string))
 				{
-					retVal = value.ToString();
+					var dto = (DateTimeOffset)value;
+					retVal = dto.Millisecond > 0 ? dto.ToString("o") : value.ToString();
 				}
 				else if (value is string && destinationType == typeof(DateTimeOffset))
 				{
