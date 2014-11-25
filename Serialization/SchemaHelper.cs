@@ -45,6 +45,11 @@
 			return field.MatchFactory(typeof(RelationSingleFieldFactory<,>));
 		}
 
+		public static bool IsPersistable(this Field field)
+		{
+			return field.MatchFactory(typeof(PersistableFieldactory<>));
+		}
+
 		#region MatchFactory
 
 		private static readonly Dictionary<Tuple<Field, Type>, bool> _matchFactoryCache = new Dictionary<Tuple<Field, Type>, bool>();

@@ -23,6 +23,9 @@
 
 			var factoryType = SchemaManager.GlobalFieldFactories.TryGetValue(type);
 
+			//if (factoryType == null && typeof(IPersistable).IsAssignableFrom(type))
+			//	factoryType = typeof(PersistableFieldactory<>).Make(type);
+
 			if (factoryType == null)
 				return value.To(type);
 
@@ -42,6 +45,10 @@
 			if (type == null)
 			{
 				var factoryType = SchemaManager.GlobalFieldFactories.TryGetValue(instanceType);
+
+				//if (factoryType == null && typeof(IPersistable).IsAssignableFrom(instanceType))
+				//	factoryType = typeof(PersistableFieldactory<>).Make(instanceType);
+
 				if (factoryType != null)
 				{
 					var factory = GetFactory(factoryType);
@@ -52,8 +59,8 @@
 				else
 				{
 					value = instanceType.IsPrimitive()
-								? instance
-								: GetInnerSchemaFactory(instanceType).OnCreateSource(serializer, instance);
+						? instance 
+						: GetInnerSchemaFactory(instanceType).OnCreateSource(serializer, instance);
 				}
 			}
 			else
