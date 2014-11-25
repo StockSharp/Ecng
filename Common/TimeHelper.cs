@@ -327,7 +327,8 @@ namespace Ecng.Common
 
 		public static DateTimeOffset Truncate(this DateTimeOffset time, long precision)
 		{
-			return new DateTimeOffset(time.UtcDateTime.Truncate(precision));
+			var offset = time.Offset;
+			return new DateTimeOffset(time.UtcDateTime.Truncate(precision).ChangeKind() + offset, offset);
 		}
 	}
 }
