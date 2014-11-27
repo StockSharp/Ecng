@@ -1,6 +1,9 @@
 ﻿namespace Ecng.Serialization
 {
 	using System;
+	using System.Globalization;
+	using System.IO;
+	using System.Text;
 
 	using Ecng.Common;
 
@@ -106,6 +109,34 @@
 				throw new ArgumentNullException("storage");
 
 			storage.SetValue(name, persistable.Save());
+		}
+
+		public static SettingsStorage LoadSettingsStorage(this string value)
+		{
+			if (value == null)
+				throw new ArgumentNullException("value");
+
+			var serializer = new XmlSerializer<SettingsStorage>();
+			var bytes = Encoding.UTF8.GetBytes(value);
+
+			return CultureInfo.InvariantCulture.DoInCulture(() => serializer.Deserialize(bytes));
+		}
+
+		public static string SaveSettingsStorage(this SettingsStorage settings)
+		{
+			if (settings == null)
+				throw new ArgumentNullException("settings");
+
+			var serializer = new XmlSerializer<SettingsStorage>();
+
+			using (var s = new MemoryStream())
+			{
+				var stream = s;
+
+				CultureInfo.InvariantCulture.DoInCulture(() => serializer.Serialize(settings, stream));
+
+				return Encoding.UTF8.GetString(stream.ToArray());
+			}
 		}
 	}
 }
