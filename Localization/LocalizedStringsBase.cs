@@ -8,39 +8,21 @@
 
 	using Ecng.Common;
 
-	abstract public class LocalizedStringsBase
+	public enum Languages
 	{
-		public enum Language : byte
-		{
-			English,
-			Russian
-		}
+		English,
+		Russian
+	}
 
-		private static byte _activeLanguage;
-
-		public static Language ActiveLanguage
-		{
-			get
-			{
-				return (Language)_activeLanguage;
-			}
-
-			set
-			{
-				var newLang = (byte)value;
-
-				if(newLang >= _numLanguages)
-					throw new InvalidOperationException("Invalid language");
-
-				_activeLanguage = newLang;
-			}
-		}
+	public abstract class LocalizedStringsBase
+	{
+		public static Languages ActiveLanguage { get; set; }
 
 		private static readonly Dictionary<string, string[]> _strings = new Dictionary<string, string[]>();
 
 		private static bool _initialized;
 
-		static readonly int _numLanguages = Enum.GetValues(typeof(Language)).Length;
+		private static readonly int _numLanguages = Enumerator.GetValues<Languages>().Count();
 
 		protected LocalizedStringsBase(Assembly asmHolder, string fileName)
 		{
@@ -53,10 +35,13 @@
 					throw new ArgumentNullException("fileName");
 
 				var ex1 = ProcessCsvStream("embedded", () => asmHolder.GetManifestResourceStream(ConvertPathToResourceName(asmHolder, fileName)));
-				var ex2 = File.Exists(fileName) ? ProcessCsvStream("file", () => File.OpenRead(fileName)) : new Exception("file not found");
+				
+				var ex2 = File.Exists(fileName)
+					? ProcessCsvStream("file", () => File.OpenRead(fileName))
+					: new InvalidOperationException("File {0} not found.".Put(fileName));
 
-				if(ex1 != null && ex2 != null)
-					throw new AggregateException("Unable to load string resources", ex1, ex2);
+				if (ex1 != null && ex2 != null)
+					throw new AggregateException("Unable to load string resources.", ex1, ex2);
 			}
 
 			_initialized = true;
@@ -76,17 +61,18 @@
 					var list = new List<string>();
 
 					using (var reader = new CsvFileReader(stream, EmptyLineBehavior.Ignore))
-						while(reader.ReadRow(list))
+					{
+						while (reader.ReadRow(list))
 						{
 							if (list.Count < 2 || list.Count > _numLanguages + 1)
 								throw new LocalizedStringsException("{0}: Unexpected number of columns in CSV ({1}): {2}".Put(name, list.Count, list.Join("|")));
 
 							var key = list[0];
 							if (key.IsEmpty())
-								throw new LocalizedStringsException("{0}: Empty key found".Put(name));
+								throw new LocalizedStringsException("{0}: Empty key found.".Put(name));
 
 							if (!names.Add(key))
-								throw new LocalizedStringsException("{0}: Duplicated key({1}) found".Put(name, key));
+								throw new LocalizedStringsException("{0}: Duplicated key({1}) found.".Put(name, key));
 
 							string[] arr;
 							_strings.TryGetValue(key, out arr);
@@ -104,6 +90,7 @@
 									arr[i] = !arr[i].IsEmpty() ? arr[i] : fallback;
 							}
 						}
+					}
 				}
 			}
 			catch (LocalizedStringsException)
@@ -123,20 +110,23 @@
 			return "{0}.{1}".Put(assembly.GetName().Name, Path.GetFileName(fileName));
 		}
 
-		protected static string GetString(string resourceId)
+		public static string GetString(string resourceId)
 		{
-			if(!_initialized)
+			if (!_initialized)
 				throw new InvalidOperationException("Localized strings were not initialized.");
 
 			string[] arr;
 			_strings.TryGetValue(resourceId, out arr);
 
-			return arr == null ? resourceId : arr[_activeLanguage];
+			return arr == null ? resourceId : arr[(int)ActiveLanguage];
 		}
 	}
 
 	public class LocalizedStringsException : ApplicationException
 	{
-		public LocalizedStringsException(string message) : base(message) {}
+		public LocalizedStringsException(string message)
+			: base(message)
+		{
+		}
 	}
 }

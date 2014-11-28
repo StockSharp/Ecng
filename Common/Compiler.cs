@@ -10,7 +10,7 @@
 	using Microsoft.CSharp;
 	using Microsoft.VisualBasic;
 
-	public enum Languages
+	public enum CompilationLanguages
 	{
 		CSharp,
 		VisualBasic,
@@ -53,18 +53,18 @@
 
 	public sealed class Compiler
 	{
-		private Compiler(Languages language, string outputDir, string tempPath)
+		private Compiler(CompilationLanguages language, string outputDir, string tempPath)
 		{
 			Language = language;
 			OutputDir = outputDir;
 			TempPath = tempPath;
 		}
 
-		public Languages Language { get; private set; }
+		public CompilationLanguages Language { get; private set; }
 		public string OutputDir { get; private set; }
 		public string TempPath { get; private set; }
 
-		public static Compiler Create(Languages language, string outputDir, string tempPath)
+		public static Compiler Create(CompilationLanguages language, string outputDir, string tempPath)
 		{
 			return new Compiler(language, outputDir, tempPath);
 		}
@@ -77,19 +77,19 @@
 
 			switch (Language)
 			{
-				case Languages.CSharp:
+				case CompilationLanguages.CSharp:
 					provider = new CSharpCodeProvider(providerOptions);
 					break;
-				case Languages.VisualBasic:
+				case CompilationLanguages.VisualBasic:
 					provider = new VBCodeProvider(providerOptions);
 					break;
-				case Languages.Java:
+				case CompilationLanguages.Java:
 					provider = CodeDomProvider.CreateProvider("VJSharp");
 					break;
-				case Languages.JScript:
+				case CompilationLanguages.JScript:
 					provider = CodeDomProvider.CreateProvider("JScript");
 					break;
-				case Languages.Cpp:
+				case CompilationLanguages.Cpp:
 					provider = CodeDomProvider.CreateProvider("Cpp");
 					break;
 				default:
