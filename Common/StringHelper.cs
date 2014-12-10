@@ -671,7 +671,7 @@
 
 		public static string LightScreening(this string text)
 		{
-			return text.Replace(' ', '-').Replace(".", string.Empty).Replace("#", string.Empty).Replace("?", string.Empty);
+			return text.Replace(' ', '-').Replace(".", string.Empty).Replace("#", string.Empty).Replace("?", string.Empty).Replace(":", string.Empty);
 		}
 
 		public static bool ComparePaths(this string path1, string path2)
