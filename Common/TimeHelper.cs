@@ -208,6 +208,11 @@ namespace Ecng.Common
 			return dt.Date + LessOneDay;
 		}
 
+		public static DateTimeOffset EndOfDay(this DateTimeOffset dto)
+		{
+			return new DateTimeOffset(dto.Date.EndOfDay(), dto.Offset);
+		}
+
 		public static readonly DateTime GregorianStart = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
 		public static readonly TimeZoneInfo Est = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
