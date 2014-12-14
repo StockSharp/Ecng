@@ -302,7 +302,7 @@ namespace Ecng.Common
 			if (zone == null)
 				throw new ArgumentNullException("zone");
 
-			return dt.ApplyTimeZone(zone.BaseUtcOffset);
+			return dt.ApplyTimeZone(zone.GetUtcOffset(dt.ChangeKind()));
 		}
 
 		public static DateTimeOffset ApplyTimeZone(this DateTime dt, TimeSpan offset)
