@@ -203,6 +203,11 @@ namespace Ecng.Common
 			return date.AddDays(-1 * diff).Date;
 		}
 
+		public static DateTime EndOfDay(this DateTime dt)
+		{
+			return dt.Date + LessOneDay;
+		}
+
 		public static readonly DateTime GregorianStart = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
 		public static readonly TimeZoneInfo Est = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
