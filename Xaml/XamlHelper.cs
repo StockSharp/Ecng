@@ -2,6 +2,7 @@ namespace Ecng.Xaml
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 	using System.Reflection;
 	using System.Windows;
 	using System.Windows.Controls;
@@ -847,6 +848,15 @@ namespace Ecng.Xaml
 
 		#endregion
 #endif
+
+		public static void Restart(this Application application)
+		{
+			if (application == null)
+				throw new ArgumentNullException("application");
+
+			Process.Start(Application.ResourceAssembly.Location);
+			application.Shutdown();
+		}
 
 		#region Color
 
