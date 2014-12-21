@@ -1,12 +1,13 @@
 ﻿namespace Ecng.Xaml
 {
-	using System;
 	using System.Diagnostics;
 	using System.IO;
 	using System.Reflection;
 	using System.Windows;
 	using System.Windows.Data;
 	using System.Xml;
+
+	using Ecng.Common;
 
 	/// <summary>
 	/// Interaction logic for AboutWindow.xaml
@@ -28,7 +29,7 @@
 		public AboutWindow(Window parent)
 			: this()
 		{
-			this.Owner = parent;
+			Owner = parent;
 		}
 
 		/// <summary>
@@ -38,17 +39,17 @@
 		/// <param name="e">Navigation events arguments.</param>
 		private void hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
 		{
-			if (e.Uri != null && string.IsNullOrEmpty(e.Uri.OriginalString) == false)
-			{
-				string uri = e.Uri.AbsoluteUri;
-				Process.Start(new ProcessStartInfo(uri));
-				e.Handled = true;
-			}
+			if (e.Uri == null || e.Uri.OriginalString.IsEmpty())
+				return;
+
+			var uri = e.Uri.AbsoluteUri;
+			Process.Start(new ProcessStartInfo(uri));
+			e.Handled = true;
 		}
 
 		#region AboutData Provider
 		#region Member data
-		private XmlDocument xmlDoc = null;
+		private XmlDocument xmlDoc;
 
 		private const string propertyNameTitle = "Title";
 		private const string propertyNameDescription = "Description";
@@ -74,13 +75,15 @@
 		{
 			get
 			{
-				string result = CalculatePropertyValue<AssemblyTitleAttribute>(propertyNameTitle, xPathTitle);
-				if (string.IsNullOrEmpty(result))
+				var result = CalculatePropertyValue<AssemblyTitleAttribute>(propertyNameTitle, xPathTitle);
+				
+				if (result.IsEmpty())
 				{
 					// otherwise, just get the name of the assembly itself.
 					result = Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().CodeBase);
 				}
-				return "О " + result;
+
+				return "About " + result;
 			}
 		}
 
@@ -91,18 +94,9 @@
 		{
 			get
 			{
-				string result = string.Empty;
 				// first, try to get the version string from the assembly.
-				Version version = Assembly.GetEntryAssembly().GetName().Version;
-				if (version != null)
-				{
-					result = version.ToString();
-				}
-				else
-				{
-					// if that fails, try to get the version from a resource in the Application.
-					result = GetLogicalResourceString(xPathVersion);
-				}
+				var version = Assembly.GetEntryAssembly().GetName().Version;
+				var result = version != null ? version.ToString() : GetLogicalResourceString(xPathVersion);
 				return result;
 			}
 		}
@@ -167,13 +161,13 @@
 		/// Returns null if no data could be retrieved.</returns>
 		private string CalculatePropertyValue<T>(string propertyName, string xpathQuery)
 		{
-			string result = string.Empty;
+			var result = string.Empty;
 			// first, try to get the property value from an attribute.
-			object[] attributes = Assembly.GetEntryAssembly().GetCustomAttributes(typeof(T), false);
+			var attributes = Assembly.GetEntryAssembly().GetCustomAttributes(typeof(T), false);
 			if (attributes.Length > 0)
 			{
-				T attrib = (T)attributes[0];
-				PropertyInfo property = attrib.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+				var attrib = (T)attributes[0];
+				var property = attrib.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
 				if (property != null)
 				{
 					result = property.GetValue(attributes[0], null) as string;
@@ -196,16 +190,17 @@
 		{
 			get
 			{
-				if (xmlDoc == null)
+				if (xmlDoc != null)
+					return xmlDoc;
+
+				// if we haven't already found the resource XmlDocument, then try to find it.
+				var provider = TryFindResource("aboutProvider") as XmlDataProvider;
+				if (provider != null)
 				{
-					// if we haven't already found the resource XmlDocument, then try to find it.
-					XmlDataProvider provider = this.TryFindResource("aboutProvider") as XmlDataProvider;
-					if (provider != null)
-					{
-						// save away the XmlDocument, so we don't have to get it multiple times.
-						xmlDoc = provider.Document;
-					}
+					// save away the XmlDocument, so we don't have to get it multiple times.
+					xmlDoc = provider.Document;
 				}
+
 				return xmlDoc;
 			}
 		}
@@ -218,26 +213,24 @@
 		/// Returns empty string if resource element couldn't be found.</returns>
 		protected virtual string GetLogicalResourceString(string xpathQuery)
 		{
-			string result = string.Empty;
+			var result = string.Empty;
 			// get the About xml information from the resources.
-			XmlDocument doc = this.ResourceXmlDocument;
-			if (doc != null)
+			var doc = ResourceXmlDocument;
+			if (doc == null)
+				return result;
+			// if we found the XmlDocument, then look for the specified data. 
+			var node = doc.SelectSingleNode(xpathQuery);
+			if (node == null)
+				return result;
+			if (node is XmlAttribute)
 			{
-				// if we found the XmlDocument, then look for the specified data. 
-				XmlNode node = doc.SelectSingleNode(xpathQuery);
-				if (node != null)
-				{
-					if (node is XmlAttribute)
-					{
-						// only an XmlAttribute has a Value set.
-						result = node.Value;
-					}
-					else
-					{
-						// otherwise, need to just return the inner text.
-						result = node.InnerText;
-					}
-				}
+				// only an XmlAttribute has a Value set.
+				result = node.Value;
+			}
+			else
+			{
+				// otherwise, need to just return the inner text.
+				result = node.InnerText;
 			}
 			return result;
 		}

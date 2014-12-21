@@ -67,14 +67,14 @@
             <Label x:Name="productName" x:Uid="productName" 
                    Content="{Binding Mode=OneTime, Path=Product}" />
             <StackPanel x:Uid="versionArea" Orientation="Horizontal">
-                <Label x:Name="versionLabel" x:Uid="VersionLabel" Content="Версия - " />
+                <Label x:Name="versionLabel" x:Uid="VersionLabel" Content="v - " />
                 <Label x:Name="version" x:Uid="version" Content="{Binding Mode=OneTime, Path=Version}" />
             </StackPanel>
             <Label x:Name="copyright" x:Uid="copyright" Content="{Binding Mode=OneTime, Path=Copyright}"  />
             <Label x:Name="company" x:Uid="company" Content="{Binding Mode=OneTime, Path=Company}" />
-            <Label x:Name="reserved" x:Uid="reserved" Content="Все права защищены." />
+            <Label x:Name="reserved" x:Uid="reserved" Content="All right reserved." />
             <Label x:Name="info" x:Uid="info" Style="{StaticResource ParagraphSeparator}" 
-                   Content="Описание продукта:" />
+                   Content="Description:" />
             <TextBox x:Name="description" x:Uid="description" Text="{Binding Mode=OneTime, Path=Description}"
                      Style="{StaticResource ReadOnlyDescStyle}" />
             <DockPanel x:Uid="buttonArea">
