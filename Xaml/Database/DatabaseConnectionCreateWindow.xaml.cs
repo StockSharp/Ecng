@@ -3,6 +3,7 @@
 	using System.Windows;
 
 	using Ecng.Data;
+	using Ecng.Localization;
 
 	/// <summary>
 	/// Окно для создания строки подключения.
@@ -15,6 +16,9 @@
 		public DatabaseConnectionCreateWindow()
 		{
 			InitializeComponent();
+
+			Title = Title.Translate();
+			CheckCtrl.Content = ((string)CheckCtrl.Content).Translate();
 
 			Connection = new DatabaseConnectionPair
 			{

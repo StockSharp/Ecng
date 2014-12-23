@@ -7,6 +7,7 @@
 	using System.Windows.Controls;
 
 	using Ecng.Common;
+	using Ecng.Localization;
 
 	using Ookii.Dialogs.Wpf;
 
@@ -70,7 +71,7 @@
 		public override ValidationResult Validate(object value, CultureInfo cultureInfo)
 		{
 			if (value == null || !File.Exists((string)value))
-				return new ValidationResult(false, "Неверно указан путь к файлу.");
+				return new ValidationResult(false, "Invalid file path.".Translate());
 
 			return ValidationResult.ValidResult;
 		}

@@ -40,7 +40,7 @@
         </Label>
         <TextBox Grid.Row="1" Grid.ColumnSpan="4" Grid.Column="0" Margin="2" x:Name="TextBoxName" />
 
-        <Button Grid.Row="2" Grid.Column="2" MinWidth="70" Margin="2" Content="ОК" IsDefault="True" Command="{x:Static xaml:InputWindow.OkCommand}"/>
-        <Button Grid.Row="2" Grid.Column="3" MinWidth="70" Margin="2" Content="Отмена" IsCancel="True" Command="{x:Static xaml:InputWindow.CancelCommand}"/>
+        <Button Grid.Row="2" Grid.Column="2" MinWidth="70" Margin="2" Content="OK" IsDefault="True" Command="{x:Static xaml:InputWindow.OkCommand}"/>
+        <Button x:Name="Cancel" Grid.Row="2" Grid.Column="3" MinWidth="70" Margin="2" Content="Cancel" IsCancel="True" Command="{x:Static xaml:InputWindow.CancelCommand}"/>
     </Grid>
 </Window>

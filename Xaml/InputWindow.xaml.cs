@@ -3,6 +3,8 @@
 	using System.Windows;
 	using System.Windows.Input;
 
+	using Ecng.Localization;
+
 	public partial class InputWindow
 	{
 		public static readonly RoutedCommand OkCommand = new RoutedCommand();
@@ -34,6 +36,8 @@
 		private InputWindow()
 		{
 			InitializeComponent();
+
+			Cancel.Content = ((string)Cancel.Content).Translate();
 		}
 
 		private void Ok_OnCanExecute(object sender, CanExecuteRoutedEventArgs e)

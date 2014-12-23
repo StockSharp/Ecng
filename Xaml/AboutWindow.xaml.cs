@@ -8,6 +8,7 @@
 	using System.Xml;
 
 	using Ecng.Common;
+	using Ecng.Localization;
 
 	/// <summary>
 	/// Interaction logic for AboutWindow.xaml
@@ -20,6 +21,9 @@
 		protected AboutWindow()
 		{
 			InitializeComponent();
+
+			reserved.Content = ((string)reserved.Content).Translate();
+			info.Content = ((string)info.Content).Translate();
 		}
 
 		/// <summary>
@@ -83,7 +87,7 @@
 					result = Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().CodeBase);
 				}
 
-				return "About " + result;
+				return "About".Translate() + " " + result;
 			}
 		}
 

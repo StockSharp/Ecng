@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace Ecng.Xaml.Grids
+﻿namespace Ecng.Xaml.Grids
 {
 	using System;
 	using System.IO;

@@ -2,10 +2,9 @@
 		x:Class="Ecng.Xaml.Grids.DdeSettingsWindow"
 		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 		xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit.PropertyGrid;assembly=Xceed.Wpf.Toolkit"
-		mc:Ignorable="d" Title="Настройки DDE" ShowInTaskbar="False" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" Width="400" Height="400">
+		Title="DDE settings" ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+		ResizeMode="NoResize" Width="400" Height="400">
     <Grid Margin="5">
 		<Grid.RowDefinitions>
 			<RowDefinition />
@@ -23,10 +22,10 @@
 				<ColumnDefinition Width="100" />
 			</Grid.ColumnDefinitions>
 			
-			<Button x:Name="StartStop" Click="StartStop_OnClick" Grid.Column="0">Запуск</Button>
-			<Button x:Name="Flush" Click="Export_OnClick" Grid.Column="2">Вывести (разово)</Button>
+			<Button x:Name="StartStop" Click="StartStop_OnClick" Grid.Column="0">Start</Button>
+			<Button x:Name="Flush" Click="Export_OnClick" Grid.Column="2">Flush (one time)</Button>
 
-			<Button IsDefault="True" Click="Ok_OnClick" Grid.Column="5">OK</Button>
+			<Button IsDefault="True" Click="Ok_OnClick" Grid.Column="4">OK</Button>
 		</Grid>
 		
 	</Grid>

@@ -21,6 +21,7 @@
 	using Ecng.ComponentModel;
 	using Ecng.Interop;
 	using Ecng.Interop.Dde;
+	using Ecng.Localization;
 	using Ecng.Serialization;
 	using Ecng.Xaml.Converters;
 
@@ -71,43 +72,43 @@
 
 			ContextMenu = new ContextMenu();
 
-			ContextMenu.Items.Add(new MenuItem { Header = "Группировка" });
-			ContextMenu.Items.Add(new MenuItem { Header = "Показывать имя столбца в заголовке группы", IsCheckable = true });
-			ContextMenu.Items.Add(new MenuItem { Header = "Автопрокрутка", IsCheckable = true });
+			ContextMenu.Items.Add(new MenuItem { Header = "Grouping".Translate() });
+			ContextMenu.Items.Add(new MenuItem { Header = "Show column header in grouping".Translate(), IsCheckable = true });
+			ContextMenu.Items.Add(new MenuItem { Header = "Auto scroll".Translate(), IsCheckable = true });
 			ContextMenu.Items.Add(new Separator());
-			ContextMenu.Items.Add(new MenuItem { Header = "Столбцы" });
+			ContextMenu.Items.Add(new MenuItem { Header = "Available columns".Translate() });
 			ContextMenu.Items.Add(new Separator());
 
-			var formatMi = new MenuItem { Header = "Форматирование столбца" };
+			var formatMi = new MenuItem { Header = "Format".Translate() };
 			formatMi.Click += Format_Click;
 			ContextMenu.Items.Add(formatMi);
 
 			ContextMenu.Items.Add(new Separator());
 
-			var selectMi = new MenuItem { Header = "Вывести" };
+			var selectMi = new MenuItem { Header = "Export".Translate() };
 			ContextMenu.Items.Add(selectMi);
 
-			var clipboardTxtMi = new MenuItem { Header = "Буфер обмена (текст)" };
+			var clipboardTxtMi = new MenuItem { Header = "Clipboard (as csv)".Translate() };
 			clipboardTxtMi.Click += ExportClipBoardText_OnClick;
 			selectMi.Items.Add(clipboardTxtMi);
 
-			var clipboardImageMi = new MenuItem { Header = "Буфер обмена (изображение)" };
+			var clipboardImageMi = new MenuItem { Header = "Clipboard (as image)".Translate() };
 			clipboardImageMi.Click += ExportClipBoardImage_OnClick;
 			selectMi.Items.Add(clipboardImageMi);
 
-			var exportCsvMi = new MenuItem { Header = "Файл CSV..." };
+			var exportCsvMi = new MenuItem { Header = "CSV file...".Translate() };
 			exportCsvMi.Click += ExportCsv_OnClick;
 			selectMi.Items.Add(exportCsvMi);
 
-			var exportExcelMi = new MenuItem { Header = "Файл Excel..." };
+			var exportExcelMi = new MenuItem { Header = "Excel file...".Translate() };
 			exportExcelMi.Click += ExportExcel_OnClick;
 			selectMi.Items.Add(exportExcelMi);
 
-			var exportPngMi = new MenuItem { Header = "Файл PNG..." };
+			var exportPngMi = new MenuItem { Header = "PNG file...".Translate() };
 			exportPngMi.Click += ExportPng_OnClick;
 			selectMi.Items.Add(exportPngMi);
 
-			var exportDdeMi = new MenuItem { Header = "DDE..." };
+			var exportDdeMi = new MenuItem { Header = "DDE...".Translate() };
 			exportDdeMi.Click += ExportDde_OnClick;
 			selectMi.Items.Add(exportDdeMi);
 

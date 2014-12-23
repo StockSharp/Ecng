@@ -4,15 +4,20 @@
 
 	using Ecng.Collections;
 	using Ecng.ComponentModel;
+	using Ecng.Localization;
 
 	public partial class FormatRuleView
     {
         public FormatRuleView()
         {
 			InitializeComponent();
+
 			ConditionsCombo.SetDataSource<ComparisonOperator>();
 			SelectedCondition = ComparisonOperator.Less;
-		}
+
+	        BackgroundLabel.Text = BackgroundLabel.Text.Translate();
+			ForegroundLabel.Text = ForegroundLabel.Text.Translate();
+        }
 
 		private readonly PairSet<int, ComparisonOperator> _conditions = new PairSet<int, ComparisonOperator>
 		{

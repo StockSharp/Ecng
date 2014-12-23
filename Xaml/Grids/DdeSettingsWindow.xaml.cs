@@ -4,12 +4,18 @@
 	using System.Windows;
 
 	using Ecng.Interop.Dde;
+	using Ecng.Localization;
 
 	public partial class DdeSettingsWindow
 	{
 		public DdeSettingsWindow()
 		{
 			InitializeComponent();
+
+			Title = Title.Translate();
+
+			StartStop.Content = ((string)StartStop.Content).Translate();
+			Flush.Content = ((string)Flush.Content).Translate();
 		}
 
 		private XlsDdeClient _ddeClient;

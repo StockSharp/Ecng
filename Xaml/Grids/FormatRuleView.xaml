@@ -1,10 +1,8 @@
 ﻿<UserControl  x:Class="Ecng.Xaml.Grids.FormatRuleView"
               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
               xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-			  xmlns:fonts="clr-namespace:Ecng.Xaml.Fonts" mc:Ignorable="d" Height="160">
+			  xmlns:fonts="clr-namespace:Ecng.Xaml.Fonts" Height="160">
     <Border BorderBrush="Black" BorderThickness="1" CornerRadius="3" Margin="1">
 		<Grid>
 			<Grid.ColumnDefinitions>
@@ -33,7 +31,7 @@
 
 			<TextBox Grid.Column="1" Grid.Row="1" Margin="5" Text="{Binding Path=Value}" />
 
-			<Grid Grid.ColumnSpan="3" Grid.Row="2" HorizontalAlignment="Center">
+			<Grid Grid.ColumnSpan="3" Grid.Column="0" Grid.Row="2" HorizontalAlignment="Center">
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="Auto" />
 					<ColumnDefinition Width="Auto" />
@@ -45,12 +43,16 @@
 				</Grid.RowDefinitions>
 
 				<StackPanel Orientation="Horizontal" Margin="5">
-					<TextBlock Text="Фон " />
+					<TextBlock>
+						<Run x:Name="BackgroundLabel" Text="Background color" /><Run Text=":" />
+					</TextBlock>
 					<xctk:ColorPicker SelectedColor="{Binding Path=Background.Color, Mode=TwoWay}" Width="50" />
 				</StackPanel>
 
-				<StackPanel Orientation="Horizontal" Margin="5" Grid.Column="1">
-					<TextBlock Text="Текст " />
+				<StackPanel Orientation="Horizontal" Margin="5" Grid.Row="0" Grid.Column="1">
+					<TextBlock>
+						<Run x:Name="ForegroundLabel" Text="Font color" /><Run Text=":" />
+					</TextBlock>
 					<xctk:ColorPicker SelectedColor="{Binding Path=Foreground.Color, Mode=TwoWay}" Width="50" />
 				</StackPanel>
 			</Grid>
@@ -62,7 +64,7 @@
 					FontStyle="{Binding Path=Font.Style, Mode=TwoWay}"
 					FontWeight="{Binding Path=Font.Weight, Mode=TwoWay}">Шрифт</Button>-->
 
-			<fonts:FontChooser Grid.Row="3" Margin="5" Grid.ColumnSpan="2" SelectedFont="{Binding Path=Rule.Font, Mode=TwoWay}" />
+			<fonts:FontChooser Grid.Row="3" Margin="5" Grid.ColumnSpan="2" Grid.Column="0" SelectedFont="{Binding Path=Rule.Font, Mode=TwoWay}" />
 
 			<!--<CheckBox Grid.Row="4" Content="Применять ко всей строке" Grid.ColumnSpan="2" IsChecked="{Binding Path=IsApplyToRow, Mode=TwoWay}" />-->
 		</Grid>

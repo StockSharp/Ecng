@@ -8,13 +8,108 @@
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.Data;
+	using Ecng.Localization;
 
 	using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
 	public partial class DatabaseConnectionPanel
 	{
-		[DisplayName("Настройки")]
-		[Description("Настройки строки подключения к базе данных.")]
+		private enum Titles
+		{
+			Settings,
+			SettingsDescription,
+			Login,
+			LoginDescription,
+			Password,
+			PasswordDescription,
+			Server,
+			ServerDescription,
+			Database,
+			DatabaseDescription,
+			Security,
+			SecurityDescription,
+			String,
+			StringDescription,
+			Provider,
+			ProviderDescription,
+		}
+
+		private class DatabaseDisplayNameAttribute : DisplayNameAttribute
+		{
+			public DatabaseDisplayNameAttribute(Titles title)
+				: base(GetString(title))
+			{
+			}
+
+			private static string GetString(Titles title)
+			{
+				switch (title)
+				{
+					case Titles.Settings:
+						return "Settings".Translate();
+					case Titles.Login:
+						return "Login".Translate();
+					case Titles.Password:
+						return "Password".Translate();
+					case Titles.Provider:
+						return "Provider".Translate();
+					case Titles.Server:
+						return "Server".Translate();
+					case Titles.Database:
+						return "Database".Translate();
+					case Titles.Security:
+						return "Integrated security".Translate();
+					case Titles.String:
+						return "Connection string".Translate();
+					default:
+						throw new ArgumentOutOfRangeException("title");
+				}
+			}
+		}
+
+		private class DatabaseDescriptionAttribute : DescriptionAttribute
+		{
+			public DatabaseDescriptionAttribute(Titles title)
+				: base(GetString(title))
+			{
+			}
+
+			private static string GetString(Titles title)
+			{
+				switch (title)
+				{
+					case Titles.SettingsDescription:
+						return "Database connection string settings.".Translate();
+					case Titles.LoginDescription:
+						return "User name. Not used in anonymous mode.".Translate();
+					case Titles.PasswordDescription:
+						return "Password. Not used in anonymous mode.".Translate();
+					case Titles.ServerDescription:
+						return "Network address or path to file.".Translate();
+					case Titles.DatabaseDescription:
+						return "Name of database. Not used in SQLite.".Translate();
+					case Titles.SecurityDescription:
+						return "Use integrated security (like Windows accounts).".Translate();
+					case Titles.StringDescription:
+						return "Final connection string.".Translate();
+					case Titles.ProviderDescription:
+						return "Provider settings.".Translate();
+					default:
+						throw new ArgumentOutOfRangeException("title");
+				}
+			}
+		}
+
+		private class DatabaseCategoryAttribute : CategoryAttribute
+		{
+			public DatabaseCategoryAttribute()
+				: base("Common".Translate())
+			{
+			}
+		}
+
+		[DatabaseDisplayName(Titles.Settings)]
+		[DatabaseDescription(Titles.SettingsDescription)]
 		private class Settings : NotifiableObject
 		{
 			private readonly DbConnectionStringBuilder _builder = new DbConnectionStringBuilder();
@@ -36,16 +131,16 @@
 				return default(T);
 			}
 
-			[DisplayName("Пароль")]
-			[Description("Пароль для доступа к базе данных. Не используется при анонимном доступе.")]
-			[Category("Основные")]
+			[DatabaseDisplayName(Titles.Provider)]
+			[DatabaseDescription(Titles.ProviderDescription)]
+			[DatabaseCategory]
 			[PropertyOrder(0)]
 			[Editor(typeof(DatabaseProviderEditor), typeof(DatabaseProviderEditor))]
 			public DatabaseProvider Provider { get; set; }
 
-			[DisplayName("Сервер")]
-			[Description("Адрес сервера или путь к базе данных.")]
-			[Category("Основные")]
+			[DatabaseDisplayName(Titles.Server)]
+			[DatabaseDescription(Titles.ServerDescription)]
+			[DatabaseCategory]
 			[PropertyOrder(1)]
 			public string Server
 			{
@@ -57,9 +152,9 @@
 				}
 			}
 
-			[DisplayName("База данных")]
-			[Description("Название базы данных. Не используется для SQLite.")]
-			[Category("Основные")]
+			[DatabaseDisplayName(Titles.Database)]
+			[DatabaseDescription(Titles.DatabaseDescription)]
+			[DatabaseCategory]
 			[PropertyOrder(2)]
 			public string Database
 			{
@@ -71,9 +166,9 @@
 				}
 			}
 
-			[DisplayName("Логин")]
-			[Description("Логин для доступа к базе данных. Не используется при анонимном доступе.")]
-			[Category("Основные")]
+			[DatabaseDisplayName(Titles.Login)]
+			[DatabaseDescription(Titles.LoginDescription)]
+			[DatabaseCategory]
 			[PropertyOrder(3)]
 			public string UserName
 			{
@@ -85,9 +180,9 @@
 				}
 			}
 
-			[DisplayName("Пароль")]
-			[Description("Пароль для доступа к базе данных. Не используется при анонимном доступе.")]
-			[Category("Основные")]
+			[DatabaseDisplayName(Titles.Password)]
+			[DatabaseDescription(Titles.PasswordDescription)]
+			[DatabaseCategory]
 			[PropertyOrder(4)]
 			public string Password
 			{
@@ -99,9 +194,9 @@
 				}
 			}
 
-			[DisplayName("Windows")]
-			[Description("Использовать текущую учетную запись Windows для подключения к базе данных.")]
-			[Category("Основные")]
+			[DatabaseDisplayName(Titles.Security)]
+			[DatabaseDescription(Titles.SecurityDescription)]
+			[DatabaseCategory]
 			[PropertyOrder(5)]
 			public bool IntegratedSecurity
 			{
@@ -113,9 +208,9 @@
 				}
 			}
 
-			[DisplayName("Подключение")]
-			[Description("Готовая строка подключения.")]
-			[Category("Основные")]
+			[DatabaseDisplayName(Titles.String)]
+			[DatabaseDescription(Titles.StringDescription)]
+			[DatabaseCategory]
 			[PropertyOrder(6)]
 			public string ConnectionString
 			{

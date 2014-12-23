@@ -64,8 +64,8 @@
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="CsvFile.cs" />
     <Compile Include="LocalizationException.cs" />
+    <Compile Include="LocalizationHelper.cs" />
     <Compile Include="LocalizationManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">

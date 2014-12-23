@@ -9,6 +9,7 @@
 
 	using Ecng.Collections;
 	using Ecng.Common;
+	using Ecng.Localization;
 	using Ecng.Serialization;
 
 	using Wintellect.PowerCollections;
@@ -24,6 +25,10 @@
 		public FormattingWindow()
 		{
 			InitializeComponent();
+
+			Title = Title.Translate();
+			Apply.Content = ((string)Apply.Content).Translate();
+
 			ColumnFormatRulesCtrl.ItemsSource = _columnFormatRules;
 		}
 

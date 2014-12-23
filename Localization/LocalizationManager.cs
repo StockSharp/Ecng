@@ -12,13 +12,15 @@
 	public enum Languages
 	{
 		English,
-		Russian
+		Russian,
+		Chinese,
+		Indian,
 	}
 
 	public class LocalizationManager
 	{
-		private readonly Dictionary<string, string[]> _strings = new Dictionary<string, string[]>();
-		private readonly int _numLanguages = Enumerator.GetValues<Languages>().Count();
+		private readonly Dictionary<string, string[]> _stringByResourceId = new Dictionary<string, string[]>();
+		private readonly Dictionary<Tuple<Languages, string>, Dictionary<Languages, string>> _stringsByLang = new Dictionary<Tuple<Languages, string>, Dictionary<Languages, string>>();
 
 		public LocalizationManager(Assembly asmHolder, string fileName)
 		{
@@ -51,35 +53,56 @@
 					if (stream == null)
 						return new Exception("stream is null");
 
-					var list = new List<string>();
+					var row = new List<string>();
+
+					//var langCount = Enumerator.GetValues<Languages>().Count();
 
 					using (var reader = new CsvFileReader(stream, EmptyLineBehavior.Ignore))
 					{
-						while (reader.ReadRow(list))
+						while (reader.ReadRow(row))
 						{
-							if (list.Count < 2 || list.Count > _numLanguages + 1)
-								throw new LocalizationException("{0}: Unexpected number of columns in CSV ({1}): {2}".Put(name, list.Count, list.Join("|")));
+							if (row.Count < 2/* || list.Count > (langCount + 1)*/)
+								throw new LocalizationException("{0}: Unexpected number of columns in CSV ({1}): {2}".Put(name, row.Count, row.Join("|")));
 
-							var key = list[0];
+							var key = row[0];
 							if (key.IsEmpty())
 								throw new LocalizationException("{0}: Empty key found.".Put(name));
 
 							if (!names.Add(key))
 								throw new LocalizationException("{0}: Duplicated key({1}) found.".Put(name, key));
 
-							var arr = _strings.TryGetValue(key);
+							var arr = _stringByResourceId.TryGetValue(key);
 
 							if (arr == null)
-								_strings.Add(key, arr = new string[_numLanguages]);
+								_stringByResourceId.Add(key, arr = new string[row.Count - 1]);
 
-							var fallback = list.Skip(1).FirstOrDefault(s => !s.IsEmpty()) ?? key;
+							//var fallback = row.Skip(1).FirstOrDefault(s => !s.IsEmpty()) ?? key;
 
-							for (var i = 0; i < _numLanguages; ++i)
+							var i = 0;
+
+							var tuples = new List<Tuple<Languages, string>>();
+
+							foreach (var cell in row.Skip(1))
 							{
-								if (i + 1 < list.Count)
-									arr[i] = list[i + 1].Trim() != string.Empty ? list[i + 1] : (!arr[i].IsEmpty() ? arr[i] : fallback);
-								else
-									arr[i] = !arr[i].IsEmpty() ? arr[i] : fallback;
+								//if (i + 1 < row.Count)
+								//	arr[i] = row[i + 1].Trim() != string.Empty ? row[i + 1] : (!arr[i].IsEmpty() ? arr[i] : fallback);
+								//else
+								//	arr[i] = !arr[i].IsEmpty() ? arr[i] : fallback;
+
+								arr[i] = cell;
+
+								tuples.Add(Tuple.Create((Languages)i, cell));
+
+								i++;
+							}
+
+							for (var j = 0; j < tuples.Count; j++)
+							{
+								var dict = tuples
+									.Where((t, k) => k != j)
+									.ToDictionary(tuple => tuple.Item1, tuple => tuple.Item2);
+
+								_stringsByLang[tuples[j]] = dict;
 							}
 						}
 					}
@@ -99,8 +122,19 @@
 
 		public string GetString(string resourceId)
 		{
-			var arr = _strings.TryGetValue(resourceId);
-			return arr == null ? resourceId : arr[(int)ActiveLanguage];
+			var arr = _stringByResourceId.TryGetValue(resourceId);
+
+			if (arr == null)
+				return resourceId;
+
+			var index = (int)ActiveLanguage;
+			return index >= arr.Length ? resourceId : arr[index];
+		}
+
+		public string Translate(string text, Languages from, Languages to)
+		{
+			var dict = _stringsByLang.TryGetValue(Tuple.Create(from, text));
+			return dict == null ? text : dict.TryGetValue(to) ?? text;
 		}
 	}
 }

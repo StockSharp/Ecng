@@ -14,7 +14,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace Ecng.Localization
+namespace Ecng.Common
 {
 	/// <summary>
 	/// Determines how empty lines are interpreted when reading CSV files.

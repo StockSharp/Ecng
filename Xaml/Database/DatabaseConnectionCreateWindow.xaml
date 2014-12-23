@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:xaml="clr-namespace:Ecng.Xaml"
         xmlns:db="clr-namespace:Ecng.Xaml.Database"
-        Title="Новая строка подключения" ShowInTaskbar="False"
+        Title="New connection string" ShowInTaskbar="False"
 		Width="Auto" Height="Auto" WindowStartupLocation="CenterOwner"
 		SizeToContent="WidthAndHeight" ResizeMode="NoResize">
     <Grid Margin="5">
@@ -19,7 +19,7 @@
 
 		<db:DatabaseConnectionPanel x:Name="SettingsGrid" Grid.ColumnSpan="3" />
 
-		<Button x:Name="TestCtrl" Grid.Row="2" Grid.Column="0" Click="TestCtrl_Click">Проверить</Button>
-		<Button x:Name="Ok" Grid.Row="2" Grid.Column="2" Width="100" IsEnabled="False" IsDefault="True" xaml:XamlHelper.DialogResult="True" HorizontalAlignment="Right">OK</Button>
+		<Button x:Name="CheckCtrl" Grid.Row="2" Grid.Column="0" Click="TestCtrl_Click">Check</Button>
+		<Button x:Name="Ok" Grid.Row="2" Grid.Column="1" Width="100" IsEnabled="False" IsDefault="True" xaml:XamlHelper.DialogResult="True" HorizontalAlignment="Right">OK</Button>
 	</Grid>
 </Window>
