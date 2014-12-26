@@ -196,6 +196,7 @@
     </Compile>
     <Compile Include="StickyWindow.cs" />
     <Compile Include="ThreadSafeObservableCollection.cs" />
+    <Compile Include="TimeZoneComboBox.cs" />
     <Compile Include="UniqueObservableCollection.cs" />
     <Compile Include="ViewModelBase.cs" />
     <Compile Include="WpfFormAdapter.cs" />
