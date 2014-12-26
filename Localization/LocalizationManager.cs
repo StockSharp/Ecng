@@ -65,18 +65,24 @@
 								throw new LocalizationException("{0}: Unexpected number of columns in CSV ({1}): {2}".Put(name, row.Count, row.Join("|")));
 
 							var key = row[0];
-							if (key.IsEmpty())
-								throw new LocalizationException("{0}: Empty key found.".Put(name));
+							//if (key.IsEmpty())
+							//	throw new LocalizationException("{0}: Empty key found.".Put(name));
 
-							if (!names.Add(key))
-								throw new LocalizationException("{0}: Duplicated key({1}) found.".Put(name, key));
+							string[] stringByResourceId = null;
 
-							var arr = _stringByResourceId.TryGetValue(key);
+							if (!key.IsEmpty())
+							{
+								if (!names.Add(key))
+									throw new LocalizationException("{0}: Duplicated key({1}) found.".Put(name, key));
 
-							if (arr == null)
-								_stringByResourceId.Add(key, arr = new string[row.Count - 1]);
+								stringByResourceId = _stringByResourceId.TryGetValue(key);
 
-							//var fallback = row.Skip(1).FirstOrDefault(s => !s.IsEmpty()) ?? key;
+								if (stringByResourceId == null)
+									_stringByResourceId.Add(key, stringByResourceId = new string[row.Count - 1]);
+
+								//var fallback = row.Skip(1).FirstOrDefault(s => !s.IsEmpty()) ?? key;	
+							}
+							
 
 							var i = 0;
 
@@ -89,7 +95,8 @@
 								//else
 								//	arr[i] = !arr[i].IsEmpty() ? arr[i] : fallback;
 
-								arr[i] = cell;
+								if (stringByResourceId != null)
+									stringByResourceId[i] = cell;
 
 								tuples.Add(Tuple.Create((Languages)i, cell));
 
@@ -120,21 +127,44 @@
 			return null;
 		}
 
+		public event Action<string, bool> Missing;
+
 		public string GetString(string resourceId)
 		{
 			var arr = _stringByResourceId.TryGetValue(resourceId);
 
 			if (arr == null)
+			{
+				Missing.SafeInvoke(resourceId, false);
 				return resourceId;
+			}
 
 			var index = (int)ActiveLanguage;
-			return index >= arr.Length ? resourceId : arr[index];
+
+			if (index < arr.Length)
+				return arr[index];
+
+			Missing.SafeInvoke(resourceId, false);
+			return resourceId;
 		}
 
 		public string Translate(string text, Languages from, Languages to)
 		{
 			var dict = _stringsByLang.TryGetValue(Tuple.Create(from, text));
-			return dict == null ? text : dict.TryGetValue(to) ?? text;
+
+			if (dict == null)
+			{
+				Missing.SafeInvoke(text, true);
+				return text;
+			}
+
+			var translate = dict.TryGetValue(to);
+
+			if (translate != null)
+				return translate;
+
+			Missing.SafeInvoke(text, true);
+			return text;
 		}
 	}
 }
