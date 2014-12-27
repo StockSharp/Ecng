@@ -397,7 +397,6 @@ namespace Ecng.Web
 
 			if (!IsAnswerValid(user, answer))
 			{
-				ValidatePasswordAttemts(user);
 				SecurityError(userName, SecurityErrorTypes.InvalidPasswordAnswer);
 				throw new MembershipPasswordException("Answer for user {0} is incorrect.".Put(userName));
 			}
@@ -426,7 +425,6 @@ namespace Ecng.Web
 
 			if (!IsAnswerValid(user, answer))
 			{
-				ValidatePasswordAttemts(user);
 				SecurityError(userName, SecurityErrorTypes.InvalidPasswordAnswer);
 				throw new MembershipPasswordException("Answer for user {0} is incorrect.".Put(userName));
 			}
@@ -458,7 +456,6 @@ namespace Ecng.Web
 
 			if (!IsPasswordValid(user, oldPassword))
 			{
-				ValidatePasswordAttemts(user);
 				SecurityError(userName, SecurityErrorTypes.InvalidOldPassword);
 				return false;
 			}
@@ -493,7 +490,6 @@ namespace Ecng.Web
 
 			if (!IsPasswordValid(user, password))
 			{
-				ValidatePasswordAttemts(user);
 				SecurityError(userName, SecurityErrorTypes.InvalidPasswordAnswer);
 				return false;
 			}
@@ -574,7 +570,6 @@ namespace Ecng.Web
 
 			if (!IsPasswordValid(user, password))
 			{
-				ValidatePasswordAttemts(user);
 				return SecurityErrorTypes.InvalidPassword;
 			}
 
@@ -609,7 +604,14 @@ namespace Ecng.Web
 			if (user == null)
 				throw new ArgumentNullException("user");
 
-			return !RequiresQuestionAndAnswer || user.PasswordAnswer.Equals(CreateSecret(answer, user.PasswordAnswer.Salt));
+			var isOk = !RequiresQuestionAndAnswer || user.PasswordAnswer.Equals(CreateSecret(answer, user.PasswordAnswer.Salt));
+
+			if (isOk)
+				ResetPasswordAttemts(user);
+			else
+				ValidatePasswordAttemts(user);
+
+			return isOk;
 		}
 
 		private bool IsPasswordValid(IWebUser user, string password)
@@ -617,7 +619,14 @@ namespace Ecng.Web
 			if (user == null)
 				throw new ArgumentNullException("user");
 
-			return user.Password.Equals(CreateSecret(password, user.Password.Salt));
+			var isOk = user.Password.Equals(CreateSecret(password, user.Password.Salt));
+
+			if (isOk)
+				ResetPasswordAttemts(user);
+			else
+				ValidatePasswordAttemts(user);
+
+			return isOk;
 		}
 
 		private MembershipUser ConvertToMembershipUser(IWebUser user)
@@ -626,6 +635,17 @@ namespace Ecng.Web
 				throw new ArgumentNullException("user");
 
 			return new MembershipUser(base.Name, user.Name, user.Key, user.Email, RequiresQuestionAndAnswer ? user.PasswordQuestion : string.Empty, user.Description, user.IsApproved, user.IsLockedOut, user.CreationDate, user.LastLoginDate, user.LastActivityDate, user.LastPasswordChangedDate, user.LastLockOutDate);
+		}
+
+		private void ResetPasswordAttemts(IWebUser user)
+		{
+			if (user == null)
+				throw new ArgumentNullException("user");
+
+			lock (_lock)
+			{
+				_passwordAttempts.Remove(user);
+			}
 		}
 
 		private void ValidatePasswordAttemts(IWebUser user)
@@ -638,24 +658,25 @@ namespace Ecng.Web
 			lock (_lock)
 			{
 				var count = 1;
+				var now = DateTime.Now;
 
 				if (_passwordAttempts.TryGetValue(user, out passwordAttemts))
 				{
-					if ((DateTime.Now - passwordAttemts.Item1) < TimeSpan.FromMinutes(PasswordAttemptWindow))
+					if ((now - passwordAttemts.Item1) < TimeSpan.FromMinutes(PasswordAttemptWindow))
 						count = passwordAttemts.Item2 + 1;
 				}
 
-				passwordAttemts = new Tuple<DateTime, int>(DateTime.Now, count);
+				passwordAttemts = new Tuple<DateTime, int>(now, count);
 
 				_passwordAttempts[user] = passwordAttemts;
 			}
 
-			if (passwordAttemts.Item2 >= MaxInvalidPasswordAttempts)
-			{
-				user.IsLockedOut = true;
-				user.LastLockOutDate = DateTime.Now;
-				UpdateUser(user);
-			}
+			if (passwordAttemts.Item2 < MaxInvalidPasswordAttempts)
+				return;
+
+			user.IsLockedOut = true;
+			user.LastLockOutDate = DateTime.Now;
+			UpdateUser(user);
 		}
 	}
 }
