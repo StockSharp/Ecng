@@ -5,6 +5,8 @@ namespace Ecng.Collections
 	using System.ComponentModel;
 	using System.Linq;
 
+	using Ecng.Common;
+
 	public class ListEx<T> : BaseListEx<T>
 	{
 		private readonly List<T> _innerList = new List<T>();
@@ -23,31 +25,27 @@ namespace Ecng.Collections
 		{
 			if (startIndex >= _innerList.Count)
 				return Enumerable.Empty<T>();
-			else
+
+			if (StringHelper.IsEmpty(sortExpression))
 			{
-				if (sortExpression.IsEmpty())
-				{
-					if ((startIndex + count) > _innerList.Count)
-						count = _innerList.Count - startIndex;
+				if ((startIndex + count) > _innerList.Count)
+					count = _innerList.Count - startIndex;
 
-					return _innerList.GetRange((int)startIndex, (int)count);
-				}
-				else
-				{
-					var items = (IEnumerable<T>)_innerList;
-
-					var func = _properties.SafeAdd(sortExpression, key => i => typeof(T).GetProperty(key).GetValue(i, null));
-
-					items = directions == ListSortDirection.Ascending ? items.OrderBy(func) : items.OrderByDescending(func);
-
-					items = items.Skip((int)startIndex);
-					
-					if (count >= 0)
-						items = items.Take((int)count);
-
-					return items;
-				}
+				return _innerList.GetRange((int)startIndex, (int)count);
 			}
+
+			var items = (IEnumerable<T>)_innerList;
+
+			var func = _properties.SafeAdd(sortExpression, key => i => typeof(T).GetProperty(key).GetValue(i, null));
+
+			items = directions == ListSortDirection.Ascending ? items.OrderBy(func) : items.OrderByDescending(func);
+
+			items = items.Skip((int)startIndex);
+					
+			if (count >= 0)
+				items = items.Take((int)count);
+
+			return items;
 		}
 
 		public override void CopyTo(T[] array, int index)
