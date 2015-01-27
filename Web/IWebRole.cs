@@ -4,5 +4,6 @@ namespace Ecng.Web
 	{
 		string Name { get; set; }
 		IWebUserCollection Users { get; }
+		bool Deleted { get; }
 	}
 }

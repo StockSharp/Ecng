@@ -28,5 +28,7 @@ namespace Ecng.Web
 		DateTime LastLockOutDate { get; set; }
 
 		IWebRoleCollection Roles { get; }
+
+		bool Deleted { get; }
 	}
 }

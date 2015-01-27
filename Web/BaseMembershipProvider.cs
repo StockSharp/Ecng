@@ -20,7 +20,8 @@ namespace Ecng.Web
 		InvalidPasswordAnswer,
 		InvalidName,
 		UserLockedOut,
-		UserNotApproved
+		UserNotApproved,
+		UserDeleted
 	}
 
 	[Ignore(FieldName = "_EventHandler")]
@@ -417,6 +418,12 @@ namespace Ecng.Web
 				throw new ArgumentException("User {0} not founded.".Put(userName), "userName");
 			}
 
+			if (user.Deleted)
+			{
+				SecurityError(userName, SecurityErrorTypes.UserDeleted);
+				throw new MembershipPasswordException("User {0} deleted.".Put(userName));
+			}
+
 			if (!user.IsApproved)
 			{
 				SecurityError(userName, SecurityErrorTypes.UserNotApproved);
@@ -445,6 +452,12 @@ namespace Ecng.Web
 			if (user == null)
 			{
 				SecurityError(userName, SecurityErrorTypes.InvalidName);
+				return false;
+			}
+
+			if (user.Deleted)
+			{
+				SecurityError(userName, SecurityErrorTypes.UserDeleted);
 				return false;
 			}
 
@@ -485,6 +498,12 @@ namespace Ecng.Web
 			if (!user.IsApproved)
 			{
 				SecurityError(userName, SecurityErrorTypes.UserNotApproved);
+				return false;
+			}
+
+			if (user.Deleted)
+			{
+				SecurityError(userName, SecurityErrorTypes.UserDeleted);
 				return false;
 			}
 
@@ -562,6 +581,9 @@ namespace Ecng.Web
 			if (user == null)
 				return SecurityErrorTypes.InvalidName;
 
+			if (user.Deleted)
+				return SecurityErrorTypes.UserDeleted;
+
 			if (user.IsLockedOut)
 				return SecurityErrorTypes.UserLockedOut;
 
@@ -634,7 +656,7 @@ namespace Ecng.Web
 			if (user == null)
 				throw new ArgumentNullException("user");
 
-			return new MembershipUser(base.Name, user.Name, user.Key, user.Email, RequiresQuestionAndAnswer ? user.PasswordQuestion : string.Empty, user.Description, user.IsApproved, user.IsLockedOut, user.CreationDate, user.LastLoginDate, user.LastActivityDate, user.LastPasswordChangedDate, user.LastLockOutDate);
+			return new MembershipUser(Name, user.Name, user.Key, user.Email, RequiresQuestionAndAnswer ? user.PasswordQuestion : string.Empty, user.Description, user.IsApproved, user.IsLockedOut, user.CreationDate, user.LastLoginDate, user.LastActivityDate, user.LastPasswordChangedDate, user.LastLockOutDate);
 		}
 
 		private void ResetPasswordAttemts(IWebUser user)
