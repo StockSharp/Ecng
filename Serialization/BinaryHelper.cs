@@ -308,15 +308,20 @@
 
 		public static Stream Save(this Stream stream, string fileName)
 		{
-			var pos = stream.Position;
-			stream.To<byte[]>().Save(fileName);
-			stream.Position = pos;
+			var pos = stream.CanSeek ? stream.Position : 0;
+
+			using (var file = File.OpenWrite(fileName))
+				stream.CopyTo(file);
+
+			if (stream.CanSeek)
+				stream.Position = pos;
+
 			return stream;
 		}
 
 		public static byte[] Save(this byte[] data, string fileName)
 		{
-			File.WriteAllBytes(fileName, data);
+			data.To<Stream>().Save(fileName);
 			return data;
 		}
 	}
