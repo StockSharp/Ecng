@@ -11,8 +11,8 @@
 	{
 		private static readonly SynchronizedList<DatabaseProvider> _providers = new SynchronizedList<DatabaseProvider>
 		{
-			new SqlServerDatabaseProvider(), new SQLiteDatabaseProvider(), new PostgreSqlDatabaseProvider(),
-			new FirebirdDatabaseProvider(), new JetDatabaseProvider(), new PostgreSqlDatabaseProvider(),
+			new SqlServerDatabaseProvider(), new SQLiteDatabaseProvider(), new JetDatabaseProvider(),
+			//new PostgreSqlDatabaseProvider(), new FirebirdDatabaseProvider()
 		};
 
 		public static ISynchronizedCollection<DatabaseProvider> Providers

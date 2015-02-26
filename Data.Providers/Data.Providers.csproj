@@ -36,12 +36,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FirebirdSql.Data.FirebirdClient">
-      <HintPath>..\References\FirebirdSql.Data.FirebirdClient.dll</HintPath>
-    </Reference>
-    <Reference Include="Npgsql">
-      <HintPath>..\References\Npgsql.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -52,16 +46,10 @@
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="DatabaseProviderRegistry.cs" />
-    <Compile Include="FirebirdRenderer.cs" />
     <Compile Include="JetRenderer.cs" />
     <Compile Include="MySqlRenderer.cs" />
     <Compile Include="OdbcDatabaseProvider.cs" />
-    <Compile Include="FirebirdDatabaseProvider.cs" />
     <Compile Include="JetDatabaseProvider.cs" />
-    <Compile Include="PostgreSqlDatabaseProvider.cs" />
-    <Compile Include="PostgreSqlRenderer.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

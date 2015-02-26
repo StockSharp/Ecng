@@ -123,14 +123,14 @@ namespace Ecng.Test.Data
 		{
 			var renderers = new SqlRenderer[]
 			{
-				new FirebirdRenderer(),
+				//new FirebirdRenderer(),
 				new JetRenderer(),
 				new SqlServerRenderer(),
-				new PostgreSqlRenderer(),
+				//new PostgreSqlRenderer(),
 				new MySqlRenderer()
 			};
 
-			foreach (SqlRenderer renderer in renderers)
+			foreach (var renderer in renderers)
 				Query.Create(typeof(QueryTestEntity).GetSchema(), type, null, null).Render(renderer);
 		}
 	}
