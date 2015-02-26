@@ -242,7 +242,7 @@
 			if (size > int.MaxValue / 10)
 				throw new ArgumentOutOfRangeException("size", "Size has too big value {0}.".Put(size));
 
-			var buffer = size > 0 ? stream.ReadBuffer(size) : ArrayHelper<byte>.EmptyArray;
+			var buffer = size > 0 ? stream.ReadBuffer(size) : ArrayHelper.Empty<byte>();
 
 			if (type == typeof(byte[]))
 				return buffer;

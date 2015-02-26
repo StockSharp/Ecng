@@ -2,16 +2,21 @@
 {
 	using System;
 
-	public static class ArrayHelper<T>
-	{
-		public static T[] EmptyArray = new T[0];
-	}
-
 	/// <summary>
 	/// Class-helper that provided some routine extension based methods.
 	/// </summary>
 	public static class ArrayHelper
 	{
+		private static class EmptyArrayHolder<T>
+		{
+			public static readonly T[] Array = new T[0];
+		}
+
+		public static T[] Empty<T>()
+		{
+			return EmptyArrayHolder<T>.Array;
+		}
+
 		/// <summary>
 		/// Sets all of elements in the <see cref="Array"/> to zero, to false, or to null, depending on the element type.
 		/// </summary>

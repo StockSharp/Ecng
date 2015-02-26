@@ -51,7 +51,7 @@ namespace Ecng.Reflection.Path
 				else if (methodArgs.Count == 1)
 					return Invoker.ReturnInvoke(methodArgs[0]);
 				else
-					return Invoker.ReturnInvoke(ArrayHelper<object>.EmptyArray);				
+					return Invoker.ReturnInvoke(ArrayHelper.Empty<object>());				
 			}
 			else
 			{
@@ -60,7 +60,7 @@ namespace Ecng.Reflection.Path
 				else if (methodArgs.Count == 1)
 					return Invoker.ReturnInvoke(instance, methodArgs[0]);
 				else
-					return Invoker.ReturnInvoke(instance, ArrayHelper<object>.EmptyArray);	
+					return Invoker.ReturnInvoke(instance, ArrayHelper.Empty<object>());	
 			}
 		}
 

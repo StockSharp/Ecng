@@ -412,7 +412,7 @@ namespace Ecng.Xaml
 		public void Wait()
 		{
 			var syncRoot = new SyncObject();
-			AddAction(new CollectionAction(ActionTypes.Wait, ArrayHelper<TItem>.EmptyArray) { SyncRoot = syncRoot });
+			AddAction(new CollectionAction(ActionTypes.Wait, ArrayHelper.Empty<TItem>()) { SyncRoot = syncRoot });
 			syncRoot.Wait();
 		}
 

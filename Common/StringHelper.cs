@@ -126,7 +126,7 @@
 				throw new ArgumentNullException("str");
 
 			if (str.Length == 0)
-				return ArrayHelper<string>.EmptyArray;
+				return ArrayHelper.Empty<string>();
 
 			return str.Split(new[] { separator }, removeEmptyEntries ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
 		}

@@ -556,7 +556,7 @@ namespace Ecng.Data
 				return ReadAll<TEntity>(GetCommand(SchemaManager.GetSchema<TEntity>(), SqlCommandTypes.ReadAll, fields, new FieldList()), input);
 			}
 			else
-				return ArrayHelper<TEntity>.EmptyArray;
+				return ArrayHelper.Empty<TEntity>();
 		}
 
 		public virtual IEnumerable<TEntity> ReadAll<TEntity>(DatabaseCommand command, SerializationItemCollection input)

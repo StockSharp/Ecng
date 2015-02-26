@@ -71,16 +71,16 @@ namespace Ecng.Reflection.Emit
 				throw new ArgumentNullException("ctor");
 
 			if (props == null)
-				props = ArrayHelper<PropertyInfo>.EmptyArray;
+				props = ArrayHelper.Empty<PropertyInfo>();
 
 			if (propValues == null)
-				propValues = ArrayHelper<object>.EmptyArray;
+				propValues = ArrayHelper.Empty<object>();
 
 			if (fields == null)
-				fields = ArrayHelper<FieldInfo>.EmptyArray;
+				fields = ArrayHelper.Empty<FieldInfo>();
 
 			if (fieldValues == null)
-				fieldValues = ArrayHelper<object>.EmptyArray;
+				fieldValues = ArrayHelper.Empty<object>();
 
 			if (props.HasNullItem())
 				throw new ArgumentException("props");

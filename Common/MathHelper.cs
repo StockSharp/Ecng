@@ -583,7 +583,7 @@ namespace Ecng.Common
 
 			if (mantissa == 0)
 			{
-				return ArrayHelper<long>.EmptyArray;
+				return ArrayHelper.Empty<long>();
 			}
 
 			/* Normalize */
@@ -749,7 +749,7 @@ namespace Ecng.Common
 				return new[] { x1, x2 };
 			}
 			else
-				return ArrayHelper<double>.EmptyArray;
+				return ArrayHelper.Empty<double>();
 		}
 
 		public static long AsRaw(this double value)

@@ -144,7 +144,7 @@ namespace Ecng.Reflection
 		/// </returns>
 		public override ParameterInfo[] GetParameters()
 		{
-			return ArrayHelper<ParameterInfo>.EmptyArray;
+			return ArrayHelper.Empty<ParameterInfo>();
 		}
 
 		/// <summary>
@@ -159,7 +159,7 @@ namespace Ecng.Reflection
 		/// <exception cref="T:System.TypeLoadException">The custom attribute type cannot be loaded. </exception>
 		public override object[] GetCustomAttributes(Type attributeType, bool inherit)
 		{
-			return ArrayHelper<object>.EmptyArray;
+			return ArrayHelper.Empty<object>();
 		}
 
 		/// <summary>
@@ -171,7 +171,7 @@ namespace Ecng.Reflection
 		/// </returns>
 		public override object[] GetCustomAttributes(bool inherit)
 		{
-			return ArrayHelper<object>.EmptyArray;
+			return ArrayHelper.Empty<object>();
 		}
 
 		/// <summary>

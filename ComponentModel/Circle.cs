@@ -97,7 +97,7 @@ namespace Ecng.ComponentModel
 
 			var roots = MathHelper.GetRoots(a, b, c);
 			if (roots.IsEmpty())
-				return ArrayHelper<Point<double>>.EmptyArray;
+				return ArrayHelper.Empty<Point<double>>();
 
 			var lp = new List<Point<double>>();
 			if ((roots[0] >= 0) && (roots[0] <= 1))   // нас удовлетворяют только t в пределах [0..1] - отрезок

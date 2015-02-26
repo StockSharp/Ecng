@@ -269,7 +269,7 @@ namespace Ecng.Common
 		public static IEnumerable<T> GetInvocationList<T>(this T @delegate)
 		{
 			var dlg = @delegate.To<Delegate>();
-			var list = dlg != null ? dlg.GetInvocationList() : ArrayHelper<Delegate>.EmptyArray;
+			var list = dlg != null ? dlg.GetInvocationList() : ArrayHelper.Empty<Delegate>();
 			return list.Cast<T>();
 		}
 	}
