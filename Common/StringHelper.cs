@@ -17,7 +17,6 @@
 
 	using SmartFormat;
 	using SmartFormat.Core.Extensions;
-	using SmartFormat.Core.Parsing;
 #endif
 
 	public static class StringHelper
@@ -48,21 +47,21 @@
 #if !SILVERLIGHT
 		private class DictionarySourceEx : ISource
 		{
-			public void EvaluateSelector(object current, Selector selector, ref bool handled, ref object result, FormatDetails formatDetails)
+			bool ISource.TryEvaluateSelector(ISelectorInfo selectorInfo)
 			{
-				var dictionary = current as IDictionary;
+				var dictionary = selectorInfo.CurrentValue as IDictionary;
 
 				if (dictionary == null)
-					return;
+					return false;
 
 				var type = dictionary.GetType().GetGenericType(typeof(IDictionary<,>));
 
 				if (type == null)
-					return;
+					return false;
 
-				var key = selector.Text.To(type.GetGenericArguments()[0]);
-				result = dictionary[key];
-				handled = true;
+				var key = selectorInfo.Selector.Text.To(type.GetGenericArguments()[0]);
+				selectorInfo.Result = dictionary[key];
+				return true;
 			}
 		}
 

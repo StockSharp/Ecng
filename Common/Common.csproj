@@ -61,9 +61,6 @@
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="PresentationCore" />
-    <Reference Include="SmartFormat">
-      <HintPath>..\References\SmartFormat.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -86,6 +83,45 @@
     <Compile Include="CsvFile.cs" />
     <Compile Include="NtpClient.cs" />
     <Compile Include="ResettableTimer.cs" />
+    <Compile Include="SmartFormat\Core\Extensions\IFormatter.cs" />
+    <Compile Include="SmartFormat\Core\Extensions\IFormattingInfo.cs" />
+    <Compile Include="SmartFormat\Core\Extensions\ISelectorInfo.cs" />
+    <Compile Include="SmartFormat\Core\Extensions\ISource.cs" />
+    <Compile Include="SmartFormat\Core\Formatting\FormatCache.cs" />
+    <Compile Include="SmartFormat\Core\Formatting\FormatDetails.cs" />
+    <Compile Include="SmartFormat\Core\Formatting\FormattingException.cs" />
+    <Compile Include="SmartFormat\Core\Formatting\FormattingInfo.cs" />
+    <Compile Include="SmartFormat\Core\Output\IOutput.cs" />
+    <Compile Include="SmartFormat\Core\Output\StringOutput.cs" />
+    <Compile Include="SmartFormat\Core\Output\TextWriterOutput.cs" />
+    <Compile Include="SmartFormat\Core\Parsing\Format.cs" />
+    <Compile Include="SmartFormat\Core\Parsing\FormatItem.cs" />
+    <Compile Include="SmartFormat\Core\Parsing\LiteralText.cs" />
+    <Compile Include="SmartFormat\Core\Parsing\Parser.cs" />
+    <Compile Include="SmartFormat\Core\Parsing\ParsingErrors.cs" />
+    <Compile Include="SmartFormat\Core\Parsing\Placeholder.cs" />
+    <Compile Include="SmartFormat\Core\Parsing\Selector.cs" />
+    <Compile Include="SmartFormat\Core\Settings\CaseSensitivityType.cs" />
+    <Compile Include="SmartFormat\Core\Settings\ErrorAction.cs" />
+    <Compile Include="SmartFormat\Core\Settings\SmartSettings.cs" />
+    <Compile Include="SmartFormat\Extensions\ChooseFormatter.cs" />
+    <Compile Include="SmartFormat\Extensions\ConditionalFormatter.cs" />
+    <Compile Include="SmartFormat\Extensions\DefaultFormatter.cs" />
+    <Compile Include="SmartFormat\Extensions\DefaultSource.cs" />
+    <Compile Include="SmartFormat\Extensions\DictionarySource.cs" />
+    <Compile Include="SmartFormat\Extensions\ListFormatter.cs" />
+    <Compile Include="SmartFormat\Extensions\PluralLocalizationFormatter.cs" />
+    <Compile Include="SmartFormat\Extensions\ReflectionSource.cs" />
+    <Compile Include="SmartFormat\Extensions\TimeFormatter.cs" />
+    <Compile Include="SmartFormat\Extensions\XElementFormatter.cs" />
+    <Compile Include="SmartFormat\Extensions\XmlSource.cs" />
+    <Compile Include="SmartFormat\Smart.cs" />
+    <Compile Include="SmartFormat\SmartExtensions.cs" />
+    <Compile Include="SmartFormat\SmartFormatter.cs" />
+    <Compile Include="SmartFormat\Utilities\FormatDelegate.cs" />
+    <Compile Include="SmartFormat\Utilities\PluralRules.cs" />
+    <Compile Include="SmartFormat\Utilities\PluralRules_Old.cs" />
+    <Compile Include="SmartFormat\Utilities\TimeSpanUtility.cs" />
     <Compile Include="SmartPointer.cs" />
     <Compile Include="Cloneable.cs" />
     <Compile Include="CloneHelper.cs" />
