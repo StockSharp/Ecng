@@ -1,7 +1,7 @@
 ﻿namespace Ecng.Collections
 {
 	using System;
-	using System.Collections;
+	using System.IO;
 
 	using Ecng.Common;
 
@@ -10,16 +10,17 @@
 		private int _bitOffset;
 		private int _dataOffset;
 		private readonly ulong[] _data;
+		private readonly Stream _underlyingStream;
 
-		public BitArrayReader(BitArray bitArray)
-			: this(bitArray.To<byte[]>())
+		public BitArrayReader(Stream underlyingStream)
 		{
-		}
+			if (underlyingStream == null)
+				throw new ArgumentNullException("underlyingStream");
 
-		public BitArrayReader(byte[] bytes)
-		{
-			if (bytes == null)
-				throw new ArgumentNullException("bytes");
+			_underlyingStream = underlyingStream;
+
+			// TODO
+			var bytes = underlyingStream.To<byte[]>();
 
 			_data = new ulong[bytes.Length / 8 + 2];
 			Buffer.BlockCopy(bytes, 0, _data, 0, bytes.Length);
@@ -38,9 +39,14 @@
 			}
 		}
 
+		private ulong Get(int offset)
+		{
+			return _data[offset];
+		}
+
 		public bool Read()
 		{
-			var b = _data[_dataOffset];
+			var b = Get(_dataOffset);
 
 			var value = ((b >> _bitOffset) & 1) != 0;
 
@@ -82,14 +88,13 @@
 			if (count <= 0 || count > 64)
 				throw new ArgumentOutOfRangeException("count", count, "Invalid count value.");
 
-			var offset = _dataOffset;
 			var bitOffset = _bitOffset;
 
-			var value = _data[offset] >> bitOffset;
+			var value = Get(_dataOffset) >> bitOffset;
 
 			var shift = 64 - bitOffset;
 			if (shift < count)
-				value |= _data[offset + 1] << shift;
+				value |= Get(_dataOffset + 1) << shift;
 
 			bitOffset = bitOffset + count;
 			_dataOffset += bitOffset >> 6;
@@ -102,14 +107,13 @@
 
 		public int ReadInt()
 		{
-			var offset = _dataOffset;
-			var bits = _data[offset];
+			var bits = Get(_dataOffset);
 			var bitOffset = _bitOffset;
 
 			bits >>= bitOffset;
 
 			if (bitOffset > 0)
-				bits |= _data[offset + 1] << (64 - bitOffset); // честные 64 бита в битс
+				bits |= Get(_dataOffset + 1) << (64 - bitOffset); // честные 64 бита в битс
 
 			var value = 0;
 
@@ -153,7 +157,7 @@
 			value = (bits & 2) != 0 ? value : -value;
 
 			bitOffset += seek;
-			_dataOffset = offset + (bitOffset >> 6);
+			_dataOffset = _dataOffset + (bitOffset >> 6);
 			_bitOffset = bitOffset & 63;
 
 			return value;
@@ -163,10 +167,10 @@
 		{
 			var offset = _dataOffset;
 			var bitOffset = _bitOffset;
-			var bits = _data[offset] >> bitOffset;
+			var bits = Get(offset) >> bitOffset;
 
 			if (bitOffset > 0)
-				bits |= _data[offset + 1] << (64 - bitOffset);
+				bits |= Get(offset + 1) << (64 - bitOffset);
 
 			long value;
 			if ((bits & 1) != 0)
@@ -177,10 +181,10 @@
 
 				offset += bitOffset >> 6;
 				bitOffset &= 63;
-				bits = _data[offset] >> bitOffset;
+				bits = Get(offset) >> bitOffset;
 
 				if (bitOffset > 0)
-					bits |= _data[offset + 1] << (64 - bitOffset);
+					bits |= Get(offset + 1) << (64 - bitOffset);
 
 				bitOffset += 63;
 
@@ -188,7 +192,6 @@
 
 				if (!isPositive)
 					value = -value;
-
 			}
 			else
 			{

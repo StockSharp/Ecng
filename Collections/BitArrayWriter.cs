@@ -1,78 +1,107 @@
 namespace Ecng.Collections
 {
-	using System.Collections;
-	using System.Collections.Generic;
+	using System;
+	using System.IO;
 
 	using Ecng.Common;
 
-	public class BitArrayWriter
+	public class BitArrayWriter : Disposable
 	{
-		private readonly List<bool> _bits;
+		private readonly Stream _underlyingStream;
+		private int _temp;
+		private int _bitOffset;
 
-		public BitArrayWriter(int capacity = 0)
+		public BitArrayWriter(Stream underlyingStream)
 		{
-			_bits = new List<bool>(capacity);
+			if (underlyingStream == null)
+				throw new ArgumentNullException("underlyingStream");
+
+			_underlyingStream = underlyingStream;
+		}
+
+		private void Flush()
+		{
+			_underlyingStream.WriteByte((byte)_temp);
+			_temp = 0;
+			_bitOffset = 0;
+		}
+
+		protected override void DisposeManaged()
+		{
+			Flush();
+			base.DisposeManaged();
 		}
 
 		public void Write(bool bit)
 		{
-			_bits.Add(bit);
+			_temp |= ((bit ? 1 : 0) << _bitOffset);
+
+			_bitOffset++;
+
+			if (_bitOffset < 8)
+				return;
+
+			Flush();
 		}
 
 		public void WriteInt(int value)
 		{
 			if (value == 0)
-				_bits.Add(false);
+				Write(false);
 			else
 			{
-				_bits.Add(true);
+				Write(true);
 
 				if (value < 0)
 				{
 					value = -value;
-					_bits.Add(false);
+					Write(false);
 				}
 				else
-					_bits.Add(true);
+					Write(true);
 
 				if (value == 1)
-					_bits.Add(false);
+					Write(false);
 				else
 				{
-					_bits.Add(true);
+					Write(true);
+
 					if (value < 16)
 					{
-						_bits.Add(false);
-						_bits.AddRange(value.ToBits(4));
+						Write(false);
+						WriteBits(value, 4);
 					}
 					else
 					{
-						_bits.Add(true);
+						Write(true);
+
 						if (value <= byte.MaxValue)
 						{
-							_bits.Add(false);
-							_bits.AddRange(value.ToBits(8));
+							Write(false);
+							WriteBits(value, 8);
 						}
 						else
 						{
-							_bits.Add(true);
+							Write(true);
+
 							if (value <= ushort.MaxValue)
 							{
-								_bits.Add(false);
-								_bits.AddRange(value.ToBits(16));
+								Write(false);
+								WriteBits(value, 16);
 							}
 							else
 							{
-								_bits.Add(true);
+								Write(true);
+
 								if (value <= 16777216) // 24 бита
 								{
-									_bits.Add(false);
-									_bits.AddRange(value.ToBits(24));
+									Write(false);
+									WriteBits(value, 24);
 								}
 								else
 								{
-									_bits.Add(true);
-									_bits.AddRange(value.ToBits(32));
+									Write(true);
+									WriteBits(value, 32);
 								}
 							}
 						}
@@ -85,13 +114,13 @@ namespace Ecng.Collections
 		{
 			if (value.Abs() > int.MaxValue)
 			{
-				_bits.Add(true);
-				_bits.Add(value >= 0);
+				Write(true);
+				Write(value >= 0);
 				WriteBits(value.Abs(), 63);
 			}
 			else
 			{
-				_bits.Add(false);
+				Write(false);
 				WriteInt((int)value);
 			}
 		}
@@ -99,23 +128,13 @@ namespace Ecng.Collections
 		public void WriteBits(int value, int bitCount)
 		{
 			for (var i = 0; i < bitCount; i++)
-				_bits.Add((value & (1 << i)) != 0);
+				Write((value & (1 << i)) != 0);
 		}
 
 		public void WriteBits(long value, int bitCount)
 		{
 			for (var i = 0; i < bitCount; i++)
-				_bits.Add((value & (1L << i)) != 0);
-		}
-
-		public byte[] GetBytes()
-		{
-			return new BitArray(GetBits()).To<byte[]>();
-		}
-
-		public bool[] GetBits()
-		{
-			return _bits.ToArray();
+				Write((value & (1L << i)) != 0);
 		}
 	}
 }

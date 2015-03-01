@@ -892,7 +892,7 @@ namespace Ecng.Data.Sql
 
 		public static Query Execute(string sqlBatch)
 		{
-			return CreateQuery((renderer, builder) => builder.AppendLine(sqlBatch));
+			return CreateQuery((renderer, builder) => builder.Append(sqlBatch));
 		}
 
 		public Query As()
