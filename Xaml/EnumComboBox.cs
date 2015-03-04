@@ -69,7 +69,7 @@
 			}
 		}
 
-		private static readonly Dictionary<Type, PairSet<object, string>> _names = new Dictionary<Type, PairSet<object, string>>();
+		private static readonly Dictionary<Type, Dictionary<object, string>> _names = new Dictionary<Type, Dictionary<object, string>>();
 		private static readonly Dictionary<ComboBox, ObservableCollection<EnumerationMember>> _sources = new Dictionary<ComboBox, ObservableCollection<EnumerationMember>>();
 
 		public static IEnumerable<T> GetDataSource<T>(this ComboBox comboBox)
@@ -106,17 +106,11 @@
 			if (dataSource == null)
 				throw new ArgumentNullException("dataSource");
 
-			var set = _names.SafeAdd(enumType, key =>
-			{
-				var retVal = new PairSet<object, string>();
+			var dict = _names.SafeAdd(enumType, key => enumType
+				.GetValues()
+				.ToDictionary(f => f, f => f.GetDisplayName()));
 
-				foreach (var enumField in enumType.GetValues())
-					retVal.Add(enumField, enumField.GetDisplayName());
-
-				return retVal;
-			});
-
-			GetItemsSource(comboBox).AddRange(dataSource.Select(item => new EnumerationMember { Description = set.GetValue(item), Value = item }));
+			GetItemsSource(comboBox).AddRange(dataSource.Select(item => new EnumerationMember { Description = dict[item], Value = item }));
 		}
 
 		public static ObservableCollection<EnumerationMember> GetItemsSource(this ComboBox comboBox)
