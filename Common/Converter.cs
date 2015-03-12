@@ -115,7 +115,7 @@
 				return ((DnsEndPoint)endPoint).Host;
 			}
 			else
-				throw new InvalidOperationException("Неизвестная информация об адресе.");
+				throw new InvalidOperationException("Unknown endpoint {0}.".Put(endPoint));
 		}
 
 		public static int GetPort(this EndPoint endPoint)
@@ -132,7 +132,7 @@
 				return ((DnsEndPoint)endPoint).Port;
 			}
 			else
-				throw new InvalidOperationException("Неизвестная информация об адресе.");
+				throw new InvalidOperationException("Unknown endpoint {0}.".Put(endPoint));
 		}
 
 		/// <summary>
@@ -426,14 +426,14 @@
 
 					retVal = output.ToArray();
 				}
-				else if (value is byte[] && destinationType == typeof(Stream))
+				else if (value is byte[] && (destinationType == typeof(Stream) || destinationType == typeof(MemoryStream)))
 				{
 					var stream = new MemoryStream(((byte[])value).Length);
 					stream.Write((byte[])value, 0, stream.Capacity);
 					stream.Position = 0;
 					retVal = stream;
 				}
-				else if (value is string && destinationType == typeof(Stream))
+				else if (value is string && (destinationType == typeof(Stream) || destinationType == typeof(MemoryStream)))
 				{
 					retVal = value.To<byte[]>().To<Stream>();
 				}
@@ -502,7 +502,7 @@
 						retVal = bytes;
 					}
 					else
-						throw new ArgumentException("Can't convert type '{0}' to byte[].".Put(sourceType), "value");
+						throw new ArgumentException("Can't convert '{0}' to byte array.".Put(sourceType), "value");
 				}
 				else if (value is byte[])
 				{
@@ -561,7 +561,7 @@
 						return new decimal(bits);
 					}
 					else
-						throw new ArgumentException("Can't convert byte[] to type '{0}'.".Put(destinationType), "value");
+						throw new ArgumentException("Can't convert byte array to '{0}'.".Put(destinationType), "value");
 
 					if (enumType != null)
 						retVal = Enum.ToObject(enumType, retVal);
@@ -755,7 +755,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException("Cannot convert {0} to type {1}.".Put(value, destinationType), ex);
+				throw new InvalidCastException("Cannot convert {0} to {1}.".Put(value, destinationType), ex);
 			}
 		}
 
