@@ -243,7 +243,7 @@ namespace Ecng.Common
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to DateTime.".Put(value, format), ex);
+				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(value, format, typeof(DateTime).Name), ex);
 			}
 		}
 
@@ -268,7 +268,7 @@ namespace Ecng.Common
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to TimeSpan.".Put(value, format), ex);
+				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(value, format, typeof(TimeSpan).Name), ex);
 			}
 		}
 
@@ -293,7 +293,7 @@ namespace Ecng.Common
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to TimeSpan.".Put(value, format), ex);
+				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(value, format, typeof(DateTimeOffset).Name), ex);
 			}
 		}
 
