@@ -61,7 +61,7 @@
 		public TFifth Fifth { get; set; }
 	}
 
-	public static class Ref
+	public static class RefTuple
 	{
 		public static RefPair<TFirst, TSecond> Create<TFirst, TSecond>(TFirst first, TSecond second)
 		{

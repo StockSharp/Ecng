@@ -62,7 +62,7 @@ namespace Ecng.Web.UI.WebControls
 			if (altText.IsEmpty())
 				throw new ArgumentNullException("altText");
 
-			_imageUrls.Add("[" + code + "]", Ref.Create(url, altText));
+			_imageUrls.Add("[" + code + "]", RefTuple.Create(url, altText));
 		}
 
 		//private static string tocTitlePlaceHolder = "%%%%TocTitlePlaceHolder%%%%";
