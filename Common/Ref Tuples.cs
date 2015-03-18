@@ -60,4 +60,27 @@
 
 		public TFifth Fifth { get; set; }
 	}
+
+	public static class Ref
+	{
+		public static RefPair<TFirst, TSecond> Create<TFirst, TSecond>(TFirst first, TSecond second)
+		{
+			return new RefPair<TFirst, TSecond>(first, second);
+		}
+
+		public static RefTriple<TFirst, TSecond, TThird> Create<TFirst, TSecond, TThird>(TFirst first, TSecond second, TThird third)
+		{
+			return new RefTriple<TFirst, TSecond, TThird>(first, second, third);
+		}
+
+		public static RefQuadruple<TFirst, TSecond, TThird, TFourth> Create<TFirst, TSecond, TThird, TFourth>(TFirst first, TSecond second, TThird third, TFourth fourth)
+		{
+			return new RefQuadruple<TFirst, TSecond, TThird, TFourth>(first, second, third, fourth);
+		}
+
+		public static RefFive<TFirst, TSecond, TThird, TFourth, TFifth> Create<TFirst, TSecond, TThird, TFourth, TFifth>(TFirst first, TSecond second, TThird third, TFourth fourth, TFifth fifth)
+		{
+			return new RefFive<TFirst, TSecond, TThird, TFourth, TFifth>(first, second, third, fourth, fifth);
+		}
+	}
 }
