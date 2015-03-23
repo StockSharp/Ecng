@@ -1,9 +1,13 @@
 namespace Ecng.ComponentModel
 {
+	using System;
 	using System.ComponentModel;
+	using System.Runtime.Serialization;
 
 	using Ecng.Common;
 
+	[Serializable]
+	[DataContract]
 	public abstract class NotifiableObject : INotifyPropertyChangedEx, INotifyPropertyChanging
 	{
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -20,7 +24,7 @@ namespace Ecng.ComponentModel
 
 		protected void NotifyChanged(string propertyName)
 		{
-			NotifyPropertyChangedExHelper.Notify(this, propertyName);
+			this.Notify(propertyName);
 		}
 
 		protected void NotifyChanging(string propertyName)
