@@ -4,6 +4,7 @@ namespace Ecng.Common
 
 	using System;
 	using System.ComponentModel;
+	using System.Diagnostics;
 	using System.Xml.Serialization;
 
 	#endregion
@@ -79,7 +80,15 @@ namespace Ecng.Common
 		/// </summary>
 		~Disposable()
 		{
-            DisposeNative();
+			// http://stackoverflow.com/a/9903121
+			try
+			{
+				DisposeNative();
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine(ex);
+			}
 		}
 
 		#endregion
