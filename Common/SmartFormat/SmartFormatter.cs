@@ -18,11 +18,12 @@ namespace SmartFormat
 		#region: Constructor :
 
 		public SmartFormatter()
-			#if DEBUG
 			: this(ErrorAction.ThrowError)
-			#else
-			: this(ErrorAction.Ignore)
-			#endif
+			//#if DEBUG
+			//: this(ErrorAction.ThrowError)
+			//#else
+			//: this(ErrorAction.Ignore)
+			//#endif
 		{
 		}
 
