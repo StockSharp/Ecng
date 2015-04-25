@@ -28,7 +28,9 @@ namespace Ecng.Collections
 
 		protected override void DisposeManaged()
 		{
-			Flush();
+			if (_bitOffset > 0)
+				Flush();
+
 			base.DisposeManaged();
 		}
 
