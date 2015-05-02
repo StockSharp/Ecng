@@ -4,7 +4,6 @@
 
 	using System;
 	using System.Collections.Generic;
-	using System.Deployment.Internal;
 	using System.Globalization;
 	using System.Linq;
 	using System.Reflection;
@@ -35,12 +34,21 @@
 
 		#region MemberProxy.ctor()
 
-		private MemberProxy(Type rootType, string path, IEnumerable<MemberProxyItem> items)
+		private MemberProxy(Type rootType, string path, MemberProxyItem[] items)
 		{
+			if (rootType == null)
+				throw new ArgumentNullException("rootType");
+
+			if (path.IsEmpty())
+				throw new ArgumentNullException("path");
+
+			if (items == null)
+				throw new ArgumentNullException("items");
+
 			_rootType = rootType;
 			_path = path;
 
-			if (items.HasNullItem())
+			if (items.Length == 0)
 				throw new ArgumentException("items");
 
 			Items = items;
@@ -131,7 +139,7 @@
 
 		#region GetItems
 
-		private static IEnumerable<MemberProxyItem> GetItems(Type type, IEnumerable<string> memberNames)
+		private static MemberProxyItem[] GetItems(Type type, IEnumerable<string> memberNames)
 		{
 			var items = new List<MemberProxyItem>();
 
@@ -190,7 +198,7 @@
 					throw new ArgumentException("memberNames");
 			}
 
-			return items;
+			return items.ToArray();
 		}
 
 		#endregion
