@@ -54,7 +54,30 @@ namespace SmartFormat.Extensions
 							}
 							else
 							{
-								continue;
+								method = null;
+
+								// mika
+								// https://github.com/scottrippey/SmartFormat.NET/issues/57
+
+								var setter = prop.GetSetMethod();
+
+								if (setter != null)
+								{
+									var baseSetter = setter.GetBaseDefinition();
+
+									if (baseSetter != setter)
+									{
+										var baseProp = baseSetter.DeclaringType.GetProperty(selector.Text, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
+										if (baseProp != null)
+										{
+											method = baseProp.GetGetMethod();
+										}
+									}
+								}
+
+								if (method == null)
+									continue;
 							}
 						}
 						else
