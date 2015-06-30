@@ -300,7 +300,7 @@ namespace Ecng.Web
 		{
 			var user = Users.GetByEmail(email);
 
-			if (user == null)
+			if (user == null || user.Deleted)
 				return null;
 
 			return user.Name;
@@ -313,7 +313,7 @@ namespace Ecng.Web
 
 			var user = Users.GetByKey(providerUserKey);
 
-			if (user == null)
+			if (user == null || user.Deleted)
 				throw new ArgumentException("User not founded.", "providerUserKey");
 
 			if (userIsOnline)
@@ -335,7 +335,7 @@ namespace Ecng.Web
 
 			var user = Users.GetByName(userName);
 
-			if (user == null)
+			if (user == null || user.Deleted)
 			{
 				//SecurityError(userName, SecurityErrorTypes.InvalidName);
 				return null;
