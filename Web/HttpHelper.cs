@@ -283,7 +283,18 @@ namespace Ecng.Web
 			if (file == null)
 				throw new ArgumentNullException("file");
 
-			var body = file.Body.To<Stream>();
+			return ShrinkFile(file.Body, size);
+		}
+
+		public static byte[] ShrinkFile(this byte[] file, Size<int> size)
+		{
+			if (file == null)
+				throw new ArgumentNullException("file");
+
+			if (size == null)
+				throw new ArgumentNullException("size");
+
+			var body = file.To<Stream>();
 
 			if (body == null)
 				throw new ArgumentException("file");
