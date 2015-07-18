@@ -40,8 +40,6 @@
 				throw new AggregateException("Unable to load string resources.", ex1, ex2);
 		}
 
-		public Languages ActiveLanguage { get; set; }
-
 		private Exception ProcessCsvStream(string name, Func<Stream> getCsvStream)
 		{
 			try
@@ -129,7 +127,7 @@
 
 		public event Action<string, bool> Missing;
 
-		public string GetString(string resourceId)
+		public string GetString(string resourceId, Languages language)
 		{
 			var arr = _stringByResourceId.TryGetValue(resourceId);
 
@@ -139,7 +137,7 @@
 				return resourceId;
 			}
 
-			var index = (int)ActiveLanguage;
+			var index = (int)language;
 
 			if (index < arr.Length)
 				return arr[index];
