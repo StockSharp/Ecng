@@ -983,7 +983,7 @@
 					rowIndex++;
 				}
 
-				worker.Save(dlg.FileName);
+				worker.Save(dlg.FileName, false);
 			}
 		}
 

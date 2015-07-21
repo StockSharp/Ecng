@@ -555,19 +555,23 @@
 		/// 
 		/// </summary>
 		/// <param name="fileName"></param>
+		/// <param name="autoSizeColumns"></param>
 		/// <returns></returns>
-		public ExcelWorker Save(string fileName)
+		public ExcelWorker Save(string fileName, bool autoSizeColumns)
 		{
 			if (fileName.IsEmpty())
 				throw new ArgumentNullException("fileName");
 
-			for (var i = 0; i < Workbook.NumberOfSheets; i++)
+			if (autoSizeColumns)
 			{
-				var sheet = Workbook.GetSheetAt(i);
+				for (var i = 0; i < Workbook.NumberOfSheets; i++)
+				{
+					var sheet = Workbook.GetSheetAt(i);
 
-				// TODO
-				for (var j = 0; j < 20; j++)
-					sheet.AutoSizeColumn(j);
+					// TODO
+					for (var j = 0; j < 20; j++)
+						sheet.AutoSizeColumn(j);
+				}	
 			}
 
 			using (var file = new FileStream(fileName, FileMode.Create))
