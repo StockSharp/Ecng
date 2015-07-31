@@ -116,6 +116,11 @@ namespace Ecng.Common
 		public const int Tick = 1;
 
 		/// <summary>
+		/// Represents the number of ticks in 1 nanosecond. This field is constant.
+		/// </summary>
+		public const long TicksPerNanosecond = 1000;
+
+		/// <summary>
 		/// Represents the number of ticks in 1 microsecond. This field is constant.
 		/// </summary>
 		public const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
@@ -150,6 +155,21 @@ namespace Ecng.Common
 		public static int GetMicroseconds(this TimeSpan ts)
 		{
 			return (int)((ts.Ticks / (TimeSpan.TicksPerMillisecond / 1000)) % 1000);
+		}
+
+		public static TimeSpan AddNanoseconds(this TimeSpan t, long nanoseconds)
+		{
+			return t + TimeSpan.FromTicks(nanoseconds * TicksPerNanosecond);
+		}
+
+		public static DateTime AddNanoseconds(this DateTime dt, long nanoseconds)
+		{
+			return dt.AddTicks(nanoseconds * TicksPerNanosecond);
+		}
+
+		public static DateTimeOffset AddNanoseconds(this DateTimeOffset dto, long nanoseconds)
+		{
+			return dto.AddTicks(nanoseconds * TicksPerNanosecond);
 		}
 
 		public static DateTime Truncate(this DateTime time, long precision)
