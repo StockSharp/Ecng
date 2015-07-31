@@ -870,5 +870,20 @@
 
 			return result;
 		}
+
+		public static byte[] ChangeOrder(this byte[] bytes, bool isLittleEndian)
+		{
+			if (isLittleEndian == BitConverter.IsLittleEndian)
+				return bytes;
+
+			for (var i = 0; i < bytes.Length / 2; i++)
+			{
+				var temp = bytes[i];
+				bytes[i] = bytes[bytes.Length - i - 1];
+				bytes[bytes.Length - i - 1] = temp;
+			}
+
+			return bytes;
+		}
 	}
 }
