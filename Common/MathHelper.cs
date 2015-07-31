@@ -541,6 +541,21 @@ namespace Ecng.Common
 			return value;
 		}
 
+		public static bool GetBit(this byte value, int index)
+		{
+			return (value & (1 << index - 1)) != 0;
+		}
+
+		public static byte SetBit(this byte value, int index, bool bit)
+		{
+			if (bit)
+				value |= (byte)(1 << index); //set bit index 1
+			else
+				value &= (byte)~(1 << index); //set bit index 0
+
+			return value;
+		}
+
 		public static bool HasBits(this int value, int part)
 		{
 			return (value & part) == part;
