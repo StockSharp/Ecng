@@ -84,6 +84,7 @@
     <Compile Include="AttributeHelper.cs" />
     <Compile Include="CountryCodes.cs" />
     <Compile Include="CsvFile.cs" />
+    <Compile Include="DumpableStream.cs" />
     <Compile Include="IOHelper.cs" />
     <Compile Include="NtpClient.cs" />
     <Compile Include="ResettableTimer.cs" />
