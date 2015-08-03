@@ -310,7 +310,7 @@
 		{
 			var pos = stream.CanSeek ? stream.Position : 0;
 
-			using (var file = File.OpenWrite(fileName))
+			using (var file = File.Create(fileName))
 				stream.CopyTo(file);
 
 			if (stream.CanSeek)
