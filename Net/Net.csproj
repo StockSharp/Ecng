@@ -83,6 +83,7 @@
     <Compile Include="ChannelWrapper.cs" />
     <Compile Include="JsonDateTimeConverter.cs" />
     <Compile Include="MailHelper.cs" />
+    <Compile Include="MulticastSourceAddress.cs" />
     <Compile Include="NetworkHelper.cs" />
     <Compile Include="ReferencePreservingDataContractFormatAttribute.cs" />
     <Compile Include="ServiceHost.cs" />
@@ -94,6 +95,7 @@
     <Compile Include="RemoteMethodAttribute.cs" />
     <Compile Include="Transport\SocketClient.cs" />
     <Compile Include="Transport\SocketServer.cs" />
+    <Compile Include="UdpStream.cs" />
     <Compile Include="WebClientEx.cs">
       <SubType>Component</SubType>
     </Compile>
