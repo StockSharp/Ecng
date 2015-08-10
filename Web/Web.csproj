@@ -91,6 +91,17 @@
     <Compile Include="AspNetPath.cs" />
     <Compile Include="BaseMembershipProvider.cs" />
     <Compile Include="BaseRoleProvider.cs" />
+    <Compile Include="BBCodes\BBAttribute.cs" />
+    <Compile Include="BBCodes\BBCode.cs" />
+    <Compile Include="BBCodes\BBCodeParser.cs" />
+    <Compile Include="BBCodes\BBCodeParsingException.cs" />
+    <Compile Include="BBCodes\BBTag.cs" />
+    <Compile Include="BBCodes\SyntaxTree\SequenceNode.cs" />
+    <Compile Include="BBCodes\SyntaxTree\SyntaxTreeNode.cs" />
+    <Compile Include="BBCodes\SyntaxTree\SyntaxTreeNodeCollection.cs" />
+    <Compile Include="BBCodes\SyntaxTree\SyntaxTreeVisitor.cs" />
+    <Compile Include="BBCodes\SyntaxTree\TagNode.cs" />
+    <Compile Include="BBCodes\SyntaxTree\TextNode.cs" />
     <Compile Include="Configuration\WebSection.cs" />
     <Compile Include="IWebRoleCollection.cs" />
     <Compile Include="IWebUserCollection.cs" />
