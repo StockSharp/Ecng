@@ -80,5 +80,35 @@ namespace Ecng.Net
 
 			return socket.Poll(timeOut, SelectMode.SelectRead) && socket.Available != 0;
 		}
+
+		public static void JoinMulticast(this Socket socket, MulticastSourceAddress address)
+		{
+			if (socket == null)
+				throw new ArgumentNullException("socket");
+
+			socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddSourceMembership, GetBytes(address));	
+		}
+
+		public static void LeaveMulticast(this Socket socket, MulticastSourceAddress address)
+		{
+			if (socket == null)
+				throw new ArgumentNullException("socket");
+
+			socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DropSourceMembership, GetBytes(address));
+		}
+
+		private static byte[] GetBytes(MulticastSourceAddress address)
+		{
+			if (address == null)
+				throw new ArgumentNullException("address");
+
+			// https://social.msdn.microsoft.com/Forums/en-US/e8063f6d-22f5-445e-a00c-bf46b46c1561/how-to-join-source-specific-multicast-group-in-c?forum=netfxnetcom
+
+			var maddr = new byte[12];
+			Array.Copy(address.GroupAddress.GetAddressBytes(), 0, maddr, 0, 4); // <ip> from "config.xml"
+			Array.Copy(address.SourceAddress.GetAddressBytes(), 0, maddr, 4, 4); // <src-ip> from "config.xml"
+			Array.Copy(IPAddress.Any.GetAddressBytes(), 0, maddr, 8, 4);
+			return maddr;
+		}
 	}
 }
