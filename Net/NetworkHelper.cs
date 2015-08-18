@@ -86,7 +86,10 @@ namespace Ecng.Net
 			if (socket == null)
 				throw new ArgumentNullException("socket");
 
-			socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddSourceMembership, GetBytes(address));	
+			if (address.SourceAddress == null)
+				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(address.GroupAddress));
+			else
+				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddSourceMembership, GetBytes(address));
 		}
 
 		public static void LeaveMulticast(this Socket socket, MulticastSourceAddress address)
@@ -94,7 +97,10 @@ namespace Ecng.Net
 			if (socket == null)
 				throw new ArgumentNullException("socket");
 
-			socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DropSourceMembership, GetBytes(address));
+			if (address.SourceAddress == null)
+				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DropMembership, new MulticastOption(address.GroupAddress));
+			else
+				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DropSourceMembership, GetBytes(address));
 		}
 
 		private static byte[] GetBytes(MulticastSourceAddress address)
