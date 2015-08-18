@@ -60,7 +60,10 @@ namespace Ecng.Net
 		public override int Read(byte[] buffer, int offset, int count)
 		{
 			if (_readOffset == _dtgrmSize)
+			{
 				_dtgrmSize = _client.Receive(_mtuBuffer, 0, _mtuBuffer.Length, SocketFlags.None);
+				_readOffset = 0;
+			}
 
 			if (count > (_dtgrmSize - _readOffset))
 				throw new ArgumentOutOfRangeException("count");
