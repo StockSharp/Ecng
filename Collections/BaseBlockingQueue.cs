@@ -117,16 +117,14 @@
 			return retVal;
 		}
 
-		public bool TryDequeue(out T value)
-		{
-			return TryDequeue(out value, true);
-		}
-
-		private bool WaitWhileEmpty(bool exitOnClose)
+		private bool WaitWhileEmpty(bool exitOnClose, bool block)
 		{
 			while (InnerCollection.Count == 0)
 			{
 				if (exitOnClose && _isClosed)
+					return false;
+
+				if (!block)
 					return false;
 
 				Monitor.Wait(_syncRoot);
@@ -135,11 +133,11 @@
 			return true;
 		}
 
-		public bool TryDequeue(out T value, bool exitOnClose)
+		public bool TryDequeue(out T value, bool exitOnClose = true, bool block = true)
 		{
 			lock (_syncRoot)
 			{
-				if (!WaitWhileEmpty(exitOnClose))
+				if (!WaitWhileEmpty(exitOnClose, block))
 				{
 					value = default(T);
 					return false;
@@ -164,16 +162,11 @@
 			return retVal;
 		}
 
-		public bool TryPeek(out T value)
-		{
-			return TryPeek(out value, true);
-		}
-
-		private bool TryPeek(out T value, bool exitOnClose)
+		public bool TryPeek(out T value, bool exitOnClose = true, bool block = true)
 		{
 			lock (SyncRoot)
 			{
-				if (!WaitWhileEmpty(exitOnClose))
+				if (!WaitWhileEmpty(exitOnClose, block))
 				{
 					value = default(T);
 					return false;
