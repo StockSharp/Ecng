@@ -5,7 +5,6 @@
 	using System.Collections.Generic;
 	using System.Collections.Specialized;
 	using System.ComponentModel;
-	using System.IO;
 	using System.Linq;
 	using System.Text;
 	using System.Windows;
@@ -670,37 +669,37 @@
 
 					style.Setters.AddRange(new[]
 					{
-						new Setter(Control.BackgroundProperty, new Binding
+						new Setter(BackgroundProperty, new Binding
 						{
 							RelativeSource = RelativeSource.Self,
 							Converter = textBlockBackgroundConverter,
 						}),
-						new Setter(Control.ForegroundProperty, new Binding
+						new Setter(ForegroundProperty, new Binding
 						{
 							RelativeSource = RelativeSource.Self,
 							Converter = textBlockForegroundConverter,
 						}),
-						new Setter(Control.FontFamilyProperty, new Binding
+						new Setter(FontFamilyProperty, new Binding
 						{
 							RelativeSource = RelativeSource.Self,
 							Converter = textBlockFontFamilyConverter,
 						}),
-						new Setter(Control.FontSizeProperty, new Binding
+						new Setter(FontSizeProperty, new Binding
 						{
 							RelativeSource = RelativeSource.Self,
 							Converter = textBlockFontSizeConverter,
 						}),
-						new Setter(Control.FontStretchProperty, new Binding
+						new Setter(FontStretchProperty, new Binding
 						{
 							RelativeSource = RelativeSource.Self,
 							Converter = textBlockFontStretchConverter,
 						}),
-						new Setter(Control.FontStyleProperty, new Binding
+						new Setter(FontStyleProperty, new Binding
 						{
 							RelativeSource = RelativeSource.Self,
 							Converter = textBlockFontStyleConverter,
 						}),
-						new Setter(Control.FontWeightProperty, new Binding
+						new Setter(FontWeightProperty, new Binding
 						{
 							RelativeSource = RelativeSource.Self,
 							Converter = textBlockFontWeightConverter,
@@ -870,17 +869,40 @@
 			storage.SetValue("DdeSettings", _ddeClient.Settings.Save());
 		}
 
-		private string GetText(string separator)
+		private DataGridColumn[] ExportColumns
+		{
+			get
+			{
+				return Columns
+					.Where(c => c.Visibility == Visibility.Visible)
+					.OrderBy(c => c.DisplayIndex)
+					.ToArray();
+			}
+		}
+
+		private static IEnumerable<string> GetCellValues(object item, IEnumerable<DataGridColumn> columns)
+		{
+			return columns.Select(column =>
+			{
+				var value = item.GetPropValue(column.SortMemberPath);
+				return value != null ? value.ToString() : string.Empty;
+			});
+		}
+
+		protected override void OnCopyingRowClipboardContent(DataGridRowClipboardEventArgs e)
+		{
+			e.ClipboardRowContent.Clear();
+			e.ClipboardRowContent.Add(new DataGridClipboardCellContent(e.Item, null, GetCellValues(e.Item, ExportColumns).Join("\t")));
+		}
+
+		private void ExportClipBoardText_OnClick(object sender, RoutedEventArgs e)
 		{
 			var text = new StringBuilder();
 
-			var columns = Columns
-				.Where(c => c.Visibility == Visibility.Visible)
-				.OrderBy(c => c.DisplayIndex)
-				.ToArray();
+			var columns = ExportColumns;
 
 			text
-				.Append(columns.Select(c => c.Header as string).Join(separator))
+				.Append(columns.Select(c => c.Header as string).Join("\t"))
 				.AppendLine();
 
 			foreach (var i in Items)
@@ -888,43 +910,11 @@
 				var item = i;
 
 				text
-					.Append(GetText(item, columns, separator))
+					.Append(GetCellValues(item, columns).Join("\t"))
 					.AppendLine();
 			}
 
-			return text.ToString();
-		}
-
-		private string GetText(object item, string separator)
-		{
-			var columns = Columns
-				.Where(c => c.Visibility == Visibility.Visible)
-				.OrderBy(c => c.DisplayIndex)
-				.ToArray();
-
-			return GetText(item, columns, separator);
-		}
-
-		private static string GetText(object item, IEnumerable<DataGridColumn> columns, string separator)
-		{
-			return columns
-				.Select(column =>
-				{
-					var value = item.GetPropValue(column.SortMemberPath);
-					return value != null ? value.ToString() : string.Empty;
-				})
-				.Join(separator);
-		}
-
-		protected override void OnCopyingRowClipboardContent(DataGridRowClipboardEventArgs e)
-		{
-			e.ClipboardRowContent.Clear();
-			e.ClipboardRowContent.Add(new DataGridClipboardCellContent(e.Item, null, GetText(e.Item, "\t")));
-		}
-
-		private void ExportClipBoardText_OnClick(object sender, RoutedEventArgs e)
-		{
-			Clipboard.SetText(GetText("\t"));
+			Clipboard.SetText(text.ToString());
 		}
 
 		private void ExportClipBoardImage_OnClick(object sender, RoutedEventArgs e)
@@ -942,7 +932,19 @@
 			};
 
 			if (dlg.ShowDialog(this.GetWindow()) == true)
-				File.WriteAllText(dlg.FileName, GetText(";"));
+			{
+				using (var writer = new CsvFileWriter(dlg.FileName))
+				{
+					var columns = ExportColumns;
+
+					writer.WriteRow(columns.Select(c => c.Header as string).ToList());
+
+					foreach (var item in Items)
+					{
+						writer.WriteRow(GetCellValues(item, columns).ToList());
+					}
+				}
+			}
 		}
 
 		private void ExportExcel_OnClick(object sender, RoutedEventArgs e)
