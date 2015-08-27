@@ -252,6 +252,16 @@
 			return Database.GetCommand(Query.Execute(Schema, morph), Schema, null, null).ExecuteNonQuery(source);
 		}
 
+		protected SerializationItemCollection ExecuteRow(string morph, SerializationItemCollection source)
+		{
+			return Database.GetCommand(Query.Execute(Schema, morph), Schema, null, null).ExecuteRow(source);
+		}
+
+		protected SerializationItemCollection ExecuteTable(string morph, SerializationItemCollection source)
+		{
+			return Database.GetCommand(Query.Execute(Schema, morph), Schema, null, null).ExecuteTable(source);
+		}
+
 		private static IEnumerable<Tuple<Field, object>> ConvertToPairs(IEnumerable<object> entities)
 		{
 			return entities.Select(entity => new Tuple<Field, object>(Schema.Fields[entity.GetType().GetSchema().Name], entity));

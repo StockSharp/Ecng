@@ -92,17 +92,17 @@ namespace Ecng.Data
 			}
 		}
 
-		public int ExecuteNonQuery(SerializationItemCollection input)
+		public int ExecuteNonQuery(IEnumerable<SerializationItem> input)
 		{
 			return Execute(input, cmd => cmd.ExecuteNonQuery());
 		}
 
-		public TScalar ExecuteScalar<TScalar>(SerializationItemCollection input)
+		public TScalar ExecuteScalar<TScalar>(IEnumerable<SerializationItem> input)
 		{
 			return Execute(input, cmd => cmd.ExecuteScalar().To<TScalar>());
 		}
 
-		public SerializationItemCollection ExecuteRow(SerializationItemCollection input)
+		public SerializationItemCollection ExecuteRow(IEnumerable<SerializationItem> input)
 		{
 			return Execute(input, cmd =>
 			{
