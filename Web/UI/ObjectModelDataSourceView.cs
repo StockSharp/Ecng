@@ -200,7 +200,10 @@
 				var collection = GetCollection();
 
 				if (collection == null)
+				{
+					arguments.TotalRowCount = 0;
 					return Enumerable.Empty<object>();
+				}
 
 				if (arguments.RetrieveTotalRowCount)
 					arguments.TotalRowCount = GetCount(collection);
