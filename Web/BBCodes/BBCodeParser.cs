@@ -356,7 +356,7 @@ namespace Ecng.Web.BBCodes
             if (end >= input.Length || input[end] != '=') return null;
             end++;
 
-            var endIndex = input.IndexOfAny(" []".ToCharArray(), end);
+            var endIndex = input.IndexOfAny("[]".ToCharArray(), end);
             if (endIndex == -1) endIndex = input.Length;
 
             var valStart = pos + 1;
