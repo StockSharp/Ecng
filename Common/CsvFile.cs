@@ -260,9 +260,9 @@ namespace Ecng.Common
 	{
 		// Private members
 		private StreamWriter Writer;
-		private string OneQuote = null;
-		private string TwoQuotes = null;
-		private string QuotedFormat = null;
+		private string OneQuote;
+		private string TwoQuotes;
+		private string QuotedFormat;
 
 		/// <summary>
 		/// Initializes a new instance of the CsvFileWriter class for the
@@ -288,12 +288,31 @@ namespace Ecng.Common
 		/// Writes a row of columns to the current CSV file.
 		/// </summary>
 		/// <param name="columns">The list of columns to write</param>
-		public void WriteRow(List<string> columns)
+		public void WriteRow(IEnumerable<string> columns)
 		{
 			// Verify required argument
 			if (columns == null)
 				throw new ArgumentNullException("columns");
 
+			var i = 0;
+
+			// Write each column
+			foreach (var c in columns)
+			{
+				// Add delimiter if this isn't the first column
+				if (i > 0)
+					Writer.Write(Delimiter);
+
+				// Write this column
+				Writer.Write(Encode(c));
+				i++;
+			}
+
+			Writer.WriteLine();
+		}
+
+		public string Encode(string column)
+		{
 			// Ensure we're using current quote character
 			if (OneQuote == null || OneQuote[0] != Quote)
 			{
@@ -302,19 +321,11 @@ namespace Ecng.Common
 				QuotedFormat = String.Format("{0}{{0}}{0}", Quote);
 			}
 
-			// Write each column
-			for (int i = 0; i < columns.Count; i++)
-			{
-				// Add delimiter if this isn't the first column
-				if (i > 0)
-					Writer.Write(Delimiter);
-				// Write this column
-				if (columns[i].IndexOfAny(SpecialChars) == -1)
-					Writer.Write(columns[i]);
-				else
-					Writer.Write(QuotedFormat, columns[i].Replace(OneQuote, TwoQuotes));
-			}
-			Writer.WriteLine();
+			// Write this column
+			if (column.IndexOfAny(SpecialChars) != -1)
+				column = QuotedFormat.Put(column.Replace(OneQuote, TwoQuotes));
+
+			return column;
 		}
 
 		// Propagate Dispose to StreamWriter

@@ -937,11 +937,11 @@
 				{
 					var columns = ExportColumns;
 
-					writer.WriteRow(columns.Select(c => c.Header as string).ToList());
+					writer.WriteRow(columns.Select(c => c.Header as string));
 
 					foreach (var item in Items)
 					{
-						writer.WriteRow(GetCellValues(item, columns).ToList());
+						writer.WriteRow(GetCellValues(item, columns));
 					}
 				}
 			}
