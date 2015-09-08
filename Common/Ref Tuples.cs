@@ -14,6 +14,16 @@
 
 		public TFirst First { get; set; }
 		public TSecond Second { get; set; }
+
+		public override string ToString()
+		{
+			return "[" + GetValuesString() + "]";
+		}
+
+		protected virtual string GetValuesString()
+		{
+			return First + ", " + Second;
+		}
 	}
 
 	public class RefTriple<TFirst, TSecond, TThird> : RefPair<TFirst, TSecond>
@@ -29,6 +39,11 @@
 		}
 
 		public TThird Third { get; set; }
+
+		protected override string GetValuesString()
+		{
+			return base.GetValuesString() + ", " + Third;
+		}
 	}
 
 	public class RefQuadruple<TFirst, TSecond, TThird, TFourth> : RefTriple<TFirst, TSecond, TThird>
@@ -44,6 +59,11 @@
 		}
 
 		public TFourth Fourth { get; set; }
+
+		protected override string GetValuesString()
+		{
+			return base.GetValuesString() + ", " + Fourth;
+		}
 	}
 
 	public class RefFive<TFirst, TSecond, TThird, TFourth, TFifth> : RefQuadruple<TFirst, TSecond, TThird, TFourth>
@@ -59,6 +79,11 @@
 		}
 
 		public TFifth Fifth { get; set; }
+
+		protected override string GetValuesString()
+		{
+			return base.GetValuesString() + ", " + Fifth;
+		}
 	}
 
 	public static class RefTuple
