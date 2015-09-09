@@ -317,6 +317,11 @@ namespace Ecng.Common
 			}
 		}
 
+		public static DateTimeOffset ToDateTimeOffset(this DateTime date, TimeZoneInfo zone)
+		{
+			return date.ToDateTimeOffset(zone.GetUtcOffset(date));
+		}
+
 		public static DateTimeOffset ToDateTimeOffset(this DateTime date, TimeSpan offset)
 		{
 			return new DateTimeOffset(date.ChangeKind() + offset, offset);
