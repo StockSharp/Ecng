@@ -670,9 +670,27 @@
 				else if (destinationType.GetUnderlyingType() != null)
 				{
 					if (value is string && (string)value == string.Empty)
-						retVal = destinationType.CreateInstance<object>();
+					{
+						if (destinationType == typeof(decimal?))
+							retVal = new decimal?();
+						else if (destinationType == typeof(int?))
+							retVal = new decimal?();
+						else if (destinationType == typeof(long?))
+							retVal = new decimal?();
+						else
+							retVal = destinationType.CreateInstance<object>();
+					}
 					else
-						retVal = destinationType.CreateInstance<object>(value.To(destinationType.GetUnderlyingType()));
+					{
+						if (destinationType == typeof(decimal?))
+							retVal = value.To(typeof(decimal));
+						else if (destinationType == typeof(int?))
+							retVal = value.To(typeof(int));
+						else if (destinationType == typeof(long?))
+							retVal = value.To(typeof(long));
+						else
+							retVal = destinationType.CreateInstance<object>(value.To(destinationType.GetUnderlyingType()));
+					}
 				}
 				else if (value is string && destinationType == typeof(TimeSpan))
 					retVal = TimeSpan.Parse((string)value);
