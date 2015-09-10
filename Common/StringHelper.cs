@@ -47,6 +47,10 @@
 #if !SILVERLIGHT
 		private class DictionarySourceEx : ISource
 		{
+			private readonly SyncObject _sync = new SyncObject();
+			private readonly Dictionary<Type, Type> _genericTypes = new Dictionary<Type, Type>();
+			private readonly Dictionary<string, object> _keys = new Dictionary<string, object>();
+
 			bool ISource.TryEvaluateSelector(ISelectorInfo selectorInfo)
 			{
 				var dictionary = selectorInfo.CurrentValue as IDictionary;
@@ -54,12 +58,34 @@
 				if (dictionary == null)
 					return false;
 
-				var type = dictionary.GetType().GetGenericType(typeof(IDictionary<,>));
+				var dictType = dictionary.GetType();
+
+				Type type;
+
+				lock (_sync)
+				{
+					if (!_genericTypes.TryGetValue(dictType, out type))
+					{
+						type = dictType.GetGenericType(typeof(IDictionary<,>));
+						_genericTypes.Add(dictType, type);
+					}
+				}
 
 				if (type == null)
 					return false;
 
-				var key = selectorInfo.Selector.Text.To(type.GetGenericArguments()[0]);
+				object key;
+				var text = selectorInfo.Selector.Text;
+
+				lock (_sync)
+				{
+					if (!_keys.TryGetValue(text, out key))
+					{
+						key = text.To(type.GetGenericArguments()[0]);
+						_keys.Add(text, key);
+					}
+				}
+
 				selectorInfo.Result = dictionary[key];
 				return true;
 			}
