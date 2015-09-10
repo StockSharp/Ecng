@@ -28,6 +28,14 @@ namespace Ecng.Common
 			get { return _startWithOffset + _timer.Elapsed; }
 		}
 
+		public static DateTimeOffset NowWithOffset
+		{
+			get
+			{
+				return Now.ApplyTimeZone(TimeZoneInfo.Local);
+			}
+		}
+
 		private static TimeSpan _nowOffset;
 
 		/// <summary>
@@ -347,7 +355,7 @@ namespace Ecng.Common
 
 		public static DateTime ToLocalTime(this DateTimeOffset dto, TimeZoneInfo zone)
 		{
-			return dto.Convert(zone).LocalDateTime;
+			return dto.Convert(zone).DateTime;
 		}
 
 		public static DateTimeOffset Convert(this DateTimeOffset dto, TimeZoneInfo zone)
