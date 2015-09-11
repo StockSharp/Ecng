@@ -6,42 +6,22 @@ namespace Ecng.Common
 
 	public static class XmlHelper
 	{
-		public static T GetElementValue<T>(this XElement elem, string name, T defaultValue = default(T))
+		public static T GetElementValue<T>(this XElement parent, string name, T defaultValue = default(T))
 		{
-			var value =  elem.GetElementValue(name, null, defaultValue.IsNull(true));
-			return value == null ? defaultValue : value.To<T>();
-		}
+			if (parent == null)
+				throw new ArgumentNullException("parent");
 
-		public static string GetElementValue(this XElement elem, string name, string defaultValue = null, bool throwIfNotExist = true)
-		{
-			if (elem == null)
-				throw new ArgumentNullException("elem");
-
-			var attr = elem.Element(name);
-
-			if (attr != null)
-				return attr.Value;
-
-			if (!throwIfNotExist)
-				return null;
-
-			throw new ArgumentException("Element '{0}' doesn't exist.".Put(name), "name");
+			var elem = parent.Element(name);
+			return elem == null ? defaultValue : elem.Value.To<T>();
 		}
 
 		public static T GetAttributeValue<T>(this XElement elem, string name, T defaultValue = default(T))
-		{
-			var value = elem.GetAttributeValue(name, null, defaultValue.IsNull(true));
-			return value == null ? defaultValue : value.To<T>();
-		}
-
-		public static string GetAttributeValue(this XElement elem, string name, string defaultValue = null, bool throwIfNotExist = true)
 		{
 			if (elem == null)
 				throw new ArgumentNullException("elem");
 
 			var attr = elem.Attribute(name);
-			return attr == null ? defaultValue : attr.Value;
-			//throw new ArgumentException("Attribute '{0}' doesn't exist.".Put(name), "name");
+			return attr == null ? defaultValue : attr.Value.To<T>();
 		}
 
 		public static void WriteAttribute(this XmlWriter writer, string name, object value)
