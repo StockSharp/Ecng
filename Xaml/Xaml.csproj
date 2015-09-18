@@ -71,7 +71,6 @@
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="Xceed.Wpf.Toolkit">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\References\Xceed.Wpf.Toolkit.dll</HintPath>
     </Reference>
   </ItemGroup>
