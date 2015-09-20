@@ -8,6 +8,21 @@ namespace Ecng.Common
 
 	public static class TypeHelper
 	{
+		private static readonly FieldInfo _remoteStackTraceString;
+
+		static TypeHelper()
+		{
+			// Get the _remoteStackTraceString of the Exception class
+			_remoteStackTraceString = typeof(Exception)
+				.GetField("_remoteStackTraceString",
+					BindingFlags.Instance | BindingFlags.NonPublic); // MS.Net
+
+			if (_remoteStackTraceString == null)
+				_remoteStackTraceString = typeof(Exception)
+				.GetField("remote_stack_trace",
+					BindingFlags.Instance | BindingFlags.NonPublic); // Mono
+		}
+
 		private static readonly Type _enumType = typeof(Enum);
 
 		public static T CreateInstance<T>(this Type type, params object[] args)
@@ -244,15 +259,7 @@ namespace Ecng.Common
 			if (ex == null)
 				throw new ArgumentNullException("ex");
 
-			var ctx = new StreamingContext(StreamingContextStates.CrossAppDomain);
-			var mgr = new ObjectManager(null, ctx);
-			var si = new SerializationInfo(ex.GetType(), new FormatterConverter());
-
-			ex.GetObjectData(si, ctx);
-			mgr.RegisterObject(ex, 1, si); // prepare for SetObjectData
-			mgr.DoFixups(); // ObjectManager calls SetObjectData
-
-			// voila, e is unmodified save for _remoteStackTraceString
+			_remoteStackTraceString.SetValue(ex, ex.StackTrace + Environment.NewLine);
 
 			throw ex;
 		}
