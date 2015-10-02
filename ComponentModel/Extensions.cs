@@ -46,5 +46,11 @@ namespace Ecng.ComponentModel
 
 			return name;
 		}
+
+		public static string GetDocUrl(this Type type)
+		{
+			var attr = type.GetAttribute<DocAttribute>();
+			return attr == null ? null : attr.DocUrl;
+		}
 	}
 }

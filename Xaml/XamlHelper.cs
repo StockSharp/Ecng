@@ -426,6 +426,14 @@ namespace Ecng.Xaml
 			}
 		});
 #endif
+		public static Uri GetIconUrl(this Type type)
+		{
+			if (type == null)
+				throw new ArgumentNullException("type");
+
+			var attr = type.GetAttribute<IconAttribute>();
+			return attr == null ? null : (attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(type));
+		}
 
 		public static Uri GetResourceUrl(this string resName, Type type)
 		{
