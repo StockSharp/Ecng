@@ -14,10 +14,14 @@
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -112,6 +116,10 @@
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj">
       <Project>{38C67615-BE2E-461E-BBED-5217F6DC0AFE}</Project>
       <Name>UnitTesting</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Web\Web.csproj">
+      <Project>{125B0185-1FE3-407B-A14C-AD5046A6B68C}</Project>
+      <Name>Web</Name>
     </ProjectReference>
     <ProjectReference Include="..\Xaml\Xaml.csproj">
       <Project>{90A23E0C-3329-4459-BB97-21CD84E5418A}</Project>

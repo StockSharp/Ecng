@@ -10,10 +10,14 @@
     <RootNamespace>Ecng.Serialization</RootNamespace>
     <AssemblyName>Ecng.Serialization</AssemblyName>
     <WarningLevel>4</WarningLevel>
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
