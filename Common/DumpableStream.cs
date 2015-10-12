@@ -20,26 +20,23 @@ namespace Ecng.Common
 
 		public byte[] GetReadDump()
 		{
-			try
-			{
-				return _readDump.ToArray();
-			}
-			finally
-			{
-				_readDump.Position = 0;
-			}
+			return GetDump(_readDump);
 		}
 
 		public byte[] GetWriteDump()
 		{
-			try
-			{
-				return _writeDump.ToArray();
-			}
-			finally
-			{
-				_writeDump.Position = 0;
-			}
+			return GetDump(_writeDump);
+		}
+
+		private static byte[] GetDump(MemoryStream stream)
+		{
+			var buffer = new byte[stream.Position];
+
+			stream.Position = 0;
+			stream.Read(buffer, 0, buffer.Length);
+			stream.Position = 0;
+
+			return buffer;
 		}
 
 		/// <summary>
