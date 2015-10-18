@@ -10,10 +10,12 @@ namespace Ecng.Net
 	{
 		[DisplayName("Group Address")]
 		[Description("UDP multicast group address.")]
+		[IpAddress(AsString = true)]
 		public IPAddress GroupAddress { get; set; }
 
 		[DisplayName("Source Address")]
 		[Description("UDP multicast source address.")]
+		[IpAddress(AsString = true)]
 		public IPAddress SourceAddress { get; set; }
 
 		[Description("Local port.")]

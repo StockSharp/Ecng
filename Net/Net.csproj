@@ -122,6 +122,10 @@
       <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
       <Name>Reflection</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Serialization.FieldFactories\Serialization.FieldFactories.csproj">
+      <Project>{864E3014-6C0F-4A6E-B766-3FF37963DDFD}</Project>
+      <Name>Serialization.FieldFactories</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Serialization\Serialization.csproj">
       <Project>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</Project>
       <Name>Serialization</Name>
