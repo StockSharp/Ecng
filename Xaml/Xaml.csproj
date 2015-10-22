@@ -118,11 +118,21 @@
     </Compile>
     <Compile Include="Database\DatabaseProviderComboBox.cs" />
     <Compile Include="Database\DatabaseProviderEditor.cs" />
+    <Compile Include="DateTimeOffsetEditor.xaml.cs">
+      <DependentUpon>DateTimeOffsetEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="DelegateCommand.cs" />
     <Compile Include="ConvertibleObservableCollection.cs" />
     <Compile Include="EncodingComboBox.cs" />
     <Compile Include="Converters\EnumDisplayNameConverter.cs" />
     <Compile Include="EndPointComboBox.cs" />
+    <Compile Include="Converters\EndPointConverter.cs" />
+    <Compile Include="EndPointEditor.xaml.cs">
+      <DependentUpon>EndPointEditor.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="EndPointListEditor.xaml.cs">
+      <DependentUpon>EndPointListEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="FileBrowserEditor.cs" />
     <Compile Include="FileBrowserPicker.xaml.cs">
       <DependentUpon>FileBrowserPicker.xaml</DependentUpon>
@@ -179,6 +189,10 @@
     <Compile Include="IFormAdapter.cs" />
     <Compile Include="InputWindow.xaml.cs">
       <DependentUpon>InputWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Converters\IpAddressConverter.cs" />
+    <Compile Include="IpAddressEditor.xaml.cs">
+      <DependentUpon>IpAddressEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="IWin32WindowEx.cs" />
     <Compile Include="LoadingAnimation.xaml.cs">
@@ -419,6 +433,18 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="DateTimeOffsetEditor.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="EndPointEditor.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="EndPointListEditor.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="FileBrowserPicker.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -462,6 +488,10 @@
     <Page Include="InputWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="IpAddressEditor.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="LoadingAnimation.xaml">
       <Generator>MSBuild:Compile</Generator>
