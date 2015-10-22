@@ -62,6 +62,10 @@ namespace Ecng.Net
 			if (_readOffset == _dtgrmSize)
 			{
 				_dtgrmSize = _client.Receive(_mtuBuffer, 0, _mtuBuffer.Length, SocketFlags.None);
+
+				if (_dtgrmSize == 0)
+					return 0;
+
 				_readOffset = 0;
 			}
 
