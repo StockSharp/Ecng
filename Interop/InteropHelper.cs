@@ -5,6 +5,7 @@
 	using System.Diagnostics;
 	using System.IO;
 	using System.Linq;
+	using System.Reflection;
 	using System.Threading;
 
 	using Ecng.Common;
@@ -50,6 +51,29 @@
 			return !Directory.Exists(path)
 				? Enumerable.Empty<string>()
 				: Directory.EnumerateDirectories(path, searchPattern, searchOption);
+		}
+
+		public static DateTime GetTimestamp(this Assembly assembly)
+		{
+			if (assembly == null)
+				throw new ArgumentNullException("assembly");
+
+			return GetTimestamp(assembly.Location);
+		}
+
+		public static DateTime GetTimestamp(string filePath)
+		{
+			var b = new byte[2048];
+
+			using (var s = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+				s.Read(b, 0, b.Length);
+
+			const int peHeaderOffset = 60;
+			const int linkerTimestampOffset = 8;
+			var i = BitConverter.ToInt32(b, peHeaderOffset);
+			var secondsSince1970 = BitConverter.ToInt32(b, i + linkerTimestampOffset);
+
+			return TimeHelper.GregorianStart.AddSeconds(secondsSince1970).ToLocalTime();
 		}
 	}
 }
