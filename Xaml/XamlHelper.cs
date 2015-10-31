@@ -894,5 +894,10 @@ namespace Ecng.Xaml
 		}
 
 		#endregion
+
+		public static bool IsDesignMode(this DependencyObject obj)
+		{
+			return DesignerProperties.GetIsInDesignMode(obj);
+		}
 	}
 }
