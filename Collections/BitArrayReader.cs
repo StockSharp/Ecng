@@ -8,7 +8,7 @@
 	public class BitArrayReader
 	{
 		private int _bitOffset;
-		private int _dataOffset;
+		private long _dataOffset;
 		private readonly ulong[] _data;
 		private readonly Stream _underlyingStream;
 
@@ -26,7 +26,7 @@
 			Buffer.BlockCopy(bytes, 0, _data, 0, bytes.Length);
 		}
 
-		public int Offset
+		public long Offset
 		{
 			get { return (_dataOffset << 6) | _bitOffset; }
 			set
@@ -35,11 +35,11 @@
 					throw new ArgumentOutOfRangeException();
 
 				_dataOffset = value >> 6;
-				_bitOffset = value & 63;
+				_bitOffset = (int)(value & 63);
 			}
 		}
 
-		private ulong Get(int offset)
+		private ulong Get(long offset)
 		{
 			return _data[offset];
 		}
