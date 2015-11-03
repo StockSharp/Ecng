@@ -1,0 +1,24 @@
+﻿<Window x:Class="ExcelExporterNPOIMyIS.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ExcelExporterNPOIMyIS" Height="350" Width="525">
+    <Grid>
+        <Menu>
+            <MenuItem Header="Export">
+                <MenuItem Header="SheetConditionalFormatting" Click="Click_SheetConditionalFormatting" />
+                <MenuItem Header="GroupColumnsAndRows" Click="Click_GroupColumnsAndRows2" />
+                <MenuItem Header="SetBackGroudColor" Click="Click_SetBackGroudColor3" />
+                <MenuItem Header="Copy_Row_Cell" Click="Click_Copy_Row_Cell4" />
+                <MenuItem Header="Copy_Rename_Switch_Sheet" Click="Click_Copy_Rename_Switch_Sheet5" />
+                <MenuItem Header="SetDateTime" Click="Click_SetDateTime6" />
+                <MenuItem Header="SetFormulas" Click="Click_SetFormulas7" />
+                <MenuItem Header="Click_AddHyperLink8" Click="Click_AddHyperLink8" />
+                <MenuItem Header="Click_SetWidthAndHeigh_Aligment_Merge_Cell" Click="Click_SetWidthAndHeigh_Aligment_Merge_Cell" />
+                <MenuItem Header="Click_Aligment_Merge_Cell" Click="Click_Aligment_Merge_Cell" />
+            </MenuItem>
+            <MenuItem Header="Import">
+                <MenuItem  Header="ImportCells" Click="Click_ImportCells"/>
+            </MenuItem>
+        </Menu>
+    </Grid>
+</Window>
