@@ -141,7 +141,6 @@
     <Compile Include="Dde\DdeSettings.cs" />
     <Compile Include="Dde\XlsDdeSerializer.cs" />
     <Compile Include="Dde\XlsDdeServer.cs" />
-    <Compile Include="ExcelWorkerMyis.cs" />
     <Compile Include="ManagedWinapi\Accessibility\AccessibleObjectListener.cs">
       <SubType>Component</SubType>
     </Compile>
