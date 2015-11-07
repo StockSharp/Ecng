@@ -35,6 +35,7 @@ namespace Ecng.Interop
 
 		#region Import
 		public List<ICell> cells = new List<ICell>();
+
 		public ExcelWorker importXLS(string path)
 		{
 			while (Workbook.NumberOfSheets != 0)
@@ -658,48 +659,6 @@ namespace Ecng.Interop
 			sheetCf.AddConditionalFormatting(my_data_range, rule);
 			return this;
 		}
-
-//		public ExcelWorker SetConditionalFormatting(int firstRow,int lastRow,int firstColumn,int lasColumn
-//			,short backGroungColorInd,short foreGroungColorInd,string formula1,string formula2 = "",
-//			ComparisonOperator comparisonOperator = ComparisonOperator.Equal,bool isUseComparision = false)
-//		{
-//			NPOI.SS.Util.CellRangeAddress[] my_data_range =
-//			{
-//				new NPOI.SS.Util.CellRangeAddress(firstRow, lastRow, firstColumn, lasColumn)
-//			};
-//			var sheetCf = _currentSheet.SheetConditionalFormatting;
-//
-//			IConditionalFormattingRule rule;
-//			if (isUseComparision == false)
-//			{
-//				rule = sheetCf.CreateConditionalFormattingRule(formula1);
-//			}
-//			else
-//			{
-//				rule = (comparisonOperator == ComparisonOperator.Between ||
-//				        comparisonOperator == ComparisonOperator.NotBetween)
-//					? sheetCf.CreateConditionalFormattingRule(comparisonOperator,formula1,formula2)
-//					: sheetCf.CreateConditionalFormattingRule(comparisonOperator,formula1);
-//			}
-//
-//			var fill = rule.CreatePatternFormatting();
-//			fill.FillBackgroundColor = backGroungColorInd;
-//			fill.FillPattern = (short)FillPattern.SolidForeground;
-//			sheetCf.AddConditionalFormatting(my_data_range,rule);
-//
-//			return this;
-//		}
-
-		public ExcelWorker SetConditionalFormatting(int col,Ecng.ComponentModel.ComparisonOperator comparison,
-			string formula1,short indexedColor)
-		{
-//						SetConditionalFormatting(0,ushort.MaxValue,col,col+1,backGroungColorInd,formula1,formula1,ToExcelOperator(comparison),true);
-//			SetConditionalFormatting(0,ushort.MaxValue,col,col + 1,indexedColor, TODO,formula1,formula2: formula1,
-//				comparisonOperator: ToExcelOperator(comparison),isUseComparision: true);
-			return this;
-		}
-
-
 
 		/// <summary>
 		///Поддерживает только стандартные цвета Aqua,Black,Blue,Brown,CornflowerBlue,DarkBlue,
