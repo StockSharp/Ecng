@@ -1,4 +1,7 @@
-﻿namespace Ecng.Interop
+﻿using System.Collections;
+using System.Windows.Media;
+
+namespace Ecng.Interop
 {
 	using System;
 	using System.Collections.Generic;
@@ -22,7 +25,7 @@
 		private ISheet _currentSheet;
 		private string _fileName;
 
-		private readonly Dictionary<string, Dictionary<int, HashSet<int>>> _indecies1 =
+		public readonly Dictionary<string, Dictionary<int, HashSet<int>>> _indecies1 =
 			new Dictionary<string, Dictionary<int, HashSet<int>>>();
 
 		private readonly Dictionary<string, NPOI.SS.UserModel.ICellStyle> _cellStyleCache =
@@ -31,7 +34,7 @@
 		private FileStream _stream;
 
 		#region Import
-
+		public List<ICell> cells = new List<ICell>();
 		public ExcelWorker importXLS(string path)
 		{
 			while (Workbook.NumberOfSheets != 0)
@@ -55,19 +58,33 @@
 					_currentSheet = Workbook.GetSheetAt(i);
 					_indecies1.Add(_currentSheet.SheetName,
 						new Dictionary<int, HashSet<int>>());
-					System.Collections.IEnumerator rows = _currentSheet.GetRowEnumerator();
-
+					System.Collections.IEnumerator rows = (IEnumerator) _currentSheet.GetRowEnumerator();
+					int it = 0;
 					while (rows.MoveNext())
 					{
 						IRow row = (IRow) rows.Current;
-
-						for (int i1 = 0; i1 < row.LastCellNum; i1++)
+						foreach (var cell in row.Cells)
 						{
-							var ccel = InternalGetCell(i1, i);
+							cells.Add(InternalGetCell(cell.ColumnIndex, row.RowNum));
 						}
 					}
 				}
 			return this;
+		}
+
+
+		public IEnumerable<T> GetColumn<T>(int col)
+		{
+			try
+			{
+				List<T> TT = new List<T>();
+				foreach (var cell in cells.Where(cc => cc.ColumnIndex == 1)) TT.Add(GetCell<T>(cell.ColumnIndex, cell.RowIndex));
+				return TT;
+			}
+			catch (Exception e)
+			{
+				throw new ArgumentNullException(e.ToString());
+			}
 		}
 
 		#endregion
@@ -120,7 +137,7 @@
 			return this;
 		}
 
-		public ExcelWorker SetCell2(int col, int row, string value)
+		public ExcelWorker SetCell(int col,int row,string value,DataFormat dataFormat)
 		{
 			var cell = InternalGetCell(col, row);
 			var cStyle = Workbook.CreateCellStyle();
@@ -130,33 +147,28 @@
 			return this;
 		}
 
-		public ExcelWorker SetCell2(int col, int row, decimal value,
-			DataFormat nomber = DataFormat.UniversalText)
+		public ExcelWorker SetCell(int col,int row,decimal value,DataFormat dataFormat)
 		{
-			SetCell2(col, row, (double) value, nomber);
+			SetCell(col,row,(double)value,dataFormat);
 			return this;
 		}
 
-		public ExcelWorker SetCell2(int col, int row, int value,
-			DataFormat nomber = DataFormat.UniversalText)
+		public ExcelWorker SetCell(int col,int row,int value,DataFormat dataFormat)
 		{
-			SetCell2(col, row, (double) value, nomber);
+			SetCell(col,row,(double)value,dataFormat);
 			return this;
 		}
 
-		public ExcelWorker SetCell2(int col, int row, TimeSpan value,
-			DataFormat typeDate = DataFormat.UniversalText)
+		public ExcelWorker SetCell(int col, int row, TimeSpan value,DataFormat dataFormat)
 		{
-			return SetCell2(col, row, DateTime.Today + value, typeDate);
+			return SetCell(col, row, DateTime.Today + value, dataFormat);
 		}
 
-		public ExcelWorker SetCell2(int col, int row, DateTime value,
-			DataFormat typeDate = DataFormat.DateTime)
+		public ExcelWorker SetCell(int col, int row, DateTime value, DataFormat dataFormat)
 		{
-			string dataFormat = GetDataType(typeDate);
 			var cell = InternalGetCell(col, row);
 			var cStyle = Workbook.CreateCellStyle();
-			cStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat(dataFormat);
+			cStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat(GetDataType(dataFormat));
 			cell.CellStyle = cStyle;
 			cell.SetCellValue(value);
 			return this;
@@ -263,7 +275,7 @@
 			return "";
 		}
 
-		public ExcelWorker SetCell2(int col, int row, double value,
+		public ExcelWorker SetCell(int col, int row, double value,
 			DataFormat nomber = DataFormat.UniversalText)
 		{
 			string dataFormat = GetDataType(nomber);
@@ -286,8 +298,6 @@
 		public ExcelWorker SetBackGroundColor(int col, int row, short hssfColorIndex,
 			FillPattern fillPatternSolidForeground = FillPattern.SolidForeground)
 		{
-
-
 			var style = Workbook.CreateCellStyle();
 			style.FillBackgroundColor = hssfColorIndex;
 			style.FillForegroundColor = hssfColorIndex;
@@ -321,8 +331,6 @@
 			_currentSheet.GroupRow(from, to);
 			return this;
 		}
-
-
 
 		/// <summary>
 		/// Auto Sizing columns
@@ -377,8 +385,6 @@
 			_currentSheet.GetRow(rowIndex).CopyCell(colIndex, targetIndex);
 			return this;
 		}
-
-
 
 		/// <summary>
 		/// Create <see cref="ExcelWorker"/>.
@@ -617,15 +623,15 @@
 		/// <param name="lastRow"></param>
 		/// <param name="firstColumn"></param>
 		/// <param name="lasColumn"></param>
-		/// <param name="indexedColor"></param>
+		/// <param name="backGroungColorInd"></param>
 		/// <param name="formula1"></param>
 		/// <param name="formula2"></param>
 		/// <param name="comparisonOperator"></param>
 		/// <param name="isUseComparision"></param>
 		/// <returns></returns>
-		public ExcelWorker SetConditionalFormatting(int firstRow,int lastRow,int firstColumn,int lasColumn
-			,short indexedColor,string formula1,string formula2 = "",
-			ComparisonOperator comparisonOperator = ComparisonOperator.Equal,bool isUseComparision = false)
+		public ExcelWorker SetConditionalFormatting(int firstRow, int lastRow, int firstColumn, int lasColumn
+			, short backGroungColorInd, string formula1, string formula2 = "",
+			ComparisonOperator comparisonOperator = ComparisonOperator.Equal, bool isUseComparision = false)
 		{
 			NPOI.SS.Util.CellRangeAddress[] my_data_range =
 			{
@@ -642,55 +648,167 @@
 			{
 				rule = (comparisonOperator == ComparisonOperator.Between ||
 				        comparisonOperator == ComparisonOperator.NotBetween)
-					? sheetCf.CreateConditionalFormattingRule(comparisonOperator,formula1,formula2)
-					: sheetCf.CreateConditionalFormattingRule(comparisonOperator,formula1);
+					? sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1, formula2)
+					: sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1);
 			}
 
 			var fill = rule.CreatePatternFormatting();
-			fill.FillBackgroundColor = indexedColor;
-			fill.FillPattern = (short)FillPattern.SolidForeground;
-			sheetCf.AddConditionalFormatting(my_data_range,rule);
-
+			fill.FillBackgroundColor = backGroungColorInd;
+			fill.FillPattern = (short) FillPattern.SolidForeground;
+			sheetCf.AddConditionalFormatting(my_data_range, rule);
 			return this;
 		}
+
+//		public ExcelWorker SetConditionalFormatting(int firstRow,int lastRow,int firstColumn,int lasColumn
+//			,short backGroungColorInd,short foreGroungColorInd,string formula1,string formula2 = "",
+//			ComparisonOperator comparisonOperator = ComparisonOperator.Equal,bool isUseComparision = false)
+//		{
+//			NPOI.SS.Util.CellRangeAddress[] my_data_range =
+//			{
+//				new NPOI.SS.Util.CellRangeAddress(firstRow, lastRow, firstColumn, lasColumn)
+//			};
+//			var sheetCf = _currentSheet.SheetConditionalFormatting;
+//
+//			IConditionalFormattingRule rule;
+//			if (isUseComparision == false)
+//			{
+//				rule = sheetCf.CreateConditionalFormattingRule(formula1);
+//			}
+//			else
+//			{
+//				rule = (comparisonOperator == ComparisonOperator.Between ||
+//				        comparisonOperator == ComparisonOperator.NotBetween)
+//					? sheetCf.CreateConditionalFormattingRule(comparisonOperator,formula1,formula2)
+//					: sheetCf.CreateConditionalFormattingRule(comparisonOperator,formula1);
+//			}
+//
+//			var fill = rule.CreatePatternFormatting();
+//			fill.FillBackgroundColor = backGroungColorInd;
+//			fill.FillPattern = (short)FillPattern.SolidForeground;
+//			sheetCf.AddConditionalFormatting(my_data_range,rule);
+//
+//			return this;
+//		}
 
 		public ExcelWorker SetConditionalFormatting(int col,Ecng.ComponentModel.ComparisonOperator comparison,
 			string formula1,short indexedColor)
 		{
-			//			SetConditionalFormatting(0,ushort.MaxValue,col,col+1,indexedColor,formula1,formula1,ToExcelOperator(comparison),true);
-			SetConditionalFormatting(0,ushort.MaxValue,col,col + 1,indexedColor,formula1,formula1,
-				ToExcelOperator(comparison),true);
+//						SetConditionalFormatting(0,ushort.MaxValue,col,col+1,backGroungColorInd,formula1,formula1,ToExcelOperator(comparison),true);
+//			SetConditionalFormatting(0,ushort.MaxValue,col,col + 1,indexedColor, TODO,formula1,formula2: formula1,
+//				comparisonOperator: ToExcelOperator(comparison),isUseComparision: true);
 			return this;
 		}
 
+
+
+		/// <summary>
+		///Поддерживает только стандартные цвета Aqua,Black,Blue,Brown,CornflowerBlue,DarkBlue,
+		/// DarkGreen,DarkRed,Gold,Green,Indigo,Lavender,LemonChiffon,LightBlue,LightGreen,
+		/// LightYellow,Lime,Maroon,Orange,Orchid,Pink,Plum,Red,RoyalBlue,SeaGreen,SkyBlue,
+		/// Tan,Teal,Turquoise Violet ,White ,Yellow
+		///fgColor - не работает так как GoreGroundColor - является вторым цветом заливки , у данного типа заливки цвет один
+		/// </summary>
+		/// <param name="col"></param>
+		/// <param name="comparison"></param>
+		/// <param name="formula1"></param>
+		/// <param name="bgColor"></param>
+		/// <param name="fgColor"></param>
+		/// <returns></returns>
 		public ExcelWorker SetConditionalFormatting(int col, Ecng.ComponentModel.ComparisonOperator comparison,
 			string formula1, Color? bgColor, Color? fgColor)
 		{
-			return SetConditionalFormatting(col, 0, col, ushort.MaxValue, comparison, formula1, formula1, bgColor,
+
+			return SetConditionalFormatting(col,col,0,ushort.MaxValue,comparison,formula1,formula1,bgColor,
 				fgColor);
 		}
 
-		public ExcelWorker SetConditionalFormatting(int colStart, int rowStart, int colEnd, int rowEnd,
+		private short? ToHSSFColorIndex(Color? Color)
+		{
+			if (Color == null) return null;
+			Color col = (Color) Color;
+			if (col == Colors.Aqua) return HSSFColor.Aqua.Index;
+			if (col == Colors.Black) return HSSFColor.Black.Index;
+			if (col == Colors.Blue) return HSSFColor.Blue.Index;
+			if (col == Colors.Brown) return HSSFColor.Brown.Index;
+			if (col == Colors.CornflowerBlue) return HSSFColor.CornflowerBlue.Index;
+			if (col == Colors.DarkBlue) return HSSFColor.DarkBlue.Index;
+			if (col == Colors.DarkGreen) return HSSFColor.DarkGreen.Index;
+			if (col == Colors.DarkRed) return HSSFColor.DarkRed.Index;
+			if (col == Colors.Gold) return HSSFColor.Gold.Index;
+			if (col == Colors.Green) return HSSFColor.Green.Index;
+			if (col == Colors.Indigo) return HSSFColor.Indigo.Index;
+			if (col == Colors.Lavender) return HSSFColor.Lavender.Index;
+			if (col == Colors.LemonChiffon) return HSSFColor.LemonChiffon.Index;
+			if (col == Colors.LightBlue) return HSSFColor.LightBlue.Index;
+			if (col == Colors.LightGreen) return HSSFColor.LightGreen.Index;
+			if (col == Colors.LightYellow) return HSSFColor.LightYellow.Index;
+			if (col == Colors.Lime) return HSSFColor.Lime.Index;
+			if (col == Colors.Maroon) return HSSFColor.Maroon.Index;
+			if (col == Colors.Orange) return HSSFColor.Orange.Index;
+			if (col == Colors.Orchid) return HSSFColor.Orchid.Index;
+			if (col == Colors.Pink) return HSSFColor.Pink.Index;
+			if (col == Colors.Plum) return HSSFColor.Plum.Index;
+			if (col == Colors.Red) return HSSFColor.Red.Index;
+			if (col == Colors.RoyalBlue) return HSSFColor.RoyalBlue.Index;
+			if (col == Colors.SeaGreen) return HSSFColor.SeaGreen.Index;
+			if (col == Colors.SkyBlue) return HSSFColor.SkyBlue.Index;
+			if (col == Colors.Tan) return HSSFColor.Tan.Index;
+			if (col == Colors.Teal) return HSSFColor.Teal.Index;
+			if (col == Colors.Turquoise) return HSSFColor.Turquoise.Index;
+			if (col == Colors.Violet) return HSSFColor.Violet.Index;
+			if (col == Colors.White) return HSSFColor.White.Index;
+			if (col == Colors.Yellow) return HSSFColor.Yellow.Index;
+			if (col == Colors.Green) return HSSFColor.Green.Index;
+			if (col == Colors.Red) return HSSFColor.Red.Index;
+			return null;
+		}
+		
+		/// <summary>
+		///Поддерживает только стандартные цвета Aqua,Black,Blue,Brown,CornflowerBlue,DarkBlue,
+		/// DarkGreen,DarkRed,Gold,Green,Indigo,Lavender,LemonChiffon,LightBlue,LightGreen,
+		/// LightYellow,Lime,Maroon,Orange,Orchid,Pink,Plum,Red,RoyalBlue,SeaGreen,SkyBlue,
+		/// Tan,Teal,Turquoise Violet ,White ,Yellow
+		/// </summary>
+		/// <param name="colStart"></param>
+		/// <param name="rowStart"></param>
+		/// <param name="colEnd"></param>
+		/// <param name="rowEnd"></param>
+		/// <param name="comparison"></param>
+		/// <param name="formula1"></param>
+		/// <param name="formula2"></param>
+		/// <param name="bgColor"></param>
+		/// <param name="fgColor"></param>
+		/// <returns></returns>
+		public ExcelWorker SetConditionalFormatting(int colStart, int colEnd, int rowStart, int rowEnd,
 			Ecng.ComponentModel.ComparisonOperator comparison, string formula1, string formula2, Color? bgColor,
 			Color? fgColor)
 		{
-			var hscf = _currentSheet.SheetConditionalFormatting;
+			NPOI.SS.Util.CellRangeAddress[] my_data_range =
+			{
+				new NPOI.SS.Util.CellRangeAddress(rowStart, rowEnd, colStart, colEnd)
+			};
+			var sheetCf = _currentSheet.SheetConditionalFormatting;
 
-			var rule = hscf.CreateConditionalFormattingRule(ToExcelOperator(comparison), formula1, formula2);
+			var comparisonOperator = ToExcelOperator(comparison);
+			IConditionalFormattingRule rule;
 
-			// TODO
-			//if (bgColor != null)
-			//	rule.CreatePatternFormatting().FillBackgroundColor = _colors[(Color)bgColor];
+			rule = (comparisonOperator == ComparisonOperator.Between ||
+			        comparisonOperator == ComparisonOperator.NotBetween)
+				? sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1, formula2)
+				: sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1);
+			var fill = rule.CreatePatternFormatting();
+			
+			short? bgColorIndex = ToHSSFColorIndex(bgColor);
+			if (bgColorIndex != null) fill.FillBackgroundColor = (short) bgColorIndex;
 
-			//if (fgColor != null)
-			//	rule.CreateFontFormatting().FontColorIndex = _colors[(Color)fgColor];
+			var fgColorIndex = ToHSSFColorIndex(fgColor);
+			if (fgColorIndex != null) fill.FillForegroundColor = (short) fgColorIndex;
 
-			hscf.AddConditionalFormatting(
-				new[] {new CellRangeAddress(rowStart, rowEnd, colStart, colEnd)}, new[] {rule});
+			  fill.FillPattern = fgColorIndex == null  ? (short) FillPattern.SolidForeground:(short) FillPattern.Bricks;
+			sheetCf.AddConditionalFormatting(my_data_range, rule);
 
 			return this;
 		}
-
 
 		private static Color ToWpfColor(XSSFColor color)
 		{

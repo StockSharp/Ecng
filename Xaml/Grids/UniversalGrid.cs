@@ -978,7 +978,7 @@
 					foreach (var column in Columns)
 					{
 						var tb = column.GetCellContent(item) as TextBlock;
-						worker.SetCell(colIndex, rowIndex, tb != null ? tb.Text : string.Empty);
+						worker.SetCell(colIndex, rowIndex, (object) (tb != null ? tb.Text : string.Empty));
 						colIndex++;
 					}
 

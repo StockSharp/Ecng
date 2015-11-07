@@ -1,4 +1,7 @@
-﻿namespace ExcelExporterNPOIMyIS
+﻿using System.Collections.Generic;
+using System.Windows.Documents;
+
+namespace ExcelExporterNPOIMyIS
 {
 	using System;
 	using System.Diagnostics;
@@ -29,7 +32,7 @@
 			worker.RemoveSheet("Sheet0");
 
 			//Conditional Formatting
-			worker.SetCell2(0, _indexRow, "Conditional Formatting A2>4");
+			worker.SetCell(0, _indexRow, "Conditional Formatting A2>4");
 			AddData(worker);
 			worker.SetConditionalFormatting(0, 10, 0, 10, HSSFColor.Blue.Index, @"A2>4");
 
@@ -37,11 +40,11 @@
 			worker.AddSheet(@"Second");
 			worker.SwitchSheet(@"Second");
 			_indexRow = 0;
-			worker.SetCell2(0, _indexRow, "Conditional Formatting Between 10-50");
+			worker.SetCell(0, _indexRow, "Conditional Formatting Between 10-50");
 			_indexRow++;
 			AddData(worker);
 			worker.SetConditionalFormatting(0, 10, 0, 10, HSSFColor.Brown.Index, @"10", "50",
-				NPOI.SS.UserModel.ComparisonOperator.Between, true);
+				NPOI.SS.UserModel.ComparisonOperator.Between, isUseComparision: true);
 			worker.Save(path + "1.xlsx", true);
 			Process.Start(path + "1.xlsx");
 		}
@@ -60,7 +63,7 @@
 		{
 			_indexRow = 0;
 			worker = new ExcelWorker();
-			worker.SetCell2(0, _indexRow, "ColorBlue")
+			worker.SetCell(0, _indexRow, "ColorBlue")
 				.SetBackGroundColor(_indexRow, 0, NPOI.HSSF.Util.HSSFColor.Blue.Index);
 			_indexRow++;
 
@@ -76,10 +79,10 @@
 			worker = new ExcelWorker();
 			AddData(worker);
 
-			worker.SetCell2(0, 5, "Copied raw");
+			worker.SetCell(0, 5, "Copied raw");
 			worker = worker.CopyRow(0, 6);
 
-			worker.SetCell2(5, 0, "Copied cell");
+			worker.SetCell(5, 0, "Copied cell");
 			worker = worker.CopyCell(0, 1, 6);
 
 			worker.Save(path + "4.xlsx", true);
@@ -108,86 +111,86 @@
 			worker = new ExcelWorker();
 			DateTime dt = DateTime.Now;
 
-			worker.SetCell2(_indexRow, 1, "DateTime").SetBackGroundColor(_indexRow, 1, HSSFColor.Red.Index);
+			worker.SetCell(_indexRow, 1, "DateTime").SetBackGroundColor(_indexRow, 1, HSSFColor.Red.Index);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt);
+			worker.SetCell(_indexRow, 1, dt);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Date1);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Date1);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Date2);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Date2);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Date3);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Date3);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Time1);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Time1);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Time2);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Time2);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Time3);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Time3);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Time4);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Time4);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Time5);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Time5);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.UniversalText);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.UniversalText);
 			_indexRow++;
 
-			worker.SetCell2(_indexRow, 1, "DateTime").SetBackGroundColor(_indexRow, 1, HSSFColor.Red.Index);
+			worker.SetCell(_indexRow, 1, "DateTime").SetBackGroundColor(_indexRow, 1, HSSFColor.Red.Index);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt);
+			worker.SetCell(_indexRow, 1, dt);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Date1);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Date1);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Date2);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Date2);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Date3);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Date3);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Time1);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Time1);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Time2);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Time2);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Time3);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Time3);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Time4);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Time4);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.Time5);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.Time5);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 1, dt, ExcelWorker.DataFormat.UniversalText);
+			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.UniversalText);
 			_indexRow++;
 
 			_indexRow = 0;
 			int nom = 321412412;
-			worker.SetCell2(_indexRow, 2, "Nomber").SetBackGroundColor(_indexRow, 2, HSSFColor.Red.Index);
+			worker.SetCell(_indexRow, 2, "Nomber").SetBackGroundColor(_indexRow, 2, HSSFColor.Red.Index);
 			;
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom);
+			worker.SetCell(_indexRow, 2, nom);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Exponential);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Exponential);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Fractional1);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Fractional1);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Fractional2);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Fractional2);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Money1);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Money1);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Money2);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Money2);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Money3);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Money3);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Money4);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Money4);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric1);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric1);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric2);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric2);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric3);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric3);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric4);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric4);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Percentage1);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Percentage1);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.Percentage2);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Percentage2);
 			_indexRow++;
-			worker.SetCell2(_indexRow, 2, nom, ExcelWorker.DataFormat.UniversalText);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.UniversalText);
 			_indexRow++;
 
 			worker.Save(path + "6.xlsx", true);
@@ -199,7 +202,7 @@
 			_indexRow = 0;
 			worker = new ExcelWorker();
 			AddData(worker);
-			worker.SetCell2(3, 0, "Formula");
+			worker.SetCell(3, 0, "Formula");
 			worker.SetFormula(3, 1, "B4+A4+A2+B2");
 			worker.SetFormula(4, 1,
 				string.Format("{0}4 + {1}4", CellReference.ConvertNumToColString(1), CellReference.ConvertNumToColString(0)));
@@ -212,7 +215,7 @@
 		{
 			worker = new ExcelWorker();
 			_indexRow = 0;
-			worker.SetCell2(0, _indexRow, "HyperLink").AddHyperLink(0, _indexRow, "http://poi.apache.org/");
+			worker.SetCell(0, _indexRow, "HyperLink").AddHyperLink(0, _indexRow, "http://poi.apache.org/");
 			worker.Save(path + "8.xlsx", true);
 			Process.Start(path + "8.xlsx");
 		}
@@ -230,7 +233,7 @@
 				NPOI.SS.UserModel.HorizontalAlignment.Right);
 
 			worker.MergeCells(5, 7, 0, 5);
-			worker.SetCell2(5, 0, "MergedCell");
+			worker.SetCell(5, 0, "MergedCell");
 			worker.SetAligmentCell(5, 7, NPOI.SS.UserModel.VerticalAlignment.Center,
 				NPOI.SS.UserModel.HorizontalAlignment.Right);
 
@@ -246,7 +249,7 @@
 			_indexRow = 0;
 
 			worker.MergeCells(5, 7, 0, 5);
-			worker.SetCell2(0, 5, "MergedCell");
+			worker.SetCell(0, 5, "MergedCell");
 			worker.SetAligmentCell(0, 5, NPOI.SS.UserModel.VerticalAlignment.Center,
 				NPOI.SS.UserModel.HorizontalAlignment.Right);
 
@@ -258,20 +261,20 @@
 
 		private void AddData(ExcelWorker excelWorker)
 		{
-			excelWorker.SetCell2(0, _indexRow, -5);
-			excelWorker.SetCell2(1, _indexRow, 1);
+			excelWorker.SetCell(0, _indexRow, -5);
+			excelWorker.SetCell(1, _indexRow, 1);
 			_indexRow ++;
 
-			excelWorker.SetCell2(0, _indexRow, 3);
-			excelWorker.SetCell2(1, _indexRow, 10);
+			excelWorker.SetCell(0, _indexRow, 3);
+			excelWorker.SetCell(1, _indexRow, 10);
 			_indexRow ++;
 
-			excelWorker.SetCell2(0, _indexRow, 8);
-			excelWorker.SetCell2(1, _indexRow, 6);
+			excelWorker.SetCell(0, _indexRow, 8);
+			excelWorker.SetCell(1, _indexRow, 6);
 			_indexRow ++;
 
-			excelWorker.SetCell2(0, _indexRow, 54);
-			excelWorker.SetCell2(1, _indexRow, 12);
+			excelWorker.SetCell(0, _indexRow, 54);
+			excelWorker.SetCell(1, _indexRow, 12);
 			_indexRow ++;
 		}
 
@@ -279,6 +282,12 @@
 		{
 			worker = new ExcelWorker();
 			worker = worker.importXLS(path + "Book1.xls");
+			worker.SwitchSheet("Sheet1");
+			DateTime str = worker.GetCell<DateTime>(0,1);
+			IEnumerable<object> cols = worker.GetColumn<object>(0);
+			string str1 = "First column   "  + str.ToString();
+			foreach (var col in cols) str1 += ";" + col;
+			MessageBox.Show(str1);
 		}
 	}
 }

@@ -95,6 +95,7 @@
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Class1.cs" />
     <Compile Include="Dde\Documentation\NamespaceDoc.cs" />
     <Compile Include="Dde\Internal\Advanced\DdemlContext.cs" />
     <Compile Include="Dde\Internal\Advanced\DdemlRegistrationEventArgs.cs" />
