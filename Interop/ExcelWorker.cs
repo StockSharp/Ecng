@@ -25,8 +25,7 @@ namespace Ecng.Interop
 		private ISheet _currentSheet;
 		private string _fileName;
 
-		public readonly Dictionary<string, Dictionary<int, HashSet<int>>> _indecies1 =
-			new Dictionary<string, Dictionary<int, HashSet<int>>>();
+		private readonly Dictionary<int,HashSet<int>> _indecies = new Dictionary<int,HashSet<int>>();
 
 		private readonly Dictionary<string, NPOI.SS.UserModel.ICellStyle> _cellStyleCache =
 			new Dictionary<string, NPOI.SS.UserModel.ICellStyle>();
@@ -50,15 +49,11 @@ namespace Ecng.Interop
 				Workbook = new HSSFWorkbook(file);
 			}
 
-			_indecies1.Clear();
-
 			if (Workbook.NumberOfSheets > 0)
 
 				for (int i = 0; i < Workbook.NumberOfSheets; i++)
 				{
 					_currentSheet = Workbook.GetSheetAt(i);
-					_indecies1.Add(_currentSheet.SheetName,
-						new Dictionary<int, HashSet<int>>());
 					System.Collections.IEnumerator rows = (IEnumerator) _currentSheet.GetRowEnumerator();
 					int it = 0;
 					while (rows.MoveNext())
@@ -362,9 +357,6 @@ namespace Ecng.Interop
 		public ExcelWorker CopySheet(string name, bool copyStyle = true)
 		{
 			_currentSheet.CopySheet(name, copyStyle);
-			if (!_indecies1.ContainsKey(name))
-				_indecies1.Add(name, new Dictionary<int, HashSet<int>>());
-
 			return this;
 		}
 
@@ -395,7 +387,6 @@ namespace Ecng.Interop
 			Workbook = new XSSFWorkbook();
 			//            Workbook = new NPOI.XSSF.UserModel.XSSFWorkbook();
 			_currentSheet = Workbook.CreateSheet();
-			_indecies1.Add(_currentSheet.SheetName, new Dictionary<int, HashSet<int>>()); //+++
 		}
 
 		/// <summary>
@@ -434,8 +425,6 @@ namespace Ecng.Interop
 				return this;
 
 			var sheet = Workbook.CreateSheet(sheetName);
-			if (!_indecies1.ContainsKey(sheetName))
-				_indecies1.Add(sheetName, new Dictionary<int, HashSet<int>>()); //+++
 			if (_currentSheet == null)
 			{
 				_currentSheet = sheet;
@@ -453,7 +442,6 @@ namespace Ecng.Interop
 			ThrowIfCurrentSheetIsEmpty();
 
 			Workbook.RemoveSheetAt(Workbook.GetSheetIndex(_currentSheet));
-			if (_indecies1.ContainsKey(_currentSheet.SheetName)) _indecies1.Remove(_currentSheet.SheetName); //+++
 			_currentSheet = null;
 
 			return this;
@@ -470,7 +458,6 @@ namespace Ecng.Interop
 			{
 				Workbook.RemoveSheetAt(Workbook.GetSheetIndex(sheetName));
 
-				if (_indecies1.ContainsKey(sheetName)) _indecies1.Remove(sheetName);
 				if (_currentSheet != null && _currentSheet.SheetName == sheetName)
 					_currentSheet = null;
 			}
@@ -487,14 +474,7 @@ namespace Ecng.Interop
 		{
 			if (sheetName.IsEmpty())
 				throw new ArgumentNullException("sheetName");
-			//+++
-			if (_indecies1.ContainsKey(_currentSheet.SheetName))
-			{
-				var val = _indecies1[_currentSheet.SheetName];
-				_indecies1.Remove(_currentSheet.SheetName);
-				_indecies1.Add(sheetName, val);
-			}
-			//+++
+			
 			ThrowIfCurrentSheetIsEmpty();
 
 			Workbook.SetSheetName(Workbook.GetSheetIndex(_currentSheet), sheetName);
@@ -630,7 +610,7 @@ namespace Ecng.Interop
 		/// <param name="comparisonOperator"></param>
 		/// <param name="isUseComparision"></param>
 		/// <returns></returns>
-		public ExcelWorker SetConditionalFormatting(int firstRow, int lastRow, int firstColumn, int lasColumn
+		public ExcelWorker SetConditionalFormatting(int firstColumn, int lasColumn ,int firstRow, int lastRow
 			, short backGroungColorInd, string formula1, string formula2 = "",
 			ComparisonOperator comparisonOperator = ComparisonOperator.Equal, bool isUseComparision = false)
 		{
@@ -665,7 +645,7 @@ namespace Ecng.Interop
 		/// DarkGreen,DarkRed,Gold,Green,Indigo,Lavender,LemonChiffon,LightBlue,LightGreen,
 		/// LightYellow,Lime,Maroon,Orange,Orchid,Pink,Plum,Red,RoyalBlue,SeaGreen,SkyBlue,
 		/// Tan,Teal,Turquoise Violet ,White ,Yellow
-		///fgColor - не работает так как GoreGroundColor - является вторым цветом заливки , у данного типа заливки цвет один
+		///fontColor - не работает так как GoreGroundColor - является вторым цветом заливки , у данного типа заливки цвет один
 		/// </summary>
 		/// <param name="col"></param>
 		/// <param name="comparison"></param>
@@ -674,11 +654,10 @@ namespace Ecng.Interop
 		/// <param name="fgColor"></param>
 		/// <returns></returns>
 		public ExcelWorker SetConditionalFormatting(int col, Ecng.ComponentModel.ComparisonOperator comparison,
-			string formula1, Color? bgColor, Color? fgColor)
+			string formula1,Color? bgColor,Color? fontColor)
 		{
 
-			return SetConditionalFormatting(col,col,0,ushort.MaxValue,comparison,formula1,formula1,bgColor,
-				fgColor);
+			return SetConditionalFormatting(col,col,0,ushort.MaxValue,comparison,formula1,formula1,bgColor,fontColor);
 		}
 
 		private short? ToHSSFColorIndex(Color? Color)
@@ -736,11 +715,11 @@ namespace Ecng.Interop
 		/// <param name="formula1"></param>
 		/// <param name="formula2"></param>
 		/// <param name="bgColor"></param>
-		/// <param name="fgColor"></param>
+		/// <param name="fontColor"></param>
 		/// <returns></returns>
 		public ExcelWorker SetConditionalFormatting(int colStart, int colEnd, int rowStart, int rowEnd,
 			Ecng.ComponentModel.ComparisonOperator comparison, string formula1, string formula2, Color? bgColor,
-			Color? fgColor)
+			Color? fontColor)
 		{
 			NPOI.SS.Util.CellRangeAddress[] my_data_range =
 			{
@@ -756,15 +735,28 @@ namespace Ecng.Interop
 				? sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1, formula2)
 				: sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1);
 			var fill = rule.CreatePatternFormatting();
-			
+			var fontColorIndex = ToHSSFColorIndex(fontColor);
+			if (fontColorIndex != null)
+			{
+				IFontFormatting font = rule.CreateFontFormatting();
+				font.SetFontStyle(false,true);
+				font.FontColorIndex = (short)fontColorIndex;
+			}
+
 			short? bgColorIndex = ToHSSFColorIndex(bgColor);
-			if (bgColorIndex != null) fill.FillBackgroundColor = (short) bgColorIndex;
+			if (bgColorIndex != null)
+			{
+				fill.FillBackgroundColor = (short) bgColorIndex;
+				fill.FillPattern = (short) FillPattern.SolidForeground;
+			}
 
-			var fgColorIndex = ToHSSFColorIndex(fgColor);
-			if (fgColorIndex != null) fill.FillForegroundColor = (short) fgColorIndex;
-
-			  fill.FillPattern = fgColorIndex == null  ? (short) FillPattern.SolidForeground:(short) FillPattern.Bricks;
+//			 fill.FillForegroundColor = (short) fgColorIndex;
+			
+//			fill.FillPattern = fontColorIndex == null ? (short) FillPattern.SolidForeground : (short) FillPattern.Bricks;
 			sheetCf.AddConditionalFormatting(my_data_range, rule);
+
+
+
 
 			return this;
 		}
@@ -1018,8 +1010,7 @@ namespace Ecng.Interop
 					_currentSheet.CreateRow(i);
 			}
 			var row = _currentSheet.GetRow(rowInd);
-			var cellIndecies = _indecies1[_currentSheet.SheetName].SafeAdd(rowInd,
-				key => new HashSet<int>(row.Cells.Select(c => c.ColumnIndex)));
+			var cellIndecies = _indecies.SafeAdd(rowInd,key => new HashSet<int>(row.Cells.Select(c => c.ColumnIndex)));
 
 			if (!cellIndecies.Contains(colInd))
 			{

@@ -26,24 +26,18 @@ namespace ExcelExporterNPOIMyIS
 		private void Click_SheetConditionalFormatting(object sender, RoutedEventArgs e)
 		{
 			worker = new ExcelWorker();
-			worker.AddSheet("Same Cell");
-			worker.SwitchSheet("Same Cell");
-
-			worker.RemoveSheet("Sheet0");
-
+			_indexRow = 0;
 			//Conditional Formatting
 			worker.SetCell(0, _indexRow, "Conditional Formatting A2>4");
 			AddData(worker);
-			worker.SetConditionalFormatting(0, 10, 0, 10, HSSFColor.Blue.Index, @"A2>4");
+			worker.SetConditionalFormatting(0, 2, 0, 4, HSSFColor.Blue.Index, @"A2>4");
 
 			//Conditional Formatting with between values.
-			worker.AddSheet(@"Second");
-			worker.SwitchSheet(@"Second");
-			_indexRow = 0;
+			_indexRow ++;
 			worker.SetCell(0, _indexRow, "Conditional Formatting Between 10-50");
-			_indexRow++;
+//			_indexRow++;
 			AddData(worker);
-			worker.SetConditionalFormatting(0, 10, 0, 10, HSSFColor.Brown.Index, @"10", "50",
+			worker.SetConditionalFormatting(0,2,5,9,HSSFColor.Brown.Index,@"10","50",
 				NPOI.SS.UserModel.ComparisonOperator.Between, isUseComparision: true);
 			worker.Save(path + "1.xlsx", true);
 			Process.Start(path + "1.xlsx");
