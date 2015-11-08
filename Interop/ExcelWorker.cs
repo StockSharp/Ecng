@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Windows.Media;
-
-namespace Ecng.Interop
+﻿namespace Ecng.Interop
 {
 	using System;
 	using System.Collections.Generic;
@@ -9,95 +6,163 @@ namespace Ecng.Interop
 	using System.Drawing;
 	using System.IO;
 	using System.Linq;
-	using Color = System.Windows.Media.Color;
-	using NPOI.HSSF.UserModel;
-	using Ecng.Common;
-	using Ecng.Collections;
-	using ICellStyle = NPOI.SS.UserModel;
-	using NPOI.XSSF.UserModel;
-	using NPOI.SS.UserModel;
-	using NPOI.SS.Util;
+	using System.Windows.Media;
 
+	using Ecng.Collections;
+	using Ecng.Common;
+	using Ecng.ComponentModel;
+	using Ecng.Reflection;
+
+	using NPOI.HSSF.UserModel;
 	using NPOI.HSSF.Util;
+	using NPOI.SS.Util;
+	using NPOI.XSSF.UserModel;
+
+	using Color = System.Windows.Media.Color;
+	using ICellStyle = NPOI.SS.UserModel;
 
 	public class ExcelWorker : Disposable
 	{
-		private ISheet _currentSheet;
+		private static readonly CachedSynchronizedDictionary<short, Color> _colors = new CachedSynchronizedDictionary<short, Color>();
+
+		static ExcelWorker()
+		{
+			var replaces = new Dictionary<string, string>
+			{
+				{ "OliveGreen", "Olive" },
+				{ "DarkTeal", "Teal" },
+				{ "Grey25Percent", "LightGray" },
+				{ "Grey40Percent", "Gray" },
+				{ "Grey50Percent", "DarkGray" },
+				{ "Grey80Percent", "DimGray" },
+				{ "DarkYellow", "YellowGreen" },
+				{ "BlueGrey", "SlateGray" },
+				{ "LightOrange", "Orange" },
+				{ "BrightGreen", "GreenYellow" },
+				{ "Rose", "RosyBrown" },
+				{ "LightTurquoise", "Turquoise" },
+				{ "PaleBlue", "PaleTurquoise" },
+				{ "LightCornflowerBlue", "LightBlue" }
+			};
+
+			//Colors.LightBlue
+
+			_colors.AddRange(typeof(HSSFColor).Assembly
+				.GetTypes()
+				.Where(t => t.IsSubclassOf(typeof(HSSFColor)) && t.Name != "Automatic" && t.Name != "CustomColor")
+				.ToDictionary(
+					t => (short)t.GetField("Index").GetValue(null),
+					t => typeof(Colors).GetValue<VoidType, Color>(replaces.TryGetValue(t.Name) ?? t.Name, null)));
+		}
+
+		private ICellStyle.ISheet _currentSheet;
 		private string _fileName;
 
-		private readonly Dictionary<int,HashSet<int>> _indecies = new Dictionary<int,HashSet<int>>();
+		private readonly Dictionary<int, HashSet<int>> _indecies = new Dictionary<int, HashSet<int>>();
 
-		private readonly Dictionary<string, NPOI.SS.UserModel.ICellStyle> _cellStyleCache =
-			new Dictionary<string, NPOI.SS.UserModel.ICellStyle>();
+		private readonly Dictionary<string, ICellStyle.ICellStyle> _cellStyleCache =
+			new Dictionary<string, ICellStyle.ICellStyle>();
 
 		private FileStream _stream;
 
-		#region Import
-		public List<ICell> cells = new List<ICell>();
-
-		public ExcelWorker importXLS(string path)
+		/// <summary>
+		/// Create <see cref="ExcelWorker"/>.
+		/// </summary>
+		public ExcelWorker()
 		{
-			while (Workbook.NumberOfSheets != 0)
-			{
-				Workbook.RemoveSheetAt(Workbook.ActiveSheetIndex);
-			}
-
-			using (FileStream file = new FileStream(path, FileMode.Open, FileAccess.Read))
-			{
-				//                Workbook = new XSSFWorkbook(file);
-
-				Workbook = new HSSFWorkbook(file);
-			}
-
-			if (Workbook.NumberOfSheets > 0)
-
-				for (int i = 0; i < Workbook.NumberOfSheets; i++)
-				{
-					_currentSheet = Workbook.GetSheetAt(i);
-					System.Collections.IEnumerator rows = (IEnumerator) _currentSheet.GetRowEnumerator();
-					int it = 0;
-					while (rows.MoveNext())
-					{
-						IRow row = (IRow) rows.Current;
-						foreach (var cell in row.Cells)
-						{
-							cells.Add(InternalGetCell(cell.ColumnIndex, row.RowNum));
-						}
-					}
-				}
-			return this;
+			Workbook = new XSSFWorkbook();
+			//            Workbook = new NPOI.XSSF.UserModel.XSSFWorkbook();
+			_currentSheet = Workbook.CreateSheet();
 		}
 
-
-		public IEnumerable<T> GetColumn<T>(int col)
+		/// <summary>
+		/// Create <see cref="ExcelWorker"/>.
+		/// </summary>
+		/// <param name="name">Name of workbook.</param>
+		/// <param name="readOnly"></param>
+		public ExcelWorker(string name, bool readOnly = false)
 		{
-			try
-			{
-				List<T> TT = new List<T>();
-				foreach (var cell in cells.Where(cc => cc.ColumnIndex == 1)) TT.Add(GetCell<T>(cell.ColumnIndex, cell.RowIndex));
-				return TT;
-			}
-			catch (Exception e)
-			{
-				throw new ArgumentNullException(e.ToString());
-			}
+			if (name.IsEmpty())
+				throw new ArgumentOutOfRangeException(nameof(name));
+
+			_stream = new FileStream(name, FileMode.Open, readOnly ? FileAccess.Read : FileAccess.ReadWrite);
+			Workbook = ICellStyle.WorkbookFactory.Create(_stream);
 		}
 
-		#endregion
+		[CLSCompliant(false)]
+		public ICellStyle.IWorkbook Workbook { get; }
+
+		//#region Import
+
+		//public List<ICellStyle.ICell> cells = new List<ICellStyle.ICell>();
+
+		//public ExcelWorker importXLS(string path)
+		//{
+		//	while (Workbook.NumberOfSheets != 0)
+		//	{
+		//		Workbook.RemoveSheetAt(Workbook.ActiveSheetIndex);
+		//	}
+
+		//	using (FileStream file = new FileStream(path, FileMode.Open, FileAccess.Read))
+		//	{
+		//		//                Workbook = new XSSFWorkbook(file);
+
+		//		Workbook = new HSSFWorkbook(file);
+		//	}
+
+		//	if (Workbook.NumberOfSheets > 0)
+
+		//		for (int i = 0; i < Workbook.NumberOfSheets; i++)
+		//		{
+		//			_currentSheet = Workbook.GetSheetAt(i);
+		//			IEnumerator rows = _currentSheet.GetRowEnumerator();
+		//			int it = 0;
+		//			while (rows.MoveNext())
+		//			{
+		//				ICellStyle.IRow row = (ICellStyle.IRow)rows.Current;
+		//				foreach (var cell in row.Cells)
+		//				{
+		//					cells.Add(InternalGetCell(cell.ColumnIndex, row.RowNum));
+		//				}
+		//			}
+		//		}
+
+		//	return this;
+		//}
+
+
+		//public IEnumerable<T> GetColumn<T>(int col)
+		//{
+		//	try
+		//	{
+		//		return cells
+		//			.Where(cc => cc.ColumnIndex == 1)
+		//			.Select(cell => GetCell<T>(cell.ColumnIndex, cell.RowIndex))
+		//			.ToArray();
+		//	}
+		//	catch (Exception e)
+		//	{
+		//		throw new ArgumentNullException(e.ToString());
+		//	}
+		//}
+
+		//#endregion
 
 		public ExcelWorker MergeCells(int firstRow, int lastRow, int firstCol, int lastCol, bool isborder = false)
 		{
 			var region = new CellRangeAddress(firstRow, lastRow, firstCol, lastCol);
 			_currentSheet.AddMergedRegion(region);
+
 			if (isborder)
-				((HSSFSheet) _currentSheet).SetEnclosedBorderOfRegion(region, BorderStyle.Dotted,
-					NPOI.HSSF.Util.HSSFColor.Red.Index);
+				((HSSFSheet)_currentSheet).SetEnclosedBorderOfRegion(region, ICellStyle.BorderStyle.Dotted,
+					HSSFColor.Red.Index);
+
 			return this;
 		}
 
 		public ExcelWorker SetAligmentCell(int colInd, int rowInd,
-			VerticalAlignment verAligment = VerticalAlignment.Center,
-			HorizontalAlignment horAligment = HorizontalAlignment.Center)
+			ICellStyle.VerticalAlignment verAligment = ICellStyle.VerticalAlignment.Center,
+			ICellStyle.HorizontalAlignment horAligment = ICellStyle.HorizontalAlignment.Center)
 		{
 			var ccel = InternalGetCell(colInd, rowInd);
 			var style = Workbook.CreateCellStyle();
@@ -115,25 +180,24 @@ namespace Ecng.Interop
 			return this;
 		}
 
-		public ExcelWorker AddHyperLink(int col, int row, string value, short HSSFColorIndex = HSSFColor.Blue.Index)
+		public ExcelWorker AddHyperLink(int col, int row, string value, Color color)
 		{
-			var hlink_style = Workbook.CreateCellStyle();
-			IFont hlink_font = Workbook.CreateFont();
-			hlink_font.Underline = FontUnderlineType.Single;
-			hlink_font.Color = HSSFColorIndex;
-			hlink_style.SetFont(hlink_font);
+			var style = Workbook.CreateCellStyle();
+			var font = Workbook.CreateFont();
+			font.Underline = ICellStyle.FontUnderlineType.Single;
+			font.Color = ToHSSFColorIndex(color);
+			style.SetFont(font);
 
 			var cell = InternalGetCell(col, row);
 
-			XSSFHyperlink link = new XSSFHyperlink(HyperlinkType.Url);
-			link.Address = (value);
+			var link = new XSSFHyperlink(ICellStyle.HyperlinkType.Url) { Address = (value) };
 
 			cell.Hyperlink = link;
-			cell.CellStyle = hlink_style;
+			cell.CellStyle = style;
 			return this;
 		}
 
-		public ExcelWorker SetCell(int col,int row,string value,DataFormat dataFormat)
+		public ExcelWorker SetCell(int col, int row, string value, DataFormat dataFormat)
 		{
 			var cell = InternalGetCell(col, row);
 			var cStyle = Workbook.CreateCellStyle();
@@ -143,19 +207,19 @@ namespace Ecng.Interop
 			return this;
 		}
 
-		public ExcelWorker SetCell(int col,int row,decimal value,DataFormat dataFormat)
+		public ExcelWorker SetCell(int col, int row, decimal value, DataFormat dataFormat)
 		{
-			SetCell(col,row,(double)value,dataFormat);
+			SetCell(col, row, (double)value, dataFormat);
 			return this;
 		}
 
-		public ExcelWorker SetCell(int col,int row,int value,DataFormat dataFormat)
+		public ExcelWorker SetCell(int col, int row, int value, DataFormat dataFormat)
 		{
-			SetCell(col,row,(double)value,dataFormat);
+			SetCell(col, row, (double)value, dataFormat);
 			return this;
 		}
 
-		public ExcelWorker SetCell(int col, int row, TimeSpan value,DataFormat dataFormat)
+		public ExcelWorker SetCell(int col, int row, TimeSpan value, DataFormat dataFormat)
 		{
 			return SetCell(col, row, DateTime.Today + value, dataFormat);
 		}
@@ -170,9 +234,9 @@ namespace Ecng.Interop
 			return this;
 		}
 
-		private string GetDataType(DataFormat typeDate)
+		private static string GetDataType(DataFormat format)
 		{
-			switch (typeDate)
+			switch (format)
 			{
 				case DataFormat.Date1:
 				{
@@ -211,19 +275,19 @@ namespace Ecng.Interop
 					return "m/d/yy h:mm";
 				}
 
-				case DataFormat.Nuneric1:
+				case DataFormat.Numeric1:
 				{
 					return "0";
 				}
-				case DataFormat.Nuneric2:
+				case DataFormat.Numeric2:
 				{
 					return "0.00";
 				}
-				case DataFormat.Nuneric3:
+				case DataFormat.Numeric3:
 				{
 					return "#,##0";
 				}
-				case DataFormat.Nuneric4:
+				case DataFormat.Numeric4:
 				{
 					return "#,##0.00";
 				}
@@ -267,14 +331,15 @@ namespace Ecng.Interop
 				{
 					return "@";
 				}
+				//case DataFormat.Default:
+				default:
+					return string.Empty;
 			}
-			return "";
 		}
 
-		public ExcelWorker SetCell(int col, int row, double value,
-			DataFormat nomber = DataFormat.UniversalText)
+		public ExcelWorker SetCell(int col, int row, double value, DataFormat nomber = DataFormat.UniversalText)
 		{
-			string dataFormat = GetDataType(nomber);
+			var dataFormat = GetDataType(nomber);
 			var cell = InternalGetCell(col, row);
 			var cStyle = Workbook.CreateCellStyle();
 			cStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat(dataFormat);
@@ -286,13 +351,12 @@ namespace Ecng.Interop
 		/// <summary>
 		/// Sets color on background on cell
 		/// </summary>
-		/// <param name="nomCol"></param>
-		/// <param name="nomRow"></param>
+		/// <param name="col"></param>
+		/// <param name="row"></param>
 		/// <param name="hssfColorIndex"></param>
 		/// <param name="fillPatternSolidForeground"></param>
 		/// <returns></returns>
-		public ExcelWorker SetBackGroundColor(int col, int row, short hssfColorIndex,
-			FillPattern fillPatternSolidForeground = FillPattern.SolidForeground)
+		public ExcelWorker SetBackGroundColor(int col, int row, short hssfColorIndex, ICellStyle.FillPattern fillPatternSolidForeground = ICellStyle.FillPattern.SolidForeground)
 		{
 			var style = Workbook.CreateCellStyle();
 			style.FillBackgroundColor = hssfColorIndex;
@@ -338,13 +402,10 @@ namespace Ecng.Interop
 		public ExcelWorker AutoSizeColumn(int column, bool useMergetCells = false)
 		{
 			if (useMergetCells == false)
-			{
 				_currentSheet.AutoSizeColumn(column);
-			}
 			else
-			{
 				_currentSheet.AutoSizeColumn(column, true);
-			}
+
 			return this;
 		}
 
@@ -380,39 +441,9 @@ namespace Ecng.Interop
 		}
 
 		/// <summary>
-		/// Create <see cref="ExcelWorker"/>.
-		/// </summary>
-		public ExcelWorker()
-		{
-			Workbook = new XSSFWorkbook();
-			//            Workbook = new NPOI.XSSF.UserModel.XSSFWorkbook();
-			_currentSheet = Workbook.CreateSheet();
-		}
-
-		/// <summary>
-		/// Create <see cref="ExcelWorker"/>.
-		/// </summary>
-		/// <param name="name">Name of workbook.</param>
-		/// <param name="readOnly"></param>
-		public ExcelWorker(string name, bool readOnly = false)
-		{
-			if (name.IsEmpty())
-				throw new ArgumentOutOfRangeException("name");
-
-			_stream = new FileStream(name, FileMode.Open, readOnly ? FileAccess.Read : FileAccess.ReadWrite);
-			Workbook = NPOI.SS.UserModel.WorkbookFactory.Create(_stream);
-		}
-
-		[CLSCompliant(false)]
-		public NPOI.SS.UserModel.IWorkbook Workbook { get; private set; }
-
-		/// <summary>
 		/// Name of current sheet. Null, if current sheet doesn't exist.
 		/// </summary>
-		public string CurrentSheetName
-		{
-			get { return _currentSheet != null ? _currentSheet.SheetName : string.Empty; }
-		}
+		public string CurrentSheetName => _currentSheet != null ? _currentSheet.SheetName : string.Empty;
 
 		/// <summary>
 		/// Create worksheet with specified name.
@@ -425,11 +456,10 @@ namespace Ecng.Interop
 				return this;
 
 			var sheet = Workbook.CreateSheet(sheetName);
+
 			if (_currentSheet == null)
-			{
 				_currentSheet = sheet;
 
-			}
 			return this;
 		}
 
@@ -443,6 +473,7 @@ namespace Ecng.Interop
 
 			Workbook.RemoveSheetAt(Workbook.GetSheetIndex(_currentSheet));
 			_currentSheet = null;
+			_indecies.Clear();
 
 			return this;
 		}
@@ -460,6 +491,8 @@ namespace Ecng.Interop
 
 				if (_currentSheet != null && _currentSheet.SheetName == sheetName)
 					_currentSheet = null;
+
+				_indecies.Clear();
 			}
 
 			return this;
@@ -473,8 +506,8 @@ namespace Ecng.Interop
 		public ExcelWorker RenameSheet(string sheetName)
 		{
 			if (sheetName.IsEmpty())
-				throw new ArgumentNullException("sheetName");
-			
+				throw new ArgumentNullException(nameof(sheetName));
+
 			ThrowIfCurrentSheetIsEmpty();
 
 			Workbook.SetSheetName(Workbook.GetSheetIndex(_currentSheet), sheetName);
@@ -489,7 +522,7 @@ namespace Ecng.Interop
 		public bool ContainsSheet(string sheetName)
 		{
 			if (sheetName.IsEmpty())
-				throw new ArgumentNullException("sheetName");
+				throw new ArgumentNullException(nameof(sheetName));
 
 			return Workbook.GetSheetIndex(sheetName) != -1;
 		}
@@ -502,7 +535,11 @@ namespace Ecng.Interop
 		public ExcelWorker SwitchSheet(string sheetName)
 		{
 			if (ContainsSheet(sheetName))
+			{
 				_currentSheet = Workbook.GetSheet(sheetName);
+				_indecies.Clear();
+            }
+
 			return this;
 		}
 
@@ -537,7 +574,7 @@ namespace Ecng.Interop
 		{
 			var cell = InternalGetCell(col, row);
 			//            _currentSheet. InternalGetCell
-			var style = (XSSFCellStyle) Workbook.CreateCellStyle();
+			var style = (XSSFCellStyle)Workbook.CreateCellStyle();
 			style.FillBackgroundColorColor = ToExcelColor(color);
 			cell.CellStyle = style;
 			return this;
@@ -545,7 +582,7 @@ namespace Ecng.Interop
 
 		public Color GetBackColor(int col, int row)
 		{
-			return ToWpfColor((XSSFColor) InternalGetCell(col, row).CellStyle.FillBackgroundColorColor);
+			return ToWpfColor((XSSFColor)InternalGetCell(col, row).CellStyle.FillBackgroundColorColor);
 		}
 
 		/// <summary>
@@ -577,24 +614,24 @@ namespace Ecng.Interop
 		/// <param name="row"></param>
 		/// <param name="color"></param>
 		/// <returns></returns>
-		public ExcelWorker SetForeColor(int col,int row,Color color)
+		public ExcelWorker SetForeColor(int col, int row, Color color)
 		{
-			var cell = InternalGetCell(col,row);
+			var cell = InternalGetCell(col, row);
 			var style = (XSSFCellStyle)Workbook.CreateCellStyle();
 			style.FillForegroundColorColor = ToExcelColor(color);
 			cell.CellStyle = style;
 			return this;
 		}
 
-		public Color GetForeColor(int col,int row)
+		public Color GetForeColor(int col, int row)
 		{
-			var color = (XSSFColor)InternalGetCell(col,row).CellStyle.FillForegroundColorColor;
+			var color = (XSSFColor)InternalGetCell(col, row).CellStyle.FillForegroundColorColor;
 			return ToWpfColor(color);
 		}
 
-		private static IColor ToExcelColor(Color color)
+		private static ICellStyle.IColor ToExcelColor(Color color)
 		{
-			return new XSSFColor(new[] {color.R, color.G, color.B});
+			return new XSSFColor(new[] { color.R, color.G, color.B });
 		}
 
 		/// <summary>
@@ -610,33 +647,24 @@ namespace Ecng.Interop
 		/// <param name="comparisonOperator"></param>
 		/// <param name="isUseComparision"></param>
 		/// <returns></returns>
-		public ExcelWorker SetConditionalFormatting(int firstColumn, int lasColumn ,int firstRow, int lastRow
-			, short backGroungColorInd, string formula1, string formula2 = "",
-			ComparisonOperator comparisonOperator = ComparisonOperator.Equal, bool isUseComparision = false)
+		public ExcelWorker SetConditionalFormatting(int firstColumn, int lasColumn, int firstRow, int lastRow, short backGroungColorInd, string formula1, string formula2 = "", ICellStyle.ComparisonOperator comparisonOperator = ICellStyle.ComparisonOperator.Equal, bool isUseComparision = false)
 		{
-			NPOI.SS.Util.CellRangeAddress[] my_data_range =
+			CellRangeAddress[] myDataRange =
 			{
-				new NPOI.SS.Util.CellRangeAddress(firstRow, lastRow, firstColumn, lasColumn)
+				new CellRangeAddress(firstRow, lastRow, firstColumn, lasColumn)
 			};
 			var sheetCf = _currentSheet.SheetConditionalFormatting;
 
-			IConditionalFormattingRule rule;
+			ICellStyle.IConditionalFormattingRule rule;
 			if (isUseComparision == false)
-			{
 				rule = sheetCf.CreateConditionalFormattingRule(formula1);
-			}
 			else
-			{
-				rule = (comparisonOperator == ComparisonOperator.Between ||
-				        comparisonOperator == ComparisonOperator.NotBetween)
-					? sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1, formula2)
-					: sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1);
-			}
+				rule = (comparisonOperator == ICellStyle.ComparisonOperator.Between || comparisonOperator == ICellStyle.ComparisonOperator.NotBetween) ? sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1, formula2) : sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1);
 
 			var fill = rule.CreatePatternFormatting();
 			fill.FillBackgroundColor = backGroungColorInd;
-			fill.FillPattern = (short) FillPattern.SolidForeground;
-			sheetCf.AddConditionalFormatting(my_data_range, rule);
+			fill.FillPattern = (short)ICellStyle.FillPattern.SolidForeground;
+			sheetCf.AddConditionalFormatting(myDataRange, rule);
 			return this;
 		}
 
@@ -653,54 +681,16 @@ namespace Ecng.Interop
 		/// <param name="bgColor"></param>
 		/// <param name="fgColor"></param>
 		/// <returns></returns>
-		public ExcelWorker SetConditionalFormatting(int col, Ecng.ComponentModel.ComparisonOperator comparison,
-			string formula1,Color? bgColor,Color? fontColor)
+		public ExcelWorker SetConditionalFormatting(int col, ComparisonOperator comparison, string formula1, Color? bgColor, Color? fgColor)
 		{
-
-			return SetConditionalFormatting(col,col,0,ushort.MaxValue,comparison,formula1,formula1,bgColor,fontColor);
+			return SetConditionalFormatting(col, col, 0, ushort.MaxValue, comparison, formula1, formula1, bgColor, fgColor);
 		}
 
-		private short? ToHSSFColorIndex(Color? Color)
+		private static short ToHSSFColorIndex(Color color)
 		{
-			if (Color == null) return null;
-			Color col = (Color) Color;
-			if (col == Colors.Aqua) return HSSFColor.Aqua.Index;
-			if (col == Colors.Black) return HSSFColor.Black.Index;
-			if (col == Colors.Blue) return HSSFColor.Blue.Index;
-			if (col == Colors.Brown) return HSSFColor.Brown.Index;
-			if (col == Colors.CornflowerBlue) return HSSFColor.CornflowerBlue.Index;
-			if (col == Colors.DarkBlue) return HSSFColor.DarkBlue.Index;
-			if (col == Colors.DarkGreen) return HSSFColor.DarkGreen.Index;
-			if (col == Colors.DarkRed) return HSSFColor.DarkRed.Index;
-			if (col == Colors.Gold) return HSSFColor.Gold.Index;
-			if (col == Colors.Green) return HSSFColor.Green.Index;
-			if (col == Colors.Indigo) return HSSFColor.Indigo.Index;
-			if (col == Colors.Lavender) return HSSFColor.Lavender.Index;
-			if (col == Colors.LemonChiffon) return HSSFColor.LemonChiffon.Index;
-			if (col == Colors.LightBlue) return HSSFColor.LightBlue.Index;
-			if (col == Colors.LightGreen) return HSSFColor.LightGreen.Index;
-			if (col == Colors.LightYellow) return HSSFColor.LightYellow.Index;
-			if (col == Colors.Lime) return HSSFColor.Lime.Index;
-			if (col == Colors.Maroon) return HSSFColor.Maroon.Index;
-			if (col == Colors.Orange) return HSSFColor.Orange.Index;
-			if (col == Colors.Orchid) return HSSFColor.Orchid.Index;
-			if (col == Colors.Pink) return HSSFColor.Pink.Index;
-			if (col == Colors.Plum) return HSSFColor.Plum.Index;
-			if (col == Colors.Red) return HSSFColor.Red.Index;
-			if (col == Colors.RoyalBlue) return HSSFColor.RoyalBlue.Index;
-			if (col == Colors.SeaGreen) return HSSFColor.SeaGreen.Index;
-			if (col == Colors.SkyBlue) return HSSFColor.SkyBlue.Index;
-			if (col == Colors.Tan) return HSSFColor.Tan.Index;
-			if (col == Colors.Teal) return HSSFColor.Teal.Index;
-			if (col == Colors.Turquoise) return HSSFColor.Turquoise.Index;
-			if (col == Colors.Violet) return HSSFColor.Violet.Index;
-			if (col == Colors.White) return HSSFColor.White.Index;
-			if (col == Colors.Yellow) return HSSFColor.Yellow.Index;
-			if (col == Colors.Green) return HSSFColor.Green.Index;
-			if (col == Colors.Red) return HSSFColor.Red.Index;
-			return null;
+			return _colors.CachedPairs.First(v => v.Value == color).Key;
 		}
-		
+
 		/// <summary>
 		///Поддерживает только стандартные цвета Aqua,Black,Blue,Brown,CornflowerBlue,DarkBlue,
 		/// DarkGreen,DarkRed,Gold,Green,Indigo,Lavender,LemonChiffon,LightBlue,LightGreen,
@@ -717,46 +707,39 @@ namespace Ecng.Interop
 		/// <param name="bgColor"></param>
 		/// <param name="fontColor"></param>
 		/// <returns></returns>
-		public ExcelWorker SetConditionalFormatting(int colStart, int colEnd, int rowStart, int rowEnd,
-			Ecng.ComponentModel.ComparisonOperator comparison, string formula1, string formula2, Color? bgColor,
-			Color? fontColor)
+		public ExcelWorker SetConditionalFormatting(int colStart, int colEnd, int rowStart, int rowEnd, ComparisonOperator comparison, string formula1, string formula2, Color? bgColor, Color? fontColor)
 		{
-			NPOI.SS.Util.CellRangeAddress[] my_data_range =
+			CellRangeAddress[] dataRange =
 			{
-				new NPOI.SS.Util.CellRangeAddress(rowStart, rowEnd, colStart, colEnd)
+				new CellRangeAddress(rowStart, rowEnd, colStart, colEnd)
 			};
+
 			var sheetCf = _currentSheet.SheetConditionalFormatting;
 
 			var comparisonOperator = ToExcelOperator(comparison);
-			IConditionalFormattingRule rule;
 
-			rule = (comparisonOperator == ComparisonOperator.Between ||
-			        comparisonOperator == ComparisonOperator.NotBetween)
-				? sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1, formula2)
-				: sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1);
+			var rule = (comparisonOperator == ICellStyle.ComparisonOperator.Between || comparisonOperator == ICellStyle.ComparisonOperator.NotBetween) ? sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1, formula2) : sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1);
+
 			var fill = rule.CreatePatternFormatting();
-			var fontColorIndex = ToHSSFColorIndex(fontColor);
+			var fontColorIndex = fontColor == null ? (short?)null : ToHSSFColorIndex(fontColor.Value);
 			if (fontColorIndex != null)
 			{
-				IFontFormatting font = rule.CreateFontFormatting();
-				font.SetFontStyle(false,true);
+				var font = rule.CreateFontFormatting();
+				font.SetFontStyle(false, true);
 				font.FontColorIndex = (short)fontColorIndex;
 			}
 
-			short? bgColorIndex = ToHSSFColorIndex(bgColor);
+			var bgColorIndex = bgColor == null ? (short?)null : ToHSSFColorIndex(bgColor.Value);
 			if (bgColorIndex != null)
 			{
-				fill.FillBackgroundColor = (short) bgColorIndex;
-				fill.FillPattern = (short) FillPattern.SolidForeground;
+				fill.FillBackgroundColor = (short)bgColorIndex;
+				fill.FillPattern = (short)ICellStyle.FillPattern.SolidForeground;
 			}
 
-//			 fill.FillForegroundColor = (short) fgColorIndex;
-			
-//			fill.FillPattern = fontColorIndex == null ? (short) FillPattern.SolidForeground : (short) FillPattern.Bricks;
-			sheetCf.AddConditionalFormatting(my_data_range, rule);
+			//			 fill.FillForegroundColor = (short) fgColorIndex;
 
-
-
+			//			fill.FillPattern = fontColorIndex == null ? (short) FillPattern.SolidForeground : (short) FillPattern.Bricks;
+			sheetCf.AddConditionalFormatting(dataRange, rule);
 
 			return this;
 		}
@@ -764,39 +747,34 @@ namespace Ecng.Interop
 		private static Color ToWpfColor(XSSFColor color)
 		{
 			if (color == null)
-				throw new ArgumentNullException("color");
+				throw new ArgumentNullException(nameof(color));
 
 			var argb = color.GetARgb();
 			return Color.FromArgb(argb[0], argb[1], argb[2], argb[3]);
 		}
-				private static NPOI.SS.UserModel.ComparisonOperator ToExcelOperator(
-			Ecng.ComponentModel.ComparisonOperator comparison)
+
+		private static ICellStyle.ComparisonOperator ToExcelOperator(ComparisonOperator comparison)
 		{
 			switch (comparison)
 			{
-				case ComponentModel.ComparisonOperator.Equal:
-					return ComparisonOperator.Equal;
-				case ComponentModel.ComparisonOperator.NotEqual:
-					return ComparisonOperator.NotEqual;
-				case ComponentModel.ComparisonOperator.Greater:
-					return ComparisonOperator.GreaterThan;
-				case ComponentModel.ComparisonOperator.GreaterOrEqual:
-					return ComparisonOperator.GreaterThanOrEqual;
-				case ComponentModel.ComparisonOperator.Less:
-					return ComparisonOperator.LessThan;
-				case ComponentModel.ComparisonOperator.LessOrEqual:
-					return ComparisonOperator.LessThanOrEqual;
-				case ComponentModel.ComparisonOperator.Any:
-					return ComparisonOperator.NoComparison;
+				case ComparisonOperator.Equal:
+					return ICellStyle.ComparisonOperator.Equal;
+				case ComparisonOperator.NotEqual:
+					return ICellStyle.ComparisonOperator.NotEqual;
+				case ComparisonOperator.Greater:
+					return ICellStyle.ComparisonOperator.GreaterThan;
+				case ComparisonOperator.GreaterOrEqual:
+					return ICellStyle.ComparisonOperator.GreaterThanOrEqual;
+				case ComparisonOperator.Less:
+					return ICellStyle.ComparisonOperator.LessThan;
+				case ComparisonOperator.LessOrEqual:
+					return ICellStyle.ComparisonOperator.LessThanOrEqual;
+				case ComparisonOperator.Any:
+					return ICellStyle.ComparisonOperator.NoComparison;
 				default:
-					throw new ArgumentOutOfRangeException("comparison");
+					throw new ArgumentOutOfRangeException(nameof(comparison));
 			}
 		}
-
-		//public T GetCell<T>(int col, int row)
-		//{
-		//    return GetCell(col, row).To<T>();
-		//}
 
 		/// <summary>
 		/// 
@@ -808,21 +786,21 @@ namespace Ecng.Interop
 		public ExcelWorker SetFont(int col, int row, Font font)
 		{
 			if (font == null)
-				throw new ArgumentNullException("font");
+				throw new ArgumentNullException(nameof(font));
 
 			var cellFont = InternalGetCell(col, row).CellStyle.GetFont(Workbook);
 
 			//cellFont.Color = font;
 			cellFont.IsItalic = font.Italic;
 			cellFont.FontName = font.Name;
-			cellFont.FontHeight = (short) font.Size;
+			cellFont.FontHeight = (short)font.Size;
 
 			return this;
 		}
 
-		public ExcelWorker SetStyle(int col, System.Type dataType)
+		public ExcelWorker SetStyle(int col, Type dataType)
 		{
-			return this.SetStyle(col, GetDefaultDataFormat(dataType));
+			return SetStyle(col, GetDefaultDataFormat(dataType));
 		}
 
 		public ExcelWorker SetStyle(int col, string dataFormat)
@@ -833,12 +811,10 @@ namespace Ecng.Interop
 
 				// check if this is a built-in format
 				// TODO
-				var builtinFormatId = (short) -1; //XSSFDataFormat.GetBuiltinFormat(dataFormat);
+				var builtinFormatId = (short)-1; //XSSFDataFormat.GetBuiltinFormat(dataFormat);
 
 				if (builtinFormatId != -1)
-				{
 					style.DataFormat = builtinFormatId;
-				}
 				else
 				{
 					// not a built-in format, so create a new one
@@ -853,43 +829,43 @@ namespace Ecng.Interop
 			return this;
 		}
 
-		private static string GetDefaultDataFormat(System.Type dataType)
+		private static string GetDefaultDataFormat(Type dataType)
 		{
 			if (dataType == null)
-			{
 				return "General";
-			}
-			switch (System.Type.GetTypeCode(dataType))
+
+			switch (Type.GetTypeCode(dataType))
 			{
-				case System.TypeCode.Empty:
-				case System.TypeCode.Object:
-				case System.TypeCode.DBNull:
-				case System.TypeCode.Char:
-				case System.TypeCode.String:
+				case TypeCode.Empty:
+				case TypeCode.Object:
+				case TypeCode.DBNull:
+				case TypeCode.Char:
+				case TypeCode.String:
 					return "text";
 
-				case System.TypeCode.Boolean:
+				case TypeCode.Boolean:
 					return "[=0]\"Yes\";[=1]\"No\"";
 
-				case System.TypeCode.SByte:
-				case System.TypeCode.Byte:
-				case System.TypeCode.Int16:
-				case System.TypeCode.UInt16:
-				case System.TypeCode.Int32:
-				case System.TypeCode.UInt32:
-				case System.TypeCode.Int64:
-				case System.TypeCode.UInt64:
+				case TypeCode.SByte:
+				case TypeCode.Byte:
+				case TypeCode.Int16:
+				case TypeCode.UInt16:
+				case TypeCode.Int32:
+				case TypeCode.UInt32:
+				case TypeCode.Int64:
+				case TypeCode.UInt64:
 					return "0";
 
-				case System.TypeCode.Single:
-				case System.TypeCode.Double:
-				case System.TypeCode.Decimal:
+				case TypeCode.Single:
+				case TypeCode.Double:
+				case TypeCode.Decimal:
 					return "0.00";
 
-				case System.TypeCode.DateTime:
+				case TypeCode.DateTime:
 					return "yyyy.MM.dd HH:mm";
+				default:
+					throw new ArgumentOutOfRangeException();
 			}
-			throw new System.ArgumentOutOfRangeException();
 		}
 
 		/// <summary>
@@ -899,9 +875,9 @@ namespace Ecng.Interop
 		/// <param name="row"></param>
 		/// <param name="value"></param>
 		/// <returns></returns>
-		public ExcelWorker SetCell(int col,int row,object value)
+		public ExcelWorker SetCell(int col, int row, object value)
 		{
-			var cell = InternalGetCell(col,row);
+			var cell = InternalGetCell(col, row);
 
 			if (value == null)
 			{
@@ -917,8 +893,8 @@ namespace Ecng.Interop
 				cell.SetCellValue((string)value);
 			else if (value is bool)
 				cell.SetCellValue((bool)value);
-			else if (value is IRichTextString)
-				cell.SetCellValue((IRichTextString)value);
+			else if (value is ICellStyle.IRichTextString)
+				cell.SetCellValue((ICellStyle.IRichTextString)value);
 			else if (value is double || value is int)
 				cell.SetCellValue(value.To<double>());
 			else
@@ -929,7 +905,7 @@ namespace Ecng.Interop
 
 		public ExcelWorker SetFormula(int col, int row, string formula)
 		{
-			ICell cell = InternalGetCell(col, row);
+			var cell = InternalGetCell(col, row);
 			cell.CellFormula = formula;
 			return this;
 		}
@@ -940,83 +916,66 @@ namespace Ecng.Interop
 		/// <param name="col"></param>
 		/// <param name="row"></param>
 		/// <returns></returns>
-		public T GetCell<T>(int col,int row)
+		public T GetCell<T>(int col, int row)
 		{
-			var cell = InternalGetCell(col,row,false);
+			var cell = InternalGetCell(col, row, false);
 
-			if (
-					typeof(T) == typeof(int) ||
-                    typeof(T) == typeof(long) ||
-                    typeof(T) == typeof(uint) ||
-                    typeof(T) == typeof(ulong) ||
-                    typeof(T) == typeof(short) ||
-                    typeof(T) == typeof(ushort) ||
-                    typeof(T) == typeof(double) ||
-                    typeof(T) == typeof(float) ||
-                    typeof(T) == typeof(decimal)
-				)
-			{
+			if (typeof(T) == typeof(int) || typeof(T) == typeof(long) || typeof(T) == typeof(uint) || typeof(T) == typeof(ulong) || typeof(T) == typeof(short) || typeof(T) == typeof(ushort) || typeof(T) == typeof(double) || typeof(T) == typeof(float) || typeof(T) == typeof(decimal))
 				return cell.NumericCellValue.To<T>();
-			}
-			else if (typeof(T) == typeof(DateTime))
+			if (typeof(T) == typeof(DateTime))
 				return cell.DateCellValue.To<T>();
-			else if (typeof(T) == typeof(TimeSpan))
+			if (typeof(T) == typeof(TimeSpan))
 				return cell.DateCellValue.TimeOfDay.To<T>();
-			else if (typeof(T) == typeof(string))
+			if (typeof(T) == typeof(string))
 				return cell.StringCellValue.To<T>();
-			else if (typeof(T) == typeof(bool))
+			if (typeof(T) == typeof(bool))
 				return cell.BooleanCellValue.To<T>();
-			else
+			switch (cell.CellType)
 			{
-				switch (cell.CellType)
-				{
-					case CellType.Unknown:
-						return cell.RichStringCellValue.To<T>();
-					case CellType.Numeric:
-						return cell.NumericCellValue.To<T>();
-					case CellType.String:
-						return cell.StringCellValue.To<T>();
-					case CellType.Formula:
-						return cell.CellFormula.To<T>();
-					case CellType.Blank:
-						return default(T);
-					case CellType.Boolean:
-						return cell.BooleanCellValue.To<T>();
-					case CellType.Error:
-						return cell.ErrorCellValue.To<T>();
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
+				case ICellStyle.CellType.Unknown:
+					return cell.RichStringCellValue.To<T>();
+				case ICellStyle.CellType.Numeric:
+					return cell.NumericCellValue.To<T>();
+				case ICellStyle.CellType.String:
+					return cell.StringCellValue.To<T>();
+				case ICellStyle.CellType.Formula:
+					return cell.CellFormula.To<T>();
+				case ICellStyle.CellType.Blank:
+					return default(T);
+				case ICellStyle.CellType.Boolean:
+					return cell.BooleanCellValue.To<T>();
+				case ICellStyle.CellType.Error:
+					return cell.ErrorCellValue.To<T>();
+				default:
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 
-		public ICell InternalGetCell(int colInd,int rowInd,bool createIfNotExists = true)
+		public ICellStyle.ICell InternalGetCell(int colInd, int rowInd, bool createIfNotExists = true)
 		{
 			if (colInd < 0)
-				throw new ArgumentOutOfRangeException("colInd",colInd,"Column index must be greater than zero.");
+				throw new ArgumentOutOfRangeException(nameof(colInd), colInd, "Column index must be greater than zero.");
 
 			if (rowInd < 0)
-				throw new ArgumentOutOfRangeException("rowInd",rowInd,"Row index must be greater than zero.");
+				throw new ArgumentOutOfRangeException(nameof(rowInd), rowInd, "Row index must be greater than zero.");
 
 			var rowCount = GetRowsCount();
 
 			if (rowInd >= rowCount)
 			{
 				if (!createIfNotExists)
-					throw new ArgumentOutOfRangeException("rowInd",rowInd,
-						"Row count {0} isn't enought for operation.".Put(rowCount));
+					throw new ArgumentOutOfRangeException(nameof(rowInd), rowInd, "Row count {0} isn't enought for operation.".Put(rowCount));
 
-				for (var i = rowCount;i <= rowInd;i++)
+				for (var i = rowCount; i <= rowInd; i++)
 					_currentSheet.CreateRow(i);
 			}
 			var row = _currentSheet.GetRow(rowInd);
-			var cellIndecies = _indecies.SafeAdd(rowInd,key => new HashSet<int>(row.Cells.Select(c => c.ColumnIndex)));
+			var cellIndecies = _indecies.SafeAdd(rowInd, key => new HashSet<int>(row.Cells.Select(c => c.ColumnIndex)));
 
 			if (!cellIndecies.Contains(colInd))
 			{
 				if (!createIfNotExists)
-					throw new ArgumentOutOfRangeException("colInd",colInd,
-						"Cell count {0} isn't enought for operation.".Put(cellIndecies.Count));
+					throw new ArgumentOutOfRangeException(nameof(colInd), colInd, "Cell count {0} isn't enought for operation.".Put(cellIndecies.Count));
 				row.CreateCell(colInd);
 
 				if (!cellIndecies.Add(colInd))
@@ -1040,7 +999,7 @@ namespace Ecng.Interop
 		public ExcelWorker Save(string fileName, bool autoSizeColumns)
 		{
 			if (fileName.IsEmpty())
-				throw new ArgumentNullException("fileName");
+				throw new ArgumentNullException(nameof(fileName));
 
 			if (autoSizeColumns)
 			{
@@ -1102,22 +1061,22 @@ namespace Ecng.Interop
 			/// <summary>
 			/// "0", //1 Числовой    2000000  -2000000
 			/// </summary>
-			Nuneric1,
+			Numeric1,
 
 			/// <summary>
 			/// "0.00", //2 Числовой с 2мя знаками после запятой   2000000,35 -2000000,35
 			/// </summary>
-			Nuneric2,
+			Numeric2,
 
 			/// <summary>
 			/// "#,##0", //3 Числовой с разделителями  2 000 000  -2 000 000
 			/// </summary>
-			Nuneric3,
+			Numeric3,
 
 			/// <summary>
 			/// //4 Числовой с разделителями с 2мя знаками после запятой   2 000 000,35   -2 000 000,35
 			/// </summary>
-			Nuneric4,
+			Numeric4,
 
 			/// <summary>
 			/// //5 Денежный 2 000 000 ₽ -2 000 000 ₽
@@ -1217,7 +1176,7 @@ namespace Ecng.Interop
 			/// <summary>
 			/// 
 			/// </summary>
-			Defoult
+			Default
 		}
 
 		#region DataTypes

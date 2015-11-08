@@ -59,15 +59,5 @@ namespace ExcelExporterImporterExampe.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] Book1 {
-            get {
-                object obj = ResourceManager.GetObject("Book1", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
     }
 }

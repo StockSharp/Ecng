@@ -6,6 +6,8 @@ namespace ExcelExporterNPOIMyIS
 	using System;
 	using System.Diagnostics;
 	using System.Windows;
+	using System.Windows.Media;
+
 	using Ecng.Interop;
 	using NPOI.HSSF.Util;
 	using NPOI.SS.Util;
@@ -172,13 +174,13 @@ namespace ExcelExporterNPOIMyIS
 			_indexRow++;
 			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Money4);
 			_indexRow++;
-			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric1);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Numeric1);
 			_indexRow++;
-			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric2);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Numeric2);
 			_indexRow++;
-			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric3);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Numeric3);
 			_indexRow++;
-			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Nuneric4);
+			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Numeric4);
 			_indexRow++;
 			worker.SetCell(_indexRow, 2, nom, ExcelWorker.DataFormat.Percentage1);
 			_indexRow++;
@@ -209,7 +211,7 @@ namespace ExcelExporterNPOIMyIS
 		{
 			worker = new ExcelWorker();
 			_indexRow = 0;
-			worker.SetCell(0, _indexRow, "HyperLink").AddHyperLink(0, _indexRow, "http://poi.apache.org/");
+			worker.SetCell(0, _indexRow, "HyperLink").AddHyperLink(0, _indexRow, "http://poi.apache.org/", Colors.Blue);
 			worker.Save(path + "8.xlsx", true);
 			Process.Start(path + "8.xlsx");
 		}
@@ -275,13 +277,13 @@ namespace ExcelExporterNPOIMyIS
 		private void Click_ImportCells(object sender, RoutedEventArgs e)
 		{
 			worker = new ExcelWorker();
-			worker = worker.importXLS(path + "Book1.xls");
+			//worker = worker.importXLS(path + "Book1.xls");
 			worker.SwitchSheet("Sheet1");
 			DateTime str = worker.GetCell<DateTime>(0,1);
-			IEnumerable<object> cols = worker.GetColumn<object>(0);
-			string str1 = "First column   "  + str.ToString();
-			foreach (var col in cols) str1 += ";" + col;
-			MessageBox.Show(str1);
+			//IEnumerable<object> cols = worker.GetColumn<object>(0);
+			//string str1 = "First column   "  + str.ToString();
+			//foreach (var col in cols) str1 += ";" + col;
+			//MessageBox.Show(str1);
 		}
 	}
 }
