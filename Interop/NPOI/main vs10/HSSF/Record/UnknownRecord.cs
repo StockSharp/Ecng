@@ -103,15 +103,9 @@ namespace NPOI.HSSF.Record
         {
             out1.Write(_rawData);
         }
-        protected override int DataSize
-        {
-            get
-            {
-                return _rawData.Length;
-            }
-        }
+        protected override int DataSize => _rawData.Length;
 
-        /**
+	    /**
          * print a sort of string representation ([UNKNOWN RECORD] id = x [/UNKNOWN RECORD])
          */
 
@@ -304,13 +298,9 @@ namespace NPOI.HSSF.Record
             return false;
         }
 
-        public override short Sid
-        {
-            get { return (short)_sid; }
-        }
+        public override short Sid => (short)_sid;
 
-
-        /** Unlike the other Record.Clone methods this Is a shallow Clone*/
+	    /** Unlike the other Record.Clone methods this Is a shallow Clone*/
         public override Object Clone()
         {
             //UnknownRecord rec = new UnknownRecord();

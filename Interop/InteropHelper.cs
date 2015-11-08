@@ -39,7 +39,7 @@
 		public static void OpenLinkInBrowser(this Uri address)
 		{
 			if (address == null)
-				throw new ArgumentNullException("address");
+				throw new ArgumentNullException(nameof(address));
 
 			Process.Start(new ProcessStartInfo(address.ToString()));
 		}
@@ -56,7 +56,7 @@
 		public static DateTime GetTimestamp(this Assembly assembly)
 		{
 			if (assembly == null)
-				throw new ArgumentNullException("assembly");
+				throw new ArgumentNullException(nameof(assembly));
 
 			return GetTimestamp(assembly.Location);
 		}

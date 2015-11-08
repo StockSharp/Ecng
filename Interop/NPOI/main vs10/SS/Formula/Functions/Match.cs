@@ -42,13 +42,7 @@ namespace NPOI.SS.Formula.Functions
             return _value;
         }
 
-        public int Size
-        {
-            get
-            {
-                return 1;
-            }
-        }
+        public int Size => 1;
     }
     /**
      * Implementation for the MATCH() Excel function.<p/>

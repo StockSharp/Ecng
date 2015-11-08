@@ -26,25 +26,15 @@ namespace NPOI.OpenXml4Net.OPC.Internal
             throw new NotImplementedException();
         }
 
-        public override bool CanRead
-        {
-            get { return false; }
-        }
-        public override bool CanWrite
-        {
-            get { return true; }
-        }
-        public override bool CanSeek
-        {
-            get { return false; }
-        }
+        public override bool CanRead => false;
 
-        public override long Length
-        {
-            get { return _buff.Length; }
-        }
-        
-        public void Write(int b)
+	    public override bool CanWrite => true;
+
+	    public override bool CanSeek => false;
+
+	    public override long Length => _buff.Length;
+
+	    public void Write(int b)
         {
             _buff.WriteByte((byte)b);
         }

@@ -15,9 +15,6 @@ namespace Ecng.Collections
 
 		public T Current { get; protected set; }
 
-		object IEnumerator.Current
-		{
-			get { return Current; }
-		}
+		object IEnumerator.Current => Current;
 	}
 }

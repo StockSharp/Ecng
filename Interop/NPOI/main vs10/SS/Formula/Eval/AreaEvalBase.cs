@@ -72,42 +72,19 @@ namespace NPOI.SS.Formula.Eval
             
         }
 
-        public int FirstColumn
-        {
-            get{return _firstColumn;}
-        }
+        public int FirstColumn => _firstColumn;
 
-        public int FirstRow
-        {
-            get { return _firstRow; }
-        }
+	    public int FirstRow => _firstRow;
 
-        public int LastColumn
-        {
-            get { return _lastColumn; }
-        }
+	    public int LastColumn => _lastColumn;
 
-        public int LastRow
-        {
-            get { return _lastRow; }
-        }
+	    public int LastRow => _lastRow;
 
-        public int FirstSheetIndex
-        {
-            get
-            {
-                return _firstSheet;
-            }
-        }
-        public int LastSheetIndex
-        {
-            get
-            {
-                return _lastSheet;
-            }
-        }
+	    public int FirstSheetIndex => _firstSheet;
 
-        public ValueEval GetValue(int row, int col)
+	    public int LastSheetIndex => _lastSheet;
+
+	    public ValueEval GetValue(int row, int col)
         {
             return GetRelativeValue(row, col);
         }
@@ -133,16 +110,11 @@ namespace NPOI.SS.Formula.Eval
             return (_firstColumn <= col) && (_lastColumn >= col);
         }
 
-        public bool IsColumn
-        {
-            get{return _firstColumn == _lastColumn;}
-        }
+        public bool IsColumn => _firstColumn == _lastColumn;
 
-        public bool IsRow
-        {
-            get { return _firstRow == _lastRow; }
-        }
-        public ValueEval GetAbsoluteValue(int row, int col)
+	    public bool IsRow => _firstRow == _lastRow;
+
+	    public ValueEval GetAbsoluteValue(int row, int col)
         {
             int rowOffsetIx = row - _firstRow;
             int colOffsetIx = col - _firstColumn;
@@ -162,20 +134,11 @@ namespace NPOI.SS.Formula.Eval
         public abstract ValueEval GetRelativeValue(int relativeRowIndex, int relativeColumnIndex);
         public abstract ValueEval GetRelativeValue(int sheetIndex, int relativeRowIndex, int relativeColumnIndex);
 
-        public int Width
-        {
-            get
-            {
-                return _lastColumn - _firstColumn + 1;
-            }
-        }
+        public int Width => _lastColumn - _firstColumn + 1;
 
-        public int Height
-        {
-            get { return _lastRow - _firstRow + 1; }
-        }
+	    public int Height => _lastRow - _firstRow + 1;
 
-        /**
+	    /**
  * @return  whether cell at rowIndex and columnIndex is a subtotal.
  * By default return false which means 'don't care about subtotals'
 */

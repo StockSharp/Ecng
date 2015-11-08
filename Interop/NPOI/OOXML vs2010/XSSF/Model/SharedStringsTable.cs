@@ -138,30 +138,18 @@ namespace NPOI.XSSF.Model
          *
          * @return the total count of strings in the workbook
          */
-        public int Count
-        {
-            get
-            {
-                return count;
-            }
-        }
+        public int Count => count;
 
-        /**
+	    /**
          * Returns an integer representing the total count of unique strings in the Shared String Table.
          * A string is unique even if it is a copy of another string, but has different formatting applied
          * at the character level.
          *
          * @return the total count of unique strings in the workbook
          */
-        public int UniqueCount
-        {
-            get
-            {
-                return uniqueCount;
-            }
-        }
+        public int UniqueCount => uniqueCount;
 
-        /**
+	    /**
          * Add an entry to this Shared String table (a new value is appened to the end).
          *
          * <p>
@@ -196,15 +184,9 @@ namespace NPOI.XSSF.Model
          *
          * @return array of CT_Rst beans
          */
-        public List<CT_Rst> Items
-        {
-            get
-            {
-                return strings;
-            }
-        }
+        public List<CT_Rst> Items => strings;
 
-        /**
+	    /**
          * 
          * this table out as XML.
          * 

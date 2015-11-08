@@ -23,10 +23,7 @@
 
 		private static ForumRole _users;
 
-		public ForumRole Users
-		{
-			get { return _users ?? (_users = ReadById((long)Identities.RoleUsers)); }
-		}
+		public ForumRole Users => _users ?? (_users = ReadById((long)Identities.RoleUsers));
 
 		#endregion
 
@@ -34,10 +31,7 @@
 
 		private static ForumRole _administrators;
 
-		public ForumRole Administrators
-		{
-			get { return _administrators ?? (_administrators = ReadById((long)Identities.RoleAdministrators)); }
-		}
+		public ForumRole Administrators => _administrators ?? (_administrators = ReadById((long)Identities.RoleAdministrators));
 
 		#endregion
 
@@ -45,10 +39,7 @@
 
 		private static ForumRole _moderators;
 
-		public ForumRole Moderators
-		{
-			get { return _moderators ?? (_moderators = ReadById((long)Identities.RoleModerators)); }
-		}
+		public ForumRole Moderators => _moderators ?? (_moderators = ReadById((long)Identities.RoleModerators));
 
 		#endregion
 
@@ -56,10 +47,7 @@
 
 		private static ForumRole _editors;
 
-		public ForumRole Editors
-		{
-			get { return _editors ?? (_editors = ReadById((long)Identities.RoleEditors)); }
-		}
+		public ForumRole Editors => _editors ?? (_editors = ReadById((long)Identities.RoleEditors));
 
 		#endregion
 

@@ -38,29 +38,17 @@ namespace Ookii.Dialogs
         /// <value>
         /// <see langword="true" /> on operating systems that support the Desktop Window Manager (Windows Vista and higher); otherwise, <see langword="false" />.
         /// </value>
-        public static bool OSSupportsDwmComposition
-        {
-            get
-            {
-                return NativeMethods.IsWindowsVistaOrLater;
-            }
-        }
+        public static bool OSSupportsDwmComposition => NativeMethods.IsWindowsVistaOrLater;
 
-        /// <summary>
+	    /// <summary>
         /// Gets a value that indicates whether desktop composition is enabled.
         /// </summary>
         /// <value>
         /// <see langword="true" /> when desktop composition is supported and enabled; otherwise, <see langword="false" />.
         /// </value>
-        public static bool IsDwmCompositionEnabled
-        {
-            get
-            {
-                return OSSupportsDwmComposition && NativeMethods.DwmIsCompositionEnabled();
-            }
-        }
+        public static bool IsDwmCompositionEnabled => OSSupportsDwmComposition && NativeMethods.DwmIsCompositionEnabled();
 
-        /// <summary>
+	    /// <summary>
         /// Extends the glass window frame into the client area of the specified window.
         /// </summary>
         /// <param name="window">The <see cref="IWin32Window"/> on which to enable client area glass.</param>
@@ -89,7 +77,7 @@ namespace Ookii.Dialogs
 				throw new NotSupportedException(Ecng.Xaml.Properties.Resources.GlassNotSupportedError);
 
             if( window == null )
-                throw new ArgumentNullException("window");
+                throw new ArgumentNullException(nameof(window));
 
             NativeMethods.MARGINS margins = new NativeMethods.MARGINS(glassMargin);
             NativeMethods.DwmExtendFrameIntoClientArea(window.Handle, ref margins);
@@ -119,11 +107,11 @@ namespace Ookii.Dialogs
 				throw new NotSupportedException(Ecng.Xaml.Properties.Resources.GlassNotSupportedError);
 
             if( dc == null )
-                throw new ArgumentNullException("dc");
+                throw new ArgumentNullException(nameof(dc));
             if( text == null )
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
             if( font == null )
-                throw new ArgumentNullException("font");
+                throw new ArgumentNullException(nameof(font));
 
             IntPtr primaryHdc = dc.GetHdc();
             try
@@ -171,11 +159,11 @@ namespace Ookii.Dialogs
 				throw new NotSupportedException(Ecng.Xaml.Properties.Resources.GlassNotSupportedError);
 
             if( dc == null )
-                throw new ArgumentNullException("dc");
+                throw new ArgumentNullException(nameof(dc));
             if( text == null )
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
             if( font == null )
-                throw new ArgumentNullException("font");
+                throw new ArgumentNullException(nameof(font));
 
             IntPtr primaryHdc = dc.GetHdc();
             try

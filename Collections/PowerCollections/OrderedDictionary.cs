@@ -84,7 +84,7 @@ namespace Wintellect.PowerCollections
             this(null, comparer, Comparers.ComparerKeyValueFromComparerKey<TKey, TValue>(comparer))
 		{
             if (comparer == null)
-                throw new ArgumentNullException("comparer");
+                throw new ArgumentNullException(nameof(comparer));
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace Wintellect.PowerCollections
             : this(keysAndValues, comparer, Comparers.ComparerKeyValueFromComparerKey<TKey, TValue>(comparer))
         {
             if (comparer == null)
-                throw new ArgumentNullException("comparer");
+                throw new ArgumentNullException(nameof(comparer));
         }
 
         /// <summary>
@@ -254,16 +254,9 @@ namespace Wintellect.PowerCollections
         /// created using a comparison delegate, then a comparer equivalent to that delegate
         /// is returned. Otherwise
         /// the default comparer for TKey (Comparer&lt;TKey&gt;.Default) is returned.</value>
-        public IComparer<TKey> Comparer
-        {
-            get
-            {
-                return this.keyComparer;
-            }
-        }
+        public IComparer<TKey> Comparer => this.keyComparer;
 
-
-        /// <summary>
+		/// <summary>
         /// Returns a View collection that can be used for enumerating the keys and values in the collection in 
         /// reversed order.
         /// </summary>
@@ -443,7 +436,7 @@ namespace Wintellect.PowerCollections
 
             bool added = tree.Insert(pair, DuplicatePolicy.DoNothing, out dummy);
             if (! added) 
-                throw new ArgumentException(Strings.KeyAlreadyPresent, "key");
+                throw new ArgumentException(Strings.KeyAlreadyPresent, nameof(key));
         }
 
         /// <summary>
@@ -481,7 +474,7 @@ namespace Wintellect.PowerCollections
         public void AddMany(IEnumerable<KeyValuePair<TKey, TValue>> keysAndValues)
         {
             if (keysAndValues == null)
-                throw new ArgumentNullException("keysAndValues");
+                throw new ArgumentNullException(nameof(keysAndValues));
 
             foreach (KeyValuePair<TKey, TValue> pair in keysAndValues) {
                 this[pair.Key] = pair.Value;
@@ -499,7 +492,7 @@ namespace Wintellect.PowerCollections
         public int RemoveMany(IEnumerable<TKey> keyCollectionToRemove)
         {
             if (keyCollectionToRemove == null)
-                throw new ArgumentNullException("keyCollectionToRemove");
+                throw new ArgumentNullException(nameof(keyCollectionToRemove));
 
             int count = 0;
 
@@ -581,15 +574,9 @@ namespace Wintellect.PowerCollections
 		/// </summary>
         /// <remarks>The size of the dictionary is returned in constant time..</remarks>
         /// <value>The number of keys in the dictionary.</value>
-        public sealed override int Count
-		{
-			get
-			{
-				return tree.ElementCount;
-			}
-		}
+        public sealed override int Count => tree.ElementCount;
 
-#endregion
+		#endregion
 
 		#region IEnumerable<KeyValuePair<TKey,TValue>> Members
 
@@ -751,7 +738,7 @@ namespace Wintellect.PowerCollections
                  set
                 {
                     if (!KeyInView(key))
-                        throw new ArgumentException(Strings.OutOfViewRange, "key");
+                        throw new ArgumentException(Strings.OutOfViewRange, nameof(key));
                     else
                         myDictionary[key] = value;
                 }

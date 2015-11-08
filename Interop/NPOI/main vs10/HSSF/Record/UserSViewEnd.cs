@@ -56,23 +56,11 @@ namespace NPOI.HSSF.Record
             out1.Write(_rawData);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return _rawData.Length;
-            }
-        }
+        protected override int DataSize => _rawData.Length;
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+	    public override short Sid => sid;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
 

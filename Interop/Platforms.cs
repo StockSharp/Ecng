@@ -22,7 +22,7 @@
 				case Platforms.AnyCPU:
 					return true;
 				default:
-					throw new ArgumentOutOfRangeException("platform");
+					throw new ArgumentOutOfRangeException(nameof(platform));
 			}
 		}
 	}

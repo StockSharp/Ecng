@@ -93,14 +93,8 @@ namespace NPOI.SS.Formula.PTG
             return HSSFErrorConstants.GetText(field_1_error_code);
         }
 
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
 
-        public int ErrorCode
-        {
-            get { return field_1_error_code; }
-        }
+	    public int ErrorCode => field_1_error_code;
     }
 }

@@ -57,21 +57,14 @@ namespace Hardcodet.Wpf.GenericTreeView
     /// monitored parent items, stored by their parent's
     /// key.
     /// </summary>
-    public Dictionary<string, INotifyCollectionChanged> ChildCollections
-    {
-      get { return childCollections; }
-    }
+    public Dictionary<string, INotifyCollectionChanged> ChildCollections => childCollections;
 
-
-    /// <summary>
+	  /// <summary>
     /// Gets the tree that renders the observed items.
     /// </summary>
-    public TreeViewBase<T> Tree
-    {
-      get { return tree; }
-    }
+    public TreeViewBase<T> Tree => tree;
 
-    #endregion
+	  #endregion
 
 
     #region collection change event bubbling
@@ -97,7 +90,7 @@ namespace Hardcodet.Wpf.GenericTreeView
     /// is a null reference.</exception>
     public ItemMonitor(TreeViewBase<T> tree)
     {
-      if (tree == null) throw new ArgumentNullException("tree");
+      if (tree == null) throw new ArgumentNullException(nameof(tree));
       this.tree = tree;
     }
 

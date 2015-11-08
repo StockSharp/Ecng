@@ -81,15 +81,9 @@ namespace NPOI.HSSF.UserModel
         /// Gets the CF records aggregate.
         /// </summary>
         /// <returns></returns>
-        public CFRecordsAggregate CFRecordsAggregate
-        {
-            get
-            {
-                return cfAggregate;
-            }
-        }
+        public CFRecordsAggregate CFRecordsAggregate => cfAggregate;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the array of Regions
         /// </summary>
         /// <returns></returns>
@@ -149,12 +143,9 @@ namespace NPOI.HSSF.UserModel
         /// Gets the number of Conditional Formatting rules.
         /// </summary>
         /// <value>The number of rules.</value>
-        public int NumberOfRules
-        {
-            get { return cfAggregate.NumberOfRules; }
-        }
+        public int NumberOfRules => cfAggregate.NumberOfRules;
 
-        /// <summary>
+	    /// <summary>
         /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
         /// </summary>
         /// <returns>

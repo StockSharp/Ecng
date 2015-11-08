@@ -54,17 +54,11 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// <summary>
         /// String describing the constructor being set up.
         /// </summary>
-        public string ConstructorSignature
-        {
-            get { return constructorSignature; }
-        }
+        public string ConstructorSignature => constructorSignature;
 
-        /// <summary>
+	    /// <summary>
         /// Parameter that's being resolved.
         /// </summary>
-        public string ParameterName
-        {
-            get { return parameterName; }
-        }
+        public string ParameterName => parameterName;
     }
 }

@@ -48,13 +48,9 @@ namespace Hardcodet.Wpf.GenericTreeView
     /// <summary>
     /// A list of expanded nodes.
     /// </summary>
-    public List<string> ExpandedNodeIds
-    {
-      get { return expandedNodeIds; }
-    }
+    public List<string> ExpandedNodeIds => expandedNodeIds;
 
-
-    /// <summary>
+	  /// <summary>
     /// Checks whether a given node is supposed to be
     /// expanded or not.
     /// </summary>

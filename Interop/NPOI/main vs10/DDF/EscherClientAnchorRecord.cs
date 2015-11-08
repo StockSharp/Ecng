@@ -138,30 +138,21 @@ namespace NPOI.DDF
         /// Returns the number of bytes that are required to Serialize this record.
         /// </summary>
         /// <value>Number of bytes</value>
-        public override int RecordSize
-        {
-            get { return 8 + (shortRecord ? 8 : 18) + (remainingData == null ? 0 : remainingData.Length); }
-        }
+        public override int RecordSize => 8 + (shortRecord ? 8 : 18) + (remainingData == null ? 0 : remainingData.Length);
 
-        /// <summary>
+	    /// <summary>
         /// The record id for this record.
         /// </summary>
         /// <value></value>
-        public override short RecordId
-        {
-            get { return RECORD_ID; }
-        }
+        public override short RecordId => RECORD_ID;
 
-        /// <summary>
+	    /// <summary>
         /// The short name for this record
         /// </summary>
         /// <value></value>
-        public override String RecordName
-        {
-            get { return "ClientAnchor"; }
-        }
+        public override String RecordName => "ClientAnchor";
 
-        /// <summary>
+	    /// <summary>
         /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
         /// </summary>
         /// <returns>

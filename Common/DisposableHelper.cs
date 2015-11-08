@@ -13,10 +13,10 @@ namespace Ecng.Common
 			public DisposableByAction(T unmanagedData, Action<T> disposeAction)
 			{
 				if (unmanagedData.IsNull())
-					throw new ArgumentNullException("unmanagedData");
+					throw new ArgumentNullException(nameof(unmanagedData));
 
 				if (disposeAction == null)
-					throw new ArgumentNullException("disposeAction");
+					throw new ArgumentNullException(nameof(disposeAction));
 
 				_unmanagedData = unmanagedData;
 				_disposeAction = disposeAction;
@@ -37,7 +37,7 @@ namespace Ecng.Common
 		public static void DisposeAll(this IEnumerable<IDisposable> disposables)
 		{
 			if (disposables == null)
-				throw new ArgumentNullException("disposables");
+				throw new ArgumentNullException(nameof(disposables));
 
 			foreach (var disp in disposables)
 				disp.Dispose();
@@ -49,7 +49,7 @@ namespace Ecng.Common
 		public static Disposable MakeDisposable<T>(this T unmanagedData, Action<T> disposeAction)
 		{
 			if (disposeAction == null)
-				throw new ArgumentNullException("disposeAction");
+				throw new ArgumentNullException(nameof(disposeAction));
 
 			lock (GenericHolder<T>.Registry)
 			{

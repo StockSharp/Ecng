@@ -23,7 +23,7 @@ namespace Ecng.ComponentModel
 		public override void Validate(T value)
 		{
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 		}
 
 		#endregion

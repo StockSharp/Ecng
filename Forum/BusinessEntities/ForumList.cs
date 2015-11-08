@@ -16,10 +16,7 @@
 
 		private static Forum _news;
 
-		public Forum News
-		{
-			get { return _news ?? (_news = ReadById((long)Identities.ForumNews)); }
-		}
+		public Forum News => _news ?? (_news = ReadById((long)Identities.ForumNews));
 
 		#endregion
 
@@ -27,10 +24,7 @@
 
 		private static Forum _shutdownErrors;
 
-		public Forum ShutdownErrors
-		{
-			get { return _shutdownErrors ?? (_shutdownErrors = ReadById((long)Identities.ForumShutdownErrors)); }
-		}
+		public Forum ShutdownErrors => _shutdownErrors ?? (_shutdownErrors = ReadById((long)Identities.ForumShutdownErrors));
 
 		#endregion
 
@@ -38,10 +32,7 @@
 
 		private static Forum _securityErrors;
 
-		public Forum SecurityErrors
-		{
-			get { return _securityErrors ?? (_securityErrors = ReadById((long)Identities.ForumSecurityErrors)); }
-		}
+		public Forum SecurityErrors => _securityErrors ?? (_securityErrors = ReadById((long)Identities.ForumSecurityErrors));
 
 		#endregion
 
@@ -49,10 +40,7 @@
 
 		private static Forum _logicErrors;
 
-		public Forum LogicErrors
-		{
-			get { return _logicErrors ?? (_logicErrors = ReadById((long)Identities.ForumLogicErrors)); }
-		}
+		public Forum LogicErrors => _logicErrors ?? (_logicErrors = ReadById((long)Identities.ForumLogicErrors));
 
 		#endregion
 
@@ -60,10 +48,7 @@
 
 		private static Forum _clientErrors;
 
-		public Forum ClientErrors
-		{
-			get { return _clientErrors ?? (_clientErrors = ReadById((long)Identities.ForumClientErrors)); }
-		}
+		public Forum ClientErrors => _clientErrors ?? (_clientErrors = ReadById((long)Identities.ForumClientErrors));
 
 		#endregion
 
@@ -71,10 +56,7 @@
 
 		private static Forum _serverErrors;
 
-		public Forum ServerErrors
-		{
-			get { return _serverErrors ?? (_serverErrors = ReadById((long)Identities.ForumServerErrors)); }
-		}
+		public Forum ServerErrors => _serverErrors ?? (_serverErrors = ReadById((long)Identities.ForumServerErrors));
 
 		#endregion
 
@@ -82,10 +64,7 @@
 
 		private static Forum _trash;
 
-		public Forum Trash
-		{
-			get { return _trash ?? (_trash = ReadById((long)Identities.ForumTrash)); }
-		}
+		public Forum Trash => _trash ?? (_trash = ReadById((long)Identities.ForumTrash));
 
 		#endregion
 
@@ -93,10 +72,7 @@
 
 		private static Forum _privateMessages;
 
-		public Forum PrivateMessages
-		{
-			get { return _privateMessages ?? (_privateMessages = ReadById((long)Identities.ForumPrivateMessages)); }
-		}
+		public Forum PrivateMessages => _privateMessages ?? (_privateMessages = ReadById((long)Identities.ForumPrivateMessages));
 
 		#endregion
 
@@ -104,10 +80,7 @@
 
 		private static Forum _journalEntries;
 
-		public Forum JournalEntries
-		{
-			get { return _journalEntries ?? (_journalEntries = ReadById((long)Identities.ForumJournalEntries)); }
-		}
+		public Forum JournalEntries => _journalEntries ?? (_journalEntries = ReadById((long)Identities.ForumJournalEntries));
 
 		#endregion
 
@@ -115,10 +88,7 @@
 
 		private static Forum _faq;
 
-		public Forum Faq
-		{
-			get { return _faq ?? (_faq = ReadById((long)Identities.ForumFaq)); }
-		}
+		public Forum Faq => _faq ?? (_faq = ReadById((long)Identities.ForumFaq));
 
 		#endregion
 
@@ -126,10 +96,7 @@
 
 		private static Forum _rules;
 
-		public Forum Rules
-		{
-			get { return _rules ?? (_rules = ReadById((long)Identities.ForumRules)); }
-		}
+		public Forum Rules => _rules ?? (_rules = ReadById((long)Identities.ForumRules));
 
 		#endregion
 
@@ -137,10 +104,7 @@
 
 		private static Forum _market;
 
-		public Forum Market
-		{
-			get { return _market ?? (_market = ReadById((long)Identities.ForumMarket)); }
-		}
+		public Forum Market => _market ?? (_market = ReadById((long)Identities.ForumMarket));
 
 		#endregion
 
@@ -148,10 +112,7 @@
 
 		private static Forum _blogs;
 
-		public Forum Blogs
-		{
-			get { return _blogs ?? (_blogs = ReadById((long)Identities.ForumBlogs)); }
-		}
+		public Forum Blogs => _blogs ?? (_blogs = ReadById((long)Identities.ForumBlogs));
 
 		#endregion
 	}

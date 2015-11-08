@@ -372,15 +372,9 @@ namespace NPOI.OpenXml4Net.OPC
          * @throws OpenXml4NetException
          * @see org.apache.poi.OpenXml4Net.opc.RelationshipSource#getRelationships()
          */
-        public PackageRelationshipCollection Relationships
-        {
-            get
-            {
-                return GetRelationshipsCore(null);
-            }
-        }
+        public PackageRelationshipCollection Relationships => GetRelationshipsCore(null);
 
-        /**
+	    /**
          * Retrieves a package relationship from its id.
          * 
          * @param id
@@ -446,15 +440,9 @@ namespace NPOI.OpenXml4Net.OPC
          *         <b>false</b>.
          * @see org.apache.poi.OpenXml4Net.opc.RelationshipSource#hasRelationships()
          */
-        public bool HasRelationships
-        {
-            get
-            {
-                return (!this.IsRelationshipPart && (_relationships != null && _relationships.Size > 0));
-            }
-        }
+        public bool HasRelationships => (!this.IsRelationshipPart && (_relationships != null && _relationships.Size > 0));
 
-        /**
+	    /**
          * Checks if the specified relationship is part of this package part.
          * 
          * @param rel
@@ -623,15 +611,9 @@ namespace NPOI.OpenXml4Net.OPC
         /**
          * @return the uri
          */
-        public PackagePartName PartName
-        {
-            get
-            {
-                return _partName;
-            }
-        }
+        public PackagePartName PartName => _partName;
 
-        /**
+	    /**
          * @return the contentType
          */
         public String ContentType
@@ -652,33 +634,15 @@ namespace NPOI.OpenXml4Net.OPC
         /**
          * @return The Content Type, including parameters, of the part
          */
-        public ContentType ContentTypeDetails
-        {
-            get
-            {
-                return _contentType;
-            }
-        }
-        public OPCPackage Package
-        {
-            get
-            {
-                return _container;
-            }
-        }
+        public ContentType ContentTypeDetails => _contentType;
+	    public OPCPackage Package => _container;
 
-        /**
+	    /**
          * @return true if this part is a relationship
          */
-        public bool IsRelationshipPart
-        {
-            get
-            {
-                return this._isRelationshipPart;
-            }
-        }
+        public bool IsRelationshipPart => this._isRelationshipPart;
 
-        /**
+	    /**
          * @return true if this part has been logically deleted
          */
         public bool IsDeleted
@@ -692,14 +656,9 @@ namespace NPOI.OpenXml4Net.OPC
         /**
          * @return The length of the part in bytes, or -1 if not known
          */
-        public virtual long Size
-        {
-            get
-            {
-                return -1;
-            }
-        }
-        public override String ToString()
+        public virtual long Size => -1;
+
+	    public override String ToString()
         {
             return "Name: " + this._partName + " - Content Type: "
                     + this._contentType.ToString();

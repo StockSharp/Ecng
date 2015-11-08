@@ -15,14 +15,14 @@ namespace Ecng.Serialization
 			: base(field, order)
 		{
 			if (validator == null)
-				throw new ArgumentNullException("validator");
+				throw new ArgumentNullException(nameof(validator));
 
 			Validator = validator;
 		}
 
 		#endregion
 
-		public BaseValidator<T> Validator { get; private set; }
+		public BaseValidator<T> Validator { get; }
 
 		#region FieldFactory Members
 
@@ -63,7 +63,7 @@ namespace Ecng.Serialization
 			var attr = field.Member.GetAttribute<BaseValidatorAttribute>();
 			
 			if (attr == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			return typeof(ValidationFieldFactory<>).Make(field.Type).CreateInstance<FieldFactory>(attr.CreateValidator(field.Type), field, Order);
 		}

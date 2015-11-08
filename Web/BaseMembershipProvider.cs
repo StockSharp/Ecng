@@ -75,28 +75,19 @@ namespace Ecng.Web
 		[Field("requiresUniqueName")]
 		private readonly bool _requiresUniqueName = DefaultRequiresUniqueNameValue;
 
-		public bool RequiresUniqueName
-		{
-			get { return _requiresUniqueName; }
-		}
+		public bool RequiresUniqueName => _requiresUniqueName;
 
 		[DefaultValue(DefaultMinRequiredUserLengthValue)]
 		[Field("minRequiredUserLength")]
 		private readonly int _minRequiredUserLength = DefaultMinRequiredUserLengthValue;
 
-		public int MinRequiredUserLength
-		{
-			get { return _minRequiredUserLength; }
-		}
+		public int MinRequiredUserLength => _minRequiredUserLength;
 
 		[DefaultValue(DefaultMaxRequiredUserLengthValue)]
 		[Field("maxRequiredUserLength")]
 		private readonly int _maxRequiredUserLength = DefaultMaxRequiredUserLengthValue;
 
-		public int MaxRequiredUserLength
-		{
-			get { return _maxRequiredUserLength; }
-		}
+		public int MaxRequiredUserLength => _maxRequiredUserLength;
 
 		#region MembershipProvider Members
 
@@ -114,110 +105,71 @@ namespace Ecng.Web
 		[Field("enablePasswordReset")]
 		private readonly bool _enablePasswordReset = DefaultEnablePasswordResetValue;
 		
-		public override bool EnablePasswordReset
-		{
-			get { return _enablePasswordReset; }
-		}
+		public override bool EnablePasswordReset => _enablePasswordReset;
 
 		[DefaultValue(DefaultEnablePasswordRetrievalValue)]
 		[Field("enablePasswordRetrieval")]
 		private readonly bool _enablePasswordRetrieval = DefaultEnablePasswordRetrievalValue;
 
-		public override bool EnablePasswordRetrieval
-		{
-			get { return _enablePasswordRetrieval; }
-		}
+		public override bool EnablePasswordRetrieval => _enablePasswordRetrieval;
 
 		[DefaultValue(DefaultRequiresQuestionAndAnswerValue)]
 		[Field("requiresQuestionAndAnswer")]
 		private readonly bool _requiresQuestionAndAnswer = DefaultRequiresQuestionAndAnswerValue;
 
-		public override bool RequiresQuestionAndAnswer
-		{
-			get { return _requiresQuestionAndAnswer; }
-		}
+		public override bool RequiresQuestionAndAnswer => _requiresQuestionAndAnswer;
 
 		[DefaultValue(DefaultRequiresUniqueEmailValue)]
 		[Field("requiresUniqueEmail")]
 		private readonly bool _requiresUniqueEmail = DefaultRequiresUniqueEmailValue;
 
-		public override bool RequiresUniqueEmail
-		{
-			get { return _requiresUniqueEmail; }
-		}
+		public override bool RequiresUniqueEmail => _requiresUniqueEmail;
 
 		[DefaultValue(DefaultMaxInvalidPasswordAttemptsValue)]
 		[Field("maxInvalidPasswordAttempts")]
 		private readonly int _maxInvalidPasswordAttempts = DefaultMaxInvalidPasswordAttemptsValue;
 
-		public override int MaxInvalidPasswordAttempts
-		{
-			get { return _maxInvalidPasswordAttempts; }
-		}
+		public override int MaxInvalidPasswordAttempts => _maxInvalidPasswordAttempts;
 
 		[DefaultValue(DefaultMinRequiredNonAlphanumericCharactersValue)]
 		[Field("minRequiredNonAlphanumericCharacters")]
 		private readonly int _minRequiredNonAlphanumericCharacters = DefaultMinRequiredNonAlphanumericCharactersValue;
 
-		public override int MinRequiredNonAlphanumericCharacters
-		{
-			get { return _minRequiredNonAlphanumericCharacters; }
-		}
+		public override int MinRequiredNonAlphanumericCharacters => _minRequiredNonAlphanumericCharacters;
 
 		[DefaultValue(DefaultMinRequiredPasswordLengthValue)]
 		[Field("minRequiredPasswordLength")]
 		private readonly int _minRequiredPasswordLength = DefaultMinRequiredPasswordLengthValue;
 
-		public override int MinRequiredPasswordLength
-		{
-			get { return _minRequiredPasswordLength; }
-		}
+		public override int MinRequiredPasswordLength => _minRequiredPasswordLength;
 
 		[DefaultValue(DefaultPasswordAttemptWindowValue)]
 		[Field("passwordAttemptWindow")]
 		private readonly int _passwordAttemptWindow = DefaultPasswordAttemptWindowValue;
 
-		public override int PasswordAttemptWindow
-		{
-			get { return _passwordAttemptWindow; }
-		}
+		public override int PasswordAttemptWindow => _passwordAttemptWindow;
 
 		[DefaultValue(DefaultPasswordFormatValue)]
 		[Field("passwordFormat")]
 		private readonly MembershipPasswordFormat _passwordFormat = DefaultPasswordFormatValue;
 
-		public override MembershipPasswordFormat PasswordFormat
-		{
-			get { return _passwordFormat; }
-		}
+		public override MembershipPasswordFormat PasswordFormat => _passwordFormat;
 
 		[DefaultValue(DefaultPasswordStrengthRegularExpressionValue)]
 		[Field("passwordStrengthRegularExpression")]
 		private readonly string _passwordStrengthRegularExpression = DefaultPasswordStrengthRegularExpressionValue;
 
-		public override string PasswordStrengthRegularExpression
-		{
-			get { return _passwordStrengthRegularExpression; }
-		}
+		public override string PasswordStrengthRegularExpression => _passwordStrengthRegularExpression;
 
 		[DefaultValue(Secret.DefaultSaltSize)]
 		[Field("saltSize")]
 		private readonly int _saltSize = Secret.DefaultSaltSize;
 
-		public int SaltSize
-		{
-			get { return _saltSize; }
-		}
+		public int SaltSize => _saltSize;
 
 		private readonly Lazy<CryptoAlgorithm> _cryptoAlgorithm = new Lazy<CryptoAlgorithm>(() => CryptoAlgorithm.Create(CryptoAlgorithm.GetAlgo(Membership.HashAlgorithmType)));
 
-		public virtual CryptoAlgorithm CryptoAlgorithm
-		{
-			get
-			{
-				return _cryptoAlgorithm.Value;
-			}
-		}
+		public virtual CryptoAlgorithm CryptoAlgorithm => _cryptoAlgorithm.Value;
 
 		[Ignore]
 		private readonly TimeSpan _timeDelta = TimeSpan.FromMinutes(10);
@@ -314,7 +266,7 @@ namespace Ecng.Web
 			var user = Users.GetByKey(providerUserKey);
 
 			if (user == null || user.Deleted)
-				throw new ArgumentException("User not founded.", "providerUserKey");
+				throw new ArgumentException("User not founded.", nameof(providerUserKey));
 
 			if (userIsOnline)
 			{
@@ -393,7 +345,7 @@ namespace Ecng.Web
 			if (user == null)
 			{
 				SecurityError(userName, SecurityErrorTypes.InvalidName);
-				throw new ArgumentException("User {0} not founded.".Put(userName), "userName");
+				throw new ArgumentException("User {0} not founded.".Put(userName), nameof(userName));
 			}
 
 			if (!IsAnswerValid(user, answer))
@@ -415,7 +367,7 @@ namespace Ecng.Web
 			if (user == null)
 			{
 				SecurityError(userName, SecurityErrorTypes.InvalidName);
-				throw new ArgumentException("User {0} not founded.".Put(userName), "userName");
+				throw new ArgumentException("User {0} not founded.".Put(userName), nameof(userName));
 			}
 
 			if (user.Deleted)
@@ -480,7 +432,7 @@ namespace Ecng.Web
 		internal void ChangePassword(IWebUser user, string password)
 		{
 			if (user == null)
-				throw new ArgumentNullException("user");
+				throw new ArgumentNullException(nameof(user));
 
 			user.Password = CreateSecret(password);
 			user.LastPasswordChangedDate = DateTime.Now;
@@ -547,7 +499,7 @@ namespace Ecng.Web
 		public override void UpdateUser(MembershipUser membershipUser)
 		{
 			if (membershipUser == null)
-				throw new ArgumentNullException("membershipUser");
+				throw new ArgumentNullException(nameof(membershipUser));
 
 			var user = Users.GetByName(membershipUser.UserName);
 
@@ -624,7 +576,7 @@ namespace Ecng.Web
 		private bool IsAnswerValid(IWebUser user, string answer)
 		{
 			if (user == null)
-				throw new ArgumentNullException("user");
+				throw new ArgumentNullException(nameof(user));
 
 			var isOk = !RequiresQuestionAndAnswer || user.PasswordAnswer.Equals(CreateSecret(answer, user.PasswordAnswer.Salt));
 
@@ -639,7 +591,7 @@ namespace Ecng.Web
 		private bool IsPasswordValid(IWebUser user, string password)
 		{
 			if (user == null)
-				throw new ArgumentNullException("user");
+				throw new ArgumentNullException(nameof(user));
 
 			var isOk = user.Password.Equals(CreateSecret(password, user.Password.Salt));
 
@@ -654,7 +606,7 @@ namespace Ecng.Web
 		private MembershipUser ConvertToMembershipUser(IWebUser user)
 		{
 			if (user == null)
-				throw new ArgumentNullException("user");
+				throw new ArgumentNullException(nameof(user));
 
 			return new MembershipUser(Name, user.Name, user.Key, user.Email, RequiresQuestionAndAnswer ? user.PasswordQuestion : string.Empty, user.Description, user.IsApproved, user.IsLockedOut, user.CreationDate, user.LastLoginDate, user.LastActivityDate, user.LastPasswordChangedDate, user.LastLockOutDate);
 		}
@@ -662,7 +614,7 @@ namespace Ecng.Web
 		private void ResetPasswordAttemts(IWebUser user)
 		{
 			if (user == null)
-				throw new ArgumentNullException("user");
+				throw new ArgumentNullException(nameof(user));
 
 			lock (_lock)
 			{
@@ -673,7 +625,7 @@ namespace Ecng.Web
 		private void ValidatePasswordAttemts(IWebUser user)
 		{
 			if (user == null)
-				throw new ArgumentNullException("user");
+				throw new ArgumentNullException(nameof(user));
 
 			Tuple<DateTime, int> passwordAttemts;
 

@@ -90,20 +90,11 @@ namespace NPOI.POIFS.NIO
 
         #endregion
 
-        public bool IsWriteable
-        {
-            get
-            {
-                return this.writable;
-            }
-        }
+        public bool IsWriteable => this.writable;
 
-        public Stream Stream
-        {
-            get { return this.fileStream; }
-        }
+	    public Stream Stream => this.fileStream;
 
-        /// <summary>
+	    /// <summary>
         /// Reads a sequence of bytes from this FileStream starting at the given file position.
         /// </summary>
         /// <param name="length"></param>

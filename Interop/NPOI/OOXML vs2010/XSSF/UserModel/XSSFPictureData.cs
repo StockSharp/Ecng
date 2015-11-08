@@ -133,12 +133,9 @@ namespace NPOI.XSSF.UserModel
             }
         }
 
-        public string MimeType
-        {
-            get { return GetPackagePart().ContentType; }
-        }
+        public string MimeType => GetPackagePart().ContentType;
 
-        /**
+	    /**
          * *PictureData objects store the actual content in the part directly without keeping a 
          * copy like all others therefore we need to handle them differently.
          */

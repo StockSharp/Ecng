@@ -12284,12 +12284,9 @@ namespace NPOI.OpenXmlFormats.Dml.Chart
             }
         }
         [XmlIgnore]
-        public bool bwModeSpecified
-        {
-            get { return ST_BlackWhiteMode.none != this.bwModeField; }
-        }
+        public bool bwModeSpecified => ST_BlackWhiteMode.none != this.bwModeField;
 
-        public static CT_ShapeProperties Parse(XmlNode node, XmlNamespaceManager namespaceManager)
+	    public static CT_ShapeProperties Parse(XmlNode node, XmlNamespaceManager namespaceManager)
         {
             if (node == null)
                 return null;

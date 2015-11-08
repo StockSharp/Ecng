@@ -49,15 +49,9 @@ namespace NPOI.HSSF.UserModel
         /**
          * Returns the OLE2 Class Name of the object
          */
-        public String OLE2ClassName
-        {
-            get
-            {
-                return FindObjectRecord().OLEClassName;
-            }
-        }
+        public String OLE2ClassName => FindObjectRecord().OLEClassName;
 
-        /**
+	    /**
          * Gets the object data. Only call for ones that have
          *  data though. See {@link #hasDirectoryEntry()}
          *

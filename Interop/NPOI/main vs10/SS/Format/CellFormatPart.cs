@@ -473,27 +473,16 @@ namespace NPOI.SS.Format
          *
          * @return The CellFormatType.
          */
-        internal CellFormatType CellFormatType
-        {
-            get
-            {
-                return type;
-            }
-        }
+        internal CellFormatType CellFormatType => type;
 
-        /**
+	    /**
          * Returns <tt>true</tt> if this format part has a condition.
          *
          * @return <tt>true</tt> if this format part has a condition.
          */
-        internal bool HasCondition
-        {
-            get
-            {
-                return condition != null;
-            }
-        }
-        public static StringBuilder ParseFormat(String fdesc, CellFormatType type,
+        internal bool HasCondition => condition != null;
+
+	    public static StringBuilder ParseFormat(String fdesc, CellFormatType type,
                 IPartHandler partHandler)
         {
 

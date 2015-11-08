@@ -52,10 +52,7 @@
 
 		private readonly List<LocalGenerator> _locals = new List<LocalGenerator>();
 
-		public IEnumerable<LocalGenerator> Locals
-		{
-			get { return _locals; }
-		}
+		public IEnumerable<LocalGenerator> Locals => _locals;
 
 		#endregion
 
@@ -63,10 +60,7 @@
 
 		private readonly List<ParameterGenerator> _parameters = new List<ParameterGenerator>();
 
-		public IEnumerable<ParameterGenerator> Parameters
-		{
-			get { return _parameters; }
-		}
+		public IEnumerable<ParameterGenerator> Parameters => _parameters;
 
 		#endregion
 
@@ -695,7 +689,7 @@
 		public MethodGenerator ldloc(LocalGenerator local)
 		{
 			if (local == null)
-				throw new ArgumentNullException("local");
+				throw new ArgumentNullException(nameof(local));
 
 			return ldloc(local.Builder.LocalIndex);
 		}
@@ -713,7 +707,7 @@
 		public MethodGenerator ldloca(LocalGenerator local)
 		{
 			if (local == null)
-				throw new ArgumentNullException("local");
+				throw new ArgumentNullException(nameof(local));
 
 			return ldloca(local.Builder.LocalIndex);
 		}
@@ -722,7 +716,7 @@
 		public MethodGenerator ldsfld(FieldGenerator field)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			return ldsfld(field.Builder);
 		}
@@ -730,7 +724,7 @@
 		public MethodGenerator ldsflda(FieldGenerator field)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			return ldsflda(field.Builder);
 		}
@@ -817,7 +811,7 @@
 		public MethodGenerator ldfld(FieldGenerator field)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			return ldfld(field.Builder);
 		}
@@ -826,7 +820,7 @@
 		public MethodGenerator ldflda(FieldGenerator field)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			return ldflda(field.Builder);
 		}
@@ -862,7 +856,7 @@
 		public MethodGenerator LoadObj(Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if (type.IsEnum())
 				type = type.GetEnumBaseType();
@@ -926,7 +920,7 @@
 		public MethodGenerator stloc(LocalGenerator local)
 		{
 			if (local == null)
-				throw new ArgumentNullException("local");
+				throw new ArgumentNullException(nameof(local));
 
 			return stloc(local.Builder.LocalIndex);
 		}
@@ -935,7 +929,7 @@
 		public MethodGenerator stfld(FieldGenerator field)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			return stfld(field.Builder);
 		}
@@ -947,7 +941,7 @@
 		public MethodGenerator stsfld(FieldGenerator field)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			return stsfld(field.Builder);
 		}
@@ -977,7 +971,7 @@
 					var method = ((PropertyInfo)member).GetGetMethod(true);
 
 					if (method == null)
-						throw new ArgumentException("Get accessor for property '{0}' of type '{1}' isn't exist.".Put(member.Name, member.ReflectedType.Name), "member");
+						throw new ArgumentException("Get accessor for property '{0}' of type '{1}' isn't exist.".Put(member.Name, member.ReflectedType.Name), nameof(member));
 
 					if (isStatic || member.DeclaringType.IsValueType)
 						return call(method);
@@ -1000,7 +994,7 @@
 					var method = ((PropertyInfo)member).GetSetMethod(true);
 
 					if (method == null)
-						throw new ArgumentException("Set accessor for property '{0}' of type '{1}' doesn't exist.".Put(member.Name, member.ReflectedType.Name), "member");
+						throw new ArgumentException("Set accessor for property '{0}' of type '{1}' doesn't exist.".Put(member.Name, member.ReflectedType.Name), nameof(member));
 
 					if (isStatic || member.DeclaringType.IsValueType)
 						return call(method);

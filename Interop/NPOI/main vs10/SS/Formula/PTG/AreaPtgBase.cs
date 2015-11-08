@@ -220,15 +220,9 @@ namespace NPOI.SS.Formula.PTG
         /**
          * @return last column and bitmask (the raw field)
          */
-        public virtual short LastColumnRaw
-        {
-            get
-            {
-                return (short)field_4_last_column;
-            }
-        }
+        public virtual short LastColumnRaw => (short)field_4_last_column;
 
-        /**
+	    /**
          * @return last row relative or not
          */
         public virtual bool IsLastRowRelative
@@ -260,12 +254,9 @@ namespace NPOI.SS.Formula.PTG
             return FormatReferenceAsString();
         }
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_REF; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_REF;
 
-        protected String FormatReferenceAsString()
+	    protected String FormatReferenceAsString()
         {
             CellReference topLeft = new CellReference(FirstRow, FirstColumn, !IsFirstRowRelative, !IsFirstColRelative);
             CellReference botRight = new CellReference(LastRow, LastColumn, !IsLastRowRelative, !IsLastColRelative);

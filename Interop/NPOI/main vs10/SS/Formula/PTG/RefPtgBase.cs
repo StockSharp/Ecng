@@ -111,12 +111,9 @@ namespace NPOI.SS.Formula.PTG
         /**
          * Returns the row number as an int, between 0 and 65535
          */
-        public int RowAsInt
-        {
-            get { return field_1_row; }
-        }
+        public int RowAsInt => field_1_row;
 
-        public bool IsRowRelative
+	    public bool IsRowRelative
         {
             get { return rowRelative.IsSet(field_2_col); }
             set
@@ -161,9 +158,6 @@ namespace NPOI.SS.Formula.PTG
         }
 
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_REF; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_REF;
     }
 }

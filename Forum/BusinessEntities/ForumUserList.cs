@@ -26,17 +26,11 @@
 
 		private static ForumUser _gallery;
 
-		public ForumUser Gallery
-		{
-			get { return _gallery ?? (_gallery = ReadById((long)Identities.UserGallery)); }
-		}
+		public ForumUser Gallery => _gallery ?? (_gallery = ReadById((long)Identities.UserGallery));
 
 		private static ForumUser _image;
 
-		public ForumUser Image
-		{
-			get { return _image ?? (_image = ReadById((long)Identities.UserImage)); }
-		}
+		public ForumUser Image => _image ?? (_image = ReadById((long)Identities.UserImage));
 
 		public override ForumUser ReadByName(string userName)
 		{
@@ -51,7 +45,7 @@
 		public IEnumerable<ForumUser> ReadAllByEmail([Length(128)]string emailMatch, long startIndex, long count)
 		{
 			if (emailMatch.IsEmpty())
-				throw new ArgumentNullException("emailMatch");
+				throw new ArgumentNullException(nameof(emailMatch));
 
 			return ReadAll("Email", string.Empty, startIndex, count, new SerializationItemCollection { new SerializationItem(new VoidField<string>("EmailMatch"), emailMatch) });
 		}

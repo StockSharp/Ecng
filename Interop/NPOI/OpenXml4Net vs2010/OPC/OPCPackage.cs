@@ -1361,15 +1361,9 @@ namespace NPOI.OpenXml4Net.OPC
          * @throws OpenXml4NetException
          * @see #GetRelationshipsHelper(String)
          */
-        public PackageRelationshipCollection Relationships
-        {
-            get
-            {
-                return GetRelationshipsHelper(null);
-            }
-        }
+        public PackageRelationshipCollection Relationships => GetRelationshipsHelper(null);
 
-        /**
+	    /**
          * Retrieves all relationships with the specified type.
          * 
          * @param relationshipType
@@ -1442,15 +1436,9 @@ namespace NPOI.OpenXml4Net.OPC
         /**
          * @see org.apache.poi.OpenXml4Net.opc.RelationshipSource#hasRelationships()
          */
-        public bool HasRelationships
-        {
-            get
-            {
-                return (relationships.Size > 0);
-            }
-        }
+        public bool HasRelationships => (relationships.Size > 0);
 
-        /**
+	    /**
          * @see org.apache.poi.OpenXml4Net.opc.RelationshipSource#isRelationshipExists(org.apache.poi.OpenXml4Net.opc.PackageRelationship)
          */
         public bool IsRelationshipExists(PackageRelationship rel)

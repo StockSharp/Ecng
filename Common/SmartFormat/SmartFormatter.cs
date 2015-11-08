@@ -39,8 +39,8 @@ namespace SmartFormat
 
 		#region: Extension Registry :
 
-		public List<ISource> SourceExtensions { get; private set; }
-		public List<IFormatter> FormatterExtensions { get; private set; }
+		public List<ISource> SourceExtensions { get; }
+		public List<IFormatter> FormatterExtensions { get; }
 
 
 		/// <summary>
@@ -61,7 +61,7 @@ namespace SmartFormat
 
 				// If this object ISN'T a extension, throw an exception:
 				if (source == null && formatter == null)
-					throw new ArgumentException(string.Format("{0} does not implement ISource nor IFormatter.", extension.GetType().FullName), "extensions");
+					throw new ArgumentException(string.Format("{0} does not implement ISource nor IFormatter.", extension.GetType().FullName), nameof(extensions));
 
 				if (source != null)
 					SourceExtensions.Insert(0, source);
@@ -122,7 +122,7 @@ namespace SmartFormat
 		public Parser Parser { get; set; }
 		public ErrorAction ErrorAction { get; set; }
 		private SmartSettings settings;
-		public SmartSettings Settings { get { return settings ?? (settings = new SmartSettings()); } }
+		public SmartSettings Settings => settings ?? (settings = new SmartSettings());
 
 		#endregion
 

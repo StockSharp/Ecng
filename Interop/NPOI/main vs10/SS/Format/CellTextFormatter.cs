@@ -35,11 +35,9 @@ namespace NPOI.SS.Format
         private class PartHandler : CellFormatPart.IPartHandler
         {
             private int numplace;
-            public int NumPlace
-            {
-                get{return numplace;}
-            }
-            public PartHandler(int numPlace)
+            public int NumPlace => numplace;
+
+	        public PartHandler(int numPlace)
             {
                 this.numplace = numPlace;
             }

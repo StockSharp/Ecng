@@ -32,7 +32,7 @@ namespace SmartFormat.Utilities
 		/// These are the absolute default options that will be used as
 		/// a safeguard, just in case DefaultFormatOptions is missing a value.
 		/// </summary>
-		public static TimeSpanFormatOptions AbsoluteDefaults { get; private set; }
+		public static TimeSpanFormatOptions AbsoluteDefaults { get; }
 
 		#endregion
 
@@ -533,28 +533,22 @@ namespace SmartFormat.Utilities
 					return null;
 			}
 		}
-		public static TimeTextInfo English
-		{
-			get
-			{
-				return new TimeTextInfo(
-					PluralRules.GetPluralRule("en"),
-					new[] { "{0} week", "{0} weeks" },
-					new[] { "{0} day", "{0} days" },
-					new[] { "{0} hour", "{0} hours" },
-					new[] { "{0} minute", "{0} minutes" },
-					new[] { "{0} second", "{0} seconds" },
-					new[] { "{0} millisecond", "{0} milliseconds" },
-					new[] { "{0}w" },
-					new[] { "{0}d" },
-					new[] { "{0}h" },
-					new[] { "{0}m" },
-					new[] { "{0}s" },
-					new[] { "{0}ms" },
-					"less than {0}"
-					);
-			}
-		}
+		public static TimeTextInfo English => new TimeTextInfo(
+			PluralRules.GetPluralRule("en"),
+			new[] { "{0} week", "{0} weeks" },
+			new[] { "{0} day", "{0} days" },
+			new[] { "{0} hour", "{0} hours" },
+			new[] { "{0} minute", "{0} minutes" },
+			new[] { "{0} second", "{0} seconds" },
+			new[] { "{0} millisecond", "{0} milliseconds" },
+			new[] { "{0}w" },
+			new[] { "{0}d" },
+			new[] { "{0}h" },
+			new[] { "{0}m" },
+			new[] { "{0}s" },
+			new[] { "{0}ms" },
+			"less than {0}"
+			);
 	}
 
 	#endregion

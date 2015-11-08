@@ -44,23 +44,15 @@ namespace Hardcodet.Wpf.GenericTreeView
     /// the tree's <see cref="TreeViewBase{T}.SelectedItem"/>
     /// property is null, so is this parameter.
     /// </summary>
-    public T NewItem
-    {
-      get { return newItem; }
-    }
+    public T NewItem => newItem;
 
-
-    /// <summary>
+	  /// <summary>
     /// The previously selected item, if any. Might be null
     /// if no item was selected before.
     /// </summary>
-    public T OldItem
-    {
-      get { return oldItem; }
-    }
+    public T OldItem => oldItem;
 
-
-    /// <summary>
+	  /// <summary>
     /// Creates the event args.
     /// </summary>
     /// <param name="newItem">The selected item, if any.</param>

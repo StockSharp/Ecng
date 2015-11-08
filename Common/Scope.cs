@@ -22,7 +22,7 @@ namespace Ecng.Common
 		public Scope(T value, bool ownInstance)
 		{
 			if (value.IsNull())
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			Value = value;
 			OwnInstance = ownInstance;
@@ -42,10 +42,7 @@ namespace Ecng.Common
 
 		private readonly Scope<T> _parent;
 
-		public Scope<T> Parent
-		{
-			get { return _parent; }
-		}
+		public Scope<T> Parent => _parent;
 
 		#endregion
 
@@ -54,10 +51,7 @@ namespace Ecng.Common
 		[ThreadStatic]
 		private static Scope<T> _current;
 
-		public static Scope<T> Current
-		{
-			get { return _current; }
-		}
+		public static Scope<T> Current => _current;
 
 		#endregion
 
@@ -84,8 +78,8 @@ namespace Ecng.Common
 
 		#endregion
 
-		public bool OwnInstance { get; private set; }
-		public T Value { get; private set; }
+		public bool OwnInstance { get; }
+		public T Value { get; }
 
 		#region Disposable Members
 

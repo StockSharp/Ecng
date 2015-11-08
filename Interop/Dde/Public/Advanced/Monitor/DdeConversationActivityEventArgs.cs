@@ -50,47 +50,31 @@ namespace NDde.Advanced.Monitor
         /// <summary>
         /// This gets the service name associated with the conversation.
         /// </summary>
-        public string Service
-        {
-            get { return _DdemlObject.Service; }
-        }
+        public string Service => _DdemlObject.Service;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the topic name associated with the conversation.
         /// </summary>
-        public string Topic
-        {
-            get { return _DdemlObject.Topic; }
-        }
+        public string Topic => _DdemlObject.Topic;
 
-        /// <summary>
+	    /// <summary>
         /// This gets a bool indicating whether the conversation is being established.
         /// </summary>
         /// <remarks>
         /// The value returned by this property will be true if the conversation is being established.  If the conversation
         /// is being terminated then the value will be false.
         /// </remarks>
-        public bool IsEstablished
-        {
-            get { return _DdemlObject.IsEstablished; }
-        }
+        public bool IsEstablished => _DdemlObject.IsEstablished;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the handle to the client application associated with the conversation.
         /// </summary>
-        public IntPtr ClientHandle
-        {
-            get { return _DdemlObject.ClientHandle; }
-        }
+        public IntPtr ClientHandle => _DdemlObject.ClientHandle;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the handle to the server application associated with the conversation.
         /// </summary>
-        public IntPtr ServerHandle
-        {
-            get { return _DdemlObject.ServerHandle; }
-        }
-
+        public IntPtr ServerHandle => _DdemlObject.ServerHandle;
     } // class
 
 } // namespace

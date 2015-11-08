@@ -40,17 +40,11 @@ namespace NPOI.SS.Formula.PTG
             // enforce singleton
         }
 
-        protected override byte Sid
-        {
-            get { return sid; }
-        }
+        protected override byte Sid => sid;
 
-        public override int NumberOfOperands
-        {
-            get { return 2; }
-        }
+	    public override int NumberOfOperands => 2;
 
-        /** implementation of method from OperationsPtg*/
+	    /** implementation of method from OperationsPtg*/
         public override String ToFormulaString(String[] operands)
         {
             StringBuilder buffer = new StringBuilder();

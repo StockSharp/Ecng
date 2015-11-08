@@ -59,23 +59,11 @@ using NPOI.Util;
             out1.Write(_rawData);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return _rawData.Length;
-            }
-        }
+        protected override int DataSize => _rawData.Length;
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+	    public override short Sid => sid;
 
-        /**
+	    /**
          * @return Globally unique identifier for the custom view
          */
         public byte[] Guid

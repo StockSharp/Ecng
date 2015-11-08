@@ -213,14 +213,9 @@ namespace NPOI.HSSF.UserModel
         /// Get the number of builtin and reserved builtinFormats
         /// </summary>
         /// <returns>number of builtin and reserved builtinFormats</returns>
-        public static int NumberOfBuiltinBuiltinFormats
-        {
-            get
-            {
-                return builtinFormats.Count;
-            }
-        }
-        /**
+        public static int NumberOfBuiltinBuiltinFormats => builtinFormats.Count;
+
+	    /**
 	     * Ensures that the formats list can hold entries
 	     *  up to and including the entry with this index
 	     */

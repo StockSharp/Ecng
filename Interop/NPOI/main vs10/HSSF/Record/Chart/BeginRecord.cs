@@ -67,16 +67,11 @@ namespace NPOI.HSSF.Record.Chart
         {
         }
 
-        protected override int DataSize
-        {
-            get { return 0; }
-        }
+        protected override int DataSize => 0;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public override Object Clone()
+	    public override short Sid => sid;
+
+	    public override Object Clone()
         {
             BeginRecord br = new BeginRecord();
             // No data so nothing to copy

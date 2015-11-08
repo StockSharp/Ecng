@@ -14,22 +14,16 @@
 		public XlsDdeClient(DdeSettings settings)
 		{
 			if (settings == null)
-				throw new ArgumentNullException("settings");
+				throw new ArgumentNullException(nameof(settings));
 
 			_settings = settings;
 		}
 
-		public bool IsStarted
-		{
-			get { return _client != null; }
-		}
+		public bool IsStarted => _client != null;
 
 		private readonly DdeSettings _settings;
 
-		public DdeSettings Settings
-		{
-			get { return _settings; }
-		}
+		public DdeSettings Settings => _settings;
 
 		public void Start()
 		{
@@ -48,10 +42,10 @@
 		public void Poke(IList<IList<object>> rows)
 		{
 			if (rows == null)
-				throw new ArgumentNullException("rows");
+				throw new ArgumentNullException(nameof(rows));
 
 			if (rows.Count == 0)
-				throw new ArgumentOutOfRangeException("rows");
+				throw new ArgumentOutOfRangeException(nameof(rows));
 
 			if (!Settings.ShowHeaders)
 				rows.RemoveAt(0);

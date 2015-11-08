@@ -246,32 +246,20 @@ namespace NPOI.XSSF.Util
             return read;
         }
 
-        public override bool CanRead
-        {
-            get { return true; }
-        }
+        public override bool CanRead => true;
 
-        public override bool CanSeek
-        {
-            get { return true; }
-        }
+	    public override bool CanSeek => true;
 
-        public override bool CanWrite
-        {
-            get { return false; }
-        }
+	    public override bool CanWrite => false;
 
-        public override void Flush()
+	    public override void Flush()
         {
             
         }
 
-        public override long Length
-        {
-            get { return source.Length; }
-        }
+        public override long Length => source.Length;
 
-        public override long Position
+	    public override long Position
         {
             get
             {

@@ -136,28 +136,19 @@ namespace NDde.Foundation.Advanced
             }
         }
 
-        public int InstanceId
-        {
-            get { return _InstanceId; }
-        }
+        public int InstanceId => _InstanceId;
 
-        public bool IsInitialized
-        {
-            get { return _InstanceId != 0; }
-        }
+	    public bool IsInitialized => _InstanceId != 0;
 
-        public Encoding Encoding
+	    public Encoding Encoding
         {
             get { return _Encoding; }
             set { _Encoding = value; }
         }
 
-        internal bool IsDisposed
-        {
-            get { return _Disposed; }
-        }
+        internal bool IsDisposed => _Disposed;
 
-        public void Initialize()
+	    public void Initialize()
         {
             if (IsDisposed)
             {
@@ -185,7 +176,7 @@ namespace NDde.Foundation.Advanced
             }
             if (filter == null)
             {
-                throw new ArgumentNullException("filter");
+                throw new ArgumentNullException(nameof(filter));
             }
             if (_Filters.Contains(filter))
             {
@@ -203,7 +194,7 @@ namespace NDde.Foundation.Advanced
             }
             if (filter == null)
             {
-                throw new ArgumentNullException("filter");
+                throw new ArgumentNullException(nameof(filter));
             }
             if (!_Filters.Contains(filter))
             {

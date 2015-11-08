@@ -44,7 +44,7 @@ namespace Ecng.Common
 		public static decimal Round(this decimal value, decimal step, int digits, MidpointRounding? rounding = null)
 		{
 			if (step <= 0)
-				throw new ArgumentOutOfRangeException("step", step, "The 'step' parameter must be more than zero.");
+				throw new ArgumentOutOfRangeException(nameof(step), step, "The 'step' parameter must be more than zero.");
 
 			var retVal = Floor(value, step);
 
@@ -498,7 +498,7 @@ namespace Ecng.Common
 		public static bool GetBit(this int value, int index)
 		{
 			if (index < 0 || index > 32)
-				throw new ArgumentOutOfRangeException("index");
+				throw new ArgumentOutOfRangeException(nameof(index));
 
 			return (value & (1 << index)) != 0;
 		}
@@ -506,7 +506,7 @@ namespace Ecng.Common
 		public static int SetBit(this int value, int index, bool bit)
 		{
 			if (index < 0 || index > 32)
-				throw new ArgumentOutOfRangeException("index");
+				throw new ArgumentOutOfRangeException(nameof(index));
 
 			// http://www.daniweb.com/forums/thread196013.html
 
@@ -521,7 +521,7 @@ namespace Ecng.Common
 		public static bool GetBit(this long value, int index)
 		{
 			if (index < 0 || index > 64)
-				throw new ArgumentOutOfRangeException("index");
+				throw new ArgumentOutOfRangeException(nameof(index));
 
 			return (value & (1 << index)) != 0;
 		}
@@ -529,7 +529,7 @@ namespace Ecng.Common
 		public static long SetBit(this long value, int index, bool bit)
 		{
 			if (index < 0 || index > 64)
-				throw new ArgumentOutOfRangeException("index");
+				throw new ArgumentOutOfRangeException(nameof(index));
 
 			// http://www.daniweb.com/forums/thread196013.html
 
@@ -643,10 +643,7 @@ namespace Ecng.Common
 			public int Scale { get; set; }
 			public int TrailingZeros { get; set; }
 
-			public int EffectiveScale
-			{
-				get { return Scale - TrailingZeros; }
-			}
+			public int EffectiveScale => Scale - TrailingZeros;
 		}
 
 		// http://stackoverflow.com/questions/763942/calculate-system-decimal-precision-and-scale

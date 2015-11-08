@@ -70,7 +70,7 @@ namespace Wintellect.PowerCollections
         public virtual void Add(TKey key, TValue value)
         {
             if (ContainsKey(key)) {
-                throw new ArgumentException(Strings.KeyAlreadyPresent, "key");
+                throw new ArgumentException(Strings.KeyAlreadyPresent, nameof(key));
             }
             else {
                 this[key] = value;
@@ -173,22 +173,16 @@ namespace Wintellect.PowerCollections
         /// Returns a collection of the keys in this dictionary. 
         /// </summary>
         /// <value>A read-only collection of the keys in this dictionary.</value>
-        public virtual ICollection<TKey> Keys
-        {
-            get { return new KeysCollection(this); }
-        }
+        public virtual ICollection<TKey> Keys => new KeysCollection(this);
 
-        /// <summary>
+	    /// <summary>
         /// Returns a collection of the values in this dictionary. The ordering of 
         /// values in this collection is the same as that in the Keys collection.
         /// </summary>
         /// <value>A read-only collection of the values in this dictionary.</value>
-        public virtual ICollection<TValue> Values
-        {
-            get { return new ValuesCollection(this); }
-        }
+        public virtual ICollection<TValue> Values => new ValuesCollection(this);
 
-        #endregion
+	    #endregion
 
         #region ICollection<KeyValuePair<TKey,TValue>> Members
 
@@ -333,41 +327,29 @@ namespace Wintellect.PowerCollections
         /// Returns whether this dictionary is fixed size. This implemented always returns false.
         /// </summary>
         /// <value>Always returns false.</value>
-        bool IDictionary.IsFixedSize
-        {
-            get { return false; }
-        }
+        bool IDictionary.IsFixedSize => false;
 
-        /// <summary>
+	    /// <summary>
         /// Returns if this dictionary is read-only. This implementation always returns false.
         /// </summary>
         /// <value>Always returns false.</value>
-        bool IDictionary.IsReadOnly
-        {
-            get { return false; }
-        }
+        bool IDictionary.IsReadOnly => false;
 
-        /// <summary>
+	    /// <summary>
         /// Returns a collection of all the keys in the dictionary. The values in this collection will
         /// be enumerated in the same order as the (overridden) GetEnumerator method.
         /// </summary>
         /// <value>The collection of keys.</value>
-        ICollection IDictionary.Keys
-        {
-            get { return new KeysCollection(this); }
-        }
+        ICollection IDictionary.Keys => new KeysCollection(this);
 
-        /// <summary>
+	    /// <summary>
         /// Returns a collection of all the values in the dictionary. The values in this collection will
         /// be enumerated in the same order as the (overridden) GetEnumerator method.
         /// </summary>
         /// <value>The collection of values.</value>
-        ICollection IDictionary.Values
-        {
-            get { return new ValuesCollection(this); }
-        }
+        ICollection IDictionary.Values => new ValuesCollection(this);
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the value associated with a given key. When getting a value, if this
         /// key is not found in the collection, then null is returned. When setting
         /// a value, the value replaces any existing value in the dictionary. If either the key or value
@@ -469,12 +451,9 @@ namespace Wintellect.PowerCollections
                 this.myDictionary = myDictionary;
             }
 
-            public override int Count
-            {
-                get { return myDictionary.Count; }
-            }
+            public override int Count => myDictionary.Count;
 
-            public override IEnumerator<TKey> GetEnumerator()
+	        public override IEnumerator<TKey> GetEnumerator()
             {
                 foreach (KeyValuePair<TKey, TValue> pair in myDictionary)
                     yield return pair.Key;
@@ -500,12 +479,9 @@ namespace Wintellect.PowerCollections
                 this.myDictionary = myDictionary;
             }
 
-            public override int Count
-            {
-                get { return myDictionary.Count; }
-            }
+            public override int Count => myDictionary.Count;
 
-            public override IEnumerator<TValue> GetEnumerator()
+	        public override IEnumerator<TValue> GetEnumerator()
             {
                 foreach (KeyValuePair<TKey, TValue> pair in myDictionary)
                     yield return pair.Value;
@@ -578,13 +554,7 @@ namespace Wintellect.PowerCollections
             }
 
 
-            public object Current
-            {
-                get
-                {
-                    return Entry;
-                }
-            }
+            public object Current => Entry;
         }
     }
 }

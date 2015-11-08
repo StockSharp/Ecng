@@ -89,14 +89,9 @@ namespace NPOI.HSSF.Record.AutoFilter
                     break;
             }
         }
-        public override int RecordSize
-        {
-            get
-            {
-                return 10;
-            }
-        }
-        public int Serialize(ILittleEndianOutput out1)
+        public override int RecordSize => 10;
+
+	    public int Serialize(ILittleEndianOutput out1)
         {
             out1.WriteByte((byte)vt);
             switch (vt)
@@ -195,18 +190,14 @@ namespace NPOI.HSSF.Record.AutoFilter
         /// <summary>
         /// Whether the bBoolErr field contains a Boolean value
         /// </summary>
-        public bool IsBooleanValue
-        {
-            get { return fError == 0; }
-        }
-        /// <summary>
+        public bool IsBooleanValue => fError == 0;
+
+	    /// <summary>
         /// Whether the bBoolErr field contains a Error value
         /// </summary>
-        public bool IsErrorValue
-        {
-            get { return fError == 1; }
-        }
-        /// <summary>
+        public bool IsErrorValue => fError == 1;
+
+	    /// <summary>
         /// Get or sets the boolean value
         /// </summary>
         public bool BooleanValue

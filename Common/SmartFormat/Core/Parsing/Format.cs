@@ -32,7 +32,7 @@ namespace SmartFormat.Core.Parsing
 		#region: Fields and Properties :
 
 		public readonly Placeholder parent;
-		public List<FormatItem> Items { get; private set; }
+		public List<FormatItem> Items { get; }
 		public bool HasNested { get; set; }
 
 		#endregion
@@ -53,9 +53,9 @@ namespace SmartFormat.Core.Parsing
 			var endIndex = startIndex + length;
 			// Validate the arguments:
 			if (startIndex < this.startIndex || startIndex > this.endIndex) // || endIndex > this.endIndex)
-				throw new ArgumentOutOfRangeException("startIndex");
+				throw new ArgumentOutOfRangeException(nameof(startIndex));
 			if (endIndex > this.endIndex)
-				throw new ArgumentOutOfRangeException("length");
+				throw new ArgumentOutOfRangeException(nameof(length));
 
 			// If startIndex and endIndex already match this item, we're done:
 			if (startIndex == this.startIndex && endIndex == this.endIndex)
@@ -195,7 +195,7 @@ namespace SmartFormat.Core.Parsing
 			{
 				get
 				{
-					if (index > splits.Count) throw new ArgumentOutOfRangeException("index");
+					if (index > splits.Count) throw new ArgumentOutOfRangeException(nameof(index));
 
 					if (splits.Count == 0)
 					{
@@ -234,15 +234,9 @@ namespace SmartFormat.Core.Parsing
 				}
 			}
 
-			public int Count
-			{
-				get { return splits.Count + 1; }
-			}
+			public int Count => splits.Count + 1;
 
-			public bool IsReadOnly
-			{
-				get { return true; }
-			}
+			public bool IsReadOnly => true;
 
 			#endregion
 

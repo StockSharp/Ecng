@@ -66,15 +66,9 @@ namespace NPOI.XSSF.UserModel.Charts
             }
         }
 
-        public bool IsSetLogBase
-        {
-            get
-            {
-                return GetCTScaling().IsSetLogBase();
-            }
-        }
+        public bool IsSetLogBase => GetCTScaling().IsSetLogBase();
 
-        public double LogBase
+	    public double LogBase
         {
             get
             {
@@ -104,15 +98,9 @@ namespace NPOI.XSSF.UserModel.Charts
             }
         }
 
-        public bool IsSetMinimum
-        {
-            get
-            {
-                return GetCTScaling().IsSetMin();
-            }
-        }
+        public bool IsSetMinimum => GetCTScaling().IsSetMin();
 
-        public double Minimum
+	    public double Minimum
         {
             get
             {
@@ -140,15 +128,9 @@ namespace NPOI.XSSF.UserModel.Charts
             }
         }
 
-        public bool IsSetMaximum
-        {
-            get
-            {
-                return GetCTScaling().IsSetMax();
-            }
-        }
+        public bool IsSetMaximum => GetCTScaling().IsSetMax();
 
-        public double Maximum
+	    public double Maximum
         {
             get
             {

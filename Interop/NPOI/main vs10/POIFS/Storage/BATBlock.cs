@@ -345,30 +345,21 @@ namespace NPOI.POIFS.Storage
         /// Gets the entries per block.
         /// </summary>
         /// <value>The number of entries per block</value>
-        public static int EntriesPerBlock
-        {
-            get { return _entries_per_block; }
-        }
+        public static int EntriesPerBlock => _entries_per_block;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the entries per XBAT block.
         /// </summary>
         /// <value>number of entries per XBAT block</value>
-        public static int EntriesPerXBATBlock
-        {
-            get { return _entries_per_xbat_block; }
-        }
+        public static int EntriesPerXBATBlock => _entries_per_xbat_block;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the XBAT chain offset.
         /// </summary>
         /// <value>offset of chain index of XBAT block</value>
-        public static int XBATChainOffset
-        {
-            get { return _xbat_chain_offset; }
-        }
+        public static int XBATChainOffset => _xbat_chain_offset;
 
-        private void SetXBATChain(int chainIndex)
+	    private void SetXBATChain(int chainIndex)
         {
             _fields[_entries_per_xbat_block].Set(chainIndex, _data);
         }
@@ -382,15 +373,9 @@ namespace NPOI.POIFS.Storage
          * Does this BATBlock have any free sectors in it, or
          *  is it full?
          */
-        public bool HasFreeSectors
-        {
-            get
-            {
-                return _has_free_sectors;
-            }
-        }
+        public bool HasFreeSectors => _has_free_sectors;
 
-        public int GetValueAt(int relativeOffset)
+	    public int GetValueAt(int relativeOffset)
         {
             if (relativeOffset >= _values.Length)
             {
@@ -501,13 +486,7 @@ namespace NPOI.POIFS.Storage
           this.index = index;
           this.block = block;
        }
-       public int Index 
-       {
-           get { return index; }
-       }
-       public BATBlock Block
-       {
-           get { return block; }
-       }
+       public int Index => index;
+	    public BATBlock Block => block;
     }
 }

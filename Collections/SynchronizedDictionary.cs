@@ -35,15 +35,12 @@ namespace Ecng.Collections
 
 		private readonly SyncObject _syncRoot = new SyncObject();
 
-		public SyncObject SyncRoot
-		{
-			get { return _syncRoot; }
-		}
+		public SyncObject SyncRoot => _syncRoot;
 
 		protected SynchronizedDictionary(IDictionary<TKey, TValue> inner)
 		{
 			if (inner == null)
-				throw new ArgumentNullException("inner");
+				throw new ArgumentNullException(nameof(inner));
 
 			_inner = inner;
 		}
@@ -95,10 +92,7 @@ namespace Ecng.Collections
 			}
 		}
 
-		public bool IsReadOnly
-		{
-			get { return false; }
-		}
+		public bool IsReadOnly => false;
 
 		public virtual bool ContainsKey(TKey key)
 		{

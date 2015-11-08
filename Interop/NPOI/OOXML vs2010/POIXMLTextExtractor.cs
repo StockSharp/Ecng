@@ -61,37 +61,20 @@ namespace NPOI
         /**
          * Returns opened document
          */
-        public POIXMLDocument Document
-        {
-            get{
-                return _document;
-            }
-        }
+        public POIXMLDocument Document => _document;
 
-        /**
+	    /**
          * Returns the opened OPCPackage that Contains the document
          */
-        public OPCPackage Package
-        {
-            get
-            {
-                return _document.Package;
-            }
-        }
+        public OPCPackage Package => _document.Package;
 
-        /**
+	    /**
          * Returns an OOXML properties text extractor for the
          *  document properties metadata, such as title and author.
          */
-        public override POITextExtractor MetadataTextExtractor
-        {
-            get
-            {
-                return new POIXMLPropertiesTextExtractor(_document);
-            }
-        }
+        public override POITextExtractor MetadataTextExtractor => new POIXMLPropertiesTextExtractor(_document);
 
-        public override void Close()
+	    public override void Close()
         {
             // e.g. XSSFEventBaseExcelExtractor passes a null-document
             if (_document != null)

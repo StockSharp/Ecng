@@ -49,26 +49,13 @@ namespace NDde.Foundation.Client
             _Data = data;
         }
 
-        public string Item
-        {
-            get { return _Item; }
-        }
+        public string Item => _Item;
 
-        public int Format
-        {
-            get { return _Format; }
-        }
+	    public int Format => _Format;
 
-        public object State
-        {
-            get { return _State; }
-        }
+	    public object State => _State;
 
-        public byte[] Data
-        {
-            get { return _Data; }
-        }
-
+	    public byte[] Data => _Data;
     } // class
 
 } // namespace

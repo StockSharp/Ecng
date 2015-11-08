@@ -150,19 +150,15 @@ namespace NPOI.HSSF.Record
             field_16_help_topic_text = "";
             field_17_status_bar_text = "";
         }
-        protected int DataSize
-        {
-            get {
-                return 13   // 3 shorts + 7 bytes
-                        + NameRawSize
-                        + field_14_custom_menu_text.Length
-                        + field_15_description_text.Length
-                        + field_16_help_topic_text.Length
-                        + field_17_status_bar_text.Length
-                        + field_13_name_definition.EncodedSize;
-            }
-        }
-        /**
+        protected int DataSize => 13   // 3 shorts + 7 bytes
+                                  + NameRawSize
+                                  + field_14_custom_menu_text.Length
+                                  + field_15_description_text.Length
+                                  + field_16_help_topic_text.Length
+                                  + field_17_status_bar_text.Length
+                                  + field_13_name_definition.EncodedSize;
+
+	    /**
          * Constructs a Name record and Sets its fields appropriately.
          *
          * @param in the RecordInputstream to Read the record from
@@ -303,14 +299,8 @@ namespace NPOI.HSSF.Record
         /**
  * @return <c>true</c> if name has a formula (named range or defined value)
  */
-        public bool HasFormula
-        {
-            get
-            {
-                return IsFormula(field_1_option_flag) && field_13_name_definition.EncodedTokenSize > 0;
-            }
-        }
-        /**
+        public bool HasFormula => IsFormula(field_1_option_flag) && field_13_name_definition.EncodedTokenSize > 0;
+	    /**
          * @return true if name Is hidden
          */
         public bool IsHiddenName
@@ -352,37 +342,23 @@ namespace NPOI.HSSF.Record
         /**
          * @return true if name Is a command
          */
-        public bool IsCommandName
-        {
-            get { return (field_1_option_flag & (short)Option.OPT_COMMAND_NAME) != 0; }
-        }
+        public bool IsCommandName => (field_1_option_flag & (short)Option.OPT_COMMAND_NAME) != 0;
 
-        /**
+	    /**
          * @return true if function macro or command macro
          */
-        public bool IsMacro
-        {
-            get { return (field_1_option_flag & (short)Option.OPT_MACRO) != 0; }
-        }
+        public bool IsMacro => (field_1_option_flag & (short)Option.OPT_MACRO) != 0;
 
-        /**
+	    /**
          * @return true if array formula or user defined
          */
-        public bool IsComplexFunction
-        {
-            get { return (field_1_option_flag & (short)Option.OPT_COMPLEX) != 0; }
-        }
+        public bool IsComplexFunction => (field_1_option_flag & (short)Option.OPT_COMPLEX) != 0;
 
-
-        /**Convenience Function to determine if the name Is a built-in name
+	    /**Convenience Function to determine if the name Is a built-in name
          */
-        public bool IsBuiltInName
-        {
-            get { return ((this.OptionFlag & (short)Option.OPT_BUILTIN) != 0); }
-        }
+        public bool IsBuiltInName => ((this.OptionFlag & (short)Option.OPT_BUILTIN) != 0);
 
-
-        /** Gets the name
+	    /** Gets the name
          * @return name
          */
         public String NameText
@@ -401,13 +377,9 @@ namespace NPOI.HSSF.Record
         /** Gets the Built In Name
          * @return the built in Name
          */
-        public byte BuiltInName
-        {
-            get { return this.field_12_built_in_code; }
-        }
+        public byte BuiltInName => this.field_12_built_in_code;
 
-
-        /** Gets the definition, reference (Formula)
+	    /** Gets the definition, reference (Formula)
          * @return definition -- can be null if we cant Parse ptgs
          */
         public Ptg[] NameDefinition
@@ -552,11 +524,8 @@ namespace NPOI.HSSF.Record
         /**
          * return the non static version of the id for this record.
          */
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        /*
+        public override short Sid => sid;
+	    /*
           20 00 
           00 
           01 

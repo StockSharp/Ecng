@@ -14,7 +14,7 @@ namespace Ecng.Logic.BusinessEntities
 		public static string GetIdentity(Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			return _identifiers.SafeAdd(type, delegate
 			{
@@ -46,10 +46,10 @@ namespace Ecng.Logic.BusinessEntities
 			where TRole : BaseRole<TUser, TRole>
 		{
 			if (queryString == null)
-				throw new ArgumentNullException("queryString");
+				throw new ArgumentNullException(nameof(queryString));
 
 			if (entity == null)
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 
 			queryString.Append(GetIdentity(entity.GetType()), entity.Id);
 		}

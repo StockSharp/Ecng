@@ -82,15 +82,9 @@ namespace Ookii.Dialogs.Wpf
         /// </para>
         /// </remarks>
         [Browsable(false)]
-        public static bool IsVistaFileDialogSupported
-        {
-            get
-            {
-                return NativeMethods.IsWindowsVistaOrLater;
-            }
-        }
+        public static bool IsVistaFileDialogSupported => NativeMethods.IsWindowsVistaOrLater;
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets a value indicating whether the dialog box automatically adds an extension to a file name 
         /// if the user omits the extension.
         /// </summary>

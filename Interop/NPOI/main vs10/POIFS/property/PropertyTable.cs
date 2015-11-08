@@ -107,12 +107,9 @@ namespace NPOI.POIFS.Properties
          * @return count of BigBlock instances
          */
 
-        public override int CountBlocks
-        {
-            get { return (_blocks == null) ? 0 : _blocks.Length; }
-        }
+        public override int CountBlocks => (_blocks == null) ? 0 : _blocks.Length;
 
-        /**
+	    /**
          * Write the storage to an Stream
          *
          * @param stream the Stream to which the stored data should

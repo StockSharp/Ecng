@@ -9,9 +9,6 @@
             _value = new CodePageString(data, offset);
         }
 
-        public int Size
-        {
-            get { return _value.Size; }
-        } 
+        public int Size => _value.Size;
     }
 }

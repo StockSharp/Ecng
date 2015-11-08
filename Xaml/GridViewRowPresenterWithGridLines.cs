@@ -30,10 +30,7 @@
 
 		public static readonly DependencyProperty SeparatorStyleProperty;
 
-		private IEnumerable<FrameworkElement> Children
-		{
-			get { return LogicalTreeHelper.GetChildren(this).OfType<FrameworkElement>(); }
-		}
+		private IEnumerable<FrameworkElement> Children => LogicalTreeHelper.GetChildren(this).OfType<FrameworkElement>();
 
 		private static void SeparatorStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
@@ -77,10 +74,7 @@
 			}
 		}
 
-		protected override int VisualChildrenCount
-		{
-			get { return base.VisualChildrenCount + _lines.Count; }
-		}
+		protected override int VisualChildrenCount => base.VisualChildrenCount + _lines.Count;
 
 		protected override Visual GetVisualChild(int index)
 		{

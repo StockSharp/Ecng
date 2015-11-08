@@ -33,13 +33,7 @@ namespace NPOI.HSSF.EventUserModel.DummyRecord
         }
 
 
-        public int Row
-        {
-            get { return row; }
-        }
-        public int Column
-        {
-            get { return column; }
-        }
+        public int Row => row;
+	    public int Column => column;
     }
 }

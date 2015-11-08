@@ -43,7 +43,7 @@ namespace Ecng.Common
 		public static string ToFullPath(this string path)
 		{
 			if (path == null)
-				throw new ArgumentNullException("path");
+				throw new ArgumentNullException(nameof(path));
 
 			return Path.GetFullPath(path);
 		}
@@ -56,10 +56,10 @@ namespace Ecng.Common
 		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error)
 		{
 			if (output == null)
-				throw new ArgumentNullException("output");
+				throw new ArgumentNullException(nameof(output));
 
 			if (error == null)
-				throw new ArgumentNullException("error");
+				throw new ArgumentNullException(nameof(error));
 
 			var procInfo = new ProcessStartInfo(fileName, arg)
 			{

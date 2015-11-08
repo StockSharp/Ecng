@@ -94,24 +94,13 @@
             return _firstRow <= rowInd && rowInd <= _lastRow &&
                     _firstCol <= colInd && colInd <= _lastCol;
         }
-        public bool IsFullColumnRange
-        {
-            get
-            {
-                return (_firstRow == 0 && _lastRow ==SpreadsheetVersion.EXCEL97.LastRowIndex)
-                    || (_firstRow == -1 && _lastRow == -1);
-            }
-        }
-        public bool IsFullRowRange
-        {
-            get
-            {
-                return (_firstCol == 0 && _lastCol == SpreadsheetVersion.EXCEL97.LastColumnIndex)
-                    || (_firstCol == -1 && _lastCol == -1);
-            }
-        }
+        public bool IsFullColumnRange => (_firstRow == 0 && _lastRow ==SpreadsheetVersion.EXCEL97.LastRowIndex)
+                                         || (_firstRow == -1 && _lastRow == -1);
 
-        /**
+	    public bool IsFullRowRange => (_firstCol == 0 && _lastCol == SpreadsheetVersion.EXCEL97.LastColumnIndex)
+	                                  || (_firstCol == -1 && _lastCol == -1);
+
+	    /**
          * @return column number for the upper left hand corner
          */
         public int FirstColumn
@@ -162,14 +151,9 @@
         /**
          * @return the size of the range (number of cells in the area).
          */
-        public int NumberOfCells
-        {
-            get
-            {
-                return (_lastRow - _firstRow + 1) * (_lastCol - _firstCol + 1);
-            }
-        }
-        public override String ToString()
+        public int NumberOfCells => (_lastRow - _firstRow + 1) * (_lastCol - _firstCol + 1);
+
+	    public override String ToString()
         {
             CellReference crA = new CellReference(_firstRow, _firstCol);
             CellReference crB = new CellReference(_lastRow, _lastCol);

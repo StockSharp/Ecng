@@ -21,14 +21,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
         {
             this.workbook = workbook;
         }
-        public CT_Workbook Workbook
-        {
-            get
-            {
-                return this.workbook;
-            }
-        }
-        public void Save(Stream stream)
+        public CT_Workbook Workbook => this.workbook;
+
+	    public void Save(Stream stream)
         {
             using (StreamWriter sw1 = new StreamWriter(stream))
             {

@@ -90,17 +90,11 @@ namespace Microsoft.Practices.Unity.Configuration
         /// is being used. For example, if setting a property Prop1,
         /// this should return "property Prop1" (in english).
         /// </summary>
-        public string DestinationName
-        {
-            get
-            {
-                return string.Format(CultureInfo.CurrentCulture,
-                    Resources.DestinationNameFormat,
-                    Resources.Parameter, Name);
-            }
-        }
+        public string DestinationName => string.Format(CultureInfo.CurrentCulture,
+	        Resources.DestinationNameFormat,
+	        Resources.Parameter, Name);
 
-        /// <summary>
+	    /// <summary>
         /// Returns the required <see cref="InjectionParameterValue"/> needed
         /// to configure the container so that the correct value is injected.
         /// </summary>

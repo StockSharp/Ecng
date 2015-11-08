@@ -61,13 +61,7 @@ namespace NPOI.SS.Formula.Functions
                 }
                 return _tableArray.GetRelativeValue(_rowIndex, index);
             }
-            public int Size
-            {
-                get
-                {
-                    return _size;
-                }
-            }
+            public int Size => _size;
         }
         internal class ColumnVector : ValueVector
         {
@@ -99,13 +93,7 @@ namespace NPOI.SS.Formula.Functions
                 }
                 return _tableArray.GetRelativeValue(index, _columnIndex);
             }
-            public int Size
-            {
-                get
-                {
-                    return _size;
-                }
-            }
+            public int Size => _size;
         }
 
         private class SheetVector : ValueVector
@@ -129,13 +117,7 @@ namespace NPOI.SS.Formula.Functions
                 int sheetIndex = _re.FirstSheetIndex + index;
                 return _re.GetInnerValueEval(sheetIndex);
             }
-            public int Size
-            {
-                get
-                {
-                    return _size;
-                }
-            }
+            public int Size => _size;
         }
 
 
@@ -604,23 +586,12 @@ namespace NPOI.SS.Formula.Functions
             }
             return LessThan;
         }
-        public bool IsTypeMismatch
-        {
-            get { return _isTypeMismatch; }
-        }
-        public bool IsLessThan
-        {
-            get { return _isLessThan; }
-        }
-        public bool IsEqual
-        {
-            get { return _isEqual; }
-        }
-        public bool IsGreaterThan
-        {
-            get { return _isGreaterThan; }
-        }
-        public override String ToString()
+        public bool IsTypeMismatch => _isTypeMismatch;
+	    public bool IsLessThan => _isLessThan;
+	    public bool IsEqual => _isEqual;
+	    public bool IsGreaterThan => _isGreaterThan;
+
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder(64);
             sb.Append(GetType().Name).Append(" [");

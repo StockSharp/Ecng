@@ -40,7 +40,7 @@ namespace Ecng.ComponentModel
 		public CommonTypeConverter(Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			var attr = type.GetAttribute<CommonTypeConverterNamesAttribute>();
 
@@ -198,7 +198,7 @@ namespace Ecng.ComponentModel
 		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
 		{
 			if (destinationType == null)
-				throw new ArgumentNullException("destinationType");
+				throw new ArgumentNullException(nameof(destinationType));
 
 			if (_type.IsInstanceOfType(value))
 			{

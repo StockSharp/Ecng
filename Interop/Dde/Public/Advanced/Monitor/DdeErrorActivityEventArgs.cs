@@ -50,11 +50,7 @@ namespace NDde.Advanced.Monitor
         /// <summary>
         /// This gets an error code returned by the DDEML.
         /// </summary>
-        public int Code
-        {
-            get { return _DdemlObject.Code; }
-        }
-
+        public int Code => _DdemlObject.Code;
     } // class
 
 } // namespace

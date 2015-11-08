@@ -20,10 +20,10 @@ namespace Ecng.ComponentModel
 		public Line(Point<T> start, Point<T> end)
 		{
 			if (start == null)
-				throw new ArgumentNullException("start");
+				throw new ArgumentNullException(nameof(start));
 
 			if (end == null)
-				throw new ArgumentNullException("end");
+				throw new ArgumentNullException(nameof(end));
 
 			Start = start;
 			End = end;
@@ -37,12 +37,12 @@ namespace Ecng.ComponentModel
 		/// <summary>
 		/// 
 		/// </summary>
-		public Point<T> Start { get; private set; }
+		public Point<T> Start { get; }
 
 		/// <summary>
 		/// 
 		/// </summary>
-		public Point<T> End { get; private set; }
+		public Point<T> End { get; }
 
 		/// <summary>
 		/// 
@@ -52,12 +52,12 @@ namespace Ecng.ComponentModel
 		/// <summary>
 		/// 
 		/// </summary>
-		public T DeltaX { get; private set; }
+		public T DeltaX { get; }
 
 		/// <summary>
 		/// 
 		/// </summary>
-		public T DeltaY { get; private set; }
+		public T DeltaY { get; }
 
 		/// <summary>
 		/// 

@@ -26,7 +26,7 @@
 			set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_ddeClient = value;
 				DdeSettingsGrid.SelectedObject = value.Settings.Clone();

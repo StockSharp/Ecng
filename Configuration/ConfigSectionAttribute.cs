@@ -26,10 +26,7 @@ namespace Ecng.Configuration
 
 		#region SectionType
 
-		public Type SectionType
-		{
-			get { return FactoryType; }
-		}
+		public Type SectionType => FactoryType;
 
 		#endregion
 	}

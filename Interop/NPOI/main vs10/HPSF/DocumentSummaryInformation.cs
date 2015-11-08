@@ -51,15 +51,9 @@ namespace NPOI.HPSF
          */
         public const string DEFAULT_STREAM_NAME = "\x0005DocumentSummaryInformation";
 
-        public override PropertyIDMap PropertySetIDMap
-        {
-            get
-            {
-                return PropertyIDMap.DocumentSummaryInformationProperties;
-            }
-        }
+        public override PropertyIDMap PropertySetIDMap => PropertyIDMap.DocumentSummaryInformationProperties;
 
-        /// <summary>
+	    /// <summary>
         /// Initializes a new instance of the <see cref="DocumentSummaryInformation"/> class.
         /// </summary>
         /// <param name="ps">A property Set which should be Created from a

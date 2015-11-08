@@ -269,17 +269,11 @@ namespace NPOI.HSSF.Record
             out1.WriteInt(RequiredVersion);
         }
 
-        protected override int DataSize
-        {
-            get { return 16; }
-        }
+        protected override int DataSize => 16;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override object Clone()
+	    public override object Clone()
         {
             BOFRecord rec = new BOFRecord();
             rec.field_1_version = field_1_version;

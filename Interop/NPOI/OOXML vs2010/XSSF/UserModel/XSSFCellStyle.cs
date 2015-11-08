@@ -628,15 +628,9 @@ namespace NPOI.XSSF.UserModel
          * @return short - font index
          * @see NPOI.xssf.usermodel.XSSFWorkbook#getFontAt(short)
          */
-        public short FontIndex
-        {
-            get
-            {
-                return (short)FontId;
-            }
-        }
+        public short FontIndex => (short)FontId;
 
-        /**
+	    /**
          * Get whether the cell's using this style are to be hidden
          *
          * @return bool -  whether the cell using this style is hidden
@@ -684,21 +678,10 @@ namespace NPOI.XSSF.UserModel
          *
          * @return unique index number of the underlying record this style represents
          */
-        public short Index
-        {
-            get
-            {
-                return (short)this._cellXfId;
-            }
-        }
-        protected internal int UIndex
-        {
-            get
-            {
-                return this._cellXfId;
-            }
-        }
-        /**
+        public short Index => (short)this._cellXfId;
+
+	    protected internal int UIndex => this._cellXfId;
+	    /**
          * Get the color to use for the left border
          *
          * @return the index of the color defInition, default value is {@link NPOI.ss.usermodel.IndexedColors#BLACK}

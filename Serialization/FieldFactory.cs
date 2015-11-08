@@ -15,7 +15,7 @@
 		protected FieldFactory(Field field, int order)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			Field = field;
 			Order = order;
@@ -24,7 +24,7 @@
 
 		#endregion
 
-		public Field Field { get; private set; }
+		public Field Field { get; }
 		public int Order { get; private set; }
 		//public bool IsNullable { get; private set; }
 
@@ -34,10 +34,10 @@
 		public virtual object CreateInstance(ISerializer serializer, SerializationItem source)
 		{
 			if (serializer == null)
-				throw new ArgumentNullException("serializer", "Serializer for field '{0}' is null.".Put(Field.Name));
+				throw new ArgumentNullException(nameof(serializer), "Serializer for field '{0}' is null.".Put(Field.Name));
 
 			if (source == null)
-				throw new ArgumentNullException("source", "Source value for field '{0}' is null.".Put(Field.Name));
+				throw new ArgumentNullException(nameof(source), "Source value for field '{0}' is null.".Put(Field.Name));
 
 			/*IsNullable && */
 			return source.Value == null ? null : OnCreateInstance(serializer, source.Value);
@@ -46,7 +46,7 @@
 		public virtual SerializationItem CreateSource(ISerializer serializer, object instance)
 		{
 			if (serializer == null)
-				throw new ArgumentNullException("serializer", "Serializer for field '{0}' is null.".Put(Field.Name));
+				throw new ArgumentNullException(nameof(serializer), "Serializer for field '{0}' is null.".Put(Field.Name));
 
 			//if (!IsNullable && instance == null)
 			//	throw new ArgumentNullException("instance", "Instance value for field '{0}' is null.".Put(Field.Name));
@@ -104,8 +104,8 @@
 
 		#endregion
 
-		public override Type InstanceType { get { return typeof(I); } }
-		public override Type SourceType { get { return typeof(S); } }
+		public override Type InstanceType => typeof(I);
+		public override Type SourceType => typeof(S);
 
 		protected abstract internal I OnCreateInstance(ISerializer serializer, S source);
 		protected abstract internal S OnCreateSource(ISerializer serializer, I instance);

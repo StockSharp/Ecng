@@ -47,34 +47,19 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// The SystemWindow instance that represents this list box.
         /// </summary>
-        public SystemWindow SystemWindow
-        {
-            get { return sw; }
-        }
+        public SystemWindow SystemWindow => sw;
 
-        /// <summary>
+	    /// <summary>
         /// The number of elements in this list box.
         /// </summary>
-        public int Count
-        {
-            get
-            {
-                return sw.SendGetMessage(LB_GETCOUNT);
-            }
-        }
+        public int Count => sw.SendGetMessage(LB_GETCOUNT);
 
-        /// <summary>
+	    /// <summary>
         /// The index of the selected element in this list box.
         /// </summary>
-        public int SelectedIndex
-        {
-            get
-            {
-                return sw.SendGetMessage(LB_GETCURSEL);
-            }
-        }
+        public int SelectedIndex => sw.SendGetMessage(LB_GETCURSEL);
 
-        /// <summary>
+	    /// <summary>
         /// The selected element in this list box.
         /// </summary>
         public string SelectedItem
@@ -142,23 +127,14 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// The SystemWindow instance that represents this combo box.
         /// </summary>
-        public SystemWindow SystemWindow
-        {
-            get { return sw; }
-        }
+        public SystemWindow SystemWindow => sw;
 
-        /// <summary>
+	    /// <summary>
         /// The number of elements in this combo box.
         /// </summary>
-        public int Count
-        {
-            get
-            {
-                return sw.SendGetMessage(CB_GETCOUNT);
-            }
-        }
+        public int Count => sw.SendGetMessage(CB_GETCOUNT);
 
-        /// <summary>
+	    /// <summary>
         /// Gets an element by index.
         /// </summary>
         public string this[int index]

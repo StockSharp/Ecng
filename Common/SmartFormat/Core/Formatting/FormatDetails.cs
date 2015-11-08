@@ -25,7 +25,7 @@ namespace SmartFormat.Core.Formatting
 		/// The original formatter responsible for formatting this item.
 		/// It can be used for evaluating nested formats.
 		/// </summary>
-		public SmartFormatter Formatter { get; private set; }
+		public SmartFormatter Formatter { get; }
 
 		public Format OriginalFormat { get; private set; }
 
@@ -58,6 +58,6 @@ namespace SmartFormat.Core.Formatting
 		/// <summary>
 		/// Contains case-sensitivity settings
 		/// </summary>
-		public SmartSettings Settings { get { return this.Formatter.Settings; } }
+		public SmartSettings Settings => this.Formatter.Settings;
 	}
 }

@@ -11,35 +11,17 @@
 	[ToolboxData("<{0}:DataPagerRepeater runat=\"server\" PersistentDataSource=true></{0}:DataPagerRepeater>")]
 	public class DataPagerRepeater : Repeater, IPageableItemContainer
 	{
-		public int MaximumRows
-		{
-			get
-			{
-				return ViewState["_maximumRows"] != null
-				       	? (int)ViewState["_maximumRows"]
-				       	: -1;
-			}
-		}
+		public int MaximumRows => ViewState["_maximumRows"] != null
+			? (int)ViewState["_maximumRows"]
+			: -1;
 
-		public int StartRowIndex
-		{
-			get
-			{
-				return ViewState["_startRowIndex"] != null
-				       	? (int)ViewState["_startRowIndex"]
-				       	: -1;
-			}
-		}
+		public int StartRowIndex => ViewState["_startRowIndex"] != null
+			? (int)ViewState["_startRowIndex"]
+			: -1;
 
-		public int TotalRows
-		{
-			get
-			{
-				return ViewState["_totalRows"] != null
-				       	? (int)ViewState["_totalRows"]
-				       	: -1;
-			}
-		}
+		public int TotalRows => ViewState["_totalRows"] != null
+			? (int)ViewState["_totalRows"]
+			: -1;
 
 		public bool PersistentDataSource
 		{

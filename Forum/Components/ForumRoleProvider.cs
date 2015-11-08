@@ -29,15 +29,9 @@ namespace Ecng.Forum.Components
 			return new ForumRole { Name = name };
 		}
 
-		protected override IWebRoleCollection Roles
-		{
-			get { return ForumHelper.GetRootObject<ForumRootObject>().Roles; }
-		}
+		protected override IWebRoleCollection Roles => ForumHelper.GetRootObject<ForumRootObject>().Roles;
 
-		protected override IWebUserCollection Users
-		{
-			get { return ForumHelper.GetRootObject<ForumRootObject>().Users; }
-		}
+		protected override IWebUserCollection Users => ForumHelper.GetRootObject<ForumRootObject>().Users;
 
 		#endregion
 	}

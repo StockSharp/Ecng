@@ -16,10 +16,10 @@ namespace Ecng.Common
 		public SmartPointer(T value, Action<T> release)
 		{
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (release == null)
-				throw new ArgumentNullException("release");
+				throw new ArgumentNullException(nameof(release));
 
 			_value = value;
 			_release = release;
@@ -27,10 +27,7 @@ namespace Ecng.Common
 
 		private int _counter;
 
-		public int Counter
-		{
-			get { return _counter; }
-		}
+		public int Counter => _counter;
 
 		private T _value;
 

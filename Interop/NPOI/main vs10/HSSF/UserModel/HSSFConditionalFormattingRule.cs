@@ -47,12 +47,9 @@ namespace NPOI.HSSF.UserModel
             cfRuleRecord = pRuleRecord;
         }
 
-        public CFRuleRecord CfRuleRecord
-        {
-            get { return cfRuleRecord; }
-        }
+        public CFRuleRecord CfRuleRecord => cfRuleRecord;
 
-        private HSSFFontFormatting GetFontFormatting(bool Create)
+	    private HSSFFontFormatting GetFontFormatting(bool Create)
         {
             FontFormatting fontFormatting = cfRuleRecord.FontFormatting;
             if (fontFormatting != null)
@@ -164,33 +161,15 @@ namespace NPOI.HSSF.UserModel
         /**
 	     * @return -  the conditiontype for the cfrule
 	     */
-        public ConditionType ConditionType
-        {
-            get
-            {
-                return (ConditionType)cfRuleRecord.ConditionType;
-            }
-        }
-        /**
+        public ConditionType ConditionType => (ConditionType)cfRuleRecord.ConditionType;
+	    /**
 	     * @return - the comparisionoperatation for the cfrule
 	     */
-        public ComparisonOperator ComparisonOperation
-        {
-            get
-            {
-                return (ComparisonOperator)cfRuleRecord.ComparisonOperation;
-            }
-        }
+        public ComparisonOperator ComparisonOperation => (ComparisonOperator)cfRuleRecord.ComparisonOperation;
 
-        public String Formula1
-        {
-            get
-            {
-                return ToFormulaString(cfRuleRecord.ParsedExpression1);
-            }
-        }
+	    public String Formula1 => ToFormulaString(cfRuleRecord.ParsedExpression1);
 
-        public String Formula2
+	    public String Formula2
         {
             get
             {

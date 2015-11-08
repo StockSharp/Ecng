@@ -171,15 +171,9 @@ namespace NPOI.XWPF.UserModel
         }
 
 
-        public string Text
-        {
-            get
-            {
-                return text;
-            }
-        }
+        public string Text => text;
 
-        public override string ToString()
+	    public override string ToString()
         {
             return Text;
         }

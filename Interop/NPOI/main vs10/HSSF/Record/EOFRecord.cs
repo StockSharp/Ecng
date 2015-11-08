@@ -68,17 +68,11 @@ public class EOFRecord: StandardRecord
     {
     }
 
-    protected override int DataSize
-    {
-        get { return ENCODED_SIZE-4; }
-    }
+    protected override int DataSize => ENCODED_SIZE-4;
 
-    public override short Sid
-    {
-        get{return sid;}
-    }
+	public override short Sid => sid;
 
-    public override Object Clone() {
+	public override Object Clone() {
       EOFRecord rec = new EOFRecord();
       return rec;
     }

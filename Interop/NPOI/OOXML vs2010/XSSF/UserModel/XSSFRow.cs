@@ -78,15 +78,9 @@ namespace NPOI.XSSF.UserModel
          *
          * @return the XSSFSheet that owns this row
          */
-        public ISheet Sheet
-        {
-            get
-            {
-                return this._sheet;
-            }
-        }
+        public ISheet Sheet => this._sheet;
 
-        /**
+	    /**
          * Cell iterator over the physically defined cells:
          * <blockquote><pre>
          * for (Iterator<Cell> it = row.cellIterator(); it.HasNext(); ) {
@@ -283,15 +277,9 @@ namespace NPOI.XSSF.UserModel
          * @return short representing the first logical cell in the row,
          *  or -1 if the row does not contain any cells.
          */
-        public short FirstCellNum
-        {
-            get
-            {
-                return (short)(_cells.Count == 0 ? -1 : GetFirstKey(_cells.Keys));
-            }
-        }
+        public short FirstCellNum => (short)(_cells.Count == 0 ? -1 : GetFirstKey(_cells.Keys));
 
-        /**
+	    /**
          * Gets the index of the last cell Contained in this row <b>PLUS ONE</b>. The result also
          * happens to be the 1-based column number of the last cell.  This value can be used as a
          * standard upper bound when iterating over cells:
@@ -310,15 +298,9 @@ namespace NPOI.XSSF.UserModel
          * @return short representing the last logical cell in the row <b>PLUS ONE</b>,
          *   or -1 if the row does not contain any cells.
          */
-        public short LastCellNum
-        {
-            get
-            {
-                return (short)(_cells.Count == 0 ? -1 : (GetLastKey(_cells.Keys) + 1));
-            }
-        }
+        public short LastCellNum => (short)(_cells.Count == 0 ? -1 : (GetLastKey(_cells.Keys) + 1));
 
-        /**
+	    /**
          * Get the row's height measured in twips (1/20th of a point). If the height is not Set, the default worksheet value is returned,
          * See {@link NPOI.XSSF.usermodel.XSSFSheet#GetDefaultRowHeightInPoints()}
          *
@@ -377,15 +359,9 @@ namespace NPOI.XSSF.UserModel
          *
          * @return int representing the number of defined cells in the row.
          */
-        public int PhysicalNumberOfCells
-        {
-            get
-            {
-                return _cells.Count;
-            }
-        }
+        public int PhysicalNumberOfCells => _cells.Count;
 
-        /**
+	    /**
          * Get row number this row represents
          *
          * @return the row number (0 based)
@@ -432,14 +408,8 @@ namespace NPOI.XSSF.UserModel
          *  do have whole-row styles. For those that do, you
          *  can get the formatting from {@link #GetRowStyle()}
          */
-        public bool IsFormatted
-        {
-            get
-            {
-                return _row.IsSetS();
-            }
-        }
-        /**
+        public bool IsFormatted => _row.IsSetS();
+	    /**
          * Returns the whole-row cell style. Most rows won't
          *  have one of these, so will return null. Call
          *  {@link #isFormatted()} to check first.
@@ -641,14 +611,9 @@ namespace NPOI.XSSF.UserModel
         {
             return GetEnumerator();
         }
-        public int OutlineLevel
-        {
-            get
-            {
-                return _row.outlineLevel;
-            }
-        }
-        #endregion
+        public int OutlineLevel => _row.outlineLevel;
+
+	    #endregion
     }
 
 }

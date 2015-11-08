@@ -44,7 +44,7 @@ namespace Ecng.Serialization
 		protected internal override TSource OnCreateSource(ISerializer serializer, TInstance instance)
 		{
 			if (instance.IsNull())
-				throw new ArgumentNullException("instance", "Field '{0}' in schema '{1}' isn't initialized.".Put(Field.Name, Field.Schema.EntityType));
+				throw new ArgumentNullException(nameof(instance), "Field '{0}' in schema '{1}' isn't initialized.".Put(Field.Name, Field.Schema.EntityType));
 
 			return (TSource)serializer.GetSerializer<TInstance>().GetId(instance);
 		}
@@ -57,7 +57,7 @@ namespace Ecng.Serialization
 			: base(field, order)
 		{
 			if (underlyingListType == null)
-				throw new ArgumentNullException("underlyingListType");
+				throw new ArgumentNullException(nameof(underlyingListType));
 
 			UnderlyingListType = underlyingListType;
 			BulkLoad = bulkLoad;
@@ -65,21 +65,15 @@ namespace Ecng.Serialization
 			BufferSize = bufferSize;
 		}
 
-		public Type UnderlyingListType { get; private set; }
-		public bool BulkLoad { get; private set; }
-		public bool CacheCount { get; private set; }
-		public int BufferSize { get; private set; }
+		public Type UnderlyingListType { get; }
+		public bool BulkLoad { get; }
+		public bool CacheCount { get; }
+		public int BufferSize { get; }
 
 		private FastInvoker<VoidType, object[], RelationManyList<TItem>> _listCreator;
 
-		public FastInvoker<VoidType, object[], RelationManyList<TItem>> ListCreator
-		{
-			get
-			{
-				return _listCreator ?? (_listCreator = FastInvoker<VoidType, object[], RelationManyList<TItem>>
-					.Create(UnderlyingListType.GetMember<ConstructorInfo>(typeof(IStorage), typeof(TEntity))));
-			}
-		}
+		public FastInvoker<VoidType, object[], RelationManyList<TItem>> ListCreator => _listCreator ?? (_listCreator = FastInvoker<VoidType, object[], RelationManyList<TItem>>
+			.Create(UnderlyingListType.GetMember<ConstructorInfo>(typeof(IStorage), typeof(TEntity))));
 
 		public override object CreateInstance(ISerializer serializer, SerializationItem source)
 		{
@@ -133,7 +127,7 @@ namespace Ecng.Serialization
 			: this()
 		{
 			if (underlyingListType == null)
-				throw new ArgumentNullException("underlyingListType");
+				throw new ArgumentNullException(nameof(underlyingListType));
 
 			UnderlyingListType = underlyingListType;
 		}

@@ -76,15 +76,9 @@ namespace NPOI.POIFS.FileSystem
             _currentBlock = GetDataInputBlock(0);
         }
 
-        public override long Length
-        {
-            get
-            {
-                return _document_size;
-            }
-        }
-        
-        /**
+        public override long Length => _document_size;
+
+	    /**
          * Create an InputStream from the specified Document
          * 
          * @param document the Document to be read

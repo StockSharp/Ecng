@@ -204,12 +204,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public bool ContainsColumn(int columnIndex)
+	    public bool ContainsColumn(int columnIndex)
         {
             return _first_col <= columnIndex && columnIndex <= _last_col;
         }
@@ -218,12 +215,9 @@ namespace NPOI.HSSF.Record
             return _last_col == other._first_col - 1;
         }
 
-        protected override int DataSize
-        {
-            get { return 12; }
-        }
+        protected override int DataSize => 12;
 
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             out1.WriteShort(FirstColumn);
             out1.WriteShort(LastColumn);

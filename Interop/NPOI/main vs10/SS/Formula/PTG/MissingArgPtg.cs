@@ -42,12 +42,9 @@ namespace NPOI.SS.Formula.PTG
             out1.WriteByte(sid + PtgClass);
         }
 
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
 
-        public override String ToFormulaString()
+	    public override String ToFormulaString()
         {
             return " ";
         }

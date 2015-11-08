@@ -43,18 +43,12 @@ namespace ManagedWinapi.Windows.Contents
         }
 
         ///
-        public string ComponentType
-        {
-            get { return type; }
-        }
+        public string ComponentType => type;
 
-        ///
-        public string ShortDescription
-        {
-            get { return (current == null ? "" : current + " ") + "<" + type + ">"; }
-        }
+	    ///
+        public string ShortDescription => (current == null ? "" : current + " ") + "<" + type + ">";
 
-        ///
+	    ///
         public string LongDescription
         {
             get
@@ -96,48 +90,27 @@ namespace ManagedWinapi.Windows.Contents
         /// The value in this list or combo box that is selected.
         /// In a combo box, this value may not be in the list.
         /// </summary>
-        public String SelectedValue
-        {
-            get { return current; }
-        }
+        public String SelectedValue => current;
 
-        /// <summary>
+	    /// <summary>
         /// The index of the selected item, or -1 if no item
         /// is selected.
         /// </summary>
-        public int SelectedIndex
-        {
-            get
-            {
-                return selected;
-            }
-        }
+        public int SelectedIndex => selected;
 
-        /// <summary>
+	    /// <summary>
         /// The number of items in this list.
         /// </summary>
-        public int Count
-        {
-            get
-            {
-                return values.Length;
-            }
-        }
+        public int Count => values.Length;
 
-        /// <summary>
+	    /// <summary>
         /// Accesses individual list items.
         /// </summary>
         /// <param name="index">Index of list item.</param>
         /// <returns>The list item.</returns>
-        public string this[int index]
-        {
-            get
-            {
-                return values[index];
-            }
-        }
+        public string this[int index] => values[index];
 
-        internal static string Repeat(char ch, int count)
+	    internal static string Repeat(char ch, int count)
         {
             char[] tmp = new char[count];
             for (int i = 0; i < tmp.Length; i++)

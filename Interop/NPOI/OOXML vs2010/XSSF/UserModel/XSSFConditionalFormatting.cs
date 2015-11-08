@@ -106,13 +106,7 @@ namespace NPOI.XSSF.UserModel
         /**
          * @return number of Conditional Formatting rules.
          */
-        public int NumberOfRules
-        {
-            get
-            {
-                return _cf.sizeOfCfRuleArray();
-            }
-        }
+        public int NumberOfRules => _cf.sizeOfCfRuleArray();
     }
 }
 

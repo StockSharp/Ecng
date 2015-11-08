@@ -14,7 +14,7 @@ namespace Ecng.Web.UI.WebControls
 		public ImageResolvingEventArgs(MenuItem item)
 		{
 			if (item == null)
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
 			_item = item;
 		}
@@ -25,10 +25,7 @@ namespace Ecng.Web.UI.WebControls
 
 		private readonly MenuItem _item;
 
-		public MenuItem Item
-		{
-			get { return _item; }
-		}
+		public MenuItem Item => _item;
 
 		#endregion
 

@@ -71,13 +71,10 @@ namespace Microsoft.Practices.ObjectBuilder2
                     string.Format(CultureInfo.CurrentCulture,
                                   Resources.MustHaveSameNumberOfGenericArguments,
                                   sourceType.Name, DestinationType.Name),
-                    "sourceType");
+                    nameof(sourceType));
             }
         }
 
-        private Type DestinationType
-        {
-            get { return destinationKey.Type; }
-        }
+        private Type DestinationType => destinationKey.Type;
     }
 }

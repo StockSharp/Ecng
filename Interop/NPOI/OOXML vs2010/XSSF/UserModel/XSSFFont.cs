@@ -632,15 +632,9 @@ namespace NPOI.XSSF.UserModel
          * @return unique index number of the underlying record this Font represents (probably you don't care
          *  unless you're comparing which one is which)
          */
-        public short Index
-        {
-            get
-            {
-                return _index;
-            }
-        }
+        public short Index => _index;
 
-        public override int GetHashCode()
+	    public override int GetHashCode()
         {
             return _ctFont.ToString().GetHashCode();
         }

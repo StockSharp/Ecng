@@ -233,29 +233,17 @@ namespace NPOI.HSSF.UserModel
         /// <value>
         /// 	<c>true</c> if the anchor goes from right to left; otherwise, <c>false</c>.
         /// </value>
-        public override bool IsHorizontallyFlipped
-        {
-            get
-            {
-                return _isHorizontallyFlipped;
-            }
-        }
+        public override bool IsHorizontallyFlipped => _isHorizontallyFlipped;
 
-        /// <summary>
+	    /// <summary>
         /// Gets a value indicating whether this instance is vertically flipped.
         /// </summary>
         /// <value>
         /// 	<c>true</c> if the anchor goes from bottom to top.; otherwise, <c>false</c>.
         /// </value>
-        public override bool IsVerticallyFlipped
-        {
-            get
-            {
-                return _isVerticallyFlipped;
-            }
-        }
+        public override bool IsVerticallyFlipped => _isVerticallyFlipped;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the anchor type
         /// 0 = Move and size with Cells, 2 = Move but don't size with cells, 3 = Don't move or size with cells.
         /// </summary>

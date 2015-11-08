@@ -14,14 +14,14 @@ namespace Ecng.Reflection.Path
 			: base(FastInvoker.Create(method))
 		{
 			if (parameters == null)
-				throw new ArgumentNullException("parameters");
+				throw new ArgumentNullException(nameof(parameters));
 
 			Parameters = parameters;
 		}
 
 		#endregion
 
-		public IEnumerable<Param> Parameters { get; private set; }
+		public IEnumerable<Param> Parameters { get; }
 
 		#region MemberProxyItem Members
 

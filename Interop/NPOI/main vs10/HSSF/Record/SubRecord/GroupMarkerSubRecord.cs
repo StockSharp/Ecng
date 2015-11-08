@@ -78,17 +78,11 @@ namespace NPOI.HSSF.Record
         /**
          * Size of record (exluding 4 byte header)
          */
-        public override int DataSize
-        {
-            get { return reserved.Length; }
-        }
+        public override int DataSize => reserved.Length;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             GroupMarkerSubRecord rec = new GroupMarkerSubRecord();
             rec.reserved = new byte[reserved.Length];

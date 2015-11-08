@@ -23,7 +23,7 @@ namespace Ecng.Reflection.Aspects
 		public WrapperAttribute(Type wrapperType)
 		{
 			if (wrapperType == null)
-				throw new ArgumentNullException("wrapperType");
+				throw new ArgumentNullException(nameof(wrapperType));
 
 			_wrapperType = wrapperType;
 		}

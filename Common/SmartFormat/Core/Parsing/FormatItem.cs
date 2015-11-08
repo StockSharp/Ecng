@@ -19,14 +19,7 @@
 		/// <summary>
 		/// Retrieves the substring that this item represents.
 		/// </summary>
-		public string Text
-		{
-			get
-			{
-				return this.baseString.Substring(startIndex, endIndex - startIndex);
-			}
-		}
-
+		public string Text => this.baseString.Substring(startIndex, endIndex - startIndex);
 
 		public readonly string baseString;
 		public int startIndex;

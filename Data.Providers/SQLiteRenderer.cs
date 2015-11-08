@@ -46,14 +46,8 @@
 			return "last_insert_rowid() as " + schema.Identity.Name;
 		}
 
-		protected override string ParameterPrefix
-		{
-			get { return "@"; }
-		}
+		protected override string ParameterPrefix => "@";
 
-		protected override string[] ReservedWords
-		{
-			get { return Properties.Resources.SQLiteReservedWords.Split(new[] { Environment.NewLine }, StringSplitOptions.None); }
-		}
+		protected override string[] ReservedWords => Properties.Resources.SQLiteReservedWords.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
 	}
 }

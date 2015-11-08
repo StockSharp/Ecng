@@ -74,20 +74,14 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// The underlying <see cref="ILGenerator"/> that can be used to
         /// emit IL into the generated dynamic method.
         /// </summary>
-        public ILGenerator IL
-        {
-            get { return il; }
-        }
+        public ILGenerator IL => il;
 
-        /// <summary>
+	    /// <summary>
         /// The type we're currently creating the method to build.
         /// </summary>
-        public Type TypeToBuild
-        {
-            get { return typeToBuild; }
-        }
+        public Type TypeToBuild => typeToBuild;
 
-        /// <summary>
+	    /// <summary>
         /// Completes generation of the dynamic method and returns the
         /// generated dynamic method delegate.
         /// </summary>

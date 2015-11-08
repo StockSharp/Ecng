@@ -28,10 +28,10 @@ namespace Ecng.Common
 		public static T CreateInstance<T>(this Type type, params object[] args)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if (args == null)
-				throw new ArgumentNullException("args");
+				throw new ArgumentNullException(nameof(args));
 			
 			return Activator.CreateInstance(type, args).To<T>();
 		}
@@ -39,10 +39,10 @@ namespace Ecng.Common
 		public static T CreateInstanceArgs<T>(this Type type, object[] args)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if (args == null)
-				throw new ArgumentNullException("args");
+				throw new ArgumentNullException(nameof(args));
 
 			Func<Type, object[], object> func = Activator.CreateInstance;
 			return func(type, args).To<T>();
@@ -51,10 +51,10 @@ namespace Ecng.Common
 		public static Type Make(this Type type, params Type[] args)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if (args == null)
-				throw new ArgumentNullException("args");
+				throw new ArgumentNullException(nameof(args));
 
 			return type.MakeGenericType(args);
 		}
@@ -62,10 +62,10 @@ namespace Ecng.Common
 		public static Type Make(this Type type, IEnumerable<Type> args)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if (args == null)
-				throw new ArgumentNullException("args");
+				throw new ArgumentNullException(nameof(args));
 
 			return type.MakeGenericType(args.ToArray());
 		}
@@ -73,7 +73,7 @@ namespace Ecng.Common
 		public static bool IsPrimitive(this Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			return (
 						type.IsPrimitive ||
@@ -112,7 +112,7 @@ namespace Ecng.Common
 		public static string GetTypeAsString(this Type type, bool isAssemblyQualifiedName)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			return Converter.GetAlias(type) ?? type.GetTypeName(isAssemblyQualifiedName) /*"{0}, {1}".Put(type.FullName, type.Assembly.GetName().Name)*/;
 		}
@@ -120,7 +120,7 @@ namespace Ecng.Common
 		public static bool IsStruct(this Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			return type.IsValueType && !type.IsEnum();
 		}
@@ -128,7 +128,7 @@ namespace Ecng.Common
 		public static bool IsEnum(this Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			//
 			// 2 times faster than Type.IsEnum
@@ -149,7 +149,7 @@ namespace Ecng.Common
 		public static bool IsWpfColor(this Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			return type == typeof (System.Windows.Media.Color);
 		}
@@ -158,7 +158,7 @@ namespace Ecng.Common
 		public static bool IsWinColor(this Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			return type == typeof(System.Drawing.Color);
 		}
@@ -172,7 +172,7 @@ namespace Ecng.Common
 		public static object CreateUnitialized(this Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			return FormatterServices.GetUninitializedObject(type);
 		}
@@ -181,7 +181,7 @@ namespace Ecng.Common
 			where TDestination : class 
 		{
 			if (handler == null)
-				throw new ArgumentNullException("handler");
+				throw new ArgumentNullException(nameof(handler));
 
 			var destination = source as TDestination;
 
@@ -206,10 +206,7 @@ namespace Ecng.Common
 			return attr != null ? attr.Title : asm.GetName().Name;
 		});
 
-		public static string ApplicationName
-		{
-			get { return _applicationName.Value; }
-		}
+		public static string ApplicationName => _applicationName.Value;
 
 		private static readonly Lazy<string> _applicationNameWithVersion = new Lazy<string>(() =>
 		{
@@ -221,10 +218,7 @@ namespace Ecng.Common
 			return ApplicationName + " v" + asm.GetName().Version;
 		});
 
-		public static string ApplicationNameWithVersion
-		{
-			get { return _applicationNameWithVersion.Value; }
-		}
+		public static string ApplicationNameWithVersion => _applicationNameWithVersion.Value;
 #endif
 
 		// http://stackoverflow.com/questions/8517159/how-to-detect-at-runtime-that-net-version-4-5-currently-running-your-code
@@ -237,7 +231,7 @@ namespace Ecng.Common
 		public static string GetTypeName(this Type type, bool isAssemblyQualifiedName)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			return isAssemblyQualifiedName ? type.AssemblyQualifiedName : "{0}, {1}".Put(type.FullName,
 #if SILVERLIGHT
@@ -257,7 +251,7 @@ namespace Ecng.Common
 		public static void Throw(this Exception ex)
 		{
 			if (ex == null)
-				throw new ArgumentNullException("ex");
+				throw new ArgumentNullException(nameof(ex));
 
 			_remoteStackTraceString.SetValue(ex, ex.StackTrace + Environment.NewLine);
 

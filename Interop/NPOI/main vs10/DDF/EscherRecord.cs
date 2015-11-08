@@ -105,13 +105,9 @@ namespace NPOI.DDF
         /// <value>
         /// 	<c>true</c> if this instance is container record; otherwise, <c>false</c>.
         /// </value>
-        public bool IsContainerRecord
-        {
-            get { return Version == (short)0x000f; }
-        }
+        public bool IsContainerRecord => Version == (short)0x000f;
 
-
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the options field for this record.  All records have one
         /// </summary>
         /// <value>The options.</value>
@@ -267,30 +263,21 @@ namespace NPOI.DDF
             /// Gets the options.
             /// </summary>
             /// <value>The options.</value>
-            public short Options
-            {
-                get { return options; }
-            }
+            public short Options => options;
 
-            /// <summary>
+	        /// <summary>
             /// Gets the record id.
             /// </summary>
             /// <value>The record id.</value>
-            public virtual short RecordId
-            {
-                get { return recordId; }
-            }
+            public virtual short RecordId => recordId;
 
-            /// <summary>
+	        /// <summary>
             /// Gets the remaining bytes.
             /// </summary>
             /// <value>The remaining bytes.</value>
-            public int RemainingBytes
-            {
-                get { return remainingBytes; }
-            }
+            public int RemainingBytes => remainingBytes;
 
-            /// <summary>
+	        /// <summary>
             /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
             /// </summary>
             /// <returns>

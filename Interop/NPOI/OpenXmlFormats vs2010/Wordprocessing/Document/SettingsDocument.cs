@@ -34,12 +34,6 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         {
             this.settings = settings;
         }
-        public CT_Settings Settings
-        {
-            get
-            {
-                return this.settings;
-            }
-        }
+        public CT_Settings Settings => this.settings;
     }
 }

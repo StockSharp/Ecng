@@ -42,15 +42,9 @@ namespace Microsoft.Practices.Unity.Configuration
         /// <summary>
         /// Element name to use to serialize this into XML.
         /// </summary>
-        public virtual string ElementName
-        {
-            get
-            {
-                return ExtensionElementMap.GetTagForExtensionElement(this);
-            }
-        }
+        public virtual string ElementName => ExtensionElementMap.GetTagForExtensionElement(this);
 
-        /// <summary>
+	    /// <summary>
         /// Get the standard tag name for an <see cref="InjectionMemberElement"/>
         /// taking into account currently loaded section extensions.
         /// </summary>

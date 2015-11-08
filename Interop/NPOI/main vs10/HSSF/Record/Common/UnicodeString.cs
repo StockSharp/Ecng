@@ -61,23 +61,11 @@ namespace NPOI.HSSF.Record
             {
             }
 
-            public short CharacterPos
-            {
-                get
-                {
-                    return _character;
-                }
-            }
+            public short CharacterPos => _character;
 
-            public short FontIndex
-            {
-                get
-                {
-                    return _fontIndex;
-                }
-            }
+	        public short FontIndex => _fontIndex;
 
-            public override bool Equals(Object o)
+	        public override bool Equals(Object o)
             {
                 if (!(o is FormatRun))
                 {
@@ -239,15 +227,10 @@ namespace NPOI.HSSF.Record
              * Returns our size, excluding our 
              *  4 byte header
              */
-            internal int DataSize
-            {
-                get
-                {
-                    return 4 + 6 + (2 * phoneticText.Length) +
-                       (6 * phRuns.Length) + extraData.Length;
-                }
-            }
-            internal void Serialize(ContinuableRecordOutput out1)
+            internal int DataSize => 4 + 6 + (2 * phoneticText.Length) +
+                                     (6 * phRuns.Length) + extraData.Length;
+
+	        internal void Serialize(ContinuableRecordOutput out1)
             {
                 int dataSize = DataSize;
 
@@ -342,41 +325,15 @@ namespace NPOI.HSSF.Record
                 return ext;
             }
 
-            public short FormattingFontIndex
-            {
-                get
-                {
-                    return formattingFontIndex;
-                }
-            }
-            public short FormattingOptions
-            {
-                get
-                {
-                    return formattingOptions;
-                }
-            }
-            public int NumberOfRuns
-            {
-                get
-                {
-                    return numberOfRuns;
-                }
-            }
-            public String PhoneticText
-            {
-                get
-                {
-                    return phoneticText;
-                }
-            }
-            public PhRun[] PhRuns
-            {
-                get
-                {
-                    return phRuns;
-                }
-            }
+            public short FormattingFontIndex => formattingFontIndex;
+
+	        public short FormattingOptions => formattingOptions;
+
+	        public int NumberOfRuns => numberOfRuns;
+
+	        public String PhoneticText => phoneticText;
+
+	        public PhRun[] PhRuns => phRuns;
         }
         public class PhRun
         {
@@ -572,12 +529,9 @@ namespace NPOI.HSSF.Record
                 field_1_charCount = (short)value;
             }
         }
-        public short CharCountShort
-        {
-            get { return field_1_charCount; }
-        }
+        public short CharCountShort => field_1_charCount;
 
-        /**
+	    /**
          * Get the option flags which among other things return if this is a 16-bit or
          * 8 bit string
          *
@@ -903,23 +857,11 @@ namespace NPOI.HSSF.Record
             return 0;
         }
 
-        private bool IsRichText
-        {
-            get
-            {
-                return richText.IsSet(OptionFlags);
-            }
-        }
+        private bool IsRichText => richText.IsSet(OptionFlags);
 
-        private bool IsExtendedText
-        {
-            get
-            {
-                return extBit.IsSet(OptionFlags);
-            }
-        }
+	    private bool IsExtendedText => extBit.IsSet(OptionFlags);
 
-        public Object Clone()
+	    public Object Clone()
         {
             UnicodeString str = new UnicodeString();
             str.field_1_charCount = field_1_charCount;

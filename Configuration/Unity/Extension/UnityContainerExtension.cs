@@ -32,7 +32,7 @@ namespace Microsoft.Practices.Unity
         {
             if(context == null)
             {
-                throw new ArgumentNullException("context");
+                throw new ArgumentNullException(nameof(context));
             }
 
             container = context.Container;
@@ -44,21 +44,15 @@ namespace Microsoft.Practices.Unity
         /// The container this extension has been added to.
         /// </summary>
         /// <value>The <see cref="UnityContainer"/> that this extension has been added to.</value>
-        public IUnityContainer Container
-        {
-            get { return container; }
-        }
+        public IUnityContainer Container => container;
 
-        /// <summary>
+	    /// <summary>
         /// The <see cref="ExtensionContext"/> object used to manipulate
         /// the inner state of the container.
         /// </summary>
-        protected ExtensionContext Context
-        {
-            get { return context; }
-        }
+        protected ExtensionContext Context => context;
 
-        /// <summary>
+	    /// <summary>
         /// Initial the container with this extension's functionality.
         /// </summary>
         /// <remarks>

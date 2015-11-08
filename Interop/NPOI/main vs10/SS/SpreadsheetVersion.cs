@@ -63,114 +63,53 @@ namespace NPOI.SS
         /**
          * @return the default file extension of spReadsheet
          */
-        public string DefaultExtension
-        {
-            get
-            {
-                return _defaultExtension;
-            }
-        }
+        public string DefaultExtension => _defaultExtension;
 
-        /**
+	    /**
          * @return the maximum number of usable rows in each spReadsheet
          */
-        public int MaxRows
-        {
-            get
-            {
-                return _maxRows;
-            }
-        }
+        public int MaxRows => _maxRows;
 
-        /**
+	    /**
          * @return the last (maximum) valid row index, equals to <code> GetMaxRows() - 1 </code>
          */
-        public int LastRowIndex
-        {
-            get
-            {
-                return _maxRows - 1;
-            }
-        }
+        public int LastRowIndex => _maxRows - 1;
 
-        /**
+	    /**
          * @return the maximum number of usable columns in each spReadsheet
          */
-        public int MaxColumns
-        {
-            get
-            {
-                return _maxColumns;
-            }
-        }
+        public int MaxColumns => _maxColumns;
 
-        /**
+	    /**
          * @return the last (maximum) valid column index, equals to <code> GetMaxColumns() - 1 </code>
          */
-        public int LastColumnIndex
-        {
-            get
-            {
-                return _maxColumns - 1;
-            }
-        }
+        public int LastColumnIndex => _maxColumns - 1;
 
-        /**
+	    /**
          * @return the maximum number arguments that can be passed to a multi-arg function (e.g. COUNTIF)
          */
-        public int MaxFunctionArgs
-        {
-            get
-            {
-                return _maxFunctionArgs;
-            }
-        }
+        public int MaxFunctionArgs => _maxFunctionArgs;
 
-        /**
+	    /**
          *
          * @return the maximum number of conditional format conditions on a cell
          */
-        public int MaxConditionalFormats
-        {
-            get
-            {
-                return _maxCondFormats;
-            }
-        }
+        public int MaxConditionalFormats => _maxCondFormats;
 
-        /**
+	    /**
          *
          * @return the last valid column index in a ALPHA-26 representation
          *  (<code>IV</code> or <code>XFD</code>).
          */
-        public String LastColumnName
-        {
-            get
-            {
-                return CellReference.ConvertNumToColString(LastColumnIndex);
-            }
-        }
-        /**
+        public String LastColumnName => CellReference.ConvertNumToColString(LastColumnIndex);
+	    /**
         * @return the maximum number of cell styles per spreadsheet
         */
-        public int MaxCellStyles
-        {
-            get
-            {
-                return _maxCellStyles;
-            }
-        }
-        /**
+        public int MaxCellStyles => _maxCellStyles;
+	    /**
          * @return the maximum length of a text cell
          */
-        public int MaxTextLength
-        {
-            get
-            {
-                return _maxTextLength;
-            }
-        }
-
+        public int MaxTextLength => _maxTextLength;
     }
 
 }

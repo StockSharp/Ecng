@@ -107,14 +107,8 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(CurrentCountry);
         }
 
-        protected override int DataSize
-        {
-            get { return 4; }
-        }
+        protected override int DataSize => 4;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
     }
 }

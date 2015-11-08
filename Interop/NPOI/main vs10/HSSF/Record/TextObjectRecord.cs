@@ -296,15 +296,9 @@ namespace NPOI.HSSF.Record
             get { return _text; }
             set { this._text = value; }
         }
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+        public override short Sid => sid;
 
-        /**
+	    /**
          * Get the text orientation field for the TextObjectBase record.
          *
          * @return a TextOrientation
@@ -351,14 +345,9 @@ namespace NPOI.HSSF.Record
             set { field_1_options = textLocked.SetBoolean(field_1_options, value); }
         }
 
-        public Ptg LinkRefPtg
-        {
-            get
-            {
-                return _linkRefPtg;
-            }
-        }
-        public override String ToString()
+        public Ptg LinkRefPtg => _linkRefPtg;
+
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
 

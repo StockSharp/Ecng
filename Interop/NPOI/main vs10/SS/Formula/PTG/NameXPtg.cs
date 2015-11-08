@@ -75,12 +75,9 @@ namespace NPOI.SS.Formula.PTG
 
         }
 
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
 
-        public String ToFormulaString(IFormulaRenderingWorkbook book)
+	    public String ToFormulaString(IFormulaRenderingWorkbook book)
         {
             // -1 to convert definedNameIndex from 1-based to zero-based
             return book.ResolveNameXText(this);
@@ -90,24 +87,9 @@ namespace NPOI.SS.Formula.PTG
             throw new NotImplementedException("3D references need a workbook to determine formula text");
         }
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_VALUE; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_VALUE;
 
-        public int SheetRefIndex
-        {
-            get
-            {
-                return _sheetRefIndex;
-            }
-        }
-        public int NameIndex
-        {
-            get
-            {
-                return _nameNumber - 1;
-            }
-        }
+	    public int SheetRefIndex => _sheetRefIndex;
+	    public int NameIndex => _nameNumber - 1;
     }
 }

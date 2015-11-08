@@ -11,10 +11,10 @@ namespace Ecng.Common
 		public static void Do(this Action action, Action<Exception> error)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			if (error == null)
-				throw new ArgumentNullException("error");
+				throw new ArgumentNullException(nameof(error));
 
 			try
 			{
@@ -29,10 +29,10 @@ namespace Ecng.Common
 		public static void DoAsync(this Action action, Action<Exception> error)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			if (error == null)
-				throw new ArgumentNullException("error");
+				throw new ArgumentNullException(nameof(error));
 
 			Do(() => action.BeginInvoke(result =>
 			{
@@ -190,13 +190,13 @@ namespace Ecng.Common
 			where T : EventArgs
 		{
 			if (sender == null)
-				throw new ArgumentNullException("sender");
+				throw new ArgumentNullException(nameof(sender));
 
 			if (args == null)
-				throw new ArgumentNullException("args");
+				throw new ArgumentNullException(nameof(args));
 
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			var handlerLocal = handler;
 			if (handlerLocal != null)

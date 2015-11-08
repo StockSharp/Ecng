@@ -40,12 +40,6 @@ namespace NPOI.SS.Formula.Eval
             this.functionName = functionName;
         }
 
-        public String FunctionName
-        {
-            get
-            {
-                return functionName;
-            }
-        }
+        public String FunctionName => functionName;
     }
 }

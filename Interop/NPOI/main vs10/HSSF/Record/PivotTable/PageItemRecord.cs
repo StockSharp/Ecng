@@ -92,25 +92,11 @@ namespace NPOI.HSSF.Record.PivotTable
         }
 
 
-        protected override int DataSize
-        {
-            get
-            {
-                return _fieldInfos.Length * FieldInfo.ENCODED_SIZE;
-            }
-        }
+        protected override int DataSize => _fieldInfos.Length * FieldInfo.ENCODED_SIZE;
 
+	    public override short Sid => sid;
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
-
-
-        public override string ToString()
+	    public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("[SXPI]\n");

@@ -9,20 +9,14 @@ namespace Ecng.Web
 	{
 		public abstract IWebFile File { get; }
 
-		bool IHttpHandler.IsReusable
-		{
-			get { return true; }
-		}
+		bool IHttpHandler.IsReusable => true;
 
 		void IHttpHandler.ProcessRequest(HttpContext context)
 		{
 			File.Download(Size, Embed, context);
 		}
 
-		private static bool Embed
-		{
-			get { return Url.Current.QueryString.TryGetValue("embed", true); }
-		}
+		private static bool Embed => Url.Current.QueryString.TryGetValue("embed", true);
 
 		private static Size<int> Size
 		{

@@ -29,7 +29,7 @@ namespace Ecng.Reflection
 		protected FastInvoker(MemberInfo member)
 		{
 			if (member == null)
-				throw new ArgumentNullException("member");
+				throw new ArgumentNullException(nameof(member));
 
 			Member = member;
 		}
@@ -38,7 +38,7 @@ namespace Ecng.Reflection
 
 		#region Member
 
-		public MemberInfo Member { get; private set; }
+		public MemberInfo Member { get; }
 
 		#endregion
 
@@ -90,7 +90,7 @@ namespace Ecng.Reflection
 		private static FastInvoker CreateCore(MemberInfo member, bool? isGetter)
 		{
 			if (member == null)
-				throw new ArgumentNullException("member");
+				throw new ArgumentNullException(nameof(member));
 
 			return GetCache(member, isGetter).SafeAdd(member, delegate
 			{
@@ -458,7 +458,7 @@ namespace Ecng.Reflection
 			: base(member)
 		{
 			if (callback == null)
-				throw new ArgumentNullException("callback");
+				throw new ArgumentNullException(nameof(callback));
 
 			if (callback is CtorCallback)
 				_ctor = (CtorCallback)callback;

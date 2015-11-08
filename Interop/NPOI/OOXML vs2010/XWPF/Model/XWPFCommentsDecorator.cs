@@ -57,12 +57,6 @@ namespace NPOI.XWPF.Model
             return commentText.ToString();
         }
 
-        public override String Text
-        {
-            get
-            {
-                return base.Text + commentText;
-            }
-        }
+        public override String Text => base.Text + commentText;
     }
 }

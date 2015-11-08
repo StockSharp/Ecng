@@ -182,13 +182,9 @@ namespace Wintellect.PowerCollections
 		/// <summary>
 		/// Returns the number of elements in the tree.
 		/// </summary>
-		public int ElementCount {
-			get {
-				return count;
-			}
-		}
+		public int ElementCount => count;
 
-        /// <summary>
+		/// <summary>
         /// Clone the tree, returning a new tree containing the same items. Should
         /// take O(N) take.
         /// </summary>
@@ -272,7 +268,7 @@ namespace Wintellect.PowerCollections
         public T GetItemByIndex(int index)
         {
             if (index < 0 || index >= count)
-                throw new ArgumentOutOfRangeException("index");
+                throw new ArgumentOutOfRangeException(nameof(index));
 
 			Node current = root;			// current search location in the tree
 

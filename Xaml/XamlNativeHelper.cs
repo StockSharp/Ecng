@@ -52,7 +52,7 @@
 		public static IntPtr GetOwnerHandle(this Window wnd)
 		{
 			if (wnd == null)
-				throw new ArgumentNullException("wnd");
+				throw new ArgumentNullException(nameof(wnd));
 
 			return new WindowInteropHelper(wnd).Owner;
 		}
@@ -60,7 +60,7 @@
 		public static Window SetOwnerHandle(this Window wnd, IntPtr ownerHandle)
 		{
 			if (wnd == null)
-				throw new ArgumentNullException("wnd");
+				throw new ArgumentNullException(nameof(wnd));
 
 			new WindowInteropHelper(wnd).Owner = ownerHandle;
 			return wnd;
@@ -69,10 +69,10 @@
 		public static bool ShowModalNative(this Window wnd, Control control)
 		{
 			if (wnd == null)
-				throw new ArgumentNullException("wnd");
+				throw new ArgumentNullException(nameof(wnd));
 
 			if (control == null)
-				throw new ArgumentNullException("control");
+				throw new ArgumentNullException(nameof(control));
 
 			return wnd.SetOwnerHandle(control.Handle).ShowDialog() == true;
 		}
@@ -80,10 +80,10 @@
 		public static bool ShowModalNative(this CommonDialog dlg, Window owner)
 		{
 			if (dlg == null)
-				throw new ArgumentNullException("dlg");
+				throw new ArgumentNullException(nameof(dlg));
 
 			if (owner == null)
-				throw new ArgumentNullException("owner");
+				throw new ArgumentNullException(nameof(owner));
 
 			return dlg.ShowDialog(owner.GetIWin32Window()) == DialogResult.OK;
 		}
@@ -91,10 +91,10 @@
 		public static bool ShowModalNative(this Form form, Window owner)
 		{
 			if (form == null)
-				throw new ArgumentNullException("form");
+				throw new ArgumentNullException(nameof(form));
 
 			if (owner == null)
-				throw new ArgumentNullException("owner");
+				throw new ArgumentNullException(nameof(owner));
 
 			return form.ShowDialog(owner.GetIWin32Window()) == DialogResult.OK;
 		}
@@ -102,10 +102,10 @@
 		public static bool ShowModalNative(this Microsoft.Win32.CommonDialog dlg, Window owner)
 		{
 			if (dlg == null)
-				throw new ArgumentNullException("dlg");
+				throw new ArgumentNullException(nameof(dlg));
 
 			if (owner == null)
-				throw new ArgumentNullException("owner");
+				throw new ArgumentNullException(nameof(owner));
 
 			return dlg.ShowDialog(owner) == true;
 		}
@@ -113,7 +113,7 @@
 		public static BitmapSource ToBitmapSource(this Bitmap source)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			var hBitmap = source.GetHbitmap();
 			using (hBitmap.MakeDisposable(DeleteObject))
@@ -126,7 +126,7 @@
 		public static Bitmap ToBitmap(this BitmapSource source)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			const System.Drawing.Imaging.PixelFormat format = System.Drawing.Imaging.PixelFormat.Format32bppPArgb;
 			var bmp = new Bitmap(source.PixelWidth, source.PixelHeight, format);
@@ -141,7 +141,7 @@
 		public static IWin32WindowEx GetIWin32Window(this Visual visual)
 		{
 			if (visual == null)
-				throw new ArgumentNullException("visual");
+				throw new ArgumentNullException(nameof(visual));
 
 			var source = (HwndSource)PresentationSource.FromVisual(visual);
 
@@ -162,19 +162,13 @@
 
 			#region System.Windows.Interop.IWin32Window Members
 
-			IntPtr System.Windows.Interop.IWin32Window.Handle
-			{
-				get { return _handle; }
-			}
+			IntPtr System.Windows.Interop.IWin32Window.Handle => _handle;
 
 			#endregion
 
 			#region System.Windows.Forms.IWin32Window Members
 
-			IntPtr System.Windows.Forms.IWin32Window.Handle
-			{
-				get { return _handle; }
-			}
+			IntPtr System.Windows.Forms.IWin32Window.Handle => _handle;
 
 			#endregion
 		}
@@ -202,10 +196,10 @@
 		public static bool Compare(this Image first, Image second)
 		{
 			if (first == null)
-				throw new ArgumentNullException("first");
+				throw new ArgumentNullException(nameof(first));
 
 			if (second == null)
-				throw new ArgumentNullException("second");
+				throw new ArgumentNullException(nameof(second));
 
 			if (first.Size == second.Size)
 			{

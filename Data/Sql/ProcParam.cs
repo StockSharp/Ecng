@@ -37,7 +37,7 @@ namespace Ecng.Data.Sql
 			set
 			{
 				if (value.IsEmpty())
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_name = value;
 			}
@@ -67,7 +67,7 @@ namespace Ecng.Data.Sql
 			set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_length = value;
 			}

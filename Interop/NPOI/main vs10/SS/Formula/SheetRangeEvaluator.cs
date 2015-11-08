@@ -61,22 +61,11 @@ namespace NPOI.SS.Formula
             return _sheetEvaluators[sheetIndex - _firstSheetIndex];
         }
 
-        public int FirstSheetIndex
-        {
-            get
-            {
-                return _firstSheetIndex;
-            }
-        }
-        public int LastSheetIndex
-        {
-            get
-            {
-                return _lastSheetIndex;
-            }
-        }
+        public int FirstSheetIndex => _firstSheetIndex;
 
-        public String GetSheetName(int sheetIndex)
+	    public int LastSheetIndex => _lastSheetIndex;
+
+	    public String GetSheetName(int sheetIndex)
         {
             return GetSheetEvaluator(sheetIndex).SheetName;
         }

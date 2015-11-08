@@ -25,34 +25,28 @@ namespace Ecng.Data
 		internal DatabaseCommand(Database database, DbCommand dbCommand)
 		{
 			if (database == null)
-				throw new ArgumentNullException("database");
+				throw new ArgumentNullException(nameof(database));
 
 			if (dbCommand == null)
-				throw new ArgumentNullException("dbCommand");
+				throw new ArgumentNullException(nameof(dbCommand));
 
 			Database = database;
 			_dbCommand = dbCommand;
 		}
 
-		public Database Database { get; private set; }
+		public Database Database { get; }
 
-		public string Text
-		{
-			get { return _dbCommand.CommandText; }
-		}
+		public string Text => _dbCommand.CommandText;
 
-		public DbParameterCollection Parameters
-		{
-			get { return _dbCommand.Parameters; }
-		}
+		public DbParameterCollection Parameters => _dbCommand.Parameters;
 
 		private TResult Execute<TResult>(IEnumerable<SerializationItem> input, Func<DbCommand, TResult> handler)
 		{
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 
 			if (handler == null)
-				throw new ArgumentNullException("handler");
+				throw new ArgumentNullException(nameof(handler));
 
 			lock (_syncObj)
 			{
@@ -163,10 +157,10 @@ namespace Ecng.Data
 		private DbCommand CreateCommand(DbConnection connection, IEnumerable<SerializationItem> source)
 		{
 			if (connection == null)
-				throw new ArgumentNullException("connection");
+				throw new ArgumentNullException(nameof(connection));
 
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			var dict = source.ToDictionary(i => Database.Provider.Renderer.FormatParameter(i.Field.Name), i => i.Value, StringComparer.InvariantCultureIgnoreCase);
 

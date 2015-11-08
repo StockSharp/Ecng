@@ -92,30 +92,21 @@ namespace NPOI.DDF
         /// Returns the number of bytes that are required to Serialize this record.
         /// </summary>
         /// <value>number of bytes</value>
-        public override int RecordSize
-        {
-            get { return 8 + 4 * 4; }
-        }
+        public override int RecordSize => 8 + 4 * 4;
 
-        /// <summary>
+	    /// <summary>
         /// Return the current record id.
         /// </summary>
         /// <value>the 16 bit identifer for this record.</value>
-        public override short RecordId
-        {
-            get { return RECORD_ID; }
-        }
+        public override short RecordId => RECORD_ID;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the short name for this record
         /// </summary>
         /// <value>The name of the record.</value>
-        public override String RecordName
-        {
-            get { return "SplitMenuColors"; }
-        }
+        public override String RecordName => "SplitMenuColors";
 
-        /// <summary>
+	    /// <summary>
         /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
         /// </summary>
         /// <returns>

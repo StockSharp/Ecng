@@ -84,42 +84,30 @@ namespace NPOI.HSSF.Record
          */
 
         //public short Row
-        public int Row
-        {
-            get { return _row; }
-        }
+        public int Row => _row;
 
-        /**
+	    /**
          * starting column (first cell this holds in the row)
          * @return first column number
          */
 
-        public int FirstColumn
-        {
-            get { return _first_col; }
-        }
+        public int FirstColumn => _first_col;
 
-        /**
+	    /**
          * ending column (last cell this holds in the row)
          * @return first column number
          */
 
-        public int LastColumn
-        {
-            get { return _last_col; }
-        }
+        public int LastColumn => _last_col;
 
-        /**
+	    /**
          * Get the number of columns this Contains (last-first +1)
          * @return number of columns (last - first +1)
          */
 
-        public int NumColumns
-        {
-            get { return _last_col - _first_col + 1; }
-        }
+        public int NumColumns => _last_col - _first_col + 1;
 
-        /**
+	    /**
          * returns the xf index for column (coffset = column - field_2_first_col)
          * @param coffset  the column (coffset = column - field_2_first_col)
          * @return the XF index for the column
@@ -161,16 +149,10 @@ namespace NPOI.HSSF.Record
             return buffer.ToString();
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        protected override int DataSize
-        {
-            get { return 6 + _xfs.Length * 2; }
-        }
+        public override short Sid => sid;
+	    protected override int DataSize => 6 + _xfs.Length * 2;
 
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             out1.WriteShort(_row);
             out1.WriteShort(_first_col);

@@ -20,12 +20,9 @@ namespace Ecng.Serialization
 			IgnoreFields = new List<string>();
 		}
 
-		protected bool IsCollection
-		{
-			get { return !typeof(T).IsPrimitive() && typeof(T).IsCollection(); }
-		}
+		protected bool IsCollection => !typeof(T).IsPrimitive() && typeof(T).IsCollection();
 
-		public IList<string> IgnoreFields { get; private set; }
+		public IList<string> IgnoreFields { get; }
 
 		#region Schema
 
@@ -144,13 +141,13 @@ namespace Ecng.Serialization
 			using (new Scope<SerializationContext>(new SerializationContext { Entity = graph }))
 			{
 				if (graph.IsNull())
-					throw new ArgumentNullException("graph", "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
+					throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
 
 				if (fields == null)
-					throw new ArgumentNullException("fields");
+					throw new ArgumentNullException(nameof(fields));
 
 				if (source == null)
-					throw new ArgumentNullException("source");
+					throw new ArgumentNullException(nameof(source));
 
 				var tracking = graph as ISerializationTracking;
 
@@ -246,13 +243,13 @@ namespace Ecng.Serialization
 			using (new Scope<SerializationContext>(new SerializationContext { Entity = graph }))
 			{
 				if (source == null)
-					throw new ArgumentNullException("source", "Source for type '{0}' doesn't initialized.".Put(typeof(T)));
+					throw new ArgumentNullException(nameof(source), "Source for type '{0}' doesn't initialized.".Put(typeof(T)));
 
 				if (fields == null)
-					throw new ArgumentNullException("fields");
+					throw new ArgumentNullException(nameof(fields));
 
 				if (graph.IsNull())
-					throw new ArgumentNullException("graph", "Graph for type '{0}' doesn't initialized.".Put(typeof(T)));
+					throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' doesn't initialized.".Put(typeof(T)));
 
 				var tracking = graph as ISerializationTracking;
 
@@ -299,7 +296,7 @@ namespace Ecng.Serialization
 		public object GetId(T graph)
 		{
 			if (graph.IsNull())
-				throw new ArgumentNullException("graph", "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
+				throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
 
 			var identity = Schema.Identity;
 
@@ -316,10 +313,10 @@ namespace Ecng.Serialization
 		public T SetId(T graph, object id)
 		{
 			if (graph.IsNull())
-				throw new ArgumentNullException("graph", "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
+				throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
 
 			if (id == null)
-				throw new ArgumentNullException("id", "Identifier for type '{0}' isn't initialized.".Put(typeof(T)));
+				throw new ArgumentNullException(nameof(id), "Identifier for type '{0}' isn't initialized.".Put(typeof(T)));
 
 			return Schema.Identity.GetAccessor<T>().SetValue(graph, id);
 		}
@@ -330,20 +327,11 @@ namespace Ecng.Serialization
 		
 		#region ISerializer Members
 
-		Schema ISerializer.Schema
-		{
-			get { return Schema; }
-		}
+		Schema ISerializer.Schema => Schema;
 
-		Type ISerializer.Type
-		{
-			get { return typeof(T); }
-		}
+		Type ISerializer.Type => typeof(T);
 
-		string ISerializer.FileExtension
-		{
-			get { return FileExtension; }
-		}
+		string ISerializer.FileExtension => FileExtension;
 
 		object ISerializer.GetId(object graph)
 		{

@@ -60,26 +60,14 @@ namespace NPOI.HSSF.Record
             out1.Write(reserved);
         }
 
-        public override int DataSize
-        {
-            get
-            {
-                return reserved.Length;
-            }
-        }
+        public override int DataSize => reserved.Length;
 
-        /**
+	    /**
          * @return id of this record.
          */
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+        public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             FtCblsSubRecord rec = new FtCblsSubRecord();
             byte[] recdata = new byte[reserved.Length];

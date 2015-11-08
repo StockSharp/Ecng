@@ -56,22 +56,13 @@ namespace NPOI.SS.Formula.PTG
             out1.WriteShort(field_2_first_col);
         }
 
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
 
-        public short Row
-        {
-            get { return field_1_first_row; }
-        }
+	    public short Row => field_1_first_row;
 
-        public short Column
-        {
-            get { return field_2_first_col; }
-        }
+	    public short Column => field_2_first_col;
 
-        public override String ToFormulaString()
+	    public override String ToFormulaString()
         {
             throw new RecordFormatException("Coding Error: Expected ExpPtg to be Converted from Shared to Non-Shared Formula by ValueRecordsAggregate, but it wasn't");
         }

@@ -200,14 +200,8 @@ namespace NPOI.XWPF.UserModel
          * Get the currently referenced paragraph/SDT object
          * @return current parent
          */
-        public IRunBody Parent
-        {
-            get
-            {
-                return parent;
-            }
-        }
-        /**
+        public IRunBody Parent => parent;
+	    /**
          * Get the currently referenced paragraph, or null if a SDT object
          * @deprecated use {@link XWPFRun#getParent()} instead
          */
@@ -331,14 +325,9 @@ namespace NPOI.XWPF.UserModel
         /**
          * Returns text embedded in pictures
          */
-        public String PictureText
-        {
-            get
-            {
-                return pictureText;
-            }
-        }
-        public void ReplaceText(string oldText, string newText)
+        public String PictureText => pictureText;
+
+	    public void ReplaceText(string oldText, string newText)
         {
             string text = this.Text.Replace(oldText, newText);
             this.SetText(text);
@@ -798,11 +787,8 @@ namespace NPOI.XWPF.UserModel
             }
         }
 
-        public string FontName
-        {
-            get { return FontFamily; }
-        }
-        /**
+        public string FontName => FontFamily;
+	    /**
          * Gets the font family for the specified font char range.
          * If fcr is null, the font char range "ascii" is used
          *

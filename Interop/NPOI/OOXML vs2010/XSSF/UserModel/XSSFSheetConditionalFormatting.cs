@@ -231,15 +231,9 @@ namespace NPOI.XSSF.UserModel
         /**
         * @return number of Conditional Formatting objects of the sheet
         */
-        public int NumConditionalFormattings
-        {
-            get
-            {
-                return _sheet.GetCTWorksheet().SizeOfConditionalFormattingArray();
-            }
-        }
+        public int NumConditionalFormattings => _sheet.GetCTWorksheet().SizeOfConditionalFormattingArray();
 
-        /**
+	    /**
         * Removes a Conditional Formatting object by index
         * @param index of a Conditional Formatting object to remove
         */

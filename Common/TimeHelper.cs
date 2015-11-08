@@ -23,18 +23,9 @@ namespace Ecng.Common
 		/// <summary>
 		/// Текущее время.
 		/// </summary>
-		public static DateTime Now
-		{
-			get { return _startWithOffset + _timer.Elapsed; }
-		}
+		public static DateTime Now => _startWithOffset + _timer.Elapsed;
 
-		public static DateTimeOffset NowWithOffset
-		{
-			get
-			{
-				return Now.ApplyTimeZone(TimeZoneInfo.Local);
-			}
-		}
+		public static DateTimeOffset NowWithOffset => Now.ApplyTimeZone(TimeZoneInfo.Local);
 
 		private static TimeSpan _nowOffset;
 
@@ -343,7 +334,7 @@ namespace Ecng.Common
 		public static DateTimeOffset ApplyTimeZone(this DateTime dt, TimeZoneInfo zone)
 		{
 			if (zone == null)
-				throw new ArgumentNullException("zone");
+				throw new ArgumentNullException(nameof(zone));
 
 			return dt.ApplyTimeZone(zone.GetUtcOffset(dt.ChangeKind()));
 		}

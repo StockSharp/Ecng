@@ -259,9 +259,9 @@
 
 		#region Grouping
 
-		public ICollection<DataGridColumn> GroupingColumns { get; private set; }
+		public ICollection<DataGridColumn> GroupingColumns { get; }
 
-		public IDictionary<string, IValueConverter> GroupingColumnConverters { get; private set; }
+		public IDictionary<string, IValueConverter> GroupingColumnConverters { get; }
 
 		private void GroupMenu_Click(object sender, RoutedEventArgs e)
 		{
@@ -292,7 +292,7 @@
 		private void Group(DataGridColumn column)
 		{
 			if (column == null)
-				throw new ArgumentNullException("column");
+				throw new ArgumentNullException(nameof(column));
 
 			column.Visibility = Visibility.Collapsed;
 
@@ -308,7 +308,7 @@
 		private void UnGroup(DataGridColumn column)
 		{
 			if (column == null)
-				throw new ArgumentNullException("column");
+				throw new ArgumentNullException(nameof(column));
 
 			column.Visibility = Visibility.Visible;
 			ChangeView(desc => desc.RemoveWhere(g => ((PropertyGroupDescriptionEx)g).PropertyName == column.SortMemberPath));
@@ -346,10 +346,7 @@
 
 		private readonly MultiDictionary<DataGridColumn, FormatRule> _formatRules = new MultiDictionary<DataGridColumn, FormatRule>(false);
 
-		public MultiDictionary<DataGridColumn, FormatRule> FormatRules
-		{
-			get { return _formatRules; }
-		}
+		public MultiDictionary<DataGridColumn, FormatRule> FormatRules => _formatRules;
 
 		public Func<DataGridCell, bool> CanDrag;
 		public Func<DataGridCell, DataGridCell, bool> Dropping;
@@ -594,7 +591,7 @@
 		private T GetFormatterValue<T>(DataGridColumn column, object cellValue, Func<FormatRule, T> getPart)
 		{
 			if (getPart == null)
-				throw new ArgumentNullException("getPart");
+				throw new ArgumentNullException(nameof(getPart));
 
 			var value = getPart(FormatRule.Default);
 
@@ -839,10 +836,7 @@
 			ApplyFormatRules();
 		}
 
-		protected virtual IList<DataGridColumn> SerializableColumns
-		{
-			get { return Columns; }
-		}
+		protected virtual IList<DataGridColumn> SerializableColumns => Columns;
 
 		public virtual void Save(SettingsStorage storage)
 		{

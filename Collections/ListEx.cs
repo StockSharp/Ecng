@@ -73,15 +73,9 @@ namespace Ecng.Collections
 			return _innerList.Remove(item);
 		}
 
-		public override int Count
-		{
-			get { return _innerList.Count; }
-		}
+		public override int Count => _innerList.Count;
 
-		public override bool IsReadOnly
-		{
-			get { return false; }
-		}
+		public override bool IsReadOnly => false;
 
 		public override IEnumerator<T> GetEnumerator()
 		{

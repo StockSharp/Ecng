@@ -103,7 +103,7 @@
 		#endregion
 
 #if !SILVERLIGHT
-		public static Configuration InnerConfig { get; private set; }
+		public static Configuration InnerConfig { get; }
 
 		#region GetSection
 
@@ -177,7 +177,7 @@
 
 		#endregion
 
-		public static UnityContainer UnityContainer { get; private set; }
+		public static UnityContainer UnityContainer { get; }
 
 		public static event Action<Type, object> ServiceRegistered;
 
@@ -218,10 +218,7 @@
 		}
 #endif
 
-		public static IServiceLocator ServiceLocator
-		{
-			get { return NativeServiceLocator.Current; }
-		}
+		public static IServiceLocator ServiceLocator => NativeServiceLocator.Current;
 
 		public static T GetService<T>()
 		{

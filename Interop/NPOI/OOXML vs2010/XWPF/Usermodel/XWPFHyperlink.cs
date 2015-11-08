@@ -33,21 +33,9 @@ namespace NPOI.XWPF.UserModel
             this.url = url;
         }
 
-        public String Id
-        {
-            get
-            {
-                return id;
-            }
-        }
+        public String Id => id;
 
-        public String URL
-        {
-            get
-            {
-                return url;
-            }
-        }
+	    public String URL => url;
     }
 
 }

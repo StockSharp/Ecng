@@ -144,13 +144,6 @@ namespace NPOI.HSSF.Model
             return next;
         }
 
-        public EscherDggRecord Dgg
-        {
-            get
-            {
-                return dgg;
-            }
-        }
-
+        public EscherDggRecord Dgg => dgg;
     }
 }

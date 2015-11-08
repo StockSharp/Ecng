@@ -129,10 +129,7 @@
 
 		public IEnumerable<EntityProperty> Properties { get; set; }
 
-		public string FullDisplayName
-		{
-			get { return Parent == null ? DisplayName : "{0} -> {1}".Put(Parent.DisplayName, DisplayName); }
-		}
+		public string FullDisplayName => Parent == null ? DisplayName : "{0} -> {1}".Put(Parent.DisplayName, DisplayName);
 
 		public override string ToString()
 		{

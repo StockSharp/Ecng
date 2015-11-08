@@ -26,20 +26,14 @@ namespace Ecng.Data.Sql
 
 		private readonly SqlCommandTypes _commandType;
 
-		public SqlCommandTypes CommandType
-		{
-			get { return _commandType; }
-		}
+		public SqlCommandTypes CommandType => _commandType;
 
-		#endregion
+	    #endregion
 
 		#region ProcedureName
 
-		public string ProcedureName
-		{
-			get { return Name; }
-		}
+		public string ProcedureName => Name;
 
-		#endregion
+	    #endregion
 	}
 }

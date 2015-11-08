@@ -80,10 +80,10 @@
 		public DelayAction(IStorage storage, Action<Exception> errorHandler)
 		{
 			if (storage == null)
-				throw new ArgumentNullException("storage");
+				throw new ArgumentNullException(nameof(storage));
 
 			if (errorHandler == null)
-				throw new ArgumentNullException("errorHandler");
+				throw new ArgumentNullException(nameof(errorHandler));
 
 			_storage = storage;
 			_errorHandler = errorHandler;
@@ -106,7 +106,7 @@
 		public void Add(Action action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			Add(new Item(action, postAction, canBatch, breakBatchOnError));
 		}
@@ -114,7 +114,7 @@
 		private void Add(Item item)
 		{
 			if (item == null)
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
 			lock (_actions.SyncRoot)
 			{

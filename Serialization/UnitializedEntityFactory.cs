@@ -4,7 +4,7 @@
 
 	public class UnitializedEntityFactory<TEntity> : EntityFactory<TEntity>
 	{
-		public override bool FullInitialize { get { return false; } }
+		public override bool FullInitialize => false;
 
 		public override TEntity CreateEntity(ISerializer serializer, SerializationItemCollection source)
 		{

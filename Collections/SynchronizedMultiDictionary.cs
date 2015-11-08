@@ -29,10 +29,7 @@ namespace Ecng.Collections
 
 		private readonly SyncObject _syncRoot = new SyncObject();
 
-		public SyncObject SyncRoot
-		{
-			get { return _syncRoot; }
-		}
+		public SyncObject SyncRoot => _syncRoot;
 
 		public override void Clear()
 		{

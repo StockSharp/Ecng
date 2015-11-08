@@ -278,18 +278,11 @@ namespace NPOI
             return text.ToString();
         }
 
-        public override String Text
-        {
-            get
-            {
-                return
-                    GetCorePropertiesText() +
-                    GetExtendedPropertiesText() +
-                    GetCustomPropertiesText();
-            }
-        }
+        public override String Text => GetCorePropertiesText() +
+                                       GetExtendedPropertiesText() +
+                                       GetCustomPropertiesText();
 
-        public override POITextExtractor MetadataTextExtractor
+	    public override POITextExtractor MetadataTextExtractor
         {
             get
             {

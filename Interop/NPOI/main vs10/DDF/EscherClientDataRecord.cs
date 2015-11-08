@@ -81,28 +81,19 @@ namespace NPOI.DDF
          *
          * @return Number of bytes
          */
-        public override int RecordSize
-        {
-            get { return 8 + (remainingData == null ? 0 : remainingData.Length); }
-        }
+        public override int RecordSize => 8 + (remainingData == null ? 0 : remainingData.Length);
 
-        /**
+	    /**
          * Returns the identifier of this record.
          */
-        public override short RecordId
-        {
-            get { return RECORD_ID; }
-        }
+        public override short RecordId => RECORD_ID;
 
-        /**
+	    /**
          * The short name for this record
          */
-        public override String RecordName
-        {
-            get { return "ClientData"; }
-        }
+        public override String RecordName => "ClientData";
 
-        /**
+	    /**
          * Returns the string representation of this record.
          */
         public override String ToString()

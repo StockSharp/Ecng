@@ -182,12 +182,9 @@ namespace NPOI.HSSF.Record.Aggregates
             return new CFRecordsAggregate((CFHeaderRecord)header.Clone(), newRecs);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        /// <summary>
+	    /// <summary>
         /// called by the class that is responsible for writing this sucker.
         /// Subclasses should implement this so that their data is passed back in a
         /// byte array.
@@ -210,12 +207,9 @@ namespace NPOI.HSSF.Record.Aggregates
             return pos - offset;
         }
 
-        public CFHeaderRecord Header
-        {
-            get { return header; }
-        }
+        public CFHeaderRecord Header => header;
 
-        private void CheckRuleIndex(int idx)
+	    private void CheckRuleIndex(int idx)
         {
             if (idx < 0 || idx >= rules.Count)
             {
@@ -320,12 +314,9 @@ namespace NPOI.HSSF.Record.Aggregates
             rules.Add(r);
             header.NumberOfConditionalFormats = (rules.Count);
         }
-        public int NumberOfRules
-        {
-            get { return rules.Count; }
-        }
+        public int NumberOfRules => rules.Count;
 
-        /**
+	    /**
          *  @return sum of sizes of all aggregated records
          */
         //public override int RecordSize

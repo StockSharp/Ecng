@@ -108,14 +108,8 @@ namespace NPOI.HSSF.Record
          * Get the logical row number for this row (0 based index)
          * @return row - the row number
          */
-        public bool IsEmpty
-        {
-            get
-            {
-                return (field_2_first_col | field_3_last_col) == 0;
-            }
-        }
-        //public short RowNumber
+        public bool IsEmpty => (field_2_first_col | field_3_last_col) == 0;
+	    //public short RowNumber
         public int RowNumber
         {
             get
@@ -271,11 +265,8 @@ namespace NPOI.HSSF.Record
         }
 
         // end bitfields
-        public short OptionFlags2
-        {
-            get { return (short)this.field_8_option_flags; }
-        }
-        /**
+        public short OptionFlags2 => (short)this.field_8_option_flags;
+	    /**
          * if the row is formatted then this is the index to the extended format record
          * @see org.apache.poi.hssf.record.ExtendedFormatRecord
          * @return index to the XF record or bogus value (undefined) if Isn't formatted
@@ -355,24 +346,12 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(OptionFlags);
             out1.WriteShort(OptionFlags2);
         }
-        protected override int DataSize
-        {
-            get
-            {
-                return ENCODED_SIZE - 4;
-            }
-        }
-        public override int RecordSize
-        {
-            get { return 20; }
-        }
+        protected override int DataSize => ENCODED_SIZE - 4;
+	    public override int RecordSize => 20;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public int CompareTo(Object obj)
+	    public int CompareTo(Object obj)
         {
             RowRecord loc = (RowRecord)obj;
 

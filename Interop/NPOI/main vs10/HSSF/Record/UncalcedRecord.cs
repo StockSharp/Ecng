@@ -49,12 +49,9 @@ namespace NPOI.HSSF.Record
             _reserved = in1.ReadShort();
 	    }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
             buffer.Append("[UNCALCED]\n");
@@ -67,14 +64,8 @@ namespace NPOI.HSSF.Record
            out1.WriteShort(_reserved);
         }
 
-        protected override int DataSize
-        {
-            get { return 2; }
-        }
+        protected override int DataSize => 2;
 
-        public static int StaticRecordSize
-        {
-            get { return 6; }
-        }
+	    public static int StaticRecordSize => 6;
     }
 }

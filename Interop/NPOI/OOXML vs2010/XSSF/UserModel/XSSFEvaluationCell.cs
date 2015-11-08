@@ -45,85 +45,29 @@ namespace NPOI.XSSF.UserModel
 
         }
 
-        public Object IdentityKey
-        {
-            get
-            {
-                // save memory by just using the cell itself as the identity key
-                // Note - this assumes HSSFCell has not overridden hashCode and Equals
-                return _cell;
-            }
-        }
+        public Object IdentityKey => _cell;
 
-        public XSSFCell GetXSSFCell()
+	    public XSSFCell GetXSSFCell()
         {
             return _cell;
         }
-        public bool BooleanCellValue
-        {
-            get
-            {
-                return _cell.BooleanCellValue;
-            }
-        }
-        public CellType CellType
-        {
-            get
-            {
-                return _cell.CellType;
-            }
-        }
-        public int ColumnIndex
-        {
-            get
-            {
-                return _cell.ColumnIndex;
-            }
-        }
-        public int ErrorCellValue
-        {
-            get
-            {
-                return _cell.ErrorCellValue;
-            }
-        }
-        public double NumericCellValue
-        {
-            get
-            {
-                return _cell.NumericCellValue;
-            }
-        }
-        public int RowIndex
-        {
-            get
-            {
-                return _cell.RowIndex;
-            }
-        }
-        public IEvaluationSheet Sheet
-        {
-            get
-            {
-                return _evalSheet;
-            }
-        }
-        public String StringCellValue
-        {
-            get
-            {
-                return _cell.RichStringCellValue.String;
-            }
-        }
+        public bool BooleanCellValue => _cell.BooleanCellValue;
 
-        #region IEvaluationCell 成员
+	    public CellType CellType => _cell.CellType;
+
+	    public int ColumnIndex => _cell.ColumnIndex;
+
+	    public int ErrorCellValue => _cell.ErrorCellValue;
+	    public double NumericCellValue => _cell.NumericCellValue;
+	    public int RowIndex => _cell.RowIndex;
+	    public IEvaluationSheet Sheet => _evalSheet;
+	    public String StringCellValue => _cell.RichStringCellValue.String;
+
+	    #region IEvaluationCell 成员
 
 
-        public CellType CachedFormulaResultType
-        {
-            get { return _cell.CachedFormulaResultType; }
-        }
+        public CellType CachedFormulaResultType => _cell.CachedFormulaResultType;
 
-        #endregion
+	    #endregion
     }
 }

@@ -30,7 +30,7 @@
 		public NtpClient(EndPoint ntpServer)
 		{
 			if (ntpServer == null)
-				throw new ArgumentNullException("ntpServer");
+				throw new ArgumentNullException(nameof(ntpServer));
 
 			_ntpServer = ntpServer;
 		}
@@ -38,7 +38,7 @@
 		public DateTime GetLocalTime(TimeZoneInfo info, int timeout = 5000)
 		{
 			if (info == null)
-				throw new ArgumentNullException("info");
+				throw new ArgumentNullException(nameof(info));
 
 			var utcTime = GetUtcTime(timeout);
 			return utcTime + info.GetUtcOffset(utcTime);

@@ -46,12 +46,9 @@ namespace NPOI.HSSF.Record.Chart
             field_7_option = in1.ReadShort();
         }
 
-        protected override int DataSize
-        {
-            get { return 14; }
-        }
+        protected override int DataSize => 14;
 
-        public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
+	    public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
         {
             out1.WriteShort(field_1_anRot);
             out1.WriteShort(field_2_anElev);
@@ -62,11 +59,9 @@ namespace NPOI.HSSF.Record.Chart
             out1.WriteShort(field_7_option);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        /// <summary>
+        public override short Sid => sid;
+
+	    /// <summary>
         /// A signed integer that specifies the clockwise rotation, in degrees, of the 3-D plot area 
         /// around a vertical line through the center of the 3-D plot area. MUST be greater than or 
         /// equal to 0 and MUST be less than or equal to 360.

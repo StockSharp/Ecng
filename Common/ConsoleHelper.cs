@@ -37,7 +37,7 @@
 		public static void ConsoleWithColor(this Action handler, ConsoleColor color)
 		{
 			if (handler == null)
-				throw new ArgumentNullException("handler");
+				throw new ArgumentNullException(nameof(handler));
 
 			var prevColor = Console.ForegroundColor;
 

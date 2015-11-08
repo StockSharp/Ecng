@@ -257,30 +257,15 @@ namespace NPOI.Util
             return Write(data, 0, data.Length);
         }
 
-        public int Remain
-        {
-            get { return limit - position; }
-        }
-        
-        public byte[] Buffer
-        {
-            get { return buffer; }
-        }
+        public int Remain => limit - position;
 
-        public int Offset
-        {
-            get { return offset; }
-        }
+	    public byte[] Buffer => buffer;
 
-        public bool HasBuffer
-        {
-            get { return true; }
-        }
+	    public int Offset => offset;
 
-        public int Length
-        {
-            get { return capacity; }
-        }
+	    public bool HasBuffer => true;
+
+	    public int Length => capacity;
     }
 }
 /*

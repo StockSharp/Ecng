@@ -243,9 +243,9 @@ namespace Wintellect.PowerCollections
         public OrderedMultiDictionary(bool allowDuplicateValues, IComparer<TKey> keyComparer, IComparer<TValue> valueComparer)
         {
             if (keyComparer == null)
-                throw new ArgumentNullException("keyComparer");
+                throw new ArgumentNullException(nameof(keyComparer));
             if (valueComparer == null)
-                throw new ArgumentNullException("valueComparer");
+                throw new ArgumentNullException(nameof(valueComparer));
 
             this.allowDuplicateValues = allowDuplicateValues;
             this.keyComparer = keyComparer;
@@ -355,30 +355,18 @@ namespace Wintellect.PowerCollections
         /// created using a comparison delegate, then a comparer equivalent to that delegate
         /// is returned. Otherwise
         /// the default comparer for TKey (Comparer&lt;TKey&gt;.Default) is returned.</value>
-        public IComparer<TKey> KeyComparer
-        {
-            get
-            {
-                return this.keyComparer;
-            }
-        }
+        public IComparer<TKey> KeyComparer => this.keyComparer;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the IComparer&lt;T&gt; used to compare values in this dictionary. 
         /// </summary>
         /// <value>If the dictionary was created using a comparer, that comparer is returned. If the dictionary was
         /// created using a comparison delegate, then a comparer equivalent to that delegate
         /// is returned. Otherwise
         /// the default comparer for TValue (Comparer&lt;TValue&gt;.Default) is returned.</value>
-        public IComparer<TValue> ValueComparer
-        {
-            get
-            {
-                return this.valueComparer;
-            }
-        }
+        public IComparer<TValue> ValueComparer => this.valueComparer;
 
-        /// <summary>
+	    /// <summary>
         /// Determine if two values are equal.
         /// </summary>
         /// <param name="value1">First value to compare.</param>
@@ -395,15 +383,9 @@ namespace Wintellect.PowerCollections
         /// value is included in the count.
         /// </summary>
         /// <value>The number of key-value pairs in the dictionary.</value>
-        public sealed override int Count
-        {
-            get
-            {
-                return keyCount;
-            }
-        }
+        public sealed override int Count => keyCount;
 
-        /// <summary>
+	    /// <summary>
         /// Checks to see if <paramref name="value"/> is associated with <paramref name="key"/>
         /// in the dictionary.
         /// </summary>
@@ -621,12 +603,9 @@ namespace Wintellect.PowerCollections
         /// values associated with it, then a key-value pair is present for each value associated
         /// with the key.
         /// </summary>
-        public sealed override ICollection<KeyValuePair<TKey, TValue>> KeyValuePairs
-        {
-            get { return new KeyValuePairsCollection(this); }
-        }
+        public sealed override ICollection<KeyValuePair<TKey, TValue>> KeyValuePairs => new KeyValuePairsCollection(this);
 
-        /// <summary>
+	    /// <summary>
         /// A private class that implements ICollection&lt;KeyValuePair&lt;TKey,TValue&gt;&gt; and ICollection for the
         /// KeyValuePairs collection. The collection is read-only.
         /// </summary>
@@ -640,12 +619,9 @@ namespace Wintellect.PowerCollections
                 this.myDictionary = myDictionary;
             }
 
-            public override int Count
-            {
-                get { return myDictionary.CountAllValues(); }
-            }
+            public override int Count => myDictionary.CountAllValues();
 
-            public override IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+	        public override IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
             {
                 return myDictionary.tree.GetEnumerator();
             }
@@ -924,7 +900,7 @@ namespace Wintellect.PowerCollections
             public sealed override void Add(TKey key, TValue value)
             {
                 if (!KeyInView(key))
-                    throw new ArgumentException(Strings.OutOfViewRange, "key");
+                    throw new ArgumentException(Strings.OutOfViewRange, nameof(key));
                 else
                     myDictionary.Add(key, value);
             }

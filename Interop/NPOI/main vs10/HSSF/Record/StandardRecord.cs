@@ -31,15 +31,9 @@ namespace NPOI.HSSF.Record
     {
 
         protected abstract int DataSize{get;}
-        public override int RecordSize
-        {
-            get
-            {
-                return 4 + DataSize;
-            }
-        }
+        public override int RecordSize => 4 + DataSize;
 
-        /// <summary>
+	    /// <summary>
         /// Write the data content of this BIFF record including the sid and record length.
         /// The subclass must write the exact number of bytes as reported by Record#getRecordSize()
         /// </summary>

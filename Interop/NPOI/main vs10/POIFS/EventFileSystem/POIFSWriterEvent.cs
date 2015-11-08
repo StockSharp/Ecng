@@ -60,49 +60,25 @@ namespace NPOI.POIFS.EventFileSystem
          * @return the DocumentOutputStream, freshly opened
          */
 
-        public DocumentOutputStream Stream
-        {
-            get
-            {
-                return stream;
-            }
-        }
+        public DocumentOutputStream Stream => stream;
 
-        /**
+	    /**
          * @return the document's path
          */
 
-        public POIFSDocumentPath Path
-        {
-            get
-            {
-                return path;
-            }
-        }
+        public POIFSDocumentPath Path => path;
 
-        /**
+	    /**
          * @return the document's name
          */
 
-        public String Name
-        {
-            get
-            {
-                return documentName;
-            }
-        }
+        public String Name => documentName;
 
-        /**
+	    /**
          * @return the limit on writing, in bytes
          */
 
-        public int Limit
-        {
-            get
-            {
-                return limit;
-            }
-        }
+        public int Limit => limit;
     }   // end public class POIFSWriterEvent
 
 

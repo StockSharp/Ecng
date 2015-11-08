@@ -14,8 +14,8 @@ namespace Ecng.Web.BBCodes
         }
         public BBAttribute(string id, string name, Func<IAttributeRenderingContext, string> contentTransformer, HtmlEncodingMode htmlEncodingMode)
         {
-            if (id == null) throw new ArgumentNullException("id");
-            if (name == null) throw new ArgumentNullException("name");
+            if (id == null) throw new ArgumentNullException(nameof(id));
+            if (name == null) throw new ArgumentNullException(nameof(name));
             if (!Enum.IsDefined(typeof(HtmlEncodingMode), htmlEncodingMode)) throw new ArgumentException("htmlEncodingMode");
 
             ID = id;

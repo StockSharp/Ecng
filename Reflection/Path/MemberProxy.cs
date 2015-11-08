@@ -37,13 +37,13 @@
 		private MemberProxy(Type rootType, string path, MemberProxyItem[] items)
 		{
 			if (rootType == null)
-				throw new ArgumentNullException("rootType");
+				throw new ArgumentNullException(nameof(rootType));
 
 			if (path.IsEmpty())
-				throw new ArgumentNullException("path");
+				throw new ArgumentNullException(nameof(path));
 
 			if (items == null)
-				throw new ArgumentNullException("items");
+				throw new ArgumentNullException(nameof(items));
 
 			_rootType = rootType;
 			_path = path;
@@ -60,7 +60,7 @@
 
 		#region Items
 
-		public IEnumerable<MemberProxyItem> Items { get; private set; }
+		public IEnumerable<MemberProxyItem> Items { get; }
 
 		#endregion
 
@@ -74,7 +74,7 @@
 		public object Invoke(object instance, IDictionary<string, object> args)
 		{
 			if (args == null)
-				throw new ArgumentNullException("args");
+				throw new ArgumentNullException(nameof(args));
 
 			var formatterArgs = args.ToDictionary(pair => pair.Key.ToLower(), pair => pair.Value);
 
@@ -149,7 +149,7 @@
 					throw new ArgumentNullException("Type for member '{0}' is null.".Put(memberName), "type");
 
 				if (type == typeof(void))
-					throw new ArgumentException("Type for member '{0}' is void.".Put(memberName), "type");
+					throw new ArgumentException("Type for member '{0}' is void.".Put(memberName), nameof(type));
 
 				var methodMatch = _methodRegex.Match(memberName);
 				var indexerMatch = _indexerRegex.Match(memberName);
@@ -209,7 +209,7 @@
 			where T : MemberInfo
 		{
 			if (parametersSet == null)
-				throw new ArgumentNullException("parametersSet");
+				throw new ArgumentNullException(nameof(parametersSet));
 
 			var @params = new List<Param>();
 
@@ -218,7 +218,7 @@
 			if (!argsGroup.IsEmpty())
 			{
 				if (parametersSet.IsEmpty())
-					throw new ArgumentOutOfRangeException("parametersSet");
+					throw new ArgumentOutOfRangeException(nameof(parametersSet));
 
 				var args = argsGroup.Split(',');
 
@@ -315,15 +315,9 @@
 			return null;
 		}
 
-		public override ICustomAttributeProvider ReturnTypeCustomAttributes
-		{
-			get { return null; }
-		}
+		public override ICustomAttributeProvider ReturnTypeCustomAttributes => null;
 
-		public override MethodAttributes Attributes
-		{
-			get { return MethodAttributes.Public; }
-		}
+		public override MethodAttributes Attributes => MethodAttributes.Public;
 
 		public override MethodImplAttributes GetMethodImplementationFlags()
 		{
@@ -340,25 +334,13 @@
 			return Invoke(obj);
 		}
 
-		public override RuntimeMethodHandle MethodHandle
-		{
-			get { return default(RuntimeMethodHandle); }
-		}
+		public override RuntimeMethodHandle MethodHandle => default(RuntimeMethodHandle);
 
-		public override Type DeclaringType
-		{
-			get { return _rootType; }
-		}
+		public override Type DeclaringType => _rootType;
 
-		public override string Name
-		{
-			get { return _path; }
-		}
+		public override string Name => _path;
 
-		public override Type ReflectedType
-		{
-			get { return _rootType; }
-		}
+		public override Type ReflectedType => _rootType;
 
 		public override object[] GetCustomAttributes(Type attributeType, bool inherit)
 		{
@@ -375,10 +357,7 @@
 			return false;
 		}
 
-		public override Type ReturnType
-		{
-			get { return Items.IsEmpty() ? typeof(void) : Items.Last().Invoker.Member.GetMemberType(); }
-		}
+		public override Type ReturnType => Items.IsEmpty() ? typeof(void) : Items.Last().Invoker.Member.GetMemberType();
 
 		#endregion
 	}

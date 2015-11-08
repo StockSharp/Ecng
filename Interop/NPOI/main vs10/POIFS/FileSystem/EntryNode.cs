@@ -70,25 +70,15 @@ namespace NPOI.POIFS.FileSystem
         /// grant access to the property
         /// </summary>
         /// <value>the property backing this entry</value>
-        public Property Property
-        {
-            get { return _property; }
-        }
+        public Property Property => _property;
 
-        /// <summary>
+	    /// <summary>
         /// Is this the root of the tree?
         /// </summary>
         /// <value><c>true</c> if this instance is root; otherwise, <c>false</c>.</value>
-        protected bool IsRoot
-        {
-            get
-            {
-                // only the root Entry has no parent ...
-                return (_parent == null);
-            }
-        }
+        protected bool IsRoot => (_parent == null);
 
-        /// <summary>
+	    /// <summary>
         /// extensions use this method to verify internal rules regarding
         /// deletion of the underlying store.
         /// </summary>
@@ -103,56 +93,32 @@ namespace NPOI.POIFS.FileSystem
         /// <value>The name.</value>
         /// Get the name of the Entry
         /// @return name
-        public String Name
-        {
-            get
-            {
-                return _property.Name;
-            }
-        }
+        public String Name => _property.Name;
 
-        /// <summary>
+	    /// <summary>
         /// Is this a DirectoryEntry?
         /// </summary>
         /// <value>
         /// 	<c>true</c> if the Entry Is a DirectoryEntry; otherwise, <c>false</c>.
         /// </value>
-        public virtual bool IsDirectoryEntry
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public virtual bool IsDirectoryEntry => false;
 
-        /// <summary>
+	    /// <summary>
         /// Is this a DocumentEntry?
         /// </summary>
         /// <value>
         /// 	<c>true</c> if the Entry Is a DocumentEntry; otherwise, <c>false</c>.
         /// </value>
-        public virtual bool IsDocumentEntry
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public virtual bool IsDocumentEntry => false;
 
-        /// <summary>
+	    /// <summary>
         /// Get this Entry's parent (the DocumentEntry that owns this
         /// Entry). All Entry objects, except the root Entry, has a parent.
         /// </summary>
         /// <value>this Entry's parent; null iff this Is the root Entry</value>
-        public DirectoryEntry Parent
-        {
-            get
-            {
-                return _parent;
-            }
-        }
+        public DirectoryEntry Parent => _parent;
 
-        /// <summary>
+	    /// <summary>
         /// Delete this Entry. ThIs operation should succeed, but there are
         /// special circumstances when it will not:
         /// If this Entry Is the root of the Entry tree, it cannot be

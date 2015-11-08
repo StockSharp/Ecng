@@ -20,7 +20,7 @@
 			set
 			{
 				if (value.IsEmpty())
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_dllDir = value;
 
@@ -50,10 +50,10 @@
 		public static void Extract(Stream from, Stream to, string password = null)
 		{
 			if (from == null)
-				throw new ArgumentNullException("from");
+				throw new ArgumentNullException(nameof(@from));
 
 			if (to == null)
-				throw new ArgumentNullException("to");
+				throw new ArgumentNullException(nameof(to));
 
 			Init();
 
@@ -71,10 +71,10 @@
 		public static void Compress(Stream from, Stream to, string password = null)
 		{
 			if (from == null)
-				throw new ArgumentNullException("from");
+				throw new ArgumentNullException(nameof(@from));
 
 			if (to == null)
-				throw new ArgumentNullException("to");
+				throw new ArgumentNullException(nameof(to));
 
 			Init();
 

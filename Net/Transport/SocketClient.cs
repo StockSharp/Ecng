@@ -12,7 +12,7 @@ namespace Ecng.Net.Transport
 		public SocketClient(EndPoint serverAddress, bool autoCloseConnection)
 		{
 			if (serverAddress == null)
-				throw new ArgumentNullException("serverAddress");
+				throw new ArgumentNullException(nameof(serverAddress));
 
 			ServerAddress = serverAddress;
 			AutoCloseConnection = autoCloseConnection;
@@ -20,17 +20,17 @@ namespace Ecng.Net.Transport
 			//Error = delegate { };
 		}
 
-		public EndPoint ServerAddress { get; private set; }
-		public bool AutoCloseConnection { get; private set; }
+		public EndPoint ServerAddress { get; }
+		public bool AutoCloseConnection { get; }
 		//public Action<Exception> Error;
 
 		public void ProcessRequest(Stream request, Action<Stream> handler)
 		{
 			if (request == null)
-				throw new ArgumentNullException("request");
+				throw new ArgumentNullException(nameof(request));
 
 			if (handler == null)
-				throw new ArgumentNullException("handler");
+				throw new ArgumentNullException(nameof(handler));
 
 			var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 

@@ -103,9 +103,6 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
     }
 }

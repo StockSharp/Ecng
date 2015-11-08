@@ -29,10 +29,7 @@ namespace Ecng.Web
 
 		public const string DefaultPage = "Default.aspx";
 
-		public static string PortalName
-		{
-			get { return Url.Current.Host; }
-		}
+		public static string PortalName => Url.Current.Host;
 
 		public static string MakeEmail(string account)
 		{

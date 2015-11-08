@@ -129,14 +129,9 @@ namespace NPOI.HSSF.Model
         /// Gets the NoteRecord holding the comment attributes
         /// </summary>
         /// <value>The NoteRecord</value>
-        public NoteRecord NoteRecord
-        {
-            get
-            {
-                return note;
-            }
-        }
-        protected override int GetCmoObjectId(int shapeId)
+        public NoteRecord NoteRecord => note;
+
+	    protected override int GetCmoObjectId(int shapeId)
         {
             return shapeId;
         }

@@ -19,12 +19,9 @@ namespace Gma.DataStructures.StringSearch
         }
 
 
-        protected override int KeyLength
-        {
-            get { return 1; }
-        }
+        protected override int KeyLength => 1;
 
-        protected override IEnumerable<TValue> Values()
+		protected override IEnumerable<TValue> Values()
         {
             return m_Values;
         }
@@ -46,7 +43,7 @@ namespace Gma.DataStructures.StringSearch
 
         protected override TrieNodeBase<TValue> GetChildOrNull(string query, int position)
         {
-            if (query == null) throw new ArgumentNullException("query");
+            if (query == null) throw new ArgumentNullException(nameof(query));
             ConcurrentTrieNode<TValue> childNode;
             return
                 m_Children.TryGetValue(query[position], out childNode)

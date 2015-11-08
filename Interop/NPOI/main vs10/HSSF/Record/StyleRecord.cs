@@ -56,14 +56,8 @@ namespace NPOI.HSSF.Record
         {
             field_1_xf_index = isBuiltinFlag.Set(field_1_xf_index);
         }
-        public bool IsBuiltin
-        {
-            get
-            {
-                return isBuiltinFlag.IsSet(field_1_xf_index);
-            }
-        }
-        /**
+        public bool IsBuiltin => isBuiltinFlag.IsSet(field_1_xf_index);
+	    /**
          * Constructs a Style record and Sets its fields appropriately.
          * @param in the RecordInputstream to Read the record from
          */
@@ -238,9 +232,6 @@ namespace NPOI.HSSF.Record
         }
 
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
     }
 }

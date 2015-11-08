@@ -86,30 +86,21 @@ namespace NPOI.POIFS.Storage
         /// Get the number of SBAT blocks
         /// </summary>
         /// <value>number of SBAT big blocks</value>
-        public int SBATBlockCount
-        {
-            get { return (_big_block_count + 15) / 16; }
-        }
+        public int SBATBlockCount => (_big_block_count + 15) / 16;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the SBAT.
         /// </summary>
         /// <value>the Small Block Allocation Table</value>
-        public BlockAllocationTableWriter SBAT
-        {
-            get { return _sbat; }
-        }
+        public BlockAllocationTableWriter SBAT => _sbat;
 
-        /// <summary>
+	    /// <summary>
         /// Return the number of BigBlock's this instance uses
         /// </summary>
         /// <value>count of BigBlock instances</value>
-        public int CountBlocks
-        {
-            get{return _big_block_count;}
-        }
+        public int CountBlocks => _big_block_count;
 
-        /// <summary>
+	    /// <summary>
         /// Sets the start block.
         /// </summary>
         /// <value>The start block.</value>

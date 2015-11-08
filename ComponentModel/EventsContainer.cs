@@ -85,7 +85,7 @@ namespace Ecng.ComponentModel
 		public EventsContainer(Action<Exception> processDataError)
 		{
 			if (processDataError == null)
-				throw new ArgumentNullException("processDataError");
+				throw new ArgumentNullException(nameof(processDataError));
 
 			_processDataError = processDataError;
 		}
@@ -95,7 +95,7 @@ namespace Ecng.ComponentModel
 		public void Push(IEnumerable<TItem> newItems)
 		{
 			if (newItems == null)
-				throw new ArgumentNullException("newItems");
+				throw new ArgumentNullException(nameof(newItems));
 
 			if (newItems.IsEmpty())
 				return;

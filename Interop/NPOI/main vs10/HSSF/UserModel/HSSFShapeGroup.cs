@@ -1,4 +1,4 @@
-/* ====================================================================
+﻿/* ====================================================================
    Licensed to the Apache Software Foundation (ASF) Under one or more
    contributor license agreements.  See the NOTICE file distributed with
    this work for Additional information regarding copyright ownership.
@@ -268,12 +268,9 @@ namespace NPOI.HSSF.UserModel
         /// Return all children contained by this shape.
         /// </summary>
         /// <value></value>
-        public IList<HSSFShape> Children
-        {
-            get { return shapes; }
-        }
+        public IList<HSSFShape> Children => shapes;
 
-        /// <summary>
+	    /// <summary>
         /// Sets the coordinate space of this Group.  All children are constrained
         /// to these coordinates.
         /// </summary>
@@ -300,48 +297,27 @@ namespace NPOI.HSSF.UserModel
         /// Gets The top left x coordinate of this Group.
         /// </summary>
         /// <value>The x1.</value>
-        public int X1
-        {
-            get { return _spgrRecord.RectX1; }
-        }
+        public int X1 => _spgrRecord.RectX1;
 
-        /// <summary>
+	    /// <summary>
         /// Gets The top left y coordinate of this Group.
         /// </summary>
         /// <value>The y1.</value>
-        public int Y1
-        {
-            get
-            {
-                return _spgrRecord.RectY1;
-            }
-        }
+        public int Y1 => _spgrRecord.RectY1;
 
-        /// <summary>
+	    /// <summary>
         /// Gets The bottom right x coordinate of this Group.
         /// </summary>
         /// <value>The x2.</value>
-        public int X2
-        {
-            get
-            {
-                return _spgrRecord.RectX2;
-            }
-        }
+        public int X2 => _spgrRecord.RectX2;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the bottom right y coordinate of this Group.
         /// </summary>
         /// <value>The y2.</value>
-        public int Y2
-        {
-            get
-            {
-                return _spgrRecord.RectY2;
-            }
-        }
+        public int Y2 => _spgrRecord.RectY2;
 
-        /// <summary>
+	    /// <summary>
         /// Count of all children and their childrens children.
         /// </summary>
         /// <value></value>

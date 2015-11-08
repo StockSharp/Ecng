@@ -71,12 +71,9 @@ namespace Microsoft.Practices.Unity.Configuration
         /// <summary>
         /// Key used to keep these instances unique in the config collection.
         /// </summary>
-        public override string Key
-        {
-            get { return "instance:" + Name + ":" + Value; }
-        }
+        public override string Key => "instance:" + Name + ":" + Value;
 
-        /// <summary>
+	    /// <summary>
         /// Write the contents of this element to the given <see cref="XmlWriter"/>.
         /// </summary>
         /// <remarks>The caller of this method has already written the start element tag before

@@ -41,21 +41,15 @@ namespace NPOI.SS.Formula.PTG
             // enforce singleton
         }
 
-        protected override byte Sid
-        {
-            get { return sid; }
-        }
+        protected override byte Sid => sid;
 
-        /**
+	    /**
          * Get the number of operands for the Less than operator
          * @return int the number of operands
          */
-        public override int NumberOfOperands
-        {
-            get { return 2; }
-        }
+        public override int NumberOfOperands => 2;
 
-        /** 
+	    /** 
         * Implementation of method from OperationsPtg
         * @param operands a String array of operands
         * @return String the Formula as a String

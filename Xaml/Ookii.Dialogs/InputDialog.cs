@@ -257,11 +257,8 @@ namespace Ookii.Dialogs
         /// The collection of data-binding objects for this <see cref="TaskDialog"/>.
         /// </value>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content), Category("Data"), RefreshProperties(RefreshProperties.All), ParenthesizePropertyName(true)]
-        public ControlBindingsCollection DataBindings
-        {
-            get { return _bindings ?? (_bindings = new ControlBindingsCollection(this)); }
-        }
+        public ControlBindingsCollection DataBindings => _bindings ?? (_bindings = new ControlBindingsCollection(this));
 
-        #endregion
+	    #endregion
     }
 }

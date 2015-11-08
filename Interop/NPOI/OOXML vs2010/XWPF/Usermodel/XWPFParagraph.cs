@@ -176,49 +176,19 @@ namespace NPOI.XWPF.UserModel
             return paragraph;
         }
 
-        public IList<XWPFRun> Runs
-        {
-            get
-            {
-                return runs.AsReadOnly();
-            }
-        }
+        public IList<XWPFRun> Runs => runs.AsReadOnly();
 
-        /**
+	    /**
          * Return literal runs and sdt/content control objects.
          * @return List<IRunElement>
          */
-        public List<IRunElement> IRuns
-        {
-            get
-            {
-                return iRuns;
-            }
-        }
+        public List<IRunElement> IRuns => iRuns;
 
-        public bool IsEmpty
-        {
-            get
-            {
-                //!paragraph.getDomNode().hasChildNodes();
-                //inner xml include objects holded by Items and pPr object
-                //should use children of pPr node, but we didn't keep reference to it.
-                //return paragraph.Items.Count == 0 && (paragraph.pPr == null ||
-                //    paragraph.pPr != null && paragraph.pPr.rPr == null && paragraph.pPr.sectPr == null && paragraph.pPr.pPrChange == null
-                //    );
-                return paragraph.Items.Count == 0 && (paragraph.pPr == null || paragraph.pPr.IsEmpty);
-            }
-        }
+	    public bool IsEmpty => paragraph.Items.Count == 0 && (paragraph.pPr == null || paragraph.pPr.IsEmpty);
 
-        public XWPFDocument Document
-        {
-            get
-            {
-                return document;
-            }
-        }
+	    public XWPFDocument Document => document;
 
-        /**
+	    /**
          * Return the textual content of the paragraph, including text from pictures
          * and std element in it.
          */
@@ -508,15 +478,9 @@ namespace NPOI.XWPF.UserModel
          *
          * @return  the footnote text or empty string if the paragraph does not have footnotes
          */
-        public String FootnoteText
-        {
-            get
-            {
-                return footnoteText.ToString();
-            }
-        }
+        public String FootnoteText => footnoteText.ToString();
 
-        /**
+	    /**
          * Returns the paragraph alignment which shall be applied to text in this
          * paragraph.
          * <p>
@@ -1431,23 +1395,11 @@ namespace NPOI.XWPF.UserModel
          * returns the type of the BodyElement Paragraph
          * @see NPOI.XWPF.UserModel.IBodyElement#getElementType()
          */
-        public BodyElementType ElementType
-        {
-            get
-            {
-                return BodyElementType.PARAGRAPH;
-            }
-        }
+        public BodyElementType ElementType => BodyElementType.PARAGRAPH;
 
-        public IBody Body
-        {
-            get
-            {
-                return part;
-            }
-        }
+	    public IBody Body => part;
 
-        /**
+	    /**
          * returns the part of the bodyElement
          * @see NPOI.XWPF.UserModel.IBody#getPart()
          */
@@ -1468,15 +1420,9 @@ namespace NPOI.XWPF.UserModel
          * 
          * @see NPOI.XWPF.UserModel.IBody#getPartType()
          */
-        public BodyType PartType
-        {
-            get
-            {
-                return part.PartType;
-            }
-        }
+        public BodyType PartType => part.PartType;
 
-        /**
+	    /**
          * Adds a new Run to the Paragraph
          * 
          * @param r

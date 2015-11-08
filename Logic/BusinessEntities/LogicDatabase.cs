@@ -104,16 +104,16 @@ namespace Ecng.Logic.BusinessEntities
 		private static Dictionary<Tuple<Field, string>, byte> GetAuditFields(Type entityType, IEnumerable<AuditFieldAttribute> attrs, IDictionary<string, string> innerSchemaNameOverrides, IList<string> innerSchemaIgnoreFields)
 		{
 			if (entityType == null)
-				throw new ArgumentNullException("entityType");
+				throw new ArgumentNullException(nameof(entityType));
 
 			if (attrs == null)
-				throw new ArgumentNullException("attrs");
+				throw new ArgumentNullException(nameof(attrs));
 
 			if (innerSchemaNameOverrides == null)
-				throw new ArgumentNullException("innerSchemaNameOverrides");
+				throw new ArgumentNullException(nameof(innerSchemaNameOverrides));
 
 			if (innerSchemaIgnoreFields == null)
-				throw new ArgumentNullException("innerSchemaIgnoreFields");
+				throw new ArgumentNullException(nameof(innerSchemaIgnoreFields));
 
 			var fields = new Dictionary<Tuple<Field, string>, byte>();
 

@@ -273,16 +273,10 @@ namespace NPOI.HSSF.UserModel
         /**
          * Returns the series of the chart
          */
-        public HSSFSeries[] Series
-        {
-            get
-            {
-                return (HSSFSeries[])
-                    series.ToArray();
-            }
-        }
+        public HSSFSeries[] Series => (HSSFSeries[])
+	        series.ToArray();
 
-        /**
+	    /**
          * Returns the chart's title, if there is one,
          *  or null if not
          */
@@ -1027,25 +1021,13 @@ namespace NPOI.HSSF.UserModel
                 this.seriesTitleText = seriesTitleText;
             }
 
-            public short NumValues
-            {
-                get
-                {
-                    return series.NumValues;
-                }
-            }
-            /**
+            public short NumValues => series.NumValues;
+	        /**
              * See {@link SeriesRecord}
              */
-            public short ValueType
-            {
-                get
-                {
-                    return series.ValuesDataType;
-                }
-            }
+            public short ValueType => series.ValuesDataType;
 
-            /**
+	        /**
              * Returns the series' title, if there is one,
              *  or null if not
              */
@@ -1440,12 +1422,6 @@ namespace NPOI.HSSF.UserModel
             return result;
         }
 
-        public HSSFChartType Type
-        {
-            get
-            {
-                return type;
-            }
-        }
+        public HSSFChartType Type => type;
     }
 }

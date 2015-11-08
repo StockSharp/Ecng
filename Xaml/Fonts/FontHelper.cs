@@ -14,7 +14,7 @@ namespace Ecng.Xaml.Fonts
 		public static string TypefaceToString(this FamilyTypeface ttf)
 		{
 			if (ttf == null)
-				throw new ArgumentNullException("ttf");
+				throw new ArgumentNullException(nameof(ttf));
 
 			var sb = new StringBuilder(ttf.Stretch.ToString());
 			sb.Append("-");
@@ -27,7 +27,7 @@ namespace Ecng.Xaml.Fonts
 		public static FamilyTypeface TypefaceFromString(this string str)
 		{
 			if (str.IsEmpty())
-				throw new ArgumentNullException("str");
+				throw new ArgumentNullException(nameof(str));
 
 			var parts = str.Split('-');
 
@@ -42,10 +42,10 @@ namespace Ecng.Xaml.Fonts
 		public static void ApplyFont(this Control control, FontInfo font)
 		{
 			if (control == null)
-				throw new ArgumentNullException("control");
+				throw new ArgumentNullException(nameof(control));
 
 			if (font == null)
-				throw new ArgumentNullException("font");
+				throw new ArgumentNullException(nameof(font));
 
 			control.FontFamily = font.Family;
 			control.FontSize = font.Size;
@@ -58,7 +58,7 @@ namespace Ecng.Xaml.Fonts
 		public static FontInfo GetFont(this Control control)
 		{
 			if (control == null)
-				throw new ArgumentNullException("control");
+				throw new ArgumentNullException(nameof(control));
 
 			return new FontInfo
 			{
@@ -74,10 +74,10 @@ namespace Ecng.Xaml.Fonts
 		public static void ApplyFont(this TextBlock control, FontInfo font)
 		{
 			if (control == null)
-				throw new ArgumentNullException("control");
+				throw new ArgumentNullException(nameof(control));
 
 			if (font == null)
-				throw new ArgumentNullException("font");
+				throw new ArgumentNullException(nameof(font));
 
 			control.FontFamily = font.Family;
 			control.FontSize = font.Size;
@@ -90,7 +90,7 @@ namespace Ecng.Xaml.Fonts
 		public static FontInfo GetFont(this TextBlock control)
 		{
 			if (control == null)
-				throw new ArgumentNullException("control");
+				throw new ArgumentNullException(nameof(control));
 
 			return new FontInfo
 			{

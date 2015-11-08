@@ -296,17 +296,11 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(Copies);
         }
 
-        protected override int DataSize
-        {
-            get { return 34; }
-        }
+        protected override int DataSize => 34;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             PrintSetupRecord rec = new PrintSetupRecord();
             rec.field_1_paper_size = field_1_paper_size;

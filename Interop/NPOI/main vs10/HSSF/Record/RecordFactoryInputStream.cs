@@ -132,37 +132,19 @@ namespace NPOI.HSSF.Record
                 return new RecordInputStream(original, key, _InitialRecordsSize);
             }
 
-            public bool HasEncryption
-            {
-                get
-                {
-                    return _filePassRec != null;
-                }
-            }
+            public bool HasEncryption => _filePassRec != null;
 
-            /**
+	        /**
              * @return last record scanned while looking for encryption info.
              * This will typically be the first or second record Read. Possibly <code>null</code>
              * if stream was empty
              */
-            public Record LastRecord
-            {
-                get
-                {
-                    return _lastRecord;
-                }
-            }
+            public Record LastRecord => _lastRecord;
 
-            /**
+	        /**
              * <c>false</c> in some test cases
              */
-            public bool HasBOFRecord
-            {
-                get
-                {
-                    return _hasBOFRecord;
-                }
-            }
+            public bool HasBOFRecord => _hasBOFRecord;
         }
 
 

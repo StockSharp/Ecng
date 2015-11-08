@@ -29,21 +29,11 @@ namespace NPOI.SS.Formula
         {
             _lastSheetIdentifier = lastSheetIdentifier;
         }
-        public NameIdentifier FirstSheetIdentifier
-        {
-            get
-            {
-                return base.SheetId;
-            }
-        }
-        public NameIdentifier LastSheetIdentifier
-        {
-            get
-            {
-                return _lastSheetIdentifier;
-            }
-        }
-        protected override void AsFormulaString(StringBuilder sb)
+        public NameIdentifier FirstSheetIdentifier => base.SheetId;
+
+	    public NameIdentifier LastSheetIdentifier => _lastSheetIdentifier;
+
+	    protected override void AsFormulaString(StringBuilder sb)
         {
             base.AsFormulaString(sb);
             sb.Append(':');

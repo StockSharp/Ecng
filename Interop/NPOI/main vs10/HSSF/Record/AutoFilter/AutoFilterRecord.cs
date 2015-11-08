@@ -61,12 +61,9 @@ namespace NPOI.HSSF.Record.AutoFilter
             }
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public short iEntry
+	    public short iEntry
         {
             get { return field_1_iEntry; }
             set { field_1_iEntry = value; }
@@ -89,17 +86,11 @@ namespace NPOI.HSSF.Record.AutoFilter
             set { field_2_grbit = fSimple2Flag.SetShortBoolean(field_2_grbit, value); }
         }
 
-        public DOPERRecord Doper1
-        {
-            get { return field_3_doper1; }
-        }
+        public DOPERRecord Doper1 => field_3_doper1;
 
-        public DOPERRecord Doper2
-        {
-            get { return field_4_doper2; }
-        }
+	    public DOPERRecord Doper2 => field_4_doper2;
 
-        public string Doper1RGCH
+	    public string Doper1RGCH
         {
             get { return field_5_rgch1; }
             set {

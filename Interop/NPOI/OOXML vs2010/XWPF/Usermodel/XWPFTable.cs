@@ -178,15 +178,9 @@ namespace NPOI.XWPF.UserModel
          *
          * @return text
          */
-        public String Text
-        {
-            get
-            {
-                return text.ToString();
-            }
-        }
+        public String Text => text.ToString();
 
-        public void AddNewRowBetween(int start, int end)
+	    public void AddNewRowBetween(int start, int end)
         {
             throw new NotImplementedException();
         }
@@ -258,15 +252,9 @@ namespace NPOI.XWPF.UserModel
         /**
          * @return number of rows in table
          */
-        public int NumberOfRows
-        {
-            get
-            {
-                return ctTbl.SizeOfTrArray();
-            }
-        }
+        public int NumberOfRows => ctTbl.SizeOfTrArray();
 
-        private CT_TblPr GetTrPr()
+	    private CT_TblPr GetTrPr()
         {
             return (ctTbl.tblPr != null) ? ctTbl.tblPr : ctTbl
                     .AddNewTblPr();
@@ -739,36 +727,17 @@ namespace NPOI.XWPF.UserModel
             return false;
         }
 
-        public List<XWPFTableRow> Rows
-        {
-            get
-            {
-                return tableRows;
-            }
-        }
+        public List<XWPFTableRow> Rows => tableRows;
 
-
-        /**
+	    /**
          * returns the type of the BodyElement Table
          * @see NPOI.XWPF.UserModel.IBodyElement#getElementType()
          */
-        public BodyElementType ElementType
-        {
-            get
-            {
-                return BodyElementType.TABLE;
-            }
-        }
+        public BodyElementType ElementType => BodyElementType.TABLE;
 
-        public IBody Body
-        {
-            get
-            {
-                return part;
-            }
-        }
+	    public IBody Body => part;
 
-        /**
+	    /**
          * returns the part of the bodyElement
          * @see NPOI.XWPF.UserModel.IBody#getPart()
          */
@@ -788,15 +757,9 @@ namespace NPOI.XWPF.UserModel
          * returns the partType of the bodyPart which owns the bodyElement
          * @see NPOI.XWPF.UserModel.IBody#getPartType()
          */
-        public BodyType PartType
-        {
-            get
-            {
-                return part.PartType;
-            }
-        }
+        public BodyType PartType => part.PartType;
 
-        /**
+	    /**
          * returns the XWPFRow which belongs to the CTRow row
          * if this row is not existing in the table null will be returned
          */

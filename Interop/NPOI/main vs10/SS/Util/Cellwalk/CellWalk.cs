@@ -119,29 +119,11 @@ namespace NPOI.SS.Util.CellWalk
             public int rowNumber = 0;
             public int colNumber = 0;
 
-            public long OrdinalNumber
-            {
-                get
-                {
-                    return ordinalNumber;
-                }
-            }
+            public long OrdinalNumber => ordinalNumber;
 
-            public int RowNumber
-            {
-                get
-                {
-                    return rowNumber;
-                }
-            }
+	        public int RowNumber => rowNumber;
 
-            public int ColumnNumber
-            {
-                get
-                {
-                    return colNumber;
-                }
-            }
+	        public int ColumnNumber => colNumber;
         }
     }
 

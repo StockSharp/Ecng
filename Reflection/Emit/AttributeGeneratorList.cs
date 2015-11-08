@@ -11,7 +11,7 @@ namespace Ecng.Reflection.Emit
 		internal AttributeGeneratorList(object owner)
 		{
 			if (owner == null)
-				throw new ArgumentNullException("owner");
+				throw new ArgumentNullException(nameof(owner));
 
 			_owner = owner;
 		}

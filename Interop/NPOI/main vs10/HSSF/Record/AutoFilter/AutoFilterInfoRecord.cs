@@ -19,17 +19,11 @@ namespace NPOI.HSSF.Record.AutoFilter
         }
 
         public const short sid = 0x9D;
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        protected override int DataSize
-        {
-            get { return 2; }
-        }
+	    protected override int DataSize => 2;
 
-        public short NumEntries
+	    public short NumEntries
         {
             get { return field_1_cEntries; }
             set { field_1_cEntries = value; }

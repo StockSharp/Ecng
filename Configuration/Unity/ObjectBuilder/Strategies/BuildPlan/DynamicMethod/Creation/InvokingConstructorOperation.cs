@@ -36,12 +36,9 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// <summary>
         /// Constructor we're trying to call.
         /// </summary>
-        public string ConstructorSignature
-        {
-            get { return constructorSignature; }
-        }
+        public string ConstructorSignature => constructorSignature;
 
-        /// <summary>
+	    /// <summary>
         /// Generate the description string.
         /// </summary>
         /// <returns>The string.</returns>

@@ -71,21 +71,11 @@ namespace NPOI.SS.Formula.Functions
             /**
              * @return number of characters used to represent this operator
              */
-            public int Length
-            {
-                get
-                {
-                    return _representation.Length;
-                }
-            }
-            public int Code
-            {
-                get
-                {
-                    return _code;
-                }
-            }
-            public static CmpOp GetOperator(String value)
+            public int Length => _representation.Length;
+
+	        public int Code => _code;
+
+	        public static CmpOp GetOperator(String value)
             {
                 int len = value.Length;
                 if (len < 1)
@@ -160,13 +150,7 @@ namespace NPOI.SS.Formula.Functions
                 sb.Append(" [").Append(_representation).Append("]");
                 return sb.ToString();
             }
-            public String Representation
-            {
-                get
-                {
-                    return _representation;
-                }
-            }
+            public String Representation => _representation;
         }
         internal abstract class MatcherBase : IMatchPredicate
         {
@@ -176,14 +160,9 @@ namespace NPOI.SS.Formula.Functions
             {
                 _operator = operator1;
             }
-            protected int Code
-            {
-                get
-                {
-                    return _operator.Code;
-                }
-            }
-            protected bool Evaluate(int cmpResult)
+            protected int Code => _operator.Code;
+
+	        protected bool Evaluate(int cmpResult)
             {
                 return _operator.Evaluate(cmpResult);
             }
@@ -216,15 +195,9 @@ namespace NPOI.SS.Formula.Functions
                 ;
                 _value = errorCode;
             }
-            protected override String ValueText
-            {
-                get
-                {
-                    return ErrorConstants.GetText(_value);
-                }
-            }
+            protected override String ValueText => ErrorConstants.GetText(_value);
 
-            public override bool Matches(ValueEval x)
+	        public override bool Matches(ValueEval x)
             {
                 if (x is ErrorEval)
                 {
@@ -298,10 +271,7 @@ namespace NPOI.SS.Formula.Functions
                 return Evaluate(testValue.CompareTo(_value));
             }
 
-            protected override string ValueText
-            {
-                get { return _value.ToString(CultureInfo.InvariantCulture); }
-            }
+            protected override string ValueText => _value.ToString(CultureInfo.InvariantCulture);
         }
         private class BooleanMatcher : MatcherBase
         {
@@ -377,10 +347,7 @@ namespace NPOI.SS.Formula.Functions
                 return Evaluate(testValue - _value);
             }
 
-            protected override string ValueText
-            {
-                get { return _value == 1 ? "TRUE" : "FALSE"; }
-            }
+            protected override string ValueText => _value == 1 ? "TRUE" : "FALSE";
         }
         internal class StringMatcher : MatcherBase
         {

@@ -45,7 +45,7 @@
 		public static Action InitWpf(Action init)
 		{
 			if (init == null)
-				throw new ArgumentNullException("init");
+				throw new ArgumentNullException(nameof(init));
 
 			using (var waitHandle = new AutoResetEvent(false))
 			{

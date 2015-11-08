@@ -133,17 +133,11 @@ namespace NPOI.HSSF.Record
             return buffer.ToString();
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 4 // 2 short fields
-                    + CellRangeAddress.ENCODED_SIZE
-                    + field_4_cell_ranges.Size;
-            }
-        }
+        protected override int DataSize => 4 // 2 short fields
+                                           + CellRangeAddress.ENCODED_SIZE
+                                           + field_4_cell_ranges.Size;
 
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             out1.WriteShort(field_1_numcf);
             out1.WriteShort(field_2_need_recalculation);
@@ -152,12 +146,9 @@ namespace NPOI.HSSF.Record
         }
 
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             CFHeaderRecord result = new CFHeaderRecord();
             result.field_1_numcf = field_1_numcf;

@@ -17,7 +17,7 @@ namespace Gma.DataStructures.StringSearch
 
         public void Add(string key, int position, TValue value)
         {
-            if (key == null) throw new ArgumentNullException("key");
+            if (key == null) throw new ArgumentNullException(nameof(key));
             if (EndOfString(position, key))
             {
                 AddValue(value);

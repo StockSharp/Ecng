@@ -29,8 +29,8 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 		/// <param name="algorithmType">A fully qualifed type name derived from <see cref="HashAlgorithm"/>.</param>
 		public HashCryptographer(Type algorithmType)
 		{
-			if (algorithmType == null) throw new ArgumentNullException("algorithmType");
-			if (!typeof(HashAlgorithm).IsAssignableFrom(algorithmType)) throw new ArgumentException(Resources.ExceptionCreatingHashAlgorithmInstance, "algorithmType");
+			if (algorithmType == null) throw new ArgumentNullException(nameof(algorithmType));
+			if (!typeof(HashAlgorithm).IsAssignableFrom(algorithmType)) throw new ArgumentException(Resources.ExceptionCreatingHashAlgorithmInstance, nameof(algorithmType));
 
 			this.algorithmType = algorithmType;
 		}

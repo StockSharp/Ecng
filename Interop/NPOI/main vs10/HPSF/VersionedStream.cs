@@ -27,9 +27,6 @@ namespace NPOI.HPSF
             _streamName = new IndirectPropertyName(data, offset + GUID.SIZE);
         }
 
-        public int Size
-        {
-            get { return GUID.SIZE + _streamName.Size; }
-        }
+        public int Size => GUID.SIZE + _streamName.Size;
     }
 }

@@ -48,24 +48,15 @@ namespace ManagedWinapi.Windows.Contents
         }
 
         ///
-        public string ComponentType
-        {
-            get { return "AccessibleWindow"; }
-        }
+        public string ComponentType => "AccessibleWindow";
 
-        ///
-        public string ShortDescription
-        {
-            get
-            {
-                return name + " <AccessibleWindow:" +
-                    (hasSysMenu ? " SystemMenu" : "") +
-                    (hasMenu ? " Menu" : "") +
-                    (hasClientArea ? " ClientArea" : "") + ">";
-            }
-        }
+	    ///
+        public string ShortDescription => name + " <AccessibleWindow:" +
+                                          (hasSysMenu ? " SystemMenu" : "") +
+                                          (hasMenu ? " Menu" : "") +
+                                          (hasClientArea ? " ClientArea" : "") + ">";
 
-        ///
+	    ///
         public string LongDescription
         {
             get

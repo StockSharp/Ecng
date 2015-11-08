@@ -50,26 +50,14 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// The number of items (icons) in this tree view.
         /// </summary>
-        public int Count
-        {
-            get
-            {
-                return sw.SendGetMessage(TVM_GETCOUNT);
-            }
-        }
+        public int Count => sw.SendGetMessage(TVM_GETCOUNT);
 
-        /// <summary>
+	    /// <summary>
         /// The root items of this tree view.
         /// </summary>
-        public SystemTreeViewItem[] Roots
-        {
-            get
-            {
-                return FindSubItems(sw, IntPtr.Zero);
-            }
-        }
+        public SystemTreeViewItem[] Roots => FindSubItems(sw, IntPtr.Zero);
 
-        internal static SystemTreeViewItem[] FindSubItems(SystemWindow sw, IntPtr hParent)
+	    internal static SystemTreeViewItem[] FindSubItems(SystemWindow sw, IntPtr hParent)
         {
             List<SystemTreeViewItem> result = new List<SystemTreeViewItem>();
             IntPtr hChild;
@@ -142,12 +130,9 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// All child items of that item.
         /// </summary>
-        public SystemTreeViewItem[] Children
-        {
-            get { return SystemTreeView.FindSubItems(sw, handle); }
-        }
+        public SystemTreeViewItem[] Children => SystemTreeView.FindSubItems(sw, handle);
 
-        #region PInvoke Declarations
+	    #region PInvoke Declarations
 
         private static readonly uint TVM_GETITEM = 0x1100 + 12, TVIF_TEXT = 1;
 

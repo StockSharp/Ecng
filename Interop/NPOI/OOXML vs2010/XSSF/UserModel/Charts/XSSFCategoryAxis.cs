@@ -26,15 +26,9 @@ namespace NPOI.XSSF.UserModel.Charts
             this.ctCatAx = ctCatAx;
         }
 
-        public override long Id
-        {
-            get
-            {
-                return ctCatAx.axId.val;
-            }
-        }
+        public override long Id => ctCatAx.axId.val;
 
-        protected override CT_AxPos GetCTAxPos()
+	    protected override CT_AxPos GetCTAxPos()
         {
             return ctCatAx.axPos;
         }

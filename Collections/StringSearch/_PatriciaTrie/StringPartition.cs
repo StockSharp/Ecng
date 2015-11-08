@@ -30,27 +30,21 @@ namespace Gma.DataStructures.StringSearch
 
         public StringPartition(string origin, int startIndex, int partitionLength)
         {
-            if (origin == null) throw new ArgumentNullException("origin");
-            if (startIndex < 0) throw new ArgumentOutOfRangeException("startIndex", "The value must be non negative.");
+            if (origin == null) throw new ArgumentNullException(nameof(origin));
+            if (startIndex < 0) throw new ArgumentOutOfRangeException(nameof(startIndex), "The value must be non negative.");
             if (partitionLength < 0)
-                throw new ArgumentOutOfRangeException("partitionLength", "The value must be non negative.");
+                throw new ArgumentOutOfRangeException(nameof(partitionLength), "The value must be non negative.");
             m_Origin = string.Intern(origin);
             m_StartIndex = startIndex;
             int availableLength = m_Origin.Length - startIndex;
             m_PartitionLength = Math.Min(partitionLength, availableLength);
         }
 
-        public char this[int index]
-        {
-            get { return m_Origin[m_StartIndex + index]; }
-        }
+        public char this[int index] => m_Origin[m_StartIndex + index];
 
-        public int Length
-        {
-            get { return m_PartitionLength; }
-        }
+	    public int Length => m_PartitionLength;
 
-        #region IEnumerable<char> Members
+	    #region IEnumerable<char> Members
 
         public IEnumerator<char> GetEnumerator()
         {

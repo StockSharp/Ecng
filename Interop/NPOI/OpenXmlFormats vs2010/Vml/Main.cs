@@ -1111,12 +1111,9 @@ namespace NPOI.OpenXmlFormats.Vml
             set { this.fField = value; }
         }
         [XmlIgnore]
-        public bool fSpecified
-        {
-            get { return (null != fField); }
-        }
+        public bool fSpecified => (null != fField);
 
-        public CT_F AddNewF()
+	    public CT_F AddNewF()
         {
             if (this.fField == null)
                 this.fField = new List<CT_F>();
@@ -1172,11 +1169,9 @@ namespace NPOI.OpenXmlFormats.Vml
             set { this.eqnField = value; }
         }
         [XmlIgnore]
-        public bool eqnSpecified
-        {
-            get { return (null != eqnField); }
-        }
-        public static CT_F Parse(XmlNode node, XmlNamespaceManager namespaceManager)
+        public bool eqnSpecified => (null != eqnField);
+
+	    public static CT_F Parse(XmlNode node, XmlNamespaceManager namespaceManager)
         {
             if (node == null)
                 return null;
@@ -1214,12 +1209,9 @@ namespace NPOI.OpenXmlFormats.Vml
             set { this.hField = value; }
         }
         [XmlIgnore]
-        public bool hSpecified
-        {
-            get { return (null != hField); }
-        }
+        public bool hSpecified => (null != hField);
 
-        public CT_H AddNewH()
+	    public CT_H AddNewH()
         {
             if (hField == null)
                 hField = new List<CT_H>();

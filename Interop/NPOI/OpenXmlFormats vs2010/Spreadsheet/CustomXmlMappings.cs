@@ -120,13 +120,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             }
         }
         [XmlIgnore]
-        public bool SchemaRefSpecified
-        {
-            get { return null != this.schemaRefField; }
-        }
+        public bool SchemaRefSpecified => null != this.schemaRefField;
 
-
-        [XmlAttribute]
+	    [XmlAttribute]
         public string Namespace
         {
             get
@@ -139,12 +135,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             }
         }
         [XmlIgnore]
-        public bool NamespaceSpecified
-        {
-            get { return null != this.namespaceField; }
-        }
+        public bool NamespaceSpecified => null != this.namespaceField;
 
-        public string InnerXml;
+	    public string InnerXml;
     }
 
 
@@ -189,13 +182,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             }
         }
         [XmlIgnore]
-        public bool DataBindingSpecified
-        {
-            get { return (null != dataBindingField); }
-        }
+        public bool DataBindingSpecified => (null != dataBindingField);
 
-
-        [XmlAttribute]
+	    [XmlAttribute]
         public uint ID
         {
             get
@@ -359,26 +348,18 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.dataBindingNameField = value; }
         }
         [XmlIgnore]
-        public bool outlineSpecified
-        {
-            get { return (null != dataBindingNameField); }
-        }
+        public bool outlineSpecified => (null != dataBindingNameField);
 
-
-        [XmlAttribute]
+	    [XmlAttribute]
         public bool FileBinding
         {
             get { return null == this.fileBindingField ? false : (bool)this.fileBindingField; } // default value not defined in xsd
             set { this.fileBindingField = value; }
         }
         [XmlIgnore]
-        public bool FileBindingSpecified
-        {
-            get { return (null != fileBindingField); }
-        }
+        public bool FileBindingSpecified => (null != fileBindingField);
 
-
-        [XmlAttribute]
+	    [XmlAttribute]
         public uint ConnectionID
         {
             get { return null == this.connectionIDField ? 0 : (uint)this.connectionIDField; } // default value not defined in xsd
@@ -386,26 +367,18 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
         }
 
         [XmlIgnore]
-        public bool ConnectionIDSpecified
-        {
-            get { return (null != connectionIDField); }
-        }
+        public bool ConnectionIDSpecified => (null != connectionIDField);
 
-
-        [XmlAttribute]
+	    [XmlAttribute]
         public string FileBindingName
         {
             get { return this.fileBindingNameField; }
             set { this.fileBindingNameField = value; }
         }
         [XmlIgnore]
-        public bool FileBindingNameSpecified
-        {
-            get { return (null != fileBindingNameField); }
-        }
+        public bool FileBindingNameSpecified => (null != fileBindingNameField);
 
-
-        [XmlAttribute]
+	    [XmlAttribute]
         public uint DataBindingLoadMode
         {
             get { return this.dataBindingLoadModeField; }

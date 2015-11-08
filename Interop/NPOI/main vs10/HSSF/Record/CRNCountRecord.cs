@@ -55,15 +55,9 @@ namespace NPOI.HSSF.Record
             field_2_sheet_table_index = in1.ReadShort();
         }
 
-        public int NumberOfCRNs
-        {
-            get
-            {
-                return field_1_number_crn_records;
-            }
-        }
+        public int NumberOfCRNs => field_1_number_crn_records;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(GetType().Name).Append(" [XCT");
@@ -78,20 +72,11 @@ namespace NPOI.HSSF.Record
             out1.WriteShort((short)field_1_number_crn_records);
             out1.WriteShort((short)field_2_sheet_table_index);
         }
-        protected override int DataSize
-        {
-            get
-            {
-                return DATA_SIZE;
-            }
-        }
+        protected override int DataSize => DATA_SIZE;
 
-        /**
+	    /**
          * return the non static version of the id for this record.
          */
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
     }
 }

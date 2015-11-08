@@ -14,13 +14,13 @@ namespace Ecng.Web.BBCodes.SyntaxTree
         public TextNode(string text, string htmlTemplate)
             : base(null)
         {
-            if (text == null) throw new ArgumentNullException("text");
+            if (text == null) throw new ArgumentNullException(nameof(text));
             Text = text;
             HtmlTemplate = htmlTemplate;
         }
 
-        public string Text { get; private set; }
-        public string HtmlTemplate { get; private set; }
+        public string Text { get; }
+        public string HtmlTemplate { get; }
 
         public override string ToHtml()
         {
@@ -37,13 +37,13 @@ namespace Ecng.Web.BBCodes.SyntaxTree
 
         public override SyntaxTreeNode SetSubNodes(IEnumerable<SyntaxTreeNode> subNodes)
         {
-            if (subNodes == null) throw new ArgumentNullException("subNodes");
+            if (subNodes == null) throw new ArgumentNullException(nameof(subNodes));
             if (subNodes.Any()) throw new ArgumentException("subNodes cannot contain any nodes for a TextNode");
             return this;
         }
         internal override SyntaxTreeNode AcceptVisitor(SyntaxTreeVisitor visitor)
         {
-            if (visitor == null) throw new ArgumentNullException("visitor");
+            if (visitor == null) throw new ArgumentNullException(nameof(visitor));
             return visitor.Visit(this);
         }
 

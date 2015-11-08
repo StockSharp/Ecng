@@ -351,12 +351,9 @@ namespace NDde.Advanced
         /// <summary>
         /// This gets a bool indicating whether the caller must use Invoke.
         /// </summary>
-        public bool InvokeRequired
-        {
-            get { return Synchronizer.InvokeRequired; }
-        }
+        public bool InvokeRequired => Synchronizer.InvokeRequired;
 
-        /// <summary>
+	    /// <summary>
         /// This initializes the context.
         /// </summary>
         /// <exception cref="InvalidOperationException">

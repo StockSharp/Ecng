@@ -105,12 +105,9 @@ namespace ManagedWinapi.Hooks
         /// <summary>
         /// Whether this hook has been started.
         /// </summary>
-        public bool Hooked
-        {
-            get { return hooked; }
-        }
+        public bool Hooked => hooked;
 
-        /// <summary>
+	    /// <summary>
         /// Hooks the hook.
         /// </summary>
         public virtual void StartHook()

@@ -44,15 +44,9 @@ namespace NPOI.HSSF.UserModel
         /// Gets the pattern formatting block.
         /// </summary>
         /// <value>The pattern formatting block.</value>
-        public PatternFormatting PatternFormattingBlock
-        {
-            get
-            {
-                return patternFormatting;
-            }
-        }
+        public PatternFormatting PatternFormattingBlock => patternFormatting;
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the color of the fill background.
         /// </summary>
         /// <value>The color of the fill background.</value>

@@ -55,15 +55,9 @@ namespace NPOI.HSSF.Record.Common
             return buffer.ToString();
         }
 
-        public int DataSize
-        {
-            get
-            {
-                return data.Length;
-            }
-        }
+        public int DataSize => data.Length;
 
-        public void Serialize(ILittleEndianOutput out1)
+	    public void Serialize(ILittleEndianOutput out1)
         {
             out1.Write(data);
         }

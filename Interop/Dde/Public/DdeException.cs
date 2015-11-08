@@ -94,12 +94,9 @@ namespace NDde
         /// </list>
         /// </para>
         /// </remarks>
-        public int Code
-        {
-            get { return _DdemlObject.Code; }
-        }
+        public int Code => _DdemlObject.Code;
 
-        /// <summary>
+	    /// <summary>
         /// </summary>
         /// <param name="info"></param>
         /// <param name="context"></param>

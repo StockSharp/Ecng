@@ -11,10 +11,7 @@
 		#region UrlRewritingRules
 
 		[ConfigurationProperty("urlRewritingRules", IsRequired = true)]
-		public ProviderSettingsCollection UrlRewritingRules
-		{
-			get { return (ProviderSettingsCollection)base["urlRewritingRules"]; }
-		}
+		public ProviderSettingsCollection UrlRewritingRules => (ProviderSettingsCollection)base["urlRewritingRules"];
 
 		#endregion
 	}

@@ -30,21 +30,11 @@ namespace NPOI.SS.Formula
             _name = name;
             _isQuoted = isQuoted;
         }
-        public String Name
-        {
-            get
-            {
-                return _name;
-            }
-        }
-        public bool IsQuoted
-        {
-            get
-            {
-                return _isQuoted;
-            }
-        }
-        public override String ToString()
+        public String Name => _name;
+
+	    public bool IsQuoted => _isQuoted;
+
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder(64);
             sb.Append(this.GetType().Name);

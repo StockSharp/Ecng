@@ -85,22 +85,15 @@ namespace NPOI.HSSF.Record.Aggregates
             }
         }
         /** It's an aggregate... just made something up */
-        public override short Sid
-        {
-            get { return -1012; }
-        }
-        /// <summary>
+        public override short Sid => -1012;
+
+	    /// <summary>
         /// Gets the num columns.
         /// </summary>
         /// <value>The num columns.</value>
-        public int NumColumns
-        {
-            get
-            {
-                return records.Count;
-            }
-        }
-        /// <summary>
+        public int NumColumns => records.Count;
+
+	    /// <summary>
         /// Gets the size of the record.
         /// </summary>
         /// <value>The size of the record.</value>

@@ -8,7 +8,7 @@ namespace Ecng.Reflection.Path
 		protected MemberProxyItem(FastInvoker invoker)
 		{
 			if (invoker == null)
-				throw new ArgumentNullException("invoker");
+				throw new ArgumentNullException(nameof(invoker));
 
 			Invoker = invoker;
 		}

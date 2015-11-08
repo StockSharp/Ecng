@@ -60,16 +60,9 @@ namespace NDde.Foundation.Advanced.Monitor
             _Action = action;
         }
 
-        public string Value
-        {
-            get { return _Value; }
-        }
+        public string Value => _Value;
 
-        public DdemlStringActivityType Action
-        {
-            get { return _Action; }
-        }
-
+	    public DdemlStringActivityType Action => _Action;
     } // class
 
 } // namespace

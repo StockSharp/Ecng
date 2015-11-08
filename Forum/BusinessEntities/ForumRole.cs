@@ -21,9 +21,6 @@
 		[RelationMany(typeof(RoleSecurityEntryList), BulkLoad = true)]
 		public SecurityEntryList Entries { get; protected set; }
 
-		IWebUserCollection IWebRole.Users
-		{
-			get { return Users; }
-		}
+		IWebUserCollection IWebRole.Users => Users;
 	}
 }

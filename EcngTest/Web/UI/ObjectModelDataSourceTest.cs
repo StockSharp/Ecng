@@ -44,10 +44,7 @@ namespace Ecng.Test.Web.UI
 		private readonly TestEntityList _childs;
 
 		[RelationMany(typeof(TestEntityList))]
-		public TestEntityList Childs
-		{
-			get { return _childs; }
-		}
+		public TestEntityList Childs => _childs;
 
 		#endregion
 

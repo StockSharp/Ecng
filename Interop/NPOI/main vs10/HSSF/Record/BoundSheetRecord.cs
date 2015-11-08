@@ -124,15 +124,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        private bool IsMultibyte
-        {
-            get
-            {
-                return (field_4_isMultibyteUnicode & 0x01) != 0;
-            }
-        }
+        private bool IsMultibyte => (field_4_isMultibyteUnicode & 0x01) != 0;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
 
@@ -145,15 +139,9 @@ namespace NPOI.HSSF.Record
             return buffer.ToString();
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 8 + field_5_sheetname.Length * (IsMultibyte ? 2 : 1);
-            }
-        }
+        protected override int DataSize => 8 + field_5_sheetname.Length * (IsMultibyte ? 2 : 1);
 
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             out1.WriteInt(PositionOfBof);
             out1.WriteShort(field_2_option_flags);
@@ -172,12 +160,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public bool IsHidden
+	    public bool IsHidden
         {
             get
             {

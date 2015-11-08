@@ -68,13 +68,9 @@ namespace NPOI.HSSF.Record
             field_4_rk_number = in1.ReadInt();
         }
 
-        public int RKField
-        {
-            get { return field_4_rk_number; }
+        public int RKField => field_4_rk_number;
 
-        }
-
-        /**
+	    /**
          * Get the type of the number
          *
          * @return one of these values:
@@ -86,12 +82,9 @@ namespace NPOI.HSSF.Record
          *         </OL>
          */
 
-        public short RKType
-        {
-            get { return (short)(field_4_rk_number & 3); }
-        }
+        public short RKType => (short)(field_4_rk_number & 3);
 
-        /**
+	    /**
          * Extract the value of the number
          * 
          * The mechanism for determining the value is dependent on the two
@@ -109,22 +102,11 @@ namespace NPOI.HSSF.Record
          *         happen)
          */
 
-        public double RKNumber
-        {
-            get { return RKUtil.DecodeNumber(field_4_rk_number); }
-        }
+        public double RKNumber => RKUtil.DecodeNumber(field_4_rk_number);
 
+	    protected override String RecordName => "RK";
 
-        protected override String RecordName
-        {
-            get
-            {
-                return "RK";
-            }
-        }
-
-
-        protected override void AppendValueText(StringBuilder sb)
+	    protected override void AppendValueText(StringBuilder sb)
         {
             sb.Append("  .value= ").Append(RKNumber);
         }
@@ -135,20 +117,11 @@ namespace NPOI.HSSF.Record
         }
 
 
-        protected override int ValueDataSize
-        {
-            get
-            {
-                return 4;
-            }
-        }
+        protected override int ValueDataSize => 4;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public new object Clone()
+	    public new object Clone()
         {
             RKRecord rec = new RKRecord();
             CopyBaseFields(rec);

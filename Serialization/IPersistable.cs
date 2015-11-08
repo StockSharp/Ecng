@@ -36,7 +36,7 @@
 			where T : IPersistable
 		{
 			if (storage == null)
-				throw new ArgumentNullException("storage");
+				throw new ArgumentNullException(nameof(storage));
 
 			var instance = storage.GetValue<Type>("type").CreateInstance<T>();
 			instance.Load(storage.GetValue<SettingsStorage>("settings"));
@@ -46,7 +46,7 @@
 		public static SettingsStorage SaveEntire(this IPersistable persistable, bool isAssemblyQualifiedName)
 		{
 			if (persistable == null)
-				throw new ArgumentNullException("persistable");
+				throw new ArgumentNullException(nameof(persistable));
 
 			var storage = new SettingsStorage();
 			storage.SetValue("type", persistable.GetType().GetTypeName(isAssemblyQualifiedName));
@@ -79,7 +79,7 @@
 		public static SettingsStorage Save(this IPersistable persistable)
 		{
 			if (persistable == null)
-				throw new ArgumentNullException("persistable");
+				throw new ArgumentNullException(nameof(persistable));
 
 			var storage = new SettingsStorage();
 			persistable.Save(storage);
@@ -90,7 +90,7 @@
 			where T : IPersistable, new()
 		{
 			if (storage == null)
-				throw new ArgumentNullException("storage");
+				throw new ArgumentNullException(nameof(storage));
 
 			var obj = new T();
 			obj.Load(storage);
@@ -106,7 +106,7 @@
 		public static void SetValue(this SettingsStorage storage, string name, IPersistable persistable)
 		{
 			if (storage == null)
-				throw new ArgumentNullException("storage");
+				throw new ArgumentNullException(nameof(storage));
 
 			storage.SetValue(name, persistable.Save());
 		}
@@ -114,7 +114,7 @@
 		public static SettingsStorage LoadSettingsStorage(this string value)
 		{
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			var serializer = new XmlSerializer<SettingsStorage>();
 			var bytes = Encoding.UTF8.GetBytes(value);
@@ -125,7 +125,7 @@
 		public static string SaveSettingsStorage(this SettingsStorage settings)
 		{
 			if (settings == null)
-				throw new ArgumentNullException("settings");
+				throw new ArgumentNullException(nameof(settings));
 
 			var serializer = new XmlSerializer<SettingsStorage>();
 

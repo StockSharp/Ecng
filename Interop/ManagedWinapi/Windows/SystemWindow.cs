@@ -320,26 +320,14 @@ namespace ManagedWinapi.Windows
         /// The Desktop window, i. e. the window that covers the
         /// complete desktop.
         /// </summary>
-        public static SystemWindow DesktopWindow
-        {
-            get
-            {
-                return new SystemWindow(GetDesktopWindow());
-            }
-        }
+        public static SystemWindow DesktopWindow => new SystemWindow(GetDesktopWindow());
 
-        /// <summary>
+	    /// <summary>
         /// Returns all available toplevel windows.
         /// </summary>
-        public static SystemWindow[] AllToplevelWindows
-        {
-            get
-            {
-                return FilterToplevelWindows(new Predicate<SystemWindow>(ALL));
-            }
-        }
+        public static SystemWindow[] AllToplevelWindows => FilterToplevelWindows(new Predicate<SystemWindow>(ALL));
 
-        /// <summary>
+	    /// <summary>
         /// Returns all toplevel windows that match the given predicate.
         /// </summary>
         /// <param name="predicate">The predicate to filter.</param>
@@ -442,26 +430,14 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// Return all descendant windows (child windows and their descendants).
         /// </summary>
-        public SystemWindow[] AllDescendantWindows
-        {
-            get
-            {
-                return FilterDescendantWindows(false, ALL);
-            }
-        }
+        public SystemWindow[] AllDescendantWindows => FilterDescendantWindows(false, ALL);
 
-        /// <summary>
+	    /// <summary>
         /// Return all direct child windows.
         /// </summary>
-        public SystemWindow[] AllChildWindows
-        {
-            get
-            {
-                return FilterDescendantWindows(true, ALL);
-            }
-        }
+        public SystemWindow[] AllChildWindows => FilterDescendantWindows(true, ALL);
 
-        /// <summary>
+	    /// <summary>
         /// Returns all child windows that match the given predicate.
         /// </summary>
         /// <param name="directOnly">Whether to include only direct children (no descendants)</param>
@@ -488,9 +464,9 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// The Window handle of this window.
         /// </summary>
-        public IntPtr HWnd { get { return _hwnd; } }
+        public IntPtr HWnd => _hwnd;
 
-        /// <summary>
+	    /// <summary>
         /// The title of this window (by the <c>GetWindowText</c> API function).
         /// </summary>
         public string Title
@@ -550,15 +526,9 @@ namespace ManagedWinapi.Windows
         /// Whether this window is currently visible. A window is visible if its 
         /// and all ancestor's visibility flags are true.
         /// </summary>
-        public bool Visible
-        {
-            get
-            {
-                return IsWindowVisible(_hwnd);
-            }
-        }
+        public bool Visible => IsWindowVisible(_hwnd);
 
-        /// <summary>
+	    /// <summary>
         /// Whether this window always appears above all other windows
         /// that do not have this property set to true.
         /// </summary>
@@ -655,15 +625,9 @@ namespace ManagedWinapi.Windows
         /// This window's parent. A dialog's parent is its owner, a component's parent is
         /// the window that contains it.
         /// </summary>
-        public SystemWindow Parent
-        {
-            get
-            {
-                return new SystemWindow(GetParent(_hwnd));
-            }
-        }
+        public SystemWindow Parent => new SystemWindow(GetParent(_hwnd));
 
-        /// <summary>
+	    /// <summary>
         /// The window's parent, but only if this window is its parent child. Some
         /// parents, like dialog owners, do not have the window as its child. In that case,
         /// <c>null</c> will be returned.
@@ -864,27 +828,15 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// Whether this window can be moved on the screen by the user.
         /// </summary>
-        public bool Movable
-        {
-            get
-            {
-                return (Style & WindowStyleFlags.SYSMENU) != 0;
-            }
-        }
+        public bool Movable => (Style & WindowStyleFlags.SYSMENU) != 0;
 
-        /// <summary>
+	    /// <summary>
         /// Whether this window can be resized by the user. Resizing a window that
         /// cannot be resized by the user works, but may be irritating to the user.
         /// </summary>
-        public bool Resizable
-        {
-            get
-            {
-                return (Style & WindowStyleFlags.THICKFRAME) != 0;
-            }
-        }
+        public bool Resizable => (Style & WindowStyleFlags.THICKFRAME) != 0;
 
-        /// <summary>
+	    /// <summary>
         /// An image of this window. Unlike a screen shot, this will not
         /// contain parts of other windows (partially) cover this window.
         /// If you want to create a screen shot, use the 
@@ -957,15 +909,9 @@ namespace ManagedWinapi.Windows
         /// The ID of a control within a dialog. This is used in
         /// WM_COMMAND messages to distinguish which control sent the command.
         /// </summary>
-        public int DialogID
-        {
-            get
-            {
-                return GetWindowLong32(_hwnd, (int)GWL.GWL_ID);
-            }
-        }
+        public int DialogID => GetWindowLong32(_hwnd, (int)GWL.GWL_ID);
 
-        /// <summary>
+	    /// <summary>
         /// Get the window that is below this window in the Z order,
         /// or null if this is the lowest window.
         /// </summary>
@@ -1014,30 +960,18 @@ namespace ManagedWinapi.Windows
         /// The content of this window. Is only supported for some
         /// kinds of controls (like text or list boxes).
         /// </summary>
-        public WindowContent Content
-        {
-            get
-            {
-                return WindowContentParser.Parse(this);
-            }
-        }
+        public WindowContent Content => WindowContentParser.Parse(this);
 
-        /// <summary>
+	    /// <summary>
         /// A preview of the content of this window. Is only supported for some
         /// kinds of controls (like text or list boxes). This method can be a lot
         /// faster than the <see cref="Content"/> method, but will only
         /// guarantee that the <see cref="WindowContent.ShortDescription"/> field is
         /// filled accurately.
         /// </summary>
-        public WindowContent PreviewContent
-        {
-            get
-            {
-                return WindowContentParser.ParsePreview(this);
-            }
-        }
+        public WindowContent PreviewContent => WindowContentParser.ParsePreview(this);
 
-        /// <summary>
+	    /// <summary>
         /// Whether this control, which is a check box or radio button, is checked.
         /// </summary>
         public CheckState CheckState
@@ -1443,9 +1377,9 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// The device context handle.
         /// </summary>
-        public IntPtr HDC { get { return hDC; } }
+        public IntPtr HDC => hDC;
 
-        /// <summary>
+	    /// <summary>
         /// Creates a Graphics object for this device context.
         /// </summary>
         public Graphics CreateGraphics()

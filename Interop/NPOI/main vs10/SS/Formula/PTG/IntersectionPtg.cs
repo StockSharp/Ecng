@@ -36,17 +36,11 @@ namespace NPOI.SS.Formula.PTG
             // enforce singleton
         }
 
-        public override bool IsBaseToken
-        {
-            get { return true; }
-        }
+        public override bool IsBaseToken => true;
 
-        public override int Size
-        {
-            get { return 1; }
-        }
+	    public override int Size => 1;
 
-        public override void Write(ILittleEndianOutput out1)
+	    public override void Write(ILittleEndianOutput out1)
         {
             out1.WriteByte(sid + PtgClass);
         }
@@ -71,10 +65,6 @@ namespace NPOI.SS.Formula.PTG
             return buffer.ToString();
         }
 
-        public override int NumberOfOperands
-        {
-            get { return 2; }
-        }
-
+        public override int NumberOfOperands => 2;
     }
 }

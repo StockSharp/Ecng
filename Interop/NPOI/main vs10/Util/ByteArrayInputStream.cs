@@ -88,42 +88,20 @@ namespace NPOI.Util
         }
 
 
-        public override bool CanRead
-        {
-            get
-            {
-                return true;
-            }
-        }
-        public override bool CanWrite
-        {
-            get
-            {
-                return false;
-            }
-        }
-        public override bool CanSeek
-        {
-            get
-            {
-                return true;
-            }
-        }
+        public override bool CanRead => true;
 
-        public override void Flush()
+	    public override bool CanWrite => false;
+
+	    public override bool CanSeek => true;
+
+	    public override void Flush()
         {
             throw new NotImplementedException();
         }
 
-        public override long Length
-        {
-            get
-            {
-                return this.count;
-            }
-        }
+        public override long Length => this.count;
 
-        public override long Position
+	    public override long Position
         {
             get
             {
@@ -145,7 +123,7 @@ namespace NPOI.Util
                 case SeekOrigin.Begin:
                     if (0L > offset)
                     {
-                        throw new ArgumentOutOfRangeException("offset", "offset must be positive");
+                        throw new ArgumentOutOfRangeException(nameof(offset), "offset must be positive");
                     }
                     this.Position = offset < this.Length ? offset : this.Length;
                     break;
@@ -159,7 +137,7 @@ namespace NPOI.Util
                     break;
 
                 default:
-                    throw new ArgumentException("incorrect SeekOrigin", "origin");
+                    throw new ArgumentException("incorrect SeekOrigin", nameof(origin));
             }
             return Position;
         }

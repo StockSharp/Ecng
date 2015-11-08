@@ -165,17 +165,11 @@ namespace NPOI.HSSF.Record
         /**
          * Size of record (exluding 4 byte header)
          */
-        public override int DataSize
-        {
-            get { return  2 + 2 + 2 + 4 + 4 + 4; }
-        }
+        public override int DataSize => 2 + 2 + 2 + 4 + 4 + 4;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             CommonObjectDataSubRecord rec = new CommonObjectDataSubRecord();
 

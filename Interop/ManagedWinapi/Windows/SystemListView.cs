@@ -50,26 +50,14 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// The number of items (icons) in this list view.
         /// </summary>
-        public int Count
-        {
-            get
-            {
-                return sw.SendGetMessage(LVM_GETITEMCOUNT);
-            }
-        }
+        public int Count => sw.SendGetMessage(LVM_GETITEMCOUNT);
 
-        /// <summary>
+	    /// <summary>
         /// An item of this list view.
         /// </summary>
-        public SystemListViewItem this[int index]
-        {
-            get
-            {
-                return this[index, 0];
-            }
-        }
+        public SystemListViewItem this[int index] => this[index, 0];
 
-        /// <summary>
+	    /// <summary>
         /// A subitem (a column value) of an item of this list view.
         /// </summary>
         public SystemListViewItem this[int index, int subIndex]
@@ -199,20 +187,20 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// The title of this item
         /// </summary>
-        public string Title { get { return title; } }
+        public string Title => title;
 
-        /// <summary>
+	    /// <summary>
         /// The index of this item's image in the image list of this list view.
         /// </summary>
-        public int Image { get { return image; } }
+        public int Image => image;
 
-        /// <summary>
+	    /// <summary>
         /// State bits of this item.
         /// </summary>
         [CLSCompliant(false)]
-        public uint State { get { return state; } }
+        public uint State => state;
 
-        /// <summary>
+	    /// <summary>
         /// Position of the upper left corner of this item.
         /// </summary>
         public Point Position
@@ -265,35 +253,23 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// The format (like left justified) of this column.
         /// </summary>
-        public int Format
-        {
-            get { return format; }
-        }
+        public int Format => format;
 
-        /// <summary>
+	    /// <summary>
         /// The width of this column.
         /// </summary>
-        public int Width
-        {
-            get { return width; }
-        }
+        public int Width => width;
 
-        /// <summary>
+	    /// <summary>
         /// The subindex of the subitem displayed in this column. Note
         /// that the second column does not necessarily display the second
         /// subitem - especially when the columns can be reordered by the user.
         /// </summary>
-        public int SubIndex
-        {
-            get { return subIndex; }
-        }
+        public int SubIndex => subIndex;
 
-        /// <summary>
+	    /// <summary>
         /// The title of this column.
         /// </summary>
-        public string Title
-        {
-            get { return title; }
-        }
+        public string Title => title;
     }
 }

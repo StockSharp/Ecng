@@ -72,43 +72,20 @@ namespace NPOI.XWPF.UserModel
                 }
             }
         }
-        public IList<XWPFParagraph> Paragraphs
-        {
-            get
-            {
-                return paragraphs;
-            }
-        }
-        public IEnumerator<XWPFParagraph> GetEnumerator()
+        public IList<XWPFParagraph> Paragraphs => paragraphs;
+
+	    public IEnumerator<XWPFParagraph> GetEnumerator()
         {
             return paragraphs.GetEnumerator();
         }
 
-        public IList<XWPFTable> Tables
-        {
-            get
-            {
-                return tables;
-            }
-        }
+        public IList<XWPFTable> Tables => tables;
 
-        public IList<XWPFPictureData> Pictures
-        {
-            get
-            {
-                return pictures;
-            }
-        }
+	    public IList<XWPFPictureData> Pictures => pictures;
 
-        public IList<IBodyElement> BodyElements
-        {
-            get
-            {
-                return bodyElements;
-            }
-        }
+	    public IList<IBodyElement> BodyElements => bodyElements;
 
-        public CT_FtnEdn GetCTFtnEdn()
+	    public CT_FtnEdn GetCTFtnEdn()
         {
             return ctFtnEdn;
         }
@@ -238,15 +215,9 @@ namespace NPOI.XWPF.UserModel
             throw new NotImplementedException();
         }
 
-        public POIXMLDocumentPart Owner
-        {
-            get
-            {
-                return footnotes;
-            }
-        }
+        public POIXMLDocumentPart Owner => footnotes;
 
-        /**
+	    /**
          * 
          * @param cursor
          * @return the inserted table
@@ -371,27 +342,15 @@ namespace NPOI.XWPF.UserModel
          * returns the Part, to which the body belongs, which you need for Adding relationship to other parts
          * @see NPOI.XWPF.UserModel.IBody#getPart()
          */
-        public POIXMLDocumentPart Part
-        {
-            get
-            {
-                return footnotes;
-            }
-        }
+        public POIXMLDocumentPart Part => footnotes;
 
-        /**
+	    /**
          * Get the PartType of the body
          * @see NPOI.XWPF.UserModel.IBody#getPartType()
          */
-        public BodyType PartType
-        {
-            get
-            {
-                return BodyType.FOOTNOTE;
-            }
-        }
+        public BodyType PartType => BodyType.FOOTNOTE;
 
-        public XWPFParagraph Current
+	    public XWPFParagraph Current
         {
             get { throw new NotImplementedException(); }
         }

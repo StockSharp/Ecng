@@ -55,22 +55,15 @@ namespace NPOI.HSSF.Model
         /// Gets the count.
         /// </summary>
         /// <value>The count.</value>
-        public int Count
-        {
-            get { return records.Count; }
-        }
+        public int Count => records.Count;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the <see cref="NPOI.HSSF.Record.Record"/> at the specified index.
         /// </summary>
         /// <value></value>
-        public Record this[int index]
-        {
-            get { return (Record)records[index]; }
+        public Record this[int index] => (Record)records[index];
 
-        }
-
-        /// <summary>
+	    /// <summary>
         /// Adds the specified pos.
         /// </summary>
         /// <param name="pos">The pos.</param>

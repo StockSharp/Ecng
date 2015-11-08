@@ -21,10 +21,10 @@ namespace Ecng.Interop.Dde
 			: base(service)
 		{
 			if (poke == null)
-				throw new ArgumentNullException("poke");
+				throw new ArgumentNullException(nameof(poke));
 
 			if (error == null)
-				throw new ArgumentNullException("error");
+				throw new ArgumentNullException(nameof(error));
 
 			_poke = poke;
 			_error = error;

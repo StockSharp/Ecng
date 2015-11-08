@@ -73,13 +73,7 @@ namespace Ecng.Reflection.Aspects
 
 		#endregion
 
-		private static InterceptContext Context
-		{
-			get
-			{
-				return Scope<InterceptContext>.Current.Value;
-			}
-		}
+		private static InterceptContext Context => Scope<InterceptContext>.Current.Value;
 
 		private static InterceptTypes GetType(MethodBase method)
 		{
@@ -96,7 +90,7 @@ namespace Ecng.Reflection.Aspects
 				}
 
 				if (attr == null)
-					throw new ArgumentNullException("key");
+					throw new ArgumentNullException(nameof(key));
 
 				return attr.Type;
 			});

@@ -127,23 +127,11 @@ namespace NPOI.XSSF.UserModel
             }
         }
 
-        public String ErrorBoxText
-        {
-            get
-            {
-                return ctDdataValidation.error;
-            }
-        }
+        public String ErrorBoxText => ctDdataValidation.error;
 
-        public String ErrorBoxTitle
-        {
-            get
-            {
-                return ctDdataValidation.errorTitle;
-            }
-        }
+	    public String ErrorBoxTitle => ctDdataValidation.errorTitle;
 
-        public int ErrorStyle
+	    public int ErrorStyle
         {
             get
             {
@@ -156,26 +144,14 @@ namespace NPOI.XSSF.UserModel
             }
         }
 
-        public String PromptBoxText
-        {
-            get
-            {
-                return ctDdataValidation.prompt;
-            }
-        }
+        public String PromptBoxText => ctDdataValidation.prompt;
 
-        /* (non-Javadoc)
+	    /* (non-Javadoc)
          * @see NPOI.ss.usermodel.DataValidation#getPromptBoxTitle()
          */
-        public String PromptBoxTitle
-        {
-            get
-            {
-                return ctDdataValidation.promptTitle;
-            }
-        }
+        public String PromptBoxTitle => ctDdataValidation.promptTitle;
 
-        /* (non-Javadoc)
+	    /* (non-Javadoc)
          * @see NPOI.ss.usermodel.DataValidation#getShowErrorBox()
          */
         public bool ShowErrorBox
@@ -223,23 +199,11 @@ namespace NPOI.XSSF.UserModel
             }
         }
 
-        public IDataValidationConstraint ValidationConstraint
-        {
-            get
-            {
-                return validationConstraint;
-            }
-        }
+        public IDataValidationConstraint ValidationConstraint => validationConstraint;
 
-        public CellRangeAddressList Regions
-        {
-            get
-            {
-                return regions;
-            }
-        }
+	    public CellRangeAddressList Regions => regions;
 
-        public String PrettyPrint()
+	    public String PrettyPrint()
         {
             StringBuilder builder = new StringBuilder();
             foreach (CellRangeAddress Address in regions.CellRangeAddresses)

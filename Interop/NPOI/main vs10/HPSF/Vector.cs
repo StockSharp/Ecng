@@ -73,9 +73,6 @@ namespace NPOI.HPSF
             return offset - startOffset;
         }
 
-        public TypedPropertyValue[] Values
-        {
-            get { return _values; }
-        }
+        public TypedPropertyValue[] Values => _values;
     }
 }

@@ -48,10 +48,7 @@
 			return rule;
 		});
 
-		public static FormatRule Default
-		{
-			get { return _default.Value; }
-		}
+		public static FormatRule Default => _default.Value;
 
 		//public static readonly DependencyProperty TypeProperty = DependencyProperty.Register("Type", typeof(FormatRuleTypes), typeof(FormatRule), new PropertyMetadata());
 

@@ -63,64 +63,42 @@ namespace NPOI.HPSF
         /// the section (and thus the property Set) is a SummaryInformation.
         /// </summary>
         /// <value>The format ID.</value>
-        public ClassID FormatID
-        {
-            get { return formatID; }
-        }
+        public ClassID FormatID => formatID;
 
-        protected long offset;
+	    protected long offset;
 
 
         /// <summary>
         /// Gets the offset of the section in the stream.
         /// </summary>
         /// <value>The offset of the section in the stream</value>
-        public long OffSet
-        {
-            get { return offset; }
-        }
+        public long OffSet => offset;
 
-
-
-
-        protected int size;
+	    protected int size;
 
 
         /// <summary>
         /// Returns the section's size in bytes.
         /// </summary>
         /// <value>The section's size in bytes.</value>
-        public virtual int Size
-        {
-            get { return size; }
-        }
+        public virtual int Size => size;
 
-
-
-        /// <summary>
+	    /// <summary>
         /// Returns the number of properties in this section.
         /// </summary>
         /// <value>The number of properties in this section.</value> 
-        public virtual int PropertyCount
-        {
-            get { return properties.Length; }
-        }
+        public virtual int PropertyCount => properties.Length;
 
-        protected Property[] properties;
+	    protected Property[] properties;
 
 
         /// <summary>
         /// Returns this section's properties.
         /// </summary>
         /// <value>This section's properties.</value>
-        public virtual Property[] Properties
-        {
-            get { return properties; }
-        }
+        public virtual Property[] Properties => properties;
 
-
-
-        /// <summary>
+	    /// <summary>
         /// Creates an empty and uninitialized {@link Section}.
         /// </summary>
         protected Section()
@@ -426,14 +404,9 @@ namespace NPOI.HPSF
         /// <value><c>true</c> if the last call To {@link
         /// #GetPropertyIntValue} or {@link #GetProperty} tried To access a
         /// property that was not available; otherwise, <c>false</c>.</value>
-        public virtual bool WasNull
-        {
-            get { return wasNull; }
-        }
+        public virtual bool WasNull => wasNull;
 
-
-
-        /// <summary>
+	    /// <summary>
         /// Returns the PID string associated with a property ID. The ID
         /// is first looked up in the {@link Section}'s private
         /// dictionary. If it is not found there, the method calls {@link

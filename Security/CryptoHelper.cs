@@ -14,7 +14,7 @@ namespace Ecng.Security
 		public static byte[] ToBytes(this ProtectedKey key)
 		{
 			if (key == null)
-				throw new ArgumentNullException("key");
+				throw new ArgumentNullException(nameof(key));
 
 			return key.DecryptedKey;
 		}
@@ -41,7 +41,7 @@ namespace Ecng.Security
 		public static RSAParameters ToRsa(this ProtectedKey key)
 		{
 			if (key == null)
-				throw new ArgumentNullException("key");
+				throw new ArgumentNullException(nameof(key));
 
 			var stream = key.DecryptedKey.To<Stream>();
 
@@ -63,7 +63,7 @@ namespace Ecng.Security
 		private static void WriteByteArray(Stream stream, byte[] array)
 		{
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			stream.Write(array == null);
 
@@ -80,7 +80,7 @@ namespace Ecng.Security
 		private static byte[] ReadByteArray(Stream stream)
 		{
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			var isNull = stream.Read<bool>();
 

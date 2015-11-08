@@ -101,19 +101,11 @@ namespace NPOI.HSSF.Record
         {
             return _regions[_startIndex + index];
         }
-        protected override int DataSize
-        {
-            get
-            {
-                return CellRangeAddressList.GetEncodedSize(_numberOfRegions);
-            }
-        }
+        protected override int DataSize => CellRangeAddressList.GetEncodedSize(_numberOfRegions);
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override short Sid => sid;
+
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             int nItems = _numberOfRegions;
             out1.WriteShort(nItems);

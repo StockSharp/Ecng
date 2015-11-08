@@ -98,16 +98,9 @@ namespace NPOI.XSSF.UserModel
          *
          * @return the parent XSSFWorkbook
          */
-        public IWorkbook Workbook
-        {
-            get
-            {
-                return (XSSFWorkbook)GetParent();
+        public IWorkbook Workbook => (XSSFWorkbook)GetParent();
 
-            }
-        }
-
-        /**
+	    /**
          * Initialize worksheet data when Reading in an exisiting file.
          */
 
@@ -269,15 +262,9 @@ namespace NPOI.XSSF.UserModel
          *
          * @return the name of this sheet
          */
-        public String SheetName
-        {
-            get
-            {
-                return sheet.name;
-            }
-        }
+        public String SheetName => sheet.name;
 
-        /**
+	    /**
          * Adds a merged region of cells (hence those cells form one).
          *
          * @param region (rowfrom/colfrom-rowto/colto) to merge
@@ -961,16 +948,9 @@ namespace NPOI.XSSF.UserModel
          *  {@link #GetOddFooter()} and
          *  {@link #GetEvenFooter()}
          */
-        public IFooter Footer
-        {
-            get
-            {
-                // The default footer is an odd footer
-                return OddFooter;
-            }
-        }
+        public IFooter Footer => OddFooter;
 
-        /**
+	    /**
          * Returns the default header for the sheet,
          *  creating one as needed.
          * You may also want to look at
@@ -978,87 +958,43 @@ namespace NPOI.XSSF.UserModel
          *  {@link #GetOddHeader()} and
          *  {@link #GetEvenHeader()}
          */
-        public IHeader Header
-        {
-            get
-            {
-                // The default header is an odd header
-                return OddHeader;
-            }
-        }
+        public IHeader Header => OddHeader;
 
-        /**
+	    /**
          * Returns the odd footer. Used on all pages unless
          *  other footers also present, when used on only
          *  odd pages.
          */
-        public IFooter OddFooter
-        {
-            get
-            {
-                return new XSSFOddFooter(GetSheetTypeHeaderFooter());
-            }
-        }
-        /**
+        public IFooter OddFooter => new XSSFOddFooter(GetSheetTypeHeaderFooter());
+	    /**
          * Returns the even footer. Not there by default, but
          *  when Set, used on even pages.
          */
-        public IFooter EvenFooter
-        {
-            get
-            {
-                return new XSSFEvenFooter(GetSheetTypeHeaderFooter());
-            }
-        }
-        /**
+        public IFooter EvenFooter => new XSSFEvenFooter(GetSheetTypeHeaderFooter());
+	    /**
          * Returns the first page footer. Not there by
          *  default, but when Set, used on the first page.
          */
-        public IFooter FirstFooter
-        {
-            get
-            {
-                return new XSSFFirstFooter(GetSheetTypeHeaderFooter());
-            }
-        }
+        public IFooter FirstFooter => new XSSFFirstFooter(GetSheetTypeHeaderFooter());
 
-        /**
+	    /**
          * Returns the odd header. Used on all pages unless
          *  other headers also present, when used on only
          *  odd pages.
          */
-        public IHeader OddHeader
-        {
-            get
-            {
-                return new XSSFOddHeader(GetSheetTypeHeaderFooter());
-            }
-        }
-        /**
+        public IHeader OddHeader => new XSSFOddHeader(GetSheetTypeHeaderFooter());
+	    /**
          * Returns the even header. Not there by default, but
          *  when Set, used on even pages.
          */
-        public IHeader EvenHeader
-        {
-            get
-            {
-                return new XSSFEvenHeader(GetSheetTypeHeaderFooter());
-            }
-        }
-        /**
+        public IHeader EvenHeader => new XSSFEvenHeader(GetSheetTypeHeaderFooter());
+	    /**
          * Returns the first page header. Not there by
          *  default, but when Set, used on the first page.
          */
-        public IHeader FirstHeader
-        {
-            get
-            {
-                return new XSSFFirstHeader(GetSheetTypeHeaderFooter());
-            }
-        }
+        public IHeader FirstHeader => new XSSFFirstHeader(GetSheetTypeHeaderFooter());
 
-
-        /**
+	    /**
          * Determine whether printed output for this sheet will be horizontally centered.
          */
         public bool HorizontallyCenter
@@ -1077,16 +1013,9 @@ namespace NPOI.XSSF.UserModel
             }
         }
 
-        public int LastRowNum
-        {
-            get
-            {
-                return _rows.Count == 0 ? 0 : GetLastKey(_rows.Keys);
-            }
-        }
+        public int LastRowNum => _rows.Count == 0 ? 0 : GetLastKey(_rows.Keys);
 
-
-        /**
+	    /**
          * Gets the size of the margin in inches.
          *
          * @param margin which margin to get
@@ -1191,15 +1120,9 @@ namespace NPOI.XSSF.UserModel
             }
         }
 
-        public int NumHyperlinks
-        {
-            get
-            {
-                return hyperlinks.Count;
-            }
-        }
+        public int NumHyperlinks => hyperlinks.Count;
 
-        /**
+	    /**
          * Returns the information regarding the currently configured pane (split or freeze).
          *
          * @return null if no pane configured, or the pane information.
@@ -1226,41 +1149,23 @@ namespace NPOI.XSSF.UserModel
          *
          * @return the number of phsyically defined rows
          */
-        public int PhysicalNumberOfRows
-        {
-            get
-            {
-                return _rows.Count;
-            }
-        }
+        public int PhysicalNumberOfRows => _rows.Count;
 
-        /**
+	    /**
          * Gets the print Setup object.
          *
          * @return The user model for the print Setup object.
          */
-        public IPrintSetup PrintSetup
-        {
-            get
-            {
-                return new XSSFPrintSetup(worksheet);
-            }
-        }
+        public IPrintSetup PrintSetup => new XSSFPrintSetup(worksheet);
 
-        /**
+	    /**
          * Answer whether protection is enabled or disabled
          *
          * @return true => protection enabled; false => protection disabled
          */
-        public bool Protect
-        {
-            get
-            {
-                return worksheet.IsSetSheetProtection() && sheetProtectionEnabled();
-            }
-        }
+        public bool Protect => worksheet.IsSetSheetProtection() && sheetProtectionEnabled();
 
-        /**
+	    /**
          * Enables sheet protection and Sets the password for the sheet.
          * Also Sets some attributes on the {@link CT_SheetProtection} that correspond to
          * the default values used by Excel
@@ -1409,15 +1314,10 @@ namespace NPOI.XSSF.UserModel
         /// <summary>
         /// A flag indicating whether scenarios are locked when the sheet is protected.
         /// </summary>
-        public bool ScenarioProtect
-        {
-            get
-            {
-                return worksheet.IsSetSheetProtection()
-                    && (bool)worksheet.sheetProtection.scenarios;
-            }
-        }
-        public short LeftCol
+        public bool ScenarioProtect => worksheet.IsSetSheetProtection()
+                                       && (bool)worksheet.sheetProtection.scenarios;
+
+	    public short LeftCol
         {
             get
             {
@@ -3080,14 +2980,9 @@ namespace NPOI.XSSF.UserModel
          *
          * @return the location of the active cell.
          */
-        public String ActiveCell
-        {
-            get
-            {
-                return GetSheetTypeSelection().activeCell;
-            }
-        }
-        public void SetActiveCell(string cellref)
+        public String ActiveCell => GetSheetTypeSelection().activeCell;
+
+	    public void SetActiveCell(string cellref)
         {
             CT_Selection ctsel = GetSheetTypeSelection();
                 ctsel.activeCell = cellref;
@@ -3914,14 +3809,8 @@ namespace NPOI.XSSF.UserModel
             return tableList;
         }
 
-        public ISheetConditionalFormatting SheetConditionalFormatting
-        {
-            get
-            {
-                return new XSSFSheetConditionalFormatting(this);
-            }
-        }
-        /**
+        public ISheetConditionalFormatting SheetConditionalFormatting => new XSSFSheetConditionalFormatting(this);
+	    /**
          * Set background color of the sheet tab
          *
          * @param colorIndex  the indexed color to set, must be a constant from {@link IndexedColors}

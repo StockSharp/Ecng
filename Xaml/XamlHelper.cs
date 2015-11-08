@@ -46,7 +46,7 @@ namespace Ecng.Xaml
 		//where TOperator : IOperator<T>, new()
 		{
 			if (bounds == null)
-				throw new ArgumentNullException("bounds");
+				throw new ArgumentNullException(nameof(bounds));
 
 			elem.SetLocation(bounds.Location);
 			elem.SetSize(bounds.Size);
@@ -61,7 +61,7 @@ namespace Ecng.Xaml
 		//where TOperator : IOperator<T>, new()
 		{
 			if (elem == null)
-				throw new ArgumentNullException("elem");
+				throw new ArgumentNullException(nameof(elem));
 
 			return new Size<int>(elem.Width.To<int>(), elem.Height.To<int>());
 		}
@@ -71,10 +71,10 @@ namespace Ecng.Xaml
 		//where TOperator : IOperator<T>, new()
 		{
 			if (elem == null)
-				throw new ArgumentNullException("elem");
+				throw new ArgumentNullException(nameof(elem));
 
 			if (size == null)
-				throw new ArgumentNullException("size");
+				throw new ArgumentNullException(nameof(size));
 
 			elem.Width = size.Width;
 			elem.Height = size.Height;
@@ -89,7 +89,7 @@ namespace Ecng.Xaml
 		//where TOperator : IOperator<T>, new()
 		{
 			if (elem == null)
-				throw new ArgumentNullException("elem");
+				throw new ArgumentNullException(nameof(elem));
 
 			return new Point<int>(elem.GetValue(Canvas.LeftProperty).To<int>(), elem.GetValue(Canvas.TopProperty).To<int>());
 		}
@@ -99,10 +99,10 @@ namespace Ecng.Xaml
 		//where TOperator : IOperator<T>, new()
 		{
 			if (elem == null)
-				throw new ArgumentNullException("elem");
+				throw new ArgumentNullException(nameof(elem));
 
 			if (location == null)
-				throw new ArgumentNullException("location");
+				throw new ArgumentNullException(nameof(location));
 
 			elem.SetValue(Canvas.LeftProperty, location.X.To<double>());
 			elem.SetValue(Canvas.TopProperty, location.Y.To<double>());
@@ -115,7 +115,7 @@ namespace Ecng.Xaml
 		public static void SetVisibility(this UIElement elem, bool isVisible)
 		{
 			if (elem == null)
-				throw new ArgumentNullException("elem");
+				throw new ArgumentNullException(nameof(elem));
 
 			elem.Visibility = (isVisible) ? Visibility.Visible : Visibility.Collapsed;
 		}
@@ -123,7 +123,7 @@ namespace Ecng.Xaml
 		public static bool GetVisibility(this UIElement elem)
 		{
 			if (elem == null)
-				throw new ArgumentNullException("elem");
+				throw new ArgumentNullException(nameof(elem));
 
 			return (elem.Visibility == Visibility.Visible);
 		}
@@ -137,7 +137,7 @@ namespace Ecng.Xaml
 		public static void SetUrl(this ImageBrush brush, Uri url)
 		{
 			if (brush == null)
-				throw new ArgumentNullException("brush");
+				throw new ArgumentNullException(nameof(brush));
 
 			brush.ImageSource = CreateSource(url);
 		}
@@ -145,7 +145,7 @@ namespace Ecng.Xaml
 		public static void SetUrl(this Image img, Uri url)
 		{
 			if (img == null)
-				throw new ArgumentNullException("img");
+				throw new ArgumentNullException(nameof(img));
 
 			img.Source = CreateSource(url);
 		}
@@ -153,7 +153,7 @@ namespace Ecng.Xaml
 		public static void SetEmptyUrl(this Image img)
 		{
 			if (img == null)
-				throw new ArgumentNullException("img");
+				throw new ArgumentNullException(nameof(img));
 
 			img.Source = _empty;
 		}
@@ -161,7 +161,7 @@ namespace Ecng.Xaml
 		public static void SetEmptyUrl(this ImageBrush brush)
 		{
 			if (brush == null)
-				throw new ArgumentNullException("brush");
+				throw new ArgumentNullException(nameof(brush));
 
 			brush.ImageSource = _empty;
 		}
@@ -171,7 +171,7 @@ namespace Ecng.Xaml
 		private static ImageSource CreateSource(Uri url)
 		{
 			if (url == null)
-				throw new ArgumentNullException("url");
+				throw new ArgumentNullException(nameof(url));
 
 			return _sourceCache.SafeAdd(url, key => new BitmapImage(url));
 		}
@@ -179,7 +179,7 @@ namespace Ecng.Xaml
 		public static void SetUrl(this ImageSource source, Uri url)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			var bmp = ((BitmapImage)source);
 			bmp.UriSource = url;
@@ -188,7 +188,7 @@ namespace Ecng.Xaml
 		public static Uri GetUrl(this ImageBrush brush)
 		{
 			if (brush == null)
-				throw new ArgumentNullException("brush");
+				throw new ArgumentNullException(nameof(brush));
 
 			return brush.ImageSource.GetUrl();
 		}
@@ -196,7 +196,7 @@ namespace Ecng.Xaml
 		public static Uri GetUrl(this Image img)
 		{
 			if (img == null)
-				throw new ArgumentNullException("img");
+				throw new ArgumentNullException(nameof(img));
 
 #if SILVERLIGHT
 			return img.Source.GetUrl();
@@ -208,7 +208,7 @@ namespace Ecng.Xaml
 		public static Uri GetUrl(this ImageSource source)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			return ((BitmapImage)source).UriSource;
 		}
@@ -225,12 +225,12 @@ namespace Ecng.Xaml
 			where T : FrameworkElement
 		{
 			if (elem == null)
-				throw new ArgumentNullException("elem");
+				throw new ArgumentNullException(nameof(elem));
 
 			var retVal = (T)elem.FindName(name);
 
 			if (throwException && retVal == null)
-				throw new ArgumentException("Element with name '{0}' doesn't exits.".Put(name), "name");
+				throw new ArgumentException("Element with name '{0}' doesn't exits.".Put(name), nameof(name));
 
 			return retVal;
 		}
@@ -398,7 +398,7 @@ namespace Ecng.Xaml
 		public static bool? GetDialogResult(DependencyObject obj)
 		{
 			if (obj == null)
-				throw new ArgumentNullException("obj");
+				throw new ArgumentNullException(nameof(obj));
 
 			return (bool?)obj.GetValue(DialogResultProperty);
 		}
@@ -406,7 +406,7 @@ namespace Ecng.Xaml
 		public static void SetDialogResult(DependencyObject obj, bool? value)
 		{
 			if (obj == null)
-				throw new ArgumentNullException("obj");
+				throw new ArgumentNullException(nameof(obj));
 
 			obj.SetValue(DialogResultProperty, value);
 		}
@@ -429,7 +429,7 @@ namespace Ecng.Xaml
 		public static Uri GetIconUrl(this Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			var attr = type.GetAttribute<IconAttribute>();
 			return attr == null ? null : (attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(type));
@@ -438,7 +438,7 @@ namespace Ecng.Xaml
 		public static Uri GetResourceUrl(this string resName, Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			return type.Assembly.GetResourceUrl(resName);
 		}
@@ -446,10 +446,10 @@ namespace Ecng.Xaml
 		private static Uri GetResourceUrl(this Assembly assembly, string resName)
 		{
 			if (assembly == null)
-				throw new ArgumentNullException("assembly");
+				throw new ArgumentNullException(nameof(assembly));
 
 			if (resName.IsEmpty())
-				throw new ArgumentNullException("resName");
+				throw new ArgumentNullException(nameof(resName));
 
 			var name = assembly.FullName;
 			return new Uri("/" + name.Substring(0, name.IndexOf(',')) + ";component/" + resName, UriKind.Relative);
@@ -467,7 +467,7 @@ namespace Ecng.Xaml
 #endif
 		{
 			if (obj == null)
-				throw new ArgumentNullException("obj");
+				throw new ArgumentNullException(nameof(obj));
 
 			obj.Dispatcher.GuiAsync(action);
 		}
@@ -480,10 +480,10 @@ namespace Ecng.Xaml
 		public static void GuiAsync(this Dispatcher dispatcher, Action action, DispatcherPriority priority)
 		{
 			if (dispatcher == null)
-				throw new ArgumentNullException("dispatcher");
+				throw new ArgumentNullException(nameof(dispatcher));
 
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			if (dispatcher.CheckAccess())
 				action();
@@ -494,7 +494,7 @@ namespace Ecng.Xaml
 		public static Size<int> GetActualSize(this FrameworkElement elem)
 		{
 			if (elem == null)
-				throw new ArgumentNullException("elem");
+				throw new ArgumentNullException(nameof(elem));
 
 			return new Size<int>((int)elem.ActualWidth, (int)elem.ActualHeight);
 		}
@@ -516,7 +516,7 @@ namespace Ecng.Xaml
 		public static void GuiSync(this DispatcherObject obj, Action action)
 		{
 			if (obj == null)
-				throw new ArgumentNullException("obj");
+				throw new ArgumentNullException(nameof(obj));
 
 			obj.Dispatcher.GuiSync(action);
 		}
@@ -524,7 +524,7 @@ namespace Ecng.Xaml
 		public static T GuiSync<T>(this DispatcherObject obj, Func<T> func)
 		{
 			if (obj == null)
-				throw new ArgumentNullException("obj");
+				throw new ArgumentNullException(nameof(obj));
 
 			return obj.Dispatcher.GuiSync(func);
 		}
@@ -537,10 +537,10 @@ namespace Ecng.Xaml
 		public static void GuiSync(this Dispatcher dispatcher, Action action, DispatcherPriority priority)
 		{
 			if (dispatcher == null)
-				throw new ArgumentNullException("dispatcher");
+				throw new ArgumentNullException(nameof(dispatcher));
 
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			if (dispatcher.CheckAccess())
 				action();
@@ -556,10 +556,10 @@ namespace Ecng.Xaml
 		public static T GuiSync<T>(this Dispatcher dispatcher, Func<T> func, DispatcherPriority priority)
 		{
 			if (dispatcher == null)
-				throw new ArgumentNullException("dispatcher");
+				throw new ArgumentNullException(nameof(dispatcher));
 
 			if (func == null)
-				throw new ArgumentNullException("func");
+				throw new ArgumentNullException(nameof(func));
 
 			return dispatcher.CheckAccess() ? func() : dispatcher.Invoke(func, priority).To<T>();
 		}
@@ -573,7 +573,7 @@ namespace Ecng.Xaml
 		public static BitmapSource GetImage(this Window window)
 		{
 			if (window == null)
-				throw new ArgumentNullException("window");
+				throw new ArgumentNullException(nameof(window));
 
 			return window.GetImage(((FrameworkElement)window.Content).GetActualSize());
 		}
@@ -586,7 +586,7 @@ namespace Ecng.Xaml
 		public static BitmapSource GetImage(this Visual visual, Size<int> size)
 		{
 			if (size == null)
-				throw new ArgumentNullException("size");
+				throw new ArgumentNullException(nameof(size));
 
 			return visual.GetImage(size.Width, size.Height);
 		}
@@ -594,7 +594,7 @@ namespace Ecng.Xaml
 		public static BitmapSource GetImage(this Visual visual, int width, int height)
 		{
 			if (visual == null)
-				throw new ArgumentNullException("visual");
+				throw new ArgumentNullException(nameof(visual));
 
 			var drawingVisual = new DrawingVisual();
 
@@ -612,7 +612,7 @@ namespace Ecng.Xaml
 		public static void SaveImage(this BitmapSource image, string filePath)
 		{
 			if (image == null)
-				throw new ArgumentNullException("image");
+				throw new ArgumentNullException(nameof(image));
 
 			using (var stream = File.Create(filePath))
 			{
@@ -633,10 +633,10 @@ namespace Ecng.Xaml
 		public static ICollectionView MakeFilterable<T>(this IEnumerable<T> source, Func<T, bool> filter)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			if (filter == null)
-				throw new ArgumentNullException("filter");
+				throw new ArgumentNullException(nameof(filter));
 
 			var view = CollectionViewSource.GetDefaultView(source);
 			view.Filter = i => filter((T)i);
@@ -667,10 +667,10 @@ namespace Ecng.Xaml
 		public static bool ShowModal(this Window wnd, Window owner)
 		{
 			if (wnd == null)
-				throw new ArgumentNullException("wnd");
+				throw new ArgumentNullException(nameof(wnd));
 
 			if (owner == null)
-				throw new ArgumentNullException("owner");
+				throw new ArgumentNullException(nameof(owner));
 
 			wnd.Owner = owner;
 
@@ -687,7 +687,7 @@ namespace Ecng.Xaml
 		public static void ShowOrHide(this Window window)
 		{
 			if (window == null)
-				throw new ArgumentNullException("window");
+				throw new ArgumentNullException(nameof(window));
 
 			if (window.Visibility == Visibility.Visible)
 				window.Hide();
@@ -698,7 +698,7 @@ namespace Ecng.Xaml
 		public static void BringToFront(this Window window)
 		{
 			if (window == null)
-				throw new ArgumentNullException("window");
+				throw new ArgumentNullException(nameof(window));
 
 			if (window.WindowState == WindowState.Minimized)
 				window.GetOwnerHandle().ShowWindow(WindowShowStyle.Restore);
@@ -726,7 +726,7 @@ namespace Ecng.Xaml
 		public static void TryCopyToClipboard<T>(this T value, int attempts = 5)
 		{
 			if (attempts < 1)
-				throw new ArgumentOutOfRangeException("attempts");
+				throw new ArgumentOutOfRangeException(nameof(attempts));
 
 			while (attempts > 0)
 			{
@@ -748,10 +748,10 @@ namespace Ecng.Xaml
 			where T : Window
 		{
 			if (child == null)
-				throw new ArgumentNullException("child");
+				throw new ArgumentNullException(nameof(child));
 
 			if (parent == null)
-				throw new ArgumentNullException("parent");
+				throw new ArgumentNullException(nameof(parent));
 
 			// проверить корректность родителя
 			if (parent.Left > SystemParameters.VirtualScreenWidth || parent.Left < 0 || parent.Left.IsNaN())
@@ -784,7 +784,7 @@ namespace Ecng.Xaml
 		public static void MakeHideable(this Window window)
 		{
 			if (window == null)
-				throw new ArgumentNullException("window");
+				throw new ArgumentNullException(nameof(window));
 
 			window.Closing += OnHideableClosing;
 		}
@@ -792,7 +792,7 @@ namespace Ecng.Xaml
 		public static void DeleteHideable(this Window window)
 		{
 			if (window == null)
-				throw new ArgumentNullException("window");
+				throw new ArgumentNullException(nameof(window));
 
 			window.Closing -= OnHideableClosing;
 		}
@@ -806,7 +806,7 @@ namespace Ecng.Xaml
 		public static IEnumerable<Window> GetActiveWindows(this Application app)
 		{
 			if (app == null)
-				throw new ArgumentNullException("app");
+				throw new ArgumentNullException(nameof(app));
 
 			return
 				from window in app.Windows.Cast<Window>()
@@ -860,7 +860,7 @@ namespace Ecng.Xaml
 		public static void Restart(this Application application)
 		{
 			if (application == null)
-				throw new ArgumentNullException("application");
+				throw new ArgumentNullException(nameof(application));
 
 			Process.Start(Application.ResourceAssembly.Location);
 			application.Shutdown();
@@ -888,7 +888,7 @@ namespace Ecng.Xaml
 		public static Color ToColor(this SettingsStorage settings)
 		{
 			if (settings == null)
-				throw new ArgumentNullException("settings");
+				throw new ArgumentNullException(nameof(settings));
 
 			return Color.FromArgb(settings.GetValue<byte>("A"), settings.GetValue<byte>("R"), settings.GetValue<byte>("G"), settings.GetValue<byte>("B"));
 		}

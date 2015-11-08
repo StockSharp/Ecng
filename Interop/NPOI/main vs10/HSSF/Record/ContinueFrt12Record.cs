@@ -35,21 +35,13 @@ namespace NPOI.HSSF.Record
         {
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return base.DataSize;
-            }
-        }
-        public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
+        protected override int DataSize => base.DataSize;
+
+	    public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
         {
             base.Serialize(out1);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
     }
 }

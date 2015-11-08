@@ -35,22 +35,15 @@ namespace Microsoft.Practices.Unity
         /// <summary>
         /// The type of parameter this object represents.
         /// </summary>
-        public virtual Type ParameterType
-        {
-            get { return parameterReflector.Type; }
-        }
+        public virtual Type ParameterType => parameterReflector.Type;
 
-
-        /// <summary>
+	    /// <summary>
         /// Name for the type represented by this <see cref="InjectionParameterValue"/>.
         /// This may be an actual type name or a generic argument name.
         /// </summary>
-        public override string ParameterTypeName
-        {
-            get { return parameterReflector.Type.Name; }
-        }
+        public override string ParameterTypeName => parameterReflector.Type.Name;
 
-        /// <summary>
+	    /// <summary>
         /// Test to see if this parameter value has a matching type for the given type.
         /// </summary>
         /// <param name="t">Type to check.</param>

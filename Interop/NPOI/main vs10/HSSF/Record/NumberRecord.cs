@@ -60,14 +60,9 @@ namespace NPOI.HSSF.Record
             field_4_value = in1.ReadDouble();
         }
 
-        protected override String RecordName
-        {
-            get
-            {
-                return "NUMBER";
-            }
-        }
-        protected override void AppendValueText(StringBuilder sb)
+        protected override String RecordName => "NUMBER";
+
+	    protected override void AppendValueText(StringBuilder sb)
         {
             sb.Append("  .value= ").Append(NumberToTextConverter.ToText(field_4_value));
         }
@@ -76,14 +71,8 @@ namespace NPOI.HSSF.Record
         {
             out1.WriteDouble(Value);
         }
-        protected override int ValueDataSize
-        {
-            get
-            {
-                return 8;
-            }
-        }
-        /**
+        protected override int ValueDataSize => 8;
+	    /**
          * Get the value for the cell
          *
          * @return double representing the value
@@ -95,12 +84,9 @@ namespace NPOI.HSSF.Record
             set { field_4_value = value; }
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override object Clone()
+	    public override object Clone()
         {
             NumberRecord rec = new NumberRecord();
             CopyBaseFields(rec);

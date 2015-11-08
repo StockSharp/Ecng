@@ -113,34 +113,25 @@ namespace NPOI.HSSF.Record
          * @return number of Chars
          */
 
-        public short StringLength
-        {
-            get { return field_4_string_len; }
-        }
+        public short StringLength => field_4_string_len;
 
-        /**
+	    /**
          * Is this Uncompressed Unicode (16bit)?  Or just 8-bit compressed?
          * @return IsUnicode - True for 16bit- false for 8bit
          */
 
-        public bool IsUncompressedUnicode
-        {
-            get { return (field_5_unicode_flag & 0x01) != 0; }
-        }
+        public bool IsUncompressedUnicode => (field_5_unicode_flag & 0x01) != 0;
 
-        /**
+	    /**
          * Get the value
          *
          * @return the text string
          * @see #GetStringLength
          */
 
-        public String Value
-        {
-            get { return field_6_value; }
-        }
+        public String Value => field_6_value;
 
-        /**
+	    /**
          * THROWS A RUNTIME EXCEPTION..  USE LABELSSTRecords.  YOU HAVE NO REASON to use LABELRecord!!
          */
 
@@ -157,12 +148,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
             buffer.Append("[LABEL]\n");

@@ -177,35 +177,20 @@ namespace NPOI.SS.Util
             _isColAbs = pAbsCol;
         }
 
-        public int Row
-        {
-            get { return _rowIndex; }
-        }
-        public short Col
-        {
-            get
-            {
-                return (short)_colIndex;
-            }
-        }
-        public bool IsRowAbsolute
-        {
-            get { return _isRowAbs; }
-        }
-        public bool IsColAbsolute
-        {
-            get { return _isColAbs; }
-        }
-        /**
+        public int Row => _rowIndex;
+
+	    public short Col => (short)_colIndex;
+
+	    public bool IsRowAbsolute => _isRowAbs;
+
+	    public bool IsColAbsolute => _isColAbs;
+	    /**
           * @return possibly <c>null</c> if this is a 2D reference.  Special characters are not
           * escaped or delimited
           */
-        public String SheetName
-        {
-            get { return _sheetName; }
-        }
+        public String SheetName => _sheetName;
 
-        /**
+	    /**
          * takes in a column reference portion of a CellRef and converts it from
          * ALPHA-26 number format to 0-based base 10.
          * 'A' -> 0
@@ -474,19 +459,13 @@ namespace NPOI.SS.Util
          *  references, so use {@link #formatAsString()}
          *  to properly turn references into strings. 
          */
-        public String[] CellRefParts
-        {
-            get
-            {
-                return new String[] {
-                    _sheetName,
-                    (_rowIndex+1).ToString(CultureInfo.InvariantCulture),
-                   ConvertNumToColString(_colIndex)
-                };
-            }
-        }
+        public String[] CellRefParts => new String[] {
+	        _sheetName,
+	        (_rowIndex+1).ToString(CultureInfo.InvariantCulture),
+	        ConvertNumToColString(_colIndex)
+        };
 
-        /**
+	    /**
          * Appends cell reference with '$' markers for absolute values as required.
          * Sheet name is not included.
          */

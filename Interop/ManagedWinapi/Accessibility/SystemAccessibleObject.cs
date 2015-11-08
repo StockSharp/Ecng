@@ -43,14 +43,14 @@ namespace ManagedWinapi.Accessibility
         /// The IAccessible instance of this object (if <see cref="ChildID"/> is zero)
         /// or its parent.
         /// </summary>
-        public IAccessible IAccessible { get { return iacc; } }
+        public IAccessible IAccessible => iacc;
 
-        /// <summary>
+	    /// <summary>
         /// The underlying child ID
         /// </summary>
-        public int ChildID { get { return childID; } }
+        public int ChildID => childID;
 
-        /// <summary>
+	    /// <summary>
         /// Create an accessible object from an IAccessible instance and a child ID.
         /// </summary>
         public SystemAccessibleObject(IAccessible iacc, int childID)
@@ -114,15 +114,9 @@ namespace ManagedWinapi.Accessibility
         /// <summary>
         /// Gets an accessibility object for the mouse cursor.
         /// </summary>
-        public static SystemAccessibleObject MouseCursor
-        {
-            get
-            {
-                return FromWindow(null, AccessibleObjectID.OBJID_CURSOR);
-            }
-        }
+        public static SystemAccessibleObject MouseCursor => FromWindow(null, AccessibleObjectID.OBJID_CURSOR);
 
-        /// <summary>
+	    /// <summary>
         /// Gets an accessibility object for the input caret, or
         /// <b>null</b> if there is none.
         /// </summary>
@@ -198,27 +192,15 @@ namespace ManagedWinapi.Accessibility
         /// <summary>
         /// The name of this accessible object.
         /// </summary>
-        public string Name
-        {
-            get
-            {
-                return iacc.get_accName(childID);
-            }
-        }
+        public string Name => iacc.get_accName(childID);
 
-        /// <summary>
+	    /// <summary>
         /// The role of this accessible object. This can either be an int
         /// (for a predefined role) or a string.
         /// </summary>
-        public object Role
-        {
-            get
-            {
-                return iacc.get_accRole(childID);
-            }
-        }
+        public object Role => iacc.get_accRole(childID);
 
-        /// <summary>
+	    /// <summary>
         /// The role of this accessible object, as an integer. If this role
         /// is not predefined, -1 is returned.
         /// </summary>
@@ -316,26 +298,14 @@ namespace ManagedWinapi.Accessibility
         /// <summary>
         /// A string representation of the state of this accessible object.
         /// </summary>
-        public string StateString
-        {
-            get
-            {
-                return StateToString(State);
-            }
-        }
+        public string StateString => StateToString(State);
 
-        /// <summary>
+	    /// <summary>
         /// Whether this accessibile object is visible.
         /// </summary>
-        public bool Visible
-        {
-            get
-            {
-                return (State & 0x8000) == 0;
-            }
-        }
+        public bool Visible => (State & 0x8000) == 0;
 
-        /// <summary>
+	    /// <summary>
         /// The parent of this accessible object, or <b>null</b> if none exists.
         /// </summary>
         public SystemAccessibleObject Parent

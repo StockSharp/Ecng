@@ -72,10 +72,7 @@ namespace Ecng.Reflection.Emit
 
 		private static readonly List<Type> _cachedTypes = new List<Type>();
 
-		public static IList<Type> CachedTypes
-		{
-			get { return _cachedTypes; }
-		}
+		public static IList<Type> CachedTypes => _cachedTypes;
 
 		#endregion
 

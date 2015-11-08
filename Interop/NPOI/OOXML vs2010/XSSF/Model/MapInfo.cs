@@ -87,15 +87,9 @@ namespace NPOI.XSSF.Model
          *
          * @return the parent XSSFWorkbook
          */
-        public XSSFWorkbook Workbook
-        {
-            get
-            {
-                return (XSSFWorkbook)GetParent();
-            }
-        }
+        public XSSFWorkbook Workbook => (XSSFWorkbook)GetParent();
 
-        /**
+	    /**
          * 
          * @return the internal data object
          */

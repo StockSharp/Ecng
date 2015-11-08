@@ -57,31 +57,15 @@ namespace NDde.Foundation.Advanced.Monitor
             _ServerHandle = serverHandle;
         }
 
-        public string Service
-        {
-            get { return _Service; }
-        }
+        public string Service => _Service;
 
-        public string Topic
-        {
-            get { return _Topic; }
-        }
+	    public string Topic => _Topic;
 
-        public bool IsEstablished
-        {
-            get { return _Established; }
-        }
+	    public bool IsEstablished => _Established;
 
-        public IntPtr ClientHandle
-        {
-            get { return _ClientHandle; }
-        }
+	    public IntPtr ClientHandle => _ClientHandle;
 
-        public IntPtr ServerHandle
-        {
-            get { return _ServerHandle; }
-        }
-
+	    public IntPtr ServerHandle => _ServerHandle;
     } // class
 
 } // namespace

@@ -31,7 +31,7 @@ namespace Ecng.Web.UI.WebControls
 			set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_roles = value;
 			}

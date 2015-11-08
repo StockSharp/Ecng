@@ -52,40 +52,22 @@ namespace NPOI.HSSF.Record
             this.codepage = codepage;
         }
 
-        public short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+        public short Sid => sid;
 
-        /**
+	    /**
          * Get the offset in bytes of the Beginning of File Marker within the HSSF Stream part of the POIFS file
          *
          * @return offset in bytes
          */
-        public int PositionOfBof
-        {
-            get
-            {
-                return field_1_position_of_BOF;
-            }
-        }
+        public int PositionOfBof => field_1_position_of_BOF;
 
-        /**
+	    /**
          * Get the sheetname for this sheet.  (this appears in the tabs at the bottom)
          * @return sheetname the name of the sheet
          */
-        public String Sheetname
-        {
-            get
-            {
-                return OldStringRecord.GetString(field_5_sheetname, codepage);
-            }
-        }
+        public String Sheetname => OldStringRecord.GetString(field_5_sheetname, codepage);
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
 

@@ -234,15 +234,9 @@ namespace NPOI.POIFS.FileSystem
          *
          * @return the totalSize
          */
-        public int TotalSize
-        {
-            get
-            {
-                return totalSize;
-            }
-        }
+        public int TotalSize => totalSize;
 
-        /**
+	    /**
          * Returns flags1 - currently unknown - usually 0x0002.
          *
          * @return the flags1
@@ -348,13 +342,9 @@ namespace NPOI.POIFS.FileSystem
          *
          * @return the dataSize
          */
-        public int DataSize
-        {
-            get{return dataBuffer.Length;}
-            
-        }
+        public int DataSize => dataBuffer.Length;
 
-        /**
+	    /**
          * Returns the buffer Containing the embedded file's data, or <code>null</code>
          * if no data was embedded. Note that an embedding may provide information about
          * the data, but the actual data is not included. (So label, filename etc. are

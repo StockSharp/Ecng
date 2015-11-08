@@ -109,15 +109,9 @@ namespace NPOI.XWPF.UserModel
          * returns an Iterator with paragraphs and tables
          * @see NPOI.XWPF.UserModel.IBody#getBodyElements()
          */
-        public IList<IBodyElement> BodyElements
-        {
-            get
-            {
-                return bodyElements.AsReadOnly();
-            }
-        }
+        public IList<IBodyElement> BodyElements => bodyElements.AsReadOnly();
 
-        public void SetParagraph(XWPFParagraph p)
+	    public void SetParagraph(XWPFParagraph p)
         {
             if (ctTc.SizeOfPArray() == 0) {
                 ctTc.AddNewP();
@@ -128,15 +122,9 @@ namespace NPOI.XWPF.UserModel
         /**
          * returns a list of paragraphs
          */
-        public IList<XWPFParagraph> Paragraphs
-        {
-            get
-            {
-                return paragraphs;
-            }
-        }
+        public IList<XWPFParagraph> Paragraphs => paragraphs;
 
-        /**
+	    /**
          * Add a Paragraph to this Table Cell
          * @return The paragraph which was Added
          */
@@ -383,28 +371,14 @@ namespace NPOI.XWPF.UserModel
          * 
          * @see NPOI.XWPF.UserModel.IBody#getPart()
          */
-        public POIXMLDocumentPart Part
-        {
-            get
-            {
-                return tableRow.GetTable().Part;
-            }
-        }
+        public POIXMLDocumentPart Part => tableRow.GetTable().Part;
 
-
-        /** 
+	    /** 
          * @see NPOI.XWPF.UserModel.IBody#getPartType()
          */
-        public BodyType PartType
-        {
-            get
-            {
-                return BodyType.TABLECELL;
-            }
-        }
+        public BodyType PartType => BodyType.TABLECELL;
 
-
-        /**
+	    /**
          * Get a table by its CTTbl-Object
          * @see NPOI.XWPF.UserModel.IBody#getTable(org.Openxmlformats.schemas.wordProcessingml.x2006.main.CTTbl)
          */
@@ -433,16 +407,9 @@ namespace NPOI.XWPF.UserModel
         /** 
          * @see NPOI.XWPF.UserModel.IBody#getTables()
          */
-        public IList<XWPFTable> Tables
-        {
-            get
-            {
-                return tables.AsReadOnly();
-            }
-        }
+        public IList<XWPFTable> Tables => tables.AsReadOnly();
 
-
-        /**
+	    /**
          * inserts an existing XWPFTable to the arrays bodyElements and tables
          * @see NPOI.XWPF.UserModel.IBody#insertTable(int, NPOI.XWPF.UserModel.XWPFTable)
          */

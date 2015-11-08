@@ -33,7 +33,7 @@ namespace Ecng.Xaml
 		private DispatcherPropertyChangedEventManager(GuiDispatcher dispatcher)
 		{
 			if (dispatcher == null)
-				throw new ArgumentNullException("dispatcher");
+				throw new ArgumentNullException(nameof(dispatcher));
 
 			var tableType = "MS.Internal.WeakEventTable, WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35".To<Type>();
 			var table = tableType.GetValue<VoidType, object>("CurrentWeakEventTable", null);
@@ -69,9 +69,9 @@ namespace Ecng.Xaml
 		{
 			private readonly Action<object, PropertyChangedEventArgs> _action;
 
-			public string PropertyName { get; private set; }
+			public string PropertyName { get; }
 
-			public INotifyPropertyChanged Source { get; private set; }
+			public INotifyPropertyChanged Source { get; }
 
 			public Listener(INotifyPropertyChanged source, string property, Action<object, PropertyChangedEventArgs> action)
 			{

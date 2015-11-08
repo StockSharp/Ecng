@@ -45,38 +45,17 @@ namespace NPOI.XWPF.UserModel
             this.content = new XWPFSDTContent(block.sdtContent, part, this);
         }
 
-        public override ISDTContent Content
-        {
-            get
-            {
-                return content;
-            }
-        }
+        public override ISDTContent Content => content;
 
-        public XWPFDocument Document
-        {
-            get { return GetDocument(); }
-        }
+	    public XWPFDocument Document => GetDocument();
 
-        public POIXMLDocumentPart Part
-        {
-            get { return GetPart(); }
-        }
+	    public POIXMLDocumentPart Part => GetPart();
 
-        public IBody Body
-        {
-            get { return GetBody(); }
-        }
+	    public IBody Body => GetBody();
 
-        public BodyType PartType
-        {
-            get { return GetPartType(); }
-        }
+	    public BodyType PartType => GetPartType();
 
-        public BodyElementType ElementType
-        {
-            get { return GetElementType(); }
-        }
+	    public BodyElementType ElementType => GetElementType();
     }
 
 }

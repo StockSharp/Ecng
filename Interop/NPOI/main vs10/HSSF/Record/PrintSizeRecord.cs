@@ -27,21 +27,16 @@ namespace NPOI.HSSF.Record
             set { printSize = value; }
         }
 
-        protected override int DataSize
-        {
-            get { return 2; }
-        }
+        protected override int DataSize => 2;
 
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             out1.WriteShort(printSize);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public override object Clone()
+        public override short Sid => sid;
+
+	    public override object Clone()
         {
             PrintSizeRecord pzr = new PrintSizeRecord();
             pzr.printSize = this.printSize;

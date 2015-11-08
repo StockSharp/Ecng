@@ -68,19 +68,12 @@ namespace NDde.Advanced.Monitor
         /// <summary>
         /// This gets the kind of message associated with this event.
         /// </summary>
-        public DdeMessageActivityKind Kind
-        {
-            get { return (DdeMessageActivityKind)(int)_DdemlObject.Kind; }
-        }
+        public DdeMessageActivityKind Kind => (DdeMessageActivityKind)(int)_DdemlObject.Kind;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the message associated with this event.
         /// </summary>
-        public Message Message
-        {
-            get { return _DdemlObject.Message; }
-        }
-
+        public Message Message => _DdemlObject.Message;
     } // class
 
 } // namespace

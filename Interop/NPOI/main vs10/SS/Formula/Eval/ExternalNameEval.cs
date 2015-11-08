@@ -34,15 +34,9 @@ namespace NPOI.SS.Formula.Eval
             _name = name;
         }
 
-        public IEvaluationName Name
-        {
-            get
-            {
-                return _name;
-            }
-        }
+        public IEvaluationName Name => _name;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder(64);
             sb.Append(GetType().Name).Append(" [");

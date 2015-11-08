@@ -17,7 +17,7 @@
 		protected FactoryAttribute(Type factoryType)
 		{
 			if (factoryType == null)
-				throw new ArgumentNullException("factoryType");
+				throw new ArgumentNullException(nameof(factoryType));
 
 			_factoryType = factoryType;
 		}
@@ -32,10 +32,7 @@
 		/// Gets the type of the factory.
 		/// </summary>
 		/// <value>The type of the factory.</value>
-		public Type FactoryType
-		{
-			get { return _factoryType; }
-		}
+		public Type FactoryType => _factoryType;
 
 		#endregion
 	}

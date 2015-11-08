@@ -27,22 +27,16 @@ namespace NPOI.HSSF.Record.Chart
             field_1_pcExplode = ris.ReadShort();
         }
 
-        protected override int DataSize
-        {
-            get { return 2; }
-        }
+        protected override int DataSize => 2;
 
-        public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
+	    public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
         {
             out1.WriteShort(field_1_pcExplode);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override object Clone()
+	    public override object Clone()
         {
             PieFormatRecord record = new PieFormatRecord();
 

@@ -69,14 +69,9 @@ namespace NPOI.SS.Formula
         {
 
         }
-        private int TokenCount
-        {
-            get
-            {
-                return _tokenCount;
-            }
-        }
-        public int EncodedSize
+        private int TokenCount => _tokenCount;
+
+	    public int EncodedSize
         {
             get
             {

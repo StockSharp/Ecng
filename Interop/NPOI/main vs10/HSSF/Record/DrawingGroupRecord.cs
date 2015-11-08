@@ -40,17 +40,11 @@ namespace NPOI.HSSF.Record
 
         }
 
-        protected override String RecordName
-        {
-            get { return "MSODRAWINGGROUP"; }
-        }
+        protected override String RecordName => "MSODRAWINGGROUP";
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override int Serialize(int offset, byte [] data)
+	    public override int Serialize(int offset, byte [] data)
         {
             byte[] rawData = RawData;
             if (EscherRecords.Count == 0 && rawData != null)
@@ -85,12 +79,9 @@ namespace NPOI.HSSF.Record
         /**
          * Size of record (including 4 byte headers for all sections)
          */
-        public override int RecordSize
-        {
-            get { return GrossSizeFromDataSize(this.RawDataSize); }
-        }
+        public override int RecordSize => GrossSizeFromDataSize(this.RawDataSize);
 
-        public int RawDataSize
+	    public int RawDataSize
         {
             get
             {

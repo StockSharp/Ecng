@@ -49,88 +49,58 @@ namespace ManagedWinapi.Audio.Mixer
         /// <summary>
         /// The ID of this control.
         /// </summary>
-        public int Id { get { return ctrl.dwControlID; } }
+        public int Id => ctrl.dwControlID;
 
-        /// <summary>
+	    /// <summary>
         /// The short name of this control.
         /// </summary>
-        public string ShortName { get { return ctrl.szShortName; } }
+        public string ShortName => ctrl.szShortName;
 
-        /// <summary>
+	    /// <summary>
         /// The long name of this control.
         /// </summary>
-        public string LongName { get { return ctrl.szName; } }
+        public string LongName => ctrl.szName;
 
-        /// <summary>
+	    /// <summary>
         /// The class of this control. For example FADER or SWITCH.
         /// </summary>
-        public MixerControlClass Class
-        {
-            get
-            {
-                return (MixerControlClass)(ctrl.dwControlType & MIXERCONTROL_CT_CLASS_MASK);
-            }
-        }
+        public MixerControlClass Class => (MixerControlClass)(ctrl.dwControlType & MIXERCONTROL_CT_CLASS_MASK);
 
-        /// <summary>
+	    /// <summary>
         /// The type of the control. For example mute switch.
         /// </summary>
-        public MixerControlType ControlType
-        {
-            get
-            {
-                return (MixerControlType)ctrl.dwControlType;
-            }
-        }
+        public MixerControlType ControlType => (MixerControlType)ctrl.dwControlType;
 
-        /// <summary>
+	    /// <summary>
         /// The flags of this control.
         /// </summary>
-        public MixerControlFlags Flags
-        {
-            get
-            {
-                return (MixerControlFlags)ctrl.fdwControl;
-            }
-        }
+        public MixerControlFlags Flags => (MixerControlFlags)ctrl.fdwControl;
 
-        /// <summary>
+	    /// <summary>
         /// Whether this control is uniform. A uniform control controls
         /// more than one channel, but can only set one value for all
         /// channels.
         /// </summary>
-        public bool IsUniform
-        {
-            get
-            {
-                return (Flags & MixerControlFlags.UNIFORM) != 0;
-            }
-        }
+        public bool IsUniform => (Flags & MixerControlFlags.UNIFORM) != 0;
 
-        /// <summary>
+	    /// <summary>
         /// Whether this control has multiple values per channel. An
         /// example for a multiple value control is a three-band equalizer.
         /// </summary>
-        public bool IsMultiple
-        {
-            get
-            {
-                return (Flags & MixerControlFlags.MULTIPLE) != 0;
-            }
-        }
+        public bool IsMultiple => (Flags & MixerControlFlags.MULTIPLE) != 0;
 
-        /// <summary>
+	    /// <summary>
         /// The number of channels.
         /// </summary>
-        public int ChannelCount { get { return ml.ChannelCount; } }
+        public int ChannelCount => ml.ChannelCount;
 
-        /// <summary>
+	    /// <summary>
         /// The number of multiple values. For a three band equalizer,
         /// this is 3. Will be always one if IsMultiple is false.
         /// </summary>
-        public int MultipleValuesCount { get { return IsMultiple ? ctrl.cMultipleItems : 1; } }
+        public int MultipleValuesCount => IsMultiple ? ctrl.cMultipleItems : 1;
 
-        /// <summary>
+	    /// <summary>
         /// The number of raw values that have to be get or set. This
         /// value is provided as a convenience; it can be computed from
         /// MultipleValuesCount, IsUniform and ChannelCount.
@@ -151,14 +121,14 @@ namespace ManagedWinapi.Audio.Mixer
         /// <summary>
         /// The line this control belongs to.
         /// </summary>
-        public MixerLine Line { get { return ml; } }
+        public MixerLine Line => ml;
 
-        /// <summary>
+	    /// <summary>
         /// The mixer this control belongs to.
         /// </summary>
-        public Mixer Mixer { get { return mx; } }
+        public Mixer Mixer => mx;
 
-        internal static MixerControl[] GetControls(Mixer mx, MixerLine line, int controlCount)
+	    internal static MixerControl[] GetControls(Mixer mx, MixerLine line, int controlCount)
         {
             if (controlCount == 0) return new MixerControl[0];
             MIXERCONTROL[] mc = new MIXERCONTROL[controlCount];
@@ -314,14 +284,14 @@ namespace ManagedWinapi.Audio.Mixer
         /// <summary>
         /// The minimum value of this fader.
         /// </summary>
-        public int Minimum { get { return ctrl.lMinimum; } }
+        public int Minimum => ctrl.lMinimum;
 
-        /// <summary>
+	    /// <summary>
         /// The maximum value of this fader.
         /// </summary>
-        public int Maximum { get { return ctrl.lMaximum; } }
+        public int Maximum => ctrl.lMaximum;
 
-        /// <summary>
+	    /// <summary>
         /// Used to get or set the values of this fader.
         /// </summary>
         public int[] Values

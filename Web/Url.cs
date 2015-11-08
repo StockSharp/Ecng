@@ -52,23 +52,9 @@ namespace Ecng.Web
 
 		private QueryString _queryString;
 
-		public QueryString QueryString
-		{
-			get { return _queryString ?? (_queryString = new QueryString(this)); }
-		}
+		public QueryString QueryString => _queryString ?? (_queryString = new QueryString(this));
 
-		public static Url Current
-		{
-			get
-			{
-#if SILVERLIGHT
-				//return new Url(HtmlPage.Document.DocumentUri);
-				return new Url(Application.Current.Host.Source);
-#else
-				return new Url(HttpContext.Current.Request.Url);
-#endif
-			}
-		}
+		public static Url Current => new Url(HttpContext.Current.Request.Url);
 
 		object ICloneable.Clone()
 		{

@@ -59,7 +59,7 @@ namespace Ecng.ComponentModel
 		public static void AddOperator<T>(IOperator<T> @operator)
 		{
 			if (@operator == null)
-				throw new ArgumentNullException("operator");
+				throw new ArgumentNullException(nameof(@operator));
 
 			_operators.Add(typeof(T), @operator);
 		}
@@ -100,7 +100,7 @@ namespace Ecng.ComponentModel
 		public static void RemoveOperator<T>(IOperator<T> @operator)
 		{
 			if (@operator == null)
-				throw new ArgumentNullException("operator");
+				throw new ArgumentNullException(nameof(@operator));
 
 			_operators.Remove(typeof(T));
 		}

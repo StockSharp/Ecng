@@ -40,7 +40,7 @@ namespace Microsoft.Practices.Unity
         {
             if (parameterValue == null)
             {
-                throw new ArgumentNullException("parameterValue", Resources.ExceptionNullParameterValue);
+                throw new ArgumentNullException(nameof(parameterValue), Resources.ExceptionNullParameterValue);
             }
             return parameterValue.GetType();
         }

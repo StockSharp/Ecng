@@ -17,27 +17,21 @@
 			: base(field, 0)
 		{
 			if (factories == null)
-				throw new ArgumentNullException("factories");
+				throw new ArgumentNullException(nameof(factories));
 
 			if (factories.IsEmpty())
-				throw new ArgumentOutOfRangeException("factories");
+				throw new ArgumentOutOfRangeException(nameof(factories));
 
 			AscFactories = factories.OrderBy(factory => factory.Order);
 			DescFactories = AscFactories.Reverse();
 		}
 
-		public override Type InstanceType
-		{
-			get { return AscFactories.Last().InstanceType; }
-		}
+		public override Type InstanceType => AscFactories.Last().InstanceType;
 
-		public override Type SourceType
-		{
-			get { return AscFactories.First().SourceType; }
-		}
+		public override Type SourceType => AscFactories.First().SourceType;
 
-		public IEnumerable<FieldFactory> AscFactories { get; private set; }
-		public IEnumerable<FieldFactory> DescFactories { get; private set; }
+		public IEnumerable<FieldFactory> AscFactories { get; }
+		public IEnumerable<FieldFactory> DescFactories { get; }
 
 		#region FieldFactory Members
 

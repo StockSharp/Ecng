@@ -17,10 +17,7 @@ namespace Ecng.Collections
 			throw new NotSupportedException();
 		}
 
-		bool ICollection<T>.IsReadOnly
-		{
-			get { return false; }
-		}
+		bool ICollection<T>.IsReadOnly => false;
 
 		#endregion
 	}

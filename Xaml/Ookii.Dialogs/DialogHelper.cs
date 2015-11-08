@@ -11,17 +11,11 @@ namespace Ookii.Dialogs
 {
     static class DialogHelper
     {
-        public static bool IsTaskDialogThemeSupported
-        {
-            get
-            {
-                return NativeMethods.IsWindowsVistaOrLater &&
-                    VisualStyleRenderer.IsSupported &&
-                    Application.RenderWithVisualStyles;
-            }
-        }
+        public static bool IsTaskDialogThemeSupported => NativeMethods.IsWindowsVistaOrLater &&
+                                                         VisualStyleRenderer.IsSupported &&
+                                                         Application.RenderWithVisualStyles;
 
-        public static int GetTextHeight(IDeviceContext dc, string mainInstruction, string content, Font mainInstructionFallbackFont, Font contentFallbackFont, int width)
+	    public static int GetTextHeight(IDeviceContext dc, string mainInstruction, string content, Font mainInstructionFallbackFont, Font contentFallbackFont, int width)
         {
             // compute the height the text needs at the current dialog width.
             Point location = Point.Empty;

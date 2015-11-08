@@ -44,15 +44,9 @@ namespace Ookii.Dialogs.Wpf
         /// <see langword="true" /> on Windows Vista or newer operating systems; otherwise, <see langword="false" />.
         /// </value>
         [Browsable(false)]
-        public static bool IsVistaFolderDialogSupported
-        {
-            get
-            {
-                return NativeMethods.IsWindowsVistaOrLater;
-            }
-        }
+        public static bool IsVistaFolderDialogSupported => NativeMethods.IsWindowsVistaOrLater;
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the descriptive text displayed above the tree view control in the dialog box, or below the list view control
         /// in the Vista style dialog.
         /// </summary>

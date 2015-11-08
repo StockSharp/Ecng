@@ -91,12 +91,9 @@ namespace NPOI.DDF
         /// Gets the complex data.
         /// </summary>
         /// <value>The complex data.</value>
-        public byte[] ComplexData
-        {
-            get { return _complexData; }
-        }
+        public byte[] ComplexData => _complexData;
 
-        /// <summary>
+	    /// <summary>
         /// Determine whether this property is equal to another property.
         /// </summary>
         /// <param name="o">The object to compare to.</param>
@@ -117,12 +114,9 @@ namespace NPOI.DDF
         /// Caclulates the number of bytes required to Serialize this property.
         /// </summary>
         /// <value>Number of bytes</value>
-        public override int PropertySize
-        {
-            get { return 6 + _complexData.Length; }
-        }
+        public override int PropertySize => 6 + _complexData.Length;
 
-        /// <summary>
+	    /// <summary>
         /// Serves as a hash function for a particular type.
         /// </summary>
         /// <returns>

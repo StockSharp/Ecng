@@ -303,27 +303,16 @@ namespace NPOI.HSSF.Record
          *
          * @return 16-byte guid identifier
          */
-        public GUID Guid
-        {
-            get
-            {
-                return _guid;
-            }
-        }
+        public GUID Guid => _guid;
 
-        /**
+	    /**
          * Returns a 16-byte moniker.
          *
          * @return 16-byte moniker
          */
-        public GUID Moniker
-        {
-            get
-            {
-                return _moniker;
-            }
-        }
-        private static String CleanString(String s)
+        public GUID Moniker => _moniker;
+
+	    private static String CleanString(String s)
         {
             if (s == null)
             {
@@ -403,21 +392,11 @@ namespace NPOI.HSSF.Record
         /**
          * Link options. Must be a combination of HLINK_* constants.
          */
-        public int LinkOptions
-        {
-            get
-            {
-                return _linkOpts;
-            }
-        }
-        public String TargetFrame
-        {
-            get
-            {
-                return CleanString(_targetFrame);
-            }
-        }
-        public String ShortFilename
+        public int LinkOptions => _linkOpts;
+
+	    public String TargetFrame => CleanString(_targetFrame);
+
+	    public String ShortFilename
         {
             get
             {
@@ -431,33 +410,16 @@ namespace NPOI.HSSF.Record
         /**
          * Label options
          */
-        public int LabelOptions
-        {
-            get
-            {
-                return 2;
-            }
-        }
+        public int LabelOptions => 2;
 
-        /**
+	    /**
          * Options for a file link
          */
-        public int FileOptions
-        {
-            get
-            {
-                return _fileOpts;
-            }
-        }
+        public int FileOptions => _fileOpts;
 
+	    public override short Sid => HyperlinkRecord.sid;
 
-        public override short Sid
-        {
-            get { return HyperlinkRecord.sid; }
-        }
-
-
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             _range.Serialize(out1);
 

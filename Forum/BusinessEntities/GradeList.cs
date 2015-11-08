@@ -12,10 +12,7 @@
 		{
 		}
 
-		public virtual int TotalValue
-		{
-			get { return ExecuteScalar<int>("TotalValue", new SerializationItemCollection()); }
-		}
+		public virtual int TotalValue => ExecuteScalar<int>("TotalValue", new SerializationItemCollection());
 	}
 
 	class MessageGradeList : GradeList
@@ -29,10 +26,7 @@
 			AddFilter(message);
 		}
 
-		public override int TotalValue
-		{
-			get { return ExecuteScalar<int>("MessageTotalValue", _message); }
-		}
+		public override int TotalValue => ExecuteScalar<int>("MessageTotalValue", _message);
 	}
 
 	abstract class UserGradeList : GradeList
@@ -47,10 +41,7 @@
 			_morph = morph;
 		}
 
-		public override int TotalValue
-		{
-			get { return ExecuteScalar<int>(_morph, _user); }
-		}
+		public override int TotalValue => ExecuteScalar<int>(_morph, _user);
 	}
 
 	[Serializable]
@@ -85,10 +76,7 @@
 			AddFilter(new VoidField<long>("Topic"), topic);
 		}
 
-		public override int TotalValue
-		{
-			get { return ExecuteScalar<int>("TopicTotalValue", _topic); }
-		}
+		public override int TotalValue => ExecuteScalar<int>("TopicTotalValue", _topic);
 	}
 
 	[Serializable]
@@ -103,10 +91,7 @@
 			AddFilter(new VoidField<long>("Forum"), forum);
 		}
 
-		public override int TotalValue
-		{
-			get { return ExecuteScalar<int>("ForumTotalValue", _forum); }
-		}
+		public override int TotalValue => ExecuteScalar<int>("ForumTotalValue", _forum);
 	}
 
 	[Serializable]
@@ -121,9 +106,6 @@
 			AddFilter(new VoidField<long>("Folder"), folder);
 		}
 
-		public override int TotalValue
-		{
-			get { return ExecuteScalar<int>("ForumFolderTotalValue", _folder); }
-		}
+		public override int TotalValue => ExecuteScalar<int>("ForumFolderTotalValue", _folder);
 	}
 }

@@ -131,27 +131,27 @@ namespace ManagedWinapi.Hooks
         /// <summary>
         /// The window this message has been sent to.
         /// </summary>
-        public IntPtr HWnd { get { return msg.hWnd; } }
+        public IntPtr HWnd => msg.hWnd;
 
-        /// <summary>
+	    /// <summary>
         /// The message.
         /// </summary>
         [CLSCompliant(false)]
-        public uint Message { get { return msg.message; } }
+        public uint Message => msg.message;
 
-        /// <summary>
+	    /// <summary>
         /// The first parameter of the message.
         /// </summary>
         [CLSCompliant(false)]
-        public uint ParamL { get { return msg.paramL; } }
+        public uint ParamL => msg.paramL;
 
-        /// <summary>
+	    /// <summary>
         /// The second parameter of the message.
         /// </summary>
         [CLSCompliant(false)]
-        public uint ParamH { get { return msg.paramH; } }
+        public uint ParamH => msg.paramH;
 
-        /// <summary>
+	    /// <summary>
         /// The timestamp of the message.
         /// </summary>
         public int Time
@@ -185,10 +185,7 @@ namespace ManagedWinapi.Hooks
         /// <summary>
         /// The recorded message.
         /// </summary>
-        public JournalMessage RecordedMessage
-        {
-            get { return msg; }
-        }
+        public JournalMessage RecordedMessage => msg;
     }
 
     /// <summary>

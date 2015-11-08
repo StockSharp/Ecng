@@ -22,7 +22,7 @@ namespace Ecng.Logic.BusinessEntities
 			: base(storage)
 		{
 			if (entity == null)
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 
 			AddFilter("EntityId", entity.Id);
 		}

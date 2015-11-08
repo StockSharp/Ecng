@@ -17,7 +17,7 @@ namespace Ookii.Dialogs.Wpf
         public VistaFileDialogEvents(VistaFileDialog dialog)
         {
             if( dialog == null )
-                throw new ArgumentNullException("dialog");
+                throw new ArgumentNullException(nameof(dialog));
 
             _dialog = dialog;
         }

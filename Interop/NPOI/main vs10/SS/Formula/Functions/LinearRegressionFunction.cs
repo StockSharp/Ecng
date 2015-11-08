@@ -59,13 +59,7 @@ namespace NPOI.SS.Formula.Functions
             }
             protected abstract ValueEval GetItemInternal(int index);
 
-            public int Size
-            {
-                get
-                {
-                    return _size;
-                }
-            }
+            public int Size => _size;
         }
 
         private class SingleCellValueArray : ValueArray

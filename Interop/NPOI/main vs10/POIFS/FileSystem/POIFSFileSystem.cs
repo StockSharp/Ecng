@@ -501,28 +501,19 @@ namespace NPOI.POIFS.FileSystem
         /// </summary>
         /// <value><c>true</c> if a viewer should call GetViewableArray, <c>false</c> if
         /// a viewer should call GetViewableIterator </value>
-        public bool PreferArray
-        {
-            get{return (( POIFSViewable ) this.Root).PreferArray;}
-        }
+        public bool PreferArray => (( POIFSViewable ) this.Root).PreferArray;
 
-        /// <summary>
+	    /// <summary>
         /// Provides a short description of the object, to be used when a
         /// POIFSViewable object has not provided its contents.
         /// </summary>
         /// <value>The short description.</value>
-        public String ShortDescription
-        {
-            get{return "POIFS FileSystem";}
-        }
+        public String ShortDescription => "POIFS FileSystem";
 
-        /// <summary>
+	    /// <summary>
         /// Gets The Big Block size, normally 512 bytes, sometimes 4096 bytes
         /// </summary>
         /// <value>The size of the big block.</value>
-        public int BigBlockSize 
-        {
-            get { return bigBlockSize.GetBigBlockSize(); }
-        }
+        public int BigBlockSize => bigBlockSize.GetBigBlockSize();
     }
 }

@@ -162,9 +162,6 @@ namespace NPOI.HSSF.UserModel
         /// Gets the type of this hyperlink
         /// </summary>
         /// <value>the type of this hyperlink</value>
-        public HyperlinkType Type
-        {
-            get { return (HyperlinkType)link_type; }
-        }
+        public HyperlinkType Type => (HyperlinkType)link_type;
     }
 }

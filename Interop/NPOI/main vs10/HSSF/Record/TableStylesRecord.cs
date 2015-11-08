@@ -68,24 +68,12 @@ namespace NPOI.HSSF.Record
         }
 
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 2 + 2 + 8 + 4 + 2 + 2
-                    + (2 * rgchDefListStyle.Length) + (2 * rgchDefPivotStyle.Length);
-            }
-        }
+        protected override int DataSize => 2 + 2 + 8 + 4 + 2 + 2
+                                           + (2 * rgchDefListStyle.Length) + (2 * rgchDefPivotStyle.Length);
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+	    public override short Sid => sid;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
 

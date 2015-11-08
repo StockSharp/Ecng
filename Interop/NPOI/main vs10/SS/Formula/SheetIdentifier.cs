@@ -30,21 +30,10 @@ namespace NPOI.SS.Formula
             _bookName = bookName;
             _sheetIdentifier = sheetIdentifier;
         }
-        public String BookName
-        {
-            get
-            {
-                return _bookName;
-            }
-        }
-        public NameIdentifier SheetId
-        {
-            get
-            {
-                return _sheetIdentifier;
-            }
-        }
-        protected virtual void AsFormulaString(StringBuilder sb)
+        public String BookName => _bookName;
+	    public NameIdentifier SheetId => _sheetIdentifier;
+
+	    protected virtual void AsFormulaString(StringBuilder sb)
         {
             if (_bookName != null)
             {

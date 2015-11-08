@@ -116,17 +116,11 @@ namespace NPOI.HSSF.Record.Chart
         /**
          * Size of record (exluding 4 byte header)
          */
-        protected override int DataSize
-        {
-            get { return 2 + 1 + 1 + field_4_text.Length * (is16bit ? 2 : 1); }
-        }
+        protected override int DataSize => 2 + 1 + 1 + field_4_text.Length * (is16bit ? 2 : 1);
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             SeriesTextRecord rec = new SeriesTextRecord();
 

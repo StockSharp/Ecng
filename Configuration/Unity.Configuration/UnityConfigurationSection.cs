@@ -59,12 +59,9 @@ namespace Microsoft.Practices.Unity.Configuration
         /// The current <see cref="UnityConfigurationSection"/> that is being deserialized
         /// or being configured from.
         /// </summary>
-        public static UnityConfigurationSection CurrentSection
-        {
-            get { return currentSection; }
-        }
+        public static UnityConfigurationSection CurrentSection => currentSection;
 
-        /// <summary>
+	    /// <summary>
         /// Storage for XML namespace. The namespace isn't used or validated by config, but
         /// it is useful for Visual Studio XML IntelliSense to kick in.
         /// </summary>
@@ -93,40 +90,27 @@ namespace Microsoft.Practices.Unity.Configuration
         /// The set of type aliases defined in this configuration file.
         /// </summary>
         [ConfigurationProperty(TypeAliasesPropertyName)]
-        public AliasElementCollection TypeAliases
-        {
-            get { return (AliasElementCollection)base[TypeAliasesPropertyName]; }
-        }
+        public AliasElementCollection TypeAliases => (AliasElementCollection)base[TypeAliasesPropertyName];
 
-        /// <summary>
+	    /// <summary>
         /// Any schema extensions that are added.
         /// </summary>
         [ConfigurationProperty(SectionExtensionsPropertyName)]
-        public SectionExtensionElementCollection SectionExtensions
-        {
-            get { return (SectionExtensionElementCollection)base[SectionExtensionsPropertyName]; }
-        }
+        public SectionExtensionElementCollection SectionExtensions => (SectionExtensionElementCollection)base[SectionExtensionsPropertyName];
 
-        /// <summary>
+	    /// <summary>
         /// Any namespaces added to the type search list.
         /// </summary>
         [ConfigurationProperty(NamespacesPropertyName)]
-        public NamespaceElementCollection Namespaces
-        {
-            get { return (NamespaceElementCollection)base[NamespacesPropertyName]; }
-        }
+        public NamespaceElementCollection Namespaces => (NamespaceElementCollection)base[NamespacesPropertyName];
 
-        /// <summary>
+	    /// <summary>
         /// Any assemblies added to the type search list.
         /// </summary>
         [ConfigurationProperty(AssembliesPropertyName)]
-        public AssemblyElementCollection Assemblies
-        {
-            get { return (AssemblyElementCollection)base[AssembliesPropertyName]; }
-        }
+        public AssemblyElementCollection Assemblies => (AssemblyElementCollection)base[AssembliesPropertyName];
 
-
-        /// <summary>
+	    /// <summary>
         /// Apply the configuration in the default container element to the given container.
         /// </summary>
         /// <param name="container">Container to configure.</param>
@@ -159,7 +143,7 @@ namespace Microsoft.Practices.Unity.Configuration
                 throw new ArgumentException(
                     string.Format(CultureInfo.CurrentCulture,
                         Resources.NoSuchContainer, configuredContainerName),
-                    "configuredContainerName");
+                    nameof(configuredContainerName));
             }
             return containerElement;
         }

@@ -23,21 +23,15 @@ namespace SmartFormat.Core.Formatting
 			this.Index = index;
 		}
 
-		public string Format { get; private set; }
+		public string Format { get; }
 		public FormatItem ErrorItem { get; private set; }
-		public string Issue { get; private set; }
-		public int Index { get; private set; }
+		public string Issue { get; }
+		public int Index { get; }
 
-		public override string Message
-		{
-			get
-			{
-				return string.Format("Error parsing format string: {0} at {1}\n{2}\n{3}",
-									 Issue,
-									 Index,
-									 Format,
-									 new String('-', Index) + "^");
-			}
-		}
+		public override string Message => string.Format("Error parsing format string: {0} at {1}\n{2}\n{3}",
+			Issue,
+			Index,
+			Format,
+			new String('-', Index) + "^");
 	}
 }

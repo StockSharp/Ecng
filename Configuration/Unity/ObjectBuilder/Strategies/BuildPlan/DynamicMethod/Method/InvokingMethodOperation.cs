@@ -36,12 +36,9 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// <summary>
         /// Method we're trying to call.
         /// </summary>
-        public string MethodSignature
-        {
-            get { return methodSignature; }
-        }
+        public string MethodSignature => methodSignature;
 
-        /// <summary>
+	    /// <summary>
         /// Generate the description string.
         /// </summary>
         /// <returns>The string.</returns>

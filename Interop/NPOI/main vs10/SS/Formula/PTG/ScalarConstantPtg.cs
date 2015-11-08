@@ -23,13 +23,8 @@ namespace NPOI.SS.Formula.PTG
      */
     public abstract class ScalarConstantPtg : Ptg
     {
-        public override bool IsBaseToken
-        {
-            get { return true; }
-        }
-        public override byte DefaultOperandClass
-        {
-            get{return Ptg.CLASS_VALUE;}
-        }
+        public override bool IsBaseToken => true;
+
+	    public override byte DefaultOperandClass => Ptg.CLASS_VALUE;
     }
 }

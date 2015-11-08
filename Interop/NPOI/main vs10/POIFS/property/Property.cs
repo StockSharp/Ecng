@@ -211,12 +211,9 @@ namespace NPOI.POIFS.Properties
         /// small blocks?
         /// </summary>
         /// <returns>true if the size Is less than _big_block_minimum_bytes</returns>
-        public bool ShouldUseSmallBlocks
-        {
-            get { return Property.IsSmall(_size.Value); }
-        }
+        public bool ShouldUseSmallBlocks => Property.IsSmall(_size.Value);
 
-        /// <summary>
+	    /// <summary>
         /// does the length indicate a small document?
         /// </summary>
         /// <param name="length">length in bytes</param>
@@ -269,12 +266,9 @@ namespace NPOI.POIFS.Properties
         /// <value>
         /// 	<c>true</c> if a directory type Property; otherwise, <c>false</c>.
         /// </value>
-        public virtual bool IsDirectory
-        {
-            get { return false; }
-        }
+        public virtual bool IsDirectory => false;
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the storage class ID for this property stream. ThIs Is the Class ID
         /// of the COM object which can read and write this property stream </summary>
         /// <value>Storage Class ID</value>
@@ -339,15 +333,9 @@ namespace NPOI.POIFS.Properties
         /// Get the child property (its index in the Property Table)
         /// </summary>
         /// <value>The index of the child.</value>
-        public int ChildIndex
-        {
-            get
-            {
-                return _child_property.Value;
-            }
-        }
+        public int ChildIndex => _child_property.Value;
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the size of the document associated with this Property
         /// </summary>
         /// <value>the size of the document, in bytes</value>
@@ -384,26 +372,15 @@ namespace NPOI.POIFS.Properties
         /// Gets the index of the next child.
         /// </summary>
         /// <value>The index of the next child.</value>
-        public int NextChildIndex
-        {
-            get
-            {
-                return _next_property.Value;
-            }
-        }
+        public int NextChildIndex => _next_property.Value;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the index of the previous child.
         /// </summary>
         /// <value>The index of the previous child.</value>
-        public int PreviousChildIndex
-        {
-            get{
-                return _previous_property.Value;
-            }
-        }
+        public int PreviousChildIndex => _previous_property.Value;
 
-        /// <summary>
+	    /// <summary>
         /// Determines whether the specified index Is valid
         /// </summary>
         /// <param name="index">value to be checked</param>
@@ -492,27 +469,18 @@ namespace NPOI.POIFS.Properties
         /// </summary>
         /// <value> may not be null, but may have an empty
         /// back end store</value>
-        public IEnumerator ViewableIterator
-        {
-            get
-            {
-                return ArrayList.ReadOnly(new ArrayList()).GetEnumerator();
-            }
-        }
+        public IEnumerator ViewableIterator => ArrayList.ReadOnly(new ArrayList()).GetEnumerator();
 
-        /// <summary>
+	    /// <summary>
         /// Give viewers a hint as to whether to call GetViewableArray or
         /// GetViewableIterator
         /// </summary>
         /// <value><c>true</c> if a viewer Should call GetViewableArray; otherwise, <c>false</c>
         /// if a viewer Should call GetViewableIterator
         /// </value>
-        public bool PreferArray
-        {
-            get { return true; }
-        }
+        public bool PreferArray => true;
 
-        /// <summary>
+	    /// <summary>
         /// Provides a short description of the object, to be used when a
         /// POIFSViewable object has not provided its contents.
         /// </summary>

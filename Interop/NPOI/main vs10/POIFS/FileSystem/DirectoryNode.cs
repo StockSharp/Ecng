@@ -228,22 +228,13 @@ namespace NPOI.POIFS.FileSystem
         /// Gets the path.
         /// </summary>
         /// <value>this directory's path representation</value>
-        public POIFSDocumentPath Path
-        {
-            get { return _path; }
-        }
+        public POIFSDocumentPath Path => _path;
 
-        public POIFSFileSystem FileSystem
-        {
-            get { return _oFilesSystem; }
-        }
+	    public POIFSFileSystem FileSystem => _oFilesSystem;
 
-        public NPOIFSFileSystem NFileSystem
-        {
-            get { return _nFilesSystem; }
-        }
+	    public NPOIFSFileSystem NFileSystem => _nFilesSystem;
 
-       /// <summary>
+	    /// <summary>
         /// get an iterator of the Entry instances contained directly in
         /// this instance (in other words, children only; no grandchildren
         /// etc.)
@@ -254,11 +245,9 @@ namespace NPOI.POIFS.FileSystem
         /// objects retrieved by next() are guaranteed to be
         /// implementations of Entry.
         /// </value>
-        public IEnumerator<Entry> Entries
-        {
-            get { return _entries.GetEnumerator(); }
-        }
-        internal Entry GetEntry(int index)
+        public IEnumerator<Entry> Entries => _entries.GetEnumerator();
+
+	    internal Entry GetEntry(int index)
         {
             return _entries[index];
         }
@@ -272,26 +261,17 @@ namespace NPOI.POIFS.FileSystem
          *         getEntry(String), which may be empty (if this 
          *         DirectoryEntry is empty)
          */
-        public List<String> EntryNames
-        {
-            get
-            {
-                return new List<string>(_byname.Keys);
-            }
-        }
+        public List<String> EntryNames => new List<string>(_byname.Keys);
 
-        /// <summary>
+	    /// <summary>
         /// is this DirectoryEntry empty?
         /// </summary>
         /// <value>
         /// 	<c>true</c> if this instance contains no Entry instances; otherwise, <c>false</c>.
         /// </value>
-        public bool IsEmpty
-        {
-            get { return _entries.Count == 0; }
-        }
+        public bool IsEmpty => _entries.Count == 0;
 
-        /// <summary>
+	    /// <summary>
         /// find out how many Entry instances are contained directly within
         /// this DirectoryEntry
         /// </summary>
@@ -299,13 +279,9 @@ namespace NPOI.POIFS.FileSystem
         /// number of immediately (no grandchildren etc.) contained
         /// Entry instances
         /// </value>
-        public int EntryCount
-        {
-            get { return _entries.Count; }
-        }
+        public int EntryCount => _entries.Count;
 
-
-        public bool HasEntry(String name)
+	    public bool HasEntry(String name)
         {
             return name != null && _byname.ContainsKey(name);
         }
@@ -456,27 +432,17 @@ namespace NPOI.POIFS.FileSystem
         /// Is this a DirectoryEntry?
         /// </summary>
         /// <value>true if the Entry Is a DirectoryEntry, else false</value>
-        public override bool IsDirectoryEntry
-        {
-            get { return true; }
-        }
+        public override bool IsDirectoryEntry => true;
 
-        /// <summary>
+	    /// <summary>
         /// extensions use this method to verify internal rules regarding
         /// deletion of the underlying store.
         /// </summary>
         /// <value> true if it's ok to Delete the underlying store, else
         /// false</value>
-        protected override bool IsDeleteOK
-        {
-            // if this directory Is empty, we can Delete it
-            get
-            {
-                return IsEmpty;
-            }
-        }
+        protected override bool IsDeleteOK => IsEmpty;
 
-        public DocumentEntry CreateDocument(string name, Stream stream)
+	    public DocumentEntry CreateDocument(string name, Stream stream)
         {
             try
             {
@@ -514,15 +480,9 @@ namespace NPOI.POIFS.FileSystem
         /// Get an array of objects, some of which may implement POIFSViewable
         /// </summary>
         /// <value>an array of Object; may not be null, but may be empty</value>
-        public Array ViewableArray
-        {
-            get
-            {
-                return new Object[0];
-            }
-        }
+        public Array ViewableArray => new Object[0];
 
-        /// <summary>
+	    /// <summary>
         /// Get an Iterator of objects, some of which may implement
         /// POIFSViewable
         /// </summary>
@@ -547,22 +507,16 @@ namespace NPOI.POIFS.FileSystem
         /// </summary>
         /// <value><c>true</c> if a viewer should call GetViewableArray; otherwise, <c>false</c>if
         /// a viewer should call GetViewableIterator</value>
-        public bool PreferArray
-        {
-            get { return false; }
-        }
+        public bool PreferArray => false;
 
-        /// <summary>
+	    /// <summary>
         /// Provides a short description of the object, to be used when a
         /// POIFSViewable object has not provided its contents.
         /// </summary>
         /// <value>The short description.</value>
-        public String ShortDescription
-        {
-            get { return Name; }
-        }
-        
-        #endregion
+        public String ShortDescription => Name;
+
+	    #endregion
 
 
 

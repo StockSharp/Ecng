@@ -231,10 +231,7 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             }
         }
         [XmlIgnore]
-        public bool uriSpecified
-        {
-            get { return (null != uriField); }
-        }
+        public bool uriSpecified => (null != uriField);
     }
 
     [Serializable]

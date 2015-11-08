@@ -37,7 +37,7 @@ namespace Ecng.Data
 			public void AddAction<TEntity>(Action action, TEntity entity)
 			{
 				if (action == null)
-					throw new ArgumentNullException("action");
+					throw new ArgumentNullException(nameof(action));
 
 				_commands.Add(() =>
 				{
@@ -128,7 +128,7 @@ namespace Ecng.Data
 			set
 			{
 				if (value.IsEmpty())
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_name = value;
 			}
@@ -142,7 +142,7 @@ namespace Ecng.Data
 			set
 			{
 				if (value.IsEmpty())
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_connectionString = value;
 			}
@@ -156,7 +156,7 @@ namespace Ecng.Data
 			set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_provider = value;
 			}
@@ -167,17 +167,7 @@ namespace Ecng.Data
 		//private readonly Dictionary<Type, string[]> _cacheKeys = new Dictionary<Type, string[]>();
 		private readonly SynchronizedDictionary<string, object> _cache = new SynchronizedDictionary<string, object>();
 
-		public IDictionary<string, object> Cache
-		{
-			get { return _cache; }
-			//set
-			//{
-			//	if (value == null)
-			//		throw new ArgumentNullException("value");
-
-			//	_cache = value;
-			//}
-		}
+		public IDictionary<string, object> Cache => _cache;
 
 		public CultureInfo CultureInfo { get; set; }
 
@@ -189,7 +179,7 @@ namespace Ecng.Data
 			set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_serializerType = value;
 			}
@@ -205,7 +195,7 @@ namespace Ecng.Data
 		internal void GetConnection(Action<DbConnection> action)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			if (_batchInfo != null && _batchInfo.Connection != null)
 				action(_batchInfo.Connection);
@@ -265,7 +255,7 @@ namespace Ecng.Data
 		public virtual DatabaseCommand GetCommand(Query commandQuery, Schema schema, FieldList keyFields, FieldList valueFields, bool parseParameters = true)
 		{
 			if (commandQuery == null)
-				throw new ArgumentNullException("commandQuery");
+				throw new ArgumentNullException(nameof(commandQuery));
 
 			return _commands.SafeAdd(commandQuery, key =>
 			{
@@ -375,7 +365,7 @@ namespace Ecng.Data
 		public virtual long GetCount(DatabaseCommand command, SerializationItemCollection source)
 		{
 			if (command == null)
-				throw new ArgumentNullException("command");
+				throw new ArgumentNullException(nameof(command));
 
 			return CultureInfo.DoInCulture(() => command.ExecuteScalar<long>(source));
 		}
@@ -387,7 +377,7 @@ namespace Ecng.Data
 		public virtual TEntity Create<TEntity>(TEntity entity)
 		{
 			if (entity.IsNull(true))
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 
 			var schema = SchemaManager.GetSchema<TEntity>();
 
@@ -446,7 +436,7 @@ namespace Ecng.Data
 		public virtual TEntity Read<TEntity>(object id)
 		{
 			if (id == null)
-				throw new ArgumentNullException("id");
+				throw new ArgumentNullException(nameof(id));
 
 			return Read<TEntity>(new SerializationItem(SchemaManager.GetSchema<TEntity>().Identity, id));
 		}
@@ -454,7 +444,7 @@ namespace Ecng.Data
 		public virtual TEntity Read<TEntity>(SerializationItem by)
 		{
 			if (by == null)
-				throw new ArgumentNullException("by");
+				throw new ArgumentNullException(nameof(@by));
 
 			return Read<TEntity>(new SerializationItemCollection { by });
 		}
@@ -462,10 +452,10 @@ namespace Ecng.Data
 		public virtual TEntity Read<TEntity>(SerializationItemCollection by)
 		{
 			if (by == null)
-				throw new ArgumentNullException("by");
+				throw new ArgumentNullException(nameof(@by));
 
 			if (by.IsEmpty())
-				throw new ArgumentOutOfRangeException("by");
+				throw new ArgumentOutOfRangeException(nameof(@by));
 
 			var schema = SchemaManager.GetSchema<TEntity>();
 
@@ -502,7 +492,7 @@ namespace Ecng.Data
 		public virtual TEntity Read<TEntity>(DatabaseCommand command, SerializationItemCollection input)
 		{
 			if (command == null)
-				throw new ArgumentNullException("command");
+				throw new ArgumentNullException(nameof(command));
 
 			return CultureInfo.DoInCulture(() =>
 			{
@@ -529,10 +519,10 @@ namespace Ecng.Data
 		public virtual IEnumerable<TEntity> ReadAll<TEntity>(long startIndex, long count, Field orderBy, ListSortDirection direction = ListSortDirection.Ascending)
 		{
 			if (startIndex < 0)
-				throw new ArgumentOutOfRangeException("startIndex");
+				throw new ArgumentOutOfRangeException(nameof(startIndex));
 
 			if (count < 0)
-				throw new ArgumentOutOfRangeException("count");
+				throw new ArgumentOutOfRangeException(nameof(count));
 
 			//if (orderBy == null)
 			//	throw new ArgumentNullException("orderBy");
@@ -562,7 +552,7 @@ namespace Ecng.Data
 		public virtual IEnumerable<TEntity> ReadAll<TEntity>(DatabaseCommand command, SerializationItemCollection input)
 		{
 			if (command == null)
-				throw new ArgumentNullException("command");
+				throw new ArgumentNullException(nameof(command));
 
 			return CultureInfo.DoInCulture(() =>
 			{
@@ -594,13 +584,13 @@ namespace Ecng.Data
 		public virtual TEntity Update<TEntity>(TEntity entity, FieldList keyFields, FieldList valueFields)
 		{
 			if (entity.IsNull(true))
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 
 			if (keyFields == null)
-				throw new ArgumentNullException("keyFields");
+				throw new ArgumentNullException(nameof(keyFields));
 
 			if (valueFields == null)
-				throw new ArgumentNullException("valueFields");
+				throw new ArgumentNullException(nameof(valueFields));
 
 			var schema = SchemaManager.GetSchema<TEntity>();
 			if (schema.ReadOnly)
@@ -662,7 +652,7 @@ namespace Ecng.Data
 		public virtual void Delete(Schema schema, object id)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			Delete(new SerializationItem(schema.Identity, id));
 		}
@@ -670,7 +660,7 @@ namespace Ecng.Data
 		public virtual void Delete<TEntity>(TEntity entity, Field field)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			Delete(new SerializationItem(field, field.GetAccessor<TEntity>().GetValue(entity)));
 		}
@@ -683,10 +673,10 @@ namespace Ecng.Data
 		public virtual void Delete(SerializationItemCollection by)
 		{
 			if (by == null)
-				throw new ArgumentNullException("by");
+				throw new ArgumentNullException(nameof(@by));
 
 			if (by.IsEmpty())
-				throw new ArgumentOutOfRangeException("by");
+				throw new ArgumentOutOfRangeException(nameof(@by));
 
 			Action action = () =>
 			{
@@ -733,7 +723,7 @@ namespace Ecng.Data
 		public virtual void Delete(DatabaseCommand command, SerializationItemCollection input)
 		{
 			if (command == null)
-				throw new ArgumentNullException("command");
+				throw new ArgumentNullException(nameof(command));
 
 			CultureInfo.DoInCulture(() => command.ExecuteNonQuery(input));
 		}
@@ -770,10 +760,10 @@ namespace Ecng.Data
 		public virtual void DeleteAll(DatabaseCommand command, SerializationItemCollection source)
 		{
 			if (command == null)
-				throw new ArgumentNullException("command");
+				throw new ArgumentNullException(nameof(command));
 
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			if (!AllowDeleteAll)
 				throw new NotSupportedException();
@@ -803,7 +793,7 @@ namespace Ecng.Data
 		public virtual SerializationItemCollection Execute(DatabaseCommand command, SerializationItemCollection source, bool needRetVal)
 		{
 			if (command == null)
-				throw new ArgumentNullException("command");
+				throw new ArgumentNullException(nameof(command));
 
 			if (needRetVal)
 				return command.ExecuteRow(source);
@@ -822,13 +812,13 @@ namespace Ecng.Data
 		private static string CreateKey(Schema schema, Field field, object fieldValue)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			if (fieldValue == null)
-				throw new ArgumentNullException("fieldValue");
+				throw new ArgumentNullException(nameof(fieldValue));
 
 			return Tuple.Create(schema.EntityType, field, fieldValue).ToString();
 		}
@@ -836,7 +826,7 @@ namespace Ecng.Data
 		private IEnumerable<TEntity> GetOrAddCacheTable<TEntity>(SerializationItemCollection table)
 		{
 			if (table == null)
-				throw new ArgumentNullException("table");
+				throw new ArgumentNullException(nameof(table));
 
 			var schema = SchemaManager.GetSchema<TEntity>();
 			var serializer = GetSerializer<TEntity>();
@@ -906,7 +896,7 @@ namespace Ecng.Data
 		private TEntity GetOrAddCache<TEntity>(SerializationItemCollection input)
 		{
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 
 			var schema = SchemaManager.GetSchema<TEntity>();
 			var serializer = GetSerializer<TEntity>();
@@ -955,19 +945,19 @@ namespace Ecng.Data
 		private void AddCache<TEntity>(TEntity entity, string key, object id, SerializationItemCollection source, bool newEntry, Action action)
 		{
 			if (entity.IsNull(true))
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 
 			if (key.IsEmpty())
-				throw new ArgumentNullException("key");
+				throw new ArgumentNullException(nameof(key));
 
 			if (id == null)
-				throw new ArgumentNullException("id");
+				throw new ArgumentNullException(nameof(id));
 
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			var schema = SchemaManager.GetSchema<TEntity>();
 			var serializer = GetSerializer<TEntity>();
@@ -1068,13 +1058,13 @@ namespace Ecng.Data
 		private SerializationItemCollection GroupSource(IEnumerable<Field> fields, SerializationItemCollection input, IEnumerable<PairSet<string, string>> innerSchemaNameOverrides)
 		{
 			if (fields == null)
-				throw new ArgumentNullException("fields");
+				throw new ArgumentNullException(nameof(fields));
 
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 
 			if (innerSchemaNameOverrides == null)
-				throw new ArgumentNullException("innerSchemaNameOverrides");
+				throw new ArgumentNullException(nameof(innerSchemaNameOverrides));
 
 			var output = new SerializationItemCollection();
 
@@ -1143,10 +1133,10 @@ namespace Ecng.Data
 		private SerializationItemCollection UngroupSource(FieldList fields, IEnumerable<SerializationItem> input)
 		{
 			if (fields == null)
-				throw new ArgumentNullException("fields");
+				throw new ArgumentNullException(nameof(fields));
 
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 
 			var output = new SerializationItemCollection();
 
@@ -1196,10 +1186,10 @@ namespace Ecng.Data
 		private static SerializationItemCollection ConvertSourceNames(PairSet<string, string> innerSchemaNameOverrides, SerializationItemCollection source, bool isNewName)
 		{
 			if (innerSchemaNameOverrides == null)
-				throw new ArgumentNullException("innerSchemaNameOverrides");
+				throw new ArgumentNullException(nameof(innerSchemaNameOverrides));
 
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			if (!innerSchemaNameOverrides.IsEmpty())
 			{

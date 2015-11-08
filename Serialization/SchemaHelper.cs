@@ -12,7 +12,7 @@
 		public static EntityFactory<TEntity> GetFactory<TEntity>(this Schema schema)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			return (EntityFactory<TEntity>)schema.Factory;
 		}
@@ -20,7 +20,7 @@
 		public static FieldAccessor<TEntity> GetAccessor<TEntity>(this Field field)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			return (FieldAccessor<TEntity>)field.Accessor;
 		}
@@ -57,10 +57,10 @@
 		public static bool MatchFactory(this Field field, Type baseType)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			if (baseType == null)
-				throw new ArgumentNullException("baseType");
+				throw new ArgumentNullException(nameof(baseType));
 
 			return _matchFactoryCache.SafeAdd(new Tuple<Field, Type>(field, baseType), key => key.Item1.Factory != null && MatchFactory(key.Item1.Factory, key.Item2));
 		}
@@ -68,10 +68,10 @@
 		private static bool MatchFactory(this FieldFactory factory, Type baseType)
 		{
 			if (factory == null)
-				throw new ArgumentNullException("factory");
+				throw new ArgumentNullException(nameof(factory));
 
 			if (baseType == null)
-				throw new ArgumentNullException("baseType");
+				throw new ArgumentNullException(nameof(baseType));
 
 			var chain = factory as FieldFactoryChain;
 			if (chain != null)

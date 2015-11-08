@@ -28,7 +28,7 @@ namespace Ecng.ComponentModel
 		public static string GetDisplayName(this object field)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			if (!(field is Enum))
 				throw new ArgumentException("field");
@@ -36,7 +36,7 @@ namespace Ecng.ComponentModel
 			var fieldInfo = field.GetType().GetField(field.ToString());
 
 			if (fieldInfo == null)
-				throw new ArgumentException(field.ToString(), "field");
+				throw new ArgumentException(field.ToString(), nameof(field));
 
 			var name = fieldInfo.Name;
 

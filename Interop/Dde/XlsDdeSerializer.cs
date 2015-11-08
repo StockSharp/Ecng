@@ -37,7 +37,7 @@
 				case DataTypes.Skip:
 					return null;
 				default:
-					throw new ArgumentOutOfRangeException("type");
+					throw new ArgumentOutOfRangeException(nameof(type));
 			}
 		}
 
@@ -58,7 +58,7 @@
 			if (cell is bool)
 				return DataTypes.Bool;
 
-			throw new ArgumentException("Unknown cell value type '{0}'.".Put(cell.GetType()), "cell");
+			throw new ArgumentException("Unknown cell value type '{0}'.".Put(cell.GetType()), nameof(cell));
 		}
 
 		public static byte[] Serialize(IList<IList<object>> rows)
@@ -111,7 +111,7 @@
 		public static IList<IList<object>> Deserialize(byte[] data)
 		{
 			if (data == null)
-				throw new ArgumentNullException("data");
+				throw new ArgumentNullException(nameof(data));
 
 			var stream = data.To<Stream>();
 

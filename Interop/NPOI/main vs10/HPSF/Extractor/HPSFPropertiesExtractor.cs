@@ -148,15 +148,9 @@ namespace NPOI.HPSF.Extractor
         /// the document.
         /// </summary>
         /// <value>All the text from the document.</value>
-        public override String Text
-        {
-            get
-            {
-                return SummaryInformationText + DocumentSummaryInformationText;
-            }
-        }
+        public override String Text => SummaryInformationText + DocumentSummaryInformationText;
 
-        /// <summary>
+	    /// <summary>
         /// Returns another text extractor, which is able to
         /// output the textual content of the document
         /// metadata / properties, such as author and title.

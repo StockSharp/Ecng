@@ -50,11 +50,7 @@ namespace NDde.Advanced
         /// <summary>
         /// This gets the service name associated with this event.
         /// </summary>
-        public string Service
-        {
-            get { return _DdemlObject.Service; }
-        }
-
+        public string Service => _DdemlObject.Service;
     } // class
 
 } // namespace

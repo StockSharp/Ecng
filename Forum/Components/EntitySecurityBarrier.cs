@@ -31,7 +31,7 @@ namespace Ecng.Forum.Components
 		public void Check(Forum forum)
 		{
 			if (forum == null)
-				throw new ArgumentNullException("forum");
+				throw new ArgumentNullException(nameof(forum));
 
 			if (forum.IsLocked)
 				Check(_roles.Moderators);
@@ -40,7 +40,7 @@ namespace Ecng.Forum.Components
 		public void Check(Topic topic)
 		{
 			if (topic == null)
-				throw new ArgumentNullException("topic");
+				throw new ArgumentNullException(nameof(topic));
 
 			if (topic.Type == TopicTypes.Locked || topic.Type == TopicTypes.Announce)
 				Check(_roles.Moderators);
@@ -54,7 +54,7 @@ namespace Ecng.Forum.Components
 		public File Check(File file)
 		{
 			if (file == null)
-				throw new ArgumentNullException("file");
+				throw new ArgumentNullException(nameof(file));
 
 			if (ForumHelper.CurrentUser != file.User)
 				Check(_roles.Administrators);
@@ -70,7 +70,7 @@ namespace Ecng.Forum.Components
 		public bool TryCheck(Poll poll, PermissionTypes permissions)
 		{
 			if (poll == null)
-				throw new ArgumentNullException("poll");
+				throw new ArgumentNullException(nameof(poll));
 
 			return TryCheck(poll.Topic, permissions);
 		}
@@ -83,7 +83,7 @@ namespace Ecng.Forum.Components
 		public bool TryCheck(Message message, PermissionTypes permissions)
 		{
 			if (message == null)
-				throw new ArgumentNullException("message");
+				throw new ArgumentNullException(nameof(message));
 
 			return TryCheck(message.Topic, permissions);
 		}
@@ -96,7 +96,7 @@ namespace Ecng.Forum.Components
 		public bool TryCheck(Topic topic, PermissionTypes permissions)
 		{
 			if (topic == null)
-				throw new ArgumentNullException("topic");
+				throw new ArgumentNullException(nameof(topic));
 
 			var retVal = TryCheck(topic.Forum, permissions);
 
@@ -119,7 +119,7 @@ namespace Ecng.Forum.Components
 		public bool TryCheck(Forum forum, PermissionTypes permissions)
 		{
 			if (forum == null)
-				throw new ArgumentNullException("forum");
+				throw new ArgumentNullException(nameof(forum));
 
 			return TryCheck(forum.Folder, permissions);
 		}
@@ -139,7 +139,7 @@ namespace Ecng.Forum.Components
 		public bool TryCheck(ForumFolder forumFolder, PermissionTypes permissions, ForumRole[] roles)
 		{
 			if (forumFolder == null)
-				throw new ArgumentNullException("forumFolder");
+				throw new ArgumentNullException(nameof(forumFolder));
 
 			//if (forumFolder.Parent != null && !TryCheck(forumFolder.Parent, permissions, roles))
 			//	return false;
@@ -151,7 +151,7 @@ namespace Ecng.Forum.Components
 			where E : ForumBaseEntity
 		{
 			if (entity == null)
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 
 			if (!retVal)
 				throw new UnauthorizedAccessException("Entity of type '{0}' with id '{1}' can't be '{2}'.".Put(entity.GetType(), entity.Id, permissions));

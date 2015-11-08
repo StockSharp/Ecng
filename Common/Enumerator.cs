@@ -99,7 +99,7 @@
 		public static T JoinMask<T>(this IEnumerable<T> values)
 		{
 			if (values == null)
-				throw new ArgumentNullException("values");
+				throw new ArgumentNullException(nameof(values));
 
 			return values.Aggregate(default(T), (current, t) => (current.To<long>() | t.To<long>()).To<T>());
 		}

@@ -48,15 +48,9 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// <value>
         /// The number of items in the locator.
         /// </value>
-        public int Count
-        {
-            get
-            {
-                return policies.Count;
-            }
-        }
+        public int Count => policies.Count;
 
-        /// <summary>
+	    /// <summary>
         /// Removes an individual policy type for a build key.
         /// </summary>
         /// <param name="policyInterface">The type of policy to remove.</param>
@@ -259,7 +253,7 @@ namespace Microsoft.Practices.ObjectBuilder2
                     CultureInfo.CurrentCulture,
                     Resources.CannotExtractTypeFromBuildKey,
                     buildKey),
-                "buildKey");
+                nameof(buildKey));
         }
 
         class NullPolicyList : IPolicyList

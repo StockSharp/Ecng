@@ -24,7 +24,7 @@
 		public SiteMapMapper(SiteMapProvider provider)
 		{
 			if (provider == null)
-				throw new ArgumentNullException("provider");
+				throw new ArgumentNullException(nameof(provider));
 
 			Provider = provider;
 
@@ -36,7 +36,7 @@
 		public SiteMapNode GetNode(Type pageType)
 		{
 			if (pageType == null)
-				throw new ArgumentNullException("pageType");
+				throw new ArgumentNullException(nameof(pageType));
 
 			return _pageNodes.TryGetValue(pageType);
 		}
@@ -44,7 +44,7 @@
 		private void ObtainNodeInfo(SiteMapNode node)
 		{
 			if (node == null)
-				throw new ArgumentNullException("node");
+				throw new ArgumentNullException(nameof(node));
 
 			foreach (SiteMapNode childNode in node.ChildNodes)
 				ObtainNodeInfo(childNode);

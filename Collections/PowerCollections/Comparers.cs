@@ -187,7 +187,7 @@ namespace Wintellect.PowerCollections
         public static IComparer<T> ComparerFromComparison<T>(Comparison<T> comparison)
         {
             if (comparison == null)
-                throw new ArgumentNullException("comparison");
+                throw new ArgumentNullException(nameof(comparison));
 
             return new ComparisonComparer<T>(comparison);
         }
@@ -203,7 +203,7 @@ namespace Wintellect.PowerCollections
         public static IComparer<KeyValuePair<TKey, TValue>> ComparerKeyValueFromComparerKey<TKey, TValue>(IComparer<TKey> keyComparer)
         {
             if (keyComparer == null)
-                throw new ArgumentNullException("keyComparer");
+                throw new ArgumentNullException(nameof(keyComparer));
 
             return new KeyValueComparer<TKey, TValue>(keyComparer);
         }
@@ -219,7 +219,7 @@ namespace Wintellect.PowerCollections
         public static IEqualityComparer<KeyValuePair<TKey, TValue>> EqualityComparerKeyValueFromComparerKey<TKey, TValue>(IEqualityComparer<TKey> keyEqualityComparer)
         {
             if (keyEqualityComparer == null)
-                throw new ArgumentNullException("keyEqualityComparer");
+                throw new ArgumentNullException(nameof(keyEqualityComparer));
 
             return new KeyValueEqualityComparer<TKey, TValue>(keyEqualityComparer);
         }
@@ -236,9 +236,9 @@ namespace Wintellect.PowerCollections
         public static IComparer<KeyValuePair<TKey, TValue>> ComparerPairFromKeyValueComparers<TKey, TValue>(IComparer<TKey> keyComparer, IComparer<TValue> valueComparer)
         {
             if (keyComparer == null)
-                throw new ArgumentNullException("keyComparer");
+                throw new ArgumentNullException(nameof(keyComparer));
             if (valueComparer == null)
-                throw new ArgumentNullException("valueComparer");
+                throw new ArgumentNullException(nameof(valueComparer));
 
             return new PairComparer<TKey, TValue>(keyComparer, valueComparer);
         }
@@ -254,7 +254,7 @@ namespace Wintellect.PowerCollections
         public static IComparer<KeyValuePair<TKey, TValue>> ComparerKeyValueFromComparisonKey<TKey, TValue>(Comparison<TKey> keyComparison)
         {
             if (keyComparison == null)
-                throw new ArgumentNullException("keyComparison");
+                throw new ArgumentNullException(nameof(keyComparison));
 
             return new ComparisonKeyValueComparer<TKey, TValue>(keyComparison);
         }

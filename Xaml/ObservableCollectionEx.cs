@@ -215,10 +215,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"/>.
 		/// </returns>
-		public int Count
-		{
-			get { return _items.Count; }
-		}
+		public int Count => _items.Count;
 
 		/// <summary>
 		/// Gets an object that can be used to synchronize access to the <see cref="T:System.Collections.ICollection"/>.
@@ -226,10 +223,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// An object that can be used to synchronize access to the <see cref="T:System.Collections.ICollection"/>.
 		/// </returns>
-		object ICollection.SyncRoot
-		{
-			get { return this; }
-		}
+		object ICollection.SyncRoot => this;
 
 		/// <summary>
 		/// Gets a value indicating whether access to the <see cref="T:System.Collections.ICollection"/> is synchronized (thread safe).
@@ -237,10 +231,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// true if access to the <see cref="T:System.Collections.ICollection"/> is synchronized (thread safe); otherwise, false.
 		/// </returns>
-		bool ICollection.IsSynchronized
-		{
-			get { return true; }
-		}
+		bool ICollection.IsSynchronized => true;
 
 		/// <summary>
 		/// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.
@@ -248,10 +239,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// true if the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only; otherwise, false.
 		/// </returns>
-		public bool IsReadOnly
-		{
-			get { return false; }
-		}
+		public bool IsReadOnly => false;
 
 		/// <summary>
 		/// Gets a value indicating whether the <see cref="T:System.Collections.IList"/> has a fixed size.
@@ -259,10 +247,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// true if the <see cref="T:System.Collections.IList"/> has a fixed size; otherwise, false.
 		/// </returns>
-		bool IList.IsFixedSize
-		{
-			get { return false; }
-		}
+		bool IList.IsFixedSize => false;
 
 		/// <summary>
 		/// Determines the index of a specific item in the <see cref="T:System.Collections.Generic.IList`1"/>.
@@ -347,10 +332,10 @@ namespace Ecng.Xaml
 		private void OnCollectionChanged(NotifyCollectionChangedAction action, IList<TItem> items, int index)
 		{
 			if (items == null)
-				throw new ArgumentNullException("items");
+				throw new ArgumentNullException(nameof(items));
 
 			if (index < 0)
-				throw new ArgumentOutOfRangeException("index");
+				throw new ArgumentOutOfRangeException(nameof(index));
 
 			var evt = CollectionChanged;
 

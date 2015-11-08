@@ -11,7 +11,7 @@ namespace Ecng.Collections
 		public SimpleEnumerable(Func<IEnumerator<T>> createEnumerator)
 		{
 			if (createEnumerator == null)
-				throw new ArgumentNullException("createEnumerator");
+				throw new ArgumentNullException(nameof(createEnumerator));
 
 			_createEnumerator = createEnumerator;
 		}

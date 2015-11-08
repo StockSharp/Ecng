@@ -50,11 +50,7 @@ namespace NDde.Advanced.Monitor
         /// <summary>
         /// This gets the task handle of the application associated with this event.
         /// </summary>
-        public IntPtr TaskHandle
-        {
-            get { return _DdemlObject.TaskHandle; }
-        }
-
+        public IntPtr TaskHandle => _DdemlObject.TaskHandle;
     } // class
 
 } // namespace

@@ -62,15 +62,9 @@ namespace Microsoft.Practices.Unity
             return keys;
         }
 
-        public IEnumerable<Type> RegisteredTypes
-        {
-            get
-            {
-                return registeredKeys.Keys;
-            }
-        }
+        public IEnumerable<Type> RegisteredTypes => registeredKeys.Keys;
 
-        public void Clear()
+	    public void Clear()
         {
             registeredKeys.Clear();
         }

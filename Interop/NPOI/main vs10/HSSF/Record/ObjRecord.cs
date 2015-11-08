@@ -231,20 +231,11 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public List<SubRecord> SubRecords
-        {
-            get
-            {
-                return subrecords;
-            }
-        }
+	    public List<SubRecord> SubRecords => subrecords;
 
-        public void ClearSubRecords()
+	    public void ClearSubRecords()
         {
             subrecords.Clear();
         }

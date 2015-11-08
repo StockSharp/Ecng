@@ -363,64 +363,31 @@ namespace NPOI.XSSF.Model
         /**
          * get the size of cell styles
          */
-        public int NumCellStyles
-        {
-            get
-            {
-                // Each cell style has a unique xfs entry
-                // Several might share the same styleXfs entry
-                return xfs.Count;
-            }
-        }
+        public int NumCellStyles => xfs.Count;
 
-        /**
+	    /**
          * For unit testing only
          */
-        internal int NumberFormatSize
-        {
-            get
-            {
-                return numberFormats.Count;
-            }
-        }
+        internal int NumberFormatSize => numberFormats.Count;
 
-        /**
+	    /**
          * For unit testing only
          */
-        internal int XfsSize
-        {
-            get
-            {
-                return xfs.Count;
-            }
-        }
-        /**
+        internal int XfsSize => xfs.Count;
+	    /**
          * For unit testing only
          */
-        internal int StyleXfsSize
-        {
-            get
-            {
-                return styleXfs.Count;
-            }
-        }
-        /**
+        internal int StyleXfsSize => styleXfs.Count;
+	    /**
          * For unit testing only!
          */
         internal CT_Stylesheet GetCTStylesheet()
         {
             return doc.GetStyleSheet();
         }
-        internal int DXfsSize
-        {
-            get
-            {
-                return dxfs.Count;
-            }
-        }
+        internal int DXfsSize => dxfs.Count;
 
-
-        /**
+	    /**
          * Write this table out as XML.
          *
          * @param out The stream to write to.

@@ -17,7 +17,7 @@ namespace Ecng.Security
 		public override void FromXml(SecurityElement elem)
 		{
 			if (elem == null)
-				throw new ArgumentNullException("elem");
+				throw new ArgumentNullException(nameof(elem));
 
 			if (!elem.Tag.Equals("IPermission"))
 				throw new ArgumentException("elem");
@@ -39,7 +39,7 @@ namespace Ecng.Security
 		public override IPermission Intersect(IPermission target)
 		{
 			if (target == null)
-				throw new ArgumentNullException("target");
+				throw new ArgumentNullException(nameof(target));
 
 			return OnIntersect((T)target);
 		}
@@ -47,7 +47,7 @@ namespace Ecng.Security
 		public override bool IsSubsetOf(IPermission target)
 		{
 			if (target == null)
-				throw new ArgumentNullException("target");
+				throw new ArgumentNullException(nameof(target));
 
 			return OnIsSubsetOf((T)target);
 		}
@@ -68,7 +68,7 @@ namespace Ecng.Security
 		public override IPermission Union(IPermission other)
 		{
 			if (other == null)
-				throw new ArgumentNullException("other");
+				throw new ArgumentNullException(nameof(other));
 
 			return OnUnion((T)other);
 		}

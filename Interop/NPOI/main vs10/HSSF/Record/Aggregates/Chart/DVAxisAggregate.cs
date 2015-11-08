@@ -32,11 +32,9 @@ namespace NPOI.HSSF.Record.Aggregates.Chart
         private AXSAggregate axs;
         private CrtMlFrtAggregate crtmlfrt;
 
-        public AxisRecord Axis
-        {
-            get { return axis; }
-        }
-        public DVAxisAggregate(RecordStream rs, ChartRecordAggregate container, AxisRecord axis)
+        public AxisRecord Axis => axis;
+
+	    public DVAxisAggregate(RecordStream rs, ChartRecordAggregate container, AxisRecord axis)
             : base(RuleName_DVAXIS, container)
         {
             if (axis == null)

@@ -38,30 +38,21 @@ namespace Ecng.Reflection
 		/// </summary>
 		/// <value></value>
 		/// <returns>One of the <see cref="T:System.Reflection.MethodAttributes"></see> values.</returns>
-		public override MethodAttributes Attributes
-		{
-			get { return MethodAttributes.Public; }
-		}
+		public override MethodAttributes Attributes => MethodAttributes.Public;
 
 		/// <summary>
 		/// Gets the class that declares this member.
 		/// </summary>
 		/// <value></value>
 		/// <returns>The Type object for the class that declares this member.</returns>
-		public override Type DeclaringType
-		{
-			get { return _type; }
-		}
+		public override Type DeclaringType => _type;
 
 		/// <summary>
 		/// Gets the name of the current member.
 		/// </summary>
 		/// <value></value>
 		/// <returns>A <see cref="T:System.String"></see> containing the name of this member.</returns>
-		public override string Name
-		{
-			get { return ConstructorInfo.ConstructorName; }
-		}
+		public override string Name => ConstructorInfo.ConstructorName;
 
 		/// <summary>
 		/// Gets a handle to the internal metadata representation of a method.
@@ -78,10 +69,7 @@ namespace Ecng.Reflection
 		/// </summary>
 		/// <value></value>
 		/// <returns>The Type object through which this <see cref="MemberInfo"/> object was obtained.</returns>
-		public override Type ReflectedType
-		{
-			get { return _type; }
-		}
+		public override Type ReflectedType => _type;
 
 		/// <summary>
 		/// When implemented in a derived class, invokes the constructor reflected by this <see cref="ConstructorInfo"/> with the specified arguments, under the constraints of the specified Binder.

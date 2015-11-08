@@ -83,15 +83,9 @@ namespace NPOI.HSSF.Record
  *
  * @return whether this record is the last in the sub-record stream
  */
-        public virtual bool IsTerminating
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public virtual bool IsTerminating => false;
 
-        public abstract Object Clone();
+	    public abstract Object Clone();
     }
 
      public class UnknownSubRecord : SubRecord
@@ -107,21 +101,10 @@ namespace NPOI.HSSF.Record
              in1.ReadFully(buf);
              _data = buf;
          }
-         public override int DataSize
-         {
-             get
-             {
-                 return _data.Length;
-             }
-         }
-         public override short Sid
-         {
-             get 
-             {
-                 return (short)_sid;
-             }
-         }
-         public override void Serialize(ILittleEndianOutput out1)
+         public override int DataSize => _data.Length;
+	     public override short Sid => (short)_sid;
+
+	     public override void Serialize(ILittleEndianOutput out1)
          {
              out1.WriteShort(_sid);
              out1.WriteShort(_data.Length);

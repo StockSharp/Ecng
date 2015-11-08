@@ -487,15 +487,9 @@ namespace NPOI.OpenXml4Net.OPC
          *
          * @return The name of this part name.
          */
-        public String Name
-        {
-            get
-            {
-                return this.partNameURI.OriginalString;
-            }
-        }
+        public String Name => this.partNameURI.OriginalString;
 
-        /**
+	    /**
          * Part name equivalence is determined by comparing part names as
          * case-insensitive ASCII strings. Packages shall not contain equivalent
          * part names and package implementers shall neither create nor recognize
@@ -537,15 +531,9 @@ namespace NPOI.OpenXml4Net.OPC
          *
          * @return This part name URI.
          */
-        public Uri URI
-        {
-            get
-            {
-                return this.partNameURI;
-            }
-        }
+        public Uri URI => this.partNameURI;
 
-        /**
+	    /**
          * A natural sort order for package part names, consistent with the
          * requirements of {@code java.util.Comparator}, but simply implemented
          * as a static method.

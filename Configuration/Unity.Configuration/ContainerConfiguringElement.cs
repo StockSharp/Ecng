@@ -46,9 +46,6 @@ namespace Microsoft.Practices.Unity.Configuration
         /// <summary>
         /// Return a unique key that can be used to manage this element in a collection.
         /// </summary>
-        public virtual string Key
-        {
-            get { return string.Format(CultureInfo.InvariantCulture, "configuring:{0}", configuringElementNum); }
-        }
+        public virtual string Key => string.Format(CultureInfo.InvariantCulture, "configuring:{0}", configuringElementNum);
     }
 }

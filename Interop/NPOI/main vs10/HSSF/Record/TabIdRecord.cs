@@ -127,16 +127,7 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return _tabids.Length * 2;
-            }
-        }
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        protected override int DataSize => _tabids.Length * 2;
+	    public override short Sid => sid;
     }
 }

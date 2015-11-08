@@ -16,7 +16,7 @@
 			InnerCollection = innerCollection;
 		}
 
-		protected TF InnerCollection { get; private set; }
+		protected TF InnerCollection { get; }
 
 		// -1 is unlimited
 		private int _maxSize = -1;
@@ -27,7 +27,7 @@
 			set
 			{
 				if (value == 0 || value < -1)
-					throw new ArgumentOutOfRangeException("value");
+					throw new ArgumentOutOfRangeException(nameof(value));
 
 				_maxSize = value;
 			}
@@ -35,19 +35,13 @@
 
 		private readonly SyncObject _syncRoot = new SyncObject();
 
-		public SyncObject SyncRoot
-		{
-			get { return _syncRoot; }
-		}
+		public SyncObject SyncRoot => _syncRoot;
 
-		public int Count
-		{
-			get { return InnerCollection.Count; }
-		}
+		public int Count => InnerCollection.Count;
 
 		private bool _isClosed;
 
-		public bool IsClosed { get { return _isClosed; } }
+		public bool IsClosed => _isClosed;
 
 		public void Close()
 		{
@@ -192,10 +186,7 @@
 			throw new NotSupportedException();
 		}
 
-		bool ICollection<T>.IsReadOnly
-		{
-			get { return false; }
-		}
+		bool ICollection<T>.IsReadOnly => false;
 
 		void ICollection<T>.Add(T item)
 		{

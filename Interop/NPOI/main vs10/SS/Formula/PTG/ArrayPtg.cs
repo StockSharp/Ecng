@@ -114,12 +114,9 @@ namespace NPOI.SS.Formula.PTG
 
         }
 
-        public override bool IsBaseToken
-        {
-            get { return false; }
-        }
+        public override bool IsBaseToken => false;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder("[ArrayPtg]\n");
 
@@ -173,23 +170,11 @@ namespace NPOI.SS.Formula.PTG
             return 3 + ConstantValueParser.GetEncodedSize(_arrayValues);
         }
 
-        public int RowCount
-        {
-            get
-            {
-                return _nRows;
-            }
-        }
+        public int RowCount => _nRows;
 
-        public int ColumnCount
-        {
-            get
-            {
-                return _nColumns;
-            }
-        }
+	    public int ColumnCount => _nColumns;
 
-        /** This size includes the size of the array Ptg plus the Array Ptg Token value size*/
+	    /** This size includes the size of the array Ptg plus the Array Ptg Token value size*/
         public override int Size
         {
             get
@@ -250,13 +235,9 @@ namespace NPOI.SS.Formula.PTG
             throw new ArgumentException("Unexpected constant class (" + o.GetType().Name + ")");
         }
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_ARRAY; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_ARRAY;
 
-
-        /**
+	    /**
  * Represents the initial plain tArray token (without the constant data that trails the whole
  * formula).  Objects of this class are only temporary and cannot be used as {@link Ptg}s.
  * These temporary objects get converted to {@link ArrayPtg} by the
@@ -285,21 +266,10 @@ namespace NPOI.SS.Formula.PTG
                     throw Invalid();
                 }
             }
-            public override int Size
-            {
-                get
-                {
-                    return PLAIN_TOKEN_SIZE;
-                }
-            }
-            public override bool IsBaseToken
-            {
-                get
-                {
-                    return false;
-                }
-            }
-            public override String ToFormulaString()
+            public override int Size => PLAIN_TOKEN_SIZE;
+	        public override bool IsBaseToken => false;
+
+	        public override String ToFormulaString()
             {
                 throw Invalid();
             }

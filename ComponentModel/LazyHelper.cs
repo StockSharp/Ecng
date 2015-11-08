@@ -12,7 +12,7 @@
 		public static Lazy<T> Track<T>(this Lazy<T> lazy)
 		{
 			if (lazy == null)
-				throw new ArgumentNullException("lazy");
+				throw new ArgumentNullException(nameof(lazy));
 
 			if (lazy.IsValueCreated)
 				throw new ArgumentException("lazy");
@@ -24,7 +24,7 @@
 		public static void Reset<T>(this Lazy<T> lazy)
 		{
 			if (lazy == null)
-				throw new ArgumentNullException("lazy");
+				throw new ArgumentNullException(nameof(lazy));
 
 			var initFunc = _delegates[lazy];
 			lazy.SetValue("m_boxed", (object)null);

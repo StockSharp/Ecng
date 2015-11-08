@@ -66,7 +66,7 @@ namespace Ecng.Serialization
 		private ISerializer GetSerializer(ISerializer serializer, SerializationItemCollection source, TEntity instance = default(TEntity))
 		{
 			if (serializer == null)
-				throw new ArgumentNullException("serializer");
+				throw new ArgumentNullException(nameof(serializer));
 
 			var entityType = typeof(TEntity);
 

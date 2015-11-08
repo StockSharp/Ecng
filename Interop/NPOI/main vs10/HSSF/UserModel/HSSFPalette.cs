@@ -184,15 +184,9 @@ namespace NPOI.HSSF.UserModel
             /// Gets index to the standard palette
             /// </summary>
             /// <value></value>
-            public override short Indexed
-            {
-                get
-                {
-                    return byteOffset;
-                }
-            }
+            public override short Indexed => byteOffset;
 
-            /// <summary>
+	        /// <summary>
             /// Gets triplet representation like that in Excel
             /// </summary>
             /// <value></value>

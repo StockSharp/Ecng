@@ -43,11 +43,7 @@ namespace NDde.Foundation.Advanced.Monitor
             _TaskHandle = taskHandle;
         }
 
-        public IntPtr TaskHandle
-        {
-            get { return _TaskHandle; }
-        }
-
+        public IntPtr TaskHandle => _TaskHandle;
     } // class
 
 } // namespace

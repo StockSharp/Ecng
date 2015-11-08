@@ -74,10 +74,10 @@ namespace Ecng.Data.Sql
 		public static Query Execute(Schema schema, SqlCommandTypes commandType, FieldList keyFields, FieldList valueFields)
 		{
 			if (keyFields == null)
-				throw new ArgumentNullException("keyFields");
+				throw new ArgumentNullException(nameof(keyFields));
 
 			if (valueFields == null)
-				throw new ArgumentNullException("valueFields");
+				throw new ArgumentNullException(nameof(valueFields));
 
 			var keyFieldsMorph = commandType == SqlCommandTypes.ReadAll ? string.Empty : GetMorphByFields(keyFields);
 
@@ -127,10 +127,10 @@ namespace Ecng.Data.Sql
 		public static Query Create(Schema schema, SqlCommandTypes type, FieldList keyFields, FieldList valueFields)
 		{
 			if (keyFields == null)
-				throw new ArgumentNullException("keyFields");
+				throw new ArgumentNullException(nameof(keyFields));
 
 			if (valueFields == null)
-				throw new ArgumentNullException("valueFields");
+				throw new ArgumentNullException(nameof(valueFields));
 
 			return _queries2.SafeAdd(new Tuple<Schema, SqlCommandTypes, int, int>(schema, type, keyFields.GetHashCodeEx(), valueFields.GetHashCodeEx()), key =>
 			{
@@ -254,10 +254,10 @@ namespace Ecng.Data.Sql
 		private static Query GetQuery(Schema schema, SqlCommandTypes commandType, string morph, Func<Tuple<Schema, SqlCommandTypes, string>, Query> handler)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			if (handler == null)
-				throw new ArgumentNullException("handler");
+				throw new ArgumentNullException(nameof(handler));
 
 			return _queries.SafeAdd(new Tuple<Schema, SqlCommandTypes, string>(schema, commandType, morph), handler);
 		}
@@ -269,7 +269,7 @@ namespace Ecng.Data.Sql
 		public Query Join(Schema schema)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			return Join(schema.Name);
 		}
@@ -289,10 +289,10 @@ namespace Ecng.Data.Sql
 		public Query On(Field leftField, Field rightField)
 		{
 			if (leftField == null)
-				throw new ArgumentNullException("leftField");
+				throw new ArgumentNullException(nameof(leftField));
 
 			if (rightField == null)
-				throw new ArgumentNullException("rightField");
+				throw new ArgumentNullException(nameof(rightField));
 
 			return On("{0}.{1}".Put(leftField.Schema.Name, leftField.Name), "{0}.{1}".Put(rightField.Schema.Name, rightField.Name));
 		}
@@ -312,7 +312,7 @@ namespace Ecng.Data.Sql
 		public static Query Select(Schema schema)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			return Select(r => new[] { r.FormatReserver(schema.Name) + ".*" });
 		}
@@ -350,7 +350,7 @@ namespace Ecng.Data.Sql
 		public static Query Select(FieldList fields)
 		{
 			if (fields == null)
-				throw new ArgumentNullException("fields");
+				throw new ArgumentNullException(nameof(fields));
 
 			return Select(fields.ToArray());
 		}
@@ -376,7 +376,7 @@ namespace Ecng.Data.Sql
 		public Query From(Schema schema)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			return From(schema.Name);
 		}
@@ -442,7 +442,7 @@ namespace Ecng.Data.Sql
 		private Query AddAction(Action<SqlRenderer, StringBuilder> action)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			_actions.Add(action);
 			return this;
@@ -479,7 +479,7 @@ namespace Ecng.Data.Sql
 		public Query Into(Schema schema, params Field[] fields)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			return Into(schema.Name, GetFieldNames(fields, new PairSet<string, string>()));
 		}
@@ -487,7 +487,7 @@ namespace Ecng.Data.Sql
 		public Query Into(Schema schema, FieldList fields)
 		{
 			if (fields == null)
-				throw new ArgumentNullException("fields");
+				throw new ArgumentNullException(nameof(fields));
 
 			return Into(schema, fields.ToArray());
 		}
@@ -522,7 +522,7 @@ namespace Ecng.Data.Sql
 		public Query Values(FieldList fields)
 		{
 			if (fields == null)
-				throw new ArgumentNullException("fields");
+				throw new ArgumentNullException(nameof(fields));
 
 			return Values(fields.ToArray());
 		}
@@ -552,7 +552,7 @@ namespace Ecng.Data.Sql
 		public static Query Update(Schema schema)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			return Update(schema.Name);
 		}
@@ -574,7 +574,7 @@ namespace Ecng.Data.Sql
 		public Query Set(FieldList fields)
 		{
 			if (fields == null)
-				throw new ArgumentNullException("fields");
+				throw new ArgumentNullException(nameof(fields));
 
 			return Set(fields.ToArray());
 		}
@@ -587,7 +587,7 @@ namespace Ecng.Data.Sql
 		private static void Set(ICollection<SetPart> parts, SqlRenderer renderer, StringBuilder builder)
 		{
 			if (parts.IsEmpty())
-				throw new ArgumentOutOfRangeException("parts");
+				throw new ArgumentOutOfRangeException(nameof(parts));
 
 			builder.AppendLine("set");
 
@@ -801,7 +801,7 @@ namespace Ecng.Data.Sql
 		private static string GetMorphByFields(ICollection<Field> fields)
 		{
 			if (fields == null)
-				throw new ArgumentNullException("fields");
+				throw new ArgumentNullException(nameof(fields));
 
 			var morph = new StringBuilder();
 
@@ -945,10 +945,10 @@ namespace Ecng.Data.Sql
 		private static string[] GetFieldNames(IEnumerable<Field> fields, PairSet<string, string> names)
 		{
 			if (fields == null)
-				throw new ArgumentNullException("fields");
+				throw new ArgumentNullException(nameof(fields));
 
 			if (fields.IsEmpty())
-				throw new ArgumentOutOfRangeException("fields");
+				throw new ArgumentOutOfRangeException(nameof(fields));
 
 			var fieldNames = new List<string>();
 
@@ -1015,10 +1015,7 @@ namespace Ecng.Data.Sql
 
 		private readonly string _column;
 
-		public string Column
-		{
-			get { return _column; }
-		}
+		public string Column => _column;
 
 		#endregion
 
@@ -1026,10 +1023,7 @@ namespace Ecng.Data.Sql
 
 		private readonly string _valueName;
 
-		public string ValueName
-		{
-			get { return _valueName; }
-		}
+		public string ValueName => _valueName;
 
 		#endregion
 	}
@@ -1041,10 +1035,7 @@ namespace Ecng.Data.Sql
 
 		private readonly List<Query> _queries = new List<Query>();
 
-		public List<Query> Queries
-		{
-			get { return _queries; }
-		}
+		public List<Query> Queries => _queries;
 
 		#endregion
 

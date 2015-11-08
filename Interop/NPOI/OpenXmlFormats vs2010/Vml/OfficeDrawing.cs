@@ -176,12 +176,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }        
-    
-        [XmlAttribute(DataType="integer")]
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    [XmlAttribute(DataType="integer")]
         public string spidmax {
             get {
                 return this.spidmaxField;
@@ -325,12 +322,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
+        public bool extSpecified => ST_Ext.NONE != this.extField;
 
-        [XmlAttribute]
+	    [XmlAttribute]
         public string id
         {
             get {
@@ -520,12 +514,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }        
-    
-        [XmlAttribute]
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    [XmlAttribute]
         public ST_TrueFalse on {
             get {
                 return this.onField;
@@ -1122,12 +1113,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
-    
-        [XmlAttribute]
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    [XmlAttribute]
         public ST_TrueFalse on {
             get {
                 return this.onField;
@@ -1440,12 +1428,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
-    
-        [XmlAttribute]
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    [XmlAttribute]
         public ST_TrueFalse position {
             get {
                 return this.positionField;
@@ -1762,12 +1747,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
-    
-        [XmlAttribute]
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    [XmlAttribute]
         public string colors {
             get {
                 return this.colorsField;
@@ -1805,12 +1787,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
-    
-        [XmlAttribute]
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    [XmlAttribute]
         public string strokecolor {
             get {
                 return this.strokecolorField;
@@ -1953,12 +1932,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
-    
-        [XmlAttribute]
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    [XmlAttribute]
         public ST_TrueFalse issignatureline {
             get {
                 return this.issignaturelineField;
@@ -2190,11 +2166,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
-        //internal static XmlSerializerNamespaces namespaces = new XmlSerializerNamespaces(new XmlQualifiedName[] {
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    //internal static XmlSerializerNamespaces namespaces = new XmlSerializerNamespaces(new XmlQualifiedName[] {
         //    new XmlQualifiedName("o", "urn:schemas-microsoft-com:office:office"),
         //    new XmlQualifiedName("x", "urn:schemas-microsoft-com:office:excel"),
         //    new XmlQualifiedName("v", "urn:schemas-microsoft-com:vml")
@@ -2271,24 +2245,18 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
+        public bool extSpecified => ST_Ext.NONE != this.extField;
 
-        [XmlAttribute]
+	    [XmlAttribute]
         public string data
         {
             get { return this.dataField; }
             set { this.dataField = value; }
         }
         [XmlIgnore]
-        public bool dataSpecified
-        {
-            get { return null != this.dataField; }
-        }
+        public bool dataSpecified => null != this.dataField;
 
-        public static CT_IdMap Parse(XmlNode node, XmlNamespaceManager namespaceManager)
+	    public static CT_IdMap Parse(XmlNode node, XmlNamespaceManager namespaceManager)
         {
             if (node == null)
                 return null;
@@ -2369,10 +2337,7 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
+        public bool extSpecified => ST_Ext.NONE != this.extField;
     }
     
 
@@ -2393,23 +2358,18 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.newField = value; }
         }
         [XmlIgnore]
-        public bool newSpecified
-        {
-            get { return null != this.newField; }
-        }
+        public bool newSpecified => null != this.newField;
 
-        [XmlAttribute]
+	    [XmlAttribute]
         public int old
         {
             get { return (int)this.oldField; }
             set { this.oldField = value; }
         }
         [XmlIgnore]
-        public bool oldSpecified
-        {
-            get { return null != this.oldField; }
-        }
-        public static CT_Entry Parse(XmlNode node, XmlNamespaceManager namespaceManager)
+        public bool oldSpecified => null != this.oldField;
+
+	    public static CT_Entry Parse(XmlNode node, XmlNamespaceManager namespaceManager)
         {
             if (node == null)
                 return null;
@@ -2460,12 +2420,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
+        public bool extSpecified => ST_Ext.NONE != this.extField;
 
-        public static CT_Rules Parse(XmlNode node, XmlNamespaceManager namespaceManager)
+	    public static CT_Rules Parse(XmlNode node, XmlNamespaceManager namespaceManager)
         {
             if (node == null)
                 return null;
@@ -2537,36 +2494,27 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.typeField = value; }
         }
         [XmlIgnore]
-        public bool typeSpecified
-        {
-            get { return ST_RType.NONE != this.typeField; }
-        }
+        public bool typeSpecified => ST_RType.NONE != this.typeField;
 
-        [XmlAttribute]
+	    [XmlAttribute]
         public ST_How how
         {
             get { return this.howField; }
             set { this.howField = value; }
         }
         [XmlIgnore]
-        public bool howSpecified
-        {
-            get { return ST_How.NONE != this.howField; }
-        }
+        public bool howSpecified => ST_How.NONE != this.howField;
 
-        [XmlAttribute]
+	    [XmlAttribute]
         public string idref
         {
             get { return this.idrefField; }
             set { this.idrefField = value; }
         }
         [XmlIgnore]
-        public bool idrefSpecified
-        {
-            get { return null != this.idrefField; }
-        }
+        public bool idrefSpecified => null != this.idrefField;
 
-        public static CT_R Parse(XmlNode node, XmlNamespaceManager namespaceManager)
+	    public static CT_R Parse(XmlNode node, XmlNamespaceManager namespaceManager)
         {
             if (node == null)
                 return null;
@@ -2631,12 +2579,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.startField = value; }
         }
         [XmlIgnore]
-        public bool startSpecified
-        {
-            get { return (ST_TrueFalseBlank.NONE != startField); }
-        }
+        public bool startSpecified => (ST_TrueFalseBlank.NONE != startField);
 
-        [XmlAttribute]
+	    [XmlAttribute]
         [DefaultValue(ST_TrueFalseBlank.@false)]
         public ST_TrueFalseBlank end
         {
@@ -2644,39 +2589,27 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.endField = value; }
         }
         [XmlIgnore]
-        public bool endSpecified
-        {
-            get { return (ST_TrueFalseBlank.NONE != endField); }
-        }
+        public bool endSpecified => (ST_TrueFalseBlank.NONE != endField);
 
-        [XmlAttribute]
+	    [XmlAttribute]
         public string idref
         {
             get { return this.idrefField; }
             set { this.idrefField = value; }
         }
         [XmlIgnore]
-        public bool idrefSpecified
-        {
-            get { return (null != idrefField); }
-        }
+        public bool idrefSpecified => (null != idrefField);
 
-        [XmlAttribute]
+	    [XmlAttribute]
         public int connectloc
         {
             get { return (int)this.connectlocField; }
             set { this.connectlocField = value; }
         }
         [XmlIgnore]
-        public bool connectlocSpecified
-        {
-            get
-            {
-                return null != this.connectlocField;
-            }
-        }
+        public bool connectlocSpecified => null != this.connectlocField;
 
-        public static CT_Proxy Parse(XmlNode node, XmlNamespaceManager namespaceManager)
+	    public static CT_Proxy Parse(XmlNode node, XmlNamespaceManager namespaceManager)
         {
             if (node == null)
                 return null;
@@ -2789,13 +2722,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
-        
-    
-        [XmlAttribute(DataType="integer")]
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    [XmlAttribute(DataType="integer")]
         public string dgmstyle {
             get {
                 return this.dgmstyleField;
@@ -2960,10 +2889,7 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
+        public bool extSpecified => ST_Ext.NONE != this.extField;
     }
     
 
@@ -2992,12 +2918,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }       
-    
-        [XmlAttribute]
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    [XmlAttribute]
         public string idsrc {
             get {
                 return this.idsrcField;
@@ -3308,10 +3231,7 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }
+        public bool extSpecified => ST_Ext.NONE != this.extField;
     }    
 
     [Serializable]
@@ -3417,12 +3337,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }       
-    
-        [XmlAttribute]
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    [XmlAttribute]
         public ST_TrueFalse on {
             get {
                 return this.onField;
@@ -3930,12 +3847,9 @@ namespace NPOI.OpenXmlFormats.Vml.Office
             set { this.extField = value; }
         }
         [XmlIgnore]
-        public bool extSpecified
-        {
-            get { return ST_Ext.NONE != this.extField; }
-        }       
-    
-        [XmlAttribute]
+        public bool extSpecified => ST_Ext.NONE != this.extField;
+
+	    [XmlAttribute]
         public ST_FillType1 type {
             get {
                 return this.typeField;

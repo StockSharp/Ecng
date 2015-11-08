@@ -44,23 +44,17 @@ namespace NPOI.SS.Formula.PTG
             field_1_value = (formulaToken.Equals("TRUE"));
         }
 
-        public bool Value
-        {
-            get { return field_1_value; }
-        }
+        public bool Value => field_1_value;
 
-        public override void Write(ILittleEndianOutput out1)
+	    public override void Write(ILittleEndianOutput out1)
         {
             out1.WriteByte(sid + PtgClass);
             out1.WriteByte(field_1_value ? 1 : 0);
         }
 
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
 
-        public override String ToFormulaString()
+	    public override String ToFormulaString()
         {
             return field_1_value ? "TRUE" : "FALSE";
         }

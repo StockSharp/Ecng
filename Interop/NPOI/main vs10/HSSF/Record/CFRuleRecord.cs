@@ -247,17 +247,11 @@ namespace NPOI.HSSF.Record
             field_18_formula2 = FR.Formula.Read(field_4_formula2_len, in1);
     }
 
-        public byte ConditionType
-        {
-            get { return field_1_condition_type; }
-        }
+        public byte ConditionType => field_1_condition_type;
 
-        public bool ContainsFontFormattingBlock
-        {
-            get { return GetOptionFlag(font); }
-        }
+	    public bool ContainsFontFormattingBlock => GetOptionFlag(font);
 
-        public FontFormatting FontFormatting
+	    public FontFormatting FontFormatting
         {
             get
             {
@@ -277,20 +271,16 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public bool ContainsAlignFormattingBlock
-        {
-            get { return GetOptionFlag(align); }
-        }
-        public void SetAlignFormattingUnChanged()
+        public bool ContainsAlignFormattingBlock => GetOptionFlag(align);
+
+	    public void SetAlignFormattingUnChanged()
         {
             SetOptionFlag(false, align);
         }
 
-        public bool ContainsBorderFormattingBlock
-        {
-            get { return GetOptionFlag(bord); }
-        }
-        public BorderFormatting BorderFormatting
+        public bool ContainsBorderFormattingBlock => GetOptionFlag(bord);
+
+	    public BorderFormatting BorderFormatting
         {
             get
             {
@@ -310,12 +300,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public bool ContainsPatternFormattingBlock
-        {
-            get { return GetOptionFlag(patt); }
-        }
+        public bool ContainsPatternFormattingBlock => GetOptionFlag(patt);
 
-        public PatternFormatting PatternFormatting
+	    public PatternFormatting PatternFormatting
         {
             get
             {
@@ -335,11 +322,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public bool ContainsProtectionFormattingBlock
-        {
-            get { return GetOptionFlag(prot); }
-        }
-        public void SetProtectionFormattingUnChanged()
+        public bool ContainsProtectionFormattingBlock => GetOptionFlag(prot);
+
+	    public void SetProtectionFormattingUnChanged()
         {
             SetOptionFlag(false, prot);
         }
@@ -356,12 +341,9 @@ namespace NPOI.HSSF.Record
          *
          * @return bit mask
          */
-        public int Options
-        {
-            get { return field_5_options; }
-        }
+        public int Options => field_5_options;
 
-        private bool IsModified(BitField field)
+	    private bool IsModified(BitField field)
         {
             return !field.IsSet(field_5_options);
         }
@@ -437,12 +419,9 @@ namespace NPOI.HSSF.Record
 
 
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        /**
+	    /**
          * @param ptgs may be <c>null</c>
          * @return encoded size of the formula
          */

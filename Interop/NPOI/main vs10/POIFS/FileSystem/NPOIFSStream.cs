@@ -326,17 +326,11 @@ namespace NPOI.POIFS.FileSystem
                 throw new NotImplementedException("Unsupported Operations!");
             }
 
-            public ByteBuffer Current
-            {
-                get { return current; }
-            }
+            public ByteBuffer Current => current;
 
-            Object System.Collections.IEnumerator.Current
-            {
-                get { return current; }
-            }
+	        Object System.Collections.IEnumerator.Current => current;
 
-            void System.Collections.IEnumerator.Reset()
+	        void System.Collections.IEnumerator.Reset()
             {
                 throw new NotImplementedException();
             }

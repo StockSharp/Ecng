@@ -13,7 +13,7 @@ namespace Ecng.ComponentModel
 			where T : IComparable<T>
 		{
 			if (range == null)
-				throw new ArgumentNullException("range");
+				throw new ArgumentNullException(nameof(range));
 
 			return !range.HasMaxValue && !range.HasMinValue;
 		}

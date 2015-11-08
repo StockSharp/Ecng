@@ -45,21 +45,15 @@ namespace NPOI.DDF
         /// Whether this bool property is true
         /// </summary>
         /// <value><c>true</c> if this instance is true; otherwise, <c>false</c>.</value>
-        public bool IsTrue
-        {
-            get { return propertyValue != 0; }
-        }
+        public bool IsTrue => propertyValue != 0;
 
-        /// <summary>
+	    /// <summary>
         /// Whether this bool property is false
         /// </summary>
         /// <value><c>true</c> if this instance is false; otherwise, <c>false</c>.</value>
-        public bool IsFalse
-        {
-            get { return propertyValue == 0; }
-        }
+        public bool IsFalse => propertyValue == 0;
 
-        //public override String ToString()
+	    //public override String ToString()
         //{
         //    return "propNum: " + PropertyNumber
         //            + ", complex: " + IsComplex

@@ -54,12 +54,9 @@ namespace NPOI.SS.Formula.PTG
         /**
          * @return zero based index to a defined name record in the LinkTable
          */
-        public int Index
-        {
-            get { return field_1_label_index - 1; } // Convert to zero based
-        }
+        public int Index => field_1_label_index - 1;
 
-        public override void Write(ILittleEndianOutput out1)
+	    public override void Write(ILittleEndianOutput out1)
         {
 		    out1.WriteByte(sid + PtgClass);
 		    out1.WriteShort(field_1_label_index);
@@ -67,12 +64,9 @@ namespace NPOI.SS.Formula.PTG
         }
 
 
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
 
-        public String ToFormulaString(IFormulaRenderingWorkbook book)
+	    public String ToFormulaString(IFormulaRenderingWorkbook book)
         {
             return book.GetNameText(this);
         }
@@ -82,9 +76,6 @@ namespace NPOI.SS.Formula.PTG
         }
     
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_REF; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_REF;
     }
 }

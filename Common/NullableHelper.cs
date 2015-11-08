@@ -12,7 +12,7 @@ namespace Ecng.Common
 		public static bool IsNullable(this Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			return type.GetUnderlyingType() != null;
 		}
@@ -40,10 +40,10 @@ namespace Ecng.Common
 			where T : class
 		{
 			if (notNullFunc == null)
-				throw new ArgumentNullException("notNullFunc");
+				throw new ArgumentNullException(nameof(notNullFunc));
 
 			if (nullFunc == null)
-				throw new ArgumentNullException("nullFunc");
+				throw new ArgumentNullException(nameof(nullFunc));
 
 			return value == null ? nullFunc() : notNullFunc(value);
 		}

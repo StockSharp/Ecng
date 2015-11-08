@@ -453,15 +453,9 @@ namespace NPOI.XSSF.UserModel
          * 
          * @return text paragraphs in this shape
          */
-        public List<XSSFTextParagraph> TextParagraphs
-        {
-            get
-            {
-                return _paragraphs;
-            }
-        }
+        public List<XSSFTextParagraph> TextParagraphs => _paragraphs;
 
-        /**
+	    /**
          * Add a new paragraph run to this shape
          *
          * @return Created paragraph run

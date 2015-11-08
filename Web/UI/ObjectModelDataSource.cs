@@ -88,13 +88,7 @@
 		[MergableProperty(false)]
 		[PersistenceMode(PersistenceMode.InnerProperty)]
 		[DefaultValue(null)]
-		public ParameterCollection PathParameters
-		{
-			get
-			{
-				return GetView().PathParameters;
-			}
-		}
+		public ParameterCollection PathParameters => GetView().PathParameters;
 
 		#endregion
 

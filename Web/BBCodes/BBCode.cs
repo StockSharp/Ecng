@@ -13,7 +13,7 @@ namespace Ecng.Web.BBCodes
 
         public static string ToHtml(string bbCode)
         {
-            if (bbCode == null) throw new ArgumentNullException("bbCode");
+            if (bbCode == null) throw new ArgumentNullException(nameof(bbCode));
             return defaultParser.ToHtml(bbCode);
         }
 
@@ -42,7 +42,7 @@ namespace Ecng.Web.BBCodes
         /// </summary>
         public static string EscapeText(string text)
         {
-            if (text == null) throw new ArgumentNullException("text");
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             int escapeCount = 0;
             for (int i = 0; i < text.Length; i++)
@@ -72,15 +72,15 @@ namespace Ecng.Web.BBCodes
         /// </summary>
         public static string UnescapeText(string text)
         {
-            if (text == null) throw new ArgumentNullException("text");
+            if (text == null) throw new ArgumentNullException(nameof(text));
 
             return text.Replace("\\[", "[").Replace("\\]", "]").Replace("\\\\", "\\");
         }
 
         public static SyntaxTreeNode ReplaceTextSpans(SyntaxTreeNode node, Func<string, IList<TextSpanReplaceInfo>> getTextSpansToReplace, Func<TagNode, bool> tagFilter)
         {
-            if (node == null) throw new ArgumentNullException("node");
-            if (getTextSpansToReplace == null) throw new ArgumentNullException("getTextSpansToReplace");
+            if (node == null) throw new ArgumentNullException(nameof(node));
+            if (getTextSpansToReplace == null) throw new ArgumentNullException(nameof(getTextSpansToReplace));
 
             if (node is TextNode)
             {
@@ -131,8 +131,8 @@ namespace Ecng.Web.BBCodes
 
         public static void VisitTextNodes(SyntaxTreeNode node, Action<string> visitText, Func<TagNode, bool> tagFilter)
         {
-            if (node == null) throw new ArgumentNullException("node");
-            if (visitText == null) throw new ArgumentNullException("visitText");
+            if (node == null) throw new ArgumentNullException(nameof(node));
+            if (visitText == null) throw new ArgumentNullException(nameof(visitText));
 
             if (node is TextNode)
             {
@@ -168,16 +168,16 @@ namespace Ecng.Web.BBCodes
     {
         public TextSpanReplaceInfo(int index, int length, SyntaxTreeNode replacement)
         {
-            if (index < 0) throw new ArgumentOutOfRangeException("index");
-            if (length < 0) throw new ArgumentOutOfRangeException("index");
+            if (index < 0) throw new ArgumentOutOfRangeException(nameof(index));
+            if (length < 0) throw new ArgumentOutOfRangeException(nameof(index));
 
             Index = index;
             Length = length;
             Replacement = replacement;
         }
 
-        public int Index { get; private set; }
-        public int Length { get; private set; }
-        public SyntaxTreeNode Replacement { get; private set; }
+        public int Index { get; }
+        public int Length { get; }
+        public SyntaxTreeNode Replacement { get; }
     }
 }

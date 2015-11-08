@@ -103,12 +103,9 @@ namespace NPOI.Util.Collections
         /// <returns>
         /// The number of elements contained in the <see cref="T:System.Collections.ICollection"/>.
         /// </returns>
-		public int Count
-		{
-			get { return impl.Count; }
-		}
-        
-        /// <summary>
+		public int Count => impl.Count;
+
+	    /// <summary>
         /// Returns an enumerator that iterates through a collection.
         /// </summary>
         /// <returns>

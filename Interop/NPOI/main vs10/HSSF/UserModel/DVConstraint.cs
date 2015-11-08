@@ -45,21 +45,9 @@ using NPOI.HSSF.Record;
                 _formula1 = formula1;
                 _formula2 = formula2;
             }
-            public Ptg[] Formula1
-            {
-                get
-                {
-                    return _formula1;
-                }
-            }
-            public Ptg[] Formula2
-            {
-                get
-                {
-                    return _formula2;
-                }
-            }
+            public Ptg[] Formula1 => _formula1;
 
+	        public Ptg[] Formula2 => _formula2;
         }
 
         // convenient access to ValidationType namespace
@@ -325,26 +313,14 @@ using NPOI.HSSF.Record;
          * Convenience method
          * @return <c>true</c> if this constraint is a 'list' validation
          */
-        public bool IsListValidationType
-        {
-            get
-            {
-                return _validationType == ValidationType.LIST;
-            }
-        }
-        /**
+        public bool IsListValidationType => _validationType == ValidationType.LIST;
+	    /**
          * Convenience method
          * @return <c>true</c> if this constraint is a 'list' validation with explicit values
          */
-        public bool IsExplicitList
-        {
-            get
-            {
-                return _validationType == ValidationType.LIST && _explicitListValues != null;
-            }
-        }
+        public bool IsExplicitList => _validationType == ValidationType.LIST && _explicitListValues != null;
 
-        public int Operator
+	    public int Operator
         {
             get
             {

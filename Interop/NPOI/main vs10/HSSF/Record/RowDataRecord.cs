@@ -12,15 +12,9 @@ namespace NPOI.HSSF.Record
         {
             _rawData = in1.ReadRemainder();
         }
-        protected override int DataSize
-        {
-            get
-            {
-                return _rawData.Length;
-            }
-        }
+        protected override int DataSize => _rawData.Length;
 
-        public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
+	    public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
         {
             out1.Write(_rawData);
         }

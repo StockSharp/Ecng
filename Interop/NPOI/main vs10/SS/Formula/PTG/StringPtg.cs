@@ -84,12 +84,9 @@ namespace NPOI.SS.Formula.PTG
             field_1_Length = value.Length; // for the moment, we support only ASCII strings in formulas we Create
         }
 
-        public String Value
-        {
-            get { return field_3_string; }
-        }
+        public String Value => field_3_string;
 
-        public override void Write(ILittleEndianOutput out1)
+	    public override void Write(ILittleEndianOutput out1)
         {
             out1.WriteByte(sid + PtgClass);
             out1.WriteByte(field_3_string.Length); // Note - nChars is 8-bit
@@ -104,15 +101,9 @@ namespace NPOI.SS.Formula.PTG
             }
         }
 
-        public override int Size
-        {
-            get
-            {
-                return field_3_string.Length * (_is16bitUnicode ? 2 : 1) + 3;
-            }
-        }
+        public override int Size => field_3_string.Length * (_is16bitUnicode ? 2 : 1) + 3;
 
-        public override String ToFormulaString()
+	    public override String ToFormulaString()
         {
             String value = field_3_string;
             int len = value.Length;

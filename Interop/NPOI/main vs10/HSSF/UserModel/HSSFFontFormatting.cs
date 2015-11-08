@@ -101,12 +101,9 @@ namespace NPOI.HSSF.UserModel
          * @return bw - a number between 100-1000 for the fonts "boldness"
          */
 
-        public short FontWeight
-        {
-            get { return fontFormatting.FontWeight; }
-        }
+        public short FontWeight => fontFormatting.FontWeight;
 
-        /**
+	    /**
          * @return
          * @see org.apache.poi.hssf.record.cf.FontFormatting#GetRawRecord()
          */
@@ -158,15 +155,9 @@ namespace NPOI.HSSF.UserModel
          *
          * @return bold - whether the font Is bold or not
          */
-        public bool IsBold
-        {
-            get
-            {
-                return fontFormatting.IsFontWeightModified && fontFormatting.IsBold;
-            }
-        }
+        public bool IsBold => fontFormatting.IsFontWeightModified && fontFormatting.IsBold;
 
-        /**
+	    /**
          * @return true if escapement type was modified from default   
          */
         public bool IsEscapementTypeModified
@@ -227,12 +218,9 @@ namespace NPOI.HSSF.UserModel
         /**
          * @return true if font style was Set to <i>italic</i> 
          */
-        public bool IsItalic
-        {
-            get { return fontFormatting.IsFontStyleModified && fontFormatting.IsItalic; }
-        }
+        public bool IsItalic => fontFormatting.IsFontStyleModified && fontFormatting.IsItalic;
 
-        /**
+	    /**
          * @return true if font outline Is on
          */
         public bool IsOutlineOn
@@ -290,15 +278,9 @@ namespace NPOI.HSSF.UserModel
         /**
          * @return true if font weight was modified from default   
          */
-        public bool IsFontWeightModified
-        {
-            get{
-                return fontFormatting.IsFontWeightModified;
-            }
+        public bool IsFontWeightModified => fontFormatting.IsFontWeightModified;
 
-        }
-
-        /**
+	    /**
          * Set font style options.
          * 
          * @param italic - if true, Set posture style to italic, otherwise to normal 

@@ -60,15 +60,9 @@ namespace NPOI.SS.UserModel
          *
          * @return value of this charset
          */
-        public int Value
-        {
-            get
-            {
-                return charset;
-            }
-        }
+        public int Value => charset;
 
-        private static FontCharset[] _table = null;
+	    private static FontCharset[] _table = null;
 
         static FontCharset()
         {

@@ -51,17 +51,11 @@ using System.Collections.Generic;
             private int field_1_drawingGroupId;
             private int field_2_numShapeIdsUsed;
 
-            public int DrawingGroupId
-            {
-                get { return field_1_drawingGroupId; }
-            }
+            public int DrawingGroupId => field_1_drawingGroupId;
 
-            public int NumShapeIdsUsed
-            {
-                get { return field_2_numShapeIdsUsed; }
-            }
+	        public int NumShapeIdsUsed => field_2_numShapeIdsUsed;
 
-            public void IncrementShapeId()
+	        public void IncrementShapeId()
             {
                 this.field_2_numShapeIdsUsed++;
             }
@@ -131,30 +125,21 @@ using System.Collections.Generic;
         /// Returns the number of bytes that are required to Serialize this record.
         /// </summary>
         /// <value>Number of bytes</value>
-        public override int RecordSize
-        {
-            get { return 8 + 16 + (8 * field_5_fileIdClusters.Length); }
-        }
+        public override int RecordSize => 8 + 16 + (8 * field_5_fileIdClusters.Length);
 
-        /// <summary>
+	    /// <summary>
         /// Return the current record id.
         /// </summary>
         /// <value>The 16 bit record id.</value>
-        public override short RecordId
-        {
-            get { return RECORD_ID; }
-        }
+        public override short RecordId => RECORD_ID;
 
-        /// <summary>
+	    /// <summary>
         /// The short name for this record
         /// </summary>
         /// <value></value>
-        public override String RecordName
-        {
-            get { return "Dgg"; }
-        }
+        public override String RecordName => "Dgg";
 
-        /// <summary>
+	    /// <summary>
         /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
         /// </summary>
         /// <returns>
@@ -223,12 +208,9 @@ using System.Collections.Generic;
         /// Gets the Number of id clusters + 1
         /// </summary>
         /// <value>The num id clusters.</value>
-        public int NumIdClusters
-        {
-            get { return field_5_fileIdClusters.Length + 1; }
-        }
+        public int NumIdClusters => field_5_fileIdClusters.Length + 1;
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the num shapes saved.
         /// </summary>
         /// <value>The num shapes saved.</value>
@@ -323,9 +305,9 @@ using System.Collections.Generic;
         public static void InsertionSort<T>(List<T> list, IComparer<T> comparison)
         {
             if (list == null)
-                throw new ArgumentNullException("list");
+                throw new ArgumentNullException(nameof(list));
             if (comparison == null)
-                throw new ArgumentNullException("comparison");
+                throw new ArgumentNullException(nameof(comparison));
 
             int count = list.Count;
             for (int j = 1; j < count; j++)

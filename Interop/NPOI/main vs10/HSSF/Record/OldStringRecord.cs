@@ -57,23 +57,11 @@ namespace NPOI.HSSF.Record
             in1.Read(field_2_bytes, 0, field_1_string_len);
         }
 
-        public bool IsBiff2
-        {
-            get
-            {
-                return sid == biff2_sid;
-            }
-        }
+        public bool IsBiff2 => sid == biff2_sid;
 
-        public short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+	    public short Sid => sid;
 
-        public void SetCodePage(CodepageRecord codepage)
+	    public void SetCodePage(CodepageRecord codepage)
         {
             this.codepage = codepage;
         }

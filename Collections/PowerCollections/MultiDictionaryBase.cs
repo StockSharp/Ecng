@@ -95,7 +95,7 @@ namespace Wintellect.PowerCollections
         void IDictionary<TKey, ICollection<TValue>>.Add(TKey key, ICollection<TValue> values)
         {
             if (ContainsKey(key)) {
-                throw new ArgumentException(Strings.KeyAlreadyPresent, "key");
+                throw new ArgumentException(Strings.KeyAlreadyPresent, nameof(key));
             }
             else {
                 AddMany(key, values);
@@ -312,40 +312,28 @@ namespace Wintellect.PowerCollections
         /// Gets a read-only collection all the keys in this dictionary.
         /// </summary>
         /// <value>An readonly ICollection&lt;TKey&gt; of all the keys in this dictionary.</value>
-        public virtual ICollection<TKey> Keys
-        {
-            get { return new KeysCollection(this); }
-        }
+        public virtual ICollection<TKey> Keys => new KeysCollection(this);
 
-        /// <summary>
+	    /// <summary>
         /// Gets a read-only collection of all the values in the dictionary. 
         /// </summary>
         /// <returns>A read-only ICollection&lt;TValue&gt; of all the values in the dictionary.</returns>
-        public virtual ICollection<TValue> Values
-        {
-            get { return new ValuesCollection(this); }
-        }
+        public virtual ICollection<TValue> Values => new ValuesCollection(this);
 
-        /// <summary>
+	    /// <summary>
         /// Gets a read-only collection of all the value collections in the dictionary. 
         /// </summary>
         /// <returns>A read-only ICollection&lt;IEnumerable&lt;TValue&gt;&gt; of all the values in the dictionary.</returns>
-        ICollection<ICollection<TValue>> IDictionary<TKey, ICollection<TValue>>.Values
-        {
-            get { return new EnumerableValuesCollection(this); }
-        }
+        ICollection<ICollection<TValue>> IDictionary<TKey, ICollection<TValue>>.Values => new EnumerableValuesCollection(this);
 
-        /// <summary>
+	    /// <summary>
         /// Gets a read-only collection of all key-value pairs in the dictionary. If a key has multiple
         /// values associated with it, then a key-value pair is present for each value associated
         /// with the key.
         /// </summary>
-        public virtual ICollection<KeyValuePair<TKey, TValue>> KeyValuePairs
-        {
-            get { return new KeyValuePairsCollection(this); }
-        }
+        public virtual ICollection<KeyValuePair<TKey, TValue>> KeyValuePairs => new KeyValuePairsCollection(this);
 
-        /// <summary>
+	    /// <summary>
         /// Returns a collection of all of the values in the dictionary associated with <paramref name="key"/>,
         /// or changes the set of values associated with <paramref name="key"/>.
         /// If the key is not present in the dictionary, an ICollection enumerating no
@@ -596,14 +584,9 @@ namespace Wintellect.PowerCollections
             /// <summary>
             /// Get the number of values associated with the key.
             /// </summary>
-            public override int Count
-            {
-                get { 
-                    return myDictionary.CountValues(key);
-                }
-            }
+            public override int Count => myDictionary.CountValues(key);
 
-            /// <summary>
+	        /// <summary>
             /// A simple function that returns an IEnumerator&lt;TValue&gt; that
             /// doesn't yield any values. A helper.
             /// </summary>
@@ -655,12 +638,9 @@ namespace Wintellect.PowerCollections
                 this.myDictionary = myDictionary;
             }
 
-            public override int Count
-            {
-                get { return myDictionary.Count; }
-            }
+            public override int Count => myDictionary.Count;
 
-            public override IEnumerator<TKey> GetEnumerator()
+	        public override IEnumerator<TKey> GetEnumerator()
             {
                 return myDictionary.EnumerateKeys();
             }
@@ -685,12 +665,9 @@ namespace Wintellect.PowerCollections
                 this.myDictionary = myDictionary;
             }
 
-            public override int Count
-            {
-                get { return myDictionary.CountAllValues(); }
-            }
+            public override int Count => myDictionary.CountAllValues();
 
-            public override IEnumerator<TValue> GetEnumerator()
+	        public override IEnumerator<TValue> GetEnumerator()
             {
                 using (IEnumerator<TKey> enumKeys = myDictionary.EnumerateKeys()) {
                     while (enumKeys.MoveNext()) {
@@ -730,12 +707,9 @@ namespace Wintellect.PowerCollections
                 this.myDictionary = myDictionary;
             }
 
-            public override int Count
-            {
-                get { return myDictionary.Count; }
-            }
+            public override int Count => myDictionary.Count;
 
-            public override IEnumerator<ICollection<TValue>> GetEnumerator()
+	        public override IEnumerator<ICollection<TValue>> GetEnumerator()
             {
                 using (IEnumerator<TKey> enumKeys = myDictionary.EnumerateKeys()) {
                     while (enumKeys.MoveNext()) {
@@ -791,12 +765,9 @@ namespace Wintellect.PowerCollections
                 this.myDictionary = myDictionary;
             }
 
-            public override int Count
-            {
-                get { return myDictionary.CountAllValues(); }
-            }
+            public override int Count => myDictionary.CountAllValues();
 
-            public override IEnumerator<KeyValuePair<TKey,TValue>> GetEnumerator()
+	        public override IEnumerator<KeyValuePair<TKey,TValue>> GetEnumerator()
             {
                 using (IEnumerator<TKey> enumKeys = myDictionary.EnumerateKeys()) {
                     while (enumKeys.MoveNext()) {

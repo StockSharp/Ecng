@@ -23,14 +23,9 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         {
             this.styles = styles;
         }
-        public CT_Styles Styles
-        {
-            get
-            {
-                return this.styles;
-            }
-        }
-        public void Save(Stream stream)
+        public CT_Styles Styles => this.styles;
+
+	    public void Save(Stream stream)
         {
             using (StreamWriter sw = new StreamWriter(stream))
             {

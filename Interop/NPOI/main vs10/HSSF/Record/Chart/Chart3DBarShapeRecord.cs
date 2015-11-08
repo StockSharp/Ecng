@@ -62,12 +62,9 @@ namespace NPOI.HSSF.Record.Chart
             out1.WriteByte(field_2_taper);
         }
 
-        protected override int DataSize
-        {
-            get { return 1 + 1; }
-        }
+        protected override int DataSize => 1 + 1;
 
-        public override object Clone()
+	    public override object Clone()
         {
             Chart3DBarShapeRecord record = new Chart3DBarShapeRecord();
             record.Riser = this.Riser;
@@ -75,11 +72,9 @@ namespace NPOI.HSSF.Record.Chart
             return record;
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        /// <summary>
+        public override short Sid => sid;
+
+	    /// <summary>
         /// the shape of the base of the data points in a bar or column chart group. 
         /// MUST be a value from the following table
         /// 0x00      The base of the data point is a rectangle.

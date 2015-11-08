@@ -38,9 +38,9 @@ namespace Microsoft.Practices.Unity.Configuration.ConfigurationHelpers
 
         public bool IsOpenGeneric { get; set; }
 
-        public int NumGenericParameters { get { return GenericParameters.Count; } }
+        public int NumGenericParameters => GenericParameters.Count;
 
-        public List<TypeNameInfo> GenericParameters { get; private set; }
+	    public List<TypeNameInfo> GenericParameters { get; }
 
         public TypeNameInfo()
         {

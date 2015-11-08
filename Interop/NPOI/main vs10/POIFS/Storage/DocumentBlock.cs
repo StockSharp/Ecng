@@ -76,30 +76,21 @@ namespace NPOI.POIFS.Storage
         /// Get the number of bytes Read for this block.
         /// </summary>
         /// <value>bytes Read into the block</value>
-        public int Size
-        {
-            get { return _bytes_Read; }
-        }
+        public int Size => _bytes_Read;
 
-        /// <summary>
+	    /// <summary>
         /// Was this a partially Read block?
         /// </summary>
         /// <value><c>true</c> if the block was only partially filled with data</value>
-        public bool PartiallyRead
-        {
-            get { return _bytes_Read != POIFSConstants.BIG_BLOCK_SIZE; }
-        }
+        public bool PartiallyRead => _bytes_Read != POIFSConstants.BIG_BLOCK_SIZE;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the fill byte used
         /// </summary>
         /// <value>The fill byte.</value>
-        public static byte FillByte
-        {
-            get { return _default_value; }
-        }
+        public static byte FillByte => _default_value;
 
-        /// <summary>
+	    /// <summary>
         /// convert a single long array into an array of DocumentBlock
         /// instances
         /// </summary>

@@ -264,11 +264,9 @@ namespace NPOI.SS.UserModel
             return null;
         }
 
-        public byte[] RGB
-        {
-            get { return hssfColor.RGB; }
-        }
-        public string HexString
+        public byte[] RGB => hssfColor.RGB;
+
+	    public string HexString
         {
             get
             {
@@ -289,12 +287,6 @@ namespace NPOI.SS.UserModel
          *
          * @return index of this color
          */
-        public short Index
-        {
-            get
-            {
-                return (short)index;
-            }
-        }
+        public short Index => (short)index;
     }
 }

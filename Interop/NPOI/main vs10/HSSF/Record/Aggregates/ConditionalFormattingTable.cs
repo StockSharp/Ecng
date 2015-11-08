@@ -75,15 +75,9 @@ namespace NPOI.HSSF.Record.Aggregates
             return _cfHeaders.Count - 1;
         }
 
-        public int Count
-        {
-            get
-            {
-                return _cfHeaders.Count;
-            }
-        }
+        public int Count => _cfHeaders.Count;
 
-        public CFRecordsAggregate Get(int index)
+	    public CFRecordsAggregate Get(int index)
         {
             CheckIndex(index);
             return (CFRecordsAggregate)_cfHeaders[index];

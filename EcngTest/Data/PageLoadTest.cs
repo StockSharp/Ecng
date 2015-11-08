@@ -51,10 +51,7 @@ namespace Ecng.Test.Data
 		private PageLoadEntityList _simpleList;
 
 		[RelationMany(typeof(PageLoadEntityList))]
-		public PageLoadEntityList SimpleList
-		{
-			get { return _simpleList; }
-		}
+		public PageLoadEntityList SimpleList => _simpleList;
 
 		#endregion
 
@@ -63,10 +60,7 @@ namespace Ecng.Test.Data
 		private AbsPageLoadEntityList _absList;
 
 		[RelationMany(typeof(AbsPageLoadEntityList))]
-		public AbsPageLoadEntityList AbsList
-		{
-			get { return _absList; }
-		}
+		public AbsPageLoadEntityList AbsList => _absList;
 
 		#endregion
 
@@ -75,10 +69,7 @@ namespace Ecng.Test.Data
 		private IList<PageLoadEntity> _interfaceList;
 
 		[RelationMany(typeof(IList<PageLoadEntity>))]
-		public IList<PageLoadEntity> InterfaceList
-		{
-			get { return _interfaceList; }
-		}
+		public IList<PageLoadEntity> InterfaceList => _interfaceList;
 
 		#endregion
 	}

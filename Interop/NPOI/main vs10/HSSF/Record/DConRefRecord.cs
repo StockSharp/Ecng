@@ -210,44 +210,29 @@ namespace NPOI.HSSF.Record
                 out1.Write(_unused);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        /**
+	    /**
          * @return The first column of the range.
          */
-        public int FirstColumn
-        {
-            get { return firstCol; }
-        }
+        public int FirstColumn => firstCol;
 
-        /**
+	    /**
          * @return The first row of the range.
          */
-        public int FirstRow
-        {
-            get { return firstRow; }
-        }
+        public int FirstRow => firstRow;
 
-        /**
+	    /**
          * @return The last column of the range.
          */
-        public int LastColumn
-        {
-            get { return lastCol; }
-        }
+        public int LastColumn => lastCol;
 
-        /**
+	    /**
          * @return The last row of the range.
          */
-        public int LastRow
-        {
-            get { return lastRow; }
-        }
+        public int LastRow => lastRow;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder b = new StringBuilder();
             b.Append("[DCONREF]\n");

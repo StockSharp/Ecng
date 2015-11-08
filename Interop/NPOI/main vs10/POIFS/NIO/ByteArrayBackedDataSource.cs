@@ -95,15 +95,9 @@ namespace NPOI.POIFS.NIO
             stream.Write(buffer, 0, (int)size);
         }
 
-        public override long Size
-        {
-            get
-            {
-                return size;
-            }
-        }
+        public override long Size => size;
 
-        public override void Close()
+	    public override void Close()
         {
             buffer = null;
             size = -1;

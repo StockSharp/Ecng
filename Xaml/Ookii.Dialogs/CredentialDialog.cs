@@ -156,12 +156,9 @@ namespace Ookii.Dialogs
         /// A <see cref="NetworkCredential"/> instance containing the user name and password specified on the dialog.
         /// </value>
         [Browsable(false)]
-        public NetworkCredential Credentials
-        {
-            get { return _credentials; }
-        }
+        public NetworkCredential Credentials => _credentials;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the user name the user entered in the dialog.
         /// </summary>
         /// <value>
@@ -527,11 +524,11 @@ namespace Ookii.Dialogs
         public static void StoreCredential(string target, NetworkCredential credential)
         {
             if( target == null )
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
             if( target.Length == 0 )
-				throw new ArgumentException(Ecng.Xaml.Properties.Resources.CredentialEmptyTargetError, "target");
+				throw new ArgumentException(Ecng.Xaml.Properties.Resources.CredentialEmptyTargetError, nameof(target));
             if( credential == null )
-                throw new ArgumentNullException("credential");
+                throw new ArgumentNullException(nameof(credential));
 
             NativeMethods.CREDENTIAL c = new NativeMethods.CREDENTIAL();
             c.UserName = credential.UserName;
@@ -574,9 +571,9 @@ namespace Ookii.Dialogs
         public static NetworkCredential RetrieveCredential(string target)
         {
             if( target == null )
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
             if( target.Length == 0 )
-				throw new ArgumentException(Ecng.Xaml.Properties.Resources.CredentialEmptyTargetError, "target");
+				throw new ArgumentException(Ecng.Xaml.Properties.Resources.CredentialEmptyTargetError, nameof(target));
 
             NetworkCredential cred = RetrieveCredentialFromApplicationInstanceCache(target);
             if( cred != null )
@@ -625,9 +622,9 @@ namespace Ookii.Dialogs
         public static NetworkCredential RetrieveCredentialFromApplicationInstanceCache(string target)
         {
             if( target == null )
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
             if( target.Length == 0 )
-				throw new ArgumentException(Ecng.Xaml.Properties.Resources.CredentialEmptyTargetError, "target");
+				throw new ArgumentException(Ecng.Xaml.Properties.Resources.CredentialEmptyTargetError, nameof(target));
 
             lock( _applicationInstanceCredentialCache )
             {
@@ -659,9 +656,9 @@ namespace Ookii.Dialogs
         public static bool DeleteCredential(string target)
         {
             if( target == null )
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
             if( target.Length == 0 )
-				throw new ArgumentException(Ecng.Xaml.Properties.Resources.CredentialEmptyTargetError, "target");
+				throw new ArgumentException(Ecng.Xaml.Properties.Resources.CredentialEmptyTargetError, nameof(target));
 
             bool found = false;
             lock( _applicationInstanceCredentialCache )

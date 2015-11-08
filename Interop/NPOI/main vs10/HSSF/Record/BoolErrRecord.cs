@@ -135,48 +135,34 @@ namespace NPOI.HSSF.Record
          * @return bool representing the bool value
          */
 
-        public bool BooleanValue
-        {
-            get { return (_value != 0); }
-        }
+        public bool BooleanValue => (_value != 0);
 
-        /**
+	    /**
          * Get the error value for the cell
          *
          * @return byte representing the error value
          */
 
-        public byte ErrorValue
-        {
-            get { return (byte)_value; }
-        }
-        /**
+        public byte ErrorValue => (byte)_value;
+	    /**
      * Indicates whether the call holds a boolean value
      *
      * @return boolean true if the cell holds a boolean value
      */
 
-        public bool IsBoolean
-        {
-            get { return !_isError; }
-        }
+        public bool IsBoolean => !_isError;
 
-        /**
+	    /**
          * Indicates whether the call holds an error value
          *
          * @return bool true if the cell holds an error value
          */
 
-        public bool IsError
-        {
-            get { return _isError; }
-        }
+        public bool IsError => _isError;
 
-        protected override String RecordName
-        {
-            get { return "BOOLERR"; }
-        }
-        protected override void AppendValueText(StringBuilder buffer)
+	    protected override String RecordName => "BOOLERR";
+
+	    protected override void AppendValueText(StringBuilder buffer)
         {
             if (IsBoolean)
             {
@@ -195,21 +181,11 @@ namespace NPOI.HSSF.Record
             out1.WriteByte(_value);
             out1.WriteByte(_isError ? 1 : 0);
         }
-        protected override int ValueDataSize
-        {
-            get
-            {
-                return 2;
-            }
-        }
+        protected override int ValueDataSize => 2;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-
-        public override Object Clone()
+	    public override Object Clone()
         {
             BoolErrRecord rec = new BoolErrRecord();
             CopyBaseFields(rec);

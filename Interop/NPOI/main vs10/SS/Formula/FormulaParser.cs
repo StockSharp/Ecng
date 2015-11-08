@@ -914,24 +914,11 @@ namespace NPOI.SS.Formula
                 _type = Get(hasLetters, hasNumbers);
             }
 
-            public bool IsCell
-            {
-                get
-                {
-                    return _type == PartType.Cell;
-                }
-            }
+            public bool IsCell => _type == PartType.Cell;
 
-            public bool IsRowOrColumn
-            {
-                get
-                {
-                    return _type != PartType.Cell;
-                }
-            }
+	        public bool IsRowOrColumn => _type != PartType.Cell;
 
-
-            public CellReference CellReference
+	        public CellReference CellReference
             {
                 get
                 {
@@ -943,31 +930,13 @@ namespace NPOI.SS.Formula
                 }
             }
 
-            public bool IsColumn
-            {
-                get
-                {
-                    return _type == PartType.Column;
-                }
-            }
+            public bool IsColumn => _type == PartType.Column;
 
-            public bool IsRow
-            {
-                get
-                {
-                    return _type == PartType.Row;
-                }
-            }
+	        public bool IsRow => _type == PartType.Row;
 
-            public String Rep
-            {
-                get
-                {
-                    return _rep;
-                }
-            }
+	        public String Rep => _rep;
 
-            /**
+	        /**
              * @return <c>true</c> if the two range parts can be combined in an
              * {@link AreaPtg} ( Note - the explicit range operator (:) may still be valid
              * when this method returns <c>false</c> )

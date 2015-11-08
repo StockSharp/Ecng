@@ -169,9 +169,9 @@ namespace Wintellect.PowerCollections
         public MultiDictionary(bool allowDuplicateValues, IEqualityComparer<TKey> keyEqualityComparer, IEqualityComparer<TValue> valueEqualityComparer)
         {
             if (keyEqualityComparer == null)
-                throw new ArgumentNullException("keyEqualityComparer");
+                throw new ArgumentNullException(nameof(keyEqualityComparer));
             if (valueEqualityComparer == null)
-                throw new ArgumentNullException("valueEqualityComparer");
+                throw new ArgumentNullException(nameof(valueEqualityComparer));
 
             this.allowDuplicateValues = allowDuplicateValues;
             this.keyEqualityComparer = keyEqualityComparer;
@@ -186,9 +186,9 @@ namespace Wintellect.PowerCollections
         private MultiDictionary(bool allowDuplicateValues, IEqualityComparer<TKey> keyEqualityComparer, IEqualityComparer<TValue> valueEqualityComparer, IEqualityComparer<KeyAndValues> equalityComparer, Hash<KeyAndValues> hash)
         {
             if (keyEqualityComparer == null)
-                throw new ArgumentNullException("keyEqualityComparer");
+                throw new ArgumentNullException(nameof(keyEqualityComparer));
             if (valueEqualityComparer == null)
-                throw new ArgumentNullException("valueEqualityComparer");
+                throw new ArgumentNullException(nameof(valueEqualityComparer));
 
             this.allowDuplicateValues = allowDuplicateValues;
             this.keyEqualityComparer = keyEqualityComparer;
@@ -341,28 +341,16 @@ namespace Wintellect.PowerCollections
         /// </summary>
         /// <value>If the dictionary was created using a comparer, that comparer is returned. Otherwise
         /// the default comparer for TKey (EqualityComparer&lt;TKey&gt;.Default) is returned.</value>
-        public IEqualityComparer<TKey> KeyComparer
-        {
-            get
-            {
-                return this.keyEqualityComparer;
-            }
-        }
+        public IEqualityComparer<TKey> KeyComparer => this.keyEqualityComparer;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the IEqualityComparer&lt;T&gt; used to compare values in this dictionary. 
         /// </summary>
         /// <value>If the dictionary was created using a comparer, that comparer is returned. Otherwise
         /// the default comparer for TValue (EqualityComparer&lt;TValue&gt;.Default) is returned.</value>
-        public IEqualityComparer<TValue> ValueComparer
-        {
-            get
-            {
-                return this.valueEqualityComparer;
-            }
-        }
+        public IEqualityComparer<TValue> ValueComparer => this.valueEqualityComparer;
 
-        /// <summary>
+	    /// <summary>
         /// Determine if two values are equal.
         /// </summary>
         /// <param name="value1">First value to compare.</param>
@@ -379,15 +367,9 @@ namespace Wintellect.PowerCollections
         /// value is included in the count.
         /// </summary>
         /// <value>The number of key-value pairs in the dictionary.</value>
-        public sealed override int Count
-        {
-            get
-            {
-                return hash.ElementCount;
-            }
-        }
+        public sealed override int Count => hash.ElementCount;
 
-        /// <summary>
+	    /// <summary>
         /// Checks to see if <paramref name="value"/> is associated with <paramref name="key"/>
         /// in the dictionary.
         /// </summary>

@@ -20,7 +20,7 @@
 		public DuckTypedList(INotifyList<TInner> innerList, bool onlyCompatible)
 		{
 			if (innerList == null)
-				throw new ArgumentNullException("innerList");
+				throw new ArgumentNullException(nameof(innerList));
 
 			_innerList = innerList;
 			_onlyCompatible = onlyCompatible;
@@ -94,15 +94,9 @@
 			return _innerList.Remove(item.To<TInner>());
 		}
 
-		int ICollection<TOuter>.Count
-		{
-			get { return _innerList.Count; }
-		}
+		int ICollection<TOuter>.Count => _innerList.Count;
 
-		bool ICollection<TOuter>.IsReadOnly
-		{
-			get { return _innerList.IsReadOnly; }
-		}
+		bool ICollection<TOuter>.IsReadOnly => _innerList.IsReadOnly;
 
 		int IList<TOuter>.IndexOf(TOuter item)
 		{

@@ -238,28 +238,16 @@ namespace NPOI.XSSF.UserModel
          *
          * @return  the first formula
          */
-        public String Formula1
-        {
-            get
-            {
-                return _cfRule.sizeOfFormulaArray() > 0 ? _cfRule.GetFormulaArray(0) : null;
-            }
-        }
+        public String Formula1 => _cfRule.sizeOfFormulaArray() > 0 ? _cfRule.GetFormulaArray(0) : null;
 
-        /**
+	    /**
          * The formula used to Evaluate the second operand of the comparison when
          * comparison type is  {@link ConditionalFormattingRule#CONDITION_TYPE_CELL_VALUE_IS} and operator
          * is either {@link NPOI.ss.usermodel.ComparisonOperator#BETWEEN} or {@link NPOI.ss.usermodel.ComparisonOperator#NOT_BETWEEN}
          *
          * @return  the second formula
          */
-        public String Formula2
-        {
-            get
-            {
-                return _cfRule.sizeOfFormulaArray() == 2 ? _cfRule.GetFormulaArray(1) : null;
-            }
-        }
+        public String Formula2 => _cfRule.sizeOfFormulaArray() == 2 ? _cfRule.GetFormulaArray(1) : null;
     }
 }
 

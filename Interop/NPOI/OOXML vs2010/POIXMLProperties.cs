@@ -218,35 +218,18 @@ namespace NPOI
             return props.GetProperties();
         }
 
-        public String Template
-        {
-            get
-            {
-                return props.GetProperties().Template;
-            }
-        }
-        public String Manager
-        {
-            get { return props.GetProperties().Manager; }
-        }
-        public String Company
-        {
-            get { return props.GetProperties().Company; }
-        }
-        public String PresentationFormat
-        {
-            get { return props.GetProperties().PresentationFormat; }
-        }
-        public String Application
-        {
-            get { return props.GetProperties().Application; }
-        }
-        public String AppVersion
-        {
-            get { return props.GetProperties().AppVersion; }
-        }
+        public String Template => props.GetProperties().Template;
 
-        public int Pages
+	    public String Manager => props.GetProperties().Manager;
+	    public String Company => props.GetProperties().Company;
+
+	    public String PresentationFormat => props.GetProperties().PresentationFormat;
+
+	    public String Application => props.GetProperties().Application;
+
+	    public String AppVersion => props.GetProperties().AppVersion;
+
+	    public int Pages
         {
             get
             {
@@ -368,10 +351,7 @@ namespace NPOI
             }
         }
 
-        public String HyperlinkBase
-        {
-            get { return props.GetProperties().HyperlinkBase; }
-        }
+        public String HyperlinkBase => props.GetProperties().HyperlinkBase;
     }
 
     /**
@@ -585,37 +565,19 @@ namespace NPOI
         /**
          * Returns the core document properties
          */
-        public CoreProperties CoreProperties
-        {
-            get
-            {
-                return core;
-            }
-        }
+        public CoreProperties CoreProperties => core;
 
-        /**
+	    /**
          * Returns the extended document properties
          */
-        public ExtendedProperties ExtendedProperties
-        {
-            get
-            {
-                return ext;
-            }
-        }
+        public ExtendedProperties ExtendedProperties => ext;
 
-        /**
+	    /**
          * Returns the custom document properties
          */
-        public CustomProperties CustomProperties
-        {
-            get
-            {
-                return cust;
-            }
-        }
+        public CustomProperties CustomProperties => cust;
 
-        /**
+	    /**
          * Commit Changes to the underlying OPC namespace
          */
         public virtual void Commit()

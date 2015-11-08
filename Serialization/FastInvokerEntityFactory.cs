@@ -13,7 +13,7 @@ namespace Ecng.Serialization
 			_invoker = FastInvoker<VoidType, VoidType, E>.Create(typeof(E).GetMember<ConstructorInfo>());
 		}
 
-		public override bool FullInitialize { get { return false; } }
+		public override bool FullInitialize => false;
 
 		public override E CreateEntity(ISerializer serializer, SerializationItemCollection source)
 		{

@@ -84,23 +84,11 @@ namespace NPOI.HSSF.Record.Common
             out1.WriteInt(errorCheck);
         }
 
-        public int DataSize
-        {
-            get
-            {
-                return 4;
-            }
-        }
+        public int DataSize => 4;
 
-        public int RawErrorCheckValue
-        {
-            get
-            {
-                return errorCheck;
-            }
-        }
+	    public int RawErrorCheckValue => errorCheck;
 
-        public bool CheckCalculationErrors
+	    public bool CheckCalculationErrors
         {
             get
             {

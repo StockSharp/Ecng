@@ -117,10 +117,7 @@ namespace Ecng.Transactions
 
 		#region IsTransactionValid
 
-		private static bool IsTransactionValid
-		{
-			get { return Transaction.Current != null && Transaction.Current.TransactionInformation.Status == TransactionStatus.Active; }
-		}
+		private static bool IsTransactionValid => Transaction.Current != null && Transaction.Current.TransactionInformation.Status == TransactionStatus.Active;
 
 		#endregion
 

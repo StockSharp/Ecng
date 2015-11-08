@@ -82,15 +82,9 @@ namespace NPOI.HSSF.Util
         }
 
 
-        public String SheetName
-        {
-            get
-            {
-                return m_sheetName;
-            }
-        }
+        public String SheetName => m_sheetName;
 
-        public String Range
+	    public String Range
         {
             get
             {
@@ -152,23 +146,11 @@ namespace NPOI.HSSF.Util
         }
 
 
-        public String FromCell
-        {
-            get
-            {
-                return m_cellFrom;
-            }
-        }
+        public String FromCell => m_cellFrom;
 
-        public String ToCell
-        {
-            get
-            {
-                return m_cellTo;
-            }
-        }
+	    public String ToCell => m_cellTo;
 
-        public int Width
+	    public int Width
         {
             get
             {
@@ -227,15 +209,9 @@ namespace NPOI.HSSF.Util
             }
         }
 
-        public bool HasRange
-        {
-            get
-            {
-                return (m_cellFrom != null && m_cellTo != null && !m_cellFrom.Equals(m_cellTo));
-            }
-        }
+        public bool HasRange => (m_cellFrom != null && m_cellTo != null && !m_cellFrom.Equals(m_cellTo));
 
-        public bool HasCell
+	    public bool HasCell
         {
             get
             {

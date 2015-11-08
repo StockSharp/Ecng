@@ -503,12 +503,9 @@ namespace NPOI.Util
         /// <summary>
         /// the number of elements in this shortList
         /// </summary>
-        public int Count
-        {
-            get { return _limit; }
-        }
-        
-        /// <summary>
+        public int Count => _limit;
+
+	    /// <summary>
         /// Returns an array Containing all of the elements in this list in
         /// proper sequence.  Obeys the general contract of the
         /// Collection.ToArray method.

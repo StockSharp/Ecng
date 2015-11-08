@@ -65,15 +65,9 @@ using NPOI.Util;
          *
          * @return length of the footer string
          */
-        private int TextLength
-        {
-            get
-            {
-                return field_3_text.Length;
-            }
-        }
+        private int TextLength => field_3_text.Length;
 
-        public String Text
+	    public String Text
         {
             get
             {

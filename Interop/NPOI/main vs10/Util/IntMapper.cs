@@ -75,23 +75,16 @@ namespace NPOI.Util
         /// <summary>
         /// Gets the size.
         /// </summary>
-        public int Size
-        {
-            get
-            {
-                return elements.Count;
-            }
-        }
-        /// <summary>
+        public int Size => elements.Count;
+
+	    /// <summary>
         /// Gets the T object at the specified index.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        public T this[int index]
-        {
-            get { return elements[index]; }
-        }
-        /// <summary>
+        public T this[int index] => elements[index];
+
+	    /// <summary>
         /// Gets the index of T object.
         /// </summary>
         /// <param name="o">The o.</param>

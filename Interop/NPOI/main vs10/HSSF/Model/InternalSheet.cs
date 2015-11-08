@@ -169,11 +169,9 @@ namespace NPOI.HSSF.Model
             return _rowsAggregate.GetValueRecords();
         }
 
-        public WindowTwoRecord WindowTwo
-        {
-            get { return windowTwo; }
-        }
-        /// <summary>
+        public WindowTwoRecord WindowTwo => windowTwo;
+
+	    /// <summary>
         /// Creates the sheet.
         /// </summary>
         /// <param name="rs">The stream.</param>
@@ -571,21 +569,11 @@ namespace NPOI.HSSF.Model
         /// Gets the column infos.
         /// </summary>
         /// <value>The column infos.</value>
-        public ColumnInfoRecordsAggregate ColumnInfos
-        {
-            get { return _columnInfos; }
-        }
-        internal MergedCellsTable MergedRecords
-        {
-            get
-            {
-                // always present
-                return _mergedCellsTable;
-            }
-        }
+        public ColumnInfoRecordsAggregate ColumnInfos => _columnInfos;
 
+	    internal MergedCellsTable MergedRecords => _mergedCellsTable;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the merged region at.
         /// </summary>
         /// <param name="index">The index.</param>
@@ -605,14 +593,9 @@ namespace NPOI.HSSF.Model
         /// Gets the number of merged regions.
         /// </summary>
         /// <value>The number merged regions.</value>
-        public int NumMergedRegions
-        {
-            get
-            {
-                return MergedRecords.NumberOfMergedRegions;
-            }
-        }
-        ///// <summary>
+        public int NumMergedRegions => MergedRecords.NumberOfMergedRegions;
+
+	    ///// <summary>
         ///// Find correct position to Add new CF record
         ///// </summary>
         ///// <returns></returns>
@@ -649,15 +632,9 @@ namespace NPOI.HSSF.Model
         /// Gets the number of conditional formattings.
         /// </summary>
         /// <value>The number of conditional formattings.</value>
-        public int NumConditionalFormattings
-        {
-            get
-            {
-                return condFormatting.Count;
-            }
-        }
+        public int NumConditionalFormattings => condFormatting.Count;
 
-        /// <summary>
+	    /// <summary>
         /// Per an earlier reported bug in working with Andy Khan's excel Read library.  This
         /// Sets the values in the sheet's DimensionsRecord object to be correct.  Excel doesn't
         /// really care, but we want to play nice with other libraries.
@@ -1531,23 +1508,15 @@ namespace NPOI.HSSF.Model
             return new EOFRecord();
         }
 
-        public List<RecordBase> Records
-        {
-            get { return records; }
-        }
+        public List<RecordBase> Records => records;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the gridset record for this sheet.
         /// </summary>
         /// <value>The gridset record.</value>
-        public GridsetRecord GridsetRecord
-        {
-            get
-            {
-                return gridset;
-            }
-        }
-        private GutsRecord GutsRecord
+        public GridsetRecord GridsetRecord => gridset;
+
+	    private GutsRecord GutsRecord
         {
             get
             {
@@ -1903,15 +1872,9 @@ namespace NPOI.HSSF.Model
         [NonSerialized]
         private WorksheetProtectionBlock _protectionBlock = new WorksheetProtectionBlock();
         
-        public WorksheetProtectionBlock ProtectionBlock
-        {
-            get
-            {
-                return _protectionBlock;
-            }
-        }
+        public WorksheetProtectionBlock ProtectionBlock => _protectionBlock;
 
-        /**
+	    /**
          * Returns if gridlines are Displayed.
          * @return whether gridlines are Displayed
          */
@@ -2082,14 +2045,8 @@ namespace NPOI.HSSF.Model
                 _columnInfos.ExpandColumn(columnNumber);
             }
         }
-        public RowRecordsAggregate RowsAggregate
-        {
-            get
-            {
-                return _rowsAggregate;
-            }
-        }
-        /**
+        public RowRecordsAggregate RowsAggregate => _rowsAggregate;
+	    /**
  * Updates formulas in cells and conditional formats due to moving of cells
  * @param externSheetIndex the externSheet index of this sheet
  */
@@ -2293,12 +2250,6 @@ namespace NPOI.HSSF.Model
             this.type = type;
         }
 
-        public BOFRecordType Type
-        {
-            get
-            {
-                return type;
-            }
-        }
+        public BOFRecordType Type => type;
     }
 }

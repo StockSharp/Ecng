@@ -30,10 +30,7 @@ namespace Ecng.Serialization
 
 		private static readonly CloneFactory<T> _factory;
 
-		public static CloneFactory<T> Factory
-		{
-			get { return _factory; }
-		}
+		public static CloneFactory<T> Factory => _factory;
 
 		#endregion
 

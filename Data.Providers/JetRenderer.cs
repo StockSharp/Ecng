@@ -53,25 +53,16 @@ namespace Ecng.Data.Providers
 
 		#region SqlRenderer Members
 
-		protected override string ParameterPrefix
-		{
-			get { return "[?"; }
-		}
+		protected override string ParameterPrefix => "[?";
 
-		protected override string ParameterSuffix
-		{
-			get { return "]"; }
-		}
+		protected override string ParameterSuffix => "]";
 
 		public override string GetIdentitySelect(Schema schema)
 		{
 			return "@@identity as " + schema.Identity.Name;
 		}
 
-		protected override string[] ReservedWords
-		{
-			get { return ArrayHelper.Empty<string>(); }
-		}
+		protected override string[] ReservedWords => ArrayHelper.Empty<string>();
 
 		#endregion
 	}

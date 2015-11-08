@@ -14,12 +14,12 @@ namespace Ecng.Web
 			Id = id;
 		}
 
-		public byte Id { get; private set; }
+		public byte Id { get; }
 
 		public static byte? GetId(IHttpHandler page)
 		{
 			if (page == null)
-				throw new ArgumentNullException("page");
+				throw new ArgumentNullException(nameof(page));
 
 			var attr = page.GetType().GetAttribute<VisitPageAttribute>();
 			if (attr == null)
@@ -31,7 +31,7 @@ namespace Ecng.Web
 		public static byte GetId(Type pageType)
 		{
 			if (pageType == null)
-				throw new ArgumentNullException("pageType");
+				throw new ArgumentNullException(nameof(pageType));
 
 			var attr = pageType.GetAttribute<VisitPageAttribute>();
 			if (attr == null)

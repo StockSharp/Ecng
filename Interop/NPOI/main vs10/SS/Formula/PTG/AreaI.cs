@@ -59,36 +59,12 @@ namespace NPOI.SS.Formula.PTG
 			_lastColumn = baseColumn + Math.Max(relFirstColIx, relLastColIx);
 		}
 
-		public int FirstColumn 
-        {
-            get
-            {
-                return _firstColumn;
-            }
-		}
+		public int FirstColumn => _firstColumn;
 
-		public int FirstRow
-        {
-            get
-            {
-                return _firstRow;
-            }
-		}
+    		public int FirstRow => _firstRow;
 
-		public int LastColumn
-        {
-            get
-            {
-                return _lastColumn;
-            }
-		}
+    		public int LastColumn => _lastColumn;
 
-		public int LastRow
-        {
-            get
-            {
-                return _lastRow;
-            }
-		}
-	}
+    		public int LastRow => _lastRow;
+    	}
 }

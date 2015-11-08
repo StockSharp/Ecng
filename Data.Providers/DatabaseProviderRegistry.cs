@@ -15,20 +15,17 @@
 			//new PostgreSqlDatabaseProvider(), new FirebirdDatabaseProvider()
 		};
 
-		public static ISynchronizedCollection<DatabaseProvider> Providers
-		{
-			get { return _providers; }
-		}
+		public static ISynchronizedCollection<DatabaseProvider> Providers => _providers;
 
 		public static DatabaseProvider GetProviderBySystemName(string name)
 		{
 			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			var row = DbProviderFactories.GetFactoryClasses().Select("InvariantName = '{0}'".Put(name)).FirstOrDefault();
 			
 			if (row == null)
-				throw new ArgumentException("Provider with name '{0}' doesn't register.".Put(name), "name");
+				throw new ArgumentException("Provider with name '{0}' doesn't register.".Put(name), nameof(name));
 			
 			var type = row[3].To<Type>();
 			return _providers.First(p => p.Factory.GetType() == type);

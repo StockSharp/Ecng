@@ -107,14 +107,9 @@ namespace NPOI.Util
         /// Gets the length.
         /// </summary>
         /// <value>The number of bytes occupied by this object in the byte stream.</value>
-        public int Length
-        {
-            get { return LENGTH; }
-        }
+        public int Length => LENGTH;
 
-
-
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the bytes making out the class ID. They are returned in correct order, i.e. big-endian.
         /// </summary>
         /// <value>the bytes making out the class ID..</value>

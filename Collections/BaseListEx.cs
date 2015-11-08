@@ -24,10 +24,7 @@ namespace Ecng.Collections
 
 		#region ICollection Members
 
-		int ICollection.Count
-		{
-			get { return Count; }
-		}
+		int ICollection.Count => Count;
 
 		void ICollection.CopyTo(Array array, int index)
 		{
@@ -36,15 +33,9 @@ namespace Ecng.Collections
 
 		private object _syncRoot;
 
-		object ICollection.SyncRoot
-		{
-			get { return _syncRoot ?? (_syncRoot = new object()); }
-		}
+		object ICollection.SyncRoot => _syncRoot ?? (_syncRoot = new object());
 
-		bool ICollection.IsSynchronized
-		{
-			get { return false; }
-		}
+		bool ICollection.IsSynchronized => false;
 
 		#endregion
 
@@ -59,10 +50,7 @@ namespace Ecng.Collections
 		public abstract bool Remove(T item);
 		public abstract int Count { get; }
 
-		public virtual bool IsReadOnly
-		{
-			get { return false; }
-		}
+		public virtual bool IsReadOnly => false;
 
 		#endregion
 
@@ -94,16 +82,13 @@ namespace Ecng.Collections
 		int IList.Add(object value)
 		{
 			if (!IsCompatible(value))
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			Add((T)value);
 			return Count;
 		}
 
-		bool IList.IsReadOnly
-		{
-			get { return IsReadOnly; }
-		}
+		bool IList.IsReadOnly => IsReadOnly;
 
 		object IList.this[int index]
 		{
@@ -111,7 +96,7 @@ namespace Ecng.Collections
 			set
 			{
 				if (!IsCompatible(value))
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				this[index] = (T)value;
 			}
@@ -133,7 +118,7 @@ namespace Ecng.Collections
 		void IList.Insert(int index, object value)
 		{
 			if (!IsCompatible(value))
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			Insert(index, (T)value);
 		}

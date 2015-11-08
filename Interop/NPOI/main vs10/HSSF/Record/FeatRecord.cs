@@ -61,15 +61,9 @@ namespace NPOI.HSSF.Record
             futureHeader.RecordType = (/*setter*/sid);
         }
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+        public override short Sid => sid;
 
-        public FeatRecord(RecordInputStream in1)
+	    public FeatRecord(RecordInputStream in1)
         {
             futureHeader = new FtrHeader(in1);
 
@@ -133,25 +127,13 @@ namespace NPOI.HSSF.Record
             sharedFeature.Serialize(out1);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 12 + 2 + 1 + 4 + 2 + 4 + 2 +
-                    (cellRefs.Length * CellRangeAddress.ENCODED_SIZE)
-                    + sharedFeature.DataSize;
-            }
-        }
+        protected override int DataSize => 12 + 2 + 1 + 4 + 2 + 4 + 2 +
+                                           (cellRefs.Length * CellRangeAddress.ENCODED_SIZE)
+                                           + sharedFeature.DataSize;
 
-        public int Isf_sharedFeatureType
-        {
-            get
-            {
-                return isf_sharedFeatureType;
-            }
-        }
+	    public int Isf_sharedFeatureType => isf_sharedFeatureType;
 
-        public long CbFeatData
+	    public long CbFeatData
         {
             get
             {

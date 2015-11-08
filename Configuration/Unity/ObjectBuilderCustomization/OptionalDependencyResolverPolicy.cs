@@ -62,20 +62,14 @@ namespace Microsoft.Practices.Unity
         /// <summary>
         /// Type this resolver will resolve.
         /// </summary>
-        public Type DependencyType
-        {
-            get { return type; }
-        }
+        public Type DependencyType => type;
 
-        /// <summary>
+	    /// <summary>
         /// Name this resolver will resolve.
         /// </summary>
-        public string Name
-        {
-            get { return name; }
-        }
+        public string Name => name;
 
-        #region IDependencyResolverPolicy Members
+	    #region IDependencyResolverPolicy Members
 
         /// <summary>
         /// Get the value for a dependency.

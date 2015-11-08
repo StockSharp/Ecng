@@ -147,15 +147,9 @@ namespace NPOI.XSSF.UserModel
          *
          * @return the type of this hyperlink
          */
-        public HyperlinkType Type
-        {
-            get
-            {
-                return (HyperlinkType)_type;
-            }
-        }
+        public HyperlinkType Type => (HyperlinkType)_type;
 
-        /**
+	    /**
          * Get the reference of the cell this applies to,
          * es A55
          */

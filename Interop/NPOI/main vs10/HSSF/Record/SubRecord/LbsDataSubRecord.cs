@@ -146,40 +146,21 @@ namespace NPOI.HSSF.Record
             }
 
         }
-        public override bool IsTerminating
-        {
-            get
-            {
-                return true;
-            }
-        }
-        /**
+        public override bool IsTerminating => true;
+	    /**
  *
  * @return the formula that specifies the range of cell values that are the items in this list.
  */
-        public Ptg Formula
-        {
-            get
-            {
-                return _linkPtg;
-            }
-        }
+        public Ptg Formula => _linkPtg;
 
-        /**
+	    /**
          * @return the number of items in the list
          */
-        public int NumberOfItems
-        {
-            get
-            {
-                return _cLines;
-            }
-        }
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public override int DataSize
+        public int NumberOfItems => _cLines;
+
+	    public override short Sid => sid;
+
+	    public override int DataSize
         {
             get
             {

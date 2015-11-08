@@ -50,23 +50,18 @@ namespace NPOI.HSSF.Record.Chart
         }
 
 
-        protected override int DataSize
-        {
-            get { return 2 + 2 + 2; }
-        }
+        protected override int DataSize => 2 + 2 + 2;
 
-        public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
+	    public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
         {
             out1.WriteShort(field_1_anStart);
             out1.WriteShort(field_2_pcDonut);
             out1.WriteShort(field_3_option);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public override object Clone()
+        public override short Sid => sid;
+
+	    public override object Clone()
         {
             PieRecord record = new PieRecord();
             record.Dount = this.Dount;

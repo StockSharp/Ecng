@@ -30,10 +30,7 @@
 
 		private readonly List<TypeGenerator> _types = new List<TypeGenerator>();
 
-		public IEnumerable<TypeGenerator> Types
-		{
-			get { return _types; }
-		}
+		public IEnumerable<TypeGenerator> Types => _types;
 
 		#endregion
 
@@ -41,10 +38,7 @@
 
 		private readonly List<EnumGenerator> _enums = new List<EnumGenerator>();
 
-		public IEnumerable<EnumGenerator> Enums
-		{
-			get { return _enums; }
-		}
+		public IEnumerable<EnumGenerator> Enums => _enums;
 
 		#endregion
 

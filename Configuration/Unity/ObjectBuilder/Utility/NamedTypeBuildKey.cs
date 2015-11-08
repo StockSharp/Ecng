@@ -75,21 +75,15 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// </summary>
         /// <value>The type to build.</value>
         [SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods", Justification = "This is the type part of the key.")]
-        public Type Type
-        {
-            get { return type; }
-        }
+        public Type Type => type;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the name stored in this build key.
         /// </summary>
         /// <remarks>The name to use when building.</remarks>
-        public string Name
-        {
-            get { return name; }
-        }
+        public string Name => name;
 
-        /// <summary>
+	    /// <summary>
         /// Compare two <see cref="NamedTypeBuildKey"/> instances.
         /// </summary>
         /// <remarks>Two <see cref="NamedTypeBuildKey"/> instances compare equal

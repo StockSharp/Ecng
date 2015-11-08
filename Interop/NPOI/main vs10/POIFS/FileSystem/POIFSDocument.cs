@@ -254,40 +254,22 @@ namespace NPOI.POIFS.FileSystem
         /// Gets the number of BigBlock's this instance uses
         /// </summary>
         /// <value>count of BigBlock instances</value>
-        public virtual int CountBlocks
-        {
-            get
-            {
-                return this._big_store.CountBlocks;
-            }
-        }
+        public virtual int CountBlocks => this._big_store.CountBlocks;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the document property.
         /// </summary>
         /// <value>The document property.</value>
-        public virtual DocumentProperty DocumentProperty
-        {
-            get
-            {
-                return this._property;
-            }
-        }
+        public virtual DocumentProperty DocumentProperty => this._property;
 
-        /// <summary>
+	    /// <summary>
         /// Provides a short description of the object to be used when a
         /// POIFSViewable object has not provided its contents.
         /// </summary>
         /// <value><c>true</c> if [prefer array]; otherwise, <c>false</c>.</value>
-        public virtual bool PreferArray
-        {
-            get
-            {
-                return true;
-            }
-        }
+        public virtual bool PreferArray => true;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the short description.
         /// </summary>
         /// <value>The short description.</value>
@@ -306,27 +288,15 @@ namespace NPOI.POIFS.FileSystem
         /// Gets the size.
         /// </summary>
         /// <value>The size.</value>
-        public virtual int Size
-        {
-            get
-            {
-                return this._size;
-            }
-        }
+        public virtual int Size => this._size;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the small blocks.
         /// </summary>
         /// <value>The small blocks.</value>
-        public virtual BlockWritable[] SmallBlocks
-        {
-            get
-            {
-                return this._small_store.Blocks;
-            }
-        }
+        public virtual BlockWritable[] SmallBlocks => this._small_store.Blocks;
 
-        /// <summary>
+	    /// <summary>
         /// Sets the start block for this instance
         /// </summary>
         /// <value>
@@ -408,14 +378,9 @@ namespace NPOI.POIFS.FileSystem
         /// Give viewers a hint as to whether to call ViewableArray or ViewableIterator
         /// </summary>
         /// <value>The viewable iterator.</value>
-        public virtual IEnumerator ViewableIterator
-        {
-            get
-            {
-                return ArrayList.ReadOnly(new ArrayList()).GetEnumerator();
-            }
-        }
-        public event POIFSWriterEventHandler BeforeWriting;
+        public virtual IEnumerator ViewableIterator => ArrayList.ReadOnly(new ArrayList()).GetEnumerator();
+
+	    public event POIFSWriterEventHandler BeforeWriting;
 
         protected virtual void OnBeforeWriting(POIFSWriterEventArgs e)
         {
@@ -470,15 +435,7 @@ namespace NPOI.POIFS.FileSystem
                     return this.smallBlocks;
                     }
                 }
-            internal virtual bool Valid
-            {
-                get
-                {
-                    return ((this.smallBlocks.Length > 0) || (this.writer != null));
-                }
-            }
-
-
+            internal virtual bool Valid => ((this.smallBlocks.Length > 0) || (this.writer != null));
         }
 
         internal class BigBlockStore
@@ -510,15 +467,9 @@ namespace NPOI.POIFS.FileSystem
                 this.writer = writer;
             }
 
-            internal virtual bool Valid
-            {
-                get
-            {
-                    return ((this.bigBlocks.Length > 0) || (this.writer != null));
-                }
-            }
+            internal virtual bool Valid => ((this.bigBlocks.Length > 0) || (this.writer != null));
 
-            internal virtual DocumentBlock[] Blocks
+	        internal virtual DocumentBlock[] Blocks
             {
                 get
             {

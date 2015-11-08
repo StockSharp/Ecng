@@ -1,4 +1,4 @@
-/* ====================================================================
+﻿/* ====================================================================
    Licensed to the Apache Software Foundation (ASF) Under one or more
    contributor license agreements.  See the NOTICE file distributed with
    this work for Additional information regarding copyright ownership.
@@ -439,39 +439,21 @@ namespace NPOI.HSSF.UserModel
         /// Returns the number of phsyically defined rows (NOT the number of rows in the _sheet)
         /// </summary>
         /// <value>The physical number of rows.</value>
-        public int PhysicalNumberOfRows
-        {
-            get
-            {
-                return rows.Count;
-            }
-        }
+        public int PhysicalNumberOfRows => rows.Count;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the first row on the _sheet
         /// </summary>
         /// <value>the number of the first logical row on the _sheet</value>
-        public int FirstRowNum
-        {
-            get
-            {
-                return firstrow;
-            }
-        }
+        public int FirstRowNum => firstrow;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the last row on the _sheet
         /// </summary>
         /// <value>last row contained n this _sheet.</value>
-        public int LastRowNum
-        {
-            get
-            {
-                return lastrow;
-            }
-        }
+        public int LastRowNum => lastrow;
 
-        private class RecordVisitor1 : RecordVisitor
+	    private class RecordVisitor1 : RecordVisitor
         {
             private List<IDataValidation> hssfValidations;
             private IWorkbook workbook;
@@ -753,15 +735,9 @@ namespace NPOI.HSSF.UserModel
         /// returns the number of merged regions
         /// </summary>
         /// <value>The number of merged regions</value>
-        public int NumMergedRegions
-        {
-            get
-            {
-                return _sheet.NumMergedRegions;
-            }
-        }
+        public int NumMergedRegions => _sheet.NumMergedRegions;
 
-        ///// <summary>
+	    ///// <summary>
         ///// Gets the region at a particular index
         ///// </summary>
         ///// <param name="index">of the region to fetch</param>
@@ -807,12 +783,9 @@ namespace NPOI.HSSF.UserModel
         /// Object.
         /// </summary>
         /// <value>low level representation of this HSSFSheet.</value>
-        public InternalSheet Sheet
-        {
-            get { return _sheet; }
-        }
+        public InternalSheet Sheet => _sheet;
 
-        /// <summary>
+	    /// <summary>
         /// Sets the active cell.
         /// </summary>
         /// <param name="row">The row.</param>
@@ -1021,30 +994,21 @@ namespace NPOI.HSSF.UserModel
         /// Gets the print setup object.
         /// </summary>
         /// <value>The user model for the print setup object.</value>
-        public NPOI.SS.UserModel.IPrintSetup PrintSetup
-        {
-            get { return new HSSFPrintSetup(this._sheet.PageSettings.PrintSetup); }
-        }
+        public NPOI.SS.UserModel.IPrintSetup PrintSetup => new HSSFPrintSetup(this._sheet.PageSettings.PrintSetup);
 
-        /// <summary>
+	    /// <summary>
         /// Gets the user model for the document header.
         /// </summary>
         /// <value>The Document header.</value>
-        public NPOI.SS.UserModel.IHeader Header
-        {
-            get { return new HSSFHeader(this._sheet.PageSettings); }
-        }
+        public NPOI.SS.UserModel.IHeader Header => new HSSFHeader(this._sheet.PageSettings);
 
-        /// <summary>
+	    /// <summary>
         /// Gets the user model for the document footer.
         /// </summary>
         /// <value>The Document footer.</value>
-        public NPOI.SS.UserModel.IFooter Footer
-        {
-            get { return new HSSFFooter(this._sheet.PageSettings); }
-        }
+        public NPOI.SS.UserModel.IFooter Footer => new HSSFFooter(this._sheet.PageSettings);
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets whether the worksheet is displayed from right to left instead of from left to right.
         /// </summary>
         /// <value>true for right to left, false otherwise</value>
@@ -1092,58 +1056,33 @@ namespace NPOI.HSSF.UserModel
             this.Sheet.WindowTwo.IsActive = sel;
         }
 
-        private WorksheetProtectionBlock ProtectionBlock
-        {
-            get
-            {
-                return _sheet.ProtectionBlock;
-            }
-        }
-        /// <summary>
+        private WorksheetProtectionBlock ProtectionBlock => _sheet.ProtectionBlock;
+
+	    /// <summary>
         /// Answer whether protection is enabled or disabled
         /// </summary>
         /// <value><c>true</c> if protection enabled; otherwise, <c>false</c>.</value>
-        public bool Protect
-        {
-            get { return ProtectionBlock.IsSheetProtected; }
-        }
+        public bool Protect => ProtectionBlock.IsSheetProtected;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the hashed password
         /// </summary>
         /// <value>The password.</value>
-        public int Password
-        {
-            get
-            {
-                return ProtectionBlock.PasswordHash;
-            }
-        }
+        public int Password => ProtectionBlock.PasswordHash;
 
-        /// <summary>
+	    /// <summary>
         /// Answer whether object protection is enabled or disabled
         /// </summary>
         /// <value><c>true</c> if protection enabled; otherwise, <c>false</c>.</value>
-        public bool ObjectProtect
-        {
-            get
-            {
-                return ProtectionBlock.IsObjectProtected;
-            }
-        }
+        public bool ObjectProtect => ProtectionBlock.IsObjectProtected;
 
-        /// <summary>
+	    /// <summary>
         /// Answer whether scenario protection is enabled or disabled
         /// </summary>
         /// <value><c>true</c> if protection enabled; otherwise, <c>false</c>.</value>
-        public bool ScenarioProtect
-        {
-            get
-            {
-                return ProtectionBlock.IsScenarioProtected;
-            }
-        }
-        /// <summary>
+        public bool ScenarioProtect => ProtectionBlock.IsScenarioProtected;
+
+	    /// <summary>
         /// Sets the protection enabled as well as the password
         /// </summary>
         /// <param name="password">password to set for protection, pass <code>null</code> to remove protection</param>
@@ -1648,15 +1587,9 @@ namespace NPOI.HSSF.UserModel
         /// Returns the information regarding the currently configured pane (split or freeze).
         /// </summary>
         /// <value>null if no pane configured, or the pane information.</value>
-        public NPOI.SS.Util.PaneInformation PaneInformation
-        {
-            get
-            {
-                return Sheet.PaneInformation;
-            }
-        }
+        public NPOI.SS.Util.PaneInformation PaneInformation => Sheet.PaneInformation;
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets if gridlines are Displayed.
         /// </summary>
         /// <value>whether gridlines are Displayed</value>
@@ -1764,30 +1697,15 @@ namespace NPOI.HSSF.UserModel
         /// Retrieves all the horizontal page breaks
         /// </summary>
         /// <value>all the horizontal page breaks, or null if there are no row page breaks</value>
-        public int[] RowBreaks
-        {
-            get
-            {
-                //we can probably cache this information, but this should be a sparsely used function
-                return _sheet.PageSettings.RowBreaks;
-            }
-        }
+        public int[] RowBreaks => _sheet.PageSettings.RowBreaks;
 
-        /// <summary>
+	    /// <summary>
         /// Retrieves all the vertical page breaks
         /// </summary>
         /// <value>all the vertical page breaks, or null if there are no column page breaks</value>
-        public int[] ColumnBreaks
-        {
-            get
-            {
-                //we can probably cache this information, but this should be a sparsely used function
-                return _sheet.PageSettings.ColumnBreaks;
-            }
-        }
+        public int[] ColumnBreaks => _sheet.PageSettings.ColumnBreaks;
 
-
-        /// <summary>
+	    /// <summary>
         /// Sets a page break at the indicated column
         /// </summary>
         /// <param name="column">The column.</param>
@@ -2243,14 +2161,9 @@ namespace NPOI.HSSF.UserModel
         /// Gets the sheet conditional formatting.
         /// </summary>
         /// <value>The sheet conditional formatting.</value>
-        public ISheetConditionalFormatting SheetConditionalFormatting
-        {
-            get
-            {
-                return new HSSFSheetConditionalFormatting(this);
-            }
-        }
-        /// <summary>
+        public ISheetConditionalFormatting SheetConditionalFormatting => new HSSFSheetConditionalFormatting(this);
+
+	    /// <summary>
         /// Get the DVRecords objects that are associated to this _sheet
         /// </summary>
         /// <value>a list of DVRecord instances</value>
@@ -2274,15 +2187,9 @@ namespace NPOI.HSSF.UserModel
         /// <summary>
         /// Provide a reference to the parent workbook.
         /// </summary>
-        public NPOI.SS.UserModel.IWorkbook Workbook
-        {
-            get
-            {
-                return _workbook;
-            }
-        }
+        public NPOI.SS.UserModel.IWorkbook Workbook => _workbook;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the name of this _sheet
         /// </summary>
         public String SheetName

@@ -363,12 +363,9 @@ namespace NPOI.HSSF.Record
         /**
          * @return  Returns the current sid.
          */
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        /**
+	    /**
          * Calculates the string representation of this record.  This Is
          * simply a dump of all the records.
          */
@@ -1075,12 +1072,9 @@ namespace NPOI.HSSF.Record
             //        lastShapeId = 1024;
         }
 
-        protected override String RecordName
-        {
-            get { return "ESCHERAGGREGATE"; }
-        }
+        protected override String RecordName => "ESCHERAGGREGATE";
 
-        // =============== Private methods ========================
+	    // =============== Private methods ========================
 
         private static bool IsObjectRecord(List<RecordBase> records, int loc)
         {
@@ -1305,9 +1299,9 @@ namespace NPOI.HSSF.Record
      * @return unmodifiable copy of tail records. We need to access them when building shapes.
      *         Every HSSFComment shape has a link to a NoteRecord from the tailRec collection.
      */
-        public Dictionary<int, NoteRecord> TailRecords { get { return tailRec; } }
+        public Dictionary<int, NoteRecord> TailRecords => tailRec;
 
-        internal Dictionary<EscherRecord, Record> GetShapeToObjMapping()
+	    internal Dictionary<EscherRecord, Record> GetShapeToObjMapping()
         {
             return shapeToObj;
         }

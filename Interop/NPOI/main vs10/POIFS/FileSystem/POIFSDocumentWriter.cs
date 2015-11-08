@@ -169,43 +169,25 @@ namespace NPOI.POIFS.FileSystem
         /// <value></value>
         /// <returns>true if the stream supports reading; otherwise, false.
         /// </returns>
-        public override bool CanRead
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public override bool CanRead => false;
 
-        /// <summary>
+	    /// <summary>
         /// When overridden in a derived class, gets a value indicating whether the current stream supports seeking.
         /// </summary>
         /// <value></value>
         /// <returns>true if the stream supports seeking; otherwise, false.
         /// </returns>
-        public override bool CanSeek
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public override bool CanSeek => false;
 
-        /// <summary>
+	    /// <summary>
         /// When overridden in a derived class, gets a value indicating whether the current stream supports writing.
         /// </summary>
         /// <value></value>
         /// <returns>true if the stream supports writing; otherwise, false.
         /// </returns>
-        public override bool CanWrite
-        {
-            get
-            {
-                return true;
-            }
-        }
+        public override bool CanWrite => true;
 
-        /// <summary>
+	    /// <summary>
         /// When overridden in a derived class, gets the length in bytes of the stream.
         /// </summary>
         /// <value></value>
@@ -218,15 +200,9 @@ namespace NPOI.POIFS.FileSystem
         /// <exception cref="T:System.ObjectDisposedException">
         /// Methods were called after the stream was closed.
         /// </exception>
-        public override long Length
-        {
-            get
-            {
-                return this.stream.Length;
-            }
-        }
+        public override long Length => this.stream.Length;
 
-        /// <summary>
+	    /// <summary>
         /// When overridden in a derived class, gets or sets the position within the current stream.
         /// </summary>
         /// <value></value>

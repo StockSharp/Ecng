@@ -23,14 +23,9 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         {
             this.endnotes = endnotes;
         }
-        public CT_Endnotes Endnotes
-        {
-            get
-            {
-                return this.endnotes;
-            }
-        }
-        public void Save(Stream stream)
+        public CT_Endnotes Endnotes => this.endnotes;
+
+	    public void Save(Stream stream)
         {
             using (StreamWriter sw = new StreamWriter(stream))
             {

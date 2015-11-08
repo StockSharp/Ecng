@@ -77,19 +77,12 @@ namespace NDde.Advanced.Monitor
         /// <summary>
         /// This gets the text associated with the string handle.
         /// </summary>
-        public string Value
-        {
-            get { return _DdemlObject.Value; }
-        }
+        public string Value => _DdemlObject.Value;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the action being performed.
         /// </summary>
-        public DdeStringActivityType Action
-        {
-            get { return (DdeStringActivityType)((int)_DdemlObject.Action); }
-        }
-
+        public DdeStringActivityType Action => (DdeStringActivityType)((int)_DdemlObject.Action);
     } // class
 
 } // namespace

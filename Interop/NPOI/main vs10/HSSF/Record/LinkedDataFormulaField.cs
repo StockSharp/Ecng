@@ -36,15 +36,9 @@ namespace NPOI.HSSF.Record
     {
         Ptg[] formulaTokens;
 
-        public int Size
-        {
-            get
-            {
-                return 2 + Ptg.GetEncodedSize(formulaTokens);
-            }
-        }
+        public int Size => 2 + Ptg.GetEncodedSize(formulaTokens);
 
-        public int FillField(RecordInputStream in1)
+	    public int FillField(RecordInputStream in1)
         {
             short tokenSize = in1.ReadShort();
             formulaTokens = Ptg.ReadTokens(tokenSize, in1);

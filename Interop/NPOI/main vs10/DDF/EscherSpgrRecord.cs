@@ -90,30 +90,21 @@ namespace NPOI.DDF
         /// Returns the number of bytes that are required to Serialize this record.
         /// </summary>
         /// <value>Number of bytes</value>
-        public override int RecordSize
-        {
-            get { return 8 + 16; }
-        }
+        public override int RecordSize => 8 + 16;
 
-        /// <summary>
+	    /// <summary>
         /// Return the current record id.
         /// </summary>
         /// <value>The 16 bit identifier of this shape group record.</value>
-        public override short RecordId
-        {
-            get { return RECORD_ID; }
-        }
+        public override short RecordId => RECORD_ID;
 
-        /// <summary>
+	    /// <summary>
         /// The short name for this record
         /// </summary>
         /// <value></value>
-        public override String RecordName
-        {
-            get { return "Spgr"; }
-        }
+        public override String RecordName => "Spgr";
 
-        /// <summary>
+	    /// <summary>
         /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
         /// </summary>
         /// <returns>

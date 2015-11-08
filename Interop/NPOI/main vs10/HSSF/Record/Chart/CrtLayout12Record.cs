@@ -111,19 +111,13 @@ namespace NPOI.HSSF.Record.Chart
             ris.ReadShort();
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 2 + 2 + 4 + 4 +
-                    4 +
-                    2 +
-                    2 + 2 + 2 + 2 +
-                    8 + 8 + 8 + 8 + 2;
-            }
-        }
+        protected override int DataSize => 2 + 2 + 4 + 4 +
+                                           4 +
+                                           2 +
+                                           2 + 2 + 2 + 2 +
+                                           8 + 8 + 8 + 8 + 2;
 
-        public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
+	    public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
         {
             out1.WriteShort(field_1_frtHeader_rt);
             out1.WriteShort(field_2_frtHeader_grbitFrt);
@@ -142,12 +136,9 @@ namespace NPOI.HSSF.Record.Chart
             out1.WriteShort(0);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override object Clone()
+	    public override object Clone()
         {
             CrtLayout12Record record = new CrtLayout12Record();
             record.AutoLayoutType = this.AutoLayoutType;

@@ -13,12 +13,9 @@
 		{
 		}
 
-		private SynchronizedDictionary<TKey, TValue> SyncDict
-		{
-			get { return (SynchronizedDictionary<TKey, TValue>)InnerDictionary; }
-		}
+		private SynchronizedDictionary<TKey, TValue> SyncDict => (SynchronizedDictionary<TKey, TValue>)InnerDictionary;
 
-		public SyncObject SyncRoot { get { return SyncDict.SyncRoot; } }
+		public SyncObject SyncRoot => SyncDict.SyncRoot;
 
 		public override TValue this[TKey key]
 		{

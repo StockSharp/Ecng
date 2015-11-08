@@ -19,14 +19,9 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         {
             this.numbering = numbering;
         }
-        public CT_Numbering Numbering
-        {
-            get
-            {
-                return this.numbering;
-            }
-        }
-        public void Save(Stream stream)
+        public CT_Numbering Numbering => this.numbering;
+
+	    public void Save(Stream stream)
         {
             using (StreamWriter sw = new StreamWriter(stream))
             {

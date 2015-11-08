@@ -45,16 +45,9 @@ namespace NDde.Foundation.Client
             _Disposed = disposed;
         }
 
-        public bool IsServerInitiated
-        {
-            get { return _ServerInitiated; }
-        }
+        public bool IsServerInitiated => _ServerInitiated;
 
-        public bool IsDisposed
-        {
-            get { return _Disposed; }
-        }
-
+	    public bool IsDisposed => _Disposed;
     } // class
 
 } // namespace

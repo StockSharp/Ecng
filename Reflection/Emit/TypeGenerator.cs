@@ -19,7 +19,7 @@ namespace Ecng.Reflection.Emit
 		public TypeCompiledEventArgs(Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			_type = type;
 		}
@@ -30,10 +30,7 @@ namespace Ecng.Reflection.Emit
 
 		private readonly Type _type;
 
-		public Type Type
-		{
-			get { return _type; }
-		}
+		public Type Type => _type;
 
 		#endregion
 	}
@@ -74,13 +71,13 @@ namespace Ecng.Reflection.Emit
 
 		#region BaseType
 
-		public Type BaseType { get; private set; }
+		public Type BaseType { get; }
 
 		#endregion
 
 		#region Interfaces
 
-		public IEnumerable<Type> Interfaces { get; private set; }
+		public IEnumerable<Type> Interfaces { get; }
 
 		#endregion
 
@@ -88,10 +85,7 @@ namespace Ecng.Reflection.Emit
 
 		private readonly List<MethodGenerator> _methods = new List<MethodGenerator>();
 
-		public IEnumerable<MethodGenerator> Methods
-		{
-			get { return _methods; }
-		}
+		public IEnumerable<MethodGenerator> Methods => _methods;
 
 		#endregion
 
@@ -99,10 +93,7 @@ namespace Ecng.Reflection.Emit
 
 		private readonly List<MethodGenerator> _ctors = new List<MethodGenerator>();
 
-		public IEnumerable<MethodGenerator> Ctors
-		{
-			get { return _ctors; }
-		}
+		public IEnumerable<MethodGenerator> Ctors => _ctors;
 
 		#endregion
 
@@ -110,10 +101,7 @@ namespace Ecng.Reflection.Emit
 
 		private readonly List<PropertyGenerator> _properties = new List<PropertyGenerator>();
 
-		public IEnumerable<PropertyGenerator> Properties
-		{
-			get { return _properties; }
-		}
+		public IEnumerable<PropertyGenerator> Properties => _properties;
 
 		#endregion
 
@@ -121,10 +109,7 @@ namespace Ecng.Reflection.Emit
 
 		private readonly List<FieldGenerator> _fields = new List<FieldGenerator>();
 
-		public IEnumerable<FieldGenerator> Fields
-		{
-			get { return _fields; }
-		}
+		public IEnumerable<FieldGenerator> Fields => _fields;
 
 		#endregion
 
@@ -132,10 +117,7 @@ namespace Ecng.Reflection.Emit
 
 		private readonly List<EventGenerator> _events = new List<EventGenerator>();
 
-		public IEnumerable<EventGenerator> Events
-		{
-			get { return _events; }
-		}
+		public IEnumerable<EventGenerator> Events => _events;
 
 		#endregion
 

@@ -59,31 +59,13 @@ namespace NPOI.SS.Formula.PTG
         }
 
 
-        public override int Size
-        {
-            get
-            {
-                return SIZE;
-            }
-        }
+        public override int Size => SIZE;
 
-        public int Row
-        {
-            get
-            {
-                return field_1_first_row;
-            }
-        }
+	    public int Row => field_1_first_row;
 
-        public int Column
-        {
-            get
-            {
-                return field_2_first_col;
-            }
-        }
+	    public int Column => field_2_first_col;
 
-        public override String ToFormulaString()
+	    public override String ToFormulaString()
         {
             // table(....)[][]
             throw new RecordFormatException("Table and Arrays are not yet supported");

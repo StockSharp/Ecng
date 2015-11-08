@@ -40,12 +40,9 @@ namespace NPOI.HSSF.Record.Aggregates.Chart
         private ShapePropsAggregate shapeProps2 = null;
         private CrtMlFrtAggregate crtMlFrt = null;
 
-        public DataFormatRecord DataFormat
-        {
-            get { return dataFormat; }
-        }
+        public DataFormatRecord DataFormat => dataFormat;
 
-        public SSAggregate(RecordStream rs, ChartRecordAggregate container)
+	    public SSAggregate(RecordStream rs, ChartRecordAggregate container)
             : base(RuleName_SS, container)
         {
             dataFormat = (DataFormatRecord)rs.GetNext();

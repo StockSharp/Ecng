@@ -102,23 +102,11 @@ namespace NPOI.XSSF.UserModel
         }
 
 
-        public CT_Shape ParentShape
-        {
-            get
-            {
-                return _shape;
-            }
-        }
+        public CT_Shape ParentShape => _shape;
 
-        public List<XSSFTextRun> TextRuns
-        {
-            get
-            {
-                return _Runs;
-            }
-        }
+	    public List<XSSFTextRun> TextRuns => _Runs;
 
-        /**
+	    /**
          * Add a new run of text
          *
          * @return a new run of text

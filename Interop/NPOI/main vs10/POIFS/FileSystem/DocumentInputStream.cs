@@ -79,14 +79,9 @@ namespace NPOI.POIFS.FileSystem
             return delegate1.Seek(offset, origin);
         }
 
-        public override long Length
-        {
-            get
-            {
-                return delegate1.Length;
-            }
-        }
-        public override long Position
+        public override long Length => delegate1.Length;
+
+	    public override long Position
         {
             get
             {

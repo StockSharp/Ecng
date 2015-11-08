@@ -54,16 +54,9 @@ namespace NPOI.SS.Formula.Functions
         }
 
 
-        protected override int MaxNumOperands
-        {
-            get
-            {
-                return 3;
-            }
-        }
+        protected override int MaxNumOperands => 3;
 
-
-        protected internal override double Evaluate(double[] values)
+	    protected internal override double Evaluate(double[] values)
         {
 
             double financeRate = values[values.Length - 1];

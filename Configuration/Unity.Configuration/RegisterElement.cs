@@ -74,12 +74,9 @@ namespace Microsoft.Practices.Unity.Configuration
         /// this registration.
         /// </summary>
         [ConfigurationProperty(InjectionMembersPropertyName, IsDefaultCollection = true)]
-        public InjectionMemberElementCollection InjectionMembers
-        {
-            get { return (InjectionMemberElementCollection) base[InjectionMembersPropertyName]; }
-        }
+        public InjectionMemberElementCollection InjectionMembers => (InjectionMemberElementCollection) base[InjectionMembersPropertyName];
 
-        /// <summary>
+	    /// <summary>
         /// Apply the registrations from this element to the given container.
         /// </summary>
         /// <param name="container">Container to configure.</param>

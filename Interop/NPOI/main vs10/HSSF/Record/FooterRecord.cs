@@ -70,12 +70,9 @@ namespace NPOI.HSSF.Record
         /// </summary>
         /// <value></value>
         /// return the non static version of the id for this record.
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             return new FooterRecord(this.Text);
         }

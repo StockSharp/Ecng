@@ -59,15 +59,9 @@ namespace NPOI.HSSF.Record
             
         }
 
-        public bool IsBiff5BookStreamPresent
-        {
-          get
-            {
-            return biff5BookStreamFlag.IsSet(_options);
-            }
-        }
+        public bool IsBiff5BookStreamPresent => biff5BookStreamFlag.IsSet(_options);
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
 
@@ -83,14 +77,8 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(_options);
         }
 
-        protected override int DataSize
-        {
-            get { return 2; }
-        }
+        protected override int DataSize => 2;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
     }
 }

@@ -69,12 +69,9 @@ namespace NPOI.HSSF.Record
             }
         }
         
-        public short NumColors
-        {
-            get { return (short)field_2_colors.Count; }
-        }
+        public short NumColors => (short)field_2_colors.Count;
 
-        /// <summary>
+	    /// <summary>
         /// Dangerous! Only call this if you intend to replace the colors!
         /// </summary>
         public void ClearColors()
@@ -111,20 +108,11 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 2 + field_2_colors.Count * PColor.ENCODED_SIZE;
-            }
-        }
+        protected override int DataSize => 2 + field_2_colors.Count * PColor.ENCODED_SIZE;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        /**
+	    /**
          * Returns the color value at a given index
          *
          * @return the RGB triplet for the color, or null if the specified index

@@ -13,17 +13,11 @@ namespace NPOI.HSSF.Record
         }
 
         public const short sid = 0x1c0;
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        protected override int DataSize
-        {
-            get { return 0; }
-        }
+	    protected override int DataSize => 0;
 
-        public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
+	    public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
         {
             
         }

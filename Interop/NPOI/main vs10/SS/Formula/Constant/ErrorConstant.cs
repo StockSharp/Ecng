@@ -52,10 +52,9 @@ namespace NPOI.SS.Formula.Constant
         /// Gets the error code.
         /// </summary>
         /// <value>The error code.</value>
-        public int ErrorCode {
-            get { return _errorCode; }
-        }
-        /// <summary>
+        public int ErrorCode => _errorCode;
+
+	    /// <summary>
         /// Gets the text.
         /// </summary>
         /// <value>The text.</value>

@@ -3569,11 +3569,9 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         }
         object parent;
         [XmlIgnore]
-        public object Parent
-        {
-            get { return parent; }
-        }
-        #region Generic methods for object operation
+        public object Parent => parent;
+
+	    #region Generic methods for object operation
         private List<T> GetObjectList<T>(ItemsChoiceTableCellType type) where T : class
         {
             lock (this)
@@ -5419,11 +5417,9 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         }
         object parent;
         [XmlIgnore]
-        public object Parent
-        {
-            get { return parent; }
-        }
-        public static CT_Row Parse(XmlNode node, XmlNamespaceManager namespaceManager, object parent)
+        public object Parent => parent;
+
+	    public static CT_Row Parse(XmlNode node, XmlNamespaceManager namespaceManager, object parent)
         {
             if (node == null)
                 return null;

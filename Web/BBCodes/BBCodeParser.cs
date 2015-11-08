@@ -22,26 +22,26 @@ namespace Ecng.Web.BBCodes
 
         public BBCodeParser(ErrorMode errorMode, string textNodeHtmlTemplate, IList<BBTag> tags)
         {
-            if (!Enum.IsDefined(typeof(ErrorMode), errorMode)) throw new ArgumentOutOfRangeException("errorMode");
-            if (tags == null) throw new ArgumentNullException("tags");
+            if (!Enum.IsDefined(typeof(ErrorMode), errorMode)) throw new ArgumentOutOfRangeException(nameof(errorMode));
+            if (tags == null) throw new ArgumentNullException(nameof(tags));
 
             ErrorMode = errorMode;
             TextNodeHtmlTemplate = textNodeHtmlTemplate;
             Tags = tags;
         }
 
-        public IList<BBTag> Tags { get; private set; }
-        public string TextNodeHtmlTemplate { get; private set; }
-        public ErrorMode ErrorMode { get; private set; }
+        public IList<BBTag> Tags { get; }
+        public string TextNodeHtmlTemplate { get; }
+        public ErrorMode ErrorMode { get; }
 
         public virtual string ToHtml(string bbCode)
         {
-            if (bbCode == null) throw new ArgumentNullException("bbCode");
+            if (bbCode == null) throw new ArgumentNullException(nameof(bbCode));
             return ParseSyntaxTree(bbCode).ToHtml();
         }
         public virtual SequenceNode ParseSyntaxTree(string bbCode)
         {
-            if (bbCode == null) throw new ArgumentNullException("bbCode");
+            if (bbCode == null) throw new ArgumentNullException(nameof(bbCode));
 
             Stack<SyntaxTreeNode> stack = new Stack<SyntaxTreeNode>();
             var rootNode = new SequenceNode();

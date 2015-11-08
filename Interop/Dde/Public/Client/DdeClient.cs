@@ -1809,27 +1809,15 @@ namespace NDde.Client
                 _Context = context;
             }
 
-            public object AsyncState
-            {
-                get { return _State; }
-            }
+            public object AsyncState => _State;
 
-            public WaitHandle AsyncWaitHandle
-            {
-                get { return _DdemlObject.AsyncWaitHandle; }
-            }
+	        public WaitHandle AsyncWaitHandle => _DdemlObject.AsyncWaitHandle;
 
-            public bool CompletedSynchronously
-            {
-                get { return _DdemlObject.CompletedSynchronously; }
-            }
+	        public bool CompletedSynchronously => _DdemlObject.CompletedSynchronously;
 
-            public bool IsCompleted
-            {
-                get { return _DdemlObject.IsCompleted; }
-            }
+	        public bool IsCompleted => _DdemlObject.IsCompleted;
 
-            public AsyncCallback Callback
+	        public AsyncCallback Callback
             {
                 get { return _Callback; }
                 set { _Callback = value; }
@@ -1854,35 +1842,19 @@ namespace NDde.Client
         {
             private static readonly InvalidAsyncResult _Instance = new InvalidAsyncResult();
 
-            public static InvalidAsyncResult Instance
-            {
-                get { return _Instance; }
-            }
+            public static InvalidAsyncResult Instance => _Instance;
 
-            private InvalidAsyncResult()
+	        private InvalidAsyncResult()
             {
             }
 
-            public object AsyncState
-            {
-                get { return null; }
-            }
+            public object AsyncState => null;
 
-            public bool CompletedSynchronously
-            {
-                get { return false;	}
-            }
+	        public bool CompletedSynchronously => false;
 
-            public WaitHandle AsyncWaitHandle
-            {
-                get { return null; }
-            }
+	        public WaitHandle AsyncWaitHandle => null;
 
-            public bool IsCompleted
-            {
-                get { return false; }
-            }
-
+	        public bool IsCompleted => false;
         } // class
 
     } // class

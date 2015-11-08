@@ -181,14 +181,9 @@ namespace NPOI.HPSF
         /// Set.
         /// </summary>
         /// <value>The number of {@link Section}s in the property Set.</value>
-        public virtual int SectionCount
-        {
-            get { return sections.Count; }
-        }
+        public virtual int SectionCount => sections.Count;
 
-
-
-        /**
+	    /**
          * The sections in this {@link PropertySet}.
          */
         protected List<Section> sections;
@@ -198,14 +193,9 @@ namespace NPOI.HPSF
         /// Returns the {@link Section}s in the property Set.
         /// </summary>
         /// <value>{@link Section}s in the property Set.</value>
-        public virtual List<Section> Sections
-        {
-            get { return sections; }
-        }
+        public virtual List<Section> Sections => sections;
 
-
-
-        /// <summary>
+	    /// <summary>
         /// Creates an empty (uninitialized) {@link PropertySet}
         /// Please note: For the time being this
         /// constructor is protected since it is used for internal purposes
@@ -486,14 +476,9 @@ namespace NPOI.HPSF
         /// </summary>
         /// <value>The properties of the only {@link Section} of this
         /// {@link PropertySet}.</value>
-        public virtual Property[] Properties
-        {
-            get { return FirstSection.Properties; }
-        }
+        public virtual Property[] Properties => FirstSection.Properties;
 
-
-
-        /// <summary>
+	    /// <summary>
         /// Convenience method returning the value of the property with
         /// the specified ID. If the property is not available,
         /// <c>null</c> is returned and a subsequent call To {@link
@@ -553,14 +538,9 @@ namespace NPOI.HPSF
         /// <value><c>true</c> if the last call To {@link
         /// #GetPropertyIntValue} or {@link #GetProperty} tried To access a
         /// property that Was not available; otherwise, <c>false</c>.</value>
-        public virtual bool WasNull
-        {
-            get { return FirstSection.WasNull; }
-        }
+        public virtual bool WasNull => FirstSection.WasNull;
 
-
-
-        /// <summary>
+	    /// <summary>
         /// Gets the first section.
         /// </summary>
         /// <value>The first section.</value>

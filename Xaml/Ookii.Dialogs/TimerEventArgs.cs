@@ -44,10 +44,6 @@ namespace Ookii.Dialogs
         /// The number of milliseconds that has elapsed since the dialog was created or since the last time the event handler returned
         /// with the <see cref="ResetTickCount"/> property set to <see langword="true" />.
         /// </value>
-        public int TickCount
-        {
-            get { return _tickCount; }
-        }
-	
+        public int TickCount => _tickCount;
     }
 }

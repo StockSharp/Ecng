@@ -54,20 +54,14 @@ namespace Microsoft.Practices.Unity
         /// <summary>
         /// The type that was being requested from the container at the time of failure.
         /// </summary>
-        public string TypeRequested
-        {
-            get { return typeRequested; }
-        }
+        public string TypeRequested => typeRequested;
 
-        /// <summary>
+	    /// <summary>
         /// The name that was being requested from the container at the time of failure.
         /// </summary>
-        public string NameRequested
-        {
-            get { return nameRequested; }
-        }
+        public string NameRequested => nameRequested;
 
-        private static string CreateMessage(Type typeRequested, string nameRequested, Exception innerException, IBuilderContext context)
+	    private static string CreateMessage(Type typeRequested, string nameRequested, Exception innerException, IBuilderContext context)
         {
             Guard.ArgumentNotNull(typeRequested, "typeRequested");
             Guard.ArgumentNotNull(context, "context");

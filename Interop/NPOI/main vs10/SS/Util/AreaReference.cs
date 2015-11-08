@@ -250,32 +250,23 @@ namespace NPOI.SS.Util
         /**
          * @return <c>false</c> if this area reference involves more than one cell
          */
-        public bool IsSingleCell
-        {
-            get { return _isSingleCell; }
-        }
+        public bool IsSingleCell => _isSingleCell;
 
-        /**
+	    /**
          * @return the first cell reference which defines this area. Usually this cell is in the upper
          * left corner of the area (but this is not a requirement).
          */
-        public CellReference FirstCell
-        {
-            get { return _firstCell; }
-        }
+        public CellReference FirstCell => _firstCell;
 
-        /**
+	    /**
          * Note - if this area reference refers to a single cell, the return value of this method will
          * be identical to that of <c>GetFirstCell()</c>
          * @return the second cell reference which defines this area.  For multi-cell areas, this is 
          * cell diagonally opposite the 'first cell'.  Usually this cell is in the lower right corner 
          * of the area (but this is not a requirement).
          */
-        public CellReference LastCell
-        {
-            get{return _lastCell;}
-        }
-        /**
+        public CellReference LastCell => _lastCell;
+	    /**
          * Returns a reference to every cell covered by this area
          */
         public CellReference[] GetAllReferencedCells()

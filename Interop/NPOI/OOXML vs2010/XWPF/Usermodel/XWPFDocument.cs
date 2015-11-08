@@ -285,60 +285,31 @@ namespace NPOI.XWPF.UserModel
          * Returns the low level document base object
          */
         //CTDocument1
-        public CT_Document Document
-        {
-            get
-            {
-                return ctDocument;
-            }
-        }
+        public CT_Document Document => ctDocument;
 
-        internal IdentifierManager DrawingIdManager
-        {
-            get
-            {
-                return drawingIdManager;
-            }
-        }
+	    internal IdentifierManager DrawingIdManager => drawingIdManager;
 
-        /**
+	    /**
          * returns an Iterator with paragraphs and tables
          * @see NPOI.XWPF.UserModel.IBody#getBodyElements()
          */
-        public IList<IBodyElement> BodyElements
-        {
-            get
-            {
-                return bodyElements.AsReadOnly();
-            }
-        }
-        public IEnumerator<IBodyElement> GetBodyElementsIterator()
+        public IList<IBodyElement> BodyElements => bodyElements.AsReadOnly();
+
+	    public IEnumerator<IBodyElement> GetBodyElementsIterator()
         {
             return bodyElements.GetEnumerator();
         }
         /**
          * @see NPOI.XWPF.UserModel.IBody#getParagraphs()
          */
-        public IList<XWPFParagraph> Paragraphs
-        {
-            get
-            {
-                return paragraphs.AsReadOnly();
-            }
-        }
+        public IList<XWPFParagraph> Paragraphs => paragraphs.AsReadOnly();
 
-        /**
+	    /**
          * @see NPOI.XWPF.UserModel.IBody#getTables()
          */
-        public IList<XWPFTable> Tables
-        {
-            get
-            {
-                return tables.AsReadOnly();
-            }
-        }
+        public IList<XWPFTable> Tables => tables.AsReadOnly();
 
-        /**
+	    /**
          * @see NPOI.XWPF.UserModel.IBody#getTableArray(int)
          */
         public XWPFTable GetTableArray(int pos)
@@ -354,15 +325,9 @@ namespace NPOI.XWPF.UserModel
          * 
          * @return  the list of footers
          */
-        public IList<XWPFFooter> FooterList
-        {
-            get
-            {
-                return footers.AsReadOnly();
-            }
-        }
+        public IList<XWPFFooter> FooterList => footers.AsReadOnly();
 
-        public XWPFFooter GetFooterArray(int pos)
+	    public XWPFFooter GetFooterArray(int pos)
         {
             return footers[(pos)];
         }
@@ -371,15 +336,9 @@ namespace NPOI.XWPF.UserModel
          * 
          * @return  the list of headers
          */
-        public IList<XWPFHeader> HeaderList
-        {
-            get
-            {
-                return headers.AsReadOnly();
-            }
-        }
+        public IList<XWPFHeader> HeaderList => headers.AsReadOnly();
 
-        public XWPFHeader GetHeaderArray(int pos)
+	    public XWPFHeader GetHeaderArray(int pos)
         {
             return headers[(pos)];
         }
@@ -407,14 +366,9 @@ namespace NPOI.XWPF.UserModel
             if (footnotes == null) return null;
             return footnotes.GetFootnoteById(id);
         }
-        public Dictionary<int, XWPFFootnote> Endnotes
-        {
-            get
-            {
-                return endnotes;
-            }
-        }
-        public XWPFFootnote GetEndnoteByID(int id)
+        public Dictionary<int, XWPFFootnote> Endnotes => endnotes;
+
+	    public XWPFFootnote GetEndnoteByID(int id)
         {
             if (endnotes == null || !endnotes.ContainsKey(id)) 
                 return null;
@@ -1232,15 +1186,9 @@ namespace NPOI.XWPF.UserModel
          * Returns all Pictures, which are referenced from the document itself.
          * @return a {@link List} of {@link XWPFPictureData}. The returned {@link List} is unmodifiable. Use #a
          */
-        public IList<XWPFPictureData> AllPictures
-        {
-            get
-            {
-                return pictures.AsReadOnly();
-            }
-        }
+        public IList<XWPFPictureData> AllPictures => pictures.AsReadOnly();
 
-        /**
+	    /**
          * @return all Pictures in this package
          */
         public IList<XWPFPictureData> AllPackagePictures
@@ -1499,30 +1447,17 @@ namespace NPOI.XWPF.UserModel
          * belongs.
          * @see NPOI.XWPF.UserModel.IBody#getPart()
          */
-        public POIXMLDocumentPart Part
-        {
-            get
-            {
-                return this;
-            }
-        }
+        public POIXMLDocumentPart Part => this;
 
-
-        /**
+	    /**
          * Get the PartType of the body, for example
          * DOCUMENT, HEADER, FOOTER,	FOOTNOTE,
          *
          * @see NPOI.XWPF.UserModel.IBody#getPartType()
          */
-        public BodyType PartType
-        {
-            get
-            {
-                return BodyType.DOCUMENT;
-            }
-        }
+        public BodyType PartType => BodyType.DOCUMENT;
 
-        /**
+	    /**
          * Get the TableCell which belongs to the TableCell
          * @param cell
          */

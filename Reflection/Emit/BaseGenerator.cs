@@ -8,13 +8,13 @@ namespace Ecng.Reflection.Emit
 		protected BaseGenerator(T builder)
 		{
 			if (builder == null)
-				throw new ArgumentNullException("builder");
+				throw new ArgumentNullException(nameof(builder));
 
 			Builder = builder;
 			Attributes = new AttributeGeneratorList(Builder);
 		}
 
-		public T Builder { get; private set; }
+		public T Builder { get; }
 		public AttributeGeneratorList Attributes { get; private set; }
 	}
 }

@@ -74,15 +74,9 @@ namespace NPOI.HSSF.Record
             futureHeader.RecordType = (/*setter*/sid);
         }
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+        public override short Sid => sid;
 
-        public FeatHdrRecord(RecordInputStream in1)
+	    public FeatHdrRecord(RecordInputStream in1)
         {
             futureHeader = new FtrHeader(in1);
 
@@ -114,15 +108,9 @@ namespace NPOI.HSSF.Record
             out1.Write(rgbHdrData);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 12 + 2 + 1 + 4 + rgbHdrData.Length;
-            }
-        }
+        protected override int DataSize => 12 + 2 + 1 + 4 + rgbHdrData.Length;
 
-        //HACK: do a "cheat" Clone, see Record.java for more information
+	    //HACK: do a "cheat" Clone, see Record.java for more information
         public override Object Clone()
         {
             return CloneViaReserialise();

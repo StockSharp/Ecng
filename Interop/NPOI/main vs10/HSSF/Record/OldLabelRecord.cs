@@ -74,26 +74,14 @@ namespace NPOI.HSSF.Record
          * Get the number of characters this string Contains
          * @return number of characters
          */
-        public short StringLength
-        {
-            get
-            {
-                return field_4_string_len;
-            }
-        }
+        public short StringLength => field_4_string_len;
 
-        /**
+	    /**
          * Get the String of the cell
          */
-        public String Value
-        {
-            get
-            {
-                return OldStringRecord.GetString(field_5_bytes, codepage);
-            }
-        }
+        public String Value => OldStringRecord.GetString(field_5_bytes, codepage);
 
-        /**
+	    /**
          * Not supported
          */
         public int Serialize(int offset, byte[] data)
@@ -114,13 +102,7 @@ namespace NPOI.HSSF.Record
             sb.Append("    .value       = ").Append(Value).Append("\n");
         }
 
-        protected override String RecordName
-        {
-            get
-            {
-                return "OLD LABEL";
-            }
-        }
+        protected override String RecordName => "OLD LABEL";
     }
 
 }

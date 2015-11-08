@@ -40,12 +40,9 @@ namespace ManagedWinapi.Windows.Contents
         }
 
         ///
-        public string ComponentType
-        {
-            get { return strict ? "TextBox" : "Text"; }
-        }
+        public string ComponentType => strict ? "TextBox" : "Text";
 
-        ///
+	    ///
         public string ShortDescription
         {
             get

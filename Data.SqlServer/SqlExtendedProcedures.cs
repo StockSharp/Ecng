@@ -22,10 +22,10 @@ namespace Ecng.Data.SqlServer
 		public static void PageSelect(string table, long startIndex, long count, string orderByColumn, string columns, string filter, object param1, object param2, object param3, object param4, object param5, object param6, object param7, object param8, object param9, object param10)
 		{
 			if (string.IsNullOrEmpty(table))
-				throw new ArgumentNullException("table");
+				throw new ArgumentNullException(nameof(table));
 
 			if (startIndex < 0)
-				throw new ArgumentOutOfRangeException("startIndex");
+				throw new ArgumentOutOfRangeException(nameof(startIndex));
 
 			if (string.IsNullOrEmpty(columns))
 				columns = string.Format("[{0}].*", table);
@@ -45,7 +45,7 @@ namespace Ecng.Data.SqlServer
 				countFilter = ">= @StartIndex";
 			}
 			else
-				throw new ArgumentOutOfRangeException("count");
+				throw new ArgumentOutOfRangeException(nameof(count));
 
 			var command = new SqlCommand(string.Format(@"
 				with Numbered as (

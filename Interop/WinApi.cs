@@ -252,7 +252,7 @@
 		public static string GetText(this SystemWindow wnd)
 		{
 			if (wnd == null)
-				throw new ArgumentNullException("wnd");
+				throw new ArgumentNullException(nameof(wnd));
 
 			var len = SendMessage(wnd.HWnd, (int)WM.GETTEXTLENGTH, IntPtr.Zero, IntPtr.Zero);
 			var retVal = new StringBuilder(len);
@@ -281,7 +281,7 @@
 		public static int SendMessage<TMessage, TWParam, TLParam>(this SystemWindow wnd, TMessage message, TWParam wParam, TLParam lParam)
 		{
 			if (wnd == null)
-				throw new ArgumentNullException("wnd");
+				throw new ArgumentNullException(nameof(wnd));
 
 			return wnd.HWnd.SendMessage(message.To<int>(), wParam.To<IntPtr>(), lParam.To<IntPtr>());
 		}
@@ -289,7 +289,7 @@
 		public static int PostMessage<TMessage, TWParam, TLParam>(this SystemWindow wnd, TMessage message, TWParam wParam, TLParam lParam)
 		{
 			if (wnd == null)
-				throw new ArgumentNullException("wnd");
+				throw new ArgumentNullException(nameof(wnd));
 
 			return wnd.HWnd.PostMessage(message.To<int>(), wParam.To<IntPtr>(), lParam.To<IntPtr>());
 		}
@@ -335,7 +335,7 @@
 		public static void SetText(this SystemWindow wnd, string text)
 		{
 			if (wnd == null)
-				throw new ArgumentNullException("wnd");
+				throw new ArgumentNullException(nameof(wnd));
 
 			wnd.HWnd.SendMessage((int)WM.SETTEXT, 0, text);
 		}
@@ -414,10 +414,10 @@
 		public static void Command(this SystemWindow wnd, SystemWindow elem)
 		{
 			if (wnd == null)
-				throw new ArgumentNullException("wnd");
+				throw new ArgumentNullException(nameof(wnd));
 
 			if (elem == null)
-				throw new ArgumentNullException("elem");
+				throw new ArgumentNullException(nameof(elem));
 
 			wnd.SendMessage(WM.COMMAND, elem.DialogID, 0);
 		}
@@ -425,10 +425,10 @@
 		public static bool Equals(this Process firstProcess, Process secondProcess)
 		{
 			if (firstProcess == null)
-				throw new ArgumentNullException("firstProcess");
+				throw new ArgumentNullException(nameof(firstProcess));
 
 			if (secondProcess == null)
-				throw new ArgumentNullException("secondProcess");
+				throw new ArgumentNullException(nameof(secondProcess));
 
 			return firstProcess.Id == secondProcess.Id;
 		}
@@ -484,7 +484,7 @@
 		public static string GetOwner(this Process process)
 		{
 			if (process == null)
-				throw new ArgumentNullException("process");
+				throw new ArgumentNullException(nameof(process));
 
 			var query = "Select * From Win32_Process Where ProcessID = " + process.Id;
 			var searcher = new ManagementObjectSearcher(query);
@@ -504,7 +504,7 @@
 		public static string GetFileName(this Process process)
 		{
 			if (process == null)
-				throw new ArgumentNullException("process");
+				throw new ArgumentNullException(nameof(process));
 
 			return process.MainModule.FileName;
 		}
@@ -512,7 +512,7 @@
 		public static bool WaitForInputIdle(this Process process, TimeSpan timeOut)
 		{
 			if (process == null)
-				throw new ArgumentNullException("process");
+				throw new ArgumentNullException(nameof(process));
 
 			return process.WaitForInputIdle((int)timeOut.TotalMilliseconds);
 		}
@@ -567,7 +567,7 @@
 		public static int GetProcessId(this SystemWindow wnd)
 		{
 			if (wnd == null)
-				throw new ArgumentNullException("wnd");
+				throw new ArgumentNullException(nameof(wnd));
 
 			int pid;
 			GetWindowThreadProcessId(wnd.HWnd, out pid);

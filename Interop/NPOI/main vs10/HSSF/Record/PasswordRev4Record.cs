@@ -80,14 +80,8 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(field_1_password);
         }
 
-        protected override int DataSize
-        {
-            get { return 2; }
-        }
+        protected override int DataSize => 2;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
     }
 }

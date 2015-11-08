@@ -47,36 +47,19 @@ namespace NPOI
         /// Returns the document information metadata for the document
         /// </summary>
         /// <value>The doc summary information.</value>
-        public virtual DocumentSummaryInformation DocSummaryInformation
-        {
-            get
-            {
-                return document.DocumentSummaryInformation;
-            }
-        }
-        /// <summary>
+        public virtual DocumentSummaryInformation DocSummaryInformation => document.DocumentSummaryInformation;
+
+	    /// <summary>
         /// Returns the summary information metadata for the document
         /// </summary>
         /// <value>The summary information.</value>
-        public virtual SummaryInformation SummaryInformation
-        {
-            get
-            {
-                return document.SummaryInformation;
-            }
-        }
+        public virtual SummaryInformation SummaryInformation => document.SummaryInformation;
 
-        /// <summary>
+	    /// <summary>
         /// Returns an HPSF powered text extractor for the
         /// document properties metadata, such as title and author.
         /// </summary>
         /// <value></value>
-        public override POITextExtractor MetadataTextExtractor
-        {
-            get
-            {
-                return new HPSFPropertiesExtractor(this);
-            }
-        }
+        public override POITextExtractor MetadataTextExtractor => new HPSFPropertiesExtractor(this);
     }
 }

@@ -86,21 +86,10 @@ namespace NPOI.SS.Formula.Functions
                 _Length = length;
             }
 
-            public short FirstIndex
-            {
-                get
-                {
-                    return (short)_offset;
-                }
-            }
-            public short LastIndex
-            {
-                get
-                {
-                    return (short)(_offset + _Length - 1);
-                }
-            }
-            /**
+            public short FirstIndex => (short)_offset;
+
+	        public short LastIndex => (short)(_offset + _Length - 1);
+	        /**
              * Moves the range by the specified translation amount.<p/>
              * 
              * This method also 'normalises' the range: Excel specifies that the width and height 
@@ -181,38 +170,15 @@ namespace NPOI.SS.Formula.Functions
                 _width = ae.LastColumn - ae.FirstColumn + 1;
             }
 
-            public int Width
-            {
-                get
-                {
-                    return _width;
-                }
-            }
+            public int Width => _width;
 
-            public int Height
-            {
-                get
-                {
-                    return _height;
-                }
-            }
+	        public int Height => _height;
 
-            public int FirstRowIndex
-            {
-                get
-                {
-                    return _firstRowIndex;
-                }
-            }
+	        public int FirstRowIndex => _firstRowIndex;
 
-            public int FirstColumnIndex
-            {
-                get
-                {
-                    return _firstColumnIndex;
-                }
-            }
-            public AreaEval Offset(int relFirstRowIx, int relLastRowIx,int relFirstColIx, int relLastColIx)
+	        public int FirstColumnIndex => _firstColumnIndex;
+
+	        public AreaEval Offset(int relFirstRowIx, int relLastRowIx,int relFirstColIx, int relLastColIx)
             {
                 if (_refEval == null)
                 {

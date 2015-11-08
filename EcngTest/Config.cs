@@ -15,10 +15,7 @@ namespace Ecng.Test
 
 		private const string _connectionString = @"Data Source=cbdb2;Initial Catalog=EcngTestDB;Integrated Security=True;User ID=ecngtest;Password=ecngtest;";
 
-		public static string ConnectionString
-		{
-			get { return _connectionString; }
-		}
+		public static string ConnectionString => _connectionString;
 
 		#endregion
 

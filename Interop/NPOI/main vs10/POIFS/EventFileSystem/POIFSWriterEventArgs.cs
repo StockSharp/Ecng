@@ -62,49 +62,25 @@ namespace NPOI.POIFS.EventFileSystem
         /// Gets the limit on writing, in bytes
         /// </summary>
         /// <value>The limit.</value>
-        public virtual int Limit
-        {
-            get
-            {
-                return this.limit;
-            }
-        }
+        public virtual int Limit => this.limit;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the document's name
         /// </summary>
         /// <value>The name.</value>
-        public virtual string Name
-        {
-            get
-            {
-                return this.documentName;
-            }
-        }
+        public virtual string Name => this.documentName;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the document's path
         /// </summary>
         /// <value>The path.</value>
-        public virtual POIFSDocumentPath Path
-        {
-            get
-            {
-                return this.path;
-            }
-        }
+        public virtual POIFSDocumentPath Path => this.path;
 
-        /// <summary>
+	    /// <summary>
         /// the POIFSDocumentWriter, freshly opened
         /// </summary>
         /// <value>The stream.</value>
-        public virtual DocumentOutputStream Stream
-        {
-            get
-            {
-                return this.stream;
-            }
-        }
+        public virtual DocumentOutputStream Stream => this.stream;
     }
 
     public delegate void POIFSWriterEventHandler(object sender, POIFSWriterEventArgs e);

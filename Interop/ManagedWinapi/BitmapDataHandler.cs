@@ -62,7 +62,7 @@ namespace ManagedWinapi
     /// locked, only changes via the <see cref="BitmapDataHandler"/> instance
     /// are valid.
     /// </summary>
-    public Bitmap Bitmap { get; private set; }
+    public Bitmap Bitmap { get; }
 
     //-------------------------------------------------------------------------
 

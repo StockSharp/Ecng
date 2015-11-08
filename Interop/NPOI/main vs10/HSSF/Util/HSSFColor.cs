@@ -184,19 +184,10 @@ namespace NPOI.HSSF.Util
          * @return index to the standard palette
          */
 
-        public virtual short Indexed
-        {
-            get
-            {
-                return Black.Index;
-            }
-        }
+        public virtual short Indexed => Black.Index;
 
-        public byte[] RGB 
-        {
-            get { return this.GetTriplet(); }
-        }
-        /**
+	    public byte[] RGB => this.GetTriplet();
+	    /**
          * @return  triplet representation like that in Excel
          */
         [Obsolete]
@@ -227,12 +218,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 0, 0, 0 };
             public const string HexString = "0:0:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -254,12 +242,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 153, 51, 0 };
             public const string HexString = "9999:3333:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -281,12 +266,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 51, 51, 0 };
             public const string HexString = "3333:3333:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -308,12 +290,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 0, 51, 0 };
             public const string HexString = "0:3333:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -335,12 +314,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 0, 51, 102 };
             public const string HexString = "0:3333:6666";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -363,12 +339,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 0, 0, 128 };
             public const string HexString = "0:0:8080";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -390,12 +363,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 51, 51, 153 };
             public const string HexString = "3333:3333:9999";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -417,12 +387,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 51, 51, 51 };
             public const string HexString = "3333:3333:3333";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -445,12 +412,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 128, 0, 0 };
             public const string HexString = "8080:0:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -472,12 +436,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 255, 102, 0 };
             public const string HexString = "FFFF:6666:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -499,12 +460,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 128, 128, 0 };
             public const string HexString = "8080:8080:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -526,12 +484,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 0, 128, 0 };
             public const string HexString = "0:8080:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -554,12 +509,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 0, 128, 128 };
             public const string HexString = "0:8080:8080";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -582,12 +534,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 0, 0, 255 };
             public const string HexString = "0:0:FFFF";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -609,12 +558,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 102, 102, 153 };
             public const string HexString = "6666:6666:9999";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -636,12 +582,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 128, 128, 128 };
             public const string HexString = "8080:8080:8080";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -663,12 +606,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 255, 0, 0 };
             public const string HexString = "FFFF:0:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -690,12 +630,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 255, 153, 0 };
             public const string HexString = "FFFF:9999:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -716,12 +653,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 153, 204, 0 };
             public const string HexString = "9999:CCCC:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -743,12 +677,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 51, 153, 102 };
             public const string HexString = "3333:9999:6666";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -770,12 +701,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 51, 204, 204 };
             public const string HexString = "3333:CCCC:CCCC";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -792,12 +720,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 51, 102, 255 };
             public const string HexString = "3333:6666:FFFF";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -815,12 +740,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 128, 0, 128 };
             public const string HexString = "8080:0:8080";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -842,12 +764,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 150, 150, 150 };
             public const string HexString = "9696:9696:9696";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -865,12 +784,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 255, 0, 255 };
             public const string HexString = "FFFF:0:FFFF";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -887,12 +803,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 255, 204, 0 };
             public const string HexString = "FFFF:CCCC:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -911,12 +824,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 255, 255, 0 };
             public const string HexString = "FFFF:FFFF:0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -939,12 +849,9 @@ namespace NPOI.HSSF.Util
                 return HexString;
             }
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -962,12 +869,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 0, 255, 255 };
             public const string HexString = "0:FFFF:FFFF";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -989,12 +893,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 0, 204, 255 };
             public const string HexString = "0:CCCC:FFFF";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1017,12 +918,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 153, 51, 102 };
             public const string HexString = "9999:3333:6666";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1044,12 +942,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 192, 192, 192 };
             public const string HexString = "C0C0:C0C0:C0C0";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1071,12 +966,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 255, 153, 204 };
             public const string HexString = "FFFF:9999:CCCC";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1098,12 +990,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 255, 204, 153 };
             public const string HexString = "FFFF:CCCC:9999";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1125,12 +1014,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 255, 255, 153 };
             public const string HexString = "FFFF:FFFF:9999";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1152,12 +1038,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 204, 255, 204 };
             public const string HexString = "CCCC:FFFF:CCCC";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1180,12 +1063,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 204, 255, 255 };
             public const string HexString = "CCCC:FFFF:FFFF";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1207,12 +1087,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 153, 204, 255 };
             public const string HexString = "9999:CCCC:FFFF";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1235,12 +1112,9 @@ namespace NPOI.HSSF.Util
             public const string HexString = "CCCC:9999:FFFF";
 
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1262,12 +1136,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 255, 255, 255 };
             public const string HexString = "FFFF:FFFF:FFFF";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1287,12 +1158,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 153, 153, 255 };
             public const string HexString = "9999:9999:FFFF";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1314,12 +1182,9 @@ namespace NPOI.HSSF.Util
 
             public const string HexString = "FFFF:FFFF:CCCC";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1338,12 +1203,9 @@ namespace NPOI.HSSF.Util
             public const short Index = 0x19;
             public static readonly byte[] Triplet = { 127, 0, 0 };
             public const string HexString = "8000:0:0";
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1363,12 +1225,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 102, 0, 102 };
             public const string HexString = "6666:0:6666";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1388,12 +1247,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 255, 128, 128 };
             public const string HexString = "FFFF:8080:8080";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1413,12 +1269,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 0, 102, 204 };
             public const string HexString = "0:6666:CCCC";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }
@@ -1438,12 +1291,9 @@ namespace NPOI.HSSF.Util
             public static readonly byte[] Triplet = { 204, 204, 255 };
             public const string HexString = "CCCC:CCCC:FFFF";
 
-            public override short Indexed
-            {
-                get{return Index;}
-            }
+            public override short Indexed => Index;
 
-            public override byte[] GetTriplet()
+	        public override byte[] GetTriplet()
             {
                 return Triplet;
             }

@@ -49,7 +49,7 @@
 			set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				Stretch = value.Stretch;
 				Weight = value.Weight;

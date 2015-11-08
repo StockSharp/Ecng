@@ -34,20 +34,14 @@ namespace Ecng.Forum.Components.Configuration
 		#region PageTypes
 
 		[ConfigurationProperty("pageTypes", IsRequired = false)]
-		public ProviderSettingsCollection PageTypes
-		{
-			get { return (ProviderSettingsCollection)base["pageTypes"]; }
-		}
+		public ProviderSettingsCollection PageTypes => (ProviderSettingsCollection)base["pageTypes"];
 
 		#endregion
 
 		#region EntityAssemblies
 
 		[ConfigurationProperty("entityAssemblies", IsRequired = false)]
-		public AssemblyCollection EntityAssemblies
-		{
-			get { return (AssemblyCollection)base["entityAssemblies"]; }
-		}
+		public AssemblyCollection EntityAssemblies => (AssemblyCollection)base["entityAssemblies"];
 
 		#endregion
 	}

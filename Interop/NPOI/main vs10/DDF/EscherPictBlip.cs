@@ -167,12 +167,9 @@ namespace NPOI.DDF
         /// Returns the number of bytes that are required to Serialize this record.
         /// </summary>
         /// <value>Number of bytes</value>
-        public override int RecordSize
-        {
-            get { return 8 + 50 + raw_pictureData.Length; }
-        }
+        public override int RecordSize => 8 + 50 + raw_pictureData.Length;
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the UID.
         /// </summary>
         /// <value>The UID.</value>

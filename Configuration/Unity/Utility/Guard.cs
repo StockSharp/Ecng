@@ -56,8 +56,8 @@ namespace Microsoft.Practices.Unity.Utility
         /// <param name="argumentName">Argument name.</param>
         public static void TypeIsAssignable(Type assignmentTargetType, Type assignmentValueType, string argumentName)
         {
-            if (assignmentTargetType == null) throw new ArgumentNullException("assignmentTargetType");
-            if (assignmentValueType == null) throw new ArgumentNullException("assignmentValueType");
+            if (assignmentTargetType == null) throw new ArgumentNullException(nameof(assignmentTargetType));
+            if (assignmentValueType == null) throw new ArgumentNullException(nameof(assignmentValueType));
 
             if (!assignmentTargetType.IsAssignableFrom(assignmentValueType))
             {
@@ -84,8 +84,8 @@ namespace Microsoft.Practices.Unity.Utility
             Justification = "GetType() invoked for diagnostics purposes")]
         public static void InstanceIsAssignable(Type assignmentTargetType, object assignmentInstance, string argumentName)
         {
-            if (assignmentTargetType == null) throw new ArgumentNullException("assignmentTargetType");
-            if (assignmentInstance == null) throw new ArgumentNullException("assignmentInstance");
+            if (assignmentTargetType == null) throw new ArgumentNullException(nameof(assignmentTargetType));
+            if (assignmentInstance == null) throw new ArgumentNullException(nameof(assignmentInstance));
 
             if (!assignmentTargetType.IsInstanceOfType(assignmentInstance))
             {

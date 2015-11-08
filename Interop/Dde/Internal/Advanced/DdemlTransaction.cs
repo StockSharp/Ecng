@@ -58,47 +58,23 @@ namespace NDde.Foundation.Advanced
             _dwData2 = dwData2;
         }
 
-        public int uType
-        {
-            get { return _uType; }
-        }
+        public int uType => _uType;
 
-        public int uFmt
-        {
-            get { return _uFmt; }
-        }
+	    public int uFmt => _uFmt;
 
-        public IntPtr hConv
-        {
-            get { return _hConv; }
-        }
+	    public IntPtr hConv => _hConv;
 
-        public IntPtr hsz1
-        {
-            get { return _hsz1; }
-        }
+	    public IntPtr hsz1 => _hsz1;
 
-        public IntPtr hsz2
-        {
-            get { return _hsz2; }
-        }
+	    public IntPtr hsz2 => _hsz2;
 
-        public IntPtr hData
-        {
-            get { return _hData; }
-        }
+	    public IntPtr hData => _hData;
 
-        public IntPtr dwData1
-        {
-            get { return _dwData1; }
-        }
+	    public IntPtr dwData1 => _dwData1;
 
-        public IntPtr dwData2
-        {
-            get { return _dwData2; }
-        }
+	    public IntPtr dwData2 => _dwData2;
 
-        public IntPtr dwRet
+	    public IntPtr dwRet
         {
             get { return _dwRet; }
             set { _dwRet = value; }

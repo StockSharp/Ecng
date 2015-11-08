@@ -65,23 +65,17 @@ namespace NPOI.SS.Formula.PTG
             field_1_value = value;
         }
 
-        public int Value
-        {
-            get { return field_1_value; }
-        }
+        public int Value => field_1_value;
 
-        public override void Write(ILittleEndianOutput out1)
+	    public override void Write(ILittleEndianOutput out1)
         {
             out1.WriteByte(sid + PtgClass);
             out1.WriteShort(Value);
         }
 
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
 
-        public override String ToFormulaString()
+	    public override String ToFormulaString()
         {
             return Value.ToString(CultureInfo.InvariantCulture);
         }

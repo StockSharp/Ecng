@@ -110,43 +110,25 @@ namespace NPOI.HSSF.Record
         /**
          * Convenience Function to determine if the name Is a built-in name
          */
-        public bool IsBuiltInName
-        {
-            get
-            {
-                return (field_1_option_flag & OPT_BUILTIN_NAME) != 0;
-            }
-        }
-        /**
+        public bool IsBuiltInName => (field_1_option_flag & OPT_BUILTIN_NAME) != 0;
+	    /**
          * For OLE and DDE, links can be either 'automatic' or 'manual'
          */
-        public bool IsAutomaticLink
-        {
-            get { return (field_1_option_flag & OPT_AUTOMATIC_LINK) != 0; }
-        }
-        /**
+        public bool IsAutomaticLink => (field_1_option_flag & OPT_AUTOMATIC_LINK) != 0;
+	    /**
          * only for OLE and DDE
          */
-        public bool IsPicureLink
-        {
-            get { return (field_1_option_flag & OPT_PICTURE_LINK) != 0; }
-        }
-        /**
+        public bool IsPicureLink => (field_1_option_flag & OPT_PICTURE_LINK) != 0;
+	    /**
          * DDE links only. If <c>true</c>, this denotes the 'StdDocumentName'
          */
-        public bool IsStdDocumentNameIdentifier
-        {
-            get { return (field_1_option_flag & OPT_STD_DOCUMENT_NAME) != 0; }
-        }
-        public bool IsOLELink
-        {
-            get { return (field_1_option_flag & OPT_OLE_LINK) != 0; }
-        }
-        public bool IsIconifiedPictureLink
-        {
-            get { return (field_1_option_flag & OPT_ICONIFIED_PICTURE_LINK) != 0; }
-        }
-        public short Ix
+        public bool IsStdDocumentNameIdentifier => (field_1_option_flag & OPT_STD_DOCUMENT_NAME) != 0;
+
+	    public bool IsOLELink => (field_1_option_flag & OPT_OLE_LINK) != 0;
+
+	    public bool IsIconifiedPictureLink => (field_1_option_flag & OPT_ICONIFIED_PICTURE_LINK) != 0;
+
+	    public short Ix
         {
             get
             {
@@ -299,12 +281,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("[EXTERNALNAME]\n");

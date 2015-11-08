@@ -225,14 +225,9 @@ namespace NPOI.HSSF.UserModel
         /// <value>
         /// 	<c>true</c> if this instance is function name; otherwise, <c>false</c>.
         /// </value>
-        public bool IsFunctionName
-        {
-            get
-            {
-                return _definedNameRec.IsFunctionName;
-            }
-        }
-        /**
+        public bool IsFunctionName => _definedNameRec.IsFunctionName;
+
+	    /**
      * Indicates that the defined name refers to a user-defined function.
      * This attribute is used when there is an add-in or other code project associated with the file.
      *

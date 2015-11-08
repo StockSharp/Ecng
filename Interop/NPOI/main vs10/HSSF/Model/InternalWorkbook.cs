@@ -438,15 +438,9 @@ namespace NPOI.HSSF.Model
             // TODO - do we need "this.records.Remove(...);" similar to that in this.RemoveName(int namenum) {}?
         }
 
-        public int NumRecords
-        {
-            get
-            {
-                return records.Count;
-            }
-        }
+        public int NumRecords => records.Count;
 
-        /**
+	    /**
          * Gets the font record at the given index in the font table.  Remember
          * "There is No Four" (someone at M$ must have gone to Rocky Horror one too
          * many times)
@@ -587,15 +581,9 @@ namespace NPOI.HSSF.Model
          * @return   number of font records in the "font table"
          */
 
-        public int NumberOfFontRecords
-        {
-            get
-            {
-                return numfonts;
-            }
-        }
+        public int NumberOfFontRecords => numfonts;
 
-        /**
+	    /**
          * Sets the BOF for a given sheet
          *
          * @param sheetnum the number of the sheet to Set the positing of the bof for
@@ -615,16 +603,9 @@ namespace NPOI.HSSF.Model
          * Returns the position of the backup record.
          */
 
-        public BackupRecord BackupRecord
-        {
-            get
-            {
-                return (BackupRecord)records[records.Backuppos];
-            }
-        }
+        public BackupRecord BackupRecord => (BackupRecord)records[records.Backuppos];
 
-
-        /**
+	    /**
          * Sets the name for a given sheet.  If the boundsheet record doesn't exist and
          * its only one more than we have, go ahead and Create it.  If its > 1 more than
          * we have, except
@@ -929,32 +910,16 @@ namespace NPOI.HSSF.Model
          * @return number of BoundSheet records
          */
 
-        public int NumSheets
-        {
-            get
-            {
-                //if (log.Check(POILogger.DEBUG))
-                //    log.Log(DEBUG, "GetNumSheets=", boundsheets.Count);
-                return boundsheets.Count;
-            }
-        }
+        public int NumSheets => boundsheets.Count;
 
-        /**
+	    /**
          * Get the number of ExtendedFormat records contained in this workbook.
          *
          * @return int count of ExtendedFormat records
          */
 
-        public int NumExFormats
-        {
-            get
-            {
-                //if (log.Check(POILogger.DEBUG))
-                //    log.Log(DEBUG, "GetXF=", numxfs);
-                return numxfs;
-            }
-        }
-        /**
+        public int NumExFormats => numxfs;
+	    /**
  * Retrieves the index of the given font
  */
         public int GetFontIndex(FontRecord font)
@@ -2194,15 +2159,9 @@ namespace NPOI.HSSF.Model
          * lazy initialization
          * Note - creating the link table causes creation of 1 EXTERNALBOOK and 1 EXTERNALSHEET record
          */
-        private LinkTable OrCreateLinkTable
-        {
-            get
-            {
-                return GetOrCreateLinkTable();
-            }
-        }
+        private LinkTable OrCreateLinkTable => GetOrCreateLinkTable();
 
-        private LinkTable GetOrCreateLinkTable()
+	    private LinkTable GetOrCreateLinkTable()
         {
             if (linkTable == null)
             {
@@ -2463,15 +2422,9 @@ namespace NPOI.HSSF.Model
          * Returns the list of FormatRecords in the workbook.
          * @return ArrayList of FormatRecords in the notebook
          */
-        public List<FormatRecord> Formats
-        {
-            get
-            {
-                return formats;
-            }
-        }
+        public List<FormatRecord> Formats => formats;
 
-        /**
+	    /**
          * Creates a FormatRecord, Inserts it, and returns the index code.
          * @param format the format string
          * @return the index code of the format record.
@@ -2577,17 +2530,11 @@ namespace NPOI.HSSF.Model
             return null;
         }
 
-        public IList Hyperlinks
-        {
-            get{return hyperlinks;}
-        }
+        public IList Hyperlinks => hyperlinks;
 
-        public IList Records
-        {
-            get{return records.Records;}
-        }
+	    public IList Records => records.Records;
 
-        //    public void InsertChartRecords( List chartRecords )
+	    //    public void InsertChartRecords( List chartRecords )
         //    {
         //        backuppos += chartRecords.Count;
         //        fontpos += chartRecords.Count;
@@ -2604,12 +2551,9 @@ namespace NPOI.HSSF.Model
         *
         * @return true if using 1904 date windowing
         */
-        public bool IsUsing1904DateWindowing
-        {
-            get { return uses1904datewindowing; }
-        }
+        public bool IsUsing1904DateWindowing => uses1904datewindowing;
 
-        /**
+	    /**
          * Returns the custom palette in use for this workbook; if a custom palette record
          * does not exist, then it is Created.
          */
@@ -2810,15 +2754,9 @@ namespace NPOI.HSSF.Model
             }
         }
 
-        public WindowOneRecord WindowOne
-        {
-            get
-            {
-                return windowOne;
-            }
-        }
+        public WindowOneRecord WindowOne => windowOne;
 
-        /**
+	    /**
          * Removes the given font record from the
          *  file's list. This will make all 
          *  subsequent font indicies drop by one,
@@ -2891,15 +2829,9 @@ namespace NPOI.HSSF.Model
             return escherBSERecords.Count;
         }
 
-        public DrawingManager2 DrawingManager
-        {
-            get
-            {
-                return drawingManager;
-            }
-        }
+        public DrawingManager2 DrawingManager => drawingManager;
 
-        public WriteProtectRecord WriteProtect
+	    public WriteProtectRecord WriteProtect
         {
             get
             {

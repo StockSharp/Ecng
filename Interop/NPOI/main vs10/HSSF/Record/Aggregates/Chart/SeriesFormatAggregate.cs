@@ -136,11 +136,9 @@ namespace NPOI.HSSF.Record.Aggregates.Chart
             private LegendExceptionRecord legendException = null;
             private AttachedLabelAggregate attachedLabel = null;
             private TextPropsAggregate textProps = null;
-            public LegendExceptionRecord LegendException
-            {
-                get { return legendException; }
-            }
-            public LegendExceptionAggregate(RecordStream rs, ChartRecordAggregate container)
+            public LegendExceptionRecord LegendException => legendException;
+
+	        public LegendExceptionAggregate(RecordStream rs, ChartRecordAggregate container)
                 : base(RuleName_LEGENDEXCEPTION, container)
             {
                 legendException = (LegendExceptionRecord)rs.GetNext();

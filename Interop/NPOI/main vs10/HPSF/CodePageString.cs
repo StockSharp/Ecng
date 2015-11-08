@@ -81,12 +81,9 @@ namespace NPOI.HPSF
             return result.Substring(0, terminator);
         }
 
-        public int Size
-        {
-            get { return LittleEndian.INT_SIZE + _value.Length; }
-        }
+        public int Size => LittleEndian.INT_SIZE + _value.Length;
 
-        public void SetJavaValue(String aString, int codepage)
+	    public void SetJavaValue(String aString, int codepage)
         {
             if (codepage == -1)
                 _value = Encoding.UTF8.GetBytes(aString + "\0");

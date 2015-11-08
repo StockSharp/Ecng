@@ -68,10 +68,10 @@ namespace Ecng.Collections
 		public int RemoveRange(int index, int count)
 		{
 			if (index < -1)
-				throw new ArgumentOutOfRangeException("index");
+				throw new ArgumentOutOfRangeException(nameof(index));
 
 			if (count <= 0)
-				throw new ArgumentOutOfRangeException("count");
+				throw new ArgumentOutOfRangeException(nameof(count));
 
 			lock (SyncRoot)
 			{

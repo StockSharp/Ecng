@@ -176,12 +176,9 @@ namespace NPOI.HSSF.Record
 
 
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        private static Ptg ReadRefPtg(byte[] formulaRawBytes)
+	    private static Ptg ReadRefPtg(byte[] formulaRawBytes)
         {
             using (MemoryStream ms = new MemoryStream(formulaRawBytes))
             {
@@ -356,15 +353,9 @@ namespace NPOI.HSSF.Record
          *
          * @return the data stream ID. Possibly <c>null</c>
          */
-        public int? StreamId
-        {
-            get
-            {
-                return field_5_stream_id;
-            }
-        }
+        public int? StreamId => field_5_stream_id;
 
-        public String OLEClassName
+	    public String OLEClassName
         {
             get
             {

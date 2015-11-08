@@ -522,13 +522,7 @@ namespace NPOI.OpenXml4Net.OPC
          *
          * @return The zip archive.
          */
-        public Util.ZipEntrySource ZipArchive
-        {
-            get
-            {
-                return zipArchive;
-            }
-        }
+        public Util.ZipEntrySource ZipArchive => zipArchive;
     }
 
 }

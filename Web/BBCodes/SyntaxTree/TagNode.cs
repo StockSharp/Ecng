@@ -14,12 +14,12 @@ namespace Ecng.Web.BBCodes.SyntaxTree
         public TagNode(BBTag tag, IEnumerable<SyntaxTreeNode> subNodes)
             : base(subNodes)
         {
-            if (tag == null) throw new ArgumentNullException("tag");
+            if (tag == null) throw new ArgumentNullException(nameof(tag));
             Tag = tag;
             AttributeValues = new Dictionary<BBAttribute, string>();
         }
 
-        public BBTag Tag { get; private set; }
+        public BBTag Tag { get; }
         public IDictionary<BBAttribute, string> AttributeValues { get; private set; }
 
         public override string ToHtml()
@@ -129,7 +129,7 @@ namespace Ecng.Web.BBCodes.SyntaxTree
 
         public override SyntaxTreeNode SetSubNodes(IEnumerable<SyntaxTreeNode> subNodes)
         {
-            if (subNodes == null) throw new ArgumentNullException("subNodes");
+            if (subNodes == null) throw new ArgumentNullException(nameof(subNodes));
             return new TagNode(Tag, subNodes)
                 {
                     AttributeValues = new Dictionary<BBAttribute, string>(AttributeValues),
@@ -137,7 +137,7 @@ namespace Ecng.Web.BBCodes.SyntaxTree
         }
         internal override SyntaxTreeNode AcceptVisitor(SyntaxTreeVisitor visitor)
         {
-            if (visitor == null) throw new ArgumentNullException("visitor");
+            if (visitor == null) throw new ArgumentNullException(nameof(visitor));
             return visitor.Visit(this);
         }
 
@@ -159,9 +159,9 @@ namespace Ecng.Web.BBCodes.SyntaxTree
                 GetAttributeValueByIDData = getAttributeValueByIdData;
             }
 
-            public BBAttribute Attribute { get; private set; }
-            public string AttributeValue { get; private set; }
-            public IDictionary<string, string> GetAttributeValueByIDData { get; private set; }
+            public BBAttribute Attribute { get; }
+            public string AttributeValue { get; }
+            public IDictionary<string, string> GetAttributeValueByIDData { get; }
 
             public string GetAttributeValueByID(string id)
             {

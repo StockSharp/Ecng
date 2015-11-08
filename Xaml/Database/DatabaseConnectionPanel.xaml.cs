@@ -62,7 +62,7 @@
 					case Titles.String:
 						return "Connection string".Translate();
 					default:
-						throw new ArgumentOutOfRangeException("title");
+						throw new ArgumentOutOfRangeException(nameof(title));
 				}
 			}
 		}
@@ -95,7 +95,7 @@
 					case Titles.ProviderDescription:
 						return "Provider settings.".Translate();
 					default:
-						throw new ArgumentOutOfRangeException("title");
+						throw new ArgumentOutOfRangeException(nameof(title));
 				}
 			}
 		}

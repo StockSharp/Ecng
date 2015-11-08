@@ -37,7 +37,7 @@
 		public void SetValue<T>(string name, T value)
 		{
 			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			this[name] = value;
 		}
@@ -50,7 +50,7 @@
 		public bool Contains(string name)
 		{
 			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			return ContainsKey(name);
 		}
@@ -65,7 +65,7 @@
 		public T GetValue<T>(string name, T defaultValue = default(T))
 		{
 			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			var value = this.TryGetValue(name);
 			return value != null ? value.To<T>() : defaultValue;

@@ -142,22 +142,16 @@ namespace ManagedWinapi
         /// <summary>
         /// The DNS host name of this machine. Can be easily changed.
         /// </summary>
-        public static string HostName
-        {
-            get { return Dns.GetHostName(); }
-        }
+        public static string HostName => Dns.GetHostName();
 
-        /// <summary>
+	    /// <summary>
         /// The NetBIOS name of this machine. Can be easily changed; having two 
         /// machines with same name on the same network can cause trouble with 
         /// shared folders, though.
         /// </summary>
-        public static string MachineName
-        {
-            get { return Environment.MachineName; }
-        }
+        public static string MachineName => Environment.MachineName;
 
-        /// <summary>
+	    /// <summary>
         /// The Media Access Control addresses of all network adapters. Note 
         /// that these values are the addresses loaded from the driver, and thus 
         /// could have been set by the user.
@@ -188,15 +182,9 @@ namespace ManagedWinapi
         /// addresses, or the MAC address that is used for connecting to a 
         /// specific IP address.
         /// </summary>
-        public static NetworkInterface[] NetworkInterfaces
-        {
-            get
-            {
-                return NetworkInterface.GetAllNetworkInterfaces();
-            }
-        }
+        public static NetworkInterface[] NetworkInterfaces => NetworkInterface.GetAllNetworkInterfaces();
 
-        /// <summary>
+	    /// <summary>
         /// Get the Volume Serial Numbers from all hard disk partitions.
         /// These values are part of the filesystem, and were originally intended
         /// to detect floppy swaps where the same floppy has been removed

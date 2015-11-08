@@ -74,12 +74,9 @@ namespace NPOI.HSSF.Record
             set { field_2_bucket_sst_offset = value; }
         }
 
-        public int BucketSSTOffset
-        {
-            get { return field_2_bucket_sst_offset; }
-        }
+        public int BucketSSTOffset => field_2_bucket_sst_offset;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
 

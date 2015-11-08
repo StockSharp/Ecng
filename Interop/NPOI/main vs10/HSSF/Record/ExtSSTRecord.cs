@@ -131,18 +131,10 @@ namespace NPOI.HSSF.Record
         }
 
         /** Returns the size of this record */
-        internal int DataSize
-        {
-            get { return 2 + InfoSubRecord.ENCODED_SIZE * _sstInfos.Length; }
-        }
-        internal InfoSubRecord[] InfoSubRecords
-        {
-            get
-            {
-                return _sstInfos;
-            }
-        }
-        public static int GetNumberOfInfoRecsForStrings(int numStrings)
+        internal int DataSize => 2 + InfoSubRecord.ENCODED_SIZE * _sstInfos.Length;
+	    internal InfoSubRecord[] InfoSubRecords => _sstInfos;
+
+	    public static int GetNumberOfInfoRecsForStrings(int numStrings)
         {
             int infoRecs = (numStrings / DEFAULT_BUCKET_SIZE);
             if ((numStrings % DEFAULT_BUCKET_SIZE) != 0)
@@ -160,12 +152,9 @@ namespace NPOI.HSSF.Record
             return 4 + 2 + (GetNumberOfInfoRecsForStrings(numStrings) * 8);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public void SetBucketOffsets(int[] bucketAbsoluteOffsets, int[] bucketRelativeOffsets)
+	    public void SetBucketOffsets(int[] bucketAbsoluteOffsets, int[] bucketRelativeOffsets)
         {
             this._sstInfos = new InfoSubRecord[bucketAbsoluteOffsets.Length];
             for (int i = 0; i < bucketAbsoluteOffsets.Length; i++)

@@ -293,12 +293,9 @@ namespace NPOI.DDF
                 throw new NotImplementedException();
             }
 
-            object System.Collections.IEnumerator.Current
-            {
-                get { return this.Current; }
-            }
+            object System.Collections.IEnumerator.Current => this.Current;
 
-            public bool MoveNext()
+	        public bool MoveNext()
             {
                 idx++;
                 return (idx < dataHolder.NumberOfElementsInArray);

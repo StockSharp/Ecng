@@ -55,12 +55,9 @@ namespace NPOI.SS.Formula.PTG
             paramClass = paramTypes;
         }
 
-        public override bool IsBaseToken
-        {
-            get { return false; }
-        }
+        public override bool IsBaseToken => false;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder(64);
             sb.Append(GetType().Name).Append(" [");
@@ -70,35 +67,18 @@ namespace NPOI.SS.Formula.PTG
             return sb.ToString();
         }
 
-        public short FunctionIndex
-        {
-            get
-            {
-                return _functionIndex;
-            }
-        }
-        public override int NumberOfOperands
-        {
-            get
-            {
-                return _numberOfArgs;
-            }
-        }
+        public short FunctionIndex => _functionIndex;
 
-        public String Name
-        {
-            get { return LookupName(_functionIndex); }
-        }
-        /**
+	    public override int NumberOfOperands => _numberOfArgs;
+
+	    public String Name => LookupName(_functionIndex);
+	    /**
          * external functions Get some special Processing
          * @return <c>true</c> if this is an external function
          */
-        public bool IsExternalFunction
-        {
-            get { return _functionIndex == FUNCTION_INDEX_EXTERNAL; }
-        }
+        public bool IsExternalFunction => _functionIndex == FUNCTION_INDEX_EXTERNAL;
 
-        public override String ToFormulaString()
+	    public override String ToFormulaString()
         {
             return Name;
         }
@@ -176,12 +156,9 @@ namespace NPOI.SS.Formula.PTG
             return ix;
         }
 
-        public override byte DefaultOperandClass
-        {
-            get { return returnClass; }
-        }
+        public override byte DefaultOperandClass => returnClass;
 
-        public byte GetParameterClass(int index)
+	    public byte GetParameterClass(int index)
         {
             if (index >= paramClass.Length)
             {

@@ -71,7 +71,7 @@ namespace Ecng.Forum.Components
 		private static void AddEntityType(Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			//if (!type.IsSubclassOf(typeof(ForumBaseEntity)))
 			//	throw new ArgumentException("type");

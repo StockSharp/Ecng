@@ -14,7 +14,7 @@ namespace Ecng.Collections
 		public BitArrayWriter(Stream underlyingStream)
 		{
 			if (underlyingStream == null)
-				throw new ArgumentNullException("underlyingStream");
+				throw new ArgumentNullException(nameof(underlyingStream));
 
 			_underlyingStream = underlyingStream;
 		}

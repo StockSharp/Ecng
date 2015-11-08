@@ -15,7 +15,7 @@
 		public static MailMessage Attach(this MailMessage message, IWebFile file)
 		{
 			if (message == null)
-				throw new ArgumentNullException("message");
+				throw new ArgumentNullException(nameof(message));
 
 			if (file != null)
 				message.Attachments.Add(file.ToAttachment());
@@ -26,7 +26,7 @@
 		public static Attachment ToAttachment(this IWebFile file)
 		{
 			if (file == null)
-				throw new ArgumentNullException("file");
+				throw new ArgumentNullException(nameof(file));
 
 			return MailHelper.CreateAttachment(file.Body.To<Stream>(), file.Name);
 		}
@@ -56,7 +56,7 @@
 					maxChunkLength = 76;
 					break;
 				default:
-					throw new ArgumentException("The specified TransferEncoding is not supported: {0}".Put(transferEncoding), "transferEncoding");
+					throw new ArgumentException("The specified TransferEncoding is not supported: {0}".Put(transferEncoding), nameof(transferEncoding));
 			}
 
 			attachment.NameEncoding = Encoding.GetEncoding(encodingMarker);
@@ -92,7 +92,7 @@
 		public static void Send(this MailMessage message, bool dispose = true)
 		{
 			if (message == null)
-				throw new ArgumentNullException("message");
+				throw new ArgumentNullException(nameof(message));
 
 			using (var mail = new SmtpClient())
 				mail.Send(message);
@@ -104,7 +104,7 @@
 		public static MailMessage AddHtml(this MailMessage message, string bodyHtml)
 		{
 			if (message == null)
-				throw new ArgumentNullException("message");
+				throw new ArgumentNullException(nameof(message));
 
 			message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(bodyHtml, null, MediaTypeNames.Text.Html));
 

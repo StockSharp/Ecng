@@ -55,14 +55,9 @@ namespace NPOI.SS.Formula.PTG
             : base(arearef)
         {
         }
-        public override int Size
-        {
-            get
-            {
-                return SIZE;
-            }
-        }
-        public override String ToFormulaString()
+        public override int Size => SIZE;
+
+	    public override String ToFormulaString()
         {
             return FormatReferenceAsString();
         }

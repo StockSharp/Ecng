@@ -118,29 +118,17 @@ namespace NPOI.SS.Formula
          * </ul>
          * Note - this value is different to <c>tokenDataLength</c>
          */
-        public int EncodedSize
-        {
-            get
-            {
-                return 2 + _byteEncoding.Length;
-            }
-        }
-        /**
+        public int EncodedSize => 2 + _byteEncoding.Length;
+	    /**
          * This method is often used when the formula length does not appear immediately before
          * the encoded token data.
          * 
          * @return the encoded length of the plain formula tokens.  This does <em>not</em> include
          * the leading ushort field, nor any trailing array constant data.
          */
-        public int EncodedTokenSize
-        {
-            get
-            {
-                return _encodedTokenLen;
-            }
-        }
+        public int EncodedTokenSize => _encodedTokenLen;
 
-        /**
+	    /**
          * Creates a {@link Formula} object from a supplied {@link Ptg} array. 
          * Handles <code>null</code>s OK.
          * @param ptgs may be <code>null</code>

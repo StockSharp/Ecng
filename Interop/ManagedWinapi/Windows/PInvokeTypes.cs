@@ -94,24 +94,24 @@ namespace ManagedWinapi.Windows
         /// <summary>
         /// HEIGHT
         /// </summary>
-        public int Height { get { return Bottom - Top; } }
+        public int Height => Bottom - Top;
 
-        /// <summary>
+	    /// <summary>
         /// WIDTH
         /// </summary>
-        public int Width { get { return Right - Left; } }
+        public int Width => Right - Left;
 
-        /// <summary>
+	    /// <summary>
         /// SIZE
         /// </summary>
-        public Size Size { get { return new Size(Width, Height); } }
+        public Size Size => new Size(Width, Height);
 
-        /// <summary>
+	    /// <summary>
         /// LOCATION
         /// </summary>
-        public Point Location { get { return new Point(Left, Top); } }
+        public Point Location => new Point(Left, Top);
 
-        // Handy method for converting to a System.Drawing.Rectangle
+	    // Handy method for converting to a System.Drawing.Rectangle
         /// <summary>
         /// Convert RECT to a Rectangle.
         /// </summary>

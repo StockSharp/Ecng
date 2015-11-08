@@ -74,14 +74,14 @@ namespace Ecng.Net
 		protected BehaviorServer(TBehavior behavior)
 		{
 			if (behavior.IsNull())
-				throw new ArgumentNullException("behavior");
+				throw new ArgumentNullException(nameof(behavior));
 
 			Behavior = behavior;
 		}
 
 		#endregion
 
-		public TBehavior Behavior { get; private set; }
+		public TBehavior Behavior { get; }
 
 		protected abstract IEnumerable<Field> Filter(IEnumerable<Field> fields);
 
@@ -154,7 +154,7 @@ namespace Ecng.Net
 			}
 			catch (Exception ex)
 			{
-				throw new ArgumentException("Processing '{0}' throws exception.".Put(contextId), "input", ex);
+				throw new ArgumentException("Processing '{0}' throws exception.".Put(contextId), nameof(input), ex);
 			}
 		}
 	}

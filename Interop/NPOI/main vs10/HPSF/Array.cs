@@ -77,19 +77,10 @@ namespace NPOI.HPSF
             }
         }
 
-        public int Size
-        {
-            get
-            {
-                return LittleEndian.INT_SIZE*2 + _dimensions.Length
-                       *ArrayDimension.SIZE;
-            }
-        }
+        public int Size => LittleEndian.INT_SIZE*2 + _dimensions.Length
+                           *ArrayDimension.SIZE;
 
-        public int Type
-        {
-            get { return _type; }
-        }
+	    public int Type => _type;
     }
 
     private ArrayHeader _header;

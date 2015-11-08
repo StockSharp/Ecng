@@ -35,12 +35,9 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// <summary>
         /// The property value currently being resolved.
         /// </summary>
-        public string PropertyName
-        {
-            get { return propertyName; }
-        }
+        public string PropertyName => propertyName;
 
-        /// <summary>
+	    /// <summary>
         /// Generate the description of this operation.
         /// </summary>
         /// <returns>The string.</returns>

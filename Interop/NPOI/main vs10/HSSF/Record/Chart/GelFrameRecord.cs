@@ -41,27 +41,17 @@ namespace NPOI.HSSF.Record.Chart
             //tertiaryFillOption = new OfficeArtTertiaryFOPT(ris);
         }
 
-        protected override int DataSize
-        {
-            get 
-            {
-                return base.DataSize;
-                //return fillOption.DataSize + tertiaryFillOption.DataSize; 
-            }
-        }
+        protected override int DataSize => base.DataSize;
 
-        public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
+	    public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
         {
             base.Serialize(out1);
             //fillOption.Serialize(out1);
             //tertiaryFillOption.Serialize(out1);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-/*
+        public override short Sid => sid;
+	    /*
         public MSOFillType FillType
         {
             get;

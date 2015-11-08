@@ -460,10 +460,7 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             }
         }
         [XmlIgnore]
-        public bool valbSpecified
-        {
-            get { return (null != valField); }
-        }
+        public bool valbSpecified => (null != valField);
     }
 
     [Serializable]

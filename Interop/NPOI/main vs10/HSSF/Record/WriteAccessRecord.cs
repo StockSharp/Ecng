@@ -168,17 +168,8 @@ namespace NPOI.HSSF.Record
             out1.Write(PADDING, 0, paddingSize);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return DATA_SIZE;
-            }
-        }
+        protected override int DataSize => DATA_SIZE;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
     }
 }

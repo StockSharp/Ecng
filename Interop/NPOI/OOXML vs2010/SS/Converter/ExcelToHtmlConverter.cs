@@ -1,4 +1,4 @@
-/* ====================================================================
+﻿/* ====================================================================
    Licensed to the Apache Software Foundation (ASF) under one or more
    contributor license agreements.  See the NOTICE file distributed with
    this work for additional information regarding copyright ownership.
@@ -120,14 +120,9 @@ namespace NPOI.SS.Converter
             excelToHtmlConverter.ProcessWorkbook(workbook);
             return excelToHtmlConverter.Document;
         }
-        public XmlDocument Document
-        {
-            get
-            {
-                return htmlDocumentFacade.Document;
-            }
-        }
-        public void ProcessWorkbook(IWorkbook workbook)
+        public XmlDocument Document => htmlDocumentFacade.Document;
+
+	    public void ProcessWorkbook(IWorkbook workbook)
         {
 
             ProcessDocumentInformation(workbook);

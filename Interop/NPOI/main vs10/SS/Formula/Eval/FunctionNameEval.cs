@@ -34,15 +34,9 @@ namespace NPOI.SS.Formula.Eval
             _functionName = functionName;
         }
 
-        public String FunctionName
-        {
-            get
-            {
-                return _functionName;
-            }
-        }
+        public String FunctionName => _functionName;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder(64);
             sb.Append(GetType().Name).Append(" [");

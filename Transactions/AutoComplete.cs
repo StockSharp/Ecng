@@ -13,10 +13,10 @@ namespace Ecng.Transactions
 		public static void Do(TransactionScope scope, Action action)
 		{
 			if (scope == null)
-				throw new ArgumentNullException("scope");
+				throw new ArgumentNullException(nameof(scope));
 
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			using (scope)
 			{

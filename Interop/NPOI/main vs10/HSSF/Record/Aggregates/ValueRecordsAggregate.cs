@@ -183,22 +183,11 @@ namespace NPOI.HSSF.Record.Aggregates
             }
         }
 
-        public int FirstCellNum
-        {
-            get
-            {
-                return firstcell;
-            }
-        }
+        public int FirstCellNum => firstcell;
 
-        public int LastCellNum
-        {
-            get
-            {
-                return lastcell;
-            }
-        }
-        public void AddMultipleBlanks(MulBlankRecord mbr)
+	    public int LastCellNum => lastcell;
+
+	    public void AddMultipleBlanks(MulBlankRecord mbr)
         {
             for (int j = 0; j < mbr.NumColumns; j++)
             {

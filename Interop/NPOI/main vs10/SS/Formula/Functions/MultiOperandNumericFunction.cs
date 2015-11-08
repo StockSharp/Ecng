@@ -115,24 +115,12 @@ namespace NPOI.SS.Formula.Functions
          * Maximum number of operands accepted by this function.
          * Subclasses may override to Change default value.
          */
-        protected virtual int MaxNumOperands
-        {
-            get
-            {
-                return DEFAULT_MAX_NUM_OPERANDS;
-            }
-        }
-        /**
+        protected virtual int MaxNumOperands => DEFAULT_MAX_NUM_OPERANDS;
+	    /**
      *  Whether to count nested subtotals.
      */
-        public virtual bool IsSubtotalCounted
-        {
-            get
-            {
-                return true;
-            }
-        }
-        /**
+        public virtual bool IsSubtotalCounted => true;
+	    /**
      * Collects values from a single argument
      */
         private void CollectValues(ValueEval operand, DoubleList temp)

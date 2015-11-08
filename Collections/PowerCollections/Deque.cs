@@ -122,7 +122,7 @@ namespace Wintellect.PowerCollections
         public sealed override void CopyTo(T[] array, int arrayIndex)
         {
             if (array == null)
-                throw new ArgumentNullException("array");
+                throw new ArgumentNullException(nameof(array));
 
             // This override is provided to give a more efficient implementation to CopyTo than
             // the default one provided by CollectionBase.
@@ -164,9 +164,9 @@ namespace Wintellect.PowerCollections
             set
             {
                 if (value < Count)
-                    throw new ArgumentOutOfRangeException("value", Strings.CapacityLessThanCount);
+                    throw new ArgumentOutOfRangeException(nameof(value), Strings.CapacityLessThanCount);
                 if (value > int.MaxValue - 1)
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
                 if (value == Capacity)
                     return;
 
@@ -217,11 +217,11 @@ namespace Wintellect.PowerCollections
             {
                 int i = index + start;
                 if (i < start)  // handles both the case where index < 0, or the above addition overflow to a negative number.
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentOutOfRangeException(nameof(index));
 
                 if (end >= start) {
                     if (i >= end)
-                        throw new ArgumentOutOfRangeException("index");
+                        throw new ArgumentOutOfRangeException(nameof(index));
                     return buffer[i];
                 }
                 else {
@@ -229,7 +229,7 @@ namespace Wintellect.PowerCollections
                     if (i >= length) {
                         i -= length;
                         if (i >= end)
-                            throw new ArgumentOutOfRangeException("index");
+                            throw new ArgumentOutOfRangeException(nameof(index));
                     }
                     return buffer[i];
                 }
@@ -243,11 +243,11 @@ namespace Wintellect.PowerCollections
 
                 int i = index + start;
                 if (i < start)  // handles both the case where index < 0, or the above addition overflow to a negative number.
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentOutOfRangeException(nameof(index));
 
                 if (end >= start) {
                     if (i >= end)
-                        throw new ArgumentOutOfRangeException("index");
+                        throw new ArgumentOutOfRangeException(nameof(index));
                     buffer[i] = value;
                 }
                 else {
@@ -255,7 +255,7 @@ namespace Wintellect.PowerCollections
                     if (i >= length) {
                         i -= length;
                         if (i >= end)
-                            throw new ArgumentOutOfRangeException("index");
+                            throw new ArgumentOutOfRangeException(nameof(index));
                     }
                     buffer[i] = value;
                 }
@@ -320,7 +320,7 @@ namespace Wintellect.PowerCollections
 
             int count = Count;
             if (index < 0 || index > Count)
-                throw new ArgumentOutOfRangeException("index");
+                throw new ArgumentOutOfRangeException(nameof(index));
 
             if (buffer == null) {
                 // The buffer hasn't been created yet.
@@ -398,13 +398,13 @@ namespace Wintellect.PowerCollections
         public void InsertRange(int index, IEnumerable<T> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException("collection");
+                throw new ArgumentNullException(nameof(collection));
 
             StopEnumerations();
 
             int count = Count;
             if (index < 0 || index > Count)
-                throw new ArgumentOutOfRangeException("index");
+                throw new ArgumentOutOfRangeException(nameof(index));
 
             // We need an ICollection, because we need the count of the collection.
             // If needed, copy the items to a temporary list.
@@ -508,7 +508,7 @@ namespace Wintellect.PowerCollections
             int count = Count;
 
             if (index < 0 || index >= count)
-                throw new ArgumentOutOfRangeException("index");
+                throw new ArgumentOutOfRangeException(nameof(index));
 
             int length = buffer.Length;
             int i; // index of removed item
@@ -584,9 +584,9 @@ namespace Wintellect.PowerCollections
             int dequeCount = Count;
 
             if (index < 0 || index >= dequeCount)
-                throw new ArgumentOutOfRangeException("index");
+                throw new ArgumentOutOfRangeException(nameof(index));
             if (count < 0 || count > dequeCount - index)
-                throw new ArgumentOutOfRangeException("count");
+                throw new ArgumentOutOfRangeException(nameof(count));
             if (count == 0)
                 return;
 
@@ -724,7 +724,7 @@ namespace Wintellect.PowerCollections
         public void AddManyToFront(IEnumerable<T> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException("collection");
+                throw new ArgumentNullException(nameof(collection));
 
             InsertRange(0, collection);
         }
@@ -780,7 +780,7 @@ namespace Wintellect.PowerCollections
         public void AddManyToBack(IEnumerable<T> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException("collection");
+                throw new ArgumentNullException(nameof(collection));
 
             foreach (T item in collection)
                 AddToBack(item);

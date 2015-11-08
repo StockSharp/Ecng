@@ -115,12 +115,9 @@ namespace NPOI.HSSF.Record
          *
          * @return number of cell offsets
          */
-        public int NumCellOffsets
-        {
-            get{return field_2_cell_offsets.Length;}
-        }
+        public int NumCellOffsets => field_2_cell_offsets.Length;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
 
@@ -144,12 +141,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        protected override int DataSize
-        {
-            get { return 4 + field_2_cell_offsets.Length * 2; }
-        }
+        protected override int DataSize => 4 + field_2_cell_offsets.Length * 2;
 
-        /**
+	    /**
          *  @returns the size of the Group of <c>DBCellRecord</c>s needed to encode
          *  the specified number of blocks and rows
          */
@@ -161,12 +155,9 @@ namespace NPOI.HSSF.Record
             return nBlocks * 8 + nRows * 2;
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             // TODO - make immutable.
             // this should be safe because only the instantiating code mutates these objects

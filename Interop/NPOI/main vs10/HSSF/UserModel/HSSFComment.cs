@@ -208,12 +208,9 @@ namespace NPOI.HSSF.UserModel
         /// Gets the note record.
         /// </summary>
         /// <value>the underlying Note record.</value>
-        internal NoteRecord NoteRecord
-        {
-            get { return _note; }
-        }
+        internal NoteRecord NoteRecord => _note;
 
-        /**
+	    /**
          * Do we know which cell this comment belongs to?
          */
         public bool HasPosition

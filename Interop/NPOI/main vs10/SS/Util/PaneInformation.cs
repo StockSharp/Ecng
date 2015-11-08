@@ -57,41 +57,29 @@ namespace NPOI.SS.Util
          *         or for a freeze pane the number of columns in the TOP pane,
          *         or for a split plane the position of the split in 1/20th of a point.
          */
-        public short VerticalSplitPosition
-        {
-            get { return x; }
-        }
+        public short VerticalSplitPosition => x;
 
-        /**
+	    /**
          * Returns the horizontal position of the split.
          * @return 0 if there is no horizontal spilt,
          *         or for a freeze pane the number of rows in the LEFT pane,
          *         or for a split plane the position of the split in 1/20th of a point.
          */
-        public short HorizontalSplitPosition
-        {
-           get{return y;}
-        }
+        public short HorizontalSplitPosition => y;
 
-        /**
+	    /**
          * For a horizontal split returns the top row in the BOTTOM pane.
          * @return 0 if there is no horizontal split, or the top row of the bottom pane.
          */
-        public short HorizontalSplitTopRow
-        {
-            get { return topRow; }
-        }
+        public short HorizontalSplitTopRow => topRow;
 
-        /**
+	    /**
          * For a vertical split returns the left column in the RIGHT pane.
          * @return 0 if there is no vertical split, or the left column in the RIGHT pane.
          */
-        public short VerticalSplitLeftColumn
-        {
-            get { return leftColumn; }
-        }
+        public short VerticalSplitLeftColumn => leftColumn;
 
-        /**
+	    /**
          * Returns the active pane
          * @see #PANE_LOWER_RIGHT
          * @see #PANE_UPPER_RIGHT
@@ -99,12 +87,9 @@ namespace NPOI.SS.Util
          * @see #PANE_UPPER_LEFT
          * @return the active pane.
          */
-        public byte ActivePane
-        {
-            get{return activePane;}
-        }
+        public byte ActivePane => activePane;
 
-        /** Returns true if this is a Freeze pane, false if it is a split pane.
+	    /** Returns true if this is a Freeze pane, false if it is a split pane.
          */
         public bool IsFreezePane()
         {

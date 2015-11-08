@@ -55,16 +55,9 @@ namespace NPOI.HSSF.Record
         }
 
 
-        public int NumberOfCRNs
-        {
-            get
-            {
-                return field_1_last_column_index;
-            }
-        }
+        public int NumberOfCRNs => field_1_last_column_index;
 
-
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(GetType().Name).Append(" [CRN");
@@ -74,15 +67,9 @@ namespace NPOI.HSSF.Record
             sb.Append("]");
             return sb.ToString();
         }
-        protected override int DataSize
-        {
-            get
-            {
-                return 4 + ConstantValueParser.GetEncodedSize(field_4_constant_values);
-            }
-        }
+        protected override int DataSize => 4 + ConstantValueParser.GetEncodedSize(field_4_constant_values);
 
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             out1.WriteByte(field_1_last_column_index);
             out1.WriteByte(field_2_first_column_index);
@@ -93,10 +80,7 @@ namespace NPOI.HSSF.Record
         /**
          * return the non static version of the id for this record.
          */
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
     }
 
 }

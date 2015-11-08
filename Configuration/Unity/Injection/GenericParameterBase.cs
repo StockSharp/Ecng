@@ -63,12 +63,9 @@ namespace Microsoft.Practices.Unity
         /// Name for the type represented by this <see cref="InjectionParameterValue"/>.
         /// This may be an actual type name or a generic argument name.
         /// </summary>
-        public override string ParameterTypeName
-        {
-            get { return genericParameterName; }
-        }
+        public override string ParameterTypeName => genericParameterName;
 
-        /// <summary>
+	    /// <summary>
         /// Test to see if this parameter value has a matching type for the given type.
         /// </summary>
         /// <param name="t">Type to check.</param>

@@ -8,9 +8,9 @@ namespace Ecng.Web.BBCodes
 
         public BBTag(string name, string openTagTemplate, string closeTagTemplate, bool autoRenderContent, BBTagClosingStyle tagClosingClosingStyle, Func<string, string> contentTransformer, bool enableIterationElementBehavior, params BBAttribute[] attributes)
         {
-            if (name == null) throw new ArgumentNullException("name");
-            if (openTagTemplate == null) throw new ArgumentNullException("openTagTemplate");
-            if (closeTagTemplate == null) throw new ArgumentNullException("closeTagTemplate");
+            if (name == null) throw new ArgumentNullException(nameof(name));
+            if (openTagTemplate == null) throw new ArgumentNullException(nameof(openTagTemplate));
+            if (closeTagTemplate == null) throw new ArgumentNullException(nameof(closeTagTemplate));
             if (!Enum.IsDefined(typeof(BBTagClosingStyle), tagClosingClosingStyle)) throw new ArgumentException("tagClosingClosingStyle");
 
             Name = name;
@@ -48,13 +48,10 @@ namespace Ecng.Web.BBCodes
         public string CloseTagTemplate { get; private set; }
         public bool AutoRenderContent { get; private set; }
         public bool EnableIterationElementBehavior { get; private set; }
-        public bool RequiresClosingTag
-        {
-            get { return TagClosingStyle == BBTagClosingStyle.RequiresClosingTag; }
-        }
-        public BBTagClosingStyle TagClosingStyle { get; private set; }
+        public bool RequiresClosingTag => TagClosingStyle == BBTagClosingStyle.RequiresClosingTag;
+	    public BBTagClosingStyle TagClosingStyle { get; }
         public Func<string, string> ContentTransformer { get; private set; } //allows for custom modification of the tag content before rendering takes place
-        public BBAttribute[] Attributes { get; private set; }
+        public BBAttribute[] Attributes { get; }
 
         public BBAttribute FindAttribute(string name)
         {

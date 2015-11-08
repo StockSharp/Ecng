@@ -29,11 +29,9 @@ namespace NPOI.SS.Formula.PTG
         /**
          * All Operand <c>Ptg</c>s are classifed ('relative', 'value', 'array')  
          */
-        public override bool IsBaseToken
-        {
-            get { return false; }
-        }
-        public OperandPtg Copy()
+        public override bool IsBaseToken => false;
+
+	    public OperandPtg Copy()
         {
             try
             {

@@ -144,12 +144,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             }
         }
         [XmlIgnore]
-        public bool extLstSpecified
-        {
-            get { return null != this.extLstField; }
-        }
+        public bool extLstSpecified => null != this.extLstField;
 
-        [DefaultValue(ST_Visibility.visible)]
+	    [DefaultValue(ST_Visibility.visible)]
         [XmlAttribute]
         public ST_Visibility visibility
         {

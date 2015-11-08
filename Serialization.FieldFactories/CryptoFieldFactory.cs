@@ -22,7 +22,7 @@ namespace Ecng.Serialization
 			: base(field, order)
 		{
 			if (algorithm == null)
-				throw new ArgumentNullException("algorithm");
+				throw new ArgumentNullException(nameof(algorithm));
 
 			Algorithm = algorithm;
 		}

@@ -18,10 +18,10 @@
 			public EntityInfo(Schema schema, ISerializer serializer, string directory)
 			{
 				if (schema == null)
-					throw new ArgumentNullException("schema");
+					throw new ArgumentNullException(nameof(schema));
 
 				if (serializer == null)
-					throw new ArgumentNullException("serializer");
+					throw new ArgumentNullException(nameof(serializer));
 
 				Serializer = serializer;
 				Schema = schema;
@@ -31,9 +31,9 @@
 				Cache = (IDictionary<object, object>)Serializer.Deserialize(_fileName);
 			}
 
-			public ISerializer Serializer { get; private set; }
+			public ISerializer Serializer { get; }
 			public Schema Schema { get; private set; }
-			public IDictionary<object, object> Cache { get; private set; }
+			public IDictionary<object, object> Cache { get; }
 
 			public void Save()
 			{
@@ -59,10 +59,10 @@
 		public FileStorage(string directory, ISerializer serializer)
 		{
 			if (directory.IsEmpty())
-				throw new ArgumentNullException("directory");
+				throw new ArgumentNullException(nameof(directory));
 
 			if (serializer == null)
-				throw new ArgumentNullException("serializer");
+				throw new ArgumentNullException(nameof(serializer));
 
 			_directory = directory;
 			_serializer = serializer;

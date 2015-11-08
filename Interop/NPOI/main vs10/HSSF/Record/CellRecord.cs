@@ -156,15 +156,9 @@ namespace NPOI.HSSF.Record
             SerializeValue(out1);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 6 + ValueDataSize;
-            }
-        }
+        protected override int DataSize => 6 + ValueDataSize;
 
-        protected void CopyBaseFields(CellRecord rec)
+	    protected void CopyBaseFields(CellRecord rec)
         {
             rec._rowIndex = _rowIndex;
             rec._columnIndex = _columnIndex;

@@ -20,9 +20,6 @@ namespace NPOI.HPSF
                     + LittleEndian.INT_SIZE, size);
         }
 
-        public int Size
-        {
-            get { return LittleEndian.INT_SIZE + _value.Length; }
-        }
+        public int Size => LittleEndian.INT_SIZE + _value.Length;
     }
 }

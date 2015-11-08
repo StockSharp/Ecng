@@ -21,7 +21,7 @@ namespace Ookii.Dialogs
         public AnimationResource(string resourceFile, int resourceId)
         {
             if( resourceFile == null )
-                throw new ArgumentNullException("resourceFile");
+                throw new ArgumentNullException(nameof(resourceFile));
 
             ResourceFile = resourceFile;
             ResourceId = resourceId;
@@ -33,7 +33,7 @@ namespace Ookii.Dialogs
         /// <value>
         /// The name of the file containing the animation resource. This is typically a DLL or EXE file.
         /// </value>
-        public string ResourceFile { get; private set; }
+        public string ResourceFile { get; }
 
         /// <summary>
         /// Gets the ID of the animation resource.
@@ -53,7 +53,7 @@ namespace Ookii.Dialogs
         public static AnimationResource GetShellAnimation(ShellAnimation animation)
         {
             if( !Enum.IsDefined(typeof(ShellAnimation), animation) )
-                throw new ArgumentOutOfRangeException("animation");
+                throw new ArgumentOutOfRangeException(nameof(animation));
 
             return new AnimationResource("shell32.dll", (int)animation);
         }

@@ -33,7 +33,7 @@ namespace Ecng.Serialization
 			set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_entityType = value;
 				Name = value.Name;
@@ -63,27 +63,21 @@ namespace Ecng.Serialization
 		#region ReadOnly
 
 		[Ignore]
-		public bool ReadOnly
-		{
-			get { return Fields.NonReadOnlyFields.IsEmpty(); }
-		}
+		public bool ReadOnly => Fields.NonReadOnlyFields.IsEmpty();
 
 		#endregion
 
 		#region IsSerializable
 
 		[Ignore]
-		public bool IsSerializable
-		{
-			get { return typeof(ISerializable).IsAssignableFrom(EntityType); }
-		}
+		public bool IsSerializable => typeof(ISerializable).IsAssignableFrom(EntityType);
 
 		#endregion
 
 		#region Fields
 
 		[Collection]
-		public FieldList Fields { get; private set; }
+		public FieldList Fields { get; }
 
 		#endregion
 

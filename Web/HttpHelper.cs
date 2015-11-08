@@ -79,10 +79,7 @@ namespace Ecng.Web
 		/// Gets the current handler.
 		/// </summary>
 		/// <value>The current handler.</value>
-		public static IHttpHandler CurrentHandler
-		{
-			get { return HttpContext.Current.Handler; }
-		}
+		public static IHttpHandler CurrentHandler => HttpContext.Current.Handler;
 
 		#endregion
 
@@ -92,17 +89,14 @@ namespace Ecng.Web
 		/// Gets the current handler.
 		/// </summary>
 		/// <value>The current handler.</value>
-		public static Page CurrentPage
-		{
-			get { return HttpContext.Current.Handler as Page; }
-		}
+		public static Page CurrentPage => HttpContext.Current.Handler as Page;
 
 		#endregion
 
 		public static TItem GetDataItem<TItem>(this Page page)
 		{
 			if (page == null)
-				throw new ArgumentNullException("page");
+				throw new ArgumentNullException(nameof(page));
 
 			return (TItem)page.GetDataItem();
 		}
@@ -110,7 +104,7 @@ namespace Ecng.Web
 		public static string GetMimeType(this string fileName)
 		{
 			if (fileName.IsEmpty())
-				throw new ArgumentNullException("fileName");
+				throw new ArgumentNullException(nameof(fileName));
 
 			if (fileName[0] != '.')
 				fileName = '.' + fileName;
@@ -121,7 +115,7 @@ namespace Ecng.Web
 		public static string GetMimeType(this IWebFile file)
 		{
 			if (file == null)
-				throw new ArgumentNullException("file");
+				throw new ArgumentNullException(nameof(file));
 
 			return file.Name.GetMimeType();
 		}
@@ -156,7 +150,7 @@ namespace Ecng.Web
 		public static void Redirect(this Url url, bool endResponse = true)
 		{
 			if (url == null)
-				throw new ArgumentNullException("url");
+				throw new ArgumentNullException(nameof(url));
 
 			var localPath = url.LocalPath;
 
@@ -170,7 +164,7 @@ namespace Ecng.Web
 			where T : Control
 		{
 			if (control == null)
-				throw new ArgumentNullException("control");
+				throw new ArgumentNullException(nameof(control));
 
 			if (!control.Page.ClientScript.IsStartupScriptRegistered(typeof(T), key))
 				control.Page.ClientScript.RegisterStartupScript(typeof(T), key, script, true);
@@ -187,12 +181,12 @@ namespace Ecng.Web
 		public static void SetChildValue<T>(this Control parent, string id, T value)
 		{
 			if (parent == null)
-				throw new ArgumentNullException("parent");
+				throw new ArgumentNullException(nameof(parent));
 
 			var control = parent.FindControl(id);
 
 			if (control == null)
-				throw new ArgumentException("Control not founded with id '{0}'".Put(id), "id");
+				throw new ArgumentException("Control not founded with id '{0}'".Put(id), nameof(id));
 
 			control.SetValue(value);
 		}
@@ -200,7 +194,7 @@ namespace Ecng.Web
 		public static void SetValue<T>(this Control control, T value)
 		{
 			if (control == null)
-				throw new ArgumentNullException("control");
+				throw new ArgumentNullException(nameof(control));
 
 			if (control is TextBox)
 				((TextBox)control).Text = value.To<string>();
@@ -217,18 +211,18 @@ namespace Ecng.Web
 			else if (control is Image)
 				((Image)control).ImageUrl = value.To<string>();
 			else
-				throw new ArgumentException("Control with id '{0}' has unsupported type '{1}'.".Put(control.ID, control.GetType()), "control");
+				throw new ArgumentException("Control with id '{0}' has unsupported type '{1}'.".Put(control.ID, control.GetType()), nameof(control));
 		}
 
 		public static T GetChildValue<T>(this Control parent, string id)
 		{
 			if (parent == null)
-				throw new ArgumentNullException("parent");
+				throw new ArgumentNullException(nameof(parent));
 
 			var control = parent.FindControl(id);
 
 			if (control == null)
-				throw new ArgumentException("Control not founded with id '{0}'".Put(id), "id");
+				throw new ArgumentException("Control not founded with id '{0}'".Put(id), nameof(id));
 
 			return control.GetValue<T>();
 		}
@@ -252,7 +246,7 @@ namespace Ecng.Web
 			else if (control is Image)
 				value = ((Image)control).ImageUrl;
 			else
-				throw new ArgumentException("Control with id '{0}' has unsupported type '{1}'.".Put(control.ID, control.GetType()), "control");
+				throw new ArgumentException("Control with id '{0}' has unsupported type '{1}'.".Put(control.ID, control.GetType()), nameof(control));
 
 			return value.To<T>();
 		}
@@ -268,7 +262,7 @@ namespace Ecng.Web
 				context = HttpContext.Current;
 
 			if (file == null)
-				throw new ArgumentNullException("file");
+				throw new ArgumentNullException(nameof(file));
 
 			// http://stackoverflow.com/questions/994135/image-from-httphandler-wont-cache-in-browser
 			var body = file.ShrinkFile(size);
@@ -281,7 +275,7 @@ namespace Ecng.Web
 		public static byte[] ShrinkFile(this IWebFile file, Size<int> size)
 		{
 			if (file == null)
-				throw new ArgumentNullException("file");
+				throw new ArgumentNullException(nameof(file));
 
 			return ShrinkFile(file.Body, size);
 		}
@@ -289,10 +283,10 @@ namespace Ecng.Web
 		public static byte[] ShrinkFile(this byte[] file, Size<int> size)
 		{
 			if (file == null)
-				throw new ArgumentNullException("file");
+				throw new ArgumentNullException(nameof(file));
 
 			if (size == null)
-				throw new ArgumentNullException("size");
+				throw new ArgumentNullException(nameof(size));
 
 			var body = file.To<Stream>();
 

@@ -106,14 +106,9 @@ namespace NPOI.HSSF.Record.Aggregates
             {
                 _totalSize = 0;
             }
-            public int TotalSize
-            {
-                get
-                {
-                    return _totalSize;
-                }
-            }
-            public void VisitRecord(Record r)
+            public int TotalSize => _totalSize;
+
+	        public void VisitRecord(Record r)
             {
                 _totalSize += r.RecordSize;
             }

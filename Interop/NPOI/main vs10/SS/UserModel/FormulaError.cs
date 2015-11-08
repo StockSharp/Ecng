@@ -154,35 +154,17 @@ namespace NPOI.SS.UserModel
         /**
          * @return numeric code of the error
          */
-        public byte Code
-        {
-            get
-            {
-                return type;
-            }
-        }
-        /**
+        public byte Code => type;
+	    /**
          * @return long (internal) numeric code of the error
          */
-        public int LongCode
-        {
-            get
-            {
-                return longType;
-            }
-        }
-        /**
+        public int LongCode => longType;
+	    /**
          * @return string representation of the error
          */
-        public String String
-        {
-            get
-            {
-                return repr;
-            }
-        }
+        public String String => repr;
 
-        private static Dictionary<String, FormulaError> smap = new Dictionary<string, FormulaError>();
+	    private static Dictionary<String, FormulaError> smap = new Dictionary<string, FormulaError>();
         private static Dictionary<Byte, FormulaError> bmap = new Dictionary<byte, FormulaError>();
         private static Dictionary<int, FormulaError> imap = new Dictionary<int, FormulaError>();
         public static bool IsValidCode(int errorCode)

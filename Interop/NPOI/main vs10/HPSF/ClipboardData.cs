@@ -31,17 +31,11 @@ namespace NPOI.HPSF
                     + LittleEndian.INT_SIZE * 2, size - LittleEndian.INT_SIZE);
         }
 
-        public int Size
-        {
-            get { return LittleEndian.INT_SIZE*2 + _value.Length; }
-        }
+        public int Size => LittleEndian.INT_SIZE*2 + _value.Length;
 
-        public byte[] Value
-        {
-            get { return _value; }
-        }
+	    public byte[] Value => _value;
 
-        public byte[] ToByteArray()
+	    public byte[] ToByteArray()
         {
             byte[] result = new byte[Size];
             LittleEndian.PutInt(result, 0 * LittleEndian.INT_SIZE,

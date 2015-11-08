@@ -54,6 +54,6 @@ namespace Microsoft.Practices.Unity
         /// <summary>
         /// The type of Lifetime manager that will be created by this factory.
         /// </summary>
-        public Type LifetimeType { get; private set; }
+        public Type LifetimeType { get; }
     }
 }

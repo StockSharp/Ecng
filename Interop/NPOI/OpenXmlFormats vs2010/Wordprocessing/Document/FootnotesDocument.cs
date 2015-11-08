@@ -23,14 +23,9 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         {
             this.footnotes = footnotes;
         }
-        public CT_Footnotes Footnotes
-        {
-            get
-            {
-                return this.footnotes;
-            }
-        }
-        public void Save(Stream stream)
+        public CT_Footnotes Footnotes => this.footnotes;
+
+	    public void Save(Stream stream)
         {
             using (StreamWriter sw = new StreamWriter(stream))
             {

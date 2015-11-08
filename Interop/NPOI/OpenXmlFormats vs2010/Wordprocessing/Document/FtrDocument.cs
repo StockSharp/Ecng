@@ -33,14 +33,9 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         {
             this.ftr = ftr;
         }
-        public CT_Ftr Ftr
-        {
-            get
-            {
-                return this.ftr;
-            }
-        }
-        public void SetFtr(CT_Ftr ftr)
+        public CT_Ftr Ftr => this.ftr;
+
+	    public void SetFtr(CT_Ftr ftr)
         {
             this.ftr = ftr;
         }

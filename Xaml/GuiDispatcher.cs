@@ -24,7 +24,7 @@ namespace Ecng.Xaml
 			public ActionInfo(Action action)
 			{
 				if (action == null)
-					throw new ArgumentNullException("action");
+					throw new ArgumentNullException(nameof(action));
 
 				_action = action;
 			}
@@ -32,7 +32,7 @@ namespace Ecng.Xaml
 			public ActionInfo(Func<object> func)
 			{
 				if (func == null)
-					throw new ArgumentNullException("func");
+					throw new ArgumentNullException(nameof(func));
 
 				_func = func;
 			}
@@ -95,7 +95,7 @@ namespace Ecng.Xaml
 		public GuiDispatcher(Dispatcher dispatcher)
 		{
 			if (dispatcher == null)
-				throw new ArgumentNullException("dispatcher");
+				throw new ArgumentNullException(nameof(dispatcher));
 
 			Dispatcher = dispatcher;
 		}
@@ -103,7 +103,7 @@ namespace Ecng.Xaml
 		/// <summary>
 		/// Объект для доступа к графическому потоку.
 		/// </summary>
-		public Dispatcher Dispatcher { get; private set; }
+		public Dispatcher Dispatcher { get; }
 
 		private TimeSpan _interval = TimeSpan.FromMilliseconds(100);
 
@@ -116,7 +116,7 @@ namespace Ecng.Xaml
 			set
 			{
 				if (value <= TimeSpan.Zero)
-					throw new ArgumentOutOfRangeException("value");
+					throw new ArgumentOutOfRangeException(nameof(value));
 
 				_interval = value;
 				StopTimer();
@@ -127,15 +127,12 @@ namespace Ecng.Xaml
 		/// <summary>
 		/// Количество действий, которое ожидает обработку.
 		/// </summary>
-		public int PendingActionsCount
-		{
-			get { return _actions.Count + _periodicalActions.Count; }
-		}
+		public int PendingActionsCount => _actions.Count + _periodicalActions.Count;
 
 		public object AddPeriodicalAction(Action action)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			var token = new object();
 
@@ -156,7 +153,7 @@ namespace Ecng.Xaml
 		public void RemovePeriodicalAction(object token)
 		{
 			if (token == null)
-				throw new ArgumentNullException("token");
+				throw new ArgumentNullException(nameof(token));
 
 			_periodicalActions.Remove(token);
 		}
@@ -281,10 +278,7 @@ namespace Ecng.Xaml
 
 		private static GuiDispatcher _globalDispatcher;
 
-		public static GuiDispatcher GlobalDispatcher
-		{
-			get { return _globalDispatcher ?? (_globalDispatcher = new GuiDispatcher()); }
-		}
+		public static GuiDispatcher GlobalDispatcher => _globalDispatcher ?? (_globalDispatcher = new GuiDispatcher());
 
 		public static void InitGlobalDispatcher()
 		{

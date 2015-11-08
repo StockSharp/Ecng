@@ -16,7 +16,7 @@ namespace Ecng.Net
 		public static ChannelFactory<TChannel> Create<TChannel>(string endpointName, Func<ChannelFactory<TChannel>> createFactory)
 		{
 			if (createFactory == null)
-				throw new ArgumentNullException("createFactory");
+				throw new ArgumentNullException(nameof(createFactory));
 
 			if (!endpointName.IsEmpty())
 			{
@@ -38,10 +38,10 @@ namespace Ecng.Net
 			where TChannel : class
 		{
 			if (factory == null)
-				throw new ArgumentNullException("factory");
+				throw new ArgumentNullException(nameof(factory));
 
 			if (handler == null)
-				throw new ArgumentNullException("handler");
+				throw new ArgumentNullException(nameof(handler));
 
 			using (var channel = new ChannelWrapper<TChannel>(factory.CreateChannel()))
 			{
@@ -53,10 +53,10 @@ namespace Ecng.Net
 			where TChannel : class
 		{
 			if (factory == null)
-				throw new ArgumentNullException("factory");
+				throw new ArgumentNullException(nameof(factory));
 
 			if (handler == null)
-				throw new ArgumentNullException("handler");
+				throw new ArgumentNullException(nameof(handler));
 
 			using (var channel = new ChannelWrapper<TChannel>(factory.CreateChannel()))
 				return handler(channel.Value);

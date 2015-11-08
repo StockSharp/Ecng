@@ -34,7 +34,7 @@ namespace Ecng.Serialization
 			set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_encoding = value;
 			}
@@ -43,7 +43,7 @@ namespace Ecng.Serialization
 		private static string FormatTypeName(Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if (type.IsArray)
 				return FormatTypeName(type.GetElementType()) + "Array";
@@ -67,7 +67,7 @@ namespace Ecng.Serialization
 		public void Serialize(SerializationItemCollection source, XElement element)
 		{
 			if (element == null)
-				throw new ArgumentNullException("element");
+				throw new ArgumentNullException(nameof(element));
 
 			_element = element;
 
@@ -87,7 +87,7 @@ namespace Ecng.Serialization
 		public void Serialize(T graph, XElement element)
 		{
 			if (element == null)
-				throw new ArgumentNullException("element");
+				throw new ArgumentNullException(nameof(element));
 
 			_element = element;
 
@@ -97,7 +97,7 @@ namespace Ecng.Serialization
 		public T Deserialize(XElement element)
 		{
 			if (element == null)
-				throw new ArgumentNullException("element");
+				throw new ArgumentNullException(nameof(element));
 
 			_element = element;
 
@@ -106,18 +106,15 @@ namespace Ecng.Serialization
 
 		#region Serializer<T> Members
 
-		public override string FileExtension
-		{
-			get { return "xml"; }
-		}
+		public override string FileExtension => "xml";
 
 		public override void Serialize(FieldList fields, SerializationItemCollection source, Stream stream)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			XDocument doc = null;
 			XElement rootElem;
@@ -171,13 +168,13 @@ namespace Ecng.Serialization
 		public override void Deserialize(Stream stream, FieldList fields, SerializationItemCollection source)
 		{
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			if (fields == null)
-				throw new ArgumentNullException("fields");
+				throw new ArgumentNullException(nameof(fields));
 
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			var root = _element;
 
@@ -188,7 +185,7 @@ namespace Ecng.Serialization
 					var doc = XDocument.Load(reader);
 
 					if (doc.Root == null)
-						throw new ArgumentException("Root element is null.", "stream");
+						throw new ArgumentException("Root element is null.", nameof(stream));
 
 					root = doc.Root;
 				}

@@ -32,11 +32,11 @@ namespace Microsoft.Practices.Unity
         /// <summary>
         /// The newly created child container.
         /// </summary>
-        public IUnityContainer ChildContainer { get { return ChildContext.Container; } }
+        public IUnityContainer ChildContainer => ChildContext.Container;
 
-        /// <summary>
+	    /// <summary>
         /// An extension context for the created child container.
         /// </summary>
-        public ExtensionContext ChildContext { get; private set; }
+        public ExtensionContext ChildContext { get; }
     }
 }

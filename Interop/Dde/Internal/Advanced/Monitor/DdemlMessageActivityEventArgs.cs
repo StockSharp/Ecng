@@ -57,16 +57,9 @@ namespace NDde.Foundation.Advanced.Monitor
             _Message = message;
         }
 
-        public DdemlMessageActivityKind Kind
-        {
-            get { return _Kind; }
-        }
+        public DdemlMessageActivityKind Kind => _Kind;
 
-        public Message Message
-        {
-            get { return _Message; }
-        }
-
+	    public Message Message => _Message;
     } // class
 
 } // namespace

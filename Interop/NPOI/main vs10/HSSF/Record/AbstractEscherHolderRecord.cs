@@ -216,12 +216,9 @@ namespace NPOI.HSSF.Record
             return true;
         }
 
-        public List<EscherRecord> EscherRecords
-        {
-            get { return escherRecords; }
-        }
+        public List<EscherRecord> EscherRecords => escherRecords;
 
-        public void ClearEscherRecords()
+	    public void ClearEscherRecords()
         {
             escherRecords.Clear();
         }

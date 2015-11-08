@@ -275,19 +275,19 @@ namespace ManagedWinapi
         /// <summary>
         /// The number of codepoints supported by this font.
         /// </summary>
-        public int SupportedCodepointCount { get { return codepointCount; } }
+        public int SupportedCodepointCount => codepointCount;
 
-        /// <summary>
+	    /// <summary>
         /// The first (lowest) supported codepoint.
         /// </summary>
-        public char FirstCodepoint { get { return ranges[0]; } }
+        public char FirstCodepoint => ranges[0];
 
-        /// <summary>
+	    /// <summary>
         /// The last (highest) supported codepoint.
         /// </summary>
-        public char LastCodepoint { get { return (char)(ranges[ranges.Length - 1] - 1); } }
+        public char LastCodepoint => (char)(ranges[ranges.Length - 1] - 1);
 
-        /// <summary>
+	    /// <summary>
         /// Tests whether a specific codepoint is supported by this font.
         /// </summary>
         public bool IsSupported(char codepoint)

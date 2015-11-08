@@ -20,7 +20,7 @@ namespace Ecng.Serialization
 			: base(field, order)
 		{
 			if (values == null)
-				throw new ArgumentNullException("values");
+				throw new ArgumentNullException(nameof(values));
 
 			Values = values;
 			DefaultValue = defaultValue;
@@ -104,8 +104,8 @@ namespace Ecng.Serialization
 
 		#endregion
 
-		public object InstanceValue { get; private set; }
-		public object SourceValue { get; private set; }
+		public object InstanceValue { get; }
+		public object SourceValue { get; }
 	}
 
 	[AttributeUsage(ReflectionHelper.Members | ReflectionHelper.Types | AttributeTargets.Enum)]
@@ -124,7 +124,7 @@ namespace Ecng.Serialization
 		public ValuesAttribute(Type valueType)
 		{
 			if (valueType == null)
-				throw new ArgumentNullException("valueType");
+				throw new ArgumentNullException(nameof(valueType));
 
 			_valueType = valueType;
 		}
@@ -169,7 +169,7 @@ namespace Ecng.Serialization
 				values[valueAttr.InstanceValue.To<I>()] = (S)valueAttr.SourceValue;
 
 			if (values.IsEmpty())
-				throw new ArgumentException("Member '{0}' has empty value set.".Put(field.Name), "field");
+				throw new ArgumentException("Member '{0}' has empty value set.".Put(field.Name), nameof(field));
 
 			var defaultValue = new NullableEx<I>();
 
@@ -178,7 +178,7 @@ namespace Ecng.Serialization
 				defaultValue.Value = DefaultValue.To<I>();
 
 				if (values.ContainsKey(defaultValue.Value))
-					throw new ArgumentException("Member '{0}' has incorrect default value '{1}'.".Put(field.Name, defaultValue.Value), "field");
+					throw new ArgumentException("Member '{0}' has incorrect default value '{1}'.".Put(field.Name, defaultValue.Value), nameof(field));
 			}
 
 			return new ValuesFieldFactory<I, S>(values, defaultValue, field, Order);

@@ -408,25 +408,12 @@ namespace NPOI.XSSF.UserModel
                 _fpBook = fpBook;
             }
 
-            public Ptg[] NameDefinition
-            {
-                get
-                {
+            public Ptg[] NameDefinition => FormulaParser.Parse(_nameRecord.RefersToFormula, _fpBook, 
+	            FormulaType.NamedRange, _nameRecord.SheetIndex);
 
-                    return FormulaParser.Parse(_nameRecord.RefersToFormula, _fpBook, 
-                        FormulaType.NamedRange, _nameRecord.SheetIndex);
-                }
-            }
+	        public String NameText => _nameRecord.NameName;
 
-            public String NameText
-            {
-                get
-                {
-                    return _nameRecord.NameName;
-                }
-            }
-
-            public bool HasFormula
+	        public bool HasFormula
             {
                 get
                 {
@@ -437,22 +424,11 @@ namespace NPOI.XSSF.UserModel
                 }
             }
 
-            public bool IsFunctionName
-            {
-                get
-                {
-                    return _nameRecord.IsFunctionName;
-                }
-            }
+            public bool IsFunctionName => _nameRecord.IsFunctionName;
 
-            public bool IsRange
-            {
-                get
-                {
-                    return HasFormula; // TODO - is this right?
-                }
-            }
-            public NamePtg CreatePtg()
+	        public bool IsRange => HasFormula;
+
+	        public NamePtg CreatePtg()
             {
                 return new NamePtg(_index);
             }

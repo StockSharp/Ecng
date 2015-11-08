@@ -34,7 +34,7 @@
 			_compiledString = url.Query;
 		}
 
-		public Url Url { get; private set; }
+		public Url Url { get; }
 
 		public string Raw
 		{
@@ -46,10 +46,7 @@
 			return _queryString.ContainsKey(queryField);
 		}
 
-		public int Count
-		{
-			get { return _queryString.Count; }
-		}
+		public int Count => _queryString.Count;
 
 		public object this[string queryField]
 		{
@@ -57,7 +54,7 @@
 			set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				if (Contains(queryField))
 				{
@@ -87,10 +84,10 @@
 		public QueryString Append(string name, object value)
 		{
 			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			_queryString.Add(name, value.To<string>());
 			RefreshUri();

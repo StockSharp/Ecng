@@ -53,37 +53,25 @@ namespace NPOI.POIFS.FileSystem
          * @return the internal POIFSDocument
          */
 
-        public POIFSDocument Document
-        {
-            get { return _document; }
-        }
+        public POIFSDocument Document => _document;
 
-
-        /**
+	    /**
          * get the zize of the document, in bytes
          *
          * @return size in bytes
          */
 
-        public int Size
-        {
-            get { return Property.Size; }
-        }
+        public int Size => Property.Size;
 
-
-        /**
+	    /**
          * Is this a DocumentEntry?
          *
          * @return true if the Entry Is a DocumentEntry, else false
          */
 
-        public override bool IsDocumentEntry
-        {
-            get{return true;}
-        }
+        public override bool IsDocumentEntry => true;
 
-
-        /**
+	    /**
          * extensions use this method to verify internal rules regarding
          * deletion of the underlying store.
          *
@@ -91,25 +79,18 @@ namespace NPOI.POIFS.FileSystem
          *         false
          */
 
-        protected override bool IsDeleteOK
-        {
-            get { return true; }
-        }
+        protected override bool IsDeleteOK => true;
 
-
-        /**
+	    /**
          * Get an array of objects, some of which may implement
          * POIFSViewable
          *
          * @return an array of Object; may not be null, but may be empty
          */
 
-        public Array ViewableArray
-        {
-            get { return new Object[0]; }
-        }
+        public Array ViewableArray => new Object[0];
 
-        /**
+	    /**
          * Get an Iterator of objects, some of which may implement
          * POIFSViewable
          *
@@ -137,21 +118,15 @@ namespace NPOI.POIFS.FileSystem
          *         a viewer should call getViewableIterator
          */
 
-        public bool PreferArray
-        {
-            get { return false; }
-        }
+        public bool PreferArray => false;
 
-        /**
+	    /**
          * Provides a short description of the object, to be used when a
          * POIFSViewable object has not provided its contents.
          *
          * @return short description
          */
 
-        public String ShortDescription
-        {
-            get{return Name;}
-        }
+        public String ShortDescription => Name;
     }
 }

@@ -63,12 +63,9 @@ namespace NPOI.HSSF.Record
             return buffer.ToString();
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             return new HeaderRecord(this.Text);
         }

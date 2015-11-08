@@ -35,9 +35,9 @@ namespace Microsoft.Practices.Unity.Configuration
         /// <summary>
         /// Unique key generated for use in the collection class.
         /// </summary>
-        public string Key { get { return string.Format(CultureInfo.InvariantCulture, "extensionConfig:{0}", extensionConfigurationNumber); } }
+        public string Key => string.Format(CultureInfo.InvariantCulture, "extensionConfig:{0}", extensionConfigurationNumber);
 
-        internal void Configure(IUnityContainer container)
+	    internal void Configure(IUnityContainer container)
         {
             ConfigureContainer(container);
         }

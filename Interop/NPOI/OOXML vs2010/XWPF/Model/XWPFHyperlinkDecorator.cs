@@ -70,13 +70,7 @@ namespace NPOI.XWPF.Model
             }
         }
 
-        public override String Text
-        {
-            get
-            {
-                return base.Text + hyperlinkText;
-            }
-        }
+        public override String Text => base.Text + hyperlinkText;
     }
 
 }

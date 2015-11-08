@@ -25,10 +25,10 @@
 		public LocalizationManager(Assembly asmHolder, string fileName)
 		{
 			if (asmHolder == null)
-				throw new ArgumentNullException("asmHolder");
+				throw new ArgumentNullException(nameof(asmHolder));
 
 			if (fileName.IsEmpty())
-				throw new ArgumentNullException("fileName");
+				throw new ArgumentNullException(nameof(fileName));
 
 			var ex1 = ProcessCsvStream("embedded", () => asmHolder.GetManifestResourceStream("{0}.{1}".Put(asmHolder.GetName().Name, Path.GetFileName(fileName))));
 

@@ -15,7 +15,7 @@ namespace Ecng.Security
 		public static void Check(string userName)
 		{
 			if (userName.IsEmpty())
-				throw new ArgumentNullException("userName");
+				throw new ArgumentNullException(nameof(userName));
 
 			if (string.Compare(Thread.CurrentPrincipal.Identity.Name, userName, StringComparison.OrdinalIgnoreCase) != 0)
 				ThrowAccessException();
@@ -24,7 +24,7 @@ namespace Ecng.Security
 		public static void Check(IEnumerable<string> roles)
 		{
 			if (roles == null)
-				throw new ArgumentNullException("roles");
+				throw new ArgumentNullException(nameof(roles));
 
 			foreach (var role in roles)
 			{

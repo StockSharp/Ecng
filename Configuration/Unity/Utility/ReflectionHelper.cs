@@ -37,52 +37,34 @@ namespace Microsoft.Practices.Unity.Utility
         /// The <see cref="Type"/> object we're reflecting over.
         /// </summary>
         [SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods")]
-        public Type Type
-        {
-            get { return t; }
-        }
+        public Type Type => t;
 
-        /// <summary>
+	    /// <summary>
         /// Is this type generic?
         /// </summary>
-        public bool IsGenericType
-        {
-            get { return t.IsGenericType; }
-        }
+        public bool IsGenericType => t.IsGenericType;
 
-        /// <summary>
+	    /// <summary>
         /// Is this type an open generic (no type parameter specified)
         /// </summary>
-        public bool IsOpenGeneric
-        {
-            get { return t.IsGenericType && t.ContainsGenericParameters; }
-        }
+        public bool IsOpenGeneric => t.IsGenericType && t.ContainsGenericParameters;
 
-        /// <summary>
+	    /// <summary>
         /// Is this type an array type?
         /// </summary>
-        public bool IsArray
-        {
-            get { return t.IsArray; }
-        }
+        public bool IsArray => t.IsArray;
 
-        /// <summary>
+	    /// <summary>
         /// Is this type an array of generic elements?
         /// </summary>
-        public bool IsGenericArray
-        {
-            get { return IsArray && ArrayElementType.IsGenericParameter; }
-        }
+        public bool IsGenericArray => IsArray && ArrayElementType.IsGenericParameter;
 
-        /// <summary>
+	    /// <summary>
         /// The type of the elements in this type (if it's an array).
         /// </summary>
-        public Type ArrayElementType
-        {
-            get { return t.GetElementType(); }
-        }
+        public Type ArrayElementType => t.GetElementType();
 
-        /// <summary>
+	    /// <summary>
         /// Test the given <see cref="MethodBase"/> object, looking at
         /// the parameters. Determine if any of the parameters are
         /// open generic types that need type attributes filled in.

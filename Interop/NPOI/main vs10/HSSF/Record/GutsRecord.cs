@@ -137,20 +137,11 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(ColLevelMax);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 8;
-            }
-        }
+        protected override int DataSize => 8;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             GutsRecord rec = new GutsRecord();
             rec.field_1_left_row_gutter = field_1_left_row_gutter;

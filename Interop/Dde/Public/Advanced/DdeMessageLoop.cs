@@ -123,12 +123,9 @@ namespace NDde.Advanced
         /// <summary>
         /// This gets a bool indicating whether the caller must use Invoke.
         /// </summary>
-        bool ISynchronizeInvoke.InvokeRequired
-        {
-            get { return Thread.VolatileRead(ref _ThreadId) != GetCurrentThreadId(); }
-        }
+        bool ISynchronizeInvoke.InvokeRequired => Thread.VolatileRead(ref _ThreadId) != GetCurrentThreadId();
 
-        /// <summary>
+	    /// <summary>
         /// This starts a message loop on the current thread.
         /// </summary>
         public void Run()

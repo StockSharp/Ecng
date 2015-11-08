@@ -59,14 +59,9 @@ namespace NPOI.XWPF.UserModel
             }
         }
 
-        public PositionInParagraph EndPos
-        {
-            get
-            {
-                return endPos;
-            }
-        }
-        /// <summary>
+        public PositionInParagraph EndPos => endPos;
+
+	    /// <summary>
         /// The index of the start run
         /// </summary>
         public int BeginRun

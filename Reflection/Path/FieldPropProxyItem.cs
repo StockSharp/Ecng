@@ -16,7 +16,7 @@ namespace Ecng.Reflection.Path
 		private static FastInvoker Create(MemberInfo member, bool isGetter)
 		{
 			if (member == null)
-				throw new ArgumentNullException("member");
+				throw new ArgumentNullException(nameof(member));
 
 			if (member is PropertyInfo)
 				return FastInvoker.Create((PropertyInfo)member, isGetter);

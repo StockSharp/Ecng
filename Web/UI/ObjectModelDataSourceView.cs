@@ -26,10 +26,10 @@
 			: base(owner, name)
 		{
 			if (proxy == null)
-				throw new ArgumentNullException("proxy");
+				throw new ArgumentNullException(nameof(proxy));
 
 			if (context == null)
-				throw new ArgumentNullException("context");
+				throw new ArgumentNullException(nameof(context));
 
 			LastItemType = proxy.Items.Last().Invoker.Member.GetMemberType();
 
@@ -55,12 +55,12 @@
 
 		#endregion
 
-		public Type LastItemType { get; private set; }
-		public Type ItemType { get; private set; }
-		public MemberProxy Proxy { get; private set; }
-		public object Root { get; private set; }
-		protected ObjectModelDataSource Owner { get; private set; }
-		protected HttpContext Context { get; private set; }
+		public Type LastItemType { get; }
+		public Type ItemType { get; }
+		public MemberProxy Proxy { get; }
+		public object Root { get; }
+		protected ObjectModelDataSource Owner { get; }
+		protected HttpContext Context { get; }
 
 		#region Path
 
@@ -163,35 +163,17 @@
 
 		#region DataSourceView Members
 
-		public override bool CanUpdate
-		{
-			get { return true; }
-		}
+		public override bool CanUpdate => true;
 
-		public override bool CanDelete
-		{
-			get { return true; }
-		}
+		public override bool CanDelete => true;
 
-		public override bool CanInsert
-		{
-			get { return true; }
-		}
+		public override bool CanInsert => true;
 
-		public override bool CanSort
-		{
-			get { return true; }
-		}
+		public override bool CanSort => true;
 
-		public override bool CanPage
-		{
-			get { return true; }
-		}
+		public override bool CanPage => true;
 
-		public override bool CanRetrieveTotalRowCount
-		{
-			get { return true; }
-		}
+		public override bool CanRetrieveTotalRowCount => true;
 
 		protected override IEnumerable ExecuteSelect(DataSourceSelectArguments arguments)
 		{
@@ -296,10 +278,7 @@
 
 		private bool _isTrackingViewState;
 
-		bool IStateManager.IsTrackingViewState
-		{
-			get { return _isTrackingViewState; }
-		}
+		bool IStateManager.IsTrackingViewState => _isTrackingViewState;
 
 		void IStateManager.LoadViewState(object state)
 		{

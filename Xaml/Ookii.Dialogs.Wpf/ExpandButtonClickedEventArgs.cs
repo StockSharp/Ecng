@@ -27,10 +27,6 @@ namespace Ookii.Dialogs.Wpf
         /// Gets a value that indicates if the expanded content on the dialog is shown.
         /// </summary>
         /// <value><see langword="true" /> if the expanded content on the dialog is shown; otherwise, <see langword="false" />.</value>
-        public bool Expanded
-        {
-            get { return _expanded; }
-        }
-	
+        public bool Expanded => _expanded;
     }
 }

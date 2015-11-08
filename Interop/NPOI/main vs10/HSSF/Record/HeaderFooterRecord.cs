@@ -58,23 +58,11 @@ namespace NPOI.HSSF.Record
             out1.Write(_rawData);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return _rawData.Length;
-            }
-        }
+        protected override int DataSize => _rawData.Length;
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+	    public override short Sid => sid;
 
-        /**
+	    /**
          * If this header belongs to a specific sheet view , the sheet view?s GUID will be saved here.
          * 
          * If it is zero, it means the current sheet. Otherwise, this field MUST match the guid field
@@ -95,15 +83,9 @@ namespace NPOI.HSSF.Record
         /**
          * @return whether this record belongs to the current sheet 
          */
-        public bool IsCurrentSheet
-        {
-            get
-            {
-                return Arrays.Equals(Guid, BLANK_GUID);
-            }
-        }
+        public bool IsCurrentSheet => Arrays.Equals(Guid, BLANK_GUID);
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
 

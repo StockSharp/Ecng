@@ -16,10 +16,10 @@ namespace Ecng.Xaml
 		public EndPointValueConverter(AddressComboBox<EndPoint> comboBox, EndPoint defaultEndPoint)
 		{
 			if (comboBox == null)
-				throw new ArgumentNullException("comboBox");
+				throw new ArgumentNullException(nameof(comboBox));
 
 			if (defaultEndPoint == null)
-				throw new ArgumentNullException("defaultEndPoint");
+				throw new ArgumentNullException(nameof(defaultEndPoint));
 
 			_comboBox = comboBox;
 			_defaultEndPoint = defaultEndPoint;
@@ -88,10 +88,10 @@ namespace Ecng.Xaml
 		public UriValueConverter(AddressComboBox<Uri> comboBox, Uri defaultUrl)
 		{
 			if (comboBox == null)
-				throw new ArgumentNullException("comboBox");
+				throw new ArgumentNullException(nameof(comboBox));
 
 			if (defaultUrl == null)
-				throw new ArgumentNullException("defaultUrl");
+				throw new ArgumentNullException(nameof(defaultUrl));
 
 			_comboBox = comboBox;
 			_defaultUrl = defaultUrl;

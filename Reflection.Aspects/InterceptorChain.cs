@@ -8,10 +8,7 @@ namespace Ecng.Reflection.Aspects
 
 		private readonly List<Interceptor> _interceptors = new List<Interceptor>();
 
-		public IList<Interceptor> Interceptors
-		{
-			get { return _interceptors; }
-		}
+		public IList<Interceptor> Interceptors => _interceptors;
 
 		#endregion
 

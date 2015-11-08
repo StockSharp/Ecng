@@ -30,10 +30,6 @@ namespace Ookii.Dialogs
         /// <value>
         /// The <see cref="TaskDialogItem"/> that was clicked.
         /// </value>
-        public TaskDialogItem Item
-        {
-            get { return _item; }
-        }
-	
+        public TaskDialogItem Item => _item;
     }
 }

@@ -17,13 +17,13 @@ namespace Ecng.Reflection
 		internal GenericArg(Type type, string name, IEnumerable<Constraint> constraints)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if (constraints == null)
-				throw new ArgumentNullException("constraints");
+				throw new ArgumentNullException(nameof(constraints));
 
 			Type = type;
 			Name = name;

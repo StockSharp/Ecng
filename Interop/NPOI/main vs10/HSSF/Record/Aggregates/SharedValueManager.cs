@@ -45,11 +45,9 @@ namespace NPOI.HSSF.Record.Aggregates
              * {@link #_sfr}
              */
             private CellReference _firstCell;
-            internal CellReference FirstCell
-            {
-                get { return _firstCell; }
-            }
-            public SharedFormulaGroup(SharedFormulaRecord sfr, CellReference firstCell)
+            internal CellReference FirstCell => _firstCell;
+
+	        public SharedFormulaGroup(SharedFormulaRecord sfr, CellReference firstCell)
             {
                 if (!sfr.IsInRange(firstCell.Row, firstCell.Col))
                 {
@@ -88,15 +86,9 @@ namespace NPOI.HSSF.Record.Aggregates
                 }
             }
 
-            public SharedFormulaRecord SFR
-            {
-                get
-                {
-                    return _sfr;
-                }
-            }
+            public SharedFormulaRecord SFR => _sfr;
 
-            public override String ToString()
+	        public override String ToString()
             {
                 StringBuilder sb = new StringBuilder(64);
                 sb.Append(GetType().Name).Append(" [");

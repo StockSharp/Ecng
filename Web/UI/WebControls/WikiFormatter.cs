@@ -54,13 +54,13 @@ namespace Ecng.Web.UI.WebControls
 		public static void AddImageUrl(string code, Url url, string altText)
 		{
 			if (code.IsEmpty())
-				throw new ArgumentNullException("code");
+				throw new ArgumentNullException(nameof(code));
 
 			if (url == null)
-				throw new ArgumentNullException("url");
+				throw new ArgumentNullException(nameof(url));
 
 			if (altText.IsEmpty())
-				throw new ArgumentNullException("altText");
+				throw new ArgumentNullException(nameof(altText));
 
 			_imageUrls.Add("[" + code + "]", RefTuple.Create(url, altText));
 		}

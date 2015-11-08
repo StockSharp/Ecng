@@ -81,15 +81,9 @@ namespace NPOI.XSSF.Model
          * Returns the underlying xmlbeans object for the external
          *  link table
          */
-        public CT_ExternalLink CTExternalLink
-        {
-            get
-            {
-                return link;
-            }
-        }
+        public CT_ExternalLink CTExternalLink => link;
 
-        /**
+	    /**
          * get or set the last recorded name of the file that this
          *  is linked to
          */
@@ -229,22 +223,10 @@ namespace NPOI.XSSF.Model
                     name.refersTo = (/*setter*/'=' + value);
                 }
             }
-            public bool IsFunctionName
-            {
-                get
-                {
-                    return false;
-                }
-            }
-            public bool IsDeleted
-            {
-                get
-                {
-                    return false;
-                }
-            }
+            public bool IsFunctionName => false;
+	        public bool IsDeleted => false;
 
-            public String Comment
+	        public String Comment
             {
                 get
                 {

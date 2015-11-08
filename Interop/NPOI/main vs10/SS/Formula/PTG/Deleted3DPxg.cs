@@ -64,14 +64,9 @@ namespace NPOI.SS.Formula.PTG
             return sb.ToString();
         }
 
-        public int ExternalWorkbookNumber
-        {
-            get
-            {
-                return externalWorkbookNumber;
-            }
-        }
-        public String SheetName
+        public int ExternalWorkbookNumber => externalWorkbookNumber;
+
+	    public String SheetName
         {
             get
             {
@@ -101,22 +96,11 @@ namespace NPOI.SS.Formula.PTG
             return sb.ToString();
         }
 
-        public override byte DefaultOperandClass
-        {
-            get
-            {
-                return Ptg.CLASS_VALUE;
-            }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_VALUE;
 
-        public override int Size
-        {
-            get
-            {
-                return 1;
-            }
-        }
-        public override void Write(ILittleEndianOutput out1)
+	    public override int Size => 1;
+
+	    public override void Write(ILittleEndianOutput out1)
         {
             throw new InvalidOperationException("XSSF-only Ptg, should not be serialised");
         }

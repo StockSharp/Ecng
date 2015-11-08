@@ -63,19 +63,19 @@ namespace ManagedWinapi
         /// <summary>
         /// The process this chunk refers to.
         /// </summary>
-        public Process Process { get { return process; } }
+        public Process Process => process;
 
-        /// <summary>
+	    /// <summary>
         /// The location in memory (of the other process) this chunk refers to.
         /// </summary>
-        public IntPtr Location { get { return location; } }
+        public IntPtr Location => location;
 
-        /// <summary>
+	    /// <summary>
         /// The size of the chunk.
         /// </summary>
-        public int Size { get { return size; } }
+        public int Size => size;
 
-        /// <summary>
+	    /// <summary>
         /// Allocate a chunk in another process.
         /// </summary>
         public static ProcessMemoryChunk Alloc(Process process, int size)
@@ -135,7 +135,7 @@ namespace ManagedWinapi
         /// </summary>
         public void Write(int offset, IntPtr ptr, int length)
         {
-            if (offset < 0) throw new ArgumentException("Offset may not be negative", "offset");
+            if (offset < 0) throw new ArgumentException("Offset may not be negative", nameof(offset));
             if (offset + length > size) throw new ArgumentException("Exceeding chunk size");
             WriteProcessMemory(hProcess, new IntPtr(location.ToInt64() + offset), ptr, new UIntPtr((uint)length), IntPtr.Zero);
         }
@@ -145,7 +145,7 @@ namespace ManagedWinapi
         /// </summary>
         public void Write(int offset, byte[] ptr)
         {
-            if (offset < 0) throw new ArgumentException("Offset may not be negative", "offset");
+            if (offset < 0) throw new ArgumentException("Offset may not be negative", nameof(offset));
             if (offset + ptr.Length > size) throw new ArgumentException("Exceeding chunk size");
             WriteProcessMemory(hProcess, new IntPtr(location.ToInt64() + offset), ptr, new UIntPtr((uint)ptr.Length), IntPtr.Zero);
         }

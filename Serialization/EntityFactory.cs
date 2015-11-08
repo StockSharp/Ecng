@@ -49,14 +49,14 @@
 		public PrimitiveEntityFactory(string name)
 		{
 			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			Name = name;
 		}
 
-		public string Name { get; private set; }
+		public string Name { get; }
 
-		public override bool FullInitialize { get { return true; } }
+		public override bool FullInitialize => true;
 
 		public override TEntity CreateEntity(ISerializer serializer, SerializationItemCollection source)
 		{
@@ -70,7 +70,7 @@
 	class CollectionEntityFactory<TCollection, TItem> : EntityFactory<TCollection>
 		where TCollection : IEnumerable<TItem>
 	{
-		public override bool FullInitialize { get { return true; } }
+		public override bool FullInitialize => true;
 
 		public override TCollection CreateEntity(ISerializer serializer, SerializationItemCollection source)
 		{

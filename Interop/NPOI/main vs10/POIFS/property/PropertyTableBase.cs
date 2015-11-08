@@ -53,12 +53,9 @@ namespace NPOI.POIFS.Properties
             _properties.Remove(property);
         }
 
-        public RootProperty Root
-        {
-            get { return (RootProperty)(_properties[0]); }
-        }
+        public RootProperty Root => (RootProperty)(_properties[0]);
 
-        protected void PopulatePropertyTree(DirectoryProperty root)
+	    protected void PopulatePropertyTree(DirectoryProperty root)
         {
             try
             {

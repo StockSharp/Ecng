@@ -298,15 +298,9 @@ namespace NPOI.XSSF.UserModel
          *
          * @return <code>true</code> if this name refers to a user-defined function
          */
-        public bool IsFunctionName
-        {
-            get
-            {
-                return this.Function;
-            }
-        }
+        public bool IsFunctionName => this.Function;
 
-        /**
+	    /**
          * Returns the comment the user provided when the name was Created.
          *
          * @return the user comment for this named range

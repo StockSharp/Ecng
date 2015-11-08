@@ -370,12 +370,9 @@ namespace NPOI.HSSF.UserModel
         /// Returns a list of all shapes contained by the patriarch.
         /// </summary>
         /// <value>The children.</value>
-        public IList<HSSFShape> Children
-        {
-            get { return _shapes; }
-        }
+        public IList<HSSFShape> Children => _shapes;
 
-        /**
+	    /**
          * add a shape to this drawing
          */
         public void AddShape(HSSFShape shape)
@@ -492,39 +489,27 @@ namespace NPOI.HSSF.UserModel
         /// The top left x coordinate of this Group.
         /// </summary>
         /// <value>The x1.</value>
-        public int X1
-        {
-            get { return _spgrRecord.RectX1; }
-        }
+        public int X1 => _spgrRecord.RectX1;
 
-        /// <summary>
+	    /// <summary>
         /// The top left y coordinate of this Group.
         /// </summary>
         /// <value>The y1.</value>
-        public int Y1
-        {
-            get { return _spgrRecord.RectY1; }
-        }
+        public int Y1 => _spgrRecord.RectY1;
 
-        /// <summary>
+	    /// <summary>
         /// The bottom right x coordinate of this Group.
         /// </summary>
         /// <value>The x2.</value>
-        public int X2
-        {
-            get { return _spgrRecord.RectX2; }
-        }
+        public int X2 => _spgrRecord.RectX2;
 
-        /// <summary>
+	    /// <summary>
         /// The bottom right y coordinate of this Group.
         /// </summary>
         /// <value>The y2.</value>
-        public int Y2
-        {
-            get { return _spgrRecord.RectY2; }
-        }
+        public int Y2 => _spgrRecord.RectY2;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the aggregate escher record we're bound to
         /// </summary>
         /// <returns></returns>
@@ -590,12 +575,6 @@ namespace NPOI.HSSF.UserModel
         {
             return _shapes.GetEnumerator();
         }
-        protected internal HSSFSheet Sheet
-        {
-            get
-            {
-                return _sheet;
-            }
-        }
+        protected internal HSSFSheet Sheet => _sheet;
     }
 }

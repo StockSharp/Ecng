@@ -147,20 +147,8 @@ namespace NPOI.SS.Formula.Eval.Forked
                 }
                 return _columnIndex - o._columnIndex;
             }
-            public int RowIndex
-            {
-                get
-                {
-                    return _rowIndex;
-                }
-            }
-            public int ColumnIndex
-            {
-                get
-                {
-                    return _columnIndex;
-                }
-            }
+            public int RowIndex => _rowIndex;
+	        public int ColumnIndex => _columnIndex;
         }
     }
 

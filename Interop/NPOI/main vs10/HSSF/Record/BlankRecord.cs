@@ -106,12 +106,9 @@ namespace NPOI.HSSF.Record
          * return the non static version of the id for this record.
          */
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
 
@@ -123,12 +120,9 @@ namespace NPOI.HSSF.Record
             return buffer.ToString();
         }
 
-        protected override int DataSize
-        {
-            get { return 6; }
-        }
+        protected override int DataSize => 6;
 
-        /**
+	    /**
          * called by the class that is responsible for writing this sucker.
          * Subclasses should implement this so that their data is passed back in a
          * byte array.

@@ -23,13 +23,13 @@ namespace Ecng.Reflection.Aspects
 		internal InterceptContext(object instance, InterceptTypes types, MethodBase method, IDictionary<string, object> inRefArgs)
 		{
 			if (instance == null)
-				throw new ArgumentNullException("instance");
+				throw new ArgumentNullException(nameof(instance));
 
 			if (method == null)
-				throw new ArgumentNullException("method");
+				throw new ArgumentNullException(nameof(method));
 
 			if (inRefArgs == null)
-				throw new ArgumentNullException("inRefArgs");
+				throw new ArgumentNullException(nameof(inRefArgs));
 
 			Instance = instance;
 			_types = types;
@@ -40,7 +40,7 @@ namespace Ecng.Reflection.Aspects
 		#endregion
 
 		public object Instance { get; private set; }
-		public MethodBase Method { get; private set; }
+		public MethodBase Method { get; }
 		public IDictionary<string, object> InRefArgs { get; private set; }
 
 		#region RefOutArgs
@@ -53,7 +53,7 @@ namespace Ecng.Reflection.Aspects
 			internal set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_refOutArgs = value;
 			}
@@ -63,28 +63,19 @@ namespace Ecng.Reflection.Aspects
 
 		#region ReflectedType
 
-		public Type ReflectedType
-		{
-			get { return Method.ReflectedType; }
-		}
+		public Type ReflectedType => Method.ReflectedType;
 
 		#endregion
 
 		#region MethodName
 
-		public string MethodName
-		{
-			get { return Method.Name; }
-		}
+		public string MethodName => Method.Name;
 
 		#endregion
 
 		#region HasReturnValue
 
-		public bool HasReturnValue
-		{
-			get { return Method.GetMemberType() != typeof(void); }
-		}
+		public bool HasReturnValue => Method.GetMemberType() != typeof(void);
 
 		#endregion
 	

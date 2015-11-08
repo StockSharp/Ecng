@@ -36,20 +36,14 @@ namespace NPOI.HSSF.EventUserModel.DummyRecord
          * Returns the (0 based) number of the row we are
          *  currently working on.
          */
-        public int Row
-        {
-            get { return row; }
-        }
-        /**
+        public int Row => row;
+	    /**
          * Returns the (0 based) number of the last column
          *  seen for this row. You should have alReady been
          *  called with that record.
          * This Is -1 in the case of there being no columns
          *  for the row.
          */
-        public int LastColumnNumber
-        {
-            get { return lastColumnNumber; }
-        }
+        public int LastColumnNumber => lastColumnNumber;
     }
 }

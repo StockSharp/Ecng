@@ -47,15 +47,9 @@ namespace NPOI.SS.Formula
             _sheetIndex = sheetIndex;
         }
 
-        public String SheetName
-        {
-            get
-            {
-                return _bookEvaluator.GetSheetName(_sheetIndex);
-            }
-        }
+        public String SheetName => _bookEvaluator.GetSheetName(_sheetIndex);
 
-        public ValueEval GetEvalForCell(int rowIndex, int columnIndex)
+	    public ValueEval GetEvalForCell(int rowIndex, int columnIndex)
         {
             return _bookEvaluator.EvaluateReference(this.Sheet, _sheetIndex, rowIndex, columnIndex, _tracker);
         }

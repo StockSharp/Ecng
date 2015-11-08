@@ -43,21 +43,10 @@ namespace NPOI.HSSF.EventUserModel
             this.childListener = childListener;
         }
 
-        public int NumberOfCustomFormats
-        {
-            get
-            {
-                return customFormatRecords.Count;
-            }
-        }
-        public int NumberOfExtendedFormats
-        {
-            get
-            {
-                return xfRecords.Count;
-            }
-        }
-        /**
+        public int NumberOfCustomFormats => customFormatRecords.Count;
+
+	    public int NumberOfExtendedFormats => xfRecords.Count;
+	    /**
          * Process this record ourselves, and then
          *  pass it on to our child listener
          */

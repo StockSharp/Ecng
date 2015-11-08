@@ -434,26 +434,14 @@ namespace NPOI.XSSF.UserModel
         /**
          * Returns the number of characters in this string.
          */
-        public int Length
-        {
-            get
-            {
-                return this.String.Length;
-            }
-        }
+        public int Length => this.String.Length;
 
-        /**
+	    /**
          * @return  The number of formatting Runs used.
          */
-        public int NumFormattingRuns
-        {
-            get
-            {
-                return st.sizeOfRArray();
-            }
-        }
+        public int NumFormattingRuns => st.sizeOfRArray();
 
-        /**
+	    /**
          * Gets a copy of the font used in a particular formatting Run.
          *
          * @param index     the index of the formatting run

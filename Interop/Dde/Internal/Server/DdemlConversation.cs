@@ -51,27 +51,15 @@ namespace NDde.Foundation.Server
             _Topic = topic;
         }
 
-        public IntPtr Handle
-        {
-            get { return _Handle; }
-        }
+        public IntPtr Handle => _Handle;
 
-        public string Topic
-        {
-            get { return _Topic; }
-        }
+	    public string Topic => _Topic;
 
-        public string Service
-        {
-            get { return _Service; }
-        }
+	    public string Service => _Service;
 
-        public bool IsPaused
-        {
-            get { return _Waiting > 0; }
-        }
+	    public bool IsPaused => _Waiting > 0;
 
-        public object Tag
+	    public object Tag
         {
             get { return _Tag; }
             set { _Tag = value; }

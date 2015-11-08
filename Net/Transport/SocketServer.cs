@@ -15,10 +15,10 @@
 		public SocketServer(IPAddress address, int port, Action<TcpClient> handler, Action<Exception> error)
 		{
 			if (handler == null)
-				throw new ArgumentNullException("handler");
+				throw new ArgumentNullException(nameof(handler));
 
 			if (error == null)
-				throw new ArgumentNullException("error");
+				throw new ArgumentNullException(nameof(error));
 
 			_handler = handler;
 			_error = error;

@@ -14,10 +14,7 @@
 
 		#region Item
 
-		public TKey this[TValue value]
-		{
-			get { return _values[value]; }
-		}
+		public TKey this[TValue value] => _values[value];
 
 		#endregion
 		

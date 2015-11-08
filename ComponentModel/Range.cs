@@ -57,10 +57,7 @@ namespace Ecng.ComponentModel
 		/// <value>
 		/// 	<c>true</c> if this instance has min value; otherwise, <c>false</c>.
 		/// </value>
-		public bool HasMinValue
-		{
-			get { return _min.HasValue; }
-		}
+		public bool HasMinValue => _min.HasValue;
 
 		#endregion
 
@@ -72,10 +69,7 @@ namespace Ecng.ComponentModel
 		/// <value>
 		/// 	<c>true</c> if this instance has max value; otherwise, <c>false</c>.
 		/// </value>
-		public bool HasMaxValue
-		{
-			get { return _max.HasValue; }
-		}
+		public bool HasMaxValue => _max.HasValue;
 
 		#endregion
 
@@ -165,10 +159,10 @@ namespace Ecng.ComponentModel
 		public static Range<T> Parse(string value)
 		{
 			if (value.IsEmpty())
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (value.Length < 3)
-				throw new ArgumentOutOfRangeException("value");
+				throw new ArgumentOutOfRangeException(nameof(value));
 
 			value = value.Substring(1, value.Length - 2);
 			value = value.Replace("Min:", string.Empty).Replace("Max:", string.Empty);
@@ -263,7 +257,7 @@ namespace Ecng.ComponentModel
 		public bool Contains(Range<T> range)
 		{
 			if (range == null)
-				throw new ArgumentNullException("range");
+				throw new ArgumentNullException(nameof(range));
 
 			return Contains(range.Min) && Contains(range.Max);
 		}
@@ -271,7 +265,7 @@ namespace Ecng.ComponentModel
 		public Range<T> Intersect(Range<T> range)
 		{
 			if (range == null)
-				throw new ArgumentNullException("range");
+				throw new ArgumentNullException(nameof(range));
 
 			if (Contains(range))
 				return range.Clone();
@@ -330,7 +324,7 @@ namespace Ecng.ComponentModel
 		private static void ValidateBounds(T min, T max)
 		{
 			if (min.CompareTo(max) > 0)
-				throw new ArgumentOutOfRangeException("min", "Min value {0} is more than max value {1}.".Put(min, max));
+				throw new ArgumentOutOfRangeException(nameof(min), "Min value {0} is more than max value {1}.".Put(min, max));
 		}
 	}
 }

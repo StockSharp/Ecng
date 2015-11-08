@@ -377,12 +377,9 @@ namespace Ookii.Dialogs
         /// otherwise, <see langword="false"/>.
         /// </value>
         [Browsable(false)]
-        public bool IsBusy
-        {
-            get { return _backgroundWorker.IsBusy; }
-        }
+        public bool IsBusy => _backgroundWorker.IsBusy;
 
-        /// <summary>
+	    /// <summary>
         /// Displays the progress dialog as a modeless dialog.
         /// </summary>
         /// <remarks>
@@ -565,7 +562,7 @@ namespace Ookii.Dialogs
         public void ReportProgress(int percentProgress, string text, string description, object userState)
         {
             if( percentProgress < 0 || percentProgress > 100 )
-                throw new ArgumentOutOfRangeException("percentProgress");
+                throw new ArgumentOutOfRangeException(nameof(percentProgress));
             if( _dialog == null )
 				throw new InvalidOperationException(Ecng.Xaml.Properties.Resources.ProgressDialogNotRunningError);
             _backgroundWorker.ReportProgress(percentProgress, new ProgressChangedData() { Text = text, Description = description, UserState = userState });

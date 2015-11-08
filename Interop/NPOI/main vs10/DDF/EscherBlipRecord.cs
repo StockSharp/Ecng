@@ -83,21 +83,15 @@ namespace NPOI.DDF
         /// Returns the number of bytes that are required to Serialize this record.
         /// </summary>
         /// <value>Number of bytes</value>
-        public override int RecordSize
-        {
-            get { return field_pictureData.Length + HEADER_SIZE; }
-        }
+        public override int RecordSize => field_pictureData.Length + HEADER_SIZE;
 
-        /// <summary>
+	    /// <summary>
         /// The short name for this record
         /// </summary>
         /// <value></value>
-        public override String RecordName
-        {
-            get { return "Blip"; }
-        }
+        public override String RecordName => "Blip";
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the picture data.
         /// </summary>
         /// <value>The picture data.</value>

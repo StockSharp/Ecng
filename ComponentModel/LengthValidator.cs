@@ -43,7 +43,7 @@ namespace Ecng.ComponentModel
 		/// Gets the length.
 		/// </summary>
 		/// <value>The length.</value>
-		public Range<int> Length { get; private set; }
+		public Range<int> Length { get; }
 
 		#region BaseValidator<ICollection<T>> Members
 
@@ -54,10 +54,10 @@ namespace Ecng.ComponentModel
 		public override void Validate(TCollectiom value)
 		{
 			if (value.IsNull())
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (!Length.Contains(value.Count))
-				throw new ArgumentOutOfRangeException("value");
+				throw new ArgumentOutOfRangeException(nameof(value));
 		}
 
 		#endregion
@@ -103,7 +103,7 @@ namespace Ecng.ComponentModel
 		/// Gets the length.
 		/// </summary>
 		/// <value>The length.</value>
-		public Range<int> Length { get; private set; }
+		public Range<int> Length { get; }
 
 		#region BaseValidatorAttribute Members
 

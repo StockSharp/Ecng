@@ -64,12 +64,9 @@ namespace NPOI.DDF
         /// The short name for this record
         /// </summary>
         /// <value></value>
-        public override String RecordName
-        {
-            get { return "Opt"; }
-        }
+        public override String RecordName => "Opt";
 
-        public override short Version
+	    public override short Version
         {
             get
             {

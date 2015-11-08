@@ -102,12 +102,9 @@ namespace NPOI.HSSF.Record
         /**
          * @return id of this record.
          */
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        /**
+	    /**
          * Serialize the record data into the supplied array of bytes
          *
          * @param offset offset in the <c>data</c>
@@ -137,17 +134,11 @@ namespace NPOI.HSSF.Record
         /**
          * Size of record
          */
-        protected override int DataSize
-        {
-            get
-            {
-                return 11 // 5 shorts + 1 byte
-                    + field_6_author.Length * (field_5_hasMultibyte ? 2 : 1)
-                    + (field_7_padding == null ? 0 : 1);
-            }
-        }
+        protected override int DataSize => 11 // 5 shorts + 1 byte
+                                           + field_6_author.Length * (field_5_hasMultibyte ? 2 : 1)
+                                           + (field_7_padding == null ? 0 : 1);
 
-        /**
+	    /**
          * Convert this record to string.
          * Used by BiffViewer and other utulities.
          */
@@ -229,15 +220,9 @@ namespace NPOI.HSSF.Record
         /**
  * For unit testing only!
  */
-        internal bool AuthorIsMultibyte
-        {
-            get
-            {
-                return field_5_hasMultibyte;
-            }
-        }
+        internal bool AuthorIsMultibyte => field_5_hasMultibyte;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             NoteRecord rec = new NoteRecord();
             rec.field_1_row = field_1_row;

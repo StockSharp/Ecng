@@ -76,14 +76,9 @@ namespace NPOI.OpenXml4Net.OPC.Internal
             return new MemoryPackagePartOutputStream(this);
         }
 
-        public override long Size
-        {
-            get
-            {
-                return data == null ? 0 : data.Length;
-            }
-        }
-        public override void Clear()
+        public override long Size => data == null ? 0 : data.Length;
+
+	    public override void Clear()
         {
             data = null;
         }

@@ -16,10 +16,7 @@ namespace Ecng.Forum.BusinessEntities
 
 		private static ForumFolder _root;
 
-		public ForumFolder Root
-		{
-			get { return _root ?? (_root = ReadById((long)Identities.ForumFolderRoot)); }
-		}
+		public ForumFolder Root => _root ?? (_root = ReadById((long)Identities.ForumFolderRoot));
 
 		#endregion
 
@@ -27,10 +24,7 @@ namespace Ecng.Forum.BusinessEntities
 
 		private static ForumFolder _privateAdmin;
 
-		public ForumFolder PrivateAdmin
-		{
-			get { return _privateAdmin ?? (_privateAdmin = ReadById((long)Identities.ForumFolderPrivateAdmin)); }
-		}
+		public ForumFolder PrivateAdmin => _privateAdmin ?? (_privateAdmin = ReadById((long)Identities.ForumFolderPrivateAdmin));
 
 		#endregion
 
@@ -38,10 +32,7 @@ namespace Ecng.Forum.BusinessEntities
 
 		private static ForumFolder _privateModerator;
 
-		public ForumFolder PrivateModerator
-		{
-			get { return _privateModerator ?? (_privateModerator = ReadById((long)Identities.ForumFolderPrivateModerator)); }
-		}
+		public ForumFolder PrivateModerator => _privateModerator ?? (_privateModerator = ReadById((long)Identities.ForumFolderPrivateModerator));
 
 		#endregion
 
@@ -49,10 +40,7 @@ namespace Ecng.Forum.BusinessEntities
 
 		private static ForumFolder _privateEditor;
 
-		public ForumFolder PrivateEditor
-		{
-			get { return _privateEditor ?? (_privateEditor = ReadById((long)Identities.ForumFolderPrivateEditor)); }
-		}
+		public ForumFolder PrivateEditor => _privateEditor ?? (_privateEditor = ReadById((long)Identities.ForumFolderPrivateEditor));
 
 		#endregion
 
@@ -60,10 +48,7 @@ namespace Ecng.Forum.BusinessEntities
 
 		private static ForumFolder _common;
 
-		public ForumFolder Common
-		{
-			get { return _common ?? (_common = ReadById((long)Identities.ForumFolderCommon)); }
-		}
+		public ForumFolder Common => _common ?? (_common = ReadById((long)Identities.ForumFolderCommon));
 
 		#endregion
 
@@ -71,10 +56,7 @@ namespace Ecng.Forum.BusinessEntities
 
 		private static ForumFolder _news;
 
-		public ForumFolder News
-		{
-			get { return _news ?? (_news = ReadById((long)Identities.ForumFolderNews)); }
-		}
+		public ForumFolder News => _news ?? (_news = ReadById((long)Identities.ForumFolderNews));
 
 		#endregion
 
@@ -82,10 +64,7 @@ namespace Ecng.Forum.BusinessEntities
 
 		private static ForumFolder _articles;
 
-		public ForumFolder Articles
-		{
-			get { return _articles ?? (_articles = ReadById((long)Identities.ForumFolderArticles)); }
-		}
+		public ForumFolder Articles => _articles ?? (_articles = ReadById((long)Identities.ForumFolderArticles));
 
 		#endregion
 	}

@@ -42,12 +42,9 @@ namespace NPOI.HSSF.Record.Chart
         BitField fNotShowInt = BitFieldFactory.GetInstance(0x10);
         BitField fNotShowBrd = BitFieldFactory.GetInstance(0x20);
 
-        protected override int DataSize
-        {
-            get { return 4 + 4 + 2 + 2 + 2 + 2 + 4; }
-        }
+        protected override int DataSize => 4 + 4 + 2 + 2 + 2 + 2 + 4;
 
-        public MarkerFormatRecord()
+	    public MarkerFormatRecord()
         {
         }
 
@@ -103,11 +100,9 @@ namespace NPOI.HSSF.Record.Chart
             record.Size = this.Size;
             return record;
         }
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        /// <summary>
+        public override short Sid => sid;
+
+	    /// <summary>
         /// the border color of the data marker.
         /// </summary>
         public int RGBFore

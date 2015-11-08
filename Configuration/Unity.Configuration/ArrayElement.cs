@@ -46,12 +46,9 @@ namespace Microsoft.Practices.Unity.Configuration
         /// Values used to calculate the contents of the array.
         /// </summary>
         [ConfigurationProperty(ValuesPropertyName, IsDefaultCollection = true)]
-        public ParameterValueElementCollection Values
-        {
-            get { return (ParameterValueElementCollection)base[ValuesPropertyName]; }
-        }
+        public ParameterValueElementCollection Values => (ParameterValueElementCollection)base[ValuesPropertyName];
 
-        /// <summary>
+	    /// <summary>
         /// Write the contents of this element to the given <see cref="XmlWriter"/>.
         /// </summary>
         /// <remarks>The caller of this method has already written the start element tag before

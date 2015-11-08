@@ -16,12 +16,12 @@
 			: base(owner, name)
 		{
 			if (enumType == null)
-				throw new ArgumentNullException("enumType");
+				throw new ArgumentNullException(nameof(enumType));
 
 			EnumType = enumType;
 		}
 
-		public Type EnumType { get; private set; }
+		public Type EnumType { get; }
 
 		protected override IEnumerable ExecuteSelect(DataSourceSelectArguments arguments)
 		{

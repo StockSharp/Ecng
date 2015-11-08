@@ -32,12 +32,9 @@ namespace NPOI.HSSF.Record.Aggregates.Chart
         private AxesAggregate axes = null;
         private List<CRTAggregate> crtList = new List<CRTAggregate>();
 
-        public AxisParentRecord AxisParent
-        {
-            get { return axisPraent; }
-        }
+        public AxisParentRecord AxisParent => axisPraent;
 
-        public AxisParentAggregate(RecordStream rs, ChartRecordAggregate container)
+	    public AxisParentAggregate(RecordStream rs, ChartRecordAggregate container)
             : base(RuleName_AXISPARENT, container)
         {
             axisPraent = (AxisParentRecord)rs.GetNext();

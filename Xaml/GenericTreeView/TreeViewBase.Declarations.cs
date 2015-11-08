@@ -324,13 +324,9 @@ namespace Hardcodet.Wpf.GenericTreeView
     /// and <see cref="ClearCollapsedNodes"/> dependency
     /// properties.
     /// </summary>
-    public virtual bool ClearCollapsedNodesResolved
-    {
-      get { return IsLazyLoading && ClearCollapsedNodes; }
-    }
+    public virtual bool ClearCollapsedNodesResolved => IsLazyLoading && ClearCollapsedNodes;
 
-
-    /// <summary>
+	  /// <summary>
     /// A property wrapper for the <see cref="ClearCollapsedNodesProperty"/>
     /// dependency property:<br/>
     /// If enabled along with lazy loading, the tree automatically

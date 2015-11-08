@@ -67,15 +67,9 @@ namespace NPOI.SS.UserModel
             value = val;
         }
 
-        public int Value
-        {
-            get
-            {
-                return value;
-            }
-        }
+        public int Value => value;
 
-        public byte ByteValue
+	    public byte ByteValue
         {
             get
             {

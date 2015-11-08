@@ -24,17 +24,11 @@ namespace NPOI.HPSF
             _dwHighDateTime = high;
         }
 
-        public long High
-        {
-            get { return _dwHighDateTime; }
-        }
+        public long High => _dwHighDateTime;
 
-        public long Low
-        {
-            get { return _dwLowDateTime; }
-        }
+	    public long Low => _dwLowDateTime;
 
-        public byte[] ToByteArray()
+	    public byte[] ToByteArray()
         {
             byte[] result = new byte[SIZE];
             LittleEndian.PutInt(result, 0 * LittleEndian.INT_SIZE, _dwLowDateTime);

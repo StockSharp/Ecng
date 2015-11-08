@@ -11,10 +11,7 @@ namespace Ecng.Web
 	{
 		#region IHttpHandler Members
 
-		bool IHttpHandler.IsReusable
-		{
-			get { return false; }
-		}
+		bool IHttpHandler.IsReusable => false;
 
 		void IHttpHandler.ProcessRequest(HttpContext context)
 		{

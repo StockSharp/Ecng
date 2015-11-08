@@ -89,20 +89,8 @@
             return spContainer;
         }
 
-        public override EscherContainerRecord SpContainer
-        {
-            get
-            {
-                return spContainer;
-            }
-        }
+        public override EscherContainerRecord SpContainer => spContainer;
 
-        public override ObjRecord ObjRecord
-        {
-            get
-            {
-                return objRecord;
-            }
-        }
+	    public override ObjRecord ObjRecord => objRecord;
     }
 }

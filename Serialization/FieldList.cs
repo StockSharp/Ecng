@@ -45,7 +45,7 @@
 				var field = TryGet(name);
 
 				if (field == null)
-					throw new ArgumentException("Item with name '{0}' doesn't exists.".Put(name), "name");
+					throw new ArgumentException("Item with name '{0}' doesn't exists.".Put(name), nameof(name));
 
 				return field;
 			}
@@ -148,7 +148,7 @@
 		protected override bool OnAdding(Field item)
 		{
 			if (Contains(item.Name))
-				throw new ArgumentException("Item with name '{0}' already added.".Put(item.Name), "item");
+				throw new ArgumentException("Item with name '{0}' already added.".Put(item.Name), nameof(item));
 
 			ResetCachedStates();
 			_innerDictionary.Add(item.Name, item);
@@ -173,7 +173,7 @@
 		protected override bool OnInserting(int index, Field item)
 		{
 			if (Contains(item.Name))
-				throw new ArgumentException("Item with name '{0}' already added.".Put(item.Name), "item");
+				throw new ArgumentException("Item with name '{0}' already added.".Put(item.Name), nameof(item));
 
 			ResetCachedStates();
 			_innerDictionary.Add(item.Name, item);

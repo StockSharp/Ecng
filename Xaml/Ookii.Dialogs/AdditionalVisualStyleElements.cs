@@ -38,22 +38,15 @@ namespace Ookii.Dialogs
             /// <value>
             /// A <see cref="VisualStyleElement"/> representing the style for the main instruction.
             /// </value>
-            public static VisualStyleElement MainInstruction
-            {
-                get { return _mainInstruction ?? (_mainInstruction = VisualStyleElement.CreateElement(_className, 1, 0)); }
-            }
+            public static VisualStyleElement MainInstruction => _mainInstruction ?? (_mainInstruction = VisualStyleElement.CreateElement(_className, 1, 0));
 
-            /// <summary>
+	        /// <summary>
             /// Gets a visual style element that represents the body text in a dialog box.
             /// </summary>
             /// <value>
             /// A <see cref="VisualStyleElement"/> representing the style for the body text.
             /// </value>
-            public static VisualStyleElement BodyText
-            {
-                get { return _bodyText ?? (_bodyText = VisualStyleElement.CreateElement(_className, 4, 0)); }
-            }
-	
+            public static VisualStyleElement BodyText => _bodyText ?? (_bodyText = VisualStyleElement.CreateElement(_className, 4, 0));
         }
 
         /// <summary>
@@ -80,21 +73,15 @@ namespace Ookii.Dialogs
             /// <value>
             /// A <see cref="VisualStyleElement"/> representing the style for the primary panel.
             /// </value>
-            public static VisualStyleElement PrimaryPanel
-            {
-                get { return _primaryPanel ?? (_primaryPanel = VisualStyleElement.CreateElement(_className, 1, 0)); }
-            }
+            public static VisualStyleElement PrimaryPanel => _primaryPanel ?? (_primaryPanel = VisualStyleElement.CreateElement(_className, 1, 0));
 
-            /// <summary>
+	        /// <summary>
             /// Gets a visual style element that represents the secondary panel of a task dialog.
             /// </summary>
             /// <value>
             /// A <see cref="VisualStyleElement"/> representing the style for the secondary panel.
             /// </value>
-            public static VisualStyleElement SecondaryPanel
-            {
-                get { return _secondaryPanel ?? (_secondaryPanel = VisualStyleElement.CreateElement(_className, 8, 0)); }
-            }
+            public static VisualStyleElement SecondaryPanel => _secondaryPanel ?? (_secondaryPanel = VisualStyleElement.CreateElement(_className, 8, 0));
         }
     }
 }

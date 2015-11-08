@@ -33,20 +33,9 @@ namespace NPOI.SS.Formula
             _workbookName = workbookName;
             _sheetName = sheetName;
         }
-        public String WorkbookName
-        {
-            get
-            {
-                return _workbookName;
-            }
-        }
-        public String SheetName
-        {
-            get
-            {
-                return _sheetName;
-            }
-        }
+        public String WorkbookName => _workbookName;
+
+	    public String SheetName => _sheetName;
     }
 
     public class ExternalSheetRange : ExternalSheet
@@ -58,20 +47,9 @@ namespace NPOI.SS.Formula
             this._lastSheetName = lastSheetName;
         }
 
-        public String FirstSheetName
-        {
-            get
-            {
-                return SheetName;
-            }
-        }
-        public String LastSheetName
-        {
-            get
-            {
-                return _lastSheetName;
-            }
-        }
+        public String FirstSheetName => SheetName;
+
+	    public String LastSheetName => _lastSheetName;
     }
 
     /**
@@ -135,26 +113,8 @@ namespace NPOI.SS.Formula
             _nameNumber = nameNumber;
             _ix = ix;
         }
-        public String Name
-        {
-            get
-            {
-                return _nameName;
-            }
-        }
-        public int Number
-        {
-            get
-            {
-                return _nameNumber;
-            }
-        }
-        public int Ix
-        {
-            get
-            {
-                return _ix;
-            }
-        }
+        public String Name => _nameName;
+	    public int Number => _nameNumber;
+	    public int Ix => _ix;
     }
 }

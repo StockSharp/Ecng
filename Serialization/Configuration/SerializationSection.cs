@@ -6,12 +6,6 @@
 	{
 		[ConfigurationProperty("fieldFactories", IsDefaultCollection = false)]
 		[ConfigurationCollection(typeof(ConfigFieldFactoryCollection), AddItemName = "add", ClearItemsName = "clear", RemoveItemName = "remove")]
-		public ConfigFieldFactoryCollection FieldFactories
-		{
-			get
-			{
-				return (ConfigFieldFactoryCollection)base["fieldFactories"];
-			}
-		}
+		public ConfigFieldFactoryCollection FieldFactories => (ConfigFieldFactoryCollection)base["fieldFactories"];
 	}
 }

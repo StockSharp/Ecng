@@ -15,7 +15,7 @@ namespace Ecng.Serialization
 		public SerializationItem(Field field, object value)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			Field = field;
 			Value = value;
@@ -23,7 +23,7 @@ namespace Ecng.Serialization
 
 		#endregion
 
-		public Field Field { get; private set; }
+		public Field Field { get; }
 
 		#region Value
 

@@ -34,9 +34,6 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// <summary>
         /// The constructor this object wraps.
         /// </summary>
-        public MethodInfo Method
-        {
-            get { return MemberInfo; }
-        }
+        public MethodInfo Method => MemberInfo;
     }
 }

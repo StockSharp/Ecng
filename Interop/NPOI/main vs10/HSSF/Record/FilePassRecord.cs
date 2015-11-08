@@ -125,14 +125,9 @@ namespace NPOI.HSSF.Record
             out1.Write(_saltHash);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 54;
-            }
-        }
-        public byte[] DocId
+        protected override int DataSize => 54;
+
+	    public byte[] DocId
         {
             get
             {
@@ -144,29 +139,13 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public byte[] SaltData
-        {
-            get
-            {
-                return _saltData;
-            }
-        }
+        public byte[] SaltData => _saltData;
 
-        public byte[] SaltHash
-        {
-            get
-            {
-                return _saltHash;
-            }
-        }
+	    public byte[] SaltHash => _saltHash;
 
+	    public override short Sid => sid;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-
-        public override Object Clone()
+	    public override Object Clone()
         {
             // currently immutable
             return this;

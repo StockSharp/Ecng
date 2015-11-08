@@ -67,20 +67,15 @@ namespace NPOI.POIFS.FileSystem
         /// Gets the path.
         /// </summary>
         /// <value>The path.</value>
-        public string Path
-        {
-            get { return this.path.ToString(); }
-        }
-        /// <summary>
+        public string Path => this.path.ToString();
+
+	    /// <summary>
         /// Gets the name.
         /// </summary>
         /// <value>The name.</value>
-        public string Name
-        {
-            get { return this.name; }
-        }
+        public string Name => this.name;
 
-        /// <summary>
+	    /// <summary>
         /// equality. Two DocumentDescriptor instances are equal if they
         /// have equal paths and names
         /// </summary>

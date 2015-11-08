@@ -121,19 +121,12 @@ namespace NPOI.HSSF.Model
         /// shape.
         /// </summary>
         /// <value></value>
-        public override EscherContainerRecord SpContainer
-        {
-           get{ return spContainer;}
-        }
+        public override EscherContainerRecord SpContainer => spContainer;
 
-        /// <summary>
+	    /// <summary>
         /// The object record that is associated with this shape.
         /// </summary>
         /// <value></value>
-        public override ObjRecord ObjRecord
-        {
-            get { return objRecord; }
-        }
-
+        public override ObjRecord ObjRecord => objRecord;
     }
 }

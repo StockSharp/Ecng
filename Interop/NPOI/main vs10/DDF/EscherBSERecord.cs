@@ -176,12 +176,9 @@ namespace NPOI.DDF
         /// The short name for this record
         /// </summary>
         /// <value></value>
-        public override String RecordName
-        {
-            get { return "BSE"; }
-        }
+        public override String RecordName => "BSE";
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the expected blip type under windows (failure to match this blip type will result in
         /// Excel converting to this format).
         /// </summary>

@@ -193,22 +193,11 @@ namespace NPOI.HSSF.UserModel
         /// <summary>
         /// the Workbook that this Cell is bound to
         /// </summary>
-        public InternalWorkbook BoundWorkbook
-        {
-            get
-            {
-                return book.Workbook;
-            }
-        }
+        public InternalWorkbook BoundWorkbook => book.Workbook;
 
-        public ISheet Sheet
-        {
-            get
-            {
-                return this._sheet;
-            }
-        }
-        /// <summary>
+	    public ISheet Sheet => this._sheet;
+
+	    /// <summary>
         /// the HSSFRow this cell belongs to
         /// </summary>
         public IRow Row
@@ -398,14 +387,9 @@ namespace NPOI.HSSF.UserModel
         /// Get the cells type (numeric, formula or string)
         /// </summary>
         /// <value>The type of the cell.</value>
-        public CellType CellType
-        {
-            get
-            {
-                return cellType;
-            }
-        }
-        private String ConvertCellValueToString()
+        public CellType CellType => cellType;
+
+	    private String ConvertCellValueToString()
         {
 
             switch (cellType)
@@ -1026,12 +1010,9 @@ namespace NPOI.HSSF.UserModel
         /// Should only be used by HSSFSheet and friends.  Returns the low level CellValueRecordInterface record
         /// </summary>
         /// <value>the cell via the low level api.</value>
-        public CellValueRecordInterface CellValueRecord
-        {
-            get { return _record; }
-        }
+        public CellValueRecordInterface CellValueRecord => _record;
 
-        /// <summary>
+	    /// <summary>
         /// Checks the bounds.
         /// </summary>
         /// <param name="cellIndex">The cell num.</param>
@@ -1203,14 +1184,9 @@ namespace NPOI.HSSF.UserModel
         /// Gets the index of the column.
         /// </summary>
         /// <value>The index of the column.</value>
-        public int ColumnIndex
-        {
-            get
-            {
-                return _record.Column & 0xFFFF;
-            }
-        }
-        /**
+        public int ColumnIndex => _record.Column & 0xFFFF;
+
+	    /**
          * Updates the cell record's idea of what
          *  column it belongs in (0 based)
          * @param num the new cell number
@@ -1223,14 +1199,9 @@ namespace NPOI.HSSF.UserModel
         /// Gets the (zero based) index of the row containing this cell
         /// </summary>
         /// <value>The index of the row.</value>
-        public int RowIndex
-        {
-            get
-            {
-                return _record.Row;
-            }
-        }
-        /// <summary>
+        public int RowIndex => _record.Row;
+
+	    /// <summary>
         /// Get or set hyperlink associated with this cell
         /// If the supplied hyperlink is null on setting, the hyperlink for this cell will be removed.
         /// </summary>

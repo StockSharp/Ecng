@@ -28,7 +28,7 @@ namespace Ecng.ComponentModel
 			where T : ProviderBase
 		{
 			if (settings == null)
-				throw new ArgumentNullException("settings");
+				throw new ArgumentNullException(nameof(settings));
 
 			var providerType = settings.Type.To<Type>();
 
@@ -47,10 +47,10 @@ namespace Ecng.ComponentModel
 		public static ProviderBase Initialize(this ProviderSettings providerSettings, Type providerType)
 		{
 			if (providerSettings == null)
-				throw new ArgumentNullException("providerSettings");
+				throw new ArgumentNullException(nameof(providerSettings));
 
 			if (providerType == null)
-				throw new ArgumentNullException("providerType");
+				throw new ArgumentNullException(nameof(providerType));
 
 			var provider = providerType.CreateInstance<ProviderBase>();
 			provider.Initialize(providerSettings.Name, providerSettings.Parameters);
@@ -90,10 +90,10 @@ namespace Ecng.ComponentModel
 		public static void Initialize(this ProviderBase provider, NameValueCollection config, bool removeFields)
 		{
 			if (provider == null)
-				throw new ArgumentNullException("provider");
+				throw new ArgumentNullException(nameof(provider));
 
 			if (config == null)
-				throw new ArgumentNullException("config");
+				throw new ArgumentNullException(nameof(config));
 
 			var fields = provider.GetType().GetSchema().Fields.SerializableFields;
 			var source = new SerializationItemCollection();

@@ -24,14 +24,9 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         {
             this.document = document;
         }
-        public CT_Document Document
-        {
-            get
-            {
-                return this.document;
-            }
-        }
-        public void Save(Stream stream)
+        public CT_Document Document => this.document;
+
+	    public void Save(Stream stream)
         {
             using (StreamWriter sw = new StreamWriter(stream))
             {

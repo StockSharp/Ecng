@@ -195,14 +195,8 @@ namespace NPOI.XWPF.UserModel
             return null;
         }
 
-        public int NumberOfStyles
-        {
-            get
-            {
-                return listStyle.Count;
-            }
-        }
-        /**
+        public int NumberOfStyles => listStyle.Count;
+	    /**
          * Get the styles which are related to the parameter style and their relatives
          * this method can be used to copy all styles from one document to another document 
          * @param style
@@ -343,13 +337,7 @@ namespace NPOI.XWPF.UserModel
         /**
          * Get the definition of all the Latent Styles
          */
-        public XWPFLatentStyles LatentStyles
-        {
-            get
-            {
-                return latentStyles;
-            }
-        }
+        public XWPFLatentStyles LatentStyles => latentStyles;
     }
 
 }

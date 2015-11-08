@@ -530,12 +530,9 @@ namespace NPOI.Util
         /// <summary>
         /// the number of elements in this IntList
         /// </summary>
-        public int Count
-        {
-            get { return _limit; }
-        }
+        public int Count => _limit;
 
-        /// <summary>
+	    /// <summary>
         /// Returns an array Containing all of the elements in this list in
         /// proper sequence.  Obeys the general contract of the
         /// Collection.ToArray method.

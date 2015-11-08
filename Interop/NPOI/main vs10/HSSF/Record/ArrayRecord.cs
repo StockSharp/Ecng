@@ -58,53 +58,25 @@ namespace NPOI.HSSF.Record
             _field3notUsed = 0;
             _formula = formula;
         }
-        public bool IsAlwaysRecalculate
-        {
-            get
-            {
-                return (_options & OPT_ALWAYS_RECALCULATE) != 0;
-            }
-        }
-        public bool IsCalculateOnOpen
-        {
-            get
-            {
-                return (_options & OPT_CALCULATE_ON_OPEN) != 0;
-            }
-        }
+        public bool IsAlwaysRecalculate => (_options & OPT_ALWAYS_RECALCULATE) != 0;
 
-        public Ptg[] FormulaTokens
-        {
-            get
-            {
-                return _formula.Tokens;
-            }
-        }
+	    public bool IsCalculateOnOpen => (_options & OPT_CALCULATE_ON_OPEN) != 0;
 
-        protected override int ExtraDataSize
-        {
-            get
-            {
-                return 2 + 4
-                    + _formula.EncodedSize;
-            }
-        }
-        protected override void SerializeExtraData(ILittleEndianOutput out1)
+	    public Ptg[] FormulaTokens => _formula.Tokens;
+
+	    protected override int ExtraDataSize => 2 + 4
+	                                            + _formula.EncodedSize;
+
+	    protected override void SerializeExtraData(ILittleEndianOutput out1)
         {
             out1.WriteShort(_options);
             out1.WriteInt(_field3notUsed);
             _formula.Serialize(out1);
         }
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+        public override short Sid => sid;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(GetType().Name).Append(" [ARRAY]\n");

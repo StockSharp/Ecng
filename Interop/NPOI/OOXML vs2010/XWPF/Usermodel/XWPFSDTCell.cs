@@ -40,13 +40,6 @@ namespace NPOI.XWPF.UserModel
         }
 
 
-        public override ISDTContent Content
-        {
-            get
-            {
-                return cellContent;
-            }
-        }
-
+        public override ISDTContent Content => cellContent;
     }
 }

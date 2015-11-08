@@ -162,17 +162,11 @@ namespace NPOI.HSSF.Record
 		    out1.WriteInt(DVRecNo);
         }
 
-        protected override int DataSize
-        {
-            get { return 18; }
-        }
+        protected override int DataSize => 18;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             DVALRecord rec = new DVALRecord();
             rec.field_1_options = field_1_options;

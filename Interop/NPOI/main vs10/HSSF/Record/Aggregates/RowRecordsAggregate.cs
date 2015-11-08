@@ -266,31 +266,13 @@ namespace NPOI.HSSF.Record.Aggregates
             fr.Column=((short)col);
             return new FormulaRecordAggregate(fr, null, _sharedValueManager);
         }
-        public int PhysicalNumberOfRows
-        {
-            get
-            {
-                return _rowRecords.Count;
-            }
-        }
+        public int PhysicalNumberOfRows => _rowRecords.Count;
 
-        public int FirstRowNum
-        {
-            get
-            {
-                return firstrow;
-            }
-        }
+	    public int FirstRowNum => firstrow;
 
-        public int LastRowNum
-        {
-            get
-            {
-                return lastrow;
-            }
-        }
+	    public int LastRowNum => lastrow;
 
-        /** Returns the number of row blocks.
+	    /** Returns the number of row blocks.
          * <p/>The row blocks are goupings of rows that contain the DBCell record
          * after them
          */

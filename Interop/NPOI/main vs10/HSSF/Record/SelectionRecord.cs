@@ -168,22 +168,12 @@ namespace NPOI.HSSF.Record
                 field_6_refs[i].Serialize(out1);
             }
         }
-        protected override int DataSize
-        {
-            get
-            {
-                return 9 // 1 byte + 4 shorts 
-                    + CellRangeAddress8Bit.GetEncodedSize(field_6_refs.Length);
-            }
-        }
+        protected override int DataSize => 9 // 1 byte + 4 shorts 
+                                           + CellRangeAddress8Bit.GetEncodedSize(field_6_refs.Length);
 
+	    public override short Sid => sid;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-
-        public override Object Clone()
+	    public override Object Clone()
         {
             SelectionRecord rec = new SelectionRecord(field_2_row_active_cell, field_3_col_active_cell);
             rec.field_1_pane = field_1_pane;

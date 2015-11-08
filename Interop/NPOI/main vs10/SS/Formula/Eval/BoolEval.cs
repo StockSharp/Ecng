@@ -58,21 +58,13 @@ namespace NPOI.SS.Formula.Eval
             this.value = value;
         }
 
-        public bool BooleanValue
-        {
-            get { return value; }
-        }
+        public bool BooleanValue => value;
 
-        public double NumberValue
-        {
-            get{return value ? 1 : 0;}
-        }
+	    public double NumberValue => value ? 1 : 0;
 
-        public String StringValue
-        {
-            get { return value ? "TRUE" : "FALSE"; }
-        }
-        public override String ToString()
+	    public String StringValue => value ? "TRUE" : "FALSE";
+
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder(64);
             sb.Append(GetType().Name).Append(" [");

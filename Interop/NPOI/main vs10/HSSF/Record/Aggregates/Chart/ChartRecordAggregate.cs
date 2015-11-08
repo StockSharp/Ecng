@@ -549,10 +549,7 @@ namespace NPOI.HSSF.Record.Aggregates.Chart
                 }
                 return false;
             }
-            public int Count
-            {
-                get { return blockList.Count; }
-            }
+            public int Count => blockList.Count;
         }
     }
 }

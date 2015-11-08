@@ -58,28 +58,13 @@ namespace NPOI.HSSF.Util
             return _d1 ^ _d2 ^ _d3 ^ _d4.GetHashCode ();
         }
 
-        public int D1
-        {
-            get{
-            return _d1;
-            }
-        }
+        public int D1 => _d1;
 
-        public int D2
-        {
-            get{
-            return _d2;
-            }
-        }
+	    public int D2 => _d2;
 
-        public int D3
-        {
-            get{
-            return _d3;
-            }
-        }
+	    public int D3 => _d3;
 
-        public long D4
+	    public long D4
         {
             get{
                 //return _d4;

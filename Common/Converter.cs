@@ -104,7 +104,7 @@
 		public static string GetHost(this EndPoint endPoint)
 		{
 			if (endPoint == null)
-				throw new ArgumentNullException("endPoint");
+				throw new ArgumentNullException(nameof(endPoint));
 
 			if (endPoint is IPEndPoint)
 			{
@@ -121,7 +121,7 @@
 		public static int GetPort(this EndPoint endPoint)
 		{
 			if (endPoint == null)
-				throw new ArgumentNullException("endPoint");
+				throw new ArgumentNullException(nameof(endPoint));
 
 			if (endPoint is IPEndPoint)
 			{
@@ -144,14 +144,14 @@
 		public static object To(this object value, Type destinationType)
 		{
 			if (destinationType == null)
-				throw new ArgumentNullException("destinationType");
+				throw new ArgumentNullException(nameof(destinationType));
 
 			try
 			{
 				if (value == null)
 				{
 					if ((destinationType.IsValueType || destinationType.IsEnum()) && !destinationType.IsNullable())
-						throw new ArgumentNullException("value");
+						throw new ArgumentNullException(nameof(value));
 
 					return null;
 				}
@@ -234,11 +234,11 @@
 								break;
 							}
 							default:
-								throw new ArgumentException("Can't convert IPAddress to long.", "value");
+								throw new ArgumentException("Can't convert IPAddress to long.", nameof(value));
 						}
 					}
 					else
-						throw new ArgumentException("Can't convert IPAddress to type '{0}'.".Put(destinationType), "value");
+						throw new ArgumentException("Can't convert IPAddress to type '{0}'.".Put(destinationType), nameof(value));
 				}
 				else if (destinationType == typeof(IPAddress))
 				{
@@ -249,7 +249,7 @@
 					else if (value is long)
 						retVal = new IPAddress((long)value);
 					else
-						throw new ArgumentException("Can't convert type '{0}' to IPAddress.".Put(destinationType), "value");
+						throw new ArgumentException("Can't convert type '{0}' to IPAddress.".Put(destinationType), nameof(value));
 				}
 				else if (value is string && typeof(EndPoint).IsAssignableFrom(destinationType))
 				{
@@ -329,7 +329,7 @@
 									if (type != null)
 										_typeCache.Add(key, type);
 									else
-										throw new ArgumentException("Type {0} doesn't exists.".Put(value), "value");
+										throw new ArgumentException("Type {0} doesn't exists.".Put(value), nameof(value));
 								}
 							}
 						}
@@ -502,7 +502,7 @@
 						retVal = bytes;
 					}
 					else
-						throw new ArgumentException("Can't convert '{0}' to byte array.".Put(sourceType), "value");
+						throw new ArgumentException("Can't convert '{0}' to byte array.".Put(sourceType), nameof(value));
 				}
 				else if (value is byte[])
 				{
@@ -561,7 +561,7 @@
 						return new decimal(bits);
 					}
 					else
-						throw new ArgumentException("Can't convert byte array to '{0}'.".Put(destinationType), "value");
+						throw new ArgumentException("Can't convert byte array to '{0}'.".Put(destinationType), nameof(value));
 
 					if (enumType != null)
 						retVal = Enum.ToObject(enumType, retVal);
@@ -790,10 +790,10 @@
 		public static void AddAlias(Type type, string name)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			_aliases.Add(name, type);
 
@@ -817,10 +817,10 @@
 		public static T DoInCulture<T>(this CultureInfo cultureInfo, Func<T> func)
 		{
 			if (cultureInfo == null)
-				throw new ArgumentNullException("cultureInfo");
+				throw new ArgumentNullException(nameof(cultureInfo));
 
 			if (func == null)
-				throw new ArgumentNullException("func");
+				throw new ArgumentNullException(nameof(func));
 
 			var prevCi = Thread.CurrentThread.CurrentCulture;
 			Thread.CurrentThread.CurrentCulture = cultureInfo;
@@ -838,7 +838,7 @@
 		public static void DoInCulture(this CultureInfo cultureInfo, Action action)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			cultureInfo.DoInCulture<object>(() =>
 			{
@@ -865,7 +865,7 @@
 			const string digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 			if (radix < 2 || radix > digits.Length)
-				throw new ArgumentOutOfRangeException("radix", radix, "The radix must be >= 2 and <= {0}.".Put(digits.Length));
+				throw new ArgumentOutOfRangeException(nameof(radix), radix, "The radix must be >= 2 and <= {0}.".Put(digits.Length));
 
 			if (decimalNumber == 0)
 				return "0";

@@ -216,28 +216,16 @@ namespace NPOI.OpenXml4Net.OPC.Internal
          *
          * @return The subtype of this content type.
          */
-        public String SubType
-        {
-            get
-            {
-                return this.subType;
-            }
-        }
+        public String SubType => this.subType;
 
-        /**
+	    /**
          * Get the type.
          *
          * @return The type of this content type.
          */
-        public String Type
-        {
-            get
-            {
-                return this.type;
-            }
-        }
+        public String Type => this.type;
 
-        /**
+	    /**
          * Does this content type have any parameters associated with it?
          */
         public bool HasParameters()

@@ -48,24 +48,10 @@ namespace NPOI.POIFS.EventFileSystem
         private POIFSDocument document;
         private string name;
 
-        public virtual POIFSDocumentPath Path
-        {
-            get { return path; }
-        }
-        public virtual POIFSDocument Document
-        {
-            get { return document; }
-        }
-        public virtual DocumentInputStream Stream
-        {
-            get { 
-                return new DocumentInputStream(this.document); 
-            }
-        }
-        public virtual string Name
-        {
-            get { return name; }
-        }
+        public virtual POIFSDocumentPath Path => path;
+	    public virtual POIFSDocument Document => document;
+	    public virtual DocumentInputStream Stream => new DocumentInputStream(this.document);
+	    public virtual string Name => name;
     }
 
     public delegate void POIFSReaderEventHandler(object sender, POIFSReaderEventArgs e);

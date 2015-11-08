@@ -537,14 +537,9 @@ namespace NPOI.HPSF
         /// shouldn't.
         /// </summary>
         /// <value>The number of properties in this section.</value>
-        public override int PropertyCount
-        {
-            get { return preprops.Count; }
-        }
+        public override int PropertyCount => preprops.Count;
 
-
-
-        /// <summary>
+	    /// <summary>
         /// Returns this section's properties.
         /// </summary>
         /// <value>This section's properties.</value>

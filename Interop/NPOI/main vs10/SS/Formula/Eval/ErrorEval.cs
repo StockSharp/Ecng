@@ -93,18 +93,10 @@ namespace NPOI.SS.Formula.Eval
             if (!evals.ContainsKey(error))
                 evals.Add(error, this);
         }
-        public int ErrorCode
-        {
-            get{return _error.LongCode;}
-        }
-        public String ErrorString
-        {
-            get
-            {
-                return _error.String;
-            }
-        }
-        public override String ToString()
+        public int ErrorCode => _error.LongCode;
+	    public String ErrorString => _error.String;
+
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder(64);
             sb.Append(GetType().Name).Append(" [");

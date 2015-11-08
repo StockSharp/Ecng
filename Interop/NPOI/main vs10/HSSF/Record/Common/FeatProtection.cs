@@ -83,15 +83,9 @@ namespace NPOI.HSSF.Record.Common
             out1.Write(securityDescriptor);
         }
 
-        public int DataSize
-        {
-            get
-            {
-                return 4 + 4 + StringUtil.GetEncodedSize(title) + securityDescriptor.Length;
-            }
-        }
+        public int DataSize => 4 + 4 + StringUtil.GetEncodedSize(title) + securityDescriptor.Length;
 
-        public int GetPasswordVerifier()
+	    public int GetPasswordVerifier()
         {
             return passwordVerifier;
         }

@@ -35,14 +35,9 @@ namespace NPOI.HSSF.UserModel
             _hs = hs;
         }
 
-        public HSSFSheet HSSFSheet
-        {
-            get
-            {
-                return _hs;
-            }
-        }
-        public IEvaluationCell GetCell(int rowIndex, int columnIndex)
+        public HSSFSheet HSSFSheet => _hs;
+
+	    public IEvaluationCell GetCell(int rowIndex, int columnIndex)
         {
             HSSFRow row = (HSSFRow)_hs.GetRow(rowIndex);
             if (row == null)

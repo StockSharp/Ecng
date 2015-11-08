@@ -50,79 +50,51 @@ namespace NDde.Advanced.Monitor
         /// <summary>
         /// This gets the service name associated with the link.
         /// </summary>
-        public string Service
-        {
-            get { return _DdemlObject.Service; }
-        }
+        public string Service => _DdemlObject.Service;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the topic name associated with the link.
         /// </summary>
-        public string Topic
-        {
-            get { return _DdemlObject.Topic; }
-        }
+        public string Topic => _DdemlObject.Topic;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the item name associated with the link.
         /// </summary>
-        public string Item
-        {
-            get { return _DdemlObject.Item; }
-        }
+        public string Item => _DdemlObject.Item;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the format of the data associated with the link.
         /// </summary>
-        public int Format
-        {
-            get { return _DdemlObject.Format; }
-        }
+        public int Format => _DdemlObject.Format;
 
-        /// <summary>
+	    /// <summary>
         /// This gets a bool indicating whether the link is hot.
         /// </summary>
-        public bool IsHot
-        {
-            get { return _DdemlObject.IsHot; }
-        }
+        public bool IsHot => _DdemlObject.IsHot;
 
-        /// <summary>
+	    /// <summary>
         /// This gets a bool indicating whether the link is being established.
         /// </summary>
         /// <remarks>
         /// The value returned by this property will be true if the conversation is being established.  If the conversation
         /// is being terminated then the value will be false.
         /// </remarks>
-        public bool IsEstablished
-        {
-            get { return _DdemlObject.IsEstablished; }
-        }
+        public bool IsEstablished => _DdemlObject.IsEstablished;
 
-        /// <summary>
+	    /// <summary>
         /// This gets a bool indicating whether the link was terminated by the server.
         /// </summary>
-        public bool IsServerInitiated
-        {
-            get { return _DdemlObject.IsServerInitiated; }
-        }
+        public bool IsServerInitiated => _DdemlObject.IsServerInitiated;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the handle to the client application associated with the link.
         /// </summary>
-        public IntPtr ClientHandle
-        {
-            get { return _DdemlObject.ClientHandle; }
-        }
+        public IntPtr ClientHandle => _DdemlObject.ClientHandle;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the handle to the server application associated with the link.
         /// </summary>
-        public IntPtr ServerHandle
-        {
-            get { return _DdemlObject.ServerHandle; }
-        }
-
+        public IntPtr ServerHandle => _DdemlObject.ServerHandle;
     } // class
 
 } // namespace

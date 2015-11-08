@@ -29,10 +29,6 @@ namespace Ookii.Dialogs
         /// <value>
         /// The value of the href attribute of the hyperlink.
         /// </value>
-        public string Href
-        {
-            get { return _href; }
-        }
-	
+        public string Href => _href;
     }
 }

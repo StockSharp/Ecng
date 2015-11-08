@@ -31,10 +31,7 @@
 
 		private readonly SyncObject _syncRoot = new SyncObject();
 
-		public SyncObject SyncRoot
-		{
-			get { return _syncRoot; }
-		}
+		public SyncObject SyncRoot => _syncRoot;
 
 		public int Count
 		{
@@ -45,10 +42,7 @@
 			}
 		}
 
-		public bool IsReadOnly
-		{
-			get { return false; }
-		}
+		public bool IsReadOnly => false;
 
 		public T this[int index]
 		{
@@ -74,7 +68,7 @@
 		public void Add(T item)
 		{
 			if (item.IsNull())
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
 			lock (SyncRoot)
 			{
@@ -100,7 +94,7 @@
 		public bool Contains(T item)
 		{
 			if (item.IsNull())
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
 			lock (SyncRoot)
 				return _nonOrderedList.Contains(item);
@@ -109,7 +103,7 @@
 		public void CopyTo(T[] array, int arrayIndex)
 		{
 			if (array == null)
-				throw new ArgumentNullException("array");
+				throw new ArgumentNullException(nameof(array));
 
 			lock (SyncRoot)
 				Array.Copy(_inner.ToArray(), 0, array, arrayIndex, _inner.Count);
@@ -118,7 +112,7 @@
 		public bool Remove(T item)
 		{
 			if (item.IsNull())
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
 			lock (SyncRoot)
 			{
@@ -129,7 +123,7 @@
 		public int IndexOf(T item)
 		{
 			if (item.IsNull())
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
 			lock (SyncRoot)
 				return _inner.IndexOf(item);
@@ -138,7 +132,7 @@
 		public void Insert(int index, T item)
 		{
 			if (item.IsNull())
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
 			Add(item);
 		}

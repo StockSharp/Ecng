@@ -18,7 +18,7 @@ namespace Ecng.Xaml
 			: base(errorHandler)
 		{
 			if (dispatcher == null)
-				throw new ArgumentNullException("dispatcher");
+				throw new ArgumentNullException(nameof(dispatcher));
 
 			_dispatcher = dispatcher;
 		}
@@ -26,7 +26,7 @@ namespace Ecng.Xaml
 		public override void Add(Action evt, string syncToken)
 		{
 			if (evt == null)
-				throw new ArgumentNullException("evt");
+				throw new ArgumentNullException(nameof(evt));
 
 			base.Add(() => _dispatcher.GuiSync(evt), syncToken);
 		}

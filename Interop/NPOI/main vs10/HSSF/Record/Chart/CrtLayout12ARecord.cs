@@ -121,12 +121,9 @@ namespace NPOI.HSSF.Record.Chart
             reserved2 = ris.ReadShort();
         }
 
-        protected override int DataSize
-        {
-            get { return 12 + 4 + 9 * 2 + 8 * 4 + 2; }
-        }
+        protected override int DataSize => 12 + 4 + 9 * 2 + 8 * 4 + 2;
 
-        public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
+	    public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
         {
             out1.WriteShort(frtHeader.rt);
             out1.WriteShort(frtHeader.grbitFrt);
@@ -148,12 +145,9 @@ namespace NPOI.HSSF.Record.Chart
             out1.WriteShort(reserved2);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        /// <summary>
+	    /// <summary>
         /// specifies the type of plot area for the layout target.
         /// false  Outer plot area - The bounding rectangle that includes the axis labels, axis titles, data table (2) and plot area of the chart.
         /// true   Inner plot area – The rectangle bounded by the chart axes.

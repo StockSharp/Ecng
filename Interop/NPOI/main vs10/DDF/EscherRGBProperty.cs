@@ -43,38 +43,27 @@ namespace NPOI.DDF
         /// Gets the color of the RGB.
         /// </summary>
         /// <value>The color of the RGB.</value>
-        public int RgbColor
-        {
-            get { return propertyValue; }
-        }
+        public int RgbColor => propertyValue;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the red.
         /// </summary>
         /// <value>The red.</value>
-        public byte Red
-        {
-            get { return (byte)(propertyValue & 0xFF); }
-        }
+        public byte Red => (byte)(propertyValue & 0xFF);
 
-        /// <summary>
+	    /// <summary>
         /// Gets the green.
         /// </summary>
         /// <value>The green.</value>
-        public byte Green
-        {
-            get{return (byte)((propertyValue >> 8) & 0xFF);}
-        }
+        public byte Green => (byte)((propertyValue >> 8) & 0xFF);
 
-        /// <summary>
+	    /// <summary>
         /// Gets the blue.
         /// </summary>
         /// <value>The blue.</value>
-        public byte Blue
-        {
-            get{return (byte)((propertyValue >> 16) & 0xFF);}
-        }
-        public override String ToXml(String tab)
+        public byte Blue => (byte)((propertyValue >> 16) & 0xFF);
+
+	    public override String ToXml(String tab)
         {
             StringBuilder builder = new StringBuilder();
             builder.Append(tab).Append("<").Append(GetType().Name).Append(" id=\"0x").Append(HexDump.ToHex(Id))

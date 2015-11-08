@@ -75,14 +75,9 @@ namespace NPOI.HSSF.Record
                 }
             }
         }
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
-        public override String ToString()
+        public override short Sid => sid;
+
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
 
@@ -98,15 +93,9 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(field_1_protect);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 2;
-            }
-        }
+        protected override int DataSize => 2;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             ScenarioProtectRecord rec = new ScenarioProtectRecord();
             rec.field_1_protect = field_1_protect;

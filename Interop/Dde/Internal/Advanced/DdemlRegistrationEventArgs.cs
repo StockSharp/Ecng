@@ -43,11 +43,7 @@ namespace NDde.Foundation.Advanced
             _Service = service;
         }
 
-        public string Service
-        {
-            get { return _Service; }
-        }
-
+        public string Service => _Service;
     } // class
 
 } // namespace

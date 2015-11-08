@@ -33,14 +33,8 @@ namespace NPOI.HSSF.Record
 
         }
 
-        protected override String RecordName
-        {
-            get { return "MSODRAWINGSELECTION"; }
-        }
+        protected override String RecordName => "MSODRAWINGSELECTION";
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
     }
 }

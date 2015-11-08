@@ -92,12 +92,9 @@ namespace NPOI.SS.Formula.PTG
             WriteCoordinates(out1);
         }
 
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
 
-        public int ExternSheetIndex
+	    public int ExternSheetIndex
         {
             get { return field_1_index_extern_sheet; }
             set { field_1_index_extern_sheet = value; }
@@ -116,9 +113,6 @@ namespace NPOI.SS.Formula.PTG
             throw new NotImplementedException("3D references need a workbook to determine formula text");
         }
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_REF; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_REF;
     }
 }

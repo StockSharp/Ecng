@@ -8,7 +8,7 @@
 		protected ParamConverterAttribute(Type sourceType)
 		{
 			if (sourceType == null)
-				throw new ArgumentNullException("sourceType");
+				throw new ArgumentNullException(nameof(sourceType));
 
 			SourceType = sourceType;
 		}
@@ -16,7 +16,7 @@
 		internal void Init(Type destType)
 		{
 			if (destType == null)
-				throw new ArgumentNullException("destType");
+				throw new ArgumentNullException(nameof(destType));
 
 			DestType = destType;
 		}

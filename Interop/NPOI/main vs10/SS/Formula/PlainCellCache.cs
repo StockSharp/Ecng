@@ -56,35 +56,13 @@ namespace NPOI.SS.Formula
             return _bookSheetColumn == other._bookSheetColumn && _rowIndex == other._rowIndex;
         }
 
-        public int RowIndex
-        {
-            get
-            {
-                return _rowIndex;
-            }
-        }
-        public int ColumnIndex
-        {
-            get
-            {
-                return (int)(_bookSheetColumn & 0x000FFFF);
-            }
-        }
-        public int SheetIndex
-        {
-            get
-            {
-                return (int)((_bookSheetColumn >> 32) & 0xFFFF);
-            }
-        }
+        public int RowIndex => _rowIndex;
 
-        public int BookIndex
-        {
-            get
-            {
-                return (int)((_bookSheetColumn >> 48) & 0xFFFF);
-            }
-        }
+	    public int ColumnIndex => (int)(_bookSheetColumn & 0x000FFFF);
+
+	    public int SheetIndex => (int)((_bookSheetColumn >> 32) & 0xFFFF);
+
+	    public int BookIndex => (int)((_bookSheetColumn >> 48) & 0xFFFF);
     }
     /**
      *

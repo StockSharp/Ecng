@@ -133,15 +133,9 @@ namespace NPOI.OpenXml4Net.OPC
          *
          * @return Uri of the package root.
          */
-        public static Uri PackageRootUri
-        {
-            get
-            {
-                return packageRootUri;
-            }
-        }
+        public static Uri PackageRootUri => packageRootUri;
 
-        private static readonly bool IsMono = Type.GetType("Mono.Runtime") != null;
+	    private static readonly bool IsMono = Type.GetType("Mono.Runtime") != null;
         public static Uri ParseUri(string s, UriKind kind = UriKind.Absolute)
         {
             if (IsMono)

@@ -66,20 +66,11 @@ namespace NPOI.HSSF.Record
             out1.WriteDouble(field_1_margin);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 8;
-            }
-        }
+        protected override int DataSize => 8;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        /**
+	    /**
          * Get the margin field for the BottomMargin record.
          */
         public double Margin

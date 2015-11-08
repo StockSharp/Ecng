@@ -60,9 +60,9 @@
 			TempPath = tempPath;
 		}
 
-		public CompilationLanguages Language { get; private set; }
-		public string OutputDir { get; private set; }
-		public string TempPath { get; private set; }
+		public CompilationLanguages Language { get; }
+		public string OutputDir { get; }
+		public string TempPath { get; }
 
 		public static Compiler Create(CompilationLanguages language, string outputDir, string tempPath)
 		{

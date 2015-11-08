@@ -109,14 +109,9 @@ namespace NPOI.Util
             System.Array.Copy(b, offset, _buf, _writeIndex, len);
             _writeIndex += len;
         }
-        public int WriteIndex
-        {
-            get
-            {
-                return _writeIndex;
-            }
-        }
-        public ILittleEndianOutput CreateDelayedOutput(int size)
+        public int WriteIndex => _writeIndex;
+
+	    public ILittleEndianOutput CreateDelayedOutput(int size)
         {
             CheckPosition(size);
             ILittleEndianOutput result = new LittleEndianByteArrayOutputStream(_buf, _writeIndex, size);

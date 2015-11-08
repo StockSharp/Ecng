@@ -51,19 +51,11 @@ namespace NPOI.HSSF.Record
             out1.Write(recordData);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return recordData.Length;
-            }
-        }
+        protected override int DataSize => recordData.Length;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public byte[] Data
+	    public override short Sid => sid;
+
+	    public byte[] Data
         {
             get
             {

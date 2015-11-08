@@ -70,20 +70,11 @@
 
 		#region public
 
-		public IEqualityComparer<TKey> Comparer
-		{
-			get { return _keyedEntryCollection.Comparer; }
-		}
+		public IEqualityComparer<TKey> Comparer => _keyedEntryCollection.Comparer;
 
-		public int Count
-		{
-			get { return _keyedEntryCollection.Count; }
-		}
+		public int Count => _keyedEntryCollection.Count;
 
-		public Dictionary<TKey, TValue>.KeyCollection Keys
-		{
-			get { return TrueDictionary.Keys; }
-		}
+		public Dictionary<TKey, TValue>.KeyCollection Keys => TrueDictionary.Keys;
 
 		public TValue this[TKey key]
 		{
@@ -91,10 +82,7 @@
 			set { DoSetEntry(key, value); }
 		}
 
-		public Dictionary<TKey, TValue>.ValueCollection Values
-		{
-			get { return TrueDictionary.Values; }
-		}
+		public Dictionary<TKey, TValue>.ValueCollection Values => TrueDictionary.Values;
 
 		#endregion public
 
@@ -362,15 +350,9 @@
 			return TryGetValue(key, out value);
 		}
 
-		ICollection<TKey> IDictionary<TKey, TValue>.Keys
-		{
-			get { return Keys; }
-		}
+		ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys;
 
-		ICollection<TValue> IDictionary<TKey, TValue>.Values
-		{
-			get { return Values; }
-		}
+		ICollection<TValue> IDictionary<TKey, TValue>.Values => Values;
 
 		TValue IDictionary<TKey, TValue>.this[TKey key]
 		{
@@ -402,15 +384,9 @@
 			return new Enumerator(this, true);
 		}
 
-		bool IDictionary.IsFixedSize
-		{
-			get { return false; }
-		}
+		bool IDictionary.IsFixedSize => false;
 
-		bool IDictionary.IsReadOnly
-		{
-			get { return false; }
-		}
+		bool IDictionary.IsReadOnly => false;
 
 		object IDictionary.this[object key]
 		{
@@ -418,20 +394,14 @@
 			set { DoSetEntry((TKey)key, (TValue)value); }
 		}
 
-		ICollection IDictionary.Keys
-		{
-			get { return Keys; }
-		}
+		ICollection IDictionary.Keys => Keys;
 
 		void IDictionary.Remove(object key)
 		{
 			DoRemoveEntry((TKey)key);
 		}
 
-		ICollection IDictionary.Values
-		{
-			get { return Values; }
-		}
+		ICollection IDictionary.Values => Values;
 
 		#endregion IDictionary
 
@@ -456,30 +426,24 @@
 		{
 			if (array == null)
 			{
-				throw new ArgumentNullException("index", "CopyTo() failed:  array parameter was null");
+				throw new ArgumentNullException(nameof(index), "CopyTo() failed:  array parameter was null");
 			}
 			if ((index < 0) || (index > array.Length))
 			{
-				throw new ArgumentOutOfRangeException("index", "CopyTo() failed:  index parameter was outside the bounds of the supplied array");
+				throw new ArgumentOutOfRangeException(nameof(index), "CopyTo() failed:  index parameter was outside the bounds of the supplied array");
 			}
 			if ((array.Length - index) < _keyedEntryCollection.Count)
 			{
-				throw new ArgumentException("CopyTo() failed:  supplied array was too small", "index");
+				throw new ArgumentException("CopyTo() failed:  supplied array was too small", nameof(index));
 			}
 
 			foreach (DictionaryEntry entry in _keyedEntryCollection)
 				array[index++] = new KeyValuePair<TKey, TValue>((TKey)entry.Key, (TValue)entry.Value);
 		}
 
-		int ICollection<KeyValuePair<TKey, TValue>>.Count
-		{
-			get { return _keyedEntryCollection.Count; }
-		}
+		int ICollection<KeyValuePair<TKey, TValue>>.Count => _keyedEntryCollection.Count;
 
-		bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly
-		{
-			get { return false; }
-		}
+		bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
 
 		bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> kvp)
 		{
@@ -495,20 +459,11 @@
 			((ICollection)_keyedEntryCollection).CopyTo(array, index);
 		}
 
-		int ICollection.Count
-		{
-			get { return _keyedEntryCollection.Count; }
-		}
+		int ICollection.Count => _keyedEntryCollection.Count;
 
-		bool ICollection.IsSynchronized
-		{
-			get { return ((ICollection)_keyedEntryCollection).IsSynchronized; }
-		}
+		bool ICollection.IsSynchronized => ((ICollection)_keyedEntryCollection).IsSynchronized;
 
-		object ICollection.SyncRoot
-		{
-			get { return ((ICollection)_keyedEntryCollection).SyncRoot; }
-		}
+		object ICollection.SyncRoot => ((ICollection)_keyedEntryCollection).SyncRoot;
 
 		#endregion ICollection
 
@@ -536,7 +491,7 @@
 		{
 			if (info == null)
 			{
-				throw new ArgumentNullException("info");
+				throw new ArgumentNullException(nameof(info));
 			}
 
 			var entries = new Collection<DictionaryEntry>();

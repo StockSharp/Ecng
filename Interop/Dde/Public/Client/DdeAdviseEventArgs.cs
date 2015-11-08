@@ -54,36 +54,24 @@ namespace NDde.Client
         /// <summary>
         /// This gets the item name associated with this notification.
         /// </summary>
-        public string Item
-        {
-            get { return _DdemlObject.Item; }
-        }
+        public string Item => _DdemlObject.Item;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the format of the data included in this notification.
         /// </summary>
-        public int Format
-        {
-            get { return _DdemlObject.Format; }
-        }
+        public int Format => _DdemlObject.Format;
 
-        /// <summary>
+	    /// <summary>
         /// This gets an application defined data object associated with this advise loop.
         /// </summary>
-        public object State
-        {
-            get { return _DdemlObject.State; }
-        }
+        public object State => _DdemlObject.State;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the data associated with this notification or null if this is not a hot advise loop.
         /// </summary>
-        public byte[] Data
-        {
-            get { return _DdemlObject.Data; }
-        }
+        public byte[] Data => _DdemlObject.Data;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the text associated with this notification or null if this is not a hot advise loop.
         /// </summary>
         public string Text

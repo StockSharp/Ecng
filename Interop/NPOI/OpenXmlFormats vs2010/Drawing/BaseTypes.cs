@@ -2697,11 +2697,9 @@ namespace NPOI.OpenXmlFormats.Dml
             set { this.lField = value; }
         }
         [XmlIgnore]
-        public bool lSpecified
-        {
-            get { return (null != lField); }
-        }
-        [XmlAttribute]
+        public bool lSpecified => (null != lField);
+
+	    [XmlAttribute]
         [DefaultValue(0)]
         public int t
         {
@@ -2713,11 +2711,9 @@ namespace NPOI.OpenXmlFormats.Dml
             set { this.tField = value; }
         }
         [XmlIgnore]
-        public bool tSpecified
-        {
-            get { return (null != tField); }
-        }
-        [XmlAttribute]
+        public bool tSpecified => (null != tField);
+
+	    [XmlAttribute]
         [DefaultValue(0)]
         public int r
         {
@@ -2730,11 +2726,9 @@ namespace NPOI.OpenXmlFormats.Dml
             set { this.rField = value; }
         }
         [XmlIgnore]
-        public bool rSpecified
-        {
-            get { return (null != rField); }
-        }
-        [XmlAttribute]
+        public bool rSpecified => (null != rField);
+
+	    [XmlAttribute]
         [DefaultValue(0)]
         public int b
         {
@@ -2746,10 +2740,7 @@ namespace NPOI.OpenXmlFormats.Dml
             set { this.bField = value; }
         }
         [XmlIgnore]
-        public bool bSpecified
-        {
-            get { return (null != bField); }
-        }
+        public bool bSpecified => (null != bField);
     }
 
     [Serializable]

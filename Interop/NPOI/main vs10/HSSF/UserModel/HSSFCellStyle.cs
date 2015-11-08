@@ -65,11 +65,9 @@ namespace NPOI.HSSF.UserModel
         /// </summary>
         /// <value>Unique index number of the Underlying record this style represents (probably you don't care
         /// Unless you're comparing which one is which)</value>
-        public short Index
-        {
-            get { return index; }
-        }
-        /// <summary>
+        public short Index => index;
+
+	    /// <summary>
         /// Gets the parent style.
         /// </summary>
         /// <value>the parent style for this cell style.
@@ -171,12 +169,9 @@ namespace NPOI.HSSF.UserModel
         /// Gets the index of the font for this style.
         /// </summary>
         /// <value>The index of the font.</value>
-        public short FontIndex
-        {
-            get { return _format.FontIndex; }
-        }
+        public short FontIndex => _format.FontIndex;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the font for this style
         /// </summary>
         /// <param name="parentWorkbook">The parent workbook that this style belongs to.</param>

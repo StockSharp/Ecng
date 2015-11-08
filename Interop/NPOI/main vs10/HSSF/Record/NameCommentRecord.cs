@@ -68,17 +68,11 @@ namespace NPOI.HSSF.Record
             StringUtil.PutCompressedUnicode(field_7_comment_text, out1);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 18 // 4 shorts + 1 long + 2 spurious 'nul's
-                     + field_6_name_text.Length
-                     + field_7_comment_text.Length;
-            }
-        }
+        protected override int DataSize => 18 // 4 shorts + 1 long + 2 spurious 'nul's
+                                           + field_6_name_text.Length
+                                           + field_7_comment_text.Length;
 
-        /**
+	    /**
          * @param ris the RecordInputstream to read the record from
          */
         public NameCommentRecord(RecordInputStream ris)
@@ -100,16 +94,9 @@ namespace NPOI.HSSF.Record
          * return the non static version of the id for this record.
          */
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+        public override short Sid => sid;
 
-
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
 
@@ -155,14 +142,7 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public short RecordType
-        {
-            get
-            {
-                return field_1_record_type;
-            }
-        }
-
+        public short RecordType => field_1_record_type;
     }
 }
 

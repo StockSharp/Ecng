@@ -45,12 +45,9 @@ namespace NPOI.SS.Formula.PTG
             field_1_len_ref_subexpression = subExprLen;
         }
 
-        public override int Size
-        {
-            get { return 3; }
-        }
+        public override int Size => 3;
 
-        public override void Write(ILittleEndianOutput out1)
+	    public override void Write(ILittleEndianOutput out1)
         {
             out1.WriteByte(sid + PtgClass);
             out1.WriteShort(field_1_len_ref_subexpression);
@@ -61,19 +58,10 @@ namespace NPOI.SS.Formula.PTG
             return "";
         }
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_REF; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_REF;
 
-        public int NumberOfOperands
-        {
-            get { return field_1_len_ref_subexpression; }
-        }
+	    public int NumberOfOperands => field_1_len_ref_subexpression;
 
-        public int LenRefSubexpression
-        {
-            get { return field_1_len_ref_subexpression; }
-        }
+	    public int LenRefSubexpression => field_1_len_ref_subexpression;
     }
 }

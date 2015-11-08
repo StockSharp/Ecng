@@ -14,12 +14,6 @@ namespace NPOI.OpenXmlFormats
         { 
             
         }
-        public static string NamespaceURI
-        { 
-            get{
-                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
-           }
-        }
-
+        public static string NamespaceURI => "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
     }
 }

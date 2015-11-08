@@ -130,14 +130,9 @@ namespace NPOI.HSSF.UserModel
                 _totalSize = 0;
                 _list = new ArrayList(128);
             }
-            public int TotalSize
-            {
-                get
-                {
-                    return _totalSize;
-                }
-            }
-            public void VisitRecord(Record r)
+            public int TotalSize => _totalSize;
+
+	        public void VisitRecord(Record r)
             {
                 _list.Add(r);
                 _totalSize += r.RecordSize;
@@ -579,15 +574,9 @@ namespace NPOI.HSSF.UserModel
         /// allow you to show the data of one sheet when another Is seen "selected"
         /// in the tabs (at the bottom).
         /// </summary>
-        public int ActiveSheetIndex
-        {
-            get
-            {
-                return workbook.WindowOne.ActiveSheetIndex;
-            }
-        }
+        public int ActiveSheetIndex => workbook.WindowOne.ActiveSheetIndex;
 
-        /// <summary>
+	    /// <summary>
         /// Sets the tab whose data is actually seen when the sheet is opened.
         /// This may be different from the "selected sheet" since excel seems to
         /// allow you to show the data of one sheet when another Is seen "selected"
@@ -616,12 +605,9 @@ namespace NPOI.HSSF.UserModel
             set { workbook.WindowOne.FirstVisibleTab = value;}
         }
         [Obsolete("Misleading name - use GetFirstVisibleTab() ")]
-        public short DisplayedTab
-        {
-            get { return (short)FirstVisibleTab; }
-        }
+        public short DisplayedTab => (short)FirstVisibleTab;
 
-        /**
+	    /**
          * @deprecated POI will now properly handle Unicode strings without
          * forceing an encoding
          */
@@ -882,12 +868,9 @@ namespace NPOI.HSSF.UserModel
         /// Get the number of spreadsheets in the workbook (this will be three after serialization)
         /// </summary>
         /// <value>The number of sheets.</value>
-        public int NumberOfSheets
-        {
-            get { return _sheets.Count; }
-        }
+        public int NumberOfSheets => _sheets.Count;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the sheets.
         /// </summary>
         /// <returns></returns>
@@ -1181,14 +1164,9 @@ namespace NPOI.HSSF.UserModel
         /// Get the number of fonts in the font table
         /// </summary>
         /// <value>The number of fonts.</value>
-        public short NumberOfFonts
-        {
-            get
-            {
-                return (short)workbook.NumberOfFontRecords;
-            }
-        }
-        public bool IsHidden
+        public short NumberOfFonts => (short)workbook.NumberOfFontRecords;
+
+	    public bool IsHidden
         {
             get
             {
@@ -1258,16 +1236,9 @@ namespace NPOI.HSSF.UserModel
         /// Get the number of styles the workbook Contains
         /// </summary>
         /// <value>count of cell styles</value>
-        public short NumCellStyles
-        {
-            get
-            {
-                return (short)workbook.NumExFormats;
-            }
+        public short NumCellStyles => (short)workbook.NumExFormats;
 
-        }
-
-        /// <summary>
+	    /// <summary>
         /// Get the cell style object at the given index
         /// </summary>
         /// <param name="idx">index within the Set of styles</param>
@@ -1465,12 +1436,9 @@ namespace NPOI.HSSF.UserModel
         /// Gets the workbook.
         /// </summary>
         /// <value>The workbook.</value>
-        public InternalWorkbook Workbook
-        {
-            get { return workbook; }
-        }
+        public InternalWorkbook Workbook => workbook;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the total number of named ranges in the workboko
         /// </summary>
         /// <value>The number of named ranges</value>
@@ -2029,12 +1997,9 @@ namespace NPOI.HSSF.UserModel
         /// <value>
         /// 	<c>true</c> if this instance is write protected; otherwise, <c>false</c>.
         /// </value>
-        public bool IsWriteProtected
-        {
-            get { return this.workbook.IsWriteProtected; }
-        }
+        public bool IsWriteProtected => this.workbook.IsWriteProtected;
 
-        /// <summary>
+	    /// <summary>
         /// protect a workbook with a password (not encypted, just Sets Writeprotect
         /// flags and the password.
         /// </summary>
@@ -2169,15 +2134,9 @@ namespace NPOI.HSSF.UserModel
             return workbook.ChangeExternalReference(oldUrl, newUrl);
         }
 
-        public DirectoryNode RootDirectory
-        {
-            get
-            {
-                return directory;
-            }
-        }
+        public DirectoryNode RootDirectory => directory;
 
-        public int IndexOf(ISheet item)
+	    public int IndexOf(ISheet item)
         {
             throw new NotImplementedException();
         }
@@ -2231,12 +2190,9 @@ namespace NPOI.HSSF.UserModel
             throw new NotImplementedException();
         }
 
-        public int Count
-        {
-            get { return this.NumberOfSheets; }
-        }
+        public int Count => this.NumberOfSheets;
 
-        public bool IsReadOnly
+	    public bool IsReadOnly
         {
             get { throw new NotImplementedException(); }
         }

@@ -47,10 +47,7 @@
 
 		private readonly bool _restrict;
 
-		public bool Restrict
-		{
-			get { return _restrict; }
-		}
+		public bool Restrict => _restrict;
 
 		#endregion
 

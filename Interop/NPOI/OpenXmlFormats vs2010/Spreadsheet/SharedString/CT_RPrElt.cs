@@ -122,11 +122,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
         }
         [XmlIgnore]
         // do not remove this field or change the name, because it is automatically used by the XmlSerializer to decide if the name attribute should be printed or not.
-        public bool rFontSpecified
-        {
-            get { return (null != rFontField); }
-        }
-        public int sizeOfRFontArray()
+        public bool rFontSpecified => (null != rFontField);
+
+	    public int sizeOfRFontArray()
         {
             return this.rFontField == null ? 0 : 1;
         }
@@ -150,11 +148,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.charsetField = value; }
         }
         [XmlIgnore]
-        public bool charsetSpecified
-        {
-            get { return (null != charsetField); }
-        }
-        public int sizeOfCharsetArray()
+        public bool charsetSpecified => (null != charsetField);
+
+	    public int sizeOfCharsetArray()
         {
             return this.charsetField == null ? 0 : 1;
         }
@@ -178,11 +174,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.familyField = value; }
         }
         [XmlIgnore]
-        public bool familySpecified
-        {
-            get { return (null != familyField); }
-        }
-        public int sizeOfFamilyArray()
+        public bool familySpecified => (null != familyField);
+
+	    public int sizeOfFamilyArray()
         {
             return this.familyField == null ? 0 : 1;
         }
@@ -210,11 +204,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.bField = value; }
         }
         [XmlIgnore]
-        public bool bSpecified
-        {
-            get { return (null != bField); }
-        }
-        public int sizeOfBArray()
+        public bool bSpecified => (null != bField);
+
+	    public int sizeOfBArray()
         {
             return this.bField == null ? 0 : 1;
         }
@@ -242,11 +234,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.iField = value; }
         }
         [XmlIgnore]
-        public bool iSpecified
-        {
-            get { return (null != iField); }
-        }
-        public int sizeOfIArray()
+        public bool iSpecified => (null != iField);
+
+	    public int sizeOfIArray()
         {
             return this.iField == null ? 0 : 1;
         }
@@ -274,11 +264,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.strikeField = value; }
         }
         [XmlIgnore]
-        public bool strikeSpecified
-        {
-            get { return (null != strikeField); }
-        }
-        public int sizeOfStrikeArray()
+        public bool strikeSpecified => (null != strikeField);
+
+	    public int sizeOfStrikeArray()
         {
             return this.strikeField == null ? 0 : 1;
         }
@@ -306,11 +294,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.outlineField = value; }
         }
         [XmlIgnore]
-        public bool outlineSpecified
-        {
-            get { return (null != outlineField); }
-        }
-        public int sizeOfOutlineArray()
+        public bool outlineSpecified => (null != outlineField);
+
+	    public int sizeOfOutlineArray()
         {
             return this.outlineField == null ? 0 : 1;
         }
@@ -338,11 +324,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.shadowField = value; }
         }
         [XmlIgnore]
-        public bool shadowSpecified
-        {
-            get { return (null != shadowField); }
-        }
-        public int sizeOfShadowArray()
+        public bool shadowSpecified => (null != shadowField);
+
+	    public int sizeOfShadowArray()
         {
             return this.shadowField == null ? 0 : 1;
         }
@@ -366,11 +350,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.condenseField = value; }
         }
         [XmlIgnore]
-        public bool condenseSpecified
-        {
-            get { return (null != condenseField); }
-        }
-        public int sizeOfCondenseArray()
+        public bool condenseSpecified => (null != condenseField);
+
+	    public int sizeOfCondenseArray()
         {
             return this.condenseField == null ? 0 : 1;
         }
@@ -394,11 +376,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.extendField = value; }
         }
         [XmlIgnore]
-        public bool extendSpecified
-        {
-            get { return (null != extendField); }
-        }
-        public int sizeOfExtendArray()
+        public bool extendSpecified => (null != extendField);
+
+	    public int sizeOfExtendArray()
         {
             return this.extendField == null ? 0 : 1;
         }
@@ -422,11 +402,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.colorField = value; }
         }
         [XmlIgnore]
-        public bool colorSpecified
-        {
-            get { return (null != colorField); }
-        }
-        public int sizeOfColorArray()
+        public bool colorSpecified => (null != colorField);
+
+	    public int sizeOfColorArray()
         {
             return this.colorField == null ? 0 : 1;
         }
@@ -454,11 +432,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.szField = value; }
         }
         [XmlIgnore]
-        public bool szSpecified
-        {
-            get { return (null != szField); }
-        }
-        public int sizeOfSzArray()
+        public bool szSpecified => (null != szField);
+
+	    public int sizeOfSzArray()
         {
             return this.szField == null ? 0 : 1;
         }
@@ -486,11 +462,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.uField = value; }
         }
         [XmlIgnore]
-        public bool uSpecified
-        {
-            get { return (null != uField); }
-        }
-        public int sizeOfUArray()
+        public bool uSpecified => (null != uField);
+
+	    public int sizeOfUArray()
         {
             return this.uField == null ? 0 : 1;
         }
@@ -518,11 +492,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.vertAlignField = value; }
         }
         [XmlIgnore]
-        public bool vertAlignSpecified
-        {
-            get { return (null != vertAlignField); }
-        }
-        public int sizeOfVertAlignArray()
+        public bool vertAlignSpecified => (null != vertAlignField);
+
+	    public int sizeOfVertAlignArray()
         {
             return this.vertAlignField == null ? 0 : 1;
         }
@@ -550,11 +522,9 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             set { this.schemeField = value; }
         }
         [XmlIgnore]
-        public bool schemeSpecified
-        {
-            get { return (null != schemeField); }
-        }
-        public int sizeOfSchemeArray()
+        public bool schemeSpecified => (null != schemeField);
+
+	    public int sizeOfSchemeArray()
         {
             return this.schemeField == null ? 0 : 1;
         }

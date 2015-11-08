@@ -117,59 +117,29 @@ namespace NPOI.OpenXml4Net.OPC
 
         /* Getters */
 
-        public static Uri ContainerPartRelationship
-        {
-            get
-            {
-                return containerRelationshipPart;
-            }
-        }
+        public static Uri ContainerPartRelationship => containerRelationshipPart;
 
-        /**
+	    /**
          * @return the container
          */
-        public OPCPackage Package
-        {
-            get
-            {
-                return container;
-            }
-        }
+        public OPCPackage Package => container;
 
-        /**
+	    /**
          * @return the id
          */
-        public String Id
-        {
-            get
-            {
-                return id;
-            }
-        }
+        public String Id => id;
 
-        /**
+	    /**
          * @return the relationshipType
          */
-        public String RelationshipType
-        {
-            get
-            {
-                return relationshipType;
-            }
-        }
+        public String RelationshipType => relationshipType;
 
-        /**
+	    /**
          * @return the source
          */
-        public PackagePart Source
-        {
-            get
-            {
-                return source;
-            }
-        }
+        public PackagePart Source => source;
 
-        /**
+	    /**
          * 
          * @return URL of the source part of this relationship
          */
@@ -190,15 +160,9 @@ namespace NPOI.OpenXml4Net.OPC
          * 
          * @return the targetMode
          */
-        public TargetMode? TargetMode
-        {
-            get
-            {
-                return targetMode;
-            }
-        }
+        public TargetMode? TargetMode => targetMode;
 
-        /**
+	    /**
          * @return the targetUri
          */
         public Uri TargetUri

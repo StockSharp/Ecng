@@ -32,15 +32,9 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         {
             this.hdr = hdr;
         }
-        public CT_Hdr Hdr
-        {
-            get
-            {
-                return this.hdr;
-            }
-        }
+        public CT_Hdr Hdr => this.hdr;
 
-        public void SetHdr(CT_Hdr hdr)
+	    public void SetHdr(CT_Hdr hdr)
         {
             this.hdr = hdr;
         }

@@ -28,12 +28,9 @@ namespace Gma.DataStructures.StringSearch
             m_Children = children;
         }
 
-        protected override int KeyLength
-        {
-            get { return m_Key.Length; }
-        }
+        protected override int KeyLength => m_Key.Length;
 
-        protected override IEnumerable<TValue> Values()
+	    protected override IEnumerable<TValue> Values()
         {
             return m_Values;
         }
@@ -122,7 +119,7 @@ namespace Gma.DataStructures.StringSearch
 
         protected override TrieNodeBase<TValue> GetChildOrNull(string query, int position)
         {
-            if (query == null) throw new ArgumentNullException("query");
+            if (query == null) throw new ArgumentNullException(nameof(query));
             PatriciaTrieNode<TValue> child;
             if (m_Children.TryGetValue(query[position], out child))
             {

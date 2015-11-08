@@ -216,12 +216,9 @@ namespace Ecng.Collections
         /// <summary>
         /// Gets whether priority queue is empty
         /// </summary>
-        public bool IsEmpty
-        {
-            get { return _baseHeap.Count == 0; }
-        }
+        public bool IsEmpty => _baseHeap.Count == 0;
 
-        #endregion
+	    #endregion
 
         #region Heap operations
 
@@ -337,12 +334,9 @@ namespace Ecng.Collections
         /// <summary>
         /// Gets number of elements in the priority queue
         /// </summary>
-        public int Count
-        {
-            get { return _baseHeap.Count; }
-        }
+        public int Count => _baseHeap.Count;
 
-        /// <summary>
+	    /// <summary>
         /// Copies the elements of the priority queue to an Array, starting at a particular Array index. 
         /// </summary>
         /// <param name="array">The one-dimensional Array that is the destination of the elements copied from the priority queue. The Array must have zero-based indexing. </param>
@@ -361,12 +355,9 @@ namespace Ecng.Collections
         /// <remarks>
         /// For priority queue this property returns <c>false</c>.
         /// </remarks>
-        public bool IsReadOnly
-        {
-            get { return false; }
-        }
+        public bool IsReadOnly => false;
 
-        /// <summary>
+	    /// <summary>
         /// Removes the first occurrence of a specific object from the priority queue. 
         /// </summary>
         /// <param name="item">The object to remove from the ICollection <(Of <(T >)>). </param>

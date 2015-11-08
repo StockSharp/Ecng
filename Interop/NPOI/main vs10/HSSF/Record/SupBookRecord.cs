@@ -138,26 +138,13 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public bool IsExternalReferences
-        {
-            get { return field_3_sheet_names != null; }
-        }
-        public bool IsInternalReferences
-        {
-            get
-            {
-                return field_3_sheet_names == null && !_isAddInFunctions;
-            }
-        }
-        public bool IsAddInFunctions
-        {
-            get
-            {
-                return field_3_sheet_names == null && _isAddInFunctions;
-            }
-        }
+        public bool IsExternalReferences => field_3_sheet_names != null;
 
-        public override String ToString()
+	    public bool IsInternalReferences => field_3_sheet_names == null && !_isAddInFunctions;
+
+	    public bool IsAddInFunctions => field_3_sheet_names == null && _isAddInFunctions;
+
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("[SUPBOOK ");
@@ -231,11 +218,9 @@ namespace NPOI.HSSF.Record
             set { field_1_number_of_sheets = value; }
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public String URL
+        public override short Sid => sid;
+
+	    public String URL
         {
             get
             {
@@ -305,12 +290,6 @@ namespace NPOI.HSSF.Record
             }
             return sb.ToString();
         }
-        public String[] SheetNames
-        {
-            get
-            {
-                return (String[])field_3_sheet_names.Clone();
-            }
-        }
+        public String[] SheetNames => (String[])field_3_sheet_names.Clone();
     }
 }

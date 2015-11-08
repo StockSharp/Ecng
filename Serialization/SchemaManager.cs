@@ -43,13 +43,10 @@
 			};
 		}
 
-		public static IEnumerable<Schema> Schemas
-		{
-			get { return _schemas.Values; }
-		}
+		public static IEnumerable<Schema> Schemas => _schemas.Values;
 
-		public static IDictionary<Type, SchemaFactory> CustomSchemaFactories { get; private set; }
-		public static IDictionary<Tuple<Type, string>, Type> CustomFieldFactories { get; private set; }
+		public static IDictionary<Type, SchemaFactory> CustomSchemaFactories { get; }
+		public static IDictionary<Tuple<Type, string>, Type> CustomFieldFactories { get; }
 		public static IDictionary<Type, Type> GlobalFieldFactories { get; private set; }
 
 		#region GetSchema
@@ -91,16 +88,16 @@
 		public static Schema GetSchema(this Type entityType, SchemaFactory factory)
 		{
 			if (entityType == null)
-				throw new ArgumentNullException("entityType");
+				throw new ArgumentNullException(nameof(entityType));
 
 			if (factory == null)
-				throw new ArgumentNullException("factory");
+				throw new ArgumentNullException(nameof(factory));
 
 			if (entityType.IsNullable())
 				entityType = entityType.GetUnderlyingType();
 
 			if (entityType.IsCollection())
-				throw new ArgumentException("Entity type cannot be a collection. The type is '{0}'.".Put(entityType), "entityType");
+				throw new ArgumentException("Entity type cannot be a collection. The type is '{0}'.".Put(entityType), nameof(entityType));
 
 			_schemaFactories.SafeAdd(entityType, key => factory);
 
@@ -129,10 +126,10 @@
 		private static void ValidateSchema(Schema schema)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			if (schema.EntityType == null)
-				throw new ArgumentException("Entity type is null.", "schema");
+				throw new ArgumentException("Entity type is null.", nameof(schema));
 
 			if (schema.Fields.IsEmpty() && !typeof(ISerializable).IsAssignableFrom(schema.EntityType))
 				throw new ArgumentException("Type '{0}' has no one members.".Put(schema.EntityType));

@@ -167,14 +167,9 @@ namespace NPOI.HSSF.Model
                 _crnBlocks = new CRNBlock[0];
             }
 
-            public int NumberOfNames
-            {
-                get
-                {
-                    return _externalNameRecords.Length;
-                }
-            }
-            public int AddExternalName(ExternalNameRecord rec)
+            public int NumberOfNames => _externalNameRecords.Length;
+
+	        public int AddExternalName(ExternalNameRecord rec)
             {
                 ExternalNameRecord[] tmp = new ExternalNameRecord[_externalNameRecords.Length + 1];
                 Array.Copy(_externalNameRecords, 0, tmp, 0, _externalNameRecords.Length);
@@ -313,13 +308,9 @@ namespace NPOI.HSSF.Model
         /**
          * TODO - would not be required if calling code used RecordStream or similar
          */
-        public int RecordCount
-        {
-            get { return _recordCount; }
-        }
+        public int RecordCount => _recordCount;
 
-
-        public NameRecord GetSpecificBuiltinRecord(byte builtInCode, int sheetNumber)
+	    public NameRecord GetSpecificBuiltinRecord(byte builtInCode, int sheetNumber)
         {
 
             IEnumerator<NameRecord> iterator = _definedNames.GetEnumerator();
@@ -383,15 +374,9 @@ namespace NPOI.HSSF.Model
             _externSheetRecord.RemoveSheet(sheetIdx);
         }
 
-        public int NumNames
-        {
-            get
-            {
-                return _definedNames.Count;
-            }
-        }
+        public int NumNames => _definedNames.Count;
 
-        private int ExtendExternalBookBlocks(ExternalBookBlock newBlock)
+	    private int ExtendExternalBookBlocks(ExternalBookBlock newBlock)
         {
             ExternalBookBlock[] tmp = new ExternalBookBlock[_externalBookBlocks.Length + 1];
             Array.Copy(_externalBookBlocks, 0, tmp, 0, _externalBookBlocks.Length);

@@ -159,23 +159,12 @@ namespace NPOI.HSSF.Record
             set { field_5_flags = rowDeleted.SetBoolean(field_5_flags, value); }
         }
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
-        protected override int ExtraDataSize
-        {
-            get
-            {
-                return
-                2 // 2 byte fields
-                + 8; // 4 short fields
-            }
-        }
-        protected override void SerializeExtraData(ILittleEndianOutput out1)
+        public override short Sid => sid;
+
+	    protected override int ExtraDataSize => 2 // 2 byte fields
+	                                            + 8;
+
+	    protected override void SerializeExtraData(ILittleEndianOutput out1)
         {
             out1.WriteByte(field_5_flags);
             out1.WriteByte(field_6_res);

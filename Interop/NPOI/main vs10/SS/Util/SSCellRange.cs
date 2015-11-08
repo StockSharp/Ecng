@@ -129,30 +129,19 @@ namespace NPOI.SS.Util
 
             #region IEnumerator Members
 
-            object System.Collections.IEnumerator.Current
-            {
-                get { return this.Current; }
-            }
+            object System.Collections.IEnumerator.Current => this.Current;
 
-            #endregion
+	        #endregion
         }
 
         #region CellRange<K> Members
 
 
-        public K TopLeftCell
-        {
-            get { return _flattenedArray[0]; }
-        }
+        public K TopLeftCell => _flattenedArray[0];
 
-        public K[] FlattenedCells
-        {
-            get {
-                return (K[])_flattenedArray.Clone();
-            }
-        }
+	    public K[] FlattenedCells => (K[])_flattenedArray.Clone();
 
-        public K[][] Cells
+	    public K[][] Cells
         {
             get {
                 Type itemCls = _flattenedArray.GetType();
@@ -168,29 +157,11 @@ namespace NPOI.SS.Util
             }
         }
 
-        public int Height
-        {
-            get
-            {
-                return _height;
-            }
-        }
-        public int Width
-        {
-            get
-            {
-                return _width;
-            }
-        }
-        public int Size
-        {
-            get
-            {
-                return _height * _width;
-            }
-        }
+        public int Height => _height;
+	    public int Width => _width;
+	    public int Size => _height * _width;
 
-        public String ReferenceText
+	    public String ReferenceText
         {
             get
             {

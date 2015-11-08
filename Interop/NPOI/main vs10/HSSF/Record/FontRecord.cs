@@ -391,12 +391,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override int GetHashCode()
+	    public override int GetHashCode()
         {
             int prime = 31;
             int result = 1;

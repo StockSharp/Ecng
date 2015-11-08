@@ -180,15 +180,9 @@ namespace NPOI.POIFS.FileSystem
             _property.StartBlock = (POIFSConstants.END_OF_CHAIN);
         }
 
-        internal NPOIFSFileSystem FileSystem
-        {
-            get
-            {
-                return _filesystem;
-            }
-        }
+        internal NPOIFSFileSystem FileSystem => _filesystem;
 
-        public int GetDocumentBlockSize()
+	    public int GetDocumentBlockSize()
         {
             return _block_size;
         }
@@ -210,14 +204,9 @@ namespace NPOI.POIFS.FileSystem
         /**
          * @return size of the document
          */
-        public int Size
-        {
-            get
-            {
-                return _property.Size;
-            }
-        }
-        public void ReplaceContents(Stream stream)
+        public int Size => _property.Size;
+
+	    public void ReplaceContents(Stream stream)
         {
             Free();
             int size = Store(stream);
@@ -227,15 +216,9 @@ namespace NPOI.POIFS.FileSystem
         /**
          * @return the instance's DocumentProperty
          */
-        public DocumentProperty DocumentProperty
-        {
-            get
-            {
-                return _property;
-            }
-        }
+        public DocumentProperty DocumentProperty => _property;
 
-        /**
+	    /**
          * Get an array of objects, some of which may implement POIFSViewable
          *
          * @return an array of Object; may not be null, but may be empty
@@ -307,26 +290,14 @@ namespace NPOI.POIFS.FileSystem
 
         #region POIFSViewable Members
 
-        public bool PreferArray
-        {
-            get { return true; }
-        }
+        public bool PreferArray => true;
 
-        public string ShortDescription
-        {
-            get { return GetShortDescription(); }
-        }
+	    public string ShortDescription => GetShortDescription();
 
-        public Array ViewableArray
-        {
-            get { return GetViewableArray(); }
-        }
+	    public Array ViewableArray => GetViewableArray();
 
-        public IEnumerator ViewableIterator
-        {
-            get { return GetViewableIterator(); }
-        }
+	    public IEnumerator ViewableIterator => GetViewableIterator();
 
-        #endregion
+	    #endregion
     }
 }

@@ -166,15 +166,9 @@ namespace Ookii.Dialogs
         /// <value>
         /// Returns <see langword="true" /> for Windows Vista or later; otherwise <see langword="false" />.
         /// </value>
-        public static bool OSSupportsTaskDialogs
-        {
-            get
-            {
-                return NativeMethods.IsWindowsVistaOrLater;
-            }
-        }
+        public static bool OSSupportsTaskDialogs => NativeMethods.IsWindowsVistaOrLater;
 
-        /// <summary>
+	    /// <summary>
         /// Gets a list of the buttons on the Task Dialog.
         /// </summary>
         /// <value>
@@ -185,25 +179,18 @@ namespace Ookii.Dialogs
         /// in the Windows-defined order, regardless of the order of the buttons in the collection.
         /// </remarks>
         [Localizable(true), DesignerSerializationVisibility(DesignerSerializationVisibility.Content), Category("Appearance"), Description("A list of the buttons on the Task Dialog.")]
-        public TaskDialogItemCollection<TaskDialogButton> Buttons
-        {
-            get { return _buttons ?? (_buttons = new TaskDialogItemCollection<TaskDialogButton>(this)); }
-        }
+        public TaskDialogItemCollection<TaskDialogButton> Buttons => _buttons ?? (_buttons = new TaskDialogItemCollection<TaskDialogButton>(this));
 
-        /// <summary>
+	    /// <summary>
         /// Gets a list of the radio buttons on the Task Dialog.
         /// </summary>
         /// <value>
         /// A list of the radio buttons on the Task Dialog.
         /// </value>
         [Localizable(true), DesignerSerializationVisibility(DesignerSerializationVisibility.Content), Category("Appearance"), Description("A list of the radio buttons on the Task Dialog.")]
-        public TaskDialogItemCollection<TaskDialogRadioButton> RadioButtons
-        {
-            get { return _radioButtons ?? (_radioButtons = new TaskDialogItemCollection<TaskDialogRadioButton>(this)); }
-        }
-	
+        public TaskDialogItemCollection<TaskDialogRadioButton> RadioButtons => _radioButtons ?? (_radioButtons = new TaskDialogItemCollection<TaskDialogRadioButton>(this));
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the window title of the task dialog.
         /// </summary>
         /// <value>
@@ -896,7 +883,7 @@ namespace Ookii.Dialogs
             set 
             {
                 if( _progressBarMaximum <= value )
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
                 _progressBarMinimimum = value;
                 UpdateProgressBarRange();
             }
@@ -920,7 +907,7 @@ namespace Ookii.Dialogs
             set 
             {
                 if( value <= _progressBarMinimimum )
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
                 _progressBarMaximum = value;
                 UpdateProgressBarRange();
             }
@@ -948,7 +935,7 @@ namespace Ookii.Dialogs
             set 
             {
                 if( value < ProgressBarMinimum || value > ProgressBarMaximum )
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
 
                 _progressBarValue = value;
                 UpdateProgressBarValue();
@@ -1297,16 +1284,9 @@ namespace Ookii.Dialogs
             }
         }
 
-        private bool IsDialogRunning
-        {
-            get 
-            { 
-                // Intentially not using the Handle property, since the cross-thread call check should not be performed here.
-                return _handle != IntPtr.Zero; 
-            }
-        }
+        private bool IsDialogRunning => _handle != IntPtr.Zero;
 
-        private void SetElementText(NativeMethods.TaskDialogElements element, string text)
+	    private void SetElementText(NativeMethods.TaskDialogElements element, string text)
         {
             if( IsDialogRunning )
             {

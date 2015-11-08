@@ -18,17 +18,17 @@ namespace Ecng.Web.BBCodes.SyntaxTree
         public SyntaxTreeNodeCollection(IEnumerable<SyntaxTreeNode> list)
             : base(list.ToArray())
         {
-            if (list == null) throw new ArgumentNullException("list");
+            if (list == null) throw new ArgumentNullException(nameof(list));
         }
 
         protected override void SetItem(int index, SyntaxTreeNode item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
             base.SetItem(index, item);
         }
         protected override void InsertItem(int index, SyntaxTreeNode item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
             base.InsertItem(index, item);
         }
     }
@@ -38,7 +38,7 @@ namespace Ecng.Web.BBCodes.SyntaxTree
         public ImmutableSyntaxTreeNodeCollection(IEnumerable<SyntaxTreeNode> list)
             : base(list.ToArray())
         {
-            if (list == null) throw new ArgumentNullException("list");
+            if (list == null) throw new ArgumentNullException(nameof(list));
         }
         internal ImmutableSyntaxTreeNodeCollection(IList<SyntaxTreeNode> list, bool isFresh)
             : base(isFresh ? list : list.ToArray())
@@ -46,9 +46,6 @@ namespace Ecng.Web.BBCodes.SyntaxTree
         }
 
         static readonly ImmutableSyntaxTreeNodeCollection empty = new ImmutableSyntaxTreeNodeCollection(new SyntaxTreeNode[0], true);
-        public static ImmutableSyntaxTreeNodeCollection Empty
-        {
-            get { return empty; }
-        }
+        public static ImmutableSyntaxTreeNodeCollection Empty => empty;
     }
 }

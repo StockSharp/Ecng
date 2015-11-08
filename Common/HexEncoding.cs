@@ -25,7 +25,7 @@ namespace Ecng.Common
 		public override int GetByteCount(string hexString)
 		{
 			if (hexString.IsEmpty())
-				throw new ArgumentNullException("hexString");
+				throw new ArgumentNullException(nameof(hexString));
 
 			return GetByteCount(hexString.ToCharArray(), 0, hexString.Length);
 		}
@@ -52,10 +52,10 @@ namespace Ecng.Common
 		public override int GetByteCount(char[] chars, int index, int count)
 		{
 			if (chars == null)
-				throw new ArgumentNullException("chars");
+				throw new ArgumentNullException(nameof(chars));
 
 			if (chars.Length < (index + count))
-				throw new ArgumentOutOfRangeException("chars");
+				throw new ArgumentOutOfRangeException(nameof(chars));
 
 			var numHexChars = 0;
 
@@ -124,7 +124,7 @@ namespace Ecng.Common
 		public override byte[] GetBytes(string hexString)
 		{
 			if (hexString.IsEmpty())
-				throw new ArgumentNullException("hexString");
+				throw new ArgumentNullException(nameof(hexString));
 
 			int discarded;
 			return GetBytes(hexString.ToCharArray(), 0, hexString.Length, out discarded);
@@ -250,10 +250,10 @@ namespace Ecng.Common
 		public static byte[] GetBytes(char[] chars, int charIndex, int charCount, out int discarded)
 		{
 			if (chars == null)
-				throw new ArgumentNullException("chars");
+				throw new ArgumentNullException(nameof(chars));
 
 			if (chars.Length < (charIndex + charCount))
-				throw new ArgumentOutOfRangeException("chars");
+				throw new ArgumentOutOfRangeException(nameof(chars));
 
 
 			discarded = 0;
@@ -319,7 +319,7 @@ namespace Ecng.Common
 		private static byte HexToByte(string hexString)
 		{
 			if (hexString.IsEmpty())
-				throw new ArgumentNullException("hexString");
+				throw new ArgumentNullException(nameof(hexString));
 
 			if (hexString.Length > 2 || hexString.Length <= 0)
 				throw new ArgumentException("hex must be 1 or 2 characters in length");

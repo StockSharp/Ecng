@@ -52,10 +52,7 @@
 			set { SetValue(ResizeModeProperty, value); }
 		}
 
-		private Thumb Gripper
-		{
-			get { return GetTemplateChild("PART_Gripper") as Thumb; }
-		}
+		private Thumb Gripper => GetTemplateChild("PART_Gripper") as Thumb;
 
 		static ResizableContentControl()
 		{

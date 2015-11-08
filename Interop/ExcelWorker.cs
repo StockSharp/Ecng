@@ -573,7 +573,6 @@
 		public ExcelWorker SetBackColor(int col, int row, Color color)
 		{
 			var cell = InternalGetCell(col, row);
-			//            _currentSheet. InternalGetCell
 			var style = (XSSFCellStyle)Workbook.CreateCellStyle();
 			style.FillBackgroundColorColor = ToExcelColor(color);
 			cell.CellStyle = style;

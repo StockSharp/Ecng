@@ -111,9 +111,6 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             }
         }
         [XmlIgnore]
-        public bool rowSpecified
-        {
-            get { return null != rowField; }
-        }
+        public bool rowSpecified => null != rowField;
     }
 }

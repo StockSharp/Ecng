@@ -142,57 +142,38 @@ namespace NPOI.SS.Formula.PTG
             return new AttrPtg(optiSum.Set(0), 0, null, -1);
         }
 
-        public bool IsSemiVolatile
-        {
-            get { return semiVolatile.IsSet(field_1_options); }
-        }
+        public bool IsSemiVolatile => semiVolatile.IsSet(field_1_options);
 
-        public bool IsOptimizedIf
+	    public bool IsOptimizedIf
         {
             get { return optiIf.IsSet(field_1_options); }
             set { field_1_options = optiIf.SetByteBoolean(field_1_options, value); }
         }
 
-        public bool IsOptimizedChoose
-        {
-            get { return optiChoose.IsSet(field_1_options); }
-        }
+        public bool IsOptimizedChoose => optiChoose.IsSet(field_1_options);
 
-        public bool IsSum
+	    public bool IsSum
         {
             get { return optiSum.IsSet(field_1_options); }
             set { field_1_options = optiSum.SetByteBoolean(field_1_options, value); }
         }
 
         // lets hope no one uses this anymore
-        public bool IsBaxcel
-        {
-            get{return baxcel.IsSet(field_1_options);}
-        }
+        public bool IsBaxcel => baxcel.IsSet(field_1_options);
 
-        // biff3&4 only  shouldn't happen anymore
-        public bool IsSpace
-        {
-            get { return space.IsSet(field_1_options); }
-        }
-        public bool IsSkip
-        {
-            get { return optiSkip.IsSet(field_1_options); }
-        }
+	    // biff3&4 only  shouldn't happen anymore
+        public bool IsSpace => space.IsSet(field_1_options);
 
-        public short Data
+	    public bool IsSkip => optiSkip.IsSet(field_1_options);
+
+	    public short Data
         {
             get { return field_2_data; }
             set { field_2_data = value; }
         }
-        public int[] JumpTable
-        {
-            get
-            {
-                return (int[])_jumpTable.Clone();
-            }
-        }
-        public int ChooseFuncOffset
+        public int[] JumpTable => (int[])_jumpTable.Clone();
+
+	    public int ChooseFuncOffset
         {
             get
             {
@@ -294,17 +275,11 @@ namespace NPOI.SS.Formula.PTG
         }
 
 
-        public int NumberOfOperands
-        {
-            get { return 1; }
-        }
+        public int NumberOfOperands => 1;
 
-        public int Type
-        {
-            get { return -1; }
-        }
+	    public int Type => -1;
 
-        public override String ToFormulaString()
+	    public override String ToFormulaString()
         {
             if (semiVolatile.IsSet(field_1_options))
             {

@@ -67,22 +67,16 @@ namespace NPOI.SS.Formula.PTG
         }
 
 
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
 
-        public override String ToFormulaString()
+	    public override String ToFormulaString()
         {
             return ""; // TODO: Not sure how to format this. -- DN
         }
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_VALUE; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_VALUE;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder(64);
             sb.Append(this.GetType().Name).Append(" [len=");

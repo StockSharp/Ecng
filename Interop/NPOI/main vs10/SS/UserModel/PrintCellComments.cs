@@ -56,15 +56,9 @@ namespace NPOI.SS.UserModel
             _table[this.Value] = this;
         }
 
-        public int Value
-        {
-            get
-            {
-                return comments;
-            }
-        }
+        public int Value => comments;
 
-        private static PrintCellComments[] _table;
+	    private static PrintCellComments[] _table;
 
         public static PrintCellComments ValueOf(int value)
         {

@@ -326,12 +326,9 @@ namespace NPOI.HSSF.UserModel
         /// you take it out of them.
         /// </summary>
         /// <value>The outline level.</value>
-        public int OutlineLevel
-        {
-            get { return row.OutlineLevel; }
-        }
+        public int OutlineLevel => row.OutlineLevel;
 
-        /// <summary>
+	    /// <summary>
         /// Moves the supplied cell to a new column, which
         /// must not already have a cell there!
         /// </summary>
@@ -372,14 +369,9 @@ namespace NPOI.HSSF.UserModel
  *
  * @return the HSSFSheet that owns this row
  */
-        public ISheet Sheet
-        {
-            get
-            {
-                return sheet;
-            }
-        }
-        /// <summary>
+        public ISheet Sheet => sheet;
+
+	    /// <summary>
         /// used internally to Add a cell.
         /// </summary>
         /// <param name="cell">The cell.</param>
@@ -552,16 +544,9 @@ namespace NPOI.HSSF.UserModel
         /// That is to say if only columns 0,4,5 have values then there would be 3.
         /// </summary>
         /// <value>the number of defined cells in the row.</value>
-        public int PhysicalNumberOfCells
-        {
-            get
-            {
-                return cells.Count;
-            }
-        }
+        public int PhysicalNumberOfCells => cells.Count;
 
-
-        /// <summary>
+	    /// <summary>
         /// Gets or sets  whether or not to Display this row with 0 height
         /// </summary>
         /// <value>height is zero or not.</value>
@@ -616,14 +601,9 @@ namespace NPOI.HSSF.UserModel
         /// <value>
         /// 	<c>true</c> if this instance is formatted; otherwise, <c>false</c>.
         /// </value>
-        public bool IsFormatted
-        {
-            get
-            {
-                return row.Formatted;
-            }
-        }
-        /// <summary>
+        public bool IsFormatted => row.Formatted;
+
+	    /// <summary>
         /// Returns the whole-row cell styles. Most rows won't
         /// have one of these, so will return null. Call IsFormmated to check first
         /// </summary>
@@ -674,16 +654,9 @@ namespace NPOI.HSSF.UserModel
         /// by other parts of the high level API
         /// </summary>
         /// <value>RowRecord this row represents</value>
-        public RowRecord RowRecord
-        {
-            get
-            {
-                return row;
-            }
-        }
+        public RowRecord RowRecord => row;
 
-
-        /// <summary>
+	    /// <summary>
         /// used internally to refresh the "first cell" when the first cell is Removed.
         /// </summary>
         /// <param name="firstcell">The first cell index.</param>
@@ -706,14 +679,9 @@ namespace NPOI.HSSF.UserModel
         /// <summary>
         /// Get cells in the row (existing cells only, no blanks)
         /// </summary>
-        public List<ICell> Cells
-        {
-            get {
-                return new List<ICell>(this.cells.Values);
-            }
-        }
+        public List<ICell> Cells => new List<ICell>(this.cells.Values);
 
-        /// <summary>
+	    /// <summary>
         /// Gets the cell enumerator of the physically defined cells.
         /// </summary>
         /// <remarks>

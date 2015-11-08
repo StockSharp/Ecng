@@ -30,12 +30,9 @@ namespace NPOI.HSSF.Record.Aggregates.Chart
         private AttachedLabelAggregate attachedLabel = null;
         private ChartEndObjectRecord endObject = null;
 
-        public DefaultTextRecord DefaultText
-        {
-            get { return defaultText; }
-        }
+        public DefaultTextRecord DefaultText => defaultText;
 
-        public DFTTextAggregate(RecordStream rs, ChartRecordAggregate container)
+	    public DFTTextAggregate(RecordStream rs, ChartRecordAggregate container)
             : base(RuleName_DFTTEXT, container)
         {
             if (rs.PeekNextChartSid() == DataLabExtRecord.sid)

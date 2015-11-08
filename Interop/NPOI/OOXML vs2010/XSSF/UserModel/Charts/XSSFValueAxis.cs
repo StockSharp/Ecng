@@ -45,15 +45,9 @@ namespace NPOI.XSSF.UserModel.Charts
             this.ctValAx = ctValAx;
         }
 
-        public override long Id
-        {
-            get
-            {
-                return ctValAx.axId.val;
-            }
-        }
+        public override long Id => ctValAx.axId.val;
 
-        public void SetCrossBetween(AxisCrossBetween crossBetween)
+	    public void SetCrossBetween(AxisCrossBetween crossBetween)
         {
             ctValAx.crossBetween.val= fromCrossBetween(crossBetween);
         }

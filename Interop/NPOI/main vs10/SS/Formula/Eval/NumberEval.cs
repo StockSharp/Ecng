@@ -56,12 +56,9 @@ namespace NPOI.SS.Formula.Eval
             this._value = value;
         }
 
-        public double NumberValue
-        {
-            get { return _value; }
-        }
+        public double NumberValue => _value;
 
-        public String StringValue
+	    public String StringValue
         {
             get
             {// TODO: limit to 15 decimal places

@@ -55,15 +55,9 @@ namespace NPOI.HSSF.Record
             field_4_sst_index = in1.ReadInt();
         }
 
-        protected override String RecordName
-        {
-            get
-            {
-                return "LABELSST";
-            }
-        }
+        protected override String RecordName => "LABELSST";
 
-        /**
+	    /**
          * Get the index to the string in the SSTRecord
          *
          * @return index of string in the SST Table
@@ -87,20 +81,11 @@ namespace NPOI.HSSF.Record
         }
 
 
-        protected override int ValueDataSize
-        {
-            get
-            {
-                return 4;
-            }
-        }
+        protected override int ValueDataSize => 4;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             LabelSSTRecord rec = new LabelSSTRecord();
             CopyBaseFields(rec);

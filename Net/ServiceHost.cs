@@ -15,10 +15,7 @@ namespace Ecng.Net
 		{
 		}
 
-		public T Instance
-		{
-			get { return (T)SingletonInstance; }
-		}
+		public T Instance => (T)SingletonInstance;
 
 		protected override void OnClosed()
 		{

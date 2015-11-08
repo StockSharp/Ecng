@@ -34,20 +34,14 @@ namespace Ecng.Xaml
 		public WpfFormAdapter(Window window)
 		{
 			if (window == null)
-				throw new ArgumentNullException("window");
+				throw new ArgumentNullException(nameof(window));
 
 			_window = window;
 		}
 
 		#region IFormAdapter Members
 
-		public IntPtr Handle
-		{
-			get
-			{
-				return _window.GetOwnerHandle();
-			}
-		}
+		public IntPtr Handle => _window.GetOwnerHandle();
 
 		public Rectangle Bounds
 		{

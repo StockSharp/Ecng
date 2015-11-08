@@ -39,7 +39,7 @@ namespace Ecng.Forum.Components
 
 		#endregion
 
-		public static Dictionary<Type, Type> PageTypes { get; private set; }
+		public static Dictionary<Type, Type> PageTypes { get; }
 		public static Logger Logger { get; private set; }
 		public static EntitySecurityBarrier SecurityBarrier { get; private set; }
 
@@ -55,10 +55,7 @@ namespace Ecng.Forum.Components
 
 		#region CurrentUser
 
-		public static ForumUser CurrentUser
-		{
-			get { return LogicHelper<ForumUser, ForumRole>.CurrentUser; }
-		}
+		public static ForumUser CurrentUser => LogicHelper<ForumUser, ForumRole>.CurrentUser;
 
 		#endregion
 
@@ -112,7 +109,7 @@ namespace Ecng.Forum.Components
 		public static Url GetIdentityUrl(BaseEntity<ForumUser, ForumRole> entity)
 		{
 			if (entity == null)
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 
 			var url = new Url(PageTypes[entity.GetType()]);
 			url.QueryString.Append(WebHelper.GetIdentity(entity.GetType()), entity.Id);

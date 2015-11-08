@@ -64,11 +64,9 @@ namespace NPOI.HSSF.Record.Chart
                     m_offset = value;
                 }
             }
-            public short FontIndex
-            {
-                get { return m_fontIndex; }
-            }
-            public void Serialize(ILittleEndianOutput out1)
+            public short FontIndex => m_fontIndex;
+
+	        public void Serialize(ILittleEndianOutput out1)
             {
                 out1.WriteShort(m_offset);
                 out1.WriteShort(m_fontIndex);
@@ -107,17 +105,11 @@ namespace NPOI.HSSF.Record.Chart
             }
         }
 
-        protected override int DataSize
-        {
-            get { return 2 + (4 * m_formats.Count); }
-        }
+        protected override int DataSize => 2 + (4 * m_formats.Count);
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public int GetFormatCount()
+	    public int GetFormatCount()
         {
             return m_formats.Count;
         }

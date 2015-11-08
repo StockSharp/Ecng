@@ -55,13 +55,9 @@ namespace NPOI.HSSF.Record
         /* (non-Javadoc)
          * @see org.apache.poi.hssf.record.Record#Sid
          */
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-
-        public override Object Clone()
+	    public override Object Clone()
         {
             PageBreakRecord result = new VerticalPageBreakRecord();
             IEnumerator<Break> iterator = GetBreaksEnumerator();

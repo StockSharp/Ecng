@@ -55,10 +55,7 @@ namespace NPOI.SS.UserModel.Charts
             }
         }
 
-        public override bool IsNumeric
-        {
-            get { return true; }
-        }
+        public override bool IsNumeric => true;
     }
     public static IChartDataSource<String> FromStringCellRange(ISheet sheet, CellRangeAddress cellRangeAddress)
     {
@@ -85,10 +82,7 @@ namespace NPOI.SS.UserModel.Charts
             }
         }
 
-        public override bool IsNumeric
-        {
-            get { return false; }
-        }
+        public override bool IsNumeric => false;
     }
 
     private class ArrayDataSource<T> : IChartDataSource<T> {
@@ -99,19 +93,15 @@ namespace NPOI.SS.UserModel.Charts
             this.elements = elements;
         }
 
-        public int PointCount {
-            get { return elements.Length; }
-        }
+        public int PointCount => elements.Length;
 
-        public T GetPointAt(int index) {
+	    public T GetPointAt(int index) {
             return elements[index];
         }
 
-        public bool IsReference {
-            get { return false; }
-        }
+        public bool IsReference => false;
 
-        public bool IsNumeric {
+	    public bool IsNumeric {
             get
             {
                 //Class < ? > arrayComponentType = elements.getClass().getComponentType();
@@ -145,22 +135,16 @@ namespace NPOI.SS.UserModel.Charts
             this.evaluator = sheet.Workbook.GetCreationHelper().CreateFormulaEvaluator();
         }
 
-        public int PointCount {
-            get { return numOfCells; }
-        }
+        public int PointCount => numOfCells;
 
-        public bool IsReference {
-            get { return true; }
-        }
+	    public bool IsReference => true;
 
-        public abstract T GetPointAt(int index);
+	    public abstract T GetPointAt(int index);
         public abstract bool IsNumeric { get; }
 
-        public String FormulaString {
-            get { return cellRangeAddress.FormatAsString(sheet.SheetName, true); }
-        }
+        public String FormulaString => cellRangeAddress.FormatAsString(sheet.SheetName, true);
 
-        protected CellValue GetCellValueAt(int index) {
+	    protected CellValue GetCellValueAt(int index) {
             if (index < 0 || index >= numOfCells) {
                 throw new IndexOutOfRangeException("Index must be between 0 and " +
                         (numOfCells - 1) + " (inclusive), given: " + index);

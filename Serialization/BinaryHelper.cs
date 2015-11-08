@@ -27,7 +27,7 @@
 		public static IEnumerable<string> EnumerateLines(this Stream stream, Encoding encoding = null)
 		{
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			using (var sr = new LeaveOpenStreamReader(stream, encoding ?? Encoding.UTF8))
 			{
@@ -44,19 +44,19 @@
 		public static void CopyAsync(this Stream source, Stream destination, int count, Action completed, Action<Exception> error)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			if (destination == null)
-				throw new ArgumentNullException("destination");
+				throw new ArgumentNullException(nameof(destination));
 
 			if (completed == null)
-				throw new ArgumentNullException("completed");
+				throw new ArgumentNullException(nameof(completed));
 
 			if (error == null)
-				throw new ArgumentNullException("error");
+				throw new ArgumentNullException(nameof(error));
 
 			if (count < 0)
-				throw new ArgumentOutOfRangeException("count");
+				throw new ArgumentOutOfRangeException(nameof(count));
 
 			if (count == 0)
 				completed();
@@ -109,7 +109,7 @@
 		public static byte[] ReadBuffer(this Stream stream)
 		{
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			return stream.ReadBuffer((int)(stream.Length - stream.Position));
 		}
@@ -117,10 +117,10 @@
 		public static byte[] ReadBuffer(this Stream stream, int size)
 		{
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			if (size < 0)
-				throw new ArgumentOutOfRangeException("size", "Size has negative value '{0}'.".Put(size));
+				throw new ArgumentOutOfRangeException(nameof(size), "Size has negative value '{0}'.".Put(size));
 
 			var buffer = new byte[size];
 
@@ -129,7 +129,7 @@
 				var @byte = stream.ReadByte();
 				
 				if (@byte == -1)
-					throw new ArgumentException("Insufficient stream size '{0}'.".Put(size), "stream");
+					throw new ArgumentException("Insufficient stream size '{0}'.".Put(size), nameof(stream));
 
 				buffer[0] = (byte)@byte;
 			}
@@ -141,7 +141,7 @@
 					var readBytes = stream.Read(buffer, offset, size - offset);
 					
 					if (readBytes == 0)
-						throw new ArgumentException("Insufficient stream size '{0}'.".Put(size), "stream");
+						throw new ArgumentException("Insufficient stream size '{0}'.".Put(size), nameof(stream));
 
 					offset += readBytes;
 				}
@@ -154,7 +154,7 @@
 		public static IEnumerable<string> ReadLines(this Stream stream)
 		{
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			using (var reader = new StreamReader(stream))
 			{
@@ -170,10 +170,10 @@
 		public static void Write(this Stream stream, object value)
 		{
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (value is Stream)
 				stream.Write((int)((Stream)value).Length);
@@ -195,10 +195,10 @@
 		public static void WriteRaw(this Stream stream, byte[] buffer)
 		{
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			if (buffer == null)
-				throw new ArgumentNullException("buffer");
+				throw new ArgumentNullException(nameof(buffer));
 
 			stream.Write(buffer, 0, buffer.Length);
 		}
@@ -225,22 +225,22 @@
 		public static object Read(this Stream stream, Type type, int size)
 		{
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if (size < 0)
-				throw new ArgumentOutOfRangeException("size", "Size has negative value '{0}'.".Put(size));
+				throw new ArgumentOutOfRangeException(nameof(size), "Size has negative value '{0}'.".Put(size));
 
 			if (size == 0 && !(type == typeof(string) || type == typeof(byte[]) || type == typeof(Stream)))
-				throw new ArgumentOutOfRangeException("size", "Size has zero value.");
+				throw new ArgumentOutOfRangeException(nameof(size), "Size has zero value.");
 
 			if (type == typeof(string))
 				size *= 2;
 
 			if (size > int.MaxValue / 10)
-				throw new ArgumentOutOfRangeException("size", "Size has too big value {0}.".Put(size));
+				throw new ArgumentOutOfRangeException(nameof(size), "Size has too big value {0}.".Put(size));
 
 			var buffer = size > 0 ? stream.ReadBuffer(size) : ArrayHelper.Empty<byte>();
 

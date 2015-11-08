@@ -59,10 +59,10 @@ namespace Ecng.ComponentModel
 		public Rectangle(Point<T> leftTop, Point<T> rightBottom)
 		{
 			if (leftTop == null)
-				throw new ArgumentNullException("leftTop");
+				throw new ArgumentNullException(nameof(leftTop));
 
 			if (rightBottom == null)
-				throw new ArgumentNullException("rightBottom");
+				throw new ArgumentNullException(nameof(rightBottom));
 
 			if (_operator.Compare(rightBottom.X, leftTop.X) < 0)
 				throw new ArgumentException("rightBottom");
@@ -82,10 +82,10 @@ namespace Ecng.ComponentModel
 		public Rectangle(Point<T> location, Size<T> size)
 		{
 			if (location == null)
-				throw new ArgumentNullException("location");
+				throw new ArgumentNullException(nameof(location));
 
 			if (size == null)
-				throw new ArgumentNullException("size");
+				throw new ArgumentNullException(nameof(size));
 
 
 			Location = location;
@@ -100,13 +100,7 @@ namespace Ecng.ComponentModel
 		/// Gets the center.
 		/// </summary>
 		/// <value>The center.</value>
-		public Point<T> Center
-		{
-			get
-			{
-				return new Point<T>(_operator.Add(Location.X, _operator.Divide(Size.Width, 2.To<T>())), _operator.Add(Location.Y, _operator.Divide(Size.Height, 2.To<T>())));
-			}
-		}
+		public Point<T> Center => new Point<T>(_operator.Add(Location.X, _operator.Divide(Size.Width, 2.To<T>())), _operator.Add(Location.Y, _operator.Divide(Size.Height, 2.To<T>())));
 
 		#endregion
 
@@ -116,10 +110,7 @@ namespace Ecng.ComponentModel
 		/// Gets the right.
 		/// </summary>
 		/// <value>The right.</value>
-		public T Right
-		{
-			get { return _operator.Add(Location.X, Size.Width); }
-		}
+		public T Right => _operator.Add(Location.X, Size.Width);
 
 		#endregion
 
@@ -129,10 +120,7 @@ namespace Ecng.ComponentModel
 		/// Gets the bottom.
 		/// </summary>
 		/// <value>The bottom.</value>
-		public T Bottom
-		{
-			get { return _operator.Add(Location.Y, Size.Height); }
-		}
+		public T Bottom => _operator.Add(Location.Y, Size.Height);
 
 		#endregion
 
@@ -142,7 +130,7 @@ namespace Ecng.ComponentModel
 		/// Gets or sets the location.
 		/// </summary>
 		/// <value>The location.</value>
-		public Point<T> Location { get; private set; }
+		public Point<T> Location { get; }
 
 		#endregion
 
@@ -152,7 +140,7 @@ namespace Ecng.ComponentModel
 		/// Gets or sets the size.
 		/// </summary>
 		/// <value>The size.</value>
-		public Size<T> Size { get; private set; }
+		public Size<T> Size { get; }
 
 		#endregion
 
@@ -185,7 +173,7 @@ namespace Ecng.ComponentModel
 		public bool Contains(Point<T> point)
 		{
 			if (point == null)
-				throw new ArgumentNullException("point");
+				throw new ArgumentNullException(nameof(point));
 
 			return Contains(point.X, point.Y);
 		}

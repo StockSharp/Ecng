@@ -51,7 +51,7 @@ namespace Ecng.Data
 		public static DbParameter Parameter(this Database database, string name, ParameterDirection direction, DbType type, int size, string sourceColumn, bool sourceColumnNullMapping, object value)
 		{
 			if (database == null)
-				throw new ArgumentNullException("database");
+				throw new ArgumentNullException(nameof(database));
 
 			var parameter = database.Provider.Factory.CreateParameter();
 

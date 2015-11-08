@@ -376,12 +376,9 @@ namespace NPOI.POIFS.Storage
         /// </summary>
         /// <value>The size of the big block.</value>
         /// @return 
-        public POIFSBigBlockSize BigBlockSize
-        {
-            get{return bigBlockSize;}
-        }
+        public POIFSBigBlockSize BigBlockSize => bigBlockSize;
 
-        //public void Write(Stream stream)
+	    //public void Write(Stream stream)
         //{
         //    try
         //    {

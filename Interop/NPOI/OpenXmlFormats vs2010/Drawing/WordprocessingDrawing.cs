@@ -307,11 +307,9 @@ namespace NPOI.OpenXmlFormats.Dml.WordProcessing
             }
         }
         [XmlIgnore]
-        public bool descrSpecified
-        {
-            get { return (null != descrField); }
-        }
-        [XmlAttribute]
+        public bool descrSpecified => (null != descrField);
+
+	    [XmlAttribute]
         [DefaultValue(false)]
         public bool hidden
         {
@@ -326,10 +324,7 @@ namespace NPOI.OpenXmlFormats.Dml.WordProcessing
         }
 
         [XmlIgnore]
-        public bool hiddenSpecified
-        {
-            get { return (null != hiddenField); }
-        }
+        public bool hiddenSpecified => (null != hiddenField);
     }
     [Serializable]
     [System.ComponentModel.DesignerCategoryAttribute("code")]

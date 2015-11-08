@@ -36,15 +36,9 @@ namespace ManagedWinapi.Audio.Mixer
         /// Gets the number of available mixers in this system.
         /// </summary>
         [CLSCompliant(false)]
-        public static uint MixerCount
-        {
-            get
-            {
-                return mixerGetNumDevs();
-            }
-        }
+        public static uint MixerCount => mixerGetNumDevs();
 
-        /// <summary>
+	    /// <summary>
         /// Opens a mixer.
         /// </summary>
         /// <param name="index">The zero-based index of this mixer.</param>
@@ -130,31 +124,19 @@ namespace ManagedWinapi.Audio.Mixer
             set { createEvents = value; }
         }
 
-        internal IntPtr Handle { get { return hMixer; } }
+        internal IntPtr Handle => hMixer;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the name of this mixer's sound card.
         /// </summary>
-        public string Name
-        {
-            get
-            {
-                return mc.szPname;
-            }
-        }
+        public string Name => mc.szPname;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the number of destination lines of this mixer.
         /// </summary>
-        public int DestinationLineCount
-        {
-            get
-            {
-                return mc.cDestinations;
-            }
-        }
+        public int DestinationLineCount => mc.cDestinations;
 
-        /// <summary>
+	    /// <summary>
         /// Gets all destination lines of this mixer
         /// </summary>
         public IList<DestinationLine> DestinationLines
@@ -297,16 +279,16 @@ namespace ManagedWinapi.Audio.Mixer
         /// <summary>
         /// The affected mixer.
         /// </summary>
-        public Mixer Mixer { get { return mixer; } }
+        public Mixer Mixer => mixer;
 
-        /// <summary>
+	    /// <summary>
         /// The affected line.
         /// </summary>
-        public MixerLine Line { get { return line; } }
+        public MixerLine Line => line;
 
-        /// <summary>
+	    /// <summary>
         /// The affected control.
         /// </summary>
-        public MixerControl Control { get { return control; } }
+        public MixerControl Control => control;
     }
 }

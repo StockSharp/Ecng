@@ -123,28 +123,16 @@ namespace NPOI.XSSF.UserModel
          *
          * @return the sheet this cell belongs to
          */
-        public ISheet Sheet
-        {
-            get
-            {
-                return _row.Sheet;
-            }
-        }
+        public ISheet Sheet => _row.Sheet;
 
-        /**
+	    /**
          * Returns the row this cell belongs to
          *
          * @return the row this cell belongs to
          */
-        public IRow Row
-        {
-            get
-            {
-                return _row;
-            }
-        }
+        public IRow Row => _row;
 
-        /**
+	    /**
          * Get the value of the cell as a bool.
          * <p>
          * For strings, numbers, and errors, we throw an exception. For blank cells we return a false.
@@ -523,25 +511,14 @@ namespace NPOI.XSSF.UserModel
         /// <summary>
         /// Returns zero-based column index of this cell
         /// </summary>
-        public int ColumnIndex
-        {
-            get
-            {
-                return this._cellNum;
-            }
-        }
+        public int ColumnIndex => this._cellNum;
 
-        /// <summary>
+	    /// <summary>
         /// Returns zero-based row index of a row in the sheet that contains this cell
         /// </summary>
-        public int RowIndex
-        {
-            get
-            {
-                return _row.RowNum;
-            }
-        }
-        /// <summary>
+        public int RowIndex => _row.RowNum;
+
+	    /// <summary>
         /// Returns an A1 style reference to the location of this cell
         /// </summary>
         /// <returns>A1 style reference to the location of this cell</returns>
@@ -1096,15 +1073,9 @@ namespace NPOI.XSSF.UserModel
             }
         }
 
-        public bool IsPartOfArrayFormulaGroup
-        {
-            get
-            {
-                return ((XSSFSheet)Sheet).IsCellInArrayFormulaContext(this);
-            }
-        }
+        public bool IsPartOfArrayFormulaGroup => ((XSSFSheet)Sheet).IsCellInArrayFormulaContext(this);
 
-        /**
+	    /**
          * The purpose of this method is to validate the cell state prior to modification
          *
          * @see #NotifyArrayFormulaChanging()
@@ -1138,15 +1109,9 @@ namespace NPOI.XSSF.UserModel
         #region ICell Members
 
 
-        public bool IsMergedCell
-        {
-            get {
-                return this.Sheet.IsMergedRegion(new CellRangeAddress(this.RowIndex, this.RowIndex, this.ColumnIndex, this.ColumnIndex));
-            }
-            
-        }
+        public bool IsMergedCell => this.Sheet.IsMergedRegion(new CellRangeAddress(this.RowIndex, this.RowIndex, this.ColumnIndex, this.ColumnIndex));
 
-        #endregion
+	    #endregion
 
 
         public ICell CopyCellTo(int targetIndex)

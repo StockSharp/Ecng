@@ -41,14 +41,14 @@ namespace Ecng.Reflection.Aspects
 		public static Type Create(Type baseType)
 		{
 			if (baseType == null)
-				throw new ArgumentNullException("baseType");
+				throw new ArgumentNullException(nameof(baseType));
 
 			if (!baseType.IsPublic)
 				throw new ArgumentException("baseType");
 
 			var attrs = baseType.GetAttributes<MetaExtensionAttribute>();
 			if (attrs.IsEmpty())
-				throw new ArgumentException("Type '{0}' isn't marked MetaExtensionAttribute.".Put(baseType), "baseType");
+				throw new ArgumentException("Type '{0}' isn't marked MetaExtensionAttribute.".Put(baseType), nameof(baseType));
 
 			return _extendedTypes.SafeAdd(baseType, delegate
 			{
@@ -75,7 +75,7 @@ namespace Ecng.Reflection.Aspects
 		private static Type GetBaseExtensionType(Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if (type.BaseType != null && type.BaseType.GetAttribute<MetaExtensionAttribute>() != null)
 				return type.BaseType;

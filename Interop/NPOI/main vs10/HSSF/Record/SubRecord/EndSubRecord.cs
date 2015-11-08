@@ -58,14 +58,9 @@ namespace NPOI.HSSF.Record
 
         }
 
-        public override bool IsTerminating
-        {
-            get
-            {
-                return true;
-            }
-        }
-        public override String ToString()
+        public override bool IsTerminating => true;
+
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
 
@@ -84,17 +79,11 @@ namespace NPOI.HSSF.Record
         /**
          * Size of record (exluding 4 byte header)
          */
-        public override int DataSize
-        {
-            get { return ENCODED_SIZE; }
-        }
+        public override int DataSize => ENCODED_SIZE;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             EndSubRecord rec = new EndSubRecord();
 

@@ -24,10 +24,7 @@ namespace Ecng.Transactions
 
 		#region Locked
 
-		public bool Locked
-		{
-			get { return (OwningTransaction != null); }
-		}
+		public bool Locked => (OwningTransaction != null);
 
 		#endregion
 
@@ -41,7 +38,7 @@ namespace Ecng.Transactions
 		public void Lock(Transaction transaction)
 		{
 			if (transaction == null)
-				throw new ArgumentNullException("transaction");
+				throw new ArgumentNullException(nameof(transaction));
 
 			Enter();
 

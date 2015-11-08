@@ -277,11 +277,9 @@ namespace NPOI.OpenXmlFormats.Dml.Spreadsheet
             }
         }
         [XmlIgnore]
-        public bool descrSpecified
-        {
-            get { return (null != descrField); }
-        }
-        [XmlAttribute]
+        public bool descrSpecified => (null != descrField);
+
+	    [XmlAttribute]
         [DefaultValue(false)]
         public bool hidden
         {
@@ -296,10 +294,7 @@ namespace NPOI.OpenXmlFormats.Dml.Spreadsheet
         }
 
         [XmlIgnore]
-        public bool hiddenSpecified
-        {
-            get { return (null != hiddenField); }
-        }
+        public bool hiddenSpecified => (null != hiddenField);
     }
     [Serializable]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -988,12 +983,9 @@ namespace NPOI.OpenXmlFormats.Dml.Spreadsheet
             }
         }
         [XmlIgnore]
-        public bool bwModeSpecified
-        {
-            get { return ST_BlackWhiteMode.none != this.bwModeField; }
-        }
+        public bool bwModeSpecified => ST_BlackWhiteMode.none != this.bwModeField;
 
-        public static CT_ShapeProperties Parse(XmlNode node, XmlNamespaceManager namespaceManager)
+	    public static CT_ShapeProperties Parse(XmlNode node, XmlNamespaceManager namespaceManager)
         {
             if (node == null)
                 return null;

@@ -66,17 +66,9 @@ namespace NPOI.HSSF.Record
             int nAvailableBytes = in1.Available();
             field_7_parsed_expr = NPOI.SS.Formula.Formula.Read(field_6_expression_len, in1, nAvailableBytes);
         }
-        protected override int ExtraDataSize
-        {
-            get
-            {
-                //Because this record is converted to individual Formula records, this method is not required.
-                return 2 + field_7_parsed_expr.EncodedSize;
-            }
+        protected override int ExtraDataSize => 2 + field_7_parsed_expr.EncodedSize;
 
-        }
-
-        /**
+	    /**
          * print a sort of string representation ([SHARED FORMULA RECORD] id = x [/SHARED FORMULA RECORD])
          */
 
@@ -100,11 +92,9 @@ namespace NPOI.HSSF.Record
             return buffer.ToString();
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public override Object Clone()
+        public override short Sid => sid;
+
+	    public override Object Clone()
         {
             SharedFormulaRecord result = new SharedFormulaRecord(Range);
             result.field_5_reserved = field_5_reserved;

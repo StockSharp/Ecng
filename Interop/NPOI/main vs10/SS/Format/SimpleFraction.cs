@@ -171,25 +171,12 @@ namespace NPOI.SS.Format
          * Access the denominator.
          * @return the denominator.
          */
-        public int Denominator
-        {
-            get
-            {
-                return denominator;
-            }
-        }
+        public int Denominator => denominator;
 
-        /**
+	    /**
          * Access the numerator.
          * @return the numerator.
          */
-        public int Numerator
-        {
-            get
-            {
-                return numerator;
-            }
-        }
-
+        public int Numerator => numerator;
     }
 }

@@ -392,13 +392,9 @@ namespace NPOI.HPSF
         /// properties.
         /// </summary>
         /// <value>The dictionary.</value>
-        public IDictionary Dictionary
-        {
-            get { return dictionaryIDToName; }
-        }
+        public IDictionary Dictionary => dictionaryIDToName;
 
-
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the codepage.
         /// </summary>
         /// <value>The codepage.</value>

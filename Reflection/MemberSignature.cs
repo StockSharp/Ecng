@@ -30,7 +30,7 @@ namespace Ecng.Reflection
 		public MemberSignature(MemberInfo member)
 		{
 			if (member == null)
-				throw new ArgumentNullException("member");
+				throw new ArgumentNullException(nameof(member));
 
 			Member = member;
 
@@ -49,19 +49,19 @@ namespace Ecng.Reflection
 
 		#endregion
 
-		public MemberInfo Member { get; private set; }
+		public MemberInfo Member { get; }
 
 		/// <summary>
 		/// Gets or sets the type of the return.
 		/// </summary>
 		/// <value>The type of the return.</value>
-		public Type ReturnType { get; private set; }
+		public Type ReturnType { get; }
 
 		/// <summary>
 		/// Gets or sets the param types.
 		/// </summary>
 		/// <value>The param types.</value>
-		public Type[] ParamTypes { get; private set; }
+		public Type[] ParamTypes { get; }
 
 		#region Equatable<MemberSignature> Members
 

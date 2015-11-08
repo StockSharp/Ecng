@@ -16,10 +16,7 @@ namespace Ecng.Web.UrlRewriting
 
 		private Regex _regex;
 
-		private Regex Regex
-		{
-			get { return _regex ?? (_regex = new Regex(SourceUrl, RegexOptions.IgnoreCase | RegexOptions.Compiled)); }
-		}
+		private Regex Regex => _regex ?? (_regex = new Regex(SourceUrl, RegexOptions.IgnoreCase | RegexOptions.Compiled));
 
 		public override void Initialize(string name, NameValueCollection config)
 		{

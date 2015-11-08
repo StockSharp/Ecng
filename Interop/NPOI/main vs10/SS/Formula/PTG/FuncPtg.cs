@@ -57,9 +57,6 @@ namespace NPOI.SS.Formula.PTG
             out1.WriteByte(sid + PtgClass);
             out1.WriteShort(_functionIndex);
         }
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
     }
 }

@@ -21,7 +21,7 @@
 			internal ComboItem(TAddress address, string title)
 			{
 				if (address == null)
-					throw new ArgumentNullException("address");
+					throw new ArgumentNullException(nameof(address));
 
 				//if (title.IsEmpty())
 				//	throw new ArgumentNullException("title");
@@ -37,12 +37,12 @@
 			/// <summary>
 			/// Адрес.
 			/// </summary>
-			public TAddress Address { get; private set; }
+			public TAddress Address { get; }
 
 			/// <summary>
 			/// Отображаемое имя.
 			/// </summary>
-			public string Title { get; private set; }
+			public string Title { get; }
 		}
 
 		private readonly ObservableCollection<ComboItem> _items = new ObservableCollection<ComboItem>();

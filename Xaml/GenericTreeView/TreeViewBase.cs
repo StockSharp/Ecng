@@ -852,7 +852,7 @@ namespace Hardcodet.Wpf.GenericTreeView
     /// is a null reference.</exception>
     public virtual TreeViewItem TryFindNode(T item)
     {
-      if (item == null) throw new ArgumentNullException("item");
+      if (item == null) throw new ArgumentNullException(nameof(item));
 
       //get item key and delegate to overload
       string itemKey = GetItemKey(item);
@@ -873,7 +873,7 @@ namespace Hardcodet.Wpf.GenericTreeView
     /// is a null reference.</exception>
     public virtual TreeViewItem TryFindNodeByKey(string itemKey)
     {
-      if (itemKey == null) throw new ArgumentNullException("itemKey");
+      if (itemKey == null) throw new ArgumentNullException(nameof(itemKey));
       return TryFindItemNode(Tree.Items, itemKey, true);
     }
 

@@ -24,22 +24,13 @@ namespace Microsoft.Practices.Unity.Configuration.ConfigurationHelpers
             this.input = input ?? string.Empty;
         }
 
-        public bool AtEnd
-        {
-            get { return currentPosition == input.Length; }
-        }
+        public bool AtEnd => currentPosition == input.Length;
 
-        public char CurrentChar
-        {
-            get { return input[currentPosition]; }
-        }
+	    public char CurrentChar => input[currentPosition];
 
-        public int CurrentPosition
-        {
-            get { return currentPosition; }
-        }
+	    public int CurrentPosition => currentPosition;
 
-        public void Consume(int numChars)
+	    public void Consume(int numChars)
         {
             currentPosition = Clamp(currentPosition + numChars);
         }

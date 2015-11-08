@@ -15,7 +15,7 @@ namespace Ecng.Collections
 		protected BaseCollection(TCollection innerCollection)
 		{
 			if (innerCollection.IsNull())
-				throw new ArgumentNullException("innerCollection");
+				throw new ArgumentNullException(nameof(innerCollection));
 
 			InnerCollection = innerCollection;
 			AllowNullableItems = false;
@@ -23,7 +23,7 @@ namespace Ecng.Collections
 
 		public bool AllowNullableItems { get; set; }
 
-		protected TCollection InnerCollection { get; private set; }
+		protected TCollection InnerCollection { get; }
 
 		protected abstract TItem OnGetItem(int index);
 		protected abstract void OnInsert(int index, TItem item);
@@ -49,10 +49,7 @@ namespace Ecng.Collections
 			return InnerCollection.GetEnumerator();
 		}
 
-		public override int Count
-		{
-			get { return InnerCollection.Count; }
-		}
+		public override int Count => InnerCollection.Count;
 
 		public override bool Contains(TItem item)
 		{
@@ -65,7 +62,7 @@ namespace Ecng.Collections
 #if SILVERLIGHT
 				throw new ArgumentOutOfRangeException("index");
 #else
-				throw new ArgumentOutOfRangeException("index", index, "Index has incorrect value.");
+				throw new ArgumentOutOfRangeException(nameof(index), index, "Index has incorrect value.");
 #endif
 		}
 
@@ -114,15 +111,12 @@ namespace Ecng.Collections
 			}
 		}
 
-		public virtual bool IsReadOnly
-		{
-			get { return false; }
-		}
+		public virtual bool IsReadOnly => false;
 
 		public override void Add(TItem item)
 		{
 			if (!AllowNullableItems && item.IsNull())
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
 			if (OnAdding(item))
 			{
@@ -143,7 +137,7 @@ namespace Ecng.Collections
 		public override bool Remove(TItem item)
 		{
 			if (!AllowNullableItems && item.IsNull())
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
 			if (OnRemoving(item))
 			{
@@ -245,16 +239,13 @@ namespace Ecng.Collections
 		int IList.Add(object value)
 		{
 			if (!IsCompatible(value))
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			Add((TItem)value);
 			return Count;
 		}
 
-		bool IList.IsReadOnly
-		{
-			get { return false; }
-		}
+		bool IList.IsReadOnly => false;
 
 		object IList.this[int index]
 		{
@@ -262,7 +253,7 @@ namespace Ecng.Collections
 			set
 			{
 				if (!IsCompatible(value))
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				this[index] = (TItem)value;
 			}
@@ -284,7 +275,7 @@ namespace Ecng.Collections
 		void IList.Insert(int index, object value)
 		{
 			if (!IsCompatible(value))
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			Insert(index, (TItem)value);
 		}
@@ -302,10 +293,7 @@ namespace Ecng.Collections
 			RemoveAt(index);
 		}
 
-		bool IList.IsFixedSize
-		{
-			get { return false; }
-		}
+		bool IList.IsFixedSize => false;
 
 		#endregion
 

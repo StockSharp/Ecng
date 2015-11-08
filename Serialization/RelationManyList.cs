@@ -68,7 +68,7 @@
 		protected RelationManyList(IStorage storage)
 		{
 			if (storage == null)
-				throw new ArgumentNullException("storage");
+				throw new ArgumentNullException(nameof(storage));
 
 			Storage = storage;
 			Storage.Added += value => DoIf<TEntity>(value, entity =>
@@ -81,10 +81,7 @@
 
 		private static Schema _schema;
 
-		public static Schema Schema
-		{
-			get { return _schema ?? (_schema = SchemaManager.GetSchema<TEntity>()); }
-		}
+		public static Schema Schema => _schema ?? (_schema = SchemaManager.GetSchema<TEntity>());
 
 		private class StringIdComparer : IEqualityComparer<object>
 		{
@@ -117,7 +114,7 @@
 			}
 		}
 
-		public IStorage Storage { get; private set; }
+		public IStorage Storage { get; }
 
 		public DelayAction DelayAction { get; set; }
 
@@ -142,17 +139,14 @@
 
 		#region Item
 
-		public TEntity this[object id]
-		{
-			get { return ReadById(id); }
-		}
+		public TEntity this[object id] => ReadById(id);
 
 		#endregion
 
 		public virtual TEntity ReadById(object id)
 		{
 			if (id == null)
-				throw new ArgumentNullException("id");
+				throw new ArgumentNullException(nameof(id));
 
 			ThrowIfStorageNull();
 
@@ -506,7 +500,7 @@
 		public TEntity Read(SerializationItem by)
 		{
 			if (by == null)
-				throw new ArgumentNullException("by");
+				throw new ArgumentNullException(nameof(@by));
 
 			return Read(new SerializationItemCollection { by });
 		}

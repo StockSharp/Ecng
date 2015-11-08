@@ -43,7 +43,7 @@
 		public ModifiedEnumerable(IEnumerable<T> source)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			_source = source;
 		}

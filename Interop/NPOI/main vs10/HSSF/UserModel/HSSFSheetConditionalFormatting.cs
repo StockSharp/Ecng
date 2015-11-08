@@ -201,15 +201,9 @@ namespace NPOI.HSSF.UserModel
         /// the number of Conditional Formatting objects of the sheet
         /// </summary>
         /// <value>The num conditional formattings.</value>
-        public int NumConditionalFormattings
-        {
-            get
-            {
-                return _conditionalFormattingTable.Count;
-            }
-        }
+        public int NumConditionalFormattings => _conditionalFormattingTable.Count;
 
-        /// <summary>
+	    /// <summary>
         /// Removes a Conditional Formatting object by index
         /// </summary>
         /// <param name="index">index of a Conditional Formatting object to Remove</param>

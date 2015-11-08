@@ -123,19 +123,13 @@ namespace Ecng.Security
 
 		#region Name
 
-		public string Name
-		{
-			get { return _store.Name; }
-		}
+		public string Name => _store.Name;
 
 		#endregion
 
 		#region Location
 
-		public StoreLocation Location
-		{
-			get { return _store.Location; }
-		}
+		public StoreLocation Location => _store.Location;
 
 		#endregion
 
@@ -143,10 +137,7 @@ namespace Ecng.Security
 
 		private X509Certificate2CollectionEx _certificates;
 
-		public X509Certificate2Collection Certificates
-		{
-			get { return _certificates; }
-		}
+		public X509Certificate2Collection Certificates => _certificates;
 
 		#endregion
 

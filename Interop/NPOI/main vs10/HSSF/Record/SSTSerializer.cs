@@ -85,20 +85,8 @@ namespace NPOI.HSSF.Record
             return (UnicodeString)strings[index];
         }
 
-        public int[] BucketAbsoluteOffsets
-        {
-            get
-            {
-                return bucketAbsoluteOffsets;
-            }
-        }
+        public int[] BucketAbsoluteOffsets => bucketAbsoluteOffsets;
 
-        public int[] BucketRelativeOffsets
-        {
-            get
-            {
-                return bucketRelativeOffsets;
-            }
-        }
+	    public int[] BucketRelativeOffsets => bucketRelativeOffsets;
     }
 }

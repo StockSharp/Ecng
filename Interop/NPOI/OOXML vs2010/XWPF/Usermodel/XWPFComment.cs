@@ -45,29 +45,11 @@ namespace NPOI.XWPF.UserModel
             }
         }
 
-        public String Id
-        {
-            get
-            {
-                return id;
-            }
-        }
+        public String Id => id;
 
-        public String Author
-        {
-            get
-            {
-                return author;
-            }
-        }
+	    public String Author => author;
 
-        public String Text
-        {
-            get
-            {
-                return text.ToString();
-            }
-        }
+	    public String Text => text.ToString();
     }
 
 }

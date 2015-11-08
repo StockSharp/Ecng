@@ -24,12 +24,6 @@
 		/// </summary>
 		internal readonly int operatorStart;
 
-		public string Operator
-		{
-			get
-			{
-				return this.baseString.Substring(operatorStart, startIndex - operatorStart);
-			}
-		}
+		public string Operator => this.baseString.Substring(operatorStart, startIndex - operatorStart);
 	}
 }

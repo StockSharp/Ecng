@@ -61,9 +61,6 @@ namespace NPOI.OpenXmlFormats.Spreadsheet
             }
         }
         [XmlIgnore]
-        public bool extLstSpecified
-        {
-            get { return null != this.extLst; }
-        }
+        public bool extLstSpecified => null != this.extLst;
     }
 }

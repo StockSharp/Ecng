@@ -157,12 +157,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        protected override int DataSize
-        {
-            get { return 16 + (NumDbcells * 4); }
-        }
+        protected override int DataSize => 16 + (NumDbcells * 4);
 
-        /** Returns the size of an INdexRecord when it needs to index the specified number of blocks
+	    /** Returns the size of an INdexRecord when it needs to index the specified number of blocks
           *
           */
         public static int GetRecordSizeForBlockCount(int blockCount)
@@ -170,12 +167,9 @@ namespace NPOI.HSSF.Record
             return 20 + (4 * blockCount);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             IndexRecord rec = new IndexRecord();
             rec.field_1_zero = field_1_zero;

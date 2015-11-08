@@ -38,18 +38,18 @@ namespace SmartFormat.Core.Formatting
 
 		public FormattingInfo Parent { get; private set; }
 
-		public FormatDetails FormatDetails { get; private set; }
+		public FormatDetails FormatDetails { get; }
 
 		public Selector Selector { get; set; }
 		public object Result { get; set; }
 
 		public object CurrentValue { get; set; }
 
-		public Placeholder Placeholder { get; private set; }
-		public int Alignment { get { return this.Placeholder.Alignment; }}
-		public string FormatterOptions { get { return Placeholder.FormatterOptions; } }
+		public Placeholder Placeholder { get; }
+		public int Alignment => this.Placeholder.Alignment;
+		public string FormatterOptions => Placeholder.FormatterOptions;
 
-		public Format Format { get; private set; }
+		public Format Format { get; }
 
 		public void Write(string text)
 		{

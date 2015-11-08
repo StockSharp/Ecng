@@ -86,13 +86,9 @@ namespace Wintellect.PowerCollections
             /// <summary>
             /// Is this slot empty?
             /// </summary>
-            public bool Empty {
-                get {
-                    return HashValue == 0;
-                }
-            }
+            public bool Empty => HashValue == 0;
 
-            /// <summary>
+			/// <summary>
             /// Clear this slot, leaving the collision bit alone.
             /// </summary>
             public void Clear() {
@@ -338,28 +334,16 @@ namespace Wintellect.PowerCollections
         /// Get the number of items in the hash table.
         /// </summary>
         /// <value>The number of items stored in the hash table.</value>
-        public int ElementCount
-        {
-            get
-            {
-                return count;
-            }
-        }
+        public int ElementCount => count;
 
-        /// <summary>
+	    /// <summary>
         /// Get the number of slots in the hash table. Exposed internally
         /// for testing purposes.
         /// </summary>
         /// <value>The number of slots in the hash table.</value>
-        internal int SlotCount
-        {
-            get
-            {
-                return totalSlots;
-            }
-        }
+        internal int SlotCount => totalSlots;
 
-        /// <summary>
+	    /// <summary>
         /// Get or change the load factor. Changing the load factor may cause
         /// the size of the table to grow or shrink accordingly.
         /// </summary>
@@ -374,7 +358,7 @@ namespace Wintellect.PowerCollections
             {
                 // Don't allow hopelessly inefficient load factors.
                 if (value < 0.25 || value > 0.95)
-					throw new ArgumentOutOfRangeException("value", value, Strings.InvalidLoadFactor);
+					throw new ArgumentOutOfRangeException(nameof(value), value, Strings.InvalidLoadFactor);
 
                 StopEnumerations();
 
@@ -614,7 +598,7 @@ namespace Wintellect.PowerCollections
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null)
-                throw new ArgumentNullException("info");
+                throw new ArgumentNullException(nameof(info));
 
             info.AddValue("equalityComparer", equalityComparer, typeof(IEqualityComparer<T>));
             info.AddValue("loadFactor", loadFactor, typeof(float));

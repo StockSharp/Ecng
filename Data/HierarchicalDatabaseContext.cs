@@ -11,7 +11,7 @@
 			: this(schema, source)
 		{
 			if (morph == null)
-				throw new ArgumentNullException("morph");
+				throw new ArgumentNullException(nameof(morph));
 
 			Morph = morph;
 			
@@ -21,7 +21,7 @@
 			: this(schema, source)
 		{
 			if (query == null)
-				throw new ArgumentNullException("query");
+				throw new ArgumentNullException(nameof(query));
 
 			Query = query;
 		}
@@ -29,10 +29,10 @@
 		private HierarchicalDatabaseContext(Schema schema, SerializationItemCollection source)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			Schema = schema;
 			Source = source;

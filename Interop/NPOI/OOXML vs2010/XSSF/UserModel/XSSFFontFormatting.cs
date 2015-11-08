@@ -169,26 +169,14 @@ namespace NPOI.XSSF.UserModel
          *
          * @return bold - whether the font is bold or not
          */
-        public bool IsBold
-        {
-            get
-            {
-                return _font.SizeOfBArray() == 1 && _font.GetBArray(0).val;
-            }
-        }
+        public bool IsBold => _font.SizeOfBArray() == 1 && _font.GetBArray(0).val;
 
-        /**
+	    /**
          * @return true if font style was Set to <i>italic</i>
          */
-        public bool IsItalic
-        {
-            get
-            {
-                return _font.sizeOfIArray() == 1 && _font.GetIArray(0).val;
-            }
-        }
+        public bool IsItalic => _font.sizeOfIArray() == 1 && _font.GetIArray(0).val;
 
-        /**
+	    /**
          * Set font style options.
          *
          * @param italic - if true, Set posture style to italic, otherwise to normal

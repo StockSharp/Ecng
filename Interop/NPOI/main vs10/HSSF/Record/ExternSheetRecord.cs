@@ -58,26 +58,13 @@ namespace NPOI.HSSF.Record
         {
 
         }
-        public int ExtBookIndex
-        {
-            get
-            {
-                return _extBookIndex;
-            }
-        }
-        public int FirstSheetIndex
-        {
-            get
-            {
-                return _firstSheetIndex;
-            }
-        }
-        public int LastSheetIndex
-        {
-            get { return _lastSheetIndex; }
-        }
+        public int ExtBookIndex => _extBookIndex;
 
-        public override String ToString()
+	    public int FirstSheetIndex => _firstSheetIndex;
+
+	    public int LastSheetIndex => _lastSheetIndex;
+
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
             buffer.Append("extBook=").Append(_extBookIndex);
@@ -197,26 +184,14 @@ namespace NPOI.HSSF.Record
         /** returns the number of REF Records, which is in model
          * @return number of REF records
          */
-        public int NumOfREFRecords
-        {
-            get
-            {
-                return _list.Count;
-            }
-        }
-    
-        /**  
+        public int NumOfREFRecords => _list.Count;
+
+	    /**  
  * @return number of REF structures
  */
-        public int NumOfRefs
-        {
-            get
-            {
-                return _list.Count;
-            }
-        }
+        public int NumOfRefs => _list.Count;
 
-        /** 
+	    /** 
          * Adds REF struct (ExternSheetSubRecord)
          * @param rec REF struct
          */
@@ -358,19 +333,11 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        protected override int DataSize
-        {
-            get { 
-                return 2 + _list.Count * RefSubRecord.ENCODED_SIZE; 
-            }
-        }
+        protected override int DataSize => 2 + _list.Count * RefSubRecord.ENCODED_SIZE;
 
-        /**
+	    /**
          * return the non static version of the id for this record.
          */
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
     }
 }

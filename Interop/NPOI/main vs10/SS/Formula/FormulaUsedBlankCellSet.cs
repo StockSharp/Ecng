@@ -229,12 +229,6 @@ namespace NPOI.SS.Formula
             }
             return bcsg.ContainsCell(rowIndex, columnIndex);
         }
-        public bool IsEmpty
-        {
-            get
-            {
-                return _sheetGroupsByBookSheet.Count == 0;
-            }
-        }
+        public bool IsEmpty => _sheetGroupsByBookSheet.Count == 0;
     }
 }

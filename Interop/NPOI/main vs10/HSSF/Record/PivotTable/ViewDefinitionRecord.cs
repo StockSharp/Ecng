@@ -121,26 +121,12 @@ namespace NPOI.HSSF.Record.PivotTable
         }
 
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 40 + // 20 short fields (rwFirst ... itblAutoFmt)
-                    StringUtil.GetEncodedSize(name) + StringUtil.GetEncodedSize(dataField);
-            }
-        }
+        protected override int DataSize => 40 + // 20 short fields (rwFirst ... itblAutoFmt)
+                                           StringUtil.GetEncodedSize(name) + StringUtil.GetEncodedSize(dataField);
 
+	    public override short Sid => sid;
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
-
-
-        public override string ToString()
+	    public override string ToString()
         {
             StringBuilder buffer = new StringBuilder();
 

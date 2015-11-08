@@ -61,14 +61,9 @@ namespace NPOI.HSSF.Record.Cont
         /**
          * includes 4 byte header
          */
-        public int TotalSize
-        {
-            get
-            {
-                return 4 + _size;
-            }
-        }
-        public int AvailableSpace
+        public int TotalSize => 4 + _size;
+
+	    public int AvailableSpace
         {
             get
             {

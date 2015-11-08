@@ -45,13 +45,7 @@ namespace NPOI.POIFS.Storage
             {
             }
 
-            public override bool IsDirectory
-            {
-                get
-                {
-                    return false;
-                }
-            }
+            public override bool IsDirectory => false;
         }
 
 

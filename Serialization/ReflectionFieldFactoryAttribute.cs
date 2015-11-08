@@ -40,7 +40,7 @@ namespace Ecng.Serialization
 		protected ReflectionImplFieldFactoryAttribute(Type factoryType)
 		{
 			if (factoryType == null)
-				throw new ArgumentNullException("factoryType");
+				throw new ArgumentNullException(nameof(factoryType));
 
 			_factoryType = factoryType;
 		}

@@ -15,7 +15,7 @@
 		public BitArrayReader(Stream underlyingStream)
 		{
 			if (underlyingStream == null)
-				throw new ArgumentNullException("underlyingStream");
+				throw new ArgumentNullException(nameof(underlyingStream));
 
 			_underlyingStream = underlyingStream;
 
@@ -86,7 +86,7 @@
 		public long ReadLong(int count)
 		{
 			if (count <= 0 || count > 64)
-				throw new ArgumentOutOfRangeException("count", count, "Invalid count value.");
+				throw new ArgumentOutOfRangeException(nameof(count), count, "Invalid count value.");
 
 			var bitOffset = _bitOffset;
 

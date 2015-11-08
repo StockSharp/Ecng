@@ -65,14 +65,9 @@ public class ZipPackagePart : PackagePart {
      * 
      * @return The zip entry in the zip structure coresponding to this part.
      */
-    public ZipEntry ZipArchive
-    {
-        get{
-        return zipEntry;
-        }
-    }
+    public ZipEntry ZipArchive => zipEntry;
 
-    /**
+	/**
      * Implementation of the getInputStream() which return the inputStream of
      * this part zip entry.
      * 
@@ -92,15 +87,9 @@ public class ZipPackagePart : PackagePart {
         return null;
     }
 
-    public override long Size
-    {
-        get
-        {
-            return zipEntry.Size;
-        }
-    }
+    public override long Size => zipEntry.Size;
 
-    public override bool Save(Stream os){
+	public override bool Save(Stream os){
         return new ZipPartMarshaller().Marshall(this, os);
     }
 

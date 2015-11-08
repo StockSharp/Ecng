@@ -44,14 +44,11 @@ namespace Ecng.Interop
 
 		private static readonly Lazy<HardwareInfo> _instance = new Lazy<HardwareInfo>(() => new HardwareInfo());
 
-		public static HardwareInfo Instance
-		{
-			get { return _instance.Value; }
-		}
+		public static HardwareInfo Instance => _instance.Value;
 
-		public string ProcessId { get; private set; }
-		public string MotherBoardId { get; private set; }
-		public string NetworkId { get; private set; }
+		public string ProcessId { get; }
+		public string MotherBoardId { get; }
+		public string NetworkId { get; }
 
 
 		public string Id { get; private set; }

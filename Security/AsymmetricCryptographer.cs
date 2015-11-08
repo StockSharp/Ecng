@@ -24,13 +24,13 @@ namespace Ecng.Security
 			private static AsymmetricAlgorithm CreateAlgo(Type algorithmType, ProtectedKey key)
 			{
 				if (algorithmType == null)
-					throw new ArgumentNullException("algorithmType");
+					throw new ArgumentNullException(nameof(algorithmType));
 
 				if (!typeof(AsymmetricAlgorithm).IsAssignableFrom(algorithmType))
 					throw new ArgumentException("algorithmType");
 
 				if (key == null)
-					throw new ArgumentNullException("key");
+					throw new ArgumentNullException(nameof(key));
 
 				var retVal = algorithmType.CreateInstance<AsymmetricAlgorithm>();
 

@@ -18,16 +18,16 @@
 			: base(name)
 		{
 			if (factory == null)
-				throw new ArgumentNullException("factory");
+				throw new ArgumentNullException(nameof(factory));
 
 			if (renderer == null)
-				throw new ArgumentNullException("renderer");
+				throw new ArgumentNullException(nameof(renderer));
 
 			Factory = factory;
 			Renderer = renderer;
 		}
 
-		public DbProviderFactory Factory { get; private set; }
+		public DbProviderFactory Factory { get; }
 		public SqlRenderer Renderer { get; private set; }
 
 		public DbConnection CreateConnection(string connectionString)

@@ -175,30 +175,21 @@ namespace NPOI.POIFS.Storage
         /// Get start of Property Table
         /// </summary>
         /// <value>the index of the first block of the Property Table</value>
-        public int PropertyStart
-        {
-            get{return _property_start;}
-        }
+        public int PropertyStart => _property_start;
 
-        /// <summary>
+	    /// <summary>
         /// Gets start of small block allocation table
         /// </summary>
         /// <value>The SBAT start.</value>
-        public int SBATStart
-        {
-            get{return _sbat_start;}
-        }
+        public int SBATStart => _sbat_start;
 
-        /// <summary>
+	    /// <summary>
         /// Gets number of BAT blocks
         /// </summary>
         /// <value>The BAT count.</value>
-        public int BATCount
-        {
-            get{return _bat_count;}
-        }
+        public int BATCount => _bat_count;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the BAT array.
         /// </summary>
         /// <value>The BAT array.</value>
@@ -222,28 +213,19 @@ namespace NPOI.POIFS.Storage
         /// </summary>
         /// <value>The XBAT count.</value>
         /// @return XBAT count
-        public int XBATCount
-        {
-            get{return _xbat_count;}
-        }
+        public int XBATCount => _xbat_count;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the index of the XBAT.
         /// </summary>
         /// <value>The index of the XBAT.</value>
-        public int XBATIndex
-        {
-            get{return _xbat_start;}
-        }
-        
-        /// <summary>
+        public int XBATIndex => _xbat_start;
+
+	    /// <summary>
         /// Gets The Big Block Size, normally 512 bytes, sometimes 4096 bytes
         /// </summary>
         /// <value>The size of the big block.</value>
         /// @return 
-        public POIFSBigBlockSize BigBlockSize
-        {
-    	    get{return bigBlockSize;}
-        }
+        public POIFSBigBlockSize BigBlockSize => bigBlockSize;
     }
 }

@@ -62,19 +62,12 @@ namespace NPOI.DDF
         /// Gets the description.
         /// </summary>
         /// <value>The description.</value>
-        public String Description
-        {
-            get { return description; }
-        }
+        public String Description => description;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the type.
         /// </summary>
         /// <value>The type.</value>
-        public byte Type
-        {
-            get { return type; }
-        }
-
+        public byte Type => type;
     }
 }

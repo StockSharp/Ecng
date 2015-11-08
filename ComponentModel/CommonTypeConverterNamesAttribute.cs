@@ -26,7 +26,7 @@ namespace Ecng.ComponentModel
 		public CommonTypeConverterNamesAttribute(string members)
 		{
 			if (members.IsEmpty())
-				throw new ArgumentNullException("members");
+				throw new ArgumentNullException(nameof(members));
 
 			_members = members.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -44,10 +44,7 @@ namespace Ecng.ComponentModel
 		/// Gets the members.
 		/// </summary>
 		/// <value>The members.</value>
-		public string[] Members
-		{
-			get { return _members; }
-		}
+		public string[] Members => _members;
 
 		#endregion
 	}

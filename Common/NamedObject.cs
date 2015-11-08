@@ -21,10 +21,7 @@ namespace Ecng.Common
 
 		private readonly string _name;
 
-		public string Name
-		{
-			get { return _name; }
-		}
+		public string Name => _name;
 
 		#endregion
 	}

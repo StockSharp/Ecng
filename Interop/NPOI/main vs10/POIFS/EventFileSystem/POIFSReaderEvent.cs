@@ -55,28 +55,19 @@ namespace NPOI.POIFS.EventFileSystem
          * @return the DocumentInputStream, freshly opened
          */
 
-        public DocumentInputStream Stream
-        {
-            get { return stream; }
-        }
+        public DocumentInputStream Stream => stream;
 
-        /**
+	    /**
          * @return the document's path
          */
 
-        public POIFSDocumentPath Path
-        {
-            get { return path; }
-        }
+        public POIFSDocumentPath Path => path;
 
-        /**
+	    /**
          * @return the document's name
          */
 
-        public String Name
-        {
-            get { return documentName; }
-        }
+        public String Name => documentName;
     }   // end public class POIFSReaderEvent
 
 }

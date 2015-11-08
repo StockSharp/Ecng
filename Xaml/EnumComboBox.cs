@@ -76,7 +76,7 @@
 			where T : struct
 		{
 			if (comboBox == null)
-				throw new ArgumentNullException("comboBox");
+				throw new ArgumentNullException(nameof(comboBox));
 
 			return (IEnumerable<T>)comboBox.ItemsSource;
 		}
@@ -101,10 +101,10 @@
 		public static void SetDataSource(this ComboBox comboBox, Type enumType, IEnumerable<object> dataSource)
 		{
 			if (comboBox == null)
-				throw new ArgumentNullException("comboBox");
+				throw new ArgumentNullException(nameof(comboBox));
 
 			if (dataSource == null)
-				throw new ArgumentNullException("dataSource");
+				throw new ArgumentNullException(nameof(dataSource));
 
 			var dict = _names.SafeAdd(enumType, key => enumType
 				.GetValues()
@@ -116,7 +116,7 @@
 		public static ObservableCollection<EnumerationMember> GetItemsSource(this ComboBox comboBox)
 		{
 			if (comboBox == null)
-				throw new ArgumentNullException("comboBox");
+				throw new ArgumentNullException(nameof(comboBox));
 
 			return _sources.SafeAdd(comboBox, key =>
 			{
@@ -138,7 +138,7 @@
 		public static object GetSelectedValue(this ComboBox comboBox)
 		{
 			if (comboBox == null)
-				throw new ArgumentNullException("comboBox");
+				throw new ArgumentNullException(nameof(comboBox));
 
 			return comboBox.SelectedItem != null ? ((EnumerationMember)comboBox.SelectedItem).Value : null;
 		}
@@ -147,7 +147,7 @@
 			where T : struct
 		{
 			if (comboBox == null)
-				throw new ArgumentNullException("comboBox");
+				throw new ArgumentNullException(nameof(comboBox));
 
 			comboBox.SelectedValue = value;
 		}

@@ -42,13 +42,8 @@ public class ZipInputStreamZipEntrySource:ZipEntrySource {
 		inp.Close();
 	}
 
-    public IEnumerator Entries
-    {
-        get{
-		return new EntryEnumerator(zipEntries);
-        }
-	}
-	
+    public IEnumerator Entries => new EntryEnumerator(zipEntries);
+
 	public Stream GetInputStream(ZipEntry zipEntry) {
         FakeZipEntry entry = (FakeZipEntry)zipEntry;
 		return entry.GetInputStream();
@@ -75,15 +70,9 @@ public class ZipInputStreamZipEntrySource:ZipEntrySource {
 			return iterator.MoveNext();
 		}
 
-		public object Current 
-        {
-            get
-            {
-                return iterator.Current;
-            }
-		}
+		public object Current => iterator.Current;
 
-        #region IEnumerator Members
+		#region IEnumerator Members
 
 
         public void Reset()

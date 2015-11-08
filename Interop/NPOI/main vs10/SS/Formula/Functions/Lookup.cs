@@ -33,13 +33,7 @@ namespace NPOI.SS.Formula.Functions
         {
             return _values[index];
         }
-        public int Size
-        {
-            get
-            {
-                return _values.Length;
-            }
-        }
+        public int Size => _values.Length;
     }
     /**
      * Implementation of Excel function LOOKUP.<p/>

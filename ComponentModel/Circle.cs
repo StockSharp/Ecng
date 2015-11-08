@@ -22,10 +22,10 @@ namespace Ecng.ComponentModel
 		public Circle(Point<T> center, T radius)
 		{
 			if (center == null)
-				throw new ArgumentNullException("center");
+				throw new ArgumentNullException(nameof(center));
 
 			if (_operator.Compare(radius, 0.To<T>()) < 0)
-				throw new ArgumentOutOfRangeException("radius");
+				throw new ArgumentOutOfRangeException(nameof(radius));
 
 			Center = center;
 			Radius = radius;
@@ -34,12 +34,12 @@ namespace Ecng.ComponentModel
 		/// <summary>
 		/// 
 		/// </summary>
-		public Point<T> Center { get; private set; }
+		public Point<T> Center { get; }
 
 		/// <summary>
 		/// 
 		/// </summary>
-		public T Radius { get; private set; }
+		public T Radius { get; }
 
 		/// <summary>
 		/// 
@@ -49,7 +49,7 @@ namespace Ecng.ComponentModel
 		public bool Contains(Point<T> point)
 		{
 			if (point == null)
-				throw new ArgumentNullException("point");
+				throw new ArgumentNullException(nameof(point));
 
 			return _operator.Compare(new Line<T>(Center, point).Length.To<T>(), Radius) <= 0;
 			//return new Line<T>(Center, point).Length <= Radius;
@@ -74,7 +74,7 @@ namespace Ecng.ComponentModel
 		public Point<double>[] GetIntersection(Line<T> line)
 		{
 			if (line == null)
-				throw new ArgumentNullException("line");
+				throw new ArgumentNullException(nameof(line));
 
 			//double
 			//l = p2.X - p1.X,	// преобразуем отрезок в вид x = x1 + l * t, y = y1 + m * t

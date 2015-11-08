@@ -69,51 +69,23 @@ namespace NDde.Foundation.Advanced.Monitor
             _ServerHandle = serverHandle;
         }
 
-        public string Service
-        {
-            get { return _Service; }
-        }
+        public string Service => _Service;
 
-        public string Topic
-        {
-            get { return _Topic; }
-        }
+	    public string Topic => _Topic;
 
-        public string Item
-        {
-            get { return _Item; }
-        }
+	    public string Item => _Item;
 
-        public int Format
-        {
-            get { return _Format; }
-        }
+	    public int Format => _Format;
 
-        public bool IsHot
-        {
-            get { return _Hot; }
-        }
+	    public bool IsHot => _Hot;
 
-        public bool IsEstablished
-        {
-            get { return _Established; }
-        }
+	    public bool IsEstablished => _Established;
 
-        public bool IsServerInitiated
-        {
-            get { return _ServerInitiated; }
-        }
+	    public bool IsServerInitiated => _ServerInitiated;
 
-        public IntPtr ClientHandle
-        {
-            get { return _ClientHandle; }
-        }
+	    public IntPtr ClientHandle => _ClientHandle;
 
-        public IntPtr ServerHandle
-        {
-            get { return _ServerHandle; }
-        }
-
+	    public IntPtr ServerHandle => _ServerHandle;
     } // class
 
 } // namespace

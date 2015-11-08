@@ -49,12 +49,9 @@ namespace Microsoft.Practices.Unity
         /// <summary>
         /// Name of the dependency.
         /// </summary>
-        public string Name
-        {
-            get { return name; }
-        }
+        public string Name => name;
 
-        /// <summary>
+	    /// <summary>
         /// Create an instance of <see cref="IDependencyResolverPolicy"/> that
         /// will be used to get the value for the member this attribute is
         /// applied to.

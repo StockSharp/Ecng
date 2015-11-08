@@ -34,7 +34,7 @@ namespace Ecng.Net.Transport
 		public void ReceiveAsync<T>(Action<T> handler)
 		{
 			if (handler == null)
-				throw new ArgumentNullException("handler");
+				throw new ArgumentNullException(nameof(handler));
 
 			throw new NotImplementedException();
 		}

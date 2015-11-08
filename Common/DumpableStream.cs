@@ -13,7 +13,7 @@ namespace Ecng.Common
 		public DumpableStream(Stream underlying)
 		{
 			if (underlying == null)
-				throw new ArgumentNullException("underlying");
+				throw new ArgumentNullException(nameof(underlying));
 
 			_underlying = underlying;
 		}
@@ -102,10 +102,7 @@ namespace Ecng.Common
 		/// <returns>
 		/// true if the stream supports reading; otherwise, false.
 		/// </returns>
-		public override bool CanRead
-		{
-			get { return _underlying.CanRead; }
-		}
+		public override bool CanRead => _underlying.CanRead;
 
 		/// <summary>
 		/// When overridden in a derived class, gets a value indicating whether the current stream supports seeking.
@@ -113,10 +110,7 @@ namespace Ecng.Common
 		/// <returns>
 		/// true if the stream supports seeking; otherwise, false.
 		/// </returns>
-		public override bool CanSeek
-		{
-			get { return _underlying.CanSeek; }
-		}
+		public override bool CanSeek => _underlying.CanSeek;
 
 		/// <summary>
 		/// When overridden in a derived class, gets a value indicating whether the current stream supports writing.
@@ -124,10 +118,7 @@ namespace Ecng.Common
 		/// <returns>
 		/// true if the stream supports writing; otherwise, false.
 		/// </returns>
-		public override bool CanWrite
-		{
-			get { return _underlying.CanWrite; }
-		}
+		public override bool CanWrite => _underlying.CanWrite;
 
 		/// <summary>
 		/// When overridden in a derived class, gets the length in bytes of the stream.
@@ -136,10 +127,7 @@ namespace Ecng.Common
 		/// A long value representing the length of the stream in bytes.
 		/// </returns>
 		/// <exception cref="T:System.NotSupportedException">A class derived from Stream does not support seeking. </exception><exception cref="T:System.ObjectDisposedException">Methods were called after the stream was closed. </exception>
-		public override long Length
-		{
-			get { return _underlying.Length; }
-		}
+		public override long Length => _underlying.Length;
 
 		/// <summary>
 		/// When overridden in a derived class, gets or sets the position within the current stream.

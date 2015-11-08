@@ -62,15 +62,15 @@ namespace NDde.Foundation.Server
         {
             if (service == null)
             {
-                throw new ArgumentNullException("service");
+                throw new ArgumentNullException(nameof(service));
             }
             if (service.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "service");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(service));
             }
             if (context == null)
             {
-                throw new ArgumentNullException("context");
+                throw new ArgumentNullException(nameof(context));
             }
             
             _Service = service;
@@ -132,22 +132,13 @@ namespace NDde.Foundation.Server
             }
         }
 
-        public virtual string Service
-        {
-            get { return _Service; }
-        }
+        public virtual string Service => _Service;
 
-        public virtual bool IsRegistered
-        {
-            get { return _ServiceHandle != IntPtr.Zero; }
-        }
+	    public virtual bool IsRegistered => _ServiceHandle != IntPtr.Zero;
 
-        internal bool IsDisposed
-        {
-            get { return _Disposed; }
-        }
+	    internal bool IsDisposed => _Disposed;
 
-        public virtual void Register()
+	    public virtual void Register()
         {
             if (IsDisposed)
             {
@@ -232,19 +223,19 @@ namespace NDde.Foundation.Server
             }
             if (topic == null)
             {
-                throw new ArgumentNullException("topic");
+                throw new ArgumentNullException(nameof(topic));
             }
             if (topic.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "topic");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(topic));
             }
             if (item == null)
             {
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             }
             if (item.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "item");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(item));
             }
 
             // Assume the topic name and item name are wild.
@@ -294,7 +285,7 @@ namespace NDde.Foundation.Server
             }
             if (conversation == null)
             {
-                throw new ArgumentNullException("conversation");
+                throw new ArgumentNullException(nameof(conversation));
             }
             if (conversation.IsPaused)
             {
@@ -355,7 +346,7 @@ namespace NDde.Foundation.Server
             }
             if (conversation == null)
             {
-                throw new ArgumentNullException("conversation");
+                throw new ArgumentNullException(nameof(conversation));
             }
             if (!conversation.IsPaused)
             {
@@ -416,7 +407,7 @@ namespace NDde.Foundation.Server
             }
             if (conversation == null)
             {
-                throw new ArgumentNullException("conversation");
+                throw new ArgumentNullException(nameof(conversation));
             }
             
             if (_ConversationTable.ContainsKey(conversation.Handle))

@@ -101,10 +101,7 @@
 		/// <summary>
 		/// Gets whether priority queue is empty
 		/// </summary>
-		public bool IsEmpty
-		{
-			get { return Count == 0; }
-		}
+		public bool IsEmpty => Count == 0;
 
 		#endregion
 
@@ -167,10 +164,7 @@
 		/// <remarks>
 		/// For priority queue this property returns <c>false</c>.
 		/// </remarks>
-		public bool IsReadOnly
-		{
-			get { return false; }
-		}
+		public bool IsReadOnly => false;
 
 		/// <summary>
 		/// Removes the first occurrence of a specific object from the priority queue. 

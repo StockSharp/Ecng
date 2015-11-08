@@ -62,15 +62,9 @@ namespace NPOI.XSSF.UserModel
         /**
          * Gets the parent shape.
          */
-        public IShape Parent
-        {
-            get
-            {
-                return parent;
-            }
-        }
+        public IShape Parent => parent;
 
-        /**
+	    /**
          * @return  the anchor that is used by this shape.
          */
         public XSSFAnchor GetAnchor()

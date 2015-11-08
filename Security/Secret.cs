@@ -37,10 +37,10 @@ namespace Ecng.Security
 			: this(algo)
 		{
 			if (passwordBytes == null)
-				throw new ArgumentNullException("passwordBytes");
+				throw new ArgumentNullException(nameof(passwordBytes));
 
 			if (salt == null)
-				throw new ArgumentNullException("salt");
+				throw new ArgumentNullException(nameof(salt));
 
 			Hash = algo.Encrypt(passwordBytes);
 			Salt = salt;
@@ -49,7 +49,7 @@ namespace Ecng.Security
 		private Secret(CryptoAlgorithm algo)
 		{
 			if (algo == null)
-				throw new ArgumentNullException("algo");
+				throw new ArgumentNullException(nameof(algo));
 
 			Algo = algo;
 		}
@@ -70,7 +70,7 @@ namespace Ecng.Security
 		public byte[] Hash { get; set; }
 
 		[Ignore]
-		public CryptoAlgorithm Algo { get; private set; }
+		public CryptoAlgorithm Algo { get; }
 
 		public bool IsValid(byte[] passwordBytes)
 		{

@@ -50,37 +50,25 @@ namespace Ecng.Logic.BusinessEntities
 
 		#region FirstCreated
 
-		public virtual TEntity FirstCreated
-		{
-			get { return ReadFirstsCreated(1).FirstOrDefault(); }
-		}
+		public virtual TEntity FirstCreated => ReadFirstsCreated(1).FirstOrDefault();
 
 		#endregion
 
 		#region LastCreated
 
-		public virtual TEntity LastCreated
-		{
-			get { return ReadLastsCreated(1).FirstOrDefault(); }
-		}
+		public virtual TEntity LastCreated => ReadLastsCreated(1).FirstOrDefault();
 
 		#endregion
 
 		#region FirstModified
 
-		public virtual TEntity FirstModified
-		{
-			get { return ReadFirstsModified(1).FirstOrDefault(); }
-		}
+		public virtual TEntity FirstModified => ReadFirstsModified(1).FirstOrDefault();
 
 		#endregion
 
 		#region LastModified
 
-		public virtual TEntity LastModified
-		{
-			get { return ReadLastsModified(1).FirstOrDefault(); }
-		}
+		public virtual TEntity LastModified => ReadLastsModified(1).FirstOrDefault();
 
 		#endregion
 
@@ -116,10 +104,7 @@ namespace Ecng.Logic.BusinessEntities
 			return ReadLasts(count, ModificationDateField);
 		}
 
-		private static TUser CurrentUser
-		{
-			get { return LogicHelper<TUser, TRole>.CurrentUser ?? LogicHelper<TUser, TRole>.GetRootObject().GetUsers().Null; }
-		}
+		private static TUser CurrentUser => LogicHelper<TUser, TRole>.CurrentUser ?? LogicHelper<TUser, TRole>.GetRootObject().GetUsers().Null;
 
 		public string OverrideItemName { get; set; }
 
@@ -150,7 +135,7 @@ namespace Ecng.Logic.BusinessEntities
 		protected override void OnUpdate(TEntity entity)
 		{
 			if (entity == null)
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 
 			entity.ModificationDate = DateTime.Now;
 
@@ -168,7 +153,7 @@ namespace Ecng.Logic.BusinessEntities
 		protected void AddFilter(BaseEntity<TUser, TRole> entity)
 		{
 			if (entity == null)
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 
 			AddFilter(entity.GetType().GetSchema().Name, entity);
 		}
@@ -181,10 +166,10 @@ namespace Ecng.Logic.BusinessEntities
 		protected void AddFilter(Field field, BaseEntity<TUser, TRole> fieldValue)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			if (fieldValue == null)
-				throw new ArgumentNullException("fieldValue");
+				throw new ArgumentNullException(nameof(fieldValue));
 
 			AddFilter(field, fieldValue, () => fieldValue.Id);
 		}

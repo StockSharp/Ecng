@@ -615,14 +615,9 @@ namespace NPOI.POIFS.FileSystem
             return offset + 1;
         }
 
-        protected internal long Size
-        {
-            get
-            {
-                return _data.Size;
-            }
-        }
-        public override ChainLoopDetector GetChainLoopDetector()
+        protected internal long Size => _data.Size;
+
+	    public override ChainLoopDetector GetChainLoopDetector()
         {
             return new ChainLoopDetector(_data.Size, this);
         }
@@ -631,12 +626,9 @@ namespace NPOI.POIFS.FileSystem
           * For unit Testing only! Returns the underlying
           *  properties table
           */
-        public NPropertyTable PropertyTable
-        {
-            get { return _property_table; }
-        }
+        public NPropertyTable PropertyTable => _property_table;
 
-        /**
+	    /**
          * Returns the MiniStore, which performs a similar low
          *  level function to this, except for the small blocks.
          */
@@ -923,27 +915,15 @@ namespace NPOI.POIFS.FileSystem
 
         #region POIFSViewable Members
 
-        public bool PreferArray
-        {
-            get { return ((POIFSViewable)Root).PreferArray; }
-        }
+        public bool PreferArray => ((POIFSViewable)Root).PreferArray;
 
-        public string ShortDescription
-        {
-            get { return GetShortDescription(); }
-        }
+	    public string ShortDescription => GetShortDescription();
 
-        public Array ViewableArray
-        {
-            get { return GetViewableArray(); }
-        }
+	    public Array ViewableArray => GetViewableArray();
 
-        public IEnumerator ViewableIterator
-        {
-            get { return GetViewableIterator(); }
-        }
+	    public IEnumerator ViewableIterator => GetViewableIterator();
 
-        #endregion
+	    #endregion
     }
 
 }

@@ -85,12 +85,9 @@ namespace NPOI.SS.Formula.PTG
             out1.WriteShort(field_1_index_extern_sheet);
             WriteCoordinates(out1);
         }
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
 
-        public int ExternSheetIndex
+	    public int ExternSheetIndex
         {
             get{return field_1_index_extern_sheet;}
             set { field_1_index_extern_sheet = value; }
@@ -133,10 +130,6 @@ namespace NPOI.SS.Formula.PTG
         {
             return ExternSheetNameResolver.PrependSheetName(book, field_1_index_extern_sheet, FormatReferenceAsString());
         }
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_REF; }
-        }
-
+        public override byte DefaultOperandClass => Ptg.CLASS_REF;
     }
 }

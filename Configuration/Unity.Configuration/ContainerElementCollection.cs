@@ -31,20 +31,14 @@ namespace Microsoft.Practices.Unity.Configuration
         /// </summary>
         /// <param name="name">Name to look up.</param>
         /// <returns>The stored container or null if not in the collection.</returns>
-        public new ContainerElement this[string name]
-        {
-            get { return GetElement(name); }
-        }
+        public new ContainerElement this[string name] => GetElement(name);
 
-        /// <summary>
+	    /// <summary>
         /// Return the default container in the collection. The default is the one without a name.
         /// </summary>
-        public ContainerElement Default
-        {
-            get { return GetElement(string.Empty); }
-        }
+        public ContainerElement Default => GetElement(string.Empty);
 
-        /// <summary>
+	    /// <summary>
         /// Plug point to get objects out of the collection.
         /// </summary>
         /// <param name="index">Index in the collection to retrieve the item from.</param>

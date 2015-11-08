@@ -105,12 +105,9 @@ namespace NPOI.HSSF.Util
          * This Is the reason there Isn't a Set method for this field .
          * @return number of AddR structures
          */
-        public short AddRStructureNumber
-        {
-            get { return this.field_Addr_number; }
-        }
+        public short AddRStructureNumber => this.field_Addr_number;
 
-        /**
+	    /**
          * Add an AddR structure .
          * @param first_row - the upper left hand corner's row
          * @param first_col - the upper left hand corner's col
@@ -172,12 +169,9 @@ namespace NPOI.HSSF.Util
             return this.Size;
         }
 
-        public int Size
-        {
-            get { return 2 + this.field_Addr_number * 8; }
-        }
+        public int Size => 2 + this.field_Addr_number * 8;
 
-        public class AddrStructure
+	    public class AddrStructure
         {
             private short _first_row;
             private short _first_col;

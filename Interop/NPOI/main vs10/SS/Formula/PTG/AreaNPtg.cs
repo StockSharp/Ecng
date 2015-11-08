@@ -33,9 +33,6 @@ namespace NPOI.SS.Formula.PTG
 
         }
 
-        protected override byte Sid
-        {
-            get { return (byte) sid; }
-        }
+        protected override byte Sid => (byte) sid;
     }
 }

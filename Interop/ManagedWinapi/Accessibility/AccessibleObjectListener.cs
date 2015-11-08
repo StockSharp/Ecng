@@ -219,65 +219,41 @@ namespace ManagedWinapi.Accessibility
         /// <summary>
         /// Type of this accessible event
         /// </summary>
-        public AccessibleEventType EventType
-        {
-            get { return eventType; }
-        }
+        public AccessibleEventType EventType => eventType;
 
-        /// <summary>
+	    /// <summary>
         /// Handle of the affected window, if any.
         /// </summary>
-        public IntPtr HWnd
-        {
-            get { return hWnd; }
-        }
+        public IntPtr HWnd => hWnd;
 
-        /// <summary>
+	    /// <summary>
         /// Object ID.
         /// </summary>
         [CLSCompliant(false)]
-        public uint ObjectID
-        {
-            get { return idObject; }
-        }
+        public uint ObjectID => idObject;
 
-        /// <summary>
+	    /// <summary>
         /// Child ID.
         /// </summary>
         [CLSCompliant(false)]
-        public uint ChildID
-        {
-            get { return idChild; }
-        }
+        public uint ChildID => idChild;
 
-        /// <summary>
+	    /// <summary>
         /// The thread that generated this event.
         /// </summary>
         [CLSCompliant(false)]
-        public uint Thread
-        {
-            get { return dwEventThread; }
-        }
+        public uint Thread => dwEventThread;
 
-        /// <summary>
+	    /// <summary>
         /// Time in milliseconds when the event was generated.
         /// </summary>
         [CLSCompliant(false)]
-        public uint Time
-        {
-            get { return dwmsEventTime; }
-        }
+        public uint Time => dwmsEventTime;
 
-        /// <summary>
+	    /// <summary>
         /// The accessible object related to this event.
         /// </summary>
-        public SystemAccessibleObject AccessibleObject
-        {
-            get
-            {
-                return AccessibleEventListener.GetAccessibleObject(this);
-            }
-        }
+        public SystemAccessibleObject AccessibleObject => AccessibleEventListener.GetAccessibleObject(this);
     }
 
     /// <summary>

@@ -46,25 +46,11 @@ namespace NPOI.HSSF.Record.PivotTable
         }
 
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 2;
-            }
-        }
+        protected override int DataSize => 2;
 
+	    public override short Sid => sid;
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
-
-
-        public override string ToString()
+	    public override string ToString()
         {
             StringBuilder buffer = new StringBuilder();
 

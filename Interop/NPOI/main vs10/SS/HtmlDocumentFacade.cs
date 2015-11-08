@@ -194,20 +194,13 @@ namespace NPOI.SS
         {
             return document.CreateElement("ul");
         }
-        public XmlElement Body
-        {
-            get { return body; }
-        }
-        public XmlDocument Document
-        {
-            get { return document; }
-        }
-        public XmlElement Head
-        {
-            get { return head; }
-        }
+        public XmlElement Body => body;
 
-        public string GetOrCreateCssClass(string tagName, string classNamePrefix,
+	    public XmlDocument Document => document;
+
+	    public XmlElement Head => head;
+
+	    public string GetOrCreateCssClass(string tagName, string classNamePrefix,
             string style)
         {
             if (!stylesheet.ContainsKey(tagName))

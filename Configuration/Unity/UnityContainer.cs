@@ -280,32 +280,17 @@ namespace Microsoft.Practices.Unity
                 this.container = container;
             }
 
-            public override IUnityContainer Container
-            {
-                get { return container; }
-            }
+            public override IUnityContainer Container => container;
 
-            public override StagedStrategyChain<UnityBuildStage> Strategies
-            {
-                get { return container.strategies; }
-            }
+	        public override StagedStrategyChain<UnityBuildStage> Strategies => container.strategies;
 
-            public override StagedStrategyChain<UnityBuildStage> BuildPlanStrategies
-            {
-                get { return container.buildPlanStrategies; }
-            }
+	        public override StagedStrategyChain<UnityBuildStage> BuildPlanStrategies => container.buildPlanStrategies;
 
-            public override IPolicyList Policies
-            {
-                get { return container.policies; }
-            }
+	        public override IPolicyList Policies => container.policies;
 
-            public override ILifetimeContainer Lifetime
-            {
-                get { return container.lifetimeContainer; }
-            }
+	        public override ILifetimeContainer Lifetime => container.lifetimeContainer;
 
-            public override void RegisterNamedType(Type t, string name)
+	        public override void RegisterNamedType(Type t, string name)
             {
                 container.registeredNames.RegisterType(t, name);
             }
@@ -427,12 +412,9 @@ namespace Microsoft.Practices.Unity
         /// The parent of this container.
         /// </summary>
         /// <value>The parent container, or null if this container doesn't have one.</value>
-        public IUnityContainer Parent
-        {
-            get { return parent; }
-        }
+        public IUnityContainer Parent => parent;
 
-        #endregion
+	    #endregion
 
         #region IDisposable Implementation
 
@@ -506,7 +488,7 @@ namespace Microsoft.Practices.Unity
                     throw new ArgumentException(
                         string.Format(CultureInfo.CurrentCulture,
                         Resources.CannotResolveOpenGenericType,
-                        t.FullName), "t");
+                        t.FullName), nameof(t));
                 }
 
                 return context.Strategies.ExecuteBuildUp(context);
@@ -556,27 +538,15 @@ namespace Microsoft.Practices.Unity
             cachedStrategiesLock = new object();
         }
 
-        private StagedStrategyChain<UnityBuildStage> ParentStrategies
-        {
-            get { return parent == null ? null : parent.strategies; }
-        }
+        private StagedStrategyChain<UnityBuildStage> ParentStrategies => parent == null ? null : parent.strategies;
 
-        private StagedStrategyChain<UnityBuildStage> ParentBuildPlanStrategies
-        {
-            get { return parent == null ? null : parent.buildPlanStrategies; }
-        }
+	    private StagedStrategyChain<UnityBuildStage> ParentBuildPlanStrategies => parent == null ? null : parent.buildPlanStrategies;
 
-        private PolicyList ParentPolicies
-        {
-            get { return parent == null ? null : parent.policies; }
-        }
+	    private PolicyList ParentPolicies => parent == null ? null : parent.policies;
 
-        private NamedTypesRegistry ParentNameRegistry
-        {
-            get { return parent == null ? null : parent.registeredNames; }
-        }
+	    private NamedTypesRegistry ParentNameRegistry => parent == null ? null : parent.registeredNames;
 
-        #endregion
+	    #endregion
 
         /// <summary>
         /// Get a sequence of <see cref="ContainerRegistration"/> that describe the current state

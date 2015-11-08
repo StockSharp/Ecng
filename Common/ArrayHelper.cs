@@ -24,7 +24,7 @@
 		public static void Clear(this Array array)
 		{
 			if (array == null)
-				throw new ArgumentNullException("array");
+				throw new ArgumentNullException(nameof(array));
 
 			Clear(array, 0, array.Length);
 		}
@@ -50,7 +50,7 @@
 		public static T[] Range<T>(this T[] array, int index)
 		{
 			if (array == null)
-				throw new ArgumentNullException("array");
+				throw new ArgumentNullException(nameof(array));
 
 			return array.Range(index, array.Length - index);
 		}
@@ -88,7 +88,7 @@
 		public static T[] Clone<T>(this T[] array)
 		{
 			if (array == null)
-				throw new ArgumentNullException("array");
+				throw new ArgumentNullException(nameof(array));
 
 			return (T[])array.Clone();
 		}
@@ -96,7 +96,7 @@
 		public static T[] Reverse<T>(this T[] array)
 		{
 			if (array == null)
-				throw new ArgumentNullException("array");
+				throw new ArgumentNullException(nameof(array));
 
 			var clone = (T[])array.Clone();
 			Array.Reverse(clone);
@@ -106,10 +106,10 @@
 		public static T[] Concat<T>(this T[] first, T[] second)
 		{
 			if (first == null)
-				throw new ArgumentNullException("first");
+				throw new ArgumentNullException(nameof(first));
 
 			if (second == null)
-				throw new ArgumentNullException("second");
+				throw new ArgumentNullException(nameof(second));
 
 			var result = new T[first.Length + second.Length];
 

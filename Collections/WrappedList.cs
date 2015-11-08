@@ -14,7 +14,7 @@ namespace Ecng.Collections
 		public WrappedList(IList<TInner> inner)
 		{
 			if (inner == null)
-				throw new ArgumentNullException("inner");
+				throw new ArgumentNullException(nameof(inner));
 
 			_inner = inner;
 		}
@@ -34,10 +34,7 @@ namespace Ecng.Collections
 			return _inner.Remove(item);
 		}
 
-		public override int Count
-		{
-			get { return _inner.Count; }
-		}
+		public override int Count => _inner.Count;
 
 		public override IEnumerator<TOuter> GetEnumerator()
 		{

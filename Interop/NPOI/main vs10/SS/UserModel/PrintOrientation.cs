@@ -58,16 +58,9 @@ namespace NPOI.SS.UserModel
         }
 
 
-        public int Value
-        {
-            get
-            {
-                return orientation;
-            }
-        }
+        public int Value => orientation;
 
-
-        private static PrintOrientation[] _table;
+	    private static PrintOrientation[] _table;
 
         public static PrintOrientation ValueOf(int value)
         {

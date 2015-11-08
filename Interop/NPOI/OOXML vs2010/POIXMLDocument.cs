@@ -67,23 +67,11 @@ namespace NPOI
             }
         }
 
-        public OPCPackage Package
-        {
-            get
-            {
-                return this.pkg;
-            }
-        }
+        public OPCPackage Package => this.pkg;
 
-        protected PackagePart CorePart
-        {
-            get
-            {
-                return GetPackagePart();
-            }
-        }
+	    protected PackagePart CorePart => GetPackagePart();
 
-        /**
+	    /**
          * Retrieves all the PackageParts which are defined as
          *  relationships of the base document with the
          *  specified content type.

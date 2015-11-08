@@ -359,13 +359,7 @@ namespace NPOI.XSSF.UserModel
          * @return the sheet which contains the picture shape
          */
 
-        public ISheet Sheet
-        {
-            get
-            {
-                return (XSSFSheet)this.GetDrawing().GetParent();
-            }
-        }
+        public ISheet Sheet => (XSSFSheet)this.GetDrawing().GetParent();
     }
 }
 

@@ -143,12 +143,6 @@ namespace NPOI.XWPF.UserModel
         /// <summary>
         /// Get the PartType of the body
         /// </summary>
-        public override BodyType PartType
-        {
-            get
-            {
-                return BodyType.HEADER;
-            }
-        }
+        public override BodyType PartType => BodyType.HEADER;
     }
 }

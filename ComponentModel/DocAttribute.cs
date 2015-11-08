@@ -21,7 +21,7 @@
 		public DocAttribute(string docUrl)
 		{
 			if (docUrl.IsEmpty())
-				throw new ArgumentNullException("docUrl");
+				throw new ArgumentNullException(nameof(docUrl));
 
 			DocUrl = docUrl;
 		}

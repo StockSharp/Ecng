@@ -62,17 +62,8 @@ namespace NPOI.HSSF.Record
         {
         }
 
-       protected override int DataSize
-       {
-           get
-           {
-               return 0;
-           }
-       }
+       protected override int DataSize => 0;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
     }
 }

@@ -91,12 +91,9 @@ namespace NPOI.HSSF.Record
         /**
          * return the non static version of the id for this record.
          */
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        /**
+	    /**
          * @return The string represented by this record.
          */
         public String String

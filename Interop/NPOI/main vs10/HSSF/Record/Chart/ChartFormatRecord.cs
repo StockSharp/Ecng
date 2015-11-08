@@ -110,17 +110,11 @@ namespace NPOI.HSSF.Record
             return r;
         }
 
-        protected override int DataSize
-        {
-            get { return 20; }
-        }
+        protected override int DataSize => 20;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public int XPosition
+	    public int XPosition
         {
             get
             {

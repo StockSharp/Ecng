@@ -36,15 +36,9 @@ namespace NPOI.XSSF.UserModel
             _p = p;
         }
 
-        public XSSFTextParagraph ParentParagraph
-        {
-            get
-            {
-                return _p;
-            }
-        }
+        public XSSFTextParagraph ParentParagraph => _p;
 
-        public String Text
+	    public String Text
         {
             get
             {

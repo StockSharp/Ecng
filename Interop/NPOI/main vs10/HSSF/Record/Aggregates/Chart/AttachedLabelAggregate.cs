@@ -47,12 +47,9 @@ namespace NPOI.HSSF.Record.Aggregates.Chart
             set { _isFirst = value; }
         }
 
-        public ObjectLinkRecord ObjectLink
-        {
-            get { return objectLink; }
-        }
+        public ObjectLinkRecord ObjectLink => objectLink;
 
-        public AttachedLabelAggregate(RecordStream rs, ChartRecordAggregate container)
+	    public AttachedLabelAggregate(RecordStream rs, ChartRecordAggregate container)
             : base(RuleName_ATTACHEDLABEL, container)
         {
             ChartSheetAggregate cs = GetContainer<ChartSheetAggregate>(ChartRecordAggregate.RuleName_CHARTSHEET);

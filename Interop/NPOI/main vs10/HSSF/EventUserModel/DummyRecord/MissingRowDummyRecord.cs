@@ -32,12 +32,6 @@ namespace NPOI.HSSF.EventUserModel.DummyRecord
 
 
 
-        public int RowNumber
-        {
-            get
-            {
-                return rowNumber;
-            }
-        }
+        public int RowNumber => rowNumber;
     }
 }

@@ -162,10 +162,10 @@ namespace Ecng.Interop
 		public static void RegisterObject(this SafeHandle handle, object nativeObject)
 		{
 			if (handle == null)
-				throw new ArgumentNullException("handle");
+				throw new ArgumentNullException(nameof(handle));
 
 			if (nativeObject == null)
-				throw new ArgumentNullException("nativeObject");
+				throw new ArgumentNullException(nameof(nativeObject));
 
 			_nativeObjects.SafeAdd(handle, key => nativeObject);
 		}
@@ -178,7 +178,7 @@ namespace Ecng.Interop
 		public static T GetObject<T>(this SafeHandle handle)
 		{
 			if (handle == null)
-				throw new ArgumentNullException("handle");
+				throw new ArgumentNullException(nameof(handle));
 
 			return _nativeObjects.TryGetValue(handle).To<T>();
 		}
@@ -319,7 +319,7 @@ namespace Ecng.Interop
 		public static HGlobalSafeHandle ToHGlobal(this Encoding encoding, string data)
 		{
 			if (encoding == null)
-				throw new ArgumentNullException("encoding");
+				throw new ArgumentNullException(nameof(encoding));
 
 			var dataEncoded = encoding.GetBytes(data);
 			var size = typeof(byte).SizeOf() * dataEncoded.Length;
@@ -333,7 +333,7 @@ namespace Ecng.Interop
 		public static string ToString(this Encoding encoding, IntPtr pData)
 		{
 			if (encoding == null)
-				throw new ArgumentNullException("encoding");
+				throw new ArgumentNullException(nameof(encoding));
 
 			var errStr = pData.ToAnsi();
 			var length = errStr.Length;
@@ -349,7 +349,7 @@ namespace Ecng.Interop
 			var addr = GetProcAddress(library, procName);
 
 			if (addr == IntPtr.Zero)
-				throw new ArgumentException("Ошибка в загрузке процедуры {0}.".Put(procName), "procName", new Win32Exception());
+				throw new ArgumentException("Ошибка в загрузке процедуры {0}.".Put(procName), nameof(procName), new Win32Exception());
 
 			return Marshaler.GetDelegateForFunctionPointer<T>(addr);
 		}

@@ -89,31 +89,18 @@ namespace NPOI.XWPF.UserModel
             return headerFooter;
         }
 
-        public IList<IBodyElement> BodyElements
-        {
-            get
-            {
-                return bodyElements.AsReadOnly();
-            }
-        }
+        public IList<IBodyElement> BodyElements => bodyElements.AsReadOnly();
 
-        /**
+	    /**
          * Returns the paragraph(s) that holds
          *  the text of the header or footer.
          * Normally there is only the one paragraph, but
          *  there could be more in certain cases, or 
          *  a table.
          */
-        public IList<XWPFParagraph> Paragraphs
-        {
-            get
-            {
-                return paragraphs.AsReadOnly();
-            }
-        }
+        public IList<XWPFParagraph> Paragraphs => paragraphs.AsReadOnly();
 
-
-        /**
+	    /**
          * Return the table(s) that holds the text
          *  of the header or footer, for complex cases
          *  where a paragraph isn't used.
@@ -121,17 +108,9 @@ namespace NPOI.XWPF.UserModel
          *  complex headers/footers have a table or two
          *  in Addition. 
          */
-        public IList<XWPFTable> Tables
-        {
-            get
-            {
-                return tables.AsReadOnly();
-            }
-        }
+        public IList<XWPFTable> Tables => tables.AsReadOnly();
 
-
-
-        /**
+	    /**
          * Returns the textual content of the header/footer,
          *  by flattening out the text of its paragraph(s)
          */
@@ -239,27 +218,15 @@ namespace NPOI.XWPF.UserModel
             return paragraphs;
         }
 
-        public IList<XWPFPictureData> AllPictures
-        {
-            get
-            {
-                return pictures.AsReadOnly();
-            }
-        }
+        public IList<XWPFPictureData> AllPictures => pictures.AsReadOnly();
 
-        /**
+	    /**
          * Get all Pictures in this package
          * @return all Pictures in this package
          */
-        public IList<XWPFPictureData> AllPackagePictures
-        {
-            get
-            {
-                return document.AllPackagePictures;
-            }
-        }
+        public IList<XWPFPictureData> AllPackagePictures => document.AllPackagePictures;
 
-        /**
+	    /**
          * Adds a picture to the document.
          *
          * @param pictureData       The picture data
@@ -472,15 +439,9 @@ namespace NPOI.XWPF.UserModel
         }*/
 
 
-        public POIXMLDocumentPart Owner
-        {
-            get
-            {
-                return this;
-            }
-        }
+        public POIXMLDocumentPart Owner => this;
 
-        /**
+	    /**
          * Returns the table at position pos
          * @see NPOI.XWPF.UserModel.IBody#getTableArray(int)
          */
@@ -609,15 +570,9 @@ namespace NPOI.XWPF.UserModel
          * returns the Part, to which the body belongs, which you need for Adding relationship to other parts
          * @see NPOI.XWPF.UserModel.IBody#getPart()
          */
-        public POIXMLDocumentPart Part
-        {
-            get
-            {
-                return this;
-            }
-        }
+        public POIXMLDocumentPart Part => this;
 
-        #region IBody 成员
+	    #region IBody 成员
 
 
         public virtual BodyType PartType

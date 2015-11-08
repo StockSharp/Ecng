@@ -14,7 +14,7 @@ namespace Ecng.Net
 		public UdpStream(Socket client, int mtuSize = 1600)
 		{
 			if (client == null)
-				throw new ArgumentNullException("client");
+				throw new ArgumentNullException(nameof(client));
 
 			_client = client;
 			_mtuBuffer = new byte[mtuSize];
@@ -70,7 +70,7 @@ namespace Ecng.Net
 			}
 
 			if (count > (_dtgrmSize - _readOffset))
-				throw new ArgumentOutOfRangeException("count");
+				throw new ArgumentOutOfRangeException(nameof(count));
 
 			Buffer.BlockCopy(_mtuBuffer, _readOffset, buffer, offset, count);
 			_readOffset += count;
@@ -94,10 +94,7 @@ namespace Ecng.Net
 		/// <returns>
 		/// true if the stream supports reading; otherwise, false.
 		/// </returns>
-		public override bool CanRead
-		{
-			get { return true; }
-		}
+		public override bool CanRead => true;
 
 		/// <summary>
 		/// When overridden in a derived class, gets a value indicating whether the current stream supports seeking.
@@ -105,10 +102,7 @@ namespace Ecng.Net
 		/// <returns>
 		/// true if the stream supports seeking; otherwise, false.
 		/// </returns>
-		public override bool CanSeek
-		{
-			get { return false; }
-		}
+		public override bool CanSeek => false;
 
 		/// <summary>
 		/// When overridden in a derived class, gets a value indicating whether the current stream supports writing.
@@ -116,10 +110,7 @@ namespace Ecng.Net
 		/// <returns>
 		/// true if the stream supports writing; otherwise, false.
 		/// </returns>
-		public override bool CanWrite
-		{
-			get { return true; }
-		}
+		public override bool CanWrite => true;
 
 		/// <summary>
 		/// When overridden in a derived class, gets the length in bytes of the stream.

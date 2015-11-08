@@ -57,14 +57,8 @@ namespace NPOI.SS.Formula.PTG
             return HSSFErrorConstants.GetText(HSSFErrorConstants.ERROR_REF);
         }
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_REF; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_REF;
 
-        public override int Size
-        {
-            get { return 9; }
-        }
+	    public override int Size => 9;
     }
 }

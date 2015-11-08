@@ -31,24 +31,18 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
         private SymmetricAlgorithm algorithm;
         private ProtectedKey key;
 
-		private byte[] Key
-		{
-			get
-			{
-				return key.DecryptedKey;
-			}
-		}
+		private byte[] Key => key.DecryptedKey;
 
-		/// <summary>
+	    /// <summary>
 		/// <para>Initalize a new instance of the <see cref="SymmetricCryptographer"/> class with an algorithm type and a key.</para>
 		/// </summary>
 		/// <param name="algorithmType"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
 		/// <param name="key"><para>The key for the algorithm.</para></param>
 		public SymmetricCryptographer(Type algorithmType, ProtectedKey key)
 		{
-			if (algorithmType == null) throw new ArgumentNullException("algorithmType");
-			if (!typeof(SymmetricAlgorithm).IsAssignableFrom(algorithmType)) throw new ArgumentException(Resources.ExceptionCreatingSymmetricAlgorithmInstance, "algorithmType");
-			if (key == null) throw new ArgumentNullException("key");
+			if (algorithmType == null) throw new ArgumentNullException(nameof(algorithmType));
+			if (!typeof(SymmetricAlgorithm).IsAssignableFrom(algorithmType)) throw new ArgumentException(Resources.ExceptionCreatingSymmetricAlgorithmInstance, nameof(algorithmType));
+			if (key == null) throw new ArgumentNullException(nameof(key));
 
 			this.key = key;
 			this.algorithm = GetSymmetricAlgorithm(algorithmType);
@@ -134,7 +128,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 
         private static byte[] Transform(ICryptoTransform transform, byte[] buffer)
         {
-			if (buffer == null) throw new ArgumentNullException("buffer");
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 
 			byte[] transformBuffer = null;
 

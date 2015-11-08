@@ -33,7 +33,7 @@ namespace Ecng.Serialization
 				var retVal = _innerDictionary.TryGetValue(name);
 
 				if (retVal == null)
-					throw new ArgumentException("Item with name '{0}' doesn't exists.".Put(name), "name");
+					throw new ArgumentException("Item with name '{0}' doesn't exists.".Put(name), nameof(name));
 
 				return retVal;
 			}
@@ -67,7 +67,7 @@ namespace Ecng.Serialization
 		protected override bool OnAdding(SerializationItem item)
 		{
 			if (Contains(item.Field.Name))
-				throw new ArgumentException("Item with name '{0}' already added.".Put(item.Field.Name), "item");
+				throw new ArgumentException("Item with name '{0}' already added.".Put(item.Field.Name), nameof(item));
 
 			_innerDictionary.Add(item.Field.Name, item);
 

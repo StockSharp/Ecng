@@ -111,16 +111,9 @@ namespace NPOI.HSSF.Record.PivotTable
         }
 
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+        public override short Sid => sid;
 
-
-        public override string ToString()
+	    public override string ToString()
         {
             StringBuilder buffer = new StringBuilder();
             buffer.Append("[SXVD]\n");

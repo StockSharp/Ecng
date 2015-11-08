@@ -359,28 +359,19 @@ namespace ManagedWinapi.Hooks
         /// <summary>
         /// Flags of the message. Its contents depend on the message.
         /// </summary>
-        public int Flags
-        {
-            get { return flags; }
-        }
+        public int Flags => flags;
 
-        /// <summary>
+	    /// <summary>
         /// The message identifier.
         /// </summary>
-        public int Message
-        {
-            get { return msg; }
-        }
+        public int Message => msg;
 
-        /// <summary>
+	    /// <summary>
         /// Extra information. Its contents depend on the message.
         /// </summary>
-        public IntPtr ExtraInfo
-        {
-            get { return extraInfo; }
-        }
+        public IntPtr ExtraInfo => extraInfo;
 
-        /// <summary>
+	    /// <summary>
         /// Replays this event as if the user did it again.
         /// </summary>
         public abstract void ReplayEvent();
@@ -407,20 +398,14 @@ namespace ManagedWinapi.Hooks
         /// <summary>
         /// The mouse position where this message occurred.
         /// </summary>
-        public POINT Point
-        {
-            get { return pt; }
-        }
+        public POINT Point => pt;
 
-        /// <summary>
+	    /// <summary>
         /// Additional mouse data, depending on the type of event.
         /// </summary>
-        public int MouseData
-        {
-            get { return mouseData; }
-        }
+        public int MouseData => mouseData;
 
-        /// <summary>
+	    /// <summary>
         /// Mouse event flags needed to replay this message.
         /// </summary>
         [CLSCompliant(false)]
@@ -519,20 +504,14 @@ namespace ManagedWinapi.Hooks
         /// <summary>
         /// The virtual key code that caused this message.
         /// </summary>
-        public int VirtualKeyCode
-        {
-            get { return vkCode; }
-        }
+        public int VirtualKeyCode => vkCode;
 
-        /// <summary>
+	    /// <summary>
         /// The scan code that caused this message.
         /// </summary>
-        public int ScanCode
-        {
-            get { return scanCode; }
-        }
+        public int ScanCode => scanCode;
 
-        /// <summary>
+	    /// <summary>
         /// Flags needed to replay this event.
         /// </summary>
         [CLSCompliant(false)]

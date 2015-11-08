@@ -61,30 +61,13 @@ namespace NPOI.HSSF.UserModel
         /* (non-Javadoc)
          * @see NPOI.HSSF.UserModel.DataValidation#getConstraint()
          */
-        public IDataValidationConstraint ValidationConstraint
-        {
-            get
-            {
-                return _constraint;
-            }
-        }
+        public IDataValidationConstraint ValidationConstraint => _constraint;
 
-        public DVConstraint Constraint
-        {
-            get
-            {
-                return _constraint;
-            }
-        }
+	    public DVConstraint Constraint => _constraint;
 
-        public CellRangeAddressList Regions
-        {
-            get
-            {
-                return _regions;
-            }
-        }
-        public int ErrorStyle
+	    public CellRangeAddressList Regions => _regions;
+
+	    public int ErrorStyle
         {
             get
             {
@@ -161,26 +144,14 @@ namespace NPOI.HSSF.UserModel
         /* (non-Javadoc)
          * @see NPOI.HSSF.UserModel.DataValidation#getPromptBoxTitle()
          */
-        public String PromptBoxTitle
-        {
-            get
-            {
-                return _prompt_title;
-            }
-        }
+        public String PromptBoxTitle => _prompt_title;
 
-        /* (non-Javadoc)
+	    /* (non-Javadoc)
          * @see NPOI.HSSF.UserModel.DataValidation#getPromptBoxText()
          */
-        public String PromptBoxText
-        {
-            get
-            {
-                return _prompt_text;
-            }
-        }
+        public String PromptBoxText => _prompt_text;
 
-        /* (non-Javadoc)
+	    /* (non-Javadoc)
          * @see NPOI.HSSF.UserModel.DataValidation#CreateErrorBox(java.lang.String, java.lang.String)
          */
         public void CreateErrorBox(String title, String text)
@@ -193,26 +164,14 @@ namespace NPOI.HSSF.UserModel
         /* (non-Javadoc)
          * @see NPOI.HSSF.UserModel.DataValidation#getErrorBoxTitle()
          */
-        public String ErrorBoxTitle
-        {
-            get
-            {
-                return _error_title;
-            }
-        }
+        public String ErrorBoxTitle => _error_title;
 
-        /* (non-Javadoc)
+	    /* (non-Javadoc)
          * @see NPOI.HSSF.UserModel.DataValidation#getErrorBoxText()
          */
-        public String ErrorBoxText
-        {
-            get
-            {
-                return _error_text;
-            }
-        }
+        public String ErrorBoxText => _error_text;
 
-        public DVRecord CreateDVRecord(HSSFSheet sheet)
+	    public DVRecord CreateDVRecord(HSSFSheet sheet)
         {
 
             NPOI.HSSF.UserModel.DVConstraint.FormulaPair fp = _constraint.CreateFormulas(sheet);

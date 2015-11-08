@@ -13,7 +13,7 @@ namespace Ecng.Common
 			where TAttribute : Attribute
 		{
 			if (provider == null)
-				throw new ArgumentNullException("provider");
+				throw new ArgumentNullException(nameof(provider));
 
 			return (TAttribute)_attrCache.SafeAdd(new Tuple<Type, ICustomAttributeProvider>(typeof(TAttribute), provider),
 				key => provider.GetCustomAttributes(typeof(TAttribute), inherit).Cast<TAttribute>().FirstOrDefault());
@@ -23,7 +23,7 @@ namespace Ecng.Common
 			where TAttribute : Attribute
 		{
 			if (provider == null)
-				throw new ArgumentNullException("provider");
+				throw new ArgumentNullException(nameof(provider));
 
 			return provider.GetCustomAttributes(typeof(TAttribute), inherit).Cast<TAttribute>();
 		}
@@ -31,7 +31,7 @@ namespace Ecng.Common
 		public static IEnumerable<Attribute> GetAttributes(this ICustomAttributeProvider provider, bool inherit = true)
 		{
 			if (provider == null)
-				throw new ArgumentNullException("provider");
+				throw new ArgumentNullException(nameof(provider));
 
 			return provider.GetCustomAttributes(inherit).Cast<Attribute>();
 		}
@@ -39,10 +39,10 @@ namespace Ecng.Common
 		private static V SafeAdd<K, V>(this IDictionary<K, V> dictionary, K key, Func<K, V> handler)
 		{
 			if (dictionary == null)
-				throw new ArgumentNullException("dictionary");
+				throw new ArgumentNullException(nameof(dictionary));
 
 			if (handler == null)
-				throw new ArgumentNullException("handler");
+				throw new ArgumentNullException(nameof(handler));
 
 			V value;
 

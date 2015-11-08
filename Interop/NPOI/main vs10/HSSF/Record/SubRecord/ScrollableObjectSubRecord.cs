@@ -60,17 +60,11 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(field_8_options);
         }
 
-        public override int DataSize
-        {
-            get { return 20; }
-        }
-        public const short sid = 0x0C;
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override int DataSize => 20;
+	    public const short sid = 0x0C;
+        public override short Sid => sid;
 
-        public short CurrentValue
+	    public short CurrentValue
         {
             get { return field_1_iVal; }
             set {

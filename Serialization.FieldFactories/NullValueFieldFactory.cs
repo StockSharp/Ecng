@@ -11,7 +11,7 @@ namespace Ecng.Serialization
 			NullValue = nullValue;
 		}
 
-		public T NullValue { get; private set; }
+		public T NullValue { get; }
 
 		protected override T OnCreateInstance(ISerializer serializer, T source)
 		{
@@ -31,7 +31,7 @@ namespace Ecng.Serialization
 			NullValue = nullValue;
 		}
 
-		public object NullValue { get; private set; }
+		public object NullValue { get; }
 
 		public override FieldFactory CreateFactory(Field field)
 		{

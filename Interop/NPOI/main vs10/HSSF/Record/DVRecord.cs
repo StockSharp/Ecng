@@ -236,28 +236,15 @@ namespace NPOI.HSSF.Record
           * @return <code>true</code> if drop down arrow should be suppressed when list validation is
           * used, <code>false</code> otherwise
          */
-        public bool SuppressDropdownArrow
-        {
-            get
-            {
-                return (opt_suppress_dropdown_arrow.IsSet(_option_flags));
-            }
-        }
-        /**
+        public bool SuppressDropdownArrow => (opt_suppress_dropdown_arrow.IsSet(_option_flags));
+	    /**
          * return true if a prompt window should appear when cell Is selected, false otherwise
          * @return if a prompt window should appear when cell Is selected, false otherwise
          * @see org.apache.poi.hssf.util.HSSFDataValidation utility class
          */
-        public bool ShowPromptOnCellSelected
-        {
-            get
-            {
-                return (this.opt_show_prompt_on_cell_selected.IsSet(this._option_flags));
-            }
-        }
+        public bool ShowPromptOnCellSelected => (this.opt_show_prompt_on_cell_selected.IsSet(this._option_flags));
 
-
-        /**
+	    /**
          * return true if an error window should appear when an invalid value Is entered in the cell, false otherwise
          * @return if an error window should appear when an invalid value Is entered in the cell, false otherwise
          * @see org.apache.poi.hssf.util.HSSFDataValidation utility class
@@ -290,55 +277,19 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public String PromptTitle
-        {
-            get
-            {
-                return ResolveTitleString(_promptTitle);
-            }
-        }
+        public String PromptTitle => ResolveTitleString(_promptTitle);
 
-        public String ErrorTitle
-        {
-            get
-            {
-                return ResolveTitleString(_errorTitle);
-            }
-        }
+	    public String ErrorTitle => ResolveTitleString(_errorTitle);
 
-        public String PromptText
-        {
-            get
-            {
-                return ResolveTitleString(_promptText);
-            }
-        }
+	    public String PromptText => ResolveTitleString(_promptText);
 
-        public String ErrorText
-        {
-            get
-            {
-                return ResolveTitleString(_errorText);
-            }
-        }
+	    public String ErrorText => ResolveTitleString(_errorText);
 
-        public Ptg[] Formula1
-        {
-            get
-            {
-                return Formula.GetTokens(_formula1);
-            }
-        }
+	    public Ptg[] Formula1 => Formula.GetTokens(_formula1);
 
-        public Ptg[] Formula2
-        {
-            get
-            {
-                return  Formula.GetTokens(_formula2);
-            }
-        }
+	    public Ptg[] Formula2 => Formula.GetTokens(_formula2);
 
-        public CellRangeAddressList CellRangeAddress
+	    public CellRangeAddressList CellRangeAddress
         {
             get
             {
@@ -351,15 +302,9 @@ namespace NPOI.HSSF.Record
          * Gets the option flags field.
          * @return options - the option flags field
          */
-        public int OptionFlags
-        {
-            get
-            {
-                return this._option_flags;
-            }
-        }
+        public int OptionFlags => this._option_flags;
 
-        public override String ToString()
+	    public override String ToString()
         {
             /* @todo DVRecord string representation */
             StringBuilder buffer = new StringBuilder();
@@ -412,12 +357,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public override short Sid
-        {
-            get { return DVRecord.sid; }
-        }
+        public override short Sid => DVRecord.sid;
 
-        /**
+	    /**
          * Clones the object. Uses serialisation, as the
          *  contents are somewhat complex
          */

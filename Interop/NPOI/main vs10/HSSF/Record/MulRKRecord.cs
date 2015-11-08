@@ -66,42 +66,30 @@ namespace NPOI.HSSF.Record
         }
 
         //public short Row
-        public int Row
-        {
-            get { return field_1_row; }
-        }
+        public int Row => field_1_row;
 
-        /**
+	    /**
          * starting column (first cell this holds in the row)
          * @return first column number
          */
 
-        public short FirstColumn
-        {
-            get { return field_2_first_col; }
-        }
+        public short FirstColumn => field_2_first_col;
 
-        /**
+	    /**
          * ending column (last cell this holds in the row)
          * @return first column number
          */
 
-        public short LastColumn
-        {
-            get { return field_4_last_col; }
-        }
+        public short LastColumn => field_4_last_col;
 
-        /**
+	    /**
          * Get the number of columns this Contains (last-first +1)
          * @return number of columns (last - first +1)
          */
 
-        public int NumColumns
-        {
-            get { return field_4_last_col - field_2_first_col + 1; }
-        }
+        public int NumColumns => field_4_last_col - field_2_first_col + 1;
 
-        /**
+	    /**
          * returns the xf index for column (coffset = column - field_2_first_col)
          * @return the XF index for the column
          */
@@ -153,12 +141,9 @@ namespace NPOI.HSSF.Record
             return buffer.ToString();
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             throw new RecordFormatException("Sorry, you can't serialize MulRK in this release");
         }

@@ -60,12 +60,9 @@ namespace NDde.Foundation
             _Code = info.GetInt32("NDde.Ddeml.DdemlException.Code");
         }
 
-        public int Code
-        {
-            get { return _Code; }
-        }
+        public int Code => _Code;
 
-        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+	    public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             info.AddValue("NDde.Ddeml.DdemlException.Code", _Code);
             base.GetObjectData(info, context);

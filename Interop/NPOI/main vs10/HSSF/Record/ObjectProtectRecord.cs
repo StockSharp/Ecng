@@ -92,21 +92,10 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(field_1_protect);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 2;
-            }
-        }
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
-        public override Object Clone()
+        protected override int DataSize => 2;
+	    public override short Sid => sid;
+
+	    public override Object Clone()
         {
             ObjectProtectRecord rec = new ObjectProtectRecord();
             rec.field_1_protect = field_1_protect;

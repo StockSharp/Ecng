@@ -51,53 +51,18 @@ namespace NPOI.HSSF.Record
             _range = new CellRangeAddress8Bit(in1);
         }
 
-        public CellRangeAddress8Bit Range
-        {
-            get
-            {
-                return _range;
-            }
-        }
+        public CellRangeAddress8Bit Range => _range;
 
-        public virtual int FirstRow
-        {
-            get
-            {
-                return _range.FirstRow;
-            }
-        }
+	    public virtual int FirstRow => _range.FirstRow;
 
-        public virtual int LastRow
-        {
-            get
-            {
-                return _range.LastRow;
-            }
-        }
+	    public virtual int LastRow => _range.LastRow;
 
-        public virtual int FirstColumn
-        {
-            get
-            {
-                return (short)_range.FirstColumn;
-            }
-        }
+	    public virtual int FirstColumn => (short)_range.FirstColumn;
 
-        public virtual int LastColumn
-        {
-            get
-            {
-                return (short)_range.LastColumn;
-            }
-        }
-        protected override int DataSize
-        {
-            get
-            {
-                return CellRangeAddress8Bit.ENCODED_SIZE + this.ExtraDataSize;
-            }
-        }
-        protected abstract int ExtraDataSize { get; }
+	    public virtual int LastColumn => (short)_range.LastColumn;
+
+	    protected override int DataSize => CellRangeAddress8Bit.ENCODED_SIZE + this.ExtraDataSize;
+	    protected abstract int ExtraDataSize { get; }
 
         protected abstract void SerializeExtraData(ILittleEndianOutput out1);
 

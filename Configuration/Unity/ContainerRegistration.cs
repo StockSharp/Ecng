@@ -33,20 +33,20 @@ namespace Microsoft.Practices.Unity
         /// The type that was passed to the <see cref="IUnityContainer.RegisterType"/> method
         /// as the "from" type, or the only type if type mapping wasn't done.
         /// </summary>
-        public Type RegisteredType { get { return buildKey.Type; } }
+        public Type RegisteredType => buildKey.Type;
 
-        /// <summary>
+	    /// <summary>
         /// The type that this registration is mapped to. If no type mapping was done, the
         /// <see cref="RegisteredType"/> property and this one will have the same value.
         /// </summary>
-        public Type MappedToType { get; private set; }
+        public Type MappedToType { get; }
 
         /// <summary>
         /// Name the type was registered under. Null for default registration.
         /// </summary>
-        public string Name { get { return buildKey.Name; } }
+        public string Name => buildKey.Name;
 
-        /// <summary>
+	    /// <summary>
         /// The registered lifetime manager instance.
         /// </summary>
         public Type LifetimeManagerType { get; private set; }

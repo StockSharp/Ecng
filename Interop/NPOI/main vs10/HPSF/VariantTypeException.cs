@@ -62,19 +62,12 @@ namespace NPOI.HPSF
         /// Gets the offending variant type
         /// </summary>
         /// <value>the offending variant type.</value>
-        public long VariantType
-        {
-            get { return variantType; }
-        }
+        public long VariantType => variantType;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the value who's variant type caused the problem.
         /// </summary>
         /// <value>the value who's variant type caused the problem.</value>
-        public Object Value
-        {
-            get{return value;}
-        }
-
+        public Object Value => value;
     }
 }

@@ -25,10 +25,10 @@ namespace Ecng.Serialization
 		public Field(Schema schema, MemberInfo member)
 		{
 			if (schema == null)
-				throw new ArgumentNullException("schema");
+				throw new ArgumentNullException(nameof(schema));
 
 			if (member == null)
-				throw new ArgumentNullException("member");
+				throw new ArgumentNullException(nameof(member));
 
 			Schema = schema;
 			Member = member;
@@ -43,10 +43,10 @@ namespace Ecng.Serialization
 		private void Init(string name, Type type)
 		{
 			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			Name = name;
 			Type = type;
@@ -60,7 +60,7 @@ namespace Ecng.Serialization
 		#endregion
 
 		[Ignore]
-		public Schema Schema { get; private set; }
+		public Schema Schema { get; }
 
 		[Identity]
 		[Member]

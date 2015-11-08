@@ -70,18 +70,9 @@ namespace Ecng.Data
 			return "scope_identity() as " + schema.Identity.Name;
 		}
 
-		protected override string ParameterPrefix
-		{
-			get { return "@"; }
-		}
+		protected override string ParameterPrefix => "@";
 
-		protected override string[] ReservedWords
-		{
-			get
-			{
-				return Properties.Resources.SqlServerReservedWords.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-			}
-		}
+		protected override string[] ReservedWords => Properties.Resources.SqlServerReservedWords.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
 
 		#endregion
 
@@ -97,7 +88,7 @@ namespace Ecng.Data
 			else if (size > 0)
 				return size.ToString();
 			else
-				throw new ArgumentOutOfRangeException("size");
+				throw new ArgumentOutOfRangeException(nameof(size));
 		}
 
 		#endregion

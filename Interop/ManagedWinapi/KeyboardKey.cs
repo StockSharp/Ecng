@@ -45,14 +45,14 @@ namespace ManagedWinapi
         /// <summary>
         /// The state of this key, as seen by this application.
         /// </summary>
-        public short State { get { return GetKeyState((short)key); } }
+        public short State => GetKeyState((short)key);
 
-        /// <summary>
+	    /// <summary>
         /// The global state of this key.
         /// </summary>
-        public short AsyncState { get { return GetAsyncKeyState((short)key); } }
+        public short AsyncState => GetAsyncKeyState((short)key);
 
-        /// <summary>
+	    /// <summary>
         /// Press this key and release it.
         /// </summary>
         public void PressAndRelease()

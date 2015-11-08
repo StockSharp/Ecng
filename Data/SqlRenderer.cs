@@ -65,7 +65,7 @@ namespace Ecng.Data
 		public string FormatParameter(string value)
 		{
 			if (value.IsEmpty())
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			return ParameterPrefix + value + ParameterSuffix;
 		}
@@ -73,10 +73,10 @@ namespace Ecng.Data
 		public string UnformatParameter(string value)
 		{
 			if (value.IsEmpty())
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (value.Length < ParameterPrefix.Length + ParameterSuffix.Length + 1)
-				throw new ArgumentOutOfRangeException("value");
+				throw new ArgumentOutOfRangeException(nameof(value));
 
 			value = value.Substring(ParameterPrefix.Length);
 			return value.Substring(0, value.Length - ParameterSuffix.Length);
@@ -85,13 +85,13 @@ namespace Ecng.Data
 		public string GetTypeName(DbType type, Range<int> length)
 		{
 			if (!_typeNames.ContainsKey(type))
-				throw new ArgumentException("Type {0} is not supported.".Put(type), "type");
+				throw new ArgumentException("Type {0} is not supported.".Put(type), nameof(type));
 
 			return _typeNames[type](length);
 		}
 
 		protected abstract string ParameterPrefix { get; }
-		protected virtual string ParameterSuffix { get { return string.Empty; } }
+		protected virtual string ParameterSuffix => string.Empty;
 
 		protected abstract string[] ReservedWords { get; }
 	}

@@ -48,15 +48,9 @@ namespace NPOI.SS.Formula.Eval.Forked
             SetValue(BlankEval.instance); // followed by a proper call to SetValue()
         }
 
-        public Object IdentityKey
-        {
-            get
-            {
-                return _masterCell.IdentityKey;
-            }
-        }
+        public Object IdentityKey => _masterCell.IdentityKey;
 
-        public void SetValue(ValueEval value)
+	    public void SetValue(ValueEval value)
         {
             Type cls = value.GetType();
 
@@ -111,14 +105,9 @@ namespace NPOI.SS.Formula.Eval.Forked
                 throw new Exception("Wrong data type (" + _cellType + ")");
             }
         }
-        public CellType CellType
-        {
-            get
-            {
-                return _cellType;
-            }
-        }
-        public bool BooleanCellValue
+        public CellType CellType => _cellType;
+
+	    public bool BooleanCellValue
         {
             get
             {
@@ -150,30 +139,9 @@ namespace NPOI.SS.Formula.Eval.Forked
                 return _stringValue;
             }
         }
-        public IEvaluationSheet Sheet
-        {
-            get
-            {
-                return _sheet;
-            }
-        }
-        public int RowIndex
-        {
-            get
-            {
-                return _masterCell.RowIndex;
-            }
-        }
-        public int ColumnIndex
-        {
-            get
-            {
-                return _masterCell.ColumnIndex;
-            }
-        }
-        public CellType CachedFormulaResultType
-        {
-            get { return _masterCell.CachedFormulaResultType; }
-        }
+        public IEvaluationSheet Sheet => _sheet;
+	    public int RowIndex => _masterCell.RowIndex;
+	    public int ColumnIndex => _masterCell.ColumnIndex;
+	    public CellType CachedFormulaResultType => _masterCell.CachedFormulaResultType;
     }
 }

@@ -31,14 +31,9 @@ namespace NPOI.HSSF.EventUserModel.DummyRecord
             //
         }
 
-        public override short Sid
-        {
-            get
-            {
-                return -1;
-            }
-        }
-        public override int Serialize(int offset, byte[] data)
+        public override short Sid => -1;
+
+	    public override int Serialize(int offset, byte[] data)
         {
             throw new RecordFormatException("Cannot serialize a dummy record");
         }

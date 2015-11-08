@@ -183,11 +183,9 @@ namespace NPOI.XSSF.UserModel.Helpers
             {
                 return this.innerObj.Remove(item);
             }
-            public int Count
-            {
-                get { return this.innerObj.Count; }
-            }
-            public void CopyTo(T[] target)
+            public int Count => this.innerObj.Count;
+
+	        public void CopyTo(T[] target)
             { 
                 for (int i = 0; i < this.innerObj.Count; i++)
                 {

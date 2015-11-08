@@ -166,14 +166,9 @@ namespace NPOI.HSSF.Record.Aggregates
         /// return the non static version of the id for this record.
         /// </summary>
         /// <value>The sid.</value>
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
-        /// <summary>
+        public override short Sid => sid;
+
+	    /// <summary>
         /// Sometimes the shared formula flag "seems" to be erroneously set (because the corresponding
         /// SharedFormulaRecord does not exist). Normally this would leave no way of determining
         /// the Ptg tokens for the formula.  However as it turns out in these

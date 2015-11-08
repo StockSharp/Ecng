@@ -149,27 +149,15 @@ namespace NPOI.HSSF.Extractor
         /**
          * The Biff version, largely corresponding to the Excel version
          */
-        public int BiffVersion
-        {
-            get
-            {
-                return biffVersion;
-            }
-        }
-        /**
+        public int BiffVersion => biffVersion;
+	    /**
          * The kind of the file, one of {@link BOFRecord#TYPE_WORKSHEET},
          *  {@link BOFRecord#TYPE_CHART}, {@link BOFRecord#TYPE_EXCEL_4_MACRO}
          *  or {@link BOFRecord#TYPE_WORKSPACE_FILE}
          */
-        public int FileType
-        {
-            get
-            {
-                return fileType;
-            }
-        }
+        public int FileType => fileType;
 
-        /**
+	    /**
          * Retrieves the text contents of the file, as best we can
          *  for these old file formats
          */

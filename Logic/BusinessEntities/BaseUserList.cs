@@ -19,10 +19,7 @@
 
 		private static TUser _null;
 
-		public TUser Null
-		{
-			get { return _null ?? (_null = ReadById(_nullUserId)); }
-		}
+		public TUser Null => _null ?? (_null = ReadById(_nullUserId));
 
 		public abstract TUser ReadByName(string userName);
 	}

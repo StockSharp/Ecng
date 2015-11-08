@@ -51,22 +51,13 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 		/// <summary>
 		/// Gets the encrypted key contained by this object.
 		/// </summary>
-		public byte[] EncryptedKey
-		{
-			get
-			{
-				return Item1.ToArray();
-			}
-		}
+		public byte[] EncryptedKey => Item1.ToArray();
 
 		/// <summary>
 		/// Gets the decrypted key protected by this object. It is the responsibility of the caller of this method 
 		/// to clear the returned byte array.
 		/// </summary>
-		public byte[] DecryptedKey
-		{
-			get { return Unprotect(); }
-		}
+		public byte[] DecryptedKey => Unprotect();
 
 		/// <summary>
 		/// Returns the decrypted symmetric key.

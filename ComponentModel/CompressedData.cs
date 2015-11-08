@@ -40,10 +40,10 @@ namespace Ecng.ComponentModel
 			: this()
 		{
 			if (items == null)
-				throw new ArgumentNullException("items");
+				throw new ArgumentNullException(nameof(items));
 
 			if (items.IsEmpty())
-				throw new ArgumentOutOfRangeException("items");
+				throw new ArgumentOutOfRangeException(nameof(items));
 
 			int xCount = items.Length;
 			int yCount = items[0].Length;
@@ -150,7 +150,7 @@ namespace Ecng.ComponentModel
 		/// Gets the secondary items.
 		/// </summary>
 		/// <value>The secondary items.</value>
-		public IDictionary<TBound, List<CompressedDataRange<TItem, TBound>>> SecondaryItems { get; private set; }
+		public IDictionary<TBound, List<CompressedDataRange<TItem, TBound>>> SecondaryItems { get; }
 
 		#region Item
 
@@ -241,7 +241,7 @@ namespace Ecng.ComponentModel
 			set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
                 _stream = value;
 

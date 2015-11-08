@@ -78,15 +78,9 @@ namespace Ookii.Dialogs
         /// <see langword="true"/> on Windows Vista or newer operating systems; otherwise, <see langword="false"/>.
         /// </value>
         [Browsable(false)]
-        public static bool IsVistaFileDialogSupported
-        {
-            get
-            {
-                return Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 6;
-            }
-        }
+        public static bool IsVistaFileDialogSupported => Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 6;
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets a value indicating whether the dialog box automatically adds an extension to a file name 
         /// if the user omits the extension.
         /// </summary>

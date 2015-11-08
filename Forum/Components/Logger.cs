@@ -24,7 +24,7 @@ namespace Ecng.Forum.Components
 		public void AutoLog(Action action)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 
 			try
 			{
@@ -41,7 +41,7 @@ namespace Ecng.Forum.Components
 			try
 			{
 				if (ex == null)
-					throw new ArgumentNullException("ex");
+					throw new ArgumentNullException(nameof(ex));
 
 				Forum forum;
 				var forums = ForumHelper.GetRootObject<ForumRootObject>().Forums;

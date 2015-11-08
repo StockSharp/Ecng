@@ -57,15 +57,10 @@ namespace NPOI.SS.Formula.PTG
         {
             throw new Exception("3D references need a workbook to determine formula text");
         }
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_REF; }
-        }
-        public override int Size
-        {
-            get { return 7; }
-        }
-        public override void Write(ILittleEndianOutput out1)
+        public override byte DefaultOperandClass => Ptg.CLASS_REF;
+	    public override int Size => 7;
+
+	    public override void Write(ILittleEndianOutput out1)
         {
             out1.WriteByte(sid + PtgClass);
             out1.WriteShort(field_1_index_extern_sheet);

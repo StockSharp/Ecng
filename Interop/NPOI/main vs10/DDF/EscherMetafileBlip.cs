@@ -304,14 +304,9 @@ namespace NPOI.DDF
             get{return (field_6_fCompression == 0);}
             set { field_6_fCompression = value ? (byte)0 : (byte)0xFE; }
         }
-        public byte[] RemainingData
-        {
-            get
-            {
-                return remainingData;
-            }
-        }
-        /// <summary>
+        public byte[] RemainingData => remainingData;
+
+	    /// <summary>
         /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
         /// </summary>
         /// <returns>

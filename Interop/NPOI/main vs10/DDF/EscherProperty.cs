@@ -58,62 +58,44 @@ namespace NPOI.DDF
         /// Gets the id.
         /// </summary>
         /// <value>The id.</value>
-        public virtual  short Id
-        {
-            get { return id; }
-        }
+        public virtual  short Id => id;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the property number.
         /// </summary>
         /// <value>The property number.</value>
-        public virtual  short PropertyNumber
-        {
-            get { return (short)(id & (short)0x3FFF); }
-        }
+        public virtual  short PropertyNumber => (short)(id & (short)0x3FFF);
 
-        /// <summary>
+	    /// <summary>
         /// Gets a value indicating whether this instance is complex.
         /// </summary>
         /// <value>
         /// 	<c>true</c> if this instance is complex; otherwise, <c>false</c>.
         /// </value>
-        public virtual  bool IsComplex
-        {
-            get { return (id & unchecked((short)0x8000)) != 0; }
-        }
+        public virtual  bool IsComplex => (id & unchecked((short)0x8000)) != 0;
 
-        /// <summary>
+	    /// <summary>
         /// Gets a value indicating whether this instance is blip id.
         /// </summary>
         /// <value>
         /// 	<c>true</c> if this instance is blip id; otherwise, <c>false</c>.
         /// </value>
-        public virtual  bool IsBlipId
-        {
-            get { return (id & (short)0x4000) != 0; }
-        }
+        public virtual  bool IsBlipId => (id & (short)0x4000) != 0;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the name.
         /// </summary>
         /// <value>The name.</value>
-        public virtual String Name
-        {
-            get { return EscherProperties.GetPropertyName(PropertyNumber); }
-        }
+        public virtual String Name => EscherProperties.GetPropertyName(PropertyNumber);
 
-        /// <summary>
+	    /// <summary>
         /// Most properties are just 6 bytes in Length.  Override this if we're
         /// dealing with complex properties.
         /// </summary>
         /// <value>The size of the property.</value>
-        public virtual int PropertySize
-        {
-            get { return 6; }
-        }
+        public virtual int PropertySize => 6;
 
-        public virtual String ToXml(String tab)
+	    public virtual String ToXml(String tab)
         {
             StringBuilder builder = new StringBuilder();
             builder.Append(tab)

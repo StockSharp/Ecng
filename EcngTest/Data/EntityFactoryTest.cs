@@ -12,7 +12,7 @@ namespace Ecng.Test.Data
 
 	class EmptyEntityFactory<T> : EntityFactory<T>
 	{
-		public override bool FullInitialize { get { return false; } }
+		public override bool FullInitialize => false;
 
 		public override T CreateEntity(ISerializer serializer, SerializationItemCollection itemSource)
 		{

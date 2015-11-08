@@ -35,29 +35,20 @@ namespace NPOI.SS.Formula.PTG
         /**
          * All Operator <c>Ptg</c>s are base tokens (i.e. are not RVA classified)  
          */
-        public override bool IsBaseToken
-        {
-            get { return true; }
-        }
+        public override bool IsBaseToken => true;
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_VALUE; }
-        }
+	    public override byte DefaultOperandClass => Ptg.CLASS_VALUE;
 
-        public override void Write(ILittleEndianOutput out1)
+	    public override void Write(ILittleEndianOutput out1)
         {
             out1.WriteByte(Sid + PtgClass);
         }
 
         protected abstract byte Sid { get; }
 
-        public override int Size
-        {
-            get { return 1; }
-        }
+        public override int Size => 1;
 
-        public override String ToFormulaString() 
+	    public override String ToFormulaString() 
         {
     	    throw new NotImplementedException("ToFormulaString(String[] operands) should be used for subclasses of OperationPtgs");
 	    }

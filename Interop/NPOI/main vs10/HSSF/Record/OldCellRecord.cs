@@ -54,63 +54,28 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public int Row
-        {
-            get
-            {
-                return field_1_row;
-            }
-        }
+        public int Row => field_1_row;
 
-        public short Column
-        {
-            get
-            {
-                return field_2_column;
-            }
-        }
+	    public short Column => field_2_column;
 
-        /**
+	    /**
          * Get the index to the ExtendedFormat, for non-Biff2
          *
          * @see NPOI.HSSF.Record.ExtendedFormatRecord
          * @return index to the XF record
          */
-        public short XFIndex
-        {
-            get
-            {
-                return field_3_xf_index;
-            }
-        }
-        public int CellAttrs
-        {
-            get
-            {
-                return field_3_cell_attrs;
-            }
-        }
+        public short XFIndex => field_3_xf_index;
 
-        /**
+	    public int CellAttrs => field_3_cell_attrs;
+
+	    /**
          * Is this a Biff2 record, or newer?
          */
-        public virtual bool IsBiff2
-        {
-            get
-            {
-                return isBiff2;
-            }
-        }
-        public virtual short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+        public virtual bool IsBiff2 => isBiff2;
 
+	    public virtual short Sid => sid;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
             String recordName = this.RecordName;

@@ -40,17 +40,11 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// <summary>
         /// PropertyInfo for this property.
         /// </summary>
-        public PropertyInfo Property
-        {
-            get { return property; }
-        }
+        public PropertyInfo Property => property;
 
-        /// <summary>
+	    /// <summary>
         /// Key to look up this property's resolver.
         /// </summary>
-        public string Key
-        {
-            get { return key; }
-        }
+        public string Key => key;
     }
 }

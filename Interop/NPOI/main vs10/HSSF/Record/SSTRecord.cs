@@ -204,12 +204,9 @@ namespace NPOI.HSSF.Record
         /**
          * @return sid
          */
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        /**
+	    /**
          * @return hashcode
          */
         public override int GetHashCode()
@@ -245,12 +242,9 @@ namespace NPOI.HSSF.Record
          * @return count of the strings we hold.
          */
 
-        public int CountStrings
-        {
-            get { return field_3_strings.Size; }
-        }
+        public int CountStrings => field_3_strings.Size;
 
-        /**
+	    /**
          * called by the class that Is responsible for writing this sucker.
          * Subclasses should implement this so that their data Is passed back in a
          * byte array.

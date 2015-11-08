@@ -64,20 +64,14 @@ namespace NPOI.SS.Formula.PTG
             set { field_1_reserved = value; }
         }
 
-        public override int Size
-        {
-            get { return SIZE; }
-        }
+        public override int Size => SIZE;
 
-        public override String ToFormulaString()
+	    public override String ToFormulaString()
         {
             //TODO -- should we store a cellreference instance in this ptg?? but .. memory is an Issue, i believe!
             return "#REF!";
         }
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_REF; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_REF;
     }
 }

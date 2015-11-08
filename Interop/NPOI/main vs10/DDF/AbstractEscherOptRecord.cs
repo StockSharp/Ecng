@@ -55,15 +55,9 @@ namespace NPOI.DDF
         /**
          * The list of properties stored by this record.
          */
-        public List<EscherProperty> EscherProperties
-        {
-            get
-            {
-                return properties;
-            }
-        }
+        public List<EscherProperty> EscherProperties => properties;
 
-        /**
+	    /**
          * The list of properties stored by this record.
          */
         public EscherProperty GetEscherProperty(int index)
@@ -86,15 +80,9 @@ namespace NPOI.DDF
         }
 
 
-        public override int RecordSize
-        {
-            get
-            {
-                return 8 + PropertiesSize;
-            }
-        }
+        public override int RecordSize => 8 + PropertiesSize;
 
-        public EscherProperty Lookup(int propId)
+	    public EscherProperty Lookup(int propId)
         {
             foreach (EscherProperty prop in properties)
             {

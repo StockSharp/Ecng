@@ -94,10 +94,6 @@ namespace NPOI.HPSF
         /// Exception}.
         /// </summary>
         /// <value>The reason.</value>
-        public Exception Reason
-        {
-            get { return this.InnerException; }
-        }
-
+        public Exception Reason => this.InnerException;
     }
 }

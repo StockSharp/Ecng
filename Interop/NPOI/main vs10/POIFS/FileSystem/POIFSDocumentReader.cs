@@ -78,14 +78,9 @@ namespace NPOI.POIFS.FileSystem
         /// at the end Of document.
         /// </summary>
         /// <returns></returns>
-        private bool EOD
-        {
-            get
-            {
-                return (this._current_offset == this._document_size);
-            }
-        }
-        /// <summary>
+        private bool EOD => (this._current_offset == this._document_size);
+
+	    /// <summary>
         /// Returns the number of bytes that can be read (or skipped over)
         /// from this input stream without blocking by the next caller of a
         /// method for this input stream. The next caller might be the same
@@ -270,7 +265,7 @@ namespace NPOI.POIFS.FileSystem
                 case SeekOrigin.Begin:
                     if (0L > offset)
                     {
-                        throw new ArgumentOutOfRangeException("offset","offset must be positive");
+                        throw new ArgumentOutOfRangeException(nameof(offset),"offset must be positive");
                     }
                     this.Position = offset<this.Length?offset:this.Length;
                     break;
@@ -284,7 +279,7 @@ namespace NPOI.POIFS.FileSystem
                     break;
 
                 default:
-                    throw new ArgumentException("incorrect SeekOrigin","origin");
+                    throw new ArgumentException("incorrect SeekOrigin",nameof(origin));
             }
             return Position;
 
@@ -356,43 +351,25 @@ namespace NPOI.POIFS.FileSystem
         /// <value></value>
         /// <returns>true if the stream supports reading; otherwise, false.
         /// </returns>
-        public override bool CanRead
-        {
-            get
-            {
-                return true;
-            }
-        }
+        public override bool CanRead => true;
 
-        /// <summary>
+	    /// <summary>
         /// When overridden in a derived class, gets a value indicating whether the current stream supports seeking.
         /// </summary>
         /// <value></value>
         /// <returns>true if the stream supports seeking; otherwise, false.
         /// </returns>
-        public override bool CanSeek
-        {
-            get
-            {
-                return true;
-            }
-        }
+        public override bool CanSeek => true;
 
-        /// <summary>
+	    /// <summary>
         /// When overridden in a derived class, gets a value indicating whether the current stream supports writing.
         /// </summary>
         /// <value></value>
         /// <returns>true if the stream supports writing; otherwise, false.
         /// </returns>
-        public override bool CanWrite
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public override bool CanWrite => false;
 
-        /// <summary>
+	    /// <summary>
         /// When overridden in a derived class, gets the length in bytes of the stream.
         /// </summary>
         /// <value></value>
@@ -405,15 +382,9 @@ namespace NPOI.POIFS.FileSystem
         /// <exception cref="T:System.ObjectDisposedException">
         /// Methods were called after the stream was closed.
         /// </exception>
-        public override long Length
-        {
-            get
-            {
-                return (long)this._document_size;
-            }
-        }
+        public override long Length => (long)this._document_size;
 
-        /// <summary>
+	    /// <summary>
         /// When overridden in a derived class, gets or sets the position within the current stream.
         /// </summary>
         /// <value></value>

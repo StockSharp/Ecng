@@ -28,7 +28,7 @@ namespace SmartFormat.Core.Parsing
 		public readonly Format parent;
 		public int NestedDepth { get; set; }
 
-		public List<Selector> Selectors { get; private set; }
+		public List<Selector> Selectors { get; }
 		public int Alignment { get; set; }
 		public string FormatterName { get; set; }
 		public string FormatterOptions { get; set; }

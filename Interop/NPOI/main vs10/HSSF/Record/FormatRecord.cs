@@ -81,29 +81,17 @@ namespace NPOI.HSSF.Record
          * @see org.apache.poi.hssf.model.Workbook
          */
 
-        public int IndexCode
-        {
-            get
-            {
-                return field_1_index_code;
-            }
-        }
+        public int IndexCode => field_1_index_code;
 
-        /**
+	    /**
          * Get the format string
          *
          * @return the format string
          */
 
-        public String FormatString
-        {
-            get
-            {
-                return field_4_formatstring;
-            }
-        }
+        public String FormatString => field_4_formatstring;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
 
@@ -131,20 +119,12 @@ namespace NPOI.HSSF.Record
                 StringUtil.PutCompressedUnicode(formatString, out1);
             }
         }
-        protected override int DataSize
-        {
-            get
-            {
-                return 5 // 2 shorts + 1 byte
-                    + FormatString.Length * (field_3_hasMultibyte ? 2 : 1);
-            }
-        }
+        protected override int DataSize => 5 // 2 shorts + 1 byte
+                                           + FormatString.Length * (field_3_hasMultibyte ? 2 : 1);
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public override Object Clone()
+	    public override short Sid => sid;
+
+	    public override Object Clone()
         {
             // immutable
             return this;

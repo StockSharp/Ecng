@@ -42,9 +42,6 @@ namespace NPOI.SS.Formula.PTG
          */
         public abstract int NumberOfOperands { get; }
 
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_VALUE; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_VALUE;
     }
 }

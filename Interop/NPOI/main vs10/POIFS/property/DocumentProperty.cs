@@ -84,12 +84,9 @@ namespace NPOI.POIFS.Properties
         /// <returns>
         /// 	<c>true</c> if this instance is directory; otherwise, <c>false</c>.
         /// </returns>
-        public override bool IsDirectory
-        {
-            get { return false; }
-        }
+        public override bool IsDirectory => false;
 
-        /// <summary>
+	    /// <summary>
         /// Perform whatever activities need to be performed prior to
         /// writing
         /// </summary>

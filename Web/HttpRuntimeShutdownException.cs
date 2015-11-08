@@ -30,10 +30,7 @@ namespace Ecng.Web
 
 		private readonly string _stackTrace;
 
-		public override string StackTrace
-		{
-			get { return _stackTrace; }
-		}
+		public override string StackTrace => _stackTrace;
 
 		#endregion
 	}

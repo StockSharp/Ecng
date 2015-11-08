@@ -10,15 +10,9 @@ namespace Ecng.Forum.Components
 	{
 		#region BaseMembershipProvider<User> Members
 
-		protected override IWebRoleCollection Roles
-		{
-			get { return ForumHelper.GetRootObject<ForumRootObject>().Roles; }
-		}
+		protected override IWebRoleCollection Roles => ForumHelper.GetRootObject<ForumRootObject>().Roles;
 
-		protected override IWebUserCollection Users
-		{
-			get { return ForumHelper.GetRootObject<ForumRootObject>().Users; }
-		}
+		protected override IWebUserCollection Users => ForumHelper.GetRootObject<ForumRootObject>().Users;
 
 		protected override IEnumerable<IWebUser> GetUserRange(int pageIndex, int pageSize, out int totalRecords)
 		{
@@ -58,9 +52,6 @@ namespace Ecng.Forum.Components
 
 		#endregion
 
-		private static ForumUserList ForumUsers
-		{
-			get { return ForumHelper.GetRootObject<ForumRootObject>().Users; }
-		}
+		private static ForumUserList ForumUsers => ForumHelper.GetRootObject<ForumRootObject>().Users;
 	}
 }

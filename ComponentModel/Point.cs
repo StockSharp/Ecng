@@ -120,10 +120,10 @@ namespace Ecng.ComponentModel
 		public static Point<T> operator +(Point<T> first, Point<T> second)
 		{
 			if (first == null)
-				throw new ArgumentNullException("first");
+				throw new ArgumentNullException(nameof(first));
 
 			if (second == null)
-				throw new ArgumentNullException("second");
+				throw new ArgumentNullException(nameof(second));
 
 			return new Point<T>(_operator.Add(first.X, second.X), _operator.Add(first.Y, second.Y));
 		}
@@ -137,10 +137,10 @@ namespace Ecng.ComponentModel
 		public static Point<T> operator -(Point<T> first, Point<T> second)
 		{
 			if (first == null)
-				throw new ArgumentNullException("first");
+				throw new ArgumentNullException(nameof(first));
 
 			if (second == null)
-				throw new ArgumentNullException("second");
+				throw new ArgumentNullException(nameof(second));
 
 			return new Point<T>(_operator.Subtract(first.X, second.X), _operator.Subtract(first.Y, second.Y));
 		}
@@ -154,10 +154,10 @@ namespace Ecng.ComponentModel
 		public static Point<T> operator *(Point<T> first, Point<T> second)
 		{
 			if (first == null)
-				throw new ArgumentNullException("first");
+				throw new ArgumentNullException(nameof(first));
 
 			if (second == null)
-				throw new ArgumentNullException("second");
+				throw new ArgumentNullException(nameof(second));
 
 			return new Point<T>(_operator.Multiply(first.X, second.X), _operator.Multiply(first.Y, second.Y));
 		}
@@ -171,10 +171,10 @@ namespace Ecng.ComponentModel
 		public static Point<T> operator /(Point<T> first, Point<T> second)
 		{
 			if (first == null)
-				throw new ArgumentNullException("first");
+				throw new ArgumentNullException(nameof(first));
 
 			if (second == null)
-				throw new ArgumentNullException("second");
+				throw new ArgumentNullException(nameof(second));
 
 			return new Point<T>(_operator.Divide(first.X, second.X), _operator.Divide(first.Y, second.Y));
 		}

@@ -43,23 +43,11 @@ namespace NPOI.SS.Formula
             return _workbook;
         }
 
-        public int RowIndex
-        {
-            get
-            {
-                return _rowIndex;
-            }
-        }
+        public int RowIndex => _rowIndex;
 
-        public int ColumnIndex
-        {
-            get
-            {
-                return _columnIndex;
-            }
-        }
+	    public int ColumnIndex => _columnIndex;
 
-        SheetRangeEvaluator CreateExternSheetRefEvaluator(IExternSheetReferenceToken ptg)
+	    SheetRangeEvaluator CreateExternSheetRefEvaluator(IExternSheetReferenceToken ptg)
         {
             return CreateExternSheetRefEvaluator(ptg.ExternSheetIndex);
         }

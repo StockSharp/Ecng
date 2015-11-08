@@ -431,44 +431,20 @@ namespace NPOI.HSSF.UserModel
                 Logger.Log(POILogger.WARN, "FillRoundRect not supported");
         }
 
-        public Rectangle Clip
-        {
-            get
-            {
-                return ClipBounds;
-            }
-        }
+        public Rectangle Clip => ClipBounds;
 
-        public Rectangle ClipBounds
-        {
-            get
-            {
-                return Rectangle.Empty;
-            }
-        }
+	    public Rectangle ClipBounds => Rectangle.Empty;
 
-        public Rectangle GetClipRect()
+	    public Rectangle GetClipRect()
         {
            return ClipBounds;
         }
 
-        public Color Color
-        {
-            get
-            {
-                return foreground;
-            }
-        }
+        public Color Color => foreground;
 
-        public Font Font
-        {
-            get
-            {
-                return font;
-            }
-        }
+	    public Font Font => font;
 
-        //public FontMetrics GetFontMetrics(Font f)
+	    //public FontMetrics GetFontMetrics(Font f)
         //{
         //    return GetFontMetrics(f);
         //}

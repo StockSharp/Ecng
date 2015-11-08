@@ -311,16 +311,7 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(TabWidthRatio);
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 18;
-            }
-        }
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        protected override int DataSize => 18;
+	    public override short Sid => sid;
     }
 }

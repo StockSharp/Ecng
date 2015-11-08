@@ -39,8 +39,8 @@ namespace Microsoft.Practices.Unity.Configuration.ConfigurationHelpers
         private class GenericParameters
         {
             public bool IsOpenGeneric;
-            public int Count { get { return Parameters.Count; } }
-            public readonly List<TypeNameInfo> Parameters = new List<TypeNameInfo>();
+            public int Count => Parameters.Count;
+	        public readonly List<TypeNameInfo> Parameters = new List<TypeNameInfo>();
         }
 
         private static void InitializeTypeNameInfo(ParsedUnqualifiedName from, TypeNameInfo to)

@@ -555,57 +555,28 @@ namespace NPOI.HSSF.Record.Aggregates
         /**
          * @return all the horizontal page breaks, never <c>null</c>
          */
-        public int[] RowBreaks
-        {
-            get
-            {
-                return this.RowBreaksRecord.GetBreaks();
-            }
-        }
+        public int[] RowBreaks => this.RowBreaksRecord.GetBreaks();
 
-        /**
+	    /**
          * @return the number of row page breaks
          */
-        public int NumRowBreaks
-        {
-            get
-            {
-                return this.RowBreaksRecord.NumBreaks;
-            }
-        }
+        public int NumRowBreaks => this.RowBreaksRecord.NumBreaks;
 
-        /**
+	    /**
          * @return all the column page breaks, never <c>null</c>
          */
-        public int[] ColumnBreaks
-        {
-            get
-            {
-                return this.ColumnBreaksRecord.GetBreaks();
-            }
-        }
+        public int[] ColumnBreaks => this.ColumnBreaksRecord.GetBreaks();
 
-        /**
+	    /**
          * @return the number of column page breaks
          */
-        public int NumColumnBreaks
-        {
-            get
-            {
-                return this.ColumnBreaksRecord.NumBreaks;
-            }
-        }
+        public int NumColumnBreaks => this.ColumnBreaksRecord.NumBreaks;
 
-        public VCenterRecord VCenter
-        {
-            get { return _vCenter; }
-        }
+	    public VCenterRecord VCenter => _vCenter;
 
-        public HCenterRecord HCenter
-        {
-            get { return _hCenter; }
-        }
-        /// <summary>
+	    public HCenterRecord HCenter => _hCenter;
+
+	    /// <summary>
         ///  HEADERFOOTER is new in 2007.  Some apps seem to have scattered this record long after
         /// the PageSettingsBlock where it belongs.
         /// </summary>

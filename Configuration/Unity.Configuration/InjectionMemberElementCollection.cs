@@ -38,12 +38,9 @@ namespace Microsoft.Practices.Unity.Configuration
         /// </summary>
         /// <param name="key">Key to retrieve element with.</param>
         /// <returns>The element.</returns>
-        public new InjectionMemberElement this[string key]
-        {
-            get { return (InjectionMemberElement) BaseGet(key); }
-        }
+        public new InjectionMemberElement this[string key] => (InjectionMemberElement) BaseGet(key);
 
-        /// <summary>
+	    /// <summary>
         /// Causes the configuration system to throw an exception.
         /// </summary>
         /// <returns>

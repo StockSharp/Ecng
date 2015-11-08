@@ -17,19 +17,16 @@ namespace Ecng.Xaml
 		public ConvertibleObservableCollection(ICollection<TDisplay> collection, Func<TItem, TDisplay> converter)
 		{
 			if (collection == null)
-				throw new ArgumentNullException("collection");
+				throw new ArgumentNullException(nameof(collection));
 
 			if (converter == null)
-				throw new ArgumentNullException("converter");
+				throw new ArgumentNullException(nameof(converter));
 
 			_collection = collection;
 			_converter = converter;
 		}
 
-		private object SyncRoot
-		{
-			get { return ((ICollection)_collection).SyncRoot; }
-		}
+		private object SyncRoot => ((ICollection)_collection).SyncRoot;
 
 		public TItem[] Items
 		{
@@ -179,10 +176,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// true if the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only; otherwise, false.
 		/// </returns>
-		bool ICollection<TItem>.IsReadOnly
-		{
-			get { return false; }
-		}
+		bool ICollection<TItem>.IsReadOnly => false;
 
 		/// <summary>
 		/// Determines whether the <see cref="T:System.Collections.Generic.ICollection`1"/> contains a specific value.

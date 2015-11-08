@@ -741,15 +741,10 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         {
 
         }
-        public override bool IsEmpty
-        {
-            get
-            {
-                return base.IsEmpty && 
-                    rPrField == null && sectPrField == null && pPrChangeField == null;
-            }
-        }
-        public static new CT_PPr Parse(XmlNode node, XmlNamespaceManager namespaceManager)
+        public override bool IsEmpty => base.IsEmpty && 
+                                        rPrField == null && sectPrField == null && pPrChangeField == null;
+
+	    public static new CT_PPr Parse(XmlNode node, XmlNamespaceManager namespaceManager)
         {
             if (node == null)
                 return null;
@@ -5893,47 +5888,41 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
 
         private CT_Cnf cnfStyleField;
 
-        public virtual bool IsEmpty
-        {
-            get
-            {
-                return pStyleField == null &&
-keepNextField == null &&
-keepLinesField == null &&
-pageBreakBeforeField == null &&
-framePrField == null &&
-widowControlField == null &&
-numPrField == null &&
-suppressLineNumbersField == null &&
-pBdrField == null &&
-shdField == null &&
-tabsField == null &&
-suppressAutoHyphensField == null &&
-kinsokuField == null &&
-wordWrapField == null &&
-overflowPunctField == null &&
-topLinePunctField == null &&
-autoSpaceDEField == null &&
-autoSpaceDNField == null &&
-bidiField == null &&
-adjustRightIndField == null &&
-snapToGridField == null &&
-spacingField == null &&
-indField == null &&
-contextualSpacingField == null &&
-mirrorIndentsField == null &&
-suppressOverlapField == null &&
-jcField == null &&
-textDirectionField == null &&
-textAlignmentField == null &&
-textboxTightWrapField == null &&
-outlineLvlField == null &&
-divIdField == null &&
-cnfStyleField == null;
-            }
-        }
+        public virtual bool IsEmpty => pStyleField == null &&
+                                       keepNextField == null &&
+                                       keepLinesField == null &&
+                                       pageBreakBeforeField == null &&
+                                       framePrField == null &&
+                                       widowControlField == null &&
+                                       numPrField == null &&
+                                       suppressLineNumbersField == null &&
+                                       pBdrField == null &&
+                                       shdField == null &&
+                                       tabsField == null &&
+                                       suppressAutoHyphensField == null &&
+                                       kinsokuField == null &&
+                                       wordWrapField == null &&
+                                       overflowPunctField == null &&
+                                       topLinePunctField == null &&
+                                       autoSpaceDEField == null &&
+                                       autoSpaceDNField == null &&
+                                       bidiField == null &&
+                                       adjustRightIndField == null &&
+                                       snapToGridField == null &&
+                                       spacingField == null &&
+                                       indField == null &&
+                                       contextualSpacingField == null &&
+                                       mirrorIndentsField == null &&
+                                       suppressOverlapField == null &&
+                                       jcField == null &&
+                                       textDirectionField == null &&
+                                       textAlignmentField == null &&
+                                       textboxTightWrapField == null &&
+                                       outlineLvlField == null &&
+                                       divIdField == null &&
+                                       cnfStyleField == null;
 
-        public CT_PPrBase()
+	    public CT_PPrBase()
         {
 
         }

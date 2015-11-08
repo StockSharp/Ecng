@@ -20,7 +20,7 @@
 			public TableListViewExItemTemplate(TableListViewEx parent)
 			{
 				if (parent == null)
-					throw new ArgumentNullException("parent");
+					throw new ArgumentNullException(nameof(parent));
 
 				_parent = parent;
 			}
@@ -122,10 +122,10 @@
 		protected virtual HyperLink GetHeaderCellLink(TemplateField column, Url url)
 		{
 			if (column == null)
-				throw new ArgumentNullException("column");
+				throw new ArgumentNullException(nameof(column));
 
 			if (url == null)
-				throw new ArgumentNullException("url");
+				throw new ArgumentNullException(nameof(url));
 
 			return new HyperLink { Text = column.HeaderText, NavigateUrl = url.ToString() };
 		}

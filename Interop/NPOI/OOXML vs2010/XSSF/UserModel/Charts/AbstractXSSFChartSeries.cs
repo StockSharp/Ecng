@@ -46,15 +46,9 @@ namespace NPOI.XSSF.UserModel.Charts
         {
             return titleType;
         }
-        protected bool IsTitleSet
-        {
-            get
-            {
-                return titleType != null;
-            }
-        }
+        protected bool IsTitleSet => titleType != null;
 
-        protected CT_SerTx GetCTSerTx()
+	    protected CT_SerTx GetCTSerTx()
         {
             CT_SerTx tx = new CT_SerTx();
             switch (titleType)

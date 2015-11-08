@@ -54,12 +54,9 @@ namespace NDde
             return _Storage.ContainsKey(key);
         }
 
-        public ICollection<TKey> Keys
-        {
-            get { return _Storage.Keys; }
-        }
+        public ICollection<TKey> Keys => _Storage.Keys;
 
-        public bool Remove(TKey key)
+	    public bool Remove(TKey key)
         {
             return _Storage.Remove(key);
         }
@@ -78,12 +75,9 @@ namespace NDde
             return false;
         }
 
-        public ICollection<TValue> Values
-        {
-            get { return new MyValueCollection(this); }
-        }
+        public ICollection<TValue> Values => new MyValueCollection(this);
 
-        public TValue this[TKey key]
+	    public TValue this[TKey key]
         {
             get
             {
@@ -145,17 +139,11 @@ namespace NDde
             }
         }
 
-        public int Count
-        {
-            get { return _Storage.Count; }
-        }
+        public int Count => _Storage.Count;
 
-        public bool IsReadOnly
-        {
-            get { return _Storage.IsReadOnly; }
-        }
+	    public bool IsReadOnly => _Storage.IsReadOnly;
 
-        public bool Remove(KeyValuePair<TKey, TValue> item)
+	    public bool Remove(KeyValuePair<TKey, TValue> item)
         {
             return false;
         }
@@ -234,17 +222,11 @@ namespace NDde
                 }
             }
 
-            public int Count
-            {
-                get { return _Parent._Storage.Values.Count; }
-            }
+            public int Count => _Parent._Storage.Values.Count;
 
-            public bool IsReadOnly
-            {
-                get { return true; }
-            }
+	        public bool IsReadOnly => true;
 
-            public bool Remove(TValue item)
+	        public bool Remove(TValue item)
             {
                 throw new Exception("The method or operation is not implemented.");
             }

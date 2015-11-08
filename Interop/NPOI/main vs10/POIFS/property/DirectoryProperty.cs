@@ -212,12 +212,9 @@ namespace NPOI.POIFS.Properties
         /// <value>
         /// 	<c>true</c> if a directory type Property; otherwise, <c>false</c>.
         /// </value>
-        public override bool IsDirectory
-        {
-            get{return true;}
-        }
+        public override bool IsDirectory => true;
 
-        /// <summary>
+	    /// <summary>
         /// Perform whatever activities need to be performed prior to
         /// writing
         /// </summary>
@@ -267,12 +264,9 @@ namespace NPOI.POIFS.Properties
         /// are instances of Property.
         /// </summary>
         /// <value>Iterator of children; may refer to an empty collection</value>
-        public IEnumerator<Property> Children
-        {
-            get{return _children.GetEnumerator();}
-        }
+        public IEnumerator<Property> Children => _children.GetEnumerator();
 
-        /// <summary>
+	    /// <summary>
         /// Add a new child to the collection of children
         /// </summary>
         /// <param name="property">the new child to be added; must not be null</param>

@@ -103,12 +103,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-        //public override int Serialize(int offset, byte[] data)
+	    //public override int Serialize(int offset, byte[] data)
         //{
         //    int nBreaks = _breaks.Count;
         //    if (!IS_EMPTY_RECORD_WRITTEN && nBreaks < 1)
@@ -137,15 +134,9 @@ namespace NPOI.HSSF.Record
                 _breaks[i].Serialize(out1);
             }
         }
-        protected override int DataSize
-        {
-            get
-            {
-                return 2 + _breaks.Count * Break.ENCODED_SIZE;
-            }
-        }
+        protected override int DataSize => 2 + _breaks.Count * Break.ENCODED_SIZE;
 
-        public IEnumerator<Break> GetBreaksEnumerator()
+	    public IEnumerator<Break> GetBreaksEnumerator()
         {
             //if (_breaks == null)
             //    return new ArrayList().GetEnumerator();
@@ -246,21 +237,9 @@ namespace NPOI.HSSF.Record
                 return 4 + DataSize;
             }
         }
-        public int NumBreaks
-        {
-            get
-            {
-                return _breaks.Count;
-            }
-        }
-        public bool IsEmpty
-        {
-            get
-            {
-                return _breaks.Count==0;
-            }
-        }
-        /**
+        public int NumBreaks => _breaks.Count;
+	    public bool IsEmpty => _breaks.Count==0;
+	    /**
          * Retrieves the region at the row/column indicated
          * @param main FIXME: Document this!
          * @return The Break or null if no break exists at the row/col specified.

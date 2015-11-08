@@ -13,7 +13,7 @@ namespace Ecng.Collections
 			public CircularBufferEnumerator(IEnumerator<T> sourceEnumerator)
 			{
 				if (sourceEnumerator == null)
-					throw new ArgumentNullException("sourceEnumerator");
+					throw new ArgumentNullException(nameof(sourceEnumerator));
 
 				_sourceEnumerator = sourceEnumerator;
 			}
@@ -41,15 +41,9 @@ namespace Ecng.Collections
 				_sourceEnumerator.Reset();
 			}
 
-			public T Current
-			{
-				get { return _sourceEnumerator.Current; }
-			}
+			public T Current => _sourceEnumerator.Current;
 
-			object IEnumerator.Current
-			{
-				get { return Current; }
-			}
+			object IEnumerator.Current => Current;
 		}
 
 		private readonly IEnumerable<T> _source;
@@ -57,7 +51,7 @@ namespace Ecng.Collections
 		public CircularBuffer(IEnumerable<T> source)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			_source = source;
 		}

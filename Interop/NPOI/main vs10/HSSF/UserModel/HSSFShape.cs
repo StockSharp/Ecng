@@ -420,12 +420,9 @@ namespace NPOI.HSSF.UserModel
         /// Count of all children and their childrens children.
         /// </summary>
         /// <value>The count of all children.</value>
-        public virtual int CountOfAllChildren
-        {
-            get { return 1; }
-        }
+        public virtual int CountOfAllChildren => 1;
 
-        internal abstract HSSFShape CloneShape();
+	    internal abstract HSSFShape CloneShape();
 
         public HSSFPatriarch Patriarch
         {

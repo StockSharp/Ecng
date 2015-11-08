@@ -40,9 +40,9 @@ namespace Microsoft.Practices.Unity.Configuration
         /// Return a unique string that can be used to identify this object. Used
         /// by the configuration collection support.
         /// </summary>
-        public string Key { get { return string.Format(CultureInfo.InvariantCulture, "value:{0}", valueNumber); } }
+        public string Key => string.Format(CultureInfo.InvariantCulture, "value:{0}", valueNumber);
 
-        /// <summary>
+	    /// <summary>
         /// Generate an <see cref="InjectionParameterValue"/> object
         /// that will be used to configure the container for a type registration.
         /// </summary>

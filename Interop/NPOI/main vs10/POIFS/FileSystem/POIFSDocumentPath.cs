@@ -212,14 +212,9 @@ namespace NPOI.POIFS.FileSystem
         /// Gets the length.
         /// </summary>
         /// <value>the number of components</value>
-        public virtual int Length
-        {
-            get
-            {
-                return this.components.Length;
-            }
-        }
-        /// <summary>
+        public virtual int Length => this.components.Length;
+
+	    /// <summary>
         /// Returns the path's parent or <c>null</c> if this path
         /// is the root path.
         /// </summary>

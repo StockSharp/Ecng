@@ -56,7 +56,7 @@ namespace Ookii.Dialogs
         protected override void InsertItem(int index, T item)
         {
             if( item == null )
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
 
             if( item.Owner != null )
 				throw new ArgumentException(Ecng.Xaml.Properties.Resources.TaskDialogItemHasOwnerError);
@@ -119,7 +119,7 @@ namespace Ookii.Dialogs
         protected override void SetItem(int index, T item)
         {
             if( item == null )
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
 
             if( base[index] != item )
             {

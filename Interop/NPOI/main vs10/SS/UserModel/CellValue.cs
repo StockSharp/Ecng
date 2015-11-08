@@ -74,56 +74,27 @@ namespace NPOI.SS.UserModel
         /**
          * @return Returns the boolValue.
          */
-        public bool BooleanValue
-        {
-            get
-            {
-                return _boolValue;
-            }
-        }
-        /**
+        public bool BooleanValue => _boolValue;
+	    /**
          * @return Returns the numberValue.
          */
-        public double NumberValue
-        {
-            get
-            {
-                return _numberValue;
-            }
-        }
-        /**
+        public double NumberValue => _numberValue;
+	    /**
          * @return Returns the stringValue.
          */
-        public String StringValue
-        {
-            get
-            {
-                return _textValue;
-            }
-        }
-        /**
+        public String StringValue => _textValue;
+	    /**
          * @return Returns the cellType.
          */
-        public CellType CellType
-        {
-            get
-            {
-                return _cellType;
-            }
-        }
-        /**
+        public CellType CellType => _cellType;
+	    /**
          * @return Returns the errorValue.
          */
         //the return value should be sbyte? the byte in java is signed(-128~127) and is unsiged(0~255) in c#.
         //if use byte, the test NPOI.SS.Formula.TestWorkbookEvaluator.TestResultOutsideRange failed.
-        public sbyte ErrorValue
-        {
-            get
-            {
-                return (sbyte)_errorCode;
-            }
-        }
-        public override String ToString()
+        public sbyte ErrorValue => (sbyte)_errorCode;
+
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder(64);
             sb.Append(GetType().Name).Append(" [");

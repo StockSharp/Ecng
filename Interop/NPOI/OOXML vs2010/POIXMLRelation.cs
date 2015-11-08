@@ -80,44 +80,26 @@ namespace NPOI
          *
          * @return the content type
          */
-        public String ContentType
-        {
-            get
-            {
-                return _type;
-            }
-        }
+        public String ContentType => _type;
 
-        /**
+	    /**
          * Return the relationship, the kind of connection between a source part and a target part in a namespace.
          * Relationships make the connections between parts directly discoverable without looking at the content
          * in the parts, and without altering the parts themselves.
          *
          * @return the relationship
          */
-        public String Relation
-        {
-            get
-            {
-                return _relation;
-            }
-        }
+        public String Relation => _relation;
 
-        /**
+	    /**
          * Return the default part name. Part names are used to refer to a part in the context of a
          * namespace, typically as part of a URI.
          *
          * @return the default part name
          */
-        public String DefaultFileName
-        {
-            get
-            {
-                return _defaultName;
-            }
-        }
+        public String DefaultFileName => _defaultName;
 
-        /**
+	    /**
          * Returns the filename for the nth one of these,
          *  e.g. /xl/comments4.xml
          */
@@ -136,13 +118,7 @@ namespace NPOI
          *
          * @return the class of the object used to construct instances of this relation
          */
-        public Type RelationClass
-        {
-            get
-            {
-                return _cls;
-            }
-        }
+        public Type RelationClass => _cls;
     }
 }
 

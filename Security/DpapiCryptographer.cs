@@ -9,7 +9,7 @@
 			Scope = scope;
 		}
 
-		public DataProtectionScope Scope { get; private set; }
+		public DataProtectionScope Scope { get; }
 
 		public byte[] Encrypt(byte[] plainText)
 		{

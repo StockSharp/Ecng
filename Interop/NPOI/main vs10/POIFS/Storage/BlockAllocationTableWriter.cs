@@ -172,9 +172,6 @@ namespace NPOI.POIFS.Storage
         /// Gets the number of BigBlock's this instance uses
         /// </summary>
         /// <value>count of BigBlock instances</value>
-        public int CountBlocks
-        {
-            get { return _blocks.Length; }
-        }
+        public int CountBlocks => _blocks.Length;
     }
 }

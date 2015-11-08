@@ -154,17 +154,11 @@ namespace NPOI.HSSF.Record
         /**
          * Size of record (exluding 4 byte header)
          */
-        protected override int DataSize
-        {
-            get { return 1 + 1 + 1 + 1 + 4 + 8 + 8 + 2 + 2 + 2; }
-        }
+        protected override int DataSize => 1 + 1 + 1 + 1 + 4 + 8 + 8 + 2 + 2 + 2;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             TickRecord rec = new TickRecord();
 

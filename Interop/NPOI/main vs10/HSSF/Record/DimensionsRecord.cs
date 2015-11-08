@@ -134,17 +134,11 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(( short ) 0);
         }
 
-        protected override int DataSize
-        {
-            get { return 14; }
-        }
+        protected override int DataSize => 14;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             DimensionsRecord rec = new DimensionsRecord();
             rec.field_1_first_row = field_1_first_row;

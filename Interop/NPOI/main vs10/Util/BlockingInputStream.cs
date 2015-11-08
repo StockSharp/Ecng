@@ -113,31 +113,19 @@ namespace NPOI.Util
             return stream.Seek(n, SeekOrigin.Begin);
         }
 
-        public override bool CanRead
-        {
-            get { return true; }
-        }
+        public override bool CanRead => true;
 
-        public override bool CanSeek
-        {
-            get { return true; }
-        }
+	    public override bool CanSeek => true;
 
-        public override bool CanWrite
-        {
-            get { return false; }
-        }
+	    public override bool CanWrite => false;
 
-        public override void Flush()
+	    public override void Flush()
         {
         }
 
-        public override long Length
-        {
-            get { return stream.Length; }
-        }
+        public override long Length => stream.Length;
 
-        public override long Position
+	    public override long Position
         {
             get
             {

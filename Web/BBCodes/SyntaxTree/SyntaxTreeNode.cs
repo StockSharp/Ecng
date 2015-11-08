@@ -24,7 +24,7 @@ namespace Ecng.Web.BBCodes.SyntaxTree
         }
 
         //not null
-        public ISyntaxTreeNodeCollection SubNodes { get; private set; }
+        public ISyntaxTreeNodeCollection SubNodes { get; }
 
         public abstract string ToHtml();
         public abstract string ToBBCode();

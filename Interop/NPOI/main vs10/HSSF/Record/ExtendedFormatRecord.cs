@@ -981,17 +981,11 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(FillPaletteOptions);
         }
 
-        protected override int DataSize
-        {
-            get { return 20; }
-        }
+        protected override int DataSize => 20;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public override int GetHashCode()
+	    public override int GetHashCode()
         {
             int prime = 31;
             int result = 1;
@@ -1044,13 +1038,7 @@ namespace NPOI.HSSF.Record
             return false;
         }
 
-        public int[] StateSummary
-        {
-            get
-            {
-                return new int[] { field_1_font_index, field_2_format_index, field_3_cell_options, field_4_alignment_options,
-                field_5_indention_options, field_6_border_options, field_7_palette_options, field_8_adtl_palette_options, field_9_fill_palette_options };
-            }
-        }
+        public int[] StateSummary => new int[] { field_1_font_index, field_2_format_index, field_3_cell_options, field_4_alignment_options,
+	        field_5_indention_options, field_6_border_options, field_7_palette_options, field_8_adtl_palette_options, field_9_fill_palette_options };
     }
 }

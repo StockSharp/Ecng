@@ -65,9 +65,6 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// <summary>
         /// The member info stored.
         /// </summary>
-        protected TMemberInfoType MemberInfo
-        {
-            get { return memberInfo; }
-        }
+        protected TMemberInfoType MemberInfo => memberInfo;
     }
 }

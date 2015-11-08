@@ -91,26 +91,14 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(flags);
         }
 
-        public override int DataSize
-        {
-            get
-            {
-                return length;
-            }
-        }
+        public override int DataSize => length;
 
-        /**
+	    /**
          * @return id of this record.
          */
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+        public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             FtCfSubRecord rec = new FtCfSubRecord();
             rec.flags = this.flags;

@@ -55,42 +55,30 @@ namespace Microsoft.Practices.Unity.Configuration
         /// The type registrations in this container.
         /// </summary>
         [ConfigurationProperty(RegistrationsPropertyName, IsDefaultCollection =  true)]
-        public RegisterElementCollection Registrations
-        {
-            get { return (RegisterElementCollection) base[RegistrationsPropertyName]; }
-        }
+        public RegisterElementCollection Registrations => (RegisterElementCollection) base[RegistrationsPropertyName];
 
-        /// <summary>
+	    /// <summary>
         /// Any instances to register in the container.
         /// </summary>
         [ConfigurationProperty(InstancesPropertyName)]
-        public InstanceElementCollection Instances
-        {
-            get { return (InstanceElementCollection) base[InstancesPropertyName]; }
-        }
+        public InstanceElementCollection Instances => (InstanceElementCollection) base[InstancesPropertyName];
 
-        /// <summary>
+	    /// <summary>
         /// Any extensions to add to the container.
         /// </summary>
         [ConfigurationProperty(ExtensionsPropertyName)]
-        public ContainerExtensionElementCollection Extensions
-        {
-            get { return (ContainerExtensionElementCollection) base[ExtensionsPropertyName]; }
-        }
+        public ContainerExtensionElementCollection Extensions => (ContainerExtensionElementCollection) base[ExtensionsPropertyName];
 
-        /// <summary>
+	    /// <summary>
         /// Set of any extra configuration elements that were added by a
         /// section extension.
         /// </summary>
         /// <remarks>
         /// This is not marked as a configuration property because we don't want
         /// the actual property to show up as a nested element in the configuration.</remarks>
-        public ContainerConfiguringElementCollection ConfiguringElements
-        {
-            get { return configuringElements; }
-        }
+        public ContainerConfiguringElementCollection ConfiguringElements => configuringElements;
 
-        /// <summary>
+	    /// <summary>
         /// Original configuration API kept for backwards compatibility.
         /// </summary>
         /// <param name="container">Container to configure</param>

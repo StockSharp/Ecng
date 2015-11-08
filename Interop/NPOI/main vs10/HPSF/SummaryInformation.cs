@@ -50,15 +50,9 @@ namespace NPOI.HPSF
         public const String DEFAULT_STREAM_NAME = "\x0005SummaryInformation";
 
 
-        public override PropertyIDMap PropertySetIDMap
-        {
-            get
-            {
-                return PropertyIDMap.SummaryInformationProperties;
-            }
-        }
+        public override PropertyIDMap PropertySetIDMap => PropertyIDMap.SummaryInformationProperties;
 
-        /// <summary>
+	    /// <summary>
         /// Initializes a new instance of the <see cref="SummaryInformation"/> class.
         /// </summary>
         /// <param name="ps">A property Set which should be Created from a summary

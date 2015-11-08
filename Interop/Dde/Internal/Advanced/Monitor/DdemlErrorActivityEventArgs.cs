@@ -43,11 +43,7 @@ namespace NDde.Foundation.Advanced.Monitor
             _Code = code;
         }
 
-        public int Code
-        {
-            get { return _Code; }
-        }
-
+        public int Code => _Code;
     } // class
 
 } // namespace

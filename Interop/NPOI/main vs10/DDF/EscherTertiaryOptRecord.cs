@@ -28,12 +28,6 @@ namespace NPOI.DDF
     {
         public const short RECORD_ID = unchecked((short)0xF122);
 
-        public override String RecordName
-        {
-            get
-            {
-                return "TertiaryOpt";
-            }
-        }
+        public override String RecordName => "TertiaryOpt";
     }
 }

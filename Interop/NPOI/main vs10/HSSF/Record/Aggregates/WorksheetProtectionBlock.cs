@@ -223,30 +223,13 @@ namespace NPOI.HSSF.Record.Aggregates
             }
         }
 
-        public bool IsSheetProtected
-        {
-            get
-            {
-                return _protectRecord != null && _protectRecord.Protect;
-            }
-        }
+        public bool IsSheetProtected => _protectRecord != null && _protectRecord.Protect;
 
-        public bool IsObjectProtected
-        {
-            get{
-                return _objectProtectRecord != null && _objectProtectRecord.Protect;
-            }
-        }
+	    public bool IsObjectProtected => _objectProtectRecord != null && _objectProtectRecord.Protect;
 
-        public bool IsScenarioProtected
-        {
-            get
-            {
-                return _scenarioProtectRecord != null && _scenarioProtectRecord.Protect;
-            }
-        }
+	    public bool IsScenarioProtected => _scenarioProtectRecord != null && _scenarioProtectRecord.Protect;
 
-        /// <summary>
+	    /// <summary>
         /// Creates an ObjectProtect record with protect set to false.
         /// </summary>
         /// <returns></returns>

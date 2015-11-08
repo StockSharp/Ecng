@@ -63,15 +63,9 @@ namespace NPOI.HSSF.Record
         {
             field_1_data = in1.ReadRemainder();
         }
-        protected override int DataSize
-        {
-            get
-            {
-                return field_1_data.Length;
-            }
-        }
-        
-        public override void Serialize(ILittleEndianOutput out1)
+        protected override int DataSize => field_1_data.Length;
+
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             out1.Write(field_1_data);
         }
@@ -148,13 +142,9 @@ namespace NPOI.HSSF.Record
             return buffer.ToString();
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
 
-
-        /**
+	    /**
          * Clone this record.
          */
         public override Object Clone()

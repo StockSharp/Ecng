@@ -39,12 +39,9 @@ namespace Ookii.Dialogs
         /// The <see cref="InputDialog.Input"/> property will not be updated until the dialog has been closed,
         /// so this property can be used to determine the value entered by the user when this event is raised.
         /// </remarks>
-        public string Input
-        {
-            get { return _input; }
-        }
+        public string Input => _input;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the input box window.
         /// </summary>
         /// <value>
@@ -54,10 +51,6 @@ namespace Ookii.Dialogs
         /// You can use this property if you need to display a modal dialog (for example to alert the user if the current input value
         /// is invalid) and you want the input box to be the parent of that dialog.
         /// </remarks>
-        public System.Windows.Forms.IWin32Window InputBoxWindow
-        {
-            get { return _inputBoxWindow; }
-        }
-	
+        public System.Windows.Forms.IWin32Window InputBoxWindow => _inputBoxWindow;
     }
 }

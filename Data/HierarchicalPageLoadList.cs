@@ -43,10 +43,10 @@
 		protected void AddFilter(string fieldName, object fieldValue)
 		{
 			if (fieldName.IsEmpty())
-				throw new ArgumentNullException("fieldName");
+				throw new ArgumentNullException(nameof(fieldName));
 
 			if (fieldValue == null)
-				throw new ArgumentNullException("fieldValue");
+				throw new ArgumentNullException(nameof(fieldValue));
 
 			AddFilter(new VoidField(fieldName, fieldValue.GetType()), null, () => fieldValue);
 		}
@@ -54,10 +54,10 @@
 		protected void AddFilter(Field field, object fieldValue, Func<object> func)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 
 			if (func == null)
-				throw new ArgumentNullException("func");
+				throw new ArgumentNullException(nameof(func));
 
 			_filters.Add(new Tuple<Field, object, Func<object>>(field, fieldValue, func));
 		}
@@ -65,7 +65,7 @@
 		protected void AddFilter(params Tuple<string, object>[] pairs)
 		{
 			if (pairs == null)
-				throw new ArgumentNullException("pairs");
+				throw new ArgumentNullException(nameof(pairs));
 
 			foreach (var p in pairs)
 			{
@@ -193,7 +193,7 @@
 		protected void FillSource(SerializationItemCollection source)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			foreach (var filter in _filters)
 				source.Add(new SerializationItem(filter.Item1, filter.Item3()));
@@ -211,10 +211,7 @@
 				return Read(new SerializationItemCollection { new SerializationItem(field, value) });
 		}
 
-		protected Database Database
-		{
-			get { return (Database)Storage; }
-		}
+		protected Database Database => (Database)Storage;
 
 		protected TEntity Read(string keyFieldsMorph, string valueFieldsMorph, SerializationItemCollection source)
 		{

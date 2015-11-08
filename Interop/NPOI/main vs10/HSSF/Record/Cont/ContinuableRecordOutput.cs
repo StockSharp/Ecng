@@ -51,14 +51,8 @@ namespace NPOI.HSSF.Record.Cont
         /**
          * @return total number of bytes written so far (including all BIFF headers) 
          */
-        public int TotalSize
-        {
-            get
-            {
-                return _totalPreviousRecordsSize + _ulrOutput.TotalSize;
-            }
-        }
-        /**
+        public int TotalSize => _totalPreviousRecordsSize + _ulrOutput.TotalSize;
+	    /**
          * Terminates the last record (also updates its 'ushort size' field)
          */
         public void Terminate()
@@ -68,15 +62,9 @@ namespace NPOI.HSSF.Record.Cont
         /**
          * @return number of remaining bytes of space in current record
          */
-        public int AvailableSpace
-        {
-            get
-            {
-                return _ulrOutput.AvailableSpace;
-            }
-        }
+        public int AvailableSpace => _ulrOutput.AvailableSpace;
 
-        /**
+	    /**
          * Terminates the current record and starts a new {@link ContinueRecord} (regardless
          * of how much space is still available in the current record).
          */

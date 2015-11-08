@@ -45,42 +45,22 @@ namespace NPOI.SS.Formula.Function
             _returnClassCode = returnClassCode;
             _parameterClassCodes = parameterClassCodes;
         }
-        public int Index
-        {
-            get { return _index; }
-        }
-        public String Name
-        {
-            get { return _name; }
-        }
-        public int MinParams
-        {
-            get { return _minParams; }
-        }
-        public int MaxParams
-        {
-            get{return _maxParams;}
-        }
-        public bool HasFixedArgsLength
-        {
-            get { return _minParams == _maxParams; }
-        }
-        public byte ReturnClassCode
-        {
-            get { return _returnClassCode; }
-        }
-        public byte[] ParameterClassCodes
-        {
-            get { return (byte[])_parameterClassCodes.Clone(); }
-        }
-        public bool HasUnlimitedVarags
-        {
-            get
-            {
-                return FUNCTION_MAX_PARAMS == _maxParams;
-            }
-        }
-        public override String ToString()
+        public int Index => _index;
+	    public String Name => _name;
+
+	    public int MinParams => _minParams;
+
+	    public int MaxParams => _maxParams;
+
+	    public bool HasFixedArgsLength => _minParams == _maxParams;
+
+	    public byte ReturnClassCode => _returnClassCode;
+
+	    public byte[] ParameterClassCodes => (byte[])_parameterClassCodes.Clone();
+
+	    public bool HasUnlimitedVarags => FUNCTION_MAX_PARAMS == _maxParams;
+
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder(64);
             sb.Append(GetType().Name).Append(" [");

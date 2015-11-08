@@ -78,14 +78,9 @@ namespace NPOI.HSSF.UserModel
         /// gets format of the picture.
         /// </summary>
         /// <value>The format.</value>
-        public int Format
-        {
-            get
-            {
-                return blip.RecordId - unchecked((short)0xF018);
-            }
-        }
-        /// <summary>
+        public int Format => blip.RecordId - unchecked((short)0xF018);
+
+	    /// <summary>
         /// Suggests a file extension for this image.
         /// </summary>
         /// <returns>the file extension.</returns>

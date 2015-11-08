@@ -39,7 +39,7 @@
 		public static string Put(this string str, params object[] args)
 		{
 			if (args == null)
-				throw new ArgumentNullException("args");
+				throw new ArgumentNullException(nameof(args));
 
 			return args.Length == 0 ? str : string.Format(str, args);
 		}
@@ -99,7 +99,7 @@
 		public static string PutEx(this string str, params object[] args)
 		{
 			if (args == null)
-				throw new ArgumentNullException("args");
+				throw new ArgumentNullException(nameof(args));
 
 			return args.Length == 0 ? str : Smart.Format(str, args);
 		}
@@ -107,10 +107,10 @@
 		private static Type GetGenericType(this Type targetType, Type genericType)
 		{
 			if (targetType == null)
-				throw new ArgumentNullException("targetType");
+				throw new ArgumentNullException(nameof(targetType));
 
 			if (genericType == null)
-				throw new ArgumentNullException("genericType");
+				throw new ArgumentNullException(nameof(genericType));
 
 			if (!genericType.IsGenericTypeDefinition)
 				throw new ArgumentException("genericType");
@@ -148,7 +148,7 @@
 		public static string[] Split(this string str, string separator, bool removeEmptyEntries = true)
 		{
 			if (str == null)
-				throw new ArgumentNullException("str");
+				throw new ArgumentNullException(nameof(str));
 
 			if (str.Length == 0)
 				return ArrayHelper.Empty<string>();
@@ -164,7 +164,7 @@
 		public static int LastIndexOf(this StringBuilder builder, char value)
 		{
 			if (builder == null)
-				throw new ArgumentNullException("builder");
+				throw new ArgumentNullException(nameof(builder));
 
 			for (var i = builder.Length - 1; i > 0; i--)
 			{
@@ -238,10 +238,10 @@
 		public static string Reduce(this string s, int count, string endings)
 		{
 			if (endings.IsEmpty())
-				throw new ArgumentNullException("endings");
+				throw new ArgumentNullException(nameof(endings));
 
 			if (count < endings.Length || count >= endings.Length)
-				throw new ArgumentOutOfRangeException("count");
+				throw new ArgumentOutOfRangeException(nameof(count));
 
 			return s.Substring(0, count - endings.Length) + endings;
 		}
@@ -385,7 +385,7 @@
 		public static bool ContainsIgnoreCase(this string str1, string str2)
 		{
 			if (str1 == null)
-				throw new ArgumentNullException("str1");
+				throw new ArgumentNullException(nameof(str1));
 
 			return str1.IndexOf(str2, StringComparison.InvariantCultureIgnoreCase) >= 0;
 		}
@@ -396,10 +396,10 @@
 		public static string ReplaceIgnoreCase(this string original, string oldValue, string newValue)
 		{
 			if (oldValue == null)
-				throw new ArgumentNullException("oldValue");
+				throw new ArgumentNullException(nameof(oldValue));
 
 			if (newValue == null)
-				throw new ArgumentNullException("newValue");
+				throw new ArgumentNullException(nameof(newValue));
 
 			var result = original;
 
@@ -446,10 +446,10 @@
 		public static string Times(this string value, int n, string separator)
 		{
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (n < 0)
-				throw new ArgumentException("Must be a positive number.", "n");
+				throw new ArgumentException("Must be a positive number.", nameof(n));
 
 			if (value.Length > 0 && n > 0)
 				return Enumerable.Repeat(value, n).Join(separator);
@@ -518,7 +518,7 @@
 		{
 #if !SILVERLIGHT
 			if (maxLength < 0)
-				throw new ArgumentOutOfRangeException("maxLength", "maxLength", "maxLength is negative.");
+				throw new ArgumentOutOfRangeException(nameof(maxLength), "maxLength", "maxLength is negative.");
 #endif
 
 			var truncatedString = text;
@@ -549,10 +549,10 @@
 		public static string RemoveTrailingZeros(this string s, string separator)
 		{
 			if (s.IsEmpty())
-				throw new ArgumentNullException("s");
+				throw new ArgumentNullException(nameof(s));
 
 			if (separator.IsEmpty())
-				throw new ArgumentNullException("separator");
+				throw new ArgumentNullException(nameof(separator));
 
 			s = s.TrimStart('0').TrimEnd('0');
 

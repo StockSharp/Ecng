@@ -96,12 +96,9 @@ namespace NPOI.HSSF.Record
         //    return field_1_recalcids;
         //}
 
-        public bool IsNeeded
-        {
-            get { return  true; }
-        }
+        public bool IsNeeded => true;
 
-        public override String ToString()
+	    public override String ToString()
         {
             StringBuilder buffer = new StringBuilder();
             buffer.Append("[RECALCID]\n");
@@ -128,17 +125,8 @@ namespace NPOI.HSSF.Record
                 return _engineId;
             }
         }
-        protected override int DataSize
-        {
-            get
-            {
-                return 8;
-            }
-        }
+        protected override int DataSize => 8;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
     }
 }

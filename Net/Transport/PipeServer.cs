@@ -14,10 +14,10 @@ namespace Ecng.Net.Transport
 		public PipeServer(string pipeName, string userName, Action<Stream> handler, Action<Exception> error)
 		{
 			if (handler == null)
-				throw new ArgumentNullException("handler");
+				throw new ArgumentNullException(nameof(handler));
 
 			if (error == null)
-				throw new ArgumentNullException("error");
+				throw new ArgumentNullException(nameof(error));
 
 			PipeSecurity security;
 

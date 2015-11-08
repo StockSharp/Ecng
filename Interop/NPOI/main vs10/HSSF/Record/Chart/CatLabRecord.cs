@@ -59,23 +59,11 @@ namespace NPOI.HSSF.Record.Chart
         }
 
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 2 + 2 + 2 + 2 + 2 + (unused == null ? 0 : 2);
-            }
-        }
+        protected override int DataSize => 2 + 2 + 2 + 2 + 2 + (unused == null ? 0 : 2);
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+	    public override short Sid => sid;
 
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override void Serialize(ILittleEndianOutput out1)
         {
 
             out1.WriteShort(rt);

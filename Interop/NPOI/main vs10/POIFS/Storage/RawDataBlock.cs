@@ -97,22 +97,17 @@ namespace NPOI.POIFS.Storage
         /// </summary>
         /// <value><c>true</c> if the EoF was hit during this block, or; otherwise, <c>false</c>if not. If you have a dodgy short last block, then
         /// it's possible to both have data, and also hit EoF...</value>
-        public bool EOF
-        {
-            get { return _eof; }
-        }
-        /// <summary>
+        public bool EOF => _eof;
+
+	    /// <summary>
         /// Did we actually find any data to read? It's possible,
         /// in the event of a short last block, to both have hit
         /// the EoF, but also to have data
         /// </summary>
         /// <value><c>true</c> if this instance has data; otherwise, <c>false</c>.</value>
-        public bool HasData
-        {
-            get { return _hasData; }
-        }
+        public bool HasData => _hasData;
 
-        /// <summary>
+	    /// <summary>
         /// Get the data from the block
         /// </summary>
         /// <value>the block's data as a byte array</value>
@@ -135,9 +130,6 @@ namespace NPOI.POIFS.Storage
             return "RawDataBlock of size " + _data.Length;
         }
 
-        public int BigBlockSize
-        {
-            get { return _data.Length; }
-        }
+        public int BigBlockSize => _data.Length;
     }
 }

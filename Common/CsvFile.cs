@@ -121,7 +121,7 @@ namespace Ecng.Common
 		{
 			// Verify required argument
 			if (columns == null)
-				throw new ArgumentNullException("columns");
+				throw new ArgumentNullException(nameof(columns));
 
 		ReadNextLine:
 			// Read next line from the file
@@ -292,7 +292,7 @@ namespace Ecng.Common
 		{
 			// Verify required argument
 			if (columns == null)
-				throw new ArgumentNullException("columns");
+				throw new ArgumentNullException(nameof(columns));
 
 			var i = 0;
 

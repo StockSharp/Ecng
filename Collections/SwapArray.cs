@@ -42,7 +42,7 @@ namespace Ecng.Collections
 		public SwapArray(long size)
 		{
 			if (size < 0)
-				throw new ArgumentOutOfRangeException("size", "Size has incorrect value '{0}'.".Put(size));
+				throw new ArgumentOutOfRangeException(nameof(size), "Size has incorrect value '{0}'.".Put(size));
 
 			//_swapFile = new FileStream(@"swap\__swap" + _number++, FileMode.Create);
 			//_writer = new BinaryWriter(_swapFile);
@@ -84,10 +84,7 @@ namespace Ecng.Collections
 
 		private readonly long _count;
 
-		public override int Count
-		{
-			get { return (int)_count; }
-		}
+		public override int Count => (int)_count;
 
 		public override IEnumerator<T> GetEnumerator()
 		{
@@ -156,7 +153,7 @@ namespace Ecng.Collections
 		private void Seek(long index)
 		{
 			if (index < 0 || index >= _count)
-				throw new ArgumentOutOfRangeException("index", "Index has incorrect value '{0}'.".Put(index));
+				throw new ArgumentOutOfRangeException(nameof(index), "Index has incorrect value '{0}'.".Put(index));
 
 			var newSeekPos = index * _valueSize + _offset;
 
@@ -165,12 +162,12 @@ namespace Ecng.Collections
 				var offset = newSeekPos - _swapFile.Position;
 
 				if ((offset + _swapFile.Position) < 0 || (offset + _swapFile.Position) > _swapFile.Length)
-					throw new ArgumentOutOfRangeException("index", "Offset is incorrect for position '{0}' and index '{1}'.".Put(_swapFile.Position, index));
+					throw new ArgumentOutOfRangeException(nameof(index), "Offset is incorrect for position '{0}' and index '{1}'.".Put(_swapFile.Position, index));
 
 				_swapFile.Seek(offset, SeekOrigin.Current);
 
 				if (_swapFile.Position < _offset || _swapFile.Position >= (_offset + _count * _valueSize))
-					throw new ArgumentOutOfRangeException("index");
+					throw new ArgumentOutOfRangeException(nameof(index));
 			}
 		}
 	}

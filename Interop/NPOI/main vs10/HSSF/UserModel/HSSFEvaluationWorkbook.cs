@@ -232,38 +232,13 @@ using NPOI.Util;
                 _nameRecord = nameRecord;
                 _index = index;
             }
-            public Ptg[] NameDefinition
-            {
-                get{
-                    return _nameRecord.NameDefinition;
-                }
-            }
-            public String NameText
-            {
-                get{
-                    return _nameRecord.NameText;
-                }
-            }
-            public bool HasFormula
-            {
-                get{
-                    return _nameRecord.HasFormula;
-                }
-            }
-            public bool IsFunctionName
-            {
-                get{
-                    return _nameRecord.IsFunctionName;
-                }
-            }
-            public bool IsRange
-            {
-                get
-                {
-                    return _nameRecord.HasFormula; // TODO - is this right?
-                }
-            }
-            public NamePtg CreatePtg()
+            public Ptg[] NameDefinition => _nameRecord.NameDefinition;
+	        public String NameText => _nameRecord.NameText;
+	        public bool HasFormula => _nameRecord.HasFormula;
+	        public bool IsFunctionName => _nameRecord.IsFunctionName;
+	        public bool IsRange => _nameRecord.HasFormula;
+
+	        public NamePtg CreatePtg()
             {
                 return new NamePtg(_index);
             }

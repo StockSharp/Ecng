@@ -50,75 +50,47 @@ namespace NDde.Advanced.Monitor
         /// <summary>
         /// See the MSDN documentation for information about this member.
         /// </summary>
-        public int uType
-        {
-            get { return _DdemlObject.uType; }
-        }
+        public int uType => _DdemlObject.uType;
 
-        /// <summary>
+	    /// <summary>
         /// See the MSDN documentation for information about this member.
         /// </summary>
-        public int uFmt
-        {
-            get { return _DdemlObject.uFmt; }
-        }
+        public int uFmt => _DdemlObject.uFmt;
 
-        /// <summary>
+	    /// <summary>
         /// See the MSDN documentation for information about this member.
         /// </summary>
-        public IntPtr hConv
-        {
-            get { return _DdemlObject.hConv; }
-        }
+        public IntPtr hConv => _DdemlObject.hConv;
 
-        /// <summary>
+	    /// <summary>
         /// See the MSDN documentation for information about this member.
         /// </summary>
-        public IntPtr hsz1
-        {
-            get { return _DdemlObject.hsz1; }
-        }
+        public IntPtr hsz1 => _DdemlObject.hsz1;
 
-        /// <summary>
+	    /// <summary>
         /// See the MSDN documentation for information about this member.
         /// </summary>
-        public IntPtr hsz2
-        {
-            get { return _DdemlObject.hsz2; }
-        }
+        public IntPtr hsz2 => _DdemlObject.hsz2;
 
-        /// <summary>
+	    /// <summary>
         /// See the MSDN documentation for information about this member.
         /// </summary>
-        public IntPtr hData
-        {
-            get { return _DdemlObject.hData; }
-        }
+        public IntPtr hData => _DdemlObject.hData;
 
-        /// <summary>
+	    /// <summary>
         /// See the MSDN documentation for information about this member.
         /// </summary>
-        public IntPtr dwData1
-        {
-            get { return _DdemlObject.dwData1; }
-        }
+        public IntPtr dwData1 => _DdemlObject.dwData1;
 
-        /// <summary>
+	    /// <summary>
         /// See the MSDN documentation for information about this member.
         /// </summary>
-        public IntPtr dwData2
-        {
-            get { return _DdemlObject.dwData2; }
-        }
+        public IntPtr dwData2 => _DdemlObject.dwData2;
 
-        /// <summary>
+	    /// <summary>
         /// This gets the return value of the DDEML callback function.  See the MSDN documentation for information about this member.
         /// </summary>
-        public IntPtr dwRet
-        {
-            get { return _DdemlObject.dwRet; }
-        }
-
+        public IntPtr dwRet => _DdemlObject.dwRet;
     } // class
 
 } // namespace

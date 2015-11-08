@@ -53,7 +53,7 @@ namespace Ecng.ComponentModel
 		/// Gets the length.
 		/// </summary>
 		/// <value>The length.</value>
-		public Range<int> Length { get; private set; }
+		public Range<int> Length { get; }
 
 		#endregion
 
@@ -113,10 +113,10 @@ namespace Ecng.ComponentModel
 		public override void Validate(string value)
 		{
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (!Length.Contains(value.Length))
-				throw new ArgumentOutOfRangeException("value", "Value is {0}. Length must be between {1}.".Put(value, Length));
+				throw new ArgumentOutOfRangeException(nameof(value), "Value is {0}. Length must be between {1}.".Put(value, Length));
 
 			if (_regex != null && !_regex.IsMatch(value))
 				throw new ArgumentException("value");

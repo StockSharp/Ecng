@@ -45,15 +45,9 @@ namespace NPOI.SS.UserModel
          *
          * @return index of this font family
          */
-        public int Value
-        {
-            get
-            {
-                return family;
-            }
-        }
+        public int Value => family;
 
-        public static FontFamily ValueOf(int family)
+	    public static FontFamily ValueOf(int family)
         {
             switch(family)
             {

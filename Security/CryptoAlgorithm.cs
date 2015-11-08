@@ -57,7 +57,7 @@ namespace Ecng.Security
 		public CryptoAlgorithm(SymmetricCryptographer symmetric)
 		{
 			if (symmetric == null)
-				throw new ArgumentNullException("symmetric");
+				throw new ArgumentNullException(nameof(symmetric));
 
 			_type = AlgorithmTypes.Symmetric;
 			_symmetric = symmetric;
@@ -66,7 +66,7 @@ namespace Ecng.Security
 		public CryptoAlgorithm(AsymmetricCryptographer asymmetric)
 		{
 			if (asymmetric == null)
-				throw new ArgumentNullException("asymmetric");
+				throw new ArgumentNullException(nameof(asymmetric));
 
 			_type = AlgorithmTypes.Asymmetric;
 			_asymmetric = asymmetric;
@@ -75,7 +75,7 @@ namespace Ecng.Security
 		public CryptoAlgorithm(DpapiCryptographer dpapi)
 		{
 			if (dpapi == null)
-				throw new ArgumentNullException("dpapi");
+				throw new ArgumentNullException(nameof(dpapi));
 
 			_type = AlgorithmTypes.Dpapi;
 			_dpapi = dpapi;
@@ -84,7 +84,7 @@ namespace Ecng.Security
 		public CryptoAlgorithm(HashCryptographer hash)
 		{
 			if (hash == null)
-				throw new ArgumentNullException("hash");
+				throw new ArgumentNullException(nameof(hash));
 
 			_type = AlgorithmTypes.Hash;
 			_hash = hash;
@@ -108,7 +108,7 @@ namespace Ecng.Security
 		public static AlgorithmTypes GetAlgType(string name)
 		{
 			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			return GetAlgType(_types[name]);
 		}
@@ -116,7 +116,7 @@ namespace Ecng.Security
 		public static AlgorithmTypes GetAlgType(Type type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if (type == typeof(DpapiCryptographer))
 				return AlgorithmTypes.Dpapi;
@@ -127,7 +127,7 @@ namespace Ecng.Security
 			else if (typeof(HashAlgorithm).IsAssignableFrom(type))
 				return AlgorithmTypes.Hash;
 			else
-				throw new ArgumentException("Type {0} doesnt't supported.".Put(type), "type");
+				throw new ArgumentException("Type {0} doesnt't supported.".Put(type), nameof(type));
 		}
 
 		#endregion
@@ -203,7 +203,7 @@ namespace Ecng.Security
 					name = DefaultHashAlgoName;
 					break;
 				default:
-					throw new ArgumentOutOfRangeException("type");
+					throw new ArgumentOutOfRangeException(nameof(type));
 			}
 
 			return GetAlgo(name);
@@ -224,7 +224,7 @@ namespace Ecng.Security
 		public static CryptoAlgorithm Create(Type type, params ProtectedKey[] keys)
 		{
 			if (keys == null)
-				throw new ArgumentNullException("keys");
+				throw new ArgumentNullException(nameof(keys));
 
 			switch (GetAlgType(type))
 			{

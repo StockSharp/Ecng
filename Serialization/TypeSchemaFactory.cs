@@ -219,8 +219,8 @@
 
 		#endregion
 
-		public SearchBy SearchBy { get; private set; }
-		public VisibleScopes Scope { get; private set; }
+		public SearchBy SearchBy { get; }
+		public VisibleScopes Scope { get; }
 
 		#region SchemaFactoryAttribute Members
 

@@ -66,14 +66,9 @@ namespace NPOI.HSSF.UserModel
         /// </summary>
         /// <value>Unique index number of the Underlying record this Font represents (probably you don't care
         /// Unless you're comparing which one is which)</value>
-        public short Index
-        {
-            get { return index; }
-        }
+        public short Index => index;
 
-
-
-        /// <summary>
+	    /// <summary>
         /// Get or sets the font height in Unit's of 1/20th of a point.  Maybe you might want to
         /// use the GetFontHeightInPoints which matches to the familiar 10, 12, 14 etc..
         /// </summary>

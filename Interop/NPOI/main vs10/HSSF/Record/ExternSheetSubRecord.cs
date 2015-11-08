@@ -139,18 +139,12 @@ namespace NPOI.HSSF.Record
 
         /** returns the record size
          */
-        public override int RecordSize
-        {
-            get { return 6; }
-        }
+        public override int RecordSize => 6;
 
-        /**
+	    /**
          * return the non static version of the id for this record.
          */
-        public override short Sid
-        {
-            get { return sid; }
-        }
+        public override short Sid => sid;
     }
 
 }

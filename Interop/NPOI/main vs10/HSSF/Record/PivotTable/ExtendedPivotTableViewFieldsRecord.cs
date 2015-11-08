@@ -105,26 +105,12 @@ namespace NPOI.HSSF.Record.PivotTable
         }
 
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 4 + 1 + 1 + 2 + 2 + 2 + 4 + 4 +
-                            (subName == null ? 0 : (2 * subName.Length)); // in unicode
-            }
-        }
+        protected override int DataSize => 4 + 1 + 1 + 2 + 2 + 2 + 4 + 4 +
+                                           (subName == null ? 0 : (2 * subName.Length));
 
+	    public override short Sid => sid;
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
-
-
-        public override string ToString()
+	    public override string ToString()
         {
             StringBuilder buffer = new StringBuilder();
 

@@ -68,12 +68,9 @@ namespace NPOI.POIFS.FileSystem
         }
         #region DirectoryEntry 成员
 
-        public IEnumerator<Entry> Entries
-        {
-            get { return GetEntries(); }
-        }
+        public IEnumerator<Entry> Entries => GetEntries();
 
-        public List<String> EntryNames
+	    public List<String> EntryNames
         {
             get
             {
@@ -89,11 +86,9 @@ namespace NPOI.POIFS.FileSystem
             }
         }
 
-        public bool IsEmpty
-        {
-            get { return EntryCount == 0; }
-        }
-        public bool HasEntry(String name)
+        public bool IsEmpty => EntryCount == 0;
+
+	    public bool HasEntry(String name)
         {
             if (excludes.Contains(name))
             {
@@ -172,27 +167,15 @@ namespace NPOI.POIFS.FileSystem
 
         #region Entry 成员
 
-        public string Name
-        {
-            get { return directory.Name; }
-        }
+        public string Name => directory.Name;
 
-        public bool IsDirectoryEntry
-        {
-            get { return true; }
-        }
+	    public bool IsDirectoryEntry => true;
 
-        public bool IsDocumentEntry
-        {
-            get { return false; }
-        }
+	    public bool IsDocumentEntry => false;
 
-        public DirectoryEntry Parent
-        {
-            get { return directory.Parent; }
-        }
+	    public DirectoryEntry Parent => directory.Parent;
 
-        public bool Delete()
+	    public bool Delete()
         {
             return directory.Delete();
         }
@@ -267,12 +250,9 @@ namespace NPOI.POIFS.FileSystem
 
             #region IEnumerator<Entry> 成员
 
-            public Entry Current
-            {
-                get { return next; }
-            }
+            public Entry Current => next;
 
-            #endregion
+	        #endregion
 
             #region IDisposable 成员
 
@@ -284,12 +264,9 @@ namespace NPOI.POIFS.FileSystem
 
             #region IEnumerator 成员
 
-            object System.Collections.IEnumerator.Current
-            {
-                get { return next; }
-            }
+            object System.Collections.IEnumerator.Current => next;
 
-            public bool MoveNext()
+	        public bool MoveNext()
             {
                 next = null;
                 Entry e;

@@ -44,12 +44,9 @@ namespace NPOI.HPSF
             _value = value;
         }
 
-        public Object Value
-        {
-            get { return _value; }
-        }
+        public Object Value => _value;
 
-        public int Read(byte[] data, int startOffset)
+	    public int Read(byte[] data, int startOffset)
         {
             int offset = startOffset;
 

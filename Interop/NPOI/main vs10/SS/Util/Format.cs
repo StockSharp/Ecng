@@ -179,15 +179,9 @@ namespace NPOI.SS.Util
                 throw new ArgumentException("invalid pattern");
             this.pattern = pattern;
         }
-        public string Pattern
-        {
-            get
-            {
-                return pattern;
-            }
-        }
+        public string Pattern => pattern;
 
-        private static readonly Regex RegexFraction = new Regex("#+/#+");
+	    private static readonly Regex RegexFraction = new Regex("#+/#+");
         public override string Format(Object obj)
         {
             return Format(obj, System.Globalization.CultureInfo.CurrentCulture);

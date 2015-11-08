@@ -376,22 +376,13 @@ namespace Ecng.Forum.BusinessEntities
 		#region IWebUser Members
 
 		[Ignore]
-		object IWebUser.Key
-		{
-			get { return Id; }
-		}
+		object IWebUser.Key => Id;
 
 		[Ignore]
-		string IWebUser.Name
-		{
-			get { return Email; }
-		}
+		string IWebUser.Name => Email;
 
 		[Ignore]
-		string IWebUser.Description
-		{
-			get { return string.Empty; }
-		}
+		string IWebUser.Description => string.Empty;
 
 		[Ignore]
 		string IWebUser.PasswordQuestion
@@ -414,10 +405,7 @@ namespace Ecng.Forum.BusinessEntities
 			set { IsLockedOut = value; }
 		}
 
-		IWebRoleCollection IWebUser.Roles
-		{
-			get { return Roles; }
-		}
+		IWebRoleCollection IWebUser.Roles => Roles;
 
 		#endregion
 	}

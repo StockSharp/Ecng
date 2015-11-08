@@ -56,79 +56,21 @@ namespace NPOI.HSSF.UserModel
                 && _cell.Sheet == cellb.Sheet;
         }
 
-        public NPOI.SS.UserModel.ICell HSSFCell
-        {
-            get
-            {
-                return _cell;
-            }
-        }
-        public bool BooleanCellValue
-        {
-            get
-            {
-                return _cell.BooleanCellValue;
-            }
-        }
-        public NPOI.SS.UserModel.CellType CellType
-        {
-            get
-            {
-                return _cell.CellType;
-            }
-        }
-        public int ColumnIndex
-        {
-            get
-            {
-                return _cell.ColumnIndex;
-            }
-        }
-        public int ErrorCellValue
-        {
-            get
-            {
-                return _cell.ErrorCellValue;
-            }
-        }
-        public double NumericCellValue
-        {
-            get
-            {
-                return _cell.NumericCellValue;
-            }
-        }
-        public int RowIndex
-        {
-            get
-            {
-                return _cell.RowIndex;
-            }
-        }
-        public IEvaluationSheet Sheet
-        {
-            get
-            {
-                return _evalSheet;
-            }
-        }
-        public String StringCellValue
-        {
-            get
-            {
-                return _cell.RichStringCellValue.String;
-            }
-        }
+        public NPOI.SS.UserModel.ICell HSSFCell => _cell;
 
+	    public bool BooleanCellValue => _cell.BooleanCellValue;
 
-        public object IdentityKey
-        {
-            get { return _cell; }
-        }
+	    public NPOI.SS.UserModel.CellType CellType => _cell.CellType;
 
-        public CellType CachedFormulaResultType
-        {
-            get { return _cell.CachedFormulaResultType; }
-        }
+	    public int ColumnIndex => _cell.ColumnIndex;
+	    public int ErrorCellValue => _cell.ErrorCellValue;
+	    public double NumericCellValue => _cell.NumericCellValue;
+	    public int RowIndex => _cell.RowIndex;
+	    public IEvaluationSheet Sheet => _evalSheet;
+	    public String StringCellValue => _cell.RichStringCellValue.String;
+
+	    public object IdentityKey => _cell;
+
+	    public CellType CachedFormulaResultType => _cell.CachedFormulaResultType;
     }
 }

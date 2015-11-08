@@ -114,14 +114,8 @@ namespace NPOI.SS.Util
             }
         }
 
-        public int Size
-        {
-            get
-            {
-                return GetEncodedSize(_list.Count);
-            }
-        }
-        /**
+        public int Size => GetEncodedSize(_list.Count);
+	    /**
          * @return the total size of for the specified number of ranges,
          *  including the initial 2 byte range count
          */

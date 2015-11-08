@@ -35,18 +35,12 @@ namespace Microsoft.Practices.Unity.Utility
         /// <summary>
         /// The first value of the pair.
         /// </summary>
-        public TFirst First
-        {
-            get { return first; }
-        }
+        public TFirst First => first;
 
-        /// <summary>
+	    /// <summary>
         /// The second value of the pair.
         /// </summary>
-        public TSecond Second
-        {
-            get { return second; }
-        }
+        public TSecond Second => second;
     }
 
     /// <summary>

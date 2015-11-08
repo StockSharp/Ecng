@@ -24,7 +24,7 @@ namespace Ecng.ComponentModel
 		public IconAttribute(string icon, bool isFullPath = false)
 		{
 			if (icon.IsEmpty())
-				throw new ArgumentNullException("icon");
+				throw new ArgumentNullException(nameof(icon));
 
 			Icon = icon;
 			IsFullPath = isFullPath;

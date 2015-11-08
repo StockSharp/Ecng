@@ -124,15 +124,9 @@ namespace NPOI.HSSF.Record.Aggregates
         }
 
 
-        public List<CellRangeAddress> MergedRegions
-        {
-            get
-            {
-                return _mergedRegions;
-            }
-        }
+        public List<CellRangeAddress> MergedRegions => _mergedRegions;
 
-        public CellRangeAddress Get(int index)
+	    public CellRangeAddress Get(int index)
         {
             CheckIndex(index);
             return (CellRangeAddress)_mergedRegions[index];
@@ -158,12 +152,6 @@ namespace NPOI.HSSF.Record.Aggregates
             _mergedRegions.Add(new CellRangeAddress(rowFrom, rowTo, colFrom, colTo));
         }
 
-        public int NumberOfMergedRegions
-        {
-            get
-            {
-                return _mergedRegions.Count;
-            }
-        }
+        public int NumberOfMergedRegions => _mergedRegions.Count;
     }
 }

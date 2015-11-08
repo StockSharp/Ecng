@@ -164,23 +164,11 @@ namespace NPOI.XSSF.UserModel
             this.frame = frame;
         }
 
-        public IChartDataFactory ChartDataFactory
-        {
-            get
-            {
-                return XSSFChartDataFactory.GetInstance();
-            }
-        }
+        public IChartDataFactory ChartDataFactory => XSSFChartDataFactory.GetInstance();
 
-        public IChartAxisFactory ChartAxisFactory
-        {
-            get
-            {
-                return this;
-            }
-        }
+	    public IChartAxisFactory ChartAxisFactory => this;
 
-        public void Plot(IChartData data, params IChartAxis[] axis)
+	    public void Plot(IChartData data, params IChartAxis[] axis)
         {
             data.FillChart(this, axis);
         }

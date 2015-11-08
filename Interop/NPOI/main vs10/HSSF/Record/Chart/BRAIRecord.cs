@@ -124,23 +124,11 @@ namespace NPOI.HSSF.Record.Chart
         /**
          * Size of record (exluding 4 byte header)
          */
-        protected override int DataSize
-        {
-            get
-            {
-                return 1 + 1 + 2 + 2 + field_5_formulaOfLink.EncodedSize;
-            }
-        }
+        protected override int DataSize => 1 + 1 + 2 + 2 + field_5_formulaOfLink.EncodedSize;
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
+	    public override short Sid => sid;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             BRAIRecord rec = new BRAIRecord();
 

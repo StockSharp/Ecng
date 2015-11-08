@@ -16,12 +16,12 @@ namespace Ecng.Collections
 		protected KeyedCollection(IDictionary<TKey, TValue> innerDictionary)
 		{
 			if (innerDictionary == null)
-				throw new ArgumentNullException("innerDictionary");
+				throw new ArgumentNullException(nameof(innerDictionary));
 
 			InnerDictionary = innerDictionary;
 		}
 
-		protected IDictionary<TKey, TValue> InnerDictionary { get; private set; }
+		protected IDictionary<TKey, TValue> InnerDictionary { get; }
 
 		#region DictionaryBase<TKey, TValue> Members
 
@@ -64,10 +64,7 @@ namespace Ecng.Collections
 			return InnerDictionary.TryGetValue(key, out value);
 		}
 
-		public override int Count
-		{
-			get { return InnerDictionary.Count; }
-		}
+		public override int Count => InnerDictionary.Count;
 
 		public override IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
 		{

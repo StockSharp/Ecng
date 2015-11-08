@@ -89,12 +89,9 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// The strategy that's first in the chain; returns null if there are no
         /// strategies in the chain.
         /// </returns>
-        public IStrategyChain Strategies
-        {
-            get { return chain; }
-        }
+        public IStrategyChain Strategies => chain;
 
-        /// <summary>
+	    /// <summary>
         /// Get the current build key for the current build operation.
         /// </summary>
         public NamedTypeBuildKey BuildKey { get; set; }
@@ -113,34 +110,25 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// <value>
         /// The <see cref="ILifetimeContainer"/> associated with the build.
         /// </value>
-        public ILifetimeContainer Lifetime
-        {
-            get { return lifetime; }
-        }
+        public ILifetimeContainer Lifetime => lifetime;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the original build key for the build operation.
         /// </summary>
         /// <value>
         /// The original build key for the build operation.
         /// </value>
-        public NamedTypeBuildKey OriginalBuildKey
-        {
-            get { return originalBuildKey; }
-        }
+        public NamedTypeBuildKey OriginalBuildKey => originalBuildKey;
 
-        /// <summary>
+	    /// <summary>
         /// The set of policies that were passed into this context.
         /// </summary>
         /// <remarks>This returns the policies passed into the context.
         /// Policies added here will remain after buildup completes.</remarks>
         /// <value>The persistent policies for the current context.</value>
-        public IPolicyList PersistentPolicies
-        {
-            get { return persistentPolicies; }
-        }
+        public IPolicyList PersistentPolicies => persistentPolicies;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the policies for the current context. 
         /// </summary>
         /// <remarks>
@@ -150,22 +138,15 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// <value>
         /// The policies for the current context.
         /// </value>
-        public IPolicyList Policies
-        {
-            get { return policies; }
-        }
+        public IPolicyList Policies => policies;
 
-
-        /// <summary>
+	    /// <summary>
         /// Gets the collection of <see cref="IRequiresRecovery"/> objects
         /// that need to execute in event of an exception.
         /// </summary>
-        public IRecoveryStack RecoveryStack
-        {
-            get { return recoveryStack; }
-        }
+        public IRecoveryStack RecoveryStack => recoveryStack;
 
-        /// <summary>
+	    /// <summary>
         /// Flag indicating if the build operation should continue.
         /// </summary>
         /// <value>true means that building should not call any more

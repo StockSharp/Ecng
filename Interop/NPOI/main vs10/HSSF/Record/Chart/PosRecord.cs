@@ -83,12 +83,9 @@ namespace NPOI.HSSF.Record.Chart
             in1.ReadShort();    //unused4
         }
 
-        protected override int DataSize
-        {
-            get { return 20; }
-        }
+        protected override int DataSize => 20;
 
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             out1.WriteShort(mdTopLt);
             out1.WriteShort(mdBotRt);
@@ -102,11 +99,9 @@ namespace NPOI.HSSF.Record.Chart
             out1.WriteShort(0);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public override object Clone()
+        public override short Sid => sid;
+
+	    public override object Clone()
         {
             PosRecord r = new PosRecord();
             r.MdBotRt = this.MdBotRt;

@@ -80,11 +80,7 @@
 		/// <summary>
 		/// Gets the IEqualityComparer&lt;T&gt; object that is used to determine equality for the values in the set.
 		/// </summary>
-		public IEqualityComparer<T> Comparer
-		{
-			get { return _hashSet.Comparer; }
-		}
-
+		public IEqualityComparer<T> Comparer => _hashSet.Comparer;
 
 		/// <summary>
 		/// Gets the number of elements contained in the <see cref="ObservableHashSet&lt;T&gt;"/>.
@@ -92,20 +88,14 @@
 		/// <returns>
 		/// The number of elements contained in the <see cref="ObservableHashSet&lt;T&gt;"/>.
 		///   </returns>
-		public int Count
-		{
-			get { return _hashSet.Count; }
-		}
+		public int Count => _hashSet.Count;
 
 		/// <summary>
 		/// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.
 		/// </summary>
 		/// <returns>true if the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only; otherwise, false.
 		///   </returns>
-		bool ICollection<T>.IsReadOnly
-		{
-			get { return ((ICollection<T>)_hashSet).IsReadOnly; }
-		}
+		bool ICollection<T>.IsReadOnly => ((ICollection<T>)_hashSet).IsReadOnly;
 
 		#endregion
 
@@ -241,7 +231,7 @@
 		public void ExceptWith(IEnumerable<T> other)
 		{
 			if(other == null)
-				throw new ArgumentNullException("other");
+				throw new ArgumentNullException(nameof(other));
 
 			CheckReentrancy();
 
@@ -273,7 +263,7 @@
 		public void IntersectWith(IEnumerable<T> other)
 		{
 			if (other == null)
-				throw new ArgumentNullException("other");
+				throw new ArgumentNullException(nameof(other));
 
 			CheckReentrancy();
 
@@ -376,7 +366,7 @@
 		public void SymmetricExceptWith(IEnumerable<T> other)
 		{
 			if (other == null)
-				throw new ArgumentNullException("other");
+				throw new ArgumentNullException(nameof(other));
 
 			CheckReentrancy();
 
@@ -420,7 +410,7 @@
 		public void UnionWith(IEnumerable<T> other)
 		{
 			if (other == null)
-				throw new ArgumentNullException("other");
+				throw new ArgumentNullException(nameof(other));
 
 			CheckReentrancy();
 
@@ -483,13 +473,7 @@
 				_busyCount++;
 			}
 
-			public bool Busy
-			{
-				get
-				{
-					return (_busyCount > 0);
-				}
-			}
+			public bool Busy => (_busyCount > 0);
 		}
 
 		#endregion

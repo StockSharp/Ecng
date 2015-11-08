@@ -100,14 +100,9 @@ namespace NPOI.SS.Formula
             return _collaboratingWorkbookEnvironment.GetWorkbookEvaluator(workbookName);
         }
 
-        internal IEvaluationWorkbook Workbook
-        {
-            get
-            {
-                return _workbook;
-            }
-        }
-        internal IEvaluationSheet GetSheet(int sheetIndex)
+        internal IEvaluationWorkbook Workbook => _workbook;
+
+	    internal IEvaluationSheet GetSheet(int sheetIndex)
         {
             return _workbook.GetSheet(sheetIndex);
         }

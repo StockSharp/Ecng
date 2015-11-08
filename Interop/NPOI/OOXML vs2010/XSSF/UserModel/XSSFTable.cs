@@ -239,16 +239,9 @@ namespace NPOI.XSSF.UserModel
         /**
          * @return  the number of mapped table columns (see Open Office XML Part 4: chapter 3.5.1.4)
          */
-        public long NumberOfMappedColumns
-        {
-            get
-            {
-                return ctTable.tableColumns.count;
-            }
-        }
+        public long NumberOfMappedColumns => ctTable.tableColumns.count;
 
-
-        /**
+	    /**
          * @return The reference for the cell in the top-left part of the table
          * (see Open Office XML Part 4: chapter 3.5.1.2, attribute ref) 
          *

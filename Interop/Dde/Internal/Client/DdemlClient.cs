@@ -67,23 +67,23 @@ namespace NDde.Foundation.Client
         {
             if (service == null)
             {
-                throw new ArgumentNullException("service");
+                throw new ArgumentNullException(nameof(service));
             }
             if (service.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "service");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(service));
             }
             if (topic == null)
             {
-                throw new ArgumentNullException("topic");
+                throw new ArgumentNullException(nameof(topic));
             }
             if (topic.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "topic");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(topic));
             }
             if (context == null)
             {
-                throw new ArgumentNullException("context");
+                throw new ArgumentNullException(nameof(context));
             }
 
             _Service = service;
@@ -170,37 +170,19 @@ namespace NDde.Foundation.Client
             }
         }
 
-        public virtual string Service
-        {
-            get { return _Service; }
-        }
+        public virtual string Service => _Service;
 
-        public virtual string Topic
-        {
-            get { return _Topic; }
-        }
+	    public virtual string Topic => _Topic;
 
-        public virtual IntPtr Handle
-        {
-            get { return _ConversationHandle; }
-        }
+	    public virtual IntPtr Handle => _ConversationHandle;
 
-        public virtual bool IsPaused
-        {
-            get { return _Paused; }
-        }
+	    public virtual bool IsPaused => _Paused;
 
-        public virtual bool IsConnected
-        {
-            get { return _ConversationHandle != IntPtr.Zero; }
-        }
+	    public virtual bool IsConnected => _ConversationHandle != IntPtr.Zero;
 
-        internal bool IsDisposed
-        {
-            get { return _Disposed; }
-        }
+	    internal bool IsDisposed => _Disposed;
 
-        public virtual void Connect()
+	    public virtual void Connect()
         {
             int error = TryConnect();
 
@@ -389,7 +371,7 @@ namespace NDde.Foundation.Client
             }
             if (!(asyncResult is AsyncResultBase))
             {
-                throw new ArgumentException(Resources.AsyncResultParameterInvalidMessage, "asyncResult");
+                throw new ArgumentException(Resources.AsyncResultParameterInvalidMessage, nameof(asyncResult));
             }
 
             AsyncResultBase arb = (AsyncResultBase)asyncResult;
@@ -420,15 +402,15 @@ namespace NDde.Foundation.Client
             }
             if (error == -3 && command == null)
             {
-                throw new ArgumentNullException("command");
+                throw new ArgumentNullException(nameof(command));
             }
             if (error == -3 && command.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "command");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(command));
             }
             if (error == -3 && timeout <= 0)
             {
-                throw new ArgumentException(Resources.TimeoutParameterInvalidMessage, "timeout");
+                throw new ArgumentException(Resources.TimeoutParameterInvalidMessage, nameof(timeout));
             }
             if (error > Ddeml.DMLERR_NO_ERROR)
             {
@@ -497,11 +479,11 @@ namespace NDde.Foundation.Client
             }
             if (command == null)
             {
-                throw new ArgumentNullException("command");
+                throw new ArgumentNullException(nameof(command));
             }
             if (command.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "command");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(command));
             }
 
             // Convert the command to a byte array with a null terminating character.
@@ -549,7 +531,7 @@ namespace NDde.Foundation.Client
             {
                 string message = Resources.AsyncResultParameterInvalidMessage;
                 message = message.Replace("${method}", System.Reflection.MethodInfo.GetCurrentMethod().Name);
-                throw new ArgumentException(message, "asyncResult");
+                throw new ArgumentException(message, nameof(asyncResult));
             }
 
             ExecuteAsyncResult ar = (ExecuteAsyncResult)asyncResult;
@@ -578,19 +560,19 @@ namespace NDde.Foundation.Client
             }
             if (error == -3 && data == null)
             {
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException(nameof(data));
             }
             if (error == -3 && item == null)
             {
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             }
             if (error == -3 && item.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "item");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(item));
             }
             if (error == -3 && timeout <= 0)
             {
-                throw new ArgumentException(Resources.TimeoutParameterInvalidMessage, "timeout");
+                throw new ArgumentException(Resources.TimeoutParameterInvalidMessage, nameof(timeout));
             }
             if (error > Ddeml.DMLERR_NO_ERROR)
             {
@@ -682,15 +664,15 @@ namespace NDde.Foundation.Client
             }
             if (data == null)
             {
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException(nameof(data));
             }
             if (item == null)
             {
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             }
             if (item.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "item");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(item));
             }
 
             // Create a string handle for the item name.
@@ -763,7 +745,7 @@ namespace NDde.Foundation.Client
             {
                 string message = Resources.AsyncResultParameterInvalidMessage;
                 message = message.Replace("${method}", System.Reflection.MethodInfo.GetCurrentMethod().Name);
-                throw new ArgumentException(message, "asyncResult");
+                throw new ArgumentException(message, nameof(asyncResult));
             }
 
             PokeAsyncResult ar = (PokeAsyncResult)asyncResult;
@@ -794,15 +776,15 @@ namespace NDde.Foundation.Client
             }
             if (error == -3 && item == null)
             {
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             }
             if (error == -3 && item.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "item");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(item));
             }
             if (error == -3 && timeout <= 0)
             {
-                throw new ArgumentException(Resources.TimeoutParameterInvalidMessage, "timeout");
+                throw new ArgumentException(Resources.TimeoutParameterInvalidMessage, nameof(timeout));
             }
             if (error > Ddeml.DMLERR_NO_ERROR)
             {
@@ -888,11 +870,11 @@ namespace NDde.Foundation.Client
             }
             if (item == null)
             {
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             }
             if (item.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "item");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(item));
             }
 
             // Create a string handle for the item name.
@@ -947,7 +929,7 @@ namespace NDde.Foundation.Client
             {
                 string message = Resources.AsyncResultParameterInvalidMessage;
                 message = message.Replace("${method}", System.Reflection.MethodInfo.GetCurrentMethod().Name);
-                throw new ArgumentException(message, "asyncResult");
+                throw new ArgumentException(message, nameof(asyncResult));
             }
 
             RequestAsyncResult ar = (RequestAsyncResult)asyncResult;
@@ -976,15 +958,15 @@ namespace NDde.Foundation.Client
             }
             if (item == null)
             {
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             }
             if (item.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "item");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(item));
             }
             if (timeout <= 0)
             {
-                throw new ArgumentException(Resources.TimeoutParameterInvalidMessage, "timeout");
+                throw new ArgumentException(Resources.TimeoutParameterInvalidMessage, nameof(timeout));
             }
             if (_AdviseLoopTable.ContainsKey(item))
             {
@@ -1056,11 +1038,11 @@ namespace NDde.Foundation.Client
             }
             if (item == null)
             {
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             }
             if (item.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "item");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(item));
             }
             if (_AdviseLoopTable.ContainsKey(item))
             {
@@ -1129,7 +1111,7 @@ namespace NDde.Foundation.Client
             {
                 string message = Resources.AsyncResultParameterInvalidMessage;
                 message = message.Replace("${method}", System.Reflection.MethodInfo.GetCurrentMethod().Name);
-                throw new ArgumentException(message, "asyncResult");
+                throw new ArgumentException(message, nameof(asyncResult));
             }
 
             StartAdviseAsyncResult ar = (StartAdviseAsyncResult)asyncResult;
@@ -1156,15 +1138,15 @@ namespace NDde.Foundation.Client
             }
             if (item == null)
             {
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             }
             if (item.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "item");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(item));
             }
             if (timeout <= 0)
             {
-                throw new ArgumentException(Resources.TimeoutParameterInvalidMessage, "timeout");
+                throw new ArgumentException(Resources.TimeoutParameterInvalidMessage, nameof(timeout));
             }
             if (!_AdviseLoopTable.ContainsKey(item))
             {
@@ -1223,11 +1205,11 @@ namespace NDde.Foundation.Client
             }
             if (item == null)
             {
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             }
             if (item.Length > Ddeml.MAX_STRING_SIZE)
             {
-                throw new ArgumentException(Resources.StringParameterInvalidMessage, "item");
+                throw new ArgumentException(Resources.StringParameterInvalidMessage, nameof(item));
             }
             if (!_AdviseLoopTable.ContainsKey(item))
             {
@@ -1292,7 +1274,7 @@ namespace NDde.Foundation.Client
             {
                 string message = Resources.AsyncResultParameterInvalidMessage;
                 message = message.Replace("${method}", System.Reflection.MethodInfo.GetCurrentMethod().Name);
-                throw new ArgumentException(message, "asyncResult");
+                throw new ArgumentException(message, nameof(asyncResult));
             }
 
             StopAdviseAsyncResult ar = (StopAdviseAsyncResult)asyncResult;
@@ -1556,33 +1538,21 @@ namespace NDde.Foundation.Client
                 set { _State = value; }
             }
 
-            public WaitHandle AsyncWaitHandle
-            {
-                get { return _CompletionEvent; }
-            }
+            public WaitHandle AsyncWaitHandle => _CompletionEvent;
 
-            public bool CompletedSynchronously
-            {
-                get { return false; }
-            }
+	        public bool CompletedSynchronously => false;
 
-            public bool IsCompleted
-            {
-                get { return _IsCompleted; }
-            }
+	        public bool IsCompleted => _IsCompleted;
 
-            public AsyncCallback Callback
+	        public AsyncCallback Callback
             {
                 get { return _Callback; }
                 set { _Callback = value; }
             }
 
-            public DdemlClient Client
-            {
-                get { return _Client; }
-            }
+            public DdemlClient Client => _Client;
 
-            public int TransactionId
+	        public int TransactionId
             {
                 get { return _TransactionId; }
                 set { _TransactionId = value; }

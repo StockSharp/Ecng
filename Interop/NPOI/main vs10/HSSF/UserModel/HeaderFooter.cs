@@ -214,149 +214,77 @@ namespace NPOI.HSSF.UserModel
         /// Returns the string representing the current page number
         /// </summary>
         /// <value>The special string for page number.</value>
-        public static String Page
-        {
-            get
-            {
-                return PAGE_FIELD.sequence;
-            }
-        }
+        public static String Page => PAGE_FIELD.sequence;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the string representing the number of pages.
         /// </summary>
         /// <value>The special string for the number of pages.</value>
-        public static String NumPages
-        {
-            get
-            {
-                return NUM_PAGES_FIELD.sequence;
-            }
-        }
+        public static String NumPages => NUM_PAGES_FIELD.sequence;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the string representing the current date
         /// </summary>
         /// <value>The special string for the date</value>
-        public static String Date
-        {
-            get
-            {
-                return DATE_FIELD.sequence;
-            }
-        }
+        public static String Date => DATE_FIELD.sequence;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the time.
         /// </summary>
         /// <value>The time.</value>
         /// Returns the string representing the current time
         /// @return The special string for the time
-        public static String Time
-        {
-            get
-            {
-                return TIME_FIELD.sequence;
-            }
-        }
+        public static String Time => TIME_FIELD.sequence;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the string representing the current file name
         /// </summary>
         /// <value>The special string for the file name.</value>
-        public static String File
-        {
-            get{
-                return FILE_FIELD.sequence;
-            }
-        }
+        public static String File => FILE_FIELD.sequence;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the string representing the current tab (sheet) name
         /// </summary>
         /// <value>The special string for tab name.</value>
-        public static String Tab
-        {
-            get
-            {
-                return SHEET_NAME_FIELD.sequence;
-            }
-        }
+        public static String Tab => SHEET_NAME_FIELD.sequence;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the string representing the start bold
         /// </summary>
         /// <returns>The special string for start bold</returns>
-        public static String StartBold
-        {
-            get
-            {
-                return BOLD_FIELD.sequence;
-            }
-        }
+        public static String StartBold => BOLD_FIELD.sequence;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the string representing the end bold
         /// </summary>
         /// <value>The special string for end bold.</value>
-        public static String EndBold
-        {
-            get
-            {
-                return BOLD_FIELD.sequence;
-            }
-        }
+        public static String EndBold => BOLD_FIELD.sequence;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the string representing the start underline
         /// </summary>
         /// <value>The special string for start underline.</value>
-        public static String StartUnderline
-        {
-            get
-            {
-                return UNDERLINE_FIELD.sequence;
-            }
-        }
+        public static String StartUnderline => UNDERLINE_FIELD.sequence;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the string representing the end underline
         /// </summary>
         /// <value>The special string for end underline.</value>
-        public static String EndUnderline
-        {
-            get
-            {
-                return UNDERLINE_FIELD.sequence;
-            }
-        }
+        public static String EndUnderline => UNDERLINE_FIELD.sequence;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the string representing the start double underline
         /// </summary>
         /// <value>The special string for start double underline.</value>
-        public static String StartDoubleUnderline
-        {
-            get
-            {
-                return DOUBLE_UNDERLINE_FIELD.sequence;
-            }
-        }
+        public static String StartDoubleUnderline => DOUBLE_UNDERLINE_FIELD.sequence;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the string representing the end double underline
         /// </summary>
         /// <value>The special string for end double underline.</value>
-        public static String EndDoubleUnderline
-        {
-            get
-            {
-                return DOUBLE_UNDERLINE_FIELD.sequence;
-            }
-        }
+        public static String EndDoubleUnderline => DOUBLE_UNDERLINE_FIELD.sequence;
 
-
-        /// <summary>
+	    /// <summary>
         /// Removes any fields (eg macros, page markers etc)
         /// from the string.
         /// Normally used to make some text suitable for showing
@@ -415,35 +343,34 @@ namespace NPOI.HSSF.UserModel
         }
 
         // this abstract class does not initialize the static field that are required for the the StripFields method.
-        internal static Field SHEET_NAME_FIELD { get { return Fields.Instance.SHEET_NAME_FIELD; } }
-        internal static Field DATE_FIELD { get { return Fields.Instance.DATE_FIELD; } }
-        internal static Field FILE_FIELD { get { return Fields.Instance.FILE_FIELD; } }
-        public static Field FULL_FILE_FIELD { get { return Fields.Instance.FULL_FILE_FIELD; } }
-        internal static Field PAGE_FIELD { get { return Fields.Instance.PAGE_FIELD; } }
-        internal static Field TIME_FIELD { get { return Fields.Instance.TIME_FIELD; } }
-        internal static Field NUM_PAGES_FIELD { get { return Fields.Instance.NUM_PAGES_FIELD; } }
+        internal static Field SHEET_NAME_FIELD => Fields.Instance.SHEET_NAME_FIELD;
+	    internal static Field DATE_FIELD => Fields.Instance.DATE_FIELD;
+	    internal static Field FILE_FIELD => Fields.Instance.FILE_FIELD;
+	    public static Field FULL_FILE_FIELD => Fields.Instance.FULL_FILE_FIELD;
+	    internal static Field PAGE_FIELD => Fields.Instance.PAGE_FIELD;
+	    internal static Field TIME_FIELD => Fields.Instance.TIME_FIELD;
+	    internal static Field NUM_PAGES_FIELD => Fields.Instance.NUM_PAGES_FIELD;
 
-        public static Field PICTURE_FIELD { get { return Fields.Instance.PICTURE_FIELD; } }
+	    public static Field PICTURE_FIELD => Fields.Instance.PICTURE_FIELD;
 
-        internal static PairField BOLD_FIELD { get { return Fields.Instance.BOLD_FIELD; } }
-        public static PairField ITALIC_FIELD { get { return Fields.Instance.ITALIC_FIELD; } }
-        public static PairField STRIKETHROUGH_FIELD { get { return Fields.Instance.STRIKETHROUGH_FIELD; } }
-        public static PairField SUBSCRIPT_FIELD { get { return Fields.Instance.SUBSCRIPT_FIELD; } }
-        public static PairField SUPERSCRIPT_FIELD { get { return Fields.Instance.SUPERSCRIPT_FIELD; } }
-        internal static PairField UNDERLINE_FIELD { get { return Fields.Instance.UNDERLINE_FIELD; } }
-        internal static PairField DOUBLE_UNDERLINE_FIELD { get { return Fields.Instance.DOUBLE_UNDERLINE_FIELD; } }
+	    internal static PairField BOLD_FIELD => Fields.Instance.BOLD_FIELD;
+	    public static PairField ITALIC_FIELD => Fields.Instance.ITALIC_FIELD;
+	    public static PairField STRIKETHROUGH_FIELD => Fields.Instance.STRIKETHROUGH_FIELD;
+	    public static PairField SUBSCRIPT_FIELD => Fields.Instance.SUBSCRIPT_FIELD;
+	    public static PairField SUPERSCRIPT_FIELD => Fields.Instance.SUPERSCRIPT_FIELD;
+	    internal static PairField UNDERLINE_FIELD => Fields.Instance.UNDERLINE_FIELD;
+	    internal static PairField DOUBLE_UNDERLINE_FIELD => Fields.Instance.DOUBLE_UNDERLINE_FIELD;
 
-
-        /// <summary>
+	    /// <summary>
         /// Represents a special field in a header or footer,
         /// eg the page number
         /// </summary>
         public class Field
         {
             [Obsolete("Use the generic list Fields.AllFields instead.")]
-            public static ArrayList ALL_FIELDS { get { return new ArrayList(Fields.AllFields); } }
+            public static ArrayList ALL_FIELDS => new ArrayList(Fields.AllFields);
 
-            /** The character sequence that marks this field */
+	        /** The character sequence that marks this field */
             public String sequence;
             public Field(Fields fields, String sequence)
             {
@@ -470,8 +397,8 @@ namespace NPOI.HSSF.UserModel
         public class Fields
         {
             private List<Field> allFields = new List<Field>();
-            public static ReadOnlyCollection<Field> AllFields { get { return Instance.allFields.AsReadOnly(); } }
-            private Field _sheetnamefield;
+            public static ReadOnlyCollection<Field> AllFields => Instance.allFields.AsReadOnly();
+	        private Field _sheetnamefield;
             private Field _filefield;
             private Field _fullfilefield;
             private Field _pagefield;
@@ -486,73 +413,27 @@ namespace NPOI.HSSF.UserModel
             private PairField _superscriptfield;
             private PairField _underlinefield;
             private PairField _doubleunderlinefield;
-            public Field SHEET_NAME_FIELD
-            {
-                get{return _sheetnamefield;}
-            }
-            public Field DATE_FIELD
-            {
-                get{return _datefield;}
-            }
+            public Field SHEET_NAME_FIELD => _sheetnamefield;
+	        public Field DATE_FIELD => _datefield;
 
-            public Field FILE_FIELD
-            {
-                get{return _filefield;}
-            }
-            public Field FULL_FILE_FIELD
-            {
-                get{return _fullfilefield;}
-            }
+	        public Field FILE_FIELD => _filefield;
+	        public Field FULL_FILE_FIELD => _fullfilefield;
 
-            public Field PAGE_FIELD
-            {
-                get{return _pagefield;}
-            }
-            public Field TIME_FIELD
-            {
-                get{return _timefield;}
-            }
-            public Field NUM_PAGES_FIELD
-            {
-                get{return _numpagesfield;}
-            }
+	        public Field PAGE_FIELD => _pagefield;
+	        public Field TIME_FIELD => _timefield;
+	        public Field NUM_PAGES_FIELD => _numpagesfield;
 
-            public Field PICTURE_FIELD
-            {
-                get{return _picturefield;}
-            }
+	        public Field PICTURE_FIELD => _picturefield;
 
-            public PairField BOLD_FIELD
-            {
-                get{return _boldfield;}
-            }
-            public PairField ITALIC_FIELD
-            {
-                get{return _italicfield;}
-            }
-            public PairField STRIKETHROUGH_FIELD
-            {
-                get{return _strikethroughfield;}
-            }
-            public PairField SUBSCRIPT_FIELD
-            {
-                get{return _subscriptfield;}
-            }
-            public PairField SUPERSCRIPT_FIELD
-            {
-                get{return _superscriptfield;}
-            }
-            public PairField UNDERLINE_FIELD
-            {
-                get{return _underlinefield;}
-            }
-            public PairField DOUBLE_UNDERLINE_FIELD
-            {
-                get{return _doubleunderlinefield;}
-            }
+	        public PairField BOLD_FIELD => _boldfield;
+	        public PairField ITALIC_FIELD => _italicfield;
+	        public PairField STRIKETHROUGH_FIELD => _strikethroughfield;
+	        public PairField SUBSCRIPT_FIELD => _subscriptfield;
+	        public PairField SUPERSCRIPT_FIELD => _superscriptfield;
+	        public PairField UNDERLINE_FIELD => _underlinefield;
+	        public PairField DOUBLE_UNDERLINE_FIELD => _doubleunderlinefield;
 
-
-            #region Singleton Implementation
+	        #region Singleton Implementation
             /// <summary>
             /// Instance to this class.
             /// </summary>
@@ -591,14 +472,9 @@ namespace NPOI.HSSF.UserModel
             /// <summary>
             /// Accessing the initialized instance.
             /// </summary>
-            public static Fields Instance
-            {
-                get
-                {
-                    return instance;
-                }
-            }
-            #endregion Singleton Implementation
+            public static Fields Instance => instance;
+
+	        #endregion Singleton Implementation
 
             internal void Add(Field field)
             {

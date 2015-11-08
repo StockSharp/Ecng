@@ -162,20 +162,11 @@ namespace NPOI.HSSF.Model
             return false;
         }
 
-        public Ptg Token
-        {
-            get
-            {
-                return _token;
-            }
-        }
+        public Ptg Token => _token;
 
-        public ParseNode[] Children
-        {
-            get { return _children; }
-        }
+	    public ParseNode[] Children => _children;
 
-        private class TokenCollector
+	    private class TokenCollector
         {
 
             private Ptg[] _ptgs;
@@ -221,13 +212,7 @@ namespace NPOI.HSSF.Model
                 _ptgs[index] = token;
             }
 
-            public Ptg[] Result
-            {
-                get
-                {
-                    return _ptgs;
-                }
-            }
+            public Ptg[] Result => _ptgs;
         }
     }
 }

@@ -50,13 +50,6 @@ namespace NPOI.SS.Formula.Functions
         {
             throw new NotImplementedFunctionException(_functionName);
         }
-        public String FunctionName
-        {
-            get
-            {
-                return _functionName;
-            }
-        }
-
+        public String FunctionName => _functionName;
     }
 }

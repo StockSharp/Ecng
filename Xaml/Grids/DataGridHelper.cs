@@ -97,7 +97,7 @@
 		public static void SetValueToCell(this DataGridCell cell, object value)
 		{
 			if (cell == null)
-				throw new ArgumentNullException("cell");
+				throw new ArgumentNullException(nameof(cell));
 
 			cell.Do((prop, obj) =>
 			{
@@ -110,10 +110,10 @@
 		private static object Do(this DataGridCell cell, Func<PropertyInfo, object, object> func)
 		{
 			if (cell == null)
-				throw new ArgumentNullException("cell");
+				throw new ArgumentNullException(nameof(cell));
 
 			if (func == null)
-				throw new ArgumentNullException("func");
+				throw new ArgumentNullException(nameof(func));
 
 			var obj = cell.DataContext;
 			var t = obj.GetType();

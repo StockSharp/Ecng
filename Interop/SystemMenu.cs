@@ -14,7 +14,7 @@
 		internal SystemMenuItem(WinApi.MenuItemInfo info, SystemWindow window)
 		{
 			if (window == null)
-				throw new ArgumentNullException("window");
+				throw new ArgumentNullException(nameof(window));
 
 			_window = window;
 
@@ -38,7 +38,7 @@
 
 		[CLSCompliant(false)]
 		public WinApi.MenuItemInfo Info { get; private set; }
-		public int Id { get; private set; }
+		public int Id { get; }
 
 		public void Click()
 		{

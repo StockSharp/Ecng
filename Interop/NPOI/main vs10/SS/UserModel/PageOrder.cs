@@ -50,15 +50,9 @@ namespace NPOI.SS.UserModel
             _table[order] = this;
         }
 
-        public int Value
-        {
-            get
-            {
-                return order;
-            }
-        }
+        public int Value => order;
 
-        private static PageOrder[] _table;
+	    private static PageOrder[] _table;
 
         public static PageOrder ValueOf(int value)
         {

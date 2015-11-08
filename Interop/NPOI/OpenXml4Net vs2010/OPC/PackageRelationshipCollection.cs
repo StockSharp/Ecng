@@ -314,15 +314,9 @@ namespace NPOI.OpenXml4Net.OPC
         /**
          * Get the numbe rof relationships in the collection.
          */
-        public int Size
-        {
-            get
-            {
-                return relationshipsByID.Values.Count;
-            }
-        }
+        public int Size => relationshipsByID.Values.Count;
 
-        /**
+	    /**
          * Parse the relationship part and add all relationship in this collection.
          * 
          * @param relPart

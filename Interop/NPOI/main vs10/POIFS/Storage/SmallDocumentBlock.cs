@@ -287,17 +287,8 @@ namespace NPOI.POIFS.Storage
         /// Get the data from the block
         /// </summary>
         /// <value>the block's data as a byte array</value>
-        public byte [] Data
-        {
-            get
-            {
-                return _data;
-            }
-        }
+        public byte [] Data => _data;
 
-        public POIFSBigBlockSize BigBlockSize
-        {
-            get { return _bigBlockSize; }
-        }
+	    public POIFSBigBlockSize BigBlockSize => _bigBlockSize;
     }
 }

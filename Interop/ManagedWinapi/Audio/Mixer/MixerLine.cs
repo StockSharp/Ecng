@@ -104,45 +104,39 @@ namespace ManagedWinapi.Audio.Mixer
         /// <summary>
         /// Gets the ID of this line.
         /// </summary>
-        public int Id { get { return line.dwLineID; } }
+        public int Id => line.dwLineID;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the number of channels of this line.
         /// </summary>
-        public int ChannelCount { get { return line.cChannels; } }
+        public int ChannelCount => line.cChannels;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the number of controls of this line.
         /// </summary>
-        public int ControlCount { get { return line.cControls; } }
+        public int ControlCount => line.cControls;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the short name of this line;
         /// </summary>
-        public string ShortName { get { return line.szShortName; } }
+        public string ShortName => line.szShortName;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the full name of this line.
         /// </summary>
-        public string Name { get { return line.szName; } }
+        public string Name => line.szName;
 
-        /// <summary>
+	    /// <summary>
         /// Gets the component type of this line;
         /// </summary>
-        public MixerLineComponentType ComponentType
-        {
-            get
-            {
-                return (MixerLineComponentType)line.dwComponentType;
-            }
-        }
+        public MixerLineComponentType ComponentType => (MixerLineComponentType)line.dwComponentType;
 
-        /// <summary>
+	    /// <summary>
         /// The mixer that owns this line.
         /// </summary>
-        public Mixer Mixer { get { return mixer; } }
+        public Mixer Mixer => mixer;
 
-        internal MixerLine findLine(int lineId)
+	    internal MixerLine findLine(int lineId)
         {
             if (Id == lineId) { return this; }
             foreach (MixerLine ml in ChildLines)
@@ -157,15 +151,9 @@ namespace ManagedWinapi.Audio.Mixer
         private static readonly IList<MixerLine> EMPTY_LIST =
             new List<MixerLine>().AsReadOnly();
 
-        internal virtual IList<MixerLine> ChildLines
-        {
-            get
-            {
-                return EMPTY_LIST;
-            }
-        }
+        internal virtual IList<MixerLine> ChildLines => EMPTY_LIST;
 
-        internal MixerControl findControl(int ctrlId)
+	    internal MixerControl findControl(int ctrlId)
         {
             foreach (MixerControl c in Controls)
             {
@@ -236,9 +224,9 @@ namespace ManagedWinapi.Audio.Mixer
         /// <summary>
         /// Gets the number of source lines of this destination line.
         /// </summary>
-        public int SourceLineCount { get { return line.cConnections; } }
+        public int SourceLineCount => line.cConnections;
 
-        private IList<SourceLine> srcLines = null;
+	    private IList<SourceLine> srcLines = null;
 
         /// <summary>
         /// Gets all source lines of this destination line.

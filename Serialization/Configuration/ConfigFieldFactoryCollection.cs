@@ -14,13 +14,7 @@
 			BaseAdd(element, false);
 		}
 
-		public override ConfigurationElementCollectionType CollectionType
-		{
-			get
-			{
-				return ConfigurationElementCollectionType.AddRemoveClearMap;
-			}
-		}
+		public override ConfigurationElementCollectionType CollectionType => ConfigurationElementCollectionType.AddRemoveClearMap;
 
 		protected override ConfigurationElement CreateNewElement()
 		{

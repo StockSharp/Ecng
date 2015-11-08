@@ -17,8 +17,9 @@ namespace SmartFormat.Core.Parsing
 		}
 
 		private readonly Format result;
-		public List<ParsingIssue> Issues { get; private set; }
-		public bool HasIssues { get { return Issues.Count > 0; } }
+		public List<ParsingIssue> Issues { get; }
+		public bool HasIssues => Issues.Count > 0;
+
 		public void AddIssue(Format parent, string issue, int startIndex, int endIndex)
 		{
 			Issues.Add(new ParsingIssue(issue, startIndex, endIndex - startIndex));
@@ -73,9 +74,9 @@ namespace SmartFormat.Core.Parsing
 				this.Index = index;
 				this.Length = length;
 			}
-			public int Index { get; private set;}
-			public int Length { get; private set;}
-			public string Issue { get; private set;}
+			public int Index { get; }
+			public int Length { get; }
+			public string Issue { get; }
 		}
 	}
 }

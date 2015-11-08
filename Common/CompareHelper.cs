@@ -15,10 +15,10 @@ namespace Ecng.Common
 		public static bool Compare(this Type first, Type second, bool useInheritance)
 		{
 			if (first == null)
-				throw new ArgumentNullException("first");
+				throw new ArgumentNullException(nameof(first));
 
 			if (second == null)
-				throw new ArgumentNullException("second");
+				throw new ArgumentNullException(nameof(second));
 
 			if (useInheritance)
 				return first.IsAssignableFrom(second);
@@ -29,10 +29,10 @@ namespace Ecng.Common
 		public static int Compare(this Type first, Type second)
 		{
 			if (first == null)
-				throw new ArgumentNullException("first");
+				throw new ArgumentNullException(nameof(first));
 
 			if (second == null)
-				throw new ArgumentNullException("second");
+				throw new ArgumentNullException(nameof(second));
 
 			if (first == second)
 				return 0;
@@ -59,7 +59,7 @@ namespace Ecng.Common
 				return 1;
 
 			if (value1.GetType() != value2.GetType())
-				throw new ArgumentException("The values must be a same types.", "value2");
+				throw new ArgumentException("The values must be a same types.", nameof(value2));
 
 			var compare1 = value1 as IComparable;
 

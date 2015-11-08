@@ -113,31 +113,13 @@ namespace NPOI.HSSF.Model
          * actually should be in the {@link MergedCellsTable} which is much later (see bug 45699).
          * @return any loose  <c>MergeCellsRecord</c>s found
          */
-        public MergeCellsRecord[] LooseMergedCells
-        {
-            get
-            {
-                return _mergedCellsRecords;
-            }
-        }
+        public MergeCellsRecord[] LooseMergedCells => _mergedCellsRecords;
 
-        public SharedValueManager SharedFormulaManager
-        {
-            get
-            {
-                return _sfm;
-            }
-        }
-        /**
+	    public SharedValueManager SharedFormulaManager => _sfm;
+	    /**
          * @return a {@link RecordStream} containing all the non-{@link SharedFormulaRecord} 
          * non-{@link ArrayRecord} and non-{@link TableRecord} Records.
          */
-        public RecordStream PlainRecordStream
-        {
-            get
-            {
-                return new RecordStream(_plainRecords, 0);
-            }
-        }
+        public RecordStream PlainRecordStream => new RecordStream(_plainRecords, 0);
     }
 }

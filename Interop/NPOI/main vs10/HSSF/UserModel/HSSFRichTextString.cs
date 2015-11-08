@@ -206,11 +206,9 @@ namespace NPOI.HSSF.UserModel
         /// Returns the plain string representation.
         /// </summary>
         /// <value>The string.</value>
-        public String String
-        {
-            get { return _string.String; }
-        }
-        /// <summary>
+        public String String => _string.String;
+
+	    /// <summary>
         /// Returns the raw, probably shared Unicode String.
         /// Used when tweaking the styles, eg updating font
         /// positions.
@@ -218,15 +216,9 @@ namespace NPOI.HSSF.UserModel
         /// other RichTextStrings too!
         /// </summary>
         /// <value>The raw unicode string.</value>
-        public UnicodeString RawUnicodeString
-        {
-            get
-            {
-                return _string;
-            }
-        }
+        public UnicodeString RawUnicodeString => _string;
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the unicode string.
         /// </summary>
         /// <value>The unicode string.</value>
@@ -241,12 +233,9 @@ namespace NPOI.HSSF.UserModel
         /// Gets the number of Chars in the font..
         /// </summary>
         /// <value>The length.</value>
-        public int Length
-        {
-            get { return _string.CharCount; }
-        }
+        public int Length => _string.CharCount;
 
-        /// <summary>
+	    /// <summary>
         /// Returns the font in use at a particular index.
         /// </summary>
         /// <param name="index">The index.</param>
@@ -274,12 +263,9 @@ namespace NPOI.HSSF.UserModel
         /// least one of font NO_FONT.
         /// </summary>
         /// <value>The num formatting runs.</value>
-        public int NumFormattingRuns
-        {
-            get { return _string.FormatRunCount; }
-        }
+        public int NumFormattingRuns => _string.FormatRunCount;
 
-        /// <summary>
+	    /// <summary>
         /// The index within the string to which the specified formatting run applies.
         /// </summary>
         /// <param name="index">the index of the formatting run</param>

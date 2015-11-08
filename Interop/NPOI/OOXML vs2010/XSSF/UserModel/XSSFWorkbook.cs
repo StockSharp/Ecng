@@ -723,17 +723,9 @@ namespace NPOI.XSSF.UserModel
          * which is currently displayed when the workbook is viewed in Excel.
          * 'Selected' sheet(s) is a distinct concept.
          */
-        public int ActiveSheetIndex
-        {
-            get
-            {
-                //activeTab (Active Sheet Index) Specifies an unsignedInt
-                //that Contains the index to the active sheet in this book view.
-                return (int)workbook.bookViews.GetWorkbookViewArray(0).activeTab;
-            }
-        }
+        public int ActiveSheetIndex => (int)workbook.bookViews.GetWorkbookViewArray(0).activeTab;
 
-        /**
+	    /**
          * Gets all pictures from the Workbook.
          *
          * @return the list of pictures (a list of {@link XSSFPictureData} objects.)
@@ -837,52 +829,30 @@ namespace NPOI.XSSF.UserModel
          *
          * @return count of cell styles
          */
-        public short NumCellStyles
-        {
-            get
-            {
-                return (short)(stylesSource).NumCellStyles;
-            }
-        }
+        public short NumCellStyles => (short)(stylesSource).NumCellStyles;
 
-        /**
+	    /**
          * Get the number of fonts in the this workbook
          *
          * @return number of fonts
          */
-        public short NumberOfFonts
-        {
-            get{
-            return (short)stylesSource.GetFonts().Count;
-            }
-        }
+        public short NumberOfFonts => (short)stylesSource.GetFonts().Count;
 
-        /**
+	    /**
          * Get the number of named ranges in the this workbook
          *
          * @return number of named ranges
          */
-        public int NumberOfNames
-        {
-            get{
-            return namedRanges.Count;
-            }
-        }
+        public int NumberOfNames => namedRanges.Count;
 
-        /**
+	    /**
          * Get the number of worksheets in the this workbook
          *
          * @return number of worksheets
          */
-        public int NumberOfSheets
-        {
-            get
-            {
-                return sheets.Count;
-            }
-        }
+        public int NumberOfSheets => sheets.Count;
 
-        /**
+	    /**
          * Retrieves the reference for the printarea of the specified sheet, the sheet name is Appended to the reference even if it was not specified.
          * @param sheetIndex Zero-based sheet index (0 Represents the first sheet to keep consistent with java)
          * @return String Null if no print area has been defined
@@ -1784,15 +1754,9 @@ namespace NPOI.XSSF.UserModel
 
          * @return the <code>ExternalLinksTable</code> list, which may be empty
          */
-        public List<ExternalLinksTable> ExternalLinksTable
-        {
-            get
-            {
-                return externalLinks;
-            }
-        }
+        public List<ExternalLinksTable> ExternalLinksTable => externalLinks;
 
-        /**
+	    /**
          *
          * @return a collection of custom XML mappings defined in this workbook
          */
@@ -2094,17 +2058,11 @@ namespace NPOI.XSSF.UserModel
             throw new NotImplementedException();
         }
 
-        public int Count
-        {
-            get { return this.NumberOfSheets; }
-        }
+        public int Count => this.NumberOfSheets;
 
-        public bool IsReadOnly
-        {
-            get { return false; }
-        }
+	    public bool IsReadOnly => false;
 
-        public bool Remove(ISheet item)
+	    public bool Remove(ISheet item)
         {
 
             return this.sheets.Remove((XSSFSheet)item);

@@ -139,19 +139,11 @@ namespace NPOI.HPSF
         /// Set.
         /// </summary>
         /// <value>The number of {@link Section}s in the property Set.</value>
-        public override int SectionCount
-        {
-            get { return delegate1.SectionCount; }
-        }
+        public override int SectionCount => delegate1.SectionCount;
 
+	    public override List<Section> Sections => delegate1.Sections;
 
-        public override List<Section> Sections
-        {
-            get { return delegate1.Sections; }
-        }
-
-
-        /// <summary>
+	    /// <summary>
         /// Checks whether this {@link PropertySet} represents a Summary
         /// Information.
         /// </summary>
@@ -159,12 +151,9 @@ namespace NPOI.HPSF
         /// 	<c>true</c> Checks whether this {@link PropertySet} represents a Summary
         /// Information; otherwise, <c>false</c>.
         /// </value>
-        public override bool IsSummaryInformation
-        {
-            get{return delegate1.IsSummaryInformation;}
-        }
+        public override bool IsSummaryInformation => delegate1.IsSummaryInformation;
 
-        public override Stream ToInputStream() 
+	    public override Stream ToInputStream() 
         {
             return delegate1.ToInputStream();
         }
@@ -182,22 +171,15 @@ namespace NPOI.HPSF
         /// if this {@link PropertySet}
         /// represents a Document Summary Information, else
         /// <c>false</c>
-        public override bool IsDocumentSummaryInformation
-        {
-            get{return delegate1.IsDocumentSummaryInformation;}
-        }
+        public override bool IsDocumentSummaryInformation => delegate1.IsDocumentSummaryInformation;
 
-
-        /// <summary>
+	    /// <summary>
         /// Gets the PropertySet's first section.
         /// </summary>
         /// <value>The {@link PropertySet}'s first section.</value>
-        public override Section FirstSection
-        {
-            get { return delegate1.FirstSection; }
-        }
+        public override Section FirstSection => delegate1.FirstSection;
 
-        /// <summary>
+	    /// <summary>
         /// Adds a section To this property set.
         /// </summary>
         /// <param name="section">The {@link Section} To Add. It will be Appended
@@ -300,14 +282,9 @@ namespace NPOI.HPSF
         /// The properties of the only {@link Section} of this
         /// {@link PropertySet}.
         /// </value>
-        public override Property[] Properties
-        {
-            get { return delegate1.Properties; }
-        }
+        public override Property[] Properties => delegate1.Properties;
 
-
-
-        /// <summary>
+	    /// <summary>
         /// Convenience method returning the value of the property with
         /// the specified ID. If the property is not available,
         /// <c>null</c> is returned and a subsequent call To {@link
@@ -434,10 +411,6 @@ namespace NPOI.HPSF
         /// #GetPropertyIntValue} or {@link #GetProperty} tried To access a
         /// property that Was not available; otherwise, <c>false</c>.
         /// </value>
-        public override bool WasNull
-        {
-            get { return delegate1.WasNull; }
-        }
-
+        public override bool WasNull => delegate1.WasNull;
     }
 }

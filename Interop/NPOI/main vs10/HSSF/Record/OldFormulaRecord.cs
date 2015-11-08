@@ -95,57 +95,27 @@ namespace NPOI.HSSF.Record
          *
          * @return calculated value
          */
-        public double Value
-        {
-            get
-            {
-                return field_4_value;
-            }
-        }
+        public double Value => field_4_value;
 
-        /**
+	    /**
          * Get the option flags
          *
          * @return bitmask
          */
-        public short Options
-        {
-            get
-            {
-                return field_5_options;
-            }
-        }
+        public short Options => field_5_options;
 
-        /**
+	    /**
          * @return the formula tokens. never <code>null</code>
          */
-        public Ptg[] ParsedExpression
-        {
-            get
-            {
-                return field_6_Parsed_expr.Tokens;
-            }
-        }
+        public Ptg[] ParsedExpression => field_6_Parsed_expr.Tokens;
 
-        public Formula Formula
-        {
-            get
-            {
-                return field_6_Parsed_expr;
-            }
-        }
+	    public Formula Formula => field_6_Parsed_expr;
 
-        protected override void AppendValueText(StringBuilder sb)
+	    protected override void AppendValueText(StringBuilder sb)
         {
             sb.Append("    .value       = ").Append(Value).Append("\n");
         }
-        protected override String RecordName
-        {
-            get
-            {
-                return "Old Formula";
-            }
-        }
+        protected override String RecordName => "Old Formula";
     }
 
 }

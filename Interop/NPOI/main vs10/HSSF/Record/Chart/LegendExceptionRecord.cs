@@ -38,23 +38,16 @@ namespace NPOI.HSSF.Record.Chart
         {
         }
 
-        protected override int DataSize
-        {
-            get
-            {
-                return base.DataSize;
-            }
-        }
-        public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
+        protected override int DataSize => base.DataSize;
+
+	    public override void Serialize(NPOI.Util.ILittleEndianOutput out1)
         {
             base.Serialize(out1);
         }
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public short LegendEntry
+        public override short Sid => sid;
+
+	    public short LegendEntry
         {
             get { throw new NotImplementedException(); }
             set { throw new NotImplementedException(); }

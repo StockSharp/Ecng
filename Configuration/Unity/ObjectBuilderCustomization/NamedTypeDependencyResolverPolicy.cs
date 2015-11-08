@@ -55,17 +55,11 @@ namespace Microsoft.Practices.Unity.ObjectBuilder
         /// The type that this resolver resolves.
         /// </summary>
         [SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods")]
-        public Type Type
-        {
-            get { return type; }
-        }
+        public Type Type => type;
 
-        /// <summary>
+	    /// <summary>
         /// The name that this resolver resolves.
         /// </summary>
-        public string Name
-        {
-            get { return name; }
-        }
+        public string Name => name;
     }
 }

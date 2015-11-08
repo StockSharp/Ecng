@@ -11,10 +11,7 @@
 
 		private readonly SyncObject _syncRoot = new SyncObject();
 
-		public SyncObject SyncRoot
-		{
-			get { return _syncRoot; }
-		}
+		public SyncObject SyncRoot => _syncRoot;
 
 		public virtual LinkedListNode<T> First
 		{
@@ -150,9 +147,6 @@
 			}
 		}
 
-		bool ICollection<T>.IsReadOnly
-		{
-			get { return false; }
-		}
+		bool ICollection<T>.IsReadOnly => false;
 	}
 }

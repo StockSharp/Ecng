@@ -34,10 +34,7 @@ namespace Ecng.Reflection.Emit
 
 		private readonly List<EnumFieldGenerator> _fields = new List<EnumFieldGenerator>();
 
-		public IEnumerable<EnumFieldGenerator> Fields
-		{
-			get { return _fields; }
-		}
+		public IEnumerable<EnumFieldGenerator> Fields => _fields;
 
 		#endregion
 

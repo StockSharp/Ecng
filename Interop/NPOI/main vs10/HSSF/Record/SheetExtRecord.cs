@@ -93,20 +93,12 @@ namespace NPOI.HSSF.Record
             set { optionflag2=(short)fNotPublished.SetBoolean(optionflag2,!value); }
         }
 
-        protected override int DataSize
-        {
-            get 
-            {
-                return 12 + 4 + 4 + (cb == 0x28? 20 : 0);
-            }
-        }
-        public const short sid=0x862; //2146
+        protected override int DataSize => 12 + 4 + 4 + (cb == 0x28? 20 : 0);
+	    public const short sid=0x862; //2146
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
-        public override void Serialize(ILittleEndianOutput out1)
+        public override short Sid => sid;
+
+	    public override void Serialize(ILittleEndianOutput out1)
         {
             out1.WriteShort(rt);
             out1.WriteShort(grbitFrt);

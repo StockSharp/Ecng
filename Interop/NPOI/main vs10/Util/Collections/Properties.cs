@@ -98,13 +98,9 @@ namespace NPOI.Util.Collections
         /// Gets the count.
         /// </summary>
         /// <value>The count.</value>
-        public int Count {
-            get {
-                return _col.Count;
-            }
-        }
+        public int Count => _col.Count;
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the <see cref="System.String"/> with the specified key.
         /// </summary>
         /// <value></value>
@@ -122,13 +118,9 @@ namespace NPOI.Util.Collections
         /// Gets the keys.
         /// </summary>
         /// <value>The keys.</value>
-        public ICollection Keys {
-            get {
-                return _col.Keys;
-            }
-        }
+        public ICollection Keys => _col.Keys;
 
-        /// <summary>
+	    /// <summary>
         /// Clears this instance.
         /// </summary>
         public void Clear() {

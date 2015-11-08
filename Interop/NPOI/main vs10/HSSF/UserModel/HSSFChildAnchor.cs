@@ -69,22 +69,11 @@ namespace NPOI.HSSF.UserModel
             this.Dy2 = Math.Max(dy1, dy2);
         }
 
-        public override bool IsHorizontallyFlipped
-        {
-            get 
-            { 
-                return _isHorizontallyFlipped; 
-            }
-        }
+        public override bool IsHorizontallyFlipped => _isHorizontallyFlipped;
 
-        public override bool IsVerticallyFlipped
-        {
-            get 
-            { 
-                return _isVerticallyFlipped; 
-            }
-        }
-        public override int Dx1
+	    public override bool IsVerticallyFlipped => _isVerticallyFlipped;
+
+	    public override int Dx1
         {
             get
             {

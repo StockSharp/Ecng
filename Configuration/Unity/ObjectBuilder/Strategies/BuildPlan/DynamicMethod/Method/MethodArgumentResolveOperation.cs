@@ -54,17 +54,11 @@ namespace Microsoft.Practices.ObjectBuilder2
         /// <summary>
         /// String describing the method being set up.
         /// </summary>
-        public string MethodSignature
-        {
-            get { return methodSignature; }
-        }
+        public string MethodSignature => methodSignature;
 
-        /// <summary>
+	    /// <summary>
         /// Parameter that's being resolved.
         /// </summary>
-        public string ParameterName
-        {
-            get { return parameterName; }
-        }
+        public string ParameterName => parameterName;
     }
 }

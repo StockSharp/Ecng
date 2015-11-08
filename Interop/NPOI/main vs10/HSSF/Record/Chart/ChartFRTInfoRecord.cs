@@ -1,4 +1,4 @@
-/* ====================================================================
+﻿/* ====================================================================
    Licensed to the Apache Software Foundation (ASF) under one or more
    contributor license agreements.  See the NOTICE file distributed with
    this work for additional information regarding copyright ownership.
@@ -106,25 +106,11 @@ namespace NPOI.HSSF.Record.Chart
         }
 
 
-        protected override int DataSize
-        {
-            get
-            {
-                return 2 + 2 + 1 + 1 + 2 + rgCFRTID.Length * CFRTID.ENCODED_SIZE;
-            }
-        }
+        protected override int DataSize => 2 + 2 + 1 + 1 + 2 + rgCFRTID.Length * CFRTID.ENCODED_SIZE;
 
+	    public override short Sid => sid;
 
-        public override short Sid
-        {
-            get
-            {
-                return sid;
-            }
-        }
-
-
-        public override void Serialize(ILittleEndianOutput out1)
+	    public override void Serialize(ILittleEndianOutput out1)
         {
 
             out1.WriteShort(rt);

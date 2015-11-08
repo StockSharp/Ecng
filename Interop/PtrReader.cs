@@ -18,7 +18,7 @@
 			set
 			{
 				if (value == IntPtr.Zero)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_ptr = value;
 			}

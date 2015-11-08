@@ -92,17 +92,11 @@ namespace NPOI.HPSF
             return false;
         }
 
-        public int Size
-        {
-            get { return LittleEndian.INT_SIZE + _value.Length; }
-        }
+        public int Size => LittleEndian.INT_SIZE + _value.Length;
 
-        public byte[] Value
-        {
-            get { return _value; }
-        }
+	    public byte[] Value => _value;
 
-        public String ToJavaString()
+	    public String ToJavaString()
         {
             if (_value.Length == 0)
                 return null;

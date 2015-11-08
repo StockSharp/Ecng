@@ -513,21 +513,15 @@ namespace Wintellect.PowerCollections
         /// Returns whether the list is a fixed size. This implementation always returns true.
         /// </summary>
         /// <value>Alway true, indicating that the list is fixed size.</value>
-        bool IList.IsFixedSize
-        {
-            get { return true; }
-        }
+        bool IList.IsFixedSize => true;
 
-        /// <summary>
+	    /// <summary>
         /// Returns whether the list is read only. This implementation always returns true.
         /// </summary>
         /// <value>Alway true, indicating that the list is read-only.</value>
-        bool IList.IsReadOnly
-        {
-            get { return true; }
-        }
+        bool IList.IsReadOnly => true;
 
-        /// <summary>
+	    /// <summary>
         /// Searches the list for the first item that compares equal to <paramref name="value"/>.
         /// If one is found, it is removed. Otherwise, the list is unchanged.  This implementation throws a NotSupportedException
         /// indicating that the list is read-only.

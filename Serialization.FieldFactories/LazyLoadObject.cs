@@ -12,16 +12,16 @@ namespace Ecng.Serialization
 		internal LazyLoadObject(IStorage storage, object id)
 		{
 			if (storage == null)
-				throw new ArgumentNullException("storage");
+				throw new ArgumentNullException(nameof(storage));
 
 			if (id == null)
-				throw new ArgumentNullException("id");
+				throw new ArgumentNullException(nameof(id));
 
 			_storage = storage;
 			Id = id;
 		}
 
-		public object Id { get; private set; }
+		public object Id { get; }
 
 		/// <summary>
 		/// Gets or sets the value.

@@ -24,14 +24,9 @@ namespace NPOI.OpenXmlFormats.Wordprocessing
         {
             this.comments = comments;
         }
-        public CT_Comments Comments
-        {
-            get
-            {
-                return this.comments;
-            }
-        }
-        public void Save(Stream stream)
+        public CT_Comments Comments => this.comments;
+
+	    public void Save(Stream stream)
         {
             using (StreamWriter sw = new StreamWriter(stream))
             {

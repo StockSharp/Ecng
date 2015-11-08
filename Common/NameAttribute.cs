@@ -7,7 +7,7 @@
 		protected NameAttribute(string name)
 		{
 			if (name.IsEmpty())
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			Name = name;
 		}

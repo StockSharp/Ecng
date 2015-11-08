@@ -46,7 +46,7 @@ namespace Ecng.Reflection.Aspects
 				throw new ArgumentException("interceptorTypes");
 
 			if (interceptorTypes.IsEmpty())
-				throw new ArgumentOutOfRangeException("interceptorTypes");
+				throw new ArgumentOutOfRangeException(nameof(interceptorTypes));
 
 			foreach (var interceptorType in interceptorTypes)
 				_interceptorChain.Interceptors.Add(interceptorType.CreateInstance<Interceptor>());

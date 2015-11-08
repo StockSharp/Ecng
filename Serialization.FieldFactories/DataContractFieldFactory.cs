@@ -17,7 +17,7 @@ namespace Ecng.Serialization
 			Serializer = serializer;
 		}
 
-		public TSerializer Serializer { get; private set; }
+		public TSerializer Serializer { get; }
 
 		protected override I OnCreateInstance(ISerializer serializer, Stream source)
 		{

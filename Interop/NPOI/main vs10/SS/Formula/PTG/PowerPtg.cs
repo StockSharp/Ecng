@@ -36,18 +36,11 @@ namespace NPOI.SS.Formula.PTG
             // enforce singleton
         }
 
-        protected override byte Sid
-        {
-            get { return sid; }
-        }
+        protected override byte Sid => sid;
 
-        public override int NumberOfOperands
-        {
-            get { return 2; } 
-            // TODO - 2 seems wrong (Jun 2008).  Maybe this method is not relevant
-        }
+	    public override int NumberOfOperands => 2;
 
-        public override String ToFormulaString(String[] operands)
+	    public override String ToFormulaString(String[] operands)
         {
             StringBuilder buffer = new StringBuilder();
 

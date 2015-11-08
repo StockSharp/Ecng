@@ -23,7 +23,7 @@ namespace Ecng.Xaml
 			public CollectionAction(ActionTypes type, params TItem[] items)
 			{
 				if (items == null)
-					throw new ArgumentNullException("items");
+					throw new ArgumentNullException(nameof(items));
 
 				Type = type;
 				Items = items;
@@ -36,10 +36,10 @@ namespace Ecng.Xaml
 				Count = count;
 			}
 
-			public ActionTypes Type { get; private set; }
-			public TItem[] Items { get; private set; }
-			public int Index { get; private set; }
-			public int Count { get; private set; }
+			public ActionTypes Type { get; }
+			public TItem[] Items { get; }
+			public int Index { get; }
+			public int Count { get; }
 			public SyncObject SyncRoot { get; set; }
 		}
 
@@ -51,12 +51,12 @@ namespace Ecng.Xaml
 		public ThreadSafeObservableCollection(IListEx<TItem> items)
 		{
 			if (items == null)
-				throw new ArgumentNullException("items");
+				throw new ArgumentNullException(nameof(items));
 
 			_items = items;
 		}
 
-		public IListEx<TItem> Items { get { return _items; } }
+		public IListEx<TItem> Items => _items;
 
 		private GuiDispatcher _dispatcher = GuiDispatcher.GlobalDispatcher;
 
@@ -66,7 +66,7 @@ namespace Ecng.Xaml
 			set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 
 				_dispatcher = value;
 			}
@@ -101,10 +101,10 @@ namespace Ecng.Xaml
 		public override int RemoveRange(int index, int count)
 		{
 			if (index < -1)
-				throw new ArgumentOutOfRangeException("index");
+				throw new ArgumentOutOfRangeException(nameof(index));
 
 			if (count <= 0)
-				throw new ArgumentOutOfRangeException("count");
+				throw new ArgumentOutOfRangeException(nameof(count));
 
 			if (!Dispatcher.Dispatcher.CheckAccess())
 			{
@@ -306,10 +306,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// An object that can be used to synchronize access to the <see cref="T:System.Collections.ICollection"/>.
 		/// </returns>
-		object ICollection.SyncRoot
-		{
-			get { return SyncRoot; }
-		}
+		object ICollection.SyncRoot => SyncRoot;
 
 		/// <summary>
 		/// Gets a value indicating whether access to the <see cref="T:System.Collections.ICollection"/> is synchronized (thread safe).
@@ -317,10 +314,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// true if access to the <see cref="T:System.Collections.ICollection"/> is synchronized (thread safe); otherwise, false.
 		/// </returns>
-		bool ICollection.IsSynchronized
-		{
-			get { return true; }
-		}
+		bool ICollection.IsSynchronized => true;
 
 		/// <summary>
 		/// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.
@@ -328,10 +322,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// true if the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only; otherwise, false.
 		/// </returns>
-		public bool IsReadOnly
-		{
-			get { return false; }
-		}
+		public bool IsReadOnly => false;
 
 		/// <summary>
 		/// Gets a value indicating whether the <see cref="T:System.Collections.IList"/> has a fixed size.
@@ -339,10 +330,7 @@ namespace Ecng.Xaml
 		/// <returns>
 		/// true if the <see cref="T:System.Collections.IList"/> has a fixed size; otherwise, false.
 		/// </returns>
-		bool IList.IsFixedSize
-		{
-			get { return false; }
-		}
+		bool IList.IsFixedSize => false;
 
 		/// <summary>
 		/// Determines the index of a specific item in the <see cref="T:System.Collections.Generic.IList`1"/>.
@@ -419,7 +407,7 @@ namespace Ecng.Xaml
 		private void AddAction(CollectionAction item)
 		{
 			if (item == null)
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
 			lock (SyncRoot)
 			{
@@ -528,9 +516,6 @@ namespace Ecng.Xaml
 
 		private readonly SyncObject _syncRoot = new SyncObject();
 
-		public SyncObject SyncRoot
-		{
-			get { return _syncRoot; }
-		}
+		public SyncObject SyncRoot => _syncRoot;
 	}
 }

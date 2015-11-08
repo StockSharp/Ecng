@@ -69,14 +69,9 @@ namespace NPOI.SS.Formula.PTG
 
         protected abstract byte Sid { get; }
 
-        public override int Size
-        {
-            get
-            {
-                return SIZE;
-            }
-        }
-        public override String ToString()
+        public override int Size => SIZE;
+
+	    public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(GetType().Name);

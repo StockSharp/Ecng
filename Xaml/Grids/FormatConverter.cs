@@ -11,7 +11,7 @@
 		public FormatConverter(Func<object, TValue> getValue)
 		{
 			if (getValue == null)
-				throw new ArgumentNullException("getValue");
+				throw new ArgumentNullException(nameof(getValue));
 
 			_getValue = getValue;
 		}

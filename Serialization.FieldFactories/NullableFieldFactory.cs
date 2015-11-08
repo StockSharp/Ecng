@@ -32,7 +32,7 @@ namespace Ecng.Serialization
 		protected override T OnCreateSource(ISerializer serializer, T? instance)
 		{
 			if (instance == null)
-				throw new ArgumentNullException("instance", "For field {0} in schema {1} value is empty.".Put(Field.Name, Field.Schema.Name));
+				throw new ArgumentNullException(nameof(instance), "For field {0} in schema {1} value is empty.".Put(Field.Name, Field.Schema.Name));
 
 			return instance.Value;
 		}

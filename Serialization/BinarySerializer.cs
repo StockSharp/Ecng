@@ -9,10 +9,7 @@ namespace Ecng.Serialization
 
 	public class BinarySerializer<T> : Serializer<T>
 	{
-		public override string FileExtension
-		{
-			get { return "bin"; }
-		}
+		public override string FileExtension => "bin";
 
 		public override void Serialize(FieldList fields, SerializationItemCollection source, Stream stream)
 		{

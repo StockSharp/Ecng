@@ -82,30 +82,21 @@ namespace NPOI.DDF
         /// Returns the number of bytes that are required to Serialize this record.
         /// </summary>
         /// <value>Number of bytes</value>
-        public override int RecordSize
-        {
-            get { return 8 + 8; }
-        }
+        public override int RecordSize => 8 + 8;
 
-        /// <summary>
+	    /// <summary>
         /// Return the current record id.
         /// </summary>
         /// <value>The 16 bit record id.</value>
-        public override short RecordId
-        {
-            get { return RECORD_ID; }
-        }
+        public override short RecordId => RECORD_ID;
 
-        /// <summary>
+	    /// <summary>
         ///  The short name for this record
         /// </summary>
         /// <value></value>
-        public override String RecordName
-        {
-            get { return "Dg"; }
-        }
+        public override String RecordName => "Dg";
 
-        /// <summary>
+	    /// <summary>
         /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
         /// </summary>
         /// <returns>
@@ -171,12 +162,9 @@ namespace NPOI.DDF
         /// instance part of the option record.
         /// </summary>
         /// <value>The drawing group id.</value>
-        public short DrawingGroupId
-        {
-            get { return (short)(Options >> 4); }
-        }
+        public short DrawingGroupId => (short)(Options >> 4);
 
-        /// <summary>
+	    /// <summary>
         /// Increments the shape count.
         /// </summary>
         public void IncrementShapeCount()

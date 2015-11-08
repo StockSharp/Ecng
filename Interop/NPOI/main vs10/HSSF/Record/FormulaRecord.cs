@@ -100,14 +100,9 @@ namespace NPOI.HSSF.Record
             out1.WriteShort(0xFFFF);
         }
 
-        public String FormatDebugString
-        {
-            get
-            {
-                return FormatValue + ' ' + HexDump.ToHex(_variableData);
-            }
-        }
-        private String FormatValue
+        public String FormatDebugString => FormatValue + ' ' + HexDump.ToHex(_variableData);
+
+	    private String FormatValue
         {
             get
             {
@@ -122,14 +117,9 @@ namespace NPOI.HSSF.Record
                 return "#error(type=" + typeCode + ")#";
             }
         }
-        private int DataValue
-        {
-            get
-            {
-                return _variableData[DATA_INDEX];
-            }
-        }
-        public static SpecialCachedValue CreateCachedEmptyValue()
+        private int DataValue => _variableData[DATA_INDEX];
+
+	    public static SpecialCachedValue CreateCachedEmptyValue()
         {
             return Create(EMPTY, 0);
         }
@@ -357,36 +347,15 @@ namespace NPOI.HSSF.Record
             get { return (Ptg[])field_8_parsed_expr.Tokens; }
             set { field_8_parsed_expr = NPOI.SS.Formula.Formula.Create(value); }
         }
-        public NPOI.SS.Formula.Formula Formula
-        {
-            get
-            {
-                return field_8_parsed_expr;
-            }
-        }
+        public NPOI.SS.Formula.Formula Formula => field_8_parsed_expr;
 
-        protected override String RecordName
-        {
-            get
-            {
-                return "FORMULA";
-            }
-        }
+	    protected override String RecordName => "FORMULA";
 
-        protected override int ValueDataSize 
-        {
-            get
-            {
-                return FIXED_SIZE + field_8_parsed_expr.EncodedSize;
-            }
-        }
+	    protected override int ValueDataSize => FIXED_SIZE + field_8_parsed_expr.EncodedSize;
 
-        public override short Sid
-        {
-            get { return sid; }
-        }
+	    public override short Sid => sid;
 
-        public void SetCachedResultTypeEmptyString()
+	    public void SetCachedResultTypeEmptyString()
         {
             specialCachedValue = SpecialCachedValue.CreateCachedEmptyValue();
         }
@@ -402,22 +371,10 @@ namespace NPOI.HSSF.Record
         {
             specialCachedValue = SpecialCachedValue.CreateCachedBoolean(value);
         }
-        public bool CachedBooleanValue
-        {
-            get
-            {
-                return specialCachedValue.GetBooleanValue();
-            }
-        }
-        public int CachedErrorValue
-        {
-            get
-            {
-                return specialCachedValue.GetErrorValue();
-            }
-        }
+        public bool CachedBooleanValue => specialCachedValue.GetBooleanValue();
+	    public int CachedErrorValue => specialCachedValue.GetErrorValue();
 
-        public NPOI.SS.UserModel.CellType CachedResultType
+	    public NPOI.SS.UserModel.CellType CachedResultType
         {
             get
             {

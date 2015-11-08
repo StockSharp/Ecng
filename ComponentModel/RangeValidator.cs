@@ -52,7 +52,7 @@ namespace Ecng.ComponentModel
 		/// Gets the range.
 		/// </summary>
 		/// <value>The range.</value>
-		public Range<T> Range { get; private set; }
+		public Range<T> Range { get; }
 
 		#region BaseValidator<T> Members
 
@@ -63,7 +63,7 @@ namespace Ecng.ComponentModel
 		public override void Validate(T value)
 		{
 			if (!Range.Contains(value))
-				throw new ArgumentOutOfRangeException("value");
+				throw new ArgumentOutOfRangeException(nameof(value));
 		}
 
 		#endregion
@@ -96,7 +96,7 @@ namespace Ecng.ComponentModel
 		public override BaseValidator CreateValidator(Type validationType)
 		{
 			if (validationType == null)
-				throw new ArgumentNullException("validationType");
+				throw new ArgumentNullException(nameof(validationType));
 
 			if (validationType.IsByRef)
 				validationType = validationType.GetElementType();

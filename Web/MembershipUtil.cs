@@ -35,10 +35,7 @@
 			}
 		}
 
-		private static BaseMembershipProvider Provider
-		{
-			get { return (BaseMembershipProvider)Membership.Provider; }
-		}
+		private static BaseMembershipProvider Provider => (BaseMembershipProvider)Membership.Provider;
 
 		public static SecurityErrorTypes? Validate(string userName, string password)
 		{
@@ -53,7 +50,7 @@
 		public static void SetAuthCookie(this IWebUser user, bool createPersistentCookie)
 		{
 			if (user == null)
-				throw new ArgumentNullException("user");
+				throw new ArgumentNullException(nameof(user));
 
 			FormsAuthentication.SetAuthCookie(user.Name, createPersistentCookie);
 		}
@@ -61,7 +58,7 @@
 		public static void RedirectFromLoginPage(this IWebUser user, bool createPersistentCookie)
 		{
 			if (user == null)
-				throw new ArgumentNullException("user");
+				throw new ArgumentNullException(nameof(user));
 
 			FormsAuthentication.RedirectFromLoginPage(user.Name, createPersistentCookie);
 		}
@@ -69,12 +66,12 @@
 		public static MembershipUser ToMembership(this IWebUser user)
 		{
 			if (user == null)
-				throw new ArgumentNullException("user");
+				throw new ArgumentNullException(nameof(user));
 
 			var msUser = Membership.GetUser(user.Name);
 
 			if (msUser == null)
-				throw new ArgumentException("Membership user with name {0} doesn't exist.".Put(user.Name), "user");
+				throw new ArgumentException("Membership user with name {0} doesn't exist.".Put(user.Name), nameof(user));
 
 			return msUser;
 		}
@@ -82,12 +79,12 @@
 		public static IWebUser ToWeb(this MembershipUser user)
 		{
 			if (user == null)
-				throw new ArgumentNullException("user");
+				throw new ArgumentNullException(nameof(user));
 
 			var webUser = Provider.Users.GetByName(user.UserName);
 
 			if (webUser == null)
-				throw new ArgumentException("Web user with name {0} doesn't exist.".Put(user.UserName), "user");
+				throw new ArgumentException("Web user with name {0} doesn't exist.".Put(user.UserName), nameof(user));
 
 			return webUser;
 		}

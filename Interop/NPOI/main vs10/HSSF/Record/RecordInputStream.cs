@@ -167,12 +167,9 @@ namespace NPOI.HSSF.Record
             return result;
         }
 
-        public short Sid
-        {
-            get { return (short)_currentSid; }
-        }
+        public short Sid => (short)_currentSid;
 
-        public override long Position
+	    public override long Position
         {
             get
             {
@@ -184,17 +181,11 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public long CurrentLength
-        {
-            get { return _currentDataLength; }
-        }
+        public long CurrentLength => _currentDataLength;
 
-        public int RecordOffset
-        {
-            get { return _currentDataOffset; }
-        }
+	    public int RecordOffset => _currentDataOffset;
 
-        public override long Seek(long offset, SeekOrigin origin)
+	    public override long Seek(long offset, SeekOrigin origin)
         {
             //if (!this.CanSeek)
             //{
@@ -594,12 +585,9 @@ namespace NPOI.HSSF.Record
             }
         }
 
-        public override long Length
-        {
-            get { return _currentDataLength; }
-        }
+        public override long Length => _currentDataLength;
 
-        public override void SetLength(long value)
+	    public override void SetLength(long value)
         {
             _currentDataLength = (int)value;
         }
@@ -610,31 +598,13 @@ namespace NPOI.HSSF.Record
         }
 
         // Properties
-        public override bool CanRead
-        {
-            get
-            {
-                return true;
-            }
-        }
+        public override bool CanRead => true;
 
-        public override bool CanSeek
-        {
-            get
-            {
-                return false;
-            }
-        }
+	    public override bool CanSeek => false;
 
-        public override bool CanWrite
-        {
-            get
-            {
-                return false;
-            }
-        }
+	    public override bool CanWrite => false;
 
-        public override void Write(byte[] buffer, int offset, int count)
+	    public override void Write(byte[] buffer, int offset, int count)
         {
             throw new NotSupportedException();
         }

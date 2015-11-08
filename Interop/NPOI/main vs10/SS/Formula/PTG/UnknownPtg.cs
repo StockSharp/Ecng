@@ -42,29 +42,21 @@ namespace NPOI.SS.Formula.PTG
             // doesn't need anything
         }
 
-        public override bool IsBaseToken
-        {
-            get { return true; }
-        }
-        public override void Write(ILittleEndianOutput out1)
+        public override bool IsBaseToken => true;
+
+	    public override void Write(ILittleEndianOutput out1)
         {
         }
 
-        public override int Size
-        {
-            get { return size; }
-        }
+        public override int Size => size;
 
-        public override String ToFormulaString()
+	    public override String ToFormulaString()
         {
             return "UNKNOWN";
         }
-        public override byte DefaultOperandClass
-        {
-            get { return Ptg.CLASS_VALUE; }
-        }
+        public override byte DefaultOperandClass => Ptg.CLASS_VALUE;
 
-        public override Object Clone()
+	    public override Object Clone()
         {
             return new UnknownPtg();
         }

@@ -11,7 +11,7 @@
 			: base(name)
 		{
 			if (database == null)
-				throw new ArgumentNullException("database");
+				throw new ArgumentNullException(nameof(database));
 
 			Database = database;
 		}
