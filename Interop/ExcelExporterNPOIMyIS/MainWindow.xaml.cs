@@ -1,15 +1,13 @@
-﻿using System.Collections.Generic;
-using System.Windows.Documents;
-
-namespace ExcelExporterNPOIMyIS
+﻿namespace ExcelExporterNPOIMyIS
 {
 	using System;
 	using System.Diagnostics;
 	using System.Windows;
 	using System.Windows.Media;
 
+	using Ecng.ComponentModel;
 	using Ecng.Interop;
-	using NPOI.HSSF.Util;
+
 	using NPOI.SS.Util;
 
 	public partial class MainWindow
@@ -32,15 +30,15 @@ namespace ExcelExporterNPOIMyIS
 			//Conditional Formatting
 			worker.SetCell(0, _indexRow, "Conditional Formatting A2>4");
 			AddData(worker);
-			worker.SetConditionalFormatting(0, 2, 0, 4, HSSFColor.Blue.Index, @"A2>4");
+			worker.SetConditionalFormatting(0, 2, 0, 4, Colors.Blue, @"A2>4");
 
 			//Conditional Formatting with between values.
 			_indexRow ++;
 			worker.SetCell(0, _indexRow, "Conditional Formatting Between 10-50");
 //			_indexRow++;
 			AddData(worker);
-			worker.SetConditionalFormatting(0,2,5,9,HSSFColor.Brown.Index,@"10","50",
-				NPOI.SS.UserModel.ComparisonOperator.Between, isUseComparision: true);
+			worker.SetConditionalFormatting(0,2,5,9,Colors.Brown,@"10","50",
+				ComparisonOperator.GreaterOrEqual | ComparisonOperator.LessOrEqual, isUseComparision: true);
 			worker.Save(path + "1.xlsx", true);
 			Process.Start(path + "1.xlsx");
 		}
@@ -59,8 +57,7 @@ namespace ExcelExporterNPOIMyIS
 		{
 			_indexRow = 0;
 			worker = new ExcelWorker();
-			worker.SetCell(0, _indexRow, "ColorBlue")
-				.SetBackGroundColor(_indexRow, 0, NPOI.HSSF.Util.HSSFColor.Blue.Index);
+			worker.SetCell(0, _indexRow, "ColorBlue").SetBackGroundColor(_indexRow, 0, Colors.Blue);
 			_indexRow++;
 
 			AddData(worker);
@@ -107,7 +104,7 @@ namespace ExcelExporterNPOIMyIS
 			worker = new ExcelWorker();
 			DateTime dt = DateTime.Now;
 
-			worker.SetCell(_indexRow, 1, "DateTime").SetBackGroundColor(_indexRow, 1, HSSFColor.Red.Index);
+			worker.SetCell(_indexRow, 1, "DateTime").SetBackGroundColor(_indexRow, 1, Colors.Red);
 			_indexRow++;
 			worker.SetCell(_indexRow, 1, dt);
 			_indexRow++;
@@ -130,7 +127,7 @@ namespace ExcelExporterNPOIMyIS
 			worker.SetCell(_indexRow, 1, dt, ExcelWorker.DataFormat.UniversalText);
 			_indexRow++;
 
-			worker.SetCell(_indexRow, 1, "DateTime").SetBackGroundColor(_indexRow, 1, HSSFColor.Red.Index);
+			worker.SetCell(_indexRow, 1, "DateTime").SetBackGroundColor(_indexRow, 1, Colors.Red);
 			_indexRow++;
 			worker.SetCell(_indexRow, 1, dt);
 			_indexRow++;
@@ -155,7 +152,7 @@ namespace ExcelExporterNPOIMyIS
 
 			_indexRow = 0;
 			int nom = 321412412;
-			worker.SetCell(_indexRow, 2, "Nomber").SetBackGroundColor(_indexRow, 2, HSSFColor.Red.Index);
+			worker.SetCell(_indexRow, 2, "Nomber").SetBackGroundColor(_indexRow, 2, Colors.Red);
 			;
 			_indexRow++;
 			worker.SetCell(_indexRow, 2, nom);
@@ -225,13 +222,11 @@ namespace ExcelExporterNPOIMyIS
 			worker.SetWidthAndHeight(0, 1, 2000, 3000);
 			worker.SetWidthAndHeight(1, 2, 200, 3000);
 
-			worker.SetAligmentCell(0, 1, NPOI.SS.UserModel.VerticalAlignment.Center,
-				NPOI.SS.UserModel.HorizontalAlignment.Right);
+			worker.SetAligmentCell(0, 1, VerticalAlignment.Center, HorizontalAlignment.Right);
 
 			worker.MergeCells(5, 7, 0, 5);
 			worker.SetCell(5, 0, "MergedCell");
-			worker.SetAligmentCell(5, 7, NPOI.SS.UserModel.VerticalAlignment.Center,
-				NPOI.SS.UserModel.HorizontalAlignment.Right);
+			worker.SetAligmentCell(5, 7, VerticalAlignment.Center, HorizontalAlignment.Right);
 
 			_indexRow = 0;
 
@@ -246,8 +241,7 @@ namespace ExcelExporterNPOIMyIS
 
 			worker.MergeCells(5, 7, 0, 5);
 			worker.SetCell(0, 5, "MergedCell");
-			worker.SetAligmentCell(0, 5, NPOI.SS.UserModel.VerticalAlignment.Center,
-				NPOI.SS.UserModel.HorizontalAlignment.Right);
+			worker.SetAligmentCell(0, 5, VerticalAlignment.Center, HorizontalAlignment.Right);
 
 			_indexRow = 0;
 

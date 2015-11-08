@@ -6,6 +6,7 @@
 	using System.Drawing;
 	using System.IO;
 	using System.Linq;
+	using System.Windows;
 	using System.Windows.Media;
 
 	using Ecng.Collections;
@@ -71,7 +72,6 @@
 		public ExcelWorker()
 		{
 			Workbook = new XSSFWorkbook();
-			//            Workbook = new NPOI.XSSF.UserModel.XSSFWorkbook();
 			_currentSheet = Workbook.CreateSheet();
 		}
 
@@ -161,15 +161,49 @@
 		}
 
 		public ExcelWorker SetAligmentCell(int colInd, int rowInd,
-			ICellStyle.VerticalAlignment verAligment = ICellStyle.VerticalAlignment.Center,
-			ICellStyle.HorizontalAlignment horAligment = ICellStyle.HorizontalAlignment.Center)
+			VerticalAlignment? verAligment = VerticalAlignment.Center,
+			HorizontalAlignment? horAligment = HorizontalAlignment.Center)
 		{
 			var ccel = InternalGetCell(colInd, rowInd);
 			var style = Workbook.CreateCellStyle();
-			style.VerticalAlignment = verAligment;
-			style.Alignment = horAligment;
+			style.VerticalAlignment = verAligment == null ? ICellStyle.VerticalAlignment.None : ToExcel(verAligment.Value);
+			style.Alignment = horAligment == null ? ICellStyle.HorizontalAlignment.General : ToExcel(horAligment.Value);
 			ccel.CellStyle = style;
 			return this;
+		}
+
+		private ICellStyle.HorizontalAlignment ToExcel(HorizontalAlignment aligment)
+		{
+			switch (aligment)
+			{
+				case HorizontalAlignment.Left:
+					return ICellStyle.HorizontalAlignment.Left;
+				case HorizontalAlignment.Center:
+					return ICellStyle.HorizontalAlignment.Center;
+				case HorizontalAlignment.Right:
+					return ICellStyle.HorizontalAlignment.Right;
+				case HorizontalAlignment.Stretch:
+					return ICellStyle.HorizontalAlignment.Justify;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(aligment), aligment, null);
+			}
+		}
+
+		private ICellStyle.VerticalAlignment ToExcel(VerticalAlignment aligment)
+		{
+			switch (aligment)
+			{
+				case VerticalAlignment.Top:
+					return ICellStyle.VerticalAlignment.Top;
+				case VerticalAlignment.Center:
+					return ICellStyle.VerticalAlignment.Center;
+				case VerticalAlignment.Bottom:
+					return ICellStyle.VerticalAlignment.Bottom;
+				case VerticalAlignment.Stretch:
+					return ICellStyle.VerticalAlignment.Justify;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(aligment), aligment, null);
+			}
 		}
 
 		public ExcelWorker SetWidthAndHeight(int colInd, int rowInd, int widthCol, short heighRow)
@@ -353,14 +387,15 @@
 		/// </summary>
 		/// <param name="col"></param>
 		/// <param name="row"></param>
-		/// <param name="hssfColorIndex"></param>
+		/// <param name="color"></param>
 		/// <param name="fillPatternSolidForeground"></param>
 		/// <returns></returns>
-		public ExcelWorker SetBackGroundColor(int col, int row, short hssfColorIndex, ICellStyle.FillPattern fillPatternSolidForeground = ICellStyle.FillPattern.SolidForeground)
+		public ExcelWorker SetBackGroundColor(int col, int row, Color color,
+			ICellStyle.FillPattern fillPatternSolidForeground = ICellStyle.FillPattern.SolidForeground)
 		{
 			var style = Workbook.CreateCellStyle();
-			style.FillBackgroundColor = hssfColorIndex;
-			style.FillForegroundColor = hssfColorIndex;
+			style.FillBackgroundColor = ToHSSFColorIndex(color);
+			//style.FillForegroundColor = hssfColorIndex;
 			style.FillPattern = fillPatternSolidForeground;
 			var cell = InternalGetCell(col, row);
 			cell.CellStyle = style;
@@ -538,7 +573,7 @@
 			{
 				_currentSheet = Workbook.GetSheet(sheetName);
 				_indecies.Clear();
-            }
+			}
 
 			return this;
 		}
@@ -640,13 +675,15 @@
 		/// <param name="lastRow"></param>
 		/// <param name="firstColumn"></param>
 		/// <param name="lasColumn"></param>
-		/// <param name="backGroungColorInd"></param>
+		/// <param name="backGroungColor"></param>
 		/// <param name="formula1"></param>
 		/// <param name="formula2"></param>
-		/// <param name="comparisonOperator"></param>
+		/// <param name="comparison"></param>
 		/// <param name="isUseComparision"></param>
 		/// <returns></returns>
-		public ExcelWorker SetConditionalFormatting(int firstColumn, int lasColumn, int firstRow, int lastRow, short backGroungColorInd, string formula1, string formula2 = "", ICellStyle.ComparisonOperator comparisonOperator = ICellStyle.ComparisonOperator.Equal, bool isUseComparision = false)
+		public ExcelWorker SetConditionalFormatting(int firstColumn, int lasColumn, int firstRow, int lastRow,
+			Color backGroungColor, string formula1, string formula2 = "",
+			ComparisonOperator comparison = ComparisonOperator.Equal, bool isUseComparision = false)
 		{
 			CellRangeAddress[] myDataRange =
 			{
@@ -658,10 +695,13 @@
 			if (isUseComparision == false)
 				rule = sheetCf.CreateConditionalFormattingRule(formula1);
 			else
+			{
+				var comparisonOperator = ToExcelOperator(comparison);
 				rule = (comparisonOperator == ICellStyle.ComparisonOperator.Between || comparisonOperator == ICellStyle.ComparisonOperator.NotBetween) ? sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1, formula2) : sheetCf.CreateConditionalFormattingRule(comparisonOperator, formula1);
+			}
 
 			var fill = rule.CreatePatternFormatting();
-			fill.FillBackgroundColor = backGroungColorInd;
+			fill.FillBackgroundColor = ToHSSFColorIndex(backGroungColor);
 			fill.FillPattern = (short)ICellStyle.FillPattern.SolidForeground;
 			sheetCf.AddConditionalFormatting(myDataRange, rule);
 			return this;
@@ -680,7 +720,8 @@
 		/// <param name="bgColor"></param>
 		/// <param name="fgColor"></param>
 		/// <returns></returns>
-		public ExcelWorker SetConditionalFormatting(int col, ComparisonOperator comparison, string formula1, Color? bgColor, Color? fgColor)
+		public ExcelWorker SetConditionalFormatting(int col, ComparisonOperator comparison, string formula1,
+			Color? bgColor, Color? fgColor)
 		{
 			return SetConditionalFormatting(col, col, 0, ushort.MaxValue, comparison, formula1, formula1, bgColor, fgColor);
 		}
@@ -706,7 +747,8 @@
 		/// <param name="bgColor"></param>
 		/// <param name="fontColor"></param>
 		/// <returns></returns>
-		public ExcelWorker SetConditionalFormatting(int colStart, int colEnd, int rowStart, int rowEnd, ComparisonOperator comparison, string formula1, string formula2, Color? bgColor, Color? fontColor)
+		public ExcelWorker SetConditionalFormatting(int colStart, int colEnd, int rowStart, int rowEnd,
+			ComparisonOperator comparison, string formula1, string formula2, Color? bgColor, Color? fontColor)
 		{
 			CellRangeAddress[] dataRange =
 			{
@@ -968,6 +1010,7 @@
 				for (var i = rowCount; i <= rowInd; i++)
 					_currentSheet.CreateRow(i);
 			}
+
 			var row = _currentSheet.GetRow(rowInd);
 			var cellIndecies = _indecies.SafeAdd(rowInd, key => new HashSet<int>(row.Cells.Select(c => c.ColumnIndex)));
 

@@ -75,6 +75,7 @@
       <HintPath>..\References\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="SevenZipSharp">
       <HintPath>..\References\SevenZip\SevenZipSharp.dll</HintPath>
     </Reference>
