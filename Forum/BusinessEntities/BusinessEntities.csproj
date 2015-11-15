@@ -142,7 +142,7 @@
     </ProjectReference>
     <ProjectReference Include="..\..\Logic\BusinessEntities\BusinessEntities.csproj">
       <Project>{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A}</Project>
-      <Name>BusinessEntities %28Logic\BusinessEntities%29</Name>
+      <Name>BusinessEntities</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Security\Security.csproj">
       <Project>{F99E753E-C8C8-4753-BA95-E656AAE55786}</Project>

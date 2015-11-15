@@ -133,7 +133,7 @@
     </ProjectReference>
     <ProjectReference Include="..\..\Logic\BusinessEntities\BusinessEntities.csproj">
       <Project>{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A}</Project>
-      <Name>BusinessEntities %28Logic\BusinessEntities%29</Name>
+      <Name>BusinessEntities</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Net\Net.csproj">
       <Project>{685a7bf3-5c51-42ea-954f-1dec176f9dfc}</Project>
@@ -161,7 +161,7 @@
     </ProjectReference>
     <ProjectReference Include="..\BusinessEntities\BusinessEntities.csproj">
       <Project>{11FB7AAA-D0F0-4040-9315-75B15A528151}</Project>
-      <Name>BusinessEntities %28Forum\BusinessEntities%29</Name>
+      <Name>BusinessEntities</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
