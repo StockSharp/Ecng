@@ -1,0 +1,79 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:Common="clr-namespace:Ecng.Xaml.Charting.Common"
+                    xmlns:layout="clr-namespace:System.Windows.Controls"
+                    xmlns:Ultrachart="clr-namespace:Ecng.Xaml.Charting"
+                    xmlns:common="clr-namespace:Ecng.Xaml.Charting.Rendering.Common">
+
+    <!--  *********************************  -->
+    <!--  Theme Specific Colors and Brushes  -->
+    <!--  *********************************  -->
+
+    <!--  Chart Brushes  -->
+    <SolidColorBrush x:Key="TickTextBrush" Color="#EEEEEE" />
+    <SolidColorBrush x:Key="MajorGridLineBrush" Color="#AAB3E8F6" />
+    <SolidColorBrush x:Key="MinorGridLineBrush" Color="#33B3E8F6" />
+    <LinearGradientBrush x:Key="UltrachartBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FF151624" />
+        <GradientStop Offset="0.2" Color="#FF3B4990" />
+        <GradientStop Offset="1.0" Color="#FF151624" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="GridBorderBrush" Color="#FFB3E8F6" />
+    <SolidColorBrush x:Key="GridBackgroundBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="RolloverLineBrush" Color="#5599EE99" />
+    <SolidColorBrush x:Key="CursorLineBrush" Color="#FFB3E8F6" />
+    <SolidColorBrush x:Key="RubberBandFillBrush" Color="#33B3E8F6" />
+    <SolidColorBrush x:Key="RubberBandStrokeBrush" Color="#FFFFFFFF" />
+
+    <SolidColorBrush x:Key="LegendBackgroundBrush" Color="#77FFFFFF" />
+
+    <SolidColorBrush x:Key="LabelBackgroundBrush" Color="#CC3B4990" />
+    <SolidColorBrush x:Key="LabelBorderBrush" Color="#FFB3E8F6" />
+    <SolidColorBrush x:Key="LabelForegroundBrush" Color="#EEEEEE" />
+
+    <SolidColorBrush x:Key="TextAnnotationForeground" Color="#EEEEEE" />
+    <SolidColorBrush x:Key="TextAnnotationBackground" Color="#CC3B4990" />
+
+    <!-- TODO a real colour for this chart type -->
+    <Color x:Key="AxisBandsFill">#33B3E8F6</Color>
+    
+    <!--  Default Series Colors  -->
+    <Color x:Key="UpWickColor">#FFFFFFFF</Color>
+    <Color x:Key="DownWickColor">#FFB3E8F6</Color>
+    <SolidColorBrush x:Key="UpBodyBrush" Color="#55DCEFF4" />
+    <SolidColorBrush x:Key="DownBodyBrush" Color="#33B3E8F6" />
+
+    <Color x:Key="UpBandSeriesLineColor">#FF52CC54</Color>
+    <Color x:Key="DownBandSeriesLineColor">#FFE26565</Color>
+    <Color x:Key="UpBandSeriesFillColor">#9052CC54</Color>
+    <Color x:Key="DownBandSeriesFillColor">#A0E26565</Color>
+
+    <SolidColorBrush x:Key="MountainAreaBrush">#33B3E8F6</SolidColorBrush>
+    <Color x:Key="MountainLineColor">#FFFFFFFF</Color>
+    <Color x:Key="LineSeriesColor">#FFFFFFFF</Color>
+    <Color x:Key="ColumnLineColor">#FFDCEFF4</Color>
+    <SolidColorBrush x:Key="ColumnFillBrush" Color="#FFDCEFF4"></SolidColorBrush> 
+
+    <Brush x:Key="OverviewFillBrush">#7FD3D3D3</Brush>
+
+    <Brush x:Key="ScrollbarFillBrush">#7FD3D3D3</Brush>
+
+    <LinearGradientBrush x:Key="DefaultColorMapBrush">
+        <GradientStop Offset="0" Color="DarkBlue" />
+        <GradientStop Offset="0.5" Color="CornflowerBlue" />
+        <GradientStop Offset="1" Color="#FF22AA" />
+    </LinearGradientBrush>
+
+    <Color x:Key="BoxVolumeTimeframe2Color">#FF353654</Color>
+    <Color x:Key="BoxVolumeTimeframe2FrameColor">#FFFFFFFF</Color>
+    <Color x:Key="BoxVolumeTimeframe3Color">#FF555674</Color>
+    <Color x:Key="BoxVolumeCellFontColor">#63C3D8F6</Color>
+    <Color x:Key="BoxVolumeHighVolColor">White</Color>
+
+    <Color x:Key="ClusterProfileLineColor">#FF555674</Color>
+    <Color x:Key="ClusterProfileTextColor">#FF353654</Color>
+    <Color x:Key="ClusterProfileClusterColor">#FFBCCFD4</Color>
+    <Color x:Key="ClusterProfileClusterMaxColor">White</Color>
+
+</ResourceDictionary>
+
