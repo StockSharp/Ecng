@@ -11,7 +11,7 @@
     <RootNamespace>Ecng.Forum.Components</RootNamespace>
     <AssemblyName>Ecng.Forum.Components</AssemblyName>
     <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\..\Ecng.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\..\Ecng.snk</AssemblyOriginatorKeyFile>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>
@@ -110,8 +110,8 @@
     <Compile Include="UserLink.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Ecng.pfx">
-      <Link>Ecng.pfx</Link>
+    <None Include="..\..\Ecng.snk">
+      <Link>Ecng.snk</Link>
     </None>
   </ItemGroup>
   <ItemGroup>

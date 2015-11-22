@@ -12,7 +12,7 @@
     <AssemblyName>Ecng.Data.SqlServer</AssemblyName>
     <RootNamespace>Ecng.Data.SqlServer</RootNamespace>
     <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\Ecng.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
     <PermissionLevel>1</PermissionLevel>
     <FileUpgradeFlags>40</FileUpgradeFlags>
@@ -80,8 +80,8 @@
   </Target>
   -->
   <ItemGroup>
-    <None Include="..\Ecng.pfx">
-      <Link>Ecng.pfx</Link>
+    <None Include="..\Ecng.snk">
+      <Link>Ecng.snk</Link>
     </None>
     <None Include="Test Scripts\StringColumnSize.sql" />
   </ItemGroup>
