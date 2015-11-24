@@ -43,6 +43,18 @@ namespace Ecng.Xaml
 				return _convertedValues.TryGetValue(item);
 		}
 
+		public event Action<IEnumerable<TItem>> AddedRange
+		{
+			add { throw new NotSupportedException(); }
+			remove { throw new NotSupportedException(); }
+		}
+
+		public event Action<IEnumerable<TItem>> RemovedRange
+		{
+			add { throw new NotSupportedException(); }
+			remove { throw new NotSupportedException(); }
+		}
+
 		public void AddRange(IEnumerable<TItem> items)
 		{
 			lock (SyncRoot)
@@ -62,7 +74,7 @@ namespace Ecng.Xaml
 			CheckCount();
 		}
 
-		public IEnumerable<TItem> RemoveRange(IEnumerable<TItem> items)
+		public void RemoveRange(IEnumerable<TItem> items)
 		{
 			lock (SyncRoot)
 			{
@@ -81,9 +93,6 @@ namespace Ecng.Xaml
 
 				_collection.RemoveRange(converted);
 			}
-
-			// TODO
-			return items;
 		}
 
 		public override int RemoveRange(int index, int count)

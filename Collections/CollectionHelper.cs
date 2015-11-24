@@ -170,6 +170,8 @@
 				((List<T>)source).AddRange(items);
 			else if (source is ICollectionEx<T>)
 				((ICollectionEx<T>)source).AddRange(items);
+			else if (source is ISet<T>)
+				((ISet<T>)source).UnionWith(items);
 			else
 			{
 				foreach (var item in items)
@@ -177,12 +179,15 @@
 			}
 		}
 
-		public static IEnumerable<T> RemoveRange<T>(this ICollection<T> source, IEnumerable<T> items)
+		public static void RemoveRange<T>(this ICollection<T> source, IEnumerable<T> items)
 		{
 			if (items == null)
 				throw new ArgumentNullException(nameof(items));
 
-			return items.Where(source.Remove).ToArray();
+			if (source is ICollectionEx<T>)
+				((ICollectionEx<T>)source).RemoveRange(items);
+			else
+				items.ForEach(i => source.Remove(i));
 		}
 
 		public static IEnumerable<T> RemoveWhere<T>(this ICollection<T> collection, Func<T, bool> filter)

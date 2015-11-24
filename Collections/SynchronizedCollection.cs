@@ -14,9 +14,7 @@
 		{
 		}
 
-		private readonly SyncObject _syncRoot = new SyncObject();
-
-		public SyncObject SyncRoot => _syncRoot;
+		public SyncObject SyncRoot => new SyncObject();
 
 		public override int Count
 		{

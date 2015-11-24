@@ -10,6 +10,8 @@ namespace Ecng.Xaml
 
 	using Ecng.Collections;
 
+	using MoreLinq;
+
 	public class ObservableCollectionEx<TItem> : IListEx<TItem>, IList, INotifyCollectionChanged, INotifyPropertyChanged
 	{
 		private const string _countString = "Count";
@@ -23,6 +25,18 @@ namespace Ecng.Xaml
 
 		public event NotifyCollectionChangedEventHandler CollectionChanged;
 		public event PropertyChangedEventHandler PropertyChanged;
+
+		public event Action<IEnumerable<TItem>> AddedRange
+		{
+			add { throw new NotSupportedException(); }
+			remove { throw new NotSupportedException(); }
+		}
+
+		public event Action<IEnumerable<TItem>> RemovedRange
+		{
+			add { throw new NotSupportedException(); }
+			remove { throw new NotSupportedException(); }
+		}
 
 		public virtual void AddRange(IEnumerable<TItem> items)
 		{
@@ -41,9 +55,22 @@ namespace Ecng.Xaml
 			OnCollectionChanged(NotifyCollectionChangedAction.Add, arr, index);
 		}
 
-		public virtual IEnumerable<TItem> RemoveRange(IEnumerable<TItem> items)
+		public virtual void RemoveRange(IEnumerable<TItem> items)
 		{
-			return CollectionHelper.RemoveRange(this, items);
+			items = items.ToArray();
+
+			if (items.Count() > 10000 || items.Count() > Count * 0.1)
+			{
+				var temp = new HashSet<TItem>(_items);
+				temp.RemoveRange(items);
+
+				Clear();
+				AddRange(temp);
+
+				return;
+			}
+
+			items.ForEach(i => Remove(i));
 		}
 
 		public virtual int RemoveRange(int index, int count)
@@ -319,11 +346,7 @@ namespace Ecng.Xaml
 		protected void OnPropertyChanged(string propertyName)
 		{
 			var evt = PropertyChanged;
-
-			if (evt != null)
-			{
-				evt(this, new PropertyChangedEventArgs(propertyName));
-			}
+			evt?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
 		/// <summary>
@@ -379,11 +402,7 @@ namespace Ecng.Xaml
 		private void OnCollectionReset()
 		{
 			var evt = CollectionChanged;
-
-			if (evt == null)
-				return;
-
-			evt(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+			evt?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 		}
 	}
 }

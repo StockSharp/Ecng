@@ -43,7 +43,6 @@ namespace Ecng.Xaml
 			public SyncObject SyncRoot { get; set; }
 		}
 
-		private readonly IListEx<TItem> _items;
 		private readonly Queue<CollectionAction> _pendingActions = new Queue<CollectionAction>();
 		private int _pendingCount;
 		private bool _isTimerStarted;
@@ -53,10 +52,10 @@ namespace Ecng.Xaml
 			if (items == null)
 				throw new ArgumentNullException(nameof(items));
 
-			_items = items;
+			Items = items;
 		}
 
-		public IListEx<TItem> Items => _items;
+		public IListEx<TItem> Items { get; }
 
 		private GuiDispatcher _dispatcher = GuiDispatcher.GlobalDispatcher;
 
@@ -72,6 +71,18 @@ namespace Ecng.Xaml
 			}
 		}
 
+		public event Action<IEnumerable<TItem>> AddedRange
+		{
+			add { throw new NotSupportedException(); }
+			remove { throw new NotSupportedException(); }
+		}
+
+		public event Action<IEnumerable<TItem>> RemovedRange
+		{
+			add { throw new NotSupportedException(); }
+			remove { throw new NotSupportedException(); }
+		}
+
 		public virtual void AddRange(IEnumerable<TItem> items)
 		{
 			if (!Dispatcher.Dispatcher.CheckAccess())
@@ -80,22 +91,21 @@ namespace Ecng.Xaml
 				return;
 			}
 
-			_items.AddRange(items);
-			_pendingCount = _items.Count;
+			Items.AddRange(items);
+			_pendingCount = Items.Count;
 			CheckCount();
 		}
 
-		public virtual IEnumerable<TItem> RemoveRange(IEnumerable<TItem> items)
+		public virtual void RemoveRange(IEnumerable<TItem> items)
 		{
 			if (!Dispatcher.Dispatcher.CheckAccess())
 			{
 				AddAction(new CollectionAction(ActionTypes.Remove, items.ToArray()));
-				return Enumerable.Empty<TItem>();
+				return;
 			}
 
-			var deleted = _items.RemoveRange(items);
-			_pendingCount = _items.Count;
-			return deleted;
+			Items.RemoveRange(items);
+			_pendingCount = Items.Count;
 		}
 
 		public override int RemoveRange(int index, int count)
@@ -114,7 +124,7 @@ namespace Ecng.Xaml
 				return (realCount.Min(count)).Max(0);
 			}
 
-			return _items.RemoveRange(index, count);
+			return Items.RemoveRange(index, count);
 		}
 
 		/// <summary>
@@ -125,7 +135,7 @@ namespace Ecng.Xaml
 		/// </returns>
 		public IEnumerator<TItem> GetEnumerator()
 		{
-			return _items.GetEnumerator();
+			return Items.GetEnumerator();
 		}
 
 		/// <summary>
@@ -151,8 +161,8 @@ namespace Ecng.Xaml
 				return;
 			}
 
-			_items.Add(item);
-			_pendingCount = _items.Count;
+			Items.Add(item);
+			_pendingCount = Items.Count;
 			CheckCount();
 		}
 
@@ -171,8 +181,8 @@ namespace Ecng.Xaml
 				return true;
 			}
 
-			var removed = _items.Remove(item);
-			_pendingCount = _items.Count;
+			var removed = Items.Remove(item);
+			_pendingCount = Items.Count;
 			return removed;
 		}
 
@@ -213,7 +223,7 @@ namespace Ecng.Xaml
 				return;
 			}
 
-			_items.Clear();
+			Items.Clear();
 			_pendingCount = 0;
 		}
 
@@ -259,7 +269,7 @@ namespace Ecng.Xaml
 			if (!Dispatcher.Dispatcher.CheckAccess())
 				throw new NotSupportedException();
 
-			return _items.Contains(item);
+			return Items.Contains(item);
 		}
 
 		/// <summary>
@@ -271,7 +281,7 @@ namespace Ecng.Xaml
 			if (!Dispatcher.Dispatcher.CheckAccess())
 				throw new NotSupportedException();
 
-			_items.CopyTo(array, arrayIndex);
+			Items.CopyTo(array, arrayIndex);
 		}
 
 		/// <summary>
@@ -296,7 +306,7 @@ namespace Ecng.Xaml
 				if (!Dispatcher.Dispatcher.CheckAccess())
 					throw new NotSupportedException();
 
-				return _items.Count;
+				return Items.Count;
 			}
 		}
 
@@ -344,7 +354,7 @@ namespace Ecng.Xaml
 			if (!Dispatcher.Dispatcher.CheckAccess())
 				throw new NotSupportedException();
 
-			return _items.IndexOf(item);
+			return Items.IndexOf(item);
 		}
 
 		/// <summary>
@@ -392,7 +402,7 @@ namespace Ecng.Xaml
 				if (!Dispatcher.Dispatcher.CheckAccess())
 					throw new NotSupportedException();
 
-				return _items[index];
+				return Items[index];
 			}
 			set { throw new NotSupportedException(); }
 		}
@@ -485,22 +495,22 @@ namespace Ecng.Xaml
 			Dispatcher.AddAction(() =>
 			{
 				if (hasClear)
-					_items.Clear();
+					Items.Clear();
 
 				foreach (var action in pendingActions)
 				{
 					switch (action.Type)
 					{
 						case ActionTypes.Add:
-							_items.AddRange(action.Items);
+							Items.AddRange(action.Items);
 							CheckCount();
 							break;
 						case ActionTypes.Remove:
 						{
 							if (action.Items != null)
-								_items.RemoveRange(action.Items);
+								Items.RemoveRange(action.Items);
 							else
-								_items.RemoveRange(action.Index, action.Count);
+								Items.RemoveRange(action.Index, action.Count);
 
 							break;
 						}

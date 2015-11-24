@@ -2,9 +2,14 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
+
+	using Ecng.Common;
+
+	using MoreLinq;
 
 	[Serializable]
-	public class SynchronizedSet<T> : SynchronizedCollection<T, HashSet<T>>, ISet<T>
+	public class SynchronizedSet<T> : SynchronizedCollection<T, HashSet<T>>, ISet<T>, ICollectionEx<T>
 	{
 		private readonly PairSet<int, T> _indecies;
 		private int _maxIndex = -1;
@@ -65,20 +70,20 @@
 
 		protected override void OnInsert(int index, T item)
 		{
-			if (InnerCollection.Add(item))
-			{
-				if (_indecies != null)
-				{
-					if (_maxIndex == -1)
-						throw new InvalidOperationException();
+			if (!InnerCollection.Add(item))
+				return;
 
-					for (var i = _maxIndex; i >= index; i--)
-						_indecies.SetKey(_indecies[i], i + 1);
+			if (_indecies == null)
+				return;
 
-					_indecies[index] = item;
-					_maxIndex++;
-				}
-			}
+			if (_maxIndex == -1)
+				throw new InvalidOperationException();
+
+			for (var i = _maxIndex; i >= index; i--)
+				_indecies.SetKey(_indecies[i], i + 1);
+
+			_indecies[index] = item;
+			_maxIndex++;
 		}
 
 		protected override void OnRemoveAt(int index)
@@ -91,46 +96,43 @@
 
 		protected override void OnAdd(T item)
 		{
-			if (InnerCollection.Add(item))
-			{
-				if (_indecies != null)
-				{
-					_maxIndex = Count - 1;
-					_indecies.Add(_maxIndex, item);
-				}
-			}
+			if (!InnerCollection.Add(item))
+				return;
+
+			if (_indecies == null)
+				return;
+
+			_maxIndex = Count - 1;
+			_indecies.Add(_maxIndex, item);
 		}
 
 		protected override bool OnRemove(T item)
 		{
-			if (base.OnRemove(item))
-			{
-				if (_indecies != null)
-				{
-					if (_maxIndex == -1)
-						throw new InvalidOperationException();
+			if (!base.OnRemove(item))
+				return false;
 
-					var index = _indecies.GetKey(item);
-					_indecies.RemoveByValue(item);
-
-					for (var i = index + 1; i <= _maxIndex; i++)
-						_indecies.SetKey(_indecies[i], i - 1);
-
-					_maxIndex--;
-				}
-
+			if (_indecies == null)
 				return true;
-			}
 
-			return false;
+			if (_maxIndex == -1)
+				throw new InvalidOperationException();
+
+			var index = _indecies.GetKey(item);
+			_indecies.RemoveByValue(item);
+
+			for (var i = index + 1; i <= _maxIndex; i++)
+				_indecies.SetKey(_indecies[i], i - 1);
+
+			_maxIndex--;
+
+			return true;
 		}
 
 		protected override void OnClear()
 		{
 			base.OnClear();
 
-			if (_indecies != null)
-				_indecies.Clear();
+			_indecies?.Clear();
 		}
 
 		protected override int OnIndexOf(T item)
@@ -144,7 +146,7 @@
 
 		public void UnionWith(IEnumerable<T> other)
 		{
-			throw new NotImplementedException();
+			AddRange(other);
 		}
 
 		public void IntersectWith(IEnumerable<T> other)
@@ -154,7 +156,7 @@
 
 		public void ExceptWith(IEnumerable<T> other)
 		{
-			throw new NotImplementedException();
+			RemoveRange(other);
 		}
 
 		public void SymmetricExceptWith(IEnumerable<T> other)
@@ -164,27 +166,32 @@
 
 		public bool IsSubsetOf(IEnumerable<T> other)
 		{
-			throw new NotImplementedException();
+			lock (SyncRoot)
+				return InnerCollection.IsSubsetOf(other);
 		}
 
 		public bool IsSupersetOf(IEnumerable<T> other)
 		{
-			throw new NotImplementedException();
+			lock (SyncRoot)
+				return InnerCollection.IsSupersetOf(other);
 		}
 
 		public bool IsProperSupersetOf(IEnumerable<T> other)
 		{
-			throw new NotImplementedException();
+			lock (SyncRoot)
+				return InnerCollection.Overlaps(other);
 		}
 
 		public bool IsProperSubsetOf(IEnumerable<T> other)
 		{
-			throw new NotImplementedException();
+			lock (SyncRoot)
+				return InnerCollection.IsProperSubsetOf(other);
 		}
 
 		public bool Overlaps(IEnumerable<T> other)
 		{
-			throw new NotImplementedException();
+			lock (SyncRoot)
+				return InnerCollection.Overlaps(other);
 		}
 
 		public bool SetEquals(IEnumerable<T> other)
@@ -212,6 +219,54 @@
 				Add(item);
 				return true;
 			}
+		}
+
+		public event Action<IEnumerable<T>> AddedRange;
+		public event Action<IEnumerable<T>> RemovedRange;
+
+		protected override void OnAdded(T item)
+		{
+			base.OnAdded(item);
+
+			var evt = AddedRange;
+			evt?.Invoke(new[] { item });
+		}
+
+		protected override void OnRemoved(T item)
+		{
+			base.OnRemoved(item);
+
+			var evt = RemovedRange;
+			evt?.Invoke(new[] { item });
+		}
+
+		public void AddRange(IEnumerable<T> items)
+		{
+			lock (SyncRoot)
+			{
+				var filteredItems = items.Where(OnAdding).ToArray();
+				InnerCollection.AddRange(filteredItems);
+				filteredItems.ForEach(base.OnAdded);
+
+				AddedRange.SafeInvoke(filteredItems);
+			}
+		}
+
+		public void RemoveRange(IEnumerable<T> items)
+		{
+			lock (SyncRoot)
+			{
+				var filteredItems = items.Where(OnRemoving).ToArray();
+				InnerCollection.RemoveRange(filteredItems);
+				filteredItems.ForEach(base.OnRemoved);
+
+				RemovedRange.SafeInvoke(filteredItems);
+			}
+		}
+
+		public int RemoveRange(int index, int count)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

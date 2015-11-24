@@ -41,28 +41,47 @@ namespace Ecng.Collections
 			return InnerCollection.IndexOf(item);
 		}
 
+		public event Action<IEnumerable<T>> AddedRange;
+		public event Action<IEnumerable<T>> RemovedRange;
+
+		protected override void OnAdded(T item)
+		{
+			base.OnAdded(item);
+
+			var evt = AddedRange;
+			evt?.Invoke(new[] { item });
+		}
+
+		protected override void OnRemoved(T item)
+		{
+			base.OnRemoved(item);
+
+			var evt = RemovedRange;
+			evt?.Invoke(new[] { item });
+		}
+
 		public void AddRange(IEnumerable<T> items)
 		{
 			lock (SyncRoot)
 			{
 				var filteredItems = items.Where(OnAdding).ToArray();
 				InnerCollection.AddRange(filteredItems);
-				filteredItems.ForEach(OnAdded);
+				filteredItems.ForEach(base.OnAdded);
+
+				AddedRange.SafeInvoke(filteredItems);
 			}
 		}
 
-		public IEnumerable<T> RemoveRange(IEnumerable<T> items)
+		public void RemoveRange(IEnumerable<T> items)
 		{
-			IEnumerable<T> removedItems;
-
 			lock (SyncRoot)
 			{
 				var filteredItems = items.Where(OnRemoving).ToArray();
-				removedItems = InnerCollection.RemoveRange(filteredItems);
-				filteredItems.ForEach(OnRemoved);
-			}
+				InnerCollection.RemoveRange(filteredItems);
+				filteredItems.ForEach(base.OnRemoved);
 
-			return removedItems;
+				RemovedRange.SafeInvoke(filteredItems);
+			}
 		}
 
 		public int RemoveRange(int index, int count)
