@@ -15,6 +15,7 @@ namespace Gma.DataStructures.StringSearch
         IEnumerable<TValue> Retrieve(string query);
         void Add(string key, TValue value);
 		void Remove(TValue value);
-	    void Clear();
+		void RemoveRange(IEnumerable<TValue> values);
+		void Clear();
     }
 }

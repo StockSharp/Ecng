@@ -7,6 +7,8 @@ using System.Collections.Generic;
 
 namespace Gma.DataStructures.StringSearch
 {
+	using Ecng.Collections;
+
 	public class ConcurrentTrieNode<TValue> : TrieNodeBase<TValue>
     {
         private readonly ConcurrentDictionary<char, ConcurrentTrieNode<TValue>> m_Children;
@@ -53,8 +55,13 @@ namespace Gma.DataStructures.StringSearch
 
 		public void Remove(TValue value)
 		{
+			RemoveRange(new[] { value });
+		}
+
+		public void RemoveRange(IEnumerable<TValue> values)
+		{
 			var temp = new HashSet<TValue>(m_Values);
-			temp.Remove(value);
+			temp.RemoveRange(values);
 
 			while (!m_Values.IsEmpty)
 			{
@@ -73,7 +80,7 @@ namespace Gma.DataStructures.StringSearch
 			{
 				var node = pair.Value;
 
-				node.Remove(value);
+				node.RemoveRange(values);
 
 				if (node.m_Values.IsEmpty)
 					emptyNodes.Add(pair.Key);

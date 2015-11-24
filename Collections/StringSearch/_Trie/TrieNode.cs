@@ -6,6 +6,8 @@ using System.Collections.Generic;
 
 namespace Gma.DataStructures.StringSearch
 {
+	using Ecng.Collections;
+
 	public class TrieNode<TValue> : TrieNodeBase<TValue>
     {
         private readonly Dictionary<char, TrieNode<TValue>> m_Children;
@@ -32,7 +34,7 @@ namespace Gma.DataStructures.StringSearch
         protected override TrieNodeBase<TValue> GetOrCreateChild(char key)
         {
             TrieNode<TValue> result;
-            if (!m_Children.TryGetValue(key, out result))
+            if (m_Children.Count == 0 || !m_Children.TryGetValue(key, out result))
             {
                 result = new TrieNode<TValue>();
                 m_Children.Add(key, result);
@@ -57,9 +59,14 @@ namespace Gma.DataStructures.StringSearch
 
 		public void Remove(TValue value)
 		{
+			RemoveRange(new[] { value });
+		}
+
+		public void RemoveRange(IEnumerable<TValue> values)
+		{
 			var temp = new HashSet<TValue>(m_Values);
-			temp.Remove(value);
-			
+			temp.RemoveRange(values);
+
 			m_Values.Clear();
 
 			foreach (var item in temp)
@@ -71,7 +78,7 @@ namespace Gma.DataStructures.StringSearch
 			{
 				var node = pair.Value;
 
-				node.Remove(value);
+				node.RemoveRange(values);
 
 				if (node.m_Values.Count == 0)
 					emptyNodes.Add(pair.Key);

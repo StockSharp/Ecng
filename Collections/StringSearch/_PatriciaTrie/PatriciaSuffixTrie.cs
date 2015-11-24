@@ -46,7 +46,12 @@ namespace Gma.DataStructures.StringSearch
 			m_InnerTrie.Remove(value);
 	    }
 
-	    public void Clear()
+		public void RemoveRange(IEnumerable<TValue> values)
+		{
+			m_InnerTrie.RemoveRange(values);
+		}
+
+		public void Clear()
 	    {
 			m_InnerTrie.Clear();
 	    }

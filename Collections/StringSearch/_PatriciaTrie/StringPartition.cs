@@ -135,8 +135,9 @@ namespace Gma.DataStructures.StringSearch
 
         public override string ToString()
         {
-            var result = new string(this.ToArray());
-            return string.Intern(result);
+            //var result = new string(this.ToArray());
+            //return string.Intern(result);
+	        return string.Intern(m_Origin.Substring(m_StartIndex, Length));
         }
 
         public static bool operator ==(StringPartition left, StringPartition right)

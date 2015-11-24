@@ -8,7 +8,9 @@ using System.Text;
 
 namespace Gma.DataStructures.StringSearch
 {
-    [DebuggerDisplay("'{m_Key}'")]
+	using Ecng.Collections;
+
+	[DebuggerDisplay("'{m_Key}'")]
     public class PatriciaTrieNode<TValue> : TrieNodeBase<TValue>
     {
         private Dictionary<char, PatriciaTrieNode<TValue>> m_Children;
@@ -160,8 +162,13 @@ namespace Gma.DataStructures.StringSearch
 
 		public void Remove(TValue value)
 		{
+			RemoveRange(new[] { value });
+		}
+
+	    public void RemoveRange(IEnumerable<TValue> values)
+	    {
 			var temp = new HashSet<TValue>(m_Values);
-			temp.Remove(value);
+			temp.RemoveRange(values);
 
 			m_Values.Clear();
 
@@ -174,7 +181,7 @@ namespace Gma.DataStructures.StringSearch
 			{
 				var node = pair.Value;
 
-				node.Remove(value);
+				node.RemoveRange(values);
 
 				if (node.m_Values.Count == 0)
 					emptyNodes.Add(pair.Key);
