@@ -4,10 +4,12 @@
 	using System.IO;
 	using System.Net.Mail;
 	using System.Net.Mime;
+	using System.Reflection;
 	using System.Text;
 	using System.Web;
 
 	using Ecng.Common;
+	using Ecng.Reflection;
 	using Ecng.Web;
 
 	public static class MailHelper
@@ -28,7 +30,7 @@
 			if (file == null)
 				throw new ArgumentNullException(nameof(file));
 
-			return MailHelper.CreateAttachment(file.Body.To<Stream>(), file.Name);
+			return CreateAttachment(file.Body.To<Stream>(), file.Name);
 		}
 
 		// http://social.msdn.microsoft.com/Forums/en-US/dotnetframeworkde/thread/b6c764f7-4697-4394-b45f-128a24306d55
@@ -109,6 +111,36 @@
 			message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(bodyHtml, null, MediaTypeNames.Text.Html));
 
 			return message;
+		}
+
+		public static MailMessage AddPlain(this MailMessage message, string bodyPlain)
+		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(bodyPlain, null, MediaTypeNames.Text.Plain));
+
+			return message;
+		}
+
+		// http://stackoverflow.com/a/9621399
+		public static MemoryStream ToStream(this MailMessage message)
+		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			var assembly = typeof(SmtpClient).Assembly;
+			var mailWriterType = assembly.GetType("System.Net.Mail.MailWriter");
+
+			var stream = new MemoryStream();
+
+			var mailWriter = mailWriterType.CreateInstance(stream);
+
+			message.SetValue<object, object[]>("Send", new[] { mailWriter, true, true });
+
+			mailWriter.SetValue<object, VoidType>("Close", null);
+
+			return stream;
 		}
 	}
 }
