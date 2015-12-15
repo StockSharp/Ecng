@@ -14,7 +14,7 @@
 		{
 		}
 
-		public SyncObject SyncRoot => new SyncObject();
+		public SyncObject SyncRoot { get; } = new SyncObject();
 
 		public override int Count
 		{
