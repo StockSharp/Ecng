@@ -183,6 +183,18 @@ namespace Ecng.Xaml.Charting
         {
             get { return GetYCursorFormattedValue(UpperQuartileValue); }
         }
+
+        public override void CopyFrom(SeriesInfo other)
+        {
+            base.CopyFrom(other);
+
+            var o = (BoxPlotSeriesInfo)other;
+            _minimumValue = o._minimumValue;
+            _maximumValue = o._maximumValue;
+            _lowerQuartileValue = o._lowerQuartileValue;
+            _upperQuartileValue = o._upperQuartileValue;
+            _medianValue = o._medianValue;
+        }
     }
 
     /// <summary>
@@ -275,6 +287,16 @@ namespace Ecng.Xaml.Charting
         {
             get { return GetYCursorFormattedValue(CloseValue); }
         }
+
+        public override void CopyFrom(SeriesInfo other)
+        {
+            base.CopyFrom(other);
+
+            var o = (HlcSeriesInfo)other;
+            _highValue = o._highValue;
+            _lowValue = o._lowValue;
+            _closeValue = o._closeValue;
+        }
     } 
 
     /// <summary>
@@ -320,6 +342,14 @@ namespace Ecng.Xaml.Charting
         {
             get { return GetYCursorFormattedValue(OpenValue); }
         }
+
+        public override void CopyFrom(SeriesInfo other)
+        {
+            base.CopyFrom(other);
+
+            var o = (OhlcSeriesInfo)other;
+            _openValue = o._openValue;
+        }
     }
 
     /// <summary>
@@ -330,6 +360,8 @@ namespace Ecng.Xaml.Charting
         private IComparable _y1Value;
         private Point _xy1Coordinate;
         private bool _isFirstSeries;
+
+        override public object SeriesInfoKey => Tuple.Create(RenderableSeries, IsFirstSeries);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BandSeriesInfo" /> class.
@@ -391,6 +423,16 @@ namespace Ecng.Xaml.Charting
                 OnPropertyChanged("Xy1Coordinate");
             }
         }
+
+        public override void CopyFrom(SeriesInfo other)
+        {
+            base.CopyFrom(other);
+
+            var o = (BandSeriesInfo)other;
+            _y1Value = o._y1Value;
+            _xy1Coordinate = o._xy1Coordinate;
+            _isFirstSeries = o.IsFirstSeries;
+        }
     }
 
     /// <summary>
@@ -427,6 +469,14 @@ namespace Ecng.Xaml.Charting
                 _zValue = value;
                 OnPropertyChanged("ZValue");
             }
+        }
+
+        public override void CopyFrom(SeriesInfo other)
+        {
+            base.CopyFrom(other);
+
+            var o = (XyzSeriesInfo)other;
+            _zValue = o._zValue;
         }
     }
 
@@ -481,6 +531,14 @@ namespace Ecng.Xaml.Charting
                 OnPropertyChanged("AccumulatedValue");
             }
         }
+
+        public override void CopyFrom(SeriesInfo other)
+        {
+            base.CopyFrom(other);
+
+            var o = (XyStackedSeriesInfo)other;
+            _accumulated = o._accumulated;
+        }
     }
 
     /// <summary>
@@ -513,6 +571,14 @@ namespace Ecng.Xaml.Charting
                 OnPropertyChanged("Percentage");
             }
         }
+
+        public override void CopyFrom(SeriesInfo other)
+        {
+            base.CopyFrom(other);
+
+            var o = (OneHundredPercentStackedSeriesInfo)other;
+            _percentage = o._percentage;
+        }
     }
 
     /// <summary>
@@ -538,6 +604,8 @@ namespace Ecng.Xaml.Charting
         private Point _xyCoordinate;
         private bool _isHit;
         private int _dataSeriesIndex;
+
+        public virtual object SeriesInfoKey => RenderableSeries;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SeriesInfo"/> class.
@@ -794,7 +862,7 @@ namespace Ecng.Xaml.Charting
             return MemberwiseClone();
         }
 
-        public void CopyFrom(SeriesInfo other) {
+        public virtual void CopyFrom(SeriesInfo other) {
             if(other.RenderableSeries != _rSeries)
                 throw new InvalidOperationException("invalid series");
 
