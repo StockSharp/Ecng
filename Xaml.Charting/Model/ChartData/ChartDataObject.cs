@@ -74,10 +74,19 @@ namespace Ecng.Xaml.Charting
 
 
         public void UpdateSeriesInfo(IEnumerable<SeriesInfo> newInfos) {
-            var oldInfos = SeriesInfo.ToDictionary(si => si.SeriesInfoKey);
             var newInfosDict = newInfos.ToDictionary(si => si.SeriesInfoKey);
 
-            SeriesInfo.RemoveWhere(si => !newInfosDict.ContainsKey(si.SeriesInfoKey));
+            SeriesInfo.RemoveWhere(si =>
+            {
+                SeriesInfo newSi;
+                if(!newInfosDict.TryGetValue(si.SeriesInfoKey, out newSi))
+                    return true;
+
+                return newSi.GetType() != si.GetType();
+            });
+
+            var oldInfos = SeriesInfo.ToDictionary(si => si.SeriesInfoKey);
+
             newInfosDict.Values
                 .Where(si => si.RenderableSeries.GetIncludeSeries(Modifier.Cursor) && !oldInfos.ContainsKey(si.SeriesInfoKey))
                 .ForEachDo(si => SeriesInfo.Add(si));
