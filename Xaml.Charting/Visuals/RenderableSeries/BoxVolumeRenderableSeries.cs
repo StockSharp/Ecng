@@ -104,7 +104,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             //RenderContextBase.Test.Perf = _perf;
             //_perf.Restart("render start");
 
-            var series = DataSeries as BoxVolumeDataSeries;
+            var series = DataSeries as TimeframeSegmentDataSeries;
             if(series == null) return;
 
             var xCalc = CurrentRenderPassData.XCoordinateCalculator;
@@ -116,7 +116,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             var highVolColor = HighVolColor;
             var screenHeight = renderContext.ViewportSize.Height;
             var screenWidth = renderContext.ViewportSize.Width;
-            var points = (BoxVolumePointSeries) CurrentRenderPassData.PointSeries;
+            var points = (TimeframeSegmentPointSeries) CurrentRenderPassData.PointSeries;
             var segments = points.Segments;
             var numSegments = segments.Length;
             var priceStep = points.PriceStep;
@@ -137,7 +137,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
             var maxDrawPrice = yCalc.GetDataValue(-segmentHeight);
             var minDrawPrice = yCalc.GetDataValue(screenHeight + segmentHeight);
-            var buf = new List<TimeframeSegmentWrapper<MinVolumeSegment>>(Math.Max(tf2, tf3));
+            var buf = new List<TimeframeSegmentWrapper>(Math.Max(tf2, tf3));
 
             if(minDrawPrice > maxDrawPrice)
                 throw new InvalidOperationException($"minDrawPrice({minDrawPrice}) > maxDrawPrice({maxDrawPrice})");

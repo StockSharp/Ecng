@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Windows.Controls;
-using Ecng.Xaml.Charting.Common;
 using Ecng.Xaml.Charting.Common.Extensions;
 using Ecng.Xaml.Charting.Numerics;
 using Ecng.Xaml.Charting.Numerics.GenericMath;
@@ -19,7 +17,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
     /// base class for segmented data series
     /// </summary>
     [Obfuscation(Exclude = true, ApplyToMembers = true)]
-    public abstract class TimeframeSegmentDataSeries : BindableObject, IDataSeries<DateTime, double> {
+    public class TimeframeSegmentDataSeries : BindableObject, IDataSeries<DateTime, double> {
         public const double MinPriceStep = 0.000001d;
         public const int TimeframeOneDay = 60 * 24;
         public const int TimeframeOneWeek = 60 * 24 * 7;
@@ -28,28 +26,17 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         public static readonly IMath<DateTime> XMath = GenericMathFactory.New<DateTime>();
 
         string _seriesName;
-        readonly double _priceStep;
-        readonly int _timeframe;
-        readonly bool _sumTicks;
 
+        readonly UltraList<TimeframeDataSegment> _segments = new UltraList<TimeframeDataSegment>();
         readonly UltraList<DateTime> _segmentDates = new UltraList<DateTime>();
-        protected IUltraReadOnlyList<DateTime> SegmentDates => _segmentDates.AsReadOnly();
+        IUltraReadOnlyList<DateTime> SegmentDates => _segmentDates.AsReadOnly();
 
-        internal IUltraReadOnlyList<TimeframeDataSegment> Segments => SegmentsReadOnly;
+        TimeframeSegmentPointSeries _lastPointSeries;
 
-        abstract protected IUltraReadOnlyList<TimeframeDataSegment> SegmentsReadOnly {get;}
-        abstract protected IList<DateTime> XValues {get;}
-        abstract protected double[] YValues {get;}
-        abstract public DataSeriesType DataSeriesType {get;}
-        abstract public double GetYMinAt(int index, double existingYMin);
-        abstract public double GetYMaxAt(int index, double existingYMax);
-        abstract public IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory);
-        abstract public IRange GetWindowedYRange(IndexRange xIndexRange);
-        abstract public IRange YRange {get;}
+        public DataSeriesType DataSeriesType => DataSeriesType.TimeframeSegment;
 
-        public int Timeframe {get {return _timeframe;}}
-        public double PriceStep {get {return _priceStep;}}
-        public bool SumTicks {get {return _sumTicks;}}
+        public int Timeframe {get;}
+        public double PriceStep {get;}
 
         /// <summary>
         /// Event raised whenever points are added to, removed or one or more DataSeries properties changes
@@ -60,10 +47,6 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         #region sync objects
 
         readonly object _syncRoot = new object();
-        readonly object _clearSyncRoot = new object();
-
-        // лок, использующийся при очистке датасерии или полном пересчете (второй лок тоже используется при этих операциях)
-        public object ClearSyncRoot {get { return _clearSyncRoot; }}
 
         // операции добавления
         public object SyncRoot {get { return _syncRoot; }}
@@ -86,56 +69,58 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             }
         }
 
-        public bool HasValues {get {return _segmentDates.Count > 0;}}
-        public int Count { get { return _segmentDates.Count; }}
+        public bool HasValues => _segmentDates.Count > 0;
+        public int Count => _segmentDates.Count;
 
-        public IComparable YMin { get { return YRange.Min; } }
-        public IComparable YMax { get { return YRange.Max; } }
+        public IComparable YMin => YRange.Min;
+        public IComparable YMax => YRange.Max;
 
-        IComparable IDataSeries.XMin { get { return XRange.Min; }}
-        IComparable IDataSeries.XMax { get { return XRange.Max; }}
+        IComparable IDataSeries.XMin => XRange.Min;
+        IComparable IDataSeries.XMax => XRange.Max;
 
-        bool IDataSeries.IsFifo { get { return false; }}
+        bool IDataSeries.IsFifo => false;
 
-        public bool IsSorted { get { return true; } }
+        public bool IsSorted => true;
+
+        internal new IUltraList<TimeframeDataSegment> Segments => _segments;
+
+        protected IUltraReadOnlyList<TimeframeDataSegment> SegmentsReadOnly => _segments.AsReadOnly();
+
         /// <summary>
         /// Gets the Type of X-data points in this DataSeries. Used to check compatibility with Axis types
         /// </summary>
-        public Type XType { get { return typeof(DateTime); } }
+        public Type XType => typeof(DateTime);
 
         /// <summary>
         /// Gets the Type of Y-data points in this DataSeries. Used to check compatibility with Axis types
         /// </summary>
-        public Type YType { get { return typeof(double); } }
+        public Type YType => typeof(double);
 
         /// <summary>
         /// Gets the latest Y-Value of the DataSeries
         /// </summary>
-        public IComparable LatestYValue { get { return null; } }
+        public IComparable LatestYValue => null;
 
-        IList IDataSeries.XValues { get {return (IList)XValues;}}
-        IList<DateTime> IDataSeries<DateTime, double>.XValues { get {return XValues;}}
+        IList<DateTime> XValues => SegmentDates;
+        double[] YValues => _segments.Select(s => s.Y).ToArray();
 
-        IList IDataSeries.YValues { get {return YValues;}}
-        IList<double> IDataSeries<DateTime, double>.YValues { get {return YValues;}}
+        IList IDataSeries.XValues => (IList)XValues;
+        IList<DateTime> IDataSeries<DateTime, double>.XValues => XValues;
 
-        protected TimeframeSegmentDataSeries(int timeframe, double priceStep, bool sumTicks) {
-            if(timeframe < 1 || timeframe > MaxTimeframe) throw new ArgumentOutOfRangeException("timeframe");
-            if(priceStep <= 0d || priceStep.IsNaN()) throw new ArgumentOutOfRangeException("priceStep");
+        IList IDataSeries.YValues => YValues;
+        IList<double> IDataSeries<DateTime, double>.YValues => YValues;
 
-            _sumTicks = sumTicks;
-            _timeframe = timeframe;
-            _priceStep = PriceDataPoint.NormalizePrice(priceStep, MinPriceStep);
-        }
+        public TimeframeSegmentDataSeries(int timeframe, double priceStep) {
+            if(timeframe < 1 || timeframe > MaxTimeframe) throw new ArgumentOutOfRangeException(nameof(timeframe));
+            if(priceStep <= 0d || priceStep.IsNaN()) throw new ArgumentOutOfRangeException(nameof(priceStep));
 
-        protected virtual void OnNewSegment(TimeframeDataSegment segment) {
-            _segmentDates.Add(segment.Time);
+            Timeframe = timeframe;
+            PriceStep = priceStep.NormalizePrice(MinPriceStep);
         }
 
         public void Clear() {
-            UltrachartDebugLogger.Instance.WriteLine("TimeframeSegmentDataSeries.Clear(): not supported");
+            UltrachartDebugLogger.Instance.WriteLine("ERROR: TimeframeSegmentDataSeries.Clear(): not supported");
         }
-
 
         /// <summary>
         /// May be called to trigger a redraw on the parent <see cref="UltrachartSurface" />. This method is extremely useful
@@ -189,19 +174,29 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             return ((IDataSeries)this).GetWindowedYRange(xRange);
         }
 
-        public IRange XRange { get {
-            return _segmentDates.Any() ? 
-                new DateRange(_segmentDates[0], _segmentDates[_segmentDates.Count - 1]).AsDoubleRange() :
-                new DoubleRange(double.MinValue, double.MaxValue);
+        public IRange XRange => _segmentDates.Any() ? 
+                                    new DateRange(_segmentDates[0], _segmentDates[_segmentDates.Count - 1]).AsDoubleRange() :
+                                    new DoubleRange(double.MinValue, double.MaxValue);
+
+        public IRange YRange { get {
+            if(_segments.Count == 0)
+                return new DoubleRange(double.MinValue, double.MaxValue);
+
+            double minPrice, maxPrice;
+            minPrice = double.MaxValue;
+            maxPrice = double.MinValue;
+
+            foreach(var seg in _segments) {
+                if(seg.MinPrice < minPrice)
+                    minPrice = seg.MinPrice;
+                if(seg.MaxPrice > maxPrice)
+                    maxPrice = seg.MaxPrice;
+            }
+
+            return new DoubleRange(minPrice, maxPrice);
         }}
 
-        protected void OnDataSeriesChanged(DataSeriesUpdate dataSeriesUpdate) {
-            var handler = DataSeriesChanged;
-            if(handler != null)
-                handler(this, new DataSeriesChangedEventArgs(dataSeriesUpdate));
-        }
-
-        protected IndexRange SearchDataIndexesOn(IRange range, SearchMode downSearchMode, SearchMode upSearchMode) {
+        IndexRange SearchDataIndexesOn(IRange range, SearchMode downSearchMode, SearchMode upSearchMode) {
             var indRange = range as IndexRange;
             if(indRange != null)
                 return (IndexRange)indRange.Clone();
@@ -229,7 +224,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             return NormalizeIndexRange(indicesRange);
         }
 
-        protected IndexRange NormalizeIndexRange(IndexRange indexRange) {
+        IndexRange NormalizeIndexRange(IndexRange indexRange) {
             var count = _segmentDates.Count;
 
             if(indexRange.IsDefined) {
@@ -251,7 +246,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
         public static Tuple<DateTime, DateTime, int> GetTimeframePeriod(DateTime dt, int periodMinutes) {
             if(periodMinutes < 1 || periodMinutes > MaxTimeframe)
-                throw new ArgumentOutOfRangeException("periodMinutes");
+                throw new ArgumentOutOfRangeException(nameof(periodMinutes));
 
             DateTime start, end;
             int index;
@@ -286,12 +281,90 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             return Tuple.Create(start, end, index);
         }
 
+        internal static double[] GeneratePrices(double min, double max, double step) {
+            min = min.NormalizePrice(step);
+            max = max.NormalizePrice(step);
+
+            var result = new double[1 + (int)Math.Round((max - min) / step)];
+
+            for (var i = 0; i < result.Length; ++i)
+                result[i] = (min + i * step).NormalizePrice(step);
+
+            return result;
+        }
+
+        public void Append(DateTime time, double price, int volume) {
+            lock(SyncRoot) {
+                var period = GetTimeframePeriod(time, Timeframe);
+
+                if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > period.Item1)
+                    throw new ArgumentOutOfRangeException(nameof(time), "data must be ordered by time");
+
+                AddOrUpdateSegment(period.Item1, price, volume);
+            }
+
+            DataSeriesChanged?.Invoke(this, new DataSeriesChangedEventArgs(DataSeriesUpdate.DataChanged));
+        }
+
+        void AddOrUpdateSegment(DateTime periodStart, double price, int volume) {
+            if(PriceStep <= 0 || PriceStep.IsNaN()) return;
+
+            TimeframeDataSegment segment;
+
+            if(_segments.Count == 0 || _segments[_segments.Count - 1].Time != periodStart) {
+                segment = new TimeframeDataSegment(periodStart, PriceStep, _segments.Count);
+
+                _segments.Add(segment);
+                _segmentDates.Add(segment.Time);
+            } else {
+                segment = _segments[_segments.Count - 1];
+            }
+
+            segment.AddPoint(price, volume);
+
+            //OnNewPoint(point); // todo aggregation
+        }
+
+
+        public double GetYMinAt(int index, double existingYMin) {
+            return Math.Min(_segments[index].MinPrice, existingYMin);
+        }
+
+        public double GetYMaxAt(int index, double existingYMax) {
+            return Math.Max(_segments[index].MaxPrice, existingYMax);
+        }
+
+        public IRange GetWindowedYRange(IndexRange xIndexRange) {
+            double min, max;
+
+            var range = (IndexRange)xIndexRange.Clone();
+
+            if(range.Min < 0) range.Min = 0;
+            if(range.Max >= _segments.Count) range.Max = _segments.Count - 1;
+
+            TimeframeDataSegment.MinMax(_segments.Skip(range.Min).Take(range.Max - range.Min + 1), out min, out max);
+
+            return new DoubleRange(min, max);
+        }
+
+        public IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory) {
+            if(!pointRange.IsDefined)
+                return null;
+
+            var pointSeries = new TimeframeSegmentPointSeries(_lastPointSeries, Segments.ItemsArray, pointRange, visibleXRange, PriceStep);
+
+            _lastPointSeries = pointSeries;
+
+            return pointSeries;
+        }
+
+
         #region suspender
 
         /// <summary>
         /// Gets a value indicating whether updates for the target are currently suspended
         /// </summary>
-        public bool IsSuspended { get { return UpdateSuspender.GetIsSuspended(this); } }
+        public bool IsSuspended => UpdateSuspender.GetIsSuspended(this);
 
         /// <summary>
         /// Suspends drawing updates on the target until the returned object is disposed, when a final draw call will be issued
@@ -359,110 +432,5 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         IComparable IDataSeries.YMinPositive {get {throw new NotImplementedException();}}
 
         #endregion
-    }
-
-    /// <summary>
-    /// base class for segmented data series
-    /// </summary>
-    [Obfuscation(Exclude = true, ApplyToMembers = true)]
-    abstract public class TimeframeSegmentDataSeries<TPoint, TSegment> : TimeframeSegmentDataSeries
-                                                                        where TPoint:PriceDataPoint
-                                                                        where TSegment:TimeframeDataSegment<TPoint> {
-
-        readonly UltraList<TSegment> _segments = new UltraList<TSegment>();
-        internal new IUltraList<TSegment> Segments {get {return _segments;}}
-        protected override IUltraReadOnlyList<TimeframeDataSegment> SegmentsReadOnly => (IUltraReadOnlyList<TimeframeDataSegment>)_segments.AsReadOnly();
-
-        public TPoint LastTick {get; private set;}
-
-        internal event Action<TSegment> NewSegment;
-
-        /// <summary>
-        /// Create data series.
-        /// </summary>
-        protected TimeframeSegmentDataSeries(int timeframe, double priceStep, bool sumTicks) : base(timeframe, priceStep, sumTicks) { }
-
-        abstract protected TSegment CreateSegment(DateTime periodStart);
-        abstract protected void OnNewPoint(TPoint point);
-
-        public void Append(TPoint point) {
-            lock(SyncRoot) {
-                var period = GetTimeframePeriod(point.Time, Timeframe);
-
-                if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > period.Item1)
-                    throw new ArgumentOutOfRangeException("point", "data must be ordered by time");
-
-                AddOrUpdateSegment(period.Item1, point);
-            }
-
-            OnDataSeriesChanged(DataSeriesUpdate.DataChanged);
-        }
-
-        void AddOrUpdateSegment(DateTime periodStart, TPoint point) {
-            if(PriceStep <= 0 || PriceStep.IsNaN()) return;
-
-            TSegment segment;
-            var newSegment = false;
-
-            if(_segments.Count == 0 || _segments[_segments.Count - 1].Time != periodStart) {
-                segment = CreateSegment(periodStart);
-
-                newSegment = true;
-                _segments.Add(segment);
-                OnNewSegment(segment);
-            } else {
-                segment = _segments[_segments.Count - 1];
-            }
-
-            LastTick = point;
-
-            segment.AddPoint(point);
-            OnNewPoint(point);
-
-            if(newSegment)
-                NewSegment.SafeInvoke(segment);
-        }
-
-        protected override IList<DateTime> XValues { get { return SegmentDates; }}
-        protected override double[] YValues { get { return _segments.Select(s => s.Y).ToArray(); }}
-
-        public override double GetYMinAt(int index, double existingYMin) {
-            return Math.Min(_segments[index].MinPrice, existingYMin);
-        }
-
-        public override double GetYMaxAt(int index, double existingYMax) {
-            return Math.Max(_segments[index].MaxPrice, existingYMax);
-        }
-
-        public override IRange GetWindowedYRange(IndexRange xIndexRange) {
-            double min, max;
-
-            var range = (IndexRange)xIndexRange.Clone();
-
-            if(range.Min < 0) range.Min = 0;
-            if(range.Max >= _segments.Count) range.Max = _segments.Count - 1;
-
-            TimeframeDataSegment.MinMax(_segments.Skip(range.Min).Take(range.Max - range.Min + 1), out min, out max);
-
-            return new DoubleRange(min, max);
-        }
-
-        public override IRange YRange { get {
-            if(_segments.Count == 0)
-                return new DoubleRange(double.MinValue, double.MaxValue);
-
-            double minPrice, maxPrice;
-            minPrice = double.MaxValue;
-            maxPrice = double.MinValue;
-
-            foreach(var seg in _segments) {
-                if(seg.MinPrice < minPrice)
-                    minPrice = seg.MinPrice;
-                if(seg.MaxPrice > maxPrice)
-                    maxPrice = seg.MaxPrice;
-            }
-
-            return new DoubleRange(minPrice, maxPrice);
-        }}
     }
 }

@@ -56,12 +56,12 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
         }
 
         protected override void OnDrawImpl(IRenderContext2D renderContext, IRenderPassData renderPassData) {
-            var series = DataSeries as ClusterProfileDataSeries;
+            var series = DataSeries as TimeframeSegmentDataSeries;
             if(series == null) return;
 
             #region initialize
 
-            var pointSeries = (ClusterProfilePointSeries)CurrentRenderPassData.PointSeries;
+            var pointSeries = (TimeframeSegmentPointSeries)CurrentRenderPassData.PointSeries;
             var segments = pointSeries.Segments;
             var priceStep = pointSeries.PriceStep;
 
@@ -117,7 +117,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                     return;
 
                 // ReSharper disable once PossibleMultipleEnumeration
-                var maxValue = visibleSegments.Max(s => s.Segment.GetMaxValue());
+                var maxValue = visibleSegments.Max(s => s.Segment.MaxValue);
                 var drawClusters = ctx.SegmentWidth >= 3;
 
                 // ReSharper disable once PossibleMultipleEnumeration
@@ -134,17 +134,17 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                     var y1 = ctx.YCalc.GetCoordinate(segment.MaxPrice) - ctx.HalfPriceLevelHeight;
                     var y2 = ctx.YCalc.GetCoordinate(segment.MinPrice) + ctx.HalfPriceLevelHeight;
 
-                    var data = segment.Data;
+                    var data = segment.Values;
 
                     renderContext.DrawLine(linePen, new Point(vertLineX, y1 + 1), new Point(vertLineX, y2));
 
                     if(drawClusters) {
-                        var localMaxVal = segment.GetMaxValue();
+                        var localMaxVal = segment.MaxValue;
 
                         var iter = new BarIterator(data.Length, maxValue, it => {
                             var priceData = data[it.Index];
                             it.Coord = priceData.Price;
-                            it.Value = priceData[0].Value;
+                            it.Value = priceData.Value;
 
                             // ReSharper disable once AccessToDisposedClosure
                             it.BarBrush = penManager.GetBrush(it.Value == localMaxVal ? maxColor : mainColor);

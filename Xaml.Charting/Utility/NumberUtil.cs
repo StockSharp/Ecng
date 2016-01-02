@@ -71,6 +71,10 @@ namespace Ecng.Xaml.Charting.Utility
             return Math.Round(value/nearest)*nearest;                
         }
 
+        public static double NormalizePrice(this double price, double priceStep) {
+            return Math.Round(price/priceStep)*priceStep;                
+        }
+
         public static float Round(this float value, float nearest)
         {
             return (float)Math.Round((double)value/nearest)*nearest;                

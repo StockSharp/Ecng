@@ -201,13 +201,8 @@
     <Compile Include="Licensing\XElementExtensions.cs" />
     <Compile Include="Model\AxisProxy.cs" />
     <Compile Include="Model\ChartData\PropertyChangedEventArgsWithValues.cs" />
-    <Compile Include="Model\DataSeries\SegmentDataSeries\BoxVolumeDataSeries.cs" />
-    <Compile Include="Model\DataSeries\SegmentDataSeries\MinVolumeSegment.cs" />
-    <Compile Include="Model\DataSeries\SegmentDataSeries\ClusterProfileSegment.cs" />
     <Compile Include="Model\DataSeries\SegmentDataSeries\TimeframeSegmentPointSeries.cs" />
     <Compile Include="Model\DataSeries\SegmentDataSeries\TimeframeDataSegment.cs" />
-    <Compile Include="Model\DataSeries\SegmentDataSeries\PriceDataPoint.cs" />
-    <Compile Include="Model\DataSeries\SegmentDataSeries\ClusterProfileDataSeries.cs" />
     <Compile Include="Model\DataSeries\DataDistributionCalculator\DataDistributionCalculatorFactory.cs" />
     <Compile Include="Model\DataSeries\DataDistributionCalculator\DataDistributionCalculators.cs">
       <AutoGen>True</AutoGen>

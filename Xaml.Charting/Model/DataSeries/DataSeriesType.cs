@@ -68,13 +68,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         OneHundredPercentStackedXy,
 
         /// <summary>
-        /// Box volume
+        /// Timeframe segment
         /// </summary>
-        BoxVolume,
-
-        /// <summary>
-        /// Cluster profile cluster
-        /// </summary>
-        ClusterProfile
+        TimeframeSegment
     }
 }

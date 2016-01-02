@@ -1,26 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Ecng.Xaml.Charting.Utility;
 
 namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
-    abstract public class TimeframeDataSegment : IPoint {
-        protected class PriceLevel {
-            readonly double _price;
+    public class TimeframeDataSegment : IPoint {
+        public class PriceLevel {
+            public PriceLevel(double price) { Price = price; }
 
-            public PriceLevel(double price) { _price = price; }
+            public double Price {get;}
+            public int Value {get; private set;}
+            public int Digits {get; private set;}
 
-            public double Price {get {return _price;}}
+            public void AddValue(int val) {
+                Value += val;
+                Digits = Value.NumDigitsInPositiveNumber();
+            }
         }
 
-        protected readonly IUltraList<PriceLevel> _levels = new UltraList<PriceLevel>(4);
-        readonly int _index;
-        readonly double _priceStep;
-        readonly DateTime _time;
+        readonly IUltraList<PriceLevel> _levels = new UltraList<PriceLevel>(4);
         double _minPrice, _maxPrice;
 
-        protected bool IsEmtpy {get {return _levels.Count == 0;}}
+        bool IsEmtpy => _levels.Count == 0;
 
-        internal int BandIndex {get; set;}
+        public PriceLevel[] Values => _levels.ToArray();
 
         public double[] AllPrices { get {
             if(_levels.Count == 0) return new double[0];
@@ -28,34 +31,37 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             var p0 = _levels[0].Price;
             var arr = new double[_levels.Count];
             for(var i = 0; i < _levels.Count; ++i)
-                arr[i] = PriceDataPoint.NormalizePrice(p0 + i * PriceStep, PriceStep);
+                arr[i] = (p0 + i * PriceStep).NormalizePrice(PriceStep);
 
             return arr;
         }}
 
-        public double PriceStep {get {return _priceStep;}}
-        public int Index {get {return _index;}}
-        public DateTime Time {get {return _time;}}
+        public double PriceStep {get;}
+        public int Index {get;}
+        public DateTime Time {get;}
 
-        public double MinPrice {get {return _minPrice;}}
-        public double MaxPrice {get {return _maxPrice;}}
+        public double MinPrice => _minPrice;
+        public double MaxPrice => _maxPrice;
 
-        public double X {get {return _time.Ticks;}}
-        public double Y {get {return !IsEmtpy ? _maxPrice : double.NaN;}}
+        public int MaxValue {get; private set;}
+        public int MaxDigits {get; private set;}
 
-        protected TimeframeDataSegment(DateTime time, double priceStep, int index) {
+        public double X => Time.Ticks;
+        public double Y => !IsEmtpy ? _maxPrice : double.NaN;
+
+        public TimeframeDataSegment(DateTime time, double priceStep, int index) {
             if(time.Second != 0 || time.Millisecond != 0)
                 throw new InvalidOperationException("invalid time");
 
-            _time = time;
-            _priceStep = priceStep;
-            _index = index;
+            Time = time;
+            PriceStep = priceStep;
+            Index = index;
 
             _minPrice = double.MaxValue;
             _maxPrice = double.MinValue;
         }
 
-        protected PriceLevel GetPriceLevel(double normPrice, Func<double, PriceLevel> creator) {
+        PriceLevel GetPriceLevel(double normPrice) {
             if(normPrice < MinPrice) _minPrice = normPrice;
             if(normPrice > MaxPrice) _maxPrice = normPrice;
 
@@ -67,7 +73,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             var arr = _levels.ItemsArray;
 
             if(numElements == 1)
-                return arr[0] ?? (arr[0] = creator(normPrice));
+                return arr[0] ?? (arr[0] = new PriceLevel(normPrice));
 
             var first = arr[0];
             if(first == null) {
@@ -81,7 +87,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
                 if(levelsArrSizeChanged) {
                     for(var i = 0; i < levels.Count; ++i)
                         if(arr[i] == null)
-                            arr[i] = creator(PriceDataPoint.NormalizePrice(MinPrice + i * PriceStep, PriceStep));
+                            arr[i] = new PriceLevel((MinPrice + i * PriceStep).NormalizePrice(PriceStep));
                 }
 
                 return arr[index];
@@ -89,15 +95,47 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
             index = -index;
             for(var i = numElements - 1; i >= 0; --i) {
-                var price = PriceDataPoint.NormalizePrice(MinPrice + i * PriceStep, PriceStep);
+                var price = (MinPrice + i * PriceStep).NormalizePrice(PriceStep);
 
                 arr[i] = i >= index ? 
-                         (arr[i - index] ?? creator(price)) : 
-                         creator(price);
+                         (arr[i - index] ?? new PriceLevel(price)) : 
+                         new PriceLevel(price);
 
             }
 
             return arr[0];
+        }
+
+        public void AddPoint(double price, int volume) {
+            if(volume == 0) return;
+
+            price = price.NormalizePrice(PriceStep);
+
+            var level = GetPriceLevel(price);
+
+            level.AddValue(volume);
+
+            if(level.Value > MaxValue) {
+                MaxValue = level.Value;
+                MaxDigits = level.Digits;
+            }
+        }
+
+        public int GetValueByPrice(double price) {
+            if(_levels.Count == 0) return 0;
+
+            price = price.NormalizePrice(PriceStep);
+
+            if(price < MinPrice || price > MaxPrice) return 0;
+
+            var arr = _levels.ItemsArray;
+            var index = (int)Math.Round((price - arr[0].Price) / PriceStep);
+
+            if(index < 0 || index >= _levels.Count)
+                return 0;
+
+            var pv = arr[index];
+            return pv?.Value ?? 0;
         }
 
         public static void MinMax(IEnumerable<TimeframeDataSegment> segments, out double minPrice, out double maxPrice) {
@@ -115,7 +153,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
                 if(seg.MinPrice < minPrice) minPrice = seg.MinPrice;
                 if(seg.MaxPrice > maxPrice) maxPrice = seg.MaxPrice;
 
-                priceStep = seg._priceStep;
+                priceStep = seg.PriceStep;
             }
 
             if(priceStep > 0)
@@ -123,31 +161,15 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         }
     }
 
-    public abstract class TimeframeDataSegment<T> : TimeframeDataSegment where T : PriceDataPoint {
-        protected TimeframeDataSegment(DateTime time, double priceStep, int index) : base(time, priceStep, index) {}
+    public class TimeframeSegmentWrapper : IPoint {
+        public TimeframeDataSegment Segment {get;}
 
-        public abstract void AddPoint(T point);
-    }
+        public double X {get;}
+        public double Y => Segment.Y;
 
-    abstract public class TimeframeSegmentWrapper : IPoint {
-        abstract public double X {get;}
-        abstract public double Y {get;}
-        abstract public TimeframeDataSegment BaseSegment {get;}
-    }
-
-    public class TimeframeSegmentWrapper<T> : TimeframeSegmentWrapper,IPoint where T:TimeframeDataSegment {
-        readonly T _segment;
-        readonly double _index;
-
-        public override TimeframeDataSegment BaseSegment {get {return _segment;}}
-        public T Segment {get {return _segment;}}
-
-        public override double X {get {return _index;}}
-        public override double Y {get {return _segment.Y;}}
-
-        public TimeframeSegmentWrapper(T segment, double index) {
-            _segment = segment;
-            _index = index;
+        public TimeframeSegmentWrapper(TimeframeDataSegment segment, double index) {
+            Segment = segment;
+            X = index;
         }
     }
 }

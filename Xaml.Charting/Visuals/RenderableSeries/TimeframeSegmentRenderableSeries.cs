@@ -84,7 +84,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             drawingHelper.DrawQuad(framePen, pt1, pt2);
         }
 
-        protected void FillPeriodSegments<T>(List<TimeframeSegmentWrapper<T>> buf, TimeframeSegmentWrapper<T>[] arr, int index, int tf) where T : TimeframeDataSegment {
+        protected void FillPeriodSegments(List<TimeframeSegmentWrapper> buf, TimeframeSegmentWrapper[] arr, int index, int tf) {
             buf.Clear();
             var segment = arr[index];
 
