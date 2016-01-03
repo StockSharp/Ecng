@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Windows;
@@ -17,6 +17,19 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
     [UltrachartLicenseProvider(typeof(RenderableSeriesUltrachartLicenseProvider))]
     abstract public class TimeframeSegmentRenderableSeries : BaseRenderableSeries {
         protected const string _defaultFontFamily = "Tahoma";
+        static readonly Brush _defaultVerticalVolumeBrush = new LinearGradientBrush(Color.FromRgb(0, 128, 0), Color.FromRgb(0, 15, 0), 90);
+
+        public static readonly DependencyProperty LocalHorizontalVolumesProperty = DependencyProperty.Register(nameof(LocalHorizontalVolumes), typeof(bool), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(false, OnInvalidateParentSurface));
+        public static readonly DependencyProperty ShowHorizontalVolumesProperty = DependencyProperty.Register(nameof(ShowHorizontalVolumes), typeof(bool), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(true, OnInvalidateParentSurface));
+        public static readonly DependencyProperty HorizontalVolumeWidthFractionProperty = DependencyProperty.Register(nameof(HorizontalVolumeWidthFraction), typeof(double), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(0.15d, OnInvalidateParentSurface));
+        public static readonly DependencyProperty VolumeBarsBrushProperty = DependencyProperty.Register(nameof(VolumeBarsBrush), typeof(Brush), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(_defaultVerticalVolumeBrush, OnInvalidateParentSurface));
+        public static readonly DependencyProperty VolBarsFontColorProperty = DependencyProperty.Register(nameof(VolBarsFontColor), typeof(Color), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(Colors.White, OnInvalidateParentSurface));
+
+        public bool LocalHorizontalVolumes { get { return (bool)GetValue(LocalHorizontalVolumesProperty); } set { SetValue(LocalHorizontalVolumesProperty, value); }}
+        public bool ShowHorizontalVolumes { get { return (bool)GetValue(ShowHorizontalVolumesProperty); } set { SetValue(ShowHorizontalVolumesProperty, value); }}
+        public double HorizontalVolumeWidthFraction { get { return (double)GetValue(HorizontalVolumeWidthFractionProperty); } set { SetValue(HorizontalVolumeWidthFractionProperty, value); }}
+        public Brush VolumeBarsBrush { get { return (Brush)GetValue(VolumeBarsBrushProperty); } set { SetValue(VolumeBarsBrushProperty, value); }}
+        public Color VolBarsFontColor { get { return (Color)GetValue(VolBarsFontColorProperty); } set { SetValue(VolBarsFontColorProperty, value); }}
 
         public double PriceScale {get { return ((TimeframeSegmentDataSeries)DataSeries).Return(ser => ser.PriceStep, 10d); }}
         public int Timeframe {get { return ((TimeframeSegmentDataSeries)DataSeries).Return(ser => ser.Timeframe, 1); }}
@@ -54,6 +67,9 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             }
 
             OnDrawImpl(renderContext, renderPassData);
+
+            if(ShowHorizontalVolumes)
+                DrawHorizontalVolumes(renderContext, renderPassData);
         }
 
         protected void DrawGrid(IRenderContext2D renderContext, ISeriesDrawingHelper drawingHelper, Point pt1, Point pt2, int xCount, int yCount, IPen2D framePen, IPen2D gridPen, IBrush2D fillBrush) {
@@ -100,6 +116,73 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                 if(nextSeg.Segment.Time >= period.Item2)
                     break;
             } while(true);
+        }
+
+        void DrawHorizontalVolumes(IRenderContext2D renderContext, IRenderPassData renderPassData) {
+            const float MinHistTextSize = 9f;
+
+            var series = DataSeries as TimeframeSegmentDataSeries;
+            if(series == null) return;
+
+            var localHorizVolume = LocalHorizontalVolumes;
+            var points = (TimeframeSegmentPointSeries) CurrentRenderPassData.PointSeries;
+            var priceStep = points.PriceStep;
+            var segments = points.Segments;
+            //var xCalc = CurrentRenderPassData.XCoordinateCalculator;
+            var yCalc = CurrentRenderPassData.YCoordinateCalculator;
+            var screenWidth = renderContext.ViewportSize.Width;
+            var screenHeight = renderContext.ViewportSize.Height;
+            var segmentHeight = Math.Abs(yCalc.GetCoordinate(segments[0].Segment.MinPrice) - yCalc.GetCoordinate(segments[0].Segment.MinPrice + priceStep));
+            var halfSegmentHeight = segmentHeight / 2;
+            var maxDrawPrice = yCalc.GetDataValue(-segmentHeight);
+            var minDrawPrice = yCalc.GetDataValue(screenHeight + segmentHeight);
+
+            var allPrices = localHorizVolume ? 
+                points.AllPrices.Where(p => p > minDrawPrice && p < maxDrawPrice) :
+                TimeframeSegmentDataSeries.GeneratePrices(minDrawPrice, maxDrawPrice, priceStep);
+
+            var hvolumes = localHorizVolume ?
+                allPrices.ToDictionary(price => price, points.GetVolumeByPrice) :
+                allPrices.ToDictionary(price => price, price => series.GetVolumeByPrice(price, priceStep));
+
+            var horizVolumes = hvolumes.Where(kv => kv.Key > minDrawPrice && kv.Key < maxDrawPrice && kv.Value > 0).ToArray();
+            var volBarsBrush = VolumeBarsBrush;
+            var volBarsFontColor = VolBarsFontColor;
+            var volumeLinearBrush = volBarsBrush as LinearGradientBrush;
+
+            if(!horizVolumes.Any())
+                return;
+
+            using(var penManager = new PenManager(renderContext, false, StrokeThickness, Opacity)) {
+                var volBrightLinePen = penManager.GetPen(volumeLinearBrush?.GradientStops[0].Color ?? volBarsFontColor);
+                var volBarBrush = penManager.GetBrush(volBarsBrush);
+                var maxHorizVolume = horizVolumes.Max(kv => kv.Value);
+                var widthFraction = HorizontalVolumeWidthFraction;
+
+                foreach(var kv in horizVolumes) {
+                    var yTop = yCalc.GetCoordinate(kv.Key) - halfSegmentHeight;
+                    var yBottom = yTop + segmentHeight;
+                    var width = screenWidth * kv.Value * widthFraction / maxHorizVolume;
+
+                    var pt1 = new Point(0, yTop);
+                    var pt2 = new Point(width, yBottom);
+
+                    if(segmentHeight > 1.5) {
+                        renderContext.DrawLine(volBrightLinePen, pt1, new Point(width, yTop));
+                        renderContext.FillRectangle(volBarBrush, new Point(0, yTop + 1), pt2, 3 * Math.PI / 2);
+                    } else {
+                        renderContext.FillRectangle(volBarBrush, pt1, pt2, 3 * Math.PI / 2);
+                    }
+
+                    var text = kv.Value.ToString(CultureInfo.InvariantCulture);
+                    var rectText = new Rect(new Point(1, yTop), pt2);
+                    var fontInfo = _fontCalculator.GetFont(rectText.Size, kv.Value.NumDigitsInPositiveNumber(), MinHistTextSize);
+
+                    if(fontInfo.Item3) {
+                        renderContext.DrawText(text, rectText, AlignmentX.Left, AlignmentY.Center, volBarsFontColor, fontInfo.Item1, _fontCalculator.FontFamily, fontInfo.Item2);
+                    }
+                }
+            }
         }
 
         protected class FontCalculator {
@@ -245,15 +328,6 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 //            public int NumCalls {get {return _numCalls;}}
         }
 
-    }
-
-    class NoResetObservableCollection<T> : ObservableCollection<T> {
-        /// <summary>Clears all items in the collection by removing them individually.</summary>
-        protected sealed override void ClearItems() {
-            var items = new List<T>(this);
-            foreach(var item in items)
-                Remove(item);
-        }
     }
 
     public class PerformanceAnalyzer {

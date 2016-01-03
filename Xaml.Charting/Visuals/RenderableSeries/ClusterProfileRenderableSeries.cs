@@ -134,7 +134,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                     var y1 = ctx.YCalc.GetCoordinate(segment.MaxPrice) - ctx.HalfPriceLevelHeight;
                     var y2 = ctx.YCalc.GetCoordinate(segment.MinPrice) + ctx.HalfPriceLevelHeight;
 
-                    var data = segment.Values;
+                    var data = segment.Values.ToArray();
 
                     renderContext.DrawLine(linePen, new Point(vertLineX, y1 + 1), new Point(vertLineX, y2));
 

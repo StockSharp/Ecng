@@ -27,11 +27,11 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
         string _seriesName;
 
+        readonly Dictionary<double, int> _volumeByPrice = new Dictionary<double, int>();
+
         readonly UltraList<TimeframeDataSegment> _segments = new UltraList<TimeframeDataSegment>();
         readonly UltraList<DateTime> _segmentDates = new UltraList<DateTime>();
         IUltraReadOnlyList<DateTime> SegmentDates => _segmentDates.AsReadOnly();
-
-        TimeframeSegmentPointSeries _lastPointSeries;
 
         public DataSeriesType DataSeriesType => DataSeriesType.TimeframeSegment;
 
@@ -46,10 +46,9 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
         #region sync objects
 
-        readonly object _syncRoot = new object();
-
         // операции добавления
-        public object SyncRoot {get { return _syncRoot; }}
+        public object SyncRoot {get;} = new object();
+
         public bool AcceptsUnsortedData {get {return false;} set{ } }
 
         #endregion
@@ -65,7 +64,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             get { return _seriesName; }
             set {
                 _seriesName = value;
-                OnDataSeriesChanged(DataSeriesUpdate.DataChanged);
+                DataSeriesChanged?.Invoke(this, new DataSeriesChangedEventArgs(DataSeriesUpdate.DataChanged));
             }
         }
 
@@ -307,12 +306,15 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         }
 
         void AddOrUpdateSegment(DateTime periodStart, double price, int volume) {
-            if(PriceStep <= 0 || PriceStep.IsNaN()) return;
+            var step = PriceStep;
+            if(step <= 0 || step.IsNaN()) return;
+
+            price = price.NormalizePrice(step);
 
             TimeframeDataSegment segment;
 
             if(_segments.Count == 0 || _segments[_segments.Count - 1].Time != periodStart) {
-                segment = new TimeframeDataSegment(periodStart, PriceStep, _segments.Count);
+                segment = new TimeframeDataSegment(periodStart, step, _segments.Count);
 
                 _segments.Add(segment);
                 _segmentDates.Add(segment.Time);
@@ -322,7 +324,9 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
             segment.AddPoint(price, volume);
 
-            //OnNewPoint(point); // todo aggregation
+            int v;
+            _volumeByPrice.TryGetValue(price, out v);
+            _volumeByPrice[price] = v + volume;
         }
 
 
@@ -348,16 +352,19 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         }
 
         public IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory) {
-            if(!pointRange.IsDefined)
-                return null;
-
-            var pointSeries = new TimeframeSegmentPointSeries(_lastPointSeries, Segments.ItemsArray, pointRange, visibleXRange, PriceStep);
-
-            _lastPointSeries = pointSeries;
-
-            return pointSeries;
+            return pointRange.IsDefined ? new TimeframeSegmentPointSeries(Segments.ItemsArray, pointRange, visibleXRange, PriceStep) : null;
         }
 
+        public int GetVolumeByPrice(double price, double priceStep = 0d) {
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if(priceStep == 0d) priceStep = PriceStep;
+
+            price = price.NormalizePrice(priceStep);
+
+            int vol;
+            _volumeByPrice.TryGetValue(price, out vol);
+            return vol;
+        }
 
         #region suspender
 
@@ -388,20 +395,16 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         /// </summary>
         /// <param name="suspender"></param>
         public void ResumeUpdates(IUpdateSuspender suspender) {
-            if (suspender.ResumeTargetOnDispose) {
-                OnDataSeriesChanged(DataSeriesUpdate.DataChanged | DataSeriesUpdate.DataSeriesCleared);
-            }
+            if(suspender.ResumeTargetOnDispose)
+                DataSeriesChanged?.Invoke(this, new DataSeriesChangedEventArgs(DataSeriesUpdate.DataChanged | DataSeriesUpdate.DataSeriesCleared));
 
-            if (suspender.Tag != null)
-            {
+            if(suspender.Tag != null) {
                 // Synchronization object on the parent surface
                 Monitor.Exit(suspender.Tag);
             }
         }
 
-        public void DecrementSuspend()
-        {
-        }
+        public void DecrementSuspend() { }
 
         #endregion
 

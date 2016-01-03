@@ -93,7 +93,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
             var result = new IndexRange(range.Min - offset + 1, range.Max + offset - 1);
 
-            UltrachartDebugLogger.Instance.WriteLine("GetExtendedXRange: ({0},{1}) => ({2},{3})", range.Min, range.Max, result.Min, result.Max);
+            //UltrachartDebugLogger.Instance.WriteLine("GetExtendedXRange: ({0},{1}) => ({2},{3})", range.Min, range.Max, result.Min, result.Max);
 
             return result;
         }
@@ -101,9 +101,6 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
         //readonly PerformanceAnalyzer _perf = new PerformanceAnalyzer();
 
         protected override void OnDrawImpl(IRenderContext2D renderContext, IRenderPassData renderPassData) {
-            //RenderContextBase.Test.Perf = _perf;
-            //_perf.Restart("render start");
-
             var series = DataSeries as TimeframeSegmentDataSeries;
             if(series == null) return;
 
@@ -115,7 +112,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             var fontColor = CellFontColor;
             var highVolColor = HighVolColor;
             var screenHeight = renderContext.ViewportSize.Height;
-            var screenWidth = renderContext.ViewportSize.Width;
+            //var screenWidth = renderContext.ViewportSize.Width;
             var points = (TimeframeSegmentPointSeries) CurrentRenderPassData.PointSeries;
             var segments = points.Segments;
             var numSegments = segments.Length;

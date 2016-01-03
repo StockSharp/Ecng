@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Ecng.Xaml.Charting.Common.Extensions;
 
 namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
     class TimeframeSegmentPointSeries : IPointSeries {
         readonly TimeframeSegmentWrapper[] _segments;
         readonly DoubleRange _yRange;
         IUltraList<double> _xValues;
+
+        readonly Dictionary<double, int> _volumeByPrice = new Dictionary<double, int>();
 
         public IUltraList<double> XValues => _xValues ?? (_xValues = new UltraList<double>(_segments.Select(s => s.X)));
         public IUltraList<double> YValues => null;
@@ -25,7 +26,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         public IndexRange DataRange {get;}
         public IndexRange VisibleRange {get;}
 
-        public TimeframeSegmentPointSeries(TimeframeSegmentPointSeries lastPointSeries, TimeframeDataSegment[] segments, IndexRange dataRange, IRange visibleRange, double priceStep) {
+        public TimeframeSegmentPointSeries(TimeframeDataSegment[] segments, IndexRange dataRange, IRange visibleRange, double priceStep) {
             PriceStep = priceStep;
             DataRange = (IndexRange)dataRange.Clone();
             VisibleRange = visibleRange as IndexRange ?? dataRange;
@@ -48,30 +49,25 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
             _yRange = new DoubleRange(min, max);
 
-            if(lastPointSeries != null && lastPointSeries.DataRange.Min == DataRange.Min && lastPointSeries.DataRange.Max == DataRange.Max) {
-                // диапазон сегментов не изменился с прошлого рендера => значит мог измениться только последний сегмент =>
-                // => оптимизация агрегации (берем все агрегаторы из предыдущей пойнт-серии и обновляем только то, что изменилось в последнем сегменте)
+            var prices = new HashSet<double>();
 
-                var lastSegmentIndex = DataRange.Max;
+            foreach(var pv in Segments.SelectMany(seg => seg.Segment.Values.Where(pv => pv != null))) {
+                prices.Add(pv.Price);
 
-                var newAllPrices = new HashSet<double>();
-                lastPointSeries.AllPrices.ForEachDo(price => newAllPrices.Add(price));
-                segments[lastSegmentIndex].Values.ForEachDo(pd => newAllPrices.Add(pd.Price));
-
-                AllPrices = newAllPrices.ToArray();
-
-            } else { // иначе создаем пойнт-серию заново (без инициализированных агрегаторов)
-
-                var prices = new HashSet<double>();
-
-                foreach(var d in Segments.SelectMany(seg => seg.Segment.Values.Where(pd => pd != null)))
-                    prices.Add(d.Price);
-
-                AllPrices = prices.ToArray();
+                int vol;
+                _volumeByPrice.TryGetValue(pv.Price, out vol);
+                _volumeByPrice[pv.Price] = pv.Value + vol;
             }
 
+            AllPrices = prices.ToArray();
         }
 
         public DoubleRange GetYRange() { return _yRange; }
+
+        public int GetVolumeByPrice(double normalizedPrice) {
+            int vol;
+            _volumeByPrice.TryGetValue(normalizedPrice, out vol);
+            return vol;
+        }
     }
 }

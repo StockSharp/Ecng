@@ -18,23 +18,13 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             }
         }
 
-        readonly IUltraList<PriceLevel> _levels = new UltraList<PriceLevel>(4);
+        readonly UltraList<PriceLevel> _levels = new UltraList<PriceLevel>(4);
         double _minPrice, _maxPrice;
 
         bool IsEmtpy => _levels.Count == 0;
 
-        public PriceLevel[] Values => _levels.ToArray();
-
-        public double[] AllPrices { get {
-            if(_levels.Count == 0) return new double[0];
-
-            var p0 = _levels[0].Price;
-            var arr = new double[_levels.Count];
-            for(var i = 0; i < _levels.Count; ++i)
-                arr[i] = (p0 + i * PriceStep).NormalizePrice(PriceStep);
-
-            return arr;
-        }}
+        public IEnumerable<PriceLevel> Values => _levels;
+        public IEnumerable<double> AllPrices  => _levels.Select(l => l.Price);
 
         public double PriceStep {get;}
         public int Index {get;}
@@ -67,8 +57,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
             var numElements = 1 + (int)Math.Round((MaxPrice - MinPrice) / PriceStep);
 
-            var levels = ((UltraList<PriceLevel>)_levels);
-            var levelsArrSizeChanged = levels.EnsureMinSize(numElements);
+            var levelsArrSizeChanged = _levels.EnsureMinSize(numElements);
 
             var arr = _levels.ItemsArray;
 
@@ -77,7 +66,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
             var first = arr[0];
             if(first == null) {
-                var errMsg = string.Format("ERROR: GetPriceLevel({0}): first item is null for time={1}", normPrice, Time);
+                var errMsg = $"ERROR: GetPriceLevel({normPrice}): first item is null for time={Time}";
                 UltrachartDebugLogger.Instance.WriteLine(errMsg);
                 throw new InvalidOperationException(errMsg);
             }
@@ -85,7 +74,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             var index = (int)Math.Round((normPrice - first.Price) / PriceStep);
             if(index >= 0) {
                 if(levelsArrSizeChanged) {
-                    for(var i = 0; i < levels.Count; ++i)
+                    for(var i = 0; i < _levels.Count; ++i)
                         if(arr[i] == null)
                             arr[i] = new PriceLevel((MinPrice + i * PriceStep).NormalizePrice(PriceStep));
                 }
