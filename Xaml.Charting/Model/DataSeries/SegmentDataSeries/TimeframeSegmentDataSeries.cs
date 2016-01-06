@@ -27,7 +27,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
         string _seriesName;
 
-        readonly Dictionary<double, int> _volumeByPrice = new Dictionary<double, int>();
+        readonly Dictionary<double, long> _volumeByPrice = new Dictionary<double, long>();
 
         readonly UltraList<TimeframeDataSegment> _segments = new UltraList<TimeframeDataSegment>();
         readonly UltraList<DateTime> _segmentDates = new UltraList<DateTime>();
@@ -238,7 +238,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             if(indexRange.Min.CompareTo(indexRange.Max) > 0)
                 indexRange.Min = 0;
 
-            UltrachartDebugLogger.Instance.WriteLine("GetIndicesRange(boxvol): Min={0}, Max={1}", indexRange.Min, indexRange.Max);
+            UltrachartDebugLogger.Instance.WriteLine("GetIndicesRange(timeframesegment): Min={0}, Max={1}", indexRange.Min, indexRange.Max);
 
             return indexRange;
         }
@@ -292,22 +292,48 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             return result;
         }
 
-        public void Append(DateTime time, double price, int volume) {
+        public void Append(DateTime time, double price, long volume) {
+            bool updated;
+
             lock(SyncRoot) {
                 var period = GetTimeframePeriod(time, Timeframe);
 
                 if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > period.Item1)
                     throw new ArgumentOutOfRangeException(nameof(time), "data must be ordered by time");
 
-                AddOrUpdateSegment(period.Item1, price, volume);
+                updated = AddOrUpdateSegment(period.Item1, price, volume, true);
             }
 
-            DataSeriesChanged?.Invoke(this, new DataSeriesChangedEventArgs(DataSeriesUpdate.DataChanged));
+            if(updated)
+                DataSeriesChanged?.Invoke(this, new DataSeriesChangedEventArgs(DataSeriesUpdate.DataChanged));
         }
 
-        void AddOrUpdateSegment(DateTime periodStart, double price, int volume) {
+        public void Update(DateTime time, double price, long volume) {
+            bool updated;
+
+            lock(SyncRoot) {
+                var period = GetTimeframePeriod(time, Timeframe);
+
+                if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > period.Item1)
+                    throw new ArgumentOutOfRangeException(nameof(time), "data must be ordered by time");
+
+                updated = AddOrUpdateSegment(period.Item1, price, volume, false);
+            }
+
+            if(updated)
+                DataSeriesChanged?.Invoke(this, new DataSeriesChangedEventArgs(DataSeriesUpdate.DataChanged));
+        }
+
+        bool AddOrUpdateSegment(DateTime periodStart, double price, long volume, bool sum) {
+            if(volume < 0)
+                throw new ArgumentException(nameof(volume));
+
+            if(sum && volume == 0)
+                return false;
+
             var step = PriceStep;
-            if(step <= 0 || step.IsNaN()) return;
+            if(step <= 0 || step.IsNaN())
+                return false;
 
             price = price.NormalizePrice(step);
 
@@ -322,13 +348,26 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
                 segment = _segments[_segments.Count - 1];
             }
 
-            segment.AddPoint(price, volume);
-
-            int v;
+            long v;
             _volumeByPrice.TryGetValue(price, out v);
-            _volumeByPrice[price] = v + volume;
-        }
 
+            if(sum) {
+                segment.AddPoint(price, volume);
+                _volumeByPrice[price] = v + volume;
+
+                return true;
+            }
+
+            var oldVolume = segment.GetValueByPrice(price);
+
+            if(volume == oldVolume)
+                return false;
+
+            segment.UpdatePoint(price, volume);
+            _volumeByPrice[price] = v - oldVolume + volume;
+
+            return true;
+        }
 
         public double GetYMinAt(int index, double existingYMin) {
             return Math.Min(_segments[index].MinPrice, existingYMin);
@@ -355,13 +394,13 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             return pointRange.IsDefined ? new TimeframeSegmentPointSeries(Segments.ItemsArray, pointRange, visibleXRange, PriceStep) : null;
         }
 
-        public int GetVolumeByPrice(double price, double priceStep = 0d) {
+        public long GetVolumeByPrice(double price, double priceStep = 0d) {
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             if(priceStep == 0d) priceStep = PriceStep;
 
             price = price.NormalizePrice(priceStep);
 
-            int vol;
+            long vol;
             _volumeByPrice.TryGetValue(price, out vol);
             return vol;
         }

@@ -164,13 +164,13 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
         class BarIterator {
             readonly int _count;
-            readonly int _maxValue;
+            readonly long _maxValue;
             readonly Action<BarIterator> _onNextBar;
             int _index;
 
             public int Index {get {return _index;}}
 
-            public BarIterator(int count, int maxValue, Action<BarIterator> onNextBar) {
+            public BarIterator(int count, long maxValue, Action<BarIterator> onNextBar) {
                 _count = count;
                 _maxValue = maxValue;
                 _onNextBar = onNextBar;
@@ -189,10 +189,10 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             }
 
             public double Coord {get; set;}
-            public int Value {get; set;}
+            public long Value {get; set;}
             public IBrush2D BarBrush {get; set;}
             public Color FontColor {get; set;}
-            public int MaxValue {get {return _maxValue;}}
+            public long MaxValue {get {return _maxValue;}}
         }
 
         void DrawHistogram(BarIterator bars, LocalRenderContext ctx, double baselineCoord, double barMaxHeight, DrawStartPoint orientation, float minFontSize) {

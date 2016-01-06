@@ -9,11 +9,16 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             public PriceLevel(double price) { Price = price; }
 
             public double Price {get;}
-            public int Value {get; private set;}
+            public long Value {get; private set;}
             public int Digits {get; private set;}
 
-            public void AddValue(int val) {
+            public void AddValue(long val) {
                 Value += val;
+                Digits = Value.NumDigitsInPositiveNumber();
+            }
+
+            public void UpdateValue(long val) {
+                Value = val;
                 Digits = Value.NumDigitsInPositiveNumber();
             }
         }
@@ -33,7 +38,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         public double MinPrice => _minPrice;
         public double MaxPrice => _maxPrice;
 
-        public int MaxValue {get; private set;}
+        public long MaxValue {get; private set;}
         public int MaxDigits {get; private set;}
 
         public double X => Time.Ticks;
@@ -95,7 +100,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             return arr[0];
         }
 
-        public void AddPoint(double price, int volume) {
+        public void AddPoint(double price, long volume) {
             if(volume == 0) return;
 
             price = price.NormalizePrice(PriceStep);
@@ -110,7 +115,25 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             }
         }
 
-        public int GetValueByPrice(double price) {
+        public void UpdatePoint(double price, long volume) {
+            price = price.NormalizePrice(PriceStep);
+
+            var level = GetPriceLevel(price);
+
+            var oldValue = level.Value;
+
+            level.UpdateValue(volume);
+
+            if(level.Value > oldValue && level.Value > MaxValue) {
+                MaxValue = volume;
+                MaxDigits = level.Digits;
+            } else if(level.Value < oldValue) {
+                MaxValue = _levels.Max(l => l.Value);
+                MaxDigits = MaxValue.NumDigitsInPositiveNumber();
+            }
+        }
+
+        public long GetValueByPrice(double price) {
             if(_levels.Count == 0) return 0;
 
             price = price.NormalizePrice(PriceStep);

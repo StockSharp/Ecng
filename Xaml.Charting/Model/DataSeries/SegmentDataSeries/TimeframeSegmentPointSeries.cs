@@ -7,7 +7,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         readonly DoubleRange _yRange;
         IUltraList<double> _xValues;
 
-        readonly Dictionary<double, int> _volumeByPrice = new Dictionary<double, int>();
+        readonly Dictionary<double, long> _volumeByPrice = new Dictionary<double, long>();
 
         public IUltraList<double> XValues => _xValues ?? (_xValues = new UltraList<double>(_segments.Select(s => s.X)));
         public IUltraList<double> YValues => null;
@@ -54,7 +54,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             foreach(var pv in Segments.SelectMany(seg => seg.Segment.Values.Where(pv => pv != null))) {
                 prices.Add(pv.Price);
 
-                int vol;
+                long vol;
                 _volumeByPrice.TryGetValue(pv.Price, out vol);
                 _volumeByPrice[pv.Price] = pv.Value + vol;
             }
@@ -64,8 +64,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
         public DoubleRange GetYRange() { return _yRange; }
 
-        public int GetVolumeByPrice(double normalizedPrice) {
-            int vol;
+        public long GetVolumeByPrice(double normalizedPrice) {
+            long vol;
             _volumeByPrice.TryGetValue(normalizedPrice, out vol);
             return vol;
         }

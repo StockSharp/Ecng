@@ -21,7 +21,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
         public static readonly DependencyProperty LocalHorizontalVolumesProperty = DependencyProperty.Register(nameof(LocalHorizontalVolumes), typeof(bool), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(false, OnInvalidateParentSurface));
         public static readonly DependencyProperty ShowHorizontalVolumesProperty = DependencyProperty.Register(nameof(ShowHorizontalVolumes), typeof(bool), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(true, OnInvalidateParentSurface));
-        public static readonly DependencyProperty HorizontalVolumeWidthFractionProperty = DependencyProperty.Register(nameof(HorizontalVolumeWidthFraction), typeof(double), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(0.15d, OnInvalidateParentSurface));
+        public static readonly DependencyProperty HorizontalVolumeWidthFractionProperty = DependencyProperty.Register(nameof(HorizontalVolumeWidthFraction), typeof(double), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(0.15d, OnInvalidateParentSurface, CoerceHorizontalVolumeWidthFraction));
         public static readonly DependencyProperty VolumeBarsBrushProperty = DependencyProperty.Register(nameof(VolumeBarsBrush), typeof(Brush), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(_defaultVerticalVolumeBrush, OnInvalidateParentSurface));
         public static readonly DependencyProperty VolBarsFontColorProperty = DependencyProperty.Register(nameof(VolBarsFontColor), typeof(Color), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(Colors.White, OnInvalidateParentSurface));
 
@@ -38,6 +38,13 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
         protected override HitTestInfo HitTestInternal(Point rawPoint, double hitTestRadius, bool interpolate) {
             return HitTestInfo.Empty;
+        }
+
+        static object CoerceHorizontalVolumeWidthFraction(DependencyObject d, object newVal) {
+            var f = (double)newVal;
+
+            return f < 0d ? 0d : 
+                  (f > 1d ? 1d : newVal);
         }
 
         abstract protected void OnDrawImpl(IRenderContext2D renderContext, IRenderPassData renderPassData);

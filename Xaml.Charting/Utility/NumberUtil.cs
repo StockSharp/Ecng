@@ -37,10 +37,9 @@ namespace Ecng.Xaml.Charting.Utility
 
             if (x < 10000000) return 7;
             if (x < 100000000) return 8;
-            if (x < 1000000000) return 9; 
-            if (x < 10000000000) return 10; 
+            if (x < 1000000000) return 9;
 
-            throw new InvalidOperationException("impossible");
+            return 10;
         }
 
         internal static byte NumDigitsInPositiveNumber(this long x) {
@@ -55,10 +54,11 @@ namespace Ecng.Xaml.Charting.Utility
 
             if (x < 10000000) return 7;
             if (x < 100000000) return 8;
-            if (x < 1000000000) return 9; 
-            if (x < 10000000000) return 10; 
-            if (x < 100000000000) return 11; 
-            if (x < 1000000000000) return 12; 
+            if (x < 1000000000) return 9;
+            if (x < 10000000000) return 10;
+            if (x < 100000000000) return 11;
+            if (x < 1000000000000) return 12;
+            if (x < 10000000000000) return 13;
 
             return (byte)(Math.Truncate(Math.Log10(x)) + 1); // Very uncommon
         }
