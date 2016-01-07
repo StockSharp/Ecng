@@ -51,7 +51,9 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
             var prices = new HashSet<double>();
 
-            foreach(var pv in Segments.SelectMany(seg => seg.Segment.Values.Where(pv => pv != null))) {
+            foreach(var pv in Segments.Where(seg => seg.Segment.Index >= VisibleRange.Min && seg.Segment.Index <= VisibleRange.Max)
+                                      .SelectMany(seg => seg.Segment.Values.Where(pv => pv != null))) {
+
                 prices.Add(pv.Price);
 
                 long vol;
