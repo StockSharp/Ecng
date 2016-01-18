@@ -243,9 +243,12 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             return indexRange;
         }
 
-        public static Tuple<DateTime, DateTime, int> GetTimeframePeriod(DateTime dt, int periodMinutes) {
+        public static Tuple<DateTime, DateTime, int> GetTimeframePeriod(DateTime dt, int periodMinutes, Tuple<DateTime, DateTime, int> prevPeriod = null) {
             if(periodMinutes < 1 || periodMinutes > MaxTimeframe)
                 throw new ArgumentOutOfRangeException(nameof(periodMinutes));
+
+            if(prevPeriod != null && prevPeriod.Item3 == periodMinutes && dt >= prevPeriod.Item1 && dt < prevPeriod.Item2)
+                return prevPeriod;
 
             DateTime start, end;
             int index;
@@ -292,16 +295,18 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             return result;
         }
 
+        Tuple<DateTime, DateTime, int> _curPeriod;
+
         public void Append(DateTime time, double price, long volume) {
             bool updated;
 
             lock(SyncRoot) {
-                var period = GetTimeframePeriod(time, Timeframe);
+                _curPeriod = GetTimeframePeriod(time, Timeframe, _curPeriod);
 
-                if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > period.Item1)
+                if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > _curPeriod.Item1)
                     throw new ArgumentOutOfRangeException(nameof(time), "data must be ordered by time");
 
-                updated = AddOrUpdateSegment(period.Item1, price, volume, true);
+                updated = AddOrUpdateSegment(_curPeriod.Item1, price, volume, true);
             }
 
             if(updated)
@@ -312,12 +317,12 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             bool updated;
 
             lock(SyncRoot) {
-                var period = GetTimeframePeriod(time, Timeframe);
+                _curPeriod = GetTimeframePeriod(time, Timeframe);
 
-                if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > period.Item1)
+                if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > _curPeriod.Item1)
                     throw new ArgumentOutOfRangeException(nameof(time), "data must be ordered by time");
 
-                updated = AddOrUpdateSegment(period.Item1, price, volume, false);
+                updated = AddOrUpdateSegment(_curPeriod.Item1, price, volume, false);
             }
 
             if(updated)
