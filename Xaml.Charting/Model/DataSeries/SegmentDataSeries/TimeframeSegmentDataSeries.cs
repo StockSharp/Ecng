@@ -247,7 +247,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             if(periodMinutes < 1 || periodMinutes > MaxTimeframe)
                 throw new ArgumentOutOfRangeException(nameof(periodMinutes));
 
-            if(prevPeriod != null && prevPeriod.Item3 == periodMinutes && dt >= prevPeriod.Item1 && dt < prevPeriod.Item2)
+            if(prevPeriod != null && dt < prevPeriod.Item2 && dt >= prevPeriod.Item1)
                 return prevPeriod;
 
             DateTime start, end;
@@ -255,7 +255,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
             if(periodMinutes < TimeframeOneDay) {
                 index = (int)(dt.TimeOfDay.TotalMinutes / periodMinutes);
-                start = new DateTime(dt.Year, dt.Month, dt.Day) + TimeSpan.FromMinutes(index * periodMinutes);
+                start = dt.Date + TimeSpan.FromMinutes(index * periodMinutes);
                 end = start + TimeSpan.FromMinutes(periodMinutes);
                 if(end.Day != start.Day)
                     end = end.Date;
