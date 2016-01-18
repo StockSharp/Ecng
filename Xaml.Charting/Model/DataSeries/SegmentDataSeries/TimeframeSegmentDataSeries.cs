@@ -257,7 +257,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
                 index = (int)(dt.TimeOfDay.TotalMinutes / periodMinutes);
                 start = new DateTime(dt.Year, dt.Month, dt.Day) + TimeSpan.FromMinutes(index * periodMinutes);
                 end = start + TimeSpan.FromMinutes(periodMinutes);
-                if(end.Date != start.Date)
+                if(end.Day != start.Day)
                     end = end.Date;
             } else if(periodMinutes == TimeframeOneDay) {
                 start = new DateTime(dt.Year, dt.Month, dt.Day);
@@ -317,7 +317,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             bool updated;
 
             lock(SyncRoot) {
-                _curPeriod = GetTimeframePeriod(time, Timeframe);
+                _curPeriod = GetTimeframePeriod(time, Timeframe, _curPeriod);
 
                 if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > _curPeriod.Item1)
                     throw new ArgumentOutOfRangeException(nameof(time), "data must be ordered by time");
