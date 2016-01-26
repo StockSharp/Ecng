@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using Ecng.Xaml.Charting.Common;
 using Ecng.Xaml.Charting.Common.Extensions;
 using Ecng.Xaml.Charting.Model.DataSeries;
 using Ecng.Xaml.Charting.Numerics.CoordinateCalculators;
@@ -84,6 +85,9 @@ namespace Ecng.Xaml.Charting
                 suspender.ResumeTargetOnDispose = false;
 
                 UltrachartDebugLogger.Instance.WriteLine("Beginning Render Loop ... ");
+
+                // flush dataseries buffers
+                _ultraChartSurface.RenderableSeries.ForEachDo(rs => rs.DataSeries.Do(ds => ds.OnBeginRenderPass()));
 
                 // Step 1: Perform measure/arrange pass manually as we're not drawing WPF primitives
                 Size viewportSize = OnLayoutUltrachart(_ultraChartSurface);
@@ -312,8 +316,6 @@ namespace Ecng.Xaml.Charting
                 IndexRange pointRange;
                 IPointSeries resampledSeries;
                 IDataSeries dataSeries;
-
-                renderableSeries.DataSeries.OnBeginRenderPass();
 
                 ResampleSeries(scs.XAxes, renderableSeries, renderPassInfo, resamplerFactory, out dataSeries, out pointRange, out resampledSeries);
 
