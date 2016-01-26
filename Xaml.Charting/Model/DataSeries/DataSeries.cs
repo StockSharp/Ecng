@@ -656,15 +656,15 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
             Guard.NotNull(x, "x");
             if (x.GetType() != typeof(TX))
             {
-				if (x.GetType() == typeof (double))
-				{
-					// convert from double to TX
-					var xAsDouble = (double) x;
-					var zeroX = XMath.ZeroValue;
-					var oneX = zeroX;
-					oneX = XMath.Inc(ref oneX);
-					x = XMath.Mult(oneX, xAsDouble);
-				}
+                if (x.GetType() == typeof (double))
+                {
+                    // convert from double to TX
+                    var xAsDouble = (double) x;
+                    var zeroX = XMath.ZeroValue;
+                    var oneX = zeroX;
+                    oneX = XMath.Inc(ref oneX);
+                    x = XMath.Mult(oneX, xAsDouble);
+                }
                 else throw new InvalidOperationException(string.Format("The X-value type {0} does not match the DataSeries X-Type", x.GetType()));
             }
 
@@ -1036,8 +1036,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         /// The index of first point in line, -1 if not found (when count is zero)
         /// </returns>
         /// <exception cref="System.NotImplementedException"></exception>
-		public virtual int FindClosestLine(IComparable x, IComparable y, double xyScaleRatio, double xRadius, LineDrawMode drawNanAs)
-		{
+        public virtual int FindClosestLine(IComparable x, IComparable y, double xyScaleRatio, double xRadius, LineDrawMode drawNanAs)
+        {
             var count = Count;
             var closestPointIndex = -1;
 
@@ -1149,6 +1149,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
 
                 return closestPointIndex;
             }
-		}        
+        }
+
+        public virtual void OnBeginRenderPass() { }
     }    
 }

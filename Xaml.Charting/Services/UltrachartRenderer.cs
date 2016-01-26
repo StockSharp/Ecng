@@ -313,6 +313,8 @@ namespace Ecng.Xaml.Charting
                 IPointSeries resampledSeries;
                 IDataSeries dataSeries;
 
+                renderableSeries.DataSeries.OnBeginRenderPass();
+
                 ResampleSeries(scs.XAxes, renderableSeries, renderPassInfo, resamplerFactory, out dataSeries, out pointRange, out resampledSeries);
 
                 renderPassInfo.RenderableSeries[i] = allRenderableSeries[i];

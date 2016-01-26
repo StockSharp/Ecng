@@ -201,6 +201,7 @@
     <Compile Include="Licensing\XElementExtensions.cs" />
     <Compile Include="Model\AxisProxy.cs" />
     <Compile Include="Model\ChartData\PropertyChangedEventArgsWithValues.cs" />
+    <Compile Include="Model\DataSeries\DataSeriesAppendBuffer.cs" />
     <Compile Include="Model\DataSeries\SegmentDataSeries\TimeframeSegmentPointSeries.cs" />
     <Compile Include="Model\DataSeries\SegmentDataSeries\TimeframeDataSegment.cs" />
     <Compile Include="Model\DataSeries\DataDistributionCalculator\DataDistributionCalculatorFactory.cs" />
@@ -857,6 +858,12 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{725d5260-8208-4a39-843a-6b58606ed73b}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -18,6 +18,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Ecng.Common;
+using Ecng.Xaml.Charting.Common;
 using Ecng.Xaml.Charting.Common.Extensions;
 using Ecng.Xaml.Charting.Numerics;
 using Ecng.Xaml.Charting.Numerics.GenericMath;
@@ -64,11 +67,14 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
     {
         public static readonly IMath<TZ> ZMath = GenericMathFactory.New<TZ>();
 
+        readonly DataSeriesAppendBuffer<ValTuple<TX, TY, TZ>> _appendBuffer;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="XyzDataSeries{TX,TY,TZ}" /> class.
         /// </summary>
         public XyzDataSeries()
         {
+            _appendBuffer = new DataSeriesAppendBuffer<ValTuple<TX, TY, TZ>>(FlushAppendBuffer);
         }
 
         protected ISeriesColumn<TZ> _zColumn = new SeriesColumn<TZ>();
@@ -116,6 +122,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock(SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 XValues.RemoveAt(index);
                 YValues.RemoveAt(index);
                 ZValues.RemoveAt(index);
@@ -134,6 +142,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 _xColumn.RemoveRange(startIndex, count);
                 _yColumn.RemoveRange(startIndex, count);
                 _zColumn.RemoveRange(startIndex, count);
@@ -151,6 +161,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 var dataSeries = new XyzDataSeries<TX, TY, TZ>();
                 dataSeries.FifoCapacity = FifoCapacity;
                 dataSeries.AcceptsUnsortedData = AcceptsUnsortedData;
@@ -201,11 +213,17 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
-				var yPoints = factory.GetPointResampler<TX, TY>().Execute(resamplingMode, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _yColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
-				var zPoints = factory.GetPointResampler<TX, TZ>().Execute(resamplingMode, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _zColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
+                var yPoints = factory.GetPointResampler<TX, TY>().Execute(resamplingMode, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _yColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
+                var zPoints = factory.GetPointResampler<TX, TZ>().Execute(resamplingMode, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _zColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
 
                 return new XyzPointSeries(yPoints, zPoints);
             }
+        }
+
+        public override void OnBeginRenderPass() {
+            base.OnBeginRenderPass();
+            // ReSharper disable once InconsistentlySynchronizedField
+            _appendBuffer.Flush();
         }
 
         /// <summary>
@@ -234,25 +252,29 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         /// </summary>
         protected override void ClearColumns()
         {
-            bool isFifo = FifoCapacity.HasValue;
-            if (isFifo)
-            {
-                int size = FifoCapacity.Value;
+            lock(SyncRoot) {
+                bool isFifo = FifoCapacity.HasValue;
+                if (isFifo)
+                {
+                    int size = FifoCapacity.Value;
 
-                _xColumn = new FifoSeriesColumn<TX>(size);
-                _yColumn = new FifoSeriesColumn<TY>(size);
-                _zColumn = new FifoSeriesColumn<TZ>(size);
-            }
-            else
-            {
-                _xColumn = new SeriesColumn<TX>();
-                _yColumn = new SeriesColumn<TY>();
-                _zColumn = new SeriesColumn<TZ>();
-            }
+                    _xColumn = new FifoSeriesColumn<TX>(size);
+                    _yColumn = new FifoSeriesColumn<TY>(size);
+                    _zColumn = new FifoSeriesColumn<TZ>(size);
+                }
+                else
+                {
+                    _xColumn = new SeriesColumn<TX>();
+                    _yColumn = new SeriesColumn<TY>();
+                    _zColumn = new SeriesColumn<TZ>();
+                }
 
-            ((ICollection<TX>)_xColumn).Clear();
-            ((ICollection<TY>)_yColumn).Clear();
-            ((ICollection<TZ>)_zColumn).Clear();
+                ((ICollection<TX>)_xColumn).Clear();
+                ((ICollection<TY>)_yColumn).Clear();
+                ((ICollection<TZ>)_zColumn).Clear();
+
+                _appendBuffer.Do(b => b.Clear());
+            }
         }
 
         /// <summary>
@@ -286,15 +308,10 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         /// <param name="z">The Z-value</param>
         public void Append(TX x, TY y, TZ z)
         {
-            lock (SyncRoot)
-            {
-                _xColumn.Add(x);
-                _yColumn.Add(y);
-                _zColumn.Add(z);
+            // ReSharper disable once InconsistentlySynchronizedField
+            _appendBuffer.Append(ValTuple.Create(x, y, z));
 
-                OnDataSeriesChanged(DataSeriesUpdate.DataChanged);
-                DataDistributionCalculator.OnAppendXValue(_xColumn, x, AcceptsUnsortedData);
-            }
+            OnDataSeriesChanged(DataSeriesUpdate.DataChanged);
         }
 
         /// <summary>
@@ -305,21 +322,18 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         /// <param name="z">The Z-values</param>
         public void Append(IEnumerable<TX> x, IEnumerable<TY> y, IEnumerable<TZ> z)
         {
-            if (!x.IsEmpty())
-            {
-                lock (SyncRoot)
-                {
-                    var xCountBeforeAppending = ((ISeriesColumn) _xColumn).Count;
+            if (x.IsEmpty())
+                return;
 
-                    _xColumn.AddRange(x);
-                    _yColumn.AddRange(y);
-                    _zColumn.AddRange(z);
+            var xe = x.GetEnumerator();
+            var ye = y.GetEnumerator();
+            var ze = z.GetEnumerator();
 
-                    OnDataSeriesChanged(DataSeriesUpdate.DataChanged);
-                    DataDistributionCalculator.OnAppendXValues(_xColumn,
-                        xCountBeforeAppending, x, AcceptsUnsortedData);
-                }
-            }
+            lock(_appendBuffer.SyncRoot)
+                while(xe.MoveNext() && ye.MoveNext() && ze.MoveNext())
+                    _appendBuffer.Append(ValTuple.Create(xe.Current, ye.Current, ze.Current));
+                
+            OnDataSeriesChanged(DataSeriesUpdate.DataChanged);
         }
 
         /// <summary>
@@ -332,6 +346,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 int index = ((IList)_xColumn).FindIndex(IsSorted, x, SearchMode.Exact);
                 if (index == -1)
                 {
@@ -356,6 +372,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 XValues.Insert(index, x);
                 YValues.Insert(index, y);
                 ZValues.Insert(index, z);
@@ -376,6 +394,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 var xCountBeforeInserting = ((ISeriesColumn) _xColumn).Count;
                 _xColumn.InsertRange(startIndex, x);
                 var xCountAfterInserting = ((ISeriesColumn) _xColumn).Count;
@@ -385,6 +405,18 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
                 OnDataSeriesChanged(DataSeriesUpdate.DataChanged);
                 DataDistributionCalculator.OnInsertXValues(_xColumn, startIndex,
                     xCountAfterInserting - xCountBeforeInserting, x, AcceptsUnsortedData);
+            }
+        }
+
+        void FlushAppendBuffer(IList<ValTuple<TX, TY, TZ>> bufferedValues) {
+            lock (SyncRoot) {
+                var newX = bufferedValues.Select(b => b.Item1);
+                var xCountBeforeAppending = ((ISeriesColumn) _xColumn).Count;
+
+                _xColumn.AddRange(newX);
+                _yColumn.AddRange(bufferedValues.Select(b => b.Item2));
+                _zColumn.AddRange(bufferedValues.Select(b => b.Item3));
+                DataDistributionCalculator.OnAppendXValues(_xColumn, xCountBeforeAppending, newX, AcceptsUnsortedData);
             }
         }
     }	

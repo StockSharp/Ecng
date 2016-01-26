@@ -303,6 +303,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
 		/// <param name="drawNanAs">specifies how to handle NAN elements</param>
 		/// <returns>The index of first point in line, -1 if not found (when count is zero)</returns>
 		int FindClosestLine(IComparable x, IComparable y, double xyScaleRatio, double xRadius, LineDrawMode drawNanAs);
+
+        void OnBeginRenderPass();
     }
 
     /// <summary>

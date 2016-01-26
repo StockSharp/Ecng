@@ -426,6 +426,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
             throw new NotImplementedException();
         }
 
+        public void OnBeginRenderPass() { }
+
         bool ISuspendable.IsSuspended
         {
             get { throw new NotImplementedException(); }

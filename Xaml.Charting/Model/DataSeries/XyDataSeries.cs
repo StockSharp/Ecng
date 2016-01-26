@@ -18,13 +18,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
+using Ecng.Common;
+using Ecng.Xaml.Charting.Common;
 using Ecng.Xaml.Charting.Common.Extensions;
 using Ecng.Xaml.Charting.Numerics;
-using Ecng.Xaml.Charting.Numerics.GenericMath;
 using Ecng.Xaml.Charting.Numerics.PointResamplers;
-using Ecng.Xaml.Charting.Utility;
 using Ecng.Xaml.Charting.Visuals;
 using Ecng.Xaml.Charting.Visuals.RenderableSeries;
 
@@ -60,11 +59,14 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         where TX : IComparable
         where TY : IComparable
     {
+        readonly DataSeriesAppendBuffer<ValTuple<TX, TY>> _appendBuffer;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="XyDataSeries{TX,TY}" /> class.
         /// </summary>
         public XyDataSeries()
         {
+            _appendBuffer = new DataSeriesAppendBuffer<ValTuple<TX, TY>>(FlushAppendBuffer);
         }
 
         /// <summary>
@@ -115,27 +117,37 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
             }
         }
 
+        public override void OnBeginRenderPass() {
+            base.OnBeginRenderPass();
+            // ReSharper disable once InconsistentlySynchronizedField
+            _appendBuffer.Flush();
+        }
+
         /// <summary>
         /// When overridden in a derived class, clears all columns in the Data Series
         /// </summary>
         protected override void ClearColumns()
         {
-            bool isFifo = FifoCapacity.HasValue;
-            if (isFifo)
-            {
-                int size = FifoCapacity.Value;
+            lock(SyncRoot) {
+                bool isFifo = FifoCapacity.HasValue;
+                if (isFifo)
+                {
+                    int size = FifoCapacity.Value;
 
-                _xColumn = new FifoSeriesColumn<TX>(size);
-                _yColumn = new FifoSeriesColumn<TY>(size);
-            }
-            else
-            {
-                _xColumn = new SeriesColumn<TX>();
-                _yColumn = new SeriesColumn<TY>();
-            }
+                    _xColumn = new FifoSeriesColumn<TX>(size);
+                    _yColumn = new FifoSeriesColumn<TY>(size);
+                }
+                else
+                {
+                    _xColumn = new SeriesColumn<TX>();
+                    _yColumn = new SeriesColumn<TY>();
+                }
 
-            ((ICollection<TX>)_xColumn).Clear();
-            ((ICollection<TY>)_yColumn).Clear();
+                ((ICollection<TX>)_xColumn).Clear();
+                ((ICollection<TY>)_yColumn).Clear();
+
+                _appendBuffer.Do(b => b.Clear());
+            }
         }
 
         /// <summary>
@@ -146,6 +158,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 var y = YValues[index];
                 var x = XValues[index];
 
@@ -166,6 +180,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 _xColumn.RemoveRange(startIndex, count);
                 _yColumn.RemoveRange(startIndex, count);
                
@@ -182,6 +198,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 IXyDataSeries<TX, TY> dataSeries = new XyDataSeries<TX, TY>();
                 dataSeries.FifoCapacity = FifoCapacity;
                 dataSeries.AcceptsUnsortedData = AcceptsUnsortedData;
@@ -234,14 +252,10 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         /// <param name="y">The Y Value</param>
         public virtual void Append(TX x, TY y)
         {
-            lock (SyncRoot)
-            {
-                _xColumn.Add(x);
-                _yColumn.Add(y);
+            // ReSharper disable once InconsistentlySynchronizedField
+            _appendBuffer.Append(ValTuple.Create(x, y));
 
-                OnDataSeriesChanged(DataSeriesUpdate.DataChanged);
-                DataDistributionCalculator.OnAppendXValue(_xColumn, x, AcceptsUnsortedData);
-            }
+            OnDataSeriesChanged(DataSeriesUpdate.DataChanged);
         }
 
         /// <summary>
@@ -254,15 +268,14 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
             if (x.IsEmpty())
                 return;
 
-            lock (SyncRoot)
-            {
-                var xCountBeforeAppending = ((ISeriesColumn) _xColumn).Count;
-                _xColumn.AddRange(x);
-                _yColumn.AddRange(y);
+            var xe = x.GetEnumerator();
+            var ye = y.GetEnumerator();
 
-                OnDataSeriesChanged(DataSeriesUpdate.DataChanged);
-                DataDistributionCalculator.OnAppendXValues(_xColumn, xCountBeforeAppending, x, AcceptsUnsortedData);
-            }
+            lock(_appendBuffer.SyncRoot)
+                while(xe.MoveNext() && ye.MoveNext())
+                    _appendBuffer.Append(ValTuple.Create(xe.Current, ye.Current));
+                
+            OnDataSeriesChanged(DataSeriesUpdate.DataChanged);
         }
 
         /// <summary>
@@ -275,6 +288,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 int index = ((IList)_xColumn).FindIndex(IsSorted, x, SearchMode.Exact);
                 if (index == -1)
                 {
@@ -297,6 +312,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 XValues.Insert(index, x);
                 YValues.Insert(index, y);
 
@@ -316,6 +333,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         {
             lock (SyncRoot)
             {
+                _appendBuffer.Flush();
+
                 var xCountBeforeInserting = ((ISeriesColumn)_xColumn).Count;
                 _xColumn.InsertRange(startIndex, x);
                 var xCountAfterInserting = ((ISeriesColumn)_xColumn).Count;
@@ -352,7 +371,16 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
             var max = YValues[index];
             return YMath.IsNaN(max) ? existingYMax : YMath.Max(existingYMax, max);
         }
+
+        void FlushAppendBuffer(IList<ValTuple<TX, TY>> bufferedValues) {
+            lock (SyncRoot) {
+                var newX = bufferedValues.Select(b => b.Item1);
+                var xCountBeforeAppending = ((ISeriesColumn) _xColumn).Count;
+
+                _xColumn.AddRange(newX);
+                _yColumn.AddRange(bufferedValues.Select(b => b.Item2));
+                DataDistributionCalculator.OnAppendXValues(_xColumn, xCountBeforeAppending, newX, AcceptsUnsortedData);
+            }
+        }
     }
-
-
 }

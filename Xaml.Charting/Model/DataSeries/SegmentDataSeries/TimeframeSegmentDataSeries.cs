@@ -471,6 +471,9 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         int IDataSeries.FindIndex(IComparable x, SearchMode searchMode) { throw new NotImplementedException(); }
         int IDataSeries.FindClosestPoint(IComparable x, IComparable y, double xyScaleRatio, double maxXDistance) { throw new NotImplementedException(); }
         int IDataSeries.FindClosestLine(IComparable x, IComparable y, double xyScaleRatio, double maxXDistance, LineDrawMode drawNanAs) { throw new NotImplementedException(); }
+
+        public virtual void OnBeginRenderPass() { }
+
         // obsolete
         IPointSeries IDataSeries.ToPointSeries(IList column, ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis) { throw new NotImplementedException(); }
         HitTestInfo IDataSeries.ToHitTestInfo(int index) { return HitTestInfo.Empty; }
