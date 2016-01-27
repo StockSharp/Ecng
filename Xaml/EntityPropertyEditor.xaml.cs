@@ -8,6 +8,7 @@
 	using System.Reflection;
 	using System.Windows;
 	using System.Windows.Controls;
+	using System.Windows.Controls.Primitives;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
@@ -25,7 +26,7 @@
 			var value = (EntityProperty)args.NewValue;
 			var ctrl = (EntityPropertyEditor)sender;
 
-			ctrl.SelectedPropertyName = value == null ? null : value.Name;
+			ctrl.SelectedPropertyName = value?.Name;
 		}
 
 		/// <summary>
@@ -86,11 +87,26 @@
 		public EntityPropertyEditor()
 		{
 			InitializeComponent();
-		}
+			TreeView.ItemContainerGenerator.StatusChanged += OnItemContainerGeneratorStatusChanged;
+        }
 
 		private void TreeView_OnSelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
 		{
 			SelectedValue = (EntityProperty)e.NewValue;
+		}
+
+		private void OnItemContainerGeneratorStatusChanged(object sender, EventArgs e)
+		{
+			if (TreeView.ItemContainerGenerator.Status != GeneratorStatus.ContainersGenerated)
+				return;
+
+			if (SelectedValue == null)
+				return;
+
+			var element = TreeView.ItemContainerGenerator.ContainerFromItem(SelectedValue);
+
+			if (element != null)
+				((TreeViewItem)element).IsSelected = true;
 		}
 
 		private void SelectItem(string name)
@@ -106,8 +122,10 @@
 
 				item = items.FirstOrDefault(i => i.Name == propName);
 
-				if (item != null)
-					items = item.Properties;
+				if (item == null)
+					break;
+
+				items = item.Properties;
 			}
 
 			SelectedValue = item;
@@ -129,7 +147,7 @@
 
 		public IEnumerable<EntityProperty> Properties { get; set; }
 
-		public string FullDisplayName => Parent == null ? DisplayName : "{0} -> {1}".Put(Parent.DisplayName, DisplayName);
+		public string FullDisplayName => Parent == null ? DisplayName : "{0} -> {1}".Put(Parent.FullDisplayName, DisplayName);
 
 		public override string ToString()
 		{
@@ -139,40 +157,67 @@
 
 	public static class EntityPropertyHelper
 	{
-		public static List<EntityProperty> GetEntityProperties(this Type type, Func<PropertyInfo, bool> filter = null)
+		public static List<EntityProperty> GetEntityProperties(this Type initialType, Func<PropertyInfo, bool> filter = null)
 		{
-			return type.GetEntityProperties(null, filter ?? (p => true));
-		}
+			if (initialType == null)
+				throw new ArgumentNullException(nameof(initialType));
 
-		private static List<EntityProperty> GetEntityProperties(this Type type, EntityProperty parent, Func<PropertyInfo, bool> filter)
-		{
-			var properties = new List<EntityProperty>();
+			List<EntityProperty> rootProperties = null;
 
-			var propertyInfos = type
-				.GetMembers<PropertyInfo>(BindingFlags.Public | BindingFlags.Instance)
-				.Where(filter);
+			var processed = new HashSet<Type>();
+			var stack = new Stack<Tuple<Type, EntityProperty>>();
+			var root = Tuple.Create(initialType, (EntityProperty)null);
 
-			foreach (var pi in propertyInfos)
+			filter = filter ?? (p => true);
+
+			stack.Push(root);
+
+			while (stack.Count > 0)
 			{
-				var nameAttr = pi.GetAttribute<DisplayNameAttribute>();
-				var displayName = nameAttr == null ? pi.Name : nameAttr.DisplayName;
+				var item = stack.Pop();
+				var type = item.Item1;
+				var parent = item.Item2;
 
-				var prop = new EntityProperty
-				{
-					Name = (parent != null ? parent.Name + "." : string.Empty) + pi.Name,
-					Parent = parent,
-					DisplayName = displayName,
-				};
+				if (processed.Contains(type))
+					continue;
 
-				if (!pi.PropertyType.IsPrimitive() && !pi.PropertyType.IsNullable())
+				var properties = new List<EntityProperty>();
+
+				var propertyInfos = type
+					.GetMembers<PropertyInfo>(BindingFlags.Public | BindingFlags.Instance)
+					.Where(filter);
+
+				foreach (var pi in propertyInfos)
 				{
-					prop.Properties = GetEntityProperties(pi.PropertyType, prop, filter);
+					var nameAttr = pi.GetAttribute<DisplayNameAttribute>();
+					var displayName = nameAttr == null ? pi.Name : nameAttr.DisplayName;
+
+					var prop = new EntityProperty
+					{
+						Name = (parent != null ? parent.Name + "." : string.Empty) + pi.Name,
+						Parent = parent,
+						DisplayName = displayName,
+					};
+
+					if (!pi.PropertyType.IsPrimitive() && !pi.PropertyType.IsNullable())
+					{
+						stack.Push(Tuple.Create(pi.PropertyType, prop));
+					}
+
+					properties.Add(prop);
 				}
 
-				properties.Add(prop);
+				processed.Add(type);
+
+				if (parent != null)
+				{
+					parent.Properties = properties;
+				}
+				else
+					rootProperties = properties;
 			}
 
-			return properties;
+			return rootProperties;
 		}
 
 		public static object GetPropValue(this object entity, string name)
@@ -181,10 +226,7 @@
 
 			foreach (var part in name.Split('.'))
 			{
-				if (value == null)
-					return null;
-
-				var info = value.GetType().GetProperty(part);
+				var info = value?.GetType().GetProperty(part);
 
 				if (info == null)
 					return null;
