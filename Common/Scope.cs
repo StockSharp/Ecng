@@ -30,7 +30,7 @@ namespace Ecng.Common
 #if !SILVERLIGHT
 			Thread.BeginThreadAffinity();
 #endif
-			_parent = _current;
+			Parent = _current;
 			_current = this;
 
 			//_all.Add(this);
@@ -40,9 +40,7 @@ namespace Ecng.Common
 
 		#region Parent
 
-		private readonly Scope<T> _parent;
-
-		public Scope<T> Parent => _parent;
+		public Scope<T> Parent { get; }
 
 		#endregion
 
@@ -89,7 +87,7 @@ namespace Ecng.Common
 			if (this != _current)
 				throw new InvalidOperationException("Disposed out of order.");
 
-			_current = _parent;
+			_current = Parent;
 #if !SILVERLIGHT
 			Thread.EndThreadAffinity();
 #endif

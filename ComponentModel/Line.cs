@@ -10,7 +10,7 @@ namespace Ecng.ComponentModel
 	public class Line<T> : Equatable<Line<T>>
 		where T : struct, IEquatable<T>
 	{
-		private readonly static IOperator<T> _operator = OperatorRegistry.GetOperator<T>();
+		private static readonly IOperator<T> _operator = OperatorRegistry.GetOperator<T>();
 
 		/// <summary>
 		/// 

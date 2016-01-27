@@ -42,12 +42,12 @@ namespace Ecng.ComponentModel
 		/// <summary>
 		/// Represents the smallest possible value of a T.
 		/// </summary>
-		public readonly static T MinValue;
+		public static readonly T MinValue;
 
 		/// <summary>
 		/// Represents the largest possible value of a T.
 		/// </summary>
-		public readonly static T MaxValue;
+		public static readonly T MaxValue;
 
 		#region HasMinValue
 
@@ -86,7 +86,7 @@ namespace Ecng.ComponentModel
 			get
 			{
 				if (!HasMinValue || !HasMaxValue)
-					return Range<T>.MaxValue;
+					return MaxValue;
 				else
 				{
 					if (_operator == null)

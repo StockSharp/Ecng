@@ -20,7 +20,7 @@ namespace Ecng.ComponentModel
 		where T : struct, IEquatable<T>
 		//where TOperator : IOperator<T>, new()
 	{
-		private readonly static IOperator<T> _operator = OperatorRegistry.GetOperator<T>();
+		private static readonly IOperator<T> _operator = OperatorRegistry.GetOperator<T>();
 
 		#region Point.ctor()
 

@@ -43,16 +43,10 @@ namespace Ecng.Common
 			}
 		}
 
-		private static TimeSpan _timeZoneOffset = TimeZoneInfo.Local.BaseUtcOffset;
-
 		/// <summary>
 		/// Смещение временной зоны.
 		/// </summary>
-		public static TimeSpan TimeZoneOffset
-		{
-			get { return _timeZoneOffset; }
-			set { _timeZoneOffset = value; }
-		}
+		public static TimeSpan TimeZoneOffset { get; set; } = TimeZoneInfo.Local.BaseUtcOffset;
 
 		/// <summary>
 		/// Синхронизировать <see cref="NowOffset"/> между локальным временем на компьютере и NTP сервером в интернете.

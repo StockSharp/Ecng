@@ -19,20 +19,18 @@
 			if (factoryType == null)
 				throw new ArgumentNullException(nameof(factoryType));
 
-			_factoryType = factoryType;
+			FactoryType = factoryType;
 		}
 
 		#endregion
 
 		#region FactoryType
 
-		private readonly Type _factoryType;
-
 		/// <summary>
 		/// Gets the type of the factory.
 		/// </summary>
 		/// <value>The type of the factory.</value>
-		public Type FactoryType => _factoryType;
+		public Type FactoryType { get; }
 
 		#endregion
 	}
