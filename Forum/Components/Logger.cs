@@ -2,7 +2,6 @@ namespace Ecng.Forum.Components
 {
 	using System;
 	using System.Diagnostics;
-	using System.Management.Automation;
 	using System.Security;
 
 	using Ecng.Common;
@@ -50,8 +49,6 @@ namespace Ecng.Forum.Components
 					forum = forums.SecurityErrors;
 				else if (ex is HttpRuntimeShutdownException)
 					forum = forums.ShutdownErrors;
-				else if (ex is RuntimeException)
-					forum = forums.LogicErrors;
 				else if (ex is ClientException)
 				{
 					forum = forums.ClientErrors;
