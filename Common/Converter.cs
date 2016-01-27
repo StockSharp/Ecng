@@ -285,7 +285,7 @@
 					var endPoint = (EndPoint)value;
 					retVal = endPoint.GetHost() + ":" + endPoint.GetPort();
 				}
-				else if (destinationType.IsEnum() && (value is string || sourceType.IsPrimitive))
+				else if ((value is string || sourceType.IsPrimitive) && destinationType.IsEnum())
 				{
 					if (value is string)
 						retVal = Enum.Parse(destinationType, (string)value, true);
