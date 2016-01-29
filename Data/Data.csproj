@@ -81,6 +81,7 @@
     <Compile Include="BatchException.cs" />
     <Compile Include="DatabaseCommandHelper.cs" />
     <Compile Include="DatabaseProvider.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="HierarchicalDatabase.cs" />
     <Compile Include="HierarchicalDatabaseContext.cs" />
     <Compile Include="HierarchicalPageLoadList.cs" />
