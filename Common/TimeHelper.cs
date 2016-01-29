@@ -312,6 +312,9 @@ namespace Ecng.Common
 
 		public static DateTimeOffset ToDateTimeOffset(this DateTime date, TimeZoneInfo zone)
 		{
+			if (zone == null)
+				throw new ArgumentNullException(nameof(zone));
+
 			return date.ToDateTimeOffset(zone.GetUtcOffset(date));
 		}
 

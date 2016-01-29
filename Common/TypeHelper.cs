@@ -191,6 +191,23 @@ namespace Ecng.Common
 			handler(destination);
 		}
 
+		public static void DoIfElse<T>(this object value, Action<T> ifAction, Action elseAction)
+			where T : class
+		{
+			if (ifAction == null)
+				throw new ArgumentNullException(nameof(ifAction));
+
+			if (elseAction == null)
+				throw new ArgumentNullException(nameof(elseAction));
+
+			var typedValue = value as T;
+
+			if (typedValue != null)
+				ifAction(typedValue);
+			else
+				elseAction();
+		}
+
 		public static void DoDispose<TSource>(this TSource source)
 		{
 			source.DoIf<TSource, IDisposable>(d => d.Dispose());
