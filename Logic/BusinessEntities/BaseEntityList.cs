@@ -124,10 +124,10 @@ namespace Ecng.Logic.BusinessEntities
 			return new SerializationItemCollection { new SerializationItem<long>(new VoidField<long>(OverrideItemName), entity.Id) };
 		}
 
-		public override bool Contains(TEntity item)
-		{
-			return ReadById(item.Id) != null;
-		}
+		//public override bool Contains(TEntity item)
+		//{
+		//	return ReadById(item.Id) != null;
+		//}
 
 		protected override void OnAdd(TEntity entity)
 		{
