@@ -97,6 +97,7 @@
     <Compile Include="Converters\DateTimeOffsetConverter.cs" />
     <Compile Include="Converters\DictionaryConverter.cs" />
     <Compile Include="Converters\InverseBooleanConverter.cs" />
+    <Compile Include="Converters\LeftMarginMultiplierConverter.cs" />
     <Compile Include="Converters\ListViewBackgroundConvertor.cs" />
     <Compile Include="BmpImage.cs" />
     <Compile Include="Block.xaml.cs">
