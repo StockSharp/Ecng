@@ -454,7 +454,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
             return new IndexRange(0, ArrayWidth - 1);
         }
 
-        IPointSeries IDataSeries.ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory)
+        IPointSeries IDataSeries.ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory, object pointSeriesArg = null)
         {
             return new Array2DPointSeries<TX, TY>(this, _xMapping, _yMapping);
         }

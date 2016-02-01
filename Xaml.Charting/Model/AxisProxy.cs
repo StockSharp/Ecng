@@ -64,6 +64,7 @@ namespace Ecng.Xaml.Charting
         public bool IsVisible { get; set; }
         public bool AntiAliasing { get; set; }
         public ResamplingMode ResamplingMode { get; set; }
+        public object PointSeriesArg {get;}
         public IDataSeries DataSeries { get; set; }
         public IDataSeries DataSeriesForCore { get; set; }
         public IAxis XAxis { get; set; }

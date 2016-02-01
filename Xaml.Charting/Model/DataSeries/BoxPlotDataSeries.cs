@@ -238,7 +238,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
 		/// <returns>
 		/// A <see cref="IPointSeries"/> which is used to render XY series
 		/// </returns>
-		public override IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory)
+		public override IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory, object pointSeriesArg = null)
 		{
 			lock (SyncRoot)
 			{

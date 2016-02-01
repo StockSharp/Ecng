@@ -46,6 +46,11 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
     }
 
     /// <summary>
+    /// Enumeration constants to define how <see cref="OhlcDataSeries"/> is drawn.
+    /// </summary>
+    public enum OhlcLineDrawMode { Open, High, Low, Close }
+
+    /// <summary>
     /// Defines a Line renderable series, supporting solid, stroked (thickness 1+) lines, dashed lines <seealso cref="FastLineRenderableSeries.StrokeDashArray"/> and
     /// optional Point-markers <seealso cref="BaseRenderableSeries.PointMarker"/>
     /// </summary>
@@ -84,6 +89,11 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
         /// </summary>
         public static readonly DependencyProperty StrokeDashArrayProperty = DependencyProperty.Register("StrokeDashArray", typeof(double[]), typeof(FastLineRenderableSeries),
             new PropertyMetadata(null, OnInvalidateParentSurface));
+
+        /// <summary>
+        /// Defines the OhlcDrawMode DependencyProperty
+        /// </summary>
+        public static readonly DependencyProperty OhlcDrawModeProperty = DependencyProperty.Register("OhlcDrawMode", typeof(OhlcLineDrawMode), typeof(FastLineRenderableSeries), new PropertyMetadata(OhlcLineDrawMode.Close, OnInvalidateParentSurface));
         
         /// <summary>
         /// Initializes a new instance of the <seealso cref="FastLineRenderableSeries"/> class.
@@ -114,6 +124,16 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             set { SetValue(StrokeDashArrayProperty, value); }
         }
 
+        /// <summary>
+        /// OHLC line draw mode.
+        /// </summary>
+        public OhlcLineDrawMode OhlcDrawMode
+        {
+            get { return (OhlcLineDrawMode) GetValue(OhlcDrawModeProperty); }
+            set { SetValue(OhlcDrawModeProperty, value); }
+        }
+
+        public override object PointSeriesArg => OhlcDrawMode;
 
         /// <summary>
         /// Called when the <see cref="BaseRenderableSeries.SeriesColor"/> dependency property changes. Allows derived types to do caching 

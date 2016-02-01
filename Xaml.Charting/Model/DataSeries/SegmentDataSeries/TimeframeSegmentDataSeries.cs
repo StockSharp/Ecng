@@ -395,7 +395,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             return new DoubleRange(min, max);
         }
 
-        public IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory) {
+        public IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory, object pointSeriesArg = null) {
             return pointRange.IsDefined ? new TimeframeSegmentPointSeries(Segments.ItemsArray, pointRange, visibleXRange, PriceStep) : null;
         }
 

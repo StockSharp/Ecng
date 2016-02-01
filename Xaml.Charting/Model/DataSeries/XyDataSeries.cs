@@ -106,7 +106,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
             bool isCategoryAxis, 
             bool? dataIsDisplayedAs2D, 
             IRange visibleXRange, 
-            IPointResamplerFactory factory)
+            IPointResamplerFactory factory,
+			object pointSeriesArg = null)
         {
             lock (SyncRoot)
             {

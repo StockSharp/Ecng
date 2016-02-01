@@ -215,9 +215,9 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
 
         internal bool IsLicenseValid { get; set; }
 
-		protected internal virtual bool IsPartOfExtendedFeatures => false;
+        protected internal virtual bool IsPartOfExtendedFeatures => false;
 
-	    /// <summary>
+        /// <summary>
         /// Gets the <see cref="ServiceContainer"/> which provides access to services throughout Ultrachart. 
         /// ServiceContainers are created one per <see cref="UltrachartSurface"/> instance, 
         /// and shared between peripheral components such as <see cref="AxisBase"/>, <see cref="BaseRenderableSeries"/>, <see cref="Ecng.Xaml.Charting.ChartModifiers.ChartModifierBase"/> instances.
@@ -368,6 +368,8 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             set { SetValue(ResamplingModeProperty, value); }
         }
 
+        public virtual object PointSeriesArg => null;
+
         /// <summary>
         /// Gets or sets the SeriesColor.
         /// </summary>
@@ -412,14 +414,14 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             set { this.ThreadSafeSetValue(DataSeriesProperty, value); }
         }
 
-		/// <summary>
-		/// Gets or sets a value indicating how this renderable series will treat double.NaN. See <see cref="LineDrawMode"/> for available options
-		/// </summary>
+        /// <summary>
+        /// Gets or sets a value indicating how this renderable series will treat double.NaN. See <see cref="LineDrawMode"/> for available options
+        /// </summary>
         public LineDrawMode DrawNaNAs
-		{
-			get { return (LineDrawMode)GetValue(DrawNaNAsProperty); }
-			set { SetValue(DrawNaNAsProperty, value); }
-		}
+        {
+            get { return (LineDrawMode)GetValue(DrawNaNAsProperty); }
+            set { SetValue(DrawNaNAsProperty, value); }
+        }
 
         /// <summary>
         /// Gets or sets the RenderPassData instance used for this render pass
@@ -469,23 +471,23 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
         /// </summary>
         public virtual bool DisplaysDataAsXy { get; private set; }
 
-		/// <summary>
-		/// Gets a value indicating whether this <see cref="BaseRenderableSeries"/> is valid for drawing.
-		/// </summary>
-		/// <remarks></remarks>
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="BaseRenderableSeries"/> is valid for drawing.
+        /// </summary>
+        /// <remarks></remarks>
         internal virtual bool IsValidForDrawing
-		{
-			get
-			{
-			    var isValid = GetIsValidForDrawing();
+        {
+            get
+            {
+                var isValid = GetIsValidForDrawing();
 
-			    return isValid
+                return isValid
 #if LICENSEDDEPLOY
-					   && IsLicenseValid
+                       && IsLicenseValid
 #endif
-					;
-			}
-		}
+                    ;
+            }
+        }
 
         /// <summary>
         /// Gets a value indicating whether this <see cref="BaseRenderableSeries"/> is valid for drawing.
@@ -776,18 +778,18 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
         /// <exception cref="System.NotImplementedException"></exception>
         protected virtual HitTestInfo NearestHitResult(Point mouseRawPoint, double hitTestRadiusInPixels, SearchMode searchMode, bool considerYCoordinateForDistanceCalculation)
         {
-			if (Double.IsNaN(hitTestRadiusInPixels)) throw new ArgumentException("hitTestRadiusInPixels is NAN");
+            if (Double.IsNaN(hitTestRadiusInPixels)) throw new ArgumentException("hitTestRadiusInPixels is NAN");
 
             var mouseDataPoint = GetHitDataValue(mouseRawPoint);
-			var transformedMouseRawPoint = TransformPoint(mouseRawPoint, CurrentRenderPassData.IsVerticalChart);
-			var xUnitsPerPixel = Math.Abs(CurrentRenderPassData.XCoordinateCalculator.GetDataValue(transformedMouseRawPoint.X + 1) - CurrentRenderPassData.XCoordinateCalculator.GetDataValue(transformedMouseRawPoint.X));
-			
-			// in case of datetime it is number of ticks per pixel
-			var yUnitsPerPixel = Math.Abs(CurrentRenderPassData.YCoordinateCalculator.GetDataValue(transformedMouseRawPoint.Y + 1) - CurrentRenderPassData.YCoordinateCalculator.GetDataValue(transformedMouseRawPoint.Y));
-			var xyScaleRatio = considerYCoordinateForDistanceCalculation ? xUnitsPerPixel / yUnitsPerPixel : 0;
+            var transformedMouseRawPoint = TransformPoint(mouseRawPoint, CurrentRenderPassData.IsVerticalChart);
+            var xUnitsPerPixel = Math.Abs(CurrentRenderPassData.XCoordinateCalculator.GetDataValue(transformedMouseRawPoint.X + 1) - CurrentRenderPassData.XCoordinateCalculator.GetDataValue(transformedMouseRawPoint.X));
+            
+            // in case of datetime it is number of ticks per pixel
+            var yUnitsPerPixel = Math.Abs(CurrentRenderPassData.YCoordinateCalculator.GetDataValue(transformedMouseRawPoint.Y + 1) - CurrentRenderPassData.YCoordinateCalculator.GetDataValue(transformedMouseRawPoint.Y));
+            var xyScaleRatio = considerYCoordinateForDistanceCalculation ? xUnitsPerPixel / yUnitsPerPixel : 0;
 
             int closestPointIndex;
-	        var dataSeries = DataSeries;
+            var dataSeries = DataSeries;
 
             if (dataSeries.Count < 2)
             {
@@ -873,7 +875,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
 
             return new Tuple<IComparable, IComparable>(hitXValue, hitYValue);
         }
-		
+        
         /// <param name="hitTestRadius">is used to calculate HitTestInfo.IsHit</param>
         protected HitTestInfo GetHitTestInfo(int nearestDataPointIndex, Point rawPoint, double hitTestRadius, IComparable hitXValue)
         {
@@ -898,7 +900,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             double yCoord = CurrentRenderPassData.YCoordinateCalculator.GetCoordinate(hitTestInfo.YValue.ToDouble());
 
             var nearestPoint = new Point(xCoord, yCoord);
-	        rawPoint = TransformPoint(rawPoint, CurrentRenderPassData.IsVerticalChart);
+            rawPoint = TransformPoint(rawPoint, CurrentRenderPassData.IsVerticalChart);
 
             hitTestInfo.HitTestPoint = hitTestInfo.Y1HitTestPoint = TransformPoint(nearestPoint, CurrentRenderPassData.IsVerticalChart);
 
@@ -1011,7 +1013,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
         }
 
         private Point InterpolateAtPoint(Point rawPoint, Point pt1, Point pt2)
-		{
+        {
             var xCoord1 = pt1.X;
             var yCoord1 = pt1.Y;
 
@@ -1024,10 +1026,10 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             // Use this fraction to perform linear interpolation on coordinates
             double fraction = (rawPoint.X - xCoord1) / (xCoord2 - xCoord1);
 
-			// limit fraction for case when difference of X coordinates between mouse point and data point is greater than 
-			// difference of X coordinates between adjacent data points
-			if (fraction > 1) fraction = 1;
-			else if (fraction < 0) fraction = 0;
+            // limit fraction for case when difference of X coordinates between mouse point and data point is greater than 
+            // difference of X coordinates between adjacent data points
+            if (fraction > 1) fraction = 1;
+            else if (fraction < 0) fraction = 0;
 
             // Interpolate coord using Pythagoras
             xCoord1 = xCoord1 + (xCoord2 - xCoord1) * fraction;
@@ -1036,7 +1038,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             if (!this.HasDigitalLine())
             {
                 yCoord1 = yCoord1 + (yCoord2 - yCoord1) * fraction;
-			}
+            }
 
             return new Point(xCoord1, yCoord1);
         }
@@ -1183,7 +1185,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             if (lowerBound > upperBound) NumberUtil.Swap(ref lowerBound, ref upperBound);
             return coord >= lowerBound && coord <= upperBound;
         }
-		
+        
         internal SeriesInfo GetSeriesInfo(Point point)
         {
             HitTestInfo hitTestInfo = HitTest(point);
@@ -1547,13 +1549,13 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             series.OnInvalidateParentSurface();
         }
 
-		[Obfuscation(Feature = "encryptmethod", Exclude = false)]
-		private void Initialize()
-		{
+        [Obfuscation(Feature = "encryptmethod", Exclude = false)]
+        private void Initialize()
+        {
 #if LICENSEDDEPLOY
-			new LicenseManager().Validate(this, new UltrachartLicenseProviderFactory());
+            new LicenseManager().Validate(this, new UltrachartLicenseProviderFactory());
 #endif
-		}
+        }
 
         
         internal double HitTestRadius

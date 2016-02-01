@@ -215,7 +215,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         /// <param name="factory">The PointResamplerFactory which returns <see cref="IPointResampler"/> instances</param>
         /// <param name="dataIsDisplayedAs2D">If true, then data is presented as a scatter series without relationship between the points, e.g. not a line series </param>
         /// <returns>A <see cref="IPointSeries"/> which is used to render XY series</returns>
-        IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory);
+        IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory, object pointSeriesArg = null);
 
         /// <summary>
         /// OBSOLETE: ToPointSeries overload has been deprecated, use ToPointSeries instead, and cast to correct type of point series

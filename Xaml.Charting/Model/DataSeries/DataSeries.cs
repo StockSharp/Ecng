@@ -547,7 +547,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         /// <returns>
         /// A <see cref="IPointSeries" /> which is used to render XY series
         /// </returns>
-        public abstract IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory);
+        public abstract IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory, object pointSeriesArg = null);
 
         /// <summary>
         /// OBSOLETE. Use ToPointSeries instead, and cast to correct type of point series

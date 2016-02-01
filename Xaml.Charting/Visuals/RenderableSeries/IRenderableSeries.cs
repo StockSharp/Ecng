@@ -131,6 +131,11 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
         ResamplingMode ResamplingMode { get; set; }
 
         /// <summary>
+        /// ToPointSeries argument.
+        /// </summary>        
+        object PointSeriesArg { get; }
+
+        /// <summary>
         /// Gets or sets the DataSeries associated with this series
         /// </summary>
         IDataSeries DataSeries { get; set; }

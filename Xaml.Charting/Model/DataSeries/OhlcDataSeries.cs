@@ -251,22 +251,39 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
         /// <returns>
         /// A <see cref="IPointSeries"/> which is used to render XY series
         /// </returns>
-        public override IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory)
-        {
+        public override IPointSeries ToPointSeries(ResamplingMode resamplingMode, IndexRange pointRange, int viewportWidth, bool isCategoryAxis, bool? dataIsDisplayedAs2D, IRange visibleXRange, IPointResamplerFactory factory, object pointSeriesArg = null) {
+            var drawMode = pointSeriesArg as OhlcLineDrawMode?;
+
+            if(drawMode == null)
+            {
+                lock (SyncRoot)
+                {
+                    // Either Mid or None. Cannot have mix MinMax with Max/Min as they result in different numbers of points
+                    var ocResample = resamplingMode == ResamplingMode.None ? ResamplingMode.None : ResamplingMode.Mid;
+                    var hResample = resamplingMode == ResamplingMode.None ? ResamplingMode.None : ResamplingMode.Max;
+                    var lResample = resamplingMode == ResamplingMode.None ? ResamplingMode.None : ResamplingMode.Min;
+
+                    var r = factory.GetPointResampler<TX, TY>();
+                    var openPoints = r.Execute(ocResample, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _openColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
+                    var highPoints = r.Execute(hResample, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _highColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
+                    var lowPoints = r.Execute(lResample, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _lowColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
+                    var closePoints = r.Execute(ocResample, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _closeColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
+
+                    return new OhlcPointSeries(openPoints, highPoints, lowPoints, closePoints);
+                }
+            }
+
+            var yCol =
+                    drawMode.Value == OhlcLineDrawMode.Open ? _openColumn :
+                    drawMode.Value == OhlcLineDrawMode.High ? _highColumn :
+                    drawMode.Value == OhlcLineDrawMode.Low ? _lowColumn :
+                    _closeColumn;
+
             lock (SyncRoot)
             {
-                // Either Mid or None. Cannot have mix MinMax with Max/Min as they result in different numbers of points
-                var ocResample = resamplingMode == ResamplingMode.None ? ResamplingMode.None : ResamplingMode.Mid;
-                var hResample = resamplingMode == ResamplingMode.None ? ResamplingMode.None : ResamplingMode.Max;
-                var lResample = resamplingMode == ResamplingMode.None ? ResamplingMode.None : ResamplingMode.Min;
-
                 var r = factory.GetPointResampler<TX, TY>();
-                var openPoints = r.Execute(ocResample, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _openColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
-                var highPoints = r.Execute(hResample, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _highColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
-                var lowPoints = r.Execute(lResample, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _lowColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
-                var closePoints = r.Execute(ocResample, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, _closeColumn, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
-
-                return new OhlcPointSeries(openPoints, highPoints, lowPoints, closePoints);
+                var ps = r.Execute(resamplingMode, pointRange, viewportWidth, IsFifo, isCategoryAxis, _xColumn, yCol, DataDistributionCalculator.DataIsSortedAscending, DataDistributionCalculator.DataIsEvenlySpaced, dataIsDisplayedAs2D, visibleXRange);
+                return ps;
             }
         }
 

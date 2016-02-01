@@ -385,7 +385,8 @@ namespace Ecng.Xaml.Charting
                         (int) renderPassInfo.ViewportSize.Width, isCategoryAxis,
                         displayDataAs2D,
                         xAxisRange,
-                        resamplerFactory);
+                        resamplerFactory,
+                        renderableSeries.PointSeriesArg);
                 }
             }
         }
