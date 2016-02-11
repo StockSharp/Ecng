@@ -773,5 +773,7 @@
 				}
 			}
 		}
+
+		public static Encoding WindowsCyrillic => Encoding.GetEncoding(1251);
 	}
 }

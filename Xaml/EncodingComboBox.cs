@@ -7,6 +7,8 @@ namespace Ecng.Xaml
 	using System.Windows;
 	using System.Windows.Controls;
 
+	using Ecng.Common;
+
 	using MoreLinq;
 
 	using Xceed.Wpf.Toolkit.PropertyGrid.Editors;
@@ -24,8 +26,14 @@ namespace Ecng.Xaml
 		{
 			var priorityCopePages = new[]
 			{
-				Encoding.ASCII, Encoding.UTF7, Encoding.GetEncoding(1251), Encoding.UTF8, Encoding.Unicode
-			}.Select(e => e.CodePage).ToHashSet();
+				Encoding.ASCII,
+				Encoding.UTF7,
+				StringHelper.WindowsCyrillic,
+				Encoding.UTF8,
+				Encoding.Unicode
+			}
+			.Select(e => e.CodePage)
+			.ToHashSet();
 
 			DisplayMemberPath = "DisplayName";
 			ItemsSource = _encodingInfos.Values
