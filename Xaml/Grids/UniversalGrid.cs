@@ -455,7 +455,7 @@
 
 			_dragCell = null;
 
-			base.OnPreviewMouseRightButtonDown(e);
+			base.OnPreviewMouseLeftButtonUp(e);
 		}
 
 		protected override void OnSelectedCellsChanged(SelectedCellsChangedEventArgs e)
