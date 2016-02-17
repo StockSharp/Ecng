@@ -8,6 +8,8 @@
 		// TODO В .NET 4.5 поле стандартно в классе Timeout
 		public static readonly TimeSpan InfiniteTimeSpan = new TimeSpan(0, 0, 0, 0, -1);
 
+		private bool _processed;
+
 		public bool TryEnter(TimeSpan? timeOut = null)
 		{
 			return timeOut == null ? Monitor.TryEnter(this) : Monitor.TryEnter(this, timeOut.Value);
@@ -35,6 +37,15 @@
 				Monitor.PulseAll(this);
 		}
 
+		public void PulseSignal()
+		{
+			lock (this)
+			{
+				_processed = true;
+				Monitor.Pulse(this);
+			}
+		}
+
 		public bool Wait(TimeSpan? timeOut = null)
 		{
 			lock (this)
@@ -43,6 +54,17 @@
 					return Monitor.Wait(this);
 				else
 					return Monitor.Wait(this, timeOut.Value);
+			}
+		}
+
+		public void WaitSignal()
+		{
+			lock (this)
+			{
+				if (!_processed)
+					Monitor.Wait(this);
+
+				_processed = false;
 			}
 		}
 	}
