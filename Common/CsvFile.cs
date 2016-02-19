@@ -269,9 +269,10 @@ namespace Ecng.Common
 		/// specified stream.
 		/// </summary>
 		/// <param name="stream">The stream to write to</param>
-		public CsvFileWriter(Stream stream)
-		{
-			Writer = new StreamWriter(stream);
+		public CsvFileWriter(Stream stream, Encoding encoding = null) {
+			Writer = encoding != null ?
+				new StreamWriter(stream, encoding) :
+				new StreamWriter(stream);
 		}
 
 		/// <summary>
