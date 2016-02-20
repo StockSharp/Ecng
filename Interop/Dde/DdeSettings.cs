@@ -1,4 +1,4 @@
-namespace Ecng.Interop.Dde
+п»їnamespace Ecng.Interop.Dde
 {
 	using System.ComponentModel;
 
@@ -7,7 +7,7 @@ namespace Ecng.Interop.Dde
 
 	using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
-	[DisplayName("Настройки DDE")]
+	[DisplayName("РќР°СЃС‚СЂРѕР№РєРё DDE")]
 	public class DdeSettings : Cloneable<DdeSettings>, IPersistable
 	{
 		public DdeSettings()
@@ -16,31 +16,31 @@ namespace Ecng.Interop.Dde
 			Topic = "[Book1.xlsx]Sheet1";
 		}
 
-		[DisplayName("Сервер")]
-		[Description("Название DDE сервера.")]
+		[DisplayName("РЎРµСЂРІРµСЂ")]
+		[Description("РќР°Р·РІР°РЅРёРµ DDE СЃРµСЂРІРµСЂР°.")]
 		[PropertyOrder(0)]
 		public string Server { get; set; }
 
-		[DisplayName("Топик")]
-		[Description("Название топика (например, для Экселя имеет формат [Book Name].Sheet Name).")]
+		[DisplayName("РўРѕРїРёРє")]
+		[Description("РќР°Р·РІР°РЅРёРµ С‚РѕРїРёРєР° (РЅР°РїСЂРёРјРµСЂ, РґР»СЏ Р­РєСЃРµР»СЏ РёРјРµРµС‚ С„РѕСЂРјР°С‚ [Book Name].Sheet Name).")]
 		[PropertyOrder(1)]
 		public string Topic { get; set; }
 
-		[DisplayName("Отступ колонки")]
-		[Description("Отступ колонки от левого верхнего угла.")]
+		[DisplayName("РћС‚СЃС‚СѓРї РєРѕР»РѕРЅРєРё")]
+		[Description("РћС‚СЃС‚СѓРї РєРѕР»РѕРЅРєРё РѕС‚ Р»РµРІРѕРіРѕ РІРµСЂС…РЅРµРіРѕ СѓРіР»Р°.")]
 		[PropertyOrder(2)]
 		public int ColumnOffset { get; set; }
 
-		[DisplayName("Отступ строчки")]
-		[Description("Отступ строчки от левого верхнего угла.")]
+		[DisplayName("РћС‚СЃС‚СѓРї СЃС‚СЂРѕС‡РєРё")]
+		[Description("РћС‚СЃС‚СѓРї СЃС‚СЂРѕС‡РєРё РѕС‚ Р»РµРІРѕРіРѕ РІРµСЂС…РЅРµРіРѕ СѓРіР»Р°.")]
 		[PropertyOrder(3)]
 		public int RowOffset { get; set; }
 
-		[DisplayName("Заголовки")]
-		[Description("Выводить ли названия колонок.")]
+		[DisplayName("Р—Р°РіРѕР»РѕРІРєРё")]
+		[Description("Р’С‹РІРѕРґРёС‚СЊ Р»Рё РЅР°Р·РІР°РЅРёСЏ РєРѕР»РѕРЅРѕРє.")]
 		[PropertyOrder(4)]
 		public bool ShowHeaders { get; set; }
-		
+
 		public void Apply(DdeSettings clone)
 		{
 			PersistableHelper.Apply(this, clone);
