@@ -105,10 +105,6 @@
       <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
       <Name>Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
-      <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
-      <Name>ComponentModel</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
 </Project>

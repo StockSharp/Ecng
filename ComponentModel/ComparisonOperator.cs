@@ -8,43 +8,43 @@
 		/// <summary>
 		/// Значения параметров равны.
 		/// </summary>
-		[EnumDisplayName("Равно")]
+		[EnumDisplayName("Equal", true)]
 		Equal,
 		
 		/// <summary>
 		/// Значения параметров не равны.
 		/// </summary>
-		[EnumDisplayName("Не равно")]
+		[EnumDisplayName("Not equal", true)]
 		NotEqual,
 		
 		/// <summary>
 		/// Значение левого параметра строго больше значения правого параметра.
 		/// </summary>
-		[EnumDisplayName("Больше")]
+		[EnumDisplayName("Greater", true)]
 		Greater,
 		
 		/// <summary>
 		/// Значение левого параметра нестрого больше (больше или равно) значения правого параметра.
 		/// </summary>
-		[EnumDisplayName("Больше или равно")]
+		[EnumDisplayName("Greater or equal", true)]
 		GreaterOrEqual,
 		
 		/// <summary>
 		/// Значение левого параметра строго меньше значения правого параметра.
 		/// </summary>
-		[EnumDisplayName("Меньше")]
+		[EnumDisplayName("Less", true)]
 		Less,
 		
 		/// <summary>
 		/// Значение левого параметра нестрого меньше (меньше или равно) значения правого параметра.
 		/// </summary>
-		[EnumDisplayName("Меньше или равно")]
+		[EnumDisplayName("Less or equal", true)]
 		LessOrEqual,
 
 		/// <summary>
 		/// Значение левого параметра имеет любое значение.
 		/// </summary>
-		[EnumDisplayName("Любое")]
+		[EnumDisplayName("Any", true)]
 		Any,
 	}
 }

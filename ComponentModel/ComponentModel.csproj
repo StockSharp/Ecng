@@ -129,6 +129,10 @@
       <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
       <Name>Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Localization\Localization.csproj">
+      <Project>{5ec44477-9e8c-4425-8f3a-6648d0c38b9d}</Project>
+      <Name>Localization</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Reflection\Reflection.csproj">
       <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
       <Name>Reflection</Name>
