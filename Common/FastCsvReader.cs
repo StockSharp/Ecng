@@ -14,7 +14,7 @@ namespace Ecng.Common
 		private int _bufferPos;
 		private char[] _line = new char[_buffSize];
 		private int _lineLen;
-		private RefPair<int, int>[] _columnPos = new RefPair<int, int>[_buffSize];
+		private readonly RefPair<int, int>[] _columnPos = new RefPair<int, int>[_buffSize];
 		private int _columnCount;
 		private int _columnCurr;
 
@@ -38,7 +38,7 @@ namespace Ecng.Common
 
 			for (var i = 0; i < _columnPos.Length; i++)
 				_columnPos[i] = new RefPair<int, int>();
-        }
+		}
 
 		private int _lineSeparatorCharPos;
 		private char[] _lineSeparatorChars;
@@ -74,7 +74,7 @@ namespace Ecng.Common
 		{
 			_lineLen = 0;
 			_columnCount = 0;
-			_columnCurr = 0;
+			_columnCurr = -1;
 
 			var inQuote = false;
 			var columnStart = 0;
@@ -127,7 +127,7 @@ namespace Ecng.Common
 						Array.Copy(_lineSeparatorChars, 0, _line, _lineLen, _lineSeparatorCharPos);
 
 						_lineLen += _lineSeparatorCharPos;
-                        _lineSeparatorCharPos = 0;
+						_lineSeparatorCharPos = 0;
 					}
 
 					if (c == ColumnSeparator)
@@ -140,9 +140,9 @@ namespace Ecng.Common
 						pair.First = columnStart;
 						pair.Second = _lineLen;
 
-                        columnStart = _lineLen + 1;
+						columnStart = _lineLen + 1;
 
-                        _columnCount++;
+						_columnCount++;
 					}
 				}
 
@@ -150,10 +150,10 @@ namespace Ecng.Common
 				{
 					inQuote = !inQuote;
 
-					if (inQuote)
-						continue;
-					else
-						break;
+					//if (inQuote)
+					continue;
+					//else
+					//	break;
 				}
 
 				if (_lineLen >= _line.Length)
@@ -228,7 +228,7 @@ namespace Ecng.Common
 
 		public decimal? ReadNullableDecimal()
 		{
-			var pair = GetColumnPos();
+			var pair = GetNextColumnPos();
 
 			if (pair.First == pair.Second)
 				return null;
@@ -282,7 +282,7 @@ namespace Ecng.Common
 
 		public int? ReadNullableInt()
 		{
-			var pair = GetColumnPos();
+			var pair = GetNextColumnPos();
 
 			if (pair.First == pair.Second)
 				return null;
@@ -304,7 +304,7 @@ namespace Ecng.Common
 
 		public long? ReadNullableLong()
 		{
-			var pair = GetColumnPos();
+			var pair = GetNextColumnPos();
 
 			if (pair.First == pair.Second)
 				return null;
@@ -321,7 +321,7 @@ namespace Ecng.Common
 
 		public string ReadString()
 		{
-			var pair = GetColumnPos();
+			var pair = GetNextColumnPos();
 
 			var len = pair.Second - pair.First;
 
@@ -355,12 +355,12 @@ namespace Ecng.Common
 			return str?.ToTimeSpan(format);
 		}
 
-		private RefPair<int, int> GetColumnPos()
+		private RefPair<int, int> GetNextColumnPos()
 		{
 			if (_columnCurr >= _columnCount)
 				throw new InvalidOperationException();
 
-			return _columnPos[_columnCurr++];
+			return _columnPos[++_columnCurr];
 		}
 	}
 }
