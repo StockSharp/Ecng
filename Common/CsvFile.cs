@@ -258,8 +258,9 @@ namespace Ecng.Common
 	/// </summary>
 	public class CsvFileWriter : CsvFileCommon, IDisposable
 	{
+		public StreamWriter Writer { get; }
+
 		// Private members
-		private StreamWriter Writer;
 		private string OneQuote;
 		private string TwoQuotes;
 		private string QuotedFormat;
@@ -305,7 +306,7 @@ namespace Ecng.Common
 					Writer.Write(Delimiter);
 
 				// Write this column
-				Writer.Write(Encode(c));
+				Writer.Write(Encode(c ?? string.Empty));
 				i++;
 			}
 
@@ -317,7 +318,7 @@ namespace Ecng.Common
 			// Ensure we're using current quote character
 			if (OneQuote == null || OneQuote[0] != Quote)
 			{
-				OneQuote = String.Format("{0}", Quote);
+				OneQuote = $"{Quote}";
 				TwoQuotes = String.Format("{0}{0}", Quote);
 				QuotedFormat = String.Format("{0}{{0}}{0}", Quote);
 			}
