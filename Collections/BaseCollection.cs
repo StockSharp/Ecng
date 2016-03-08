@@ -163,67 +163,67 @@ namespace Ecng.Collections
 
 		protected virtual bool OnInserting(int index, TItem item)
 		{
-			Inserting.SafeInvoke(index, item);
+			Inserting?.Invoke(index, item);
 			return true;
 		}
 
 		protected virtual void OnInserted(int index, TItem item)
 		{
-			Inserted.SafeInvoke(index, item);
+			Inserted?.Invoke(index, item);
 			OnChanged();
 		}
 
 		protected virtual bool OnAdding(TItem item)
 		{
-			Adding.SafeInvoke(item);
+			Adding?.Invoke(item);
 			return true;
 		}
 
 		protected virtual void OnAdded(TItem item)
 		{
-			Added.SafeInvoke(item);
+			Added?.Invoke(item);
 			OnChanged();
 		}
 
 		protected virtual bool OnClearing()
 		{
-			Clearing.SafeInvoke();
+			Clearing?.Invoke();
 			return true;
 		}
 
 		protected virtual void OnCleared()
 		{
-			Cleared.SafeInvoke();
+			Cleared?.Invoke();
 			OnChanged();
 		}
 
 		protected virtual bool OnRemoving(TItem item)
 		{
-			Removing.SafeInvoke(item);
+			Removing?.Invoke(item);
 			return true;
 		}
 
 		protected virtual void OnRemoved(TItem item)
 		{
-			Removed.SafeInvoke(item);
+			Removed?.Invoke(item);
 			OnChanged();
 		}
 
 		protected virtual bool OnRemovingAt(int index)
 		{
-			RemovingAt.SafeInvoke(index);
+			RemovingAt?.Invoke(index);
 			return true;
 		}
 
 		protected virtual void OnRemovedAt(int index)
 		{
-			RemovedAt.SafeInvoke(index);
+			RemovedAt?.Invoke(index);
 			OnChanged();
 		}
 
 		protected virtual void OnChanged()
 		{
-			Changed.SafeInvoke();
+			Changed?.Invoke();
 		}
 
 		#region IList Members

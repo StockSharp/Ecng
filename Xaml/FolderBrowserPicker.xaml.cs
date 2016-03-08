@@ -56,13 +56,13 @@
 			if (dlg.ShowDialog(owner) == true)
 			{
 				FolderPath.Text = dlg.SelectedPath;
-				FolderChange.SafeInvoke(dlg.SelectedPath);
+				FolderChange?.Invoke(dlg.SelectedPath);
 			}
 		}
 
 		private void FolderPath_OnTextChanged(object sender, TextChangedEventArgs e)
 		{
-			FolderChange.SafeInvoke(FolderPath.Text);
+			FolderChange?.Invoke(FolderPath.Text);
 		}
 	}
 

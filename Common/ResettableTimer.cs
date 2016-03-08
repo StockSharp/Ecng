@@ -53,7 +53,7 @@
 							}
 						}
 
-						Elapsed.SafeInvoke(CanProcess);
+						Elapsed?.Invoke(CanProcess);
 						_period.Sleep();
 					}
 				}

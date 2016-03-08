@@ -20,7 +20,7 @@
 		public TEntity Add<TEntity>(TEntity entity)
 		{
 			_cache.Add(typeof(TEntity), entity);
-			Added.SafeInvoke(entity);
+			Added?.Invoke(entity);
 			return entity;
 		}
 
@@ -36,13 +36,13 @@
 
 		public TEntity Update<TEntity>(TEntity entity)
 		{
-			Updated.SafeInvoke(entity);
+			Updated?.Invoke(entity);
 			return entity;
 		}
 
 		public void Remove<TEntity>(TEntity entity)
 		{
-			Removed.SafeInvoke(entity);
+			Removed?.Invoke(entity);
 			_cache.Remove(typeof(TEntity), entity);
 		}
 

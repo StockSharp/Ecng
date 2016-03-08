@@ -74,9 +74,9 @@
 			Storage.Added += value => DoIf<TEntity>(value, entity =>
 			{
 				if (_cache.Remove(entity))
-					Added.SafeInvoke(entity);
+					Added?.Invoke(entity);
 			});
-			Storage.Removed += value => DoIf<TEntity>(value, Removed.SafeInvoke);
+			Storage.Removed += value => DoIf<TEntity>(value, e => Removed?.Invoke(e));
 		}
 
 		private static Schema _schema;
@@ -297,7 +297,7 @@
 
 		public override void Add(TEntity item)
 		{
-			Adding.SafeInvoke(item);
+			Adding?.Invoke(item);
 
 			ThrowIfStorageNull();
 
@@ -326,7 +326,7 @@
 
 		public override void Clear()
 		{
-			Clearing.SafeInvoke();
+			Clearing?.Invoke();
 
 			_cache.Clear();
 
@@ -341,7 +341,7 @@
 
 			_count = 0;
 
-			Cleared.SafeInvoke();
+			Cleared?.Invoke();
 		}
 
 		public override bool Contains(TEntity item)
@@ -356,7 +356,7 @@
 
 		public override bool Remove(TEntity item)
 		{
-			Removing.SafeInvoke(item);
+			Removing?.Invoke(item);
 
 			//ThrowExceptionIfReadOnly();
 			ProcessDelayed(() => OnRemove(item));

@@ -56,7 +56,7 @@
 
 			if (TotalRows > -1)
 			{
-				TotalRowCountAvailable.SafeInvoke(this, new PageEventArgs((int)ViewState["_startRowIndex"], (int)ViewState["_maximumRows"], TotalRows));
+				TotalRowCountAvailable?.Invoke(this, new PageEventArgs((int)ViewState["_startRowIndex"], (int)ViewState["_maximumRows"], TotalRows));
 			}
 		}
 

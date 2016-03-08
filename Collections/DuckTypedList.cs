@@ -201,56 +201,56 @@
 		{
 			if (CanProcess(item))
 			{
-				_removed.SafeInvoke(item.To<TOuter>());
-				_changed.SafeInvoke();
+				_removed?.Invoke(item.To<TOuter>());
+				_changed?.Invoke();
 			}
 		}
 
 		private void OnRemoving(TInner item)
 		{
 			if (CanProcess(item))
-				_removing.SafeInvoke(item.To<TOuter>());
+				_removing?.Invoke(item.To<TOuter>());
 		}
 
 		private void OnAdded(TInner item)
 		{
 			if (CanProcess(item))
 			{
-				_added.SafeInvoke(item.To<TOuter>());
-				_changed.SafeInvoke();
+				_added?.Invoke(item.To<TOuter>());
+				_changed?.Invoke();
 			}
 		}
 
 		private void OnAdding(TInner item)
 		{
 			if (CanProcess(item))
-				_adding.SafeInvoke(item.To<TOuter>());
+				_adding?.Invoke(item.To<TOuter>());
 		}
 
 		private void OnInserting(int index, TInner item)
 		{
 			if (CanProcess(item))
-				_inserting.SafeInvoke(index, item.To<TOuter>());
+				_inserting?.Invoke(index, item.To<TOuter>());
 		}
 
 		private void OnInserted(int index, TInner item)
 		{
 			if (CanProcess(item))
 			{
-				_inserted.SafeInvoke(index, item.To<TOuter>());
-				_changed.SafeInvoke();
+				_inserted?.Invoke(index, item.To<TOuter>());
+				_changed?.Invoke();
 			}
 		}
 
 		private void OnClearing()
 		{
-			_clearing.SafeInvoke();
+			_clearing?.Invoke();
 		}
 
 		private void OnCleared()
 		{
-			_cleared.SafeInvoke();
-			_changed.SafeInvoke();
+			_cleared?.Invoke();
+			_changed?.Invoke();
 		}
 
 		protected override void DisposeManaged()

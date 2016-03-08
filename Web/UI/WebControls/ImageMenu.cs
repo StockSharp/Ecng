@@ -1,19 +1,11 @@
 namespace Ecng.Web.UI.WebControls
 {
-	#region Using Directives
-
 	using System;
 	using System.ComponentModel;
 	using System.Web.UI.WebControls;
 
-	using Ecng.Common;
-
-	#endregion
-
 	public class ImageMenu : Menu
 	{
-		#region ImageResolving
-
 		private static readonly object _eventImageResolving = new object();
 
 		[Description("")]
@@ -30,18 +22,19 @@ namespace Ecng.Web.UI.WebControls
 			}
 		}
 
-		#endregion
-
 		protected override void OnMenuItemDataBound(MenuEventArgs e)
 		{
 			base.OnMenuItemDataBound(e);
 
-			((EventHandler<ImageResolvingEventArgs>)Events[_eventImageResolving]).SafeInvoke(this, new ImageResolvingEventArgs(e.Item),
-			args =>
-			{
-				e.Item.ImageUrl = args.ImageUrl;
-				e.Item.Text = string.Empty;
-			});
+			var handler = (EventHandler<ImageResolvingEventArgs>)Events[_eventImageResolving];
+
+			if (handler == null)
+				return;
+
+			handler(this, new ImageResolvingEventArgs(e.Item));
+
+			e.Item.ImageUrl = e.Item.ImageUrl;
+			e.Item.Text = string.Empty;
 		}
 	}
 }

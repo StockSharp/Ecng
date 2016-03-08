@@ -128,7 +128,7 @@ namespace Ecng.ComponentModel
 		{
 			try
 			{
-				Event.SafeInvoke(items);
+				Event?.Invoke(items);
 			}
 			catch (Exception ex)
 			{

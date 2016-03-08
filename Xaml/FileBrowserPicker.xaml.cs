@@ -56,13 +56,13 @@
 			if (dlg.ShowDialog(owner) == true)
 			{
 				FilePath.Text = dlg.FileName;
-				FileChange.SafeInvoke(dlg.FileName);
+				FileChange?.Invoke(dlg.FileName);
 			}
 		}
 
 		private void FilePath_OnTextChanged(object sender, TextChangedEventArgs e)
 		{
-			FileChange.SafeInvoke(FilePath.Text);
+			FileChange?.Invoke(FilePath.Text);
 		}
 	}
 

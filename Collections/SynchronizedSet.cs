@@ -248,7 +248,7 @@
 				InnerCollection.AddRange(filteredItems);
 				filteredItems.ForEach(base.OnAdded);
 
-				AddedRange.SafeInvoke(filteredItems);
+				AddedRange?.Invoke(filteredItems);
 			}
 		}
 
@@ -260,7 +260,7 @@
 				InnerCollection.RemoveRange(filteredItems);
 				filteredItems.ForEach(base.OnRemoved);
 
-				RemovedRange.SafeInvoke(filteredItems);
+				RemovedRange?.Invoke(filteredItems);
 			}
 		}
 

@@ -188,7 +188,7 @@
 			lock (_sync)
 				_services[typeof(T)] = service;
 
-			ServiceRegistered.SafeInvoke(typeof(T), service);
+			ServiceRegistered?.Invoke(typeof(T), service);
 		}
 
 		public static bool IsServiceRegistered<T>()

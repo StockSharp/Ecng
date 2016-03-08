@@ -19,7 +19,7 @@ namespace Ecng.ComponentModel
 		/// <param name="propertyName">Property name.</param>
 		public void NotifyPropertyChanged(string propertyName)
 		{
-			PropertyChanged.SafeInvoke(this, propertyName);
+			PropertyChanged?.Invoke(this, propertyName);
 		}
 
 		protected void NotifyChanged(string propertyName)
@@ -29,7 +29,7 @@ namespace Ecng.ComponentModel
 
 		protected void NotifyChanging(string propertyName)
 		{
-			PropertyChanging.SafeInvoke(this, propertyName);
+			PropertyChanging?.Invoke(this, propertyName);
 		}
 	}
 }

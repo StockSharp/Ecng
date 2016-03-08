@@ -78,7 +78,7 @@
 		{
 			var info = GetInfo<TEntity>();
 			info.Cache.Add(info.Serializer.GetId(entity), entity);
-			Added.SafeInvoke(entity);
+			Added?.Invoke(entity);
 			return entity;
 		}
 
@@ -103,7 +103,7 @@
 		{
 			var info = GetInfo<TEntity>();
 			info.Save();
-			Updated.SafeInvoke(entity);
+			Updated?.Invoke(entity);
 			return entity;
 		}
 
@@ -112,7 +112,7 @@
 			var info = GetInfo<TEntity>();
 			info.Cache.Remove(info.Serializer.GetId(entity));
 			info.Save();
-			Removed.SafeInvoke(entity);
+			Removed?.Invoke(entity);
 		}
 
 		public void Clear<TEntity>()

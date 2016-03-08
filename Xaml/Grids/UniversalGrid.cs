@@ -233,7 +233,7 @@
 		{
 			var ctrl = d.FindLogicalChild<UniversalGrid>();
 
-			ctrl.PropertyChanged.SafeInvoke(ctrl, "AutoScroll");
+			ctrl.PropertyChanged?.Invoke(ctrl, "AutoScroll");
 		}
 
 		/// <summary>
@@ -286,7 +286,7 @@
 				return;
 
 			handler(view.GroupDescriptions);
-			PropertyChanged.SafeInvoke(this, "GroupingColumns");
+			PropertyChanged?.Invoke(this, "GroupingColumns");
 		}
 
 		private void Group(DataGridColumn column)
@@ -393,10 +393,10 @@
 			{
 				_contextCell = dependencyObject as DataGridCell;
 				//_contextColumn = _contextCell.Column;
-				CellMouseRightButtonUp.SafeInvoke(_contextCell, e);
+				CellMouseRightButtonUp?.Invoke(_contextCell, e);
 			}
 
-			//PropertyChanged.SafeInvoke(this, "IsColumnSelected");
+			//PropertyChanged?.Invoke(this, "IsColumnSelected");
 
 			base.OnMouseRightButtonDown(e);
 		}
@@ -450,7 +450,7 @@
 			}
 			else
 			{
-				CellMouseLeftButtonUp.SafeInvoke(dropCell, e);
+				CellMouseLeftButtonUp?.Invoke(dropCell, e);
 			}
 
 			_dragCell = null;
@@ -463,20 +463,20 @@
 			var cells = SelectedCells;
 
 			SelectedColumn = cells.IsEmpty() ? null : cells.First().Column;
-			//SelectionChanged.SafeInvoke(this);
+			//SelectionChanged?.Invoke(this);
 
 			base.OnSelectedCellsChanged(e);
 		}
 
 		protected override void OnSorting(DataGridSortingEventArgs eventArgs)
 		{
-			PropertyChanged.SafeInvoke(this, "Sorting");
+			PropertyChanged?.Invoke(this, "Sorting");
 			base.OnSorting(eventArgs);
 		}
 
 		protected override void OnColumnReordered(DataGridColumnEventArgs e)
 		{
-			PropertyChanged.SafeInvoke(this, "Reordered");
+			PropertyChanged?.Invoke(this, "Reordered");
 			base.OnColumnReordered(e);
 		}
 
@@ -534,14 +534,14 @@
 		{
 			var column = (DataGridColumn)((MenuItem)sender).Tag;
 			column.Visibility = Visibility.Collapsed;
-			PropertyChanged.SafeInvoke(column, "Visibility");
+			PropertyChanged?.Invoke(column, "Visibility");
 		}
 
 		private void ShowCheckedColumn(object sender, RoutedEventArgs e)
 		{
 			var column = (DataGridColumn)((MenuItem)sender).Tag;
 			column.Visibility = Visibility.Visible;
-			PropertyChanged.SafeInvoke(column, "Visibility");
+			PropertyChanged?.Invoke(column, "Visibility");
 		}
 
 		private static DataGridCell GetCell(RoutedEventArgs e)
@@ -573,7 +573,7 @@
 			Action applied = () =>
 			{
 				ApplyFormatRules();
-				PropertyChanged.SafeInvoke(this, "FormatRules");
+				PropertyChanged?.Invoke(this, "FormatRules");
 			};
 
 			var wnd = new FormattingWindow
@@ -1026,7 +1026,7 @@
 							}
 							catch (Exception ex)
 							{
-								ErrorHandler.SafeInvoke(ex);
+								ErrorHandler?.Invoke(ex);
 							}
 
 							lock (_ddeLock)

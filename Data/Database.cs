@@ -413,7 +413,7 @@ namespace Ecng.Data
 					AddCache(entity, output);
 				});
 
-				Added.SafeInvoke(entity);
+				Added?.Invoke(entity);
 			};
 
 			if (_batchInfo != null)
@@ -624,7 +624,7 @@ namespace Ecng.Data
 					UpdateCache(serializer, entity, output);
 				});
 
-				Updated.SafeInvoke(entity);
+				Updated?.Invoke(entity);
 			};
 
 			if (_batchInfo != null)
@@ -709,7 +709,7 @@ namespace Ecng.Data
 					}
 				});
 
-				entities.ForEach(Removed.SafeInvoke);
+				entities.ForEach(e => Removed?.Invoke(e));
 
 				DeleteCache(schema, by);
 			};

@@ -143,7 +143,6 @@
     <Compile Include="Common\Databinding\ValueMultiplicatorConverter.cs" />
     <Compile Include="Common\Databinding\ValueToTopMarginConverter.cs" />
     <Compile Include="Common\Databinding\VerticalOrientationVisibilityConverter.cs" />
-    <Compile Include="Common\DelegateHelper.cs" />
     <Compile Include="Common\Extensions\AssemblyExtensions.cs" />
     <Compile Include="Common\Extensions\DashSplitter.cs" />
     <Compile Include="Common\Extensions\DoubleCollectionExtensions.cs" />

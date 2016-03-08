@@ -68,7 +68,7 @@ namespace Ecng.Collections
 				InnerCollection.AddRange(filteredItems);
 				filteredItems.ForEach(base.OnAdded);
 
-				AddedRange.SafeInvoke(filteredItems);
+				AddedRange?.Invoke(filteredItems);
 			}
 		}
 
@@ -80,7 +80,7 @@ namespace Ecng.Collections
 				InnerCollection.RemoveRange(filteredItems);
 				filteredItems.ForEach(base.OnRemoved);
 
-				RemovedRange.SafeInvoke(filteredItems);
+				RemovedRange?.Invoke(filteredItems);
 			}
 		}
 

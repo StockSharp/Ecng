@@ -97,7 +97,7 @@
 		private void ApplyRulesExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
 			Copy(_formatRulesCopy, _formatRules);
-			Applied.SafeInvoke();
+			Applied?.Invoke();
 		}
 
 		private void ApplyRulesCanExecute(object sender, CanExecuteRoutedEventArgs e)

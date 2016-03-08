@@ -112,7 +112,7 @@ namespace Ecng.Xaml
 		{
 			Source = null; // setting a local value seems scetchy...
 
-			BitmapFailed.SafeInvoke(this, e);
+			BitmapFailed?.Invoke(this, e);
 		}
 
 		private void OnLayoutUpdated(object sender, EventArgs e)

@@ -135,7 +135,7 @@
 
 			if (arr == null)
 			{
-				Missing.SafeInvoke(resourceId, false);
+				Missing?.Invoke(resourceId, false);
 				return resourceId;
 			}
 
@@ -144,7 +144,7 @@
 			if (index < arr.Length)
 				return arr[index];
 
-			Missing.SafeInvoke(resourceId, false);
+			Missing?.Invoke(resourceId, false);
 			return resourceId;
 		}
 
@@ -154,7 +154,7 @@
 
 			if (dict == null)
 			{
-				Missing.SafeInvoke(text, true);
+				Missing?.Invoke(text, true);
 				return text;
 			}
 
@@ -163,7 +163,7 @@
 			if (translate != null)
 				return translate;
 
-			Missing.SafeInvoke(text, true);
+			Missing?.Invoke(text, true);
 			return text;
 		}
 	}
