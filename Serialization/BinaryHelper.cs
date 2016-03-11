@@ -11,9 +11,127 @@
 #endif
 
 	using Ecng.Common;
+	using Ecng.Localization;
 
-	public static class BinaryHelper
+	public static unsafe class BinaryHelper
 	{
+		public static void WriteBytes(this Stream stream, byte[] bytes, int len)
+		{
+			stream.Write(bytes, 0, len);
+		}
+
+		public static byte[] ReadBytes(this Stream stream, byte[] buffer, int len, bool? isLittleEndian = null)
+		{
+			var left = len;
+
+			while (left > 0)
+			{
+				var read = stream.Read(buffer, len - left, left);
+
+				if (read <= 0)
+					throw new InvalidOperationException("Network connection returned '{0}' bytes.".Translate().Put(read));
+
+				left -= read;
+			}
+
+			return isLittleEndian == null ? buffer : buffer.ChangeOrder(len, isLittleEndian.Value);
+		}
+
+		public static byte ReadByteEx(this Stream stream, byte[] buffer)
+		{
+			return stream.ReadBytes(buffer, 1)[0];
+		}
+
+		public static void WriteByteEx(this Stream stream, byte[] buffer, byte value)
+		{
+			buffer[0] = value;
+			stream.Write(buffer, 0, 1);
+		}
+
+		public static void WriteShort(this Stream stream, byte[] buffer, short value, bool isLittleEndian)
+		{
+			fixed (byte* b = buffer)
+				*((short*)b) = value;
+
+			stream.WriteBytes(buffer.ChangeOrder(2, isLittleEndian), 2);
+		}
+
+		public static short ReadShort(this Stream stream, byte[] buffer, bool isLittleEndian)
+		{
+			return BitConverter.ToInt16(stream.ReadBytes(buffer, 2, isLittleEndian), 0);
+		}
+
+		[CLSCompliant(false)]
+		public static void WriteUShort(this Stream stream, byte[] buffer, ushort value, bool isLittleEndian)
+		{
+			fixed (byte* b = buffer)
+				*((ushort*)b) = value;
+
+			stream.WriteBytes(buffer.ChangeOrder(2, isLittleEndian), 2);
+		}
+
+		[CLSCompliant(false)]
+		public static ushort ReadUShort(this Stream stream, byte[] buffer, bool isLittleEndian)
+		{
+			return BitConverter.ToUInt16(stream.ReadBytes(buffer, 2, isLittleEndian), 0);
+		}
+
+		public static void WriteInt(this Stream stream, byte[] buffer, int value, bool isLittleEndian)
+		{
+			fixed (byte* b = buffer)
+				*((int*)b) = value;
+
+			stream.WriteBytes(buffer.ChangeOrder(4, isLittleEndian), 4);
+		}
+
+		public static int ReadInt(this Stream stream, byte[] buffer, bool isLittleEndian)
+		{
+			return BitConverter.ToInt32(stream.ReadBytes(buffer, 4, isLittleEndian), 0);
+		}
+
+		[CLSCompliant(false)]
+		public static void WriteUInt(this Stream stream, byte[] buffer, uint value, bool isLittleEndian)
+		{
+			fixed (byte* b = buffer)
+				*((uint*)b) = value;
+
+			stream.WriteBytes(buffer.ChangeOrder(4, isLittleEndian), 4);
+		}
+
+		[CLSCompliant(false)]
+		public static uint ReadUInt(this Stream stream, byte[] buffer, bool isLittleEndian)
+		{
+			return BitConverter.ToUInt32(stream.ReadBytes(buffer, 4, isLittleEndian), 0);
+		}
+
+		public static void WriteLong(this Stream stream, byte[] buffer, long value, bool isLittleEndian, int len = 8)
+		{
+			fixed (byte* b = buffer)
+				*((long*)b) = value;
+
+			stream.WriteBytes(buffer.ChangeOrder(len, isLittleEndian), 8);
+		}
+
+		public static long ReadLong(this Stream stream, byte[] buffer, bool isLittleEndian, int len = 8)
+		{
+			return BitConverter.ToInt64(stream.ReadBytes(buffer, len, isLittleEndian), 0);
+		}
+
+		[CLSCompliant(false)]
+		public static void WriteULong(this Stream stream, byte[] buffer, ulong value, bool isLittleEndian, int len = 8)
+		{
+			fixed (byte* b = buffer)
+				*((ulong*)b) = value;
+
+			stream.WriteBytes(buffer.ChangeOrder(len, isLittleEndian), 8);
+		}
+
+		[CLSCompliant(false)]
+		public static ulong ReadULong(this Stream stream, byte[] buffer, bool isLittleEndian, int len = 8)
+		{
+			return BitConverter.ToUInt64(stream.ReadBytes(buffer, len, isLittleEndian), 0);
+		}
+
 		// убрать когда перейдем на 4.5 полностью
 		private class LeaveOpenStreamReader : StreamReader
 		{

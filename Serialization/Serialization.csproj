@@ -35,7 +35,7 @@
     <Optimize>false</Optimize>
     <OutputPath>.\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -44,6 +44,7 @@
     <OutputPath>.\bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Web|AnyCPU' ">
     <OutputPath>bin\Web\</OutputPath>
@@ -187,6 +188,10 @@
     <ProjectReference Include="..\Configuration\Configuration.csproj">
       <Project>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</Project>
       <Name>Configuration</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Localization\Localization.csproj">
+      <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
+      <Name>Localization</Name>
     </ProjectReference>
     <ProjectReference Include="..\Reflection\Reflection.csproj">
       <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
