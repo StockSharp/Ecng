@@ -77,10 +77,8 @@ namespace Ecng.Xaml.Charting
             get { return _minimumValue; }
             set
             {
-                _minimumValue = value;
-
-                OnPropertyChanged("MinimumValue");
-                OnPropertyChanged("FormattedMinimumValue");
+                if(SetField(ref _minimumValue, value, nameof(MinimumValue)))
+                    OnPropertyChanged(nameof(FormattedMinimumValue));
             }
         }
 
@@ -100,10 +98,8 @@ namespace Ecng.Xaml.Charting
             get { return _maximumValue; }
             set
             {
-                _maximumValue = value;
-
-                OnPropertyChanged("MaximumValue");
-                OnPropertyChanged("FormattedMaximumValue");
+                if(SetField(ref _maximumValue, value, nameof(MaximumValue)))
+                    OnPropertyChanged(nameof(FormattedMaximumValue));
             }
         }
 
@@ -123,10 +119,8 @@ namespace Ecng.Xaml.Charting
             get { return _medianValue; }
             set
             {
-                _medianValue = value;
-
-                OnPropertyChanged("MedianValue");
-                OnPropertyChanged("FormattedMedianValue");
+                if(SetField(ref _medianValue, value, nameof(MedianValue)))
+                    OnPropertyChanged(nameof(FormattedMedianValue));
             }
         }
 
@@ -146,10 +140,8 @@ namespace Ecng.Xaml.Charting
             get { return _lowerQuartileValue; }
             set
             {
-                _lowerQuartileValue = value;
-
-                OnPropertyChanged("LowerQuartileValue");
-                OnPropertyChanged("FormattedLowerQuartileValue");
+                if(SetField(ref _lowerQuartileValue, value, nameof(LowerQuartileValue)))
+                    OnPropertyChanged(nameof(FormattedLowerQuartileValue));
             }
         }
 
@@ -169,10 +161,8 @@ namespace Ecng.Xaml.Charting
             get { return _upperQuartileValue; }
             set
             {
-                _upperQuartileValue = value;
-
-                OnPropertyChanged("UpperQuartileValue");
-                OnPropertyChanged("FormattedUpperQuartileValue");
+                if(SetField(ref _upperQuartileValue, value, nameof(UpperQuartileValue)))
+                    OnPropertyChanged(nameof(FormattedUpperQuartileValue));
             }
         }
 
@@ -189,11 +179,11 @@ namespace Ecng.Xaml.Charting
             base.CopyFrom(other);
 
             var o = (BoxPlotSeriesInfo)other;
-            _minimumValue = o._minimumValue;
-            _maximumValue = o._maximumValue;
-            _lowerQuartileValue = o._lowerQuartileValue;
-            _upperQuartileValue = o._upperQuartileValue;
-            _medianValue = o._medianValue;
+            MinimumValue = o.MinimumValue;
+            MaximumValue = o.MaximumValue;
+            LowerQuartileValue = o.LowerQuartileValue;
+            UpperQuartileValue = o.UpperQuartileValue;
+            MedianValue = o.MedianValue;
         }
     }
 
@@ -227,10 +217,8 @@ namespace Ecng.Xaml.Charting
             get { return _highValue; }
             set
             {
-                _highValue = value;
-
-                OnPropertyChanged("HighValue");
-                OnPropertyChanged("FormattedHighValue");
+                if(SetField(ref _highValue, value, nameof(HighValue)))
+                    OnPropertyChanged(nameof(FormattedHighValue));
             }
         }
 
@@ -250,10 +238,8 @@ namespace Ecng.Xaml.Charting
             get { return _lowValue; }
             set
             {
-                _lowValue = value;
-
-                OnPropertyChanged("LowValue");
-                OnPropertyChanged("FormattedLowValue");
+                if(SetField(ref _lowValue, value, nameof(LowValue)))
+                    OnPropertyChanged(nameof(FormattedLowValue));
             }
         }
 
@@ -273,10 +259,8 @@ namespace Ecng.Xaml.Charting
             get { return _closeValue; }
             set
             {
-                _closeValue = value;
-
-                OnPropertyChanged("CloseValue");
-                OnPropertyChanged("FormattedCloseValue");
+                if(SetField(ref _closeValue, value, nameof(CloseValue)))
+                    OnPropertyChanged(nameof(FormattedCloseValue));
             }
         }
 
@@ -293,9 +277,9 @@ namespace Ecng.Xaml.Charting
             base.CopyFrom(other);
 
             var o = (HlcSeriesInfo)other;
-            _highValue = o._highValue;
-            _lowValue = o._lowValue;
-            _closeValue = o._closeValue;
+            HighValue = o.HighValue;
+            LowValue = o.LowValue;
+            CloseValue = o.CloseValue;
         }
     } 
 
@@ -328,10 +312,8 @@ namespace Ecng.Xaml.Charting
             get { return _openValue; }
             set
             {
-                _openValue = value;
-
-                OnPropertyChanged("OpenValue");
-                OnPropertyChanged("FormattedOpenValue");
+                if(SetField(ref _openValue, value, nameof(OpenValue)))
+                    OnPropertyChanged(nameof(FormattedOpenValue));
             }
         }
 
@@ -348,7 +330,7 @@ namespace Ecng.Xaml.Charting
             base.CopyFrom(other);
 
             var o = (OhlcSeriesInfo)other;
-            _openValue = o._openValue;
+            OpenValue = o.OpenValue;
         }
     }
 
@@ -397,9 +379,8 @@ namespace Ecng.Xaml.Charting
             }
             set
             {
-                _y1Value = value;
-                OnPropertyChanged("Y1Value");
-                OnPropertyChanged("FormattedY1Value");
+                if(SetField(ref _y1Value, value, nameof(Y1Value)))
+                    OnPropertyChanged(nameof(FormattedY1Value));
             }
         }
 
@@ -417,11 +398,7 @@ namespace Ecng.Xaml.Charting
         public Point Xy1Coordinate
         {
             get { return _xy1Coordinate; }
-            set
-            {
-                _xy1Coordinate = value;
-                OnPropertyChanged("Xy1Coordinate");
-            }
+            set { SetField(ref _xy1Coordinate, value, nameof(Xy1Coordinate)); }
         }
 
         public override void CopyFrom(SeriesInfo other)
@@ -429,9 +406,9 @@ namespace Ecng.Xaml.Charting
             base.CopyFrom(other);
 
             var o = (BandSeriesInfo)other;
-            _y1Value = o._y1Value;
-            _xy1Coordinate = o._xy1Coordinate;
-            _isFirstSeries = o.IsFirstSeries;
+            Y1Value = o.Y1Value;
+            Xy1Coordinate = o.Xy1Coordinate;
+            IsFirstSeries = o.IsFirstSeries;
         }
     }
 
@@ -466,8 +443,7 @@ namespace Ecng.Xaml.Charting
             }
             set
             {
-                _zValue = value;
-                OnPropertyChanged("ZValue");
+                SetField(ref _zValue, value, nameof(ZValue));
             }
         }
 
@@ -476,7 +452,7 @@ namespace Ecng.Xaml.Charting
             base.CopyFrom(other);
 
             var o = (XyzSeriesInfo)other;
-            _zValue = o._zValue;
+            ZValue = o.ZValue;
         }
     }
 
@@ -527,8 +503,7 @@ namespace Ecng.Xaml.Charting
             }
             set
             {
-                _accumulated = value;
-                OnPropertyChanged("AccumulatedValue");
+                SetField(ref _accumulated, value, nameof(AccumulatedValue));
             }
         }
 
@@ -537,7 +512,7 @@ namespace Ecng.Xaml.Charting
             base.CopyFrom(other);
 
             var o = (XyStackedSeriesInfo)other;
-            _accumulated = o._accumulated;
+            AccumulatedValue = o.AccumulatedValue;
         }
     }
 
@@ -565,11 +540,7 @@ namespace Ecng.Xaml.Charting
         public double Percentage
         {
             get { return _percentage; }
-            set
-            {
-                _percentage = value;
-                OnPropertyChanged("Percentage");
-            }
+            set { SetField(ref _percentage, value, nameof(Percentage)); }
         }
 
         public override void CopyFrom(SeriesInfo other)
@@ -577,7 +548,7 @@ namespace Ecng.Xaml.Charting
             base.CopyFrom(other);
 
             var o = (OneHundredPercentStackedSeriesInfo)other;
-            _percentage = o._percentage;
+            Percentage = o.Percentage;
         }
     }
 
@@ -668,11 +639,7 @@ namespace Ecng.Xaml.Charting
         public DataSeriesType DataSeriesType
         {
             get { return _dataSeriesType; }
-            set
-            {
-                _dataSeriesType = value;
-                OnPropertyChanged("DataSeriesType");
-            }
+            set { SetField(ref _dataSeriesType, value, nameof(DataSeriesType)); }
         }
         
         /// <summary>
@@ -683,11 +650,7 @@ namespace Ecng.Xaml.Charting
         public Color SeriesColor
         {
             get { return _seriesColor; }
-            set
-            {
-                _seriesColor = value;
-                OnPropertyChanged("SeriesColor");
-            }
+            set { SetField(ref _seriesColor, value, nameof(SeriesColor)); }
         }
 
         /// <summary>
@@ -697,15 +660,8 @@ namespace Ecng.Xaml.Charting
         /// <remarks></remarks>
         public string SeriesName
         {
-            get
-            {
-                return _seriesName;
-            }
-            set
-            {
-                _seriesName = value;
-                OnPropertyChanged("SeriesName");
-            }
+            get { return _seriesName; }
+            set { SetField(ref _seriesName, value, nameof(SeriesName)); }
         }
 
         /// <summary>
@@ -715,15 +671,8 @@ namespace Ecng.Xaml.Charting
         /// <remarks></remarks>
         public double Value
         {
-            get
-            {
-                return _yValueDouble;
-            }
-            set
-            {
-                _yValueDouble = value;
-                OnPropertyChanged("Value");
-            }
+            get { return _yValueDouble; }
+            set { SetField(ref _yValueDouble, value, nameof(Value)); }
         }
 
         /// <summary>
@@ -739,10 +688,8 @@ namespace Ecng.Xaml.Charting
             }
             set
             {
-                _yValue = value;
-
-                OnPropertyChanged("YValue");
-                OnPropertyChanged("FormattedYValue");
+                if(SetField(ref _yValue, value, nameof(YValue)))
+                    OnPropertyChanged(nameof(FormattedYValue));
             }
         }
 
@@ -767,10 +714,8 @@ namespace Ecng.Xaml.Charting
             }
             set
             {
-                _xValue = value;
-
-                OnPropertyChanged("XValue");
-                OnPropertyChanged("FormattedXValue");
+                if(SetField(ref _xValue, value, nameof(XValue)))
+                    OnPropertyChanged(nameof(FormattedXValue));
             }
         }
 
@@ -788,11 +733,7 @@ namespace Ecng.Xaml.Charting
         public Point XyCoordinate
         {
             get { return _xyCoordinate; }
-            set
-            {
-                _xyCoordinate = value;
-                OnPropertyChanged("XyCoordinate");
-            }
+            set { SetField(ref _xyCoordinate, value, nameof(XyCoordinate)); }
         }
 
         /// <summary>
@@ -801,11 +742,7 @@ namespace Ecng.Xaml.Charting
         public bool IsHit
         {
             get { return _isHit; }
-            set
-            {
-                _isHit = value;
-                OnPropertyChanged("IsHit");
-            }
+            set { SetField(ref _isHit, value, nameof(IsHit)); }
         }
 
         /// <summary>
@@ -814,11 +751,7 @@ namespace Ecng.Xaml.Charting
         public int DataSeriesIndex
         {
             get { return _dataSeriesIndex; }
-            set
-            {
-                _dataSeriesIndex = value;
-                OnPropertyChanged("DataSeriesIndex");
-            }
+            set { SetField(ref _dataSeriesIndex, value, nameof(DataSeriesIndex)); }
         }
 
         /// <summary>
