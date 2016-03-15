@@ -2267,6 +2267,8 @@
 
     <!--  UltrachartGroup  -->
     <Style TargetType="s:UltrachartGroup">
+        <Setter Property="Background" Value="{z:ThemeBinding Path=UltrachartBackground}" />
+        <Setter Property="Foreground" Value="{z:ThemeBinding Path=TickTextBrush}" />
         <Setter Property="ItemContainerStyle" Value="{StaticResource DefaultGroupPaneStyle}" />
         <Setter Property="Template">
             <Setter.Value>
