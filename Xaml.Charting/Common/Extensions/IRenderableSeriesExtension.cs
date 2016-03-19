@@ -132,6 +132,9 @@ namespace Ecng.Xaml.Charting.Common.Extensions
                 case DataSeriesType.OneHundredPercentStackedXy:
                     seriesInfo = new OneHundredPercentStackedSeriesInfo(rSeries, hitTestInfo);
                     break;
+                case DataSeriesType.TimeframeSegment:
+                    seriesInfo = new TimeframeSegmentSeriesInfo(rSeries, hitTestInfo);
+                    break;
                 default:
                     seriesInfo = new XySeriesInfo(rSeries, hitTestInfo);
                     break;

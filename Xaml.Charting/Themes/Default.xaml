@@ -1408,6 +1408,38 @@
         </StackPanel>
     </DataTemplate>
 
+    <DataTemplate x:Key="TimeframeSegmentSeriesRolloverLabelTemplate">
+        <StackPanel Orientation="Vertical">
+            <TextBlock Style="{StaticResource HintDataItemsStyle}"
+                       Text="{Binding SeriesName, StringFormat='{}{0}:'}"
+                       Visibility="{Binding SeriesName, Converter={StaticResource CollapseIfNullOrEmptyStringConverter}}" />
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <Grid.Resources>
+                    <Style TargetType="TextBlock" BasedOn="{StaticResource HintDataItemsStyle}"/>
+                </Grid.Resources>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Time = " HorizontalAlignment="Right" Visibility="{Binding FormattedXValue, Converter={StaticResource CollapseIfNullOrEmptyStringConverter}}"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding FormattedXValue, Mode=OneWay}" Visibility="{Binding FormattedXValue, Converter={StaticResource CollapseIfNullOrEmptyStringConverter}}"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Y = " HorizontalAlignment="Right"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding FormattedYValue, Mode=OneWay}"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Volume = " HorizontalAlignment="Right"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Volume, Mode=OneWay}"/>
+            </Grid>
+        </StackPanel>
+    </DataTemplate>
+
     <Style x:Key="DefaultSeriesInfoTemplateSelectorStyle" TargetType="s:SeriesInfoTemplateSelector">
         <Setter Property="DefaultTemplate" Value="{StaticResource XySeriesRolloverLabelTemplate}" />
         <Setter Property="BandSeries1Template" Value="{StaticResource BandSeriesCursorLabelTemplate}" />
@@ -1417,6 +1449,7 @@
         <Setter Property="HlcSeriesTemplate" Value="{StaticResource HlcSeriesRolloverLabelTemplate}" />
         <Setter Property="HeatmapSeriesTemplate" Value="{StaticResource HeatmapRolloverLabelTemplate}" />
         <Setter Property="OneHundredPercentStackedSeriesTemplate" Value="{StaticResource OneHundredPercentStackedSeriesRolloverLabelTemplate}" />
+        <Setter Property="TimeframeSegmentSeriesTemplate" Value="{StaticResource TimeframeSegmentSeriesRolloverLabelTemplate}" />
     </Style>
 
     <Style BasedOn="{StaticResource DefaultSeriesInfoTemplateSelectorStyle}" TargetType="s:SeriesInfoTemplateSelector" />

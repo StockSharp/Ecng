@@ -31,6 +31,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
         readonly UltraList<TimeframeDataSegment> _segments = new UltraList<TimeframeDataSegment>();
         readonly UltraList<DateTime> _segmentDates = new UltraList<DateTime>();
+        readonly YValueList _yValues;
         IUltraReadOnlyList<DateTime> SegmentDates => _segmentDates.AsReadOnly();
 
         public DataSeriesType DataSeriesType => DataSeriesType.TimeframeSegment;
@@ -101,18 +102,18 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         public IComparable LatestYValue => null;
 
         IList<DateTime> XValues => SegmentDates;
-        double[] YValues => _segments.Select(s => s.Y).ToArray();
 
         IList IDataSeries.XValues => (IList)XValues;
         IList<DateTime> IDataSeries<DateTime, double>.XValues => XValues;
 
-        IList IDataSeries.YValues => YValues;
-        IList<double> IDataSeries<DateTime, double>.YValues => YValues;
+        IList IDataSeries.YValues => _yValues;
+        IList<double> IDataSeries<DateTime, double>.YValues => _yValues;
 
         public TimeframeSegmentDataSeries(int timeframe, double priceStep) {
             if(timeframe < 1 || timeframe > MaxTimeframe) throw new ArgumentOutOfRangeException(nameof(timeframe));
             if(priceStep <= 0d || priceStep.IsNaN()) throw new ArgumentOutOfRangeException(nameof(priceStep));
 
+            _yValues = new YValueList(this);
             Timeframe = timeframe;
             PriceStep = priceStep.NormalizePrice(MinPriceStep);
         }
@@ -451,6 +452,110 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         public void DecrementSuspend() { }
 
         #endregion
+
+        class YValueList : IList<double>, IList {
+            readonly TimeframeSegmentDataSeries _parent;
+
+            public int Count => _parent._segments.Count;
+            public object SyncRoot => ((ICollection)_parent._segments).SyncRoot;
+            public bool IsSynchronized => ((ICollection)_parent._segments).IsSynchronized;
+            public bool IsReadOnly => true;
+            public bool IsFixedSize => false;
+
+
+            public YValueList(TimeframeSegmentDataSeries parent) {
+                _parent = parent;
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() {
+                return GetEnumerator();
+            }
+
+            public IEnumerator<double> GetEnumerator() {
+                return _parent._segments.Select(s => s.Y).GetEnumerator();
+            }
+
+            bool IList.Contains(object value) {
+                if(!(value is double))
+                    return false;
+
+                return Contains((double)value);
+            }
+
+            public bool Contains(double value) {
+                return _parent._segments.Select(s => s.Y).Contains(value);
+            }
+
+            int IList.IndexOf(object value) {
+                if(!(value is double))
+                    return -1;
+
+                return IndexOf((double)value);
+            }
+
+            public int IndexOf(double value) {
+                var count = _parent._segments.Count;
+                for(var i=0; i < count; ++i)
+                    if(_parent._segments[i].Y.DoubleEquals(value))
+                        return i;
+
+                return -1;
+            }
+
+            public double this[int index] {
+                get { return _parent._segments[index].Y; }
+                set { throw new NotImplementedException(); }
+            }
+
+            object IList.this[int index] {
+                get { return this[index]; }
+                set { throw new NotImplementedException(); }
+            }
+
+            #region not implemented
+
+            public void CopyTo(double[] array, int arrayIndex) {
+                throw new NotImplementedException();
+            }
+
+            public void CopyTo(Array array, int index) {
+                throw new NotImplementedException();
+            }
+
+            public void Add(double value) {
+                throw new NotImplementedException();
+            }
+
+            public void Clear() {
+                throw new NotImplementedException();
+            }
+
+            public void Insert(int index, double value) {
+                throw new NotImplementedException();
+            }
+
+            public bool Remove(double value) {
+                throw new NotImplementedException();
+            }
+
+            public void RemoveAt(int index) {
+                throw new NotImplementedException();
+            }
+
+            int IList.Add(object value) {
+                throw new NotImplementedException();
+            }
+
+            void IList.Insert(int index, object value) {
+                throw new NotImplementedException();
+            }
+
+            void IList.Remove(object value) {
+                throw new NotImplementedException();
+            }
+
+            #endregion
+        }
 
         #region not implemented for this type
 

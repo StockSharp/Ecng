@@ -42,7 +42,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         public int MaxDigits {get; private set;}
 
         public double X => Time.Ticks;
-        public double Y => !IsEmtpy ? _maxPrice : double.NaN;
+        public double Y => !IsEmtpy ? (_maxPrice + _minPrice) / 2d : double.NaN;
 
         public TimeframeDataSegment(DateTime time, double priceStep, int index) {
             if(time.Second != 0 || time.Millisecond != 0)

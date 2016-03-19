@@ -159,6 +159,11 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
         /// </summary>
         public double Persentage { get; set; }
 
+        /// <summary>
+        /// Volume value for TimeframeSegmentDataSeries.
+        /// </summary>
+        public long Volume {get; set;}
+
         private HitTestInfo(bool isEmpty)
             : this()
         {

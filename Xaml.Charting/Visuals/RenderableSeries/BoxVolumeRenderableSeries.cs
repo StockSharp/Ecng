@@ -217,8 +217,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                     for(var i = 0; i < numSegments; ++i) {
                         var segment = segments[i];
 
-                        var center = xCalc.GetCoordinate(segment.X) - halfSegmentWidth;
-                        var minX = center;
+                        var minX = xCalc.GetCoordinate(segment.X) - halfSegmentWidth;
 
                         foreach(var pv in segment.Segment.Values.Where(v => v != null && v.Price > minDrawPrice && v.Price < maxDrawPrice)) {
                             var centerY = yCalc.GetCoordinate(pv.Price);

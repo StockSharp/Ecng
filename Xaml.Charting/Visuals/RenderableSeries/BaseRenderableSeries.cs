@@ -1108,7 +1108,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             return isHit;
         }
 
-        protected HitTestInfo HitTestSeriesWithBody(Point rawPoint, HitTestInfo nearestHitPoint, double hitTestRadius)
+        protected virtual HitTestInfo HitTestSeriesWithBody(Point rawPoint, HitTestInfo nearestHitPoint, double hitTestRadius)
         {
             // Check if the click was actually on a series body, not just near the dataPoint
             if (DataSeries != null && CurrentRenderPassData != null)
