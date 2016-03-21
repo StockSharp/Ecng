@@ -161,7 +161,7 @@
 			{
 				if (DelayAction != null && _pendingAdd.Count > 0)
 				{
-					var pair = _pendingAdd.CachedPairs.FirstOrDefault(p => p.Value == id);
+					var pair = _pendingAdd.CachedPairs.FirstOrDefault(p => Equals(p.Value, id));
 
 					if (!pair.Key.IsNull())
 						return pair.Key;
