@@ -29,7 +29,7 @@
 				var read = stream.Read(buffer, len - left, left);
 
 				if (read <= 0)
-					throw new InvalidOperationException("Network connection returned '{0}' bytes.".Translate().Put(read));
+					throw new InvalidOperationException("Stream returned '{0}' bytes.".Translate().Put(read));
 
 				left -= read;
 			}
