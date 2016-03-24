@@ -351,6 +351,32 @@
 					return new DateTimeOffset(input);
 			});
 
+			AddTypedConverter<byte, string>(input => input.ToString());
+			AddTypedConverter<string, byte>(byte.Parse);
+			AddTypedConverter<sbyte, string>(input => input.ToString());
+			AddTypedConverter<string, sbyte>(sbyte.Parse);
+			AddTypedConverter<bool, string>(input => input.ToString());
+			AddTypedConverter<string, bool>(bool.Parse);
+			AddTypedConverter<float, string>(input => input.ToString());
+			AddTypedConverter<string, float>(float.Parse);
+			AddTypedConverter<double, string>(input => input.ToString());
+			AddTypedConverter<string, double>(double.Parse);
+			AddTypedConverter<decimal, string>(input => input.ToString());
+			AddTypedConverter<string, decimal>(decimal.Parse);
+			AddTypedConverter<short, string>(input => input.ToString());
+			AddTypedConverter<string, short>(short.Parse);
+			AddTypedConverter<int, string>(input => input.ToString());
+			AddTypedConverter<string, int>(int.Parse);
+			AddTypedConverter<long, string>(input => input.ToString());
+			AddTypedConverter<string, long>(long.Parse);
+			AddTypedConverter<ushort, string>(input => input.ToString());
+			AddTypedConverter<string, ushort>(ushort.Parse);
+			AddTypedConverter<uint, string>(input => input.ToString());
+			AddTypedConverter<string, uint>(uint.Parse);
+			AddTypedConverter<ulong, string>(input => input.ToString());
+			AddTypedConverter<string, ulong>(ulong.Parse);
+			AddTypedConverter<char, string>(input => input.ToString());
+			AddTypedConverter<string, char>(char.Parse);
 		}
 
 		public static void AddTypedConverter<TFrom, TTo>(Func<TFrom, TTo> converter)
