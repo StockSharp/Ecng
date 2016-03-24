@@ -98,9 +98,8 @@
 			AddTypedConverter<Type, DbType>(input =>
 			{
 				if (input.IsNullable())
-				{
 					input = input.GetGenericArguments()[0];
-				}
+
 				if (input.IsEnum())
 					input = input.GetEnumBaseType();
 
@@ -439,6 +438,11 @@
 			return GetTypedConverter<TFrom, TTo>()(from);
 		}
 
+		private static bool TryGetTypedConverter(Type from, Type to, out Func<object, object> typedConverter)
+		{
+			return _typedConverters2.TryGetValue(Tuple.Create(from, to), out typedConverter);
+		}
+
 		/// <summary>
 		/// Convert value into a instance of <paramref name="destinationType"/>.
 		/// </summary>
@@ -462,7 +466,7 @@
 
 				Func<object, object> typedConverter;
 
-				if (_typedConverters2.TryGetValue(Tuple.Create(value.GetType(), destinationType), out typedConverter))
+				if (TryGetTypedConverter(value is Type ? typeof(Type) : value.GetType(), destinationType, out typedConverter))
 					return typedConverter(value);
 
 				var sourceType = value.GetType();
@@ -539,7 +543,7 @@
 					if (value is Enum)
 						value = value.To(sourceType.GetEnumBaseType());
 
-					if (_typedConverters2.TryGetValue(Tuple.Create(value.GetType(), destinationType), out typedConverter))
+					if (TryGetTypedConverter(value is Type ? typeof(Type) : value.GetType(), destinationType, out typedConverter))
 						return typedConverter(value);
 				}
 				else if (value is byte[])
@@ -556,7 +560,7 @@
 
 					object retVal;
 
-					if (_typedConverters2.TryGetValue(Tuple.Create(value.GetType(), destinationType), out typedConverter))
+					if (TryGetTypedConverter(value is Type ? typeof(Type) : value.GetType(), destinationType, out typedConverter))
 						retVal = typedConverter(value);
 					else
 						throw new ArgumentException("Can't convert byte array to '{0}'.".Put(destinationType), nameof(value));
