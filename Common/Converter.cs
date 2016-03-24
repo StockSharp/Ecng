@@ -33,16 +33,13 @@
 
 	public static class Converter
 	{
-		#region Private Fields
-
 		private static readonly Dictionary<Type, DbType> _dbTypes = new Dictionary<Type, DbType>();
 		private static readonly Dictionary<string, Type> _aliases = new Dictionary<string, Type>();
 		private static readonly Dictionary<Type, List<string>> _aliasesByValue = new Dictionary<Type, List<string>>();
 		private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
 
-		#endregion
-
-		#region Converter.cctor()
+		private static readonly Dictionary<Tuple<Type, Type>, Delegate> _typedConverters = new Dictionary<Tuple<Type, Type>, Delegate>();
+		private static readonly Dictionary<Tuple<Type, Type>, Func<object, object>> _typedConverters2 = new Dictionary<Tuple<Type, Type>, Func<object, object>>();
 
 		static Converter()
 		{
@@ -97,9 +94,285 @@
 			AddAlias(typeof(UIntPtr), "uintptr");
 			AddAlias(typeof(void), "void");
 			AddAlias(typeof(Guid), "guid");
+
+			AddTypedConverter<Type, DbType>(input =>
+			{
+				if (input.IsNullable())
+				{
+					input = input.GetGenericArguments()[0];
+				}
+				if (input.IsEnum())
+					input = input.GetEnumBaseType();
+
+				DbType dbType;
+
+				if (_dbTypes.TryGetValue(input, out dbType))
+					return dbType;
+				else
+					throw new ArgumentException(".NET type {0} doesn't have associated db type.".Put(input));
+			});
+
+			AddTypedConverter<DbType, Type>(input => _dbTypes.First(pair => pair.Value == input).Key);
+			AddTypedConverter<string, byte[]>(input => Encoding.Unicode.GetBytes(input));
+			AddTypedConverter<byte[], string>(input => Encoding.Unicode.GetString(input));
+			AddTypedConverter<bool[], BitArray>(input => new BitArray(input));
+			AddTypedConverter<BitArray, bool[]>(input =>
+			{
+				var source = new bool[input.Length];
+				input.CopyTo(source, 0);
+				return source;
+			});
+			AddTypedConverter<byte[], BitArray>(input => new BitArray(input));
+			AddTypedConverter<BitArray, byte[]>(input =>
+			{
+				var source = new byte[(int)((double)input.Length / 8).Ceiling()];
+				input.CopyTo(source, 0);
+				return source;
+			});
+			AddTypedConverter<IPAddress, string>(input => input.ToString());
+			AddTypedConverter<string, IPAddress>(IPAddress.Parse);
+			AddTypedConverter<IPAddress, byte[]>(input => input.GetAddressBytes());
+			AddTypedConverter<byte[], IPAddress>(input => new IPAddress(input));
+			AddTypedConverter<IPAddress, long>(input =>
+			{
+				switch (input.AddressFamily)
+				{
+					case AddressFamily.InterNetworkV6:
+					{
+						return input.ScopeId;
+					}
+					case AddressFamily.InterNetwork:
+					{
+						var byteIp = input.GetAddressBytes();
+						return ((((byteIp[3] << 0x18) | (byteIp[2] << 0x10)) | (byteIp[1] << 8)) | byteIp[0]) & (0xffffffff);
+						//retVal = BitConverter.ToInt32(addr.GetAddressBytes(), 0);
+					}
+					default:
+						throw new ArgumentException("Can't convert IPAddress to long.", nameof(input));
+				}
+			});
+			AddTypedConverter<long, IPAddress>(input => new IPAddress(input));
+			AddTypedConverter<string, IPEndPoint>(input => (IPEndPoint)input.TypedTo<string, EndPoint>());
+			AddTypedConverter<string, DnsEndPoint>(input => (DnsEndPoint)input.TypedTo<string, EndPoint>());
+			AddTypedConverter<string, EndPoint>(input =>
+			{
+				var index = input.LastIndexOf(':');
+
+				if (index != -1)
+				{
+					var host = input.Substring(0, index);
+					var port = input.Substring(index + 1).To<int>();
+
+					IPAddress addr;
+
+					if (!IPAddress.TryParse(host, out addr))
+						return new DnsEndPoint(host, port);
+
+					return new IPEndPoint(addr, port);
+				}
+				else
+					throw new FormatException("Invalid endpoint format.");
+			});
+			AddTypedConverter<EndPoint, string>(input => input.GetHost() + ":" + input.GetPort());
+			AddTypedConverter<IPEndPoint, string>(input => input.TypedTo<EndPoint, string>());
+			AddTypedConverter<DnsEndPoint, string>(input => input.TypedTo<EndPoint, string>());
+			AddTypedConverter<string, Type>(input =>
+			{
+				Type type;
+				var key = input.ToLowerInvariant();
+
+				if (!_aliases.TryGetValue(key, out type))
+				{
+					if (!_typeCache.TryGetValue(key, out type))
+					{
+						lock (_typeCache)
+						{
+							if (!_typeCache.TryGetValue(key, out type))
+							{
+								type = Type.GetType(input, false, true);
+
+#if !SILVERLIGHT
+								// в строке может быть записаное не AssemblyQualifiedName, а только полное имя типа + имя сборки.
+								if (type == null)
+								{
+									var parts = input.Split(", ");
+									if (parts.Length == 2)
+									{
+										var asm = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == parts[1]) ?? Assembly.LoadWithPartialName(parts[1]);
+
+										if (asm != null)
+										{
+											type = asm.GetType(parts[0]);
+										}
+									}
+								}
+#endif
+
+								if (type != null)
+									_typeCache.Add(key, type);
+								else
+									throw new ArgumentException("Type {0} doesn't exists.".Put(input), nameof(input));
+							}
+						}
+					}
+				}
+
+				return type;
+			});
+			AddTypedConverter<Type, string>(input => input.AssemblyQualifiedName);
+			AddTypedConverter<StringBuilder, string>(input => input.ToString());
+			AddTypedConverter<string, StringBuilder>(input => new StringBuilder(input));
+			AddTypedConverter<DbConnectionStringBuilder, string>(input => input.ToString());
+			AddTypedConverter<string, DbConnectionStringBuilder>(input => new DbConnectionStringBuilder { ConnectionString = input });
+			AddTypedConverter<SecureString, string>(input =>
+			{
+				var bstr = Marshal.SecureStringToBSTR(input);
+
+				using (bstr.MakeDisposable(Marshal.ZeroFreeBSTR))
+				{
+					return Marshal.PtrToStringBSTR(bstr);
+				}
+			});
+			AddTypedConverter<string, SecureString>(input => input.ToCharArray().TypedTo<char[], SecureString>());
+			AddTypedConverter<char[], SecureString>(input =>
+			{
+				var s = new SecureString();
+
+				foreach (var c in input)
+					s.AppendChar(c);
+
+				return s;
+			});
+			AddTypedConverter<byte[], SecureString>(input =>
+			{
+				var charArray = new char[input.Length / 2];
+
+				var offset = 0;
+				for (var i = 0; i < input.Length; i += 2)
+					charArray[offset++] = BitConverter.ToChar(new[] { input[i], input[i + 1] }, 0);
+
+				return charArray.TypedTo<char[], SecureString>();
+			});
+
+
+			AddTypedConverter<byte, byte[]>(input => new[] { input });
+			AddTypedConverter<byte[], byte>(input => input[0]);
+			AddTypedConverter<bool, byte[]>(BitConverter.GetBytes);
+			AddTypedConverter<byte[], bool>(input => BitConverter.ToBoolean(input, 0));
+			AddTypedConverter<char, byte[]>(BitConverter.GetBytes);
+			AddTypedConverter<byte[], char>(input => BitConverter.ToChar(input, 0));
+			AddTypedConverter<short, byte[]>(BitConverter.GetBytes);
+			AddTypedConverter<byte[], short>(input => BitConverter.ToInt16(input, 0));
+			AddTypedConverter<int, byte[]>(BitConverter.GetBytes);
+			AddTypedConverter<byte[], int>(input => BitConverter.ToInt32(input, 0));
+			AddTypedConverter<long, byte[]>(BitConverter.GetBytes);
+			AddTypedConverter<byte[], long>(input => BitConverter.ToInt64(input, 0));
+			AddTypedConverter<ushort, byte[]>(BitConverter.GetBytes);
+			AddTypedConverter<byte[], ushort>(input => BitConverter.ToUInt16(input, 0));
+			AddTypedConverter<uint, byte[]>(BitConverter.GetBytes);
+			AddTypedConverter<byte[], uint>(input => BitConverter.ToUInt32(input, 0));
+			AddTypedConverter<ulong, byte[]>(BitConverter.GetBytes);
+			AddTypedConverter<byte[], ulong>(input => BitConverter.ToUInt64(input, 0));
+			AddTypedConverter<float, byte[]>(BitConverter.GetBytes);
+			AddTypedConverter<byte[], float>(input => BitConverter.ToSingle(input, 0));
+			AddTypedConverter<double, byte[]>(BitConverter.GetBytes);
+			AddTypedConverter<byte[], double>(input => BitConverter.ToDouble(input, 0));
+			AddTypedConverter<DateTime, byte[]>(input => BitConverter.GetBytes(input.Ticks));
+			AddTypedConverter<byte[], DateTime>(input => new DateTime(BitConverter.ToInt64(input, 0)));
+			AddTypedConverter<DateTimeOffset, byte[]>(input => BitConverter.GetBytes(input.UtcTicks));
+			AddTypedConverter<byte[], DateTimeOffset>(input => new DateTimeOffset(BitConverter.ToInt64(input, 0), TimeSpan.Zero));
+			AddTypedConverter<TimeSpan, byte[]>(input => BitConverter.GetBytes(input.Ticks));
+			AddTypedConverter<byte[], TimeSpan>(input => new TimeSpan(BitConverter.ToInt64(input, 0)));
+			AddTypedConverter<Guid, byte[]>(input => input.ToByteArray());
+			AddTypedConverter<byte[], Guid>(input => new Guid(input));
+
+			AddTypedConverter<decimal, byte[]>(input =>
+			{
+				var bits = decimal.GetBits(input);
+
+				var lo = bits[0];
+				var mid = bits[1];
+				var hi = bits[2];
+				var flags = bits[3];
+
+				var bytes = new byte[16];
+
+				bytes[0] = (byte)lo;
+				bytes[1] = (byte)(lo >> 8);
+				bytes[2] = (byte)(lo >> 0x10);
+				bytes[3] = (byte)(lo >> 0x18);
+				bytes[4] = (byte)mid;
+				bytes[5] = (byte)(mid >> 8);
+				bytes[6] = (byte)(mid >> 0x10);
+				bytes[7] = (byte)(mid >> 0x18);
+				bytes[8] = (byte)hi;
+				bytes[9] = (byte)(hi >> 8);
+				bytes[10] = (byte)(hi >> 0x10);
+				bytes[11] = (byte)(hi >> 0x18);
+				bytes[12] = (byte)flags;
+				bytes[13] = (byte)(flags >> 8);
+				bytes[14] = (byte)(flags >> 0x10);
+				bytes[15] = (byte)(flags >> 0x18);
+
+				return bytes;
+			});
+			AddTypedConverter<byte[], decimal>(input =>
+			{
+				var bytes = input;
+
+				var bits = new[]
+				{
+					((bytes[0] | (bytes[1] << 8)) | (bytes[2] << 0x10)) | (bytes[3] << 0x18), //lo
+					((bytes[4] | (bytes[5] << 8)) | (bytes[6] << 0x10)) | (bytes[7] << 0x18), //mid
+					((bytes[8] | (bytes[9] << 8)) | (bytes[10] << 0x10)) | (bytes[11] << 0x18), //hi
+					((bytes[12] | (bytes[13] << 8)) | (bytes[14] << 0x10)) | (bytes[15] << 0x18) //flags
+				};
+
+				return new decimal(bits);
+			});
+
+			AddTypedConverter<TimeSpan, long>(input => input.Ticks);
+			AddTypedConverter<long, TimeSpan>(input => new TimeSpan(input));
+			AddTypedConverter<DateTime, long>(input => input.Ticks);
+			AddTypedConverter<long, DateTime>(input => new DateTime(input));
+			AddTypedConverter<DateTimeOffset, long>(input => input.UtcTicks);
+			AddTypedConverter<long, DateTimeOffset>(input => new DateTimeOffset(input, TimeSpan.Zero));
+
+			AddTypedConverter<DateTime, double>(input => input.ToOADate());
+			AddTypedConverter<double, DateTime>(DateTime.FromOADate);
+
+			AddTypedConverter<DateTime, DateTimeOffset>(input =>
+			{
+				if (input == DateTime.MinValue)
+					return DateTimeOffset.MinValue;
+				else if (input == DateTime.MaxValue)
+					return DateTimeOffset.MaxValue;
+				else
+					return new DateTimeOffset(input);
+			});
+
 		}
 
-		#endregion
+		public static void AddTypedConverter<TFrom, TTo>(Func<TFrom, TTo> converter)
+		{
+			if (converter == null)
+				throw new ArgumentNullException(nameof(converter));
+
+			var key = Tuple.Create(typeof(TFrom), typeof(TTo));
+
+			_typedConverters.Add(key, converter);
+			_typedConverters2.Add(key, input => converter((TFrom)input));
+		}
+
+		public static Func<TFrom, TTo> GetTypedConverter<TFrom, TTo>()
+		{
+			return (Func<TFrom, TTo>)_typedConverters[Tuple.Create(typeof(TFrom), typeof(TTo))];
+		}
+
+		public static Func<object, object> GetTypedConverter(Type from, Type to)
+		{
+			return (Func<object, object>)_typedConverters[Tuple.Create(from, to)];
+		}
 
 		public static string GetHost(this EndPoint endPoint)
 		{
@@ -135,6 +408,11 @@
 				throw new InvalidOperationException("Unknown endpoint {0}.".Put(endPoint));
 		}
 
+		public static TTo TypedTo<TFrom, TTo>(this TFrom from)
+		{
+			return GetTypedConverter<TFrom, TTo>()(from);
+		}
+
 		/// <summary>
 		/// Convert value into a instance of <paramref name="destinationType"/>.
 		/// </summary>
@@ -156,243 +434,36 @@
 					return null;
 				}
 
-				object retVal;
+				Func<object, object> typedConverter;
+
+				if (_typedConverters2.TryGetValue(Tuple.Create(value.GetType(), destinationType), out typedConverter))
+					return typedConverter(value);
+
 				var sourceType = value.GetType();
 
 				if (destinationType.IsAssignableFrom(sourceType))
-					retVal = value;
-				else if (value is Type && destinationType == typeof(DbType))
-				{
-					var type = (Type)value;
-
-					if (type.IsNullable())
-					{
-						type = type.GetGenericArguments()[0];
-					}
-					if (type.IsEnum())
-						type = type.GetEnumBaseType();
-
-					DbType dbType;
-
-					if (_dbTypes.TryGetValue(type, out dbType))
-						retVal = dbType;
-					else
-						throw new ArgumentException(".NET type {0} doesn't have associated db type.".Put(type));
-				}
-				else if (value is DbType && destinationType == typeof(Type))
-					retVal = _dbTypes.Values.First(arg => ((DbType)value) == arg);
-				else if (value is string && destinationType == typeof(byte[]))
-				{
-					retVal = Encoding.Unicode.GetBytes((string)value);
-				}
-				else if (value is byte[] && destinationType == typeof(string))
-					retVal = Encoding.Unicode.GetString((byte[])value);
-				else if (value is bool[] && destinationType == typeof(BitArray))
-				{
-					retVal = new BitArray((bool[])value);
-				}
-				else if (value is BitArray && destinationType == typeof(bool[]))
-				{
-					var array = (BitArray)value;
-					var source = new bool[array.Length];
-					array.CopyTo(source, 0);
-					retVal = source;
-				}
-				else if (value is byte[] && destinationType == typeof(BitArray))
-				{
-					retVal = new BitArray((byte[])value);
-				}
-				else if (value is BitArray && destinationType == typeof(byte[]))
-				{
-					var array = (BitArray)value;
-					var source = new byte[(int)((double)array.Length / 8).Ceiling()];
-					array.CopyTo(source, 0);
-					retVal = source;
-				}
-				else if (value is IPAddress)
-				{
-					var addr = (IPAddress)value;
-
-					if (destinationType == typeof(string))
-						retVal = addr.ToString();
-					else if (destinationType == typeof(byte[]))
-						retVal = addr.GetAddressBytes();
-					else if (destinationType == typeof(long))
-					{
-						switch (addr.AddressFamily)
-						{
-							case AddressFamily.InterNetworkV6:
-							{
-								retVal = addr.ScopeId;
-								break;
-							}
-							case AddressFamily.InterNetwork:
-							{
-								var byteIp = addr.GetAddressBytes();
-								retVal = ((((byteIp[3] << 0x18) | (byteIp[2] << 0x10)) | (byteIp[1] << 8)) | byteIp[0]) & (0xffffffff);
-								//retVal = BitConverter.ToInt32(addr.GetAddressBytes(), 0);
-								break;
-							}
-							default:
-								throw new ArgumentException("Can't convert IPAddress to long.", nameof(value));
-						}
-					}
-					else
-						throw new ArgumentException("Can't convert IPAddress to type '{0}'.".Put(destinationType), nameof(value));
-				}
-				else if (destinationType == typeof(IPAddress))
-				{
-					if (value is string)
-						retVal = IPAddress.Parse((string)value);
-					else if (value is byte[])
-						retVal = new IPAddress((byte[])value);
-					else if (value is long)
-						retVal = new IPAddress((long)value);
-					else
-						throw new ArgumentException("Can't convert type '{0}' to IPAddress.".Put(destinationType), nameof(value));
-				}
-				else if (value is string && typeof(EndPoint).IsAssignableFrom(destinationType))
-				{
-					var str = (string)value;
-					var index = str.LastIndexOf(':');
-
-					if (index != -1)
-					{
-						var host = str.Substring(0, index);
-						var port = str.Substring(index + 1).To<int>();
-
-						IPAddress addr;
-
-						if (destinationType == typeof(IPEndPoint))
-							addr = host.To<IPAddress>();
-						else
-						{
-#if SILVERLIGHT
-							addr = host.To<IPAddress>();
-#else
-							if (!IPAddress.TryParse(host, out addr))
-								return new DnsEndPoint(host, port);
-#endif
-						}
-
-						return new IPEndPoint(addr, port);
-					}
-					else
-						throw new FormatException("Invalid endpoint format.");
-				}
-				else if (destinationType == typeof(string) && value is EndPoint)
-				{
-					var endPoint = (EndPoint)value;
-					retVal = endPoint.GetHost() + ":" + endPoint.GetPort();
-				}
+					return value;
 				else if ((value is string || sourceType.IsPrimitive) && destinationType.IsEnum())
 				{
 					if (value is string)
-						retVal = Enum.Parse(destinationType, (string)value, true);
+						return Enum.Parse(destinationType, (string)value, true);
 					else
-						retVal = Enum.ToObject(destinationType, value);
+						return Enum.ToObject(destinationType, value);
 				}
-				else if (value is string && destinationType == typeof(Type))
-				{
-					Type type;
-					var str = (string)value;
-
-					var key = str.ToLowerInvariant();
-
-					if (!_aliases.TryGetValue(key, out type))
-					{
-						if (!_typeCache.TryGetValue(key, out type))
-						{
-							lock (_typeCache)
-							{
-								if (!_typeCache.TryGetValue(key, out type))
-								{
-									type = Type.GetType(str, false, true);
-
 #if !SILVERLIGHT
-									// в строке может быть записаное не AssemblyQualifiedName, а только полное имя типа + имя сборки.
-									if (type == null)
-									{
-										var parts = str.Split(", ");
-										if (parts.Length == 2)
-										{
-											var asm = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == parts[1]) ?? Assembly.LoadWithPartialName(parts[1]);
-
-											if (asm != null)
-											{
-												type = asm.GetType(parts[0]);
-											}
-										}
-									}
-#endif
-
-									if (type != null)
-										_typeCache.Add(key, type);
-									else
-										throw new ArgumentException("Type {0} doesn't exists.".Put(value), nameof(value));
-								}
-							}
-						}
-					}
-
-					retVal = type;
-				}
-				else if (value is Type && destinationType == typeof(string))
-					retVal = ((Type)value).AssemblyQualifiedName;
-				else if (value is string && destinationType == typeof(StringBuilder))
-					retVal = new StringBuilder((string)value);
-				else if (value is StringBuilder && destinationType == typeof(string))
-					retVal = value.ToString();
-#if !SILVERLIGHT
-				else if (value is string && destinationType == typeof(DbConnectionStringBuilder))
-					retVal = new DbConnectionStringBuilder { ConnectionString = (string)value };
-				else if (value is DbConnectionStringBuilder && destinationType == typeof(string))
-					retVal = value.ToString();
-				else if (value is SecureString && destinationType == typeof(string))
-				{
-					var bstr = Marshal.SecureStringToBSTR((SecureString)value);
-
-					using (bstr.MakeDisposable(Marshal.ZeroFreeBSTR))
-					{
-						retVal = Marshal.PtrToStringBSTR(bstr);
-					}
-				}
-#endif
-				else if (value is string && destinationType == typeof(SecureString))
-					retVal = ((string)value).ToCharArray().To(destinationType);
-				else if (value is byte[] && destinationType == typeof(SecureString))
-				{
-					var byteArray = (byte[])value;
-
-					var charArray = new char[byteArray.Length / 2];
-
-					var offset = 0;
-					for (var i = 0; i < byteArray.Length; i += 2)
-						charArray[offset++] = BitConverter.ToChar(new[] { byteArray[i], byteArray[i + 1] }, 0);
-
-					retVal = charArray.To(destinationType);
-				}
-				else if (value is char[] && destinationType == typeof(SecureString))
-				{
-					var s = new SecureString();
-
-					foreach (var c in (char[])value)
-						s.AppendChar(c);
-
-					retVal = s;
-				}
 				else if (value is string && destinationType == typeof(DbProviderFactory))
-					retVal = DbProviderFactories.GetFactory((string)value);
+					return DbProviderFactories.GetFactory((string)value);
+#endif
 				else if (destinationType == typeof(Type[]))
 				{
 					if (!(value is IEnumerable<object>))
 						value = new[] { value };
 
-					retVal = ((IEnumerable<object>)value).Select(arg => arg == null ? typeof(void) : arg.GetType()).ToArray();
+					return ((IEnumerable<object>)value).Select(arg => arg?.GetType() ?? typeof(void)).ToArray();
 				}
 				else if (value is Stream && destinationType == typeof(string))
 				{
-					retVal = value.To<byte[]>().To<string>();
+					return value.To<byte[]>().To<string>();
 				}
 				else if (value is Stream && destinationType == typeof(byte[]))
 				{
@@ -424,85 +495,26 @@
 						}
 					}
 
-					retVal = output.ToArray();
+					return output.ToArray();
 				}
 				else if (value is byte[] && (destinationType == typeof(Stream) || destinationType == typeof(MemoryStream)))
 				{
 					var stream = new MemoryStream(((byte[])value).Length);
 					stream.Write((byte[])value, 0, stream.Capacity);
 					stream.Position = 0;
-					retVal = stream;
+					return stream;
 				}
 				else if (value is string && (destinationType == typeof(Stream) || destinationType == typeof(MemoryStream)))
 				{
-					retVal = value.To<byte[]>().To<Stream>();
+					return value.To<byte[]>().To<Stream>();
 				}
 				else if (destinationType == typeof(byte[]))
 				{
 					if (value is Enum)
 						value = value.To(sourceType.GetEnumBaseType());
 
-					if (value is byte)
-						retVal = new[] { (byte)value };
-					else if (value is bool)
-						retVal = BitConverter.GetBytes((bool)value);
-					else if (value is char)
-						retVal = BitConverter.GetBytes((char)value);
-					else if (value is short)
-						retVal = BitConverter.GetBytes((short)value);
-					else if (value is int)
-						retVal = BitConverter.GetBytes((int)value);
-					else if (value is long)
-						retVal = BitConverter.GetBytes((long)value);
-					else if (value is ushort)
-						retVal = BitConverter.GetBytes((ushort)value);
-					else if (value is uint)
-						retVal = BitConverter.GetBytes((uint)value);
-					else if (value is ulong)
-						retVal = BitConverter.GetBytes((ulong)value);
-					else if (value is float)
-						retVal = BitConverter.GetBytes((float)value);
-					else if (value is double)
-						retVal = BitConverter.GetBytes((double)value);
-					else if (value is DateTime)
-						retVal = BitConverter.GetBytes(((DateTime)value).Ticks);
-					else if (value is DateTimeOffset)
-						retVal = BitConverter.GetBytes(((DateTimeOffset)value).UtcTicks);
-					else if (value is Guid)
-						retVal = ((Guid)value).ToByteArray();
-					else if (value is TimeSpan)
-						retVal = BitConverter.GetBytes(((TimeSpan)value).Ticks);
-					else if (value is decimal)
-					{
-						var bits = decimal.GetBits((decimal)value);
-						var lo = bits[0];
-						var mid = bits[1];
-						var hi = bits[2];
-						var flags = bits[3];
-
-						var bytes = new byte[16];
-
-						bytes[0] = (byte)lo;
-						bytes[1] = (byte)(lo >> 8);
-						bytes[2] = (byte)(lo >> 0x10);
-						bytes[3] = (byte)(lo >> 0x18);
-						bytes[4] = (byte)mid;
-						bytes[5] = (byte)(mid >> 8);
-						bytes[6] = (byte)(mid >> 0x10);
-						bytes[7] = (byte)(mid >> 0x18);
-						bytes[8] = (byte)hi;
-						bytes[9] = (byte)(hi >> 8);
-						bytes[10] = (byte)(hi >> 0x10);
-						bytes[11] = (byte)(hi >> 0x18);
-						bytes[12] = (byte)flags;
-						bytes[13] = (byte)(flags >> 8);
-						bytes[14] = (byte)(flags >> 0x10);
-						bytes[15] = (byte)(flags >> 0x18);
-
-						retVal = bytes;
-					}
-					else
-						throw new ArgumentException("Can't convert '{0}' to byte array.".Put(sourceType), nameof(value));
+					if (_typedConverters2.TryGetValue(Tuple.Create(value.GetType(), destinationType), out typedConverter))
+						return typedConverter(value);
 				}
 				else if (value is byte[])
 				{
@@ -516,109 +528,44 @@
 					else
 						enumType = null;
 
-					if (destinationType == typeof(byte))
-						retVal = ((byte[])value)[0];
-					else if (destinationType == typeof(bool))
-						retVal = BitConverter.ToBoolean((byte[])value, 0);
-					else if (destinationType == typeof(char))
-						retVal = BitConverter.ToChar((byte[])value, 0);
-					else if (destinationType == typeof(short))
-						retVal = BitConverter.ToInt16((byte[])value, 0);
-					else if (destinationType == typeof(int))
-						retVal = BitConverter.ToInt32((byte[])value, 0);
-					else if (destinationType == typeof(long))
-						retVal = BitConverter.ToInt64((byte[])value, 0);
-					else if (destinationType == typeof(ushort))
-						retVal = BitConverter.ToUInt16((byte[])value, 0);
-					else if (destinationType == typeof(uint))
-						retVal = BitConverter.ToUInt32((byte[])value, 0);
-					else if (destinationType == typeof(ulong))
-						retVal = BitConverter.ToUInt64((byte[])value, 0);
-					else if (destinationType == typeof(float))
-						retVal = BitConverter.ToSingle((byte[])value, 0);
-					else if (destinationType == typeof(double))
-						retVal = BitConverter.ToDouble((byte[])value, 0);
-					else if (destinationType == typeof(DateTime))
-						retVal = new DateTime(BitConverter.ToInt64((byte[])value, 0));
-					else if (destinationType == typeof(DateTimeOffset))
-						retVal = new DateTimeOffset(BitConverter.ToInt64((byte[])value, 0), TimeSpan.Zero);
-					else if (destinationType == typeof(Guid))
-						retVal = new Guid((byte[])value);
-					else if (destinationType == typeof(TimeSpan))
-						retVal = new TimeSpan(BitConverter.ToInt64((byte[])value, 0));
-					else if (destinationType == typeof(decimal))
-					{
-						var bytes = (byte[])value;
+					object retVal;
 
-						var bits = new[]
-						{
-							((bytes[0] | (bytes[1] << 8)) | (bytes[2] << 0x10)) | (bytes[3] << 0x18), //lo
-							((bytes[4] | (bytes[5] << 8)) | (bytes[6] << 0x10)) | (bytes[7] << 0x18), //mid
-							((bytes[8] | (bytes[9] << 8)) | (bytes[10] << 0x10)) | (bytes[11] << 0x18), //hi
-							((bytes[12] | (bytes[13] << 8)) | (bytes[14] << 0x10)) | (bytes[15] << 0x18) //flags
-						};
-
-						return new decimal(bits);
-					}
+					if (_typedConverters2.TryGetValue(Tuple.Create(value.GetType(), destinationType), out typedConverter))
+						retVal = typedConverter(value);
 					else
 						throw new ArgumentException("Can't convert byte array to '{0}'.".Put(destinationType), nameof(value));
 
 					if (enumType != null)
 						retVal = Enum.ToObject(enumType, retVal);
-				}
-				else if (value is TimeSpan && destinationType == typeof(long))
-					retVal = ((TimeSpan)value).Ticks;
-				else if (value is long && destinationType == typeof(TimeSpan))
-					retVal = new TimeSpan((long)value);
-				else if (value is DateTime && destinationType == typeof(long))
-					retVal = ((DateTime)value).Ticks;
-				else if (value is long && destinationType == typeof(DateTime))
-					retVal = new DateTime((long)value);
-				else if (value is DateTimeOffset && destinationType == typeof(long))
-					retVal = ((DateTimeOffset)value).UtcTicks;
-				else if (value is long && destinationType == typeof(DateTimeOffset))
-					retVal = new DateTimeOffset((long)value, TimeSpan.Zero);
-				else if (value is DateTime && destinationType == typeof(double))
-					retVal = ((DateTime)value).ToOADate();
-				else if (value is double && destinationType == typeof(DateTime))
-					retVal = DateTime.FromOADate((double)value);
-				else if (value is DateTime && destinationType == typeof(DateTimeOffset))
-				{
-					var dt = (DateTime)value;
 
-					if (dt == DateTime.MinValue)
-						retVal = DateTimeOffset.MinValue;
-					else if (dt == DateTime.MaxValue)
-						retVal = DateTimeOffset.MaxValue;
-					else
-						retVal = new DateTimeOffset(dt);
+					return retVal;
 				}
 #if !SILVERLIGHT
 				else if (value is WinColor && destinationType == typeof(int))
-					retVal = ((WinColor)value).ToArgb();
+					return ((WinColor)value).ToArgb();
 				else if (value is int && destinationType == typeof(WinColor))
 				{
 					var intValue = (int)value;
-					retVal = WinColor.FromArgb((byte)((intValue >> 0x18) & 0xffL), (byte)((intValue >> 0x10) & 0xffL), (byte)((intValue >> 8) & 0xffL), (byte)(intValue & 0xffL));
+					return WinColor.FromArgb((byte)((intValue >> 0x18) & 0xffL), (byte)((intValue >> 0x10) & 0xffL), (byte)((intValue >> 8) & 0xffL), (byte)(intValue & 0xffL));
 					//retVal = Color.FromArgb(intValue);
 				}
 				else if (value is WinColor && destinationType == typeof(string))
-					retVal = ColorTranslator.ToHtml((WinColor)value);
+					return ColorTranslator.ToHtml((WinColor)value);
 				else if (value is string && destinationType == typeof(WinColor))
-					retVal = ColorTranslator.FromHtml((string)value);
+					return ColorTranslator.FromHtml((string)value);
 #endif
 				else if (value is WpfColor && destinationType == typeof(int))
 				{
 					var color = (WpfColor)value;
-					retVal = (color.A << 24) | (color.R << 16) | (color.G << 8) | color.B;
+					return (color.A << 24) | (color.R << 16) | (color.G << 8) | color.B;
 				}
 				else if (value is int && destinationType == typeof(WpfColor))
 				{
 					var intValue = (int)value;
-					retVal = WpfColor.FromArgb((byte)(intValue >> 24), (byte)(intValue >> 16), (byte)(intValue >> 8), (byte)(intValue));
+					return WpfColor.FromArgb((byte)(intValue >> 24), (byte)(intValue >> 16), (byte)(intValue >> 8), (byte)(intValue));
 				}
 				else if (value is WpfColor && destinationType == typeof(string))
-					retVal = ((WpfColor)value).ToString();
+					return ((WpfColor)value).ToString();
 				else if (value is string && destinationType == typeof(WpfColor))
 #if SILVERLIGHT
 				{
@@ -635,107 +582,107 @@
 					retVal = Color.FromArgb(255, r, g, b);
 				}
 #else
-					retVal = WpfColorConverter.ConvertFromString((string)value);
+					return WpfColorConverter.ConvertFromString((string)value);
 #endif
 				else if (value is Uri && destinationType == typeof(string))
-					retVal = value.ToString();
+					return value.ToString();
 				else if (value is string && destinationType == typeof(Uri))
-					retVal = new Uri((string)value);
+					return new Uri((string)value);
 				else if (value is Version && destinationType == typeof(string))
-					retVal = value.ToString();
+					return value.ToString();
 				else if (value is string && destinationType == typeof(Version))
-					retVal = new Version((string)value);
+					return new Version((string)value);
 				else if (value is int && destinationType == typeof(IntPtr))
-					retVal = new IntPtr((int)value);
+					return new IntPtr((int)value);
 				else if (value is long && destinationType == typeof(IntPtr))
-					retVal = new IntPtr((long)value);
+					return new IntPtr((long)value);
 				else if (value is uint && destinationType == typeof(UIntPtr))
-					retVal = new UIntPtr((uint)value);
+					return new UIntPtr((uint)value);
 				else if (value is ulong && destinationType == typeof(UIntPtr))
-					retVal = new UIntPtr((ulong)value);
+					return new UIntPtr((ulong)value);
 				else if (value is IntPtr && destinationType == typeof(int))
-					retVal = ((IntPtr)value).ToInt32();
+					return ((IntPtr)value).ToInt32();
 				else if (value is IntPtr && destinationType == typeof(long))
-					retVal = ((IntPtr)value).ToInt64();
+					return ((IntPtr)value).ToInt64();
 				else if (value is UIntPtr && destinationType == typeof(uint))
-					retVal = ((UIntPtr)value).ToUInt32();
+					return ((UIntPtr)value).ToUInt32();
 				else if (value is UIntPtr && destinationType == typeof(ulong))
-					retVal = ((UIntPtr)value).ToUInt64();
+					return ((UIntPtr)value).ToUInt64();
 #if !SILVERLIGHT
 				else if (value is CultureInfo && destinationType == typeof(int))
-					retVal = ((CultureInfo)value).LCID;
+					return ((CultureInfo)value).LCID;
 				else if (value is int && destinationType == typeof(CultureInfo))
-					retVal = new CultureInfo((int)value);
+					return new CultureInfo((int)value);
 #endif
 				else if (destinationType.GetUnderlyingType() != null)
 				{
 					if (value is string && (string)value == string.Empty)
 					{
 						if (destinationType == typeof(decimal?))
-							retVal = new decimal?();
+							return new decimal?();
 						else if (destinationType == typeof(int?))
-							retVal = new decimal?();
+							return new decimal?();
 						else if (destinationType == typeof(long?))
-							retVal = new decimal?();
+							return new decimal?();
 						else
-							retVal = destinationType.CreateInstance<object>();
+							return destinationType.CreateInstance<object>();
 					}
 					else
 					{
 						if (destinationType == typeof(decimal?))
-							retVal = value.To(typeof(decimal));
+							return value.To(typeof(decimal));
 						else if (destinationType == typeof(int?))
-							retVal = value.To(typeof(int));
+							return value.To(typeof(int));
 						else if (destinationType == typeof(long?))
-							retVal = value.To(typeof(long));
+							return value.To(typeof(long));
 						else
-							retVal = destinationType.CreateInstance<object>(value.To(destinationType.GetUnderlyingType()));
+							return destinationType.CreateInstance<object>(value.To(destinationType.GetUnderlyingType()));
 					}
 				}
 				else if (value is string && destinationType == typeof(TimeSpan))
-					retVal = TimeSpan.Parse((string)value);
+					return TimeSpan.Parse((string)value);
 				else if (value is TimeSpan && destinationType == typeof(string))
-					retVal = value.ToString();
+					return value.ToString();
 				else if (value is DateTime && destinationType == typeof(string))
 				{
 					var date = (DateTime)value;
-					retVal = date.Millisecond > 0 ? date.ToString("o") : value.ToString();
+					return date.Millisecond > 0 ? date.ToString("o") : value.ToString();
 				}
 				else if (value is DateTimeOffset && destinationType == typeof(string))
 				{
 					var dto = (DateTimeOffset)value;
-					retVal = dto.Millisecond > 0 ? dto.ToString("o") : value.ToString();
+					return dto.Millisecond > 0 ? dto.ToString("o") : value.ToString();
 				}
 				else if (value is string && destinationType == typeof(DateTimeOffset))
 				{
-					retVal = DateTimeOffset.Parse((string)value);
+					return DateTimeOffset.Parse((string)value);
 				}
 #if !SILVERLIGHT
 				else if (value is string && destinationType == typeof(TimeZoneInfo))
-					retVal = TimeZoneInfo.FromSerializedString((string)value);
+					return TimeZoneInfo.FromSerializedString((string)value);
 				else if (value is TimeZoneInfo && destinationType == typeof(string))
-					retVal = ((TimeZoneInfo)value).ToSerializedString();
+					return ((TimeZoneInfo)value).ToSerializedString();
 #endif
 				else if (value is string && destinationType == typeof(Guid))
-					retVal = new Guid((string)value);
+					return new Guid((string)value);
 				else if (value is Guid && destinationType == typeof(string))
-					retVal = value.ToString();
+					return value.ToString();
 				else if (value is string && destinationType == typeof(XDocument))
-					retVal = XDocument.Parse((string)value);
+					return XDocument.Parse((string)value);
 				else if (value is string && destinationType == typeof(XElement))
-					retVal = XElement.Parse((string)value);
+					return XElement.Parse((string)value);
 				else if (value is XNode && destinationType == typeof(string))
-					retVal = value.ToString();
+					return value.ToString();
 				else if (value is string && destinationType == typeof(XmlDocument))
 				{
 					var doc = new XmlDocument();
 					doc.LoadXml((string)value);
-					retVal = doc;
+					return doc;
 				}
 				else if (value is XmlNode && destinationType == typeof(string))
-					retVal = ((XmlNode)value).OuterXml;
+					return ((XmlNode)value).OuterXml;
 				else if (value is string && destinationType == typeof(decimal))
-					retVal = decimal.Parse((string)value, NumberStyles.Any, null);
+					return decimal.Parse((string)value, NumberStyles.Any, null);
 				else
 				{
 					var attr = destinationType.GetAttribute<TypeConverterAttribute>();
@@ -753,29 +700,39 @@
 						}
 					}
 
-					try
+					var convertible = value as IConvertible;
+
+					if (convertible != null)
 					{
-						retVal = Convert.ChangeType(value, destinationType, null);
+						return Convert.ChangeType(value, destinationType, null);
 					}
-					catch
+					else
 					{
-						var methods = sourceType.GetMethods(BindingFlags.Public | BindingFlags.Static);
-						var method = methods.FirstOrDefault(mi => (mi.Name == "op_Implicit" || mi.Name == "op_Explicit") && mi.ReturnType == destinationType);
+						//var key = Tuple.Create(sourceType, destinationType);
 
-						if (method == null)
-							throw;
+						MethodInfo method;
 
-						retVal = method.Invoke(null, new[] { value });
+						//if (!_castOperators.TryGetValue(key, out method))
+						{
+							var methods = sourceType.GetMethods(BindingFlags.Public | BindingFlags.Static);
+							method = methods.FirstOrDefault(mi => (mi.Name == "op_Implicit" || mi.Name == "op_Explicit") && mi.ReturnType == destinationType);
+							//_castOperators.Add(key, method);
+						}
+
+						if (method != null)
+							return method.Invoke(null, new[] { value });
 					}
 				}
 
-				return retVal;
+				throw new ArgumentException("Can't convert {0} to type '{1}'.".Put(value, destinationType), nameof(value));
 			}
 			catch (Exception ex)
 			{
 				throw new InvalidCastException("Cannot convert {0} to {1}.".Put(value, destinationType), ex);
 			}
 		}
+
+		//private static readonly Dictionary<Tuple<Type, Type>, MethodInfo> _castOperators = new Dictionary<Tuple<Type, Type>, MethodInfo>();
 
 		/// <summary>
 		/// Convert value into a instance of destinationType.

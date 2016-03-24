@@ -7,6 +7,9 @@ namespace Ecng.Common
 
 	public class FastCsvReader
 	{
+		private static readonly Func<string, bool> _toBool = Converter.GetTypedConverter<string, bool>();
+		private static readonly Func<string, double> _toDouble = Converter.GetTypedConverter<string, double>();
+
 		private readonly TextReader _reader;
 		private const int _buffSize = 1024 * 1024;
 		private readonly char[] _buffer = new char[_buffSize];
@@ -194,7 +197,11 @@ namespace Ecng.Common
 		public bool? ReadNullableBool()
 		{
 			var str = ReadString();
-			return str.To<bool?>();
+
+			if (str == null)
+				return null;
+
+			return _toBool(str);
 		}
 
 		public T ReadEnum<T>()
@@ -218,7 +225,11 @@ namespace Ecng.Common
 		public double? ReadNullableDouble()
 		{
 			var str = ReadString();
-			return str.To<double?>();
+
+			if (str == null)
+				return null;
+
+			return _toDouble(str);
 		}
 
 		public decimal ReadDecimal()
