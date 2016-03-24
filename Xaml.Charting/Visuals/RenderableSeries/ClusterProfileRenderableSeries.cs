@@ -45,6 +45,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             public double PriceLevelHeight;
             public double HalfPriceLevelHeight;
             public Color DefaultFontColor;
+            public long VisibleMaxVolume;
 
             public IRenderContext2D RenderContext;
             public IPen2D BarSeparatorPen;
@@ -54,6 +55,8 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             //  0deg       90deg      180deg    270deg (counterclockwise)
             BottomLeft, BottomRight, TopRight, TopLeft
         }
+
+        LocalRenderContext _lastContext;
 
         protected override void OnDrawImpl(IRenderContext2D renderContext, IRenderPassData renderPassData) {
             var series = DataSeries as TimeframeSegmentDataSeries;
@@ -65,7 +68,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             var segments = pointSeries.Segments;
             var priceStep = pointSeries.PriceStep;
 
-            var ctx = new LocalRenderContext {
+            var ctx = _lastContext = new LocalRenderContext {
                 XCalc = CurrentRenderPassData.XCoordinateCalculator,
                 YCalc = CurrentRenderPassData.YCoordinateCalculator,
                 Timeframe = Timeframe,
@@ -117,7 +120,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                     return;
 
                 // ReSharper disable once PossibleMultipleEnumeration
-                var maxValue = visibleSegments.Max(s => s.Segment.MaxValue);
+                var maxValue = ctx.VisibleMaxVolume = visibleSegments.Max(s => s.Segment.MaxValue);
                 var drawClusters = ctx.SegmentWidth >= 3;
 
                 // ReSharper disable once PossibleMultipleEnumeration
@@ -164,7 +167,6 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
         class BarIterator {
             readonly int _count;
-            readonly long _maxValue;
             readonly Action<BarIterator> _onNextBar;
             int _index;
 
@@ -172,7 +174,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
             public BarIterator(int count, long maxValue, Action<BarIterator> onNextBar) {
                 _count = count;
-                _maxValue = maxValue;
+                MaxValue = maxValue;
                 _onNextBar = onNextBar;
             }
 
@@ -192,7 +194,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             public long Value {get; set;}
             public IBrush2D BarBrush {get; set;}
             public Color FontColor {get; set;}
-            public long MaxValue {get {return _maxValue;}}
+            public long MaxValue {get;}
         }
 
         void DrawHistogram(BarIterator bars, LocalRenderContext ctx, double baselineCoord, double barMaxHeight, DrawStartPoint orientation, float minFontSize) {
@@ -284,6 +286,28 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                     ctx.RenderContext.DrawText(text, rectText, txtAlignX, txtAlignY, fontColor, fontInfo.Item1, _fontCalculator.FontFamily, fontInfo.Item2);
                 }
             }
+        }
+
+        protected override HitTestInfo HitTestSeriesWithBody(Point rawPoint, HitTestInfo nearestHitPoint, double hitTestRadius) {
+            var dataSeries = DataSeries as TimeframeSegmentDataSeries;
+            var ctx = _lastContext;
+            var index = nearestHitPoint.DataSeriesIndex;
+            if(dataSeries == null || dataSeries.Count < 1 || ctx == null || index < 0 || index >= dataSeries.Count)
+                return HitTestInfo.Empty;
+
+            var maxValue = ctx.VisibleMaxVolume;
+            if(maxValue == 0)
+                return HitTestInfo.Empty;
+
+            var vol = nearestHitPoint.Volume;
+            var xMin = ctx.XCalc.GetCoordinate(index);
+            var coord = xMin + ctx.SegmentWidth * vol / maxValue;
+
+            if(rawPoint.X < xMin || rawPoint.X > coord)
+                return HitTestInfo.Empty;
+
+            //nearestHitPoint.HitTestPoint = new Point(coord, nearestHitPoint.HitTestPoint.Y);
+            return nearestHitPoint;
         }
     }
 }

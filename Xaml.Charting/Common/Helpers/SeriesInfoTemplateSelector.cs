@@ -53,6 +53,10 @@ namespace Ecng.Xaml.Charting
         /// Defines the OneHundredPercentStackedSeriesTemplate DependencyProperty
         /// </summary>
         public static readonly DependencyProperty OneHundredPercentStackedSeriesTemplateProperty = DependencyProperty.Register("OneHundredPercentStackedSeriesTemplate", typeof(DataTemplate), typeof(SeriesInfoTemplateSelector), new PropertyMetadata(OnDefautlTemplateDependencyPropertyChanged));
+        /// <summary>
+        /// Defines the TimeframeSegmentSeriesTemplate DependencyProperty
+        /// </summary>
+        public static readonly DependencyProperty TimeframeSegmentSeriesTemplateProperty = DependencyProperty.Register("TimeframeSegmentSeriesTemplate", typeof(DataTemplate), typeof(SeriesInfoTemplateSelector), new PropertyMetadata(OnDefautlTemplateDependencyPropertyChanged));
 
         /// <summary>
         /// Initializes a new instance of the <seealso cref="SeriesInfoTemplateSelector"/> class.
@@ -126,6 +130,15 @@ namespace Ecng.Xaml.Charting
         }
 
         /// <summary>
+        /// Gets or sets the DataTemplate for <see cref="TimeframeSegmentSeriesInfo" />
+        /// </summary>
+        public DataTemplate TimeframeSegmentSeriesTemplate
+        {
+            get { return (DataTemplate)GetValue(TimeframeSegmentSeriesTemplateProperty); }
+            set { SetValue(TimeframeSegmentSeriesTemplateProperty, value); }
+        }
+
+        /// <summary>
         /// When overidden in derived classes, contains the logic for choosing a proper DataTemplate
         /// </summary>
         /// <param name="item"></param>
@@ -162,6 +175,9 @@ namespace Ecng.Xaml.Charting
             {
                 return OneHundredPercentStackedSeriesTemplate;
             }
+
+            if(item is TimeframeSegmentSeriesInfo)
+                return TimeframeSegmentSeriesTemplate;
 
             return base.SelectTemplate(item, container);
         }

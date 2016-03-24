@@ -7,6 +7,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using Ecng.Xaml.Charting.Common;
+using Ecng.Xaml.Charting.Common.Extensions;
 using Ecng.Xaml.Charting.Licensing;
 using Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries;
 using Ecng.Xaml.Charting.Rendering.Common;
@@ -18,6 +19,8 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
     abstract public class TimeframeSegmentRenderableSeries : BaseRenderableSeries {
         protected const string _defaultFontFamily = "Tahoma";
         static readonly Brush _defaultVerticalVolumeBrush = new LinearGradientBrush(Color.FromRgb(0, 128, 0), Color.FromRgb(0, 15, 0), 90);
+
+        Dictionary<double, Tuple<double, long>> _horizVolsWidths = new Dictionary<double, Tuple<double, long>>();
 
         public static readonly DependencyProperty LocalHorizontalVolumesProperty = DependencyProperty.Register(nameof(LocalHorizontalVolumes), typeof(bool), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(false, OnInvalidateParentSurface));
         public static readonly DependencyProperty ShowHorizontalVolumesProperty = DependencyProperty.Register(nameof(ShowHorizontalVolumes), typeof(bool), typeof(TimeframeSegmentRenderableSeries), new PropertyMetadata(true, OnInvalidateParentSurface));
@@ -37,7 +40,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
         protected internal override bool IsPartOfExtendedFeatures => true;
 
         protected override HitTestInfo HitTestInternal(Point rawPoint, double hitTestRadius, bool interpolate) {
-            return HitTestInfo.Empty;
+            return base.HitTestInternal(rawPoint, hitTestRadius, false);
         }
 
         static object CoerceHorizontalVolumeWidthFraction(DependencyObject d, object newVal) {
@@ -75,8 +78,11 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
             OnDrawImpl(renderContext, renderPassData);
 
-            if(ShowHorizontalVolumes)
+            if(ShowHorizontalVolumes) {
                 DrawHorizontalVolumes(renderContext, renderPassData);
+            } else {
+                _horizVolsWidths = new Dictionary<double, Tuple<double, long>>();
+            }
         }
 
         protected void DrawGrid(IRenderContext2D renderContext, ISeriesDrawingHelper drawingHelper, Point pt1, Point pt2, int xCount, int yCount, IPen2D framePen, IPen2D gridPen, IBrush2D fillBrush) {
@@ -156,6 +162,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             var volBarsBrush = VolumeBarsBrush;
             var volBarsFontColor = VolBarsFontColor;
             var volumeLinearBrush = volBarsBrush as LinearGradientBrush;
+            var newHorizVolsWidths = new Dictionary<double, Tuple<double, long>>();
 
             if(!horizVolumes.Any())
                 return;
@@ -181,6 +188,8 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                         renderContext.FillRectangle(volBarBrush, pt1, pt2, 3 * Math.PI / 2);
                     }
 
+                    newHorizVolsWidths[kv.Key] = Tuple.Create(width, kv.Value);
+
                     var text = kv.Value.ToString(CultureInfo.InvariantCulture);
                     var rectText = new Rect(new Point(1, yTop), pt2);
                     var fontInfo = _fontCalculator.GetFont(rectText.Size, kv.Value.NumDigitsInPositiveNumber(), MinHistTextSize);
@@ -189,7 +198,67 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                         renderContext.DrawText(text, rectText, AlignmentX.Left, AlignmentY.Center, volBarsFontColor, fontInfo.Item1, _fontCalculator.FontFamily, fontInfo.Item2);
                     }
                 }
+
+                _horizVolsWidths = newHorizVolsWidths;
             }
+        }
+
+        protected override HitTestInfo NearestHitResult(Point mouseRawPoint, double hitTestRadiusInPixels, SearchMode searchMode, bool considerYCoordinateForDistanceCalculation) {
+            var dataSeries = DataSeries as TimeframeSegmentDataSeries;
+            if(dataSeries == null || dataSeries.Count < 1)
+                return HitTestInfo.Empty;
+
+            var priceStep = dataSeries.PriceStep;
+            var xCalc = CurrentRenderPassData.XCoordinateCalculator;
+            var yCalc = CurrentRenderPassData.YCoordinateCalculator;
+            var index = (int)xCalc.GetDataValue(mouseRawPoint.X);
+            var yValue = yCalc.GetDataValue(mouseRawPoint.Y);
+            var price = yValue.NormalizePrice(priceStep);
+            var segmentWidth = Math.Abs(xCalc.GetCoordinate(1) - xCalc.GetCoordinate(0));
+            var segmentHeight = Math.Abs(yCalc.GetCoordinate(price) - yCalc.GetCoordinate(price + priceStep));
+
+            if(segmentWidth < 1 || segmentHeight < 1)
+                return HitTestInfo.Empty;
+
+            if(ShowHorizontalVolumes) {
+                Tuple<double, long> t;
+
+                if(_horizVolsWidths.TryGetValue(price, out t) && mouseRawPoint.X <= t.Item1)
+                    return new HitTestInfo {
+                        DataSeriesName = dataSeries.SeriesName,
+                        DataSeriesType = dataSeries.DataSeriesType,
+                        YValue = price,
+                        Volume = t.Item2,
+                        IsHit = true,
+                        HitTestPoint = new Point(t.Item1, yCalc.GetCoordinate(price)),
+                    };
+            }
+
+            if(index < 0 || index >= dataSeries.Count)
+                return HitTestInfo.Empty;
+
+            var segment = dataSeries.Segments[index];
+            var vol = segment.GetValueByPrice(yValue);
+            if(vol == 0)
+                return HitTestInfo.Empty;
+
+            var hitTestInfo = new HitTestInfo {
+                DataSeriesName = dataSeries.SeriesName,
+                DataSeriesType = dataSeries.DataSeriesType,
+                XValue = segment.Time,
+                YValue = price,
+                DataSeriesIndex = index,
+                Volume = vol,
+                IsHit = true,
+                //HitTestPoint = new Point(xCalc.GetCoordinate(index), yCalc.GetCoordinate(price)),
+                HitTestPoint = mouseRawPoint,
+            };
+
+            return HitTestSeriesWithBody(mouseRawPoint, hitTestInfo, hitTestRadiusInPixels);
+        }
+
+        protected override HitTestInfo HitTestSeriesWithBody(Point rawPoint, HitTestInfo nearestHitPoint, double hitTestRadius) {
+            return nearestHitPoint;
         }
 
         protected class FontCalculator {

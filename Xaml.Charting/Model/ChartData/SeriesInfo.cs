@@ -553,6 +553,38 @@ namespace Ecng.Xaml.Charting
     }
 
     /// <summary>
+    /// Provides a ViewModel containing info about BoxVolume series
+    /// </summary>
+    public class TimeframeSegmentSeriesInfo : SeriesInfo
+    {
+        long _volume;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TimeframeSegmentSeriesInfo" /> class.
+        /// </summary>
+        /// <param name="rSeries">The <see cref="IRenderableSeries"/>.</param>
+        /// <param name="hitTestInfo"> </param>
+        public TimeframeSegmentSeriesInfo(IRenderableSeries rSeries, HitTestInfo hitTestInfo) : base(rSeries, hitTestInfo)
+        {
+            Volume = hitTestInfo.Volume;
+        }
+
+        public long Volume
+        {
+            get { return _volume; }
+            set { SetField(ref _volume, value, nameof(Volume)); }
+        }
+
+        public override void CopyFrom(SeriesInfo other)
+        {
+            base.CopyFrom(other);
+
+            var o = (TimeframeSegmentSeriesInfo)other;
+            Volume = o.Volume;
+        }
+    }
+
+    /// <summary>
     /// <para>
     /// Provides a ViewModel containing info about a series, such as name, value, color. <see cref="SeriesInfo"/> types are
     /// produced by the <see cref="RolloverModifier"/>, <see cref="CursorModifier"/> and <see cref="LegendModifier"/>. They are
