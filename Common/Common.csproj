@@ -91,6 +91,8 @@
     <Compile Include="CsvFile.cs" />
     <Compile Include="DumpableStream.cs" />
     <Compile Include="FastCsvReader.cs" />
+    <Compile Include="FastDateTimeParser.cs" />
+    <Compile Include="FastTimeSpanParser.cs" />
     <Compile Include="IOHelper.cs" />
     <Compile Include="NtpClient.cs" />
     <Compile Include="ObjectPool.cs" />
