@@ -115,6 +115,8 @@
 		[Bindable(true), Category("Appearance"), DefaultValue(true)]
 		public bool IsRenderBody { get; set; }
 
+		public string TableStyle { get; set; }
+
 		protected virtual void ApplyHeaderSeparatorStyles(TableCell cell)
 		{
 		}
@@ -239,6 +241,9 @@
 
 			if (IsRenderHeader)
 				InitHeader(table);
+
+			if (!TableStyle.IsEmpty())
+				table.CssClass = TableStyle;
 
 			if (IsRenderBody)
 				InitBody(table);
