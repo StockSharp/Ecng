@@ -250,8 +250,8 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                 DataSeriesIndex = index,
                 Volume = vol,
                 IsHit = true,
-                //HitTestPoint = new Point(xCalc.GetCoordinate(index), yCalc.GetCoordinate(price)),
-                HitTestPoint = mouseRawPoint,
+                HitTestPoint = new Point(xCalc.GetCoordinate(index), yCalc.GetCoordinate(price)),
+                //HitTestPoint = mouseRawPoint,
             };
 
             return HitTestSeriesWithBody(mouseRawPoint, hitTestInfo, hitTestRadiusInPixels);

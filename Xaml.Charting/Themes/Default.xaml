@@ -1417,7 +1417,6 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -1428,14 +1427,11 @@
                     <Style TargetType="TextBlock" BasedOn="{StaticResource HintDataItemsStyle}"/>
                 </Grid.Resources>
 
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Time = " HorizontalAlignment="Right" Visibility="{Binding FormattedXValue, Converter={StaticResource CollapseIfNullOrEmptyStringConverter}}"/>
-                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding FormattedXValue, Mode=OneWay}" Visibility="{Binding FormattedXValue, Converter={StaticResource CollapseIfNullOrEmptyStringConverter}}"/>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Y = " HorizontalAlignment="Right"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding FormattedYValue, Mode=OneWay}"/>
 
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Y = " HorizontalAlignment="Right"/>
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding FormattedYValue, Mode=OneWay}"/>
-
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Volume = " HorizontalAlignment="Right"/>
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Volume, Mode=OneWay}"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Volume = " HorizontalAlignment="Right"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Volume, Mode=OneWay}"/>
             </Grid>
         </StackPanel>
     </DataTemplate>

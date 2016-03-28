@@ -306,7 +306,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             if(rawPoint.X < xMin || rawPoint.X > coord)
                 return HitTestInfo.Empty;
 
-            //nearestHitPoint.HitTestPoint = new Point(coord, nearestHitPoint.HitTestPoint.Y);
+            nearestHitPoint.HitTestPoint = new Point(coord, nearestHitPoint.HitTestPoint.Y);
             return nearestHitPoint;
         }
     }
