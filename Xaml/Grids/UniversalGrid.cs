@@ -5,6 +5,7 @@
 	using System.Collections.Generic;
 	using System.Collections.Specialized;
 	using System.ComponentModel;
+	using System.IO;
 	using System.Linq;
 	using System.Text;
 	using System.Windows;
@@ -155,7 +156,7 @@
 
 					e.OldItems.Cast<DataGridColumn>().ForEach(c =>
 					{
-						var mi = items.OfType<MenuItem>().FirstOrDefault(i => i.Tag == c);
+						var mi = items.OfType<MenuItem>().FirstOrDefault(i => ReferenceEquals(i.Tag, c));
 
 						if (mi != null)
 						{
@@ -165,7 +166,7 @@
 							items.Remove(mi);
 						}
 
-						var groupMenuItem = groupItems.OfType<MenuItem>().FirstOrDefault(i => i.Tag == c);
+						var groupMenuItem = groupItems.OfType<MenuItem>().FirstOrDefault(i => ReferenceEquals(i.Tag, c));
 
 						if (groupMenuItem != null)
 						{
@@ -280,7 +281,7 @@
 		{
 			var view = (CollectionView)CollectionViewSource.GetDefaultView(ItemsSource);
 
-			_isGroupingPending = view == null || view.GroupDescriptions == null;
+			_isGroupingPending = view?.GroupDescriptions == null;
 
 			if (_isGroupingPending)
 				return;
@@ -338,15 +339,10 @@
 		{
 			var dataView = CollectionViewSource.GetDefaultView(ItemsSource);
 
-			if (dataView == null)
-				return;
-
-			dataView.Refresh();
+			dataView?.Refresh();
 		}
 
-		private readonly MultiDictionary<DataGridColumn, FormatRule> _formatRules = new MultiDictionary<DataGridColumn, FormatRule>(false);
-
-		public MultiDictionary<DataGridColumn, FormatRule> FormatRules => _formatRules;
+		public MultiDictionary<DataGridColumn, FormatRule> FormatRules { get; } = new MultiDictionary<DataGridColumn, FormatRule>(false);
 
 		public Func<DataGridCell, bool> CanDrag;
 		public Func<DataGridCell, DataGridCell, bool> Dropping;
@@ -556,12 +552,7 @@
 				dependencyObject = VisualTreeHelper.GetParent(dependencyObject);
 			}
 
-			if (dependencyObject != null)
-			{
-				return dependencyObject as DataGridCell;
-			}
-
-			return null;
+			return dependencyObject as DataGridCell;
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -788,9 +779,7 @@
 
 		private void ScrollToEnd()
 		{
-			var scroll = this.FindVisualChild<ScrollViewer>();
-			if (scroll != null)
-				scroll.ScrollToVerticalOffset(double.PositiveInfinity);
+			this.FindVisualChild<ScrollViewer>()?.ScrollToVerticalOffset(double.PositiveInfinity);
 		}
 
 		public virtual void Load(SettingsStorage storage)
@@ -879,7 +868,7 @@
 			return columns.Select(column =>
 			{
 				var value = item.GetPropValue(column.SortMemberPath);
-				return value != null ? value.ToString() : string.Empty;
+				return value?.ToString() ?? string.Empty;
 			});
 		}
 
@@ -972,7 +961,7 @@
 					foreach (var column in Columns)
 					{
 						var tb = column.GetCellContent(item) as TextBlock;
-						worker.SetCell(colIndex, rowIndex, (object) (tb != null ? tb.Text : string.Empty));
+						worker.SetCell(colIndex, rowIndex, (tb != null ? tb.Text : string.Empty));
 						colIndex++;
 					}
 
@@ -993,7 +982,11 @@
 			};
 
 			if (dlg.ShowDialog(this.GetWindow()) == true)
-				this.GetImage().SaveImage(dlg.FileName);
+			{
+				var stream = new MemoryStream();
+				this.GetImage().SaveImage(stream);
+				stream.Save(dlg.FileName);
+			}
 		}
 
 		private readonly SyncObject _ddeLock = new SyncObject();
