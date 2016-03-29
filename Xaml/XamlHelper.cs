@@ -166,7 +166,7 @@ namespace Ecng.Xaml
 			brush.ImageSource = _empty;
 		}
 
-		private readonly static Dictionary<Uri, ImageSource> _sourceCache = new Dictionary<Uri, ImageSource>();
+		private static readonly Dictionary<Uri, ImageSource> _sourceCache = new Dictionary<Uri, ImageSource>();
 
 		private static ImageSource CreateSource(Uri url)
 		{
@@ -609,17 +609,20 @@ namespace Ecng.Xaml
 			return source;
 		}
 
-		public static void SaveImage(this BitmapSource image, string filePath)
+		public static void SaveImage(this BitmapSource image, Stream file)
 		{
 			if (image == null)
 				throw new ArgumentNullException(nameof(image));
 
-			using (var stream = File.Create(filePath))
-			{
-				var encoder = new PngBitmapEncoder();
-				encoder.Frames.Add(BitmapFrame.Create(image));
-				encoder.Save(stream);
-			}
+			if (file == null)
+				throw new ArgumentNullException(nameof(file));
+
+			//using (var stream = File.Create(filePath))
+			//{
+			var encoder = new PngBitmapEncoder();
+			encoder.Frames.Add(BitmapFrame.Create(image));
+			encoder.Save(file);
+			//}
 		}
 
 		//public static void CopyImage(this BitmapSource image)
