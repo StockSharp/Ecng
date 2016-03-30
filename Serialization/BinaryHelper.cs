@@ -15,6 +15,16 @@
 
 	public static unsafe class BinaryHelper
 	{
+		public static void UndoDispose(this MemoryStream stream)
+		{
+			if (stream == null)
+				throw new ArgumentNullException(nameof(stream));
+
+			stream.SetValue("_isOpen", true);
+			stream.SetValue("_writable", true);
+			stream.SetValue("_expandable", true);
+		}
+
 		public static void WriteBytes(this Stream stream, byte[] bytes, int len)
 		{
 			stream.Write(bytes, 0, len);
