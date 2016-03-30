@@ -659,7 +659,7 @@ namespace Ecng.Xaml
 
 		public static bool ShowModal(this Window wnd)
 		{
-			return wnd.ShowModal(Application.Current.MainWindow);
+			return Application.Current == null ? wnd.ShowDialog() == true : wnd.ShowModal(Application.Current.MainWindow);
 		}
 
 		public static bool ShowModal(this Window wnd, DependencyObject obj)
