@@ -54,7 +54,9 @@ namespace Ecng.Backup.Yandex
 					error = e.Error;
 			};
 
-			var retVal = owner == null ? loginWindow.ShowModal() : loginWindow.ShowModal(owner);
+			owner = owner ?? Scope<Window>.Current?.Value;
+
+			var retVal = owner?.GuiSync(() => loginWindow.ShowModal(owner)) ?? loginWindow.ShowDialog() == true;
 
 			if (!retVal)
 				throw new UnauthorizedAccessException();
