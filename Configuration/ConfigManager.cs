@@ -226,19 +226,20 @@
 
 			lock (_sync)
 			{
-				if (_services.TryGetValue(typeof(T), out service))
-					return (T)service;
-
-				service = ServiceLocator.GetInstance<T>();
-
-				if (service != null)
+				if (!_services.TryGetValue(typeof(T), out service))
 				{
-					// service T can register itseft in the constructor
-					if (!_services.ContainsKey(typeof(T)))
-						_services.Add(typeof(T), service);
+					service = ServiceLocator.GetInstance<T>();
+
+					if (service != null)
+					{
+						// service T can register itseft in the constructor
+						if (!_services.ContainsKey(typeof(T)))
+							_services.Add(typeof(T), service);
+					}
 				}
 			}
 
+			(service as IDelayInitService)?.Init();
 			return (T)service;
 		}
 
