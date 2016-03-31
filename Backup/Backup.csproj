@@ -85,6 +85,10 @@
       <Project>{725d5260-8208-4a39-843a-6b58606ed73b}</Project>
       <Name>Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Configuration\Configuration.csproj">
+      <Project>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</Project>
+      <Name>Configuration</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Localization\Localization.csproj">
       <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
       <Name>Localization</Name>

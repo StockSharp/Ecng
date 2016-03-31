@@ -27,16 +27,19 @@ namespace Ecng.Backup.Amazon
 	using global::Amazon.S3.Model;
 
 	using Ecng.Common;
+	using Ecng.Configuration;
 	using Ecng.Serialization;
 
 	/// <summary>
 	/// The data storage service based on Amazon S3 http://aws.amazon.com/s3/.
 	/// </summary>
-	public class AmazonS3Service : IBackupService
+	public class AmazonS3Service : Disposable, IBackupService
 	{
 		private readonly string _bucket;
-		private readonly AmazonS3Client _client;
+		private AmazonS3Client _client;
 		private const int _bufferSize = 1024 * 1024 * 10; // 10mb
+		private readonly AWSCredentials _credentials;
+		private readonly RegionEndpoint _endpoint;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AmazonS3Service"/>.
@@ -50,8 +53,14 @@ namespace Ecng.Backup.Amazon
 			if (bucket.IsEmpty())
 				throw new ArgumentNullException(nameof(bucket));
 
-			_client = new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey), endpoint);
+			_credentials = new BasicAWSCredentials(accessKey, secretKey);
+			_endpoint = endpoint;
 			_bucket = bucket;
+		}
+
+		void IDelayInitService.Init()
+		{
+			_client = new AmazonS3Client(_credentials, _endpoint);
 		}
 
 		IEnumerable<BackupEntry> IBackupService.Get(BackupEntry parent)
@@ -246,6 +255,15 @@ namespace Ecng.Backup.Amazon
 			}
 
 			return entities.Last();
+		}
+
+		/// <summary>
+		/// Disposes the managed resources.
+		/// </summary>
+		protected override void DisposeManaged()
+		{
+			_client.Dispose();
+			base.DisposeManaged();
 		}
 	}
 }

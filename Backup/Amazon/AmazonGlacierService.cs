@@ -25,14 +25,17 @@ namespace Ecng.Backup.Amazon
 	using global::Amazon.S3;
 
 	using Ecng.Common;
+	using Ecng.Configuration;
 
 	/// <summary>
 	/// The data storage service based on Amazon Glacier http://aws.amazon.com/glacier/.
 	/// </summary>
-	public class AmazonGlacierService : IBackupService
+	public class AmazonGlacierService : Disposable, IBackupService
 	{
-		private readonly AmazonS3Client _client;
+		private AmazonS3Client _client;
 		private readonly string _vaultName;
+		private readonly AWSCredentials _credentials;
+		private readonly RegionEndpoint _endpoint;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AmazonGlacierService"/>.
@@ -46,8 +49,14 @@ namespace Ecng.Backup.Amazon
 			if (vaultName.IsEmpty())
 				throw new ArgumentNullException(nameof(vaultName));
 
-			_client = new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey), endpoint);
+			_credentials = new BasicAWSCredentials(accessKey, secretKey);
+			_endpoint = endpoint;
 			_vaultName = vaultName;
+		}
+
+		void IDelayInitService.Init()
+		{
+			_client = new AmazonS3Client(_credentials, _endpoint);
 		}
 
 		IEnumerable<BackupEntry> IBackupService.Get(BackupEntry parent)
@@ -78,6 +87,15 @@ namespace Ecng.Backup.Amazon
 		void IBackupService.UnPublish(BackupEntry entry)
 		{
 			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		/// Disposes the managed resources.
+		/// </summary>
+		protected override void DisposeManaged()
+		{
+			_client.Dispose();
+			base.DisposeManaged();
 		}
 	}
 }

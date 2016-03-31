@@ -20,10 +20,12 @@ namespace Ecng.Backup
 	using System.IO;
 	using System.Threading;
 
+	using Ecng.Configuration;
+
 	/// <summary>
 	/// The interface describing online data storage service.
 	/// </summary>
-	public interface IBackupService
+	public interface IBackupService : IDelayInitService, IDisposable
 	{
 		/// <summary>
 		/// List of files.
