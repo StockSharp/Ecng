@@ -89,7 +89,36 @@
 			{
 				var result = compilation.Emit(ms);
 
-				compilationResult.Errors = result.Diagnostics.Select(d => new CompilationError(d)).ToArray();
+				compilationResult.Errors = result.Diagnostics.Select(diagnostic =>
+				{
+					var pos = diagnostic.Location.GetLineSpan().StartLinePosition;
+
+					var error = new CompilationError
+					{
+						Id = diagnostic.Id,
+						Line = pos.Line,
+						Character = pos.Character,
+						Message = diagnostic.GetMessage()
+					};
+
+					switch (diagnostic.Severity)
+					{
+						case DiagnosticSeverity.Hidden:
+						case DiagnosticSeverity.Info:
+							error.Type = CompilationErrorTypes.Info;
+							break;
+						case DiagnosticSeverity.Warning:
+							error.Type = CompilationErrorTypes.Warning;
+							break;
+						case DiagnosticSeverity.Error:
+							error.Type = CompilationErrorTypes.Error;
+							break;
+						default:
+							throw new ArgumentOutOfRangeException();
+					}
+
+					return error;
+				}).ToArray();
 
 				if (result.Success)
 				{

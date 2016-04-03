@@ -55,6 +55,9 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\EcngAssemblyInfo.cs">
+      <Link>Properties\EcngAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="CompilationError.cs" />
     <Compile Include="CompilationResult.cs" />
     <Compile Include="Compiler.cs" />
