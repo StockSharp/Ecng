@@ -192,6 +192,11 @@
 			return WinColor.FromArgb(c.A, c.R, c.G, c.B);
 		}
 
+		public static bool Compare(this WinColor first, WinColor second)
+		{
+			return first.ToArgb() == second.ToArgb();
+		}
+
 		public static bool Compare(this Image first, Image second)
 		{
 			if (first == null)

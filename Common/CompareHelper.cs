@@ -3,7 +3,6 @@ namespace Ecng.Common
 	using System;
 	using System.Collections.Generic;
 	using System.Net;
-	using System.Drawing;
 
 	public static class CompareHelper
 	{
@@ -40,11 +39,6 @@ namespace Ecng.Common
 				return 1;
 			else
 				return -1;
-		}
-
-		public static bool Compare(this Color first, Color second)
-		{
-			return first.ToArgb() == second.ToArgb();
 		}
 
 		public static int Compare(this object value1, object value2)
