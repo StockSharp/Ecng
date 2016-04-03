@@ -15,7 +15,6 @@
 	using Ecng.Common;
 	using Ecng.Interop;
 
-	using WinApplication = System.Windows.Forms.Application;
 	using WinColor = System.Drawing.Color;
 	using WpfColor = System.Windows.Media.Color;
 	using WpfPoint = System.Windows.Point;
@@ -188,7 +187,7 @@
 			return WpfColor.FromArgb(c.A, c.R, c.G, c.B);
 		}
 
-		public static System.Drawing.Color ToWin(this WpfColor c)
+		public static WinColor ToWin(this WpfColor c)
 		{
 			return WinColor.FromArgb(c.A, c.R, c.G, c.B);
 		}

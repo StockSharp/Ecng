@@ -4,6 +4,7 @@ namespace Ecng.Xaml
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Reflection;
+	using System.Security;
 	using System.Windows;
 	using System.Windows.Controls;
 	using System.Windows.Markup;
@@ -27,6 +28,8 @@ namespace Ecng.Xaml
 	using Ecng.ComponentModel;
 	using Ecng.Collections;
 	using Ecng.Serialization;
+
+	using Microsoft.Win32;
 
 	public static class XamlHelper
 	{
@@ -901,6 +904,83 @@ namespace Ecng.Xaml
 		public static bool IsDesignMode(this DependencyObject obj)
 		{
 			return DesignerProperties.GetIsInDesignMode(obj);
+		}
+
+		// http://stackoverflow.com/a/3190790
+		public static void HideScriptErrors(this WebBrowser wb, bool hide)
+		{
+			var fiComWebBrowser = typeof(WebBrowser).GetField("_axIWebBrowser2", BindingFlags.Instance | BindingFlags.NonPublic);
+			if (fiComWebBrowser == null)
+				return;
+
+			var objComWebBrowser = fiComWebBrowser.GetValue(wb);
+			if (objComWebBrowser == null)
+			{
+				wb.Loaded += (o, s) => HideScriptErrors(wb, hide); //In case we are to early
+				return;
+			}
+
+			objComWebBrowser.GetType().InvokeMember("Silent", BindingFlags.SetProperty, null, objComWebBrowser, new object[] { hide });
+		}
+
+		//
+		// http://www.codeproject.com/Articles/793687/Configuring-the-emulation-mode-of-an-Internet-Expl
+		//
+
+		private const string _internetExplorerRootKey = @"Software\Microsoft\Internet Explorer";
+		private const string _browserEmulationKey = _internetExplorerRootKey + @"\Main\FeatureControl\FEATURE_BROWSER_EMULATION";
+
+		public enum BrowserEmulationVersion
+		{
+			Default = 0,
+			Version7 = 7000,
+			Version8 = 8000,
+			Version8Standards = 8888,
+			Version9 = 9000,
+			Version9Standards = 9999,
+			Version10 = 10000,
+			Version10Standards = 10001,
+			Version11 = 11000,
+			Version11Edge = 11001
+		}
+
+		public static bool SetBrowserEmulationVersion(BrowserEmulationVersion version)
+		{
+			try
+			{
+				var key = Registry.CurrentUser.OpenSubKey(_browserEmulationKey, true);
+
+				if (key != null)
+				{
+					using (key)
+					{
+						var programName = Path.GetFileName(Environment.GetCommandLineArgs()[0]);
+
+						if (version != BrowserEmulationVersion.Default)
+						{
+							// if it's a valid value, update or create the value
+							key.SetValue(programName, (int)version, RegistryValueKind.DWord);
+						}
+						else
+						{
+							// otherwise, remove the existing value
+							key.DeleteValue(programName, false);
+						}
+
+						return true;
+					}
+				}
+			}
+			catch (SecurityException)
+			{
+				// The user does not have the permissions required to read from the registry key.
+			}
+			catch (UnauthorizedAccessException)
+			{
+				// The user does not have the necessary registry rights.
+			}
+
+			return false;
 		}
 	}
 }
