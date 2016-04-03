@@ -930,21 +930,7 @@ namespace Ecng.Xaml
 		private const string _internetExplorerRootKey = @"Software\Microsoft\Internet Explorer";
 		private const string _browserEmulationKey = _internetExplorerRootKey + @"\Main\FeatureControl\FEATURE_BROWSER_EMULATION";
 
-		public enum BrowserEmulationVersion
-		{
-			Default = 0,
-			Version7 = 7000,
-			Version8 = 8000,
-			Version8Standards = 8888,
-			Version9 = 9000,
-			Version9Standards = 9999,
-			Version10 = 10000,
-			Version10Standards = 10001,
-			Version11 = 11000,
-			Version11Edge = 11001
-		}
-
-		public static bool SetBrowserEmulationVersion(BrowserEmulationVersion version)
+		public static bool SetBrowserEmulationVersion(this BrowserEmulationVersion version)
 		{
 			try
 			{
@@ -982,5 +968,19 @@ namespace Ecng.Xaml
 
 			return false;
 		}
+	}
+
+	public enum BrowserEmulationVersion
+	{
+		Default = 0,
+		Version7 = 7000,
+		Version8 = 8000,
+		Version8Standards = 8888,
+		Version9 = 9000,
+		Version9Standards = 9999,
+		Version10 = 10000,
+		Version10Standards = 10001,
+		Version11 = 11000,
+		Version11Edge = 11001
 	}
 }
