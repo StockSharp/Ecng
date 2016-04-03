@@ -72,6 +72,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xaml.Charting", "Xaml.Chart
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backup", "Backup\Backup.csproj", "{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Roslyn", "Roslyn\Roslyn.csproj", "{78884141-5A63-4EAE-81A4-512FBD2195C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -189,6 +191,10 @@ Global
 		{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
