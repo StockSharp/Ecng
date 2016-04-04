@@ -76,7 +76,12 @@ namespace Ecng.Common
 		public static int Compare(this Version first, Version second)
 		{
 			if (first == null)
+			{
+				if (second == null)
+					return 0;
+
 				return -1;
+			}
 
 			if (second == null)
 				return 1;
