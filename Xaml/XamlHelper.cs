@@ -636,6 +636,17 @@ namespace Ecng.Xaml
 		//    Clipboard.SetImage(image);
 		//}
 
+		/// <summary>
+		/// Cast value to specified type.
+		/// </summary>
+		/// <typeparam name="T">Return type.</typeparam>
+		/// <param name="value">Source value.</param>
+		/// <returns>Casted value.</returns>
+		public static T WpfCast<T>(this object value)
+		{
+			return value == DependencyProperty.UnsetValue ? default(T) : value.To<T>();
+		}
+
 		public static ICollectionView MakeFilterable<T>(this IEnumerable<T> source, Func<T, bool> filter)
 		{
 			if (source == null)
