@@ -81,6 +81,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
             _axisMarker.SetBindings(ForegroundProperty, this, nameof(Foreground), BindingMode.OneWay);
             _axisMarker.SetBindings(BackgroundProperty, this, nameof(Background), BindingMode.OneWay);
             _axisMarker.SetBindings(BorderBrushProperty, this, nameof(Background), BindingMode.OneWay);
+            _axisMarker.SetBindings(XAxisIdProperty, this, nameof(XAxisId), BindingMode.OneWay);
             _axisMarker.SetBindings(YAxisIdProperty, this, nameof(YAxisId), BindingMode.OneWay);
             _axisMarker.SetBindings(Y1Property, this, nameof(Y1), BindingMode.OneWay);
             _axisMarker.SetBindings(IsHiddenProperty, this, nameof(IsHidden), BindingMode.OneWay);
