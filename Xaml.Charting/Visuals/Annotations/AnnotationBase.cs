@@ -1429,6 +1429,14 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             }
         }
 
+        protected virtual void HandleIsEditable()
+        {
+            var usedCursor = IsEditable ? GetSelectedCursor() : Cursors.Arrow;
+
+            SetCurrentValue(CursorProperty, usedCursor);
+            PerformFocusOnInputTextArea();
+        }
+
         /// <summary>
         /// Gets the Adorner Canvas to place annotation adorners
         /// </summary>
@@ -1571,15 +1579,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
         private static void OnIsEditableChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var annotation = d as AnnotationBase;
-
-            if (annotation != null)
-            {
-                var usedCursor = ((bool)e.NewValue) ? annotation.GetSelectedCursor() : Cursors.Arrow;
-                annotation.SetCurrentValue(CursorProperty, usedCursor);
-
-                annotation.PerformFocusOnInputTextArea();
-            }
+            (d as AnnotationBase)?.HandleIsEditable();
         }
 
         private static void OnIsHiddenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

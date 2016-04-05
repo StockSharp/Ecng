@@ -16,6 +16,8 @@
 		protected override void OnChanged()
 		{
 			_cache = null;
+
+			base.OnChanged();
 		}
 	}
 }

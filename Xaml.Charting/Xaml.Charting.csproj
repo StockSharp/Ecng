@@ -540,6 +540,7 @@
     <Compile Include="StrategyManager\ITransformationStrategy.cs" />
     <Compile Include="StrategyManager\IStrategyManager.cs" />
     <Compile Include="Themes\RadialPanel.cs" />
+    <Compile Include="Visuals\Annotations\ActiveOrderAnnotation.cs" />
     <Compile Include="Visuals\Annotations\IAnnotationCanvas.cs" />
     <Compile Include="Themes\AxisCanvas.cs" />
     <Compile Include="Themes\AxisPanel.cs" />
@@ -862,6 +863,10 @@
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{725d5260-8208-4a39-843a-6b58606ed73b}</Project>
       <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Xaml\Xaml.csproj">
+      <Project>{90a23e0c-3329-4459-bb97-21cd84e5418a}</Project>
+      <Name>Xaml</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
