@@ -2018,8 +2018,8 @@
                 <!-- DataContext for RenderableSeries is the UltrachartOverview. This is set in code -->
                 <Style TargetType="r:FastMountainRenderableSeries">
                     <Setter Property="AreaBrush" Value="{Binding Path=AreaBrush, RelativeSource={RelativeSource FindAncestor, AncestorType=visuals:UltrachartOverview}, Mode=OneWay}"/>
-					<Setter Property="DataSeries" Value="{Binding DataSeries, RelativeSource={RelativeSource FindAncestor, AncestorType=visuals:UltrachartOverview}, Mode=OneWay}"/>
-					<Setter Property="SeriesColor" Value="{Binding SeriesColor, RelativeSource={RelativeSource FindAncestor, AncestorType=visuals:UltrachartOverview}, Mode=OneWay}"/>
+                    <Setter Property="DataSeries" Value="{Binding DataSeries, RelativeSource={RelativeSource FindAncestor, AncestorType=visuals:UltrachartOverview}, Mode=OneWay}"/>
+                    <Setter Property="SeriesColor" Value="{Binding SeriesColor, RelativeSource={RelativeSource FindAncestor, AncestorType=visuals:UltrachartOverview}, Mode=OneWay}"/>
                 </Style>
             </Setter.Value>
         </Setter>
@@ -2673,14 +2673,14 @@
                     <Grid x:Name="PART_AnnotationRoot" ShowGridLines="False" SnapsToDevicePixels="True">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="18"/>
-							<ColumnDefinition Width="Auto"/>
-							<ColumnDefinition Width="Auto"/>
-						</Grid.ColumnDefinitions>
-						<Grid.Resources>
-							<Style TargetType="TextBlock">
-								<Setter Property="FontSize" Value="10"/>
-							</Style>
-						</Grid.Resources>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontSize" Value="10"/>
+                            </Style>
+                        </Grid.Resources>
 
                         <Border Grid.Column="0" BorderBrush="{TemplateBinding Stroke}" Background="{TemplateBinding CancelButtonFill}" CornerRadius="1" BorderThickness="1">
                             <Button Style="{StaticResource CancelOrderButtonStyle}" x:Name="PART_CancelButton" Padding="0">
@@ -2695,23 +2695,27 @@
                                 <ColumnDefinition Width="10"/>
                             </Grid.ColumnDefinitions>
 
-                            <Border Grid.Column="0" BorderBrush="{TemplateBinding Stroke}" Background="{TemplateBinding Background}" CornerRadius="1" BorderThickness="1">
-								<TextBlock Margin="2,-1,2,1" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{TemplateBinding OrderSizeText}"/>
-							</Border>
-							<Border Grid.Column="1" BorderBrush="{TemplateBinding Stroke}" Background="{TemplateBinding Background}" CornerRadius="1,0,0,1" BorderThickness="1,1,0,1">
-								<TextBlock Margin="0,-1,0,1" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{TemplateBinding OrderText}" FontWeight="Bold"/>
-							</Border>
+							<Border x:Name="PART_GridOrderCount" Grid.Column="0" RenderTransformOrigin="0.1,0.5" Panel.ZIndex="1"
+									BorderBrush="{TemplateBinding Stroke}" Background="{TemplateBinding Background}" CornerRadius="1" BorderThickness="1">
+                                <Border.RenderTransform>
+                                    <ScaleTransform/>
+                                </Border.RenderTransform>
+								<TextBlock x:Name="PART_OrderCountText" Margin="2,-1,2,1" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{TemplateBinding OrderSizeText}"/>
+                            </Border>
+                            <Border x:Name="PART_GridOrderText" Grid.Column="1" BorderBrush="{TemplateBinding Stroke}" Background="{TemplateBinding Background}" CornerRadius="1,0,0,1" BorderThickness="1,1,0,1">
+                                <TextBlock Margin="0,-1,0,1" x:Name="PART_OrderText" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{TemplateBinding OrderText}" FontWeight="Bold"/>
+                            </Border>
                             <Grid Grid.Column="2">
-                                <Polygon StrokeThickness="0" Points="0,0 10,9 0,17" Fill="{TemplateBinding Background}"/>
-								<Line Stroke="{TemplateBinding Stroke}" StrokeThickness="1" X1="0" Y1="0" X2="10" Y2="9"/>
-								<Line Stroke="{TemplateBinding Stroke}" StrokeThickness="1" X1="10" Y1="9" X2="0" Y2="17"/>
+                                <Polygon x:Name="PART_OrderPointer" StrokeThickness="0" Points="0,0 10,9 0,17" Fill="{TemplateBinding Background}"/>
+                                <Line Stroke="{TemplateBinding Stroke}" StrokeThickness="1" X1="0" Y1="0" X2="10" Y2="9"/>
+                                <Line Stroke="{TemplateBinding Stroke}" StrokeThickness="1" X1="10" Y1="9" X2="0" Y2="17"/>
                             </Grid>
                         </Grid>
 
-						<Line x:Name="PART_Line" Grid.Column="2" VerticalAlignment="Center" Stretch="Fill"
+                        <Line x:Name="PART_Line" Grid.Column="2" VerticalAlignment="Center" Stretch="Fill"
                                   Stroke="{TemplateBinding Background}" StrokeDashArray="3 3" StrokeThickness="2"/>
 
-					</Grid>
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
