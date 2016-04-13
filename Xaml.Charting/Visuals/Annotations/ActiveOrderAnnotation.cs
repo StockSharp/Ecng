@@ -150,6 +150,8 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
             {
                 _cancelButton = GetAndAssertTemplateChild<Button>("PART_CancelButton");
                 _cancelButton.Click += (sender, args) => CancelClick?.Invoke(this);
+
+                _cancelButton.SetBindings(IsEnabledProperty, this, nameof(IsEditable), BindingMode.OneWay);
             }
 
             _templateInitialized = true;
