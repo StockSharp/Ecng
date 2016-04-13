@@ -268,13 +268,17 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
         public void AnimateOrderFill()
         {
             if(IsAnimationEnabled)
-                GetFillAnimation()?.Begin();
+                GetFillAnimation()?.Begin(this, true);
+            else
+                TryInvokeAnimationDone();
         }
 
         public void AnimateError()
         {
             if(IsAnimationEnabled)
-                GetErrorAnimation()?.Begin();
+                GetErrorAnimation()?.Begin(this, true);
+            else
+                TryInvokeAnimationDone();
         }
 
         public void AnimateBlink(bool blinkEnabled)
@@ -286,9 +290,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
         private void StartStopBlink()
         {
             if(_blinkEnabled && IsAnimationEnabled)
-                GetPartFillColorAnimation()?.Begin();
+                GetPartFillColorAnimation()?.Begin(this, true);
             else
-                GetPartFillColorAnimation()?.Stop();
+                GetPartFillColorAnimation()?.Stop(this);
         }
 
         private void OnBackgroundChanged(object o, EventArgs args)
@@ -419,11 +423,11 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
 
         void TryInvokeAnimationDone()
         {
-            if (_errorAnimation.Return(a => a.GetCurrentState(), ClockState.Stopped) != ClockState.Active &&
-                _fillAnimation.Return(a => a.GetCurrentState(), ClockState.Stopped) != ClockState.Active)
-            {
+            var errAnimState = _errorAnimation.Return(a => a.GetCurrentState(this), ClockState.Stopped);
+            var fillAnimState = _fillAnimation.Return(a => a.GetCurrentState(this), ClockState.Stopped);
+
+            if (!IsAnimationEnabled || (errAnimState != ClockState.Active && fillAnimState != ClockState.Active))
                 AnimationDone?.Invoke(this);
-            }
         }
 
         #endregion
