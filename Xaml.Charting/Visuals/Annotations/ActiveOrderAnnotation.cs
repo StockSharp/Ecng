@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -24,9 +23,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
         public static readonly DependencyProperty CancelButtonFillProperty = DependencyProperty.Register("CancelButtonFill", typeof(Brush), typeof(ActiveOrderAnnotation), new PropertyMetadata(Brushes.DarkGray));
         public static readonly DependencyProperty CancelButtonColorProperty = DependencyProperty.Register("CancelButtonColor", typeof(Brush), typeof(ActiveOrderAnnotation), new PropertyMetadata(Brushes.Black));
         public static readonly DependencyProperty YDragStepProperty = DependencyProperty.Register("YDragStep", typeof(double), typeof(ActiveOrderAnnotation), new PropertyMetadata(0d));
-        public static readonly DependencyProperty IsAnimationEnabledProperty = DependencyProperty.Register("IsAnimationEnabled", typeof(bool), typeof(ActiveOrderAnnotation), new PropertyMetadata(true, OnAnimationEnabledChanged));
+        public static readonly DependencyProperty IsAnimationEnabledProperty = DependencyProperty.Register("IsAnimationEnabled", typeof(bool), typeof(ActiveOrderAnnotation), new PropertyMetadata(true));
         public static readonly DependencyProperty OrderErrorTextProperty = DependencyProperty.Register("OrderErrorText", typeof(string), typeof(ActiveOrderAnnotation), new PropertyMetadata("ERROR"));
-        public static readonly DependencyProperty BlinkColorProperty = DependencyProperty.Register("BlinkColor", typeof(Color), typeof(ActiveOrderAnnotation), new PropertyMetadata(Colors.Black, OnBlinkColorChanged));
+        public static readonly DependencyProperty BlinkColorProperty = DependencyProperty.Register("BlinkColor", typeof(Color), typeof(ActiveOrderAnnotation), new PropertyMetadata(Colors.Black));
 
         public string OrderText
         {
@@ -94,10 +93,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
         private TextBlock _txtOrderText, _txtCount;
         readonly AxisMarkerAnnotation _axisMarker;
 
-        private bool _blinkEnabled;
         private bool _templateInitialized;
 
-        Storyboard _fillAnimation, _partFillColorAnimation, _errorAnimation;
+        Storyboard _fillAnimation, _errorAnimation;
 
         public ActiveOrderAnnotation()
         {
@@ -117,9 +115,6 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
             _axisMarker.SetBindings(YAxisIdProperty, this, nameof(YAxisId), BindingMode.OneWay);
             _axisMarker.SetBindings(Y1Property, this, nameof(Y1), BindingMode.OneWay);
             _axisMarker.SetBindings(IsHiddenProperty, this, nameof(IsHidden), BindingMode.OneWay);
-
-            var pd = DependencyPropertyDescriptor.FromProperty(BackgroundProperty, typeof(Control));
-            pd.AddValueChanged(this, OnBackgroundChanged);
         }
 
         protected override void HandleIsEditable()
@@ -158,9 +153,6 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
 
             HandleIsEditable();
             Refresh();
-
-            if(IsAnimationEnabled)
-                StartStopBlink();
         }
 
         public override void OnAttached()
@@ -281,41 +273,19 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
                 TryInvokeAnimationDone();
         }
 
-        public void AnimateBlink(bool blinkEnabled)
-        {
-            _blinkEnabled = blinkEnabled;
-            StartStopBlink();
-        }
-
-        private void StartStopBlink()
-        {
-            if(_blinkEnabled && IsAnimationEnabled)
-                GetPartFillColorAnimation()?.Begin(this, true);
-            else
-                GetPartFillColorAnimation()?.Stop(this);
-        }
-
-        private void OnBackgroundChanged(object o, EventArgs args)
-        {
-            if(IsAnimationEnabled)
-                StartStopBlink();
-        }
-
-        static void OnBlinkColorChanged(DependencyObject o, DependencyPropertyChangedEventArgs args)
-        {
-            var a = (ActiveOrderAnnotation)o;
-            if(a.IsAnimationEnabled)
-                a.StartStopBlink();
-        }
-
-        private static void OnAnimationEnabledChanged(DependencyObject o, DependencyPropertyChangedEventArgs args)
-        {
-            ((ActiveOrderAnnotation)o).StartStopBlink();
-        }
-
         Storyboard GetFillAnimation() {
-            if(_fillAnimation != null || !_templateInitialized)
+            if(!_templateInitialized)
+                return null;
+
+            var altColor = BlinkColor;
+
+            if (_fillAnimation != null)
+            {
+                ((ColorAnimation)_fillAnimation.Children[2]).From = altColor;
+                ((ColorAnimation)_fillAnimation.Children[3]).From = altColor;
+                ((ColorAnimation)_fillAnimation.Children[4]).From = altColor;
                 return _fillAnimation;
+            }
 
             _fillAnimation = new Storyboard();
 
@@ -323,44 +293,24 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
 
             var animX = InitAnimation<DoubleAnimation>(_fillAnimation, _borderOrderCount, "RenderTransform.ScaleX");
             var animY = InitAnimation<DoubleAnimation>(_fillAnimation, _borderOrderCount, "RenderTransform.ScaleY");
+            var colAnim1 = InitAnimation<ColorAnimation>(_fillAnimation, _borderOrderText, "Background.Color");
+            var colAnim2 = InitAnimation<ColorAnimation>(_fillAnimation, _borderOrderCount, "Background.Color");
+            var colAnim3 = InitAnimation<ColorAnimation>(_fillAnimation, _orderPointer, "Fill.Color");
 
             animX.To = animY.To = 1.5d;
             animX.Duration = animY.Duration = TimeSpan.FromMilliseconds(75);
             animX.EasingFunction = animY.EasingFunction = new ExponentialEase();
 
-            return _fillAnimation;
-        }
-
-        Storyboard GetPartFillColorAnimation() {
-            if(!_templateInitialized)
-                return null;
-
-            var altColor = BlinkColor;
-
-            if(_partFillColorAnimation != null) {
-                ((ColorAnimation)_partFillColorAnimation.Children[0]).From = altColor;
-                ((ColorAnimation)_partFillColorAnimation.Children[1]).From = altColor;
-                ((ColorAnimation)_partFillColorAnimation.Children[2]).From = altColor;
-                return _partFillColorAnimation;
-            }
-
-            _partFillColorAnimation = new Storyboard {
-                RepeatBehavior = RepeatBehavior.Forever
-            };
-
-            var anim1 = InitAnimation<ColorAnimation>(_partFillColorAnimation, _borderOrderText, "Background.Color");
-            var anim2 = InitAnimation<ColorAnimation>(_partFillColorAnimation, _borderOrderCount, "Background.Color");
-            var anim3 = InitAnimation<ColorAnimation>(_partFillColorAnimation, _orderPointer, "Fill.Color");
-
-            anim1.From = anim2.From = anim3.From = altColor;
-            anim1.Duration = anim2.Duration = anim3.Duration = TimeSpan.FromMilliseconds(100);
-            anim1.EasingFunction = anim2.EasingFunction = anim3.EasingFunction = new ExponentialEase
+            colAnim1.RepeatBehavior = colAnim2.RepeatBehavior = colAnim3.RepeatBehavior = new RepeatBehavior(3);
+            colAnim1.From = colAnim2.From = colAnim3.From = altColor;
+            colAnim1.Duration = colAnim2.Duration = colAnim3.Duration = TimeSpan.FromMilliseconds(100);
+            colAnim1.EasingFunction = colAnim2.EasingFunction = colAnim3.EasingFunction = new ExponentialEase
             {
                 EasingMode = EasingMode.EaseIn,
                 Exponent = 3
             };
 
-            return _partFillColorAnimation;
+            return _fillAnimation;
         }
 
         Storyboard GetErrorAnimation() {
