@@ -943,29 +943,29 @@ namespace Ecng.Xaml
 
 		public static bool SetBrowserEmulationVersion(this BrowserEmulationVersion version)
 		{
+			return version.SetBrowserEmulationVersion(Environment.GetCommandLineArgs()[0]);
+		}
+
+		public static bool SetBrowserEmulationVersion(this BrowserEmulationVersion version, string appName)
+		{
 			try
 			{
-				var key = Registry.CurrentUser.OpenSubKey(_browserEmulationKey, true);
-
-				if (key != null)
+				using (var key = Registry.CurrentUser.CreateSubKey(_browserEmulationKey))
 				{
-					using (key)
+					var programName = Path.GetFileName(appName);
+
+					if (version != BrowserEmulationVersion.Default)
 					{
-						var programName = Path.GetFileName(Environment.GetCommandLineArgs()[0]);
-
-						if (version != BrowserEmulationVersion.Default)
-						{
-							// if it's a valid value, update or create the value
-							key.SetValue(programName, (int)version, RegistryValueKind.DWord);
-						}
-						else
-						{
-							// otherwise, remove the existing value
-							key.DeleteValue(programName, false);
-						}
-
-						return true;
+						// if it's a valid value, update or create the value
+						key.SetValue(programName, (int)version, RegistryValueKind.DWord);
 					}
+					else
+					{
+						// otherwise, remove the existing value
+						key.DeleteValue(programName, false);
+					}
+
+					return true;
 				}
 			}
 			catch (SecurityException)
