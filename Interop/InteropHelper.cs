@@ -10,7 +10,10 @@
 
 	using Ecng.Common;
 
-	public static class InteropHelper
+#if !__STOCKSHARP__
+	public
+#endif
+		static class InteropHelper
 	{
 		public static bool CreateDirIfNotExists(this string fullPath)
 		{

@@ -6,7 +6,10 @@ namespace Ecng.Interop
 
 	using Ecng.Common;
 
-	public sealed class HardwareInfo
+#if !__STOCKSHARP__
+	public
+#endif
+	sealed class HardwareInfo
 	{
 		private HardwareInfo()
 		{
