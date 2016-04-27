@@ -752,13 +752,16 @@
 						if (method != null)
 							return method.Invoke(null, new[] { value });
 					}
+
+					if (destinationType == typeof(string))
+						return value.ToString();
 				}
 
-				throw new ArgumentException("Can't convert {0} to type '{1}'.".Put(value, destinationType), nameof(value));
+				throw new ArgumentException($"Can't convert {value} of type '{value.GetType()}' to type '{destinationType}'.", nameof(value));
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException("Cannot convert {0} to {1}.".Put(value, destinationType), ex);
+				throw new InvalidCastException($"Can't convert {value} of type '{value.GetType()}' to type '{destinationType}'.", ex);
 			}
 		}
 
