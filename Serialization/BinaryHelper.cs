@@ -25,18 +25,18 @@
 			stream.SetValue("_expandable", true);
 		}
 
-		public static void WriteBytes(this Stream stream, byte[] bytes, int len)
+		public static void WriteBytes(this Stream stream, byte[] bytes, int len, int pos = 0)
 		{
-			stream.Write(bytes, 0, len);
+			stream.Write(bytes, pos, len);
 		}
 
-		public static byte[] ReadBytes(this Stream stream, byte[] buffer, int len, bool? isLittleEndian = null)
+		public static byte[] ReadBytes(this Stream stream, byte[] buffer, int len, int pos = 0)
 		{
 			var left = len;
 
 			while (left > 0)
 			{
-				var read = stream.Read(buffer, len - left, left);
+				var read = stream.Read(buffer, pos + (len - left), left);
 
 				if (read <= 0)
 					throw new InvalidOperationException("Stream returned '{0}' bytes.".Translate().Put(read));
@@ -44,7 +44,7 @@
 				left -= read;
 			}
 
-			return isLittleEndian == null ? buffer : buffer.ChangeOrder(len, isLittleEndian.Value);
+			return buffer;
 		}
 
 		public static byte ReadByteEx(this Stream stream, byte[] buffer)
@@ -68,9 +68,9 @@
 
 		public static short ReadShort(this Stream stream, byte[] buffer, bool isLittleEndian)
 		{
-			return BitConverter.ToInt16(stream.ReadBytes(buffer, 2, isLittleEndian), 0);
+			return BitConverter.ToInt16(stream.ReadBytes(buffer, 2).ChangeOrder(2, isLittleEndian), 0);
 		}
-
+		
 		[CLSCompliant(false)]
 		public static void WriteUShort(this Stream stream, byte[] buffer, ushort value, bool isLittleEndian)
 		{
@@ -83,7 +83,7 @@
 		[CLSCompliant(false)]
 		public static ushort ReadUShort(this Stream stream, byte[] buffer, bool isLittleEndian)
 		{
-			return BitConverter.ToUInt16(stream.ReadBytes(buffer, 2, isLittleEndian), 0);
+			return BitConverter.ToUInt16(stream.ReadBytes(buffer, 2).ChangeOrder(2, isLittleEndian), 0);
 		}
 
 		public static void WriteInt(this Stream stream, byte[] buffer, int value, bool isLittleEndian)
@@ -96,7 +96,7 @@
 
 		public static int ReadInt(this Stream stream, byte[] buffer, bool isLittleEndian)
 		{
-			return BitConverter.ToInt32(stream.ReadBytes(buffer, 4, isLittleEndian), 0);
+			return BitConverter.ToInt32(stream.ReadBytes(buffer, 4).ChangeOrder(4, isLittleEndian), 0);
 		}
 
 		[CLSCompliant(false)]
@@ -111,7 +111,7 @@
 		[CLSCompliant(false)]
 		public static uint ReadUInt(this Stream stream, byte[] buffer, bool isLittleEndian)
 		{
-			return BitConverter.ToUInt32(stream.ReadBytes(buffer, 4, isLittleEndian), 0);
+			return BitConverter.ToUInt32(stream.ReadBytes(buffer, 4).ChangeOrder(4, isLittleEndian), 0);
 		}
 
 		public static void WriteLong(this Stream stream, byte[] buffer, long value, bool isLittleEndian, int len = 8)
@@ -124,7 +124,7 @@
 
 		public static long ReadLong(this Stream stream, byte[] buffer, bool isLittleEndian, int len = 8)
 		{
-			return BitConverter.ToInt64(stream.ReadBytes(buffer, len, isLittleEndian), 0);
+			return BitConverter.ToInt64(stream.ReadBytes(buffer, len).ChangeOrder(len, isLittleEndian), 0);
 		}
 
 		[CLSCompliant(false)]
@@ -139,7 +139,7 @@
 		[CLSCompliant(false)]
 		public static ulong ReadULong(this Stream stream, byte[] buffer, bool isLittleEndian, int len = 8)
 		{
-			return BitConverter.ToUInt64(stream.ReadBytes(buffer, len, isLittleEndian), 0);
+			return BitConverter.ToUInt64(stream.ReadBytes(buffer, len).ChangeOrder(4, isLittleEndian), 0);
 		}
 
 		// убрать когда перейдем на 4.5 полностью
