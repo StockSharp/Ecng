@@ -17,10 +17,7 @@ namespace Ecng.Common
 				_parent = parent;
 			}
 
-			void IDisposable.Dispose()
-			{
-				_pos = 0;
-			}
+			void IDisposable.Dispose() => _pos = 0;
 
 			bool IEnumerator.MoveNext()
 			{
@@ -33,10 +30,7 @@ namespace Ecng.Common
 				return false;
 			}
 
-			void IEnumerator.Reset()
-			{
-				_pos = 0;
-			}
+			void IEnumerator.Reset() => _pos = 0;
 
 			T IEnumerator<T>.Current => _current;
 
@@ -59,7 +53,18 @@ namespace Ecng.Common
 
 		private int _count;
 
-		public int Count => _count;
+		public int Count
+		{
+			get { return _count; }
+			set
+			{
+				if (_buffer.Length < value)
+					Array.Resize(ref _buffer, value);
+
+				_count = value;
+			}
+		}
+
 		public T[] Buffer => _buffer;
 
 		public void Reset(int capacity = 1)
@@ -81,14 +86,8 @@ namespace Ecng.Common
 				Array.Resize(ref _buffer, _buffer.Length + _capacity);
 		}
 
-		public IEnumerator<T> GetEnumerator()
-		{
-			return _enumerator;
-		}
+		public IEnumerator<T> GetEnumerator() => _enumerator;
 
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
-		}
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 	}
 }
