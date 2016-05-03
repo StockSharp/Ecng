@@ -9,7 +9,7 @@ namespace Ecng.Xaml.Database
 	{
 		public DatabaseProviderComboBox()
 		{
-			DisplayMemberPath = "Name";
+			DisplayMemberPath = nameof(DatabaseProvider.Name);
 			ItemsSource = DatabaseProviderRegistry.Providers;
 
 			if (Items.Count > 0)

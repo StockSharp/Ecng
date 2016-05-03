@@ -9,7 +9,6 @@
 	using Ecng.ComponentModel;
 	using Ecng.Data;
 	using Ecng.Localization;
-	using Ecng.Xaml.PropertyGrid;
 
 	using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
@@ -136,7 +135,8 @@
 			[DatabaseDescription(Titles.ProviderDescription)]
 			[DatabaseCategory]
 			[PropertyOrder(0)]
-			[Editor(typeof(DatabaseProviderEditor), typeof(DatabaseProviderEditor))]
+			// TODO
+			//[Editor(typeof(DatabaseProviderEditor), typeof(DatabaseProviderEditor))]
 			public DatabaseProvider Provider { get; set; }
 
 			[DatabaseDisplayName(Titles.Server)]

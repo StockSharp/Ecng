@@ -120,7 +120,6 @@
       <DependentUpon>DatabaseConnectionCreateWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Database\DatabaseProviderComboBox.cs" />
-    <Compile Include="PropertyGrid\DatabaseProviderEditor.cs" />
     <Compile Include="DateTimeOffsetEditor.xaml.cs">
       <DependentUpon>DateTimeOffsetEditor.xaml</DependentUpon>
     </Compile>
@@ -128,7 +127,6 @@
     <Compile Include="ConvertibleObservableCollection.cs" />
     <Compile Include="EncodingComboBox.cs" />
     <Compile Include="Converters\EnumDisplayNameConverter.cs" />
-    <Compile Include="PropertyGrid\EncodingComboBoxEditor.cs" />
     <Compile Include="EndPointComboBox.cs" />
     <Compile Include="Converters\EndPointConverter.cs" />
     <Compile Include="EndPointEditor.xaml.cs">
@@ -137,11 +135,9 @@
     <Compile Include="EndPointListEditor.xaml.cs">
       <DependentUpon>EndPointListEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="PropertyGrid\FileBrowserEditor.cs" />
     <Compile Include="FileBrowserPicker.xaml.cs">
       <DependentUpon>FileBrowserPicker.xaml</DependentUpon>
     </Compile>
-    <Compile Include="PropertyGrid\FolderBrowserEditor.cs" />
     <Compile Include="FolderBrowserPicker.xaml.cs">
       <DependentUpon>FolderBrowserPicker.xaml</DependentUpon>
     </Compile>
@@ -372,7 +368,6 @@
     <Compile Include="StickyWindow.cs" />
     <Compile Include="ThreadSafeObservableCollection.cs" />
     <Compile Include="TimeZoneComboBox.cs" />
-    <Compile Include="PropertyGrid\TimeZoneEditor.cs" />
     <Compile Include="UniqueObservableCollection.cs" />
     <Compile Include="ViewModelBase.cs" />
     <Compile Include="WpfFormAdapter.cs" />
