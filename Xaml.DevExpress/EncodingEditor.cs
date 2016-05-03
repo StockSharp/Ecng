@@ -4,7 +4,7 @@ namespace Ecng.Xaml.DevExp
 
 	using Ecng.Xaml;
 
-	class EncodingEditor : ComboBoxEditSettings
+	public class EncodingEditor : ComboBoxEditSettings
 	{
 		private readonly EncodingComboBox _cb = new EncodingComboBox();
 

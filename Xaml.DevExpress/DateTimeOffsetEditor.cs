@@ -10,7 +10,7 @@
 
 	using Ecng.Common;
 
-	class DateTimeOffsetEditor : DateEditSettings
+	public class DateTimeOffsetEditor : DateEditSettings
 	{
 		static DateTimeOffsetEditor()
 		{
@@ -25,7 +25,7 @@
 		}
 	}
 
-	class DateTimeOffsetEdit : DateEdit
+	public class DateTimeOffsetEdit : DateEdit
 	{
 		static DateTimeOffsetEdit()
 		{
@@ -43,7 +43,7 @@
 		}
 	}
 
-	class DateTimeOffsetEditStrategy : DateEditStrategy
+	public class DateTimeOffsetEditStrategy : DateEditStrategy
 	{
 		public DateTimeOffsetEditStrategy(DateTimeOffsetEdit edit)
 			: base(edit)

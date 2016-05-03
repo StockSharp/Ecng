@@ -4,7 +4,7 @@ namespace Ecng.Xaml.DevExp
 
 	using DevExpress.Xpf.Editors.Settings;
 
-	class TimeZoneEditor : ComboBoxEditSettings
+	public class TimeZoneEditor : ComboBoxEditSettings
 	{
 		public TimeZoneEditor()
 		{
