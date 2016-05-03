@@ -13,7 +13,7 @@ namespace Ecng.ComponentModel
 		{
 			var dpAttr = provider.GetAttribute<DisplayAttribute>();
 
-			if (dpAttr == null)
+			if (dpAttr?.Name == null)
 			{
 				var nameAttr = provider.GetAttribute<DisplayNameAttribute>();
 				return nameAttr == null ? defaultValue ?? provider.GetTypeName() : nameAttr.DisplayName;
@@ -26,7 +26,7 @@ namespace Ecng.ComponentModel
 		{
 			var dpAttr = provider.GetAttribute<DisplayAttribute>();
 
-			if (dpAttr == null)
+			if (dpAttr?.Description == null)
 			{
 				var descrAttr = provider.GetAttribute<DescriptionAttribute>();
 				return descrAttr == null ? defaultValue ?? provider.GetTypeName() : descrAttr.Description;
@@ -39,7 +39,7 @@ namespace Ecng.ComponentModel
 		{
 			var dpAttr = provider.GetAttribute<DisplayAttribute>();
 
-			if (dpAttr == null)
+			if (dpAttr?.GroupName == null)
 			{
 				var categoryAttr = provider.GetAttribute<CategoryAttribute>();
 				return categoryAttr == null ? defaultValue ?? provider.GetTypeName() : categoryAttr.Category;
