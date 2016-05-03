@@ -78,7 +78,7 @@
 		[MergableProperty(false)]
 		[DefaultValue((string)null)]
 		[Category("")]
-		[Description("")]
+		//[Description("")]
 		public virtual DataControlFieldCollection Columns
 		{
 			get

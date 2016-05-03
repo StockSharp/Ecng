@@ -1,8 +1,5 @@
 namespace Ecng.Web.UI.WebControls
 {
-	#region Using Directives
-
-	using System.Collections.Generic;
 	using System.ComponentModel;
 	using System.Linq;
 	using System.Security.Permissions;
@@ -13,8 +10,6 @@ namespace Ecng.Web.UI.WebControls
 
 	using Ecng.Collections;
 	using Ecng.Common;
-
-	#endregion
 
 	public enum StyleTypes
 	{
@@ -33,16 +28,10 @@ namespace Ecng.Web.UI.WebControls
 	{
 		#region Styles
 
-		private string _styles = string.Empty;
-
 		[Description("Wrapped styles")]
 		[DefaultValue("")]
 		[Category("Accessibility")]
-		public string Styles
-		{
-			get { return _styles; }
-			set { _styles = value; }
-		}
+		public string Styles { get; set; } = string.Empty;
 
 		#endregion
 
@@ -67,7 +56,7 @@ namespace Ecng.Web.UI.WebControls
 		public override void RenderEndTag(HtmlTextWriter writer)
 		{
 			var styles = GetStyles();
-			var count = styles.Count();
+			var count = styles.Length;
 
 			if (count > 0)
 			{
@@ -82,10 +71,10 @@ namespace Ecng.Web.UI.WebControls
 
 		#endregion
 
-		private IEnumerable<string> GetStyles()
+		private string[] GetStyles()
 		{
 			var styles = Styles;
-			return !styles.IsEmpty() ? styles.Split(',').Select(arg => arg.Trim()) : new string[0];
+			return !styles.IsEmpty() ? styles.Split(',').Select(arg => arg.Trim()).ToArray() : ArrayHelper.Empty<string>();
 		}
 	}
 }

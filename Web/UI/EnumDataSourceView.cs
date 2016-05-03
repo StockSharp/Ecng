@@ -5,9 +5,9 @@
 	using System.Web.UI;
 	using System.Data;
 	using System.Reflection;
-	using System.ComponentModel;
 
 	using Ecng.Common;
+	using Ecng.ComponentModel;
 	using Ecng.Reflection;
 
 	public class EnumDataSourceView : DataSourceView
@@ -37,11 +37,9 @@
 
 				var info = EnumType.GetMember<FieldInfo>(name);
 
-				string displayName;
-				var nameAttr = info.GetAttribute<DisplayNameAttribute>();
-				if (nameAttr != null)
-					displayName = nameAttr.DisplayName;
-				else
+				var displayName = info.GetDisplayName();
+
+				if (displayName == null)
 				{
 					displayName = name;
 
@@ -52,10 +50,7 @@
 					}
 				}
 
-				var descAttr = info.GetAttribute<DescriptionAttribute>();
-				var description = descAttr != null ? descAttr.Description : null;
-
-				table.Rows.Add(name, value, displayName, description);
+				table.Rows.Add(name, value, displayName, info.GetDescription());
 			}
 
 			table.AcceptChanges();
