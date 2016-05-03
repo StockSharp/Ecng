@@ -62,7 +62,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MoreLinq">
-      <HintPath>..\References\MoreLinq.dll</HintPath>
+      <HintPath>..\..\StockSharp (GitHub)\References\MoreLinq.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />

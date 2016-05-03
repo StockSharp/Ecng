@@ -32,19 +32,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AWSSDK.Core">
-      <HintPath>..\References\Amazon\AWSSDK.Core.dll</HintPath>
+      <HintPath>..\..\StockSharp (GitHub)\References\AWSSDK.Core.dll</HintPath>
     </Reference>
     <Reference Include="AWSSDK.Glacier">
-      <HintPath>..\References\Amazon\AWSSDK.Glacier.dll</HintPath>
+      <HintPath>..\..\StockSharp (GitHub)\References\AWSSDK.Glacier.dll</HintPath>
     </Reference>
     <Reference Include="AWSSDK.S3">
-      <HintPath>..\References\Amazon\AWSSDK.S3.dll</HintPath>
+      <HintPath>..\..\StockSharp (GitHub)\References\AWSSDK.S3.dll</HintPath>
     </Reference>
     <Reference Include="Disk.SDK">
-      <HintPath>..\References\Yandex\Disk.SDK.dll</HintPath>
+      <HintPath>..\..\StockSharp (GitHub)\References\Disk.SDK.dll</HintPath>
     </Reference>
     <Reference Include="Disk.SDK.Provider">
-      <HintPath>..\References\Yandex\Disk.SDK.Provider.dll</HintPath>
+      <HintPath>..\..\StockSharp (GitHub)\References\Disk.SDK.Provider.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -53,7 +53,7 @@
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
     <Reference Include="Xceed.Wpf.Toolkit">
-      <HintPath>..\References\Xceed.Wpf.Toolkit.dll</HintPath>
+      <HintPath>..\..\StockSharp (GitHub)\References\Xceed.Wpf.Toolkit.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
