@@ -1,29 +1,24 @@
 namespace Ecng.Net
 {
 	using System.ComponentModel;
+	using System.ComponentModel.DataAnnotations;
 	using System.Net;
 
 	using Ecng.Common;
 	using Ecng.Serialization;
 
-	using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
-
+	[TypeConverter(typeof(ExpandableObjectConverter))]
 	public class MulticastSourceAddress : IPersistable
 	{
-		[DisplayName("Group Address")]
-		[Description("UDP multicast group address.")]
+		[Display(Name = "Group Address", Description = "UDP multicast group address.", Order = 0)]
 		[IpAddress(AsString = true)]
-		[PropertyOrder(0)]
 		public IPAddress GroupAddress { get; set; }
 
-		[DisplayName("Source Address")]
-		[Description("UDP multicast source address.")]
+		[Display(Name = "Source Address", Description = "UDP multicast source address.", Order = 1)]
 		[IpAddress(AsString = true)]
-		[PropertyOrder(1)]
 		public IPAddress SourceAddress { get; set; }
 
-		[Description("Local port.")]
-		[PropertyOrder(2)]
+		[Display(Name = "Port", Description = "Local port.", Order = 2)]
 		public int Port { get; set; }
 
 		public void Load(SettingsStorage storage)

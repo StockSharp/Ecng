@@ -21,10 +21,10 @@ namespace Ecng.Xaml
 		}
 
 		/// <summary>
-		/// <see cref="DependencyProperty"/> for <see cref="DateTimeOffsetEditor.Offset"/>.
+		/// <see cref="DependencyProperty"/> for <see cref="Offset"/>.
 		/// </summary>
 		public static readonly DependencyProperty OffsetProperty =
-			DependencyProperty.Register("Offset", typeof(DateTimeOffset?),
+			DependencyProperty.Register(nameof(Offset), typeof(DateTimeOffset?),
 				typeof(DateTimeOffsetEditor), new UIPropertyMetadata(DateTimeOffset.Now, OnOffsetProperty));
 
 		private static void OnOffsetProperty(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -55,7 +55,7 @@ namespace Ecng.Xaml
 
 		private void DateTimeOffsetEditor_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
 		{
-			Offset = e.NewValue == null ? (DateTimeOffset?)null : ((DateTime)e.NewValue).ApplyTimeZone(_zoneOffset);
+			Offset = ((DateTime?)e.NewValue)?.ApplyTimeZone(_zoneOffset);
 		}
 	}
 }

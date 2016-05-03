@@ -67,6 +67,7 @@
       <HintPath>..\References\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -79,9 +80,6 @@
     </Reference>
     <Reference Include="System.ServiceModel.Activation" />
     <Reference Include="System.Web" />
-    <Reference Include="Xceed.Wpf.Toolkit">
-      <HintPath>..\References\Xceed.Wpf.Toolkit.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs">

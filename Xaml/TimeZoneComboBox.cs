@@ -4,8 +4,6 @@
 	using System.Windows;
 	using System.Windows.Controls;
 
-	using Xceed.Wpf.Toolkit.PropertyGrid.Editors;
-
 	public class TimeZoneComboBox : ComboBox
 	{
 		public TimeZoneComboBox()
@@ -31,14 +29,6 @@
 		{
 			SelectedTimeZone = (TimeZoneInfo)SelectedItem;
 			base.OnSelectionChanged(e);
-		}
-	}
-
-	public class TimeZoneEditor : TypeEditor<TimeZoneComboBox>
-	{
-		protected override void SetValueDependencyProperty()
-		{
-			ValueProperty = TimeZoneComboBox.SelectedTimeZoneProperty;
 		}
 	}
 }

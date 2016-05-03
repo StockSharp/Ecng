@@ -9,6 +9,7 @@
 	using Ecng.ComponentModel;
 	using Ecng.Data;
 	using Ecng.Localization;
+	using Ecng.Xaml.PropertyGrid;
 
 	using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
@@ -148,7 +149,7 @@
 				set
 				{
 					_builder["Data Source"] = value;
-					NotifyChanged("ConnectionString");
+					NotifyChanged(nameof(ConnectionString));
 				}
 			}
 
@@ -162,7 +163,7 @@
 				set
 				{
 					_builder["Initial Catalog"] = value;
-					NotifyChanged("ConnectionString");
+					NotifyChanged(nameof(ConnectionString));
 				}
 			}
 
@@ -176,7 +177,7 @@
 				set
 				{
 					_builder["User ID"] = value;
-					NotifyChanged("ConnectionString");
+					NotifyChanged(nameof(ConnectionString));
 				}
 			}
 
@@ -190,7 +191,7 @@
 				set
 				{
 					_builder["Password"] = value;
-					NotifyChanged("ConnectionString");
+					NotifyChanged(nameof(ConnectionString));
 				}
 			}
 
@@ -204,7 +205,7 @@
 				set
 				{
 					_builder["Integrated Security"] = value;
-					NotifyChanged("ConnectionString");
+					NotifyChanged(nameof(ConnectionString));
 				}
 			}
 
@@ -219,11 +220,11 @@
 				{
 					_builder.ConnectionString = value;
 
-					NotifyChanged("Server");
-					NotifyChanged("Database");
-					NotifyChanged("UserName");
-					NotifyChanged("Password");
-					NotifyChanged("IntegratedSecurity");
+					NotifyChanged(nameof(Server));
+					NotifyChanged(nameof(Database));
+					NotifyChanged(nameof(UserName));
+					NotifyChanged(nameof(Password));
+					NotifyChanged(nameof(IntegratedSecurity));
 				}
 			}
 		}

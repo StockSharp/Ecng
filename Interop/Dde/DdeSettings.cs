@@ -1,13 +1,12 @@
 ﻿namespace Ecng.Interop.Dde
 {
 	using System.ComponentModel;
+	using System.ComponentModel.DataAnnotations;
 
 	using Ecng.Common;
 	using Ecng.Serialization;
 
-	using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
-
-	[DisplayName("Настройки DDE")]
+	[DisplayName("DDE settings")]
 	public class DdeSettings : Cloneable<DdeSettings>, IPersistable
 	{
 		public DdeSettings()
@@ -16,29 +15,19 @@
 			Topic = "[Book1.xlsx]Sheet1";
 		}
 
-		[DisplayName("Сервер")]
-		[Description("Название DDE сервера.")]
-		[PropertyOrder(0)]
+		[Display(Name = "Server", Description = "DDE server name.", Order = 0)]
 		public string Server { get; set; }
 
-		[DisplayName("Топик")]
-		[Description("Название топика (например, для Экселя имеет формат [Book Name].Sheet Name).")]
-		[PropertyOrder(1)]
+		[Display(Name = "Topic", Description = "Topic name (like [Book1.xlsx].Sheet1).", Order = 1)]
 		public string Topic { get; set; }
 
-		[DisplayName("Отступ колонки")]
-		[Description("Отступ колонки от левого верхнего угла.")]
-		[PropertyOrder(2)]
+		[Display(Name = "Column offset", Description = "Column offset from left top corner.", Order = 2)]
 		public int ColumnOffset { get; set; }
 
-		[DisplayName("Отступ строчки")]
-		[Description("Отступ строчки от левого верхнего угла.")]
-		[PropertyOrder(3)]
+		[Display(Name = "Row offset", Description = "Row offset from left top corner.", Order = 2)]
 		public int RowOffset { get; set; }
 
-		[DisplayName("Заголовки")]
-		[Description("Выводить ли названия колонок.")]
-		[PropertyOrder(4)]
+		[Display(Name = "Headers", Description = "Show headers name.", Order = 2)]
 		public bool ShowHeaders { get; set; }
 
 		public void Apply(DdeSettings clone)
@@ -53,20 +42,20 @@
 
 		public void Load(SettingsStorage storage)
 		{
-			Server = storage.GetValue<string>("Service");
-			Topic = storage.GetValue<string>("Topic");
-			ColumnOffset = storage.GetValue<int>("ColumnOffset");
-			RowOffset = storage.GetValue<int>("RowOffset");
-			ShowHeaders = storage.GetValue<bool>("ShowHeaders");
+			Server = storage.GetValue<string>(nameof(Server));
+			Topic = storage.GetValue<string>(nameof(Topic));
+			ColumnOffset = storage.GetValue<int>(nameof(ColumnOffset));
+			RowOffset = storage.GetValue<int>(nameof(RowOffset));
+			ShowHeaders = storage.GetValue<bool>(nameof(ShowHeaders));
 		}
 
 		public void Save(SettingsStorage storage)
 		{
-			storage.SetValue("Service", Server);
-			storage.SetValue("Topic", Topic);
-			storage.SetValue("ColumnOffset", ColumnOffset);
-			storage.SetValue("RowOffset", RowOffset);
-			storage.SetValue("ShowHeaders", ShowHeaders);
+			storage.SetValue(nameof(Server), Server);
+			storage.SetValue(nameof(Topic), Topic);
+			storage.SetValue(nameof(ColumnOffset), ColumnOffset);
+			storage.SetValue(nameof(RowOffset), RowOffset);
+			storage.SetValue(nameof(ShowHeaders), ShowHeaders);
 		}
 	}
 }
