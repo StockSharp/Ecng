@@ -62,6 +62,6 @@
 		/// <summary>
 		/// Items.
 		/// </summary>
-		public IList<Tuple<string, object>> ComboBoxItems => new ObservableCollection<Tuple<string, object>>();
+		public IList<Tuple<string, object>> ComboBoxItems { get; } = new ObservableCollection<Tuple<string, object>>();
 	}
 }
