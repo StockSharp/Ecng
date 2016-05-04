@@ -56,7 +56,7 @@
 		{
 			DisplayMember = "Item1";
 			ValueMember = "Item2";
-			ItemsSource = Items;
+			ItemsSource = ComboBoxItems;
 		}
 
 		/// <summary>
