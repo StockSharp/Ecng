@@ -7,7 +7,7 @@
              x:Name="Ctrl" MinHeight="22">
 
     <UserControl.Resources>
-        <xctk:InverseBoolConverter x:Key="InverseBoolConverter" />
+        <converters:InverseBooleanConverter x:Key="InverseBoolConverter" />
 
         <Style TargetType="{x:Type xctk:DropDownButton}">
             <Setter Property="BorderThickness" Value="1" />

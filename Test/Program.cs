@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Data;
 	using System.Diagnostics;
 	using System.Drawing;
 	using System.Drawing.Drawing2D;
@@ -10,14 +11,18 @@
 	using System.IO;
 	using System.Linq;
 	using System.Management;
+	using System.Net;
 	using System.Reflection;
 	using System.Runtime.Serialization;
 	using System.Runtime.Serialization.Formatters.Binary;
 	using System.ServiceModel;
+	using System.Text;
 	using System.Threading;
 	using System.Web.UI.WebControls;
 	using System.Windows.Media;
 
+	using Ecng.Backup;
+	using Ecng.Backup.Yandex;
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.ComponentModel;
@@ -27,6 +32,7 @@
 	using Ecng.Interop;
 	using Ecng.Net;
 	using Ecng.Reflection;
+	using Ecng.Roslyn;
 	using Ecng.Security;
 	using Ecng.Serialization;
 	using Ecng.UnitTesting;
@@ -39,6 +45,11 @@
 	using Wintellect.PowerCollections;
 
 	using Rectangle = System.Windows.Shapes.Rectangle;
+
+	public interface ICalc
+	{
+		decimal Calc(decimal[] prices);
+	}
 
 	class TestEntity
 	{
@@ -126,12 +137,313 @@
 			void Method1();
 		}
 
+		internal enum TimeInForce
+		{
+			PutInQueue,
+			CancelBalance,
+			MatchOrCancel
+		}
 
+		internal enum OrderTypes
+		{
+			Execute,
+			ExtRepo,
+			Limit,
+			Market,
+		}
 
+		internal enum CurrencyTypes
+		{
+			MGF,
+			JPY,
+			XCD,
+			GTQ,
+			BND,
+			EEK,
+			CZK,
+			TJS,
+			BBD,
+			SKK,
+			SDD,
+			XPT,
+			KES,
+			KHR,
+			KPW,
+		}
+
+		internal enum OrderStatus
+		{
+			NotValidated,
+			CanceledByManager,
+			NotAcceptedByManager,
+			SentToCanceled,
+			Accepted,
+			GateError,
+			RejectedBySystem,
+			NotSigned,
+			NotSupported,
+		}
+
+		internal enum OrderStates
+		{
+			Active,
+			Pending,
+			Failed,
+			None,
+		}
+
+		internal enum Sides
+		{
+			Buy,
+			Sell
+		}
+
+		internal enum ExecutionTypes
+		{
+		}
+
+		/// <summary>
+		/// <see cref="DateTime"/> format.
+		/// </summary>
+		public const string DateFormat = "yyyyMMdd";
+
+		/// <summary>
+		/// <see cref="TimeSpan"/> format.
+		/// </summary>
+		public const string TimeFormat = "HHmmssfff";
+
+		internal class ExecutionMessage
+		{
+			public long TransactionId { get; set; }
+			public long OriginalTransactionId { get; set; }
+			public long? OrderId { get; set; }
+			public string OrderStringId { get; set; }
+			public string OrderBoardId { get; set; }
+			public string UserOrderId { get; set; }
+			public decimal OrderPrice { get; set; }
+			public decimal? OrderVolume { get; set; }
+			public decimal? Balance { get; set; }
+			public decimal? VisibleVolume { get; set; }
+			public Sides Side { get; set; }
+			public Sides? OriginSide { get; set; }
+			public OrderStates? OrderState { get; set; }
+			public long? TradeId { get; set; }
+			public string TradeStringId { get; set; }
+			public decimal? TradePrice { get; set; }
+			public decimal? TradeVolume { get; set; }
+			public string PortfolioName { get; set; }
+			public string ClientCode { get; set; }
+			public string BrokerCode { get; set; }
+			public string DepoName { get; set; }
+			public bool? IsSystem { get; set; }
+			public bool HasOrderInfo { get; set; }
+			public bool HasTradeInfo { get; set; }
+			public decimal? Commission { get; set; }
+			public string Comment { get; set; }
+			public string SystemComment { get; set; }
+			public long? DerivedOrderId { get; set; }
+			public string DerivedOrderStringId { get; set; }
+			public bool? IsUpTick { get; set; }
+			public bool IsCancelled { get; set; }
+			public decimal? OpenInterest { get; set; }
+			public decimal? PnL { get; set; }
+			public decimal? Position { get; set; }
+			public decimal? Slippage { get; set; }
+			public int? TradeStatus { get; set; }
+			public TimeSpan? Latency { get; set; }
+			public OrderTypes? OrderType { get; set; }
+			public TimeInForce? TimeInForce { get; set; }
+			public CurrencyTypes? Currency { get; set; }
+			public OrderStatus? OrderStatus { get; set; }
+			public DateTimeOffset? ExpiryDate { get; set; }
+			public InvalidOperationException Error { get; set; }
+			public DateTimeOffset ServerTime { get; set; }
+		}
+
+		public static DateTimeOffset ReadTime(FastCsvReader reader, DateTime date)
+		{
+			if (reader == null)
+				throw new ArgumentNullException(nameof(reader));
+
+			return (date + reader.ReadDateTime(TimeFormat).TimeOfDay).ToDateTimeOffset(TimeSpan.Parse(reader.ReadString().Replace("+", string.Empty)));
+		}
+
+		const int _iterCount = 1000000;
+		const string _dtTemplate = "yyyyMMdd HH:mm:ss fff";
+		const string _tsTemplate = "hh\\:mm\\:ss\\ fff";
+
+		class Class1
+		{
+			public static implicit operator double(Class1 d)
+			{
+				return 1;
+			}
+		}
+
+		[STAThread]
 		static void Main()
 		{
-			Console.WriteLine(new XmlSerializer<Type[]>().Deserialize(new XmlSerializer<Type[]>().Serialize(new[] { typeof(int) }))[0]);
+			Console.WriteLine(new Version(4, 3, 14, 0).Compare(new Version(4, 3, 14, 1)));
+
 			return;
+			var compiler = Compiler.Create(CompilationLanguages.CSharp);
+			var res = compiler.Compile("test", @"
+//using System;
+using Test;
+
+class TestCalc : ICalc
+{
+	decimal ICalc.Calc(decimal[] prices)
+	{
+		return prices[0] * prices[1];
+	}
+}
+", new[] { typeof(object).Assembly.Location, Assembly.GetExecutingAssembly().Location });
+
+			foreach (var error in res.Errors)
+			{
+				Console.WriteLine(error.Message);
+			}
+
+			if (res.Assembly != null)
+			{
+				var t = res.Assembly.GetType("TestCalc");
+				var calc = t.CreateInstance<ICalc>();
+				Console.WriteLine(calc.Calc(new decimal[] { 6, 4 }));
+			}
+
+			return;
+			TimeSpan elapsed;
+
+			//using (IBackupService disk = new YandexDiskService())
+			//{
+			//	disk.Init();
+
+			//	foreach (var entry in disk.Get(null))
+			//	{
+			//		if (entry.Name.CompareIgnoreCase("stocksharp"))
+			//		{
+			//			Console.WriteLine(entry);
+
+			//			foreach (var entry1 in disk.Get(entry))
+			//			{
+			//				var stream = new MemoryStream();
+			//				disk.Download(entry1, stream, p1 => { });
+
+			//				Console.WriteLine("{0}={1}, url={2}", entry1.Name, stream.Length, disk.Publish(entry1));
+			//				disk.UnPublish(entry1);
+			//			}
+			//		}
+			//	}
+			//}
+
+			//return;
+
+			var obj1 = new Class1();
+			obj1.To<double>();
+
+			elapsed = Watch.Do(() =>
+			{
+				for (int i = 0; i < _iterCount; i++)
+				{
+					obj1.To<double>();
+				}
+			});
+
+			Console.WriteLine("To: " + elapsed.TotalMilliseconds);
+
+			Converter.AddTypedConverter<Class1, double>(cl => cl);
+
+			elapsed = Watch.Do(() =>
+			{
+				for (int i = 0; i < _iterCount; i++)
+				{
+					obj1.To<double>();
+				}
+			});
+			
+			Console.WriteLine("TypedTo: " + elapsed.TotalMilliseconds);
+			return;
+
+			var typedConverter = Converter.GetTypedConverter<string, IPAddress>();
+
+			elapsed = Watch.Do(() =>
+			{
+				for (int i = 0; i < _iterCount; i++)
+				{
+					typedConverter("127.0.0.1");
+				}
+			});
+
+			Console.WriteLine("Typed converter: " + elapsed.TotalMilliseconds);
+
+			var dateTimeString = DateTime.Now.ToString(_dtTemplate);
+
+			elapsed = Watch.Do(() =>
+			{
+				for (int i = 0; i < _iterCount; i++)
+				{
+					DateTime.ParseExact(dateTimeString, _dtTemplate, null);
+				}
+			});
+
+
+
+			Console.WriteLine("DateTime.Parse: " + elapsed.TotalMilliseconds);
+
+			var dtParser = new FastDateTimeParser(_dtTemplate);
+
+			elapsed = Watch.Do(() =>
+			{
+				for (int i = 0; i < _iterCount; i++)
+				{
+					dtParser.Parse(dateTimeString);
+				}
+			});
+
+			Console.WriteLine("DateTimeParser.Parse: " + elapsed.TotalMilliseconds);
+
+			var timeSpanString = DateTime.Now.TimeOfDay.ToString(_tsTemplate);
+
+			elapsed = Watch.Do(() =>
+			{
+				for (int i = 0; i < _iterCount; i++)
+				{
+					TimeSpan.ParseExact(timeSpanString, _tsTemplate, null);
+				}
+			});
+
+			Console.WriteLine("TimeSpan.Parse: " + elapsed.TotalMilliseconds);
+
+			var tsParser = new FastTimeSpanParser(_tsTemplate);
+
+			elapsed = Watch.Do(() =>
+			{
+				for (int i = 0; i < _iterCount; i++)
+				{
+					tsParser.Parse(timeSpanString);
+				}
+			});
+
+			Console.WriteLine("DateTimeParser.Parse: " + elapsed.TotalMilliseconds);
+
+			elapsed = Watch.Do(() =>
+			{
+				for (int i = 0; i < _iterCount; i++)
+				{
+					var hours = (timeSpanString[0] - '0') * 10 + (timeSpanString[1] - '0');
+					var minutes = (timeSpanString[3] - '0') * 10 + (timeSpanString[4] - '0');
+					var seconds = (timeSpanString[6] - '0') * 10 + (timeSpanString[7] - '0');
+					var milli = (timeSpanString[9] - '0') * 100 + (timeSpanString[10] - '0') * 10 + (timeSpanString[11] - '0');
+
+					new TimeSpan(0, hours, minutes, seconds, milli);
+				}
+			});
+
+			Console.WriteLine("Manual: " + elapsed.TotalMilliseconds);
+
+			return;
+			Console.WriteLine(new XmlSerializer<Type[]>().Deserialize(new XmlSerializer<Type[]>().Serialize(new[] { typeof(int) }))[0]);
 			var body = File.ReadAllBytes("csharp.jpg").To<Stream>();
 			var srcImage = new Bitmap(body);
 

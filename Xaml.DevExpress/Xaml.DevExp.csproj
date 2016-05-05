@@ -55,6 +55,7 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
@@ -62,7 +63,15 @@
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="DatabaseProviderEditor.cs" />
+    <Compile Include="Database\DatabaseProviderEditor.cs" />
+    <Compile Include="Database\DatabaseConnectionCreateWindow.xaml.cs">
+      <DependentUpon>DatabaseConnectionCreateWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Database\DatabaseConnectionPair.cs" />
+    <Compile Include="Database\DatabaseConnectionPanel.xaml.cs">
+      <DependentUpon>DatabaseConnectionPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Database\DatabaseProviderComboBox.cs" />
     <Compile Include="DateTimeOffsetEditor.cs" />
     <Compile Include="EncodingEditor.cs" />
     <Compile Include="EntityPropertyEditor.cs" />
@@ -79,6 +88,14 @@
     <Compile Include="TimeZoneEditor.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Database\DatabaseConnectionCreateWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Database\DatabaseConnectionPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="EnumEditor.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -93,6 +110,10 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Collections\Collections.csproj">
+      <Project>{62a4add9-9d89-48e6-984b-73bf023d7e50}</Project>
+      <Name>Collections</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
       <Name>Common</Name>
@@ -100,6 +121,22 @@
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
       <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
       <Name>ComponentModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Data.Providers\Data.Providers.csproj">
+      <Project>{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}</Project>
+      <Name>Data.Providers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Data\Data.csproj">
+      <Project>{2FA3ACBD-8623-42D5-B5A5-F0DC2416F92A}</Project>
+      <Name>Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Localization\Localization.csproj">
+      <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
+      <Name>Localization</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Serialization\Serialization.csproj">
+      <Project>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</Project>
+      <Name>Serialization</Name>
     </ProjectReference>
     <ProjectReference Include="..\Xaml\Xaml.csproj">
       <Project>{90A23E0C-3329-4459-BB97-21CD84E5418A}</Project>

@@ -76,7 +76,8 @@
     <Reference Include="WindowsBase">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="Xceed.Wpf.Toolkit">
+    <Reference Include="Xceed.Wpf.Toolkit, Version=2.6.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\StockSharp (GitHub)\References\Xceed.Wpf.Toolkit.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -90,45 +91,41 @@
     <Compile Include="AddressComboBox.cs" />
     <Compile Include="AutoRefreshCollectionViewSource.cs" />
     <Compile Include="BaseObservableCollection.cs" />
-    <Compile Include="Converters\BoolToBrushConverter.cs" />
-    <Compile Include="Converters\BoolToOpacityConverter.cs" />
-    <Compile Include="Converters\ColorToBrushConverter.cs" />
-    <Compile Include="Converters\CountryConverters.cs" />
-    <Compile Include="Converters\DateTimeOffsetConverter.cs" />
-    <Compile Include="Converters\DictionaryConverter.cs" />
-    <Compile Include="Converters\InverseBooleanConverter.cs" />
-    <Compile Include="Converters\LeftMarginMultiplierConverter.cs" />
-    <Compile Include="Converters\ListViewBackgroundConvertor.cs" />
     <Compile Include="BmpImage.cs" />
     <Compile Include="Block.xaml.cs">
       <DependentUpon>Block.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converters\BoolToBrushConverter.cs" />
+    <Compile Include="Converters\BoolToOpacityConverter.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
+    <Compile Include="Converters\ColorToBrushConverter.cs" />
+    <Compile Include="Converters\CountryConverters.cs" />
     <Compile Include="Converters\DataTimeConverter.cs" />
+    <Compile Include="Converters\DateTimeOffsetConverter.cs" />
+    <Compile Include="Converters\DictionaryConverter.cs" />
+    <Compile Include="Converters\EndPointConverter.cs" />
+    <Compile Include="Converters\EnumBooleanConverter.cs" />
+    <Compile Include="Converters\EnumDisplayNameConverter.cs" />
+    <Compile Include="Converters\FormattingConverter.cs" />
+    <Compile Include="Converters\InverseBooleanConverter.cs" />
+    <Compile Include="Converters\IpAddressConverter.cs" />
+    <Compile Include="Converters\LeftMarginMultiplierConverter.cs" />
+    <Compile Include="Converters\ListViewBackgroundConvertor.cs" />
     <Compile Include="Converters\MultiBoolToOpacityConverter.cs" />
     <Compile Include="Converters\NullImageConverter.cs" />
     <Compile Include="Converters\NullToBoolConverter.cs" />
     <Compile Include="Converters\NullToVisibilityConvertor.cs" />
     <Compile Include="Converters\StringConverter.cs" />
+    <Compile Include="Converters\TimeSpanConverter.cs" />
     <Compile Include="Converters\TimeSpanToDateTimeConverter.cs" />
     <Compile Include="Converters\VisibilityToBoolConverter.cs" />
-    <Compile Include="Database\DatabaseConnectionPair.cs" />
-    <Compile Include="Database\DatabaseConnectionPanel.xaml.cs">
-      <DependentUpon>DatabaseConnectionPanel.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Database\DatabaseConnectionCreateWindow.xaml.cs">
-      <DependentUpon>DatabaseConnectionCreateWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Database\DatabaseProviderComboBox.cs" />
     <Compile Include="DateTimeOffsetEditor.xaml.cs">
       <DependentUpon>DateTimeOffsetEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="DelegateCommand.cs" />
     <Compile Include="ConvertibleObservableCollection.cs" />
     <Compile Include="EncodingComboBox.cs" />
-    <Compile Include="Converters\EnumDisplayNameConverter.cs" />
     <Compile Include="EndPointComboBox.cs" />
-    <Compile Include="Converters\EndPointConverter.cs" />
     <Compile Include="EndPointEditor.xaml.cs">
       <DependentUpon>EndPointEditor.xaml</DependentUpon>
     </Compile>
@@ -155,7 +152,6 @@
       <DependentUpon>EntityPropertyEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="FixedWidthColumn.cs" />
-    <Compile Include="Converters\FormattingConverter.cs" />
     <Compile Include="GenericTreeView\ItemMonitor.cs" />
     <Compile Include="GenericTreeView\RoutedTreeItemEventArgs.cs" />
     <Compile Include="GenericTreeView\TreeLayout.cs" />
@@ -173,7 +169,6 @@
     </Compile>
     <Compile Include="Grids\GroupItemToGroupHeaderConverter.xaml.cs" />
     <Compile Include="Grids\PropertyGroupDescriptionEx.xaml.cs" />
-    <Compile Include="Converters\EnumBooleanConverter.cs" />
     <Compile Include="Grids\FormatRuleView.xaml.cs">
       <DependentUpon>FormatRuleView.xaml</DependentUpon>
     </Compile>
@@ -190,7 +185,6 @@
     <Compile Include="InputWindow.xaml.cs">
       <DependentUpon>InputWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Converters\IpAddressConverter.cs" />
     <Compile Include="IpAddressEditor.xaml.cs">
       <DependentUpon>IpAddressEditor.xaml</DependentUpon>
     </Compile>
@@ -372,7 +366,6 @@
     <Compile Include="ViewModelBase.cs" />
     <Compile Include="WpfFormAdapter.cs" />
     <Compile Include="XamlEventDispatcher.cs" />
-    <Compile Include="Converters\TimeSpanConverter.cs" />
     <Compile Include="XamlHelper.cs" />
     <Compile Include="XamlNativeHelper.cs" />
   </ItemGroup>
@@ -388,14 +381,6 @@
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
       <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
       <Name>ComponentModel</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Data.Providers\Data.Providers.csproj">
-      <Project>{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}</Project>
-      <Name>Data.Providers</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Data\Data.csproj">
-      <Project>{2FA3ACBD-8623-42D5-B5A5-F0DC2416F92A}</Project>
-      <Name>Data</Name>
     </ProjectReference>
     <ProjectReference Include="..\Interop\Interop.csproj">
       <Project>{6EACA7CE-0269-47A2-AE6A-3669738EE303}</Project>
@@ -422,14 +407,6 @@
     <Page Include="Block.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Database\DatabaseConnectionPanel.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Database\DatabaseConnectionCreateWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

@@ -1,0 +1,6 @@
+﻿<dxprg:PropertyGridControl x:Class="Ecng.Xaml.DevExp.Database.DatabaseConnectionPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dxprg="http://schemas.devexpress.com/winfx/2008/xaml/propertygrid"
+             ShowSearchBox="False">
+</dxprg:PropertyGridControl>
