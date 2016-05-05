@@ -149,6 +149,8 @@
 
 		public string FullDisplayName => Parent == null ? DisplayName : "{0} -> {1}".Put(Parent.FullDisplayName, DisplayName);
 
+		public string ParentName => Parent == null ? string.Empty : Parent.Name;
+
 		public override string ToString()
 		{
 			return "{0} ({1})".Put(Name, FullDisplayName);
