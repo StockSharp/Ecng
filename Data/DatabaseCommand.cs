@@ -15,6 +15,16 @@ namespace Ecng.Data
 	using Ecng.Collections;
 	using Ecng.Serialization;
 
+	public class DatabaseCommandTimeout
+	{
+		public DatabaseCommandTimeout(TimeSpan timeout)
+		{
+			Timeout = timeout;
+		}
+
+		public TimeSpan Timeout { get; }
+	}
+
 	[Serializable]
 	public sealed class DatabaseCommand : Disposable
 	{
@@ -166,6 +176,10 @@ namespace Ecng.Data
 
 			var command = Database.Provider.CreateCommand(_dbCommand.CommandText, _dbCommand.CommandType);
 			command.Connection = connection;
+
+			var timeout = Scope<DatabaseCommandTimeout>.Current;
+			if (timeout != null)
+				command.CommandTimeout = (int)timeout.Value.Timeout.TotalSeconds;
 
 			foreach (DbParameter parameter in _dbCommand.Parameters)
 			{
