@@ -15,6 +15,23 @@ namespace Ecng.Common
 			_underlying = underlying;
 		}
 
+		public byte[] GetReadDump()
+		{
+			return GetDump(ReadDump);
+		}
+
+		public byte[] GetWriteDump()
+		{
+			return GetDump(WriteDump);
+		}
+
+		private static byte[] GetDump(AllocationArray<byte> dump)
+		{
+			var buffer = new byte[dump.Count];
+			Array.Copy(dump.Buffer, 0, buffer, 0, buffer.Length);
+			return buffer;
+		}
+
 		public AllocationArray<byte> ReadDump { get; } = new AllocationArray<byte>();
 
 		public AllocationArray<byte> WriteDump { get; } = new AllocationArray<byte>();
