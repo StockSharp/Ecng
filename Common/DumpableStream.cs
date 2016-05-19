@@ -7,9 +7,6 @@ namespace Ecng.Common
 	{
 		private readonly Stream _underlying;
 
-		private readonly MemoryStream _readDump = new MemoryStream();
-		private readonly MemoryStream _writeDump = new MemoryStream();
-
 		public DumpableStream(Stream underlying)
 		{
 			if (underlying == null)
@@ -18,26 +15,9 @@ namespace Ecng.Common
 			_underlying = underlying;
 		}
 
-		public byte[] GetReadDump()
-		{
-			return GetDump(_readDump);
-		}
+		public AllocationArray<byte> ReadDump { get; } = new AllocationArray<byte>();
 
-		public byte[] GetWriteDump()
-		{
-			return GetDump(_writeDump);
-		}
-
-		private static byte[] GetDump(MemoryStream stream)
-		{
-			var buffer = new byte[stream.Position];
-
-			stream.Position = 0;
-			stream.Read(buffer, 0, buffer.Length);
-			stream.Position = 0;
-
-			return buffer;
-		}
+		public AllocationArray<byte> WriteDump { get; } = new AllocationArray<byte>();
 
 		/// <summary>
 		/// When overridden in a derived class, clears all buffers for this stream and causes any buffered data to be written to the underlying device.
@@ -81,7 +61,7 @@ namespace Ecng.Common
 			var read = _underlying.Read(buffer, offset, count);
 
 			if (read > 0)
-				_readDump.Write(buffer, offset, read);
+				ReadDump.Add(buffer, offset, read);
 
 			return read;
 		}
@@ -93,7 +73,8 @@ namespace Ecng.Common
 		public override void Write(byte[] buffer, int offset, int count)
 		{
 			_underlying.Write(buffer, offset, count);
-			_writeDump.Write(buffer, offset, count);
+
+			WriteDump.Add(buffer, offset, count);
 		}
 
 		/// <summary>

@@ -78,12 +78,24 @@ namespace Ecng.Common
 				Array.Resize(ref _buffer, capacity);
 		}
 
+		private void EnsureCapacity(int newSize)
+		{
+			if (_buffer.Length <= newSize)
+				Array.Resize(ref _buffer, newSize + _capacity);
+		}
+
 		public void Add(T item)
 		{
-			_buffer[_count++] = item;
+			EnsureCapacity(_count + 1);
 
-			if (_buffer.Length <= _count)
-				Array.Resize(ref _buffer, _buffer.Length + _capacity);
+			_buffer[_count++] = item;
+		}
+
+		public void Add(T[] items, int offset, int count)
+		{
+			EnsureCapacity(_count + count);
+
+			Array.Copy(items, offset, _buffer, _count, count);
 		}
 
 		public IEnumerator<T> GetEnumerator() => _enumerator;
