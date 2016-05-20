@@ -88,7 +88,8 @@ namespace Ecng.Common
 		{
 			EnsureCapacity(_count + 1);
 
-			_buffer[_count++] = item;
+			_buffer[_count] = item;
+			_count++;
 		}
 
 		public void Add(T[] items, int offset, int count)
@@ -96,6 +97,7 @@ namespace Ecng.Common
 			EnsureCapacity(_count + count);
 
 			Array.Copy(items, offset, _buffer, _count, count);
+			_count += count;
 		}
 
 		public IEnumerator<T> GetEnumerator() => _enumerator;
