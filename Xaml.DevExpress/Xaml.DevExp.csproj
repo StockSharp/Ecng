@@ -78,14 +78,19 @@
     <Compile Include="EnumEditor.xaml.cs">
       <DependentUpon>EnumEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="FileBrowserEditor.cs" />
-    <Compile Include="FolderBrowserEditor.cs" />
+    <Compile Include="FileBrowserEditor.xaml.cs">
+      <DependentUpon>FileBrowserEditor.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="FolderBrowserEditor.xaml.cs">
+      <DependentUpon>FolderBrowserEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="IItemsSource.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TimeSpanEditor.xaml.cs">
       <DependentUpon>TimeSpanEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="TimeZoneEditor.cs" />
+    <Compile Include="ValidationHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="Database\DatabaseConnectionCreateWindow.xaml">
@@ -99,6 +104,14 @@
     <Page Include="EnumEditor.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="FileBrowserEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="FolderBrowserEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Themes\Generic.xaml">
       <Generator>MSBuild:Compile</Generator>

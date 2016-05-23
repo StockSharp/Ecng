@@ -1,0 +1,17 @@
+﻿<dxe:ButtonEditSettings x:Class="Ecng.Xaml.DevExp.FileBrowserEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+             xmlns:devExp="clr-namespace:Ecng.Xaml.DevExp"
+             AllowDefaultButton="False">
+
+    <devExp:ValidationHelper.ValidationRules>
+        <devExp:ValidationRulesCollection>
+            <devExp:FileValidationRule />
+        </devExp:ValidationRulesCollection>
+    </devExp:ValidationHelper.ValidationRules>
+	
+    <dxe:ButtonEditSettings.Buttons>
+        <dxe:ButtonInfo x:Name="OpenBtn" GlyphKind="Search" Click="OpenBtn_OnClick"/>
+    </dxe:ButtonEditSettings.Buttons>
+</dxe:ButtonEditSettings>
