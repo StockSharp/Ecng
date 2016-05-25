@@ -95,6 +95,7 @@
     <Compile Include="Block.xaml.cs">
       <DependentUpon>Block.xaml</DependentUpon>
     </Compile>
+    <Compile Include="BusyIndicator.cs" />
     <Compile Include="Converters\BoolToBrushConverter.cs" />
     <Compile Include="Converters\BoolToOpacityConverter.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
