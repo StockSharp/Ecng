@@ -16,7 +16,7 @@ namespace Ecng.Common
 			var valueSourceInterface = itemInitializerType.GetInterface(typeof(IItemInitializer).FullName);
 
 			if (valueSourceInterface == null)
-				throw new ArgumentException(@"Type must implement the IItemInitializer interface.", nameof(itemInitializerType));
+				throw new ArgumentException($"Type {itemInitializerType} must implement the {nameof(IItemInitializer)} interface.", nameof(itemInitializerType));
 
 			ItemInitializerTypeator = itemInitializerType;
 		}
