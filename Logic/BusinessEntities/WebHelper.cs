@@ -9,7 +9,7 @@ namespace Ecng.Logic.BusinessEntities
 
 	public static class WebHelper
 	{
-		private readonly static SynchronizedDictionary<Type, string> _identifiers = new SynchronizedDictionary<Type, string>();
+		private static readonly SynchronizedDictionary<Type, string> _identifiers = new SynchronizedDictionary<Type, string>();
 
 		public static string GetIdentity(Type type)
 		{

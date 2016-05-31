@@ -53,6 +53,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Data" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
   </ItemGroup>
@@ -73,6 +74,7 @@
     <Compile Include="LogicDatabase.cs" />
     <Compile Include="LogicHelper.cs" />
     <Compile Include="LogicObjectModelDataSourceView.cs" />
+    <Compile Include="LogicQueryStringParameter.cs" />
     <Compile Include="LogicRootObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BaseRole.cs" />
