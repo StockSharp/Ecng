@@ -102,6 +102,13 @@
 			return this;
 		}
 
+		public QueryString Clear()
+		{
+			_queryString.Clear();
+			RefreshUri();
+			return this;
+		}
+
 		private void RefreshUri()
 		{
 			if (_queryString.IsEmpty())

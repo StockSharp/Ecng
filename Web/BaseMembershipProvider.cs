@@ -285,7 +285,7 @@ namespace Ecng.Web
 			if (userName.IsEmpty())
 				return null;
 
-			var user = Users.GetByName(userName);
+			var user = Users.GetByName(userName) ?? Users.GetByEmail(userName);
 
 			if (user == null || user.Deleted)
 			{
