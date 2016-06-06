@@ -354,5 +354,13 @@ namespace Ecng.Web
 		{
 			return HttpUtility.ParseQueryString(url, _urlEncoding);
 		}
+
+		public static IWebUser TryGetByNameOrEmail(this IWebUserCollection users, string id)
+		{
+			if (users == null)
+				throw new ArgumentNullException(nameof(users));
+
+			return users.GetByName(id) ?? users.GetByEmail(id);
+		}
 	}
 }
