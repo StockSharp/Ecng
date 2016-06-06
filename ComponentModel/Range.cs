@@ -1,6 +1,7 @@
 namespace Ecng.ComponentModel
 {
 	using System;
+	using System.ComponentModel;
 
 	using Ecng.Common;
 	using Ecng.Serialization;
@@ -57,6 +58,7 @@ namespace Ecng.ComponentModel
 		/// <value>
 		/// 	<c>true</c> if this instance has min value; otherwise, <c>false</c>.
 		/// </value>
+		[Browsable(false)]
 		public bool HasMinValue => _min.HasValue;
 
 		#endregion
@@ -69,6 +71,7 @@ namespace Ecng.ComponentModel
 		/// <value>
 		/// 	<c>true</c> if this instance has max value; otherwise, <c>false</c>.
 		/// </value>
+		[Browsable(false)]
 		public bool HasMaxValue => _max.HasValue;
 
 		#endregion
@@ -81,6 +84,7 @@ namespace Ecng.ComponentModel
 		/// Gets the length.
 		/// </summary>
 		/// <value>The length.</value>
+		[Browsable(false)]
 		public T Length
 		{
 			get
