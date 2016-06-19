@@ -6,11 +6,13 @@ namespace Ecng.Common
 
 	public static class RandomGen
 	{
+		private static readonly SyncObject _sync = new SyncObject();
 		private static readonly Random _value = new Random((int)DateTime.Now.Ticks);
 
 		public static double GetDouble()
 		{
-			return _value.NextDouble();
+			lock (_sync)
+				return _value.NextDouble();
 		}
 
 		public static byte[] GetBytes(int count)
@@ -22,22 +24,26 @@ namespace Ecng.Common
 
 		public static void GetBytes(byte[] buffer)
 		{
-			_value.NextBytes(buffer);
+			lock (_sync)
+				_value.NextBytes(buffer);
 		}
 
 		public static int GetInt()
 		{
-			return _value.Next();
+			lock (_sync)
+				return _value.Next();
 		}
 
 		public static int GetInt(int max)
 		{
-			return _value.Next(max + 1);
+			lock (_sync)
+				return _value.Next(max + 1);
 		}
 
 		public static int GetInt(int min, int max)
 		{
-			return _value.Next(min, max + 1);
+			lock (_sync)
+				return _value.Next(min, max + 1);
 		}
 
 		public static bool GetBool()
