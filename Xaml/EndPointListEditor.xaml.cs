@@ -10,13 +10,10 @@ namespace Ecng.Xaml
 
 	using Ecng.Common;
 
-	using Xceed.Wpf.Toolkit.PropertyGrid;
-	using Xceed.Wpf.Toolkit.PropertyGrid.Editors;
-
 	/// <summary>
 	/// Editor for the collection <see cref="EndPoint"/>.
 	/// </summary>
-	public partial class EndPointListEditor : ITypeEditor
+	public partial class EndPointListEditor
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="EndPointListEditor"/>.
@@ -40,19 +37,6 @@ namespace Ecng.Xaml
 		{
 			get { return (IEnumerable<EndPoint>)GetValue(EndPointsProperty); }
 			set { SetValue(EndPointsProperty, value); }
-		}
-
-		FrameworkElement ITypeEditor.ResolveEditor(PropertyItem propertyItem)
-		{
-			BindingOperations.SetBinding(this, EndPointsProperty, new Binding("Value")
-			{
-				Source = propertyItem,
-				ValidatesOnExceptions = true,
-				ValidatesOnDataErrors = true,
-				Mode = BindingMode.TwoWay
-			});
-
-			return this;
 		}
 	}
 

@@ -6,7 +6,7 @@
 			 DataContext="{Binding RelativeSource={RelativeSource Self}}">
 
 	<Control.Resources>
-		<Style TargetType="{x:Type xctk:MaskedTextBox}">
+        <Style TargetType="{x:Type TextBox}">
 			<Setter Property="Validation.ErrorTemplate">
 				<Setter.Value>
 					<ControlTemplate>
@@ -30,8 +30,8 @@
 	</Control.Resources>
 
 	<Grid>
-		<xctk:MaskedTextBox x:Name="Address">
-			<xctk:MaskedTextBox.Text>
+        <TextBox x:Name="Address">
+            <TextBox.Text>
 				<Binding Path="EndPoints"
 						 RelativeSource="{RelativeSource AncestorType={x:Type xaml:EndPointListEditor}}"
 						 Mode="TwoWay"
@@ -42,7 +42,7 @@
 						<xaml:EndPointValidationRule Multi="True" />
 					</Binding.ValidationRules>
 				</Binding>
-			</xctk:MaskedTextBox.Text>
-		</xctk:MaskedTextBox>
+			</TextBox.Text>
+		</TextBox>
 	</Grid>
 </UserControl>

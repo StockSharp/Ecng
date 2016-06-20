@@ -120,9 +120,6 @@
     <Compile Include="Converters\TimeSpanConverter.cs" />
     <Compile Include="Converters\TimeSpanToDateTimeConverter.cs" />
     <Compile Include="Converters\VisibilityToBoolConverter.cs" />
-    <Compile Include="DateTimeOffsetEditor.xaml.cs">
-      <DependentUpon>DateTimeOffsetEditor.xaml</DependentUpon>
-    </Compile>
     <Compile Include="DelegateCommand.cs" />
     <Compile Include="ConvertibleObservableCollection.cs" />
     <Compile Include="EncodingComboBox.cs" />
@@ -149,9 +146,6 @@
     <Compile Include="Fonts\FontInfo.cs" />
     <Compile Include="DispatcherPropertyChangedEventManager.cs" />
     <Compile Include="EnumComboBox.cs" />
-    <Compile Include="EntityPropertyEditor.xaml.cs">
-      <DependentUpon>EntityPropertyEditor.xaml</DependentUpon>
-    </Compile>
     <Compile Include="FixedWidthColumn.cs" />
     <Compile Include="GenericTreeView\ItemMonitor.cs" />
     <Compile Include="GenericTreeView\RoutedTreeItemEventArgs.cs" />
@@ -160,9 +154,6 @@
     <Compile Include="GenericTreeView\TreeViewBase.cs" />
     <Compile Include="GenericTreeView\TreeViewBase.Declarations.cs" />
     <Compile Include="Grids\DataGridHelper.cs" />
-    <Compile Include="Grids\DdeSettingsWindow.xaml.cs">
-      <DependentUpon>DdeSettingsWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Grids\FormatConverter.cs" />
     <Compile Include="Grids\FormatRule.cs" />
     <Compile Include="Grids\FormattingWindow.xaml.cs">
@@ -411,10 +402,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="DateTimeOffsetEditor.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="EndPointEditor.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -436,14 +423,6 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Fonts\FontDialog.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Grids\DdeSettingsWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="EntityPropertyEditor.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

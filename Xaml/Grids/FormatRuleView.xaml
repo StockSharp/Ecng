@@ -46,14 +46,14 @@
 					<TextBlock>
 						<Run x:Name="BackgroundLabel" Text="Background color" /><Run Text=":" />
 					</TextBlock>
-					<xctk:ColorPicker SelectedColor="{Binding Path=Background.Color, Mode=TwoWay}" Width="50" />
+					<!--<xctk:ColorPicker SelectedColor="{Binding Path=Background.Color, Mode=TwoWay}" Width="50" />-->
 				</StackPanel>
 
 				<StackPanel Orientation="Horizontal" Margin="5" Grid.Row="0" Grid.Column="1">
 					<TextBlock>
 						<Run x:Name="ForegroundLabel" Text="Font color" /><Run Text=":" />
 					</TextBlock>
-					<xctk:ColorPicker SelectedColor="{Binding Path=Foreground.Color, Mode=TwoWay}" Width="50" />
+					<!--<xctk:ColorPicker SelectedColor="{Binding Path=Foreground.Color, Mode=TwoWay}" Width="50" />-->
 				</StackPanel>
 			</Grid>
 

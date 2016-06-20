@@ -68,6 +68,9 @@
     </Compile>
     <Compile Include="Database\DatabaseProviderComboBox.cs" />
     <Compile Include="DateTimeOffsetEditor.cs" />
+    <Compile Include="DdeSettingsWindow.xaml.cs">
+      <DependentUpon>DdeSettingsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="EncodingEditor.cs" />
     <Compile Include="EntityPropertyEditor.cs" />
     <Compile Include="EnumEditor.xaml.cs">
@@ -93,6 +96,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Database\DatabaseConnectionPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="DdeSettingsWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -138,9 +145,17 @@
       <Project>{2FA3ACBD-8623-42D5-B5A5-F0DC2416F92A}</Project>
       <Name>Data</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Interop\Interop.csproj">
+      <Project>{6eaca7ce-0269-47a2-ae6a-3669738ee303}</Project>
+      <Name>Interop</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Localization\Localization.csproj">
       <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
       <Name>Localization</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Reflection\Reflection.csproj">
+      <Project>{a30f5b45-e04b-41d0-b304-abc1755bf23a}</Project>
+      <Name>Reflection</Name>
     </ProjectReference>
     <ProjectReference Include="..\Serialization\Serialization.csproj">
       <Project>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</Project>
