@@ -22,6 +22,7 @@
 	using Ecng.Interop;
 	using Ecng.Interop.Dde;
 	using Ecng.Localization;
+	using Ecng.Reflection;
 	using Ecng.Serialization;
 	using Ecng.Xaml.Converters;
 
@@ -994,87 +995,87 @@
 
 		private void ExportDde_OnClick(object sender, RoutedEventArgs e)
 		{
-			new DdeSettingsWindow
-			{
-				DdeClient = _ddeClient,
-				StartedAction = () =>
-				{
-					_ddeQueue.Open();
-					_isDdeThreadExited = false;
+			//new DdeSettingsWindow
+			//{
+			//	DdeClient = _ddeClient,
+			//	StartedAction = () =>
+			//	{
+			//		_ddeQueue.Open();
+			//		_isDdeThreadExited = false;
 
-					ThreadingHelper
-						.Thread(() =>
-						{
-							try
-							{
-								while (true)
-								{
-									IList<object> row;
+			//		ThreadingHelper
+			//			.Thread(() =>
+			//			{
+			//				try
+			//				{
+			//					while (true)
+			//					{
+			//						IList<object> row;
 
-									if (!_ddeQueue.TryDequeue(out row))
-										break;
+			//						if (!_ddeQueue.TryDequeue(out row))
+			//							break;
 
-									_ddeClient.Poke(new[] { row });
-								}
-							}
-							catch (Exception ex)
-							{
-								ErrorHandler?.Invoke(ex);
-							}
+			//						_ddeClient.Poke(new[] { row });
+			//					}
+			//				}
+			//				catch (Exception ex)
+			//				{
+			//					ErrorHandler?.Invoke(ex);
+			//				}
 
-							lock (_ddeLock)
-							{
-								_isDdeThreadExited = true;
-								_ddeLock.Pulse();
-							}
-						})
-						.Name("UG DDE")
-						.Launch();
+			//				lock (_ddeLock)
+			//				{
+			//					_isDdeThreadExited = true;
+			//					_ddeLock.Pulse();
+			//				}
+			//			})
+			//			.Name("UG DDE")
+			//			.Launch();
 
-					var list = ItemsSource;
+			//		var list = ItemsSource;
 
-					if (list == null)
-						return;
+			//		if (list == null)
+			//			return;
 
-					foreach (var item in list)
-						_ddeQueue.Enqueue(ToRow(item));
-				},
-				StoppedAction = () =>
-				{
-					_ddeQueue.Close();
+			//		foreach (var item in list)
+			//			_ddeQueue.Enqueue(ToRow(item));
+			//	},
+			//	StoppedAction = () =>
+			//	{
+			//		_ddeQueue.Close();
 
-					lock (_ddeLock)
-					{
-						if (_isDdeThreadExited)
-							return;
+			//		lock (_ddeLock)
+			//		{
+			//			if (_isDdeThreadExited)
+			//				return;
 
-						_ddeLock.Wait();
-					}
-				},
-				FlushAction = () =>
-				{
-					try
-					{
-						using (var client = new XlsDdeClient(_ddeClient.Settings))
-						{
-							client.Start();
+			//			_ddeLock.Wait();
+			//		}
+			//	},
+			//	FlushAction = () =>
+			//	{
+			//		try
+			//		{
+			//			using (var client = new XlsDdeClient(_ddeClient.Settings))
+			//			{
+			//				client.Start();
 
-							var rows = new List<IList<object>>
-							{
-								Columns.Select(c => c.Header).ToList()
-							};
+			//				var rows = new List<IList<object>>
+			//				{
+			//					Columns.Select(c => c.Header).ToList()
+			//				};
 
-							rows.AddRange(from object item in Items select ToRow(item));
+			//				rows.AddRange(from object item in Items select ToRow(item));
 
-							client.Poke(rows);
-						}
-					}
-					catch (Exception ex)
-					{
-						MessageBox.Show(ex.ToString());
-					}
-				}
-			}.ShowModal(this);
+			//				client.Poke(rows);
+			//			}
+			//		}
+			//		catch (Exception ex)
+			//		{
+			//			MessageBox.Show(ex.ToString());
+			//		}
+			//	}
+			//}.ShowModal(this);
 		}
 
 		private IList<object> ToRow(object item)
