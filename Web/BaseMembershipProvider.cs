@@ -285,7 +285,7 @@ namespace Ecng.Web
 			if (userName.IsEmpty())
 				return null;
 
-			var user = Users.GetByName(userName) ?? Users.GetByEmail(userName);
+			var user = Users.TryGetByNameOrEmail(userName);
 
 			if (user == null || user.Deleted)
 			{
@@ -340,7 +340,7 @@ namespace Ecng.Web
 			if (!EnablePasswordRetrieval)
 				throw new NotSupportedException();
 
-			var user = Users.GetByName(userName);
+			var user = Users.TryGetByNameOrEmail(userName);
 
 			if (user == null)
 			{
@@ -362,7 +362,7 @@ namespace Ecng.Web
 			if (!EnablePasswordReset)
 				throw new NotSupportedException();
 
-			var user = Users.GetByName(userName);
+			var user = Users.TryGetByNameOrEmail(userName);
 
 			if (user == null)
 			{
@@ -399,7 +399,7 @@ namespace Ecng.Web
 
 		public override bool ChangePassword(string userName, string oldPassword, string newPassword)
 		{
-			var user = Users.GetByName(userName);
+			var user = Users.TryGetByNameOrEmail(userName);
 
 			if (user == null)
 			{
@@ -442,7 +442,7 @@ namespace Ecng.Web
 
 		public override bool ChangePasswordQuestionAndAnswer(string userName, string password, string newPasswordQuestion, string newPasswordAnswer)
 		{
-			var user = Users.GetByName(userName);
+			var user = Users.TryGetByNameOrEmail(userName);
 
 			if (user == null)
 				return false;
@@ -475,7 +475,7 @@ namespace Ecng.Web
 
 		public override bool UnlockUser(string userName)
 		{
-			var user = Users.GetByName(userName);
+			var user = Users.TryGetByNameOrEmail(userName);
 
 			if (user == null)
 				return false;
@@ -487,7 +487,7 @@ namespace Ecng.Web
 
 		public override bool DeleteUser(string name, bool deleteAllRelatedData)
 		{
-			var user = Users.GetByName(name);
+			var user = Users.TryGetByNameOrEmail(name);
 
 			if (user == null)
 				return false;
@@ -528,7 +528,7 @@ namespace Ecng.Web
 
 		internal SecurityErrorTypes? ValidateUserInternal(string userName, string password)
 		{
-			var user = Users.GetByName(userName);
+			var user = Users.TryGetByNameOrEmail(userName);
 
 			if (user == null)
 				return SecurityErrorTypes.InvalidName;

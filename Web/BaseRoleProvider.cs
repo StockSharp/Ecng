@@ -156,7 +156,7 @@ namespace Ecng.Web
 
 		protected virtual IWebUser GetUser(string userName)
 		{
-			return Users.GetByName(userName);
+			return Users.TryGetByNameOrEmail(userName);
 		}
 
 		protected abstract IWebRoleCollection Roles { get; }

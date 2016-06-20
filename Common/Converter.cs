@@ -761,7 +761,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException($"Can't convert {value} of type '{value.GetType()}' to type '{destinationType}'.", ex);
+				throw new InvalidCastException($"Can't convert {value} of type '{value?.GetType()}' to type '{destinationType}'.", ex);
 			}
 		}
 
