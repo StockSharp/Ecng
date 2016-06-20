@@ -26,7 +26,7 @@
 	</UserControl.Resources>
 	
 	<DockPanel LastChildFill="True">
-		<Button x:Name="OpenFile" DockPanel.Dock="Right" Width="20" Content="..." Click="OpenFile_Click" />
+		<Button x:Name="OpenFile" DockPanel.Dock="Right" Width="20" Margin="0" Padding="0" Content="..." Click="OpenFile_Click" />
 		<TextBox x:Name="FilePath" TextChanged="FilePath_OnTextChanged">
 			<TextBox.Text>
 				<Binding Path="File" RelativeSource="{RelativeSource AncestorType={x:Type local:FileBrowserPicker}}" Mode="TwoWay" NotifyOnValidationError="True" UpdateSourceTrigger="PropertyChanged">
