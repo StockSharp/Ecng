@@ -9,7 +9,7 @@
 	//[Audit((byte)AuditSchemas.Role)]
 	[QueryStringId("rid")]
 	public abstract class BaseRole<TUser, TRole> : BaseEntity<TUser, TRole>
-		where TUser : BaseUser<TUser, TRole>
+		where TUser : BaseEntity<TUser, TRole>
 		where TRole : BaseRole<TUser, TRole>
 	{
 		protected BaseRole()

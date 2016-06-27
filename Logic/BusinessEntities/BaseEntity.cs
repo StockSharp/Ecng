@@ -18,7 +18,7 @@ namespace Ecng.Logic.BusinessEntities
 	[Serializable]
 	[TypeSchemaFactory(SearchBy.Properties, VisibleScopes.Public)]
 	public abstract class BaseEntity<TUser, TRole> : Equatable<BaseEntity<TUser, TRole>>
-		where TUser : BaseUser<TUser, TRole>
+		where TUser : BaseEntity<TUser, TRole>
 		where TRole : BaseRole<TUser, TRole>
 	{
 		protected BaseEntity()

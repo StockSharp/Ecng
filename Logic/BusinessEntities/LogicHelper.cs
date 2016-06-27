@@ -23,7 +23,7 @@ namespace Ecng.Logic.BusinessEntities
 	}
 
 	public static class LogicHelper<TUser, TRole>
-		where TUser : BaseUser<TUser, TRole>
+		where TUser : BaseEntity<TUser, TRole>
 		where TRole : BaseRole<TUser, TRole>
 	{
 		#region GetRootObject

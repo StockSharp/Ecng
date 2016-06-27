@@ -2,8 +2,16 @@ namespace Ecng.Logic.BusinessEntities
 {
 	using Ecng.Data;
 
+	public interface IUserList<TUser, TRole>
+		where TUser : BaseEntity<TUser, TRole>
+		where TRole : BaseRole<TUser, TRole>
+	{
+		TUser Null { get; }
+		TUser ReadByName(string name);
+	}
+
 	public abstract class LogicRootObject<TUser, TRole> : RootObject<LogicDatabase<TUser, TRole>>
-		where TUser : BaseUser<TUser, TRole>
+		where TUser : BaseEntity<TUser, TRole>
 		where TRole : BaseRole<TUser, TRole>
 	{
 		protected LogicRootObject(string name, LogicDatabase<TUser, TRole> database)
@@ -13,7 +21,7 @@ namespace Ecng.Logic.BusinessEntities
 
 		public AuditList<TUser, TRole> Audit { get; private set; }
 
-		protected internal abstract BaseUserList<TUser, TRole> GetUsers();
+		protected internal abstract IUserList<TUser, TRole> GetUsers();
 
 		public override void Initialize()
 		{

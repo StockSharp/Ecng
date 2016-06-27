@@ -10,7 +10,7 @@ namespace Ecng.Logic.BusinessEntities
 	using Ecng.Serialization;
 
 	public class LogicDatabase<TUser, TRole> : HierarchicalDatabase
-		where TUser : BaseUser<TUser, TRole>
+		where TUser : BaseEntity<TUser, TRole>
 		where TRole : BaseRole<TUser, TRole>
 	{
 		private static readonly object _auditLock = new object();

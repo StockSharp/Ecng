@@ -16,7 +16,7 @@ namespace Ecng.Logic.BusinessEntities
 
 	[Serializable]
 	public abstract class BaseEntityList<TEntity, TUser, TRole> : HierarchicalPageLoadList<TEntity>
-		where TUser : BaseUser<TUser, TRole>
+		where TUser : BaseEntity<TUser, TRole>
 		where TRole : BaseRole<TUser, TRole>
 		where TEntity : BaseEntity<TUser, TRole>
 	{

@@ -21,7 +21,7 @@
 	}
 
 	public class LogicObjectModelDataSourceView<TUser, TRole> : ObjectModelDataSourceView
-		where TUser : BaseUser<TUser, TRole>
+		where TUser : BaseEntity<TUser, TRole>
 		where TRole : BaseRole<TUser, TRole>
 	{
 		#region Private Fields

@@ -7,7 +7,7 @@
 
 	[Serializable]
 	public abstract class BaseRoleList<TUser, TRole> : BaseEntityList<TRole, TUser, TRole>
-		where TUser : BaseUser<TUser, TRole>
+		where TUser : BaseEntity<TUser, TRole>
 		where TRole : BaseRole<TUser, TRole>
 	{
 		protected BaseRoleList(IStorage storage)
@@ -15,7 +15,7 @@
 		{
 		}
 
-		private readonly static Field _nameField = SchemaManager.GetSchema<TRole>().Fields["Name"];
+		private static readonly Field _nameField = SchemaManager.GetSchema<TRole>().Fields["Name"];
 
 		public TRole ReadByName([Length(512)]string name)
 		{

@@ -9,7 +9,7 @@ namespace Ecng.Logic.BusinessEntities
 	[Ignore(FieldName = "Changes")]
 	[Entity("Audit")]
 	public class Audit<TUser, TRole> : BaseEntity<TUser, TRole>
-		where TUser : BaseUser<TUser, TRole>
+		where TUser : BaseEntity<TUser, TRole>
 		where TRole : BaseRole<TUser, TRole>
 	{
 		public byte SchemaId { get; set; }

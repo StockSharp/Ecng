@@ -6,7 +6,7 @@
 
 	[Serializable]
 	public abstract class BaseUserList<TUser, TRole> : BaseEntityList<TUser, TUser, TRole>
-		where TUser : BaseUser<TUser, TRole>
+		where TUser : BaseEntity<TUser, TRole>
 		where TRole : BaseRole<TUser, TRole>
 	{
 		private readonly long _nullUserId;

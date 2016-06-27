@@ -42,7 +42,7 @@ namespace Ecng.Logic.BusinessEntities
 
 		public static void Append<TEntity, TUser, TRole>(this QueryString queryString, TEntity entity)
 			where TEntity : BaseEntity<TUser, TRole>
-			where TUser : BaseUser<TUser, TRole>
+			where TUser : BaseEntity<TUser, TRole>
 			where TRole : BaseRole<TUser, TRole>
 		{
 			if (queryString == null)

@@ -79,8 +79,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BaseRole.cs" />
     <Compile Include="BaseRoleList.cs" />
-    <Compile Include="BaseUser.cs" />
-    <Compile Include="BaseUserList.cs" />
     <Compile Include="WebHelper.cs" />
   </ItemGroup>
   <ItemGroup>
