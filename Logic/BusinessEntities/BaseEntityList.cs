@@ -114,7 +114,7 @@ namespace Ecng.Logic.BusinessEntities
 			{
 				new SerializationItem<long>(new VoidField<long>(OverrideItemName), entity.Id),
 				new SerializationItem<DateTime>(new VoidField<DateTime>("CreationDate"), DateTime.Now),
-				new SerializationItem<long>(new VoidField<long>("User"), CurrentUser.Id),
+				new SerializationItem<long>(new VoidField<long>("CreatedBy"), CurrentUser.Id),
 				new SerializationItem<bool>(new VoidField<bool>("Deleted"), false),
 			};
 		}
@@ -131,8 +131,8 @@ namespace Ecng.Logic.BusinessEntities
 
 		protected override void OnAdd(TEntity entity)
 		{
-			if (entity.User == null)
-				entity.User = CurrentUser;
+			if (entity.CreatedBy == null)
+				entity.CreatedBy = CurrentUser;
 
 			base.OnAdd(entity);
 		}

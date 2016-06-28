@@ -42,7 +42,7 @@ namespace Ecng.Logic.BusinessEntities
 
 		[RelationSingle]
 		[AuditField((byte)AuditFields.User)]
-		public TUser User { get; set; }
+		public TUser CreatedBy { get; set; }
 
 		[NonSerialized]
 		private AuditList<TUser, TRole> _changes;
