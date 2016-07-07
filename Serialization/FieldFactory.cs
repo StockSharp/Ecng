@@ -107,8 +107,8 @@
 		public override Type InstanceType => typeof(I);
 		public override Type SourceType => typeof(S);
 
-		protected abstract internal I OnCreateInstance(ISerializer serializer, S source);
-		protected abstract internal S OnCreateSource(ISerializer serializer, I instance);
+		protected internal abstract I OnCreateInstance(ISerializer serializer, S source);
+		protected internal abstract S OnCreateSource(ISerializer serializer, I instance);
 
 		#region FieldFactory Members
 
