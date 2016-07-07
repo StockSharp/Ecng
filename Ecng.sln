@@ -9,11 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		EcngAssemblyInfo.cs = EcngAssemblyInfo.cs
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Forum", "Forum", "{4381B427-D0AB-4D3C-99AD-AA875E3648C8}"
-	ProjectSection(SolutionItems) = preProject
-		Forum\EcngForumAssemblyInfo.cs = Forum\EcngForumAssemblyInfo.cs
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Logic", "Logic", "{ED4C3725-09A0-4BEB-9EF4-BC5B42B0459C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{725D5260-8208-4A39-843A-6B58606ED73B}"
@@ -45,10 +40,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transactions", "Transactions\Transactions.csproj", "{8DE0D8CB-561B-43E3-B89F-02CDEE71415B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "Web\Web.csproj", "{125B0185-1FE3-407B-A14C-AD5046A6B68C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BusinessEntities", "Forum\BusinessEntities\BusinessEntities.csproj", "{11FB7AAA-D0F0-4040-9315-75B15A528151}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Components", "Forum\Components\Components.csproj", "{CBCDC444-947A-48D5-884E-CB73A5ACD3F9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Net", "Net\Net.csproj", "{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}"
 EndProject
@@ -141,14 +132,6 @@ Global
 		{125B0185-1FE3-407B-A14C-AD5046A6B68C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{125B0185-1FE3-407B-A14C-AD5046A6B68C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{125B0185-1FE3-407B-A14C-AD5046A6B68C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{11FB7AAA-D0F0-4040-9315-75B15A528151}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{11FB7AAA-D0F0-4040-9315-75B15A528151}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{11FB7AAA-D0F0-4040-9315-75B15A528151}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{11FB7AAA-D0F0-4040-9315-75B15A528151}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CBCDC444-947A-48D5-884E-CB73A5ACD3F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CBCDC444-947A-48D5-884E-CB73A5ACD3F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CBCDC444-947A-48D5-884E-CB73A5ACD3F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CBCDC444-947A-48D5-884E-CB73A5ACD3F9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -206,8 +189,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{11FB7AAA-D0F0-4040-9315-75B15A528151} = {4381B427-D0AB-4D3C-99AD-AA875E3648C8}
-		{CBCDC444-947A-48D5-884E-CB73A5ACD3F9} = {4381B427-D0AB-4D3C-99AD-AA875E3648C8}
 		{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A} = {ED4C3725-09A0-4BEB-9EF4-BC5B42B0459C}
 	EndGlobalSection
 EndGlobal
