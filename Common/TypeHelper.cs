@@ -84,7 +84,8 @@ namespace Ecng.Common
 						type == typeof(DateTimeOffset) ||
 						type == typeof(Guid) ||
 						type == typeof(byte[]) ||
-						type == typeof(TimeSpan)
+						type == typeof(TimeSpan) ||
+						type == typeof(TimeZoneInfo)
 					);
 		}
 

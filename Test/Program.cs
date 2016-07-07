@@ -283,6 +283,13 @@
 		[STAThread]
 		static void Main()
 		{
+			var settingSotrage = new SettingsStorage();
+			settingSotrage.SetValue("1", TimeZoneInfo.Local);
+
+			settingSotrage = new XmlSerializer<SettingsStorage>().Deserialize(new XmlSerializer<SettingsStorage>().Serialize(settingSotrage));
+			Console.WriteLine(settingSotrage["1"]);
+			return;
+
 			Console.WriteLine(new Version(4, 3, 14, 0).Compare(new Version(4, 3, 14, 1)));
 
 			return;

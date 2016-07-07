@@ -689,9 +689,9 @@
 				}
 #if !SILVERLIGHT
 				else if (value is string && destinationType == typeof(TimeZoneInfo))
-					return TimeZoneInfo.FromSerializedString((string)value);
+					return TimeZoneInfo.FindSystemTimeZoneById((string)value);
 				else if (value is TimeZoneInfo && destinationType == typeof(string))
-					return ((TimeZoneInfo)value).ToSerializedString();
+					return ((TimeZoneInfo)value).Id;
 #endif
 				else if (value is string && destinationType == typeof(Guid))
 					return new Guid((string)value);
