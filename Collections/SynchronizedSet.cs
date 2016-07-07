@@ -4,8 +4,6 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Ecng.Common;
-
 	using MoreLinq;
 
 	[Serializable]
@@ -41,13 +39,13 @@
 		private void Duplicate()
 		{
 			if (ThrowIfDuplicate)
-				throw new InvalidOperationException("Элемент уже добавлен.");
+				throw new InvalidOperationException("Duplicate element.");
 		}
 
 		private void CheckIndexingEnabled()
 		{
 			if (_indecies == null)
-				throw new InvalidOperationException("Индексация выключена.");
+				throw new InvalidOperationException("Indexing not switched on.");
 		}
 
 		protected override bool OnAdding(T item)
