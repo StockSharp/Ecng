@@ -153,7 +153,7 @@
 
 		private void Excel_OnClick(object sender, RoutedEventArgs e)
 		{
-			
+			new AboutWindow(this.GetWindow()).ShowModal(this);
 		}
 
 		private void Clipboard_OnClick(object sender, RoutedEventArgs e)

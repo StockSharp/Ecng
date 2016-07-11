@@ -6,13 +6,13 @@
     Style="{DynamicResource AboutDialogStyle}" WindowStartupLocation="CenterOwner"
 		Width="300" Height="200">
     <Window.Resources>
-        <XmlDataProvider x:Key="aboutProvider" XPath="ApplicationInfo" IsAsynchronous="False" IsInitialLoadEnabled="True">
+        <!--<XmlDataProvider x:Key="aboutProvider" XPath="ApplicationInfo" IsAsynchronous="False" IsInitialLoadEnabled="True">
             <x:XData>
                 <ApplicationInfo xmlns="">
                     <Link Uri="http://stocksharp.com">http://stocksharp.com</Link>
                 </ApplicationInfo>
             </x:XData>
-        </XmlDataProvider>
+        </XmlDataProvider>-->
         <Style x:Key="AboutDialogStyle" TargetType="Window">
             <Setter Property="Height" Value="Auto" />
             <Setter Property="Width" Value="500" />
@@ -83,7 +83,7 @@
                 <Label x:Name="productLink" x:Uid="productLink" Style="{StaticResource LinkLabelStyle}" >
                     <Hyperlink x:Name="hyperlink" x:Uid="hyperlink" NavigateUri="{Binding Mode=OneTime, Path=LinkUri}"  Style="{StaticResource LinkLabelStyle}"
                                Hyperlink.RequestNavigate="hyperlink_RequestNavigate">
-                        <TextBlock Text="{Binding Mode=OneTime, Path=LinkText}" />
+						<TextBlock Text="{Binding Mode=OneTime, Path=LinkUri}" />
                     </Hyperlink>
                 </Label>
             </DockPanel>

@@ -4,8 +4,6 @@
 	using System.IO;
 	using System.Reflection;
 	using System.Windows;
-	using System.Windows.Data;
-	using System.Xml;
 
 	using Ecng.Common;
 	using Ecng.Localization;
@@ -53,7 +51,7 @@
 
 		#region AboutData Provider
 		#region Member data
-		private XmlDocument xmlDoc;
+		//private XmlDocument xmlDoc;
 
 		private const string propertyNameTitle = "Title";
 		private const string propertyNameDescription = "Description";
@@ -62,13 +60,13 @@
 		private const string propertyNameCompany = "Company";
 		private const string xPathRoot = "ApplicationInfo/";
 		private const string xPathTitle = xPathRoot + propertyNameTitle;
-		private const string xPathVersion = xPathRoot + "Version";
+		//private const string xPathVersion = xPathRoot + "Version";
 		private const string xPathDescription = xPathRoot + propertyNameDescription;
 		private const string xPathProduct = xPathRoot + propertyNameProduct;
 		private const string xPathCopyright = xPathRoot + propertyNameCopyright;
 		private const string xPathCompany = xPathRoot + propertyNameCompany;
-		private const string xPathLink = xPathRoot + "Link";
-		private const string xPathLinkUri = xPathRoot + "Link/@Uri";
+		//private const string xPathLink = xPathRoot + "Link";
+		//private const string xPathLinkUri = xPathRoot + "Link/@Uri";
 		#endregion
 
 		#region Properties
@@ -100,8 +98,8 @@
 			{
 				// first, try to get the version string from the assembly.
 				var version = Assembly.GetEntryAssembly().GetName().Version;
-				var result = version != null ? version.ToString() : GetLogicalResourceString(xPathVersion);
-				return result;
+				//var result = version != null ? version.ToString() : GetLogicalResourceString(xPathVersion);
+				return version.ToString();
 			}
 		}
 
@@ -125,15 +123,22 @@
 		/// </summary>
 		public string Company => CalculatePropertyValue<AssemblyCompanyAttribute>(propertyNameCompany, xPathCompany);
 
-		/// <summary>
-		/// Gets the link text to display in the About dialog.
-		/// </summary>
-		public string LinkText => GetLogicalResourceString(xPathLink);
+		///// <summary>
+		///// Gets the link text to display in the About dialog.
+		///// </summary>
+		//public string LinkText => GetLogicalResourceString(xPathLink);
 
 		/// <summary>
 		/// Gets the link uri that is the navigation target of the link.
 		/// </summary>
-		public string LinkUri => GetLogicalResourceString(xPathLinkUri);
+		public string LinkUri
+		{
+			get
+			{
+				var domain = LocalizationHelper.DefaultManager?.ActiveLanguage == Languages.Russian ? "ru" : "com";
+				return $"http://stocksharp.{domain}";
+			}
+		}
 
 		#endregion
 
@@ -146,7 +151,7 @@
 		/// <param name="xpathQuery">XPath to the element in the XML data resource.</param>
 		/// <returns>The resulting string to use for a property.
 		/// Returns null if no data could be retrieved.</returns>
-		private string CalculatePropertyValue<T>(string propertyName, string xpathQuery)
+		private static string CalculatePropertyValue<T>(string propertyName, string xpathQuery)
 		{
 			var result = string.Empty;
 			// first, try to get the property value from an attribute.
@@ -161,66 +166,66 @@
 				}
 			}
 
-			// if the attribute wasn't found or it did not have a value, then look in an xml resource.
-			if (result == string.Empty)
-			{
-				// if that fails, try to get it from a resource.
-				result = GetLogicalResourceString(xpathQuery);
-			}
+			//// if the attribute wasn't found or it did not have a value, then look in an xml resource.
+			//if (result == string.Empty)
+			//{
+			//	// if that fails, try to get it from a resource.
+			//	result = GetLogicalResourceString(xpathQuery);
+			//}
 			return result;
 		}
 
-		/// <summary>
-		/// Gets the XmlDataProvider's document from the resource dictionary.
-		/// </summary>
-		protected virtual XmlDocument ResourceXmlDocument
-		{
-			get
-			{
-				if (xmlDoc != null)
-					return xmlDoc;
+		///// <summary>
+		///// Gets the XmlDataProvider's document from the resource dictionary.
+		///// </summary>
+		//protected virtual XmlDocument ResourceXmlDocument
+		//{
+		//	get
+		//	{
+		//		if (xmlDoc != null)
+		//			return xmlDoc;
 
-				// if we haven't already found the resource XmlDocument, then try to find it.
-				var provider = TryFindResource("aboutProvider") as XmlDataProvider;
-				if (provider != null)
-				{
-					// save away the XmlDocument, so we don't have to get it multiple times.
-					xmlDoc = provider.Document;
-				}
+		//		// if we haven't already found the resource XmlDocument, then try to find it.
+		//		var provider = TryFindResource("aboutProvider") as XmlDataProvider;
+		//		if (provider != null)
+		//		{
+		//			// save away the XmlDocument, so we don't have to get it multiple times.
+		//			xmlDoc = provider.Document;
+		//		}
 
-				return xmlDoc;
-			}
-		}
+		//		return xmlDoc;
+		//	}
+		//}
 
-		/// <summary>
-		/// Gets the specified data element from the XmlDataProvider in the resource dictionary.
-		/// </summary>
-		/// <param name="xpathQuery">An XPath query to the XML element to retrieve.</param>
-		/// <returns>The resulting string value for the specified XML element. 
-		/// Returns empty string if resource element couldn't be found.</returns>
-		protected virtual string GetLogicalResourceString(string xpathQuery)
-		{
-			var result = string.Empty;
-			// get the About xml information from the resources.
-			var doc = ResourceXmlDocument;
-			if (doc == null)
-				return result;
-			// if we found the XmlDocument, then look for the specified data. 
-			var node = doc.SelectSingleNode(xpathQuery);
-			if (node == null)
-				return result;
-			if (node is XmlAttribute)
-			{
-				// only an XmlAttribute has a Value set.
-				result = node.Value;
-			}
-			else
-			{
-				// otherwise, need to just return the inner text.
-				result = node.InnerText;
-			}
-			return result;
-		}
+		///// <summary>
+		///// Gets the specified data element from the XmlDataProvider in the resource dictionary.
+		///// </summary>
+		///// <param name="xpathQuery">An XPath query to the XML element to retrieve.</param>
+		///// <returns>The resulting string value for the specified XML element. 
+		///// Returns empty string if resource element couldn't be found.</returns>
+		//protected virtual string GetLogicalResourceString(string xpathQuery)
+		//{
+		//	var result = string.Empty;
+		//	// get the About xml information from the resources.
+		//	var doc = ResourceXmlDocument;
+		//	if (doc == null)
+		//		return result;
+		//	// if we found the XmlDocument, then look for the specified data. 
+		//	var node = doc.SelectSingleNode(xpathQuery);
+		//	if (node == null)
+		//		return result;
+		//	if (node is XmlAttribute)
+		//	{
+		//		// only an XmlAttribute has a Value set.
+		//		result = node.Value;
+		//	}
+		//	else
+		//	{
+		//		// otherwise, need to just return the inner text.
+		//		result = node.InnerText;
+		//	}
+		//	return result;
+		//}
 		#endregion
 		#endregion
 	}
