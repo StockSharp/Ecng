@@ -1,13 +1,9 @@
 namespace Ecng.Interop
 {
-	#region Using Directives
-
 	using System;
 	using System.Runtime.InteropServices;
 
 	using Ecng.Common;
-
-	#endregion
 
 	/// <summary>
 	/// Generic version of structure <see cref="T:System.Runtime.InteropServices.GCHandle"/>.
@@ -15,31 +11,32 @@ namespace Ecng.Interop
 	/// <typeparam name="T"></typeparam>
 	public class GCHandle<T> : Wrapper<GCHandle>
 	{
-		#region GCHandle.ctor()
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="GCHandle{T}"/> class.
 		/// </summary>
 		/// <param name="value">The native value.</param>
-		public GCHandle(T value)
-			: base(GCHandle.Alloc(value))
+		/// <param name="type">One of the <see cref="GCHandleType"/> values, indicating the type of <see cref="GCHandle"/> to create.</param>
+		public GCHandle(T value, GCHandleType type = GCHandleType.Normal)
+			: this(GCHandle.Alloc(value, type))
 		{
 		}
 
-		#endregion
-
-		#region Disposable Members
+		/// <summary>
+		/// Initializes a new instance of the <see cref="GCHandle{T}"/> class.
+		/// </summary>
+		public GCHandle(GCHandle handle)
+			: base(handle)
+		{
+		}
 
 		/// <summary>
 		/// Disposes the native values.
 		/// </summary>
 		protected override void DisposeNative()
 		{
-			base.Value.Free();
+			Value.Free();
 			base.DisposeNative();
 		}
-
-		#endregion
 
 		/// <summary>
 		/// Creates a new object that is a copy of the current instance.
