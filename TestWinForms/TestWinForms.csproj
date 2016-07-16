@@ -126,6 +126,10 @@
       <Project>{408006c6-a8eb-43f8-9d0c-5a519dff5873}</Project>
       <Name>Serialization</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Xaml.DevExpress\Xaml.DevExp.csproj">
+      <Project>{3160D0DB-5D8C-4CF6-987C-C242C3566BAA}</Project>
+      <Name>Xaml.DevExp</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Xaml\Xaml.csproj">
       <Project>{90A23E0C-3329-4459-BB97-21CD84E5418A}</Project>
       <Name>Xaml</Name>

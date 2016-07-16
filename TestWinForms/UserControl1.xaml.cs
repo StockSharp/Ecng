@@ -9,6 +9,7 @@
 	using Ecng.ComponentModel;
 	using Ecng.Serialization;
 	using Ecng.Xaml;
+	using Ecng.Xaml.DevExp;
 
 	/// <summary>
 	/// Interaction logic for UserControl1.xaml
@@ -153,7 +154,8 @@
 
 		private void Excel_OnClick(object sender, RoutedEventArgs e)
 		{
-			new AboutWindow(this.GetWindow()).ShowModal(this);
+			new MessageBoxBuilder().Handler(new DevExpMessageBoxHandler()).Owner(this).Text("Test").Show();
+			//new AboutWindow(this.GetWindow()).ShowModal(this);
 		}
 
 		private void Clipboard_OnClick(object sender, RoutedEventArgs e)

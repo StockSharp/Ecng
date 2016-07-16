@@ -1,19 +1,76 @@
 namespace Ecng.Xaml
 {
+	using System;
 	using System.Windows;
-
-	using MessageBox = Xceed.Wpf.Toolkit.MessageBox;
 
 	using Ecng.Common;
 
 	public class MessageBoxBuilder
 	{
+		public interface IMessageBoxHandler
+		{
+			MessageBoxResult Show(string text , string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options);
+			MessageBoxResult Show(Window owner, string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options);
+		}
+
+		public class WpfMessageBoxHandler : IMessageBoxHandler
+		{
+			MessageBoxResult IMessageBoxHandler.Show(string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options)
+			{
+				return MessageBox.Show(text, caption, button, icon, defaultResult, options);
+			}
+
+			MessageBoxResult IMessageBoxHandler.Show(Window owner, string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options)
+			{
+				return MessageBox.Show(owner, text, caption, button, icon, defaultResult, options);
+			}
+		}
+
+		public class XceedMessageBoxHandler : IMessageBoxHandler
+		{
+			MessageBoxResult IMessageBoxHandler.Show(string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options)
+			{
+				return Xceed.Wpf.Toolkit.MessageBox.Show(text, caption, button, icon, defaultResult);
+			}
+
+			MessageBoxResult IMessageBoxHandler.Show(Window owner, string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options)
+			{
+				return Xceed.Wpf.Toolkit.MessageBox.Show(owner, text, caption, button, icon, defaultResult);
+			}
+		}
+
+		private static IMessageBoxHandler _defaultHandler = new WpfMessageBoxHandler();
+
+		public static IMessageBoxHandler DefaultHandler
+		{
+			get { return _defaultHandler; }
+			set
+			{
+				if (value == null)
+					throw new ArgumentNullException(nameof(value));
+
+				_defaultHandler = value;
+			}
+		}
+
 		private Window _owner;
 		private string _text;
 		private string _caption;
 		private MessageBoxButton _button = MessageBoxButton.OK;
 		private MessageBoxImage _icon = MessageBoxImage.None;
+		private MessageBoxResult _defaultResult = MessageBoxResult.None;
+		private MessageBoxOptions _options = MessageBoxOptions.None;
 		private string _description;
+		private IMessageBoxHandler _handler = DefaultHandler;
+
+		public MessageBoxBuilder Handler(IMessageBoxHandler handler)
+		{
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			_handler = handler;
+			return this;
+		}
 
 		public MessageBoxBuilder Owner(DependencyObject owner)
 		{
@@ -87,6 +144,18 @@ namespace Ecng.Xaml
 			return this;
 		}
 
+		public MessageBoxBuilder Options(MessageBoxOptions options)
+		{
+			_options = options;
+			return this;
+		}
+
+		public MessageBoxBuilder DefaultResult(MessageBoxResult defaultResult)
+		{
+			_defaultResult = defaultResult;
+			return this;
+		}
+
 		public MessageBoxResult Show()
 		{
 			var caption = _caption;
@@ -99,7 +168,9 @@ namespace Ecng.Xaml
 					caption += " - " + _description;
 			}
 
-			return _owner == null ? MessageBox.Show(_text, caption, _button, _icon) : MessageBox.Show(_owner, _text, caption, _button, _icon);
+			return _owner == null
+				? _handler.Show(_text, caption, _button, _icon, _defaultResult, _options)
+				: _handler.Show(_owner, _text, caption, _button, _icon, _defaultResult, _options);
 		}
 	}
 }
