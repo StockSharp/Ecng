@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:ecngXaml="clr-namespace:Ecng.Xaml.Converters;assembly=Ecng.Xaml"
-             xmlns:ug="clr-namespace:Ecng.Xaml.Grids;assembly=Ecng.Xaml"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="500">
 
@@ -21,20 +20,8 @@
 			<RowDefinition></RowDefinition>
 			<RowDefinition Height="22"></RowDefinition>
 		</Grid.RowDefinitions>
-		
-		<ug:UniversalGrid x:Name="TradesGrid" IsGroupsExpanded="False" PropertyChanged="TradesGrid_OnPropertyChanged">
-			<!--<ug:UniversalGrid.RowStyle>
-				<Style TargetType="{x:Type DataGridRow}">
-					<Style.Triggers>
-						<DataTrigger Binding="{Binding OrderDirection}" Value="Sell">
-							<Setter Property="Background" Value="LightPink"/>
-						</DataTrigger>
-						<DataTrigger Binding="{Binding OrderDirection}" Value="Buy">
-							<Setter Property="Background" Value="LightBlue"/>
-						</DataTrigger>
-					</Style.Triggers>
-				</Style>
-			</ug:UniversalGrid.RowStyle>-->
+
+		<!--<ug:UniversalGrid x:Name="TradesGrid" IsGroupsExpanded="False" PropertyChanged="TradesGrid_OnPropertyChanged">
 			<ug:UniversalGrid.Columns>
 				<DataGridTextColumn Header="Инструмент" Width="70" Binding="{Binding Path=Security.Id}" SortMemberPath="Security.Id"/>
 				<DataGridTextColumn Header="Номер" Width="70" Binding="{Binding Path=Id}" SortMemberPath="Id"/>
@@ -44,7 +31,7 @@
 				<DataGridTextColumn Header="Объем" Width="50" Binding="{Binding Path=Volume}" SortMemberPath="Volume"/>
 				<DataGridTextColumn Header="Направление" Width="60" Binding="{Binding Path=OrderDirection}" SortMemberPath="OrderDirection"/>
 			</ug:UniversalGrid.Columns>
-		</ug:UniversalGrid>
+		</ug:UniversalGrid>-->
 		
 		<ListBox x:Name="Changes" Grid.Column="1"></ListBox>
 

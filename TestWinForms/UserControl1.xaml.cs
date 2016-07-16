@@ -106,9 +106,9 @@
 		{
 			InitializeComponent();
 
-			TradesGrid.GroupingColumns.Add(TradesGrid.Columns[0]);
+			//TradesGrid.GroupingColumns.Add(TradesGrid.Columns[0]);
 
-			TradesGrid.ItemsSource = new[]
+			var a = new[]
 			{
 				new Trade
 				{
@@ -145,6 +145,7 @@
 					Time = DateTime.Now,
 				},
 			};
+			//TradesGrid.ItemsSource = a;
 		}
 
 		private void Button_Click(object sender, RoutedEventArgs e)
@@ -170,7 +171,7 @@
 
 		private void ReLoad_OnClick(object sender, RoutedEventArgs e)
 		{
-			TradesGrid.Load(TradesGrid.Save());
+			//TradesGrid.Load(TradesGrid.Save());
 		}
 
 		private void TradesGrid_OnPropertyChanged(object sender, PropertyChangedEventArgs e)
