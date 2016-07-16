@@ -251,95 +251,6 @@
     <Compile Include="Ookii.Dialogs.Wpf\VistaFolderBrowserDialog.cs" />
     <Compile Include="Ookii.Dialogs.Wpf\VistaOpenFileDialog.cs" />
     <Compile Include="Ookii.Dialogs.Wpf\VistaSaveFileDialog.cs" />
-    <Compile Include="Ookii.Dialogs\AdditionalVisualStyleElements.cs" />
-    <Compile Include="Ookii.Dialogs\AnimationResource.cs" />
-    <Compile Include="Ookii.Dialogs\ButtonType.cs" />
-    <Compile Include="Ookii.Dialogs\ComCtlv6ActivationContext.cs" />
-    <Compile Include="Ookii.Dialogs\CredentialDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\CredentialDialog.designer.cs">
-      <DependentUpon>CredentialDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\CredentialException.cs" />
-    <Compile Include="Ookii.Dialogs\DialogHelper.cs" />
-    <Compile Include="Ookii.Dialogs\DownlevelTextMode.cs" />
-    <Compile Include="Ookii.Dialogs\ExpandButtonClickedEventArgs.cs" />
-    <Compile Include="Ookii.Dialogs\ExtendedForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\Glass.cs" />
-    <Compile Include="Ookii.Dialogs\GlobalSuppressions.cs" />
-    <Compile Include="Ookii.Dialogs\HyperlinkClickedEventArgs.cs" />
-    <Compile Include="Ookii.Dialogs\InputDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\InputDialog.designer.cs">
-      <DependentUpon>InputDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\InputDialogForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\InputDialogForm.designer.cs">
-      <DependentUpon>InputDialogForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\Interop\ComDlgResources.cs" />
-    <Compile Include="Ookii.Dialogs\Interop\COMGuids.cs" />
-    <Compile Include="Ookii.Dialogs\Interop\ErrorHelper.cs" />
-    <Compile Include="Ookii.Dialogs\Interop\IProgressDialog.cs" />
-    <Compile Include="Ookii.Dialogs\Interop\ShellComInterfaces.cs" />
-    <Compile Include="Ookii.Dialogs\Interop\ShellWrapperDefinitions.cs" />
-    <Compile Include="Ookii.Dialogs\Interop\Win32Resources.cs" />
-    <Compile Include="Ookii.Dialogs\Interop\WindowHandleWrapper.cs" />
-    <Compile Include="Ookii.Dialogs\NativeMethods.cs" />
-    <Compile Include="Ookii.Dialogs\OkButtonClickedEventArgs.cs" />
-    <Compile Include="Ookii.Dialogs\ProgressBarState.cs" />
-    <Compile Include="Ookii.Dialogs\ProgressBarStyle.cs" />
-    <Compile Include="Ookii.Dialogs\ProgressDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\ProgressDialog.designer.cs">
-      <DependentUpon>ProgressDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\SafeHandles.cs" />
-    <Compile Include="Ookii.Dialogs\ShellAnimation.cs" />
-    <Compile Include="Ookii.Dialogs\TaskDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\TaskDialog.designer.cs">
-      <DependentUpon>TaskDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\TaskDialogButton.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\TaskDialogButtonStyle.cs" />
-    <Compile Include="Ookii.Dialogs\TaskDialogDesigner.cs" />
-    <Compile Include="Ookii.Dialogs\TaskDialogIcon.cs" />
-    <Compile Include="Ookii.Dialogs\TaskDialogItem.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\TaskDialogItem.designer.cs">
-      <DependentUpon>TaskDialogItem.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\TaskDialogItemClickedEventArgs.cs" />
-    <Compile Include="Ookii.Dialogs\TaskDialogItemCollection.cs" />
-    <Compile Include="Ookii.Dialogs\TaskDialogRadioButton.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\TimerEventArgs.cs" />
-    <Compile Include="Ookii.Dialogs\VistaFileDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\VistaFileDialogEvents.cs" />
-    <Compile Include="Ookii.Dialogs\VistaFolderBrowserDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\VistaOpenFileDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Ookii.Dialogs\VistaSaveFileDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -734,13 +645,6 @@
     <EmbeddedResource Include="Ookii.Dialogs.Wpf\VistaFolderBrowserDialog.bmp" />
     <EmbeddedResource Include="Ookii.Dialogs.Wpf\VistaOpenFileDialog.bmp" />
     <EmbeddedResource Include="Ookii.Dialogs.Wpf\VistaSaveFileDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs\CredentialDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs\InputDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs\ProgressDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs\TaskDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs\VistaFolderBrowserDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs\VistaOpenFileDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs\VistaSaveFileDialog.bmp" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -748,18 +652,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Ookii.Dialogs.Wpf\ProgressDialog.resx">
-      <DependentUpon>ProgressDialog.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Ookii.Dialogs\ExtendedForm.resx">
-      <DependentUpon>ExtendedForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Ookii.Dialogs\InputDialogForm.nl.resx">
-      <DependentUpon>InputDialogForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Ookii.Dialogs\InputDialogForm.resx">
-      <DependentUpon>InputDialogForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Ookii.Dialogs\ProgressDialog.resx">
       <DependentUpon>ProgressDialog.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="..\Ecng.snk">
