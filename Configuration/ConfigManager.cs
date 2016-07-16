@@ -252,5 +252,13 @@
 		{
 			return ServiceLocator.GetAllInstances<T>();
 		}
+
+		public static string ToFullPathIfNeed(this string path)
+		{
+			if (path == null)
+				throw new ArgumentNullException(nameof(path));
+
+			return path.Replace("%Documents%", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+		}
 	}
 }
