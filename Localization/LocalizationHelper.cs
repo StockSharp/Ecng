@@ -13,5 +13,8 @@ namespace Ecng.Localization
 
 			return manager.Translate(text, from ?? Languages.English, to ?? manager.ActiveLanguage);
 		}
+
+		public const string Ru = "ru-RU";
+		public const string En = "en-US";
 	}
 }
