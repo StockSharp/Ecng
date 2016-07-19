@@ -88,6 +88,9 @@
     <Compile Include="IItemsSource.cs" />
     <Compile Include="MessageBoxHandlers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SecretEditor.xaml.cs">
+      <DependentUpon>SecretEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="TimeSpanEditor.xaml.cs">
       <DependentUpon>TimeSpanEditor.xaml</DependentUpon>
     </Compile>
@@ -116,6 +119,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="FolderBrowserEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SecretEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
