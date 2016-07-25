@@ -79,7 +79,6 @@
     <Compile Include="FastCsvReader.cs" />
     <Compile Include="FastDateTimeParser.cs" />
     <Compile Include="FastTimeSpanParser.cs" />
-    <Compile Include="IItemInitializer.cs" />
     <Compile Include="IOHelper.cs" />
     <Compile Include="NtpClient.cs" />
     <Compile Include="ObjectPool.cs" />
