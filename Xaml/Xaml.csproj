@@ -244,6 +244,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="PropertyChangeNotifier.cs" />
     <Compile Include="Proxy.cs" />
     <Compile Include="ResizableContentControl.cs" />
     <Compile Include="SecretPicker.xaml.cs">

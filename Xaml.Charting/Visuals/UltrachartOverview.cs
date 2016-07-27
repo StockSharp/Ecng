@@ -294,11 +294,11 @@ namespace Ecng.Xaml.Charting.Visuals
             if (scs != null)
             {
                 _renderableSeriesPropertyNotifier = new PropertyChangeNotifier(scs, UltrachartSurface.RenderableSeriesProperty);
-                _renderableSeriesPropertyNotifier.ValueChanged += (s, arg) => OnRenderableSeriesChanged((ObservableCollection<IRenderableSeries>)_renderableSeriesPropertyNotifier.Value);
+                _renderableSeriesPropertyNotifier.ValueChanged += () => OnRenderableSeriesChanged((ObservableCollection<IRenderableSeries>)_renderableSeriesPropertyNotifier.Value);
 
                 
                 _xAxesPropertyNotifier = new PropertyChangeNotifier(scs, UltrachartSurface.XAxesProperty);
-                _xAxesPropertyNotifier.ValueChanged += (s, arg) => OnXAxesPropertyChanged((AxisCollection)_xAxesPropertyNotifier.Value);
+                _xAxesPropertyNotifier.ValueChanged += () => OnXAxesPropertyChanged((AxisCollection)_xAxesPropertyNotifier.Value);
 
                 if (!DoesSurfaceHaveThisDataSeries(scs, DataSeries))
                 {
@@ -387,7 +387,7 @@ namespace Ecng.Xaml.Charting.Visuals
                     if (renderableSeries is BaseRenderableSeries)
                     {
                         _renderSeriesDataSeriesPropertyNotifier = new PropertyChangeNotifier(renderableSeries as BaseRenderableSeries, BaseRenderableSeries.DataSeriesProperty);
-                        _renderSeriesDataSeriesPropertyNotifier.ValueChanged += (o, args) => OnDataSeriesDependencyPropertyChanged(renderableSeries.DataSeries);
+                        _renderSeriesDataSeriesPropertyNotifier.ValueChanged += () => OnDataSeriesDependencyPropertyChanged(renderableSeries.DataSeries);
                     }
 
                     OnDataSeriesDependencyPropertyChanged(renderableSeries.DataSeries);

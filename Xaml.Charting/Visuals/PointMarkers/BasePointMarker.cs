@@ -85,8 +85,8 @@ namespace Ecng.Xaml.Charting.Visuals.PointMarkers
             _widthNotifier = new PropertyChangeNotifier(this, WidthProperty);
             _heightNotifier = new PropertyChangeNotifier(this, HeightProperty);
 
-            _widthNotifier.ValueChanged += (s, e) => OnPropertyChanged(this, default(DependencyPropertyChangedEventArgs));
-            _heightNotifier.ValueChanged += (s, e) => OnPropertyChanged(this, default(DependencyPropertyChangedEventArgs));
+            _widthNotifier.ValueChanged += () => OnPropertyChanged(this, default(DependencyPropertyChangedEventArgs));
+            _heightNotifier.ValueChanged += () => OnPropertyChanged(this, default(DependencyPropertyChangedEventArgs));
         }
 
         /// <summary>

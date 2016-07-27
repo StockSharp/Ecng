@@ -112,7 +112,6 @@
     <Compile Include="Common\Databinding\AxisAlignmentToFlowDirectionConverter.cs" />
     <Compile Include="Common\Databinding\AxisAlignmentToHorizontalAlignmentConverter.cs" />
     <Compile Include="Common\Animation\DoubleAnimator.cs" />
-    <Compile Include="Common\AttachedProperties\PropertyChangedNotifier.cs" />
     <Compile Include="Common\Databinding\AxisAlignmentToHorizontalAnchorPointConverter.cs" />
     <Compile Include="Common\Databinding\AxisAlignmentToTransformOriginConverter.cs" />
     <Compile Include="Common\Databinding\AxisAlignmentToVerticalAlignmentConverter.cs" />

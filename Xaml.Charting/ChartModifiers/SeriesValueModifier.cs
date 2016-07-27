@@ -199,10 +199,10 @@ namespace Ecng.Xaml.Charting.ChartModifiers
                 _renderSeriesNotifier.ValueChanged += OnRenderableSeriesDrasticallyChanged;
             }
 
-            OnRenderableSeriesDrasticallyChanged(this, EventArgs.Empty);
+            OnRenderableSeriesDrasticallyChanged();
         }
 
-        private void OnRenderableSeriesDrasticallyChanged(object sender, EventArgs eventArgs)
+        private void OnRenderableSeriesDrasticallyChanged()
         {
             ResetAllMarkers();
 
