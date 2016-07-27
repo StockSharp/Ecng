@@ -20,12 +20,12 @@
 
 		private const RegexOptions _options = RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled;
 
-		private readonly static Regex _methodRegex = new Regex(@"(?<methodName>\w+) \( (?<inRefArgs>[^\)]*) \)", _options);
-		private readonly static Regex _indexerRegex = new Regex(@"(?<propName>\w+) \[ (?<inRefArgs>[^\]]+) \]", _options);
-		private readonly static Regex _propRegex = new Regex(@"(?<propName>\w+)(\.|$)", _options);
+		private static readonly Regex _methodRegex = new Regex(@"(?<methodName>\w+) \( (?<inRefArgs>[^\)]*) \)", _options);
+		private static readonly Regex _indexerRegex = new Regex(@"(?<propName>\w+) \[ (?<inRefArgs>[^\]]+) \]", _options);
+		private static readonly Regex _propRegex = new Regex(@"(?<propName>\w+)(\.|$)", _options);
 		//private static Regex _argsRegex = new Regex(@"(\@*) \w+", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
-		private readonly static Dictionary<Tuple<Type, string>, MemberProxy> _proxies = new Dictionary<Tuple<Type, string>, MemberProxy>();
+		private static readonly Dictionary<Tuple<Type, string>, MemberProxy> _proxies = new Dictionary<Tuple<Type, string>, MemberProxy>();
 
 		private readonly Type _rootType;
 		private readonly string _path;
@@ -157,7 +157,8 @@
 
 				if (methodMatch.Success)
 				{
-					var methods = type.GetMembers<MethodInfo>(ReflectionHelper.AllMembers, true, methodMatch.Groups["methodName"].Value);
+					var methodName = methodMatch.Groups["methodName"].Value;
+					var methods = type.GetMembers<MethodInfo>(ReflectionHelper.AllMembers, true, methodName);
 
 					var parametersSet = methods.Select(m => m.GetParameters()).ToList();
 
@@ -167,12 +168,16 @@
 					if (methods.Length == 1)
 						method = methods[0];
 
+					if (method == null)
+						throw new InvalidOperationException($"Method {methodName} doesn't exist in type {type}.");
+
 					items.Add(new MethodProxyItem(method, @params));
 					type = method.ReturnType;
 				}
 				else if (indexerMatch.Success)
 				{
-					var member = type.GetMember<MemberInfo>(indexerMatch.Groups["propName"].Value);
+					var indexerName = indexerMatch.Groups["propName"].Value;
+					var member = type.GetMember<MemberInfo>(indexerName);
 					items.Add(new FieldPropProxyItem(member));
 
 					var indexers = member.GetMemberType().GetIndexers();
@@ -185,12 +190,20 @@
 					if (indexers.Length == 1)
 						indexer = indexers[0].GetGetMethod(true);
 
+					if (indexer == null)
+						throw new InvalidOperationException($"Indexer {indexerName} doesn't exist in type {type}.");
+
 					items.Add(new IndexerProxyItem(indexer, @params));
 					type = indexer.ReturnType;
 				}
 				else if (propMatch.Success)
 				{
-					var member = type.GetMember<MemberInfo>(propMatch.Groups["propName"].Value);
+					var propName = propMatch.Groups["propName"].Value;
+					var member = type.GetMember<MemberInfo>(propName);
+
+					if (member == null)
+						throw new InvalidOperationException($"Property {propName} doesn't exist in type {type}.");
+
 					items.Add(new FieldPropProxyItem(member));
 					type = member.GetMemberType();
 				}

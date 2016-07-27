@@ -431,7 +431,12 @@
 					return GetRange().ElementAt(index);
 				}
 				else
-					throw new NotImplementedException();
+				{
+					if (index != 0)
+						throw new NotImplementedException();
+					else
+						return ReadFirsts(1, Schema.Identity).FirstOrDefault();
+				}
 			}
 			set
 			{

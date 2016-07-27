@@ -621,7 +621,7 @@ namespace Ecng.Data
 					if (!readOnlyFields.IsEmpty())
 						entity = serializer.Deserialize(output, readOnlyFields, entity);
 
-					UpdateCache(serializer, entity, output);
+					UpdateCache(entity, output);
 				});
 
 				Updated?.Invoke(entity);
@@ -983,6 +983,9 @@ namespace Ecng.Data
 							if (fieldValue == null)
 								continue;
 
+							if ((fieldValue as string)?.IsEmpty() == true)
+								continue;
+
 							_cache.Add(CreateKey(schema, field, fieldValue), entity);
 						}
 
@@ -1002,7 +1005,7 @@ namespace Ecng.Data
 			CacheAdded(entity, source, newEntry);
 		}
 
-		private void UpdateCache<TEntity>(ISerializer serializer, TEntity entity, SerializationItemCollection source)
+		private void UpdateCache<TEntity>(TEntity entity, SerializationItemCollection source)
 		{
 			var schema = SchemaManager.GetSchema<TEntity>();
 
@@ -1205,7 +1208,7 @@ namespace Ecng.Data
 						name = innerSchemaNameOverrides.GetKey(name);
 
 					var value = item.Value;
-					newSource.Add(new SerializationItem(new VoidField(name, (value != null) ? value.GetType() : item.Field.Type), value));
+					newSource.Add(new SerializationItem(new VoidField(name, value?.GetType() ?? item.Field.Type), value));
 				}
 
 				return newSource;

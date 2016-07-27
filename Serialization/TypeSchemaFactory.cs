@@ -12,7 +12,7 @@
 	public class TypeSchemaFactory : SchemaFactory
 	{
 		private readonly MemberTypes _memberTypes;
-		private readonly BindingFlags _flags = BindingFlags.Instance;
+		private readonly BindingFlags _flags;
 
 		#region TypeSchemaFactory.ctor()
 
@@ -33,7 +33,7 @@
 					_memberTypes = MemberTypes.Field | MemberTypes.Property;
 					break;
 				default:
-					throw new ArgumentException("searchBy");
+					throw new ArgumentOutOfRangeException(nameof(searchBy));
 			}
 
 			switch (scope)
@@ -48,14 +48,14 @@
 					_flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 					break;
 				default:
-					throw new ArgumentException("scope");
+					throw new ArgumentOutOfRangeException(nameof(scope));
 			}
 		}
 
 		#endregion
 
-		public SearchBy SearchBy { get; private set; }
-		public VisibleScopes Scope { get; private set; }
+		public SearchBy SearchBy { get; }
+		public VisibleScopes Scope { get; }
 
 		#region GetMembers
 
@@ -95,7 +95,7 @@
 			schema.Fields.AddRange(GetMembers(entityType).Select(member =>
 			{
 				var field = member.GetAttribute<IdentityAttribute>() == null
-					? new Field(schema, member) { IsIndex = (member.GetAttribute<IndexAttribute>() != null) }
+					? new Field(schema, member) { IsIndex = member.GetAttribute<IndexAttribute>() != null }
 					: new IdentityField(schema, member);
 
 				var fieldAttr = member.GetAttribute<FieldAttribute>();
@@ -107,7 +107,7 @@
 				}
 
 				var accessorAttr = member.GetAttribute<FieldAccessorAttribute>();
-				field.Accessor = ((accessorAttr != null) ? accessorAttr.FactoryType : typeof(FastInvokerFieldAccessor<,>).Make(entityType, field.Type)).CreateInstance<FieldAccessor>(field);
+				field.Accessor = (accessorAttr != null ? accessorAttr.FactoryType : typeof(FastInvokerFieldAccessor<,>).Make(entityType, field.Type)).CreateInstance<FieldAccessor>(field);
 
 				field.IsUnderlying = member.GetAttribute<UnderlyingAttribute>() != null;
 
