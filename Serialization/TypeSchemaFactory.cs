@@ -84,7 +84,10 @@
 
 			var entityAttr = entityType.GetAttribute<EntityAttribute>();
 			if (entityAttr != null)
+			{
 				schema.Name = entityAttr.Name;
+				schema.NoCache = entityAttr.NoCache;
+			}
 
 			var factoryAttr = entityType.GetAttribute<EntityFactoryAttribute>();
 			schema.Factory = factoryAttr != null ? factoryAttr.FactoryType.CreateInstance<EntityFactory>() : typeof(FastInvokerEntityFactory<>).Make(entityType).CreateInstance<EntityFactory>();

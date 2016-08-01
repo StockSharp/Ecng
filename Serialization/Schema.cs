@@ -21,6 +21,8 @@ namespace Ecng.Serialization
 			Fields = new FieldList();
 		}
 
+		public bool NoCache { get; set; }
+
 		#region EntityType
 
 		private Type _entityType;

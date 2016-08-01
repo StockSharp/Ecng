@@ -611,7 +611,7 @@ namespace Ecng.Data
 
 					var readOnlyFields = valueFields.ReadOnlyFields;
 
-					if (!readOnlyFields.IsEmpty() && schema.Identity != null && schema.Identity.IsReadOnly && !keyFields.Contains(schema.Identity))
+					if (!readOnlyFields.IsEmpty() && schema.NoCache && schema.Identity != null && schema.Identity.IsReadOnly && !keyFields.Contains(schema.Identity))
 						serializer.Serialize(entity, new FieldList(schema.Identity), input);
 
 					input = UngroupSource(schema.Fields, input);
@@ -844,7 +844,7 @@ namespace Ecng.Data
 					{
 						var source = GetRow(table, i);
 
-						if (schema.Identity != null)
+						if (!schema.NoCache && schema.Identity != null)
 						{
 							var id = schema.Identity.Factory.CreateInstance(serializer, source[schema.Identity.Name]);
 							var key = CreateKey(schema, schema.Identity, id);
@@ -905,7 +905,7 @@ namespace Ecng.Data
 
 			var entity = schema.GetFactory<TEntity>().CreateEntity(serializer, input);
 
-			if (schema.Identity == null)
+			if (schema.NoCache || schema.Identity == null)
 				return serializer.Deserialize(input, schema.Fields.NonIdentityFields, entity);
 
 			var id = schema.Identity.Factory.CreateInstance(serializer, input[schema.Identity.Name]);
@@ -930,7 +930,7 @@ namespace Ecng.Data
 		{
 			var schema = SchemaManager.GetSchema<TEntity>();
 
-			if (schema.Identity == null)
+			if (schema.NoCache || schema.Identity == null)
 				return;
 
 			var serializer = GetSerializer<TEntity>();

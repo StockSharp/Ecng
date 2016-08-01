@@ -12,13 +12,11 @@ namespace Ecng.Serialization
 	[AttributeUsage(ReflectionHelper.Types)]
 	public class EntityAttribute : NameAttribute
 	{
-		#region EntityAttribute.ctor()
-
 		public EntityAttribute(string name)
 			: base(name)
 		{
 		}
 
-		#endregion
+		public bool NoCache { get; set; }
 	}
 }

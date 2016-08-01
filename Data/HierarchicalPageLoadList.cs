@@ -264,7 +264,7 @@
 			return entities.Select(entity => new Tuple<Field, object>(Schema.Fields[entity.GetType().GetSchema().Name], entity));
 		}
 
-		private DatabaseCommand GetCommand(SqlCommandTypes commandType, string keyFieldsMorph, string valueFieldsMorph)
+		protected DatabaseCommand GetCommand(SqlCommandTypes commandType, string keyFieldsMorph, string valueFieldsMorph)
 		{
 			return Database.GetCommand(Query.Execute(Schema, commandType, keyFieldsMorph, valueFieldsMorph), Schema, null, null);
 		}
