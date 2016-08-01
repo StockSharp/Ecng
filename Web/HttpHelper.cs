@@ -3,7 +3,7 @@ namespace Ecng.Web
 	using System.Text;
 	using System.Web;
 	using System.Collections.Specialized;
-
+	using System.Web.Routing;
 #if !SILVERLIGHT
 	using System;
 	using System.Collections;
@@ -361,6 +361,11 @@ namespace Ecng.Web
 				throw new ArgumentNullException(nameof(users));
 
 			return users.GetByName(id) ?? users.GetByEmail(id);
+		}
+
+		public static RequestContext GetCurrentRouteRequest()
+		{
+			return HttpContext.Current.Request.RequestContext;
 		}
 	}
 }
