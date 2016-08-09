@@ -51,6 +51,8 @@ namespace Ecng.Common
 			_enumerator = new AllocationArrayEnumerator(this);
 		}
 
+		public int MaxCount { get; set; } = int.MaxValue;
+
 		private int _count;
 
 		public int Count
@@ -59,9 +61,32 @@ namespace Ecng.Common
 			set
 			{
 				if (_buffer.Length < value)
+				{
+					if (value > MaxCount)
+						throw new ArgumentOutOfRangeException();
+
 					Array.Resize(ref _buffer, value);
+				}
 
 				_count = value;
+			}
+		}
+
+		public T this[int index]
+		{
+			get
+			{
+				if (index >= Count)
+					throw new ArgumentOutOfRangeException();
+
+				return _buffer[index];
+			}
+			set
+			{
+				if (index >= Count)
+					Count = index + 1;
+
+				_buffer[index] = value;
 			}
 		}
 
@@ -81,7 +106,12 @@ namespace Ecng.Common
 		private void EnsureCapacity(int newSize)
 		{
 			if (_buffer.Length <= newSize)
+			{
+				if (newSize > MaxCount)
+					throw new ArgumentOutOfRangeException();
+
 				Array.Resize(ref _buffer, newSize + _capacity);
+			}
 		}
 
 		public void Add(T item)
