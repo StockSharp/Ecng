@@ -28,7 +28,7 @@
 		/// <see cref="DependencyProperty"/> для <see cref="Folder"/>.
 		/// </summary>
 		public static readonly DependencyProperty FolderProperty =
-			DependencyProperty.Register("Folder", typeof (string), typeof(FolderBrowserPicker), new PropertyMetadata(default(string)));
+			DependencyProperty.Register(nameof(Folder), typeof (string), typeof(FolderBrowserPicker), new PropertyMetadata(default(string)));
 
 		/// <summary>
 		/// Директория.
@@ -42,7 +42,7 @@
 		/// <summary>
 		/// Событие изменения <see cref="Folder"/>.
 		/// </summary>
-		public event Action<string> FolderChange;
+		public event Action<string> FolderChanged;
 
 		private void OpenFolder_Click(object sender, RoutedEventArgs e)
 		{
@@ -56,13 +56,13 @@
 			if (dlg.ShowDialog(owner) == true)
 			{
 				FolderPath.Text = dlg.SelectedPath;
-				FolderChange?.Invoke(dlg.SelectedPath);
+				FolderChanged?.Invoke(dlg.SelectedPath);
 			}
 		}
 
 		private void FolderPath_OnTextChanged(object sender, TextChangedEventArgs e)
 		{
-			FolderChange?.Invoke(FolderPath.Text);
+			FolderChanged?.Invoke(FolderPath.Text);
 		}
 	}
 

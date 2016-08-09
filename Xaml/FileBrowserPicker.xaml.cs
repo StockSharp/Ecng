@@ -28,7 +28,7 @@
 		/// <see cref="DependencyProperty"/> для <see cref="File"/>.
 		/// </summary>
 		public static readonly DependencyProperty FileProperty =
-			DependencyProperty.Register("File", typeof(string), typeof(FileBrowserPicker), new PropertyMetadata(default(string)));
+			DependencyProperty.Register(nameof(File), typeof(string), typeof(FileBrowserPicker), new PropertyMetadata(default(string)));
 
 		/// <summary>
 		/// Директория.
@@ -40,13 +40,27 @@
 		}
 
 		/// <summary>
+		/// <see cref="DependencyProperty"/> for <see cref="IsSaving"/>.
+		/// </summary>
+		public static readonly DependencyProperty IsSavingProperty =
+			DependencyProperty.Register(nameof(IsSaving), typeof(bool), typeof(FileBrowserPicker), new PropertyMetadata(default(bool)));
+
+		public bool IsSaving
+		{
+			get { return (bool)GetValue(IsSavingProperty); }
+			set { SetValue(IsSavingProperty, value); }
+		}
+
+		/// <summary>
 		/// Событие изменения <see cref="File"/>.
 		/// </summary>
-		public event Action<string> FileChange;
+		public event Action<string> FileChanged;
 
 		private void OpenFile_Click(object sender, RoutedEventArgs e)
 		{
-			var dlg = new VistaOpenFileDialog { CheckFileExists = true };
+			var dlg = IsSaving
+				? (VistaFileDialog)new VistaSaveFileDialog()
+				: new VistaOpenFileDialog { CheckFileExists = true };
 
 			if (!FilePath.Text.IsEmpty())
 				dlg.FileName = FilePath.Text;
@@ -56,13 +70,13 @@
 			if (dlg.ShowDialog(owner) == true)
 			{
 				FilePath.Text = dlg.FileName;
-				FileChange?.Invoke(dlg.FileName);
+				FileChanged?.Invoke(dlg.FileName);
 			}
 		}
 
 		private void FilePath_OnTextChanged(object sender, TextChangedEventArgs e)
 		{
-			FileChange?.Invoke(FilePath.Text);
+			FileChanged?.Invoke(FilePath.Text);
 		}
 	}
 
