@@ -5,6 +5,7 @@
 	using System.IO;
 	using System.Windows;
 	using System.Windows.Controls;
+	using System.Windows.Data;
 
 	using Ecng.Common;
 	using Ecng.Localization;
@@ -22,6 +23,30 @@
 		public FileBrowserPicker()
 		{
 			InitializeComponent();
+		}
+
+		/// <summary>
+		/// <see cref="DependencyProperty"/> for <see cref="DefaultExt"/>.
+		/// </summary>
+		public static readonly DependencyProperty DefaultExtProperty =
+			DependencyProperty.Register(nameof(DefaultExt), typeof(string), typeof(FileBrowserPicker), new PropertyMetadata(default(string)));
+
+		public string DefaultExt
+		{
+			get { return (string)GetValue(DefaultExtProperty); }
+			set { SetValue(DefaultExtProperty, value); }
+		}
+
+		/// <summary>
+		/// <see cref="DependencyProperty"/> for <see cref="Filter"/>.
+		/// </summary>
+		public static readonly DependencyProperty FilterProperty =
+			DependencyProperty.Register(nameof(Filter), typeof(string), typeof(FileBrowserPicker), new PropertyMetadata(default(string)));
+
+		public string Filter
+		{
+			get { return (string)GetValue(FilterProperty); }
+			set { SetValue(FilterProperty, value); }
 		}
 
 		/// <summary>
@@ -43,7 +68,12 @@
 		/// <see cref="DependencyProperty"/> for <see cref="IsSaving"/>.
 		/// </summary>
 		public static readonly DependencyProperty IsSavingProperty =
-			DependencyProperty.Register(nameof(IsSaving), typeof(bool), typeof(FileBrowserPicker), new PropertyMetadata(default(bool)));
+			DependencyProperty.Register(nameof(IsSaving), typeof(bool), typeof(FileBrowserPicker), new PropertyMetadata(default(bool), (o, args) =>
+			{
+				var picker = (FileBrowserPicker)o;
+				var binding = BindingOperations.GetBinding(picker.FilePath, TextBox.TextProperty);
+				(((FileValidationRule)binding.ValidationRules[0])).IsActive = !(bool)args.NewValue;
+			}));
 
 		public bool IsSaving
 		{
@@ -62,14 +92,20 @@
 				? (VistaFileDialog)new VistaSaveFileDialog()
 				: new VistaOpenFileDialog { CheckFileExists = true };
 
-			if (!FilePath.Text.IsEmpty())
-				dlg.FileName = FilePath.Text;
+			if (!Filter.IsEmpty())
+				dlg.Filter = Filter;
 
-			var owner = sender is DependencyObject ? ((DependencyObject)sender).GetWindow() : null;
+			if (!DefaultExt.IsEmpty())
+				dlg.DefaultExt = DefaultExt;
+
+			if (!File.IsEmpty())
+				dlg.FileName = File;
+
+			var owner = (sender as DependencyObject)?.GetWindow();
 
 			if (dlg.ShowDialog(owner) == true)
 			{
-				FilePath.Text = dlg.FileName;
+				File = dlg.FileName;
 				FileChanged?.Invoke(dlg.FileName);
 			}
 		}
@@ -82,9 +118,11 @@
 
 	class FileValidationRule : ValidationRule
 	{
+		public bool IsActive { get; set; } = true;
+
 		public override ValidationResult Validate(object value, CultureInfo cultureInfo)
 		{
-			if (value == null || !File.Exists((string)value))
+			if (IsActive && (value == null || !File.Exists((string)value)))
 				return new ValidationResult(false, "Invalid file path.".Translate());
 
 			return ValidationResult.ValidResult;
