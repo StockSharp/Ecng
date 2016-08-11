@@ -8,6 +8,7 @@ namespace Ecng.Web
 	using System.Web.Security;
 	using System.Linq;
 
+	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.Security;
@@ -32,10 +33,16 @@ namespace Ecng.Web
 	public abstract class BaseMembershipProvider : MembershipProvider
 	{
 		[Ignore]
+		private readonly TimeSpan _timeDelta = TimeSpan.FromMinutes(10);
+
+		[Ignore]
+		private readonly SynchronizedDictionary<IWebUser, DateTime> _prevUpdateTime = new SynchronizedDictionary<IWebUser, DateTime>();
+
+		[Ignore]
 		private readonly object _lock = new object();
 
 		[Ignore]
-		private readonly Dictionary<IWebUser, Tuple<DateTime, int>> _passwordAttempts = new Dictionary<IWebUser, Tuple<DateTime, int>>();
+		private readonly SynchronizedDictionary<IWebUser, Tuple<DateTime, int>> _passwordAttempts = new SynchronizedDictionary<IWebUser, Tuple<DateTime, int>>();
 
 		public override void Initialize(string name, NameValueCollection config)
 		{
@@ -171,9 +178,6 @@ namespace Ecng.Web
 
 		public virtual CryptoAlgorithm CryptoAlgorithm => _cryptoAlgorithm.Value;
 
-		[Ignore]
-		private readonly TimeSpan _timeDelta = TimeSpan.FromMinutes(10);
-
 		public override MembershipUser CreateUser(string userName, string password, string email, string passwordQuestion, string passwordAnswer, bool isApproved, object providerUserKey, out MembershipCreateStatus status)
 		{
 			status = MembershipCreateStatus.Success;
@@ -258,6 +262,21 @@ namespace Ecng.Web
 			return user.Name;
 		}
 
+		private void TrySaveActivity(IWebUser user, bool userIsOnline)
+		{
+			if (!userIsOnline)
+				return;
+
+			var prev = _prevUpdateTime.SafeAdd(user, key => DateTime.Now);
+			user.LastActivityDate = DateTime.Now;
+
+			if ((user.LastActivityDate - prev) <= _timeDelta)
+				return;
+
+			_prevUpdateTime[user] = user.LastActivityDate;
+			UpdateUser(user);
+		}
+
 		public override MembershipUser GetUser(object providerUserKey, bool userIsOnline)
 		{
 			//if (providerUserKey == null)
@@ -268,14 +287,7 @@ namespace Ecng.Web
 			if (user == null || user.Deleted)
 				throw new ArgumentException("User not founded.", nameof(providerUserKey));
 
-			if (userIsOnline)
-			{
-				var prev = user.LastActivityDate;
-				user.LastActivityDate = DateTime.Now;
-
-				if ((user.LastActivityDate - prev) > _timeDelta)
-					UpdateUser(user);
-			}
+			TrySaveActivity(user, userIsOnline);
 
 			return ConvertToMembershipUser(user);
 		}
@@ -293,14 +305,7 @@ namespace Ecng.Web
 				return null;
 			}
 
-			if (userIsOnline)
-			{
-				var prev = user.LastActivityDate;
-				user.LastActivityDate = DateTime.Now;
-
-				if ((user.LastActivityDate - prev) > _timeDelta)
-					UpdateUser(user);
-			}
+			TrySaveActivity(user, userIsOnline);
 
 			return ConvertToMembershipUser(user);
 		}
@@ -510,6 +515,7 @@ namespace Ecng.Web
 			user.LastActivityDate = membershipUser.LastActivityDate;
 			user.IsApproved = membershipUser.IsApproved;
 
+			_prevUpdateTime[user] = user.LastActivityDate;
 			UpdateUser(user);
 		}
 
