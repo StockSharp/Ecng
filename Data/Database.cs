@@ -871,6 +871,9 @@ namespace Ecng.Data
 							var entity = schema.GetFactory<TEntity>().CreateEntity(serializer, source);
 							entities.Add(entity);
 
+							if (schema.Identity != null)
+								serializer.SetId(entity, schema.Identity.Factory.CreateInstance(serializer, source[schema.Identity.Name]));
+
 							source.AddRange(CreateSource(schema.Fields.RelationManyFields));
 							serializer.Deserialize(source, schema.Fields.NonIdentityFields, entity);
 						}
@@ -906,7 +909,12 @@ namespace Ecng.Data
 			var entity = schema.GetFactory<TEntity>().CreateEntity(serializer, input);
 
 			if (schema.NoCache || schema.Identity == null)
+			{
+				if (schema.Identity != null)
+					serializer.SetId(entity, schema.Identity.Factory.CreateInstance(serializer, input[schema.Identity.Name]));
+
 				return serializer.Deserialize(input, schema.Fields.NonIdentityFields, entity);
+			}
 
 			var id = schema.Identity.Factory.CreateInstance(serializer, input[schema.Identity.Name]);
 			var key = CreateKey(schema, schema.Identity, id);
