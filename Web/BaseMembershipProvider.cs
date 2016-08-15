@@ -273,7 +273,7 @@ namespace Ecng.Web
 			if ((user.LastActivityDate - prev) <= _timeDelta)
 				return;
 
-			_prevUpdateTime[user] = user.LastActivityDate;
+			_prevUpdateTime[user] = user.LastActivityDate.Value;
 			UpdateUser(user);
 		}
 
@@ -511,11 +511,11 @@ namespace Ecng.Web
 			if (user == null)
 				throw new ArgumentException("membershipUser");
 
-			user.LastLoginDate = membershipUser.LastLoginDate;
-			user.LastActivityDate = membershipUser.LastActivityDate;
+			user.LastLoginDate = membershipUser.LastLoginDate.IsDefault() ? (DateTime?)null : membershipUser.LastLoginDate;
+			user.LastActivityDate = membershipUser.LastActivityDate.IsDefault() ? (DateTime?)null : membershipUser.LastActivityDate;
 			user.IsApproved = membershipUser.IsApproved;
 
-			_prevUpdateTime[user] = user.LastActivityDate;
+			_prevUpdateTime[user] = user.LastActivityDate ?? default(DateTime);
 			UpdateUser(user);
 		}
 
@@ -614,7 +614,7 @@ namespace Ecng.Web
 			if (user == null)
 				throw new ArgumentNullException(nameof(user));
 
-			return new MembershipUser(Name, user.Name, user.Key, user.Email, RequiresQuestionAndAnswer ? user.PasswordQuestion : string.Empty, user.Description, user.IsApproved, user.IsLockedOut, user.CreationDate, user.LastLoginDate, user.LastActivityDate, user.LastPasswordChangedDate, user.LastLockOutDate);
+			return new MembershipUser(Name, user.Name, user.Key, user.Email, RequiresQuestionAndAnswer ? user.PasswordQuestion : string.Empty, user.Description, user.IsApproved, user.IsLockedOut, user.CreationDate, user.LastLoginDate ?? default(DateTime), user.LastActivityDate ?? default(DateTime), user.LastPasswordChangedDate ?? default(DateTime), user.LastLockOutDate ?? default(DateTime));
 		}
 
 		private void ResetPasswordAttemts(IWebUser user)

@@ -22,10 +22,10 @@ namespace Ecng.Web
 		Secret PasswordAnswer { get; set; }
 
 		DateTime CreationDate { get; }
-		DateTime LastLoginDate { get; set; }
-		DateTime LastActivityDate { get; set; }
-		DateTime LastPasswordChangedDate { get; set; }
-		DateTime LastLockOutDate { get; set; }
+		DateTime? LastLoginDate { get; set; }
+		DateTime? LastActivityDate { get; set; }
+		DateTime? LastPasswordChangedDate { get; set; }
+		DateTime? LastLockOutDate { get; set; }
 
 		IWebRoleCollection Roles { get; }
 
