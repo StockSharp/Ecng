@@ -541,6 +541,44 @@
 			return truncatedString;
 		}
 
+		public static string TruncateMiddle(this string input, int limit)
+		{
+			if (input.IsEmpty())
+				return input;
+
+			var output = input;
+			const string middle = "...";
+
+			// Check if the string is longer than the allowed amount
+			// otherwise do nothing
+			if (output.Length <= limit || limit <= 0)
+				return output;
+
+			// figure out how much to make it fit...
+			var left = (limit / 2) - (middle.Length / 2);
+			var right = limit - left - (middle.Length / 2);
+
+			if ((left + right + middle.Length) < limit)
+			{
+				right++;
+			}
+			else if ((left + right + middle.Length) > limit)
+			{
+				right--;
+			}
+
+			// cut the left side
+			output = input.Substring(0, left);
+
+			// add the middle
+			output += middle;
+
+			// add the right side...
+			output += input.Substring(input.Length - right, right);
+
+			return output;
+		}
+
 		public static string RemoveTrailingZeros(this string s)
 		{
 			return s.RemoveTrailingZeros(Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalSeparator);
