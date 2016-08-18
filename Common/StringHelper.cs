@@ -426,6 +426,17 @@
 			return result;
 		}
 
+		public static StringBuilder ReplaceIgnoreCase(this StringBuilder builder, string oldValue, string newValue)
+		{
+			if (builder == null)
+				throw new ArgumentNullException(nameof(builder));
+
+			var str = builder.ToString().ReplaceIgnoreCase(oldValue, newValue);
+			return builder
+				.Clear()
+				.Append(str);
+		}
+
 		//
 		// http://ppetrov.wordpress.com/2008/06/30/useful-method-8-of-n-string-capitalize-firsttotitlecase/
 		//
