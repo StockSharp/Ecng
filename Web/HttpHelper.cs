@@ -3,6 +3,7 @@ namespace Ecng.Web
 	using System.Text;
 	using System.Web;
 	using System.Collections.Specialized;
+	using System.Security;
 	using System.Web.Routing;
 #if !SILVERLIGHT
 	using System;
@@ -366,6 +367,11 @@ namespace Ecng.Web
 		public static RequestContext GetCurrentRouteRequest()
 		{
 			return HttpContext.Current.Request.RequestContext;
+		}
+
+		public static string XmlEscape(this string content)
+		{
+			return SecurityElement.Escape(content);
 		}
 	}
 }
