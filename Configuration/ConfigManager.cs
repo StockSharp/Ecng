@@ -258,7 +258,7 @@
 			if (path == null)
 				throw new ArgumentNullException(nameof(path));
 
-			return path.Replace("%Documents%", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+			return path.ReplaceIgnoreCase("%Documents%", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
 		}
 	}
 }

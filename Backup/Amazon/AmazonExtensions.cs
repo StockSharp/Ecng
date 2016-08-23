@@ -62,7 +62,7 @@ namespace Ecng.Backup.Amazon
 		{
 			return Endpoints.First(e =>
 				e.SystemName.CompareIgnoreCase(name) ||
-				e.SystemName.Replace("-", string.Empty).CompareIgnoreCase(name) ||
+				e.SystemName.Remove("-").CompareIgnoreCase(name) ||
 				e.DisplayName.CompareIgnoreCase(name));
 		}
 	}

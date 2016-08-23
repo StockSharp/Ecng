@@ -28,7 +28,7 @@ namespace Ecng.Common
 
 			_template = template;
 
-			template = template.Replace("\\", string.Empty);
+			template = template.Remove("\\");
 
 			_dayStart = template.IndexOf('d');
 			_hourStart = template.IndexOf('h');

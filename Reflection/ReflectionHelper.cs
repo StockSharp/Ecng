@@ -820,10 +820,10 @@ namespace Ecng.Reflection
 				throw new ArgumentNullException(nameof(accessorName));
 
 			return accessorName
-							.Replace("get_", string.Empty)
-							.Replace("set_", string.Empty)
-							.Replace("add_", string.Empty)
-							.Replace("remove_", string.Empty);
+							.Remove("get_")
+							.Remove("set_")
+							.Remove("add_")
+							.Remove("remove_");
 		}
 
 		#endregion

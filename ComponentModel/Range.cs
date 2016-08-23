@@ -169,7 +169,7 @@ namespace Ecng.ComponentModel
 				throw new ArgumentOutOfRangeException(nameof(value));
 
 			value = value.Substring(1, value.Length - 2);
-			value = value.Replace("Min:", string.Empty).Replace("Max:", string.Empty);
+			value = value.Remove("Min:").Remove("Max:");
 			var parts = value.Split(' ');
 
 			return new Range<T>(parts[0].To<T>(), parts[1].To<T>());

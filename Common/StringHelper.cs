@@ -275,7 +275,15 @@
 		/// <returns>string without spaces</returns>
 		public static string RemoveSpaces(this string s)
 		{
-			return s.Replace(" ", "");
+			return s.Remove(" ");
+		}
+
+		public static string Remove(this string s, string what, bool ignoreCase = false)
+		{
+			if (ignoreCase)
+				return s.ReplaceIgnoreCase(what, string.Empty);
+			else
+				return s.Replace(what, string.Empty);
 		}
 
 		/// <summary>
@@ -745,7 +753,7 @@
 
 		public static string LightScreening(this string text)
 		{
-			return text.Replace(' ', '-').Replace(".", string.Empty).Replace("#", string.Empty).Replace("?", string.Empty).Replace(":", string.Empty);
+			return text.Replace(' ', '-').Remove(".").Remove("#").Remove("?").Remove(":");
 		}
 
 		public static bool ComparePaths(this string path1, string path2)
@@ -777,7 +785,7 @@
 
 		public static string Digest(this byte[] digest)
 		{
-			return BitConverter.ToString(digest).Replace("-", string.Empty);
+			return BitConverter.ToString(digest).Remove("-");
 		}
 
 		private static readonly byte[] _initVectorBytes = Encoding.ASCII.GetBytes("ss14fgty650h8u82");

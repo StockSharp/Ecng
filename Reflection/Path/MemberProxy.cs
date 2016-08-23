@@ -290,12 +290,12 @@
 
 					if (paramName.Contains("@"))
 					{
-						param.Name = paramName.Replace("@", "").ToLower();
+						param.Name = paramName.Remove("@").ToLower();
 						param.Type = ParamType.Reference;
 					}
 					else
 					{
-						param.Value = paramName.Replace("'", "");
+						param.Value = paramName.Remove("'");
 						param.Type = ParamType.Direct;
 					}
 

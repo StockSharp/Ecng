@@ -17,7 +17,7 @@
 		protected HierarchicalPageLoadList(IStorage storage)
 			: base(storage)
 		{
-			Morph = GetType().Name.Replace("List", string.Empty);
+			Morph = GetType().Name.Remove("List");
 
 			if (Morph == typeof(TEntity).Name)
 				Morph = string.Empty;

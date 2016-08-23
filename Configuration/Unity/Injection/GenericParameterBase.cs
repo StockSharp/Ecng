@@ -15,6 +15,7 @@ using System.Globalization;
 using Microsoft.Practices.ObjectBuilder2;
 using Ecng.Configuration.Properties;
 using Microsoft.Practices.Unity.Utility;
+using Ecng.Common;
 
 namespace Microsoft.Practices.Unity
 {
@@ -48,7 +49,7 @@ namespace Microsoft.Practices.Unity
             Guard.ArgumentNotNull(genericParameterName, "genericParameterName");
             if (genericParameterName.EndsWith("[]", StringComparison.Ordinal) || genericParameterName.EndsWith("()", StringComparison.Ordinal))
             {
-                this.genericParameterName = genericParameterName.Replace("[]", "").Replace("()", "");
+                this.genericParameterName = genericParameterName.Remove("[]").Remove("()");
                 this.isArray = true;
             }
             else
