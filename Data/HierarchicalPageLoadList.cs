@@ -67,10 +67,11 @@
 			if (pairs == null)
 				throw new ArgumentNullException(nameof(pairs));
 
-			foreach (var p in pairs)
+			foreach (var pair in pairs)
 			{
-				var pair = p;
-				AddFilter(new VoidField(pair.Item1, pair.Item2.GetType()), pair.Item2, () => pair.Item2);
+				var fieldName = pair.Item1;
+				var fieldValue = pair.Item2;
+				AddFilter(new VoidField(fieldName, fieldValue.GetType()), fieldValue, () => fieldValue);
 			}
 		}
 
