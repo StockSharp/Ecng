@@ -70,6 +70,7 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.XML" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs">
@@ -93,6 +94,9 @@
     <Compile Include="Configuration\WebSection.cs" />
     <Compile Include="IWebRoleCollection.cs" />
     <Compile Include="IWebUserCollection.cs" />
+    <Compile Include="Sitemap\SitemapFrequency.cs" />
+    <Compile Include="Sitemap\SitemapGenerator.cs" />
+    <Compile Include="Sitemap\SitemapNode.cs" />
     <Compile Include="UI\WebControls\DataPagerEx.cs" />
     <Compile Include="Feeds\FeedHandler.cs" />
     <Compile Include="HttpHelper.cs" />
