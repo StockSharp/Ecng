@@ -126,7 +126,7 @@
 		//	_count += diff;
 		//}
 
-		public void ResetCache()
+		public virtual void ResetCache()
 		{
 			lock (CachedEntities.SyncRoot)
 			{
@@ -378,7 +378,7 @@
 
 		public override IEnumerable<TEntity> GetRange(long startIndex, long count, string sortExpression = null, ListSortDirection directions = ListSortDirection.Ascending)
 		{
-			var orderBy = sortExpression.IsEmpty() ? null : Schema.Fields[sortExpression];
+			var orderBy = sortExpression.IsEmpty() ? null : Schema.Fields.TryGet(sortExpression) ?? new VoidField(sortExpression, typeof(object));
 			return ReadAll(startIndex, count, orderBy, directions);
 		}
 
