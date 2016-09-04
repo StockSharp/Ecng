@@ -9,9 +9,7 @@ namespace Ecng.Logic.BusinessEntities
 	using Ecng.Data;
 	using Ecng.Serialization;
 
-	public class LogicDatabase<TUser, TRole> : HierarchicalDatabase
-		where TUser : BaseEntity<TUser, TRole>
-		where TRole : BaseRole<TUser, TRole>
+	public class LogicDatabase : HierarchicalDatabase
 	{
 		private static readonly object _auditLock = new object();
 		private static readonly Dictionary<Tuple<Type, long>, SerializationItemCollection> _auditPrevValues = new Dictionary<Tuple<Type, long>, SerializationItemCollection>();
@@ -31,7 +29,7 @@ namespace Ecng.Logic.BusinessEntities
 				{
 					var schema = SchemaManager.GetSchema<TEntity>();
 
-					var baseEntity = entity.To<BaseEntity<TUser, TRole>>();
+					var baseEntity = entity.To<BaseEntity>();
 
 					var info = _auditIds.SafeAdd(schema.EntityType, key =>
 						new Tuple<byte, IDictionary<string, byte>>
@@ -58,7 +56,7 @@ namespace Ecng.Logic.BusinessEntities
 			{
 				var info = _auditIds[typeof(TEntity)];
 				var diff = new SerializationItemCollection();
-				var id = entity.To<BaseEntity<TUser, TRole>>().Id;
+				var id = entity.To<BaseEntity>().Id;
 
 				lock (_auditLock)
 				{
@@ -94,7 +92,7 @@ namespace Ecng.Logic.BusinessEntities
 			base.CacheCleared();
 		}
 
-		public AuditList<TUser, TRole> Audit { get; set; }
+		public AuditList Audit { get; set; }
 
 		private static Dictionary<Tuple<Field, string>, byte> GetAuditFields(Type entityType)
 		{
@@ -140,7 +138,7 @@ namespace Ecng.Logic.BusinessEntities
 		{
 			var transactionId = Guid.NewGuid();
 
-			var auditList = items.Select(item => new Audit<TUser, TRole>
+			var auditList = items.Select(item => new Audit
 			{
 				SchemaId = info.Item1,
 				FieldId = info.Item2[item.Field.Name],

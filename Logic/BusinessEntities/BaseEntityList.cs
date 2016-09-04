@@ -11,14 +11,13 @@ namespace Ecng.Logic.BusinessEntities
 	using Ecng.Data;
 	using Ecng.Data.Sql;
 	using Ecng.Serialization;
+	using Ecng.Web;
 
 	#endregion
 
 	[Serializable]
-	public abstract class BaseEntityList<TEntity, TUser, TRole> : HierarchicalPageLoadList<TEntity>
-		where TUser : BaseEntity<TUser, TRole>
-		where TRole : BaseRole<TUser, TRole>
-		where TEntity : BaseEntity<TUser, TRole>
+	public abstract class BaseEntityList<TEntity> : HierarchicalPageLoadList<TEntity>
+		where TEntity : BaseEntity
 	{
 		#region Private Fields
 
@@ -104,7 +103,7 @@ namespace Ecng.Logic.BusinessEntities
 			return ReadLasts(count, ModificationDateField);
 		}
 
-		private static TUser CurrentUser => LogicHelper<TUser, TRole>.CurrentUser ?? LogicHelper<TUser, TRole>.GetRootObject().GetUsers().Null;
+		private static IWebUser CurrentUser => LogicHelper.CurrentUser ?? LogicHelper.GetRootObject().GetUsers().Null;
 
 		public string OverrideItemName { get; set; }
 
@@ -114,7 +113,7 @@ namespace Ecng.Logic.BusinessEntities
 			{
 				new SerializationItem<long>(new VoidField<long>(OverrideItemName), entity.Id),
 				new SerializationItem<DateTime>(new VoidField<DateTime>("CreationDate"), DateTime.Now),
-				new SerializationItem<long>(new VoidField<long>("CreatedBy"), CurrentUser.Id),
+				new SerializationItem(new VoidField<long>("CreatedBy"), CurrentUser.Key),
 				new SerializationItem<bool>(new VoidField<bool>("Deleted"), false),
 			};
 		}
@@ -155,7 +154,7 @@ namespace Ecng.Logic.BusinessEntities
 			base.OnRemove(entity);
 		}
 
-		protected void AddFilter(BaseEntity<TUser, TRole> entity)
+		protected void AddFilter(BaseEntity entity)
 		{
 			if (entity == null)
 				throw new ArgumentNullException(nameof(entity));
@@ -163,12 +162,12 @@ namespace Ecng.Logic.BusinessEntities
 			AddFilter(entity.GetType().GetSchema().Name, entity);
 		}
 
-		protected void AddFilter(string fieldName, BaseEntity<TUser, TRole> fieldValue)
+		protected void AddFilter(string fieldName, BaseEntity fieldValue)
 		{
 			AddFilter(Schema.Fields.TryGet(fieldName) ?? new VoidField<long>(fieldName), fieldValue);
 		}
 
-		protected void AddFilter(Field field, BaseEntity<TUser, TRole> fieldValue)
+		protected void AddFilter(Field field, BaseEntity fieldValue)
 		{
 			if (field == null)
 				throw new ArgumentNullException(nameof(field));
@@ -192,12 +191,12 @@ namespace Ecng.Logic.BusinessEntities
 			}
 		}
 
-		protected TScalar ExecuteScalar<TScalar>(string morph, params BaseEntity<TUser, TRole>[] filterEntities)
+		protected TScalar ExecuteScalar<TScalar>(string morph, params BaseEntity[] filterEntities)
 		{
 			return ExecuteScalar<TScalar>(morph, ConvertToSource(filterEntities));
 		}
 
-		protected int ExecuteNonQuery(string morph, params BaseEntity<TUser, TRole>[] filterEntities)
+		protected int ExecuteNonQuery(string morph, params BaseEntity[] filterEntities)
 		{
 			return ExecuteNonQuery(morph, ConvertToSource(filterEntities));
 		}
@@ -219,17 +218,17 @@ namespace Ecng.Logic.BusinessEntities
 			return ReadAll(keyFieldsMorph, valueFieldsMorph, newSource);
 		}
 
-		protected IEnumerable<TEntity> ReadAll(string keyFieldsMorph, string valueFieldsMorph, params BaseEntity<TUser, TRole>[] entities)
+		protected IEnumerable<TEntity> ReadAll(string keyFieldsMorph, string valueFieldsMorph, params BaseEntity[] entities)
 		{
 			return ReadAll(keyFieldsMorph, valueFieldsMorph, ConvertToSource(entities));
 		}
 
-		protected TEntity Read(string keyFieldsMorph, string valueFieldsMorph, params BaseEntity<TUser, TRole>[] filterEntities)
+		protected TEntity Read(string keyFieldsMorph, string valueFieldsMorph, params BaseEntity[] filterEntities)
 		{
 			return Read(keyFieldsMorph, valueFieldsMorph, ConvertToSource(filterEntities));
 		}
 
-		private static SerializationItemCollection ConvertToSource(IEnumerable<BaseEntity<TUser, TRole>> entities)
+		private static SerializationItemCollection ConvertToSource(IEnumerable<BaseEntity> entities)
 		{
 			return new SerializationItemCollection(entities.Select(entity => new SerializationItem(new VoidField<long>(entity.GetType().GetSchema().Name), entity.Id)));
 		}

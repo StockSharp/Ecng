@@ -11,7 +11,7 @@ namespace Ecng.Logic.BusinessEntities
 		}
 
 		public LogicQueryStringParameter(string qsKey)
-			: base(qsKey, TypeCode.Int64, WebHelper.GetIdentity<T>())
+			: base(qsKey, TypeCode.Int64, LogicHelper.GetIdentity<T>())
 		{
 		}
 	}

@@ -11,6 +11,7 @@
 	using Ecng.Reflection;
 	using Ecng.Reflection.Path;
 	using Ecng.Serialization;
+	using Ecng.Web;
 	using Ecng.Web.UI;
 
 	public abstract class LogicObjectModelDataSource : ObjectModelDataSource
@@ -20,48 +21,30 @@
 		//protected abstract ObjectModelDataSourceView CreateView(ObjectModelDataSource owner, string viewName, MemberProxy proxy, object root, HttpContext context);
 	}
 
-	public class LogicObjectModelDataSourceView<TUser, TRole> : ObjectModelDataSourceView
-		where TUser : BaseEntity<TUser, TRole>
-		where TRole : BaseRole<TUser, TRole>
+	public class LogicObjectModelDataSourceView : ObjectModelDataSourceView
 	{
-		#region Private Fields
-
 		private readonly MethodInfo _getRangeMethod;
 		private readonly Schema _schema;
-
-		#endregion
-
-		#region LogicObjectModelDataSource.ctor()
 
 		public LogicObjectModelDataSourceView(ObjectModelDataSource owner, string name, MemberProxy proxy, object root, HttpContext context, bool restrict)
 			: base(owner, name, proxy, root, context)
 		{
-			_restrict = restrict;
-			_getRangeMethod = typeof(LogicObjectModelDataSourceView<TUser, TRole>).GetMember<MethodInfo>("nGetRange").Make(ItemType);
+			Restrict = restrict;
+			_getRangeMethod = typeof(LogicObjectModelDataSourceView).GetMember<MethodInfo>("nGetRange").Make(ItemType);
 			_schema = ItemType.GetSchema();
 		}
 
-		#endregion
-
-		#region Restrict
-
-		private readonly bool _restrict;
-
-		public bool Restrict => _restrict;
-
-		#endregion
-
-		#region ObjectModelDataSourceView Members
+		public bool Restrict { get; }
 
 		protected override int GetCount(IRangeCollection collection)
 		{
-			using (LogicHelper<TUser, TRole>.CreateScope(_schema, Restrict))
+			using (LogicHelper.CreateScope(_schema, Restrict))
 				return base.GetCount(collection);
 		}
 
 		protected override IEnumerable GetRange(IRangeCollection collection, int startIndex, int count, string sortExpression, ListSortDirection direction)
 		{
-			using (LogicHelper<TUser, TRole>.CreateScope(_schema, Restrict))
+			using (LogicHelper.CreateScope(_schema, Restrict))
 			{
 				if (!sortExpression.IsEmpty() && !_schema.Fields.Contains(sortExpression))
 					return _getRangeMethod.GetValue<object[], IEnumerable>(new object[] { collection, startIndex, count, new VoidField<ListSortDirection>(sortExpression), direction });
@@ -69,8 +52,6 @@
 					return base.GetRange(collection, startIndex, count, sortExpression, direction);
 			}
 		}
-
-		#endregion
 
 		private static IEnumerable<E> nGetRange<E>(RelationManyList<E> list, int startIndex, int count, VoidField field, ListSortDirection direction)
 		{

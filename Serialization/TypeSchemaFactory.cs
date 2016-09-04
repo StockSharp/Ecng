@@ -95,11 +95,17 @@
 			if (schema.IsSerializable)
 				return schema;
 
+			var typeOverides = entityType.GetAttributes<TypeOverrideAttribute>().ToDictionary(a => a.FromType, a => a.ToType);
+
 			schema.Fields.AddRange(GetMembers(entityType).Select(member =>
 			{
 				var field = member.GetAttribute<IdentityAttribute>() == null
 					? new Field(schema, member) { IsIndex = member.GetAttribute<IndexAttribute>() != null }
 					: new IdentityField(schema, member);
+
+				var toType = typeOverides.TryGetValue(field.Type);
+				if (toType != null)
+					field.Type = toType;
 
 				var fieldAttr = member.GetAttribute<FieldAttribute>();
 				if (fieldAttr != null)

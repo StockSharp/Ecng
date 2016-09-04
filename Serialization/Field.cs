@@ -69,7 +69,7 @@ namespace Ecng.Serialization
 		public string Name { get; internal set; }
 
 		[Ignore]
-		public Type Type { get; private set; }
+		public Type Type { get; set; }
 
 		public bool IsReadOnly { get; set; }
 

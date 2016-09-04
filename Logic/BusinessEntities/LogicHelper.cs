@@ -1,9 +1,11 @@
 namespace Ecng.Logic.BusinessEntities
 {
 	using System;
+	using System.Linq;
 	using System.Reflection;
 	using System.Threading;
 
+	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Configuration;
 	using Ecng.Data;
@@ -11,30 +13,17 @@ namespace Ecng.Logic.BusinessEntities
 	using Ecng.Reflection;
 	using Ecng.Web;
 
-	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
-	public class QueryStringIdAttribute : Attribute
-	{
-		public QueryStringIdAttribute(string idField)
-		{
-			IdField = idField;
-		}
-
-		public string IdField { get; private set; }
-	}
-
-	public static class LogicHelper<TUser, TRole>
-		where TUser : BaseEntity<TUser, TRole>
-		where TRole : BaseRole<TUser, TRole>
+	public static class LogicHelper
 	{
 		#region GetRootObject
 
-		public static LogicRootObject<TUser, TRole> GetRootObject()
+		public static LogicRootObject GetRootObject()
 		{
-			return ConfigManager.GetService<LogicRootObject<TUser, TRole>>();
+			return ConfigManager.GetService<LogicRootObject>();
 		}
 
 		public static TRoot GetRootObject<TRoot>()
-			where TRoot : LogicRootObject<TUser, TRole>
+			where TRoot : LogicRootObject
 		{
 			return (TRoot)GetRootObject();
 		}
@@ -43,19 +32,19 @@ namespace Ecng.Logic.BusinessEntities
 
 		#region CurrentUser
 
-		public static TUser CurrentUser
+		public static IWebUser CurrentUser
 		{
 			get
 			{
 				var identity = Thread.CurrentPrincipal.Identity;
-				return identity.IsAuthenticated ? GetRootObject().GetUsers().ReadByName(identity.Name) : null;
+				return identity.IsAuthenticated ? GetRootObject().GetUsers().ReadByName(identity.Name) : default(IWebUser);
 			}
 		}
 
 		#endregion
 
-		public static TValue SecureGet<TEntity, TValue>(BaseEntityList<TEntity, TUser, TRole> list, Func<BaseEntityList<TEntity, TUser, TRole>, TValue> func)
-			where TEntity : BaseEntity<TUser, TRole>
+		public static TValue SecureGet<TEntity, TValue>(BaseEntityList<TEntity> list, Func<BaseEntityList<TEntity>, TValue> func)
+			where TEntity : BaseEntity
 		{
 			using (CreateScope(SchemaManager.GetSchema<TEntity>(), true))
 				return func(list);
@@ -69,7 +58,7 @@ namespace Ecng.Logic.BusinessEntities
 			if (restrict)
 			{
 				morph = "Secure";
-				source.Add(new SerializationItem(new VoidField<long>("CurrentUser"), CurrentUser != null ? (object)CurrentUser.Id : null));
+				source.Add(new SerializationItem(new VoidField<long>("CurrentUser"), CurrentUser.Key));
 			}
 			else
 				morph = string.Empty;
@@ -80,13 +69,13 @@ namespace Ecng.Logic.BusinessEntities
 		#region GetEntity
 
 		public static TEntity GetEntity<TEntity>()
-			where TEntity : BaseEntity<TUser, TRole>
+			where TEntity : BaseEntity
 		{
-			return GetEntity<TEntity>(WebHelper.GetIdentity<TEntity>());
+			return GetEntity<TEntity>(GetIdentity<TEntity>());
 		}
 
 		public static TEntity GetEntity<TEntity>(string id)
-			where TEntity : BaseEntity<TUser, TRole>
+			where TEntity : BaseEntity
 		{
 			var entity = GetRootObject().Database.Read<TEntity>(Url.Current.QueryString.GetValue<long>(id));
 
@@ -96,20 +85,65 @@ namespace Ecng.Logic.BusinessEntities
 				return entity;
 		}
 
-		public static BaseEntity<TUser, TRole> GetEntity(Type entityType, string id)
+		public static BaseEntity GetEntity(Type entityType, string id)
 		{
-			return typeof(LogicHelper<TUser, TRole>)
+			return typeof(LogicHelper)
 					.GetMember<MethodInfo>("GetEntity", typeof(string))
 					.Make(entityType)
-					.GetValue<string, BaseEntity<TUser, TRole>>(id);
+					.GetValue<string, BaseEntity>(id);
 		}
 
 		#endregion
 
 		public static T GetOrCreateEntity<T>()
-			where T : BaseEntity<TUser, TRole>, new()
+			where T : BaseEntity, new()
 		{
-			return WebHelper.Contains<T>() ? GetEntity<T>() : new T();
+			return Contains<T>() ? GetEntity<T>() : new T();
+		}
+
+		private static readonly SynchronizedDictionary<Type, string> _identifiers = new SynchronizedDictionary<Type, string>();
+
+		public static string GetIdentity(Type type)
+		{
+			if (type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			return _identifiers.SafeAdd(type, delegate
+			{
+				var attr = type.GetAttribute<QueryStringIdAttribute>();
+
+				if (attr != null)
+					return attr.IdField;
+				else
+				{
+					var upperChars = type.Name.ToCharArray().Where(char.IsUpper).ToArray();
+					return new string(upperChars).ToLowerInvariant() + "id";
+				}
+			});
+		}
+
+		public static string GetIdentity<T>()
+		{
+			return GetIdentity(typeof(T));
+		}
+
+		public static bool Contains<T>()
+		{
+			return Url.Current.QueryString.Contains(GetIdentity(typeof(T)));
+		}
+
+		public static void Append<TEntity>(this QueryString queryString, TEntity entity)
+			where TEntity : BaseEntity
+			//where TUser : IWebUser
+			//where TRole : IWebRole
+		{
+			if (queryString == null)
+				throw new ArgumentNullException(nameof(queryString));
+
+			if (entity == null)
+				throw new ArgumentNullException(nameof(entity));
+
+			queryString.Append(GetIdentity(entity.GetType()), entity.Id);
 		}
 	}
 }

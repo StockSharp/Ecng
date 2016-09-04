@@ -1,31 +1,28 @@
 namespace Ecng.Logic.BusinessEntities
 {
 	using Ecng.Data;
+	using Ecng.Web;
 
-	public interface IUserList<TUser, TRole>
-		where TUser : BaseEntity<TUser, TRole>
-		where TRole : BaseRole<TUser, TRole>
+	public interface IUserList
 	{
-		TUser Null { get; }
-		TUser ReadByName(string name);
+		IWebUser Null { get; }
+		IWebUser ReadByName(string name);
 	}
 
-	public abstract class LogicRootObject<TUser, TRole> : RootObject<LogicDatabase<TUser, TRole>>
-		where TUser : BaseEntity<TUser, TRole>
-		where TRole : BaseRole<TUser, TRole>
+	public abstract class LogicRootObject : RootObject<LogicDatabase>
 	{
-		protected LogicRootObject(string name, LogicDatabase<TUser, TRole> database)
+		protected LogicRootObject(string name, LogicDatabase database)
 			: base(name, database)
 		{
 		}
 
-		public AuditList<TUser, TRole> Audit { get; private set; }
+		public AuditList Audit { get; private set; }
 
-		protected internal abstract IUserList<TUser, TRole> GetUsers();
+		protected internal abstract IUserList GetUsers();
 
 		public override void Initialize()
 		{
-			Audit = new AuditList<TUser, TRole>(Database);
+			Audit = new AuditList(Database);
 			Database.Audit = Audit;
 		}
 	}

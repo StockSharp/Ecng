@@ -129,6 +129,7 @@
     <Compile Include="SchemaFactoryAttribute.cs" />
     <Compile Include="SerializerFieldFactory.cs" />
     <Compile Include="SettingsStorage.cs" />
+    <Compile Include="TypeOverrideAttribute.cs" />
     <Compile Include="TypeSchemaFactory.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

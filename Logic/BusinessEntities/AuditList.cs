@@ -4,9 +4,7 @@ namespace Ecng.Logic.BusinessEntities
 
 	using Ecng.Serialization;
 
-	public class AuditList<TUser, TRole> : BaseEntityList<Audit<TUser, TRole>, TUser, TRole>
-		where TUser : BaseEntity<TUser, TRole>
-		where TRole : BaseRole<TUser, TRole>
+	public class AuditList : BaseEntityList<Audit>
 	{
 		public AuditList(IStorage storage)
 			: base(storage)
@@ -14,11 +12,9 @@ namespace Ecng.Logic.BusinessEntities
 		}
 	}
 
-	class BaseEntityAuditList<TUser, TRole> : AuditList<TUser, TRole>
-		where TUser : BaseEntity<TUser, TRole>
-		where TRole : BaseRole<TUser, TRole>
+	class BaseEntityAuditList : AuditList
 	{
-		public BaseEntityAuditList(IStorage storage, BaseEntity<TUser, TRole> entity)
+		public BaseEntityAuditList(IStorage storage, BaseEntity entity)
 			: base(storage)
 		{
 			if (entity == null)

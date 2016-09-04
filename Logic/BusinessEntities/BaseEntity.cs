@@ -5,21 +5,20 @@ namespace Ecng.Logic.BusinessEntities
 
 	using Ecng.Common;
 	using Ecng.Serialization;
+	using Ecng.Web;
 
 	sealed class AuditPageLoadAttribute : RelationManyAttribute
 	{
 		protected override Type GetFactoryType(Field field)
 		{
-			UnderlyingListType = typeof(BaseEntityAuditList<,>).Make(field.Type.GetGenericArguments());
+			UnderlyingListType = typeof(BaseEntityAuditList);//.Make(field.Type.GetGenericArguments());
 			return base.GetFactoryType(field);
 		}
 	}
 
 	[Serializable]
 	[TypeSchemaFactory(SearchBy.Properties, VisibleScopes.Public)]
-	public abstract class BaseEntity<TUser, TRole> : Equatable<BaseEntity<TUser, TRole>>
-		where TUser : BaseEntity<TUser, TRole>
-		where TRole : BaseRole<TUser, TRole>
+	public abstract class BaseEntity : Equatable<BaseEntity>
 	{
 		protected BaseEntity()
 		{
@@ -29,7 +28,7 @@ namespace Ecng.Logic.BusinessEntities
 
 		[Identity]
 		[Field("Id", ReadOnly = true)]
-		public virtual long Id { get; set; }
+		public long Id { get; set; }
 
 		[AuditField((byte)AuditFields.CreationDate)]
 		public DateTime CreationDate { get; set; }
@@ -42,36 +41,36 @@ namespace Ecng.Logic.BusinessEntities
 
 		[RelationSingle]
 		[AuditField((byte)AuditFields.User)]
-		public TUser CreatedBy { get; set; }
+		public IWebUser CreatedBy { get; set; }
 
 		[NonSerialized]
-		private AuditList<TUser, TRole> _changes;
+		private AuditList _changes;
 
 		[AuditPageLoad]
 		[IgnoreDataMember]
-		public AuditList<TUser, TRole> Changes
+		public AuditList Changes
 		{
 			get { return _changes; }
 			protected set { _changes = value; }
 		}
 
-		#region Equatable<BaseEntity<TUser, TRole>> Members
+		#region Equatable<BaseEntity> Members
 
-		protected override bool OnEquals(BaseEntity<TUser, TRole> other)
+		protected override bool OnEquals(BaseEntity other)
 		{
 			if (Id != -1)
 				return Id == other.Id;
 			else
-				return object.ReferenceEquals(this, other);
+				return ReferenceEquals(this, other);
 		}
 
 		#endregion
 
-		#region Cloneable<BaseEntity<TUser, TRole>> Members
+		#region Cloneable<BaseEntity> Members
 
-		public override BaseEntity<TUser, TRole> Clone()
+		public override BaseEntity Clone()
 		{
-			throw new NotImplementedException();
+			throw new NotSupportedException();
 		}
 
 		#endregion
