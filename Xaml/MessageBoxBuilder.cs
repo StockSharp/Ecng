@@ -60,7 +60,6 @@ namespace Ecng.Xaml
 		private MessageBoxImage _icon = MessageBoxImage.None;
 		private MessageBoxResult _defaultResult = MessageBoxResult.None;
 		private MessageBoxOptions _options = MessageBoxOptions.None;
-		private string _description;
 		private IMessageBoxHandler _handler = DefaultHandler;
 
 		public MessageBoxBuilder Handler(IMessageBoxHandler handler)
@@ -93,12 +92,6 @@ namespace Ecng.Xaml
 		public MessageBoxBuilder Caption(string caption)
 		{
 			_caption = caption;
-			return this;
-		}
-
-		public MessageBoxBuilder Description(string description)
-		{
-			_description = description;
 			return this;
 		}
 
@@ -163,9 +156,6 @@ namespace Ecng.Xaml
 			if (caption == null)
 			{
 				caption = TypeHelper.ApplicationName;
-
-				if (_description != null)
-					caption += " - " + _description;
 			}
 
 			return _owner == null
