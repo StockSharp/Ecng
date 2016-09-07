@@ -47,6 +47,10 @@ namespace Ecng.Xaml
 		private int _pendingCount;
 		private bool _isTimerStarted;
 
+		public event Action BeforeUpdate;
+
+		public event Action AfterUpdate;
+
 		public ThreadSafeObservableCollection(IListEx<TItem> items)
 		{
 			if (items == null)
@@ -494,7 +498,9 @@ namespace Ecng.Xaml
 
 			Dispatcher.AddAction(() =>
 			{
-				if (hasClear)
+				BeforeUpdate?.Invoke();
+
+                if (hasClear)
 					Items.Clear();
 
 				foreach (var action in pendingActions)
@@ -518,6 +524,8 @@ namespace Ecng.Xaml
 							throw new ArgumentOutOfRangeException();
 					}
 				}
+
+				AfterUpdate?.Invoke();
 
 				if (error != null)
 					throw error;
