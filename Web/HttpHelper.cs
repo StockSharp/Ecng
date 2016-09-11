@@ -1,5 +1,6 @@
 namespace Ecng.Web
 {
+	using System.Collections.Generic;
 	using System.Text;
 	using System.Web;
 	using System.Collections.Specialized;
@@ -372,6 +373,57 @@ namespace Ecng.Web
 		public static string XmlEscape(this string content)
 		{
 			return SecurityElement.Escape(content);
+		}
+
+		public static string ClearUrl(this string url)
+		{
+			var chars = new List<char>(url);
+
+			var count = chars.Count;
+
+			for (var i = 0; i < count; i++)
+			{
+				if (!IsUrlSafeChar(chars[i]))
+				{
+					chars.RemoveAt(i);
+					count--;
+					i--;
+				}
+			}
+
+			return new string(chars.ToArray());
+		}
+
+		public static bool IsUrlSafeChar(this char ch)
+		{
+			if (((ch < 'a') || (ch > 'z')) && ((ch < 'A') || (ch > 'Z')) && ((ch < '0') || (ch > '9')))
+			{
+				switch (ch)
+				{
+					case '(':
+					case ')':
+					//case '*':
+					case '-':
+					//case '.':
+					case '!':
+						break;
+
+					case '+':
+					case ',':
+					case '.':
+					case '%':
+					case '*':
+						return false;
+
+					default:
+						if (ch != '_')
+							return false;
+
+						break;
+				}
+			}
+
+			return true;
 		}
 	}
 }
