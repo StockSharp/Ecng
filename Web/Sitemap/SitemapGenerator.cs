@@ -127,6 +127,8 @@ namespace Ecng.Web.Sitemap
 			XNamespace xmlns = _sitemapsNamespace;
 			var root = new XElement(xmlns + "urlset");
 
+			var count = 0;
+
 			foreach (var sitemapNode in sitemapNodes)
 			{
 				var urlElement = new XElement(
@@ -143,6 +145,9 @@ namespace Ecng.Web.Sitemap
 						sitemapNode.Priority.Value.ToString("F1", CultureInfo.InvariantCulture)));
 
 				root.Add(urlElement);
+
+				count++;
+				CheckSitemapCount(count);
 			}
 
 			var document = new XDocument(root);
@@ -154,11 +159,11 @@ namespace Ecng.Web.Sitemap
 		/// <summary>
 		/// Checks the size of the XML sitemap document. If it is over 10MB, logs an error.
 		/// </summary>
-		/// <param name="sitemapXml">The sitemap XML document.</param>
-		public static void CheckDocumentSize(string sitemapXml)
+		/// <param name="size">The sitemap XML document size.</param>
+		public static void CheckDocumentSize(int size)
 		{
-			if (sitemapXml.Length >= MaximumSitemapSizeInBytes)
-				throw new ArgumentOutOfRangeException(nameof(sitemapXml), sitemapXml.Length, "Sitemap exceeds the maximum size of 10MB.");
+			if (size >= MaximumSitemapSizeInBytes)
+				throw new ArgumentOutOfRangeException(nameof(size), size, "Sitemap exceeds the maximum size of 10MB.");
 		}
 
 		/// <summary>
