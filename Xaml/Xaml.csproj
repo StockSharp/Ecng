@@ -247,6 +247,7 @@
     <Compile Include="PropertyChangeNotifier.cs" />
     <Compile Include="Proxy.cs" />
     <Compile Include="ResizableContentControl.cs" />
+    <Compile Include="ResourseDictExtension.cs" />
     <Compile Include="SecretPicker.xaml.cs">
       <DependentUpon>SecretPicker.xaml</DependentUpon>
     </Compile>
