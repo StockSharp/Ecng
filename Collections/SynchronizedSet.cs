@@ -11,6 +11,7 @@
 	{
 		private readonly PairSet<int, T> _indecies;
 		private int _maxIndex = -1;
+		private bool _raiseRangeEvents = true;
 
 		public SynchronizedSet()
 			: this(false)
@@ -226,16 +227,16 @@
 		{
 			base.OnAdded(item);
 
-			var evt = AddedRange;
-			evt?.Invoke(new[] { item });
+			if (_raiseRangeEvents)
+				AddedRange?.Invoke(new[] { item });
 		}
 
 		protected override void OnRemoved(T item)
 		{
 			base.OnRemoved(item);
 
-			var evt = RemovedRange;
-			evt?.Invoke(new[] { item });
+			if (_raiseRangeEvents)
+				RemovedRange?.Invoke(new[] { item });
 		}
 
 		public void AddRange(IEnumerable<T> items)
@@ -244,7 +245,7 @@
 			{
 				var filteredItems = items.Where(OnAdding).ToArray();
 				InnerCollection.AddRange(filteredItems);
-				filteredItems.ForEach(base.OnAdded);
+				ProcessRange(filteredItems, OnAdded);
 
 				AddedRange?.Invoke(filteredItems);
 			}
@@ -256,10 +257,19 @@
 			{
 				var filteredItems = items.Where(OnRemoving).ToArray();
 				InnerCollection.RemoveRange(filteredItems);
-				filteredItems.ForEach(base.OnRemoved);
+				ProcessRange(filteredItems, OnRemoved);
 
 				RemovedRange?.Invoke(filteredItems);
 			}
+		}
+
+		private void ProcessRange(IEnumerable<T> items, Action<T> action)
+		{
+			_raiseRangeEvents = false;
+
+			items.ForEach(action);
+
+			_raiseRangeEvents = true;
 		}
 
 		public int RemoveRange(int index, int count)
