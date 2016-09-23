@@ -49,6 +49,36 @@
 				throw new InvalidOperationException("Indexing not switched on.");
 		}
 
+		private void AddIndicies(T item)
+		{
+			if (_indecies == null)
+				return;
+
+			_maxIndex = Count - 1;
+			_indecies.Add(_maxIndex, item);
+		}
+
+		private bool RemoveIndicies(T item)
+		{
+			if (_indecies == null)
+				return true;
+
+			if (_maxIndex == -1)
+				throw new InvalidOperationException();
+
+			var index = _indecies.GetKey(item);
+			_indecies.RemoveByValue(item);
+
+			for (var i = index + 1; i <= _maxIndex; i++)
+			{
+				_indecies.SetKey(_indecies[i], i - 1);
+			}
+
+			_maxIndex--;
+
+			return true;
+		}
+
 		protected override bool OnAdding(T item)
 		{
 			if (InnerCollection.Contains(item))
@@ -98,11 +128,7 @@
 			if (!InnerCollection.Add(item))
 				return;
 
-			if (_indecies == null)
-				return;
-
-			_maxIndex = Count - 1;
-			_indecies.Add(_maxIndex, item);
+			AddIndicies(item);
 		}
 
 		protected override bool OnRemove(T item)
@@ -110,21 +136,7 @@
 			if (!base.OnRemove(item))
 				return false;
 
-			if (_indecies == null)
-				return true;
-
-			if (_maxIndex == -1)
-				throw new InvalidOperationException();
-
-			var index = _indecies.GetKey(item);
-			_indecies.RemoveByValue(item);
-
-			for (var i = index + 1; i <= _maxIndex; i++)
-				_indecies.SetKey(_indecies[i], i - 1);
-
-			_maxIndex--;
-
-			return true;
+			return RemoveIndicies(item);
 		}
 
 		protected override void OnClear()
@@ -245,7 +257,11 @@
 			{
 				var filteredItems = items.Where(OnAdding).ToArray();
 				InnerCollection.AddRange(filteredItems);
-				ProcessRange(filteredItems, OnAdded);
+				ProcessRange(filteredItems, item =>
+				{
+					AddIndicies(item);
+					OnAdded(item);
+				});
 
 				AddedRange?.Invoke(filteredItems);
 			}
@@ -257,7 +273,11 @@
 			{
 				var filteredItems = items.Where(OnRemoving).ToArray();
 				InnerCollection.RemoveRange(filteredItems);
-				ProcessRange(filteredItems, OnRemoved);
+				ProcessRange(filteredItems, item =>
+				{
+					RemoveIndicies(item);
+					OnRemoved(item);
+				});
 
 				RemovedRange?.Invoke(filteredItems);
 			}
