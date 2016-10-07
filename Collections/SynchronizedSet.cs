@@ -257,9 +257,17 @@
 			{
 				var filteredItems = items.Where(OnAdding).ToArray();
 				InnerCollection.AddRange(filteredItems);
+
 				ProcessRange(filteredItems, item =>
 				{
-					AddIndicies(item);
+					//AddIndicies(item);
+
+					if (_indecies != null)
+					{
+						_indecies.Add(_maxIndex + 1, item);
+						_maxIndex++;
+					}
+
 					OnAdded(item);
 				});
 
