@@ -23,4 +23,8 @@
 
 		event Action Changed;
 	}
+
+	public interface INotifyListEx<TItem> : INotifyList<TItem>, IListEx<TItem>
+	{
+	}
 }

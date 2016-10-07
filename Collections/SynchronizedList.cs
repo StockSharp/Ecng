@@ -9,7 +9,7 @@ namespace Ecng.Collections
 	using MoreLinq;
 
 	[Serializable]
-	public class SynchronizedList<T> : SynchronizedCollection<T, List<T>>, ICollectionEx<T>
+	public class SynchronizedList<T> : SynchronizedCollection<T, List<T>>, INotifyListEx<T>
 	{
 		public SynchronizedList()
 			: this(0)
