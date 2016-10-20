@@ -46,16 +46,23 @@
 				.GetMembers<PropertyInfo>(BindingFlags.Public | BindingFlags.Instance)
 				.Where(filter);
 
+			var names = new HashSet<string>();
+
 			processed.Add(type);
 
 			foreach (var pi in propertyInfos)
 			{
+				var name = (parent != null ? parent.Name + "." : string.Empty) + pi.Name;
+
+				if (!names.Add(name))
+					continue;
+
 				var nameAttr = pi.GetAttribute<DisplayNameAttribute>();
 				var displayName = nameAttr == null ? pi.Name : nameAttr.DisplayName;
 
 				var prop = new EntityProperty
 				{
-					Name = (parent != null ? parent.Name + "." : string.Empty) + pi.Name,
+					Name = name,
 					Parent = parent,
 					DisplayName = displayName,
 				};
