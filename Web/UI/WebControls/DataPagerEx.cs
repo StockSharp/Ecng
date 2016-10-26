@@ -32,7 +32,7 @@
 			private void CreateDataPagersForQueryString(DataPagerFieldItem container, int fieldIndex)
 			{
 				var currPage = _startRowIndex / _maximumRows;
-				var lastPage = _totalRowCount / _maximumRows;
+				var lastPage = (_totalRowCount - 1) / _maximumRows;
 				QueryStringHandled = true;
 				//var num2 = _startRowIndex / (ButtonCount * _maximumRows) * ButtonCount;
 				//var rowCount = (num2 + ButtonCount) * _maximumRows - 1;
@@ -43,17 +43,17 @@
 				{
 					if (currPage > offset)
 					{
-						container.Controls.Add(CreateNextPrevLink("<<", 0, NextPageImageUrl));
+						container.Controls.Add(CreateNextPrevLink("<<", 1, NextPageImageUrl));
 						AddNonBreakingSpace(container);
 					}
 
-					container.Controls.Add(CreateNextPrevLink("<", currPage - 1, NextPageImageUrl));
+					container.Controls.Add(CreateNextPrevLink("<", currPage, NextPageImageUrl));
 					AddNonBreakingSpace(container);
 				}
 
 				for (var i = (currPage - offset).Max(0); i < currPage; i++)
 				{
-					container.Controls.Add(CreateNumericLink(i));
+					container.Controls.Add(CreateNumericLink(i + 1));
 					AddNonBreakingSpace(container);
 				}
 
@@ -68,7 +68,7 @@
 
 				for (var i = currPage; i < (currPage + offset).Min(lastPage); i++)
 				{
-					container.Controls.Add(CreateNumericLink(i + 1));
+					container.Controls.Add(CreateNumericLink(i + 2));
 					AddNonBreakingSpace(container);
 				}
 
@@ -82,12 +82,12 @@
 				if (currPage < lastPage)
 				{
 					AddNonBreakingSpace(container);
-					container.Controls.Add(CreateNextPrevLink(">", currPage + 1, NextPageImageUrl));
+					container.Controls.Add(CreateNextPrevLink(">", currPage + 2, NextPageImageUrl));
 
 					if (currPage < lastPage - offset)
 					{
 						AddNonBreakingSpace(container);
-						container.Controls.Add(CreateNextPrevLink(">>", lastPage, NextPageImageUrl));
+						container.Controls.Add(CreateNextPrevLink(">>", lastPage + 1, NextPageImageUrl));
 					}
 				}
 			}
@@ -100,9 +100,9 @@
 				}
 			}
 
-			private HyperLink CreateNextPrevLink(string buttonText, int pageIndex, string imageUrl)
+			private HyperLink CreateNextPrevLink(string buttonText, int pageNumber, string imageUrl)
 			{
-				var pageNumber = pageIndex + 1;
+				//var pageNumber = pageIndex + 1;
 
 				var link = new HyperLink
 				{
@@ -117,9 +117,9 @@
 				return link;
 			}
 
-			private HyperLink CreateNumericLink(int pageIndex)
+			private HyperLink CreateNumericLink(int pageNumber)
 			{
-				var pageNumber = pageIndex + 1;
+				//var pageNumber = pageIndex + 1;
 
 				var link = new HyperLink
 				{
