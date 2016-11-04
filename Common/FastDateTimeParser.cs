@@ -27,6 +27,10 @@ namespace Ecng.Common
 		private readonly int _milliStart;
 		//private readonly int _milliLen;
 
+		private readonly bool _isYearTwoChars;
+		private readonly bool _isMonthTwoChars = true;
+		private readonly bool _isDayTwoChars = true;
+	
 		public FastDateTimeParser(string template)
 		{
 			if (template.IsEmpty())
@@ -41,6 +45,27 @@ namespace Ecng.Common
 			_minuteStart = template.IndexOf('m');
 			_secondStart = template.IndexOf('s');
 			_milliStart = template.IndexOf('f');
+
+			if (_yearStart == -1)
+				_yearStart = template.IndexOf('Y');
+
+			if (_dayStart == -1)
+				_dayStart = template.IndexOf('D');
+
+			if (_monthStart == -1 && _minuteStart != -1 && _hourStart == -1)
+			{
+				_monthStart = _minuteStart;
+				_minuteStart = -1;
+			}
+
+			if (_yearStart != -1)
+				_isYearTwoChars = template.Length < _yearStart + 3 || template[_yearStart + 2] != template[_yearStart];
+
+			if (_monthStart != -1)
+				_isMonthTwoChars = template.Length > _monthStart + 2 && template[_monthStart + 1] == template[_monthStart];
+
+			if (_dayStart != -1)
+				_isDayTwoChars = template.Length > _dayStart + 2 && template[_dayStart + 1] == template[_dayStart];
 
 			//TimeHelper.InitBounds(template, 'y', out _yearStart, out _yearLen);
 			//TimeHelper.InitBounds(template, 'M', out _monthStart, out _monthLen);
@@ -57,9 +82,9 @@ namespace Ecng.Common
 			{
 				//fixed (char* stringBuffer = input)
 				//{
-				var years = _yearStart == -1 ? DateTime.Now.Year : (input[_yearStart] - '0') * 1000 + (input[_yearStart + 1] - '0') * 100 + (input[_yearStart + 2] - '0') * 10 + (input[_yearStart + 3] - '0');
-				var months = _monthStart == -1 ? DateTime.Now.Month : (input[_monthStart] - '0') * 10 + (input[_monthStart + 1] - '0');
-				var days = _dayStart == -1 ? DateTime.Now.Year : (input[_dayStart] - '0') * 10 + (input[_dayStart + 1] - '0');
+				var years = _yearStart == -1 ? DateTime.Now.Year : (_isYearTwoChars ? ((DateTime.Now.Year / 1000) * 1000 + (input[_yearStart] - '0') * 10 + (input[_yearStart + 1] - '0')) : (input[_yearStart] - '0') * 1000 + (input[_yearStart + 1] - '0') * 100 + (input[_yearStart + 2] - '0') * 10 + (input[_yearStart + 3] - '0'));
+				var months = _monthStart == -1 ? DateTime.Now.Month : (_isMonthTwoChars ? (input[_monthStart] - '0') * 10 + (input[_monthStart + 1] - '0') : input[_monthStart] - '0');
+				var days = _dayStart == -1 ? DateTime.Now.Day : (_isDayTwoChars ? (input[_dayStart] - '0') * 10 + (input[_dayStart + 1] - '0') : input[_dayStart] - '0');
 
 				var hours = _hourStart == -1 ? 0 : (input[_hourStart] - '0') * 10 + (input[_hourStart + 1] - '0');
 				var minutes = _minuteStart == -1 ? 0 : (input[_minuteStart] - '0') * 10 + (input[_minuteStart + 1] - '0');
