@@ -53,7 +53,7 @@ namespace Ecng.Xaml.DevExp.Database
 				if (showMessageBox)
 				{
 					new MessageBoxBuilder()
-						.Text("Строка подключения не указана.")
+						.Text("Cannot create a connection, because some data was not entered.")
 						.Error()
 						.Owner(owner)
 						.Show();
@@ -71,7 +71,7 @@ namespace Ecng.Xaml.DevExp.Database
 					if (showMessageBox)
 					{
 						new MessageBoxBuilder()
-							.Text("Проверка прошла успешно.")
+							.Text("Connection successfully checked.")
 							.Owner(owner)
 							.Show();
 					}
@@ -83,7 +83,7 @@ namespace Ecng.Xaml.DevExp.Database
 					if (showMessageBox)
 					{
 						new MessageBoxBuilder()
-							.Text("Не удалось подключиться к базе данных. Причина '{0}'.".Put(ex.Message))
+							.Text("Cannot connect." + Environment.NewLine + ex)
 							.Error()
 							.Owner(owner)
 							.Show();
