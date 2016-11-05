@@ -16,14 +16,12 @@
 			if (settings == null)
 				throw new ArgumentNullException(nameof(settings));
 
-			_settings = settings;
+			Settings = settings;
 		}
 
 		public bool IsStarted => _client != null;
 
-		private readonly DdeSettings _settings;
-
-		public DdeSettings Settings => _settings;
+		public DdeSettings Settings { get; }
 
 		public void Start()
 		{

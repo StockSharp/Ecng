@@ -41,7 +41,7 @@
 
 		private void RefreshButtons()
 		{
-			StartStop.Content = DdeClient.IsStarted ? "Остановить" : "Запустить";
+			StartStop.Content = (DdeClient.IsStarted ? "Stop" : "Start").Translate();
 			Flush.IsEnabled = !DdeClient.IsStarted;
 		}
 

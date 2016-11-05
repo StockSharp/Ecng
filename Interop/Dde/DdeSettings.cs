@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Interop.Dde
 {
+	using System;
 	using System.ComponentModel;
 	using System.ComponentModel.DataAnnotations;
 
@@ -21,11 +22,35 @@
 		[Display(Name = "Topic", Description = "Topic name (like [Book1.xlsx].Sheet1).", Order = 1)]
 		public string Topic { get; set; }
 
+		private int _columnOffset;
+
 		[Display(Name = "Column offset", Description = "Column offset from left top corner.", Order = 2)]
-		public int ColumnOffset { get; set; }
+		public int ColumnOffset
+		{
+			get { return _columnOffset; }
+			set
+			{
+				if (value < 0)
+					throw new ArgumentOutOfRangeException();
+
+				_columnOffset = value;
+			}
+		}
+
+		private int _rowOffset;
 
 		[Display(Name = "Row offset", Description = "Row offset from left top corner.", Order = 2)]
-		public int RowOffset { get; set; }
+		public int RowOffset
+		{
+			get { return _rowOffset; }
+			set
+			{
+				if (value < 0)
+					throw new ArgumentOutOfRangeException();
+
+				_rowOffset = value;
+			}
+		}
 
 		[Display(Name = "Headers", Description = "Show headers name.", Order = 2)]
 		public bool ShowHeaders { get; set; }
