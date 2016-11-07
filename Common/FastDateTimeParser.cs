@@ -62,10 +62,10 @@ namespace Ecng.Common
 				_isYearTwoChars = template.Length < _yearStart + 3 || template[_yearStart + 2] != template[_yearStart];
 
 			if (_monthStart != -1)
-				_isMonthTwoChars = template.Length > _monthStart + 2 && template[_monthStart + 1] == template[_monthStart];
+				_isMonthTwoChars = template.Length > _monthStart + 1 && template[_monthStart + 1] == template[_monthStart];
 
 			if (_dayStart != -1)
-				_isDayTwoChars = template.Length > _dayStart + 2 && template[_dayStart + 1] == template[_dayStart];
+				_isDayTwoChars = template.Length > _dayStart + 1 && template[_dayStart + 1] == template[_dayStart];
 
 			//TimeHelper.InitBounds(template, 'y', out _yearStart, out _yearLen);
 			//TimeHelper.InitBounds(template, 'M', out _monthStart, out _monthLen);
