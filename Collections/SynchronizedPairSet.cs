@@ -12,6 +12,12 @@
 
 		#endregion
 
+		public override void Add(TKey key, TValue value)
+		{
+			lock (SyncRoot)
+				base.Add(key, value);
+		}
+
 		#region Item
 
 		public TKey this[TValue value]
@@ -50,7 +56,7 @@
 				if (Remove(key))
 				{
 					Add(key, value);
-					OnSetting(new Tuple<TKey, TValue>(key, value));
+					OnSetting(key, value);
 				}
 			}
 		}
@@ -67,9 +73,14 @@
 
 		#region SynchronizedKeyedCollection<TKey, TValue> Members
 
-		protected override void OnSetting(Tuple<TKey, TValue> pair)
+		protected override void OnAdding(TKey key, TValue value)
 		{
-			_values.Add(pair.Item2, pair.Item1);
+			_values.Add(value, key);
+		}
+
+		protected override void OnSetting(TKey key, TValue value)
+		{
+			_values[value] = key;
 		}
 
 		protected override void OnClearing()
@@ -77,9 +88,9 @@
 			_values.Clear();
 		}
 
-		protected override void OnRemoving(Tuple<TKey, TValue> pair)
+		protected override void OnRemoving(TKey key, TValue value)
 		{
-			_values.Remove(pair.Item2);
+			_values.Remove(value);
 		}
 
 		#endregion

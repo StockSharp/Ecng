@@ -23,16 +23,22 @@ namespace Ecng.Collections
 
 		protected IDictionary<TKey, TValue> InnerDictionary { get; }
 
+		public override void Add(TKey key, TValue value)
+		{
+			OnAdding(key, value);
+			InnerDictionary.Add(key, value);
+			OnAdded(key, value);
+		}
+
 		#region DictionaryBase<TKey, TValue> Members
 
 		public override TValue this[TKey key]
 		{
 			set
 			{
-				var pair = new Tuple<TKey, TValue>(key, value);
-				OnSetting(pair);
+				OnSetting(key, value);
 				InnerDictionary[key] = value;
-				OnSetted(pair);
+				OnSetted(key, value);
 			}
 		}
 
@@ -49,10 +55,9 @@ namespace Ecng.Collections
 
 			if (InnerDictionary.TryGetValue(key, out value))
 			{
-				var pair = new Tuple<TKey, TValue>(key, value);
-				OnRemoving(pair);
+				OnRemoving(key, value);
 				var retVal = InnerDictionary.Remove(key);
-				OnRemoved(pair);
+				OnRemoved(key, value);
 				return retVal;
 			}
 			else
@@ -73,13 +78,16 @@ namespace Ecng.Collections
 
 		#endregion
 
-		protected virtual void OnSetting(Tuple<TKey, TValue> pair) { }
-		protected virtual void OnSetted(Tuple<TKey, TValue> pair) { }
+		protected virtual void OnAdding(TKey key, TValue value) { }
+		protected virtual void OnAdded(TKey key, TValue value) { }
+
+		protected virtual void OnSetting(TKey key, TValue value) { }
+		protected virtual void OnSetted(TKey key, TValue value) { }
 
 		protected virtual void OnClearing() {}
 		protected virtual void OnCleared() {}
 
-		protected virtual void OnRemoving(Tuple<TKey, TValue> pair) { }
-		protected virtual void OnRemoved(Tuple<TKey, TValue> pair) { }
+		protected virtual void OnRemoving(TKey key, TValue value) { }
+		protected virtual void OnRemoved(TKey key, TValue value) { }
 	}
 }
