@@ -5,7 +5,9 @@ using System.Linq;
 
 namespace Gma.DataStructures.StringSearch
 {
-    public class SuffixTrie<T> : ITrie<T>
+	using System;
+
+	public class SuffixTrie<T> : ITrie<T>
     {
         private readonly Trie<T> m_InnerTrie;
         private readonly int m_MinSuffixLength;
@@ -17,6 +19,9 @@ namespace Gma.DataStructures.StringSearch
 
         private SuffixTrie(Trie<T> innerTrie, int minSuffixLength)
         {
+			if (minSuffixLength <= 0)
+				throw new ArgumentOutOfRangeException(nameof(minSuffixLength));
+
             m_InnerTrie = innerTrie;
             m_MinSuffixLength = minSuffixLength;
         }
@@ -31,11 +36,11 @@ namespace Gma.DataStructures.StringSearch
 
         public void Add(string key, T value)
         {
-            foreach (string suffix in GetAllSuffixes(m_MinSuffixLength, key))
-            {
-                m_InnerTrie.Add(suffix, value);
-            }
-        }
+			for (int i = key.Length - m_MinSuffixLength; i >= 0; i--)
+			{
+				m_InnerTrie.Add(key, i, value);
+			}
+		}
 
 	    public void Remove(T value)
 	    {
@@ -52,13 +57,13 @@ namespace Gma.DataStructures.StringSearch
 			m_InnerTrie.Clear();
 	    }
 
-	    private static IEnumerable<string> GetAllSuffixes(int minSuffixLength, string word)
-        {
-            for (int i = word.Length - minSuffixLength; i >= 0; i--)
-            {
-                var partition = new StringPartition(word, i);
-                yield return partition.ToString();
-            }
-        }
-    }
+		private static IEnumerable<string> GetAllSuffixes(int minSuffixLength, string word)
+		{
+			for (int i = word.Length - minSuffixLength; i >= 0; i--)
+			{
+				var partition = new StringPartition(word, i);
+				yield return partition.ToString();
+			}
+		}
+	}
 }
