@@ -83,6 +83,7 @@
     <Compile Include="NtpClient.cs" />
     <Compile Include="ObjectPool.cs" />
     <Compile Include="ResettableTimer.cs" />
+    <Compile Include="SimpleResettableTimer.cs" />
     <Compile Include="SmartFormat\Core\Extensions\IFormatter.cs" />
     <Compile Include="SmartFormat\Core\Extensions\IFormattingInfo.cs" />
     <Compile Include="SmartFormat\Core\Extensions\ISelectorInfo.cs" />
