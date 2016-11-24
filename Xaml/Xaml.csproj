@@ -97,7 +97,9 @@
     </Compile>
     <Compile Include="BusyIndicator.cs" />
     <Compile Include="Converters\BoolToBrushConverter.cs" />
+    <Compile Include="Converters\BoolToImageConverter.cs" />
     <Compile Include="Converters\BoolToOpacityConverter.cs" />
+    <Compile Include="Converters\BoolToStringConverter.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\ColorToBrushConverter.cs" />
     <Compile Include="Converters\CountryConverters.cs" />

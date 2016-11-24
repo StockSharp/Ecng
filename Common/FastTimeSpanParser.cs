@@ -36,6 +36,21 @@ namespace Ecng.Common
 			_secondStart = template.IndexOf('s');
 			_milliStart = template.IndexOf('f');
 
+			if (_dayStart == -1)
+				_dayStart = template.IndexOf('D');
+
+			if (_hourStart == -1)
+				_hourStart = template.IndexOf('H');
+
+			if (_minuteStart == -1)
+				_minuteStart = template.IndexOf('M');
+
+			if (_secondStart == -1)
+				_secondStart = template.IndexOf('S');
+
+			if (_milliStart == -1)
+				_milliStart = template.IndexOf('F');
+
 			//TimeHelper.InitBounds(template, 'd', out _dayStart, out _dayLen);
 			//TimeHelper.InitBounds(template, 'h', out _hourStart, out _hourLen);
 			//TimeHelper.InitBounds(template, 'm', out _minuteStart, out _minuteLen);

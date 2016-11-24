@@ -4,6 +4,7 @@
 	using System.ComponentModel;
 	using System.Data.Common;
 	using System.Linq;
+	using System.Security;
 
 	using Ecng.Common;
 	using Ecng.ComponentModel;
@@ -182,12 +183,12 @@
 			[DatabaseDescription(Titles.PasswordDescription)]
 			[DatabaseCategory]
 			//[PropertyOrder(4)]
-			public string Password
+			public SecureString Password
 			{
-				get { return GetValue<string>("Password"); }
+				get { return GetValue<string>("Password").To<SecureString>(); }
 				set
 				{
-					_builder["Password"] = value;
+					_builder["Password"] = value.To<string>();
 					NotifyChanged(nameof(ConnectionString));
 				}
 			}
@@ -201,7 +202,11 @@
 				get { return GetValue<bool>("Integrated Security"); }
 				set
 				{
-					_builder["Integrated Security"] = value;
+					if (value)
+						_builder["Integrated Security"] = true;
+					else
+						_builder.Remove("Integrated Security");
+
 					NotifyChanged(nameof(ConnectionString));
 				}
 			}
