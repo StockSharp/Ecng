@@ -18,8 +18,6 @@ namespace Ecng.Common
 		private char[] _line = new char[_buffSize];
 		private int _lineLen;
 		private readonly RefPair<int, int>[] _columnPos = new RefPair<int, int>[_buffSize];
-		private int _columnCount;
-		private int _columnCurr;
 
 		public FastCsvReader(Stream stream, Encoding encoding)
 			: this(new StreamReader(stream, encoding))
@@ -72,6 +70,14 @@ namespace Ecng.Common
 				return new string(_line, 0, _lineLen);
 			}
 		}
+
+		private int _columnCount;
+
+		public int ColumnCount => _columnCount;
+
+		private int _columnCurr;
+
+		public int ColumnCurr => _columnCurr;
 
 		public bool NextLine()
 		{
