@@ -170,7 +170,12 @@
 					return new IPEndPoint(addr, port);
 				}
 				else
+				{
+					if (input.IsEmpty())
+						return null;
+
 					throw new FormatException("Invalid endpoint format.");
+				}
 			});
 			AddTypedConverter<EndPoint, string>(input => input.GetHost() + ":" + input.GetPort());
 			AddTypedConverter<IPEndPoint, string>(input => input.TypedTo<EndPoint, string>());
