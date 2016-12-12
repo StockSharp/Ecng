@@ -4,6 +4,7 @@ namespace Ecng.Web
 	using System.Text;
 	using System.Web;
 	using System.Collections.Specialized;
+	using System.Net;
 	using System.Security;
 	using System.Web.Routing;
 #if !SILVERLIGHT
@@ -258,7 +259,7 @@ namespace Ecng.Web
 			file.Download(new Size<int>(), false, context);
 		}
 
-		public static void Download(this IWebFile file, Size<int> size, bool embed, HttpContext context = null)
+		public static void Download(this IWebFile file, Size<int> size, bool embed, HttpContext context = null, TimeSpan? cache = null)
 		{
 			if (context == null)
 				context = HttpContext.Current;
@@ -268,10 +269,20 @@ namespace Ecng.Web
 
 			// http://stackoverflow.com/questions/994135/image-from-httphandler-wont-cache-in-browser
 			var body = file.ShrinkFile(size);
-			context.Response.ContentType = file.GetMimeType();
-			context.Response.AppendHeader("Content-Disposition", "{0}; filename=\"{1}\"".Put(embed ? "inline" : "attachment", file.Name));
-			context.Response.OutputStream.Write(body, 0, body.Length);
-			context.Response.End();
+			var response = context.Response;
+
+			response.ContentType = file.GetMimeType();
+
+			if (cache != null)
+			{
+				response.Cache.SetCacheability(HttpCacheability.Public);
+				response.Cache.SetExpires(DateTime.Now + cache.Value);
+				response.Cache.SetMaxAge(cache.Value);
+			}
+
+			response.AppendHeader("Content-Disposition", "{0}; filename=\"{1}\"".Put(embed ? "inline" : "attachment", file.Name));
+			response.OutputStream.Write(body, 0, body.Length);
+			response.End();
 		}
 
 		public static byte[] ShrinkFile(this IWebFile file, Size<int> size)
@@ -424,6 +435,16 @@ namespace Ecng.Web
 			}
 
 			return true;
+		}
+
+		public static void Make404(this HttpResponse response)
+		{
+			if (response == null)
+				throw new ArgumentNullException(nameof(response));
+
+			response.TrySkipIisCustomErrors = true;
+			response.StatusDescription = "404 Not Found";
+			response.StatusCode = (int)HttpStatusCode.NotFound;
 		}
 	}
 }
