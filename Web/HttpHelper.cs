@@ -7,6 +7,8 @@ namespace Ecng.Web
 	using System.Net;
 	using System.Security;
 	using System.Web.Routing;
+
+	using Ecng.Collections;
 #if !SILVERLIGHT
 	using System;
 	using System.Collections;
@@ -445,6 +447,24 @@ namespace Ecng.Web
 			response.TrySkipIisCustomErrors = true;
 			response.StatusDescription = "404 Not Found";
 			response.StatusCode = (int)HttpStatusCode.NotFound;
+		}
+
+		private static readonly SynchronizedSet<string> _imgExts = new SynchronizedSet<string>
+		{
+			".png", ".jpg", ".jpeg", ".bmp", ".gif"
+		};
+
+		public static bool IsImage(this IWebFile file)
+		{
+			if (file == null)
+				throw new ArgumentNullException(nameof(file));
+
+			var ext = Path.GetExtension(file.Name);
+
+			if (ext.IsEmpty())
+				return false;
+
+			return _imgExts.Contains(ext.ToLowerInvariant());
 		}
 	}
 }
