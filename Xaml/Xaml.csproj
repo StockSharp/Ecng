@@ -84,9 +84,6 @@
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="AboutWindow.xaml.cs">
-      <DependentUpon>AboutWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="AddressComboBox.cs" />
     <Compile Include="AutoRefreshCollectionViewSource.cs" />
     <Compile Include="BaseObservableCollection.cs" />
@@ -295,10 +292,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="AboutWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="Block.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
