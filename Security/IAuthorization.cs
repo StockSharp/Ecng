@@ -1,69 +1,71 @@
 namespace Ecng.Security
 {
 	using System;
+	using System.Security;
 
 	using Ecng.Common;
+	using Ecng.Localization;
 
 	/// <summary>
-	/// Интерфейс, описывающий модуль проверки доступа соединения.
+	/// Defines the interface to an autorization module.
 	/// </summary>
 	public interface IAuthorization
 	{
 		/// <summary>
-		/// Проверить логин и пароль на правильность.
+		/// Check login and password.
 		/// </summary>
-		/// <param name="login">Логин.</param>
-		/// <param name="password">Пароль.</param>
-		/// <returns>Идентификатор сессии.</returns>
-		Guid ValidateCredentials(string login, string password);
+		/// <param name="login">Login.</param>
+		/// <param name="password">Password.</param>
+		/// <returns>Session identifier.</returns>
+		Guid ValidateCredentials(string login, SecureString password);
 	}
 
 	/// <summary>
-	/// Модуль проверки доступа соединения, предоставляющий доступ всем соединениям.
+	/// Autorization module granted access for everyone.
 	/// </summary>
 	public class AnonymousAuthorization : IAuthorization
 	{
 		/// <summary>
-		/// Создать <see cref="AnonymousAuthorization"/>.
+		/// Initializes a new instance of the <see cref="AnonymousAuthorization"/>.
 		/// </summary>
 		public AnonymousAuthorization()
 		{
 		}
 
 		/// <summary>
-		/// Проверить логин и пароль на правильность.
+		/// Check login and password.
 		/// </summary>
-		/// <param name="login">Логин.</param>
-		/// <param name="password">Пароль.</param>
-		/// <returns>Идентификатор сессии.</returns>
-		public virtual Guid ValidateCredentials(string login, string password)
+		/// <param name="login">Login.</param>
+		/// <param name="password">Password.</param>
+		/// <returns>Session identifier.</returns>
+		public virtual Guid ValidateCredentials(string login, SecureString password)
 		{
 			return Guid.NewGuid();
 		}
 	}
 
 	/// <summary>
-	/// Модуль проверки доступа соединения, основанный на Windows авторизации.
+	/// Autorization module based on Windows user storage.
 	/// </summary>
 	public class WindowsAuthorization : IAuthorization
 	{
 		/// <summary>
-		/// Создать <see cref="WindowsAuthorization"/>.
+		/// Initializes a new instance of the <see cref="WindowsAuthorization"/>.
 		/// </summary>
 		public WindowsAuthorization()
 		{
 		}
 
 		/// <summary>
-		/// Проверить логин и пароль на правильность.
+		/// Check login and password.
 		/// </summary>
-		/// <param name="login">Логин.</param>
-		/// <param name="password">Пароль.</param>
-		/// <returns>Идентификатор сессии.</returns>
-		public virtual Guid ValidateCredentials(string login, string password)
+		/// <param name="login">Login.</param>
+		/// <param name="password">Password.</param>
+		/// <returns>Session identifier.</returns>
+		public virtual Guid ValidateCredentials(string login, SecureString password)
 		{
-			if (!WindowsIdentityManager.Validate(login, password))
-				throw new UnauthorizedAccessException("Пользователь {0} не найден или был передан неправильный пароль.".Put(login));
+			if (!WindowsIdentityManager.Validate(login, password.To<string>()))
+				throw new UnauthorizedAccessException("User {0} not found or password is incorrect.".Translate().Put(login));
 
 			return Guid.NewGuid();
 		}
