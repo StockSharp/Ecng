@@ -599,7 +599,12 @@ namespace Ecng.Web
 			if (user == null)
 				throw new ArgumentNullException(nameof(user));
 
-			var isOk = user.Password.Equals(CreateSecret(password, user.Password.Salt));
+			var userPassword = user.Password;
+
+			if (userPassword == null)
+				return false;
+
+			var isOk = userPassword.Equals(CreateSecret(password, userPassword.Salt));
 
 			if (isOk)
 				ResetPasswordAttemts(user);
