@@ -6,9 +6,11 @@ namespace Ecng.Web
 	using System.Collections.Specialized;
 	using System.Net;
 	using System.Security;
+	using System.Web.Configuration;
 	using System.Web.Routing;
 
 	using Ecng.Collections;
+	using Ecng.Configuration;
 #if !SILVERLIGHT
 	using System;
 	using System.Collections;
@@ -465,6 +467,31 @@ namespace Ecng.Web
 				return false;
 
 			return _imgExts.Contains(ext.ToLowerInvariant());
+		}
+
+		// http://stackoverflow.com/a/1306932
+		public static void ForceSignOff(this HttpContext context)
+		{
+			if (context == null)
+				throw new ArgumentNullException(nameof(context));
+
+			FormsAuthentication.SignOut();
+			context.Session.Abandon();
+
+			// clear authentication cookie
+			context.Response.Cookies.Add(new HttpCookie(FormsAuthentication.FormsCookieName, string.Empty)
+			{
+				Expires = DateTime.Now.AddYears(-1)
+			});
+
+			// clear session cookie (not necessary for your current problem but i would recommend you do it anyway)
+			var sessionStateSection = ConfigManager.GetSection<SessionStateSection>();
+			context.Response.Cookies.Add(new HttpCookie(sessionStateSection.CookieName, string.Empty)
+			{
+				Expires = DateTime.Now.AddYears(-1)
+			});
+
+			FormsAuthentication.RedirectToLoginPage();
 		}
 	}
 }
