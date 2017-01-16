@@ -27,6 +27,8 @@ namespace Ecng.Common
 		private readonly int _milliStart;
 		//private readonly int _milliLen;
 
+		private readonly int _timeZoneStart;
+
 		private readonly bool _isYearTwoChars;
 		private readonly bool _isMonthTwoChars = true;
 		private readonly bool _isDayTwoChars = true;
@@ -45,6 +47,7 @@ namespace Ecng.Common
 			_minuteStart = template.IndexOf('m');
 			_secondStart = template.IndexOf('s');
 			_milliStart = template.IndexOf('f');
+			_timeZoneStart = template.IndexOf('z');
 
 			if (_yearStart == -1)
 				_yearStart = template.IndexOf('Y');
@@ -99,6 +102,24 @@ namespace Ecng.Common
 			{
 				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(input, _template, typeof(DateTime).Name), ex);
 			}
+		}
+
+		public DateTimeOffset ParseDto(string input)
+		{
+			var dt = Parse(input);
+
+			var timeZone = TimeSpan.Zero;
+
+			if (_timeZoneStart != -1)
+			{
+				var pos = input[_timeZoneStart] == '+';
+				var hours = (input[_timeZoneStart + 1] - '0') * 10 + (input[_timeZoneStart + 2] - '0');
+				var minutes = (input[_timeZoneStart + 4] - '0') * 10 + (input[_timeZoneStart + 5] - '0');
+
+				timeZone = new TimeSpan(pos ? hours : -hours, minutes, 0);
+			}
+
+			return dt.ApplyTimeZone(timeZone);
 		}
 	}
 }
