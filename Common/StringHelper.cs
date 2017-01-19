@@ -5,6 +5,7 @@
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
+	using System.Runtime.InteropServices;
 	using System.Security;
 	using System.Security.Cryptography;
 	using System.Text;
@@ -782,6 +783,50 @@
 				|| secureString.Length == 0;
 #endif
 		}
+
+#if !SILVERLIGHT
+		public static bool IsEqualTo(this SecureString value1, SecureString value2)
+		{
+			if (value1 == null)
+				throw new ArgumentNullException(nameof(value1));
+
+			if (value2 == null)
+				throw new ArgumentNullException(nameof(value2));
+
+			if (value1.Length != value2.Length)
+				return false;
+
+			var bstr1 = IntPtr.Zero;
+			var bstr2 = IntPtr.Zero;
+
+			try
+			{
+				bstr1 = Marshal.SecureStringToBSTR(value1);
+				bstr2 = Marshal.SecureStringToBSTR(value2);
+
+				var length = Marshal.ReadInt32(bstr1, -4);
+
+				for (var x = 0; x < length; ++x)
+				{
+					var byte1 = Marshal.ReadByte(bstr1, x);
+					var byte2 = Marshal.ReadByte(bstr2, x);
+
+					if (byte1 != byte2)
+						return false;
+				}
+
+				return true;
+			}
+			finally
+			{
+				if (bstr2 != IntPtr.Zero)
+					Marshal.ZeroFreeBSTR(bstr2);
+
+				if (bstr1 != IntPtr.Zero)
+					Marshal.ZeroFreeBSTR(bstr1);
+			}
+		}
+#endif
 
 		public static string Digest(this byte[] digest)
 		{
