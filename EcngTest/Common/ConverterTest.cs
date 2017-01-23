@@ -20,26 +20,43 @@ namespace Ecng.Test.Common
 		}
 
 		[TestMethod]
-		public void FastDateTimeParser()
+		public void FastTimeParser()
 		{
 			var date = new DateTime(2015, 5, 1);
 			var time = new TimeSpan(18, 41, 59);
-			new FastDateTimeParser("yyyyMMdd").Parse("20150501").AssertEqual(date);
-			new FastDateTimeParser("yyyyddMM").Parse("20150105").AssertEqual(date);
-			new FastDateTimeParser("ddMMyyyy").Parse("01052015").AssertEqual(date);
-			new FastDateTimeParser("ddmmyyyy").Parse("01052015").AssertEqual(date);
-			new FastDateTimeParser("d/MM/yyyy").Parse("1/05/2015").AssertEqual(date);
-			new FastDateTimeParser("dd/m/yyyy").Parse("01/5/2015").AssertEqual(date);
-			new FastDateTimeParser("dd/m/yy").Parse("01/5/15").AssertEqual(date);
-			new FastDateTimeParser("D/M/YYYY").Parse("1/5/2015").AssertEqual(date);
-			new FastDateTimeParser("DD/MM/YYYY").Parse("01/05/2015").AssertEqual(date);
-			new FastDateTimeParser("D/M/YY").Parse("1/5/15").AssertEqual(date);
-			new FastDateTimeParser("D/M/YY").Parse("1/5/15").AssertEqual(date);
-			new FastTimeSpanParser(@"hh_mm_ss").Parse("18_41_59").AssertEqual(time);
-			new FastTimeSpanParser(@"HH_MM_SS").Parse("18_41_59").AssertEqual(time);
+			RunDt("yyyyMMdd", "20150501", date);
+			RunDt("yyyyddMM", "20150105", date);
+			RunDt("ddMMyyyy", "01052015", date);
+			RunDt("ddmmyyyy", "01052015", date);
+			RunDt("d/MM/yyyy", "1/05/2015", date);
+			RunDt("dd/m/yyyy", "01/5/2015", date);
+			RunDt("dd/m/yy", "01/5/15", date);
+			RunDt("D/M/YYYY", "1/5/2015", date);
+			RunDt("DD/MM/YYYY", "01/05/2015", date);
+			RunDt("D/M/YY", "1/5/15", date);
+			RunDt("D/M/YY", "1/5/15", date);
+			RunDt("D/M/YY HH:mm:ss.fff", "1/5/15 00:00:00.000", date);
+			RunDt("D/M/YY HH:mm:ss.fff", "1/5/15 18:41:59.456", date + new TimeSpan(0, 18, 41, 59, 456));
+			RunTs(@"hh_mm_ss", "18_41_59", time);
+			RunTs(@"HH_MM_SS", "18_41_59", time);
+			RunTs(@"HH:MM:SS.ffF", "18:41:59.456", new TimeSpan(0, 18, 41, 59, 456));
 			"01/05/2015".ToDateTime("dd/MM/yyyy").AssertEqual(date);
 			"1/5/2015".ToDateTime("d/M/yyyy").AssertEqual(date);
 			"18:41:59".ToTimeSpan(@"hh\:mm\:ss").AssertEqual(time);
+		}
+
+		private static void RunDt(string format, string str, DateTime dt)
+		{
+			var parser = new FastDateTimeParser(format);
+			parser.Parse(str).AssertEqual(dt);
+			parser.ToString(dt).AssertEqual(str);
+		}
+
+		private static void RunTs(string format, string str, TimeSpan ts)
+		{
+			var parser = new FastTimeSpanParser(format);
+			parser.Parse(str).AssertEqual(ts);
+			parser.ToString(ts).AssertEqual(str);
 		}
 	}
 }

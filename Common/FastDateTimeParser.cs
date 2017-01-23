@@ -1,10 +1,24 @@
 namespace Ecng.Common
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Text;
 
 	public class FastDateTimeParser
 	{
-		private readonly string _template;
+		private enum Parts
+		{
+			String,
+			Year,
+			Month,
+			Day,
+			Hour,
+			Minute,
+			Second,
+			Mls
+		}
+
+		private readonly Tuple<Parts, string>[] _parts;
 
 		private readonly int _yearStart;
 		//private readonly int _yearLen;
@@ -32,13 +46,15 @@ namespace Ecng.Common
 		private readonly bool _isYearTwoChars;
 		private readonly bool _isMonthTwoChars = true;
 		private readonly bool _isDayTwoChars = true;
+
+		public string Template { get; }
 	
 		public FastDateTimeParser(string template)
 		{
 			if (template.IsEmpty())
 				throw new ArgumentNullException(nameof(template));
 
-			_template = template;
+			Template = template;
 
 			_yearStart = template.IndexOf('y');
 			_monthStart = template.IndexOf('M');
@@ -70,6 +86,58 @@ namespace Ecng.Common
 			if (_dayStart != -1)
 				_isDayTwoChars = template.Length > _dayStart + 1 && template[_dayStart + 1] == template[_dayStart];
 
+			var parts = new SortedList<int, Parts>();
+
+			if (_yearStart != -1)
+				parts.Add(_yearStart, Parts.Year);
+
+			if (_monthStart != -1)
+				parts.Add(_monthStart, Parts.Month);
+
+			if (_dayStart != -1)
+				parts.Add(_dayStart, Parts.Day);
+
+			if (_hourStart != -1)
+				parts.Add(_hourStart, Parts.Hour);
+
+			if (_minuteStart != -1)
+				parts.Add(_minuteStart, Parts.Minute);
+
+			if (_secondStart != -1)
+				parts.Add(_secondStart, Parts.Second);
+
+			if (_milliStart != -1)
+				parts.Add(_milliStart, Parts.Mls);
+
+			var parts2 = new List<Tuple<Parts, string>>();
+
+			var prevIndex = 0;
+
+			foreach (var part in parts)
+			{
+				if (prevIndex != part.Key)
+				{
+					var len = part.Key - prevIndex;
+					parts2.Add(Tuple.Create(Parts.String, template.Substring(prevIndex, len)));
+					prevIndex += len;
+				}
+
+				parts2.Add(Tuple.Create(part.Value, (string)null));
+
+				if (part.Value == Parts.Year)
+					prevIndex += _isYearTwoChars ? 2 : 4;
+				else if (part.Value == Parts.Month)
+					prevIndex += _isMonthTwoChars ? 2 : 1;
+				else if (part.Value == Parts.Day)
+					prevIndex += _isDayTwoChars ? 2 : 1;
+				else if (part.Value == Parts.Mls)
+					prevIndex += 3;
+				else
+					prevIndex += 2;
+			}
+
+			_parts = parts2.ToArray();
+
 			//TimeHelper.InitBounds(template, 'y', out _yearStart, out _yearLen);
 			//TimeHelper.InitBounds(template, 'M', out _monthStart, out _monthLen);
 			//TimeHelper.InitBounds(template, 'd', out _dayStart, out _dayLen);
@@ -100,7 +168,7 @@ namespace Ecng.Common
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(input, _template, typeof(DateTime).Name), ex);
+				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(input, Template, typeof(DateTime).Name), ex);
 			}
 		}
 
@@ -120,6 +188,74 @@ namespace Ecng.Common
 			}
 
 			return dt.ApplyTimeZone(timeZone);
+		}
+
+		public string ToString(DateTime value)
+		{
+			var builder = new StringBuilder();
+
+			foreach (var part in _parts)
+			{
+				switch (part.Item1)
+				{
+					case Parts.String:
+						builder.Append(part.Item2);
+						break;
+					case Parts.Year:
+						Append(builder, _isYearTwoChars ? value.Year % 100 : value.Year, _isYearTwoChars ? 2 : 4);
+						break;
+					case Parts.Month:
+						Append(builder, value.Month, _isMonthTwoChars ? 2 : 1);
+						break;
+					case Parts.Day:
+						Append(builder, value.Day, _isDayTwoChars ? 2 : 1);
+						break;
+					case Parts.Hour:
+						Append(builder, value.Hour);
+						break;
+					case Parts.Minute:
+						Append(builder, value.Minute);
+						break;
+					case Parts.Second:
+						Append(builder, value.Second);
+						break;
+					case Parts.Mls:
+						Append(builder, value.Millisecond, 3);
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+			}
+
+			return builder.ToString();
+		}
+
+		private static void Append(StringBuilder builder, int value, int size = 2)
+		{
+			if (size == 1)
+			{
+				builder.Append((char)(value + '0'));
+			}
+			else if (size == 2)
+			{
+				builder.Append((char)(value / 10 + '0'));
+				builder.Append((char)(value % 10 + '0'));
+			}
+			else if (size == 3)
+			{
+				builder.Append((char)(value / 100 + '0'));
+				builder.Append((char)((value - (value / 100) * 100) / 10 + '0'));
+				builder.Append((char)(value % 10 + '0'));
+			}
+			else
+			{
+				builder.Append((char)(value / 1000 + '0'));
+				value -= (value / 1000) * 1000;
+				builder.Append((char)(value / 100 + '0'));
+				value -= (value / 100) * 100;
+				builder.Append((char)(value / 10 + '0'));
+				builder.Append((char)(value % 10 + '0'));
+			}
 		}
 	}
 }

@@ -1,10 +1,22 @@
 namespace Ecng.Common
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Text;
 
 	public class FastTimeSpanParser
 	{
-		private readonly string _template;
+		private enum Parts
+		{
+			String,
+			Day,
+			Hour,
+			Minute,
+			Second,
+			Mls
+		}
+
+		private readonly Tuple<Parts, string>[] _parts;
 
 		private readonly int _dayStart;
 		//private readonly int _dayLen;
@@ -21,12 +33,14 @@ namespace Ecng.Common
 		private readonly int _milliStart;
 		//private readonly int _milliLen;
 
+		public string Template { get; }
+
 		public FastTimeSpanParser(string template)
 		{
 			if (template.IsEmpty())
 				throw new ArgumentNullException(nameof(template));
 
-			_template = template;
+			Template = template;
 
 			template = template.Remove("\\");
 
@@ -51,6 +65,46 @@ namespace Ecng.Common
 			if (_milliStart == -1)
 				_milliStart = template.IndexOf('F');
 
+			var parts = new SortedList<int, Parts>();
+
+			if (_dayStart != -1)
+				parts.Add(_dayStart, Parts.Day);
+
+			if (_hourStart != -1)
+				parts.Add(_hourStart, Parts.Hour);
+
+			if (_minuteStart != -1)
+				parts.Add(_minuteStart, Parts.Minute);
+
+			if (_secondStart != -1)
+				parts.Add(_secondStart, Parts.Second);
+
+			if (_milliStart != -1)
+				parts.Add(_milliStart, Parts.Mls);
+
+			var parts2 = new List<Tuple<Parts, string>>();
+
+			var prevIndex = 0;
+
+			foreach (var part in parts)
+			{
+				if (prevIndex != part.Key)
+				{
+					var len = part.Key - prevIndex;
+					parts2.Add(Tuple.Create(Parts.String, template.Substring(prevIndex, len)));
+					prevIndex += len;
+				}
+
+				parts2.Add(Tuple.Create(part.Value, (string)null));
+
+				if (part.Value == Parts.Mls)
+					prevIndex += 3;
+				else
+					prevIndex += 2;
+			}
+
+			_parts = parts2.ToArray();
+
 			//TimeHelper.InitBounds(template, 'd', out _dayStart, out _dayLen);
 			//TimeHelper.InitBounds(template, 'h', out _hourStart, out _hourLen);
 			//TimeHelper.InitBounds(template, 'm', out _minuteStart, out _minuteLen);
@@ -74,7 +128,56 @@ namespace Ecng.Common
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(input, _template, typeof(TimeSpan).Name), ex);
+				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(input, Template, typeof(TimeSpan).Name), ex);
+			}
+		}
+
+		public string ToString(TimeSpan value)
+		{
+			var builder = new StringBuilder();
+
+			foreach (var part in _parts)
+			{
+				switch (part.Item1)
+				{
+					case Parts.String:
+						builder.Append(part.Item2);
+						break;
+					case Parts.Day:
+						Append(builder, value.Days);
+						break;
+					case Parts.Hour:
+						Append(builder, value.Hours);
+						break;
+					case Parts.Minute:
+						Append(builder, value.Minutes);
+						break;
+					case Parts.Second:
+						Append(builder, value.Seconds);
+						break;
+					case Parts.Mls:
+						Append(builder, value.Milliseconds, 3);
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+			}
+
+			return builder.ToString();
+		}
+
+		private static void Append(StringBuilder builder, int value, int size = 2)
+		{
+			if (size == 2)
+			{
+				builder.Append((char)(value / 10 + '0'));
+				builder.Append((char)(value % 10 + '0'));
+			}
+			else
+			{
+				builder.Append((char)(value / 100 + '0'));
+				builder.Append((char)((value - (value / 100) * 100) / 10 + '0'));
+				builder.Append((char)(value % 10 + '0'));
 			}
 		}
 	}
