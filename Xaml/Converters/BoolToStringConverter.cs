@@ -12,7 +12,7 @@ namespace Ecng.Xaml.Converters
 
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			return (bool)value ? TrueValue : FalseValue;
+			return (value as bool?) == true ? TrueValue : FalseValue;
 		}
 
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
