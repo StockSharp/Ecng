@@ -841,16 +841,27 @@ namespace Ecng.Xaml
 			return app.GetActiveWindow() ?? app.MainWindow;
 		}
 
-		public static void SetBindings(this DependencyObject obj, DependencyProperty property, object dataObject, string propertyName, BindingMode mode = BindingMode.TwoWay, IValueConverter converter = null, object parameter = null)
+		public static void SetBindings(this DependencyObject obj, DependencyProperty property, object dataObject, string path, BindingMode mode = BindingMode.TwoWay, IValueConverter converter = null, object parameter = null)
 		{
-			var binding = new Binding(propertyName)
+			BindingOperations.SetBinding(obj, property, new Binding(path)
 			{
 				Source = dataObject,
 				Mode = mode,
 				Converter = converter,
 				ConverterParameter = parameter
-			};
-			BindingOperations.SetBinding(obj, property, binding);
+			});
+		}
+
+		public static void SetBindings(this DependencyObject obj, DependencyProperty property, object dataObject, PropertyPath path, BindingMode mode = BindingMode.TwoWay, IValueConverter converter = null, object parameter = null)
+		{
+			BindingOperations.SetBinding(obj, property, new Binding
+			{
+				Source = dataObject,
+				Path = path,
+				Mode = mode,
+				Converter = converter,
+				ConverterParameter = parameter
+			});
 		}
 
 		#region Menu
