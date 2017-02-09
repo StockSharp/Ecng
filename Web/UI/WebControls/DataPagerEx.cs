@@ -1,10 +1,13 @@
 ﻿namespace Ecng.Web.UI.WebControls
 {
+	using System;
 	using System.Globalization;
+	using System.Reflection;
 	using System.Web.UI;
 	using System.Web.UI.WebControls;
 
 	using Ecng.Common;
+	using Ecng.Reflection;
 
 	public class DataPagerEx : DataPager
 	{
@@ -182,6 +185,43 @@
 		public const string PageField = "page";
 
 		public int MaxRowCount { get; set; }
+
+		protected override void OnInit(EventArgs e)
+		{
+			var ptr = typeof(Control).GetMember<MethodInfo>("OnInit").MethodHandle.GetFunctionPointer();
+			var onInit = (Action<EventArgs>)Activator.CreateInstance(typeof(Action<EventArgs>), this, ptr);
+			onInit.Invoke(e);
+		
+			if (!DesignMode)
+			{
+				var pageableItemControl = FindPageableItemContainer();
+
+				if (pageableItemControl != null)
+				{
+					this.SetValue("_pageableItemContainer", pageableItemControl);
+
+					ConnectToEvents(pageableItemControl);
+
+					var startRowIndex = Url.Current.QueryString.TryGetValue<int?>(PageField) ?? 0;
+
+					if (startRowIndex == 1)
+						startRowIndex = 0;
+					else if (startRowIndex > 1)
+						startRowIndex = (startRowIndex - 1) * MaximumRows;
+					else if (startRowIndex < 0)
+						startRowIndex = 0;
+
+					this.SetValue("_startRowIndex", startRowIndex);
+
+					pageableItemControl.SetPageProperties(StartRowIndex, MaximumRows, false);
+					this.SetValue("_setPageProperties", true);
+				}
+
+				Page?.RegisterRequiresControlState(this);
+			}
+
+			this.SetValue("_initialized", true);
+		}
 
 		protected override void Render(HtmlTextWriter writer)
 		{
