@@ -1,8 +1,10 @@
-﻿<UserControl x:Class="Ecng.Xaml.EndPointEditor"
+﻿<UserControl x:Class="Ecng.Xaml.DevExp.EndPointEditor"
 			 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
-			 xmlns:xaml="clr-namespace:Ecng.Xaml"
-			 xmlns:converters="clr-namespace:Ecng.Xaml.Converters">
+			 xmlns:converters="clr-namespace:Ecng.Xaml.Converters;assembly=Ecng.Xaml"
+			 xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+			 xmlns:devExp="clr-namespace:Ecng.Xaml.DevExp"
+			 xmlns:xaml="clr-namespace:Ecng.Xaml;assembly=Ecng.Xaml">
 
 	<Control.Resources>
 		<Style TargetType="{x:Type TextBox}">
@@ -29,12 +31,12 @@
 	</Control.Resources>
 	
 	<Grid>
-		<TextBox x:Name="Address"
-				 BorderThickness="{Binding RelativeSource={RelativeSource AncestorType={x:Type xaml:EndPointEditor}}, Path=BorderThickness}"
-				 BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type xaml:EndPointEditor}}, Path=BorderBrush}">
-			<TextBox.Text>
+		<dxe:TextEdit x:Name="Address"
+				 BorderThickness="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointEditor}}, Path=BorderThickness}"
+				 BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointEditor}}, Path=BorderBrush}">
+			<dxe:TextEdit.Text>
 				<Binding Path="EndPoint"
-						 RelativeSource="{RelativeSource AncestorType={x:Type xaml:EndPointEditor}}"
+						 RelativeSource="{RelativeSource AncestorType={x:Type devExp:EndPointEditor}}"
 						 Mode="TwoWay"
 						 NotifyOnValidationError="True"
 						 UpdateSourceTrigger="PropertyChanged" 
@@ -43,7 +45,7 @@
 						<xaml:EndPointValidationRule/>
 					</Binding.ValidationRules>
 				</Binding>
-			</TextBox.Text>
-		</TextBox>
+			</dxe:TextEdit.Text>
+		</dxe:TextEdit>
 	</Grid>
 </UserControl>

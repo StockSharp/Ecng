@@ -49,6 +49,9 @@
     <Reference Include="DevExpress.Xpf.PropertyGrid.v15.2">
       <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.PropertyGrid.v15.2.dll</HintPath>
     </Reference>
+    <Reference Include="MoreLinq">
+      <HintPath>..\..\StockSharp (GitHub)\References\MoreLinq.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
@@ -75,6 +78,9 @@
       <DependentUpon>DdeSettingsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="EncodingEditor.cs" />
+    <Compile Include="EndPointEditor.xaml.cs">
+      <DependentUpon>EndPointEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="EntityPropertyEditor.cs" />
     <Compile Include="EnumEditor.xaml.cs">
       <DependentUpon>EnumEditor.xaml</DependentUpon>
@@ -107,6 +113,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="DdeSettingsWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="EndPointEditor.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
