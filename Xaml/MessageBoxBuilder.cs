@@ -5,14 +5,14 @@ namespace Ecng.Xaml
 
 	using Ecng.Common;
 
+	public interface IMessageBoxHandler
+	{
+		MessageBoxResult Show(string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options);
+		MessageBoxResult Show(Window owner, string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options);
+	}
+
 	public class MessageBoxBuilder
 	{
-		public interface IMessageBoxHandler
-		{
-			MessageBoxResult Show(string text , string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options);
-			MessageBoxResult Show(Window owner, string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options);
-		}
-
 		public class WpfMessageBoxHandler : IMessageBoxHandler
 		{
 			MessageBoxResult IMessageBoxHandler.Show(string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options)
@@ -23,19 +23,6 @@ namespace Ecng.Xaml
 			MessageBoxResult IMessageBoxHandler.Show(Window owner, string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options)
 			{
 				return MessageBox.Show(owner, text, caption, button, icon, defaultResult, options);
-			}
-		}
-
-		public class XceedMessageBoxHandler : IMessageBoxHandler
-		{
-			MessageBoxResult IMessageBoxHandler.Show(string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options)
-			{
-				return Xceed.Wpf.Toolkit.MessageBox.Show(text, caption, button, icon, defaultResult);
-			}
-
-			MessageBoxResult IMessageBoxHandler.Show(Window owner, string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options)
-			{
-				return Xceed.Wpf.Toolkit.MessageBox.Show(owner, text, caption, button, icon, defaultResult);
 			}
 		}
 
