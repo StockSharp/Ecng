@@ -23,16 +23,34 @@ namespace Ecng.Backup.Yandex
 	using Disk.SDK;
 	using Disk.SDK.Provider;
 
+	using Ecng.ComponentModel;
 	using Ecng.Localization;
 
 	partial class YandexLoginWindow
 	{
+		private class LoadingContext : NotifiableObject
+		{
+			private string _title;
+
+			public string Title
+			{
+				get { return _title; }
+				set
+				{
+					_title = value;
+					NotifyChanged(nameof(Title));
+				}
+			}
+		}
+
 		private const string _clientId = "fa16e5e894684f479fd32f7578f0d4a4";
 		private const string _returnUrl = "https://oauth.yandex.ru/verification_code";
 
 		private bool _authCompleted;
 
 		public event EventHandler<GenericSdkEventArgs<string>> AuthCompleted;
+		
+		private readonly LoadingContext _loadingContext = new LoadingContext();
 
 		public YandexLoginWindow()
 		{
@@ -42,8 +60,9 @@ namespace Ecng.Backup.Yandex
 
 			Browser.Visibility = Visibility.Hidden;
 
-			BusyIndicator.BusyContent = "Authorization".Translate() + "...";
-			BusyIndicator.IsBusy = true;
+			BusyIndicator.SplashScreenDataContext = _loadingContext;
+			_loadingContext.Title = "Authorization...".Translate();
+			BusyIndicator.IsSplashScreenShown = true;
 
 			Browser.Navigated += BrowserNavigated;
 		}
@@ -54,7 +73,7 @@ namespace Ecng.Backup.Yandex
 				return;
 
 			Browser.Visibility = Visibility.Visible;
-			BusyIndicator.IsBusy = false;
+			BusyIndicator.IsSplashScreenShown = false;
 		}
 
 		private void YandexLoginWindow_OnLoaded(object sender, RoutedEventArgs e)
@@ -68,14 +87,14 @@ namespace Ecng.Backup.Yandex
 
 			Browser.Visibility = Visibility.Hidden;
 
-			BusyIndicator.BusyContent = "File loading...".Translate();
-			BusyIndicator.IsBusy = true;
+			_loadingContext.Title = "File loading...".Translate();
+			BusyIndicator.IsSplashScreenShown = true;
 
 			Task.Factory
 				.StartNew(() => AuthCompleted?.Invoke(this, new GenericSdkEventArgs<string>(e.Result)))
 				.ContinueWith(res =>
 				{
-					BusyIndicator.IsBusy = false;
+					BusyIndicator.IsSplashScreenShown = false;
 					DialogResult = true;
 				}, TaskScheduler.FromCurrentSynchronizationContext());
 		}

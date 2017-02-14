@@ -40,6 +40,8 @@
     <Reference Include="AWSSDK.S3">
       <HintPath>..\..\StockSharp (GitHub)\References\AWSSDK.S3.dll</HintPath>
     </Reference>
+    <Reference Include="DevExpress.Mvvm.v15.2, Version=15.2.11.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a, processorArchitecture=MSIL" />
+    <Reference Include="DevExpress.Xpf.Core.v15.2, Version=15.2.11.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a, processorArchitecture=MSIL" />
     <Reference Include="Disk.SDK">
       <HintPath>..\..\StockSharp (GitHub)\References\Disk.SDK.dll</HintPath>
     </Reference>
@@ -52,9 +54,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
-    <Reference Include="Xceed.Wpf.Toolkit">
-      <HintPath>..\..\StockSharp (GitHub)\References\Xceed.Wpf.Toolkit.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs">
@@ -85,6 +84,10 @@
       <Project>{725d5260-8208-4a39-843a-6b58606ed73b}</Project>
       <Name>Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
+      <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
+      <Name>ComponentModel</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Configuration\Configuration.csproj">
       <Project>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</Project>
       <Name>Configuration</Name>
@@ -96,6 +99,10 @@
     <ProjectReference Include="..\Serialization\Serialization.csproj">
       <Project>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</Project>
       <Name>Serialization</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Xaml.DevExpress\Xaml.DevExp.csproj">
+      <Project>{3160D0DB-5D8C-4CF6-987C-C242C3566BAA}</Project>
+      <Name>Xaml.DevExp</Name>
     </ProjectReference>
     <ProjectReference Include="..\Xaml\Xaml.csproj">
       <Project>{90A23E0C-3329-4459-BB97-21CD84E5418A}</Project>
