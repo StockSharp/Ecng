@@ -82,6 +82,14 @@ namespace Ecng.Xaml
 			return this;
 		}
 
+		public MessageBoxBuilder Error(Exception error)
+		{
+			if (error == null)
+				throw new ArgumentNullException(nameof(error));
+
+			return Text(error.ToString()).Icon(MessageBoxImage.Error);
+		}
+
 		public MessageBoxBuilder Error()
 		{
 			return Icon(MessageBoxImage.Error);
