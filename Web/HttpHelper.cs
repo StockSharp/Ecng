@@ -441,6 +441,16 @@ namespace Ecng.Web
 			return true;
 		}
 
+		public static void Make403(this HttpResponse response)
+		{
+			if (response == null)
+				throw new ArgumentNullException(nameof(response));
+
+			response.TrySkipIisCustomErrors = true;
+			response.StatusDescription = "403 Forbidden";
+			response.StatusCode = (int)HttpStatusCode.Forbidden;
+		}
+
 		public static void Make404(this HttpResponse response)
 		{
 			if (response == null)
