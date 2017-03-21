@@ -77,7 +77,6 @@
     <Compile Include="Emit\EventGenerator.cs" />
     <Compile Include="Emit\FieldGenerator.cs" />
     <Compile Include="Emit\GenericArgGenerator.cs" />
-    <Compile Include="EntityProperty.cs" />
     <Compile Include="FastInvoker.cs" />
     <Compile Include="Emit\LocalGenerator.cs" />
     <Compile Include="GenericArg.cs" />

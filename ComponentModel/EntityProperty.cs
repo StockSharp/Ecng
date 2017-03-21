@@ -1,4 +1,4 @@
-﻿namespace Ecng.Reflection
+﻿namespace Ecng.ComponentModel
 {
 	using System;
 	using System.Collections.Generic;
@@ -7,6 +7,7 @@
 	using System.Reflection;
 
 	using Ecng.Common;
+	using Ecng.Reflection;
 
 	public class EntityProperty
 	{
@@ -57,8 +58,7 @@
 				if (!names.Add(name))
 					continue;
 
-				var nameAttr = pi.GetAttribute<DisplayNameAttribute>();
-				var displayName = nameAttr == null ? pi.Name : nameAttr.DisplayName;
+				var displayName = pi.GetDisplayName();
 
 				var prop = new EntityProperty
 				{

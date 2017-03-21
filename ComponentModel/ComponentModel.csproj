@@ -77,6 +77,7 @@
     <Compile Include="CompressedData.cs" />
     <Compile Include="CompressedDataRange.cs" />
     <Compile Include="DocAttribute.cs" />
+    <Compile Include="EntityProperty.cs" />
     <Compile Include="EnumDisplayNameAttribute.cs" />
     <Compile Include="EventDispatcher.cs" />
     <Compile Include="EventsContainer.cs" />
