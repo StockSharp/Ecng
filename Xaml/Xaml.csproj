@@ -151,6 +151,7 @@
     <Compile Include="GridViewSort.cs" />
     <Compile Include="GuiDispatcher.cs" />
     <Compile Include="HeaderedSeparator.cs" />
+    <Compile Include="Doc.cs" />
     <Compile Include="HighlightingTextBlock.xaml.cs">
       <DependentUpon>HighlightingTextBlock.xaml</DependentUpon>
     </Compile>
