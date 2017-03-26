@@ -1,6 +1,7 @@
 namespace Ecng.Security
 {
 	using System;
+	using System.Net;
 	using System.Security;
 
 	using Ecng.Common;
@@ -16,8 +17,9 @@ namespace Ecng.Security
 		/// </summary>
 		/// <param name="login">Login.</param>
 		/// <param name="password">Password.</param>
+		/// <param name="clientAddress">Remote network address.</param>
 		/// <returns>Session identifier.</returns>
-		Guid ValidateCredentials(string login, SecureString password);
+		Guid ValidateCredentials(string login, SecureString password, IPAddress clientAddress);
 	}
 
 	/// <summary>
@@ -37,8 +39,9 @@ namespace Ecng.Security
 		/// </summary>
 		/// <param name="login">Login.</param>
 		/// <param name="password">Password.</param>
+		/// <param name="clientAddress">Remote network address.</param>
 		/// <returns>Session identifier.</returns>
-		public virtual Guid ValidateCredentials(string login, SecureString password)
+		public virtual Guid ValidateCredentials(string login, SecureString password, IPAddress clientAddress)
 		{
 			return Guid.NewGuid();
 		}
@@ -61,8 +64,9 @@ namespace Ecng.Security
 		/// </summary>
 		/// <param name="login">Login.</param>
 		/// <param name="password">Password.</param>
+		/// <param name="clientAddress">Remote network address.</param>
 		/// <returns>Session identifier.</returns>
-		public virtual Guid ValidateCredentials(string login, SecureString password)
+		public virtual Guid ValidateCredentials(string login, SecureString password, IPAddress clientAddress)
 		{
 			if (!WindowsIdentityManager.Validate(login, password.To<string>()))
 				throw new UnauthorizedAccessException("User {0} not found or password is incorrect.".Translate().Put(login));
