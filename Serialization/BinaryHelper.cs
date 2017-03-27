@@ -39,7 +39,7 @@
 				var read = stream.Read(buffer, pos + (len - left), left);
 
 				if (read <= 0)
-					throw new InvalidOperationException("Stream returned '{0}' bytes.".Translate().Put(read));
+					throw new IOException("Stream returned '{0}' bytes.".Translate().Put(read));
 
 				left -= read;
 			}
