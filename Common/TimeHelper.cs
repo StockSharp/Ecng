@@ -103,15 +103,20 @@ namespace Ecng.Common
 			return (double)value.Ticks / TicksPerMillenium;
 		}
 
-		/// <summary>
-		/// Represents the one tick.
-		/// </summary>
-		public const int Tick = 1;
+		///// <summary>
+		///// Represents the one tick.
+		///// </summary>
+		//public const int Tick = 1;
 
 		/// <summary>
 		/// Represents the number of ticks in 1 nanosecond. This field is constant.
 		/// </summary>
-		public const long TicksPerNanosecond = 100;
+		public const double TicksPerNanosecond = 1.0 / NanosecondsPerTick;
+
+		/// <summary>
+		/// Represents the number of nanoseconds in 1 tick. This field is constant.
+		/// </summary>
+		public const long NanosecondsPerTick = 100;
 
 		/// <summary>
 		/// Represents the number of ticks in 1 microsecond. This field is constant.
@@ -147,27 +152,72 @@ namespace Ecng.Common
 
 		public static int GetMicroseconds(this TimeSpan ts)
 		{
-			return (int)((ts.Ticks / (TimeSpan.TicksPerMillisecond / 1000)) % 1000);
+			return (int)(TicksToMicroseconds(ts.Ticks) % 1000);
 		}
 
-		public static long ToTicks(this long nanoseconds)
+		public static int GetMicroseconds(this DateTime dt)
 		{
-			return nanoseconds / TicksPerNanosecond;
+			return (int)(TicksToMicroseconds(dt.Ticks) % 1000);
+		}
+
+		public static long GetNanoseconds(this TimeSpan ts)
+		{
+			return TicksToNanoseconds(ts.Ticks);
+		}
+
+		public static long GetNanoseconds(this DateTime dt)
+		{
+			return TicksToNanoseconds(dt.Ticks);
+		}
+
+		public static long NanosecondsToTicks(this long nanoseconds)
+		{
+			return nanoseconds / NanosecondsPerTick;
+		}
+
+		public static long TicksToNanoseconds(this long ticks)
+		{
+			return ticks * NanosecondsPerTick;
 		}
 
 		public static TimeSpan AddNanoseconds(this TimeSpan t, long nanoseconds)
 		{
-			return t + TimeSpan.FromTicks(ToTicks(nanoseconds));
+			return t + TimeSpan.FromTicks(NanosecondsToTicks(nanoseconds));
 		}
 
 		public static DateTime AddNanoseconds(this DateTime dt, long nanoseconds)
 		{
-			return dt.AddTicks(ToTicks(nanoseconds));
+			return dt.AddTicks(NanosecondsToTicks(nanoseconds));
 		}
 
 		public static DateTimeOffset AddNanoseconds(this DateTimeOffset dto, long nanoseconds)
 		{
-			return dto.AddTicks(ToTicks(nanoseconds));
+			return dto.AddTicks(NanosecondsToTicks(nanoseconds));
+		}
+
+		public static long MicrosecondsToTicks(this long mcs)
+		{
+			return mcs * TicksPerMicrosecond;
+		}
+
+		public static long TicksToMicroseconds(this long ticks)
+		{
+			return ticks / TicksPerMicrosecond;
+		}
+
+		public static TimeSpan AddMicroseconds(this TimeSpan t, long microseconds)
+		{
+			return t + TimeSpan.FromTicks(MicrosecondsToTicks(microseconds));
+		}
+
+		public static DateTime AddMicroseconds(this DateTime dt, long microseconds)
+		{
+			return dt.AddTicks(MicrosecondsToTicks(microseconds));
+		}
+
+		public static DateTimeOffset AddMicroseconds(this DateTimeOffset dto, long microseconds)
+		{
+			return dto.AddTicks(MicrosecondsToTicks(microseconds));
 		}
 
 		public static DateTime Truncate(this DateTime time, long precision)

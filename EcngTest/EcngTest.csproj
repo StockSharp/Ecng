@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="Common\ConverterTest.cs" />
     <Compile Include="Common\MathHelperTest.cs" />
+    <Compile Include="Common\TimeTest.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Data\AbstractTest.cs" />
     <Compile Include="Data\CacheTest.cs" />
