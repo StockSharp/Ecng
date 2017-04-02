@@ -11,7 +11,7 @@
 
 	using MoreLinq;
 
-	public class DelayAction
+	public class DelayAction : Disposable
 	{
 		private class Item
 		{
@@ -39,12 +39,18 @@
 			private bool _isProcessed;
 			private Exception _err;
 
-			public FlushItem()
+			public FlushItem(DelayAction parent, bool dispose)
 			{
+				if (parent == null)
+					throw new ArgumentNullException(nameof(parent));
+
 				Action = () => {};
 				PostAction = err =>
 				{
 					_err = err;
+
+					if (dispose)
+						parent.Dispose();
 
 					lock (_syncObject)
 					{
@@ -133,9 +139,9 @@
 			}
 		}
 
-		public void WaitFlush()
+		public void WaitFlush(bool dispose)
 		{
-			var item = new FlushItem();
+			var item = new FlushItem(this, dispose);
 			Add(item);
 			item.Wait();
 		}
@@ -169,6 +175,9 @@
 								BatchFlushAndClear(list);
 								list.Clear();
 
+								if (IsDisposed)
+									break;
+
 								Flush(actions[index]);
 							}
 							else
@@ -177,7 +186,8 @@
 							index++;
 						}
 
-						BatchFlushAndClear(list);
+						if (!IsDisposed)
+							BatchFlushAndClear(list);
 					}
 					else
 					{
@@ -218,8 +228,7 @@
 				error = ex;
 			}
 
-			if (item.PostAction != null)
-				item.PostAction(error);
+			item.PostAction?.Invoke(error);
 		}
 
 		private void BatchFlushAndClear(ICollection<Item> actions)
@@ -241,10 +250,16 @@
 								action.Action();
 							else
 								Flush(action);
+
+							if (IsDisposed)
+								break;
 						}
 
 						batch.Commit();
-					}	
+					}
+
+					if (IsDisposed)
+						break;
 				}
 			}
 			catch (Exception ex)
