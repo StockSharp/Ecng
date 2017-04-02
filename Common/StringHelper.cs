@@ -410,6 +410,9 @@
 			if (newValue == null)
 				throw new ArgumentNullException(nameof(newValue));
 
+			if (oldValue.Length == 0)
+				return original?.Length == 0 ? newValue : original;
+
 			var result = original;
 
 			if (oldValue != newValue)
