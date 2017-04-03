@@ -75,7 +75,6 @@
 			}
 		}
 
-		private readonly IStorage _storage;
 		private readonly Action<Exception> _errorHandler;
 
 		private Timer _flushTimer;
@@ -83,15 +82,11 @@
 		private bool _isFlushing;
 		private readonly SynchronizedList<Item> _actions = new SynchronizedList<Item>();
 
-		public DelayAction(IStorage storage, Action<Exception> errorHandler)
+		public DelayAction(Action<Exception> errorHandler)
 		{
-			if (storage == null)
-				throw new ArgumentNullException(nameof(storage));
-
 			if (errorHandler == null)
 				throw new ArgumentNullException(nameof(errorHandler));
 
-			_storage = storage;
 			_errorHandler = errorHandler;
 		}
 
@@ -242,7 +237,7 @@
 			{
 				foreach (var packet in actions.Batch(MaxBatchSize))
 				{
-					using (var batch = _storage.BeginBatch())
+					using (var batch = BeginBatch())
 					{
 						foreach (var action in packet)
 						{
@@ -271,6 +266,24 @@
 			actions
 				.Where(a => a.PostAction != null)
 				.ForEach(a => a.PostAction(error));
+		}
+
+		private class DummyBatchContext : IBatchContext
+		{
+			void IDisposable.Dispose()
+			{
+			}
+
+			void IBatchContext.Commit()
+			{
+			}
+		}
+
+		private readonly DummyBatchContext _batchContext = new DummyBatchContext();
+
+		protected virtual IBatchContext BeginBatch()
+		{
+			return _batchContext;
 		}
 	}
 }

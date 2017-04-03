@@ -116,7 +116,7 @@
 
 		public IStorage Storage { get; }
 
-		public DelayAction DelayAction { get; set; }
+		public StorageDelayAction DelayAction { get; set; }
 
 		public bool BulkLoad { get; set; }
 		public bool CacheCount { get; set; }

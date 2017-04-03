@@ -9,6 +9,6 @@
 
 		public object Entity { get; set; }
 
-		public static DelayAction DelayAction { get; set; }
+		public static StorageDelayAction DelayAction { get; set; }
 	}
 }
