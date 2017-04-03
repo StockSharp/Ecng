@@ -15,7 +15,7 @@ namespace Ecng.Serialization
 			_storage = storage;
 		}
 
-		protected override IBatchContext BeginBatch()
+		protected override IBatchContext BeginBatch(Group group)
 		{
 			return _storage.BeginBatch();
 		}
