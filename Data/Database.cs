@@ -210,7 +210,7 @@ namespace Ecng.Data
 
 		public bool SupportParallelBatch { get; set; }
 
-		public BatchContext BeginBatch()
+		public IBatchContext BeginBatch()
 		{
 			_batchInfo = new BatchInfo(this);
 			return new BatchContext(this);

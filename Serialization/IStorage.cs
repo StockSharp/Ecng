@@ -24,7 +24,7 @@
 
 		void ClearCache();
 
-		BatchContext BeginBatch();
+		IBatchContext BeginBatch();
 		void CommitBatch();
 		void EndBatch();
 

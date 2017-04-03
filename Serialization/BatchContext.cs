@@ -4,7 +4,7 @@ namespace Ecng.Serialization
 
 	using Ecng.Common;
 
-	public sealed class BatchContext : Disposable
+	public sealed class BatchContext : Disposable, IBatchContext
 	{
 		private readonly IStorage _storage;
 

@@ -131,7 +131,7 @@
 		{
 		}
 
-		public BatchContext BeginBatch()
+		public IBatchContext BeginBatch()
 		{
 			return new BatchContext(this);
 		}
