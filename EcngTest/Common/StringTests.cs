@@ -24,6 +24,16 @@ namespace Ecng.Test.Common
 
 			"AA ffgg GGG".ReplaceIgnoreCase("g", "k").AssertEqual("AA ffkk kkk");
 			"AA ffgg GGG".ReplaceIgnoreCase("g", "").AssertEqual("AA ff ");
+
+			"AbABabab".ReplaceIgnoreCase("ab", "kg").AssertEqual("kgkgkgkg");
+			"AbABaba".ReplaceIgnoreCase("ab", "kg").AssertEqual("kgkgkga");
+
+			"_".ReplaceIgnoreCase("_", "/").AssertEqual("/");
+			"__".ReplaceIgnoreCase("_", "/").AssertEqual("//");
+			"___".ReplaceIgnoreCase("__", "/").AssertEqual("/_");
+			"___S".ReplaceIgnoreCase("__", "/").AssertEqual("/_S");
+			"S___S".ReplaceIgnoreCase("__", "/").AssertEqual("S/_S");
+			"S___".ReplaceIgnoreCase("__", "/").AssertEqual("S/_");
 		}
 
 		[TestMethod]
