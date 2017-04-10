@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>protobuf-net</AssemblyName>
+    <Title>protobuf-net</Title>
+    <Description>Provides simple access to fast and efficient "Protocol Buffers" serialization from .NET applications</Description>
+    <TargetFrameworks>net20;net35;net40;netstandard1.3</TargetFrameworks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>EMIT_ASSEMBLY_INFO</DefineConstants> <!-- new build tools spit these out -->
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    
+    <!-- this is how we will configure the builds relatively cleanly -->
+    <ImportLibs>net</ImportLibs>
+    <FeatureCompiler>true</FeatureCompiler>
+    <FeatureServiceModel>true</FeatureServiceModel>
+    <PlatformXmlSerializer>true</PlatformXmlSerializer>
+    <PlatformBinaryFormatter>true</PlatformBinaryFormatter>
+  </PropertyGroup>
+
+  <!-- define configuration per-platform -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net20'">
+    <FeatureServiceModel>false</FeatureServiceModel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
+    <DefineConstants>$(DefineConstants);COREFX</DefineConstants>
+    <ImportLibs>core</ImportLibs>
+    <FeatureServiceModel>false</FeatureServiceModel>
+  </PropertyGroup>
+
+  <!-- apply the configuration options (typical via defines that switch code flows) -->
+  <PropertyGroup Condition="'$(FeatureCompiler)' == 'true'">
+    <DefineConstants>$(DefineConstants);FEAT_COMPILER</DefineConstants>    
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(FeatureServiceModel)' == 'true'">
+    <DefineConstants>$(DefineConstants);FEAT_SERVICEMODEL</DefineConstants>    
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(PlatformXmlSerializer)' == 'true'">
+    <DefineConstants>$(DefineConstants);PLAT_XMLSERIALIZER</DefineConstants>    
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(PlatformBinaryFormatter)' == 'true'">
+    <DefineConstants>$(DefineConstants);PLAT_BINARYFORMATTER</DefineConstants>    
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ImportLibs)' == 'net'">
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ImportLibs)|$(FeatureServiceModel)' == 'net|true'">
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ImportLibs)' == 'core'">
+    <!-- could make this more granular to respect the options, but no need yet -->
+    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.Emit.ILGeneration" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.TypeExtensions" Version="4.3.0" />
+    <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
+  </ItemGroup>
+</Project>
