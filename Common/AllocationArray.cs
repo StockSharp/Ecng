@@ -37,7 +37,7 @@ namespace Ecng.Common
 			object IEnumerator.Current => _current;
 		}
 
-		private readonly int _capacity;
+		//private readonly int _capacity;
 		private T[] _buffer;
 		private readonly AllocationArrayEnumerator _enumerator;
 
@@ -46,12 +46,12 @@ namespace Ecng.Common
 			if (capacity < 1)
 				throw new ArgumentOutOfRangeException(nameof(capacity));
 
-			_capacity = capacity;
+			//_capacity = capacity;
 			_buffer = new T[capacity];
 			_enumerator = new AllocationArrayEnumerator(this);
 		}
 
-		public int MaxCount { get; set; } = int.MaxValue;
+		public int MaxCount { get; set; } = int.MaxValue / 4;
 
 		private int _count;
 
@@ -65,7 +65,7 @@ namespace Ecng.Common
 					if (value > MaxCount)
 						throw new ArgumentOutOfRangeException();
 
-					Array.Resize(ref _buffer, value);
+					Resize(value);
 				}
 
 				_count = value;
@@ -100,18 +100,18 @@ namespace Ecng.Common
 			_count = 0;
 
 			if (_buffer.Length < capacity)
-				Array.Resize(ref _buffer, capacity);
+				Resize(capacity);
 		}
 
 		private void EnsureCapacity(int newSize)
 		{
-			if (_buffer.Length <= newSize)
-			{
-				if (newSize > MaxCount)
-					throw new ArgumentOutOfRangeException();
+			if (_buffer.Length > newSize)
+				return;
 
-				Array.Resize(ref _buffer, newSize + _capacity);
-			}
+			if (newSize > MaxCount)
+				throw new ArgumentOutOfRangeException();
+
+			Resize(newSize * 2);
 		}
 
 		public void Add(T item)
@@ -133,5 +133,10 @@ namespace Ecng.Common
 		public IEnumerator<T> GetEnumerator() => _enumerator;
 
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+		private void Resize(int capacity)
+		{
+			Array.Resize(ref _buffer, capacity);
+		}
 	}
 }
