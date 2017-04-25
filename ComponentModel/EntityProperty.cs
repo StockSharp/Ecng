@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.ComponentModel;
 	using System.Linq;
 	using System.Reflection;
 
@@ -78,6 +77,29 @@
 			processed.Remove(type);
 
 			return properties;
+		}
+
+		public static Type GetPropType(this Type type, string name)
+		{
+			if (type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			if (name == null)
+				throw new ArgumentNullException(nameof(name));
+
+			var value = type;
+
+			foreach (var part in name.Split('.'))
+			{
+				var info = value.GetProperty(part);
+
+				if (info == null)
+					return null;
+
+				value = info.PropertyType;
+			}
+
+			return value;
 		}
 
 		public static object GetPropValue(this object entity, string name)
