@@ -14,11 +14,14 @@
 			if (values[0] == null || values[0] == DependencyProperty.UnsetValue)
 				return Binding.DoNothing;
 
-			var date = (DateTimeOffset)values[0];
+			var date = values[0] as DateTimeOffset?;
+
+			if (date == null)
+				return Binding.DoNothing;
 
 			return values[1] == DependencyProperty.UnsetValue
-				? date.ToString()
-				: date.ToString((string)values[1]);
+				? date.Value.ToString()
+				: date.Value.ToString((string)values[1]);
 		}
 
 		object[] IMultiValueConverter.ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)

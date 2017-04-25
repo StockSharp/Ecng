@@ -1,17 +1,15 @@
 namespace Ecng.Security
 {
-	#region Using Directives
-
 	using System;
 	using System.ComponentModel;
+	using System.DirectoryServices;
 	using System.DirectoryServices.AccountManagement;
 	using System.Runtime.InteropServices;
+	using System.Security;
 	using System.Security.Principal;
 	using System.Threading;
 
 	using Ecng.Common;
-
-	#endregion
 
 	public enum LogonType
 	{
@@ -119,7 +117,7 @@ namespace Ecng.Security
 		private static extern bool CloseHandle(IntPtr handle);
 
 		[DllImport("advapi32.dll", SetLastError = true)]
-		private extern static bool DuplicateToken(IntPtr existingTokenHandle, SecurityImpersonationLevel level, out IntPtr duplicateTokenHandle);
+		private static extern bool DuplicateToken(IntPtr existingTokenHandle, SecurityImpersonationLevel level, out IntPtr duplicateTokenHandle);
 
 		public static void Login(string name, string password, Action action)
 		{
@@ -177,10 +175,51 @@ namespace Ecng.Security
 				throw new Win32Exception();
 		}
 
-		public static bool Validate(string userName, string password, string domain = null)
+		public static bool Validate(string userName, SecureString password, string domain = null)
 		{
-			using (var pc = new PrincipalContext(domain.IsEmpty() ? ContextType.Machine : ContextType.Domain, domain))
-				return pc.ValidateCredentials(userName, password);
+			using (var context = new PrincipalContext(domain.IsEmpty() ? ContextType.Machine : ContextType.Domain, domain))
+				return context.ValidateCredentials(userName, password.To<string>());
+		}
+
+		// http://stackoverflow.com/a/642511
+		public static bool DeleteUser(string userName)
+		{
+			var localDirectory = new DirectoryEntry("WinNT://" + Environment.MachineName);
+			var users = localDirectory.Children;
+			var user = users.Find(userName);
+			users.Remove(user);
+			return true;
+		}
+
+		// http://stackoverflow.com/a/6834015
+		public static bool CreateUser(string userName, SecureString password, string domain = null)
+		{
+			using (var context = new PrincipalContext(domain.IsEmpty() ? ContextType.Machine : ContextType.Domain, domain))
+			{
+				var oUserPrincipal = new UserPrincipal(context)
+				{
+					Name = userName
+				};
+				oUserPrincipal.SetPassword(password.To<string>());
+				//User Log on Name
+				//oUserPrincipal.UserPrincipalName = sUserName;
+				oUserPrincipal.Save();
+				return true;
+			}
+		}
+
+		public static bool ChangePassword(string userName, SecureString oldPassword, SecureString newPassword, string domain = null)
+		{
+			using (var context = new PrincipalContext(domain.IsEmpty() ? ContextType.Machine : ContextType.Domain, domain))
+			{
+				var user = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, userName);
+
+				if (user == null)
+					return false;
+
+				user.ChangePassword(oldPassword.To<string>(), newPassword.To<string>());
+				return true;
+			}
 		}
 	}
 }

@@ -410,18 +410,23 @@
 			if (newValue == null)
 				throw new ArgumentNullException(nameof(newValue));
 
+			if (oldValue.Length == 0)
+				return original?.Length == 0 ? newValue : original;
+
 			var result = original;
 
 			if (oldValue != newValue)
 			{
-				var index = -1;
+				int index;
 				var lastIndex = 0;
 
 				var buffer = new StringBuilder();
 
-				while ((index = original.IndexOf(oldValue, index + 1, StringComparison.InvariantCultureIgnoreCase)) >= 0)
+				while ((index = original.IndexOf(oldValue, lastIndex, StringComparison.InvariantCultureIgnoreCase)) >= 0)
 				{
-					buffer.Append(original, lastIndex, index - lastIndex);
+					if (lastIndex != (index - lastIndex))
+						buffer.Append(original, lastIndex, index - lastIndex);
+
 					buffer.Append(newValue);
 
 					lastIndex = index + oldValue.Length;

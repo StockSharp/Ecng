@@ -84,6 +84,7 @@
     <Compile Include="FastInvokerEntityFactory.cs" />
     <Compile Include="FastInvokerFieldAccessor.cs" />
     <Compile Include="FileStorage.cs" />
+    <Compile Include="IBatchContext.cs" />
     <Compile Include="InMemoryStorage.cs" />
     <Compile Include="IPersistable.cs" />
     <Compile Include="ISerializable.cs" />
@@ -129,6 +130,7 @@
     <Compile Include="SchemaFactoryAttribute.cs" />
     <Compile Include="SerializerFieldFactory.cs" />
     <Compile Include="SettingsStorage.cs" />
+    <Compile Include="StorageDelayAction.cs" />
     <Compile Include="TypeOverrideAttribute.cs" />
     <Compile Include="TypeSchemaFactory.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

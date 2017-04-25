@@ -210,7 +210,7 @@ namespace Ecng.Data
 
 		public bool SupportParallelBatch { get; set; }
 
-		public BatchContext BeginBatch()
+		public IBatchContext BeginBatch()
 		{
 			_batchInfo = new BatchInfo(this);
 			return new BatchContext(this);
@@ -984,18 +984,21 @@ namespace Ecng.Data
 
 					foreach (var field in schema.Fields.IndexFields)
 					{
-						if (!(field is IdentityField))
-						{
-							var fieldValue = field.GetAccessor<TEntity>().GetValue(entity);
+						if (field is IdentityField)
+							continue;
 
-							if (fieldValue == null)
-								continue;
+						var fieldValue = field.GetAccessor<TEntity>().GetValue(entity);
 
-							if ((fieldValue as string)?.IsEmpty() == true)
-								continue;
+						if (fieldValue == null)
+							continue;
 
-							_cache.Add(CreateKey(schema, field, fieldValue), entity);
-						}
+						if ((fieldValue as string)?.IsEmpty() == true)
+							continue;
+
+						var indexKey = CreateKey(schema, field, fieldValue);
+
+						if (!_cache.TryAdd(indexKey, entity))
+							throw new InvalidOperationException("Cannot add index {0} for {1}. It is already associated with {2}.".Put(indexKey, entity, _cache[indexKey]));
 
 						//keys.Add(field.Name);
 					}

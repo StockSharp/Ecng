@@ -6,7 +6,6 @@
 	using System.Linq;
 
 	using Ecng.Collections;
-	using Ecng.Common;
 
 	public class InMemoryStorage : IStorage
 	{
@@ -56,7 +55,7 @@
 			_cache.Clear();
 		}
 
-		public BatchContext BeginBatch()
+		public IBatchContext BeginBatch()
 		{
 			return new BatchContext(this);
 		}

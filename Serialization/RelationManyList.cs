@@ -116,7 +116,7 @@
 
 		public IStorage Storage { get; }
 
-		public DelayAction DelayAction { get; set; }
+		public StorageDelayAction DelayAction { get; set; }
 
 		public bool BulkLoad { get; set; }
 		public bool CacheCount { get; set; }
@@ -242,7 +242,7 @@
 		private void ProcessDelayed(Action action, Action<Exception> postAction = null)
 		{
 			if (DelayAction != null)
-				DelayAction.Add(action, postAction);
+				DelayAction.DefaultGroup.Add(action, postAction);
 			else
 				action();
 		}

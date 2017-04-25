@@ -257,6 +257,16 @@
 			return value;
 		}
 
+		public static TValue TryGetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
+		{
+			TValue value;
+
+			if (dict.TryGetValue(key, out value))
+				dict.Remove(key);
+
+			return value;
+		}
+
 		public static T ElementAtFromEnd<T>(this IEnumerable<T> source, int index)
 		{
 			return source.ElementAt(source.GetIndexFromEnd(index));
@@ -626,6 +636,32 @@
 		{
 			lock (queue.SyncRoot)
 				return queue.IsEmpty() ? (T?)null : queue.Dequeue();
+		}
+
+		public static T TryPeek<T>(this Queue<T> queue)
+			where T : class
+		{
+			return queue.IsEmpty() ? null : queue.Peek();
+		}
+
+		public static T? TryPeek2<T>(this Queue<T> queue)
+			where T : struct
+		{
+			return queue.IsEmpty() ? (T?)null : queue.Peek();
+		}
+
+		public static T TryPeek<T>(this SynchronizedQueue<T> queue)
+			where T : class
+		{
+			lock (queue.SyncRoot)
+				return queue.IsEmpty() ? null : queue.Peek();
+		}
+
+		public static T? TryPeek2<T>(this SynchronizedQueue<T> queue)
+			where T : struct
+		{
+			lock (queue.SyncRoot)
+				return queue.IsEmpty() ? (T?)null : queue.Peek();
 		}
 
 		public static T FirstOr<T>(this IEnumerable<T> source, T alternate)
