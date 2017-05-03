@@ -84,6 +84,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="FileSizeFormatProvider.cs" />
     <Compile Include="Circle.cs" />
+    <Compile Include="GratherThanZeroAttribute.cs" />
     <Compile Include="IconAttribute.cs" />
     <Compile Include="INotifyPropertyChangedEx.cs" />
     <Compile Include="IOperable.cs" />
