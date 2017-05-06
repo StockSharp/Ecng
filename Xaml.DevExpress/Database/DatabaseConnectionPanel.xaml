@@ -4,12 +4,28 @@
              xmlns:dxprg="http://schemas.devexpress.com/winfx/2008/xaml/propertygrid"
              xmlns:devExp="clr-namespace:Ecng.Xaml.DevExp"
              xmlns:security="clr-namespace:System.Security;assembly=mscorlib"
-             ShowSearchBox="False" ShowCategories="False">
-	<dxprg:PropertyDefinition Type="security:SecureString">
+             xmlns:data="clr-namespace:Ecng.Data;assembly=Ecng.Data"
+             xmlns:database="clr-namespace:Ecng.Xaml.DevExp.Database"
+             ShowDescriptionIn="ToolTipAndPanel" ShowSearchBox="False" ShowToolPanel="False" ShowMenuButtonInRows="False"
+             ExpandCategoriesWhenSelectedObjectChanged="True" AllowExpanding="Default" AllowInstanceInitializer="False">
+
+    <dxprg:PropertyGridControl.Resources>
+        <Style TargetType="dxprg:PropertyDefinition">
+            <Setter Property="PostOnEditValueChanged" Value="True" />
+        </Style>
+    </dxprg:PropertyGridControl.Resources>
+
+    <dxprg:PropertyDefinition Type="security:SecureString">
 		<dxprg:PropertyDefinition.CellTemplate>
 			<DataTemplate DataType="dxprg:RowData">
 				<devExp:SecretEdit BorderBrush="{x:Null}" BorderThickness="0" Secret="{Binding Path=Value, Mode=TwoWay}"/>
 			</DataTemplate>
 		</dxprg:PropertyDefinition.CellTemplate>
 	</dxprg:PropertyDefinition>
+
+    <dxprg:PropertyDefinition Type="data:DatabaseProvider" TypeMatchMode="Extended" IsReadOnly="False">
+        <dxprg:PropertyDefinition.EditSettings>
+            <database:DatabaseProviderEditor />
+        </dxprg:PropertyDefinition.EditSettings>
+    </dxprg:PropertyDefinition>
 </dxprg:PropertyGridControl>

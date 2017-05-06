@@ -113,6 +113,8 @@
 		{
 			private readonly DbConnectionStringBuilder _builder = new DbConnectionStringBuilder();
 
+			private DatabaseProvider _provider;
+
 			private T GetValue<T>(string key)
 			{
 				if (_builder.Keys.Cast<string>().Contains(key))
@@ -134,8 +136,16 @@
 			[DatabaseDescription(Titles.ProviderDescription)]
 			[DatabaseCategory]
 			//[PropertyOrder(0)]
-			[Editor(typeof(DatabaseProviderEditor), typeof(DatabaseProviderEditor))]
-			public DatabaseProvider Provider { get; set; }
+			//[Editor(typeof(DatabaseProviderEditor), typeof(DatabaseProviderEditor))]
+			public DatabaseProvider Provider
+			{
+				get { return _provider; }
+				set
+				{
+					_provider = value;
+					NotifyChanged(nameof(Provider));
+				}
+			}
 
 			[DatabaseDisplayName(Titles.Server)]
 			[DatabaseDescription(Titles.ServerDescription)]
