@@ -1,12 +1,14 @@
 namespace Ecng.Net
 {
 	using System;
+	using System.IO;
 	using System.Linq;
 	using System.Net;
 	using System.Net.Sockets;
 	using System.Web;
 
 	using Ecng.Common;
+	using Ecng.Localization;
 
 	public static class NetworkHelper
 	{
@@ -26,7 +28,7 @@ namespace Ecng.Net
 			else if (endPoint is DnsEndPoint)
 				return ((DnsEndPoint)endPoint).Host.CompareIgnoreCase("localhost");
 			else
-				throw new InvalidOperationException("Неизвестная информация об адресе.");
+				throw new ArgumentOutOfRangeException(nameof(endPoint), endPoint, "Invalid argument value.".Translate());
 		}
 
 		public static bool IsLocalIpAddress(this EndPoint endPoint)
@@ -67,12 +69,35 @@ namespace Ecng.Net
 			}
 		}
 
+		public static void Read(this Socket socket, byte[] buffer, int offset, int len)
+		{
+			var left = len;
+
+			while (left > 0)
+			{
+				var read = socket.Receive(buffer, offset + (len - left), left, SocketFlags.None);
+
+				if (read <= 0)
+					throw new IOException("Stream returned '{0}' bytes.".Translate().Put(read));
+
+				left -= read;
+			}
+		}
+
 		public static bool Wait(this Socket socket, int timeOut)
 		{
 			if (socket == null)
 				throw new ArgumentNullException(nameof(socket));
 
 			return socket.Poll(timeOut, SelectMode.SelectRead) && socket.Available != 0;
+		}
+
+		public static void JoinMulticast(this Socket socket, IPAddress address)
+		{
+			if (address == null)
+				throw new ArgumentNullException(nameof(address));
+
+			socket.JoinMulticast(new MulticastSourceAddress { GroupAddress = address });
 		}
 
 		public static void JoinMulticast(this Socket socket, MulticastSourceAddress address)
@@ -84,6 +109,14 @@ namespace Ecng.Net
 				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(address.GroupAddress));
 			else
 				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddSourceMembership, GetBytes(address));
+		}
+
+		public static void LeaveMulticast(this Socket socket, IPAddress address)
+		{
+			if (address == null)
+				throw new ArgumentNullException(nameof(address));
+
+			socket.LeaveMulticast(new MulticastSourceAddress { GroupAddress = address });
 		}
 
 		public static void LeaveMulticast(this Socket socket, MulticastSourceAddress address)
