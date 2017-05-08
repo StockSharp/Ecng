@@ -39,7 +39,7 @@
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
     </DocumentationFile>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <NoWarn>3001,3002,3003,3005,3008</NoWarn>
   </PropertyGroup>
@@ -1750,6 +1750,10 @@
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
       <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
       <Name>ComponentModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Localization\Localization.csproj">
+      <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
+      <Name>Localization</Name>
     </ProjectReference>
     <ProjectReference Include="..\Reflection\Reflection.csproj">
       <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>

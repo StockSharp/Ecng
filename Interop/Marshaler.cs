@@ -11,6 +11,7 @@ namespace Ecng.Interop
 
 	using Ecng.Common;
 	using Ecng.Collections;
+	using Ecng.Localization;
 	using Ecng.Serialization;
 
 	/// <summary>
@@ -101,7 +102,7 @@ namespace Ecng.Interop
 			else if (typeof(T) == typeof(IntPtr) || typeof(T) == typeof(UIntPtr))
 				Marshal.WriteIntPtr(ptr, value.To<IntPtr>());
 			else
-				throw new ArgumentException("value");
+				throw new ArgumentException(nameof(ptr));
 		}
 
 		/// <summary>
@@ -125,7 +126,7 @@ namespace Ecng.Interop
 			else if (typeof(T) == typeof(IntPtr) || typeof(T) == typeof(UIntPtr))
 				retVal = Marshal.ReadIntPtr(ptr);
 			else
-				throw new ArgumentException("value");
+				throw new ArgumentException(nameof(ptr));
 
 			return retVal.To<T>();
 		}
@@ -349,7 +350,7 @@ namespace Ecng.Interop
 			var addr = GetProcAddress(library, procName);
 
 			if (addr == IntPtr.Zero)
-				throw new ArgumentException("Ошибка в загрузке процедуры {0}.".Put(procName), nameof(procName), new Win32Exception());
+				throw new ArgumentException("Cannot load function '{0}'.".Translate().Put(procName), nameof(procName), new Win32Exception());
 
 			return Marshaler.GetDelegateForFunctionPointer<T>(addr);
 		}
@@ -363,5 +364,53 @@ namespace Ecng.Interop
 		[DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
 		public static extern IntPtr GetProcAddress([In] IntPtr hModule, [In] string procName);
 #endif
+
+		public static unsafe string GetUnsafeString(this Encoding encoding, ref byte srcChar, int maxBytes)
+		{
+			if (encoding == null)
+				throw new ArgumentNullException(nameof(encoding));
+
+			if (maxBytes < 0)
+				throw new ArgumentOutOfRangeException(nameof(maxBytes));
+
+			if (srcChar == 0)
+				return null;
+
+			var charBuffer = stackalloc char[maxBytes];
+
+			fixed (byte* ptr8 = &srcChar)
+			{
+				encoding.GetChars(ptr8, maxBytes, charBuffer, maxBytes);
+				return new string(charBuffer);
+			}
+		}
+
+		public static unsafe void SetUnsafeString(this Encoding encoding, ref byte tgtChar, int maxBytes, string value)
+		{
+			if (encoding == null)
+				throw new ArgumentNullException(nameof(encoding));
+
+			if (maxBytes < 0)
+				throw new ArgumentOutOfRangeException(nameof(maxBytes));
+
+			if (value.IsEmpty())
+				return;
+
+			var charBuffer = stackalloc char[maxBytes];
+
+			fixed (byte* ptr8 = &tgtChar)
+			{
+				for (var b = 0; b < maxBytes; b++)
+					ptr8[b] = 0;
+
+				if (value.Length >= maxBytes)
+					throw new ArgumentOutOfRangeException();
+
+				for (var c = 0; c < value.Length; c++)
+					charBuffer[c] = value[c];
+
+				encoding.GetBytes(charBuffer, value.Length, ptr8, maxBytes);
+			}
+		}
 	}
 }
