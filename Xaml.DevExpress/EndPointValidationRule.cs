@@ -1,4 +1,4 @@
-namespace Ecng.Xaml
+namespace Ecng.Xaml.DevExp
 {
 	using System;
 	using System.Globalization;

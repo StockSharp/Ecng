@@ -1,4 +1,4 @@
-namespace Ecng.Xaml
+﻿namespace Ecng.Xaml.DevExp
 {
 	using System;
 	using System.Collections.Generic;
@@ -10,20 +10,8 @@ namespace Ecng.Xaml
 
 	using Ecng.Common;
 
-	/// <summary>
-	/// Editor for the collection <see cref="EndPoint"/>.
-	/// </summary>
 	public partial class EndPointListEditor
 	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="EndPointListEditor"/>.
-		/// </summary>
-		public EndPointListEditor()
-		{
-			InitializeComponent();
-			//Address.Mask = @"[а-яА-Яa-zA-Z0-9\.\-\,]+:?\d+";
-		}
-
 		/// <summary>
 		/// <see cref="DependencyProperty"/> for <see cref="EndPointListEditor.EndPoints"/>.
 		/// </summary>
@@ -38,14 +26,18 @@ namespace Ecng.Xaml
 			get { return (IEnumerable<EndPoint>)GetValue(EndPointsProperty); }
 			set { SetValue(EndPointsProperty, value); }
 		}
+
+		public EndPointListEditor()
+		{
+			InitializeComponent();
+		}
 	}
 
 	class EndPointListConverter : IValueConverter
 	{
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			var endPoints = value as IEnumerable<EndPoint>;
-			return endPoints == null ? null : endPoints.Select(e => e.To<string>()).Join(",");
+			return (value as IEnumerable<EndPoint>)?.Select(e => e.To<string>()).Join(",");
 		}
 
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

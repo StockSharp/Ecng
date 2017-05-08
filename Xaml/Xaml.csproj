@@ -120,10 +120,6 @@
     <Compile Include="ConvertibleObservableCollection.cs" />
     <Compile Include="EncodingComboBox.cs" />
     <Compile Include="EndPointComboBox.cs" />
-    <Compile Include="EndPointListEditor.xaml.cs">
-      <DependentUpon>EndPointListEditor.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="EndPointValidationRule.cs" />
     <Compile Include="FileBrowserPicker.xaml.cs">
       <DependentUpon>FileBrowserPicker.xaml</DependentUpon>
     </Compile>
@@ -291,10 +287,6 @@
     <Page Include="Block.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="EndPointListEditor.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
