@@ -25,9 +25,12 @@
 			switch (mode)
 			{
 				case FileMode.CreateNew:
+				{
 					if (File.Exists(_name))
 						throw new IOException();
+
 					break;
+				}
 				case FileMode.Create:
 					break;
 				case FileMode.Open:
@@ -36,9 +39,14 @@
 				case FileMode.Truncate:
 					break;
 				case FileMode.Append:
-					File.Copy(_name, _nameTemp, true);
+				{
+					if (File.Exists(_name))
+						File.Copy(_name, _nameTemp, true);
+
 					isAppend = true;
+
 					break;
+				}
 				default:
 					throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
 			}
