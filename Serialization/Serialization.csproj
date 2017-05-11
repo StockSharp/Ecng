@@ -131,6 +131,7 @@
     <Compile Include="SerializerFieldFactory.cs" />
     <Compile Include="SettingsStorage.cs" />
     <Compile Include="StorageDelayAction.cs" />
+    <Compile Include="TransactionFileStream.cs" />
     <Compile Include="TypeOverrideAttribute.cs" />
     <Compile Include="TypeSchemaFactory.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
