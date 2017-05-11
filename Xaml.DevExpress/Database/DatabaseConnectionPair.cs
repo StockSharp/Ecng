@@ -6,6 +6,7 @@ namespace Ecng.Xaml.DevExp.Database
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.Data;
+	using Ecng.Localization;
 
 	public class DatabaseConnectionPair : NotifiableObject
 	{
@@ -38,7 +39,7 @@ namespace Ecng.Xaml.DevExp.Database
 		private void UpdateTitle()
 		{
 			Title = "({0}) {1}".Put(Provider == null ? string.Empty : Provider.Name, ConnectionString);
-			NotifyChanged("Title");
+			NotifyChanged(nameof(Title));
 		}
 
 		public override string ToString()
@@ -53,7 +54,7 @@ namespace Ecng.Xaml.DevExp.Database
 				if (showMessageBox)
 				{
 					new MessageBoxBuilder()
-						.Text("Cannot create a connection, because some data was not entered.")
+						.Text("Cannot create a connection, because some data was not entered.".Translate())
 						.Error()
 						.Owner(owner)
 						.Show();
@@ -71,7 +72,7 @@ namespace Ecng.Xaml.DevExp.Database
 					if (showMessageBox)
 					{
 						new MessageBoxBuilder()
-							.Text("Connection successfully checked.")
+							.Text("Connection successfully checked.".Translate())
 							.Owner(owner)
 							.Show();
 					}
@@ -83,7 +84,7 @@ namespace Ecng.Xaml.DevExp.Database
 					if (showMessageBox)
 					{
 						new MessageBoxBuilder()
-							.Text("Cannot connect." + Environment.NewLine + ex)
+							.Text("Cannot connect.".Translate() + Environment.NewLine + ex)
 							.Error()
 							.Owner(owner)
 							.Show();

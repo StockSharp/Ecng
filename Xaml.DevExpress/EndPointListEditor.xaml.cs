@@ -13,10 +13,10 @@
 	public partial class EndPointListEditor
 	{
 		/// <summary>
-		/// <see cref="DependencyProperty"/> for <see cref="EndPointListEditor.EndPoints"/>.
+		/// <see cref="DependencyProperty"/> for <see cref="EndPoints"/>.
 		/// </summary>
 		public static readonly DependencyProperty EndPointsProperty =
-			DependencyProperty.Register("EndPoints", typeof(IEnumerable<EndPoint>), typeof(EndPointListEditor), new PropertyMetadata(Enumerable.Empty<EndPoint>()));
+			DependencyProperty.Register(nameof(EndPoints), typeof(IEnumerable<EndPoint>), typeof(EndPointListEditor), new PropertyMetadata(Enumerable.Empty<EndPoint>()));
 
 		/// <summary>
 		/// Addresses.
