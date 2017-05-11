@@ -28,23 +28,21 @@
 
 		<converters:EndPointConverter x:Key="EndPointToString"/>
 	</Control.Resources>
-	
-	<Grid>
-		<dxe:TextEdit x:Name="Address"
-				 BorderThickness="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointEditor}}, Path=BorderThickness}"
-				 BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointEditor}}, Path=BorderBrush}">
-			<dxe:TextEdit.Text>
-				<Binding Path="EndPoint"
+
+    <dxe:TextEdit x:Name="Address"
+				  BorderThickness="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointEditor}}, Path=BorderThickness}"
+				  BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointEditor}}, Path=BorderBrush}">
+        <dxe:TextEdit.Text>
+            <Binding Path="EndPoint"
 						 RelativeSource="{RelativeSource AncestorType={x:Type devExp:EndPointEditor}}"
 						 Mode="TwoWay"
 						 NotifyOnValidationError="True"
 						 UpdateSourceTrigger="PropertyChanged" 
 						 Converter="{StaticResource EndPointToString}">
-					<Binding.ValidationRules>
-						<devExp:EndPointValidationRule/>
-					</Binding.ValidationRules>
-				</Binding>
-			</dxe:TextEdit.Text>
-		</dxe:TextEdit>
-	</Grid>
+                <Binding.ValidationRules>
+                    <devExp:EndPointValidationRule/>
+                </Binding.ValidationRules>
+            </Binding>
+        </dxe:TextEdit.Text>
+    </dxe:TextEdit>
 </UserControl>

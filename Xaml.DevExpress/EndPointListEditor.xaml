@@ -1,7 +1,8 @@
 ﻿<UserControl x:Class="Ecng.Xaml.DevExp.EndPointListEditor"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:devExp="clr-namespace:Ecng.Xaml.DevExp">
+             xmlns:devExp="clr-namespace:Ecng.Xaml.DevExp"
+             xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors">
 
     <Control.Resources>
         <Style TargetType="{x:Type TextBox}">
@@ -27,20 +28,20 @@
         <devExp:EndPointListConverter x:Key="EndPointToString" />
     </Control.Resources>
 
-    <Grid>
-        <TextBox x:Name="Address">
-            <TextBox.Text>
-                <Binding Path="EndPoints"
+    <dxe:TextEdit x:Name="Address"
+				  BorderThickness="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointEditor}}, Path=BorderThickness}"
+				  BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointEditor}}, Path=BorderBrush}">
+        <dxe:TextEdit.Text>
+            <Binding Path="EndPoints"
 						 RelativeSource="{RelativeSource AncestorType={x:Type devExp:EndPointListEditor}}"
 						 Mode="TwoWay"
 						 NotifyOnValidationError="True"
 						 UpdateSourceTrigger="PropertyChanged" 
 						 Converter="{StaticResource EndPointToString}">
-                    <Binding.ValidationRules>
-                        <devExp:EndPointValidationRule Multi="True" />
-                    </Binding.ValidationRules>
-                </Binding>
-            </TextBox.Text>
-        </TextBox>
-    </Grid>
+                <Binding.ValidationRules>
+                    <devExp:EndPointValidationRule Multi="True" />
+                </Binding.ValidationRules>
+            </Binding>
+        </dxe:TextEdit.Text>
+    </dxe:TextEdit>
 </UserControl>
