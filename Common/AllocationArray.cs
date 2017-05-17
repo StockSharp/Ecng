@@ -130,6 +130,31 @@ namespace Ecng.Common
 			_count += count;
 		}
 
+		public void RemoveAt(int index)
+		{
+			RemoveRange(index, 1);
+		}
+
+		public void RemoveRange(int startIndex, int count)
+		{
+			if (startIndex < 0)
+				throw new ArgumentOutOfRangeException(nameof(startIndex));
+
+			if (count <= 0)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
+			var begin = startIndex + count;
+			var countOfMove = _count - begin;
+
+			if (countOfMove < 0)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
+			if (countOfMove > 0)
+				Array.Copy(_buffer, begin, _buffer, startIndex, countOfMove);
+
+			_count -= count;
+		}
+
 		public IEnumerator<T> GetEnumerator() => _enumerator;
 
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

@@ -59,6 +59,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\AllocationArrayTest.cs" />
     <Compile Include="Common\ConverterTest.cs" />
     <Compile Include="Common\MathHelperTest.cs" />
     <Compile Include="Common\StringTests.cs" />
