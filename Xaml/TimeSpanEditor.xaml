@@ -1,0 +1,104 @@
+﻿<UserControl x:Class="Ecng.Xaml.TimeSpanEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:Ecng.Xaml.Converters"
+             xmlns:ex="clr-namespace:Ecng.Xaml"
+             x:Name="Ctrl">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" FalseVisibilityValue="Collapsed" TrueVisibilityValue="Visible"/>
+		<ex:TimeSpanEditorMaskToVisibilityConverter x:Key="TimeSpanEditorMaskToVisibilityConverter"/>
+		
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True" >
+                    <Setter Property="Background" Value="LightGray" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="3"/>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="3"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="3"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="3"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="3"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="19"/>
+        </Grid.ColumnDefinitions>
+
+        <Label FontFamily="Segoe UI" FontSize="12" Content=":" Grid.Column="2" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Padding="0"
+			   Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Days}}"/>
+        <Label FontFamily="Segoe UI" FontSize="12" Content=":" Grid.Column="4" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Padding="0"
+			   Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Minutes}}"/>
+        <Label FontFamily="Segoe UI" FontSize="12" Content=":" Grid.Column="6" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Padding="0"
+			   Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Seconds}}"/>
+        <Label FontFamily="Segoe UI" FontSize="12" Content=":" Grid.Column="8" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Padding="0"
+			   Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Milliseconds}}"/>
+        <Label FontFamily="Segoe UI" FontSize="12" Content=":" Grid.Column="10" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Padding="0"
+			   Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Microseconds}}"/>
+
+        <CheckBox x:Name="HasValueCheckBox" Grid.Column="0" BorderThickness="0" Margin="2,0,0,0"
+				  IsChecked="{Binding ElementName=Ctrl, Path=HasValue}"
+				  Visibility="{Binding ElementName=Ctrl, Path=IsNullable, Converter={StaticResource BoolToVisibilityConverter}}"
+				  VerticalContentAlignment="Center" HorizontalAlignment="Left" Background="Transparent"/>
+
+        <TextBox x:Name="TxbDays" Text="{Binding Path=Days, ElementName=Ctrl}" TextAlignment="Right" 
+				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
+                 Grid.Column="1" BorderThickness="0" PreviewKeyDown="KeyPressed" GotFocus="FocusedTextBox" 
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Days}}"
+                 VerticalContentAlignment="Center" ToolTip="Days" TextChanged="TextChanged" MouseWheel="OnMouseWheel"/>
+
+        <TextBox x:Name="TxbHours" Text="{Binding Path=Hours, ElementName=Ctrl}" TextAlignment="Center"
+				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
+                 FontFamily="Segoe UI" FontSize="12" Grid.Column="3" BorderThickness="0" 
+                 MouseWheel="OnMouseWheel" PreviewKeyDown="KeyPressed" GotFocus="FocusedTextBox" 
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Hours}}"
+                 VerticalContentAlignment="Center" ToolTip="Hours" TextChanged="TextChanged" />
+
+        <TextBox x:Name="TxbMinutes" Text="{Binding Path=Minutes, ElementName=Ctrl}" TextAlignment="Center"
+				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
+                 FontFamily="Segoe UI" FontSize="12" Grid.Column="5" BorderThickness="0" 
+                 MouseWheel="OnMouseWheel" PreviewKeyDown="KeyPressed" GotFocus="FocusedTextBox"
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Minutes}}"
+                 VerticalContentAlignment="Center" ToolTip="Minutes" TextChanged="TextChanged" />
+
+        <TextBox x:Name="TxbSeconds" Text="{Binding Path=Seconds, ElementName=Ctrl}" TextAlignment="Center"
+				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
+                 FontFamily="Segoe UI" FontSize="12" Grid.Column="7" BorderThickness="0" 
+                 MouseWheel="OnMouseWheel" PreviewKeyDown="KeyPressed"  GotFocus="FocusedTextBox"
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Seconds}}"
+                 VerticalContentAlignment="Center" ToolTip="Seconds" TextChanged="TextChanged" />
+
+        <TextBox x:Name="TxbMilliseconds" Text="{Binding Path=Milliseconds, ElementName=Ctrl}" TextAlignment="Center"
+				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
+                 FontFamily="Segoe UI" FontSize="12" Grid.Column="9" BorderThickness="0" 
+                 MouseWheel="OnMouseWheel" PreviewKeyDown="KeyPressed"  GotFocus="FocusedTextBox"
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Milliseconds}}"
+                 VerticalContentAlignment="Center" ToolTip="Milliseconds" TextChanged="TextChanged" />
+
+        <TextBox x:Name="TxbMicroseconds" Text="{Binding Path=Microseconds, ElementName=Ctrl}" TextAlignment="Center"
+				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
+                 FontFamily="Segoe UI" FontSize="12" Grid.Column="11" BorderThickness="0" 
+                 MouseWheel="OnMouseWheel" PreviewKeyDown="KeyPressed"  GotFocus="FocusedTextBox"
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Microseconds}}"
+                 VerticalContentAlignment="Center" ToolTip="Microseconds" TextChanged="TextChanged" />
+
+        <Viewbox DockPanel.Dock="Right" HorizontalAlignment="Right" Grid.Column="12"
+				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}">
+            <StackPanel Width="40">
+                <RepeatButton Content="&#9650;" Name="BtnUp" Click="ButtonUpDownClick" Focusable="False" />
+                <RepeatButton Content="&#9660;" Name="BtnDown" Click="ButtonUpDownClick" Focusable="False" />
+            </StackPanel>
+        </Viewbox>
+    </Grid>
+</UserControl>

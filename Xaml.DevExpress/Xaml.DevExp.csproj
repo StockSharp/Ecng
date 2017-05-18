@@ -101,9 +101,6 @@
     <Compile Include="SecretEditor.xaml.cs">
       <DependentUpon>SecretEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="TimeSpanEditor.xaml.cs">
-      <DependentUpon>TimeSpanEditor.xaml</DependentUpon>
-    </Compile>
     <Compile Include="TimeZoneEditor.cs" />
     <Compile Include="ValidationHelper.cs" />
   </ItemGroup>
@@ -145,10 +142,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Themes\Generic.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="TimeSpanEditor.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

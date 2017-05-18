@@ -245,6 +245,10 @@
     </Compile>
     <Compile Include="StickyWindow.cs" />
     <Compile Include="ThreadSafeObservableCollection.cs" />
+    <Compile Include="TimeSpanEditor.xaml.cs">
+      <DependentUpon>TimeSpanEditor.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="TimeSpanEditorAttribute.cs" />
     <Compile Include="TimeZoneComboBox.cs" />
     <Compile Include="UniqueObservableCollection.cs" />
     <Compile Include="ViewModelBase.cs" />
@@ -329,6 +333,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="TimeSpanEditor.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
