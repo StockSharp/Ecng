@@ -55,8 +55,8 @@
 			return new SerializationItem(Field, source);
 		}
 
-		protected abstract internal object OnCreateInstance(ISerializer serializer, object source);
-		protected abstract internal object OnCreateSource(ISerializer serializer, object instance);
+		protected internal abstract object OnCreateInstance(ISerializer serializer, object source);
+		protected internal abstract object OnCreateSource(ISerializer serializer, object instance);
 
 		#region Serializable<FieldFactory> Members
 

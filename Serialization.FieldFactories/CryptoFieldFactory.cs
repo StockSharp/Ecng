@@ -1,9 +1,8 @@
 namespace Ecng.Serialization
 {
-	#region Using Directives
-
 	using System;
 	using System.IO;
+	using System.Security.Cryptography;
 	using System.Security.Cryptography.X509Certificates;
 
 	using Ecng.Common;
@@ -11,13 +10,9 @@ namespace Ecng.Serialization
 
 	using Microsoft.Practices.EnterpriseLibrary.Security.Cryptography;
 
-	#endregion
-
 	[Serializable]
 	public class CryptoFieldFactory : FieldFactory<byte[], byte[]>
 	{
-		#region CryptoFieldFactory.ctor()
-
 		public CryptoFieldFactory(CryptoAlgorithm algorithm, Field field, int order)
 			: base(field, order)
 		{
@@ -27,29 +22,27 @@ namespace Ecng.Serialization
 			Algorithm = algorithm;
 		}
 
-		#endregion
-
-		#region Algorithm
-
 		public CryptoAlgorithm Algorithm { get; private set; }
-
-		#endregion
-
-		#region FieldFactory<byte[], byte[]> Members
 
 		protected override byte[] OnCreateInstance(ISerializer serializer, byte[] source)
 		{
-			return Algorithm.Decrypt(source);
+			try
+			{
+				return Algorithm.Decrypt(source);
+			}
+			catch (CryptographicException ex)
+			{
+				if (ContinueOnExceptionContext.TryProcess(ex))
+					return null;
+
+				throw;
+			}
 		}
 
 		protected override byte[] OnCreateSource(ISerializer serializer, byte[] instance)
 		{
 			return Algorithm.Encrypt(instance);
 		}
-
-		#endregion
-
-		#region Serializable Members
 
 		protected override void Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source)
 		{
@@ -62,8 +55,6 @@ namespace Ecng.Serialization
 			Algorithm = serializer.GetSerializer<CryptoAlgorithm>().Deserialize(source);
 			base.Deserialize(serializer, fields, source);
 		}
-
-		#endregion
 	}
 
 	public abstract class BaseCryptoAttribute : FieldFactoryAttribute
@@ -84,8 +75,6 @@ namespace Ecng.Serialization
 
 	public class CryptoAttribute : BaseCryptoAttribute
 	{
-		#region Algorithm
-
 		private string _algorithm;
 
 		public string Algorithm
@@ -109,8 +98,6 @@ namespace Ecng.Serialization
 			}
 			set { _algorithm = value; }
 		}
-
-		#endregion
 
 		public KeyTypes KeyType { get; set; }
 		public string PublicKey { get; set; }
@@ -140,8 +127,6 @@ namespace Ecng.Serialization
 			return alg;
 		}
 
-		#region GetKey
-
 		private ProtectedKey GetKey(string value)
 		{
 			byte[] plainText;
@@ -160,8 +145,6 @@ namespace Ecng.Serialization
 
 			return plainText.FromBytes();
 		}
-
-		#endregion
 	}
 
 	public class X509Attribute : BaseCryptoAttribute
@@ -183,8 +166,6 @@ namespace Ecng.Serialization
 			return new CryptoAlgorithm(new X509Cryptographer(cert));
 		}
 
-		#region FindCertificate
-
 		private X509Certificate2 FindCertificate()
 		{
 			using (var store = new X509StoreEx(StoreName, StoreLocation, OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly))
@@ -198,7 +179,5 @@ namespace Ecng.Serialization
 
 			throw new InvalidOperationException();
 		}
-
-		#endregion
 	}
 }

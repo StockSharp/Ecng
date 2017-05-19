@@ -78,6 +78,7 @@
     <Compile Include="Configuration\ConfigFieldFactory.cs" />
     <Compile Include="Configuration\ConfigFieldFactoryCollection.cs" />
     <Compile Include="Configuration\SerializationSection.cs" />
+    <Compile Include="ContinueOnExceptionContext.cs" />
     <Compile Include="DelayAction.cs" />
     <Compile Include="DynamicFieldFactory.cs" />
     <Compile Include="DynamicInnerSchemaFieldFactory.cs" />

@@ -25,7 +25,17 @@ namespace Ecng.Serialization
 
 		protected override SecureString OnCreateInstance(ISerializer serializer, byte[] source)
 		{
-			return _cryptographer.Decrypt(source.To<byte[]>(), Entropy).To<string>().To<SecureString>();
+			try
+			{
+				return _cryptographer.Decrypt(source, Entropy).To<string>().To<SecureString>();
+			}
+			catch (CryptographicException ex)
+			{
+				if (ContinueOnExceptionContext.TryProcess(ex))
+					return null;
+				
+				throw;
+			}
 		}
 
 		protected override byte[] OnCreateSource(ISerializer serializer, SecureString instance)

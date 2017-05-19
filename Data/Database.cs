@@ -833,14 +833,17 @@ namespace Ecng.Data
 
 			var entities = new List<TEntity>();
 
-			if (!table.IsEmpty())
-			{
-				var entityCount = ((ICollection)table[0].Value).Count;
-				table = GroupSource(schema.Fields, table, Enumerable.Empty<PairSet<string, string>>());
+			if (table.IsEmpty())
+				return entities;
 
-				lock (_cache.SyncRoot)
+			var entityCount = ((ICollection)table[0].Value).Count;
+			table = GroupSource(schema.Fields, table, Enumerable.Empty<PairSet<string, string>>());
+
+			lock (_cache.SyncRoot)
+			{
+				for (var i = 0; i < entityCount; i++)
 				{
-					for (var i = 0; i < entityCount; i++)
+					try
 					{
 						var source = GetRow(table, i);
 
@@ -877,6 +880,11 @@ namespace Ecng.Data
 							source.AddRange(CreateSource(schema.Fields.RelationManyFields));
 							serializer.Deserialize(source, schema.Fields.NonIdentityFields, entity);
 						}
+					}
+					catch (Exception ex)
+					{
+						if (!ContinueOnExceptionContext.TryProcess(ex))
+							throw;
 					}
 				}
 			}
@@ -1121,10 +1129,24 @@ namespace Ecng.Data
 
 							if (value is IList<object>)
 							{
+								var ctx = Scope<ContinueOnExceptionContext>.Current;
+
 								value = ((IList<object>)value).AsParallel().Select(v => CultureInfo.DoInCulture(() =>
 								{
 									var source = new SerializationItemCollection();
-									serializer.Deserialize(serializer.Encoding.GetBytes((string)v).To<Stream>(), source);
+
+									try
+									{
+										serializer.Deserialize(serializer.Encoding.GetBytes((string)v).To<Stream>(), source);
+									}
+									catch (Exception ex)
+									{
+										if (ctx != null)
+											ctx.Value.Process(ex);
+										else
+											throw;
+									}
+
 									return source;
 								})).ToList();
 							}
