@@ -27,7 +27,6 @@ namespace Ecng.Backup.Amazon
 	using global::Amazon.S3.Model;
 
 	using Ecng.Common;
-	using Ecng.Configuration;
 	using Ecng.Serialization;
 
 	/// <summary>
@@ -36,7 +35,7 @@ namespace Ecng.Backup.Amazon
 	public class AmazonS3Service : Disposable, IBackupService
 	{
 		private readonly string _bucket;
-		private AmazonS3Client _client;
+		private readonly AmazonS3Client _client;
 		private const int _bufferSize = 1024 * 1024 * 10; // 10mb
 		private readonly AWSCredentials _credentials;
 		private readonly RegionEndpoint _endpoint;
@@ -56,10 +55,6 @@ namespace Ecng.Backup.Amazon
 			_credentials = new BasicAWSCredentials(accessKey, secretKey);
 			_endpoint = endpoint;
 			_bucket = bucket;
-		}
-
-		void IDelayInitService.Init()
-		{
 			_client = new AmazonS3Client(_credentials, _endpoint);
 		}
 

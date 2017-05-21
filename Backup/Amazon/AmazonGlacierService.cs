@@ -25,14 +25,13 @@ namespace Ecng.Backup.Amazon
 	using global::Amazon.S3;
 
 	using Ecng.Common;
-	using Ecng.Configuration;
 
 	/// <summary>
 	/// The data storage service based on Amazon Glacier http://aws.amazon.com/glacier/.
 	/// </summary>
 	public class AmazonGlacierService : Disposable, IBackupService
 	{
-		private AmazonS3Client _client;
+		private readonly AmazonS3Client _client;
 		private readonly string _vaultName;
 		private readonly AWSCredentials _credentials;
 		private readonly RegionEndpoint _endpoint;
@@ -52,10 +51,6 @@ namespace Ecng.Backup.Amazon
 			_credentials = new BasicAWSCredentials(accessKey, secretKey);
 			_endpoint = endpoint;
 			_vaultName = vaultName;
-		}
-
-		void IDelayInitService.Init()
-		{
 			_client = new AmazonS3Client(_credentials, _endpoint);
 		}
 

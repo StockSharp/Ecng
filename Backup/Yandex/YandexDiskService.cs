@@ -11,7 +11,6 @@ namespace Ecng.Backup.Yandex
 	using Disk.SDK.Provider;
 
 	using Ecng.Common;
-	using Ecng.Configuration;
 	using Ecng.Serialization;
 	using Ecng.Xaml;
 
@@ -29,35 +28,60 @@ namespace Ecng.Backup.Yandex
 		{
 		}
 
-		private YandexLoginWindow CreateWindow(out Exception error)
+		private void Process(Action<DiskSdkClient> handler)
 		{
-			Exception error1 = null;
-			var loginWindow = new YandexLoginWindow();
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
 
-			loginWindow.AuthCompleted += (s, e) =>
+			Process<object>(client =>
 			{
-				if (e.Error == null)
-					_client = new DiskSdkClient(e.Result);
-				else
-					error1 = e.Error;
-			};
-
-			error = error1;
-			return loginWindow;
+				handler(client);
+				return null;
+			});
 		}
 
-		void IDelayInitService.Init()
+		private T Process<T>(Func<DiskSdkClient, T> handler)
 		{
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			if (_client != null)
+			{
+				return handler(_client);
+			}
+
+			var result = default(T);
+
 			Exception error = null;
 
 			var owner = Scope<Window>.Current?.Value ?? Application.Current?.MainWindow;
 
-			var retVal = owner?.GuiSync(() => CreateWindow(out error).ShowModal(owner)) ?? CreateWindow(out error).ShowDialog() == true;
+			YandexLoginWindow CreateWindow()
+			{
+				var loginWindow = new YandexLoginWindow();
+
+				loginWindow.AuthCompleted += (s, e) =>
+				{
+					if (e.Error == null)
+					{
+						_client = new DiskSdkClient(e.Result);
+						result = handler(_client);
+					}
+					else
+						error = e.Error;
+				};
+
+				return loginWindow;
+			}
+
+			var retVal = owner?.GuiSync(() => CreateWindow().ShowModal(owner)) ?? CreateWindow().ShowDialog() == true;
 
 			if (!retVal)
 				throw new UnauthorizedAccessException();
 
 			error?.Throw();
+
+			return result;
 		}
 
 		private static string GetPath(BackupEntry entry)
@@ -75,15 +99,18 @@ namespace Ecng.Backup.Yandex
 
 			var path = GetPath(parent) + "/";
 
-			return _client.AsyncWait<GenericSdkEventArgs<IEnumerable<DiskItemInfo>>, IEnumerable<BackupEntry>>(
-				nameof(DiskSdkClient.GetListCompleted),
-				() => _client.GetListAsync(path),
-				e => e.Result.Select(i => new BackupEntry
-				{
-					Parent = parent,
-					Name = i.DisplayName,
-					Size = i.ContentLength
-				}).ToArray());
+			return Process(client =>
+			{
+				return client.AsyncWait<GenericSdkEventArgs<IEnumerable<DiskItemInfo>>, IEnumerable<BackupEntry>>(
+					nameof(DiskSdkClient.GetListCompleted),
+					() => client.GetListAsync(path),
+					e => e.Result.Select(i => new BackupEntry
+					{
+						Parent = parent,
+						Name = i.DisplayName,
+						Size = i.ContentLength
+					}).ToArray());
+			});
 		}
 
 		void IBackupService.Delete(BackupEntry entry)
@@ -93,10 +120,13 @@ namespace Ecng.Backup.Yandex
 
 			var path = GetPath(entry);
 
-			_client.AsyncWait<SdkEventArgs, object>(
-				nameof(DiskSdkClient.RemoveCompleted),
-				() => _client.RemoveAsync(path),
-				e => e);
+			Process(client =>
+			{
+				client.AsyncWait<SdkEventArgs, object>(
+					nameof(DiskSdkClient.RemoveCompleted),
+					() => client.RemoveAsync(path),
+					e => e);
+			});
 		}
 
 		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, Action<int> progress)
@@ -113,16 +143,23 @@ namespace Ecng.Backup.Yandex
 			var source = new CancellationTokenSource();
 			var path = GetPath(entry);
 
+			Exception error = null;
+
 			var sync = new SyncObject();
 			var pulsed = false;
 
-			_client.DownloadFileAsync(path, stream, new AsyncProgress((curr, total) => progress((int)(curr * 100 / total))), (s, e) =>
+			Process(client =>
 			{
-				lock (sync)
+				client.DownloadFileAsync(path, stream, new AsyncProgress((curr, total) => progress((int)(curr * 100 / total))), (s, e) =>
 				{
-					pulsed = true;
-					sync.Pulse();
-				}
+					error = error ?? e.Error;
+
+					lock (sync)
+					{
+						pulsed = true;
+						sync.Pulse();
+					}
+				});
 			});
 
 			lock (sync)
@@ -132,6 +169,8 @@ namespace Ecng.Backup.Yandex
 			}
 
 			(stream as MemoryStream)?.UndoDispose();
+
+			error?.Throw();
 
 			return source;
 		}
@@ -150,16 +189,23 @@ namespace Ecng.Backup.Yandex
 			var source = new CancellationTokenSource();
 			var path = GetPath(entry);
 
+			Exception error = null;
+
 			var sync = new SyncObject();
 			var pulsed = false;
 
-			_client.UploadFileAsync(path, stream, new AsyncProgress((curr, total) => progress((int)(curr * 100 / total))), (s, e) =>
+			Process(client =>
 			{
-				lock (sync)
+				client.UploadFileAsync(path, stream, new AsyncProgress((curr, total) => progress((int)(curr * 100 / total))), (s, e) =>
 				{
-					pulsed = true;
-					sync.Pulse();
-				}
+					error = error ?? e.Error;
+
+					lock (sync)
+					{
+						pulsed = true;
+						sync.Pulse();
+					}
+				});
 			});
 
 			lock (sync)
@@ -169,6 +215,8 @@ namespace Ecng.Backup.Yandex
 			}
 
 			(stream as MemoryStream)?.UndoDispose();
+
+			error?.Throw();
 
 			return source;
 		}
@@ -180,10 +228,13 @@ namespace Ecng.Backup.Yandex
 
 			var path = GetPath(entry);
 
-			return _client.AsyncWait<GenericSdkEventArgs<string>, string>(
-				nameof(DiskSdkClient.PublishCompleted),
-				() => _client.PublishAsync(path),
-				e => e.Result);
+			return Process(client =>
+			{
+				return client.AsyncWait<GenericSdkEventArgs<string>, string>(
+					nameof(DiskSdkClient.PublishCompleted),
+					() => client.PublishAsync(path),
+					e => e.Result);
+			});
 		}
 
 		void IBackupService.UnPublish(BackupEntry entry)
@@ -193,10 +244,13 @@ namespace Ecng.Backup.Yandex
 
 			var path = GetPath(entry);
 
-			_client.AsyncWait<SdkEventArgs, object>(
-				nameof(DiskSdkClient.UnpublishCompleted),
-				() => _client.UnpublishAsync(path),
-				e => e);
+			Process(client =>
+			{
+				client.AsyncWait<SdkEventArgs, object>(
+					nameof(DiskSdkClient.UnpublishCompleted),
+					() => client.UnpublishAsync(path),
+					e => e);
+			});
 		}
 	}
 }

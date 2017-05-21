@@ -239,7 +239,7 @@
 				}
 			}
 
-			(service as IDelayInitService)?.Init();
+			//(service as IDelayInitService)?.Init();
 			return (T)service;
 		}
 
