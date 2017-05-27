@@ -5,21 +5,55 @@ namespace Ecng.Net
 	using System.Net;
 
 	using Ecng.Common;
+	using Ecng.ComponentModel;
 	using Ecng.Serialization;
 
 	[TypeConverter(typeof(ExpandableObjectConverter))]
-	public class MulticastSourceAddress : IPersistable
+	public class MulticastSourceAddress : NotifiableObject, IPersistable
 	{
+		private IPAddress _groupAddress;
+
 		[Display(Name = "Group Address", Description = "UDP multicast group address.", Order = 0)]
 		[IpAddress(AsString = true)]
-		public IPAddress GroupAddress { get; set; }
+		public IPAddress GroupAddress
+		{
+			get => _groupAddress;
+			set
+			{
+				NotifyChanging(nameof(GroupAddress));
+				_groupAddress = value;
+				NotifyChanged(nameof(GroupAddress));
+			}
+		}
+
+		private IPAddress _sourceAddress;
 
 		[Display(Name = "Source Address", Description = "UDP multicast source address.", Order = 1)]
 		[IpAddress(AsString = true)]
-		public IPAddress SourceAddress { get; set; }
+		public IPAddress SourceAddress
+		{
+			get => _sourceAddress;
+			set
+			{
+				NotifyChanging(nameof(SourceAddress));
+				_sourceAddress = value;
+				NotifyChanged(nameof(SourceAddress));
+			}
+		}
+
+		private int _port;
 
 		[Display(Name = "Port", Description = "Local port.", Order = 2)]
-		public int Port { get; set; }
+		public int Port
+		{
+			get => _port;
+			set
+			{
+				NotifyChanging(nameof(Port));
+				_port = value;
+				NotifyChanged(nameof(Port));
+			}
+		}
 
 		public void Load(SettingsStorage storage)
 		{
