@@ -29,15 +29,15 @@
     </Control.Resources>
 
     <dxe:TextEdit x:Name="Address"
-				  BorderThickness="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointEditor}}, Path=BorderThickness}"
-				  BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointEditor}}, Path=BorderBrush}">
+				  BorderThickness="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointListEditor}}, Path=BorderThickness}"
+				  BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type devExp:EndPointListEditor}}, Path=BorderBrush}">
         <dxe:TextEdit.Text>
             <Binding Path="EndPoints"
-						 RelativeSource="{RelativeSource AncestorType={x:Type devExp:EndPointListEditor}}"
-						 Mode="TwoWay"
-						 NotifyOnValidationError="True"
-						 UpdateSourceTrigger="PropertyChanged" 
-						 Converter="{StaticResource EndPointToString}">
+					 RelativeSource="{RelativeSource AncestorType={x:Type devExp:EndPointListEditor}}"
+					 Mode="TwoWay"
+					 NotifyOnValidationError="True"
+					 UpdateSourceTrigger="PropertyChanged" 
+					 Converter="{StaticResource EndPointToString}">
                 <Binding.ValidationRules>
                     <devExp:EndPointValidationRule Multi="True" />
                 </Binding.ValidationRules>
