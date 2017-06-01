@@ -990,6 +990,51 @@ namespace Ecng.Xaml
 
 			return false;
 		}
+
+		//private static readonly double _standartDpi = 96.0;
+		//private static readonly double _currentDpi = new System.Windows.Forms.TextBox().CreateGraphics().DpiX;
+		//private static readonly double _scale = _standartDpi / _currentDpi;
+
+		//
+		// https://www.devexpress.com/Support/Center/Question/Details/T422976
+		//
+		public static BitmapImage RenderDrawing(this DrawingImage drawingImage, Size drawingImageSize)
+		{
+			if (drawingImage == null)
+				throw new ArgumentNullException(nameof(drawingImage));
+
+			double currentDpi = new System.Windows.Forms.TextBox().CreateGraphics().DpiX;
+
+			var dpiScale = currentDpi / 96;
+
+			var renderTargetBitmap =
+				new RenderTargetBitmap((int)Math.Ceiling(drawingImageSize.Width * dpiScale),
+					(int)Math.Ceiling(drawingImageSize.Height * dpiScale), currentDpi,
+					currentDpi,
+					PixelFormats.Pbgra32);
+
+			var drawingVisual = new DrawingVisual();
+
+			using (var drawingContext = drawingVisual.RenderOpen())
+				drawingContext.DrawImage(drawingImage, new Rect(default(Point), drawingImageSize));
+			renderTargetBitmap.Render(drawingVisual);
+
+			var pngBitmapEncoder = new PngBitmapEncoder();
+			pngBitmapEncoder.Frames.Add(BitmapFrame.Create(renderTargetBitmap));
+
+			var memoryStream = new MemoryStream();
+			pngBitmapEncoder.Save(memoryStream);
+			memoryStream.Seek(0, SeekOrigin.Begin);
+
+			var bitmapImage = new BitmapImage();
+
+			bitmapImage.BeginInit();
+			bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+			bitmapImage.StreamSource = memoryStream;
+			bitmapImage.EndInit();
+
+			return bitmapImage;
+		}
 	}
 
 	public enum BrowserEmulationVersion
