@@ -101,6 +101,7 @@
     <Compile Include="IItemsSource.cs" />
     <Compile Include="MessageBoxHandlers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RangeEditor.cs" />
     <Compile Include="SecretEditor.xaml.cs">
       <DependentUpon>SecretEditor.xaml</DependentUpon>
     </Compile>
