@@ -6,18 +6,11 @@
 	using System.Linq;
 	using System.Reflection;
 
+	using Ecng.Common;
+
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.VisualBasic;
-
-	public enum CompilationLanguages
-	{
-		CSharp,
-		VisualBasic,
-		//Java,
-		//JScript,
-		//Cpp,
-	}
 
 	public sealed class Compiler
 	{
