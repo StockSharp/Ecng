@@ -1,7 +1,5 @@
 namespace Ecng.Common
 {
-	using System.Collections.Generic;
-
 	public enum CompilationLanguages
 	{
 		CSharp,
@@ -13,6 +11,6 @@ namespace Ecng.Common
 
 	public interface ICompilerService
 	{
-		CompilationResult Compile(CompilationLanguages language, string name, string body, IEnumerable<string> refs);
+		ICompiler GetCompiler(CompilationLanguages language);
 	}
 }

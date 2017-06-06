@@ -81,6 +81,8 @@
     <Compile Include="FastCsvReader.cs" />
     <Compile Include="FastDateTimeParser.cs" />
     <Compile Include="FastTimeSpanParser.cs" />
+    <Compile Include="Fw40CompilerService.cs" />
+    <Compile Include="ICompiler.cs" />
     <Compile Include="ICompilerService.cs" />
     <Compile Include="IOHelper.cs" />
     <Compile Include="NtpClient.cs" />
