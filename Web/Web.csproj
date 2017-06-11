@@ -97,6 +97,7 @@
     <Compile Include="Sitemap\SitemapFrequency.cs" />
     <Compile Include="Sitemap\SitemapGenerator.cs" />
     <Compile Include="Sitemap\SitemapNode.cs" />
+    <Compile Include="UI\WebControls\BorderlessImage.cs" />
     <Compile Include="UI\WebControls\DataPagerEx.cs" />
     <Compile Include="Feeds\FeedHandler.cs" />
     <Compile Include="HttpHelper.cs" />
