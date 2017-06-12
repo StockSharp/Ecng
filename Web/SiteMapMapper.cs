@@ -50,6 +50,10 @@
 				ObtainNodeInfo(childNode);
 
 			var pageType = node.ToPageType();
+
+			if (_pageNodes.ContainsKey(pageType))
+				throw new ArgumentException($"Type {pageType} already exist.", nameof(node));
+
 			_pageNodes.Add(pageType, node);
 		}
 

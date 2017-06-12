@@ -6,36 +6,42 @@
 	using System.Linq;
 	using System.Reflection;
 
+	using Ecng.Common;
+
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.VisualBasic;
 
-	public enum CompilationLanguages
+	public class RoslynCompiler : ICompiler
 	{
-		CSharp,
-		VisualBasic,
-		//Java,
-		//JScript,
-		//Cpp,
-	}
+		private static readonly Dictionary<string, string> _redirects = new Dictionary<string, string>
+		{
+			{ "System.Collections.Immutable, Version=1.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.Collections.Immutable.dll"},
+			{ "System.IO.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.IO.FileSystem.dll"},
+			//{ "System.IO.FileSystem, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.IO.FileSystem.dll"},
+			//{ "System.Security.Cryptography.Primitives, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.Security.Cryptography.Primitives.dll"},
+		};
 
-	public sealed class Compiler
-	{
-		private Compiler(CompilationLanguages language/*, string outputDir, string tempPath*/)
+		static RoslynCompiler()
+		{
+			AppDomain.CurrentDomain.AssemblyResolve += (o, args) =>
+			{
+				if (_redirects.ContainsKey(args.Name))
+				{
+					var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _redirects[args.Name]);
+					return Assembly.LoadFrom(path);
+				}
+
+				return null;
+			};
+		}
+
+		public RoslynCompiler(CompilationLanguages language)
 		{
 			Language = language;
-			//OutputDir = outputDir;
-			//TempPath = tempPath;
 		}
 
 		public CompilationLanguages Language { get; }
-		//public string OutputDir { get; }
-		//public string TempPath { get; }
-
-		public static Compiler Create(CompilationLanguages language)
-		{
-			return new Compiler(language);
-		}
 
 		public CompilationResult Compile(string name, string body, IEnumerable<string> refs)
 		{

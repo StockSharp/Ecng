@@ -1,4 +1,4 @@
-namespace Ecng.Roslyn
+namespace Ecng.Common
 {
 	public enum CompilationErrorTypes
 	{

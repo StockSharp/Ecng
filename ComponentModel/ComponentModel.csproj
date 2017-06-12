@@ -86,6 +86,7 @@
     <Compile Include="Circle.cs" />
     <Compile Include="GreaterThanZeroAttribute.cs" />
     <Compile Include="IconAttribute.cs" />
+    <Compile Include="INotifyPropertiesChanged.cs" />
     <Compile Include="INotifyPropertyChangedEx.cs" />
     <Compile Include="IOperable.cs" />
     <Compile Include="LazyHelper.cs" />
