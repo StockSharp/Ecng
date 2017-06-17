@@ -139,7 +139,7 @@
 			//[Editor(typeof(DatabaseProviderEditor), typeof(DatabaseProviderEditor))]
 			public DatabaseProvider Provider
 			{
-				get { return _provider; }
+				get => _provider;
 				set
 				{
 					_provider = value;
@@ -153,7 +153,7 @@
 			//[PropertyOrder(1)]
 			public string Server
 			{
-				get { return GetValue<string>("Data Source"); }
+				get => GetValue<string>("Data Source");
 				set
 				{
 					_builder["Data Source"] = value;
@@ -167,7 +167,7 @@
 			//[PropertyOrder(2)]
 			public string Database
 			{
-				get { return GetValue<string>("Initial Catalog"); }
+				get => GetValue<string>("Initial Catalog");
 				set
 				{
 					_builder["Initial Catalog"] = value;
@@ -181,7 +181,7 @@
 			//[PropertyOrder(3)]
 			public string UserName
 			{
-				get { return GetValue<string>("User ID"); }
+				get => GetValue<string>("User ID");
 				set
 				{
 					_builder["User ID"] = value;
@@ -195,7 +195,7 @@
 			//[PropertyOrder(4)]
 			public SecureString Password
 			{
-				get { return GetValue<string>("Password").To<SecureString>(); }
+				get => GetValue<string>("Password").To<SecureString>();
 				set
 				{
 					_builder["Password"] = value.To<string>();
@@ -209,7 +209,7 @@
 			//[PropertyOrder(5)]
 			public bool IntegratedSecurity
 			{
-				get { return GetValue<bool>("Integrated Security"); }
+				get => GetValue<bool>("Integrated Security");
 				set
 				{
 					if (value)
@@ -227,7 +227,7 @@
 			//[PropertyOrder(6)]
 			public string ConnectionString
 			{
-				get { return _builder.ConnectionString; }
+				get => _builder.ConnectionString;
 				set
 				{
 					_builder.ConnectionString = value;

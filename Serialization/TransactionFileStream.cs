@@ -103,8 +103,8 @@
 
 		public override long Position
 		{
-			get { return _temp.Position; }
-			set { _temp.Position = value; }
+			get => _temp.Position;
+			set => _temp.Position = value;
 		}
 	}
 }

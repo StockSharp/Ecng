@@ -78,8 +78,8 @@
 
 		public TValue this[TKey key]
 		{
-			get { return (TValue)_keyedEntryCollection[key].Value; }
-			set { DoSetEntry(key, value); }
+			get => (TValue)_keyedEntryCollection[key].Value;
+			set => DoSetEntry(key, value);
 		}
 
 		public Dictionary<TKey, TValue>.ValueCollection Values => TrueDictionary.Values;
@@ -356,8 +356,8 @@
 
 		TValue IDictionary<TKey, TValue>.this[TKey key]
 		{
-			get { return (TValue)_keyedEntryCollection[key].Value; }
-			set { DoSetEntry(key, value); }
+			get => (TValue)_keyedEntryCollection[key].Value;
+			set => DoSetEntry(key, value);
 		}
 
 		#endregion IDictionary<TKey, TValue>
@@ -390,8 +390,8 @@
 
 		object IDictionary.this[object key]
 		{
-			get { return _keyedEntryCollection[(TKey)key].Value; }
-			set { DoSetEntry((TKey)key, (TValue)value); }
+			get => _keyedEntryCollection[(TKey)key].Value;
+			set => DoSetEntry((TKey)key, (TValue)value);
 		}
 
 		ICollection IDictionary.Keys => Keys;
@@ -521,8 +521,8 @@
 
 		event NotifyCollectionChangedEventHandler INotifyCollectionChanged.CollectionChanged
 		{
-			add { CollectionChanged += value; }
-			remove { CollectionChanged -= value; }
+			add => CollectionChanged += value;
+			remove => CollectionChanged -= value;
 		}
 
 		protected virtual event NotifyCollectionChangedEventHandler CollectionChanged;
@@ -533,8 +533,8 @@
 
 		event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
 		{
-			add { PropertyChanged += value; }
-			remove { PropertyChanged -= value; }
+			add => PropertyChanged += value;
+			remove => PropertyChanged -= value;
 		}
 
 		protected virtual event PropertyChangedEventHandler PropertyChanged;

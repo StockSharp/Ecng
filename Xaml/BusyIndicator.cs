@@ -14,12 +14,12 @@
 
 		#region IsBusy
 
-		public static readonly DependencyProperty IsBusyProperty = DependencyProperty.Register("IsBusy", typeof(bool), typeof(BusyIndicator), new PropertyMetadata(false, OnIsBusyChanged));
+		public static readonly DependencyProperty IsBusyProperty = DependencyProperty.Register(nameof(IsBusy), typeof(bool), typeof(BusyIndicator), new PropertyMetadata(false, OnIsBusyChanged));
 
 		public bool IsBusy
 		{
-			get { return (bool)GetValue(IsBusyProperty); }
-			set { SetValue(IsBusyProperty, value); }
+			get => (bool)GetValue(IsBusyProperty);
+			set => SetValue(IsBusyProperty, value);
 		}
 
 		private static void OnIsBusyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -37,36 +37,36 @@
 
 		#region Busy Content
 
-		public static readonly DependencyProperty BusyContentProperty = DependencyProperty.Register("BusyContent", typeof(object), typeof(BusyIndicator), new PropertyMetadata(null));
+		public static readonly DependencyProperty BusyContentProperty = DependencyProperty.Register(nameof(BusyContent), typeof(object), typeof(BusyIndicator), new PropertyMetadata(null));
 
 		public object BusyContent
 		{
-			get { return GetValue(BusyContentProperty); }
-			set { SetValue(BusyContentProperty, value); }
+			get => GetValue(BusyContentProperty);
+			set => SetValue(BusyContentProperty, value);
 		}
 
 		#endregion
 
 		#region Busy Content Template
 
-		public static readonly DependencyProperty BusyContentTemplateProperty = DependencyProperty.Register("BusyContentTemplate", typeof(DataTemplate), typeof(BusyIndicator), new PropertyMetadata(null));
+		public static readonly DependencyProperty BusyContentTemplateProperty = DependencyProperty.Register(nameof(BusyContentTemplate), typeof(DataTemplate), typeof(BusyIndicator), new PropertyMetadata(null));
 
 		public DataTemplate BusyContentTemplate
 		{
-			get { return (DataTemplate)GetValue(BusyContentTemplateProperty); }
-			set { SetValue(BusyContentTemplateProperty, value); }
+			get => (DataTemplate)GetValue(BusyContentTemplateProperty);
+			set => SetValue(BusyContentTemplateProperty, value);
 		}
 
 		#endregion
 
 		#region Overlay Style
 
-		public static readonly DependencyProperty OverlayStyleProperty = DependencyProperty.Register("OverlayStyle", typeof(Style), typeof(BusyIndicator), new PropertyMetadata(null));
+		public static readonly DependencyProperty OverlayStyleProperty = DependencyProperty.Register(nameof(OverlayStyle), typeof(Style), typeof(BusyIndicator), new PropertyMetadata(null));
 
 		public Style OverlayStyle
 		{
-			get { return (Style)GetValue(OverlayStyleProperty); }
-			set { SetValue(OverlayStyleProperty, value); }
+			get => (Style)GetValue(OverlayStyleProperty);
+			set => SetValue(OverlayStyleProperty, value);
 		}
 
 		#endregion

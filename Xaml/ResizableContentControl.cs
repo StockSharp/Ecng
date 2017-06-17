@@ -17,39 +17,39 @@
 		private Point _currentPosition;
 
 		public static readonly DependencyProperty CanAutoSizeProperty = 
-			DependencyProperty.Register("CanAutoSize", typeof(bool), typeof(ResizableContentControl), new FrameworkPropertyMetadata(true));
+			DependencyProperty.Register(nameof(CanAutoSize), typeof(bool), typeof(ResizableContentControl), new FrameworkPropertyMetadata(true));
 		
 		public static readonly DependencyProperty GripperBackgroundProperty = 
-			DependencyProperty.Register("GripperBackground", typeof(Brush), typeof(ResizableContentControl), new FrameworkPropertyMetadata(Brushes.Transparent));
+			DependencyProperty.Register(nameof(GripperBackground), typeof(Brush), typeof(ResizableContentControl), new FrameworkPropertyMetadata(Brushes.Transparent));
 		
 		public static readonly DependencyProperty GripperForegroundProperty = 
-			DependencyProperty.Register("GripperForeground", typeof(Brush), typeof(ResizableContentControl), new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromRgb(184, 180, 162))));
+			DependencyProperty.Register(nameof(GripperForeground), typeof(Brush), typeof(ResizableContentControl), new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromRgb(184, 180, 162))));
 		
 		public static readonly DependencyProperty ResizeModeProperty = 
-			DependencyProperty.Register("ResizeMode", typeof(ControlResizeMode), typeof(ResizableContentControl), new FrameworkPropertyMetadata(ControlResizeMode.Both));
+			DependencyProperty.Register(nameof(ResizeMode), typeof(ControlResizeMode), typeof(ResizableContentControl), new FrameworkPropertyMetadata(ControlResizeMode.Both));
 
 		public bool CanAutoSize
 		{
-			get { return (bool)GetValue(CanAutoSizeProperty); }
-			set { SetValue(CanAutoSizeProperty, value); }
+			get => (bool)GetValue(CanAutoSizeProperty);
+			set => SetValue(CanAutoSizeProperty, value);
 		}
 
 		public Brush GripperBackground
 		{
-			get { return (Brush)GetValue(GripperBackgroundProperty); }
-			set { SetValue(GripperBackgroundProperty, value); }
+			get => (Brush)GetValue(GripperBackgroundProperty);
+			set => SetValue(GripperBackgroundProperty, value);
 		}
 
 		public Brush GripperForeground
 		{
-			get { return (Brush)GetValue(GripperForegroundProperty); }
-			set { SetValue(GripperForegroundProperty, value); }
+			get => (Brush)GetValue(GripperForegroundProperty);
+			set => SetValue(GripperForegroundProperty, value);
 		}
 
 		public ControlResizeMode ResizeMode
 		{
-			get { return (ControlResizeMode)GetValue(ResizeModeProperty); }
-			set { SetValue(ResizeModeProperty, value); }
+			get => (ControlResizeMode)GetValue(ResizeModeProperty);
+			set => SetValue(ResizeModeProperty, value);
 		}
 
 		private Thumb Gripper => GetTemplateChild("PART_Gripper") as Thumb;

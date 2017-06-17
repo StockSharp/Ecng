@@ -28,7 +28,7 @@
 
 		public long Offset
 		{
-			get { return (_dataOffset << 6) | _bitOffset; }
+			get => (_dataOffset << 6) | _bitOffset;
 			set
 			{
 				if (value < 0)// || value >= _bits.Length)

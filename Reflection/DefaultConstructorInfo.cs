@@ -59,10 +59,7 @@ namespace Ecng.Reflection
 		/// </summary>
 		/// <value></value>
 		/// <returns>A <see cref="T:System.RuntimeMethodHandle"></see> object.</returns>
-		public override RuntimeMethodHandle MethodHandle
-		{
-			get { throw new NotSupportedException(); }
-		}
+		public override RuntimeMethodHandle MethodHandle => throw new NotSupportedException();
 
 		/// <summary>
 		/// Gets the class object that was used to obtain this instance of <see cref="MemberInfo"/>.

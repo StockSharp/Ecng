@@ -386,7 +386,7 @@
 
 		public int BufferSize
 		{
-			get { return _bufferSize; }
+			get => _bufferSize;
 			set
 			{
 				if (value <= 0)
@@ -438,10 +438,7 @@
 						return ReadFirsts(1, Schema.Identity).FirstOrDefault();
 				}
 			}
-			set
-			{
-				throw new NotImplementedException();
-			}
+			set => throw new NotImplementedException();
 		}
 
 		#endregion

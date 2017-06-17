@@ -124,7 +124,7 @@ namespace Ecng.Data
 
 		public string Name
 		{
-			get { return _name; }
+			get => _name;
 			set
 			{
 				if (value.IsEmpty())
@@ -138,7 +138,7 @@ namespace Ecng.Data
 
 		public string ConnectionString
 		{
-			get { return _connectionString; }
+			get => _connectionString;
 			set
 			{
 				if (value.IsEmpty())
@@ -152,7 +152,7 @@ namespace Ecng.Data
 
 		public DatabaseProvider Provider
 		{
-			get { return _provider; }
+			get => _provider;
 			set
 			{
 				if (value == null)
@@ -175,7 +175,7 @@ namespace Ecng.Data
 
 		public Type SerializerType
 		{
-			get { return _serializerType; }
+			get => _serializerType;
 			set
 			{
 				if (value == null)
@@ -197,7 +197,7 @@ namespace Ecng.Data
 			if (action == null)
 				throw new ArgumentNullException(nameof(action));
 
-			if (_batchInfo != null && _batchInfo.Connection != null)
+			if (_batchInfo?.Connection != null)
 				action(_batchInfo.Connection);
 			else
 			{
@@ -596,7 +596,7 @@ namespace Ecng.Data
 			if (schema.ReadOnly)
 				throw new InvalidOperationException();
 
-			Action action = () =>
+			void Action()
 			{
 				CultureInfo.DoInCulture(() =>
 				{
@@ -625,12 +625,12 @@ namespace Ecng.Data
 				});
 
 				Updated?.Invoke(entity);
-			};
+			}
 
 			if (_batchInfo != null)
-				_batchInfo.AddAction(action, entity);
+				_batchInfo.AddAction(Action, entity);
 			else
-				action();
+				Action();
 
 			return entity;
 		}
@@ -673,12 +673,12 @@ namespace Ecng.Data
 		public virtual void Delete(SerializationItemCollection by)
 		{
 			if (by == null)
-				throw new ArgumentNullException(nameof(@by));
+				throw new ArgumentNullException(nameof(by));
 
 			if (by.IsEmpty())
-				throw new ArgumentOutOfRangeException(nameof(@by));
+				throw new ArgumentOutOfRangeException(nameof(by));
 
-			Action action = () =>
+			void Action()
 			{
 				var schema = by[0].Field.Schema;
 
@@ -712,12 +712,12 @@ namespace Ecng.Data
 				entities.ForEach(e => Removed?.Invoke(e));
 
 				DeleteCache(schema, by);
-			};
+			}
 
 			if (_batchInfo != null)
-				_batchInfo.AddAction(action, by);
+				_batchInfo.AddAction(Action, by);
 			else
-				action();
+				Action();
 		}
 
 		public virtual void Delete(DatabaseCommand command, SerializationItemCollection input)
@@ -768,12 +768,12 @@ namespace Ecng.Data
 			if (!AllowDeleteAll)
 				throw new NotSupportedException();
 
-			Action action = () => CultureInfo.DoInCulture(() => command.ExecuteNonQuery(source));
+			void Action() => CultureInfo.DoInCulture(() => command.ExecuteNonQuery(source));
 
 			if (_batchInfo != null)
-				_batchInfo.AddAction(action, source);
+				_batchInfo.AddAction(Action, source);
 			else
-				action();
+				Action();
 		}
 
 		#endregion
@@ -1094,7 +1094,8 @@ namespace Ecng.Data
 			{
 				if (field.IsInnerSchema())
 				{
-					var innerSchema = field.Factory is IDynamicSchema ? ((IDynamicSchema)field.Factory).Schema : field.Type.GetSchema();
+					var schema = field.Factory as IDynamicSchema;
+					var innerSchema = schema != null ? schema.Schema : field.Type.GetSchema();
 
 					var field1 = field;
 					var innerSchemaSource = GroupSource(
@@ -1188,7 +1189,8 @@ namespace Ecng.Data
 
 						if (innerSource != null)
 						{
-							var innerSchema = item.Field.Factory is IDynamicSchema ? ((IDynamicSchema)item.Field.Factory).Schema : item.Field.Type.GetSchema();
+							var schema = item.Field.Factory as IDynamicSchema;
+							var innerSchema = schema != null ? schema.Schema : item.Field.Type.GetSchema();
 							innerSource = UngroupSource(innerSchema.Fields, innerSource);
 							innerSource = ConvertSourceNames(item.Field.InnerSchemaNameOverrides, innerSource, true);
 							output.AddRange(innerSource);

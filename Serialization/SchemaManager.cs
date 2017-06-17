@@ -47,7 +47,7 @@
 
 		public static IDictionary<Type, SchemaFactory> CustomSchemaFactories { get; }
 		public static IDictionary<Tuple<Type, string>, Type> CustomFieldFactories { get; }
-		public static IDictionary<Type, Type> GlobalFieldFactories { get; private set; }
+		public static IDictionary<Type, Type> GlobalFieldFactories { get; }
 
 		#region GetSchema
 

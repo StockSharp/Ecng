@@ -193,7 +193,7 @@
 
 		public int MaxBatchSize
 		{
-			get { return _maxBatchSize; }
+			get => _maxBatchSize;
 			set
 			{
 				if (value <= 0)

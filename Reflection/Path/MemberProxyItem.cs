@@ -13,7 +13,7 @@ namespace Ecng.Reflection.Path
 			Invoker = invoker;
 		}
 
-		public FastInvoker Invoker { get; private set; }
+		public FastInvoker Invoker { get; }
 
 		public abstract object Invoke(object instance, IDictionary<string, object> args);
 

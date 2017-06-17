@@ -12,8 +12,8 @@ namespace Ecng.Web.UI.WebControls
 		[DefaultValue("")]
 		public string OnClientClick
 		{
-			get { return (string)ViewState["OnClientClick"] ?? string.Empty; }
-			set { ViewState["OnClientClick"] = value; }
+			get => (string)ViewState["OnClientClick"] ?? string.Empty;
+			set => ViewState["OnClientClick"] = value;
 		}
 
 		protected override void OnPreRender(EventArgs e)

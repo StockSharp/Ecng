@@ -23,8 +23,8 @@
 		/// </summary>
 		public IEnumerable<EndPoint> EndPoints
 		{
-			get { return (IEnumerable<EndPoint>)GetValue(EndPointsProperty); }
-			set { SetValue(EndPointsProperty, value); }
+			get => (IEnumerable<EndPoint>)GetValue(EndPointsProperty);
+			set => SetValue(EndPointsProperty, value);
 		}
 
 		public EndPointListEditor()

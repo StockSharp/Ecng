@@ -40,8 +40,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     /// </summary>
     public string SelectedItemId
     {
-      get { return selectedItemId; }
-      set { selectedItemId = value; }
+      get => selectedItemId;
+	    set => selectedItemId = value;
     }
 
 

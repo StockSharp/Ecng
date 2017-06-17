@@ -53,38 +53,37 @@
 
 			Trace.WriteLine("ConfigManager FilePath=" + InnerConfig.FilePath);
 
-		    Action<ConfigurationSectionCollection> initSections = sections =>
-		    {
-                // Из-за ошибки в велсе приходится оборачивать в try
-		        try
-		        {
-		            foreach (ConfigurationSection section in sections)
-		            {
-		                if (!_sections.ContainsKey(section.GetType()))
-		                    _sections.Add(section.GetType(), section);
-		            }
-		        }
-		        catch (Exception ex)
-		        {
+			void InitSections(ConfigurationSectionCollection sections)
+			{
+				// Из-за ошибки в велсе приходится оборачивать в try
+				try
+				{
+					foreach (ConfigurationSection section in sections)
+					{
+						if (!_sections.ContainsKey(section.GetType()))
+							_sections.Add(section.GetType(), section);
+					}
+				}
+				catch (Exception ex)
+				{
 					Trace.WriteLine(ex);
-		        }
-		    };
+				}
+			}
 
-			Action<ConfigurationSectionGroupCollection> initSectionGroups = null;
-			initSectionGroups = groups =>
+			void InitSectionGroups(ConfigurationSectionGroupCollection groups)
 			{
 				foreach (ConfigurationSectionGroup sectionGroup in groups)
 				{
 					if (!_sectionGroups.ContainsKey(sectionGroup.GetType()))
 						_sectionGroups.Add(sectionGroup.GetType(), sectionGroup);
 
-					initSections(sectionGroup.Sections);
-					initSectionGroups(sectionGroup.SectionGroups);
+					InitSections(sectionGroup.Sections);
+					InitSectionGroups(sectionGroup.SectionGroups);
 				}
-			};
+			}
 
-			initSections(InnerConfig.Sections);
-			initSectionGroups(InnerConfig.SectionGroups);
+			InitSections(InnerConfig.Sections);
+			InitSectionGroups(InnerConfig.SectionGroups);
 
 			UnityContainer = new UnityContainer();
 

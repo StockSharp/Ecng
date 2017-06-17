@@ -14,7 +14,7 @@ namespace Ecng.Xaml.DevExp.Database
 
 		public DatabaseProvider Provider
 		{
-			get { return _provider; }
+			get => _provider;
 			set
 			{
 				_provider = value;
@@ -26,7 +26,7 @@ namespace Ecng.Xaml.DevExp.Database
 
 		public string ConnectionString
 		{
-			get { return _connectionString; }
+			get => _connectionString;
 			set
 			{
 				_connectionString = value;

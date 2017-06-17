@@ -62,10 +62,7 @@
 		/// <value>The priority.</value>
 		public double? Priority
 		{
-			get
-			{
-				return _priority;
-			}
+			get => _priority;
 
 			set
 			{

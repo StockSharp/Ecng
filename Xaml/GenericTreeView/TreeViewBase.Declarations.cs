@@ -52,8 +52,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("Raised if the SelectedItem property is changed either programmatically or through the user interface.")]
     public event RoutedTreeItemEventHandler<T> SelectedItemChanged
     {
-      add { AddHandler(SelectedItemChangedEvent, value); }
-      remove { RemoveHandler(SelectedItemChangedEvent, value); }
+      add => AddHandler(SelectedItemChangedEvent, value);
+	    remove => RemoveHandler(SelectedItemChangedEvent, value);
     }
 
     /// <summary>
@@ -91,8 +91,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("The root items that provide the top level of the tree.")]
     public virtual IEnumerable<T> Items
     {
-      get { return (IEnumerable<T>) GetValue(ItemsProperty); }
-      set { SetValue(ItemsProperty, value); }
+      get => (IEnumerable<T>) GetValue(ItemsProperty);
+	    set => SetValue(ItemsProperty, value);
     }
 
 
@@ -157,8 +157,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("The tree's currently selected item, if any.")]
     public virtual T SelectedItem
     {
-      get { return (T) GetValue(SelectedItemProperty); }
-      set { SetValue(SelectedItemProperty, value); }
+      get => (T) GetValue(SelectedItemProperty);
+	    set => SetValue(SelectedItemProperty, value);
     }
 
 
@@ -279,8 +279,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("Whether to delay creation of child nodes until a parent node is expanded.")]
     public virtual bool IsLazyLoading
     {
-      get { return (bool) GetValue(IsLazyLoadingProperty); }
-      set { SetValue(IsLazyLoadingProperty, value); }
+      get => (bool) GetValue(IsLazyLoadingProperty);
+	    set => SetValue(IsLazyLoadingProperty, value);
     }
 
 
@@ -341,9 +341,9 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("Removes collapsed nodes from the tree if lazy loading is active.")]
     public bool ClearCollapsedNodes
     {
-      get { return (bool) GetValue(ClearCollapsedNodesProperty); }
-      set { SetValue(ClearCollapsedNodesProperty, value); }
-    }
+      get => (bool) GetValue(ClearCollapsedNodesProperty);
+		  set => SetValue(ClearCollapsedNodesProperty, value);
+	  }
 
 
     /// <summary>
@@ -387,8 +387,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("Whether to observe the bound Items collection for changed contents.")]
     public bool ObserveRootItems
     {
-      get { return (bool) GetValue(ObserveRootItemsProperty); }
-      set { SetValue(ObserveRootItemsProperty, value); }
+      get => (bool) GetValue(ObserveRootItemsProperty);
+	    set => SetValue(ObserveRootItemsProperty, value);
     }
 
 
@@ -466,8 +466,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("Whether to monitor child collections of rendered nodes for changes or not.")]
     public virtual bool ObserveChildItems
     {
-      get { return (bool) GetValue(ObserveChildItemsProperty); }
-      set { SetValue(ObserveChildItemsProperty, value); }
+      get => (bool) GetValue(ObserveChildItemsProperty);
+	    set => SetValue(ObserveChildItemsProperty, value);
     }
 
 
@@ -509,8 +509,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("The underlying WPF TreeView that renders the assigned data.")]
     public virtual TreeView Tree
     {
-      get { return (TreeView)GetValue(TreeProperty); }
-      set { SetValue(TreeProperty, value); }
+      get => (TreeView)GetValue(TreeProperty);
+	    set => SetValue(TreeProperty, value);
     }
 
 
@@ -576,8 +576,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("The style to be attached to the internal TreeView control.")]
     public virtual Style TreeStyle
     {
-      get { return (Style)GetValue(TreeStyleProperty); }
-      set { SetValue(TreeStyleProperty, value); }
+      get => (Style)GetValue(TreeStyleProperty);
+	    set => SetValue(TreeStyleProperty, value);
     }
 
 
@@ -621,8 +621,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("A virtual root node that displays the assigned items.")]
     public TreeViewItem RootNode
     {
-      get { return (TreeViewItem)GetValue(RootNodeProperty); }
-      set { SetValue(RootNodeProperty, value); }
+      get => (TreeViewItem)GetValue(RootNodeProperty);
+	    set => SetValue(RootNodeProperty, value);
     }
 
 
@@ -673,8 +673,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("Keeps the layout if possible, if the control is refreshed.")]
     public bool PreserveLayoutOnRefresh
     {
-      get { return (bool)GetValue(PreserveLayoutOnRefreshProperty); }
-      set { SetValue(PreserveLayoutOnRefreshProperty, value); }
+      get => (bool)GetValue(PreserveLayoutOnRefreshProperty);
+	    set => SetValue(PreserveLayoutOnRefreshProperty, value);
     }
 
 
@@ -711,8 +711,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("The style to be assigned to the tree's item nodes.")]
     public virtual Style TreeNodeStyle
     {
-      get { return (Style)GetValue(TreeNodeStyleProperty); }
-      set { SetValue(TreeNodeStyleProperty, value); }
+      get => (Style)GetValue(TreeNodeStyleProperty);
+	    set => SetValue(TreeNodeStyleProperty, value);
     }
 
 
@@ -759,8 +759,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("Sorting directives for the tree's nodes.")]
     public virtual IEnumerable<SortDescription> NodeSortDescriptions
     {
-      get { return (IEnumerable<SortDescription>) GetValue(NodeSortDescriptionsProperty); }
-      set { SetValue(NodeSortDescriptionsProperty, value); }
+      get => (IEnumerable<SortDescription>) GetValue(NodeSortDescriptionsProperty);
+	    set => SetValue(NodeSortDescriptionsProperty, value);
     }
 
 
@@ -809,8 +809,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("Filter expression for bound items.")]
     public Predicate<T> ItemFilter
     {
-      get { return (Predicate<T>) GetValue(ItemFilterProperty); }
-      set { SetValue(ItemFilterProperty, value); }
+      get => (Predicate<T>) GetValue(ItemFilterProperty);
+	    set => SetValue(ItemFilterProperty, value);
     }
 
 
@@ -863,8 +863,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("Whether right-clicked nodes should be selected or not.")]
     public virtual bool SelectNodesOnRightClick
     {
-      get { return (bool)GetValue(SelectNodesOnRightClickProperty); }
-      set { SetValue(SelectNodesOnRightClickProperty, value); }
+      get => (bool)GetValue(SelectNodesOnRightClickProperty);
+	    set => SetValue(SelectNodesOnRightClickProperty, value);
     }
 
 
@@ -912,8 +912,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     [Description("A custom context menu which is displayed for all nodes.")]
     public virtual ContextMenu NodeContextMenu
     {
-      get { return (ContextMenu)GetValue(NodeContextMenuProperty); }
-      set { SetValue(NodeContextMenuProperty, value); }
+      get => (ContextMenu)GetValue(NodeContextMenuProperty);
+	    set => SetValue(NodeContextMenuProperty, value);
     }
 
 
@@ -953,8 +953,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     /// </summary>
     public bool AutoCollapse
     {
-      get { return (bool) GetValue(AutoCollapseProperty); }
-      set { SetValue(AutoCollapseProperty, value); }
+      get => (bool) GetValue(AutoCollapseProperty);
+	    set => SetValue(AutoCollapseProperty, value);
     }
 
 

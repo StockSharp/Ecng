@@ -29,10 +29,7 @@
 
 		public ConfigFieldFactory this[int index]
 		{
-			get
-			{
-				return (ConfigFieldFactory)BaseGet(index);
-			}
+			get => (ConfigFieldFactory)BaseGet(index);
 			set
 			{
 				if (BaseGet(index) != null)

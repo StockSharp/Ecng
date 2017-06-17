@@ -51,7 +51,7 @@
 				lock (SyncRoot)
 					return _inner[index];
 			}
-			set { throw new NotSupportedException(); }
+			set => throw new NotSupportedException();
 		}
 
 		public IEnumerator<T> GetEnumerator()

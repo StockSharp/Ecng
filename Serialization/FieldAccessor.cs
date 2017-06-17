@@ -15,7 +15,7 @@ namespace Ecng.Serialization
 			Field = field;
 		}
 
-		public Field Field { get; private set; }
+		public Field Field { get; }
 
 		public abstract object GetValue(object entity);
 		public abstract object SetValue(object entity, object value);

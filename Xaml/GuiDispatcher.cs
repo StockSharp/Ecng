@@ -112,7 +112,7 @@ namespace Ecng.Xaml
 		/// </summary>
 		public TimeSpan Interval
 		{
-			get { return _interval; }
+			get => _interval;
 			set
 			{
 				if (value <= TimeSpan.Zero)

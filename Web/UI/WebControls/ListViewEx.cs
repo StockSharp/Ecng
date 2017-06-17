@@ -62,8 +62,8 @@ namespace Ecng.Web.UI.WebControls
 		[DefaultValue(_defaultSortExpressionField)]
 		public string SortExpressionField
 		{
-			get { return _sortExpressionField; }
-			set { _sortExpressionField = value; }
+			get => _sortExpressionField;
+			set => _sortExpressionField = value;
 		}
 
 		#endregion
@@ -76,8 +76,8 @@ namespace Ecng.Web.UI.WebControls
 		[DefaultValue(_defaultSortDirectionField)]
 		public string SortDirectionField
 		{
-			get { return _sortDirectionField; }
-			set { _sortDirectionField = value; }
+			get => _sortDirectionField;
+			set => _sortDirectionField = value;
 		}
 
 		#endregion
@@ -90,8 +90,8 @@ namespace Ecng.Web.UI.WebControls
 		[DefaultValue("")]
 		public string SortExpr
 		{
-			get { return _sortExpr; }
-			set { _sortExpr = value; }
+			get => _sortExpr;
+			set => _sortExpr = value;
 		}
 
 		#endregion
@@ -104,8 +104,8 @@ namespace Ecng.Web.UI.WebControls
 		[DefaultValue(SortDirection.Ascending)]
 		public SortDirection SortDir
 		{
-			get { return _sortDir; }
-			set { _sortDir = value; }
+			get => _sortDir;
+			set => _sortDir = value;
 		}
 
 		#endregion

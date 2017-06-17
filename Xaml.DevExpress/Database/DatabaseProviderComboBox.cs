@@ -18,8 +18,8 @@ namespace Ecng.Xaml.DevExp.Database
 
 		public DatabaseProvider SelectedProvider
 		{
-			get { return (DatabaseProvider)SelectedItem; }
-			set { SelectedItem = value; }
+			get => (DatabaseProvider)SelectedItem;
+			set => SelectedItem = value;
 		}
 	}
 }

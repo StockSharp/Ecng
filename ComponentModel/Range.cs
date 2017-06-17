@@ -115,7 +115,7 @@ namespace Ecng.ComponentModel
 		[Field("Min", Order = 0)]
 		public T Min
 		{
-			get { return _min.Value; }
+			get => _min.Value;
 			set
 			{
 				if (_max.HasValue)
@@ -140,7 +140,7 @@ namespace Ecng.ComponentModel
 		[Field("Max", Order = 1)]
 		public T Max
 		{
-			get { return _max.Value; }
+			get => _max.Value;
 			set
 			{
 				if (_min.HasValue)

@@ -28,15 +28,15 @@ namespace Ecng.Xaml
 		/// <see cref="DependencyProperty"/> for <see cref="IpAddressEditor.Address"/>.
 		/// </summary>
 		public static readonly DependencyProperty AddressProperty =
-			DependencyProperty.Register("Address", typeof(IPAddress), typeof(IpAddressEditor), new PropertyMetadata(default(IPAddress)));
+			DependencyProperty.Register(nameof(Address), typeof(IPAddress), typeof(IpAddressEditor), new PropertyMetadata(default(IPAddress)));
 
 		/// <summary>
 		/// Address.
 		/// </summary>
 		public IPAddress Address
 		{
-			get { return (IPAddress)GetValue(AddressProperty); }
-			set { SetValue(AddressProperty, value); }
+			get => (IPAddress)GetValue(AddressProperty);
+			set => SetValue(AddressProperty, value);
 		}
 	}
 

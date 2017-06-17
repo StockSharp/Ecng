@@ -10,13 +10,13 @@
 		public static readonly RoutedCommand OkCommand = new RoutedCommand();
 		public static readonly RoutedCommand CancelCommand = new RoutedCommand();
 
-		public static readonly DependencyProperty MessageProperty = DependencyProperty.Register("Message", typeof(string), typeof(InputWindow),
+		public static readonly DependencyProperty MessageProperty = DependencyProperty.Register(nameof(Message), typeof(string), typeof(InputWindow),
 			new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
 		public string Message
 		{
-			get { return (string)GetValue(MessageProperty); }
-			set { SetValue(MessageProperty, value); }
+			get => (string)GetValue(MessageProperty);
+			set => SetValue(MessageProperty, value);
 		}
 
 		public static string WaitInput(Window owner, string title, string message)

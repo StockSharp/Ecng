@@ -53,7 +53,7 @@ namespace Ecng.Reflection.Emit
 
 		public static string AssemblyCachePath
 		{
-			get { return _assemblyCachePath; }
+			get => _assemblyCachePath;
 			set
 			{
 				if (value == null)

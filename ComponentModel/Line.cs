@@ -47,7 +47,7 @@ namespace Ecng.ComponentModel
 		/// <summary>
 		/// 
 		/// </summary>
-		public double Length { get; private set; }
+		public double Length { get; }
 
 		/// <summary>
 		/// 
@@ -62,7 +62,7 @@ namespace Ecng.ComponentModel
 		/// <summary>
 		/// 
 		/// </summary>
-		public double Angle { get; private set; }
+		public double Angle { get; }
 
 		/// <summary>
 		/// 

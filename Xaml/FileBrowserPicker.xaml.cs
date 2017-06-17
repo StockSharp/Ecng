@@ -33,8 +33,8 @@
 
 		public string DefaultExt
 		{
-			get { return (string)GetValue(DefaultExtProperty); }
-			set { SetValue(DefaultExtProperty, value); }
+			get => (string)GetValue(DefaultExtProperty);
+			set => SetValue(DefaultExtProperty, value);
 		}
 
 		/// <summary>
@@ -45,8 +45,8 @@
 
 		public string Filter
 		{
-			get { return (string)GetValue(FilterProperty); }
-			set { SetValue(FilterProperty, value); }
+			get => (string)GetValue(FilterProperty);
+			set => SetValue(FilterProperty, value);
 		}
 
 		/// <summary>
@@ -60,8 +60,8 @@
 		/// </summary>
 		public string File
 		{
-			get { return (string)GetValue(FileProperty); }
-			set { SetValue(FileProperty, value); }
+			get => (string)GetValue(FileProperty);
+			set => SetValue(FileProperty, value);
 		}
 
 		/// <summary>
@@ -77,8 +77,8 @@
 
 		public bool IsSaving
 		{
-			get { return (bool)GetValue(IsSavingProperty); }
-			set { SetValue(IsSavingProperty, value); }
+			get => (bool)GetValue(IsSavingProperty);
+			set => SetValue(IsSavingProperty, value);
 		}
 
 		/// <summary>

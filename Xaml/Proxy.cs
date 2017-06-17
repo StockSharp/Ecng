@@ -21,7 +21,7 @@
 				DefaultUpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
 			};
 
-			InProperty = DependencyProperty.Register("In", typeof(object), typeof(Proxy), inMetadata);
+			InProperty = DependencyProperty.Register(nameof(In), typeof(object), typeof(Proxy), inMetadata);
 
 			var outMetadata = new FrameworkPropertyMetadata((p, args) =>
 			{
@@ -41,7 +41,7 @@
 				DefaultUpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
 			};
 
-			OutProperty = DependencyProperty.Register("Out", typeof(object), typeof(Proxy), outMetadata);
+			OutProperty = DependencyProperty.Register(nameof(Out), typeof(object), typeof(Proxy), outMetadata);
 		}
 
 		public static readonly DependencyProperty InProperty;
@@ -54,14 +54,14 @@
 
 		public object In
 		{
-			get { return GetValue(InProperty); }
-			set { SetValue(InProperty, value); }
+			get => GetValue(InProperty);
+			set => SetValue(InProperty, value);
 		}
 
 		public object Out
 		{
-			get { return GetValue(OutProperty); }
-			set { SetValue(OutProperty, value); }
+			get => GetValue(OutProperty);
+			set => SetValue(OutProperty, value);
 		}
 	}
 }

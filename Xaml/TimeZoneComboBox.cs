@@ -13,7 +13,7 @@
 		}
 
 		public static readonly DependencyProperty SelectedTimeZoneProperty =
-			DependencyProperty.Register("SelectedTimeZone", typeof(TimeZoneInfo), typeof(TimeZoneComboBox), new UIPropertyMetadata(TimeZoneInfo.Utc, (s, e) =>
+			DependencyProperty.Register(nameof(SelectedTimeZone), typeof(TimeZoneInfo), typeof(TimeZoneComboBox), new UIPropertyMetadata(TimeZoneInfo.Utc, (s, e) =>
 			{
 				var ctrl = (TimeZoneComboBox)s;
 				ctrl.SelectedItem = e.NewValue;
@@ -21,8 +21,8 @@
 
 		public TimeZoneInfo SelectedTimeZone
 		{
-			get { return (TimeZoneInfo)GetValue(SelectedTimeZoneProperty); }
-			set { SetValue(SelectedTimeZoneProperty, value); }
+			get => (TimeZoneInfo)GetValue(SelectedTimeZoneProperty);
+			set => SetValue(SelectedTimeZoneProperty, value);
 		}
 
 		protected override void OnSelectionChanged(SelectionChangedEventArgs e)

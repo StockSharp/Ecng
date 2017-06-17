@@ -22,7 +22,7 @@
 
 		public XlsDdeClient DdeClient
 		{
-			get { return _ddeClient; }
+			get => _ddeClient;
 			set
 			{
 				if (value == null)

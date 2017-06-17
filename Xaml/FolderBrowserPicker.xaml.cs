@@ -35,8 +35,8 @@
 		/// </summary>
 		public string Folder
 		{
-			get { return (string)GetValue(FolderProperty); }
-			set { SetValue(FolderProperty, value); }
+			get => (string)GetValue(FolderProperty);
+			set => SetValue(FolderProperty, value);
 		}
 
 		/// <summary>

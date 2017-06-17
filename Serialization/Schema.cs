@@ -7,7 +7,6 @@ namespace Ecng.Serialization
 
 	using Ecng.Common;
 	using Ecng.Collections;
-	using Ecng.Reflection;
 
 	#endregion
 
@@ -31,7 +30,7 @@ namespace Ecng.Serialization
 		[Member]
 		public Type EntityType
 		{
-			get { return _entityType; }
+			get => _entityType;
 			set
 			{
 				if (value == null)

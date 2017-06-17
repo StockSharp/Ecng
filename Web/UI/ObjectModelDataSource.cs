@@ -36,7 +36,7 @@
 		[DefaultValue("")]
 		public string Path
 		{
-			get { return _path; }
+			get => _path;
 			set
 			{
 				_path = value;
@@ -53,10 +53,7 @@
 		[DefaultValue("")]
 		public string RootType
 		{
-			get
-			{
-				return Root != null ? Root.GetType().To<string>() : _rootType;
-			}
+			get => Root != null ? Root.GetType().To<string>() : _rootType;
 			set
 			{
 				_rootType = value;
@@ -72,7 +69,7 @@
 
 		public object Root
 		{
-			get { return _root; }
+			get => _root;
 			set
 			{
 				_root = value;
@@ -99,7 +96,7 @@
 		[DefaultValue("")]
 		public string SortExression
 		{
-			get { return _sortExression; }
+			get => _sortExression;
 			set
 			{
 				_sortExression = value;
@@ -116,7 +113,7 @@
 		[DefaultValue("")]
 		public ListSortDirection SortDirection
 		{
-			get { return _sortDirection; }
+			get => _sortDirection;
 			set
 			{
 				_sortDirection = value;
@@ -133,7 +130,7 @@
 		[DefaultValue("")]
 		public int MaximumRows
 		{
-			get { return _maximumRows; }
+			get => _maximumRows;
 			set
 			{
 				_maximumRows = value;

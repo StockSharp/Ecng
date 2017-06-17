@@ -29,8 +29,8 @@
 		/// </summary>
 		public string HighlightText
 		{
-			get { return GetValue(HighlightTextProperty) as string; }
-			set { SetValue(HighlightTextProperty, value); }
+			get => GetValue(HighlightTextProperty) as string;
+			set => SetValue(HighlightTextProperty, value);
 		}
 
 		/// <summary>
@@ -59,8 +59,8 @@
 		/// </summary>
 		public Brush HighlightBrush
 		{
-			get { return GetValue(HighlightBrushProperty) as Brush; }
-			set { SetValue(HighlightBrushProperty, value); }
+			get => GetValue(HighlightBrushProperty) as Brush;
+			set => SetValue(HighlightBrushProperty, value);
 		}
 
 		/// <summary>
@@ -89,8 +89,8 @@
 		/// </summary>
 		public FontWeight HighlightFontWeight
 		{
-			get { return (FontWeight)GetValue(HighlightFontWeightProperty); }
-			set { SetValue(HighlightFontWeightProperty, value); }
+			get => (FontWeight)GetValue(HighlightFontWeightProperty);
+			set => SetValue(HighlightFontWeightProperty, value);
 		}
 
 		/// <summary>

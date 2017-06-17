@@ -68,10 +68,7 @@ namespace Ecng.Collections
 
 		public virtual TItem this[int index]
 		{
-			get
-			{
-				return OnGetItem(index);
-			}
+			get => OnGetItem(index);
 			set
 			{
 				CheckIndex(index);
@@ -249,7 +246,7 @@ namespace Ecng.Collections
 
 		object IList.this[int index]
 		{
-			get { return this[index]; }
+			get => this[index];
 			set
 			{
 				if (!IsCompatible(value))

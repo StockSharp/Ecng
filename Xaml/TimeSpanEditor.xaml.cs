@@ -98,8 +98,8 @@
 		/// </summary>
 		public TimeSpan? Value
 		{
-			get { return (TimeSpan?)GetValue(ValueProperty); }
-			set { SetValue(ValueProperty, value); }
+			get => (TimeSpan?)GetValue(ValueProperty);
+			set => SetValue(ValueProperty, value);
 		}
 
 		/// <summary>
@@ -113,8 +113,8 @@
 		/// </summary>
 		public bool IsNullable
 		{
-			get { return (bool)GetValue(IsNullableProperty); }
-			set { SetValue(IsNullableProperty, value); }
+			get => (bool)GetValue(IsNullableProperty);
+			set => SetValue(IsNullableProperty, value);
 		}
 
 		/// <summary>
@@ -128,8 +128,8 @@
 		/// </summary>
 		public bool HasValue
 		{
-			get { return (bool)GetValue(HasValueProperty); }
-			set { SetValue(HasValueProperty, value); }
+			get => (bool)GetValue(HasValueProperty);
+			set => SetValue(HasValueProperty, value);
 		}
 
 		/// <summary>
@@ -143,7 +143,7 @@
 		/// </summary>
 		public int Microseconds
 		{
-			get { return (int)GetValue(MicrosecondsProperty); }
+			get => (int)GetValue(MicrosecondsProperty);
 			set
 			{
 				if (value > 999)
@@ -167,7 +167,7 @@
 		/// </summary>
 		public int Milliseconds
 		{
-			get { return (int)GetValue(MillisecondsProperty); }
+			get => (int)GetValue(MillisecondsProperty);
 			set
 			{
 				if (value > 999)
@@ -191,7 +191,7 @@
 		/// </summary>
 		public int Seconds
 		{
-			get { return (int)GetValue(SecondsProperty); }
+			get => (int)GetValue(SecondsProperty);
 			set
 			{
 				if (value > 59)
@@ -215,7 +215,7 @@
 		/// </summary>
 		public int Minutes
 		{
-			get { return (int)GetValue(MinutesProperty); }
+			get => (int)GetValue(MinutesProperty);
 			set
 			{
 				if (value > 59)
@@ -239,7 +239,7 @@
 		/// </summary>
 		public int Hours
 		{
-			get { return (int)GetValue(HoursProperty); }
+			get => (int)GetValue(HoursProperty);
 			set
 			{
 				if (value > 23)
@@ -263,7 +263,7 @@
 		/// </summary>
 		public int Days
 		{
-			get { return (int)GetValue(DaysProperty); }
+			get => (int)GetValue(DaysProperty);
 			set
 			{
 				if (value > 364)
@@ -299,8 +299,8 @@
 		/// </summary>
 		public TimeSpanEditorMask Mask
 		{
-			get { return (TimeSpanEditorMask)GetValue(MaskProperty); }
-			set { SetValue(MaskProperty, value); }
+			get => (TimeSpanEditorMask)GetValue(MaskProperty);
+			set => SetValue(MaskProperty, value);
 		}
 
 		#endregion

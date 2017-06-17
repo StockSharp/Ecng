@@ -16,7 +16,7 @@
 			Database = database;
 		}
 
-		public TDatabase Database { get; private set; }
+		public TDatabase Database { get; }
 
 		public abstract void Initialize();
 	}

@@ -12,7 +12,7 @@
 			InitializeComponent();
 		}
 
-		public static readonly DependencyProperty SelectedFontProperty = DependencyProperty.Register("SelectedFont", typeof(FontInfo), typeof(FontChooser), new PropertyMetadata(null,
+		public static readonly DependencyProperty SelectedFontProperty = DependencyProperty.Register(nameof(SelectedFont), typeof(FontInfo), typeof(FontChooser), new PropertyMetadata(null,
 			(o, args) =>
 			{
 				var chooser = (FontChooser)o;
@@ -32,8 +32,8 @@
 
 		public FontInfo SelectedFont
 		{
-			get { return (FontInfo)GetValue(SelectedFontProperty); }
-			set { SetValue(SelectedFontProperty, value); }
+			get => (FontInfo)GetValue(SelectedFontProperty);
+			set => SetValue(SelectedFontProperty, value);
 		}
 
 		private void FamilyCtrl_OnSelectionChanged(object sender, SelectionChangedEventArgs e)

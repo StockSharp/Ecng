@@ -36,7 +36,7 @@ namespace Ecng.Serialization
 
 				return base.Value;
 			}
-			set { base.Value = value; }
+			set => base.Value = value;
 		}
 
 		public override Wrapper<T> Clone()

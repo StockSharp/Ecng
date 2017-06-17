@@ -35,7 +35,7 @@ namespace Ecng.Common
 		/// </summary>
 		public static TimeSpan NowOffset
 		{
-			get { return _nowOffset; }
+			get => _nowOffset;
 			set
 			{
 				_nowOffset = value;

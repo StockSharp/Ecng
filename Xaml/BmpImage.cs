@@ -5,8 +5,6 @@ namespace Ecng.Xaml
 	using System.Windows.Media;
 	using System.Windows.Media.Imaging;
 
-	using Ecng.Common;
-
 	// http://blogs.msdn.com/b/dwayneneed/archive/2007/10/05/blurry-bitmaps.aspx
 	public class BmpImage : FrameworkElement
 	{
@@ -22,19 +20,13 @@ namespace Ecng.Xaml
 			LayoutUpdated += OnLayoutUpdated;
 		}
 
-		public static readonly DependencyProperty SourceProperty = DependencyProperty.Register("Source", typeof(BitmapSource), typeof(BmpImage),
+		public static readonly DependencyProperty SourceProperty = DependencyProperty.Register(nameof(Source), typeof(BitmapSource), typeof(BmpImage),
 			new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.AffectsMeasure, OnSourceChanged));
 
 		public BitmapSource Source
 		{
-			get
-			{
-				return (BitmapSource)GetValue(SourceProperty);
-			}
-			set
-			{
-				SetValue(SourceProperty, value);
-			}
+			get => (BitmapSource)GetValue(SourceProperty);
+			set => SetValue(SourceProperty, value);
 		}
 
 		public event EventHandler<ExceptionEventArgs> BitmapFailed;

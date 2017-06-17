@@ -31,21 +31,8 @@ namespace Ecng.Serialization
 
 		public object Value
 		{
-			get { return _value; }
-			set
-			{
-				//if (value != null)
-				//{
-				//    if (Field.Type != value.GetType())
-				//    {
-				//        var valueType = Field.Factory != null ? Field.Factory.SourceType : Field.Type;
-				//        if (!(value is SerializationItemCollection) && !valueType.IsInstanceOfType(value))
-				//            throw new ArgumentException("Value '{0}' isn't compatible with field '{1}' of type '{2}'.".Put(value, Field.Name, valueType), "value");
-				//    }
-				//}
-
-				_value = value;
-			}
+			get => _value;
+			set => _value = value;
 		}
 
 		#endregion
@@ -103,8 +90,8 @@ namespace Ecng.Serialization
 
 		public new T Value
 		{
-			get { return (T)base.Value; }
-			set { base.Value = value; }
+			get => (T)base.Value;
+			set => base.Value = value;
 		}
 
 		#endregion

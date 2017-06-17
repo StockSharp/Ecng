@@ -4,12 +4,12 @@
 
 	public partial class LoadingAnimation
     {
-		public static readonly DependencyProperty IsBusyProperty = DependencyProperty.Register("IsBusy", typeof(bool), typeof(LoadingAnimation), new PropertyMetadata(false));
+		public static readonly DependencyProperty IsBusyProperty = DependencyProperty.Register(nameof(IsBusy), typeof(bool), typeof(LoadingAnimation), new PropertyMetadata(false));
 
 		public bool IsBusy
 		{
-			get { return (bool)GetValue(IsBusyProperty); }
-			set { SetValue(IsBusyProperty, value); }
+			get => (bool)GetValue(IsBusyProperty);
+			set => SetValue(IsBusyProperty, value);
 		}
 
         public LoadingAnimation()
@@ -19,8 +19,8 @@
 
     	public string AnimationText
     	{
-			get { return AnimationTextBlock.Text; }
-			set { AnimationTextBlock.Text = value; }
-    	}
+			get => AnimationTextBlock.Text;
+		    set => AnimationTextBlock.Text = value;
+	    }
     }
 }

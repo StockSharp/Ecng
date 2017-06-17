@@ -17,7 +17,7 @@
 
 		public int MaxCount
 		{
-			get { return _maxCount; }
+			get => _maxCount;
 			set
 			{
 				if (value < 1)

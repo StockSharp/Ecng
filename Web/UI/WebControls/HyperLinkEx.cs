@@ -9,8 +9,8 @@ namespace Ecng.Web.UI.WebControls
 	{
 		public string Rel
 		{
-			get { return Attributes["rel"]; }
-			set { Attributes["rel"] = value; }
+			get => Attributes["rel"];
+			set => Attributes["rel"] = value;
 		}
 
 		protected override void RenderContents(HtmlTextWriter writer)

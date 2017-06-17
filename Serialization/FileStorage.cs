@@ -32,7 +32,7 @@
 			}
 
 			public ISerializer Serializer { get; }
-			public Schema Schema { get; private set; }
+			public Schema Schema { get; }
 			public IDictionary<object, object> Cache { get; }
 
 			public void Save()

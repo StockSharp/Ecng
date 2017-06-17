@@ -37,15 +37,12 @@
 
 		public FamilyTypeface Typeface
 		{
-			get
+			get => new FamilyTypeface
 			{
-				return new FamilyTypeface
-				{
-					Stretch = Stretch,
-					Weight = Weight,
-					Style = Style
-				};
-			}
+				Stretch = Stretch,
+				Weight = Weight,
+				Style = Style
+			};
 			set
 			{
 				if (value == null)

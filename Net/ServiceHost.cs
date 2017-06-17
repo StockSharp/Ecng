@@ -19,8 +19,8 @@ namespace Ecng.Net
 
 		protected override void OnClosed()
 		{
-			if (Instance is IDisposable)
-				((IDisposable)Instance).Dispose();
+			var instance = Instance as IDisposable;
+			instance?.Dispose();
 
 			base.OnClosed();
 		}

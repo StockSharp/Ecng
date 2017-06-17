@@ -78,9 +78,9 @@
 			}
 		}
 
-		public int Count { get; private set; }
-		public T Min { get; private set; }
-		public T Max { get; private set; }
+		public int Count { get; }
+		public T Min { get; }
+		public T Max { get; }
 
 		public T Next()
 		{

@@ -1,9 +1,8 @@
-﻿using System;
-using System.Reflection.Emit;
-
-namespace Ecng.Common
+﻿namespace Ecng.Common
 {
+	using System;
 	using System.Reflection;
+	using System.Reflection.Emit;
 
 	/// <summary>
 	/// Fast alternative to Activator.CreateInstance&lt;T> for reference types with default constructor
@@ -16,7 +15,7 @@ namespace Ecng.Common
 		// чтобы можно было создавать классы с закрытым конструктором
 		//where T :new()
 	{
-		public static Func<T> CreateObject { get; private set; }
+		public static Func<T> CreateObject { get; }
 
 		static FastActivator()
 		{

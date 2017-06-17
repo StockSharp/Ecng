@@ -58,8 +58,8 @@ namespace Ecng.Collections
 
 		public TOuter this[int index]
 		{
-			get { return (TOuter)_inner[index]; }
-			set { _inner[index] = value; }
+			get => (TOuter)_inner[index];
+			set => _inner[index] = value;
 		}
 	}
 }

@@ -33,7 +33,7 @@ namespace Ecng.Data.Sql
 
 		public string Name
 		{
-			get { return _name; }
+			get => _name;
 			set
 			{
 				if (value.IsEmpty())
@@ -51,8 +51,8 @@ namespace Ecng.Data.Sql
 
 		public DbType Type
 		{
-			get { return _type; }
-			set { _type = value; }
+			get => _type;
+			set => _type = value;
 		}
 
 		#endregion
@@ -63,7 +63,7 @@ namespace Ecng.Data.Sql
 
 		public Range<int> Length
 		{
-			get { return _length; }
+			get => _length;
 			set
 			{
 				if (value == null)

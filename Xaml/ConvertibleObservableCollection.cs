@@ -45,14 +45,14 @@ namespace Ecng.Xaml
 
 		public event Action<IEnumerable<TItem>> AddedRange
 		{
-			add { throw new NotSupportedException(); }
-			remove { throw new NotSupportedException(); }
+			add => throw new NotSupportedException();
+			remove => throw new NotSupportedException();
 		}
 
 		public event Action<IEnumerable<TItem>> RemovedRange
 		{
-			add { throw new NotSupportedException(); }
-			remove { throw new NotSupportedException(); }
+			add => throw new NotSupportedException();
+			remove => throw new NotSupportedException();
 		}
 
 		public void AddRange(IEnumerable<TItem> items)
@@ -249,8 +249,8 @@ namespace Ecng.Xaml
 		/// <param name="index">The zero-based index of the element to get or set.</param><exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="T:System.Collections.Generic.IList`1"/>.</exception><exception cref="T:System.NotSupportedException">The property is set and the <see cref="T:System.Collections.Generic.IList`1"/> is read-only.</exception>
 		public TItem this[int index]
 		{
-			get { throw new NotSupportedException(); }
-			set { throw new NotSupportedException(); }
+			get => throw new NotSupportedException();
+			set => throw new NotSupportedException();
 		}
 
 		/// <summary>

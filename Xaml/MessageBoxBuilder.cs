@@ -30,7 +30,7 @@ namespace Ecng.Xaml
 
 		public static IMessageBoxHandler DefaultHandler
 		{
-			get { return _defaultHandler; }
+			get => _defaultHandler;
 			set
 			{
 				if (value == null)

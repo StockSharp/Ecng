@@ -16,8 +16,8 @@
 
 		public bool Topmost
 		{
-			get { return (bool)GetValue(TopmostProperty); }
-			set { SetValue(TopmostProperty, value); }
+			get => (bool)GetValue(TopmostProperty);
+			set => SetValue(TopmostProperty, value);
 		}
 
 		private static void OnTopmostChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)

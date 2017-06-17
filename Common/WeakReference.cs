@@ -20,8 +20,8 @@ namespace Ecng.Common
 
 		public new T Target
 		{
-			get { return (T)base.Target; }
-			set { base.Target = value; }
+			get => (T)base.Target;
+			set => base.Target = value;
 		}
 
 		#endregion

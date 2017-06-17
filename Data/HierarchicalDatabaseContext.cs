@@ -38,9 +38,9 @@
 			Source = source;
 		}
 
-		public string Morph { get; private set; }
-		public Schema Schema { get; private set; }
-		public SerializationItemCollection Source { get; private set; }
-		public Query Query { get; private set; }
+		public string Morph { get; }
+		public Schema Schema { get; }
+		public SerializationItemCollection Source { get; }
+		public Query Query { get; }
 	}
 }

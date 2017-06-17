@@ -23,8 +23,8 @@
 
 		public DatabaseConnectionPair Connection
 		{
-			get { return SettingsGrid.Connection; }
-			set { SettingsGrid.Connection = value; }
+			get => SettingsGrid.Connection;
+			set => SettingsGrid.Connection = value;
 		}
 
 		private void TestCtrl_Click(object sender, RoutedEventArgs e)

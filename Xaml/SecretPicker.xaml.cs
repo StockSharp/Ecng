@@ -24,7 +24,7 @@
 		/// <see cref="DependencyProperty"/> для <see cref="Secret"/>.
 		/// </summary>
 		public static readonly DependencyProperty SecretProperty =
-			DependencyProperty.Register("Secret", typeof(SecureString), typeof(SecretPicker), new PropertyMetadata(default(SecureString),
+			DependencyProperty.Register(nameof(Secret), typeof(SecureString), typeof(SecretPicker), new PropertyMetadata(default(SecureString),
 				(o, args) =>
 				{
 					var picker = (SecretPicker)o;
@@ -42,8 +42,8 @@
 		/// </summary>
 		public SecureString Secret
 		{
-			get { return (SecureString)GetValue(SecretProperty); }
-			set { SetValue(SecretProperty, value); }
+			get => (SecureString)GetValue(SecretProperty);
+			set => SetValue(SecretProperty, value);
 		}
 
 		private void PasswordCtrl_OnPasswordChanged(object sender, RoutedEventArgs e)

@@ -96,7 +96,7 @@ namespace Ecng.Serialization
 						return CryptoAlgorithm.DefaultDpapiAlgoName;
 				}
 			}
-			set { _algorithm = value; }
+			set => _algorithm = value;
 		}
 
 		public KeyTypes KeyType { get; set; }

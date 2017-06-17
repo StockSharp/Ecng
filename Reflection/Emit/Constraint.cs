@@ -41,7 +41,7 @@ namespace Ecng.Reflection.Emit
 
 		public Type BaseType
 		{
-			get { return _baseType; }
+			get => _baseType;
 			set
 			{
 				if (value == null)
@@ -61,7 +61,7 @@ namespace Ecng.Reflection.Emit
 
 		public GenericParameterAttributes Attribute
 		{
-			get { return _attribute; }
+			get => _attribute;
 			set
 			{
 				_constraintType = ConstraintTypes.Attribute;
@@ -77,8 +77,8 @@ namespace Ecng.Reflection.Emit
 
 		internal ConstraintTypes ConstraintType
 		{
-			get { return _constraintType; }
-			set { _constraintType = value; }
+			get => _constraintType;
+			set => _constraintType = value;
 		}
 
 		#endregion

@@ -41,8 +41,8 @@
 		/// </summary>
 		public long Current
 		{
-			get { return _current; }
-			set { _current = value; }
+			get => _current;
+			set => _current = value;
 		}
 
 		/// <summary>

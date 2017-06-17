@@ -12,9 +12,9 @@ namespace Ecng.ComponentModel
 		/// <summary>
 		/// Icon url.
 		/// </summary>
-		public string Icon { get; private set; }
+		public string Icon { get; }
 
-		public bool IsFullPath { get; private set; }
+		public bool IsFullPath { get; }
 
 		/// <summary>
 		/// Create <see cref="IconAttribute"/>.

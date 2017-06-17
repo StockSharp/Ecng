@@ -32,8 +32,8 @@ namespace Ecng.Reflection
 
 		#endregion
 
-		public string Name { get; private set; }
-		public IEnumerable<Constraint> Constraints { get; private set; }
-		public Type Type { get; private set; }
+		public string Name { get; }
+		public IEnumerable<Constraint> Constraints { get; }
+		public Type Type { get; }
 	}
 }

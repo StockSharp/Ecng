@@ -15,7 +15,7 @@
 		/// <see cref="DependencyProperty"/> для <see cref="Secret"/>.
 		/// </summary>
 		public static readonly DependencyProperty SecretProperty =
-			DependencyProperty.Register("Secret", typeof(SecureString), typeof(SecretEdit), new PropertyMetadata(default(SecureString),
+			DependencyProperty.Register(nameof(Secret), typeof(SecureString), typeof(SecretEdit), new PropertyMetadata(default(SecureString),
 				(o, args) =>
 				{
 					var picker = (SecretEdit)o;
@@ -33,8 +33,8 @@
 		/// </summary>
 		public SecureString Secret
 		{
-			get { return (SecureString)GetValue(SecretProperty); }
-			set { SetValue(SecretProperty, value); }
+			get => (SecureString)GetValue(SecretProperty);
+			set => SetValue(SecretProperty, value);
 		}
 
 		public SecretEdit()

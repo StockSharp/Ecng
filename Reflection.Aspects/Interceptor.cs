@@ -30,8 +30,8 @@ namespace Ecng.Reflection.Aspects
 
 			new Scope<InterceptContext>(new InterceptContext(instance, GetType(method), method, inRefArgs));
 
-			if (Interceptor.Context.CanProcess(InterceptTypes.Begin))
-				BeforeCall(Interceptor.Context);
+			if (Context.CanProcess(InterceptTypes.Begin))
+				BeforeCall(Context);
 		}
 
 		#endregion
@@ -40,10 +40,10 @@ namespace Ecng.Reflection.Aspects
 
 		public void Catch(Exception ex)
 		{
-			Interceptor.Context.Exception = ex;
+			Context.Exception = ex;
 
-			if (Interceptor.Context.CanProcess(InterceptTypes.Catch))
-				Catch(Interceptor.Context);
+			if (Context.CanProcess(InterceptTypes.Catch))
+				Catch(Context);
 		}
 
 		#endregion
@@ -52,11 +52,11 @@ namespace Ecng.Reflection.Aspects
 
 		public void End(object returnValue, IDictionary<string, object> refOutArgs)
 		{
-			Interceptor.Context.ReturnValue = returnValue;
-			Interceptor.Context.RefOutArgs = refOutArgs;
+			Context.ReturnValue = returnValue;
+			Context.RefOutArgs = refOutArgs;
 
-			if (Interceptor.Context.CanProcess(InterceptTypes.End))
-				AfterCall(Interceptor.Context);
+			if (Context.CanProcess(InterceptTypes.End))
+				AfterCall(Context);
 		}
 
 		#endregion
@@ -65,8 +65,8 @@ namespace Ecng.Reflection.Aspects
 
 		public void Finally()
 		{
-			if (Interceptor.Context.CanProcess(InterceptTypes.Finally))
-				Finally(Interceptor.Context);
+			if (Context.CanProcess(InterceptTypes.Finally))
+				Finally(Context);
 
 			Scope<InterceptContext>.Current.Dispose();
 		}

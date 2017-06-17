@@ -10,6 +10,6 @@
 			Entity = entity;
 		}
 
-		public E Entity { get; private set; }
+		public E Entity { get; }
 	}
 }

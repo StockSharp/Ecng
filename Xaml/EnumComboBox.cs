@@ -17,7 +17,7 @@
 		/// <see cref="DependencyProperty"/> для <see cref="EnumType"/>.
 		/// </summary>
 		public static readonly DependencyProperty EnumTypeProperty =
-			DependencyProperty.Register("EnumType", typeof(Type), typeof(EnumComboBox), new PropertyMetadata(EnumTypePropertyChanged));
+			DependencyProperty.Register(nameof(EnumType), typeof(Type), typeof(EnumComboBox), new PropertyMetadata(EnumTypePropertyChanged));
 
 		private static void EnumTypePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
@@ -30,8 +30,8 @@
 
 		public Type EnumType
 		{
-			get { return (Type)GetValue(EnumTypeProperty); }
-			set { SetValue(EnumTypeProperty, value); }
+			get => (Type)GetValue(EnumTypeProperty);
+			set => SetValue(EnumTypeProperty, value);
 		}
 	}
 
@@ -43,11 +43,11 @@
 
 			public string Description
 			{
-				get { return _description; }
+				get => _description;
 				set
 				{
 					_description = value;
-					NotifyChanged("Description");
+					NotifyChanged(nameof(Description));
 				}
 			}
 
@@ -55,11 +55,11 @@
 
 			public object Value
 			{
-				get { return _value; }
+				get => _value;
 				set
 				{
 					_value = value;
-					NotifyChanged("Value");
+					NotifyChanged(nameof(Value));
 				}
 			}
 
@@ -120,8 +120,8 @@
 
 			return _sources.SafeAdd(comboBox, key =>
 			{
-				comboBox.DisplayMemberPath = "Description";
-				comboBox.SelectedValuePath = "Value";
+				comboBox.DisplayMemberPath = nameof(EnumerationMember.Description);
+				comboBox.SelectedValuePath = nameof(EnumerationMember.Value);
 
 				var source = new ObservableCollection<EnumerationMember>();
 				comboBox.ItemsSource = source;
@@ -140,7 +140,7 @@
 			if (comboBox == null)
 				throw new ArgumentNullException(nameof(comboBox));
 
-			return comboBox.SelectedItem != null ? ((EnumerationMember)comboBox.SelectedItem).Value : null;
+			return ((EnumerationMember)comboBox.SelectedItem)?.Value;
 		}
 
 		public static void SetSelectedValue<T>(this ComboBox comboBox, T? value)

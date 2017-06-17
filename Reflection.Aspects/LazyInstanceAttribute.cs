@@ -44,7 +44,7 @@ namespace Ecng.Reflection.Aspects
 
 		public bool Synchronize
 		{
-			get { return _synchronize; }
+			get => _synchronize;
 			set
 			{
 				_synchronize = value;

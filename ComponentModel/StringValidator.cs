@@ -76,10 +76,7 @@ namespace Ecng.ComponentModel
 				else
 					return null;
 			}
-			set
-			{
-				_regex = new Regex(value, Options);
-			}
+			set => _regex = new Regex(value, Options);
 		}
 
 		#endregion
@@ -98,8 +95,8 @@ namespace Ecng.ComponentModel
 		/// <value>The options.</value>
 		public RegexOptions Options
 		{
-			get { return _options; }
-			set { _options = value; }
+			get => _options;
+			set => _options = value;
 		}
 
 		#endregion

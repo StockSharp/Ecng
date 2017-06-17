@@ -21,7 +21,7 @@
 			DestType = destType;
 		}
 
-		public Type SourceType { get; private set; }
+		public Type SourceType { get; }
 		public Type DestType { get; private set; }
 
 		protected internal abstract object Convert(object sourceValue);

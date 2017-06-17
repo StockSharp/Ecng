@@ -49,7 +49,7 @@ namespace Ecng.Reflection.Aspects
 
 		public IDictionary<string, object> RefOutArgs
 		{
-			get { return _refOutArgs; }
+			get => _refOutArgs;
 			internal set
 			{
 				if (value == null)

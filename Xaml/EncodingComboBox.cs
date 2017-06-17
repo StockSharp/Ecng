@@ -33,7 +33,7 @@ namespace Ecng.Xaml
 			.Select(e => e.CodePage)
 			.ToHashSet();
 
-			DisplayMemberPath = "DisplayName";
+			DisplayMemberPath = nameof(EncodingInfo.DisplayName);
 			ItemsSource = _encodingInfos.Values
 				.Select(e => Tuple.Create(e, priorityCopePages.Contains(e.CodePage) ? 0 : 1))
 				.OrderBy(t => t.Item2)
@@ -47,7 +47,7 @@ namespace Ecng.Xaml
 		/// <see cref="DependencyProperty"/> для <see cref="SelectedEncoding"/>.
 		/// </summary>
 		public static readonly DependencyProperty SelectedEncodingProperty =
-			DependencyProperty.Register("SelectedEncoding", typeof(Encoding), typeof(EncodingComboBox), new PropertyMetadata(SelectedEncodingChanged));
+			DependencyProperty.Register(nameof(SelectedEncoding), typeof(Encoding), typeof(EncodingComboBox), new PropertyMetadata(SelectedEncodingChanged));
 
 		private static void SelectedEncodingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
@@ -60,8 +60,8 @@ namespace Ecng.Xaml
 
 		public Encoding SelectedEncoding
 		{
-			get { return (Encoding)GetValue(SelectedEncodingProperty); }
-			set { SetValue(SelectedEncodingProperty, value); }
+			get => (Encoding)GetValue(SelectedEncodingProperty);
+			set => SetValue(SelectedEncodingProperty, value);
 		}
 
 		/// <summary>

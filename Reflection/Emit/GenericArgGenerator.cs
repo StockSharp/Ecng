@@ -10,6 +10,6 @@ namespace Ecng.Reflection.Emit
 			Constraints = new ConstraintList(builder);
 		}
 
-		public ConstraintList Constraints { get; private set; }
+		public ConstraintList Constraints { get; }
 	}
 }

@@ -18,14 +18,14 @@
 			_defaultSeparatorStyle = new Style(typeof(Rectangle));
 			_defaultSeparatorStyle.Setters.Add(new Setter(Shape.FillProperty, SystemColors.ControlLightBrush));
 
-			SeparatorStyleProperty = DependencyProperty.Register("SeparatorStyle", typeof(Style), typeof(GridViewRowPresenterWithGridLines),
+			SeparatorStyleProperty = DependencyProperty.Register(nameof(SeparatorStyle), typeof(Style), typeof(GridViewRowPresenterWithGridLines),
 			                                                     new UIPropertyMetadata(_defaultSeparatorStyle, SeparatorStyleChanged));
 		}
 
 		public Style SeparatorStyle
 		{
-			get { return (Style)GetValue(SeparatorStyleProperty); }
-			set { SetValue(SeparatorStyleProperty, value); }
+			get => (Style)GetValue(SeparatorStyleProperty);
+			set => SetValue(SeparatorStyleProperty, value);
 		}
 
 		public static readonly DependencyProperty SeparatorStyleProperty;

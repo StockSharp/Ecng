@@ -57,7 +57,7 @@ namespace Ecng.Common
 
 		public int Count
 		{
-			get { return _count; }
+			get => _count;
 			set
 			{
 				if (_buffer.Length < value)

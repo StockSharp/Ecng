@@ -12,15 +12,15 @@
 		/// <see cref="DependencyProperty"/> <see cref="Header"/>.
 		/// </summary>
 		public static DependencyProperty HeaderProperty =
-			DependencyProperty.Register("Header", typeof(string), typeof(HeaderedSeparator));
+			DependencyProperty.Register(nameof(Header), typeof(string), typeof(HeaderedSeparator));
 
 		/// <summary>
 		/// Заголовок.
 		/// </summary>
 		public string Header
 		{
-			get { return (string)GetValue(HeaderProperty); }
-			set { SetValue(HeaderProperty, value); }
+			get => (string)GetValue(HeaderProperty);
+			set => SetValue(HeaderProperty, value);
 		}
 	}
 }

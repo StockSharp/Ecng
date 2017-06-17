@@ -104,8 +104,8 @@ namespace Ecng.Web
 
 		public override string ApplicationName
 		{
-			get { return _applicationName; }
-			set { _applicationName = value; }
+			get => _applicationName;
+			set => _applicationName = value;
 		}
 
 		[DefaultValue(DefaultEnablePasswordResetValue)]

@@ -12,8 +12,8 @@
 
 		public FontInfo Font
 		{
-			get { return FontChooser.SelectedFont; }
-			set { FontChooser.SelectedFont = value; }
+			get => FontChooser.SelectedFont;
+			set => FontChooser.SelectedFont = value;
 		}
 	}
 }

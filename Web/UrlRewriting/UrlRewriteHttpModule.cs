@@ -50,8 +50,8 @@
 
 			public override long Position
 			{
-				get { return _innerStream.Position; }
-				set { _innerStream.Position = value; }
+				get => _innerStream.Position;
+				set => _innerStream.Position = value;
 			}
 
 			public override void Close()

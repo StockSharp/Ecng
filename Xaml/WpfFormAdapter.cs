@@ -78,7 +78,7 @@ namespace Ecng.Xaml
 
 		public Size MaximumSize
 		{
-			get { return new Size(_window.MaxWidth.To<int>(), _window.MinHeight.To<int>()); }
+			get => new Size(_window.MaxWidth.To<int>(), _window.MinHeight.To<int>());
 			set
 			{
 				_window.MaxWidth = value.Width;
@@ -88,7 +88,7 @@ namespace Ecng.Xaml
 
 		public Size MinimumSize
 		{
-			get { return new Size(_window.MinWidth.To<int>(), _window.MinWidth.To<int>()); }
+			get => new Size(_window.MinWidth.To<int>(), _window.MinWidth.To<int>());
 			set
 			{
 				_window.MinWidth = value.Width;
@@ -98,7 +98,7 @@ namespace Ecng.Xaml
 
 		public bool Capture
 		{
-			get { return _window.IsMouseCaptured; }
+			get => _window.IsMouseCaptured;
 			set
 			{
 				IInputElement targetToCapture = value ? _window : null;

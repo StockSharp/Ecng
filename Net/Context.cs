@@ -29,11 +29,11 @@ namespace Ecng.Net
 			_cache = new Dictionary<object[], Stream>(comparer.ToComparer());
 		}
 
-		public FastInvoker<T, object, object> Invoker { get; private set; }
-		public Tuple<ParameterInfo, ISerializer, ParamConverterAttribute>[] ArgDeserializers { get; private set; }
-		public ISerializer ReturnSerializer { get; private set; }
-		public bool IsCached { get; private set; }
-		public bool IsCompressed { get; private set; }
+		public FastInvoker<T, object, object> Invoker { get; }
+		public Tuple<ParameterInfo, ISerializer, ParamConverterAttribute>[] ArgDeserializers { get; }
+		public ISerializer ReturnSerializer { get; }
+		public bool IsCached { get; }
+		public bool IsCompressed { get; }
 
 		private readonly Dictionary<object[], Stream> _cache;
 

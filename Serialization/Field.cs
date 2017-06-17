@@ -64,7 +64,7 @@ namespace Ecng.Serialization
 
 		[Identity]
 		[Member]
-		public MemberInfo Member { get; private set; }
+		public MemberInfo Member { get; }
 
 		public string Name { get; internal set; }
 

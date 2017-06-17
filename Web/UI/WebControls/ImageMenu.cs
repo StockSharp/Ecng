@@ -12,14 +12,8 @@ namespace Ecng.Web.UI.WebControls
 		[Category("Action")]
 		public event EventHandler<ImageResolvingEventArgs> ImageResolving
 		{
-			add
-			{
-				Events.AddHandler(_eventImageResolving, value);
-			}
-			remove
-			{
-				Events.RemoveHandler(_eventImageResolving, value);
-			}
+			add => Events.AddHandler(_eventImageResolving, value);
+			remove => Events.RemoveHandler(_eventImageResolving, value);
 		}
 
 		protected override void OnMenuItemDataBound(MenuEventArgs e)

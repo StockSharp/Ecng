@@ -232,8 +232,8 @@ namespace Ecng.Reflection.Emit
 
 		internal event EventHandler<TypeCompiledEventArgs> TypeCompiled
 		{
-			add { _typeCompiled += value; }
-			remove { _typeCompiled -= value; }
+			add => _typeCompiled += value;
+			remove => _typeCompiled -= value;
 		}
 
 		#endregion

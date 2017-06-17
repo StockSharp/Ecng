@@ -27,7 +27,7 @@ namespace Ecng.Web.UI.WebControls
 		[DefaultValue("")]
 		public string Roles
 		{
-			get { return _roles; }
+			get => _roles;
 			set
 			{
 				if (value == null)

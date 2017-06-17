@@ -92,7 +92,7 @@ namespace Ecng.Collections
 
 		object IList.this[int index]
 		{
-			get { return this[index]; }
+			get => this[index];
 			set
 			{
 				if (!IsCompatible(value))
@@ -136,10 +136,7 @@ namespace Ecng.Collections
 			RemoveAt(index);
 		}
 
-		bool IList.IsFixedSize
-		{
-			get { throw new NotImplementedException(); }
-		}
+		bool IList.IsFixedSize => throw new NotImplementedException();
 
 		private static readonly bool _isValueType = typeof(T).IsValueType;
 

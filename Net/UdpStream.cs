@@ -119,10 +119,7 @@ namespace Ecng.Net
 		/// A long value representing the length of the stream in bytes.
 		/// </returns>
 		/// <exception cref="T:System.NotSupportedException">A class derived from Stream does not support seeking. </exception><exception cref="T:System.ObjectDisposedException">Methods were called after the stream was closed. </exception>
-		public override long Length
-		{
-			get { throw new NotSupportedException(); }
-		}
+		public override long Length => throw new NotSupportedException();
 
 		/// <summary>
 		/// When overridden in a derived class, gets or sets the position within the current stream.
@@ -133,8 +130,8 @@ namespace Ecng.Net
 		/// <exception cref="T:System.IO.IOException">An I/O error occurs. </exception><exception cref="T:System.NotSupportedException">The stream does not support seeking. </exception><exception cref="T:System.ObjectDisposedException">Methods were called after the stream was closed. </exception>
 		public override long Position
 		{
-			get { throw new NotSupportedException(); }
-			set { throw new NotSupportedException(); }
+			get => throw new NotSupportedException();
+			set => throw new NotSupportedException();
 		}
 	}
 }

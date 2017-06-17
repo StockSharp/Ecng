@@ -15,6 +15,6 @@ namespace Ecng.Reflection.Emit
 		}
 
 		public T Builder { get; }
-		public AttributeGeneratorList Attributes { get; private set; }
+		public AttributeGeneratorList Attributes { get; }
 	}
 }

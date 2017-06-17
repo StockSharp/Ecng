@@ -8,7 +8,7 @@ namespace Ecng.Xaml
 
 		public int MaxCount
 		{
-			get { return _maxCount; }
+			get => _maxCount;
 			set
 			{
 				if (value < -1 || value == 0)

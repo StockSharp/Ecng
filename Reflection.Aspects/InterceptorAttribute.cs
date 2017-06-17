@@ -60,8 +60,8 @@ namespace Ecng.Reflection.Aspects
 
 		public InterceptTypes Type
 		{
-			get { return _type; }
-			set { _type = value; }
+			get => _type;
+			set => _type = value;
 		}
 
 		#endregion

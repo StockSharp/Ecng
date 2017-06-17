@@ -17,8 +17,8 @@
 		[ConfigurationProperty("needCache")]
 		public bool NeedCache
 		{
-			get { return (bool)base["needCache"]; }
-			set { base["needCache"] = value; }
+			get => (bool)base["needCache"];
+			set => base["needCache"] = value;
 		}
 
 		#endregion
@@ -28,8 +28,8 @@
 		[ConfigurationProperty("assemblyCachePath")]
 		public string AssemblyCachePath
 		{
-			get { return (string)base["assemblyCachePath"]; }
-			set { base["assemblyCachePath"] = value; }
+			get => (string)base["assemblyCachePath"];
+			set => base["assemblyCachePath"] = value;
 		}
 
 		#endregion
@@ -39,8 +39,8 @@
 		[ConfigurationProperty("compiledTypeLimit")]
 		public int CompiledTypeLimit
 		{
-			get { return (int)base["compiledTypeLimit"]; }
-			set { base["compiledTypeLimit"] = value; }
+			get => (int)base["compiledTypeLimit"];
+			set => base["compiledTypeLimit"] = value;
 		}
 
 		#endregion

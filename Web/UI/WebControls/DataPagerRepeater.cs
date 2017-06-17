@@ -25,14 +25,8 @@
 
 		public bool PersistentDataSource
 		{
-			get
-			{
-				return ViewState["PersistentDataSource"] == null || (bool)ViewState["PersistentDataSource"];
-			}
-			set
-			{
-				ViewState["PersistentDataSource"] = value;
-			}
+			get => ViewState["PersistentDataSource"] == null || (bool)ViewState["PersistentDataSource"];
+			set => ViewState["PersistentDataSource"] = value;
 		}
 
 		protected override void LoadViewState(object savedState)

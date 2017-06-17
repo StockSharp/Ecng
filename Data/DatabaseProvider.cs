@@ -28,7 +28,7 @@
 		}
 
 		public DbProviderFactory Factory { get; }
-		public SqlRenderer Renderer { get; private set; }
+		public SqlRenderer Renderer { get; }
 
 		public DbConnection CreateConnection(string connectionString)
 		{

@@ -137,8 +137,8 @@ namespace Ecng.Common
 		/// <exception cref="T:System.IO.IOException">An I/O error occurs. </exception><exception cref="T:System.NotSupportedException">The stream does not support seeking. </exception><exception cref="T:System.ObjectDisposedException">Methods were called after the stream was closed. </exception>
 		public override long Position
 		{
-			get { return _underlying.Position; }
-			set { _underlying.Position = value; }
+			get => _underlying.Position;
+			set => _underlying.Position = value;
 		}
 	}
 }

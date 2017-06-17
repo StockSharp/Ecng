@@ -4,12 +4,12 @@ namespace Ecng.Xaml
 
 	public class BindingProxy : Freezable
 	{
-		public static readonly DependencyProperty DataProperty = DependencyProperty.Register("Data", typeof(object), typeof(BindingProxy), new UIPropertyMetadata(null));
+		public static readonly DependencyProperty DataProperty = DependencyProperty.Register(nameof(Data), typeof(object), typeof(BindingProxy), new UIPropertyMetadata(null));
 
 		public object Data
 		{
-			get { return GetValue(DataProperty); }
-			set { SetValue(DataProperty, value); }
+			get => GetValue(DataProperty);
+			set => SetValue(DataProperty, value);
 		}
 
 		protected override Freezable CreateInstanceCore()

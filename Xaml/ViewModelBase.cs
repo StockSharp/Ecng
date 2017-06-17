@@ -21,12 +21,12 @@
 
 		protected void OnPropertyChanged<T>(Expression<Func<T>> selectorExpression)
 		{
-			OnPropertyChanged(ViewModelBase.PropertyName(selectorExpression));
+			OnPropertyChanged(PropertyName(selectorExpression));
 		}
 
 		protected bool SetField<T>(ref T field, T value, Expression<Func<T>> selectorExpression)
 		{
-			return SetField(ref field, value, ViewModelBase.PropertyName(selectorExpression));
+			return SetField(ref field, value, PropertyName(selectorExpression));
 		}
 
 		// установка требуемого поля в определенное значение и вызов события PropertyChanged при необходимости

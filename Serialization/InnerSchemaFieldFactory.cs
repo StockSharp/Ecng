@@ -20,8 +20,8 @@ namespace Ecng.Serialization
 			NewName = newName;
 		}
 
-		public string OldName { get; private set; }
-		public string NewName { get; private set; }
+		public string OldName { get; }
+		public string NewName { get; }
 	}
 
 	[Serializable]
@@ -93,8 +93,8 @@ namespace Ecng.Serialization
 
 		public bool NullWhenAllEmpty
 		{
-			get { return _nullWhenAllEmpty; }
-			set { _nullWhenAllEmpty = value; }
+			get => _nullWhenAllEmpty;
+			set => _nullWhenAllEmpty = value;
 		}
 
 		#region ReflectionFieldFactoryAttribute Members

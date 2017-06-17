@@ -12,7 +12,7 @@
 		/// <summary>
 		/// Online doc url.
 		/// </summary>
-		public string DocUrl { get; private set; }
+		public string DocUrl { get; }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="DocAttribute"/>.

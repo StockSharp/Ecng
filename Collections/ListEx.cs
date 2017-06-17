@@ -99,8 +99,8 @@ namespace Ecng.Collections
 
 		public override T this[int index]
 		{
-			get { return _innerList[index]; }
-			set { _innerList[index] = value; }
+			get => _innerList[index];
+			set => _innerList[index] = value;
 		}
 	}
 }

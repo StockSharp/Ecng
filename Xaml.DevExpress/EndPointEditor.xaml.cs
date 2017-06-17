@@ -28,8 +28,8 @@ namespace Ecng.Xaml.DevExp
 		/// </summary>
 		public EndPoint EndPoint
 		{
-			get { return (EndPoint)GetValue(EndPointProperty); }
-			set { SetValue(EndPointProperty, value); }
+			get => (EndPoint)GetValue(EndPointProperty);
+			set => SetValue(EndPointProperty, value);
 		}
 	}
 }

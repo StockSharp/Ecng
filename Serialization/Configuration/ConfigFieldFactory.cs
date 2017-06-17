@@ -7,22 +7,22 @@
 		[ConfigurationProperty("entityType", IsRequired = true)]
 		public string EntityType
 		{
-			get { return (string)this["entityType"]; }
-			set { this["entityType"] = value; }
+			get => (string)this["entityType"];
+			set => this["entityType"] = value;
 		}
 
 		[ConfigurationProperty("fieldName", IsRequired = true)]
 		public string FieldName
 		{
-			get { return (string)this["fieldName"]; }
-			set { this["fieldName"] = value; }
+			get => (string)this["fieldName"];
+			set => this["fieldName"] = value;
 		}
 
 		[ConfigurationProperty("fieldFactory", IsRequired = true)]
 		public string FieldFactory
 		{
-			get { return (string)this["fieldFactory"]; }
-			set { this["fieldFactory"] = value; }
+			get => (string)this["fieldFactory"];
+			set => this["fieldFactory"] = value;
 		}
 	}
 }

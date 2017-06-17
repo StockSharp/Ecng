@@ -46,7 +46,7 @@
 
 		#endregion
 
-		public TypeGenerator TypeGenerator { get; private set; }
+		public TypeGenerator TypeGenerator { get; }
 
 		#region Locals
 

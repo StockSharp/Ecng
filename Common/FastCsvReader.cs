@@ -47,7 +47,7 @@ namespace Ecng.Common
 
 		public string LineSeparator
 		{
-			get { return _lineSeparator; }
+			get => _lineSeparator;
 			set
 			{
 				if (value.IsEmpty())

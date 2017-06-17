@@ -117,14 +117,8 @@ namespace Ecng.Collections
 
 		public T this[int index]
 		{
-			get
-			{
-				return ReadArray(index, 1)[0];
-			}
-			set
-			{
-				WriteArray(index, new [] { value });
-			}
+			get => ReadArray(index, 1)[0];
+			set => WriteArray(index, new [] { value });
 		}
 
 		#endregion

@@ -73,8 +73,8 @@ namespace Hardcodet.Wpf.GenericTreeView
     /// </summary>
     protected ItemMonitor<T> Monitor
     {
-      get { return monitor; }
-      set { monitor = value; }
+      get => monitor;
+	    set => monitor = value;
     }
 
     #endregion

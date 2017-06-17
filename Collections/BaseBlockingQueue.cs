@@ -23,7 +23,7 @@
 
 		public int MaxSize
 		{
-			get { return _maxSize; }
+			get => _maxSize;
 			set
 			{
 				if (value == 0 || value < -1)

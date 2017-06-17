@@ -30,7 +30,7 @@ namespace Ecng.Serialization
 
 		public Encoding Encoding
 		{
-			get { return _encoding; }
+			get => _encoding;
 			set
 			{
 				if (value == null)

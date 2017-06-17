@@ -121,80 +121,80 @@
 
 		TOuter IList<TOuter>.this[int index]
 		{
-			get { return _innerList[index].To<TOuter>(); }
-			set { _innerList[index] = value.To<TInner>(); }
+			get => _innerList[index].To<TOuter>();
+			set => _innerList[index] = value.To<TInner>();
 		}
 
 		private Action<TOuter> _adding;
 
 		event Action<TOuter> INotifyList<TOuter>.Adding
 		{
-			add { _adding += value; }
-			remove { _adding -= value; }
+			add => _adding += value;
+			remove => _adding -= value;
 		}
 
 		private Action<TOuter> _added;
 
 		event Action<TOuter> INotifyList<TOuter>.Added
 		{
-			add { _added += value; }
-			remove { _added -= value; }
+			add => _added += value;
+			remove => _added -= value;
 		}
 
 		private Action<int, TOuter> _inserting;
 
 		event Action<int, TOuter> INotifyList<TOuter>.Inserting
 		{
-			add { _inserting += value; }
-			remove { _inserting -= value; }
+			add => _inserting += value;
+			remove => _inserting -= value;
 		}
 
 		private Action<int, TOuter> _inserted;
 
 		event Action<int, TOuter> INotifyList<TOuter>.Inserted
 		{
-			add { _inserted += value; }
-			remove { _inserted -= value; }
+			add => _inserted += value;
+			remove => _inserted -= value;
 		}
 
 		private Action<TOuter> _removing;
 
 		event Action<TOuter> INotifyList<TOuter>.Removing
 		{
-			add { _removing += value; }
-			remove { _removing -= value; }
+			add => _removing += value;
+			remove => _removing -= value;
 		}
 
 		private Action<TOuter> _removed;
 
 		event Action<TOuter> INotifyList<TOuter>.Removed
 		{
-			add { _removed += value; }
-			remove { _removed -= value; }
+			add => _removed += value;
+			remove => _removed -= value;
 		}
 
 		private Action _clearing;
 
 		event Action INotifyList<TOuter>.Clearing
 		{
-			add { _clearing += value; }
-			remove { _clearing -= value; }
+			add => _clearing += value;
+			remove => _clearing -= value;
 		}
 
 		private Action _cleared;
 
 		event Action INotifyList<TOuter>.Cleared
 		{
-			add { _cleared += value; }
-			remove { _cleared -= value; }
+			add => _cleared += value;
+			remove => _cleared -= value;
 		}
 
 		private Action _changed;
 
 		event Action INotifyList<TOuter>.Changed
 		{
-			add { _changed += value; }
-			remove { _changed -= value; }
+			add => _changed += value;
+			remove => _changed -= value;
 		}
 
 		private void OnRemoved(TInner item)

@@ -50,7 +50,7 @@
 
 		public object this[string queryField]
 		{
-			get { return _queryString.TryGetValue(queryField); }
+			get => _queryString.TryGetValue(queryField);
 			set
 			{
 				if (value == null)

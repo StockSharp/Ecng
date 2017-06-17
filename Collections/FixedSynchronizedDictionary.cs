@@ -18,7 +18,7 @@
 
 		public int BufferSize
 		{
-			get { return _befferSize; }
+			get => _befferSize;
 			set
 			{
 				if (value <= 1)

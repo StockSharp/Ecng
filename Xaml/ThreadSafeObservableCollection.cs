@@ -65,7 +65,7 @@ namespace Ecng.Xaml
 
 		public GuiDispatcher Dispatcher
 		{
-			get { return _dispatcher; }
+			get => _dispatcher;
 			set
 			{
 				if (value == null)
@@ -77,14 +77,14 @@ namespace Ecng.Xaml
 
 		public event Action<IEnumerable<TItem>> AddedRange
 		{
-			add { throw new NotSupportedException(); }
-			remove { throw new NotSupportedException(); }
+			add => throw new NotSupportedException();
+			remove => throw new NotSupportedException();
 		}
 
 		public event Action<IEnumerable<TItem>> RemovedRange
 		{
-			add { throw new NotSupportedException(); }
-			remove { throw new NotSupportedException(); }
+			add => throw new NotSupportedException();
+			remove => throw new NotSupportedException();
 		}
 
 		public virtual void AddRange(IEnumerable<TItem> items)
@@ -388,8 +388,8 @@ namespace Ecng.Xaml
 		/// <param name="index">The zero-based index of the element to get or set. </param><exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="T:System.Collections.IList"/>. </exception><exception cref="T:System.NotSupportedException">The property is set and the <see cref="T:System.Collections.IList"/> is read-only. </exception>
 		object IList.this[int index]
 		{
-			get { return this[index]; }
-			set { this[index] = (TItem)value; }
+			get => this[index];
+			set => this[index] = (TItem)value;
 		}
 
 		/// <summary>
@@ -408,7 +408,7 @@ namespace Ecng.Xaml
 
 				return Items[index];
 			}
-			set { throw new NotSupportedException(); }
+			set => throw new NotSupportedException();
 		}
 
 		public void Wait()

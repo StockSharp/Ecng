@@ -12,24 +12,23 @@ namespace Ecng.Xaml
 
 		public double FixedWidth
 		{
-			get { return (double)GetValue(FixedWidthProperty); }
-			set { SetValue(FixedWidthProperty, value); }
+			get => (double)GetValue(FixedWidthProperty);
+			set => SetValue(FixedWidthProperty, value);
 		}
 
-		public static readonly DependencyProperty FixedWidthProperty = DependencyProperty.Register("FixedWidth", typeof(double), typeof(FixedWidthColumn), new FrameworkPropertyMetadata(double.NaN, OnFixedWidthChanged));
+		public static readonly DependencyProperty FixedWidthProperty = DependencyProperty.Register(nameof(FixedWidth), typeof(double), typeof(FixedWidthColumn), new FrameworkPropertyMetadata(double.NaN, OnFixedWidthChanged));
 
 		private static void OnFixedWidthChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
 			var fwc = o as FixedWidthColumn;
 
-			if (fwc != null)
-				fwc.CoerceValue(WidthProperty);
+			fwc?.CoerceValue(WidthProperty);
 		}
 
 		private static object OnCoerceWidth(DependencyObject o, object baseValue)
 		{
 			var fwc = o as FixedWidthColumn;
-			return fwc != null ? fwc.FixedWidth : baseValue;
+			return fwc?.FixedWidth ?? baseValue;
 		}
 	}
 }
