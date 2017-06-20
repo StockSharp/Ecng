@@ -66,5 +66,15 @@ namespace Ecng.Test.Common
 				dt.AddNanoseconds(nanoseconds).GetNanoseconds().AssertEqual(dt.GetNanoseconds() + 400);
 			}
 		}
+
+		[TestMethod]
+		public void WeekOfYear()
+		{
+			new DateTime(2015, 1, 1).GetIso8601WeekOfYear().AssertEqual(1);
+			new DateTime(2015, 12, 31).GetIso8601WeekOfYear().AssertEqual(53);
+
+			new DateTime(2016, 1, 1).GetIso8601WeekOfYear().AssertEqual(1);
+			new DateTime(2016, 12, 31).GetIso8601WeekOfYear().AssertEqual(53);
+		}
 	}
 }

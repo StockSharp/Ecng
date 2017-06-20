@@ -416,5 +416,23 @@ namespace Ecng.Common
 			var offset = time.Offset;
 			return new DateTimeOffset(time.UtcDateTime.Truncate(precision).ChangeKind() + offset, offset);
 		}
+
+		// https://stackoverflow.com/questions/11154673/get-the-correct-week-number-of-a-given-date
+		public static int GetIso8601WeekOfYear(this DateTime time)
+		{
+			// Seriously cheat.  If its Monday, Tuesday or Wednesday, then it'll 
+			// be the same week# as whatever Thursday, Friday or Saturday are,
+			// and we always get those right
+			var calendar = CultureInfo.InvariantCulture.Calendar;
+
+			var day = calendar.GetDayOfWeek(time);
+			if (day >= DayOfWeek.Monday && day <= DayOfWeek.Wednesday)
+			{
+				time = time.AddDays(3);
+			}
+
+			// Return the week of our adjusted day
+			return calendar.GetWeekOfYear(time, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+		}
 	}
 }
