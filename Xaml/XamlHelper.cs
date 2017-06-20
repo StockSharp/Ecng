@@ -31,6 +31,8 @@ namespace Ecng.Xaml
 
 	using Microsoft.Win32;
 
+	using Ookii.Dialogs.Wpf;
+
 	public static class XamlHelper
 	{
 		#region Bounds
@@ -628,6 +630,27 @@ namespace Ecng.Xaml
 			//}
 		}
 
+		public static BitmapImage ToImage(byte[] imageData)
+		{
+			using (var mem = new MemoryStream(imageData))
+			{
+				mem.Position = 0;
+
+				var image = new BitmapImage();
+
+				image.BeginInit();
+				image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
+				image.CacheOption = BitmapCacheOption.OnLoad;
+				image.UriSource = null;
+				image.StreamSource = mem;
+				image.EndInit();
+
+				//image.Freeze();
+
+				return image;
+			}
+		}
+
 		//public static void CopyImage(this BitmapSource image)
 		//{
 		//    if (image == null)
@@ -679,6 +702,16 @@ namespace Ecng.Xaml
 		public static bool ShowModal(this Window wnd, DependencyObject obj)
 		{
 			return wnd.ShowModal(obj.GetWindow());
+		}
+
+		public static bool ShowModal(this VistaFileDialog dlg, DependencyObject obj)
+		{
+			return dlg.ShowDialog(obj.GetWindow()) == true;
+		}
+
+		public static bool ShowModal(this VistaFolderBrowserDialog dlg, DependencyObject obj)
+		{
+			return dlg.ShowDialog(obj.GetWindow()) == true;
 		}
 
 		public static bool ShowModal(this Window wnd, Window owner)
