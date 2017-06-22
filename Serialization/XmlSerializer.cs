@@ -22,8 +22,19 @@ namespace Ecng.Serialization
 
 	public class XmlSerializer<T> : Serializer<T>, IXmlSerializer
 	{
+		private readonly bool _indent;
 		private const string _typeAttr = "type";
 		private const string _isNullAttr = "isNull";
+
+		public XmlSerializer()
+			: this(true)
+		{
+		}
+
+		public XmlSerializer(bool indent)
+		{
+			_indent = indent;
+		}
 
 		private XElement _element;
 		private Encoding _encoding = new UTF8Encoding(false);
@@ -161,7 +172,7 @@ namespace Ecng.Serialization
 			if (doc == null)
 				return;
 
-			using (var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true, Encoding = Encoding }))
+			using (var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = _indent, OmitXmlDeclaration = true, Encoding = Encoding }))
 				doc.Save(writer);
 		}
 
