@@ -295,19 +295,19 @@ namespace Ecng.Common
 			return TimeZoneInfo.ConvertTime(time, source, destination ?? TimeZoneInfo.Utc);
 		}
 
-		public static DateTime? TryToDateTime(this string value, string format)
+		public static DateTime? TryToDateTime(this string value, string format, CultureInfo ci = null)
 		{
 			if (value.IsEmpty())
 				return null;
 
-			return value.ToDateTime(format);
+			return value.ToDateTime(format, ci);
 		}
 
-		public static DateTime ToDateTime(this string value, string format)
+		public static DateTime ToDateTime(this string value, string format, CultureInfo ci = null)
 		{
 			try
 			{
-				return DateTime.ParseExact(value, format, CultureInfo.InvariantCulture);
+				return DateTime.ParseExact(value, format, ci ?? CultureInfo.InvariantCulture);
 			}
 			catch (Exception ex)
 			{
@@ -315,24 +315,24 @@ namespace Ecng.Common
 			}
 		}
 
-		public static string FromDateTime(this DateTime dt, string format)
+		public static string FromDateTime(this DateTime dt, string format, CultureInfo ci = null)
 		{
-			return dt.ToString(format, CultureInfo.InvariantCulture);
+			return dt.ToString(format, ci ?? CultureInfo.InvariantCulture);
 		}
 
-		public static TimeSpan? TryToTimeSpan(this string value, string format)
+		public static TimeSpan? TryToTimeSpan(this string value, string format, CultureInfo ci = null)
 		{
 			if (value.IsEmpty())
 				return null;
 
-			return value.ToTimeSpan(format);
+			return value.ToTimeSpan(format, ci);
 		}
 
-		public static TimeSpan ToTimeSpan(this string value, string format)
+		public static TimeSpan ToTimeSpan(this string value, string format, CultureInfo ci = null)
 		{
 			try
 			{
-				return TimeSpan.ParseExact(value, format, CultureInfo.InvariantCulture);
+				return TimeSpan.ParseExact(value, format, ci ?? CultureInfo.InvariantCulture);
 			}
 			catch (Exception ex)
 			{
@@ -340,24 +340,24 @@ namespace Ecng.Common
 			}
 		}
 
-		public static string FromTimeSpan(this TimeSpan ts, string format)
+		public static string FromTimeSpan(this TimeSpan ts, string format, CultureInfo ci = null)
 		{
-			return ts.ToString(format, CultureInfo.InvariantCulture);
+			return ts.ToString(format, ci ?? CultureInfo.InvariantCulture);
 		}
 
-		public static DateTimeOffset? TryToDateTimeOffset(this string value, string format)
+		public static DateTimeOffset? TryToDateTimeOffset(this string value, string format, CultureInfo ci = null)
 		{
 			if (value.IsEmpty())
 				return null;
 
-			return value.ToDateTimeOffset(format);
+			return value.ToDateTimeOffset(format, ci);
 		}
 
-		public static DateTimeOffset ToDateTimeOffset(this string value, string format)
+		public static DateTimeOffset ToDateTimeOffset(this string value, string format, CultureInfo ci = null)
 		{
 			try
 			{
-				return DateTimeOffset.ParseExact(value, format, CultureInfo.InvariantCulture);
+				return DateTimeOffset.ParseExact(value, format, ci ?? CultureInfo.InvariantCulture);
 			}
 			catch (Exception ex)
 			{
@@ -378,9 +378,9 @@ namespace Ecng.Common
 			return new DateTimeOffset(date.ChangeKind() + offset, offset);
 		}
 
-		public static string FromDateTimeOffset(this DateTimeOffset dto, string format)
+		public static string FromDateTimeOffset(this DateTimeOffset dto, string format, CultureInfo ci = null)
 		{
-			return dto.ToString(format, CultureInfo.InvariantCulture);
+			return dto.ToString(format, ci ?? CultureInfo.InvariantCulture);
 		}
 
 		public static DateTimeOffset ApplyTimeZone(this DateTime dt, TimeZoneInfo zone)
@@ -418,12 +418,12 @@ namespace Ecng.Common
 		}
 
 		// https://stackoverflow.com/questions/11154673/get-the-correct-week-number-of-a-given-date
-		public static int GetIso8601WeekOfYear(this DateTime time)
+		public static int GetIso8601WeekOfYear(this DateTime time, CultureInfo ci = null)
 		{
 			// Seriously cheat.  If its Monday, Tuesday or Wednesday, then it'll 
 			// be the same week# as whatever Thursday, Friday or Saturday are,
 			// and we always get those right
-			var calendar = CultureInfo.InvariantCulture.Calendar;
+			var calendar = (ci ?? CultureInfo.InvariantCulture).Calendar;
 
 			var day = calendar.GetDayOfWeek(time);
 			if (day >= DayOfWeek.Monday && day <= DayOfWeek.Wednesday)
