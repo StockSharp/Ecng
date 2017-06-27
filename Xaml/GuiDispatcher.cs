@@ -105,10 +105,10 @@ namespace Ecng.Xaml
 		/// </summary>
 		public Dispatcher Dispatcher { get; }
 
-		private TimeSpan _interval = TimeSpan.FromMilliseconds(100);
+		private TimeSpan _interval = TimeSpan.FromMilliseconds(1);
 
 		/// <summary>
-		/// Интервал обработки накопленных действий. По-умолчанию равен 100 млс.
+		/// Интервал обработки накопленных действий. По-умолчанию равен 1 млс.
 		/// </summary>
 		public TimeSpan Interval
 		{
