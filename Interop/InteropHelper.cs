@@ -74,9 +74,9 @@
 			const int peHeaderOffset = 60;
 			const int linkerTimestampOffset = 8;
 			var i = BitConverter.ToInt32(b, peHeaderOffset);
-			var secondsSince1970 = BitConverter.ToInt32(b, i + linkerTimestampOffset);
+			var secondsSince1970 = (long)BitConverter.ToInt32(b, i + linkerTimestampOffset);
 
-			return TimeHelper.GregorianStart.AddSeconds(secondsSince1970).ToLocalTime();
+			return secondsSince1970.FromUnix().ToLocalTime();
 		}
 	}
 }

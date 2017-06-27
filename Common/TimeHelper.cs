@@ -434,5 +434,55 @@ namespace Ecng.Common
 			// Return the week of our adjusted day
 			return calendar.GetWeekOfYear(time, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
 		}
+
+		public static double ToUnix(this DateTimeOffset time)
+		{
+			return time.UtcDateTime.ToUnix();
+		}
+
+		public static double ToUnix(this DateTime time)
+		{
+			if (time.Kind != DateTimeKind.Utc)
+				throw new ArgumentException(nameof(time));
+
+			var diff = time - GregorianStart;
+
+			if (diff < TimeSpan.Zero)
+				throw new ArgumentOutOfRangeException(nameof(time));
+
+			return diff.TotalSeconds;
+		}
+		
+		public static DateTime FromUnix(this long time, bool isSeconds = true)
+		{
+			return isSeconds ? ((double)time).FromUnix() : GregorianStart.AddMilliseconds(time);
+		}
+
+		public static DateTime FromUnix(this double time)
+		{
+			return GregorianStart.AddSeconds(time);
+		}
+
+		public static double UnixNowS => DateTime.UtcNow.ToUnix();
+		public static double UnixNowMls => DateTime.UtcNow.ToUnix();
+
+		//private const string _timeFormat = "yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'"; // "yyyy-MM-dd'T'HH:mm:ss.fffffffff'Z'"
+
+		//public static string ToRfc3339(this DateTimeOffset time)
+		//{
+		//	var str = time.ToString(_timeFormat);
+		//	return str.Insert(str.IndexOf('.') + 8, "00");
+		//}
+
+		//public static DateTimeOffset FromRfc3339(this string time)
+		//{
+		//	if (time.IsEmpty())
+		//		throw new ArgumentNullException(nameof(time));
+
+		//	// cannot parse nanoseconds
+		//	var dt = time.Remove(time.IndexOf('.') + 8, 2).ToDateTime(_timeFormat);
+		//	//var dt = time.ToDateTime(_timeFormat);
+		//	return dt.ChangeKind(DateTimeKind.Utc);
+		//}
 	}
 }
