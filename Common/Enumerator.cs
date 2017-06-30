@@ -126,5 +126,26 @@
 		{
 			return (enumSource.To<long>() & enumPart.To<long>()) == enumPart.To<long>();
 		}
+
+
+		//
+		// https://stackoverflow.com/a/9276348
+		//
+
+		/// <summary>
+		/// Gets an attribute on an enum field value
+		/// </summary>
+		/// <typeparam name="TAttribute">The type of the attribute you want to retrieve</typeparam>
+		/// <param name="enumVal">The enum value</param>
+		/// <returns>The attribute of type <typeparam name="TAttribute" /> that exists on the enum value</returns>
+		public static TAttribute GetAttributeOfType<TAttribute>(this Enum enumVal)
+			where TAttribute : Attribute
+		{
+			if (enumVal == null)
+				throw new ArgumentNullException(nameof(enumVal));
+
+			var memInfo = enumVal.GetType().GetMember(enumVal.ToString());
+			return memInfo[0].GetAttribute<TAttribute>(false);
+		}
 	}
 }
