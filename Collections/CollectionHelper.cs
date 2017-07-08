@@ -461,13 +461,14 @@
 		public static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
 			where TValue : new()
 		{
-			bool isNew;
-			return dictionary.SafeAdd(key, out isNew);
+			return dictionary.SafeAdd(key, out bool isNew);
 		}
 
-        private static class FastActivatorCache<TKey, TValue> where TValue : new()
+        private static class FastActivatorCache<TKey, TValue>
+			where TValue : new()
         {
-            public readonly static Func<TKey, TValue> Activator; 
+            public static readonly Func<TKey, TValue> Activator; 
+
             static FastActivatorCache()
             {
                 Activator = k => FastActivator<TValue>.CreateObject();
@@ -482,8 +483,7 @@
 
 		public static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> handler)
 		{
-			bool isNew;
-			return dictionary.SafeAdd(key, handler, out isNew);
+			return dictionary.SafeAdd(key, handler, out bool isNew);
 		}
 
 		public static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> handler, out bool isNew)
@@ -496,9 +496,7 @@
 
 			isNew = false;
 
-			TValue value;
-
-			if (!dictionary.TryGetValue(key, out value))
+			if (!dictionary.TryGetValue(key, out TValue value))
 			{
 				var syncObj = dictionary is ISynchronizedCollection<KeyValuePair<TKey, TValue>> ? ((ISynchronizedCollection<KeyValuePair<TKey, TValue>>)dictionary).SyncRoot : (object)dictionary;
 
@@ -523,8 +521,7 @@
 			if (dict == null)
 				throw new ArgumentNullException(nameof(dict));
 
-			TValue value;
-			dict.TryGetValue(key, out value);
+			dict.TryGetValue(key, out TValue value);
 			return value;
 		}
 
@@ -534,9 +531,23 @@
 			if (dict == null)
 				throw new ArgumentNullException(nameof(dict));
 
-			TValue value;
-			if (dict.TryGetValue(key, out value))
+			if (dict.TryGetValue(key, out TValue value))
 				return value;
+			else
+				return null;
+		}
+
+		public static TKey TryGetKey<TKey, TValue>(this PairSet<TKey, TValue> pairSet, TValue value)
+		{
+			pairSet.TryGetKey(value, out TKey key);
+			return key;
+		}
+
+		public static TKey? TryGetKey2<TKey, TValue>(this PairSet<TKey, TValue> pairSet, TValue value)
+			where TKey : struct
+		{
+			if (pairSet.TryGetKey(value, out TKey key))
+				return key;
 			else
 				return null;
 		}

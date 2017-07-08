@@ -75,11 +75,6 @@
 
 		#endregion
 
-		public TKey TryGetKey(TValue value)
-		{
-			return _values.TryGetValue(value);
-		}
-
 		public bool TryGetKey(TValue value, out TKey key)
 		{
 			return _values.TryGetValue(value, out key);
