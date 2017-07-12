@@ -434,7 +434,7 @@ namespace Ecng.Web
 			return true;
 		}
 
-		internal void ChangePassword(IWebUser user, string password)
+		protected internal virtual void ChangePassword(IWebUser user, string password)
 		{
 			if (user == null)
 				throw new ArgumentNullException(nameof(user));
