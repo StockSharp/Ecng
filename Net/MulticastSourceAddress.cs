@@ -73,5 +73,43 @@ namespace Ecng.Net
 		{
 			return GroupAddress + " " + SourceAddress + " " + Port;
 		}
+
+		public override int GetHashCode()
+		{
+			return GroupAddress?.GetHashCode() ?? 0 ^ Port.GetHashCode() ^ SourceAddress?.GetHashCode() ?? 0;
+		}
+
+		public override bool Equals(object obj)
+		{
+			var addr = obj as MulticastSourceAddress;
+
+			if (addr == null)
+				return false;
+
+			if (GroupAddress == null)
+			{
+				if (addr.GroupAddress != null)
+					return false;
+			}
+			else if (addr.GroupAddress == null)
+				return false;
+			else if (!GroupAddress.Equals(addr.GroupAddress))
+				return false;
+
+			if (Port != addr.Port)
+				return false;
+
+			if (SourceAddress == null)
+			{
+				if (addr.SourceAddress != null)
+					return false;
+			}
+			else if (addr.SourceAddress == null)
+				return false;
+			else if (!SourceAddress.Equals(addr.SourceAddress))
+				return false;
+
+			return true;
+		}
 	}
 }
