@@ -13,5 +13,6 @@
 
     <dxe:ButtonEditSettings.Buttons>
         <dxe:ButtonInfo x:Name="OpenBtn" GlyphKind="Search" Click="OpenBtn_OnClick"/>
+        <dxe:ButtonInfo x:Name="ClearBtn" GlyphKind="Cancel" Click="ClearBtn_OnClick"/>
     </dxe:ButtonEditSettings.Buttons>
 </dxe:ButtonEditSettings>

@@ -48,6 +48,16 @@
 			if (dlg.ShowDialog(owner) == true)
 				edit.EditValue = dlg.SelectedPath;
 		}
+
+		private void ClearBtn_OnClick(object sender, RoutedEventArgs e)
+		{
+			var edit = BaseEdit.GetOwnerEdit((DependencyObject)sender);
+
+			if (edit == null)
+				return;
+
+			edit.EditValue = null;
+		}
 	}
 
 	class FolderValidationRule : ValidationRule
