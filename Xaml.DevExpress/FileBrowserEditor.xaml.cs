@@ -65,7 +65,7 @@
 		{
 			var path = (string)value;
 
-			if (!path.IsEmpty() && !Directory.Exists(path))
+			if (!path.IsEmpty() && !File.Exists(path))
 				return new ValidationResult(false, "Invalid file path.".Translate());
 
 			return ValidationResult.ValidResult;
