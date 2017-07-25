@@ -63,7 +63,9 @@
 	{
 		public override ValidationResult Validate(object value, CultureInfo cultureInfo)
 		{
-			if (value == null || !File.Exists((string)value))
+			var path = (string)value;
+
+			if (!path.IsEmpty() && !Directory.Exists(path))
 				return new ValidationResult(false, "Invalid file path.".Translate());
 
 			return ValidationResult.ValidResult;
