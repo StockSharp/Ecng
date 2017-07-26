@@ -24,12 +24,21 @@
 			where T : IDisposable
 		{
 			void Add(Action<T> action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true);
+			void Add<TState>(Action<T, TState> action, TState state, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true);
 		}
 
 		private interface IInternalGroup
 		{
 			IDisposable Init();
-			Item[] GetItemsAndClear();
+			IGroupItem[] GetItemsAndClear();
+		}
+
+		private interface IGroupItem
+		{
+			void Do(IDisposable scope);
+			Action<Exception> PostAction { get; }
+			bool CanBatch { get; }
+			bool BreakBatchOnError { get; }
 		}
 
 		private class Group<T> : IGroup<T>, IInternalGroup
@@ -42,9 +51,83 @@
 				}
 			}
 
+			private class Item<TState> : IGroupItem
+			{
+				private readonly TState _state;
+				private readonly Action<T, TState> _action;
+
+				public virtual void Do(IDisposable scope)
+				{
+					_action((T)scope, _state);
+				}
+
+				public Action<Exception> PostAction { get; protected set; }
+				public bool CanBatch { get; protected set; }
+				public bool BreakBatchOnError { get; protected set; }
+
+				protected Item()
+				{
+				}
+
+				public Item(Action<T, TState> action, TState state, Action<Exception> postAction, bool canBatch, bool breakBatchOnError)
+				{
+					_state = state;
+					_action = action;
+
+					PostAction = postAction;
+					CanBatch = canBatch;
+					BreakBatchOnError = breakBatchOnError;
+				}
+			}
+
+			private class FlushItem : Item<object>
+			{
+				private readonly SyncObject _syncObject = new SyncObject();
+				private bool _isProcessed;
+				private Exception _err;
+
+				public FlushItem(DelayAction parent, bool dispose)
+				{
+					if (parent == null)
+						throw new ArgumentNullException(nameof(parent));
+
+					PostAction = err =>
+					{
+						_err = err;
+
+						if (dispose)
+							parent.Dispose();
+
+						lock (_syncObject)
+						{
+							_isProcessed = true;
+							_syncObject.Pulse();
+						}
+					};
+					CanBatch = true;
+					BreakBatchOnError = true;
+				}
+
+				public override void Do(IDisposable scope)
+				{
+				}
+
+				public void Wait()
+				{
+					lock (_syncObject)
+					{
+						if (!_isProcessed)
+							_syncObject.Wait();
+					}
+
+					if (_err != null)
+						throw _err;
+				}
+			}
+
 			private readonly DelayAction _parent;
 			private readonly Func<T> _init;
-			private readonly SynchronizedList<Item> _actions = new SynchronizedList<Item>();
+			private readonly SynchronizedList<IGroupItem> _actions = new SynchronizedList<IGroupItem>();
 			private readonly Dummy _dummy = new Dummy();
 
 			public Group(DelayAction parent, Func<T> init)
@@ -82,7 +165,7 @@
 				if (action == null)
 					throw new ArgumentNullException(nameof(action));
 
-				Add(new Item(action, postAction, canBatch, breakBatchOnError));
+				Add((T scope) => action(scope), postAction, canBatch, breakBatchOnError);
 			}
 
 			public void Add(Action<T> action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true)
@@ -90,10 +173,15 @@
 				if (action == null)
 					throw new ArgumentNullException(nameof(action));
 
-				Add((IDisposable s) => action((T)s), postAction, canBatch, breakBatchOnError);
+				Add<object>((scope, state) => action(scope), null, postAction, canBatch, breakBatchOnError);
 			}
 
-			private void Add(Item item)
+			public void Add<TState>(Action<T, TState> action, TState state, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true)
+			{
+				Add(new Item<TState>(action, state, postAction, canBatch, breakBatchOnError));
+			}
+
+			private void Add<TState>(Item<TState> item)
 			{
 				if (item == null)
 					throw new ArgumentNullException(nameof(item));
@@ -111,72 +199,10 @@
 				item.Wait();
 			}
 
-			public Item[] GetItemsAndClear()
+			public IGroupItem[] GetItemsAndClear()
 			{
 				lock (_actions.SyncRoot)
 					return _actions.CopyAndClear();
-			}
-		}
-
-		private class Item
-		{
-			public Action<IDisposable> Action { get; protected set; }
-			public Action<Exception> PostAction { get; protected set; }
-			public bool CanBatch { get; protected set; }
-			public bool BreakBatchOnError { get; protected set; }
-
-			protected Item()
-			{
-			}
-
-			public Item(Action<IDisposable> action, Action<Exception> postAction, bool canBatch, bool breakBatchOnError)
-			{
-				Action = action;
-				PostAction = postAction;
-				CanBatch = canBatch;
-				BreakBatchOnError = breakBatchOnError;
-			}
-		}
-
-		private class FlushItem : Item
-		{
-			private readonly SyncObject _syncObject = new SyncObject();
-			private bool _isProcessed;
-			private Exception _err;
-
-			public FlushItem(DelayAction parent, bool dispose)
-			{
-				if (parent == null)
-					throw new ArgumentNullException(nameof(parent));
-
-				Action = s => {};
-				PostAction = err =>
-				{
-					_err = err;
-
-					if (dispose)
-						parent.Dispose();
-
-					lock (_syncObject)
-					{
-						_isProcessed = true;
-						_syncObject.Pulse();
-					}
-				};
-				CanBatch = true;
-				BreakBatchOnError = true;
-			}
-
-			public void Wait()
-			{
-				lock (_syncObject)
-				{
-					if (!_isProcessed)
-						_syncObject.Wait();
-				}
-
-				if (_err != null)
-					throw _err;
 			}
 		}
 
@@ -277,7 +303,7 @@
 
 						hasItems = true;
 
-						var list = new List<Item>();
+						var list = new List<IGroupItem>();
 
 						foreach (var item in items)
 						{
@@ -322,13 +348,13 @@
 			}
 		}
 
-		private void Flush(Item item)
+		private void Flush(IGroupItem item)
 		{
 			Exception error;
 
 			try
 			{
-				item.Action(null);
+				item.Do(null);
 				error = null;
 			}
 			catch (Exception ex)
@@ -340,7 +366,7 @@
 			item.PostAction?.Invoke(error);
 		}
 
-		private void BatchFlushAndClear(IGroup group, ICollection<Item> actions)
+		private void BatchFlushAndClear(IGroup group, ICollection<IGroupItem> actions)
 		{
 			if (actions.IsEmpty())
 				return;
@@ -349,7 +375,7 @@
 
 			try
 			{
-				using (var state = ((IInternalGroup)group).Init())
+				using (var scope = ((IInternalGroup)group).Init())
 				{
 					foreach (var packet in actions.Batch(MaxBatchSize))
 					{
@@ -358,7 +384,7 @@
 							foreach (var action in packet)
 							{
 								if (action.BreakBatchOnError)
-									action.Action(state);
+									action.Do(scope);
 								else
 									Flush(action);
 
