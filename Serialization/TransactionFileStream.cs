@@ -20,8 +20,6 @@
 			_name = name;
 			_nameTemp = _name + ".tmp";
 
-			var isAppend = false;
-
 			switch (mode)
 			{
 				case FileMode.CreateNew:
@@ -34,8 +32,17 @@
 				case FileMode.Create:
 					break;
 				case FileMode.Open:
+				{
+					File.Copy(_name, _nameTemp, true);
+					break;
+				}
 				case FileMode.OpenOrCreate:
-					throw new NotSupportedException();
+				{
+					if (File.Exists(_name))
+						File.Copy(_name, _nameTemp, true);
+
+					break;
+				}
 				case FileMode.Truncate:
 					break;
 				case FileMode.Append:
@@ -43,15 +50,13 @@
 					if (File.Exists(_name))
 						File.Copy(_name, _nameTemp, true);
 
-					isAppend = true;
-
 					break;
 				}
 				default:
 					throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
 			}
 
-			_temp = new FileStream(_nameTemp, isAppend ? FileMode.Append : FileMode.Create, FileAccess.Write);
+			_temp = new FileStream(_nameTemp, mode, FileAccess.Write);
 		}
 
 		protected override void Dispose(bool disposing)
