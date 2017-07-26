@@ -13,7 +13,27 @@
 
 	public class DelayAction : Disposable
 	{
-		public class Group
+		public interface IGroup
+		{
+			void Add(Action action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true);
+			void Add(Action<IDisposable> action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true);
+			void WaitFlush(bool dispose);
+		}
+
+		public interface IGroup<T> : IGroup
+			where T : IDisposable
+		{
+			void Add(Action<T> action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true);
+		}
+
+		private interface IInternalGroup
+		{
+			IDisposable Init();
+			Item[] GetItemsAndClear();
+		}
+
+		private class Group<T> : IGroup<T>, IInternalGroup
+			where T : IDisposable
 		{
 			private class Dummy : IDisposable
 			{
@@ -23,11 +43,11 @@
 			}
 
 			private readonly DelayAction _parent;
-			private readonly Func<IDisposable> _init;
+			private readonly Func<T> _init;
 			private readonly SynchronizedList<Item> _actions = new SynchronizedList<Item>();
 			private readonly Dummy _dummy = new Dummy();
 
-			internal Group(DelayAction parent, Func<IDisposable> init)
+			public Group(DelayAction parent, Func<T> init)
 			{
 				if (parent == null)
 					throw new ArgumentNullException(nameof(parent));
@@ -54,7 +74,7 @@
 				if (action == null)
 					throw new ArgumentNullException(nameof(action));
 
-				Add(s => action(), postAction, canBatch, breakBatchOnError);
+				Add((IDisposable s) => action(), postAction, canBatch, breakBatchOnError);
 			}
 
 			public void Add(Action<IDisposable> action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true)
@@ -63,6 +83,14 @@
 					throw new ArgumentNullException(nameof(action));
 
 				Add(new Item(action, postAction, canBatch, breakBatchOnError));
+			}
+
+			public void Add(Action<T> action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true)
+			{
+				if (action == null)
+					throw new ArgumentNullException(nameof(action));
+
+				Add((IDisposable s) => action((T)s), postAction, canBatch, breakBatchOnError);
 			}
 
 			private void Add(Item item)
@@ -83,14 +111,14 @@
 				item.Wait();
 			}
 
-			internal Item[] GetItemsAndClear()
+			public Item[] GetItemsAndClear()
 			{
 				lock (_actions.SyncRoot)
 					return _actions.CopyAndClear();
 			}
 		}
 
-		internal class Item
+		private class Item
 		{
 			public Action<IDisposable> Action { get; protected set; }
 			public Action<Exception> PostAction { get; protected set; }
@@ -158,7 +186,7 @@
 		private readonly TimeSpan _flushInterval = TimeSpan.FromSeconds(1);
 		private bool _isFlushing;
 
-		private readonly CachedSynchronizedList<Group> _groups = new CachedSynchronizedList<Group>();
+		private readonly CachedSynchronizedList<IGroup> _groups = new CachedSynchronizedList<IGroup>();
 
 		public DelayAction(Action<Exception> errorHandler)
 		{
@@ -166,19 +194,20 @@
 				throw new ArgumentNullException(nameof(errorHandler));
 
 			_errorHandler = errorHandler;
-			DefaultGroup = CreateGroup();
+			DefaultGroup = CreateGroup<IDisposable>(null);
 		}
 
-		public Group DefaultGroup { get; }
+		public IGroup DefaultGroup { get; }
 
-		public Group CreateGroup(Func<IDisposable> init = null)
+		public IGroup<T> CreateGroup<T>(Func<T> init)
+			where T : IDisposable
 		{
-			var group = new Group(this, init);
+			var group = new Group<T>(this, init);
 			_groups.Add(group);
 			return group;
 		}
 
-		public void DeleteGroup(Group group)
+		public void DeleteGroup(IGroup group)
 		{
 			if (group == null)
 				throw new ArgumentNullException(nameof(group));
@@ -220,7 +249,7 @@
 		{
 			try
 			{
-				Group[] groups;
+				IGroup[] groups;
 
 				lock (_groups.SyncRoot)
 				{
@@ -241,7 +270,7 @@
 						if (IsDisposed)
 							break;
 
-						var items = group.GetItemsAndClear();
+						var items = ((IInternalGroup)group).GetItemsAndClear();
 
 						if (items.Length == 0)
 							continue;
@@ -311,7 +340,7 @@
 			item.PostAction?.Invoke(error);
 		}
 
-		private void BatchFlushAndClear(Group group, ICollection<Item> actions)
+		private void BatchFlushAndClear(IGroup group, ICollection<Item> actions)
 		{
 			if (actions.IsEmpty())
 				return;
@@ -320,7 +349,7 @@
 
 			try
 			{
-				using (var state = group.Init())
+				using (var state = ((IInternalGroup)group).Init())
 				{
 					foreach (var packet in actions.Batch(MaxBatchSize))
 					{
@@ -369,7 +398,7 @@
 
 		private readonly DummyBatchContext _batchContext = new DummyBatchContext();
 
-		protected virtual IBatchContext BeginBatch(Group group)
+		protected virtual IBatchContext BeginBatch(IGroup group)
 		{
 			return _batchContext;
 		}
