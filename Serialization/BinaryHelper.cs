@@ -452,5 +452,14 @@
 			data.To<Stream>().Save(fileName);
 			return data;
 		}
+
+		public static void Truncate(this StreamWriter writer)
+		{
+			if (writer == null)
+				throw new ArgumentNullException(nameof(writer));
+
+			writer.Flush();
+			writer.BaseStream.SetLength(0);
+		}
 	}
 }
