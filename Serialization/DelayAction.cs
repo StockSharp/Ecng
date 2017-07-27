@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 	using System.Globalization;
 	using System.Linq;
 	using System.Threading;
@@ -209,7 +210,6 @@
 		private readonly Action<Exception> _errorHandler;
 
 		private Timer _flushTimer;
-		private readonly TimeSpan _flushInterval = TimeSpan.FromSeconds(1);
 		private bool _isFlushing;
 
 		private readonly CachedSynchronizedList<IGroup> _groups = new CachedSynchronizedList<IGroup>();
@@ -224,6 +224,25 @@
 		}
 
 		public IGroup DefaultGroup { get; }
+
+		private TimeSpan _flushInterval = TimeSpan.FromSeconds(1);
+
+		public TimeSpan FlushInterval
+		{
+			get => _flushInterval;
+			set
+			{
+				_flushInterval = value;
+
+				lock (_groups.SyncRoot)
+				{
+					if (_flushTimer == null)
+						return;
+
+					_flushTimer.Interval(_flushInterval);
+				}
+			}
+		}
 
 		public IGroup<T> CreateGroup<T>(Func<T> init)
 			where T : IDisposable
@@ -291,6 +310,8 @@
 
 				try
 				{
+					Debug.WriteLine($"Groups: {groups.Length}");
+
 					foreach (var group in groups)
 					{
 						if (IsDisposed)
@@ -301,6 +322,8 @@
 						if (items.Length == 0)
 							continue;
 
+						Debug.WriteLine($"Flushing: {items.Length}");
+
 						hasItems = true;
 
 						var list = new List<IGroupItem>();
@@ -309,6 +332,8 @@
 						{
 							if (!item.CanBatch)
 							{
+								Debug.WriteLine($"!!! Iterrupt: {list.Count}");
+
 								BatchFlushAndClear(group, list);
 								list.Clear();
 
@@ -370,6 +395,8 @@
 		{
 			if (actions.IsEmpty())
 				return;
+
+			Debug.WriteLine($"Batch: {actions.Count}");
 
 			Exception error = null;
 
