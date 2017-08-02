@@ -25,7 +25,7 @@
 			where T : IDisposable
 		{
 			void Add(Action<T> action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true);
-			void Add<TState>(Action<T, TState> action, TState state, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true);
+			void Add<TState>(Action<T, TState> action, TState state, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true, Func<TState, TState, bool> compareStates = null);
 		}
 
 		private interface IInternalGroup
@@ -42,6 +42,12 @@
 			bool BreakBatchOnError { get; }
 		}
 
+		private interface IInternalGroupItem
+		{
+			bool Equals(IGroupItem other);
+			int GetStateHashCode();
+		}
+
 		private class Group<T> : IGroup<T>, IInternalGroup
 			where T : IDisposable
 		{
@@ -52,9 +58,10 @@
 				}
 			}
 
-			private class Item<TState> : IGroupItem
+			private class Item<TState> : IGroupItem, IInternalGroupItem
 			{
 				private readonly TState _state;
+				private readonly Func<TState, TState, bool> _compareStates;
 				private readonly Action<T, TState> _action;
 
 				public virtual void Do(IDisposable scope)
@@ -70,14 +77,33 @@
 				{
 				}
 
-				public Item(Action<T, TState> action, TState state, Action<Exception> postAction, bool canBatch, bool breakBatchOnError)
+				public Item(Action<T, TState> action, TState state, Action<Exception> postAction, bool canBatch, bool breakBatchOnError, Func<TState, TState, bool> compareStates)
 				{
 					_state = state;
+					_compareStates = compareStates;
 					_action = action;
 
 					PostAction = postAction;
 					CanBatch = canBatch;
 					BreakBatchOnError = breakBatchOnError;
+				}
+
+				bool IInternalGroupItem.Equals(IGroupItem other)
+				{
+					if (_compareStates == null)
+						return false;
+
+					var item = other as Item<TState>;
+
+					if (item == null)
+						return false;
+
+					return _compareStates(_state, item._state);
+				}
+
+				int IInternalGroupItem.GetStateHashCode()
+				{
+					return typeof(TState).GetHashCode() ^ (_state == null ? 0 : 1) ^ (_compareStates == null ? 0 : 1);
 				}
 			}
 
@@ -177,9 +203,9 @@
 				Add<object>((scope, state) => action(scope), null, postAction, canBatch, breakBatchOnError);
 			}
 
-			public void Add<TState>(Action<T, TState> action, TState state, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true)
+			public void Add<TState>(Action<T, TState> action, TState state, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true, Func<TState, TState, bool> compareStates = null)
 			{
-				Add(new Item<TState>(action, state, postAction, canBatch, breakBatchOnError));
+				Add(new Item<TState>(action, state, postAction, canBatch, breakBatchOnError, compareStates));
 			}
 
 			private void Add<TState>(Item<TState> item)
@@ -391,6 +417,21 @@
 			item.PostAction?.Invoke(error);
 		}
 
+		private class ItemComparer : IEqualityComparer<IGroupItem>
+		{
+			bool IEqualityComparer<IGroupItem>.Equals(IGroupItem x, IGroupItem y)
+			{
+				return ((IInternalGroupItem)x).Equals(y);
+			}
+
+			int IEqualityComparer<IGroupItem>.GetHashCode(IGroupItem obj)
+			{
+				return ((IInternalGroupItem)obj).GetStateHashCode();
+			}
+		}
+
+		private static readonly IEqualityComparer<IGroupItem> _itemComparer = new ItemComparer();
+
 		private void BatchFlushAndClear(IGroup group, ICollection<IGroupItem> actions)
 		{
 			if (actions.IsEmpty())
@@ -404,7 +445,7 @@
 			{
 				using (var scope = ((IInternalGroup)group).Init())
 				{
-					foreach (var packet in actions.Batch(MaxBatchSize))
+					foreach (var packet in actions.Distinct(_itemComparer).Batch(MaxBatchSize))
 					{
 						using (var batch = BeginBatch(group))
 						{
