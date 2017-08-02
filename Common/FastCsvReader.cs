@@ -159,6 +159,14 @@ namespace Ecng.Common
 				{
 					inQuote = !inQuote;
 
+					if (inQuote && _bufferPos > 1 && _buffer[_bufferPos - 2] == '"')
+					{
+						if (_lineLen >= _line.Length)
+							Array.Resize(ref _line, _line.Length + _buffSize);
+
+						_line[_lineLen++] = c;
+					}
+
 					//if (inQuote)
 					continue;
 					//else
