@@ -17,7 +17,7 @@ namespace Ecng.Common
 		private int _bufferPos;
 		private char[] _line = new char[_buffSize];
 		private int _lineLen;
-		private readonly RefPair<int, int>[] _columnPos = new RefPair<int, int>[_buffSize];
+		private RefPair<int, int>[] _columnPos = new RefPair<int, int>[_buffSize];
 
 		public FastCsvReader(Stream stream, Encoding encoding)
 			: this(new StreamReader(stream, encoding))
@@ -78,6 +78,23 @@ namespace Ecng.Common
 		private int _columnCurr;
 
 		public int ColumnCurr => _columnCurr;
+
+		private RefPair<int, int> GetColumnPos()
+		{
+			var prevLen = _columnPos.Length;
+
+			if (prevLen <= _columnCount)
+			{
+				Array.Resize(ref _columnPos, prevLen + _buffSize);
+
+				for (var i = prevLen; i < prevLen + _buffSize; i++)
+				{
+					_columnPos[i] = new RefPair<int, int>();
+				}
+			}
+
+			return _columnPos[_columnCount];
+		}
 
 		public bool NextLine()
 		{
@@ -144,7 +161,7 @@ namespace Ecng.Common
 						if (columnStart > _lineLen)
 							throw new InvalidOperationException();
 
-						var pair = _columnPos[_columnCount];
+						var pair = GetColumnPos();
 
 						pair.First = columnStart;
 						pair.Second = _lineLen;
@@ -181,7 +198,7 @@ namespace Ecng.Common
 
 			if (_columnCount > 0)
 			{
-				var pair = _columnPos[_columnCount];
+				var pair = GetColumnPos();
 
 				pair.First = columnStart;
 				pair.Second = _lineLen;
