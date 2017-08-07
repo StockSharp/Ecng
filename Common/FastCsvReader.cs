@@ -10,7 +10,6 @@ namespace Ecng.Common
 		private static readonly Func<string, bool> _toBool = Converter.GetTypedConverter<string, bool>();
 		private static readonly Func<string, double> _toDouble = Converter.GetTypedConverter<string, double>();
 
-		private readonly TextReader _reader;
 		private const int _buffSize = 1024 * 1024;
 		private readonly char[] _buffer = new char[_buffSize];
 		private int _bufferLen;
@@ -34,12 +33,14 @@ namespace Ecng.Common
 			if (reader == null)
 				throw new ArgumentNullException(nameof(reader));
 
-			_reader = reader;
+			Reader = reader;
 			LineSeparator = Environment.NewLine;
 
 			for (var i = 0; i < _columnPos.Length; i++)
 				_columnPos[i] = new RefPair<int, int>();
 		}
+
+		public TextReader Reader { get; }
 
 		private int _lineSeparatorCharPos;
 		private char[] _lineSeparatorChars;
@@ -116,7 +117,7 @@ namespace Ecng.Common
 
 					while (left > 0)
 					{
-						var read = _reader.ReadBlock(_buffer, 0, _buffer.Length);
+						var read = Reader.ReadBlock(_buffer, 0, _buffer.Length);
 
 						if (read == 0)
 							break;
