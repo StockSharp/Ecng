@@ -766,7 +766,10 @@ namespace Ecng.Xaml
 			else if (value is Stream)
 				Clipboard.SetAudio(value.To<Stream>());
 			else if (value is string)
-				Clipboard.SetText(value.To<string>());
+			{
+				// https://stackoverflow.com/a/17678542
+				Clipboard.SetDataObject(value.To<string>());
+			}
 			else if (value is BitmapSource)
 				Clipboard.SetImage(value.To<BitmapSource>());
 			else
