@@ -107,6 +107,7 @@
     <Compile Include="Size.cs" />
     <Compile Include="StringValidator.cs" />
     <Compile Include="TypeConverterHelper.cs" />
+    <Compile Include="VectorIconAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Collections\Collections.csproj">
