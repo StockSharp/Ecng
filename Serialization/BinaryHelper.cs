@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.IO;
+	using System.Reflection;
 	using System.Text;
 
 	using Ecng.Reflection;
@@ -460,6 +461,30 @@
 
 			writer.Flush();
 			writer.BaseStream.SetLength(0);
+		}
+
+		public static T FromString<T>(this string value)
+			where T : MemberInfo
+		{
+			if (value.IsEmpty())
+				throw new ArgumentNullException(nameof(value));
+
+			var parts = value.Split('/');
+
+			var type = parts[0].To<Type>();
+			return parts.Length == 1 ? type.To<T>() : type.GetMember<T>(parts[1]);
+		}
+
+		public static string ToString<T>(this T member, bool isAssemblyQualifiedName)
+			where T : MemberInfo
+		{
+			if (member == null)
+				throw new ArgumentNullException(nameof(member));
+
+			if (member.ReflectedType != null)
+				return member.ReflectedType.GetTypeName(isAssemblyQualifiedName) + "/" + member.Name;
+			else
+				return member.To<Type>().GetTypeName(isAssemblyQualifiedName);
 		}
 	}
 }

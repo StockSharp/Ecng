@@ -4,7 +4,6 @@ namespace Ecng.Serialization
 	using System.Reflection;
 
 	using Ecng.Common;
-	using Ecng.Reflection;
 
 	[Serializable]
 	public class MemberFieldFactory<T> : FieldFactory<T, string>
@@ -20,18 +19,12 @@ namespace Ecng.Serialization
 
 		protected internal override T OnCreateInstance(ISerializer serializer, string source)
 		{
-			var parts = source.Split('/');
-
-			var type = parts[0].To<Type>();
-			return parts.Length == 1 ? type.To<T>() : type.GetMember<T>(parts[1]);
+			return source.FromString<T>();
 		}
 
 		protected internal override string OnCreateSource(ISerializer serializer, T instance)
 		{
-			if (instance.ReflectedType != null)
-				return instance.ReflectedType.GetTypeName(_isAssemblyQualifiedName) + "/" + instance.Name;
-			else
-				return instance.To<Type>().GetTypeName(_isAssemblyQualifiedName);
+			return instance.ToString(_isAssemblyQualifiedName);
 		}
 	}
 
