@@ -130,6 +130,7 @@ namespace Ecng.Common
 			return thread;
 		}
 
+		[Obsolete]
 		public static Thread Culture(this Thread thread, CultureInfo culture)
 		{
 			if (thread == null)
@@ -142,6 +143,7 @@ namespace Ecng.Common
 			return thread;
 		}
 
+		[Obsolete]
 		public static Thread UICulture(this Thread thread, CultureInfo culture)
 		{
 			if (thread == null)
