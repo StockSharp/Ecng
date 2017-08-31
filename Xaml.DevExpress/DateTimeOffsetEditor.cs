@@ -85,8 +85,7 @@
 			if (str.IsEmpty())
 				return null;
 
-			DateTimeOffset offset;
-			if (DateTimeOffset.TryParse(str, out offset))
+			if (DateTimeOffset.TryParse(str, out var offset))
 				return offset;
 
 			return null;
@@ -101,10 +100,9 @@
 				return ((DateTimeOffset)value).LocalDateTime;
 
 			var str = value as string;
-			DateTimeOffset offset;
 
-			return !str.IsEmpty() && DateTimeOffset.TryParse(str, out offset) 
-				? (object)offset 
+			return !str.IsEmpty() && DateTimeOffset.TryParse(str, out var offset)
+				? (object)offset
 				: null;
 		}
 	}

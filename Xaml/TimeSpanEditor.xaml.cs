@@ -477,8 +477,7 @@
 			if (text.Length > max.ToString().Length)
 				return lastValue;
 
-			int num;
-			if (!int.TryParse(text, out num))
+			if (!int.TryParse(text, out var num))
 				return 0;
 
 			if (num > max) num = 0;

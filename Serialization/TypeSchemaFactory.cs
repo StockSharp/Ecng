@@ -145,9 +145,7 @@
 
 				if (field.Factory == null)
 				{
-					Type factoryType;
-
-					if (!SchemaManager.CustomFieldFactories.TryGetValue(new Tuple<Type, string>(entityType, field.Name), out factoryType))
+					if (!SchemaManager.CustomFieldFactories.TryGetValue(new Tuple<Type, string>(entityType, field.Name), out var factoryType))
 					{
 						if (field.Type == typeof(object))
 							factoryType = typeof(DynamicFieldFactory);

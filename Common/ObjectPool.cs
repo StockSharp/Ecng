@@ -29,9 +29,8 @@
 
 		public T Get()
 		{
-			T result;
 
-			if (_pool.TryTake(out result))
+			if (_pool.TryTake(out T result))
 			{
 				_approxCount--;
 				return result;

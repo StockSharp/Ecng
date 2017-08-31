@@ -108,8 +108,7 @@ namespace Ecng.Common
 		/// <filterpriority>1</filterpriority>
 		public override int GetBytes(char[] chars, int charIndex, int charCount, byte[] bytes, int byteIndex)
 		{
-			int discarded;
-			var hexBytes = GetBytes(chars, charIndex, charCount, out discarded);
+			var hexBytes = GetBytes(chars, charIndex, charCount, out int discarded);
 			Array.Copy(hexBytes, 0, bytes, byteIndex, hexBytes.Length);
 			return hexBytes.Length;
 		}
@@ -126,8 +125,7 @@ namespace Ecng.Common
 			if (hexString.IsEmpty())
 				throw new ArgumentNullException(nameof(hexString));
 
-			int discarded;
-			return GetBytes(hexString.ToCharArray(), 0, hexString.Length, out discarded);
+			return GetBytes(hexString.ToCharArray(), 0, hexString.Length, out int discarded);
 		}
 
 		/// <summary>

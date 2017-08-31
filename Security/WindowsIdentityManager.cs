@@ -131,13 +131,11 @@ namespace Ecng.Security
 
 		public static void Login(string name, string domain, string password, LogonType logonType, Action action)
 		{
-			IntPtr token;
-			if (LogonUser(name, domain, password, logonType, LogonProvider.Default, out token))
+			if (LogonUser(name, domain, password, logonType, LogonProvider.Default, out var token))
 			{
 				try
 				{
-					IntPtr tokenDuplicate;
-					if (DuplicateToken(token, SecurityImpersonationLevel.SecurityImpersonation, out tokenDuplicate))
+					if (DuplicateToken(token, SecurityImpersonationLevel.SecurityImpersonation, out var tokenDuplicate))
 					{
 						try
 						{

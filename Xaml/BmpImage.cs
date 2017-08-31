@@ -168,8 +168,7 @@ namespace Ecng.Xaml
 
 		private static Point ApplyVisualTransform(Point point, Visual v, bool inverse)
 		{
-			bool success;
-			return TryApplyVisualTransform(point, v, inverse, true, out success);
+			return TryApplyVisualTransform(point, v, inverse, true, out bool success);
 		}
 
 		private Point GetPixelOffset()

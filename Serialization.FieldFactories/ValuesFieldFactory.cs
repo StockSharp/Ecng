@@ -48,9 +48,7 @@ namespace Ecng.Serialization
 
 		protected override S OnCreateSource(ISerializer serializer, I instance)
 		{
-			S source;
-
-			if (Values.TryGetValue(instance, out source))
+			if (Values.TryGetValue(instance, out S source))
 				return source;
 			else
 				throw new ArgumentException("instance");

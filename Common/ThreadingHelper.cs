@@ -51,8 +51,7 @@ namespace Ecng.Common
 
 		public static TimeSpan Interval(this Timer timer)
 		{
-			TimeSpan interval;
-			_intervals.TryGetValue(timer, out interval);
+			_intervals.TryGetValue(timer, out var interval);
 			return interval;
 		}
 

@@ -569,8 +569,7 @@
 			if (wnd == null)
 				throw new ArgumentNullException(nameof(wnd));
 
-			int pid;
-			GetWindowThreadProcessId(wnd.HWnd, out pid);
+			GetWindowThreadProcessId(wnd.HWnd, out int pid);
 			return pid;
 		}
 

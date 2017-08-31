@@ -67,8 +67,7 @@ namespace Ecng.Common
 		{
 			lock (GenericHolder<T>.Registry)
 			{
-				DisposableByAction<T> wrapper;
-				return !GenericHolder<T>.Registry.TryGetValue(unmanagedData, out wrapper) || wrapper.IsDisposed;
+				return !GenericHolder<T>.Registry.TryGetValue(unmanagedData, out var wrapper) || wrapper.IsDisposed;
 			}
 		}
 	}

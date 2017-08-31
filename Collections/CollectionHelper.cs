@@ -259,9 +259,7 @@
 
 		public static TValue TryGetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
 		{
-			TValue value;
-
-			if (dict.TryGetValue(key, out value))
+			if (dict.TryGetValue(key, out var value))
 				dict.Remove(key);
 
 			return value;

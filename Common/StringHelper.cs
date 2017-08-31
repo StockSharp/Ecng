@@ -299,13 +299,11 @@
 
 			if (floatPoint)
 			{
-				double d;
-				return double.TryParse(withoutWhiteSpace, NumberStyles.Any, CultureInfo.InvariantCulture, out d);
+				return double.TryParse(withoutWhiteSpace, NumberStyles.Any, CultureInfo.InvariantCulture, out var d);
 			}
 			else
 			{
-				int i;
-				return int.TryParse(withoutWhiteSpace, out i);
+				return int.TryParse(withoutWhiteSpace, out var i);
 			}
 		}
 
@@ -746,9 +744,7 @@
 
 			foreach (var letter in russianTitle.ToLower())
 			{
-				string mappedLetter;
-
-				if (_charMap.TryGetValue(letter, out mappedLetter))
+				if (_charMap.TryGetValue(letter, out var mappedLetter))
 					transliter += mappedLetter;
 				else
 					transliter += letter;

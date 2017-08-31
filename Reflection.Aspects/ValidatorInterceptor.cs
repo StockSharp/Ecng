@@ -84,9 +84,7 @@ namespace Ecng.Reflection.Aspects
 
 			if (context.HasReturnValue)
 			{
-				BaseValidator validator;
-
-				if (validators.TryGetValue(_returnValidatorId, out validator))
+				if (validators.TryGetValue(_returnValidatorId, out var validator))
 					validator.Validate(context.ReturnValue);
 			}
 
@@ -99,9 +97,7 @@ namespace Ecng.Reflection.Aspects
 		{
 			foreach (var pair in args)
 			{
-				BaseValidator validator;
-
-				if (validators.TryGetValue(pair.Key, out validator))
+				if (validators.TryGetValue(pair.Key, out var validator))
 					validator.Validate(pair.Value);
 			}
 		}

@@ -313,10 +313,8 @@
 			if (value == null)
 				return null;
 
-			CountryCodes code;
-
 			if (value is string strCode)
-				return Enum.TryParse(strCode, true, out code) ? code : (CountryCodes?)null;
+				return Enum.TryParse(strCode, true, out var code) ? code : (CountryCodes?)null;
 
 			if (value is CountryCodes)
 				return (CountryCodes) value;

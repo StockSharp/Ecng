@@ -54,9 +54,7 @@
 				{
 					while (!queue.IsClosed)
 					{
-						Action evt;
-
-						if (!queue.TryDequeue(out evt))
+						if (!queue.TryDequeue(out var evt))
 							break;
 
 						evt();

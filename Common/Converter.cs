@@ -103,9 +103,8 @@
 				if (input.IsEnum())
 					input = input.GetEnumBaseType();
 
-				DbType dbType;
 
-				if (_dbTypes.TryGetValue(input, out dbType))
+				if (_dbTypes.TryGetValue(input, out var dbType))
 					return dbType;
 				else
 					throw new ArgumentException(".NET type {0} doesn't have associated db type.".Put(input));
@@ -162,9 +161,7 @@
 					var host = input.Substring(0, index);
 					var port = input.Substring(index + 1).To<int>();
 
-					IPAddress addr;
-
-					if (!IPAddress.TryParse(host, out addr))
+					if (!IPAddress.TryParse(host, out var addr))
 						return new DnsEndPoint(host, port);
 
 					return new IPEndPoint(addr, port);
@@ -182,10 +179,9 @@
 			AddTypedConverter<DnsEndPoint, string>(input => input.TypedTo<EndPoint, string>());
 			AddTypedConverter<string, Type>(input =>
 			{
-				Type type;
 				var key = input.ToLowerInvariant();
 
-				if (!_aliases.TryGetValue(key, out type))
+				if (!_aliases.TryGetValue(key, out var type))
 				{
 					if (!_typeCache.TryGetValue(key, out type))
 					{
@@ -469,9 +465,8 @@
 					return null;
 				}
 
-				Func<object, object> typedConverter;
 
-				if (TryGetTypedConverter(value is Type ? typeof(Type) : value.GetType(), destinationType, out typedConverter))
+				if (TryGetTypedConverter(value is Type ? typeof(Type) : value.GetType(), destinationType, out var typedConverter))
 					return typedConverter(value);
 
 				var sourceType = value.GetType();
@@ -791,9 +786,8 @@
 
 			_aliases.Add(name, type);
 
-			List<string> aliases;
 
-			if (!_aliasesByValue.TryGetValue(type, out aliases))
+			if (!_aliasesByValue.TryGetValue(type, out var aliases))
 			{
 				aliases = new List<string>();
 				_aliasesByValue.Add(type, aliases);
@@ -804,8 +798,7 @@
 
 		public static string GetAlias(Type type)
 		{
-			List<string> aliases;
-			return _aliasesByValue.TryGetValue(type, out aliases) ? aliases.FirstOrDefault() : null;
+			return _aliasesByValue.TryGetValue(type, out var aliases) ? aliases.FirstOrDefault() : null;
 		}
 
 		public static T DoInCulture<T>(this CultureInfo cultureInfo, Func<T> func)

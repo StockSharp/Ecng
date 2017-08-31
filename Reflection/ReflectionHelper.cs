@@ -393,8 +393,7 @@ namespace Ecng.Reflection
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			Type proxyType;
-			if (_proxyTypes.TryGetValue(type, out proxyType))
+			if (_proxyTypes.TryGetValue(type, out var proxyType))
 				type = proxyType;
 
 #if !SILVERLIGHT

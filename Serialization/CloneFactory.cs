@@ -42,9 +42,10 @@ namespace Ecng.Serialization
 		#region CloneFactory<T> Members
 
 		public override T Clone(T value)
-        {
+		{
+			var cloneable = value as Cloneable<T>;
 
-			if (value is Cloneable<T> cloneable)
+			if (cloneable != null)
 				return cloneable.Clone();
 			else
 				return (T)((ICloneable)value).Clone();

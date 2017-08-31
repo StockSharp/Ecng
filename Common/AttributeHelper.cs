@@ -44,9 +44,8 @@ namespace Ecng.Common
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
-			V value;
 
-			if (!dictionary.TryGetValue(key, out value))
+			if (!dictionary.TryGetValue(key, out V value))
 			{
 				lock (dictionary)
 				{

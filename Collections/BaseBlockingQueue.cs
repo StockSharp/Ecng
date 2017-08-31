@@ -106,8 +106,7 @@
 
 		public T Dequeue()
 		{
-			T retVal;
-			TryDequeue(out retVal, false);
+			TryDequeue(out T retVal, false);
 			return retVal;
 		}
 
@@ -151,8 +150,7 @@
 
 		public T Peek()
 		{
-			T retVal;
-			TryPeek(out retVal, false);
+			TryPeek(out T retVal, false);
 			return retVal;
 		}
 

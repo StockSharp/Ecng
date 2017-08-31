@@ -162,8 +162,7 @@
 
 					var parametersSet = methods.Select(m => m.GetParameters()).ToList();
 
-					MethodInfo method;
-					var @params = GetParams(methodMatch, parametersSet, out method);
+					var @params = GetParams(methodMatch, parametersSet, out var method);
 
 					if (methods.Length == 1)
 						method = methods[0];
@@ -184,8 +183,7 @@
 
 					var parametersSet = indexers.Select(i => i.GetGetMethod(true).GetParameters()).ToList();
 
-					MethodInfo indexer;
-					var @params = GetParams(indexerMatch, parametersSet, out indexer);
+					var @params = GetParams(indexerMatch, parametersSet, out MethodInfo indexer);
 
 					if (indexers.Length == 1)
 						indexer = indexers[0].GetGetMethod(true);

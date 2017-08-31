@@ -47,8 +47,7 @@ namespace Ecng.Xaml
 			if (address != null)
 				return address;
 
-			EndPoint endPoint;
-			return TryParseEndPoint((string)value, out endPoint)
+			return TryParseEndPoint((string)value, out var endPoint)
 					   ? endPoint
 					   : _defaultEndPoint;
 		}
@@ -66,14 +65,12 @@ namespace Ecng.Xaml
 
 			var portString = endPointString.Substring(addressLength + 1);
 
-			int port;
-			if (!int.TryParse(portString, out port))
+			if (!int.TryParse(portString, out var port))
 				return false;
 
 			var addressString = value.Substring(0, addressLength);
 
-			IPAddress address;
-			endPoint = IPAddress.TryParse(addressString, out address)
+			endPoint = IPAddress.TryParse(addressString, out var address)
 						   ? (EndPoint)new IPEndPoint(address, port)
 						   : new DnsEndPoint(addressString, port);
 			return true;

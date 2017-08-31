@@ -170,8 +170,7 @@ namespace Ecng.ComponentModel
 
 				if (!SecondaryItems.IsEmpty())
 				{
-					List<CompressedDataRange<TItem, TBound>> ranges;
-					if (SecondaryItems.TryGetValue(y, out ranges))
+					if (SecondaryItems.TryGetValue(y, out var ranges))
 					{
 						foreach (var range in ranges)
 						{

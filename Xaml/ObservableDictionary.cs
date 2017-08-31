@@ -228,8 +228,7 @@
 			{
 				_version++;
 
-				DictionaryEntry entry;
-				var index = GetIndexAndEntryForKey(key, out entry);
+				var index = GetIndexAndEntryForKey(key, out var entry);
 				FireEntryAddedNotifications(entry, index);
 			}
 		}
@@ -245,8 +244,7 @@
 
 		private bool DoRemoveEntry(TKey key)
 		{
-			DictionaryEntry entry;
-			var index = GetIndexAndEntryForKey(key, out entry);
+			var index = GetIndexAndEntryForKey(key, out var entry);
 
 			var result = RemoveEntry(key);
 			if (result)
@@ -261,8 +259,7 @@
 
 		private void DoSetEntry(TKey key, TValue value)
 		{
-			DictionaryEntry entry;
-			var index = GetIndexAndEntryForKey(key, out entry);
+			var index = GetIndexAndEntryForKey(key, out var entry);
 
 			if (SetEntry(key, value))
 			{

@@ -100,8 +100,7 @@ namespace Ecng.Test.Web.UI
 		[TestMethod]
 		public void SelectSingle()
 		{
-			ObjectModelDataSource source;
-			DataSourceView view = GetView("Instance.Childs[@Id]", out source);
+			DataSourceView view = GetView("Instance.Childs[@Id]", out var source);
 			source.PathParameters.Add(new Parameter("Id", TypeCode.Int64, "5"));
 			view.Select(new DataSourceSelectArguments(), delegate(IEnumerable data)
 			{
@@ -163,8 +162,7 @@ namespace Ecng.Test.Web.UI
 
 		private static DataSourceView GetView()
 		{
-			ObjectModelDataSource source;
-			return GetView("Instance.Childs", out source);
+			return GetView("Instance.Childs", out var source);
 		}
 
 		private static DataSourceView GetView(string path, out ObjectModelDataSource source)

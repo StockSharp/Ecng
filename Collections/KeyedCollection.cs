@@ -51,9 +51,8 @@ namespace Ecng.Collections
 
 		public override bool Remove(TKey key)
 		{
-			TValue value;
 
-			if (InnerDictionary.TryGetValue(key, out value))
+			if (InnerDictionary.TryGetValue(key, out var value))
 			{
 				OnRemoving(key, value);
 				var retVal = InnerDictionary.Remove(key);

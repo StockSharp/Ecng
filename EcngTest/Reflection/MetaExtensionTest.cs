@@ -442,8 +442,7 @@ namespace Ecng.Test.Reflection
 		public void RefOutMethod()
 		{
 			int value = 10;
-			string value2;
-			Create<AbsMethodClass>().RefOutMethod(ref value, out value2);
+			Create<AbsMethodClass>().RefOutMethod(ref value, out var value2);
 			Assert.AreEqual(10, value);
 			Assert.IsNull(value2);
 		}
@@ -451,9 +450,7 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void OutOutMethod()
 		{
-			int value;
-			string value2;
-			Create<AbsMethodClass>().OutOutMethod(out value, out value2);
+			Create<AbsMethodClass>().OutOutMethod(out int value, out var value2);
 			Assert.AreEqual(0, value);
 			Assert.IsNull(value2);
 		}
@@ -461,9 +458,7 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void StringOutOutMethod()
 		{
-			int value;
-			string value2;
-			Assert.IsNull(Create<AbsMethodClass>().StringOutOutMethod(out value, out value2));
+			Assert.IsNull(Create<AbsMethodClass>().StringOutOutMethod(out var value, out var value2));
 			Assert.AreEqual(0, value);
 			Assert.IsNull(value2);
 		}
@@ -472,9 +467,7 @@ namespace Ecng.Test.Reflection
 		[ExpectedException(typeof(NotImplementedException))]
 		public void NotImpMethod()
 		{
-			int value;
-			string value2;
-			Create<AbsMethodClass>().NotImpMethod(out value, out value2);
+			Create<AbsMethodClass>().NotImpMethod(out int value, out var value2);
 		}
 
 		private static T Create<T>()
