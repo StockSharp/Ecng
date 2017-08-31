@@ -32,10 +32,9 @@
 		/// <returns>Returns a window instance</returns>
 		public static Window VerifyObjectType(object instance)
 		{
-			var returnValue = instance as Window;
 
 			//return the value if it is alread a window
-			if (returnValue != null)
+			if (instance is Window returnValue)
 				return returnValue;
 
 			//wrap the control in a window and return it

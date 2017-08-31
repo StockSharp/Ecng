@@ -128,9 +128,8 @@ namespace Ecng.Xaml
 
 			if (pc == null)
 			{
-				var wr = source as WeakReference;
 
-				if (wr != null)
+				if (source is WeakReference wr)
 				{
 					pc = wr.Target as INotifyPropertyChanged;
 				}

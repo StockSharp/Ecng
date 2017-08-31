@@ -25,41 +25,35 @@
 
 		private void UnsubscribeSourceEvents(object source)
 		{
-			var notify = source as INotifyCollectionChanged;
 
-			if (notify != null)
+			if (source is INotifyCollectionChanged notify)
 				notify.CollectionChanged -= OnSourceCollectionChanged;
 
-			var items = source as IEnumerable;
-			if (items != null)
+			if (source is IEnumerable items)
 				UnsubscribeItemsEvents(items);
 		}
 
 		private void SubscribeSourceEvents(object source)
 		{
-			var notify = source as INotifyCollectionChanged;
 
-			if (notify != null)
+			if (source is INotifyCollectionChanged notify)
 				notify.CollectionChanged += OnSourceCollectionChanged;
 
-			var items = source as IEnumerable;
-			if (items != null)
+			if (source is IEnumerable items)
 				SubscribeItemsEvents(items);
 		}
 
 		private void UnsubscribeItemEvents(object item)
 		{
-			var notify = item as INotifyPropertyChanged;
 
-			if (notify != null)
+			if (item is INotifyPropertyChanged notify)
 				notify.PropertyChanged -= OnItemPropertyChanged;
 		}
 
 		private void SubscribeItemEvents(object item)
 		{
-			var notify = item as INotifyPropertyChanged;
 
-			if (notify != null)
+			if (item is INotifyPropertyChanged notify)
 				notify.PropertyChanged += OnItemPropertyChanged;
 		}
 
@@ -98,9 +92,8 @@
 				return;
 
 			var current = view.CurrentItem;
-			var editableCollectionView = view as IEditableCollectionView;
 
-			if (editableCollectionView != null)
+			if (view is IEditableCollectionView editableCollectionView)
 			{
 				editableCollectionView.EditItem(sender);
 				editableCollectionView.CommitEdit();

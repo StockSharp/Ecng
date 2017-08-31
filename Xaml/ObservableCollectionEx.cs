@@ -371,9 +371,8 @@ namespace Ecng.Xaml
 
 			foreach (var handler in evt.GetInvocationList().Cast<NotifyCollectionChangedEventHandler>())
 			{
-				var view = handler.Target as CollectionView;
 
-				if (view != null)
+				if (handler.Target is CollectionView view)
 				{
 					if (items.Count > _maxDiff)
 						view.Refresh();

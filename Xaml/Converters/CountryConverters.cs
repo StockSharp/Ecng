@@ -315,8 +315,7 @@
 
 			CountryCodes code;
 
-			var strCode = value as string;
-			if (strCode != null)
+			if (value is string strCode)
 				return Enum.TryParse(strCode, true, out code) ? code : (CountryCodes?)null;
 
 			if (value is CountryCodes)

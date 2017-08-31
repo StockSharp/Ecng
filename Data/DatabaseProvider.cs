@@ -66,8 +66,7 @@
 			param.DbType = type;
 
 			// http://connect.microsoft.com/VisualStudio/feedback/details/381934/sqlparameter-dbtype-dbtype-time-sets-the-parameter-to-sqldbtype-datetime-instead-of-sqldbtype-time
-			var sqlParam = param as SqlParameter;
-			if (sqlParam != null && (type == DbType.Date || type == DbType.Time))
+			if (param is SqlParameter sqlParam && (type == DbType.Date || type == DbType.Time))
 				sqlParam.SqlDbType = type == DbType.Date ? SqlDbType.Date : SqlDbType.Time;
 
 			return param;

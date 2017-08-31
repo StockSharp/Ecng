@@ -73,8 +73,7 @@
 			if (baseType == null)
 				throw new ArgumentNullException(nameof(baseType));
 
-			var chain = factory as FieldFactoryChain;
-			if (chain != null)
+			if (factory is FieldFactoryChain chain)
 				return chain.AscFactories.Any(innerFactory => MatchFactory(innerFactory, baseType));
 			else
 				return factory.GetType().GetGenericType(baseType) != null;

@@ -149,9 +149,8 @@ namespace Ecng.Serialization
 
 				if (item.Value != null)
 				{
-					var items = item.Value as SerializationItemCollection;
 
-					if (items != null)
+					if (item.Value is SerializationItemCollection items)
 					{
 						var serializer = (IXmlSerializer)GetSerializer(item.Field.Type);
 						serializer.Serialize(items, itemElem);

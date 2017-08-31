@@ -201,9 +201,7 @@ namespace Ecng.Common
 			if (elseAction == null)
 				throw new ArgumentNullException(nameof(elseAction));
 
-			var typedValue = value as T;
-
-			if (typedValue != null)
+			if (value is T typedValue)
 				ifAction(typedValue);
 			else
 				elseAction();

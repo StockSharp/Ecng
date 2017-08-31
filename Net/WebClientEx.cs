@@ -24,8 +24,7 @@
 			if (request != null)
 				request.Timeout = (int)Timeout.TotalMilliseconds;
 
-			var http = request as HttpWebRequest;
-			if (http != null)
+			if (request is HttpWebRequest http)
 				http.AutomaticDecompression = DecompressionMethods;
 
 			return request;

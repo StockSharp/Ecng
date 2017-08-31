@@ -43,13 +43,12 @@ namespace Ecng.Serialization
 
 		public override T Clone(T value)
         {
-			var cloneable = value as Cloneable<T>;
 
-			if (cloneable != null)
+			if (value is Cloneable<T> cloneable)
 				return cloneable.Clone();
-            else
-                return (T)((ICloneable)value).Clone();
-        }
+			else
+				return (T)((ICloneable)value).Clone();
+		}
 
         #endregion
     }

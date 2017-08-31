@@ -57,9 +57,8 @@ namespace Ecng.Serialization
 
 		private static IEnumerable<TItem> GetItems(IEnumerable<TItem> collection)
 		{
-			var syncCol = collection as ISynchronizedCollection<TItem>;
 
-			if (syncCol != null)
+			if (collection is ISynchronizedCollection<TItem> syncCol)
 				collection = syncCol.SyncGet(c => c.ToArray());
 
 			return collection;

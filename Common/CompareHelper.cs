@@ -55,9 +55,8 @@ namespace Ecng.Common
 			if (value1.GetType() != value2.GetType())
 				throw new ArgumentException("The values must be a same types.", nameof(value2));
 
-			var compare1 = value1 as IComparable;
 
-			if (compare1 != null)
+			if (value1 is IComparable compare1)
 				return compare1.CompareTo(value2);
 
 			throw new ArgumentException("The values must be IComparable.");

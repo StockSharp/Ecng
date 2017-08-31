@@ -154,9 +154,8 @@ namespace Ecng.Serialization
 				if (tracking != null)
 					tracking.BeforeSerialize();
 
-				var serializable = graph as ISerializable;
 
-				if (serializable != null)
+				if (graph is ISerializable serializable)
 				{
 					serializable.Serialize(this, fields, source);
 					var orderedSource = source.OrderBy(item => item.Field.Name).ToArray();
@@ -256,9 +255,8 @@ namespace Ecng.Serialization
 				if (tracking != null)
 					tracking.BeforeDeserialize();
 
-				var serializable = graph as ISerializable;
 
-				if (serializable != null)
+				if (graph is ISerializable serializable)
 					serializable.Deserialize(this, fields, source);
 				else
 				{

@@ -41,9 +41,8 @@ namespace Ecng.Security
 
 			foreach (var entry in typeof(CryptoConfig).GetValue<VoidType, Dictionary<string, object>>("DefaultNameHT", null))
 			{
-				var value = entry.Value as Type;
 
-				if (value != null)
+				if (entry.Value is Type value)
 					_types.Add(entry.Key, value);
 			}
 

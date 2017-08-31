@@ -98,9 +98,8 @@ namespace Ecng.Reflection
 				var ctor = member as ConstructorInfo;
 				//FieldInfo field = member as FieldInfo;
 				var property = member as PropertyInfo;
-				var evt = member as EventInfo;
 
-				if (evt != null)
+				if (member is EventInfo evt)
 				{
 					method = isGetter == false ? evt.GetAddMethod(true) : evt.GetRemoveMethod(true);
 				}

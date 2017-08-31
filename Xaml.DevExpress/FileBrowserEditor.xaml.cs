@@ -21,9 +21,8 @@
 
 		protected override void AssignToEditCore(IBaseEdit edit)
 		{
-			var btnEdit = edit as ButtonEdit;
 
-			if (btnEdit != null)
+			if (edit is ButtonEdit btnEdit)
 				ValidationHelper.SetBaseEdit(this, btnEdit);
 
 			base.AssignToEditCore(edit);

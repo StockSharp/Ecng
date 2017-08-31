@@ -45,14 +45,13 @@
 			if (column == null)
 				return editor;
 
-			var cbe = editor as ComboBoxEdit;
 
-			if (cbe != null)
+			if (editor is ComboBoxEdit cbe)
 			{
 				cbe.ItemTemplate = ItemTemplate;
 				cbe.ApplyItemTemplateToSelectedItem = ApplyItemTemplateToSelectedItem;
 				cbe.IsTextEditable = IsTextEditable;
-                return cbe;
+				return cbe;
 			}
 			else
 			{

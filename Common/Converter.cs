@@ -735,9 +735,8 @@
 						}
 					}
 
-					var convertible = value as IConvertible;
 
-					if (convertible != null)
+					if (value is IConvertible convertible)
 					{
 						return Convert.ChangeType(value, destinationType, null);
 					}

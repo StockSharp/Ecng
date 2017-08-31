@@ -701,8 +701,7 @@
 			if (source == null)
 				throw new ArgumentNullException(nameof(source));
 
-			var list = source as IList<T>;
-			if (list != null)
+			if (source is IList<T> list)
 			{
 				var count = list.Count;
 
@@ -722,12 +721,10 @@
 
 		public static bool IsEmpty<T>(this IEnumerable<T> source)
 		{
-			var col = source as ICollection<T>;
-			if (col != null)
+			if (source is ICollection<T> col)
 				return col.Count == 0;
 
-			var col2 = source as ICollection;
-			if (col2 != null)
+			if (source is ICollection col2)
 				return col2.Count == 0;
 
 			return !source.Any();
