@@ -162,7 +162,7 @@
 
 					var parametersSet = methods.Select(m => m.GetParameters()).ToList();
 
-					var @params = GetParams(methodMatch, parametersSet, out var method);
+					var @params = GetParams(methodMatch, parametersSet, out MethodInfo method);
 
 					if (methods.Length == 1)
 						method = methods[0];
