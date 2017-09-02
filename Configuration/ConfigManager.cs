@@ -190,6 +190,16 @@
 			ServiceRegistered?.Invoke(typeof(T), service);
 		}
 
+		public static void RegisterService<T>(string name, T service)
+		{
+			UnityContainer.RegisterInstance(name, service);
+
+			lock (_sync)
+				_services[typeof(T)] = service;
+
+			ServiceRegistered?.Invoke(typeof(T), service);
+		}
+
 		public static bool IsServiceRegistered<T>()
 		{
 			lock (_sync)
