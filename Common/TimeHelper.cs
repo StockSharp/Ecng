@@ -393,7 +393,14 @@ namespace Ecng.Common
 
 		public static DateTimeOffset ApplyTimeZone(this DateTime dt, TimeSpan offset)
 		{
-			return new DateTimeOffset(dt.ChangeKind(), offset);
+			try
+			{
+				return new DateTimeOffset(dt.ChangeKind(), offset);
+			}
+			catch (Exception ex)
+			{
+				throw new ArgumentException($"Cannot convert {dt} to {nameof(DateTimeOffset)}.", nameof(dt), ex);
+			}
 		}
 
 		public static DateTime ToLocalTime(this DateTimeOffset dto, TimeZoneInfo zone)
