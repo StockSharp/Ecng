@@ -37,13 +37,15 @@ namespace Ecng.Backup.Yandex
 			{
 				handler(client);
 				return null;
-			});
+			}, out var _);
 		}
 
-		private T Process<T>(Func<DiskSdkClient, T> handler)
+		private T Process<T>(Func<DiskSdkClient, T> handler, out bool cancelled)
 		{
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
+
+			cancelled = false;
 
 			if (_client != null)
 			{
@@ -77,7 +79,7 @@ namespace Ecng.Backup.Yandex
 			var retVal = owner?.GuiSync(() => CreateWindow().ShowModal(owner)) ?? CreateWindow().ShowDialog() == true;
 
 			if (!retVal)
-				throw new UnauthorizedAccessException();
+				cancelled = true;
 
 			error?.Throw();
 
@@ -99,7 +101,7 @@ namespace Ecng.Backup.Yandex
 
 			var path = GetPath(parent) + "/";
 
-			return Process(client =>
+			var retVal = Process(client =>
 			{
 				return client.AsyncWait<GenericSdkEventArgs<IEnumerable<DiskItemInfo>>, IEnumerable<BackupEntry>>(
 					nameof(DiskSdkClient.GetListCompleted),
@@ -110,7 +112,12 @@ namespace Ecng.Backup.Yandex
 						Name = i.DisplayName,
 						Size = i.ContentLength
 					}).ToArray());
-			});
+			}, out var cancelled);
+
+			if (cancelled)
+				throw new UnauthorizedAccessException();
+
+			return retVal;
 		}
 
 		void IBackupService.Delete(BackupEntry entry)
@@ -234,7 +241,7 @@ namespace Ecng.Backup.Yandex
 					nameof(DiskSdkClient.PublishCompleted),
 					() => client.PublishAsync(path),
 					e => e.Result);
-			});
+			}, out var _);
 		}
 
 		void IBackupService.UnPublish(BackupEntry entry)
