@@ -13,25 +13,20 @@ namespace Ecng.Common
 			Hour,
 			Minute,
 			Second,
-			Mls
+			Mls,
+			Mcs,
+			Nano,
 		}
 
 		private readonly Tuple<Parts, string>[] _parts;
 
 		private readonly int _dayStart;
-		//private readonly int _dayLen;
-
 		private readonly int _hourStart;
-		//private readonly int _hourLen;
-
 		private readonly int _minuteStart;
-		//private readonly int _minuteLen;
-
 		private readonly int _secondStart;
-		//private readonly int _secondLen;
-
 		private readonly int _milliStart;
-		//private readonly int _milliLen;
+		private readonly int _microStart;
+		private readonly int _nanoStart;
 
 		public string Template { get; }
 
@@ -79,8 +74,29 @@ namespace Ecng.Common
 			if (_secondStart != -1)
 				parts.Add(_secondStart, Parts.Second);
 
+			_microStart = -1;
+			_nanoStart = -1;
+
 			if (_milliStart != -1)
+			{
 				parts.Add(_milliStart, Parts.Mls);
+
+				var microStart = _milliStart + 3;
+
+				if (template.Length > (microStart + 1) && (template[microStart] == 'f' || template[microStart] == 'F'))
+				{
+					_microStart = microStart;
+					parts.Add(_microStart, Parts.Mcs);
+
+					var nanoStart = _microStart + 3;
+
+					if (template.Length > (nanoStart + 1) && (template[nanoStart] == 'f' || template[nanoStart] == 'F'))
+					{
+						_nanoStart = nanoStart;
+						parts.Add(_nanoStart, Parts.Nano);
+					}
+				}
+			}
 
 			var parts2 = new List<Tuple<Parts, string>>();
 
@@ -97,10 +113,21 @@ namespace Ecng.Common
 
 				parts2.Add(Tuple.Create(part.Value, (string)null));
 
-				if (part.Value == Parts.Mls)
-					prevIndex += 3;
-				else
-					prevIndex += 2;
+				switch (part.Value)
+				{
+					case Parts.Mls:
+						prevIndex += 3;
+						break;
+					case Parts.Mcs:
+						prevIndex += 3;
+						break;
+					case Parts.Nano:
+						prevIndex += 3;
+						break;
+					default:
+						prevIndex += 2;
+						break;
+				}
 			}
 
 			_parts = parts2.ToArray();
@@ -123,8 +150,20 @@ namespace Ecng.Common
 				var seconds = _secondStart == -1 ? 0 : (input[_secondStart] - '0') * 10 + (input[_secondStart + 1] - '0');
 
 				var millis = _milliStart == -1 ? 0 : (input[_milliStart] - '0') * 100 + (input[_milliStart + 1] - '0') * 10 + (input[_milliStart + 2] - '0');
+				var micro = _microStart == -1 ? 0 : (input[_microStart] - '0') * 100 + (input[_microStart + 1] - '0') * 10 + (input[_microStart + 2] - '0');
+				var nano = _nanoStart == -1 ? 0 : (input[_nanoStart] - '0') * 100 + (input[_nanoStart + 1] - '0') * 10 + (input[_nanoStart + 2] - '0');
 
-				return new TimeSpan(days, hours, minutes, seconds, millis);
+				var ts = new TimeSpan(days, hours, minutes, seconds, millis);
+
+				if (micro > 0)
+				{
+					ts = ts.AddMicroseconds(micro);
+
+					if (nano > 0)
+						ts = ts.AddNanoseconds(nano);
+				}
+
+				return ts;
 			}
 			catch (Exception ex)
 			{
@@ -158,6 +197,12 @@ namespace Ecng.Common
 					case Parts.Mls:
 						Append(builder, value.Milliseconds, 3);
 						break;
+					case Parts.Mcs:
+						Append(builder, value.GetMicroseconds(), 3);
+						break;
+					case Parts.Nano:
+						Append(builder, value.GetNanoseconds(), 3);
+						break;
 					default:
 						throw new ArgumentOutOfRangeException();
 				}
@@ -180,5 +225,7 @@ namespace Ecng.Common
 				builder.Append((char)(value % 10 + '0'));
 			}
 		}
+
+		public override string ToString() => Template;
 	}
 }

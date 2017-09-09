@@ -51,19 +51,27 @@ namespace Ecng.Test.Common
 		{
 			for (var i = 0; i < 10000000; i++)
 			{
-				const int nanoseconds = 456;
+				var nanoseconds = RandomGen.GetInt(0, 999);
+				var roundNs = (nanoseconds / 100) * 100;
 
 				var ts = TimeSpan.Zero;
-				ts.AddNanoseconds(nanoseconds).GetNanoseconds().AssertEqual(400);
+				ts.AddNanoseconds(nanoseconds).ToNanoseconds().AssertEqual(roundNs);
 
 				var dt = DateTime.Now;
-				dt.AddNanoseconds(nanoseconds).GetNanoseconds().AssertEqual(dt.GetNanoseconds() + 400);
+				var ns = dt.GetNanoseconds();
+				dt = dt.AddNanoseconds(nanoseconds);
+				ns += roundNs;
+				if (ns >= 1000)
+					ns = ns - 1000;
+				dt.GetNanoseconds().AssertEqual(ns);
 
-				dt = TimeHelper.Now;
-				dt.AddNanoseconds(nanoseconds).GetNanoseconds().AssertEqual(dt.GetNanoseconds() + 400);
-
-				dt = DateTime.MaxValue - TimeSpan.FromDays(1);
-				dt.AddNanoseconds(nanoseconds).GetNanoseconds().AssertEqual(dt.GetNanoseconds() + 400);
+				dt = DateTime.MaxValue - TimeSpan.FromDays(1 + RandomGen.GetDouble());
+				ns = dt.GetNanoseconds();
+				dt = dt.AddNanoseconds(nanoseconds);
+				ns += roundNs;
+				if (ns >= 1000)
+					ns = ns - 1000;
+				dt.GetNanoseconds().AssertEqual(ns);
 			}
 		}
 

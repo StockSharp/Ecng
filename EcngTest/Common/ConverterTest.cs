@@ -37,9 +37,13 @@ namespace Ecng.Test.Common
 			RunDt("D/M/YY", "1/5/15", date);
 			RunDt("D/M/YY HH:mm:ss.fff", "1/5/15 00:00:00.000", date);
 			RunDt("D/M/YY HH:mm:ss.fff", "1/5/15 18:41:59.456", date + new TimeSpan(0, 18, 41, 59, 456));
+			RunDt("D/M/YY HH:mm:ss.ffffff", "1/5/15 18:41:59.456123", date + new TimeSpan(0, 18, 41, 59, 456).AddMicroseconds(123));
+			RunDt("D/M/YY HH:mm:ss.ffffFFfff", "1/5/15 18:41:59.456123456", date + new TimeSpan(0, 18, 41, 59, 456).AddMicroseconds(123).AddNanoseconds(456));
 			RunTs(@"hh_mm_ss", "18_41_59", time);
 			RunTs(@"HH_MM_SS", "18_41_59", time);
 			RunTs(@"HH:MM:SS.ffF", "18:41:59.456", new TimeSpan(0, 18, 41, 59, 456));
+			RunTs(@"HH:MM:SS.ffFfff", "18:41:59.456123", new TimeSpan(0, 18, 41, 59, 456).AddMicroseconds(123));
+			RunTs(@"HH:MM:SS.ffFfffFFf", "18:41:59.456123456", new TimeSpan(0, 18, 41, 59, 456).AddMicroseconds(123).AddNanoseconds(456));
 			"01/05/2015".ToDateTime("dd/MM/yyyy").AssertEqual(date);
 			"1/5/2015".ToDateTime("d/M/yyyy").AssertEqual(date);
 			"18:41:59".ToTimeSpan(@"hh\:mm\:ss").AssertEqual(time);
@@ -49,6 +53,10 @@ namespace Ecng.Test.Common
 		{
 			var parser = new FastDateTimeParser(format);
 			parser.Parse(str).AssertEqual(dt);
+
+			if (format.ContainsIgnoreCase("fffffffff"))
+				str = str.Remove(str.Length - 2) + "00";
+
 			parser.ToString(dt).AssertEqual(str);
 		}
 
@@ -56,6 +64,10 @@ namespace Ecng.Test.Common
 		{
 			var parser = new FastTimeSpanParser(format);
 			parser.Parse(str).AssertEqual(ts);
+
+			if (format.ContainsIgnoreCase("fffffffff"))
+				str = str.Remove(str.Length - 2) + "00";
+
 			parser.ToString(ts).AssertEqual(str);
 		}
 	}

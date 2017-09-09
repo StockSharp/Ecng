@@ -160,12 +160,27 @@ namespace Ecng.Common
 			return (int)(TicksToMicroseconds(dt.Ticks) % 1000);
 		}
 
-		public static long GetNanoseconds(this TimeSpan ts)
+		public static int GetNanoseconds(this TimeSpan ts)
+		{
+			return GetNanoseconds(ts.Ticks);
+		}
+
+		public static int GetNanoseconds(this DateTime dt)
+		{
+			return GetNanoseconds(dt.Ticks);
+		}
+
+		public static int GetNanoseconds(this long ticks)
+		{
+			return (int)((ticks % 10) * NanosecondsPerTick);
+		}
+
+		public static long ToNanoseconds(this TimeSpan ts)
 		{
 			return TicksToNanoseconds(ts.Ticks);
 		}
 
-		public static long GetNanoseconds(this DateTime dt)
+		public static long ToNanoseconds(this DateTime dt)
 		{
 			return TicksToNanoseconds(dt.Ticks);
 		}
@@ -177,7 +192,7 @@ namespace Ecng.Common
 
 		public static long TicksToNanoseconds(this long ticks)
 		{
-			return ticks * NanosecondsPerTick;
+			return checked(ticks * NanosecondsPerTick);
 		}
 
 		public static TimeSpan AddNanoseconds(this TimeSpan t, long nanoseconds)
