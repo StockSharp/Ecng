@@ -78,5 +78,7 @@
 
 			return secondsSince1970.FromUnix().ToLocalTime();
 		}
+
+		public static bool IsDirectory(this string path) => File.GetAttributes(path).HasFlag(FileAttributes.Directory);
 	}
 }
