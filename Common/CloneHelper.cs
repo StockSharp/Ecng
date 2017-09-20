@@ -2,6 +2,7 @@ namespace Ecng.Common
 {
 	using System;
 
+	[Obsolete]
 	public static class CloneHelper
 	{
 		public static T CloneNullable<T>(this T obj)
