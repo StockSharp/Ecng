@@ -10,6 +10,7 @@
 	using Ecng.Common;
 	using Ecng.Reflection;
 	using Ecng.Collections;
+	using Ecng.Localization;
 
 	public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<string, string>>
 	{
@@ -50,11 +51,20 @@
 
 		public object this[string queryField]
 		{
-			get => _queryString.TryGetValue(queryField);
+			get
+			{
+				if (queryField.IsEmpty())
+					throw new ArgumentNullException(nameof(queryField));
+
+				return _queryString.TryGetValue(queryField);
+			}
 			set
 			{
+				if (queryField.IsEmpty())
+					throw new ArgumentNullException(nameof(queryField));
+
 				if (value == null)
-					throw new ArgumentNullException(nameof(value));
+					throw new ArgumentNullException(nameof(value), "Value for key '{0}' is null.".Translate().Put(queryField));
 
 				if (Contains(queryField))
 				{
@@ -87,7 +97,7 @@
 				throw new ArgumentNullException(nameof(name));
 
 			if (value == null)
-				throw new ArgumentNullException(nameof(value));
+				throw new ArgumentNullException(nameof(value), "Value for key '{0}' is null.".Translate().Put(name));
 
 			_queryString.Add(name, value.To<string>());
 			RefreshUri();
