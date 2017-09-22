@@ -36,11 +36,24 @@ namespace Ecng.Xaml
 				Count = count;
 			}
 
+			public CollectionAction(Func<object> convert)
+			{
+				if (convert == null)
+					throw new ArgumentNullException(nameof(convert));
+
+				Type = ActionTypes.Wait;
+				Items = ArrayHelper.Empty<TItem>();
+				Convert = convert;
+			}
+
 			public ActionTypes Type { get; }
 			public TItem[] Items { get; }
 			public int Index { get; }
 			public int Count { get; }
 			public SyncObject SyncRoot { get; set; }
+
+			public Func<object> Convert { get; set; }
+			public object ConvertResult { get; set; }
 		}
 
 		private readonly Queue<CollectionAction> _pendingActions = new Queue<CollectionAction>();
@@ -356,7 +369,13 @@ namespace Ecng.Xaml
 		public int IndexOf(TItem item)
 		{
 			if (!Dispatcher.Dispatcher.CheckAccess())
-				throw new NotSupportedException();
+			{
+				// NOTE: DevExpress.Data.Helpers.BindingListAdapterBase.RaiseChangedIfNeeded access to IndexOf
+				// https://pastebin.com/4X8yPmwa
+
+				return (int)Do(() => IndexOf(item));
+				//throw new NotSupportedException();
+			}
 
 			return Items.IndexOf(item);
 		}
@@ -404,18 +423,31 @@ namespace Ecng.Xaml
 			get
 			{
 				if (!Dispatcher.Dispatcher.CheckAccess())
-					throw new NotSupportedException();
+				{
+					return (TItem)Do(() => this[index]);
+					//throw new NotSupportedException();
+				}
 
 				return Items[index];
 			}
 			set => throw new NotSupportedException();
 		}
 
-		public void Wait()
+		public object Do(Func<object> func)
 		{
-			var syncRoot = new SyncObject();
-			AddAction(new CollectionAction(ActionTypes.Wait, ArrayHelper.Empty<TItem>()) { SyncRoot = syncRoot });
-			syncRoot.Wait();
+			if (func == null)
+				throw new ArgumentNullException(nameof(func));
+
+			var action = new CollectionAction(func) { SyncRoot = new SyncObject() };
+			AddAction(action);
+
+			lock (action.SyncRoot)
+			{
+				if (action.ConvertResult == null)
+					action.SyncRoot.Wait();
+
+				return action.ConvertResult;
+			}
 		}
 
 		private void AddAction(CollectionAction item)
@@ -484,7 +516,8 @@ namespace Ecng.Xaml
 							hasClear = true;
 							break;
 						case ActionTypes.Wait:
-							Dispatcher.AddAction(action.SyncRoot.Pulse);
+							pendingActions.Add(action);
+							//Dispatcher.AddAction(action.SyncRoot.Pulse);
 							break;
 						default:
 							throw new ArgumentOutOfRangeException();
@@ -517,6 +550,18 @@ namespace Ecng.Xaml
 								Items.RemoveRange(action.Items);
 							else
 								Items.RemoveRange(action.Index, action.Count);
+
+							break;
+						}
+						case ActionTypes.Wait:
+						{
+							var result = action.Convert();
+
+							lock (action.SyncRoot)
+							{
+								action.ConvertResult = result;
+								action.SyncRoot.Pulse();
+							}
 
 							break;
 						}
