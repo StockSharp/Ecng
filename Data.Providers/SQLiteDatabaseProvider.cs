@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Data.Common;
+	using System.Diagnostics;
 
 	using Ecng.Common;
 	using Ecng.Data.Providers.Properties;
@@ -14,11 +15,18 @@
 
 		static SQLiteDatabaseProvider()
 		{
-			(Environment.Is64BitProcess ? Resources.SQLite64 : Resources.SQLite32).Save("System.Data.SQLite.dll");
+			try
+			{
+				(Environment.Is64BitProcess ? Resources.SQLite64 : Resources.SQLite32).Save("System.Data.SQLite.dll");
 
-			_factory = "System.Data.SQLite.SQLiteFactory, System.Data.SQLite"
-				.To<Type>()
-				.GetValue<VoidType, DbProviderFactory>("Instance", null);
+				_factory = "System.Data.SQLite.SQLiteFactory, System.Data.SQLite"
+					.To<Type>()
+					.GetValue<VoidType, DbProviderFactory>("Instance", null);
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine(ex);
+			}
 		}
 
 		public SQLiteDatabaseProvider()
