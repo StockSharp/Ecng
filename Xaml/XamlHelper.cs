@@ -272,24 +272,21 @@ namespace Ecng.Xaml
 		public static T FindVisualChild<T>(this DependencyObject obj)
 			where T : DependencyObject
 		{
-			var count = VisualTreeHelper.GetChildrenCount(obj);
-			for (var i = 0; i < count; i++)
+			return obj.FindVisualChilds<T>().FirstOrDefault();
+		}
+
+		public static IEnumerable<T> FindVisualChilds<T>(this DependencyObject obj)
+			where T : DependencyObject
+		{
+			for (var i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
 			{
 				var child = VisualTreeHelper.GetChild(obj, i);
-
 				if (child is T)
-				{
-					return (T)child;
-				}
-				else
-				{
-					var childOfChild = FindVisualChild<T>(child);
-				
-					if (childOfChild != null)
-						return childOfChild;
-				}
+					yield return (T)child;
+
+				foreach (var childOfChild in FindVisualChilds<T>(child))
+					yield return childOfChild;
 			}
-			return null;
 		}
 
 		#region ZIndex
