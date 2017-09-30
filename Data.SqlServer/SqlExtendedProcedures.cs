@@ -27,11 +27,26 @@ namespace Ecng.Data.SqlServer
 			if (startIndex < 0)
 				throw new ArgumentOutOfRangeException(nameof(startIndex));
 
-			if (string.IsNullOrEmpty(columns))
-				columns = string.Format("[{0}].*", table);
+			if (!table.StartsWith("[") && !table.Contains("."))
+				table = $"[{table}]";
 
-			if (string.IsNullOrEmpty(orderByColumn))
-				orderByColumn = "Id";
+			if (string.IsNullOrEmpty(columns))
+				columns = $"{table}.*";
+
+			if (orderByColumn.StartsWith("#"))
+			{
+				orderByColumn = orderByColumn.Substring(1);
+
+				if (string.IsNullOrEmpty(orderByColumn))
+					orderByColumn = "Id";
+			}
+			else
+			{
+				if (string.IsNullOrEmpty(orderByColumn))
+					orderByColumn = "Id";
+
+				orderByColumn = $"{table}.{orderByColumn}";
+			}
 
 			string countFilter;
 
@@ -47,25 +62,32 @@ namespace Ecng.Data.SqlServer
 			else
 				throw new ArgumentOutOfRangeException(nameof(count));
 
-			var command = new SqlCommand(string.Format(@"
+			var command = new SqlCommand($@"
 				with Numbered as (
-					select row_number() over(order by [{0}].{1}) N_Row, {3} from [{0}] {2}
+					select row_number() over(order by {orderByColumn}) N_Row, {columns} from {table} {filter}
 				)
 				select * from Numbered
-					where N_Row - 1 {4}
-				order by N_Row", table, orderByColumn, filter, columns, countFilter));
+					where N_Row - 1 {countFilter}
+				order by N_Row");
 
 			command.Parameters.AddWithValue("@StartIndex", startIndex);
 
 			if (count != -1)
 				command.Parameters.AddWithValue("@Count", count);
 
-			if (!string.IsNullOrEmpty(filter))
+			var tableIsFunc = table.Contains("@");
+
+			if (tableIsFunc || !string.IsNullOrEmpty(filter))
 			{
 				var externalParams = new[] { param1, param2, param3, param4, param5, param6, param7, param8, param9, param10 };
 
-				int index = 0;
-				foreach (Match match in _regex.Matches(filter))
+				var text = filter;
+
+				if (tableIsFunc)
+					text = table + Environment.NewLine + text;
+
+				var index = 0;
+				foreach (Match match in _regex.Matches(text))
 				{
 					if (!command.Parameters.Contains(match.Value))
 						command.Parameters.AddWithValue(match.Value, externalParams[index++]);
