@@ -33,7 +33,7 @@ namespace Ecng.Data.SqlServer
 			if (string.IsNullOrEmpty(columns))
 				columns = $"{table}.*";
 
-			if (orderByColumn.StartsWith("#"))
+			if (orderByColumn != null && orderByColumn.StartsWith("#"))
 			{
 				orderByColumn = orderByColumn.Substring(1);
 
