@@ -51,8 +51,7 @@ namespace Ecng.Xaml
 
 		private static void SelectedEncodingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
-			var ctrl = d as EncodingComboBox;
-			if (ctrl == null)
+			if (!(d is EncodingComboBox ctrl))
 				return;
 
 			ctrl.SelectedValue = e.NewValue == null ? null : _encodingInfos[((Encoding)e.NewValue).CodePage];

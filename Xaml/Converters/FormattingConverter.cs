@@ -11,8 +11,7 @@ namespace Ecng.Xaml.Converters
 	{
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			var s = parameter as string;
-			return s != null ? string.Format(culture, s, value) : value.To<string>();
+			return parameter is string s ? string.Format(culture, s, value) : value.To<string>();
 		}
 
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

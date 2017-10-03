@@ -8,8 +8,7 @@ namespace Ecng.Xaml.Converters
 	{
 		object IValueConverter.Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			var brush = value as SolidColorBrush;
-			return brush == null ? Colors.Black : brush.Color;
+			return value is SolidColorBrush brush ? brush.Color : Colors.Black;
 		}
 
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)

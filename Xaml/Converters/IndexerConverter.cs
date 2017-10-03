@@ -10,20 +10,16 @@ namespace Ecng.Xaml.Converters
 	{
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			var list = value as IList;
-
-			if (list == null)
+			if (!(value is IList list))
 				return DependencyProperty.UnsetValue;
 
-			var index = parameter as int?;
-
-			if (index == null)
+			if (!(parameter is int index))
 				return DependencyProperty.UnsetValue;
 
 			if (index >= list.Count)
 				return DependencyProperty.UnsetValue;
 
-			return list[index.Value];
+			return list[index];
 		}
 
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

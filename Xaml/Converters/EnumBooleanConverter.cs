@@ -14,9 +14,7 @@ namespace Ecng.Xaml.Converters
 
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			var parameterString = parameter as string;
-
-			if (parameterString == null)
+			if (!(parameter is string parameterString))
 				return DependencyProperty.UnsetValue;
 
 			if (Enum.IsDefined(value.GetType(), value) == false)
@@ -29,9 +27,7 @@ namespace Ecng.Xaml.Converters
 
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			var parameterString = parameter as string;
-
-			if (parameterString == null)
+			if (!(parameter is string parameterString))
 				return DependencyProperty.UnsetValue;
 
 			if (DefaultValueWhenUnchecked && !(bool)value)

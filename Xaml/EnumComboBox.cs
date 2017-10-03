@@ -21,8 +21,7 @@
 
 		private static void EnumTypePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
-			var ctrl = d as EnumComboBox;
-			if (ctrl == null)
+			if (!(d is EnumComboBox ctrl))
 				return;
 
 			ctrl.SetDataSource((Type)e.NewValue);
