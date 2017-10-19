@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Diagnostics;
 	using System.IO;
 	using System.Linq;
@@ -39,12 +40,34 @@
 			return Directory.Exists(dir);
 		}
 
-		public static void OpenLinkInBrowser(this Uri address)
+		public static bool OpenLink(this string url, bool raiseError)
 		{
-			if (address == null)
-				throw new ArgumentNullException(nameof(address));
+			if (url.IsEmpty())
+				throw new ArgumentNullException(nameof(url));
 
-			Process.Start(new ProcessStartInfo(address.ToString()));
+			// https://stackoverflow.com/a/21836079
+
+			try
+			{
+				Process.Start(url);
+				return true;
+			}
+			catch (Win32Exception)
+			{
+				try
+				{
+					var launcher = url.StartsWith("http", StringComparison.InvariantCultureIgnoreCase) ? "IExplore.exe" : "explorer.exe";
+					Process.Start(launcher, url);
+					return true;
+				}
+				catch
+				{
+					if (raiseError)
+						throw;
+
+					return false;
+				}
+			}
 		}
 
 		public static IEnumerable<string> GetDirectories(string path,

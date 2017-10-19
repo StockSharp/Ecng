@@ -14,7 +14,7 @@
 
 		private void Hyperlink_OnRequestNavigate(object sender, RequestNavigateEventArgs e)
 		{
-			NavigateUri.OpenLinkInBrowser();
+			NavigateUri.ToString().OpenLink(false);
 			e.Handled = true;
 		}
 	}
