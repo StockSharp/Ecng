@@ -43,25 +43,19 @@ namespace Ecng.Xaml
 				return _convertedValues.TryGetValue(item);
 		}
 
-		public event Action<IEnumerable<TItem>> AddedRange
-		{
-			add => throw new NotSupportedException();
-			remove => throw new NotSupportedException();
-		}
+		public event Action<IEnumerable<TItem>> AddedRange;
 
-		public event Action<IEnumerable<TItem>> RemovedRange
-		{
-			add => throw new NotSupportedException();
-			remove => throw new NotSupportedException();
-		}
+		public event Action<IEnumerable<TItem>> RemovedRange;
 
 		public void AddRange(IEnumerable<TItem> items)
 		{
+			var arr = items.ToArray();
+
 			lock (SyncRoot)
 			{
 				var converted = new List<TDisplay>();
 
-				foreach (var item in items)
+				foreach (var item in arr)
 				{
 					var display = _converter(item);
 					_convertedValues.Add(item, display);
@@ -71,16 +65,19 @@ namespace Ecng.Xaml
 				_collection.AddRange(converted);
 			}
 
+			AddedRange?.Invoke(arr);
 			CheckCount();
 		}
 
 		public void RemoveRange(IEnumerable<TItem> items)
 		{
+			var arr = items.ToArray();
+
 			lock (SyncRoot)
 			{
 				var converted = new List<TDisplay>();
 
-				foreach (var item in items)
+				foreach (var item in arr)
 				{
 					var display = TryGet(item);
 
@@ -93,6 +90,8 @@ namespace Ecng.Xaml
 
 				_collection.RemoveRange(converted);
 			}
+
+			RemovedRange?.Invoke(arr);
 		}
 
 		public override int RemoveRange(int index, int count)
@@ -107,11 +106,17 @@ namespace Ecng.Xaml
 
 		public void Clear()
 		{
+			TItem[] removedItems;
+
 			lock (SyncRoot)
 			{
+				removedItems = _convertedValues.Keys.ToArray();
+
 				_convertedValues.Clear();
 				_collection.Clear();
 			}
+
+			RemovedRange?.Invoke(removedItems);
 		}
 
 		/// <summary>
