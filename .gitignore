@@ -192,3 +192,4 @@ FakesAssemblies/
 
 # EditorConfig studio extension
 .editorconfig
+/.vs/
