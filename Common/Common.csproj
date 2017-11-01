@@ -154,6 +154,8 @@
     <Compile Include="OrderedAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyncObject.cs" />
+    <Compile Include="TimeZoneConverter\DataLoader.cs" />
+    <Compile Include="TimeZoneConverter\TZConvert.cs" />
     <Compile Include="ValTuples.cs" />
     <Compile Include="XmlHelper.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -191,6 +193,8 @@
     <Compile Include="WeakReference.cs" />
     <Compile Include="Wrapper.cs" />
     <AppDesigner Include="Properties\" />
+    <EmbeddedResource Include="TimeZoneConverter\Data\Aliases.csv.gz" />
+    <EmbeddedResource Include="TimeZoneConverter\Data\Mapping.csv.gz" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
 </Project>

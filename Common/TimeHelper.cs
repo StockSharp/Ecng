@@ -5,6 +5,8 @@ namespace Ecng.Common
 	using System.Diagnostics;
 	using System.Globalization;
 
+	using Ecng.Common.TimeZoneConverter;
+
 	public static class TimeHelper
 	{
 		private static readonly Stopwatch _timer;
@@ -299,6 +301,7 @@ namespace Ecng.Common
 		public static readonly DateTime GregorianStart = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
 		public static readonly TimeZoneInfo Est = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+		public static readonly TimeZoneInfo Cst = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
 		public static readonly TimeZoneInfo Moscow = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
 		//public static readonly TimeZoneInfo Gmt = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
 
@@ -506,5 +509,25 @@ namespace Ecng.Common
 		//	//var dt = time.ToDateTime(_timeFormat);
 		//	return dt.ChangeKind(DateTimeKind.Utc);
 		//}
+
+		/// <summary>
+		/// Retrieves a <see cref="TimeZoneInfo"/>  object given a valid Windows or IANA time zone idenfifier,
+		/// regardless of which platform the application is running on.
+		/// </summary>
+		/// <param name="iana">A valid IANA time zone identifier.</param>
+		/// <returns>A <see cref="TimeZoneInfo"/> object.</returns>
+		public static TimeZoneInfo IanaToTimeZone(string iana)
+		{
+			if (iana.CompareIgnoreCase("MSK"))
+				return Moscow;
+
+			if (iana.CompareIgnoreCase("CST"))
+				return Cst;
+
+			if (iana.CompareIgnoreCase("EST"))
+				return Est;
+
+			return TimeZoneInfo.FindSystemTimeZoneById(TZConvert.IanaToWindows(iana));
+		}
 	}
 }
