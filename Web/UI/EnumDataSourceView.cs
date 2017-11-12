@@ -31,11 +31,20 @@
 			table.Columns.Add(new DataColumn("DisplayName", typeof(string)));
 			table.Columns.Add(new DataColumn("Description", typeof(string)));
 
-			foreach (var value in EnumType.GetValues())
+			var enumType = EnumType;
+
+			if (enumType.IsNullable())
+			{
+				table.Rows.Add(string.Empty, null, string.Empty, string.Empty);
+
+				enumType = enumType.GetUnderlyingType();
+			}
+
+			foreach (var value in enumType.GetValues())
 			{
 				var name = value.To<Enum>().GetName();
 
-				var info = EnumType.GetMember<FieldInfo>(name);
+				var info = enumType.GetMember<FieldInfo>(name);
 
 				var displayName = info.GetDisplayName();
 
