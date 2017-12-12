@@ -279,6 +279,8 @@ namespace Ecng.Common
 			long? intPart = null;
 			long? fractalPart = null;
 
+			var isNegative = false;
+
 			int i;
 
 			for (i = pair.First; i < pair.Second; i++)
@@ -287,6 +289,23 @@ namespace Ecng.Common
 
 				if (c == '.')
 					break;
+
+				if (c == '+')
+				{
+					if (i != pair.First)
+						throw new InvalidOperationException("+");
+
+					continue;
+				}
+
+				if (c == '-')
+				{
+					if (i != pair.First)
+						throw new InvalidOperationException("-");
+
+					isNegative = true;
+					continue;
+				}
 
 				intPart = (intPart ?? 0) * 10 + (c - '0');
 			}
@@ -310,12 +329,19 @@ namespace Ecng.Common
 				fractalPart = (c - '0') * 10.Pow(fractalPartSize - 1) + (fractalPart ?? 0);
 			}
 
-			if (fractalPart == null)
-				return intPart;
+			decimal? retVal = intPart;
 
-			intPart = intPart ?? 0;
+			if (fractalPart != null)
+			{
+				intPart = intPart ?? 0;
 
-			return intPart.Value + (decimal)fractalPart.Value / (long)Math.Pow(10, fractalPartSize);
+				retVal = intPart.Value + (decimal)fractalPart.Value / (long)Math.Pow(10, fractalPartSize);
+			}
+
+			if (retVal > 0 && isNegative)
+				retVal = -retVal;
+
+			return retVal;
 		}
 
 		public int ReadInt()
@@ -330,12 +356,36 @@ namespace Ecng.Common
 			if (pair.First == pair.Second)
 				return null;
 
+			var isNegative = false;
+
 			var retVal = 0;
 
 			for (var i = pair.First; i < pair.Second; i++)
 			{
-				retVal = retVal * 10 + (_line[i] - '0');
+				var c = _line[i];
+
+				if (c == '+')
+				{
+					if (i != pair.First)
+						throw new InvalidOperationException("+");
+
+					continue;
+				}
+
+				if (c == '-')
+				{
+					if (i != pair.First)
+						throw new InvalidOperationException("-");
+
+					isNegative = true;
+					continue;
+				}
+
+				retVal = retVal * 10 + (c - '0');
 			}
+
+			if (retVal > 0 && isNegative)
+				retVal = -retVal;
 
 			return retVal;
 		}
@@ -352,12 +402,36 @@ namespace Ecng.Common
 			if (pair.First == pair.Second)
 				return null;
 
+			var isNegative = false;
+
 			var retVal = 0L;
 
 			for (var i = pair.First; i < pair.Second; i++)
 			{
-				retVal = retVal * 10 + (_line[i] - '0');
+				var c = _line[i];
+
+				if (c == '+')
+				{
+					if (i != pair.First)
+						throw new InvalidOperationException("+");
+
+					continue;
+				}
+
+				if (c == '-')
+				{
+					if (i != pair.First)
+						throw new InvalidOperationException("-");
+
+					isNegative = true;
+					continue;
+				}
+
+				retVal = retVal * 10 + (c - '0');
 			}
+
+			if (retVal > 0 && isNegative)
+				retVal = -retVal;
 
 			return retVal;
 		}
