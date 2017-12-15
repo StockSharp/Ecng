@@ -81,9 +81,7 @@ namespace Ecng.Net
 
 		public override bool Equals(object obj)
 		{
-			var addr = obj as MulticastSourceAddress;
-
-			if (addr == null)
+			if (!(obj is MulticastSourceAddress addr))
 				return false;
 
 			if (GroupAddress == null)
