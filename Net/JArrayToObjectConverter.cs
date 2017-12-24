@@ -1,6 +1,7 @@
 namespace Ecng.Net
 {
 	using System;
+	using System.Reflection;
 
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Linq;
@@ -14,7 +15,7 @@ namespace Ecng.Net
 			existingValue = existingValue ?? Activator.CreateInstance(objectType);
 			
 			var array = JArray.Load(reader);
-			var fields = objectType.GetFields();
+			var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
 			
 			for (var i = 0; i < fields.Length; i++)
 			{
