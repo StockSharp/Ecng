@@ -76,12 +76,15 @@
     <Compile Include="BehaviorServer.cs" />
     <Compile Include="ChannelHelper.cs" />
     <Compile Include="ChannelWrapper.cs" />
+    <Compile Include="JArrayToObjectConverter.cs" />
     <Compile Include="JsonDateTimeConverter.cs" />
     <Compile Include="MailHelper.cs" />
     <Compile Include="MulticastSourceAddress.cs" />
     <Compile Include="NetworkHelper.cs" />
     <Compile Include="ReferencePreservingDataContractFormatAttribute.cs" />
     <Compile Include="ServiceHost.cs" />
+    <Compile Include="TimestampedDictionary.cs" />
+    <Compile Include="TimestampedDictionaryConverter.cs" />
     <Compile Include="Transport\PipeClient.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="ParamConverterAttribute.cs" />
