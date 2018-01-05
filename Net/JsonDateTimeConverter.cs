@@ -8,6 +8,18 @@ namespace Ecng.Net
 
 	public class JsonDateTimeConverter : JsonConverter
 	{
+		private readonly bool _isSeconds;
+
+		public JsonDateTimeConverter()
+			: this(true)
+		{
+		}
+
+		public JsonDateTimeConverter(bool isSeconds)
+		{
+			_isSeconds = isSeconds;
+		}
+
 		public override bool CanConvert(Type objectType)
 		{
 			return typeof(DateTime) == objectType;
@@ -20,7 +32,7 @@ namespace Ecng.Net
 
 			try
 			{
-				return reader.Value.To<long>().FromUnix();
+				return reader.Value.To<long>().FromUnix(_isSeconds);
 			}
 			catch (Exception ex)
 			{
