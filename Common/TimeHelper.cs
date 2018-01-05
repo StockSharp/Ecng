@@ -460,12 +460,12 @@
 			return calendar.GetWeekOfYear(time, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
 		}
 
-		public static double ToUnix(this DateTimeOffset time)
+		public static double ToUnix(this DateTimeOffset time, bool isSeconds = true)
 		{
-			return time.UtcDateTime.ToUnix();
+			return time.UtcDateTime.ToUnix(isSeconds);
 		}
 
-		public static double ToUnix(this DateTime time)
+		public static double ToUnix(this DateTime time, bool isSeconds = true)
 		{
 			if (time.Kind != DateTimeKind.Utc)
 				throw new ArgumentException(nameof(time));
@@ -475,17 +475,17 @@
 			if (diff < TimeSpan.Zero)
 				throw new ArgumentOutOfRangeException(nameof(time));
 
-			return diff.TotalSeconds;
+			return isSeconds ? diff.TotalSeconds : diff.TotalMilliseconds;
 		}
 		
 		public static DateTime FromUnix(this long time, bool isSeconds = true)
 		{
-			return isSeconds ? ((double)time).FromUnix() : GregorianStart.AddMilliseconds(time);
+			return isSeconds ? GregorianStart.AddSeconds(time) : GregorianStart.AddMilliseconds(time);
 		}
 
-		public static DateTime FromUnix(this double time)
+		public static DateTime FromUnix(this double time, bool isSeconds = true)
 		{
-			return GregorianStart.AddSeconds(time);
+			return isSeconds ? GregorianStart.AddSeconds(time) : GregorianStart.AddMilliseconds(time);
 		}
 
 		public static double UnixNowS => DateTime.UtcNow.ToUnix();
