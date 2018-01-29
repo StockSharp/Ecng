@@ -381,6 +381,11 @@
 			return string.Join(separator, parts.ToArray());
 		}
 
+		public static bool EqualsIgnoreCase(this string str1, string str2)
+		{
+			return string.Equals(str1, str2, StringComparison.InvariantCultureIgnoreCase);
+		}
+
 		public static bool CompareIgnoreCase(this string str1, string str2)
 		{
 			return string.Compare(str1, str2, StringComparison.InvariantCultureIgnoreCase) == 0;
@@ -447,6 +452,30 @@
 			return builder
 				.Clear()
 				.Append(str);
+		}
+
+		public static bool StartsWithIgnoreCase(this string str1, string str2)
+		{
+			if (str1 == null)
+				throw new ArgumentNullException(nameof(str1));
+
+			return str1.StartsWith(str2, StringComparison.InvariantCultureIgnoreCase);
+		}
+
+		public static bool EndsWithIgnoreCase(this string str1, string str2)
+		{
+			if (str1 == null)
+				throw new ArgumentNullException(nameof(str1));
+
+			return str1.EndsWith(str2, StringComparison.InvariantCultureIgnoreCase);
+		}
+
+		public static int IndexOfIgnoreCase(this string str1, string str2)
+		{
+			if (str1 == null)
+				throw new ArgumentNullException(nameof(str1));
+
+			return str1.IndexOf(str2, StringComparison.InvariantCultureIgnoreCase);
 		}
 
 		//

@@ -161,7 +161,7 @@ namespace Ecng.Web
 
 			var localPath = url.LocalPath;
 
-			if (localPath.EndsWith("Default.aspx", StringComparison.InvariantCultureIgnoreCase) && !url.KeepDefaultPage)
+			if (localPath.EndsWithIgnoreCase("Default.aspx") && !url.KeepDefaultPage)
 				localPath = localPath.ReplaceIgnoreCase("Default.aspx", string.Empty);
 
 			HttpContext.Current.Response.Redirect(new Uri(url.Clone(), localPath).ToString() + url.QueryString, endResponse);

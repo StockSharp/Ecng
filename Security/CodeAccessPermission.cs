@@ -26,7 +26,7 @@ namespace Ecng.Security
 			if (className.IsEmpty())
 				throw new ArgumentException("elem");
 
-			if (className.IndexOf(GetType().FullName, StringComparison.InvariantCultureIgnoreCase) < 0)
+			if (className.IndexOfIgnoreCase(GetType().FullName) < 0)
 				throw new ArgumentException("elem");
 
 			string unrestricted = elem.Attribute("Unrestricted");

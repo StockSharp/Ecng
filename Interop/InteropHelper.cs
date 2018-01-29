@@ -56,7 +56,7 @@
 			{
 				try
 				{
-					var launcher = url.StartsWith("http", StringComparison.InvariantCultureIgnoreCase) ? "IExplore.exe" : "explorer.exe";
+					var launcher = url.StartsWithIgnoreCase("http") ? "IExplore.exe" : "explorer.exe";
 					Process.Start(launcher, url);
 					return true;
 				}
