@@ -11,6 +11,8 @@
 	{
 		private const string _fakeMask = "5mmdfxfo56";
 
+		private bool _suspendChanges;
+
 		/// <summary>
 		/// <see cref="DependencyProperty"/> для <see cref="Secret"/>.
 		/// </summary>
@@ -21,11 +23,7 @@
 					var picker = (SecretEdit)o;
 					var secret = (SecureString)args.NewValue;
 
-					if (picker.PasswordCtrl.Password.IsEmpty() && secret != null && secret.Length > 0)
-					{
-						// заполняем поле пароля звездочками
-						picker.PasswordCtrl.Password = _fakeMask;
-					}
+					picker.SetPassword(secret);
 				}));
 
 		/// <summary>
@@ -44,8 +42,33 @@
 
 		private void BaseEdit_OnEditValueChanged(object sender, EditValueChangedEventArgs e)
 		{
-			if (PasswordCtrl.Password != _fakeMask)
+			if (PasswordCtrl.Password == _fakeMask) 
+				return;
+
+			try
+			{
+				_suspendChanges = true;
+
 				Secret = PasswordCtrl.Password.To<SecureString>();
+			}
+			finally
+			{
+				_suspendChanges = false;
+			}
+		}
+
+		private void SetPassword(SecureString secret)
+		{
+			if (secret != null)
+			{
+				if (PasswordCtrl.Password.IsEmpty() || !_suspendChanges)
+				{
+					// заполняем поле пароля звездочками
+					PasswordCtrl.Password = _fakeMask;
+				}
+			}
+			else
+				PasswordCtrl.Password = null;
 		}
 	}
 }
