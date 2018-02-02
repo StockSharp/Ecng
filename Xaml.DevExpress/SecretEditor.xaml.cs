@@ -59,16 +59,12 @@
 
 		private void SetPassword(SecureString secret)
 		{
-			if (secret != null)
-			{
-				if (PasswordCtrl.Password.IsEmpty() || !_suspendChanges)
-				{
-					// заполняем поле пароля звездочками
-					PasswordCtrl.Password = _fakeMask;
-				}
-			}
-			else
-				PasswordCtrl.Password = null;
+			if (_suspendChanges)
+				return;
+			
+			PasswordCtrl.Password = !secret.IsEmpty() 
+				? _fakeMask // заполняем поле пароля звездочками
+				: null;
 		}
 	}
 }
