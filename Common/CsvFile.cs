@@ -82,7 +82,7 @@ namespace Ecng.Common
 	{
 		// Private members
 		private StreamReader Reader;
-		private string CurrLine;
+		public string CurrLine;
 		private int CurrPos;
 		private EmptyLineBehavior EmptyLineBehavior;
 
