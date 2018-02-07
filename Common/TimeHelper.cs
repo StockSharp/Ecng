@@ -303,7 +303,7 @@
 		public static readonly TimeZoneInfo Est = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
 		public static readonly TimeZoneInfo Cst = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
 		public static readonly TimeZoneInfo Moscow = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
-		//public static readonly TimeZoneInfo Gmt = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+		public static readonly TimeZoneInfo Gmt = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
 
 		public static DateTime To(this DateTime time, TimeZoneInfo source = null, TimeZoneInfo destination = null)
 		{
@@ -677,7 +677,7 @@
 			// Gambier Island Time
 			{ "GIT", TimeZoneInfo.FindSystemTimeZoneById("Alaskan Standard Time") },
 			// Greenwich Mean Time
-			{ "GMT", TimeZoneInfo.FindSystemTimeZoneById("Greenwich Standard Time") },
+			{ "GMT", TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time") },
 			// South Georgia and the South Sandwich Islands Time
 			//{ "GST", TimeZoneInfo.FindSystemTimeZoneById("Mid-Atlantic Standard Time") },
 			// Gulf Standard Time
@@ -920,6 +920,9 @@
 
 			if (iana.CompareIgnoreCase("EST"))
 				return Est;
+
+			if (iana.CompareIgnoreCase("Greenwich Mean Time"))
+				return Gmt;
 
 			return TimeZoneInfo.FindSystemTimeZoneById(TZConvert.IanaToWindows(iana));
 		}
