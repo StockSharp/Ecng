@@ -442,7 +442,7 @@
 
 				case nameof(TxbMilliseconds):
 					num = ValidateNumber(Milliseconds, 999, control.Text);
-					Microseconds = num;
+					Milliseconds = num;
 					control.Text = num.ToString(CultureInfo.InvariantCulture);
 					break;
 
