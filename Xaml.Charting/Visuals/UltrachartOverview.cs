@@ -29,6 +29,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using Ecng.Xaml.Charting.ChartModifiers;
 using Ecng.Xaml.Charting.Common.AttachedProperties;
 using Ecng.Xaml.Charting.Common.Extensions;
 using Ecng.Xaml.Charting.Common.Helpers;
@@ -249,7 +250,14 @@ namespace Ecng.Xaml.Charting.Visuals
 
             SynchronizeXAxisType(Axis);
             SynchronizeRenderableSeriesType(RenderableSeriesStyle, RenderableSeriesType);
-        }        
+
+			if(this.GetTemplateChild("PART_Scrollbar") is UltrachartScrollbar bar) {
+				bar.MouseWheel += (sender, args) => {
+					var point = args.GetPosition(ParentSurface.RootGrid as UIElement);
+					ParentSurface?.ChartModifier?.OnModifierMouseWheel(new ModifierMouseArgs(point, MouseButtons.None, MouseExtensions.GetCurrentModifier(), args.Delta, true));
+				};
+			}
+		}
 
         private void SynchronizeXAxisType(IAxis xAxis)
         {
