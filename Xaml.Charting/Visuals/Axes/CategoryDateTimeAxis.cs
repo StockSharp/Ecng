@@ -192,8 +192,8 @@ namespace Ecng.Xaml.Charting.Visuals.Axes
         {
             IndexRange dataRange = null;
 
-            var baseRSeries = ParentSurface.RenderableSeries.FirstOrDefault(x => x.XAxisId == Id);
-            if (baseRSeries != null && baseRSeries.DataSeries != null && baseRSeries.DataSeries.Count > 0)
+            var baseRSeries = ParentSurface.RenderableSeries.FirstOrDefault(x => x.XAxisId == Id && x.DataSeries?.HasValues == true);
+            if (baseRSeries != null)
             {
                 dataRange = new IndexRange(0, baseRSeries.DataSeries.XValues.Count - 1);
             }

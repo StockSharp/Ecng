@@ -411,7 +411,7 @@ namespace Ecng.Xaml.Charting
         internal static void PrepareXAxes(IUltrachartSurface scs, RenderPassInfo rpi)
         {
             foreach (var xAxis in scs.XAxes.Where(x => x != null)) {
-                var firstPointSeries = GetFirstPointSeries(scs, rpi, scs.RenderableSeries.FirstOrDefault(x => x.XAxisId == xAxis.Id && x.IsVisible));
+                var firstPointSeries = GetFirstPointSeries(scs, rpi, x => x.XAxisId == xAxis.Id && x.IsVisible);
 
                 xAxis.OnBeginRenderPass(rpi, firstPointSeries);
             }
@@ -431,14 +431,16 @@ namespace Ecng.Xaml.Charting
                         yAxis.VisibleRange = newYRange;
                     }
 
-                    var firstPointSeries = GetFirstPointSeries(scs, renderPassInfo, scs.RenderableSeries.FirstOrDefault(x => x.YAxisId == yAxis.Id && x.IsVisible));
+                    var firstPointSeries = GetFirstPointSeries(scs, renderPassInfo, x => x.YAxisId == yAxis.Id && x.IsVisible);
 
                     yAxis.OnBeginRenderPass(renderPassInfo, firstPointSeries);
                 }
             }
         }
 
-        static IPointSeries GetFirstPointSeries(IUltrachartSurface scs, RenderPassInfo rpi, IRenderableSeries renderableSeries) {
+        static IPointSeries GetFirstPointSeries(IUltrachartSurface scs, RenderPassInfo rpi, Func<IRenderableSeries, bool> pred) {
+            var renderableSeries = scs.RenderableSeries.FirstOrDefault(rs => pred(rs) && rs.DataSeries.HasValues);
+
             if(rpi.PointSeries.IsNullOrEmpty() || renderableSeries == null)
                 return null;
 

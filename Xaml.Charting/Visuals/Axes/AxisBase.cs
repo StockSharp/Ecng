@@ -1172,7 +1172,7 @@ namespace Ecng.Xaml.Charting.Visuals.Axes
 
             foreach (
                 var rSeries in
-                    ParentSurface.RenderableSeries.Where(x => x.XAxisId == Id && x.IsVisible && x.DataSeries!= null))
+                    ParentSurface.RenderableSeries.Where(x => x.XAxisId == Id && x.IsVisible && x.DataSeries?.HasValues == true))
             {
                 var xRange = rSeries.GetXRange();
 
@@ -1709,8 +1709,8 @@ namespace Ecng.Xaml.Charting.Visuals.Axes
             if (ParentSurface != null && ParentSurface.RenderableSeries != null)
             {
                 var firstSeries = IsXAxis
-                    ? ParentSurface.RenderableSeries.FirstOrDefault(x => x.XAxisId == Id)
-                    : ParentSurface.RenderableSeries.FirstOrDefault(x => x.YAxisId == Id);
+                    ? ParentSurface.RenderableSeries.FirstOrDefault(x => x.XAxisId == Id && x.DataSeries.HasValues)
+                    : ParentSurface.RenderableSeries.FirstOrDefault(x => x.YAxisId == Id && x.DataSeries.HasValues);
 
                 if (firstSeries != null && firstSeries.DataSeries != null)
                 {
