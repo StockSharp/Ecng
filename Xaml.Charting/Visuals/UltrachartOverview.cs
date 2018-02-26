@@ -253,7 +253,7 @@ namespace Ecng.Xaml.Charting.Visuals
 
 			if(this.GetTemplateChild("PART_Scrollbar") is UltrachartScrollbar bar) {
 				bar.MouseWheel += (sender, args) => {
-					var point = args.GetPosition(ParentSurface.RootGrid as UIElement);
+					var point = args.GetPosition((UIElement)ParentSurface.RootGrid);
 					ParentSurface?.ChartModifier?.OnModifierMouseWheel(new ModifierMouseArgs(point, MouseButtons.None, MouseExtensions.GetCurrentModifier(), args.Delta, true));
 				};
 			}
