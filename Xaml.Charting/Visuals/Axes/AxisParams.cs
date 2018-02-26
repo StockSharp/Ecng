@@ -46,8 +46,8 @@ namespace Ecng.Xaml.Charting.Visuals.Axes
         internal bool IsBaseXValuesSorted;
         internal IList BaseXValues;
 
-        internal IPointSeries CategoryPointSeries;
-        internal IndexRange PointRange;
+        public IPointSeries CategoryPointSeries;
+        public IndexRange PointRange;
         internal double DataPointPixelSize;
         internal double DataPointStep;
 
