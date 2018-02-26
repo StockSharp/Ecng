@@ -9,7 +9,6 @@
 		public TimeZoneComboBox()
 		{
 			ItemsSource = TimeZoneInfo.GetSystemTimeZones();
-			SelectedItem = TimeZoneInfo.Utc;
 		}
 
 		public static readonly DependencyProperty SelectedTimeZoneProperty =
