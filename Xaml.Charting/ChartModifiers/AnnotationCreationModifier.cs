@@ -156,6 +156,38 @@ namespace Ecng.Xaml.Charting.ChartModifiers
             _newAnnotation.UpdatePosition(_draggingStartPoint, translatedPoint);
         }
 
+        public override void OnModifierMouseDown(ModifierMouseArgs mouseButtonEventArgs)
+        {
+            base.OnModifierMouseDown(mouseButtonEventArgs);
+
+            if (_newAnnotationType == null ||
+                !MatchesExecuteOn(mouseButtonEventArgs.MouseButtons, ExecuteOn) ||
+                !mouseButtonEventArgs.IsMaster)
+                return;
+
+            // First point - anotation creation
+            if (_newAnnotation != null && !_newAnnotation.IsSelected)
+                return;
+
+            mouseButtonEventArgs.Handled = true;
+
+            if(_newAnnotation != null && _newAnnotation.IsAttached)
+                _newAnnotation.IsSelected = false;
+
+            _draggingStartPoint = GetPointRelativeTo(mouseButtonEventArgs.MousePoint, ModifierSurface);
+
+            _newAnnotation = CreateAnnotation(_newAnnotationType, _newAnnotationStyle);
+            _newAnnotation.UpdatePosition(_draggingStartPoint, _draggingStartPoint);
+
+            // only one point is needed
+            if(typeof(IAnchorPointAnnotation).IsAssignableFrom(_newAnnotationType) || _newAnnotationType.IsSubclassOf(typeof(LineAnnotationWithLabelsBase)))
+            {
+                _newAnnotation.IsSelected = true;
+                OnAnnotationCreated();
+				_newAnnotation = null;
+            }
+        }
+
         /// <summary>
         /// Called when a Mouse Button is released on the parent <see cref="UltrachartSurface"/>
         /// </summary>
@@ -168,35 +200,12 @@ namespace Ecng.Xaml.Charting.ChartModifiers
                 !mouseButtonEventArgs.IsMaster)
                 return;
 
-            // First point - anotation creation
-            if (_newAnnotation == null || _newAnnotation.IsSelected)
-            {
-                if(_newAnnotation!= null && _newAnnotation.IsAttached)
-                {
-                    _newAnnotation.IsSelected = false;   
-                }
+			if (_newAnnotation == null || _newAnnotation.IsSelected) return;
 
-                _draggingStartPoint = GetPointRelativeTo(mouseButtonEventArgs.MousePoint, ModifierSurface);
-
-                _newAnnotation = CreateAnnotation(_newAnnotationType, _newAnnotationStyle);
-
-                _newAnnotation.UpdatePosition(_draggingStartPoint, _draggingStartPoint);
-
-                // only one point is needed
-                if (typeof (IAnchorPointAnnotation).IsAssignableFrom(_newAnnotationType) ||
-                    (_newAnnotationType.IsSubclassOf(typeof (LineAnnotationWithLabelsBase))))
-                {
-                    _newAnnotation.IsSelected = true;
-                    OnAnnotationCreated();
-                }
-            }
-            else
-            {
-                // the second point
-                _newAnnotation.IsSelected = true;
-                OnAnnotationCreated();
-            }
-        }
+			// the second point
+			_newAnnotation.IsSelected = true;
+			OnAnnotationCreated();
+		}
 
         /// <summary>
         /// Creates an annotation of the specified Type and applies the style to it
