@@ -1427,10 +1427,10 @@
                     <Style TargetType="TextBlock" BasedOn="{StaticResource HintDataItemsStyle}"/>
                 </Grid.Resources>
 
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Y = " HorizontalAlignment="Right"/>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Y " HorizontalAlignment="Left"/>
                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding FormattedYValue, Mode=OneWay}"/>
 
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Volume = " HorizontalAlignment="Right"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Volume " HorizontalAlignment="Left"/>
                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Volume, Mode=OneWay}"/>
             </Grid>
         </StackPanel>
