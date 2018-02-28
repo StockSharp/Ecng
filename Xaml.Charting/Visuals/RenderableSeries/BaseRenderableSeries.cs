@@ -875,11 +875,16 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
 
             return new Tuple<IComparable, IComparable>(hitXValue, hitYValue);
         }
+
+        protected virtual HitTestInfo ToHitTestInfoImpl(int nearestDataPointIndex)
+        {
+            return DataSeries.ToHitTestInfo(nearestDataPointIndex);
+        }
         
         /// <param name="hitTestRadius">is used to calculate HitTestInfo.IsHit</param>
         protected HitTestInfo GetHitTestInfo(int nearestDataPointIndex, Point rawPoint, double hitTestRadius, IComparable hitXValue)
         {
-            var hitTestInfo = DataSeries.ToHitTestInfo(nearestDataPointIndex);
+            var hitTestInfo = ToHitTestInfoImpl(nearestDataPointIndex);
 
             lock (DataSeries.SyncRoot)
             {

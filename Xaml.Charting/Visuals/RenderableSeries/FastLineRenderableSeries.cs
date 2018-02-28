@@ -153,6 +153,33 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             return isValid;
         }
 
+        protected override HitTestInfo ToHitTestInfoImpl(int nearestDataPointIndex)
+        {
+            var info = base.ToHitTestInfoImpl(nearestDataPointIndex);
+
+            if(info.DataSeriesType != DataSeriesType.Ohlc && info.DataSeriesType != DataSeriesType.Hlc)
+                return info;
+
+            info.DataSeriesType = DataSeriesType.Xy;
+            switch (OhlcDrawMode)
+            {
+                case OhlcLineDrawMode.Open:
+                    info.YValue = info.OpenValue;
+                    break;
+                case OhlcLineDrawMode.High:
+                    info.YValue = info.HighValue;
+                    break;
+                case OhlcLineDrawMode.Low:
+                    info.YValue = info.LowValue;
+                    break;
+                case OhlcLineDrawMode.Close:
+                    info.YValue = info.CloseValue;
+                    break;
+            }
+
+            return info;
+        }
+
         /// <summary>
         /// Draws the series using the <see cref="IRenderContext2D"/> and the <see cref="IRenderPassData"/> passed in
         /// </summary>
