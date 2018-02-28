@@ -184,7 +184,7 @@ namespace Ecng.Xaml.Charting.ChartModifiers
             {
                 _newAnnotation.IsSelected = true;
                 OnAnnotationCreated();
-				_newAnnotation = null;
+                _newAnnotation = null;
             }
         }
 
@@ -200,12 +200,14 @@ namespace Ecng.Xaml.Charting.ChartModifiers
                 !mouseButtonEventArgs.IsMaster)
                 return;
 
-			if (_newAnnotation == null || _newAnnotation.IsSelected) return;
+            if (_newAnnotation == null || _newAnnotation.IsSelected) return;
 
-			// the second point
-			_newAnnotation.IsSelected = true;
-			OnAnnotationCreated();
-		}
+            // the second point
+            var ann = _newAnnotation;
+            _newAnnotation.IsSelected = true;
+            OnAnnotationCreated();
+            ann.UpdateAdorners();
+        }
 
         /// <summary>
         /// Creates an annotation of the specified Type and applies the style to it

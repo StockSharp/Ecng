@@ -160,6 +160,8 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
                 UpdatePositions(_points);
 
+                _adornerMarkers.ForEach(m => m.ContextMenu = (AdornedAnnotation as AnnotationBase)?.ContextMenu);
+
 #if SILVERLIGHT
                 // Recalculate changes related to new point coordinates
                 if (_previousPoints != null && _points != null && _lastMarkerIndex != -1)

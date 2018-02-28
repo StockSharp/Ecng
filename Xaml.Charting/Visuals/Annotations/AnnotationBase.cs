@@ -938,7 +938,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             UpdateAdorners();
         }
 
-        private void UpdateAdorners()
+        internal void UpdateAdorners()
         {
             var adornerCanvas = GetAdornerLayer();
             if (adornerCanvas == null) return;
