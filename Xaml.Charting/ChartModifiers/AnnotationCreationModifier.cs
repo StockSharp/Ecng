@@ -156,6 +156,11 @@ namespace Ecng.Xaml.Charting.ChartModifiers
             _newAnnotation.UpdatePosition(_draggingStartPoint, translatedPoint);
         }
 
+        bool IsSinglePointAnnotation(Type annType)
+        {
+            return typeof(IAnchorPointAnnotation).IsAssignableFrom(annType) || annType.IsSubclassOf(typeof(LineAnnotationWithLabelsBase));
+        }
+
         public override void OnModifierMouseDown(ModifierMouseArgs mouseButtonEventArgs)
         {
             base.OnModifierMouseDown(mouseButtonEventArgs);
@@ -165,7 +170,6 @@ namespace Ecng.Xaml.Charting.ChartModifiers
                 !mouseButtonEventArgs.IsMaster)
                 return;
 
-            // First point - anotation creation
             if (_newAnnotation != null && !_newAnnotation.IsSelected)
                 return;
 
@@ -176,15 +180,10 @@ namespace Ecng.Xaml.Charting.ChartModifiers
 
             _draggingStartPoint = GetPointRelativeTo(mouseButtonEventArgs.MousePoint, ModifierSurface);
 
-            _newAnnotation = CreateAnnotation(_newAnnotationType, _newAnnotationStyle);
-            _newAnnotation.UpdatePosition(_draggingStartPoint, _draggingStartPoint);
-
-            // only one point is needed
-            if(typeof(IAnchorPointAnnotation).IsAssignableFrom(_newAnnotationType) || _newAnnotationType.IsSubclassOf(typeof(LineAnnotationWithLabelsBase)))
+            if(!IsSinglePointAnnotation(_newAnnotationType))
             {
-                _newAnnotation.IsSelected = true;
-                OnAnnotationCreated();
-                _newAnnotation = null;
+                _newAnnotation = CreateAnnotation(_newAnnotationType, _newAnnotationStyle);
+                _newAnnotation.UpdatePosition(_draggingStartPoint, _draggingStartPoint);
             }
         }
 
@@ -200,9 +199,15 @@ namespace Ecng.Xaml.Charting.ChartModifiers
                 !mouseButtonEventArgs.IsMaster)
                 return;
 
-            if (_newAnnotation == null || _newAnnotation.IsSelected) return;
+            if (IsSinglePointAnnotation(_newAnnotationType) && _newAnnotation == null)
+            {
+                _newAnnotation = CreateAnnotation(_newAnnotationType, _newAnnotationStyle);
+                var point = GetPointRelativeTo(mouseButtonEventArgs.MousePoint, ModifierSurface);
+                _newAnnotation.UpdatePosition(point, point);
+            }
 
-            // the second point
+            if (_newAnnotation == null) return;
+
             var ann = _newAnnotation;
             _newAnnotation.IsSelected = true;
             OnAnnotationCreated();

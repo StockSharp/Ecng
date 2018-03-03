@@ -87,10 +87,6 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         {
             DefaultStyleKey = typeof(AnnotationLabel);
 
-#if !SILVERLIGHT
-            SetCurrentValue(ContextMenuProperty, new ContextMenu { Visibility = Visibility.Collapsed });
-#endif
-
             MouseLeftButtonDown += (s, e) =>
                              {
                                  TryFocusInputTextArea();
@@ -225,11 +221,6 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             }
 
             _inputTextArea = GetAndAssertTemplateChild<TextBox>("PART_InputTextArea");
-
-#if !SILVERLIGHT
-            var binding = new Binding("ContextMenu") { RelativeSource = RelativeSource.TemplatedParent };
-            _inputTextArea.SetBinding(ContextMenuProperty, binding);
-#endif
         }
 
         /// <summary>

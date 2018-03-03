@@ -123,6 +123,11 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             }
         }
 
+        public void RemoveFocusFromInputTextArea()
+        {
+            RemoveFocusInputTextArea();
+        }
+
         /// <summary>
         /// Remove focus from input text area. Applicable only for Text and label annotation
         /// </summary>

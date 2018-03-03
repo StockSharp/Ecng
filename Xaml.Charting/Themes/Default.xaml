@@ -2624,9 +2624,11 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
+                                ContextMenu="{TemplateBinding ContextMenu}"
                                 CornerRadius="{TemplateBinding CornerRadius}">
                             <TextBox x:Name="PART_InputTextArea"
                                      Margin="{TemplateBinding Padding}"
+                                     ContextMenu="{TemplateBinding ContextMenu}"
                                      VerticalAlignment="{TemplateBinding VerticalAlignment}"
                                      FontFamily="{TemplateBinding FontFamily}"
                                      FontSize="{TemplateBinding FontSize}"
@@ -2695,12 +2697,12 @@
                                 <ColumnDefinition Width="10"/>
                             </Grid.ColumnDefinitions>
 
-							<Border x:Name="PART_GridOrderCount" Grid.Column="0" RenderTransformOrigin="0.1,0.5" Panel.ZIndex="1"
-									BorderBrush="{TemplateBinding Stroke}" Background="{TemplateBinding Background}" CornerRadius="1" BorderThickness="1">
+                            <Border x:Name="PART_GridOrderCount" Grid.Column="0" RenderTransformOrigin="0.1,0.5" Panel.ZIndex="1"
+                                    BorderBrush="{TemplateBinding Stroke}" Background="{TemplateBinding Background}" CornerRadius="1" BorderThickness="1">
                                 <Border.RenderTransform>
                                     <ScaleTransform/>
                                 </Border.RenderTransform>
-								<TextBlock x:Name="PART_OrderCountText" Margin="2,-1,2,1" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{TemplateBinding OrderSizeText}"/>
+                                <TextBlock x:Name="PART_OrderCountText" Margin="2,-1,2,1" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{TemplateBinding OrderSizeText}"/>
                             </Border>
                             <Border x:Name="PART_GridOrderText" Grid.Column="1" BorderBrush="{TemplateBinding Stroke}" Background="{TemplateBinding Background}" CornerRadius="1,0,0,1" BorderThickness="1,1,0,1">
                                 <TextBlock Margin="0,-1,0,1" x:Name="PART_OrderText" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{TemplateBinding OrderText}" FontWeight="Bold"/>

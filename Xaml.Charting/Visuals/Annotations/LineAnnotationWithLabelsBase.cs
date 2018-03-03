@@ -405,6 +405,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             var labelPlacementBinding = new Binding("LabelPlacement"){Source = this, Mode=BindingMode.OneWay};
             label.SetBinding(AnnotationLabel.LabelPlacementProperty, labelPlacementBinding);
 
+            var binding = new Binding("ContextMenu") { Source = this, Mode=BindingMode.OneWay };
+            label.SetBinding(ContextMenuProperty, binding);
+
             AnnotationLabels.Add(label);
 
             return label;
