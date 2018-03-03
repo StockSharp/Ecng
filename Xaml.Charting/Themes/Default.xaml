@@ -1066,6 +1066,13 @@
         <Setter Property="DownWickColor" Value="{z:ThemeBinding Path=DefaultCandleDownWickColor}" />
     </Style>
 
+    <!--  XO Series  -->
+    <Style BasedOn="{StaticResource DefaultRenderableSeriesStyle}" TargetType="r:FastXORenderableSeries">
+        <Setter Property="LegendMarkerTemplate" Value="{StaticResource OhlcLegendMarkerTemplate}" />
+        <Setter Property="UpWickColor" Value="{z:ThemeBinding Path=DefaultCandleUpWickColor}" />
+        <Setter Property="DownWickColor" Value="{z:ThemeBinding Path=DefaultCandleDownWickColor}" />
+    </Style>
+
     <!--  Column Series  -->
     <Style BasedOn="{StaticResource DefaultRenderableSeriesStyle}" TargetType="r:FastColumnRenderableSeries">
         <Setter Property="LegendMarkerTemplate" Value="{StaticResource ColumnSeriesLegendMarkerTemplate}" />

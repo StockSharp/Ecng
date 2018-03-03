@@ -21,7 +21,7 @@ using Ecng.Xaml.Charting.Rendering.Common;
 
 namespace Ecng.Xaml.Charting.Visuals
 {
-    internal interface IPenManager : IDisposable
+    public interface IPenManager : IDisposable
     {
         IPen2D GetPen(Color color);
     }

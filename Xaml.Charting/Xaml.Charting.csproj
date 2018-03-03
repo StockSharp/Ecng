@@ -581,6 +581,7 @@
     <Compile Include="Visuals\PointMarkers\PolarPointMarkerPathContextFactory.cs" />
     <Compile Include="Visuals\RenderableSeries\ClusterProfileRenderableSeries.cs" />
     <Compile Include="Visuals\RenderableSeries\BoxVolumeRenderableSeries.cs" />
+    <Compile Include="Visuals\RenderableSeries\FastXORenderableSeries.cs" />
     <Compile Include="Visuals\RenderableSeries\LinesClippingDecorator.cs" />
     <Compile Include="Visuals\RenderableSeries\PolarPathDrawingDecorator.cs" />
     <Compile Include="Visuals\RenderableSeries\PolygonClippingDecorator.cs" />

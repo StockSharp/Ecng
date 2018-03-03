@@ -53,8 +53,8 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
         /// </summary>
         public static readonly DependencyProperty DataPointWidthProperty = DependencyProperty.Register("DataPointWidth", typeof(double), typeof(FastOhlcRenderableSeries), new PropertyMetadata(0.8, OnInvalidateParentSurface));
 
-        private IPen2D _upWickPen;
-        private IPen2D _downWickPen;
+        protected IPen2D _upWickPen;
+        protected IPen2D _downWickPen;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FastCandlestickRenderableSeries"/> class.
@@ -232,7 +232,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             }
         }
 
-        private void DrawVanilla(IRenderContext2D renderContext, IRenderPassData renderPassData, IPenManager penManager)
+        protected virtual void DrawVanilla(IRenderContext2D renderContext, IRenderPassData renderPassData, IPenManager penManager)
         {
             var isVerticalChart = renderPassData.IsVerticalChart;
             var ohlcPoints = CurrentRenderPassData.PointSeries;
