@@ -20,9 +20,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
     public class TimeframeSegmentDataSeries : BindableObject, IDataSeries<DateTime, double> {
         public const double MinPriceStep = 0.000001d;
         public const int TimeframeOneDay = 60 * 24;
-        public const int TimeframeOneWeek = TimeframeOneDay * 7;
-        public const int Timeframe30Days  = TimeframeOneDay * 30;
-        public const int MaxTimeframe = Timeframe30Days;
+        public const int TimeframeOneWeek = 60 * 24 * 7;
+        public const int MaxTimeframe = TimeframeOneWeek; // 1 week
 
         public static readonly IMath<DateTime> XMath = GenericMathFactory.New<DateTime>();
 
@@ -269,10 +268,10 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
                 start = new DateTime(dt.Year, dt.Month, dt.Day) - TimeSpan.FromDays((int)dt.DayOfWeek);
                 end = start + TimeSpan.FromDays(7);
                 index = start.WeekNumber();
-            } else if(periodMinutes > Timeframe30Days) {
+            } else if(periodMinutes > TimeframeOneWeek) {
                 throw new NotImplementedException("periods more than one week are not supported");
             } else {
-                // day < period <= 30days
+                // day < period < week
                 var yearStart = new DateTime(dt.Year, 1, 1);
                 var diff = yearStart - dt;
                 index = (int)(diff.TotalMinutes / periodMinutes);
