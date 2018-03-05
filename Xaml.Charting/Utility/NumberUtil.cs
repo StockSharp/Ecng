@@ -63,7 +63,7 @@ namespace Ecng.Xaml.Charting.Utility
             return (byte)(Math.Truncate(Math.Log10(x)) + 1); // Very uncommon
         }
 
-        internal static bool DoubleEquals(this double value, double other) {
+        public static bool DoubleEquals(this double value, double other) {
             return Math.Abs(value - other) < EPSILON;
         }
 

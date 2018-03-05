@@ -13,7 +13,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
     [UltrachartLicenseProvider(typeof(RenderableSeriesUltrachartLicenseProvider))]
     public class FastXORenderableSeries : FastOhlcRenderableSeries
     {
-        public static readonly DependencyProperty XOBoxSizeProperty = DependencyProperty.Register("XOBoxSize", typeof(double), typeof(FastXORenderableSeries), new PropertyMetadata(1d, OnInvalidateParentSurface));
+        public static readonly DependencyProperty XOBoxSizeProperty = DependencyProperty.Register("XOBoxSize", typeof(double), typeof(FastXORenderableSeries), new PropertyMetadata(0d, OnInvalidateParentSurface));
 
         public double XOBoxSize { get => (double) GetValue(XOBoxSizeProperty); set => SetValue(XOBoxSizeProperty, value);}
 
