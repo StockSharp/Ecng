@@ -28,7 +28,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries {
                 _points = new List<TPoint>();
             }
 
-            _flushAction(points);
+            if(points.Count > 0)
+                _flushAction(points);
         }
 
         public void Append(TPoint newPoint) {
