@@ -70,6 +70,14 @@
 		}
 	}
 
+	public class UTCIncrementalIdGenerator : IncrementalIdGenerator
+	{
+		public UTCIncrementalIdGenerator()
+		{
+			Current = (long)(DateTime.UtcNow - TimeHelper.GregorianStart).TotalSeconds;
+		}
+	}
+
 	/// <summary>
 	/// Генератор идентификаторов, основанный на миллисекундах. Каждый следующий вызов метода <see cref="GetNextId"/>
 	/// будет возвращать количество миллисекунд, прошедшее с начала создания генератора.
