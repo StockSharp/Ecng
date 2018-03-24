@@ -354,9 +354,19 @@ namespace Ecng.Common
 			return Math.Acos(value);
 		}
 
+		public static decimal Acos(this decimal value)
+		{
+			return (decimal)Math.Acos((double)value);
+		}
+
 		public static double Asin(this double value)
 		{
 			return Math.Asin(value);
+		}
+
+		public static decimal Asin(this decimal value)
+		{
+			return (decimal)Math.Asin((double)value);
 		}
 
 		public static double Atan(this double value)
@@ -364,9 +374,19 @@ namespace Ecng.Common
 			return Math.Atan(value);
 		}
 
+		public static decimal Atan(this decimal value)
+		{
+			return (decimal)Math.Atan((double)value);
+		}
+
 		public static double Asin(this double x, double y)
 		{
 			return Math.Atan2(x, y);
+		}
+
+		public static decimal Asin(this decimal x, decimal y)
+		{
+			return (decimal)Math.Atan2((double)x, (double)y);
 		}
 
 		public static double Cos(this double value)
@@ -374,9 +394,19 @@ namespace Ecng.Common
 			return Math.Cos(value);
 		}
 
+		public static decimal Cos(this decimal value)
+		{
+			return (decimal)Math.Cos((double)value);
+		}
+
 		public static double Cosh(this double value)
 		{
 			return Math.Cosh(value);
+		}
+
+		public static decimal Cosh(this decimal value)
+		{
+			return (decimal)Math.Cosh((double)value);
 		}
 
 		public static double Sin(this double value)
@@ -384,9 +414,19 @@ namespace Ecng.Common
 			return Math.Sin(value);
 		}
 
+		public static decimal Sin(this decimal value)
+		{
+			return (decimal)Math.Sin((double)value);
+		}
+
 		public static double Sinh(this double value)
 		{
 			return Math.Sinh(value);
+		}
+
+		public static decimal Sinh(this decimal value)
+		{
+			return (decimal)Math.Sinh((double)value);
 		}
 
 		public static double Tan(this double value)
@@ -394,9 +434,19 @@ namespace Ecng.Common
 			return Math.Tan(value);
 		}
 
+		public static decimal Tan(this decimal value)
+		{
+			return (decimal)Math.Tan((double)value);
+		}
+
 		public static double Tanh(this double value)
 		{
 			return Math.Tanh(value);
+		}
+
+		public static decimal Tanh(this decimal value)
+		{
+			return (decimal)Math.Tanh((double)value);
 		}
 
 		public static double Exp(this double value)
@@ -404,9 +454,19 @@ namespace Ecng.Common
 			return Math.Exp(value);
 		}
 
+		public static decimal Exp(this decimal value)
+		{
+			return (decimal)Math.Exp((double)value);
+		}
+
 		public static double Remainder(this double x, double y)
 		{
 			return Math.IEEERemainder(x, y);
+		}
+
+		public static decimal Remainder(this decimal x, decimal y)
+		{
+			return (decimal)Math.IEEERemainder((double)x, (double)y);
 		}
 
 		public static double Log(this double value, double newBase)
@@ -414,14 +474,29 @@ namespace Ecng.Common
 			return Math.Log(value, newBase);
 		}
 
+		public static decimal Log(this decimal value, decimal newBase)
+		{
+			return (decimal)Math.Log((double)value, (double)newBase);
+		}
+
 		public static double Log(this double value)
 		{
 			return Math.Log(value);
 		}
 
+		public static decimal Log(this decimal value)
+		{
+			return (decimal)Math.Log((double)value);
+		}
+
 		public static double Log10(this double value)
 		{
 			return Math.Log10(value);
+		}
+
+		public static decimal Log10(this decimal value)
+		{
+			return (decimal)Math.Log10((double)value);
 		}
 
 		public static int Sign(this short value)
