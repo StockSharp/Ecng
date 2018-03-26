@@ -49,6 +49,7 @@ namespace Ecng.Web
 		}
 
 		public bool KeepDefaultPage { get; set; }
+		public bool PreventEncodeUrl { get; set; }
 
 		private QueryString _queryString;
 

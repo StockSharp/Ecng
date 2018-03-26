@@ -5,7 +5,6 @@
 	using System.Collections.Generic;
 	using System.Collections.Specialized;
 	using System.Linq;
-	using System.Text;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
@@ -125,14 +124,12 @@
 				_compiledString = string.Empty;
 			else
 			{
-				var queryString = new StringBuilder("?");
-
-				foreach (var part in _queryString)
-					queryString.AppendFormat("{0}={1}&", part.Key.EncodeUrl(), part.Value.EncodeUrl());
-
-				queryString.Remove(queryString.Length - 1, 1);
-
-				_compiledString = queryString.ToString();
+				_compiledString = "?" + _queryString.Select(p =>
+				{
+					var key = Url.PreventEncodeUrl ? p.Key : p.Key.EncodeUrl();
+					var value = Url.PreventEncodeUrl ? p.Value : p.Value.EncodeUrl();
+					return $"{key}={value}";
+				}).Join("&");
 			}
 
 			Url.SetValue("CreateUri", new object[] { Url.Clone(), Url.LocalPath + _compiledString, false });
