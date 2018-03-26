@@ -45,4 +45,12 @@ namespace Ecng.Net
 			throw new NotSupportedException();
 		}
 	}
+
+	public class JsonDateTimeMlsConverter : JsonDateTimeConverter
+	{
+		public JsonDateTimeMlsConverter()
+			: base(false)
+		{
+		}
+	}
 }
