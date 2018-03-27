@@ -39,7 +39,12 @@ namespace Ecng.Web.UI.WebControls
 
 		protected override bool CanView()
 		{
-			return Roles.SplitByComma().Any(Thread.CurrentPrincipal.IsInRole);
+			return Roles.SplitByComma().Any(CanView);
+		}
+
+		protected virtual bool CanView(string roleName)
+		{
+			return Thread.CurrentPrincipal.IsInRole(roleName);
 		}
 	}
 }
