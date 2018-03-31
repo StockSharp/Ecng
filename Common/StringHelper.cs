@@ -907,5 +907,8 @@
 		}
 
 		public static Encoding WindowsCyrillic => Encoding.GetEncoding(1251);
+
+		public static IEnumerable<string> Duplicates(this IEnumerable<string> items)
+			=> items.GroupBy(s => s, s => StringComparer.InvariantCultureIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key);
 	}
 }
