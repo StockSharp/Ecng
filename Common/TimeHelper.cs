@@ -300,10 +300,10 @@
 
 		public static readonly DateTime GregorianStart = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
-		public static readonly TimeZoneInfo Est = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-		public static readonly TimeZoneInfo Cst = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
-		public static readonly TimeZoneInfo Moscow = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
-		public static readonly TimeZoneInfo Gmt = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+		public static readonly TimeZoneInfo Est = "Eastern Standard Time".To<TimeZoneInfo>();
+		public static readonly TimeZoneInfo Cst = "Central Standard Time".To<TimeZoneInfo>();
+		public static readonly TimeZoneInfo Moscow = "Russian Standard Time".To<TimeZoneInfo>();
+		public static readonly TimeZoneInfo Gmt = "GMT Standard Time".To<TimeZoneInfo>();
 
 		public static DateTime To(this DateTime time, TimeZoneInfo source = null, TimeZoneInfo destination = null)
 		{
@@ -512,396 +512,643 @@
 
 		// https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
 
-		private static readonly Lazy<Dictionary<string, TimeZoneInfo>> _tzAbbrs = new Lazy<Dictionary<string, TimeZoneInfo>>(() => new Dictionary<string, TimeZoneInfo>(StringComparer.InvariantCultureIgnoreCase)
+		private static readonly Dictionary<string, string> _tzAbbrs = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
 		{
 			// Australian Central Daylight Savings Time
-			{ "ACDT", TimeZoneInfo.FindSystemTimeZoneById("Lord Howe Standard Time") },
+			{ "ACDT", "Lord Howe Standard Time" },
 			// Australian Central Standard Time
-			{ "ACST", TimeZoneInfo.FindSystemTimeZoneById("AUS Central Standard Time") },
+			{ "ACST", "AUS Central Standard Time" },
 			// Acre Time
-			{ "ACT", TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time") },
+			{ "ACT", "SA Pacific Standard Time" },
 			// Australian Central Western Standard Time (unofficial)
-			{ "ACWST", TimeZoneInfo.FindSystemTimeZoneById("Aus Central W. Standard Time") },
+			{ "ACWST", "Aus Central W. Standard Time" },
 			// Atlantic Daylight Time
-			{ "ADT", TimeZoneInfo.FindSystemTimeZoneById("Tocantins Standard Time") },
+			{ "ADT", "Tocantins Standard Time" },
 			// Australian Eastern Daylight Savings Time
-			{ "AEDT", TimeZoneInfo.FindSystemTimeZoneById("Central Pacific Standard Time") },
+			{ "AEDT", "Central Pacific Standard Time" },
 			// Australian Eastern Standard Time
-			{ "AEST", TimeZoneInfo.FindSystemTimeZoneById("AUS Eastern Standard Time") },
+			{ "AEST", "AUS Eastern Standard Time" },
 			// Afghanistan Time
-			{ "AFT", TimeZoneInfo.FindSystemTimeZoneById("Afghanistan Standard Time") },
+			{ "AFT", "Afghanistan Standard Time" },
 			// Alaska Daylight Time
-			{ "AKDT", TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time") },
+			{ "AKDT", "Pacific Standard Time" },
 			// Alaska Standard Time
-			{ "AKST", TimeZoneInfo.FindSystemTimeZoneById("Alaskan Standard Time") },
+			{ "AKST", "Alaskan Standard Time" },
 			// Amazon Summer Time (Brazil)[1]
-			{ "AMST", TimeZoneInfo.FindSystemTimeZoneById("SA Eastern Standard Time") },
+			{ "AMST", "SA Eastern Standard Time" },
 			// Amazon Time (Brazil)[2]
-			{ "AMT", TimeZoneInfo.FindSystemTimeZoneById("Central Brazilian Standard Time") },
+			{ "AMT", "Central Brazilian Standard Time" },
 			// Armenia Time
-			//{ "AMT", TimeZoneInfo.FindSystemTimeZoneById("Caucasus Standard Time") },
+			//{ "AMT", "Caucasus Standard Time" },
 			// Argentina Time
-			{ "ART", TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time") },
+			{ "ART", "Argentina Standard Time" },
 			// Arabia Standard Time
-			//{ "AST", TimeZoneInfo.FindSystemTimeZoneById("Arabic Standard Time") },
+			//{ "AST", "Arabic Standard Time" },
 			// Atlantic Standard Time
-			{ "AST", TimeZoneInfo.FindSystemTimeZoneById("Atlantic Standard Time") },
+			{ "AST", "Atlantic Standard Time" },
 			// Australian Western Standard Time
-			{ "AWST", TimeZoneInfo.FindSystemTimeZoneById("W. Australia Standard Time") },
+			{ "AWST", "W. Australia Standard Time" },
 			// Azores Summer Time
-			{ "AZOST", TimeZoneInfo.FindSystemTimeZoneById("Greenwich Standard Time") },
+			{ "AZOST", "Greenwich Standard Time" },
 			// Azores Standard Time
-			{ "AZOT", TimeZoneInfo.FindSystemTimeZoneById("Azores Standard Time") },
+			{ "AZOT", "Azores Standard Time" },
 			// Azerbaijan Time
-			{ "AZT", TimeZoneInfo.FindSystemTimeZoneById("Azerbaijan Standard Time") },
+			{ "AZT", "Azerbaijan Standard Time" },
 			// Brunei Time
-			{ "BDT", TimeZoneInfo.FindSystemTimeZoneById("North Asia East Standard Time") },
+			{ "BDT", "North Asia East Standard Time" },
 			// British Indian Ocean Time
-			{ "BIOT", TimeZoneInfo.FindSystemTimeZoneById("Bangladesh Standard Time") },
+			{ "BIOT", "Bangladesh Standard Time" },
 			// Baker Island Time
-			{ "BIT", TimeZoneInfo.FindSystemTimeZoneById("Dateline Standard Time") },
+			{ "BIT", "Dateline Standard Time" },
 			// Bolivia Time
-			{ "BOT", TimeZoneInfo.FindSystemTimeZoneById("Paraguay Standard Time") },
+			{ "BOT", "Paraguay Standard Time" },
 			// Brasília Summer Time
-			{ "BRST", TimeZoneInfo.FindSystemTimeZoneById("Mid-Atlantic Standard Time") },
+			{ "BRST", "Mid-Atlantic Standard Time" },
 			// Brasilia Time
-			{ "BRT", TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time") },
+			{ "BRT", "Argentina Standard Time" },
 			// Bangladesh Standard Time
-			{ "BST", TimeZoneInfo.FindSystemTimeZoneById("Bangladesh Standard Time") },
+			{ "BST", "Bangladesh Standard Time" },
 			// Bougainville Standard Time[3]
-			//{ "BST", TimeZoneInfo.FindSystemTimeZoneById("Bougainville Standard Time") },
+			//{ "BST", "Bougainville Standard Time" },
 			// British Summer Time (British Standard Time from Feb 1968 to Oct 1971)
-			//{ "BST", TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time") },
+			//{ "BST", "W. Europe Standard Time" },
 			// Bhutan Time
-			{ "BTT", TimeZoneInfo.FindSystemTimeZoneById("Bangladesh Standard Time") },
+			{ "BTT", "Bangladesh Standard Time" },
 			// Central Africa Time
-			{ "CAT", TimeZoneInfo.FindSystemTimeZoneById("South Africa Standard Time") },
+			{ "CAT", "South Africa Standard Time" },
 			// Cocos Islands Time
-			{ "CCT", TimeZoneInfo.FindSystemTimeZoneById("Myanmar Standard Time") },
+			{ "CCT", "Myanmar Standard Time" },
 			// Central Daylight Time (North America)
-			{ "CDT", TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time") },
+			{ "CDT", "SA Pacific Standard Time" },
 			// Cuba Daylight Time[4]
-			//{ "CDT", TimeZoneInfo.FindSystemTimeZoneById("Cuba Standard Time") },
+			//{ "CDT", "Cuba Standard Time" },
 			// Central European Summer Time (Cf. HAEC)
-			{ "CEST", TimeZoneInfo.FindSystemTimeZoneById("E. Europe Standard Time") },
+			{ "CEST", "E. Europe Standard Time" },
 			// Central European Time
-			{ "CET", TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time") },
+			{ "CET", "Central Europe Standard Time" },
 			// Chatham Standard Time
-			{ "CHAST", TimeZoneInfo.FindSystemTimeZoneById("Chatham Islands Standard Time") },
+			{ "CHAST", "Chatham Islands Standard Time" },
 			// Choibalsan Standard Time
-			{ "CHOT", TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time") },
+			{ "CHOT", "Korea Standard Time" },
 			// Choibalsan Summer Time
-			{ "CHOST", TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time") },
+			{ "CHOST", "Korea Standard Time" },
 			// Chamorro Standard Time
-			{ "CHST", TimeZoneInfo.FindSystemTimeZoneById("E. Australia Standard Time") },
+			{ "CHST", "E. Australia Standard Time" },
 			// Chuuk Time
-			{ "CHUT", TimeZoneInfo.FindSystemTimeZoneById("E. Australia Standard Time") },
+			{ "CHUT", "E. Australia Standard Time" },
 			// Clipperton Island Standard Time
-			{ "CIST", TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time") },
+			{ "CIST", "Pacific Standard Time" },
 			// Central Indonesia Time
-			{ "CIT", TimeZoneInfo.FindSystemTimeZoneById("China Standard Time") },
+			{ "CIT", "China Standard Time" },
 			// Cook Island Time
-			{ "CKT", TimeZoneInfo.FindSystemTimeZoneById("Hawaiian Standard Time") },
+			{ "CKT", "Hawaiian Standard Time" },
 			// Chile Summer Time
-			{ "CLST", TimeZoneInfo.FindSystemTimeZoneById("Saint Pierre Standard Time") },
+			{ "CLST", "Saint Pierre Standard Time" },
 			// Chile Standard Time
-			{ "CLT", TimeZoneInfo.FindSystemTimeZoneById("Atlantic Standard Time") },
+			{ "CLT", "Atlantic Standard Time" },
 			// Colombia Summer Time
-			{ "COST", TimeZoneInfo.FindSystemTimeZoneById("Atlantic Standard Time") },
+			{ "COST", "Atlantic Standard Time" },
 			// Colombia Time
-			{ "COT", TimeZoneInfo.FindSystemTimeZoneById("US Eastern Standard Time") },
+			{ "COT", "US Eastern Standard Time" },
 			// Central Standard Time (North America)
-			{ "CST", Cst },
+			{ "CST", Cst.Id },
 			// China Standard Time
-			//{ "CST", TimeZoneInfo.FindSystemTimeZoneById("China Standard Time") },
+			//{ "CST", "China Standard Time" },
 			// Cuba Standard Time
-			//{ "CST", TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time") },
+			//{ "CST", "SA Pacific Standard Time" },
 			// China time
-			{ "CT", TimeZoneInfo.FindSystemTimeZoneById("China Standard Time") },
+			{ "CT", "China Standard Time" },
 			// Cape Verde Time
-			{ "CVT", TimeZoneInfo.FindSystemTimeZoneById("Cape Verde Standard Time") },
+			{ "CVT", "Cape Verde Standard Time" },
 			// Central Western Standard Time (Australia) unofficial
-			{ "CWST", TimeZoneInfo.FindSystemTimeZoneById("Aus Central W. Standard Time") },
+			{ "CWST", "Aus Central W. Standard Time" },
 			// Christmas Island Time
-			{ "CXT", TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time") },
+			{ "CXT", "SE Asia Standard Time" },
 			// Davis Time
-			{ "DAVT", TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time") },
+			{ "DAVT", "SE Asia Standard Time" },
 			// Dumont d'Urville Time
-			{ "DDUT", TimeZoneInfo.FindSystemTimeZoneById("E. Australia Standard Time") },
+			{ "DDUT", "E. Australia Standard Time" },
 			// AIX-specific equivalent of Central European Time[5]
-			{ "DFT", TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time") },
+			{ "DFT", "W. Europe Standard Time" },
 			// Easter Island Summer Time
-			{ "EASST", TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time (Mexico)") },
+			{ "EASST", "Eastern Standard Time (Mexico)" },
 			// Easter Island Standard Time
-			{ "EAST", TimeZoneInfo.FindSystemTimeZoneById("Easter Island Standard Time") },
+			{ "EAST", "Easter Island Standard Time" },
 			// East Africa Time
-			{ "EAT", TimeZoneInfo.FindSystemTimeZoneById("E. Africa Standard Time") },
+			{ "EAT", "E. Africa Standard Time" },
 			// Eastern Caribbean Time (does not recognise DST)
-			//{ "ECT", TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time") },
+			//{ "ECT", "SA Western Standard Time" },
 			// Ecuador Time
-			{ "ECT", TimeZoneInfo.FindSystemTimeZoneById("Cuba Standard Time") },
+			{ "ECT", "Cuba Standard Time" },
 			// Eastern Daylight Time (North America)
-			{ "EDT", TimeZoneInfo.FindSystemTimeZoneById("Venezuela Standard Time") },
+			{ "EDT", "Venezuela Standard Time" },
 			// Eastern European Summer Time
-			{ "EEST", TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time") },
+			{ "EEST", "Russian Standard Time" },
 			// Eastern European Time
-			{ "EET", TimeZoneInfo.FindSystemTimeZoneById("E. Europe Standard Time") },
+			{ "EET", "E. Europe Standard Time" },
 			// Eastern Greenland Summer Time
-			{ "EGST", TimeZoneInfo.FindSystemTimeZoneById("UTC") },
+			{ "EGST", "UTC" },
 			// Eastern Greenland Time
-			{ "EGT", TimeZoneInfo.FindSystemTimeZoneById("Cape Verde Standard Time") },
+			{ "EGT", "Cape Verde Standard Time" },
 			// Eastern Indonesian Time
-			{ "EIT", TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time") },
+			{ "EIT", "Korea Standard Time" },
 			// Eastern Standard Time (North America)
-			{ "EST", TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time") },
+			{ "EST", "Eastern Standard Time" },
 			// Further-eastern European Time
-			{ "FET", TimeZoneInfo.FindSystemTimeZoneById("Arabic Standard Time") },
+			{ "FET", "Arabic Standard Time" },
 			// Fiji Time
-			{ "FJT", TimeZoneInfo.FindSystemTimeZoneById("Fiji Standard Time") },
+			{ "FJT", "Fiji Standard Time" },
 			// Falkland Islands Summer Time
-			{ "FKST", TimeZoneInfo.FindSystemTimeZoneById("Tocantins Standard Time") },
+			{ "FKST", "Tocantins Standard Time" },
 			// Falkland Islands Time
-			{ "FKT", TimeZoneInfo.FindSystemTimeZoneById("Paraguay Standard Time") },
+			{ "FKT", "Paraguay Standard Time" },
 			// Fernando de Noronha Time
-			{ "FNT", TimeZoneInfo.FindSystemTimeZoneById("Mid-Atlantic Standard Time") },
+			{ "FNT", "Mid-Atlantic Standard Time" },
 			// Galápagos Time
-			{ "GALT", TimeZoneInfo.FindSystemTimeZoneById("Central America Standard Time") },
+			{ "GALT", "Central America Standard Time" },
 			// Gambier Islands Time
-			{ "GAMT", TimeZoneInfo.FindSystemTimeZoneById("Alaskan Standard Time") },
+			{ "GAMT", "Alaskan Standard Time" },
 			// Georgia Standard Time
-			{ "GET", TimeZoneInfo.FindSystemTimeZoneById("Georgian Standard Time") },
+			{ "GET", "Georgian Standard Time" },
 			// French Guiana Time
-			{ "GFT", TimeZoneInfo.FindSystemTimeZoneById("Saint Pierre Standard Time") },
+			{ "GFT", "Saint Pierre Standard Time" },
 			// Gilbert Island Time
-			{ "GILT", TimeZoneInfo.FindSystemTimeZoneById("Kamchatka Standard Time") },
+			{ "GILT", "Kamchatka Standard Time" },
 			// Gambier Island Time
-			{ "GIT", TimeZoneInfo.FindSystemTimeZoneById("Alaskan Standard Time") },
+			{ "GIT", "Alaskan Standard Time" },
 			// Greenwich Mean Time
-			{ "GMT", TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time") },
+			{ "GMT", "GMT Standard Time" },
 			// South Georgia and the South Sandwich Islands Time
-			//{ "GST", TimeZoneInfo.FindSystemTimeZoneById("Mid-Atlantic Standard Time") },
+			//{ "GST", "Mid-Atlantic Standard Time" },
 			// Gulf Standard Time
-			{ "GST", TimeZoneInfo.FindSystemTimeZoneById("Arabian Standard Time") },
+			{ "GST", "Arabian Standard Time" },
 			// Guyana Time
-			{ "GYT", TimeZoneInfo.FindSystemTimeZoneById("Paraguay Standard Time") },
+			{ "GYT", "Paraguay Standard Time" },
 			// Hawaii–Aleutian Daylight Time
-			{ "HDT", TimeZoneInfo.FindSystemTimeZoneById("Alaskan Standard Time") },
+			{ "HDT", "Alaskan Standard Time" },
 			// Heure Avancée d'Europe Centrale French-language name for CEST
-			{ "HAEC", TimeZoneInfo.FindSystemTimeZoneById("Jordan Standard Time") },
+			{ "HAEC", "Jordan Standard Time" },
 			// Hawaii–Aleutian Standard Time
-			{ "HST", TimeZoneInfo.FindSystemTimeZoneById("Hawaiian Standard Time") },
+			{ "HST", "Hawaiian Standard Time" },
 			// Hong Kong Time
-			{ "HKT", TimeZoneInfo.FindSystemTimeZoneById("China Standard Time") },
+			{ "HKT", "China Standard Time" },
 			// Heard and McDonald Islands Time
-			{ "HMT", TimeZoneInfo.FindSystemTimeZoneById("West Asia Standard Time") },
+			{ "HMT", "West Asia Standard Time" },
 			// Khovd Summer Time
-			{ "HOVST", TimeZoneInfo.FindSystemTimeZoneById("China Standard Time") },
+			{ "HOVST", "China Standard Time" },
 			// Khovd Standard Time
-			{ "HOVT", TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time") },
+			{ "HOVT", "SE Asia Standard Time" },
 			// Indochina Time
-			{ "ICT", TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time") },
+			{ "ICT", "SE Asia Standard Time" },
 			// Israel Daylight Time
-			{ "IDT", TimeZoneInfo.FindSystemTimeZoneById("Arabic Standard Time") },
+			{ "IDT", "Arabic Standard Time" },
 			// Indian Ocean Time
-			{ "IOT", TimeZoneInfo.FindSystemTimeZoneById("Arabic Standard Time") },
+			{ "IOT", "Arabic Standard Time" },
 			// Iran Daylight Time
-			{ "IRDT", TimeZoneInfo.FindSystemTimeZoneById("Afghanistan Standard Time") },
+			{ "IRDT", "Afghanistan Standard Time" },
 			// Irkutsk Time
-			{ "IRKT", TimeZoneInfo.FindSystemTimeZoneById("Ulaanbaatar Standard Time") },
+			{ "IRKT", "Ulaanbaatar Standard Time" },
 			// Iran Standard Time
-			{ "IRST", TimeZoneInfo.FindSystemTimeZoneById("Iran Standard Time") },
+			{ "IRST", "Iran Standard Time" },
 			// Indian Standard Time
-			{ "IST", TimeZoneInfo.FindSystemTimeZoneById("India Standard Time") },
+			{ "IST", "India Standard Time" },
 			// Irish Standard Time[6]
-			//{ "IST", TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time") },
+			//{ "IST", "W. Europe Standard Time" },
 			// Israel Standard Time
-			//{ "IST", TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time") },
+			//{ "IST", "Israel Standard Time" },
 			// Japan Standard Time
-			{ "JST", TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time") },
+			{ "JST", "Tokyo Standard Time" },
 			// Kyrgyzstan Time
-			{ "KGT", TimeZoneInfo.FindSystemTimeZoneById("Central Asia Standard Time") },
+			{ "KGT", "Central Asia Standard Time" },
 			// Kosrae Time
-			{ "KOST", TimeZoneInfo.FindSystemTimeZoneById("Bougainville Standard Time") },
+			{ "KOST", "Bougainville Standard Time" },
 			// Krasnoyarsk Time
-			{ "KRAT", TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time") },
+			{ "KRAT", "SE Asia Standard Time" },
 			// Korea Standard Time
-			{ "KST", TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time") },
+			{ "KST", "Korea Standard Time" },
 			// Lord Howe Standard Time
-			{ "LHST", TimeZoneInfo.FindSystemTimeZoneById("Lord Howe Standard Time") },
+			{ "LHST", "Lord Howe Standard Time" },
 			// Lord Howe Summer Time
-			//{ "LHST", TimeZoneInfo.FindSystemTimeZoneById("Lord Howe Standard Time") },
+			//{ "LHST", "Lord Howe Standard Time" },
 			// Line Islands Time
-			{ "LINT", TimeZoneInfo.FindSystemTimeZoneById("Line Islands Standard Time") },
+			{ "LINT", "Line Islands Standard Time" },
 			// Magadan Time
-			{ "MAGT", TimeZoneInfo.FindSystemTimeZoneById("Magadan Standard Time") },
+			{ "MAGT", "Magadan Standard Time" },
 			// Mawson Station Time
-			{ "MAWT", TimeZoneInfo.FindSystemTimeZoneById("West Asia Standard Time") },
+			{ "MAWT", "West Asia Standard Time" },
 			// Mountain Daylight Time (North America)
-			{ "MDT", TimeZoneInfo.FindSystemTimeZoneById("Central America Standard Time") },
+			{ "MDT", "Central America Standard Time" },
 			// Middle European Time Same zone as CET
-			{ "MET", TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time") },
+			{ "MET", "Central Europe Standard Time" },
 			// Middle European Summer Time Same zone as CEST
-			{ "MEST", TimeZoneInfo.FindSystemTimeZoneById("Middle East Standard Time") },
+			{ "MEST", "Middle East Standard Time" },
 			// Marshall Islands Time
-			{ "MHT", TimeZoneInfo.FindSystemTimeZoneById("Kamchatka Standard Time") },
+			{ "MHT", "Kamchatka Standard Time" },
 			// Macquarie Island Station Time
-			{ "MIST", TimeZoneInfo.FindSystemTimeZoneById("Central Pacific Standard Time") },
+			{ "MIST", "Central Pacific Standard Time" },
 			// Myanmar Standard Time
-			{ "MMT", TimeZoneInfo.FindSystemTimeZoneById("Myanmar Standard Time") },
+			{ "MMT", "Myanmar Standard Time" },
 			// Moscow Time
-			{ "MSK", Moscow },
+			{ "MSK", Moscow.Id },
 			// Malaysia Standard Time
-			{ "MST", TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time") },
+			{ "MST", "Singapore Standard Time" },
 			// Mountain Standard Time (North America)
-			//{ "MST", TimeZoneInfo.FindSystemTimeZoneById("US Mountain Standard Time") },
+			//{ "MST", "US Mountain Standard Time" },
 			// Mauritius Time
-			{ "MUT", TimeZoneInfo.FindSystemTimeZoneById("Mauritius Standard Time") },
+			{ "MUT", "Mauritius Standard Time" },
 			// Maldives Time
-			{ "MVT", TimeZoneInfo.FindSystemTimeZoneById("West Asia Standard Time") },
+			{ "MVT", "West Asia Standard Time" },
 			// Malaysia Time
-			{ "MYT", TimeZoneInfo.FindSystemTimeZoneById("China Standard Time") },
+			{ "MYT", "China Standard Time" },
 			// New Caledonia Time
-			{ "NCT", TimeZoneInfo.FindSystemTimeZoneById("Bougainville Standard Time") },
+			{ "NCT", "Bougainville Standard Time" },
 			// Norfolk Island Time
-			{ "NFT", TimeZoneInfo.FindSystemTimeZoneById("Bougainville Standard Time") },
+			{ "NFT", "Bougainville Standard Time" },
 			// Nepal Time
-			{ "NPT", TimeZoneInfo.FindSystemTimeZoneById("Nepal Standard Time") },
+			{ "NPT", "Nepal Standard Time" },
 			// Niue Time
-			{ "NUT", TimeZoneInfo.FindSystemTimeZoneById("UTC-11") },
+			{ "NUT", "UTC-11" },
 			// New Zealand Daylight Time
-			{ "NZDT", TimeZoneInfo.FindSystemTimeZoneById("UTC+13") },
+			{ "NZDT", "UTC+13" },
 			// New Zealand Standard Time
-			{ "NZST", TimeZoneInfo.FindSystemTimeZoneById("New Zealand Standard Time") },
+			{ "NZST", "New Zealand Standard Time" },
 			// Omsk Time
-			{ "OMST", TimeZoneInfo.FindSystemTimeZoneById("Omsk Standard Time") },
+			{ "OMST", "Omsk Standard Time" },
 			// Oral Time
-			{ "ORAT", TimeZoneInfo.FindSystemTimeZoneById("West Asia Standard Time") },
+			{ "ORAT", "West Asia Standard Time" },
 			// Pacific Daylight Time (North America)
-			{ "PDT", TimeZoneInfo.FindSystemTimeZoneById("Mountain Standard Time") },
+			{ "PDT", "Mountain Standard Time" },
 			// Peru Time
-			{ "PET", TimeZoneInfo.FindSystemTimeZoneById("Cuba Standard Time") },
+			{ "PET", "Cuba Standard Time" },
 			// Kamchatka Time
-			{ "PETT", TimeZoneInfo.FindSystemTimeZoneById("Kamchatka Standard Time") },
+			{ "PETT", "Kamchatka Standard Time" },
 			// Papua New Guinea Time
-			{ "PGT", TimeZoneInfo.FindSystemTimeZoneById("E. Australia Standard Time") },
+			{ "PGT", "E. Australia Standard Time" },
 			// Phoenix Island Time
-			{ "PHOT", TimeZoneInfo.FindSystemTimeZoneById("Samoa Standard Time") },
+			{ "PHOT", "Samoa Standard Time" },
 			// Philippine Time
-			{ "PHT", TimeZoneInfo.FindSystemTimeZoneById("China Standard Time") },
+			{ "PHT", "China Standard Time" },
 			// Pakistan Standard Time
-			{ "PKT", TimeZoneInfo.FindSystemTimeZoneById("Pakistan Standard Time") },
+			{ "PKT", "Pakistan Standard Time" },
 			// Saint Pierre and Miquelon Daylight Time
-			{ "PMDT", TimeZoneInfo.FindSystemTimeZoneById("Saint Pierre Standard Time") },
+			{ "PMDT", "Saint Pierre Standard Time" },
 			// Saint Pierre and Miquelon Standard Time
-			{ "PMST", TimeZoneInfo.FindSystemTimeZoneById("Saint Pierre Standard Time") },
+			{ "PMST", "Saint Pierre Standard Time" },
 			// Pohnpei Standard Time
-			{ "PONT", TimeZoneInfo.FindSystemTimeZoneById("Central Pacific Standard Time") },
+			{ "PONT", "Central Pacific Standard Time" },
 			// Pacific Standard Time (North America)
-			{ "PST", TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time") },
+			{ "PST", "Pacific Standard Time" },
 			// Philippine Standard Time
-			//{ "PST", TimeZoneInfo.FindSystemTimeZoneById("China Standard Time") },
+			//{ "PST", "China Standard Time" },
 			// Paraguay Summer Time[7]
-			{ "PYST", TimeZoneInfo.FindSystemTimeZoneById("Paraguay Standard Time") },
+			{ "PYST", "Paraguay Standard Time" },
 			// Paraguay Time[8]
-			{ "PYT", TimeZoneInfo.FindSystemTimeZoneById("Paraguay Standard Time") },
+			{ "PYT", "Paraguay Standard Time" },
 			// Réunion Time
-			{ "RET", TimeZoneInfo.FindSystemTimeZoneById("Caucasus Standard Time") },
+			{ "RET", "Caucasus Standard Time" },
 			// Rothera Research Station Time
-			{ "ROTT", TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time") },
+			{ "ROTT", "Argentina Standard Time" },
 			// Sakhalin Island Time
-			{ "SAKT", TimeZoneInfo.FindSystemTimeZoneById("Sakhalin Standard Time") },
+			{ "SAKT", "Sakhalin Standard Time" },
 			// Samara Time
-			{ "SAMT", TimeZoneInfo.FindSystemTimeZoneById("Saratov Standard Time") },
+			{ "SAMT", "Saratov Standard Time" },
 			// South African Standard Time
-			{ "SAST", TimeZoneInfo.FindSystemTimeZoneById("South Africa Standard Time") },
+			{ "SAST", "South Africa Standard Time" },
 			// Solomon Islands Time
-			{ "SBT", TimeZoneInfo.FindSystemTimeZoneById("Central Pacific Standard Time") },
+			{ "SBT", "Central Pacific Standard Time" },
 			// Seychelles Time
-			{ "SCT", TimeZoneInfo.FindSystemTimeZoneById("Caucasus Standard Time") },
+			{ "SCT", "Caucasus Standard Time" },
 			// Samoa Daylight Time
-			{ "SDT", TimeZoneInfo.FindSystemTimeZoneById("Hawaiian Standard Time") },
+			{ "SDT", "Hawaiian Standard Time" },
 			// Singapore Time
-			{ "SGT", TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time") },
+			{ "SGT", "Singapore Standard Time" },
 			// Sri Lanka Standard Time
-			{ "SLST", TimeZoneInfo.FindSystemTimeZoneById("Sri Lanka Standard Time") },
+			{ "SLST", "Sri Lanka Standard Time" },
 			// Srednekolymsk Time
-			{ "SRET", TimeZoneInfo.FindSystemTimeZoneById("Sakhalin Standard Time") },
+			{ "SRET", "Sakhalin Standard Time" },
 			// Suriname Time
-			{ "SRT", TimeZoneInfo.FindSystemTimeZoneById("Tocantins Standard Time") },
+			{ "SRT", "Tocantins Standard Time" },
 			// Samoa Standard Time
-			//{ "SST", TimeZoneInfo.FindSystemTimeZoneById("UTC-11") },
+			//{ "SST", "UTC-11" },
 			// Singapore Standard Time
-			{ "SST", TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time") },
+			{ "SST", "Singapore Standard Time" },
 			// Showa Station Time
-			{ "SYOT", TimeZoneInfo.FindSystemTimeZoneById("Arabic Standard Time") },
+			{ "SYOT", "Arabic Standard Time" },
 			// Tahiti Time
-			{ "TAHT", TimeZoneInfo.FindSystemTimeZoneById("Hawaiian Standard Time") },
+			{ "TAHT", "Hawaiian Standard Time" },
 			// Thailand Standard Time
-			{ "THA", TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time") },
+			{ "THA", "SE Asia Standard Time" },
 			// Indian/Kerguelen
-			{ "TFT", TimeZoneInfo.FindSystemTimeZoneById("Pakistan Standard Time") },
+			{ "TFT", "Pakistan Standard Time" },
 			// Tajikistan Time
-			{ "TJT", TimeZoneInfo.FindSystemTimeZoneById("West Asia Standard Time") },
+			{ "TJT", "West Asia Standard Time" },
 			// Tokelau Time
-			{ "TKT", TimeZoneInfo.FindSystemTimeZoneById("Samoa Standard Time") },
+			{ "TKT", "Samoa Standard Time" },
 			// Timor Leste Time
-			{ "TLT", TimeZoneInfo.FindSystemTimeZoneById("Transbaikal Standard Time") },
+			{ "TLT", "Transbaikal Standard Time" },
 			// Turkmenistan Time
-			{ "TMT", TimeZoneInfo.FindSystemTimeZoneById("West Asia Standard Time") },
+			{ "TMT", "West Asia Standard Time" },
 			// Turkey Time
-			{ "TRT", TimeZoneInfo.FindSystemTimeZoneById("Turkey Standard Time") },
+			{ "TRT", "Turkey Standard Time" },
 			// Tonga Time
-			{ "TOT", TimeZoneInfo.FindSystemTimeZoneById("Tonga Standard Time") },
+			{ "TOT", "Tonga Standard Time" },
 			// Tuvalu Time
-			{ "TVT", TimeZoneInfo.FindSystemTimeZoneById("New Zealand Standard Time") },
+			{ "TVT", "New Zealand Standard Time" },
 			// Ulaanbaatar Summer Time
-			{ "ULAST", TimeZoneInfo.FindSystemTimeZoneById("Yakutsk Standard Time") },
+			{ "ULAST", "Yakutsk Standard Time" },
 			// Ulaanbaatar Standard Time
-			{ "ULAT", TimeZoneInfo.FindSystemTimeZoneById("Ulaanbaatar Standard Time") },
+			{ "ULAT", "Ulaanbaatar Standard Time" },
 			// Kaliningrad Time
-			{ "USZ1", TimeZoneInfo.FindSystemTimeZoneById("Kaliningrad Standard Time") },
+			{ "USZ1", "Kaliningrad Standard Time" },
 			// Coordinated Universal Time
-			{ "UTC", TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time") },
+			{ "UTC", "GMT Standard Time" },
 			// Uruguay Summer Time
-			{ "UYST", TimeZoneInfo.FindSystemTimeZoneById("Mid-Atlantic Standard Time") },
+			{ "UYST", "Mid-Atlantic Standard Time" },
 			// Uruguay Standard Time
-			{ "UYT", TimeZoneInfo.FindSystemTimeZoneById("Bahia Standard Time") },
+			{ "UYT", "Bahia Standard Time" },
 			// Uzbekistan Time
-			{ "UZT", TimeZoneInfo.FindSystemTimeZoneById("West Asia Standard Time") },
+			{ "UZT", "West Asia Standard Time" },
 			// Venezuelan Standard Time
-			{ "VET", TimeZoneInfo.FindSystemTimeZoneById("Venezuela Standard Time") },
+			{ "VET", "Venezuela Standard Time" },
 			// Vladivostok Time
-			{ "VLAT", TimeZoneInfo.FindSystemTimeZoneById("Vladivostok Standard Time") },
+			{ "VLAT", "Vladivostok Standard Time" },
 			// Volgograd Time
-			{ "VOLT", TimeZoneInfo.FindSystemTimeZoneById("Saratov Standard Time") },
+			{ "VOLT", "Saratov Standard Time" },
 			// Vostok Station Time
-			{ "VOST", TimeZoneInfo.FindSystemTimeZoneById("Omsk Standard Time") },
+			{ "VOST", "Omsk Standard Time" },
 			// Vanuatu Time
-			{ "VUT", TimeZoneInfo.FindSystemTimeZoneById("Bougainville Standard Time") },
+			{ "VUT", "Bougainville Standard Time" },
 			// Wake Island Time
-			{ "WAKT", TimeZoneInfo.FindSystemTimeZoneById("Kamchatka Standard Time") },
+			{ "WAKT", "Kamchatka Standard Time" },
 			// West Africa Summer Time
-			{ "WAST", TimeZoneInfo.FindSystemTimeZoneById("South Africa Standard Time") },
+			{ "WAST", "South Africa Standard Time" },
 			// West Africa Time
-			{ "WAT", TimeZoneInfo.FindSystemTimeZoneById("W. Central Africa Standard Time") },
+			{ "WAT", "W. Central Africa Standard Time" },
 			// Western European Summer Time
-			{ "WEST", TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time") },
+			{ "WEST", "W. Europe Standard Time" },
 			// Western European Time
-			{ "WET", TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time") },
+			{ "WET", "GMT Standard Time" },
 			// Western Indonesian Time
-			{ "WIT", TimeZoneInfo.FindSystemTimeZoneById("N. Central Asia Standard Time") },
+			{ "WIT", "N. Central Asia Standard Time" },
 			// Western Standard Time
-			{ "WST", TimeZoneInfo.FindSystemTimeZoneById("China Standard Time") },
+			{ "WST", "China Standard Time" },
 			// Yakutsk Time
-			{ "YAKT", TimeZoneInfo.FindSystemTimeZoneById("Yakutsk Standard Time") },
+			{ "YAKT", "Yakutsk Standard Time" },
 			// Yekaterinburg Time
-			{ "YEKT", TimeZoneInfo.FindSystemTimeZoneById("Ekaterinburg Standard Time") },
-		});
+			{ "YEKT", "Ekaterinburg Standard Time" },
+		};
 
-		public static TimeZoneInfo GetTimeZoneByAbbr(string tzAbbr)
+		private static readonly Dictionary<string, string> _tzAbbr2 = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
 		{
-			_tzAbbrs.Value.TryGetValue(tzAbbr, out var tz);
-			return tz;
+			{ "Alpha Time Zone", "W. Europe Standard Time" },
+			{ "Australian Central Daylight Time", "Lord Howe Standard Time" },
+			{ "Australian Central Standard Time", "Cen. Australia Standard Time" },
+			{ "Acre Time", "SA Pacific Standard Time" },
+			{ "Australian Central Time", "Cen. Australia Standard Time" },
+			{ "Australian Central Western Standard Time", "Aus Central W. Standard Time" },
+			{ "Arabia Daylight Time", "Arabian Standard Time" },
+			{ "Atlantic Daylight Time", "Tocantins Standard Time" },
+			{ "Australian Eastern Daylight Time", "Bougainville Standard Time" },
+			{ "Australian Eastern Standard Time", "E. Australia Standard Time" },
+			{ "Australian Eastern Time", "E. Australia Standard Time" },
+			{ "Afghanistan Time", "Afghanistan Standard Time" },
+			{ "Alaska Daylight Time", "Pacific Standard Time (Mexico)" },
+			{ "Alaska Standard Time", "Alaskan Standard Time" },
+			{ "Alma-Ata Time", "Central Asia Standard Time" },
+			{ "Amazon Summer Time", "Tocantins Standard Time" },
+			{ "Armenia Summer Time", "West Asia Standard Time" },
+			{ "Amazon Time", "Paraguay Standard Time" },
+			{ "Armenia Time", "Arabian Standard Time" },
+			{ "Anadyr Summer Time", "Russia Time Zone 11" },
+			{ "Anadyr Time", "Russia Time Zone 11" },
+			{ "Aqtobe Time", "West Asia Standard Time" },
+			{ "Argentina Time", "Tocantins Standard Time" },
+			{ "Arabia Standard Time", "Arabic Standard Time" },
+			{ "Atlantic Standard Time", "Paraguay Standard Time" },
+			{ "Atlantic Time", "Paraguay Standard Time" },
+			{ "Australian Western Daylight Time", "Transbaikal Standard Time" },
+			{ "Australian Western Standard Time", "China Standard Time" },
+			{ "Azores Summer Time", "UTC" },
+			{ "Azores Time", "Azores Standard Time" },
+			{ "Azerbaijan Summer Time", "West Asia Standard Time" },
+			{ "Azerbaijan Time", "Arabian Standard Time" },
+			{ "Anywhere on Earth", "Dateline Standard Time" },
+			{ "Bravo Time Zone", "Jordan Standard Time" },
+			{ "Brunei Darussalam Time", "China Standard Time" },
+			{ "Bolivia Time", "Paraguay Standard Time" },
+			{ "Bras?lia Summer Time", "UTC-02" },
+			{ "Bras?lia Time", "Tocantins Standard Time" },
+			{ "Bangladesh Standard Time", "Central Asia Standard Time" },
+			{ "Bougainville Standard Time", "Bougainville Standard Time" },
+			{ "British Summer Time", "W. Europe Standard Time" },
+			{ "Bhutan Time", "Central Asia Standard Time" },
+			{ "Charlie Time Zone", "Arabic Standard Time" },
+			{ "Casey Time", "China Standard Time" },
+			{ "Central Africa Time", "Jordan Standard Time" },
+			{ "Cocos Islands Time", "Myanmar Standard Time" },
+			{ "Central Daylight Time", "SA Pacific Standard Time" },
+			{ "Cuba Daylight Time", "Paraguay Standard Time" },
+			{ "Central European Summer Time", "Jordan Standard Time" },
+			{ "Central European Time", "W. Europe Standard Time" },
+			{ "Chatham Island Daylight Time", "Chatham Islands Standard Time" },
+			{ "Chatham Island Standard Time", "Chatham Islands Standard Time" },
+			{ "Choibalsan Summer Time", "Transbaikal Standard Time" },
+			{ "Choibalsan Time", "China Standard Time" },
+			{ "Chuuk Time", "E. Australia Standard Time" },
+			{ "Cayman Islands Daylight Saving Time", "Paraguay Standard Time" },
+			{ "Cayman Islands Standard Time", "SA Pacific Standard Time" },
+			{ "Cook Island Time", "Aleutian Standard Time" },
+			{ "Chile Summer Time", "Tocantins Standard Time" },
+			{ "Chile Standard Time", "Paraguay Standard Time" },
+			{ "Colombia Time", "SA Pacific Standard Time" },
+			{ "Central Standard Time", "Central America Standard Time" },
+			{ "China Standard Time", "China Standard Time" },
+			{ "Cuba Standard Time", "SA Pacific Standard Time" },
+			{ "Central Time", "Central America Standard Time" },
+			{ "Cape Verde Time", "Azores Standard Time" },
+			{ "Christmas Island Time", "SE Asia Standard Time" },
+			{ "Chamorro Standard Time", "E. Australia Standard Time" },
+			{ "Delta Time Zone", "Arabian Standard Time" },
+			{ "Davis Time", "SE Asia Standard Time" },
+			{ "Dumont-d'Urville Time", "E. Australia Standard Time" },
+			{ "Echo Time Zone", "West Asia Standard Time" },
+			{ "Easter Island Summer Time", "SA Pacific Standard Time" },
+			{ "Easter Island Standard Time", "Central America Standard Time" },
+			{ "Eastern Africa Time", "Arabic Standard Time" },
+			{ "Ecuador Time", "SA Pacific Standard Time" },
+			{ "Eastern Daylight Time", "Paraguay Standard Time" },
+			{ "Eastern European Summer Time", "Arabic Standard Time" },
+			{ "Eastern European Time", "Jordan Standard Time" },
+			{ "Eastern Greenland Summer Time", "UTC" },
+			{ "East Greenland Time", "Azores Standard Time" },
+			{ "Eastern Standard Time", "SA Pacific Standard Time" },
+			{ "Eastern Time", "SA Pacific Standard Time" },
+			{ "Foxtrot Time Zone", "Central Asia Standard Time" },
+			{ "Further-Eastern European Time", "Arabic Standard Time" },
+			{ "Fiji Summer Time", "UTC+13" },
+			{ "Fiji Time", "Russia Time Zone 11" },
+			{ "Falkland Islands Summer Time", "Tocantins Standard Time" },
+			{ "Falkland Island Time", "Paraguay Standard Time" },
+			{ "Fernando de Noronha Time", "UTC-02" },
+			{ "Golf Time Zone", "SE Asia Standard Time" },
+			{ "Galapagos Time", "Central America Standard Time" },
+			{ "Gambier Time", "Alaskan Standard Time" },
+			{ "Georgia Standard Time", "Arabian Standard Time" },
+			{ "French Guiana Time", "Tocantins Standard Time" },
+			{ "Gilbert Island Time", "Russia Time Zone 11" },
+			{ "Greenwich Mean Time", "UTC" },
+			{ "Gulf Standard Time", "Arabian Standard Time" },
+			{ "South Georgia Time", "UTC-02" },
+			{ "Guyana Time", "Paraguay Standard Time" },
+			{ "Hotel Time Zone", "China Standard Time" },
+			{ "Hawaii-Aleutian Daylight Time", "Alaskan Standard Time" },
+			{ "Hawaii-Aleutian Standard Time", "Aleutian Standard Time" },
+			{ "Hong Kong Time", "China Standard Time" },
+			{ "Hovd Summer Time", "China Standard Time" },
+			{ "Hovd Time", "SE Asia Standard Time" },
+			{ "India Time Zone", "Transbaikal Standard Time" },
+			{ "Indochina Time", "SE Asia Standard Time" },
+			{ "Israel Daylight Time", "Arabic Standard Time" },
+			{ "Indian Chagos Time", "Central Asia Standard Time" },
+			{ "Iran Daylight Time", "Afghanistan Standard Time" },
+			{ "Irkutsk Summer Time", "Transbaikal Standard Time" },
+			{ "Irkutsk Time", "China Standard Time" },
+			{ "Iran Standard Time", "Iran Standard Time" },
+			{ "India Standard Time", "India Standard Time" },
+			{ "Irish Standard Time", "W. Europe Standard Time" },
+			{ "Israel Standard Time", "Jordan Standard Time" },
+			{ "Japan Standard Time", "Transbaikal Standard Time" },
+			{ "Kilo Time Zone", "E. Australia Standard Time" },
+			{ "Kyrgyzstan Time", "Central Asia Standard Time" },
+			{ "Kosrae Time", "Bougainville Standard Time" },
+			{ "Krasnoyarsk Summer Time", "China Standard Time" },
+			{ "Krasnoyarsk Time", "SE Asia Standard Time" },
+			{ "Korea Standard Time", "Transbaikal Standard Time" },
+			{ "Kuybyshev Time", "Arabian Standard Time" },
+			{ "Lima Time Zone", "Bougainville Standard Time" },
+			{ "Lord Howe Daylight Time", "Bougainville Standard Time" },
+			{ "Lord Howe Standard Time", "Lord Howe Standard Time" },
+			{ "Line Islands Time", "Line Islands Standard Time" },
+			{ "Mike Time Zone", "Russia Time Zone 11" },
+			{ "Magadan Summer Time", "Russia Time Zone 11" },
+			{ "Magadan Time", "Bougainville Standard Time" },
+			{ "Marquesas Time", "Marquesas Standard Time" },
+			{ "Mawson Time", "West Asia Standard Time" },
+			{ "Mountain Daylight Time", "Central America Standard Time" },
+			{ "Marshall Islands Time", "Russia Time Zone 11" },
+			{ "Myanmar Time", "Myanmar Standard Time" },
+			{ "Moscow Daylight Time", "Arabian Standard Time" },
+			{ "Moscow Standard Time", "Arabic Standard Time" },
+			{ "Mountain Standard Time", "US Mountain Standard Time" },
+			{ "Mountain Time", "US Mountain Standard Time" },
+			{ "Mauritius Time", "Arabian Standard Time" },
+			{ "Maldives Time", "West Asia Standard Time" },
+			{ "Malaysia Time", "China Standard Time" },
+			{ "November Time Zone", "Azores Standard Time" },
+			{ "New Caledonia Time", "Bougainville Standard Time" },
+			{ "Newfoundland Daylight Time", "Newfoundland Standard Time" },
+			{ "Norfolk Time", "Bougainville Standard Time" },
+			{ "Novosibirsk Summer Time", "SE Asia Standard Time" },
+			{ "Novosibirsk Time", "Central Asia Standard Time" },
+			{ "Nepal Time", "Nepal Standard Time" },
+			{ "Nauru Time", "Russia Time Zone 11" },
+			{ "Newfoundland Standard Time", "Newfoundland Standard Time" },
+			{ "Niue Time", "UTC-11" },
+			{ "New Zealand Daylight Time", "UTC+13" },
+			{ "New Zealand Standard Time", "Russia Time Zone 11" },
+			{ "Oscar Time Zone", "UTC-02" },
+			{ "Omsk Summer Time", "SE Asia Standard Time" },
+			{ "Omsk Standard Time", "Central Asia Standard Time" },
+			{ "Oral Time", "West Asia Standard Time" },
+			{ "Papa Time Zone", "Tocantins Standard Time" },
+			{ "Pacific Daylight Time", "US Mountain Standard Time" },
+			{ "Peru Time", "SA Pacific Standard Time" },
+			{ "Kamchatka Summer Time", "Russia Time Zone 11" },
+			{ "Kamchatka Time", "Russia Time Zone 11" },
+			{ "Papua New Guinea Time", "E. Australia Standard Time" },
+			{ "Phoenix Island Time", "UTC+13" },
+			{ "Philippine Time", "China Standard Time" },
+			{ "Pakistan Standard Time", "West Asia Standard Time" },
+			{ "Pierre & Miquelon Daylight Time", "UTC-02" },
+			{ "Pierre & Miquelon Standard Time", "Tocantins Standard Time" },
+			{ "Pohnpei Standard Time", "Bougainville Standard Time" },
+			{ "Pacific Standard Time", "Pacific Standard Time (Mexico)" },
+			{ "Pitcairn Standard Time", "Pacific Standard Time (Mexico)" },
+			{ "Pacific Time", "Pacific Standard Time (Mexico)" },
+			{ "Palau Time", "Transbaikal Standard Time" },
+			{ "Paraguay Summer Time", "Tocantins Standard Time" },
+			{ "Paraguay Time", "Paraguay Standard Time" },
+			{ "Pyongyang Time", "North Korea Standard Time" },
+			{ "Quebec Time Zone", "Paraguay Standard Time" },
+			{ "Qyzylorda Time", "Central Asia Standard Time" },
+			{ "Romeo Time Zone", "SA Pacific Standard Time" },
+			{ "Reunion Time", "Arabian Standard Time" },
+			{ "Rothera Time", "Tocantins Standard Time" },
+			{ "Sierra Time Zone", "Central America Standard Time" },
+			{ "Sakhalin Time", "Bougainville Standard Time" },
+			{ "Samara Time", "Arabian Standard Time" },
+			{ "South Africa Standard Time", "Jordan Standard Time" },
+			{ "Solomon Islands Time", "Bougainville Standard Time" },
+			{ "Seychelles Time", "Arabian Standard Time" },
+			{ "Singapore Time", "China Standard Time" },
+			{ "Srednekolymsk Time", "Bougainville Standard Time" },
+			{ "Suriname Time", "Tocantins Standard Time" },
+			{ "Samoa Standard Time", "UTC-11" },
+			{ "Syowa Time", "Arabic Standard Time" },
+			{ "Tango Time Zone", "US Mountain Standard Time" },
+			{ "Tahiti Time", "Aleutian Standard Time" },
+			{ "French Southern and Antarctic Time", "West Asia Standard Time" },
+			{ "Tajikistan Time", "West Asia Standard Time" },
+			{ "Tokelau Time", "UTC+13" },
+			{ "East Timor Time", "Transbaikal Standard Time" },
+			{ "Turkmenistan Time", "West Asia Standard Time" },
+			{ "Tonga Summer Time", "Line Islands Standard Time" },
+			{ "Tonga Time", "UTC+13" },
+			{ "Turkey Time", "Arabic Standard Time" },
+			{ "Tuvalu Time", "Russia Time Zone 11" },
+			{ "Uniform Time Zone", "Pacific Standard Time (Mexico)" },
+			{ "Ulaanbaatar Summer Time", "Transbaikal Standard Time" },
+			{ "Ulaanbaatar Time", "China Standard Time" },
+			{ "Coordinated Universal Time", "UTC" },
+			{ "Uruguay Summer Time", "UTC-02" },
+			{ "Uruguay Time", "Tocantins Standard Time" },
+			{ "Uzbekistan Time", "West Asia Standard Time" },
+			{ "Victor Time Zone", "Alaskan Standard Time" },
+			{ "Venezuelan Standard Time", "Paraguay Standard Time" },
+			{ "Vladivostok Summer Time", "Bougainville Standard Time" },
+			{ "Vladivostok Time", "E. Australia Standard Time" },
+			{ "Vostok Time", "Central Asia Standard Time" },
+			{ "Vanuatu Time", "Bougainville Standard Time" },
+			{ "Whiskey Time Zone", "Aleutian Standard Time" },
+			{ "Wake Time", "Russia Time Zone 11" },
+			{ "Western Argentine Summer Time", "Tocantins Standard Time" },
+			{ "West Africa Summer Time", "Jordan Standard Time" },
+			{ "West Africa Time", "W. Europe Standard Time" },
+			{ "Western European Summer Time", "W. Europe Standard Time" },
+			{ "Western European Time", "UTC" },
+			{ "Wallis and Futuna Time", "Russia Time Zone 11" },
+			{ "Western Greenland Summer Time", "UTC-02" },
+			{ "West Greenland Time", "Tocantins Standard Time" },
+			{ "Western Indonesian Time", "SE Asia Standard Time" },
+			{ "Eastern Indonesian Time", "Transbaikal Standard Time" },
+			{ "Central Indonesian Time", "China Standard Time" },
+			{ "West Samoa Time", "UTC+13" },
+			{ "Western Sahara Summer Time", "W. Europe Standard Time" },
+			{ "Western Sahara Standard Time", "UTC" },
+			{ "X-ray Time Zone", "UTC-11" },
+			{ "Yankee Time Zone", "Dateline Standard Time" },
+			{ "Yakutsk Summer Time", "E. Australia Standard Time" },
+			{ "Yakutsk Time", "Transbaikal Standard Time" },
+			{ "Yap Time", "E. Australia Standard Time" },
+			{ "Yekaterinburg Summer Time", "Central Asia Standard Time" },
+			{ "Yekaterinburg Time", "West Asia Standard Time" },
+			{ "Zulu Time Zone", "UTC" },
+		};
+
+		public static TimeZoneInfo TryGetTimeZoneByAbbr(string tzAbbr)
+		{
+			return _tzAbbrs.TryGetValue(tzAbbr, out var tz) || _tzAbbr2.TryGetValue(tzAbbr, out tz)
+				? tz.To<TimeZoneInfo>() : null;
 		}
 
 		/// <summary>
@@ -924,7 +1171,7 @@
 			if (iana.CompareIgnoreCase("Greenwich Mean Time"))
 				return Gmt;
 
-			return TimeZoneInfo.FindSystemTimeZoneById(TZConvert.IanaToWindows(iana));
+			return TZConvert.IanaToWindows(iana).To<TimeZoneInfo>();
 		}
 	}
 }
