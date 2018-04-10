@@ -255,12 +255,12 @@
 
 			if (size == 1)
 			{
-				var @byte = stream.ReadByte();
+				var b = stream.ReadByte();
 				
-				if (@byte == -1)
+				if (b == -1)
 					throw new ArgumentException("Insufficient stream size '{0}'.".Put(size), nameof(stream));
 
-				buffer[0] = (byte)@byte;
+				buffer[0] = (byte)b;
 			}
 			else
 			{
@@ -304,12 +304,12 @@
 			if (value == null)
 				throw new ArgumentNullException(nameof(value));
 
-			if (value is Stream)
-				stream.Write((int)((Stream)value).Length);
-			else if (value is byte[])
-				stream.Write(((byte[])value).Length);
-			else if (value is string)
-				stream.Write(((string)value).Length);
+			if (value is Stream s)
+				stream.Write((int)s.Length);
+			else if (value is byte[] a1)
+				stream.Write(a1.Length);
+			else if (value is string str)
+				stream.Write(str.Length);
 
 			stream.WriteRaw(value);
 		}
@@ -452,6 +452,23 @@
 		{
 			data.To<Stream>().Save(fileName);
 			return data;
+		}
+
+		public static bool TrySave(this byte[] data, string fileName, Action<Exception> errorHandler)
+		{
+			if (errorHandler == null)
+				throw new ArgumentNullException(nameof(errorHandler));
+
+			try
+			{
+				data.To<Stream>().Save(fileName);
+				return true;
+			}
+			catch (Exception e)
+			{
+				errorHandler(e);
+				return false;
+			}
 		}
 
 		public static void Truncate(this StreamWriter writer)
