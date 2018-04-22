@@ -34,22 +34,27 @@
 			ConsoleWithColor(() => Console.WriteLine(message), color);
 		}
 
+		private static readonly SyncObject _lock = new SyncObject();
+
 		public static void ConsoleWithColor(this Action handler, ConsoleColor color)
 		{
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
-			var prevColor = Console.ForegroundColor;
-
-			Console.ForegroundColor = color;
-
-			try
+			lock (_lock)
 			{
-				handler();
-			}
-			finally
-			{
-				Console.ForegroundColor = prevColor;
+				var prevColor = Console.ForegroundColor;
+
+				Console.ForegroundColor = color;
+
+				try
+				{
+					handler();
+				}
+				finally
+				{
+					Console.ForegroundColor = prevColor;
+				}
 			}
 		}
 	}
