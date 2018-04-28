@@ -80,24 +80,24 @@
 			return (IEnumerable<T>)comboBox.ItemsSource;
 		}
 
-		public static void SetDataSource<T>(this ComboBox comboBox)
+		public static void SetDataSource<T>(this ComboBox comboBox, bool addNullable = false)
 			where T : struct
 		{
-			comboBox.SetDataSource(typeof(T));
+			comboBox.SetDataSource(typeof(T), addNullable);
 		}
 
-		public static void SetDataSource(this ComboBox comboBox, Type enumType)
+		public static void SetDataSource(this ComboBox comboBox, Type enumType, bool addNullable = false)
 		{
-			comboBox.SetDataSource(enumType, enumType.GetValues());
+			comboBox.SetDataSource(enumType, enumType.GetValues(), addNullable);
 		}
 
-		public static void SetDataSource<T>(this ComboBox comboBox, IEnumerable<T> dataSource)
+		public static void SetDataSource<T>(this ComboBox comboBox, IEnumerable<T> dataSource, bool addNullable = false)
 			where T : struct
 		{
-			comboBox.SetDataSource(typeof(T), dataSource.Cast<object>());
+			comboBox.SetDataSource(typeof(T), dataSource.Cast<object>(), addNullable);
 		}
 
-		public static void SetDataSource(this ComboBox comboBox, Type enumType, IEnumerable<object> dataSource)
+		public static void SetDataSource(this ComboBox comboBox, Type enumType, IEnumerable<object> dataSource, bool addNullable = false)
 		{
 			if (comboBox == null)
 				throw new ArgumentNullException(nameof(comboBox));
@@ -109,7 +109,16 @@
 				.GetValues()
 				.ToDictionary(f => f, f => f.GetDisplayName()));
 
-			GetItemsSource(comboBox).AddRange(dataSource.Select(item => new EnumerationMember { Description = dict[item], Value = item }));
+			var members = dataSource.Select(item => new EnumerationMember
+			{
+				Description = dict[item],
+				Value = item
+			}).ToList();
+
+			if (addNullable)
+				members.Insert(0, new EnumerationMember());
+
+			GetItemsSource(comboBox).AddRange(members);
 		}
 
 		public static ObservableCollection<EnumerationMember> GetItemsSource(this ComboBox comboBox)
