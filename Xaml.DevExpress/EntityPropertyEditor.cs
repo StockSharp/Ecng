@@ -4,6 +4,8 @@ namespace Ecng.Xaml.DevExp
 
 	using DevExpress.Xpf.Grid.LookUp;
 
+	using Ecng.ComponentModel;
+
 	public class EntityPropertyEditor : LookUpEditSettings
 	{
 		static EntityPropertyEditor()
@@ -13,8 +15,8 @@ namespace Ecng.Xaml.DevExp
 
 		public EntityPropertyEditor()
 		{
-			DisplayMember = "FullDisplayName";
-			ValueMember = "Name";
+			DisplayMember = nameof(EntityProperty.FullDisplayName);
+			ValueMember = nameof(EntityProperty.Name);
 		}
 	}
 }

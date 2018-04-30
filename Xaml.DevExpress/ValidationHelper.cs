@@ -47,9 +47,7 @@ namespace Ecng.Xaml.DevExp
 
 		private static void OnBaseEditChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
-			var settings = d as BaseEditSettings;
-
-			if (settings == null)
+			if (!(d is BaseEditSettings settings))
 				return;
 
 			var oldEdit = _edits.TryGetValue(settings);
