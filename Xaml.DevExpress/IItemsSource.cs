@@ -6,6 +6,9 @@
 
 	using DevExpress.Xpf.Editors.Settings;
 
+	using Ecng.Common;
+	using Ecng.Localization;
+
 	/// <summary>
 	/// Provides an interface that is implemented by classes when a scenario calls for use of a collection of values represented by a ComboBox for a given property.
 	/// </summary>
@@ -38,7 +41,7 @@
 				throw new ArgumentNullException(nameof(type));
 
 			if (!typeof(IItemsSource).IsAssignableFrom(type))
-				throw new ArgumentException($"Type {type} must implement the {nameof(IItemsSource)} interface.", nameof(type));
+				throw new ArgumentException("Type {0} must implement the {1} interface.".Translate().Put(type, nameof(IItemsSource)), nameof(type));
 
 			Type = type;
 		}
