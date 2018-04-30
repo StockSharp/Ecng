@@ -67,6 +67,7 @@
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="BaseCustomEnumEditor.cs" />
     <Compile Include="Database\DatabaseProviderEditor.cs" />
     <Compile Include="Database\DatabaseConnectionCreateWindow.xaml.cs">
       <DependentUpon>DatabaseConnectionCreateWindow.xaml</DependentUpon>
