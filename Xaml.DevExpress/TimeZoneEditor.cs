@@ -12,5 +12,11 @@ namespace Ecng.Xaml.DevExp
 			DisplayMember = nameof(TimeZoneInfo.DisplayName);
 			IsTextEditable = false;
 		}
+
+		public TimeZoneInfo TimeZone
+		{
+			get => (TimeZoneInfo)EditValue;
+			set => EditValue = value;
+		}
 	}
 }
