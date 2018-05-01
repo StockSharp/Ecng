@@ -1,3 +1,5 @@
+using Ecng.Localization;
+
 namespace Ecng.Xaml.DevExp
 {
 	using System;
@@ -11,6 +13,14 @@ namespace Ecng.Xaml.DevExp
 			ItemsSource = TimeZoneInfo.GetSystemTimeZones();
 			DisplayMember = nameof(TimeZoneInfo.DisplayName);
 			IsTextEditable = false;
+
+			var btnReset = new ButtonInfo
+			{
+				GlyphKind = GlyphKind.Cancel,
+				Content = "Reset".Translate()
+			};
+			btnReset.Click += (s, a) => EditValue = null;
+			Buttons.Add(btnReset);
 		}
 
 		public TimeZoneInfo TimeZone
