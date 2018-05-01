@@ -67,13 +67,7 @@ namespace Ecng.ComponentModel
 			if (fieldInfo == null)
 				throw new ArgumentException(field.ToString(), nameof(field));
 
-			var name = fieldInfo.Name;
-
-			var attr = fieldInfo.GetAttribute<EnumDisplayNameAttribute>();
-			if (attr != null/* && !attr.DisplayName.IsEmpty()*/)
-				name = attr.DisplayName;
-
-			return name;
+			return fieldInfo.GetDisplayName();
 		}
 
 		public static string GetDocUrl(this Type type)
