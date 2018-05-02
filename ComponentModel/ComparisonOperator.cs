@@ -1,5 +1,7 @@
 ﻿namespace Ecng.ComponentModel
 {
+	using System.ComponentModel.DataAnnotations;
+
 	/// <summary>
 	/// Способ сравнения двух значений параметров.
 	/// </summary>
@@ -8,43 +10,43 @@
 		/// <summary>
 		/// Значения параметров равны.
 		/// </summary>
-		[EnumDisplayName("Equal", true)]
+		[Display(Name = "=")]
 		Equal,
 		
 		/// <summary>
 		/// Значения параметров не равны.
 		/// </summary>
-		[EnumDisplayName("Not equal", true)]
+		[Display(Name = "!=")]
 		NotEqual,
 		
 		/// <summary>
 		/// Значение левого параметра строго больше значения правого параметра.
 		/// </summary>
-		[EnumDisplayName("Greater", true)]
+		[Display(Name = ">")]
 		Greater,
 		
 		/// <summary>
 		/// Значение левого параметра нестрого больше (больше или равно) значения правого параметра.
 		/// </summary>
-		[EnumDisplayName("Greater or equal", true)]
+		[Display(Name = ">=")]
 		GreaterOrEqual,
 		
 		/// <summary>
 		/// Значение левого параметра строго меньше значения правого параметра.
 		/// </summary>
-		[EnumDisplayName("Less", true)]
+		[Display(Name = "<")]
 		Less,
 		
 		/// <summary>
 		/// Значение левого параметра нестрого меньше (меньше или равно) значения правого параметра.
 		/// </summary>
-		[EnumDisplayName("Less or equal", true)]
+		[Display(Name = "<=")]
 		LessOrEqual,
 
 		/// <summary>
 		/// Значение левого параметра имеет любое значение.
 		/// </summary>
-		[EnumDisplayName("Any", true)]
+		[Display(Name = "Any")]
 		Any,
 	}
 }
