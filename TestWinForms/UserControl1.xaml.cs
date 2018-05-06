@@ -10,6 +10,7 @@
 	using Ecng.Serialization;
 	using Ecng.Xaml;
 	using Ecng.Xaml.DevExp;
+	using Ecng.Xaml.DevExp.Database;
 
 	/// <summary>
 	/// Interaction logic for UserControl1.xaml
@@ -27,14 +28,14 @@
 			/// Заявка на покупку.
 			/// </summary>
 			[EnumMember]
-			[EnumDisplayName("Покупка")]
+			//[EnumDisplayName("Покупка")]
 			Buy,
 
 			/// <summary>
 			/// Заявка на продажу.
 			/// </summary>
 			[EnumMember]
-			[EnumDisplayName("Продажа")]
+			//[EnumDisplayName("Продажа")]
 			Sell,
 		}
 
@@ -155,8 +156,9 @@
 
 		private void Excel_OnClick(object sender, RoutedEventArgs e)
 		{
-			new MessageBoxBuilder().Handler(new DevExpMessageBoxHandler()).Owner(this).Text("Test").Show();
+			//new MessageBoxBuilder().Handler(new DevExpMessageBoxHandler()).Owner(this).Text("Test").Show();
 			//new AboutWindow(this.GetWindow()).ShowModal(this);
+			new DatabaseConnectionCreateWindow().ShowModal(this);
 		}
 
 		private void Clipboard_OnClick(object sender, RoutedEventArgs e)

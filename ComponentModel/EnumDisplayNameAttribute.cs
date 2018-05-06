@@ -23,6 +23,7 @@
 #endif
 
 	[AttributeUsage(AttributeTargets.Field)]
+	[Obsolete("Use DisplayAttribute instead.")]
 	public class EnumDisplayNameAttribute : DisplayNameAttribute
 	{
 		//public EnumDisplayNameAttribute()
