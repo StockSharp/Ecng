@@ -1735,6 +1735,7 @@
     <Compile Include="SevenZip.cs" />
     <Compile Include="SystemMemory.cs" />
     <Compile Include="SystemMenu.cs" />
+    <Compile Include="TargetPlatformAttribute.cs" />
     <Compile Include="VirtualKeys.cs" />
     <Compile Include="WinApi.cs" />
     <Compile Include="WindowShowStyle.cs" />

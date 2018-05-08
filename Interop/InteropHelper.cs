@@ -103,5 +103,9 @@
 		}
 
 		public static bool IsDirectory(this string path) => File.GetAttributes(path).HasFlag(FileAttributes.Directory);
+
+#if !__STOCKSHARP__
+		public static Platforms GetPlatform(this Type type) => type.GetAttribute<TargetPlatformAttribute>()?.Platform ?? Platforms.AnyCPU;
+#endif
 	}
 }
