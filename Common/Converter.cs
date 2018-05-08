@@ -405,16 +405,35 @@
 			if (endPoint == null)
 				throw new ArgumentNullException(nameof(endPoint));
 
-			if (endPoint is IPEndPoint)
+			if (endPoint is IPEndPoint ip)
 			{
-				return ((IPEndPoint)endPoint).Address.ToString();
+				return ip.Address.ToString();
 			}
-			else if (endPoint is DnsEndPoint)
+			else if (endPoint is DnsEndPoint dns)
 			{
-				return ((DnsEndPoint)endPoint).Host;
+				return dns.Host;
 			}
 			else
 				throw new InvalidOperationException("Unknown endpoint {0}.".Put(endPoint));
+		}
+
+		public static EndPoint SetHost(this EndPoint endPoint, string host)
+		{
+			if (endPoint == null)
+				throw new ArgumentNullException(nameof(endPoint));
+
+			if (endPoint is IPEndPoint ip)
+			{
+				ip.Address = host.To<IPAddress>();
+			}
+			else if (endPoint is DnsEndPoint dns)
+			{
+				endPoint = new DnsEndPoint(host, dns.Port, dns.AddressFamily);
+			}
+			else
+				throw new InvalidOperationException("Unknown endpoint {0}.".Put(endPoint));
+
+			return endPoint;
 		}
 
 		public static int GetPort(this EndPoint endPoint)
@@ -422,16 +441,35 @@
 			if (endPoint == null)
 				throw new ArgumentNullException(nameof(endPoint));
 
-			if (endPoint is IPEndPoint)
+			if (endPoint is IPEndPoint ip)
 			{
-				return ((IPEndPoint)endPoint).Port;
+				return ip.Port;
 			}
-			else if (endPoint is DnsEndPoint)
+			else if (endPoint is DnsEndPoint dns)
 			{
-				return ((DnsEndPoint)endPoint).Port;
+				return dns.Port;
 			}
 			else
 				throw new InvalidOperationException("Unknown endpoint {0}.".Put(endPoint));
+		}
+
+		public static EndPoint SetPort(this EndPoint endPoint, int port)
+		{
+			if (endPoint == null)
+				throw new ArgumentNullException(nameof(endPoint));
+
+			if (endPoint is IPEndPoint ip)
+			{
+				ip.Port = port;
+			}
+			else if (endPoint is DnsEndPoint dns)
+			{
+				endPoint = new DnsEndPoint(dns.Host, port, dns.AddressFamily);
+			}
+			else
+				throw new InvalidOperationException("Unknown endpoint {0}.".Put(endPoint));
+
+			return endPoint;
 		}
 
 		public static TTo TypedTo<TFrom, TTo>(this TFrom from)
