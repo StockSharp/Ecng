@@ -14,7 +14,7 @@ namespace Ecng.Serialization
 
 		static CloneFactory()
 		{
-			if (typeof(T).IsPrimitive() && typeof(T) != typeof(byte[]))
+			if (typeof(T).IsSerializablePrimitive() && typeof(T) != typeof(byte[]))
 				_factory = new PrimitiveCloneFactory<T>();
 			else if (typeof(T).IsArray && typeof(T).GetElementType().IsPrimitive)
 				_factory = new ArrayCloneFactory<T>();

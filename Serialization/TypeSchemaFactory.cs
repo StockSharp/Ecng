@@ -155,7 +155,7 @@
 
 							if (factoryType == null)
 							{
-								if (field.Type.IsPrimitive())
+								if (field.Type.IsSerializablePrimitive())
 								{
 									factoryType = field.Type.IsEnum()
 												? typeof(EnumFieldFactory<,>).Make(field.Type, field.Type.GetEnumBaseType())

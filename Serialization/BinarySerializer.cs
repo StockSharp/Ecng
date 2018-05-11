@@ -54,7 +54,7 @@ namespace Ecng.Serialization
 					{
 						var innerSource = new SerializationItemCollection();
 						serializer.Deserialize(stream, innerSource);
-						value = serializer.Type.IsPrimitive() ? innerSource.First().Value : innerSource;
+						value = serializer.Type.IsSerializablePrimitive() ? innerSource.First().Value : innerSource;
 					}
 					else
 						value = null;

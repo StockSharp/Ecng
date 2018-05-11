@@ -41,7 +41,7 @@ namespace Ecng.Serialization
 
 					var type = typeof(T);
 
-					if (type.IsCollection() || type.IsPrimitive() || type == typeof(object) || type == typeof(Type))
+					if (type.IsCollection() || type.IsSerializablePrimitive() || type == typeof(object) || type == typeof(Type))
 					{
 						_schema = new Schema { EntityType = type };
 
@@ -50,7 +50,7 @@ namespace Ecng.Serialization
 						field.Accessor = typeof(PrimitiveFieldAccessor<T>).CreateInstance<FieldAccessor>(field);
 
 						// NOTE:
-						if (type.IsPrimitive() || type == typeof(object))
+						if (type.IsSerializablePrimitive() || type == typeof(object))
 						{
 							field.Factory = new PrimitiveFieldFactory<T, T>(field, 0);
 							_schema.Factory = (EntityFactory)typeof(PrimitiveEntityFactory<>).Make(type).CreateInstance(field.Name);

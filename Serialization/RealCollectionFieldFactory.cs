@@ -27,7 +27,7 @@ namespace Ecng.Serialization
 		protected internal override SerializationItemCollection OnCreateSource(ISerializer serializer, TCollection instance)
 		{
 			var source = new SerializationItemCollection();
-			var primitive = typeof(TItem).IsPrimitive();
+			var primitive = typeof(TItem).IsSerializablePrimitive();
 			var itemSer = serializer.GetSerializer<TItem>();
 
 			var index = 0;

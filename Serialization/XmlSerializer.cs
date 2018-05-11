@@ -138,11 +138,11 @@ namespace Ecng.Serialization
 			else
 				rootElem = _element;
 
-			var isSignlePrimitive = typeof(T).IsPrimitive() && _element == null;
+			var isSinglePrimitive = typeof(T).IsSerializablePrimitive() && _element == null;
 
 			foreach (var item in source)
 			{
-				var itemElem = isSignlePrimitive ? rootElem : new XElement(IsCollection ? FormatTypeName(item.Field.Type) : item.Field.Name);
+				var itemElem = isSinglePrimitive ? rootElem : new XElement(IsCollection ? FormatTypeName(item.Field.Type) : item.Field.Name);
 
 				if (item.Value == null)
 					itemElem.Add(new XAttribute(_isNullAttr, true));
@@ -164,7 +164,7 @@ namespace Ecng.Serialization
 				if (!IsCollection && !fields.Contains(item.Field.Name))
 					itemElem.Add(new XAttribute(_typeAttr, item.Field.Type.GetTypeAsString(false)));
 
-				if (!isSignlePrimitive)
+				if (!isSinglePrimitive)
 					rootElem.Add(itemElem);
 			}
 
@@ -201,7 +201,7 @@ namespace Ecng.Serialization
 				}
 			}
 
-			if (typeof(T).IsPrimitive())
+			if (typeof(T).IsSerializablePrimitive())
 			{
 				var field = fields.First();
 				var itemValue = field.Factory.SourceType == typeof(byte[]) ? root.Value.Base64() : root.Value.To(field.Factory.SourceType);
@@ -225,7 +225,7 @@ namespace Ecng.Serialization
 						{
 							var innerSource = new SerializationItemCollection();
 							serializer.Deserialize(Encoding.GetBytes(elements[i].To<string>()).To<Stream>(), innerSource);
-							value = serializer.Type.IsPrimitive() ? innerSource.First().Value : innerSource;
+							value = serializer.Type.IsSerializablePrimitive() ? innerSource.First().Value : innerSource;
 						}
 
 						source.Add(new SerializationItem(new VoidField(i.To<string>(), serializer.Type), value));
@@ -270,7 +270,7 @@ namespace Ecng.Serialization
 
 							if (fieldType == typeof(byte[]))
 								value = element.Value.Base64();
-							else if (fieldType.IsPrimitive())
+							else if (fieldType.IsSerializablePrimitive())
 								value = element.Value.To(fieldType);
 							else if (fieldType.IsRuntimeType())
 								value = element.Value.To<Type>();

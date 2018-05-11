@@ -58,7 +58,7 @@
 				}
 				else
 				{
-					value = instanceType.IsPrimitive()
+					value = instanceType.IsSerializablePrimitive()
 						? instance 
 						: GetInnerSchemaFactory(instanceType).OnCreateSource(serializer, instance);
 				}

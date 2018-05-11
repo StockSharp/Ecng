@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Ecng.Common;
 	using Ecng.Collections;
 	using Ecng.Reflection;
 
@@ -80,5 +81,10 @@
 		}
 
 		#endregion
+
+		public static bool IsSerializablePrimitive(this Type type)
+		{
+			return type.IsPrimitive() || type == typeof(Uri);
+		}
 	}
 }

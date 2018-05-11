@@ -93,7 +93,7 @@
 				throw new InvalidOperationException("Type '{0}' isn't collection.".Put(typeof(TCollection)));
 
 			var itemSer = serializer.GetSerializer<TItem>();
-			var primitive = typeof(TItem).IsPrimitive();
+			var primitive = typeof(TItem).IsSerializablePrimitive();
 
 			foreach (var item in source)
 			{
