@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Serialization
 {
 	using System;
+	using System.Diagnostics;
 	using System.IO;
 
 	using Ecng.Common;
@@ -70,7 +71,16 @@
 			base.Dispose(disposing);
 
 			File.Copy(_nameTemp, _name, true);
-			File.Delete(_nameTemp);
+
+			// SSD can copy file async
+			try
+			{
+				File.Delete(_nameTemp);
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine(ex);
+			}
 		}
 
 		public override void Flush()
