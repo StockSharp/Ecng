@@ -66,6 +66,7 @@
     <Compile Include="BackwardComparer.cs" />
     <Compile Include="BaseBlockingQueue.cs" />
     <Compile Include="BaseEnumerator.cs" />
+    <Compile Include="BaseInMemoryChannel.cs" />
     <Compile Include="BaseListEx.cs" />
     <Compile Include="BaseCollection.cs" />
     <Compile Include="BitArrayReader.cs" />
@@ -79,9 +80,11 @@
     <Compile Include="DuckTypedList.cs" />
     <Compile Include="FixedSynchronizedDictionary.cs" />
     <Compile Include="FixedSynchronizedList.cs" />
+    <Compile Include="IBlockingQueue.cs" />
     <Compile Include="ICollectionEx.cs" />
     <Compile Include="IEnumerableEx.cs" />
     <Compile Include="IListEx.cs" />
+    <Compile Include="InMemoryChannel.cs" />
     <Compile Include="INotifyList.cs" />
     <Compile Include="IRangeCollection.cs" />
     <Compile Include="ISynchronizedCollection.cs" />
