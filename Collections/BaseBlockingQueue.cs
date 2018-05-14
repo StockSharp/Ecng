@@ -8,7 +8,7 @@
 	using Ecng.Common;
 
 	// http://stackoverflow.com/questions/530211/creating-a-blocking-queuet-in-net
-	public abstract class BaseBlockingQueue<T, TF> : ISynchronizedCollection<T>
+	public abstract class BaseBlockingQueue<T, TF> : ISynchronizedCollection<T>, IBlockingQueue<T>
 		where TF : ICollection<T>
 	{
 		protected BaseBlockingQueue(TF innerCollection)
