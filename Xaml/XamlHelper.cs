@@ -1068,6 +1068,38 @@ namespace Ecng.Xaml
 
 			return bitmapImage;
 		}
+
+		public static void UpdateBrush(this DrawingImage source, Brush brush)
+		{
+			if (source == null)
+				throw new ArgumentNullException(nameof(source));
+
+			//source = source.Clone();
+			source.Drawing.UpdateBrush(brush);
+			//return source;
+		}
+
+		public static void UpdateBrush(this Drawing drawing, Brush brush)
+		{
+			if (brush == null)
+				throw new ArgumentNullException(nameof(brush));
+
+			switch (drawing)
+			{
+				case GeometryDrawing gd:
+					gd.Brush = brush;
+					break;
+				case DrawingGroup dg:
+					dg.UpdateBrush(brush);
+					break;
+			}
+		}
+
+		public static void UpdateBrush(this DrawingGroup source, Brush brush)
+		{
+			foreach (var child in source.Children)
+				UpdateBrush(child, brush);
+		}
 	}
 
 	public enum BrowserEmulationVersion
