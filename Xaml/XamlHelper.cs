@@ -1069,6 +1069,37 @@ namespace Ecng.Xaml
 			return bitmapImage;
 		}
 
+		public static Brush GetBrush(this DrawingImage source)
+		{
+			if (source == null)
+				throw new ArgumentNullException(nameof(source));
+
+			return source.Drawing.GetBrush();
+		}
+
+		private static Brush GetBrush(this Drawing drawing)
+		{
+			switch (drawing)
+			{
+				case GeometryDrawing gd:
+					return gd.Brush;
+				case DrawingGroup dg:
+				{
+					foreach (var child in dg.Children)
+					{
+						var brush = GetBrush(child);
+
+						if (brush != null)
+							return brush;
+					}
+
+					return null;
+				}
+				default:
+					return null;
+			}
+		}
+
 		public static void UpdateBrush(this DrawingImage source, Brush brush)
 		{
 			if (source == null)
@@ -1079,7 +1110,7 @@ namespace Ecng.Xaml
 			//return source;
 		}
 
-		public static void UpdateBrush(this Drawing drawing, Brush brush)
+		private static void UpdateBrush(this Drawing drawing, Brush brush)
 		{
 			if (brush == null)
 				throw new ArgumentNullException(nameof(brush));
@@ -1095,7 +1126,7 @@ namespace Ecng.Xaml
 			}
 		}
 
-		public static void UpdateBrush(this DrawingGroup source, Brush brush)
+		private static void UpdateBrush(this DrawingGroup source, Brush brush)
 		{
 			foreach (var child in source.Children)
 				UpdateBrush(child, brush);

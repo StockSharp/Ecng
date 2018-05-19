@@ -107,6 +107,7 @@
       <DependentUpon>SecretEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="TimeZoneEditor.cs" />
+    <Compile Include="TreeWalkerToSvgImageConverter.cs" />
     <Compile Include="ValidationHelper.cs" />
   </ItemGroup>
   <ItemGroup>

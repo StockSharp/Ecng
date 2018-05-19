@@ -1,11 +1,11 @@
-using Ecng.Localization;
-
 namespace Ecng.Xaml.DevExp
 {
 	using System;
 
 	using DevExpress.Xpf.Editors;
 
+	using Ecng.Localization;
+	
 	public class TimeZoneEditor : ComboBoxEdit
 	{
 		public TimeZoneEditor()
