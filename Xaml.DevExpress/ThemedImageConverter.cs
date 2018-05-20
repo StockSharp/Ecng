@@ -8,16 +8,16 @@
 
 	using DevExpress.Xpf.Core;
 
-	public class TreeWalkerToSvgImageConverter : IMultiValueConverter
+	public class ThemedImageConverter : IMultiValueConverter
 	{
 		private readonly DrawingImage _image;
 
-		public TreeWalkerToSvgImageConverter(DrawingImage image)
+		public ThemedImageConverter(DrawingImage image)
 		{
 			_image = image ?? throw new ArgumentNullException(nameof(image));
 		}
 
-		public TreeWalkerToSvgImageConverter()
+		public ThemedImageConverter()
 		{
 		}
 
@@ -26,13 +26,16 @@
 			var targetObject = values[0] as DependencyObject;
 			var inheritedPalette = values[2] as WpfSvgPalette;
 			var palette = (values[1] as ThemeTreeWalker)?.InplaceResourceProvider.GetSvgPalette(targetObject);
+			
 			var image = _image;
 
-			if (_image == null)
+			if (image == null)
+			{
 				image = values[3] as DrawingImage;
 
-			if (image == null)
-				throw new ArgumentNullException(nameof(image));
+				if (image == null)
+					throw new ArgumentNullException(nameof(image));
+			}
 
 			return ReplaceBrush(image, inheritedPalette, palette);
 		}

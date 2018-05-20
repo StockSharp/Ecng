@@ -99,6 +99,7 @@
     <Compile Include="FolderBrowserEditor.xaml.cs">
       <DependentUpon>FolderBrowserEditor.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ThemedIconBinding.cs" />
     <Compile Include="IItemsSource.cs" />
     <Compile Include="MessageBoxHandlers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -107,7 +108,7 @@
       <DependentUpon>SecretEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="TimeZoneEditor.cs" />
-    <Compile Include="TreeWalkerToSvgImageConverter.cs" />
+    <Compile Include="ThemedImageConverter.cs" />
     <Compile Include="ValidationHelper.cs" />
   </ItemGroup>
   <ItemGroup>
