@@ -34,7 +34,7 @@
 				image = values[3] as DrawingImage;
 
 				if (image == null)
-					throw new ArgumentNullException(nameof(image));
+					return null;
 			}
 
 			return ReplaceBrush(image, inheritedPalette, palette);
