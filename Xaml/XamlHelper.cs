@@ -1131,6 +1131,24 @@ namespace Ecng.Xaml
 			foreach (var child in source.Children)
 				UpdateBrush(child, brush);
 		}
+
+		public static SettingsStorage Save(this GridLength value)
+		{
+			var storage = new SettingsStorage();
+
+			storage.SetValue("Type", value.GridUnitType);
+			storage.SetValue("Value", value.Value);
+
+			return storage;
+		}
+
+		public static GridLength LoadGridLength(this SettingsStorage storage)
+		{
+			if (storage == null)
+				throw new ArgumentNullException(nameof(storage));
+
+			return new GridLength(storage.GetValue<double>("Value"), storage.GetValue<GridUnitType>("Type"));
+		}
 	}
 
 	public enum BrowserEmulationVersion
