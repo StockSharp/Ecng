@@ -16,14 +16,8 @@ namespace Ecng.Xaml
 
 		public ConvertibleObservableCollection(ICollection<TDisplay> collection, Func<TItem, TDisplay> converter)
 		{
-			if (collection == null)
-				throw new ArgumentNullException(nameof(collection));
-
-			if (converter == null)
-				throw new ArgumentNullException(nameof(converter));
-
-			_collection = collection;
-			_converter = converter;
+			_collection = collection ?? throw new ArgumentNullException(nameof(collection));
+			_converter = converter ?? throw new ArgumentNullException(nameof(converter));
 		}
 
 		private object SyncRoot => ((ICollection)_collection).SyncRoot;
@@ -50,6 +44,7 @@ namespace Ecng.Xaml
 		public void AddRange(IEnumerable<TItem> items)
 		{
 			var arr = items.ToArray();
+			var added = new List<TItem>();
 
 			lock (SyncRoot)
 			{
@@ -58,14 +53,21 @@ namespace Ecng.Xaml
 				foreach (var item in arr)
 				{
 					var display = _converter(item);
-					_convertedValues.Add(item, display);
+
+					if (!_convertedValues.TryAdd(item, display))
+						continue;
+
 					converted.Add(display);
+					added.Add(item);
 				}
+
+				if (converted.Count == 0)
+					return;
 
 				_collection.AddRange(converted);
 			}
 
-			AddedRange?.Invoke(arr);
+			AddedRange?.Invoke(added);
 			CheckCount();
 		}
 
