@@ -426,17 +426,10 @@ namespace Ecng.Xaml.Charting.Rendering.Common
         /// </summary>
         protected virtual void OnRenderTimeElapsed()
         {
-            if (_isDirty)
-            {
-                try
-                {
-                    OnDraw();
-                }
-                finally
-                {
-                    _isDirty = false;
-                }
-            }
+            if (!_isDirty) return;
+
+            _isDirty = false;
+            OnDraw();
         }
 
         /// <summary>

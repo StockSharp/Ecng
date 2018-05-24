@@ -43,10 +43,45 @@ namespace Ecng.Xaml.Charting.Visuals
 
     internal class UpdateSuspender : IUpdateSuspender
     {
+        private struct SuspendInfo
+        {
+            public SuspendInfo(int c, int ntrc)
+            {
+                Counter = c;
+                NeedToResumeCounter = ntrc;
+            }
+
+            public int Counter {get;}
+            public int NeedToResumeCounter {get;}
+        }
+
         private readonly object _tag;
         private readonly ISuspendable _target;
-        private static readonly IDictionary<ISuspendable, int> _suspendedInstances = new Dictionary<ISuspendable, int>();
+        private static readonly IDictionary<ISuspendable, SuspendInfo> _suspendedInstances = new Dictionary<ISuspendable, SuspendInfo>();
         private static readonly object _syncRoot = new object();
+
+        bool _resumeTargetOnDispose;
+
+        public bool IsSuspended => GetIsSuspended(_target);
+
+        public bool ResumeTargetOnDispose
+        {
+            get => _resumeTargetOnDispose;
+
+            set
+            {
+                if(_resumeTargetOnDispose == value)
+                    return;
+
+                _resumeTargetOnDispose = value;
+
+                lock (_syncRoot)
+                {
+                    var si = _suspendedInstances[_target];
+                    _suspendedInstances[_target] = new SuspendInfo(si.Counter, si.NeedToResumeCounter + (value ? 1 : -1));
+                }
+            }
+        }
 
         internal UpdateSuspender(ISuspendable target, object tag) : this(target)
         {
@@ -55,29 +90,18 @@ namespace Ecng.Xaml.Charting.Visuals
 
         internal UpdateSuspender(ISuspendable target)
         {
-            ResumeTargetOnDispose = true;
-
             _target = target;
 
             lock (_syncRoot)
             {
                 if (!_suspendedInstances.ContainsKey(_target))
-                    _suspendedInstances.Add(_target, 0);
+                    _suspendedInstances.Add(_target, new SuspendInfo(0, 0));
 
                 Inc(_target);
+                ResumeTargetOnDispose = true;
             }
         }
 
-        public bool IsSuspended
-        {
-            get
-            {
-                return GetIsSuspended(_target);
-            }
-        }
-
-        public bool ResumeTargetOnDispose { get; set; }
-    
         public void Dispose()
         {
             lock (_syncRoot)
@@ -86,13 +110,15 @@ namespace Ecng.Xaml.Charting.Visuals
 
                 if (Dec(_target) == 0)
                 {
+                    var si = _suspendedInstances[_target];
+                    _resumeTargetOnDispose = si.NeedToResumeCounter > 0;
                     _suspendedInstances.Remove(_target);
                     _target.ResumeUpdates(this);
                 }
             }
         }        
 
-        internal static IDictionary<ISuspendable, int> SuspendedInstances { get { return _suspendedInstances; } }
+        //internal static IDictionary<ISuspendable, int> SuspendedInstances { get { return _suspendedInstances; } }
 
         public object Tag
         {
@@ -103,21 +129,27 @@ namespace Ecng.Xaml.Charting.Visuals
         {
             lock (_syncRoot)
             {
-                return _suspendedInstances.ContainsKey(target) && _suspendedInstances[target] != 0;
+                return _suspendedInstances.ContainsKey(target) && _suspendedInstances[target].Counter != 0;
             }
         }
 
-        private static void Inc(ISuspendable target)
+        private void Inc(ISuspendable target)
         {
-            _suspendedInstances[target]++;
+            lock (_syncRoot)
+            {
+                var si = _suspendedInstances[target];
+                _suspendedInstances[target] = new SuspendInfo(si.Counter + 1, si.NeedToResumeCounter);
+            }
         }
 
-        private static int Dec(ISuspendable target)
+        private int Dec(ISuspendable target)
         {
-            int current = _suspendedInstances[target];
-            current--;
-            _suspendedInstances[target] = current;
-            return current;
+            lock (_syncRoot)
+            {
+                var si = _suspendedInstances[target];
+                _suspendedInstances[target] = new SuspendInfo(si.Counter - 1, si.NeedToResumeCounter);
+                return si.Counter - 1;
+            }
         }
     }
 }
