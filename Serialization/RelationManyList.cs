@@ -259,9 +259,9 @@
 
 		private static void DoIf<T>(object obj, Action<T> action)
 		{
-			if (obj is T)
+			if (obj is T t)
 			{
-				action((T)obj);
+				action(t);
 			}
 		}
 

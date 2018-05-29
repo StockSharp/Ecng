@@ -178,6 +178,7 @@ namespace Ecng.Common
 			return FormatterServices.GetUninitializedObject(type);
 		}
 
+		[Obsolete("Use pattern matching.")]
 		public static void DoIf<TSource, TDestination>(this TSource source, Action<TDestination> handler)
 			where TDestination : class 
 		{
@@ -192,6 +193,7 @@ namespace Ecng.Common
 			handler(destination);
 		}
 
+		[Obsolete("Use pattern matching.")]
 		public static void DoIfElse<T>(this object value, Action<T> ifAction, Action elseAction)
 			where T : class
 		{
@@ -209,7 +211,8 @@ namespace Ecng.Common
 
 		public static void DoDispose<TSource>(this TSource source)
 		{
-			source.DoIf<TSource, IDisposable>(d => d.Dispose());
+			if (source is IDisposable disposable)
+				disposable.Dispose();
 		}
 
 #if !SILVERLIGHT
