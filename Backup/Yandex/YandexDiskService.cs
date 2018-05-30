@@ -28,7 +28,7 @@ namespace Ecng.Backup.Yandex
 		{
 		}
 
-		private void Process(Action<DiskSdkClient> handler)
+		private void Process(Action<DiskSdkClient> handler, out bool cancelled)
 		{
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
@@ -37,7 +37,7 @@ namespace Ecng.Backup.Yandex
 			{
 				handler(client);
 				return null;
-			}, out var _);
+			}, out cancelled);
 		}
 
 		private T Process<T>(Func<DiskSdkClient, T> handler, out bool cancelled)
@@ -133,7 +133,7 @@ namespace Ecng.Backup.Yandex
 					nameof(DiskSdkClient.RemoveCompleted),
 					() => client.RemoveAsync(path),
 					e => e);
-			});
+			}, out _);
 		}
 
 		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, Action<int> progress)
@@ -167,17 +167,22 @@ namespace Ecng.Backup.Yandex
 						sync.Pulse();
 					}
 				});
-			});
+			}, out var cancelled);
 
-			lock (sync)
+			if (!cancelled)
 			{
-				if (!pulsed)
-					sync.Wait();
+				lock (sync)
+				{
+					if (!pulsed)
+						sync.Wait();
+				}
+
+				(stream as MemoryStream)?.UndoDispose();
+
+				error?.Throw();
 			}
-
-			(stream as MemoryStream)?.UndoDispose();
-
-			error?.Throw();
+			else
+				source.Cancel();
 
 			return source;
 		}
@@ -213,17 +218,22 @@ namespace Ecng.Backup.Yandex
 						sync.Pulse();
 					}
 				});
-			});
+			}, out var cancelled);
 
-			lock (sync)
+			if (!cancelled)
 			{
-				if (!pulsed)
-					sync.Wait();
+				lock (sync)
+				{
+					if (!pulsed)
+						sync.Wait();
+				}
+
+				(stream as MemoryStream)?.UndoDispose();
+
+				error?.Throw();
 			}
-
-			(stream as MemoryStream)?.UndoDispose();
-
-			error?.Throw();
+			else
+				source.Cancel();
 
 			return source;
 		}
@@ -241,7 +251,7 @@ namespace Ecng.Backup.Yandex
 					nameof(DiskSdkClient.PublishCompleted),
 					() => client.PublishAsync(path),
 					e => e.Result);
-			}, out var _);
+			}, out _);
 		}
 
 		void IBackupService.UnPublish(BackupEntry entry)
@@ -257,7 +267,7 @@ namespace Ecng.Backup.Yandex
 					nameof(DiskSdkClient.UnpublishCompleted),
 					() => client.UnpublishAsync(path),
 					e => e);
-			});
+			}, out _);
 		}
 	}
 }
