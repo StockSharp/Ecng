@@ -81,7 +81,7 @@ namespace Ecng.Common
 	public class CsvFileReader : CsvFileCommon, IDisposable
 	{
 		// Private members
-		private StreamReader Reader;
+		private TextReader Reader;
 		public string CurrLine;
 		private int CurrPos;
 		private EmptyLineBehavior EmptyLineBehavior;
@@ -94,9 +94,8 @@ namespace Ecng.Common
 		/// <param name="emptyLineBehavior">Determines how empty lines are handled</param>
 		public CsvFileReader(Stream stream,
 			EmptyLineBehavior emptyLineBehavior = EmptyLineBehavior.NoColumns)
+			: this(new StreamReader(stream), emptyLineBehavior)
 		{
-			Reader = new StreamReader(stream);
-			EmptyLineBehavior = emptyLineBehavior;
 		}
 
 		/// <summary>
@@ -107,8 +106,14 @@ namespace Ecng.Common
 		/// <param name="emptyLineBehavior">Determines how empty lines are handled</param>
 		public CsvFileReader(string path,
 			EmptyLineBehavior emptyLineBehavior = EmptyLineBehavior.NoColumns)
+			: this(new StreamReader(path), emptyLineBehavior)
 		{
-			Reader = new StreamReader(path);
+		}
+
+		public CsvFileReader(TextReader reader,
+			EmptyLineBehavior emptyLineBehavior = EmptyLineBehavior.NoColumns)
+		{
+			Reader = reader;
 			EmptyLineBehavior = emptyLineBehavior;
 		}
 
