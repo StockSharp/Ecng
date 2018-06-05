@@ -12,6 +12,8 @@ namespace Ecng.Net
 
 	public static class NetworkHelper
 	{
+		public const int MtuSize = 1600;
+
 		/// <summary>
 		/// Gets the user address.
 		/// </summary>
