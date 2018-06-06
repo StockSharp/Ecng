@@ -71,6 +71,7 @@
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="AllocationArray.cs" />
+    <Compile Include="AllocationMemory.cs" />
     <Compile Include="ArrayHelper.cs" />
     <Compile Include="AttributeHelper.cs" />
     <Compile Include="CompilationError.cs" />
