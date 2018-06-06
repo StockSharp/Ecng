@@ -72,7 +72,7 @@
 					control.Hours = value.Value.Hours;
 					control.Days = value.Value.Days;
 					control.Milliseconds = value.Value.Milliseconds;
-                    control.Microseconds = value.Value.GetMicroseconds();
+					control.Microseconds = value.Value.GetMicroseconds();
 				}
 				else
 				{
@@ -329,7 +329,12 @@
 
 		private static void LocalizeToolTip(TextBox tb)
 		{
-			tb.ToolTip = (tb.ToolTip as string)?.Translate();
+			var str = tb.ToolTip as string;
+
+			if (str == null)
+				return;
+
+			tb.ToolTip = str.Translate();
 		}
 
 		private void ButtonUpDownClick(object sender, RoutedEventArgs e)
