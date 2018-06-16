@@ -4,7 +4,11 @@ namespace Ecng.Net
 	using System.IO;
 	using System.Linq;
 	using System.Net;
+	using System.Net.Security;
 	using System.Net.Sockets;
+	using System.Security;
+	using System.Security.Authentication;
+	using System.Security.Cryptography.X509Certificates;
 	using System.Web;
 
 	using Ecng.Common;
@@ -144,6 +148,27 @@ namespace Ecng.Net
 			Array.Copy(address.SourceAddress.GetAddressBytes(), 0, maddr, 4, 4); // <src-ip> from "config.xml"
 			Array.Copy(IPAddress.Any.GetAddressBytes(), 0, maddr, 8, 4);
 			return maddr;
+		}
+
+		public static SslStream ToSsl(this Stream stream, SslProtocols sslProtocol,
+			bool checkCertificateRevocation, bool validateRemoteCertificates,
+			string targetHost, string sslCertificate, SecureString sslCertificatePassword,
+			RemoteCertificateValidationCallback certificateValidationCallback = null,
+			LocalCertificateSelectionCallback certificateSelectionCallback = null)
+		{
+			var ssl = validateRemoteCertificates
+				? new SslStream(stream, true, certificateValidationCallback, certificateSelectionCallback)
+				: new SslStream(stream);
+
+			if (sslCertificate.IsEmpty())
+				ssl.AuthenticateAsClient(targetHost);
+			else
+			{
+				var cert = new X509Certificate2(sslCertificate, sslCertificatePassword);
+				ssl.AuthenticateAsClient(targetHost, new X509CertificateCollection { cert }, sslProtocol, checkCertificateRevocation);
+			}
+
+			return ssl;
 		}
 	}
 }
