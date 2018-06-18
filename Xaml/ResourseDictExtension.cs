@@ -30,15 +30,18 @@ namespace Ecng.Xaml
 
 		protected static ResourceDictionary InnerDict { get; private set; }
 
+		public void InitDict()
+		{
+			var resName = AssemblyName + "." + ((string)Path).Replace('/', '.');
+
+			using (var s = Assembly.Load((string)AssemblyName).GetManifestResourceStream(resName))
+				InnerDict = (ResourceDictionary)XamlReader.Load(s);
+		}
+
 		public override object ProvideValue(IServiceProvider serviceProvider)
 		{
 			if (InnerDict == null)
-			{
-				var resName = AssemblyName + "." + ((string)Path).Replace('/', '.');
-
-				using (var s = Assembly.Load((string)AssemblyName).GetManifestResourceStream(resName))
-					InnerDict = (ResourceDictionary)XamlReader.Load(s);
-			}
+				InitDict();
 
 			return InnerDict[Key];
 		}
