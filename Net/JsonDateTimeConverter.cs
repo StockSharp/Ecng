@@ -32,7 +32,7 @@ namespace Ecng.Net
 
 			try
 			{
-				return reader.Value.To<long>().FromUnix(_isSeconds);
+				return reader.Value.To<long?>()?.FromUnix(_isSeconds);
 			}
 			catch (Exception ex)
 			{
