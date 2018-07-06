@@ -127,7 +127,7 @@
                 <ControlTemplate TargetType="visuals:UltrachartSurface">
                     <Border Background="{TemplateBinding Background}"
                             Common:Device.SnapsToDevicePixels="True"
-                            Padding="{TemplateBinding Padding}">
+                            Padding="{TemplateBinding Padding}" ClipToBounds="True">
 
                         <visuals:MainGrid x:Name="PART_MainGrid" Common:Device.SnapsToDevicePixels="True">
                             <visuals:MainGrid.ColumnDefinitions>
