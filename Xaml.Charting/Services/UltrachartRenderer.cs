@@ -381,12 +381,15 @@ namespace Ecng.Xaml.Charting
                     pointRange = renderableSeries.GetExtendedXRange(pointRange);
                     pointRange = new IndexRange(Math.Max(0, pointRange.Min), Math.Min(dataSeries.Count - 1, pointRange.Max));
 
-                    resampledSeries = dataSeries.ToPointSeries(renderableSeries.ResamplingMode, pointRange,
-                        (int) renderPassInfo.ViewportSize.Width, isCategoryAxis,
-                        displayDataAs2D,
-                        xAxisRange,
-                        resamplerFactory,
-                        renderableSeries.PointSeriesArg);
+                    if (pointRange.IsDefined)
+                    {
+                        resampledSeries = dataSeries.ToPointSeries(renderableSeries.ResamplingMode, pointRange,
+                                                                 (int) renderPassInfo.ViewportSize.Width, isCategoryAxis,
+                                                                 displayDataAs2D,
+                                                                 xAxisRange,
+                                                                 resamplerFactory,
+                                                                 renderableSeries.PointSeriesArg);
+                    }
                 }
             }
         }
