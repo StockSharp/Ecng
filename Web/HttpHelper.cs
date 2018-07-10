@@ -353,6 +353,11 @@ namespace Ecng.Web
 		{
 			return HttpUtility.HtmlEncode(text);
 		}
+
+		public static string DecodeFromHtml(this string text)
+		{
+			return HttpUtility.HtmlDecode(text);
+		}
 #endif
 
 		private static readonly Encoding _urlEncoding = Encoding.UTF8;
