@@ -329,10 +329,10 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                     _fontInfoBySizeDict[info.FontSize] = info;
                 }
 
-                var minWidth = (int)Math.Round(dMinW);
-                var maxWidth = (int)Math.Round(dMaxW);
-                var minHeight = (int)Math.Round(dMinH);
-                var maxHeight = (int)Math.Round(dMaxH);
+                var minWidth = (int)Math.Floor(dMinW);
+                var maxWidth = (int)Math.Ceiling(dMaxW);
+                var minHeight = (int)Math.Floor(dMinH);
+                var maxHeight = (int)Math.Ceiling(dMaxH);
 
                 var reversedIndexes = Enumerable.Range(0, _fontInfos.Length).Reverse().ToArray();
 
@@ -353,6 +353,13 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             public Tuple<float, FontWeight, bool> GetFont(Size area, int numSymbols, float minFontSize = 0f) {
 //                ++_numCalls;
 //                _watch.Start();
+
+                numSymbols = Math.Max(numSymbols, 1);
+
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (minFontSize != 0f)
+                    minFontSize = Math.Min(Math.Max(minFontSize, MinFontSize), MaxFontSize).Round(FontSizeStep);
+
                 try {
                     var symWidth = area.Width / numSymbols;
 
@@ -361,7 +368,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                         if(minFontSize == 0f)
                             return null;
 
-                        var fi = _fontInfoBySizeDict[minFontSize.Round(FontSizeStep)];
+                        var fi = _fontInfoBySizeDict[minFontSize];
                         return Tuple.Create(fi.FontSize, fi.FontWeight, false);
                     }
 
@@ -377,11 +384,11 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                     if(minFontSize == 0f || info.FontSize >= minFontSize)
                         return Tuple.Create(info.FontSize, info.FontWeight, true);
 
-                    info = _fontInfoBySizeDict[minFontSize.Round(FontSizeStep)];
+                    info = _fontInfoBySizeDict[minFontSize];
                     return Tuple.Create(info.FontSize, info.FontWeight, false);
                 } catch(Exception e) {
                     UltrachartDebugLogger.Instance.WriteLine("GetFont({0}x{1}, {2}, {3:0.##}) error: {4}", area.Width, area.Height, numSymbols, minFontSize, e);
-                    var info = _fontInfoBySizeDict[minFontSize.Round(FontSizeStep)];
+                    var info = _fontInfoBySizeDict[Math.Max(minFontSize, MinFontSize)];
                     return Tuple.Create(info.FontSize, info.FontWeight, false);
                 }
 

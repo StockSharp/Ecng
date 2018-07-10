@@ -34,6 +34,9 @@
     <Reference Include="DevExpress.Data.v17.2">
       <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Data.v17.2.dll</HintPath>
     </Reference>
+    <Reference Include="DevExpress.Printing.v17.2.Core">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Printing.v17.2.Core.dll</HintPath>
+    </Reference>
     <Reference Include="DevExpress.Xpf.Controls.v17.2">
       <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Controls.v17.2.dll</HintPath>
     </Reference>
