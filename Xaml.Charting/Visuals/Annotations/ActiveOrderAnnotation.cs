@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using Ecng.Xaml.Charting.Common;
 using Ecng.Xaml.Charting.Common.Extensions;
 using Ecng.Xaml.Charting.Numerics.CoordinateCalculators;
@@ -85,6 +86,10 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
 
         public event Action<ActiveOrderAnnotation> CancelClick;
 
+        const double MinScrollSpeed = 0.3d; // screens per second
+        const double MaxScrollSpeed = 2;
+        static readonly TimeSpan _scrollTimerInterval = TimeSpan.FromMilliseconds(50);
+
         private Line _line;
         private Grid _gridOrderInfo;
         private Button _cancelButton;
@@ -94,6 +99,10 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
         readonly AxisMarkerAnnotation _axisMarker;
 
         private bool _templateInitialized;
+
+        readonly DispatcherTimer _scrollTimer;
+        bool _isOutOfBounds;
+        double _totalScrollOffset;
 
         Storyboard _fillAnimation, _errorAnimation;
 
@@ -115,6 +124,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
             _axisMarker.SetBindings(YAxisIdProperty, this, nameof(YAxisId), BindingMode.OneWay);
             _axisMarker.SetBindings(Y1Property, this, nameof(Y1), BindingMode.OneWay);
             _axisMarker.SetBindings(IsHiddenProperty, this, nameof(IsHidden), BindingMode.OneWay);
+
+            _scrollTimer = new DispatcherTimer { Interval = _scrollTimerInterval };
+            _scrollTimer.Tick += ScrollTimerOnTick;
         }
 
         protected override void HandleIsEditable()
@@ -198,6 +210,72 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
 
             if(IsCoordinateValid(newPoint.X, canvas.ActualWidth))
                 SetCurrentValue(X, newX);
+
+            this.SetCurrentValue(Y, dataValues[1]);
+        }
+
+        public override void OnDragEnded()
+        {
+            base.OnDragEnded();
+            _isOutOfBounds = false;
+            _totalScrollOffset = 0;
+
+            _scrollTimer.Stop();
+        }
+
+        private void ScrollTimerOnTick(object sender, EventArgs e)
+        {
+            if(!IsDragging || !_isOutOfBounds)
+                return;
+
+            var axis = YAxis;
+            var canvas = GetCanvas(AnnotationCanvas);
+            var mousePos = Mouse.GetPosition((AnnotationSurface)canvas);
+
+            if(mousePos.Y >= 0 && mousePos.Y < canvas.ActualHeight)
+                return; // shouldn't happen
+
+            var moveSign = Math.Sign(mousePos.Y);
+
+            var speedFraction = moveSign > 0 ? 
+                Math.Min(1, (mousePos.Y - canvas.ActualHeight) / canvas.ActualHeight) :
+                Math.Min(1, -mousePos.Y / canvas.ActualHeight);
+
+            var speed = moveSign * (MinScrollSpeed + speedFraction * (MaxScrollSpeed - MinScrollSpeed));
+
+            var diff = canvas.ActualHeight * speed * _scrollTimer.Interval.TotalMilliseconds / 1000d;
+
+            if(YDragStep > 0)
+            {
+                // Compute new coordinates in pixels
+                var y1 = moveSign > 0 ? canvas.ActualHeight - 1 + diff : -diff;
+                var coordsFrom = GetCoordinates(canvas, XAxis?.GetCurrentCoordinateCalculator(), YAxis?.GetCurrentCoordinateCalculator());
+
+                var dragStartCoord = FromCoordinate(coordsFrom.Y1Coord, axis);
+                var newValue = FromCoordinate(y1, axis);
+
+                var diff2 = Math.Abs(dragStartCoord.ToDouble() - newValue.ToDouble());
+                var times = (int) Math.Round(diff2/YDragStep);
+
+                var sign = axis.FlipCoordinates ? moveSign : -moveSign;
+
+                var expectedValue = dragStartCoord.ToDouble() + sign*times*YDragStep;
+
+                y1 = ToCoordinate(expectedValue, axis);
+                diff = y1 - coordsFrom.Y1Coord;
+            }
+
+            using (ParentSurface.SuspendUpdates())
+            {
+                _totalScrollOffset += diff;
+                axis.Scroll(diff, ClipMode.None);
+
+                var coords = GetCoordinates(canvas, XAxis?.GetCurrentCoordinateCalculator(), YAxis?.GetCurrentCoordinateCalculator());
+
+                var point = new Point {X = coords.X1Coord, Y = moveSign > 0 ? canvas.ActualHeight - 1 : 0};
+
+                SetBasePoint(point, 0, XAxis, YAxis);
+            }
         }
 
         protected override void MoveAnnotationTo(AnnotationCoordinates coordinates, double horizOffset, double vertOffset)
@@ -211,12 +289,27 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
             // If any are out of bounds ... 
             if (!IsCoordinateValid(y1, canvas.ActualHeight))
             {
+                if(axis.AutoRange == AutoRange.Always)
+                    ((AxisBase)axis).SetCurrentValue(AxisBase.AutoRangeProperty, AutoRange.Once);
+
+                if (!_isOutOfBounds)
+                {
+                    _isOutOfBounds = true;
+                    _scrollTimer.Start();
+                }
+
                 // Clip to bounds
                 if (y1 < 0) vertOffset -= y1 - 1;
                 if (y1 > canvas.ActualHeight) vertOffset -= y1 - (canvas.ActualHeight - 1);
 
                 // Reassign
                 y1 = coordinates.Y1Coord + vertOffset;
+            }
+            else
+            {
+                _isOutOfBounds = false;
+                _totalScrollOffset = 0;
+                _scrollTimer.Stop();
             }
 
             if(YDragStep > 0)
@@ -239,9 +332,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
             {
                 var point = new Point {X = coordinates.X1Coord, Y = y1};
 
-                base.SetBasePoint(point, 0, XAxis, YAxis);
+                SetBasePoint(point, 0, XAxis, YAxis);
 
-                OnAnnotationDragging(new AnnotationDragDeltaEventArgs(0, vertOffset));
+                OnAnnotationDragging(new AnnotationDragDeltaEventArgs(0, vertOffset + _totalScrollOffset));
             }
         }
 

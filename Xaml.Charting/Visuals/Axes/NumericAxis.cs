@@ -304,6 +304,12 @@ namespace Ecng.Xaml.Charting.Visuals.Axes
             return SupportedTypes;
         }
 
+        protected override void OnVisibleRangeChanged(VisibleRangeChangedEventArgs args)
+        {
+            _axisParams = base.GetAxisParams();
+            base.OnVisibleRangeChanged(args);
+        }
+
         /// <summary>
         /// Gets an <see cref="AxisParams"/> struct with info about the current axis setup
         /// </summary>
