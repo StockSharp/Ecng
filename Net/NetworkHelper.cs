@@ -14,6 +14,9 @@ namespace Ecng.Net
 	using Ecng.Common;
 	using Ecng.Localization;
 
+	using Newtonsoft.Json;
+	using Newtonsoft.Json.Linq;
+
 	public static class NetworkHelper
 	{
 		public const int MtuSize = 1600;
@@ -169,6 +172,33 @@ namespace Ecng.Net
 			}
 
 			return ssl;
+		}
+
+		public static T DeserializeObject<T>(this string content)
+		{
+			if (content.IsEmpty())
+				throw new ArgumentNullException(nameof(content));
+
+			try
+			{
+				return JsonConvert.DeserializeObject<T>(content);
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidOperationException($"Can't convert {content} to type '{typeof(T).Name}'.", ex);
+			}
+		}
+
+		public static T DeserializeObject<T>(this JToken token)
+		{
+			try
+			{
+				return token.ToObject<T>();
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidOperationException($"Can't convert {token} to type '{typeof(T).Name}'.", ex);
+			}
 		}
 	}
 }
