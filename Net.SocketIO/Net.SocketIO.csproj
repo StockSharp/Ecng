@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{B79EC630-2FAB-42B9-89BA-4886C1942E96}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Ecng.Net.SocketIO</RootNamespace>
+    <AssemblyName>Ecng.Net.SocketIO</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\StockSharp (GitHub)\References\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\..\StockSharp (GitHub)\References\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\EcngAssemblyInfo.cs">
+      <Link>Properties\EcngAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="Client\AckImpl.cs" />
+    <Compile Include="Client\IAck.cs" />
+    <Compile Include="Client\IO.cs" />
+    <Compile Include="Client\Manager.cs" />
+    <Compile Include="Client\On.cs" />
+    <Compile Include="Client\Socket.cs" />
+    <Compile Include="Client\SocketIOException.cs" />
+    <Compile Include="Client\Url.cs" />
+    <Compile Include="Engine\Client\EngineIOException.cs" />
+    <Compile Include="Engine\Client\HandshakeData.cs" />
+    <Compile Include="Engine\Client\Socket.cs" />
+    <Compile Include="Engine\Client\Transport.cs" />
+    <Compile Include="Engine\Client\Transports\Polling.cs" />
+    <Compile Include="Engine\Client\Transports\PollingXHR.cs" />
+    <Compile Include="Engine\Client\Transports\WebSocket_netfw.cs" />
+    <Compile Include="Engine\ComponentEmitter\Emitter.cs" />
+    <Compile Include="Engine\Modules\Global.cs" />
+    <Compile Include="Engine\Modules\LogManager.cs" />
+    <Compile Include="Engine\Modules\ParseQS.cs" />
+    <Compile Include="Engine\Modules\ServerCertificate.cs" />
+    <Compile Include="Engine\Modules\UTF8.cs" />
+    <Compile Include="Engine\Modules\UTF8Exception.cs" />
+    <Compile Include="Engine\Parser\Buffer.cs" />
+    <Compile Include="Engine\Parser\ByteBuffer.cs" />
+    <Compile Include="Engine\Parser\IDecodePayloadCallback.cs" />
+    <Compile Include="Engine\Parser\IEncodeCallback.cs" />
+    <Compile Include="Engine\Parser\Packet.cs" />
+    <Compile Include="Engine\Parser\Parser.cs" />
+    <Compile Include="Engine\Thread\EasyTimer.cs" />
+    <Compile Include="Modules\HasBinaryData.cs" />
+    <Compile Include="Parser\Binary.cs" />
+    <Compile Include="Parser\Packet.cs" />
+    <Compile Include="Parser\Parser.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
