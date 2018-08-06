@@ -47,31 +47,46 @@ namespace Ecng.Backup.Amazon
 		/// <param name="bucket">Storage name.</param>
 		/// <param name="accessKey">Key.</param>
 		/// <param name="secretKey">Secret.</param>
+		public AmazonS3Service(string endpoint, string bucket, string accessKey, string secretKey)
+			: this(RegionEndpoint.GetBySystemName(endpoint), bucket, accessKey, secretKey)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="AmazonS3Service"/>.
+		/// </summary>
+		/// <param name="endpoint">Region address.</param>
+		/// <param name="bucket">Storage name.</param>
+		/// <param name="accessKey">Key.</param>
+		/// <param name="secretKey">Secret.</param>
 		public AmazonS3Service(RegionEndpoint endpoint, string bucket, string accessKey, string secretKey)
 		{
 			if (bucket.IsEmpty())
 				throw new ArgumentNullException(nameof(bucket));
 
 			_credentials = new BasicAWSCredentials(accessKey, secretKey);
-			_endpoint = endpoint;
+			_endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
 			_bucket = bucket;
 			_client = new AmazonS3Client(_credentials, _endpoint);
 		}
 
-		IEnumerable<BackupEntry> IBackupService.Get(BackupEntry parent)
+		IEnumerable<BackupEntry> IBackupService.Find(BackupEntry parent, string criteria)
 		{
 			//if (parent != null && !parent.IsDirectory)
 			//	throw new ArgumentException("{0} should be directory.".Put(parent.Name), "parent");
 
-			var request = new ListObjectsRequest
+			var request = new ListObjectsV2Request
 			{
 				BucketName = _bucket,
 				Prefix = parent != null ? GetKey(parent) : null,
 			};
 
+			if (!criteria.IsEmpty())
+				request.Prefix += "/" + criteria;
+
 			do
 			{
-				var response = _client.ListObjects(request);
+				var response = _client.ListObjectsV2(request);
 
 				foreach (var entry in response.S3Objects)
 				{
@@ -90,11 +105,16 @@ namespace Ecng.Backup.Amazon
 				}
 
 				if (response.IsTruncated)
-					request.Marker = response.NextMarker;
+					request.ContinuationToken = response.NextContinuationToken;
 				else
 					break;
 			}
 			while (true);
+		}
+
+		IEnumerable<BackupEntry> IBackupService.GetChilds(BackupEntry parent)
+		{
+			return ((IBackupService)this).Find(parent, null);
 		}
 
 		void IBackupService.Delete(BackupEntry entry)
@@ -103,6 +123,50 @@ namespace Ecng.Backup.Amazon
 		}
 
 		// TODO make async
+
+		public CancellationTokenSource Download(BackupEntry entry, byte[] buffer, long start, int length, Action<int> progress)
+		{
+			if (entry == null)
+				throw new ArgumentNullException(nameof(entry));
+
+			if (buffer == null)
+				throw new ArgumentNullException(nameof(buffer));
+
+			if (progress == null)
+				throw new ArgumentNullException(nameof(progress));
+
+			var source = new CancellationTokenSource();
+
+			var key = GetKey(entry);
+
+			var request = new GetObjectRequest
+			{
+				BucketName = _bucket,
+				Key = key,
+				ByteRange = new ByteRange(start, start + length)
+			};
+
+			var bytes = new byte[_bufferSize];
+			var readTotal = 0L;
+
+			using (var response = _client.GetObject(request))
+			using (var responseStream = response.ResponseStream)
+			{
+				response.WriteObjectProgressEvent += (s, a) => progress(a.PercentDone);
+
+				while (readTotal < response.ContentLength)
+				{
+					var len = (int)(response.ContentLength - readTotal).Min(bytes.Length);
+
+					responseStream.ReadBytes(bytes, len);
+					bytes.CopyTo(buffer, readTotal);
+
+					readTotal += len;
+				}
+			}
+
+			return source;
+		}
 
 		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, Action<int> progress)
 		{
@@ -213,6 +277,23 @@ namespace Ecng.Backup.Amazon
 
 			return source;
 		}
+
+		void IBackupService.FillInfo(BackupEntry entry)
+		{
+			var key = GetKey(entry);
+
+			var request = new GetObjectMetadataRequest
+			{
+				BucketName = _bucket,
+				Key = key,
+			};
+
+			var response = _client.GetObjectMetadata(request);
+
+			entry.Size = response.ContentLength;
+		}
+
+		bool IBackupService.CanPublish => false;
 
 		string IBackupService.Publish(BackupEntry entry)
 		{

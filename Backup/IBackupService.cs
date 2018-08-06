@@ -26,11 +26,30 @@ namespace Ecng.Backup
 	public interface IBackupService : IDisposable
 	{
 		/// <summary>
+		/// Is publishing feature available.
+		/// </summary>
+		bool CanPublish { get; }
+
+		/// <summary>
+		/// Find files by the specified criteria.
+		/// </summary>
+		/// <param name="parent">Parent element. Can be null.</param>
+		/// <param name="criteria">Criteria.</param>
+		/// <returns>File list.</returns>
+		IEnumerable<BackupEntry> Find(BackupEntry parent, string criteria);
+
+		/// <summary>
 		/// List of files.
 		/// </summary>
-		/// <param name="parent">Element.</param>
+		/// <param name="parent">Parent element. Can be null.</param>
 		/// <returns>File list.</returns>
-		IEnumerable<BackupEntry> Get(BackupEntry parent);
+		IEnumerable<BackupEntry> GetChilds(BackupEntry parent);
+
+		/// <summary>
+		/// Fill file info.
+		/// </summary>
+		/// <param name="entry">Element.</param>
+		void FillInfo(BackupEntry entry);
 
 		/// <summary>
 		/// Delete file from the service.
@@ -46,6 +65,17 @@ namespace Ecng.Backup
 		/// <param name="progress">Progress notification.</param>
 		/// <returns>Cancellation token.</returns>
 		CancellationTokenSource Download(BackupEntry entry, Stream stream, Action<int> progress);
+
+		/// <summary>
+		/// Save file.
+		/// </summary>
+		/// <param name="entry">Element.</param>
+		/// <param name="buffer"></param>
+		/// <param name="length"></param>
+		/// <param name="progress">Progress notification.</param>
+		/// <param name="start"></param>
+		/// <returns>Cancellation token.</returns>
+		CancellationTokenSource Download(BackupEntry entry, byte[] buffer, long start, int length, Action<int> progress);
 
 		/// <summary>
 		/// Upload file.

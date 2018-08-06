@@ -40,6 +40,18 @@ namespace Ecng.Backup.Amazon
 		/// Initializes a new instance of the <see cref="AmazonGlacierService"/>.
 		/// </summary>
 		/// <param name="endpoint">Region address.</param>
+		/// <param name="bucket">Storage name.</param>
+		/// <param name="accessKey">Key.</param>
+		/// <param name="secretKey">Secret.</param>
+		public AmazonGlacierService(string endpoint, string bucket, string accessKey, string secretKey)
+			: this(RegionEndpoint.GetBySystemName(endpoint), bucket, accessKey, secretKey)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="AmazonGlacierService"/>.
+		/// </summary>
+		/// <param name="endpoint">Region address.</param>
 		/// <param name="vaultName">Storage name.</param>
 		/// <param name="accessKey">Key.</param>
 		/// <param name="secretKey">Secret.</param>
@@ -49,12 +61,17 @@ namespace Ecng.Backup.Amazon
 				throw new ArgumentNullException(nameof(vaultName));
 
 			_credentials = new BasicAWSCredentials(accessKey, secretKey);
-			_endpoint = endpoint;
+			_endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
 			_vaultName = vaultName;
 			_client = new AmazonS3Client(_credentials, _endpoint);
 		}
 
-		IEnumerable<BackupEntry> IBackupService.Get(BackupEntry parent)
+		IEnumerable<BackupEntry> IBackupService.Find(BackupEntry parent, string criteria)
+		{
+			throw new NotImplementedException();
+		}
+
+		IEnumerable<BackupEntry> IBackupService.GetChilds(BackupEntry parent)
 		{
 			throw new NotImplementedException();
 		}
@@ -64,7 +81,17 @@ namespace Ecng.Backup.Amazon
 			throw new NotImplementedException();
 		}
 
+		void IBackupService.FillInfo(BackupEntry entry)
+		{
+			throw new NotImplementedException();
+		}
+
 		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, Action<int> progress)
+		{
+			throw new NotImplementedException();
+		}
+
+		public CancellationTokenSource Download(BackupEntry entry, byte[] buffer, long start, int length, Action<int> progress)
 		{
 			throw new NotImplementedException();
 		}
@@ -73,6 +100,8 @@ namespace Ecng.Backup.Amazon
 		{
 			throw new NotImplementedException();
 		}
+
+		bool IBackupService.CanPublish => false;
 
 		string IBackupService.Publish(BackupEntry entry)
 		{

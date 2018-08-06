@@ -94,7 +94,17 @@ namespace Ecng.Backup.Yandex
 			return GetPath(entry.Parent) + "/" + entry.Name;
 		}
 
-		IEnumerable<BackupEntry> IBackupService.Get(BackupEntry parent)
+		IEnumerable<BackupEntry> IBackupService.Find(BackupEntry parent, string criteria)
+		{
+			var entries = ((IBackupService)this).GetChilds(parent);
+
+			if (!criteria.IsEmpty())
+				entries = entries.Where(e => e.Name.ContainsIgnoreCase(criteria)).ToArray();
+			
+			return entries;
+		}
+
+		IEnumerable<BackupEntry> IBackupService.GetChilds(BackupEntry parent)
 		{
 			//if (parent == null)
 			//	throw new ArgumentNullException(nameof(parent));
@@ -118,6 +128,27 @@ namespace Ecng.Backup.Yandex
 				throw new UnauthorizedAccessException();
 
 			return retVal;
+		}
+
+		void IBackupService.FillInfo(BackupEntry entry)
+		{
+			if (entry == null)
+				throw new ArgumentNullException(nameof(entry));
+
+			var path = GetPath(entry);
+
+			var info = Process(client =>
+			{
+				return client.AsyncWait<GenericSdkEventArgs<DiskItemInfo>, DiskItemInfo>(
+					nameof(DiskSdkClient.GetItemInfoCompleted),
+					() => client.GetItemInfoAsync(path),
+					e => e.Result);
+			}, out var cancelled);
+
+			if (cancelled)
+				throw new UnauthorizedAccessException();
+
+			entry.Size = info.ContentLength;
 		}
 
 		void IBackupService.Delete(BackupEntry entry)
@@ -187,6 +218,11 @@ namespace Ecng.Backup.Yandex
 			return source;
 		}
 
+		public CancellationTokenSource Download(BackupEntry entry, byte[] buffer, long start, int length, Action<int> progress)
+		{
+			throw new NotSupportedException();
+		}
+
 		CancellationTokenSource IBackupService.Upload(BackupEntry entry, Stream stream, Action<int> progress)
 		{
 			if (entry == null)
@@ -237,6 +273,8 @@ namespace Ecng.Backup.Yandex
 
 			return source;
 		}
+
+		bool IBackupService.CanPublish => true;
 
 		string IBackupService.Publish(BackupEntry entry)
 		{
