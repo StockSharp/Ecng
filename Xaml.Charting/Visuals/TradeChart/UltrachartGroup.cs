@@ -19,14 +19,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
+using System.Windows.Input;
 using Ecng.Xaml.Charting.Common.Extensions;
 using Ecng.Xaml.Charting.Licensing;
+using Ecng.Xaml.Charting.Utility;
 using Ecng.Xaml.Charting.Visuals;
 using Ecng.Xaml.Charting.Visuals.Axes;
 using Ecng.Xaml.Licensing.Core;
@@ -91,8 +91,14 @@ namespace Ecng.Xaml.Charting
         private StackPanel _stackedViewPanel;
         private Canvas _modifierCanvas;
 
-        private ItemPane _updPane;
-        private double _updPaneHeight;
+        private double _resizeTotalDragDiff;
+        private double _resizeInitialHeight;
+        private double _resizeTotalHeight;
+        private double _resizeInitialMouseYCoord;
+        private double _resizeMinHeight;
+
+        private ItemPane _resizePane;
+        private ItemPane _resizeUpperPane;
 
         private Action<ItemPane> _addPane;
 
@@ -440,34 +446,53 @@ namespace Ecng.Xaml.Charting
 
         private void OnItemContainerResizing(object sender, DragDeltaEventArgs e)
         {
-            _updPane = _updPane ?? _items.FirstOrDefault(item => ReferenceEquals(item.PaneElement, sender));
+            ItemPane paneByElement(UIElement el) => _items.First(item => ReferenceEquals(item.PaneElement, el));
 
-            if (_updPane != null)
+            if (_resizePane == null)
             {
-                var height = _updPane.PaneElement.ActualHeight - e.VerticalChange;
-                if (height > MinHeight && Math.Abs(e.VerticalChange) >= 1d)
+                _resizePane = paneByElement((UIElement) sender);
+                if(_resizePane == null)
+                    return;
+
+                var idx = _stackedViewPanel.Children.IndexOf(_resizePane.PaneElement);
+                if (idx < 0)
                 {
-                    _updPaneHeight = height;
+                    Guard.IsTrue(_resizePane.IsTabbed, "unexpected pane type");
+
+                    var cnt = _stackedViewPanel.Children.Count;
+                    _resizeUpperPane = cnt > 0 ? paneByElement(_stackedViewPanel.Children[cnt - 1]) : _items.First(i => i.IsMainPane);
                 }
+                else if (idx == 0)
+                    _resizeUpperPane = _items.First(i => i.IsMainPane);
+                else
+                    _resizeUpperPane = paneByElement(_stackedViewPanel.Children[idx - 1]);
+
+                _resizeTotalDragDiff = 0;
+                _resizeInitialHeight = _resizePane.PaneElement.ActualHeight;
+                _resizeTotalHeight = _resizeInitialHeight + _resizeUpperPane.PaneElement.ActualHeight;
+                _resizeInitialMouseYCoord = Mouse.GetPosition(_resizeUpperPane.PaneElement.GetWindow()).Y;
+                _resizeMinHeight = ((UltrachartGroupPane)_resizePane.PaneElement).MeasureMinHeight();
             }
+
+            var y = Mouse.GetPosition(_resizeUpperPane.PaneElement.GetWindow()).Y;
+
+            _resizeTotalDragDiff = y - _resizeInitialMouseYCoord;
+
+            var newHeight = Math.Min(_resizeTotalHeight - _resizeMinHeight, Math.Max(_resizeMinHeight, _resizeInitialHeight - _resizeTotalDragDiff));
+
+            _resizePane.PaneElement.Height = newHeight;
+
+            if(!_resizeUpperPane.IsMainPane)
+                _resizeUpperPane.PaneElement.Height = _resizeTotalHeight - newHeight;
+
+            if (_resizePane.IsTabbed)
+                _items.Where(item => item.IsTabbed).ForEachDo(item => item.PaneElement.Height = newHeight);
         }
 
         private void OnItemContainerResized(object sender, DragCompletedEventArgs e)
         {
-            if (_updPane != null)
-            {
-                _updPaneHeight = CoerceDesiredHeight(_updPane, _updPaneHeight);
-
-                _updPane.PaneElement.Height = _updPaneHeight;
-
-                // Sync heights of tabbed panes
-                if (_updPane.IsTabbed)
-                {
-                    _items.Where(item => item.IsTabbed).ForEachDo(item => item.PaneElement.Height = _updPaneHeight);
-                }
-
-                _updPane = null;
-            }
+            _resizePane = _resizeUpperPane = null;
+            _resizeTotalDragDiff = _resizeInitialHeight = 0;
         }
 
         private double CoerceDesiredHeight(ItemPane pane, double desiredHeight)

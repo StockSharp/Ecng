@@ -684,7 +684,7 @@ namespace Ecng.Xaml
 		{
 			var wnd = Window.GetWindow(obj);
 
-			// åñëè WPF õîñòèöà â WinForms ÷åðåç ElementHost
+			// Ã¥Ã±Ã«Ã¨ WPF ÃµÃ®Ã±Ã²Ã¨Ã¶Ã  Ã¢ WinForms Ã·Ã¥Ã°Ã¥Ã§ ElementHost
 			if (wnd == null && Application.Current == null)
 				wnd = XamlNativeHelper.GetNativeOwner();
 
@@ -803,7 +803,7 @@ namespace Ecng.Xaml
 			if (parent == null)
 				throw new ArgumentNullException(nameof(parent));
 
-			// ïðîâåðèòü êîððåêòíîñòü ðîäèòåëÿ
+			// Ã¯Ã°Ã®Ã¢Ã¥Ã°Ã¨Ã²Ã¼ ÃªÃ®Ã°Ã°Ã¥ÃªÃ²Ã­Ã®Ã±Ã²Ã¼ Ã°Ã®Ã¤Ã¨Ã²Ã¥Ã«Ã¿
 			if (parent.Left > SystemParameters.VirtualScreenWidth || parent.Left < 0 || parent.Left.IsNaN())
 			{
 				parent.Left = (int)Math.Abs((SystemParameters.VirtualScreenWidth - parent.Width) / 2);
@@ -814,7 +814,7 @@ namespace Ecng.Xaml
 				parent.Top = (int)Math.Abs((SystemParameters.VirtualScreenHeight - parent.Height) / 2);
 			}
 
-			// âçÿòü öåíòð ðîäèòåëÿ
+			// Ã¢Ã§Ã¿Ã²Ã¼ Ã¶Ã¥Ã­Ã²Ã° Ã°Ã®Ã¤Ã¨Ã²Ã¥Ã«Ã¿
 			var widthCenter = parent.Left + parent.Width / 2;
 			var heigthCenter = parent.Top + parent.Height / 2;
 
@@ -895,6 +895,73 @@ namespace Ecng.Xaml
 				Converter = converter,
 				ConverterParameter = parameter
 			});
+		}
+
+		public static void SetMultiBinding(this DependencyObject obj, DependencyProperty prop, IMultiValueConverter conv, object param, params Binding[] bindings)
+		{
+			if(!(bindings?.Length > 1))
+				throw new ArgumentException(nameof(bindings));
+
+			var mb = new MultiBinding { Converter = conv ?? throw new ArgumentNullException(nameof(conv)) };
+
+			foreach (var b in bindings)
+			{
+				b.Mode = BindingMode.OneWay;
+				mb.Bindings.Add(b);
+			}
+
+			BindingOperations.SetBinding(obj, prop, mb);
+		}
+
+		private static readonly List<IDisposable> _listeners = new List<IDisposable>();
+
+		public static IDisposable AddPropertyListener(this DependencyObject sourceObject, DependencyProperty property, Action<DependencyPropertyChangedEventArgs> onChanged)
+		{
+			var l = new DependencyPropertyListener(sourceObject, property, onChanged);
+			_listeners.Add(l);
+			return l;
+		}
+
+		/// <summary>
+		/// Checks if supplied dispatcher/dispatcher object OR current thread is associated with Dispatcher.
+		/// </summary>
+		/// <param name="obj">Any DispatcherObject or Dispatcher or anything else (to check using Dispatcher.FromThread())</param>
+		public static void EnsureUIThread(this object obj)
+		{
+			if (((obj as DispatcherObject)?.Dispatcher ?? obj as Dispatcher ?? CurrentThreadDispatcher)?.CheckAccess() != true)
+				throw new InvalidOperationException("Operation is allowed for UI thread only.");
+		}
+
+		private class DependencyPropertyListener : DependencyObject, IDisposable
+		{
+			private static readonly DependencyProperty ProxyProperty = DependencyProperty.Register("Proxy", typeof(object), typeof(DependencyPropertyListener), new PropertyMetadata(null, OnProxyChanged));
+
+			private readonly Action<DependencyPropertyChangedEventArgs> _action;
+			private bool _isDisposed;
+
+			public DependencyPropertyListener(DependencyObject source, DependencyProperty property, Action<DependencyPropertyChangedEventArgs> action)
+			{
+				this.SetBindings(ProxyProperty, source, new PropertyPath(property), BindingMode.OneWay);
+				_action = action;
+			}
+
+			void IDisposable.Dispose()
+			{
+				if (_isDisposed)
+					return;
+
+				_isDisposed = true;
+				BindingOperations.ClearBinding(this, ProxyProperty);
+			}
+
+			private static void OnProxyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+			{
+				var listener = (DependencyPropertyListener) d;
+				if (listener._isDisposed)
+					return;
+
+				listener._action?.Invoke(e);
+			}
 		}
 
 		#region Menu
@@ -1077,6 +1144,14 @@ namespace Ecng.Xaml
 			return source.Drawing.GetBrush();
 		}
 
+		public static Pen GetPen(this DrawingImage source)
+		{
+			if (source == null)
+				throw new ArgumentNullException(nameof(source));
+
+			return source.Drawing.GetPen();
+		}
+
 		private static Brush GetBrush(this Drawing drawing)
 		{
 			switch (drawing)
@@ -1100,6 +1175,29 @@ namespace Ecng.Xaml
 			}
 		}
 
+		private static Pen GetPen(this Drawing drawing)
+		{
+			switch (drawing)
+			{
+				case GeometryDrawing gd:
+					return gd.Pen;
+				case DrawingGroup dg:
+				{
+					foreach (var child in dg.Children)
+					{
+						var pen = GetPen(child);
+
+						if (pen != null)
+							return pen;
+					}
+
+					return null;
+				}
+				default:
+					return null;
+			}
+		}
+
 		public static void UpdateBrush(this DrawingImage source, Brush brush)
 		{
 			if (source == null)
@@ -1108,6 +1206,14 @@ namespace Ecng.Xaml
 			//source = source.Clone();
 			source.Drawing.UpdateBrush(brush);
 			//return source;
+		}
+
+		public static void UpdatePen(this DrawingImage source, Pen pen)
+		{
+			if (source == null)
+				throw new ArgumentNullException(nameof(source));
+
+			source.Drawing.UpdatePen(pen);
 		}
 
 		private static void UpdateBrush(this Drawing drawing, Brush brush)
@@ -1126,10 +1232,32 @@ namespace Ecng.Xaml
 			}
 		}
 
+		private static void UpdatePen(this Drawing drawing, Pen pen)
+		{
+			if (pen == null)
+				throw new ArgumentNullException(nameof(pen));
+
+			switch (drawing)
+			{
+				case GeometryDrawing gd:
+					gd.Pen = pen;
+					break;
+				case DrawingGroup dg:
+					dg.UpdatePen(pen);
+					break;
+			}
+		}
+
 		private static void UpdateBrush(this DrawingGroup source, Brush brush)
 		{
 			foreach (var child in source.Children)
 				UpdateBrush(child, brush);
+		}
+
+		private static void UpdatePen(this DrawingGroup source, Pen pen)
+		{
+			foreach (var child in source.Children)
+				UpdatePen(child, pen);
 		}
 
 		public static SettingsStorage Save(this GridLength value)

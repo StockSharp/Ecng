@@ -23,6 +23,19 @@ namespace Ecng.ComponentModel
 			return dpAttr.GetName();
 		}
 
+		public static string GetDisplayName(this PropertyDescriptor pd, string defaultValue = null)
+		{
+			foreach(var a in pd.Attributes)
+				switch (a) {
+					case DisplayAttribute da:
+						return da.GetName();
+					case DisplayNameAttribute dna:
+						return dna.DisplayName;
+				}
+
+			return defaultValue ?? pd.PropertyType.Name;
+		}
+
 		public static string GetDescription(this ICustomAttributeProvider provider, string defaultValue = null)
 		{
 			var dpAttr = provider.GetAttribute<DisplayAttribute>();

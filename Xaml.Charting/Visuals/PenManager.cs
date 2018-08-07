@@ -33,8 +33,9 @@ namespace Ecng.Xaml.Charting.Visuals
         private readonly Dictionary<Color, IPen2D> _renderPens;
         private readonly Dictionary<Color, IBrush2D> _renderBrushes;
         private readonly Dictionary<Brush, IBrush2D> _textureBrushes;
+        private readonly double[] _strokeDashArray;
 
-        public PenManager(IRenderContext2D renderContext, bool antiAliasing, float strokeThickness, double opacity)
+        public PenManager(IRenderContext2D renderContext, bool antiAliasing, float strokeThickness, double opacity, double[] strokeDashArray = null)
         {
             _renderContext = renderContext;
             _antiAliasing = antiAliasing;
@@ -43,6 +44,7 @@ namespace Ecng.Xaml.Charting.Visuals
             _renderPens = new Dictionary<Color, IPen2D>();
             _renderBrushes = new Dictionary<Color, IBrush2D>();
             _textureBrushes = new Dictionary<Brush, IBrush2D>();
+            _strokeDashArray = strokeDashArray;
         }
 
         public IPen2D GetPen(Color color)
@@ -51,7 +53,7 @@ namespace Ecng.Xaml.Charting.Visuals
             if (_renderPens.TryGetValue(color, out pen))
                 return pen;
 
-            pen = _renderContext.CreatePen(color, _antiAliasing, _strokeThickness, _opacity);
+            pen = _renderContext.CreatePen(color, _antiAliasing, _strokeThickness, _opacity, _strokeDashArray);
             _renderPens.Add(color, pen);
             return pen;
         }

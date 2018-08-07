@@ -853,6 +853,10 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 {
                     MakeVisible(coordinates);
                 }
+                else if (Visibility != Visibility.Collapsed)
+                {
+                    MakeInvisible();
+                }
             }
             else
             {

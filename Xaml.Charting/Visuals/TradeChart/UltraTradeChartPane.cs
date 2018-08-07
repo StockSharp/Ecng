@@ -108,6 +108,16 @@ namespace Ecng.Xaml.Charting
             TryApplyHeaderTemplate();
         }
 
+        internal double MeasureMinHeight()
+        {
+            var availableSize = new Size(double.PositiveInfinity, Double.PositiveInfinity);
+
+            _headerPanel.Measure(availableSize);
+            _topSplitter.Measure(availableSize);
+
+            return Math.Max(MinHeight, _headerPanel.DesiredSize.Height + _topSplitter.DesiredSize.Height);
+        }
+
         private void OnSplitterDragCompleted(object sender, DragCompletedEventArgs e)
         {
             OnResized(e);

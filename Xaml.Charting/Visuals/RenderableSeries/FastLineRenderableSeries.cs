@@ -199,7 +199,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries
             if (isPalettedLine)
             {
                 // If the line is paletted, use the penned DrawLines technique
-                using (var penManager = new PenManager(renderContext, AntiAliasing, StrokeThickness, Opacity))
+                using (var penManager = new PenManager(renderContext, AntiAliasing, StrokeThickness, Opacity, StrokeDashArray))
                 {
                     Func<double, double, IPen2D> createPenFunc = (x, y) =>
                     {
