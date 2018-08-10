@@ -44,7 +44,7 @@ namespace Ecng.Backup.Amazon
 		/// <param name="accessKey">Key.</param>
 		/// <param name="secretKey">Secret.</param>
 		public AmazonGlacierService(string endpoint, string bucket, string accessKey, string secretKey)
-			: this(RegionEndpoint.GetBySystemName(endpoint), bucket, accessKey, secretKey)
+			: this(AmazonExtensions.GetEndpoint(endpoint), bucket, accessKey, secretKey)
 		{
 		}
 

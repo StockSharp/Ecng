@@ -15,6 +15,7 @@ Copyright 2010 by StockSharp, LLC
 #endregion S# License
 namespace Ecng.Backup.Amazon
 {
+	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
@@ -60,10 +61,15 @@ namespace Ecng.Backup.Amazon
 		/// <returns>Region.</returns>
 		public static RegionEndpoint GetEndpoint(string name)
 		{
-			return Endpoints.First(e =>
+			if (name.IsEmpty())
+				throw new ArgumentNullException(nameof(name));
+
+			var region = Endpoints.FirstOrDefault(e =>
 				e.SystemName.CompareIgnoreCase(name) ||
 				e.SystemName.Remove("-").CompareIgnoreCase(name) ||
 				e.DisplayName.CompareIgnoreCase(name));
+
+			return region ?? RegionEndpoint.GetBySystemName(name);
 		}
 	}
 }
