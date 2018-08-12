@@ -451,8 +451,6 @@ namespace Ecng.Xaml.Charting
             if (_resizePane == null)
             {
                 _resizePane = paneByElement((UIElement) sender);
-                if(_resizePane == null)
-                    return;
 
                 var idx = _stackedViewPanel.Children.IndexOf(_resizePane.PaneElement);
                 if (idx < 0)
