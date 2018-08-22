@@ -22,7 +22,6 @@
 
 		protected override void AssignToEditCore(IBaseEdit edit)
 		{
-
 			if (edit is ButtonEdit btnEdit)
 				ValidationHelper.SetBaseEdit(this, btnEdit);
 
@@ -33,7 +32,7 @@
 		{
 			var edit = BaseEdit.GetOwnerEdit((DependencyObject)sender);
 
-			if (edit == null)
+			if (edit == null || edit.IsReadOnly)
 				return;
 
 			var dlg = new VistaFolderBrowserDialog();
@@ -52,7 +51,7 @@
 		{
 			var edit = BaseEdit.GetOwnerEdit((DependencyObject)sender);
 
-			if (edit == null)
+			if (edit == null || edit.IsReadOnly)
 				return;
 
 			edit.EditValue = null;

@@ -31,7 +31,7 @@
 		{
 			var edit = BaseEdit.GetOwnerEdit((DependencyObject)sender);
 
-			if (edit == null)
+			if (edit == null || edit.IsReadOnly)
 				return;
 
 			var dlg = new VistaOpenFileDialog { CheckFileExists = true };
@@ -50,7 +50,7 @@
 		{
 			var edit = BaseEdit.GetOwnerEdit((DependencyObject)sender);
 
-			if (edit == null)
+			if (edit == null || edit.IsReadOnly)
 				return;
 
 			edit.EditValue = null;
