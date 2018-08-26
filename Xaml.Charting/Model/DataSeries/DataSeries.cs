@@ -970,7 +970,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries
                         xScale = XMath.Mult(xScale, hitTestRadius);
 
                         // use binary search to reduce search region
-                        var leftBound = XMath.Subtract(x, xScale);
+                        var leftBound = xScale.CompareTo(x) > 0 ? x : XMath.Subtract(x, xScale);
                         var rightBound = XMath.Add(x, xScale);
 
                         var leftIndexInclusive = xValuesArray.FindIndexInSortedData(xValuesArrayLength, leftBound,

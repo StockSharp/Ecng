@@ -442,7 +442,7 @@ namespace Ecng.Xaml.Charting
         }
 
         static IPointSeries GetFirstPointSeries(IUltrachartSurface scs, RenderPassInfo rpi, Func<IRenderableSeries, bool> pred) {
-            var renderableSeries = scs.RenderableSeries.FirstOrDefault(rs => pred(rs) && rs.DataSeries.HasValues);
+            var renderableSeries = scs.RenderableSeries.FirstOrDefault(rs => pred(rs) && rs.DataSeries?.HasValues == true);
 
             if(rpi.PointSeries.IsNullOrEmpty() || renderableSeries == null)
                 return null;

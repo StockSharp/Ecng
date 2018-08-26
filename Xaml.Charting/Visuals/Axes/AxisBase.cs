@@ -1709,8 +1709,8 @@ namespace Ecng.Xaml.Charting.Visuals.Axes
             if (ParentSurface != null && ParentSurface.RenderableSeries != null)
             {
                 var firstSeries = IsXAxis
-                    ? ParentSurface.RenderableSeries.FirstOrDefault(x => x.XAxisId == Id && x.DataSeries.HasValues)
-                    : ParentSurface.RenderableSeries.FirstOrDefault(x => x.YAxisId == Id && x.DataSeries.HasValues);
+                    ? ParentSurface.RenderableSeries.FirstOrDefault(x => x.XAxisId == Id && x.DataSeries?.HasValues == true)
+                    : ParentSurface.RenderableSeries.FirstOrDefault(x => x.YAxisId == Id && x.DataSeries?.HasValues == true);
 
                 if (firstSeries != null && firstSeries.DataSeries != null)
                 {
