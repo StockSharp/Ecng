@@ -79,11 +79,16 @@
     <Compile Include="Parser\Packet.cs" />
     <Compile Include="Parser\Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WebSocketClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
       <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Localization\Localization.csproj">
+      <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
+      <Name>Localization</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
