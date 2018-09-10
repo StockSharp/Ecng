@@ -7,6 +7,7 @@
 	using System.Text;
 	using System.Threading;
 
+	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Localization;
 
@@ -15,8 +16,10 @@
 	public class WebSocketClient : Disposable
 	{
 		private ClientWebSocket _ws;
-		private CancellationTokenSource _source = new CancellationTokenSource();
+		private CancellationTokenSource _source;
 		private bool _expectedDisconnect;
+
+		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new SynchronizedDictionary<CancellationTokenSource,bool>();
 
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
@@ -45,6 +48,9 @@
 		public void Connect(string url, bool immediateConnect, Action<ClientWebSocket> init = null)
 		{
 			_expectedDisconnect = false;
+			_source = new CancellationTokenSource();
+
+			_disconnectionStates[_source] = _expectedDisconnect;
 
 			_ws = new ClientWebSocket();
 			init?.Invoke(_ws);
@@ -58,10 +64,12 @@
 
 		public void Disconnect(bool expectedDisconnect = true)
 		{
-			_expectedDisconnect = expectedDisconnect;
+			if (_source == null)
+				throw new InvalidOperationException("Not connected.".Translate());
 
+			_expectedDisconnect = expectedDisconnect;
+			_disconnectionStates[_source] = _expectedDisconnect;
 			_source.Cancel();
-			_source = new CancellationTokenSource();
 		}
 
 		private void OnReceive()
@@ -72,14 +80,13 @@
 				var pos = 0;
 
 				var errorCount = 0;
-				const int maxErrorCount = 10;
+				const int maxParsingErrors = 100;
+				const int maxNetworkErrors = 10;
 
 				var source = _source;
 
 				while (!source.IsCancellationRequested)
 				{
-					string recv = null;
-
 					try
 					{
 						var task = _ws.ReceiveAsync(new ArraySegment<byte>(buf, pos, buf.Length - pos), source.Token);
@@ -95,7 +102,7 @@
 							if (task.Exception != null && !source.IsCancellationRequested)
 								_error(task.Exception);
 
-							_infoLog("Socket closed with status {0}.", result.CloseStatus);
+							_infoLog("Socket closed with status {0}.".Translate(), result.CloseStatus);
 							break;
 						}
 
@@ -104,23 +111,41 @@
 						if (!result.EndOfMessage)
 							continue;
 
-						var preProcess = PreProcess;
+						string recv;
 
-						if (preProcess != null)
+						try
 						{
-							var t = preProcess(buf, pos);
-							buf = t.Item1;
-							pos = t.Item2;
+							var preProcess = PreProcess;
+
+							if (preProcess != null)
+							{
+								var t = preProcess(buf, pos);
+								buf = t.Item1;
+								pos = t.Item2;
+							}
+
+							recv = Encoding.UTF8.GetString(buf, 0, pos);
+							_verbose2Log(recv);
+						}
+						finally
+						{
+							pos = 0;
 						}
 
-						recv = Encoding.UTF8.GetString(buf, 0, pos);
-						_verbose2Log(recv);
+						try
+						{
+							_process(recv);
+							errorCount = 0;
+						}
+						catch (Exception ex)
+						{
+							_error(new InvalidOperationException("Error parsing string '{0}'.".Translate().Put(recv), ex));
+						
+							if (++errorCount < maxParsingErrors)
+								continue;
 
-						pos = 0;
-
-						_process(recv);
-
-						errorCount = 0;
+							_errorLog("Max parsing error {0} limit reached.".Translate(), maxParsingErrors);
+						}
 					}
 					catch (AggregateException ex)
 					{
@@ -130,15 +155,16 @@
 						if (ex.InnerExceptions.FirstOrDefault() is WebSocketException)
 							break;
 
-						if (++errorCount < maxErrorCount)
+						if (++errorCount < maxNetworkErrors)
 							continue;
 
-						_errorLog("Max error {0} limit reached.", maxErrorCount);
+						_errorLog("Max network error {0} limit reached.".Translate(), maxNetworkErrors);
 						break;
 					}
 					catch (Exception ex)
 					{
-						_error(new InvalidOperationException("Error parsing string '{0}'.".Translate().Put(recv), ex));
+						if (!source.IsCancellationRequested)
+							_error(ex);
 					}
 				}
 
@@ -155,7 +181,7 @@
 				_ws.Dispose();
 				_ws = null;
 
-				_disconnected(_expectedDisconnect);
+				_disconnected(_disconnectionStates.GetAndRemove(source));
 			}
 			catch (Exception ex)
 			{
