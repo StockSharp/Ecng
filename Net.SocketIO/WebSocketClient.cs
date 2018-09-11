@@ -191,10 +191,14 @@
 
 		public void Send(object obj)
 		{
-			var json = obj as string ?? JsonConvert.SerializeObject(obj);
-			_verboseLog("Send: '{0}'", json);
+			if (!(obj is byte[] sendBuf))
+			{
+				var json = obj as string ?? JsonConvert.SerializeObject(obj);
+				_verboseLog("Send: '{0}'", json);
 
-			var sendBuf = Encoding.UTF8.GetBytes(json);
+				sendBuf = Encoding.UTF8.GetBytes(json);
+			}
+			
 			_ws.SendAsync(new ArraySegment<byte>(sendBuf), WebSocketMessageType.Text, true, _source.Token).Wait();
 		}
 

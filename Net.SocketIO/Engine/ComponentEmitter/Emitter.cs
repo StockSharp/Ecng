@@ -22,6 +22,8 @@ namespace Ecng.Net.SocketIO.Engine.ComponentEmitter
             this.Off();
         }
 
+	    public event Action<string, object[]> Unhandled;
+
         /// <summary>
         /// Executes each of listeners with the given args.
         /// </summary>
@@ -44,6 +46,16 @@ namespace Ecng.Net.SocketIO.Engine.ComponentEmitter
                     }
                 }
                 catch { }
+            }
+            else
+            {
+	            try
+	            {
+		            Unhandled?.Invoke(eventString, args);
+	            }
+	            catch
+	            {
+	            }
             }
             return this;            
         }

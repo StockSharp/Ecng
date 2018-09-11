@@ -23,9 +23,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
 	    private const bool _isNative = true;
 
-	    private ClientWebSocket _ws;
-	    private CancellationTokenSource _source = new CancellationTokenSource();
-	    private bool _connected;
+	    private WebSocketClient _client;
 
         //private WebSocket4Net.WebSocket ws;
         private List<KeyValuePair<string, string>> Cookies;
@@ -54,26 +52,25 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
 	        if (_isNative)
 	        {
-		        _ws = new ClientWebSocket();
+		        _client = new WebSocketClient(OnOpen, e => OnClose(), e => OnError("websocket error", e),
+			        OnData, (s, o) => { }, (s, o) => { }, (s, o) => { }, s => { });
 		        
 		        var destUrl = new UriBuilder(this.Uri());
 		        if (this.Secure)
 			        destUrl.Scheme = "wss";
 		        else
 			        destUrl.Scheme = "ws";
-		        var useProxy = !WebRequest.DefaultWebProxy.IsBypassed(destUrl.Uri);
-		        if (useProxy)
+		        
+		        _client.Connect(destUrl.Uri.ToString(), true, ws =>
 		        {
-			        var proxyUrl = WebRequest.DefaultWebProxy.GetProxy(destUrl.Uri);
-			        var proxy = new WebProxy(proxyUrl.Host, proxyUrl.Port);
-			        _ws.Options.Proxy = proxy;
-		        }
-		        _ws.ConnectAsync(destUrl.Uri, _source.Token).Wait();
-		        OnOpen();
-
-		        _connected = true;
-
-		        ThreadingHelper.Thread(() => CultureInfo.InvariantCulture.DoInCulture(OnReceive)).Launch();
+			        var useProxy = !WebRequest.DefaultWebProxy.IsBypassed(destUrl.Uri);
+			        if (useProxy)
+			        {
+				        var proxyUrl = WebRequest.DefaultWebProxy.GetProxy(destUrl.Uri);
+				        var proxy = new WebProxy(proxyUrl.Host, proxyUrl.Port);
+				        ws.Options.Proxy = proxy;
+			        }
+		        });
 	        }
 	        else
 	        {
@@ -112,88 +109,6 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 		        //ws.Open();
 	        }
         }
-
-	    private void OnReceive()
-	    {
-		    try
-		    {
-			    var buf = new byte[1024 * 1024];
-			    var pos = 0;
-
-			    var errorCount = 0;
-			    const int maxErrorCount = 10;
-
-			    while (_connected)
-			    {
-				    string recv = null;
-
-				    try
-				    {
-					    var task = _ws.ReceiveAsync(new ArraySegment<byte>(buf, pos, buf.Length - pos), _source.Token);
-					    task.Wait();
-
-					    var result = task.Result;
-
-					    if (result.CloseStatus != null)
-					    {
-						    if (task.Exception != null && _connected)
-							    this.OnError("websocket error", task.Exception);
-
-						    break;
-					    }
-
-					    pos += result.Count;
-
-					    if (!result.EndOfMessage)
-						    continue;
-
-					    recv = Encoding.UTF8.GetString(buf, 0, pos);
-
-					    pos = 0;
-
-					    OnData(recv);
-
-					    errorCount = 0;
-				    }
-				    catch (AggregateException ex)
-				    {
-					    if (_connected)
-						    this.OnError("websocket error", ex);
-
-					    if (ex.InnerExceptions.FirstOrDefault() is WebSocketException)
-						    break;
-
-					    if (++errorCount >= maxErrorCount)
-					    {
-						    //this.AddErrorLog("Max error {0} limit reached.", maxErrorCount);
-						    break;
-					    }
-				    }
-				    catch (Exception ex)
-				    {
-					    this.OnError("websocket error", new InvalidOperationException(recv, ex));
-				    }
-			    }
-
-			    try
-			    {
-				    _ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, _source.Token).Wait();
-			    }
-			    catch (Exception ex)
-			    {
-				    if (_connected)
-					    this.OnError("websocket error", ex);
-			    }
-
-			    _ws.Dispose();
-
-			    OnClose();
-		    }
-		    catch (Exception ex)
-		    {
-			    this.OnError("websocket error", ex);
-		    }
-	    }
 
         //void ws_DataReceived(object sender, DataReceivedEventArgs e)
         //{
@@ -290,24 +205,11 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 	            {
 		            if (data is string)
 		            {      
-			            var sendBuf = Encoding.UTF8.GetBytes((string)data);
-			            webSocket._ws.SendAsync(new ArraySegment<byte>(sendBuf), WebSocketMessageType.Text, true, webSocket._source.Token).Wait();
+			            webSocket._client.Send(data);
 		            }
 		            else if (data is byte[])
 		            {
-			            var d = (byte[])data;
-
-			            //try
-			            //{
-			            //    var dataString = BitConverter.ToString(d);
-			            //    //log.Info(string.Format("WriteEncodeCallback byte[] data {0}", dataString));
-			            //}
-			            //catch (Exception e)
-			            //{
-			            //    log.Error(e);
-			            //}
-
-			            webSocket._ws.SendAsync(new ArraySegment<byte>(d), WebSocketMessageType.Text, true, webSocket._source.Token).Wait();
+			            webSocket._client.Send(data);
 		            }
 	            }
             }
@@ -331,15 +233,13 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
    //             }
    //         }
 
-	        if (_ws != null)
+	        if (_client != null)
 	        {
           
 		        try
 		        {
 			        //ws.Close();
-			        _connected = false;
-			        _source.Cancel();
-			        _source = new CancellationTokenSource();
+			        _client.Disconnect();
 		        }
 		        catch (Exception e)
 		        {

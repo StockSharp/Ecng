@@ -82,6 +82,10 @@
     <Compile Include="WebSocketClient.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Collections\Collections.csproj">
+      <Project>{62a4add9-9d89-48e6-984b-73bf023d7e50}</Project>
+      <Name>Collections</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
       <Name>Common</Name>
