@@ -13,12 +13,14 @@ namespace Ecng.Collections
 		{
 		}
 
+		protected KeyedCollection(IEqualityComparer<TKey> comparer)
+			: this(new Dictionary<TKey, TValue>(comparer))
+		{
+		}
+
 		protected KeyedCollection(IDictionary<TKey, TValue> innerDictionary)
 		{
-			if (innerDictionary == null)
-				throw new ArgumentNullException(nameof(innerDictionary));
-
-			InnerDictionary = innerDictionary;
+			InnerDictionary = innerDictionary ?? throw new ArgumentNullException(nameof(innerDictionary));
 		}
 
 		protected IDictionary<TKey, TValue> InnerDictionary { get; }

@@ -12,6 +12,15 @@
 
 		#endregion
 
+		public PairSet()
+		{
+		}
+
+		public PairSet(IEqualityComparer<TKey> comparer)
+			: base(comparer)
+		{
+		}
+
 		#region Item
 
 		public TKey this[TValue value] => _values[value];
