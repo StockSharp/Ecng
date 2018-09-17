@@ -533,7 +533,7 @@ namespace Ecng.Xaml
 			{
 				BeforeUpdate?.Invoke();
 
-                if (hasClear)
+				if (hasClear)
 					Items.Clear();
 
 				foreach (var action in pendingActions)

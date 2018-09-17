@@ -36,7 +36,7 @@
     <NoWarn>1591,1574,1572,1587,1573,0414,1570,1710,3008</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+    <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>LICENSEDDEPLOY</DefineConstants>
@@ -44,7 +44,7 @@
     <WarningLevel>2</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DocumentationFile>bin\Release\Ecng.Xaml.Charting.xml</DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
+    <DebugSymbols>false</DebugSymbols>
     <NoWarn>1591,1574,1572,1587,1573,0414,1570,1710,3008</NoWarn>
     <Prefer32Bit>false</Prefer32Bit>
     <LangVersion>default</LangVersion>
