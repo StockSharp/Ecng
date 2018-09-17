@@ -112,7 +112,7 @@ namespace Ecng.Xaml.Charting.Visuals.Axes
                 max = max > pSeriesRange.Max ? max : pSeriesRange.Max;
             }
 
-            var visibleRange = new DateRange(new DateTime((long)min), new DateTime((long)max));
+            var visibleRange = new DateRange(new DateTime(Math.Min((long)min, DateTime.MaxValue.Ticks)), new DateTime(Math.Max((long)max, DateTime.MinValue.Ticks)));
             return visibleRange.GrowBy(GrowBy.Min, GrowBy.Max);
         }
 
