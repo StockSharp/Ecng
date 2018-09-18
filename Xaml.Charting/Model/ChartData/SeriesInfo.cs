@@ -800,7 +800,7 @@ namespace Ecng.Xaml.Charting
         /// <param name="value">The value to format</param>
         protected string GetYCursorFormattedValue(IComparable value)
         {
-            var result = RenderableSeries.YAxis.FormatCursorText(value);
+            var result = RenderableSeries.YAxis?.FormatCursorText(value) ?? string.Empty;
 
             return result;
         }
@@ -811,7 +811,7 @@ namespace Ecng.Xaml.Charting
         /// <param name="value">The value to format</param>
         protected string GetXCursorFormattedValue(IComparable value)
         {
-            var result = RenderableSeries.XAxis.FormatCursorText(value);
+            var result = RenderableSeries.XAxis?.FormatCursorText(value) ?? string.Empty;
 
             return result;
         }
