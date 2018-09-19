@@ -11,6 +11,8 @@
 
 		event Action<TItem> Removing;
 
+		event Action<int> RemovingAt;
+
 		event Action<TItem> Removed;
 
 		event Action Clearing;

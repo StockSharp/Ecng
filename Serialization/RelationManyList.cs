@@ -536,8 +536,8 @@
 
 					if (orderBy != null)
 					{
-						Func<TEntity, object> keySelector = entity => orderBy.GetAccessor<TEntity>().GetValue(entity);
-						source = direction == ListSortDirection.Ascending ? source.OrderBy(keySelector) : source.OrderByDescending(keySelector);
+						object KeySelector(TEntity entity) => orderBy.GetAccessor<TEntity>().GetValue(entity);
+						source = direction == ListSortDirection.Ascending ? source.OrderBy(KeySelector) : source.OrderByDescending(KeySelector);
 					}
 
 					return new ListEx<TEntity>(source.Skip((int)startIndex).Take((int)count));
@@ -611,6 +611,7 @@
 		public event Action<TEntity> Adding;
 		public event Action<TEntity> Added;
 		public event Action<TEntity> Removing;
+		public event Action<int> RemovingAt;
 		public event Action<TEntity> Removed;
 		public event Action Clearing;
 		public event Action Cleared;

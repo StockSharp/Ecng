@@ -19,10 +19,7 @@
 
 		public DuckTypedList(INotifyList<TInner> innerList, bool onlyCompatible)
 		{
-			if (innerList == null)
-				throw new ArgumentNullException(nameof(innerList));
-
-			_innerList = innerList;
+			_innerList = innerList ?? throw new ArgumentNullException(nameof(innerList));
 			_onlyCompatible = onlyCompatible;
 
 			_innerList.Adding += OnAdding;
@@ -30,6 +27,7 @@
 			_innerList.Inserting += OnInserting;
 			_innerList.Inserted += OnInserted;
 			_innerList.Removing += OnRemoving;
+			_innerList.RemovingAt += OnRemovingAt;
 			_innerList.Removed += OnRemoved;
 			_innerList.Clearing += OnClearing;
 			_innerList.Cleared += OnCleared;
@@ -165,6 +163,14 @@
 			remove => _removing -= value;
 		}
 
+		private Action<int> _removingAt;
+
+		event Action<int> INotifyList<TOuter>.RemovingAt
+		{
+			add => _removingAt += value;
+			remove => _removingAt -= value;
+		}
+
 		private Action<TOuter> _removed;
 
 		event Action<TOuter> INotifyList<TOuter>.Removed
@@ -210,6 +216,12 @@
 		{
 			if (CanProcess(item))
 				_removing?.Invoke(item.To<TOuter>());
+		}
+
+		private void OnRemovingAt(int index)
+		{
+			//if (CanProcess(this[index]))
+				_removingAt?.Invoke(index);
 		}
 
 		private void OnAdded(TInner item)
@@ -260,6 +272,7 @@
 			_innerList.Inserting -= OnInserting;
 			_innerList.Inserted -= OnInserted;
 			_innerList.Removing -= OnRemoving;
+			_innerList.RemovingAt -= OnRemovingAt;
 			_innerList.Removed -= OnRemoved;
 			_innerList.Clearing -= OnClearing;
 			_innerList.Cleared -= OnCleared;
