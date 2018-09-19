@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Collections.Specialized;
 #if !SILVERLIGHT
 	using System.Configuration;
 	using System.Diagnostics;
@@ -175,6 +176,8 @@
 		}
 
 		#endregion
+
+		public static NameValueCollection AppSettings => ConfigurationManager.AppSettings;
 
 		public static UnityContainer UnityContainer { get; }
 
