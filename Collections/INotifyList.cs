@@ -5,21 +5,21 @@
 
 	public interface INotifyList<TItem> : IList<TItem>
 	{
-		event Action<TItem> Adding;
+		event Func<TItem, bool> Adding;
 
 		event Action<TItem> Added;
 
-		event Action<TItem> Removing;
+		event Func<TItem, bool> Removing;
 
-		event Action<int> RemovingAt;
+		event Func<int, bool> RemovingAt;
 
 		event Action<TItem> Removed;
 
-		event Action Clearing;
+		event Func<bool> Clearing;
 
 		event Action Cleared;
 
-		event Action<int, TItem> Inserting;
+		event Func<int, TItem, bool> Inserting;
 
 		event Action<int, TItem> Inserted;
 

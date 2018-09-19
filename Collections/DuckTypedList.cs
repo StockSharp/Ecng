@@ -123,9 +123,9 @@
 			set => _innerList[index] = value.To<TInner>();
 		}
 
-		private Action<TOuter> _adding;
+		private Func<TOuter, bool> _adding;
 
-		event Action<TOuter> INotifyList<TOuter>.Adding
+		event Func<TOuter, bool> INotifyList<TOuter>.Adding
 		{
 			add => _adding += value;
 			remove => _adding -= value;
@@ -139,9 +139,9 @@
 			remove => _added -= value;
 		}
 
-		private Action<int, TOuter> _inserting;
+		private Func<int, TOuter, bool> _inserting;
 
-		event Action<int, TOuter> INotifyList<TOuter>.Inserting
+		event Func<int, TOuter, bool> INotifyList<TOuter>.Inserting
 		{
 			add => _inserting += value;
 			remove => _inserting -= value;
@@ -155,17 +155,17 @@
 			remove => _inserted -= value;
 		}
 
-		private Action<TOuter> _removing;
+		private Func<TOuter, bool> _removing;
 
-		event Action<TOuter> INotifyList<TOuter>.Removing
+		event Func<TOuter, bool> INotifyList<TOuter>.Removing
 		{
 			add => _removing += value;
 			remove => _removing -= value;
 		}
 
-		private Action<int> _removingAt;
+		private Func<int, bool> _removingAt;
 
-		event Action<int> INotifyList<TOuter>.RemovingAt
+		event Func<int, bool> INotifyList<TOuter>.RemovingAt
 		{
 			add => _removingAt += value;
 			remove => _removingAt -= value;
@@ -179,9 +179,9 @@
 			remove => _removed -= value;
 		}
 
-		private Action _clearing;
+		private Func<bool> _clearing;
 
-		event Action INotifyList<TOuter>.Clearing
+		event Func<bool> INotifyList<TOuter>.Clearing
 		{
 			add => _clearing += value;
 			remove => _clearing -= value;
@@ -212,16 +212,18 @@
 			}
 		}
 
-		private void OnRemoving(TInner item)
+		private bool OnRemoving(TInner item)
 		{
 			if (CanProcess(item))
-				_removing?.Invoke(item.To<TOuter>());
+				return _removing?.Invoke(item.To<TOuter>()) ?? true;
+
+			return false;
 		}
 
-		private void OnRemovingAt(int index)
+		private bool OnRemovingAt(int index)
 		{
 			//if (CanProcess(this[index]))
-				_removingAt?.Invoke(index);
+			return _removingAt?.Invoke(index) ?? true;
 		}
 
 		private void OnAdded(TInner item)
@@ -233,16 +235,20 @@
 			}
 		}
 
-		private void OnAdding(TInner item)
+		private bool OnAdding(TInner item)
 		{
 			if (CanProcess(item))
-				_adding?.Invoke(item.To<TOuter>());
+				return _adding?.Invoke(item.To<TOuter>()) ?? true;
+
+			return false;
 		}
 
-		private void OnInserting(int index, TInner item)
+		private bool OnInserting(int index, TInner item)
 		{
 			if (CanProcess(item))
-				_inserting?.Invoke(index, item.To<TOuter>());
+				return _inserting?.Invoke(index, item.To<TOuter>()) ?? true;
+
+			return false;
 		}
 
 		private void OnInserted(int index, TInner item)
@@ -254,9 +260,9 @@
 			}
 		}
 
-		private void OnClearing()
+		private bool OnClearing()
 		{
-			_clearing?.Invoke();
+			return _clearing?.Invoke() ?? true;
 		}
 
 		private void OnCleared()

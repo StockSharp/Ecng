@@ -608,14 +608,14 @@
 				throw new InvalidOperationException();
 		}
 
-		public event Action<TEntity> Adding;
+		public event Func<TEntity, bool> Adding;
 		public event Action<TEntity> Added;
-		public event Action<TEntity> Removing;
-		public event Action<int> RemovingAt;
+		public event Func<TEntity, bool> Removing;
+		public event Func<int, bool> RemovingAt;
 		public event Action<TEntity> Removed;
-		public event Action Clearing;
+		public event Func<bool> Clearing;
 		public event Action Cleared;
-		public event Action<int, TEntity> Inserting;
+		public event Func<int, TEntity, bool> Inserting;
 		public event Action<int, TEntity> Inserted;
 		public event Action Changed;
 	}

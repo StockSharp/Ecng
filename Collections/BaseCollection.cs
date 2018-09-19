@@ -146,22 +146,21 @@ namespace Ecng.Collections
 			return false;
 		}
 
-		public event Action<TItem> Adding;
+		public event Func<TItem, bool> Adding;
 		public event Action<TItem> Added;
-		public event Action<TItem> Removing;
+		public event Func<TItem, bool> Removing;
 		public event Action<TItem> Removed;
-		public event Action<int> RemovingAt;
+		public event Func<int, bool> RemovingAt;
 		public event Action<int> RemovedAt;
-		public event Action Clearing;
+		public event Func<bool> Clearing;
 		public event Action Cleared;
-		public event Action<int, TItem> Inserting;
+		public event Func<int, TItem, bool> Inserting;
 		public event Action<int, TItem> Inserted;
 		public event Action Changed;
 
 		protected virtual bool OnInserting(int index, TItem item)
 		{
-			Inserting?.Invoke(index, item);
-			return true;
+			return Inserting?.Invoke(index, item) ?? true;
 		}
 
 		protected virtual void OnInserted(int index, TItem item)
@@ -172,8 +171,7 @@ namespace Ecng.Collections
 
 		protected virtual bool OnAdding(TItem item)
 		{
-			Adding?.Invoke(item);
-			return true;
+			return Adding?.Invoke(item) ?? true;
 		}
 
 		protected virtual void OnAdded(TItem item)
@@ -184,8 +182,7 @@ namespace Ecng.Collections
 
 		protected virtual bool OnClearing()
 		{
-			Clearing?.Invoke();
-			return true;
+			return Clearing?.Invoke() ?? true;
 		}
 
 		protected virtual void OnCleared()
@@ -196,8 +193,7 @@ namespace Ecng.Collections
 
 		protected virtual bool OnRemoving(TItem item)
 		{
-			Removing?.Invoke(item);
-			return true;
+			return Removing?.Invoke(item) ?? true;
 		}
 
 		protected virtual void OnRemoved(TItem item)
@@ -208,8 +204,7 @@ namespace Ecng.Collections
 
 		protected virtual bool OnRemovingAt(int index)
 		{
-			RemovingAt?.Invoke(index);
-			return true;
+			return RemovingAt?.Invoke(index) ?? true;
 		}
 
 		protected virtual void OnRemovedAt(int index)
