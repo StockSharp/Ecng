@@ -3,8 +3,8 @@
 	using System;
 	using System.IO;
 	using System.Linq;
-	using System.Reflection;
 	using System.Collections.Generic;
+	using System.Globalization;
 
 	using Ecng.Common;
 	using Ecng.Collections;
@@ -22,109 +22,120 @@
 		private readonly Dictionary<string, string[]> _stringByResourceId = new Dictionary<string, string[]>();
 		private readonly Dictionary<Tuple<Languages, string>, Dictionary<Languages, string>> _stringsByLang = new Dictionary<Tuple<Languages, string>, Dictionary<Languages, string>>();
 
-		public LocalizationManager(Assembly asmHolder, string fileName)
+		//public LocalizationManager(Assembly asmHolder, string fileName)
+		//	: this(GetResourceStream(asmHolder, fileName), true, fileName)
+		//{
+		//}
+
+		//public LocalizationManager(Stream resourceStream, bool autoClose, string fileName)
+		//{
+		//	if (fileName.IsEmpty())
+		//		throw new ArgumentNullException(nameof(fileName));
+
+		//	var ex1 = ProcessCsvStream("embedded", resourceStream, autoClose);
+
+		//	var ex2 = File.Exists(fileName)
+		//		? ProcessCsvStream("file", File.OpenRead(fileName), true)
+		//		: new InvalidOperationException("File {0} not found.".Put(fileName));
+
+		//	if (ex1 != null && ex2 != null)
+		//		throw new AggregateException("Unable to load string resources.", ex1, ex2);
+		//}
+
+		public LocalizationManager()
 		{
-			if (asmHolder == null)
-				throw new ArgumentNullException(nameof(asmHolder));
-
-			if (fileName.IsEmpty())
-				throw new ArgumentNullException(nameof(fileName));
-
-			var ex1 = ProcessCsvStream("embedded", () => asmHolder.GetManifestResourceStream("{0}.{1}".Put(asmHolder.GetName().Name, Path.GetFileName(fileName))));
-
-			var ex2 = File.Exists(fileName)
-				? ProcessCsvStream("file", () => File.OpenRead(fileName))
-				: new InvalidOperationException("File {0} not found.".Put(fileName));
-
-			if (ex1 != null && ex2 != null)
-				throw new AggregateException("Unable to load string resources.", ex1, ex2);
+			ActiveLanguage = CultureInfo.CurrentCulture.Name.CompareIgnoreCase(LocalizationHelper.Ru)
+				? Languages.Russian
+				: Languages.English;
 		}
 
 		public Languages ActiveLanguage { get; set; }
 
-		private Exception ProcessCsvStream(string name, Func<Stream> getCsvStream)
+		public void Init(Stream stream, bool autoClose = true)
 		{
+			if (stream == null)
+				throw new ArgumentNullException(nameof(stream));
+
 			try
 			{
 				var names = new HashSet<string>();
 
-				using (var stream = getCsvStream())
+				var row = new List<string>();
+
+				//var langCount = Enumerator.GetValues<Languages>().Count();
+
+				using (var reader = new CsvFileReader(stream, EmptyLineBehavior.Ignore))
 				{
-					if (stream == null)
-						return new Exception("stream is null");
-
-					var row = new List<string>();
-
-					//var langCount = Enumerator.GetValues<Languages>().Count();
-
-					using (var reader = new CsvFileReader(stream, EmptyLineBehavior.Ignore))
+					while (reader.ReadRow(row))
 					{
-						while (reader.ReadRow(row))
+						if (row.Count < 2 /* || list.Count > (langCount + 1)*/)
+							throw new LocalizationException($"Unexpected number of columns in CSV ({row.Count}): {row.Join("|")}");
+
+						var key = row[0];
+						//if (key.IsEmpty())
+						//	throw new LocalizationException("{0}: Empty key found.".Put(name));
+
+						string[] stringByResourceId = null;
+
+						if (!key.IsEmpty())
 						{
-							if (row.Count < 2/* || list.Count > (langCount + 1)*/)
-								throw new LocalizationException("{0}: Unexpected number of columns in CSV ({1}): {2}".Put(name, row.Count, row.Join("|")));
+							if (!names.Add(key))
+								throw new LocalizationException($"Duplicated key({key}) found.");
 
-							var key = row[0];
-							//if (key.IsEmpty())
-							//	throw new LocalizationException("{0}: Empty key found.".Put(name));
+							stringByResourceId = _stringByResourceId.TryGetValue(key);
 
-							string[] stringByResourceId = null;
+							if (stringByResourceId == null)
+								_stringByResourceId.Add(key, stringByResourceId = new string[row.Count - 1]);
 
-							if (!key.IsEmpty())
-							{
-								if (!names.Add(key))
-									throw new LocalizationException("{0}: Duplicated key({1}) found.".Put(name, key));
+							//var fallback = row.Skip(1).FirstOrDefault(s => !s.IsEmpty()) ?? key;	
+						}
 
-								stringByResourceId = _stringByResourceId.TryGetValue(key);
 
-								if (stringByResourceId == null)
-									_stringByResourceId.Add(key, stringByResourceId = new string[row.Count - 1]);
+						var i = 0;
 
-								//var fallback = row.Skip(1).FirstOrDefault(s => !s.IsEmpty()) ?? key;	
-							}
-							
+						var tuples = new List<Tuple<Languages, string>>();
 
-							var i = 0;
+						foreach (var cell in row.Skip(1))
+						{
+							//if (i + 1 < row.Count)
+							//	arr[i] = row[i + 1].Trim() != string.Empty ? row[i + 1] : (!arr[i].IsEmpty() ? arr[i] : fallback);
+							//else
+							//	arr[i] = !arr[i].IsEmpty() ? arr[i] : fallback;
 
-							var tuples = new List<Tuple<Languages, string>>();
+							if (stringByResourceId != null)
+								stringByResourceId[i] = cell;
 
-							foreach (var cell in row.Skip(1))
-							{
-								//if (i + 1 < row.Count)
-								//	arr[i] = row[i + 1].Trim() != string.Empty ? row[i + 1] : (!arr[i].IsEmpty() ? arr[i] : fallback);
-								//else
-								//	arr[i] = !arr[i].IsEmpty() ? arr[i] : fallback;
+							tuples.Add(Tuple.Create((Languages)i, cell));
 
-								if (stringByResourceId != null)
-									stringByResourceId[i] = cell;
+							i++;
+						}
 
-								tuples.Add(Tuple.Create((Languages)i, cell));
+						for (var j = 0; j < tuples.Count; j++)
+						{
+							var dict = tuples
+							           .Where((t, k) => k != j)
+							           .ToDictionary(tuple => tuple.Item1, tuple => tuple.Item2);
 
-								i++;
-							}
-
-							for (var j = 0; j < tuples.Count; j++)
-							{
-								var dict = tuples
-									.Where((t, k) => k != j)
-									.ToDictionary(tuple => tuple.Item1, tuple => tuple.Item2);
-
-								_stringsByLang[tuples[j]] = dict;
-							}
+							_stringsByLang[tuples[j]] = dict;
 						}
 					}
 				}
 			}
-			catch (LocalizationException)
+			//catch (LocalizationException)
+			//{
+			//	throw;
+			//}
+			//catch (Exception e)
+			//{
+			//	return e;
+			//}
+			finally
 			{
-				throw;
-			}
-			catch (Exception e)
-			{
-				return e;
+				if (autoClose)
+					stream.Dispose();
 			}
 
-			return null;
+			//return null;
 		}
 
 		public event Action<string, bool> Missing;

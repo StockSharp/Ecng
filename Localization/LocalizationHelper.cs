@@ -2,7 +2,7 @@ namespace Ecng.Localization
 {
 	public static class LocalizationHelper
 	{
-		public static LocalizationManager DefaultManager { get; set; }
+		public static LocalizationManager DefaultManager { get; set; } = new LocalizationManager();
 
 		public static string Translate(this string text, Languages? from = null, Languages? to = null)
 		{
