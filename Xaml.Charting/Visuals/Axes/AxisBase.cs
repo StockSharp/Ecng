@@ -1283,8 +1283,8 @@ namespace Ecng.Xaml.Charting.Visuals.Axes
                     }
                     else
                     {
-                        var xAxis = rSeries.XAxis ?? ParentSurface.XAxes.GetAxisById(rSeries.XAxisId, true);
-                        xVisibleRange = xAxis.VisibleRange;
+                        var xAxis = rSeries.XAxis ?? ParentSurface.XAxes.GetAxisById(rSeries.XAxisId);
+                        xVisibleRange = xAxis?.VisibleRange;
                     }
 
                     // if X range is valid, get Y indicies range

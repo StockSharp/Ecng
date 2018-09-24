@@ -281,8 +281,9 @@ namespace Ecng.Xaml.Charting
             // 4. Point range in view
             // 5. Width/Height of rendersurface            
 
-            var allRenderableSeries = scs.RenderableSeries;
-            int renderableSeriesCount = allRenderableSeries != null ? allRenderableSeries.Count : 0;
+            var allRenderableSeries = scs.RenderableSeries?.Where(rs => scs.XAxes.GetAxisById(rs.XAxisId) != null && scs.YAxes.GetAxisById(rs.YAxisId) != null).ToList();
+            var renderableSeriesCount = allRenderableSeries?.Count ?? 0;
+
             var renderPassInfo = new RenderPassInfo {ViewportSize = viewportSize, Warnings = new List<string>()};
 
             if (Math.Abs(renderPassInfo.ViewportSize.Width) < double.Epsilon ||
