@@ -243,6 +243,10 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 annotation.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
 
                 var axis = annotation.Axis;
+
+                if(axis == null)
+                    return new Point[0];
+
                 var modifierSurface = annotation.ModifierSurface;
 
                 if (axis.IsHorizontalAxis)
@@ -282,6 +286,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             {
                 bool inBounds;
 
+                if(Annotation.Axis == null)
+                    return false;
+
                 if (Annotation.Axis.IsHorizontalAxis)
                 {
                     var actualCoord = coordinates.X1Coord;
@@ -299,6 +306,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             protected override void InternalMoveAnntotationTo(AnnotationCoordinates coordinates, ref double horizontalOffset, ref double verticalOffset, IAnnotationCanvas canvas)
             {
                 IComparable[] dataValues;
+
+                if(Annotation.Axis == null)
+                    return;
 
                 if (Annotation.Axis.IsHorizontalAxis)
                 {
@@ -331,6 +341,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             public override void PlaceAnnotation(AnnotationCoordinates coordinates)
             {
+                if(Annotation.Axis == null)
+                    return;
+
                 if (Annotation.Axis.IsXAxis)
                 {
                     ClearAxisMarkerPlacement(Annotation);
@@ -348,6 +361,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             public override bool IsInBounds(AnnotationCoordinates coordinates, IAnnotationCanvas canvas)
             {
+                if(Annotation.Axis == null)
+                    return false;
+
                 if (Annotation.Axis.IsXAxis)
                 {
                     return true;
@@ -373,6 +389,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             public override Point[] GetBasePoints(AnnotationCoordinates coordinates)
             {
+                if(Annotation.Axis == null)
+                    return new Point[0];
+
                 if (Annotation.Axis.IsXAxis)
                 {
                     var actualCoordinates = GetCartesianAnnotationCoordinates(coordinates);
@@ -480,6 +499,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             var point = new Point(coordinates.X1Coord, coordinates.Y1Coord);
 
             ClearAxisMarkerPlacement(axisMarker);
+
+            if(axis == null)
+                return;
 
             if (axis.IsHorizontalAxis)
             {

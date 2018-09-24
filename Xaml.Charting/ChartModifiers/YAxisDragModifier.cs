@@ -60,7 +60,7 @@ namespace Ecng.Xaml.Charting.ChartModifiers
         /// </returns>
         protected override bool GetIsSecondHalf(Point point, Rect axisBounds, bool isHorizontalAxis)
         {
-            if (XAxis.IsPolarAxis)
+            if (XAxis?.IsPolarAxis == true)
             {
                 axisBounds.Height /= 2;
                 return !axisBounds.Contains(point);

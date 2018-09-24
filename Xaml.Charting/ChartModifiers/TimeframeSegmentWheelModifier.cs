@@ -120,7 +120,7 @@ namespace Ecng.Xaml.Charting.ChartModifiers
                 foreach (var xAxis in XAxes)
                 {
                     // don't pan on axes which have a different orientation than primary X axis
-                    if (xAxis.IsHorizontalAxis != XAxis.IsHorizontalAxis)
+                    if (xAxis.IsHorizontalAxis != XAxis?.IsHorizontalAxis)
                         break;
 
                     var size = xAxis.IsHorizontalAxis ? xAxis.Width : xAxis.Height;

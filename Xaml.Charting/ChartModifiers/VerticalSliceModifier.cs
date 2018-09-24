@@ -106,7 +106,7 @@ namespace Ecng.Xaml.Charting.ChartModifiers
 
             foreach (var annotation in annotations)
             {
-                if (annotation.X1 == null) continue;
+                if (annotation.X1 == null || annotation.XAxis == null) continue;
 
                 var xCoord = annotation.XAxis.GetCoordinate(annotation.X1);
 

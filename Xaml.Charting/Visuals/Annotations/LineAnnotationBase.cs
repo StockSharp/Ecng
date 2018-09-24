@@ -110,6 +110,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         {
             var canvas = GetCanvas(AnnotationCanvas);
 
+			if(XAxis == null || YAxis == null)
+				return false;
+
             var xCalc = XAxis.GetCurrentCoordinateCalculator();
             var yCalc = YAxis.GetCurrentCoordinateCalculator();
 

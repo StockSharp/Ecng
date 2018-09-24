@@ -1298,6 +1298,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             if (!IsEditable) return;
 
             var canvas = GetCanvas(AnnotationCanvas);
+
+            if(XAxis == null || YAxis == null)
+                return;
             
             var yCalc = YAxis.GetCurrentCoordinateCalculator();
             var xCalc = XAxis.GetCurrentCoordinateCalculator();

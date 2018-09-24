@@ -350,7 +350,7 @@ namespace Ecng.Xaml.Charting.ChartModifiers
                 foreach (var xAxis in XAxes)
                 {
                     // Don't zoom on axes which have a different orientation than the primary X axis
-                    if (xAxis.IsHorizontalAxis != XAxis.IsHorizontalAxis)
+                    if (xAxis.IsHorizontalAxis != XAxis?.IsHorizontalAxis)
                         continue;
 
                     // Perform zoom in XAxis-direction

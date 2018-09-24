@@ -225,10 +225,11 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
 
         private void ScrollTimerOnTick(object sender, EventArgs e)
         {
-            if(!IsDragging || !_isOutOfBounds)
+            var axis = YAxis;
+
+            if(!IsDragging || !_isOutOfBounds || axis == null)
                 return;
 
-            var axis = YAxis;
             var canvas = GetCanvas(AnnotationCanvas);
             var mousePos = Mouse.GetPosition((AnnotationSurface)canvas);
 
@@ -281,6 +282,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
         protected override void MoveAnnotationTo(AnnotationCoordinates coordinates, double horizOffset, double vertOffset)
         {
             var axis = YAxis;
+            if(axis == null)
+                return;
+
             var canvas = GetCanvas(AnnotationCanvas);
 
             // Compute new coordinates in pixels
