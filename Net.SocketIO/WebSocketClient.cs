@@ -25,6 +25,7 @@
 		private readonly Action _connected;
 		private readonly Action<bool> _disconnected;
 		private readonly Action<string> _process;
+		private readonly Action<byte[], int, int> _process2;
 		private readonly Action<string, object> _infoLog;
 		private readonly Action<string, object> _errorLog;
 		private readonly Action<string, object> _verboseLog;
@@ -37,6 +38,19 @@
 			_disconnected = disconnected ?? throw new ArgumentNullException(nameof(disconnected));
 			_error = error ?? throw new ArgumentNullException(nameof(error));
 			_process = process ?? throw new ArgumentNullException(nameof(process));
+			_infoLog = infoLog ?? throw new ArgumentNullException(nameof(infoLog));
+			_errorLog = errorLog ?? throw new ArgumentNullException(nameof(errorLog));
+			_verboseLog = verbose ?? throw new ArgumentNullException(nameof(verbose));
+			_verbose2Log = verbose2 ?? throw new ArgumentNullException(nameof(verbose2));
+		}
+
+		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<byte[], int, int> process,
+			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
+		{
+			_connected = connected ?? throw new ArgumentNullException(nameof(connected));
+			_disconnected = disconnected ?? throw new ArgumentNullException(nameof(disconnected));
+			_error = error ?? throw new ArgumentNullException(nameof(error));
+			_process2 = process ?? throw new ArgumentNullException(nameof(process));
 			_infoLog = infoLog ?? throw new ArgumentNullException(nameof(infoLog));
 			_errorLog = errorLog ?? throw new ArgumentNullException(nameof(errorLog));
 			_verboseLog = verbose ?? throw new ArgumentNullException(nameof(verbose));
@@ -111,21 +125,25 @@
 						if (!result.EndOfMessage)
 							continue;
 
-						string recv;
+						string recv = null;
+						var pos2 = pos;
 
 						try
 						{
-							var preProcess = PreProcess;
-
-							if (preProcess != null)
+							if (_process != null)
 							{
-								var t = preProcess(buf, pos);
-								buf = t.Item1;
-								pos = t.Item2;
-							}
+								var preProcess = PreProcess;
 
-							recv = Encoding.UTF8.GetString(buf, 0, pos);
-							_verbose2Log(recv);
+								if (preProcess != null)
+								{
+									var t = preProcess(buf, pos);
+									buf = t.Item1;
+									pos = t.Item2;
+								}
+							
+								recv = Encoding.UTF8.GetString(buf, 0, pos);
+								_verbose2Log(recv);
+							}
 						}
 						finally
 						{
@@ -134,7 +152,11 @@
 
 						try
 						{
-							_process(recv);
+							if (_process != null)
+								_process(recv);
+							else
+								_process2(buf, 0, pos2);
+
 							errorCount = 0;
 						}
 						catch (Exception ex)
@@ -199,7 +221,12 @@
 				sendBuf = Encoding.UTF8.GetBytes(json);
 			}
 			
-			_ws.SendAsync(new ArraySegment<byte>(sendBuf), WebSocketMessageType.Text, true, _source.Token).Wait();
+			Send(sendBuf, WebSocketMessageType.Text);
+		}
+
+		public void Send(byte[] sendBuf, WebSocketMessageType type)
+		{
+			_ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, _source.Token).Wait();
 		}
 
 		protected override void DisposeManaged()
