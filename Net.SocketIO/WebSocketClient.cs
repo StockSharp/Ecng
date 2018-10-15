@@ -125,6 +125,9 @@
 						if (!result.EndOfMessage)
 							continue;
 
+						if (pos == 0)
+							continue;
+
 						string recv = null;
 						var pos2 = pos;
 
