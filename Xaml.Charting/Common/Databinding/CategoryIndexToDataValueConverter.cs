@@ -64,9 +64,16 @@ namespace Ecng.Xaml.Charting.Common.Databinding
                 var catCoordCalculator = axis.GetCurrentCoordinateCalculator() as ICategoryCoordinateCalculator;
                 if (catCoordCalculator != null)
                 {
-                    var index = (int)(value is int ? value : System.Convert.ChangeType(value, typeof(int), CultureInfo.InvariantCulture));
+                    if (value is DateTime dt)
+                    {
+                        value = dt;
+                    }
+                    else
+                    {
+                        var index = (int)(value is int ? value : System.Convert.ChangeType(value, typeof(int), CultureInfo.InvariantCulture));
 
-                    value = catCoordCalculator.TransformIndexToData(index);
+                        value = catCoordCalculator.TransformIndexToData(index);
+                    }
                 }
             }            
 
