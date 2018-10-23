@@ -3,6 +3,7 @@ namespace Ecng.Xaml
 	using System;
 	using System.Threading;
 	using System.Windows.Threading;
+	using System.Diagnostics;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -23,18 +24,12 @@ namespace Ecng.Xaml
 
 			public ActionInfo(Action action)
 			{
-				if (action == null)
-					throw new ArgumentNullException(nameof(action));
-
-				_action = action;
+				_action = action ?? throw new ArgumentNullException(nameof(action));
 			}
 
 			public ActionInfo(Func<object> func)
 			{
-				if (func == null)
-					throw new ArgumentNullException(nameof(func));
-
-				_func = func;
+				_func = func ?? throw new ArgumentNullException(nameof(func));
 			}
 
 			public void Process()
@@ -79,6 +74,7 @@ namespace Ecng.Xaml
 		private readonly TimeSpan _timeOut = TimeSpan.FromSeconds(30);
 		private readonly SynchronizedList<ActionInfo> _actions = new SynchronizedList<ActionInfo>();
 		private readonly CachedSynchronizedDictionary<object, Action> _periodicalActions = new CachedSynchronizedDictionary<object, Action>();
+		private readonly SynchronizedDictionary<Action, int> _periodicalActionsErrors = new SynchronizedDictionary<Action, int>();
 
 		/// <summary>
 		/// Создать <see cref="GuiDispatcher"/>.
@@ -94,16 +90,29 @@ namespace Ecng.Xaml
 		/// <param name="dispatcher">Объект для доступа к графическому потоку.</param>
 		public GuiDispatcher(Dispatcher dispatcher)
 		{
-			if (dispatcher == null)
-				throw new ArgumentNullException(nameof(dispatcher));
-
-			Dispatcher = dispatcher;
+			Dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 		}
 
 		/// <summary>
 		/// Объект для доступа к графическому потоку.
 		/// </summary>
 		public Dispatcher Dispatcher { get; }
+
+		public event Action<Exception> Error;
+
+		private int _maxPeriodicalActionErrors = 100;
+
+		public int MaxPeriodicalActionErrors
+		{
+			get => _maxPeriodicalActionErrors;
+			set
+			{
+				if (value < -1)
+					throw new ArgumentOutOfRangeException(nameof(value));
+
+				_maxPeriodicalActionErrors = value;
+			}
+		}
 
 		private TimeSpan _interval = TimeSpan.FromMilliseconds(1);
 
@@ -155,7 +164,10 @@ namespace Ecng.Xaml
 			if (token == null)
 				throw new ArgumentNullException(nameof(token));
 
-			_periodicalActions.Remove(token);
+			var action = _periodicalActions.TryGetAndRemove(token);
+
+			if (action != null)
+				_periodicalActionsErrors.Remove(action);
 		}
 
 		/// <summary>
@@ -246,13 +258,59 @@ namespace Ecng.Xaml
 			foreach (var action in _actions.SyncGet(c => c.CopyAndClear()))
 			{
 				hasActions = true;
-				action.Process();
+
+				try
+				{
+					action.Process();
+				}
+				catch (Exception ex)
+				{
+					try
+					{
+						Error?.Invoke(ex);
+					}
+					catch (Exception ex2)
+					{
+						Debug.WriteLine(ex2);
+					}
+				}
 			}
 
-			foreach (var action in _periodicalActions.CachedValues)
+			foreach (var pair in _periodicalActions.CachedPairs)
 			{
+				var action = pair.Value;
+
 				hasActions = true;
-				action();
+
+				try
+				{
+					action();
+					_periodicalActionsErrors.Remove(action);
+				}
+				catch (Exception ex)
+				{
+					try
+					{
+						Error?.Invoke(ex);
+					}
+					catch (Exception ex2)
+					{
+						Debug.WriteLine(ex2);
+					}
+
+					if (MaxPeriodicalActionErrors >= 0)
+					{
+						if (!_periodicalActionsErrors.TryGetValue(action, out var counter))
+							counter = 0;
+
+						counter++;
+
+						if (counter >= MaxPeriodicalActionErrors)
+							_periodicalActions.Remove(pair.Key);
+
+						_periodicalActionsErrors[action] = counter;
+					}
+				}
 			}
 
 			if (hasActions)
