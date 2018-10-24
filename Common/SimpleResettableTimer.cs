@@ -3,7 +3,7 @@
 	using System;
 	using System.Threading;
 
-	public class SimpleResettableTimer
+	public class SimpleResettableTimer : IDisposable
 	{
 		private readonly SyncObject _sync = new SyncObject();
 		private readonly TimeSpan _period;
