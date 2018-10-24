@@ -75,7 +75,8 @@
 
 				_changed = true;
 				_timer.Dispose();
-			}
+			    _timer = null;
+            }
 		}
 	}
 }
