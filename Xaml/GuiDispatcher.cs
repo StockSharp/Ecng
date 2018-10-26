@@ -34,18 +34,23 @@ namespace Ecng.Xaml
 
 			public void Process()
 			{
-				if (_action != null)
-					_action();
-				else
-					_result = _func();
-
-				if (_lock == null)
-					return;
-
-				lock (_lock)
+				try
 				{
-					_processed = true;
-					Monitor.Pulse(_lock);
+					if (_action != null)
+						_action();
+					else
+						_result = _func();
+				}
+				finally
+				{
+					if (_lock != null)
+					{
+						lock (_lock)
+						{
+							_processed = true;
+							Monitor.Pulse(_lock);
+						}
+					}
 				}
 			}
 
