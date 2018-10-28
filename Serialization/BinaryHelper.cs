@@ -165,6 +165,27 @@
 			}
 		}
 
+		public static void CopySync(this Stream source, Stream destination, int count)
+		{
+			if (source == null)
+				throw new ArgumentNullException(nameof(source));
+
+			if (destination == null)
+				throw new ArgumentNullException(nameof(destination));
+
+			if (count < 0)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
+			var buffer = new byte[count.Min(short.MaxValue)];
+			int read;
+
+			while (count > 0 && (read = source.Read(buffer, 0, buffer.Length.Min(count))) > 0)
+			{
+				destination.Write(buffer, 0, read);
+				count -= read;
+			}
+		}
+
 		public static void CopyAsync(this Stream source, Stream destination, Action completed, Action<Exception> error)
 		{
 			source.CopyAsync(destination, (int)source.Length, completed, error);
