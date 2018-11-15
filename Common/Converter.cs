@@ -513,8 +513,8 @@
 					return value;
 				else if ((value is string || sourceType.IsPrimitive) && destinationType.IsEnum())
 				{
-					if (value is string)
-						return Enum.Parse(destinationType, (string)value, true);
+					if (value is string s)
+						return Enum.Parse(destinationType, s, true);
 					else
 						return Enum.ToObject(destinationType, value);
 				}
@@ -539,8 +539,8 @@
 
 					MemoryStream output;
 
-					if (stream is MemoryStream)
-						output = (MemoryStream)stream;
+					if (stream is MemoryStream memoryStream)
+						output = memoryStream;
 					else
 					{
 						const int buffSize = 1024;
@@ -681,6 +681,10 @@
 					return ((CultureInfo)value).LCID;
 				else if (value is int && destinationType == typeof(CultureInfo))
 					return new CultureInfo((int)value);
+				else if (value is Encoding && destinationType == typeof(int))
+					return ((Encoding)value).CodePage;
+				else if (value is int && destinationType == typeof(Encoding))
+					return Encoding.GetEncoding((int)value);
 #endif
 				else if (destinationType.GetUnderlyingType() != null)
 				{

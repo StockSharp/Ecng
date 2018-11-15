@@ -468,7 +468,10 @@
 		public static double ToUnix(this DateTime time, bool isSeconds = true)
 		{
 			if (time.Kind != DateTimeKind.Utc)
-				throw new ArgumentException(nameof(time));
+			{
+				time = time.ToUniversalTime();
+				//throw new ArgumentException(nameof(time));
+			}
 
 			var diff = time - GregorianStart;
 
