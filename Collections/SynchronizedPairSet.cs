@@ -95,6 +95,18 @@
 
 		#endregion
 
+		public bool TryAdd(TKey key, TValue value)
+		{
+			lock (SyncRoot)
+			{
+				if (ContainsKey(key) || _values.ContainsKey(value))
+					return false;
+
+				Add(key, value);
+				return true;
+			}
+		}
+
 		public TKey TryGetKey(TValue value)
 		{
 			lock (SyncRoot)

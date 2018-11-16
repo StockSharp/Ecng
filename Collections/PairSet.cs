@@ -89,6 +89,15 @@
 			return _values.TryGetValue(value, out key);
 		}
 
+		public bool TryAdd(TKey key, TValue value)
+		{
+			if (ContainsKey(key) || _values.ContainsKey(value))
+				return false;
+
+			Add(key, value);
+			return true;
+		}
+
 		public bool RemoveByValue(TValue value)
 		{
 			return _values.ContainsKey(value) && Remove(_values[value]);
