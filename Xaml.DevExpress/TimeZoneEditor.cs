@@ -4,8 +4,6 @@ namespace Ecng.Xaml.DevExp
 
 	using DevExpress.Xpf.Editors;
 
-	using Ecng.Localization;
-	
 	public class TimeZoneEditor : ComboBoxEdit
 	{
 		public TimeZoneEditor()
@@ -14,13 +12,7 @@ namespace Ecng.Xaml.DevExp
 			DisplayMember = nameof(TimeZoneInfo.DisplayName);
 			IsTextEditable = false;
 
-			var btnReset = new ButtonInfo
-			{
-				GlyphKind = GlyphKind.Cancel,
-				Content = "Reset".Translate()
-			};
-			btnReset.Click += (s, a) => EditValue = null;
-			Buttons.Add(btnReset);
+			this.AddClearButton();
 		}
 
 		public TimeZoneInfo TimeZone

@@ -84,6 +84,7 @@
     <Compile Include="DdeSettingsWindow.xaml.cs">
       <DependentUpon>DdeSettingsWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="EditorExtensions.cs" />
     <Compile Include="EncodingEditor.cs" />
     <Compile Include="EndPointEditor.xaml.cs">
       <DependentUpon>EndPointEditor.xaml</DependentUpon>

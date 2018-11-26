@@ -30,23 +30,12 @@
 			btnEdit.Click += BtnEdit_OnClick;
 			Buttons.Add(btnEdit);
 
-			var btnReset = new ButtonInfo
-			{
-				GlyphKind = GlyphKind.Cancel,
-				Content = "Cancel".Translate()
-			};
-			btnReset.Click += BtnReset_OnClick;
-			Buttons.Add(btnReset);
+			this.AddClearButton();
 		}
 
 		private void BtnEdit_OnClick(object sender, RoutedEventArgs e)
 		{
 			EditValue = new Range<T>(default(T), default(T));
-		}
-
-		private void BtnReset_OnClick(object sender, RoutedEventArgs e)
-		{
-			EditValue = null;
 		}
 	}
 }

@@ -37,38 +37,31 @@
 		/// <returns>
 		/// An object implementing the <see cref="T:DevExpress.Xpf.Editors.IBaseEdit"/> interface.
 		/// </returns>
-		public override IBaseEdit CreateEditor(bool assignEditorSettings, IDefaultEditorViewInfo defaultViewInfo, EditorOptimizationMode optimizationMode)
+		public override IBaseEdit CreateEditor(bool assignEditorSettings, IDefaultEditorViewInfo defaultViewInfo,
+			EditorOptimizationMode optimizationMode)
 		{
-			var editor = base.CreateEditor(assignEditorSettings, defaultViewInfo, optimizationMode);
-			var column = defaultViewInfo as EditorColumn;
+			if (!(defaultViewInfo is EditorColumn column))
+				return base.CreateEditor(assignEditorSettings, defaultViewInfo, optimizationMode);
 
-			if (column == null)
-				return editor;
-
-
-			if (editor is ComboBoxEdit cbe)
-			{
-				cbe.ItemTemplate = ItemTemplate;
-				cbe.ApplyItemTemplateToSelectedItem = ApplyItemTemplateToSelectedItem;
-				cbe.IsTextEditable = IsTextEditable;
-				return cbe;
-			}
-			else
-			{
-				var type = !column.Owner.ValueType.IsNullable()
+			var isNullable = column.Owner.ValueType.IsNullable();
+			var type = !isNullable
 				? column.Owner.ValueType
 				: column.Owner.ValueType.GetUnderlyingType();
 
-				var ce = new ComboBoxEdit
-				{
-					ItemsSource = Enum.GetValues(type),
-					ItemTemplate = ItemTemplate,
-					ApplyItemTemplateToSelectedItem = ApplyItemTemplateToSelectedItem,
-					IsTextEditable = IsTextEditable
-				};
+			var editor = base.CreateEditor(assignEditorSettings, defaultViewInfo, optimizationMode);
 
-				return ce;
-			}
+			if (!(editor is ComboBoxEdit cbe))
+				cbe = new ComboBoxEdit();
+
+			cbe.ItemsSource = Enum.GetValues(type);
+			cbe.ItemTemplate = ItemTemplate;
+			cbe.ApplyItemTemplateToSelectedItem = ApplyItemTemplateToSelectedItem;
+			cbe.IsTextEditable = IsTextEditable;
+
+			if (isNullable)
+				cbe.AddClearButton();
+
+			return cbe;
 		}
 	}
 

@@ -18,6 +18,8 @@ namespace Ecng.Xaml.DevExp
 				.GetEncodings()
 				.Select(e => new ItemType(e.GetEncoding(), e.DisplayName))
 				.ToArray();
+
+			this.AddClearButton();
 		}
 	}
 }
