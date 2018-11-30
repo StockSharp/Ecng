@@ -13,8 +13,7 @@ namespace Ecng.Xaml.DevExp
 	{
 		protected BaseCustomEnumEditor(params TValue[] values)
 		{
-			ItemsSource = new[] { Tuple.Create(string.Empty, (TValue?)null) }
-				.Concat(values.Select(v => Tuple.Create(v.GetDisplayName(), (TValue?)v)));
+			ItemsSource = values.Select(v => Tuple.Create(v.GetDisplayName(), (TValue?)v)).ToArray();
 			
 			DisplayMember = nameof(Tuple<string, TValue?>.Item1);
 			ValueMember = nameof(Tuple<string, TValue?>.Item2);
@@ -22,6 +21,8 @@ namespace Ecng.Xaml.DevExp
 			Name = "PART_Editor";
 			EditMode = EditMode.InplaceActive;
 			NavigationManager.SetNavigationMode(this, NavigationMode.Auto);
+
+			this.AddClearButton();
 		}
 	}
 }
