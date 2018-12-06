@@ -60,7 +60,12 @@
 
 		#endregion
 
-        #region KeyedCollection<TKey, TValue> Members
+		protected override bool CanAdd(TKey key, TValue value)
+		{
+			return !_values.ContainsKey(value);
+		}
+
+		#region KeyedCollection<TKey, TValue> Members
 
 		protected override void OnAdding(TKey key, TValue value)
 		{

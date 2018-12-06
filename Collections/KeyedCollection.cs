@@ -27,6 +27,9 @@ namespace Ecng.Collections
 
 		public override void Add(TKey key, TValue value)
 		{
+			if (!CanAdd(key, value))
+				throw new ArgumentException();
+
 			OnAdding(key, value);
 			InnerDictionary.Add(key, value);
 			OnAdded(key, value);
@@ -53,7 +56,6 @@ namespace Ecng.Collections
 
 		public override bool Remove(TKey key)
 		{
-
 			if (InnerDictionary.TryGetValue(key, out var value))
 			{
 				OnRemoving(key, value);
@@ -90,5 +92,7 @@ namespace Ecng.Collections
 
 		protected virtual void OnRemoving(TKey key, TValue value) { }
 		protected virtual void OnRemoved(TKey key, TValue value) { }
+
+		protected virtual bool CanAdd(TKey key, TValue value) => true;
 	}
 }

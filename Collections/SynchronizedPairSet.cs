@@ -71,6 +71,11 @@
 
 		#endregion
 
+		protected override bool CanAdd(TKey key, TValue value)
+		{
+			return !_values.ContainsKey(value);
+		}
+
 		#region SynchronizedKeyedCollection<TKey, TValue> Members
 
 		protected override void OnAdding(TKey key, TValue value)
