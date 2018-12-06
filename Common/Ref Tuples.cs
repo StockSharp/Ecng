@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Common
 {
+	using System.Collections.Generic;
+
 	public class RefPair<TFirst, TSecond>
 	{
 		public RefPair()
@@ -23,6 +25,11 @@
 		protected virtual string GetValuesString()
 		{
 			return First + ", " + Second;
+		}
+
+		public KeyValuePair<TFirst, TSecond> ToValuePair()
+		{
+			return new KeyValuePair<TFirst, TSecond>(First, Second);
 		}
 	}
 
