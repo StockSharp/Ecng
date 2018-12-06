@@ -33,10 +33,7 @@
 
 			public EqualityComparer(Func<T, T, bool> comparer)
 			{
-				if (comparer == null)
-					throw new ArgumentNullException(nameof(comparer));
-
-				_comparer = comparer;
+				_comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
 			}
 
 			public bool Equals(T x, T y)
@@ -56,10 +53,7 @@
 
 			public Comparer(Func<T, T, int> comparer)
 			{
-				if (comparer == null)
-					throw new ArgumentNullException(nameof(comparer));
-
-				_comparer = comparer;
+				_comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
 			}
 
 			public int Compare(T x, T y)
@@ -166,12 +160,12 @@
 			if (items == null)
 				throw new ArgumentNullException(nameof(items));
 
-			if (source is List<T>)
-				((List<T>)source).AddRange(items);
-			else if (source is ICollectionEx<T>)
-				((ICollectionEx<T>)source).AddRange(items);
-			else if (source is ISet<T>)
-				((ISet<T>)source).UnionWith(items);
+			if (source is List<T> list)
+				list.AddRange(items);
+			else if (source is ICollectionEx<T> ex)
+				ex.AddRange(items);
+			else if (source is ISet<T> set)
+				set.UnionWith(items);
 			else
 			{
 				foreach (var item in items)
@@ -184,8 +178,8 @@
 			if (items == null)
 				throw new ArgumentNullException(nameof(items));
 
-			if (source is ICollectionEx<T>)
-				((ICollectionEx<T>)source).RemoveRange(items);
+			if (source is ICollectionEx<T> ex)
+				ex.RemoveRange(items);
 			else
 				items.ForEach(i => source.Remove(i));
 		}
@@ -356,6 +350,50 @@
 			return curr == null ? default(T) : curr.Value;
 		}
 
+		public static PairSet<TKey, TValue> ToPairSet<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source)
+		{
+			return source.ToPairSet(System.Collections.Generic.EqualityComparer<TKey>.Default);
+		}
+
+		public static PairSet<TKey, TValue> ToPairSet<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source, IEqualityComparer<TKey> comparer)
+		{
+			if (source == null)
+				throw new ArgumentNullException(nameof(source));
+
+			var set = new PairSet<TKey, TValue>();
+
+			foreach (var item in source)
+			{
+				set.Add(item.Key, item.Value);
+			}
+
+			return set;
+		}
+
+		public static PairSet<TKey, TValue> ToPairSet<TSource, TKey, TValue>(this IEnumerable<TSource> source, Func<TSource, int, TKey> keySelector, Func<TSource, int, TValue> valueSelector)
+		{
+			if (source == null)
+				throw new ArgumentNullException(nameof(source));
+
+			if (keySelector == null)
+				throw new ArgumentNullException(nameof(keySelector));
+
+			if (valueSelector == null)
+				throw new ArgumentNullException(nameof(valueSelector));
+
+			var set = new PairSet<TKey, TValue>();
+
+			var index = 0;
+
+			foreach (var item in source)
+			{
+				set.Add(keySelector(item, index), valueSelector(item, index));
+				index++;
+			}
+
+			return set;
+		}
+
 		#region Dictionary Methods
 
 		public static void CopyTo<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source, IDictionary<TKey, TValue> destination)
@@ -459,7 +497,7 @@
 		public static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
 			where TValue : new()
 		{
-			return dictionary.SafeAdd(key, out bool isNew);
+			return dictionary.SafeAdd(key, out _);
 		}
 
         private static class FastActivatorCache<TKey, TValue>
@@ -481,7 +519,7 @@
 
 		public static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> handler)
 		{
-			return dictionary.SafeAdd(key, handler, out bool isNew);
+			return dictionary.SafeAdd(key, handler, out _);
 		}
 
 		public static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> handler, out bool isNew)
@@ -529,7 +567,7 @@
 			if (dict == null)
 				throw new ArgumentNullException(nameof(dict));
 
-			if (dict.TryGetValue(key, out TValue value))
+			if (dict.TryGetValue(key, out var value))
 				return value;
 			else
 				return null;
@@ -537,14 +575,14 @@
 
 		public static TKey TryGetKey<TKey, TValue>(this PairSet<TKey, TValue> pairSet, TValue value)
 		{
-			pairSet.TryGetKey(value, out TKey key);
+			pairSet.TryGetKey(value, out var key);
 			return key;
 		}
 
 		public static TKey? TryGetKey2<TKey, TValue>(this PairSet<TKey, TValue> pairSet, TValue value)
 			where TKey : struct
 		{
-			if (pairSet.TryGetKey(value, out TKey key))
+			if (pairSet.TryGetKey(value, out var key))
 				return key;
 			else
 				return null;
@@ -605,7 +643,7 @@
 			lock (dict.SyncRoot)
 			{
 				var retVal = ((MultiDictionaryBase<TKey, TValue>)dict).TryGetValue(key);
-				return retVal != null ? retVal.ToArray() : null;
+				return retVal?.ToArray();
 			}
 		}
 
@@ -948,12 +986,10 @@
 			if (dict == null)
 				return null;
 
-			var syncDict = dict as SynchronizedDictionary<TKey, TValue>;
-
-			if (syncDict == null)
+			if (!(dict is SynchronizedDictionary<TKey, TValue> syncDict))
 			{
 				var typedDict = dict as Dictionary<TKey, TValue>;
-				syncDict = new SynchronizedDictionary<TKey, TValue>(typedDict == null ? null : typedDict.Comparer);
+				syncDict = new SynchronizedDictionary<TKey, TValue>(typedDict?.Comparer);
 				syncDict.AddRange(dict);
 			}
 
