@@ -96,5 +96,16 @@ namespace Ecng.Common
 				return process.ExitCode;
 			}
 		}
+
+		public static bool CreateDirIfNotExists(this string fullPath)
+		{
+			var directory = Path.GetDirectoryName(fullPath);
+
+			if (directory.IsEmpty() || Directory.Exists(directory))
+				return false;
+
+			Directory.CreateDirectory(directory);
+			return true;
+		}
 	}
 }

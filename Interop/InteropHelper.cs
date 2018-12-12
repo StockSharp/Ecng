@@ -16,17 +16,6 @@
 #endif
 		static class InteropHelper
 	{
-		public static bool CreateDirIfNotExists(this string fullPath)
-		{
-			var directory = Path.GetDirectoryName(fullPath);
-
-			if (directory.IsEmpty() || Directory.Exists(directory))
-				return false;
-
-			Directory.CreateDirectory(directory);
-			return true;
-		}
-
 		// http://social.msdn.microsoft.com/Forums/eu/windowssearch/thread/55582d9d-77ea-47d9-91ce-cff7ca7ef528
 		public static bool BlockDeleteDir(string dir, bool isRecursive = false, int iterCount = 1000, int sleep = 0)
 		{
