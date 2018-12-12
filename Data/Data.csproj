@@ -123,6 +123,10 @@
       <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
       <Name>ComponentModel</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Configuration\Configuration.csproj">
+      <Project>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</Project>
+      <Name>Configuration</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Reflection\Reflection.csproj">
       <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
       <Name>Reflection</Name>
