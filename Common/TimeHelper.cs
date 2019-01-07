@@ -442,6 +442,16 @@
 			return new DateTimeOffset(time.UtcDateTime.Truncate(precision).ChangeKind() + offset, offset);
 		}
 
+		public static DateTime FromIso8601(this string str, IFormatProvider provider = null)
+		{
+			return DateTime.Parse(str, provider, DateTimeStyles.RoundtripKind).ChangeKind(DateTimeKind.Utc);
+		}
+
+		public static string ToIso8601(this DateTime dt, IFormatProvider provider = null)
+		{
+			return dt.ToString("yyyy-MM-dd'T'HH:mm:ss.fffK", provider);
+		}
+
 		// https://stackoverflow.com/questions/11154673/get-the-correct-week-number-of-a-given-date
 		public static int GetIso8601WeekOfYear(this DateTime time, CultureInfo ci = null)
 		{
