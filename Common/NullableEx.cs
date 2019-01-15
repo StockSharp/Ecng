@@ -40,7 +40,10 @@ namespace Ecng.Common
 
 		protected override bool OnEquals(NullableEx<T> other)
 		{
-			return (HasValue == other.HasValue && Value.Equals(other.Value));
+			if (HasValue != other.HasValue)
+				return false;
+
+			return !HasValue || Value.Equals(other.Value);
 		}
 
 		public override NullableEx<T> Clone()
