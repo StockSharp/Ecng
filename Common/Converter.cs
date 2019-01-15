@@ -772,30 +772,21 @@
 						}
 					}
 
-
-					if (value is IConvertible convertible)
+					if (value is IConvertible)
 					{
-						return Convert.ChangeType(value, destinationType, null);
-					}
-					else
-					{
-						//var key = Tuple.Create(sourceType, destinationType);
-
-						MethodInfo method;
-
-						//if (!_castOperators.TryGetValue(key, out method))
+						try
 						{
-							var methods = sourceType.GetMethods(BindingFlags.Public | BindingFlags.Static);
-							method = methods.FirstOrDefault(mi => (mi.Name == "op_Implicit" || mi.Name == "op_Explicit") && mi.ReturnType == destinationType);
-							//_castOperators.Add(key, method);
+							return Convert.ChangeType(value, destinationType, null);
 						}
-
-						if (method != null)
-							return method.Invoke(null, new[] { value });
+						catch (InvalidCastException)
+						{
+							if (FinalTry(ref value, sourceType, destinationType))
+								return value;
+						}
 					}
 
-					if (destinationType == typeof(string))
-						return value.ToString();
+					if (FinalTry(ref value, sourceType, destinationType))
+						return value;
 				}
 
 				throw new ArgumentException($"Can't convert {value} of type '{value.GetType()}' to type '{destinationType}'.", nameof(value));
@@ -804,6 +795,44 @@
 			{
 				throw new InvalidCastException($"Can't convert {value} of type '{value?.GetType()}' to type '{destinationType}'.", ex);
 			}
+		}
+
+		private static bool FinalTry(ref object value, Type sourceType, Type destinationType)
+		{
+			//var key = Tuple.Create(sourceType, destinationType);
+
+			MethodInfo method;
+
+			//if (!_castOperators.TryGetValue(key, out method))
+			{
+				method =
+					sourceType
+						.GetMethods(BindingFlags.Public | BindingFlags.Static)
+						.FirstOrDefault(mi => mi.Name == "op_Implicit" && mi.ReturnType == destinationType)
+					??
+					destinationType
+						.GetMethods(BindingFlags.Public | BindingFlags.Static)
+						.FirstOrDefault(mi =>
+						{
+							if (mi.Name != "op_Explicit")
+								return false;
+
+							var parameters = mi.GetParameters();
+
+							return parameters.Length == 1 && parameters[0].ParameterType == sourceType;
+						});
+				
+				//_castOperators.Add(key, method);
+			}
+
+			if (method != null)
+				value = method.Invoke(null, new[] { value });
+			else if (destinationType == typeof(string))
+				value = value.ToString();
+			else
+				return false;
+
+			return true;
 		}
 
 		//private static readonly Dictionary<Tuple<Type, Type>, MethodInfo> _castOperators = new Dictionary<Tuple<Type, Type>, MethodInfo>();
