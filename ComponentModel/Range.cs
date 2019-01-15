@@ -11,7 +11,7 @@ namespace Ecng.ComponentModel
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	[Serializable]
-	public class Range<T> : Equatable<Range<T>>
+	public class Range<T> : Equatable<Range<T>>, IConvertible
 		where T : IComparable<T>
 	{
 		/// <summary>
@@ -155,6 +155,11 @@ namespace Ecng.ComponentModel
 
 		#region Parse
 
+		public static explicit operator Range<T>(string str)
+		{
+			return Parse(str);
+		}
+
 		/// <summary>
 		/// Parses the specified value.
 		/// </summary>
@@ -169,10 +174,21 @@ namespace Ecng.ComponentModel
 				throw new ArgumentOutOfRangeException(nameof(value));
 
 			value = value.Substring(1, value.Length - 2);
-			value = value.Remove("Min:").Remove("Max:");
-			var parts = value.Split(' ');
 
-			return new Range<T>(parts[0].To<T>(), parts[1].To<T>());
+			value = value.Remove("Min:");
+
+			var part1 = value.Substring(0, value.IndexOf("Max:") - 1);
+			var part2 = value.Substring(value.IndexOf("Max:") + 4);
+
+			var range = new Range<T>();
+
+			if (!part1.IsEmpty() && part1 != "null")
+				range.Min = part1.To<T>();
+			
+			if (!part2.IsEmpty() && part2 != "null")
+				range.Max = part2.To<T>();
+			
+			return range;
 		}
 
 		#endregion
@@ -216,42 +232,6 @@ namespace Ecng.ComponentModel
 		}
 
 		#endregion
-
-		//#region Serializable<Range<T>> Members
-
-		///// <summary>
-		///// Serializes object into specified source.
-		///// </summary>
-		///// <param name="serializer"></param>
-		///// <param name="fields"></param>
-		///// <param name="source">Serialized state.</param>
-		//protected override void Serialize(ISerializer serializer, FieldCollection fields, SerializationItemCollection source)
-		//{
-		//    if (HasMinValue)
-		//        source.Add(new SerializationItem(fields["Min"], Min.To(BaseType)));
-
-		//    if (HasMaxValue)
-		//        source.Add(new SerializationItem(fields["Max"], Max.To(BaseType)));
-		//}
-
-		///// <summary>
-		///// Deserialize object into specified source.
-		///// </summary>
-		///// <param name="serializer"></param>
-		///// <param name="fields"></param>
-		///// <param name="source">Serialized state.</param>
-		//protected override void Deserialize(ISerializer serializer, FieldCollection fields, SerializationItemCollection source)
-		//{
-		//    var min = source["Min"];
-		//    if (min != null && min.Value != null)
-		//        Min = min.Value.To<T>();
-
-		//    var max = source["Max"];
-		//    if (max != null && max.Value != null)
-		//        Max = max.Value.To<T>();
-		//}
-
-		//#endregion
 
 		public override Range<T> Clone()
 		{
@@ -328,7 +308,95 @@ namespace Ecng.ComponentModel
 		private static void ValidateBounds(T min, T max)
 		{
 			if (min.CompareTo(max) > 0)
-				throw new ArgumentOutOfRangeException(nameof(min), "Min value {0} is more than max value {1}.".Put(min, max));
+				throw new ArgumentOutOfRangeException(nameof(min), $"Min value {min} is more than max value {max}.");
+		}
+
+		TypeCode IConvertible.GetTypeCode()
+		{
+			return TypeCode.Object;
+		}
+
+		bool IConvertible.ToBoolean(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		char IConvertible.ToChar(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		sbyte IConvertible.ToSByte(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		byte IConvertible.ToByte(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		short IConvertible.ToInt16(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		ushort IConvertible.ToUInt16(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		int IConvertible.ToInt32(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		uint IConvertible.ToUInt32(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		long IConvertible.ToInt64(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		ulong IConvertible.ToUInt64(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		float IConvertible.ToSingle(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		double IConvertible.ToDouble(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		decimal IConvertible.ToDecimal(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		DateTime IConvertible.ToDateTime(IFormatProvider provider)
+		{
+			throw new InvalidCastException();
+		}
+
+		string IConvertible.ToString(IFormatProvider provider)
+		{
+			return ToString();
+		}
+
+		object IConvertible.ToType(Type conversionType, IFormatProvider provider)
+		{
+			if (conversionType == typeof(string))
+				return ToString();
+
+			throw new InvalidCastException();
 		}
 	}
 }

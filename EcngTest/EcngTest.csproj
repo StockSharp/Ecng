@@ -65,6 +65,7 @@
     <Compile Include="Common\MathHelperTest.cs" />
     <Compile Include="Common\StringTests.cs" />
     <Compile Include="Common\TimeTest.cs" />
+    <Compile Include="ComponentModel\RangeTests.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Data\AbstractTest.cs" />
     <Compile Include="Data\CacheTest.cs" />
