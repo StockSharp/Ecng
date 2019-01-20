@@ -159,10 +159,7 @@
 
 			public Group(DelayAction parent, Func<T> init)
 			{
-				if (parent == null)
-					throw new ArgumentNullException(nameof(parent));
-
-				_parent = parent;
+				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 				_init = init;
 			}
 
@@ -242,10 +239,7 @@
 
 		public DelayAction(Action<Exception> errorHandler)
 		{
-			if (errorHandler == null)
-				throw new ArgumentNullException(nameof(errorHandler));
-
-			_errorHandler = errorHandler;
+			_errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
 			DefaultGroup = CreateGroup<IDisposable>(null);
 		}
 
@@ -358,7 +352,7 @@
 						{
 							if (!item.CanBatch)
 							{
-								Debug.WriteLine($"!!! Iterrupt: {list.Count}");
+								Debug.WriteLine($"!!! Interrupt: {list.Count}");
 
 								BatchFlushAndClear(group, list);
 								list.Clear();
@@ -415,6 +409,12 @@
 			}
 
 			item.PostAction?.Invoke(error);
+		}
+
+		public void WaitFlush(bool dispose)
+		{
+			_groups.Cache.Where(g => g != DefaultGroup).ForEach(g => g.WaitFlush(false));
+			DefaultGroup.WaitFlush(dispose);
 		}
 
 		private class ItemComparer : IEqualityComparer<IGroupItem>
