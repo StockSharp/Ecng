@@ -25,6 +25,8 @@ namespace Ecng.Serialization
 
 		public XmlReaderEx(string inputUri) : base(inputUri) { }
 
+		public XmlReaderEx(TextReader reader) : base(reader) { }
+
 		public string CustomDateFormat { get; set; }
 
 		public override void ReadStartElement()
