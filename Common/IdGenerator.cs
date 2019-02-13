@@ -74,7 +74,7 @@
 	{
 		public UTCIncrementalIdGenerator()
 		{
-			Current = (long)(DateTime.UtcNow - TimeHelper.GregorianStart).TotalSeconds;
+			Current = (long)DateTime.UtcNow.ToUnix();
 		}
 	}
 
@@ -82,7 +82,7 @@
 	{
 		public UTCMlsIncrementalIdGenerator()
 		{
-			Current = (long)(DateTime.UtcNow - TimeHelper.GregorianStart).TotalMilliseconds;
+			Current = (long)DateTime.UtcNow.ToUnix(false);
 		}
 	}
 
