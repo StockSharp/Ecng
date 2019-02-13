@@ -99,7 +99,7 @@ namespace Ecng.Test.Common
 		public void UnixTimeOutOfRange()
 		{
 			var dt = DateTime.MinValue;
-			dt = dt.ChangeKind(DateTimeKind.Utc);
+			dt = dt.UtcKind();
 			dt.ToUnix();
 		}
 	}

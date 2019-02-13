@@ -277,6 +277,11 @@
 			return DateTime.SpecifyKind(date, kind);
 		}
 
+		public static DateTime UtcKind(this DateTime date)
+		{
+			return date.ChangeKind(DateTimeKind.Utc);
+		}
+
 		// http://stackoverflow.com/questions/38039/how-can-i-get-the-datetime-for-the-start-of-the-week
 		public static DateTime StartOfWeek(this DateTime date, DayOfWeek startOfWeek)
 		{
@@ -444,7 +449,7 @@
 
 		public static DateTime FromIso8601(this string str, IFormatProvider provider = null)
 		{
-			return DateTime.Parse(str, provider, DateTimeStyles.RoundtripKind).ChangeKind(DateTimeKind.Utc);
+			return DateTime.Parse(str, provider, DateTimeStyles.RoundtripKind).UtcKind();
 		}
 
 		public static string ToIso8601(this DateTime dt, IFormatProvider provider = null)
