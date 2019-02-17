@@ -16,6 +16,9 @@ namespace Ecng.Net
 
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Linq;
+	using Newtonsoft.Json.Serialization;
+
+	using RestSharp;
 
 	public static class NetworkHelper
 	{
@@ -199,6 +202,27 @@ namespace Ecng.Net
 			{
 				throw new InvalidOperationException($"Can't convert {token} to type '{typeof(T).Name}'.", ex);
 			}
+		}
+
+		public static JsonSerializerSettings CreateJsonSerializerSettings()
+		{
+			return new JsonSerializerSettings
+			{
+				FloatParseHandling = FloatParseHandling.Decimal,
+				NullValueHandling = NullValueHandling.Ignore,
+				ContractResolver = new DefaultContractResolver
+				{
+					NamingStrategy = new SnakeCaseNamingStrategy()
+				}
+			};
+		}
+
+		public static void AddBodyAsStr(this IRestRequest request, string bodyStr)
+		{
+			if (request == null)
+				throw new ArgumentNullException(nameof(request));
+
+			request.AddParameter(request.JsonSerializer.ContentType, bodyStr, ParameterType.RequestBody);
 		}
 	}
 }
