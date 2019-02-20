@@ -21,6 +21,8 @@
 
 		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new SynchronizedDictionary<CancellationTokenSource,bool>();
 
+		private readonly SynchronizedList<Tuple<byte[], WebSocketMessageType>> _resendCommands = new SynchronizedList<Tuple<byte[], WebSocketMessageType>>();
+
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
 		private readonly Action<bool> _disconnected;
@@ -57,12 +59,30 @@
 			_verbose2Log = verbose2 ?? throw new ArgumentNullException(nameof(verbose2));
 		}
 
+		private TimeSpan _resendInterval = TimeSpan.FromSeconds(2);
+
+		public TimeSpan ResendInterval
+		{
+			get => _resendInterval;
+			set
+			{
+				if (value < TimeSpan.Zero)
+					throw new ArgumentOutOfRangeException(nameof(value));
+
+				_resendInterval = value;
+			}
+		}
+
+		public bool AutoResend { get; set; }
+
 		public event Func<byte[], int, Tuple<byte[], int>> PreProcess;
 
 		public void Connect(string url, bool immediateConnect, Action<ClientWebSocket> init = null)
 		{
 			_expectedDisconnect = false;
 			_source = new CancellationTokenSource();
+
+			_resendCommands.Clear();
 
 			_disconnectionStates[_source] = _expectedDisconnect;
 
@@ -206,7 +226,11 @@
 				_ws.Dispose();
 				_ws = null;
 
-				_disconnected(_disconnectionStates.GetAndRemove(source));
+				var expected = _disconnectionStates.GetAndRemove(source);
+				_disconnected(expected);
+
+				if (!expected && AutoResend)
+					Resend();
 			}
 			catch (Exception ex)
 			{
@@ -214,7 +238,7 @@
 			}
 		}
 
-		public void Send(object obj)
+		public void Send(object obj, bool resendIfDisconnect = false)
 		{
 			if (!(obj is byte[] sendBuf))
 			{
@@ -224,12 +248,28 @@
 				sendBuf = Encoding.UTF8.GetBytes(json);
 			}
 			
-			Send(sendBuf, WebSocketMessageType.Text);
+			Send(sendBuf, WebSocketMessageType.Text, resendIfDisconnect);
 		}
 
-		public void Send(byte[] sendBuf, WebSocketMessageType type)
+		public void Send(byte[] sendBuf, WebSocketMessageType type, bool resendIfDisconnect = false)
 		{
+			if (resendIfDisconnect)
+			{
+				_resendCommands.Add(Tuple.Create(sendBuf.ToArray(), type));
+			}
+
 			_ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, _source.Token).Wait();
+		}
+
+		public void Resend()
+		{
+			var resendCommands = _resendCommands.CopyAndClear();
+
+			foreach (var resendCommand in resendCommands)
+			{
+				Send(resendCommand.Item1, resendCommand.Item2, true);
+				ResendInterval.Sleep();
+			}
 		}
 
 		protected override void DisposeManaged()

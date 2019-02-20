@@ -18,8 +18,6 @@ namespace Ecng.Net
 	using Newtonsoft.Json.Linq;
 	using Newtonsoft.Json.Serialization;
 
-	using RestSharp;
-
 	public static class NetworkHelper
 	{
 		public const int MtuSize = 1600;
@@ -215,14 +213,6 @@ namespace Ecng.Net
 					NamingStrategy = new SnakeCaseNamingStrategy()
 				}
 			};
-		}
-
-		public static void AddBodyAsStr(this IRestRequest request, string bodyStr)
-		{
-			if (request == null)
-				throw new ArgumentNullException(nameof(request));
-
-			request.AddParameter(request.JsonSerializer.ContentType, bodyStr, ParameterType.RequestBody);
 		}
 	}
 }
