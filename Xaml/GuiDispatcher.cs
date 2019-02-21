@@ -21,6 +21,7 @@ namespace Ecng.Xaml
 			private object _lock;
 			private object _result;
 			private bool _processed;
+			private Exception _error;
 
 			public ActionInfo(Action action)
 			{
@@ -40,6 +41,13 @@ namespace Ecng.Xaml
 						_action();
 					else
 						_result = _func();
+				}
+				catch (Exception excp)
+				{
+					if (_lock == null)
+						throw;
+
+					_error = excp;
 				}
 				finally
 				{
@@ -66,6 +74,9 @@ namespace Ecng.Xaml
 					if (!_processed)
 						Monitor.Wait(_lock);
 				}
+
+				if (_error != null)
+					throw new InvalidOperationException("Error processing dispatcher action.", _error);
 
 				return _result.To<T>();
 			}
