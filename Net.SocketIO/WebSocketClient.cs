@@ -26,14 +26,22 @@
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
 		private readonly Action<bool> _disconnected;
-		private readonly Action<string> _process;
-		private readonly Action<byte[], int, int> _process2;
+		private readonly Action<WebSocketClient, string> _process;
+		private readonly Action<WebSocketClient, byte[], int, int> _process2;
 		private readonly Action<string, object> _infoLog;
 		private readonly Action<string, object> _errorLog;
 		private readonly Action<string, object> _verboseLog;
 		private readonly Action<string> _verbose2Log;
 
 		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<string> process,
+			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
+			: this(connected, disconnected, error, (c, s) => process(s), infoLog, errorLog, verbose, verbose2)
+		{
+			if (process == null)
+				throw new ArgumentNullException(nameof(process));
+		}
+
+		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<WebSocketClient, string> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
 		{
 			_connected = connected ?? throw new ArgumentNullException(nameof(connected));
@@ -47,6 +55,14 @@
 		}
 
 		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<byte[], int, int> process,
+			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
+			: this(connected, disconnected, error, (c, b, s, o) => process(b, s, o), infoLog, errorLog, verbose, verbose2)
+		{
+			if (process == null)
+				throw new ArgumentNullException(nameof(process));
+		}
+
+		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<WebSocketClient, byte[], int, int> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
 		{
 			_connected = connected ?? throw new ArgumentNullException(nameof(connected));
@@ -176,9 +192,9 @@
 						try
 						{
 							if (_process != null)
-								_process(recv);
+								_process(this, recv);
 							else
-								_process2(buf, 0, pos2);
+								_process2(this, buf, 0, pos2);
 
 							errorCount = 0;
 						}
