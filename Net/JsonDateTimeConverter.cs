@@ -32,12 +32,22 @@ namespace Ecng.Net
 
 			try
 			{
-				return reader.Value.To<long?>()?.FromUnix(_isSeconds);
+				var value = reader.Value.To<long?>();
+
+				if (value == null)
+					return null;
+
+				return Convert(value.Value);
 			}
 			catch (Exception ex)
 			{
 				throw new JsonReaderException(ex.Message, ex);
 			}
+		}
+
+		protected virtual DateTime Convert(long value)
+		{
+			return value.FromUnix(_isSeconds);
 		}
 
 		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
@@ -51,6 +61,32 @@ namespace Ecng.Net
 		public JsonDateTimeMlsConverter()
 			: base(false)
 		{
+		}
+	}
+
+	public class JsonDateTimeMcsConverter : JsonDateTimeConverter
+	{
+		public JsonDateTimeMcsConverter()
+			: base(false)
+		{
+		}
+
+		protected override DateTime Convert(long value)
+		{
+			return TimeHelper.GregorianStart.AddMicroseconds(value);
+		}
+	}
+
+	public class JsonDateTimeNanoConverter : JsonDateTimeConverter
+	{
+		public JsonDateTimeNanoConverter()
+			: base(false)
+		{
+		}
+
+		protected override DateTime Convert(long value)
+		{
+			return TimeHelper.GregorianStart.AddNanoseconds(value);
 		}
 	}
 }
