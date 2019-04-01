@@ -763,6 +763,9 @@
 			if (source is ICollection col2)
 				return col2.Count == 0;
 
+			if (source is IEnumerableEx ex)
+				return ex.Count == 0;
+
 			return !source.Any();
 		}
 
