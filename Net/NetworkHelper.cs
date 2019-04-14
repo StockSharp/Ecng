@@ -177,28 +177,53 @@ namespace Ecng.Net
 
 		public static T DeserializeObject<T>(this string content)
 		{
-			if (content.IsEmpty())
-				throw new ArgumentNullException(nameof(content));
-
-			try
-			{
-				return JsonConvert.DeserializeObject<T>(content);
-			}
-			catch (Exception ex)
-			{
-				throw new InvalidOperationException($"Can't convert {content} to type '{typeof(T).Name}'.", ex);
-			}
+			return (T)content.DeserializeObject(typeof(T));
 		}
 
 		public static T DeserializeObject<T>(this JToken token)
 		{
+			return (T)token.DeserializeObject(typeof(T));
+		}
+
+		public static object DeserializeObject(this string content, Type type)
+		{
+			if (content.IsEmpty())
+				throw new ArgumentNullException(nameof(content));
+
+			if (type == null)
+				throw new ArgumentNullException(nameof(type));
+
 			try
 			{
-				return token.ToObject<T>();
+				if (content == "null")
+					return null;
+
+				return JsonConvert.DeserializeObject(content, type);
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidOperationException($"Can't convert {token} to type '{typeof(T).Name}'.", ex);
+				throw new InvalidOperationException($"Can't convert {content} to type '{type.Name}'.", ex);
+			}
+		}
+
+		public static object DeserializeObject(this JToken token, Type type)
+		{
+			if (token == null)
+				throw new ArgumentNullException(nameof(token));
+
+			if (type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			try
+			{
+				if (token.Type == JTokenType.String && (string)token == "null")
+					return null;
+
+				return token.ToObject(type);
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidOperationException($"Can't convert {token} to type '{type.Name}'.", ex);
 			}
 		}
 
