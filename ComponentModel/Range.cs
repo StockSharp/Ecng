@@ -6,12 +6,21 @@ namespace Ecng.ComponentModel
 	using Ecng.Common;
 	using Ecng.Serialization;
 
+	public interface IRange
+	{
+		bool HasMinValue { get; }
+		bool HasMaxValue { get; }
+
+		object Min { get; set; }
+		object Max { get; set; }
+	}
+
 	/// <summary>
 	/// 
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	[Serializable]
-	public class Range<T> : Equatable<Range<T>>, IConvertible
+	public class Range<T> : Equatable<Range<T>>, IConvertible, IRange
 		where T : IComparable<T>
 	{
 		/// <summary>
@@ -232,6 +241,18 @@ namespace Ecng.ComponentModel
 		}
 
 		#endregion
+
+		object IRange.Min
+		{
+			get => HasMinValue ? (object)Min : null;
+			set => Min = (T)value;
+		}
+
+		object IRange.Max
+		{
+			get => HasMaxValue ? (object)Max : null;
+			set => Max = (T)value;
+		}
 
 		public override Range<T> Clone()
 		{
