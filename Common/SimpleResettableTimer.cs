@@ -41,8 +41,11 @@
 			{
 				if (!_changed)
 				{
-					_timer.Dispose();
-					_timer = null;
+					if (_timer != null)
+					{
+						_timer.Dispose();
+						_timer = null;
+					}
 
 					elapsed = true;
 				}
@@ -74,9 +77,10 @@
 					return;
 
 				_changed = true;
+				
 				_timer.Dispose();
-			    _timer = null;
-            }
+				_timer = null;
+			}
 		}
 	}
 }
