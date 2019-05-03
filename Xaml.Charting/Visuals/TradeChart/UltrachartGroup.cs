@@ -648,11 +648,11 @@ namespace Ecng.Xaml.Charting
             var calculatedWidth =
                 synchronizedCharts.Select(
                 // for each axis from particular side (axisAlignment)
-                    x => x.UltrachartSurface.YAxes.OfType<AxisBase>().Where(axis => axis.AxisAlignment == axisAlignment))
+                    x => x.UltrachartSurface.YAxes?.OfType<AxisBase>().Where(axis => axis.AxisAlignment == axisAlignment))
                 // sum all widths
-                                  .Select(collection => collection.Aggregate(0d, (sum, axis) => sum + axis.ActualWidth))
+                                  ?.Select(collection => collection.Aggregate(0d, (sum, axis) => sum + axis.ActualWidth))
                 // get maximal width through all the charts
-                                  .MaxOrNullable() ?? 0d;
+                                  ?.MaxOrNullable() ?? 0d;
 
             return calculatedWidth;
         }
@@ -859,11 +859,11 @@ namespace Ecng.Xaml.Charting
             var calculatedAxisHeight =
                 synchronizedCharts.Select(
                 // for each axis from particular side (axisAlignment)
-                    x => x.UltrachartSurface.YAxes.OfType<AxisBase>().Where(axis => axis.AxisAlignment == axisAlignment))
+                    x => x.UltrachartSurface.YAxes?.OfType<AxisBase>().Where(axis => axis.AxisAlignment == axisAlignment))
                 // sum all widths
-                                  .Select(collection => collection.Aggregate(0d, (sum, axis) => sum + axis.ActualHeight))
+                                  ?.Select(collection => collection.Aggregate(0d, (sum, axis) => sum + axis.ActualHeight))
                 // get maximal width through all the charts
-                                  .Max();
+                                  ?.MaxOrNullable() ?? 0d;
 
             return calculatedAxisHeight;
         }
