@@ -181,40 +181,40 @@
 			{
 				var key = input.ToLowerInvariant();
 
-				if (!_aliases.TryGetValue(key, out var type))
+				if (_aliases.TryGetValue(key, out var type))
+					return type;
+
+				if (_typeCache.TryGetValue(key, out type))
+					return type;
+
+				lock (_typeCache)
 				{
-					if (!_typeCache.TryGetValue(key, out type))
-					{
-						lock (_typeCache)
-						{
-							if (!_typeCache.TryGetValue(key, out type))
-							{
-								type = Type.GetType(input, false, true);
+					if (_typeCache.TryGetValue(key, out type))
+						return type;
+
+					type = Type.GetType(input, false, true);
 
 #if !SILVERLIGHT
-								// в строке может быть записаное не AssemblyQualifiedName, а только полное имя типа + имя сборки.
-								if (type == null)
-								{
-									var parts = input.Split(", ");
-									if (parts.Length == 2)
-									{
-										var asm = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == parts[1]) ?? Assembly.LoadWithPartialName(parts[1]);
+					// в строке может быть записаное не AssemblyQualifiedName, а только полное имя типа + имя сборки.
+					if (type == null)
+					{
+						var parts = input.Split(", ");
+						if (parts.Length == 2)
+						{
+							var asm = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == parts[1]) ?? Assembly.LoadWithPartialName(parts[1]);
 
-										if (asm != null)
-										{
-											type = asm.GetType(parts[0]);
-										}
-									}
-								}
-#endif
-
-								if (type != null)
-									_typeCache.Add(key, type);
-								else
-									throw new ArgumentException("Type {0} doesn't exists.".Put(input), nameof(input));
+							if (asm != null)
+							{
+								type = asm.GetType(parts[0]);
 							}
 						}
 					}
+#endif
+
+					if (type != null)
+						_typeCache.Add(key, type);
+					else
+						throw new ArgumentException("Type {0} doesn't exists.".Put(input), nameof(input));
 				}
 
 				return type;
@@ -519,8 +519,8 @@
 						return Enum.ToObject(destinationType, value);
 				}
 #if !SILVERLIGHT
-				else if (value is string && destinationType == typeof(DbProviderFactory))
-					return DbProviderFactories.GetFactory((string)value);
+				else if (value is string strVal0 && destinationType == typeof(DbProviderFactory))
+					return DbProviderFactories.GetFactory(strVal0);
 #endif
 				else if (destinationType == typeof(Type[]))
 				{
@@ -529,17 +529,15 @@
 
 					return ((IEnumerable<object>)value).Select(arg => arg?.GetType() ?? typeof(void)).ToArray();
 				}
-				else if (value is Stream && destinationType == typeof(string))
+				else if (value is Stream st1 && destinationType == typeof(string))
 				{
-					return value.To<byte[]>().To<string>();
+					return st1.To<byte[]>().To<string>();
 				}
-				else if (value is Stream && destinationType == typeof(byte[]))
+				else if (value is Stream st2 && destinationType == typeof(byte[]))
 				{
-					var stream = (Stream)value;
-
 					MemoryStream output;
 
-					if (stream is MemoryStream memoryStream)
+					if (st2 is MemoryStream memoryStream)
 						output = memoryStream;
 					else
 					{
@@ -554,7 +552,7 @@
 
 						while (true)
 						{
-							int readBytes = stream.Read(buffer, 0, buffSize);
+							int readBytes = st2.Read(buffer, 0, buffSize);
 							if (readBytes == 0)
 								break;
 
@@ -565,10 +563,10 @@
 
 					return output.ToArray();
 				}
-				else if (value is byte[] && (destinationType == typeof(Stream) || destinationType == typeof(MemoryStream)))
+				else if (value is byte[] ba && (destinationType == typeof(Stream) || destinationType == typeof(MemoryStream)))
 				{
-					var stream = new MemoryStream(((byte[])value).Length);
-					stream.Write((byte[])value, 0, stream.Capacity);
+					var stream = new MemoryStream(ba.Length);
+					stream.Write(ba, 0, stream.Capacity);
 					stream.Position = 0;
 					return stream;
 				}
@@ -609,32 +607,29 @@
 					return retVal;
 				}
 #if !SILVERLIGHT
-				else if (value is WinColor && destinationType == typeof(int))
-					return ((WinColor)value).ToArgb();
-				else if (value is int && destinationType == typeof(WinColor))
+				else if (value is WinColor winColor && destinationType == typeof(int))
+					return winColor.ToArgb();
+				else if (value is int intVal1 && destinationType == typeof(WinColor))
 				{
-					var intValue = (int)value;
-					return WinColor.FromArgb((byte)((intValue >> 0x18) & 0xffL), (byte)((intValue >> 0x10) & 0xffL), (byte)((intValue >> 8) & 0xffL), (byte)(intValue & 0xffL));
+					return WinColor.FromArgb((byte)((intVal1 >> 0x18) & 0xffL), (byte)((intVal1 >> 0x10) & 0xffL), (byte)((intVal1 >> 8) & 0xffL), (byte)(intVal1 & 0xffL));
 					//retVal = Color.FromArgb(intValue);
 				}
-				else if (value is WinColor && destinationType == typeof(string))
-					return ColorTranslator.ToHtml((WinColor)value);
-				else if (value is string && destinationType == typeof(WinColor))
-					return ColorTranslator.FromHtml((string)value);
+				else if (value is WinColor winColor2 && destinationType == typeof(string))
+					return ColorTranslator.ToHtml(winColor2);
+				else if (value is string strVal && destinationType == typeof(WinColor))
+					return ColorTranslator.FromHtml(strVal);
 #endif
-				else if (value is WpfColor && destinationType == typeof(int))
+				else if (value is WpfColor wpfColor1 && destinationType == typeof(int))
 				{
-					var color = (WpfColor)value;
-					return (color.A << 24) | (color.R << 16) | (color.G << 8) | color.B;
+					return (wpfColor1.A << 24) | (wpfColor1.R << 16) | (wpfColor1.G << 8) | wpfColor1.B;
 				}
-				else if (value is int && destinationType == typeof(WpfColor))
+				else if (value is int intVal2 && destinationType == typeof(WpfColor))
 				{
-					var intValue = (int)value;
-					return WpfColor.FromArgb((byte)(intValue >> 24), (byte)(intValue >> 16), (byte)(intValue >> 8), (byte)(intValue));
+					return WpfColor.FromArgb((byte)(intVal2 >> 24), (byte)(intVal2 >> 16), (byte)(intVal2 >> 8), (byte)(intVal2));
 				}
-				else if (value is WpfColor && destinationType == typeof(string))
-					return ((WpfColor)value).ToString();
-				else if (value is string && destinationType == typeof(WpfColor))
+				else if (value is WpfColor wpfColor2 && destinationType == typeof(string))
+					return wpfColor2.ToString();
+				else if (value is string strVal2 && destinationType == typeof(WpfColor))
 #if SILVERLIGHT
 				{
 					//this would be initialized somewhere else, I assume
@@ -650,7 +645,7 @@
 					retVal = Color.FromArgb(255, r, g, b);
 				}
 #else
-					return WpfColorConverter.ConvertFromString((string)value);
+					return WpfColorConverter.ConvertFromString(strVal2);
 #endif
 				else if (value is Uri && destinationType == typeof(string))
 					return value.ToString();
@@ -715,25 +710,17 @@
 					return TimeSpan.Parse((string)value);
 				else if (value is TimeSpan && destinationType == typeof(string))
 					return value.ToString();
-				else if (value is DateTime && destinationType == typeof(string))
-				{
-					var date = (DateTime)value;
-					return date.Millisecond > 0 ? date.ToString("o") : value.ToString();
-				}
-				else if (value is DateTimeOffset && destinationType == typeof(string))
-				{
-					var dto = (DateTimeOffset)value;
+				else if (value is DateTime dt && destinationType == typeof(string))
+					return dt.Millisecond > 0 ? dt.ToString("o") : value.ToString();
+				else if (value is DateTimeOffset dto && destinationType == typeof(string))
 					return dto.Millisecond > 0 ? dto.ToString("o") : value.ToString();
-				}
-				else if (value is string && destinationType == typeof(DateTimeOffset))
-				{
-					return DateTimeOffset.Parse((string)value);
-				}
+				else if (value is string str4 && destinationType == typeof(DateTimeOffset))
+					return DateTimeOffset.Parse(str4);
 #if !SILVERLIGHT
-				else if (value is string && destinationType == typeof(TimeZoneInfo))
-					return TimeZoneInfo.FindSystemTimeZoneById((string)value);
-				else if (value is TimeZoneInfo && destinationType == typeof(string))
-					return ((TimeZoneInfo)value).Id;
+				else if (value is string str5 && destinationType == typeof(TimeZoneInfo))
+					return TimeZoneInfo.FindSystemTimeZoneById(str5);
+				else if (value is TimeZoneInfo tz && destinationType == typeof(string))
+					return tz.Id;
 #endif
 				else if (value is string && destinationType == typeof(Guid))
 					return new Guid((string)value);
