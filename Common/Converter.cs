@@ -356,7 +356,15 @@
 			AddTypedConverter<sbyte, string>(input => input.ToString());
 			AddTypedConverter<string, sbyte>(sbyte.Parse);
 			AddTypedConverter<bool, string>(input => input.ToString());
-			AddTypedConverter<string, bool>(bool.Parse);
+			AddTypedConverter<string, bool>(input =>
+			{
+				if (input == "1")
+					return true;
+				else if (input == "0")
+					return false;
+				else
+					return bool.Parse(input);
+			});
 			AddTypedConverter<float, string>(input => input.ToString());
 			AddTypedConverter<string, float>(float.Parse);
 			AddTypedConverter<double, string>(input => input.ToString());

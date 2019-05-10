@@ -12,6 +12,25 @@ namespace Ecng.Test.Common
 	public class ConverterTest
 	{
 		[TestMethod]
+		public void String2Bool()
+		{
+			1.To<bool>().AssertTrue();
+			0.To<bool>().AssertFalse();
+
+			"1".To<bool>().AssertTrue();
+			"0".To<bool>().AssertFalse();
+
+			"true".To<bool>().AssertTrue();
+			"false".To<bool>().AssertFalse();
+
+			"True".To<bool>().AssertTrue();
+			"False".To<bool>().AssertFalse();
+
+			"TRUE".To<bool>().AssertTrue();
+			"FALSE".To<bool>().AssertFalse();
+		}
+
+		[TestMethod]
 		public void Type2String()
 		{
 			typeof(ObservableCollection<int>).To<string>().To<Type>().AssertEqual(typeof(ObservableCollection<int>));
