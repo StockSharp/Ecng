@@ -193,7 +193,7 @@ namespace Ecng.Web
 			var control = parent.FindControl(id);
 
 			if (control == null)
-				throw new ArgumentException("Control not founded with id '{0}'".Put(id), nameof(id));
+				throw new ArgumentException("Control not found with id '{0}'".Put(id), nameof(id));
 
 			control.SetValue(value);
 		}
@@ -203,20 +203,20 @@ namespace Ecng.Web
 			if (control == null)
 				throw new ArgumentNullException(nameof(control));
 
-			if (control is TextBox)
-				((TextBox)control).Text = value.To<string>();
-			else if (control is ListControl)
-				((ListControl)control).SelectedValue = value.To<string>();
-			else if (control is Calendar)
-				((Calendar)control).SelectedDate = value.To<DateTime>();
-			else if (control is CheckBox)
-				((CheckBox)control).Checked = value.To<bool>();
-			else if (control is Label)
-				((Label)control).Text = value.To<string>();
-			else if (control is Rating)
-				((Rating)control).CurrentRating = value.To<int>();
-			else if (control is Image)
-				((Image)control).ImageUrl = value.To<string>();
+			if (control is TextBox txt)
+				txt.Text = value.To<string>();
+			else if (control is ListControl list)
+				list.SelectedValue = value.To<string>();
+			else if (control is Calendar cal)
+				cal.SelectedDate = value.To<DateTime>();
+			else if (control is CheckBox cb)
+				cb.Checked = value.To<bool>();
+			else if (control is Label lb)
+				lb.Text = value.To<string>();
+			else if (control is Rating rating)
+				rating.CurrentRating = value.To<int>();
+			else if (control is Image img)
+				img.ImageUrl = value.To<string>();
 			else
 				throw new ArgumentException("Control with id '{0}' has unsupported type '{1}'.".Put(control.ID, control.GetType()), nameof(control));
 		}
@@ -226,32 +226,47 @@ namespace Ecng.Web
 			if (parent == null)
 				throw new ArgumentNullException(nameof(parent));
 
+			if (!parent.TryGetChildValue<T>(id, out var value))
+				throw new ArgumentException("Control not found with id '{0}'".Put(id), nameof(id));
+
+			return value;
+		}
+
+		public static bool TryGetChildValue<T>(this Control parent, string id, out T value)
+		{
+			if (parent == null)
+				throw new ArgumentNullException(nameof(parent));
+
 			var control = parent.FindControl(id);
 
 			if (control == null)
-				throw new ArgumentException("Control not founded with id '{0}'".Put(id), nameof(id));
+			{
+				value = default(T);
+				return false;
+			}
 
-			return control.GetValue<T>();
+			value = control.GetValue<T>();
+			return true;
 		}
 
 		public static T GetValue<T>(this Control control)
 		{
 			object value;
 
-			if (control is TextBox)
-				value = ((TextBox)control).Text;
-			else if (control is ListControl)
-				value = ((ListControl)control).SelectedValue;
-			else if (control is Calendar)
-				value = ((Calendar)control).SelectedDate;
-			else if (control is CheckBox)
-				value = ((CheckBox)control).Checked;
-			else if (control is Label)
-				value = ((Label)control).Text;
-			else if (control is Rating)
-				value = ((Rating)control).CurrentRating;
-			else if (control is Image)
-				value = ((Image)control).ImageUrl;
+			if (control is TextBox txt)
+				value = txt.Text;
+			else if (control is ListControl list)
+				value = list.SelectedValue;
+			else if (control is Calendar cal)
+				value = cal.SelectedDate;
+			else if (control is CheckBox cb)
+				value = cb.Checked;
+			else if (control is Label lb)
+				value = lb.Text;
+			else if (control is Rating rating)
+				value = rating.CurrentRating;
+			else if (control is Image img)
+				value = img.ImageUrl;
 			else
 				throw new ArgumentException("Control with id '{0}' has unsupported type '{1}'.".Put(control.ID, control.GetType()), nameof(control));
 
