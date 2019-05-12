@@ -127,7 +127,7 @@
 						.ToList();
 
 					if (findedInterfaces.Count > 1)
-						throw new AmbiguousMatchException("Too many inerfaces was founded.");
+						throw new AmbiguousMatchException("Too many interfaces were found.");
 					else if (findedInterfaces.Count == 1)
 						return findedInterfaces[0];
 					else
@@ -343,7 +343,7 @@
 		///  result: "Prilis zlutoucky kun upel dabelske ody."
 		/// </example>
 		/// <param name="s"></param>
-		/// <remarks>founded at http://stackoverflow.com/questions/249087/how-do-i-remove-diacritics-accents-from-a-string-in-net </remarks>
+		/// <remarks>found at http://stackoverflow.com/questions/249087/how-do-i-remove-diacritics-accents-from-a-string-in-net </remarks>
 		/// <returns>string without accents</returns>
 		public static string RemoveDiacritics(this string s)
 		{

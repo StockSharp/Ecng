@@ -285,7 +285,7 @@ namespace Ecng.Web
 			var user = Users.GetByKey(providerUserKey);
 
 			if (user == null || user.Deleted)
-				throw new ArgumentException("User not founded.", nameof(providerUserKey));
+				throw new ArgumentException("User not found.", nameof(providerUserKey));
 
 			TrySaveActivity(user, userIsOnline);
 
@@ -350,7 +350,7 @@ namespace Ecng.Web
 			if (user == null)
 			{
 				SecurityError(userName, SecurityErrorTypes.InvalidName);
-				throw new ArgumentException("User {0} not founded.".Put(userName), nameof(userName));
+				throw new ArgumentException("User {0} not found.".Put(userName), nameof(userName));
 			}
 
 			if (!IsAnswerValid(user, answer))
@@ -372,7 +372,7 @@ namespace Ecng.Web
 			if (user == null)
 			{
 				SecurityError(userName, SecurityErrorTypes.InvalidName);
-				throw new ArgumentException("User {0} not founded.".Put(userName), nameof(userName));
+				throw new ArgumentException("User {0} not found.".Put(userName), nameof(userName));
 			}
 
 			if (user.Deleted)
