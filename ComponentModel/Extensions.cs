@@ -6,7 +6,6 @@ namespace Ecng.ComponentModel
 	using System.Reflection;
 
 	using Ecng.Common;
-	using Ecng.Localization;
 
 	public static class Extensions
 	{
@@ -72,13 +71,19 @@ namespace Ecng.ComponentModel
 			if (field == null)
 				throw new ArgumentNullException(nameof(field));
 
-			if (!(field is Enum))
-				throw new ArgumentException("Type '{0}' is invalid.".Translate().Put(field.GetType()), nameof(field));
+			var fieldName = field.ToString();
+			var fieldType = field.GetType();
 
-			var fieldInfo = field.GetType().GetField(field.ToString());
+			if (!(field is Enum))
+				throw new ArgumentException(fieldName, nameof(field));
+
+			var fieldInfo = fieldType.GetField(fieldName);
 
 			if (fieldInfo == null)
-				throw new ArgumentException(field.ToString(), nameof(field));
+			{
+				return fieldName;
+				//throw new ArgumentException(field.ToString(), nameof(field));
+			}
 
 			return fieldInfo.GetDisplayName();
 		}
