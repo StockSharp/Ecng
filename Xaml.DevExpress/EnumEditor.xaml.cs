@@ -7,6 +7,7 @@
 	using DevExpress.Xpf.Editors;
 	using DevExpress.Xpf.Editors.Helpers;
 	using DevExpress.Xpf.Editors.Settings;
+	using DevExpress.Xpf.Grid;
 	using DevExpress.Xpf.PropertyGrid;
 
 	using Ecng.Common;
@@ -40,13 +41,24 @@
 		public override IBaseEdit CreateEditor(bool assignEditorSettings, IDefaultEditorViewInfo defaultViewInfo,
 			EditorOptimizationMode optimizationMode)
 		{
-			if (!(defaultViewInfo is EditorColumn column))
-				return base.CreateEditor(assignEditorSettings, defaultViewInfo, optimizationMode);
+			Type valueType;
 
-			var isNullable = column.Owner.ValueType.IsNullable();
+			switch (defaultViewInfo)
+			{
+				case EditorColumn column:
+					valueType = column.Owner.ValueType;
+					break;
+				case GridColumn column:
+					valueType = column.FieldType;
+					break;
+				default:
+					return base.CreateEditor(assignEditorSettings, defaultViewInfo, optimizationMode);
+			}
+
+			var isNullable = valueType.IsNullable();
 			var type = !isNullable
-				? column.Owner.ValueType
-				: column.Owner.ValueType.GetUnderlyingType();
+				? valueType
+				: valueType.GetUnderlyingType();
 
 			var editor = base.CreateEditor(assignEditorSettings, defaultViewInfo, optimizationMode);
 
