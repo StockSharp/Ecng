@@ -1,16 +1,16 @@
 ﻿// *************************************************************************************
 // ULTRACHART™ © Copyright ulc software Services Ltd. 2011-2014. All rights reserved.
-//  
+//
 // Web: http://www.ultrachart.com
 // Support: support@ultrachart.com
-// 
-// UltrachartGroup.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart. 
+//
+// UltrachartGroup.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart.
 // For full terms and conditions of the license, see http://www.ultrachart.com/ultrachart-eula/
-// 
+//
 // This source code is protected by international copyright law. Unauthorized
 // reproduction, reverse-engineering, or distribution of all or any portion of
 // this source code is strictly prohibited.
-// 
+//
 // This source code contains confidential and proprietary trade secrets of
 // ulc software Services Ltd., and should at no time be copied, transferred, sold,
 // distributed or made available without express written permission.
@@ -63,7 +63,7 @@ namespace Ecng.Xaml.Charting
         public static readonly DependencyProperty ItemContainerStyleProperty = DependencyProperty.Register("ItemContainerStyle", typeof(Style), typeof(ItemsControl), new PropertyMetadata(null, (d, e) => ((UltrachartGroup)d).OnUltrachartGroupItemContainerStyleChanged((Style)e.OldValue, (Style)e.NewValue)));
 
         /// <summary>
-        /// Gets or sets the ItemContainerStyle, which is applied to the containers around individal <see cref="UltrachartSurface"/> instances 
+        /// Gets or sets the ItemContainerStyle, which is applied to the containers around individal <see cref="UltrachartSurface"/> instances
         /// </summary>
         public Style ItemContainerStyle
         {
@@ -211,7 +211,7 @@ namespace Ecng.Xaml.Charting
         protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
         {
             base.OnItemsChanged(e);
-            
+
             if (_mainPane == null) return;
 
             if ((e.Action == NotifyCollectionChangedAction.Add && e.NewItems == null) ||
@@ -219,7 +219,7 @@ namespace Ecng.Xaml.Charting
             {
                 return;
             }
-            
+
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
@@ -648,11 +648,11 @@ namespace Ecng.Xaml.Charting
             var calculatedWidth =
                 synchronizedCharts.Select(
                 // for each axis from particular side (axisAlignment)
-                    x => x.UltrachartSurface.YAxes.OfType<AxisBase>().Where(axis => axis.AxisAlignment == axisAlignment))
+                    x => x.UltrachartSurface.YAxes?.OfType<AxisBase>().Where(axis => axis.AxisAlignment == axisAlignment))
                 // sum all widths
-                                  .Select(collection => collection.Aggregate(0d, (sum, axis) => sum + axis.ActualWidth))
+                                  ?.Select(collection => collection.Aggregate(0d, (sum, axis) => sum + axis.ActualWidth))
                 // get maximal width through all the charts
-                                  .Max();
+                                  ?.MaxOrNullable() ?? 0d;
 
             return calculatedWidth;
         }
@@ -699,7 +699,7 @@ namespace Ecng.Xaml.Charting
             }
         }
 
-        
+
         internal List<ItemPane> Panes
         {
             get { return _items; }
@@ -710,12 +710,12 @@ namespace Ecng.Xaml.Charting
     /// <summary>
     /// A HelperClass used to perform the functionality of <see cref="UltrachartGroup.VerticalChartGroupProperty"/> but when the chart is rotated (e.g. YAxis <see cref="AxisAlignment"/> = <see cref="AxisAlignment.Top"/>
     /// </summary>
-    public class HorizontalGroupHelper 
+    public class HorizontalGroupHelper
     {
         /// <summary>
         /// Defines the HorizontalChartGroup DependencyProperty
         /// </summary>
-        public static readonly DependencyProperty HorizontalChartGroupProperty = DependencyProperty.RegisterAttached("HorizontalChartGroup", typeof(string), typeof(HorizontalGroupHelper), new PropertyMetadata(null, OnHorizontalChartGroupChanged));        
+        public static readonly DependencyProperty HorizontalChartGroupProperty = DependencyProperty.RegisterAttached("HorizontalChartGroup", typeof(string), typeof(HorizontalGroupHelper), new PropertyMetadata(null, OnHorizontalChartGroupChanged));
 
         internal static Dictionary<ChartGroup, string> HorizontalChartGroups = new Dictionary<ChartGroup, string>();
 
@@ -859,11 +859,11 @@ namespace Ecng.Xaml.Charting
             var calculatedAxisHeight =
                 synchronizedCharts.Select(
                 // for each axis from particular side (axisAlignment)
-                    x => x.UltrachartSurface.YAxes.OfType<AxisBase>().Where(axis => axis.AxisAlignment == axisAlignment))
+                    x => x.UltrachartSurface.YAxes?.OfType<AxisBase>().Where(axis => axis.AxisAlignment == axisAlignment))
                 // sum all widths
-                                  .Select(collection => collection.Aggregate(0d, (sum, axis) => sum + axis.ActualHeight))
+                                  ?.Select(collection => collection.Aggregate(0d, (sum, axis) => sum + axis.ActualHeight))
                 // get maximal width through all the charts
-                                  .Max();
+                                  ?.MaxOrNullable() ?? 0d;
 
             return calculatedAxisHeight;
         }

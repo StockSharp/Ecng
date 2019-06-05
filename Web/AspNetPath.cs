@@ -33,17 +33,20 @@ namespace Ecng.Web
 
 		public static string MakeEmail(string account)
 		{
-			return account + "@" + AspNetPath.PortalName;
+			return account + "@" + PortalName;
 		}
 
 		public static string GetThemedImagesPath(string fileName)
 		{
 			var section = ConfigManager.GetSection<PagesSection>();
-			return "~/{0}/{1}/Images/{2}".Put(AspNetPath.Themes, section.StyleSheetTheme, fileName);
+			return "~/{0}/{1}/Images/{2}".Put(Themes, section.StyleSheetTheme, fileName);
 		}
 
 		public static Url ToFullAbsolute(string virtualPath)
 		{
+			if (virtualPath.StartsWithIgnoreCase("http"))
+				return new Url(virtualPath);
+
 			return new Url(HttpContext.Current.Request.Url.ToString(), VirtualPathUtility.ToAbsolute(virtualPath));//.ToString();
 		}
 

@@ -13,6 +13,11 @@
 		{
 		}
 
+		protected SynchronizedKeyedCollection(IEqualityComparer<TKey> comparer)
+			: base(new SynchronizedDictionary<TKey, TValue>(comparer))
+		{
+		}
+
 		private SynchronizedDictionary<TKey, TValue> SyncDict => (SynchronizedDictionary<TKey, TValue>)InnerDictionary;
 
 		public SyncObject SyncRoot => SyncDict.SyncRoot;

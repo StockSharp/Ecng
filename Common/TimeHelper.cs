@@ -309,6 +309,7 @@
 		public static readonly TimeZoneInfo Cst = "Central Standard Time".To<TimeZoneInfo>();
 		public static readonly TimeZoneInfo Moscow = "Russian Standard Time".To<TimeZoneInfo>();
 		public static readonly TimeZoneInfo Gmt = "GMT Standard Time".To<TimeZoneInfo>();
+		public static readonly TimeZoneInfo Kiev = "FLE Standard Time".To<TimeZoneInfo>();
 
 		public static DateTime To(this DateTime time, TimeZoneInfo source = null, TimeZoneInfo destination = null)
 		{
@@ -1190,6 +1191,19 @@
 				return Gmt;
 
 			return TZConvert.IanaToWindows(iana).To<TimeZoneInfo>();
+		}
+
+		public static bool IsDateTime(this Type type)
+		{
+			if (type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			return type == typeof(DateTimeOffset) || type == typeof(DateTime);
+		}
+
+		public static bool IsDateOrTime(this Type type)
+		{
+			return type.IsDateTime() || type == typeof(TimeSpan);
 		}
 	}
 }

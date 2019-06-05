@@ -31,8 +31,8 @@ namespace Ecng.Logic.BusinessEntities
 		static BaseEntityList()
 		{
 			var fields = SchemaManager.GetSchema<TEntity>().Fields;
-			CreationDateField = fields.Contains("CreationDate") ? fields["CreationDate"] : null;
-			ModificationDateField = fields.Contains("ModificationDate") ? fields["ModificationDate"] : null;
+			CreationDateField = fields.Contains(nameof(BaseEntity.CreationDate)) ? fields[nameof(BaseEntity.CreationDate)] : null;
+			ModificationDateField = fields.Contains(nameof(BaseEntity.ModificationDate)) ? fields[nameof(BaseEntity.ModificationDate)] : null;
 		}
 
 		#endregion
@@ -184,8 +184,8 @@ namespace Ecng.Logic.BusinessEntities
 		{
 			get
 			{
-				if (_deletedField == null && Schema.Fields.Contains("Deleted"))
-					_deletedField = Schema.Fields["Deleted"];
+				if (_deletedField == null && Schema.Fields.Contains(nameof(BaseEntity.Deleted)))
+					_deletedField = Schema.Fields[nameof(BaseEntity.Deleted)];
 
 				return _deletedField;
 			}

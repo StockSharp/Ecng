@@ -12,6 +12,15 @@
 
 		#endregion
 
+		public SynchronizedPairSet()
+		{
+		}
+
+		public SynchronizedPairSet(IEqualityComparer<TKey> comparer)
+			: base(comparer)
+		{
+		}
+
 		public override void Add(TKey key, TValue value)
 		{
 			lock (SyncRoot)

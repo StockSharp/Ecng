@@ -85,7 +85,7 @@ namespace Ecng.Reflection
 						.ToList();
 
 					if (findedInterfaces.Count > 1)
-						throw new AmbiguousMatchException("Too many inerfaces was founded.");
+						throw new AmbiguousMatchException("Too many interfaces were found.");
 					else if (findedInterfaces.Count == 1)
 						return findedInterfaces[0];
 					else
