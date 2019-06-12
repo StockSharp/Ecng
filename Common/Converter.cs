@@ -111,8 +111,8 @@
 			});
 
 			AddTypedConverter<DbType, Type>(input => _dbTypes.First(pair => pair.Value == input).Key);
-			AddTypedConverter<string, byte[]>(input => Encoding.Unicode.GetBytes(input));
-			AddTypedConverter<byte[], string>(input => Encoding.Unicode.GetString(input));
+			AddTypedConverter<string, byte[]>(input => input.Unicode());
+			AddTypedConverter<byte[], string>(input => input.Unicode());
 			AddTypedConverter<bool[], BitArray>(input => new BitArray(input));
 			AddTypedConverter<BitArray, bool[]>(input =>
 			{

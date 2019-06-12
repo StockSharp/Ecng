@@ -910,5 +910,14 @@
 
 		public static IEnumerable<string> Duplicates(this IEnumerable<string> items)
 			=> items.GroupBy(s => s, s => StringComparer.InvariantCultureIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key);
+
+		public static byte[] UTF8(this string v) => Encoding.UTF8.GetBytes(v);
+		public static string UTF8(this byte[] v) => Encoding.UTF8.GetString(v);
+
+		public static byte[] Unicode(this string v) => Encoding.Unicode.GetBytes(v);
+		public static string Unicode(this byte[] v) => Encoding.Unicode.GetString(v);
+
+		public static byte[] Cyrillic(this string v) => WindowsCyrillic.GetBytes(v);
+		public static string Cyrillic(this byte[] v) => WindowsCyrillic.GetString(v);
 	}
 }
