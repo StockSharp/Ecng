@@ -2,8 +2,6 @@
 {
 	using System;
 	using System.Globalization;
-	using System.IO;
-	using System.Text;
 
 	using Ecng.Common;
 
@@ -111,32 +109,36 @@
 			storage.SetValue(name, persistable.Save());
 		}
 
-		public static SettingsStorage LoadSettingsStorage(this string value)
+		public static void LoadFromString(this IPersistable persistable, string value)
+		{
+			if (persistable == null)
+				throw new ArgumentNullException(nameof(persistable));
+
+			persistable.Load(value.LoadFromString());
+		}
+
+		public static SettingsStorage LoadFromString(this string value)
 		{
 			if (value == null)
 				throw new ArgumentNullException(nameof(value));
 
-			var serializer = new XmlSerializer<SettingsStorage>();
-			var bytes = Encoding.UTF8.GetBytes(value);
-
-			return CultureInfo.InvariantCulture.DoInCulture(() => serializer.Deserialize(bytes));
+			return CultureInfo.InvariantCulture.DoInCulture(() => new XmlSerializer<SettingsStorage>().Deserialize(value.UTF8()));
 		}
 
-		public static string SaveSettingsStorage(this SettingsStorage settings)
+		public static string SaveToString(this IPersistable persistable)
+		{
+			if (persistable == null)
+				throw new ArgumentNullException(nameof(persistable));
+
+			return persistable.Save().SaveToString();
+		}
+
+		public static string SaveToString(this SettingsStorage settings)
 		{
 			if (settings == null)
 				throw new ArgumentNullException(nameof(settings));
 
-			var serializer = new XmlSerializer<SettingsStorage>();
-
-			using (var s = new MemoryStream())
-			{
-				var stream = s;
-
-				CultureInfo.InvariantCulture.DoInCulture(() => serializer.Serialize(settings, stream));
-
-				return Encoding.UTF8.GetString(stream.ToArray());
-			}
+			return CultureInfo.InvariantCulture.DoInCulture(() => new XmlSerializer<SettingsStorage>().Serialize(settings).UTF8());
 		}
 	}
 }
