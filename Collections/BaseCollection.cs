@@ -18,10 +18,9 @@ namespace Ecng.Collections
 				throw new ArgumentNullException(nameof(innerCollection));
 
 			InnerCollection = innerCollection;
-			AllowNullableItems = false;
 		}
 
-		public bool AllowNullableItems { get; set; }
+		public bool CheckNullableItems { get; set; }
 
 		protected TCollection InnerCollection { get; }
 
@@ -112,7 +111,7 @@ namespace Ecng.Collections
 
 		public override void Add(TItem item)
 		{
-			if (!AllowNullableItems && item.IsNull())
+			if (CheckNullableItems && item.IsNull())
 				throw new ArgumentNullException(nameof(item));
 
 			if (OnAdding(item))
@@ -133,7 +132,7 @@ namespace Ecng.Collections
 
 		public override bool Remove(TItem item)
 		{
-			if (!AllowNullableItems && item.IsNull())
+			if (CheckNullableItems && item.IsNull())
 				throw new ArgumentNullException(nameof(item));
 
 			if (OnRemoving(item))
