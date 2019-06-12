@@ -4,6 +4,8 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Ecng.Common;
+
 	using MoreLinq;
 
 	[Serializable]
@@ -255,7 +257,13 @@
 		{
 			lock (SyncRoot)
 			{
-				var filteredItems = items.Where(OnAdding).ToArray();
+				var filteredItems = items.Where(t =>
+				{
+					if (CheckNullableItems && t.IsNull())
+						throw new ArgumentNullException(nameof(t));
+
+					return OnAdding(t);
+				}).ToArray();
 				InnerCollection.AddRange(filteredItems);
 
 				ProcessRange(filteredItems, item =>

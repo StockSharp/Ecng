@@ -64,7 +64,13 @@ namespace Ecng.Collections
 		{
 			lock (SyncRoot)
 			{
-				var filteredItems = items.Where(OnAdding).ToArray();
+				var filteredItems = items.Where(t =>
+				{
+					if (CheckNullableItems && t.IsNull())
+						throw new ArgumentNullException(nameof(t));
+
+					return OnAdding(t);
+				}).ToArray();
 				InnerCollection.AddRange(filteredItems);
 				filteredItems.ForEach(base.OnAdded);
 
