@@ -911,6 +911,9 @@
 		public static IEnumerable<string> Duplicates(this IEnumerable<string> items)
 			=> items.GroupBy(s => s, s => StringComparer.InvariantCultureIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key);
 
+		public static byte[] ASCII(this string v) => Encoding.ASCII.GetBytes(v);
+		public static string ASCII(this byte[] v) => Encoding.ASCII.GetString(v);
+
 		public static byte[] UTF8(this string v) => Encoding.UTF8.GetBytes(v);
 		public static string UTF8(this byte[] v) => Encoding.UTF8.GetString(v);
 
