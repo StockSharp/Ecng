@@ -2,7 +2,6 @@ namespace Ecng.Security
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 	using System.Net;
 	using System.Security;
 
@@ -10,15 +9,10 @@ namespace Ecng.Security
 	using Ecng.Localization;
 
 	/// <summary>
-	/// Defines the interface to an autorization module.
+	/// Defines the interface to an authorization module.
 	/// </summary>
 	public interface IAuthorization
 	{
-		/// <summary>
-		/// Get all available users.
-		/// </summary>
-		IEnumerable<Tuple<string, IEnumerable<IPAddress>>> AllUsers { get; }
-
 		/// <summary>
 		/// Save user.
 		/// </summary>
@@ -26,6 +20,14 @@ namespace Ecng.Security
 		/// <param name="password">Password.</param>
 		/// <param name="possibleAddresses">Possible addresses.</param>
 		void SaveUser(string login, SecureString password, IEnumerable<IPAddress> possibleAddresses);
+
+		/// <summary>
+		/// Change password.
+		/// </summary>
+		/// <param name="login">Login.</param>
+		/// <param name="oldPassword">Old password.</param>
+		/// <param name="newPassword">New password.</param>
+		void ChangePassword(string login, SecureString oldPassword, SecureString newPassword);
 
 		/// <summary>
 		/// Delete user by login.
@@ -45,7 +47,7 @@ namespace Ecng.Security
 	}
 
 	/// <summary>
-	/// Autorization module granted access for everyone.
+	/// Authorization module granted access for everyone.
 	/// </summary>
 	public class AnonymousAuthorization : IAuthorization
 	{
@@ -63,10 +65,13 @@ namespace Ecng.Security
 		}
 
 		/// <inheritdoc />
-		public virtual IEnumerable<Tuple<string, IEnumerable<IPAddress>>> AllUsers => Enumerable.Empty<Tuple<string, IEnumerable<IPAddress>>>();
+		public virtual void SaveUser(string login, SecureString password, IEnumerable<IPAddress> possibleAddresses)
+		{
+			throw new NotSupportedException();
+		}
 
 		/// <inheritdoc />
-		public virtual void SaveUser(string login, SecureString password, IEnumerable<IPAddress> possibleAddresses)
+		public void ChangePassword(string login, SecureString oldPassword, SecureString newPassword)
 		{
 			throw new NotSupportedException();
 		}
@@ -79,7 +84,7 @@ namespace Ecng.Security
 	}
 
 	/// <summary>
-	/// Autorization module based on Windows user storage.
+	/// Authorization module based on Windows user storage.
 	/// </summary>
 	public class WindowsAuthorization : IAuthorization
 	{
@@ -91,9 +96,6 @@ namespace Ecng.Security
 		}
 
 		/// <inheritdoc />
-		public virtual IEnumerable<Tuple<string, IEnumerable<IPAddress>>> AllUsers => Enumerable.Empty<Tuple<string, IEnumerable<IPAddress>>>();
-
-		/// <inheritdoc />
 		public virtual void SaveUser(string login, SecureString password, IEnumerable<IPAddress> possibleAddresses)
 		{
 			if (WindowsIdentityManager.Validate(login, password))
@@ -103,6 +105,16 @@ namespace Ecng.Security
 			}
 			else
 				WindowsIdentityManager.CreateUser(login, password);
+		}
+
+		/// <inheritdoc />
+		public void ChangePassword(string login, SecureString oldPassword, SecureString newPassword)
+		{
+			if (!WindowsIdentityManager.Validate(login, oldPassword))
+				throw new InvalidOperationException("User {0} not found.".Translate().Put(login));
+
+			if (!WindowsIdentityManager.ChangePassword(login, oldPassword, newPassword))
+				throw new InvalidOperationException("User {0} not found or password is incorrect.".Translate().Put(login));
 		}
 
 		/// <inheritdoc />
