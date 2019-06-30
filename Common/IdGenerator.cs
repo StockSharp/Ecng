@@ -111,4 +111,20 @@
 			return (long)(DateTime.Now - _start).TotalMilliseconds;
 		}
 	}
+
+	public class TickIdGenerator : IdGenerator
+	{
+		public override long GetNextId()
+		{
+			return DateTime.UtcNow.Ticks;
+		}
+	}
+
+	public class TickIncrementalIdGenerator : IncrementalIdGenerator
+	{
+		public TickIncrementalIdGenerator()
+		{
+			Current = DateTime.UtcNow.Ticks;
+		}
+	}
 }
