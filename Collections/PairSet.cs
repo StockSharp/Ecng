@@ -8,17 +8,25 @@
 	{
 		#region Private Fields
 
-		private readonly Dictionary<TValue, TKey> _values = new Dictionary<TValue, TKey>();
+		private readonly Dictionary<TValue, TKey> _values;
 
 		#endregion
 
 		public PairSet()
 		{
+			_values = new Dictionary<TValue, TKey>();
 		}
 
 		public PairSet(IEqualityComparer<TKey> comparer)
 			: base(comparer)
 		{
+			_values = new Dictionary<TValue, TKey>();
+		}
+
+		public PairSet(IEqualityComparer<TKey> keyComparer, IEqualityComparer<TValue> valueComparer)
+			: base(keyComparer)
+		{
+			_values = new Dictionary<TValue, TKey>(valueComparer);
 		}
 
 		#region Item
