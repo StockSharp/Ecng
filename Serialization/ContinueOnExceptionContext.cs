@@ -6,7 +6,9 @@ namespace Ecng.Serialization
 
 	public class ContinueOnExceptionContext
 	{
-		public event Action<Exception> Error; 
+		public event Action<Exception> Error;
+
+		public bool DoNotEncrypt { get; set; }
 
 		public static bool TryProcess(Exception ex)
 		{

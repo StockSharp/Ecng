@@ -27,7 +27,10 @@ namespace Ecng.Serialization
 		{
 			try
 			{
-				return _cryptographer.Decrypt(source, Entropy).To<string>().To<SecureString>();
+				if (Scope<ContinueOnExceptionContext>.Current?.Value.DoNotEncrypt != true)
+					source = _cryptographer.Decrypt(source, Entropy);
+
+				return source.To<string>().To<SecureString>();
 			}
 			catch (CryptographicException ex)
 			{
@@ -41,6 +44,10 @@ namespace Ecng.Serialization
 		protected override byte[] OnCreateSource(ISerializer serializer, SecureString instance)
 		{
 			var plainText = instance.To<string>().To<byte[]>();
+
+			if (Scope<ContinueOnExceptionContext>.Current?.Value.DoNotEncrypt == true)
+				return plainText;
+
 			return _cryptographer.Encrypt(plainText, Entropy);
 		}
 	}
