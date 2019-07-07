@@ -74,7 +74,7 @@
         <TextBox Text=":" Grid.Column="11" Style="{StaticResource ColonTextBox}"
 		         Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Microseconds}}"/>
 
-        <CheckBox x:Name="HasValueCheckBox" Grid.Column="1" BorderThickness="0" Margin="2,0,0,0"
+        <CheckBox x:Name="HasValueCheckBox" Grid.Column="1" Margin="2,0,0,0"
                   IsChecked="{Binding ElementName=Ctrl, Path=HasValue}"
 				  Visibility="{Binding ElementName=Ctrl, Path=IsNullable, Converter={StaticResource BoolToVisibilityConverter}}"
 				  VerticalContentAlignment="Center" HorizontalAlignment="Left" Background="Transparent"/>
