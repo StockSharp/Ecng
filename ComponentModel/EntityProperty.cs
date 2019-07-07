@@ -10,6 +10,8 @@
 
 		public string DisplayName { get; set; }
 
+		public string Description { get; set; }
+
 		public EntityProperty Parent { get; set; }
 
 		public IEnumerable<EntityProperty> Properties { get; set; }

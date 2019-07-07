@@ -42,18 +42,19 @@
 				if (!names.Add(name))
 					continue;
 
-				var displayName = pi.GetDisplayName();
-
 				var prop = new EntityProperty
 				{
 					Name = name,
 					Parent = parent,
-					DisplayName = displayName,
+					DisplayName = pi.GetDisplayName(),
+					Description = pi.GetDescription()
 				};
 
-				if (!pi.PropertyType.IsPrimitive() && !pi.PropertyType.IsNullable())
+				var propType = pi.PropertyType;
+
+				if (!propType.IsPrimitive() && !propType.IsNullable())
 				{
-					prop.Properties = GetEntityProperties(pi.PropertyType, prop, processed, filter);
+					prop.Properties = GetEntityProperties(propType, prop, processed, filter);
 				}
 
 				properties.Add(prop);
