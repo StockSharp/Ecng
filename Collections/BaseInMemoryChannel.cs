@@ -45,10 +45,10 @@
 			set => _queue.MaxSize = value;
 		}
 
-		/// <summary>
-		/// Channel closing event.
-		/// </summary>
-		public event Action Closed;
+		///// <summary>
+		///// Channel closing event.
+		///// </summary>
+		//public event Action Closed;
 
 		/// <summary>
 		/// Is channel opened.
@@ -56,11 +56,17 @@
 		public bool IsOpened => !_queue.IsClosed;
 
 		/// <summary>
+		/// <see cref="IsOpened"/> change event.
+		/// </summary>
+		public event Action StateChanged;
+
+		/// <summary>
 		/// Open channel.
 		/// </summary>
 		public void Open()
 		{
 			_queue.Open();
+			StateChanged?.Invoke();
 
 			ThreadingHelper
 				.Thread(() => CultureInfo.InvariantCulture.DoInCulture(() =>
@@ -82,7 +88,8 @@
 						}
 					}
 
-					Closed?.Invoke();
+					//Closed?.Invoke();
+					StateChanged?.Invoke();
 				}))
 				.Name($"{Name} channel thread.")
 				//.Culture(CultureInfo.InvariantCulture)
