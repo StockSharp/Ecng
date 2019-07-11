@@ -48,6 +48,7 @@
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="ClientWebSocket2.cs" />
     <Compile Include="Client\AckImpl.cs" />
     <Compile Include="Client\IAck.cs" />
     <Compile Include="Client\IO.cs" />
