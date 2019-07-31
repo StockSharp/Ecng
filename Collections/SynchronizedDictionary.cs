@@ -33,16 +33,11 @@ namespace Ecng.Collections
 		{
 		}
 
-		private readonly SyncObject _syncRoot = new SyncObject();
-
-		public SyncObject SyncRoot => _syncRoot;
+		public SyncObject SyncRoot { get; } = new SyncObject();
 
 		protected SynchronizedDictionary(IDictionary<TKey, TValue> inner)
 		{
-			if (inner == null)
-				throw new ArgumentNullException(nameof(inner));
-
-			_inner = inner;
+			_inner = inner ?? throw new ArgumentNullException(nameof(inner));
 		}
 
 		public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
@@ -120,13 +115,11 @@ namespace Ecng.Collections
 
 		public IDictionary<TKey, TValue> Range(TKey from, TKey to)
 		{
-			var ordered = _inner as OrderedDictionary<TKey, TValue>;
-
-			if (ordered == null)
-				throw new NotSupportedException();
-
 			lock (SyncRoot)
 			{
+				if (!(_inner is OrderedDictionary<TKey, TValue> ordered))
+					throw new NotSupportedException();
+
 				var retVal = new Dictionary<TKey, TValue>();
 				retVal.AddRange(ordered.Range(from, true, to, true));
 				return retVal;
