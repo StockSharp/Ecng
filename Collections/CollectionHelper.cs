@@ -135,10 +135,24 @@
 			if (dict == null)
 				throw new ArgumentNullException(nameof(dict));
 
-			if (!dict.ContainsKey(key))
+			if (dict is SynchronizedDictionary<TKey, TValue> syncDict)
 			{
-				dict.Add(key, value);
-				return true;
+				lock (syncDict.SyncRoot)
+				{
+					if (!syncDict.ContainsKey(key))
+					{
+						syncDict.Add(key, value);
+						return true;
+					}
+				}
+			}
+			else
+			{
+				if (!dict.ContainsKey(key))
+				{
+					dict.Add(key, value);
+					return true;
+				}
 			}
 
 			return false;
