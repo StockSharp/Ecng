@@ -218,7 +218,7 @@
 
 		public static T TryGetService<T>()
 		{
-			return IsServiceRegistered<T>() ? GetService<T>() : default(T);
+			return IsServiceRegistered<T>() ? GetService<T>() : default;
 		}
 
 		public static void TryRegisterService<T>(T service)

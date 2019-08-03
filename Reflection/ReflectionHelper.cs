@@ -25,7 +25,7 @@ namespace Ecng.Reflection
 
 		#region ProxyTypes
 
-		private readonly static Dictionary<Type, Type> _proxyTypes = new Dictionary<Type, Type>();
+		private static readonly Dictionary<Type, Type> _proxyTypes = new Dictionary<Type, Type>();
 
 		public static IDictionary<Type, Type> ProxyTypes => _proxyTypes;
 
@@ -118,7 +118,7 @@ namespace Ecng.Reflection
 
 		public static PropertyInfo GetIndexer(this Type type, params Type[] additionalTypes)
 		{
-			return GetMember<PropertyInfo>(type, "Item", ReflectionHelper.AllInstanceMembers, additionalTypes);
+			return GetMember<PropertyInfo>(type, "Item", AllInstanceMembers, additionalTypes);
 		}
 
 		#endregion
@@ -127,7 +127,7 @@ namespace Ecng.Reflection
 
 		public static PropertyInfo[] GetIndexers(this Type type, params Type[] additionalTypes)
 		{
-			return GetMembers<PropertyInfo>(type, ReflectionHelper.AllInstanceMembers, true, "Item", additionalTypes);
+			return GetMembers<PropertyInfo>(type, AllInstanceMembers, true, "Item", additionalTypes);
 		}
 
 		#endregion
@@ -184,7 +184,7 @@ namespace Ecng.Reflection
 
 		public static void SetValue<TInstance, TValue>(this TInstance instance, string memberName, TValue value)
 		{
-			instance.SetValue(memberName, ReflectionHelper.AllInstanceMembers, value);
+			instance.SetValue(memberName, AllInstanceMembers, value);
 		}
 
 		public static void SetValue<TInstance, TValue>(this TInstance instance, string memberName, BindingFlags flags, TValue value)
@@ -197,7 +197,7 @@ namespace Ecng.Reflection
 
 		public static void SetValue<TValue>(this Type type, string memberName, TValue value)
 		{
-			type.SetValue(memberName, ReflectionHelper.AllStaticMembers, value);
+			type.SetValue(memberName, AllStaticMembers, value);
 		}
 
 		public static void SetValue<TValue>(this Type type, string memberName, BindingFlags flags, TValue value)
@@ -210,14 +210,14 @@ namespace Ecng.Reflection
 			if (member == null)
 				throw new ArgumentNullException(nameof(member));
 
-			if (member is PropertyInfo)
-				FastInvoker<VoidType, TValue, VoidType>.Create((PropertyInfo)member, false).SetValue(value);
-			else if (member is FieldInfo)
-				FastInvoker<VoidType, TValue, VoidType>.Create((FieldInfo)member, false).SetValue(value);
-			else if (member is MethodInfo)
-				FastInvoker<VoidType, TValue, VoidType>.Create((MethodInfo)member).VoidInvoke(value);
-			else if (member is EventInfo)
-				FastInvoker<VoidType, TValue, VoidType>.Create((EventInfo)member, false).VoidInvoke(value);
+			if (member is PropertyInfo pi)
+				FastInvoker<VoidType, TValue, VoidType>.Create(pi, false).SetValue(value);
+			else if (member is FieldInfo fi)
+				FastInvoker<VoidType, TValue, VoidType>.Create(fi, false).SetValue(value);
+			else if (member is MethodInfo mi)
+				FastInvoker<VoidType, TValue, VoidType>.Create(mi).VoidInvoke(value);
+			else if (member is EventInfo ei)
+				FastInvoker<VoidType, TValue, VoidType>.Create(ei, false).VoidInvoke(value);
 			else
 				throw new ArgumentException("member");
 		}
@@ -227,19 +227,19 @@ namespace Ecng.Reflection
 			if (member == null)
 				throw new ArgumentNullException(nameof(member));
 
-			if (member is PropertyInfo)
+			if (member is PropertyInfo pi)
 			{
 				if (IsIndexer(member))
-					FastInvoker<TInstance, TValue, VoidType>.Create((PropertyInfo)member, false).VoidInvoke(instance, value);
+					FastInvoker<TInstance, TValue, VoidType>.Create(pi, false).VoidInvoke(instance, value);
 				else
-					return FastInvoker<TInstance, TValue, VoidType>.Create((PropertyInfo)member, false).SetValue(instance, value);
+					return FastInvoker<TInstance, TValue, VoidType>.Create(pi, false).SetValue(instance, value);
 			}
-			else if (member is FieldInfo)
-				return FastInvoker<TInstance, TValue, VoidType>.Create((FieldInfo)member, false).SetValue(instance, value);
-			else if (member is MethodInfo)
-				FastInvoker<TInstance, TValue, VoidType>.Create((MethodInfo)member).VoidInvoke(instance, value);
-			else if (member is EventInfo)
-				FastInvoker<TInstance, TValue, VoidType>.Create((EventInfo)member, false).VoidInvoke(instance, value);
+			else if (member is FieldInfo fi)
+				return FastInvoker<TInstance, TValue, VoidType>.Create(fi, false).SetValue(instance, value);
+			else if (member is MethodInfo mi)
+				FastInvoker<TInstance, TValue, VoidType>.Create(mi).VoidInvoke(instance, value);
+			else if (member is EventInfo ei)
+				FastInvoker<TInstance, TValue, VoidType>.Create(ei, false).VoidInvoke(instance, value);
 			else
 				throw new ArgumentException("member");
 
@@ -252,7 +252,7 @@ namespace Ecng.Reflection
 
 		public static TValue GetValue<TInstance, TArg, TValue>(this TInstance instance, string memberName, TArg arg)
 		{
-			return instance.GetValue<TInstance, TArg, TValue>(memberName, ReflectionHelper.AllInstanceMembers, arg);
+			return instance.GetValue<TInstance, TArg, TValue>(memberName, AllInstanceMembers, arg);
 		}
 
 		public static TValue GetValue<TInstance, TArg, TValue>(this TInstance instance, string memberName, BindingFlags flags, TArg arg)
@@ -265,7 +265,7 @@ namespace Ecng.Reflection
 
 		public static TValue GetValue<TArg, TValue>(this Type type, string memberName, TArg arg)
 		{
-			return type.GetValue<TArg, TValue>(memberName, ReflectionHelper.AllStaticMembers, arg);
+			return type.GetValue<TArg, TValue>(memberName, AllStaticMembers, arg);
 		}
 
 		public static TValue GetValue<TArg, TValue>(this Type type, string memberName, BindingFlags flags, TArg arg)
@@ -280,16 +280,16 @@ namespace Ecng.Reflection
 
 			TValue value;
 
-			if (member is PropertyInfo)
-				value = FastInvoker<VoidType, VoidType, TValue>.Create((PropertyInfo)member, true).GetValue();
-			else if (member is FieldInfo)
-				value = FastInvoker<VoidType, VoidType, TValue>.Create((FieldInfo)member, true).GetValue();
-			else if (member is MethodInfo)
-				value = FastInvoker<VoidType, TArg, TValue>.Create((MethodInfo)member).ReturnInvoke(arg);
-			else if (member is EventInfo)
+			if (member is PropertyInfo prop)
+				value = FastInvoker<VoidType, VoidType, TValue>.Create(prop, true).GetValue();
+			else if (member is FieldInfo field)
+				value = FastInvoker<VoidType, VoidType, TValue>.Create(field, true).GetValue();
+			else if (member is MethodInfo method)
+				value = FastInvoker<VoidType, TArg, TValue>.Create(method).ReturnInvoke(arg);
+			else if (member is EventInfo evt)
 			{
-				FastInvoker<VoidType, TArg, VoidType>.Create((EventInfo)member, true).VoidInvoke(arg);
-				value = default(TValue);
+				FastInvoker<VoidType, TArg, VoidType>.Create(evt, true).VoidInvoke(arg);
+				value = default;
 			}
 			else
 				throw new ArgumentException("member");
@@ -304,18 +304,16 @@ namespace Ecng.Reflection
 
 			TValue value;
 
-			if (member is PropertyInfo)
+			if (member is PropertyInfo prop)
+				value = IsIndexer(member) ? FastInvoker<TInstance, TArg, TValue>.Create(prop, true).ReturnInvoke(instance, arg) : FastInvoker<TInstance, VoidType, TValue>.Create(prop, true).GetValue(instance);
+			else if (member is FieldInfo field)
+				value = FastInvoker<TInstance, VoidType, TValue>.Create(field, true).GetValue(instance);
+			else if (member is MethodInfo method)
+				value = FastInvoker<TInstance, TArg, TValue>.Create(method).ReturnInvoke(instance, arg);
+			else if (member is EventInfo evt)
 			{
-				value = IsIndexer(member) ? FastInvoker<TInstance, TArg, TValue>.Create((PropertyInfo)member, true).ReturnInvoke(instance, arg) : FastInvoker<TInstance, VoidType, TValue>.Create((PropertyInfo)member, true).GetValue(instance);
-			}
-			else if (member is FieldInfo)
-				value = FastInvoker<TInstance, VoidType, TValue>.Create((FieldInfo)member, true).GetValue(instance);
-			else if (member is MethodInfo)
-				value = FastInvoker<TInstance, TArg, TValue>.Create((MethodInfo)member).ReturnInvoke(instance, arg);
-			else if (member is EventInfo)
-			{
-				FastInvoker<TInstance, TArg, VoidType>.Create((EventInfo)member, true).VoidInvoke(instance, arg);
-				value = default(TValue);
+				FastInvoker<TInstance, TArg, VoidType>.Create(evt, true).VoidInvoke(instance, arg);
+				value = default;
 			}
 			else
 				throw new ArgumentException("member");
@@ -372,7 +370,7 @@ namespace Ecng.Reflection
 		public static T[] GetMembers<T>(this Type type, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
-			return type.GetMembers<T>(ReflectionHelper.AllMembers, additionalTypes);
+			return type.GetMembers<T>(AllMembers, additionalTypes);
 		}
 
 		public static T[] GetMembers<T>(this Type type, BindingFlags flags, params Type[] additionalTypes)
@@ -464,7 +462,7 @@ namespace Ecng.Reflection
 				{
 					var sortedMembers = pair.Value.OrderBy(((x, y) =>
 					{
-						int result = x.ReflectedType.Compare(y.ReflectedType);
+						var result = x.ReflectedType.Compare(y.ReflectedType);
 
 						if (result == 0)
 							result = x.DeclaringType.Compare(y.DeclaringType);
@@ -472,9 +470,11 @@ namespace Ecng.Reflection
 						return result;
 					})).ToArray();
 
-					for (int i = 1; i < sortedMembers.Length; i++)
+					for (var i = 1; i < sortedMembers.Length; i++)
+					{
 						members[pair.Key].Remove(sortedMembers[i]);
 						//members.Remove(pair.Key, sortedMembers[i]);
+					}
 
 					if (members[pair.Key].IsEmpty())
 						members.Remove(pair.Key);
@@ -544,10 +544,9 @@ namespace Ecng.Reflection
 					//return GetMemberType(arg) == additionalTypes[0];
 					return GetMemberType(arg).Compare(additionalTypes[0], useInheritance);
 				}
-				else if (arg is MethodBase)
+				else if (arg is MethodBase mb)
 				{
-					return (arg as MethodBase).GetParameterTypes(true).SequenceEqual(additionalTypes,
-					(paramType, additionalType) =>
+					return mb.GetParameterTypes(true).SequenceEqual(additionalTypes, (paramType, additionalType) =>
 					{
 						if (additionalType == typeof(void))
 							return true;
@@ -575,22 +574,19 @@ namespace Ecng.Reflection
 
 			return _isAbstractCache.SafeAdd(member, delegate
 			{
-				if (member is MethodBase)
-					return ((MethodBase)member).IsAbstract;
-				else if (member is Type)
-					return ((Type)member).IsAbstract;
-				else if (member is PropertyInfo)
+				switch (member)
 				{
-					var prop = (PropertyInfo)member;
-					return (prop.CanRead && prop.GetGetMethod(true).IsAbstract) || (prop.CanWrite && prop.GetSetMethod(true).IsAbstract);
+					case MethodBase mb:
+						return mb.IsAbstract;
+					case Type type:
+						return type.IsAbstract;
+					case PropertyInfo prop:
+						return (prop.CanRead && prop.GetGetMethod(true).IsAbstract) || (prop.CanWrite && prop.GetSetMethod(true).IsAbstract);
+					case EventInfo evt:
+						return evt.GetAddMethod(true).IsAbstract || evt.GetRemoveMethod(true).IsAbstract;
+					default:
+						return false;
 				}
-				else if (member is EventInfo)
-				{
-					var evt = (EventInfo)member;
-					return evt.GetAddMethod(true).IsAbstract || evt.GetRemoveMethod(true).IsAbstract;
-				}
-				else
-					return false;	
 			});
 		}
 
@@ -607,20 +603,14 @@ namespace Ecng.Reflection
 
 			return _isVirtualCache.SafeAdd(member, delegate
 			{
-				if (member is MethodBase)
-					return ((MethodBase)member).IsVirtual;
-				//else if (member is Type)
-				//	return ((Type)member).IsVirtual;
-				else if (member is PropertyInfo)
-				{
-					var prop = (PropertyInfo)member;
+				if (member is MethodBase mb)
+					return mb.IsVirtual;
+				//else if (member is Type type)
+				//	return type.IsVirtual;
+				else if (member is PropertyInfo prop)
 					return (prop.CanRead && prop.GetGetMethod(true).IsVirtual) || (prop.CanWrite && prop.GetSetMethod(true).IsVirtual);
-				}
-				else if (member is EventInfo)
-				{
-					var evt = (EventInfo)member;
+				else if (member is EventInfo evt)
 					return evt.GetAddMethod(true).IsVirtual || evt.GetRemoveMethod(true).IsVirtual;
-				}
 				else
 					return false;
 			});
@@ -644,8 +634,8 @@ namespace Ecng.Reflection
 
 		public static bool IsIndexer(this MemberInfo member)
 		{
-			if (member is PropertyInfo)
-				return ((PropertyInfo)member).IsIndexer();
+			if (member is PropertyInfo prop)
+				return prop.IsIndexer();
 			else
 				return false;
 		}
@@ -655,7 +645,7 @@ namespace Ecng.Reflection
 			if (property == null)
 				throw new ArgumentNullException(nameof(property));
 
-			return (property.GetIndexParameters().Length > 0);
+			return property.GetIndexParameters().Length > 0;
 		}
 
 		#endregion
@@ -708,18 +698,21 @@ namespace Ecng.Reflection
 			if (member == null)
 				throw new ArgumentNullException(nameof(member));
 
-			if (member is PropertyInfo)
-				return ((PropertyInfo)member).PropertyType;
-			else if (member is FieldInfo)
-				return ((FieldInfo)member).FieldType;
-			else if (member is MethodInfo)
-				return ((MethodInfo)member).ReturnType;
-			else if (member is EventInfo)
-				return ((EventInfo)member).EventHandlerType;
-			else if (member is ConstructorInfo)
-				return member.ReflectedType;
-			else
-				throw new ArgumentException("member");
+			switch (member)
+			{
+				case PropertyInfo pi:
+					return pi.PropertyType;
+				case FieldInfo fi:
+					return fi.FieldType;
+				case MethodInfo mi:
+					return mi.ReturnType;
+				case EventInfo ei:
+					return ei.EventHandlerType;
+				case ConstructorInfo _:
+					return member.ReflectedType;
+				default:
+					throw new ArgumentException("member");
+			}
 		}
 
 		#endregion
@@ -757,12 +750,10 @@ namespace Ecng.Reflection
 
 			return _isStaticCache.SafeAdd(member, delegate
 			{
-				if (member is MethodBase)
-					return ((MethodBase)member).IsStatic;
-				else if (member is PropertyInfo)
+				if (member is MethodBase mb)
+					return mb.IsStatic;
+				else if (member is PropertyInfo prop)
 				{
-					var prop = (PropertyInfo)member;
-
 					if (prop.CanRead)
 						return IsStatic(prop.GetGetMethod(true));
 					else if (prop.CanWrite)
@@ -770,18 +761,12 @@ namespace Ecng.Reflection
 					else
 						throw new ArgumentException("member");
 				}
-				else if (member is FieldInfo)
-					return ((FieldInfo)member).IsStatic;
-				else if (member is EventInfo)
-				{
-					var evt = (EventInfo)member;
+				else if (member is FieldInfo fi)
+					return fi.IsStatic;
+				else if (member is EventInfo evt)
 					return IsStatic(evt.GetAddMethod(true));
-				}
-				else if (member is Type)
-				{
-					var type = (Type)member;
+				else if (member is Type type)
 					return type.IsAbstract && type.IsSealed;
-				}
 				else
 					throw new ArgumentException("member");
 			});

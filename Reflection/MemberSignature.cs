@@ -19,13 +19,6 @@ namespace Ecng.Reflection
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Ecng.Reflection.MemberSignature"/> class.
 		/// </summary>
-		//public MemberSignature()
-		//{
-		//}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Ecng.Reflection.MemberSignature"/> class.
-		/// </summary>
 		/// <param name="member">The member.</param>
 		public MemberSignature(MemberInfo member)
 		{
@@ -34,13 +27,10 @@ namespace Ecng.Reflection
 
 			Member = member;
 
-			if (member is ConstructorInfo)
-				ReturnType = typeof(void);
-			else
-				ReturnType = member.GetMemberType();
+			ReturnType = member is ConstructorInfo ? typeof(void) : member.GetMemberType();
 
-			if (member is MethodBase)
-				ParamTypes = ((MethodBase)member).GetParameterTypes();
+			if (member is MethodBase mb)
+				ParamTypes = mb.GetParameterTypes();
 			else if (member.IsIndexer())
 				ParamTypes = new [] { ((PropertyInfo)member).GetIndexerType() };
 			else

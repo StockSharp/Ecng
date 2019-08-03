@@ -18,8 +18,8 @@ namespace Ecng.Reflection.Path
 			if (member == null)
 				throw new ArgumentNullException(nameof(member));
 
-			if (member is PropertyInfo)
-				return FastInvoker.Create((PropertyInfo)member, isGetter);
+			if (member is PropertyInfo prop)
+				return FastInvoker.Create(prop, isGetter);
 			else
 				return FastInvoker.Create((FieldInfo)member, isGetter);
 		}

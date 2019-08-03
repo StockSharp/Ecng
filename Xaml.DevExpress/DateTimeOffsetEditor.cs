@@ -77,8 +77,8 @@
 			if (value is DateTimeOffset)
 				return value;
 
-			if (value is DateTime)
-				return new DateTimeOffset((DateTime)value);
+			if (value is DateTime dt)
+				return new DateTimeOffset(dt);
 
 			var str = value as string;
 
@@ -96,8 +96,8 @@
 			if (value is DateTime)
 				return value;
 
-			if (value is DateTimeOffset)
-				return ((DateTimeOffset)value).LocalDateTime;
+			if (value is DateTimeOffset dto)
+				return dto.LocalDateTime;
 
 			var str = value as string;
 

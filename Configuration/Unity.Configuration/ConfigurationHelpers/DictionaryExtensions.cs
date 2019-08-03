@@ -28,12 +28,11 @@ namespace Microsoft.Practices.Unity.Configuration.ConfigurationHelpers
         /// <returns>The value at the key or null if not in the dictionary.</returns>
         public static TValue GetOrNull<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
         {
-            TValue value;
-            if (dictionary.TryGetValue(key, out value))
+	        if (dictionary.TryGetValue(key, out var value))
             {
                 return value;
             }
-            return default(TValue);
+            return default;
         }
     }
 }

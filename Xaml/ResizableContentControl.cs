@@ -78,8 +78,8 @@
 			var size2 = new Size(MinWidth, MinHeight);
 			var frameworkElement = Content as FrameworkElement;
 			
-			while (frameworkElement is ContentPresenter)
-				frameworkElement = ((ContentPresenter)frameworkElement).Content as FrameworkElement;
+			while (frameworkElement is ContentPresenter cp)
+				frameworkElement = cp.Content as FrameworkElement;
 			
 			if (frameworkElement != null)
 			{

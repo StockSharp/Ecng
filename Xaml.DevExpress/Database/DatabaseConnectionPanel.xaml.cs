@@ -125,11 +125,11 @@
 					}
 					catch (InvalidCastException)
 					{
-						return default(T);
+						return default;
 					}
 				}
 
-				return default(T);
+				return default;
 			}
 
 			[DatabaseDisplayName(Titles.Provider)]

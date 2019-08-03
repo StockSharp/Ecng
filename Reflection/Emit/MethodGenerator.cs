@@ -1051,8 +1051,8 @@
 
 		public MethodGenerator call(MethodBase method)
 		{
-			if (method is ConstructorInfo)
-				_generator.Emit(OpCodes.Call, (ConstructorInfo)method);
+			if (method is ConstructorInfo ctor)
+				_generator.Emit(OpCodes.Call, ctor);
 			else
 				_generator.Emit(OpCodes.Call, (MethodInfo)method);
 

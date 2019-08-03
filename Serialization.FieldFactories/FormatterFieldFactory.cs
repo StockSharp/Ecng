@@ -22,7 +22,7 @@ namespace Ecng.Serialization
 		protected override I OnCreateInstance(ISerializer serializer, Stream source)
 		{
 			if (source.Length == 0)
-				return default(I);
+				return default;
 
 			return (I)new F().Deserialize(source);
 		}

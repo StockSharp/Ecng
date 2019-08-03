@@ -35,7 +35,7 @@
 
 		private void BtnEdit_OnClick(object sender, RoutedEventArgs e)
 		{
-			EditValue = new Range<T>(default(T), default(T));
+			EditValue = new Range<T>(default, default);
 		}
 	}
 }

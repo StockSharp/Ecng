@@ -42,42 +42,42 @@ namespace Ecng.Security
 
 			public byte[] Encrypt(byte[] plainText)
 			{
-				if (Value is RSACryptoServiceProvider)
-					return ((RSACryptoServiceProvider)Value).Encrypt(plainText, false);
+				if (Value is RSACryptoServiceProvider rsa)
+					return rsa.Encrypt(plainText, false);
 
 				throw new NotImplementedException();
 			}
 
 			public byte[] Decrypt(byte[] encryptedText)
 			{
-				if (Value is RSACryptoServiceProvider)
-					return ((RSACryptoServiceProvider)Value).Decrypt(encryptedText, false);
+				if (Value is RSACryptoServiceProvider rsa)
+					return rsa.Decrypt(encryptedText, false);
 
 				throw new NotImplementedException();
 			}
 
 			public byte[] CreateSignature(byte[] data)
 			{
-				if (Value is RSACryptoServiceProvider)
+				if (Value is RSACryptoServiceProvider rsa)
 				{
 					using (var hash = new SHA1CryptoServiceProvider())
-						return ((RSACryptoServiceProvider)Value).SignData(data, hash);
+						return rsa.SignData(data, hash);
 				}
-				else if (Value is DSACryptoServiceProvider)
-					return ((DSACryptoServiceProvider)Value).SignData(data);
+				else if (Value is DSACryptoServiceProvider dsa)
+					return dsa.SignData(data);
 				else
 					throw new NotSupportedException();
 			}
 
 			public bool VerifySignature(byte[] data, byte[] signature)
 			{
-				if (Value is RSACryptoServiceProvider)
+				if (Value is RSACryptoServiceProvider rsa)
 				{
 					using (var hash = new SHA1CryptoServiceProvider())
-						return ((RSACryptoServiceProvider)Value).VerifyData(data, hash, signature);
+						return rsa.VerifyData(data, hash, signature);
 				}
-				else if (Value is DSACryptoServiceProvider)
-					return ((DSACryptoServiceProvider)Value).VerifySignature(data, signature);
+				else if (Value is DSACryptoServiceProvider dsa)
+					return dsa.VerifySignature(data, signature);
 				else
 					throw new NotSupportedException();
 			}
@@ -104,7 +104,7 @@ namespace Ecng.Security
 		#region AsymmetricCryptographer.ctor()
 
 		/// <summary>
-		/// <para>Initalize a new instance of the <see cref="AsymmetricCryptographer"/> class with an algorithm type and a key.</para>
+		/// <para>Initialize a new instance of the <see cref="AsymmetricCryptographer"/> class with an algorithm type and a key.</para>
 		/// </summary>
 		/// <param name="algorithmType"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
 		/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
@@ -146,7 +146,7 @@ namespace Ecng.Security
 		/// <para>Encrypts bytes with the initialized algorithm and key.</para>
 		/// </summary>
 		/// <param name="plainText"><para>The plaintext in which you wish to encrypt.</para></param>
-		/// <returns><para>The resulting ciphertext.</para></returns>
+		/// <returns><para>The resulting cipher text.</para></returns>
 		public byte[] Encrypt(byte[] plainText)
 		{
 			if (_encryptor == null)

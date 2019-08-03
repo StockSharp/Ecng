@@ -51,7 +51,7 @@
 			if (!FolderPath.Text.IsEmpty())
 				dlg.SelectedPath = FolderPath.Text;
 
-			var owner = sender is DependencyObject ? ((DependencyObject)sender).GetWindow() : null;
+			var owner = sender is DependencyObject depObj ? depObj.GetWindow() : null;
 
 			if (dlg.ShowDialog(owner) == true)
 			{

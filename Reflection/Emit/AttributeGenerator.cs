@@ -30,16 +30,16 @@ namespace Ecng.Reflection.Emit
 
 			foreach (var arg in data.NamedArguments)
 			{
-				if (arg.MemberInfo is PropertyInfo)
-					props.Add((PropertyInfo)arg.MemberInfo, arg.TypedValue.Value);
+				if (arg.MemberInfo is PropertyInfo info)
+					props.Add(info, arg.TypedValue.Value);
 				else
 					fields.Add((FieldInfo)arg.MemberInfo, arg.TypedValue.Value);
 			}
 
 			var ctorArgs = data.ConstructorArguments.Select(typedArg =>
 			{
-				if (typedArg.Value is ICollection<CustomAttributeTypedArgument>)
-					return ((ICollection<CustomAttributeTypedArgument>)typedArg.Value).Select(arg => arg.Value);
+				if (typedArg.Value is ICollection<CustomAttributeTypedArgument> arguments)
+					return arguments.Select(arg => arg.Value);
 				else
 					return typedArg.Value;
 			});
@@ -88,10 +88,10 @@ namespace Ecng.Reflection.Emit
 			if (fields.HasNullItem())
 				throw new ArgumentException("fields");
 
-			if (props.Count() != propValues.Count())
+			if (props.Length != propValues.Length)
 				throw new ArgumentOutOfRangeException(nameof(propValues));
 
-			if (fields.Count() != fieldValues.Count())
+			if (fields.Length != fieldValues.Length)
 				throw new ArgumentOutOfRangeException(nameof(fieldValues));
 
 			Ctor = ctor;

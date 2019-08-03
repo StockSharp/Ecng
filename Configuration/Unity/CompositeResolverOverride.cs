@@ -13,7 +13,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+
 using Microsoft.Practices.ObjectBuilder2;
 
 namespace Microsoft.Practices.Unity
@@ -83,7 +83,7 @@ namespace Microsoft.Practices.Unity
         {
             // Walk backwards over the resolvers, this way newer resolvers can replace
             // older ones.
-            for (int index = overrides.Count() - 1; index >= 0; --index)
+            for (int index = overrides.Count - 1; index >= 0; --index)
             {
                 var resolver = overrides[index].GetResolver(context, dependencyType);
                 if(resolver != null)

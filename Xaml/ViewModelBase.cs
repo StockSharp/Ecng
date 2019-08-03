@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.ComponentModel;
 	using System.Linq.Expressions;
+
 	using Ecng.Common;
 
 	/// <summary>
@@ -15,8 +16,7 @@
 
 		protected virtual void OnPropertyChanged(string name)
 		{
-			var eventHandler = PropertyChanged;
-			if (eventHandler != null) eventHandler(this, new PropertyChangedEventArgs(name));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		}
 
 		protected void OnPropertyChanged<T>(Expression<Func<T>> selectorExpression)
@@ -42,17 +42,18 @@
 
 		public static string PropertyName<T>(Expression<Func<T>> property)
 		{
-			var lambda = (LambdaExpression) property;
+			var lambda = (LambdaExpression)property;
 
 			MemberExpression memberExpression;
-			if (lambda.Body is UnaryExpression)
+
+			if (lambda.Body is UnaryExpression exp)
 			{
-				var unaryExpression = (UnaryExpression) lambda.Body;
-				memberExpression = (MemberExpression) unaryExpression.Operand;
+				var unaryExpression = exp;
+				memberExpression = (MemberExpression)unaryExpression.Operand;
 			}
 			else
 			{
-				memberExpression = (MemberExpression) lambda.Body;
+				memberExpression = (MemberExpression)lambda.Body;
 			}
 
 			return memberExpression.Member.Name;

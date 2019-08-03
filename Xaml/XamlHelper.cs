@@ -247,14 +247,14 @@ namespace Ecng.Xaml
 			if (obj == null)
 				return null;
 
-			if (obj is T)
-				return (T)obj;
+			if (obj is T t)
+				return t;
 
 			foreach (var child in LogicalTreeHelper.GetChildren(obj).OfType<DependencyObject>())
 			{
-				if (child is T)
+				if (child is T t2)
 				{
-					return (T)child;
+					return t2;
 				}
 				else
 				{
@@ -281,8 +281,8 @@ namespace Ecng.Xaml
 			for (var i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
 			{
 				var child = VisualTreeHelper.GetChild(obj, i);
-				if (child is T)
-					yield return (T)child;
+				if (child is T t)
+					yield return t;
 
 				foreach (var childOfChild in FindVisualChilds<T>(child))
 					yield return childOfChild;
@@ -664,7 +664,7 @@ namespace Ecng.Xaml
 		/// <returns>Casted value.</returns>
 		public static T WpfCast<T>(this object value)
 		{
-			return value == DependencyProperty.UnsetValue ? default(T) : value.To<T>();
+			return value == DependencyProperty.UnsetValue ? default : value.To<T>();
 		}
 
 		public static ICollectionView MakeFilterable<T>(this IEnumerable<T> source, Func<T, bool> filter)
@@ -803,7 +803,6 @@ namespace Ecng.Xaml
 			if (parent == null)
 				throw new ArgumentNullException(nameof(parent));
 
-			// ïðîâåðèòü êîððåêòíîñòü ðîäèòåëÿ
 			if (parent.Left > SystemParameters.VirtualScreenWidth || parent.Left < 0 || parent.Left.IsNaN())
 			{
 				parent.Left = (int)Math.Abs((SystemParameters.VirtualScreenWidth - parent.Width) / 2);
@@ -814,7 +813,6 @@ namespace Ecng.Xaml
 				parent.Top = (int)Math.Abs((SystemParameters.VirtualScreenHeight - parent.Height) / 2);
 			}
 
-			// âçÿòü öåíòð ðîäèòåëÿ
 			var widthCenter = parent.Left + parent.Width / 2;
 			var heigthCenter = parent.Top + parent.Height / 2;
 
@@ -934,14 +932,14 @@ namespace Ecng.Xaml
 
 		private class DependencyPropertyListener : DependencyObject, IDisposable
 		{
-			private static readonly DependencyProperty ProxyProperty = DependencyProperty.Register("Proxy", typeof(object), typeof(DependencyPropertyListener), new PropertyMetadata(null, OnProxyChanged));
+			private static readonly DependencyProperty _proxyProperty = DependencyProperty.Register("Proxy", typeof(object), typeof(DependencyPropertyListener), new PropertyMetadata(null, OnProxyChanged));
 
 			private readonly Action<DependencyPropertyChangedEventArgs> _action;
 			private bool _isDisposed;
 
 			public DependencyPropertyListener(DependencyObject source, DependencyProperty property, Action<DependencyPropertyChangedEventArgs> action)
 			{
-				this.SetBindings(ProxyProperty, source, new PropertyPath(property), BindingMode.OneWay);
+				this.SetBindings(_proxyProperty, source, new PropertyPath(property), BindingMode.OneWay);
 				_action = action;
 			}
 
@@ -951,7 +949,7 @@ namespace Ecng.Xaml
 					return;
 
 				_isDisposed = true;
-				BindingOperations.ClearBinding(this, ProxyProperty);
+				BindingOperations.ClearBinding(this, _proxyProperty);
 			}
 
 			private static void OnProxyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -1116,7 +1114,7 @@ namespace Ecng.Xaml
 			var drawingVisual = new DrawingVisual();
 
 			using (var drawingContext = drawingVisual.RenderOpen())
-				drawingContext.DrawImage(drawingImage, new Rect(default(Point), drawingImageSize));
+				drawingContext.DrawImage(drawingImage, new Rect(default, drawingImageSize));
 			renderTargetBitmap.Render(drawingVisual);
 
 			var pngBitmapEncoder = new PngBitmapEncoder();

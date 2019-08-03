@@ -345,7 +345,7 @@
 			return Invoke(obj);
 		}
 
-		public override RuntimeMethodHandle MethodHandle => default(RuntimeMethodHandle);
+		public override RuntimeMethodHandle MethodHandle => default;
 
 		public override Type DeclaringType => _rootType;
 

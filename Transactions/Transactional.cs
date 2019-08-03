@@ -24,7 +24,7 @@ namespace Ecng.Transactions
 		#region Transactional.ctor()
 
 		public Transactional()
-			: this(default(T))
+			: this(default)
 		{
 		}
 
@@ -137,7 +137,7 @@ namespace Ecng.Transactions
 		private void ReleaseData(Enlistment enlistment)
 		{
 			_currentTransaction = null;
-			_temporaryValue = default(T);
+			_temporaryValue = default;
 			_lock.Unlock();
 			enlistment.Done();
 		}

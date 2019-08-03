@@ -33,10 +33,10 @@ namespace Ecng.Net
 			if (endPoint == null)
 				throw new ArgumentNullException(nameof(endPoint));
 
-			if (endPoint is IPEndPoint)
-				return IPAddress.IsLoopback(((IPEndPoint)endPoint).Address);
-			else if (endPoint is DnsEndPoint)
-				return ((DnsEndPoint)endPoint).Host.CompareIgnoreCase("localhost");
+			if (endPoint is IPEndPoint ip)
+				return IPAddress.IsLoopback(ip.Address);
+			else if (endPoint is DnsEndPoint dns)
+				return dns.Host.CompareIgnoreCase("localhost");
 			else
 				throw new ArgumentOutOfRangeException(nameof(endPoint), endPoint, "Invalid argument value.".Translate());
 		}
