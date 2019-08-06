@@ -604,7 +604,7 @@
 
 					object retVal;
 
-					if (TryGetTypedConverter(value is Type ? typeof(Type) : value.GetType(), destinationType, out typedConverter))
+					if (TryGetTypedConverter(typeof(byte[]), destinationType, out typedConverter))
 						retVal = typedConverter(value);
 					else
 						throw new ArgumentException("Can't convert byte array to '{0}'.".Put(destinationType), nameof(value));
@@ -657,41 +657,41 @@
 #endif
 				else if (value is Uri && destinationType == typeof(string))
 					return value.ToString();
-				else if (value is string && destinationType == typeof(Uri))
-					return new Uri((string)value);
+				else if (value is string s1 && destinationType == typeof(Uri))
+					return new Uri(s1);
 				else if (value is Version && destinationType == typeof(string))
 					return value.ToString();
-				else if (value is string && destinationType == typeof(Version))
-					return new Version((string)value);
-				else if (value is int && destinationType == typeof(IntPtr))
-					return new IntPtr((int)value);
-				else if (value is long && destinationType == typeof(IntPtr))
-					return new IntPtr((long)value);
-				else if (value is uint && destinationType == typeof(UIntPtr))
-					return new UIntPtr((uint)value);
-				else if (value is ulong && destinationType == typeof(UIntPtr))
-					return new UIntPtr((ulong)value);
-				else if (value is IntPtr && destinationType == typeof(int))
-					return ((IntPtr)value).ToInt32();
-				else if (value is IntPtr && destinationType == typeof(long))
-					return ((IntPtr)value).ToInt64();
-				else if (value is UIntPtr && destinationType == typeof(uint))
-					return ((UIntPtr)value).ToUInt32();
-				else if (value is UIntPtr && destinationType == typeof(ulong))
-					return ((UIntPtr)value).ToUInt64();
+				else if (value is string s2 && destinationType == typeof(Version))
+					return new Version(s2);
+				else if (value is int i1 && destinationType == typeof(IntPtr))
+					return new IntPtr(i1);
+				else if (value is long l1 && destinationType == typeof(IntPtr))
+					return new IntPtr(l1);
+				else if (value is uint ui1 && destinationType == typeof(UIntPtr))
+					return new UIntPtr(ui1);
+				else if (value is ulong ul1 && destinationType == typeof(UIntPtr))
+					return new UIntPtr(ul1);
+				else if (value is IntPtr iptr1 && destinationType == typeof(int))
+					return iptr1.ToInt32();
+				else if (value is IntPtr iptr2 && destinationType == typeof(long))
+					return iptr2.ToInt64();
+				else if (value is UIntPtr uptr1 && destinationType == typeof(uint))
+					return uptr1.ToUInt32();
+				else if (value is UIntPtr uptr2 && destinationType == typeof(ulong))
+					return uptr2.ToUInt64();
 #if !SILVERLIGHT
-				else if (value is CultureInfo && destinationType == typeof(int))
-					return ((CultureInfo)value).LCID;
-				else if (value is int && destinationType == typeof(CultureInfo))
-					return new CultureInfo((int)value);
-				else if (value is Encoding && destinationType == typeof(int))
-					return ((Encoding)value).CodePage;
-				else if (value is int && destinationType == typeof(Encoding))
-					return Encoding.GetEncoding((int)value);
+				else if (value is CultureInfo ci1 && destinationType == typeof(int))
+					return ci1.LCID;
+				else if (value is int i2 && destinationType == typeof(CultureInfo))
+					return new CultureInfo(i2);
+				else if (value is Encoding e1 && destinationType == typeof(int))
+					return e1.CodePage;
+				else if (value is int i3 && destinationType == typeof(Encoding))
+					return Encoding.GetEncoding(i3);
 #endif
 				else if (destinationType.GetUnderlyingType() != null)
 				{
-					if (value is string && (string)value == string.Empty)
+					if (value is string s3 && s3 == string.Empty)
 					{
 						if (destinationType == typeof(decimal?))
 							return new decimal?();
@@ -714,8 +714,8 @@
 							return destinationType.CreateInstance<object>(value.To(destinationType.GetUnderlyingType()));
 					}
 				}
-				else if (value is string && destinationType == typeof(TimeSpan))
-					return TimeSpan.Parse((string)value);
+				else if (value is string s4 && destinationType == typeof(TimeSpan))
+					return TimeSpan.Parse(s4);
 				else if (value is TimeSpan && destinationType == typeof(string))
 					return value.ToString();
 				else if (value is DateTime dt && destinationType == typeof(string))
@@ -730,26 +730,26 @@
 				else if (value is TimeZoneInfo tz && destinationType == typeof(string))
 					return tz.Id;
 #endif
-				else if (value is string && destinationType == typeof(Guid))
-					return new Guid((string)value);
+				else if (value is string s5 && destinationType == typeof(Guid))
+					return new Guid(s5);
 				else if (value is Guid && destinationType == typeof(string))
 					return value.ToString();
-				else if (value is string && destinationType == typeof(XDocument))
-					return XDocument.Parse((string)value);
-				else if (value is string && destinationType == typeof(XElement))
-					return XElement.Parse((string)value);
+				else if (value is string s6 && destinationType == typeof(XDocument))
+					return XDocument.Parse(s6);
+				else if (value is string s7 && destinationType == typeof(XElement))
+					return XElement.Parse(s7);
 				else if (value is XNode && destinationType == typeof(string))
 					return value.ToString();
-				else if (value is string && destinationType == typeof(XmlDocument))
+				else if (value is string s8 && destinationType == typeof(XmlDocument))
 				{
 					var doc = new XmlDocument();
-					doc.LoadXml((string)value);
+					doc.LoadXml(s8);
 					return doc;
 				}
-				else if (value is XmlNode && destinationType == typeof(string))
-					return ((XmlNode)value).OuterXml;
-				else if (value is string && destinationType == typeof(decimal))
-					return decimal.Parse((string)value, NumberStyles.Any, null);
+				else if (value is XmlNode n1 && destinationType == typeof(string))
+					return n1.OuterXml;
+				else if (value is string s9 && destinationType == typeof(decimal))
+					return decimal.Parse(s9, NumberStyles.Any, null);
 				else
 				{
 					var attr = destinationType.GetAttribute<TypeConverterAttribute>();

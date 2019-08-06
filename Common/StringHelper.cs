@@ -877,12 +877,12 @@
 				using (var memoryStream = new MemoryStream())
 				using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
 				{
-					var bytes = Encoding.UTF8.GetBytes(data);
+					var bytes = data.UTF8();
 
 					cryptoStream.Write(bytes, 0, bytes.Length);
 					cryptoStream.FlushFinalBlock();
 
-					return Convert.ToBase64String(memoryStream.ToArray());
+					return memoryStream.ToArray().Base64();
 				}
 			}
 		}
@@ -891,7 +891,7 @@
 		{
 			using (var pwd = new Rfc2898DeriveBytes(password, _initVectorBytes))
 			{
-				var cipherTextBytes = Convert.FromBase64String(data);
+				var cipherTextBytes = data.Base64();
 				var keyBytes = pwd.GetBytes(_keysize / 8);
 
 				using (var symmetricKey = new RijndaelManaged { Mode = CipherMode.CBC })
