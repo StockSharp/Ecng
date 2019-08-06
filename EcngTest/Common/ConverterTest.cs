@@ -2,6 +2,7 @@ namespace Ecng.Test.Common
 {
 	using System;
 	using System.Collections.ObjectModel;
+	using System.Net;
 
 	using Ecng.Common;
 	using Ecng.UnitTesting;
@@ -88,6 +89,23 @@ namespace Ecng.Test.Common
 				str = str.Remove(str.Length - 2) + "00";
 
 			parser.ToString(ts).AssertEqual(str);
+		}
+
+		private const string _uri = "net.tcp://localhost:8000";
+
+		[TestMethod]
+		public void Uri()
+		{
+			_uri.To<Uri>().To<string>().AssertEqual(_uri + "/");
+		}
+
+		[TestMethod]
+		public void EndPoint()
+		{
+			_uri.To<Uri>().To<string>().To<EndPoint>().To<string>().AssertEqual(_uri);
+			_uri.To<EndPoint>().To<string>().AssertEqual(_uri);
+			_uri.To<Uri>().To<string>().To<EndPoint>().AssertEqual(_uri.To<EndPoint>());
+			(_uri + "/").To<EndPoint>().To<string>().AssertEqual(_uri);
 		}
 	}
 }

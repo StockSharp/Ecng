@@ -159,7 +159,12 @@
 				if (index != -1)
 				{
 					var host = input.Substring(0, index);
-					var port = input.Substring(index + 1).To<int>();
+
+					var portStr = input.Substring(index + 1);
+					if (portStr.Length > 0 && portStr.Last() == '/')
+						portStr = portStr.Substring(0, portStr.Length - 1);
+
+					var port = portStr.To<int>();
 
 					if (!IPAddress.TryParse(host, out var addr))
 						return new DnsEndPoint(host, port);
