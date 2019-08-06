@@ -71,6 +71,11 @@
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="BaseCustomEnumEditor.cs" />
+    <Compile Include="Database\DatabaseConnectionCache.cs" />
+    <Compile Include="Database\DatabaseConnectionComboBox.cs" />
+    <Compile Include="Database\DatabaseConnectionEditor.xaml.cs">
+      <DependentUpon>DatabaseConnectionEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Database\DatabaseProviderEditor.cs" />
     <Compile Include="Database\DatabaseConnectionCreateWindow.xaml.cs">
       <DependentUpon>DatabaseConnectionCreateWindow.xaml</DependentUpon>
@@ -117,6 +122,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="Database\DatabaseConnectionCreateWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Database\DatabaseConnectionEditor.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -169,6 +178,10 @@
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
       <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
       <Name>ComponentModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Configuration\Configuration.csproj">
+      <Project>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</Project>
+      <Name>Configuration</Name>
     </ProjectReference>
     <ProjectReference Include="..\Data.Providers\Data.Providers.csproj">
       <Project>{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}</Project>
