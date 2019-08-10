@@ -59,5 +59,13 @@ namespace Ecng.Common
 
 			return value;
 		}
+
+		public static bool IsObsolete(this ICustomAttributeProvider provider)
+		{
+			if (provider == null)
+				throw new ArgumentNullException(nameof(provider));
+
+			return provider.GetAttribute<ObsoleteAttribute>() != null;
+		}
 	}
 }
