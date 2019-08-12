@@ -58,17 +58,5 @@ namespace Ecng.ComponentModel.Expressions
 		/// Available functions.
 		/// </summary>
 		public static IEnumerable<string> Functions => ExpressionHelper.Functions;
-
-		/// <summary>
-		/// Compile mathematical formula.
-		/// </summary>
-		/// <param name="service">Compiler service.</param>
-		/// <param name="expression">Text expression.</param>
-		/// <param name="useIdentifiers">Use ids as variables.</param>
-		/// <returns>Compiled mathematical formula.</returns>
-		public static ExpressionFormula Compile(ICompilerService service, string expression, bool useIdentifiers = true)
-		{
-			return service.Compile(expression, useIdentifiers);
-		}
 	}
 }
