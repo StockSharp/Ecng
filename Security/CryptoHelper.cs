@@ -118,16 +118,6 @@ namespace Ecng.Security
 			};
 		}
 
-		public static byte[] GenerateSalt(int saltSize)
-		{
-			using (var saltGen = new RNGCryptoServiceProvider())
-			{
-				var salt = new byte[saltSize];
-				saltGen.GetBytes(salt);
-				return salt;	
-			}
-		}
-
 		public static byte[] Protect(this byte[] plainText, byte[] entropy = null, DataProtectionScope scope = CryptoAlgorithm.DefaultScope)
 		{
 			return ProtectedData.Protect(plainText, entropy, scope);

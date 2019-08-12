@@ -244,7 +244,7 @@ namespace Ecng.Web
 
 		public Secret CreateSecret(string plainText)
 		{
-			return CreateSecret(plainText, CryptoHelper.GenerateSalt(SaltSize));
+			return CreateSecret(plainText, TypeHelper.GenerateSalt(SaltSize));
 		}
 
 		protected virtual Secret CreateSecret(string plainText, byte[] salt)

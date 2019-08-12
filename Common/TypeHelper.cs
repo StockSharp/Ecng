@@ -5,6 +5,7 @@ namespace Ecng.Common
 	using System.Linq;
 	using System.Reflection;
 	using System.Runtime.Serialization;
+	using System.Security.Cryptography;
 
 	public static class TypeHelper
 	{
@@ -275,6 +276,16 @@ namespace Ecng.Common
 			_remoteStackTraceString.SetValue(ex, ex.StackTrace + Environment.NewLine);
 
 			throw ex;
+		}
+
+		public static byte[] GenerateSalt(int saltSize)
+		{
+			using (var saltGen = new RNGCryptoServiceProvider())
+			{
+				var salt = new byte[saltSize];
+				saltGen.GetBytes(salt);
+				return salt;	
+			}
 		}
 	}
 }
