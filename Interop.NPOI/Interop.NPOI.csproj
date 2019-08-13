@@ -31,15 +31,21 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>..\..\StockSharp (GitHub)\References\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs">
       <Link>Properties\EcngAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="ExcelWorker.cs" />
+    <Compile Include="NPOIExcelWorker.cs" />
     <Compile Include="main vs10\DDF\AbstractEscherOptRecord.cs" />
     <Compile Include="main vs10\DDF\DefaultEscherRecordFactory.cs" />
     <Compile Include="main vs10\DDF\EscherArrayProperty.cs" />
@@ -1166,6 +1172,7 @@
     <Compile Include="main vs10\Util\Units.cs" />
     <Compile Include="main vs10\WP\UserModel\ICharacterRun.cs" />
     <Compile Include="main vs10\WP\UserModel\IParagraph.cs" />
+    <Compile Include="NPOIExcelWorkerProvider.cs" />
     <Compile Include="OOXML vs2010\POIXMLDocument.cs" />
     <Compile Include="OOXML vs2010\POIXMLDocumentPart.cs" />
     <Compile Include="OOXML vs2010\POIXmlException.cs" />

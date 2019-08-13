@@ -22,11 +22,11 @@
 	using Color = System.Windows.Media.Color;
 	using ICellStyle = NPOI.SS.UserModel;
 
-	public class ExcelWorker : Disposable, IExcelWorker
+	public class NPOIExcelWorker : Disposable, IExcelWorker
 	{
 		private static readonly CachedSynchronizedDictionary<short, Color> _colors = new CachedSynchronizedDictionary<short, Color>();
 
-		static ExcelWorker()
+		static NPOIExcelWorker()
 		{
 			var replaces = new Dictionary<string, string>
 			{
@@ -148,7 +148,7 @@
 
 		//#endregion
 
-		public ExcelWorker MergeCells(int firstRow, int lastRow, int firstCol, int lastCol, bool isborder = false)
+		public NPOIExcelWorker MergeCells(int firstRow, int lastRow, int firstCol, int lastCol, bool isborder = false)
 		{
 			var region = new CellRangeAddress(firstRow, lastRow, firstCol, lastCol);
 			_currentSheet.AddMergedRegion(region);
@@ -160,7 +160,7 @@
 			return this;
 		}
 
-		public ExcelWorker SetAligmentCell(int colInd, int rowInd,
+		public NPOIExcelWorker SetAligmentCell(int colInd, int rowInd,
 			VerticalAlignment? verAligment = VerticalAlignment.Center,
 			HorizontalAlignment? horAligment = HorizontalAlignment.Center)
 		{
@@ -206,7 +206,7 @@
 			}
 		}
 
-		public ExcelWorker SetWidthAndHeight(int colInd, int rowInd, int widthCol, short heighRow)
+		public NPOIExcelWorker SetWidthAndHeight(int colInd, int rowInd, int widthCol, short heighRow)
 		{
 			InternalGetCell(colInd, rowInd);
 			_currentSheet.SetColumnWidth(colInd, widthCol);
@@ -214,7 +214,7 @@
 			return this;
 		}
 
-		public ExcelWorker AddHyperLink(int col, int row, string value, Color color)
+		public NPOIExcelWorker AddHyperLink(int col, int row, string value, Color color)
 		{
 			var style = Workbook.CreateCellStyle();
 			var font = Workbook.CreateFont();
@@ -231,7 +231,7 @@
 			return this;
 		}
 
-		public ExcelWorker SetCell(int col, int row, string value, DataFormat dataFormat)
+		public NPOIExcelWorker SetCell(int col, int row, string value, DataFormat dataFormat)
 		{
 			var cell = InternalGetCell(col, row);
 			var cStyle = Workbook.CreateCellStyle();
@@ -241,24 +241,24 @@
 			return this;
 		}
 
-		public ExcelWorker SetCell(int col, int row, decimal value, DataFormat dataFormat)
+		public NPOIExcelWorker SetCell(int col, int row, decimal value, DataFormat dataFormat)
 		{
 			SetCell(col, row, (double)value, dataFormat);
 			return this;
 		}
 
-		public ExcelWorker SetCell(int col, int row, int value, DataFormat dataFormat)
+		public NPOIExcelWorker SetCell(int col, int row, int value, DataFormat dataFormat)
 		{
 			SetCell(col, row, (double)value, dataFormat);
 			return this;
 		}
 
-		public ExcelWorker SetCell(int col, int row, TimeSpan value, DataFormat dataFormat)
+		public NPOIExcelWorker SetCell(int col, int row, TimeSpan value, DataFormat dataFormat)
 		{
 			return SetCell(col, row, DateTime.Today + value, dataFormat);
 		}
 
-		public ExcelWorker SetCell(int col, int row, DateTime value, DataFormat dataFormat)
+		public NPOIExcelWorker SetCell(int col, int row, DateTime value, DataFormat dataFormat)
 		{
 			var cell = InternalGetCell(col, row);
 			var cStyle = Workbook.CreateCellStyle();
@@ -371,7 +371,7 @@
 			}
 		}
 
-		public ExcelWorker SetCell(int col, int row, double value, DataFormat nomber = DataFormat.UniversalText)
+		public NPOIExcelWorker SetCell(int col, int row, double value, DataFormat nomber = DataFormat.UniversalText)
 		{
 			var dataFormat = GetDataType(nomber);
 			var cell = InternalGetCell(col, row);
@@ -390,7 +390,7 @@
 		/// <param name="color"></param>
 		/// <param name="fillPatternSolidForeground"></param>
 		/// <returns></returns>
-		public ExcelWorker SetBackGroundColor(int col, int row, Color color,
+		public NPOIExcelWorker SetBackGroundColor(int col, int row, Color color,
 			ICellStyle.FillPattern fillPatternSolidForeground = ICellStyle.FillPattern.SolidForeground)
 		{
 			var style = Workbook.CreateCellStyle();
@@ -409,7 +409,7 @@
 		/// <param name="from">from</param>
 		/// <param name="to">to</param>
 		/// <returns></returns>
-		public ExcelWorker GroupCloumns(int from, int to)
+		public NPOIExcelWorker GroupCloumns(int from, int to)
 		{
 			_currentSheet.GroupColumn(from, to);
 			return this;
@@ -421,7 +421,7 @@
 		/// <param name="from">from</param>
 		/// <param name="to">to</param>
 		/// <returns></returns>
-		public ExcelWorker GroupRows(int from, int to)
+		public NPOIExcelWorker GroupRows(int from, int to)
 		{
 			_currentSheet.GroupRow(from, to);
 			return this;
@@ -434,7 +434,7 @@
 		/// <param name="useMergetCells">whether to use the contents of merged cells when 
 		/// calculating the width of the column . Defoult is false</param> 
 		/// <returns></returns>
-		public ExcelWorker AutoSizeColumn(int column, bool useMergetCells = false)
+		public NPOIExcelWorker AutoSizeColumn(int column, bool useMergetCells = false)
 		{
 			if (useMergetCells == false)
 				_currentSheet.AutoSizeColumn(column);
@@ -450,7 +450,7 @@
 		/// <param name="name">Name of new sheet</param>
 		/// <param name="copyStyle">To copy style from current sheet</param>
 		/// <returns></returns>
-		public ExcelWorker CopySheet(string name, bool copyStyle = true)
+		public NPOIExcelWorker CopySheet(string name, bool copyStyle = true)
 		{
 			_currentSheet.CopySheet(name, copyStyle);
 			return this;
@@ -462,13 +462,13 @@
 		/// <param name="sourceIndex"></param>
 		/// <param name="targetIndex"></param>
 		/// <returns></returns>
-		public ExcelWorker CopyRow(int sourceIndex, int targetIndex)
+		public NPOIExcelWorker CopyRow(int sourceIndex, int targetIndex)
 		{
 			_currentSheet.CopyRow(sourceIndex, targetIndex);
 			return this;
 		}
 
-		public ExcelWorker CopyCell(int rowIndex, int colIndex, int targetIndex)
+		public NPOIExcelWorker CopyCell(int rowIndex, int colIndex, int targetIndex)
 		{
 			InternalGetCell(colIndex, rowIndex);
 			_currentSheet.GetRow(rowIndex).CopyCell(colIndex, targetIndex);
@@ -485,7 +485,7 @@
 		/// </summary>
 		/// <param name="sheetName">New name of worksheet. Must be unique.</param>
 		/// <returns>Exporter.</returns>
-		public ExcelWorker AddSheet(string sheetName)
+		public NPOIExcelWorker AddSheet(string sheetName)
 		{
 			if (ContainsSheet(sheetName))
 				return this;
@@ -502,7 +502,7 @@
 		/// Removes current worksheet.
 		/// </summary>
 		/// <returns>Exporter.</returns>
-		public ExcelWorker RemoveSheet()
+		public NPOIExcelWorker RemoveSheet()
 		{
 			ThrowIfCurrentSheetIsEmpty();
 
@@ -518,7 +518,7 @@
 		/// </summary>
 		/// <param name="sheetName">Name of the sheet to remove.</param>
 		/// <returns>Exporter.</returns>
-		public ExcelWorker RemoveSheet(string sheetName)
+		public NPOIExcelWorker RemoveSheet(string sheetName)
 		{
 			if (ContainsSheet(sheetName))
 			{
@@ -538,7 +538,7 @@
 		/// </summary>
 		/// <param name="sheetName">New name of the sheet.</param>
 		/// <returns></returns>
-		public ExcelWorker RenameSheet(string sheetName)
+		public NPOIExcelWorker RenameSheet(string sheetName)
 		{
 			if (sheetName.IsEmpty())
 				throw new ArgumentNullException(nameof(sheetName));
@@ -567,7 +567,7 @@
 		/// </summary>
 		/// <param name="sheetName"></param>
 		/// <returns></returns>
-		public ExcelWorker SwitchSheet(string sheetName)
+		public NPOIExcelWorker SwitchSheet(string sheetName)
 		{
 			if (ContainsSheet(sheetName))
 			{
@@ -584,14 +584,14 @@
 		/// <param name="col"></param>
 		/// <param name="width"></param>
 		/// <returns></returns>
-		public ExcelWorker SetWidth(int col, int width)
+		public NPOIExcelWorker SetWidth(int col, int width)
 		{
 			ThrowIfCurrentSheetIsEmpty();
 			_currentSheet.SetColumnWidth(col, width);
 			return this;
 		}
 
-		public ExcelWorker SetHeight(int row, short height)
+		public NPOIExcelWorker SetHeight(int row, short height)
 		{
 			ThrowIfCurrentSheetIsEmpty();
 			_currentSheet.GetRow(row).Height = height;
@@ -605,7 +605,7 @@
 		/// <param name="row"></param>
 		/// <param name="color"></param>
 		/// <returns></returns>
-		public ExcelWorker SetBackColor(int col, int row, Color color)
+		public NPOIExcelWorker SetBackColor(int col, int row, Color color)
 		{
 			var cell = InternalGetCell(col, row);
 			var style = (XSSFCellStyle)Workbook.CreateCellStyle();
@@ -648,7 +648,7 @@
 		/// <param name="row"></param>
 		/// <param name="color"></param>
 		/// <returns></returns>
-		public ExcelWorker SetForeColor(int col, int row, Color color)
+		public NPOIExcelWorker SetForeColor(int col, int row, Color color)
 		{
 			var cell = InternalGetCell(col, row);
 			var style = (XSSFCellStyle)Workbook.CreateCellStyle();
@@ -681,7 +681,7 @@
 		/// <param name="comparison"></param>
 		/// <param name="isUseComparision"></param>
 		/// <returns></returns>
-		public ExcelWorker SetConditionalFormatting(int firstColumn, int lasColumn, int firstRow, int lastRow,
+		public NPOIExcelWorker SetConditionalFormatting(int firstColumn, int lasColumn, int firstRow, int lastRow,
 			Color backGroungColor, string formula1, string formula2 = "",
 			ComparisonOperator comparison = ComparisonOperator.Equal, bool isUseComparision = false)
 		{
@@ -720,7 +720,7 @@
 		/// <param name="bgColor"></param>
 		/// <param name="fgColor"></param>
 		/// <returns></returns>
-		public ExcelWorker SetConditionalFormatting(int col, ComparisonOperator comparison, string formula1,
+		public NPOIExcelWorker SetConditionalFormatting(int col, ComparisonOperator comparison, string formula1,
 			Color? bgColor, Color? fgColor)
 		{
 			return SetConditionalFormatting(col, col, 0, ushort.MaxValue, comparison, formula1, formula1, bgColor, fgColor);
@@ -747,7 +747,7 @@
 		/// <param name="bgColor"></param>
 		/// <param name="fontColor"></param>
 		/// <returns></returns>
-		public ExcelWorker SetConditionalFormatting(int colStart, int colEnd, int rowStart, int rowEnd,
+		public NPOIExcelWorker SetConditionalFormatting(int colStart, int colEnd, int rowStart, int rowEnd,
 			ComparisonOperator comparison, string formula1, string formula2, Color? bgColor, Color? fontColor)
 		{
 			CellRangeAddress[] dataRange =
@@ -824,7 +824,7 @@
 		/// <param name="row"></param>
 		/// <param name="font"></param>
 		/// <returns></returns>
-		public ExcelWorker SetFont(int col, int row, Font font)
+		public NPOIExcelWorker SetFont(int col, int row, Font font)
 		{
 			if (font == null)
 				throw new ArgumentNullException(nameof(font));
@@ -839,12 +839,12 @@
 			return this;
 		}
 
-		public ExcelWorker SetStyle(int col, Type dataType)
+		public NPOIExcelWorker SetStyle(int col, Type dataType)
 		{
 			return SetStyle(col, GetDefaultDataFormat(dataType));
 		}
 
-		public ExcelWorker SetStyle(int col, string dataFormat)
+		public NPOIExcelWorker SetStyle(int col, string dataFormat)
 		{
 			if (!_cellStyleCache.ContainsKey(dataFormat))
 			{
@@ -916,7 +916,7 @@
 		/// <param name="row"></param>
 		/// <param name="value"></param>
 		/// <returns></returns>
-		public ExcelWorker SetCell(int col, int row, object value)
+		public NPOIExcelWorker SetCell(int col, int row, object value)
 		{
 			var cell = InternalGetCell(col, row);
 
@@ -944,7 +944,7 @@
 			return this;
 		}
 
-		public ExcelWorker SetFormula(int col, int row, string formula)
+		public NPOIExcelWorker SetFormula(int col, int row, string formula)
 		{
 			var cell = InternalGetCell(col, row);
 			cell.CellFormula = formula;
@@ -1038,7 +1038,7 @@
 		/// <param name="fileName"></param>
 		/// <param name="autoSizeColumns"></param>
 		/// <returns></returns>
-		public ExcelWorker Save(string fileName, bool autoSizeColumns)
+		public NPOIExcelWorker Save(string fileName, bool autoSizeColumns)
 		{
 			if (fileName.IsEmpty())
 				throw new ArgumentNullException(nameof(fileName));
@@ -1066,13 +1066,13 @@
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		public ExcelWorker Open()
+		public NPOIExcelWorker Open()
 		{
 			Process.Start(_fileName);
 			return this;
 		}
 
-		public ExcelWorker Protect(string password)
+		public NPOIExcelWorker Protect(string password)
 		{
 			_currentSheet.ProtectSheet(password);
 			return this;

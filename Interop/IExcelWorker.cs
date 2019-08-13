@@ -17,4 +17,10 @@
 
 		IExcelWorker Save(string fileName, bool autoSizeColumns);
 	}
+
+	public interface IExcelWorkerProvider
+	{
+		IExcelWorker Create();
+		IExcelWorker Create(string sheetName);
+	}
 }
