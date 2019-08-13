@@ -3,14 +3,13 @@ namespace Ecng.Net
 	using System;
 	using System.Collections.Generic;
 	using System.IO;
+	using System.IO.Compression;
 	using System.Reflection;
 	using System.Linq;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
 	using Ecng.Serialization;
-
-	using ICSharpCode.SharpZipLib.GZip;
 
 	public abstract class BehaviorServer<TBehavior, TId> : Disposable
 	{
@@ -132,7 +131,7 @@ namespace Ecng.Net
 
 							var stream = new MemoryStream();
 
-							using (var outStream = new GZipOutputStream(stream) { IsStreamOwner = false })
+							using (var outStream = new GZipStream(stream, CompressionMode.Compress, true))
 								data.CopyTo(outStream);
 
 							data = stream;

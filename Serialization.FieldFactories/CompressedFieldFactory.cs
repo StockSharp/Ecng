@@ -1,8 +1,7 @@
 namespace Ecng.Serialization
 {
 	using System.IO;
-
-	using ICSharpCode.SharpZipLib.GZip;
+	using System.IO.Compression;
 
 	public class CompressedFieldFactory : FieldFactory<Stream, Stream>
 	{
@@ -13,22 +12,23 @@ namespace Ecng.Serialization
 
 		protected override Stream OnCreateInstance(ISerializer serializer, Stream source)
 		{
-			using (var inStream = new GZipInputStream(source) { IsStreamOwner = false })
-			{
-				var instance = new MemoryStream();
+			var instance = new MemoryStream();
+
+			using (var inStream = new GZipStream(source, CompressionMode.Decompress, true))
 				inStream.CopyTo(instance);
-				instance.Position = 0;
-				return instance;
-			}
+
+			instance.Position = 0;
+			return instance;
 		}
 
 		protected override Stream OnCreateSource(ISerializer serializer, Stream instance)
 		{
 			var source = new MemoryStream();
 
-			using (var outStream = new GZipOutputStream(source) { IsStreamOwner = false })
+			using (var outStream = new GZipStream(source, CompressionMode.Compress, true))
 				instance.CopyTo(outStream);
 
+			source.Position = 0;
 			return source;
 		}
 	}
