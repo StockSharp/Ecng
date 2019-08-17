@@ -102,6 +102,7 @@
     <Compile Include="EnumEditor.xaml.cs">
       <DependentUpon>EnumEditor.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Excel\DevExpExcelWorkerProvider.cs" />
     <Compile Include="FileBrowserEditor.xaml.cs">
       <DependentUpon>FileBrowserEditor.xaml</DependentUpon>
     </Compile>

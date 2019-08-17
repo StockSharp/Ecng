@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Interop
 {
 	using System;
+	using System.IO;
 	using System.Windows.Media;
 
 	using Ecng.ComponentModel;
@@ -15,12 +16,18 @@
 
 		IExcelWorker SetConditionalFormatting(int col, ComparisonOperator op, string condition, Color? bgColor, Color? fgColor);
 
-		IExcelWorker Save(string fileName, bool autoSizeColumns);
+		IExcelWorker RenameSheet(string name);
+		IExcelWorker AddSheet();
+		bool ContainsSheet(string name);
+		IExcelWorker SwitchSheet(string name);
+
+		int GetColumnsCount();
+		int GetRowsCount();
 	}
 
 	public interface IExcelWorkerProvider
 	{
-		IExcelWorker Create();
-		IExcelWorker Create(string sheetName);
+		IExcelWorker CreateNew(Stream stream, bool readOnly = false);
+		IExcelWorker OpenExist(Stream stream);
 	}
 }
