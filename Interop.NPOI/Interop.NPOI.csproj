@@ -32,7 +32,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="ICSharpCode.SharpZipLib">
-      <HintPath>..\..\StockSharp (GitHub)\References\ICSharpCode.SharpZipLib.dll</HintPath>
+      <HintPath>..\References\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -1568,8 +1568,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="main vs10\Resources\font_metrics.properties" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="main vs10\Resources\functionMetadata.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -1584,6 +1582,10 @@
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
       <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
+      <Project>{bcddce14-3697-4210-ae13-b820e4f9ae7c}</Project>
+      <Name>ComponentModel</Name>
     </ProjectReference>
     <ProjectReference Include="..\Interop\Interop.csproj">
       <Project>{6EACA7CE-0269-47A2-AE6A-3669738EE303}</Project>
