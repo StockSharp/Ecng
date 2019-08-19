@@ -22,7 +22,7 @@
 				private readonly DevExpExcelWorker _worker;
 				private readonly Dictionary<int, Dictionary<int, object>> _cells = new Dictionary<int, Dictionary<int, object>>();
 				
-				public readonly HashSet<int> Columns = new HashSet<int>();
+				public readonly SortedDictionary<int, RefPair<Type, string>> Columns = new SortedDictionary<int, RefPair<Type, string>>();
 				public readonly HashSet<int> Rows = new HashSet<int>();
 
 				public SheetData(DevExpExcelWorker worker)
@@ -34,7 +34,7 @@
 
 				public void SetCell<T>(int col, int row, T value)
 				{
-					Columns.Add(col);
+					Columns.TryAdd(col, new RefPair<Type, string>());
 					Rows.Add(row);
 					_cells.SafeAdd(row, key => new Dictionary<int, object>())[col] = value;
 				}
@@ -51,14 +51,26 @@
 						if (!Name.IsEmpty())
 							sheet.Name = Name;
 
-						foreach (var column in Columns)
+						foreach (var pair in Columns)
 						{
-							using (sheet.CreateColumn(column))
+							using (var xlCol = sheet.CreateColumn(pair.Key))
 							{
+								if (pair.Value.First != null)
+								{
+									
+								}
+								else if (!pair.Value.Second.IsEmpty())
+								{
+									xlCol.Formatting = new XlCellFormatting
+									{
+										IsDateTimeFormatString = true,
+										NetFormatString = pair.Value.Second,
+									};
+								}
 							}
 						}
 
-						foreach (var row in Rows)
+						foreach (var row in Rows.OrderBy())
 						{
 							using (var xlRow = sheet.CreateRow(row))
 							{
@@ -78,6 +90,8 @@
 											xlVal = new XlVariantValue { BooleanValue = b };
 										else if (pair.Value is DateTime dt)
 											xlVal = new XlVariantValue { DateTimeValue = dt };
+										else if (pair.Value is DateTimeOffset dto)
+											xlVal = new XlVariantValue { DateTimeValue = dto.DateTime };
 										else if (pair.Value is string s)
 											xlVal = new XlVariantValue { TextValue = s };
 										else if (pair.Value.GetType().IsNumeric())
@@ -132,11 +146,13 @@
 
 			IExcelWorker IExcelWorker.SetStyle(int col, Type type)
 			{
+				_currSheet.Columns[col] = new RefPair<Type, string>(type, null);
 				return this;
 			}
 
 			IExcelWorker IExcelWorker.SetStyle(int col, string format)
 			{
+				_currSheet.Columns[col] = new RefPair<Type, string>(null, format);
 				return this;
 			}
 
