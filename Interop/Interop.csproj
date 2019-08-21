@@ -10,14 +10,6 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Ecng.Interop</RootNamespace>
     <AssemblyName>Ecng.Interop</AssemblyName>
-    <SccProjectName>
-    </SccProjectName>
-    <SccLocalPath>
-    </SccLocalPath>
-    <SccAuxPath>
-    </SccAuxPath>
-    <SccProvider>
-    </SccProvider>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
@@ -66,6 +58,9 @@
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data">
+      <HintPath>..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Data.dll</HintPath>
     </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
@@ -121,6 +116,16 @@
     <Compile Include="Dde\DdeSettings.cs" />
     <Compile Include="Dde\XlsDdeSerializer.cs" />
     <Compile Include="Dde\XlsDdeServer.cs" />
+    <Compile Include="DotNetDBF\DBFBase.cs" />
+    <Compile Include="DotNetDBF\DBFException.cs" />
+    <Compile Include="DotNetDBF\DBFField.cs" />
+    <Compile Include="DotNetDBF\DBFFieldType.cs" />
+    <Compile Include="DotNetDBF\DBFHeader.cs" />
+    <Compile Include="DotNetDBF\DBFReader.cs" />
+    <Compile Include="DotNetDBF\DBFWriter.cs" />
+    <Compile Include="DotNetDBF\DBTHeader.cs" />
+    <Compile Include="DotNetDBF\MemoValue.cs" />
+    <Compile Include="DotNetDBF\Utils.cs" />
     <Compile Include="IExcelWorker.cs" />
     <Compile Include="ManagedWinapi\Accessibility\AccessibleObjectListener.cs">
       <SubType>Component</SubType>
