@@ -209,7 +209,7 @@ using System.Collections.Generic;
 
 using Ecng.Common;
 
-using StockSharp.Algo.Expressions;
+using Ecng.ComponentModel.Expressions;
 
 class TempExpressionFormula : ExpressionFormula
 {
