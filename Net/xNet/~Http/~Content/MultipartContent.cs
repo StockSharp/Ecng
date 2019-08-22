@@ -103,7 +103,7 @@ namespace xNet
 
             _boundary = boundary;
 
-            _contentType = string.Format("multipart/form-data; boundary={0}", _boundary);
+            ContentType = string.Format("multipart/form-data; boundary={0}", _boundary);
         }
 
         #endregion

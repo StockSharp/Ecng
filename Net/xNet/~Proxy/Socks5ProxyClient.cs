@@ -201,7 +201,7 @@ namespace xNet
         {
             byte authMethod;
 
-            if (!string.IsNullOrEmpty(_username) && !string.IsNullOrEmpty(_password))
+            if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password))
             {
                 authMethod = AuthMethodUsernamePassword;
             }
@@ -246,11 +246,11 @@ namespace xNet
 
         private void SendUsernameAndPassword(NetworkStream nStream)
         {
-            byte[] uname = string.IsNullOrEmpty(_username) ?
-                new byte[0] : Encoding.ASCII.GetBytes(_username);
+            byte[] uname = string.IsNullOrEmpty(Username) ?
+                new byte[0] : Encoding.ASCII.GetBytes(Username);
 
-            byte[] passwd = string.IsNullOrEmpty(_password) ?
-                new byte[0] : Encoding.ASCII.GetBytes(_password);
+            byte[] passwd = string.IsNullOrEmpty(Password) ?
+                new byte[0] : Encoding.ASCII.GetBytes(Password);
 
             // +----+------+----------+------+----------+
             // |VER | ULEN |  UNAME   | PLEN |  PASSWD  |

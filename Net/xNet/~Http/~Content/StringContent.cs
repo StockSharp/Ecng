@@ -46,11 +46,11 @@ namespace xNet
 
             #endregion
 
-            _content = encoding.GetBytes(content);
-            _offset = 0;
-            _count = _content.Length;
+            Content = encoding.GetBytes(content);
+            Offset = 0;
+            Count = Content.Length;
 
-            _contentType = "text/plain";
+            ContentType = "text/plain";
         }
 
         #endregion

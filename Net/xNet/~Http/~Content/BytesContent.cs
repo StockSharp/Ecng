@@ -11,11 +11,11 @@ namespace xNet
         #region Поля (защищённые)
 
         /// <summary>Содержимое тела запроса.</summary>
-        protected byte[] _content;
+        public byte[] Content { get; set; }
         /// <summary>Смещение в байтах содержимого тела запроса.</summary>
-        protected int _offset;
+        public int Offset { get; set; }
         /// <summary>Число отправляемых байтов содержимого.</summary>
-        protected int _count;
+        public int Count { get; set; }
 
         #endregion
 
@@ -78,11 +78,11 @@ namespace xNet
 
             #endregion
 
-            _content = content;
-            _offset = offset;
-            _count = count;
+            Content = content;
+            Offset = offset;
+            Count = count;
 
-            _contentType = "application/octet-stream";
+            ContentType = "application/octet-stream";
         }
 
         #endregion
@@ -102,7 +102,7 @@ namespace xNet
         /// <returns>Длина тела запроса в байтах.</returns>
         public override long CalculateContentLength()
         {
-            return _content.LongLength;
+            return Content.LongLength;
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace xNet
         /// <param name="stream">Поток, куда будут записаны данные тела запроса.</param>
         public override void WriteTo(Stream stream)
         {
-            stream.Write(_content, _offset, _count);
+            stream.Write(Content, Offset, Count);
         }
 
         #endregion

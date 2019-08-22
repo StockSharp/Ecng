@@ -40,7 +40,7 @@ namespace xNet
         public Socks4aProxyClient(string host, int port, string username)
             : base(host, port, username)
         {
-            _type = ProxyType.Socks4a;
+            Type = ProxyType.Socks4a;
         }
 
         #endregion
@@ -56,7 +56,7 @@ namespace xNet
         /// <exception cref="System.ArgumentNullException">Значение параметра <paramref name="proxyAddress"/> равно <see langword="null"/>.</exception>
         /// <exception cref="System.ArgumentException">Значение параметра <paramref name="proxyAddress"/> является пустой строкой.</exception>
         /// <exception cref="System.FormatException">Формат порта является неправильным.</exception>
-        public static Socks4aProxyClient Parse(string proxyAddress)
+        public new static Socks4aProxyClient Parse(string proxyAddress)
         {
             return ProxyClient.Parse(ProxyType.Socks4a, proxyAddress) as Socks4aProxyClient;
         }
@@ -91,8 +91,8 @@ namespace xNet
             byte[] dstPort = GetPortBytes(destinationPort);
             byte[] dstIp = { 0, 0, 0, 1 };
 
-            byte[] userId = string.IsNullOrEmpty(_username) ?
-                new byte[0] : Encoding.ASCII.GetBytes(_username);
+            byte[] userId = string.IsNullOrEmpty(Username) ?
+                new byte[0] : Encoding.ASCII.GetBytes(Username);
 
             byte[] dstAddr = ASCIIEncoding.ASCII.GetBytes(destinationHost);
 

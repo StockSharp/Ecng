@@ -13,11 +13,11 @@ namespace xNet
         #region Поля (защищённые электромагнитным излучением)
 
         /// <summary>Содержимое тела запроса.</summary>
-        protected Stream _content;
+        public Stream Content;
         /// <summary>Размер буфера в байтах для потока.</summary>
-        protected int _bufferSize;
+        public int BufferSize;
         /// <summary>Позиция в байтах, с которой начинается считывание данных из потока.</summary>
-        protected long _initialStreamPosition;
+        public long InitialStreamPosition;
 
         #endregion
 
@@ -52,11 +52,11 @@ namespace xNet
 
             #endregion
 
-            _content = content;
-            _bufferSize = bufferSize;
-            _initialStreamPosition = _content.Position;
+            Content = content;
+            BufferSize = bufferSize;
+            InitialStreamPosition = Content.Position;
 
-            _contentType = "application/octet-stream";
+            ContentType = "application/octet-stream";
         }
 
 
@@ -77,7 +77,7 @@ namespace xNet
         {
             ThrowIfDisposed();
 
-            return _content.Length;
+            return Content.Length;
         }
 
         /// <summary>
@@ -99,13 +99,13 @@ namespace xNet
 
             #endregion
 
-            _content.Position = _initialStreamPosition;
+            Content.Position = InitialStreamPosition;
 
-            var buffer = new byte[_bufferSize];
+            var buffer = new byte[BufferSize];
 
             while (true)
             {
-                int bytesRead = _content.Read(buffer, 0, buffer.Length);
+                int bytesRead = Content.Read(buffer, 0, buffer.Length);
 
                 if (bytesRead == 0)
                 {
@@ -125,17 +125,17 @@ namespace xNet
         /// <param name="disposing">Значение <see langword="true"/> позволяет освободить управляемые и неуправляемые ресурсы; значение <see langword="false"/> позволяет освободить только неуправляемые ресурсы.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && _content != null)
+            if (disposing && Content != null)
             {
-                _content.Dispose();
-                _content = null;
+                Content.Dispose();
+                Content = null;
             }
         }
 
 
         private void ThrowIfDisposed()
         {
-            if (_content == null)
+            if (Content == null)
             {
                 throw new ObjectDisposedException("StreamContent");
             }

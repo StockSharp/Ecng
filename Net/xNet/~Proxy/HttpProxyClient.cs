@@ -193,10 +193,10 @@ namespace xNet
 
         private string GenerateAuthorizationHeader()
         {
-            if (!string.IsNullOrEmpty(_username) || !string.IsNullOrEmpty(_password))
+            if (!string.IsNullOrEmpty(Username) || !string.IsNullOrEmpty(Password))
             {
                 string data = Convert.ToBase64String(Encoding.UTF8.GetBytes(
-                    string.Format("{0}:{1}", _username, _password)));
+                    string.Format("{0}:{1}", Username, Password)));
 
                 return string.Format("Proxy-Authorization: Basic {0}\r\n", data);
             }

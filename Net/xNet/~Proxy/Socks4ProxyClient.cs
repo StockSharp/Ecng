@@ -180,8 +180,8 @@ namespace xNet
             byte[] dstPort = GetIPAddressBytes(destinationHost);
             byte[] dstIp = GetPortBytes(destinationPort);
 
-            byte[] userId = string.IsNullOrEmpty(_username) ?
-                new byte[0] : Encoding.ASCII.GetBytes(_username);
+            byte[] userId = string.IsNullOrEmpty(Username) ?
+                new byte[0] : Encoding.ASCII.GetBytes(Username);
 
             // +----+----+----+----+----+----+----+----+----+----+....+----+
             // | VN | CD | DSTPORT |      DSTIP        | USERID       |NULL|

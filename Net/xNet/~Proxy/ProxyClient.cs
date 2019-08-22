@@ -16,21 +16,21 @@ namespace xNet
         #region Поля (защищённые)
 
         /// <summary>Тип прокси-сервера.</summary>
-        protected ProxyType _type;
+        private ProxyType _type;
 
         /// <summary>Хост прокси-сервера.</summary>
-        protected string _host;
+        private string _host;
         /// <summary>Порт прокси-сервера.</summary>
-        protected int _port = 1;
+        private int _port = 1;
         /// <summary>Имя пользователя для авторизации на прокси-сервере.</summary>
-        protected string _username;
+        private string _username;
         /// <summary>Пароль для авторизации на прокси-сервере.</summary>
-        protected string _password;
+        private string _password;
 
         /// <summary>Время ожидания в миллисекундах при подключении к прокси-серверу.</summary>
-        protected int _connectTimeout = 60000;
+        private int _connectTimeout = 60000;
         /// <summary>Время ожидания в миллисекундах при записи в поток или при чтении из него.</summary>
-        protected int _readWriteTimeout = 60000;
+        private int _readWriteTimeout = 60000;
 
         #endregion
 
@@ -46,6 +46,7 @@ namespace xNet
             {
                 return _type;
             }
+            set { _type = value; }
         }
 
         /// <summary>
