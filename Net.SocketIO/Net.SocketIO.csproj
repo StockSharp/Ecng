@@ -20,7 +20,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET35</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -29,7 +29,7 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;NET35</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -117,6 +117,136 @@
     <Compile Include="Parser\Packet.cs" />
     <Compile Include="Parser\Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PubnubApi\Builder\ResponseBuilder.cs" />
+    <Compile Include="PubnubApi\Builder\StatusBuilder.cs" />
+    <Compile Include="PubnubApi\Builder\UriUtil.cs" />
+    <Compile Include="PubnubApi\Builder\UrlRequestBuilder.cs" />
+    <Compile Include="PubnubApi\Callbacks\PNCallback.cs" />
+    <Compile Include="PubnubApi\Callbacks\SubscribeCallback.cs" />
+    <Compile Include="PubnubApi\ClientNetworkStatus.cs" />
+    <Compile Include="PubnubApi\ConcurrentDictionary.cs" />
+    <Compile Include="PubnubApi\EndPoint\Access\AuditOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\Access\GrantOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\ChannelGroup\AddChannelsToChannelGroupOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\ChannelGroup\DeleteChannelGroupOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\ChannelGroup\ListAllChannelGroupOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\ChannelGroup\ListChannelsForChannelGroupOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\ChannelGroup\RemoveChannelsFromChannelGroupOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\DeleteMessageOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\HistoryOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\OtherOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\Presence\GetStateOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\Presence\HereNowOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\Presence\SetStateOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\Presence\WhereNowOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\PubSub\DuplicationManager.cs" />
+    <Compile Include="PubnubApi\EndPoint\PubSub\FireOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\PubSub\ListenerManager.cs" />
+    <Compile Include="PubnubApi\EndPoint\PubSub\PublishOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\PubSub\SubscribeManager.cs" />
+    <Compile Include="PubnubApi\EndPoint\PubSub\SubscribeOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\PubSub\UnsubscribeAllOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\PubSub\UnsubscribeOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\Push\AddPushChannelOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\Push\AuditPushChannelOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\Push\RemoveAllPushChannelsOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\Push\RemovePushChannelOperation.cs" />
+    <Compile Include="PubnubApi\EndPoint\TelemetryManager.cs" />
+    <Compile Include="PubnubApi\EndPoint\TimeOperation.cs" />
+    <Compile Include="PubnubApi\Enum\PNHeartbeatNotificationOption.cs" />
+    <Compile Include="PubnubApi\Enum\PNLogVerbosity.cs" />
+    <Compile Include="PubnubApi\Enum\PNOperationType.cs" />
+    <Compile Include="PubnubApi\Enum\PNReconnectionPolicy.cs" />
+    <Compile Include="PubnubApi\Enum\PNStatusCategory.cs" />
+    <Compile Include="PubnubApi\Enum\PubnubErrorCode.cs" />
+    <Compile Include="PubnubApi\Enum\PubnubErrorSeverity.cs" />
+    <Compile Include="PubnubApi\Enum\PubnubMessageSource.cs" />
+    <Compile Include="PubnubApi\Enum\PushTypeService.cs" />
+    <Compile Include="PubnubApi\Enum\ResponseType.cs" />
+    <Compile Include="PubnubApi\HttpUtility\HttpUtility.cs" />
+    <Compile Include="PubnubApi\HttpUtility\HttpValue.cs" />
+    <Compile Include="PubnubApi\HttpUtility\HttpValueCollection.cs" />
+    <Compile Include="PubnubApi\Interface\IJsonPluggableLibrary.cs" />
+    <Compile Include="PubnubApi\Interface\IPubnubHttp.cs" />
+    <Compile Include="PubnubApi\Interface\IPubnubLog.cs" />
+    <Compile Include="PubnubApi\Interface\IPubnubUnitTest.cs" />
+    <Compile Include="PubnubApi\Interface\IUrlRequestBuilder.cs" />
+    <Compile Include="PubnubApi\Log\LoggingMethod.cs" />
+    <Compile Include="PubnubApi\Log\PNPlatform.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\AccessManager\PNAccessManagerAuditResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\AccessManager\PNAccessManagerGrantResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\AccessManager\PNAccessManagerKeyData.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\AccessManager\PNAccessManagerKeysData.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\ChannelGroup\PNChannelGroupsAddChannelResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\ChannelGroup\PNChannelGroupsAllChannelsResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\ChannelGroup\PNChannelGroupsDeleteGroupResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\ChannelGroup\PNChannelGroupsListAllResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\ChannelGroup\PNChannelGroupsRemoveChannelResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\DeleteMessage\PNDeleteMessageResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\History\PNHistoryItemResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\History\PNHistoryResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\PNErrorData.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\PNStatus.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\PNTimeResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Presence\PNGetStateResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Presence\PNHereNowChannelData.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Presence\PNHereNowOccupantData.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Presence\PNHereNowResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Presence\PNSetStateResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Presence\PNWhereNowResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Pubsub\PNMessageResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Pubsub\PNPresenceEventResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Pubsub\PNPublishResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Push\PNPushAddChannelResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Push\PNPushListProvisionsResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Push\PNPushRemoveAllChannelsResult.cs" />
+    <Compile Include="PubnubApi\Model\Consumer\Push\PNPushRemoveChannelResult.cs" />
+    <Compile Include="PubnubApi\Model\Derived\AccessManager\PNAccessManagerAuditResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\AccessManager\PNAccessManagerGrantResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\ChannelGroup\PNChannelGroupsAddChannelResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\ChannelGroup\PNChannelGroupsAllChannelsResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\ChannelGroup\PNChannelGroupsDeleteGroupResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\ChannelGroup\PNChannelGroupsListAllResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\ChannelGroup\PNChannelGroupsRemoveChannelResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\DeleteMessage\PNDeleteMessageResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\History\PNHistoryResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\PNTimeResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\Presence\PNGetStateResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\Presence\PNHereNowResultEx.cs" />
+    <Compile Include="PubnubApi\Model\Derived\Presence\PNSetStateResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\Presence\PNWhereNowResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\Pubsub\PNPublishResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\Pubsub\SubscribeCallbackExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\Push\PNPushAddChannelResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\Push\PNPushListProvisionsResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\Push\PNPushRemoveAllChannelsResultExt.cs" />
+    <Compile Include="PubnubApi\Model\Derived\Push\PNPushRemoveChannelResultExt.cs" />
+    <Compile Include="PubnubApi\Model\InternetState.cs" />
+    <Compile Include="PubnubApi\Model\PNException.cs" />
+    <Compile Include="PubnubApi\Model\PNHeartbeatResult.cs" />
+    <Compile Include="PubnubApi\Model\PNStatusCategoryHelper.cs" />
+    <Compile Include="PubnubApi\Model\ReconnectState.cs" />
+    <Compile Include="PubnubApi\Model\RequestState.cs" />
+    <Compile Include="PubnubApi\Model\Server\SubscribeEnvelope.cs" />
+    <Compile Include="PubnubApi\Model\Server\SubscribeMessage.cs" />
+    <Compile Include="PubnubApi\Model\Server\TimetokenMetadata.cs" />
+    <Compile Include="PubnubApi\NewtonsoftJsonDotNet.cs" />
+    <Compile Include="PubnubApi\PNConfiguration.cs" />
+    <Compile Include="PubnubApi\Proxy\PubnubProxy.cs" />
+    <Compile Include="PubnubApi\Pubnub.cs" />
+    <Compile Include="PubnubApi\PubnubCoreBase.cs" />
+    <Compile Include="PubnubApi\PubnubHttp.cs" />
+    <Compile Include="PubnubApi\PubnubHttpClientHandler.cs" />
+    <Compile Include="PubnubApi\Push\Mpns\MpnsCycleTileNotification.cs" />
+    <Compile Include="PubnubApi\Push\Mpns\MpnsFlipTileNotification.cs" />
+    <Compile Include="PubnubApi\Push\Mpns\MpnsIconicTileNotification.cs" />
+    <Compile Include="PubnubApi\Push\Mpns\MpnsToastNotification.cs" />
+    <Compile Include="PubnubApi\Security\MD5.cs" />
+    <Compile Include="PubnubApi\Security\MD5CryptoServiceProvider.cs" />
+    <Compile Include="PubnubApi\Security\PubnubCrypto.cs" />
+    <Compile Include="PubnubApi\Security\PubnubCryptoBase.cs" />
+    <Compile Include="PubnubApi\Security\SecureMessage.cs" />
+    <Compile Include="PubnubApi\Timer.cs" />
     <Compile Include="RestSharpHelper.cs" />
     <Compile Include="WebSocketClient.cs" />
   </ItemGroup>
