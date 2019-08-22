@@ -8,10 +8,11 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Ecng.Net.SocketIO</RootNamespace>
     <AssemblyName>Ecng.Net.SocketIO</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -78,6 +79,39 @@
     <Compile Include="Engine\Parser\Packet.cs" />
     <Compile Include="Engine\Parser\Parser.cs" />
     <Compile Include="Engine\Thread\EasyTimer.cs" />
+    <Compile Include="JWT\Algorithms\HMACSHA256Algorithm.cs" />
+    <Compile Include="JWT\Algorithms\HMACSHA384Algorithm.cs" />
+    <Compile Include="JWT\Algorithms\HMACSHA512Algorithm.cs" />
+    <Compile Include="JWT\Algorithms\HMACSHAAlgorithmFactory.cs" />
+    <Compile Include="JWT\Algorithms\IAlgorithmFactory.cs" />
+    <Compile Include="JWT\Algorithms\IJwtAlgorithm.cs" />
+    <Compile Include="JWT\Algorithms\RS256Algorithm.cs" />
+    <Compile Include="JWT\Algorithms\RSAlgorithmFactory.cs" />
+    <Compile Include="JWT\Builder\ClaimName.cs" />
+    <Compile Include="JWT\Builder\EnumExtensions.cs" />
+    <Compile Include="JWT\Builder\HeaderName.cs" />
+    <Compile Include="JWT\Builder\JwtBuilder.cs" />
+    <Compile Include="JWT\Builder\JwtBuilderExtensions.cs" />
+    <Compile Include="JWT\Builder\JwtData.cs" />
+    <Compile Include="JWT\IBase64UrlEncoder.cs" />
+    <Compile Include="JWT\IDateTimeProvider.cs" />
+    <Compile Include="JWT\IJsonSerializer.cs" />
+    <Compile Include="JWT\IJwtDecoder.cs" />
+    <Compile Include="JWT\IJwtEncoder.cs" />
+    <Compile Include="JWT\IJwtValidator.cs" />
+    <Compile Include="JWT\Internal\EncodingHelper.cs" />
+    <Compile Include="JWT\InvalidTokenPartsException.cs" />
+    <Compile Include="JWT\JwtBase64UrlEncoder.cs" />
+    <Compile Include="JWT\JwtDecoder.cs" />
+    <Compile Include="JWT\JwtEncoder.cs" />
+    <Compile Include="JWT\JwtHashAlgorithm.cs" />
+    <Compile Include="JWT\JwtParts.cs" />
+    <Compile Include="JWT\JwtValidator.cs" />
+    <Compile Include="JWT\Serializers\JsonNetSerializer.cs" />
+    <Compile Include="JWT\SignatureVerificationException.cs" />
+    <Compile Include="JWT\TokenExpiredException.cs" />
+    <Compile Include="JWT\UnixEpoch.cs" />
+    <Compile Include="JWT\UtcDateTimeProvider.cs" />
     <Compile Include="Modules\HasBinaryData.cs" />
     <Compile Include="Parser\Binary.cs" />
     <Compile Include="Parser\Packet.cs" />
