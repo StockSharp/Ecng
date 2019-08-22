@@ -51,9 +51,6 @@
     <Reference Include="ClrPatch">
       <HintPath>..\..\StockSharp (GitHub)\References\ClrPatch.dll</HintPath>
     </Reference>
-    <Reference Include="MoreLinq">
-      <HintPath>..\..\StockSharp (GitHub)\References\MoreLinq.dll</HintPath>
-    </Reference>
     <Reference Include="PresentationCore">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>

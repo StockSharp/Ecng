@@ -49,9 +49,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MoreLinq">
-      <HintPath>..\..\StockSharp (GitHub)\References\MoreLinq.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -92,6 +89,78 @@
     <Compile Include="BlockingQueue.cs" />
     <Compile Include="ListEx.cs" />
     <Compile Include="ModifiedEnumerable.cs" />
+    <Compile Include="MoreLinq\Acquire.cs" />
+    <Compile Include="MoreLinq\Assert.cs" />
+    <Compile Include="MoreLinq\AssertCount.cs" />
+    <Compile Include="MoreLinq\AtLeast.cs" />
+    <Compile Include="MoreLinq\Batch.cs" />
+    <Compile Include="MoreLinq\Cartesian.cs" />
+    <Compile Include="MoreLinq\Concat.cs" />
+    <Compile Include="MoreLinq\Consume.cs" />
+    <Compile Include="MoreLinq\CountBy.cs" />
+    <Compile Include="MoreLinq\DistinctBy.cs" />
+    <Compile Include="MoreLinq\EndsWith.cs" />
+    <Compile Include="MoreLinq\EquiZip.cs" />
+    <Compile Include="MoreLinq\ExceptBy.cs" />
+    <Compile Include="MoreLinq\Exclude.cs" />
+    <Compile Include="MoreLinq\FallbackIfEmpty.cs" />
+    <Compile Include="MoreLinq\Fold.cs" />
+    <Compile Include="MoreLinq\Fold.g.cs" />
+    <Compile Include="MoreLinq\ForEach.cs" />
+    <Compile Include="MoreLinq\FullGroupJoin.cs" />
+    <Compile Include="MoreLinq\Generate.cs" />
+    <Compile Include="MoreLinq\GenerateByIndex.cs" />
+    <Compile Include="MoreLinq\GroupAdjacent.cs" />
+    <Compile Include="MoreLinq\Incremental.cs" />
+    <Compile Include="MoreLinq\Index.cs" />
+    <Compile Include="MoreLinq\Interleave.cs" />
+    <Compile Include="MoreLinq\Lag.cs" />
+    <Compile Include="MoreLinq\Lead.cs" />
+    <Compile Include="MoreLinq\Lookup.cs" />
+    <Compile Include="MoreLinq\MaxBy.cs" />
+    <Compile Include="MoreLinq\MinBy.cs" />
+    <Compile Include="MoreLinq\MoreEnumerable.cs" />
+    <Compile Include="MoreLinq\NestedLoops.cs" />
+    <Compile Include="MoreLinq\OrderBy.cs" />
+    <Compile Include="MoreLinq\OrderByDirection.cs" />
+    <Compile Include="MoreLinq\OrderedMerge.cs" />
+    <Compile Include="MoreLinq\Pad.cs" />
+    <Compile Include="MoreLinq\Pairwise.cs" />
+    <Compile Include="MoreLinq\PartialSort.cs" />
+    <Compile Include="MoreLinq\Permutations.cs" />
+    <Compile Include="MoreLinq\Pipe.cs" />
+    <Compile Include="MoreLinq\Prepend.cs" />
+    <Compile Include="MoreLinq\PreScan.cs" />
+    <Compile Include="MoreLinq\Random.cs" />
+    <Compile Include="MoreLinq\RandomSubset.cs" />
+    <Compile Include="MoreLinq\Rank.cs" />
+    <Compile Include="MoreLinq\Repeat.cs" />
+    <Compile Include="MoreLinq\ReverseComparer.cs" />
+    <Compile Include="MoreLinq\RunLengthEncode.cs" />
+    <Compile Include="MoreLinq\Scan.cs" />
+    <Compile Include="MoreLinq\Segment.cs" />
+    <Compile Include="MoreLinq\SequenceException.cs" />
+    <Compile Include="MoreLinq\SingleOrFallback.cs" />
+    <Compile Include="MoreLinq\SkipUntil.cs" />
+    <Compile Include="MoreLinq\Slice.cs" />
+    <Compile Include="MoreLinq\SortedMerge.cs" />
+    <Compile Include="MoreLinq\Split.cs" />
+    <Compile Include="MoreLinq\StartsWith.cs" />
+    <Compile Include="MoreLinq\Subsets.cs" />
+    <Compile Include="MoreLinq\TagFirstLast.cs" />
+    <Compile Include="MoreLinq\TakeEvery.cs" />
+    <Compile Include="MoreLinq\TakeLast.cs" />
+    <Compile Include="MoreLinq\TakeUntil.cs" />
+    <Compile Include="MoreLinq\ToDataTable.cs" />
+    <Compile Include="MoreLinq\ToDelimitedString.cs" />
+    <Compile Include="MoreLinq\ToDelimitedString.g.cs" />
+    <Compile Include="MoreLinq\ToHashSet.cs" />
+    <Compile Include="MoreLinq\Trace.cs" />
+    <Compile Include="MoreLinq\Traverse.cs" />
+    <Compile Include="MoreLinq\Windowed.cs" />
+    <Compile Include="MoreLinq\Zip.stub.cs" />
+    <Compile Include="MoreLinq\ZipLongest.cs" />
+    <Compile Include="MoreLinq\ZipShortest.cs" />
     <Compile Include="OrderedPriorityQueue.cs" />
     <Compile Include="PowerCollections\Algorithms.cs">
       <SubType>Code</SubType>
@@ -180,6 +249,9 @@
       <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
       <Name>Common</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
 </Project>

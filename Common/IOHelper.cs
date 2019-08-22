@@ -4,15 +4,18 @@ namespace Ecng.Common
 	using System.Diagnostics;
 	using System.IO;
 
-	using MoreLinq;
-
 	public static class IOHelper
 	{
 		public static DirectoryInfo ClearDirectory(string releasePath)
 		{
 			var releaseDir = new DirectoryInfo(releasePath);
-			releaseDir.GetFiles().ForEach(f => f.Delete());
-			releaseDir.GetDirectories().ForEach(d => d.Delete(true));
+
+			foreach (var file in releaseDir.GetFiles())
+				file.Delete();
+
+			foreach (var dir in releaseDir.GetDirectories())
+				dir.Delete(true);
+
 			return releaseDir;
 		}
 
@@ -20,9 +23,10 @@ namespace Ecng.Common
 		{
 			Directory.CreateDirectory(destPath);
 
-			Directory
-				.GetFiles(sourcePath)
-				.ForEach(fileName => CopyAndMakeWritable(fileName, destPath));
+			foreach (var fileName in Directory.GetFiles(sourcePath))
+			{
+				CopyAndMakeWritable(fileName, destPath);
+			}
 
 			foreach (var directory in Directory.GetDirectories(sourcePath))
 			{
