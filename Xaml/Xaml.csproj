@@ -48,9 +48,6 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ClrPatch">
-      <HintPath>..\..\StockSharp (GitHub)\References\ClrPatch.dll</HintPath>
-    </Reference>
     <Reference Include="PresentationCore">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
@@ -133,7 +130,6 @@
     </Compile>
     <Compile Include="Fonts\FontHelper.cs" />
     <Compile Include="Fonts\FontInfo.cs" />
-    <Compile Include="DispatcherPropertyChangedEventManager.cs" />
     <Compile Include="EnumComboBox.cs" />
     <Compile Include="FixedWidthColumn.cs" />
     <Compile Include="GenericTreeView\ItemMonitor.cs" />
