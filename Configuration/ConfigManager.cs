@@ -185,20 +185,22 @@
 
 		public static void RegisterService<T>(T service)
 		{
-			UnityContainer.RegisterInstance(service);
-
 			lock (_sync)
+			{
+				UnityContainer.RegisterInstance(service);
 				_services[typeof(T)] = service;
+			}
 
 			ServiceRegistered?.Invoke(typeof(T), service);
 		}
 
 		public static void RegisterService<T>(string name, T service)
 		{
-			UnityContainer.RegisterInstance(name, service);
-
 			lock (_sync)
+			{
+				UnityContainer.RegisterInstance(name, service);
 				_services[typeof(T)] = service;
+			}
 
 			ServiceRegistered?.Invoke(typeof(T), service);
 		}
@@ -211,9 +213,9 @@
 
 				if (isReg)
 					return true;
-			}
 
-			return UnityContainer.IsRegistered<T>();
+				return UnityContainer.IsRegistered<T>();
+			}
 		}
 
 		public static T TryGetService<T>()
@@ -238,16 +240,16 @@
 
 			lock (_sync)
 			{
-				if (!_services.TryGetValue(typeof(T), out service))
-				{
-					service = ServiceLocator.GetInstance<T>();
+				if (_services.TryGetValue(typeof(T), out service))
+					return (T)service;
 
-					if (service != null)
-					{
-						// service T can register itseft in the constructor
-						if (!_services.ContainsKey(typeof(T)))
-							_services.Add(typeof(T), service);
-					}
+				service = ServiceLocator.GetInstance<T>();
+
+				if (service != null)
+				{
+					// service T can register itself in the constructor
+					if (!_services.ContainsKey(typeof(T)))
+						_services.Add(typeof(T), service);
 				}
 			}
 
