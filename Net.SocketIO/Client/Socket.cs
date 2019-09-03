@@ -70,14 +70,21 @@ namespace Ecng.Net.SocketIO.Client
         {
             Task.Run(() =>
             {
-                if (!Connected)
-                {
-                    _io.Open();
-                    if (_io.ReadyState == Manager.ReadyStateEnum.OPEN)
-                    {
-                        OnOpen();
-                    }
-                }
+	            try
+	            {
+		            if (!Connected)
+		            {
+			            _io.Open();
+			            if (_io.ReadyState == Manager.ReadyStateEnum.OPEN)
+			            {
+				            OnOpen();
+			            }
+		            }
+	            }
+	            catch (Exception e)
+	            {
+		            _io.OnError(e);
+	            }
             });
             return this;
         }

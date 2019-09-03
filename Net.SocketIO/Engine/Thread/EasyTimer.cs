@@ -7,29 +7,34 @@ namespace Ecng.Net.SocketIO.Engine.Thread
 {
     public class EasyTimer
     {
-        private CancellationTokenSource ts;    
+        private readonly CancellationTokenSource _ts;
 
-        public EasyTimer(CancellationTokenSource ts)
+        private EasyTimer(CancellationTokenSource ts)
         {
-            this.ts = ts;
+	        _ts = ts ?? throw new ArgumentNullException(nameof(ts));
         }
 
-        public static EasyTimer SetTimeout(Action method, int delayInMilliseconds)
+        public static EasyTimer SetTimeout(Action method, int delayInMilliseconds, Action<Exception> errorHandler)
         {
-            var ts = new CancellationTokenSource();
-            CancellationToken ct = ts.Token;
-            var task = Task.Delay(delayInMilliseconds,ct);
-            var awaiter = task.GetAwaiter();
+	        if (errorHandler == null)
+		        throw new ArgumentNullException(nameof(errorHandler));
 
-            awaiter.OnCompleted(
-                () =>
+	        var ts = new CancellationTokenSource();
+
+            Task.Delay(delayInMilliseconds, ts.Token).GetAwaiter().OnCompleted(() =>
+            {
+                try
                 {
-                    if (!ts.IsCancellationRequested)
-                    {
-                        method();
-                    }
+	                if (!ts.IsCancellationRequested)
+	                {
+		                method();
+	                }
+                }
+                catch (Exception e)
+                {
+	                errorHandler(e);
+                }
             });
-           
             
             // Returns a stop handle which can be used for stopping
             // the timer, if required
@@ -40,22 +45,19 @@ namespace Ecng.Net.SocketIO.Engine.Thread
         {
             //var log = LogManager.GetLogger(Global.CallerName());
             //log.Info("EasyTimer stop");
-            if (ts != null)
-            {
-                ts.Cancel();                
-            }           
+            _ts?.Cancel();                
         }
 
 
-        public static void TaskRun(Action action)
-        {
-            Task.Run(action).Wait();
-        }
+        //public static void TaskRun(Action action)
+        //{
+        //    Task.Run(action).Wait();
+        //}
 
-        public static void TaskRunNoWait(Action action)
-        {
-            Task.Run(action);
-        }
+        //public static void TaskRunNoWait(Action action)
+        //{
+        //    Task.Run(action);
+        //}
     }
 
 

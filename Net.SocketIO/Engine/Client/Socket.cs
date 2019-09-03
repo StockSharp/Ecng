@@ -189,10 +189,17 @@ namespace Ecng.Net.SocketIO.Engine.Client
 //            EventTasks.Exec((n) =>
             Task.Run(() =>
             {
-                //var log2 = LogManager.GetLogger(Global.CallerName());
-                //log2.Info("Task.Run Open start");
-                transport.Open();
-                //log2.Info("Task.Run Open finish");
+	            try
+	            {
+		            //var log2 = LogManager.GetLogger(Global.CallerName());
+		            //log2.Info("Task.Run Open start");
+		            transport.Open();
+		            //log2.Info("Task.Run Open finish");
+	            }
+	            catch (Exception e)
+	            {
+		            OnError(e);
+	            }
             });
             return this;
         }
@@ -583,7 +590,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
                     OnHeartbeat(PingTimeout);
                     //log2.Info("EasyTimer SetPing finish");
                 }
-            }, (int)PingInterval);
+            }, (int)PingInterval, OnError);
         }
 
         private void Ping()
@@ -1139,7 +1146,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
                     WriteBuffer = ImmutableList<Packet>.Empty;
                     CallbackBuffer = ImmutableList<Action>.Empty;
                     PrevBufferLen = 0;
-                }, 1);
+                }, 1, OnError);
 
               
                 if (this.Transport != null)
@@ -1204,7 +1211,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
                 }
                 OnClose("ping timeout");
                 //log2.Info("EasyTimer OnHeartbeat finish");
-            },(int) timeout);
+            },(int) timeout, OnError);
 
         }
 

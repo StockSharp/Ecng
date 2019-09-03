@@ -245,7 +245,7 @@ namespace Ecng.Net.SocketIO.Client
                     EmitAll(EVENT_CONNECT_TIMEOUT, timeout);
                     //log2.Info("Manager Open finish");
 
-                }, timeout);
+                }, timeout, OnError);
 
                 Subs.Enqueue(new On.ActionHandleImpl(timer.Stop));
                 ;
@@ -320,7 +320,7 @@ namespace Ecng.Net.SocketIO.Client
             this.Emit(EVENT_PACKET, packet);
         }
 
-        private void OnError(Exception err)
+        internal void OnError(Exception err)
         {
             //var log = LogManager.GetLogger(Global.CallerName());
             //log.Error("error", err);
@@ -482,7 +482,7 @@ namespace Ecng.Net.SocketIO.Client
                         }
                     }));
                     //log2.Info("EasyTimer Reconnect finish");
-                }, (int)delay);
+                }, (int)delay, OnError);
 
                 Subs.Enqueue(new On.ActionHandleImpl(timer.Stop));                
             }

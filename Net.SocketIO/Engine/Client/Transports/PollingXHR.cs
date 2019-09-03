@@ -312,65 +312,72 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
                     Task.Run(() =>
                     {
-                        //var log2 = LogManager.GetLogger(Global.CallerName());
-                        //log2.Info("Task.Run Create start");
-                        using (var res = Xhr.GetResponse())
-                        {
-                            //log.Info("Xhr.GetResponse ");
+	                    try
+	                    {
+		                    //var log2 = LogManager.GetLogger(Global.CallerName());
+		                    //log2.Info("Task.Run Create start");
+		                    using (var res = Xhr.GetResponse())
+		                    {
+			                    //log.Info("Xhr.GetResponse ");
 
-                            var responseHeaders = new Dictionary<string, string>();
-                            for (int i = 0; i < res.Headers.Count; i++)
-                            {
-                                responseHeaders.Add(res.Headers.Keys[i], res.Headers[i]);
-                            }
-                            OnResponseHeaders(responseHeaders);
+			                    var responseHeaders = new Dictionary<string, string>();
+			                    for (int i = 0; i < res.Headers.Count; i++)
+			                    {
+				                    responseHeaders.Add(res.Headers.Keys[i], res.Headers[i]);
+			                    }
+			                    OnResponseHeaders(responseHeaders);
 
-                            var contentType = res.Headers["Content-Type"];
+			                    var contentType = res.Headers["Content-Type"];
 
 
 
-                            using (var resStream = res.GetResponseStream())
-                            {
-                                Debug.Assert(resStream != null, "resStream != null");
-                                if (contentType.Equals("application/octet-stream",
-                                    StringComparison.OrdinalIgnoreCase))
-                                {
-                                    var buffer = new byte[16 * 1024];
-                                    using (var ms = new MemoryStream())
-                                    {
-                                        int read;
-                                        while ((read = resStream.Read(buffer, 0, buffer.Length)) > 0)
-                                        {
-                                            ms.Write(buffer, 0, read);
-                                        }
-                                        var a = ms.ToArray();
-                                        OnData(a);
-                                    }
-                                }
-                                else
-                                {
-                                    using (var sr = new StreamReader(resStream))
-                                    {
-                                        OnData(sr.ReadToEnd());
-                                    }
-                                }
-                            }
-                        }
-                        //log2.Info("Task.Run Create finish");
+			                    using (var resStream = res.GetResponseStream())
+			                    {
+				                    Debug.Assert(resStream != null, "resStream != null");
+				                    if (contentType.Equals("application/octet-stream",
+					                    StringComparison.OrdinalIgnoreCase))
+				                    {
+					                    var buffer = new byte[16 * 1024];
+					                    using (var ms = new MemoryStream())
+					                    {
+						                    int read;
+						                    while ((read = resStream.Read(buffer, 0, buffer.Length)) > 0)
+						                    {
+							                    ms.Write(buffer, 0, read);
+						                    }
+						                    var a = ms.ToArray();
+						                    OnData(a);
+					                    }
+				                    }
+				                    else
+				                    {
+					                    using (var sr = new StreamReader(resStream))
+					                    {
+						                    OnData(sr.ReadToEnd());
+					                    }
+				                    }
+			                    }
+		                    }
+		                    //log2.Info("Task.Run Create finish");
+	                    }
+	                    catch (Exception e)
+	                    {
+		                    OnError(e);
+	                    }
 
                     }).Wait();
 
                 }
-                catch (System.IO.IOException e)
-                {
-                    //log.Error("Create call failed", e);
-                    OnError(e);
-                }
-                catch (System.Net.WebException e)
-                {
-                    //log.Error("Create call failed", e);
-                    OnError(e);
-                }
+                //catch (System.IO.IOException e)
+                //{
+                //    //log.Error("Create call failed", e);
+                //    OnError(e);
+                //}
+                //catch (System.Net.WebException e)
+                //{
+                //    //log.Error("Create call failed", e);
+                //    OnError(e);
+                //}
                 catch (Exception e)
                 {
                     //log.Error("Create call failed", e);
