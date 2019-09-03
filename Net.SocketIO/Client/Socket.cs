@@ -96,7 +96,7 @@ namespace Ecng.Net.SocketIO.Client
 
         public override Emitter Emit(string eventString, params object[] args)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
             if (Events.Contains(eventString))
             {
@@ -120,7 +120,7 @@ namespace Ecng.Net.SocketIO.Client
 
             if (ack != null)
             {
-                log.Info(string.Format("emitting packet with ack id {0}", Ids));
+                //log.Info(string.Format("emitting packet with ack id {0}", Ids));
                 Acks = Acks.Add(Ids, ack);
                 packet.Id = Ids++;
             }
@@ -139,7 +139,7 @@ namespace Ecng.Net.SocketIO.Client
  
         public Emitter Emit(string eventString, IAck ack, params object[] args)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
             if (Events.Contains(eventString))
             {
@@ -155,7 +155,7 @@ namespace Ecng.Net.SocketIO.Client
             var parserType = HasBinaryData.HasBinary(jsonArgs) ? Parser.Parser.BINARY_EVENT : Parser.Parser.EVENT;
             var packet = new Packet(parserType, jsonArgs);
 
-            log.Info(string.Format("emitting packet with ack id {0}", Ids));
+            //log.Info(string.Format("emitting packet with ack id {0}", Ids));
             Acks = Acks.Add(Ids, ack);
             packet.Id = Ids++;
 
@@ -212,8 +212,8 @@ namespace Ecng.Net.SocketIO.Client
 
         private void OnClose(string reason)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info(string.Format("close ({0})", reason));
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info(string.Format("close ({0})", reason));
             Connected = false;
             Emit(EVENT_DISCONNECT, reason);
         }
@@ -259,7 +259,7 @@ namespace Ecng.Net.SocketIO.Client
  
         private void OnEvent(Packet packet)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+           // var log = LogManager.GetLogger(Global.CallerName());
             //var jarr =(string) ((JValue) packet.Data).Value;
             //var job = JToken.Parse(jarr);
 
@@ -271,10 +271,10 @@ namespace Ecng.Net.SocketIO.Client
 
 
 
-            log.Info(string.Format("emitting event {0}", args));
+            //log.Info(string.Format("emitting event {0}", args));
             if (packet.Id >= 0)
             {
-                log.Info("attaching ack callback to event");
+                //log.Info("attaching ack callback to event");
                 args.Add(new AckImp(this, packet.Id));
             }
 
@@ -309,9 +309,9 @@ namespace Ecng.Net.SocketIO.Client
                     return;
                 }
                 sent[0] = true;
-                var log = LogManager.GetLogger(Global.CallerName());
+                //var log = LogManager.GetLogger(Global.CallerName());
                 var jsonArgs = Parser.Packet.Args2JArray(args);
-                log.Info(string.Format("sending ack {0}", args.Length != 0 ? jsonArgs.ToString() : "null"));
+                //log.Info(string.Format("sending ack {0}", args.Length != 0 ? jsonArgs.ToString() : "null"));
 
                 var parserType = HasBinaryData.HasBinary(args) ? Parser.Parser.BINARY_ACK : Parser.Parser.ACK;
                 var packet = new Packet(parserType, jsonArgs);
@@ -322,8 +322,8 @@ namespace Ecng.Net.SocketIO.Client
 
         private void OnAck(Parser.Packet packet)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info(string.Format("calling ack {0} with {1}", packet.Id, packet.Data));
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info(string.Format("calling ack {0} with {1}", packet.Id, packet.Data));
             var fn = Acks[packet.Id];
             Acks = Acks.Remove(packet.Id);
 
@@ -366,8 +366,8 @@ namespace Ecng.Net.SocketIO.Client
 
         private void OnDisconnect()
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info(string.Format("server disconnect ({0})", this.Nsp));
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info(string.Format("server disconnect ({0})", this.Nsp));
             Destroy();
             OnClose("io server disconnect");
         }
@@ -385,11 +385,11 @@ namespace Ecng.Net.SocketIO.Client
 
         public Socket Close()
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
             if (Connected)
             {
-                log.Info(string.Format("performing disconnect ({0})", Nsp));
+                //log.Info(string.Format("performing disconnect ({0})", Nsp));
                 Packet(new Packet(Parser.Parser.DISCONNECT));
             }
 

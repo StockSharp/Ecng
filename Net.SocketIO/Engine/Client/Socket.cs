@@ -189,10 +189,10 @@ namespace Ecng.Net.SocketIO.Engine.Client
 //            EventTasks.Exec((n) =>
             Task.Run(() =>
             {
-                var log2 = LogManager.GetLogger(Global.CallerName());
-                log2.Info("Task.Run Open start");
+                //var log2 = LogManager.GetLogger(Global.CallerName());
+                //log2.Info("Task.Run Open start");
                 transport.Open();
-                log2.Info("Task.Run Open finish");
+                //log2.Info("Task.Run Open finish");
             });
             return this;
         }
@@ -239,12 +239,12 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
         private void SetTransport(Transport transport)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info(string.Format("SetTransport setting transport '{0}'", transport.Name));
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info(string.Format("SetTransport setting transport '{0}'", transport.Name));
 
             if (this.Transport != null)
             {
-                log.Info(string.Format("SetTransport clearing existing transport '{0}'", transport.Name));
+                //log.Info(string.Format("SetTransport clearing existing transport '{0}'", transport.Name));
                 this.Transport.Off();
             }
 
@@ -445,12 +445,12 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
         private bool Flush()
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
-            log.Info(string.Format("ReadyState={0} Transport.Writeable={1} Upgrading={2} WriteBuffer.Count={3}",ReadyState,Transport.Writable,Upgrading, WriteBuffer.Count));
+            //log.Info(string.Format("ReadyState={0} Transport.Writeable={1} Upgrading={2} WriteBuffer.Count={3}",ReadyState,Transport.Writable,Upgrading, WriteBuffer.Count));
             if (ReadyState != ReadyStateEnum.CLOSED && ReadyState == ReadyStateEnum.OPEN && this.Transport.Writable && !Upgrading && WriteBuffer.Count != 0)
             {
-                log.Info(string.Format("Flush {0} packets in socket", WriteBuffer.Count));
+                //log.Info(string.Format("Flush {0} packets in socket", WriteBuffer.Count));
                 PrevBufferLen = WriteBuffer.Count;
                 Transport.Send(WriteBuffer);
                 Emit(EVENT_FLUSH);
@@ -458,19 +458,19 @@ namespace Ecng.Net.SocketIO.Engine.Client
             }
             else
             {
-                log.Info(string.Format("Flush Not Send"));
+                //log.Info(string.Format("Flush Not Send"));
                 return false;
             }
         }
 
         public void OnPacket(Packet packet)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
 
             if (ReadyState == ReadyStateEnum.OPENING || ReadyState == ReadyStateEnum.OPEN)
             {
-                log.Info(string.Format("socket received: type '{0}', data '{1}'", packet.Type, packet.Data));
+                //log.Info(string.Format("socket received: type '{0}', data '{1}'", packet.Type, packet.Data));
 
                 Emit(EVENT_PACKET, packet);
                 Emit(EVENT_HEARTBEAT);
@@ -500,15 +500,15 @@ namespace Ecng.Net.SocketIO.Engine.Client
             }
             else
             {
-                log.Info(string.Format("OnPacket packet received with socket readyState '{0}'", ReadyState));
+                //log.Info(string.Format("OnPacket packet received with socket readyState '{0}'", ReadyState));
             }
 
         }
 
         private void OnHandshake(HandshakeData handshakeData)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info(nameof(OnHandshake));
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info(nameof(OnHandshake));
             Emit(EVENT_HANDSHAKE, handshakeData);
             Id = handshakeData.Sid;
             Transport.Query.Add("sid", handshakeData.Sid);
@@ -563,25 +563,25 @@ namespace Ecng.Net.SocketIO.Engine.Client
             {
                 PingIntervalTimer.Stop();
             }
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info(string.Format("writing ping packet - expecting pong within {0}ms", PingTimeout));
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info(string.Format("writing ping packet - expecting pong within {0}ms", PingTimeout));
 
             PingIntervalTimer = EasyTimer.SetTimeout(() =>
             {
-                var log2 = LogManager.GetLogger(Global.CallerName());
-                log2.Info("EasyTimer SetPing start");
+                //var log2 = LogManager.GetLogger(Global.CallerName());
+                //log2.Info("EasyTimer SetPing start");
 
                 if (Upgrading)
                 {
                     // skip this ping during upgrade
                     SetPing();
-                    log2.Info("skipping Ping during upgrade");
+                    //log2.Info("skipping Ping during upgrade");
                 }
                 else if(ReadyState == ReadyStateEnum.OPEN)
                 {
                     Ping();
                     OnHeartbeat(PingTimeout);
-                    log2.Info("EasyTimer SetPing finish");
+                    //log2.Info("EasyTimer SetPing finish");
                 }
             }, (int)PingInterval);
         }
@@ -672,7 +672,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
         private Task WaitForUpgrade()
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
             var tcs = new TaskCompletionSource<object>();
             const int TIMEOUT = 1000;
@@ -685,7 +685,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
                 {
                     if (sw.ElapsedMilliseconds > TIMEOUT)
                     {
-                        log.Info("Wait for upgrade timeout");
+                        //log.Info("Wait for upgrade timeout");
                         break;
                     }
                 }
@@ -701,7 +701,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
         private void OnOpen()
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
             //log.Info("socket open before call to flush()");
             ReadyState = ReadyStateEnum.OPEN;
@@ -714,7 +714,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
             if (ReadyState == ReadyStateEnum.OPEN && Upgrade && Transport is Polling)
             //if (ReadyState == ReadyStateEnum.OPEN && Upgrade && this.Transport)
             {
-                log.Info("OnOpen starting upgrade probes");
+                //log.Info("OnOpen starting upgrade probes");
                 _errorCount = 0;
                 foreach (var upgrade in Upgrades)
                 {
@@ -725,9 +725,9 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
         private void Probe(string name)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
-            log.Info(string.Format("Probe probing transport '{0}'", name));
+            //log.Info(string.Format("Probe probing transport '{0}'", name));
 
             PriorWebsocketSuccess = false;
 
@@ -824,7 +824,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
                     {
                         return;
                     }
-                    var log = LogManager.GetLogger(Global.CallerName());
+                    //var log = LogManager.GetLogger(Global.CallerName());
 
                     var msg = (Packet) args[0];
                     if (Packet.PONG == msg.Type && "probe" == (string) msg.Data)
@@ -859,7 +859,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
                                     return;
                                 }
 
-                                log.Info("changing transport and sending upgrade packet");
+                                //log.Info("changing transport and sending upgrade packet");
 
                                 _onTransportOpenListener.Parameters.Cleanup[0]();
 
@@ -882,7 +882,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
                                 }
                                 catch (Exception e)
                                 {
-                                    log.Error("",e);
+                                    //log.Error("",e);
                                 }
 
                             });
@@ -890,8 +890,8 @@ namespace Ecng.Net.SocketIO.Engine.Client
                     }
                     else
                     {
-                        log.Info(string.Format("probe transport '{0}' failed",
-                            _onTransportOpenListener.Parameters.Transport[0].Name));
+                        //log.Info(string.Format("probe transport '{0}' failed",
+                        //    _onTransportOpenListener.Parameters.Transport[0].Name));
 
                         var err = new EngineIOException("probe error");
                         _onTransportOpenListener.Parameters.Socket.Emit(EVENT_UPGRADE_ERROR, err);
@@ -995,9 +995,9 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
                 _freezeTransport.Call();
 
-                var log = LogManager.GetLogger(Global.CallerName());
+                //var log = LogManager.GetLogger(Global.CallerName());
 
-                log.Info(string.Format("probe transport \"{0}\" failed because of error: {1}", error.Transport, err));
+                //log.Info(string.Format("probe transport \"{0}\" failed because of error: {1}", error.Transport, err));
                 _socket.Emit(EVENT_UPGRADE_ERROR, error);
             }
 
@@ -1078,9 +1078,9 @@ namespace Ecng.Net.SocketIO.Engine.Client
                 var to = (Transport)args[0];
                 if (_transport[0] != null && to.Name != _transport[0].Name)
                 {
-                    var log = LogManager.GetLogger(Global.CallerName());
+                    //var log = LogManager.GetLogger(Global.CallerName());
 
-                    log.Info(string.Format("'{0}' works - aborting '{1}'", to.Name, _transport[0].Name));
+                    //log.Info(string.Format("'{0}' works - aborting '{1}'", to.Name, _transport[0].Name));
                     _freezeTransport.Call();
                 }
             }
@@ -1100,11 +1100,11 @@ namespace Ecng.Net.SocketIO.Engine.Client
         {
             if (this.ReadyState == ReadyStateEnum.OPENING || this.ReadyState == ReadyStateEnum.OPEN)
             {
-                var log = LogManager.GetLogger(Global.CallerName());
-                log.Info("Start");                
+                //var log = LogManager.GetLogger(Global.CallerName());
+                //log.Info("Start");                
                 this.OnClose("forced close");
 
-                log.Info("socket closing - telling transport to close");
+                //log.Info("socket closing - telling transport to close");
                 Transport.Close();
 
             }
@@ -1115,9 +1115,9 @@ namespace Ecng.Net.SocketIO.Engine.Client
         {
             if (this.ReadyState == ReadyStateEnum.OPENING || this.ReadyState == ReadyStateEnum.OPEN)
             {
-                var log = LogManager.GetLogger(Global.CallerName());
+                //var log = LogManager.GetLogger(Global.CallerName());
 
-                log.Info(string.Format("OnClose socket close with reason: {0}", reason));
+                //log.Info(string.Format("OnClose socket close with reason: {0}", reason));
 
                 // clear timers
                 if (this.PingIntervalTimer != null)
@@ -1195,15 +1195,15 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
             PingTimeoutTimer = EasyTimer.SetTimeout(() =>
             {
-                var log2 = LogManager.GetLogger(Global.CallerName());
-                log2.Info("EasyTimer OnHeartbeat start");
+                //var log2 = LogManager.GetLogger(Global.CallerName());
+                //log2.Info("EasyTimer OnHeartbeat start");
                 if (ReadyState == ReadyStateEnum.CLOSED)
                 {
-                    log2.Info("EasyTimer OnHeartbeat ReadyState == ReadyStateEnum.CLOSED finish");
+                    //log2.Info("EasyTimer OnHeartbeat ReadyState == ReadyStateEnum.CLOSED finish");
                     return;
                 }
                 OnClose("ping timeout");
-                log2.Info("EasyTimer OnHeartbeat finish");
+                //log2.Info("EasyTimer OnHeartbeat finish");
             },(int) timeout);
 
         }
@@ -1212,9 +1212,9 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
         internal void OnError(Exception exception)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
-            log.Error("socket error", exception);
+            //log.Error("socket error", exception);
             PriorWebsocketSuccess = false;
 
             //prevent endless loop

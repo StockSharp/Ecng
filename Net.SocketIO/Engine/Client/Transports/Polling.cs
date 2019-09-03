@@ -195,9 +195,9 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
         private void _onData(object data)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
-            log.Info(string.Format("polling got data {0}", data));
+            //log.Info(string.Format("polling got data {0}", data));
             var callback = new DecodePayloadCallback(this);
             if (data is string)
             {
@@ -211,7 +211,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
             if (ReadyState != ReadyStateEnum.CLOSED)
             {
                 IsPolling = false;
-                log.Info("ReadyState != ReadyStateEnum.CLOSED");
+                //log.Info("ReadyState != ReadyStateEnum.CLOSED");
                 Emit(EVENT_POLL_COMPLETE);
 
                 if (ReadyState == ReadyStateEnum.OPEN)
@@ -220,7 +220,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
                 }
                 else
                 {
-                    log.Info(string.Format("ignoring poll - transport state {0}", ReadyState));
+                    //log.Info(string.Format("ignoring poll - transport state {0}", ReadyState));
                 }
             }
 
@@ -258,20 +258,20 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
         protected override void DoClose()
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
             var closeListener = new CloseListener(this);
 
             if (ReadyState == ReadyStateEnum.OPEN)
             {
-                log.Info("transport open - closing");
+                //log.Info("transport open - closing");
                 closeListener.Call();
             }
             else
             {
                 // in case we're trying to close while
                 // handshaking is in progress (engine.io-client GH-164)
-                log.Info("transport not open - deferring close");
+                //log.Info("transport not open - deferring close");
                 this.Once(EVENT_OPEN, closeListener);
             }
         }
@@ -304,8 +304,8 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
         protected override void Write(ImmutableList<Packet> packets)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info("Write packets.Count = " + packets.Count);
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info("Write packets.Count = " + packets.Count);
 
             Writable = false;
 

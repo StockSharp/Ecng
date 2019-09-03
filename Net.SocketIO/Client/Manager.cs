@@ -190,14 +190,14 @@ namespace Ecng.Net.SocketIO.Client
 
         private Manager Open(IOpenCallback fn)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info(string.Format("readyState {0}", ReadyState));
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info(string.Format("readyState {0}", ReadyState));
             if (ReadyState == ReadyStateEnum.OPEN)
             {
                 return this;
             }
 
-            log.Info(string.Format("opening {0}", Uri));
+            //log.Info(string.Format("opening {0}", Uri));
             EngineSocket = new Engine(Uri, Opts);
             Ecng.Net.SocketIO.Engine.Client.Socket socket = EngineSocket;
 
@@ -216,7 +216,7 @@ namespace Ecng.Net.SocketIO.Client
 
             var errorSub = Client.On.Create(socket, Engine.EVENT_ERROR, new ListenerImpl((data) =>
             {
-                log.Info("connect_error");
+                //log.Info("connect_error");
                 Cleanup();
                 ReadyState = ReadyStateEnum.CLOSED;
                 EmitAll(EVENT_CONNECT_ERROR, data);
@@ -232,18 +232,18 @@ namespace Ecng.Net.SocketIO.Client
             if (_timeout >= 0)
             {
                 var timeout = (int) _timeout;
-                log.Info(string.Format("connection attempt will timeout after {0}", timeout));
+                //log.Info(string.Format("connection attempt will timeout after {0}", timeout));
                 var timer = EasyTimer.SetTimeout(() =>
                 {
-                    var log2 = LogManager.GetLogger(Global.CallerName());
-                    log2.Info("Manager Open start");
+                    //var log2 = LogManager.GetLogger(Global.CallerName());
+                    //log2.Info("Manager Open start");
 
-                    log2.Info(string.Format("connect attempt timed out after {0}", timeout));
+                    //log2.Info(string.Format("connect attempt timed out after {0}", timeout));
                     openSub.Destroy();
                     socket.Close();
                     socket.Emit(Engine.EVENT_ERROR, new SocketIOException("timeout"));
                     EmitAll(EVENT_CONNECT_TIMEOUT, timeout);
-                    log2.Info("Manager Open finish");
+                    //log2.Info("Manager Open finish");
 
                 }, timeout);
 
@@ -261,8 +261,8 @@ namespace Ecng.Net.SocketIO.Client
 
         private void OnOpen()
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info("open");
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info("open");
 
             Cleanup();
 
@@ -322,8 +322,8 @@ namespace Ecng.Net.SocketIO.Client
 
         private void OnError(Exception err)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Error("error", err);
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Error("error", err);
             this.EmitAll(EVENT_ERROR, err);
         }
 
@@ -352,8 +352,8 @@ namespace Ecng.Net.SocketIO.Client
 
         internal void Packet(Parser.Packet packet)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info(string.Format("writing packet {0}", packet));
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info(string.Format("writing packet {0}", packet));
 
             if (!Encoding)
             {
@@ -423,8 +423,8 @@ namespace Ecng.Net.SocketIO.Client
 
         private void OnClose(string reason)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info("start");
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info("start");
             Cleanup();
             ReadyState = ReadyStateEnum.CLOSED;
             Emit(EVENT_CLOSE, reason);
@@ -437,7 +437,7 @@ namespace Ecng.Net.SocketIO.Client
 
         private void Reconnect()
         {
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
 
             if (Reconnecting || SkipReconnect)
             {
@@ -448,7 +448,7 @@ namespace Ecng.Net.SocketIO.Client
 
             if (Attempts > _reconnectionAttempts)
             {
-                log.Info("reconnect failed");
+                //log.Info("reconnect failed");
                 EmitAll(EVENT_RECONNECT_FAILED);
                 Reconnecting = false;
             }
@@ -456,32 +456,32 @@ namespace Ecng.Net.SocketIO.Client
             {
                 var delay = Attempts*ReconnectionDelay();
                 delay = Math.Min(delay, ReconnectionDelayMax());
-                log.Info(string.Format("will wait {0}ms before reconnect attempt", delay));
+                //log.Info(string.Format("will wait {0}ms before reconnect attempt", delay));
 
                 Reconnecting = true;
                 var timer = EasyTimer.SetTimeout(() =>
                 {
-                    var log2 = LogManager.GetLogger(Global.CallerName());
-                    log2.Info("EasyTimer Reconnect start");
-                    log2.Info(string.Format("attempting reconnect"));
+                    //var log2 = LogManager.GetLogger(Global.CallerName());
+                    //log2.Info("EasyTimer Reconnect start");
+                    //log2.Info(string.Format("attempting reconnect"));
                     EmitAll(EVENT_RECONNECT_ATTEMPT, Attempts);
                     EmitAll(EVENT_RECONNECTING, Attempts);
                     Open(new OpenCallbackImp((err) =>
                     {
                         if (err != null)
                         {
-                            log.Error("reconnect attempt error", (Exception) err);
+                            //log.Error("reconnect attempt error", (Exception) err);
                             Reconnecting = false;
                             Reconnect();
                             EmitAll(EVENT_RECONNECT_ERROR, (Exception) err);
                         }
                         else
                         {
-                            log.Info("reconnect success");
+                            //log.Info("reconnect success");
                             OnReconnect();
                         }
                     }));
-                    log2.Info("EasyTimer Reconnect finish");
+                    //log2.Info("EasyTimer Reconnect finish");
                 }, (int)delay);
 
                 Subs.Enqueue(new On.ActionHandleImpl(timer.Stop));                

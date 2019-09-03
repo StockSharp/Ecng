@@ -50,8 +50,8 @@ namespace Ecng.Net.SocketIO.Parser
 
             public void Encode(Packet obj, ICallback callback)
             {
-                var log = LogManager.GetLogger(Global.CallerName());
-                log.Info(string.Format("encoding packet {0}", obj));
+                //var log = LogManager.GetLogger(Global.CallerName());
+                //log.Info(string.Format("encoding packet {0}", obj));
 
                 if (BINARY_EVENT == obj.Type || BINARY_ACK == obj.Type)
                 {
@@ -102,8 +102,8 @@ namespace Ecng.Net.SocketIO.Parser
                     }
                 }
 
-                var log = LogManager.GetLogger(Global.CallerName());
-                log.Info(string.Format("encoded {0} as {1}", obj, str));
+                //var log = LogManager.GetLogger(Global.CallerName());
+                //log.Info(string.Format("encoded {0} as {1}", obj, str));
                 return str.ToString();
             }
 
@@ -270,8 +270,8 @@ namespace Ecng.Net.SocketIO.Parser
                         return ErrorPacket;
                     }                    
                 }
-                var log = LogManager.GetLogger(Global.CallerName());
-                log.Info(string.Format("decoded {0} as {1}", str, p));
+                //var log = LogManager.GetLogger(Global.CallerName());
+                //log.Info(string.Format("decoded {0} as {1}", str, p));
                 return p;
             }
 

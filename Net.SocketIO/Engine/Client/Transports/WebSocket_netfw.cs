@@ -47,8 +47,8 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
         protected override void DoOpen()
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info("DoOpen uri =" + this.Uri());
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info("DoOpen uri =" + this.Uri());
 
 	        if (_isNative)
 	        {
@@ -243,8 +243,8 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 		        }
 		        catch (Exception e)
 		        {
-			        var log = LogManager.GetLogger(Global.CallerName());
-			        log.Info("DoClose ws.Close() Exception= " + e.Message);
+			        //var log = LogManager.GetLogger(Global.CallerName());
+			        //log.Info("DoClose ws.Close() Exception= " + e.Message);
 		        }
 	        }
         }

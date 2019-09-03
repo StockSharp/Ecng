@@ -36,7 +36,7 @@ namespace Ecng.Net.SocketIO.Client
         public static Socket Socket(Uri uri, Options opts)
         {
 
-            var log = LogManager.GetLogger(Global.CallerName());
+            //var log = LogManager.GetLogger(Global.CallerName());
             if (opts == null)
             {
                 opts = new Options();
@@ -46,7 +46,7 @@ namespace Ecng.Net.SocketIO.Client
 
             if (opts.ForceNew || !opts.Multiplex)
             {
-                log.Info(string.Format("ignoring socket cache for {0}", uri.ToString()));
+                //log.Info(string.Format("ignoring socket cache for {0}", uri.ToString()));
                 io = new Manager(uri, opts);
             }
             else
@@ -54,7 +54,7 @@ namespace Ecng.Net.SocketIO.Client
                 var id = Url.ExtractId(uri);
                 if (!Managers.ContainsKey(id))
                 {
-                    log.Info( string.Format("new io instance for {0}", id));
+                    //log.Info( string.Format("new io instance for {0}", id));
                     Managers.Add(id, new Manager(uri, opts));
 
                 }

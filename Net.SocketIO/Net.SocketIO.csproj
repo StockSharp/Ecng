@@ -67,7 +67,6 @@
     <Compile Include="Engine\Client\Transports\WebSocket_netfw.cs" />
     <Compile Include="Engine\ComponentEmitter\Emitter.cs" />
     <Compile Include="Engine\Modules\Global.cs" />
-    <Compile Include="Engine\Modules\LogManager.cs" />
     <Compile Include="Engine\Modules\ParseQS.cs" />
     <Compile Include="Engine\Modules\ServerCertificate.cs" />
     <Compile Include="Engine\Modules\UTF8.cs" />

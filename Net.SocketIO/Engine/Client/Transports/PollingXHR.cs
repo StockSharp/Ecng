@@ -102,8 +102,8 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
         protected override void DoWrite(byte[] data, Action action)
         {
             var opts = new XHRRequest.RequestOptions {Method = "POST", Data = data, CookieHeaderValue = Cookie};
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info("DoWrite data = " + data);
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info("DoWrite data = " + data);
             //try
             //{
             //    var dataString = BitConverter.ToString(data);
@@ -174,8 +174,8 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
         protected override void DoPoll()
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info("xhr DoPoll");
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info("xhr DoPoll");
             var opts = new XHRRequest.RequestOptions { CookieHeaderValue = Cookie };
             sendXhr = Request(opts);
             sendXhr.On(EVENT_DATA, new DoPollEventDataListener(this));
@@ -266,11 +266,11 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
             public void Create()
             {
-                var log = LogManager.GetLogger(Global.CallerName());
+                //var log = LogManager.GetLogger(Global.CallerName());
 
                 try
                 {
-                    log.Info(string.Format("xhr open {0}: {1}", Method, Uri));
+                    //log.Info(string.Format("xhr open {0}: {1}", Method, Uri));
                     Xhr = (HttpWebRequest) WebRequest.Create(Uri);
                     Xhr.Method = Method;
                     if (CookieHeaderValue != null)
@@ -287,7 +287,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
                 }
                 catch (Exception e)
                 {
-                    log.Error(e);
+                    //log.Error(e);
                     OnError(e);
                     return;
                 }
@@ -312,11 +312,11 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
                     Task.Run(() =>
                     {
-                        var log2 = LogManager.GetLogger(Global.CallerName());
-                        log2.Info("Task.Run Create start");
+                        //var log2 = LogManager.GetLogger(Global.CallerName());
+                        //log2.Info("Task.Run Create start");
                         using (var res = Xhr.GetResponse())
                         {
-                            log.Info("Xhr.GetResponse ");
+                            //log.Info("Xhr.GetResponse ");
 
                             var responseHeaders = new Dictionary<string, string>();
                             for (int i = 0; i < res.Headers.Count; i++)
@@ -356,24 +356,24 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
                                 }
                             }
                         }
-                        log2.Info("Task.Run Create finish");
+                        //log2.Info("Task.Run Create finish");
 
                     }).Wait();
 
                 }
                 catch (System.IO.IOException e)
                 {
-                    log.Error("Create call failed", e);
+                    //log.Error("Create call failed", e);
                     OnError(e);
                 }
                 catch (System.Net.WebException e)
                 {
-                    log.Error("Create call failed", e);
+                    //log.Error("Create call failed", e);
                     OnError(e);
                 }
                 catch (Exception e)
                 {
-                    log.Error("Create call failed", e);
+                    //log.Error("Create call failed", e);
                     OnError(e);
                 }
 
@@ -387,16 +387,16 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
             private void OnData(string data)
             {
-                var log = LogManager.GetLogger(Global.CallerName());
-                log.Info("OnData string = " + data);
+                //var log = LogManager.GetLogger(Global.CallerName());
+                //log.Info("OnData string = " + data);
                 this.Emit(EVENT_DATA, data);
                 this.OnSuccess();
             }
 
             private void OnData(byte[] data)
             {
-                var log = LogManager.GetLogger(Global.CallerName());
-                log.Info("OnData byte[] =" + System.Text.UTF8Encoding.UTF8.GetString(data));
+                //var log = LogManager.GetLogger(Global.CallerName());
+                //log.Info("OnData byte[] =" + System.Text.UTF8Encoding.UTF8.GetString(data));
                 this.Emit(EVENT_DATA, data);
                 this.OnSuccess();
             }

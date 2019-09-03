@@ -38,8 +38,8 @@ namespace Ecng.Net.SocketIO.Engine.Client
             get { return _writeable; } 
             set
             {
-                var log = LogManager.GetLogger(Global.CallerName());
-                log.Info(string.Format("Writable: {0} sid={1}", value, this.Socket.Id));
+                //var log = LogManager.GetLogger(Global.CallerName());
+                //log.Info(string.Format("Writable: {0} sid={1}", value, this.Socket.Id));
                 _writeable = value;
             } 
         }
@@ -150,8 +150,8 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
         public Transport Send(ImmutableList<Packet> packets)
         {
-            var log = LogManager.GetLogger(Global.CallerName());
-            log.Info("Send called with packets.Count: " + packets.Count);
+            //var log = LogManager.GetLogger(Global.CallerName());
+            //log.Info("Send called with packets.Count: " + packets.Count);
             var count = packets.Count;
             if (ReadyState == ReadyStateEnum.OPEN)
             {
