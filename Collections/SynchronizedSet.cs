@@ -9,7 +9,7 @@
 	using MoreLinq;
 
 	[Serializable]
-	public class SynchronizedSet<T> : SynchronizedCollection<T, HashSet<T>>, ISet<T>, ICollectionEx<T>
+	public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, ICollectionEx<T>
 	{
 		private readonly PairSet<int, T> _indecies;
 		private int _maxIndex = -1;
@@ -31,7 +31,27 @@
 		}
 
 		public SynchronizedSet(bool allowIndexing, IEqualityComparer<T> comparer)
-			: base(new HashSet<T>(comparer))
+			: this(allowIndexing, new HashSet<T>(comparer))
+		{
+		}
+
+		public SynchronizedSet(IEnumerable<T> collection)
+			: this(collection, EqualityComparer<T>.Default)
+		{
+		}
+
+		public SynchronizedSet(IEnumerable<T> collection, IEqualityComparer<T> comparer)
+			: this(false, collection, comparer)
+		{
+		}
+
+		public SynchronizedSet(bool allowIndexing, IEnumerable<T> collection, IEqualityComparer<T> comparer)
+			: this(allowIndexing, new HashSet<T>(collection, comparer))
+		{
+		}
+
+		protected SynchronizedSet(bool allowIndexing, ISet<T> innerCollection)
+			: base(innerCollection)
 		{
 			if (allowIndexing)
 				_indecies = new PairSet<int, T>();

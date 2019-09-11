@@ -13,13 +13,28 @@ namespace Ecng.Collections
 		{
 		}
 
+		public CachedSynchronizedSet(IEnumerable<T> collection)
+			: base(collection)
+		{
+		}
+
 		public CachedSynchronizedSet(IEqualityComparer<T> comparer)
 			: base(comparer)
 		{
 		}
 
+		public CachedSynchronizedSet(IEnumerable<T> collection, IEqualityComparer<T> comparer)
+			: base(collection, comparer)
+		{
+		}
+
 		public CachedSynchronizedSet(bool allowIndexing, IEqualityComparer<T> comparer)
 			: base(allowIndexing, comparer)
+		{
+		}
+
+		public CachedSynchronizedSet(bool allowIndexing, IEnumerable<T> collection, IEqualityComparer<T> comparer)
+			: base(allowIndexing, collection, comparer)
 		{
 		}
 
