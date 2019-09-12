@@ -21,6 +21,7 @@
 	{
 		private readonly Dictionary<string, string[]> _stringByResourceId = new Dictionary<string, string[]>();
 		private readonly Dictionary<Tuple<Languages, string>, Dictionary<Languages, string>> _stringsByLang = new Dictionary<Tuple<Languages, string>, Dictionary<Languages, string>>();
+		private readonly Dictionary<Tuple<Languages, string>, string> _keysByLang = new Dictionary<Tuple<Languages, string>, string>();
 
 		//public LocalizationManager(Assembly asmHolder, string fileName)
 		//	: this(GetResourceStream(asmHolder, fileName), true, fileName)
@@ -116,7 +117,12 @@
 							           .Where((t, k) => k != j)
 							           .ToDictionary(tuple => tuple.Item1, tuple => tuple.Item2);
 
-							_stringsByLang[tuples[j]] = dict;
+							var t1 = tuples[j];
+
+							_stringsByLang[t1] = dict;
+
+							if (!key.IsEmpty())
+								_keysByLang[t1] = key;
 						}
 					}
 				}
@@ -176,6 +182,11 @@
 
 			Missing?.Invoke(text, true);
 			return text;
+		}
+
+		public string GetResourceId(string text, Languages language = Languages.English)
+		{
+			return _keysByLang.TryGetValue(Tuple.Create(language, text));
 		}
 	}
 }
