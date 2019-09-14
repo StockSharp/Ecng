@@ -195,10 +195,10 @@
 			//[PropertyOrder(4)]
 			public SecureString Password
 			{
-				get => GetValue<string>("Password").To<SecureString>();
+				get => GetValue<string>("Password").Secure();
 				set
 				{
-					_builder["Password"] = value.To<string>();
+					_builder["Password"] = value.UnSecure();
 					NotifyChanged(nameof(ConnectionString));
 				}
 			}

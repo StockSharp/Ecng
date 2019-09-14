@@ -49,7 +49,7 @@
 		private void PasswordCtrl_OnPasswordChanged(object sender, RoutedEventArgs e)
 		{
 			if (PasswordCtrl.Password != _fakeMask)
-				Secret = PasswordCtrl.Password.To<SecureString>();
+				Secret = PasswordCtrl.Password.Secure();
 		}
 	}
 }

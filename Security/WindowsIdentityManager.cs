@@ -176,7 +176,7 @@ namespace Ecng.Security
 		public static bool Validate(string userName, SecureString password, string domain = null)
 		{
 			using (var context = new PrincipalContext(domain.IsEmpty() ? ContextType.Machine : ContextType.Domain, domain))
-				return context.ValidateCredentials(userName, password.To<string>());
+				return context.ValidateCredentials(userName, password.UnSecure());
 		}
 
 		// http://stackoverflow.com/a/642511
@@ -198,7 +198,7 @@ namespace Ecng.Security
 				{
 					Name = userName
 				};
-				oUserPrincipal.SetPassword(password.To<string>());
+				oUserPrincipal.SetPassword(password.UnSecure());
 				//User Log on Name
 				//oUserPrincipal.UserPrincipalName = sUserName;
 				oUserPrincipal.Save();
@@ -215,7 +215,7 @@ namespace Ecng.Security
 				if (user == null)
 					return false;
 
-				user.ChangePassword(oldPassword.To<string>(), newPassword.To<string>());
+				user.ChangePassword(oldPassword.UnSecure(), newPassword.UnSecure());
 				return true;
 			}
 		}

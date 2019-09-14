@@ -17,7 +17,6 @@
 	using System.Windows.Media;
 	using ArgumentOutOfRangeException = System.ArgumentOutOfRangeExceptionEx;
 #else
-	using System.Runtime.InteropServices;
 	using System.Drawing;
 #endif
 	using System.Globalization;
@@ -229,16 +228,8 @@
 			AddTypedConverter<string, StringBuilder>(input => new StringBuilder(input));
 			AddTypedConverter<DbConnectionStringBuilder, string>(input => input.ToString());
 			AddTypedConverter<string, DbConnectionStringBuilder>(input => new DbConnectionStringBuilder { ConnectionString = input });
-			AddTypedConverter<SecureString, string>(input =>
-			{
-				var bstr = Marshal.SecureStringToBSTR(input);
-
-				using (bstr.MakeDisposable(Marshal.ZeroFreeBSTR))
-				{
-					return Marshal.PtrToStringBSTR(bstr);
-				}
-			});
-			AddTypedConverter<string, SecureString>(input => input.ToCharArray().TypedTo<char[], SecureString>());
+			AddTypedConverter<SecureString, string>(input => input.UnSecure());
+			AddTypedConverter<string, SecureString>(input => input.Secure());
 			AddTypedConverter<char[], SecureString>(input =>
 			{
 				var s = new SecureString();
@@ -258,7 +249,6 @@
 
 				return charArray.TypedTo<char[], SecureString>();
 			});
-
 
 			AddTypedConverter<byte, byte[]>(input => new[] { input });
 			AddTypedConverter<byte[], byte>(input => input[0]);

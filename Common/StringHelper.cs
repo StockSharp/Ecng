@@ -922,5 +922,20 @@
 
 		public static byte[] Cyrillic(this string v) => WindowsCyrillic.GetBytes(v);
 		public static string Cyrillic(this byte[] v) => WindowsCyrillic.GetString(v);
+
+		public static SecureString Secure(this string str)
+		{
+			return str.ToCharArray().TypedTo<char[], SecureString>();
+		}
+
+		public static string UnSecure(this SecureString str)
+		{
+			var bstr = Marshal.SecureStringToBSTR(str);
+
+			using (bstr.MakeDisposable(Marshal.ZeroFreeBSTR))
+			{
+				return Marshal.PtrToStringBSTR(bstr);
+			}
+		}
 	}
 }

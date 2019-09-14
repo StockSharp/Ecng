@@ -49,7 +49,7 @@
 			{
 				_suspendChanges = true;
 
-				Secret = PasswordCtrl.Password.To<SecureString>();
+				Secret = PasswordCtrl.Password.Secure();
 			}
 			finally
 			{
