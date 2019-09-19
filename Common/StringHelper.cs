@@ -925,11 +925,14 @@
 
 		public static SecureString Secure(this string str)
 		{
-			return str.ToCharArray().TypedTo<char[], SecureString>();
+			return str?.ToCharArray().TypedTo<char[], SecureString>();
 		}
 
 		public static string UnSecure(this SecureString str)
 		{
+			if (str == null)
+				return null;
+
 			var bstr = Marshal.SecureStringToBSTR(str);
 
 			using (bstr.MakeDisposable(Marshal.ZeroFreeBSTR))
