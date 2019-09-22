@@ -397,7 +397,13 @@
 		public static bool ContainsIgnoreCase(this string str1, string str2)
 		{
 			if (str1 == null)
-				throw new ArgumentNullException(nameof(str1));
+			{
+				return false;
+				//throw new ArgumentNullException(nameof(str1));
+			}
+
+			if (str2 == null)
+				return false;
 
 			return str1.IndexOf(str2, StringComparison.InvariantCultureIgnoreCase) >= 0;
 		}
@@ -457,7 +463,13 @@
 		public static bool StartsWithIgnoreCase(this string str1, string str2)
 		{
 			if (str1 == null)
-				throw new ArgumentNullException(nameof(str1));
+			{
+				return false;
+				//throw new ArgumentNullException(nameof(str1));
+			}
+
+			if (str2 == null)
+				return false;
 
 			return str1.StartsWith(str2, StringComparison.InvariantCultureIgnoreCase);
 		}
@@ -465,7 +477,13 @@
 		public static bool EndsWithIgnoreCase(this string str1, string str2)
 		{
 			if (str1 == null)
-				throw new ArgumentNullException(nameof(str1));
+			{
+				return false;
+				//throw new ArgumentNullException(nameof(str1));
+			}
+
+			if (str2 == null)
+				return false;
 
 			return str1.EndsWith(str2, StringComparison.InvariantCultureIgnoreCase);
 		}
@@ -473,7 +491,13 @@
 		public static int IndexOfIgnoreCase(this string str1, string str2)
 		{
 			if (str1 == null)
-				throw new ArgumentNullException(nameof(str1));
+			{
+				return -1;
+				//throw new ArgumentNullException(nameof(str1));
+			}
+
+			if (str2 == null)
+				return -1;
 
 			return str1.IndexOf(str2, StringComparison.InvariantCultureIgnoreCase);
 		}
