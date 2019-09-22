@@ -1735,7 +1735,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             get { return _isMouseLeftDown; }
         }
 
-        internal class CartesianAnnotationPlacementStrategyBase<T>:AnnotationPlacementStrategyBase<T> where T:AnnotationBase
+        public class CartesianAnnotationPlacementStrategyBase<T>:AnnotationPlacementStrategyBase<T> where T:AnnotationBase
         {
             public CartesianAnnotationPlacementStrategyBase(T annotation) : base(annotation)
             {

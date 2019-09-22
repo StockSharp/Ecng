@@ -35,7 +35,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
         public Color VolBarsFontColor { get { return (Color)GetValue(VolBarsFontColorProperty); } set { SetValue(VolBarsFontColorProperty, value); }}
 
         public double PriceScale {get { return ((TimeframeSegmentDataSeries)DataSeries).Return(ser => ser.PriceStep, 10d); }}
-        public int Timeframe {get { return ((TimeframeSegmentDataSeries)DataSeries).Return(ser => ser.Timeframe, 1); }}
+        public TimeSpan? Timeframe {get { return ((TimeframeSegmentDataSeries)DataSeries).Return(ser => ser.Timeframe, null); }}
 
         protected internal override bool IsPartOfExtendedFeatures => true;
 
@@ -113,7 +113,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             drawingHelper.DrawQuad(framePen, pt1, pt2);
         }
 
-        protected void FillPeriodSegments(List<TimeframeSegmentWrapper> buf, TimeframeSegmentWrapper[] arr, int index, int tf) {
+        protected void FillPeriodSegments(List<TimeframeSegmentWrapper> buf, TimeframeSegmentWrapper[] arr, int index, TimeSpan tf) {
             buf.Clear();
             var segment = arr[index];
 

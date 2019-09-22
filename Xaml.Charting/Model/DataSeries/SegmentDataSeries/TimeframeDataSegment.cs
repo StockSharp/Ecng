@@ -45,9 +45,6 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         public double Y => !IsEmtpy ? (_maxPrice + _minPrice) / 2d : double.NaN;
 
         public TimeframeDataSegment(DateTime time, double priceStep, int index) {
-            if(time.Second != 0 || time.Millisecond != 0)
-                throw new InvalidOperationException("invalid time");
-
             Time = time;
             PriceStep = priceStep;
             Index = index;

@@ -15,8 +15,8 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
     public class BoxVolumeRenderableSeries : TimeframeSegmentRenderableSeries {
         #region dependency properties
 
-        public static readonly DependencyProperty Timeframe2Property = DependencyProperty.Register("Timeframe2", typeof(int), typeof(BoxVolumeRenderableSeries), new PropertyMetadata(5, OnInvalidateParentSurface, CoerceHigherTimeframe));
-        public static readonly DependencyProperty Timeframe3Property = DependencyProperty.Register("Timeframe3", typeof(int), typeof(BoxVolumeRenderableSeries), new PropertyMetadata(15, OnInvalidateParentSurface, CoerceHigherTimeframe));
+        public static readonly DependencyProperty Timeframe2Property = DependencyProperty.Register("Timeframe2", typeof(TimeSpan?), typeof(BoxVolumeRenderableSeries), new PropertyMetadata(TimeSpan.FromMinutes(5), OnInvalidateParentSurface, CoerceHigherTimeframe));
+        public static readonly DependencyProperty Timeframe3Property = DependencyProperty.Register("Timeframe3", typeof(TimeSpan?), typeof(BoxVolumeRenderableSeries), new PropertyMetadata(TimeSpan.FromMinutes(15), OnInvalidateParentSurface, CoerceHigherTimeframe));
 
         public static readonly DependencyProperty Timeframe2ColorProperty = DependencyProperty.Register("Timeframe2Color", typeof(Color), typeof(BoxVolumeRenderableSeries), new PropertyMetadata(Color.FromRgb(36,36,36), OnInvalidateParentSurface));
         public static readonly DependencyProperty Timeframe2FrameColorProperty = DependencyProperty.Register("Timeframe2FrameColor", typeof(Color), typeof(BoxVolumeRenderableSeries), new PropertyMetadata(Color.FromRgb(255,102,0), OnInvalidateParentSurface));
@@ -26,8 +26,8 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
         public static readonly DependencyProperty HighVolColorProperty = DependencyProperty.Register("HighVolColor", typeof(Color), typeof(BoxVolumeRenderableSeries), new PropertyMetadata(Colors.LawnGreen, OnInvalidateParentSurface));
 
-        public int Timeframe2 {
-            get { return (int)GetValue(Timeframe2Property); }
+        public TimeSpan? Timeframe2 {
+            get { return (TimeSpan?)GetValue(Timeframe2Property); }
             set { SetValue(Timeframe2Property, value); }
         }
 
@@ -41,8 +41,8 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             set { SetValue(Timeframe2FrameColorProperty, value); }
         }
 
-        public int Timeframe3 {
-            get { return (int)GetValue(Timeframe3Property); }
+        public TimeSpan? Timeframe3 {
+            get { return (TimeSpan?)GetValue(Timeframe3Property); }
             set { SetValue(Timeframe3Property, value); }
         }
 
@@ -76,9 +76,15 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
         static object CoerceHigherTimeframe(DependencyObject d, object newVal) {
             var ser = (BoxVolumeRenderableSeries)d;
-            var tf = (int)newVal;
+            var tf = (TimeSpan?)newVal;
 
-            if(tf < ser.Timeframe || tf % ser.Timeframe != 0)
+            if(tf == null)
+                return newVal;
+
+            if(ser.Timeframe == null)
+                return null;
+
+            if(tf.Value < ser.Timeframe.Value || tf.Value.Ticks % ser.Timeframe.Value.Ticks != 0)
                 return ser.Timeframe;
 
             return newVal;
@@ -86,12 +92,13 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
         public override IndexRange GetExtendedXRange(IndexRange range) {
             var tf = Timeframe;
-            if(tf < 1)
+
+            if(tf == null)
                 return range;
 
-            var offset = Math.Max(Timeframe2, Timeframe3) / tf;
+            var offsetCandles = (int)(Math.Max(Timeframe2?.Ticks ?? 0, Timeframe3?.Ticks ?? 0) / tf.Value.Ticks);
 
-            var result = new IndexRange(range.Min - offset + 1, range.Max + offset - 1);
+            var result = new IndexRange(range.Min - offsetCandles + 1, range.Max + offsetCandles - 1);
 
             //UltrachartDebugLogger.Instance.WriteLine("GetExtendedXRange: ({0},{1}) => ({2},{3})", range.Min, range.Max, result.Min, result.Max);
 
@@ -107,8 +114,8 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             var xCalc = CurrentRenderPassData.XCoordinateCalculator;
             var yCalc = CurrentRenderPassData.YCoordinateCalculator;
             var tf1 = Timeframe;
-            var tf2 = Timeframe2;
-            var tf3 = Timeframe3;
+            var tf2 = tf1 > TimeSpan.Zero ? Timeframe2 : null;
+            var tf3 = tf1 > TimeSpan.Zero ? Timeframe3 : null;
             var fontColor = CellFontColor;
             var highVolColor = HighVolColor;
             var screenHeight = renderContext.ViewportSize.Height;
@@ -119,8 +126,15 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             var priceStep = points.PriceStep;
             var visibleRange = points.VisibleRange;
 
-            if(tf1 < 1 || tf2 < tf1 || tf3 < tf1 || tf2 % tf1 != 0 || tf3 % tf1 != 0)
-                throw new InvalidOperationException($"invalid timeframes. tf1={tf1}, tf2={tf2}, tf3={tf3}");
+            if (tf1.HasValue)
+            {
+                if(tf2 < tf1 || tf3 < tf1 ||
+                    (tf2.HasValue && tf2.Value.Ticks % tf1.Value.Ticks != 0) ||
+                    (tf3.HasValue && tf3.Value.Ticks % tf1.Value.Ticks != 0))
+                {
+                    throw new InvalidOperationException($"invalid timeframes. tf1={tf1}, tf2={tf2}, tf3={tf3}");
+                }
+            }
 
             //_perf.Checkpoint("writeline");
             UltrachartDebugLogger.Instance.WriteLine("BoxVolume: started render {0} segments. Indexes: {1}-{2}, VisibleRange: {3}-{4}", segments.Length, segments[0].Segment.Index, segments[segments.Length-1].Segment.Index, visibleRange.Min, visibleRange.Max);
@@ -134,7 +148,7 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
             var maxDrawPrice = yCalc.GetDataValue(-segmentHeight);
             var minDrawPrice = yCalc.GetDataValue(screenHeight + segmentHeight);
-            var buf = new List<TimeframeSegmentWrapper>(Math.Max(tf2, tf3));
+            var buf = new List<TimeframeSegmentWrapper>((int)Math.Max(tf2?.Ticks / tf1?.Ticks ?? 1, tf3?.Ticks / tf1?.Ticks ?? 1));
 
             if(minDrawPrice > maxDrawPrice)
                 throw new InvalidOperationException($"minDrawPrice({minDrawPrice}) > maxDrawPrice({maxDrawPrice})");
@@ -158,21 +172,24 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
                 #region draw Timeframe3 grid
 
-                var tf = tf3;
-                for(var i = 0; i < numSegments; ++i) {
-                    FillPeriodSegments(buf, segments, i, tf);
-                    i += (buf.Count - 1);
+                if (tf3.HasValue)
+                {
+                    var tf = tf3;
+                    for(var i = 0; i < numSegments; ++i) {
+                        FillPeriodSegments(buf, segments, i, tf.Value);
+                        i += (buf.Count - 1);
 
-                    double minPrice, maxPrice;
-                    int numCellsY;
-                    TimeframeDataSegment.MinMax(buf.Select(w => w.Segment), out minPrice, out maxPrice, out numCellsY);
+                        double minPrice, maxPrice;
+                        int numCellsY;
+                        TimeframeDataSegment.MinMax(buf.Select(w => w.Segment), out minPrice, out maxPrice, out numCellsY);
 
-                    var minX = xCalc.GetCoordinate(buf[0].X) - halfSegmentWidth;
-                    var maxX = xCalc.GetCoordinate(buf[buf.Count-1].X) + halfSegmentWidth;
-                    var minY = yCalc.GetCoordinate(maxPrice) - halfSegmentHeight;
-                    var maxY = yCalc.GetCoordinate(minPrice) + halfSegmentHeight;
+                        var minX = xCalc.GetCoordinate(buf[0].X) - halfSegmentWidth;
+                        var maxX = xCalc.GetCoordinate(buf[buf.Count-1].X) + halfSegmentWidth;
+                        var minY = yCalc.GetCoordinate(maxPrice) - halfSegmentHeight;
+                        var maxY = yCalc.GetCoordinate(minPrice) + halfSegmentHeight;
 
-                    DrawGrid(renderContext, drawingHelper, new Point(minX, minY), new Point(maxX, maxY), buf.Count, numCellsY, pen3, pen3, brushTf3);
+                        DrawGrid(renderContext, drawingHelper, new Point(minX, minY), new Point(maxX, maxY), buf.Count, numCellsY, pen3, pen3, brushTf3);
+                    }
                 }
 
                 #endregion
@@ -181,21 +198,24 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
                 #region draw Timeframe2 grid
 
-                tf = tf2;
-                for(var i = 0; i < numSegments; ++i) {
-                    FillPeriodSegments(buf, segments, i, tf);
-                    i += (buf.Count - 1);
+                if (tf2.HasValue)
+                {
+                    var tf = tf2;
+                    for(var i = 0; i < numSegments; ++i) {
+                        FillPeriodSegments(buf, segments, i, tf.Value);
+                        i += (buf.Count - 1);
 
-                    double minPrice, maxPrice;
-                    int numCellsY;
-                    TimeframeDataSegment.MinMax(buf.Select(w => w.Segment), out minPrice, out maxPrice, out numCellsY);
+                        double minPrice, maxPrice;
+                        int numCellsY;
+                        TimeframeDataSegment.MinMax(buf.Select(w => w.Segment), out minPrice, out maxPrice, out numCellsY);
 
-                    var minX = xCalc.GetCoordinate(buf[0].X) - halfSegmentWidth;
-                    var maxX = xCalc.GetCoordinate(buf[buf.Count-1].X) + halfSegmentWidth;
-                    var minY = yCalc.GetCoordinate(maxPrice) - halfSegmentHeight;
-                    var maxY = yCalc.GetCoordinate(minPrice) + halfSegmentHeight;
+                        var minX = xCalc.GetCoordinate(buf[0].X) - halfSegmentWidth;
+                        var maxX = xCalc.GetCoordinate(buf[buf.Count-1].X) + halfSegmentWidth;
+                        var minY = yCalc.GetCoordinate(maxPrice) - halfSegmentHeight;
+                        var maxY = yCalc.GetCoordinate(minPrice) + halfSegmentHeight;
 
-                    DrawGrid(renderContext, drawingHelper, new Point(minX, minY), new Point(maxX, maxY), buf.Count, numCellsY, pen2frame, pen2, brushTf2);
+                        DrawGrid(renderContext, drawingHelper, new Point(minX, minY), new Point(maxX, maxY), buf.Count, numCellsY, pen2frame, pen2, brushTf2);
+                    }
                 }
 
                 #endregion
@@ -238,6 +258,24 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
                                 }
                             }
                         }
+                    }
+                }
+                else if (!tf2.HasValue && !tf3.HasValue)
+                {
+                    for(var i = 0; i < numSegments; ++i) {
+                        var segment = segments[i];
+
+                        var minX = xCalc.GetCoordinate(segment.X) - halfSegmentWidth;
+
+                        if(segment.Segment.MinPrice > maxDrawPrice || segment.Segment.MaxPrice < minDrawPrice)
+                            continue;
+
+                        var yMinPrice = yCalc.GetCoordinate(segment.Segment.MinPrice);
+                        var yMaxPrice = yCalc.GetCoordinate(segment.Segment.MaxPrice);
+
+                        var rect = new Rect(minX, yMaxPrice, Math.Max(segmentWidth, 1), Math.Max(Math.Abs(yMaxPrice - yMinPrice), 1));
+
+                        renderContext.FillRectangle(textBrush, rect.TopLeft, rect.BottomRight);
                     }
                 }
 

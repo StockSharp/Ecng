@@ -48,7 +48,7 @@ namespace Ecng.Xaml.Charting.StrategyManager
         void MoveAnnotationTo(AnnotationCoordinates coordinates, double horizontalOffset, double verticalOffset, IAnnotationCanvas annotationCanvas);
     }
 
-    internal abstract class AnnotationPlacementStrategyBase<T> : IAnnotationPlacementStrategy where T : AnnotationBase
+    public abstract class AnnotationPlacementStrategyBase<T> : IAnnotationPlacementStrategy where T : AnnotationBase
     {
         private readonly T _annotation;
 

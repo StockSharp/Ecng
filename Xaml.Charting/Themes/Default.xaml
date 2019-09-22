@@ -15,7 +15,8 @@
                     xmlns:s="clr-namespace:Ecng.Xaml.Charting"
                     xmlns:themes="clr-namespace:Ecng.Xaml.Charting.Themes"
                     xmlns:visuals="clr-namespace:Ecng.Xaml.Charting.Visuals"
-                    xmlns:z="clr-namespace:Ecng.Xaml.Charting.Common.MarkupExtensions">
+                    xmlns:z="clr-namespace:Ecng.Xaml.Charting.Common.MarkupExtensions"
+                    xmlns:xaml="clr-namespace:Ecng.Xaml;assembly=Ecng.Xaml">
 
     <!--  *******************************************************  -->
     <!--  Generic Styles NO COLOURS. These are provided by Themes  -->
@@ -2326,6 +2327,18 @@
                                                 Visibility="{Binding HasTabbedItems,
                                                                      RelativeSource={RelativeSource Mode=TemplatedParent},
                                                                      Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <s:TabControlCompatible.Resources>
+                                <Style TargetType="TabItem">
+                                    <Setter Property="HeaderTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <xaml:EditableTextBlock MinWidth="20" Text="{Binding Path=DataContext.PaneViewModel.Title, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}, Mode=TwoWay}"/>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </s:TabControlCompatible.Resources>
+
                             <s:TabControlCompatible.Style>
                                 <Style TargetType="s:TabControlCompatible">
                                     <Setter Property="Background" Value="{z:ThemeBinding Path=UltrachartBackground}" />

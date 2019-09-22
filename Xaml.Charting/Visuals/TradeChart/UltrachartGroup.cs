@@ -650,7 +650,7 @@ namespace Ecng.Xaml.Charting
                 // for each axis from particular side (axisAlignment)
                     x => x.UltrachartSurface.YAxes?.OfType<AxisBase>().Where(axis => axis.AxisAlignment == axisAlignment))
                 // sum all widths
-                                  ?.Select(collection => collection.Aggregate(0d, (sum, axis) => sum + axis.ActualWidth))
+                                  ?.Select(collection => collection?.Aggregate(0d, (sum, axis) => sum + axis.ActualWidth) ?? 0d)
                 // get maximal width through all the charts
                                   ?.MaxOrNullable() ?? 0d;
 

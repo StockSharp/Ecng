@@ -19,9 +19,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
     [Obfuscation(Exclude = true, ApplyToMembers = true)]
     public class TimeframeSegmentDataSeries : BindableObject, IDataSeries<DateTime, double> {
         public const double MinPriceStep = 0.000001d;
-        public const int TimeframeOneDay = 60 * 24;
-        public const int TimeframeOneWeek = TimeframeOneDay * 7;
-        public const int MaxTimeframe = TimeframeOneWeek; // 1 week
+        public static readonly TimeSpan MaxTimeframe = TimeSpan.FromDays(7); // 1 week
 
         public static readonly IMath<DateTime> XMath = GenericMathFactory.New<DateTime>();
 
@@ -36,7 +34,7 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
         public DataSeriesType DataSeriesType => DataSeriesType.TimeframeSegment;
 
-        public int Timeframe {get;}
+        public TimeSpan? Timeframe {get;}
         public double PriceStep {get;}
 
         /// <summary>
@@ -109,8 +107,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
         IList IDataSeries.YValues => _yValues;
         IList<double> IDataSeries<DateTime, double>.YValues => _yValues;
 
-        public TimeframeSegmentDataSeries(int timeframe, double priceStep) {
-            if(timeframe < 1 || timeframe > MaxTimeframe) throw new ArgumentOutOfRangeException(nameof(timeframe));
+        public TimeframeSegmentDataSeries(TimeSpan? timeframe, double priceStep) {
+            if(timeframe != null && !(timeframe.Value > TimeSpan.Zero && timeframe.Value <= MaxTimeframe)) throw new ArgumentOutOfRangeException(nameof(timeframe));
             if(priceStep <= 0d || priceStep.IsNaN()) throw new ArgumentOutOfRangeException(nameof(priceStep));
 
             _yValues = new YValueList(this);
@@ -244,39 +242,41 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             return indexRange;
         }
 
-        public static Tuple<DateTime, DateTime, int> GetTimeframePeriod(DateTime dt, int periodMinutes, Tuple<DateTime, DateTime, int> prevPeriod = null) {
-            if(periodMinutes < 1 || periodMinutes > MaxTimeframe)
-                throw new ArgumentOutOfRangeException(nameof(periodMinutes));
+        public static Tuple<DateTime, DateTime, long> GetTimeframePeriod(DateTime dt, TimeSpan period, Tuple<DateTime, DateTime, long> prevPeriod = null) {
+            if(!(period > TimeSpan.Zero && period <= MaxTimeframe))
+                throw new ArgumentOutOfRangeException(nameof(period));
 
             if(prevPeriod != null && dt < prevPeriod.Item2 && dt >= prevPeriod.Item1)
                 return prevPeriod;
 
             DateTime start, end;
-            int index;
+            long index;
 
-            if(periodMinutes < TimeframeOneDay) {
-                index = (int)(dt.TimeOfDay.TotalMinutes / periodMinutes);
-                start = dt.Date + TimeSpan.FromMinutes(index * periodMinutes);
-                end = start + TimeSpan.FromMinutes(periodMinutes);
+            var perTicks = period.Ticks;
+
+            if(period < TimeSpan.FromDays(1)) {
+                index = dt.TimeOfDay.Ticks / perTicks;
+                start = dt.Date + TimeSpan.FromTicks(index * perTicks);
+                end = start + TimeSpan.FromTicks(perTicks);
                 if(end.Day != start.Day)
                     end = end.Date;
-            } else if(periodMinutes == TimeframeOneDay) {
+            } else if(period == TimeSpan.FromDays(1)) {
                 start = new DateTime(dt.Year, dt.Month, dt.Day);
                 end = start + TimeSpan.FromDays(1);
                 index = start.DayOfYear - 1;
-            } else if(periodMinutes == TimeframeOneWeek) {
+            } else if(period == TimeSpan.FromDays(7)) {
                 start = new DateTime(dt.Year, dt.Month, dt.Day) - TimeSpan.FromDays((int)dt.DayOfWeek);
                 end = start + TimeSpan.FromDays(7);
                 index = start.WeekNumber();
-            } else if(periodMinutes > MaxTimeframe) {
+            } else if(period > MaxTimeframe) {
                 throw new NotSupportedException($"Periods more than {MaxTimeframe} days are not supported.");
             } else {
                 // day < period < MaxTimeframe
                 var yearStart = new DateTime(dt.Year, 1, 1);
                 var diff = yearStart - dt;
-                index = (int)(diff.TotalMinutes / periodMinutes);
-                start = yearStart + TimeSpan.FromMinutes(index * periodMinutes);
-                end = start + TimeSpan.FromMinutes(periodMinutes);
+                index = (int)(diff.Ticks / perTicks);
+                start = yearStart + TimeSpan.FromTicks(index * perTicks);
+                end = start + TimeSpan.FromTicks(perTicks);
                 if(end.Year != start.Year)
                     end = new DateTime(end.Year, 1, 1);
             }
@@ -296,18 +296,25 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             return result;
         }
 
-        Tuple<DateTime, DateTime, int> _curPeriod;
+        Tuple<DateTime, DateTime, long> _curPeriod;
 
         public void Append(DateTime time, double price, long volume) {
             bool updated;
 
             lock(SyncRoot) {
-                _curPeriod = GetTimeframePeriod(time, Timeframe, _curPeriod);
+                if (Timeframe != null)
+                {
+                    _curPeriod = GetTimeframePeriod(time, Timeframe.Value, _curPeriod);
 
-                if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > _curPeriod.Item1)
-                    throw new ArgumentOutOfRangeException(nameof(time), "data must be ordered by time");
+                    if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > _curPeriod.Item1)
+                        throw new ArgumentOutOfRangeException(nameof(time), "data must be ordered by time");
 
-                updated = AddOrUpdateSegment(_curPeriod.Item1, price, volume, true);
+                    updated = AddOrUpdateSegment(_curPeriod.Item1, price, volume, true);
+                }
+                else
+                {
+                    updated = AddOrUpdateSegment(time, price, volume, true);
+                }
             }
 
             if(updated)
@@ -318,19 +325,26 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
             bool updated;
 
             lock(SyncRoot) {
-                _curPeriod = GetTimeframePeriod(time, Timeframe, _curPeriod);
+                if (Timeframe != null)
+                {
+                    _curPeriod = GetTimeframePeriod(time, Timeframe.Value, _curPeriod);
 
-                if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > _curPeriod.Item1)
-                    throw new ArgumentOutOfRangeException(nameof(time), "data must be ordered by time");
+                    if(_segments.Count > 0 && _segments[_segments.Count - 1].Time > _curPeriod.Item1)
+                        throw new ArgumentOutOfRangeException(nameof(time), "data must be ordered by time");
 
-                updated = AddOrUpdateSegment(_curPeriod.Item1, price, volume, false);
+                    updated = AddOrUpdateSegment(_curPeriod.Item1, price, volume, false);
+                }
+                else
+                {
+                    updated = AddOrUpdateSegment(time, price, volume, false);
+                }
             }
 
             if(updated)
                 DataSeriesChanged?.Invoke(this, new DataSeriesChangedEventArgs(DataSeriesUpdate.DataChanged));
         }
 
-        bool AddOrUpdateSegment(DateTime periodStart, double price, long volume, bool sum) {
+        bool AddOrUpdateSegment(DateTime time, double price, long volume, bool sum) {
             if(volume < 0)
                 throw new ArgumentException(nameof(volume));
 
@@ -345,8 +359,8 @@ namespace Ecng.Xaml.Charting.Model.DataSeries.SegmentDataSeries {
 
             TimeframeDataSegment segment;
 
-            if(_segments.Count == 0 || _segments[_segments.Count - 1].Time != periodStart) {
-                segment = new TimeframeDataSegment(periodStart, step, _segments.Count);
+            if(_segments.Count == 0 || _segments[_segments.Count - 1].Time != time) {
+                segment = new TimeframeDataSegment(time, step, _segments.Count);
 
                 _segments.Add(segment);
                 _segmentDates.Add(segment.Time);

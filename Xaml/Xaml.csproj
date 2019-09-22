@@ -114,6 +114,8 @@
     <Compile Include="CultureAwareBinding.cs" />
     <Compile Include="DelegateCommand.cs" />
     <Compile Include="ConvertibleObservableCollection.cs" />
+    <Compile Include="EditableTextBlock.cs" />
+    <Compile Include="EditableTextBlockAdorner.cs" />
     <Compile Include="EncodingComboBox.cs" />
     <Compile Include="EndPointComboBox.cs" />
     <Compile Include="FileBrowserPicker.xaml.cs">

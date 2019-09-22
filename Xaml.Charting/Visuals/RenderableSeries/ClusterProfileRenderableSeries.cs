@@ -37,7 +37,6 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
         class LocalRenderContext {
             public ICoordinateCalculator<double> XCalc;
             public ICoordinateCalculator<double> YCalc;
-            public int Timeframe;
             public double ScreenWidth;
             public double ScreenHeight;
             public double SegmentWidth;
@@ -71,7 +70,6 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
             var ctx = _lastContext = new LocalRenderContext {
                 XCalc = CurrentRenderPassData.XCoordinateCalculator,
                 YCalc = CurrentRenderPassData.YCoordinateCalculator,
-                Timeframe = Timeframe,
                 ScreenHeight = renderContext.ViewportSize.Height,
                 ScreenWidth = renderContext.ViewportSize.Width,
                 RenderContext = renderContext,
@@ -94,9 +92,6 @@ namespace Ecng.Xaml.Charting.Visuals.RenderableSeries {
 
             if(segments.Length < 1)
                 return;
-
-            if(ctx.Timeframe < 1)
-                throw new InvalidOperationException($"invalid timeframes. tf1={ctx.Timeframe}");
 
             if(minDrawPrice > maxDrawPrice)
                 throw new InvalidOperationException($"minDrawPrice({minDrawPrice}) > maxDrawPrice({maxDrawPrice})");
