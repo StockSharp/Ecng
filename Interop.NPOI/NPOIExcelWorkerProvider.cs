@@ -7,9 +7,9 @@
 			return new NPOIExcelWorker();
 		}
 
-		IExcelWorker IExcelWorkerProvider.Create(string sheetName)
+		IExcelWorker IExcelWorkerProvider.Create(string sheetName, bool readOnly)
 		{
-			return new NPOIExcelWorker(sheetName);
+			return new NPOIExcelWorker(sheetName, readOnly);
 		}
 	}
 }

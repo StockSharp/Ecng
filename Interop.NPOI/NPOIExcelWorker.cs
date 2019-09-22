@@ -67,20 +67,20 @@
 		private FileStream _stream;
 
 		/// <summary>
-		/// Create <see cref="ExcelWorker"/>.
+		/// Create <see cref="NPOIExcelWorker"/>.
 		/// </summary>
-		public ExcelWorker()
+		public NPOIExcelWorker()
 		{
 			Workbook = new XSSFWorkbook();
 			_currentSheet = Workbook.CreateSheet();
 		}
 
 		/// <summary>
-		/// Create <see cref="ExcelWorker"/>.
+		/// Create <see cref="NPOIExcelWorker"/>.
 		/// </summary>
 		/// <param name="name">Name of workbook.</param>
 		/// <param name="readOnly"></param>
-		public ExcelWorker(string name, bool readOnly = false)
+		public NPOIExcelWorker(string name, bool readOnly = false)
 		{
 			if (name.IsEmpty())
 				throw new ArgumentOutOfRangeException(nameof(name));
@@ -96,7 +96,7 @@
 
 		//public List<ICellStyle.ICell> cells = new List<ICellStyle.ICell>();
 
-		//public ExcelWorker importXLS(string path)
+		//public NPOIExcelWorker importXLS(string path)
 		//{
 		//	while (Workbook.NumberOfSheets != 0)
 		//	{
