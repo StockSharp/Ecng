@@ -48,15 +48,14 @@
 #if !SILVERLIGHT
 			//http://csharp-tipsandtricks.blogspot.com/2010/01/identifying-whether-execution-context.html
 			InnerConfig = //Assembly.GetEntryAssembly() != null
-						HttpRuntime.AppDomainId==null ? 
-				ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None)
+						HttpRuntime.AppDomainId == null
+				? ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None)
 				: WebConfigurationManager.OpenWebConfiguration(HttpRuntime.AppDomainAppVirtualPath);
 
 			Trace.WriteLine("ConfigManager FilePath=" + InnerConfig.FilePath);
 
 			void InitSections(ConfigurationSectionCollection sections)
 			{
-				// Из-за ошибки в велсе приходится оборачивать в try
 				try
 				{
 					foreach (ConfigurationSection section in sections)
@@ -183,6 +182,33 @@
 
 		public static event Action<Type, object> ServiceRegistered;
 
+		private static readonly Dictionary<Type, List<Action<object>>> _subscribers = new Dictionary<Type, List<Action<object>>>();
+
+		public static void SubscribeOnRegister<T>(Action<T> registered)
+		{
+			if (registered == null)
+				throw new ArgumentNullException(nameof(registered));
+
+			if (!_subscribers.TryGetValue(typeof(T), out var subscribers))
+			{
+				subscribers = new List<Action<object>>();
+				_subscribers.Add(typeof(T), subscribers);
+			}
+
+			subscribers.Add(svc => registered((T)svc));
+		}
+
+		private static void RaiseServiceRegistered(Type type, object service)
+		{
+			ServiceRegistered?.Invoke(type, service);
+
+			if (!_subscribers.TryGetValue(type, out var subscribers))
+				return;
+
+			foreach (var subscriber in subscribers)
+				subscriber(service);
+		}
+
 		public static void RegisterService<T>(T service)
 		{
 			lock (_sync)
@@ -191,7 +217,7 @@
 				_services[typeof(T)] = service;
 			}
 
-			ServiceRegistered?.Invoke(typeof(T), service);
+			RaiseServiceRegistered(typeof(T), service);
 		}
 
 		public static void RegisterService<T>(string name, T service)
@@ -202,7 +228,7 @@
 				_services[typeof(T)] = service;
 			}
 
-			ServiceRegistered?.Invoke(typeof(T), service);
+			RaiseServiceRegistered(typeof(T), service);
 		}
 
 		public static bool IsServiceRegistered<T>()
