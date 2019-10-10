@@ -134,12 +134,6 @@
     <Compile Include="Fonts\FontInfo.cs" />
     <Compile Include="EnumComboBox.cs" />
     <Compile Include="FixedWidthColumn.cs" />
-    <Compile Include="GenericTreeView\ItemMonitor.cs" />
-    <Compile Include="GenericTreeView\RoutedTreeItemEventArgs.cs" />
-    <Compile Include="GenericTreeView\TreeLayout.cs" />
-    <Compile Include="GenericTreeView\TreeUtil.cs" />
-    <Compile Include="GenericTreeView\TreeViewBase.cs" />
-    <Compile Include="GenericTreeView\TreeViewBase.Declarations.cs" />
     <Compile Include="GridViewRowPresenterWithGridLines.cs" />
     <Compile Include="GridViewSort.cs" />
     <Compile Include="GuiDispatcher.cs" />
@@ -692,7 +686,6 @@
     <Resource Include="Resources\Flags\Wales.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="GenericTreeView\license.html" />
     <Content Include="HtmlRenderer\Core\Utils\ImageError.png" />
     <Content Include="HtmlRenderer\Core\Utils\ImageLoad.png" />
     <EmbeddedResource Include="Ookii.Dialogs.Wpf\CredentialDialog.bmp" />
