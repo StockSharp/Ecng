@@ -12,7 +12,6 @@
 
 using System;
 using System.Windows;
-using System.Windows.Controls;
 using TheArtOfDev.HtmlRenderer.Adapters;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Utils;
@@ -20,7 +19,9 @@ using TheArtOfDev.HtmlRenderer.WPF.Utilities;
 
 namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 {
-    /// <summary>
+	using DevExpress.Xpf.Bars;
+
+	/// <summary>
     /// Adapter for WPF context menu for core.
     /// </summary>
     internal sealed class ContextMenuAdapter : RContextMenu
@@ -30,7 +31,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
         /// <summary>
         /// the underline WPF context menu
         /// </summary>
-        private readonly ContextMenu _contextMenu;
+        private readonly PopupMenu _contextMenu;
 
         #endregion
 
@@ -40,17 +41,18 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
         /// </summary>
         public ContextMenuAdapter()
         {
-            _contextMenu = new ContextMenu();
+            _contextMenu = new PopupMenu
+            {
+				GlyphSize = GlyphSize.Custom,
+				CustomGlyphSize = default,
+            };
         }
 
-        public override int ItemsCount
-        {
-            get { return _contextMenu.Items.Count; }
-        }
+        public override int ItemsCount => _contextMenu.Items.Count;
 
         public override void AddDivider()
         {
-            _contextMenu.Items.Add(new Separator());
+            _contextMenu.Items.Add(new BarItemSeparator());
         }
 
         public override void AddItem(string text, bool enabled, EventHandler onClick)
@@ -58,16 +60,18 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
             ArgChecker.AssertArgNotNullOrEmpty(text, "text");
             ArgChecker.AssertArgNotNull(onClick, "onClick");
 
-            var item = new MenuItem();
-            item.Header = text;
-            item.IsEnabled = enabled;
-            item.Click += new RoutedEventHandler(onClick);
+            var item = new BarButtonItem
+            {
+	            Content = text,
+	            IsEnabled = enabled
+            };
+            item.ItemClick += new ItemClickEventHandler(onClick);
             _contextMenu.Items.Add(item);
         }
 
         public override void RemoveLastDivider()
         {
-            if (_contextMenu.Items[_contextMenu.Items.Count - 1].GetType() == typeof(Separator))
+            if (_contextMenu.Items[_contextMenu.Items.Count - 1] is BarItemSeparator)
                 _contextMenu.Items.RemoveAt(_contextMenu.Items.Count - 1);
         }
 

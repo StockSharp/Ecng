@@ -106,6 +106,24 @@
     <Compile Include="FolderBrowserEditor.xaml.cs">
       <DependentUpon>FolderBrowserEditor.xaml</DependentUpon>
     </Compile>
+    <Compile Include="HtmlRenderer.WPF\Adapters\BrushAdapter.cs" />
+    <Compile Include="HtmlRenderer.WPF\Adapters\ContextMenuAdapter.cs" />
+    <Compile Include="HtmlRenderer.WPF\Adapters\ControlAdapter.cs" />
+    <Compile Include="HtmlRenderer.WPF\Adapters\FontAdapter.cs" />
+    <Compile Include="HtmlRenderer.WPF\Adapters\FontFamilyAdapter.cs" />
+    <Compile Include="HtmlRenderer.WPF\Adapters\GraphicsAdapter.cs" />
+    <Compile Include="HtmlRenderer.WPF\Adapters\GraphicsPathAdapter.cs" />
+    <Compile Include="HtmlRenderer.WPF\Adapters\ImageAdapter.cs" />
+    <Compile Include="HtmlRenderer.WPF\Adapters\PenAdapter.cs" />
+    <Compile Include="HtmlRenderer.WPF\Adapters\WpfAdapter.cs" />
+    <Compile Include="HtmlRenderer.WPF\HtmlContainer.cs" />
+    <Compile Include="HtmlRenderer.WPF\HtmlControl.cs" />
+    <Compile Include="HtmlRenderer.WPF\HtmlLabel.cs" />
+    <Compile Include="HtmlRenderer.WPF\HtmlPanel.cs" />
+    <Compile Include="HtmlRenderer.WPF\HtmlRender.cs" />
+    <Compile Include="HtmlRenderer.WPF\RoutedEventArgs.cs" />
+    <Compile Include="HtmlRenderer.WPF\Utilities\ClipboardHelper.cs" />
+    <Compile Include="HtmlRenderer.WPF\Utilities\Utils.cs" />
     <Compile Include="ThemedIconBinding.cs" />
     <Compile Include="IItemsSource.cs" />
     <Compile Include="MessageBoxHandlers.cs" />
