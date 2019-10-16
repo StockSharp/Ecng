@@ -18,20 +18,22 @@ namespace Ecng.Serialization
 
 			foreach (var item in source)
 			{
-				if (IsCollection)
-					stream.Write(item.Value != null);
-				else
-				{
-					if (item.Value == null)
-						throw new ArgumentException("source");
-				}
+				stream.Write(item.Value != null);
+
+				//if (IsCollection)
+				//	stream.Write(item.Value != null);
+				//else
+				//{
+				//	if (item.Value == null)
+				//		throw new ArgumentException("source");
+				//}
 
 				if (item.Value != null)
 				{
-					if (item.Value is SerializationItemCollection)
+					if (item.Value is SerializationItemCollection col)
 					{
 						var serializer = GetSerializer(item.Field.Type);
-						serializer.Serialize((SerializationItemCollection)item.Value, stream);
+						serializer.Serialize(col, stream);
 					}
 					else
 						stream.Write(item.Value);

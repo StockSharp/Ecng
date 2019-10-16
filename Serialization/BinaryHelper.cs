@@ -419,7 +419,7 @@
 		/// <returns>The size of the structure parameter in unmanaged code.</returns>
 		public static int SizeOf(this Type type)
 		{
-			if (type == typeof(DateTime))
+			if (type.IsDateTime())
 				type = typeof(long);
 			else if (type == typeof(TimeSpan))
 				type = typeof(long);
