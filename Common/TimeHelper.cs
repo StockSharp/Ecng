@@ -508,7 +508,7 @@
 		}
 
 		public static double UnixNowS => DateTime.UtcNow.ToUnix();
-		public static double UnixNowMls => DateTime.UtcNow.ToUnix();
+		public static double UnixNowMls => DateTime.UtcNow.ToUnix(false);
 
 		//private const string _timeFormat = "yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'"; // "yyyy-MM-dd'T'HH:mm:ss.fffffffff'Z'"
 
