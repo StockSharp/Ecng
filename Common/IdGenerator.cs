@@ -112,6 +112,22 @@
 		}
 	}
 
+	public class UTCMillisecondIdGenerator : IdGenerator
+	{
+		public override long GetNextId()
+		{
+			return (long)TimeHelper.UnixNowMls;
+		}
+	}
+
+	public class UTCSecondIdGenerator : IdGenerator
+	{
+		public override long GetNextId()
+		{
+			return (long)TimeHelper.UnixNowS;
+		}
+	}
+
 	public class TickIdGenerator : IdGenerator
 	{
 		public override long GetNextId()
