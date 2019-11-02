@@ -769,6 +769,34 @@
 			return last;
 		}
 
+		public static T? ElementAtOr<T>(this IEnumerable<T> source, int index)
+			where T : struct
+		{
+			if (source == null)
+				throw new ArgumentNullException(nameof(source));
+
+			if (index < 0)
+				throw new ArgumentOutOfRangeException(nameof(index));
+
+			if (source is IList<T> list)
+			{
+				if (index < list.Count)
+					return list[index];
+			}
+			else
+			{
+				foreach (var i in source)
+				{
+					if (index == 0)
+						return i;
+
+					--index;
+				}
+			}
+
+			return null;
+		}
+
 		public static bool IsEmpty<T>(this IEnumerable<T> source)
 		{
 			if (source is ICollection<T> col)
