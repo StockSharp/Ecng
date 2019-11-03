@@ -19,7 +19,39 @@
 		// http://social.msdn.microsoft.com/Forums/eu/windowssearch/thread/55582d9d-77ea-47d9-91ce-cff7ca7ef528
 		public static bool BlockDeleteDir(string dir, bool isRecursive = false, int iterCount = 1000, int sleep = 0)
 		{
-			Directory.Delete(dir, isRecursive);
+			if (isRecursive)
+			{
+				// https://stackoverflow.com/a/329502/8029915
+
+				var files = Directory.GetFiles(dir);
+				var dirs = Directory.GetDirectories(dir);
+
+				foreach (var file in files)
+				{
+					File.SetAttributes(file, FileAttributes.Normal);
+					File.Delete(file);
+				}
+
+				foreach (var sub in dirs)
+				{
+					BlockDeleteDir(sub, true, iterCount, sleep);
+				}
+			}
+
+			// https://stackoverflow.com/a/1703799/8029915
+
+			try
+			{
+				Directory.Delete(dir, false);
+			}
+			catch (IOException) 
+			{
+				Directory.Delete(dir, false);
+			}
+			catch (UnauthorizedAccessException)
+			{
+				Directory.Delete(dir, false);
+			}
 
 			var limit = iterCount;
 
