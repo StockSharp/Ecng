@@ -213,8 +213,8 @@
 		{
 			if (_count == null)
 				_count = (int)OnGetCount();
-
-			_count++;
+			else
+				_count++;
 		}
 
 		//public void Update(TEntity entity, Field valueField)
