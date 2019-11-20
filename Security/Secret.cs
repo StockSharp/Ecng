@@ -36,22 +36,13 @@ namespace Ecng.Security
 		public Secret(byte[] passwordBytes, byte[] salt, CryptoAlgorithm algo)
 			: this(algo)
 		{
-			if (passwordBytes == null)
-				throw new ArgumentNullException(nameof(passwordBytes));
-
-			if (salt == null)
-				throw new ArgumentNullException(nameof(salt));
-
-			Hash = algo.Encrypt(passwordBytes);
-			Salt = salt;
+			Salt = salt ?? throw new ArgumentNullException(nameof(salt));
+			Hash = algo.Encrypt(passwordBytes ?? throw new ArgumentNullException(nameof(passwordBytes)));
 		}
 
 		private Secret(CryptoAlgorithm algo)
 		{
-			if (algo == null)
-				throw new ArgumentNullException(nameof(algo));
-
-			Algo = algo;
+			Algo = algo ?? throw new ArgumentNullException(nameof(algo));
 		}
 
 		public const int DefaultPasswordSize = 128;
@@ -79,19 +70,56 @@ namespace Ecng.Security
 
 		protected override bool OnEquals(Secret other)
 		{
-			return
-					Hash.SequenceEqual(other.Hash) &&
-					Salt.SequenceEqual(other.Salt);
+			if (EnsureGetHashCode() != other.EnsureGetHashCode())
+				return false;
+
+			if (Hash == null)
+			{
+				if (other.Hash != null)
+					return false;
+			}
+			else
+			{
+				if (other.Hash == null)
+					return false;
+				else if (!Hash.SequenceEqual(other.Hash))
+					return false;
+			}
+
+			if (Salt == null)
+			{
+				if (other.Salt != null)
+					return false;
+			}
+			else
+			{
+				if (other.Salt == null)
+					return false;
+				else if (!Salt.SequenceEqual(other.Salt))
+					return false;
+			}
+
+			return true;
+		}
+
+		private int _hashCode;
+
+		private int EnsureGetHashCode()
+		{
+			if (_hashCode == 0)
+				_hashCode = (Hash?.GetHashCodeEx() ?? 0) ^ (Salt?.GetHashCodeEx() ?? 0);
+
+			return _hashCode;
 		}
 		
 		public override int GetHashCode()
 		{
-			return Hash.GetHashCodeEx() ^ Salt.GetHashCodeEx();
+			return EnsureGetHashCode();
 		}
 
 		public override Secret Clone()
 		{
-			return new Secret { Hash = Hash.ToArray(), Salt = Salt.ToArray() };
+			return new Secret { Hash = Hash?.ToArray(), Salt = Salt?.ToArray() };
 		}
 	}
 }
