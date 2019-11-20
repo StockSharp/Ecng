@@ -3,6 +3,7 @@ namespace Ecng.Security
 	using System;
 	using System.IO;
 	using System.Security.Cryptography;
+	using System.Text;
 
 	using Ecng.Common;
 	using Ecng.Serialization;
@@ -126,6 +127,88 @@ namespace Ecng.Security
 		public static byte[] Unprotect(this byte[] cipherText, byte[] entropy = null, DataProtectionScope scope = CryptoAlgorithm.DefaultScope)
 		{
 			return ProtectedData.Unprotect(cipherText, entropy, scope);
+		}
+
+		// https://stackoverflow.com/a/10177020/8029915
+
+		// This constant is used to determine the keysize of the encryption algorithm in bits.
+		// We divide this by 8 within the code below to get the equivalent number of bytes.
+		private const int _keySize = 256;
+
+		// This constant determines the number of iterations for the password bytes generation function.
+		private const int _derivationIterations = 1000;
+
+		public static byte[] Encrypt(string plainText, string passPhrase, byte[] salt, byte[] iv)
+		{
+			if (plainText.IsEmpty())
+				throw new ArgumentNullException(nameof(plainText));
+
+			if (passPhrase.IsEmpty())
+				throw new ArgumentNullException(nameof(passPhrase));
+
+			var plainTextBytes = plainText.UTF8();
+
+			using (var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations))
+			{
+				var keyBytes = password.GetBytes(_keySize / 8);
+
+				using (var symmetricKey = new RijndaelManaged())
+				{
+					symmetricKey.BlockSize = 256;
+					symmetricKey.Mode = CipherMode.CBC;
+					symmetricKey.Padding = PaddingMode.PKCS7;
+
+					using (var encryptor = symmetricKey.CreateEncryptor(keyBytes, iv))
+					{
+						using (var memoryStream = new MemoryStream())
+						{
+							using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
+							{
+								cryptoStream.Write(plainTextBytes, 0, plainTextBytes.Length);
+								cryptoStream.FlushFinalBlock();
+								// Create the final bytes as a concatenation of the random salt bytes, the random iv bytes and the cipher bytes.
+
+								return memoryStream.ToArray();
+							}
+						}
+					}
+				}
+			}
+		}
+
+		public static string Decrypt(byte[] cipherText, string passPhrase, byte[] salt, byte[] iv)
+		{
+			if (cipherText == null)
+				throw new ArgumentNullException(nameof(cipherText));
+
+			if (passPhrase.IsEmpty())
+				throw new ArgumentNullException(nameof(passPhrase));
+
+			using (var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations))
+			{
+				var keyBytes = password.GetBytes(_keySize / 8);
+
+				using (var symmetricKey = new RijndaelManaged())
+				{
+					symmetricKey.BlockSize = 256;
+					symmetricKey.Mode = CipherMode.CBC;
+					symmetricKey.Padding = PaddingMode.PKCS7;
+
+					using (var decryptor = symmetricKey.CreateDecryptor(keyBytes, iv))
+					{
+						using (var memoryStream = new MemoryStream(cipherText))
+						{
+							using (var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read))
+							{
+								var plainTextBytes = new byte[cipherText.Length];
+								var decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
+
+								return Encoding.UTF8.GetString(plainTextBytes, 0, decryptedByteCount);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }
