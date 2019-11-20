@@ -280,12 +280,12 @@ namespace Ecng.Common
 
 		public static byte[] GenerateSalt(int saltSize)
 		{
+			var salt = new byte[saltSize];
+
 			using (var saltGen = new RNGCryptoServiceProvider())
-			{
-				var salt = new byte[saltSize];
 				saltGen.GetBytes(salt);
-				return salt;	
-			}
+
+			return salt;	
 		}
 	}
 }

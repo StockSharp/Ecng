@@ -14,10 +14,7 @@
 
 		public BitArrayReader(Stream underlyingStream)
 		{
-			if (underlyingStream == null)
-				throw new ArgumentNullException(nameof(underlyingStream));
-
-			_underlyingStream = underlyingStream;
+			_underlyingStream = underlyingStream ?? throw new ArgumentNullException(nameof(underlyingStream));
 
 			// TODO
 			var bytes = underlyingStream.To<byte[]>();
