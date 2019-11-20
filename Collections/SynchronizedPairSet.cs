@@ -70,11 +70,10 @@
 		{
 			lock (SyncRoot)
 			{
-				if (Remove(key))
-				{
-					Add(key, value);
-					OnSetting(key, value);
-				}
+				Remove(key);
+
+				Add(key, value);
+				OnSetting(key, value);
 			}
 		}
 
