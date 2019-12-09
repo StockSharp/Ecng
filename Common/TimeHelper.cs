@@ -507,6 +507,22 @@
 			return isSeconds ? GregorianStart.AddSeconds(time) : GregorianStart.AddMilliseconds(time);
 		}
 
+		public static DateTime? TryFromUnix(this long time, bool isSeconds = true)
+		{
+			if (time == 0)
+				return null;
+
+			return time.FromUnix(isSeconds);
+		}
+
+		public static DateTime? TryFromUnix(this double time, bool isSeconds = true)
+		{
+			if (Math.Abs(time) < double.Epsilon)
+				return null;
+
+			return time.FromUnix(isSeconds);
+		}
+
 		public static double UnixNowS => DateTime.UtcNow.ToUnix();
 		public static double UnixNowMls => DateTime.UtcNow.ToUnix(false);
 
