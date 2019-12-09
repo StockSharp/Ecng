@@ -3,7 +3,6 @@ namespace Ecng.Security
 	using System;
 	using System.IO;
 	using System.Security.Cryptography;
-	using System.Text;
 
 	using Ecng.Common;
 	using Ecng.Serialization;
@@ -138,15 +137,13 @@ namespace Ecng.Security
 		// This constant determines the number of iterations for the password bytes generation function.
 		private const int _derivationIterations = 1000;
 
-		public static byte[] Encrypt(string plainText, string passPhrase, byte[] salt, byte[] iv)
+		public static byte[] Encrypt(this byte[] plain, string passPhrase, byte[] salt, byte[] iv)
 		{
-			if (plainText.IsEmpty())
-				throw new ArgumentNullException(nameof(plainText));
+			if (plain == null)
+				throw new ArgumentNullException(nameof(plain));
 
 			if (passPhrase.IsEmpty())
 				throw new ArgumentNullException(nameof(passPhrase));
-
-			var plainTextBytes = plainText.UTF8();
 
 			using (var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations))
 			{
@@ -164,7 +161,7 @@ namespace Ecng.Security
 						{
 							using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
 							{
-								cryptoStream.Write(plainTextBytes, 0, plainTextBytes.Length);
+								cryptoStream.Write(plain, 0, plain.Length);
 								cryptoStream.FlushFinalBlock();
 								// Create the final bytes as a concatenation of the random salt bytes, the random iv bytes and the cipher bytes.
 
@@ -176,7 +173,7 @@ namespace Ecng.Security
 			}
 		}
 
-		public static string Decrypt(byte[] cipherText, string passPhrase, byte[] salt, byte[] iv)
+		public static byte[] Decrypt(this byte[] cipherText, string passPhrase, byte[] salt, byte[] iv)
 		{
 			if (cipherText == null)
 				throw new ArgumentNullException(nameof(cipherText));
@@ -203,7 +200,10 @@ namespace Ecng.Security
 								var plainTextBytes = new byte[cipherText.Length];
 								var decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
 
-								return Encoding.UTF8.GetString(plainTextBytes, 0, decryptedByteCount);
+								if (plainTextBytes.Length > decryptedByteCount)
+									Array.Resize(ref plainTextBytes, decryptedByteCount);
+								
+								return plainTextBytes;
 							}
 						}
 					}
