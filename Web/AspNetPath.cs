@@ -2,6 +2,7 @@ namespace Ecng.Web
 {
 	using System.Web;
 	using System.Web.Configuration;
+	using System.Web.Hosting;
 
 	using Ecng.Common;
 	using Ecng.Configuration;
@@ -46,6 +47,9 @@ namespace Ecng.Web
 		{
 			if (virtualPath.StartsWithIgnoreCase("http"))
 				return new Url(virtualPath);
+
+			if (HttpContext.Current == null)
+				return new Url(HostingEnvironment.MapPath(virtualPath));
 
 			return new Url(HttpContext.Current.Request.Url.ToString(), VirtualPathUtility.ToAbsolute(virtualPath));//.ToString();
 		}
