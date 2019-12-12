@@ -101,7 +101,7 @@ namespace Ecng.Net
 
 				object[] args;
 
-				using (new Scope<SerializationContext>(new SerializationContext { Filter = Filter }))
+				using (new SerializationContext { Filter = Filter }.ToScope())
 					args = context.ArgDeserializers.Select(deserializer => deserializer.Item2.Deserialize(input)).ToArray();
 
 				var cache = context.GetCache(args);
@@ -120,7 +120,7 @@ namespace Ecng.Net
 				{
 					var retVal = args.Length == 1 ? invoker.ReturnInvoke(Behavior, args[0]) : invoker.ReturnInvoke(Behavior, args);
 
-					using (new Scope<SerializationContext>(new SerializationContext { Filter = Filter }))
+					using (new SerializationContext { Filter = Filter }.ToScope())
 					{
 						var data = new MemoryStream();
 						context.ReturnSerializer.Serialize(retVal, data);

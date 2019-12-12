@@ -63,7 +63,7 @@ namespace Ecng.Logic.BusinessEntities
 			else
 				morph = string.Empty;
 
-			return new Scope<HierarchicalDatabaseContext>(new HierarchicalDatabaseContext(morph, schema, source));
+			return new HierarchicalDatabaseContext(morph, schema, source).ToScope();
 		}
 
 		#region GetEntity

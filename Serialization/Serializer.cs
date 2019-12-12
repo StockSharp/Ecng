@@ -138,7 +138,7 @@ namespace Ecng.Serialization
 
 		public void Serialize(T graph, FieldList fields, SerializationItemCollection source)
 		{
-			using (new Scope<SerializationContext>(new SerializationContext { Entity = graph }))
+			using (new SerializationContext { Entity = graph }.ToScope())
 			{
 				if (graph.IsNull())
 					throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
@@ -239,7 +239,7 @@ namespace Ecng.Serialization
 
 		public T Deserialize(SerializationItemCollection source, FieldList fields, T graph)
 		{
-			using (new Scope<SerializationContext>(new SerializationContext { Entity = graph }))
+			using (new SerializationContext { Entity = graph }.ToScope())
 			{
 				if (source == null)
 					throw new ArgumentNullException(nameof(source), "Source for type '{0}' doesn't initialized.".Put(typeof(T)));

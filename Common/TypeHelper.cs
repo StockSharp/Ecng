@@ -287,5 +287,10 @@ namespace Ecng.Common
 
 			return salt;	
 		}
+
+		public static Scope<T> ToScope<T>(this T value, bool ownInstance = true)
+		{
+			return new Scope<T>(value, ownInstance);
+		}
 	}
 }

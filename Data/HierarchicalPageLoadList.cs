@@ -188,7 +188,7 @@
 			FillSource(source);
 
 			var context = query == null ? new HierarchicalDatabaseContext(Morph, Schema, source) : new HierarchicalDatabaseContext(query, Schema, source);
-			return new Scope<HierarchicalDatabaseContext>(context);
+			return context.ToScope();
 		}
 
 		protected void FillSource(SerializationItemCollection source)
