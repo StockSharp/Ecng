@@ -267,10 +267,21 @@
 
 		public static TValue TryGetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
 		{
-			if (dict.TryGetValue(key, out var value))
-				dict.Remove(key);
+			if (dict.TryGetAndRemove(key, out var value))
+				return value;
 
-			return value;
+			return default;
+		}
+
+		public static bool TryGetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, out TValue value)
+		{
+			if (dict.TryGetValue(key, out value))
+			{
+				dict.Remove(key);
+				return true;
+			}
+
+			return false;
 		}
 
 		public static T ElementAtFromEnd<T>(this IEnumerable<T> source, int index)
@@ -345,7 +356,7 @@
 				index--;
 			}
 
-			return curr == null ? default(T) : curr.Value;
+			return curr == null ? default : curr.Value;
 		}
 
 		public static T ElementAtFromEndOrDefault<T>(this SynchronizedLinkedList<T> list, int index)
@@ -361,7 +372,7 @@
 				index--;
 			}
 
-			return curr == null ? default(T) : curr.Value;
+			return curr == null ? default : curr.Value;
 		}
 
 		public static PairSet<TKey, TValue> ToPairSet<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source)
@@ -546,7 +557,7 @@
 
 			isNew = false;
 
-			if (!dictionary.TryGetValue(key, out TValue value))
+			if (!dictionary.TryGetValue(key, out var value))
 			{
 				var syncObj = dictionary is ISynchronizedCollection<KeyValuePair<TKey, TValue>> ? ((ISynchronizedCollection<KeyValuePair<TKey, TValue>>)dictionary).SyncRoot : (object)dictionary;
 
@@ -571,7 +582,7 @@
 			if (dict == null)
 				throw new ArgumentNullException(nameof(dict));
 
-			dict.TryGetValue(key, out TValue value);
+			dict.TryGetValue(key, out var value);
 			return value;
 		}
 
