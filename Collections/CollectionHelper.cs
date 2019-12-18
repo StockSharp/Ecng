@@ -107,24 +107,49 @@
 			return -1;
 		}
 
-		public static void TryAdd<T>(this ICollection<T> source, IEnumerable<T> values)
+		public static void TryAdd<T>(this ICollection<T> collection, IEnumerable<T> values)
 		{
 			if (values == null)
 				throw new ArgumentNullException(nameof(values));
 
-			foreach (var value in values)
-				source.TryAdd(value);
+			if (collection is ISynchronizedCollection sync)
+			{
+				lock (sync.SyncRoot)
+				{
+					foreach (var value in values)
+						collection.TryAdd(value);
+				}
+			}
+			else
+			{
+				foreach (var value in values)
+					collection.TryAdd(value);
+			}
 		}
 
-		public static bool TryAdd<T>(this ICollection<T> source, T value)
+		public static bool TryAdd<T>(this ICollection<T> collection, T value)
 		{
-			if (source == null)
-				throw new ArgumentNullException(nameof(source));
+			if (collection == null)
+				throw new ArgumentNullException(nameof(collection));
 
-			if (!source.Contains(value))
+			if (collection is ISynchronizedCollection sync)
 			{
-				source.Add(value);
-				return true;
+				lock (sync.SyncRoot)
+				{
+					if (!collection.Contains(value))
+					{
+						collection.Add(value);
+						return true;
+					}
+				}
+			}
+			else
+			{
+				if (!collection.Contains(value))
+				{
+					collection.Add(value);
+					return true;
+				}
 			}
 
 			return false;
@@ -135,13 +160,13 @@
 			if (dict == null)
 				throw new ArgumentNullException(nameof(dict));
 
-			if (dict is SynchronizedDictionary<TKey, TValue> syncDict)
+			if (dict is ISynchronizedCollection sync)
 			{
-				lock (syncDict.SyncRoot)
+				lock (sync.SyncRoot)
 				{
-					if (!syncDict.ContainsKey(key))
+					if (!dict.ContainsKey(key))
 					{
-						syncDict.Add(key, value);
+						dict.Add(key, value);
 						return true;
 					}
 				}
@@ -275,10 +300,24 @@
 
 		public static bool TryGetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, out TValue value)
 		{
-			if (dict.TryGetValue(key, out value))
+			if (dict is ISynchronizedCollection sync)
 			{
-				dict.Remove(key);
-				return true;
+				lock (sync.SyncRoot)
+				{
+					if (dict.TryGetValue(key, out value))
+					{
+						dict.Remove(key);
+						return true;
+					}
+				}
+			}
+			else
+			{
+				if (dict.TryGetValue(key, out value))
+				{
+					dict.Remove(key);
+					return true;
+				}
 			}
 
 			return false;
@@ -559,7 +598,7 @@
 
 			if (!dictionary.TryGetValue(key, out var value))
 			{
-				var syncObj = dictionary is ISynchronizedCollection<KeyValuePair<TKey, TValue>> ? ((ISynchronizedCollection<KeyValuePair<TKey, TValue>>)dictionary).SyncRoot : (object)dictionary;
+				var syncObj = (dictionary as ISynchronizedCollection)?.SyncRoot ?? (object)dictionary;
 
 				lock (syncObj)
 				{
