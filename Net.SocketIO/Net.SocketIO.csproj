@@ -340,6 +340,10 @@
       <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
       <Name>Localization</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Net\Net.csproj">
+      <Project>{685a7bf3-5c51-42ea-954f-1dec176f9dfc}</Project>
+      <Name>Net</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
