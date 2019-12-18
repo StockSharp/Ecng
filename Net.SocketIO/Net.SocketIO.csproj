@@ -37,13 +37,14 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\StockSharp (GitHub)\References\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="RestSharp">
-      <HintPath>..\..\StockSharp (GitHub)\References\RestSharp.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable">
       <HintPath>..\..\StockSharp (GitHub)\References\System.Collections.Immutable.dll</HintPath>
     </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs">
@@ -247,6 +248,83 @@
     <Compile Include="PubnubApi\Security\SecureMessage.cs" />
     <Compile Include="PubnubApi\Timer.cs" />
     <Compile Include="RestSharpHelper.cs" />
+    <Compile Include="RestSharp\Authenticators\HttpBasicAuthenticator.cs" />
+    <Compile Include="RestSharp\Authenticators\IAuthenticator.cs" />
+    <Compile Include="RestSharp\Authenticators\JwtAuthenticator.cs" />
+    <Compile Include="RestSharp\Authenticators\NtlmAuthenticator.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth1Authenticator.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth2Authenticator.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\Extensions\CollectionExtensions.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\Extensions\OAuthExtensions.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\Extensions\StringExtensions.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\Extensions\TimeExtensions.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\HttpPostParameter.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\HttpPostParameterType.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\OAuthParameterHandling.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\OAuthSignatureMethod.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\OAuthSignatureTreatment.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\OAuthTools.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\OAuthType.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\OAuthWebQueryInfo.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\OAuthWorkflow.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\WebPair.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\WebPairCollection.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\WebParameter.cs" />
+    <Compile Include="RestSharp\Authenticators\OAuth\WebParameterCollection.cs" />
+    <Compile Include="RestSharp\Authenticators\SimpleAuthenticator.cs" />
+    <Compile Include="RestSharp\Enum.cs" />
+    <Compile Include="RestSharp\Extensions\MiscExtensions.cs" />
+    <Compile Include="RestSharp\Extensions\ReflectionExtensions.cs" />
+    <Compile Include="RestSharp\Extensions\ResponseExtensions.cs" />
+    <Compile Include="RestSharp\Extensions\ResponseStatusExtensions.cs" />
+    <Compile Include="RestSharp\Extensions\RSACryptoServiceProviderExtensions.cs" />
+    <Compile Include="RestSharp\Extensions\StringExtensions.cs" />
+    <Compile Include="RestSharp\Extensions\XmlExtensions.cs" />
+    <Compile Include="RestSharp\FileParameter.cs" />
+    <Compile Include="RestSharp\Http.Async.cs" />
+    <Compile Include="RestSharp\Http.cs" />
+    <Compile Include="RestSharp\Http.Sync.cs" />
+    <Compile Include="RestSharp\HttpCookie.cs" />
+    <Compile Include="RestSharp\HttpFile.cs" />
+    <Compile Include="RestSharp\HttpHeader.cs" />
+    <Compile Include="RestSharp\HttpParameter.cs" />
+    <Compile Include="RestSharp\HttpResponse.cs" />
+    <Compile Include="RestSharp\IHttp.cs" />
+    <Compile Include="RestSharp\IHttpResponse.cs" />
+    <Compile Include="RestSharp\IRestClient.cs" />
+    <Compile Include="RestSharp\IRestRequest.cs" />
+    <Compile Include="RestSharp\IRestResponse.cs" />
+    <Compile Include="RestSharp\NameValuePair.cs" />
+    <Compile Include="RestSharp\Parameter.cs" />
+    <Compile Include="RestSharp\RestClient.Async.cs" />
+    <Compile Include="RestSharp\RestClient.cs" />
+    <Compile Include="RestSharp\RestClient.Sync.cs" />
+    <Compile Include="RestSharp\RestClientExtensions.cs" />
+    <Compile Include="RestSharp\RestRequest.cs" />
+    <Compile Include="RestSharp\RestRequestAsyncHandle.cs" />
+    <Compile Include="RestSharp\RestRequestExtensions.cs" />
+    <Compile Include="RestSharp\RestResponse.cs" />
+    <Compile Include="RestSharp\RestResponseCookie.cs" />
+    <Compile Include="RestSharp\Serialization\ContentType.cs" />
+    <Compile Include="RestSharp\Serialization\DeserializeAsAttribute.cs" />
+    <Compile Include="RestSharp\Serialization\IDeserializer.cs" />
+    <Compile Include="RestSharp\Serialization\IRestSerializer.cs" />
+    <Compile Include="RestSharp\Serialization\ISerializer.cs" />
+    <Compile Include="RestSharp\Serialization\IWithRootElement.cs" />
+    <Compile Include="RestSharp\Serialization\Json\JsonSerializer.cs" />
+    <Compile Include="RestSharp\Serialization\Json\SimpleJson.cs" />
+    <Compile Include="RestSharp\Serialization\SerializeAsAttribute.cs" />
+    <Compile Include="RestSharp\Serialization\Xml\DotNetXmlDeserializer.cs" />
+    <Compile Include="RestSharp\Serialization\Xml\DotNetXmlSerializer.cs" />
+    <Compile Include="RestSharp\Serialization\Xml\DotNetXmlSerializerClientExtensions.cs" />
+    <Compile Include="RestSharp\Serialization\Xml\IXmlDeserializer.cs" />
+    <Compile Include="RestSharp\Serialization\Xml\IXmlSerializer.cs" />
+    <Compile Include="RestSharp\Serialization\Xml\XmlAttributeDeserializer.cs" />
+    <Compile Include="RestSharp\Serialization\Xml\XmlDeserializer.cs" />
+    <Compile Include="RestSharp\Serialization\Xml\XmlRestSerializer.cs" />
+    <Compile Include="RestSharp\Serialization\Xml\XmlSerializer.cs" />
+    <Compile Include="RestSharp\Validation\Require.cs" />
+    <Compile Include="RestSharp\Validation\Validate.cs" />
     <Compile Include="WebSocketClient.cs" />
   </ItemGroup>
   <ItemGroup>
