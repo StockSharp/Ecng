@@ -100,7 +100,7 @@
 
 			var owner = (sender as DependencyObject)?.GetWindow();
 
-			if (dlg.ShowDialog(owner) == true)
+			if (dlg.ShowModal(owner))
 			{
 				File = dlg.FileName;
 				FileChanged?.Invoke(dlg.FileName);

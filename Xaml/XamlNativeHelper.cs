@@ -98,17 +98,6 @@
 			return form.ShowDialog(owner.GetIWin32Window()) == DialogResult.OK;
 		}
 
-		public static bool ShowModalNative(this Microsoft.Win32.CommonDialog dlg, Window owner)
-		{
-			if (dlg == null)
-				throw new ArgumentNullException(nameof(dlg));
-
-			if (owner == null)
-				throw new ArgumentNullException(nameof(owner));
-
-			return dlg.ShowDialog(owner) == true;
-		}
-
 		public static BitmapSource ToBitmapSource(this Bitmap source)
 		{
 			if (source == null)

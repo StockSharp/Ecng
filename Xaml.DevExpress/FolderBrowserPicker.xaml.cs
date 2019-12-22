@@ -50,7 +50,7 @@
 
 			var owner = sender is DependencyObject depObj ? depObj.GetWindow() : null;
 
-			if (dlg.ShowModalNative(owner))
+			if (dlg.ShowModal(owner))
 			{
 				FolderPath.Text = dlg.SelectedPath;
 				FolderChanged?.Invoke(dlg.SelectedPath);

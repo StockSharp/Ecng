@@ -37,7 +37,7 @@
 
 			var owner = ((DependencyObject)sender)?.GetWindow();
 
-			if (dlg.ShowModalNative(owner))
+			if (dlg.ShowModal(owner))
 				edit.EditValue = dlg.FileName;
 		}
 

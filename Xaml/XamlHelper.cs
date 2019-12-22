@@ -30,8 +30,6 @@ namespace Ecng.Xaml
 
 	using Microsoft.Win32;
 
-	using Ookii.Dialogs.Wpf;
-
 	public static class XamlHelper
 	{
 		#region Bounds
@@ -700,16 +698,6 @@ namespace Ecng.Xaml
 			return wnd.ShowModal(obj.GetWindow());
 		}
 
-		public static bool ShowModal(this VistaFileDialog dlg, DependencyObject obj)
-		{
-			return dlg.ShowDialog(obj.GetWindow()) == true;
-		}
-
-		public static bool ShowModal(this VistaFolderBrowserDialog dlg, DependencyObject obj)
-		{
-			return dlg.ShowDialog(obj.GetWindow()) == true;
-		}
-
 		public static bool ShowModal(this Window wnd, Window owner)
 		{
 			if (wnd == null)
@@ -728,6 +716,17 @@ namespace Ecng.Xaml
 			{
 				owner.TryCloseNativeOwner();
 			}
+		}
+
+		public static bool ShowModal(this CommonDialog dlg, Window owner)
+		{
+			if (dlg == null)
+				throw new ArgumentNullException(nameof(dlg));
+
+			if (owner == null)
+				throw new ArgumentNullException(nameof(owner));
+
+			return dlg.ShowDialog(owner) == true;
 		}
 
 		public static void ShowOrHide(this Window window)
