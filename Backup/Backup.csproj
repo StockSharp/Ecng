@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Ecng.Backup</RootNamespace>
     <AssemblyName>Ecng.Backup</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -40,14 +40,14 @@
     <Reference Include="AWSSDK.S3">
       <HintPath>..\..\StockSharp (GitHub)\References\AWSSDK.S3.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Mvvm.v18.1">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Mvvm.v18.1.dll</HintPath>
+    <Reference Include="DevExpress.Mvvm.v19.2">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Mvvm.v19.2.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Xpf.Core.v18.1">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Core.v18.1.dll</HintPath>
+    <Reference Include="DevExpress.Xpf.Core.v19.2">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Core.v19.2.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Data.v18.1">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Data.v18.1.dll</HintPath>
+    <Reference Include="DevExpress.Data.v19.2">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Data.v19.2.dll</HintPath>
     </Reference>
     <Reference Include="Disk.SDK">
       <HintPath>..\..\StockSharp (GitHub)\References\Disk.SDK.dll</HintPath>

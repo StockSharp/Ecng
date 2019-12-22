@@ -127,7 +127,7 @@
 		{
 		}
 
-		public override object ProcessConversion(object value)
+		public override object ProcessConversion(object value, UpdateEditorSource updateEditorSource)
 		{
 			return DateTimeOffsetConverter.GetDateTimeOffset(value);
 		}

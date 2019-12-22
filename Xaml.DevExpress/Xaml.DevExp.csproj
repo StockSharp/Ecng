@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Ecng.Xaml.DevExp</RootNamespace>
     <AssemblyName>Ecng.Xaml.DevExp</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -31,29 +31,29 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DevExpress.Data.v18.1">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Data.v18.1.dll</HintPath>
+    <Reference Include="DevExpress.Data.v19.2">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Data.v19.2.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Printing.v18.1.Core">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Printing.v18.1.Core.dll</HintPath>
+    <Reference Include="DevExpress.Printing.v19.2.Core">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Printing.v19.2.Core.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Xpf.Controls.v18.1">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Controls.v18.1.dll</HintPath>
+    <Reference Include="DevExpress.Xpf.Controls.v19.2">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Controls.v19.2.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Xpf.Core.v18.1">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Core.v18.1.dll</HintPath>
+    <Reference Include="DevExpress.Xpf.Core.v19.2">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Core.v19.2.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Xpf.Grid.v18.1">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Grid.v18.1.dll</HintPath>
+    <Reference Include="DevExpress.Xpf.Grid.v19.2">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Grid.v19.2.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Xpf.Grid.v18.1.Core">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Grid.v18.1.Core.dll</HintPath>
+    <Reference Include="DevExpress.Xpf.Grid.v19.2.Core">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Grid.v19.2.Core.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Xpf.PropertyGrid.v18.1">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.PropertyGrid.v18.1.dll</HintPath>
+    <Reference Include="DevExpress.Xpf.PropertyGrid.v19.2">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.PropertyGrid.v19.2.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Mvvm.v18.1">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Mvvm.v18.1.dll</HintPath>
+    <Reference Include="DevExpress.Mvvm.v19.2">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Mvvm.v19.2.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
