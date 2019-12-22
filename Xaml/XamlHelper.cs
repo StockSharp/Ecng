@@ -718,6 +718,11 @@ namespace Ecng.Xaml
 			}
 		}
 
+		public static bool ShowModal(this CommonDialog dlg, DependencyObject obj)
+		{
+			return dlg.ShowModal(obj.GetWindow());
+		}
+
 		public static bool ShowModal(this CommonDialog dlg, Window owner)
 		{
 			if (dlg == null)
