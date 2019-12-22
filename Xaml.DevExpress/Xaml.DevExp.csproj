@@ -43,6 +43,9 @@
     <Reference Include="DevExpress.Xpf.Core.v19.2">
       <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Core.v19.2.dll</HintPath>
     </Reference>
+    <Reference Include="DevExpress.Xpf.Dialogs.v19.2">
+      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Dialogs.v19.2.dll</HintPath>
+    </Reference>
     <Reference Include="DevExpress.Xpf.Grid.v19.2">
       <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Grid.v19.2.dll</HintPath>
     </Reference>
@@ -60,6 +63,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
@@ -103,9 +107,17 @@
     <Compile Include="FileBrowserEditor.xaml.cs">
       <DependentUpon>FileBrowserEditor.xaml</DependentUpon>
     </Compile>
+    <Compile Include="FileBrowserPicker.xaml.cs">
+      <DependentUpon>FileBrowserPicker.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="FileValidationRule.cs" />
     <Compile Include="FolderBrowserEditor.xaml.cs">
       <DependentUpon>FolderBrowserEditor.xaml</DependentUpon>
     </Compile>
+    <Compile Include="FolderBrowserPicker.xaml.cs">
+      <DependentUpon>FolderBrowserPicker.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="FolderValidationRule.cs" />
     <Compile Include="HtmlRenderer.WPF\Adapters\BrushAdapter.cs" />
     <Compile Include="HtmlRenderer.WPF\Adapters\ContextMenuAdapter.cs" />
     <Compile Include="HtmlRenderer.WPF\Adapters\ControlAdapter.cs" />
@@ -169,9 +181,17 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="FileBrowserPicker.xaml">
+      <SubType>Designer</SubType>
+      <Generator>XamlIntelliSenseFileGenerator</Generator>
+    </Page>
     <Page Include="FolderBrowserEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="FolderBrowserPicker.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="SecretEditor.xaml">
       <SubType>Designer</SubType>

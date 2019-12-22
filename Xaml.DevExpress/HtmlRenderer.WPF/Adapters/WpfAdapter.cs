@@ -24,7 +24,9 @@ using Microsoft.Win32;
 
 namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 {
-    /// <summary>
+	using DevExpress.Xpf.Dialogs;
+
+	/// <summary>
     /// Adapter for WPF platform.
     /// </summary>
     internal sealed class WpfAdapter : RAdapter
@@ -167,7 +169,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 
         protected override void SaveToFileInt(RImage image, string name, string extension, RControl control = null)
         {
-            var saveDialog = new SaveFileDialog();
+            var saveDialog = new DXSaveFileDialog();
             saveDialog.Filter = "Images|*.png;*.bmp;*.jpg;*.tif;*.gif;*.wmp;";
             saveDialog.FileName = name;
             saveDialog.DefaultExt = extension;

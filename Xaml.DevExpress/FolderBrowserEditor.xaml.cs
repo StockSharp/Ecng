@@ -1,17 +1,11 @@
 ﻿namespace Ecng.Xaml.DevExp
 {
-	using System.Collections.Generic;
-	using System.Globalization;
-	using System.IO;
 	using System.Windows;
-	using System.Windows.Controls;
 
+	using DevExpress.Xpf.Dialogs;
 	using DevExpress.Xpf.Editors;
 
 	using Ecng.Common;
-	using Ecng.Localization;
-
-	using Ookii.Dialogs.Wpf;
 
 	public partial class FolderBrowserEditor
 	{
@@ -35,7 +29,7 @@
 			if (edit == null || edit.IsReadOnly)
 				return;
 
-			var dlg = new VistaFolderBrowserDialog();
+			var dlg = new DXFolderBrowserDialog();
 			var value = (string)edit.EditValue;
 
 			if (!value.IsEmpty())
@@ -43,7 +37,7 @@
 
 			var owner = ((DependencyObject)sender)?.GetWindow();
 
-			if (dlg.ShowDialog(owner) == true)
+			if (dlg.ShowModalNative(owner))
 				edit.EditValue = dlg.SelectedPath;
 		}
 
@@ -55,19 +49,6 @@
 				return;
 
 			edit.EditValue = null;
-		}
-	}
-
-	class FolderValidationRule : ValidationRule
-	{
-		public override ValidationResult Validate(object value, CultureInfo cultureInfo)
-		{
-			var path = (string)value;
-
-			if (!path.IsEmpty() && !Directory.Exists(path))
-				return new ValidationResult(false, "Invalid folder path.".Translate());
-
-			return ValidationResult.ValidResult;
 		}
 	}
 }

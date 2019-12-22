@@ -118,12 +118,6 @@
     <Compile Include="EditableTextBlockAdorner.cs" />
     <Compile Include="EncodingComboBox.cs" />
     <Compile Include="EndPointComboBox.cs" />
-    <Compile Include="FileBrowserPicker.xaml.cs">
-      <DependentUpon>FileBrowserPicker.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="FolderBrowserPicker.xaml.cs">
-      <DependentUpon>FolderBrowserPicker.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Fonts\FontChooser.xaml.cs">
       <DependentUpon>FontChooser.xaml</DependentUpon>
     </Compile>
@@ -356,14 +350,6 @@
     <Page Include="Block.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="FileBrowserPicker.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="FolderBrowserPicker.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

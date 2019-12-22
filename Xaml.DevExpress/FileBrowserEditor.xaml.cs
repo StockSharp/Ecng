@@ -1,16 +1,11 @@
 ﻿namespace Ecng.Xaml.DevExp
 {
-	using System.Globalization;
-	using System.IO;
 	using System.Windows;
-	using System.Windows.Controls;
 
+	using DevExpress.Xpf.Dialogs;
 	using DevExpress.Xpf.Editors;
 
 	using Ecng.Common;
-	using Ecng.Localization;
-
-	using Ookii.Dialogs.Wpf;
 
 	public partial class FileBrowserEditor
 	{
@@ -34,7 +29,7 @@
 			if (edit == null || edit.IsReadOnly)
 				return;
 
-			var dlg = new VistaOpenFileDialog { CheckFileExists = true };
+			var dlg = new DXOpenFileDialog { CheckFileExists = true };
 			var value = (string)edit.EditValue;
 
 			if (!value.IsEmpty())
@@ -42,7 +37,7 @@
 
 			var owner = ((DependencyObject)sender)?.GetWindow();
 
-			if (dlg.ShowDialog(owner) == true)
+			if (dlg.ShowModalNative(owner))
 				edit.EditValue = dlg.FileName;
 		}
 
@@ -54,19 +49,6 @@
 				return;
 
 			edit.EditValue = null;
-		}
-	}
-
-	class FileValidationRule : ValidationRule
-	{
-		public override ValidationResult Validate(object value, CultureInfo cultureInfo)
-		{
-			var path = (string)value;
-
-			if (!path.IsEmpty() && !File.Exists(path))
-				return new ValidationResult(false, "Invalid file path.".Translate());
-
-			return ValidationResult.ValidResult;
 		}
 	}
 }
