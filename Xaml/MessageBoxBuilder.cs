@@ -31,13 +31,7 @@ namespace Ecng.Xaml
 		public static IMessageBoxHandler DefaultHandler
 		{
 			get => _defaultHandler;
-			set
-			{
-				if (value == null)
-					throw new ArgumentNullException(nameof(value));
-
-				_defaultHandler = value;
-			}
+			set => _defaultHandler = value ?? throw new ArgumentNullException(nameof(value));
 		}
 
 		private Window _owner;
@@ -51,10 +45,7 @@ namespace Ecng.Xaml
 
 		public MessageBoxBuilder Handler(IMessageBoxHandler handler)
 		{
-			if (handler == null)
-				throw new ArgumentNullException(nameof(handler));
-
-			_handler = handler;
+			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
 			return this;
 		}
 
@@ -146,12 +137,7 @@ namespace Ecng.Xaml
 
 		public MessageBoxResult Show()
 		{
-			var caption = _caption;
-
-			if (caption == null)
-			{
-				caption = TypeHelper.ApplicationName;
-			}
+			var caption = _caption ?? TypeHelper.ApplicationName;
 
 			return _owner == null
 				? _handler.Show(_text, caption, _button, _icon, _defaultResult, _options)

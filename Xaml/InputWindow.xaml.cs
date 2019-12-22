@@ -25,10 +25,9 @@
 			{
 				Title = title,
 				Message = message,
-				Owner = owner
 			};
 
-			return window.ShowDialog() == true
+			return window.ShowModal(owner)
 				? window.TextBoxName.Text
 				: null;
 		}
