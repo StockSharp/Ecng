@@ -1,4 +1,5 @@
-﻿<dx:DXWindow x:Class="Ecng.Xaml.DevExp.Database.DatabaseConnectionCreateWindow"
+﻿<dx:ThemedWindow
+		x:Class="Ecng.Xaml.DevExp.Database.DatabaseConnectionCreateWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:db="clr-namespace:Ecng.Xaml.DevExp.Database"
@@ -23,4 +24,4 @@
 		<Button x:Name="CheckCtrl" Grid.Row="2" Grid.Column="0" Click="TestCtrl_Click">Check</Button>
 		<Button x:Name="Ok" Grid.Row="2" Grid.Column="1" Width="100" IsEnabled="False" IsDefault="True" xaml:XamlHelper.DialogResult="True" HorizontalAlignment="Right">OK</Button>
 	</Grid>
-</dx:DXWindow>
+</dx:ThemedWindow>
