@@ -16,7 +16,7 @@
 			if (request == null)
 				throw new ArgumentNullException(nameof(request));
 
-			request.AddParameter(request.JsonSerializer.ContentType, bodyStr, ParameterType.RequestBody);
+			request.AddParameter(RestSharp.Serialization.ContentType.Json, bodyStr, ParameterType.RequestBody);
 		}
 
 		public static object Invoke(this IRestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Action<IRestClient> init = null, Func<string, string> contentConverter = null)
