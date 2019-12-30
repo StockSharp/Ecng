@@ -14,7 +14,7 @@ namespace Ecng.Common
 
 			public AllocationArrayEnumerator(AllocationArray<T> parent)
 			{
-				_parent = parent;
+				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
 			void IDisposable.Dispose() => _pos = 0;

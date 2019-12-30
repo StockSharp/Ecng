@@ -37,7 +37,7 @@ namespace Ecng.Common
 			return provider.GetCustomAttributes(inherit).Cast<Attribute>();
 		}
 
-		private static V SafeAdd<K, V>(this IDictionary<K, V> dictionary, K key, Func<K, V> handler)
+		private static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> handler)
 		{
 			if (dictionary == null)
 				throw new ArgumentNullException(nameof(dictionary));
