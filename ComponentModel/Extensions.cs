@@ -93,5 +93,36 @@ namespace Ecng.ComponentModel
 			var attr = type.GetAttribute<DocAttribute>();
 			return attr?.DocUrl;
 		}
+
+		public static Uri GetIconUrl(this Type type)
+		{
+			var attr = type.GetAttribute<IconAttribute>();
+			return attr == null ? null : (attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(type));
+		}
+
+		public static Uri GetResourceUrl(this string resName)
+		{
+			return Assembly.GetEntryAssembly().GetResourceUrl(resName);
+		}
+
+		public static Uri GetResourceUrl(this string resName, Type type)
+		{
+			if (type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			return type.Assembly.GetResourceUrl(resName);
+		}
+
+		private static Uri GetResourceUrl(this Assembly assembly, string resName)
+		{
+			if (assembly == null)
+				throw new ArgumentNullException(nameof(assembly));
+
+			if (resName.IsEmpty())
+				throw new ArgumentNullException(nameof(resName));
+
+			var name = assembly.FullName;
+			return new Uri("/" + name.Substring(0, name.IndexOf(',')) + ";component/" + resName, UriKind.Relative);
+		}
 	}
 }
