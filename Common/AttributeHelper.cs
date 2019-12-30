@@ -2,6 +2,7 @@ namespace Ecng.Common
 {
 	using System;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Linq;
 	using System.Reflection;
 
@@ -44,8 +45,7 @@ namespace Ecng.Common
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
-
-			if (!dictionary.TryGetValue(key, out V value))
+			if (!dictionary.TryGetValue(key, out var value))
 			{
 				lock (dictionary)
 				{
@@ -66,6 +66,14 @@ namespace Ecng.Common
 				throw new ArgumentNullException(nameof(provider));
 
 			return provider.GetAttribute<ObsoleteAttribute>() != null;
+		}
+
+		public static bool IsBrowsable(this ICustomAttributeProvider provider)
+		{
+			if (provider == null)
+				throw new ArgumentNullException(nameof(provider));
+
+			return provider.GetAttribute<BrowsableAttribute>()?.Browsable != false;
 		}
 	}
 }
