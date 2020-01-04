@@ -64,7 +64,7 @@ namespace Ecng.Common
 
 		public static bool IsDefault<T>(this T value)
 		{
-			return EqualityComparer<T>.Default.Equals(value, default(T));
+			return EqualityComparer<T>.Default.Equals(value, default);
 		}
 
 		public static bool IsRuntimeDefault<T>(this T value)

@@ -47,5 +47,11 @@ namespace Ecng.Common
 
 			return value == null ? nullFunc() : notNullFunc(value);
 		}
+
+		public static T? DefaultAsNull<T>(this T value)
+			where T : struct, IComparable<T>
+		{
+			return value.IsDefault() ? (T?)null : value;
+		}
 	}
 }
