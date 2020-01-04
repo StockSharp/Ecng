@@ -95,6 +95,12 @@
 			return obj;
 		}
 
+		public static void ForceLoad<T>(this T t, SettingsStorage storage)
+			where T : IPersistable
+		{
+			t.Load(storage);
+		}
+
 		/// <summary>
 		/// Добавить значение в настройки.
 		/// </summary>
