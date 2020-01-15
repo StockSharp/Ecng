@@ -26,7 +26,9 @@ using System.Windows;
 using Ecng.Xaml.Charting.Visuals;
 namespace Ecng.Xaml.Licensing.Core
 {
-    [Obfuscation(Feature = "encryptmethod;encryptstrings;encryptconstants", Exclude = false, ApplyToMembers = true, StripAfterObfuscation = true)]
+	using Ecng.Common;
+
+	[Obfuscation(Feature = "encryptmethod;encryptstrings;encryptconstants", Exclude = false, ApplyToMembers = true, StripAfterObfuscation = true)]
     public abstract class Credentials
     {
         bool? _valid;
@@ -66,7 +68,7 @@ namespace Ecng.Xaml.Licensing.Core
 
             try
             {
-                var prop = typeof(UltrachartSurface).GetProperty(Encoding.UTF8.GetString(Convert.FromBase64String("TGljZW5zZUtleQ==")), BindingFlags.NonPublic | BindingFlags.Static);
+                var prop = typeof(UltrachartSurface).GetProperty("TGljZW5zZUtleQ==".Base64().UTF8(), BindingFlags.NonPublic | BindingFlags.Static);
 
                 var str = prop.GetValue(null, null) as string;
 

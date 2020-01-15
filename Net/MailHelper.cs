@@ -68,7 +68,7 @@
 
 			var encodedAttachmentName = attachment.TransferEncoding == TransferEncoding.QuotedPrintable
 											? HttpUtility.UrlEncode(displayName, Encoding.Default).Replace("+", " ").Replace("%", "=")
-											: Encoding.UTF8.GetBytes(displayName).Base64();
+											: displayName.UTF8().Base64();
 
 			encodedAttachmentName = SplitEncodedAttachmentName(encodingtoken, softbreak, maxChunkLength, encodedAttachmentName);
 			attachment.Name = encodedAttachmentName;

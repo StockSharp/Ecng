@@ -935,16 +935,24 @@
 			=> items.GroupBy(s => s, s => StringComparer.InvariantCultureIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key);
 
 		public static byte[] ASCII(this string v) => Encoding.ASCII.GetBytes(v);
-		public static string ASCII(this byte[] v) => Encoding.ASCII.GetString(v);
+		public static string ASCII(this byte[] v) => ASCII(v, 0, v.Length);
+		public static string ASCII(this byte[] v, int index, int count) => Encoding.ASCII.GetString(v, index, count);
+		public static string ASCII(this byte[] v, uint count, int index = 0) => ASCII(v, index, (int)count);
 
 		public static byte[] UTF8(this string v) => Encoding.UTF8.GetBytes(v);
-		public static string UTF8(this byte[] v) => Encoding.UTF8.GetString(v);
+		public static string UTF8(this byte[] v) => UTF8(v, 0, v.Length);
+		public static string UTF8(this byte[] v, int index, int count) => Encoding.UTF8.GetString(v, index, count);
+		public static string UTF8(this byte[] v, uint count, int index = 0) => UTF8(v, index, (int)count);
 
 		public static byte[] Unicode(this string v) => Encoding.Unicode.GetBytes(v);
-		public static string Unicode(this byte[] v) => Encoding.Unicode.GetString(v);
+		public static string Unicode(this byte[] v) => Unicode(v, 0, v.Length);
+		public static string Unicode(this byte[] v, int index, int count) => Encoding.Unicode.GetString(v, index, count);
+		public static string Unicode(this byte[] v, uint count, int index = 0) => Unicode(v, index, (int)count);
 
 		public static byte[] Cyrillic(this string v) => WindowsCyrillic.GetBytes(v);
-		public static string Cyrillic(this byte[] v) => WindowsCyrillic.GetString(v);
+		public static string Cyrillic(this byte[] v) => Cyrillic(v, 0, v.Length);
+		public static string Cyrillic(this byte[] v, int index, int count) => WindowsCyrillic.GetString(v, index, count);
+		public static string Cyrillic(this byte[] v, uint count, int index = 0) => Cyrillic(v, index, (int)count);
 
 		public static SecureString Secure(this string str)
 		{
@@ -963,5 +971,11 @@
 				return Marshal.PtrToStringBSTR(bstr);
 			}
 		}
+
+		public static string ToString(this char[] arr, uint count, int index = 0)
+			=> arr.ToString((int)count, index);
+
+		public static string ToString(this char[] arr, int count, int index = 0)
+			=> count == 0 ? string.Empty : new string(arr, index, count);
 	}
 }
