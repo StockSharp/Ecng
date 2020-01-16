@@ -1,7 +1,6 @@
 ﻿namespace Ecng.Interop
 {
 	using System;
-	using System.Runtime.InteropServices;
 
 	using Ecng.Serialization;
 
@@ -74,7 +73,7 @@
 		{
 			CheckBorder(length);
 
-			Marshal.Copy(Pointer, buffer, offset, length);
+			Pointer.CopyTo(buffer, offset, length);
 
 			if (autoShift)
 				Shift(length);

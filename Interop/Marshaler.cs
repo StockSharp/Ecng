@@ -48,11 +48,12 @@ namespace Ecng.Interop
 		/// Marshals data from a managed object to an unmanaged block of memory.
 		/// </summary>
 		/// <param name="structure">A managed object holding the data to be marshaled. This object must be an instance of a formatted class.</param>
+		/// <param name="size"></param>
 		/// <returns>A pointer to an unmanaged block of memory.</returns>
-		public static IntPtr StructToPtr<T>(this T structure)
+		public static IntPtr StructToPtr<T>(this T structure, int? size = null)
 			where T : struct
 		{
-			var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(T)));
+			var ptr = Marshal.AllocHGlobal(size ?? typeof(T).SizeOf());
 			Marshal.StructureToPtr(structure, ptr, false);
 			return ptr;
 		}
@@ -412,5 +413,17 @@ namespace Ecng.Interop
 				encoding.GetBytes(charBuffer, value.Length, ptr8, maxBytes);
 			}
 		}
+
+		public static void CopyTo(this IntPtr ptr, byte[] buffer)
+		{
+			ptr.CopyTo(buffer, 0, buffer.Length);
+		}
+
+		public static void CopyTo(this IntPtr ptr, byte[] buffer, int offset, int length)
+		{
+			Marshal.Copy(ptr, buffer, offset, length);
+		}
+
+		public static void FreeHGlobal(this IntPtr ptr) => Marshal.FreeHGlobal(ptr);
 	}
 }

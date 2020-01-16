@@ -1,7 +1,6 @@
 ﻿namespace Ecng.Interop
 {
 	using System;
-	using System.Runtime.InteropServices;
 
 	using Microsoft.Win32.SafeHandles;
 
@@ -15,7 +14,7 @@
 
 		protected override bool ReleaseHandle()
 		{
-			Marshal.FreeHGlobal(DangerousGetHandle());
+			DangerousGetHandle().FreeHGlobal();
 			return true;
 		}
 	}
