@@ -326,6 +326,9 @@
 				return new decimal(bits);
 			});
 
+			AddTypedConverter<int[], decimal>(input => new decimal(input));
+			AddTypedConverter<decimal, int[]>(decimal.GetBits);
+
 			AddTypedConverter<TimeSpan, long>(input => input.Ticks);
 			AddTypedConverter<long, TimeSpan>(input => new TimeSpan(input));
 			AddTypedConverter<DateTime, long>(input => input.Ticks);
