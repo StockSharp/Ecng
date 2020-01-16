@@ -2,6 +2,8 @@
 {
 	using System;
 
+	using Ecng.Common;
+
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	public static class AssertHelper
@@ -60,6 +62,14 @@
 		public static void AssertNotSame<T>(this T value, T expected)
 		{
 			Assert.AreNotSame(expected, value);
+		}
+
+		public static void AssertEqual(this string value, string expected, bool nullAsEmpty = false)
+		{
+			if (nullAsEmpty && value.IsEmpty() && expected.IsEmpty())
+				return;
+			
+			value.AssertEqual(expected);
 		}
 	}
 }
