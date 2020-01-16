@@ -972,6 +972,7 @@
 			}
 		}
 
+		[CLSCompliant(false)]
 		public static string ToString(this char[] arr, uint count, int index = 0)
 			=> arr.ToString((int)count, index);
 

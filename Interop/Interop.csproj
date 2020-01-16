@@ -215,6 +215,7 @@
     </Compile>
     <Compile Include="PtrReader.cs" />
     <Compile Include="SafeHandleCallbackMarshaler.cs" />
+    <Compile Include="SafePointer.cs" />
     <Compile Include="SevenZip.cs" />
     <Compile Include="SystemMemory.cs" />
     <Compile Include="SystemMenu.cs" />

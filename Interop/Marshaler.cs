@@ -139,7 +139,7 @@ namespace Ecng.Interop
 		/// <returns></returns>
 		public static T WrapDelegate<T>(T @delegate)
 		{
-			var handle = new GCHandle<T>(@delegate);
+			var handle = new GCHandle<T>(@delegate, GCHandleType.Normal, null);
 			_wrappers.Add(handle);
 			return @delegate;
 		}
