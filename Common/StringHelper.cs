@@ -883,7 +883,12 @@
 
 		public static string Digest(this byte[] digest)
 		{
-			return BitConverter.ToString(digest).Remove("-");
+			return digest.Digest(digest.Length);
+		}
+
+		public static string Digest(this byte[] digest, int? length, int index = 0)
+		{
+			return BitConverter.ToString(digest, index, length ?? digest.Length).Remove("-");
 		}
 
 		//private static readonly byte[] _initVectorBytes = Encoding.ASCII.GetBytes("ss14fgty650h8u82");
