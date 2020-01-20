@@ -188,6 +188,8 @@ namespace Ecng.Web
 					status = MembershipCreateStatus.InvalidUserName;
 				else if (Users.GetByName(userName) != null)
 					status = MembershipCreateStatus.DuplicateUserName;
+				else if (userName.CheckContainsUrl())
+					status = MembershipCreateStatus.InvalidUserName;
 			}
 
 			if (status != MembershipCreateStatus.Success)

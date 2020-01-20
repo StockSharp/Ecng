@@ -4,6 +4,7 @@ namespace Ecng.Web
 	using System.Text;
 	using System.Web;
 	using System.Collections.Specialized;
+	using System.Linq;
 	using System.Net;
 	using System.Security;
 	using System.Web.Configuration;
@@ -541,6 +542,13 @@ namespace Ecng.Web
 			});
 
 			FormsAuthentication.RedirectToLoginPage();
+		}
+
+		private static readonly string[] _urlParts = { "href=", "http:", "https:", "ftp:" };
+
+		public static bool CheckContainsUrl(this string url)
+		{
+			return !url.IsEmpty() && _urlParts.Any(url.ContainsIgnoreCase);
 		}
 	}
 }
