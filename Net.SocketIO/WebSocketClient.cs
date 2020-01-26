@@ -41,6 +41,14 @@
 				throw new ArgumentNullException(nameof(process));
 		}
 
+		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<object> process,
+			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
+			: this(connected, disconnected, error, (c, s) => process(s.DeserializeObject<object>()), infoLog, errorLog, verbose, verbose2)
+		{
+			if (process == null)
+				throw new ArgumentNullException(nameof(process));
+		}
+
 		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<WebSocketClient, string> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
 		{
