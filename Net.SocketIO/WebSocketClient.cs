@@ -26,12 +26,10 @@
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
 		private readonly Action<bool> _disconnected;
-		private readonly Action<WebSocketClient, string> _process;
-		private readonly Action<WebSocketClient, byte[], int, int> _process2;
+		private readonly Action<WebSocketClient, byte[], int, int> _process;
 		private readonly Action<string, object> _infoLog;
 		private readonly Action<string, object> _errorLog;
 		private readonly Action<string, object> _verboseLog;
-		private readonly Action<string> _verbose2Log;
 
 		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<string> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
@@ -51,6 +49,33 @@
 
 		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<WebSocketClient, string> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
+			: this(connected, disconnected, error, BytesToString(process, verbose2), infoLog, errorLog, verbose)
+		{
+		}
+
+		private static Action<WebSocketClient, byte[], int, int> BytesToString(Action<WebSocketClient, string> process, Action<string> verbose2)
+		{
+			if (process == null)
+				throw new ArgumentNullException(nameof(process));
+
+			return (c, b, s, o) =>
+			{
+				var recv = Encoding.UTF8.GetString(b, s, o);
+				verbose2(recv);
+				process(c, recv);
+			};
+		}
+
+		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<byte[], int, int> process,
+			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
+			: this(connected, disconnected, error, (c, b, s, o) => process(b, s, o), infoLog, errorLog, verbose)
+		{
+			if (process == null)
+				throw new ArgumentNullException(nameof(process));
+		}
+
+		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<WebSocketClient, byte[], int, int> process,
+			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
 		{
 			_connected = connected ?? throw new ArgumentNullException(nameof(connected));
 			_disconnected = disconnected ?? throw new ArgumentNullException(nameof(disconnected));
@@ -59,28 +84,6 @@
 			_infoLog = infoLog ?? throw new ArgumentNullException(nameof(infoLog));
 			_errorLog = errorLog ?? throw new ArgumentNullException(nameof(errorLog));
 			_verboseLog = verbose ?? throw new ArgumentNullException(nameof(verbose));
-			_verbose2Log = verbose2 ?? throw new ArgumentNullException(nameof(verbose2));
-		}
-
-		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<byte[], int, int> process,
-			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
-			: this(connected, disconnected, error, (c, b, s, o) => process(b, s, o), infoLog, errorLog, verbose, verbose2)
-		{
-			if (process == null)
-				throw new ArgumentNullException(nameof(process));
-		}
-
-		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<WebSocketClient, byte[], int, int> process,
-			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
-		{
-			_connected = connected ?? throw new ArgumentNullException(nameof(connected));
-			_disconnected = disconnected ?? throw new ArgumentNullException(nameof(disconnected));
-			_error = error ?? throw new ArgumentNullException(nameof(error));
-			_process2 = process ?? throw new ArgumentNullException(nameof(process));
-			_infoLog = infoLog ?? throw new ArgumentNullException(nameof(infoLog));
-			_errorLog = errorLog ?? throw new ArgumentNullException(nameof(errorLog));
-			_verboseLog = verbose ?? throw new ArgumentNullException(nameof(verbose));
-			_verbose2Log = verbose2 ?? throw new ArgumentNullException(nameof(verbose2));
 		}
 
 		private TimeSpan _resendInterval = TimeSpan.FromSeconds(2);
@@ -175,34 +178,20 @@
 						string recv = null;
 						var pos2 = pos;
 
+						pos = 0;
+
 						try
 						{
-							if (_process != null)
+							var preProcess = PreProcess;
+
+							if (preProcess != null)
 							{
-								var preProcess = PreProcess;
-
-								if (preProcess != null)
-								{
-									var t = preProcess(buf, pos);
-									buf = t.Item1;
-									pos = t.Item2;
-								}
-							
-								recv = Encoding.UTF8.GetString(buf, 0, pos);
-								_verbose2Log(recv);
+								var t = preProcess(buf, pos);
+								buf = t.Item1;
+								pos2 = t.Item2;
 							}
-						}
-						finally
-						{
-							pos = 0;
-						}
 
-						try
-						{
-							if (_process != null)
-								_process(this, recv);
-							else
-								_process2(this, buf, 0, pos2);
+							_process(this, buf, 0, pos2);
 
 							errorCount = 0;
 						}
