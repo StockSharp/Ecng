@@ -102,7 +102,7 @@
 
 		public bool AutoResend { get; set; }
 
-		public event Func<byte[], int, Tuple<byte[], int>> PreProcess;
+		public event Func<byte[], int, int, byte[], int> PreProcess;
 
 		public void Connect(string url, bool immediateConnect, Action<ClientWebSocket2> init = null)
 		{
@@ -138,6 +138,7 @@
 			try
 			{
 				var buf = new byte[1024 * 1024];
+				var buf2 = new byte[1024 * 1024];
 				var pos = 0;
 
 				var errorCount = 0;
@@ -176,7 +177,7 @@
 							continue;
 
 						string recv = null;
-						var pos2 = pos;
+						var count = pos;
 
 						pos = 0;
 
@@ -186,12 +187,11 @@
 
 							if (preProcess != null)
 							{
-								var t = preProcess(buf, pos);
-								buf = t.Item1;
-								pos2 = t.Item2;
+								count = preProcess(buf, 0, count, buf2);
+								buf = buf2;
 							}
 
-							_process(this, buf, 0, pos2);
+							_process(this, buf, 0, count);
 
 							errorCount = 0;
 						}
