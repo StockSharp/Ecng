@@ -30,6 +30,13 @@
 			}
 		}
 
+		public static int CopyToBuffer(this Stream stream, byte[] destination)
+		{
+			var output = new MemoryStream(destination);
+			stream.CopyTo(output);
+			return (int)output.Position;
+		}
+
 		public static string StreamToString(this Stream stream)
 		{
 			return stream.StreamToString(Encoding.UTF8);
@@ -55,6 +62,12 @@
 				return zip.StreamToString();
 		}
 
+		public static int UnGZip(this byte[] archive, int index, int count, byte[] destination)
+		{
+			using (var zip = new GZipStream(new MemoryStream(archive, index, count), CompressionMode.Decompress))
+				return zip.CopyToBuffer(destination);
+		}
+
 		public static string UnDeflate(this byte[] archive)
 		{
 			if (archive == null)
@@ -67,6 +80,12 @@
 		{
 			using (var deflate = new DeflateStream(new MemoryStream(archive, index, count), CompressionMode.Decompress))
 				return deflate.StreamToString();
+		}
+
+		public static int UnDeflate(this byte[] archive, int index, int count, byte[] destination)
+		{
+			using (var deflate = new DeflateStream(new MemoryStream(archive, index, count), CompressionMode.Decompress))
+				return deflate.CopyToBuffer(destination);
 		}
 	}
 }
