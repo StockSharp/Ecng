@@ -32,7 +32,7 @@ namespace Ecng.Net
 
 			try
 			{
-				var value = reader.Value.To<long?>();
+				var value = reader.Value.To<double?>();
 
 				if (value == null)
 					return null;
@@ -45,7 +45,7 @@ namespace Ecng.Net
 			}
 		}
 
-		protected virtual DateTime Convert(long value)
+		protected virtual DateTime Convert(double value)
 		{
 			return value.FromUnix(_isSeconds);
 		}
@@ -71,9 +71,9 @@ namespace Ecng.Net
 		{
 		}
 
-		protected override DateTime Convert(long value)
+		protected override DateTime Convert(double value)
 		{
-			return TimeHelper.GregorianStart.AddMicroseconds(value);
+			return TimeHelper.GregorianStart.AddMicroseconds((long)value);
 		}
 	}
 
@@ -84,9 +84,9 @@ namespace Ecng.Net
 		{
 		}
 
-		protected override DateTime Convert(long value)
+		protected override DateTime Convert(double value)
 		{
-			return TimeHelper.GregorianStart.AddNanoseconds(value);
+			return TimeHelper.GregorianStart.AddNanoseconds((long)value);
 		}
 	}
 }
