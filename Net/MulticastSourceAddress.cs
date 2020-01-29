@@ -55,11 +55,18 @@ namespace Ecng.Net
 			}
 		}
 
+		/// <summary>
+		/// Is configuration enabled.
+		/// </summary>
+		[Display(Name = "Enabled", Description = "Is configuration enabled.", Order = 3)]
+		public bool IsEnabled { get; set; } = true;
+
 		public void Load(SettingsStorage storage)
 		{
 			SourceAddress = storage.GetValue<IPAddress>(nameof(SourceAddress));
 			Port = storage.GetValue<int>(nameof(Port));
 			GroupAddress = storage.GetValue<IPAddress>(nameof(GroupAddress));
+			IsEnabled = storage.GetValue(nameof(IsEnabled), IsEnabled);
 		}
 
 		public void Save(SettingsStorage storage)
@@ -67,6 +74,7 @@ namespace Ecng.Net
 			storage.SetValue(nameof(SourceAddress), SourceAddress.To<string>());
 			storage.SetValue(nameof(Port), Port);
 			storage.SetValue(nameof(GroupAddress), GroupAddress.To<string>());
+			storage.SetValue(nameof(IsEnabled), IsEnabled);
 		}
 
 		public override string ToString()
