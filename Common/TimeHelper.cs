@@ -309,7 +309,10 @@
 		public static readonly TimeZoneInfo Cst = "Central Standard Time".To<TimeZoneInfo>();
 		public static readonly TimeZoneInfo Moscow = "Russian Standard Time".To<TimeZoneInfo>();
 		public static readonly TimeZoneInfo Gmt = "GMT Standard Time".To<TimeZoneInfo>();
-		public static readonly TimeZoneInfo Kiev = "FLE Standard Time".To<TimeZoneInfo>();
+		public static readonly TimeZoneInfo Fle = "FLE Standard Time".To<TimeZoneInfo>();
+		public static readonly TimeZoneInfo China = "China Standard Time".To<TimeZoneInfo>();
+		public static readonly TimeZoneInfo Korea = "Korea Standard Time".To<TimeZoneInfo>();
+		public static readonly TimeZoneInfo Tokyo = "Tokyo Standard Time".To<TimeZoneInfo>();
 
 		public static DateTime To(this DateTime time, TimeZoneInfo source = null, TimeZoneInfo destination = null)
 		{
