@@ -175,6 +175,14 @@ namespace Ecng.Net
 			return ssl;
 		}
 
+		public static void Connect(this TcpClient client, EndPoint address)
+		{
+			if (client == null)
+				throw new ArgumentNullException(nameof(client));
+
+			client.Connect(address.GetHost(), address.GetPort());
+		}
+
 		public static T DeserializeObject<T>(this string content)
 		{
 			return (T)content.DeserializeObject(typeof(T));
