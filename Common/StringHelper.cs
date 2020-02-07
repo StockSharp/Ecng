@@ -983,5 +983,53 @@
 
 		public static string ToString(this char[] arr, int count, int index = 0)
 			=> count == 0 ? string.Empty : new string(arr, index, count);
+
+		public static string ToBitString(this byte[] buffer, int? index = null, int? count = null, char separator = ' ')
+		{
+			if (buffer == null)
+				throw new ArgumentNullException(nameof(buffer));
+
+			var offset = index ?? 0;
+			var len = count ?? buffer.Length;
+
+			if ((offset + len) > buffer.Length)
+				throw new ArgumentOutOfRangeException(nameof(index));
+
+			if (offset == len)
+				return string.Empty;
+
+			var builder = new StringBuilder();
+
+			for (var i = 0; i < len; i++)
+			{
+				var bits = Convert.ToString(buffer[i + offset] & 0xFF, 2).PadLeft(8, '0');
+
+				builder.Append(bits).Append(separator);
+			}
+
+			if (builder.Length > 0)
+				builder.Remove(builder.Length - 1, 1);
+
+			return builder.ToString();
+		}
+
+		public static byte[] ToByteArray(this string bitString, char separator = ' ')
+		{
+			if (bitString == null)
+				throw new ArgumentNullException(nameof(bitString));
+
+			if (bitString.Length == 0)
+				return ArrayHelper.Empty<byte>();
+
+			var bitStrings = bitString.Split(separator);
+			var bytes = new byte[bitStrings.Length];
+
+			for (var i = 0; i < bitStrings.Length; i++)
+			{
+				bytes[i] = (byte)Convert.ToInt32(bitStrings[i], 2);
+			}
+
+			return bytes;
+		}
 	}
 }
