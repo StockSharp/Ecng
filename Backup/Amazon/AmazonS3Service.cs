@@ -122,53 +122,7 @@ namespace Ecng.Backup.Amazon
 			_client.DeleteObject(_bucket, GetKey(entry));
 		}
 
-		// TODO make async
-
-		public CancellationTokenSource Download(BackupEntry entry, byte[] buffer, long start, int length, Action<int> progress)
-		{
-			if (entry == null)
-				throw new ArgumentNullException(nameof(entry));
-
-			if (buffer == null)
-				throw new ArgumentNullException(nameof(buffer));
-
-			if (progress == null)
-				throw new ArgumentNullException(nameof(progress));
-
-			var source = new CancellationTokenSource();
-
-			var key = GetKey(entry);
-
-			var request = new GetObjectRequest
-			{
-				BucketName = _bucket,
-				Key = key,
-				ByteRange = new ByteRange(start, start + length)
-			};
-
-			var bytes = new byte[_bufferSize];
-			var readTotal = 0L;
-
-			using (var response = _client.GetObject(request))
-			using (var responseStream = response.ResponseStream)
-			{
-				response.WriteObjectProgressEvent += (s, a) => progress(a.PercentDone);
-
-				while (readTotal < response.ContentLength)
-				{
-					var len = (int)(response.ContentLength - readTotal).Min(bytes.Length);
-
-					responseStream.ReadBytes(bytes, len);
-					bytes.CopyTo(buffer, readTotal);
-
-					readTotal += len;
-				}
-			}
-
-			return source;
-		}
-
-		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, Action<int> progress)
+		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress)
 		{
 			if (entry == null)
 				throw new ArgumentNullException(nameof(entry));
@@ -189,6 +143,14 @@ namespace Ecng.Backup.Amazon
 				Key = key,
 			};
 
+			if (offset != null || length != null)
+			{
+				if (offset == null || length == null)
+					throw new NotSupportedException();
+
+				request.ByteRange = new ByteRange(offset.Value, offset.Value + length.Value);
+			}
+
 			var bytes = new byte[_bufferSize];
 			var readTotal = 0L;
 
@@ -202,7 +164,7 @@ namespace Ecng.Backup.Amazon
 					var len = (int)(response.ContentLength - readTotal).Min(bytes.Length);
 
 					responseStream.ReadBytes(bytes, len);
-					stream.Write(bytes, 0, len);
+					stream.Write(bytes, (int)readTotal, len);
 
 					readTotal += len;
 				}
@@ -333,9 +295,7 @@ namespace Ecng.Backup.Amazon
 			return entities.Last();
 		}
 
-		/// <summary>
-		/// Disposes the managed resources.
-		/// </summary>
+		/// <inheritdoc />
 		protected override void DisposeManaged()
 		{
 			_client.Dispose();

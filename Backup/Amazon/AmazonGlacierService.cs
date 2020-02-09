@@ -86,12 +86,7 @@ namespace Ecng.Backup.Amazon
 			throw new NotImplementedException();
 		}
 
-		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, Action<int> progress)
-		{
-			throw new NotImplementedException();
-		}
-
-		public CancellationTokenSource Download(BackupEntry entry, byte[] buffer, long start, int length, Action<int> progress)
+		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress)
 		{
 			throw new NotImplementedException();
 		}

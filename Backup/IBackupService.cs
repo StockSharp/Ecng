@@ -61,21 +61,12 @@ namespace Ecng.Backup
 		/// Save file.
 		/// </summary>
 		/// <param name="entry">Element.</param>
-		/// <param name="stream">The stream of the open file that will be saved to the service.</param>
-		/// <param name="progress">Progress notification.</param>
-		/// <returns>Cancellation token.</returns>
-		CancellationTokenSource Download(BackupEntry entry, Stream stream, Action<int> progress);
-
-		/// <summary>
-		/// Save file.
-		/// </summary>
-		/// <param name="entry">Element.</param>
-		/// <param name="buffer"></param>
+		/// <param name="stream"></param>
+		/// <param name="offset"></param>
 		/// <param name="length"></param>
 		/// <param name="progress">Progress notification.</param>
-		/// <param name="start"></param>
 		/// <returns>Cancellation token.</returns>
-		CancellationTokenSource Download(BackupEntry entry, byte[] buffer, long start, int length, Action<int> progress);
+		CancellationTokenSource Download(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress);
 
 		/// <summary>
 		/// Upload file.

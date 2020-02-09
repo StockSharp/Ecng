@@ -167,7 +167,7 @@ namespace Ecng.Backup.Yandex
 			}, out _);
 		}
 
-		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, Action<int> progress)
+		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress)
 		{
 			if (entry == null)
 				throw new ArgumentNullException(nameof(entry));
@@ -177,6 +177,9 @@ namespace Ecng.Backup.Yandex
 
 			if (progress == null)
 				throw new ArgumentNullException(nameof(progress));
+
+			if (offset != null || length != null)
+				throw new NotSupportedException();
 
 			var source = new CancellationTokenSource();
 			var path = GetPath(entry);
@@ -216,11 +219,6 @@ namespace Ecng.Backup.Yandex
 				source.Cancel();
 
 			return source;
-		}
-
-		public CancellationTokenSource Download(BackupEntry entry, byte[] buffer, long start, int length, Action<int> progress)
-		{
-			throw new NotSupportedException();
 		}
 
 		CancellationTokenSource IBackupService.Upload(BackupEntry entry, Stream stream, Action<int> progress)
