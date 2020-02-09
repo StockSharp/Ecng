@@ -8,6 +8,8 @@
 
 	public static class OctoDiffExtensions
 	{
+		private static readonly IProgressReporter _nullReporter = new NullProgressReporter();
+
 		public static byte[] CreateSignature(this byte[] file)
 		{
 			if (file == null)
@@ -39,7 +41,7 @@
 			using (var signatureFileStream = new MemoryStream(signature))
 			using (var deltaStream = new MemoryStream())
 			{
-				deltaBuilder.BuildDelta(newFileStream, new SignatureReader(signatureFileStream, new ConsoleProgressReporter()), new AggregateCopyOperationsDecorator(new BinaryDeltaWriter(deltaStream)));
+				deltaBuilder.BuildDelta(newFileStream, new SignatureReader(signatureFileStream, _nullReporter), new AggregateCopyOperationsDecorator(new BinaryDeltaWriter(deltaStream)));
 				deltaStream.Position = 0;
 				var result = deltaStream.ToArray();
 				return result;
@@ -60,7 +62,7 @@
 			using (var deltaStream = new MemoryStream(delta))
 			using (var newFileStream = new MemoryStream())
 			{
-				deltaApplier.Apply(basisStream, new BinaryDeltaReader(deltaStream, new ConsoleProgressReporter()), newFileStream);
+				deltaApplier.Apply(basisStream, new BinaryDeltaReader(deltaStream, _nullReporter), newFileStream);
 				newFileStream.Position = 0;
 				var result = newFileStream.ToArray();
 				return result;
