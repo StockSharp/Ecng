@@ -87,5 +87,33 @@
 			using (var deflate = new DeflateStream(new MemoryStream(archive, index, count), CompressionMode.Decompress))
 				return deflate.CopyToBuffer(destination);
 		}
+
+		public static byte[] DeflateTo(this byte[] content)
+		{
+			if (content == null)
+				throw new ArgumentNullException(nameof(content));
+
+			using (var output = new MemoryStream())
+			{
+				using (var deflate = new DeflateStream(output, CompressionMode.Compress, true))
+					deflate.Write(content, 0, content.Length);
+
+				return output.To<byte[]>();
+			}
+		}
+
+		public static byte[] DeflateFrom(this byte[] content)
+		{
+			if (content == null)
+				throw new ArgumentNullException(nameof(content));
+
+			using (var output = new MemoryStream())
+			{
+				using (var deflate = new DeflateStream(new MemoryStream(content), CompressionMode.Decompress))
+					deflate.CopyTo(output);
+
+				return output.To<byte[]>();
+			}
+		}
 	}
 }
