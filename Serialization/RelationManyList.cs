@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.ComponentModel;
+	using System.Data;
 	using System.Linq;
 
 	using Ecng.Common;
@@ -54,7 +55,7 @@
 					return _temporaryBuffer.ElementAt(++_posInBuffer);
 
 				canProcess = false;
-				return default(TEntity);
+				return default;
 			}
 		}
 
@@ -67,10 +68,7 @@
 
 		protected RelationManyList(IStorage storage)
 		{
-			if (storage == null)
-				throw new ArgumentNullException(nameof(storage));
-
-			Storage = storage;
+			Storage = storage ?? throw new ArgumentNullException(nameof(storage));
 			Storage.Added += value => DoIf<TEntity>(value, entity =>
 			{
 				if (_cache.Remove(entity))
@@ -195,6 +193,9 @@
 
 		public virtual void Update(TEntity entity)
 		{
+			if (IsReadOnly)
+				throw new ReadOnlyException();
+
 			if (BulkLoad && _bulkInitialized)
 			{
 				var id = GetCacheId(entity);
@@ -276,7 +277,7 @@
 				if (BulkLoad)
 				{
 					if (!_bulkInitialized)
-						GetRange(0, 1 /* passed count's value will be ingored and set into OnGetCount() */);
+						GetRange(0, 1 /* passed count's value will be ignored and set into OnGetCount() */);
 
 					return CachedEntities.Count;
 				}
@@ -297,6 +298,12 @@
 
 		public override void Add(TEntity item)
 		{
+			if (IsReadOnly)
+				throw new ReadOnlyException();
+
+			if (item == null)
+				throw new ArgumentNullException(nameof(item));
+
 			Adding?.Invoke(item);
 
 			ThrowIfStorageNull();
@@ -326,6 +333,9 @@
 
 		public override void Clear()
 		{
+			if (IsReadOnly)
+				throw new ReadOnlyException();
+
 			Clearing?.Invoke();
 
 			_cache.Clear();
@@ -356,6 +366,9 @@
 
 		public override bool Remove(TEntity item)
 		{
+			if (IsReadOnly)
+				throw new ReadOnlyException();
+
 			Removing?.Invoke(item);
 
 			//ThrowExceptionIfReadOnly();
@@ -502,7 +515,7 @@
 		public TEntity Read(SerializationItem by)
 		{
 			if (by == null)
-				throw new ArgumentNullException(nameof(@by));
+				throw new ArgumentNullException(nameof(by));
 
 			return Read(new SerializationItemCollection { by });
 		}
