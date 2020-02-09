@@ -245,7 +245,7 @@ namespace Ecng.Logic.BusinessEntities
 
 		public override void Save(TEntity entity)
 		{
-			if (entity.Id == -1)
+			if (entity.IsNotSaved())
 				Add(entity);
 			else
 				Update(entity);

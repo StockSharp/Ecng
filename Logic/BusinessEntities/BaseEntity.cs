@@ -22,7 +22,7 @@ namespace Ecng.Logic.BusinessEntities
 	{
 		protected BaseEntity()
 		{
-			Id = -1;
+			Id = Extensions.DefaultId;
 			CreationDate = ModificationDate = DateTime.Now;
 		}
 
@@ -58,7 +58,7 @@ namespace Ecng.Logic.BusinessEntities
 
 		protected override bool OnEquals(BaseEntity other)
 		{
-			if (Id != -1)
+			if (!this.IsNotSaved())
 				return Id == other.Id;
 			else
 				return ReferenceEquals(this, other);

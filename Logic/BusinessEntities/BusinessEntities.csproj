@@ -71,6 +71,7 @@
     <Compile Include="AuditSchemas.cs" />
     <Compile Include="BaseEntity.cs" />
     <Compile Include="BaseEntityList.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="LogicDatabase.cs" />
     <Compile Include="LogicHelper.cs" />
     <Compile Include="LogicObjectModelDataSourceView.cs" />
