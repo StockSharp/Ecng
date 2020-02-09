@@ -210,5 +210,27 @@ namespace Ecng.Security
 				}
 			}
 		}
+
+		private static string Hash(this byte[] value, HashAlgorithm algo)
+		{
+			if (value == null)
+				throw new ArgumentNullException(nameof(value));
+
+			if (algo == null)
+				throw new ArgumentNullException(nameof(algo));
+
+			using (algo)
+				return algo.ComputeHash(value).Digest();
+		}
+
+		public static string Md5(this byte[] value)
+		{
+			return Hash(value, MD5.Create());
+		}
+
+		public static string Sha256(this byte[] value)
+		{
+			return Hash(value, SHA256.Create());
+		}
 	}
 }
