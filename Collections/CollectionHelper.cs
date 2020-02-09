@@ -112,18 +112,23 @@
 			if (values == null)
 				throw new ArgumentNullException(nameof(values));
 
+			void InternalTryAdd()
+			{
+				foreach (var value in values)
+				{
+					if (!collection.Contains(value))
+						collection.Add(value);
+				}
+			}
+
 			if (collection is ISynchronizedCollection sync)
 			{
 				lock (sync.SyncRoot)
-				{
-					foreach (var value in values)
-						collection.TryAdd(value);
-				}
+					InternalTryAdd();
 			}
 			else
 			{
-				foreach (var value in values)
-					collection.TryAdd(value);
+				InternalTryAdd();
 			}
 		}
 
@@ -132,27 +137,22 @@
 			if (collection == null)
 				throw new ArgumentNullException(nameof(collection));
 
+			bool InternalTryAdd()
+			{
+				if (collection.Contains(value))
+					return false;
+
+				collection.Add(value);
+				return true;
+			}
+
 			if (collection is ISynchronizedCollection sync)
 			{
 				lock (sync.SyncRoot)
-				{
-					if (!collection.Contains(value))
-					{
-						collection.Add(value);
-						return true;
-					}
-				}
+					return InternalTryAdd();
 			}
-			else
-			{
-				if (!collection.Contains(value))
-				{
-					collection.Add(value);
-					return true;
-				}
-			}
-
-			return false;
+			
+			return InternalTryAdd();
 		}
 
 		public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue value)
@@ -160,27 +160,22 @@
 			if (dict == null)
 				throw new ArgumentNullException(nameof(dict));
 
+			bool InternalTryAdd()
+			{
+				if (dict.ContainsKey(key))
+					return false;
+
+				dict.Add(key, value);
+				return true;
+			}
+
 			if (dict is ISynchronizedCollection sync)
 			{
 				lock (sync.SyncRoot)
-				{
-					if (!dict.ContainsKey(key))
-					{
-						dict.Add(key, value);
-						return true;
-					}
-				}
-			}
-			else
-			{
-				if (!dict.ContainsKey(key))
-				{
-					dict.Add(key, value);
-					return true;
-				}
+					return InternalTryAdd();
 			}
 
-			return false;
+			return InternalTryAdd();
 		}
 
 		public static T ConcatEx<T, TItem>(this T first, T second)
@@ -285,42 +280,45 @@
 
 		public static TValue GetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
 		{
-			var value = dict[key];
-			dict.Remove(key);
-			return value;
+			TValue InternalGetAndRemove()
+			{
+				var value = dict[key];
+				dict.Remove(key);
+				return value;
+			}
+
+			if (dict is ISynchronizedCollection sync)
+			{
+				lock (sync.SyncRoot)
+					return InternalGetAndRemove();
+			}
+			
+			return InternalGetAndRemove();
 		}
 
 		public static TValue TryGetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
 		{
-			if (dict.TryGetAndRemove(key, out var value))
-				return value;
-
-			return default;
+			return dict.TryGetAndRemove(key, out var value) ? value : default;
 		}
 
 		public static bool TryGetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, out TValue value)
 		{
+			bool InternalTryGetAndRemove(out TValue value2)
+			{
+				if (!dict.TryGetValue(key, out value2))
+					return false;
+
+				dict.Remove(key);
+				return true;
+			}
+
 			if (dict is ISynchronizedCollection sync)
 			{
 				lock (sync.SyncRoot)
-				{
-					if (dict.TryGetValue(key, out value))
-					{
-						dict.Remove(key);
-						return true;
-					}
-				}
+					return InternalTryGetAndRemove(out value);
 			}
-			else
-			{
-				if (dict.TryGetValue(key, out value))
-				{
-					dict.Remove(key);
-					return true;
-				}
-			}
-
-			return false;
+			
+			return InternalTryGetAndRemove(out value);
 		}
 
 		public static T ElementAtFromEnd<T>(this IEnumerable<T> source, int index)
