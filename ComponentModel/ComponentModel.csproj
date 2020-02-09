@@ -104,6 +104,7 @@
     <Compile Include="RangeHelper.cs" />
     <Compile Include="RangeValidator.cs" />
     <Compile Include="Rectangle.cs" />
+    <Compile Include="ServerCredentials.cs" />
     <Compile Include="Size.cs" />
     <Compile Include="StringValidator.cs" />
     <Compile Include="TypeConverterHelper.cs" />
