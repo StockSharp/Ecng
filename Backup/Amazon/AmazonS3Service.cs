@@ -164,7 +164,7 @@ namespace Ecng.Backup.Amazon
 					var len = (int)(response.ContentLength - readTotal).Min(bytes.Length);
 
 					responseStream.ReadBytes(bytes, len);
-					stream.Write(bytes, (int)readTotal, len);
+					stream.Write(bytes, 0, len);
 
 					readTotal += len;
 				}
