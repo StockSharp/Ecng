@@ -71,10 +71,6 @@
     <Compile Include="RoslynCompilerService.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
-    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Collections\Collections.csproj">
       <Project>{62A4ADD9-9D89-48E6-984B-73BF023D7E50}</Project>
       <Name>Collections</Name>
