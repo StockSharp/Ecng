@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.Remoting.Messaging;
+using System.Threading;
 using SmartFormat.Core.Extensions;
 using SmartFormat.Core.Parsing;
 
@@ -92,15 +92,12 @@ namespace SmartFormat.Extensions
 			return false;
 		}
 
-		private static string key = "664c3d47-8d00-4825-b4fb-f3dd7c8a9bdf";
+		private static ThreadLocal<int?> _idx;
+
 		private static int CollectionIndex
 		{
-			get
-			{
-				object val = CallContext.LogicalGetData(key);
-				return val != null ? (int)val : -1;
-			}
-			set { CallContext.LogicalSetData(key, value); }
+			get => _idx.Value ?? -1;
+			set => _idx.Value = value;
 		}
 
 		public bool TryEvaluateFormat(IFormattingInfo formattingInfo)

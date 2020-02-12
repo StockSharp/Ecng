@@ -150,10 +150,14 @@ namespace Ecng.Common
 
 		public static bool IsWpfColor(this Type type)
 		{
+#if NETFRAMEWORK
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 
 			return type == typeof (System.Windows.Media.Color);
+#else
+			throw new PlatformNotSupportedException();
+#endif
 		}
 
 #if !SILVERLIGHT
