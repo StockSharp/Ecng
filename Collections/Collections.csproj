@@ -1,206 +1,25 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{62A4ADD9-9D89-48E6-984B-73BF023D7E50}</ProjectGuid>
-    <OutputType>Library</OutputType>
     <RootNamespace>Ecng.Collections</RootNamespace>
     <AssemblyName>Ecng.Collections</AssemblyName>
-    <WarningLevel>4</WarningLevel>
-    <SccProjectName>
-    </SccProjectName>
-    <SccLocalPath>
-    </SccLocalPath>
-    <SccAuxPath>
-    </SccAuxPath>
-    <SccProvider>
-    </SccProvider>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <UpgradeBackupLocation>
-    </UpgradeBackupLocation>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
+    <FileUpgradeFlags />
+    <UpgradeBackupLocation />
+    <TargetFrameworks>netcoreapp3.1;net40</TargetFrameworks>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>.\bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DocumentationFile>
-    </DocumentationFile>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugSymbols>false</DebugSymbols>
-    <Optimize>true</Optimize>
-    <OutputPath>.\bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data" />
-    <Reference Include="System.XML" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs">
-      <Link>Properties\EcngAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="BackwardComparer.cs" />
-    <Compile Include="BaseBlockingQueue.cs" />
-    <Compile Include="BaseEnumerator.cs" />
-    <Compile Include="BaseListEx.cs" />
-    <Compile Include="BaseCollection.cs" />
-    <Compile Include="BitArrayReader.cs" />
-    <Compile Include="BitArrayWriter.cs" />
-    <Compile Include="CachedSynchronizedList.cs" />
-    <Compile Include="CachedSynchronizedOrderedDictionary.cs" />
-    <Compile Include="CachedSynchronizedSet.cs" />
-    <Compile Include="CircularBuffer.cs" />
-    <Compile Include="BaseList.cs" />
-    <Compile Include="CollectionHelper.cs" />
-    <Compile Include="DuckTypedList.cs" />
-    <Compile Include="FixedSynchronizedDictionary.cs" />
-    <Compile Include="FixedSynchronizedList.cs" />
-    <Compile Include="IBlockingQueue.cs" />
-    <Compile Include="ICollectionEx.cs" />
-    <Compile Include="IEnumerableEx.cs" />
-    <Compile Include="IListEx.cs" />
-    <Compile Include="INotifyList.cs" />
-    <Compile Include="IRangeCollection.cs" />
-    <Compile Include="ISynchronizedCollection.cs" />
-    <Compile Include="KeyedCollection.cs" />
-    <Compile Include="BlockingQueue.cs" />
-    <Compile Include="ListEx.cs" />
-    <Compile Include="ModifiedEnumerable.cs" />
-    <Compile Include="MoreLinq\Acquire.cs" />
-    <Compile Include="MoreLinq\Assert.cs" />
-    <Compile Include="MoreLinq\AssertCount.cs" />
-    <Compile Include="MoreLinq\AtLeast.cs" />
-    <Compile Include="MoreLinq\Batch.cs" />
-    <Compile Include="MoreLinq\Cartesian.cs" />
-    <Compile Include="MoreLinq\Concat.cs" />
-    <Compile Include="MoreLinq\Consume.cs" />
-    <Compile Include="MoreLinq\CountBy.cs" />
-    <Compile Include="MoreLinq\DistinctBy.cs" />
-    <Compile Include="MoreLinq\EndsWith.cs" />
-    <Compile Include="MoreLinq\EquiZip.cs" />
-    <Compile Include="MoreLinq\ExceptBy.cs" />
-    <Compile Include="MoreLinq\Exclude.cs" />
-    <Compile Include="MoreLinq\FallbackIfEmpty.cs" />
-    <Compile Include="MoreLinq\Fold.cs" />
-    <Compile Include="MoreLinq\Fold.g.cs" />
-    <Compile Include="MoreLinq\ForEach.cs" />
-    <Compile Include="MoreLinq\FullGroupJoin.cs" />
-    <Compile Include="MoreLinq\Generate.cs" />
-    <Compile Include="MoreLinq\GenerateByIndex.cs" />
-    <Compile Include="MoreLinq\GroupAdjacent.cs" />
-    <Compile Include="MoreLinq\Incremental.cs" />
-    <Compile Include="MoreLinq\Index.cs" />
-    <Compile Include="MoreLinq\Interleave.cs" />
-    <Compile Include="MoreLinq\Lag.cs" />
-    <Compile Include="MoreLinq\Lead.cs" />
-    <Compile Include="MoreLinq\Lookup.cs" />
-    <Compile Include="MoreLinq\MaxBy.cs" />
-    <Compile Include="MoreLinq\MinBy.cs" />
-    <Compile Include="MoreLinq\MoreEnumerable.cs" />
-    <Compile Include="MoreLinq\NestedLoops.cs" />
-    <Compile Include="MoreLinq\OrderBy.cs" />
-    <Compile Include="MoreLinq\OrderByDirection.cs" />
-    <Compile Include="MoreLinq\OrderedMerge.cs" />
-    <Compile Include="MoreLinq\Pad.cs" />
-    <Compile Include="MoreLinq\Pairwise.cs" />
-    <Compile Include="MoreLinq\PartialSort.cs" />
-    <Compile Include="MoreLinq\Permutations.cs" />
-    <Compile Include="MoreLinq\Pipe.cs" />
-    <Compile Include="MoreLinq\Prepend.cs" />
-    <Compile Include="MoreLinq\PreScan.cs" />
-    <Compile Include="MoreLinq\Random.cs" />
-    <Compile Include="MoreLinq\RandomSubset.cs" />
-    <Compile Include="MoreLinq\Rank.cs" />
-    <Compile Include="MoreLinq\Repeat.cs" />
-    <Compile Include="MoreLinq\ReverseComparer.cs" />
-    <Compile Include="MoreLinq\RunLengthEncode.cs" />
-    <Compile Include="MoreLinq\Scan.cs" />
-    <Compile Include="MoreLinq\Segment.cs" />
-    <Compile Include="MoreLinq\SequenceException.cs" />
-    <Compile Include="MoreLinq\SingleOrFallback.cs" />
-    <Compile Include="MoreLinq\SkipUntil.cs" />
-    <Compile Include="MoreLinq\Slice.cs" />
-    <Compile Include="MoreLinq\SortedMerge.cs" />
-    <Compile Include="MoreLinq\Split.cs" />
-    <Compile Include="MoreLinq\StartsWith.cs" />
-    <Compile Include="MoreLinq\Subsets.cs" />
-    <Compile Include="MoreLinq\TagFirstLast.cs" />
-    <Compile Include="MoreLinq\TakeEvery.cs" />
-    <Compile Include="MoreLinq\TakeLast.cs" />
-    <Compile Include="MoreLinq\TakeUntil.cs" />
-    <Compile Include="MoreLinq\ToDataTable.cs" />
-    <Compile Include="MoreLinq\ToDelimitedString.cs" />
-    <Compile Include="MoreLinq\ToDelimitedString.g.cs" />
-    <Compile Include="MoreLinq\ToHashSet.cs" />
-    <Compile Include="MoreLinq\Trace.cs" />
-    <Compile Include="MoreLinq\Traverse.cs" />
-    <Compile Include="MoreLinq\Windowed.cs" />
-    <Compile Include="MoreLinq\Zip.stub.cs" />
-    <Compile Include="MoreLinq\ZipLongest.cs" />
-    <Compile Include="MoreLinq\ZipShortest.cs" />
-    <Compile Include="OrderedPriorityQueue.cs" />
-    <Compile Include="PowerCollections\Algorithms.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="PowerCollections\CollectionBase.cs" />
-    <Compile Include="PowerCollections\Comparers.cs" />
-    <Compile Include="PowerCollections\Deque.cs" />
-    <Compile Include="PowerCollections\DictionaryBase.cs" />
-    <Compile Include="PowerCollections\Hash.cs" />
-    <Compile Include="PowerCollections\ListBase.cs" />
-    <Compile Include="PowerCollections\MultiDictionary.cs" />
-    <Compile Include="PowerCollections\MultiDictionaryBase.cs" />
-    <Compile Include="PowerCollections\OrderedBag.cs" />
-    <Compile Include="PowerCollections\OrderedDictionary.cs" />
-    <Compile Include="PowerCollections\OrderedMultiDictionary.cs" />
-    <Compile Include="PowerCollections\ReadOnlyCollectionBase.cs" />
-    <Compile Include="PowerCollections\ReadOnlyListBase.cs" />
-    <Compile Include="PowerCollections\RedBlack.cs" />
-    <Compile Include="PowerCollections\Strings.cs" />
-    <Compile Include="PowerCollections\Util.cs" />
-    <Compile Include="PriorityQueue.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QueueEx.cs" />
-    <Compile Include="StackEx.cs" />
-    <Compile Include="StringSearch\ITrie.cs" />
-    <Compile Include="StringSearch\_PatriciaTrie\MatchKind.cs" />
-    <Compile Include="StringSearch\_PatriciaTrie\PatriciaSuffixTrie.cs" />
-    <Compile Include="StringSearch\_PatriciaTrie\PatriciaTrie.cs" />
-    <Compile Include="StringSearch\_PatriciaTrie\PatriciaTrieNode.cs" />
-    <Compile Include="StringSearch\_PatriciaTrie\SplitResult.cs" />
-    <Compile Include="StringSearch\_PatriciaTrie\StringPartition.cs" />
-    <Compile Include="StringSearch\_PatriciaTrie\ZipResult.cs" />
-    <Compile Include="StringSearch\_Trie\ConcurrentTrie.cs" />
-    <Compile Include="StringSearch\_Trie\ConcurrentTrieNode.cs" />
-    <Compile Include="StringSearch\_Trie\SuffixTrie.cs" />
-    <Compile Include="StringSearch\_Trie\Trie.cs" />
-    <Compile Include="StringSearch\_Trie\TrieNode.cs" />
-    <Compile Include="StringSearch\_Trie\TrieNodeBase.cs" />
-    <Compile Include="SwapArray.cs" />
-    <Compile Include="SynchronizedStack.cs" />
-    <Compile Include="WrappedList.cs" />
-    <EmbeddedResource Include="Properties\Resources.resx">
+    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
+    <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
@@ -208,48 +27,19 @@
     <None Include="..\Ecng.snk">
       <Link>Properties\Ecng.snk</Link>
     </None>
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <Compile Include="Properties\Resources.Designer.cs">
+    <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="PairSet.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-    <Compile Include="SimpleEnumerable.cs" />
-    <Compile Include="SimpleEnumerator.cs" />
-    <Compile Include="SynchronizedCollection.cs" />
-    <Compile Include="SynchronizedDictionary.cs" />
-    <Compile Include="CachedSynchronizedDictionary.cs" />
-    <Compile Include="SynchronizedKeyedCollection.cs" />
-    <Compile Include="SynchronizedLinkedList.cs" />
-    <Compile Include="SynchronizedList.cs" />
-    <Compile Include="SynchronizedMultiDictionary.cs" />
-    <Compile Include="SynchronizedOrderedDictionary.cs" />
-    <Compile Include="SynchronizedOrderedList.cs" />
-    <Compile Include="SynchronizedPairSet.cs" />
-    <Compile Include="SynchronizedQueue.cs" />
-    <Compile Include="SynchronizedSet.cs" />
-    <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
-      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-      <Name>Common</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+    <Compile Remove="BaseSynchronizedCollection.cs" />
+    <Compile Remove="MoreLinq\Fold.g1.cs" />
+    <Compile Remove="MoreLinq\ToDelimitedString.g1.cs" />
+    <Compile Remove="StringSearch\GlobalSuppressions.cs" />
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
 </Project>
