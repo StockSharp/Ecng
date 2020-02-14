@@ -1,15 +1,17 @@
 namespace Ecng.Security
 {
 	using System;
+	using System.Security;
+#if !NETCOREAPP
 	using System.ComponentModel;
 	using System.DirectoryServices;
 	using System.DirectoryServices.AccountManagement;
 	using System.Runtime.InteropServices;
-	using System.Security;
 	using System.Security.Principal;
 	using System.Threading;
 
 	using Ecng.Common;
+#endif
 
 	public enum LogonType
 	{
@@ -110,6 +112,7 @@ namespace Ecng.Security
 
 	public static class WindowsIdentityManager
 	{
+#if !NETCOREAPP
 		[DllImport("advapi32.dll", SetLastError = true)]
 		private static extern bool LogonUser(string lpszUsername, string lpszDomain, string lpszPassword, LogonType dwLogonType, LogonProvider dwLogonProvider, out IntPtr phToken);
 
@@ -118,6 +121,7 @@ namespace Ecng.Security
 
 		[DllImport("advapi32.dll", SetLastError = true)]
 		private static extern bool DuplicateToken(IntPtr existingTokenHandle, SecurityImpersonationLevel level, out IntPtr duplicateTokenHandle);
+#endif
 
 		public static void Login(string name, string password, Action action)
 		{
@@ -131,6 +135,9 @@ namespace Ecng.Security
 
 		public static void Login(string name, string domain, string password, LogonType logonType, Action action)
 		{
+#if NETCOREAPP
+			throw new PlatformNotSupportedException();
+#else
 			if (LogonUser(name, domain, password, logonType, LogonProvider.Default, out var token))
 			{
 				try
@@ -171,27 +178,39 @@ namespace Ecng.Security
 			}
 			else
 				throw new Win32Exception();
+#endif
 		}
 
 		public static bool Validate(string userName, SecureString password, string domain = null)
 		{
+#if NETCOREAPP
+			throw new PlatformNotSupportedException();
+#else
 			using (var context = new PrincipalContext(domain.IsEmpty() ? ContextType.Machine : ContextType.Domain, domain))
 				return context.ValidateCredentials(userName, password.UnSecure());
+#endif
 		}
 
 		// http://stackoverflow.com/a/642511
 		public static bool DeleteUser(string userName)
 		{
+#if NETCOREAPP
+			throw new PlatformNotSupportedException();
+#else
 			var localDirectory = new DirectoryEntry("WinNT://" + Environment.MachineName);
 			var users = localDirectory.Children;
 			var user = users.Find(userName);
 			users.Remove(user);
 			return true;
+#endif
 		}
 
 		// http://stackoverflow.com/a/6834015
 		public static bool CreateUser(string userName, SecureString password, string domain = null)
 		{
+#if NETCOREAPP
+			throw new PlatformNotSupportedException();
+#else
 			using (var context = new PrincipalContext(domain.IsEmpty() ? ContextType.Machine : ContextType.Domain, domain))
 			{
 				var oUserPrincipal = new UserPrincipal(context)
@@ -204,10 +223,14 @@ namespace Ecng.Security
 				oUserPrincipal.Save();
 				return true;
 			}
+#endif
 		}
 
 		public static bool ChangePassword(string userName, SecureString oldPassword, SecureString newPassword, string domain = null)
 		{
+#if NETCOREAPP
+			throw new PlatformNotSupportedException();
+#else
 			using (var context = new PrincipalContext(domain.IsEmpty() ? ContextType.Machine : ContextType.Domain, domain))
 			{
 				var user = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, userName);
@@ -218,6 +241,7 @@ namespace Ecng.Security
 				user.ChangePassword(oldPassword.UnSecure(), newPassword.UnSecure());
 				return true;
 			}
+#endif
 		}
 	}
 }
