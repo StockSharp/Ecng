@@ -4,7 +4,9 @@ namespace Ecng.Serialization
 	using System.Globalization;
 	using System.IO;
 	using System.Reflection;
+#if !NETCOREAPP
 	using System.ServiceModel.Syndication;
+#endif
 	using System.Xml;
 
 	using Ecng.Common;
@@ -18,7 +20,11 @@ namespace Ecng.Serialization
 
 		static XmlReaderEx()
 		{
+#if !NETCOREAPP
 			_dateFromString = typeof(Rss20FeedFormatter).GetMember<MethodInfo>("DateFromString");
+#else
+			throw new PlatformNotSupportedException();
+#endif
 		}
 
 		public XmlReaderEx(Stream s) : base(s) { }
