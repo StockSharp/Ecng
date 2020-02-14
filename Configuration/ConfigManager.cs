@@ -7,7 +7,9 @@
 	using System.Configuration;
 	using System.Diagnostics;
 	using System.Web;
+#if !NETCOREAPP
 	using System.Web.Configuration;
+#endif
 
 	using Ecng.Common;
 
@@ -46,11 +48,17 @@
 		static ConfigManager()
 		{
 #if !SILVERLIGHT
+
+#if NETCOREAPP
+			//http://csharp-tipsandtricks.blogspot.com/2010/01/identifying-whether-execution-context.html
+			InnerConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+#else
 			//http://csharp-tipsandtricks.blogspot.com/2010/01/identifying-whether-execution-context.html
 			InnerConfig = //Assembly.GetEntryAssembly() != null
 						HttpRuntime.AppDomainId == null
 				? ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None)
 				: WebConfigurationManager.OpenWebConfiguration(HttpRuntime.AppDomainAppVirtualPath);
+#endif
 
 			Trace.WriteLine("ConfigManager FilePath=" + InnerConfig.FilePath);
 
