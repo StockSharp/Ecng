@@ -155,6 +155,7 @@
 			return InternalTryAdd();
 		}
 
+#if !NETCOREAPP
 		public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue value)
 		{
 			if (dict == null)
@@ -177,6 +178,7 @@
 
 			return InternalTryAdd();
 		}
+#endif
 
 		public static T ConcatEx<T, TItem>(this T first, T second)
 			where T : ICollection<TItem>, new()
