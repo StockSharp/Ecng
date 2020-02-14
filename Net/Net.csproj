@@ -168,10 +168,6 @@
       <Project>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</Project>
       <Name>Serialization</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Web\Web.csproj">
-      <Project>{125B0185-1FE3-407B-A14C-AD5046A6B68C}</Project>
-      <Name>Web</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Ecng.snk">

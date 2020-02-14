@@ -134,6 +134,7 @@
     <Compile Include="HtmlAgilityPack\Utilities.cs" />
     <Compile Include="IWebRoleCollection.cs" />
     <Compile Include="IWebUserCollection.cs" />
+    <Compile Include="MailHelper.cs" />
     <Compile Include="Sitemap\SitemapFrequency.cs" />
     <Compile Include="Sitemap\SitemapGenerator.cs" />
     <Compile Include="Sitemap\SitemapNode.cs" />
