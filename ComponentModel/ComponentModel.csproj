@@ -1,141 +1,44 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Ecng.ComponentModel</RootNamespace>
     <AssemblyName>Ecng.ComponentModel</AssemblyName>
-    <SccProjectName>
-    </SccProjectName>
-    <SccLocalPath>
-    </SccLocalPath>
-    <SccAuxPath>
-    </SccAuxPath>
-    <SccProvider>
-    </SccProvider>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <UpgradeBackupLocation>
-    </UpgradeBackupLocation>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
+    <FileUpgradeFlags />
+    <UpgradeBackupLocation />
+    <TargetFrameworks>netcoreapp3.1;net40</TargetFrameworks>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <DocumentationFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.configuration" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.XML" />
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+    <Reference Include="System.ComponentModel.DataAnnotations"/>
+    <Reference Include="System.Configuration" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+    <PackageReference Include="System.ComponentModel.Annotations" Version="4.4"/>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs">
-      <Link>Properties\EcngAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="CommonTypeConverter.cs" />
-    <Compile Include="BaseValidator.cs" />
-    <Compile Include="CommonTypeConverterNamesAttribute.cs" />
-    <Compile Include="ComparisonOperator.cs" />
-    <Compile Include="CompressedData.cs" />
-    <Compile Include="CompressedDataRange.cs" />
-    <Compile Include="DocAttribute.cs" />
-    <Compile Include="EntityProperty.cs" />
-    <Compile Include="EntityPropertyHelper.cs" />
-    <Compile Include="EnumDisplayNameAttribute.cs" />
-    <Compile Include="EventDispatcher.cs" />
-    <Compile Include="EventsContainer.cs" />
-    <Compile Include="Expressions\ExpressionFormula.cs" />
-    <Compile Include="Expressions\ExpressionHelper.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="FileSizeFormatProvider.cs" />
-    <Compile Include="Circle.cs" />
-    <Compile Include="GreaterThanZeroAttribute.cs" />
-    <Compile Include="IconAttribute.cs" />
-    <Compile Include="INotifyPropertiesChanged.cs" />
-    <Compile Include="INotifyPropertyChangedEx.cs" />
-    <Compile Include="IOperable.cs" />
-    <Compile Include="LazyHelper.cs" />
-    <Compile Include="Line.cs" />
-    <Compile Include="NotifiableObject.cs" />
-    <Compile Include="Observable.cs" />
-    <Compile Include="IOperator.cs" />
-    <Compile Include="LengthValidator.cs" />
-    <Compile Include="NotNullValidator.cs" />
-    <Compile Include="OperatorRegistry.cs" />
-    <Compile Include="Point.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ProviderInitializer.cs" />
-    <Compile Include="Range.cs" />
-    <Compile Include="RangeHelper.cs" />
-    <Compile Include="RangeValidator.cs" />
-    <Compile Include="Rectangle.cs" />
-    <Compile Include="ServerCredentials.cs" />
-    <Compile Include="Size.cs" />
-    <Compile Include="StringValidator.cs" />
-    <Compile Include="TypeConverterHelper.cs" />
-    <Compile Include="VectorIconAttribute.cs" />
+    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj">
-      <Project>{62A4ADD9-9D89-48E6-984B-73BF023D7E50}</Project>
-      <Name>Collections</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Localization\Localization.csproj">
-      <Project>{5ec44477-9e8c-4425-8f3a-6648d0c38b9d}</Project>
-      <Name>Localization</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Reflection\Reflection.csproj">
-      <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
-      <Name>Reflection</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Serialization\Serialization.csproj">
-      <Project>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</Project>
-      <Name>Serialization</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\Collections\Collections.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\Localization\Localization.csproj" />
+    <ProjectReference Include="..\Reflection\Reflection.csproj" />
+    <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Ecng.snk">
       <Link>Properties\Ecng.snk</Link>
     </None>
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
