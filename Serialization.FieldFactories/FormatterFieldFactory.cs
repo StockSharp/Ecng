@@ -4,7 +4,9 @@ namespace Ecng.Serialization
 	using System.IO;
 	using System.Runtime.Serialization;
 	using System.Runtime.Serialization.Formatters.Binary;
+#if !NETCOREAPP
 	using System.Runtime.Serialization.Formatters.Soap;
+#endif
 
 	using Ecng.Common;
 
@@ -60,6 +62,7 @@ namespace Ecng.Serialization
 		}
 	}
 
+#if !NETCOREAPP
 	public class XmlFormatterAttribute : FormatterAttribute
 	{
 		protected override Type GetFormatterType()
@@ -67,4 +70,5 @@ namespace Ecng.Serialization
 			return typeof(SoapFormatter);
 		}
 	}
+#endif
 }

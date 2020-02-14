@@ -68,6 +68,7 @@ namespace Ecng.Serialization
 		}
 	}
 
+#if !NETCOREAPP
 	public class NetContractAttribute : DataContractAttribute
 	{
 		protected override Type GetFactoryType(Field field)
@@ -80,4 +81,5 @@ namespace Ecng.Serialization
 			return new NetDataContractSerializer();
 		}
 	}
+#endif
 }
