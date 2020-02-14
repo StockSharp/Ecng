@@ -20,8 +20,12 @@
 
 		private static ModuleBuilder CreateModule(AssemblyName name, AssemblyBuilderAccess access, string dir)
 		{
+#if NETCOREAPP
+			throw new PlatformNotSupportedException();
+#else
 			var assembly = AppDomain.CurrentDomain.DefineDynamicAssembly(name, access, dir);
 			return assembly.DefineDynamicModule(name.Name);
+#endif
 		}
 
 		#endregion

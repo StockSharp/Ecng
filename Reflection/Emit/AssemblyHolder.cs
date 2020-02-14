@@ -85,7 +85,7 @@ namespace Ecng.Reflection.Emit
 				if (_assembly == null)
 				{
 					var access = 
-#if SILVERLIGHT
+#if SILVERLIGHT || NETCOREAPP
 						AssemblyBuilderAccess.Run;
 #else
 						NeedCache ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run;
@@ -106,10 +106,14 @@ namespace Ecng.Reflection.Emit
 
 							if (CompiledTypeCount > CompiledTypeLimit)
 							{
+#if NETCOREAPP
+								throw new PlatformNotSupportedException();
+#else
 								var builder = (AssemblyBuilder)_assembly.Builder.Assembly;
 								builder.Save(builder.GetName(false).Name);
 								_assembly = null;
 								CompiledTypeCount = 0;
+#endif
 							}
 						}
 					}
