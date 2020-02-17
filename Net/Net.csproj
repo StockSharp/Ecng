@@ -19,12 +19,10 @@
     <DebugType>none</DebugType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="MimeTypes" Version="1.1.0"/>
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\StockSharp (GitHub)\References\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.configuration" />
     <Reference Include="System.ServiceModel" />
@@ -32,7 +30,6 @@
     <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3"/>
     <PackageReference Include="NamedPipeServerStream.NetFrameworkVersion" Version="1.0.2"/>
   </ItemGroup>
   <ItemGroup>
