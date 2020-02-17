@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Net;
+#if NETFRAMEWORK
 using System.Runtime.InteropServices;
+#endif
 using System.Security;
 
 namespace xNet
@@ -18,9 +21,29 @@ namespace xNet
             INTERNET_CONNECTION_CONFIGURED = 0x40
         }
 
-
+#if NETFRAMEWORK
         [DllImport("wininet.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
         internal static extern bool InternetGetConnectedState(
             ref InternetConnectionState lpdwFlags, int dwReserved);
+#else
+        internal static bool InternetGetConnectedState(ref InternetConnectionState lpdwFlags, int dwReserved)
+        {
+            lpdwFlags = InternetConnectionState.INTERNET_CONNECTION_OFFLINE;
+
+            try
+            {
+                using var client = new WebClient();
+                using (client.OpenRead("http://google.com/generate_204"))
+                {
+                    lpdwFlags = InternetConnectionState.INTERNET_CONNECTION_LAN;
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+#endif
     }
 }

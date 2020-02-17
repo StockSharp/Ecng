@@ -30,7 +30,11 @@ namespace Ecng.Net.Transport
 
 			security.AddAccessRule(new PipeAccessRule(userName, PipeAccessRights.ReadWrite, AccessControlType.Allow));
 
+#if NETFRAMEWORK
 			_pipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.None, 0, 0, security);
+#else
+			_pipe = NamedPipeServerStreamConstructors.New(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.None, 0, 0, security);
+#endif
 
 			((Action)delegate
 			{
