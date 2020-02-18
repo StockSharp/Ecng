@@ -11,7 +11,10 @@
 	{
 		private static readonly SynchronizedList<DatabaseProvider> _providers = new SynchronizedList<DatabaseProvider>
 		{
-			new SqlServerDatabaseProvider(), new SQLiteDatabaseProvider(), new JetDatabaseProvider(),
+			new SqlServerDatabaseProvider(), new SQLiteDatabaseProvider()
+#if NETFRAMEWORK
+			, new JetDatabaseProvider(),
+#endif
 			//new PostgreSqlDatabaseProvider(), new FirebirdDatabaseProvider()
 		};
 
