@@ -127,6 +127,11 @@
 			return (enumSource.To<long>() & enumPart.To<long>()) == enumPart.To<long>();
 		}
 
+		public static bool TryParse<T>(this string str, out T value, bool ignoreCase = true)
+			where T : struct
+		{
+			return Enum.TryParse(str, ignoreCase, out value);
+		}
 
 		//
 		// https://stackoverflow.com/a/9276348
