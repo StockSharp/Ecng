@@ -1,350 +1,106 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{90A23E0C-3329-4459-BB97-21CD84E5418A}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Ecng.Xaml</RootNamespace>
     <AssemblyName>Ecng.Xaml</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <SccProjectName>
-    </SccProjectName>
-    <SccLocalPath>
-    </SccLocalPath>
-    <SccAuxPath>
-    </SccAuxPath>
-    <SccProvider>
-    </SccProvider>
+    <TargetFramework>net40</TargetFramework>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
+    <FileUpgradeFlags />
     <UpgradeBackupLocation />
-    <TargetFrameworkProfile />
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PresentationCore">
-      <RequiredTargetFramework>3.0</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="PresentationFramework">
-      <RequiredTargetFramework>3.0</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System.configuration" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data" />
     <Reference Include="System.Design" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Security" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="WindowsBase">
-      <RequiredTargetFramework>3.0</RequiredTargetFramework>
-    </Reference>
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs">
-      <Link>Properties\EcngAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="AddressComboBox.cs" />
-    <Compile Include="AutoRefreshCollectionViewSource.cs" />
-    <Compile Include="BaseObservableCollection.cs" />
-    <Compile Include="BindingProxy.cs" />
-    <Compile Include="BmpImage.cs" />
-    <Compile Include="Block.xaml.cs">
+    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
+    <Compile Update="Block.xaml.cs">
       <DependentUpon>Block.xaml</DependentUpon>
     </Compile>
-    <Compile Include="BusyIndicator.cs" />
-    <Compile Include="Converters\BoolToBrushConverter.cs" />
-    <Compile Include="Converters\BoolToImageConverter.cs" />
-    <Compile Include="Converters\BoolToOpacityConverter.cs" />
-    <Compile Include="Converters\BoolToStringConverter.cs" />
-    <Compile Include="Converters\BoolToVisibilityConverter.cs" />
-    <Compile Include="Converters\ColorToBrushConverter.cs" />
-    <Compile Include="Converters\CountryConverters.cs" />
-    <Compile Include="Converters\DataTimeConverter.cs" />
-    <Compile Include="Converters\DateTimeOffsetConverter.cs" />
-    <Compile Include="Converters\DictionaryConverter.cs" />
-    <Compile Include="Converters\EndPointConverter.cs" />
-    <Compile Include="Converters\EnumBooleanConverter.cs" />
-    <Compile Include="Converters\EnumDisplayNameConverter.cs" />
-    <Compile Include="Converters\FormattingConverter.cs" />
-    <Compile Include="Converters\IndexerConverter.cs" />
-    <Compile Include="Converters\InverseBooleanConverter.cs" />
-    <Compile Include="Converters\IpAddressConverter.cs" />
-    <Compile Include="Converters\LeftMarginMultiplierConverter.cs" />
-    <Compile Include="Converters\ListViewBackgroundConvertor.cs" />
-    <Compile Include="Converters\MultiBoolToOpacityConverter.cs" />
-    <Compile Include="Converters\NullImageConverter.cs" />
-    <Compile Include="Converters\NullToBoolConverter.cs" />
-    <Compile Include="Converters\NullToVisibilityConvertor.cs" />
-    <Compile Include="Converters\StringConverter.cs" />
-    <Compile Include="Converters\TimeSpanConverter.cs" />
-    <Compile Include="Converters\TimeSpanToDateTimeConverter.cs" />
-    <Compile Include="Converters\VisibilityToBoolConverter.cs" />
-    <Compile Include="CultureAwareBinding.cs" />
-    <Compile Include="DelegateCommand.cs" />
-    <Compile Include="ConvertibleObservableCollection.cs" />
-    <Compile Include="EditableTextBlock.cs" />
-    <Compile Include="EditableTextBlockAdorner.cs" />
-    <Compile Include="EncodingComboBox.cs" />
-    <Compile Include="EndPointComboBox.cs" />
-    <Compile Include="Fonts\FontChooser.xaml.cs">
+    <Compile Update="Fonts\FontChooser.xaml.cs">
       <DependentUpon>FontChooser.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Fonts\FontDialog.xaml.cs">
+    <Compile Update="Fonts\FontDialog.xaml.cs">
       <DependentUpon>FontDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Fonts\FontHelper.cs" />
-    <Compile Include="Fonts\FontInfo.cs" />
-    <Compile Include="EnumComboBox.cs" />
-    <Compile Include="FixedWidthColumn.cs" />
-    <Compile Include="GridViewRowPresenterWithGridLines.cs" />
-    <Compile Include="GridViewSort.cs" />
-    <Compile Include="GuiDispatcher.cs" />
-    <Compile Include="HeaderedSeparator.cs" />
-    <Compile Include="Doc.cs" />
-    <Compile Include="HighlightingTextBlock.xaml.cs">
+    <Compile Update="HighlightingTextBlock.xaml.cs">
       <DependentUpon>HighlightingTextBlock.xaml</DependentUpon>
     </Compile>
-    <Compile Include="HtmlRenderer\Adapters\Entities\RColor.cs" />
-    <Compile Include="HtmlRenderer\Adapters\Entities\RDashStyle.cs" />
-    <Compile Include="HtmlRenderer\Adapters\Entities\RFontStyle.cs" />
-    <Compile Include="HtmlRenderer\Adapters\Entities\RKeyEvent.cs" />
-    <Compile Include="HtmlRenderer\Adapters\Entities\RMouseEvent.cs" />
-    <Compile Include="HtmlRenderer\Adapters\Entities\RPoint.cs" />
-    <Compile Include="HtmlRenderer\Adapters\Entities\RRect.cs" />
-    <Compile Include="HtmlRenderer\Adapters\Entities\RSize.cs" />
-    <Compile Include="HtmlRenderer\Adapters\RAdapter.cs" />
-    <Compile Include="HtmlRenderer\Adapters\RBrush.cs" />
-    <Compile Include="HtmlRenderer\Adapters\RContextMenu.cs" />
-    <Compile Include="HtmlRenderer\Adapters\RControl.cs" />
-    <Compile Include="HtmlRenderer\Adapters\RFont.cs" />
-    <Compile Include="HtmlRenderer\Adapters\RFontFamily.cs" />
-    <Compile Include="HtmlRenderer\Adapters\RGraphics.cs" />
-    <Compile Include="HtmlRenderer\Adapters\RGraphicsPath.cs" />
-    <Compile Include="HtmlRenderer\Adapters\RImage.cs" />
-    <Compile Include="HtmlRenderer\Adapters\RPen.cs" />
-    <Compile Include="HtmlRenderer\Core\CssData.cs" />
-    <Compile Include="HtmlRenderer\Core\CssDefaults.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\Border.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssBox.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssBoxFrame.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssBoxHr.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssBoxImage.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssBoxProperties.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssLayoutEngine.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssLayoutEngineTable.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssLength.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssLineBox.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssRect.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssRectImage.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssRectWord.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssSpacingBox.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\CssUnit.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\HoverBoxBlock.cs" />
-    <Compile Include="HtmlRenderer\Core\Dom\HtmlTag.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\CssBlock.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\CssBlockSelectorItem.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\HtmlGenerationStyle.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\HtmlImageLoadEventArgs.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\HtmlLinkClickedEventArgs.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\HtmlLinkClickedException.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\HtmlRefreshEventArgs.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\HtmlRenderErrorEventArgs.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\HtmlRenderErrorType.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\HtmlScrollEventArgs.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\HtmlStylesheetLoadEventArgs.cs" />
-    <Compile Include="HtmlRenderer\Core\Entities\LinkElementData.cs" />
-    <Compile Include="HtmlRenderer\Core\Handlers\BackgroundImageDrawHandler.cs" />
-    <Compile Include="HtmlRenderer\Core\Handlers\BordersDrawHandler.cs" />
-    <Compile Include="HtmlRenderer\Core\Handlers\ContextMenuHandler.cs" />
-    <Compile Include="HtmlRenderer\Core\Handlers\FontsHandler.cs" />
-    <Compile Include="HtmlRenderer\Core\Handlers\ImageDownloader.cs" />
-    <Compile Include="HtmlRenderer\Core\Handlers\ImageLoadHandler.cs" />
-    <Compile Include="HtmlRenderer\Core\Handlers\SelectionHandler.cs" />
-    <Compile Include="HtmlRenderer\Core\Handlers\StylesheetLoadHandler.cs" />
-    <Compile Include="HtmlRenderer\Core\HtmlContainerInt.cs" />
-    <Compile Include="HtmlRenderer\Core\HtmlRendererUtils.cs" />
-    <Compile Include="HtmlRenderer\Core\Parse\CssParser.cs" />
-    <Compile Include="HtmlRenderer\Core\Parse\CssValueParser.cs" />
-    <Compile Include="HtmlRenderer\Core\Parse\DomParser.cs" />
-    <Compile Include="HtmlRenderer\Core\Parse\HtmlParser.cs" />
-    <Compile Include="HtmlRenderer\Core\Parse\RegexParserHelper.cs" />
-    <Compile Include="HtmlRenderer\Core\Parse\RegexParserUtils.cs" />
-    <Compile Include="HtmlRenderer\Core\Utils\ArgChecker.cs" />
-    <Compile Include="HtmlRenderer\Core\Utils\CommonUtils.cs" />
-    <Compile Include="HtmlRenderer\Core\Utils\CssConstants.cs" />
-    <Compile Include="HtmlRenderer\Core\Utils\CssUtils.cs" />
-    <Compile Include="HtmlRenderer\Core\Utils\DomUtils.cs" />
-    <Compile Include="HtmlRenderer\Core\Utils\HtmlConstants.cs" />
-    <Compile Include="HtmlRenderer\Core\Utils\HtmlUtils.cs" />
-    <Compile Include="HtmlRenderer\Core\Utils\RenderUtils.cs" />
-    <Compile Include="HtmlRenderer\Core\Utils\SubString.cs" />
-    <Compile Include="HyperlinkEx.cs" />
-    <Compile Include="IFormAdapter.cs" />
-    <Compile Include="InputWindow.xaml.cs">
+    <Compile Update="InputWindow.xaml.cs">
       <DependentUpon>InputWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="IpAddressEditor.xaml.cs">
+    <Compile Update="IpAddressEditor.xaml.cs">
       <DependentUpon>IpAddressEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="IWin32WindowEx.cs" />
-    <Compile Include="LoadingAnimation.xaml.cs">
+    <Compile Update="LoadingAnimation.xaml.cs">
       <DependentUpon>LoadingAnimation.xaml</DependentUpon>
     </Compile>
-    <Compile Include="MessageBoxBuilder.cs" />
-    <Compile Include="NonTopmostPopup.cs" />
-    <Compile Include="NumberRangeRule.cs" />
-    <Compile Include="ObservableCollectionEx.cs" />
-    <Compile Include="ObservableDictionary.cs" />
-    <Compile Include="ObservableHashSet.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\AnimationResource.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\ButtonType.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\ComCtlv6ActivationContext.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\CredentialDialog.cs">
+    <Compile Update="Ookii.Dialogs.Wpf\CredentialDialog.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Ookii.Dialogs.Wpf\CredentialDialog.designer.cs">
+    <Compile Update="Ookii.Dialogs.Wpf\CredentialDialog.designer.cs">
       <DependentUpon>CredentialDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="Ookii.Dialogs.Wpf\CredentialException.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\DownlevelTextMode.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\ExpandButtonClickedEventArgs.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\GlobalSuppressions.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\HyperlinkClickedEventArgs.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\Interop\ComDlgResources.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\Interop\COMGuids.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\Interop\ErrorHelper.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\Interop\IProgressDialog.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\Interop\ShellComInterfaces.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\Interop\ShellWrapperDefinitions.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\Interop\Win32Resources.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\NativeMethods.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\ProgressBarState.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\ProgressBarStyle.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\ProgressDialog.cs">
+    <Compile Update="Ookii.Dialogs.Wpf\ProgressDialog.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Ookii.Dialogs.Wpf\ProgressDialog.designer.cs">
+    <Compile Update="Ookii.Dialogs.Wpf\ProgressDialog.designer.cs">
       <DependentUpon>ProgressDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="Ookii.Dialogs.Wpf\SafeHandles.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\ShellAnimation.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\TaskDialog.cs">
+    <Compile Update="Ookii.Dialogs.Wpf\TaskDialog.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Ookii.Dialogs.Wpf\TaskDialog.designer.cs">
+    <Compile Update="Ookii.Dialogs.Wpf\TaskDialog.designer.cs">
       <DependentUpon>TaskDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="Ookii.Dialogs.Wpf\TaskDialogButton.cs">
+    <Compile Update="Ookii.Dialogs.Wpf\TaskDialogButton.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Ookii.Dialogs.Wpf\TaskDialogButtonStyle.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\TaskDialogDesigner.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\TaskDialogIcon.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\TaskDialogItem.cs">
+    <Compile Update="Ookii.Dialogs.Wpf\TaskDialogItem.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Ookii.Dialogs.Wpf\TaskDialogItem.designer.cs">
+    <Compile Update="Ookii.Dialogs.Wpf\TaskDialogItem.designer.cs">
       <DependentUpon>TaskDialogItem.cs</DependentUpon>
     </Compile>
-    <Compile Include="Ookii.Dialogs.Wpf\TaskDialogItemClickedEventArgs.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\TaskDialogItemCollection.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\TaskDialogRadioButton.cs">
+    <Compile Update="Ookii.Dialogs.Wpf\TaskDialogRadioButton.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Ookii.Dialogs.Wpf\TimerEventArgs.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\VistaFileDialog.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\VistaFileDialogEvents.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\VistaFolderBrowserDialog.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\VistaOpenFileDialog.cs" />
-    <Compile Include="Ookii.Dialogs.Wpf\VistaSaveFileDialog.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
+    <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="PropertyChangeNotifier.cs" />
-    <Compile Include="Proxy.cs" />
-    <Compile Include="ResizableContentControl.cs" />
-    <Compile Include="ResourseDictExtension.cs" />
-    <Compile Include="SecretPicker.xaml.cs">
+    <Compile Update="SecretPicker.xaml.cs">
       <DependentUpon>SecretPicker.xaml</DependentUpon>
     </Compile>
-    <Compile Include="StickyWindow.cs" />
-    <Compile Include="ThreadSafeObservableCollection.cs" />
-    <Compile Include="TimeSpanEditor.xaml.cs">
+    <Compile Update="TimeSpanEditor.xaml.cs">
       <DependentUpon>TimeSpanEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="TimeSpanEditorAttribute.cs" />
-    <Compile Include="TimeZoneComboBox.cs" />
-    <Compile Include="UniqueObservableCollection.cs" />
-    <Compile Include="ViewModelBase.cs" />
-    <Compile Include="WpfFormAdapter.cs" />
-    <Compile Include="XamlEventDispatcher.cs" />
-    <Compile Include="XamlHelper.cs" />
-    <Compile Include="XamlNativeHelper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj">
-      <Project>{62A4ADD9-9D89-48E6-984B-73BF023D7E50}</Project>
-      <Name>Collections</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
-      <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
-      <Name>ComponentModel</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Interop\Interop.csproj">
-      <Project>{6EACA7CE-0269-47A2-AE6A-3669738EE303}</Project>
-      <Name>Interop</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Localization\Localization.csproj">
-      <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
-      <Name>Localization</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Reflection\Reflection.csproj">
-      <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
-      <Name>Reflection</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Serialization\Serialization.csproj">
-      <Project>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</Project>
-      <Name>Serialization</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\Collections\Collections.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
+    <ProjectReference Include="..\Interop\Interop.csproj" />
+    <ProjectReference Include="..\Localization\Localization.csproj" />
+    <ProjectReference Include="..\Reflection\Reflection.csproj" />
+    <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="Block.xaml">
@@ -662,25 +418,13 @@
     <EmbeddedResource Include="Ookii.Dialogs.Wpf\VistaFolderBrowserDialog.bmp" />
     <EmbeddedResource Include="Ookii.Dialogs.Wpf\VistaOpenFileDialog.bmp" />
     <EmbeddedResource Include="Ookii.Dialogs.Wpf\VistaSaveFileDialog.bmp" />
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Ookii.Dialogs.Wpf\ProgressDialog.resx">
+    <EmbeddedResource Update="Ookii.Dialogs.Wpf\ProgressDialog.resx">
       <DependentUpon>ProgressDialog.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="..\Ecng.snk">
       <Link>Properties\Ecng.snk</Link>
     </None>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

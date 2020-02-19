@@ -292,6 +292,7 @@
 
 			Console.WriteLine(new Version(4, 3, 14, 0).Compare(new Version(4, 3, 14, 1)));
 
+			/*
 			return;
 			var compiler = Compiler.Create(CompilationLanguages.CSharp);
 			var res = compiler.Compile("test", @"
@@ -697,6 +698,8 @@ class TestCalc : ICalc
 			var db2 = ServiceLocator.Current.GetInstance<Database>();
 
 			Console.WriteLine(object.ReferenceEquals(db1, db2));
+
+			*/
 		}
 	}
 }

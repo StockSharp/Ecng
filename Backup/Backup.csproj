@@ -1,34 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Ecng.Backup</RootNamespace>
     <AssemblyName>Ecng.Backup</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <TargetFramework>net46</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AWSSDK.Core">
@@ -57,26 +39,12 @@
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs">
-      <Link>Properties\EcngAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="Amazon\AmazonExtensions.cs" />
-    <Compile Include="Amazon\AmazonGlacierService.cs" />
-    <Compile Include="Amazon\AmazonS3Service.cs" />
-    <Compile Include="Amazon\Xaml\AmazonRegionComboBox.cs" />
-    <Compile Include="Amazon\Xaml\AmazonRegionEditor.cs" />
-    <Compile Include="BackupEntry.cs" />
-    <Compile Include="IBackupService.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Yandex\Extensions.cs" />
-    <Compile Include="Yandex\YandexDiskService.cs" />
-    <Compile Include="Yandex\YandexLoginWindow.xaml.cs">
+    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
+    <Compile Update="Yandex\YandexLoginWindow.xaml.cs">
       <DependentUpon>YandexLoginWindow.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
@@ -87,37 +55,11 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{725d5260-8208-4a39-843a-6b58606ed73b}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
-      <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
-      <Name>ComponentModel</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Localization\Localization.csproj">
-      <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
-      <Name>Localization</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Serialization\Serialization.csproj">
-      <Project>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</Project>
-      <Name>Serialization</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Xaml.DevExpress\Xaml.DevExp.csproj">
-      <Project>{3160D0DB-5D8C-4CF6-987C-C242C3566BAA}</Project>
-      <Name>Xaml.DevExp</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Xaml\Xaml.csproj">
-      <Project>{90A23E0C-3329-4459-BB97-21CD84E5418A}</Project>
-      <Name>Xaml</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
+    <ProjectReference Include="..\Localization\Localization.csproj" />
+    <ProjectReference Include="..\Serialization\Serialization.csproj" />
+    <ProjectReference Include="..\Xaml.DevExpress\Xaml.DevExp.csproj" />
+    <ProjectReference Include="..\Xaml\Xaml.csproj" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

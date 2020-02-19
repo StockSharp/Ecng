@@ -1,49 +1,23 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{125B0185-1FE3-407B-A14C-AD5046A6B68C}</ProjectGuid>
-    <OutputType>Library</OutputType>
     <RootNamespace>Ecng.Web</RootNamespace>
     <AssemblyName>Ecng.Web</AssemblyName>
-    <WarningLevel>4</WarningLevel>
-    <SccProjectName>
-    </SccProjectName>
-    <SccLocalPath>
-    </SccLocalPath>
-    <SccAuxPath>
-    </SccAuxPath>
-    <SccProvider>
-    </SccProvider>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <UpgradeBackupLocation>
-    </UpgradeBackupLocation>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
+    <FileUpgradeFlags />
+    <UpgradeBackupLocation />
+    <TargetFramework>net40</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>.\bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX40</DefineConstants>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugSymbols>false</DebugSymbols>
-    <Optimize>true</Optimize>
-    <OutputPath>.\bin\Release\</OutputPath>
-    <DefineConstants>TRACE;FX40</DefineConstants>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AjaxControlToolkit">
@@ -52,122 +26,18 @@
     <Reference Include="RssToolkit">
       <HintPath>..\References\RssToolkit.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
     <Reference Include="System.configuration" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data" />
     <Reference Include="System.Design" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Security" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.ApplicationServices" />
-    <Reference Include="System.Web.Extensions, Version=3.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Program Files\Reference Assemblies\Microsoft\Framework\ASP.NET 3.5 Extensions\System.Web.Extensions.dll</HintPath>
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.XML" />
-    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs">
-      <Link>Properties\EcngAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="ApplicationDefaultValueAttribute.cs" />
-    <Compile Include="AspNetPath.cs" />
-    <Compile Include="BaseMembershipProvider.cs" />
-    <Compile Include="BaseRoleProvider.cs" />
-    <Compile Include="BBCodes\BBAttribute.cs" />
-    <Compile Include="BBCodes\BBCode.cs" />
-    <Compile Include="BBCodes\BBCodeParser.cs" />
-    <Compile Include="BBCodes\BBCodeParsingException.cs" />
-    <Compile Include="BBCodes\BBTag.cs" />
-    <Compile Include="BBCodes\SyntaxTree\SequenceNode.cs" />
-    <Compile Include="BBCodes\SyntaxTree\SyntaxTreeNode.cs" />
-    <Compile Include="BBCodes\SyntaxTree\SyntaxTreeNodeCollection.cs" />
-    <Compile Include="BBCodes\SyntaxTree\SyntaxTreeVisitor.cs" />
-    <Compile Include="BBCodes\SyntaxTree\TagNode.cs" />
-    <Compile Include="BBCodes\SyntaxTree\TextNode.cs" />
-    <Compile Include="Configuration\WebSection.cs" />
-    <Compile Include="HtmlAgilityPack\crc32.cs" />
-    <Compile Include="HtmlAgilityPack\EncodingFoundException.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlAttribute.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlAttributeCollection.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlCmdLine.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlCommentNode.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlConsoleListener.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlDocument.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlDocument.PathMethods.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlDocument.Xpath.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlElementFlag.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlEntity.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlNameTable.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlNode.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlNode.Encapsulator.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlNode.Xpath.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlNodeCollection.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlNodeNavigator.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlNodeType.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlParseError.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlParseErrorCode.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlTextNode.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlWeb.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlWeb.Xpath.cs" />
-    <Compile Include="HtmlAgilityPack\HtmlWebException.cs" />
-    <Compile Include="HtmlAgilityPack\InvalidProgramException.cs" />
-    <Compile Include="HtmlAgilityPack\IOLibrary.cs" />
-    <Compile Include="HtmlAgilityPack\Metro\HtmlWeb.cs" />
-    <Compile Include="HtmlAgilityPack\Metro\InvalidProgramException.cs" />
-    <Compile Include="HtmlAgilityPack\MixedCodeDocument.cs" />
-    <Compile Include="HtmlAgilityPack\MixedCodeDocumentCodeFragment.cs" />
-    <Compile Include="HtmlAgilityPack\MixedCodeDocumentFragment.cs" />
-    <Compile Include="HtmlAgilityPack\MixedCodeDocumentFragmentList.cs" />
-    <Compile Include="HtmlAgilityPack\MixedCodeDocumentFragmentType.cs" />
-    <Compile Include="HtmlAgilityPack\MixedCodeDocumentTextFragment.cs" />
-    <Compile Include="HtmlAgilityPack\NameValuePair.cs" />
-    <Compile Include="HtmlAgilityPack\NameValuePairList.cs" />
-    <Compile Include="HtmlAgilityPack\Trace.cs" />
-    <Compile Include="HtmlAgilityPack\Trace.FullFramework.cs" />
-    <Compile Include="HtmlAgilityPack\Utilities.cs" />
-    <Compile Include="IWebRoleCollection.cs" />
-    <Compile Include="IWebUserCollection.cs" />
-    <Compile Include="MailHelper.cs" />
-    <Compile Include="Sitemap\SitemapFrequency.cs" />
-    <Compile Include="Sitemap\SitemapGenerator.cs" />
-    <Compile Include="Sitemap\SitemapNode.cs" />
-    <Compile Include="UI\WebControls\BorderlessImage.cs" />
-    <Compile Include="UI\WebControls\DataPagerEx.cs" />
-    <Compile Include="Feeds\FeedHandler.cs" />
-    <Compile Include="HttpHelper.cs" />
-    <Compile Include="HttpRuntimeEx.cs" />
-    <Compile Include="HttpRuntimeShutdownException.cs" />
-    <Compile Include="IWebRole.cs" />
-    <Compile Include="IWebUser.cs" />
-    <Compile Include="MembershipUtil.cs" />
-    <Compile Include="Feeds\OpmlHandler.cs" />
-    <Compile Include="SiteMapMapper.cs" />
-    <Compile Include="UI\EnumDataSource.cs" />
-    <Compile Include="UI\EnumDataSourceView.cs" />
-    <Compile Include="UI\WebControls\DataPagerRepeater.cs" />
-    <Compile Include="UI\WebControls\FormattedText.cs" />
-    <Compile Include="UI\WebControls\TableListViewEx.cs" />
-    <Compile Include="UI\WebControls\WikiFormatter.cs" />
-    <Compile Include="UI\WebControls\WikiText.cs" />
-    <Compile Include="UI\WebControls\HyperLinkEx.cs" />
-    <Compile Include="UI\WebControls\RoleSecurityPanel.cs" />
-    <Compile Include="UI\WebControls\ListViewEx.cs" />
-    <Compile Include="UrlRewriting\RegexUrlRewritingRule.cs" />
-    <Compile Include="UrlRewriting\UrlRewriteHttpModule.cs" />
-    <Compile Include="UrlRewriting\UrlRewritingRule.cs" />
-    <Compile Include="VisitPageAttribute.cs" />
-    <Compile Include="WebFile.cs" />
-    <Compile Include="WebFileHandler.cs" />
-    <Compile Include="XmlHandler.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Properties\Resources.resx">
+    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
+    <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
@@ -179,68 +49,26 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <Compile Include="Properties\Resources.Designer.cs">
+    <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
+    <Compile Update="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="QueryString.cs" />
-    <Compile Include="UI\WebControls\ImageMenu.cs" />
-    <Compile Include="UI\WebControls\ImageResolvingEventArgs.cs" />
-    <Compile Include="UI\WebControls\SecurityPanel.cs" />
-    <Compile Include="UI\ObjectModelDataSource.cs" />
-    <Compile Include="UI\ObjectModelDataSourceView.cs" />
-    <Compile Include="UI\WebControls\ScrollablePanel.cs" />
-    <Compile Include="UI\WebControls\RadioButtonListEx.cs" />
-    <Compile Include="UI\WebControls\RadioButtonEx.cs" />
-    <Compile Include="UI\WebControls\StylePanel.cs" />
-    <Compile Include="Url.cs" />
-    <Compile Include="WebApplication.cs" />
-    <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj">
-      <Project>{62A4ADD9-9D89-48E6-984B-73BF023D7E50}</Project>
-      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-      <Name>Collections</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
-      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-      <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
-      <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
-      <Name>ComponentModel</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Configuration\Configuration.csproj">
-      <Project>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</Project>
-      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-      <Name>Configuration</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Localization\Localization.csproj">
-      <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
-      <Name>Localization</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Reflection\Reflection.csproj">
-      <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
-      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-      <Name>Reflection</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Security\Security.csproj">
-      <Project>{F99E753E-C8C8-4753-BA95-E656AAE55786}</Project>
-      <Name>Security</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Serialization\Serialization.csproj">
-      <Project>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</Project>
-      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-      <Name>Serialization</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\Collections\Collections.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
+    <ProjectReference Include="..\Configuration\Configuration.csproj" />
+    <ProjectReference Include="..\Localization\Localization.csproj" />
+    <ProjectReference Include="..\Reflection\Reflection.csproj" />
+    <ProjectReference Include="..\Security\Security.csproj" />
+    <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\flexcroll-uncompressed.js" />
@@ -248,5 +76,4 @@
   <ItemGroup>
     <Content Include="Resources\flexcroll-init.js" />
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
 </Project>
