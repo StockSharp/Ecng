@@ -7,12 +7,17 @@ namespace Ecng.Common
 
 	public static class IOHelper
 	{
-		public static DirectoryInfo ClearDirectory(string releasePath)
+		public static DirectoryInfo ClearDirectory(string releasePath, Func<string, bool> filter = null)
 		{
 			var releaseDir = new DirectoryInfo(releasePath);
 
 			foreach (var file in releaseDir.GetFiles())
+			{
+				if (filter != null && !filter(file.FullName))
+					continue;
+
 				file.Delete();
+			}
 
 			foreach (var dir in releaseDir.GetDirectories())
 				dir.Delete(true);
