@@ -69,6 +69,7 @@
     <Compile Include="BitArrayWriter.cs" />
     <Compile Include="CachedSynchronizedList.cs" />
     <Compile Include="CachedSynchronizedOrderedDictionary.cs" />
+    <Compile Include="CachedSynchronizedPairSet.cs" />
     <Compile Include="CachedSynchronizedSet.cs" />
     <Compile Include="CircularBuffer.cs" />
     <Compile Include="BaseList.cs" />
