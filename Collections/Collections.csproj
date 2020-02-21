@@ -36,10 +36,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="BaseSynchronizedCollection.cs" />
-    <Compile Remove="MoreLinq\Fold.g1.cs" />
-    <Compile Remove="MoreLinq\ToDelimitedString.g1.cs" />
-    <Compile Remove="StringSearch\GlobalSuppressions.cs" />
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+    <Compile Remove="MoreLinq\ToHashSet.cs" />
   </ItemGroup>
 </Project>

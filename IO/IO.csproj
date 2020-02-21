@@ -3,7 +3,7 @@
     <ProjectGuid>{4E2D9D8A-6E5A-4482-96F6-2544DE6611B9}</ProjectGuid>
     <RootNamespace>Ecng.IO</RootNamespace>
     <AssemblyName>Ecng.IO</AssemblyName>
-    <TargetFrameworks>netcoreapp3.1;net45</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net40</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -17,8 +17,8 @@
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
-    <Reference Include="System.IO.Compression" />
+  <ItemGroup>
+    <PackageReference Include="DotNetZip" Version="1.13.5"/>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
