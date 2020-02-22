@@ -200,5 +200,33 @@ namespace Ecng.Common
 				File.WriteAllBytes(fullPath, content);
 			}
 		}
+
+		// https://stackoverflow.com/a/2811746/8029915
+		public static void DeleteEmptyDirs(string dir)
+		{
+			if (dir.IsEmpty())
+				throw new ArgumentNullException(nameof(dir));
+
+			try
+			{
+				foreach (var d in Directory.EnumerateDirectories(dir))
+				{
+					DeleteEmptyDirs(d);
+				}
+
+				var entries = Directory.EnumerateFileSystemEntries(dir);
+
+				if (!entries.Any())
+				{
+					try
+					{
+						Directory.Delete(dir);
+					}
+					catch (UnauthorizedAccessException) { }
+					catch (DirectoryNotFoundException) { }
+				}
+			}
+			catch (UnauthorizedAccessException) { }
+		}
 	}
 }
