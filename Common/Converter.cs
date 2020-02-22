@@ -33,6 +33,8 @@
 	using WpfColor = System.Windows.Media.Color;
 #endif
 
+	using TimeZoneConverter;
+
 	public static class Converter
 	{
 		private static readonly Dictionary<Type, DbType> _dbTypes = new Dictionary<Type, DbType>();
@@ -713,7 +715,7 @@
 					return DateTimeOffset.Parse(str4);
 #if !SILVERLIGHT
 				else if (value is string str5 && destinationType == typeof(TimeZoneInfo))
-					return TimeZoneInfo.FindSystemTimeZoneById(str5);
+					return TZConvert.GetTimeZoneInfo(str5);
 				else if (value is TimeZoneInfo tz && destinationType == typeof(string))
 					return tz.Id;
 #endif

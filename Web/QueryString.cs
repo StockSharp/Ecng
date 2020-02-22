@@ -10,6 +10,7 @@
 	using Ecng.Reflection;
 	using Ecng.Collections;
 	using Ecng.Localization;
+	using Ecng.Net;
 
 	public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<string, string>>
 	{

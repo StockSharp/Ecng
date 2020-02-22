@@ -20,6 +20,9 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="TimeZoneConverter" Version="3.2.0" />
+  </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -48,7 +51,5 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="TimeZoneConverter\Data\Aliases.csv.gz" />
-    <EmbeddedResource Include="TimeZoneConverter\Data\Mapping.csv.gz" />
   </ItemGroup>
 </Project>
