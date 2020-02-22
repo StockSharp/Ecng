@@ -1,8 +1,9 @@
 namespace Ecng.Common
 {
 	using System;
-
+#if NETFRAMEWORK
 	using Microsoft.Win32;
+#endif
 
 	public static class FrameworkHelper
 	{
@@ -10,11 +11,15 @@ namespace Ecng.Common
 
 		private static Version Get45Or451FromRegistry()
 		{
+#if NETFRAMEWORK
 			using (var ndpKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey("SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full\\"))
 			{
 				var releaseKey = ndpKey.GetValue("Release").To<int>();
 				return CheckFor45DotVersion(releaseKey);
 			}
+#else
+			throw new PlatformNotSupportedException();
+#endif
 		}
 
 		private static Version CheckFor45DotVersion(int releaseKey)
