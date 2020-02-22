@@ -490,6 +490,29 @@
 			return source.ToDictionary(pair => pair.Key, pair => pair.Value, comparer);
 		}
 
+		public static IDictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<Tuple<TKey, TValue>> source)
+		{
+			return source.ToDictionary(pair => pair.Item1, pair => pair.Item2);
+		}
+
+		public static IDictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<Tuple<TKey, TValue>> source, IEqualityComparer<TKey> comparer)
+		{
+			return source.ToDictionary(pair => pair.Item1, pair => pair.Item2, comparer);
+		}
+
+		public static Tuple<TKey, TValue> ToTuple<TKey, TValue>(this KeyValuePair<TKey, TValue> pair)
+		{
+			return Tuple.Create(pair.Key, pair.Value);
+		}
+
+		public static KeyValuePair<TKey, TValue> ToPair<TKey, TValue>(this Tuple<TKey, TValue> pair)
+		{
+			if (pair == null)
+				throw new ArgumentNullException(nameof(pair));
+
+			return new KeyValuePair<TKey, TValue>(pair.Item1, pair.Item2);
+		}
+
 		public static IDictionary<TKey, TValue> ToDictionary<TSource, TKey, TValue>(this IEnumerable<TSource> source, Func<TSource, int, TKey> keySelector, Func<TSource, int, TValue> valueSelector)
 		{
 			if (source == null)

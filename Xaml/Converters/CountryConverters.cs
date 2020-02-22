@@ -314,10 +314,10 @@
 				return null;
 
 			if (value is string strCode)
-				return Enum.TryParse(strCode, true, out CountryCodes code) ? code : (CountryCodes?)null;
+				return strCode.TryParse<CountryCodes>(out var code) ? code : (CountryCodes?)null;
 
-			if (value is CountryCodes)
-				return (CountryCodes) value;
+			if (value is CountryCodes c)
+				return c;
 
 			return null;
 		}

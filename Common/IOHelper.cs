@@ -3,15 +3,21 @@ namespace Ecng.Common
 	using System;
 	using System.Diagnostics;
 	using System.IO;
+	using System.Linq;
 
 	public static class IOHelper
 	{
-		public static DirectoryInfo ClearDirectory(string releasePath)
+		public static DirectoryInfo ClearDirectory(string releasePath, Func<string, bool> filter = null)
 		{
 			var releaseDir = new DirectoryInfo(releasePath);
 
 			foreach (var file in releaseDir.GetFiles())
+			{
+				if (filter != null && !filter(file.FullName))
+					continue;
+
 				file.Delete();
+			}
 
 			foreach (var dir in releaseDir.GetDirectories())
 				dir.Delete(true);
@@ -123,6 +129,104 @@ namespace Ecng.Common
 			var place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
 			var num = Math.Round(bytes / Math.Pow(1024, place), 1);
 			return (Math.Sign(byteCount) * num) + suf[place];
+		}
+
+		public static void SafeDeleteDir(this string path)
+		{
+			if (!Directory.Exists(path))
+				return;
+
+			Directory.Delete(path, true);
+		}
+
+		public static void SafeDeleteFile(this string path)
+		{
+			if (!File.Exists(path))
+				return;
+
+			File.Delete(path);
+		}
+
+		public static string CreateTempDir()
+		{
+			var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString().Remove("-"));
+
+			if (!Directory.Exists(path))
+				Directory.CreateDirectory(path);
+
+			return path;
+		}
+
+		public static bool CheckInstallation(string path)
+		{
+			if (path.IsEmpty())
+				return false;
+
+			if (!Directory.Exists(path))
+				return false;
+
+			var files = Directory.GetFiles(path);
+			var directories = Directory.GetDirectories(path);
+			return files.Any() || directories.Any();
+		}
+
+		public static string GetRelativePath(this string fileFull, string folder)
+		{
+			var pathUri = new Uri(fileFull);
+
+			if (!folder.EndsWith(Path.DirectorySeparatorChar.ToString()))
+				folder += Path.DirectorySeparatorChar;
+
+			var folderUri = new Uri(folder);
+			return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
+		}
+
+		public static long GetDiskFreeSpace(string driveName)
+		{
+			return new DriveInfo(driveName).TotalFreeSpace;
+		}
+
+		public static void CreateFile(string rootPath, string relativePath, string fileName, byte[] content)
+		{
+			if (relativePath.IsEmpty())
+			{
+				File.WriteAllBytes(Path.Combine(rootPath, fileName), content);
+			}
+			else
+			{
+				var fullPath = Path.Combine(rootPath, relativePath, fileName);
+				var fileInfo = new FileInfo(fullPath);
+				fileInfo.Directory.Create();
+				File.WriteAllBytes(fullPath, content);
+			}
+		}
+
+		// https://stackoverflow.com/a/2811746/8029915
+		public static void DeleteEmptyDirs(string dir)
+		{
+			if (dir.IsEmpty())
+				throw new ArgumentNullException(nameof(dir));
+
+			try
+			{
+				foreach (var d in Directory.EnumerateDirectories(dir))
+				{
+					DeleteEmptyDirs(d);
+				}
+
+				var entries = Directory.EnumerateFileSystemEntries(dir);
+
+				if (!entries.Any())
+				{
+					try
+					{
+						Directory.Delete(dir);
+					}
+					catch (UnauthorizedAccessException) { }
+					catch (DirectoryNotFoundException) { }
+				}
+			}
+			catch (UnauthorizedAccessException) { }
 		}
 	}
 }
