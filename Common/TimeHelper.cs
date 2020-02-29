@@ -27,7 +27,7 @@
 		/// </summary>
 		public static DateTime Now => _startWithOffset + _timer.Elapsed;
 
-		public static DateTimeOffset NowWithOffset => Now.ApplyTimeZone(TimeZoneInfo.Local);
+		public static DateTimeOffset NowWithOffset => Now.ApplyLocal();
 
 		private static TimeSpan _nowOffset;
 
@@ -410,6 +410,31 @@
 			return dto.ToString(format, ci ?? CultureInfo.InvariantCulture);
 		}
 
+		public static DateTimeOffset ApplyLocal(this DateTime dt)
+		{
+			return dt.ApplyTimeZone(TimeZoneInfo.Local);
+		}
+
+		public static DateTimeOffset ApplyUtc(this DateTime dt)
+		{
+			return dt.ApplyTimeZone(TimeZoneInfo.Utc);
+		}
+
+		public static DateTimeOffset ApplyChina(this DateTime dt)
+		{
+			return dt.ApplyTimeZone(China);
+		}
+
+		public static DateTimeOffset ApplyEst(this DateTime dt)
+		{
+			return dt.ApplyTimeZone(Est);
+		}
+
+		public static DateTimeOffset ApplyMoscow(this DateTime dt)
+		{
+			return dt.ApplyTimeZone(Moscow);
+		}
+
 		public static DateTimeOffset ApplyTimeZone(this DateTime dt, TimeZoneInfo zone)
 		{
 			if (zone == null)
@@ -433,6 +458,26 @@
 		public static DateTime ToLocalTime(this DateTimeOffset dto, TimeZoneInfo zone)
 		{
 			return dto.Convert(zone).DateTime;
+		}
+
+		public static DateTimeOffset ConvertToChina(this DateTimeOffset dto)
+		{
+			return TimeZoneInfo.ConvertTime(dto, China);
+		}
+
+		public static DateTimeOffset ConvertToEst(this DateTimeOffset dto)
+		{
+			return TimeZoneInfo.ConvertTime(dto, Est);
+		}
+
+		public static DateTimeOffset ConvertToMoscow(this DateTimeOffset dto)
+		{
+			return TimeZoneInfo.ConvertTime(dto, Moscow);
+		}
+
+		public static DateTimeOffset ConvertToUtc(this DateTimeOffset dto)
+		{
+			return TimeZoneInfo.ConvertTime(dto, TimeZoneInfo.Utc);
 		}
 
 		public static DateTimeOffset Convert(this DateTimeOffset dto, TimeZoneInfo zone)
