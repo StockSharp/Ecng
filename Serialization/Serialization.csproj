@@ -1,151 +1,35 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</ProjectGuid>
-    <OutputType>Library</OutputType>
     <RootNamespace>Ecng.Serialization</RootNamespace>
     <AssemblyName>Ecng.Serialization</AssemblyName>
-    <WarningLevel>4</WarningLevel>
-    <SccProjectName>
-    </SccProjectName>
-    <SccLocalPath>
-    </SccLocalPath>
-    <SccAuxPath>
-    </SccAuxPath>
-    <SccProvider>
-    </SccProvider>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <UpgradeBackupLocation>
-    </UpgradeBackupLocation>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
+    <FileUpgradeFlags />
+    <UpgradeBackupLocation />
+    <TargetFrameworks>netcoreapp3.1;net40</TargetFrameworks>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>.\bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugSymbols>false</DebugSymbols>
-    <Optimize>true</Optimize>
-    <OutputPath>.\bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <Reference Include="PresentationCore" />
-    <Reference Include="System" />
     <Reference Include="System.configuration" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Security" />
     <Reference Include="System.ServiceModel" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs">
-      <Link>Properties\EcngAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="BatchContext.cs" />
-    <Compile Include="BinaryHelper.cs" />
-    <Compile Include="BinarySerializer.cs" />
-    <Compile Include="CloneFactory.cs" />
-    <Compile Include="CollectionFieldFactory.cs" />
-    <Compile Include="ColorFieldFactory.cs" />
-    <Compile Include="Configuration\ConfigFieldFactory.cs" />
-    <Compile Include="Configuration\ConfigFieldFactoryCollection.cs" />
-    <Compile Include="Configuration\SerializationSection.cs" />
-    <Compile Include="ContinueOnExceptionContext.cs" />
-    <Compile Include="DelayAction.cs" />
-    <Compile Include="DynamicFieldFactory.cs" />
-    <Compile Include="DynamicInnerSchemaFieldFactory.cs" />
-    <Compile Include="FastInvokerEntityFactory.cs" />
-    <Compile Include="FastInvokerFieldAccessor.cs" />
-    <Compile Include="FileStorage.cs" />
-    <Compile Include="IBatchContext.cs" />
-    <Compile Include="InMemoryStorage.cs" />
-    <Compile Include="IPersistable.cs" />
-    <Compile Include="ISerializable.cs" />
-    <Compile Include="ISerializer.cs" />
-    <Compile Include="IStorage.cs" />
-    <Compile Include="MemberFieldFactory.cs" />
-    <Compile Include="PersistableFieldactory.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="PrimitiveFieldFactory.cs" />
-    <Compile Include="EntityAttribute.cs" />
-    <Compile Include="EnumFieldFactory.cs" />
-    <Compile Include="IndexAttribute.cs" />
-    <Compile Include="InnerSchemaFieldFactory.cs" />
-    <Compile Include="ReflectionFieldFactoryAttribute.cs" />
-    <Compile Include="RelationFieldFactory.cs" />
-    <Compile Include="RelationManyList.cs" />
-    <Compile Include="SchemaHelper.cs" />
-    <Compile Include="SchemaManager.cs" />
-    <Compile Include="Serializable.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="SerializationContext.cs" />
-    <Compile Include="Serializer.cs" />
-    <Compile Include="ISerializationTracking.cs" />
-    <Compile Include="RealCollectionFieldFactory.cs" />
-    <Compile Include="EntityFactory.cs" />
-    <Compile Include="EntityFactoryAttribute.cs" />
-    <Compile Include="FieldAttribute.cs" />
-    <Compile Include="FieldFactory.cs" />
-    <Compile Include="FieldFactoryAttribute.cs" />
-    <Compile Include="FieldFactoryChain.cs" />
-    <Compile Include="FieldAccessor.cs" />
-    <Compile Include="FieldAccessorAttribute.cs" />
-    <Compile Include="IdentityAttribute.cs" />
-    <Compile Include="IgnoreAttribute.cs" />
-    <Compile Include="FileSchemaFactory.cs" />
-    <Compile Include="Field.cs" />
-    <Compile Include="FieldList.cs" />
-    <Compile Include="IdentityField.cs" />
-    <Compile Include="Schema.cs" />
-    <Compile Include="SchemaFactory.cs" />
-    <Compile Include="SchemaFactoryAttribute.cs" />
-    <Compile Include="SerializerFieldFactory.cs" />
-    <Compile Include="SettingsStorage.cs" />
-    <Compile Include="StorageDelayAction.cs" />
-    <Compile Include="TransactionFileStream.cs" />
-    <Compile Include="TypeOverrideAttribute.cs" />
-    <Compile Include="TypeSchemaFactory.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
+    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
+    <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-    <Compile Include="SerializationItem.cs" />
-    <Compile Include="SerializationItemCollection.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Properties\Resources.resx">
+    <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
@@ -153,38 +37,12 @@
     <None Include="..\Ecng.snk">
       <Link>Properties\Ecng.snk</Link>
     </None>
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <Compile Include="UnderlyingAttribute.cs" />
-    <Compile Include="UnitializedEntityFactory.cs" />
-    <Compile Include="VoidField.cs" />
-    <Compile Include="XmlReaderEx.cs" />
-    <Compile Include="XmlSerializer.cs" />
-    <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj">
-      <Project>{62A4ADD9-9D89-48E6-984B-73BF023D7E50}</Project>
-      <Name>Collections</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Configuration\Configuration.csproj">
-      <Project>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</Project>
-      <Name>Configuration</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Localization\Localization.csproj">
-      <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
-      <Name>Localization</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Reflection\Reflection.csproj">
-      <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
-      <Name>Reflection</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\Collections\Collections.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\Configuration\Configuration.csproj" />
+    <ProjectReference Include="..\Localization\Localization.csproj" />
+    <ProjectReference Include="..\Reflection\Reflection.csproj" />
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
 </Project>

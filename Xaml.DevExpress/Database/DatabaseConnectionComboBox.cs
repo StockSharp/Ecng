@@ -1,5 +1,7 @@
 namespace Ecng.Xaml.DevExp.Database
 {
+	using Ecng.Data;
+
 	using DevExpress.Xpf.Editors;
 	using DevExpress.Xpf.Editors.Settings;
 

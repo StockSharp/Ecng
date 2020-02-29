@@ -5,7 +5,7 @@
 	using System.Diagnostics;
 	using System.Globalization;
 
-	using Ecng.Common.TimeZoneConverter;
+	using TimeZoneConverter;
 
 	public static class TimeHelper
 	{
@@ -1254,7 +1254,7 @@
 			if (iana.CompareIgnoreCase("Greenwich Mean Time"))
 				return Gmt;
 
-			return TZConvert.IanaToWindows(iana).To<TimeZoneInfo>();
+			return iana.To<TimeZoneInfo>();
 		}
 
 		public static bool IsDateTime(this Type type)

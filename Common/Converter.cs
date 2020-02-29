@@ -26,9 +26,14 @@
 
 #if !SILVERLIGHT
 	using WinColor = System.Drawing.Color;
-	using WpfColorConverter = System.Windows.Media.ColorConverter;
 #endif
+
+#if NETFRAMEWORK
+	using WpfColorConverter = System.Windows.Media.ColorConverter;
 	using WpfColor = System.Windows.Media.Color;
+#endif
+
+	using TimeZoneConverter;
 
 	public static class Converter
 	{
@@ -625,6 +630,7 @@
 				else if (value is string strVal && destinationType == typeof(WinColor))
 					return ColorTranslator.FromHtml(strVal);
 #endif
+#if NETFRAMEWORK
 				else if (value is WpfColor wpfColor1 && destinationType == typeof(int))
 				{
 					return (wpfColor1.A << 24) | (wpfColor1.R << 16) | (wpfColor1.G << 8) | wpfColor1.B;
@@ -636,21 +642,6 @@
 				else if (value is WpfColor wpfColor2 && destinationType == typeof(string))
 					return wpfColor2.ToString();
 				else if (value is string strVal2 && destinationType == typeof(WpfColor))
-#if SILVERLIGHT
-				{
-					//this would be initialized somewhere else, I assume
-					var hex = (string)value;
-
-					//strip out any # if they exist
-					hex = hex.Replace("#", string.Empty);
-
-					var r = (byte)(Convert.ToUInt32(hex.Substring(0, 2), 16));
-					var g = (byte)(Convert.ToUInt32(hex.Substring(2, 2), 16));
-					var b = (byte)(Convert.ToUInt32(hex.Substring(4, 2), 16));
-
-					retVal = Color.FromArgb(255, r, g, b);
-				}
-#else
 					return WpfColorConverter.ConvertFromString(strVal2);
 #endif
 				else if (value is Uri && destinationType == typeof(string))
@@ -724,7 +715,7 @@
 					return DateTimeOffset.Parse(str4);
 #if !SILVERLIGHT
 				else if (value is string str5 && destinationType == typeof(TimeZoneInfo))
-					return TimeZoneInfo.FindSystemTimeZoneById(str5);
+					return TZConvert.GetTimeZoneInfo(str5);
 				else if (value is TimeZoneInfo tz && destinationType == typeof(string))
 					return tz.Id;
 #endif

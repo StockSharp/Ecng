@@ -35,7 +35,9 @@ namespace PubnubApi
 #elif NET45
                         LoggingMethod.WriteToLog(log, string.Format("DateTime {0} PLATFORM = NET45", DateTime.Now.ToString(CultureInfo.InvariantCulture)), config.LogVerbosity);
 #elif NET461
-            LoggingMethod.WriteToLog(log, string.Format("DateTime {0} PLATFORM = NET461", DateTime.Now.ToString(CultureInfo.InvariantCulture)), config.LogVerbosity);
+                        LoggingMethod.WriteToLog(log, string.Format("DateTime {0} PLATFORM = NET461", DateTime.Now.ToString(CultureInfo.InvariantCulture)), config.LogVerbosity);
+#elif NETCOREAPP
+                        LoggingMethod.WriteToLog(log, string.Format("DateTime {0} PLATFORM = NETCORE", DateTime.Now.ToString(CultureInfo.InvariantCulture)), config.LogVerbosity);
 #else
                         LoggingMethod.WriteToLog(log, string.Format("DateTime {0} PLATFORM = UNKNOWN", DateTime.Now.ToString(CultureInfo.InvariantCulture)), config.LogVerbosity);
 #endif

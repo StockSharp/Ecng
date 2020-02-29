@@ -1,52 +1,27 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{6EACA7CE-0269-47A2-AE6A-3669738EE303}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Ecng.Interop</RootNamespace>
     <AssemblyName>Ecng.Interop</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <UpgradeBackupLocation>
-    </UpgradeBackupLocation>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
+    <FileUpgradeFlags />
+    <UpgradeBackupLocation />
+    <TargetFrameworks>net40;netcoreapp3.1</TargetFrameworks>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <NoWarn>3001,3002,3003,3005,3008</NoWarn>
+    <!-- <NoWarn>3001,3002,3003,3005,3008</NoWarn> -->
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugType>full</DebugType>
+    <DocumentationFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <NoWarn>3001,3002,3003,3005,3008</NoWarn>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <Reference Include="Accessibility" />
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="PresentationCore" />
@@ -54,203 +29,61 @@
     <Reference Include="SevenZipSharp">
       <HintPath>..\..\StockSharp (GitHub)\References\SevenZipSharp.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data">
-      <HintPath>..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+    <PackageReference Include="Squid-Box.SevenZipSharp" Version="1.2.242" />
+  </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs">
-      <Link>Properties\EcngAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="BlittableDecimal.cs" />
-    <Compile Include="Dde\Documentation\NamespaceDoc.cs" />
-    <Compile Include="Dde\Internal\Advanced\DdemlContext.cs" />
-    <Compile Include="Dde\Internal\Advanced\DdemlRegistrationEventArgs.cs" />
-    <Compile Include="Dde\Internal\Advanced\DdemlTransaction.cs" />
-    <Compile Include="Dde\Internal\Advanced\IDdemlTransactionFilter.cs" />
-    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlActivityEventArgs.cs" />
-    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlCallbackActivityEventArgs.cs" />
-    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlConversationActivityEventArgs.cs" />
-    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlErrorActivityEventArgs.cs" />
-    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlLinkActivityEventArgs.cs" />
-    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlMessageActivityEventArgs.cs" />
-    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlMonitor.cs" />
-    <Compile Include="Dde\Internal\Advanced\Monitor\DdemlStringActivityEventArgs.cs" />
-    <Compile Include="Dde\Internal\Client\DdemlAdviseEventArgs.cs" />
-    <Compile Include="Dde\Internal\Client\DdemlClient.cs" />
-    <Compile Include="Dde\Internal\Client\DdemlDisconnectedEventArgs.cs" />
-    <Compile Include="Dde\Internal\Ddeml.cs" />
-    <Compile Include="Dde\Internal\DdemlEventArgs.cs" />
-    <Compile Include="Dde\Internal\DdemlException.cs" />
-    <Compile Include="Dde\Internal\Server\DdemlConversation.cs" />
-    <Compile Include="Dde\Internal\Server\DdemlServer.cs" />
-    <Compile Include="Dde\Internal\Utility\WeakReferenceDictionary.cs" />
-    <Compile Include="Dde\Public\Advanced\DdeContext.cs" />
-    <Compile Include="Dde\Public\Advanced\DdeMessageLoop.cs" />
-    <Compile Include="Dde\Public\Advanced\DdeRegistrationEventArgs.cs" />
-    <Compile Include="Dde\Public\Advanced\DdeTransaction.cs" />
-    <Compile Include="Dde\Public\Advanced\IDdeTransactionFilter.cs" />
-    <Compile Include="Dde\Public\Advanced\Monitor\DdeActivityEventArgs.cs" />
-    <Compile Include="Dde\Public\Advanced\Monitor\DdeCallbackActivityEventArgs.cs" />
-    <Compile Include="Dde\Public\Advanced\Monitor\DdeConversationActivityEventArgs.cs" />
-    <Compile Include="Dde\Public\Advanced\Monitor\DdeErrorActivityEventArgs.cs" />
-    <Compile Include="Dde\Public\Advanced\Monitor\DdeLinkActivityEventArgs.cs" />
-    <Compile Include="Dde\Public\Advanced\Monitor\DdeMessageActivityEventArgs.cs" />
-    <Compile Include="Dde\Public\Advanced\Monitor\DdeMonitor.cs" />
-    <Compile Include="Dde\Public\Advanced\Monitor\DdeStringActivityEventArgs.cs" />
-    <Compile Include="Dde\Public\Client\DdeAdviseEventArgs.cs" />
-    <Compile Include="Dde\Public\Client\DdeClient.cs" />
-    <Compile Include="Dde\Public\Client\DdeDisconnectedEventArgs.cs" />
-    <Compile Include="Dde\Public\DdeEventArgs.cs" />
-    <Compile Include="Dde\Public\DdeException.cs" />
-    <Compile Include="Dde\Public\Server\DdeConversation.cs" />
-    <Compile Include="Dde\Public\Server\DdeServer.cs" />
-    <Compile Include="Dde\XlsDdeClient.cs" />
-    <Compile Include="Dde\DdeSettings.cs" />
-    <Compile Include="Dde\XlsDdeSerializer.cs" />
-    <Compile Include="Dde\XlsDdeServer.cs" />
-    <Compile Include="DotNetDBF\DBFBase.cs" />
-    <Compile Include="DotNetDBF\DBFException.cs" />
-    <Compile Include="DotNetDBF\DBFField.cs" />
-    <Compile Include="DotNetDBF\DBFFieldType.cs" />
-    <Compile Include="DotNetDBF\DBFHeader.cs" />
-    <Compile Include="DotNetDBF\DBFReader.cs" />
-    <Compile Include="DotNetDBF\DBFWriter.cs" />
-    <Compile Include="DotNetDBF\DBTHeader.cs" />
-    <Compile Include="DotNetDBF\MemoValue.cs" />
-    <Compile Include="DotNetDBF\Utils.cs" />
-    <Compile Include="IExcelWorker.cs" />
-    <Compile Include="ManagedWinapi\Accessibility\AccessibleObjectListener.cs">
+    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
+    <Compile Update="ManagedWinapi\Accessibility\AccessibleObjectListener.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ManagedWinapi\Accessibility\SystemAccessibleObject.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ManagedWinapi\ApiHelper.cs" />
-    <Compile Include="ManagedWinapi\Audio\Mixer\Mixer.cs" />
-    <Compile Include="ManagedWinapi\Audio\Mixer\MixerControl.cs" />
-    <Compile Include="ManagedWinapi\Audio\Mixer\MixerLine.cs" />
-    <Compile Include="ManagedWinapi\BitmapDataHandler.cs" />
-    <Compile Include="ManagedWinapi\ClipboardNotifier.cs">
+    <Compile Update="ManagedWinapi\ClipboardNotifier.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ManagedWinapi\CodepointRange.cs" />
-    <Compile Include="ManagedWinapi\COMTypeInformation.cs" />
-    <Compile Include="ManagedWinapi\Crosshair.cs">
+    <Compile Update="ManagedWinapi\Crosshair.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="ManagedWinapi\Crosshair.Designer.cs">
+    <Compile Update="ManagedWinapi\Crosshair.Designer.cs">
       <DependentUpon>Crosshair.cs</DependentUpon>
     </Compile>
-    <Compile Include="ManagedWinapi\ExtendedFileInfo.cs" />
-    <Compile Include="ManagedWinapi\Hooks\Hook.cs">
+    <Compile Update="ManagedWinapi\Hooks\Hook.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ManagedWinapi\Hooks\JournalHook.cs">
+    <Compile Update="ManagedWinapi\Hooks\JournalHook.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ManagedWinapi\Hooks\LowLevelHook.cs">
+    <Compile Update="ManagedWinapi\Hooks\LowLevelHook.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ManagedWinapi\Hotkey.cs">
+    <Compile Update="ManagedWinapi\Hotkey.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ManagedWinapi\InputBlocker.cs" />
-    <Compile Include="ManagedWinapi\KeyboardKey.cs" />
-    <Compile Include="ManagedWinapi\LockKeyResetter.cs" />
-    <Compile Include="ManagedWinapi\MachineIdentifiers.cs" />
-    <Compile Include="ManagedWinapi\PixelData.cs" />
-    <Compile Include="ManagedWinapi\PrivilegedActions.cs" />
-    <Compile Include="ManagedWinapi\ProcessMemoryChunk.cs" />
-    <Compile Include="ManagedWinapi\ProcessTree.cs" />
-    <Compile Include="ManagedWinapi\SendKeysEscaper.cs" />
-    <Compile Include="ManagedWinapi\ShortcutBox.cs">
+    <Compile Update="ManagedWinapi\ShortcutBox.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ManagedWinapi\ShortcutBox.Designer.cs">
+    <Compile Update="ManagedWinapi\ShortcutBox.Designer.cs">
       <DependentUpon>ShortcutBox.cs</DependentUpon>
     </Compile>
-    <Compile Include="ManagedWinapi\TextCursor.cs" />
-    <Compile Include="ManagedWinapi\TextCursorProvider.cs">
+    <Compile Update="ManagedWinapi\TextCursorProvider.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ManagedWinapi\Windows\Contents\AccessibleWindowParser.cs" />
-    <Compile Include="ManagedWinapi\Windows\Contents\ContentParserRegistry.cs" />
-    <Compile Include="ManagedWinapi\Windows\Contents\ListParser.cs" />
-    <Compile Include="ManagedWinapi\Windows\Contents\TextFieldParser.cs" />
-    <Compile Include="ManagedWinapi\Windows\Contents\WindowContent.cs" />
-    <Compile Include="ManagedWinapi\Windows\Contents\WindowContentParser.cs" />
-    <Compile Include="ManagedWinapi\Windows\EventDispatchingNativeWindow.cs" />
-    <Compile Include="ManagedWinapi\Windows\PInvokeTypes.cs" />
-    <Compile Include="ManagedWinapi\Windows\Screenshot.cs" />
-    <Compile Include="ManagedWinapi\Windows\SystemListBox.cs" />
-    <Compile Include="ManagedWinapi\Windows\SystemListView.cs" />
-    <Compile Include="ManagedWinapi\Windows\SystemTreeView.cs" />
-    <Compile Include="ManagedWinapi\Windows\SystemWindow.cs" />
-    <Compile Include="NativeLibrary.cs" />
-    <Compile Include="CustomMarshaler.cs" />
-    <Compile Include="DisposableComObject.cs" />
-    <Compile Include="GCHandle.cs" />
-    <Compile Include="HardwareInfo.cs" />
-    <Compile Include="HGlobalSafeHandle.cs" />
-    <Compile Include="InteropHelper.cs" />
-    <Compile Include="ManagedWinApiHelper.cs" />
-    <Compile Include="Marshaler.cs" />
-    <Compile Include="Messages.cs" />
-    <Compile Include="NativeObject.cs" />
-    <Compile Include="NativeObjectList.cs" />
-    <Compile Include="Platforms.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
+    <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="PtrReader.cs" />
-    <Compile Include="SafeHandleCallbackMarshaler.cs" />
-    <Compile Include="SafePointer.cs" />
-    <Compile Include="SevenZip.cs" />
-    <Compile Include="SystemMemory.cs" />
-    <Compile Include="SystemMenu.cs" />
-    <Compile Include="TargetPlatformAttribute.cs" />
-    <Compile Include="VirtualKeys.cs" />
-    <Compile Include="WinApi.cs" />
-    <Compile Include="WindowShowStyle.cs" />
-    <Compile Include="WM.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj">
-      <Project>{62A4ADD9-9D89-48E6-984B-73BF023D7E50}</Project>
-      <Name>Collections</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj">
-      <Project>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</Project>
-      <Name>ComponentModel</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Localization\Localization.csproj">
-      <Project>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</Project>
-      <Name>Localization</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Reflection\Reflection.csproj">
-      <Project>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</Project>
-      <Name>Reflection</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Serialization\Serialization.csproj">
-      <Project>{408006c6-a8eb-43f8-9d0c-5a519dff5873}</Project>
-      <Name>Serialization</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\Collections\Collections.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
+    <ProjectReference Include="..\Localization\Localization.csproj" />
+    <ProjectReference Include="..\Reflection\Reflection.csproj" />
+    <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Ecng.snk">
@@ -258,13 +91,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="ManagedWinapi\Crosshair.resx">
+    <EmbeddedResource Update="ManagedWinapi\Crosshair.resx">
       <DependentUpon>Crosshair.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ManagedWinapi\ShortcutBox.resx">
+    <EmbeddedResource Update="ManagedWinapi\ShortcutBox.resx">
       <DependentUpon>ShortcutBox.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Resources.resx">
+    <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -275,6 +108,22 @@
     <Resource Include="ManagedWinapi\crosshair.cur" />
     <Resource Include="ManagedWinapi\crosshair.ico" />
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+    <Content Remove="Dde\**" />
+    <Compile Remove="Dde\**" />
+    <EmbeddedResource Remove="Dde\**" />
+    <None Remove="Dde\**" />
+    <Content Remove="ManagedWinapi\**" />
+    <Compile Remove="ManagedWinapi\**" />
+    <EmbeddedResource Remove="ManagedWinapi\**" />
+    <None Remove="ManagedWinapi\**" />
+    <Compile Remove="HardwareInfo.cs" />
+    <Compile Remove="IExcelWorker.cs" />
+    <Compile Remove="ManagedWinApiHelper.cs" />
+    <Compile Remove="SystemMemory.cs" />
+    <Compile Remove="SystemMenu.cs" />
+    <Compile Remove="WinApi.cs" />
+    <Compile Remove="NativeLibrary.cs" />
+  </ItemGroup>
 </Project>

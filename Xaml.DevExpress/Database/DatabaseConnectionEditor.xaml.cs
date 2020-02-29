@@ -7,6 +7,7 @@
 	using DevExpress.Xpf.Editors;
 	using DevExpress.Xpf.Editors.Helpers;
 
+	using Ecng.Data;
 	using Ecng.Collections;
 	using Ecng.Configuration;
 	using Ecng.Xaml;

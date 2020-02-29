@@ -1,102 +1,31 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{4E2D9D8A-6E5A-4482-96F6-2544DE6611B9}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Ecng.IO</RootNamespace>
     <AssemblyName>Ecng.IO</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
+    <TargetFrameworks>netcoreapp3.1;net40</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <TargetFrameworkProfile />
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.IO.Compression" />
+    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs">
-      <Link>Properties\EcngAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="CompressionHelper.cs" />
-    <Compile Include="OctoDiffExtensions.cs" />
-    <Compile Include="Octodiff\CommandLine\DeltaCommand.cs" />
-    <Compile Include="Octodiff\CommandLine\ExplainDeltaCommand.cs" />
-    <Compile Include="Octodiff\CommandLine\HelpCommand.cs" />
-    <Compile Include="Octodiff\CommandLine\PatchCommand.cs" />
-    <Compile Include="Octodiff\CommandLine\SignatureCommand.cs" />
-    <Compile Include="Octodiff\CommandLine\Support\CommandAttribute.cs" />
-    <Compile Include="Octodiff\CommandLine\Support\CommandException.cs" />
-    <Compile Include="Octodiff\CommandLine\Support\CommandLocator.cs" />
-    <Compile Include="Octodiff\CommandLine\Support\ICommand.cs" />
-    <Compile Include="Octodiff\CommandLine\Support\ICommandLocator.cs" />
-    <Compile Include="Octodiff\CommandLine\Support\ICommandMetadata.cs" />
-    <Compile Include="Octodiff\CommandLine\Support\NDesk.Options.cs" />
-    <Compile Include="Octodiff\Core\Adler32RollingChecksum.cs" />
-    <Compile Include="Octodiff\Core\AggregateCopyOperationsDecorator.cs" />
-    <Compile Include="Octodiff\Core\BinaryDeltaReader.cs" />
-    <Compile Include="Octodiff\Core\BinaryDeltaWriter.cs" />
-    <Compile Include="Octodiff\Core\BinaryFormat.cs" />
-    <Compile Include="Octodiff\Core\ChunkSignature.cs" />
-    <Compile Include="Octodiff\Core\ChunkSignatureChecksumComparer.cs" />
-    <Compile Include="Octodiff\Core\CompatibilityException.cs" />
-    <Compile Include="Octodiff\Core\CorruptFileFormatException.cs" />
-    <Compile Include="Octodiff\Core\DataRange.cs" />
-    <Compile Include="Octodiff\Core\DeltaApplier.cs" />
-    <Compile Include="Octodiff\Core\DeltaBuilder.cs" />
-    <Compile Include="Octodiff\Core\DeltaStatistics.cs" />
-    <Compile Include="Octodiff\Core\HashAlgorithmWrapper.cs" />
-    <Compile Include="Octodiff\Core\IDeltaReader.cs" />
-    <Compile Include="Octodiff\Core\IDeltaWriter.cs" />
-    <Compile Include="Octodiff\Core\IHashAlgorithm.cs" />
-    <Compile Include="Octodiff\Core\IRollingChecksum.cs" />
-    <Compile Include="Octodiff\Core\ISignatureReader.cs" />
-    <Compile Include="Octodiff\Core\ISignatureWriter.cs" />
-    <Compile Include="Octodiff\Core\Signature.cs" />
-    <Compile Include="Octodiff\Core\SignatureBuilder.cs" />
-    <Compile Include="Octodiff\Core\SignatureReader.cs" />
-    <Compile Include="Octodiff\Core\SignatureWriter.cs" />
-    <Compile Include="Octodiff\Core\SupportedAlgorithms.cs" />
-    <Compile Include="Octodiff\Core\UsageException.cs" />
-    <Compile Include="Octodiff\Diagnostics\ConsoleProgressReporter.cs" />
-    <Compile Include="Octodiff\Diagnostics\IProgressReporter.cs" />
-    <Compile Include="Octodiff\Diagnostics\NullProgressReporter.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <PackageReference Include="DotNetZip" Version="1.13.5"/>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Ecng.snk">
       <Link>Properties\Ecng.snk</Link>
     </None>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

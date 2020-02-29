@@ -22,12 +22,12 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using Microsoft.Win32;
-#if FX45 || NETSTANDARD
+#if NET45 || NETSTANDARD
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading;
 #endif
-#if FX40 || FX45
+#if NET40 || NET45
 using System.Collections;
 using System.Diagnostics;
 using System.Linq;
@@ -2170,7 +2170,7 @@ namespace HtmlAgilityPack
         }
 #endif
 
-#if FX45 || NETSTANDARD
+#if NET45 || NETSTANDARD
         /// <summary>
         /// Begins the process of downloading an internet resource
         /// </summary>
@@ -2389,7 +2389,7 @@ namespace HtmlAgilityPack
 
         #region Browser
 
-#if FX40 || FX45
+#if NET40 || NET45
         private TimeSpan _browserTimeout = TimeSpan.FromSeconds(30);
         private TimeSpan _browserDelay = TimeSpan.FromMilliseconds(100);
 
@@ -2565,7 +2565,7 @@ namespace HtmlAgilityPack
         /// <returns></returns>
         public bool GetIsRegistryAvailable()
         {
-#if FX40
+#if NET40
             var permissionSet = new PermissionSet(PermissionState.None);
             var writePermission = new RegistryPermission(PermissionState.Unrestricted);
             permissionSet.AddPermission(writePermission);
@@ -2582,7 +2582,7 @@ namespace HtmlAgilityPack
         /// <returns></returns>
         public bool GetIsDnsAvailable()
         {
-#if FX40
+#if NET40
             var permissionSet = new PermissionSet(PermissionState.None);
             var writePermission = new DnsPermission(PermissionState.Unrestricted);
             permissionSet.AddPermission(writePermission);

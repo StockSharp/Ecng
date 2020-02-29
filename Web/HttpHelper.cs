@@ -364,29 +364,7 @@ namespace Ecng.Web
 
 			return body.To<byte[]>();
 		}
-
-		public static string EncodeToHtml(this string text)
-		{
-			return HttpUtility.HtmlEncode(text);
-		}
-
-		public static string DecodeFromHtml(this string text)
-		{
-			return HttpUtility.HtmlDecode(text);
-		}
 #endif
-
-		private static readonly Encoding _urlEncoding = Encoding.UTF8;
-
-		public static string EncodeUrl(this string url)
-		{
-			return HttpUtility.UrlEncode(url, _urlEncoding);
-		}
-
-		public static string DecodeUrl(this string url)
-		{
-			return HttpUtility.UrlDecode(url, _urlEncoding);
-		}
 
 		public static string UrlEncodeToUpperCase(this string url)
 		{
@@ -405,11 +383,6 @@ namespace Ecng.Web
 			}
 
 			return new string(temp);
-		}
-
-		public static NameValueCollection ParseUrl(this string url)
-		{
-			return HttpUtility.ParseQueryString(url, _urlEncoding);
 		}
 
 		public static IWebUser TryGetByNameOrEmail(this IWebUserCollection users, string id)

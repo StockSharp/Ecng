@@ -33,7 +33,9 @@
 #endif
 			GlobalFieldFactories = new Dictionary<Type, Type>
 			{
+#if !NETCOREAPP
 				{ typeof(System.Windows.Media.Color), typeof(ColorFieldFactory<System.Windows.Media.Color>) },
+#endif
 #if !SILVERLIGHT
 				{ typeof(System.Drawing.Color), typeof(ColorFieldFactory<System.Drawing.Color>) },
 				{ typeof(System.Security.SecureString), "Ecng.Serialization.SecureStringFieldFactory, Ecng.Serialization.FieldFactories".To<Type>() },

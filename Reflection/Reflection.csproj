@@ -1,94 +1,30 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</ProjectGuid>
-    <OutputType>Library</OutputType>
     <RootNamespace>Ecng.Reflection</RootNamespace>
     <AssemblyName>Ecng.Reflection</AssemblyName>
-    <WarningLevel>4</WarningLevel>
-    <SccProjectName>
-    </SccProjectName>
-    <SccLocalPath>
-    </SccLocalPath>
-    <SccAuxPath>
-    </SccAuxPath>
-    <SccProvider>
-    </SccProvider>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <UpgradeBackupLocation>
-    </UpgradeBackupLocation>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
+    <FileUpgradeFlags />
+    <UpgradeBackupLocation />
+    <TargetFrameworks>netcoreapp3.1;net40</TargetFrameworks>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <OutputPath>.\bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>.\bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <DebugSymbols>false</DebugSymbols>
-    <Optimize>true</Optimize>
-    <OutputPath>.\bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System, Version=2.0.3600.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
+  <!-- <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' "> -->
+  <!--   <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.4" /> -->
+  <!-- </ItemGroup> -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <Reference Include="System.configuration" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs">
-      <Link>Properties\EcngAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="Emit\AssemblyGenerator.cs" />
-    <Compile Include="Emit\AssemblyHolder.cs" />
-    <Compile Include="Configuration\ReflectionSection.cs" />
-    <Compile Include="DefaultConstructorInfo.cs" />
-    <Compile Include="Emit\AttributeGenerator.cs" />
-    <Compile Include="Emit\AttributeGeneratorList.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Emit\BaseGenerator.cs" />
-    <Compile Include="Emit\Constraint.cs" />
-    <Compile Include="Emit\ConstraintList.cs" />
-    <Compile Include="Emit\EnumGenerator.cs" />
-    <Compile Include="Emit\EventGenerator.cs" />
-    <Compile Include="Emit\FieldGenerator.cs" />
-    <Compile Include="Emit\GenericArgGenerator.cs" />
-    <Compile Include="FastInvoker.cs" />
-    <Compile Include="Emit\LocalGenerator.cs" />
-    <Compile Include="GenericArg.cs" />
-    <Compile Include="MemberSignature.cs" />
-    <Compile Include="Path\FieldPropProxyItem.cs" />
-    <Compile Include="Path\IndexerProxyItem.cs" />
-    <Compile Include="Path\MemberProxy.cs">
-    </Compile>
-    <Compile Include="Path\MemberProxyItem.cs" />
-    <Compile Include="Emit\MethodGenerator.cs" />
-    <Compile Include="Emit\ParameterGenerator.cs" />
-    <Compile Include="Path\MethodProxyItem.cs" />
-    <Compile Include="Path\Param.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Properties\Resources.resx">
+    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
+    <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
@@ -96,40 +32,15 @@
     <None Include="..\Ecng.snk">
       <Link>Properties\Ecng.snk</Link>
     </None>
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <Compile Include="Properties\Resources.Designer.cs">
+    <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-    <Compile Include="Emit\PropertyGenerator.cs" />
-    <Compile Include="ReflectionHelper.cs" />
-    <Compile Include="Emit\TypeGenerator.cs" />
-    <Compile Include="VoidType.cs" />
-    <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj">
-      <Project>{62A4ADD9-9D89-48E6-984B-73BF023D7E50}</Project>
-      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-      <Name>Collections</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{725D5260-8208-4A39-843A-6B58606ED73B}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Configuration\Configuration.csproj">
-      <Project>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</Project>
-      <Name>Configuration</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\Collections\Collections.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\Configuration\Configuration.csproj" />
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
 </Project>

@@ -285,36 +285,7 @@ namespace xNet
         /// </summary>
         /// <param name="extension">Расширение файла.</param>
         /// <returns>MIME-тип.</returns>
-        public static string DetermineMediaType(string extension)
-        {
-            string mediaType = "application/octet-stream";
-
-            try
-            {
-                using (var regKey = Registry.ClassesRoot.OpenSubKey(extension))
-                {
-                    if (regKey != null)
-                    {
-                        object keyValue = regKey.GetValue("Content Type");
-
-                        if (keyValue != null)
-                        {
-                            mediaType = keyValue.ToString();
-                        }
-                    }
-                }
-            }
-            #region Catch's
-
-            catch (IOException) { }
-            catch (ObjectDisposedException) { }
-            catch (UnauthorizedAccessException) { }
-            catch (SecurityException) { }
-
-            #endregion
-
-            return mediaType;
-        }
+        public static string DetermineMediaType(string extension) => Ecng.Net.MimeTypes.GetMimeType(extension);
 
         #region User Agent
 
