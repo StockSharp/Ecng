@@ -5,8 +5,6 @@
 	using System.Diagnostics;
 	using System.Globalization;
 
-	using TimeZoneConverter;
-
 	public static class TimeHelper
 	{
 		private static readonly Stopwatch _timer;
