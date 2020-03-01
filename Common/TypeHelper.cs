@@ -297,12 +297,12 @@ namespace Ecng.Common
 			return new Scope<T>(value, ownInstance);
 		}
 
-		public static Exception SingleOrAggr(this Exception[] errors)
+		public static Exception SingleOrAggr(this IList<Exception> errors)
 		{
 			if (errors == null)
 				throw new ArgumentNullException(nameof(errors));
 
-			return errors.Length == 1 ? errors[0] : new AggregateException(errors);
+			return errors.Count == 1 ? errors[0] : new AggregateException(errors);
 		}
 	}
 }
