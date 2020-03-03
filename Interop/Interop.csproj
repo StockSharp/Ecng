@@ -31,11 +31,14 @@
       <HintPath>..\..\StockSharp (GitHub)\References\SevenZipSharp.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
     <PackageReference Include="Squid-Box.SevenZipSharp" Version="1.2.242" />
+    <PackageReference Include="System.Management" Version="4.7" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+    <Reference Include="System.Management" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
@@ -119,7 +122,6 @@
     <Compile Remove="ManagedWinapi\**" />
     <EmbeddedResource Remove="ManagedWinapi\**" />
     <None Remove="ManagedWinapi\**" />
-    <Compile Remove="HardwareInfo.cs" />
     <Compile Remove="IExcelWorker.cs" />
     <Compile Remove="ManagedWinApiHelper.cs" />
     <Compile Remove="SystemMemory.cs" />

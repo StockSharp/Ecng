@@ -63,7 +63,7 @@ namespace Ecng.Common
 			return (path + relativePart).ToFullPath();
 		}
 
-		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error)
+		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null)
 		{
 			if (output == null)
 				throw new ArgumentNullException(nameof(output));
@@ -79,6 +79,8 @@ namespace Ecng.Common
 				CreateNoWindow = true,
 				WindowStyle = ProcessWindowStyle.Hidden
 			};
+
+			infoHandler?.Invoke(procInfo);
 
 			using (var process = new Process
 			{
