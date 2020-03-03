@@ -103,7 +103,7 @@ namespace Ecng.Interop
 			var errors = new List<string>();
 			var result = new List<string>();
 
-			var res = IOHelper.Execute("lsblk", "-o MOUNTPOINT,UUID", str =>
+			var res = IOHelper.Execute("lsblk", "-r -o MOUNTPOINT,UUID", str =>
 				{
 					var m = _lsblkRegex.Match(str);
 					if (m.Success)
