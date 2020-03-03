@@ -25,7 +25,7 @@ namespace Ecng.Interop
 
 		private HardwareInfo()
 		{
-#if NETFRAMEWORK
+#if NETFRAMEWORK || __STOCKSHARP__
 			InitIdWindows();
 #else
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
