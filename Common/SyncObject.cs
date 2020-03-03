@@ -9,6 +9,7 @@
 		public static readonly TimeSpan InfiniteTimeSpan = new TimeSpan(0, 0, 0, 0, -1);
 
 		private bool _processed;
+		private object _state;
 
 		public bool TryEnter(TimeSpan? timeOut = null)
 		{
@@ -27,21 +28,38 @@
 
 		public void Pulse()
 		{
+			Pulse(null);
+		}
+
+		public void Pulse(object state)
+		{
 			lock (this)
+			{
+				_state = state;
 				Monitor.Pulse(this);
+			}
 		}
 
 		public void PulseAll()
 		{
-			lock (this)
-				Monitor.PulseAll(this);
+			PulseAll(null);
 		}
 
-		public void PulseSignal()
+		public void PulseAll(object state)
+		{
+			lock (this)
+			{
+				_state = state;
+				Monitor.PulseAll(this);
+			}
+		}
+
+		public void PulseSignal(object state = null)
 		{
 			lock (this)
 			{
 				_processed = true;
+				_state = state;
 				Monitor.Pulse(this);
 			}
 		}
@@ -49,23 +67,30 @@
 		public bool Wait(TimeSpan? timeOut = null)
 		{
 			lock (this)
-			{
-				if (timeOut == null)
-					return Monitor.Wait(this);
-				else
-					return Monitor.Wait(this, timeOut.Value);
-			}
+				return WaitInternal(timeOut);
 		}
 
-		public void WaitSignal()
+		public bool WaitSignal(TimeSpan? timeOut = null)
+		{
+			return WaitSignal(timeOut, out _);
+		}
+
+		public bool WaitSignal(TimeSpan? timeOut, out object state)
 		{
 			lock (this)
 			{
-				if (!_processed)
-					Monitor.Wait(this);
-
+				var result = _processed || WaitInternal(timeOut);
 				_processed = false;
+				state = _state;
+				return result;
 			}
+		}
+
+		private bool WaitInternal(TimeSpan? timeOut)
+		{
+			return timeOut == null
+				? Monitor.Wait(this)
+				: Monitor.Wait(this, timeOut.Value);
 		}
 	}
 }
