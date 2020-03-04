@@ -304,5 +304,14 @@ namespace Ecng.Common
 
 			return errors.Count == 1 ? errors[0] : new AggregateException(errors);
 		}
+
+		public static T CheckOnNull<T>(this T value)
+			where T : class
+		{
+			if (value == null)
+				throw new ArgumentNullException(nameof(value));
+
+			return value;
+		}
 	}
 }
