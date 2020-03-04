@@ -281,5 +281,24 @@ namespace Ecng.Net
 		{
 			return HttpUtility.ParseQueryString(url, _urlEncoding);
 		}
+
+		public static string UrlEncodeToUpperCase(this string url)
+		{
+			if (url == null)
+				return null;
+
+			var temp = url.ToCharArray();
+
+			for (var i = 0; i < temp.Length - 2; i++)
+			{
+				if (temp[i] != '%')
+					continue;
+
+				temp[i + 1] = char.ToUpper(temp[i + 1]);
+				temp[i + 2] = char.ToUpper(temp[i + 2]);
+			}
+
+			return new string(temp);
+		}
 	}
 }
