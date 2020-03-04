@@ -21,7 +21,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="MimeTypes" Version="1.1.0"/>
+    <PackageReference Include="MimeTypes" Version="1.1.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -31,7 +31,7 @@
     <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
-    <PackageReference Include="NamedPipeServerStream.NetFrameworkVersion" Version="1.0.2"/>
+    <PackageReference Include="NamedPipeServerStream.NetFrameworkVersion" Version="1.0.2" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
@@ -63,4 +63,7 @@
     <Compile Remove="ChannelHelper.cs" />
     <Compile Remove="ChannelWrapper.cs" />
   </ItemGroup>
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+		<Compile Remove="WCF\*" />
+	</ItemGroup>
 </Project>
