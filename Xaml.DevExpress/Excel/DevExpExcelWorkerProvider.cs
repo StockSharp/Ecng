@@ -4,7 +4,6 @@
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
-	using System.Windows.Media;
 
 	using DevExpress.Export.Xl;
 
@@ -156,7 +155,7 @@
 				return this;
 			}
 
-			IExcelWorker IExcelWorker.SetConditionalFormatting(int col, ComparisonOperator op, string condition, Color? bgColor, Color? fgColor)
+			IExcelWorker IExcelWorker.SetConditionalFormatting(int col, ComparisonOperator op, string condition, string bgColor, string fgColor)
 			{
 				return this;
 			}

@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.IO;
-	using System.Windows.Media;
 
 	using Ecng.ComponentModel;
 
@@ -14,7 +13,7 @@
 		IExcelWorker SetStyle(int col, Type type);
 		IExcelWorker SetStyle(int col, string format);
 
-		IExcelWorker SetConditionalFormatting(int col, ComparisonOperator op, string condition, Color? bgColor, Color? fgColor);
+		IExcelWorker SetConditionalFormatting(int col, ComparisonOperator op, string condition, string bgColor, string fgColor);
 
 		IExcelWorker RenameSheet(string name);
 		IExcelWorker AddSheet();

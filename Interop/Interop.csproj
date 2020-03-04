@@ -122,7 +122,6 @@
     <Compile Remove="ManagedWinapi\**" />
     <EmbeddedResource Remove="ManagedWinapi\**" />
     <None Remove="ManagedWinapi\**" />
-    <Compile Remove="IExcelWorker.cs" />
     <Compile Remove="ManagedWinApiHelper.cs" />
     <Compile Remove="SystemMemory.cs" />
     <Compile Remove="SystemMenu.cs" />
