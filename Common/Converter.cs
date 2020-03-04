@@ -127,7 +127,7 @@
 				return source;
 			});
 			AddTypedConverter<IPAddress, string>(input => input.ToString());
-			AddTypedConverter<string, IPAddress>(IPAddress.Parse);
+			AddTypedConverter<string, IPAddress>(s => s.IsEmpty() ? null : IPAddress.Parse(s));
 			AddTypedConverter<IPAddress, byte[]>(input => input.GetAddressBytes());
 			AddTypedConverter<byte[], IPAddress>(input => new IPAddress(input));
 			AddTypedConverter<IPAddress, long>(input =>
@@ -696,7 +696,7 @@
 					return DateTimeOffset.Parse(str4);
 #if !SILVERLIGHT
 				else if (value is string str5 && destinationType == typeof(TimeZoneInfo))
-					return TZConvert.GetTimeZoneInfo(str5);
+					return TimeZoneInfo.FindSystemTimeZoneById(str5);
 				else if (value is TimeZoneInfo tz && destinationType == typeof(string))
 					return tz.Id;
 #endif
