@@ -202,7 +202,7 @@
 
 					ConnectToEvents(pageableItemControl);
 
-					var startRowIndex = Url.Current.QueryString.TryGetValue<int?>(PageField) ?? 0;
+					var startRowIndex = WebHelper.Current.QueryString.TryGetValue<int?>(PageField) ?? 0;
 
 					if (startRowIndex == 1)
 						startRowIndex = 0;

@@ -141,7 +141,7 @@
 				var rows = ViewState["MaximumRows"];
 
 				if (rows == null)
-					return HttpHelper.DefaultPageSize;
+					return WebHelper.DefaultPageSize;
 
 				return (int)rows;
 			}

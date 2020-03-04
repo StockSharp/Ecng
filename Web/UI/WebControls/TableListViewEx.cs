@@ -8,6 +8,7 @@
 	using System.Web.UI.WebControls;
 
 	using Ecng.Common;
+	using Ecng.Net;
 
 	[ToolboxData("<{0}:TableListViewEx runat=\"server\"></{0}:TableListViewEx>")]
 	public class TableListViewEx : ListViewEx
@@ -145,7 +146,7 @@
 					cell.Text = column.HeaderText;
 				else
 				{
-					var url = Url.Current;
+					var url = WebHelper.Current;
 
 					var direction = url.QueryString.TryGetValue<SortDirection?>(SortDirectionField);
 

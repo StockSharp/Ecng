@@ -2,10 +2,10 @@ namespace Ecng.Web
 {
 	using System.Web;
 	using System.Web.Configuration;
-	using System.Web.Hosting;
 
 	using Ecng.Common;
 	using Ecng.Configuration;
+	using Ecng.Net;
 
 	public static class AspNetPath
 	{
@@ -30,7 +30,7 @@ namespace Ecng.Web
 
 		public const string DefaultPage = "Default.aspx";
 
-		public static string PortalName => Url.Current.Host;
+		public static string PortalName => WebHelper.Current.Host;
 
 		public static string MakeEmail(string account)
 		{
@@ -49,7 +49,10 @@ namespace Ecng.Web
 				return new Url(virtualPath);
 
 			if (HttpContext.Current == null)
-				return new Url(HostingEnvironment.MapPath(virtualPath));
+			{
+				return new Url(virtualPath.Replace("~", "https://stocksharp.com"));
+				//return new Url(HostingEnvironment.MapPath(virtualPath));
+			}
 
 			return new Url(HttpContext.Current.Request.Url.ToString(), VirtualPathUtility.ToAbsolute(virtualPath));//.ToString();
 		}

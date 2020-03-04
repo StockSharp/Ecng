@@ -7,6 +7,7 @@ namespace Ecng.Web.UI.WebControls
 	using System.Web;
 
 	using Ecng.Common;
+	using Ecng.Net;
 
 	/// <summary>
 	/// Performs all the text formatting and parsing operations.

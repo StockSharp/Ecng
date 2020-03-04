@@ -1,9 +1,7 @@
 namespace Ecng.Web
 {
 	using System.Collections.Generic;
-	using System.Text;
 	using System.Web;
-	using System.Collections.Specialized;
 	using System.Linq;
 	using System.Net;
 	using System.Security;
@@ -31,15 +29,16 @@ namespace Ecng.Web
 
 	using Ecng.Common;
 	using Ecng.ComponentModel;
+	using Ecng.Net;
 	using Ecng.Reflection;
 #endif
 
-	public static class HttpHelper
+	public static class WebHelper
 	{
 #if !SILVERLIGHT
 		private static readonly FastInvoker<VoidType, string, string> _getMimeType;
 
-		static HttpHelper()
+		static WebHelper()
 		{
 			var type = "System.Web.MimeMapping, System.Web, Version=4.0.0.0, Culture=neutral, PublicKeyToken=B03F5F7F11D50A3A".To<Type>();
 
@@ -150,9 +149,21 @@ namespace Ecng.Web
 			return pageType;
 		}
 
+		public static Url Current => new Url(HttpContext.Current.Request.Url);
+
+		private static Url ToUrl(this Type pageType)
+		{
+			var node = DefaultMapper.GetNode(pageType);
+
+			if (node == null)
+				throw new ArgumentException("Node for type {0} doesn't exist.".Put(pageType));
+
+			return new Url(AspNetPath.ToFullAbsolute(node.Url));
+		}
+
 		public static void Redirect(this Type pageType)
 		{
-			new Url(pageType).Redirect();
+			pageType.ToUrl().Redirect();
 		}
 
 		public static void Redirect(this Url url, bool endResponse = true)

@@ -9,6 +9,7 @@ namespace Ecng.Logic.BusinessEntities
 	using Ecng.Common;
 	using Ecng.Configuration;
 	using Ecng.Data;
+	using Ecng.Net;
 	using Ecng.Serialization;
 	using Ecng.Reflection;
 	using Ecng.Web;
@@ -77,7 +78,7 @@ namespace Ecng.Logic.BusinessEntities
 		public static TEntity GetEntity<TEntity>(string id)
 			where TEntity : BaseEntity
 		{
-			var entity = GetRootObject().Database.Read<TEntity>(Url.Current.QueryString.GetValue<long>(id));
+			var entity = GetRootObject().Database.Read<TEntity>(WebHelper.Current.QueryString.GetValue<long>(id));
 
 			if (entity == null)
 				throw new ArgumentException("id");
@@ -129,7 +130,7 @@ namespace Ecng.Logic.BusinessEntities
 
 		public static bool Contains<T>()
 		{
-			return Url.Current.QueryString.Contains(GetIdentity(typeof(T)));
+			return WebHelper.Current.QueryString.Contains(GetIdentity(typeof(T)));
 		}
 
 		public static void Append<TEntity>(this QueryString queryString, TEntity entity)
