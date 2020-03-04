@@ -1225,6 +1225,29 @@ namespace Ecng.Xaml
 
 			return new GridLength(storage.GetValue<double>("Value"), storage.GetValue<GridUnitType>("Type"));
 		}
+
+		public static bool IsWpfColor(this Type type)
+		{
+			if (type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			return type == typeof(Color);
+		}
+
+		public static int ToInt(this Color color)
+		{
+			return (color.A << 24) | (color.R << 16) | (color.G << 8) | color.B;
+		}
+
+		public static Color ToColor(this int color)
+		{
+			return Color.FromArgb((byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)(color));
+		}
+
+		public static Color? ToColor(this string color)
+		{
+			return (Color?)ColorConverter.ConvertFromString(color);
+		}
 	}
 
 	public enum BrowserEmulationVersion

@@ -28,11 +28,6 @@
 	using WinColor = System.Drawing.Color;
 #endif
 
-#if NETFRAMEWORK
-	using WpfColorConverter = System.Windows.Media.ColorConverter;
-	using WpfColor = System.Windows.Media.Color;
-#endif
-
 	using TimeZoneConverter;
 
 	public static class Converter
@@ -629,20 +624,6 @@
 					return ColorTranslator.ToHtml(winColor2);
 				else if (value is string strVal && destinationType == typeof(WinColor))
 					return ColorTranslator.FromHtml(strVal);
-#endif
-#if NETFRAMEWORK
-				else if (value is WpfColor wpfColor1 && destinationType == typeof(int))
-				{
-					return (wpfColor1.A << 24) | (wpfColor1.R << 16) | (wpfColor1.G << 8) | wpfColor1.B;
-				}
-				else if (value is int intVal2 && destinationType == typeof(WpfColor))
-				{
-					return WpfColor.FromArgb((byte)(intVal2 >> 24), (byte)(intVal2 >> 16), (byte)(intVal2 >> 8), (byte)(intVal2));
-				}
-				else if (value is WpfColor wpfColor2 && destinationType == typeof(string))
-					return wpfColor2.ToString();
-				else if (value is string strVal2 && destinationType == typeof(WpfColor))
-					return WpfColorConverter.ConvertFromString(strVal2);
 #endif
 				else if (value is Uri && destinationType == typeof(string))
 					return value.ToString();

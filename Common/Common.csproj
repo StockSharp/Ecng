@@ -23,11 +23,6 @@
   <ItemGroup>
     <PackageReference Include="TimeZoneConverter" Version="3.2.0" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="WindowsBase" />
-  </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
     <PackageReference Include="System.CodeDom" Version="4.4.0" />
   </ItemGroup>
