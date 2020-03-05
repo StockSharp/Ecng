@@ -945,7 +945,7 @@ namespace HtmlAgilityPack
             }
 
             string contentType = "";
-#if !NETSTANDARD2_0
+#if NETFRAMEWORK
             var helper = new PermissionHelper();
             if (!helper.GetIsRegistryAvailable())
             {
@@ -988,7 +988,7 @@ namespace HtmlAgilityPack
             }
 
             string ext = "";
-#if !NETSTANDARD2_0
+#if NETFRAMEWORK
             var helper = new PermissionHelper();
             if (!helper.GetIsRegistryAvailable())
             {
