@@ -15,13 +15,13 @@
 // limitations under the License.
 #endregion
 
-namespace MoreLinq
+namespace System.Linq
 {
     using System;
     using System.Collections.Generic;
 
     // TODO: Tests! (The code is simple enough I trust it not to fail, mind you...)
-    static partial class MoreEnumerable
+    public static class MoreEnumerable2
     {
         /// <summary>
         /// Returns a <see cref="HashSet{T}"/> of the source items using the default equality

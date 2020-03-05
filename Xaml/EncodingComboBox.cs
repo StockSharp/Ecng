@@ -9,8 +9,6 @@ namespace Ecng.Xaml
 
 	using Ecng.Common;
 
-	using MoreLinq;
-
 	public class EncodingComboBox : ComboBox
 	{
 		private static readonly Dictionary<int, EncodingInfo> _encodingInfos;
