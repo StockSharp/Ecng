@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 
-namespace Ecng.Web.BBCodes
+namespace Ecng.Net.BBCodes
 {
 	using Ecng.Common;
-	using Ecng.Web.BBCodes.SyntaxTree;
+	using Ecng.Net.BBCodes.SyntaxTree;
 
     /// <summary>
     /// This class is useful for creating a custom parser. You can customize which tags are available

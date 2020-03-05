@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-namespace Ecng.Web.BBCodes.SyntaxTree
+namespace Ecng.Net.BBCodes.SyntaxTree
 {
     public sealed class TextNode : SyntaxTreeNode
     {

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Ecng.Web.BBCodes.SyntaxTree
+namespace Ecng.Net.BBCodes.SyntaxTree
 {
     public abstract class SyntaxTreeNode : IEquatable<SyntaxTreeNode>
     {

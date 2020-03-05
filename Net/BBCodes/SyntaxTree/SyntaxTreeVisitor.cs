@@ -1,4 +1,4 @@
-﻿namespace Ecng.Web.BBCodes.SyntaxTree
+﻿namespace Ecng.Net.BBCodes.SyntaxTree
 {
     public class SyntaxTreeVisitor
     {

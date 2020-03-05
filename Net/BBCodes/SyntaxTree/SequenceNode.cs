@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Ecng.Web.BBCodes.SyntaxTree
+namespace Ecng.Net.BBCodes.SyntaxTree
 {
     public sealed class SequenceNode : SyntaxTreeNode
     {

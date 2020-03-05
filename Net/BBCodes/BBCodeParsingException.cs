@@ -1,6 +1,6 @@
 using System;
 
-namespace Ecng.Web.BBCodes
+namespace Ecng.Net.BBCodes
 {
     [Serializable]
     public class BBCodeParsingException : Exception

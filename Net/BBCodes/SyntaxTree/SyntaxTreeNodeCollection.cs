@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace Ecng.Web.BBCodes.SyntaxTree
+namespace Ecng.Net.BBCodes.SyntaxTree
 {
     public interface ISyntaxTreeNodeCollection : IList<SyntaxTreeNode>
     {

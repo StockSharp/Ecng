@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-using Ecng.Web.BBCodes.SyntaxTree;
+using Ecng.Net.BBCodes.SyntaxTree;
 
-namespace Ecng.Web.BBCodes
+namespace Ecng.Net.BBCodes
 {
     public static class BBCode
     {
