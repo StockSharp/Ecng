@@ -40,7 +40,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
-    <Compile Remove="MoreLinq\ToHashSet.cs" />
-  </ItemGroup>
 </Project>

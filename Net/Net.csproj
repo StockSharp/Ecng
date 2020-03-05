@@ -63,7 +63,7 @@
     <Compile Remove="ChannelHelper.cs" />
     <Compile Remove="ChannelWrapper.cs" />
   </ItemGroup>
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
-		<Compile Remove="WCF\*" />
-	</ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+    <Compile Remove="WCF\**" />
+  </ItemGroup>
 </Project>
