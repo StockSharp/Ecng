@@ -51,7 +51,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BusinessEntities", "Logic\B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data.Providers", "Data.Providers\Data.Providers.csproj", "{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{CAF861AA-7473-4EEB-BF41-FFE74A97E072}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{CAF861AA-7473-4EEB-BF41-FFE74A97E072}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTesting", "UnitTesting\UnitTesting.csproj", "{38C67615-BE2E-461E-BBED-5217F6DC0AFE}"
 EndProject
@@ -70,6 +70,12 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Net.SocketIO", "Net.SocketIO\Net.SocketIO.csproj", "{B79EC630-2FAB-42B9-89BA-4886C1942E96}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO", "IO\IO.csproj", "{4E2D9D8A-6E5A-4482-96F6-2544DE6611B9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Disk.SDK", "YandexDisk\Disk.Sdk\Disk.SDK.csproj", "{D37D6F1C-812D-4096-B7CD-5EA46B48C4EE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "YandexDisk", "YandexDisk", "{03273EB5-F2CB-4B20-B31D-EB3EB642414D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Disk.SDK.Provider", "YandexDisk\Disk.SDK.Provider\Disk.SDK.Provider.csproj", "{D8BB0F49-5F72-414A-8976-19846DE293C2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -190,12 +196,22 @@ Global
 		{4E2D9D8A-6E5A-4482-96F6-2544DE6611B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E2D9D8A-6E5A-4482-96F6-2544DE6611B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E2D9D8A-6E5A-4482-96F6-2544DE6611B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D37D6F1C-812D-4096-B7CD-5EA46B48C4EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D37D6F1C-812D-4096-B7CD-5EA46B48C4EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D37D6F1C-812D-4096-B7CD-5EA46B48C4EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D37D6F1C-812D-4096-B7CD-5EA46B48C4EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8BB0F49-5F72-414A-8976-19846DE293C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8BB0F49-5F72-414A-8976-19846DE293C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8BB0F49-5F72-414A-8976-19846DE293C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8BB0F49-5F72-414A-8976-19846DE293C2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A} = {ED4C3725-09A0-4BEB-9EF4-BC5B42B0459C}
+		{D37D6F1C-812D-4096-B7CD-5EA46B48C4EE} = {03273EB5-F2CB-4B20-B31D-EB3EB642414D}
+		{D8BB0F49-5F72-414A-8976-19846DE293C2} = {03273EB5-F2CB-4B20-B31D-EB3EB642414D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EB1406AD-3523-43AF-AE9B-F7BD4EAC2F12}

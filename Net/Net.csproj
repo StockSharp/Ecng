@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProductVersion>9.0.30729</ProductVersion>
     <ProjectGuid>{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}</ProjectGuid>
     <RootNamespace>Ecng.Net</RootNamespace>
     <AssemblyName>Ecng.Net</AssemblyName>
-    <TargetFrameworks>netcoreapp3.1;net40</TargetFrameworks>
+    <TargetFrameworks>net40;netcoreapp3.1</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
     <FileUpgradeFlags />
@@ -22,6 +23,7 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="MimeTypes" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -59,11 +61,5 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
     <Compile Remove="WsdlBaseAddressFactory.cs" />
     <Compile Remove="ServiceHost.cs" />
-    <Compile Remove="ReferencePreservingDataContractFormatAttribute.cs" />
-    <Compile Remove="ChannelHelper.cs" />
-    <Compile Remove="ChannelWrapper.cs" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <Compile Remove="WCF\**" />
   </ItemGroup>
 </Project>

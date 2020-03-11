@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProductVersion>9.0.30729</ProductVersion>
     <ProjectGuid>{725D5260-8208-4A39-843A-6B58606ED73B}</ProjectGuid>
@@ -8,7 +9,7 @@
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
     <FileUpgradeFlags />
     <UpgradeBackupLocation />
-    <TargetFrameworks>netcoreapp3.1;net40</TargetFrameworks>
+    <TargetFrameworks>net40;netcoreapp3.1</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <DocumentationFile />
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>

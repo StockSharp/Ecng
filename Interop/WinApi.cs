@@ -462,16 +462,6 @@
 			return (loWord.To<int>() & 0xFFFF) + ((hiWord.To<int>() & 0xFFFF) << 16);
 		}
 
-		public static int HiWord(this int iValue)
-		{
-			return ((iValue >> 16) & 0xFFFF);
-		}
-
-		public static int LoWord(this int iValue)
-		{
-			return (iValue & 0xFFFF);
-		}
-
 		public static void PressKeyButton(this SystemWindow window, VirtualKeys key)
 		{
 			window.SendMessage(WM.KEYDOWN, (int)key, 0);

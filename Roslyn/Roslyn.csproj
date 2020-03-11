@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{78884141-5A63-4EAE-81A4-512FBD2195C5}</ProjectGuid>
     <RootNamespace>Ecng.Roslyn</RootNamespace>

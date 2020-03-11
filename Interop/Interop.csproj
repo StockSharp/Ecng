@@ -1,4 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProductVersion>9.0.30729</ProductVersion>
     <ProjectGuid>{6EACA7CE-0269-47A2-AE6A-3669738EE303}</ProjectGuid>
@@ -12,6 +13,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <UseWindowsForms>true</UseWindowsForms>
     <!-- <NoWarn>3001,3002,3003,3005,3008</NoWarn> -->
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -36,6 +38,7 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
     <PackageReference Include="Squid-Box.SevenZipSharp" Version="1.2.242" />
     <PackageReference Include="System.Management" Version="4.7" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <Reference Include="System.Management" />
@@ -114,18 +117,6 @@
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
-    <Content Remove="Dde\**" />
-    <Compile Remove="Dde\**" />
-    <EmbeddedResource Remove="Dde\**" />
-    <None Remove="Dde\**" />
-    <Content Remove="ManagedWinapi\**" />
-    <Compile Remove="ManagedWinapi\**" />
-    <EmbeddedResource Remove="ManagedWinapi\**" />
-    <None Remove="ManagedWinapi\**" />
-    <Compile Remove="ManagedWinApiHelper.cs" />
     <Compile Remove="SystemMemory.cs" />
-    <Compile Remove="SystemMenu.cs" />
-    <Compile Remove="WinApi.cs" />
-    <Compile Remove="NativeLibrary.cs" />
   </ItemGroup>
 </Project>

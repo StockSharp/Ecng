@@ -1,10 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}</ProjectGuid>
     <RootNamespace>Ecng.Backup</RootNamespace>
     <AssemblyName>Ecng.Backup</AssemblyName>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFrameworks>net46;netcoreapp3.1</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <DebugType>full</DebugType>
@@ -14,30 +16,14 @@
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AWSSDK.Core">
-      <HintPath>..\..\StockSharp (GitHub)\References\AWSSDK.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="AWSSDK.Glacier">
-      <HintPath>..\..\StockSharp (GitHub)\References\AWSSDK.Glacier.dll</HintPath>
-    </Reference>
-    <Reference Include="AWSSDK.S3">
-      <HintPath>..\..\StockSharp (GitHub)\References\AWSSDK.S3.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Mvvm.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Mvvm.v19.2.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Core.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Core.v19.2.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Data.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Data.v19.2.dll</HintPath>
-    </Reference>
-    <Reference Include="Disk.SDK">
-      <HintPath>..\..\StockSharp (GitHub)\References\Disk.SDK.dll</HintPath>
-    </Reference>
-    <Reference Include="Disk.SDK.Provider">
-      <HintPath>..\..\StockSharp (GitHub)\References\Disk.SDK.Provider.dll</HintPath>
-    </Reference>
+    <PackageReference Include="StockSharp.Ecng.Xaml.DXRefs" Version="$(DXRefsVersion)" />
+
+    <PackageReference Include="AWSSDK.S3" Version="3.3.110.32" />
+    <PackageReference Include="AWSSDK.SQS" Version="3.3.102.73" />
+    <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.3.101.130" />
+    <PackageReference Include="AWSSDK.Glacier" Version="3.3.100.141" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' ">
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Xaml" />
@@ -50,17 +36,12 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="Yandex\YandexLoginWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
     <ProjectReference Include="..\Localization\Localization.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\Xaml.DevExpress\Xaml.DevExp.csproj" />
     <ProjectReference Include="..\Xaml\Xaml.csproj" />
+    <ProjectReference Include="..\YandexDisk\Disk.SDK.Provider\Disk.SDK.Provider.csproj" />
   </ItemGroup>
 </Project>

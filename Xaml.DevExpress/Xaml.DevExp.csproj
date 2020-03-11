@@ -1,10 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{3160D0DB-5D8C-4CF6-987C-C242C3566BAA}</ProjectGuid>
     <RootNamespace>Ecng.Xaml.DevExp</RootNamespace>
     <AssemblyName>Ecng.Xaml.DevExp</AssemblyName>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFrameworks>net46;netcoreapp3.1</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <DebugType>full</DebugType>
@@ -15,33 +17,9 @@
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DevExpress.Data.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Data.v19.2.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Printing.v19.2.Core">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Printing.v19.2.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Controls.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Controls.v19.2.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Core.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Core.v19.2.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Dialogs.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Dialogs.v19.2.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Grid.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Grid.v19.2.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Grid.v19.2.Core">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Grid.v19.2.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.PropertyGrid.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.PropertyGrid.v19.2.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Mvvm.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Mvvm.v19.2.dll</HintPath>
-    </Reference>
+    <PackageReference Include="StockSharp.Ecng.Xaml.DXRefs" Version="$(DXRefsVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp3.1'">
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Windows.Forms" />
@@ -88,58 +66,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="Database\DatabaseConnectionCreateWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Database\DatabaseConnectionEditor.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Database\DatabaseConnectionPanel.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="DdeSettingsWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="EndPointEditor.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="EndPointListEditor.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="EnumEditor.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="FileBrowserEditor.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="FileBrowserPicker.xaml">
-      <SubType>Designer</SubType>
-      <Generator>XamlIntelliSenseFileGenerator</Generator>
-    </Page>
-    <Page Include="FolderBrowserEditor.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="FolderBrowserPicker.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="SecretEditor.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Themes\Generic.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Collections\Collections.csproj" />

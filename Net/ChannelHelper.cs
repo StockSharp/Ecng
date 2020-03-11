@@ -6,7 +6,9 @@ namespace Ecng.Net
 	using System.Net;
 	using System.ServiceModel;
 	using System.ServiceModel.Channels;
+#if NETFRAMEWORK
 	using System.ServiceModel.Configuration;
+#endif
 
 	using Ecng.Common;
 	using Ecng.Configuration;
@@ -15,6 +17,7 @@ namespace Ecng.Net
 	{
 		public static ChannelFactory<TChannel> Create<TChannel>(string endpointName, Func<ChannelFactory<TChannel>> createFactory)
 		{
+#if NETFRAMEWORK
 			if (createFactory == null)
 				throw new ArgumentNullException(nameof(createFactory));
 
@@ -32,6 +35,9 @@ namespace Ecng.Net
 			}
 
 			return createFactory();
+#else
+			throw new PlatformNotSupportedException();
+#endif
 		}
 
 		public static void Invoke<TChannel>(this ChannelFactory<TChannel> factory, Action<TChannel> handler)
@@ -64,8 +70,12 @@ namespace Ecng.Net
 
 		public static IPEndPoint GetClientEndPoint()
 		{
+#if NETFRAMEWORK
 			var prop = ((RemoteEndpointMessageProperty)OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name]);
 			return new IPEndPoint(prop.Address.To<IPAddress>(), prop.Port);
+#else
+			throw new PlatformNotSupportedException();
+#endif
 		}
 
 		// http://devdump.wordpress.com/2008/12/07/disposing-return-values/

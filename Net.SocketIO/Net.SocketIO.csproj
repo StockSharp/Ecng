@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{B79EC630-2FAB-42B9-89BA-4886C1942E96}</ProjectGuid>
     <RootNamespace>Ecng.Net.SocketIO</RootNamespace>
     <AssemblyName>Ecng.Net.SocketIO</AssemblyName>
-    <TargetFrameworks>netcoreapp3.1;net461</TargetFrameworks>
+    <TargetFrameworks>net461;netcoreapp3.1</TargetFrameworks>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>

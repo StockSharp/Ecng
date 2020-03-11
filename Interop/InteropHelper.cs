@@ -128,5 +128,15 @@
 #if !__STOCKSHARP__
 		public static Platforms GetPlatform(this Type type) => type.GetAttribute<TargetPlatformAttribute>()?.Platform ?? Platforms.AnyCPU;
 #endif
+
+		public static int HiWord(this int iValue)
+		{
+			return ((iValue >> 16) & 0xFFFF);
+		}
+
+		public static int LoWord(this int iValue)
+		{
+			return (iValue & 0xFFFF);
+		}
 	}
 }

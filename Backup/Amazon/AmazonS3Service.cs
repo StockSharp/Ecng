@@ -86,7 +86,7 @@ namespace Ecng.Backup.Amazon
 
 			do
 			{
-				var response = _client.ListObjectsV2(request);
+				var response = _client.ListObjectsV2Async(request).Result;
 
 				foreach (var entry in response.S3Objects)
 				{
@@ -119,7 +119,7 @@ namespace Ecng.Backup.Amazon
 
 		void IBackupService.Delete(BackupEntry entry)
 		{
-			_client.DeleteObject(_bucket, GetKey(entry));
+			_client.DeleteObjectAsync(_bucket, GetKey(entry)).Wait();
 		}
 
 		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress)
@@ -154,7 +154,7 @@ namespace Ecng.Backup.Amazon
 			var bytes = new byte[_bufferSize];
 			var readTotal = 0L;
 
-			using (var response = _client.GetObject(request))
+			using (var response = _client.GetObjectAsync(request).Result)
 			using (var responseStream = response.ResponseStream)
 			{
 				response.WriteObjectProgressEvent += (s, a) => progress(a.PercentDone);
@@ -186,11 +186,11 @@ namespace Ecng.Backup.Amazon
 
 			var key = GetKey(entry);
 
-			var initResponse = _client.InitiateMultipartUpload(new InitiateMultipartUploadRequest
+			var initResponse = _client.InitiateMultipartUploadAsync(new InitiateMultipartUploadRequest
 			{
 				BucketName = _bucket,
 				Key = key,
-			});
+			}).Result;
 
 			var filePosition = 0L;
 			var nextProgress = 1;
@@ -201,7 +201,7 @@ namespace Ecng.Backup.Amazon
 
 			while (filePosition < stream.Length)
 			{
-				var response = _client.UploadPart(new UploadPartRequest
+				var response = _client.UploadPartAsync(new UploadPartRequest
 				{
 					BucketName = _bucket,
 					UploadId = initResponse.UploadId,
@@ -210,7 +210,7 @@ namespace Ecng.Backup.Amazon
 					//FilePosition = filePosition,
 					InputStream = stream,
 					Key = key
-				});
+				}).Result;
 
 				etags.Add(new PartETag(partNum, response.ETag));
 
@@ -227,13 +227,13 @@ namespace Ecng.Backup.Amazon
 				partNum++;
 			}
 
-			_client.CompleteMultipartUpload(new CompleteMultipartUploadRequest
+			_client.CompleteMultipartUploadAsync(new CompleteMultipartUploadRequest
 			{
 				BucketName = _bucket,
 				UploadId = initResponse.UploadId,
 				Key = key,
 				PartETags = etags
-			});
+			}).Wait();
 
 			var source = new CancellationTokenSource();
 
@@ -250,7 +250,7 @@ namespace Ecng.Backup.Amazon
 				Key = key,
 			};
 
-			var response = _client.GetObjectMetadata(request);
+			var response = _client.GetObjectMetadataAsync(request).Result;
 
 			entry.Size = response.ContentLength;
 		}

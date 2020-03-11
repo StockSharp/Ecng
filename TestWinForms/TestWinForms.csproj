@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProductVersion>8.0.30703</ProductVersion>
     <ProjectGuid>{4B658B40-4303-46B0-B670-B2AB96537817}</ProjectGuid>
@@ -14,12 +15,7 @@
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DevExpress.Xpf.Core.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Xpf.Core.v19.2.dll</HintPath>
-    </Reference>
-    <Reference Include="DevExpress.Data.v19.2">
-      <HintPath>..\..\StockSharp (GitHub)\References\DevExpress.Data.v19.2.dll</HintPath>
-    </Reference>
+    <PackageReference Include="StockSharp.Ecng.Xaml.DXRefs" Version="$(DXRefsVersion)"/>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.configuration" />

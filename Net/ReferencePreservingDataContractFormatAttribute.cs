@@ -17,20 +17,28 @@ namespace Ecng.Net
 
 			public override XmlObjectSerializer CreateSerializer(Type type, string name, string ns, IList<Type> knownTypes)
 			{
-				return new DataContractSerializer(type, name, ns, knownTypes,
-				                                  0x7FFF /*maxItemsInObjectGraph*/,
-				                                  false/*ignoreExtensionDataObject*/,
-				                                  true/*preserveObjectReferences*/,
-				                                  null/*dataContractSurrogate*/);
+				return new DataContractSerializer(type, name, ns, knownTypes
+#if NETFRAMEWORK
+												  ,
+												  0x7FFF /*maxItemsInObjectGraph*/,
+												  false/*ignoreExtensionDataObject*/,
+												  true/*preserveObjectReferences*/,
+												  null/*dataContractSurrogate*/
+#endif
+												  );
 			}
 
 			public override XmlObjectSerializer CreateSerializer(Type type, XmlDictionaryString name, XmlDictionaryString ns, IList<Type> knownTypes)
 			{
-				return new DataContractSerializer(type, name, ns, knownTypes,
-				                                  0x7FFF /*maxItemsInObjectGraph*/,
-				                                  false/*ignoreExtensionDataObject*/,
-				                                  true/*preserveObjectReferences*/,
-				                                  null/*dataContractSurrogate*/);
+				return new DataContractSerializer(type, name, ns, knownTypes
+#if NETFRAMEWORK
+												  ,
+												  0x7FFF /*maxItemsInObjectGraph*/,
+												  false/*ignoreExtensionDataObject*/,
+												  true/*preserveObjectReferences*/,
+												  null/*dataContractSurrogate*/
+#endif
+												 );
 			}
 		}
 
