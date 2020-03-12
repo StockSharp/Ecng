@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="clr-namespace:Ecng.Xaml.Converters"
              xmlns:ex="clr-namespace:Ecng.Xaml"
+             xmlns:cm="clr-namespace:Ecng.ComponentModel;assembly=Ecng.ComponentModel"
              x:Name="Ctrl" 
              Background="Transparent">
 
@@ -64,15 +65,15 @@
         <TextBox Grid.Column="0" Style="{StaticResource ColonTextBox}" />
 
         <TextBox Text=":" Grid.Column="3" Style="{StaticResource ColonTextBox}"
-		         Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Days}}"/>
+		         Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static cm:TimeSpanEditorMask.Days}}"/>
         <TextBox Text=":" Grid.Column="5" Style="{StaticResource ColonTextBox}"
-		         Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Minutes}}"/>
+		         Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static cm:TimeSpanEditorMask.Minutes}}"/>
         <TextBox Text=":" Grid.Column="7" Style="{StaticResource ColonTextBox}"
-		         Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Seconds}}"/>
+		         Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static cm:TimeSpanEditorMask.Seconds}}"/>
         <TextBox Text=":" Grid.Column="9" Style="{StaticResource ColonTextBox}"
-		         Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Milliseconds}}"/>
+		         Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static cm:TimeSpanEditorMask.Milliseconds}}"/>
         <TextBox Text=":" Grid.Column="11" Style="{StaticResource ColonTextBox}"
-		         Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Microseconds}}"/>
+		         Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static cm:TimeSpanEditorMask.Microseconds}}"/>
 
         <CheckBox x:Name="HasValueCheckBox" Grid.Column="1" Margin="2,0,0,0"
                   IsChecked="{Binding ElementName=Ctrl, Path=HasValue}"
@@ -83,7 +84,7 @@
                  Style="{StaticResource ValueTextBox}"
 				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
                  Grid.Column="2" BorderThickness="0" PreviewKeyDown="KeyPressed" GotFocus="FocusedTextBox" 
-				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Days}}"
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static cm:TimeSpanEditorMask.Days}}"
                  VerticalContentAlignment="Center" ToolTip="Days" TextChanged="TextChanged" MouseWheel="OnMouseWheel"/>
 
         <TextBox x:Name="TxbHours" Text="{Binding Path=Hours, ElementName=Ctrl}" TextAlignment="Center"
@@ -91,7 +92,7 @@
 				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
                  Grid.Column="4" BorderThickness="0" 
                  MouseWheel="OnMouseWheel" PreviewKeyDown="KeyPressed" GotFocus="FocusedTextBox" 
-				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Hours}}"
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static cm:TimeSpanEditorMask.Hours}}"
                  VerticalContentAlignment="Center" ToolTip="Hours" TextChanged="TextChanged" />
 
         <TextBox x:Name="TxbMinutes" Text="{Binding Path=Minutes, ElementName=Ctrl}" TextAlignment="Center"
@@ -99,7 +100,7 @@
 				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
                  Grid.Column="6" BorderThickness="0" 
                  MouseWheel="OnMouseWheel" PreviewKeyDown="KeyPressed" GotFocus="FocusedTextBox"
-				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Minutes}}"
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static cm:TimeSpanEditorMask.Minutes}}"
                  VerticalContentAlignment="Center" ToolTip="Minutes" TextChanged="TextChanged" />
 
         <TextBox x:Name="TxbSeconds" Text="{Binding Path=Seconds, ElementName=Ctrl}" TextAlignment="Center"
@@ -107,7 +108,7 @@
 				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
                  Grid.Column="8" BorderThickness="0" 
                  MouseWheel="OnMouseWheel" PreviewKeyDown="KeyPressed"  GotFocus="FocusedTextBox"
-				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Seconds}}"
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static cm:TimeSpanEditorMask.Seconds}}"
                  VerticalContentAlignment="Center" ToolTip="Seconds" TextChanged="TextChanged" />
 
         <TextBox x:Name="TxbMilliseconds" Text="{Binding Path=Milliseconds, ElementName=Ctrl}" TextAlignment="Center"
@@ -115,7 +116,7 @@
 				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
                  Grid.Column="10" BorderThickness="0" 
                  MouseWheel="OnMouseWheel" PreviewKeyDown="KeyPressed"  GotFocus="FocusedTextBox"
-				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Milliseconds}}"
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static cm:TimeSpanEditorMask.Milliseconds}}"
                  VerticalContentAlignment="Center" ToolTip="Milliseconds" TextChanged="TextChanged" />
 
         <TextBox x:Name="TxbMicroseconds" Text="{Binding Path=Microseconds, ElementName=Ctrl}" TextAlignment="Center"
@@ -123,7 +124,7 @@
 				 IsEnabled="{Binding ElementName=HasValueCheckBox, Path=IsChecked}"
                  Grid.Column="12" BorderThickness="0" 
                  MouseWheel="OnMouseWheel" PreviewKeyDown="KeyPressed"  GotFocus="FocusedTextBox"
-				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static ex:TimeSpanEditorMask.Microseconds}}"
+				 Visibility="{Binding ElementName=Ctrl, Path=Mask, Converter={StaticResource TimeSpanEditorMaskToVisibilityConverter}, ConverterParameter={x:Static cm:TimeSpanEditorMask.Microseconds}}"
                  VerticalContentAlignment="Center" ToolTip="Microseconds" TextChanged="TextChanged" />
 
         <Viewbox DockPanel.Dock="Right" HorizontalAlignment="Right" Grid.Column="13"

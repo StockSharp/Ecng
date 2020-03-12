@@ -10,6 +10,7 @@
 	using System.Windows.Input;
 
 	using Ecng.Common;
+	using Ecng.ComponentModel;
 	using Ecng.Localization;
 
 	/// <summary>
@@ -39,11 +40,6 @@
 			Key.Delete,
 			Key.Back
 		};
-
-		/// <summary>
-		/// Default editor parts mask.
-		/// </summary>
-		public const TimeSpanEditorMask DefaultMask = TimeSpanEditorMask.Hours | TimeSpanEditorMask.Minutes | TimeSpanEditorMask.Seconds;
 
 		#region Dependency properties
 
@@ -292,7 +288,7 @@
 		/// <see cref="DependencyProperty"/> for <see cref="Mask"/>.
 		/// </summary>
 		public static readonly DependencyProperty MaskProperty = DependencyProperty.Register(nameof(Mask), typeof(TimeSpanEditorMask), typeof(TimeSpanEditor),
-			new UIPropertyMetadata(DefaultMask));
+			new UIPropertyMetadata(TimeSpanEditorAttribute.DefaultMask));
 
 		/// <summary>
 		/// Show parts mask.

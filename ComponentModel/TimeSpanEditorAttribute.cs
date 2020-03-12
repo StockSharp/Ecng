@@ -1,4 +1,4 @@
-namespace Ecng.Xaml
+namespace Ecng.ComponentModel
 {
 	using System;
 
@@ -47,6 +47,11 @@ namespace Ecng.Xaml
 		/// <summary>
 		/// Show editor parts mask.
 		/// </summary>
-		public TimeSpanEditorMask Mask { get; set; } = TimeSpanEditor.DefaultMask;
+		public TimeSpanEditorMask Mask { get; set; } = DefaultMask;
+
+		/// <summary>
+		/// Default editor parts mask.
+		/// </summary>
+		public const TimeSpanEditorMask DefaultMask = TimeSpanEditorMask.Hours | TimeSpanEditorMask.Minutes | TimeSpanEditorMask.Seconds;
 	}
 }
