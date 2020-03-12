@@ -151,7 +151,7 @@ namespace Ecng.Web
 
 		public static Url Current => new Url(HttpContext.Current.Request.Url);
 
-		private static Url ToUrl(this Type pageType)
+		public static Url ToUrl(this Type pageType)
 		{
 			var node = DefaultMapper.GetNode(pageType);
 
