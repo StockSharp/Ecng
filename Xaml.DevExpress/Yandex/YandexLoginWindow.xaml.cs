@@ -13,18 +13,18 @@ Created: 2015, 11, 11, 2:32 PM
 Copyright 2010 by StockSharp, LLC
 *******************************************************************************************/
 #endregion S# License
-namespace Ecng.Backup.Yandex
+
+namespace Ecng.Xaml.DevExp.Yandex
 {
 	using System;
 	using System.Threading.Tasks;
 	using System.Windows;
 	using System.Windows.Navigation;
-
 	using Disk.SDK;
 	using Disk.SDK.Provider;
-
 	using Ecng.ComponentModel;
 	using Ecng.Localization;
+	using Ecng.Common;
 
 	partial class YandexLoginWindow
 	{
@@ -97,6 +97,40 @@ namespace Ecng.Backup.Yandex
 					BusyIndicator.IsSplashScreenShown = false;
 					DialogResult = true;
 				}, TaskScheduler.FromCurrentSynchronizationContext());
+		}
+
+		public static string Authorize(out bool isCanceled)
+		{
+			isCanceled = false;
+
+			string token = null;
+			Exception error = null;
+
+			var owner = Scope<Window>.Current?.Value ?? Application.Current?.MainWindow;
+
+			YandexLoginWindow CreateWindow()
+			{
+				var loginWindow = new YandexLoginWindow();
+
+				loginWindow.AuthCompleted += (s, e) =>
+				{
+					if (e.Error == null)
+						token = e.Result;
+					else
+						error = e.Error;
+				};
+
+				return loginWindow;
+			}
+
+			var retVal = owner?.GuiSync(() => CreateWindow().ShowModal(owner)) ?? CreateWindow().ShowDialog() == true;
+
+			if (!retVal)
+				isCanceled = true;
+
+			error?.Throw();
+
+			return token;
 		}
 	}
 }
