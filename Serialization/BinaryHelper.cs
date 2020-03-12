@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Reflection;
+	using System.Runtime.Serialization;
 	using System.Text;
 
 	using Ecng.Reflection;
@@ -523,6 +524,16 @@
 				return member.ReflectedType.GetTypeName(isAssemblyQualifiedName) + "/" + member.Name;
 			else
 				return member.To<Type>().GetTypeName(isAssemblyQualifiedName);
+		}
+
+		public static T DeserializeDataContract<T>(this Stream stream)
+		{
+			return (T)new DataContractSerializer(typeof(T)).ReadObject(stream);
+		}
+
+		public static void SerializeDataContract<T>(this Stream stream, T value)
+		{
+			new DataContractSerializer(typeof(T)).WriteObject(stream, value);
 		}
 	}
 }
