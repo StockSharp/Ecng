@@ -76,6 +76,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "YandexDisk", "YandexDisk", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Disk.SDK.Provider", "YandexDisk\Disk.SDK.Provider\Disk.SDK.Provider.csproj", "{D8BB0F49-5F72-414A-8976-19846DE293C2}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalR.Client", "SignalR\SignalR.Client.csproj", "{EAC99715-0BFD-40C0-91C7-3E3B2CB9B344}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -199,6 +201,10 @@ Global
 		{D8BB0F49-5F72-414A-8976-19846DE293C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8BB0F49-5F72-414A-8976-19846DE293C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8BB0F49-5F72-414A-8976-19846DE293C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAC99715-0BFD-40C0-91C7-3E3B2CB9B344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAC99715-0BFD-40C0-91C7-3E3B2CB9B344}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAC99715-0BFD-40C0-91C7-3E3B2CB9B344}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAC99715-0BFD-40C0-91C7-3E3B2CB9B344}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
