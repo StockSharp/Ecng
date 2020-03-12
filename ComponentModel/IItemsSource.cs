@@ -12,10 +12,9 @@
 	public interface IItemsSource
 	{
 		/// <summary>
-		/// Get the collection of values represented by a ComboBox.
+		/// Collection of values represented by a ComboBox.
 		/// </summary>
-		/// <returns>Collection of values represented by a ComboBox.</returns>
-		IEnumerable<Tuple<string, object>> GetValues();
+		IEnumerable<Tuple<string, object>> Values { get; }
 	}
 
 	/// <summary>
