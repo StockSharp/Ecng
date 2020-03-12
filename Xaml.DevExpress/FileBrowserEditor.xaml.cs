@@ -6,8 +6,9 @@
 	using DevExpress.Xpf.Editors;
 
 	using Ecng.Common;
+	using Ecng.ComponentModel;
 
-	public partial class FileBrowserEditor
+	public partial class FileBrowserEditor : IFileBrowserEditor
 	{
 		public FileBrowserEditor()
 		{

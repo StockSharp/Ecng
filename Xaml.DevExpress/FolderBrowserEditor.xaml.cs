@@ -6,8 +6,9 @@
 	using DevExpress.Xpf.Editors;
 
 	using Ecng.Common;
+	using Ecng.ComponentModel;
 
-	public partial class FolderBrowserEditor
+	public partial class FolderBrowserEditor : IFolderBrowserEditor
 	{
 		public FolderBrowserEditor()
 		{
