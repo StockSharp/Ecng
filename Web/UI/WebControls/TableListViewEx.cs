@@ -146,7 +146,7 @@
 					cell.Text = column.HeaderText;
 				else
 				{
-					var url = WebHelper.Current;
+					var url = WebHelper.CurrentUrl;
 
 					var direction = url.QueryString.TryGetValue<SortDirection?>(SortDirectionField);
 

@@ -16,13 +16,13 @@ namespace Ecng.Web
 			File.Download(Size, Embed, context);
 		}
 
-		private static bool Embed => WebHelper.Current.QueryString.TryGetValue("embed", true);
+		private static bool Embed => WebHelper.CurrentUrl.QueryString.TryGetValue("embed", true);
 
 		private static Size<int> Size
 		{
 			get
 			{
-				var size = WebHelper.Current.QueryString.TryGetValue<string>("size");
+				var size = WebHelper.CurrentUrl.QueryString.TryGetValue<string>("size");
 
 				if (size == null)
 					return new Size<int>();

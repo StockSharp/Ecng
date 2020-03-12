@@ -149,7 +149,7 @@ namespace Ecng.Web
 			return pageType;
 		}
 
-		public static Url Current => new Url(HttpContext.Current.Request.Url);
+		public static Url CurrentUrl => new Url(HttpContext.Current.Request.Url);
 
 		public static Url ToUrl(this Type pageType)
 		{

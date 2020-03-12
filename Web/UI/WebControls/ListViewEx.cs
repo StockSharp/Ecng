@@ -112,7 +112,7 @@ namespace Ecng.Web.UI.WebControls
 
 		protected override DataSourceSelectArguments CreateDataSourceSelectArguments()
 		{
-			var qs = WebHelper.Current.QueryString;
+			var qs = WebHelper.CurrentUrl.QueryString;
 			_setSortExpression.SetValue(this, qs.TryGetValue(SortExpressionField, SortExpr));
 			_setSortDirection.SetValue(this, qs.TryGetValue(SortDirectionField, SortDir));
 			return base.CreateDataSourceSelectArguments();

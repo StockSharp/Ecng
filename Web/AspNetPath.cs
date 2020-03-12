@@ -30,7 +30,7 @@ namespace Ecng.Web
 
 		public const string DefaultPage = "Default.aspx";
 
-		public static string PortalName => WebHelper.Current.Host;
+		public static string PortalName => WebHelper.CurrentUrl.Host;
 
 		public static string MakeEmail(string account)
 		{
