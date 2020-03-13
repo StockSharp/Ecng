@@ -25,7 +25,6 @@
     <Reference Include="System.configuration" />
     <Reference Include="System.Runtime.Serialization.Formatters.Soap" />
     <Reference Include="System.Security" />
-    <Reference Include="System.ServiceModel.Web" />
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
