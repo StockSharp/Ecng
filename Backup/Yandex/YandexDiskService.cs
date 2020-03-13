@@ -5,27 +5,29 @@ namespace Ecng.Backup.Yandex
 	using System.IO;
 	using System.Linq;
 	using System.Threading;
-	using System.Windows;
 
 	using Disk.SDK;
 	using Disk.SDK.Provider;
 
 	using Ecng.Common;
 	using Ecng.Serialization;
-	using Ecng.Xaml;
 
 	/// <summary>
 	/// The class for work with the Yandex.Disk.
 	/// </summary>
 	public class YandexDiskService : Disposable, IBackupService
 	{
+		public delegate string AuthorizeDelegate(out bool isCanceled);
+
+		private readonly AuthorizeDelegate _authorize;
 		private DiskSdkClient _client;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="YandexDiskService"/>.
 		/// </summary>
-		public YandexDiskService()
+		public YandexDiskService(AuthorizeDelegate authFunc)
 		{
+			_authorize = authFunc ?? throw new ArgumentNullException(nameof(authFunc));
 		}
 
 		private void Process(Action<DiskSdkClient> handler, out bool cancelled)
@@ -52,38 +54,15 @@ namespace Ecng.Backup.Yandex
 				return handler(_client);
 			}
 
-			var result = default(T);
+			var token = _authorize(out cancelled);
 
-			Exception error = null;
-
-			var owner = Scope<Window>.Current?.Value ?? Application.Current?.MainWindow;
-
-			YandexLoginWindow CreateWindow()
+			if (!cancelled)
 			{
-				var loginWindow = new YandexLoginWindow();
-
-				loginWindow.AuthCompleted += (s, e) =>
-				{
-					if (e.Error == null)
-					{
-						_client = new DiskSdkClient(e.Result);
-						result = handler(_client);
-					}
-					else
-						error = e.Error;
-				};
-
-				return loginWindow;
+				_client = new DiskSdkClient(token);
+				return handler(_client);
 			}
 
-			var retVal = owner?.GuiSync(() => CreateWindow().ShowModal(owner)) ?? CreateWindow().ShowDialog() == true;
-
-			if (!retVal)
-				cancelled = true;
-
-			error?.Throw();
-
-			return result;
+			return default;
 		}
 
 		private static string GetPath(BackupEntry entry)

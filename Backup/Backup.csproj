@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}</ProjectGuid>
@@ -6,7 +6,6 @@
     <AssemblyName>Ecng.Backup</AssemblyName>
     <TargetFrameworks>net46;netcoreapp3.1</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <UseWPF>true</UseWPF>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <DebugType>full</DebugType>
@@ -23,25 +22,14 @@
     <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.3.101.130" />
     <PackageReference Include="AWSSDK.Glacier" Version="3.3.100.141" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' ">
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="WindowsBase" />
-  </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
-    <Compile Update="Yandex\YandexLoginWindow.xaml.cs">
-      <DependentUpon>YandexLoginWindow.xaml</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
     <ProjectReference Include="..\Localization\Localization.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
-    <ProjectReference Include="..\Xaml.DevExpress\Xaml.DevExp.csproj" />
-    <ProjectReference Include="..\Xaml\Xaml.csproj" />
     <ProjectReference Include="..\YandexDisk\Disk.SDK.Provider\Disk.SDK.Provider.csproj" />
   </ItemGroup>
 </Project>
