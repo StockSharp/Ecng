@@ -20,9 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Windows.Forms;
 using System.Runtime.InteropServices;
-using System.Drawing;
 
 namespace ManagedWinapi.Windows
 {
@@ -118,7 +116,7 @@ namespace ManagedWinapi.Windows
                 ProcessMemoryChunk ic = ProcessMemoryChunk.AllocStruct(sw.Process, tvi);
                 SystemWindow.SendMessage(new HandleRef(sw, sw.HWnd), TVM_GETITEM, IntPtr.Zero, ic.Location);
                 tvi = (TVITEM)ic.ReadToStructure(0, typeof(TVITEM));
-                if (tvi.pszText != tc.Location) MessageBox.Show(tvi.pszText + " != " + tc.Location);
+                if (tvi.pszText != tc.Location) throw new InvalidOperationException(tvi.pszText + " != " + tc.Location);
                 string result = Encoding.Default.GetString(tc.Read());
                 if (result.IndexOf('\0') != -1) result = result.Substring(0, result.IndexOf('\0'));
                 ic.Dispose();

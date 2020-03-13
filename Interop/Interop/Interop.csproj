@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
+    <Compile Include="..\Interop.Core\ManagedWinapi\ApiHelper.cs" Link="ApiHelper.cs" />
     <Compile Update="ManagedWinapi\Accessibility\AccessibleObjectListener.cs">
       <SubType>Component</SubType>
     </Compile>

@@ -37,7 +37,7 @@
 				Visibility = Visibility.Hidden,
 			};
 			wnd.Show();
-			wnd.SetOwnerHandle(WinApi.GetTopMostWindow().Handle);
+			wnd.SetOwnerHandle(WinApiWindows.GetTopMostWindow().Handle);
 			_nativeOwners.Add(wnd);
 			return wnd;
 		}

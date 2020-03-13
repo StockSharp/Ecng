@@ -5,11 +5,8 @@
 	using System.Management;
 	using System.Runtime.InteropServices;
 	using System.Text;
-	using System.Windows.Forms;
 
 	using Ecng.Common;
-
-	using ManagedWinapi.Windows;
 
 	///<summary>
 	///</summary>
@@ -246,53 +243,11 @@
 		{
 		}
 
-		///<summary>
-		///</summary>
-		///<param name="wnd"></param>
-		public static string GetText(this SystemWindow wnd)
-		{
-			if (wnd == null)
-				throw new ArgumentNullException(nameof(wnd));
-
-			var len = SendMessage(wnd.HWnd, (int)WM.GETTEXTLENGTH, IntPtr.Zero, IntPtr.Zero);
-			var retVal = new StringBuilder(len);
-			SendMessage(wnd.HWnd, (int)WM.GETTEXT, new IntPtr(len + 1), retVal);
-			return retVal.ToString();
-		}
-
 		[DllImport("user32.dll", SetLastError = true)]
 		public static extern int SendMessage(this IntPtr hWnd, int wMsg, IntPtr wParam, IntPtr lParam);
 
 		[DllImport("user32.dll", SetLastError = true)]
 		public static extern int PostMessage(this IntPtr hWnd, int wMsg, IntPtr wParam, IntPtr lParam);
-
-		//[DllImport("user32.dll", SetLastError = true)]
-		//public static extern int SendMessage(this IntPtr hWnd, WM wMsg, int wParam, int lParam);
-
-		//[DllImport("user32.dll", SetLastError = true)]
-		//public static extern int SendMessage(this IntPtr hWnd, Messages wMsg, int wParam, int lParam);
-
-		//[DllImport("user32.dll", SetLastError = true)]
-		//public static extern int PostMessage(this IntPtr hWnd, WM wMsg, int wParam, int lParam);
-
-		//[DllImport("user32.dll", SetLastError = true)]
-		//public static extern int PostMessage(this IntPtr hWnd, Messages wMsg, int wParam, int lParam);
-
-		public static int SendMessage<TMessage, TWParam, TLParam>(this SystemWindow wnd, TMessage message, TWParam wParam, TLParam lParam)
-		{
-			if (wnd == null)
-				throw new ArgumentNullException(nameof(wnd));
-
-			return wnd.HWnd.SendMessage(message.To<int>(), wParam.To<IntPtr>(), lParam.To<IntPtr>());
-		}
-
-		public static int PostMessage<TMessage, TWParam, TLParam>(this SystemWindow wnd, TMessage message, TWParam wParam, TLParam lParam)
-		{
-			if (wnd == null)
-				throw new ArgumentNullException(nameof(wnd));
-
-			return wnd.HWnd.PostMessage(message.To<int>(), wParam.To<IntPtr>(), lParam.To<IntPtr>());
-		}
 
 		/// <summary>
 		/// 
@@ -326,19 +281,6 @@
 		/// <returns></returns>
 		[DllImport("user32.dll")]
 		public static extern int SendMessage(this IntPtr hWnd, int wMsg, IntPtr wParam, StringBuilder lParam);
-
-		///<summary>
-		///</summary>
-		///<param name="wnd"></param>
-		///<param name="text"></param>
-		///<exception cref="ArgumentNullException"></exception>
-		public static void SetText(this SystemWindow wnd, string text)
-		{
-			if (wnd == null)
-				throw new ArgumentNullException(nameof(wnd));
-
-			wnd.HWnd.SendMessage((int)WM.SETTEXT, 0, text);
-		}
 
 		/// <summary>
 		/// allocates a new console for the calling process.
@@ -406,22 +348,6 @@
 			return AllocConsole();
 		}
 
-		///<summary>
-		///</summary>
-		///<param name="wnd"></param>
-		///<param name="elem"></param>
-		///<exception cref="ArgumentNullException"></exception>
-		public static void Command(this SystemWindow wnd, SystemWindow elem)
-		{
-			if (wnd == null)
-				throw new ArgumentNullException(nameof(wnd));
-
-			if (elem == null)
-				throw new ArgumentNullException(nameof(elem));
-
-			wnd.SendMessage(WM.COMMAND, elem.DialogID, 0);
-		}
-
 		public static bool Equals(this Process firstProcess, Process secondProcess)
 		{
 			if (firstProcess == null)
@@ -457,12 +383,6 @@
 		public static int MakeParam<TLo, THi>(TLo loWord, THi hiWord)
 		{
 			return (loWord.To<int>() & 0xFFFF) + ((hiWord.To<int>() & 0xFFFF) << 16);
-		}
-
-		public static void PressKeyButton(this SystemWindow window, VirtualKeys key)
-		{
-			window.SendMessage(WM.KEYDOWN, (int)key, 0);
-			window.SendMessage(WM.KEYUP, (int)key, 0);
 		}
 
 		//
@@ -551,70 +471,17 @@
 		[DllImport("user32.dll", SetLastError = true)]
 		public static extern int GetWindowThreadProcessId(this IntPtr hWnd, out int lpdwProcessId);
 
-		public static int GetProcessId(this SystemWindow wnd)
-		{
-			if (wnd == null)
-				throw new ArgumentNullException(nameof(wnd));
-
-			GetWindowThreadProcessId(wnd.HWnd, out int pid);
-			return pid;
-		}
-
 		public const int GW_HWNDNEXT = 2; // The next window is below the specified window
 		public const int GW_HWNDPREV = 3; // The previous window is above
 
 		[DllImport("user32.dll")]
-		static extern IntPtr GetTopWindow(IntPtr hWnd);
+		public static extern IntPtr GetTopWindow(IntPtr hWnd);
 
 		[DllImport("user32.dll")]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		static extern bool IsWindowVisible(IntPtr hWnd);
+		public static extern bool IsWindowVisible(IntPtr hWnd);
 
 		[DllImport("user32.dll", CharSet = CharSet.Auto, EntryPoint = "GetWindow", SetLastError = true)]
 		public static extern IntPtr GetNextWindow(IntPtr hwnd, [MarshalAs(UnmanagedType.U4)] int wFlag);
-
-		/// <summary>
-		/// Searches for the topmost visible form of your app in all the forms opened in the current Windows session.
-		/// </summary>
-		/// <returns>The Form that is currently TopMost, or null</returns>
-		public static Form GetTopMostWindow()
-		{
-			// http://social.msdn.microsoft.com/Forums/en/winforms/thread/99df9c07-c117-465a-9207-fa3534982021
-			return GetTopMostWindow(Application.OpenForms[0].Handle);
-		}
-
-		/// <summary>
-		/// Searches for the topmost visible form of your app in all the forms opened in the current Windows session.
-		/// </summary>
-		/// <param name="hWndMainFrm">Handle of the main form</param>
-		/// <returns>The Form that is currently TopMost, or null</returns>
-		public static Form GetTopMostWindow(IntPtr hWndMainFrm)
-		{
-			// http://stackoverflow.com/questions/1000847/how-to-get-the-handle-of-the-topmost-form-in-a-winform-app
-
-			Form frm = null;
-
-			var hwnd = GetTopWindow(IntPtr.Zero);
-			if (hwnd != IntPtr.Zero)
-			{
-				while ((!IsWindowVisible(hwnd) || frm == null) && hwnd != hWndMainFrm)
-				{
-					// Get next window under the current handler
-					hwnd = GetNextWindow(hwnd, GW_HWNDNEXT);
-
-					try
-					{
-						frm = (Form)Control.FromHandle(hwnd);
-					}
-					catch
-					{
-						// Weird behaviour: In some cases, trying to cast to a Form a handle of an object 
-						// that isn't a form will just return null. In other cases, will throw an exception.
-					}
-				}
-			}
-
-			return frm;
-		}
 	}
 }
