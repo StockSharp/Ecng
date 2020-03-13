@@ -19,7 +19,7 @@
 			private class SheetData : IDisposable
 			{
 				private readonly DevExpExcelWorker _worker;
-				private readonly Dictionary<int, Dictionary<int, object>> _cells = new Dictionary<int, Dictionary<int, object>>();
+				private readonly Dictionary<int, SortedDictionary<int, object>> _cells = new Dictionary<int, SortedDictionary<int, object>>();
 				
 				public readonly SortedDictionary<int, RefPair<Type, string>> Columns = new SortedDictionary<int, RefPair<Type, string>>();
 				public readonly HashSet<int> Rows = new HashSet<int>();
@@ -35,12 +35,12 @@
 				{
 					Columns.TryAdd(col, new RefPair<Type, string>());
 					Rows.Add(row);
-					_cells.SafeAdd(row, key => new Dictionary<int, object>())[col] = value;
+					_cells.SafeAdd(row, key => new SortedDictionary<int, object>())[col] = value;
 				}
 
 				public T GetCell<T>(int col, int row)
 				{
-					return (T)_cells.SafeAdd(row, key => new Dictionary<int, object>()).TryGetValue(col);
+					return (T)_cells.SafeAdd(row, key => new SortedDictionary<int, object>()).TryGetValue(col);
 				}
 
 				public void Dispose()
