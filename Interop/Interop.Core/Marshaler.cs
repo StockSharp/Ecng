@@ -377,8 +377,9 @@ namespace Ecng.Interop
 		[DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, EntryPoint = "GetProcAddress", CharSet = CharSet.Auto)]
 		private static extern IntPtr Kernel32GetProcAddress([In] IntPtr hModule, [In] string procName);
 
+		internal static string FixLibraryExtension(string path) => path;
 #else
-		static string FixLibraryExtension(string path)
+		internal static string FixLibraryExtension(string path)
 		{
 			if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || File.Exists(path))
 				return path;

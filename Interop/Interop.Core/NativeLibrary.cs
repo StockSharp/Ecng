@@ -12,7 +12,7 @@ namespace Ecng.Interop
 			if (dllPath.IsEmpty())
 				throw new ArgumentNullException(nameof(dllPath));
 
-			DllPath = dllPath;
+			DllPath = Marshaler.FixLibraryExtension(dllPath);
 			DllVersion = FileVersionInfo.GetVersionInfo(DllPath).ProductVersion?.Replace(',', '.')?.RemoveSpaces()?.To<Version>();
 
 			Handler = Marshaler.LoadLibrary(DllPath);
