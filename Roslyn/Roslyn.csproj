@@ -18,30 +18,15 @@
   <ItemGroup>
     <PackageReference Include="System.Collections.Immutable" Version="1.7.0" />
     <Reference Include="Microsoft.CodeAnalysis">
-      <HintPath>..\..\StockSharp (GitHub)\References\Microsoft.CodeAnalysis.dll</HintPath>
+      <HintPath>..\References\Microsoft.CodeAnalysis.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.CSharp">
-      <HintPath>..\..\StockSharp (GitHub)\References\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+      <HintPath>..\References\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.VisualBasic">
-      <HintPath>..\..\StockSharp (GitHub)\References\Microsoft.CodeAnalysis.VisualBasic.dll</HintPath>
+      <HintPath>..\References\Microsoft.CodeAnalysis.VisualBasic.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.IO.FileSystem">
-      <HintPath>..\..\StockSharp (GitHub)\References\System.IO.FileSystem.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Reflection.Metadata">
-      <HintPath>..\..\StockSharp (GitHub)\References\System.Reflection.Metadata.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Security.Cryptography.Algorithms">
-      <HintPath>..\..\StockSharp (GitHub)\References\System.Security.Cryptography.Algorithms.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Security.Cryptography.Primitives">
-      <HintPath>..\..\StockSharp (GitHub)\References\System.Security.Cryptography.Primitives.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ValueTuple">
-      <HintPath>..\..\StockSharp (GitHub)\References\System.ValueTuple.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />

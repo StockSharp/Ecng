@@ -29,7 +29,7 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="SevenZipSharp">
-      <HintPath>..\..\..\StockSharp (GitHub)\References\SevenZipSharp.dll</HintPath>
+      <HintPath>..\..\References\SevenZipSharp.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Windows.Forms" />
