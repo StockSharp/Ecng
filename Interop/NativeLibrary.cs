@@ -1,7 +1,6 @@
 namespace Ecng.Interop
 {
 	using System;
-	using System.ComponentModel;
 	using System.Diagnostics;
 
 	using Ecng.Common;
@@ -14,13 +13,9 @@ namespace Ecng.Interop
 				throw new ArgumentNullException(nameof(dllPath));
 
 			DllPath = dllPath;
+			DllVersion = FileVersionInfo.GetVersionInfo(DllPath).ProductVersion.Replace(',', '.').RemoveSpaces().To<Version>();
 
-			DllVersion = FileVersionInfo.GetVersionInfo(dllPath).ProductVersion.Replace(',', '.').RemoveSpaces().To<Version>();
-
-			Handler = WinApi.LoadLibrary(dllPath);
-
-			if (Handler == IntPtr.Zero)
-				throw new ArgumentException("Ошибка в загрузке библиотеки {0}.".Put(dllPath), nameof(dllPath), new Win32Exception());
+			Handler = Marshaler.LoadLibrary(DllPath);
 		}
 
 		public string DllPath { get; private set; }
@@ -29,20 +24,13 @@ namespace Ecng.Interop
 
 		protected IntPtr Handler { get; }
 
-		protected T GetHandler<T>(string procName)
-		{
-			var addr = Marshaler.GetProcAddress(Handler, procName);
-
-			if (addr == IntPtr.Zero)
-				throw new ArgumentException("Ошибка в загрузке процедуры {0}.".Put(procName), nameof(procName), new Win32Exception());
-
-			return Marshaler.GetDelegateForFunctionPointer<T>(addr);
-		}
+		protected T GetHandler<T>(string procName) => Marshaler.GetDelegateForFunctionPointer<T>(Marshaler.GetProcAddress(Handler, procName));
 
 		protected override void DisposeNative()
 		{
-			WinApi.FreeLibrary(Handler);
+			Marshaler.FreeLibrary(Handler);
 			base.DisposeNative();
 		}
+
 	}
 }

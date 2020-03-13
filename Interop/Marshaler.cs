@@ -14,6 +14,12 @@ namespace Ecng.Interop
 	using Ecng.Localization;
 	using Ecng.Serialization;
 
+#if NETCOREAPP
+	using System.IO;
+
+	using CoreNativeLib = System.Runtime.InteropServices.NativeLibrary;
+#endif
+
 	/// <summary>
 	/// Provides a collection of extended methods, that manipulate with class <see cref="Marshal"/>.
 	/// </summary>
@@ -360,14 +366,76 @@ namespace Ecng.Interop
 			return Marshaler.GetDelegateForFunctionPointer<T>(addr);
 		}
 
-		[DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
-		public static extern IntPtr LoadLibrary([In] string dllname);
+#if !NETCOREAPP
 
-		[DllImport("kernel32.dll")]
-		public static extern void FreeLibrary([In] IntPtr hModule);
+		[DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, EntryPoint = "LoadLibrary", CharSet = CharSet.Auto)]
+		private static extern IntPtr Kernel32LoadLibrary([In] string dllname);
 
-		[DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
-		public static extern IntPtr GetProcAddress([In] IntPtr hModule, [In] string procName);
+		[DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, EntryPoint = "FreeLibrary", CharSet = CharSet.Auto)]
+		private static extern bool Kernel32FreeLibrary([In] IntPtr hModule);
+
+		[DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, EntryPoint = "GetProcAddress", CharSet = CharSet.Auto)]
+		private static extern IntPtr Kernel32GetProcAddress([In] IntPtr hModule, [In] string procName);
+
+#else
+		static string FixLibraryExtension(string path)
+		{
+			if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || File.Exists(path))
+				return path;
+
+			const string dllext = ".dll";
+			const string soext = ".so";
+
+			if(path.ToLowerInvariant().EndsWith(dllext))
+				path = path.Substring(0, path.Length - dllext.Length) + ".so";
+			else if(!path.ToLowerInvariant().EndsWith(soext) && File.Exists(path + soext))
+				path += soext;
+
+			return path;
+		}
+#endif
+
+		public static IntPtr LoadLibrary(string dllPath)
+		{
+			if (dllPath.IsEmpty())
+				throw new ArgumentNullException(nameof(dllPath));
+
+#if NETCOREAPP
+			dllPath = FixLibraryExtension(dllPath);
+			var handler = CoreNativeLib.Load(dllPath);
+#else
+			var handler = Kernel32LoadLibrary(dllPath);
+#endif
+
+			if (handler == IntPtr.Zero)
+				throw new ArgumentException("Ошибка в загрузке библиотеки {0}.".Put(dllPath), nameof(dllPath), new Win32Exception());
+
+			return handler;
+		}
+
+		public static bool FreeLibrary(IntPtr hModule)
+		{
+#if NETCOREAPP
+			CoreNativeLib.Free(hModule);
+			return true;
+#else
+			return Kernel32FreeLibrary(hModule);
+#endif
+		}
+
+		public static IntPtr GetProcAddress(IntPtr hModule, string procName)
+		{
+#if NETCOREAPP
+			var addr = CoreNativeLib.GetExport(hModule, procName);
+#else
+			var addr = Kernel32GetProcAddress(hModule, procName);
+#endif
+			if (addr == IntPtr.Zero)
+				throw new ArgumentException("Ошибка в загрузке процедуры {0}.".Put(procName), nameof(procName), new Win32Exception());
+
+			return addr;
+		}
+
 #endif
 
 		public static unsafe string GetUnsafeString(this Encoding encoding, ref byte srcChar, int maxBytes)

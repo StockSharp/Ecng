@@ -26,6 +26,7 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
+using Ecng.Interop;
 using ManagedWinapi.Windows;
 
 namespace ManagedWinapi.Hooks
@@ -201,11 +202,9 @@ namespace ManagedWinapi.Hooks
         [DllImport("ManagedWinapiNativeHelper.dll")]
         private static extern bool FreeHookWrapper(IntPtr wrapper);
 
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr LoadLibrary(string lpFileName);
+		private static IntPtr LoadLibrary(string dllname) => Marshaler.LoadLibrary(dllname);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool FreeLibrary(IntPtr hModule);
+		private static bool FreeLibrary(IntPtr hModule) => Marshaler.FreeLibrary(hModule);
 
         private delegate int HookProc(int code, IntPtr wParam, IntPtr lParam);
 

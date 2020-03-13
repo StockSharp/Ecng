@@ -438,15 +438,13 @@
 		/// </summary>
 		/// <param name="dllname"></param>
 		/// <returns></returns>
-		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-		public static extern IntPtr LoadLibrary([In]string dllname);
+		public static IntPtr LoadLibrary(string dllname) => Marshaler.LoadLibrary(dllname);
 
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="hModule"></param>
-		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-		public static extern void FreeLibrary([In]IntPtr hModule);
+		public static bool FreeLibrary(IntPtr hModule) => Marshaler.FreeLibrary(hModule);
 
 		/// <summary>
 		/// 
@@ -454,8 +452,7 @@
 		/// <param name="hModule"></param>
 		/// <param name="procName"></param>
 		/// <returns></returns>
-		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-		public static extern IntPtr GetProcAddress([In]IntPtr hModule, [In]string procName);
+		public static IntPtr GetProcAddress(IntPtr hModule, string procName) => Marshaler.GetProcAddress(hModule, procName);
 
 		public static int MakeParam<TLo, THi>(TLo loWord, THi hiWord)
 		{
