@@ -3,13 +3,11 @@
  */
 
 using System;
-using System.Runtime.InteropServices;
 using System.Windows.Controls;
 using System.Windows.Navigation;
+using Disk.SDK;
 
-using Disk.SDK.Utils;
-
-namespace Disk.SDK.Provider
+namespace Ecng.Xaml.DevExp.Yandex
 {
     /// <summary>
     /// Represents wrapper for platform specific WebBrowser component.
@@ -49,7 +47,7 @@ namespace Disk.SDK.Provider
         /// <param name="e">The <see cref="NavigatingCancelEventArgs"/> instance containing the event data.</param>
         private void BrowserOnNavigating(object sender, NavigatingCancelEventArgs e)
         {
-            this.Navigating.SafeInvoke(this, new GenericSdkEventArgs<string>(e.Uri.ToString()));
+            this.Navigating?.Invoke(this, new GenericSdkEventArgs<string>(e.Uri.ToString()));
         }
     }
 }
