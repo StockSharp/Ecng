@@ -2,7 +2,7 @@
 {
 	using Ecng.Common;
 
-	public class SpeachPlayer : Disposable
+	public class SpeechPlayer : Disposable
 	{
 #if NETCOREAPP
 		public int Volume { get; set; }
