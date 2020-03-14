@@ -4,7 +4,7 @@
     <ProjectGuid>{78884141-5A63-4EAE-81A4-512FBD2195C5}</ProjectGuid>
     <RootNamespace>Ecng.Roslyn</RootNamespace>
     <AssemblyName>Ecng.Roslyn</AssemblyName>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
@@ -16,17 +16,8 @@
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Collections.Immutable" Version="1.7.0" />
-    <Reference Include="Microsoft.CodeAnalysis">
-      <HintPath>..\References\Microsoft.CodeAnalysis.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.CSharp">
-      <HintPath>..\References\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.VisualBasic">
-      <HintPath>..\References\Microsoft.CodeAnalysis.VisualBasic.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.4.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.4.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
