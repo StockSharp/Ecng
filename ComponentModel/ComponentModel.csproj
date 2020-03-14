@@ -24,6 +24,7 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <Reference Include="System.ComponentModel.DataAnnotations"/>
     <Reference Include="System.Configuration" />
+    <Reference Include="System.Speech" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
     <PackageReference Include="System.ComponentModel.Annotations" Version="4.4"/>
