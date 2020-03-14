@@ -16,7 +16,7 @@ namespace Ecng.Serialization
 	}
 
 	public class XmlAttribute : ReflectionFieldFactoryAttribute
-    {
+	{
 		protected override Type GetFactoryType(Field field)
 		{
 			if (field.Type != typeof(XmlDocument) || field.Type != typeof(XDocument))
@@ -24,5 +24,5 @@ namespace Ecng.Serialization
 
 			return typeof(XmlFieldFactory<>).Make(field.Type);
 		}
-    }
+	}
 }
