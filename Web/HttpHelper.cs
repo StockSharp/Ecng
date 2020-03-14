@@ -25,8 +25,6 @@ namespace Ecng.Web
 	using System.Web.UI.WebControls;
 	using Image = System.Web.UI.WebControls.Image;
 
-	using AjaxControlToolkit;
-
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.Net;
@@ -225,8 +223,8 @@ namespace Ecng.Web
 				cb.Checked = value.To<bool>();
 			else if (control is Label lb)
 				lb.Text = value.To<string>();
-			else if (control is Rating rating)
-				rating.CurrentRating = value.To<int>();
+			//else if (control is Rating rating)
+			//	rating.CurrentRating = value.To<int>();
 			else if (control is Image img)
 				img.ImageUrl = value.To<string>();
 			else
@@ -275,8 +273,8 @@ namespace Ecng.Web
 				value = cb.Checked;
 			else if (control is Label lb)
 				value = lb.Text;
-			else if (control is Rating rating)
-				value = rating.CurrentRating;
+			//else if (control is Rating rating)
+			//	value = rating.CurrentRating;
 			else if (control is Image img)
 				value = img.ImageUrl;
 			else
