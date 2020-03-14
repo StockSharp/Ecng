@@ -294,7 +294,7 @@ namespace FluentFTP {
 #if CORE14
 					Task.Delay(1000);
 #else
-						Thread.Sleep(1000);
+						System.Threading.Thread.Sleep(1000);
 #endif
 					}
 

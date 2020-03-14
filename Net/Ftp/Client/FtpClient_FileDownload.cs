@@ -699,7 +699,7 @@ namespace FluentFTP {
 #if CORE14
 													Task.Delay((int) (timeShouldTake - swTime)).Wait();
 #else
-									Thread.Sleep((int)(timeShouldTake - swTime));
+									System.Threading.Thread.Sleep((int)(timeShouldTake - swTime));
 #endif
 								}
 								else if (swTime > timeShouldTake + rateControlResolution) {
