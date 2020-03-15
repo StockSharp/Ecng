@@ -4,15 +4,7 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <ProjectGuid>{4B658B40-4303-46B0-B670-B2AB96537817}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net46</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <IsPackable>false</IsPackable>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="StockSharp.Ecng.Xaml.DXRefs" Version="$(DXRefsVersion)"/>

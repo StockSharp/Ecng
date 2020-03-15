@@ -1,29 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <Import Project="..\..\common.props" />
   <PropertyGroup>
-    <ProductVersion>9.0.30729</ProductVersion>
     <ProjectGuid>{6EACA7CE-0269-47A2-AE6A-3669738EE303}</ProjectGuid>
     <RootNamespace>Ecng.Interop</RootNamespace>
     <AssemblyName>Ecng.Interop</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <FileUpgradeFlags />
-    <UpgradeBackupLocation />
-    <TargetFrameworks>net40;netcoreapp3.1</TargetFrameworks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>full</DebugType>
-    <DocumentationFile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
-    <DebugSymbols>false</DebugSymbols>
-  </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+  <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' ">
     <Reference Include="Accessibility" />
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="PresentationCore" />
@@ -43,7 +29,6 @@
     <Reference Include="System.Management" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
     <Compile Include="..\Interop.Core\ManagedWinapi\ApiHelper.cs" Link="ApiHelper.cs" />
     <Compile Update="ManagedWinapi\Accessibility\AccessibleObjectListener.cs">
       <SubType>Component</SubType>

@@ -1,37 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <Import Project="..\common.props" />
   <PropertyGroup>
-    <ProductVersion>8.0.30703</ProductVersion>
     <ProjectGuid>{AAB784E4-F8C6-4324-ABC0-6E9E0F73E575}</ProjectGuid>
     <RootNamespace>Ecng.Xaml.Charting</RootNamespace>
     <AssemblyName>Ecng.Xaml.Charting</AssemblyName>
-    <TargetFrameworks>net40;netcoreapp3.1</TargetFrameworks>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <ApplicationIcon />
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>1591,1574,1572,1587,1573,0414,1570,1710,3008</NoWarn>
     <UseWPF>true</UseWPF>
-    <PostBuildEvent />
-    <PreBuildEvent />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>full</DebugType>
     <DefineConstants>TRACE;DEBUG;LICENSEDDEPLOY</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
     <DefineConstants>LICENSEDDEPLOY</DefineConstants>
     <WarningLevel>2</WarningLevel>
     <LangVersion>default</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent />
-  </PropertyGroup>
-  <PropertyGroup>
-    <PreBuildEvent />
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp3.1'">
     <Reference Include="Microsoft.CSharp" />
@@ -41,7 +27,6 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
     <Compile Update="Model\DataSeries\DataDistributionCalculator\DataDistributionCalculators.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

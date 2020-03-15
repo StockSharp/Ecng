@@ -1,25 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <PropertyGroup>
-    <ProductVersion>9.0.30729</ProductVersion>
     <ProjectGuid>{725D5260-8208-4A39-843A-6B58606ED73B}</ProjectGuid>
     <RootNamespace>Ecng.Common</RootNamespace>
     <AssemblyName>Ecng.Common</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <FileUpgradeFlags />
-    <UpgradeBackupLocation />
-    <TargetFrameworks>net40;netcoreapp3.1</TargetFrameworks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <DocumentationFile />
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <DebugType>none</DebugType>
-    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="TimeZoneConverter" Version="3.2.0" />
@@ -28,7 +14,6 @@
     <PackageReference Include="System.CodeDom" Version="4.4.0" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>

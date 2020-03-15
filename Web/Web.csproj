@@ -1,26 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <PropertyGroup>
-    <ProductVersion>9.0.30729</ProductVersion>
     <ProjectGuid>{125B0185-1FE3-407B-A14C-AD5046A6B68C}</ProjectGuid>
     <RootNamespace>Ecng.Web</RootNamespace>
     <AssemblyName>Ecng.Web</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <FileUpgradeFlags />
-    <UpgradeBackupLocation />
-    <TargetFramework>net40</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <IsPackable>false</IsPackable>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <DebugType>full</DebugType>
-    <DocumentationFile />
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DebugType>none</DebugType>
-    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System.configuration" />
@@ -33,7 +19,6 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

@@ -4,21 +4,9 @@
     <ProjectGuid>{4E2D9D8A-6E5A-4482-96F6-2544DE6611B9}</ProjectGuid>
     <RootNamespace>Ecng.IO</RootNamespace>
     <AssemblyName>Ecng.IO</AssemblyName>
-    <TargetFrameworks>net40;netcoreapp3.1</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
-    <DebugSymbols>false</DebugSymbols>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DotNetZip" Version="1.13.5"/>
   </ItemGroup>

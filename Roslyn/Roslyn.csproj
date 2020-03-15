@@ -4,23 +4,10 @@
     <ProjectGuid>{78884141-5A63-4EAE-81A4-512FBD2195C5}</ProjectGuid>
     <RootNamespace>Ecng.Roslyn</RootNamespace>
     <AssemblyName>Ecng.Roslyn</AssemblyName>
-    <TargetFrameworks>netstandard2.1</TargetFrameworks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <DebugType>full</DebugType>
-    <DocumentationFile />
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DebugType>none</DebugType>
-    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.4.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.4.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Collections\Collections.csproj" />

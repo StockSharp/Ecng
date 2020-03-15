@@ -3,16 +3,12 @@
   <PropertyGroup>
     <ProjectGuid>{8374E4D7-2A91-48F1-9360-09B09CF27C3F}</ProjectGuid>
     <RootNamespace>ProtoBuf</RootNamespace>
-    <TargetFramework>net40</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>full</DebugType>
     <DefineConstants>DEBUG;TRACE;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
     <DefineConstants>TRACE;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER</DefineConstants>
   </PropertyGroup>
   <ItemGroup>

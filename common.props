@@ -2,4 +2,7 @@
   <PropertyGroup>
     <DXRefsVersion>1.0.1</DXRefsVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(SolutionDir)StockSharpAssemblyInfo.cs" Link="Properties\StockSharpAssemblyInfo.cs" />
+  </ItemGroup>
 </Project>

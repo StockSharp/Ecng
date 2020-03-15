@@ -4,15 +4,6 @@
     <ProjectGuid>{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}</ProjectGuid>
     <RootNamespace>Ecng.Backup</RootNamespace>
     <AssemblyName>Ecng.Backup</AssemblyName>
-    <TargetFrameworks>net46;netcoreapp3.1</TargetFrameworks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <DebugType>none</DebugType>
-    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="StockSharp.Ecng.Xaml.DXRefs" Version="$(DXRefsVersion)" />
@@ -21,9 +12,6 @@
     <PackageReference Include="AWSSDK.SQS" Version="3.3.102.73" />
     <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.3.101.130" />
     <PackageReference Include="AWSSDK.Glacier" Version="3.3.100.141" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />

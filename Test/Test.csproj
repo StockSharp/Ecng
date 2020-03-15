@@ -1,19 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <Import Project="..\common.props" />
   <PropertyGroup>
-    <ProductVersion>8.0.30703</ProductVersion>
     <ProjectGuid>{CAF861AA-7473-4EEB-BF41-FFE74A97E072}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net46</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <IsPackable>false</IsPackable>
     <UseWPF>true</UseWPF>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PresentationCore" />
