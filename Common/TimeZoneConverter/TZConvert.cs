@@ -318,29 +318,42 @@ namespace TimeZoneConverter
 #if !NETSTANDARD1_1
         private static Dictionary<string, TimeZoneInfo> GetSystemTimeZones()
         {
+            IEnumerable<TimeZoneInfo> timeZones;
+
 #if NETSTANDARD2_0 || NETSTANDARD1_3
             if (IsWindows)
-                return TimeZoneInfo.GetSystemTimeZones().ToDictionary(x => x.Id, x => x, StringComparer.OrdinalIgnoreCase);
+                timeZones = TimeZoneInfo.GetSystemTimeZones();
+            else
+                timeZones = GetSystemTimeZonesLinux();
+#else
+            timeZones = TimeZoneInfo.GetSystemTimeZones();
+#endif
+            var dict = new Dictionary<string, TimeZoneInfo>(StringComparer.OrdinalIgnoreCase);
 
-            var zones = GetSystemTimeZonesLinux().ToDictionary(x => x.Id, x => x, StringComparer.OrdinalIgnoreCase);
-
-            // Include special case to resolve deleted link
-            if (!zones.ContainsKey("Canada/East-Saskatchewan"))
+            foreach (var tz in timeZones)
             {
-                try
-                {
-                    var tzi = TimeZoneInfo.FindSystemTimeZoneById("Canada/Saskatchewan");
-                    zones.Add("Canada/East-Saskatchewan", tzi);
-                }
-                catch
-                {
-                }
+                if (!dict.ContainsKey(tz.Id))
+                    dict.Add(tz.Id, tz);
             }
 
-            return zones;
-#else
-            return TimeZoneInfo.GetSystemTimeZones().ToDictionary(x => x.Id, x => x, StringComparer.OrdinalIgnoreCase);
+#if NETSTANDARD2_0 || NETSTANDARD1_3
+            if (!IsWindows)
+            {
+                const string caSka = "Canada/East-Saskatchewan";
+                // Include special case to resolve deleted link
+                if (!dict.ContainsKey(caSka))
+                {
+                    try
+                    {
+                        dict.Add(caSka, TimeZoneInfo.FindSystemTimeZoneById("Canada/Saskatchewan"));
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
 #endif
+            return dict;
         }
 
 #if NETSTANDARD2_0 || NETSTANDARD1_3
