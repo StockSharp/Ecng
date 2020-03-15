@@ -31,10 +31,10 @@ namespace Microsoft.AspNet.SignalR.Client.Infrastructure
                 return true;
             }
 
-#if NET40 || NET45
+#if NET40 || NET45 || NET461
             var webException = exception as WebException;
             return (webException != null && webException.Status == WebExceptionStatus.RequestCanceled);
-#elif NETSTANDARD1_3 || NETSTANDARD2_0
+#elif NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP
             return false;
 #else
 #error Unsupported framework.

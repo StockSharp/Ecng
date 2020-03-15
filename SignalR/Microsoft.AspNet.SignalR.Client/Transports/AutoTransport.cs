@@ -28,7 +28,7 @@ namespace Microsoft.AspNet.SignalR.Client.Transports
 
             _transports = new List<IClientTransport>()
             {
-#if NET45 || NETSTANDARD2_0
+#if NET45 || NET461 || NETCOREAPP || NETSTANDARD2_0
                 new WebSocketTransport(httpClient),
 #elif NET40 || NETSTANDARD1_3
                 // WebSockets not supported
@@ -73,7 +73,7 @@ namespace Microsoft.AspNet.SignalR.Client.Transports
         public Task<NegotiationResponse> Negotiate(IConnection connection, string connectionData)
         {
             var task = GetNegotiateResponse(connection, connectionData);
-#if NET45 || NETSTANDARD2_0
+#if NET45 || NET461 || NETSTANDARD2_0
             return task.Then(response =>
             {
                 _tryWebSockets = response.TryWebSockets;

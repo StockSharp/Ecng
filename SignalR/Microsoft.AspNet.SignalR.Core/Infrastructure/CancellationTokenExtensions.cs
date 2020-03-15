@@ -48,9 +48,9 @@ namespace Microsoft.AspNet.SignalR.Infrastructure
             };
 
             // PORT: The code is defensive enough that we could just remove the #ifs here.
-#if NETSTANDARD1_3 || NETSTANDARD2_0
+#if NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP
             return fallback;
-#elif NET40 || NET45
+#elif NET40 || NET45 || NET461
             MethodInfo methodInfo = null;
 
             try
