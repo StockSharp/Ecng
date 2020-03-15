@@ -24,7 +24,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data", "Data\Data.csproj", 
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "Data.SqlServer", "Data.SqlServer\Data.SqlServer.sqlproj", "{CF879870-07CF-47E8-AACA-1B17E8BEDF63}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interop", "Interop\Interop\Interop.csproj", "{6EACA7CE-0269-47A2-AE6A-3669738EE303}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interop", "Interop\Interop.csproj", "{6EACA7CE-0269-47A2-AE6A-3669738EE303}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Localization", "Localization\Localization.csproj", "{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}"
 EndProject
@@ -78,9 +78,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Disk.SDK.Provider", "Yandex
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalR.Client", "SignalR\SignalR.Client.csproj", "{EAC99715-0BFD-40C0-91C7-3E3B2CB9B344}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interop.Core", "Interop\Interop.Core\Interop.Core.csproj", "{E07110B3-2D56-474D-9668-7A4488774F33}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Interop", "Interop", "{5EAA92F2-450B-4827-A412-76850A9AB046}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interop.Windows", "Interop.Windows\Interop.Windows.csproj", "{E07110B3-2D56-474D-9668-7A4488774F33}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -218,11 +216,9 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{6EACA7CE-0269-47A2-AE6A-3669738EE303} = {5EAA92F2-450B-4827-A412-76850A9AB046}
 		{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A} = {ED4C3725-09A0-4BEB-9EF4-BC5B42B0459C}
 		{D37D6F1C-812D-4096-B7CD-5EA46B48C4EE} = {03273EB5-F2CB-4B20-B31D-EB3EB642414D}
 		{D8BB0F49-5F72-414A-8976-19846DE293C2} = {03273EB5-F2CB-4B20-B31D-EB3EB642414D}
-		{E07110B3-2D56-474D-9668-7A4488774F33} = {5EAA92F2-450B-4827-A412-76850A9AB046}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EB1406AD-3523-43AF-AE9B-F7BD4EAC2F12}

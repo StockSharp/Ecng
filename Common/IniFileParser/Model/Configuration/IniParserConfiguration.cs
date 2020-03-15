@@ -286,13 +286,13 @@ namespace IniParser.Model.Configuration
         #endregion
 
         #region Constants
-        protected const string _strCommentRegex = @"^{0}(.*)";
-        protected const string _strSectionRegexStart = @"^(\s*?)";
-        protected const string _strSectionRegexMiddle = @"{1}\s*[\p{L}\p{P}\p{M}_\""\'\{\}\#\+\;\*\%\(\)\=\?\&\$\,\:\/\.\-\w\d\s\\\~]+\s*";
-        protected const string _strSectionRegexEnd = @"(\s*?)$";
-        protected const string _strKeyRegex = @"^(\s*[_\.\d\w]*\s*)";
-        protected const string _strValueRegex = @"([\s\d\w\W\.]*)$";
-        protected const string _strSpecialRegexChars = @"[]\^$.|?*+()";
+        private const string _strCommentRegex = @"^{0}(.*)";
+        private const string _strSectionRegexStart = @"^(\s*?)";
+        private const string _strSectionRegexMiddle = @"{1}\s*[\p{L}\p{P}\p{M}_\""\'\{\}\#\+\;\*\%\(\)\=\?\&\$\,\:\/\.\-\w\d\s\\\~]+\s*";
+        private const string _strSectionRegexEnd = @"(\s*?)$";
+        private const string _strKeyRegex = @"^(\s*[_\.\d\w]*\s*)";
+        private const string _strValueRegex = @"([\s\d\w\W\.]*)$";
+        private const string _strSpecialRegexChars = @"[]\^$.|?*+()";
         #endregion
 
         #region Helpers
