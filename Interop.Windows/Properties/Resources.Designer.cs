@@ -61,26 +61,6 @@ namespace Ecng.Interop.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] _7z {
-            get {
-                object obj = ResourceManager.GetObject("_7z", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] _7z64 {
-            get {
-                object obj = ResourceManager.GetObject("_7z64", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The server failed to advise &quot;${service}|${topic}!${item}&quot;..
         /// </summary>
         internal static string AdviseFailedMessage {

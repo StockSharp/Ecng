@@ -7,6 +7,8 @@
 	using System.Text;
 
 	using Ecng.Common;
+	
+	using pdj.tiny7z.Archive;
 
 	public static class CompressionHelper
 	{
@@ -117,6 +119,22 @@
 
 				return output.To<byte[]>();
 			}
+		}
+
+		public static byte[] Un7Zip(this byte[] content)
+		{
+			if (content == null)
+				throw new ArgumentNullException(nameof(content));
+
+			var outStream = new MemoryStream();
+
+			using (var archive = new SevenZipArchive(content.To<Stream>(), FileAccess.Read))
+			using (var extractor = archive.Extractor())
+			{
+				extractor.ExtractFile(0, outStream);
+			}
+
+			return outStream.To<byte[]>();
 		}
 	}
 }
