@@ -13,10 +13,10 @@
 			{
 				var info = new ComputerInfo();
 
-				TotalPhysicalMemory = info.TotalPhysicalMemory;
-				TotalVirtualMemory = info.TotalVirtualMemory;
-				AvailableVirtualMemory = info.AvailableVirtualMemory;
-				AvailablePhysicalMemory = info.AvailablePhysicalMemory;
+				TotalPhysicalMemory = (long)info.TotalPhysicalMemory;
+				TotalVirtualMemory = (long)info.TotalVirtualMemory;
+				AvailableVirtualMemory = (long)info.AvailableVirtualMemory;
+				AvailablePhysicalMemory = (long)info.AvailablePhysicalMemory;
 			}
 			catch (Exception e)
 			{
@@ -27,22 +27,22 @@
 		/// <summary>
 		/// Gets the total amount of physical memory for the computer.
 		/// </summary>
-		public ulong TotalPhysicalMemory { get; }
+		public long TotalPhysicalMemory { get; }
 
 		/// <summary>
 		/// Gets the total amount of virtual address space available for the computer.
 		/// </summary>
-		public ulong TotalVirtualMemory { get; }
+		public long TotalVirtualMemory { get; }
 
 		/// <summary>
 		/// Gets the total amount of the computer's free virtual address space.
 		/// </summary>
-		public ulong AvailableVirtualMemory { get; }
+		public long AvailableVirtualMemory { get; }
 
 		/// <summary>
 		/// Gets the total amount of free physical memory for the computer.
 		/// </summary>
-		public ulong AvailablePhysicalMemory { get; }
+		public long AvailablePhysicalMemory { get; }
 
 		private static readonly Lazy<SystemMemory> _instance = new Lazy<SystemMemory>(() => new SystemMemory());
 

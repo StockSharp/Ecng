@@ -62,6 +62,7 @@ namespace Ecng.Common
 			return buffers;
 		}
 
+		[CLSCompliant(false)]
 		public void Free(byte[][] restoreBodies)
 		{
 			_allocationBuffers.AddRange(restoreBodies);
