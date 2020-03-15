@@ -1,11 +1,14 @@
 namespace Ecng.ComponentModel
 {
 	using System;
+	using System.Collections;
+	using System.Collections.Generic;
 	using System.ComponentModel;
 	using System.ComponentModel.DataAnnotations;
 	using System.Reflection;
 
 	using Ecng.Common;
+	using Ecng.Reflection;
 
 	public static class Extensions
 	{
@@ -123,6 +126,22 @@ namespace Ecng.ComponentModel
 
 			var name = assembly.FullName;
 			return new Uri("/" + name.Substring(0, name.IndexOf(',')) + ";component/" + resName, UriKind.Relative);
+		}
+
+		public static IEnumerable<Tuple<string, object>> GetValues(this ItemsSourceAttribute attr)
+		{
+			if (attr is null)
+				throw new ArgumentNullException(nameof(attr));
+
+			var prop = attr.Type.GetMember<PropertyInfo>(nameof(IItemsSource.Values));
+
+			var values = (IEnumerable)prop.GetValue(attr.Type.CreateInstance<object>());
+
+			if (values == null)
+				yield break;
+
+			foreach (dynamic item in values)
+				yield return Tuple.Create((string)item.Item1, (object)item.Item2);
 		}
 	}
 }
