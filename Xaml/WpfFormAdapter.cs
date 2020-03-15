@@ -20,7 +20,9 @@ using System.Windows;
 using System.Windows.Input;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
+#if !NETSTANDARD
 using System.Windows.Media;
+#endif
 
 namespace Ecng.Xaml
 {

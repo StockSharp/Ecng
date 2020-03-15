@@ -49,7 +49,7 @@ namespace PubnubApi
         private static ConcurrentDictionary<string, IPubnubLog> pubnubLog { get; } = new ConcurrentDictionary<string, IPubnubLog>();
         private static EndPoint.TelemetryManager pubnubTelemetryMgr;
         private static EndPoint.DuplicationManager pubnubSubscribeDuplicationManager { get; set; }
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
         private static HttpClient httpClientSubscribe { get; set; }
         private static HttpClient httpClientNonsubscribe { get; set; }
         private static HttpClient httpClientNetworkStatus { get; set; }
@@ -176,7 +176,7 @@ namespace PubnubApi
 
             CurrentUuid = pubnubConfiguation.Uuid;
 
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
             if (httpClientSubscribe == null)
             {
                 if (pubnubConfiguation.Proxy != null)
@@ -304,7 +304,7 @@ namespace PubnubApi
             ClientNetworkStatus.JsonLibrary = jsonLib;
             ClientNetworkStatus.PubnubUnitTest = unitTest;
             ClientNetworkStatus.PubnubLog = currentLog;
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
             if (httpClientNetworkStatus == null)
             {
                 if (currentConfig.Proxy != null && pubnubHttpClientHandler != null)
@@ -1852,7 +1852,7 @@ namespace PubnubApi
 
         internal static void RemoveHttpClients()
         {
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
             if (httpClientNetworkStatus != null)
             {
                 try{
@@ -1911,7 +1911,7 @@ namespace PubnubApi
                     }
                 }
             }
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
             if (httpClientSubscribe != null)
             {
                 try

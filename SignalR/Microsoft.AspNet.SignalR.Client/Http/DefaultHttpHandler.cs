@@ -1,7 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-#if NET45 || NET461 || NETCOREAPP || NETSTANDARD1_3 || NETSTANDARD2_0
+#if NET45 || NET461 || NET48 || NETCOREAPP || NETSTANDARD1_3 || NETSTANDARD
 
 using System;
 #if !NETFX_CORE && !PORTABLE
@@ -11,9 +11,9 @@ using System.Net.Http;
 
 namespace Microsoft.AspNet.SignalR.Client.Http
 {
-#if NET45 || NET461
+#if NET45 || NET461 || NET48
     public class DefaultHttpHandler : WebRequestHandler
-#elif NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP
+#elif NETSTANDARD1_3 || NETSTANDARD || NETCOREAPP
     public class DefaultHttpHandler : HttpClientHandler
 #else
 #error Unsupported target framework.

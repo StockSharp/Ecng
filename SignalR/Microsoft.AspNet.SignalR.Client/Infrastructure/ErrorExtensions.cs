@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 
-#if NETSTANDARD1_3 || NETSTANDARD2_0 || NET45 || NET461 || NETCOREAPP
+#if NETSTANDARD1_3 || NETSTANDARD || NET45 || NET461 || NET48 || NETCOREAPP
 using System.Net.Http;
 #elif NET40
 // Not needed
@@ -31,18 +31,18 @@ namespace Microsoft.AspNet.SignalR.Client
             // PORT: This logic was simplified when unifying the build across all frameworks
             ex = ex.Unwrap();
 
-#if NET40 || NET45 || NET461
+#if NET40 || NET45 || NET461 || NET48
             if (ex is WebException webEx)
             {
                 return GetWebExceptionError(webEx);
             }
-#elif NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP
+#elif NETSTANDARD1_3 || NETSTANDARD || NETCOREAPP
 // Not supported on this framework
 #else
 #error Unsupported framework.
 #endif
 
-#if NET45 || NET461 || NETCOREAPP || NETSTANDARD1_3 || NETSTANDARD2_0
+#if NET45 || NET461 || NET48 || NETCOREAPP || NETSTANDARD1_3 || NETSTANDARD
             if(ex is HttpClientException httpClientEx)
             {
                 return GetHttpClientException(httpClientEx);
@@ -56,7 +56,7 @@ namespace Microsoft.AspNet.SignalR.Client
             return new SignalRError(ex);
         }
 
-#if NET40 || NET45 || NET461
+#if NET40 || NET45 || NET461 || NET48
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The IDisposable object is the return value.")]
         private static SignalRError GetWebExceptionError(Exception ex)
         {
@@ -90,13 +90,13 @@ namespace Microsoft.AspNet.SignalR.Client
 
             return error;
         }
-#elif NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP
+#elif NETSTANDARD1_3 || NETSTANDARD || NETCOREAPP
 // Not supported on this framework
 #else
 #error Unsupported framework.
 #endif
 
-#if NET45 || NET461 || NETCOREAPP || NETSTANDARD1_3 || NETSTANDARD2_0
+#if NET45 || NET461 || NET48 || NETCOREAPP || NETSTANDARD1_3 || NETSTANDARD
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The IDisposable object is the return value.")]
         private static SignalRError GetHttpClientException(Exception ex)
         {

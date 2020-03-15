@@ -28,7 +28,7 @@ namespace Microsoft.AspNet.SignalR.Client.Transports
 
             _transports = new List<IClientTransport>()
             {
-#if NET45 || NET461 || NETCOREAPP || NETSTANDARD2_0
+#if NET45 || NET461 || NET48 || NETCOREAPP || NETSTANDARD
                 new WebSocketTransport(httpClient),
 #elif NET40 || NETSTANDARD1_3
                 // WebSockets not supported

@@ -4,7 +4,7 @@
 
 	public class SpeechPlayer : Disposable
 	{
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
 		public int Volume { get; set; }
 
 		public void Say(string text) { }

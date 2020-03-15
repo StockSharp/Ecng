@@ -1007,7 +1007,7 @@ namespace Microsoft.AspNet.SignalR.Client
             {
 #if NETSTANDARD
                 _assemblyVersion = new AssemblyName(typeof(Resources).GetTypeInfo().Assembly.FullName).Version;
-#elif NET40 || NET45 || NET461 || NETCOREAPP
+#elif NET40 || NET45 || NET461 || NET48 || NETCOREAPP
                 _assemblyVersion = new AssemblyName(typeof(Connection).Assembly.FullName).Version;
 #else 
 #error Unsupported target framework.
@@ -1016,7 +1016,7 @@ namespace Microsoft.AspNet.SignalR.Client
 
 #if NETSTANDARD1_3
             return String.Format(CultureInfo.InvariantCulture, "{0}/{1} (Unknown OS)", client, _assemblyVersion);
-#elif NETSTANDARD2_0 || NET40 || NET45 || NET461 || NETCOREAPP
+#elif NETSTANDARD || NET40 || NET45 || NET461 || NET48 || NETCOREAPP
             return String.Format(CultureInfo.InvariantCulture, "{0}/{1} ({2})", client, _assemblyVersion, Environment.OSVersion);
 #else
 #error Unsupported target framework.

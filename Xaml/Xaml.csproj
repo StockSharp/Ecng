@@ -9,7 +9,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp3.1'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1'">
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.configuration" />
@@ -19,8 +19,41 @@
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Ookii.Dialogs.Wpf\**" />
+    <EmbeddedResource Remove="Ookii.Dialogs.Wpf\**" />
+    <None Remove="Ookii.Dialogs.Wpf\**" />
+    <Page Remove="Ookii.Dialogs.Wpf\**" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <Compile Remove="BmpImage.cs" />
+    <Compile Remove="BusyIndicator.cs" />
+    <Compile Remove="EditableTextBlock.cs" />
+    <Compile Remove="EditableTextBlockAdorner.cs" />
+    <Compile Remove="EncodingComboBox.cs" />
+    <Compile Remove="EndPointComboBox.cs" />
+    <Compile Remove="EnumComboBox.cs" />
+    <Compile Remove="FixedWidthColumn.cs" />
+    <Compile Remove="GridViewRowPresenterWithGridLines.cs" />
+    <Compile Remove="GridViewSort.cs" />
+    <Compile Remove="GuiDispatcher.cs" />
+    <Compile Remove="HeaderedSeparator.cs" />
+    <Compile Remove="HighlightingTextBlock.*" />
+    <Compile Remove="HyperlinkEx.cs" />
+    <Compile Remove="IpAddressEditor.*" />
+    <Compile Remove="IWin32WindowEx.cs" />
+    <Compile Remove="NonTopmostPopup.cs" />
+    <Compile Remove="NumberRangeRule.cs" />
+    <Compile Remove="Proxy.cs" />
+    <Compile Remove="ResizableContentControl.cs" />
+    <Compile Remove="TimeSpanEditor.*" />
+    <Compile Remove="XamlHelper.cs" />
+    <Compile Remove="XamlNativeHelper.cs" />
+    <Compile Remove="AddressComboBox.cs" />
+    <Compile Remove="BindingProxy.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Block.xaml.cs">
@@ -43,36 +76,6 @@
     </Compile>
     <Compile Update="LoadingAnimation.xaml.cs">
       <DependentUpon>LoadingAnimation.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Ookii.Dialogs.Wpf\CredentialDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Ookii.Dialogs.Wpf\CredentialDialog.designer.cs">
-      <DependentUpon>CredentialDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Ookii.Dialogs.Wpf\ProgressDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Ookii.Dialogs.Wpf\ProgressDialog.designer.cs">
-      <DependentUpon>ProgressDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Ookii.Dialogs.Wpf\TaskDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Ookii.Dialogs.Wpf\TaskDialog.designer.cs">
-      <DependentUpon>TaskDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Ookii.Dialogs.Wpf\TaskDialogButton.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Ookii.Dialogs.Wpf\TaskDialogItem.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Ookii.Dialogs.Wpf\TaskDialogItem.designer.cs">
-      <DependentUpon>TaskDialogItem.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Ookii.Dialogs.Wpf\TaskDialogRadioButton.cs">
-      <SubType>Component</SubType>
     </Compile>
     <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -359,17 +362,8 @@
   <ItemGroup>
     <Content Include="HtmlRenderer\Core\Utils\ImageError.png" />
     <Content Include="HtmlRenderer\Core\Utils\ImageLoad.png" />
-    <EmbeddedResource Include="Ookii.Dialogs.Wpf\CredentialDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs.Wpf\ProgressDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs.Wpf\TaskDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs.Wpf\VistaFolderBrowserDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs.Wpf\VistaOpenFileDialog.bmp" />
-    <EmbeddedResource Include="Ookii.Dialogs.Wpf\VistaSaveFileDialog.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Update="Ookii.Dialogs.Wpf\ProgressDialog.resx">
-      <DependentUpon>ProgressDialog.cs</DependentUpon>
-    </EmbeddedResource>
     <None Include="..\Ecng.snk">
       <Link>Properties\Ecng.snk</Link>
     </None>

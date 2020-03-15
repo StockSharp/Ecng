@@ -6,7 +6,7 @@ namespace Ecng.Interop
 	using System.Collections.Generic;
 	using System.Net.NetworkInformation;
 	using System.Text.RegularExpressions;
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
 	using System.Runtime.InteropServices;
 #endif
 

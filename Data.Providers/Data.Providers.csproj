@@ -28,7 +28,7 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'netstandard2.1' ">
     <Compile Remove="JetDatabaseProvider.cs" />
     <Compile Remove="OdbcDatabaseProvider.cs" />
   </ItemGroup>

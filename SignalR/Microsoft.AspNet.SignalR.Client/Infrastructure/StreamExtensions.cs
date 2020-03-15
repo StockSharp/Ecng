@@ -79,7 +79,7 @@ namespace Microsoft.AspNet.SignalR.Infrastructure
         }
     }
 }
-#elif NET45 || NET461 || NETCOREAPP || NETSTANDARD1_3 || NETSTANDARD2_0
+#elif NET45 || NET461 || NET48 || NETCOREAPP || NETSTANDARD1_3 || NETSTANDARD
 // Not needed on this framework
 #else
 #error Unsupported framework.

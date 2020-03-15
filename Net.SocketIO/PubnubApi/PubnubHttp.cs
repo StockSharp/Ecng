@@ -8,7 +8,7 @@ using System.Net;
 using System.Collections;
 using System.Threading.Tasks;
 using System.Globalization;
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
 using System.Net.Http;
 using System.Net.Http.Headers;
 #endif
@@ -21,12 +21,12 @@ namespace PubnubApi
         private readonly IJsonPluggableLibrary jsonLib;
         private readonly IPubnubLog pubnubLog;
         private readonly EndPoint.TelemetryManager pubnubTelemetryMgr;
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
         private static HttpClient httpClientSubscribe;
         private static HttpClient httpClientNonsubscribe;
 #endif
 
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
         public PubnubHttp(PNConfiguration config, IJsonPluggableLibrary jsonPluggableLibrary, IPubnubLog log, EndPoint.TelemetryManager telemetryManager, HttpClient refHttpClientSubscribe, HttpClient refHttpClientNonsubscribe)
 #else
         public PubnubHttp(PNConfiguration config, IJsonPluggableLibrary jsonPluggableLibrary, IPubnubLog log, EndPoint.TelemetryManager telemetryManager)
@@ -36,7 +36,7 @@ namespace PubnubApi
             jsonLib = jsonPluggableLibrary;
             pubnubLog = log;
             pubnubTelemetryMgr = telemetryManager;
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
             httpClientSubscribe = refHttpClientSubscribe;
             httpClientNonsubscribe = refHttpClientNonsubscribe;
 #endif
@@ -84,7 +84,7 @@ namespace PubnubApi
             }
             else
             {
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
                 if (pubnubConfig.UseTaskFactoryAsyncInsteadOfHttpClient)
                 {
                     return await SendRequestAndGetJsonResponseTaskFactory(pubnubRequestState, request).ConfigureAwait(false);
@@ -108,7 +108,7 @@ namespace PubnubApi
             }
             else
             {
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
                 if (pubnubConfig.UseTaskFactoryAsyncInsteadOfHttpClient)
                 {
                     return await SendRequestAndGetJsonResponseTaskFactoryWithPOST(pubnubRequestState, request, postData).ConfigureAwait(false);
@@ -123,7 +123,7 @@ namespace PubnubApi
             }
         }
 
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
         async Task<string> SendRequestAndGetJsonResponseHttpClient<T>(Uri requestUri, RequestState<T> pubnubRequestState, HttpWebRequest request)
         {
             string jsonString = "";

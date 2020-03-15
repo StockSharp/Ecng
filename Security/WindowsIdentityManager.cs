@@ -2,7 +2,7 @@ namespace Ecng.Security
 {
 	using System;
 	using System.Security;
-#if !NETCOREAPP
+#if !NETCOREAPP && !NETSTANDARD
 	using System.ComponentModel;
 	using System.DirectoryServices;
 	using System.DirectoryServices.AccountManagement;
@@ -112,7 +112,7 @@ namespace Ecng.Security
 
 	public static class WindowsIdentityManager
 	{
-#if !NETCOREAPP
+#if !NETCOREAPP && !NETSTANDARD
 		[DllImport("advapi32.dll", SetLastError = true)]
 		private static extern bool LogonUser(string lpszUsername, string lpszDomain, string lpszPassword, LogonType dwLogonType, LogonProvider dwLogonProvider, out IntPtr phToken);
 
@@ -135,7 +135,7 @@ namespace Ecng.Security
 
 		public static void Login(string name, string domain, string password, LogonType logonType, Action action)
 		{
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
 			throw new PlatformNotSupportedException();
 #else
 			if (LogonUser(name, domain, password, logonType, LogonProvider.Default, out var token))
@@ -183,7 +183,7 @@ namespace Ecng.Security
 
 		public static bool Validate(string userName, SecureString password, string domain = null)
 		{
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
 			throw new PlatformNotSupportedException();
 #else
 			using (var context = new PrincipalContext(domain.IsEmpty() ? ContextType.Machine : ContextType.Domain, domain))
@@ -194,7 +194,7 @@ namespace Ecng.Security
 		// http://stackoverflow.com/a/642511
 		public static bool DeleteUser(string userName)
 		{
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
 			throw new PlatformNotSupportedException();
 #else
 			var localDirectory = new DirectoryEntry("WinNT://" + Environment.MachineName);
@@ -208,7 +208,7 @@ namespace Ecng.Security
 		// http://stackoverflow.com/a/6834015
 		public static bool CreateUser(string userName, SecureString password, string domain = null)
 		{
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
 			throw new PlatformNotSupportedException();
 #else
 			using (var context = new PrincipalContext(domain.IsEmpty() ? ContextType.Machine : ContextType.Domain, domain))
@@ -228,7 +228,7 @@ namespace Ecng.Security
 
 		public static bool ChangePassword(string userName, SecureString oldPassword, SecureString newPassword, string domain = null)
 		{
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
 			throw new PlatformNotSupportedException();
 #else
 			using (var context = new PrincipalContext(domain.IsEmpty() ? ContextType.Machine : ContextType.Domain, domain))

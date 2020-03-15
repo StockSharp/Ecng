@@ -155,7 +155,7 @@
 			return InternalTryAdd();
 		}
 
-#if !NETCOREAPP
+#if !NETCOREAPP && !NETSTANDARD
 		public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue value)
 		{
 			if (dict == null)

@@ -29,7 +29,7 @@ namespace Ecng.Net
 		/// </summary>
 		/// <value>The user address.</value>
 		public static IPAddress UserAddress => 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
 			throw new PlatformNotSupportedException();
 #else
 			(HttpContext.Current == null ? ChannelHelper.GetClientEndPoint().Address : HttpContext.Current.Request.UserHostAddress.To<IPAddress>());

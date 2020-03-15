@@ -39,7 +39,7 @@ namespace Microsoft.AspNet.SignalR.Client.Http
     }
 }
 
-#elif NETSTANDARD1_3 || NET45 || NET461 || NETCOREAPP || NETSTANDARD2_0
+#elif NETSTANDARD1_3 || NET45 || NET461 || NET48 || NETCOREAPP || NETSTANDARD
 // Not supported on this framework.
 #else 
 #error Unsupported target framework.

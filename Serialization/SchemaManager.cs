@@ -33,7 +33,7 @@
 #endif
 			GlobalFieldFactories = new Dictionary<Type, Type>
 			{
-#if !NETCOREAPP
+#if !NETCOREAPP && !NETSTANDARD
 				{ typeof(System.Windows.Media.Color), typeof(ColorFieldFactory<System.Windows.Media.Color>) },
 #endif
 #if !SILVERLIGHT

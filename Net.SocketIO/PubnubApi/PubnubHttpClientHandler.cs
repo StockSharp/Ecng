@@ -1,4 +1,4 @@
-﻿#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+﻿#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
 using System;
 using System.Collections.Generic;
 using System.Globalization;

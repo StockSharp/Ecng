@@ -16,17 +16,11 @@
 #if SILVERLIGHT
 	using System.Windows.Media;
 	using ArgumentOutOfRangeException = System.ArgumentOutOfRangeExceptionEx;
-#else
-	using System.Drawing;
 #endif
 	using System.Globalization;
 	using System.Threading;
 	using System.Xml;
 	using System.Xml.Linq;
-
-#if !SILVERLIGHT
-	using WinColor = System.Drawing.Color;
-#endif
 
 	using TimeZoneConverter;
 
@@ -612,19 +606,6 @@
 
 					return retVal;
 				}
-#if !SILVERLIGHT
-				else if (value is WinColor winColor && destinationType == typeof(int))
-					return winColor.ToArgb();
-				else if (value is int intVal1 && destinationType == typeof(WinColor))
-				{
-					return WinColor.FromArgb((byte)((intVal1 >> 0x18) & 0xffL), (byte)((intVal1 >> 0x10) & 0xffL), (byte)((intVal1 >> 8) & 0xffL), (byte)(intVal1 & 0xffL));
-					//retVal = Color.FromArgb(intValue);
-				}
-				else if (value is WinColor winColor2 && destinationType == typeof(string))
-					return ColorTranslator.ToHtml(winColor2);
-				else if (value is string strVal && destinationType == typeof(WinColor))
-					return ColorTranslator.FromHtml(strVal);
-#endif
 				else if (value is Uri && destinationType == typeof(string))
 					return value.ToString();
 				else if (value is string s1 && destinationType == typeof(Uri))

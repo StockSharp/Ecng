@@ -81,7 +81,7 @@ namespace Ecng.Interop
 		/// <returns>The object requested. You can cast this object to any COM interface that it supports.</returns>
 		public static T GetActiveObject<T>(string progId)
 		{
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
 			throw new PlatformNotSupportedException();
 #else
 			return (T)Marshal.GetActiveObject(progId);

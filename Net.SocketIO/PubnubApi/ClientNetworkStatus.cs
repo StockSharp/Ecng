@@ -20,7 +20,7 @@ namespace PubnubApi
         private static IPubnubLog pubnubLog;
 
         private static bool networkStatus = true;
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
         private static HttpClient httpClient;
 #endif
 
@@ -72,7 +72,7 @@ namespace PubnubApi
             }
         }
 
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
         public static HttpClient RefHttpClient
         {
             set
@@ -225,7 +225,7 @@ namespace PubnubApi
                 }
                 else
                 {
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
                     if (pubnubConfig.UseTaskFactoryAsyncInsteadOfHttpClient)
                     {
                         gotTimeResp = await GetTimeWithTaskFactoryAsync(requestUri).ConfigureAwait(false);
@@ -275,7 +275,7 @@ namespace PubnubApi
 			internalcallback(false);
 		}
 
-#if !NET35 && !NET40 && !NET45 && !NET461 && !NETSTANDARD10
+#if !NET35 && !NET40 && !NET45 && !NET461 && !NET48 && !NETSTANDARD
         private static async Task<bool> GetTimeWithHttpClient(Uri requestUri)
         {
             bool successFlag = false;

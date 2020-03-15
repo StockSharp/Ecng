@@ -158,7 +158,7 @@ namespace Microsoft.AspNet.SignalR.Client.Infrastructure
 
         private static void Dispatch(Action callback)
         {
-#if NET45 || NET461 || NETCOREAPP || NETSTANDARD1_3 || NETSTANDARD2_0
+#if NET45 || NET461 || NET48 || NETCOREAPP || NETSTANDARD1_3 || NETSTANDARD
             Task.Run(() =>
 #elif NET40
             ThreadPool.QueueUserWorkItem(_ =>

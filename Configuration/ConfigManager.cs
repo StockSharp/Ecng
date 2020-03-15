@@ -7,7 +7,7 @@
 	using System.Configuration;
 	using System.Diagnostics;
 	using System.Web;
-#if !NETCOREAPP
+#if !NETCOREAPP && !NETSTANDARD
 	using System.Web.Configuration;
 #endif
 
@@ -49,7 +49,7 @@
 		{
 #if !SILVERLIGHT
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
 			//http://csharp-tipsandtricks.blogspot.com/2010/01/identifying-whether-execution-context.html
 			InnerConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 #else
