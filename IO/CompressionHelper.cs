@@ -19,14 +19,14 @@
 
 		public static IEnumerable<Stream> Unzip(this Stream input, bool leaveOpen = false, Func<string, bool> filter = null)
 		{
-			using (var zip = Ionic.Zip.ZipFile.Read(input))
+			using (var zip = new ZipArchive(input, ZipArchiveMode.Read, leaveOpen))
 			{
 				foreach (var entry in zip.Entries)
 				{
-					if (filter?.Invoke(entry.FileName) == false)
+					if (filter?.Invoke(entry.Name) == false)
 						continue;
 
-					using (var stream = entry.OpenReader())
+					using (var stream = entry.Open())
 						yield return stream;
 				}
 			}
