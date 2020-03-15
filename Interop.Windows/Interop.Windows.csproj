@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-  <Import Project="..\common.props" />
+  <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{E07110B3-2D56-474D-9668-7A4488774F33}</ProjectGuid>
     <RootNamespace>Ecng.Interop</RootNamespace>

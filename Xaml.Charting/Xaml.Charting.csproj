@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-  <Import Project="..\common.props" />
+  <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{AAB784E4-F8C6-4324-ABC0-6E9E0F73E575}</ProjectGuid>
     <RootNamespace>Ecng.Xaml.Charting</RootNamespace>

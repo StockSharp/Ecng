@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
+  <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{725D5260-8208-4A39-843A-6B58606ED73B}</ProjectGuid>
     <RootNamespace>Ecng.Common</RootNamespace>

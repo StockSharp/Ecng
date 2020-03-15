@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
+  <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{B79EC630-2FAB-42B9-89BA-4886C1942E96}</ProjectGuid>
     <RootNamespace>Ecng.Net.SocketIO</RootNamespace>

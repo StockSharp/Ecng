@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
+  <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</ProjectGuid>
     <RootNamespace>Ecng.Serialization</RootNamespace>

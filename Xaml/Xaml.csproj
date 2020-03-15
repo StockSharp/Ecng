@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-  <Import Project="..\common.props" />
+  <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{90A23E0C-3329-4459-BB97-21CD84E5418A}</ProjectGuid>
     <RootNamespace>Ecng.Xaml</RootNamespace>

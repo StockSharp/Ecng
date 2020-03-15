@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
+  <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProductVersion>8.0.30703</ProductVersion>
     <ProjectGuid>{4B658B40-4303-46B0-B670-B2AB96537817}</ProjectGuid>

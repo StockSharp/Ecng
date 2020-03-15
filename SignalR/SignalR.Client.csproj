@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
+  <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <Title>Microsoft ASP.NET SignalR .NET Client</Title>
     <Description>.NET client for ASP.NET SignalR.</Description>
