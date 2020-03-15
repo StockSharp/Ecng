@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-  <Import Project="..\common_target_multi.props" />
+  <Import Project="..\common_target_fw.props" />
   <PropertyGroup>
     <ProjectGuid>{43DCD61B-E735-442E-85F4-B5D5BE199DD2}</ProjectGuid>
     <RootNamespace>Ecng.Test</RootNamespace>

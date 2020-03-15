@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-  <Import Project="..\common_target_multi.props" />
+  <Import Project="..\common_target_fw.props" />
   <PropertyGroup>
     <ProjectGuid>{CAF861AA-7473-4EEB-BF41-FFE74A97E072}</ProjectGuid>
     <OutputType>Exe</OutputType>
@@ -26,6 +26,8 @@
     <ProjectReference Include="..\Data.Providers\Data.Providers.csproj" />
     <ProjectReference Include="..\Data\Data.csproj" />
     <ProjectReference Include="..\Interop\Interop.csproj" />
+    <ProjectReference Include="..\IO\IO.csproj" />
+    <ProjectReference Include="..\Net.SocketIO\Net.SocketIO.csproj" />
     <ProjectReference Include="..\Net\Net.csproj" />
     <ProjectReference Include="..\Reflection\Reflection.csproj" />
     <ProjectReference Include="..\Roslyn\Roslyn.csproj" />
@@ -34,6 +36,7 @@
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
     <ProjectReference Include="..\Web\Web.csproj" />
+    <ProjectReference Include="..\Xaml.DevExpress\Xaml.DevExp.csproj" />
     <ProjectReference Include="..\Xaml\Xaml.csproj" />
   </ItemGroup>
 </Project>

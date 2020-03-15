@@ -10,51 +10,7 @@
     <PackageReference Include="StockSharp.Ecng.Xaml.DXRefs" Version="$(DXRefsVersion)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1'">
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
     <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="WindowsBase" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Update="Database\DatabaseConnectionEditor.xaml.cs">
-      <DependentUpon>DatabaseConnectionEditor.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Database\DatabaseConnectionCreateWindow.xaml.cs">
-      <DependentUpon>DatabaseConnectionCreateWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Database\DatabaseConnectionPanel.xaml.cs">
-      <DependentUpon>DatabaseConnectionPanel.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="DdeSettingsWindow.xaml.cs">
-      <DependentUpon>DdeSettingsWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="EndPointEditor.xaml.cs">
-      <DependentUpon>EndPointEditor.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="EndPointListEditor.xaml.cs">
-      <DependentUpon>EndPointListEditor.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="EnumEditor.xaml.cs">
-      <DependentUpon>EnumEditor.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="FileBrowserEditor.xaml.cs">
-      <DependentUpon>FileBrowserEditor.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="FileBrowserPicker.xaml.cs">
-      <DependentUpon>FileBrowserPicker.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="FolderBrowserEditor.xaml.cs">
-      <DependentUpon>FolderBrowserEditor.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="FolderBrowserPicker.xaml.cs">
-      <DependentUpon>FolderBrowserPicker.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="SecretEditor.xaml.cs">
-      <DependentUpon>SecretEditor.xaml</DependentUpon>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Backup\Backup.csproj" />
