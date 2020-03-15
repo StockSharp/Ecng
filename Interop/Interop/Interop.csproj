@@ -25,7 +25,7 @@
     <PackageReference Include="System.Management" Version="4.7" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.0" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+  <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' ">
     <Reference Include="System.Management" />
   </ItemGroup>
   <ItemGroup>

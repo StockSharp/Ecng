@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\common.props" />
+  <Import Project="..\..\common_target_fw.props" />
   <PropertyGroup>
     <ProjectGuid>{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A}</ProjectGuid>
     <RootNamespace>Ecng.Logic.BusinessEntities</RootNamespace>

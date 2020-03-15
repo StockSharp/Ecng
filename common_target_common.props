@@ -1,7 +1,9 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
+    <DXRefsVersion>1.0.1</DXRefsVersion>
+  </PropertyGroup>
+  <PropertyGroup>
     <ProductVersion>9.0.30729</ProductVersion>
-    <TargetFrameworks>net461;netcoreapp3.1</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
@@ -11,4 +13,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(SolutionDir)EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
+  </ItemGroup>
 </Project>
