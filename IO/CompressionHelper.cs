@@ -8,8 +8,6 @@
 
 	using Ecng.Common;
 	
-	using pdj.tiny7z.Archive;
-
 	public static class CompressionHelper
 	{
 		public static IEnumerable<Stream> Unzip(this byte[] input, bool leaveOpen = false, Func<string, bool> filter = null)
@@ -53,88 +51,80 @@
 				return streamReader.ReadToEnd();
 		}
 
-		public static string UnGZip(this byte[] archive)
+		public static string UnGZip(this byte[] input)
 		{
-			if (archive == null)
-				throw new ArgumentNullException(nameof(archive));
+			if (input == null)
+				throw new ArgumentNullException(nameof(input));
 
-			return archive.UnGZip(0, archive.Length);
+			return input.UnGZip(0, input.Length);
 		}
 
-		public static string UnGZip(this byte[] archive, int index, int count)
+		public static string UnGZip(this byte[] input, int index, int count)
 		{
-			using (var zip = new GZipStream(new MemoryStream(archive, index, count), CompressionMode.Decompress))
+			using (var zip = new GZipStream(new MemoryStream(input, index, count), CompressionMode.Decompress))
 				return zip.StreamToString();
 		}
 
-		public static int UnGZip(this byte[] archive, int index, int count, byte[] destination)
+		public static int UnGZip(this byte[] input, int index, int count, byte[] destination)
 		{
-			using (var zip = new GZipStream(new MemoryStream(archive, index, count), CompressionMode.Decompress))
+			using (var zip = new GZipStream(new MemoryStream(input, index, count), CompressionMode.Decompress))
 				return zip.CopyToBuffer(destination);
 		}
 
-		public static string UnDeflate(this byte[] archive)
+		public static string UnDeflate(this byte[] input)
 		{
-			if (archive == null)
-				throw new ArgumentNullException(nameof(archive));
+			if (input == null)
+				throw new ArgumentNullException(nameof(input));
 
-			return archive.UnDeflate(0, archive.Length);
+			return input.UnDeflate(0, input.Length);
 		}
 
-		public static string UnDeflate(this byte[] archive, int index, int count)
+		public static string UnDeflate(this byte[] input, int index, int count)
 		{
-			using (var deflate = new DeflateStream(new MemoryStream(archive, index, count), CompressionMode.Decompress))
+			using (var deflate = new DeflateStream(new MemoryStream(input, index, count), CompressionMode.Decompress))
 				return deflate.StreamToString();
 		}
 
-		public static int UnDeflate(this byte[] archive, int index, int count, byte[] destination)
+		public static int UnDeflate(this byte[] input, int index, int count, byte[] destination)
 		{
-			using (var deflate = new DeflateStream(new MemoryStream(archive, index, count), CompressionMode.Decompress))
+			using (var deflate = new DeflateStream(new MemoryStream(input, index, count), CompressionMode.Decompress))
 				return deflate.CopyToBuffer(destination);
 		}
 
-		public static byte[] DeflateTo(this byte[] content)
+		public static byte[] DeflateTo(this byte[] input)
 		{
-			if (content == null)
-				throw new ArgumentNullException(nameof(content));
+			if (input == null)
+				throw new ArgumentNullException(nameof(input));
 
 			using (var output = new MemoryStream())
 			{
 				using (var deflate = new DeflateStream(output, CompressionMode.Compress, true))
-					deflate.Write(content, 0, content.Length);
+					deflate.Write(input, 0, input.Length);
 
 				return output.To<byte[]>();
 			}
 		}
 
-		public static byte[] DeflateFrom(this byte[] content)
+		public static byte[] DeflateFrom(this byte[] input)
 		{
-			if (content == null)
-				throw new ArgumentNullException(nameof(content));
+			if (input == null)
+				throw new ArgumentNullException(nameof(input));
 
 			using (var output = new MemoryStream())
 			{
-				using (var deflate = new DeflateStream(new MemoryStream(content), CompressionMode.Decompress))
+				using (var deflate = new DeflateStream(new MemoryStream(input), CompressionMode.Decompress))
 					deflate.CopyTo(output);
 
 				return output.To<byte[]>();
 			}
 		}
 
-		public static byte[] Un7Zip(this byte[] content)
+		public static byte[] Un7Zip(this byte[] input)
 		{
-			if (content == null)
-				throw new ArgumentNullException(nameof(content));
+			if (input == null)
+				throw new ArgumentNullException(nameof(input));
 
-			var outStream = new MemoryStream();
-
-			using (var archive = new SevenZipArchive(content.To<Stream>(), FileAccess.Read))
-			using (var extractor = archive.Extractor())
-			{
-				extractor.ExtractFile(0, outStream);
-			}
-
-			return outStream.To<byte[]>();
+			return new Lzma.LzmaStream(input.To<Stream>(), CompressionMode.Decompress).To<byte[]>();
 		}
 	}
 }
