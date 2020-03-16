@@ -6,8 +6,6 @@
     <AssemblyName>Ecng.Backup</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="StockSharp.Ecng.Xaml.DXRefs" Version="$(DXRefsVersion)" />
-
     <PackageReference Include="AWSSDK.S3" Version="3.3.110.32" />
     <PackageReference Include="AWSSDK.SQS" Version="3.3.102.73" />
     <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.3.101.130" />
@@ -18,6 +16,12 @@
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
     <ProjectReference Include="..\Localization\Localization.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
-    <ProjectReference Include="..\YandexDisk\Disk.SDK.Provider\Disk.SDK.Provider.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Yandex\Disk.Sdk\Utils\WebdavResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>WebdavResources.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
 </Project>
