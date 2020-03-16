@@ -206,6 +206,11 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
             return _fontsHandler.GetCachedFont(family, size, style);
         }
 
+        private static Stream GetResource(string name)
+        {
+            return typeof(HtmlRendererUtils).Assembly.GetManifestResourceStream($"Ecng.Xaml.HtmlRenderer.Core.Utils.{name}");
+        }
+
         /// <summary>
         /// Get image to be used while HTML image is loading.
         /// </summary>
@@ -213,7 +218,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         {
             if (_loadImage == null)
             {
-                var stream = typeof(HtmlRendererUtils).Assembly.GetManifestResourceStream("TheArtOfDev.HtmlRenderer.Core.Utils.ImageLoad.png");
+                var stream = GetResource("ImageLoad.png");
                 if (stream != null)
                     _loadImage = ImageFromStream(stream);
             }
@@ -227,7 +232,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         {
             if (_errorImage == null)
             {
-                var stream = typeof(HtmlRendererUtils).Assembly.GetManifestResourceStream("TheArtOfDev.HtmlRenderer.Core.Utils.ImageError.png");
+                var stream = GetResource("ImageError.png");
                 if (stream != null)
                     _errorImage = ImageFromStream(stream);
             }

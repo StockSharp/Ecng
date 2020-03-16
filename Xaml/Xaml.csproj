@@ -99,6 +99,7 @@
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resources\colorfont_icon.png" />
     <Resource Include="Resources\Flags\AD.png" />
     <Resource Include="Resources\Flags\AE.png" />
     <Resource Include="Resources\Flags\AF.png" />
@@ -360,8 +361,8 @@
     <Resource Include="Resources\Flags\Wales.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="HtmlRenderer\Core\Utils\ImageError.png" />
-    <Content Include="HtmlRenderer\Core\Utils\ImageLoad.png" />
+    <EmbeddedResource Include="HtmlRenderer\Core\Utils\ImageError.png" />
+    <EmbeddedResource Include="HtmlRenderer\Core\Utils\ImageLoad.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Ecng.snk">
