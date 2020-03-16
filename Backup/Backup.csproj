@@ -21,7 +21,7 @@
     <Compile Update="Yandex\Disk.Sdk\Utils\WebdavResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>WebdavResources.resx</DependentUpon>
+      <DependentUpon>Yandex\Disk.Sdk\Utils\WebdavResources.resx</DependentUpon>
     </Compile>
   </ItemGroup>
 </Project>
