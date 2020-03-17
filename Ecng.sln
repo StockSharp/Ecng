@@ -10,8 +10,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		EcngAssemblyInfo.cs = EcngAssemblyInfo.cs
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Logic", "Logic", "{ED4C3725-09A0-4BEB-9EF4-BC5B42B0459C}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{725D5260-8208-4A39-843A-6B58606ED73B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Collections", "Collections\Collections.csproj", "{62A4ADD9-9D89-48E6-984B-73BF023D7E50}"
@@ -47,8 +45,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EcngTest", "EcngTest\EcngTest.csproj", "{43DCD61B-E735-442E-85F4-B5D5BE199DD2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xaml", "Xaml\Xaml.csproj", "{90A23E0C-3329-4459-BB97-21CD84E5418A}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BusinessEntities", "Logic\BusinessEntities\BusinessEntities.csproj", "{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data.Providers", "Data.Providers\Data.Providers.csproj", "{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}"
 EndProject
@@ -147,10 +143,6 @@ Global
 		{90A23E0C-3329-4459-BB97-21CD84E5418A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{90A23E0C-3329-4459-BB97-21CD84E5418A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{90A23E0C-3329-4459-BB97-21CD84E5418A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -196,9 +188,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{AC8F0203-4976-4FEF-8D8E-9FCF2737AD4A} = {ED4C3725-09A0-4BEB-9EF4-BC5B42B0459C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EB1406AD-3523-43AF-AE9B-F7BD4EAC2F12}
