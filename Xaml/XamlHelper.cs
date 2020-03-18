@@ -27,6 +27,7 @@ namespace Ecng.Xaml
 	using Ecng.ComponentModel;
 	using Ecng.Collections;
 	using Ecng.Serialization;
+	using Ecng.Localization;
 
 	using Microsoft.Win32;
 
@@ -969,6 +970,14 @@ namespace Ecng.Xaml
 			return Color.FromArgb(settings.GetValue<byte>("A"), settings.GetValue<byte>("R"), settings.GetValue<byte>("G"), settings.GetValue<byte>("B"));
 		}
 
+		public static Color ToColorEx(this object value)
+		{
+			if (value is int intVal)
+				return ToColor(intVal);
+			else
+				return ((SettingsStorage)value).ToColor();
+		}
+
 		#endregion
 
 		public static bool IsDesignMode(this DependencyObject obj)
@@ -1247,6 +1256,140 @@ namespace Ecng.Xaml
 		public static Color? ToColor(this string color)
 		{
 			return (Color?)ColorConverter.ConvertFromString(color);
+		}
+
+		private const string _brushTypeKey = "Type";
+
+		public static SettingsStorage ToStorage(this Brush brush)
+		{
+			var storage = new SettingsStorage();
+
+			switch (brush)
+			{
+				case SolidColorBrush sb:
+					storage.SetValue(_brushTypeKey, typeof(SolidColorBrush).GetTypeName(true));
+					storage.SetValue(nameof(SolidColorBrush.Color), sb.Color.ToStorage());
+					storage.SetValue(nameof(SolidColorBrush.Opacity), sb.Opacity);
+					break;
+
+				case LinearGradientBrush gb:
+					storage.SetValue(_brushTypeKey, typeof(LinearGradientBrush).GetTypeName(true));
+					storage.SetValue(nameof(LinearGradientBrush.ColorInterpolationMode), gb.ColorInterpolationMode);
+					storage.SetValue(nameof(LinearGradientBrush.Opacity), gb.Opacity);
+					storage.SetValue(nameof(LinearGradientBrush.StartPoint), gb.StartPoint);
+					storage.SetValue(nameof(LinearGradientBrush.EndPoint), gb.EndPoint);
+					storage.SetValue(nameof(LinearGradientBrush.SpreadMethod), gb.SpreadMethod);
+					storage.SetValue(nameof(LinearGradientBrush.GradientStops), ToStorages(gb.GradientStops));
+					break;
+
+				case RadialGradientBrush rb:
+					storage.SetValue(_brushTypeKey, typeof(RadialGradientBrush).GetTypeName(true));
+					storage.SetValue(nameof(RadialGradientBrush.ColorInterpolationMode), rb.ColorInterpolationMode);
+					storage.SetValue(nameof(RadialGradientBrush.Opacity), rb.Opacity);
+					storage.SetValue(nameof(RadialGradientBrush.Center), rb.Center);
+					storage.SetValue(nameof(RadialGradientBrush.GradientOrigin), rb.GradientOrigin);
+					storage.SetValue(nameof(RadialGradientBrush.SpreadMethod), rb.SpreadMethod);
+					storage.SetValue(nameof(RadialGradientBrush.GradientStops), ToStorages(rb.GradientStops));
+					storage.SetValue(nameof(RadialGradientBrush.RadiusX), rb.RadiusX);
+					storage.SetValue(nameof(RadialGradientBrush.RadiusY), rb.RadiusY);
+					storage.SetValue(nameof(RadialGradientBrush.MappingMode), rb.MappingMode);
+					break;
+
+				case null:
+					break;
+
+				default:
+					throw new ArgumentOutOfRangeException(nameof(brush), brush.GetType().GetTypeName(false), "Unsupported brush type.".Translate());
+			}
+
+			return storage;
+		}
+
+		public static SettingsStorage[] ToStorages(this GradientStopCollection items)
+		{
+			if (items is null)
+				throw new ArgumentNullException(nameof(items));
+
+			var storages = new List<SettingsStorage>();
+
+			foreach (var item in items)
+			{
+				var storage = new SettingsStorage();
+				storage.SetValue(nameof(GradientStop.Color), item.Color.ToStorage());
+				storage.SetValue(nameof(GradientStop.Offset), item.Offset);
+				storages.Add(storage);
+			}
+
+			return storages.ToArray();
+		}
+
+		public static Brush ToBrush(this SettingsStorage storage)
+		{
+			if (storage is null)
+				throw new ArgumentNullException(nameof(storage));
+
+			var type = storage.GetValue<string>(_brushTypeKey).To<Type>();
+
+			if (type is null)
+				return null;
+
+			if (type == typeof(SolidColorBrush))
+			{
+				return new SolidColorBrush
+				{
+					Color = storage.GetValue<SettingsStorage>(nameof(SolidColorBrush.Color)).ToColor(),
+					Opacity = storage.GetValue<double>(nameof(SolidColorBrush.Opacity))
+				};
+			}
+			else if (type == typeof(LinearGradientBrush))
+			{
+				var brush = new LinearGradientBrush();
+
+				brush.ColorInterpolationMode = storage.GetValue(nameof(LinearGradientBrush.ColorInterpolationMode), brush.ColorInterpolationMode);
+				brush.Opacity = storage.GetValue(nameof(LinearGradientBrush.Opacity), brush.Opacity);
+				brush.StartPoint = storage.GetValue(nameof(LinearGradientBrush.StartPoint), brush.StartPoint);
+				brush.EndPoint = storage.GetValue(nameof(LinearGradientBrush.EndPoint), brush.EndPoint);
+				brush.SpreadMethod = storage.GetValue(nameof(LinearGradientBrush.SpreadMethod), brush.SpreadMethod);
+
+				LoadGradientStops(brush, storage.GetValue<IEnumerable<SettingsStorage>>(nameof(LinearGradientBrush.GradientStops)));
+
+				return brush;
+			}
+			else if (type == typeof(RadialGradientBrush))
+			{
+				var brush = new RadialGradientBrush();
+				brush.ColorInterpolationMode = storage.GetValue(nameof(RadialGradientBrush.ColorInterpolationMode), brush.ColorInterpolationMode);
+				brush.Opacity = storage.GetValue(nameof(RadialGradientBrush.Opacity), brush.Opacity);
+				brush.Center = storage.GetValue(nameof(RadialGradientBrush.Center), brush.Center);
+				brush.GradientOrigin = storage.GetValue(nameof(RadialGradientBrush.GradientOrigin), brush.GradientOrigin);
+				brush.SpreadMethod = storage.GetValue(nameof(RadialGradientBrush.SpreadMethod), brush.SpreadMethod);
+				brush.RadiusX = storage.GetValue(nameof(RadialGradientBrush.RadiusX), brush.RadiusX);
+				brush.RadiusY = storage.GetValue(nameof(RadialGradientBrush.RadiusY), brush.RadiusY);
+				brush.MappingMode = storage.GetValue(nameof(RadialGradientBrush.MappingMode), brush.MappingMode);
+
+				LoadGradientStops(brush, storage.GetValue<IEnumerable<SettingsStorage>>(nameof(RadialGradientBrush.GradientStops)));
+
+				return brush;
+			}
+			else
+				throw new InvalidOperationException("Unknown brush type {0}.".Translate().Put(type));
+		}
+
+		public static void LoadGradientStops(this GradientBrush brush, IEnumerable<SettingsStorage> storages)
+		{
+			if (brush is null)
+				throw new ArgumentNullException(nameof(brush));
+
+			if (storages is null)
+				throw new ArgumentNullException(nameof(storages));
+
+			foreach (var storage in storages)
+			{
+				var color = storage.GetValue<SettingsStorage>(nameof(GradientStop.Color)).ToColor();
+				var offset = storage.GetValue<double>(nameof(GradientStop.Offset));
+
+				brush.GradientStops.Add(new GradientStop(color, offset));
+			}
 		}
 	}
 
