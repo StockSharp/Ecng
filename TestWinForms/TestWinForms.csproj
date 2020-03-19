@@ -7,7 +7,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="StockSharp.Ecng.Xaml.DXRefs" Version="$(DXRefsVersion)"/>
+    <PackageReference Include="Ecng.Xaml.DXRefs" Version="1.0.0"/>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.configuration" />
