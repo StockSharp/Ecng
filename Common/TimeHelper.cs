@@ -529,6 +529,13 @@
 
 		public static double ToUnix(this DateTime time, bool isSeconds = true)
 		{
+			var diff = time.GetUnixDiff();
+
+			return isSeconds ? diff.TotalSeconds : diff.TotalMilliseconds;
+		}
+
+		private static TimeSpan GetUnixDiff(this DateTime time)
+		{
 			if (time.Kind != DateTimeKind.Utc)
 			{
 				time = time.ToUniversalTime();
@@ -540,7 +547,7 @@
 			if (diff < TimeSpan.Zero)
 				throw new ArgumentOutOfRangeException(nameof(time));
 
-			return isSeconds ? diff.TotalSeconds : diff.TotalMilliseconds;
+			return diff;
 		}
 		
 		public static DateTime FromUnix(this long time, bool isSeconds = true)
@@ -567,6 +574,21 @@
 				return null;
 
 			return time.FromUnix(isSeconds);
+		}
+
+		public static DateTime FromUnixMcs(this long mcs)
+		{
+			return GregorianStart.AddMicroseconds(mcs);
+		}
+
+		public static DateTime FromUnixMcs(this double mcs)
+		{
+			return FromUnixMcs((long)mcs);
+		}
+
+		public static long ToUnixMcs(this DateTime time)
+		{
+			return time.GetUnixDiff().Ticks.TicksToMicroseconds();
 		}
 
 		public static double UnixNowS => DateTime.UtcNow.ToUnix();

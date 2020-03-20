@@ -73,7 +73,7 @@ namespace Ecng.Net
 
 		protected override DateTime Convert(double value)
 		{
-			return TimeHelper.GregorianStart.AddMicroseconds((long)value);
+			return value.FromUnixMcs();
 		}
 	}
 
