@@ -39,7 +39,7 @@ namespace Disk.SDK.Utils {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Disk.SDK.Utils.WebdavResources", typeof(WebdavResources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Ecng.Backup.Yandex.Disk.SDK.Utils.WebdavResources", typeof(WebdavResources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
