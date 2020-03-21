@@ -8,9 +8,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Configuration")]
+[assembly: AssemblyTitle("Ecng.Configuration")]
 [assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("3e9c6625-de71-479b-91aa-2a81167403ea")]
