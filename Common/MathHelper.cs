@@ -649,7 +649,7 @@ namespace Ecng.Common
 			var bits = value.AsRaw();
 
 			// Note that the shift is sign-extended, hence the test against -1 not 1
-			//var negative = (bits < 0);
+			var negative = (bits & (1L << 63)) != 0;
 
 			exponent = (int)((bits >> 52) & 0x7ffL);
 			mantissa = bits & 0xfffffffffffffL;
@@ -674,6 +674,9 @@ namespace Ecng.Common
 
 			if (mantissa == 0)
 			{
+				if (negative)
+					mantissa = -0;
+
 				exponent = 0;
 				return;
 			}
@@ -688,7 +691,9 @@ namespace Ecng.Common
 
 		public static void ExtractMantissaExponent(this decimal value, out long mantissa, out int exponent)
 		{
-			((double)value).ExtractMantissaExponent(out mantissa, out exponent);
+			var info = value.GetDecimalInfo();
+			mantissa = info.Mantissa;
+			exponent = info.Scale;
 		}
 
 		// http://www.java-forums.org/advanced-java/4130-rounding-double-two-decimal-places.html
@@ -719,9 +724,10 @@ namespace Ecng.Common
 
 		public struct DecimalInfo
 		{
-			public int Precision { get; set; }
-			public int Scale { get; set; }
-			public int TrailingZeros { get; set; }
+			public long Mantissa;
+			public int Precision;
+			public int Scale;
+			public int TrailingZeros;
 
 			public int EffectiveScale => Scale - TrailingZeros;
 		}
@@ -733,7 +739,6 @@ namespace Ecng.Common
 			// C# doesn't permit int[] to uint[] conversion,
 			// but .NET does. This is somewhat evil...
 			var bits = (uint[])(object)decimal.GetBits(value);
-
 
 			var mantissa =
 				(bits[2] * 4294967296m * 4294967296m) +
@@ -766,6 +771,7 @@ namespace Ecng.Common
 
 			return new DecimalInfo
 			{
+				Mantissa = (long)mantissa,
 				Precision = precision,
 				TrailingZeros = trailingZeros,
 				Scale = (int)scale,
