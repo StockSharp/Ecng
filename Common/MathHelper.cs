@@ -1,6 +1,7 @@
 namespace Ecng.Common
 {
 	using System;
+	using System.Linq;
 	using System.Collections.Generic;
 
 	public static class MathHelper
@@ -642,7 +643,7 @@ namespace Ecng.Common
 		}
 
 		// http://stackoverflow.com/questions/389993/extracting-mantissa-and-exponent-from-double-in-c
-		public static long[] GetMantissaExponent(this double value)
+		public static void ExtractMantissaExponent(this double value, out long mantissa, out int exponent)
 		{
 			// Translate the double into sign, exponent and mantissa.
 			var bits = value.AsRaw();
@@ -650,8 +651,8 @@ namespace Ecng.Common
 			// Note that the shift is sign-extended, hence the test against -1 not 1
 			//var negative = (bits < 0);
 
-			var exponent = (int)((bits >> 52) & 0x7ffL);
-			var mantissa = bits & 0xfffffffffffffL;
+			exponent = (int)((bits >> 52) & 0x7ffL);
+			mantissa = bits & 0xfffffffffffffL;
 
 			// Subnormal numbers; exponent is effectively one higher,
 			// but there's no extra normalisation bit in the mantissa
@@ -673,7 +674,8 @@ namespace Ecng.Common
 
 			if (mantissa == 0)
 			{
-				return ArrayHelper.Empty<long>();
+				exponent = 0;
+				return;
 			}
 
 			/* Normalize */
@@ -682,8 +684,11 @@ namespace Ecng.Common
 				mantissa >>= 1;
 				exponent++;
 			}
+		}
 
-			return new[] { mantissa, exponent };
+		public static void ExtractMantissaExponent(this decimal value, out long mantissa, out int exponent)
+		{
+			((double)value).ExtractMantissaExponent(out mantissa, out exponent);
 		}
 
 		// http://www.java-forums.org/advanced-java/4130-rounding-double-two-decimal-places.html
@@ -1003,5 +1008,40 @@ namespace Ecng.Common
 
 		//    return nearest;
 		//}
+
+		private static readonly decimal[] _posPow10 =
+		{
+			1M,
+			10M,
+			100M,
+			1000M,
+			10000M,
+			100000M,
+			1000000M,
+			10000000M,
+			100000000M,
+			1000000000M,
+			10000000000M,
+			100000000000M,
+		};
+
+		private static readonly decimal[] _negPow10 = _posPow10.Select(v => 1M / v).ToArray();
+
+		// https://stackoverflow.com/q/9993417/8029915
+		public static decimal ToDecimal(long mantissa, int exponent)
+		{
+			decimal result = mantissa;
+
+			if (exponent >= 0)
+			{
+				result *= _posPow10[exponent];
+			}
+			else
+			{
+				result *= _negPow10[-exponent];
+			}
+
+			return result;
+		}
 	}
 }
