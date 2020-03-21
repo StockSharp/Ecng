@@ -99,38 +99,41 @@ namespace Ecng.Xaml.DevExp.Yandex
 				}, TaskScheduler.FromCurrentSynchronizationContext());
 		}
 
-		public static string Authorize(out bool isCanceled)
+		public static Func<Tuple<string, bool>> Authorize(Window owner)
 		{
-			isCanceled = false;
-
-			string token = null;
-			Exception error = null;
-
-			var owner = Scope<Window>.Current?.Value ?? Application.Current?.MainWindow;
-
-			YandexLoginWindow CreateWindow()
+			Tuple<string, bool> Do()
 			{
-				var loginWindow = new YandexLoginWindow();
+				var isCanceled = false;
 
-				loginWindow.AuthCompleted += (s, e) =>
+				string token = null;
+				Exception error = null;
+
+				YandexLoginWindow CreateWindow()
 				{
-					if (e.Error == null)
-						token = e.Result;
-					else
-						error = e.Error;
-				};
+					var loginWindow = new YandexLoginWindow();
 
-				return loginWindow;
+					loginWindow.AuthCompleted += (s, e) =>
+					{
+						if (e.Error == null)
+							token = e.Result;
+						else
+							error = e.Error;
+					};
+
+					return loginWindow;
+				}
+
+				var retVal = owner?.GuiSync(() => CreateWindow().ShowModal(owner)) ?? CreateWindow().ShowDialog() == true;
+
+				if (!retVal)
+					isCanceled = true;
+
+				error?.Throw();
+
+				return Tuple.Create(token, isCanceled);
 			}
 
-			var retVal = owner?.GuiSync(() => CreateWindow().ShowModal(owner)) ?? CreateWindow().ShowDialog() == true;
-
-			if (!retVal)
-				isCanceled = true;
-
-			error?.Throw();
-
-			return token;
+			return Do;
 		}
 	}
 }
