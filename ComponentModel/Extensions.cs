@@ -14,6 +14,9 @@ namespace Ecng.ComponentModel
 	{
 		public static string GetDisplayName(this ICustomAttributeProvider provider, string defaultValue = null)
 		{
+			if (provider is Assembly asm)
+				return asm.GetAttribute<AssemblyTitleAttribute>()?.Title;
+
 			var dpAttr = provider.GetAttribute<DisplayAttribute>();
 
 			if (dpAttr?.Name == null)
@@ -28,18 +31,24 @@ namespace Ecng.ComponentModel
 		public static string GetDisplayName(this PropertyDescriptor pd, string defaultValue = null)
 		{
 			foreach(var a in pd.Attributes)
-				switch (a) {
+			{
+				switch (a)
+				{
 					case DisplayAttribute da:
 						return da.GetName();
 					case DisplayNameAttribute dna:
 						return dna.DisplayName;
 				}
+			}
 
 			return defaultValue ?? pd.PropertyType.Name;
 		}
 
 		public static string GetDescription(this ICustomAttributeProvider provider, string defaultValue = null)
 		{
+			if (provider is Assembly asm)
+				return asm.GetAttribute<AssemblyDescriptionAttribute>()?.Description;
+
 			var dpAttr = provider.GetAttribute<DisplayAttribute>();
 
 			if (dpAttr?.Description == null)
