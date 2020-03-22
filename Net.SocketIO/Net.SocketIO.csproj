@@ -18,9 +18,6 @@
     <Reference Include="System.Net.Http.WebRequest" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\Localization\Localization.csproj" />
     <ProjectReference Include="..\Net\Net.csproj" />
   </ItemGroup>
   <ItemGroup>

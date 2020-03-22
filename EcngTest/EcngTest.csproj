@@ -16,16 +16,6 @@
     <PackageReference Include="System.Resources.Extensions" Version="4.7.0" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="System.configuration" />
-    <Reference Include="System.Transactions" />
-    <Reference Include="System.Web" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="System.XML" />
-    <Reference Include="WindowsBase" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -41,17 +31,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\LazyLoadTestImage.bmp" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\LazyLoadTestImage2.jpg" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\LazyLoadTestImage2.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\LazyLoadTestImage2.gif" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\LazyLoadTestImage2.bmp" />
   </ItemGroup>
   <ItemGroup>
@@ -62,16 +44,9 @@
     <None Include="Resources\TestImage.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
     <ProjectReference Include="..\Data.Providers\Data.Providers.csproj" />
     <ProjectReference Include="..\Data\Data.csproj" />
     <ProjectReference Include="..\Reflection.Aspects\Reflection.Aspects.csproj" />
-    <ProjectReference Include="..\Reflection\Reflection.csproj" />
-    <ProjectReference Include="..\Security\Security.csproj" />
-    <ProjectReference Include="..\Serialization.FieldFactories\Serialization.FieldFactories.csproj" />
-    <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\Transactions\Transactions.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
     <ProjectReference Include="..\Web\Web.csproj" />

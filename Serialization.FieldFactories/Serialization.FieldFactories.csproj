@@ -14,13 +14,9 @@
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
-    <ProjectReference Include="..\Reflection\Reflection.csproj" />
-    <ProjectReference Include="..\Security\Security.csproj" />
-    <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\Transactions\Transactions.csproj" />
+    <ProjectReference Include="..\Security\Security.csproj" />
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Ecng.snk">

@@ -42,20 +42,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
-    <ProjectReference Include="..\Configuration\Configuration.csproj" />
-    <ProjectReference Include="..\Localization\Localization.csproj" />
-    <ProjectReference Include="..\Reflection\Reflection.csproj" />
-    <ProjectReference Include="..\Security\Security.csproj" />
-    <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\Net\Net.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\flexcroll-uncompressed.js" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Resources\flexcroll-init.js" />
   </ItemGroup>
 </Project>

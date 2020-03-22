@@ -12,9 +12,6 @@
     <PackageReference Include="AWSSDK.Glacier" Version="3.3.100.141" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
-    <ProjectReference Include="..\Localization\Localization.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
   <ItemGroup>

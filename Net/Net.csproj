@@ -31,14 +31,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
-    <ProjectReference Include="..\Configuration\Configuration.csproj" />
-    <ProjectReference Include="..\Localization\Localization.csproj" />
-    <ProjectReference Include="..\Reflection\Reflection.csproj" />
     <ProjectReference Include="..\Serialization.FieldFactories\Serialization.FieldFactories.csproj" />
-    <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Ecng.snk">

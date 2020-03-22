@@ -21,10 +21,6 @@
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1'">
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="WindowsBase" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Model\DataSeries\DataDistributionCalculator\DataDistributionCalculators.cs">
@@ -62,12 +58,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\SCW.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\sct.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\Xaml\Xaml.csproj" />
   </ItemGroup>
 </Project>

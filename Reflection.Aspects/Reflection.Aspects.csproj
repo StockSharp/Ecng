@@ -11,11 +11,8 @@
     <Reference Include="System.configuration" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
-    <ProjectReference Include="..\Reflection\Reflection.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Ecng.snk">
