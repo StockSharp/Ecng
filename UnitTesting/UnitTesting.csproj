@@ -2,8 +2,6 @@
   <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{38C67615-BE2E-461E-BBED-5217F6DC0AFE}</ProjectGuid>
-    <RootNamespace>Ecng.UnitTesting</RootNamespace>
-    <AssemblyName>Ecng.UnitTesting</AssemblyName>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>

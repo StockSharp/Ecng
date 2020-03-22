@@ -3,7 +3,6 @@
   <PropertyGroup>
     <ProjectGuid>{864E3014-6C0F-4A6E-B766-3FF37963DDFD}</ProjectGuid>
     <RootNamespace>Ecng.Serialization</RootNamespace>
-    <AssemblyName>Ecng.Serialization.FieldFactories</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>

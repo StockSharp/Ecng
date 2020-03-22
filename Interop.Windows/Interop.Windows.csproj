@@ -3,7 +3,6 @@
   <PropertyGroup>
     <ProjectGuid>{E07110B3-2D56-474D-9668-7A4488774F33}</ProjectGuid>
     <RootNamespace>Ecng.Interop</RootNamespace>
-    <AssemblyName>Ecng.Interop.Windows</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

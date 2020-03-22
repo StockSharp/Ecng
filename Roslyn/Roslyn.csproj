@@ -2,8 +2,6 @@
   <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{78884141-5A63-4EAE-81A4-512FBD2195C5}</ProjectGuid>
-    <RootNamespace>Ecng.Roslyn</RootNamespace>
-    <AssemblyName>Ecng.Roslyn</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.4.0" />

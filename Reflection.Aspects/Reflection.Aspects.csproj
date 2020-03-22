@@ -2,8 +2,6 @@
   <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{0006C83D-602D-4C3F-8502-6B456C75C203}</ProjectGuid>
-    <RootNamespace>Ecng.Reflection.Aspects</RootNamespace>
-    <AssemblyName>Ecng.Reflection.Aspects</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>

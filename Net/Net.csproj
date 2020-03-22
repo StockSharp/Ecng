@@ -2,8 +2,6 @@
   <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}</ProjectGuid>
-    <RootNamespace>Ecng.Net</RootNamespace>
-    <AssemblyName>Ecng.Net</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

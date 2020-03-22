@@ -2,8 +2,6 @@
   <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{2FA3ACBD-8623-42D5-B5A5-F0DC2416F92A}</ProjectGuid>
-    <RootNamespace>Ecng.Data</RootNamespace>
-    <AssemblyName>Ecng.Data</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>

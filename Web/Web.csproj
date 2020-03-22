@@ -2,8 +2,6 @@
   <Import Project="..\common_target_fw.props" />
   <PropertyGroup>
     <ProjectGuid>{125B0185-1FE3-407B-A14C-AD5046A6B68C}</ProjectGuid>
-    <RootNamespace>Ecng.Web</RootNamespace>
-    <AssemblyName>Ecng.Web</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
