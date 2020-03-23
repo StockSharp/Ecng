@@ -1366,6 +1366,9 @@ namespace Ecng.Xaml.Charting.Visuals
                 case AxisAlignment.Bottom:
                     container = _bottomAxisArea;
                     break;
+                case AxisAlignment.Default:
+                    container = axis.IsXAxis ? _bottomAxisArea : _rightAxisArea;
+                    break;
             }
             return container;
         }
