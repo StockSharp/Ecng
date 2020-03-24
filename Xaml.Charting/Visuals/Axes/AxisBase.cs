@@ -172,7 +172,7 @@ namespace Ecng.Xaml.Charting.Visuals.Axes
         /// <summary>
         /// Defines the AxisAlignment DependencyProperty
         /// </summary>
-        public static readonly DependencyProperty AxisAlignmentProperty = DependencyProperty.Register("AxisAlignment", typeof(AxisAlignment), typeof(AxisBase), new PropertyMetadata(AxisAlignment.Default, OnAlignmentChanged, CoerceAxisAlignment));
+        public static readonly DependencyProperty AxisAlignmentProperty = DependencyProperty.Register("AxisAlignment", typeof(AxisAlignment), typeof(AxisBase), new PropertyMetadata(AxisAlignment.Default, OnAlignmentChanged));
 
         /// <summary>
         /// Defines the Id DependencyProperty
@@ -2730,19 +2730,6 @@ namespace Ecng.Xaml.Charting.Visuals.Axes
             }
 
             InvalidateParent(d, e);
-        }
-
-        private static object CoerceAxisAlignment(DependencyObject d, object newVal)
-        {
-            return newVal;
-
-            // var axis = (AxisBase)d;
-            // var alignment = (AxisAlignment)newVal;
-            //
-            // if(alignment == AxisAlignment.Default)
-            //     alignment = axis.IsXAxis ? AxisAlignment.Bottom : AxisAlignment.Right;
-            //
-            // return alignment;
         }
 
         private static void OnIsCenterAxisDependencyPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
