@@ -367,7 +367,6 @@ namespace Ecng.Interop
 		}
 
 #if !NETCOREAPP
-
 		[DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, EntryPoint = "LoadLibrary", CharSet = CharSet.Auto)]
 		private static extern IntPtr Kernel32LoadLibrary([In] string dllname);
 
@@ -381,7 +380,7 @@ namespace Ecng.Interop
 #else
 		internal static string FixLibraryExtension(string path)
 		{
-			if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || File.Exists(path))
+			if (OperatingSystemEx.IsWindows() || File.Exists(path))
 				return path;
 
 			const string dllext = ".dll";

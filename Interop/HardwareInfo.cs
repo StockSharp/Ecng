@@ -6,9 +6,6 @@ namespace Ecng.Interop
 	using System.Collections.Generic;
 	using System.Net.NetworkInformation;
 	using System.Text.RegularExpressions;
-#if NETCOREAPP || NETSTANDARD
-	using System.Runtime.InteropServices;
-#endif
 
 	using Ecng.Common;
 
@@ -25,14 +22,10 @@ namespace Ecng.Interop
 
 		private HardwareInfo()
 		{
-#if NETFRAMEWORK || __STOCKSHARP__
-			InitIdWindows();
-#else
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			if (OperatingSystemEx.IsWindows())
 				InitIdWindows();
 			else
 				InitIdLinux();
-#endif
 		}
 
 		private static string GetWMIId(string table, string field)
