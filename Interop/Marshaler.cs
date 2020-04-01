@@ -367,32 +367,14 @@ namespace Ecng.Interop
 		}
 
 #if !NETCOREAPP
-		[DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, EntryPoint = "LoadLibrary", CharSet = CharSet.Auto)]
+		[DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, EntryPoint = "LoadLibrary")]
 		private static extern IntPtr Kernel32LoadLibrary([In] string dllname);
 
-		[DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, EntryPoint = "FreeLibrary", CharSet = CharSet.Auto)]
+		[DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, EntryPoint = "FreeLibrary")]
 		private static extern bool Kernel32FreeLibrary([In] IntPtr hModule);
 
-		[DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, EntryPoint = "GetProcAddress", CharSet = CharSet.Auto)]
+		[DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, EntryPoint = "GetProcAddress")]
 		private static extern IntPtr Kernel32GetProcAddress([In] IntPtr hModule, [In] string procName);
-
-		internal static string FixLibraryExtension(string path) => path;
-#else
-		internal static string FixLibraryExtension(string path)
-		{
-			if (OperatingSystemEx.IsWindows() || File.Exists(path))
-				return path;
-
-			const string dllext = ".dll";
-			const string soext = ".so";
-
-			if(path.ToLowerInvariant().EndsWith(dllext))
-				path = path.Substring(0, path.Length - dllext.Length) + ".so";
-			else if(!path.ToLowerInvariant().EndsWith(soext) && File.Exists(path + soext))
-				path += soext;
-
-			return path;
-		}
 #endif
 
 		public static IntPtr LoadLibrary(string dllPath)
@@ -401,14 +383,13 @@ namespace Ecng.Interop
 				throw new ArgumentNullException(nameof(dllPath));
 
 #if NETCOREAPP
-			dllPath = FixLibraryExtension(dllPath);
 			var handler = CoreNativeLib.Load(dllPath);
 #else
 			var handler = Kernel32LoadLibrary(dllPath);
 #endif
 
 			if (handler == IntPtr.Zero)
-				throw new ArgumentException("Ошибка в загрузке библиотеки {0}.".Put(dllPath), nameof(dllPath), new Win32Exception());
+				throw new ArgumentException("Error load library {0}.".Translate().Put(dllPath), nameof(dllPath), new Win32Exception());
 
 			return handler;
 		}
@@ -431,7 +412,7 @@ namespace Ecng.Interop
 			var addr = Kernel32GetProcAddress(hModule, procName);
 #endif
 			if (addr == IntPtr.Zero)
-				throw new ArgumentException("Ошибка в загрузке процедуры {0}.".Put(procName), nameof(procName), new Win32Exception());
+				throw new ArgumentException("Error load procedure {0}.".Translate().Put(procName), nameof(procName), new Win32Exception());
 
 			return addr;
 		}
