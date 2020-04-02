@@ -138,7 +138,7 @@ namespace Ecng.Common
 			if (culture == null)
 				throw new ArgumentNullException(nameof(culture));
 
-			thread.CurrentCulture = (CultureInfo)culture.Clone();
+			thread.CurrentCulture = culture.TypedClone();
 			return thread;
 		}
 
@@ -151,7 +151,7 @@ namespace Ecng.Common
 			if (culture == null)
 				throw new ArgumentNullException(nameof(culture));
 
-			thread.CurrentUICulture = (CultureInfo)culture.Clone();
+			thread.CurrentUICulture = culture.TypedClone();
 			return thread;
 		}
 
