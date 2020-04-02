@@ -13,18 +13,19 @@ Created: 2015, 11, 11, 2:32 PM
 Copyright 2010 by StockSharp, LLC
 *******************************************************************************************/
 #endregion S# License
+
 namespace Ecng.Backup.Amazon.Xaml
 {
-	using System;
-
-	using Ecng.Xaml.DevExp;
+	using System.Collections.Generic;
+	using DevExpress.Xpf.Editors.Settings;
+	using Ecng.ComponentModel;
 
 	using global::Amazon;
 
 	/// <summary>
 	/// The drop-down list to select the AWS region.
 	/// </summary>
-	public class AmazonRegionEditor : ItemsSourceEditSettings
+	public class AmazonRegionEditor : ComboBoxEditSettings
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AmazonRegionEditor"/>.
@@ -32,11 +33,14 @@ namespace Ecng.Backup.Amazon.Xaml
 		public AmazonRegionEditor()
 		{
 			var cb = new AmazonRegionComboBox();
+			var items = new List<ItemsSourceItem>();
 
 			foreach (RegionEndpoint item in cb.ItemsSource)
 			{
-				ComboBoxItems.Add(Tuple.Create(item.DisplayName, (object)item));
+				items.Add(new ItemsSourceItem(item.DisplayName, item));
 			}
+
+			ItemsSource = items.ToArray();
 		}
 
 		//FrameworkElement ITypeEditor.ResolveEditor(PropertyItem propertyItem)

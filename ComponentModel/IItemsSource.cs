@@ -7,19 +7,50 @@
 	using Ecng.Localization;
 	using Ecng.Reflection;
 
-	public interface IItemsSource<TValue>
+	public interface IItemsSourceItem
+	{
+		string DisplayName {get;}
+		object Value {get;}
+	}
+
+	public interface IItemsSourceItem<out TValue> : IItemsSourceItem
+	{
+		new TValue Value {get;}
+	}
+
+	public class ItemsSourceItem<T> : IItemsSourceItem<T>
+	{
+		public ItemsSourceItem(string displayName, T val)
+		{
+			DisplayName = displayName;
+			Value = val;
+		}
+
+		object IItemsSourceItem.Value => Value;
+
+		public string DisplayName { get; }
+		public T Value { get; }
+
+		public override string ToString() => DisplayName;
+	}
+
+	public class ItemsSourceItem : ItemsSourceItem<object> {
+		public ItemsSourceItem(string displayName, object val) : base(displayName, val) { }
+
+		public static ItemsSourceItem<T> Create<T>(string displayName, T val) => new ItemsSourceItem<T>(displayName, val);
+	}
+
+	public interface IItemsSource
+	{
+		IEnumerable<IItemsSourceItem> Values {get;}
+	}
+
+	public interface IItemsSource<out TValue> : IItemsSource
 	{
 		/// <summary>
 		/// Collection of values represented by a ComboBox.
 		/// </summary>
-		IEnumerable<Tuple<string, TValue>> Values { get; }
-	}
-
-	/// <summary>
-	/// Provides an interface that is implemented by classes when a scenario calls for use of a collection of values represented by a ComboBox for a given property.
-	/// </summary>
-	public interface IItemsSource : IItemsSource<object>
-	{
+		new IEnumerable<IItemsSourceItem<TValue>> Values { get; }
 	}
 
 	/// <summary>
