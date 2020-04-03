@@ -14,11 +14,11 @@ namespace Ecng.Serialization
 		public override void Serialize(FieldList fields, SerializationItemCollection source, Stream stream)
 		{
 			if (IsCollection)
-				stream.Write(source.Count);
+				stream.WriteEx(source.Count);
 
 			foreach (var item in source)
 			{
-				stream.Write(item.Value != null);
+				stream.WriteEx(item.Value != null);
 
 				//if (IsCollection)
 				//	stream.Write(item.Value != null);
@@ -36,7 +36,7 @@ namespace Ecng.Serialization
 						serializer.Serialize(col, stream);
 					}
 					else
-						stream.Write(item.Value);
+						stream.WriteEx(item.Value);
 				}
 			}
 		}

@@ -318,7 +318,13 @@
 
 		#region Write
 
+		[Obsolete("Use WriteEx method.")]
 		public static void Write(this Stream stream, object value)
+		{
+			stream.WriteEx(value);
+		}
+
+		public static void WriteEx(this Stream stream, object value)
 		{
 			if (stream == null)
 				throw new ArgumentNullException(nameof(stream));
@@ -327,11 +333,11 @@
 				throw new ArgumentNullException(nameof(value));
 
 			if (value is Stream s)
-				stream.Write((int)s.Length);
+				stream.WriteEx((int)s.Length);
 			else if (value is byte[] a1)
-				stream.Write(a1.Length);
+				stream.WriteEx(a1.Length);
 			else if (value is string str)
-				stream.Write(str.Length);
+				stream.WriteEx(str.Length);
 
 			stream.WriteRaw(value);
 		}

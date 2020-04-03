@@ -65,12 +65,12 @@ namespace Ecng.Security
 			if (stream == null)
 				throw new ArgumentNullException(nameof(stream));
 
-			stream.Write(array == null);
+			stream.WriteEx(array == null);
 
 			if (array == null)
 				return;
 
-			stream.Write(array);
+			stream.WriteEx(array);
 		}
 
 		#endregion
