@@ -196,7 +196,7 @@
 					// в строке может быть записаное не AssemblyQualifiedName, а только полное имя типа + имя сборки.
 					if (type == null)
 					{
-						var parts = input.Split(", ");
+						var parts = input.SplitBySep(", ");
 						if (parts.Length == 2)
 						{
 							var asm = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == parts[1]) ?? Assembly.LoadWithPartialName(parts[1]);
