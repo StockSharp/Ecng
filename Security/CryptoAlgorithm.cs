@@ -41,7 +41,6 @@ namespace Ecng.Security
 
 			foreach (var entry in typeof(CryptoConfig).GetValue<VoidType, Dictionary<string, object>>("DefaultNameHT", null))
 			{
-
 				if (entry.Value is Type value)
 					_types.Add(entry.Key, value);
 			}
@@ -93,10 +92,10 @@ namespace Ecng.Security
 
 		#region Public Constants
 
-		public const string DefaultSymmetricAlgoName = "System.Security.Cryptography.SymmetricAlgorithm";
-		public const string DefaultAsymmetricAlgoName = "System.Security.Cryptography.AsymmetricAlgorithm";
+		public const string DefaultSymmetricAlgoName = "Rijndael";
+		public const string DefaultAsymmetricAlgoName = "RSA";
 		public const string DefaultDpapiAlgoName = "Dpapi";
-		public const string DefaultHashAlgoName = "System.Security.Cryptography.HashAlgorithm";
+		public const string DefaultHashAlgoName = "SHA";
 
 		public const DataProtectionScope DefaultScope = DataProtectionScope.LocalMachine;
 
@@ -210,7 +209,15 @@ namespace Ecng.Security
 
 		public static Type GetAlgo(string name)
 		{
-			return _types[name];
+			if (_types.TryGetValue(name, out var type))
+				return type;
+
+			if (name == "RSA")
+				return typeof(RSACryptoServiceProvider);
+			else if (name == "SHA")
+				return typeof(SHA1Managed);
+
+			throw new ArgumentException("Algorithm {0} not found".Put(name), nameof(name));
 		}
 
 		#region Create
