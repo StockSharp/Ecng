@@ -4,6 +4,7 @@ namespace Ecng.Common
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
+	using System.Runtime.CompilerServices;
 	using System.Runtime.Serialization;
 	using System.Security.Cryptography;
 
@@ -300,6 +301,33 @@ namespace Ecng.Common
 				throw new ArgumentNullException(nameof(value));
 
 			return value;
+		}
+
+		public static IEnumerable<object> ToValues(this ITuple tuple)
+		{
+			var values = new List<object>();
+
+			for (var i = 0; i < tuple.Length; i++)
+				values.Add(tuple[i]);
+
+			return values;
+		}
+
+		public static ITuple ToTuple(this IEnumerable<object> values)
+		{
+			var types = new List<Type>();
+			var args = new List<object>();
+
+			foreach (var value in values)
+			{
+				types.Add(value.GetType());
+				args.Add(value);
+			}
+
+			var genericType = ("System.Tuple`" + types.Count).To<Type>();
+			var specificType = genericType.Make(types);
+
+			return specificType.CreateInstance<ITuple>(args.ToArray());
 		}
 	}
 }
