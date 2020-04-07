@@ -2,28 +2,17 @@
   <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{3160D0DB-5D8C-4CF6-987C-C242C3566BAA}</ProjectGuid>
-    <RootNamespace>Ecng.Xaml.DevExp</RootNamespace>
-    <AssemblyName>Ecng.Xaml.DevExp</AssemblyName>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="StockSharp.Ecng.Xaml.DXRefs" Version="$(DXRefsVersion)" />
+    <PackageReference Include="Ecng.Xaml.DXRefs" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1'">
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Backup\Backup.csproj" />
-    <ProjectReference Include="..\Collections\Collections.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
-    <ProjectReference Include="..\Configuration\Configuration.csproj" />
     <ProjectReference Include="..\Data.Providers\Data.Providers.csproj" />
-    <ProjectReference Include="..\Data\Data.csproj" />
-    <ProjectReference Include="..\Interop\Interop.csproj" />
-    <ProjectReference Include="..\Localization\Localization.csproj" />
-    <ProjectReference Include="..\Reflection\Reflection.csproj" />
-    <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\Xaml\Xaml.csproj" />
   </ItemGroup>
 </Project>

@@ -42,7 +42,7 @@
 
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			return value.To<string>().Split(",").Select(s => s.To<EndPoint>()).ToArray();
+			return value.To<string>().SplitBySep(",").Select(s => s.To<EndPoint>()).ToArray();
 		}
 	}
 }

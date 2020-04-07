@@ -913,11 +913,11 @@ namespace Ecng.Reflection
 			return dllName.VerifyAssembly() != null;
 		}
 
-		public static Assembly VerifyAssembly(this string dllName)
+		public static AssemblyName VerifyAssembly(this string dllName)
 		{
 			try
 			{
-				return Assembly.ReflectionOnlyLoadFrom(dllName);
+				return AssemblyName.GetAssemblyName(dllName);
 			}
 			catch (BadImageFormatException)
 			{

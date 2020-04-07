@@ -52,7 +52,7 @@ namespace Ecng.Xaml
 				if (!((string)value).IsEmpty())
 				{
 					if (Multi)
-						value.To<string>().Split(",").ForEach(v => v.To<IPAddress>());
+						value.To<string>().SplitBySep(",").ForEach(v => v.To<IPAddress>());
 					else
 						value.To<IPAddress>();
 				}

@@ -65,10 +65,10 @@
 		{
 			var stream = new MemoryStream();
 
-			stream.Write(DataTypes.Table);
-			stream.Write((short)4);
-			stream.Write((short)rows.Count);
-			stream.Write((short)(rows.Count == 0 ? 0 : rows[0].Count));
+			stream.WriteEx(DataTypes.Table);
+			stream.WriteEx((short)4);
+			stream.WriteEx((short)rows.Count);
+			stream.WriteEx((short)(rows.Count == 0 ? 0 : rows[0].Count));
 
 			foreach (var row in rows)
 			{
@@ -79,25 +79,25 @@
 					switch (cellDt)
 					{
 						case DataTypes.Float:
-							stream.Write((short)8);
-							stream.Write(cell);
+							stream.WriteEx((short)8);
+							stream.WriteEx(cell);
 							break;
 						case DataTypes.String:
 							var str = (string)cell;
-							stream.Write((byte)str.Length);
+							stream.WriteEx((byte)str.Length);
 							stream.WriteRaw(Encoding.Default.GetBytes(str));
 							break;
 						case DataTypes.Bool:
-							stream.Write((short)2);
-							stream.Write(cell);
+							stream.WriteEx((short)2);
+							stream.WriteEx(cell);
 							break;
 						case DataTypes.Blank:
-							stream.Write((short)2);
-							stream.Write(new byte[2]);
+							stream.WriteEx((short)2);
+							stream.WriteEx(new byte[2]);
 							break;
 						case DataTypes.Int:
-							stream.Write((short)4);
-							stream.Write(cell);
+							stream.WriteEx((short)4);
+							stream.WriteEx(cell);
 							break;
 						default:
 							throw new ArgumentOutOfRangeException();

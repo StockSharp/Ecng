@@ -17,15 +17,13 @@ namespace Ecng.Backup.Yandex
 	/// </summary>
 	public class YandexDiskService : Disposable, IBackupService
 	{
-		public delegate string AuthorizeDelegate(out bool isCanceled);
-
-		private readonly AuthorizeDelegate _authorize;
+		private readonly Func<Tuple<string, bool>> _authorize;
 		private DiskSdkClient _client;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="YandexDiskService"/>.
 		/// </summary>
-		public YandexDiskService(AuthorizeDelegate authFunc)
+		public YandexDiskService(Func<Tuple<string, bool>> authFunc)
 		{
 			_authorize = authFunc ?? throw new ArgumentNullException(nameof(authFunc));
 		}
@@ -54,11 +52,11 @@ namespace Ecng.Backup.Yandex
 				return handler(_client);
 			}
 
-			var token = _authorize(out cancelled);
+			var tuple = _authorize();
 
-			if (!cancelled)
+			if (!tuple.Item2)
 			{
-				_client = new DiskSdkClient(token);
+				_client = new DiskSdkClient(tuple.Item1);
 				return handler(_client);
 			}
 

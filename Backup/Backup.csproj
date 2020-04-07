@@ -2,8 +2,6 @@
   <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}</ProjectGuid>
-    <RootNamespace>Ecng.Backup</RootNamespace>
-    <AssemblyName>Ecng.Backup</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="3.3.110.32" />
@@ -12,16 +10,13 @@
     <PackageReference Include="AWSSDK.Glacier" Version="3.3.100.141" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
-    <ProjectReference Include="..\Localization\Localization.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Yandex\Disk.Sdk\Utils\WebdavResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>Yandex\Disk.Sdk\Utils\WebdavResources.resx</DependentUpon>
+      <DependentUpon>WebdavResources.resx</DependentUpon>
     </Compile>
   </ItemGroup>
 </Project>

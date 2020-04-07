@@ -65,12 +65,12 @@ namespace Ecng.Security
 			if (stream == null)
 				throw new ArgumentNullException(nameof(stream));
 
-			stream.Write(array == null);
+			stream.WriteEx(array == null);
 
 			if (array == null)
 				return;
 
-			stream.Write(array);
+			stream.WriteEx(array);
 		}
 
 		#endregion
@@ -216,6 +216,9 @@ namespace Ecng.Security
 			if (value == null)
 				throw new ArgumentNullException(nameof(value));
 
+			if (value.Length == 0)
+				throw new ArgumentOutOfRangeException(nameof(value));
+
 			if (algo == null)
 				throw new ArgumentNullException(nameof(algo));
 
@@ -225,12 +228,17 @@ namespace Ecng.Security
 
 		public static string Md5(this byte[] value)
 		{
-			return Hash(value, MD5.Create());
+			return value.Hash(MD5.Create());
 		}
 
 		public static string Sha256(this byte[] value)
 		{
-			return Hash(value, SHA256.Create());
+			return value.Hash(SHA256.Create());
+		}
+
+		public static string Sha512(this byte[] value)
+		{
+			return value.Hash(SHA512.Create());
 		}
 	}
 }

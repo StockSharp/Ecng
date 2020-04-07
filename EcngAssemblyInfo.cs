@@ -10,11 +10,17 @@ using System.Resources;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyCompany("Ecng")]
-[assembly: AssemblyProduct("Ecng System Framework")]
-[assembly: AssemblyCopyright("Copyright @ Ecng 2004")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCompany("StockSharp LP")]
+[assembly: AssemblyProduct("Ecng system framework")]
+[assembly: AssemblyCopyright("Copyright @ StockSharp 2020")]
+[assembly: AssemblyTrademark("StockSharp")]
 [assembly: AssemblyCulture("")]
+
+#if DEBUG
+[assembly: AssemblyConfiguration("Debug")]
+#else
+[assembly: AssemblyConfiguration("Release")]
+#endif
 
 //[assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 //[assembly: AllowPartiallyTrustedCallers]

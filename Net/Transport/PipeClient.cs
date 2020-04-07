@@ -18,7 +18,7 @@ namespace Ecng.Net.Transport
 
 		public void Send<T>(T value)
 		{
-			_core.Write(value);
+			_core.WriteEx(value);
 		}
 
 		public void SendAsync(byte[] buffer)

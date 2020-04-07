@@ -200,36 +200,36 @@ namespace Ecng.ComponentModel
 					_stream = new MemoryStream();
 
 					// write primary item
-					_stream.Write(PrimaryItem);
+					_stream.WriteEx(PrimaryItem);
 
 					var count = SecondaryItems.Count;
 
 					// write 'true' that mean data has other items
-					_stream.Write(count > 0);
+					_stream.WriteEx(count > 0);
 
 					if (count > 0)
 					{
 						// write secondary items count
-						_stream.Write(count);
+						_stream.WriteEx(count);
 
 						foreach (var item in SecondaryItems)
 						{
 							// write y position
-							_stream.Write(item.Key);
+							_stream.WriteEx(item.Key);
 
 							// write secondary item group count
-							_stream.Write(item.Value.Count);
+							_stream.WriteEx(item.Value.Count);
 
 							foreach (var range in item.Value)
 							{
 								// write item
-								_stream.Write(range.Item);
+								_stream.WriteEx(range.Item);
 
 								// write begin x position
-								_stream.Write(range.Min);
+								_stream.WriteEx(range.Min);
 
 								// write end x position
-								_stream.Write(range.Max);
+								_stream.WriteEx(range.Max);
 							}
 						}
 					}

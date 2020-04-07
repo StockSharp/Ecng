@@ -1,9 +1,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <DXRefsVersion>1.0.1</DXRefsVersion>
-  </PropertyGroup>
-  <PropertyGroup>
     <ProductVersion>9.0.30729</ProductVersion>
+    <RootNamespace>Ecng.$(MSBuildProjectName)</RootNamespace>
+    <AssemblyName>Ecng.$(MSBuildProjectName)</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>

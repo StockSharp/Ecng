@@ -2,8 +2,6 @@
   <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{8DE0D8CB-561B-43E3-B89F-02CDEE71415B}</ProjectGuid>
-    <RootNamespace>Ecng.Transactions</RootNamespace>
-    <AssemblyName>Ecng.Transactions</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
@@ -11,8 +9,6 @@
     <Reference Include="System.Transactions"/>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
   <ItemGroup>

@@ -259,12 +259,28 @@ namespace Ecng.Backup.Amazon
 
 		string IBackupService.Publish(BackupEntry entry)
 		{
-			throw new NotSupportedException();
+			var key = GetKey(entry);
+
+			_client.PutACLAsync(new PutACLRequest
+			{
+				BucketName = _bucket,
+				Key = key,
+				CannedACL = S3CannedACL.PublicRead,
+			}).Wait();
+			
+			return $"https://{_bucket}.s3.{_endpoint.SystemName}.amazonaws.com/{key}";
 		}
 
 		void IBackupService.UnPublish(BackupEntry entry)
 		{
-			throw new NotSupportedException();
+			var key = GetKey(entry);
+
+			_client.PutACLAsync(new PutACLRequest
+			{
+				BucketName = _bucket,
+				Key = key,
+				CannedACL = S3CannedACL.Private,
+			}).Wait();
 		}
 
 		private static string GetKey(BackupEntry entry)

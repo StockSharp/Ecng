@@ -140,12 +140,18 @@
 		}
 #endif
 
-		public static string[] Split(this string str, bool removeEmptyEntries = true)
+		public static string[] SplitLines(this string str, bool removeEmptyEntries = true)
 		{
-			return str.Split(Environment.NewLine, removeEmptyEntries);
+			return str.SplitBySep(Environment.NewLine, removeEmptyEntries);
 		}
 
+		[Obsolete("Use SplitBySep method.")]
 		public static string[] Split(this string str, string separator, bool removeEmptyEntries = true)
+		{
+			return str.SplitBySep(separator, removeEmptyEntries);
+		}
+
+		public static string[] SplitBySep(this string str, string separator, bool removeEmptyEntries = true)
 		{
 			if (str == null)
 				throw new ArgumentNullException(nameof(str));
@@ -156,9 +162,19 @@
 			return str.Split(new[] { separator }, removeEmptyEntries ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
 		}
 
-		public static string[] SplitByComma(this string str, string comma = ",", bool removeEmptyEntries = false)
+		public static string[] SplitByComma(this string str, bool removeEmptyEntries = false)
 		{
-			return str.Split(comma, removeEmptyEntries);
+			return str.SplitBySep(",", removeEmptyEntries);
+		}
+
+		public static string[] SplitByDotComma(this string str, bool removeEmptyEntries = false)
+		{
+			return str.SplitBySep(";", removeEmptyEntries);
+		}
+
+		public static string[] SplitByLine(this string str, bool removeEmptyEntries = false)
+		{
+			return str.SplitBySep("\n", removeEmptyEntries);
 		}
 
 		public static int LastIndexOf(this StringBuilder builder, char value)
@@ -373,6 +389,16 @@
 				return value.Substring(0, maxLength) + "...";
 			else
 				return value;
+		}
+
+		public static string JoinComma(this IEnumerable<string> parts)
+		{
+			return parts.Join(",");
+		}
+		
+		public static string JoinCommaSpace(this IEnumerable<string> parts)
+		{
+			return parts.Join(", ");
 		}
 
 		public static string Join(this IEnumerable<string> parts, string separator)

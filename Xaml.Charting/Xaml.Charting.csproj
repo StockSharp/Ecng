@@ -2,8 +2,6 @@
   <Import Project="..\common_target_multi.props" />
   <PropertyGroup>
     <ProjectGuid>{AAB784E4-F8C6-4324-ABC0-6E9E0F73E575}</ProjectGuid>
-    <RootNamespace>Ecng.Xaml.Charting</RootNamespace>
-    <AssemblyName>Ecng.Xaml.Charting</AssemblyName>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
@@ -21,10 +19,6 @@
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1'">
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="WindowsBase" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Model\DataSeries\DataDistributionCalculator\DataDistributionCalculators.cs">
@@ -62,12 +56,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\SCW.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\sct.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\Xaml\Xaml.csproj" />
   </ItemGroup>
 </Project>

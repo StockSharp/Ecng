@@ -40,10 +40,15 @@ namespace Ecng.Reflection.Aspects
 		{
 		}
 
-		public InterceptorAttribute(params Type[] interceptorTypes)
+		public InterceptorAttribute(Type interceptorType)
+			: this(new[] { interceptorType })
+		{
+		}
+
+		public InterceptorAttribute(Type[] interceptorTypes)
 		{
 			if (interceptorTypes.HasNullItem())
-				throw new ArgumentException("interceptorTypes");
+				throw new ArgumentException(nameof(interceptorTypes));
 
 			if (interceptorTypes.IsEmpty())
 				throw new ArgumentOutOfRangeException(nameof(interceptorTypes));

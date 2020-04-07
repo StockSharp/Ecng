@@ -22,7 +22,7 @@ namespace Ecng.Xaml.DevExp
 			try
 			{
 				if (Multi)
-					value.To<string>().Split(",").ForEach(v => v.To<EndPoint>());
+					value.To<string>().SplitBySep(",").ForEach(v => v.To<EndPoint>());
 				else
 					value.To<EndPoint>();
 

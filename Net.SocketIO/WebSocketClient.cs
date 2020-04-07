@@ -15,7 +15,7 @@
 
 	public class WebSocketClient : Disposable
 	{
-		private ClientWebSocket2 _ws;
+		private ClientWebSocket _ws;
 		private CancellationTokenSource _source;
 		private bool _expectedDisconnect;
 
@@ -104,7 +104,7 @@
 
 		public event Func<byte[], int, int, byte[], int> PreProcess;
 
-		public void Connect(string url, bool immediateConnect, Action<ClientWebSocket2> init = null)
+		public void Connect(string url, bool immediateConnect, Action<ClientWebSocket> init = null)
 		{
 			_expectedDisconnect = false;
 			_source = new CancellationTokenSource();
@@ -113,7 +113,7 @@
 
 			_disconnectionStates[_source] = _expectedDisconnect;
 
-			_ws = new ClientWebSocket2();
+			_ws = new ClientWebSocket();
 			init?.Invoke(_ws);
 			_ws.ConnectAsync(new Uri(url), _source.Token).Wait();
 			

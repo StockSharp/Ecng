@@ -2,8 +2,6 @@
   <Import Project="..\common_target_fw.props" />
   <PropertyGroup>
     <ProjectGuid>{125B0185-1FE3-407B-A14C-AD5046A6B68C}</ProjectGuid>
-    <RootNamespace>Ecng.Web</RootNamespace>
-    <AssemblyName>Ecng.Web</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
@@ -42,20 +40,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
-    <ProjectReference Include="..\Configuration\Configuration.csproj" />
-    <ProjectReference Include="..\Localization\Localization.csproj" />
-    <ProjectReference Include="..\Reflection\Reflection.csproj" />
-    <ProjectReference Include="..\Security\Security.csproj" />
-    <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\Net\Net.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\flexcroll-uncompressed.js" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Resources\flexcroll-init.js" />
   </ItemGroup>
 </Project>
