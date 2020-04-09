@@ -20,6 +20,12 @@
 
 	public class ItemsSourceItem<T> : IItemsSourceItem<T>
 	{
+		public ItemsSourceItem(T val)
+		{
+			Value = val;
+			DisplayName = val.ToString();
+		}
+
 		public ItemsSourceItem(string displayName, T val)
 		{
 			DisplayName = displayName;
@@ -38,6 +44,7 @@
 		public ItemsSourceItem(string displayName, object val) : base(displayName, val) { }
 
 		public static ItemsSourceItem<T> Create<T>(string displayName, T val) => new ItemsSourceItem<T>(displayName, val);
+		public static ItemsSourceItem<T> Create<T>(T val) => new ItemsSourceItem<T>(val);
 	}
 
 	public interface IItemsSource
