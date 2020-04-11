@@ -141,14 +141,6 @@ namespace Ecng.Common
 			Directory.Delete(path, true);
 		}
 
-		public static void SafeDeleteFile(this string path)
-		{
-			if (!File.Exists(path))
-				return;
-
-			File.Delete(path);
-		}
-
 		public static string CreateTempDir()
 		{
 			var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString().Remove("-"));
