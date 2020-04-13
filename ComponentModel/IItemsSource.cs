@@ -1,25 +1,146 @@
 ﻿namespace Ecng.ComponentModel
 {
 	using System;
+	using System.Linq;
 	using System.Collections.Generic;
 
 	using Ecng.Common;
 	using Ecng.Localization;
 	using Ecng.Reflection;
 
-	public interface IItemsSource<TValue>
+	public interface IItemsSourceItem
 	{
-		/// <summary>
-		/// Collection of values represented by a ComboBox.
-		/// </summary>
-		IEnumerable<Tuple<string, TValue>> Values { get; }
+		string DisplayName {get;}
+		object Value {get;}
 	}
 
-	/// <summary>
-	/// Provides an interface that is implemented by classes when a scenario calls for use of a collection of values represented by a ComboBox for a given property.
-	/// </summary>
-	public interface IItemsSource : IItemsSource<object>
+	public interface IItemsSourceItem<out TValue> : IItemsSourceItem
 	{
+		new TValue Value {get;}
+	}
+
+	public class ItemsSourceItem<T> : NotifiableObject, IItemsSourceItem<T>
+	{
+		readonly Func<T, string> _valToString;
+
+		object IItemsSourceItem.Value => Value;
+
+		private string _displayName;
+		private T _value;
+
+		public ItemsSourceItem(T val, Func<T, string> valToString = null)
+		{
+			_valToString = valToString ?? (v => v?.ToString());
+			Value = val;
+		}
+
+		public ItemsSourceItem(T val, string displayName, Func<T, string> valToString = null)
+		{
+			_valToString = valToString ?? (v => v?.ToString());
+			Value = val;
+
+			if(!displayName.IsEmpty())
+				DisplayName = displayName;
+		}
+
+		protected virtual void UpdateDisplayName()
+		{
+			DisplayName = _valToString(Value);
+		}
+
+		public string DisplayName
+		{
+			get => _displayName;
+			set
+			{
+				_displayName = value;
+				NotifyChanged(nameof(DisplayName));
+			}
+		}
+
+		public T Value
+		{
+			get => _value;
+			set
+			{
+				_value = value;
+				NotifyChanged(nameof(Value));
+				UpdateDisplayName();
+			}
+		}
+
+		public override string ToString() => DisplayName;
+	}
+
+	public class ItemsSourceItem : ItemsSourceItem<object> {
+		public ItemsSourceItem(string displayName, object val) : base(val, displayName) { }
+
+		public static ItemsSourceItem<T> Create<T>(T val, string displayName, Func<T, string> valToString = null) => new ItemsSourceItem<T>(val, displayName, valToString);
+		public static ItemsSourceItem<T> Create<T>(T val, Func<T, string> valToString = null) => new ItemsSourceItem<T>(val, valToString);
+	}
+
+	public interface IItemsSource
+	{
+		IEnumerable<IItemsSourceItem> Values { get; }
+
+		string ItemToString(object val);
+	}
+
+	public interface IItemsSource<out TValue> : IItemsSource
+	{
+		/// <summary>Collection of values represented by a ComboBox.</summary>
+		new IEnumerable<IItemsSourceItem<TValue>> Values { get; }
+	}
+
+	public class ItemsSourceBase<T> : IItemsSource<T>
+	{
+		readonly Lazy<IEnumerable<IItemsSourceItem<T>>> _values;
+
+		IEnumerable<IItemsSourceItem> IItemsSource.Values => Values;
+
+		public IEnumerable<IItemsSourceItem<T>> Values => _values.Value;
+
+		public ItemsSourceBase()
+		{
+			_values = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() =>
+			{
+				var named = GetNamedValues()?.ToArray();
+				if (named?.Length > 0)
+					return named.Select(nv => ItemsSourceItem.Create(nv.value, nv.displayName, ItemToString));
+
+				var justVals = GetValues()?.ToArray();
+				if (justVals?.Length > 0)
+					return justVals.Select(v => ItemsSourceItem.Create(v, ItemToString));
+
+				throw new InvalidOperationException($"{GetType().FullName}: both GetValues() and GetNamedValues() returned null/empty");
+			});
+		}
+
+		protected virtual string Format => null;
+
+		string IItemsSource.ItemToString(object val)
+		{
+			if(!Format.IsEmptyOrWhiteSpace())
+				return ItemToString((T)val);
+
+			if (val is IItemsSourceItem item && !item.DisplayName.IsEmpty())
+				return item.DisplayName;
+
+			return ItemToString((T)val);
+		}
+
+		protected virtual string ItemToString(T val)
+		{
+			var f = Format;
+			if(f == null)
+				return val.ToString();
+
+			return string.Format($"{{0:{f}}}", val);
+		}
+
+		protected virtual IEnumerable<T> GetValues() => null;
+
+		protected virtual IEnumerable<(string displayName, T value)> GetNamedValues() => null;
 	}
 
 	/// <summary>
