@@ -11,9 +11,7 @@
 	using System.Windows.Media;
 	using System.Windows.Media.Imaging;
 
-	using Ecng.Collections;
 	using Ecng.Common;
-	using Ecng.Interop;
 
 	using WinColor = System.Drawing.Color;
 	using WpfColor = System.Windows.Media.Color;
@@ -22,31 +20,31 @@
 
 	public static class XamlNativeHelper
 	{
-		private static readonly SynchronizedSet<Window> _nativeOwners = new SynchronizedSet<Window>();
+		//private static readonly SynchronizedSet<Window> _nativeOwners = new SynchronizedSet<Window>();
 
-		internal static Window GetNativeOwner()
-		{
-			// http://stackoverflow.com/questions/6690848/completely-hide-wpf-window-on-startup
-			var wnd = new Window
-			{
-				Width = 0,
-				Height = 0,
-				WindowStyle = WindowStyle.None,
-				ShowInTaskbar = false,
-				ShowActivated = false,
-				Visibility = Visibility.Hidden,
-			};
-			wnd.Show();
-			wnd.SetOwnerHandle(WinApiWindows.GetTopMostWindow().Handle);
-			_nativeOwners.Add(wnd);
-			return wnd;
-		}
+		//internal static Window GetNativeOwner()
+		//{
+		//	// http://stackoverflow.com/questions/6690848/completely-hide-wpf-window-on-startup
+		//	var wnd = new Window
+		//	{
+		//		Width = 0,
+		//		Height = 0,
+		//		WindowStyle = WindowStyle.None,
+		//		ShowInTaskbar = false,
+		//		ShowActivated = false,
+		//		Visibility = Visibility.Hidden,
+		//	};
+		//	wnd.Show();
+		//	wnd.SetOwnerHandle(WinApiWindows.GetTopMostWindow().Handle);
+		//	_nativeOwners.Add(wnd);
+		//	return wnd;
+		//}
 
-		internal static void TryCloseNativeOwner(this Window wnd)
-		{
-			if (_nativeOwners.Remove(wnd))
-				wnd.Close();
-		}
+		//internal static void TryCloseNativeOwner(this Window wnd)
+		//{
+		//	if (_nativeOwners.Remove(wnd))
+		//		wnd.Close();
+		//}
 
 		public static IntPtr GetOwnerHandle(this Window wnd)
 		{
@@ -65,38 +63,38 @@
 			return wnd;
 		}
 
-		public static bool ShowModalNative(this Window wnd, Control control)
-		{
-			if (wnd == null)
-				throw new ArgumentNullException(nameof(wnd));
+		//public static bool ShowModalNative(this Window wnd, Control control)
+		//{
+		//	if (wnd == null)
+		//		throw new ArgumentNullException(nameof(wnd));
 
-			if (control == null)
-				throw new ArgumentNullException(nameof(control));
+		//	if (control == null)
+		//		throw new ArgumentNullException(nameof(control));
 
-			return wnd.SetOwnerHandle(control.Handle).ShowDialog() == true;
-		}
+		//	return wnd.SetOwnerHandle(control.Handle).ShowDialog() == true;
+		//}
 
-		public static bool ShowModalNative(this CommonDialog dlg, Window owner)
-		{
-			if (dlg == null)
-				throw new ArgumentNullException(nameof(dlg));
+		//public static bool ShowModalNative(this CommonDialog dlg, Window owner)
+		//{
+		//	if (dlg == null)
+		//		throw new ArgumentNullException(nameof(dlg));
 
-			if (owner == null)
-				throw new ArgumentNullException(nameof(owner));
+		//	if (owner == null)
+		//		throw new ArgumentNullException(nameof(owner));
 
-			return dlg.ShowDialog(owner.GetIWin32Window()) == DialogResult.OK;
-		}
+		//	return dlg.ShowDialog(owner.GetIWin32Window()) == DialogResult.OK;
+		//}
 
-		public static bool ShowModalNative(this Form form, Window owner)
-		{
-			if (form == null)
-				throw new ArgumentNullException(nameof(form));
+		//public static bool ShowModalNative(this Form form, Window owner)
+		//{
+		//	if (form == null)
+		//		throw new ArgumentNullException(nameof(form));
 
-			if (owner == null)
-				throw new ArgumentNullException(nameof(owner));
+		//	if (owner == null)
+		//		throw new ArgumentNullException(nameof(owner));
 
-			return form.ShowDialog(owner.GetIWin32Window()) == DialogResult.OK;
-		}
+		//	return form.ShowDialog(owner.GetIWin32Window()) == DialogResult.OK;
+		//}
 
 		public static BitmapSource ToBitmapSource(this Bitmap source)
 		{
@@ -126,40 +124,40 @@
 			}
 		}
 
-		public static IWin32WindowEx GetIWin32Window(this Visual visual)
-		{
-			if (visual == null)
-				throw new ArgumentNullException(nameof(visual));
+		//public static IWin32WindowEx GetIWin32Window(this Visual visual)
+		//{
+		//	if (visual == null)
+		//		throw new ArgumentNullException(nameof(visual));
 
-			var source = (HwndSource)PresentationSource.FromVisual(visual);
+		//	var source = (HwndSource)PresentationSource.FromVisual(visual);
 
-			if (source == null)
-				throw new ArgumentException("visual");
+		//	if (source == null)
+		//		throw new ArgumentException("visual");
 
-			return new NativeWindow(source.Handle);
-		}
+		//	return new NativeWindow(source.Handle);
+		//}
 
-		private sealed class NativeWindow : IWin32WindowEx
-		{
-			private readonly IntPtr _handle;
+		//private sealed class NativeWindow : IWin32WindowEx
+		//{
+		//	private readonly IntPtr _handle;
 
-			public NativeWindow(IntPtr handle)
-			{
-				_handle = handle;
-			}
+		//	public NativeWindow(IntPtr handle)
+		//	{
+		//		_handle = handle;
+		//	}
 
-			#region System.Windows.Interop.IWin32Window Members
+		//	#region System.Windows.Interop.IWin32Window Members
 
-			IntPtr System.Windows.Interop.IWin32Window.Handle => _handle;
+		//	IntPtr System.Windows.Interop.IWin32Window.Handle => _handle;
 
-			#endregion
+		//	#endregion
 
-			#region System.Windows.Forms.IWin32Window Members
+		//	#region System.Windows.Forms.IWin32Window Members
 
-			IntPtr System.Windows.Forms.IWin32Window.Handle => _handle;
+		//	IntPtr System.Windows.Forms.IWin32Window.Handle => _handle;
 
-			#endregion
-		}
+		//	#endregion
+		//}
 
 		public static WpfPoint ToWpf(this WinPoint point)
 		{

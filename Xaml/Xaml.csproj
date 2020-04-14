@@ -3,17 +3,11 @@
   <PropertyGroup>
     <ProjectGuid>{90A23E0C-3329-4459-BB97-21CD84E5418A}</ProjectGuid>
     <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1'">
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Design" />
     <Reference Include="System.Security" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.0" />

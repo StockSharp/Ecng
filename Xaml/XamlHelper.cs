@@ -650,8 +650,8 @@ namespace Ecng.Xaml
 			var wnd = Window.GetWindow(obj);
 
 			// åñëè WPF õîñòèöà â WinForms ÷åðåç ElementHost
-			if (wnd == null && Application.Current == null)
-				wnd = XamlNativeHelper.GetNativeOwner();
+			//if (wnd == null && Application.Current == null)
+			//	wnd = XamlNativeHelper.GetNativeOwner();
 
 			return wnd;
 		}
@@ -676,14 +676,14 @@ namespace Ecng.Xaml
 
 			wnd.Owner = owner;
 
-			try
-			{
+			//try
+			//{
 				return wnd.ShowDialog() == true;
-			}
-			finally
-			{
-				owner.TryCloseNativeOwner();
-			}
+			//}
+			//finally
+			//{
+			//	owner.TryCloseNativeOwner();
+			//}
 		}
 
 		public static bool ShowModal(this CommonDialog dlg, DependencyObject obj)
@@ -1052,46 +1052,46 @@ namespace Ecng.Xaml
 		//private static readonly double _currentDpi = new System.Windows.Forms.TextBox().CreateGraphics().DpiX;
 		//private static readonly double _scale = _standartDpi / _currentDpi;
 
-		//
-		// https://www.devexpress.com/Support/Center/Question/Details/T422976
-		//
-		public static BitmapImage RenderDrawing(this DrawingImage drawingImage, Size drawingImageSize)
-		{
-			if (drawingImage == null)
-				throw new ArgumentNullException(nameof(drawingImage));
+		////
+		//// https://www.devexpress.com/Support/Center/Question/Details/T422976
+		////
+		//public static BitmapImage RenderDrawing(this DrawingImage drawingImage, Size drawingImageSize)
+		//{
+		//	if (drawingImage == null)
+		//		throw new ArgumentNullException(nameof(drawingImage));
 
-			double currentDpi = new System.Windows.Forms.TextBox().CreateGraphics().DpiX;
+		//	double currentDpi = new System.Windows.Forms.TextBox().CreateGraphics().DpiX;
 
-			var dpiScale = currentDpi / 96;
+		//	var dpiScale = currentDpi / 96;
 
-			var renderTargetBitmap =
-				new RenderTargetBitmap((int)Math.Ceiling(drawingImageSize.Width * dpiScale),
-					(int)Math.Ceiling(drawingImageSize.Height * dpiScale), currentDpi,
-					currentDpi,
-					PixelFormats.Pbgra32);
+		//	var renderTargetBitmap =
+		//		new RenderTargetBitmap((int)Math.Ceiling(drawingImageSize.Width * dpiScale),
+		//			(int)Math.Ceiling(drawingImageSize.Height * dpiScale), currentDpi,
+		//			currentDpi,
+		//			PixelFormats.Pbgra32);
 
-			var drawingVisual = new DrawingVisual();
+		//	var drawingVisual = new DrawingVisual();
 
-			using (var drawingContext = drawingVisual.RenderOpen())
-				drawingContext.DrawImage(drawingImage, new Rect(default, drawingImageSize));
-			renderTargetBitmap.Render(drawingVisual);
+		//	using (var drawingContext = drawingVisual.RenderOpen())
+		//		drawingContext.DrawImage(drawingImage, new Rect(default, drawingImageSize));
+		//	renderTargetBitmap.Render(drawingVisual);
 
-			var pngBitmapEncoder = new PngBitmapEncoder();
-			pngBitmapEncoder.Frames.Add(BitmapFrame.Create(renderTargetBitmap));
+		//	var pngBitmapEncoder = new PngBitmapEncoder();
+		//	pngBitmapEncoder.Frames.Add(BitmapFrame.Create(renderTargetBitmap));
 
-			var memoryStream = new MemoryStream();
-			pngBitmapEncoder.Save(memoryStream);
-			memoryStream.Seek(0, SeekOrigin.Begin);
+		//	var memoryStream = new MemoryStream();
+		//	pngBitmapEncoder.Save(memoryStream);
+		//	memoryStream.Seek(0, SeekOrigin.Begin);
 
-			var bitmapImage = new BitmapImage();
+		//	var bitmapImage = new BitmapImage();
 
-			bitmapImage.BeginInit();
-			bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-			bitmapImage.StreamSource = memoryStream;
-			bitmapImage.EndInit();
+		//	bitmapImage.BeginInit();
+		//	bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+		//	bitmapImage.StreamSource = memoryStream;
+		//	bitmapImage.EndInit();
 
-			return bitmapImage;
-		}
+		//	return bitmapImage;
+		//}
 
 		public static Brush GetBrush(this DrawingImage source)
 		{
