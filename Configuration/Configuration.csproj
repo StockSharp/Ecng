@@ -1,9 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_multi.props" />
+  <Import Project="..\common_target_multi_sign.props" />
   <PropertyGroup>
     <ProjectGuid>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</ProjectGuid>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1' ">
     <Reference Include="System.configuration" />
@@ -18,9 +16,6 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <None Include="..\Ecng.snk">
-      <Link>Properties\Ecng.snk</Link>
-    </None>
     <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

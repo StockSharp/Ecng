@@ -1,10 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_multi.props" />
+  <Import Project="..\common_target_multi_sign.props" />
   <PropertyGroup>
     <ProjectGuid>{864E3014-6C0F-4A6E-B766-3FF37963DDFD}</ProjectGuid>
     <RootNamespace>Ecng.Serialization</RootNamespace>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1' ">
     <Reference Include="System.configuration" />
@@ -16,10 +14,5 @@
     <ProjectReference Include="..\Transactions\Transactions.csproj" />
     <ProjectReference Include="..\Security\Security.csproj" />
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Ecng.snk">
-      <Link>Properties\Ecng.snk</Link>
-    </None>
   </ItemGroup>
 </Project>

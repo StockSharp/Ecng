@@ -1,9 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_multi.props" />
+  <Import Project="..\common_target_multi_sign.props" />
   <PropertyGroup>
     <ProjectGuid>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</ProjectGuid>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -16,10 +14,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Ecng.snk">
-      <Link>Properties\Ecng.snk</Link>
-    </None>
   </ItemGroup>
 </Project>

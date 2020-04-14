@@ -1,10 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-  <Import Project="..\common_target_multi.props" />
+  <Import Project="..\common_target_multi_sign.props" />
   <PropertyGroup>
     <ProjectGuid>{E07110B3-2D56-474D-9668-7A4488774F33}</ProjectGuid>
     <RootNamespace>Ecng.Interop</RootNamespace>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
@@ -64,11 +62,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Interop\Interop.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Ecng.snk">
-      <Link>Properties\Ecng.snk</Link>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="ManagedWinapi\Crosshair.resx">
