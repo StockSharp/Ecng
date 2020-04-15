@@ -1,4 +1,4 @@
-﻿namespace wyDay.Controls
+﻿namespace Ecng.Xaml.AutoUpdater
 {
     /// <summary>
     /// Specifies the update type that the AutomaticUpdater uses.

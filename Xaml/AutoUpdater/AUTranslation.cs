@@ -1,24 +1,16 @@
-﻿namespace wyDay.Controls
+﻿namespace Ecng.Xaml.AutoUpdater
 {
     public class AUTranslation
     {
         internal const string C_PrematureExitTitle = "wyUpdate exited prematurely";
         internal const string C_PrematureExitMessage = "wyUpdate ended before the current update step could be completed.";
 
-#if WPF
         // wpf menus require underscores for hint characters (not working, look into this)
         string m_CheckForUpdatesMenu = "Check for updates";
         string m_DownloadUpdateMenu = "Download and Update now";
         string m_InstallUpdateMenu = "Install update now";
         string m_CancelUpdatingMenu = "Cancel updating";
         string m_CancelCheckingMenu = "Cancel update checking";
-#else
-        string m_CheckForUpdatesMenu = "&Check for updates";
-        string m_DownloadUpdateMenu = "&Download and Update now";
-        string m_InstallUpdateMenu = "&Install update now";
-        string m_CancelUpdatingMenu = "&Cancel updating";
-        string m_CancelCheckingMenu = "&Cancel update checking";
-#endif
 
         string m_HideMenu = "Hide";
         string m_ViewChangesMenu = "View changes in version %version%";

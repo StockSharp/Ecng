@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Win32.SafeHandles;
 
-namespace wyDay.Controls
+namespace Ecng.Xaml.AutoUpdater
 {
     /// <summary>Allow pipe communication between a server and a client.</summary>
     public class PipeClient : IDisposable

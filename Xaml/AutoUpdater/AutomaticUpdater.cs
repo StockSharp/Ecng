@@ -1,42 +1,35 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing.Design;
 using System.Globalization;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
-namespace wyDay.Controls
+namespace Ecng.Xaml.AutoUpdater
 {
     /// <summary>Represents the AutomaticUpdater control.</summary>
-    public class AutomaticUpdater : Canvas, ISupportInitialize 
+    public class AutomaticUpdater : Control
     {
-        static AutomaticUpdater()
-        {
-            DefaultStyleKeyProperty.OverrideMetadata(typeof(AutomaticUpdater), new FrameworkPropertyMetadata(typeof(AutomaticUpdater)));
+        enum State { Info, UpdateNotify, Working, Tick, Error }
 
-            ForegroundProperty = TextElement.ForegroundProperty.AddOwner(typeof(AutomaticUpdater), new FrameworkPropertyMetadata(SystemColors.ControlTextBrush, FrameworkPropertyMetadataOptions.Inherits));
-        }
+        const Visibility _hiddenVisibility = Visibility.Collapsed;
+
+        public static readonly DependencyProperty IsExpandedProperty = DependencyProperty.Register(nameof(IsExpanded), typeof(bool), typeof(AutomaticUpdater), new PropertyMetadata(false));
+        public static readonly DependencyProperty TextProperty = DependencyProperty.Register(nameof(Text), typeof(string), typeof(AutomaticUpdater), new PropertyMetadata(default(string)));
+
+        public bool IsExpanded {get => (bool)GetValue(IsExpandedProperty); set => SetValue(IsExpandedProperty, value);}
+        public string Text { get => (string)GetValue(TextProperty); set => SetValue(TextProperty, value); }
 
         readonly AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend();
 
         Window ownerForm;
-
-        readonly AnimationControl ani = new AnimationControl();
-
-
-        readonly System.Windows.Forms.Timer tmrCollapse = new System.Windows.Forms.Timer { Interval = 3000 };
-        readonly System.Windows.Forms.Timer tmrAniExpandCollapse = new System.Windows.Forms.Timer { Interval = 30 };
-
-        int m_WaitBeforeCheckSecs = 10;
-        readonly System.Windows.Forms.Timer tmrWaitBeforeCheck = new System.Windows.Forms.Timer { Interval = 10000 };
-
-        int m_DaysBetweenChecks = 12;
-
+        bool _cancelStartupCheck;
         FailArgs failArgs;
 
         readonly ContextMenu contextMenu = new ContextMenu();
@@ -47,10 +40,12 @@ namespace wyDay.Controls
 
         string currentActionText;
 
-
         // menu items
         MenuItem menuItem;
 
+        static AutomaticUpdater() {
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(AutomaticUpdater), new FrameworkPropertyMetadata(typeof(AutomaticUpdater)));
+        }
 
         #region Events
 
@@ -129,14 +124,6 @@ namespace wyDay.Controls
         #region Properties
 
         /// <summary>
-        /// Gets or sets whether to slide the AutomaticUpdater out when you hover over it and in when you hover away.
-        /// </summary>
-        [Description("Whether to slide the AutomaticUpdater out when you hover over it and in when you hover away."),
-        DefaultValue(true),
-        Category("Updater")]
-        public bool Animate { get; set; }
-
-        /// <summary>
         /// Gets or sets the arguments to pass to your app when it's being restarted after an update.
         /// </summary>
         [Description("The arguments to pass to your app when it's being restarted after an update."),
@@ -166,11 +153,7 @@ namespace wyDay.Controls
         [Description("The number of days to wait before automatically re-checking for updates."),
         DefaultValue(12),
         Category("Updater")]
-        public int DaysBetweenChecks
-        {
-            get { return m_DaysBetweenChecks; }
-            set { m_DaysBetweenChecks = value; }
-        }
+        public int DaysBetweenChecks { get; set; } = 12;
 
         /// <summary>
         /// Gets the GUID (Globally Unique ID) of the automatic updater. It is recommended you set this value (especially if there is more than one exe for your product).
@@ -179,7 +162,6 @@ namespace wyDay.Controls
         [Description("The GUID (Globally Unique ID) of the automatic updater. It is recommended you set this value (especially if there is more than one exe for your product)."),
         Category("Updater"),
         DefaultValue(null),
-        EditorAttribute(typeof(GUIDEditor), typeof(UITypeEditor)),
         EditorBrowsable(EditorBrowsableState.Never)]
         public string GUID
         {
@@ -285,16 +267,7 @@ namespace wyDay.Controls
         [Description("Seconds to wait after the form is loaded before checking for updates."),
         DefaultValue(10),
         Category("Updater")]
-        public int WaitBeforeCheckSecs
-        {
-            get { return m_WaitBeforeCheckSecs; }
-            set
-            {
-                m_WaitBeforeCheckSecs = value;
-
-                tmrWaitBeforeCheck.Interval = m_WaitBeforeCheckSecs * 1000;
-            }
-        }
+        public int WaitBeforeCheckSecs { get; set; } = 10;
 
         /// <summary>
         /// Gets or sets the arguments to pass to wyUpdate when it is started to check for updates.
@@ -319,118 +292,12 @@ namespace wyDay.Controls
             set { auBackend.wyUpdateLocation = value; }
         }
 
-        FormattedText formattedText;
-
-        string Text
-        {
-            set
-            {
-                formattedText = new FormattedText(value, CultureInfo.GetCultureInfo("en-us"), FlowDirection.LeftToRight, new Typeface("Segoe UI"), 12, Foreground);
-
-
-                expandedWidth = (int)formattedText.Width + 22;
-
-                if (isFullExpanded && Width != expandedWidth)
-                {
-                    // reposition an resize the control
-                    if (HorizontalAlignment == HorizontalAlignment.Right)
-                        Margin = new Thickness(Margin.Left - expandedWidth - Width, Margin.Top, Margin.Right, Margin.Bottom);
-
-                    Width += expandedWidth - Width;
-                }
-                // if expanding
-                else if (tmrAniExpandCollapse.Enabled && sizeChange > 0)
-                {
-                    // re-start the expansion with the new size
-                    BeginAniOpen();
-                }
-
-                InvalidateVisual();
-            }
-        }
-
-        /*
-        public static readonly DependencyProperty FontFamilyProperty;
-
-        public FontFamily FontFamily { get; set; }
-        public FontStyle FontStyle { get; set; }
-        public FontStretch FontStretch { get; set; }
-        public FontWeight FontWeight { get; set; }
-
-        public double FontSize { get; set; } */
-
-        //TODO: include decent Font handling
-
-        public static readonly DependencyProperty ForegroundProperty;
-
-        /// <summary>
-        /// Gets or sets a brush that describes the foreground color. This is a dependency property.
-        /// </summary>
-        [Bindable(true), Category("Appearance"), Description("The brush that paints the foreground of the control. The default value is the system dialog font color.")]
-        public Brush Foreground
-        {
-            get
-            {
-                return (Brush)GetValue(ForegroundProperty);
-            }
-            set
-            {
-                SetValue(ForegroundProperty, value);
-            }
-        }
-        
         #endregion
 
         public AutomaticUpdater()
         {
-            Animate = true;
-
-            // Create the interop host control.
-            System.Windows.Forms.Integration.WindowsFormsHost host = new System.Windows.Forms.Integration.WindowsFormsHost
-                                                                         {
-                                                                             Child = ani, 
-                                                                             Height = 16, 
-                                                                             Width = 16
-                                                                         };
-
-            // hide the animation control in design mode
-            if (DesignMode)
-                host.Visibility = Visibility.Hidden;
-
-            MinWidth = 16;
-            Width = 16;
-
-            MinHeight = 16;
-            Height = 16;
-
-            ani.Size = new System.Drawing.Size(16, 16);
-            ani.Location = new System.Drawing.Point(0, 0);
-
-            ani.Rows = 5;
-            ani.Columns = 10;
-
-            // add to the controls
-            Children.Add(host);
-
-            ani.MouseEnter += ani_MouseEnter;
-            ani.MouseLeave += ani_MouseLeave;
-            ani.MouseDown += ani_MouseDown;
-
-            if (DesignMode)
-                ani.Visible = false;
-
-
-            SizeChanged += AutomaticUpdater_SizeChanged;
-
             contextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
             contextMenu.PlacementTarget = this;
-
-            contextMenu.Closed += contextMenu_Closed;
-
-            // events for the timers
-            tmrCollapse.Tick += tmrCollapse_Tick;
-            tmrAniExpandCollapse.Tick += tmrAniExpandCollapse_Tick;
-            tmrWaitBeforeCheck.Tick += tmrWaitBeforeCheck_Tick;
 
             // use all events from the AutomaticUpdater backend
             auBackend.BeforeChecking += auBackend_BeforeChecking;
@@ -454,6 +321,20 @@ namespace wyDay.Controls
             auBackend.UpdateStepMismatch += auBackend_UpdateStepMismatch;
 
             auBackend.CloseAppNow += auBackend_CloseAppNow;
+
+            var initialized = false;
+
+            Initialized += (sender, args) => {
+                if(initialized)
+                    return;
+
+                initialized = true;
+                Init();
+            };
+        }
+
+        void SetState(State state) {
+            _icon.Source = _stateIcons[state];
         }
 
         void auBackend_CloseAppNow(object sender, EventArgs e)
@@ -461,7 +342,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_CloseAppNow), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new EventHandler(auBackend_CloseAppNow), null, e);
                 return;
             }
 
@@ -477,7 +358,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new SuccessHandler(auBackend_UpToDate), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new SuccessHandler(auBackend_UpToDate), null, e);
                 return;
             }
 
@@ -497,12 +378,12 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new SuccessHandler(auBackend_UpdateSuccessful), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new SuccessHandler(auBackend_UpdateSuccessful), null, e);
                 return;
             }
 
             // show the control
-            Visibility = KeepHidden ? Visibility.Hidden : Visibility.Visible;
+            Visibility = KeepHidden ? _hiddenVisibility : Visibility.Visible;
 
             Text = translation.SuccessfullyUpdated.Replace("%version%", Version);
             UpdateStepSuccessful(MenuType.UpdateSuccessful);
@@ -516,19 +397,19 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_UpdateFailed), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new FailHandler(auBackend_UpdateFailed), null, e);
                 return;
             }
 
             // show the control
-            Visibility = KeepHidden ? Visibility.Hidden : Visibility.Visible;
+            Visibility = KeepHidden ? _hiddenVisibility : Visibility.Visible;
 
             failArgs = e;
 
             // show failed Text & icon
             Text = translation.UpdateFailed;
             CreateMenu(MenuType.Error);
-            AnimateImage(Properties.Resources.cross, true);
+            SetState(State.Error);
 
             if (UpdateFailed != null)
                 UpdateFailed(this, e);
@@ -539,7 +420,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_UpdateAvailable), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new EventHandler(auBackend_UpdateAvailable), null, e);
                 return;
             }
 
@@ -550,14 +431,8 @@ namespace wyDay.Controls
             if (!KeepHidden)
                 Visibility = Visibility.Visible;
 
-            // temporarily disable the collapse timer
-            tmrCollapse.Enabled = false;
-
-            // animate this open
-            if (Animate)
-                BeginAniOpen();
-
-            AnimateImage(Properties.Resources.update_notify, true);
+            SetCurrentValue(IsExpandedProperty, true);
+            SetState(State.UpdateNotify);
 
             SetMenuText(translation.DownloadUpdateMenu);
 
@@ -570,7 +445,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_ReadyToBeInstalled), null, e );
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new EventHandler(auBackend_ReadyToBeInstalled), null, e );
                 return;
             }
 
@@ -582,14 +457,8 @@ namespace wyDay.Controls
             if (!KeepHidden)
                 Visibility = Visibility.Visible;
 
-            // temporarily disable the collapse timer
-            tmrCollapse.Enabled = false;
-
-            // animate this open
-            if (Animate)
-                BeginAniOpen();
-
-            AnimateImage(Properties.Resources.info, true);
+            SetCurrentValue(IsExpandedProperty, true);
+            SetState(State.Info);
 
             SetMenuText(translation.InstallUpdateMenu);
 
@@ -603,13 +472,11 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_Cancelled), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new EventHandler(auBackend_Cancelled), null, e);
                 return;
             }
 
-            // stop animation & hide
-            ani.StopAnimation();
-            Visibility = Visibility.Hidden;
+            Visibility = _hiddenVisibility;
 
             SetMenuText(translation.CheckForUpdatesMenu);
 
@@ -620,7 +487,7 @@ namespace wyDay.Controls
         void auBackend_BeforeChecking(object sender, BeforeArgs e)
         {
             // disable any scheduled checking
-            tmrWaitBeforeCheck.Enabled = false;
+            _cancelStartupCheck = true;
 
             SetMenuText(translation.CancelCheckingMenu);
 
@@ -647,7 +514,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeDownloading), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeDownloading), null, e);
                 return;
             }
 
@@ -672,7 +539,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeExtracting), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeExtracting), null, e);
                 return;
             }
 
@@ -686,7 +553,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeInstalling), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeInstalling), null, e);
                 return;
             }
 
@@ -699,7 +566,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_CheckingFailed), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new FailHandler(auBackend_CheckingFailed), null, e);
                 return;
             }
 
@@ -716,7 +583,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_DownloadingFailed), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new FailHandler(auBackend_DownloadingFailed), null, e);
                 return;
             }
 
@@ -733,7 +600,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_ExtractingFailed), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new FailHandler(auBackend_ExtractingFailed), null, e);
                 return;
             }
 
@@ -762,7 +629,7 @@ namespace wyDay.Controls
             if (Visibility == Visibility.Visible)
             {
                 CreateMenu(MenuType.Error);
-                AnimateImage(Properties.Resources.cross, true);
+                SetState(State.Error);
             }
 
             SetMenuText(translation.CheckForUpdatesMenu);
@@ -773,7 +640,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new UpdateProgressChanged(auBackend_ProgressChanged), null, progress);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new UpdateProgressChanged(auBackend_ProgressChanged), null, progress);
                 return;
             }
 
@@ -791,7 +658,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_ClosingAborted), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new EventHandler(auBackend_ClosingAborted), null, e);
                 return;
             }
 
@@ -811,7 +678,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_UpdateStepMismatch), null, e);
+                ownerForm.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new EventHandler(auBackend_UpdateStepMismatch), null, e);
                 return;
             }
 
@@ -826,189 +693,15 @@ namespace wyDay.Controls
             }
         }
 
-
-
-
-        bool insideChildControl;
-        bool insideSelf;
-
-        void ani_MouseLeave(object sender, EventArgs e)
-        {
-            insideChildControl = false;
-
-            if (Animate && !insideSelf && isFullExpanded && !contextMenu.IsOpen)
-                tmrCollapse.Enabled = true;
-        }
-
-        void ani_MouseEnter(object sender, EventArgs e)
-        {
-            insideChildControl = true;
-
-            if (Animate)
-            {
-                tmrCollapse.Enabled = false;
-
-                if (!isFullExpanded)
-                    BeginAniOpen();
-            }
-        }
-
-        protected override void OnMouseEnter(MouseEventArgs e)
-        {
-            insideSelf = true;
-
-            if (Animate)
-            {
-                tmrCollapse.Enabled = false;
-
-                if (!isFullExpanded)
-                    BeginAniOpen();
-            }
-
-            base.OnMouseEnter(e);
-        }
-
-        protected override void OnMouseLeave(MouseEventArgs e)
-        {
-            insideSelf = false;
-
-            if (Animate && !insideChildControl && isFullExpanded && !contextMenu.IsOpen)
-                tmrCollapse.Enabled = true;
-
-            base.OnMouseLeave(e);
-        }
-
-        void tmrCollapse_Tick(object sender, EventArgs e)
-        {
-            // begin collapse animation
-            BeginAniClose();
-
-            // disable this timer
-            tmrCollapse.Stop();
-        }
-
-        bool skipNextMenuShow;
-
         protected override void OnMouseDown(MouseButtonEventArgs e)
-        {
-            ani_MouseDown(null, null);
-
-            base.OnMouseDown(e);
-        }
-
-        void ani_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
-        {
-            if (!(insideChildControl || insideSelf))
-                //skip next menu show when "reclicking" while the menu is still visible
-                skipNextMenuShow = true;
-
-            if (skipNextMenuShow)
-                skipNextMenuShow = false;
-            else
-                ShowContextMenu();
-        }
-
-        void ShowContextMenu()
         {
             if (contextMenu.IsOpen)
                 contextMenu.IsOpen = false;
             else
                 contextMenu.IsOpen = true;
+
+            base.OnMouseDown(e);
         }
-
-
-
-        #region Animation
-
-        // calculate the expanded width based on the changing text
-        int expandedWidth = 16;
-        const int collapsedWidth = 16;
-
-        const int maxTimeTicks = 30;
-        int totalTimeTicks;
-        int startSize, sizeChange;
-
-        bool isFullExpanded;
-
-
-        void tmrAniExpandCollapse_Tick(object sender, EventArgs e)
-        {
-            if (startSize - (int)Width + sizeChange == 0)
-            {
-                isFullExpanded = (int)Width != collapsedWidth;
-
-                //enable the collapse timer
-                if (isFullExpanded && !insideChildControl && !insideSelf && !contextMenu.IsOpen)
-                    tmrCollapse.Enabled = true;
-
-                tmrAniExpandCollapse.Stop();
-            }
-            else
-            {
-                totalTimeTicks++;
-
-                int DeltaAnileft;
-
-                if (totalTimeTicks == maxTimeTicks)
-                    DeltaAnileft = startSize + sizeChange - (int)Width;
-                else
-                    DeltaAnileft = (int)(sizeChange * (-Math.Pow(2, (float)(-10 * totalTimeTicks) / maxTimeTicks) + 1) + startSize) - (int)Width;
-
-                Width += DeltaAnileft;
-
-                if (HorizontalAlignment == HorizontalAlignment.Right)
-                    Margin = new Thickness(Margin.Left - DeltaAnileft, Margin.Top, Margin.Right, Margin.Bottom);
-            }
-        }
-
-
-        void BeginAniClose()
-        {
-            // totalDist = destX - startX
-            sizeChange = collapsedWidth - (int)Width;
-
-            // bail out if no tabs need to be moved
-            if (sizeChange == 0)
-                return;
-
-            // set the start position
-            startSize = (int)Width;
-
-            // begin the scrolling animation
-            totalTimeTicks = 0;
-
-            // begin the closing animation
-            isFullExpanded = false;
-            tmrAniExpandCollapse.Start();
-        }
-
-        void BeginAniOpen()
-        {
-            // totalDist = destX - startX
-            sizeChange = expandedWidth - (int)Width;
-
-            // bail out if no tabs need to be moved
-            if (sizeChange == 0)
-            {
-                tmrCollapse.Enabled = true;
-
-                return;
-            }
-
-            // set the start position
-            startSize = (int)Width;
-
-            // begin the scrolling animation
-            totalTimeTicks = 0;
-
-
-            // begin the opening animation
-            tmrAniExpandCollapse.Start();
-        }
-
-        #endregion Animation
-
-
 
         void menuItem_Click(object sender, EventArgs e)
         {
@@ -1062,7 +755,7 @@ namespace wyDay.Controls
 
         void Hide_Click(object sender, EventArgs e)
         {
-            Visibility = Visibility.Hidden;
+            Visibility = _hiddenVisibility;
         }
 
         /// <summary>
@@ -1075,31 +768,30 @@ namespace wyDay.Controls
 
         void ViewChanges_Click(object sender, EventArgs e)
         {
-            using (frmChanges changeForm = new frmChanges(auBackend.Version, auBackend.RawChanges, auBackend.AreChangesRTF, ShowButtonUpdateNow, translation))
-            {
-                changeForm.ShowDialog();
+            var dlg = new ChangesDialog(auBackend.Version, auBackend.RawChanges, auBackend.AreChangesRTF, ShowButtonUpdateNow, translation) {
+                Owner = ownerForm
+            };
 
-                if (changeForm.UpdateNow)
-                    InstallNow();
-            }
+            dlg.ShowDialog();
+
+            if(dlg.UpdateNow)
+                InstallNow();
         }
 
         void ViewError_Click(object sender, EventArgs e)
         {
-            using (frmError errorForm = new frmError(failArgs, translation))
-            {
-                errorForm.ShowDialog();
+            var dlg = new ErrorDialog(failArgs, translation);
+            dlg.ShowDialog();
 
-                if (errorForm.TryAgainLater)
-                    TryAgainLater_Click(this, EventArgs.Empty);
-            }
+            if (dlg.TryAgainLater)
+                TryAgainLater_Click(this, EventArgs.Empty);
         }
 
         void TryAgainLater_Click(object sender, EventArgs e)
         {
             // we'll check on next start of this app,
             // just hide for now.
-            Visibility = Visibility.Hidden;
+            Visibility = _hiddenVisibility;
         }
 
         void TryAgainNow_Click(object sender, EventArgs e)
@@ -1231,12 +923,6 @@ namespace wyDay.Controls
             CurrMenuType = NewMenuType;
         }
 
-        void tmrWaitBeforeCheck_Tick(object sender, EventArgs e)
-        {
-            Visibility = Visibility.Hidden;
-            auBackend.ForceCheckForUpdate(false);
-        }
-
         /// <summary>
         /// Check for updates forcefully -- returns true if the updating has begun. Use the "CheckingFailed", "UpdateAvailable", or "UpToDate" events for the result.
         /// </summary>
@@ -1253,7 +939,7 @@ namespace wyDay.Controls
             if (UpdateStepOn == UpdateStepOn.Nothing || (recheck && UpdateStepOn == UpdateStepOn.UpdateAvailable))
             {
                 if (recheck || fromUI)
-                    Visibility = KeepHidden ? Visibility.Hidden : Visibility.Visible;
+                    Visibility = KeepHidden ? _hiddenVisibility : Visibility.Visible;
 
                 return auBackend.ForceCheckForUpdate(recheck);
             }
@@ -1275,16 +961,8 @@ namespace wyDay.Controls
             // create the "hide" menu
             CreateMenu(menuType);
 
-            if (Animate)
-            {
-                // temporarily diable the collapse timer
-                tmrCollapse.Enabled = false;
-
-                // animate this open
-                BeginAniOpen();
-            }
-
-            AnimateImage(Properties.Resources.tick, true);
+            SetCurrentValue(IsExpandedProperty, true);
+            SetState(State.Tick);
         }
 
         void UpdateProcessing(bool forceShow)
@@ -1292,25 +970,8 @@ namespace wyDay.Controls
             if (forceShow && !KeepHidden)
                 Visibility = Visibility.Visible;
 
-            if (Animate)
-            {
-                // temporarily diable the collapse timer
-                tmrCollapse.Enabled = false;
-
-                // animate this open
-                BeginAniOpen();
-            }
-
-            AnimateImage(Properties.Resources.update_working, false);
-        }
-
-        void AnimateImage(System.Drawing.Image img, bool staticImg)
-        {
-            ani.StopAnimation();
-            ani.StaticImage = staticImg;
-            ani.AnimationInterval = 25;
-            ani.BaseImage = img;
-            ani.StartAnimation();
+            SetCurrentValue(IsExpandedProperty, true);
+            SetState(State.Working);
         }
 
         void SetUpdateStepOn(UpdateStepOn uso)
@@ -1343,57 +1004,20 @@ namespace wyDay.Controls
             }
         }
 
-        void AutomaticUpdater_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            if (DesignMode && Animate)
-            {
-                Width = 16;
-                Height = 16;
-            }
-            else
-                Height = Math.Max(16, formattedText == null ? 0 : formattedText.Height);
-
-            // WPF is a sloppy mess, it lets controls and text flop over the edge. Insanity.
-            Clip = new RectangleGeometry(new Rect(0, 0, Width, Height));
-        }
-
-
-
-        protected override void OnRender(DrawingContext dc)
-        {
-            base.OnRender(dc);
-
-            //TODO: split this Design drawing logic into a separate assembly
-            if (DesignMode)
-            {
-                dc.DrawImage(GetBitmapSource(Properties.Resources.update_notify), new Rect(0, 0, 16, 16));
-            }
-
-            // Draw the formatted text string to the DrawingContext of the control.
-            dc.DrawText(formattedText, new Point(20, 0));
-        }
-
-        void contextMenu_Closed(object sender, RoutedEventArgs e)
-        {
-            //begin collapsing the update helper
-            if (Animate && (isFullExpanded || tmrAniExpandCollapse.Enabled))
-                tmrCollapse.Enabled = true;
-        }
-
-        void ISupportInitialize.EndInit()
+        void Init()
         {
             if (DesignMode)
                 return;
-
+        
             ownerForm = Window.GetWindow(this);
-
+        
             if (ownerForm == null)
                 throw new Exception("Could not find the AutomaticUpdater's owner Window. Make sure you're adding the AutomaticUpdater to a Window and not a View, User control, etc.");
-
+        
             ownerForm.Loaded += ownerForm_Loaded;
-
+        
             auBackend.Initialize();
-
+        
             // see if update is pending, if so force install
             if (auBackend.ClosingForInstall)
             {
@@ -1403,7 +1027,7 @@ namespace wyDay.Controls
             }
         }
 
-        void ownerForm_Loaded(object sender, RoutedEventArgs e)
+        async void ownerForm_Loaded(object sender, RoutedEventArgs e)
         {
             SetMenuText(translation.CheckForUpdatesMenu);
 
@@ -1412,6 +1036,8 @@ namespace wyDay.Controls
                 return;
 
             auBackend.AppLoaded();
+
+            Visibility = _hiddenVisibility;
 
             if (UpdateStepOn != UpdateStepOn.Nothing)
             {
@@ -1424,9 +1050,14 @@ namespace wyDay.Controls
                 // see if enough days have elapsed since last check.
                 TimeSpan span = DateTime.Now.Subtract(auBackend.LastCheckDate);
 
-                if (span.Days >= m_DaysBetweenChecks)
+                if (span.Days >= DaysBetweenChecks)
                 {
-                    tmrWaitBeforeCheck.Enabled = true;
+                    await Task.Delay(TimeSpan.FromSeconds(WaitBeforeCheckSecs));
+
+                    if(!_cancelStartupCheck) {
+                        Visibility = _hiddenVisibility;
+                        auBackend.ForceCheckForUpdate(false);
+                    }
                 }
             }
         }
@@ -1443,11 +1074,37 @@ namespace wyDay.Controls
                 return isDesign.Value;
             }
         }
-        
-        BitmapSource GetBitmapSource(System.Drawing.Bitmap _image)
+       
+        Image _icon;
+
+        readonly Dictionary<State, ImageSource> _stateIcons = new Dictionary<State, ImageSource>();
+
+        public override void OnApplyTemplate()
         {
-            //TODO: use XAML resources: http://stackoverflow.com/questions/347614/wpf-image-resources
-            return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(_image.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            var asmName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name;
+            
+            ImageSource CreateIcon(string name) => new BitmapImage(new Uri($"pack://application:,,,/{asmName};component/Resources/{name}.png"));
+
+            base.OnApplyTemplate();
+        
+            _icon = GetTemplateChild("PART_Icon") as Image;
+
+            _stateIcons[State.Info] = CreateIcon("info");
+            _stateIcons[State.UpdateNotify] = CreateIcon("update-notify");
+            _stateIcons[State.Tick] = CreateIcon("tick");
+            _stateIcons[State.Error] = CreateIcon("cross");
+            _stateIcons[State.Working] = CreateIcon("wait");
         }
+    }
+
+    public class MultiplyConverter : IMultiValueConverter {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) {
+            var width       = (double)values[0];
+            var multiplier  = values[1] as double? ?? 0d;
+
+            return width * multiplier;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 }

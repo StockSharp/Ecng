@@ -5,11 +5,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows.Forms;
-using wyUpdate.Common;
+using Ecng.Xaml.AutoUpdater.Common;
 
 
-namespace wyDay.Controls
+namespace Ecng.Xaml.AutoUpdater
 {
     internal class UpdateHelper : IDisposable
     {
@@ -44,7 +43,7 @@ namespace wyDay.Controls
                     {
                         m_CompleteWULoc = Path.GetFullPath(Path.IsPathRooted(value)
                                             ? value
-                                            : Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), value)
+                                            : Path.Combine(Path.GetDirectoryName(AutomaticUpdaterBackend.ExecutablePath), value)
                                           );
                     }
                     catch { }
@@ -169,7 +168,7 @@ namespace wyDay.Controls
             {
                 m_CompleteWULoc = Path.GetFullPath(Path.IsPathRooted(m_wyUpdateLocation)
                                     ? m_wyUpdateLocation
-                                    : Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), m_wyUpdateLocation)
+                                    : Path.Combine(Path.GetDirectoryName(AutomaticUpdaterBackend.ExecutablePath), m_wyUpdateLocation)
                                   );
             }
             catch { }
@@ -467,9 +466,6 @@ namespace wyDay.Controls
         {
 			lock (_lock)
 			{
-                //TODO: this needs a better fix. Perhaps we should ditch the BackgroundWorker altogether and just use pure threads
-                // Fixes windows service bugs: http://wyday.com/forum/viewtopic.php?f=1&t=2949
-                Application.DoEvents();
                 bw = new BackgroundWorker();
                 bw.DoWork += bw_DoWork;
                 bw.RunWorkerCompleted += bw_RunWorkerCompleted;

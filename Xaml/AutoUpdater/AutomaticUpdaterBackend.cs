@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
-using System.Windows.Forms;
-using wyUpdate.Common;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
+using Ecng.Xaml.AutoUpdater.Common;
 
-namespace wyDay.Controls
+namespace Ecng.Xaml.AutoUpdater
 {
     /// <summary>Backend for the AutomaticUpdater control.</summary>
     public class AutomaticUpdaterBackend : IDisposable
@@ -17,6 +21,8 @@ namespace wyDay.Controls
         UpdateType internalUpdateType = UpdateType.Automatic;
         UpdateType m_UpdateType = UpdateType.Automatic;
 
+        // ReSharper disable once PossibleNullReferenceException
+        public static string ExecutablePath {get;} = Process.GetCurrentProcess().MainModule.FileName;
 
         // changes
         string version, changes;
@@ -82,6 +88,8 @@ namespace wyDay.Controls
         /// <summary>Gets or sets the arguments to pass to your app when it's being restarted after an update.</summary>
         public string Arguments { get; set; }
 
+        readonly RichTextBox _richText = new RichTextBox();
+
         /// <summary>Gets the changes for the new update.</summary>
         public string Changes
         {
@@ -90,11 +98,12 @@ namespace wyDay.Controls
                 if (!changesAreRTF)
                     return changes;
 
-                // convert the RTF text to plaintext
-                using (RichTextBox r = new RichTextBox {Rtf = changes})
-                {
-                    return r.Text;
-                }
+                var stream = new MemoryStream(Encoding.UTF8.GetBytes(changes));
+                _richText.Document.Blocks.Clear();
+                _richText.Selection.Load(stream, DataFormats.Rtf);
+
+                var range = new TextRange(_richText.Document.ContentStart, _richText.Document.ContentEnd);
+                return range.Text;
             }
         }
 
@@ -393,7 +402,7 @@ namespace wyDay.Controls
             if (ServiceName != null)
                 updateHelper.RestartInfo(ServiceName, AutoUpdaterInfo.AutoUpdateID, Arguments, true);
             else
-                updateHelper.RestartInfo(Application.ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments, false);
+                updateHelper.RestartInfo(ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments, false);
         }
 
         void DownloadUpdate()
@@ -580,7 +589,7 @@ namespace wyDay.Controls
             if (ServiceName != null)
                 updateHelper.RestartInfo(ServiceName, AutoUpdaterInfo.AutoUpdateID, Arguments, true);
             else
-                updateHelper.RestartInfo(Application.ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments, false);
+                updateHelper.RestartInfo(ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments, false);
         }
 
         void StartNextStep(UpdateStep updateStepOn)

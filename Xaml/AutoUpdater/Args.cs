@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace wyDay.Controls
+namespace Ecng.Xaml.AutoUpdater
 {
     /// <summary>Reports the progress in the current update step.</summary>
     /// <param name="sender">Sender</param>

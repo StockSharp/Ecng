@@ -1,4 +1,4 @@
-﻿namespace wyDay.Controls
+﻿namespace Ecng.Xaml.AutoUpdater
 {
     /// <summary>
     /// Represents the update steps that the AutomaticUpdater goes through.

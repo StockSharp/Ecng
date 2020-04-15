@@ -3,15 +3,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
-using wyUpdate.Common;
+using Ecng.Xaml.AutoUpdater.Common;
 
-#if WPF
 using System.Reflection;
-#elif !CLIENT
-using System.Windows.Forms;
-#endif
 
-namespace wyDay.Controls
+namespace Ecng.Xaml.AutoUpdater
 {
     internal enum AutoUpdaterStatus
     {
@@ -22,7 +18,6 @@ namespace wyDay.Controls
 
     internal class AutoUpdaterInfo
     {
-#if !CLIENT
         [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool IsWow64Process([In] IntPtr hProcess, [Out, MarshalAs(UnmanagedType.Bool)] out bool lpSystemInfo);
@@ -66,7 +61,6 @@ namespace wyDay.Controls
 
             return is32on64.Value;
         }
-#endif
 
         public DateTime LastCheckedForUpdate;
         public UpdateStepOn UpdateStepOn;
@@ -92,22 +86,6 @@ namespace wyDay.Controls
 
             // get the admin filename
             filenames[0] = GetFilename();
-
-#if CLIENT
-            // if tempFolder is not in ApplicationData, then we're updating on behalf of a limited user
-            if (oldAUTempFolder != null && !SystemFolders.IsDirInDir(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), oldAUTempFolder))
-            {
-                // AutoUpdateFiles are stored in: %appdata%\wyUpdate AU\
-                // The tempFolder is:             %appdata%\wyUpdate AU\cache\AppGUID\
-
-                // get the limited user's AutoUpdate file
-                filenames[1] = Path.Combine(oldAUTempFolder, "..\\..\\" + AutoUpdateID + ".autoupdate");
-
-                // check if LimitedUser AutoUpdateFile exists
-                if (!File.Exists(filenames[1]))
-                    filenames[1] = null;
-            }
-#endif
 
             bool failedToLoad;
 
@@ -183,13 +161,7 @@ namespace wyDay.Controls
             {
                 if (string.IsNullOrEmpty(autoUpdateID))
                 {
-#if WPF
                     return Path.GetFileName(Assembly.GetEntryAssembly().Location);
-#elif CLIENT
-                    return Path.GetFileName(VersionTools.SelfLocation);
-#else
-                    return Path.GetFileName(Application.ExecutablePath);
-#endif
                 }
 
                 return autoUpdateID;
@@ -200,20 +172,17 @@ namespace wyDay.Controls
         {
             string filename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "wyUpdate AU");
 
-#if !CLIENT
             // Disable filesystem redirection on x64 (mostly for Windows Services)
             if (Is32BitProcessOn64BitProcessor())
                 EnableWow64FSRedirection(false);
 
             try
             {
-#endif
                 if (!Directory.Exists(filename))
                 {
                     Directory.CreateDirectory(filename);
                     File.SetAttributes(filename, FileAttributes.System | FileAttributes.Hidden);
                 }
-#if !CLIENT
             }
             finally
             {
@@ -221,7 +190,6 @@ namespace wyDay.Controls
                 if (Is32BitProcessOn64BitProcessor())
                     EnableWow64FSRedirection(true);
             }
-#endif
 
             filename = Path.Combine(filename, AutoUpdateID + ".autoupdate");
 
@@ -231,14 +199,12 @@ namespace wyDay.Controls
         // not using registry because .NET 2.0 has bad support for x64/x86 access
         public void Save()
         {
-#if !CLIENT
             // Disable filesystem redirection on x64 (mostly for Windows Services)
             if (Is32BitProcessOn64BitProcessor())
                 EnableWow64FSRedirection(false);
 
             try
             {
-#endif
                 int retriedTimes = 0;
 
                 while (true)
@@ -276,7 +242,6 @@ namespace wyDay.Controls
 
                     break;
                 }
-#if !CLIENT
             }
             finally
             {
@@ -284,7 +249,6 @@ namespace wyDay.Controls
                 if (Is32BitProcessOn64BitProcessor())
                     EnableWow64FSRedirection(true);
             }
-#endif
         }
 
         void Save(string filename)
@@ -294,20 +258,11 @@ namespace wyDay.Controls
                 // Write any file-identification data you want to here
                 WriteFiles.WriteHeader(fs, "AUIF");
 
-#if CLIENT
-                UpdateStepOn = UpdateStepOn.Nothing;
-#endif
-
                 // Date last checked for update
                 WriteFiles.WriteDateTime(fs, 0x01, LastCheckedForUpdate);
 
                 // update step on
                 WriteFiles.WriteInt(fs, 0x02, (int)UpdateStepOn);
-
-#if CLIENT
-                // only save the AutoUpdaterStatus when wyUpdate writes the file
-                WriteFiles.WriteInt(fs, 0x03, (int)AutoUpdaterStatus);
-#endif
 
                 if (!string.IsNullOrEmpty(UpdateVersion))
                     WriteFiles.WriteString(fs, 0x04, UpdateVersion);
@@ -320,28 +275,18 @@ namespace wyDay.Controls
                 }
 
 
-#if CLIENT
-                if (!string.IsNullOrEmpty(ErrorTitle))
-                    WriteFiles.WriteString(fs, 0x07, ErrorTitle);
-
-                if (!string.IsNullOrEmpty(ErrorMessage))
-                    WriteFiles.WriteString(fs, 0x08, ErrorMessage);
-#endif
-
                 fs.WriteByte(0xFF);
             }
         }
 
         void Load(string filename)
         {
-#if !CLIENT
             // Disable filesystem redirection on x64 (mostly for Windows Services)
             if (Is32BitProcessOn64BitProcessor())
                 EnableWow64FSRedirection(false);
 
             try
             {
-#endif
                 using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
                 {
                     if (!ReadFiles.IsHeaderValid(fs, "AUIF"))
@@ -396,7 +341,6 @@ namespace wyDay.Controls
                         bType = (byte)fs.ReadByte();
                     }
                 }
-#if !CLIENT
             }
             finally
             {
@@ -404,7 +348,6 @@ namespace wyDay.Controls
                 if (Is32BitProcessOn64BitProcessor())
                     EnableWow64FSRedirection(true);
             }
-#endif
         }
 
         public void ClearSuccessError()

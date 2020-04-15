@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Globalization;
 
-namespace wyUpdate.Common
+namespace Ecng.Xaml.AutoUpdater.Common
 {
     public static partial class WriteFiles
     {

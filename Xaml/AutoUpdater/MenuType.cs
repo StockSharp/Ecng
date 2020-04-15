@@ -1,4 +1,4 @@
-﻿namespace wyDay.Controls
+﻿namespace Ecng.Xaml.AutoUpdater
 {
     internal enum MenuType
     {

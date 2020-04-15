@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace wyUpdate.Common
+namespace Ecng.Xaml.AutoUpdater.Common
 {
     internal class UpdateHelperData
     {
@@ -39,14 +39,6 @@ namespace wyUpdate.Common
         {
             ResponseType = responseType;
         }
-
-#if CLIENT
-        public UpdateHelperData(Response responseType, UpdateStep step, int progress)
-            : this(responseType, step)
-        {
-            Progress = progress;
-        }
-#endif
 
         public UpdateHelperData(Response responseType, UpdateStep step, string messageTitle, string messageBody)
             : this(responseType, step)

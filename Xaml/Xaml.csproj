@@ -93,10 +93,22 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\colorfont_icon.png" />
+    <Resource Include="Resources\cross.png" />
+    <Resource Include="Resources\info.png" />
+    <Resource Include="Resources\tick.png" />
+    <Resource Include="Resources\update-notify.png" />
+    <Resource Include="Resources\wait.png" />
     <Resource Include="Resources\Flags\*.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="HtmlRenderer\Core\Utils\*.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Resources\cross.png" />
+    <None Remove="Resources\info.png" />
+    <None Remove="Resources\tick.png" />
+    <None Remove="Resources\update-notify.png" />
+    <None Remove="Resources\wait.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Ecng.snk">
