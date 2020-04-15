@@ -1,7 +1,6 @@
 namespace Ecng.ComponentModel
 {
 	using System;
-	using System.Collections;
 	using System.Collections.Generic;
 	using System.ComponentModel;
 	using System.ComponentModel.DataAnnotations;
@@ -88,6 +87,9 @@ namespace Ecng.ComponentModel
 
 			if (!(value is Enum))
 			{
+				if (value is ICustomAttributeProvider provider)
+					return provider.GetDisplayName();
+
 				return type.GetDisplayName(str);
 				//throw new ArgumentException(str, nameof(value));
 			}
