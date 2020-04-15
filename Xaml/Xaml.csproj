@@ -84,10 +84,12 @@
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\colorfont_icon.png" />
+    <Resource Include="Resources\*.png" />
     <Resource Include="Resources\Flags\*.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="HtmlRenderer\Core\Utils\*.png" />
   </ItemGroup>
-</Project>
+  <ItemGroup>
+    <None Remove="Resources\*.png" />
+  </ItemGroup></Project>
