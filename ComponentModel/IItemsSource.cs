@@ -30,15 +30,13 @@
 
 		public ItemsSourceItem(T val, Func<T, string> valToString = null)
 		{
-			_valToString = valToString ?? (v => v?.ToString());
+			_valToString = valToString ?? (v => v?.GetDisplayName());
 			Value = val;
 		}
 
 		public ItemsSourceItem(T val, string displayName, Func<T, string> valToString = null)
+			: this(val, valToString)
 		{
-			_valToString = valToString ?? (v => v?.ToString());
-			Value = val;
-
 			if(!displayName.IsEmpty())
 				DisplayName = displayName;
 		}
@@ -102,18 +100,8 @@
 
 		public ItemsSourceBase()
 		{
-			_values = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() =>
-			{
-				var named = GetNamedValues()?.ToArray();
-				if (named?.Length > 0)
-					return named.Select(nv => ItemsSourceItem.Create(nv.value, nv.displayName, ItemToString));
-
-				var justVals = GetValues()?.ToArray();
-				if (justVals?.Length > 0)
-					return justVals.Select(v => ItemsSourceItem.Create(v, ItemToString));
-
-				throw new InvalidOperationException($"{GetType().FullName}: both GetValues() and GetNamedValues() returned null/empty");
-			});
+			_values = new Lazy<IEnumerable<IItemsSourceItem<T>>>(
+				() => GetNamedValues().Select(nv => ItemsSourceItem.Create(nv.Item2, nv.Item1, ItemToString)).ToArray());
 		}
 
 		protected virtual string Format => null;
@@ -133,14 +121,21 @@
 		{
 			var f = Format;
 			if(f == null)
-				return val.ToString();
+				return val.GetDisplayName();
 
 			return string.Format($"{{0:{f}}}", val);
 		}
 
-		protected virtual IEnumerable<T> GetValues() => null;
+		protected virtual IEnumerable<T> GetValues()
+			=> throw new NotSupportedException();
 
-		protected virtual IEnumerable<(string displayName, T value)> GetNamedValues() => null;
+		protected virtual IEnumerable<(string displayName, T value)> GetNamedValues()
+		{
+			foreach (var value in GetValues())
+			{
+				yield return (ItemToString(value), value);
+			}
+		}
 	}
 
 	/// <summary>
@@ -167,8 +162,8 @@
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			if (type.GetGenericType(typeof(IItemsSource<>)) == null)
-				throw new ArgumentException("Type '{0}' must implement the '{1}' interface.".Translate().Put(type, typeof(IItemsSource<>)), nameof(type));
+			if (type.GetGenericType(typeof(IItemsSource)) == null)
+				throw new ArgumentException("Type '{0}' must implement the '{1}' interface.".Translate().Put(type, typeof(IItemsSource)), nameof(type));
 
 			Type = type;
 		}

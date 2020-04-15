@@ -78,22 +78,27 @@ namespace Ecng.ComponentModel
 			return ((MemberInfo)provider).Name;
 		}
 
-		public static string GetDisplayName(this object field)
+		public static string GetDisplayName(this object value)
 		{
-			if (field == null)
-				throw new ArgumentNullException(nameof(field));
+			if (value == null)
+				throw new ArgumentNullException(nameof(value));
 
-			var fieldName = field.ToString();
-			var fieldType = field.GetType();
+			var str = value.ToString();
+			var type = value.GetType();
 
-			if (!(field is Enum))
-				throw new ArgumentException(fieldName, nameof(field));
+			if (!(value is Enum))
+			{
+				return type.GetDisplayName(str);
+				//throw new ArgumentException(str, nameof(value));
+			}
 
-			var fieldInfo = fieldType.GetField(fieldName);
+			// Enum field
+
+			var fieldInfo = type.GetField(str);
 
 			if (fieldInfo == null)
 			{
-				return fieldName;
+				return str;
 				//throw new ArgumentException(field.ToString(), nameof(field));
 			}
 
@@ -137,20 +142,12 @@ namespace Ecng.ComponentModel
 			return new Uri("/" + name.Substring(0, name.IndexOf(',')) + ";component/" + resName, UriKind.Relative);
 		}
 
-		public static IEnumerable<Tuple<string, object>> GetValues(this ItemsSourceAttribute attr)
+		public static IEnumerable<IItemsSourceItem> GetValues(this ItemsSourceAttribute attr)
 		{
 			if (attr is null)
 				throw new ArgumentNullException(nameof(attr));
 
-			var prop = attr.Type.GetMember<PropertyInfo>(nameof(IItemsSource.Values));
-
-			var values = (IEnumerable)prop.GetValue(attr.Type.CreateInstance<object>());
-
-			if (values == null)
-				yield break;
-
-			foreach (dynamic item in values)
-				yield return Tuple.Create((string)item.Item1, (object)item.Item2);
+			return attr.Type.CreateInstance<IItemsSource>().Values;
 		}
 	}
 }
