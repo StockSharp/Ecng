@@ -5,6 +5,8 @@
     <AssemblyName>Ecng.$(MSBuildProjectName)</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <!--<SignAssembly>true</SignAssembly>-->
+    <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -14,5 +16,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(SolutionDir)EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Ecng.snk">
+      <Link>Properties\Ecng.snk</Link>
+    </None>
   </ItemGroup>
 </Project>

@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_multi_sign.props" />
+  <Import Project="..\common_target_fw_core_standard.props" />
   <PropertyGroup>
     <ProjectGuid>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</ProjectGuid>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
     <Reference Include="System.configuration" />
     <Reference Include="System.Web" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'netstandard2.1' ">
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.7.0" />
   </ItemGroup>
   <ItemGroup>

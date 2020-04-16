@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_multi_sign.props" />
+  <Import Project="..\common_target_fw_core_standard.props" />
   <PropertyGroup>
     <ProjectGuid>{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}</ProjectGuid>
   </PropertyGroup>
@@ -13,7 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Data\Data.csproj" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'netstandard2.1' ">
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
     <Compile Remove="JetDatabaseProvider.cs" />
     <Compile Remove="OdbcDatabaseProvider.cs" />
   </ItemGroup>
