@@ -324,7 +324,7 @@ namespace Ecng.Xaml.AutoUpdater
 
             var initialized = false;
 
-            Initialized += (sender, args) => {
+            Loaded += (sender, args) => {
                 if(initialized)
                     return;
 
@@ -1014,8 +1014,6 @@ namespace Ecng.Xaml.AutoUpdater
             if (ownerForm == null)
                 throw new Exception("Could not find the AutomaticUpdater's owner Window. Make sure you're adding the AutomaticUpdater to a Window and not a View, User control, etc.");
         
-            ownerForm.Loaded += ownerForm_Loaded;
-        
             auBackend.Initialize();
         
             // see if update is pending, if so force install
@@ -1025,9 +1023,11 @@ namespace Ecng.Xaml.AutoUpdater
                 ownerForm.ShowInTaskbar = false;
                 ownerForm.WindowState = WindowState.Minimized;
             }
+
+            ownerForm_Loaded();
         }
 
-        async void ownerForm_Loaded(object sender, RoutedEventArgs e)
+        async void ownerForm_Loaded()
         {
             SetMenuText(translation.CheckForUpdatesMenu);
 
