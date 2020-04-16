@@ -4,9 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("Disk.SDK.Provider")]
 
 namespace Disk.SDK
 {
