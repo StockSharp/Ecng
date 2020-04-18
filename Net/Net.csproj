@@ -30,6 +30,5 @@
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
     <Compile Remove="WsdlBaseAddressFactory.cs" />
-    <Compile Remove="ServiceHost.cs" />
   </ItemGroup>
 </Project>
