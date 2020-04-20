@@ -1,7 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 					xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
 					xmlns:xaml="clr-namespace:Ecng.Xaml"
-					xmlns:au="clr-namespace:Ecng.Xaml.AutoUpdater"
 					xmlns:system="clr-namespace:System;assembly=mscorlib">
 
 	<Style x:Key="BothResizeGripperStyle" Style.TargetType="{x:Type Thumb}">
@@ -212,91 +211,6 @@
                             </ContentPresenter.Content>
                         </ContentPresenter>
                     </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-    
-    <au:MultiplyConverter x:Key="_multiplyConverter"/>
-
-    <Style TargetType="{x:Type au:AutomaticUpdater}">
-        <Style.Triggers>
-            <DataTrigger Value="True" Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}">
-                <DataTrigger.EnterActions>
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <BooleanAnimationUsingKeyFrames FillBehavior="HoldEnd" Storyboard.TargetProperty="IsExpanded">
-                                <DiscreteBooleanKeyFrame KeyTime="0:0:0" Value="True"/>
-                            </BooleanAnimationUsingKeyFrames>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </DataTrigger.EnterActions>
-                <DataTrigger.ExitActions>
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <BooleanAnimationUsingKeyFrames FillBehavior="HoldEnd" Storyboard.TargetProperty="IsExpanded" BeginTime="0:0:3">
-                                <DiscreteBooleanKeyFrame KeyTime="0:0:0" Value="False"/>
-                            </BooleanAnimationUsingKeyFrames>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </DataTrigger.ExitActions>
-            </DataTrigger>
-        </Style.Triggers>
-
-        <Setter Property="MinWidth" Value="16"/>
-        <Setter Property="MinHeight" Value="16"/>
-
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type au:AutomaticUpdater}">
-                    <StackPanel Orientation="Horizontal">
-                        <Grid Width="16" Height="16">
-                            <Image x:Name="PART_Icon" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Grid>
-                        <TextBlock x:Name="_tb2">
-                            <Run Text=" "/><Run Text="{TemplateBinding Text}"/><Run Text=" "/>
-                            <TextBlock.Width>
-                                <MultiBinding Converter="{StaticResource _multiplyConverter}">
-                                   <Binding Path="ActualWidth" ElementName="_tb2"/>
-                                   <Binding Path="Tag" ElementName="_tb2"/>
-                                   <Binding Path="Text" ElementName="_tb2"/>
-                                </MultiBinding>
-                            </TextBlock.Width>
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Tag">
-                                        <Setter.Value><system:Double>0.0</system:Double></Setter.Value>
-                                    </Setter>
-                                    <Style.Triggers>
-                                        <DataTrigger Value="True" Binding="{Binding IsExpanded, RelativeSource={RelativeSource FindAncestor, AncestorType=au:AutomaticUpdater}}">
-                                            <DataTrigger.EnterActions>
-                                                <BeginStoryboard>
-                                                    <Storyboard>
-                                                       <DoubleAnimation Storyboard.TargetProperty="Tag" To="1" Duration="0:0:0.2" FillBehavior="HoldEnd">
-                                                            <DoubleAnimation.EasingFunction>
-                                                                <CubicEase EasingMode="EaseInOut"/>
-                                                            </DoubleAnimation.EasingFunction>
-                                                       </DoubleAnimation>
-                                                    </Storyboard>
-                                                </BeginStoryboard>
-                                            </DataTrigger.EnterActions>
-                                            <DataTrigger.ExitActions>
-                                                <BeginStoryboard>
-                                                    <Storyboard>
-                                                       <DoubleAnimation Storyboard.TargetProperty="Tag" To="0" Duration="0:0:0.2" FillBehavior="HoldEnd">
-                                                           <DoubleAnimation.EasingFunction>
-                                                                <CubicEase EasingMode="EaseInOut"/>
-                                                            </DoubleAnimation.EasingFunction>
-                                                       </DoubleAnimation>
-                                                    </Storyboard>
-                                                </BeginStoryboard>
-                                            </DataTrigger.ExitActions>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
