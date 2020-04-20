@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_multi_sign.props" />
+  <Import Project="..\common_target_fw_core_standard.props" />
   <PropertyGroup>
     <ProjectGuid>{0006C83D-602D-4C3F-8502-6B456C75C203}</ProjectGuid>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
     <Reference Include="System.configuration" />
   </ItemGroup>
   <ItemGroup>

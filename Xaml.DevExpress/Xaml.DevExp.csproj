@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-  <Import Project="..\common_target_multi.props" />
+  <Import Project="..\common_target_fw_core.props" />
   <PropertyGroup>
     <ProjectGuid>{3160D0DB-5D8C-4CF6-987C-C242C3566BAA}</ProjectGuid>
     <UseWPF>true</UseWPF>

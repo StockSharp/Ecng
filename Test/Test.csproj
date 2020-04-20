@@ -1,20 +1,19 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-  <Import Project="..\common_target_multi.props" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common_target_fw_core_standard.props" />
   <PropertyGroup>
     <ProjectGuid>{CAF861AA-7473-4EEB-BF41-FFE74A97E072}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
-    <UseWPF>true</UseWPF>
   </PropertyGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1' ">
     <ProjectReference Include="..\Web\Web.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Xaml.DevExpress\Xaml.DevExp.csproj" />
-    <ProjectReference Include="..\Xaml\Xaml.csproj" />
-    <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
     <ProjectReference Include="..\Net.SocketIO\Net.SocketIO.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />
+    <ProjectReference Include="..\Interop\Interop.csproj" />
     <ProjectReference Include="..\Roslyn\Roslyn.csproj" />
+    <ProjectReference Include="..\Backup\Backup.csproj" />
+    <ProjectReference Include="..\Data\Data.csproj" />
   </ItemGroup>
 </Project>
