@@ -8,7 +8,6 @@ namespace Ecng.Data
 
 	using Ecng.Collections;
 	using Ecng.Common;
-	using Ecng.Configuration;
 	using Ecng.Data.Sql;
 	using Ecng.Serialization;
 
@@ -90,6 +89,14 @@ namespace Ecng.Data
 			var walQuery = Query.Execute("PRAGMA journal_mode=WAL;");
 			var walCmd = database.GetCommand(walQuery, null, new FieldList(), new FieldList(), false);
 			database.Execute(walCmd, new SerializationItemCollection(), false);
+		}
+
+		public static string ToFullPathIfNeed(this string path)
+		{
+			if (path == null)
+				throw new ArgumentNullException(nameof(path));
+
+			return path.ReplaceIgnoreCase("%Documents%", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
 		}
 	}
 }

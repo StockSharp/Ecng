@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.Specialized;
-#if !SILVERLIGHT
 	using System.Configuration;
 	using System.Diagnostics;
 	using System.Web;
@@ -15,7 +14,6 @@
 
 	using Microsoft.Practices.Unity;
 	using Microsoft.Practices.Unity.Configuration;
-#endif
 	using Microsoft.Practices.ServiceLocation;
 	using NativeServiceLocator = Microsoft.Practices.ServiceLocation.ServiceLocator;
 
@@ -47,11 +45,17 @@
 
 		static ConfigManager()
 		{
-#if !SILVERLIGHT
-
 #if NETCOREAPP || NETSTANDARD
-			//http://csharp-tipsandtricks.blogspot.com/2010/01/identifying-whether-execution-context.html
-			InnerConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+			try 
+			{	        
+				//http://csharp-tipsandtricks.blogspot.com/2010/01/identifying-whether-execution-context.html
+				InnerConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine(ex);
+				Console.WriteLine(ex);
+			}
 #else
 			//http://csharp-tipsandtricks.blogspot.com/2010/01/identifying-whether-execution-context.html
 			InnerConfig = //Assembly.GetEntryAssembly() != null
@@ -60,56 +64,54 @@
 				: WebConfigurationManager.OpenWebConfiguration(HttpRuntime.AppDomainAppVirtualPath);
 #endif
 
-			Trace.WriteLine("ConfigManager FilePath=" + InnerConfig.FilePath);
-
-			void InitSections(ConfigurationSectionCollection sections)
+			if (InnerConfig != null)
 			{
-				try
+				Trace.WriteLine("ConfigManager FilePath=" + InnerConfig.FilePath);
+
+				void InitSections(ConfigurationSectionCollection sections)
 				{
-					foreach (ConfigurationSection section in sections)
+					try
 					{
-						if (!_sections.ContainsKey(section.GetType()))
-							_sections.Add(section.GetType(), section);
+						foreach (ConfigurationSection section in sections)
+						{
+							if (!_sections.ContainsKey(section.GetType()))
+								_sections.Add(section.GetType(), section);
+						}
+					}
+					catch (Exception ex)
+					{
+						Trace.WriteLine(ex);
 					}
 				}
-				catch (Exception ex)
+
+				void InitSectionGroups(ConfigurationSectionGroupCollection groups)
 				{
-					Trace.WriteLine(ex);
+					foreach (ConfigurationSectionGroup sectionGroup in groups)
+					{
+						if (!_sectionGroups.ContainsKey(sectionGroup.GetType()))
+							_sectionGroups.Add(sectionGroup.GetType(), sectionGroup);
+
+						InitSections(sectionGroup.Sections);
+						InitSectionGroups(sectionGroup.SectionGroups);
+					}
 				}
+
+				InitSections(InnerConfig.Sections);
+				InitSectionGroups(InnerConfig.SectionGroups);
+
+				UnityContainer = new UnityContainer();
+
+				var unity = GetSection<UnityConfigurationSection>();
+				if (unity != null)
+					UnityContainer.LoadConfiguration(unity);
+
+				var locator = new UnityServiceLocator(UnityContainer);
+				NativeServiceLocator.SetLocatorProvider(() => locator);
 			}
-
-			void InitSectionGroups(ConfigurationSectionGroupCollection groups)
-			{
-				foreach (ConfigurationSectionGroup sectionGroup in groups)
-				{
-					if (!_sectionGroups.ContainsKey(sectionGroup.GetType()))
-						_sectionGroups.Add(sectionGroup.GetType(), sectionGroup);
-
-					InitSections(sectionGroup.Sections);
-					InitSectionGroups(sectionGroup.SectionGroups);
-				}
-			}
-
-			InitSections(InnerConfig.Sections);
-			InitSectionGroups(InnerConfig.SectionGroups);
-
-			UnityContainer = new UnityContainer();
-
-			var unity = GetSection<UnityConfigurationSection>();
-			if (unity != null)
-				UnityContainer.LoadConfiguration(unity);
-
-			var locator = new UnityServiceLocator(UnityContainer);
-#else
-			var locator = new ConfigServiceLocator();
-#endif
-			
-			NativeServiceLocator.SetLocatorProvider(() => locator);
 		}
 
 		#endregion
 
-#if !SILVERLIGHT
 		public static Configuration InnerConfig { get; }
 
 		#region GetSection
@@ -264,7 +266,6 @@
 
 			RegisterService(service);
 		}
-#endif
 
 		public static IServiceLocator ServiceLocator => NativeServiceLocator.Current;
 
@@ -299,14 +300,6 @@
 		public static IEnumerable<T> GetServices<T>()
 		{
 			return ServiceLocator.GetAllInstances<T>();
-		}
-
-		public static string ToFullPathIfNeed(this string path)
-		{
-			if (path == null)
-				throw new ArgumentNullException(nameof(path));
-
-			return path.ReplaceIgnoreCase("%Documents%", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
 		}
 	}
 }
