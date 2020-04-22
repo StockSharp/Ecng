@@ -90,13 +90,5 @@ namespace Ecng.Data
 			var walCmd = database.GetCommand(walQuery, null, new FieldList(), new FieldList(), false);
 			database.Execute(walCmd, new SerializationItemCollection(), false);
 		}
-
-		public static string ToFullPathIfNeed(this string path)
-		{
-			if (path == null)
-				throw new ArgumentNullException(nameof(path));
-
-			return path.ReplaceIgnoreCase("%Documents%", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-		}
 	}
 }

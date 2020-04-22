@@ -222,5 +222,13 @@ namespace Ecng.Common
 			}
 			catch (UnauthorizedAccessException) { }
 		}
+
+		public static string ToFullPathIfNeed(this string path)
+		{
+			if (path == null)
+				throw new ArgumentNullException(nameof(path));
+
+			return path.ReplaceIgnoreCase("%Documents%", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+		}
 	}
 }
