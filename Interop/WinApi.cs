@@ -337,6 +337,9 @@
 		/// </summary>
 		public static bool AllocateConsole()
 		{
+			if(!OperatingSystemEx.IsWindows())
+				return true;
+
 			if (AttachConsole(ATTACH_PARENT_PROCESS))
 				return true;
 			else
