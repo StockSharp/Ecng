@@ -67,7 +67,7 @@
 
 		public ErrorLoggingAttribute(Type owner, string method)
 		{
-			_errorHandler = owner.GetMember<MethodInfo>(method).CreateDelegate<Action<Exception>>();
+			_errorHandler = owner.GetMember<MethodInfo>(method, typeof(Exception)).CreateDelegate<Action<Exception>>();
 		}
 	}
 }
