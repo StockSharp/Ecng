@@ -16,12 +16,17 @@ namespace Ecng.Security
 			{
 			}
 
+			public AsymmetricAlgorithmWrapper(Type algorithmType, byte[] key)
+				: this(CreateAlgo(algorithmType, key))
+			{
+			}
+
 			public AsymmetricAlgorithmWrapper(AsymmetricAlgorithm value)
 				: base(value)
 			{
 			}
 
-			private static AsymmetricAlgorithm CreateAlgo(Type algorithmType, ProtectedKey key)
+			private static AsymmetricAlgorithm CreateAlgo(Type algorithmType, byte[] key)
 			{
 				if (algorithmType == null)
 					throw new ArgumentNullException(nameof(algorithmType));
@@ -38,6 +43,14 @@ namespace Ecng.Security
 					((RSACryptoServiceProvider)retVal).ImportParameters(key.ToRsa());
 
 				return retVal;
+			}
+
+			private static AsymmetricAlgorithm CreateAlgo(Type algorithmType, ProtectedKey key)
+			{
+				if (key == null)
+					throw new ArgumentNullException(nameof(key));
+
+				return CreateAlgo(algorithmType, key.DecryptedKey);
 			}
 
 			public byte[] Encrypt(byte[] plainText)
@@ -111,6 +124,16 @@ namespace Ecng.Security
 		/// <param name="privateKey"><para>The private key for the algorithm.</para></param>
 		public AsymmetricCryptographer(Type algorithmType, ProtectedKey publicKey, ProtectedKey privateKey)
 			: this(publicKey == null ? null : new AsymmetricAlgorithmWrapper(algorithmType, publicKey), privateKey == null ? null : new AsymmetricAlgorithmWrapper(algorithmType, privateKey))
+		{
+		}
+
+		/// <summary>
+		/// <para>Initialize a new instance of the <see cref="AsymmetricCryptographer"/> class with an algorithm type and a key.</para>
+		/// </summary>
+		/// <param name="algorithmType"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
+		/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
+		public AsymmetricCryptographer(Type algorithmType, byte[] publicKey)
+			: this(publicKey == null ? null : new AsymmetricAlgorithmWrapper(algorithmType, publicKey), null)
 		{
 		}
 

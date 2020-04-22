@@ -38,12 +38,12 @@ namespace Ecng.Security
 			return stream.To<byte[]>().FromBytes();
 		}
 
-		public static RSAParameters ToRsa(this ProtectedKey key)
+		public static RSAParameters ToRsa(this byte[] key)
 		{
 			if (key == null)
 				throw new ArgumentNullException(nameof(key));
 
-			var stream = key.DecryptedKey.To<Stream>();
+			var stream = key.To<Stream>();
 
 			return new RSAParameters
 			{
@@ -56,6 +56,14 @@ namespace Ecng.Security
 				Exponent = ReadByteArray(stream),
 				Modulus = ReadByteArray(stream)
 			};
+		}
+
+		public static RSAParameters ToRsa(this ProtectedKey key)
+		{
+			if (key == null)
+				throw new ArgumentNullException(nameof(key));
+
+			return key.DecryptedKey.ToRsa();
 		}
 
 		#region WriteByteArray

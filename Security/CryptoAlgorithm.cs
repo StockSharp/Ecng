@@ -222,6 +222,8 @@ namespace Ecng.Security
 
 		#region Create
 
+		public static CryptoAlgorithm CreateAssymetricVerifier(byte[] publicKey) => new CryptoAlgorithm(new AsymmetricCryptographer(GetDefaultAlgo(AlgorithmTypes.Asymmetric), publicKey));
+
 		public static CryptoAlgorithm Create(AlgorithmTypes type, params ProtectedKey[] keys)
 		{
 			return Create(GetDefaultAlgo(type), keys);
