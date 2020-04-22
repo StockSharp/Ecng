@@ -64,7 +64,7 @@ namespace Ecng.Web
 				//type.SetValue("AddMimeMapping", new object[] { ".png", "image/png" });
 			}
 
-			if (HttpContext.Current != null)
+			if (Context != null)
 			{
 				try
 				{
@@ -78,13 +78,15 @@ namespace Ecng.Web
 
 		public static SiteMapMapper DefaultMapper { get; private set; }
 
+		private static HttpContext Context => HttpContext.Current;
+
 		#region CurrentHandler
 
 		/// <summary>
 		/// Gets the current handler.
 		/// </summary>
 		/// <value>The current handler.</value>
-		public static IHttpHandler CurrentHandler => HttpContext.Current.Handler;
+		public static IHttpHandler CurrentHandler => Context?.Handler;
 
 		#endregion
 
@@ -94,7 +96,7 @@ namespace Ecng.Web
 		/// Gets the current handler.
 		/// </summary>
 		/// <value>The current handler.</value>
-		public static Page CurrentPage => HttpContext.Current.Handler as Page;
+		public static Page CurrentPage => Context?.Handler as Page;
 
 		#endregion
 
@@ -147,7 +149,7 @@ namespace Ecng.Web
 			return pageType;
 		}
 
-		public static Url CurrentUrl => new Url(HttpContext.Current.Request.Url);
+		public static Url CurrentUrl => Context == null ? null : new Url(Context.Request.Url);
 
 		public static Url ToUrl(this Type pageType)
 		{
@@ -174,7 +176,7 @@ namespace Ecng.Web
 			if (localPath.EndsWithIgnoreCase("Default.aspx") && !url.KeepDefaultPage)
 				localPath = localPath.ReplaceIgnoreCase("Default.aspx", string.Empty);
 
-			HttpContext.Current.Response.Redirect(new Uri(url.Clone(), localPath).ToString() + url.QueryString, endResponse);
+			Context.Response.Redirect(new Uri(url.Clone(), localPath).ToString() + url.QueryString, endResponse);
 		}
 
 		public static void RegisterScript<T>(this T control, string key, string script)
@@ -291,7 +293,7 @@ namespace Ecng.Web
 		public static void Download(this IWebFile file, Size<int> size, bool embed, HttpContext context = null, TimeSpan? cache = null)
 		{
 			if (context == null)
-				context = HttpContext.Current;
+				context = Context;
 
 			if (file == null)
 				throw new ArgumentNullException(nameof(file));
@@ -385,7 +387,7 @@ namespace Ecng.Web
 
 		public static RequestContext GetCurrentRouteRequest()
 		{
-			return HttpContext.Current.Request.RequestContext;
+			return Context.Request.RequestContext;
 		}
 
 		public static string XmlEscape(this string content)

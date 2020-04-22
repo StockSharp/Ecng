@@ -71,7 +71,10 @@ namespace Ecng.Net
 		public static IPEndPoint GetClientEndPoint()
 		{
 #if NETFRAMEWORK
-			var prop = ((RemoteEndpointMessageProperty)OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name]);
+			if (!OperationContext.Current.IncomingMessageProperties.TryGetValue(RemoteEndpointMessageProperty.Name, out var value))
+				return null;
+
+			var prop = (RemoteEndpointMessageProperty)value;
 			return new IPEndPoint(prop.Address.To<IPAddress>(), prop.Port);
 #else
 			throw new PlatformNotSupportedException();

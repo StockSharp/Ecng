@@ -32,7 +32,7 @@ namespace Ecng.Net
 #if NETCOREAPP || NETSTANDARD
 			throw new PlatformNotSupportedException();
 #else
-			(HttpContext.Current == null ? ChannelHelper.GetClientEndPoint().Address : HttpContext.Current.Request.UserHostAddress.To<IPAddress>());
+			(HttpContext.Current == null ? ChannelHelper.GetClientEndPoint()?.Address : HttpContext.Current.Request.UserHostAddress.To<IPAddress>());
 #endif
 
 		public static bool IsLocal(this EndPoint endPoint)
