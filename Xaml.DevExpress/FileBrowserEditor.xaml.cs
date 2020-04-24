@@ -15,6 +15,8 @@
 			InitializeComponent();
 		}
 
+		public bool IsSaving { get; set; }
+
 		protected override void AssignToEditCore(IBaseEdit edit)
 		{
 			if (edit is ButtonEdit btnEdit)
@@ -30,7 +32,7 @@
 			if (edit == null || edit.IsReadOnly)
 				return;
 
-			var dlg = new DXOpenFileDialog { CheckFileExists = true };
+			var dlg = IsSaving ? (DXFileDialog)new DXSaveFileDialog() : new DXOpenFileDialog { CheckFileExists = true };
 			var value = (string)edit.EditValue;
 
 			if (!value.IsEmpty())
