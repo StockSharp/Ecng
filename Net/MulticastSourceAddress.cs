@@ -59,7 +59,7 @@ namespace Ecng.Net
 		/// Is configuration enabled.
 		/// </summary>
 		[Display(Name = "Enabled", Description = "Is configuration enabled.", Order = 3)]
-		public bool IsEnabled { get; set; } = true;
+		public bool IsEnabled { get; set; }
 
 		public void Load(SettingsStorage storage)
 		{
