@@ -17,6 +17,7 @@
 	using System.Windows.Media;
 	using ArgumentOutOfRangeException = System.ArgumentOutOfRangeExceptionEx;
 #endif
+	using System.Runtime.InteropServices;
 	using System.Globalization;
 	using System.Threading;
 	using System.Xml;
@@ -377,6 +378,8 @@
 			AddTypedConverter<string, ulong>(ulong.Parse);
 			AddTypedConverter<char, string>(input => input.ToString());
 			AddTypedConverter<string, char>(char.Parse);
+			AddTypedConverter<OSPlatform, string>(input => input.ToString());
+			AddTypedConverter<string, OSPlatform>(OSPlatform.Create);
 		}
 
 		public static void AddTypedConverter<TFrom, TTo>(Func<TFrom, TTo> converter)
