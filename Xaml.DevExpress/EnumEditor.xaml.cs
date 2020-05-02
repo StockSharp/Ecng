@@ -69,6 +69,8 @@
 			cbe.ItemTemplate = ItemTemplate;
 			cbe.ApplyItemTemplateToSelectedItem = ApplyItemTemplateToSelectedItem;
 			cbe.IsTextEditable = IsTextEditable;
+			cbe.AutoComplete = AutoComplete;
+			cbe.ImmediatePopup = ImmediatePopup;
 
 			if (isNullable)
 				cbe.AddClearButton();
