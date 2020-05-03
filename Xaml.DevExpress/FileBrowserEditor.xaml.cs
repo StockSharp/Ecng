@@ -15,6 +15,8 @@
 			InitializeComponent();
 		}
 
+		public string DefaultExt { get; set; }
+		public string Filter { get; set; }
 		public bool IsSaving { get; set; }
 
 		protected override void AssignToEditCore(IBaseEdit edit)
@@ -33,6 +35,14 @@
 				return;
 
 			var dlg = IsSaving ? (DXFileDialog)new DXSaveFileDialog() : new DXOpenFileDialog { CheckFileExists = true };
+			dlg.RestoreDirectory = true;
+
+			if (!Filter.IsEmpty())
+				dlg.Filter = Filter;
+
+			if (!DefaultExt.IsEmpty())
+				dlg.DefaultExt = DefaultExt;
+
 			var value = (string)edit.EditValue;
 
 			if (!value.IsEmpty())
