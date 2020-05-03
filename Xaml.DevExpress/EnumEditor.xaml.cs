@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Xaml.DevExp
 {
 	using System;
+	using System.Linq;
 	using System.Globalization;
 	using System.Windows.Data;
 
@@ -25,6 +26,8 @@
 		{
 			InitializeComponent();
 		}
+
+		public bool Sorted { get; set; }
 
 		/// <summary>
 		/// <para>
@@ -65,7 +68,18 @@
 			if (!(editor is ComboBoxEdit cbe))
 				cbe = new ComboBoxEdit();
 
-			cbe.ItemsSource = Enum.GetValues(type);
+			var values = type.GetValues();
+
+			if (Sorted)
+			{
+				values = values
+					.Select(v => Tuple.Create(v.GetDisplayName(), v))
+					.OrderBy(t => t.Item1)
+					.Select(t => t.Item2)
+					.ToArray();
+			}
+
+			cbe.ItemsSource = values;
 			cbe.ItemTemplate = ItemTemplate;
 			cbe.ApplyItemTemplateToSelectedItem = ApplyItemTemplateToSelectedItem;
 			cbe.IsTextEditable = IsTextEditable;
