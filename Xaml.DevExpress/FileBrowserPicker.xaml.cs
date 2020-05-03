@@ -89,6 +89,8 @@
 				? (DXFileDialog)new DXSaveFileDialog()
 				: new DXOpenFileDialog { CheckFileExists = true };
 
+			dlg.RestoreDirectory = true;
+
 			if (!Filter.IsEmpty())
 				dlg.Filter = Filter;
 
