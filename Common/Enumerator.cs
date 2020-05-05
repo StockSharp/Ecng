@@ -43,6 +43,12 @@
 			return typeof(T).GetValues().Cast<T>();
 		}
 
+		public static IEnumerable<T> ExcludeObsolete<T>(this IEnumerable<T> values)
+			where T : Enum
+		{
+			return values.Where(v => v.GetAttributeOfType<ObsoleteAttribute>() != null);
+		}
+
 		public static IEnumerable<object> GetValues(this Type enumType)
 		{
 #if !SILVERLIGHT
