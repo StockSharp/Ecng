@@ -107,6 +107,16 @@ namespace Ecng.ComponentModel
 			return fieldInfo.GetDisplayName();
 		}
 
+		public static string GetFieldDisplayName<TField>(this TField field)
+		{
+			return field.GetType().GetField(field.ToString()).GetDisplayName();
+		}
+
+		public static string GetFieldDescription<TField>(this TField field)
+		{
+			return field.GetType().GetField(field.ToString()).GetAttribute<DisplayAttribute>()?.GetDescription();
+		}
+
 		public static string GetDocUrl(this Type type)
 		{
 			var attr = type.GetAttribute<DocAttribute>();
