@@ -645,7 +645,9 @@
 #endif
 				else if (destinationType.GetUnderlyingType() != null)
 				{
-					if (value is string s3 && s3 == string.Empty)
+					if (value is DBNull)
+						return null;
+					else if (value is string s3 && s3 == string.Empty)
 					{
 						if (destinationType == typeof(decimal?))
 							return new decimal?();
@@ -704,6 +706,8 @@
 					return n1.OuterXml;
 				else if (value is string s9 && destinationType == typeof(decimal))
 					return decimal.Parse(s9, NumberStyles.Any, null);
+				else if (value is DBNull)
+					return null;
 				else
 				{
 					var attr = destinationType.GetAttribute<TypeConverterAttribute>();

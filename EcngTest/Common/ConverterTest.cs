@@ -107,5 +107,12 @@ namespace Ecng.Test.Common
 			_uri.To<Uri>().To<string>().To<EndPoint>().AssertEqual(_uri.To<EndPoint>());
 			(_uri + "/").To<EndPoint>().To<string>().AssertEqual(_uri);
 		}
+
+		[TestMethod]
+		public void DbNull()
+		{
+			DBNull.Value.To<DateTime?>().AssertNull();
+			DBNull.Value.To<string>().AssertNull();
+		}
 	}
 }
