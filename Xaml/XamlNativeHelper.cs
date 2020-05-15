@@ -217,11 +217,5 @@
 
 			return true;
 		}
-
-		public static WinColor ToColor(this string color) => ColorTranslator.FromHtml(color);
-		public static WinColor ToColor(this int color) => WinColor.FromArgb((byte)((color >> 0x18) & 0xffL), (byte)((color >> 0x10) & 0xffL), (byte)((color >> 8) & 0xffL), (byte)(color & 0xffL));
-
-		public static string ToString(this WinColor color) => ColorTranslator.ToHtml(color);
-		public static int ToInt(this WinColor color) => color.ToArgb();
 	}
 }
