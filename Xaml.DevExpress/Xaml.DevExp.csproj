@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Backup\Backup.csproj" />
     <ProjectReference Include="..\Data.Providers\Data.Providers.csproj" />
+    <ProjectReference Include="..\Interop.Windows\Interop.Windows.csproj" />
     <ProjectReference Include="..\Xaml\Xaml.csproj" />
   </ItemGroup>
 </Project>
