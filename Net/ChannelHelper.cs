@@ -2,16 +2,16 @@ namespace Ecng.Net
 {
 	using System;
 	using System.IO;
-	using System.Linq;
 	using System.Net;
 	using System.ServiceModel;
-	using System.ServiceModel.Channels;
 #if NETFRAMEWORK
+	using System.Linq;
+	using System.ServiceModel.Channels;
 	using System.ServiceModel.Configuration;
-#endif
 
 	using Ecng.Common;
 	using Ecng.Configuration;
+#endif
 
 	public static class ChannelHelper
 	{

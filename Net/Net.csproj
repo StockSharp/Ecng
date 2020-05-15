@@ -13,10 +13,12 @@
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceModel.Activation" />
     <Reference Include="System.Web" />
+
+    <Compile Remove="System.ServiceModel\**" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
-    <PackageReference Include="NamedPipeServerStream.NetFrameworkVersion" Version="1.0.2" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.0" />
+    <Compile Remove="Transport\Pipe*.cs" />
+    <Compile Remove="ReferencePreservingDataContractFormatAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">

@@ -150,7 +150,7 @@ namespace xNet
         /// <exception cref="System.IO.IOException">Раздел <see cref="Microsoft.Win32.RegistryKey"/>, содержащий заданное значение, был помечен для удаления.</exception>
         public static bool GetIEProxyEnable()
         {
-#if NETCOREAPP
+#if !NETFRAMEWORK
             throw new PlatformNotSupportedException();
 #else
             using (RegistryKey regKey = Registry.CurrentUser.OpenSubKey(PathToInternetOptions))
@@ -178,7 +178,7 @@ namespace xNet
         /// <exception cref="System.UnauthorizedAccessException">Запись в объект <see cref="Microsoft.Win32.RegistryKey"/> невозможна, например, он не может быть открыт как раздел, доступный для записи, или у пользователя нет необходимых прав доступа.</exception>
         public static void SetIEProxyEnable(bool enabled)
         {
-#if NETCOREAPP
+#if !NETFRAMEWORK
             throw new PlatformNotSupportedException();
 #else
             using (RegistryKey regKey = Registry.CurrentUser.CreateSubKey(PathToInternetOptions))
@@ -198,7 +198,7 @@ namespace xNet
         /// <exception cref="System.IO.IOException">Раздел <see cref="Microsoft.Win32.RegistryKey"/>, содержащий заданное значение, был помечен для удаления.</exception>
         public static string GetIEProxy()
         {
-#if NETCOREAPP
+#if !NETFRAMEWORK
             throw new PlatformNotSupportedException();
 #else
             using (RegistryKey regKey = Registry.CurrentUser.OpenSubKey(PathToInternetOptions))
@@ -252,7 +252,7 @@ namespace xNet
         /// <exception cref="System.UnauthorizedAccessException">Запись в объект <see cref="Microsoft.Win32.RegistryKey"/> невозможна, например, он не может быть открыт как раздел, доступный для записи, или у пользователя нет необходимых прав доступа.</exception>
         public static void SetIEProxy(string hostAndPort)
         {
-#if NETCOREAPP
+#if !NETFRAMEWORK
             throw new PlatformNotSupportedException();
 #else
             using (RegistryKey regKey = Registry.CurrentUser.CreateSubKey(PathToInternetOptions))

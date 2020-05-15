@@ -9,9 +9,6 @@
     <Reference Include="System.Design" />
     <Reference Include="System.Security" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.0" />
-  </ItemGroup>
   <ItemGroup>
     <Compile Remove="Ookii.Dialogs.Wpf\**" />
     <EmbeddedResource Remove="Ookii.Dialogs.Wpf\**" />
