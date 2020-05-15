@@ -1,4 +1,4 @@
-﻿namespace Ecng.Interop
+﻿namespace Ecng.Common
 {
 	using System;
 

@@ -329,5 +329,17 @@ namespace Ecng.Common
 
 			return specificType.CreateInstance<ITuple>(args.ToArray());
 		}
+
+		public static Platforms GetPlatform(this Type type) => type.GetAttribute<TargetPlatformAttribute>()?.Platform ?? Platforms.AnyCPU;
+
+		public static int HiWord(this int iValue)
+		{
+			return (iValue >> 16) & 0xFFFF;
+		}
+
+		public static int LoWord(this int iValue)
+		{
+			return iValue & 0xFFFF;
+		}
 	}
 }
