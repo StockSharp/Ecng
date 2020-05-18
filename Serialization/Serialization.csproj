@@ -6,7 +6,6 @@
   </PropertyGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
     <Reference Include="PresentationCore" />
-    <Reference Include="System.configuration" />
     <Reference Include="System.Security" />
     <Reference Include="System.ServiceModel" />
   </ItemGroup>

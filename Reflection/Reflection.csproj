@@ -3,9 +3,6 @@
   <PropertyGroup>
     <ProjectGuid>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</ProjectGuid>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
-    <Reference Include="System.configuration" />
-  </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <Compile Remove="Emit\**" />
     <Compile Remove="Path\**" />

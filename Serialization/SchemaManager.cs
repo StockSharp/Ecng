@@ -9,7 +9,6 @@
 	using Ecng.Reflection;
 #if !SILVERLIGHT
 	using Ecng.Configuration;
-	using Ecng.Serialization.Configuration;
 #endif
 
 	public static class SchemaManager
@@ -22,15 +21,6 @@
 			CustomSchemaFactories = new Dictionary<Type, SchemaFactory>();
 			CustomFieldFactories = new Dictionary<Tuple<Type, string>, Type>();
 
-#if !SILVERLIGHT
-			var section = ConfigManager.GetSection<SerializationSection>();
-
-			if (section != null)
-			{
-				foreach (var factory in section.FieldFactories.Cast<ConfigFieldFactory>())
-					CustomFieldFactories.Add(new Tuple<Type, string>(factory.EntityType.To<Type>(), factory.FieldName), factory.FieldFactory.To<Type>());	
-			}
-#endif
 			GlobalFieldFactories = new Dictionary<Type, Type>
 			{
 #if !NETCOREAPP && !NETSTANDARD

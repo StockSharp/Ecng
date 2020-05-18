@@ -7,11 +7,6 @@ namespace Ecng.Reflection.Emit
 	using System.Reflection;
 	using System.Reflection.Emit;
 
-#if !SILVERLIGHT
-	using Ecng.Configuration;
-	using Ecng.Reflection.Configuration;
-#endif
-
 	#endregion
 
 	public static class AssemblyHolder
@@ -20,24 +15,6 @@ namespace Ecng.Reflection.Emit
 
 		private static AssemblyGenerator _assembly;
 		private static readonly object _initializeSync = new object();
-
-		#endregion
-
-		#region AssemblyHolder.cctor()
-
-		static AssemblyHolder()
-		{
-#if !SILVERLIGHT
-			var settings = ConfigManager.GetSection<ReflectionSection>();
-
-			if (settings != null)
-			{
-				NeedCache = settings.NeedCache;
-				AssemblyCachePath = settings.AssemblyCachePath;
-				CompiledTypeLimit = settings.CompiledTypeLimit;
-			}
-#endif
-		}
 
 		#endregion
 
