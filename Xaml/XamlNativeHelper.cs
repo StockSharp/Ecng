@@ -6,9 +6,7 @@
 	using System.Runtime.InteropServices;
 	using System.Security.Cryptography;
 	using System.Windows;
-	using System.Windows.Forms;
 	using System.Windows.Interop;
-	using System.Windows.Media;
 	using System.Windows.Media.Imaging;
 
 	using Ecng.Common;
@@ -116,7 +114,7 @@
 
 			const System.Drawing.Imaging.PixelFormat format = System.Drawing.Imaging.PixelFormat.Format32bppPArgb;
 			var bmp = new Bitmap(source.PixelWidth, source.PixelHeight, format);
-			var data = bmp.LockBits(new Rectangle(System.Drawing.Point.Empty, bmp.Size), ImageLockMode.WriteOnly, format);
+			var data = bmp.LockBits(new Rectangle(WinPoint.Empty, bmp.Size), ImageLockMode.WriteOnly, format);
 			using (data.MakeDisposable(bmp.UnlockBits))
 			{
 				source.CopyPixels(Int32Rect.Empty, data.Scan0, data.Height * data.Stride, data.Stride);
@@ -219,11 +217,5 @@
 
 			return true;
 		}
-
-		public static WinColor ToColor(this string color) => ColorTranslator.FromHtml(color);
-		public static WinColor ToColor(this int color) => WinColor.FromArgb((byte)((color >> 0x18) & 0xffL), (byte)((color >> 0x10) & 0xffL), (byte)((color >> 8) & 0xffL), (byte)(color & 0xffL));
-
-		public static string ToString(this WinColor color) => ColorTranslator.ToHtml(color);
-		public static int ToInt(this WinColor color) => color.ToArgb();
 	}
 }

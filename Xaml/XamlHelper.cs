@@ -20,9 +20,8 @@ namespace Ecng.Xaml
 	using System.IO;
 	using System.Runtime.InteropServices;
 	using System.Xml;
-
-	using Ecng.Interop;
 #endif
+
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.Collections;
@@ -719,7 +718,9 @@ namespace Ecng.Xaml
 				throw new ArgumentNullException(nameof(window));
 
 			if (window.WindowState == WindowState.Minimized)
-				window.GetOwnerHandle().ShowWindow(WindowShowStyle.Restore);
+			{
+				//window.GetOwnerHandle().ShowWindow(WindowShowStyle.Restore);
+			}
 
 			if (window.Visibility == Visibility.Visible)
 				window.Activate();

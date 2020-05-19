@@ -3,7 +3,7 @@
 	using System.Windows.Documents;
 	using System.Windows.Navigation;
 
-	using Ecng.Interop;
+	using Ecng.Common;
 
 	public class HyperlinkEx : Hyperlink
 	{

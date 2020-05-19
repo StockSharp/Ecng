@@ -10,13 +10,8 @@
     <Reference Include="System.Security" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="Ookii.Dialogs.Wpf\**" />
-    <EmbeddedResource Remove="Ookii.Dialogs.Wpf\**" />
-    <None Remove="Ookii.Dialogs.Wpf\**" />
-    <Page Remove="Ookii.Dialogs.Wpf\**" />
+    <Compile Remove="XamlNativeHelper.cs" />
+    <Compile Remove="WpfFormAdapter.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
     <Compile Remove="BmpImage.cs" />
@@ -80,8 +75,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Interop.Windows\Interop.Windows.csproj" />
-    <ProjectReference Include="..\Serialization\Serialization.csproj" />
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\*.png" />

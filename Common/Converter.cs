@@ -682,7 +682,7 @@
 					return DateTimeOffset.Parse(str4);
 #if !SILVERLIGHT
 				else if (value is string str5 && destinationType == typeof(TimeZoneInfo))
-					return TZConvert.GetTimeZoneInfo(str5);
+					return TZConvert.TryGetTimeZoneInfo(str5, out var tz) ? tz : TimeZoneInfo.Utc;
 				else if (value is TimeZoneInfo tz && destinationType == typeof(string))
 					return tz.Id;
 #endif
