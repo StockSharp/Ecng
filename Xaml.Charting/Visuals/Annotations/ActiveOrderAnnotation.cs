@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -214,9 +215,8 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
             this.SetCurrentValue(Y, dataValues[1]);
         }
 
-        public override void OnDragEnded()
+        protected override void OnDragEnded()
         {
-            base.OnDragEnded();
             _isOutOfBounds = false;
             _totalScrollOffset = 0;
 
@@ -245,12 +245,14 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
             var speed = moveSign * (MinScrollSpeed + speedFraction * (MaxScrollSpeed - MinScrollSpeed));
 
             var diff = canvas.ActualHeight * speed * _scrollTimer.Interval.TotalMilliseconds / 1000d;
+            var xcalc = XAxis?.GetCurrentCoordinateCalculator();
+            var ycalc = YAxis.GetCurrentCoordinateCalculator();
+            var coordsFrom = GetCoordinates(canvas, xcalc, ycalc);
 
             if(YDragStep > 0)
             {
                 // Compute new coordinates in pixels
                 var y1 = moveSign > 0 ? canvas.ActualHeight - 1 + diff : -diff;
-                var coordsFrom = GetCoordinates(canvas, XAxis?.GetCurrentCoordinateCalculator(), YAxis?.GetCurrentCoordinateCalculator());
 
                 var dragStartCoord = FromCoordinate(coordsFrom.Y1Coord, axis);
                 var newValue = FromCoordinate(y1, axis);
@@ -275,15 +277,21 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
 
                 var point = new Point {X = coords.X1Coord, Y = moveSign > 0 ? canvas.ActualHeight - 1 : 0};
 
-                SetBasePoint(point, 0, XAxis, YAxis);
+                const int idx = 0;
+
+                GetPropertiesFromIndex(idx, out _, out var Y);
+
+                SetBasePoint(point, idx, XAxis, YAxis);
+
+                RaiseAnnotationDragging(0, point.Y - DragStartPoint.Y);
             }
         }
 
-        protected override void MoveAnnotationTo(AnnotationCoordinates coordinates, double horizOffset, double vertOffset)
+        protected override (double fixedHOffset, double fixedVOffset) MoveAnnotationTo(AnnotationCoordinates coordinates, double horizOffset, double vertOffset)
         {
             var axis = YAxis;
             if(axis == null)
-                return;
+                return (0, 0);
 
             var canvas = GetCanvas(AnnotationCanvas);
 
@@ -291,7 +299,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
             var y1 = coordinates.Y1Coord + vertOffset;
 
             // If any are out of bounds ... 
-            if (!IsCoordinateValid(y1, canvas.ActualHeight))
+            if (IsDraggingByUser && !IsCoordinateValid(y1, canvas.ActualHeight))
             {
                 if(axis.AutoRange == AutoRange.Always)
                     ((AxisBase)axis).SetCurrentValue(AxisBase.AutoRangeProperty, AutoRange.Once);
@@ -329,17 +337,20 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
                 var expectedValue = dragStartCoord.ToDouble() + sign*times*YDragStep;
 
                 y1 = ToCoordinate(expectedValue, axis);
-                vertOffset = y1 - coordinates.Y1Coord;
             }
 
-            if(IsCoordinateValid(y1, canvas.ActualHeight))
+            vertOffset = y1 - coordinates.Y1Coord;
+
+            if(IsCoordinateValid(y1, canvas.ActualHeight) || !IsDraggingByUser)
             {
                 var point = new Point {X = coordinates.X1Coord, Y = y1};
 
                 SetBasePoint(point, 0, XAxis, YAxis);
 
-                OnAnnotationDragging(new AnnotationDragDeltaEventArgs(0, vertOffset + _totalScrollOffset));
+                return (0, vertOffset);
             }
+
+            return (0, 0);
         }
 
         protected override IAnnotationPlacementStrategy GetCurrentPlacementStrategy()
@@ -348,6 +359,11 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
                 throw new InvalidOperationException("Polar axis is not supported for this type of annotation");
 
             return new CartesianAnnotationPlacementStrategy(this);
+        }
+
+        public override bool CanMultiSelect(IAnnotation[] annotations)
+        {
+            return annotations.All(a => a is ActiveOrderAnnotation);
         }
 
         #region order animations

@@ -209,7 +209,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             return Cursors.SizeWE;
         }
 
-        protected override void MoveAnnotationTo(AnnotationCoordinates coordinates, double horizOffset, double vertOffset)
+        protected override (double fixedHOffset, double fixedVOffset) MoveAnnotationTo(AnnotationCoordinates coordinates, double horizOffset, double vertOffset)
         {
             var canvas = GetCanvas(AnnotationCanvas);
 
@@ -231,7 +231,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             base.SetBasePoint(point, 0, XAxis, YAxis);
 
-            OnAnnotationDragging(new AnnotationDragDeltaEventArgs(horizOffset, 0));
+            return (horizOffset, vertOffset);
         }
 
         /// <summary>
