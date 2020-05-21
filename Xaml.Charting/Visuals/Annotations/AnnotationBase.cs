@@ -158,16 +158,16 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// </summary>
         protected FrameworkElement AnnotationRoot;
 
-        private bool _isDragging;
+        private bool _isDragging, _isPrimaryDrag;
         private Point _startPoint;
         private bool _isMouseLeftDown;
         private bool _isResizable;
 
-#if !SILVERLIGHT
         private DateTime _mouseLeftDownTimestamp;        
-#endif
 
         private AnnotationCoordinates _startDragAnnotationCoordinates;
+
+        protected Point DragStartPoint => _startPoint;
 
         private IList<IAnnotationAdorner> _myAdorners = new List<IAnnotationAdorner>();
 
@@ -207,12 +207,12 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// <summary>
         /// Occurs when a Drag or move operation starts
         /// </summary>
-        public event EventHandler<EventArgs> DragStarted;
+        public event EventHandler<AnnotationDragEventArgs> DragStarted;
 
         /// <summary>
         /// Occurs when a Drag or move operation ends
         /// </summary>
-        public event EventHandler<EventArgs> DragEnded;
+        public event EventHandler<AnnotationDragEventArgs> DragEnded;
 
         /// <summary>
         /// Occurs when current <see cref="AnnotationBase"/> is dragged or moved
@@ -442,31 +442,64 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// <returns></returns>
         protected abstract Cursor GetSelectedCursor();
 
+        protected virtual void OnDragStarted() {}
+        protected virtual void OnDragEnded() {}
+        protected virtual void OnDragDelta(double hOffset, double vOffset) {}
+
         /// <summary>
         /// Raises the <see cref="AnnotationBase.DragStarted"/> event, called when a drag operation starts
         /// </summary>
-        public virtual void OnDragStarted()
+        public void StartDrag(bool isPrimaryDrag)
         {
-            var handler = DragStarted;
-            if (handler != null) handler(this, EventArgs.Empty);
+            _isDragging = true;
+            _isPrimaryDrag = isPrimaryDrag;
+
+            var canvas = GetCanvas(AnnotationCanvas);
+            
+            var yCalc = YAxis?.GetCurrentCoordinateCalculator();
+            var xCalc = XAxis?.GetCurrentCoordinateCalculator();
+
+            _startDragAnnotationCoordinates = GetCoordinates(canvas, xCalc, yCalc);
+
+            OnDragStarted();
+
+            DragStarted?.Invoke(this, new AnnotationDragEventArgs(isPrimaryDrag));
         }
 
         /// <summary>
         /// Raises the <see cref="AnnotationBase.DragEnded"/> event, called when a drag operation ends
         /// </summary>
-        public virtual void OnDragEnded()
+        public void EndDrag()
         {
-            var handler = DragEnded;
-            if (handler != null) handler(this, EventArgs.Empty);
+            OnDragEnded();
+
+            var primary = _isPrimaryDrag;
+            _isDragging = _isPrimaryDrag = false;
+
+            DragEnded?.Invoke(this, new AnnotationDragEventArgs(primary));
         }
 
         /// <summary>
         /// Raises the <see cref="AnnotationBase.DragDelta"/> event, called when a drag operation is in progress and each time the X1 Y1 X2 Y2 points update in the annotation
         /// </summary>
-        public virtual void OnDragDelta()
+        public void Drag(double hOffset, double vOffset)
         {
-            var handler = DragDelta;
-            if (handler != null) handler(this, new AnnotationDragDeltaEventArgs(0, 0));
+            if(!_isDragging)
+                return;
+
+            using (SuspendUpdates())
+            {
+                (hOffset, vOffset) = MoveAnnotationTo(_startDragAnnotationCoordinates, hOffset, vOffset);
+            }
+
+            OnDragDelta(hOffset, vOffset);
+
+            RaiseAnnotationDragging(hOffset, vOffset);
+        }
+
+        public virtual bool CanMultiSelect(IAnnotation[] annotations)
+        {
+            return annotations.Length == 1;
         }
 
         /// <summary>
@@ -677,23 +710,20 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// <param name="e"></param>
         protected virtual void OnAnnotationMouseDown(object sender, MouseButtonEventArgs e)
         {
+            if(e.ChangedButton != MouseButton.Left)
+                return;
+
             e.Handled = TrySelectAnnotation();
 
-            if (IsSelected && IsEditable)
-            {
-                _isMouseLeftDown = true;
+            if (!IsSelected || !IsEditable)
+                return;
 
-                _startPoint = e.GetPosition(RootGrid as UIElement);
+            _startPoint = Mouse.GetPosition(RootGrid as UIElement);
 
-#if !SILVERLIGHT
-                _mouseLeftDownTimestamp = DateTime.UtcNow;
-#endif
-                CaptureMouse();
-
-                e.Handled = true;
-
-                this.OnDragStarted();
-            }
+            _isMouseLeftDown = true;
+            _mouseLeftDownTimestamp = DateTime.UtcNow;
+            CaptureMouse();
+            e.Handled = true;
         }
 
         /// <summary>
@@ -703,19 +733,16 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// <param name="e"></param>
         protected virtual void OnAnnotationMouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (_isDragging)
-            {
-                _isDragging = false;
-                this.OnDragEnded();
-            }
-            else
-            {
-                //CanEditText = true
-               PerformFocusOnInputTextArea();
-            }
+            if (e.ChangedButton != MouseButton.Left)
+                return;
 
             ReleaseMouseCapture();
             _isMouseLeftDown = false;
+
+            if (_isDragging)
+                EndDrag();
+            else
+               PerformFocusOnInputTextArea();
         }
 
         /// <summary>
@@ -725,44 +752,18 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// <param name="e"></param>
         protected virtual void OnAnnotationMouseMove(object sender, MouseEventArgs e)
         {
-            var mousePoint = e.GetPosition(RootGrid as UIElement);
-
-            if (!_isMouseLeftDown
-#if !SILVERLIGHT
-                || (DateTime.UtcNow - _mouseLeftDownTimestamp) < TimeSpan.FromMilliseconds(2) || e.LeftButton != MouseButtonState.Pressed
-#endif
-            )
-            {
+            if (!_isMouseLeftDown || (DateTime.UtcNow - _mouseLeftDownTimestamp) < TimeSpan.FromMilliseconds(2) || e.LeftButton != MouseButtonState.Pressed)
                 return;
-            }
 
-            var canvas = GetCanvas(AnnotationCanvas);
-            
-            var yCalc = YAxis != null ? YAxis.GetCurrentCoordinateCalculator() : null;
-            var xCalc = XAxis != null ? XAxis.GetCurrentCoordinateCalculator() : null;
+            if(!_isDragging)
+                StartDrag(true);
 
-            if (_isDragging)
-            {                
-                var offsetX = mousePoint.X - _startPoint.X;
-                var offsetY = mousePoint.Y - _startPoint.Y;
+            var mousePoint = Mouse.GetPosition(RootGrid as UIElement);
 
-                offsetX = DragDirections == XyDirection.YDirection ? 0 : offsetX;
-                offsetY = DragDirections == XyDirection.XDirection ? 0 : offsetY;
+            var offsetX = DragDirections == XyDirection.YDirection ? 0 : mousePoint.X - _startPoint.X;
+            var offsetY = DragDirections == XyDirection.XDirection ? 0 : mousePoint.Y - _startPoint.Y;
 
-                using (SuspendUpdates())
-                {
-                    MoveAnnotationTo(_startDragAnnotationCoordinates, offsetX, offsetY);
-                }
-
-                this.OnDragDelta();
-                return;
-            }
-
-            _startPoint = mousePoint;
-
-            _isDragging = true;
-
-            _startDragAnnotationCoordinates = GetCoordinates(canvas, xCalc, yCalc);
+            Drag(offsetX, offsetY);
         }
 
         /// <summary>
@@ -1319,11 +1320,13 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// <param name="coordinates">The initial coordinates.</param>
         /// <param name="horizOffset">The horizontal offset.</param>
         /// <param name="vertOffset">The vertical offset.</param>
-        protected virtual void MoveAnnotationTo(AnnotationCoordinates coordinates, double horizOffset, double vertOffset)
+        protected virtual (double fixedHOffset, double fixedVOffset) MoveAnnotationTo(AnnotationCoordinates coordinates, double horizOffset, double vertOffset)
         {
             var canvas = GetCanvas(AnnotationCanvas);
 
             GetCurrentPlacementStrategy().MoveAnnotationTo(coordinates, horizOffset, vertOffset, canvas);
+
+            return (horizOffset, vertOffset);
         }
 
         /// <summary>
@@ -1549,13 +1552,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// <summary>
         /// Initiates the DragDelta event
         /// </summary>
-        protected void OnAnnotationDragging(AnnotationDragDeltaEventArgs args)
+        protected void RaiseAnnotationDragging(double hOffset, double vOffset)
         {
-            var handler = DragDelta;
-            if (handler != null)
-            {
-                handler(this, args);
-            }
+            DragDelta?.Invoke(this, new AnnotationDragDeltaEventArgs(_isPrimaryDrag, hOffset, vOffset));
         }
 
         private static void OnIsSelectedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -1730,10 +1729,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             get { return _isDragging; }
         }
 
-        internal bool IsMouseLeftDown
-        {
-            get { return _isMouseLeftDown; }
-        }
+        internal bool IsDraggingByUser => _isPrimaryDrag;
 
         public class CartesianAnnotationPlacementStrategyBase<T>:AnnotationPlacementStrategyBase<T> where T:AnnotationBase
         {
@@ -1771,8 +1767,6 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             public override void MoveAnnotationTo(AnnotationCoordinates coordinates, double horizontalOffset, double verticalOffset, IAnnotationCanvas annotationCanvas)
             {
                 InternalMoveAnntotationTo(coordinates, ref horizontalOffset, ref verticalOffset, annotationCanvas);
-
-                Annotation.OnAnnotationDragging(new AnnotationDragDeltaEventArgs(horizontalOffset, verticalOffset));
             }
 
             protected virtual void InternalMoveAnntotationTo(AnnotationCoordinates coordinates, ref double horizOffset, ref double vertOffset, IAnnotationCanvas canvas)
@@ -1886,8 +1880,6 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 var canvasSize = CalculateCanvasSize(annotationCanvas);
 
                 InternalMoveAnntotationTo(coordinates, offsets.Item1, offsets.Item2, canvasSize);
-
-                Annotation.OnAnnotationDragging(new AnnotationDragDeltaEventArgs(horizontalOffset, verticalOffset));
             }
 
             protected virtual Tuple<Point, Point> CalculateAnnotationOffsets(AnnotationCoordinates coordinates, double horizontalOffset, double verticalOffset)

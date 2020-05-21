@@ -7,12 +7,12 @@ namespace Ecng.Xaml.Charting
     /// <summary>
     /// Event Args used by the <see cref="AnnotationBase.DragDelta"/> event
     /// </summary>
-    public class AnnotationDragDeltaEventArgs : EventArgs
+    public class AnnotationDragDeltaEventArgs : AnnotationDragEventArgs
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="AnnotationDragDeltaEventArgs" /> class.
         /// </summary>
-        public AnnotationDragDeltaEventArgs(double horizontalOffset, double verticalOffset)
+        public AnnotationDragDeltaEventArgs(bool isPrimary, double horizontalOffset, double verticalOffset) : base(isPrimary)
         {
             HorizontalOffset = horizontalOffset;
             VerticalOffset = verticalOffset;

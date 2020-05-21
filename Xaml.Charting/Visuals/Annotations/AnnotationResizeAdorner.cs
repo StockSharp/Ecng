@@ -90,10 +90,6 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             var marker = sender as Thumb;
             marker.ReleaseMouseCapture();
             //Debug.WriteLine("Release Capture Annotation Marker");
-
-            var annotation = AdornedAnnotation;
-            if (!annotation.IsEditable) return;
-            annotation.OnDragEnded();
         }
 
         private void OnDragMarkerStarted(object sender, DragStartedEventArgs e)
@@ -101,17 +97,6 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             var marker = sender as Thumb;
             marker.CaptureMouse();
             //Debug.WriteLine("Capturing Annotation Marker");
-
-#if SILVERLIGHT
-            _horizontalChange = 0;
-            _verticalChange = 0;
-
-            _lastMarkerIndex = -1;
-#endif
-
-            var annotation = AdornedAnnotation;
-            if (!annotation.IsEditable) return;
-            annotation.OnDragStarted();
         }
 
         public override void Clear()
@@ -190,15 +175,8 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             int changedAtIndex = _adornerMarkers.IndexOf(marker);
 
-#if SILVERLIGHT
-            _horizontalChange += e.HorizontalChange;
-            _verticalChange += e.VerticalChange;
-
-            _lastMarkerIndex = changedAtIndex;
-#else
             _horizontalChange = e.HorizontalChange;
             _verticalChange = e.VerticalChange; 
-#endif
 
             double offsetX = annotation.ResizeDirections == XyDirection.YDirection ? 0 : _horizontalChange;
             double offsetY = annotation.ResizeDirections == XyDirection.XDirection ? 0 : _verticalChange;
@@ -215,8 +193,6 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             {
                 annotation.MoveAnnotation(offsetX, offsetY);
             }
-
-            annotation.OnDragDelta();
         }
 
         /// <summary>

@@ -35,12 +35,12 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// <summary>
         /// Occurs when a Drag or move operation starts
         /// </summary>
-        event EventHandler<EventArgs> DragStarted;
+        event EventHandler<AnnotationDragEventArgs> DragStarted;
 
         /// <summary>
         /// Occurs when a Drag or move operation ends
         /// </summary>
-        event EventHandler<EventArgs> DragEnded;
+        event EventHandler<AnnotationDragEventArgs> DragEnded;
 
         /// <summary>
         /// Occurs when current <see cref="AnnotationBase"/> is dragged or moved
@@ -238,17 +238,17 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// <summary>
         /// Raises the <see cref="AnnotationBase.DragStarted"/> event, called when a drag operation starts
         /// </summary>
-        void OnDragStarted();
+        void StartDrag(bool isPrimary);
 
         /// <summary>
         /// Raises the <see cref="AnnotationBase.DragEnded"/> event, called when a drag operation ends
         /// </summary>
-        void OnDragEnded();
+        void EndDrag();
 
         /// <summary>
         /// Raises the <see cref="AnnotationBase.DragDelta"/> event, called when a drag operation is in progress and each time the X1 Y1 X2 Y2 points update in the annotation
         /// </summary>
-        void OnDragDelta();
+        void Drag(double hOffset, double vOffset);
 
         /// <summary>
         /// Raises notification when parent <see cref="UltrachartSurface.XAxes"/> changes.
@@ -259,5 +259,11 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// Raises notification when parent <see cref="UltrachartSurface.YAxes"/> changes.
         /// </summary>
         void OnYAxesCollectionChanged(object sender, NotifyCollectionChangedEventArgs args);
+
+        /// <summary>
+        /// Check if this annotation can be multiselected along with other annotations.
+        /// </summary>
+        /// <param name="annotations">Annotations to check against.</param>
+        bool CanMultiSelect(IAnnotation[] annotations);
     }
 }

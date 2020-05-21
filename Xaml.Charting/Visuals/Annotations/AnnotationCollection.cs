@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
@@ -26,12 +27,14 @@ using System.Windows.Shapes;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using Ecng.Xaml.Charting.ChartModifiers;
 using Ecng.Xaml.Charting.Common.Extensions;
 using Ecng.Xaml.Charting.Common.Helpers;
 using Ecng.Xaml.Charting.Licensing;
 using Ecng.Xaml.Charting.Numerics.CoordinateCalculators;
 using Ecng.Xaml.Charting.Rendering.Common;
 using Ecng.Xaml.Licensing.Core;
+using MoreLinq;
 
 namespace Ecng.Xaml.Charting.Visuals.Annotations
 {
@@ -182,9 +185,13 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             }
         }
 
-        private static void DetachAnnotation(IAnnotation item)
+        private void DetachAnnotation(IAnnotation item)
         {
             item.OnDetached();
+
+            item.DragStarted -= Annotation_OnDragStarted;
+            item.DragEnded -= Annotation_OnDragEnded;
+            item.DragDelta -= Annotation_OnDragDelta;
 
             item.Services = null;
             item.ParentSurface = null;
@@ -197,7 +204,38 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             item.ParentSurface = _parentSurface;
             item.IsAttached = true;
 
+            item.DragStarted += Annotation_OnDragStarted;
+            item.DragEnded += Annotation_OnDragEnded;
+            item.DragDelta += Annotation_OnDragDelta;
+
             item.OnAttached();
+        }
+
+        private void Annotation_OnDragStarted(object sender, AnnotationDragEventArgs e)
+        {
+            if(!e.IsPrimary || !(sender is IAnnotation ann))
+                return;
+
+            var anns = this.Where(a => a != ann && a.IsSelected).ToArray();
+            anns.ForEach(a => a.StartDrag(false));
+        }
+
+        private void Annotation_OnDragEnded(object sender, AnnotationDragEventArgs e)
+        {
+            if(!e.IsPrimary || !(sender is IAnnotation ann))
+                return;
+
+            var anns = this.Where(a => a != ann && a.IsSelected).ToArray();
+            anns.ForEach(a => a.EndDrag());
+        }
+
+        private void Annotation_OnDragDelta(object sender, AnnotationDragDeltaEventArgs e)
+        {
+            if(!e.IsPrimary || !(sender is IAnnotation ann))
+                return;
+
+            var anns = this.Where(a => a != ann && a.IsSelected).ToArray();
+            anns.ForEach(a => a.Drag(e.HorizontalOffset, e.VerticalOffset));
         }
 
         /// <summary>
@@ -304,11 +342,10 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         {
             if (annotationBase.IsEditable && !annotationBase.IsSelected && annotationBase.IsAttached)
             {
-                // Deselect all
-                this.ForEachDo(annotation =>
-                {
-                    annotation.IsSelected = false;
-                });
+                var mod = MouseExtensions.GetCurrentModifier();
+
+                if(mod != MouseModifier.Shift || !CanAddToSelection(annotationBase))
+                    this.ForEachDo(annotation => annotation.IsSelected = false); // Deselect all
 
                 SelectAnnotation(annotationBase);
                 return true;
@@ -322,6 +359,12 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             annotationBase.IsSelected = true;
         }
 
+        bool CanAddToSelection(IAnnotation ann)
+        {
+            var all = this.Where(a => a != ann && a.IsSelected).Concat(new [] {ann}).ToArray();
+
+            return all.All(a => a.CanMultiSelect(all));
+        }
 
         // Used internally for unit tests
         internal Delegate ParentSurfaceMouseDownDelegate
