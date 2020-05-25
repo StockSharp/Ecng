@@ -162,8 +162,8 @@
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			if (!typeof(IItemsSource).IsAssignableFrom(type))
-				throw new ArgumentException("Type '{0}' must implement the '{1}' interface.".Translate().Put(type, typeof(IItemsSource)), nameof(type));
+			if (!typeof(IItemsSource).IsAssignableFrom(type) && !type.IsEnum)
+				throw new ArgumentException("Type '{0}' must implement the '{1}' interface or be an enum.".Translate().Put(type, typeof(IItemsSource)), nameof(type));
 
 			Type = type;
 		}
