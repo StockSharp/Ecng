@@ -7,6 +7,7 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
+    <IsSourcesAllow>true</IsSourcesAllow>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
