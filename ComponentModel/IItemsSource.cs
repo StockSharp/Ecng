@@ -143,6 +143,22 @@
 	/// </summary>
 	public class ItemsSourceAttribute : Attribute
 	{
+		class EnumSource<T> : ItemsSourceBase<T> where T : Enum
+		{
+			readonly T[] _items;
+
+			protected override IEnumerable<T> GetValues() => _items;
+
+			public EnumSource()
+			{
+				var vals = typeof(T).GetValues().ToArray();
+				_items = (T[]) typeof(T).CreateArray(vals.Length);
+
+				for(var i=0; i<vals.Length; ++i)
+					_items[i] = (T) vals[i];
+			}
+		}
+
 		/// <summary>
 		/// Gets the type to use.
 		/// </summary>
@@ -162,10 +178,10 @@
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			if (!typeof(IItemsSource).IsAssignableFrom(type) && !type.IsEnum)
+			Type = 
+				typeof(IItemsSource).IsAssignableFrom(type) ? type :
+				type.IsEnum ? typeof(EnumSource<>).MakeGenericType(type) :
 				throw new ArgumentException("Type '{0}' must implement the '{1}' interface or be an enum.".Translate().Put(type, typeof(IItemsSource)), nameof(type));
-
-			Type = type;
 		}
 	}
 }
