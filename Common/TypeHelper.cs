@@ -63,13 +63,7 @@ namespace Ecng.Common
 
 		public static Type Make(this Type type, IEnumerable<Type> args)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			if (args == null)
-				throw new ArgumentNullException(nameof(args));
-
-			return type.MakeGenericType(args.ToArray());
+			return type.Make(args.ToArray());
 		}
 
 		public static bool IsPrimitive(this Type type)
