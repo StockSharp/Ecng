@@ -48,6 +48,8 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         Top,
         /// <summary>Places on the axis</summary>
         Axis,
+        /// <summary>Places at the center</summary>
+        Center,
         /// <summary>Automatic Placement (Default)</summary>
         Auto
     }

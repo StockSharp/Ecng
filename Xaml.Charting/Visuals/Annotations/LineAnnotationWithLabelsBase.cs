@@ -494,18 +494,11 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             }
             else
             {
-                if (isRight)
-                {
-                    label.SetValue(Grid.ColumnProperty, 2);
-                }
-
-                if (isLeft)
-                {
-                    label.SetValue(Grid.ColumnProperty, 0);
-                }
+                label.SetValue(Grid.ColumnProperty, isRight ? 2 : isLeft ? 0 : 1);
 
                 label.SetValue(Grid.RowProperty, 1);
 
+                label.HorizontalAlignment = HorizontalAlignment.Center;
                 label.VerticalAlignment = VerticalAlignment.Center;
             }
         }

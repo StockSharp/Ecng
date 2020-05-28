@@ -1,16 +1,16 @@
 ﻿// *************************************************************************************
 // ULTRACHART™ © Copyright ulc software Services Ltd. 2011-2014. All rights reserved.
-//  
+//
 // Web: http://www.ultrachart.com
 // Support: support@ultrachart.com
-// 
-// VerticalLineAnnotation.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart. 
+//
+// VerticalLineAnnotation.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart.
 // For full terms and conditions of the license, see http://www.ultrachart.com/ultrachart-eula/
-// 
+//
 // This source code is protected by international copyright law. Unauthorized
 // reproduction, reverse-engineering, or distribution of all or any portion of
 // this source code is strictly prohibited.
-// 
+//
 // This source code contains confidential and proprietary trade secrets of
 // ulc software Services Ltd., and should at no time be copied, transferred, sold,
 // distributed or made available without express written permission.
@@ -53,7 +53,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// </summary>
         public VerticalLineAnnotation()
         {
-            DefaultStyleKey = typeof(VerticalLineAnnotation);                      
+            DefaultStyleKey = typeof(VerticalLineAnnotation);
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 {
                     label.RotationAngle = 90;
                 }
-                else if (placement.IsLeft())
+                else if (placement.IsLeft() || placement == LabelPlacement.Center)
                 {
                     label.RotationAngle = -90;
                 }
@@ -170,19 +170,12 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             }
             else
             {
-                if (isBottom)
-                {
-                    label.SetValue(Grid.RowProperty, 2);
-                }
-
-                if (isTop)
-                {
-                    label.SetValue(Grid.RowProperty, 0);
-                }
+                label.SetValue(Grid.RowProperty, isBottom ? 2 : isTop ? 0 : 1);
 
                 label.SetValue(Grid.ColumnProperty, 1);
 
                 label.HorizontalAlignment = HorizontalAlignment.Center;
+                label.VerticalAlignment = VerticalAlignment.Center;
             }
         }
 
@@ -190,7 +183,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         {
             var placement = LabelPlacement.Axis;
 
-            if (VerticalAlignment == VerticalAlignment.Top) 
+            if (VerticalAlignment == VerticalAlignment.Top)
                 placement = LabelPlacement.Bottom;
             if (VerticalAlignment == VerticalAlignment.Center)
                 placement = LabelPlacement.Right;
@@ -216,7 +209,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             // Compute new coordinates in pixels
             var x1 = coordinates.X1Coord + horizOffset;
 
-            // If any are out of bounds ... 
+            // If any are out of bounds ...
             if (!IsCoordinateValid(x1, canvas.ActualWidth))
             {
                 // Clip to bounds
@@ -255,7 +248,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             var isVerticalChart = !XAxis.IsHorizontalAxis;
 
-            // If y aren't out of bounds ... 
+            // If y aren't out of bounds ...
             if (IsCoordinateValid(newPoint.Y, canvas.ActualHeight))
             {
                 if (isVerticalChart)
@@ -271,7 +264,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
         /// <summary>
         /// Used internally to derive the X1Property, Y1Property, X1Property, Y2Property pair for the given index around the annotation..
-        /// 
+        ///
         /// e.g. index 0 returns X1,Y1
         /// index 1 returns X2,Y1
         /// index 2 returns X2,Y2
@@ -333,7 +326,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             return new CartesianAnnotationPlacementStrategy(this);
         }
-        
+
         internal class CartesianAnnotationPlacementStrategy:CartesianAnnotationPlacementStrategyBase<VerticalLineAnnotation>
         {
             public CartesianAnnotationPlacementStrategy(VerticalLineAnnotation annotation) : base(annotation)
