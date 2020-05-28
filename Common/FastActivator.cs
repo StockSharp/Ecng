@@ -15,6 +15,8 @@
 		// чтобы можно было создавать классы с закрытым конструктором
 		//where T :new()
 	{
+		private static readonly bool _dynMethodNotSupported;
+
 		public static Func<T> CreateObject { get; }
 
 		static FastActivator()
@@ -22,7 +24,7 @@
 			var objType = typeof(T);
 			var cinfo = objType.GetConstructor(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
 
-			if (objType.IsValueType || cinfo == null)
+			if (_dynMethodNotSupported || objType.IsValueType || cinfo == null)
 			{
 				CreateObject = Activator.CreateInstance<T>;
 			}
@@ -31,7 +33,18 @@
 #if SILVERLIGHT
 				var dynMethod = new DynamicMethod("DM$OBJ_FACTORY_" + objType.Name, typeof(T), null);
 #else
-				var dynMethod = new DynamicMethod("DM$OBJ_FACTORY_" + objType.Name, objType, null, typeof(T), true);
+				DynamicMethod dynMethod;
+
+				try
+				{
+					dynMethod = new DynamicMethod("DM$OBJ_FACTORY_" + objType.Name, objType, null, typeof(T), true);
+				}
+				catch (PlatformNotSupportedException)
+				{
+					_dynMethodNotSupported = true;
+					CreateObject = Activator.CreateInstance<T>;
+					return;
+				}
 #endif
 				ILGenerator ilGen = dynMethod.GetILGenerator();
 				ilGen.Emit(OpCodes.Newobj, cinfo);
