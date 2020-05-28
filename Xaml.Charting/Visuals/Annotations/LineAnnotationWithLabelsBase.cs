@@ -1,16 +1,16 @@
 ﻿// *************************************************************************************
 // ULTRACHART™ © Copyright ulc software Services Ltd. 2011-2014. All rights reserved.
-//  
+//
 // Web: http://www.ultrachart.com
 // Support: support@ultrachart.com
-// 
-// LineAnnotationWithLabelsBase.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart. 
+//
+// LineAnnotationWithLabelsBase.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart.
 // For full terms and conditions of the license, see http://www.ultrachart.com/ultrachart-eula/
-// 
+//
 // This source code is protected by international copyright law. Unauthorized
 // reproduction, reverse-engineering, or distribution of all or any portion of
 // this source code is strictly prohibited.
-// 
+//
 // This source code contains confidential and proprietary trade secrets of
 // ulc software Services Ltd., and should at no time be copied, transferred, sold,
 // distributed or made available without express written permission.
@@ -29,7 +29,6 @@ using System.Windows.Input;
 using System.Windows.Shapes;
 using Ecng.Xaml.Charting.Common.Databinding;
 using Ecng.Xaml.Charting.Common.Extensions;
-using Ecng.Xaml.Charting.Numerics.CoordinateCalculators;
 using Ecng.Xaml.Charting.Themes;
 using Ecng.Xaml.Charting.Visuals.Axes;
 
@@ -40,6 +39,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
     /// </summary>
     public abstract class LineAnnotationWithLabelsBase: LineAnnotation
     {
+
         /// <summary>
         /// Defines the ShowLabel Property
         /// </summary>
@@ -114,7 +114,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         {
             get { return (string)GetValue(DefaultTextFormattingProperty); }
         }
-        
+
         /// <summary>
         /// Gets the formatted label value
         /// </summary>
@@ -245,7 +245,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         {
             InvalidateAnnotation();
         }
-        
+
         private void InvalidateAnnotation()
         {
             InvalidateAxisLabels();
@@ -271,9 +271,10 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// <param name="annotationLabel">Label to invalidate</param>
         public void InvalidateLabel(AnnotationLabel annotationLabel)
         {
-            Attach(annotationLabel);
+            if(annotationLabel != null)
+                Attach(annotationLabel);
 
-            Refresh();
+            MeasureRefresh();
         }
 
         private void BindDefaultLabelValue()
@@ -448,7 +449,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         protected virtual void Detach(AnnotationLabel label)
         {
             label.ParentAnnotation = null;
-         
+
             var rootGrid = (AnnotationRoot as Grid);
 
             var axis = GetUsedAxis();
@@ -618,6 +619,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 {
                     label = annotation.AnnotationLabels[0];
                     annotation.AnnotationLabels.Remove(label);
+                    annotation.InvalidateLabel(null);
                 }
             }
         }

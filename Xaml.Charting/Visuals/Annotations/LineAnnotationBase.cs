@@ -1,16 +1,16 @@
 ﻿// *************************************************************************************
 // ULTRACHART™ © Copyright ulc software Services Ltd. 2011-2014. All rights reserved.
-//  
+//
 // Web: http://www.ultrachart.com
 // Support: support@ultrachart.com
-// 
-// LineAnnotationBase.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart. 
+//
+// LineAnnotationBase.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart.
 // For full terms and conditions of the license, see http://www.ultrachart.com/ultrachart-eula/
-// 
+//
 // This source code is protected by international copyright law. Unauthorized
 // reproduction, reverse-engineering, or distribution of all or any portion of
 // this source code is strictly prohibited.
-// 
+//
 // This source code contains confidential and proprietary trade secrets of
 // ulc software Services Ltd., and should at no time be copied, transferred, sold,
 // distributed or made available without express written permission.
@@ -18,6 +18,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using Ecng.Xaml.Charting.Common.Extensions;
 using Ecng.Xaml.Charting.Utility;
 
 namespace Ecng.Xaml.Charting.Visuals.Annotations
@@ -30,7 +31,8 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// <summary>Defines the StrokeDashArray DependencyProperty</summary>
         public static readonly DependencyProperty StrokeDashArrayProperty = DependencyProperty.Register("StrokeDashArray", typeof(DoubleCollection), typeof(LineAnnotationBase), new PropertyMetadata(null));
         /// <summary>Defines the StrokeThickness DependencyProperty</summary>
-        public static readonly DependencyProperty StrokeThicknessProperty = DependencyProperty.Register("StrokeThickness", typeof(double), typeof(LineAnnotationBase), new PropertyMetadata(1d));
+        public static readonly DependencyProperty StrokeThicknessProperty = DependencyProperty.Register("StrokeThickness", typeof(double), typeof(LineAnnotationBase), new PropertyMetadata(1d, (d, args) => ((LineAnnotationBase)d).MeasureRefresh()));
+
         /// <summary>Defines the Stroke DependencyProperty</summary>
         public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register("Stroke", typeof(Brush), typeof(LineAnnotationBase), new PropertyMetadata(null));
 
@@ -63,7 +65,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
         /// <summary>
         /// Used internally to derive the X1Property, Y1Property, X1Property, Y2Property pair for the given index around the annotation..
-        /// 
+        ///
         /// e.g. index 0 returns X1,Y1
         /// index 1 returns X2,Y1
         /// index 2 returns X2,Y2
@@ -97,6 +99,15 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 #else
             return Cursors.SizeAll;
 #endif
+        }
+
+        protected void MeasureRefresh()
+        {
+            Dispatcher.BeginInvokeAlways(() =>
+            {
+                AnnotationRoot?.MeasureArrange();
+                Refresh();
+            });
         }
 
         /// <summary>

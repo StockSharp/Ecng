@@ -15,14 +15,11 @@
 // ulc software Services Ltd., and should at no time be copied, transferred, sold,
 // distributed or made available without express written permission.
 // *************************************************************************************
-using System;
+
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Input;
-using System.Windows.Media;
 using Ecng.Xaml.Charting.Common.Extensions;
 
 namespace Ecng.Xaml.Charting.Visuals.Annotations
@@ -141,11 +138,11 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 #if SILVERLIGHT
                 _previousPoints = _points;
 #endif
-                _points = AdornedAnnotation.GetBasePoints();
+                _points = AdornedAnnotation.GetBasePoints() ?? new Point[0];
 
-                if (_points != null &&
-                    _points.Length != 0 && _adornerMarkers.Count == 0)
+                if (_points.Length != _adornerMarkers.Count)
                 {
+                    Clear();
                     _points.ForEachDo(AttachMarkerAt);
                 }
 

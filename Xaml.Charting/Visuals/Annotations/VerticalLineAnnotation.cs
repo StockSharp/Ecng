@@ -313,7 +313,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                     annotation.ApplyOrientation(label);
                 }
 
-                annotation.Refresh();
+                annotation.MeasureRefresh();
             }
         }
 
