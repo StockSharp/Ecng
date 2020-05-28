@@ -142,7 +142,6 @@ namespace Ecng.Interop
 			return retVal.To<T>();
 		}
 
-#if !SILVERLIGHT
 		/// <summary>
 		/// Wraps the delegate for prevent garbage collection.
 		/// </summary>
@@ -161,7 +160,7 @@ namespace Ecng.Interop
 		/// <typeparam name="T">The type of the delegate to be returned.</typeparam>
 		/// <param name="ptr">An <see cref="IntPtr"/> type that is the unmanaged function pointer to be converted.</param>
 		/// <returns>A delegate instance that can be cast to the appropriate delegate type.</returns>
-		public static T GetDelegateForFunctionPointer<T>(IntPtr ptr)
+		public static T GetDelegateForFunctionPointer<T>(this IntPtr ptr)
 		{
 			return Marshal.GetDelegateForFunctionPointer(ptr, typeof(T)).To<T>();
 		}
@@ -357,13 +356,15 @@ namespace Ecng.Interop
 		}
 
 		public static T GetHandler<T>(this IntPtr library, string procName)
+			=> GetDelegateForFunctionPointer<T>(GetProcAddress(library, procName));
+
+		public static T TryGetHandler<T>(this IntPtr library, string procName)
+			where T : Delegate
 		{
-			var addr = GetProcAddress(library, procName);
+			if (TryGetProcAddress(library, procName, out var address))
+				return GetDelegateForFunctionPointer<T>(address);
 
-			if (addr == IntPtr.Zero)
-				throw new ArgumentException("Cannot load function '{0}'.".Translate().Put(procName), nameof(procName), new Win32Exception());
-
-			return Marshaler.GetDelegateForFunctionPointer<T>(addr);
+			return null;
 		}
 
 #if !NETCOREAPP
@@ -394,7 +395,7 @@ namespace Ecng.Interop
 			return handler;
 		}
 
-		public static bool FreeLibrary(IntPtr hModule)
+		public static bool FreeLibrary(this IntPtr hModule)
 		{
 #if NETCOREAPP
 			CoreNativeLib.Free(hModule);
@@ -404,20 +405,23 @@ namespace Ecng.Interop
 #endif
 		}
 
-		public static IntPtr GetProcAddress(IntPtr hModule, string procName)
+		public static IntPtr GetProcAddress(this IntPtr hModule, string procName)
 		{
-#if NETCOREAPP
-			var addr = CoreNativeLib.GetExport(hModule, procName);
-#else
-			var addr = Kernel32GetProcAddress(hModule, procName);
-#endif
-			if (addr == IntPtr.Zero)
-				throw new ArgumentException("Error load procedure {0}.".Translate().Put(procName), nameof(procName), new Win32Exception());
+			if (TryGetProcAddress(hModule, procName, out var addr))
+				return addr;
 
-			return addr;
+			throw new ArgumentException("Error load procedure {0}.".Translate().Put(procName), nameof(procName), new Win32Exception());
 		}
 
+		public static bool TryGetProcAddress(this IntPtr hModule, string procName, out IntPtr address)
+		{
+#if NETCOREAPP
+			return CoreNativeLib.TryGetExport(hModule, procName, out address);
+#else
+			address = Kernel32GetProcAddress(hModule, procName);
+			return address != IntPtr.Zero;
 #endif
+		}
 
 		public static unsafe string GetUnsafeString(this Encoding encoding, ref byte srcChar, int maxBytes)
 		{

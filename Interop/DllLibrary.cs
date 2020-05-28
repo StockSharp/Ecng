@@ -24,13 +24,16 @@ namespace Ecng.Interop
 
 		protected IntPtr Handler { get; }
 
-		protected T GetHandler<T>(string procName) => Marshaler.GetDelegateForFunctionPointer<T>(Marshaler.GetProcAddress(Handler, procName));
+		protected T GetHandler<T>(string procName) => Handler.GetHandler<T>(procName);
+
+		protected T TryGetHandler<T>(string procName)
+			where T : Delegate
+			=> Handler.TryGetHandler<T>(procName);
 
 		protected override void DisposeNative()
 		{
-			Marshaler.FreeLibrary(Handler);
+			Handler.FreeLibrary();
 			base.DisposeNative();
 		}
-
 	}
 }

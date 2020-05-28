@@ -362,27 +362,6 @@
 			return firstProcess.Id == secondProcess.Id;
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="dllname"></param>
-		/// <returns></returns>
-		public static IntPtr LoadLibrary(string dllname) => Marshaler.LoadLibrary(dllname);
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="hModule"></param>
-		public static bool FreeLibrary(IntPtr hModule) => Marshaler.FreeLibrary(hModule);
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="hModule"></param>
-		/// <param name="procName"></param>
-		/// <returns></returns>
-		public static IntPtr GetProcAddress(IntPtr hModule, string procName) => Marshaler.GetProcAddress(hModule, procName);
-
 		public static int MakeParam<TLo, THi>(TLo loWord, THi hiWord)
 		{
 			return (loWord.To<int>() & 0xFFFF) + ((hiWord.To<int>() & 0xFFFF) << 16);

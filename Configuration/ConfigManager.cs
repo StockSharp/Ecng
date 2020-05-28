@@ -5,17 +5,20 @@
 	using System.Collections.Specialized;
 	using System.Configuration;
 	using System.Diagnostics;
+	using System.Linq;
+#if NETFRAMEWORK
 	using System.Web;
-#if !NETCOREAPP && !NETSTANDARD
 	using System.Web.Configuration;
 #endif
 
 	using Ecng.Common;
 
+#if !NETSTANDARD
 	using Microsoft.Practices.Unity;
 	using Microsoft.Practices.Unity.Configuration;
 	using Microsoft.Practices.ServiceLocation;
 	using NativeServiceLocator = Microsoft.Practices.ServiceLocation.ServiceLocator;
+#endif
 
 	public static class ConfigManager
 	{
@@ -38,7 +41,10 @@
 		private static readonly Dictionary<Type, ConfigurationSectionGroup> _sectionGroups = new Dictionary<Type, ConfigurationSectionGroup>();
 
 		private static readonly SyncObject _sync = new SyncObject();
-		private static readonly Dictionary<Type, object> _services = new Dictionary<Type, object>();
+		private static readonly Dictionary<Type, Dictionary<string, object>> _services = new Dictionary<Type, Dictionary<string, object>>();
+#endif
+#if !NETSTANDARD
+		private static readonly UnityContainer _unityContainer;
 #endif
 
 		#region ConfigManager.cctor()
@@ -99,14 +105,16 @@
 				InitSections(InnerConfig.Sections);
 				InitSectionGroups(InnerConfig.SectionGroups);
 
-				UnityContainer = new UnityContainer();
+#if !NETSTANDARD
+				_unityContainer = new UnityContainer();
 
 				var unity = GetSection<UnityConfigurationSection>();
 				if (unity != null)
-					UnityContainer.LoadConfiguration(unity);
+					_unityContainer.LoadConfiguration(unity);
 
-				var locator = new UnityServiceLocator(UnityContainer);
+				var locator = new UnityServiceLocator(_unityContainer);
 				NativeServiceLocator.SetLocatorProvider(() => locator);
+#endif
 			}
 		}
 
@@ -188,8 +196,6 @@
 
 		public static NameValueCollection AppSettings => ConfigurationManager.AppSettings;
 
-		public static UnityContainer UnityContainer { get; }
-
 		public static event Action<Type, object> ServiceRegistered;
 
 		private static readonly Dictionary<Type, List<Action<object>>> _subscribers = new Dictionary<Type, List<Action<object>>>();
@@ -219,38 +225,51 @@
 				subscriber(service);
 		}
 
+		private static Dictionary<string, object> GetDict<T>() => GetDict(typeof(T));
+
+		private static Dictionary<string, object> GetDict(Type type)
+		{
+			if (_services.TryGetValue(type, out var dict))
+				return dict;
+
+			dict = new Dictionary<string, object>(StringComparer.InvariantCultureIgnoreCase);
+			_services.Add(type, dict);
+			return dict;
+		}
+
 		public static void RegisterService<T>(T service)
 		{
-			lock (_sync)
-			{
-				UnityContainer.RegisterInstance(service);
-				_services[typeof(T)] = service;
-			}
-
-			RaiseServiceRegistered(typeof(T), service);
+			RegisterService(typeof(T).AssemblyQualifiedName, service);
 		}
 
 		public static void RegisterService<T>(string name, T service)
 		{
 			lock (_sync)
 			{
-				UnityContainer.RegisterInstance(name, service);
-				_services[typeof(T)] = service;
+#if !NETSTANDARD
+				_unityContainer.RegisterInstance(name, service);
+#endif
+				GetDict<T>()[name] = service;
 			}
 
 			RaiseServiceRegistered(typeof(T), service);
 		}
 
-		public static bool IsServiceRegistered<T>()
+		public static bool IsServiceRegistered<T>() => IsServiceRegistered<T>(typeof(T).AssemblyQualifiedName);
+
+		public static bool IsServiceRegistered<T>(string name)
 		{
 			lock (_sync)
 			{
-				var isReg = _services.ContainsKey(typeof(T));
-
-				if (isReg)
+				if (GetDict<T>().ContainsKey(name))
 					return true;
 
-				return UnityContainer.IsRegistered<T>();
+				return
+#if NETSTANDARD
+					false;
+#else
+				_unityContainer.IsRegistered<T>();
+#endif
 			}
 		}
 
@@ -267,24 +286,32 @@
 			RegisterService(service);
 		}
 
-		public static IServiceLocator ServiceLocator => NativeServiceLocator.Current;
+#if !NETSTANDARD
+		private static IServiceLocator ServiceLocator => NativeServiceLocator.Current;
+#endif
 
-		public static T GetService<T>()
+		public static T GetService<T>() => GetService<T>(typeof(T).AssemblyQualifiedName);
+
+		public static T GetService<T>(string name)
 		{
-			object service;
+			object service = null;
 
 			lock (_sync)
 			{
-				if (_services.TryGetValue(typeof(T), out service))
+				var dict = GetDict<T>();
+
+				if (dict.TryGetValue(name, out service) == true)
 					return (T)service;
 
+#if !NETSTANDARD
 				service = ServiceLocator.GetInstance<T>();
+#endif
 
 				if (service != null)
 				{
 					// service T can register itself in the constructor
-					if (!_services.ContainsKey(typeof(T)))
-						_services.Add(typeof(T), service);
+					if (!dict.ContainsKey(name))
+						dict.Add(name, service);
 				}
 			}
 
@@ -292,14 +319,16 @@
 			return (T)service;
 		}
 
-		public static T GetService<T>(string name)
-		{
-			return ServiceLocator.GetInstance<T>(name);
-		}
-
 		public static IEnumerable<T> GetServices<T>()
 		{
-			return ServiceLocator.GetAllInstances<T>();
+			IEnumerable<T> services;
+
+			lock (_sync)
+				services = GetDict<T>().Values.Cast<T>().ToArray();
+#if !NETSTANDARD
+			services = services.Concat(ServiceLocator.GetAllInstances<T>()).ToArray();
+#endif
+			return services.Distinct();
 		}
 	}
 }

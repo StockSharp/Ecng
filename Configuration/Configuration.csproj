@@ -10,6 +10,10 @@
   <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.7.0" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
+    <Compile Remove="Unity\**" />
+    <Compile Remove="Unity.Configuration\**" />
+  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

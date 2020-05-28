@@ -118,7 +118,7 @@ namespace ManagedWinapi.Hooks
             if (wrapCallback)
             {
                 wrappedDelegate = AllocHookWrapper(delegt);
-                hWrapperInstance = LoadLibrary("ManagedWinapiNativeHelper.dll");
+                hWrapperInstance = Marshaler.LoadLibrary("ManagedWinapiNativeHelper.dll");
                 hHook = SetWindowsHookEx(type, wrappedDelegate, hWrapperInstance, 0);
             }
             else if (global)
@@ -150,7 +150,7 @@ namespace ManagedWinapi.Hooks
             if (wrapCallback)
             {
                 if (!FreeHookWrapper(wrappedDelegate)) throw new Win32Exception();
-                if (!FreeLibrary(hWrapperInstance)) throw new Win32Exception();
+                if (!hWrapperInstance.FreeLibrary()) throw new Win32Exception();
             }
             hooked = false;
         }
@@ -201,10 +201,6 @@ namespace ManagedWinapi.Hooks
 
         [DllImport("ManagedWinapiNativeHelper.dll")]
         private static extern bool FreeHookWrapper(IntPtr wrapper);
-
-		private static IntPtr LoadLibrary(string dllname) => Marshaler.LoadLibrary(dllname);
-
-		private static bool FreeLibrary(IntPtr hModule) => Marshaler.FreeLibrary(hModule);
 
         private delegate int HookProc(int code, IntPtr wParam, IntPtr lParam);
 

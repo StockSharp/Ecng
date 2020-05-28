@@ -582,13 +582,11 @@
 		}
 
 		public static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
-			where TValue : new()
 		{
 			return dictionary.SafeAdd(key, out _);
 		}
 
         private static class FastActivatorCache<TKey, TValue>
-			where TValue : new()
         {
             public static readonly Func<TKey, TValue> Activator; 
 
@@ -599,7 +597,6 @@
         }
 
         public static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, out bool isNew)
-			where TValue : new()
 		{
 			return dictionary.SafeAdd(key, FastActivatorCache<TKey,TValue>.Activator, out isNew);
 		}
