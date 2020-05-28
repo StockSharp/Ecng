@@ -238,7 +238,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
 
             var moveSign = Math.Sign(mousePos.Y);
 
-            var speedFraction = moveSign > 0 ? 
+            var speedFraction = moveSign > 0 ?
                 Math.Min(1, (mousePos.Y - canvas.ActualHeight) / canvas.ActualHeight) :
                 Math.Min(1, -mousePos.Y / canvas.ActualHeight);
 
@@ -283,7 +283,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
 
                 SetBasePoint(point, idx, XAxis, YAxis);
 
-                RaiseAnnotationDragging(0, point.Y - DragStartPoint.Y);
+                RaiseAnnotationDragging(0, point.Y - DragStartPoint.Y, IsDraggingByUser, false);
             }
         }
 
@@ -298,7 +298,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
             // Compute new coordinates in pixels
             var y1 = coordinates.Y1Coord + vertOffset;
 
-            // If any are out of bounds ... 
+            // If any are out of bounds ...
             if (IsDraggingByUser && !IsCoordinateValid(y1, canvas.ActualHeight))
             {
                 if(axis.AutoRange == AutoRange.Always)
@@ -500,7 +500,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations {
 
             public override void PlaceAnnotation(AnnotationCoordinates coordinates) {
                 var canvas = Annotation.GetCanvas(Annotation.AnnotationCanvas);
-                
+
                 var y = coordinates.Y1Coord;
 
                 if(!y.IsRealNumber() || canvas == null)

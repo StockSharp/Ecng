@@ -1,16 +1,16 @@
 ﻿// *************************************************************************************
 // ULTRACHART™ © Copyright ulc software Services Ltd. 2011-2014. All rights reserved.
-//  
+//
 // Web: http://www.ultrachart.com
 // Support: support@ultrachart.com
-// 
-// AnnotationCollection.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart. 
+//
+// AnnotationCollection.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart.
 // For full terms and conditions of the license, see http://www.ultrachart.com/ultrachart-eula/
-// 
+//
 // This source code is protected by international copyright law. Unauthorized
 // reproduction, reverse-engineering, or distribution of all or any portion of
 // this source code is strictly prohibited.
-// 
+//
 // This source code contains confidential and proprietary trade secrets of
 // ulc software Services Ltd., and should at no time be copied, transferred, sold,
 // distributed or made available without express written permission.
@@ -39,7 +39,7 @@ using MoreLinq;
 namespace Ecng.Xaml.Charting.Visuals.Annotations
 {
     /// <summary>
-    /// Contains a collection of <see cref="IAnnotation"/> derived types, which allow custom drawing elements 
+    /// Contains a collection of <see cref="IAnnotation"/> derived types, which allow custom drawing elements
     /// over or under the parent <see cref="UltrachartSurface"/>
     /// </summary>
     [UltrachartLicenseProvider(typeof(AnnotationCollectionLicenseProvider))]
@@ -67,7 +67,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// Gets or sets the parent <see cref="UltrachartSurface"/> to perform operations on 
+        /// Gets or sets the parent <see cref="UltrachartSurface"/> to perform operations on
         /// </summary>
         public IUltrachartSurface ParentSurface
         {
@@ -94,8 +94,8 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// Subscribes the AnnotationCollection to events on the parent <see cref="UltrachartSurface"/>. 
-        /// Should be called internally by the Annotations API when attaching to a surface. 
+        /// Subscribes the AnnotationCollection to events on the parent <see cref="UltrachartSurface"/>.
+        /// Should be called internally by the Annotations API when attaching to a surface.
         /// </summary>
         /// <param name="parentSurface">The parent <see cref="UltrachartSurface"/></param>
         public void SubscribeSurfaceEvents(IUltrachartSurface parentSurface)
@@ -111,8 +111,8 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// Unsubscribes the AnnotationCollection to events on the parent <see cref="UltrachartSurface"/>. 
-        /// Should be called internally by the Annotations API when detaching from a surface. 
+        /// Unsubscribes the AnnotationCollection to events on the parent <see cref="UltrachartSurface"/>.
+        /// Should be called internally by the Annotations API when detaching from a surface.
         /// </summary>
         /// <param name="parentSurface">The parent <see cref="UltrachartSurface"/></param>
         public void UnsubscribeSurfaceEvents(IUltrachartSurface parentSurface)
@@ -131,7 +131,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             var oSrc = e.OriginalSource as Rectangle;
             if (oSrc != null && RenderSurfaceBase.RectIdentifier.Equals(oSrc.Tag))
             {
-                // Deselect all            
+                // Deselect all
                 DeselectAll();
                 e.Handled = true;
             }
@@ -213,7 +213,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
         private void Annotation_OnDragStarted(object sender, AnnotationDragEventArgs e)
         {
-            if(!e.IsPrimary || !(sender is IAnnotation ann))
+            if(!e.IsPrimary || e.IsResize || !(sender is IAnnotation ann))
                 return;
 
             var anns = this.Where(a => a != ann && a.IsSelected).ToArray();
@@ -222,7 +222,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
         private void Annotation_OnDragEnded(object sender, AnnotationDragEventArgs e)
         {
-            if(!e.IsPrimary || !(sender is IAnnotation ann))
+            if(!e.IsPrimary || e.IsResize || !(sender is IAnnotation ann))
                 return;
 
             var anns = this.Where(a => a != ann && a.IsSelected).ToArray();
@@ -231,7 +231,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
         private void Annotation_OnDragDelta(object sender, AnnotationDragDeltaEventArgs e)
         {
-            if(!e.IsPrimary || !(sender is IAnnotation ann))
+            if(!e.IsPrimary || e.IsResize || !(sender is IAnnotation ann))
                 return;
 
             var anns = this.Where(a => a != ann && a.IsSelected).ToArray();
@@ -288,7 +288,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 var xCoordinateCalculator = GetCoordinateCalculator(rpi.XCoordinateCalculators, annotation, annotation.XAxisId, true);
                 var yCoordinateCalculator = GetCoordinateCalculator(rpi.YCoordinateCalculators, annotation, annotation.YAxisId, false);
 
-                // SC-2533 allow update with null coordinate calculators then throw after, so that annotation is added to the parent surface 
+                // SC-2533 allow update with null coordinate calculators then throw after, so that annotation is added to the parent surface
                 // allowing bindings to propagate to the annotation
                 annotation.Update(xCoordinateCalculator, yCoordinateCalculator);
 
@@ -296,7 +296,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 {
                     rpi.Warnings.Add(String.Format("Could not draw an annotation of type {0}. XAxis with Id == {1} doesn't exist. Please ensure that the XAxisId property is set to a valid value.",
                             annotation.GetType(),
-                            annotation.XAxisId ?? "NULL"));                    
+                            annotation.XAxisId ?? "NULL"));
                 }
 
                 if (yCoordinateCalculator == null)
@@ -322,7 +322,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 return xCalc;
             }
 
-            // SC-2533 allow update with null coordinate calculators then throw after, so that annotation is added to the parent surface 
+            // SC-2533 allow update with null coordinate calculators then throw after, so that annotation is added to the parent surface
             // allowing bindings to propagate to the annotation
             return null;
         }

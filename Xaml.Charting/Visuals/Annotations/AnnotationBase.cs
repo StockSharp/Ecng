@@ -1,16 +1,16 @@
 ﻿// *************************************************************************************
 // ULTRACHART™ © Copyright ulc software Services Ltd. 2011-2014. All rights reserved.
-//  
+//
 // Web: http://www.ultrachart.com
 // Support: support@ultrachart.com
-// 
-// AnnotationBase.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart. 
+//
+// AnnotationBase.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart.
 // For full terms and conditions of the license, see http://www.ultrachart.com/ultrachart-eula/
-// 
+//
 // This source code is protected by international copyright law. Unauthorized
 // reproduction, reverse-engineering, or distribution of all or any portion of
 // this source code is strictly prohibited.
-// 
+//
 // This source code contains confidential and proprietary trade secrets of
 // ulc software Services Ltd., and should at no time be copied, transferred, sold,
 // distributed or made available without express written permission.
@@ -148,7 +148,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// </summary>
         public static readonly DependencyProperty ResizingGripsStyleProperty =
             DependencyProperty.Register("ResizingGripsStyle", typeof(Style), typeof(AnnotationBase), new PropertyMetadata(null));
-        
+
 
         private bool _isAttached;
         private bool _templateApplied;
@@ -163,7 +163,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         private bool _isMouseLeftDown;
         private bool _isResizable;
 
-        private DateTime _mouseLeftDownTimestamp;        
+        private DateTime _mouseLeftDownTimestamp;
 
         private AnnotationCoordinates _startDragAnnotationCoordinates;
 
@@ -195,12 +195,12 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// Occurs when <see cref="IAnnotation"/> becomes selected. 
+        /// Occurs when <see cref="IAnnotation"/> becomes selected.
         /// </summary>
         public event EventHandler Selected;
 
         /// <summary>
-        /// Occurs when <see cref="IAnnotation"/> becomes unselected. 
+        /// Occurs when <see cref="IAnnotation"/> becomes unselected.
         /// </summary>
         public event EventHandler Unselected;
 
@@ -276,7 +276,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// Gets or sets whether text can be edited on this <see cref="AnnotationBase"/>. 
+        /// Gets or sets whether text can be edited on this <see cref="AnnotationBase"/>.
         /// Supported by Text or label annotations only
         /// </summary>
         public bool CanEditText
@@ -354,7 +354,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// Gets or sets whether the current annotation is selected. When selected, an Adorner is placed over the annotation to allow dynamic resizing and dragging by the user. 
+        /// Gets or sets whether the current annotation is selected. When selected, an Adorner is placed over the annotation to allow dynamic resizing and dragging by the user.
         /// </summary>
         public bool IsSelected
         {
@@ -381,10 +381,10 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// Gets or sets the X1 Coordinate of the Annotation. 
-        /// 
+        /// Gets or sets the X1 Coordinate of the Annotation.
+        ///
         /// For <see cref="AnnotationCoordinateMode.Absolute"/>, this must be a data-value on the X-Axis such as a DateTime for <see cref="DateTimeAxis"/>, double for <see cref="NumericAxis"/> or integer index for <see cref="CategoryDateTimeAxis"/>.
-        /// 
+        ///
         /// For <see cref="AnnotationCoordinateMode.Relative"/>, this must be a double value between 0.0 and 1.0, where 0.0 is the far left of the XAxis and 1.0 is the far right.
         /// </summary>
         [TypeConverter(typeof(StringToAnnotationCoordinateConverter))]
@@ -395,10 +395,10 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// Gets or sets the X2 Coordinate of the Annotation. 
-        /// 
+        /// Gets or sets the X2 Coordinate of the Annotation.
+        ///
         /// For <see cref="AnnotationCoordinateMode.Absolute"/>, this must be a data-value on the X-Axis such as a DateTime for <see cref="DateTimeAxis"/>, double for <see cref="NumericAxis"/> or integer index for <see cref="CategoryDateTimeAxis"/>.
-        /// 
+        ///
         /// For <see cref="AnnotationCoordinateMode.Relative"/>, this must be a double value between 0.0 and 1.0, where 0.0 is the far left of the XAxis and 1.0 is the far right.
         /// </summary>
         [TypeConverter(typeof(StringToAnnotationCoordinateConverter))]
@@ -410,9 +410,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
         /// <summary>
         /// Gets or sets the Y1 Coordinate of the Annotation.
-        /// 
-        /// For <see cref="AnnotationCoordinateMode.Absolute"/>, this must be a data-value on the Y-Axis such as a double for <see cref="NumericAxis"/> 
-        /// 
+        ///
+        /// For <see cref="AnnotationCoordinateMode.Absolute"/>, this must be a data-value on the Y-Axis such as a double for <see cref="NumericAxis"/>
+        ///
         /// For <see cref="AnnotationCoordinateMode.Relative"/>, this must be a double value between 0.0 and 1.0, where 0.0 is the top of the YAxis and 1.0 is the bottom
         /// </summary>
         [TypeConverter(typeof(StringToAnnotationCoordinateConverter))]
@@ -423,10 +423,10 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// Gets or sets the Y2 Coordinate of the Annotation. 
-        /// 
-        /// For <see cref="AnnotationCoordinateMode.Absolute"/>, this must be a data-value on the Y-Axis such as a double for <see cref="NumericAxis"/> 
-        /// 
+        /// Gets or sets the Y2 Coordinate of the Annotation.
+        ///
+        /// For <see cref="AnnotationCoordinateMode.Absolute"/>, this must be a data-value on the Y-Axis such as a double for <see cref="NumericAxis"/>
+        ///
         /// For <see cref="AnnotationCoordinateMode.Relative"/>, this must be a double value between 0.0 and 1.0, where 0.0 is the top of the YAxis and 1.0 is the bottom
         /// </summary>
         [TypeConverter(typeof(StringToAnnotationCoordinateConverter))]
@@ -455,7 +455,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             _isPrimaryDrag = isPrimaryDrag;
 
             var canvas = GetCanvas(AnnotationCanvas);
-            
+
             var yCalc = YAxis?.GetCurrentCoordinateCalculator();
             var xCalc = XAxis?.GetCurrentCoordinateCalculator();
 
@@ -463,7 +463,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             OnDragStarted();
 
-            DragStarted?.Invoke(this, new AnnotationDragEventArgs(isPrimaryDrag));
+            RaiseAnnotationDragStarted(_isPrimaryDrag, false);
         }
 
         /// <summary>
@@ -476,7 +476,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             var primary = _isPrimaryDrag;
             _isDragging = _isPrimaryDrag = false;
 
-            DragEnded?.Invoke(this, new AnnotationDragEventArgs(primary));
+            RaiseAnnotationDragEnded(primary, false);
         }
 
         /// <summary>
@@ -494,7 +494,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             OnDragDelta(hOffset, vOffset);
 
-            RaiseAnnotationDragging(hOffset, vOffset);
+            RaiseAnnotationDragging(hOffset, vOffset, _isPrimaryDrag, false);
         }
 
         public virtual bool CanMultiSelect(IAnnotation[] annotations)
@@ -635,7 +635,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         /// Remove focus from input text area. Applicable only for Text and label annotation
         /// </summary>
         protected virtual void RemoveFocusInputTextArea()
-        { 
+        {
         }
 
         /// <summary>
@@ -669,7 +669,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             }
 
             Refresh();
-            
+
             PerformFocusOnInputTextArea();
         }
 
@@ -924,7 +924,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         {
             Visibility = Visibility.Visible;
 
-            // This check is required for Silvelight - 
+            // This check is required for Silvelight -
             // annotation has to be added to VisualTree (placed on Canvas),
             // then ApplyTemplate is called and then we can do calculations
             // in PlaceAnnotation(...)
@@ -1022,7 +1022,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// DependencyProperty changed handler which can be used to refresh the annotation on property and position changed 
+        /// DependencyProperty changed handler which can be used to refresh the annotation on property and position changed
         /// </summary>
         protected static void OnAnnotationPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -1031,7 +1031,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// Updates the position and values of the annotation during a drag or resize operation, by setting X1,Y1,X2,Y2 and X,Y pixel coordinates together, 
+        /// Updates the position and values of the annotation during a drag or resize operation, by setting X1,Y1,X2,Y2 and X,Y pixel coordinates together,
         /// from a pixel coordinate input
         /// </summary>
         /// <param name="point1">The first input pixel coordinate</param>
@@ -1142,7 +1142,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             return result;
         }
-        
+
         /// <summary>
         /// Converts a data value to pixel coordinate
         /// </summary>
@@ -1246,7 +1246,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             //find ticks range difference
             var dateDiff = upperDate.ToDouble() - lowerDate.ToDouble();
-            //find relative coef 
+            //find relative coef
             var coef = (dataValue.ToDouble() - lowerDate.ToDouble()) / dateDiff;
 
             //find coords of upper and lower values
@@ -1290,7 +1290,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// This method is used internally by the <see cref="AnnotationDragAdorner"/>. Programmatically moves the annotation by an X,Y offset. 
+        /// This method is used internally by the <see cref="AnnotationDragAdorner"/>. Programmatically moves the annotation by an X,Y offset.
         /// </summary>
         /// <param name="horizOffset">The horizontal offset to move in pixels</param>
         /// <param name="vertOffset">The vertical offset to move in pxiels</param>
@@ -1302,7 +1302,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             if(XAxis == null || YAxis == null)
                 return;
-            
+
             var yCalc = YAxis.GetCurrentCoordinateCalculator();
             var xCalc = XAxis.GetCurrentCoordinateCalculator();
 
@@ -1384,8 +1384,8 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         }
 
         /// <summary>
-        /// Called internally to marshal pixel points to X1,Y1,X2,Y2 values. 
-        /// Taking a pixel point (<paramref name="newPoint"/>) and base point <paramref name="index"/>, sets the X,Y data-values. 
+        /// Called internally to marshal pixel points to X1,Y1,X2,Y2 values.
+        /// Taking a pixel point (<paramref name="newPoint"/>) and base point <paramref name="index"/>, sets the X,Y data-values.
         /// </summary>
         /// <param name="newPoint">The pixel point</param>
         /// <param name="index">The base point index, where 0, 1, 2, 3 refer to the four corners of an Annotation</param>
@@ -1404,7 +1404,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
         /// <summary>
         /// Used internally to derive the X1Property, Y1Property, X1Property, Y2Property pair for the given index around the annotation..
-        /// 
+        ///
         /// e.g. index 0 returns X1,Y1
         /// index 1 returns X2,Y1
         /// index 2 returns X2,Y2
@@ -1549,13 +1549,14 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             }
         }
 
-        /// <summary>
-        /// Initiates the DragDelta event
-        /// </summary>
-        protected void RaiseAnnotationDragging(double hOffset, double vOffset)
-        {
-            DragDelta?.Invoke(this, new AnnotationDragDeltaEventArgs(_isPrimaryDrag, hOffset, vOffset));
-        }
+        /// <summary>Initiates the DragStarted event</summary>
+        internal void RaiseAnnotationDragStarted(bool isPrimaryDrag, bool isResize) => DragStarted?.Invoke(this, new AnnotationDragEventArgs(isPrimaryDrag, isResize));
+
+        /// <summary>Initiates the DragEnded event</summary>
+        internal void RaiseAnnotationDragEnded(bool isPrimaryDrag, bool isResize) => DragEnded?.Invoke(this, new AnnotationDragEventArgs(isPrimaryDrag, isResize));
+
+        /// <summary>Initiates the DragDelta event</summary>
+        internal void RaiseAnnotationDragging(double hOffset, double vOffset, bool isPrimaryDrag, bool isResize) => DragDelta?.Invoke(this, new AnnotationDragDeltaEventArgs(isPrimaryDrag, isResize, hOffset, vOffset));
 
         private static void OnIsSelectedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -1591,7 +1592,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         private static void OnIsHiddenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var annotation = d as AnnotationBase;
-            
+
             if (annotation != null && annotation.IsAttached)
             {
                 if ((bool)e.NewValue)
@@ -1647,7 +1648,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 ((AnnotationBase)d).Refresh();
             }
         }
-        
+
         /// <summary>
         /// Gets a value indicating whether updates for the target are currently suspended
         /// </summary>
@@ -1674,7 +1675,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
         public void ResumeUpdates(IUpdateSuspender updateSuspender)
         {
             if (updateSuspender.ResumeTargetOnDispose)
-                Refresh();  
+                Refresh();
         }
 
         /// <summary>
@@ -1740,7 +1741,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
 
             public override void PlaceAnnotation(AnnotationCoordinates coordinates)
             {
-                
+
             }
 
             public override Point[] GetBasePoints(AnnotationCoordinates coordinates)
@@ -1776,7 +1777,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 var y1 = coordinates.Y1Coord + vertOffset;
                 var y2 = coordinates.Y2Coord + vertOffset;
 
-                // If any are out of bounds ... 
+                // If any are out of bounds ...
                 if (!IsCoordinateValid(x1, canvas.ActualWidth) || !IsCoordinateValid(y1, canvas.ActualHeight) ||
                     !IsCoordinateValid(x2, canvas.ActualWidth) || !IsCoordinateValid(y2, canvas.ActualHeight))
                 {
@@ -1798,7 +1799,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 coordinates.X2Coord = coordinates.X2Coord + horizOffset;
                 coordinates.Y1Coord = coordinates.Y1Coord + vertOffset;
                 coordinates.Y2Coord = coordinates.Y2Coord + vertOffset;
-                
+
                 // Update corners
                 Annotation.SetBasePoint(new Point(coordinates.X1Coord, coordinates.Y1Coord), 0, Annotation.XAxis, Annotation.YAxis);
                 Annotation.SetBasePoint(new Point(coordinates.X2Coord, coordinates.Y2Coord), 2, Annotation.XAxis, Annotation.YAxis);
@@ -1935,7 +1936,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
                 var y1 = coordinates.Y1Coord + x1y1Offset.Y;
                 var y2 = coordinates.Y2Coord + x2y2Offset.Y;
 
-                // If any are out of bounds ... 
+                // If any are out of bounds ...
                 if (!IsCoordinateValid(x1, canvasSize.Width) || !IsCoordinateValid(y1, canvasSize.Height) ||
                     !IsCoordinateValid(x2, canvasSize.Width) || !IsCoordinateValid(y2, canvasSize.Height))
                 {

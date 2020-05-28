@@ -1,6 +1,4 @@
-﻿using System;
-using System.Windows;
-using Ecng.Xaml.Charting.Visuals.Annotations;
+﻿using Ecng.Xaml.Charting.Visuals.Annotations;
 
 namespace Ecng.Xaml.Charting
 {
@@ -12,7 +10,7 @@ namespace Ecng.Xaml.Charting
         /// <summary>
         /// Initializes a new instance of the <see cref="AnnotationDragDeltaEventArgs" /> class.
         /// </summary>
-        public AnnotationDragDeltaEventArgs(bool isPrimary, double horizontalOffset, double verticalOffset) : base(isPrimary)
+        public AnnotationDragDeltaEventArgs(bool isPrimary, bool isResize, double horizontalOffset, double verticalOffset) : base(isPrimary, isResize)
         {
             HorizontalOffset = horizontalOffset;
             VerticalOffset = verticalOffset;
@@ -21,10 +19,10 @@ namespace Ecng.Xaml.Charting
         /// <summary>
         /// Gets / Sets HorizontalOffset property
         /// </summary>
-        public double HorizontalOffset { get; set; }
+        public double HorizontalOffset { get; }
         /// <summary>
         /// Gets / Sets VerticalOffset property
         /// </summary>
-        public double VerticalOffset { get; set; }
+        public double VerticalOffset { get; }
     }
 }

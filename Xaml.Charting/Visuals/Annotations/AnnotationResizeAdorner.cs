@@ -1,16 +1,16 @@
 ﻿// *************************************************************************************
 // ULTRACHART™ © Copyright ulc software Services Ltd. 2011-2014. All rights reserved.
-//  
+//
 // Web: http://www.ultrachart.com
 // Support: support@ultrachart.com
-// 
-// AnnotationResizeAdorner.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart. 
+//
+// AnnotationResizeAdorner.cs is part of Ultrachart, a High Performance WPF & Silverlight Chart.
 // For full terms and conditions of the license, see http://www.ultrachart.com/ultrachart-eula/
-// 
+//
 // This source code is protected by international copyright law. Unauthorized
 // reproduction, reverse-engineering, or distribution of all or any portion of
 // this source code is strictly prohibited.
-// 
+//
 // This source code contains confidential and proprietary trade secrets of
 // ulc software Services Ltd., and should at no time be copied, transferred, sold,
 // distributed or made available without express written permission.
@@ -42,7 +42,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
     internal class AnnotationResizeAdorner: AdornerBase, IAnnotationResizeAdorner
     {
         private readonly List<Thumb> _adornerMarkers = new List<Thumb>();
-        
+
         private Point[] _points;
 
 #if SILVERLIGHT
@@ -90,6 +90,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             var marker = sender as Thumb;
             marker.ReleaseMouseCapture();
             //Debug.WriteLine("Release Capture Annotation Marker");
+
+            if (AdornedAnnotation is AnnotationBase ann && ann.IsEditable)
+                ann.RaiseAnnotationDragEnded(true, true);
         }
 
         private void OnDragMarkerStarted(object sender, DragStartedEventArgs e)
@@ -97,6 +100,9 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             var marker = sender as Thumb;
             marker.CaptureMouse();
             //Debug.WriteLine("Capturing Annotation Marker");
+
+            if (AdornedAnnotation is AnnotationBase ann && ann.IsEditable)
+                ann.RaiseAnnotationDragStarted(true, true);
         }
 
         public override void Clear()
@@ -176,7 +182,7 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             int changedAtIndex = _adornerMarkers.IndexOf(marker);
 
             _horizontalChange = e.HorizontalChange;
-            _verticalChange = e.VerticalChange; 
+            _verticalChange = e.VerticalChange;
 
             double offsetX = annotation.ResizeDirections == XyDirection.YDirection ? 0 : _horizontalChange;
             double offsetY = annotation.ResizeDirections == XyDirection.XDirection ? 0 : _verticalChange;
@@ -193,6 +199,8 @@ namespace Ecng.Xaml.Charting.Visuals.Annotations
             {
                 annotation.MoveAnnotation(offsetX, offsetY);
             }
+
+            (annotation as AnnotationBase)?.RaiseAnnotationDragging(0, 0, true, true);
         }
 
         /// <summary>

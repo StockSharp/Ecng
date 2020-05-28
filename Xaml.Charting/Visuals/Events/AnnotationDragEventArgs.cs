@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Ecng.Xaml.Charting
 {
@@ -11,15 +7,21 @@ namespace Ecng.Xaml.Charting
         /// <summary>
         /// Initializes a new instance of the <see cref="AnnotationDragEventArgs" /> class.
         /// </summary>
-        public AnnotationDragEventArgs(bool isPrimary)
+        public AnnotationDragEventArgs(bool isPrimary, bool isResize)
         {
             IsPrimary = isPrimary;
+            IsResize = isResize;
         }
 
         /// <summary>
         /// whether this is related to annotation user is dragging with his mouse.
         /// otherwise, this event is for annotation in multiselect group.
         /// </summary>
-        public bool IsPrimary { get; set; }
+        public bool IsPrimary { get; }
+
+        /// <summary>
+        /// whether this is adorner resize operation.
+        /// </summary>
+        public bool IsResize { get; }
     }
 }
