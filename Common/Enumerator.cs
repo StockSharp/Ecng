@@ -44,7 +44,6 @@
 		}
 
 		public static IEnumerable<T> ExcludeObsolete<T>(this IEnumerable<T> values)
-			where T : Enum
 		{
 			return values.Where(v => v.GetAttributeOfType<ObsoleteAttribute>() != null);
 		}
@@ -149,7 +148,7 @@
 		/// <typeparam name="TAttribute">The type of the attribute you want to retrieve</typeparam>
 		/// <param name="enumVal">The enum value</param>
 		/// <returns>The attribute of type <typeparam name="TAttribute" /> that exists on the enum value</returns>
-		public static TAttribute GetAttributeOfType<TAttribute>(this Enum enumVal)
+		public static TAttribute GetAttributeOfType<TAttribute>(this object enumVal)
 			where TAttribute : Attribute
 		{
 			if (enumVal == null)
