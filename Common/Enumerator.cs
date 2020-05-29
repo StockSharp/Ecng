@@ -45,7 +45,7 @@
 
 		public static IEnumerable<T> ExcludeObsolete<T>(this IEnumerable<T> values)
 		{
-			return values.Where(v => v.GetAttributeOfType<ObsoleteAttribute>() != null);
+			return values.Where(v => v.GetAttributeOfType<ObsoleteAttribute>() == null);
 		}
 
 		public static IEnumerable<object> GetValues(this Type enumType)
