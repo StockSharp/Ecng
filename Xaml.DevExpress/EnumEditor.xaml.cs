@@ -28,6 +28,7 @@
 		}
 
 		public bool Sorted { get; set; }
+		public bool IncludeObsolete { get; set; }
 
 		/// <summary>
 		/// <para>
@@ -69,6 +70,9 @@
 				cbe = new ComboBoxEdit();
 
 			var values = type.GetValues();
+
+			if (!IncludeObsolete)
+				values = values.ExcludeObsolete();
 
 			if (Sorted)
 			{
