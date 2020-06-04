@@ -13,9 +13,9 @@ namespace Ecng.Interop
 				throw new ArgumentNullException(nameof(dllPath));
 
 			DllPath = dllPath;
-			DllVersion = FileVersionInfo.GetVersionInfo(DllPath).ProductVersion?.Replace(',', '.')?.RemoveSpaces()?.To<Version>();
+			Handler = Marshaler.LoadLibrary(dllPath);
 
-			Handler = Marshaler.LoadLibrary(DllPath);
+			DllVersion = FileVersionInfo.GetVersionInfo(dllPath).ProductVersion?.Replace(',', '.')?.RemoveSpaces()?.To<Version>();
 		}
 
 		public string DllPath { get; private set; }
