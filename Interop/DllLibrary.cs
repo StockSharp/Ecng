@@ -14,13 +14,12 @@ namespace Ecng.Interop
 
 			DllPath = dllPath;
 			Handler = Marshaler.LoadLibrary(dllPath);
-
-			DllVersion = FileVersionInfo.GetVersionInfo(dllPath).ProductVersion?.Replace(',', '.')?.RemoveSpaces()?.To<Version>();
 		}
 
 		public string DllPath { get; private set; }
 
-		public Version DllVersion { get; private set; }
+		private Version _dllVersion;
+		public Version DllVersion => _dllVersion ?? (_dllVersion = FileVersionInfo.GetVersionInfo(DllPath).ProductVersion?.Replace(',', '.')?.RemoveSpaces()?.To<Version>());
 
 		protected IntPtr Handler { get; }
 
