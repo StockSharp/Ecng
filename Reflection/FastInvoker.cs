@@ -16,6 +16,123 @@ namespace Ecng.Reflection
 
 	public abstract class FastInvoker
 	{
+		private class ReflectionFastInvoker : FastInvoker
+		{
+			private readonly bool? _isGetter;
+			private ParameterInfo[] _parameters;
+
+			public ReflectionFastInvoker(MemberInfo member, bool? isGetter)
+				: base(member)
+			{
+				_isGetter = isGetter;
+			}
+
+			private object Invoke(object instance, object arg)
+			{
+				if (Member is MethodInfo method)
+				{
+					if (_parameters == null)
+						_parameters = method.GetParameters();
+
+					if (_parameters.Length == 0)
+						arg = ArrayHelper.Empty<object>();
+					
+					return method.Invoke(instance, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance, null, arg is object[] arr ? arr : new[] { arg }, null);
+				}
+				else if (Member is ConstructorInfo ctor)
+				{
+					if (_parameters == null)
+						_parameters = ctor.GetParameters();
+
+					if (_parameters.Length == 0)
+						arg = ArrayHelper.Empty<object>();
+
+					return ctor.Invoke(arg is object[] arr ? arr : new[] { arg });
+				}
+				else if (Member is FieldInfo field)
+				{
+					switch (_isGetter)
+					{
+						case true:
+							return field.GetValue(instance);
+						case false:
+							field.SetValue(instance, arg);
+							return null;
+						default:
+							throw new InvalidOperationException();
+					}
+				}
+				else if (Member is PropertyInfo prop)
+				{
+					switch (_isGetter)
+					{
+						case true:
+						{
+							return prop.GetValue(instance, arg == null ? ArrayHelper.Empty<object>() : (arg is object[] arr ? arr : new[] { arg }));
+						}
+						case false:
+						{
+							//if (prop.IsIndexer())
+							//	prop.SetValue(instance, args[0], args.Skip(1).ToArray());
+							//else
+							prop.SetValue(instance, arg is object[] arr ? arr[0] : arg);
+
+							return null;
+						}
+						default:
+							throw new InvalidOperationException();
+					}
+				}
+				else
+					throw new NotSupportedException(Member.GetType().ToString());
+			}
+
+			public override object Ctor(object arg)
+			{
+				return Invoke(null, arg);
+			}
+
+			public override object GetValue(object instance)
+			{
+				return Invoke(instance, null);
+			}
+
+			public override object ReturnInvoke(object arg)
+			{
+				return Invoke(null, arg);
+			}
+
+			public override object ReturnInvoke(object instance, object arg)
+			{
+				return Invoke(instance, arg);
+			}
+
+			public override void SetValue(object arg)
+			{
+				Invoke(null, arg);
+			}
+
+			public override object SetValue(object instance, object arg)
+			{
+				return Invoke(instance, arg);
+			}
+
+			public override object StaticGetValue()
+			{
+				return Invoke(null, null);
+			}
+
+			public override void VoidInvoke(object arg)
+			{
+				Invoke(null, arg);
+			}
+
+			public override void VoidInvoke(object instance, object arg)
+			{
+				Invoke(instance, arg);
+			}
+		}
+
 		#region Private Fields
 
 		private readonly static Dictionary<MemberInfo, FastInvoker> _getValueInvokeDelegates = new Dictionary<MemberInfo, FastInvoker>();
@@ -28,10 +145,7 @@ namespace Ecng.Reflection
 
 		protected FastInvoker(MemberInfo member)
 		{
-			if (member == null)
-				throw new ArgumentNullException(nameof(member));
-
-			Member = member;
+			Member = member ?? throw new ArgumentNullException(nameof(member));
 		}
 
 		#endregion
@@ -87,6 +201,8 @@ namespace Ecng.Reflection
 
 		#region CreateCore
 
+		private static bool _dynMethodNotSupported;
+
 		private static FastInvoker CreateCore(MemberInfo member, bool? isGetter)
 		{
 			if (member == null)
@@ -94,82 +210,93 @@ namespace Ecng.Reflection
 
 			return GetCache(member, isGetter).SafeAdd(member, delegate
 			{
-				var method = member as MethodInfo;
-				var ctor = member as ConstructorInfo;
-				//FieldInfo field = member as FieldInfo;
-				var property = member as PropertyInfo;
+				if (_dynMethodNotSupported)
+					return new ReflectionFastInvoker(member, isGetter);
 
-				if (member is EventInfo evt)
+				try
 				{
-					method = isGetter == false ? evt.GetAddMethod(true) : evt.GetRemoveMethod(true);
-				}
-				else if (property != null && member.IsIndexer())
-				{
-					method = isGetter == true ? property.GetGetMethod(true) : property.GetSetMethod(true);
-				}
+					var method = member as MethodInfo;
+					var ctor = member as ConstructorInfo;
+					//FieldInfo field = member as FieldInfo;
+					var property = member as PropertyInfo;
 
-				Type returnType;
-				Type instanceType;
-				Type argType;
-
-				Type memberType = member.GetMemberType();
-
-				if (ctor != null || member.IsStatic())
-					instanceType = typeof(VoidType);
-				else
-					instanceType = member.ReflectedType;
-
-				if (member is MethodBase mb)
-				{
-					var parameters = mb.GetParameters();
-
-					if (parameters.Length == 1 && !parameters[0].IsOutput())
-						argType = parameters[0].ParameterType;
-					else
-						argType = typeof(object[]);
-
-					if (ctor == null)
-						returnType = memberType != typeof(void) ? memberType : typeof(VoidType);
-					else
-						returnType = ctor.ReflectedType;
-				}
-				else
-				{
-					if (member.IsIndexer())
+					if (member is EventInfo evt)
 					{
-						if (isGetter == true)
-						{
-							argType = property.GetIndexerType();
-							returnType = memberType;
-						}
+						method = isGetter == false ? evt.GetAddMethod(true) : evt.GetRemoveMethod(true);
+					}
+					else if (property != null && member.IsIndexer())
+					{
+						method = isGetter == true ? property.GetGetMethod(true) : property.GetSetMethod(true);
+					}
+
+					Type returnType;
+					Type instanceType;
+					Type argType;
+
+					Type memberType = member.GetMemberType();
+
+					if (ctor != null || member.IsStatic())
+						instanceType = typeof(VoidType);
+					else
+						instanceType = member.ReflectedType;
+
+					if (member is MethodBase mb)
+					{
+						var parameters = mb.GetParameters();
+
+						if (parameters.Length == 1 && !parameters[0].IsOutput())
+							argType = parameters[0].ParameterType;
 						else
-						{
 							argType = typeof(object[]);
-							returnType = typeof(VoidType);
-						}
+
+						if (ctor == null)
+							returnType = memberType != typeof(void) ? memberType : typeof(VoidType);
+						else
+							returnType = ctor.ReflectedType;
 					}
 					else
 					{
-						if (isGetter == true)
+						if (member.IsIndexer())
 						{
-							argType = typeof(VoidType);
-							returnType = memberType;
+							if (isGetter == true)
+							{
+								argType = property.GetIndexerType();
+								returnType = memberType;
+							}
+							else
+							{
+								argType = typeof(object[]);
+								returnType = typeof(VoidType);
+							}
 						}
 						else
 						{
-							argType = memberType;
-							returnType = typeof(VoidType);
+							if (isGetter == true)
+							{
+								argType = typeof(VoidType);
+								returnType = memberType;
+							}
+							else
+							{
+								argType = memberType;
+								returnType = typeof(VoidType);
+							}
 						}
 					}
+
+					var dlgType = GetDelegateType(member, isGetter).Make(instanceType, argType, returnType);
+					var dlg = CreateDelegate(dlgType, instanceType, argType, ctor, method, member, isGetter);
+
+					return (FastInvoker)typeof(FastInvoker<,,>)
+						.Make(dlgType.GetGenericArguments())
+						.GetMember<ConstructorInfo>(typeof(MemberInfo), typeof(Delegate))
+						.Invoke(new object[] { member, dlg });
 				}
-
-				var dlgType = GetDelegateType(member, isGetter).Make(instanceType, argType, returnType);
-				var dlg = CreateDelegate(dlgType, instanceType, argType, ctor, method, member, isGetter);
-
-				return (FastInvoker)typeof(FastInvoker<,,>)
-					.Make(dlgType.GetGenericArguments())
-					.GetMember<ConstructorInfo>(typeof(MemberInfo), typeof(Delegate))
-					.Invoke(new object[] { member, dlg });
+				catch (PlatformNotSupportedException)
+				{
+					_dynMethodNotSupported = true;
+					return new ReflectionFastInvoker(member, isGetter);
+				}
 			});
 		}
 
@@ -459,24 +586,24 @@ namespace Ecng.Reflection
 			if (callback == null)
 				throw new ArgumentNullException(nameof(callback));
 
-			if (callback is CtorCallback)
-				_ctor = (CtorCallback)callback;
-			else if (callback is ReturnMethodCallback)
-				_returnMethod = (ReturnMethodCallback)callback;
-			else if (callback is VoidMethodCallback)
-				_voidMethod = (VoidMethodCallback)callback;
-			else if (callback is GetValueCallback)
-				_getValue = (GetValueCallback)callback;
-			else if (callback is SetValueCallback)
-				_setValue = (SetValueCallback)callback;
-			else if (callback is StaticReturnMethodCallback)
-				_staticReturnMethod = (StaticReturnMethodCallback)callback;
-			else if (callback is StaticVoidMethodCallback)
-				_staticVoidMethod = (StaticVoidMethodCallback)callback;
-			else if (callback is StaticGetValueCallback)
-				_staticGetValue = (StaticGetValueCallback)callback;
-			else if (callback is StaticSetValueCallback)
-				_staticSetValue = (StaticSetValueCallback)callback;
+			if (callback is CtorCallback cb1)
+				_ctor = cb1;
+			else if (callback is ReturnMethodCallback cb2)
+				_returnMethod = cb2;
+			else if (callback is VoidMethodCallback cb3)
+				_voidMethod = cb3;
+			else if (callback is GetValueCallback cb4)
+				_getValue = cb4;
+			else if (callback is SetValueCallback cb5)
+				_setValue = cb5;
+			else if (callback is StaticReturnMethodCallback cb6)
+				_staticReturnMethod = cb6;
+			else if (callback is StaticVoidMethodCallback cb7)
+				_staticVoidMethod = cb7;
+			else if (callback is StaticGetValueCallback cb8)
+				_staticGetValue = cb8;
+			else if (callback is StaticSetValueCallback cb9)
+				_staticSetValue = cb9;
 		}
 
 		private FastInvoker(FastInvoker invoker)
