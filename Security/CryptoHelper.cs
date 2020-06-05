@@ -210,7 +210,7 @@ namespace Ecng.Security
 
 								if (plainTextBytes.Length > decryptedByteCount)
 									Array.Resize(ref plainTextBytes, decryptedByteCount);
-								
+
 								return plainTextBytes;
 							}
 						}
@@ -218,6 +218,54 @@ namespace Ecng.Security
 				}
 			}
 		}
+
+		private static byte[] TransformAes(bool isEncrypt, byte[] inputBytes, string passPhrase, byte[] salt, byte[] iv)
+		{
+			if (inputBytes == null)
+				throw new ArgumentNullException(nameof(inputBytes));
+
+			if (passPhrase.IsEmpty())
+				throw new ArgumentNullException(nameof(passPhrase));
+
+			using (var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations))
+			{
+				var keyBytes = password.GetBytes(_keySize / 8);
+
+				using (var aes = new AesManaged {Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7})
+				{
+					if (isEncrypt)
+					{
+						using(var encryptor = aes.CreateEncryptor(keyBytes, iv))
+						using(var memoryStream = new MemoryStream())
+						using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
+						{
+							cryptoStream.Write(inputBytes, 0, inputBytes.Length);
+							cryptoStream.FlushFinalBlock();
+							return memoryStream.ToArray();
+						}
+					}
+					else
+					{
+						using(var decryptor = aes.CreateDecryptor(keyBytes, iv))
+						using(var memoryStream = new MemoryStream(inputBytes))
+						using (var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read))
+						{
+							var plainTextBytes = new byte[inputBytes.Length];
+							var decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
+
+							if (plainTextBytes.Length > decryptedByteCount)
+								Array.Resize(ref plainTextBytes, decryptedByteCount);
+
+							return plainTextBytes;
+						}
+					}
+				}
+			}
+		}
+
+		public static byte[] EncryptAes(this byte[] plain, string passPhrase, byte[] salt, byte[] iv) => TransformAes(true, plain, passPhrase, salt, iv);
+
+		public static byte[] DecryptAes(this byte[] cipherText, string passPhrase, byte[] salt, byte[] iv) => TransformAes(false, cipherText, passPhrase, salt, iv);
 
 		private static string Hash(this byte[] value, HashAlgorithm algo)
 		{

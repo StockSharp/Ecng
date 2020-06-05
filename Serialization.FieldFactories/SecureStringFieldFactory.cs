@@ -9,12 +9,8 @@ namespace Ecng.Serialization
 
 	public class SecureStringFieldFactory : FieldFactory<SecureString, byte[]>
 	{
-		private static readonly DpapiCryptographer _cryptographer;
-
-		static SecureStringFieldFactory()
-		{
-			_cryptographer = new DpapiCryptographer(DataProtectionScope.CurrentUser);
-		}
+		static string Key = "RClVEDn0O3EUsKqym1qd";
+		static readonly byte[] Salt = "12345678".To<byte[]>();
 
 		public static byte[] Entropy { get; set; }
 
@@ -28,7 +24,13 @@ namespace Ecng.Serialization
 			try
 			{
 				if (Scope<ContinueOnExceptionContext>.Current?.Value.DoNotEncrypt != true)
-					source = _cryptographer.Decrypt(source, Entropy);
+				{
+					var salt = Entropy ?? Salt;
+					if(salt.Length != 16)
+						throw new InvalidOperationException("salt/entropy must be 16 bytes");
+
+					source = source.DecryptAes(Key, salt, salt);
+				}
 
 				return source.To<string>().Secure();
 			}
@@ -36,7 +38,7 @@ namespace Ecng.Serialization
 			{
 				if (ContinueOnExceptionContext.TryProcess(ex))
 					return null;
-				
+
 				throw;
 			}
 		}
@@ -48,7 +50,11 @@ namespace Ecng.Serialization
 			if (Scope<ContinueOnExceptionContext>.Current?.Value.DoNotEncrypt == true)
 				return plainText;
 
-			return _cryptographer.Encrypt(plainText, Entropy);
+			var salt = Entropy ?? Salt;
+			if(salt.Length != 16)
+				throw new InvalidOperationException("salt/entropy must be 16 bytes");
+
+			return plainText.EncryptAes(Key, salt, salt);
 		}
 	}
 

@@ -206,6 +206,12 @@
 							{
 								type = asm.GetType(parts[0]);
 							}
+
+							if (type == null && parts[1].Trim() == "System.Private.CoreLib")
+							{
+								asm = typeof(string).Assembly;
+								type = asm.GetType(parts[0]);
+							}
 						}
 					}
 #endif
@@ -774,7 +780,7 @@
 
 							return parameters.Length == 1 && parameters[0].ParameterType == sourceType;
 						});
-				
+
 				//_castOperators.Add(key, method);
 			}
 
@@ -893,7 +899,7 @@
 			}
 
 			var result = new string(charArray, index + 1, bitsInLong - index - 1);
-			
+
 			if (decimalNumber < 0)
 				result = "-" + result;
 
