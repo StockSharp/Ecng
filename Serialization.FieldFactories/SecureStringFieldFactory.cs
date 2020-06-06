@@ -9,15 +9,23 @@ namespace Ecng.Serialization
 
 	public class SecureStringFieldFactory : FieldFactory<SecureString, byte[]>
 	{
-		static string Key = "RClVEDn0O3EUsKqym1qd";
-		static readonly byte[] Salt = "12345678".To<byte[]>();
-		private static readonly DpapiCryptographer _cryptographer;
+		private static readonly SecureString _key = "RClVEDn0O3EUsKqym1qd".Secure();
+		private static readonly byte[] _salt = "3hj67-!3".To<byte[]>();
+
+		private static readonly DpapiCryptographer _dpapi;
 
 		static SecureStringFieldFactory()
 		{
-			_cryptographer = new DpapiCryptographer(DataProtectionScope.CurrentUser);
+			try
+			{
+				_dpapi = new DpapiCryptographer(DataProtectionScope.CurrentUser);
+			}
+			catch
+			{
+			}
 		}
 
+		public static SecureString Key { get; set; }
 		public static byte[] Entropy { get; set; }
 
 		public SecureStringFieldFactory(Field field, int order)
@@ -31,23 +39,31 @@ namespace Ecng.Serialization
 			{
 				if (Scope<ContinueOnExceptionContext>.Current?.Value.DoNotEncrypt != true)
 				{
-					var salt = Entropy ?? Salt;
-					if(salt.Length != 16)
-						throw new InvalidOperationException("salt/entropy must be 16 bytes");
+					var key = EnsureGetKey();
+					var salt = EnsureGetSalt();
 
 					try
 					{
-						source = source.DecryptAes(Key, salt, salt);
+						source = source.DecryptAes(key, salt, salt);
 					}
-					catch (CryptographicException)
+					catch (CryptographicException ex)
 					{
+						if (_dpapi == null)
+							throw;
+
 						try
 						{
-							source = _cryptographer.Decrypt(source, Entropy);
+							source = _dpapi.Decrypt(source, Entropy);
+						}
+						catch (CryptographicException)
+						{
+							// throws original error
+							throw ex;
 						}
 						catch (PlatformNotSupportedException)
 						{
-							return null;
+							// throws original error
+							throw ex;
 						}
 					}
 				}
@@ -70,11 +86,30 @@ namespace Ecng.Serialization
 			if (Scope<ContinueOnExceptionContext>.Current?.Value.DoNotEncrypt == true)
 				return plainText;
 
-			var salt = Entropy ?? Salt;
-			if(salt.Length != 16)
-				throw new InvalidOperationException("salt/entropy must be 16 bytes");
+			var salt = EnsureGetSalt();
+			var key = EnsureGetKey();
 
-			return plainText.EncryptAes(Key, salt, salt);
+			return plainText.EncryptAes(key, salt, salt);
+		}
+
+		private static byte[] EnsureGetSalt()
+		{
+			var salt = Entropy ?? _salt;
+
+			if (salt.Length != 16)
+				throw new InvalidOperationException("Entropy must be 16 bytes.");
+
+			return salt;
+		}
+
+		private static string EnsureGetKey()
+		{
+			var key = Key ?? _key;
+
+			if (key.IsEmpty())
+				throw new InvalidOperationException("Key not specified.");
+
+			return key.UnSecure();
 		}
 	}
 
