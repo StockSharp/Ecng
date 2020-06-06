@@ -40,6 +40,20 @@ namespace Ecng.Test.Common
 		}
 
 		[TestMethod]
+		public void TypeCrossPlatform()
+		{
+			"System.Int32".To<Type>().AssertEqual(typeof(int));
+			"System.Int32, mscorlib".To<Type>().AssertEqual(typeof(int));
+			"System.Int32, mscorlib".ToLowerInvariant().To<Type>().AssertEqual(typeof(int));
+			"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089".To<Type>().AssertEqual(typeof(int));
+			"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089".ToLowerInvariant().To<Type>().AssertEqual(typeof(int));
+			"System.Int32, System.Private.CoreLib".To<Type>().AssertEqual(typeof(int));
+			"System.Int32, System.Private.CoreLib".ToLowerInvariant().To<Type>().AssertEqual(typeof(int));
+			"System.Int32, System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e".To<Type>().AssertEqual(typeof(int));
+			"System.Int32, System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e".ToLowerInvariant().To<Type>().AssertEqual(typeof(int));
+		}
+
+		[TestMethod]
 		public void FastTimeParser()
 		{
 			var date = new DateTime(2015, 5, 1);

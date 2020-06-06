@@ -198,7 +198,7 @@
 					if (type == null)
 					{
 						var parts = input.SplitBySep(", ");
-						if (parts.Length == 2)
+						if (parts.Length == 2 || parts.Length == 5)
 						{
 							var asm = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == parts[1]) ?? Assembly.LoadWithPartialName(parts[1]);
 
@@ -207,9 +207,9 @@
 								type = asm.GetType(parts[0]);
 							}
 
-							if (type == null && parts[1].Trim() == "System.Private.CoreLib")
+							if (type == null && parts[1].Trim().CompareIgnoreCase("System.Private.CoreLib"))
 							{
-								asm = typeof(string).Assembly;
+								asm = typeof(object).Assembly;
 								type = asm.GetType(parts[0]);
 							}
 						}
