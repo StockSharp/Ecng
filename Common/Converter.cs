@@ -207,7 +207,14 @@
 								type = asm.GetType(parts[0]);
 							}
 
-							if (type == null && parts[1].Trim().CompareIgnoreCase("System.Private.CoreLib"))
+							if (type == null && parts[1].Trim().CompareIgnoreCase(
+#if NETFRAMEWORK
+								"System.Private.CoreLib"
+#else
+								"mscorlib"
+#endif
+																				)
+							)
 							{
 								asm = typeof(object).Assembly;
 								type = asm.GetType(parts[0]);
