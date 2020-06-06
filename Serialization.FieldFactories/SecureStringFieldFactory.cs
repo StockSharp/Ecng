@@ -11,6 +11,12 @@ namespace Ecng.Serialization
 	{
 		static string Key = "RClVEDn0O3EUsKqym1qd";
 		static readonly byte[] Salt = "12345678".To<byte[]>();
+		private static readonly DpapiCryptographer _cryptographer;
+
+		static SecureStringFieldFactory()
+		{
+			_cryptographer = new DpapiCryptographer(DataProtectionScope.CurrentUser);
+		}
 
 		public static byte[] Entropy { get; set; }
 
@@ -29,7 +35,21 @@ namespace Ecng.Serialization
 					if(salt.Length != 16)
 						throw new InvalidOperationException("salt/entropy must be 16 bytes");
 
-					source = source.DecryptAes(Key, salt, salt);
+					try
+					{
+						source = source.DecryptAes(Key, salt, salt);
+					}
+					catch (CryptographicException)
+					{
+						try
+						{
+							source = _cryptographer.Decrypt(source, Entropy);
+						}
+						catch (PlatformNotSupportedException)
+						{
+							return null;
+						}
+					}
 				}
 
 				return source.To<string>().Secure();
