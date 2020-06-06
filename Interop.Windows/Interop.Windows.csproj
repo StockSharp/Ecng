@@ -20,39 +20,21 @@
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.0" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="ManagedWinapi\Accessibility\AccessibleObjectListener.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="ManagedWinapi\ClipboardNotifier.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="ManagedWinapi\Crosshair.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
+    <Compile Update="ManagedWinapi\Accessibility\AccessibleObjectListener.cs" />
+    <Compile Update="ManagedWinapi\ClipboardNotifier.cs" />
+    <Compile Update="ManagedWinapi\Crosshair.cs" />
     <Compile Update="ManagedWinapi\Crosshair.Designer.cs">
       <DependentUpon>Crosshair.cs</DependentUpon>
     </Compile>
-    <Compile Update="ManagedWinapi\Hooks\Hook.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="ManagedWinapi\Hooks\JournalHook.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="ManagedWinapi\Hooks\LowLevelHook.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="ManagedWinapi\Hotkey.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="ManagedWinapi\ShortcutBox.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Update="ManagedWinapi\Hooks\Hook.cs" />
+    <Compile Update="ManagedWinapi\Hooks\JournalHook.cs" />
+    <Compile Update="ManagedWinapi\Hooks\LowLevelHook.cs" />
+    <Compile Update="ManagedWinapi\Hotkey.cs" />
+    <Compile Update="ManagedWinapi\ShortcutBox.cs" />
     <Compile Update="ManagedWinapi\ShortcutBox.Designer.cs">
       <DependentUpon>ShortcutBox.cs</DependentUpon>
     </Compile>
-    <Compile Update="ManagedWinapi\TextCursorProvider.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Update="ManagedWinapi\TextCursorProvider.cs" />
     <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
