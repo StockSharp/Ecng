@@ -25,12 +25,12 @@ namespace Ecng.Common
 		public static bool IsNull<T>(this T value, bool checkValueTypeOnDefault)
 		{
 			if (!(value is ValueType))
-				return ReferenceEquals(value, null);
+				return value is null;
 
 			var defValue = default(T);
 
 			// T is object
-			if (ReferenceEquals(defValue, null))
+			if (defValue is null)
 				defValue = (T)Activator.CreateInstance(value.GetType());
 
 			return checkValueTypeOnDefault && value.Equals(defValue);
@@ -49,7 +49,7 @@ namespace Ecng.Common
 		}
 
 		public static T? DefaultAsNull<T>(this T value)
-			where T : struct, IComparable<T>
+			where T : struct
 		{
 			return value.IsDefault() ? (T?)null : value;
 		}
