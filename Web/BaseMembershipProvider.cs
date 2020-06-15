@@ -513,11 +513,11 @@ namespace Ecng.Web
 			if (user == null)
 				throw new ArgumentException("membershipUser");
 
-			user.LastLoginDate = membershipUser.LastLoginDate.IsDefault() ? (DateTime?)null : membershipUser.LastLoginDate;
-			user.LastActivityDate = membershipUser.LastActivityDate.IsDefault() ? (DateTime?)null : membershipUser.LastActivityDate;
+			user.LastLoginDate = membershipUser.LastLoginDate == default ? (DateTime?)null : membershipUser.LastLoginDate;
+			user.LastActivityDate = membershipUser.LastActivityDate == default ? (DateTime?)null : membershipUser.LastActivityDate;
 			user.IsApproved = membershipUser.IsApproved;
 
-			_prevUpdateTime[user] = user.LastActivityDate ?? default(DateTime);
+			_prevUpdateTime[user] = user.LastActivityDate ?? default;
 			UpdateUser(user);
 		}
 
