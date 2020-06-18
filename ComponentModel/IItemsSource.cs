@@ -6,11 +6,11 @@
 
 	using Ecng.Common;
 	using Ecng.Localization;
-	using Ecng.Reflection;
 
 	public interface IItemsSourceItem
 	{
 		string DisplayName {get;}
+		string Description {get;}
 		object Value {get;}
 	}
 
@@ -22,29 +22,41 @@
 	public class ItemsSourceItem<T> : NotifiableObject, IItemsSourceItem<T>
 	{
 		readonly Func<T, string> _valToString;
+		readonly Func<T, string> _valToDescription;
 
 		object IItemsSourceItem.Value => Value;
 
-		private string _displayName;
+		private string _displayName, _description;
 		private T _value;
 
-		public ItemsSourceItem(T val, Func<T, string> valToString = null)
+		public ItemsSourceItem(T val, Func<T, string> valToDisplayName = null, Func<T, string> valToDescription = null)
 		{
-			_valToString = valToString ?? (v => v?.GetDisplayName());
+			_valToString = valToDisplayName ?? (v => v?.GetDisplayName());
+			_valToDescription = valToDescription;
+
 			Value = val;
 		}
 
-		public ItemsSourceItem(T val, string displayName, Func<T, string> valToString = null)
-			: this(val, valToString)
+		public ItemsSourceItem(T val, string displayName, Func<T, string> valToString = null, Func<T, string> valToDescription = null)
+			: this(val, valToString, valToDescription)
 		{
 			if(!displayName.IsEmpty())
 				DisplayName = displayName;
 		}
 
-		protected virtual void UpdateDisplayName()
+		public ItemsSourceItem(T val, string displayName, string description, Func<T, string> valToString = null, Func<T, string> valToDescription = null)
+			: this(val, valToString, valToDescription)
 		{
-			DisplayName = _valToString(Value);
+			if(!displayName.IsEmpty())
+				DisplayName = displayName;
+
+			if(!description.IsEmpty())
+				Description = description;
 		}
+
+		protected virtual void UpdateDisplayName() => DisplayName = _valToString(Value);
+
+		protected virtual void UpdateDescription() => Description = _valToDescription != null ? _valToDescription.Invoke(Value) : Value is Enum e ? e.GetFieldDescription() : null;
 
 		public string DisplayName
 		{
@@ -56,6 +68,16 @@
 			}
 		}
 
+		public string Description
+		{
+			get => _description;
+			set
+			{
+				_description = value;
+				NotifyChanged(nameof(Description));
+			}
+		}
+
 		public T Value
 		{
 			get => _value;
@@ -64,6 +86,7 @@
 				_value = value;
 				NotifyChanged(nameof(Value));
 				UpdateDisplayName();
+				UpdateDescription();
 			}
 		}
 
@@ -73,8 +96,14 @@
 	public class ItemsSourceItem : ItemsSourceItem<object> {
 		public ItemsSourceItem(string displayName, object val) : base(val, displayName) { }
 
-		public static ItemsSourceItem<T> Create<T>(T val, string displayName, Func<T, string> valToString = null) => new ItemsSourceItem<T>(val, displayName, valToString);
-		public static ItemsSourceItem<T> Create<T>(T val, Func<T, string> valToString = null) => new ItemsSourceItem<T>(val, valToString);
+		public static ItemsSourceItem<T> Create<T>(T val, string displayName, Func<T, string> valToString = null, Func<T, string> valToDescription = null)
+			=> new ItemsSourceItem<T>(val, displayName, valToString, valToDescription);
+
+		public static ItemsSourceItem<T> Create<T>(T val, string displayName, string description, Func<T, string> valToString = null, Func<T, string> valToDescription = null)
+			=> new ItemsSourceItem<T>(val, displayName, description, valToString, valToDescription);
+
+		public static ItemsSourceItem<T> Create<T>(T val, Func<T, string> valToString = null, Func<T, string> valToDescription = null)
+			=> new ItemsSourceItem<T>(val, valToString, valToDescription);
 	}
 
 	public interface IItemsSource
@@ -82,6 +111,7 @@
 		IEnumerable<IItemsSourceItem> Values { get; }
 
 		string ItemToString(object val);
+		string ItemToDescription(object val);
 	}
 
 	public interface IItemsSource<out TValue> : IItemsSource
@@ -101,7 +131,7 @@
 		public ItemsSourceBase()
 		{
 			_values = new Lazy<IEnumerable<IItemsSourceItem<T>>>(
-				() => GetNamedValues().Select(nv => ItemsSourceItem.Create(nv.Item2, nv.Item1, ItemToString)).ToArray());
+				() => GetDescribedValues().Select(nv => ItemsSourceItem.Create(nv.value, nv.displayName, nv.description, ItemToString, ItemToDescription)).ToArray());
 		}
 
 		protected virtual string Format => null;
@@ -117,6 +147,14 @@
 			return ItemToString((T)val);
 		}
 
+		string IItemsSource.ItemToDescription(object val)
+		{
+			if (val is IItemsSourceItem item && !item.Description.IsEmpty())
+				return item.Description;
+
+			return ItemToDescription((T)val);
+		}
+
 		protected virtual string ItemToString(T val)
 		{
 			var f = Format;
@@ -126,6 +164,8 @@
 			return string.Format($"{{0:{f}}}", val);
 		}
 
+		protected virtual string ItemToDescription(T val) => val is Enum e ? e.GetFieldDescription() : null;
+
 		protected virtual IEnumerable<T> GetValues()
 			=> throw new NotSupportedException();
 
@@ -134,6 +174,14 @@
 			foreach (var value in GetValues())
 			{
 				yield return (ItemToString(value), value);
+			}
+		}
+
+		protected virtual IEnumerable<(string displayName, string description, T value)> GetDescribedValues()
+		{
+			foreach (var (name, val) in GetNamedValues())
+			{
+				yield return (name, ItemToDescription(val), val);
 			}
 		}
 	}
@@ -175,7 +223,7 @@
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			Type = 
+			Type =
 				typeof(IItemsSource).IsAssignableFrom(type)
 					? type
 					: type.IsEnum

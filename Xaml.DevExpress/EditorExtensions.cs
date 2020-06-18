@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Xaml.DevExp
 {
 	using System;
+	using System.Linq;
 	using System.Windows;
 
 	using DevExpress.Xpf.Editors;
@@ -27,9 +28,19 @@
 				if (edit.IsReadOnly)
 					return;
 
-				edit.EditValue = emptyValue;
+				edit.SetCurrentValue(BaseEdit.EditValueProperty, emptyValue);
 			};
 			edit.Buttons.Add(btnReset);
+		}
+
+		public static void RemoveClearButton(this ButtonEdit edit)
+		{
+			if (edit == null)
+				throw new ArgumentNullException(nameof(edit));
+
+			var bi = edit.Buttons.FirstOrDefault(b => ((ButtonInfo)b).GlyphKind == GlyphKind.Cancel);
+			if(bi != null)
+				edit.Buttons.Remove(bi);
 		}
 
 		public static void AddClearButton(this ComboBoxEditSettings editSettings, object emptyValue = null)
@@ -49,7 +60,7 @@
 				if (edit == null || edit.IsReadOnly)
 					return;
 
-				edit.EditValue = emptyValue;
+				edit.SetCurrentValue(BaseEdit.EditValueProperty, emptyValue);
 			};
 
 			editSettings.Buttons.Add(btnReset);
