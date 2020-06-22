@@ -36,6 +36,11 @@
 			return string.IsNullOrWhiteSpace(str);
 		}
 
+		public static string IsEmptyOrWhiteSpace(this string str, string defaultValue)
+		{
+			return str.IsEmptyOrWhiteSpace() ? defaultValue : str;
+		}
+
 		public static string Put(this string str, params object[] args)
 		{
 			if (args == null)
