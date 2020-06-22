@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Common
 {
 	using System;
+	using System.Collections.Generic;
 
 	/// <summary>
 	/// Class-helper that provided some routine extension based methods.
@@ -120,6 +121,26 @@
 			Array.Copy(second, 0, result, first.Length, second.Length);
 
 			return result;
+		}
+
+		public static T[] CopyArray<T>(this T[] source)
+		{
+			if (source is null)
+				throw new ArgumentNullException(nameof(source));
+
+			var copy = new T[source.Length];
+			source.CopyTo(copy, 0);
+			return copy;
+		}
+
+		public static T[] CopyArray<T>(this ICollection<T> source)
+		{
+			if (source is null)
+				throw new ArgumentNullException(nameof(source));
+
+			var copy = new T[source.Count];
+			source.CopyTo(copy, 0);
+			return copy;
 		}
 	}
 }
