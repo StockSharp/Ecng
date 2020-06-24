@@ -60,6 +60,6 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Xaml.DevExpress\Xaml.DevExp.csproj" />
+    <ProjectReference Include="..\Xaml\Xaml.csproj" />
   </ItemGroup>
 </Project>

@@ -9,6 +9,9 @@
     <Reference Include="System.Design" />
     <Reference Include="System.Security" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Ecng.Xaml.DXRefs" Version="1.0.0" />
+  </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
     <Compile Remove="XamlNativeHelper.cs" />
     <Compile Remove="WpfFormAdapter.cs" />
@@ -41,20 +44,8 @@
     <Compile Remove="BindingProxy.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="Block.xaml.cs">
-      <DependentUpon>Block.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Fonts\FontChooser.xaml.cs">
-      <DependentUpon>FontChooser.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Fonts\FontDialog.xaml.cs">
-      <DependentUpon>FontDialog.xaml</DependentUpon>
-    </Compile>
     <Compile Update="HighlightingTextBlock.xaml.cs">
       <DependentUpon>HighlightingTextBlock.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="InputWindow.xaml.cs">
-      <DependentUpon>InputWindow.xaml</DependentUpon>
     </Compile>
     <Compile Update="IpAddressEditor.xaml.cs">
       <DependentUpon>IpAddressEditor.xaml</DependentUpon>
@@ -67,15 +58,15 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Update="SecretPicker.xaml.cs">
-      <DependentUpon>SecretPicker.xaml</DependentUpon>
-    </Compile>
     <Compile Update="TimeSpanEditor.xaml.cs">
       <DependentUpon>TimeSpanEditor.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
+    <ProjectReference Include="..\Backup\Backup.csproj" />
+    <ProjectReference Include="..\Data.Providers\Data.Providers.csproj" />
+    <ProjectReference Include="..\Interop.Windows\Interop.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\*.png" />
