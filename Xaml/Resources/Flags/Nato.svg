@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="270.93mm" height="203.2mm" version="1.1" viewBox="0 0 270.93 203.2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <rect x="-1.4648e-5" y="-3.0518e-6" width="270.93" height="203.2" fill="#012169" stroke-width=".26458"/>
+  <use transform="rotate(180,135.6,101.47)" width="100%" height="100%" xlink:href="#d"/>
+  <g id="d" transform="translate(427.64,-170.45)">
+    <use transform="rotate(90,-291.86,271.68)" width="100%" height="100%" xlink:href="#c"/>
+    <path d="m-407.19 273.06v-2.2754h57.573v2.2754z" fill="#fff" stroke-width=".26458"/>
+    <path d="m-293.18 329.49h2.2754v23.707h-2.2754z" fill="#fff" stroke-width=".26458"/>
+    <g id="c">
+      <path d="m-342.74 271.84h50.641l-9.1546 9.1546 7.9904 35.851c0 0.39688-0.37041 0.39688-0.37041 0l-10.663-33.549z" fill="#fff" stroke-width=".26458"/>
+      <path d="m-330.54 278.32c2.6458 16.034 15.214 28.998 31.591 32.041l-1.1642-3.0427c-13.679-3.0692-24.739-14.129-27.781-28.231z" fill="#fff" stroke-width=".26458"/>
+    </g>
+  </g>
+  <path d="m129.06 62.5c-16.378 2.6723-29.316 15.637-31.962 31.644l3.0427-1.1377c3.0427-13.732 14.076-24.791 27.781-27.464z" fill="#fff" stroke-width=".26458"/>
+</svg>

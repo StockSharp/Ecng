@@ -70,7 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\*.png" />
-    <Resource Include="Resources\Flags\*.png" />
+    <Resource Include="Resources\Flags\*.svg" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="HtmlRenderer\Core\Utils\*.png" />

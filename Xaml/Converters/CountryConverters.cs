@@ -2,47 +2,30 @@
 {
 	using System;
 	using System.Globalization;
-	using System.Windows;
-	using System.Windows.Media.Imaging;
 	using System.Collections.Generic;
 	using System.Windows.Data;
+	using System.Windows.Media;
 
 	using Ecng.Collections;
 	using Ecng.Common;
 
+	using DevExpress.Xpf.Core.Native;
+
 	public sealed class CountryIdToFlagImageSourceConverter : IValueConverter
 	{
+		public static ImageSource GetCountryImage(CountryCodes code)
+		{
+			var uri = new Uri($"pack://application:,,,/Ecng.Xaml;component/Resources/Flags/{code}.svg");
+			return WpfSvgRenderer.CreateImageSource(uri);
+		}
+
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			var code = CountryIdToNameConverter.ConvertFromObject(value);
-
-			if (code == null)
-				return null;
-
-			try
-			{
-				var path = "/Ecng.Xaml;component/Resources/Flags/{0}.png".Put(code.Value);
-				var uri = new Uri(path, UriKind.Relative);
-				var resourceStream = Application.GetResourceStream(uri);
-				if (resourceStream == null)
-					return null;
-
-				var bitmap = new BitmapImage();
-				bitmap.BeginInit();
-				bitmap.StreamSource = resourceStream.Stream;
-				bitmap.EndInit();
-				return bitmap;
-			}
-			catch
-			{
-				return null;
-			}
+			return code == null ? null : GetCountryImage(code.Value);
 		}
 
-		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-		{
-			throw new NotSupportedException();
-		}
+		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
 	}
 
 	public class CountryIdToNameConverter : IValueConverter
