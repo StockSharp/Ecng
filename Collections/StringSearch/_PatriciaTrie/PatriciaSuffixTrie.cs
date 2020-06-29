@@ -34,10 +34,11 @@ namespace Gma.DataStructures.StringSearch
 
         public void Add(string key, TValue value)
         {
-            for (int i = key.Length - m_MinQueryLength; i >= 0; i--)
-			{
-				m_InnerTrie.Add(key, i, value);
-			}
+            IEnumerable<StringPartition> allSuffixes = GetAllSuffixes(MinQueryLength, key);
+            foreach (StringPartition currentSuffix in allSuffixes)
+            {
+                m_InnerTrie.Add(currentSuffix, value);
+            }
         }
 
 	    public void Remove(TValue value)
