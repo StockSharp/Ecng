@@ -144,7 +144,7 @@
 				return value;
 
 			var ut = ItemValueType?.GetUnderlyingType() ?? ItemValueType;
-			return ut?.IsEnum == true ? Enum.Parse(ut, str, true) : value;
+			return ut?.IsEnum == true ? str.To(ut) : value;
 		}
 
 		class ComboBoxEditExValueContainerService : TextInputValueContainerService
@@ -209,8 +209,8 @@
 
 		private sealed class ComboBoxEditExItemConverter : IValueConverter
 		{
-			readonly ComboBoxEditEx _parent;
-			readonly Type _valueType;
+			private readonly ComboBoxEditEx _parent;
+			private readonly Type _valueType;
 
 			public ComboBoxEditExItemConverter(ComboBoxEditEx parent, Type itemType)
 			{
@@ -244,7 +244,7 @@
 
 				var isMultiSelect = _parent is SubsetComboBox;
 				if (!isMultiSelect)
-					return isConvertible ? Convert.ChangeType(value, _valueType) : value;
+					return isConvertible ? value.To(_valueType) : value;
 
 				var items = (value as IEnumerable<object>)?.ToArray();
 				if(items == null)
@@ -253,7 +253,7 @@
 				var arr = _valueType.CreateArray(items.Length);
 
 				for (var i = 0; i < items.Length; ++i)
-					arr.SetValue(isConvertible ? Convert.ChangeType(items[i], _valueType) : items[i], i);
+					arr.SetValue(isConvertible ? items[i].To(_valueType) : items[i], i);
 
 				return arr;
 			}
@@ -290,7 +290,7 @@
 	/// </summary>
 	public class SubsetComboBox : ComboBoxEditEx
 	{
-		readonly Dictionary<object, int> _valueOrder = new Dictionary<object, int>();
+		private readonly Dictionary<object, int> _valueOrder = new Dictionary<object, int>();
 
 		static SubsetComboBox() => SubsetComboBoxSettings.RegisterCustomEdit();
 
@@ -333,7 +333,7 @@
 		/// <summary>Get typed selected values.</summary>
 		public IEnumerable<T> GetSelectedValues<T>() => (Value as IEnumerable)?.Cast<T>();
 
-		int GetValueOrder(object val) =>
+		private int GetValueOrder(object val) =>
 			val == null ? -1 :
 			_valueOrder.TryGetValue(val, out var order) ? order :
 			-1;

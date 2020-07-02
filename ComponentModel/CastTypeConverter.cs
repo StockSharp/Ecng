@@ -39,7 +39,7 @@
 			var isConvertible = typeof(IConvertible).IsAssignableFrom(argType);
 
 			for (var i = 0; i < arr.Length; ++i)
-				arr.SetValue(isConvertible ? Convert.ChangeType(objects[i], argType) : objects[i], i);
+				arr.SetValue(isConvertible ? objects[i].To(argType) : objects[i], i);
 
 			return arr;
 		}
