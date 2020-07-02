@@ -14,9 +14,13 @@
 	using DevExpress.Xpf.Editors.Settings;
 	using DevExpress.Xpf.PropertyGrid;
 	using DevExpress.Xpf.Editors.Themes;
+	using DevExpress.Xpf.Editors.EditStrategy;
+	using DevExpress.Xpf.Editors.Services;
+	using DevExpress.Xpf.Editors.Validation.Native;
 
 	using Ecng.Common;
 	using Ecng.ComponentModel;
+	using Ecng.Reflection;
 
 	/// <summary>
 	/// The drop-down list to select single value.
@@ -41,6 +45,8 @@
 		public static readonly DependencyProperty ItemTooltipConverterProperty = DependencyProperty.Register(nameof(ItemTooltipConverter), typeof(IValueConverter), typeof(ComboBoxEditEx), new PropertyMetadata(DefaultItemTooltipConverter));
 		/// <summary>Is nullable.</summary>
 		public static readonly DependencyProperty IsNullableProperty = DependencyProperty.Register(nameof(IsNullable), typeof(bool), typeof(ComboBoxEditEx), new PropertyMetadata(false, (o, args) => ((ComboBoxEditEx)o).OnIsNullableChanged()));
+		/// <summary>Item value type.</summary>
+		public static readonly DependencyProperty ItemValueTypeProperty = DependencyProperty.Register(nameof(ItemValueType), typeof(Type), typeof(ComboBoxEditEx), new PropertyMetadata(null));
 
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
@@ -48,6 +54,8 @@
 		public IValueConverter ItemTooltipConverter { get => (IValueConverter) GetValue(ItemTooltipConverterProperty); set => SetValue(ItemTooltipConverterProperty, value); }
 		/// <summary>Is nullable.</summary>
 		public bool IsNullable { get => (bool) GetValue(IsNullableProperty); set => SetValue(IsNullableProperty, value); }
+		/// <summary>Item value type.</summary>
+		public Type ItemValueType { get => (Type) GetValue(ItemValueTypeProperty); set => SetValue(ItemValueTypeProperty, value); }
 
 		/// <summary>
 		/// Get default item container style.
@@ -124,6 +132,80 @@
 
 		/// <summary>Get typed selected value.</summary>
 		public T GetSelectedValue<T>() => Value is T val ? val : default;
+
+		/// <inheritdoc />
+		protected override string GetDisplayText(object editValue, bool applyFormatting) => base.GetDisplayText(TryConvertStringEnum(editValue), applyFormatting);
+
+		protected override EditStrategyBase CreateEditStrategy() => new ComboBoxEditExStrategy(this);
+
+		object TryConvertStringEnum(object value)
+		{
+			if (!(value is string str))
+				return value;
+
+			var ut = ItemValueType?.GetUnderlyingType() ?? ItemValueType;
+			return ut?.IsEnum == true ? Enum.Parse(ut, str, true) : value;
+		}
+
+		class ComboBoxEditExValueContainerService : TextInputValueContainerService
+		{
+			public ComboBoxEditExValueContainerService(TextEditBase editor) : base(editor) { }
+
+			public override void SetEditValue(object editValue, UpdateEditorSource updateSource)
+			{
+				var ivt = ((ComboBoxEditEx) OwnerEdit).ItemValueType;
+
+				if(editValue == null || ivt == null)
+				{
+					base.SetEditValue(editValue, updateSource);
+					return;
+				}
+
+				if (editValue is IEnumerable ie)
+				{
+					var arr = (IList) typeof(List<>).Make(ivt).CreateInstance();
+					editValue = arr;
+
+					foreach(var o in ie.Cast<object>())
+						arr.Add(o);
+				}
+
+				base.SetEditValue(editValue, updateSource);
+			}
+		}
+
+		class ComboBoxEditExStrategy : ComboBoxEditStrategy
+		{
+			protected override ValueContainerService CreateValueContainerService() {
+				return new ComboBoxEditExValueContainerService(Editor);
+			}
+
+			public ComboBoxEditExStrategy(ComboBoxEdit editor) : base(editor) { }
+
+			protected override void RegisterUpdateCallbacks() {
+				base.RegisterUpdateCallbacks();
+				PropertyUpdater.Register(BaseEdit.EditValueProperty, baseValue => baseValue, baseValue =>
+				{
+					var e = (ComboBoxEditEx) Editor;
+					var editValue = SelectorUpdater.GetEditValueFromBaseValue(e.TryConvertStringEnum(baseValue));
+					var ivt = e.ItemValueType;
+
+					if (editValue == null || ivt == null)
+						return editValue;
+
+					if (!(editValue is IEnumerable ie))
+						return editValue;
+
+					var arr = (IList) typeof(List<>).Make(ivt).CreateInstance();
+
+					foreach(var o in ie.Cast<object>())
+						arr.Add(o);
+
+					return arr;
+
+				});
+			}
+		}
 
 		private sealed class ComboBoxEditExItemConverter : IValueConverter
 		{
@@ -275,11 +357,15 @@
 		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(object), typeof(ComboBoxEditExSettings));
 		/// <summary>Item tooltip converter.</summary>
 		public static readonly DependencyProperty ItemTooltipConverterProperty = DependencyProperty.Register(nameof(ItemTooltipConverter), typeof(IValueConverter), typeof(ComboBoxEditExSettings), new PropertyMetadata(ComboBoxEditEx.DefaultItemTooltipConverter));
+		/// <summary>Item value type.</summary>
+		public static readonly DependencyProperty ItemValueTypeProperty = DependencyProperty.Register(nameof(ItemValueType), typeof(Type), typeof(ComboBoxEditExSettings), new PropertyMetadata(null));
 
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
 		/// <summary>Item tooltip converter.</summary>
 		public IValueConverter ItemTooltipConverter { get => (IValueConverter) GetValue(ItemTooltipConverterProperty); set => SetValue(ItemTooltipConverterProperty, value); }
+		/// <summary>Item value type.</summary>
+		public Type ItemValueType { get => (Type) GetValue(ItemValueTypeProperty); set => SetValue(ItemValueTypeProperty, value); }
 
 		/// <inheritdoc />
 		protected override void AssignToEditCore(IBaseEdit e)
@@ -288,6 +374,7 @@
 			{
 				SetValueFromSettings(ValueProperty, () => editor.Value = Value);
 				SetValueFromSettings(ItemTooltipConverterProperty, () => editor.ItemTooltipConverter = ItemTooltipConverter);
+				SetValueFromSettings(ItemValueTypeProperty, () => editor.ItemValueType = ItemValueType);
 			}
 
 			base.AssignToEditCore(e);
