@@ -318,6 +318,14 @@
 			}
 		}
 
+		protected override object CoerceEditValue(DependencyObject d, object value)
+		{
+			if(value == null && ItemValueType != null)
+				value = typeof(List<>).Make(ItemValueType).CreateInstance();
+
+			return base.CoerceEditValue(d, value);
+		}
+
 		/// <inheritdoc />
 		protected override string GetDisplayText(object editValue, bool applyFormatting)
 		{
