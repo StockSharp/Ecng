@@ -129,15 +129,6 @@ namespace Ecng.ComponentModel
 			return attr == null ? null : (attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(type));
 		}
 
-		public static Uri GetConnectorIconUrl(this Type type)
-		{
-			const string IconsLibName = "StockSharp.Media";
-
-			var attr = type.GetAttribute<IconAttribute>();
-			return attr == null ? null :
-				new Uri($"/{IconsLibName};component/{(attr.IsFullPath ? "" : "logos/")}" + attr.Icon, UriKind.Relative);
-		}
-
 		public static Uri GetResourceUrl(this string resName)
 		{
 			return Assembly.GetEntryAssembly().GetResourceUrl(resName);
