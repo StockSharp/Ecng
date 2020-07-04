@@ -147,31 +147,30 @@
 			return ut?.IsEnum == true ? str.To(ut) : value;
 		}
 
+		object TryConvertCollection(object coll)
+		{
+			var ivt = ItemValueType;
+
+			if (ivt == null || !(coll is IEnumerable ie))
+				return null;
+
+			var arr = ie.Cast<object>().ToArray();
+
+			if(!arr.All(o => ivt.IsInstanceOfType(o)))
+				return null;
+
+			var list = (IList) typeof(List<>).Make(ivt).CreateInstance();
+			foreach(var o in arr)
+				list.Add(o);
+
+			return list;
+		}
+
 		class ComboBoxEditExValueContainerService : TextInputValueContainerService
 		{
 			public ComboBoxEditExValueContainerService(TextEditBase editor) : base(editor) { }
 
-			public override void SetEditValue(object editValue, UpdateEditorSource updateSource)
-			{
-				var ivt = ((ComboBoxEditEx) OwnerEdit).ItemValueType;
-
-				if(editValue == null || ivt == null)
-				{
-					base.SetEditValue(editValue, updateSource);
-					return;
-				}
-
-				if (editValue is IEnumerable ie)
-				{
-					var arr = (IList) typeof(List<>).Make(ivt).CreateInstance();
-					editValue = arr;
-
-					foreach(var o in ie.Cast<object>())
-						arr.Add(o);
-				}
-
-				base.SetEditValue(editValue, updateSource);
-			}
+			public override void SetEditValue(object editValue, UpdateEditorSource updateSource) => base.SetEditValue(((ComboBoxEditEx) OwnerEdit).TryConvertCollection(editValue) ?? editValue, updateSource);
 		}
 
 		class ComboBoxEditExStrategy : ComboBoxEditStrategy
@@ -188,21 +187,8 @@
 				{
 					var e = (ComboBoxEditEx) Editor;
 					var editValue = SelectorUpdater.GetEditValueFromBaseValue(e.TryConvertStringEnum(baseValue));
-					var ivt = e.ItemValueType;
 
-					if (editValue == null || ivt == null)
-						return editValue;
-
-					if (!(editValue is IEnumerable ie))
-						return editValue;
-
-					var arr = (IList) typeof(List<>).Make(ivt).CreateInstance();
-
-					foreach(var o in ie.Cast<object>())
-						arr.Add(o);
-
-					return arr;
-
+					return e.TryConvertCollection(editValue) ?? editValue;
 				});
 			}
 		}
