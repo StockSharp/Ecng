@@ -5,7 +5,7 @@
 	using System.Windows;
 	using System.Windows.Data;
 
-	class HelpUrlToVisibilityConverter : IValueConverter
+	public class HelpUrlToVisibilityConverter : IValueConverter
 	{
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
