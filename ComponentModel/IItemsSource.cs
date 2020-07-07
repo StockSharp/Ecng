@@ -186,24 +186,21 @@
 		}
 	}
 
+	public class EnumSource<T> : ItemsSourceBase<T>
+		where T : Enum
+	{
+		private static readonly IEnumerable<T> _items;
+
+		protected override IEnumerable<T> GetValues() => _items;
+
+		static EnumSource() => _items = Enumerator.GetValues<T>();
+	}
+
 	/// <summary>
 	/// Represents an attribute that is set on a property to identify the IItemsSource-derived class that will be used.
 	/// </summary>
 	public class ItemsSourceAttribute : Attribute
 	{
-		private class EnumSource<T> : ItemsSourceBase<T>
-			where T : Enum
-		{
-			private static readonly IEnumerable<T> _items;
-
-			protected override IEnumerable<T> GetValues() => _items;
-
-			static EnumSource()
-			{
-				_items = Enumerator.GetValues<T>();
-			}
-		}
-
 		/// <summary>
 		/// Gets the type to use.
 		/// </summary>
