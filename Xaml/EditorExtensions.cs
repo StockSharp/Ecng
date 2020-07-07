@@ -65,5 +65,9 @@
 
 			editSettings.Buttons.Add(btnReset);
 		}
+
+		public static T GetSelected<T>(this ComboBoxEditEx cb) => (T)cb.Value;
+
+		public static void SetSelected<T>(this ComboBoxEditEx cb, T value) => cb.Value = value;
 	}
 }

@@ -130,9 +130,6 @@
 		/// <inheritdoc />
 		protected override BaseEditSettings CreateEditorSettings() => new ComboBoxEditExSettings();
 
-		/// <summary>Get typed selected value.</summary>
-		public T GetSelectedValue<T>() => Value is T val ? val : default;
-
 		/// <inheritdoc />
 		protected override string GetDisplayText(object editValue, bool applyFormatting) => base.GetDisplayText(TryConvertStringEnum(editValue), applyFormatting);
 
@@ -213,7 +210,7 @@
 				else
 				{
 					var prop = itemType.GetProperty(valueMember, BindingFlags.Public | BindingFlags.Instance);
-					_valueType = prop == null ? null : prop.PropertyType;
+					_valueType = prop?.PropertyType;
 				}
 			}
 
@@ -323,9 +320,6 @@
 
 		/// <inheritdoc />
 		protected override BaseEditSettings CreateEditorSettings() => new SubsetComboBoxSettings();
-
-		/// <summary>Get typed selected values.</summary>
-		public IEnumerable<T> GetSelectedValues<T>() => (Value as IEnumerable)?.Cast<T>();
 
 		private int GetValueOrder(object val) =>
 			val == null ? -1 :
