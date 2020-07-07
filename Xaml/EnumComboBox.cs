@@ -11,6 +11,7 @@
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 
+	[Obsolete("Use ComboBoxEditEx instead.")]
 	public class EnumComboBox : ComboBox
 	{
 		/// <summary>
