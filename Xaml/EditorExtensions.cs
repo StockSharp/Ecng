@@ -8,6 +8,7 @@
 	using DevExpress.Xpf.Editors.Settings;
 	using DevExpress.Xpf.Grid;
 
+	using Ecng.ComponentModel;
 	using Ecng.Localization;
 
 	public static class EditorExtensions
@@ -65,6 +66,10 @@
 
 			editSettings.Buttons.Add(btnReset);
 		}
+
+		public static void SetEnumSource<T>(this ComboBoxEditEx cb)
+			where T : Enum
+			=> cb.ItemsSource = new EnumSource<T>();
 
 		public static T GetSelected<T>(this ComboBoxEditEx cb) => (T)cb.Value;
 
