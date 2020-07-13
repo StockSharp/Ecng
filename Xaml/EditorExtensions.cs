@@ -9,6 +9,7 @@
 	using DevExpress.Xpf.Editors.Settings;
 	using DevExpress.Xpf.Grid;
 
+	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.Localization;
 
@@ -68,21 +69,10 @@
 			editSettings.Buttons.Add(btnReset);
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="values"></param>
-		/// <returns></returns>
 		public static IItemsSource ToItemsSource<T>(this IEnumerable<T> values)
 			where T : Enum
 			=> new EnumSource<T>(values);
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="cb"></param>
 		public static void SetItemsSource<T>(this ComboBoxEditEx cb)
 			where T : Enum
 		{
@@ -92,12 +82,14 @@
 			cb.ItemsSource = new EnumSource<T>();
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="cb"></param>
-		/// <param name="enums"></param>
+		public static void SetItemsSource(this ComboBoxEditEx cb, Type enumType)
+		{
+			if (cb is null)
+				throw new ArgumentNullException(nameof(cb));
+
+			cb.ItemsSource = typeof(EnumSource<>).Make(enumType).CreateInstance<object>();
+		}
+
 		public static void SetItemsSource<T>(this ComboBoxEditEx cb, IEnumerable<T> enums)
 			where T : Enum
 		{
@@ -107,12 +99,6 @@
 			cb.ItemsSource = enums;//.ToItemsSource().Values;
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="cb"></param>
-		/// <param name="source"></param>
 		public static void SetItemsSource<T>(this ComboBoxEditEx cb, IItemsSource source)
 			where T : Enum
 		{
@@ -124,28 +110,10 @@
 			cb.ItemsSource = source.Values;
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="cb"></param>
-		/// <returns></returns>
 		public static T GetSelected<T>(this ComboBoxEditEx cb) => (T)cb.Value;
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="cb"></param>
-		/// <returns></returns>
 		public static IEnumerable<T> GetSelecteds<T>(this ComboBoxEditEx cb) => cb.GetSelected<IEnumerable<T>>();
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="cb"></param>
-		/// <param name="value"></param>
 		public static void SetSelected<T>(this ComboBoxEditEx cb, T value) => cb.Value = value;
 	}
 }

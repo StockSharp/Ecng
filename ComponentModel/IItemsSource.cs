@@ -186,45 +186,26 @@
 		}
 	}
 
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
 	public class EnumSource<T> : ItemsSourceBase<T>
 		where T : Enum
 	{
 		private readonly IEnumerable<T> _values;
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <returns></returns>
 		protected override IEnumerable<T> GetValues() => _values;
 
 		private static readonly IEnumerable<T> _excluded = Enumerator.GetValues<T>().ExcludeObsolete().ToArray();
 		private static readonly IEnumerable<T> _all = Enumerator.GetValues<T>();
 
-		/// <summary>
-		/// 
-		/// </summary>
 		public EnumSource()
 			: this(true)
 		{
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="excludeObsolete"></param>
 		public EnumSource(bool excludeObsolete)
 			: this(excludeObsolete ? _excluded : _all)
 		{
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="values"></param>
 		public EnumSource(IEnumerable<T> values)
 		{
 			_values = values ?? throw new ArgumentNullException(nameof(values));
