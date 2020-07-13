@@ -20,6 +20,9 @@
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.0" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Dde\Documentation\Examples.xml" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Update="ManagedWinapi\Accessibility\AccessibleObjectListener.cs" />
     <Compile Update="ManagedWinapi\ClipboardNotifier.cs" />
     <Compile Update="ManagedWinapi\Crosshair.cs" />
@@ -58,7 +61,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Dde\Documentation\Examples.xml" />
     <Resource Include="ManagedWinapi\crosshair.cur" />
     <Resource Include="ManagedWinapi\crosshair.ico" />
   </ItemGroup>
