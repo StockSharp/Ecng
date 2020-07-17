@@ -21,6 +21,7 @@
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.Reflection;
+	using Ecng.Localization;
 
 	/// <summary>
 	/// The drop-down list to select single value.
@@ -41,13 +42,13 @@
 		private static readonly DependencyPropertyKey SourceKey = DependencyProperty.RegisterReadOnly(nameof(Source), typeof(IItemsSource), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null));
 
 		/// <summary>Current value.</summary>
-		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(object), typeof(ComboBoxEditEx));
+		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(object), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null));
 		/// <summary>Is nullable.</summary>
-		public static readonly DependencyProperty IsNullableProperty = DependencyProperty.Register(nameof(IsNullable), typeof(bool), typeof(ComboBoxEditEx), new PropertyMetadata(false, (o, args) => ((ComboBoxEditEx)o).OnIsNullableChanged()));
+		public static readonly DependencyProperty IsNullableProperty = DependencyProperty.Register(nameof(IsNullable), typeof(bool), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(false, (o, args) => ((ComboBoxEditEx)o).OnIsNullableChanged()));
 		/// <summary>Show obsolete.</summary>
-		public static readonly DependencyProperty ShowObsoleteProperty = DependencyProperty.Register(nameof(ShowObsolete), typeof(bool), typeof(ComboBoxEditEx), new PropertyMetadata(false, (o, args) => ((ComboBoxEditEx)o).OnShowObsoleteChanged()));
+		public static readonly DependencyProperty ShowObsoleteProperty = DependencyProperty.Register(nameof(ShowObsolete), typeof(bool), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(false, (o, args) => ((ComboBoxEditEx)o).OnShowObsoleteChanged()));
 		/// <summary>Sort order.</summary>
-		public static readonly DependencyProperty SortOrderProperty = DependencyProperty.Register(nameof(SortOrder), typeof(ListSortDirection?), typeof(ComboBoxEditEx), new PropertyMetadata(null, (o, args) => ((ComboBoxEditEx)o).OnSortOrderChanged()));
+		public static readonly DependencyProperty SortOrderProperty = DependencyProperty.Register(nameof(SortOrder), typeof(ListSortDirection?), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null, (o, args) => ((ComboBoxEditEx)o).OnSortOrderChanged()));
 
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
@@ -154,10 +155,7 @@
 			return ut?.IsEnum == true ? str.To(ut) : value;
 		}
 
-		protected virtual object TryConvertEditValue(object ev)
-		{
-			return ev is IItemsSourceItem item ? item.Value : ev;
-		}
+		protected virtual object TryConvertEditValue(object ev) => ev;
 
 		class ComboBoxEditExValueContainerService : TextInputValueContainerService
 		{
@@ -248,6 +246,12 @@
 	/// </summary>
 	public class SubsetComboBox : ComboBoxEditEx
 	{
+		/// <summary>Display selected items count.</summary>
+		public static readonly DependencyProperty DisplaySelectedItemsCountProperty = DependencyProperty.Register(nameof(DisplaySelectedItemsCount), typeof(bool), typeof(SubsetComboBox), new FrameworkPropertyMetadata(false));
+
+		/// <summary>Display selected items count.</summary>
+		public bool DisplaySelectedItemsCount { get => (bool)GetValue(DisplaySelectedItemsCountProperty); set => SetValue(DisplaySelectedItemsCountProperty, value); }
+
 		private readonly Dictionary<object, int> _valueOrder = new Dictionary<object, int>();
 
 		static SubsetComboBox() => SubsetComboBoxSettings.RegisterCustomEdit();
@@ -322,7 +326,12 @@
 		protected override string GetDisplayText(object editValue, bool applyFormatting)
 		{
 			if(editValue is IList itemsList)
+			{
+				if(DisplaySelectedItemsCount && itemsList.Count != 1)
+					return "Selected: {0}".Translate().Put(itemsList.Count);
+
 				editValue = itemsList.Cast<object>().OrderBy(GetValueOrder).ToList();
+			}
 
 			return base.GetDisplayText(editValue, applyFormatting);
 		}
@@ -383,11 +392,26 @@
 	/// </summary>
 	public class SubsetComboBoxSettings : ComboBoxEditExSettings
 	{
+		/// <summary>Display selected items count.</summary>
+		public static readonly DependencyProperty DisplaySelectedItemsCountProperty = DependencyProperty.Register(nameof(DisplaySelectedItemsCount), typeof(bool), typeof(SubsetComboBoxSettings), new FrameworkPropertyMetadata(false));
+
+		/// <summary>Display selected items count.</summary>
+		public bool DisplaySelectedItemsCount { get => (bool)GetValue(DisplaySelectedItemsCountProperty); set => SetValue(DisplaySelectedItemsCountProperty, value); }
+
 		static SubsetComboBoxSettings() => RegisterCustomEdit();
 
 		/// <inheritdoc />
 		public SubsetComboBoxSettings() => StyleSettings = new CheckedComboBoxStyleSettings();
 
 		internal new static void RegisterCustomEdit() => EditorSettingsProvider.Default.RegisterUserEditor(typeof(SubsetComboBox), typeof(SubsetComboBoxSettings), () => new SubsetComboBox(), () => new SubsetComboBoxSettings());
+
+		/// <inheritdoc />
+		protected override void AssignToEditCore(IBaseEdit e)
+		{
+			if (e is SubsetComboBox editor)
+				SetValueFromSettings(DisplaySelectedItemsCountProperty, () => editor.DisplaySelectedItemsCount = DisplaySelectedItemsCount);
+
+			base.AssignToEditCore(e);
+		}
 	}
 }

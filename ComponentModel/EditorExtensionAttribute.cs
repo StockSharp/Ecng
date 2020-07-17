@@ -10,5 +10,7 @@
 		public bool Sorted { get; set; }
 
 		public bool IncludeObsolete { get; set; }
+
+		public bool ShowSelectedItemsCount { get; set; }
 	}
 }
