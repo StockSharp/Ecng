@@ -298,6 +298,12 @@
 			return InternalGetAndRemove();
 		}
 
+		public static TValue? TryGetAndRemove2<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
+			where TValue : struct
+		{
+			return dict.TryGetAndRemove(key, out var value) ? value : (TValue?)null;
+		}
+
 		public static TValue TryGetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
 		{
 			return dict.TryGetAndRemove(key, out var value) ? value : default;
