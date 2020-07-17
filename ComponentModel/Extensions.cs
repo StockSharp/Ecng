@@ -117,6 +117,15 @@ namespace Ecng.ComponentModel
 			return field.GetType().GetField(field.ToString()).GetAttribute<DisplayAttribute>()?.GetDescription();
 		}
 
+		public static Uri GetFieldIcon<TField>(this TField field)
+		{
+			var type = field.GetType();
+			var attr = type.GetField(field.ToString()).GetAttribute<IconAttribute>();
+			return
+				attr == null ? null :
+				attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(type);
+		}
+
 		public static string GetDocUrl(this Type type)
 		{
 			var attr = type.GetAttribute<DocAttribute>();

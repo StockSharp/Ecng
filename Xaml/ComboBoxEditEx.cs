@@ -2,12 +2,12 @@
 {
 	using System;
 	using System.Windows;
+	using System.ComponentModel;
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Windows.Data;
 	using System.Globalization;
 	using System.Linq;
-	using System.Reflection;
 
 	using DevExpress.Xpf.Editors;
 	using DevExpress.Xpf.Editors.Helpers;
@@ -27,35 +27,36 @@
 	/// </summary>
 	public class ComboBoxEditEx : ComboBoxEdit
 	{
-		/// <summary>
-		/// Default converter that is used to convert item to tooltip.
-		/// </summary>
-		public static readonly IValueConverter DefaultItemTooltipConverter = new DefaultItemToTooltipConverter();
-
 		static ComboBoxEditEx()
 		{
 			ComboBoxEditExSettings.RegisterCustomEdit();
 			IsTextEditableProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(false));
 			ImmediatePopupProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(true));
+			ItemsSourceProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null, null, (o, value) => ((ComboBoxEditEx)o).CoerceItemsSource(value)));
+			// ItemsSourceProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null));
 		}
+
+		private static readonly DependencyPropertyKey SourceKey = DependencyProperty.RegisterReadOnly(nameof(Source), typeof(IItemsSource), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null));
 
 		/// <summary>Current value.</summary>
 		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(object), typeof(ComboBoxEditEx));
-		/// <summary>Item tooltip converter.</summary>
-		public static readonly DependencyProperty ItemTooltipConverterProperty = DependencyProperty.Register(nameof(ItemTooltipConverter), typeof(IValueConverter), typeof(ComboBoxEditEx), new PropertyMetadata(DefaultItemTooltipConverter));
 		/// <summary>Is nullable.</summary>
 		public static readonly DependencyProperty IsNullableProperty = DependencyProperty.Register(nameof(IsNullable), typeof(bool), typeof(ComboBoxEditEx), new PropertyMetadata(false, (o, args) => ((ComboBoxEditEx)o).OnIsNullableChanged()));
-		/// <summary>Item value type.</summary>
-		public static readonly DependencyProperty ItemValueTypeProperty = DependencyProperty.Register(nameof(ItemValueType), typeof(Type), typeof(ComboBoxEditEx), new PropertyMetadata(null));
+		/// <summary>Show obsolete.</summary>
+		public static readonly DependencyProperty ShowObsoleteProperty = DependencyProperty.Register(nameof(ShowObsolete), typeof(bool), typeof(ComboBoxEditEx), new PropertyMetadata(false, (o, args) => ((ComboBoxEditEx)o).OnShowObsoleteChanged()));
+		/// <summary>Sort order.</summary>
+		public static readonly DependencyProperty SortOrderProperty = DependencyProperty.Register(nameof(SortOrder), typeof(ListSortDirection?), typeof(ComboBoxEditEx), new PropertyMetadata(null, (o, args) => ((ComboBoxEditEx)o).OnSortOrderChanged()));
 
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
-		/// <summary>Item tooltip converter.</summary>
-		public IValueConverter ItemTooltipConverter { get => (IValueConverter) GetValue(ItemTooltipConverterProperty); set => SetValue(ItemTooltipConverterProperty, value); }
 		/// <summary>Is nullable.</summary>
 		public bool IsNullable { get => (bool) GetValue(IsNullableProperty); set => SetValue(IsNullableProperty, value); }
-		/// <summary>Item value type.</summary>
-		public Type ItemValueType { get => (Type) GetValue(ItemValueTypeProperty); set => SetValue(ItemValueTypeProperty, value); }
+		/// <summary>Current <see cref="IItemsSource"/>.</summary>
+		public IItemsSource Source { get => (IItemsSource)GetValue(SourceKey.DependencyProperty); private set => SetValue(SourceKey, value); }
+		/// <summary>Show obsolete.</summary>
+		public bool ShowObsolete { get => (bool) GetValue(ShowObsoleteProperty); set => SetValue(ShowObsoleteProperty, value); }
+		/// <summary>Sort order.</summary>
+		public ListSortDirection? SortOrder { get => (ListSortDirection?) GetValue(SortOrderProperty); set => SetValue(SortOrderProperty, value); }
 
 		/// <summary>
 		/// Get default item container style.
@@ -65,20 +66,36 @@
 		/// <summary>Initializes a new instance of the <see cref="ComboBoxEditEx"/>. </summary>
 		public ComboBoxEditEx()
 		{
-			var mb = new MultiBinding
+			var mb = new Binding
 			{
 				Mode = BindingMode.OneWay,
-				Converter = new ToolTipConverter(),
-				Bindings =
-				{
-					new Binding(".") { Mode = BindingMode.OneWay },
-					new Binding(nameof(ItemTooltipConverter)) { Source = this, Mode = BindingMode.OneWay }
-				}
+				Converter = new ItemToTooltipConverter(),
+				Path = new PropertyPath(".")
 			};
 
 			// ReSharper disable once VirtualMemberCallInConstructor
 			ItemContainerStyle = new Style(typeof(ComboBoxEditItem), GetDefaultItemContainerStyle()) { Setters = { new Setter(ToolTipProperty, mb) } };
+
+			SetCurrentValue(DisplayMemberProperty, nameof(IItemsSourceItem.DisplayName));
+			SetCurrentValue(ValueMemberProperty, nameof(IItemsSourceItem.Value));
 		}
+
+		internal static IItemsSource CoerceItemsSource(object newValue, bool? showObsolete, ListSortDirection? sortOrder)
+			=> newValue.ToItemsSource(!showObsolete, sortOrder);
+
+		private object CoerceItemsSource(object newValue)
+		{
+			var isSet = ReadLocalValue(ShowObsoleteProperty) != DependencyProperty.UnsetValue;
+
+			var src = CoerceItemsSource(newValue, isSet ? !ShowObsolete : (bool?) null, SortOrder);
+
+			Source = src;
+
+			return src.Values;
+		}
+
+		private void OnShowObsoleteChanged()  => SetCurrentValue(ItemsSourceProperty, Source);
+		private void OnSortOrderChanged()     => SetCurrentValue(ItemsSourceProperty, Source);
 
 		private void OnIsNullableChanged()
 		{
@@ -108,23 +125,13 @@
 				return;
 			}
 
-			var itemType = (itemsSource.GetType().GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>)).Select(i => i.GetGenericArguments()[0])).FirstOrDefault();
-			if(itemType == null)
-				return;
-
 			BindingOperations.SetBinding(this, EditValueProperty, new Binding(nameof(Value))
 			{
 				Source = this,
 				Mode = BindingMode.TwoWay,
-				Converter = new ComboBoxEditExItemConverter(this, itemType),
+				Converter = new ComboBoxEditExItemConverter(this),
 				UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
 			});
-
-			if(itemType.IsNullable())
-			{
-				this.RemoveClearButton();
-				this.AddClearButton();
-			}
 		}
 
 		/// <inheritdoc />
@@ -140,34 +147,21 @@
 			if (!(value is string str))
 				return value;
 
-			var ut = ItemValueType?.GetUnderlyingType() ?? ItemValueType;
+			var itemValueType = Source?.ValueType;
+			var ut = itemValueType?.GetUnderlyingType() ?? itemValueType;
 			return ut?.IsEnum == true ? str.To(ut) : value;
 		}
 
-		object TryConvertCollection(object coll)
+		protected virtual object TryConvertEditValue(object ev)
 		{
-			var ivt = ItemValueType;
-
-			if (ivt == null || !(coll is IEnumerable ie))
-				return null;
-
-			var arr = ie.Cast<object>().ToArray();
-
-			if(!arr.All(o => ivt.IsInstanceOfType(o)))
-				return null;
-
-			var list = (IList) typeof(List<>).Make(ivt).CreateInstance();
-			foreach(var o in arr)
-				list.Add(o);
-
-			return list;
+			return ev is IItemsSourceItem item ? item.Value : ev;
 		}
 
 		class ComboBoxEditExValueContainerService : TextInputValueContainerService
 		{
 			public ComboBoxEditExValueContainerService(TextEditBase editor) : base(editor) { }
 
-			public override void SetEditValue(object editValue, UpdateEditorSource updateSource) => base.SetEditValue(((ComboBoxEditEx) OwnerEdit).TryConvertCollection(editValue) ?? editValue, updateSource);
+			public override void SetEditValue(object editValue, UpdateEditorSource updateSource) => base.SetEditValue(((ComboBoxEditEx) OwnerEdit).TryConvertEditValue(editValue) ?? editValue, updateSource);
 		}
 
 		class ComboBoxEditExStrategy : ComboBoxEditStrategy
@@ -185,33 +179,24 @@
 					var e = (ComboBoxEditEx) Editor;
 					var editValue = SelectorUpdater.GetEditValueFromBaseValue(e.TryConvertStringEnum(baseValue));
 
-					return e.TryConvertCollection(editValue) ?? editValue;
+					return e.TryConvertEditValue(editValue) ?? editValue;
 				});
 			}
 		}
 
 		private sealed class ComboBoxEditExItemConverter : IValueConverter
 		{
+			private readonly Type _enumerableType;
 			private readonly ComboBoxEditEx _parent;
 			private readonly Type _valueType;
 
-			public ComboBoxEditExItemConverter(ComboBoxEditEx parent, Type itemType)
+			public ComboBoxEditExItemConverter(ComboBoxEditEx parent)
 			{
-				if(parent == null) throw new ArgumentNullException(nameof(parent));
-				if(itemType == null) throw new ArgumentNullException(nameof(itemType));
+				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
+				_valueType = _parent.Source?.ValueType;
 
-				_parent = parent;
-				var valueMember = parent.ValueMember;
-
-				if(valueMember.IsEmptyOrWhiteSpace())
-				{
-					_valueType = itemType;
-				}
-				else
-				{
-					var prop = itemType.GetProperty(valueMember, BindingFlags.Public | BindingFlags.Instance);
-					_valueType = prop?.PropertyType;
-				}
+				if(_valueType != null)
+					_enumerableType = typeof(IEnumerable<>).Make(_valueType);
 			}
 
 			// Converts property value IEnumerable<value_type> to combobox selected items IEnumerable
@@ -220,14 +205,19 @@
 			// Converts combobox selected items IEnumerable<object> to property value IEnumerable<value_type>
 			object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 			{
-				if(_valueType == null || value == null)
+				if(_valueType == null)
 					return null;
 
-				var isConvertible = typeof(IConvertible).IsAssignableFrom(_valueType);
-
 				var isMultiSelect = _parent is SubsetComboBox;
+
+				if(value == null)
+					return isMultiSelect ? _valueType.CreateArray(0) : null;
+
 				if (!isMultiSelect)
-					return isConvertible ? value.To(_valueType) : value;
+					return value.To(_valueType);
+
+				if(_enumerableType.IsInstanceOfType(value))
+					return value;
 
 				var items = (value as IEnumerable<object>)?.ToArray();
 				if(items == null)
@@ -236,35 +226,18 @@
 				var arr = _valueType.CreateArray(items.Length);
 
 				for (var i = 0; i < items.Length; ++i)
-					arr.SetValue(isConvertible ? items[i].To(_valueType) : items[i], i);
+					arr.SetValue(items[i].To(_valueType), i);
 
 				return arr;
 			}
 		}
 
-		class ToolTipConverter : IMultiValueConverter
-		{
-			public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
-			{
-				if(values?.Length != 2 || !(values[1] is IValueConverter conv))
-					return null;
-
-				return conv.Convert(values[0], targetType, parameter, culture);
-			}
-
-			public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
-		}
-
-		class DefaultItemToTooltipConverter : IValueConverter
+		class ItemToTooltipConverter : IValueConverter
 		{
 			public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-			{
-				return
-					value is IItemsSourceItem item ? item.Description :
-					value is Enum e ? e.GetFieldDescription() : null;
-			}
+				=> value is IItemsSourceItem item ? item.Description : null;
 
-			public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)  => throw new NotSupportedException();
+			public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
 		}
 	}
 
@@ -303,10 +276,44 @@
 
 		protected override object CoerceEditValue(DependencyObject d, object value)
 		{
-			if(value == null && ItemValueType != null)
-				value = typeof(List<>).Make(ItemValueType).CreateInstance();
+			var ivt = Source?.ValueType;
+			if(value == null && ivt != null)
+				value = typeof(List<>).Make(ivt).CreateInstance();
 
 			return base.CoerceEditValue(d, value);
+		}
+
+		protected override object TryConvertEditValue(object ev)
+		{
+			var ivt = Source?.ValueType;
+
+			if (ivt == null)
+				return null;
+
+			var list = (IList) typeof(List<>).Make(ivt).CreateInstance();
+
+			if(!(ev is IEnumerable ie))
+				return list;
+
+			var arr = ie.Cast<object>().ToArray();
+
+			if(arr.All(o => ivt.IsInstanceOfType(o)))
+			{
+				foreach (var o in arr)
+					list.Add(o);
+
+				return list;
+			}
+
+			if(arr.All(o => (typeof(IItemsSourceItem)).IsInstanceOfType(o)))
+			{
+				foreach (var o in arr)
+					list.Add(((IItemsSourceItem)o).Value);
+
+				return list;
+			}
+
+			return list;
 		}
 
 		/// <inheritdoc />
@@ -337,33 +344,28 @@
 			RegisterCustomEdit();
 			IsTextEditableProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(false));
 			ImmediatePopupProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(true));
+			DisplayMemberProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(nameof(IItemsSourceItem.DisplayName)));
+			ValueMemberProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(nameof(IItemsSourceItem.Value)));
+			ItemsSourceProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(null, null, (o, value) => ((ComboBoxEditExSettings)o).CoerceItemsSource(value)));
+		}
+
+		private object CoerceItemsSource(object newValue)
+		{
+			return ComboBoxEditEx.CoerceItemsSource(newValue, null, null).Values;
 		}
 
 		internal static void RegisterCustomEdit() => EditorSettingsProvider.Default.RegisterUserEditor(typeof(ComboBoxEditEx), typeof(ComboBoxEditExSettings), () => new ComboBoxEditEx(), () => new ComboBoxEditExSettings());
 
 		/// <summary>Current value.</summary>
 		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(object), typeof(ComboBoxEditExSettings));
-		/// <summary>Item tooltip converter.</summary>
-		public static readonly DependencyProperty ItemTooltipConverterProperty = DependencyProperty.Register(nameof(ItemTooltipConverter), typeof(IValueConverter), typeof(ComboBoxEditExSettings), new PropertyMetadata(ComboBoxEditEx.DefaultItemTooltipConverter));
-		/// <summary>Item value type.</summary>
-		public static readonly DependencyProperty ItemValueTypeProperty = DependencyProperty.Register(nameof(ItemValueType), typeof(Type), typeof(ComboBoxEditExSettings), new PropertyMetadata(null));
-
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
-		/// <summary>Item tooltip converter.</summary>
-		public IValueConverter ItemTooltipConverter { get => (IValueConverter) GetValue(ItemTooltipConverterProperty); set => SetValue(ItemTooltipConverterProperty, value); }
-		/// <summary>Item value type.</summary>
-		public Type ItemValueType { get => (Type) GetValue(ItemValueTypeProperty); set => SetValue(ItemValueTypeProperty, value); }
 
 		/// <inheritdoc />
 		protected override void AssignToEditCore(IBaseEdit e)
 		{
 			if (e is ComboBoxEditEx editor)
-			{
 				SetValueFromSettings(ValueProperty, () => editor.Value = Value);
-				SetValueFromSettings(ItemTooltipConverterProperty, () => editor.ItemTooltipConverter = ItemTooltipConverter);
-				SetValueFromSettings(ItemValueTypeProperty, () => editor.ItemValueType = ItemValueType);
-			}
 
 			base.AssignToEditCore(e);
 		}

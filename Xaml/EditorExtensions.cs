@@ -1,6 +1,10 @@
-﻿namespace Ecng.Xaml
+﻿using System.ComponentModel;
+using MoreLinq;
+
+namespace Ecng.Xaml
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Windows;
@@ -69,9 +73,8 @@
 			editSettings.Buttons.Add(btnReset);
 		}
 
-		public static IItemsSource ToItemsSource<T>(this IEnumerable<T> values)
-			where T : Enum
-			=> new EnumSource<T>(values);
+		public static IItemsSource ToItemsSource(this object val, bool? excludeObsolete = null, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null)
+			=> ItemsSourceBase.Create(val, excludeObsolete, sortOrder, filter);
 
 		public static void SetItemsSource<T>(this ComboBoxEditEx cb)
 			where T : Enum
@@ -79,7 +82,7 @@
 			if (cb is null)
 				throw new ArgumentNullException(nameof(cb));
 
-			cb.ItemsSource = new EnumSource<T>();
+			cb.SetItemsSource(Enumerator.GetValues<T>().ToItemsSource());
 		}
 
 		public static void SetItemsSource(this ComboBoxEditEx cb, Type enumType)
@@ -87,27 +90,26 @@
 			if (cb is null)
 				throw new ArgumentNullException(nameof(cb));
 
-			cb.ItemsSource = typeof(EnumSource<>).Make(enumType).CreateInstance<object>();
+			if (!enumType.IsEnum)
+				throw new ArgumentException($"{enumType.FullName} is not an enum!");
+
+			cb.SetItemsSource(enumType.GetValues().ToItemsSource());
 		}
 
-		public static void SetItemsSource<T>(this ComboBoxEditEx cb, IEnumerable<T> enums)
-			where T : Enum
+		public static void SetItemsSource<T>(this ComboBoxEditEx cb, IEnumerable<T> values)
 		{
 			if (cb is null)
 				throw new ArgumentNullException(nameof(cb));
 
-			cb.ItemsSource = enums;//.ToItemsSource().Values;
+			cb.SetItemsSource(values.ToItemsSource());
 		}
 
-		public static void SetItemsSource<T>(this ComboBoxEditEx cb, IItemsSource source)
-			where T : Enum
+		public static void SetItemsSource(this ComboBoxEditEx cb, IItemsSource source)
 		{
 			if (cb is null)
 				throw new ArgumentNullException(nameof(cb));
 
-			cb.DisplayMember = nameof(IItemsSourceItem.DisplayName);
-			cb.ValueMember = nameof(IItemsSourceItem.Value);
-			cb.ItemsSource = source.Values;
+			cb.ItemsSource = source;
 		}
 
 		public static T GetSelected<T>(this ComboBoxEditEx cb) => (T)cb.Value;
