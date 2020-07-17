@@ -42,7 +42,12 @@
 		private static readonly DependencyPropertyKey SourceKey = DependencyProperty.RegisterReadOnly(nameof(Source), typeof(IItemsSource), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null));
 
 		/// <summary>Current value.</summary>
-		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(object), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null));
+		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(object), typeof(ComboBoxEditEx),
+					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+							(o, args) => ((ComboBoxEditEx)o).GetBindingExpression(ValueProperty)?.UpdateSource(),
+							(o, val)  => ((ComboBoxEditEx)o).CoerceValueProperty(val),
+							false, UpdateSourceTrigger.Explicit));
+
 		/// <summary>Is nullable.</summary>
 		public static readonly DependencyProperty IsNullableProperty = DependencyProperty.Register(nameof(IsNullable), typeof(bool), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(false, (o, args) => ((ComboBoxEditEx)o).OnIsNullableChanged()));
 		/// <summary>Show obsolete.</summary>
@@ -95,6 +100,17 @@
 			Source = src;
 
 			return src.Values;
+		}
+
+		private object CoerceValueProperty(object newVal)
+		{
+			if(newVal != null)
+				return newVal;
+
+			var src = Source;
+			var canBeNull = src == null || IsNullable || EditValue == null;
+
+			return canBeNull ? null : DependencyProperty.UnsetValue;
 		}
 
 		private void OnShowObsoleteChanged()  => SetCurrentValue(ItemsSourceProperty, Source);
@@ -199,10 +215,10 @@
 					_enumerableType = typeof(IEnumerable<>).Make(_valueType);
 			}
 
-			// Converts property value IEnumerable<value_type> to combobox selected items IEnumerable
+			// Converts property value IEnumerable<value_type> to combobox selected items IEnumerable (Value ====> EditValue)
 			object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture) => value;
 
-			// Converts combobox selected items IEnumerable<object> to property value IEnumerable<value_type>
+			// Converts combobox selected items IEnumerable<object> to property value IEnumerable<value_type>  (EditValue ====> Value)
 			object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 			{
 				if(_valueType == null)
