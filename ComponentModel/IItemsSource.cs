@@ -84,37 +84,57 @@
 
 		public virtual Type ValueType => typeof(T);
 
-		protected ItemsSourceBase(IEnumerable<T> values, bool excludeObsolete, ListSortDirection? sortOrder, Func<IItemsSourceItem, bool> filter)
+		protected ItemsSourceBase(IEnumerable values, bool excludeObsolete, ListSortDirection? sortOrder, Func<IItemsSourceItem, bool> filter)
 		{
 			SortOrder = sortOrder;
 			ExcludeObsolete = excludeObsolete;
 			_filter = filter;
-			_values = values?.ToArray() ?? (typeof(T).IsEnum ? Enumerator.GetValues<T>().ToArray() : null);
-			_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => CreateItems(GetValues()));
+
+			var objects = values?.Cast<object>().ToArray();
+			if (objects != null)
+			{
+				if(objects.All(o => o is T))
+				{
+					_values = objects.Cast<T>().ToArray();
+					_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => CreateItems(GetValues()));
+				}
+				else if (objects.All(o => o is IItemsSourceItem<T>))
+				{
+					var itemsArr = objects.Cast<IItemsSourceItem<T>>().ToArray();
+					_values = itemsArr.Select(item => item.Value).ToArray();
+					_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => FilterItems(itemsArr));
+				}
+				else if (objects.All(o => o is IItemsSourceItem iisi && iisi.Value is T))
+				{
+					var itemsArr = objects.Cast<IItemsSourceItem>().Select(CreateNewItem).ToArray();
+					_values = itemsArr.Select(item => item.Value).ToArray();
+					_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => FilterItems(itemsArr));
+				}
+				else
+				{
+					throw new ArgumentException($"{nameof(values)} is expected to contain either {typeof(T).Name} or {nameof(IItemsSourceItem)}<{typeof(T).Name}> items (mix not supported). actual types found: {objects.Select(o => o.GetType().Name).ToHashSet().Join(",")}");
+				}
+			}
+			else if (typeof(T).IsEnum)
+			{
+				_values = Enumerator.GetValues<T>().ToArray();
+				_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => CreateItems(GetValues()));
+			}
+			else
+			{
+				_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => CreateItems(GetValues()));
+			}
 		}
 
 		protected ItemsSourceBase(bool excludeObsolete, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null)
-			: this((IEnumerable<T>)null, excludeObsolete, sortOrder, filter) { }
+			: this(null, excludeObsolete, sortOrder, filter) { }
 
-		protected ItemsSourceBase(IEnumerable<T> values)
+		protected ItemsSourceBase(IEnumerable values)
 			// ReSharper disable once IntroduceOptionalParameters.Global
 			: this(values, true, null, null) { }
 
-		public ItemsSourceBase()
-			: this((IEnumerable<T>)null) { }
-
-		protected ItemsSourceBase(IEnumerable<IItemsSourceItem<T>> items, bool excludeObsolete, ListSortDirection? sortOrder, Func<IItemsSourceItem, bool> filter)
-			: this(excludeObsolete, sortOrder, filter)
-		{
-			var itemsArr = items?.ToArray() ?? throw new ArgumentNullException(nameof(items));
-
-			_values = itemsArr.Select(item => item.Value).ToArray();
-			_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => FilterItems(itemsArr));
-		}
-
-		protected ItemsSourceBase(IEnumerable<IItemsSourceItem<T>> items)
-			// ReSharper disable once IntroduceOptionalParameters.Global
-			: this(items, true, null, null) { }
+		// this constructor left public to make .CreateInstance() extension work
+		public ItemsSourceBase() : this(null) { }
 
 		protected virtual string Format => null;
 
@@ -139,6 +159,17 @@
 				throw new ArgumentException(nameof(value));
 
 			return CreateNewItem(typedVal);
+		}
+
+		IItemsSourceItem<T> CreateNewItem(IItemsSourceItem fromItem)
+		{
+			return new ItemsSourceItem<T>(
+				(T) fromItem.Value,
+				fromItem.DisplayName,
+				fromItem.Description,
+				fromItem.Icon,
+				fromItem.IsObsolete
+			);
 		}
 
 		public virtual IItemsSourceItem<T> CreateNewItem(T value)
@@ -173,43 +204,11 @@
 
 	public class ItemsSourceBase : ItemsSourceBase<object>
 	{
-		static Type GetParamType(Type type, Type genericInterfaceType)
+		static IItemsSource Create(IEnumerable values, Type itemValueType, bool? excludeObsolete, ListSortDirection? sortOrder, Func<IItemsSourceItem, bool> filter)
 		{
-			if(type == null) return null;
+			itemValueType ??= GetSourceValueType(values);
 
-			return type.GetInterfaces().Concat(type)
-				 .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == genericInterfaceType)
-				 .Select(i => i.GetGenericArguments()[0])
-				 .FirstOrDefault();
-		}
-
-		static readonly IItemsSource _emptySource = Create(new object[0]);
-
-		static IItemsSource Create(IEnumerable values, bool? excludeObsolete, ListSortDirection? sortOrder, Func<IItemsSourceItem, bool> filter)
-		{
-			var itemType = GetParamType(values.GetType(), typeof(IEnumerable<>));
-			var innerType = GetParamType(itemType, typeof(IItemsSourceItem<>));
-
-			itemType ??= typeof(object);
-
-			if(innerType != null)
-				itemType = innerType;
-			else if (typeof(IItemsSourceItem).IsAssignableFrom(itemType))
-			{
-				var arr = values.Cast<IItemsSourceItem>().ToArray();
-				var types = arr.Select(i => i.GetType()).ToArray();
-				var paramTypes = types.Select(t => GetParamType(t, typeof(IItemsSourceItem<>))).ToArray();
-
-				if(paramTypes.Any(t => t == null))
-					throw new InvalidOperationException("cant determine common item value type for: " + types.Select(t => t.Name).Join(","));
-
-				itemType = GetCommonType(paramTypes);
-
-				// ReSharper disable once PossibleNullReferenceException
-				values = (IEnumerable) typeof(Enumerable).GetMethod("Cast").MakeGenericMethod(typeof(IItemsSourceItem<>).Make(itemType)).Invoke(null, new object[] { arr });
-			}
-
-			var srcType = typeof(ItemsSourceBase<>).Make(itemType);
+			var srcType = typeof(ItemsSourceBase<>).Make(itemValueType);
 
 			excludeObsolete ??= true;
 
@@ -217,33 +216,85 @@
 					srcType,
 					BindingFlags.Instance | BindingFlags.CreateInstance | BindingFlags.Public | BindingFlags.NonPublic,
 					null,
-					new object[] { values, excludeObsolete, sortOrder, filter },
+					new object[] { values, excludeObsolete.Value, sortOrder, filter },
 					null,
 					null);
 		}
 
-		public static IItemsSource Create(object val, bool? excludeObsolete = null, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null)
+		public static IItemsSource Create(object val, Type itemValueType, bool? excludeObsolete = null, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null)
 		{
 			switch (val)
 			{
 				case null:
-					return _emptySource;
+					itemValueType ??= typeof(object);
+					return Create(itemValueType.CreateArray(0), itemValueType, excludeObsolete, sortOrder, filter);
 
 				case IItemsSource src:
-					if((excludeObsolete == null || excludeObsolete == src.ExcludeObsolete) && (sortOrder == null || sortOrder == src.SortOrder) && filter == null)
+					if((itemValueType == null || src.ValueType == itemValueType) && (excludeObsolete == null || excludeObsolete == src.ExcludeObsolete) && (sortOrder == null || sortOrder == src.SortOrder) && filter == null)
 						return src;
 
-					return Create(src.Values, excludeObsolete, sortOrder, filter);
+					return Create(src.Values, itemValueType, excludeObsolete, sortOrder, filter);
 
 				case IEnumerable ie:
-					return Create(ie, excludeObsolete, sortOrder, filter);
+					return Create(ie, itemValueType, excludeObsolete, sortOrder, filter);
 
 				default:
 					throw new ArgumentException($"cannot create {typeof(IItemsSource).FullName} from '{val.GetType().FullName}'");
 			}
 		}
 
-		public static Type GetCommonType(Type[] types)
+		static Type GetSourceValueType(IEnumerable values)
+		{
+			var itemType = GetParamType(values.GetType(), typeof(IEnumerable<>));
+			var innerType = GetParamType(itemType, typeof(IItemsSourceItem<>));
+
+			if(innerType != null && innerType != typeof(object))
+				return innerType;
+
+			if (itemType != null && !typeof(IItemsSourceItem).IsAssignableFrom(itemType) && itemType != typeof(object))
+				return itemType;
+
+			bool foundItems, foundValues;
+			foundItems = foundValues = false;
+
+			var types = values.Cast<object>().Select(o =>
+			{
+				var t = o.GetType();
+				var innerItemType = GetParamType(t, typeof(IItemsSourceItem<>));
+
+				if(innerItemType != null)
+				{
+					foundItems = true;
+					return innerItemType;
+				}
+
+				if(o is IItemsSourceItem iisi)
+				{
+					foundItems = true;
+					return iisi.Value.GetType();
+				}
+
+				foundValues = true;
+				return t;
+			}).ToArray();
+
+			if(foundItems && foundValues)
+				throw new ArgumentException($"{nameof(values)} contains elements of incompatible types");
+
+			return GetCommonType(types);
+		}
+
+		static Type GetParamType(Type type, Type genericInterfaceType)
+		{
+			if(type == null) return null;
+
+			return new[]{ type }.Concat(type.GetInterfaces())
+			           .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == genericInterfaceType)
+			           .Select(i => i.GetGenericArguments()[0])
+			           .FirstOrDefault();
+		}
+
+		static Type GetCommonType(Type[] types)
 		{
 			if (types.Length == 0)
 				return typeof(object);
@@ -255,6 +306,7 @@
 				if (types[i].IsAssignableFrom(type))
 					type = types[i];
 				else
+					// ReSharper disable once PossibleNullReferenceException
 					while (!type.IsAssignableFrom(types[i]))
 						type = type.BaseType;
 			}
@@ -271,12 +323,7 @@
 
 		public EnumSource(bool excludeObsolete) : base(excludeObsolete) { }
 
-		public EnumSource(IEnumerable<T> values, bool excludeObsolete) : base(values, excludeObsolete, null, null) { }
-
-		// ReSharper disable once IntroduceOptionalParameters.Global
-		public EnumSource(IEnumerable<T> values) : this(values, true) { }
-
-		public EnumSource(IEnumerable<IItemsSourceItem<T>> items) : base(items) { }
+		public EnumSource(IEnumerable values) : base(values, true, null, null) { }
 	}
 
 	/// <summary>

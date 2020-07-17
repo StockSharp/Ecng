@@ -1,11 +1,8 @@
-﻿using System.ComponentModel;
-using MoreLinq;
-
-namespace Ecng.Xaml
+﻿namespace Ecng.Xaml
 {
 	using System;
-	using System.Collections;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Linq;
 	using System.Windows;
 
@@ -73,8 +70,11 @@ namespace Ecng.Xaml
 			editSettings.Buttons.Add(btnReset);
 		}
 
-		public static IItemsSource ToItemsSource(this object val, bool? excludeObsolete = null, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null)
-			=> ItemsSourceBase.Create(val, excludeObsolete, sortOrder, filter);
+		public static IItemsSource ToItemsSource(this object val, Type itemValueType, bool? excludeObsolete = null, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null)
+			=> ItemsSourceBase.Create(val, itemValueType, excludeObsolete, sortOrder, filter);
+
+		public static IItemsSource ToItemsSource<T>(this object val, bool? excludeObsolete = null, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null)
+			=> ItemsSourceBase.Create(val, typeof(T), excludeObsolete, sortOrder, filter);
 
 		public static void SetItemsSource<T>(this ComboBoxEditEx cb)
 			where T : Enum
@@ -82,7 +82,7 @@ namespace Ecng.Xaml
 			if (cb is null)
 				throw new ArgumentNullException(nameof(cb));
 
-			cb.SetItemsSource(Enumerator.GetValues<T>().ToItemsSource());
+			cb.SetItemsSource(Enumerator.GetValues<T>().ToItemsSource<T>());
 		}
 
 		public static void SetItemsSource(this ComboBoxEditEx cb, Type enumType)
@@ -93,7 +93,7 @@ namespace Ecng.Xaml
 			if (!enumType.IsEnum)
 				throw new ArgumentException($"{enumType.FullName} is not an enum!");
 
-			cb.SetItemsSource(enumType.GetValues().ToItemsSource());
+			cb.SetItemsSource(enumType.GetValues().ToItemsSource(enumType));
 		}
 
 		public static void SetItemsSource<T>(this ComboBoxEditEx cb, IEnumerable<T> values)
@@ -101,7 +101,7 @@ namespace Ecng.Xaml
 			if (cb is null)
 				throw new ArgumentNullException(nameof(cb));
 
-			cb.SetItemsSource(values.ToItemsSource());
+			cb.SetItemsSource(values.ToItemsSource<T>());
 		}
 
 		public static void SetItemsSource(this ComboBoxEditEx cb, IItemsSource source)

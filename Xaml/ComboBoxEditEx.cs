@@ -29,11 +29,13 @@
 	{
 		static ComboBoxEditEx()
 		{
-			ComboBoxEditExSettings.RegisterCustomEdit();
 			IsTextEditableProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(false));
 			ImmediatePopupProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(true));
+			DisplayMemberProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(nameof(IItemsSourceItem.DisplayName)));
+			ValueMemberProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(nameof(IItemsSourceItem.Value)));
 			ItemsSourceProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null, null, (o, value) => ((ComboBoxEditEx)o).CoerceItemsSource(value)));
-			// ItemsSourceProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null));
+
+			ComboBoxEditExSettings.RegisterCustomEdit();
 		}
 
 		private static readonly DependencyPropertyKey SourceKey = DependencyProperty.RegisterReadOnly(nameof(Source), typeof(IItemsSource), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null));
@@ -76,12 +78,12 @@
 			// ReSharper disable once VirtualMemberCallInConstructor
 			ItemContainerStyle = new Style(typeof(ComboBoxEditItem), GetDefaultItemContainerStyle()) { Setters = { new Setter(ToolTipProperty, mb) } };
 
-			SetCurrentValue(DisplayMemberProperty, nameof(IItemsSourceItem.DisplayName));
-			SetCurrentValue(ValueMemberProperty, nameof(IItemsSourceItem.Value));
+			DisplayMember = nameof(IItemsSourceItem.DisplayName);
+			ValueMember = nameof(IItemsSourceItem.Value);
 		}
 
 		internal static IItemsSource CoerceItemsSource(object newValue, bool? showObsolete, ListSortDirection? sortOrder)
-			=> newValue.ToItemsSource(!showObsolete, sortOrder);
+			=> newValue.ToItemsSource(null, !showObsolete, sortOrder);
 
 		private object CoerceItemsSource(object newValue)
 		{
@@ -305,7 +307,7 @@
 				return list;
 			}
 
-			if(arr.All(o => (typeof(IItemsSourceItem)).IsInstanceOfType(o)))
+			if(arr.All(o => o is IItemsSourceItem))
 			{
 				foreach (var o in arr)
 					list.Add(((IItemsSourceItem)o).Value);
@@ -341,12 +343,17 @@
 	{
 		static ComboBoxEditExSettings()
 		{
-			RegisterCustomEdit();
 			IsTextEditableProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(false));
 			ImmediatePopupProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(true));
-			DisplayMemberProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(nameof(IItemsSourceItem.DisplayName)));
-			ValueMemberProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(nameof(IItemsSourceItem.Value)));
 			ItemsSourceProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(null, null, (o, value) => ((ComboBoxEditExSettings)o).CoerceItemsSource(value)));
+
+			RegisterCustomEdit();
+		}
+
+		public ComboBoxEditExSettings()
+		{
+			DisplayMember = nameof(IItemsSourceItem.DisplayName);
+			ValueMember = nameof(IItemsSourceItem.Value);
 		}
 
 		private object CoerceItemsSource(object newValue)
