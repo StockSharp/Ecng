@@ -70,19 +70,16 @@
 			editSettings.Buttons.Add(btnReset);
 		}
 
-		public static IItemsSource ToItemsSource(this object val, Type itemValueType, bool? excludeObsolete = null, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null)
-			=> ItemsSourceBase.Create(val, itemValueType, excludeObsolete, sortOrder, filter);
+		public static IItemsSource ToItemsSource(this object val, Type itemValueType, bool? excludeObsolete = null, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null, Func<object, string> getName = null, Func<object, string> getDescription = null)
+			=> ItemsSourceBase.Create(val, itemValueType, excludeObsolete, sortOrder, filter, getName, getDescription);
 
-		public static IItemsSource ToItemsSource<T>(this object val, bool? excludeObsolete = null, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null)
-			=> ItemsSourceBase.Create(val, typeof(T), excludeObsolete, sortOrder, filter);
+		public static IItemsSource ToItemsSource<T>(this IEnumerable<T> val, bool excludeObsolete = true, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null, Func<T, string> getName = null, Func<T, string> getDescription = null)
+			=> new ItemsSourceBase<T>(val, excludeObsolete, sortOrder, filter, getName, getDescription);
 
 		public static void SetItemsSource<T>(this ComboBoxEditEx cb)
 			where T : Enum
 		{
-			if (cb is null)
-				throw new ArgumentNullException(nameof(cb));
-
-			cb.SetItemsSource(Enumerator.GetValues<T>().ToItemsSource<T>());
+			cb.SetItemsSource(typeof(T));
 		}
 
 		public static void SetItemsSource(this ComboBoxEditEx cb, Type enumType)
@@ -96,12 +93,12 @@
 			cb.SetItemsSource(enumType.GetValues().ToItemsSource(enumType));
 		}
 
-		public static void SetItemsSource<T>(this ComboBoxEditEx cb, IEnumerable<T> values)
+		public static void SetItemsSource<T>(this ComboBoxEditEx cb, IEnumerable<T> values, Func<T, string> getName = null, Func<T, string> getDescription = null)
 		{
 			if (cb is null)
 				throw new ArgumentNullException(nameof(cb));
 
-			cb.SetItemsSource(values.ToItemsSource<T>());
+			cb.SetItemsSource(values.ToItemsSource(getName: getName, getDescription: getDescription));
 		}
 
 		public static void SetItemsSource(this ComboBoxEditEx cb, IItemsSource source)

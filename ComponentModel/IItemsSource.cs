@@ -71,9 +71,12 @@
 
 	public class ItemsSourceBase<T> : IItemsSource<T>
 	{
-		readonly T[] _values;
-		readonly Lazy<IEnumerable<IItemsSourceItem<T>>> _items;
-		readonly Func<IItemsSourceItem, bool> _filter;
+		private readonly T[] _values;
+		private readonly Lazy<IEnumerable<IItemsSourceItem<T>>> _items;
+		private readonly Func<IItemsSourceItem, bool> _filter;
+
+		private readonly Func<T, string> _getName;
+		private readonly Func<T, string> _getDescription;
 
 		public bool ExcludeObsolete { get; }
 		public ListSortDirection? SortOrder { get; }
@@ -84,11 +87,13 @@
 
 		public virtual Type ValueType => typeof(T);
 
-		protected ItemsSourceBase(IEnumerable values, bool excludeObsolete, ListSortDirection? sortOrder, Func<IItemsSourceItem, bool> filter)
+		public ItemsSourceBase(IEnumerable values, bool excludeObsolete, ListSortDirection? sortOrder, Func<IItemsSourceItem, bool> filter, Func<T, string> getName, Func<T, string> getDescription)
 		{
 			SortOrder = sortOrder;
 			ExcludeObsolete = excludeObsolete;
 			_filter = filter;
+			_getName = getName;
+			_getDescription = getDescription;
 
 			var objects = values?.Cast<object>().ToArray();
 			if (objects != null)
@@ -126,12 +131,12 @@
 			}
 		}
 
-		protected ItemsSourceBase(bool excludeObsolete, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null)
-			: this(null, excludeObsolete, sortOrder, filter) { }
+		public ItemsSourceBase(bool excludeObsolete, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null, Func<T, string> getName = null, Func<T, string> getDescription = null)
+			: this(null, excludeObsolete, sortOrder, filter, getName, getDescription) { }
 
-		protected ItemsSourceBase(IEnumerable values)
+		public ItemsSourceBase(IEnumerable values, Func<T, string> getName = null, Func<T, string> getDescription = null)
 			// ReSharper disable once IntroduceOptionalParameters.Global
-			: this(values, true, null, null) { }
+			: this(values, true, null, null, getName, getDescription) { }
 
 		// this constructor left public to make .CreateInstance() extension work
 		public ItemsSourceBase() : this(null) { }
@@ -140,11 +145,14 @@
 
 		protected virtual string GetName(T value)
 		{
+			if (_getName != null)
+				return _getName(value);
+
 			var f = Format;
 			return f.IsEmptyOrWhiteSpace() ? value.GetDisplayName() : string.Format($"{{0:{f}}}", value);
 		}
 
-		protected virtual string GetDescription(T value) => typeof(T).IsEnum ? value.GetFieldDescription() : null;
+		protected virtual string GetDescription(T value) => _getDescription == null ? (typeof(T).IsEnum ? value.GetFieldDescription() : null) : _getDescription(value);
 
 		protected virtual Uri GetIcon(T value) => typeof(T).IsEnum ? value.GetFieldIcon() : null;
 
@@ -204,7 +212,7 @@
 
 	public class ItemsSourceBase : ItemsSourceBase<object>
 	{
-		static IItemsSource Create(IEnumerable values, Type itemValueType, bool? excludeObsolete, ListSortDirection? sortOrder, Func<IItemsSourceItem, bool> filter)
+		private static IItemsSource Create(IEnumerable values, Type itemValueType, bool? excludeObsolete, ListSortDirection? sortOrder, Func<IItemsSourceItem, bool> filter, Func<object, string> getName, Func<object, string> getDescription)
 		{
 			itemValueType ??= GetSourceValueType(values);
 
@@ -216,27 +224,27 @@
 					srcType,
 					BindingFlags.Instance | BindingFlags.CreateInstance | BindingFlags.Public | BindingFlags.NonPublic,
 					null,
-					new object[] { values, excludeObsolete.Value, sortOrder, filter },
+					new object[] { values, excludeObsolete.Value, sortOrder, filter, getName, getDescription },
 					null,
 					null);
 		}
 
-		public static IItemsSource Create(object val, Type itemValueType, bool? excludeObsolete = null, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null)
+		public static IItemsSource Create(object val, Type itemValueType, bool? excludeObsolete = null, ListSortDirection? sortOrder = null, Func<IItemsSourceItem, bool> filter = null, Func<object, string> getName = null, Func<object, string> getDescription = null)
 		{
 			switch (val)
 			{
 				case null:
 					itemValueType ??= typeof(object);
-					return Create(itemValueType.CreateArray(0), itemValueType, excludeObsolete, sortOrder, filter);
+					return Create(itemValueType.CreateArray(0), itemValueType, excludeObsolete, sortOrder, filter, getName, getDescription);
 
 				case IItemsSource src:
 					if((itemValueType == null || src.ValueType == itemValueType) && (excludeObsolete == null || excludeObsolete == src.ExcludeObsolete) && (sortOrder == null || sortOrder == src.SortOrder) && filter == null)
 						return src;
 
-					return Create(src.Values, itemValueType, excludeObsolete, sortOrder, filter);
+					return Create(src.Values, itemValueType, excludeObsolete, sortOrder, filter, getName, getDescription);
 
 				case IEnumerable ie:
-					return Create(ie, itemValueType, excludeObsolete, sortOrder, filter);
+					return Create(ie, itemValueType, excludeObsolete, sortOrder, filter, getName, getDescription);
 
 				default:
 					throw new ArgumentException($"cannot create {typeof(IItemsSource).FullName} from '{val.GetType().FullName}'");
@@ -313,17 +321,6 @@
 
 			return type;
 		}
-	}
-
-	[Obsolete("Use ItemsSourceBase directly")]
-	public class EnumSource<T> : ItemsSourceBase<T>
-		where T : Enum
-	{
-		public EnumSource() : base(true) { }
-
-		public EnumSource(bool excludeObsolete) : base(excludeObsolete) { }
-
-		public EnumSource(IEnumerable values) : base(values, true, null, null) { }
 	}
 
 	/// <summary>
