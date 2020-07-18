@@ -54,6 +54,8 @@
 		public static readonly DependencyProperty ShowObsoleteProperty = DependencyProperty.Register(nameof(ShowObsolete), typeof(bool), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(false, (o, args) => ((ComboBoxEditEx)o).OnShowObsoleteChanged()));
 		/// <summary>Sort order.</summary>
 		public static readonly DependencyProperty SortOrderProperty = DependencyProperty.Register(nameof(SortOrder), typeof(ListSortDirection?), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null, (o, args) => ((ComboBoxEditEx)o).OnSortOrderChanged()));
+		/// <summary>Is searchable.</summary>
+		public static readonly DependencyProperty IsSearchableProperty = DependencyProperty.Register(nameof(IsSearchable), typeof(bool), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(false, (o, args) => ((ComboBoxEditEx)o).OnIsSearchableChanged()));
 
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
@@ -65,6 +67,8 @@
 		public bool ShowObsolete { get => (bool) GetValue(ShowObsoleteProperty); set => SetValue(ShowObsoleteProperty, value); }
 		/// <summary>Sort order.</summary>
 		public ListSortDirection? SortOrder { get => (ListSortDirection?) GetValue(SortOrderProperty); set => SetValue(SortOrderProperty, value); }
+		/// <summary>Is searchable.</summary>
+		public bool IsSearchable { get => (bool) GetValue(IsSearchableProperty); set => SetValue(IsSearchableProperty, value); }
 
 		/// <summary>
 		/// Get default item container style.
@@ -121,6 +125,15 @@
 			this.RemoveClearButton();
 			if(IsNullable)
 				this.AddClearButton();
+		}
+
+		private void OnIsSearchableChanged()
+		{
+			var searchable = IsSearchable;
+			SetCurrentValue(AutoCompleteProperty, searchable);
+			SetCurrentValue(IncrementalFilteringProperty, searchable);
+			SetCurrentValue(IncrementalSearchProperty, searchable);
+			SetCurrentValue(FilterConditionProperty, DevExpress.Data.Filtering.FilterCondition.StartsWith);
 		}
 
 		/// <inheritdoc />
@@ -390,14 +403,23 @@
 
 		/// <summary>Current value.</summary>
 		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(object), typeof(ComboBoxEditExSettings));
+		/// <summary>Is searchable.</summary>
+		public static readonly DependencyProperty IsSearchableProperty = DependencyProperty.Register(nameof(IsSearchable), typeof(bool), typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(false));
+
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
+		/// <summary>Is searchable.</summary>
+		public bool IsSearchable { get => (bool) GetValue(IsSearchableProperty); set => SetValue(IsSearchableProperty, value); }
+
 
 		/// <inheritdoc />
 		protected override void AssignToEditCore(IBaseEdit e)
 		{
 			if (e is ComboBoxEditEx editor)
+			{
 				SetValueFromSettings(ValueProperty, () => editor.Value = Value);
+				SetValueFromSettings(IsSearchableProperty, () => editor.IsSearchable = IsSearchable);
+			}
 
 			base.AssignToEditCore(e);
 		}
