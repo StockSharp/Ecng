@@ -133,6 +133,8 @@
 			_source.Cancel();
 		}
 
+		public TimeSpan DisconnectTimeout = TimeSpan.FromSeconds(10);
+
 		private void OnReceive()
 		{
 			try
@@ -228,7 +230,7 @@
 
 				try
 				{
-					_ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, new CancellationToken()).Wait();
+					_ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, new CancellationToken()).Wait((int)DisconnectTimeout.TotalMilliseconds);
 				}
 				catch (Exception ex)
 				{
