@@ -120,13 +120,11 @@
 					throw new ArgumentException($"{nameof(values)} is expected to contain either {typeof(T).Name} or {nameof(IItemsSourceItem)}<{typeof(T).Name}> items (mix not supported). actual types found: {objects.Select(o => o.GetType().Name).ToHashSet().Join(",")}");
 				}
 			}
-			else if (typeof(T).IsEnum)
-			{
-				_values = Enumerator.GetValues<T>().ToArray();
-				_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => CreateItems(GetValues()));
-			}
 			else
 			{
+				if (typeof(T).IsEnum)
+					_values = Enumerator.GetValues<T>().ToArray();
+
 				_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => CreateItems(GetValues()));
 			}
 		}
