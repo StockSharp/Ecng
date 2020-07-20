@@ -13,7 +13,6 @@
 	using DevExpress.Xpf.Editors.Helpers;
 	using DevExpress.Xpf.Editors.Settings;
 	using DevExpress.Xpf.PropertyGrid;
-	using DevExpress.Xpf.Editors.Themes;
 	using DevExpress.Xpf.Editors.EditStrategy;
 	using DevExpress.Xpf.Editors.Services;
 	using DevExpress.Xpf.Editors.Validation.Native;
@@ -30,12 +29,7 @@
 	{
 		static ComboBoxEditEx()
 		{
-			IsTextEditableProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(false));
-			ImmediatePopupProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(true));
-			DisplayMemberProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(nameof(IItemsSourceItem.DisplayName)));
-			ValueMemberProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(nameof(IItemsSourceItem.Value)));
 			ItemsSourceProperty.OverrideMetadata(typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null, null, (o, value) => ((ComboBoxEditEx)o).CoerceItemsSource(value)));
-
 			ComboBoxEditExSettings.RegisterCustomEdit();
 		}
 
@@ -55,7 +49,7 @@
 		/// <summary>Sort order.</summary>
 		public static readonly DependencyProperty SortOrderProperty = DependencyProperty.Register(nameof(SortOrder), typeof(ListSortDirection?), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null, (o, args) => ((ComboBoxEditEx)o).OnSortOrderChanged()));
 		/// <summary>Is searchable.</summary>
-		public static readonly DependencyProperty IsSearchableProperty = DependencyProperty.Register(nameof(IsSearchable), typeof(bool), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(false, (o, args) => ((ComboBoxEditEx)o).OnIsSearchableChanged()));
+		public static readonly DependencyProperty IsSearchableProperty = DependencyProperty.Register(nameof(IsSearchable), typeof(bool), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(false));
 
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
@@ -70,27 +64,10 @@
 		/// <summary>Is searchable.</summary>
 		public bool IsSearchable { get => (bool) GetValue(IsSearchableProperty); set => SetValue(IsSearchableProperty, value); }
 
-		/// <summary>
-		/// Get default item container style.
-		/// </summary>
-		protected virtual Style GetDefaultItemContainerStyle() => (Style)FindResource(new EditorListBoxThemeKeyExtension {ResourceKey = EditorListBoxThemeKeys.DefaultItemStyle });
+		public static ComponentResourceKey ComboBoxEditExStyleKey => new ComponentResourceKey(typeof(ComboBoxEditEx), "ComboBoxEditExStyle");
 
 		/// <summary>Initializes a new instance of the <see cref="ComboBoxEditEx"/>. </summary>
-		public ComboBoxEditEx()
-		{
-			var mb = new Binding
-			{
-				Mode = BindingMode.OneWay,
-				Converter = new ItemToTooltipConverter(),
-				Path = new PropertyPath(".")
-			};
-
-			// ReSharper disable once VirtualMemberCallInConstructor
-			ItemContainerStyle = new Style(typeof(ComboBoxEditItem), GetDefaultItemContainerStyle()) { Setters = { new Setter(ToolTipProperty, mb) } };
-
-			DisplayMember = nameof(IItemsSourceItem.DisplayName);
-			ValueMember = nameof(IItemsSourceItem.Value);
-		}
+		public ComboBoxEditEx() => Style = (Style) Application.Current.FindResource(ComboBoxEditExStyleKey);
 
 		internal static IItemsSource CoerceItemsSource(object newValue, bool? showObsolete, ListSortDirection? sortOrder)
 			=> newValue.ToItemsSource(null, !showObsolete, sortOrder);
@@ -125,15 +102,6 @@
 			this.RemoveClearButton();
 			if(IsNullable)
 				this.AddClearButton();
-		}
-
-		private void OnIsSearchableChanged()
-		{
-			var searchable = IsSearchable;
-			SetCurrentValue(AutoCompleteProperty, searchable);
-			SetCurrentValue(IncrementalFilteringProperty, searchable);
-			SetCurrentValue(IncrementalSearchProperty, searchable);
-			SetCurrentValue(FilterConditionProperty, DevExpress.Data.Filtering.FilterCondition.StartsWith);
 		}
 
 		/// <inheritdoc />
@@ -260,14 +228,14 @@
 				return arr;
 			}
 		}
+	}
 
-		class ItemToTooltipConverter : IValueConverter
-		{
-			public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-				=> value is IItemsSourceItem item ? item.Description : null;
+	class ComboBoxEditExItemToTooltipConverter : IValueConverter
+	{
+		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+			=> value is IItemsSourceItem item ? item.Description : null;
 
-			public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
-		}
+		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
 	}
 
 	/// <summary>
@@ -283,13 +251,12 @@
 
 		private readonly Dictionary<object, int> _valueOrder = new Dictionary<object, int>();
 
+		public static ComponentResourceKey SubsetComboBoxStyleKey => new ComponentResourceKey(typeof(ComboBoxEditEx), "SubsetComboBoxStyle");
+
 		static SubsetComboBox() => SubsetComboBoxSettings.RegisterCustomEdit();
 
 		/// <inheritdoc />
-		public SubsetComboBox() => StyleSettings = new CheckedComboBoxStyleSettings();
-
-		/// <inheritdoc />
-		protected override Style GetDefaultItemContainerStyle() => (Style)FindResource(new EditorListBoxThemeKeyExtension {ResourceKey = EditorListBoxThemeKeys.CheckBoxItemStyle });
+		public SubsetComboBox() => Style = (Style)Application.Current.FindResource(SubsetComboBoxStyleKey);
 
 		/// <inheritdoc />
 		protected override void UpdateBindings()
@@ -379,25 +346,18 @@
 	/// </summary>
 	public class ComboBoxEditExSettings : ComboBoxEditSettings
 	{
+		public static ComponentResourceKey ComboBoxEditExSettingsStyleKey => new ComponentResourceKey(typeof(ComboBoxEditEx), "ComboBoxEditExSettingsStyle");
+
 		static ComboBoxEditExSettings()
 		{
-			IsTextEditableProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(false));
-			ImmediatePopupProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(true));
 			ItemsSourceProperty.OverrideMetadata(typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(null, null, (o, value) => ((ComboBoxEditExSettings)o).CoerceItemsSource(value)));
-
 			RegisterCustomEdit();
 		}
 
-		public ComboBoxEditExSettings()
-		{
-			DisplayMember = nameof(IItemsSourceItem.DisplayName);
-			ValueMember = nameof(IItemsSourceItem.Value);
-		}
+		/// <summary>Initializes a new instance of the <see cref="ComboBoxEditExSettings"/>. </summary>
+		public ComboBoxEditExSettings() => Style = (Style) Application.Current.FindResource(ComboBoxEditExSettingsStyleKey);
 
-		private object CoerceItemsSource(object newValue)
-		{
-			return ComboBoxEditEx.CoerceItemsSource(newValue, null, null).Values;
-		}
+		private object CoerceItemsSource(object newValue) => ComboBoxEditEx.CoerceItemsSource(newValue, null, null).Values;
 
 		internal static void RegisterCustomEdit() => EditorSettingsProvider.Default.RegisterUserEditor(typeof(ComboBoxEditEx), typeof(ComboBoxEditExSettings), () => new ComboBoxEditEx(), () => new ComboBoxEditExSettings());
 
@@ -405,12 +365,15 @@
 		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(object), typeof(ComboBoxEditExSettings));
 		/// <summary>Is searchable.</summary>
 		public static readonly DependencyProperty IsSearchableProperty = DependencyProperty.Register(nameof(IsSearchable), typeof(bool), typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(false));
+		/// <summary>Is nullable.</summary>
+		public static readonly DependencyProperty IsNullableProperty = DependencyProperty.Register(nameof(IsNullable), typeof(bool), typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(false));
 
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
 		/// <summary>Is searchable.</summary>
 		public bool IsSearchable { get => (bool) GetValue(IsSearchableProperty); set => SetValue(IsSearchableProperty, value); }
-
+		/// <summary>Is nullable.</summary>
+		public bool IsNullable { get => (bool) GetValue(IsNullableProperty); set => SetValue(IsNullableProperty, value); }
 
 		/// <inheritdoc />
 		protected override void AssignToEditCore(IBaseEdit e)
@@ -419,6 +382,7 @@
 			{
 				SetValueFromSettings(ValueProperty, () => editor.Value = Value);
 				SetValueFromSettings(IsSearchableProperty, () => editor.IsSearchable = IsSearchable);
+				SetValueFromSettings(IsNullableProperty, () => editor.IsNullable = IsNullable);
 			}
 
 			base.AssignToEditCore(e);
@@ -430,6 +394,8 @@
 	/// </summary>
 	public class SubsetComboBoxSettings : ComboBoxEditExSettings
 	{
+		public static ComponentResourceKey SubsetComboBoxSettingsStyleKey => new ComponentResourceKey(typeof(ComboBoxEditEx), "SubsetComboBoxSettingsStyle");
+
 		/// <summary>Display selected items count.</summary>
 		public static readonly DependencyProperty DisplaySelectedItemsCountProperty = DependencyProperty.Register(nameof(DisplaySelectedItemsCount), typeof(bool), typeof(SubsetComboBoxSettings), new FrameworkPropertyMetadata(false));
 
@@ -439,7 +405,7 @@
 		static SubsetComboBoxSettings() => RegisterCustomEdit();
 
 		/// <inheritdoc />
-		public SubsetComboBoxSettings() => StyleSettings = new CheckedComboBoxStyleSettings();
+		public SubsetComboBoxSettings() => Style = (Style) Application.Current.FindResource(SubsetComboBoxSettingsStyleKey);
 
 		internal new static void RegisterCustomEdit() => EditorSettingsProvider.Default.RegisterUserEditor(typeof(SubsetComboBox), typeof(SubsetComboBoxSettings), () => new SubsetComboBox(), () => new SubsetComboBoxSettings());
 
