@@ -137,20 +137,7 @@
 		/// <inheritdoc />
 		protected override BaseEditSettings CreateEditorSettings() => new ComboBoxEditExSettings();
 
-		/// <inheritdoc />
-		protected override string GetDisplayText(object editValue, bool applyFormatting) => base.GetDisplayText(TryConvertStringEnum(editValue), applyFormatting);
-
 		protected override EditStrategyBase CreateEditStrategy() => new ComboBoxEditExStrategy(this);
-
-		object TryConvertStringEnum(object value)
-		{
-			if (!(value is string str))
-				return value;
-
-			var itemValueType = Source?.ValueType;
-			var ut = itemValueType?.GetUnderlyingType() ?? itemValueType;
-			return ut?.IsEnum == true ? str.To(ut) : value;
-		}
 
 		protected virtual object TryConvertEditValue(object ev) => ev;
 
@@ -174,7 +161,7 @@
 				PropertyUpdater.Register(BaseEdit.EditValueProperty, baseValue => baseValue, baseValue =>
 				{
 					var e = (ComboBoxEditEx) Editor;
-					var editValue = SelectorUpdater.GetEditValueFromBaseValue(e.TryConvertStringEnum(baseValue));
+					var editValue = SelectorUpdater.GetEditValueFromBaseValue(baseValue);
 
 					return e.TryConvertEditValue(editValue) ?? editValue;
 				});
@@ -365,15 +352,11 @@
 		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(object), typeof(ComboBoxEditExSettings));
 		/// <summary>Is searchable.</summary>
 		public static readonly DependencyProperty IsSearchableProperty = DependencyProperty.Register(nameof(IsSearchable), typeof(bool), typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(false));
-		/// <summary>Is nullable.</summary>
-		public static readonly DependencyProperty IsNullableProperty = DependencyProperty.Register(nameof(IsNullable), typeof(bool), typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(false));
 
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
 		/// <summary>Is searchable.</summary>
 		public bool IsSearchable { get => (bool) GetValue(IsSearchableProperty); set => SetValue(IsSearchableProperty, value); }
-		/// <summary>Is nullable.</summary>
-		public bool IsNullable { get => (bool) GetValue(IsNullableProperty); set => SetValue(IsNullableProperty, value); }
 
 		/// <inheritdoc />
 		protected override void AssignToEditCore(IBaseEdit e)
@@ -382,7 +365,6 @@
 			{
 				SetValueFromSettings(ValueProperty, () => editor.Value = Value);
 				SetValueFromSettings(IsSearchableProperty, () => editor.IsSearchable = IsSearchable);
-				SetValueFromSettings(IsNullableProperty, () => editor.IsNullable = IsNullable);
 			}
 
 			base.AssignToEditCore(e);
