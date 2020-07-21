@@ -4,7 +4,9 @@
                     xmlns:system="clr-namespace:System;assembly=mscorlib"
                     xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
                     xmlns:themes="http://schemas.devexpress.com/winfx/2008/xaml/editors/themekeys"
-                    xmlns:converters="clr-namespace:Ecng.Xaml.Converters">
+                    xmlns:native="http://schemas.devexpress.com/winfx/2008/xaml/core/internal"
+                    xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+                    xmlns:themes1="http://schemas.devexpress.com/winfx/2008/xaml/bars/themekeys">
 
     <Style x:Key="BothResizeGripperStyle" TargetType="{x:Type Thumb}">
         <Setter Setter.Property="FrameworkElement.Cursor" Setter.Value="SizeNWSE" />
@@ -221,8 +223,6 @@
 
     <xaml:ComboBoxEditExItemToTooltipConverter x:Key="ComboBoxEditExItemToTooltipConverter"/>
 
-    <converters:UriToImageSourceConverter x:Key="UriToImageSourceConverter"/>
-
     <Style x:Key="ComboBoxEditExItemStyle" TargetType="dxe:ListBoxEditItem" BasedOn="{StaticResource {themes:EditorListBoxThemeKey ResourceKey=DefaultItemStyle}}">
         <Setter Property="ToolTip" Value="{Binding Path=., Mode=OneWay, Converter={StaticResource ComboBoxEditExItemToTooltipConverter}}"/>
     </Style>
@@ -233,7 +233,8 @@
 
     <DataTemplate x:Key="ComboBoxEditExItemTemplate">
         <StackPanel Orientation="Horizontal">
-            <Image Source="{Binding Icon, Converter={StaticResource UriToImageSourceConverter}}" VerticalAlignment="Center" MaxHeight="18" MaxWidth="40" Margin="0,-1,3,-1">
+            <Image Source="{xaml:IconUriBinding {Binding Icon}}" VerticalAlignment="Center" MaxHeight="18" MaxWidth="40" Margin="0,-1,3,-1"
+                   dx:WpfSvgPalette.Palette="{native:ThemeResource ThemeKey={themes1:BarSvgPaletteThemeKey ResourceKey=SvgPaletteInMenu}}">
                 <Image.Style>
                     <Style TargetType="Image">
                         <Style.Triggers>
@@ -280,9 +281,6 @@
                 <Setter Property="AutoComplete" Value="True"/>
                 <Setter Property="IncrementalFiltering" Value="True"/>
                 <Setter Property="FilterCondition" Value="StartsWith"/>
-            </Trigger>
-            <Trigger Property="IsNullable" Value="True">
-                <Setter Property="ApplyItemTemplateToSelectedItem" Value="False"/>
             </Trigger>
         </Style.Triggers>
     </Style>
