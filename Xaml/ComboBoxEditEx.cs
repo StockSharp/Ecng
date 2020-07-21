@@ -310,7 +310,7 @@
 		{
 			if(editValue is IList itemsList)
 			{
-				if(DisplaySelectedItemsCount && itemsList.Count != 1)
+				if(DisplaySelectedItemsCount)
 					return "Selected: {0}".Translate().Put(itemsList.Count);
 
 				editValue = itemsList.Cast<object>().OrderBy(GetValueOrder).ToList();
