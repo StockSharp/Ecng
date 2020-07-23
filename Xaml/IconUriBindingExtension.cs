@@ -110,8 +110,8 @@
 					return _uri != null ? new BitmapImage(_uri) : null;
 
 				var targetObject = values[0] as DependencyObject;
-				//var inheritedPalette = values[3] as WpfSvgPalette;
-				var palette = (values[1] is ThemeTreeWalker treeWalker ? treeWalker.InplaceResourceProvider : ThemeHelper).GetSvgPalette(targetObject);
+				var inheritedPalette = values[3] as WpfSvgPalette;
+				var palette = inheritedPalette ?? (values[1] is ThemeTreeWalker treeWalker ? treeWalker.InplaceResourceProvider : ThemeHelper).GetSvgPalette(targetObject);
 				var state = values[2] as string;
 
 				if (_svgImage != null)
