@@ -67,7 +67,7 @@ namespace Ecng.Common
 			return (path + relativePart).ToFullPath();
 		}
 
-		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null)
+		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, int waitForExit = int.MaxValue)
 		{
 			if (output == null)
 				throw new ArgumentNullException(nameof(output));
@@ -107,7 +107,7 @@ namespace Ecng.Common
 				process.BeginOutputReadLine();
 				process.BeginErrorReadLine();
 
-				process.WaitForExit();
+				process.WaitForExit(waitForExit);
 
 				return process.ExitCode;
 			}
