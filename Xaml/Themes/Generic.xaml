@@ -261,9 +261,11 @@
 
         <Style.Triggers>
             <Trigger Property="IsSearchable" Value="True">
+                <Setter Property="IsTextEditable" Value="True"/>
                 <Setter Property="AutoComplete" Value="True"/>
                 <Setter Property="IncrementalFiltering" Value="True"/>
-                <Setter Property="FilterCondition" Value="StartsWith"/>
+                <Setter Property="ValidateOnTextInput" Value="False"/>
+                <Setter Property="FilterCondition" Value="Contains"/>
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -278,9 +280,11 @@
 
         <Style.Triggers>
             <Trigger Property="IsSearchable" Value="True">
+                <Setter Property="IsTextEditable" Value="True"/>
                 <Setter Property="AutoComplete" Value="True"/>
                 <Setter Property="IncrementalFiltering" Value="True"/>
-                <Setter Property="FilterCondition" Value="StartsWith"/>
+                <Setter Property="ValidateOnTextInput" Value="False"/>
+                <Setter Property="FilterCondition" Value="Contains"/>
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -301,8 +305,6 @@
         <Style.Triggers>
             <Trigger Property="IsSearchable" Value="True">
                 <Setter Property="AutoComplete" Value="True"/>
-                <Setter Property="IncrementalFiltering" Value="True"/>
-                <Setter Property="FilterCondition" Value="StartsWith"/>
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -322,8 +324,6 @@
         <Style.Triggers>
             <Trigger Property="IsSearchable" Value="True">
                 <Setter Property="AutoComplete" Value="True"/>
-                <Setter Property="IncrementalFiltering" Value="True"/>
-                <Setter Property="FilterCondition" Value="StartsWith"/>
             </Trigger>
         </Style.Triggers>
     </Style>
