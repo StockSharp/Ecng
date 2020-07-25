@@ -18,6 +18,7 @@
 	using DevExpress.Xpf.Editors.Validation.Native;
 
 	using Ecng.Common;
+	using Ecng.Collections;
 	using Ecng.ComponentModel;
 	using Ecng.Reflection;
 	using Ecng.Localization;
@@ -49,7 +50,7 @@
 		/// <summary>Sort order.</summary>
 		public static readonly DependencyProperty SortOrderProperty = DependencyProperty.Register(nameof(SortOrder), typeof(ListSortDirection?), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(null, (o, args) => ((ComboBoxEditEx)o).OnSortOrderChanged()));
 		/// <summary>Is searchable.</summary>
-		public static readonly DependencyProperty IsSearchableProperty = DependencyProperty.Register(nameof(IsSearchable), typeof(bool), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(false));
+		public static readonly DependencyProperty IsSearchableProperty = DependencyProperty.Register(nameof(IsSearchable), typeof(bool), typeof(ComboBoxEditEx), new FrameworkPropertyMetadata(true));
 
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
@@ -165,6 +166,19 @@
 
 					return e.TryConvertEditValue(editValue) ?? editValue;
 				});
+			}
+
+			protected override int TextSearchCallback(string prefix, int startIndex, bool ignoreStartIndex)
+			{
+				var e = (ComboBoxEditEx) Editor;
+
+				if(prefix.IsEmptyOrWhiteSpace() || !e.IsSearchable)
+					return base.TextSearchCallback(prefix, startIndex, ignoreStartIndex);
+
+				var culture = CultureInfo.InstalledUICulture;
+				prefix = prefix.ToLower(culture);
+
+				return e.Source?.Values.IndexOf(item => item.DisplayName?.ToLower(culture).Contains(prefix) == true) ?? -1;
 			}
 		}
 
@@ -351,7 +365,7 @@
 		/// <summary>Current value.</summary>
 		public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(object), typeof(ComboBoxEditExSettings));
 		/// <summary>Is searchable.</summary>
-		public static readonly DependencyProperty IsSearchableProperty = DependencyProperty.Register(nameof(IsSearchable), typeof(bool), typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(false));
+		public static readonly DependencyProperty IsSearchableProperty = DependencyProperty.Register(nameof(IsSearchable), typeof(bool), typeof(ComboBoxEditExSettings), new FrameworkPropertyMetadata(true));
 
 		/// <summary>Current value.</summary>
 		public object Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }

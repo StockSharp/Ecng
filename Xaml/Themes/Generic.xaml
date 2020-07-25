@@ -6,7 +6,8 @@
                     xmlns:themes="http://schemas.devexpress.com/winfx/2008/xaml/editors/themekeys"
                     xmlns:native="http://schemas.devexpress.com/winfx/2008/xaml/core/internal"
                     xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
-                    xmlns:themes1="http://schemas.devexpress.com/winfx/2008/xaml/bars/themekeys">
+                    xmlns:themes1="http://schemas.devexpress.com/winfx/2008/xaml/bars/themekeys"
+                    xmlns:dxeh="http://schemas.devexpress.com/winfx/2008/xaml/editors/internal">
 
     <Style x:Key="BothResizeGripperStyle" TargetType="{x:Type Thumb}">
         <Setter Setter.Property="FrameworkElement.Cursor" Setter.Value="SizeNWSE" />
@@ -231,22 +232,39 @@
         <Setter Property="ToolTip" Value="{Binding Path=., Mode=OneWay, Converter={StaticResource ComboBoxEditExItemToTooltipConverter}}"/>
     </Style>
 
+    <Style x:Key="ComboBoxEditExIconStyle" TargetType="Image">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                <Setter Property="Visibility" Value="Collapsed"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <DataTemplate x:Key="ComboBoxEditExItemTemplate">
         <StackPanel Orientation="Horizontal">
-            <Image Source="{xaml:IconUriBinding {Binding Icon}}" VerticalAlignment="Center" MaxHeight="18" MaxWidth="40" Margin="0,-1,3,-1"
-                   dx:WpfSvgPalette.Palette="{native:ThemeResource ThemeKey={themes1:BarSvgPaletteThemeKey ResourceKey=SvgPaletteInMenu}}">
-                <Image.Style>
-                    <Style TargetType="Image">
+            <Image Source="{xaml:IconUriBinding {Binding Icon}}" VerticalAlignment="Center" MaxHeight="18" MaxWidth="40" Margin="0,-1,3,-1" Style="{StaticResource ComboBoxEditExIconStyle}"
+                   dx:WpfSvgPalette.Palette="{native:ThemeResource ThemeKey={themes1:BarSvgPaletteThemeKey ResourceKey=SvgPaletteInMenu}}"/>
+
+            <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="SubsetComboBoxItemTemplate">
+        <StackPanel Orientation="Horizontal">
+            <Image Source="{xaml:IconUriBinding {Binding Icon}}" VerticalAlignment="Center" MaxHeight="18" MaxWidth="40" Margin="0,-1,3,-1" Style="{StaticResource ComboBoxEditExIconStyle}"
+                   dx:WpfSvgPalette.Palette="{native:ThemeResource ThemeKey={themes1:BarSvgPaletteThemeKey ResourceKey=SvgPaletteInMenu}}"/>
+
+            <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
-                                <Setter Property="Visibility" Value="Collapsed"/>
+                            <DataTrigger Binding="{Binding Path=(dxeh:ControlHelper.IsFocused), RelativeSource={RelativeSource FindAncestor, AncestorType=dxe:CheckEdit}}" Value="True">
+                                <Setter Property="Background" Value="#3D26A0DA"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </Image.Style>
-            </Image>
-
-            <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+                </TextBlock.Style>
+            </TextBlock>
         </StackPanel>
     </DataTemplate>
 
@@ -258,16 +276,6 @@
         <Setter Property="ValueMember" Value="Value"/>
         <Setter Property="ApplyItemTemplateToSelectedItem" Value="True"/>
         <Setter Property="ItemTemplate" Value="{StaticResource ComboBoxEditExItemTemplate}"/>
-
-        <Style.Triggers>
-            <Trigger Property="IsSearchable" Value="True">
-                <Setter Property="IsTextEditable" Value="True"/>
-                <Setter Property="AutoComplete" Value="True"/>
-                <Setter Property="IncrementalFiltering" Value="True"/>
-                <Setter Property="ValidateOnTextInput" Value="False"/>
-                <Setter Property="FilterCondition" Value="Contains"/>
-            </Trigger>
-        </Style.Triggers>
     </Style>
 
     <Style x:Key="{x:Static xaml:ComboBoxEditExSettings.ComboBoxEditExSettingsStyleKey}" TargetType="xaml:ComboBoxEditExSettings">
@@ -277,16 +285,6 @@
         <Setter Property="ValueMember" Value="Value"/>
         <Setter Property="ApplyItemTemplateToSelectedItem" Value="True"/>
         <Setter Property="ItemTemplate" Value="{StaticResource ComboBoxEditExItemTemplate}"/>
-
-        <Style.Triggers>
-            <Trigger Property="IsSearchable" Value="True">
-                <Setter Property="IsTextEditable" Value="True"/>
-                <Setter Property="AutoComplete" Value="True"/>
-                <Setter Property="IncrementalFiltering" Value="True"/>
-                <Setter Property="ValidateOnTextInput" Value="False"/>
-                <Setter Property="FilterCondition" Value="Contains"/>
-            </Trigger>
-        </Style.Triggers>
     </Style>
 
     <Style x:Key="{x:Static xaml:SubsetComboBox.SubsetComboBoxStyleKey}" TargetType="xaml:SubsetComboBox">
@@ -294,19 +292,14 @@
         <Setter Property="ImmediatePopup" Value="True"/>
         <Setter Property="DisplayMember" Value="DisplayName"/>
         <Setter Property="ValueMember" Value="Value"/>
-        <Setter Property="ItemTemplate" Value="{StaticResource ComboBoxEditExItemTemplate}"/>
+        <Setter Property="ItemTemplate" Value="{StaticResource SubsetComboBoxItemTemplate}"/>
         <Setter Property="ItemContainerStyle" Value="{StaticResource SubsetComboBoxItemStyle}"/>
+
         <Setter Property="StyleSettings">
             <Setter.Value>
                 <dxe:CheckedComboBoxStyleSettings/>
             </Setter.Value>
         </Setter>
-
-        <Style.Triggers>
-            <Trigger Property="IsSearchable" Value="True">
-                <Setter Property="AutoComplete" Value="True"/>
-            </Trigger>
-        </Style.Triggers>
     </Style>
 
     <Style x:Key="{x:Static xaml:SubsetComboBoxSettings.SubsetComboBoxSettingsStyleKey}" TargetType="xaml:SubsetComboBoxSettings">
@@ -314,18 +307,13 @@
         <Setter Property="ImmediatePopup" Value="True"/>
         <Setter Property="DisplayMember" Value="DisplayName"/>
         <Setter Property="ValueMember" Value="Value"/>
-        <Setter Property="ItemTemplate" Value="{StaticResource ComboBoxEditExItemTemplate}"/>
+        <Setter Property="ItemTemplate" Value="{StaticResource SubsetComboBoxItemTemplate}"/>
+
         <Setter Property="StyleSettings">
             <Setter.Value>
                 <dxe:CheckedComboBoxStyleSettings/>
             </Setter.Value>
         </Setter>
-
-        <Style.Triggers>
-            <Trigger Property="IsSearchable" Value="True">
-                <Setter Property="AutoComplete" Value="True"/>
-            </Trigger>
-        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>
