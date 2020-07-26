@@ -59,7 +59,7 @@ namespace MoreLinq
             if (source == null) throw new ArgumentNullException("source");
             if (size <= 0) throw new ArgumentOutOfRangeException("size");
             if (resultSelector == null) throw new ArgumentNullException("resultSelector");
-            return Batch(source, size, resultSelector);
+            return Batch(source, size, resultSelector, null);
         }
 
         public static IEnumerable<TResult> Batch<TSource, TResult>(this IEnumerable<TSource> source, int size,
