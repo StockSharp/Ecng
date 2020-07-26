@@ -1124,5 +1124,10 @@
 				}
 			}
 		}
+
+		public static long? TryToLong(this string str)
+		{
+			return long.TryParse(str, out var l) ? l : (long?)null;
+		}
 	}
 }
