@@ -45,7 +45,7 @@
 
 			init?.Invoke(client);
 
-			logVerbose?.Invoke("Request '{0}' Args '{1}'.", new object[] { url, request.Parameters.Select(p => $"{p.Name}={p.Value}").Join("&") });
+			logVerbose?.Invoke("Request '{0}' Args '{1}'.", new object[] { url, request.Parameters.Select(p => $"{p.Name}={p.Value}").JoinAnd() });
 			var response = client.Execute(request);
 
 			var content = response.Content;

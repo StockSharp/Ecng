@@ -400,10 +400,20 @@
 		{
 			return parts.Join(",");
 		}
+
+		public static string JoinDotComma(this IEnumerable<string> parts)
+		{
+			return parts.Join(";");
+		}
 		
 		public static string JoinCommaSpace(this IEnumerable<string> parts)
 		{
 			return parts.Join(", ");
+		}
+
+		public static string JoinAnd(this IEnumerable<string> parts)
+		{
+			return parts.Join("&");
 		}
 
 		public static string Join(this IEnumerable<string> parts, string separator)
