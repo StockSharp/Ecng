@@ -123,6 +123,8 @@
 			ThreadingHelper.Thread(() => CultureInfo.InvariantCulture.DoInCulture(OnReceive)).Launch();
 		}
 
+		public bool IsConnected => _source != null;
+
 		public void Disconnect(bool expectedDisconnect = true)
 		{
 			if (_source == null)
