@@ -109,24 +109,26 @@
 
 		public void Connect(string url, bool immediateConnect, Action<ClientWebSocket> init = null)
 		{
+			var source = new CancellationTokenSource();
+
 			_expectedDisconnect = false;
-			_source = new CancellationTokenSource();
+			_source = source;
 
 			_resendCommands.Clear();
 
-			_disconnectionStates[_source] = _expectedDisconnect;
+			_disconnectionStates[source] = _expectedDisconnect;
 
 			_ws = new ClientWebSocket();
 			init?.Invoke(_ws);
-			_ws.ConnectAsync(new Uri(url), _source.Token).Wait();
+			_ws.ConnectAsync(new Uri(url), source.Token).Wait();
 
 			if (immediateConnect)
 				_connected.Invoke();
 
-			ThreadingHelper.Thread(() => CultureInfo.InvariantCulture.DoInCulture(OnReceive)).Launch();
+			ThreadingHelper.Thread(() => CultureInfo.InvariantCulture.DoInCulture(() => OnReceive(source))).Launch();
 		}
 
-		public bool IsConnected => _source != null;
+		public bool IsConnected => _ws != null;
 
 		public void Disconnect(bool expectedDisconnect = true)
 		{
@@ -134,7 +136,7 @@
 				throw new InvalidOperationException("Not connected.".Translate());
 
 			_expectedDisconnect = expectedDisconnect;
-			_disconnectionStates[_source] = _expectedDisconnect;
+			_disconnectionStates[_source] = expectedDisconnect;
 			_source.Cancel();
 		}
 
@@ -168,7 +170,7 @@
 			}
 		}
 
-		private void OnReceive()
+		private void OnReceive(CancellationTokenSource source)
 		{
 			try
 			{
@@ -181,8 +183,6 @@
 				var errorCount = 0;
 				const int maxParsingErrors = 100;
 				const int maxNetworkErrors = 10;
-
-				var source = _source;
 
 				while (!source.IsCancellationRequested)
 				{
@@ -202,6 +202,15 @@
 								_error(task.Exception);
 
 							_infoLog("Socket closed with status {0}.".Translate(), result.CloseStatus);
+							_disconnected(_disconnectionStates.TryGetAndRemove(source));
+
+							try
+							{
+								_ws.Dispose();
+							}
+							catch { }
+
+							_ws = null;
 							break;
 						}
 
@@ -277,10 +286,15 @@
 						_error(ex);
 				}
 
-				_ws.Dispose();
+				try
+				{
+					_ws.Dispose();
+				}
+				catch { }
+
 				_ws = null;
 
-				var expected = _disconnectionStates.GetAndRemove(source);
+				var expected = _disconnectionStates.TryGetAndRemove(source);
 				_disconnected(expected);
 
 				if (!expected && AutoResend)
@@ -328,8 +342,7 @@
 
 		protected override void DisposeManaged()
 		{
-			if (_ws != null)
-				_source.Cancel();
+			_source?.Cancel();
 
 			base.DisposeManaged();
 		}
