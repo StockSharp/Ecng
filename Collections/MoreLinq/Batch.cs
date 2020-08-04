@@ -59,11 +59,11 @@ namespace MoreLinq
             if (source == null) throw new ArgumentNullException("source");
             if (size <= 0) throw new ArgumentOutOfRangeException("size");
             if (resultSelector == null) throw new ArgumentNullException("resultSelector");
-            return BatchImpl(source, size, resultSelector);
+            return Batch(source, size, resultSelector, null);
         }
 
-        private static IEnumerable<TResult> BatchImpl<TSource, TResult>(this IEnumerable<TSource> source, int size,
-            Func<IEnumerable<TSource>, TResult> resultSelector)
+        public static IEnumerable<TResult> Batch<TSource, TResult>(this IEnumerable<TSource> source, int size,
+            Func<IEnumerable<TSource>, TResult> resultSelector, Func<bool> needStop)
         {
             Debug.Assert(source != null);
             Debug.Assert(size > 0);
@@ -84,7 +84,8 @@ namespace MoreLinq
                 // The bucket is fully buffered before it's yielded
                 if (count != size)
                 {
-                    continue;
+                    if (needStop?.Invoke() != true)
+                        continue;
                 }
 
                 // Select is necessary so bucket contents are streamed too

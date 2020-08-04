@@ -300,5 +300,16 @@ namespace Ecng.Net
 
 			return new string(temp);
 		}
+
+		public static JsonWriter WriteProperty(this JsonWriter writer, string name, object value)
+		{
+			if (writer is null)
+				throw new ArgumentNullException(nameof(writer));
+
+			writer.WritePropertyName(name);
+			writer.WriteValue(value);
+
+			return writer;
+		}
 	}
 }

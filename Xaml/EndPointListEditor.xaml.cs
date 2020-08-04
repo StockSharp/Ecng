@@ -37,12 +37,12 @@
 	{
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			return (value as IEnumerable<EndPoint>)?.Select(e => e.To<string>()).Join(",");
+			return (value as IEnumerable<EndPoint>)?.Select(e => e.To<string>()).JoinComma();
 		}
 
 		object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			return value.To<string>().SplitBySep(",").Select(s => s.To<EndPoint>()).ToArray();
+			return value.To<string>().SplitByComma().Select(s => s.To<EndPoint>()).ToArray();
 		}
 	}
 }

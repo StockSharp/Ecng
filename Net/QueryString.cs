@@ -39,7 +39,7 @@
 
 		public string Raw
 		{
-			get { return _queryString.Select(p => p.Key + "=" + p.Value).Join("&"); }
+			get { return _queryString.Select(p => p.Key + "=" + p.Value).JoinAnd(); }
 		}
 
 		public bool Contains(string queryField)

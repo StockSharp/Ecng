@@ -6,8 +6,8 @@
         xmlns:xaml="clr-namespace:Ecng.Xaml"
         xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
         Title="New connection string" ShowInTaskbar="False"
-		Width="Auto" Height="Auto" WindowStartupLocation="CenterOwner"
-		SizeToContent="WidthAndHeight" ResizeMode="NoResize">
+		Width="700" Height="500" WindowStartupLocation="CenterOwner"
+		ResizeMode="NoResize">
     <Grid Margin="5">
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="100" />

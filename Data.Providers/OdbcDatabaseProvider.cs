@@ -3,11 +3,10 @@
 	using System.Data.Common;
 	using System.Data.Odbc;
 
-	public class OdbcDatabaseProvider<TRenderer> : DatabaseProvider
-		where TRenderer : SqlRenderer, new()
+	public class OdbcDatabaseProvider : DatabaseProvider
 	{
 		public OdbcDatabaseProvider()
-			: base(OdbcFactory.Instance, new TRenderer())
+			: base(OdbcFactory.Instance, new OdbcRenderer())
 		{
 		}
 

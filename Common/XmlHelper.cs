@@ -24,12 +24,14 @@ namespace Ecng.Common
 			return attr == null ? defaultValue : attr.Value.To<T>();
 		}
 
-		public static void WriteAttribute(this XmlWriter writer, string name, object value)
+		public static XmlWriter WriteAttribute(this XmlWriter writer, string name, object value)
 		{
-			if (writer == null)
+			if (writer is null)
 				throw new ArgumentNullException(nameof(writer));
 
 			writer.WriteAttributeString(name, value != null ? value.To<string>() : string.Empty);
+
+			return writer;
 		}
 
 		public static bool Compare(this XmlNode first, XmlNode second)

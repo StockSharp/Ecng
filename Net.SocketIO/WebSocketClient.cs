@@ -19,7 +19,7 @@
 		private CancellationTokenSource _source;
 		private bool _expectedDisconnect;
 
-		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new SynchronizedDictionary<CancellationTokenSource,bool>();
+		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new SynchronizedDictionary<CancellationTokenSource, bool>();
 
 		private readonly SynchronizedList<Tuple<byte[], WebSocketMessageType>> _resendCommands = new SynchronizedList<Tuple<byte[], WebSocketMessageType>>();
 
@@ -84,6 +84,9 @@
 			_infoLog = infoLog ?? throw new ArgumentNullException(nameof(infoLog));
 			_errorLog = errorLog ?? throw new ArgumentNullException(nameof(errorLog));
 			_verboseLog = verbose ?? throw new ArgumentNullException(nameof(verbose));
+
+			BufferSize = 1024 * 1024;
+			BufferSizeUncompress = BufferSize * 10;
 		}
 
 		private TimeSpan _resendInterval = TimeSpan.FromSeconds(2);
@@ -116,12 +119,14 @@
 			_ws = new ClientWebSocket();
 			init?.Invoke(_ws);
 			_ws.ConnectAsync(new Uri(url), _source.Token).Wait();
-			
+
 			if (immediateConnect)
 				_connected.Invoke();
 
 			ThreadingHelper.Thread(() => CultureInfo.InvariantCulture.DoInCulture(OnReceive)).Launch();
 		}
+
+		public bool IsConnected => _source != null;
 
 		public void Disconnect(bool expectedDisconnect = true)
 		{
@@ -135,13 +140,43 @@
 
 		public TimeSpan DisconnectTimeout = TimeSpan.FromSeconds(10);
 
+		private int _bufferSize;
+
+		public int BufferSize
+		{
+			get => _bufferSize;
+			set
+			{
+				if (value <= 0)
+					throw new ArgumentOutOfRangeException();
+
+				_bufferSize = value;
+			}
+		}
+
+		private int _bufferSizeUncompress;
+
+		public int BufferSizeUncompress
+		{
+			get => _bufferSizeUncompress;
+			set
+			{
+				if (value <= 0)
+					throw new ArgumentOutOfRangeException();
+
+				_bufferSizeUncompress = value;
+			}
+		}
+
 		private void OnReceive()
 		{
 			try
 			{
-				var buf = new byte[1024 * 1024];
-				var buf2 = new byte[1024 * 1024];
+				var buf = new byte[BufferSize];
 				var pos = 0;
+
+				var preProcess = PreProcess;
+				var buf2 = preProcess != null ? new byte[BufferSizeUncompress] : null;
 
 				var errorCount = 0;
 				const int maxParsingErrors = 100;
@@ -183,11 +218,11 @@
 
 						pos = 0;
 
+						var temp = buf;
+
 						try
 						{
-							var preProcess = PreProcess;
-
-							if (preProcess != null)
+							if (buf2 != null)
 							{
 								count = preProcess(buf, 0, count, buf2);
 								buf = buf2;
@@ -200,11 +235,15 @@
 						catch (Exception ex)
 						{
 							_error(new InvalidOperationException("Error parsing string '{0}'.".Translate().Put(recv), ex));
-						
+
 							if (++errorCount < maxParsingErrors)
 								continue;
 
 							_errorLog("Max parsing error {0} limit reached.".Translate(), maxParsingErrors);
+						}
+						finally
+						{
+							buf = temp;
 						}
 					}
 					catch (AggregateException ex)
@@ -262,7 +301,7 @@
 
 				sendBuf = Encoding.UTF8.GetBytes(json);
 			}
-			
+
 			Send(sendBuf, WebSocketMessageType.Text, resendIfDisconnect);
 		}
 

@@ -3,20 +3,37 @@
 	using System;
 	using System.Data.Common;
 	using System.Linq;
+	using System.Diagnostics;
 
 	using Ecng.Collections;
 	using Ecng.Common;
 
 	public static class DatabaseProviderRegistry
 	{
-		private static readonly SynchronizedList<DatabaseProvider> _providers = new SynchronizedList<DatabaseProvider>
+		private static readonly SynchronizedList<DatabaseProvider> _providers = new SynchronizedList<DatabaseProvider>();
+
+		static DatabaseProviderRegistry()
 		{
-			new SqlServerDatabaseProvider(), new SQLiteDatabaseProvider()
+			AddProvider<SqlServerDatabaseProvider>();
+			AddProvider<SQLiteDatabaseProvider>();
 #if NETFRAMEWORK
-			, new JetDatabaseProvider(),
+			AddProvider<OdbcDatabaseProvider>();
+			AddProvider<JetDatabaseProvider>();
 #endif
-			//new PostgreSqlDatabaseProvider(), new FirebirdDatabaseProvider()
-		};
+		}
+
+		private static void AddProvider<TProvider>()
+			where TProvider : DatabaseProvider, new()
+		{
+			try
+			{
+				_providers.Add(new TProvider());
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine(ex);
+			}
+		}
 
 		public static ISynchronizedCollection<DatabaseProvider> Providers => _providers;
 

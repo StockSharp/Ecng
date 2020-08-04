@@ -11,6 +11,8 @@
 	{
 		private static readonly DbProviderFactory _factory;
 
+		public static bool IsValid => _factory != null;
+
 		static SQLiteDatabaseProvider()
 		{
 			try
