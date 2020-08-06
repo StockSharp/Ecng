@@ -42,7 +42,7 @@ namespace Ecng.Common
 			return Math.Round(value, rounding);
 		}
 
-		public static decimal Round(this decimal value, decimal step, int digits, MidpointRounding? rounding = null)
+		public static decimal Round(this decimal value, decimal step, int? digits, MidpointRounding? rounding = null)
 		{
 			if (step <= 0)
 				throw new ArgumentOutOfRangeException(nameof(step), step, "The 'step' parameter must be more than zero.");
@@ -73,7 +73,10 @@ namespace Ecng.Common
 				}
 			}
 
-			return Round(retVal, digits);
+			if (digits != null)
+				retVal = Round(retVal, digits.Value);
+
+			return retVal;
 		}
 
 		public static decimal Truncate(this decimal value)

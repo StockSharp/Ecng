@@ -124,17 +124,26 @@ namespace Ecng.Common
 			return true;
 		}
 
+		private static readonly string[] _suf = { "B", "KB", "MB", "GB", "TB", "PB", "EB" }; //Longs run out around EB
+
 		public static string ToHumanReadableFileSize(this long byteCount)
 		{
-			string[] suf = { "B", "KB", "MB", "GB", "TB", "PB", "EB" }; //Longs run out around EB
+			int place;
+			int num;
 
 			if (byteCount == 0)
-				return "0" + suf[0];
+			{
+				num = 0;
+				place = 0;
+			}
+			else
+			{
+				var bytes = byteCount.Abs();
+				place = (int)Math.Log(bytes, 1024).Floor();
+				num = (int)(Math.Sign(byteCount) * Math.Round(bytes / Math.Pow(1024, place), 1));
+			}
 
-			var bytes = Math.Abs(byteCount);
-			var place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
-			var num = Math.Round(bytes / Math.Pow(1024, place), 1);
-			return (Math.Sign(byteCount) * num) + suf[place];
+			return num + " " + _suf[place];
 		}
 
 		public static void SafeDeleteDir(this string path)
