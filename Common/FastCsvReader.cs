@@ -246,7 +246,14 @@ namespace Ecng.Common
 			where T : struct
 		{
 			var str = ReadString();
-			return str.To<T?>();
+
+			if (str.IsEmpty())
+				return null;
+
+			if (int.TryParse(str, out var num))
+				return num.To<T>();
+
+			return str.To<T>();
 		}
 
 		public double ReadDouble()
