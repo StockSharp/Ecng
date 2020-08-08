@@ -292,6 +292,7 @@
         <Setter Property="ImmediatePopup" Value="True"/>
         <Setter Property="DisplayMember" Value="DisplayName"/>
         <Setter Property="ValueMember" Value="Value"/>
+        <Setter Property="SeparatorString" Value="; "/>
         <Setter Property="ItemTemplate" Value="{StaticResource SubsetComboBoxItemTemplate}"/>
         <Setter Property="ItemContainerStyle" Value="{StaticResource SubsetComboBoxItemStyle}"/>
 
@@ -307,6 +308,7 @@
         <Setter Property="ImmediatePopup" Value="True"/>
         <Setter Property="DisplayMember" Value="DisplayName"/>
         <Setter Property="ValueMember" Value="Value"/>
+        <Setter Property="SeparatorString" Value="; "/>
         <Setter Property="ItemTemplate" Value="{StaticResource SubsetComboBoxItemTemplate}"/>
 
         <Setter Property="StyleSettings">
