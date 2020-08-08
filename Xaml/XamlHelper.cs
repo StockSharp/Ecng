@@ -32,6 +32,8 @@ namespace Ecng.Xaml
 
 	public static class XamlHelper
 	{
+		public static TimeZoneInfo GlobalTimeZone { get; set; }
+		
 		#region Bounds
 
 		public static Rectangle<int> GetBounds(this FrameworkElement elem)
