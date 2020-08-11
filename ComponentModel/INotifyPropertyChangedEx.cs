@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.ComponentModel;
+	using System.Runtime.CompilerServices;
 
 	/// <summary>
 	/// Extended version <see cref="INotifyPropertyChanged"/>.
@@ -12,7 +13,7 @@
 		/// Raise event <see cref="INotifyPropertyChanged.PropertyChanged"/>.
 		/// </summary>
 		/// <param name="propertyName">Property name.</param>
-		void NotifyPropertyChanged(string propertyName);
+		void NotifyPropertyChanged([CallerMemberName]string propertyName = null);
 	}
 
 	/// <summary>
@@ -27,7 +28,7 @@
 		/// </summary>
 		/// <param name="entity">Notify based object.</param>
 		/// <param name="propertyName">Property name.</param>
-		public static void Notify<T>(this T entity, string propertyName)
+		public static void Notify<T>(this T entity, [CallerMemberName]string propertyName = null)
 			where T : INotifyPropertyChangedEx
 		{
 			if (null == Filter || Filter(entity, propertyName))
