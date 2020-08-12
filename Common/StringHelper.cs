@@ -528,7 +528,7 @@
 			return str1.EndsWith(str2, StringComparison.InvariantCultureIgnoreCase);
 		}
 
-		public static int IndexOfIgnoreCase(this string str1, string str2)
+		public static int IndexOfIgnoreCase(this string str1, string str2, int index = -1)
 		{
 			if (str1 is null)
 			{
@@ -539,10 +539,13 @@
 			if (str2 is null)
 				return -1;
 
-			return str1.IndexOf(str2, StringComparison.InvariantCultureIgnoreCase);
+			if (index == -1)
+				return str1.IndexOf(str2, StringComparison.InvariantCultureIgnoreCase);
+			else
+				return str1.IndexOf(str2, index, StringComparison.InvariantCultureIgnoreCase);
 		}
 
-		public static int LastIndexOfIgnoreCase(this string str1, string str2)
+		public static int LastIndexOfIgnoreCase(this string str1, string str2, int index = -1)
 		{
 			if (str1 is null)
 			{
@@ -553,7 +556,10 @@
 			if (str2 is null)
 				return -1;
 
-			return str1.LastIndexOf(str2, StringComparison.InvariantCultureIgnoreCase);
+			if (index == -1)
+				return str1.LastIndexOf(str2, StringComparison.InvariantCultureIgnoreCase);
+			else
+				return str1.LastIndexOf(str2, index, StringComparison.InvariantCultureIgnoreCase);
 		}
 
 		//
