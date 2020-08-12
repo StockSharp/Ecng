@@ -8,6 +8,8 @@
 	using System.Runtime.ExceptionServices;
 	using System.Text;
 
+	using Microsoft.Win32;
+
 	using Ecng.Common;
 	using Ecng.Reflection;
 
@@ -150,6 +152,20 @@
 				throw new ArgumentException("Window has invalid class name '{0}'.".Put(window.ClassName), nameof(window));
 
 			return ReflectionHelper.CreateInstance<SystemWindow, T>(window);
+		}
+
+		private const string _path = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+
+		private static RegistryKey BaseKey => Registry.CurrentUser;
+
+		public static void UpdateAutoRun(string appName, string path, bool enabled)
+		{
+			using var key = BaseKey.OpenSubKey(_path, true) ?? throw new InvalidOperationException($"autorun not found ({_path})");
+
+			if (enabled)
+				key.SetValue(appName, path);
+			else
+				key.DeleteValue(appName, false);
 		}
 	}
 }
