@@ -194,6 +194,30 @@
 
 		#endregion
 
+		/// <summary>
+		/// Try get value from config file.
+		/// </summary>
+		/// <typeparam name="T">Value type.</typeparam>
+		/// <param name="name">Key name.</param>
+		/// <param name="defaultValue">Default value.</param>
+		/// <returns>Value.</returns>
+		public static T TryGet<T>(string name, T defaultValue = default)
+		{
+			try
+			{
+				var str = AppSettings.Get(name);
+
+				if (!str.IsEmpty())
+					return str.To<T>();
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine(ex);
+			}
+
+			return defaultValue;
+		}
+
 		public static NameValueCollection AppSettings => ConfigurationManager.AppSettings;
 
 		public static event Action<Type, object> ServiceRegistered;
