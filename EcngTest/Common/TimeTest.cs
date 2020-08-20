@@ -78,11 +78,11 @@ namespace Ecng.Test.Common
 		[TestMethod]
 		public void WeekOfYear()
 		{
-			new DateTime(2015, 1, 1).GetIso8601WeekOfYear().AssertEqual(1);
-			new DateTime(2015, 12, 31).GetIso8601WeekOfYear().AssertEqual(53);
+			new DateTime(2015, 1, 1).UtcKind().GetIso8601WeekOfYear().AssertEqual(1);
+			new DateTime(2015, 12, 31).UtcKind().GetIso8601WeekOfYear().AssertEqual(53);
 
-			new DateTime(2016, 1, 1).GetIso8601WeekOfYear().AssertEqual(1);
-			new DateTime(2016, 12, 31).GetIso8601WeekOfYear().AssertEqual(53);
+			new DateTime(2016, 1, 1).UtcKind().GetIso8601WeekOfYear().AssertEqual(1);
+			new DateTime(2016, 12, 31).UtcKind().GetIso8601WeekOfYear().AssertEqual(53);
 		}
 
 		[TestMethod]
