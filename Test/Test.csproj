@@ -5,13 +5,17 @@
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' AND '$(TargetFramework)' != 'netstandard2.1' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
     <ProjectReference Include="..\Web\Web.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
+    <Reference Include="System.ServiceModel" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Net.SocketIO\Net.SocketIO.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />
     <ProjectReference Include="..\Interop\Interop.csproj" />
+    <ProjectReference Include="..\Net\Net.csproj" />
     <ProjectReference Include="..\Roslyn\Roslyn.csproj" />
     <ProjectReference Include="..\Backup\Backup.csproj" />
     <ProjectReference Include="..\Data\Data.csproj" />

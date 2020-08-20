@@ -4,9 +4,6 @@
 	using System.Collections.Generic;
 	using System.Data;
 	using System.Diagnostics;
-	using System.Drawing;
-	using System.Drawing.Drawing2D;
-	using System.Drawing.Imaging;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -15,11 +12,9 @@
 	using System.Reflection;
 	using System.Runtime.Serialization;
 	using System.Runtime.Serialization.Formatters.Binary;
-	using System.ServiceModel;
 	using System.Text;
 	using System.Threading;
-	using System.Web.UI.WebControls;
-	using System.Windows.Media;
+	using System.ServiceModel;
 
 	using Ecng.Backup;
 	using Ecng.Backup.Yandex;
@@ -28,23 +23,14 @@
 	using Ecng.ComponentModel;
 	using Ecng.Configuration;
 	using Ecng.Data;
-	using Ecng.Data.Providers;
 	using Ecng.Interop;
 	using Ecng.Net;
 	using Ecng.Reflection;
 	using Ecng.Roslyn;
 	using Ecng.Security;
 	using Ecng.Serialization;
-	using Ecng.UnitTesting;
-	using Ecng.Xaml;
-
-	using Microsoft.Practices.ServiceLocation;
-	using Microsoft.Practices.Unity;
-	using Microsoft.Practices.Unity.Configuration;
 
 	using Wintellect.PowerCollections;
-
-	using Rectangle = System.Windows.Shapes.Rectangle;
 
 	public interface ICalc
 	{
@@ -112,23 +98,23 @@
 			return range;
 		}
 
-		private static void Print(string table)
-		{
-			using (var mbs = new ManagementObjectSearcher("Select * From {0}".Put(table)))
-			{
-				using (var list = mbs.Get())
-				{
-					foreach (var obj in list.Cast<ManagementObject>())
-					{
-						foreach (var property in obj.Properties)
-						{
-							if (obj[property.Name] != null)
-								Console.WriteLine("{0}.{1} = {2}", table, property.Name, obj[property.Name]);
-						}
-					}
-				}
-			}
-		}
+		//private static void Print(string table)
+		//{
+		//	using (var mbs = new ManagementObjectSearcher("Select * From {0}".Put(table)))
+		//	{
+		//		using (var list = mbs.Get())
+		//		{
+		//			foreach (var obj in list.Cast<ManagementObject>())
+		//			{
+		//				foreach (var property in obj.Properties)
+		//				{
+		//					if (obj[property.Name] != null)
+		//						Console.WriteLine("{0}.{1} = {2}", table, property.Name, obj[property.Name]);
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
 
 		[ServiceContract]
 		public interface IInterface
