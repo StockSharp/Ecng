@@ -3,6 +3,7 @@ namespace Ecng.Common
 	using System;
 	using System.IO;
 	using System.Linq;
+	using System.Numerics;
 	using System.Text;
 
 	public class FastCsvReader
@@ -284,6 +285,7 @@ namespace Ecng.Common
 				return null;
 
 			long? intPart = null;
+			BigInteger? intPart2 = null;
 			long? fractalPart = null;
 
 			var isNegative = false;
@@ -314,7 +316,18 @@ namespace Ecng.Common
 					continue;
 				}
 
-				intPart = (intPart ?? 0) * 10 + (c - '0');
+				if (intPart2 is null)
+				{
+					intPart = (intPart ?? 0) * 10 + (c - '0');
+
+					if (intPart >= long.MaxValue / 10)
+					{
+						intPart2 = intPart;
+						intPart = null;
+					}
+				}
+				else
+					intPart2 = intPart2.Value * 10 + (c - '0');
 			}
 
 			var canSkipZero = true;
@@ -336,13 +349,14 @@ namespace Ecng.Common
 				fractalPart = (c - '0') * 10.Pow(fractalPartSize - 1) + (fractalPart ?? 0);
 			}
 
-			decimal? retVal = intPart;
+			decimal? retVal = intPart ?? (decimal?)intPart2;
 
-			if (fractalPart != null)
+			if (fractalPart is object)
 			{
-				intPart = intPart ?? 0;
-
-				retVal = intPart.Value + (decimal)fractalPart.Value / (long)Math.Pow(10, fractalPartSize);
+				if (intPart2 is object)
+					retVal = (decimal)intPart2.Value + (decimal)fractalPart.Value / (long)Math.Pow(10, fractalPartSize);
+				else
+					retVal = (intPart ?? 0L) + (decimal)fractalPart.Value / (long)Math.Pow(10, fractalPartSize);
 			}
 
 			if (retVal > 0 && isNegative)
