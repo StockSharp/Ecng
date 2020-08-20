@@ -3,6 +3,7 @@ namespace Ecng.Common
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Globalization;
 
 	public static class RandomGen
 	{
@@ -71,6 +72,21 @@ namespace Ecng.Common
 		public static TimeSpan GetTime(TimeSpan min, TimeSpan max)
 		{
 			return TimeSpan.FromTicks(GetInt(0, (int)(max.Ticks - min.Ticks)) + min.Ticks);
+		}
+
+		public static decimal GetDecimal(int integer = 8, int fractional = 8)
+		{
+			for (var k = 0; k < 10; k++)
+			{
+				var i1 = Enumerable.Repeat(9, RandomGen.GetInt(1, integer)).Select(i => RandomGen.GetInt(9).ToString()).Join("").To<long>();
+				var i2 = Enumerable.Repeat(9, RandomGen.GetInt(1, integer)).Select(i => RandomGen.GetInt(9).ToString()).Join("").To<long>();
+				var value = decimal.Parse(i1 + "." + i2, CultureInfo.InvariantCulture);
+
+				if (value != 0)
+					return value;
+			}
+
+			throw new InvalidOperationException();
 		}
 	}
 }
