@@ -125,7 +125,7 @@
 			if (immediateConnect)
 				_connected.Invoke();
 
-			ThreadingHelper.Thread(() => CultureInfo.InvariantCulture.DoInCulture(() => OnReceive(source))).Launch();
+			ThreadingHelper.ThreadInvariant(() => OnReceive(source)).Launch();
 		}
 
 		public bool IsConnected => _ws != null;

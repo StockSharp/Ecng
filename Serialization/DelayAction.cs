@@ -304,7 +304,7 @@
 				if (!_isFlushing && _flushTimer == null)
 				{
 					_flushTimer = ThreadingHelper
-						.Timer(() => CultureInfo.InvariantCulture.DoInCulture(OnFlush))
+						.TimerInvariant(OnFlush)
 						.Interval(_flushInterval);
 				}
 			}
