@@ -103,7 +103,7 @@
 			}
 		}
 
-		public bool AutoReConnect { get; set; }
+		public int ReconnectAttempts { get; set; }
 
 		public event Func<byte[], int, int, byte[], int> PreProcess;
 
@@ -119,22 +119,53 @@
 
 			_resendCommands.Clear();
 
-			ConnectImpl();
-		}
-
-		private void ConnectImpl()
-		{
 			var source = new CancellationTokenSource();
-
+			
 			_expectedDisconnect = false;
 			_source = source;
 
 			_disconnectionStates[source] = _expectedDisconnect;
 
-			_ws = new ClientWebSocket();
-			_init?.Invoke(_ws);
-			_ws.ConnectAsync(_url, source.Token).Wait();
+			ConnectImpl(source, 0);
+		}
 
+		private void ConnectImpl(CancellationTokenSource source, int attempts)
+		{
+			if (source is null)
+				throw new ArgumentNullException(nameof(source));
+
+			while (!source.IsCancellationRequested)
+			{
+				if (attempts > 0)
+					attempts--;
+
+				_ws = new ClientWebSocket();
+				_init?.Invoke(_ws);
+
+				try
+				{
+					_ws.ConnectAsync(_url, source.Token).Wait();
+					break;
+				}
+				catch
+				{
+					if (attempts > 0 || attempts == -1)
+					{
+						_errorLog("Reconnect failed. Attemps left {0}.".Translate(), attempts);
+						ResendInterval.Sleep();
+						continue;
+					}
+
+					throw;
+				}
+			}
+
+			if (source.IsCancellationRequested)
+			{
+				_infoLog("Connection {0} cannot be processed. Cancellation invoked.".Translate(), _url);
+				return;
+			}
+			
 			if (_immediateConnect)
 				_connected.Invoke();
 
@@ -196,6 +227,8 @@
 				var errorCount = 0;
 				const int maxParsingErrors = 100;
 				const int maxNetworkErrors = 10;
+
+				var attempts = ReconnectAttempts;
 
 				var needClose = true;
 
@@ -306,10 +339,10 @@
 				var expected = _disconnectionStates.TryGetAndRemove(source);
 				_disconnected(expected);
 
-				if (!expected && AutoReConnect)
+				if (!expected && (attempts > 0 || attempts == -1))
 				{
 					_infoLog("Socket re-connecting '{0}'.".Translate(), _url);
-					ConnectImpl();
+					ConnectImpl(source, attempts);
 				}
 			}
 			catch (Exception ex)
