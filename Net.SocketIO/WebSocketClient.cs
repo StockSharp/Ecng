@@ -21,7 +21,7 @@
 
 		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new SynchronizedDictionary<CancellationTokenSource, bool>();
 
-		private readonly SynchronizedList<Tuple<byte[], WebSocketMessageType>> _resendCommands = new SynchronizedList<Tuple<byte[], WebSocketMessageType>>();
+		private readonly SynchronizedList<Tuple<byte[], WebSocketMessageType, long>> _resendCommands = new SynchronizedList<Tuple<byte[], WebSocketMessageType, long>>();
 
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
@@ -103,26 +103,39 @@
 			}
 		}
 
-		public bool AutoResend { get; set; }
+		public bool AutoReConnect { get; set; }
 
 		public event Func<byte[], int, int, byte[], int> PreProcess;
 
+		private Uri _url;
+		private bool _immediateConnect;
+		private Action<ClientWebSocket> _init;
+
 		public void Connect(string url, bool immediateConnect, Action<ClientWebSocket> init = null)
+		{
+			_url = new Uri(url);
+			_immediateConnect = immediateConnect;
+			_init = init;
+
+			_resendCommands.Clear();
+
+			ConnectImpl();
+		}
+
+		private void ConnectImpl()
 		{
 			var source = new CancellationTokenSource();
 
 			_expectedDisconnect = false;
 			_source = source;
 
-			_resendCommands.Clear();
-
 			_disconnectionStates[source] = _expectedDisconnect;
 
 			_ws = new ClientWebSocket();
-			init?.Invoke(_ws);
-			_ws.ConnectAsync(new Uri(url), source.Token).Wait();
+			_init?.Invoke(_ws);
+			_ws.ConnectAsync(_url, source.Token).Wait();
 
-			if (immediateConnect)
+			if (_immediateConnect)
 				_connected.Invoke();
 
 			ThreadingHelper.ThreadInvariant(() => OnReceive(source)).Launch();
@@ -293,8 +306,8 @@
 				var expected = _disconnectionStates.TryGetAndRemove(source);
 				_disconnected(expected);
 
-				if (!expected && AutoResend)
-					Resend();
+				if (!expected && AutoReConnect)
+					ConnectImpl();
 			}
 			catch (Exception ex)
 			{
@@ -302,7 +315,7 @@
 			}
 		}
 
-		public void Send(object obj, bool resendIfDisconnect = false)
+		public void Send(object obj, long id = default)
 		{
 			if (!(obj is byte[] sendBuf))
 			{
@@ -312,15 +325,13 @@
 				sendBuf = Encoding.UTF8.GetBytes(json);
 			}
 
-			Send(sendBuf, WebSocketMessageType.Text, resendIfDisconnect);
+			Send(sendBuf, WebSocketMessageType.Text, id);
 		}
 
-		public void Send(byte[] sendBuf, WebSocketMessageType type, bool resendIfDisconnect = false)
+		public void Send(byte[] sendBuf, WebSocketMessageType type, long id = default)
 		{
-			if (resendIfDisconnect)
-			{
-				_resendCommands.Add(Tuple.Create(sendBuf.ToArray(), type));
-			}
+			if (id != default)
+				_resendCommands.Add(Tuple.Create(sendBuf.ToArray(), type, id));
 
 			_ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, _source.Token).Wait();
 		}
@@ -329,11 +340,17 @@
 		{
 			var resendCommands = _resendCommands.CopyAndClear();
 
-			foreach (var resendCommand in resendCommands)
+			foreach (var tuple in resendCommands)
 			{
-				Send(resendCommand.Item1, resendCommand.Item2, true);
+				Send(tuple.Item1, tuple.Item2, tuple.Item3);
 				ResendInterval.Sleep();
 			}
+		}
+
+		public void RemoveResend(long id)
+		{
+			lock (_resendCommands.SyncRoot)
+				_resendCommands.RemoveWhere(t => t.Item3 == id);
 		}
 
 		protected override void DisposeManaged()
