@@ -184,6 +184,8 @@
 				const int maxParsingErrors = 100;
 				const int maxNetworkErrors = 10;
 
+				var needClose = true;
+
 				while (!source.IsCancellationRequested)
 				{
 					try
@@ -202,15 +204,8 @@
 								_error(task.Exception);
 
 							_infoLog("Socket closed with status {0}.".Translate(), result.CloseStatus);
-							_disconnected(_disconnectionStates.TryGetAndRemove(source));
 
-							try
-							{
-								_ws.Dispose();
-							}
-							catch { }
-
-							_ws = null;
+							needClose = false;
 							break;
 						}
 
@@ -278,7 +273,8 @@
 
 				try
 				{
-					_ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, new CancellationToken()).Wait((int)DisconnectTimeout.TotalMilliseconds);
+					if (needClose)
+						_ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, new CancellationToken()).Wait((int)DisconnectTimeout.TotalMilliseconds);
 				}
 				catch (Exception ex)
 				{
