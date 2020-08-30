@@ -307,7 +307,10 @@
 				_disconnected(expected);
 
 				if (!expected && AutoReConnect)
+				{
+					_infoLog("Socket re-connecting '{0}'.".Translate(), _url);
 					ConnectImpl();
+				}
 			}
 			catch (Exception ex)
 			{
