@@ -144,6 +144,7 @@
 
 				try
 				{
+					_infoLog("Connecting to {0}...".Translate(), _url);
 					_ws.ConnectAsync(_url, source.Token).Wait();
 					break;
 				}
@@ -376,6 +377,8 @@
 		{
 			var resendCommands = _resendCommands.CopyAndClear();
 
+			_infoLog("Resending {0} commands.".Translate(), resendCommands.Length);
+
 			foreach (var tuple in resendCommands)
 			{
 				Send(tuple.Item1, tuple.Item2, tuple.Item3);
@@ -385,6 +388,8 @@
 
 		public void RemoveResend(long id)
 		{
+			_infoLog("Removing {0} from resend.".Translate(), id);
+
 			lock (_resendCommands.SyncRoot)
 				_resendCommands.RemoveWhere(t => t.Item3 == id);
 		}
