@@ -48,15 +48,22 @@ namespace Ecng.Serialization
 				var length = stream.Read<int>();
 				var serializer = GetSerializer(typeof(T).GetItemType());
 
+				var isPrimitive = serializer.Type.IsSerializablePrimitive();
+
 				for (var i = 0; i < length; i++)
 				{
 					object value;
 
 					if (stream.Read<bool>())
 					{
-						var innerSource = new SerializationItemCollection();
-						serializer.Deserialize(stream, innerSource);
-						value = serializer.Type.IsSerializablePrimitive() ? innerSource.First().Value : innerSource;
+						if (isPrimitive)
+							value = stream.Read(serializer.Type);
+						else
+						{
+							var innerSource = new SerializationItemCollection();
+							serializer.Deserialize(stream, innerSource);
+							value = serializer.Type.IsSerializablePrimitive() ? innerSource.First().Value : innerSource;
+						}
 					}
 					else
 						value = null;
