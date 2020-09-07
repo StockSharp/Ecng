@@ -39,7 +39,7 @@ namespace Ecng.Reflection.Emit
 			var ctorArgs = data.ConstructorArguments.Select(typedArg =>
 			{
 				if (typedArg.Value is ICollection<CustomAttributeTypedArgument> arguments)
-					return arguments.Select(arg => arg.Value);
+					return arguments.Select(arg => arg.Value).ToArray();
 				else
 					return typedArg.Value;
 			});
