@@ -16,19 +16,20 @@ namespace Ecng.Test.Collections
 		{
 			var stream = new MemoryStream();
 
-			var writer = new BitArrayWriter(stream);
+			using (var writer = new BitArrayWriter(stream))
+			{
+				foreach (var v in bools)
+					writer.Write(v);
 
-			foreach (var v in bools)
-				writer.Write(v);
+				foreach (var v in ints)
+					writer.WriteInt(v);
 
-			foreach (var v in ints)
-				writer.WriteInt(v);
+				foreach (var v in longs)
+					writer.WriteLong(v);
 
-			foreach (var v in longs)
-				writer.WriteLong(v);
-
-			foreach (var v in decs)
-				writer.WriteDecimal(v);
+				foreach (var v in decs)
+					writer.WriteDecimal(v);
+			}
 
 			//var prevPos = stream.Position;
 			stream.Position = 0;

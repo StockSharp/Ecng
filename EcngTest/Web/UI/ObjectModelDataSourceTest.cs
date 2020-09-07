@@ -28,14 +28,14 @@ namespace Ecng.Test.Web.UI
 				_childs.Add(e);
 			}
 
-			Instance = this;
-
 			_childs = new TestEntityList(Database);
 		}
 
 		#endregion
 
-		public static Root Instance;
+		private static readonly Lazy<Root> _instance = new Lazy<Root>(() => new Root());
+
+		public static Root Instance => _instance.Value;
 
 		public const int ChildCount = 10;
 
@@ -100,7 +100,7 @@ namespace Ecng.Test.Web.UI
 		[TestMethod]
 		public void SelectSingle()
 		{
-			DataSourceView view = GetView("Instance.Childs[@Id]", out var source);
+			DataSourceView view = GetView("Instance.Childs[@Id as object]", out var source);
 			source.PathParameters.Add(new Parameter("Id", TypeCode.Int64, "5"));
 			view.Select(new DataSourceSelectArguments(), delegate(IEnumerable data)
 			{

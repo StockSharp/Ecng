@@ -89,9 +89,9 @@ namespace Ecng.Reflection.Aspects
 				return attr;
 			else
 			{
-				if (method is MethodInfo)
+				if (method is MethodInfo mi)
 				{
-					var owner = ((MethodInfo)method).GetAccessorOwner();
+					var owner = mi.GetAccessorOwner();
 
 					if (owner != null)
 					{
@@ -117,7 +117,7 @@ namespace Ecng.Reflection.Aspects
 
 		private static MetaExtensionMethodAttribute FindAttribute(MemberInfo member, int order)
 		{
-			return member.GetAttributes<MetaExtensionMethodAttribute>().First(arg => arg.Order == order);
+			return member.GetAttributes<MetaExtensionMethodAttribute>().FirstOrDefault(arg => arg.Order == order);
 		}
 
 		private static MethodAttributes GetAttributes(Type baseType, MethodBase method)
