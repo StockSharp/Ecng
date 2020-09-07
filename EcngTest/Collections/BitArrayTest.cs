@@ -78,6 +78,36 @@ namespace Ecng.Test.Collections
 		}
 
 		[TestMethod]
+		public void RandomCount()
+		{
+			var bools = new List<bool>();
+
+			var count = RandomGen.GetInt(1000, 10000);
+			for (var i = 0; i < count; i++)
+				bools.Add(RandomGen.GetBool());
+
+			var ints = new List<int>();
+
+			count = RandomGen.GetInt(1000, 10000);
+			for (var i = 0; i < count; i++)
+				ints.Add(RandomGen.GetInt());
+
+			var longs = new List<long>();
+
+			count = RandomGen.GetInt(1000, 10000);
+			for (var i = 0; i < count; i++)
+				longs.Add(RandomGen.GetInt());
+
+			var decs = new List<decimal>();
+
+			count = RandomGen.GetInt(1000, 10000);
+			for (var i = 0; i < count; i++)
+				decs.Add(RandomGen.GetDecimal());
+
+			Check(bools, ints, longs, decs);
+		}
+
+		[TestMethod]
 		public void Large()
 		{
 			var bools = new List<bool>();
