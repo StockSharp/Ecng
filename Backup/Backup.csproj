@@ -4,10 +4,10 @@
     <ProjectGuid>{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="3.3.113" />
-    <PackageReference Include="AWSSDK.SQS" Version="3.3.103.24" />
-    <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.3.102.15" />
-    <PackageReference Include="AWSSDK.Glacier" Version="3.3.100.220" />
+    <PackageReference Include="AWSSDK.S3" Version="3.5.1.1" />
+    <PackageReference Include="AWSSDK.SQS" Version="3.5.0.12" />
+    <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.5.0.12" />
+    <PackageReference Include="AWSSDK.Glacier" Version="3.5.0.12" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
