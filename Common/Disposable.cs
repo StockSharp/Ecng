@@ -16,6 +16,8 @@ namespace Ecng.Common
 
 		#region IsDisposed
 
+		private bool _isDisposed;
+
 		/// <summary>
 		/// Gets a value indicating whether this instance is disposed.
 		/// </summary>
@@ -24,9 +26,24 @@ namespace Ecng.Common
 		/// </value>
 		[XmlIgnore]
 		[Browsable(false)]
-		public bool IsDisposed { get; private set; }
+		public bool IsDisposed
+		{
+			get => _isDisposed;
+			private set
+			{
+				if (_isDisposed == value)
+					return;
+
+				_isDisposed = value;
+
+				if (value)
+					Disposed?.Invoke();
+			}
+		}
 
         #endregion
+
+		public event Action Disposed;
 
 		#region IDisposable Members
 

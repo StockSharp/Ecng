@@ -13,10 +13,7 @@ namespace Ecng.Collections
 
 		public BitArrayWriter(Stream underlyingStream)
 		{
-			if (underlyingStream == null)
-				throw new ArgumentNullException(nameof(underlyingStream));
-
-			_underlyingStream = underlyingStream;
+			_underlyingStream = underlyingStream ?? throw new ArgumentNullException(nameof(underlyingStream));
 		}
 
 		private void Flush()
@@ -137,6 +134,24 @@ namespace Ecng.Collections
 		{
 			for (var i = 0; i < bitCount; i++)
 				Write((value & (1L << i)) != 0);
+		}
+
+		public void WriteDecimal(decimal value)
+		{
+			if (value < 0)
+			{
+				value = -value;
+				Write(false);
+			}
+			else
+				Write(true);
+			
+			var bits = value.To<int[]>();
+
+			WriteInt(bits[0]);
+			WriteInt(bits[1]);
+			WriteInt(bits[2]);
+			WriteInt((bits[3] >> 16) & 0xff);
 		}
 	}
 }

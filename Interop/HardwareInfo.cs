@@ -8,6 +8,7 @@ namespace Ecng.Interop
 	using System.Text.RegularExpressions;
 
 	using Ecng.Common;
+	using Ecng.Localization;
 
 #if !__STOCKSHARP__
 	public
@@ -18,28 +19,31 @@ namespace Ecng.Interop
 
 		public static HardwareInfo Instance => _instance.Value;
 
-		public string Id { get; private set; }
+		public string Id { get; }
 
 		private HardwareInfo()
 		{
+			string id;
+
 			if (OperatingSystemEx.IsWindows())
-				InitIdWindows();
+				id = GetIdWindows();
 			else
-				InitIdLinux();
+				id = GetIdLinux();
+
+			if (id.IsEmpty())
+				throw new InvalidOperationException("Cannot generate HDDID.".Translate());
+
+			Id = id;
 		}
 
 		private static string GetWMIId(string table, string field)
 		{
 			using (var mbs = new ManagementObjectSearcher("Select * From {0}".Put(table)))
-			{
-				using (var list = mbs.Get())
-				{
-					return list.Cast<ManagementObject>().Select(o => (string) o[field]).FirstOrDefault(f => !f.IsEmptyOrWhiteSpace());
-				}
-			}
+			using (var list = mbs.Get())
+				return list.Cast<ManagementObject>().Select(o => (string) o[field]).FirstOrDefault(f => !f.IsEmptyOrWhiteSpace());
 		}
 
-		private void InitIdWindows()
+		private static string GetIdWindows()
 		{
 			var cpuid = GetWMIId("Win32_processor", "ProcessorID");
 			var mbId = GetWMIId("Win32_BaseBoard", "SerialNumber");
@@ -56,17 +60,17 @@ namespace Ecng.Interop
 			var netId = GetWMIId("Win32_NetworkAdapter", "MACAddress");
 
 			if (mbId.IsEmpty() && netId.IsEmpty())
-				throw new InvalidOperationException("MotherBoard and Network are both is empty.");
+				throw new InvalidOperationException("MotherBoard and Network are both is empty.".Translate());
 
-			Id = cpuid + (mbId.IsEmpty() ? netId : mbId);
+			return cpuid + (mbId.IsEmpty() ? netId : mbId);
 		}
 
-		private void InitIdLinux()
+		private static string GetIdLinux()
 		{
 			var macs = GetLinuxMacs();
 			var volId = GetLinuxVolumeId();
 
-			Id = string.Join("", macs) + volId;
+			return macs.Join(string.Empty) + volId;
 		}
 
 		private static List<string> GetLinuxMacs()
@@ -106,12 +110,12 @@ namespace Ecng.Interop
 				info => info.EnvironmentVariables["PATH"] = "/bin:/sbin:/usr/bin:/usr/sbin");
 
 			if (res != 0 || errors.Any())
-				throw new InvalidOperationException($"unable to execute lsblk. return code {res}.\n{string.Join("\n", errors)}");
+				throw new InvalidOperationException("Unable to execute lsblk. Return code {0}.\n{1}".Translate().Put(res, errors.Join(Environment.NewLine)));
 
-			if (result.Count != 1)
-				throw new InvalidOperationException($"invalid lsblk result. got {result.Count} values: {string.Join(",", result)}");
+			//if (result.Count != 1)
+			//	throw new InvalidOperationException($"invalid lsblk result. got {result.Count} values: {result.JoinComma()}");
 
-			return result[0].Replace("-", "").ToLowerInvariant();
+			return result.FirstOrDefault()?.Remove("-").ToLowerInvariant();
 		}
 	}
 }

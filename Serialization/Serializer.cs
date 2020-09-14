@@ -154,7 +154,6 @@ namespace Ecng.Serialization
 				if (tracking != null)
 					tracking.BeforeSerialize();
 
-
 				if (graph is ISerializable serializable)
 				{
 					serializable.Serialize(this, fields, source);

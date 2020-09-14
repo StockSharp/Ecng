@@ -22,6 +22,18 @@
 		}
 
 		[TestMethod]
+		public void RoundToNearestBig()
+		{
+			9999.9999.RoundToNearest().AssertEqual(10000);
+			99999.09999.RoundToNearest().AssertEqual(100000);
+			999999.009999.RoundToNearest().AssertEqual(1000000);
+			9999999.0009999.RoundToNearest().AssertEqual(10000000);
+			99999999.00009999.RoundToNearest().AssertEqual(10000000);
+			999999999.000009999.RoundToNearest().AssertEqual(100000000);
+			9999999999.0000009999.RoundToNearest().AssertEqual(1000000000);
+		}
+
+		[TestMethod]
 		public void Decimals()
 		{
 			CultureInfo.InvariantCulture.DoInCulture(() =>

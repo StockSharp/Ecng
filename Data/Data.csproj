@@ -9,7 +9,7 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">

@@ -17,7 +17,7 @@
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
     <PackageReference Include="System.Management" Version="4.7" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.1.1" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Dde\Documentation\Examples.xml" />

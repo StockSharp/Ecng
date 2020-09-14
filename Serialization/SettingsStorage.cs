@@ -23,9 +23,12 @@
 		/// <summary>
 		/// Все названия значений, хранящиеся в настройках.
 		/// </summary>
-		public IEnumerable<string> Names
+		public IEnumerable<string> Names => this.SyncGet(d => d.Keys.ToArray());
+
+		public SettingsStorage Set<T>(string name, T value)
 		{
-			get { return this.SyncGet(d => d.Keys.ToArray()); }
+			SetValue(name, value);
+			return this;
 		}
 
 		/// <summary>
@@ -62,7 +65,7 @@
 		/// <param name="name">Название значения.</param>
 		/// <param name="defaultValue">Значения по умолчанию, если по названию <paramref name="name"/> не было найдено значения.</param>
 		/// <returns>Значение. Если по названию <paramref name="name"/> не было найдено сохраненного значения, то будет возвращено <paramref name="defaultValue"/>.</returns>
-		public T GetValue<T>(string name, T defaultValue = default(T))
+		public T GetValue<T>(string name, T defaultValue = default)
 		{
 			if (name.IsEmpty())
 				throw new ArgumentNullException(nameof(name));
@@ -70,5 +73,8 @@
 			var value = this.TryGetValue(name);
 			return value != null ? value.To<T>() : defaultValue;
 		}
+
+		public T TryGet<T>(string name, T defaultValue = default)
+			=> GetValue(name, defaultValue);
 	}
 }

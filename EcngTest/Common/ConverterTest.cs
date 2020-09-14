@@ -128,5 +128,12 @@ namespace Ecng.Test.Common
 			DBNull.Value.To<DateTime?>().AssertNull();
 			DBNull.Value.To<string>().AssertNull();
 		}
+
+		[TestMethod]
+		public void Decimal()
+		{
+			decimal.MinValue.To<int[]>().To<decimal>().AssertEqual(decimal.MinValue);
+			decimal.MaxValue.To<int[]>().To<decimal>().AssertEqual(decimal.MaxValue);
+		}
 	}
 }

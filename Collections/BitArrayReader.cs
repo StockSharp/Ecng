@@ -245,5 +245,21 @@
 
 			return value;
 		}
+
+		public decimal ReadDecimal()
+		{
+			var isPos = Read();
+
+			var i1 = ReadInt();
+			var i2 = ReadInt();
+			var i3 = ReadInt();
+			var i4 = ReadInt() << 16;
+			var dec = new[] { i1, i2, i3, i4 }.To<decimal>();
+
+			if (!isPos)
+				dec = -dec;
+
+			return dec;
+		}
 	}
 }

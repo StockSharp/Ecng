@@ -7,6 +7,11 @@ namespace Ecng.Common
 
 	public static class ThreadingHelper
 	{
+		public static Timer TimerInvariant(this Action handler)
+		{
+			return handler.Invariant().Timer();
+		}
+
 		public static Timer Timer(this Action handler)
 		{
 			if (handler == null)
@@ -73,6 +78,11 @@ namespace Ecng.Common
 		private static Timer CreateTimer(TimerCallback callback)
 		{
 			return new Timer(callback);
+		}
+
+		public static Thread ThreadInvariant(this Action handler)
+		{
+			return handler.Invariant().Thread();
 		}
 
 		public static Thread Thread(this Action handler)

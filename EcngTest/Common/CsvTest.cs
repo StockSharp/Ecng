@@ -211,7 +211,7 @@ AGRO@TQBR;ÃÄÐ ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;
 		[TestMethod]
 		public void BigNumber()
 		{
-			Assert(@"210000001;+03:00;-79228162514264337593543950335;0;Buy", 1,
+			Assert($@"210000001;+03:00;{decimal.MaxValue};{decimal.MinValue};0;Buy", 1,
 				(i, r) =>
 				{
 					switch (i)
@@ -219,8 +219,9 @@ AGRO@TQBR;ÃÄÐ ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;
 						case 0:
 							r.ReadDateTime("HHmmssfff").AssertEqual(DateTime.Today.Add(new TimeSpan(0, 21, 0, 0, 1)));
 							TimeSpan.Parse(r.ReadString().Remove("+")).AssertEqual(new TimeSpan(3, 0, 0));
-							r.ReadDecimal().AssertEqual(-79228162514264337593543950335m);
-							r.ReadDecimal().AssertEqual(1);
+							r.ReadDecimal().AssertEqual(decimal.MaxValue);
+							r.ReadDecimal().AssertEqual(decimal.MinValue);
+							r.ReadDecimal().AssertEqual(0);
 							r.ReadEnum<Sides>().AssertEqual(Sides.Buy);
 							break;
 						default:

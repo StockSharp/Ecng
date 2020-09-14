@@ -861,7 +861,7 @@
 
 		public static void DoInCulture(this CultureInfo cultureInfo, Action action)
 		{
-			if (action == null)
+			if (action is null)
 				throw new ArgumentNullException(nameof(action));
 
 			cultureInfo.DoInCulture<object>(() =>
@@ -869,6 +869,14 @@
 				action();
 				return null;
 			});
+		}
+
+		public static Action Invariant(this Action action)
+		{
+			if (action is null)
+				throw new ArgumentNullException(nameof(action));
+
+			return () => CultureInfo.InvariantCulture.DoInCulture(action);
 		}
 
 		/// <summary>

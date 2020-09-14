@@ -28,8 +28,8 @@
 			if (proxy == null)
 				throw new ArgumentNullException(nameof(proxy));
 
-			if (context == null)
-				throw new ArgumentNullException(nameof(context));
+			//if (context == null)
+			//	throw new ArgumentNullException(nameof(context));
 
 			LastItemType = proxy.Items.Last().Invoker.Member.GetMemberType();
 

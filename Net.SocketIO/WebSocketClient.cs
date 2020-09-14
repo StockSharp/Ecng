@@ -21,7 +21,7 @@
 
 		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new SynchronizedDictionary<CancellationTokenSource, bool>();
 
-		private readonly SynchronizedList<Tuple<byte[], WebSocketMessageType>> _resendCommands = new SynchronizedList<Tuple<byte[], WebSocketMessageType>>();
+		private readonly SynchronizedList<Tuple<byte[], WebSocketMessageType, long>> _resendCommands = new SynchronizedList<Tuple<byte[], WebSocketMessageType, long>>();
 
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
@@ -103,29 +103,74 @@
 			}
 		}
 
-		public bool AutoResend { get; set; }
+		public int ReconnectAttempts { get; set; }
 
 		public event Func<byte[], int, int, byte[], int> PreProcess;
 
+		private Uri _url;
+		private bool _immediateConnect;
+		private Action<ClientWebSocket> _init;
+
 		public void Connect(string url, bool immediateConnect, Action<ClientWebSocket> init = null)
 		{
-			var source = new CancellationTokenSource();
-
-			_expectedDisconnect = false;
-			_source = source;
+			_url = new Uri(url);
+			_immediateConnect = immediateConnect;
+			_init = init;
 
 			_resendCommands.Clear();
 
+			var source = new CancellationTokenSource();
+			
+			_expectedDisconnect = false;
+			_source = source;
+
 			_disconnectionStates[source] = _expectedDisconnect;
 
-			_ws = new ClientWebSocket();
-			init?.Invoke(_ws);
-			_ws.ConnectAsync(new Uri(url), source.Token).Wait();
+			ConnectImpl(source, 0);
+		}
 
-			if (immediateConnect)
+		private void ConnectImpl(CancellationTokenSource source, int attempts)
+		{
+			if (source is null)
+				throw new ArgumentNullException(nameof(source));
+
+			while (!source.IsCancellationRequested)
+			{
+				if (attempts > 0)
+					attempts--;
+
+				_ws = new ClientWebSocket();
+				_init?.Invoke(_ws);
+
+				try
+				{
+					_infoLog("Connecting to {0}...".Translate(), _url);
+					_ws.ConnectAsync(_url, source.Token).Wait();
+					break;
+				}
+				catch
+				{
+					if (attempts > 0 || attempts == -1)
+					{
+						_errorLog("Reconnect failed. Attemps left {0}.".Translate(), attempts);
+						ResendInterval.Sleep();
+						continue;
+					}
+
+					throw;
+				}
+			}
+
+			if (source.IsCancellationRequested)
+			{
+				_infoLog("Connection {0} cannot be processed. Cancellation invoked.".Translate(), _url);
+				return;
+			}
+			
+			if (_immediateConnect)
 				_connected.Invoke();
 
-			ThreadingHelper.Thread(() => CultureInfo.InvariantCulture.DoInCulture(() => OnReceive(source))).Launch();
+			ThreadingHelper.ThreadInvariant(() => OnReceive(source)).Launch();
 		}
 
 		public bool IsConnected => _ws != null;
@@ -184,6 +229,10 @@
 				const int maxParsingErrors = 100;
 				const int maxNetworkErrors = 10;
 
+				var attempts = ReconnectAttempts;
+
+				var needClose = true;
+
 				while (!source.IsCancellationRequested)
 				{
 					try
@@ -202,15 +251,8 @@
 								_error(task.Exception);
 
 							_infoLog("Socket closed with status {0}.".Translate(), result.CloseStatus);
-							_disconnected(_disconnectionStates.TryGetAndRemove(source));
 
-							try
-							{
-								_ws.Dispose();
-							}
-							catch { }
-
-							_ws = null;
+							needClose = false;
 							break;
 						}
 
@@ -278,7 +320,8 @@
 
 				try
 				{
-					_ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, new CancellationToken()).Wait((int)DisconnectTimeout.TotalMilliseconds);
+					if (needClose)
+						_ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, new CancellationToken()).Wait((int)DisconnectTimeout.TotalMilliseconds);
 				}
 				catch (Exception ex)
 				{
@@ -297,8 +340,11 @@
 				var expected = _disconnectionStates.TryGetAndRemove(source);
 				_disconnected(expected);
 
-				if (!expected && AutoResend)
-					Resend();
+				if (!expected && (attempts > 0 || attempts == -1))
+				{
+					_infoLog("Socket re-connecting '{0}'.".Translate(), _url);
+					ConnectImpl(source, attempts);
+				}
 			}
 			catch (Exception ex)
 			{
@@ -306,7 +352,7 @@
 			}
 		}
 
-		public void Send(object obj, bool resendIfDisconnect = false)
+		public void Send(object obj, long id = default)
 		{
 			if (!(obj is byte[] sendBuf))
 			{
@@ -316,15 +362,13 @@
 				sendBuf = Encoding.UTF8.GetBytes(json);
 			}
 
-			Send(sendBuf, WebSocketMessageType.Text, resendIfDisconnect);
+			Send(sendBuf, WebSocketMessageType.Text, id);
 		}
 
-		public void Send(byte[] sendBuf, WebSocketMessageType type, bool resendIfDisconnect = false)
+		public void Send(byte[] sendBuf, WebSocketMessageType type, long id = default)
 		{
-			if (resendIfDisconnect)
-			{
-				_resendCommands.Add(Tuple.Create(sendBuf.ToArray(), type));
-			}
+			if (id != default)
+				_resendCommands.Add(Tuple.Create(sendBuf.ToArray(), type, id));
 
 			_ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, _source.Token).Wait();
 		}
@@ -333,11 +377,21 @@
 		{
 			var resendCommands = _resendCommands.CopyAndClear();
 
-			foreach (var resendCommand in resendCommands)
+			_infoLog("Resending {0} commands.".Translate(), resendCommands.Length);
+
+			foreach (var tuple in resendCommands)
 			{
-				Send(resendCommand.Item1, resendCommand.Item2, true);
+				Send(tuple.Item1, tuple.Item2, tuple.Item3);
 				ResendInterval.Sleep();
 			}
+		}
+
+		public void RemoveResend(long id)
+		{
+			_infoLog("Removing {0} from resend.".Translate(), id);
+
+			lock (_resendCommands.SyncRoot)
+				_resendCommands.RemoveWhere(t => t.Item3 == id);
 		}
 
 		protected override void DisposeManaged()
