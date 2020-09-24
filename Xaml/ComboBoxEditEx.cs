@@ -142,6 +142,8 @@
 
 		protected virtual object TryConvertEditValue(object ev) => ev;
 
+		protected virtual object TryConvertBaseValue(SelectorPropertiesCoercionHelper helper, object bv) => helper.GetEditValueFromBaseValue(bv);
+
 		class ComboBoxEditExValueContainerService : TextInputValueContainerService
 		{
 			public ComboBoxEditExValueContainerService(TextEditBase editor) : base(editor) { }
@@ -162,7 +164,7 @@
 				PropertyUpdater.Register(BaseEdit.EditValueProperty, baseValue => baseValue, baseValue =>
 				{
 					var e = (ComboBoxEditEx) Editor;
-					var editValue = SelectorUpdater.GetEditValueFromBaseValue(baseValue);
+					var editValue = e.TryConvertBaseValue(SelectorUpdater, baseValue);
 
 					return e.TryConvertEditValue(editValue) ?? editValue;
 				});
@@ -317,6 +319,14 @@
 			}
 
 			return list;
+		}
+
+		protected override object TryConvertBaseValue(SelectorPropertiesCoercionHelper helper, object baseValue)
+		{
+			if (baseValue is IEnumerable ie && !(baseValue is IList))
+				baseValue = ie.Cast<object>().ToList();
+
+			return base.TryConvertBaseValue(helper, baseValue);
 		}
 
 		/// <inheritdoc />
