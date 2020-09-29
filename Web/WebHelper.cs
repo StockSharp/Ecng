@@ -468,7 +468,7 @@ namespace Ecng.Web
 
 		private static readonly SynchronizedSet<string> _imgExts = new SynchronizedSet<string>
 		{
-			".png", ".jpg", ".jpeg", ".bmp", ".gif"
+			".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg"
 		};
 
 		public static bool IsImage(this IWebFile file)
