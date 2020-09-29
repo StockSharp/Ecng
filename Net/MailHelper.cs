@@ -4,6 +4,7 @@
 	using System.IO;
 	using System.Net.Mail;
 	using System.Net.Mime;
+	using System.Text.RegularExpressions;
 
 	using Ecng.Reflection;
 
@@ -59,6 +60,23 @@
 			mailWriter.SetValue<object, VoidType>("Close", null);
 
 			return stream;
+		}
+
+		private static readonly Regex _emailRegex1 = new Regex(@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,10})+)$", RegexOptions.Compiled | RegexOptions.Singleline);
+
+		public static bool IsEmailValid(this string email)
+		{
+			// https://stackoverflow.com/questions/5342375/regex-email-validation
+
+			try
+			{
+				new MailAddress(email);
+				return _emailRegex1.IsMatch(email)/* && _emailRegex2.IsMatch(email)*/;
+			}
+			catch (FormatException)
+			{
+				return false;
+			}
 		}
 	}
 }
