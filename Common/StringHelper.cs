@@ -21,6 +21,14 @@
 
 	public static class StringHelper
 	{
+		static StringHelper()
+		{
+			Smart.Default.AddExtensions(new DictionarySourceEx());
+#if !NETFRAMEWORK
+			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+#endif
+		}
+
 		public static bool IsEmpty(this string str)
 		{
 			return string.IsNullOrEmpty(str);
@@ -94,11 +102,6 @@
 				selectorInfo.Result = dictionary[key];
 				return true;
 			}
-		}
-
-		static StringHelper()
-		{
-			Smart.Default.AddExtensions(new DictionarySourceEx());
 		}
 
 		public static string PutEx(this string str, params object[] args)
