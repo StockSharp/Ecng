@@ -22,7 +22,7 @@
 			set => _tz = value.To<TimeZoneInfo>();
 		}
 
-		public TimeZoneInfo TimeZone => _tz ?? XamlHelper.GlobalTimeZone ?? TimeZoneInfo.Local;
+		public TimeZoneInfo TimeZone => _tz ?? XamlHelper.GlobalTimeZone;
 
 		object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
@@ -31,9 +31,9 @@
 			switch (value)
 			{
 				case DateTimeOffset dto:
-					return TimeZoneInfo.ConvertTime(dto, tz);
+					return tz is null ? dto : TimeZoneInfo.ConvertTime(dto, tz);
 				case DateTime dt:
-					return TimeZoneInfo.ConvertTime(dt, tz);
+					return tz is null ? dt : TimeZoneInfo.ConvertTime(dt, tz);
 				default:
 					return Binding.DoNothing;
 			}
