@@ -4,6 +4,7 @@ namespace Ecng.Common
 	using System.Collections.Generic;
 	using System.Globalization;
 	using System.Threading;
+	using System.Threading.Tasks;
 
 	public static class ThreadingHelper
 	{
@@ -189,7 +190,6 @@ namespace Ecng.Common
 				System.Threading.Thread.Sleep(timeOut);
 		}
 
-#if !SILVERLIGHT
 		public static Thread Priority(this Thread thread, ThreadPriority priority)
 		{
 			if (thread == null)
@@ -343,12 +343,27 @@ namespace Ecng.Common
 			catch (AbandonedMutexException)
 			{
 				// http://stackoverflow.com/questions/15456986/how-to-gracefully-get-out-of-abandonedmutexexception
-				// пред процесс был закрыт, не освободив мьютекс. при получении исключения текущий
-				// процесс автоматически становится его владельцем
+				// РїСЂРµРґ РїСЂРѕС†РµСЃСЃ Р±С‹Р» Р·Р°РєСЂС‹С‚, РЅРµ РѕСЃРІРѕР±РѕРґРёРІ РјСЊСЋС‚РµРєСЃ. РїСЂРё РїРѕР»СѓС‡РµРЅРёРё РёСЃРєР»СЋС‡РµРЅРёСЏ С‚РµРєСѓС‰РёР№
+				// РїСЂРѕС†РµСЃСЃ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РµРіРѕ РІР»Р°РґРµР»СЊС†РµРј
 			}
 
 			return true;
 		}
-#endif
+
+		// https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md
+		public static async Task<T> WithCancellation<T>(this Task<T> task, CancellationToken cancellationToken)
+		{
+			var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+			// This disposes the registration as soon as one of the tasks trigger
+			using (cancellationToken.Register(state => { ((TaskCompletionSource<object>)state).TrySetResult(null); }, tcs))
+			{
+				var resultTask = await Task.WhenAny(task, tcs.Task);
+				if (resultTask == tcs.Task)
+					throw new OperationCanceledException(cancellationToken); // Operation cancelled
+
+				return await task;
+			}
+		}
 	}
 }
