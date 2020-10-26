@@ -1,6 +1,7 @@
 namespace Ecng.Common
 {
 	using System;
+	using System.Threading.Tasks;
 	using System.Collections.Generic;
 	using System.Threading;
 	using System.Linq;
@@ -67,6 +68,22 @@ namespace Ecng.Common
 			return (path + relativePart).ToFullPath();
 		}
 
+		private static void ReadProcessOutput(TextReader reader, Action<string> action, object actionSync)
+		{
+			do
+			{
+				var str = reader.ReadLine();
+				if (str == null)
+					break;
+
+				if (!str.IsEmptyOrWhiteSpace())
+				{
+					lock(actionSync)
+						action(str);
+				}
+			} while (true);
+		}
+
 		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, TimeSpan waitForExit = default)
 		{
 			if (output == null)
@@ -86,31 +103,26 @@ namespace Ecng.Common
 
 			infoHandler?.Invoke(procInfo);
 
-			using (var process = new Process
+			using var process = new Process
 			{
 				EnableRaisingEvents = true,
 				StartInfo = procInfo
-			})
-			{
-				process.OutputDataReceived += (a, e) =>
-				{
-					if (!e.Data.IsEmptyOrWhiteSpace())
-						output(e.Data);
-				};
-				process.ErrorDataReceived += (a, e) =>
-				{
-					if (!e.Data.IsEmptyOrWhiteSpace())
-						error(e.Data);
-				};
+			};
 
-				process.Start();
-				process.BeginOutputReadLine();
-				process.BeginErrorReadLine();
+			process.Start();
+			var locker = new object();
 
-				process.WaitForExit(waitForExit == default ? int.MaxValue : (int)waitForExit.TotalMilliseconds);
+			// ReSharper disable once AccessToDisposedClosure
+			var outputTask = Task.Run(() => ReadProcessOutput(process.StandardOutput, output, locker));
 
-				return process.ExitCode;
-			}
+			// ReSharper disable once AccessToDisposedClosure
+			var errorTask = Task.Run(() => ReadProcessOutput(process.StandardError, error, locker));
+
+			outputTask.Wait();
+			errorTask.Wait();
+			process.WaitForExit(waitForExit == default ? int.MaxValue : (int) waitForExit.TotalMilliseconds);
+
+			return process.ExitCode;
 		}
 
 		public static bool CreateDirIfNotExists(this string fullPath)
@@ -272,7 +284,7 @@ namespace Ecng.Common
 			{
 				Directory.Delete(dir, false);
 			}
-			catch (IOException) 
+			catch (IOException)
 			{
 				Directory.Delete(dir, false);
 			}
