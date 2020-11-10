@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Common
 {
 	using System;
+	using System.Security;
 
 	public static class ConsoleHelper
 	{
@@ -56,6 +57,31 @@
 					Console.ForegroundColor = prevColor;
 				}
 			}
+		}
+
+		public static SecureString ReadPassword()
+		{
+			var pass = new SecureString();
+			ConsoleKeyInfo key;
+
+			do
+			{
+				key = Console.ReadKey(true);
+
+				if (!char.IsControl(key.KeyChar))
+				{
+					pass.AppendChar(key.KeyChar);
+					Console.Write("*");
+				}
+				else if (key.Key == ConsoleKey.Backspace && pass.Length > 0)
+				{
+					pass.RemoveAt(pass.Length - 1);
+					Console.Write("\b \b");
+				}
+			}
+			while (key.Key != ConsoleKey.Enter);
+
+			return pass;
 		}
 	}
 }
