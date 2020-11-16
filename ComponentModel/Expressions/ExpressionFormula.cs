@@ -58,5 +58,8 @@ namespace Ecng.ComponentModel.Expressions
 		/// Available functions.
 		/// </summary>
 		public static IEnumerable<string> Functions => ExpressionHelper.Functions;
+
+		/// <inheritdoc />
+		public override string ToString() => Error ?? Expression;
 	}
 }

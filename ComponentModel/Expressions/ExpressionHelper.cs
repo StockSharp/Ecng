@@ -15,11 +15,11 @@ namespace Ecng.ComponentModel.Expressions
 	[CLSCompliant(false)]
 	public static class ExpressionHelper
 	{
-		private const string _secIdPattern = @"(#*)(@*)(#*)(\w*\.*)(\**)(\w+(\/*)\w+)@\w+";
+		private const string _idPattern = @"(#*)(@*)(#*)(\w*\.*)(\**)(\w+(\/*)\w+)@\w+";
 
-		private static readonly Regex _secIdRegex = new Regex($@"(?<secId>{_secIdPattern})");
+		private static readonly Regex _idRegex = new Regex($@"(?<id>{_idPattern})");
 		private static readonly Regex _nameRegex = new Regex(@"(?<name>(\w+))");
-		private static readonly Regex _decodeRegex = new Regex($@"\[{_secIdPattern}\]");
+		private static readonly Regex _decodeRegex = new Regex($@"\[.*\]");
 
 		/// <summary>
 		/// To get all identifiers from mathematical formula.
@@ -29,9 +29,9 @@ namespace Ecng.ComponentModel.Expressions
 		public static IEnumerable<string> GetIds(string expression)
 		{
 			return
-				from Match match in _secIdRegex.Matches(expression)
+				from Match match in _idRegex.Matches(expression)
 				where match.Success
-				select match.Groups["secId"].Value;
+				select match.Groups["id"].Value;
 		}
 
 		private static IEnumerable<Group> GetVariableNames(string expression)
@@ -49,9 +49,9 @@ namespace Ecng.ComponentModel.Expressions
 		/// <returns>Escaped text.</returns>
 		public static string Encode(string expression)
 		{
-			foreach (var secId in GetIds(expression).Distinct(StringComparer.InvariantCultureIgnoreCase))
+			foreach (var id in GetIds(expression).Distinct(StringComparer.InvariantCultureIgnoreCase))
 			{
-				expression = expression.Replace(secId, "[{0}]".Put(secId));
+				expression = expression.Replace(id, $"[{{{id}}}]");
 			}
 
 			return expression;
@@ -62,13 +62,29 @@ namespace Ecng.ComponentModel.Expressions
 		/// </summary>
 		/// <param name="expression">Escaped text.</param>
 		/// <returns>Unescaped text.</returns>
-		public static string Decode(string expression)
+		public static string Decode(string expression, out IDictionary<string, string> replaces)
 		{
+			replaces = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+
 			foreach (var match in _decodeRegex.Matches(expression).Cast<Match>().OrderByDescending(m => m.Index))
 			{
+				var varName = match.Value.Substring(1, match.Value.Length - 2);
+
+				if (!replaces.TryGetValue(varName, out var t))
+				{
+					t = $"VAR{replaces.Count}@VAR";
+					replaces.Add(varName, t);
+				}
+
+				varName = t;
+
 				expression = expression.Remove(match.Index, match.Length);
-				expression = expression.Insert(match.Index, match.Value.Substring(1, match.Value.Length - 2));
-				//expression = expression.Replace(match.Groups[0].Value, match.Groups[1].Value);
+				expression = expression.Insert(match.Index, varName);
+			}
+
+			foreach (var pair in replaces)
+			{
+				expression = expression.ReplaceIgnoreCase(pair.Key, pair.Value);
 			}
 
 			return expression;
@@ -154,7 +170,7 @@ namespace Ecng.ComponentModel.Expressions
 
 			if (useIds)
 			{
-				text = Decode(text.ToUpperInvariant());
+				text = Decode(text.ToUpperInvariant(), out _);
 				identifiers = GetIds(text).Distinct().ToArray();
 
 				var i = 0;
