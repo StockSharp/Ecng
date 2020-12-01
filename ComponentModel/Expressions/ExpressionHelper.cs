@@ -208,7 +208,7 @@ namespace Ecng.ComponentModel.Expressions
 						i = dict.Count;
 						dict.Add(g.Value, i);
 					}
-					
+
 					text = text.Remove(g.Index, g.Length).Insert(g.Index, $"values[{i}]");
 				}
 
@@ -251,8 +251,14 @@ class TempExpressionFormula : ExpressionFormula
 		{
 			try
 			{
+				var refs = new List<string>(new[] {typeof(object).Assembly.Location, typeof(ExpressionFormula).Assembly.Location, typeof(MathHelper).Assembly.Location});
+
+#if NETCOREAPP || NETSTANDARD
+				refs.Add(AppDomain.CurrentDomain.GetAssemblies().First(a => a.GetName().Name.CompareIgnoreCase("System.Runtime")).Location);
+#endif
+
 				var code = Escape(expression, useIds, out var identifiers);
-				var result = service.GetCompiler(CompilationLanguages.CSharp).Compile("IndexExpression", _template.Replace("__insert_code", code), new[] { typeof(object).Assembly.Location, typeof(ExpressionFormula).Assembly.Location, typeof(MathHelper).Assembly.Location });
+				var result = service.GetCompiler(CompilationLanguages.CSharp).Compile("IndexExpression", _template.Replace("__insert_code", code), refs);
 
 				var formula = result.Assembly == null
 					? new ErrorExpressionFormula(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).Join(Environment.NewLine))
