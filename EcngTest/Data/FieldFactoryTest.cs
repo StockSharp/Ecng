@@ -403,7 +403,7 @@ namespace Ecng.Test.Data
 		public void SerializeBinary()
 		{
 			nTest<SerializeBinaryTestEntity, Image>(Properties.Resources.TestImage, arg =>
-				Properties.Resources.TestImage.Compare(arg));
+				Properties.Resources.TestImage.Compare(arg) == 0);
 		}
 
 		[TestMethod]
@@ -416,7 +416,7 @@ namespace Ecng.Test.Data
 		public void Color()
 		{
 			nTest<ColorTestEntity, Color>(System.Drawing.Color.Pink, arg =>
-				System.Drawing.Color.Pink.Compare(arg));
+				System.Drawing.Color.Pink.Compare(arg) == 0);
 		}
 
 		[TestMethod]

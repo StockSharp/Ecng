@@ -62,13 +62,15 @@ namespace Ecng.Serialization
 		}
 	}
 
-#if !NETCOREAPP && !NETSTANDARD
 	public class XmlFormatterAttribute : FormatterAttribute
 	{
 		protected override Type GetFormatterType()
 		{
+#if NETFRAMEWORK
 			return typeof(SoapFormatter);
+#else
+			throw new PlatformNotSupportedException();
+#endif
 		}
 	}
-#endif
 }

@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_fw_core.props" />
+  <Import Project="..\common_target_core.props" />
   <PropertyGroup>
     <ProjectGuid>{38C67615-BE2E-461E-BBED-5217F6DC0AFE}</ProjectGuid>
     <IsPackable>true</IsPackable>

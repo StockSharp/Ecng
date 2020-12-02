@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_fw_core_standard.props" />
+  <Import Project="..\common_target_standard.props" />
   <PropertyGroup>
     <ProjectGuid>{8DE0D8CB-561B-43E3-B89F-02CDEE71415B}</ProjectGuid>
   </PropertyGroup>
