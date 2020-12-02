@@ -166,6 +166,7 @@
 			base.OnClear();
 
 			_indecies?.Clear();
+			_maxIndex = -1;
 		}
 
 		protected override int OnIndexOf(T item)
