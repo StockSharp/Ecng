@@ -3,6 +3,7 @@ namespace Ecng.Xaml
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Collections.Specialized;
 	using System.Linq;
 
 	using Ecng.Collections;
@@ -12,7 +13,7 @@ namespace Ecng.Xaml
 	{
 		private readonly ICollection<TDisplay> _collection;
 		private readonly Func<TItem, TDisplay> _converter;
-		private readonly Dictionary<TItem, TDisplay> _convertedValues = new Dictionary<TItem, TDisplay>();
+		private readonly OrderedDictionary _convertedValues = new OrderedDictionary();
 
 		public ConvertibleObservableCollection(ICollection<TDisplay> collection, Func<TItem, TDisplay> converter)
 		{
@@ -27,14 +28,14 @@ namespace Ecng.Xaml
 			get
 			{
 				lock (SyncRoot)
-					return _convertedValues.Keys.ToArray();
+					return _convertedValues.Keys.Cast<TItem>().ToArray();
 			}
 		}
 
 		public TDisplay TryGet(TItem item)
 		{
 			lock (SyncRoot)
-				return _convertedValues.TryGetValue(item);
+				return _convertedValues.Contains(item) ? (TDisplay) _convertedValues[item] : default;
 		}
 
 		public event Action<IEnumerable<TItem>> AddedRange;
@@ -54,8 +55,10 @@ namespace Ecng.Xaml
 				{
 					var display = _converter(item);
 
-					if (!_convertedValues.TryAdd(item, display))
+					if(_convertedValues.Contains(item))
 						continue;
+
+					_convertedValues.Add(item, display);
 
 					converted.Add(display);
 					added.Add(item);
@@ -100,7 +103,7 @@ namespace Ecng.Xaml
 		{
 			lock (SyncRoot)
 			{
-				var items = _convertedValues.Keys.Skip(index).Take(count).ToArray();
+				var items = _convertedValues.Keys.Cast<TItem>().Skip(index).Take(count).ToArray();
 				RemoveRange(items);
 				return items.Length;
 			}
@@ -112,7 +115,7 @@ namespace Ecng.Xaml
 
 			lock (SyncRoot)
 			{
-				removedItems = _convertedValues.Keys.ToArray();
+				removedItems = _convertedValues.Keys.Cast<TItem>().ToArray();
 
 				_convertedValues.Clear();
 				_collection.Clear();
@@ -130,7 +133,7 @@ namespace Ecng.Xaml
 		public IEnumerator<TItem> GetEnumerator()
 		{
 			lock (SyncRoot)
-				return _convertedValues.Keys.GetEnumerator();
+				return _convertedValues.Keys.Cast<TItem>().GetEnumerator();
 		}
 
 		/// <summary>
@@ -204,7 +207,7 @@ namespace Ecng.Xaml
 		public bool Contains(TItem item)
 		{
 			lock (SyncRoot)
-				return _convertedValues.ContainsKey(item);
+				return _convertedValues.Contains(item);
 		}
 
 		/// <summary>
@@ -256,7 +259,11 @@ namespace Ecng.Xaml
 		/// <param name="index">The zero-based index of the element to get or set.</param><exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="T:System.Collections.Generic.IList`1"/>.</exception><exception cref="T:System.NotSupportedException">The property is set and the <see cref="T:System.Collections.Generic.IList`1"/> is read-only.</exception>
 		public TItem this[int index]
 		{
-			get => throw new NotSupportedException();
+			get
+			{
+				lock (SyncRoot)
+					return (TItem) _convertedValues.Cast<DictionaryEntry>().ElementAt(index).Key;
+			}
 			set => throw new NotSupportedException();
 		}
 
