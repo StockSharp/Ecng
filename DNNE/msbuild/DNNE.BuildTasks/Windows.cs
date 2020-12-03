@@ -99,6 +99,9 @@ namespace DNNE.BuildTasks
 
             command = Path.Combine(binDir, "cl.exe");
             commandArguments = $"{compilerFlags} /link {linkerFlags}";
+
+            command = command.Replace("%28", "(").Replace("%29", ")");
+            commandArguments = commandArguments.Replace("%28", "(").Replace("%29", ")");
         }
 
         private static bool Is64BitTarget(string arch, string rid)
