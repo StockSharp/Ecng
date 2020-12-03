@@ -24,7 +24,6 @@ DNNE.targets
 -->
 <Project>
   <PropertyGroup>
-    <DnneNativeExportsBinaryName>$(TargetName)$(DnneNativeBinarySuffix)</DnneNativeExportsBinaryName>
     <DnneNativeExportsBinaryPath>$(TargetDir)</DnneNativeExportsBinaryPath>
     <DnneGeneratedOutputPath>$(IntermediateOutputPath)dnne</DnneGeneratedOutputPath>
     <DnneGeneratedBinPath>$(DnneGeneratedOutputPath)/bin</DnneGeneratedBinPath>

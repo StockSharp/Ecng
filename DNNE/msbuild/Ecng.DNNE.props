@@ -58,5 +58,7 @@ DNNE.props
 
     <!-- Indicate the dnne-gen tool's roll forward policy. -->
     <DnneGenRollForward>Minor</DnneGenRollForward>
+
+    <DnneNativeExportsBinaryName>$(TargetName)$(DnneNativeBinarySuffix)</DnneNativeExportsBinaryName>
   </PropertyGroup>
 </Project>
