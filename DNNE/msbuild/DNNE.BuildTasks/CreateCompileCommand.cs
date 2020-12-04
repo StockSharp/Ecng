@@ -29,10 +29,11 @@ namespace DNNE.BuildTasks
 {
     public class CreateCompileCommand : Task
     {
+        public static MessageImportance DevImportance = 
 #if DEBUG
-        public static MessageImportance DevImportance = MessageImportance.High;
+        MessageImportance.High;
 #else
-        public static MessageImportance DevImportance = MessageImportance.Low;
+        MessageImportance.High;
 #endif
 
         [Required]
@@ -61,8 +62,6 @@ namespace DNNE.BuildTasks
 
         [Required]
         public string Configuration { get; set; }
-
-        public string Is64Bit { get; set; }
 
         // Optional
         public string CommandOverride { get; set; }

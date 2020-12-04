@@ -121,7 +121,6 @@ DNNE.targets
         RuntimeID="$(DnneRuntimeIdentifier)"
         Architecture="$(TargetedSDKArchitecture)"
         Configuration="$(Configuration)"
-        Is64Bit="$(DnneIs64Bit)"
         CommandOverride="$(DnneCompilerCommand)"
         AdditionalIncludeDirectories="@(__DnneAdditionalIncludeDirectories)">
       <Output TaskParameter="Command" PropertyName="CompilerCmd" />
