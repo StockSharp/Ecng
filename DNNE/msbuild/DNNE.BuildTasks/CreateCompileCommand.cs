@@ -62,6 +62,8 @@ namespace DNNE.BuildTasks
         [Required]
         public string Configuration { get; set; }
 
+        public string Is64Bit { get; set; }
+
         // Optional
         public string CommandOverride { get; set; }
 

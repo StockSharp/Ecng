@@ -43,7 +43,9 @@ namespace DNNE.BuildTasks
             export.Report(CreateCompileCommand.DevImportance, $"VS Install: {vsInstall}\nVC Tools: {vcToolDir}\nWinSDK Version: {winSdk.Version}");
 
             bool isDebug = IsDebug(export.Configuration);
-            bool is64Bit = Is64BitTarget(export.Architecture, export.RuntimeID);
+            
+            if (!bool.TryParse(export.Is64Bit, out var is64Bit))
+                is64Bit = Is64BitTarget(export.Architecture, export.RuntimeID);
 
             var archDir = is64Bit ? "x64" : "x86";
 
