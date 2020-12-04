@@ -12,7 +12,6 @@
 
   <PropertyGroup>
     <PackageId>Ecng.DNNE</PackageId>
-    <Version>1.0.0</Version>
     <IsTool>True</IsTool>
 
     <!--
