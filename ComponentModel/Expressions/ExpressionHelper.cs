@@ -9,6 +9,8 @@ namespace Ecng.ComponentModel.Expressions
 	using Ecng.Common;
 	using Ecng.Localization;
 
+	using MoreLinq;
+
 	/// <summary>
 	/// Extension class for <see cref="ExpressionFormula"/>.
 	/// </summary>
@@ -254,7 +256,19 @@ class TempExpressionFormula : ExpressionFormula
 				var refs = new List<string>(new[] {typeof(object).Assembly.Location, typeof(ExpressionFormula).Assembly.Location, typeof(MathHelper).Assembly.Location});
 
 #if NETCOREAPP || NETSTANDARD
-				refs.Add(AppDomain.CurrentDomain.GetAssemblies().First(a => a.GetName().Name.CompareIgnoreCase("System.Runtime")).Location);
+				var needLibs = new[]
+				{
+					"System.Runtime",
+					"netstandard",
+				};
+
+				var allAssemblies = AppDomain.CurrentDomain.GetAssemblies().ToArray();
+				needLibs.ForEach(name =>
+				{
+					var loaded = allAssemblies.FirstOrDefault(a => a.GetName().Name.CompareIgnoreCase(name));
+					if(loaded != null)
+						refs.Add(loaded.Location);
+				});
 #endif
 
 				var code = Escape(expression, useIds, out var identifiers);
