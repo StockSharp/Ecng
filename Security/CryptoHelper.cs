@@ -1,6 +1,7 @@
 namespace Ecng.Security
 {
 	using System;
+	using System.Linq;
 	using System.IO;
 	using System.Security.Cryptography;
 
@@ -153,13 +154,16 @@ namespace Ecng.Security
 			if (passPhrase.IsEmpty())
 				throw new ArgumentNullException(nameof(passPhrase));
 
+			if (iv?.Length > 16)
+				iv = iv.Take(16).ToArray();
+
 			using (var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations))
 			{
 				var keyBytes = password.GetBytes(_keySize / 8);
 
 				using (var symmetricKey = new RijndaelManaged())
 				{
-					symmetricKey.BlockSize = 256;
+					symmetricKey.BlockSize = 128;
 					symmetricKey.Mode = CipherMode.CBC;
 					symmetricKey.Padding = PaddingMode.PKCS7;
 
@@ -189,13 +193,16 @@ namespace Ecng.Security
 			if (passPhrase.IsEmpty())
 				throw new ArgumentNullException(nameof(passPhrase));
 
+			if (iv?.Length > 16)
+				iv = iv.Take(16).ToArray();
+
 			using (var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations))
 			{
 				var keyBytes = password.GetBytes(_keySize / 8);
 
 				using (var symmetricKey = new RijndaelManaged())
 				{
-					symmetricKey.BlockSize = 256;
+					symmetricKey.BlockSize = 128;
 					symmetricKey.Mode = CipherMode.CBC;
 					symmetricKey.Padding = PaddingMode.PKCS7;
 
