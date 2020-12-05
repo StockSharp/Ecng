@@ -528,6 +528,8 @@ $@"// Computed from {export.EnclosingTypeName}{Type.Delimiter}{export.MethodName
 static {export.ReturnType} ({callConv}* {export.ExportName}_ptr)({declsig});
 DNNE_API {export.ReturnType} {callConv} {export.ExportName}({declsig})
 {{
+#pragma comment(linker, ""/EXPORT:"" __FUNCTION__ ""="" __FUNCDNAME__)
+
     if ({export.ExportName}_ptr == NULL)
     {{
         {acquireManagedFunction}
@@ -755,6 +757,11 @@ $@"#endif // {generatedHeaderDefine}
                     PrimitiveTypeCode.Single => "float",
                     PrimitiveTypeCode.Double => "double",
                     PrimitiveTypeCode.Void => "void",
+
+					// TODO
+                    PrimitiveTypeCode.Char => "uint16_t",
+                    PrimitiveTypeCode.Boolean => "uint16_t",
+
                     _ => throw new NotSupportedTypeException(typeCode.ToString())
                 };
             }
