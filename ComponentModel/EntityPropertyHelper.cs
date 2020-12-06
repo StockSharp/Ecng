@@ -27,9 +27,11 @@
 			if (processed.Contains(type))
 				return properties;
 
+			var isNullable = type.IsNullable();
+
 			var propertyInfos = type
 	            .GetMembers<PropertyInfo>(BindingFlags.Public | BindingFlags.Instance)
-	            .Where(filter);
+	            .Where(info => isNullable ? info.Name == nameof(Nullable<int>.Value) : filter(info));
 
 			var names = new HashSet<string>();
 
@@ -52,7 +54,7 @@
 
 				var propType = pi.PropertyType;
 
-				if (!propType.IsPrimitive() && !propType.IsNullable())
+				if (!propType.IsPrimitive())
 				{
 					prop.Properties = GetEntityProperties(propType, prop, processed, filter);
 				}
@@ -96,7 +98,7 @@
 			{
 				var info = value?.GetType().GetProperty(part);
 
-				if (info == null)
+				if (info == null || (info.PropertyType.IsNullable() && info.GetValue(value, null) == null))
 					return null;
 
 				value = info.GetValue(value, null);
