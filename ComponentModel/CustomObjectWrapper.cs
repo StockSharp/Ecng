@@ -5,7 +5,9 @@
 	using System.ComponentModel;
 	using System.Linq;
 
-	public abstract class CustomObjectWrapper<T> : INotifyPropertyChanged, ICustomTypeDescriptor where T : class
+	using Ecng.Common;
+
+	public abstract class CustomObjectWrapper<T> : Disposable, INotifyPropertyChanged, ICustomTypeDescriptor where T : class
 	{
 		public event PropertyChangedEventHandler PropertyChanged;
 
