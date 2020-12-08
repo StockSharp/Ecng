@@ -27,11 +27,11 @@
 			if (processed.Contains(type))
 				return properties;
 
-			var isNullable = type.IsNullable();
+			type = type.GetUnderlyingType() ?? type;
 
 			var propertyInfos = type
 	            .GetMembers<PropertyInfo>(BindingFlags.Public | BindingFlags.Instance)
-	            .Where(info => isNullable ? info.Name == nameof(Nullable<int>.Value) : filter(info));
+	            .Where(filter);
 
 			var names = new HashSet<string>();
 
@@ -75,19 +75,19 @@
 			if (name == null)
 				throw new ArgumentNullException(nameof(name));
 
-			var value = type;
+			type = type.GetUnderlyingType() ?? type;
 
 			foreach (var part in name.Split('.'))
 			{
-				var info = value.GetProperty(part);
+				var info = type.GetProperty(part);
 
 				if (info == null)
 					return null;
 
-				value = info.PropertyType;
+				type = info.PropertyType.GetUnderlyingType() ?? info.PropertyType;
 			}
 
-			return value;
+			return type;
 		}
 
 		public static object GetPropValue(this object entity, string name)
