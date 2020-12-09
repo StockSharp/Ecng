@@ -10,13 +10,11 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.configuration" />
-    <Reference Include="System.ServiceModel" />
-    <Reference Include="System.ServiceModel.Activation" />
     <Reference Include="System.Web" />
-
-    <Compile Remove="System.ServiceModel\**" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
+    <Compile Remove="ChannelHelper.cs" />
+    <Compile Remove="ChannelWrapper.cs" />
     <Compile Remove="Transport\Pipe*.cs" />
     <Compile Remove="ReferencePreservingDataContractFormatAttribute.cs" />
   </ItemGroup>
