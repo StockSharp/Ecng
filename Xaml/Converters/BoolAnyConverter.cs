@@ -12,8 +12,8 @@ namespace Ecng.Xaml.Converters
 	{
 		public bool Value { get; set; } = true;
 
-		object IMultiValueConverter.Convert(object[] values, Type targetType, object parameter, CultureInfo culture) 
-			=> values.Cast<bool>().Any(v => v == Value);
+		object IMultiValueConverter.Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+			=> values.Any(v => v is bool b && b == Value);
 
 		object[] IMultiValueConverter.ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
 	}
