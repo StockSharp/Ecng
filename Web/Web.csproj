@@ -15,7 +15,6 @@
     <Compile Remove="VisitPageAttribute.cs" />
     <Compile Remove="WebApplication.cs" />
     <Compile Remove="WebFileHandler.cs" />
-    <Compile Remove="WebHelper.cs" />
     <Compile Remove="XmlHandler.cs" />
 
     <Compile Remove="UI\**" />

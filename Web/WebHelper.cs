@@ -1,31 +1,32 @@
 namespace Ecng.Web
 {
+	using System;
 	using System.Collections.Generic;
-	using System.Web;
 	using System.Linq;
-	using System.Net;
+	using System.IO;
 	using System.Security;
+#if NETFRAMEWORK
+	using System.Net;
 	using System.Web.Configuration;
 	using System.Web.Routing;
-
-	using Ecng.Collections;
-	using Ecng.Configuration;
-#if !SILVERLIGHT
-	using System;
 	using System.Collections;
 	using System.Drawing;
 	using System.Drawing.Imaging;
 	using System.Drawing.Drawing2D;
-	using System.IO;
 	using System.Reflection;
 	using System.Threading;
+	using System.Web;
 	using System.Web.Compilation;
 	using System.Web.Security;
 	using System.Web.UI;
 	using System.Web.UI.WebControls;
 	using Image = System.Web.UI.WebControls.Image;
+#endif
 
 	using Ecng.Common;
+	using Ecng.Collections;
+	using Ecng.Configuration;
+#if NETFRAMEWORK
 	using Ecng.ComponentModel;
 	using Ecng.Net;
 	using Ecng.Reflection;
@@ -33,7 +34,7 @@ namespace Ecng.Web
 
 	public static class WebHelper
 	{
-#if !SILVERLIGHT
+#if NETFRAMEWORK
 		private static readonly FastInvoker<VoidType, string, string> _getMimeType;
 
 		static WebHelper()
@@ -375,6 +376,56 @@ namespace Ecng.Web
 
 			return body.To<byte[]>();
 		}
+
+		public static RequestContext GetCurrentRouteRequest()
+		{
+			return Context.Request.RequestContext;
+		}
+
+		public static void Make403(this HttpResponse response)
+		{
+			if (response == null)
+				throw new ArgumentNullException(nameof(response));
+
+			response.TrySkipIisCustomErrors = true;
+			response.StatusDescription = "403 Forbidden";
+			response.StatusCode = (int)HttpStatusCode.Forbidden;
+		}
+
+		public static void Make404(this HttpResponse response)
+		{
+			if (response == null)
+				throw new ArgumentNullException(nameof(response));
+
+			response.TrySkipIisCustomErrors = true;
+			response.StatusDescription = "404 Not Found";
+			response.StatusCode = (int)HttpStatusCode.NotFound;
+		}
+
+		// http://stackoverflow.com/a/1306932
+		public static void ForceSignOff(this HttpContext context)
+		{
+			if (context == null)
+				throw new ArgumentNullException(nameof(context));
+
+			FormsAuthentication.SignOut();
+			context.Session.Abandon();
+
+			// clear authentication cookie
+			context.Response.Cookies.Add(new HttpCookie(FormsAuthentication.FormsCookieName, string.Empty)
+			{
+				Expires = DateTime.Now.AddYears(-1)
+			});
+
+			// clear session cookie (not necessary for your current problem but i would recommend you do it anyway)
+			var sessionStateSection = ConfigManager.GetSection<SessionStateSection>();
+			context.Response.Cookies.Add(new HttpCookie(sessionStateSection.CookieName, string.Empty)
+			{
+				Expires = DateTime.Now.AddYears(-1)
+			});
+
+			FormsAuthentication.RedirectToLoginPage();
+		}
 #endif
 
 		public static IWebUser TryGetByNameOrEmail(this IWebUserCollection users, string id)
@@ -383,11 +434,6 @@ namespace Ecng.Web
 				throw new ArgumentNullException(nameof(users));
 
 			return users.GetByName(id) ?? users.GetByEmail(id);
-		}
-
-		public static RequestContext GetCurrentRouteRequest()
-		{
-			return Context.Request.RequestContext;
 		}
 
 		public static string XmlEscape(this string content)
@@ -446,26 +492,6 @@ namespace Ecng.Web
 			return true;
 		}
 
-		public static void Make403(this HttpResponse response)
-		{
-			if (response == null)
-				throw new ArgumentNullException(nameof(response));
-
-			response.TrySkipIisCustomErrors = true;
-			response.StatusDescription = "403 Forbidden";
-			response.StatusCode = (int)HttpStatusCode.Forbidden;
-		}
-
-		public static void Make404(this HttpResponse response)
-		{
-			if (response == null)
-				throw new ArgumentNullException(nameof(response));
-
-			response.TrySkipIisCustomErrors = true;
-			response.StatusDescription = "404 Not Found";
-			response.StatusCode = (int)HttpStatusCode.NotFound;
-		}
-
 		private static readonly SynchronizedSet<string> _imgExts = new SynchronizedSet<string>
 		{
 			".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg"
@@ -482,31 +508,6 @@ namespace Ecng.Web
 				return false;
 
 			return _imgExts.Contains(ext.ToLowerInvariant());
-		}
-
-		// http://stackoverflow.com/a/1306932
-		public static void ForceSignOff(this HttpContext context)
-		{
-			if (context == null)
-				throw new ArgumentNullException(nameof(context));
-
-			FormsAuthentication.SignOut();
-			context.Session.Abandon();
-
-			// clear authentication cookie
-			context.Response.Cookies.Add(new HttpCookie(FormsAuthentication.FormsCookieName, string.Empty)
-			{
-				Expires = DateTime.Now.AddYears(-1)
-			});
-
-			// clear session cookie (not necessary for your current problem but i would recommend you do it anyway)
-			var sessionStateSection = ConfigManager.GetSection<SessionStateSection>();
-			context.Response.Cookies.Add(new HttpCookie(sessionStateSection.CookieName, string.Empty)
-			{
-				Expires = DateTime.Now.AddYears(-1)
-			});
-
-			FormsAuthentication.RedirectToLoginPage();
 		}
 
 		private static readonly string[] _urlParts = { "href=", "http:", "https:", "ftp:" };
