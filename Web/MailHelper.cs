@@ -6,6 +6,7 @@
 	using System.Net.Mime;
 	using System.Text;
 	using System.Web;
+
 	using Ecng.Common;
 
 	public static class MailHelper

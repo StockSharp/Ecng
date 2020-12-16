@@ -14,11 +14,9 @@
     <Compile Remove="MembershipUtil.cs" />
     <Compile Remove="VisitPageAttribute.cs" />
     <Compile Remove="WebApplication.cs" />
-    <Compile Remove="WebFile.cs" />
     <Compile Remove="WebFileHandler.cs" />
     <Compile Remove="WebHelper.cs" />
     <Compile Remove="XmlHandler.cs" />
-    <Compile Remove="MailHelper.cs" />
 
     <Compile Remove="UI\**" />
     <EmbeddedResource Remove="UI\**" />
