@@ -310,7 +310,14 @@ namespace Ecng.Common
 
 			try
 			{
-				Process.Start(url);
+				// https://github.com/dotnet/wpf/issues/2566
+
+				var procInfo = new ProcessStartInfo(url)
+				{
+					UseShellExecute = true,
+				};
+
+				Process.Start(procInfo);
 				return true;
 			}
 			catch (Win32Exception)
