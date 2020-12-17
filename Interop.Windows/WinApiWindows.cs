@@ -166,13 +166,24 @@
 					}
 					catch
 					{
-						// Weird behaviour: In some cases, trying to cast to a Form a handle of an object 
+						// Weird behaviour: In some cases, trying to cast to a Form a handle of an object
 						// that isn't a form will just return null. In other cases, will throw an exception.
 					}
 				}
 			}
 
 			return frm;
+		}
+
+		public static void GetScreenParams(IntPtr hwnd, out int left, out int top, out int width, out int height)
+		{
+			var activeScreen = Screen.FromHandle(hwnd);
+			var bounds = activeScreen.Bounds;
+
+			left = bounds.Left;
+			top = bounds.Top;
+			width = bounds.Width;
+			height = bounds.Height;
 		}
 	}
 }
