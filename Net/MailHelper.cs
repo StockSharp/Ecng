@@ -53,7 +53,7 @@
 
 			var stream = new MemoryStream();
 
-			var mailWriter = mailWriterType.CreateInstance(stream);
+			var mailWriter = mailWriterType.CreateInstance(new[] { (object)stream, true });
 
 			message.SetValue<object, object[]>("Send", new[] { mailWriter, true, true });
 
