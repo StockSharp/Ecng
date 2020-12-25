@@ -14,7 +14,6 @@
 	using System.Runtime.Serialization.Formatters.Binary;
 	using System.Text;
 	using System.Threading;
-	using System.ServiceModel;
 
 	using Ecng.Backup;
 	using Ecng.Backup.Yandex;
@@ -31,6 +30,10 @@
 	using Ecng.Serialization;
 
 	using Wintellect.PowerCollections;
+	using Ecng.ComponentModel.Expressions;
+	using Ecng.Logic.BusinessEntities;
+	using StockSharp.Web.BusinessEntities;
+	using System.Net.Mail;
 
 	public interface ICalc
 	{
@@ -116,10 +119,10 @@
 		//	}
 		//}
 
-		[ServiceContract]
+		//[ServiceContract]
 		public interface IInterface
 		{
-			[OperationContract]
+			//[OperationContract]
 			void Method1();
 		}
 
@@ -269,6 +272,27 @@
 		[STAThread]
 		static void Main()
 		{
+			new MailMessage().ToStream();
+			//var database = new LogicDatabase("StockSharp Database", "Server=db.stocksharp.com;Database=StockSharp;User ID=StockSharp;Password=pX1hmKgjVDGBBGJirVLL;") { CommandType = CommandType.StoredProcedure };
+			//ConfigManager.RegisterService<IStorage>(database);
+
+			//var rootObject = new SiteRootObject("Site Root", database);
+			//rootObject.Initialize();
+
+			//var email = rootObject.Emails.ReadById(1844426L);
+			//{
+			//	foreach (var file in email.Files)
+			//	{
+					
+			//	}
+			//}
+
+			return;
+
+			var res = new RoslynCompilerService().Compile("LOG([USD##CASH@IDEALPRO]) - (USD_CASH@IDEALPRO / usd_cash@IDEALPRO) + LOG([USD##CASH@IDEALPRO])", true);
+			Console.WriteLine(res.Calculate(new[] { 10m, 11m }));
+			return;
+
 			var settingSotrage = new SettingsStorage();
 			settingSotrage.SetValue("1", TimeZoneInfo.Local);
 

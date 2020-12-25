@@ -56,8 +56,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO", "IO\IO.csproj", "{4E2D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interop.Windows", "Interop.Windows\Interop.Windows.csproj", "{E07110B3-2D56-474D-9668-7A4488774F33}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.Core", "NuGet.Core\NuGet.Core.csproj", "{F879F274-EFA0-4157-8404-33A19B4E6AEC}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -156,10 +154,6 @@ Global
 		{E07110B3-2D56-474D-9668-7A4488774F33}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E07110B3-2D56-474D-9668-7A4488774F33}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E07110B3-2D56-474D-9668-7A4488774F33}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F879F274-EFA0-4157-8404-33A19B4E6AEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F879F274-EFA0-4157-8404-33A19B4E6AEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F879F274-EFA0-4157-8404-33A19B4E6AEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F879F274-EFA0-4157-8404-33A19B4E6AEC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
