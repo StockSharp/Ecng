@@ -1,16 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_core.props" />
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{CAF861AA-7473-4EEB-BF41-FFE74A97E072}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
-    <ProjectReference Include="..\Web\Web.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
-    <Reference Include="System.ServiceModel" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Net.SocketIO\Net.SocketIO.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />

@@ -1,11 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_standard.props" />
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{0006C83D-602D-4C3F-8502-6B456C75C203}</ProjectGuid>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
-    <Reference Include="System.configuration" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />

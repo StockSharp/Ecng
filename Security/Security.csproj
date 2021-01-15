@@ -1,15 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_standard.props" />
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{F99E753E-C8C8-4753-BA95-E656AAE55786}</ProjectGuid>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
-    <Reference Include="System.configuration" />
-    <Reference Include="System.DirectoryServices" />
-    <Reference Include="System.DirectoryServices.AccountManagement" />
-    <Reference Include="System.Security" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
+  <ItemGroup>
     <PackageReference Include="System.Security.Permissions" Version="4.7.0" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.7.0" />
   </ItemGroup>

@@ -1,5 +1,26 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
+    <TargetFrameworks>netstandard2.1</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="
+           '$(MSBuildProjectName)' == 'Test'
+        or '$(MSBuildProjectName)' == 'UnitTesting'
+        or '$(MSBuildProjectName)' == 'Web'
+      ">
+    <TargetFrameworks>net5.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="
+           '$(MSBuildProjectName)' == 'EcngTest'
+        or '$(MSBuildProjectName)' == 'Interop.Windows'
+        or '$(MSBuildProjectName)' == 'TestWinForms'
+        or '$(MSBuildProjectName)' == 'Xaml'
+      ">
+    <TargetFrameworks>net5.0-windows</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <ProductVersion>9.0.30729</ProductVersion>
     <RootNamespace>Ecng.$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>Ecng.$(MSBuildProjectName)</AssemblyName>

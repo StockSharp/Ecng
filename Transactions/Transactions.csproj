@@ -1,11 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_standard.props" />
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{8DE0D8CB-561B-43E3-B89F-02CDEE71415B}</ProjectGuid>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
-    <Reference Include="System.Transactions"/>
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>

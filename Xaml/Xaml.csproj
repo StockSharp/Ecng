@@ -1,47 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-  <Import Project="..\common_target_core.props" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{90A23E0C-3329-4459-BB97-21CD84E5418A}</ProjectGuid>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
-    <Reference Include="System.configuration" />
-    <Reference Include="System.Design" />
-    <Reference Include="System.Security" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Ecng.Xaml.DXRefs" Version="1.0.0" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
-    <Compile Remove="XamlNativeHelper.cs" />
-    <Compile Remove="WpfFormAdapter.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-    <Compile Remove="BmpImage.cs" />
-    <Compile Remove="BusyIndicator.cs" />
-    <Compile Remove="EditableTextBlock.cs" />
-    <Compile Remove="EditableTextBlockAdorner.cs" />
-    <Compile Remove="EncodingComboBox.cs" />
-    <Compile Remove="EndPointComboBox.cs" />
-    <Compile Remove="EnumComboBox.cs" />
-    <Compile Remove="FixedWidthColumn.cs" />
-    <Compile Remove="GridViewRowPresenterWithGridLines.cs" />
-    <Compile Remove="GridViewSort.cs" />
-    <Compile Remove="GuiDispatcher.cs" />
-    <Compile Remove="HeaderedSeparator.cs" />
-    <Compile Remove="HighlightingTextBlock.*" />
-    <Compile Remove="HyperlinkEx.cs" />
-    <Compile Remove="IpAddressEditor.*" />
-    <Compile Remove="IWin32WindowEx.cs" />
-    <Compile Remove="NonTopmostPopup.cs" />
-    <Compile Remove="NumberRangeRule.cs" />
-    <Compile Remove="Proxy.cs" />
-    <Compile Remove="ResizableContentControl.cs" />
-    <Compile Remove="TimeSpanEditor.*" />
-    <Compile Remove="XamlHelper.cs" />
-    <Compile Remove="XamlNativeHelper.cs" />
-    <Compile Remove="AddressComboBox.cs" />
-    <Compile Remove="BindingProxy.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="HighlightingTextBlock.xaml.cs">
@@ -77,4 +41,5 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="Resources\*.png" />
-  </ItemGroup></Project>
+  </ItemGroup>
+</Project>

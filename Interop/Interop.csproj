@@ -1,14 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_standard.props" />
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{6EACA7CE-0269-47A2-AE6A-3669738EE303}</ProjectGuid>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
-    <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Management" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
+  <ItemGroup>
     <PackageReference Include="System.Management" Version="4.7" />
   </ItemGroup>
   <ItemGroup>

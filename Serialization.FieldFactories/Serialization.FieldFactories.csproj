@@ -1,15 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common_target_standard.props" />
+  <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{864E3014-6C0F-4A6E-B766-3FF37963DDFD}</ProjectGuid>
     <RootNamespace>Ecng.Serialization</RootNamespace>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
-    <Reference Include="System.configuration" />
-    <Reference Include="System.Runtime.Serialization.Formatters.Soap" />
-    <Reference Include="System.Security" />
-    <Reference Include="System.Transactions" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Transactions\Transactions.csproj" />
     <ProjectReference Include="..\Security\Security.csproj" />
