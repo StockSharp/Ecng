@@ -9,7 +9,7 @@
     <UseWinForms>true</UseWinForms>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Ecng.Xaml.DXRefs" Version="1.0.0"/>
+    <PackageReference Include="Ecng.Xaml.DXRefs" Version="1.0.1"/>
     <Reference Include="System.configuration" />
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>

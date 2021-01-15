@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>Ecng.Xaml.DXRefs</id>
+    <version>1.0.1</version>
+    <title>Ecng Xaml references</title>
+    <authors>StockSharp LP https://stocksharp.com</authors>
+    <owners>StockSharp LP</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>https://stocksharp.com/products/eula/</licenseUrl>
+    <projectUrl>https://stocksharp.com/</projectUrl>
+    <iconUrl>https://stocksharp.com/images/logo.png</iconUrl>
+    <description>Ecng Xaml references</description>
+    <copyright>StockSharp LP</copyright>
+    <tags>Ecng</tags>
+  </metadata>
+</package>
