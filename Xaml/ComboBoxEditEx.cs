@@ -106,11 +106,11 @@
 		}
 
 		/// <inheritdoc />
-		protected override void OnValueMemberChanged(string valueMember)                { base.OnValueMemberChanged(valueMember);      UpdateBindings(); }
+		protected override void OnValueMemberChanged(string valueMember)                    { base.OnValueMemberChanged(valueMember);                UpdateBindings(); }
 		/// <inheritdoc />
-		protected override void ItemsSourceChanged(object itemsSource)                  { base.ItemsSourceChanged(itemsSource);        UpdateBindings(); }
+		protected override void OnItemsSourceChanged(object oldValue, object itemsSource)   { base.OnItemsSourceChanged(oldValue, itemsSource);      UpdateBindings(); }
 		/// <inheritdoc />
-		protected override void OnEditModeChanged(EditMode oldValue, EditMode newValue) { base.OnEditModeChanged(oldValue, newValue);  UpdateBindings(); }
+		protected override void OnEditModeChanged(EditMode oldValue, EditMode newValue)     { base.OnEditModeChanged(oldValue, newValue);            UpdateBindings(); }
 
 		/// <summary>
 		/// Auto update bindings when dependency properties changed.
