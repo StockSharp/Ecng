@@ -3,7 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 
-	public interface INotifyList<TItem> : IList<TItem>
+	public interface INotifyCollection<TItem> : ICollection<TItem>
 	{
 		event Func<TItem, bool> Adding;
 
@@ -24,6 +24,10 @@
 		event Action<int, TItem> Inserted;
 
 		event Action Changed;
+	}
+
+	public interface INotifyList<TItem> : INotifyCollection<TItem>, IList<TItem>
+	{
 	}
 
 	public interface INotifyListEx<TItem> : INotifyList<TItem>, IListEx<TItem>

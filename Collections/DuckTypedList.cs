@@ -125,7 +125,7 @@
 
 		private Func<TOuter, bool> _adding;
 
-		event Func<TOuter, bool> INotifyList<TOuter>.Adding
+		event Func<TOuter, bool> INotifyCollection<TOuter>.Adding
 		{
 			add => _adding += value;
 			remove => _adding -= value;
@@ -133,7 +133,7 @@
 
 		private Action<TOuter> _added;
 
-		event Action<TOuter> INotifyList<TOuter>.Added
+		event Action<TOuter> INotifyCollection<TOuter>.Added
 		{
 			add => _added += value;
 			remove => _added -= value;
@@ -141,7 +141,7 @@
 
 		private Func<int, TOuter, bool> _inserting;
 
-		event Func<int, TOuter, bool> INotifyList<TOuter>.Inserting
+		event Func<int, TOuter, bool> INotifyCollection<TOuter>.Inserting
 		{
 			add => _inserting += value;
 			remove => _inserting -= value;
@@ -149,7 +149,7 @@
 
 		private Action<int, TOuter> _inserted;
 
-		event Action<int, TOuter> INotifyList<TOuter>.Inserted
+		event Action<int, TOuter> INotifyCollection<TOuter>.Inserted
 		{
 			add => _inserted += value;
 			remove => _inserted -= value;
@@ -157,7 +157,7 @@
 
 		private Func<TOuter, bool> _removing;
 
-		event Func<TOuter, bool> INotifyList<TOuter>.Removing
+		event Func<TOuter, bool> INotifyCollection<TOuter>.Removing
 		{
 			add => _removing += value;
 			remove => _removing -= value;
@@ -165,7 +165,7 @@
 
 		private Func<int, bool> _removingAt;
 
-		event Func<int, bool> INotifyList<TOuter>.RemovingAt
+		event Func<int, bool> INotifyCollection<TOuter>.RemovingAt
 		{
 			add => _removingAt += value;
 			remove => _removingAt -= value;
@@ -173,7 +173,7 @@
 
 		private Action<TOuter> _removed;
 
-		event Action<TOuter> INotifyList<TOuter>.Removed
+		event Action<TOuter> INotifyCollection<TOuter>.Removed
 		{
 			add => _removed += value;
 			remove => _removed -= value;
@@ -181,7 +181,7 @@
 
 		private Func<bool> _clearing;
 
-		event Func<bool> INotifyList<TOuter>.Clearing
+		event Func<bool> INotifyCollection<TOuter>.Clearing
 		{
 			add => _clearing += value;
 			remove => _clearing -= value;
@@ -189,7 +189,7 @@
 
 		private Action _cleared;
 
-		event Action INotifyList<TOuter>.Cleared
+		event Action INotifyCollection<TOuter>.Cleared
 		{
 			add => _cleared += value;
 			remove => _cleared -= value;
@@ -197,7 +197,7 @@
 
 		private Action _changed;
 
-		event Action INotifyList<TOuter>.Changed
+		event Action INotifyCollection<TOuter>.Changed
 		{
 			add => _changed += value;
 			remove => _changed -= value;
