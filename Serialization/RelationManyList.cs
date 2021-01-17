@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Serialization
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.ComponentModel;
 	using System.Data;
@@ -9,7 +10,7 @@
 	using Ecng.Common;
 	using Ecng.Collections;
 
-	public abstract class RelationManyList<TEntity> : BaseListEx<TEntity>, INotifyList<TEntity>
+	public abstract class RelationManyList<TEntity> : INotifyCollection<TEntity>, ICollection<TEntity>, ICollection, IRangeCollection
 	{
 		#region private class RelationManyListEnumerator
 
@@ -60,6 +61,24 @@
 		}
 
 		#endregion
+
+		IEnumerable IRangeCollection.GetRange(long startIndex, long count, string sortExpression, ListSortDirection directions)
+		{
+			return GetRange(startIndex, count, sortExpression, directions);
+		}
+
+		public virtual bool IsReadOnly => false;
+
+		private object _syncRoot;
+
+		object ICollection.SyncRoot => _syncRoot ?? (_syncRoot = new object());
+
+		bool ICollection.IsSynchronized => false;
+
+		void ICollection.CopyTo(Array array, int index)
+		{
+			CopyTo((TEntity[])array, index);
+		}
 
 		private readonly SynchronizedSet<TEntity> _cache = new SynchronizedSet<TEntity>();
 		private bool _bulkInitialized;
@@ -268,7 +287,7 @@
 
 		#region BaseListEx<E> Members
 
-		public override int Count
+		public virtual int Count
 		{
 			get
 			{
@@ -296,7 +315,7 @@
 			}
 		}
 
-		public override void Add(TEntity item)
+		public virtual void Add(TEntity item)
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
@@ -331,7 +350,7 @@
 			IncrementCount();
 		}
 
-		public override void Clear()
+		public virtual void Clear()
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
@@ -354,17 +373,17 @@
 			Cleared?.Invoke();
 		}
 
-		public override bool Contains(TEntity item)
+		public virtual bool Contains(TEntity item)
 		{
 			return this.Any(arg => arg.Equals(item));
 		}
 
-		public override void CopyTo(TEntity[] array, int index)
+		public virtual void CopyTo(TEntity[] array, int index)
 		{
 			((ICollection<TEntity>)GetRange(index, Count)).CopyTo(array, 0);
 		}
 
-		public override bool Remove(TEntity item)
+		public virtual bool Remove(TEntity item)
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
@@ -389,7 +408,7 @@
 			return true;
 		}
 
-		public override IEnumerable<TEntity> GetRange(long startIndex, long count, string sortExpression = null, ListSortDirection directions = ListSortDirection.Ascending)
+		public virtual IEnumerable<TEntity> GetRange(long startIndex, long count, string sortExpression = null, ListSortDirection directions = ListSortDirection.Ascending)
 		{
 			var orderBy = sortExpression.IsEmpty() ? null : Schema.Fields.TryGet(sortExpression) ?? new VoidField(sortExpression, typeof(object));
 			return ReadAll(startIndex, count, orderBy, directions);
@@ -409,12 +428,17 @@
 			}
 		}
 
-		public override IEnumerator<TEntity> GetEnumerator()
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
+
+		public virtual IEnumerator<TEntity> GetEnumerator()
 		{
 			return new RelationManyListEnumerator(this, BufferSize);
 		}
 
-		public override int IndexOf(TEntity item)
+		public virtual int IndexOf(TEntity item)
 		{
 			if (BulkLoad)
 				throw new NotImplementedException();
@@ -422,12 +446,12 @@
 				throw new NotSupportedException();
 		}
 
-		public override void Insert(int index, TEntity item)
+		public virtual void Insert(int index, TEntity item)
 		{
 			Add(item);
 		}
 
-		public override void RemoveAt(int index)
+		public virtual void RemoveAt(int index)
 		{
 			if (BulkLoad)
 				Remove(GetRange().ElementAt(index));
@@ -435,24 +459,24 @@
 				throw new NotSupportedException();
 		}
 
-		public override TEntity this[int index]
-		{
-			get
-			{
-				if (BulkLoad)
-				{
-					return GetRange().ElementAt(index);
-				}
-				else
-				{
-					if (index != 0)
-						throw new NotImplementedException();
-					else
-						return ReadFirsts(1, Schema.Identity).FirstOrDefault();
-				}
-			}
-			set => throw new NotImplementedException();
-		}
+		//public override TEntity this[int index]
+		//{
+		//	get
+		//	{
+		//		if (BulkLoad)
+		//		{
+		//			return GetRange().ElementAt(index);
+		//		}
+		//		else
+		//		{
+		//			if (index != 0)
+		//				throw new NotImplementedException();
+		//			else
+		//				return ReadFirsts(1, Schema.Identity).FirstOrDefault();
+		//		}
+		//	}
+		//	set => throw new NotImplementedException();
+		//}
 
 		#endregion
 

@@ -7,7 +7,7 @@ namespace Ecng.Collections
 
 	public abstract class BaseListEx<T> : IList<T>, IList, IRangeCollection
 	{
-		#region IListEx Members
+		#region IRangeCollection Members
 
 		IEnumerable IRangeCollection.GetRange(long startIndex, long count, string sortExpression, ListSortDirection directions)
 		{
