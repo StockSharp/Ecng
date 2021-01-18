@@ -11,7 +11,7 @@ namespace Ecng.Xaml.Database
 	using Ecng.Serialization;
 
 	/// <summary>
-	/// Кэш <see cref="DatabaseConnectionPair"/>.
+	/// РљСЌС€ <see cref="DatabaseConnectionPair"/>.
 	/// </summary>
 	public class DatabaseConnectionCache : IPersistable
 	{
@@ -24,31 +24,31 @@ namespace Ecng.Xaml.Database
 		//private static readonly Lazy<DatabaseConnectionCache> _instance = new Lazy<DatabaseConnectionCache>(() => new DatabaseConnectionCache());
 
 		///// <summary>
-		///// Кэш.
+		///// РљСЌС€.
 		///// </summary>
 		//public static DatabaseConnectionCache Instance => _instance.Value;
 
 		/// <summary>
-		/// Список всех подключений.
+		/// РЎРїРёСЃРѕРє РІСЃРµС… РїРѕРґРєР»СЋС‡РµРЅРёР№.
 		/// </summary>
 		public IEnumerable<DatabaseConnectionPair> Connections => _connections.Cache;
 
 		/// <summary>
-		/// Событие создания нового подключения.
+		/// РЎРѕР±С‹С‚РёРµ СЃРѕР·РґР°РЅРёСЏ РЅРѕРІРѕРіРѕ РїРѕРґРєР»СЋС‡РµРЅРёСЏ.
 		/// </summary>
 		public event Action<DatabaseConnectionPair> NewConnectionCreated;
 
 		/// <summary>
-		/// Событие удаления подключения.
+		/// РЎРѕР±С‹С‚РёРµ СѓРґР°Р»РµРЅРёСЏ РїРѕРґРєР»СЋС‡РµРЅРёСЏ.
 		/// </summary>
 		public event Action<DatabaseConnectionPair> ConnectionDeleted;
 
 		/// <summary>
-		/// Получить подключение к базе данных.
+		/// РџРѕР»СѓС‡РёС‚СЊ РїРѕРґРєР»СЋС‡РµРЅРёРµ Рє Р±Р°Р·Рµ РґР°РЅРЅС‹С….
 		/// </summary>
-		/// <param name="provider">Провайдер баз данных.</param>
-		/// <param name="connectionString">Строка подключения.</param>
-		/// <returns>Подключение к базе данных.</returns>
+		/// <param name="provider">РџСЂРѕРІР°Р№РґРµСЂ Р±Р°Р· РґР°РЅРЅС‹С….</param>
+		/// <param name="connectionString">РЎС‚СЂРѕРєР° РїРѕРґРєР»СЋС‡РµРЅРёСЏ.</param>
+		/// <returns>РџРѕРґРєР»СЋС‡РµРЅРёРµ Рє Р±Р°Р·Рµ РґР°РЅРЅС‹С….</returns>
 		public DatabaseConnectionPair GetConnection(DatabaseProvider provider, string connectionString)
 		{
 			var connection = Connections.FirstOrDefault(p => p.Provider == provider && p.ConnectionString.CompareIgnoreCase(connectionString));
@@ -63,9 +63,9 @@ namespace Ecng.Xaml.Database
 		}
 
 		/// <summary>
-		/// Добавить новое подключение к базе данных.
+		/// Р”РѕР±Р°РІРёС‚СЊ РЅРѕРІРѕРµ РїРѕРґРєР»СЋС‡РµРЅРёРµ Рє Р±Р°Р·Рµ РґР°РЅРЅС‹С….
 		/// </summary>
-		/// <param name="connection">Новое подключение.</param>
+		/// <param name="connection">РќРѕРІРѕРµ РїРѕРґРєР»СЋС‡РµРЅРёРµ.</param>
 		private void AddConnection(DatabaseConnectionPair connection)
 		{
 			if (connection == null)
@@ -76,9 +76,9 @@ namespace Ecng.Xaml.Database
 		}
 
 		/// <summary>
-		/// Удалить подключение к базе данных.
+		/// РЈРґР°Р»РёС‚СЊ РїРѕРґРєР»СЋС‡РµРЅРёРµ Рє Р±Р°Р·Рµ РґР°РЅРЅС‹С….
 		/// </summary>
-		/// <param name="connection">Подключение.</param>
+		/// <param name="connection">РџРѕРґРєР»СЋС‡РµРЅРёРµ.</param>
 		public void DeleteConnection(DatabaseConnectionPair connection)
 		{
 			if (connection == null)
@@ -89,9 +89,9 @@ namespace Ecng.Xaml.Database
 		}
 
 		/// <summary>
-		/// Загрузить настройки.
+		/// Р—Р°РіСЂСѓР·РёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё.
 		/// </summary>
-		/// <param name="storage">Хранилище настроек.</param>
+		/// <param name="storage">РҐСЂР°РЅРёР»РёС‰Рµ РЅР°СЃС‚СЂРѕРµРє.</param>
 		public void Load(SettingsStorage storage)
 		{
 			var connections = storage
@@ -117,9 +117,9 @@ namespace Ecng.Xaml.Database
 		}
 
 		/// <summary>
-		/// Сохранить настройки.
+		/// РЎРѕС…СЂР°РЅРёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё.
 		/// </summary>
-		/// <param name="storage">Хранилище настроек.</param>
+		/// <param name="storage">РҐСЂР°РЅРёР»РёС‰Рµ РЅР°СЃС‚СЂРѕРµРє.</param>
 		public void Save(SettingsStorage storage)
 		{
 			storage.SetValue(nameof(Connections), Connections.Select(pair => new SettingsStorage

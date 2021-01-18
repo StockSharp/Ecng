@@ -20,7 +20,7 @@
 			{
 				private readonly DevExpExcelWorker _worker;
 				private readonly Dictionary<int, SortedDictionary<int, object>> _cells = new Dictionary<int, SortedDictionary<int, object>>();
-				
+
 				public readonly SortedDictionary<int, RefPair<Type, string>> Columns = new SortedDictionary<int, RefPair<Type, string>>();
 				public readonly HashSet<int> Rows = new HashSet<int>();
 
@@ -56,7 +56,7 @@
 							{
 								if (pair.Value.First != null)
 								{
-									
+
 								}
 								else if (!pair.Value.Second.IsEmpty())
 								{
@@ -102,7 +102,7 @@
 
 										cell.Value = xlVal;
 									}
-								}	
+								}
 							}
 						}
 					}

@@ -151,12 +151,11 @@
 				lock (sync.SyncRoot)
 					return InternalTryAdd();
 			}
-			
+
 			return InternalTryAdd();
 		}
 
-#if !NETCOREAPP && !NETSTANDARD
-		public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue value)
+		public static bool TryAdd2<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue value)
 		{
 			if (dict == null)
 				throw new ArgumentNullException(nameof(dict));
@@ -178,7 +177,6 @@
 
 			return InternalTryAdd();
 		}
-#endif
 
 		public static T ConcatEx<T, TItem>(this T first, T second)
 			where T : ICollection<TItem>, new()
@@ -294,7 +292,7 @@
 				lock (sync.SyncRoot)
 					return InternalGetAndRemove();
 			}
-			
+
 			return InternalGetAndRemove();
 		}
 
@@ -325,7 +323,7 @@
 				lock (sync.SyncRoot)
 					return InternalTryGetAndRemove(out value);
 			}
-			
+
 			return InternalTryGetAndRemove(out value);
 		}
 
@@ -594,12 +592,12 @@
 
         private static class FastActivatorCache<TKey, TValue>
         {
-            public static readonly Func<TKey, TValue> Activator; 
+            public static readonly Func<TKey, TValue> Activator;
 
             static FastActivatorCache()
             {
                 Activator = k => FastActivator<TValue>.CreateObject();
-            } 
+            }
         }
 
         public static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, out bool isNew)
@@ -1220,7 +1218,7 @@
 			if (Math.Abs(length1 - length2) > threshold)
 				return int.MaxValue;
 
-			// Ensure arrays [i] / length1 use shorter length 
+			// Ensure arrays [i] / length1 use shorter length
 			if (length1 > length2)
 			{
 				Swap(ref target, ref source);

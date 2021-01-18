@@ -13,10 +13,6 @@
 	using System.Security;
 	using System.Text;
 	using System.Linq;
-#if SILVERLIGHT
-	using System.Windows.Media;
-	using ArgumentOutOfRangeException = System.ArgumentOutOfRangeExceptionEx;
-#endif
 	using System.Runtime.InteropServices;
 	using System.Globalization;
 	using System.Threading;
@@ -534,10 +530,6 @@
 					else
 						return Enum.ToObject(destinationType, value);
 				}
-#if !SILVERLIGHT
-				else if (value is string strVal0 && destinationType == typeof(DbProviderFactory))
-					return DbProviderFactories.GetFactory(strVal0);
-#endif
 				else if (destinationType == typeof(Type[]))
 				{
 					if (!(value is IEnumerable<object>))

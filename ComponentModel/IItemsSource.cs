@@ -117,7 +117,7 @@
 				}
 				else
 				{
-					throw new ArgumentException($"{nameof(values)} is expected to contain either {typeof(T).Name} or {nameof(IItemsSourceItem)}<{typeof(T).Name}> items (mix not supported). actual types found: {objects.Select(o => o.GetType().Name).ToHashSet().Join(",")}");
+					throw new ArgumentException($"{nameof(values)} is expected to contain either {typeof(T).Name} or {nameof(IItemsSourceItem)}<{typeof(T).Name}> items (mix not supported). actual types found: {objects.Select(o => o.GetType().Name).Distinct().Join(",")}");
 				}
 			}
 			else

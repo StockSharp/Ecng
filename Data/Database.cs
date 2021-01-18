@@ -1005,7 +1005,7 @@ namespace Ecng.Data
 
 						var indexKey = CreateKey(schema, field, fieldValue);
 
-						if (!_cache.TryAdd(indexKey, entity))
+						if (!_cache.TryAdd2(indexKey, entity))
 							throw new InvalidOperationException("Cannot add index {0} for {1}. It is already associated with {2}.".Put(indexKey, entity, _cache[indexKey]));
 
 						//keys.Add(field.Name);
@@ -1046,7 +1046,7 @@ namespace Ecng.Data
 						continue;
 
 					var key = CreateKey(schema, field, fieldValue);
-					_cache.TryAdd(key, entity);
+					_cache.TryAdd2(key, entity);
 				}
 			}
 

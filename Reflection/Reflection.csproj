@@ -18,5 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Collections\Collections.csproj" />
     <ProjectReference Include="..\Configuration\Configuration.csproj" />
+
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
   </ItemGroup>
 </Project>

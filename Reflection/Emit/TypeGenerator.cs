@@ -9,7 +9,7 @@ namespace Ecng.Reflection.Emit
 	using System.Linq;
 
 	using Ecng.Common;
-	
+
 	#endregion
 
 	public class TypeCompiledEventArgs : EventArgs
@@ -215,7 +215,7 @@ namespace Ecng.Reflection.Emit
 			foreach (Type @interface in Interfaces)
 				Builder.AddInterfaceImplementation(TryMakeGenericType(@interface));
 
-			Type retVal = Builder.CreateType();
+			Type retVal = Builder.CreateTypeInfo();
 
 			EventHandler<TypeCompiledEventArgs> temp = _typeCompiled;
 			if (temp != null)

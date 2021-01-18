@@ -33,7 +33,7 @@
 			if (value == null || argType == null)
 				return null;
 
-			var objects = ((IEnumerable)value).Cast<object>().ToHashSet().ToArray();
+			var objects = ((IEnumerable) value).Cast<object>().Distinct().ToArray();
 			var arr = argType.CreateArray(objects.Length);
 
 			var isConvertible = typeof(IConvertible).IsAssignableFrom(argType);

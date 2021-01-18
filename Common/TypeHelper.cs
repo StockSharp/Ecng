@@ -4,7 +4,6 @@ namespace Ecng.Common
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
-	using System.Runtime.CompilerServices;
 	using System.Runtime.Serialization;
 	using System.Security.Cryptography;
 
@@ -34,7 +33,7 @@ namespace Ecng.Common
 
 			if (args == null)
 				throw new ArgumentNullException(nameof(args));
-			
+
 			return Activator.CreateInstance(type, args).To<T>();
 		}
 
@@ -168,7 +167,7 @@ namespace Ecng.Common
 
 		[Obsolete("Use pattern matching.")]
 		public static void DoIf<TSource, TDestination>(this TSource source, Action<TDestination> handler)
-			where TDestination : class 
+			where TDestination : class
 		{
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
@@ -272,7 +271,7 @@ namespace Ecng.Common
 			using (var saltGen = new RNGCryptoServiceProvider())
 				saltGen.GetBytes(salt);
 
-			return salt;	
+			return salt;
 		}
 
 		public static Scope<T> ToScope<T>(this T value, bool ownInstance = true)
@@ -297,17 +296,97 @@ namespace Ecng.Common
 			return value;
 		}
 
-		public static IEnumerable<object> ToValues(this ITuple tuple)
+		public static IEnumerable<object> ToValues<T>(this Tuple<T> tuple)
 		{
-			var values = new List<object>();
-
-			for (var i = 0; i < tuple.Length; i++)
-				values.Add(tuple[i]);
-
-			return values;
+			yield return tuple.Item1;
 		}
 
-		public static ITuple ToTuple(this IEnumerable<object> values)
+		public static IEnumerable<object> ToValues<T1, T2>(this Tuple<T1, T2> tuple)
+		{
+			yield return tuple.Item1;
+			yield return tuple.Item2;
+		}
+
+		public static IEnumerable<object> ToValues<T1, T2, T3>(this Tuple<T1, T2, T3> tuple)
+		{
+			yield return tuple.Item1;
+			yield return tuple.Item2;
+			yield return tuple.Item3;
+		}
+
+		public static IEnumerable<object> ToValues<T1, T2, T3, T4>(this Tuple<T1, T2, T3, T4> tuple)
+		{
+			yield return tuple.Item1;
+			yield return tuple.Item2;
+			yield return tuple.Item3;
+			yield return tuple.Item4;
+		}
+
+		public static IEnumerable<object> ToValues<T1, T2, T3, T4, T5>(this Tuple<T1, T2, T3, T4, T5> tuple)
+		{
+			yield return tuple.Item1;
+			yield return tuple.Item2;
+			yield return tuple.Item3;
+			yield return tuple.Item4;
+			yield return tuple.Item5;
+		}
+
+		public static IEnumerable<object> ToValues<T1, T2, T3, T4, T5, T6>(this Tuple<T1, T2, T3, T4, T5, T6> tuple)
+		{
+			yield return tuple.Item1;
+			yield return tuple.Item2;
+			yield return tuple.Item3;
+			yield return tuple.Item4;
+			yield return tuple.Item5;
+			yield return tuple.Item6;
+		}
+
+		public static IEnumerable<object> ToValues<T>(this ValueTuple<T> tuple)
+		{
+			yield return tuple.Item1;
+		}
+
+		public static IEnumerable<object> ToValues<T1, T2>(this ValueTuple<T1, T2> tuple)
+		{
+			yield return tuple.Item1;
+			yield return tuple.Item2;
+		}
+
+		public static IEnumerable<object> ToValues<T1, T2, T3>(this ValueTuple<T1, T2, T3> tuple)
+		{
+			yield return tuple.Item1;
+			yield return tuple.Item2;
+			yield return tuple.Item3;
+		}
+
+		public static IEnumerable<object> ToValues<T1, T2, T3, T4>(this ValueTuple<T1, T2, T3, T4> tuple)
+		{
+			yield return tuple.Item1;
+			yield return tuple.Item2;
+			yield return tuple.Item3;
+			yield return tuple.Item4;
+		}
+
+		public static IEnumerable<object> ToValues<T1, T2, T3, T4, T5>(this ValueTuple<T1, T2, T3, T4, T5> tuple)
+		{
+			yield return tuple.Item1;
+			yield return tuple.Item2;
+			yield return tuple.Item3;
+			yield return tuple.Item4;
+			yield return tuple.Item5;
+		}
+
+		public static IEnumerable<object> ToValues<T1, T2, T3, T4, T5, T6>(this ValueTuple<T1, T2, T3, T4, T5, T6> tuple)
+		{
+			yield return tuple.Item1;
+			yield return tuple.Item2;
+			yield return tuple.Item3;
+			yield return tuple.Item4;
+			yield return tuple.Item5;
+			yield return tuple.Item6;
+		}
+
+		public static object ToTuple(this IEnumerable<object> values)
 		{
 			var types = new List<Type>();
 			var args = new List<object>();
@@ -321,7 +400,7 @@ namespace Ecng.Common
 			var genericType = ("System.Tuple`" + types.Count).To<Type>();
 			var specificType = genericType.Make(types);
 
-			return specificType.CreateInstance<ITuple>(args.ToArray());
+			return specificType.CreateInstance<object>(args.ToArray());
 		}
 
 		public static Platforms GetPlatform(this Type type) => type.GetAttribute<TargetPlatformAttribute>()?.Platform ?? Platforms.AnyCPU;
