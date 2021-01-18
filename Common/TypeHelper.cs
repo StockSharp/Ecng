@@ -296,6 +296,52 @@ namespace Ecng.Common
 			return value;
 		}
 
+		private static readonly HashSet<Type> TupleTypes = new HashSet<Type>
+		{
+			typeof(Tuple<>),
+			typeof(Tuple<,>),
+			typeof(Tuple<,,>),
+			typeof(Tuple<,,,>),
+			typeof(Tuple<,,,,>),
+			typeof(Tuple<,,,,,>),
+			typeof(Tuple<,,,,,,>),
+			typeof(Tuple<,,,,,,,>),
+
+			typeof(ValueTuple<>),
+			typeof(ValueTuple<,>),
+			typeof(ValueTuple<,,>),
+			typeof(ValueTuple<,,,>),
+			typeof(ValueTuple<,,,,>),
+			typeof(ValueTuple<,,,,,>),
+			typeof(ValueTuple<,,,,,,>),
+			typeof(ValueTuple<,,,,,,,>),
+		};
+
+		public static bool IsTuple(this Type tupleType)
+		{
+			return
+				tupleType != null &&
+				tupleType.IsGenericType &&
+				TupleTypes.Contains(tupleType.GetGenericTypeDefinition());
+		}
+
+		public static object[] TryTupleToValues(this object tuple)
+		{
+			var type = tuple?.GetType();
+
+			if(type?.IsTuple() != true)
+				return null;
+
+			var numValues = type.GetProperties().Count(pi => pi.Name.StartsWith("Item"));
+
+			var arr = new object[numValues];
+
+			for (var i = 1; i <= numValues; ++i)
+				arr[i - 1] = type.GetProperty("Item" + i).GetValue(tuple);
+
+			return arr;
+		}
+
 		public static IEnumerable<object> ToValues<T>(this Tuple<T> tuple)
 		{
 			yield return tuple.Item1;
