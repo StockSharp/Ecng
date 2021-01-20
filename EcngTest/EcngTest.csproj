@@ -43,11 +43,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Data.Providers\Data.Providers.csproj" />
-    <ProjectReference Include="..\Data\Data.csproj" />
     <ProjectReference Include="..\Reflection.Aspects\Reflection.Aspects.csproj" />
-    <ProjectReference Include="..\Transactions\Transactions.csproj" />
+    <ProjectReference Include="..\Serialization.FieldFactories\Serialization.FieldFactories.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
-    <ProjectReference Include="..\Web\Web.csproj" />
     <ProjectReference Include="..\Xaml\Xaml.csproj" />
   </ItemGroup>
   <ItemGroup>

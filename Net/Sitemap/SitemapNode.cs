@@ -1,4 +1,4 @@
-﻿namespace Ecng.Web.Sitemap
+﻿namespace Ecng.Net.Sitemap
 {
 	using System;
 

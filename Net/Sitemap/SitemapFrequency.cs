@@ -1,4 +1,4 @@
-﻿namespace Ecng.Web.Sitemap
+﻿namespace Ecng.Net.Sitemap
 {
 	/// <summary>
 	/// How frequently the page or URL is likely to change.

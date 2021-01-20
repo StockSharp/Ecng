@@ -1,9 +1,0 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
-  <PropertyGroup>
-    <ProjectGuid>{125B0185-1FE3-407B-A14C-AD5046A6B68C}</ProjectGuid>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Net\Net.csproj" />
-  </ItemGroup>
-</Project>

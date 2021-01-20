@@ -2,6 +2,7 @@ namespace Ecng.Net
 {
 	using System;
 	using System.Collections.Specialized;
+	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
 	using System.Net;
@@ -14,6 +15,7 @@ namespace Ecng.Net
 	using System.Web;
 
 	using Ecng.Common;
+	using Ecng.Collections;
 	using Ecng.Localization;
 
 	using Newtonsoft.Json;
@@ -310,6 +312,84 @@ namespace Ecng.Net
 			writer.WriteValue(value);
 
 			return writer;
+		}
+
+		public static string XmlEscape(this string content)
+		{
+			return SecurityElement.Escape(content);
+		}
+
+		public static string ClearUrl(this string url)
+		{
+			var chars = new List<char>(url);
+
+			var count = chars.Count;
+
+			for (var i = 0; i < count; i++)
+			{
+				if (!IsUrlSafeChar(chars[i]))
+				{
+					chars.RemoveAt(i);
+					count--;
+					i--;
+				}
+			}
+
+			return new string(chars.ToArray());
+		}
+
+		public static bool IsUrlSafeChar(this char ch)
+		{
+			if (((ch < 'a') || (ch > 'z')) && ((ch < 'A') || (ch > 'Z')) && ((ch < '0') || (ch > '9')))
+			{
+				switch (ch)
+				{
+					case '(':
+					case ')':
+					//case '*':
+					case '-':
+					//case '.':
+					case '!':
+						break;
+
+					case '+':
+					case ',':
+					case '.':
+					case '%':
+					case '*':
+						return false;
+
+					default:
+						if (ch != '_')
+							return false;
+
+						break;
+				}
+			}
+
+			return true;
+		}
+
+		private static readonly SynchronizedSet<string> _imgExts = new SynchronizedSet<string>
+		{
+			".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg"
+		};
+
+		public static bool IsImage(this string fileName)
+		{
+			var ext = Path.GetExtension(fileName);
+
+			if (ext.IsEmpty())
+				return false;
+
+			return _imgExts.Contains(ext.ToLowerInvariant());
+		}
+
+		private static readonly string[] _urlParts = { "href=", "http:", "https:", "ftp:" };
+
+		public static bool CheckContainsUrl(this string url)
+		{
+			return !url.IsEmpty() && _urlParts.Any(url.ContainsIgnoreCase);
 		}
 	}
 }
