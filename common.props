@@ -27,14 +27,33 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <IsSourcesAllow>true</IsSourcesAllow>
     <LangVersion>default</LangVersion>
-    <AwsVer>3.*</AwsVer>
-    <SysVer>5.*</SysVer>
-    <SysVer4x>4.*</SysVer4x>
-    <DxVer>1.*</DxVer>
-    <MsCodeVer>3.*</MsCodeVer>
-    <NewtonJsonVer>12.*</NewtonJsonVer>
-    <MsTestVer>2.*</MsTestVer>
-    <MsTestSdkVer>16.*</MsTestSdkVer>
+
+    <AWSSDKS3Ver>3.5.7.8</AWSSDKS3Ver>
+    <AWSSDKSQSVer>3.5.1.10</AWSSDKSQSVer>
+    <AWSSDKSimpleNotificationServiceVer>3.5.1.33</AWSSDKSimpleNotificationServiceVer>
+    <AWSSDKGlacierVer>3.5.0.61</AWSSDKGlacierVer>
+
+    <MicrosoftWindowsCompatibilityVer>5.0.1</MicrosoftWindowsCompatibilityVer>
+
+    <SystemCodeDomVer>5.0.0</SystemCodeDomVer>
+    <SystemCollectionsImmutableVer>5.0.0</SystemCollectionsImmutableVer>
+    <SystemComponentModelAnnotationsVer>5.0.0</SystemComponentModelAnnotationsVer>
+    <SystemConfigurationConfigurationManagerVer>5.0.0</SystemConfigurationConfigurationManagerVer>
+    <SystemDataSqlClientVer>4.8.2</SystemDataSqlClientVer>
+    <SystemIOCompressionVer>4.3.0</SystemIOCompressionVer>
+    <SystemManagementVer>5.0.0</SystemManagementVer>
+    <SystemReflectionEmitVer>4.7.0</SystemReflectionEmitVer>
+    <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
+    <SystemSecurityCryptographyProtectedDataVer>5.0.0</SystemSecurityCryptographyProtectedDataVer>
+    <SystemSecurityPermissionsVer>5.0.0</SystemSecurityPermissionsVer>
+    <SystemTextEncodingCodePagesVer>5.0.0</SystemTextEncodingCodePagesVer>
+
+
+    <DxVer>1.0.1</DxVer>
+    <MsCodeVer>3.8.0</MsCodeVer>
+    <NewtonJsonVer>12.0.3</NewtonJsonVer>
+    <MsTestVer>2.1.2</MsTestVer>
+    <MsTestSdkVer>16.8.3</MsTestSdkVer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
