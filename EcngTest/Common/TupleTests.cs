@@ -13,7 +13,8 @@
 	{
 		private static void ValuesAndBack(ITuple tuple)
 		{
-			tuple.AssertEqual(tuple.ToValues().ToTuple());
+			throw new NotImplementedException();
+			//tuple.AssertEqual(tuple.ToValues().ToTuple());
 		}
 
 		[TestMethod]

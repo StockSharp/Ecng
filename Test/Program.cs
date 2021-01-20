@@ -31,8 +31,6 @@
 
 	using Wintellect.PowerCollections;
 	using Ecng.ComponentModel.Expressions;
-	using Ecng.Logic.BusinessEntities;
-	using StockSharp.Web.BusinessEntities;
 	using System.Net.Mail;
 
 	public interface ICalc
