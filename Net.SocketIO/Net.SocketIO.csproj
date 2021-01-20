@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonJsonVer)" />
-    <PackageReference Include="System.Collections.Immutable" Version="$(SysVer)" />
+    <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Net\Net.csproj" />
