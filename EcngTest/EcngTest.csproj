@@ -38,7 +38,6 @@
     <None Include="Data\private.key" />
     <None Include="Data\public.key" />
     <None Include="Data\sym.key" />
-    <None Include="Data\x509.cer" />
     <None Include="Resources\TestImage.bmp" />
   </ItemGroup>
   <ItemGroup>
