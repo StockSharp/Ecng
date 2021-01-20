@@ -4,7 +4,7 @@
     <ProjectGuid>{ADB49E73-0103-44A8-8BA0-D43A351D23C7}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVer)" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SysVer)" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties\Resources.resx">

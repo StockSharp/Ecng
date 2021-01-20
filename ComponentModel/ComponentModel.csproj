@@ -4,7 +4,7 @@
     <ProjectGuid>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.ComponentModel.Annotations" Version="$(SystemComponentModelAnnotationsVer)" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="$(SysVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Serialization\Serialization.csproj" />

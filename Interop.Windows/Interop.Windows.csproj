@@ -7,8 +7,8 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Management" Version="$(SystemManagementVer)" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="$(MicrosoftWindowsCompatibilityVer)" />
+    <PackageReference Include="System.Management" Version="$(SysVer)" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="$(SysVer)" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Dde\Documentation\Examples.xml" />
