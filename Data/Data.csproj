@@ -4,7 +4,7 @@
     <ProjectGuid>{2FA3ACBD-8623-42D5-B5A5-F0DC2416F92A}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+    <PackageReference Include="System.Data.SqlClient" Version="$(SysVer4x)" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">

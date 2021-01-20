@@ -30,6 +30,14 @@
     <AssemblyOriginatorKeyFile>..\Ecng.snk</AssemblyOriginatorKeyFile>
     <IsSourcesAllow>true</IsSourcesAllow>
     <LangVersion>default</LangVersion>
+    <AwsVer>3.*</AwsVer>
+    <SysVer>5.*</SysVer>
+    <SysVer4x>4.*</SysVer4x>
+    <DxVer>1.*</DxVer>
+    <MsCodeVer>3.*</MsCodeVer>
+    <NewtonJsonVer>12.*</NewtonJsonVer>
+    <MsTestVer>2.*</MsTestVer>
+    <MsTestSdkVer>16.*</MsTestSdkVer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
