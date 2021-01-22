@@ -26,17 +26,6 @@ namespace Ecng.Net
 	{
 		public const int MtuSize = 1600;
 
-		/// <summary>
-		/// Gets the user address.
-		/// </summary>
-		/// <value>The user address.</value>
-		public static IPAddress UserAddress => 
-#if NETCOREAPP || NETSTANDARD
-			throw new PlatformNotSupportedException();
-#else
-			(HttpContext.Current == null ? ChannelHelper.GetClientEndPoint()?.Address : HttpContext.Current.Request.UserHostAddress.To<IPAddress>());
-#endif
-
 		public static bool IsLocal(this EndPoint endPoint)
 		{
 			if (endPoint == null)
@@ -390,6 +379,14 @@ namespace Ecng.Net
 		public static bool CheckContainsUrl(this string url)
 		{
 			return !url.IsEmpty() && _urlParts.Any(url.ContainsIgnoreCase);
+		}
+
+		public static bool IsLocalhost(this Uri url)
+		{
+			if (url is null)
+				throw new ArgumentNullException(nameof(url));
+
+			return url.Host.CompareIgnoreCase("localhost");
 		}
 	}
 }
