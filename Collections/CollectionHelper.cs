@@ -1284,7 +1284,7 @@
 			return result > threshold ? int.MaxValue : result;
 		}
 
-		public static ISet<T> ToSet<T>(this IEnumerable<T> values) => values.ToHashSet2();
-		public static ISet<string> ToIgnoreCaseSet(this IEnumerable<string> values) => values.ToHashSet2(StringComparer.InvariantCultureIgnoreCase);
+		public static ISet<T> ToSet<T>(this IEnumerable<T> values) => values.ToHashSet();
+		public static ISet<string> ToIgnoreCaseSet(this IEnumerable<string> values) => values.ToHashSet(StringComparer.InvariantCultureIgnoreCase);
 	}
 }
