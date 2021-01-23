@@ -9,6 +9,7 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVer)" />
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVer)" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightVer)" />
+    <PackageReference Include="SmartFormat.NET" Version="$(SmartFormatVer)" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="TimeZoneConverter\Data\*.csv.gz" />

@@ -88,7 +88,7 @@
 					return false;
 
 				object key;
-				var text = selectorInfo.Selector.Text;
+				var text = selectorInfo.SelectorText;
 
 				lock (_sync)
 				{
