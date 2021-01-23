@@ -18,8 +18,6 @@ namespace Ecng.Data
 	using Ecng.Data.Sql;
 	using Ecng.Transactions;
 
-	using MoreLinq;
-
 	public class Database : Disposable, IStorage
 	{
 		private sealed class BatchInfo : Disposable
@@ -338,7 +336,7 @@ namespace Ecng.Data
 
 				return fields
 					.Where(f => f.IsInnerSchema())
-					.Select(field => GetField(field.Type.GetSchema().Fields, paramName, innerSchemaNameOverrides.Concat(field.InnerSchemaNameOverrides)))
+					.Select(field => GetField(field.Type.GetSchema().Fields, paramName, innerSchemaNameOverrides.Append(field.InnerSchemaNameOverrides)))
 					.FirstOrDefault(f => f != null);
 			}
 		}
@@ -709,7 +707,13 @@ namespace Ecng.Data
 					}
 				});
 
-				entities.ForEach(e => Removed?.Invoke(e));
+				var evt = Removed;
+
+				if (evt != null)
+				{
+					foreach (var e in entities)
+						evt?.Invoke(e);
+				}
 
 				DeleteCache(schema, by);
 			}
@@ -1100,7 +1104,7 @@ namespace Ecng.Data
 					var field1 = field;
 					var innerSchemaSource = GroupSource(
 						innerSchema.Fields.Where(f => !field1.InnerSchemaIgnoreFields.Contains(f.Name)),
-						input, innerSchemaNameOverrides.Concat(field.InnerSchemaNameOverrides));
+						input, innerSchemaNameOverrides.Append(field.InnerSchemaNameOverrides));
 
 					output.Add(new SerializationItem(field, innerSchemaSource));
 				}

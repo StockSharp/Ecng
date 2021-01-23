@@ -10,8 +10,6 @@
 	using Ecng.Common;
 	using Ecng.Localization;
 
-	using MoreLinq;
-
 	public interface IItemsSourceItem
 	{
 		string DisplayName {get;}

@@ -5,8 +5,6 @@
 	using System.Reflection.Emit;
 	using System.Linq;
 
-	using MoreLinq;
-
 	public class PropertyGenerator : BaseGenerator<PropertyBuilder>
 	{
 		#region Private Fields
@@ -40,7 +38,7 @@
 
 		public MethodGenerator CreateSetMethod(MethodAttributes methodAttrs, params Type[] additionalTypes)
 		{
-			var generator = _typeGenerator.CreateMethod("set_" + Builder.Name, methodAttrs, typeof(void), additionalTypes.Concat(Builder.PropertyType).ToArray());
+			var generator = _typeGenerator.CreateMethod("set_" + Builder.Name, methodAttrs, typeof(void), additionalTypes.Append(Builder.PropertyType).ToArray());
 			Builder.SetSetMethod((MethodBuilder)generator.Builder);
 			return generator;
 		}
