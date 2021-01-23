@@ -16,7 +16,6 @@ namespace Ecng.Test.Data
 	using Ecng.Reflection.Aspects;
 	using Ecng.Security;
 	using Ecng.Serialization;
-	using Ecng.Xaml;
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 

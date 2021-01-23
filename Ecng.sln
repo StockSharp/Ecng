@@ -6,7 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{340C3BD6-6951-4224-8E35-49D2C67A2680}"
 	ProjectSection(SolutionItems) = preProject
 		common.props = common.props
-		Ecng.pfx = Ecng.pfx
 		EcngAssemblyInfo.cs = EcngAssemblyInfo.cs
 	EndProjectSection
 EndProject
@@ -37,8 +36,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Transactions", "Transactions\Transactions.csproj", "{8DE0D8CB-561B-43E3-B89F-02CDEE71415B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Net", "Net\Net.csproj", "{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xaml", "Xaml\Xaml.csproj", "{90A23E0C-3329-4459-BB97-21CD84E5418A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data.Providers", "Data.Providers\Data.Providers.csproj", "{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}"
 EndProject
@@ -116,10 +113,6 @@ Global
 		{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{90A23E0C-3329-4459-BB97-21CD84E5418A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{90A23E0C-3329-4459-BB97-21CD84E5418A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{90A23E0C-3329-4459-BB97-21CD84E5418A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{90A23E0C-3329-4459-BB97-21CD84E5418A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C7038B7-B32D-47ED-8088-BFDA96A55FC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
