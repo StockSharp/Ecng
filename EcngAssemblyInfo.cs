@@ -12,7 +12,7 @@ using System.Resources;
 // associated with an assembly.
 [assembly: AssemblyCompany("StockSharp LP")]
 [assembly: AssemblyProduct("Ecng system framework")]
-[assembly: AssemblyCopyright("Copyright @ StockSharp 2020")]
+[assembly: AssemblyCopyright("Copyright @ StockSharp 2021")]
 [assembly: AssemblyTrademark("StockSharp")]
 [assembly: AssemblyCulture("")]
 
