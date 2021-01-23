@@ -75,14 +75,14 @@ namespace Disk.SDK.Provider
                                     using (var responseStream = response.GetResponseStream())
                                     {
                                         const int BUFFER_LENGTH = 4096;
-                                        var total = (ulong)response.ContentLength;
-                                        ulong current = 0;
+                                        var total = response.ContentLength;
+                                        long current = 0;
                                         var buffer = new byte[BUFFER_LENGTH];
                                         var count = responseStream.Read(buffer, 0, BUFFER_LENGTH);
                                         while (count > 0)
                                         {
                                             fileStream.Write(buffer, 0, count);
-                                            current += (ulong)count;
+                                            current += count;
                                             progress.UpdateProgress(current, total);
                                             count = responseStream.Read(buffer, 0, BUFFER_LENGTH);
                                         }
@@ -131,14 +131,14 @@ namespace Disk.SDK.Provider
                             using (var requestStream = getRequestStreamRequest.EndGetRequestStream(getRequestStreamResult))
                             {
                                 const int BUFFER_LENGTH = 4096;
-                                var total = (ulong)fileStream.Length;
-                                ulong current = 0;
+                                var total = fileStream.Length;
+                                long current = 0;
                                 var buffer = new byte[BUFFER_LENGTH];
                                 var count = fileStream.Read(buffer, 0, BUFFER_LENGTH);
                                 while (count > 0)
                                 {
                                     requestStream.Write(buffer, 0, count);
-                                    current += (ulong)count;
+                                    current += count;
                                     progress.UpdateProgress(current, total);
                                     count = fileStream.Read(buffer, 0, BUFFER_LENGTH);
                                 }

@@ -16,7 +16,7 @@ namespace Disk.SDK
         /// </summary>
         /// <param name="current">The current value.</param>
         /// <param name="total">The total value.</param>
-        void UpdateProgress(ulong current, ulong total);
+        void UpdateProgress(long current, long total);
     }
 
     /// <summary>
@@ -27,13 +27,13 @@ namespace Disk.SDK
         /// <summary>
         /// The progress action.
         /// </summary>
-        private readonly Action<ulong, ulong> progressAction;
+        private readonly Action<long, long> progressAction;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AsyncProgress"/> class.
         /// </summary>
         /// <param name="progressAction">The progress action.</param>
-        public AsyncProgress(Action<ulong, ulong> progressAction)
+        public AsyncProgress(Action<long, long> progressAction)
         {
             this.progressAction = progressAction;
         }
@@ -43,7 +43,7 @@ namespace Disk.SDK
         /// </summary>
         /// <param name="current">The current value.</param>
         /// <param name="total">The total value.</param>
-        public void UpdateProgress(ulong current, ulong total)
+        public void UpdateProgress(long current, long total)
         {
             this.progressAction(current, total);
         }
