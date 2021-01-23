@@ -47,13 +47,17 @@
     <SystemSecurityCryptographyProtectedDataVer>5.0.0</SystemSecurityCryptographyProtectedDataVer>
     <SystemSecurityPermissionsVer>5.0.0</SystemSecurityPermissionsVer>
     <SystemTextEncodingCodePagesVer>5.0.0</SystemTextEncodingCodePagesVer>
-
+    <SystemResourcesExtensionsVer>5.0.0</SystemResourcesExtensionsVer>
 
     <DxVer>1.0.1</DxVer>
     <MsCodeVer>3.8.0</MsCodeVer>
     <NewtonJsonVer>12.0.3</NewtonJsonVer>
     <MsTestVer>2.1.2</MsTestVer>
     <MsTestSdkVer>16.8.3</MsTestSdkVer>
+    <SmartFormatVer>2.5.3</SmartFormatVer>
+    <OctodiffVer>1.2.1</OctodiffVer>
+    <MoreLinqVer>3.3.2</MoreLinqVer>
+    <RestSharpVer>106.11.7</RestSharpVer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
