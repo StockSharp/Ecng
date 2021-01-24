@@ -2,5 +2,5 @@
 
 helper libraries
 
-IniParser, Lzma, ManagedWinapi, YandexDisk, PowerCollections should be removed when suitable NuGet packages appear.
+IniParser, Lzma, ManagedWinapi, YandexDisk, PowerCollections, HtmlRenderer should be removed when suitable NuGet packages appear.
 StringSearch contains some uniqie modifications.
