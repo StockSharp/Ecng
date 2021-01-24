@@ -11,12 +11,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Update="Yandex\Disk.Sdk\Utils\WebdavResources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>WebdavResources.resx</DependentUpon>
-    </Compile>
+    <ProjectReference Include="..\YandexDisk\YandexDisk.csproj" />
   </ItemGroup>
 </Project>

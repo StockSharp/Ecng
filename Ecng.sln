@@ -53,13 +53,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interop.Windows", "Interop.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IniParser", "IniParser\IniParser.csproj", "{DE5E71ED-C211-4937-BABB-153C15A61140}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lzma", "Lzma\Lzma.csproj", "{69A43571-F70F-472C-9E03-48450476156B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lzma", "Lzma\Lzma.csproj", "{69A43571-F70F-472C-9E03-48450476156B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerCollections", "PowerCollections\PowerCollections.csproj", "{CFF0A6C3-90AA-497E-98AC-4602A8595C78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerCollections", "PowerCollections\PowerCollections.csproj", "{CFF0A6C3-90AA-497E-98AC-4602A8595C78}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StringSearch", "StringSearch\StringSearch.csproj", "{337D3CF8-08C6-4453-AB76-2A16B2742292}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StringSearch", "StringSearch\StringSearch.csproj", "{337D3CF8-08C6-4453-AB76-2A16B2742292}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedWinapi", "ManagedWinapi\ManagedWinapi.csproj", "{9416F8F9-9675-4050-B78B-6D8930F780BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedWinapi", "ManagedWinapi\ManagedWinapi.csproj", "{9416F8F9-9675-4050-B78B-6D8930F780BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YandexDisk", "YandexDisk\YandexDisk.csproj", "{55ED6439-B69D-4FCB-AF9C-5D790800C930}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -171,6 +173,10 @@ Global
 		{9416F8F9-9675-4050-B78B-6D8930F780BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9416F8F9-9675-4050-B78B-6D8930F780BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9416F8F9-9675-4050-B78B-6D8930F780BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

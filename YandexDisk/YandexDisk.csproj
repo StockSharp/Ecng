@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
+  <ItemGroup>
+    <Compile Update="Disk.Sdk\Utils\WebdavResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>WebdavResources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+</Project>
