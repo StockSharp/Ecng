@@ -61,7 +61,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StringSearch", "StringSearc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedWinapi", "ManagedWinapi\ManagedWinapi.csproj", "{9416F8F9-9675-4050-B78B-6D8930F780BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YandexDisk", "YandexDisk\YandexDisk.csproj", "{55ED6439-B69D-4FCB-AF9C-5D790800C930}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YandexDisk", "YandexDisk\YandexDisk.csproj", "{55ED6439-B69D-4FCB-AF9C-5D790800C930}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
