@@ -1323,5 +1323,8 @@
                 yield return resultSelector(bucket);
             }
         }
+
+		public static IEnumerable<T> Append2<T>(this IEnumerable<T> values, T value)
+			=> Enumerable.Append(values, value);
 	}
 }
