@@ -13,6 +13,7 @@
   <PropertyGroup Condition="
            '$(MSBuildProjectName)' == 'EcngTest'
         or '$(MSBuildProjectName)' == 'Interop.Windows'
+        or '$(MSBuildProjectName)' == 'ManagedWinapi'
         or '$(MSBuildProjectName)' == 'TestWinForms'
         or '$(MSBuildProjectName)' == 'Xaml'
       ">

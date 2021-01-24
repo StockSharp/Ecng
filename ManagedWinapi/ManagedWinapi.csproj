@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
+  <PropertyGroup>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="$(MicrosoftWindowsCompatibilityVer)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Accessibility\AccessibleObjectListener.cs" />
+    <Compile Update="ClipboardNotifier.cs" />
+    <Compile Update="Crosshair.cs" />
+    <Compile Update="Crosshair.Designer.cs">
+      <DependentUpon>Crosshair.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Hooks\Hook.cs" />
+    <Compile Update="Hooks\JournalHook.cs" />
+    <Compile Update="Hooks\LowLevelHook.cs" />
+    <Compile Update="Hotkey.cs" />
+    <Compile Update="ShortcutBox.cs" />
+    <Compile Update="ShortcutBox.Designer.cs">
+      <DependentUpon>ShortcutBox.cs</DependentUpon>
+    </Compile>
+    <Compile Update="TextCursorProvider.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Interop\Interop.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Crosshair.resx">
+      <DependentUpon>Crosshair.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="ShortcutBox.resx">
+      <DependentUpon>ShortcutBox.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="crosshair.cur" />
+    <Resource Include="crosshair.ico" />
+  </ItemGroup>
+</Project>

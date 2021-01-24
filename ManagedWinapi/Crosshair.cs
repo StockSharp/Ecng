@@ -37,7 +37,7 @@ namespace ManagedWinapi
         public Crosshair()
         {
             InitializeComponent();
-            System.IO.Stream Load() => System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Ecng.Interop.Windows.ManagedWinapi.crosshair.ico");
+            System.IO.Stream Load() => System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Ecng.ManagedWinapi.crosshair.ico");
             myImage = new Bitmap(Load());
             myCursor = new Cursor(Load());
             dragger.Image = myImage;

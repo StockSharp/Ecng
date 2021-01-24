@@ -59,6 +59,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerCollections", "PowerCo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StringSearch", "StringSearch\StringSearch.csproj", "{337D3CF8-08C6-4453-AB76-2A16B2742292}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedWinapi", "ManagedWinapi\ManagedWinapi.csproj", "{9416F8F9-9675-4050-B78B-6D8930F780BE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -165,6 +167,10 @@ Global
 		{337D3CF8-08C6-4453-AB76-2A16B2742292}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{337D3CF8-08C6-4453-AB76-2A16B2742292}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{337D3CF8-08C6-4453-AB76-2A16B2742292}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9416F8F9-9675-4050-B78B-6D8930F780BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9416F8F9-9675-4050-B78B-6D8930F780BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9416F8F9-9675-4050-B78B-6D8930F780BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9416F8F9-9675-4050-B78B-6D8930F780BE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
