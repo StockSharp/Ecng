@@ -1286,5 +1286,42 @@
 
 		public static ISet<T> ToSet<T>(this IEnumerable<T> values) => values.ToHashSet();
 		public static ISet<string> ToIgnoreCaseSet(this IEnumerable<string> values) => values.ToHashSet(StringComparer.InvariantCultureIgnoreCase);
+
+		public static IEnumerable<TResult> Batch<TSource, TResult>(this IEnumerable<TSource> source, int size,
+            Func<IEnumerable<TSource>, TResult> resultSelector, Func<bool> needStop)
+        {
+            TSource[] bucket = null;
+            var count = 0;
+
+            foreach (var item in source)
+            {
+                if (bucket == null)
+                {
+                    bucket = new TSource[size];
+                }
+
+                bucket[count++] = item;
+
+                // The bucket is fully buffered before it's yielded
+                if (count != size)
+                {
+                    if (needStop?.Invoke() != true)
+                        continue;
+                }
+
+                // Select is necessary so bucket contents are streamed too
+                yield return resultSelector(bucket);
+               
+                bucket = null;
+                count = 0;
+            }
+
+            // Return the last bucket with all remaining elements
+            if (bucket != null && count > 0)
+            {
+                Array.Resize(ref bucket, count);
+                yield return resultSelector(bucket);
+            }
+        }
 	}
 }
