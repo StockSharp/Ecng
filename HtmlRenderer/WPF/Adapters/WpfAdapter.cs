@@ -29,7 +29,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 	/// <summary>
     /// Adapter for WPF platform.
     /// </summary>
-    internal sealed class WpfAdapter : RAdapter
+    public class WpfAdapter : RAdapter
     {
         #region Fields and Consts
 
@@ -162,12 +162,29 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
             Clipboard.SetImage(((ImageAdapter)image).Image);
         }
 
-        #region Private/Protected methods
+        public event Func<RContextMenu> CreateContextMenuHandler;
 
-        /// <summary>
-        /// Get solid color brush for the given color.
-        /// </summary>
-        private static Brush GetSolidColorBrush(RColor color)
+		protected override RContextMenu CreateContextMenuInt()
+		{
+			return CreateContextMenuHandler?.Invoke() ?? base.CreateContextMenuInt();
+		}
+
+        public event Action<RImage, string, string, RControl> SaveToFileHandler;
+
+		protected override void SaveToFileInt(RImage image, string name, string extension, RControl control = null)
+		{
+            if (SaveToFileHandler is null)
+		    	base.SaveToFileInt(image, name, extension, control);
+            else
+                SaveToFileHandler(image, name, extension, control);
+		}
+
+		#region Private/Protected methods
+
+		/// <summary>
+		/// Get solid color brush for the given color.
+		/// </summary>
+		private static Brush GetSolidColorBrush(RColor color)
         {
             Brush solidBrush;
             if (color == RColor.White)
