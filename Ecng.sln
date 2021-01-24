@@ -55,6 +55,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IniParser", "IniParser\IniP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lzma", "Lzma\Lzma.csproj", "{69A43571-F70F-472C-9E03-48450476156B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerCollections", "PowerCollections\PowerCollections.csproj", "{CFF0A6C3-90AA-497E-98AC-4602A8595C78}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +155,10 @@ Global
 		{69A43571-F70F-472C-9E03-48450476156B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{69A43571-F70F-472C-9E03-48450476156B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69A43571-F70F-472C-9E03-48450476156B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFF0A6C3-90AA-497E-98AC-4602A8595C78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFF0A6C3-90AA-497E-98AC-4602A8595C78}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFF0A6C3-90AA-497E-98AC-4602A8595C78}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFF0A6C3-90AA-497E-98AC-4602A8595C78}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
