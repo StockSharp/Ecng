@@ -14,8 +14,7 @@
            '$(MSBuildProjectName)' == 'EcngTest'
         or '$(MSBuildProjectName)' == 'Interop.Windows'
         or '$(MSBuildProjectName)' == 'ManagedWinapi'
-        or '$(MSBuildProjectName)' == 'TestWinForms'
-        or '$(MSBuildProjectName)' == 'Xaml'
+        or '$(MSBuildProjectName)' == 'HtmlRenderer'
       ">
     <TargetFrameworks>net5.0-windows</TargetFrameworks>
   </PropertyGroup>
