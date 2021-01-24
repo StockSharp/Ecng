@@ -5,10 +5,12 @@
     <RootNamespace>Ecng.Interop</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseWindowsForms>true</UseWindowsForms>
+    <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Management" Version="$(SystemManagementVer)" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="$(MicrosoftWindowsCompatibilityVer)" />
+    <PackageReference Include="Specshell.NDde" Version="$(NDdeVer)" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Dde\Documentation\Examples.xml" />

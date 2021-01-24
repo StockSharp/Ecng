@@ -57,6 +57,7 @@
     <OctodiffVer>1.2.1</OctodiffVer>
     <MoreLinqVer>3.3.2</MoreLinqVer>
     <RestSharpVer>106.11.7</RestSharpVer>
+    <NDdeVer>3.0.1</NDdeVer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
