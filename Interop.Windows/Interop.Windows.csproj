@@ -13,9 +13,6 @@
     <PackageReference Include="Specshell.NDde" Version="$(NDdeVer)" />
   </ItemGroup>
   <ItemGroup>
-    <None Remove="Dde\Documentation\Examples.xml" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Update="ManagedWinapi\Accessibility\AccessibleObjectListener.cs" />
     <Compile Update="ManagedWinapi\ClipboardNotifier.cs" />
     <Compile Update="ManagedWinapi\Crosshair.cs" />
@@ -31,11 +28,6 @@
       <DependentUpon>ShortcutBox.cs</DependentUpon>
     </Compile>
     <Compile Update="ManagedWinapi\TextCursorProvider.cs" />
-    <Compile Update="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Interop\Interop.csproj" />
@@ -46,11 +38,6 @@
     </EmbeddedResource>
     <EmbeddedResource Update="ManagedWinapi\ShortcutBox.resx">
       <DependentUpon>ShortcutBox.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <SubType>Designer</SubType>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
