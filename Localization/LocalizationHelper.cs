@@ -1,20 +1,75 @@
 namespace Ecng.Localization
 {
+	using System;
+
+	using Ecng.Common;
+	using Ecng.Configuration;
+
 	public static class LocalizationHelper
 	{
-		public static LocalizationManager DefaultManager { get; set; } = new LocalizationManager();
-
-		public static string Translate(this string text, Languages? from = null, Languages? to = null)
+		[Obsolete]
+		public static string TranslateOld(this string text, Languages from = Languages.English, Languages? to = null)
 		{
-			var manager = DefaultManager;
+			string fromStr;
+
+			switch (from)
+			{
+				case Languages.English:
+					fromStr = LangCodes.En;
+					break;
+				case Languages.Russian:
+					fromStr = LangCodes.Ru;
+					break;
+				case Languages.Chinese:
+					fromStr = "ch";
+					break;
+				case Languages.Indian:
+					fromStr = "in";
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(from));
+			}
+
+			string toStr;
+
+			switch (to)
+			{
+				case null:
+					toStr = null;
+					break;
+				case Languages.English:
+					toStr = LangCodes.En;
+					break;
+				case Languages.Russian:
+					toStr = LangCodes.Ru;
+					break;
+				case Languages.Chinese:
+					toStr = "ch";
+					break;
+				case Languages.Indian:
+					toStr = "in";
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(from));
+			}
+
+			return text.Translate(fromStr, toStr);
+		}
+
+		public static string Translate(this string text, string from = LangCodes.En, string to = null)
+		{
+			var manager = ConfigManager.TryGetService<LocalizationManager>();
 
 			if (manager == null)
 				return text;
 
-			return manager.Translate(text, from ?? Languages.English, to ?? manager.ActiveLanguage);
+			if (to.IsEmpty())
+				to = manager.ActiveLanguage;
+
+			return manager.Translate(text, from, to);
 		}
 
-		public const string Ru = "ru-RU";
-		public const string En = "en-US";
+		public const string RuCulture = "ru-RU";
+		public const string EnCulture = "en-US";
 	}
 }
