@@ -68,8 +68,5 @@ namespace Ecng.Localization
 
 			return manager.Translate(text, from, to);
 		}
-
-		public const string RuCulture = "ru-RU";
-		public const string EnCulture = "en-US";
 	}
 }

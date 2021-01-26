@@ -19,22 +19,15 @@
 		private readonly Dictionary<(string lang, string text), Dictionary<string, string>> _stringsByLang = new Dictionary<(string lang, string text), Dictionary<string, string>>();
 		private readonly Dictionary<(string lang, string text), string> _keysByLang = new Dictionary<(string lang, string text), string>();
 
-		public LocalizationManager(string nativeCulture, string nativeLangCode)
-		{
-			ActiveLanguage = CultureInfo
-				.CurrentCulture
-				.Name
-				.CompareIgnoreCase(nativeCulture)
-					? nativeLangCode
-					: LangCodes.En;
-		}
-
-		public string ActiveLanguage { get; set; }
+		public string ActiveLanguage { get; set; } = LangCodes.En;
 
 		public void Init(TextReader reader)
 		{
 			if (reader is null)
 				throw new ArgumentNullException(nameof(reader));
+
+			var currCulture = CultureInfo.CurrentCulture.Name;
+			var currLang = currCulture.SplitBySep("-").First().ToLowerInvariant();
 
 			using (var jsonReader = new JsonTextReader(reader))
 			{
@@ -82,6 +75,9 @@
 					}
 				}
 			}
+
+			if (_langIdx.ContainsKey(currLang))
+				ActiveLanguage = currLang;
 		}
 
 		public event Action<string, bool> Missing;
