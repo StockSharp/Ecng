@@ -21,6 +21,10 @@
 
 		public string ActiveLanguage { get; set; } = LangCodes.En;
 
+		public IEnumerable<string> AvailableLanguages => _langIdx.Keys;
+
+		public IEnumerable<string> AvailableResourceIds => _stringByResourceId.Keys;
+
 		public void Init(TextReader reader)
 		{
 			if (reader is null)
