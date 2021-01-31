@@ -39,7 +39,6 @@
     <SystemCollectionsImmutableVer>5.0.0</SystemCollectionsImmutableVer>
     <SystemComponentModelAnnotationsVer>5.0.0</SystemComponentModelAnnotationsVer>
     <SystemConfigurationConfigurationManagerVer>5.0.0</SystemConfigurationConfigurationManagerVer>
-    <SystemDataSqlClientVer>4.8.2</SystemDataSqlClientVer>
     <SystemIOCompressionVer>4.3.0</SystemIOCompressionVer>
     <SystemManagementVer>5.0.0</SystemManagementVer>
     <SystemReflectionEmitVer>4.7.0</SystemReflectionEmitVer>
