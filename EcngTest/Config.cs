@@ -2,7 +2,6 @@ namespace Ecng.Test
 {
 	#region Using Directives
 
-	using Ecng.Data;
 	using Ecng.Reflection;
 	using Ecng.Reflection.Aspects;
 	using Ecng.Serialization;
@@ -11,19 +10,6 @@ namespace Ecng.Test
 
 	static class Config
 	{
-		#region ConnectionString
-
-		private const string _connectionString = @"Data Source=cbdb2;Initial Catalog=EcngTestDB;Integrated Security=True;User ID=ecngtest;Password=ecngtest;";
-
-		public static string ConnectionString => _connectionString;
-
-		#endregion
-
-		public static Database CreateDatabase()
-		{
-			return new Database("Customer Database", Config.ConnectionString);
-		}
-
 		public static T Create<T>()
 		{
 			CreateProxy<T>();

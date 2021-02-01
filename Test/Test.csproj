@@ -12,6 +12,5 @@
     <ProjectReference Include="..\Net\Net.csproj" />
     <ProjectReference Include="..\Roslyn\Roslyn.csproj" />
     <ProjectReference Include="..\Backup\Backup.csproj" />
-    <ProjectReference Include="..\Data\Data.csproj" />
   </ItemGroup>
 </Project>

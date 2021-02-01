@@ -8,6 +8,12 @@
     <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Data\**" />
+    <EmbeddedResource Remove="Data\**" />
+    <None Remove="Data\**" />
+    <Page Remove="Data\**" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MsTestSdkVer)" />
     <PackageReference Include="MSTest.TestAdapter" Version="$(MsTestVer)" />
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />
@@ -35,13 +41,9 @@
     <None Include="Resources\LazyLoadTestImage2.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Data\private.key" />
-    <None Include="Data\public.key" />
-    <None Include="Data\sym.key" />
     <None Include="Resources\TestImage.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Data.Providers\Data.Providers.csproj" />
     <ProjectReference Include="..\Interop\Interop.csproj" />
     <ProjectReference Include="..\Reflection.Aspects\Reflection.Aspects.csproj" />
     <ProjectReference Include="..\Serialization.FieldFactories\Serialization.FieldFactories.csproj" />

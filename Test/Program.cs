@@ -21,7 +21,6 @@
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.Configuration;
-	using Ecng.Data;
 	using Ecng.Interop;
 	using Ecng.Net;
 	using Ecng.Reflection;
@@ -31,7 +30,6 @@
 
 	using Wintellect.PowerCollections;
 	using Ecng.ComponentModel.Expressions;
-	using System.Net.Mail;
 
 	public interface ICalc
 	{
@@ -270,7 +268,6 @@
 		[STAThread]
 		static void Main()
 		{
-			new MailMessage().ToStream();
 			//var database = new LogicDatabase("StockSharp Database", "Server=db.stocksharp.com;Database=StockSharp;User ID=StockSharp;Password=pX1hmKgjVDGBBGJirVLL;") { CommandType = CommandType.StoredProcedure };
 			//ConfigManager.RegisterService<IStorage>(database);
 
