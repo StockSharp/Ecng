@@ -10,9 +10,6 @@ namespace Ecng.Reflection
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Reflection.Emit;
-#if !SILVERLIGHT
-	using Ecng.Reflection.Path;
-#endif
 
 	public static class ReflectionHelper
 	{
@@ -394,21 +391,12 @@ namespace Ecng.Reflection
 			if (_proxyTypes.TryGetValue(type, out var proxyType))
 				type = proxyType;
 
-#if !SILVERLIGHT
-			if (typeof(T) != typeof(MemberProxy))
-			{
-#endif
-				var members = type.GetMembers<T>(memberName, flags, inheritance);
+			var members = type.GetMembers<T>(memberName, flags, inheritance);
 
-				if (!members.IsEmpty() && additionalTypes.Length > 0)
-					members = FilterMembers(members, additionalTypes);
+			if (!members.IsEmpty() && additionalTypes.Length > 0)
+				members = FilterMembers(members, additionalTypes);
 
-				return members.ToArray();
-#if !SILVERLIGHT
-			}
-			else
-				return new [] { MemberProxy.Create(type, memberName) as T };
-#endif
+			return members.ToArray();
 		}
 
 		private static IEnumerable<T> GetMembers<T>(this Type type, string memberName, BindingFlags flags, bool inheritance)
@@ -556,7 +544,7 @@ namespace Ecng.Reflection
 							return paramType.Compare(additionalType, useInheritance);
 					});
 				}
-				
+
 				return false;
 			});
 		}
@@ -734,7 +722,7 @@ namespace Ecng.Reflection
 							|| type.GetGenericType(typeof(IEnumerable<>)) != null;
 			});
 
-			
+
 		}
 
 		#endregion
