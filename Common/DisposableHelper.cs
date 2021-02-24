@@ -29,11 +29,6 @@ namespace Ecng.Common
 			}
 		}
 
-		static class GenericHolder<T>
-		{
-			public static readonly Dictionary<T, DisposableByAction<T>> Registry = new Dictionary<T, DisposableByAction<T>>();
-		}
-
 		public static void DisposeAll(this IEnumerable<IDisposable> disposables)
 		{
 			if (disposables == null)
@@ -51,24 +46,7 @@ namespace Ecng.Common
 			if (disposeAction == null)
 				throw new ArgumentNullException(nameof(disposeAction));
 
-			lock (GenericHolder<T>.Registry)
-			{
-				var wrapper = new DisposableByAction<T>(unmanagedData, key =>
-				{
-					GenericHolder<T>.Registry.Remove(key);
-					disposeAction(key);
-				});
-				GenericHolder<T>.Registry.Add(unmanagedData, wrapper);
-				return wrapper;
-			}
-		}
-
-		public static bool? IsDisposed<T>(this T unmanagedData)
-		{
-			lock (GenericHolder<T>.Registry)
-			{
-				return !GenericHolder<T>.Registry.TryGetValue(unmanagedData, out var wrapper) || wrapper.IsDisposed;
-			}
+			return new DisposableByAction<T>(unmanagedData, disposeAction);
 		}
 	}
 }
