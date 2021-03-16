@@ -25,7 +25,7 @@
     <AssemblyName>Ecng.$(MSBuildProjectName)</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <IsSourcesAllow>false</IsSourcesAllow>
+    <IsSourcesAllow>true</IsSourcesAllow>
     <LangVersion>default</LangVersion>
 
     <AWSSDKS3Ver>3.5.7.8</AWSSDKS3Ver>
