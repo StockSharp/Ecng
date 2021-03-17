@@ -1,3 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
+  <PropertyGroup>
+    <IsSourcesAllow>false</IsSourcesAllow>
+  </PropertyGroup>
 </Project>

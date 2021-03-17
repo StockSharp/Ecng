@@ -2,6 +2,7 @@
   <Import Project="..\common.props" />
   <PropertyGroup>
     <UseWindowsForms>true</UseWindowsForms>
+    <IsSourcesAllow>false</IsSourcesAllow>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="$(MicrosoftWindowsCompatibilityVer)" />

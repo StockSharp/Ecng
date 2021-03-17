@@ -1,5 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
+  <PropertyGroup>
+    <IsSourcesAllow>false</IsSourcesAllow>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Update="Disk.Sdk\Utils\WebdavResources.Designer.cs">
       <AutoGen>True</AutoGen>
