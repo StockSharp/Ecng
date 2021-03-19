@@ -84,7 +84,7 @@ namespace Ecng.Common
 			} while (true);
 		}
 
-		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, TimeSpan waitForExit = default)
+		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, TimeSpan waitForExit = default, string stdInput = null)
 		{
 			if (output == null)
 				throw new ArgumentNullException(nameof(output));
@@ -92,11 +92,14 @@ namespace Ecng.Common
 			if (error == null)
 				throw new ArgumentNullException(nameof(error));
 
+			var input = !stdInput.IsEmpty();
+
 			var procInfo = new ProcessStartInfo(fileName, arg)
 			{
 				UseShellExecute = false,
 				RedirectStandardError = true,
 				RedirectStandardOutput = true,
+				RedirectStandardInput = input,
 				CreateNoWindow = true,
 				WindowStyle = ProcessWindowStyle.Hidden
 			};
@@ -111,6 +114,12 @@ namespace Ecng.Common
 
 			process.Start();
 			var locker = new object();
+
+			if (input)
+			{
+				process.StandardInput.WriteLine(stdInput);
+				process.StandardInput.Close();
+			}
 
 			// ReSharper disable once AccessToDisposedClosure
 			var outputTask = Task.Run(() => ReadProcessOutput(process.StandardOutput, output, locker));
