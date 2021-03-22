@@ -388,5 +388,7 @@ namespace Ecng.Net
 
 			return url.Host.CompareIgnoreCase("localhost");
 		}
+
+		public static string CheckUrl(this string str) => str.ToLatin().LightScreening().ClearUrl();
 	}
 }

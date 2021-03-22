@@ -1,0 +1,88 @@
+﻿namespace Ecng.Net.BBCodes
+{
+	using System.Text.RegularExpressions;
+
+	/// <summary>
+	/// Syntax Highlighted code block regular express replace
+	/// </summary>
+	public class SyntaxHighlightedCodeRegexReplaceRule<TContext> : SimpleRegexReplaceRule<TContext>
+    {
+        #region Constants and Fields
+
+        /// <summary>
+        ///   The _syntax highlighter.
+        /// </summary>
+        private readonly HighLighter _syntaxHighlighter = new HighLighter();
+
+        #endregion
+
+        #region Constructors and Destructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SyntaxHighlightedCodeRegexReplaceRule"/> class.
+        /// </summary>
+        /// <param name="regExSearch">
+        /// The reg ex search.
+        /// </param>
+        /// <param name="regExReplace">
+        /// The reg ex replace.
+        /// </param>
+        public SyntaxHighlightedCodeRegexReplaceRule(Regex regExSearch, string regExReplace)
+            : base(regExSearch, regExReplace)
+        {
+            this._syntaxHighlighter.ReplaceEnter = true;
+            this.RuleRank = 1;
+        }
+
+        #endregion
+
+        #region Public Methods
+
+        /// <summary>
+        /// The replace.
+        /// </summary>
+        /// <param name="text">
+        /// The text.
+        /// </param>
+        /// <param name="replacement">
+        /// The replacement.
+        /// </param>
+        public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+        {
+            Match m = RegExSearch.Match(text);
+            while (m.Success)
+            {
+                string inner = this._syntaxHighlighter.ColorText(
+                    this.GetInnerValue(m.Groups["inner"].Value), m.Groups["language"].Value);
+
+                string replaceItem = RegExReplace.Replace("${inner}", inner);
+
+                // pulls the htmls into the replacement collection before it's inserted back into the main text
+                int replaceIndex = replacement.Add(replaceItem);
+
+                text = text.Substring(0, m.Groups[0].Index) + replacement.Get(replaceIndex)
+                       + text.Substring(m.Groups[0].Index + m.Groups[0].Length);
+
+                m = RegExSearch.Match(text);
+            }
+        }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// This just overrides how the inner value is handled
+        /// </summary>
+        /// <param name="innerValue">The inner value.</param>
+        /// <returns>
+        /// The get inner value.
+        /// </returns>
+        protected override string GetInnerValue(string innerValue)
+        {
+            return innerValue;
+        }
+
+        #endregion
+    }
+}

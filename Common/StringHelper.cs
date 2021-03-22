@@ -1162,5 +1162,88 @@
 		{
 			return long.TryParse(str, out var l) ? l : (long?)null;
 		}
+
+		public static int FastIndexOf(this string source, string pattern)
+		{
+			if (source is null)
+				throw new ArgumentNullException(nameof(source));
+
+			if (pattern is null)
+				throw new ArgumentNullException(nameof(pattern));
+
+			if (pattern.Length == 0)
+			{
+				return 0;
+			}
+
+			if (pattern.Length == 1)
+			{
+				return source.IndexOf(pattern[0]);
+			}
+
+			int limit = source.Length - pattern.Length + 1;
+			if (limit < 1)
+			{
+				return -1;
+			}
+
+			// Store the first 2 characters of "pattern"
+			char c0 = pattern[0];
+			char c1 = pattern[1];
+
+			// Find the first occurrence of the first character
+			int first = source.IndexOf(c0, 0, limit);
+			while (first != -1)
+			{
+				// Check if the following character is the same like
+				// the 2nd character of "pattern"
+				if (source[first + 1] != c1)
+				{
+					first = source.IndexOf(c0, ++first, limit - first);
+					continue;
+				}
+
+				// Check the rest of "pattern" (starting with the 3rd character)
+				bool found = true;
+				for (int j = 2; j < pattern.Length; j++)
+				{
+					if (source[first + j] != pattern[j])
+					{
+						found = false;
+						break;
+					}
+				}
+
+				// If the whole word was found, return its index, otherwise try again
+				if (found)
+				{
+					return first;
+				}
+
+				first = source.IndexOf(c0, ++first, limit - first);
+			}
+
+			return -1;
+		}
+
+		/// <summary>
+		/// Removes multiple whitespace characters from a string.
+		/// </summary>
+		/// <param name="text">
+		/// </param>
+		/// <returns>
+		/// The remove multiple whitespace.
+		/// </returns>
+		public static string RemoveMultipleWhitespace(this string text)
+		{
+			string result = string.Empty;
+			if (text.IsEmptyOrWhiteSpace())
+			{
+				return result;
+			}
+
+			var r = new Regex(@"\s+");
+			return r.Replace(text, @" ");
+		}
 	}
 }
