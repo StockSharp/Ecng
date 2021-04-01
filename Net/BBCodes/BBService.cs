@@ -67,6 +67,7 @@
 
 		private readonly Regex _rgxTable;
 		private readonly Regex _rgxTable2;
+		private readonly Regex _rgxTable3;
 		private readonly Regex _rgxTableRow;
 		private readonly Regex _rgxTableCell;
 		private readonly Regex _rgxTableCell2;
@@ -100,7 +101,7 @@
 		private readonly Func<string, string> _encryptUrl;
 		private readonly Func<string, bool, Url> _toFullAbsolute;
 		private readonly Func<string, bool, string> _getLocString;
-		private readonly Func<long, INamedObject> _getProduct;
+		private readonly Func<long, IProductObject> _getProduct;
 		private readonly Func<long, INamedObject> _getUser;
 		private readonly Func<long, INamedObject> _getFile;
 
@@ -115,7 +116,7 @@
 			Func<string, string> encryptUrl,
 			Func<string, bool, Url> toFullAbsolute,
 			Func<string, bool, string> getLocString,
-			Func<long, INamedObject> getProduct,
+			Func<long, IProductObject> getProduct,
 			Func<long, INamedObject> getUser,
 			Func<long, INamedObject> getFile)
 		{
@@ -194,6 +195,7 @@
 
 			_rgxTable = new Regex(@"\[table\](?<inner>(.*?))\[/table\]", singleLineOptions);
 			_rgxTable2 = new Regex(@"\[t\](?<inner>(.*?))\[/t\]", singleLineOptions);
+			_rgxTable3 = new Regex(@"\[t=(?<style>[^\]]*)\](?<inner>(.*?))\[/t\]", singleLineOptions);
 			_rgxTableRow = new Regex(@"\[tr\](?<inner>(.*?))\[/tr\]", singleLineOptions);
 			_rgxTableCell = new Regex(@"\[td\](?<inner>(.*?))\[/td\]", singleLineOptions);
 			_rgxTableCell2 = new Regex(@"\[td=(?<colspan>[^\]]*)\](?<inner>(.*?))\[/td\]", singleLineOptions);
@@ -253,6 +255,7 @@
 			//AddRule(new VariableRegexReplaceRule(_rgxImgTitle, "<a class=\"thumbnail\" href=\"#thumb\"><img style=\"max-width:400px\" src=\"${http}${inner}\" alt=\"\"/><span><img src=\"${http}${inner}\" alt=\"${description}\" title=\"${description}\" /><br/>${description}</span></a>", new string[] { "http", "description" }, new string[] { "http://" }));
 			AddRule(new RemoveNewLineRule(_rgxTable, "<table border='0' cellspacing='2' cellpadding='5'>${inner}</table>"));
 			AddRule(new RemoveNewLineRule(_rgxTable2, "<table border='0' cellspacing='2' cellpadding='5'>${inner}</table>"));
+			AddRule(new RemoveNewLineRule(_rgxTable3, "<table style='${style}'>${inner}</table>"));
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxTableRow, "<tr>${inner}</tr>"));
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxTableCell, "<td>${inner}</td>"));
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxTableCell2, "<td colspan=${colspan}>${inner}</td>", new[] { "colspan" }));
@@ -922,13 +925,73 @@
 					{
 						var product = _parent._getProduct(id);
 
-						sb.Replace("${url}", _parent._getProductUrl(product.Id, product.Name));
+						sb.Replace("${url}", _parent._getProductUrl(product.Id, product.PackageId));
 						sb.Replace("${name}", product.Name);
 					}
 					else
 					{
 						sb.Replace("${url}", idStr);
 						sb.Replace("${name}", idStr);
+					}
+
+					replacement.ReplaceHtmlFromText(ref sb);
+
+					var group = match.Groups[0];
+					builder.Remove(group.Index, group.Length);
+					builder.Insert(group.Index, sb.ToString());
+				}
+
+				text = builder.ToString();
+			}
+		}
+
+		class Product2Rule : SimpleRegexReplaceRule<TContext>
+		{
+			private readonly BBService<TContext> _parent;
+
+			public Product2Rule(BBService<TContext> parent)
+				: base(new Regex(@"\[product=(?<id>([0-9]*))\](?<inner>(.*?))\[/product\]", RegexOptions.Singleline | RegexOptions.IgnoreCase), "<a href='${url}'>${inner}</a>")
+			{
+				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
+			}
+
+			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			{
+				var builder = new StringBuilder(text);
+
+				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
+				{
+					var sb = new StringBuilder(RegExReplace);
+
+					var idStr = match.Groups["id"].Value;
+					var inner = match.Groups["inner"].Value;
+
+					if (long.TryParse(idStr, out var id))
+					{
+						var product = _parent._getProduct(id);
+
+						if (product != null)
+						{
+							sb.Replace("${url}", _parent._getProductUrl(product.Id, product.PackageId));
+
+							if (inner.IsEmpty())
+								inner = product.Name;
+						}
+						else
+							sb.Replace("${url}", idStr);
+
+						if (inner.IsEmpty())
+							inner = idStr;
+
+						sb.Replace("${inner}", inner);
+					}
+					else
+					{
+						if (inner.IsEmpty())
+							inner = idStr;
+
+						sb.Replace("${url}", idStr);
+						sb.Replace("${inner}", inner);
 					}
 
 					replacement.ReplaceHtmlFromText(ref sb);
