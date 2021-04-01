@@ -104,6 +104,7 @@
 		private readonly Func<long, IProductObject> _getProduct;
 		private readonly Func<long, INamedObject> _getUser;
 		private readonly Func<long, INamedObject> _getFile;
+		private readonly Func<long, IPage> _getPage;
 
 		public BBService(bool isEnglish,
 			Func<string, bool, string> getOppositeUrl,
@@ -118,7 +119,8 @@
 			Func<string, bool, string> getLocString,
 			Func<long, IProductObject> getProduct,
 			Func<long, INamedObject> getUser,
-			Func<long, INamedObject> getFile)
+			Func<long, INamedObject> getFile,
+			Func<long, IPage> getPage)
 		{
 			_getOppositeUrl = getOppositeUrl ?? throw new ArgumentNullException(nameof(getOppositeUrl));
 			_getFileUrl = getFileUrl ?? throw new ArgumentNullException(nameof(getFileUrl));
@@ -133,6 +135,7 @@
 			_getProduct = getProduct ?? throw new ArgumentNullException(nameof(getProduct));
 			_getUser = getUser ?? throw new ArgumentNullException(nameof(getUser));
 			_getFile = getFile ?? throw new ArgumentNullException(nameof(getFile));
+			_getPage = getPage ?? throw new ArgumentNullException(nameof(getPage));
 
 			const RegexOptions compiledOptions = RegexOptions.IgnoreCase | RegexOptions.Compiled;
 			const RegexOptions singleLineOptions = RegexOptions.Singleline | compiledOptions;
@@ -370,6 +373,7 @@
 			AddRule(new UserRule(this, _rgxUser, "<a href='${url}'>${name}</a>"));
 			AddRule(new PackageRule(this, _rgxPackage, "<a href='${url}'>${name}</a>"));
 			AddRule(new ProductRule(this, _rgxProduct, "<a href='${url}'>${name}</a>"));
+			AddRule(new Product2Rule(this));
 
 			AddRule(new SpoilerRule(this, _rgxSpoiler));
 			AddRule(new HtmlRule(_rgxHtml));
@@ -395,6 +399,8 @@
 			{
 				RuleRank = 10
 			});
+
+			AddRule(new DynamicPageRule(this));
 		}
 
 		public void AddRule(IReplaceRule<TContext> rule)
@@ -581,7 +587,7 @@
 			return html.EncodeToHtml();
 		}
 
-		private sealed class UrlRule : VariableRegexReplaceRule<TContext>
+		private class UrlRule : VariableRegexReplaceRule<TContext>
 		{
 			private readonly BBService<TContext> _parent;
 
@@ -652,7 +658,7 @@
 						else
 							inner = url;
 
-						if (file?.Name.IsImage() == true)
+						if (file?.GetName(context.IsEnglish).IsImage() == true)
 						{
 							sb.Replace("title=", $"data-preview-id='{id}' title=");
 						}
@@ -743,7 +749,7 @@
 			}
 		}
 
-		private sealed class SpoilerRule : SimpleRegexReplaceRule<TContext>
+		private class SpoilerRule : SimpleRegexReplaceRule<TContext>
 		{
 			private readonly BBService<TContext> _parent;
 			
@@ -783,7 +789,7 @@
 			}
 		}
 
-		private sealed class HtmlRule : SimpleRegexReplaceRule<TContext>
+		private class HtmlRule : SimpleRegexReplaceRule<TContext>
 		{
 			public HtmlRule(Regex regExSearch)
 				: base(regExSearch, "<span>${inner}</span>")
@@ -816,7 +822,7 @@
 			}
 		}
 
-		private sealed class UserRule : SimpleRegexReplaceRule<TContext>
+		private class UserRule : SimpleRegexReplaceRule<TContext>
 		{
 			private readonly BBService<TContext> _parent;
 
@@ -840,7 +846,7 @@
 						var client = _parent._getUser(id);
 
 						sb.Replace("${url}", _parent._getOppositeUrl(_parent._toFullAbsolute(_parent._getUserUrl(client.Id), context.IsEnglish).ToString(), context.IsEnglish));
-						sb.Replace("${name}", client.Name?.CheckUrl());
+						sb.Replace("${name}", client.GetName(context.IsEnglish)?.CheckUrl());
 					}
 					else
 					{
@@ -859,7 +865,7 @@
 			}
 		}
 
-		private sealed class PackageRule : SimpleRegexReplaceRule<TContext>
+		private class PackageRule : SimpleRegexReplaceRule<TContext>
 		{
 			private readonly BBService<TContext> _parent;
 
@@ -901,7 +907,7 @@
 			}
 		}
 
-		private sealed class ProductRule : SimpleRegexReplaceRule<TContext>
+		private class ProductRule : SimpleRegexReplaceRule<TContext>
 		{
 			private readonly BBService<TContext> _parent;
 
@@ -926,7 +932,7 @@
 						var product = _parent._getProduct(id);
 
 						sb.Replace("${url}", _parent._getProductUrl(product.Id, product.PackageId));
-						sb.Replace("${name}", product.Name);
+						sb.Replace("${name}", product.GetName(context.IsEnglish));
 					}
 					else
 					{
@@ -945,7 +951,7 @@
 			}
 		}
 
-		class Product2Rule : SimpleRegexReplaceRule<TContext>
+		private class Product2Rule : SimpleRegexReplaceRule<TContext>
 		{
 			private readonly BBService<TContext> _parent;
 
@@ -975,7 +981,67 @@
 							sb.Replace("${url}", _parent._getProductUrl(product.Id, product.PackageId));
 
 							if (inner.IsEmpty())
-								inner = product.Name;
+								inner = product.GetName(context.IsEnglish);
+						}
+						else
+							sb.Replace("${url}", idStr);
+
+						if (inner.IsEmpty())
+							inner = idStr;
+
+						sb.Replace("${inner}", inner);
+					}
+					else
+					{
+						if (inner.IsEmpty())
+							inner = idStr;
+
+						sb.Replace("${url}", idStr);
+						sb.Replace("${inner}", inner);
+					}
+
+					replacement.ReplaceHtmlFromText(ref sb);
+
+					var group = match.Groups[0];
+					builder.Remove(group.Index, group.Length);
+					builder.Insert(group.Index, sb.ToString());
+				}
+
+				text = builder.ToString();
+			}
+		}
+
+		private class DynamicPageRule : SimpleRegexReplaceRule<TContext>
+		{
+			private readonly BBService<TContext> _parent;
+
+			public DynamicPageRule(BBService<TContext> parent)
+				: base(new Regex(@"\[page=(?<id>([0-9]*))\](?<inner>(.*?))\[/page\]", RegexOptions.Singleline | RegexOptions.IgnoreCase), "<a href='${url}'>${inner}</a>")
+			{
+				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
+			}
+
+			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			{
+				var builder = new StringBuilder(text);
+
+				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
+				{
+					var sb = new StringBuilder(RegExReplace);
+
+					var idStr = match.Groups["id"].Value;
+					var inner = match.Groups["inner"].Value;
+
+					if (long.TryParse(idStr, out var id))
+					{
+						var page = _parent._getPage(id);
+
+						if (page != null)
+						{
+							sb.Replace("${url}", page.Url);
+
+							if (inner.IsEmpty())
+								inner = page.GetHeader(context.IsEnglish);
 						}
 						else
 							sb.Replace("${url}", idStr);
@@ -1089,7 +1155,8 @@
 							var file = _parent._getFile(fileId);
 							url = _parent._toFullAbsolute(_parent._getFileUrl(fileId), context.IsEnglish).ToString();
 
-							var isGif = Path.GetExtension(file?.Name).CompareIgnoreCase(".gif");
+							var fileName = file?.GetName(context.IsEnglish);
+							var isGif = Path.GetExtension(fileName).CompareIgnoreCase(".gif");
 
 							if (!context.PreventScaling)
 							{
@@ -1101,7 +1168,7 @@
 									url += "?size=" + size;
 							}
 
-							sb.Replace("${description}", file?.Name);
+							sb.Replace("${description}", fileName);
 						}
 
 						sb.Replace("${id}", url);
