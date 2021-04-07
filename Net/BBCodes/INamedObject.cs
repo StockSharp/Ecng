@@ -8,12 +8,12 @@
 
 	public interface IProductObject : INamedObject
 	{
-		public string PackageId { get; }
+		public string UrlPart { get; }
 	}
 
 	public interface IPage : INamedObject
 	{
 		public string GetHeader(bool isEngish);
-		public string Url { get; }
+		public string GetUrl(bool isEngish);
 	}
 }
