@@ -28,12 +28,12 @@
     <IsSourcesAllow>true</IsSourcesAllow>
     <LangVersion>default</LangVersion>
 
-    <AWSSDKS3Ver>3.5.7.8</AWSSDKS3Ver>
-    <AWSSDKSQSVer>3.5.1.10</AWSSDKSQSVer>
-    <AWSSDKSimpleNotificationServiceVer>3.5.1.33</AWSSDKSimpleNotificationServiceVer>
-    <AWSSDKGlacierVer>3.5.0.61</AWSSDKGlacierVer>
+    <AWSSDKS3Ver>3.7.0.8</AWSSDKS3Ver>
+    <AWSSDKSQSVer>3.7.0.8</AWSSDKSQSVer>
+    <AWSSDKSimpleNotificationServiceVer>3.7.0.8</AWSSDKSimpleNotificationServiceVer>
+    <AWSSDKGlacierVer>3.7.0.7</AWSSDKGlacierVer>
 
-    <MicrosoftWindowsCompatibilityVer>5.0.1</MicrosoftWindowsCompatibilityVer>
+    <MicrosoftWindowsCompatibilityVer>5.0.2</MicrosoftWindowsCompatibilityVer>
 
     <SystemCodeDomVer>5.0.0</SystemCodeDomVer>
     <SystemCollectionsImmutableVer>5.0.0</SystemCollectionsImmutableVer>
@@ -48,15 +48,15 @@
     <SystemTextEncodingCodePagesVer>5.0.0</SystemTextEncodingCodePagesVer>
     <SystemResourcesExtensionsVer>5.0.0</SystemResourcesExtensionsVer>
 
-    <MsCodeVer>3.8.0</MsCodeVer>
-    <NewtonJsonVer>12.0.3</NewtonJsonVer>
-    <MsTestVer>2.1.2</MsTestVer>
-    <MsTestSdkVer>16.8.3</MsTestSdkVer>
-    <SmartFormatVer>2.5.3</SmartFormatVer>
+    <MsCodeVer>3.9.0</MsCodeVer>
+    <NewtonJsonVer>13.0.1</NewtonJsonVer>
+    <MsTestVer>2.2.3</MsTestVer>
+    <MsTestSdkVer>16.9.4</MsTestSdkVer>
+    <SmartFormatVer>2.6.2</SmartFormatVer>
     <OctodiffVer>1.2.1</OctodiffVer>
     <MoreLinqVer>3.3.2</MoreLinqVer>
     <RestSharpVer>106.11.7</RestSharpVer>
-    <NDdeVer>3.0.1</NDdeVer>
+    <NDdeVer>3.0.6</NDdeVer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
