@@ -99,7 +99,7 @@
 		private readonly Func<long, string> _getTopicUrl;
 		private readonly Func<long, string> _getMessageUrl;
 		private readonly Func<string, string> _encryptUrl;
-		private readonly Func<string, bool, Url> _toFullAbsolute;
+		private readonly Func<string, bool, string> _toFullAbsolute;
 		private readonly Func<string, bool, string> _getLocString;
 		private readonly Func<long, IProductObject> _getProduct;
 		private readonly Func<long, INamedObject> _getUser;
@@ -115,7 +115,7 @@
 			Func<long, string> getTopicUrl,
 			Func<long, string> getMessageUrl,
 			Func<string, string> encryptUrl,
-			Func<string, bool, Url> toFullAbsolute,
+			Func<string, bool, string> toFullAbsolute,
 			Func<string, bool, string> getLocString,
 			Func<long, IProductObject> getProduct,
 			Func<long, INamedObject> getUser,
@@ -328,10 +328,9 @@
 				code = code.Replace("<", "&lt;");
 				code = code.Replace("\"", "&quot;");
 
-				var src = _getOppositeUrl(_toFullAbsolute(Path.GetExtension(smile.Icon).CompareIgnoreCase(".gif")
+				var src = _toFullAbsolute(Path.GetExtension(smile.Icon).CompareIgnoreCase(".gif")
 					? $"~/images/smiles/{smile.Icon}"
-					: $"~/images/svg/smiles/{smile.Icon}", isEnglish).ToString(),
-					isEnglish);
+					: $"~/images/svg/smiles/{smile.Icon}", isEnglish);
 
 				var alt = smile.Emoticon.EncodeToHtml();
 
@@ -359,7 +358,7 @@
 			//ForumPage page = new ForumPage();
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxQuote2, "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put("${quote}", "${inner}"), new[] { "quote" }) { RuleRank = 63 });
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxQuote1, "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put($"{_getLocString("Quote", isEnglish)}:", "${inner}")) { RuleRank = 64 });
-			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, () => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _getOppositeUrl(_toFullAbsolute("~/posts/m/${id}/", isEnglish).ToString(), isEnglish), _getOppositeUrl(_toFullAbsolute("~/images/icon_latest_reply.gif", isEnglish).ToString(), isEnglish), _getLocString("GoTo", isEnglish), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
+			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, () => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute("~/posts/m/${id}/", isEnglish), _toFullAbsolute("~/images/icon_latest_reply.gif", isEnglish), _getLocString("GoTo", isEnglish), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
 			//}
 			AddRule(new TopicRegexReplaceRule(this, _rgxPost, "<a {0} href=\"${post}\">${inner}</a>".Replace("{0}", _blank), singleLine));
 			AddRule(new TopicRegexReplaceRule(this, _rgxTopic, "<a {0} href=\"${topic}\">${inner}</a>".Replace("{0}", _blank), singleLine));
@@ -651,7 +650,7 @@
 					{
 						var file = _parent._getFile(id);
 
-						url = _parent._toFullAbsolute(file == null ? _parent._getFileUrl(id) : _parent._getFileUrl(file.Id), context.IsEnglish).ToString();
+						url = _parent._toFullAbsolute(file == null ? _parent._getFileUrl(id) : _parent._getFileUrl(file.Id), context.IsEnglish);
 
 						if (hasTitle)
 							sb.Replace("${url}", url);
@@ -845,7 +844,7 @@
 					{
 						var client = _parent._getUser(id);
 
-						sb.Replace("${url}", _parent._getOppositeUrl(_parent._toFullAbsolute(_parent._getUserUrl(client.Id), context.IsEnglish).ToString(), context.IsEnglish));
+						sb.Replace("${url}", _parent._toFullAbsolute(_parent._getUserUrl(client.Id), context.IsEnglish));
 						sb.Replace("${name}", client.GetName(context.IsEnglish)?.CheckUrl());
 					}
 					else
@@ -1038,7 +1037,7 @@
 
 						if (page != null)
 						{
-							sb.Replace("${url}", page.GetUrl(context.IsEnglish));
+							sb.Replace("${url}", _parent._toFullAbsolute(page.GetUrl(context.IsEnglish), context.IsEnglish));
 
 							if (inner.IsEmpty())
 								inner = page.GetHeader(context.IsEnglish);
@@ -1153,7 +1152,7 @@
 						if (long.TryParse(match.Groups["id"].Value, out var fileId))
 						{
 							var file = _parent._getFile(fileId);
-							url = _parent._toFullAbsolute(_parent._getFileUrl(fileId), context.IsEnglish).ToString();
+							url = _parent._toFullAbsolute(_parent._getFileUrl(fileId), context.IsEnglish);
 
 							var fileName = file?.GetName(context.IsEnglish);
 							var isGif = Path.GetExtension(fileName).CompareIgnoreCase(".gif");
@@ -1186,15 +1185,17 @@
 						if (http.IsEmpty())
 							http = "http://";
 
-						if ((sb.ToString().ContainsIgnoreCase("/forum/resource.ashx?i=")
-						     || sb.ToString().ContainsIgnoreCase("/forum/resource.ashx?a=")
-						     || sb.ToString().ContainsIgnoreCase("file.aspx")))
+						var sbStr = sb.ToString();
+
+						if ((sbStr.ContainsIgnoreCase("/forum/resource.ashx?i=")
+						     || sbStr.ContainsIgnoreCase("/forum/resource.ashx?a=")
+						     || sbStr.ContainsIgnoreCase("file.aspx")))
 						{
 							const string baseImgUrl = "/file.aspx?t=forum";
 
 							if (!context.PreventScaling)
 							{
-								if (sb.ToString().ContainsIgnoreCase("file.aspx"))
+								if (sbStr.ContainsIgnoreCase("file.aspx"))
 									sb.Replace("/file.aspx?", $"/file.aspx?&size={size}&amp;");
 								else
 								{
@@ -1300,9 +1301,9 @@
 						{
 							case "post":
 							case "message":
-								return _parent._toFullAbsolute(_parent._getMessageUrl(id), context.IsEnglish).ToString();
+								return _parent._toFullAbsolute(_parent._getMessageUrl(id), context.IsEnglish);
 							case "topic":
-								return _parent._toFullAbsolute(_parent._getTopicUrl(id), context.IsEnglish).ToString();
+								return _parent._toFullAbsolute(_parent._getTopicUrl(id), context.IsEnglish);
 						}
 					}
 				}
