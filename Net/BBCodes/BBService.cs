@@ -138,31 +138,31 @@
 			_getPage = getPage ?? throw new ArgumentNullException(nameof(getPage));
 
 			const RegexOptions compiledOptions = RegexOptions.IgnoreCase | RegexOptions.Compiled;
-			const RegexOptions singleLineOptions = RegexOptions.Singleline | compiledOptions;
-			const RegexOptions multiLineOptions = RegexOptions.Multiline | compiledOptions;
+			const RegexOptions singleLine = RegexOptions.Singleline | compiledOptions;
+			const RegexOptions multiLine = RegexOptions.Multiline | compiledOptions;
 
 			//_rgxBBCodeLocalizationTag = @"\[localization=(?<tag>[^\]]*)\](?<inner>(.+?))\[/localization\]";
-			_rgxNoParse = new Regex(@"\[noparse\](?<inner>(.*?))\[/noparse\]", singleLineOptions);
-			_rgxBold = new Regex(@"\[B\](?<inner>(.*?))\[/B\]", singleLineOptions);
+			_rgxNoParse = new Regex(@"\[noparse\](?<inner>(.*?))\[/noparse\]", singleLine);
+			_rgxBold = new Regex(@"\[B\](?<inner>(.*?))\[/B\]", singleLine);
 			_rgxBr = "[\r]?\n(?!.*<[^>]+>.*)";
 			_rgxBullet = @"\[\*\]";
 			_rgxCenter = @"\[center\](?<inner>(.*?))\[/center\]";
-			_rgxCode1 = new Regex(@"\[code\](?<inner>(.*?))\[/code\]", singleLineOptions);
-			_rgxCode2 = new Regex(@"\[code=(?<language>[^\]]*)\](?<inner>(.*?))\[/code\]", singleLineOptions);
+			_rgxCode1 = new Regex(@"\[code\](?<inner>(.*?))\[/code\]", singleLine);
+			_rgxCode2 = new Regex(@"\[code=(?<language>[^\]]*)\](?<inner>(.*?))\[/code\]", singleLine);
 			_rgxColor = @"\[color=(?<color>(\#?[-a-z0-9]*))\](?<inner>(.*?))\[/color\]";
 			_rgxFloat = new Regex(@"\[float=(?<float>[^\]]*)\](?<inner>(.*?))\[/float\]");
-			_rgxEmail1 = new Regex(@"\[email[^\]]*\](?<inner>(.+?))\[/email\]", singleLineOptions);
-			_rgxEmail2 = new Regex(@"\[email=(?<email>[^\]]*)\](?<inner>(.+?))\[/email\]", singleLineOptions);
+			_rgxEmail1 = new Regex(@"\[email[^\]]*\](?<inner>(.+?))\[/email\]", singleLine);
+			_rgxEmail2 = new Regex(@"\[email=(?<email>[^\]]*)\](?<inner>(.+?))\[/email\]", singleLine);
 			_rgxFont = @"\[font=(?<font>([-a-z0-9, ]*))\](?<inner>(.*?))\[/font\]";
 			_rgxHr = "^[-][-][-][-][-]*[\r]?[\n]";
-			_rgxImg = new Regex(@"\[img\](?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\[/img\]", singleLineOptions);
-			_rgxImgSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img\](?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\[/img\]\[/size\]", singleLineOptions);
-			_rgxImgTitle = new Regex(@"\[img=(?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\](?<description>(.*?))\[/img\]", singleLineOptions);
-			_rgxImgTitleSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img=(?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\](?<description>(.*?))\[/img\]\[/size\]", singleLineOptions);
-			_rgxImgId = new Regex(@"\[img\](?<id>([0-9]*))\[/img\]", singleLineOptions);
-			_rgxImgIdSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img\](?<id>([0-9]*))\[/img\]\[/size\]", singleLineOptions);
-			_rgxImgIdTitle = new Regex(@"\[img=(?<id>([0-9]*))\](?<description>(.*?))\[/img\]", singleLineOptions);
-			_rgxImgIdTitleSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img=(?<id>([0-9]*))\](?<description>(.*?))\[/img\]\[/size\]", singleLineOptions);
+			_rgxImg = new Regex(@"\[img\](?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\[/img\]", singleLine);
+			_rgxImgSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img\](?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\[/img\]\[/size\]", singleLine);
+			_rgxImgTitle = new Regex(@"\[img=(?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\](?<description>(.*?))\[/img\]", singleLine);
+			_rgxImgTitleSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img=(?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\](?<description>(.*?))\[/img\]\[/size\]", singleLine);
+			_rgxImgId = new Regex(@"\[img\](?<id>([0-9]*))\[/img\]", singleLine);
+			_rgxImgIdSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img\](?<id>([0-9]*))\[/img\]\[/size\]", singleLine);
+			_rgxImgIdTitle = new Regex(@"\[img=(?<id>([0-9]*))\](?<description>(.*?))\[/img\]", singleLine);
+			_rgxImgIdTitleSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img=(?<id>([0-9]*))\](?<description>(.*?))\[/img\]\[/size\]", singleLine);
 			_rgxHighlighted = @"\[h\](?<inner>(.*?))\[/h\]";
 			_rgxItalic = @"\[I\](?<inner>(.*?))\[/I\]";
 			_rgxLeft = @"\[left\](?<inner>(.*?))\[/left\]";
@@ -171,51 +171,47 @@
 			_rgxList3 = @"\[list=a\](?<inner>(.*?))\[/list\]";
 			_rgxList4 = @"\[list=i\](?<inner>(.*?))\[/list\]";
 			_rgxPost = @"\[post=(?<post>[^\]]*)\](?<inner>(.*?))\[/post\]";
-			_rgxQuote1 = new Regex(@"\[quote\](?<inner>(.*?))\[/quote\]", singleLineOptions);
-			_rgxQuote2 = new Regex(@"\[quote=(?<quote>[^\]]*)\](?<inner>(.*?))\[/quote\]", singleLineOptions);
-			_rgxQuote3 = new Regex(@"\[quote=(?<quote>(.*?));(?<id>([0-9]*))\](?<inner>(.*?))\[/quote\]", singleLineOptions);
+			_rgxQuote1 = new Regex(@"\[quote\](?<inner>(.*?))\[/quote\]", singleLine);
+			_rgxQuote2 = new Regex(@"\[quote=(?<quote>[^\]]*)\](?<inner>(.*?))\[/quote\]", singleLine);
+			_rgxQuote3 = new Regex(@"\[quote=(?<quote>(.*?));(?<id>([0-9]*))\](?<inner>(.*?))\[/quote\]", singleLine);
 			_rgxRight = @"\[right\](?<inner>(.*?))\[/right\]";
 			_rgxSize = @"\[size=(?<size>([1-9]))\](?<inner>(.*?))\[/size\]";
 			_rgxStrike = @"\[S\](?<inner>(.*?))\[/S\]";
 			_rgxTopic = @"\[topic=(?<topic>[^\]]*)\](?<inner>(.*?))\[/topic\]";
 			_rgxMessage = @"\[message=(?<message>[^\]]*)\](?<inner>(.*?))\[/message\]";
 			_rgxUnderline = @"\[U\](?<inner>(.*?))\[/U\]";
-			_rgxUrl1 = new Regex(@"\[url\](?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?))\[/url\]", singleLineOptions);
-			_rgxUrl2 = new Regex(@"\[url\=(?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<url>([^\]]*?))\](?<inner>(.+?))\[/url\]", singleLineOptions);
-			//_rgxUrlId1 = new Regex(@"\[url\](?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?))\[/url\]", singleLineOptions);
-			//_rgxUrlId2 = new Regex(@"\[url\=(?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<url>([^\]]*?))\](?<inner>(.+?))\[/url\]", singleLineOptions);
-			_rgxModalUrl1 = new Regex(@"\[modalurl](?<http>(skype:)|(http://)|(https://)| (ftp://)|(ftps://))?(?<inner>(.+?))\[/modalurl\]", singleLineOptions);
-			_rgxModalUrl2 = new Regex(@"\[modalurl\=(?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<url>([^\]]*?))\](?<inner>(.+?))\[/modalurl\]", singleLineOptions);
-			_rgxYouTube = new Regex(@"\[youtube\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?youtube.com/watch\?v=(?<id>[0-9A-Za-z-_]{11}))[^[]*\[/youtube\]", singleLineOptions);
-			_rgxYouTube2 = new Regex(@"\[youtube\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?youtu.be/(?<id>[0-9A-Za-z-_]{11}))[^[]*\[/youtube\]", singleLineOptions);
-			_rgxVimeo = new Regex(@"\[vimeo\](?<inner>http://(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?vimeo.com/(?<vimeoId>[0-9]{8}))[^[]*\[/vimeo\]", singleLineOptions);
-			_rgxVk = new Regex(@"\[vk\](?<inner>http://(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?vk.com/(?<vkId>.+))[^[]*\[/vk\]", singleLineOptions);
-			_rgxUser = new Regex(@"\[user\](?<id>([0-9]*))\[/user\]", singleLineOptions);
-			_rgxProduct = new Regex(@"\[product\](?<id>([0-9]*))\[/product\]", singleLineOptions);
-			_rgxPackage = new Regex(@"\[package\](?<id>(.+?))\[/package\]", singleLineOptions);
-			_rgxSpoiler = new Regex(@"\[spoiler\](?<inner>.+?)\[/spoiler\]", singleLineOptions);
-			_rgxHtml = new Regex(@"\[html\](?<inner>.+?)\[/html\]", singleLineOptions);
+			_rgxUrl1 = new Regex(@"\[url\](?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?))\[/url\]", singleLine);
+			_rgxUrl2 = new Regex(@"\[url\=(?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<url>([^\]]*?))\](?<inner>(.+?))\[/url\]", singleLine);
+			//_rgxUrlId1 = new Regex(@"\[url\](?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?))\[/url\]", singleLine);
+			//_rgxUrlId2 = new Regex(@"\[url\=(?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<url>([^\]]*?))\](?<inner>(.+?))\[/url\]", singleLine);
+			_rgxModalUrl1 = new Regex(@"\[modalurl](?<http>(skype:)|(http://)|(https://)| (ftp://)|(ftps://))?(?<inner>(.+?))\[/modalurl\]", singleLine);
+			_rgxModalUrl2 = new Regex(@"\[modalurl\=(?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<url>([^\]]*?))\](?<inner>(.+?))\[/modalurl\]", singleLine);
+			_rgxYouTube = new Regex(@"\[youtube\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?youtube.com/watch\?v=(?<id>[0-9A-Za-z-_]{11}))[^[]*\[/youtube\]", singleLine);
+			_rgxYouTube2 = new Regex(@"\[youtube\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?youtu.be/(?<id>[0-9A-Za-z-_]{11}))[^[]*\[/youtube\]", singleLine);
+			_rgxVimeo = new Regex(@"\[vimeo\](?<inner>http://(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?vimeo.com/(?<vimeoId>[0-9]{8}))[^[]*\[/vimeo\]", singleLine);
+			_rgxVk = new Regex(@"\[vk\](?<inner>http://(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?vk.com/(?<vkId>.+))[^[]*\[/vk\]", singleLine);
+			_rgxUser = new Regex(@"\[user\](?<id>([0-9]*))\[/user\]", singleLine);
+			_rgxProduct = new Regex(@"\[product\](?<id>([0-9]*))\[/product\]", singleLine);
+			_rgxPackage = new Regex(@"\[package\](?<id>(.+?))\[/package\]", singleLine);
+			_rgxSpoiler = new Regex(@"\[spoiler\](?<inner>.+?)\[/spoiler\]", singleLine);
+			_rgxHtml = new Regex(@"\[html\](?<inner>.+?)\[/html\]", singleLine);
 
-			_rgxTable = new Regex(@"\[table\](?<inner>(.*?))\[/table\]", singleLineOptions);
-			_rgxTable2 = new Regex(@"\[t\](?<inner>(.*?))\[/t\]", singleLineOptions);
-			_rgxTable3 = new Regex(@"\[t=(?<style>[^\]]*)\](?<inner>(.*?))\[/t\]", singleLineOptions);
-			_rgxTableRow = new Regex(@"\[tr\](?<inner>(.*?))\[/tr\]", singleLineOptions);
-			_rgxTableCell = new Regex(@"\[td\](?<inner>(.*?))\[/td\]", singleLineOptions);
-			_rgxTableCell2 = new Regex(@"\[td=(?<colspan>[^\]]*)\](?<inner>(.*?))\[/td\]", singleLineOptions);
-			_rgxTableHeader = new Regex(@"\[th\](?<inner>(.*?))\[/th\]", singleLineOptions);
-			_rgxTableHeader2 = new Regex(@"\[th=(?<color>[^\]]*)\](?<inner>(.*?))\[/th\]", singleLineOptions);
+			_rgxTable = new Regex(@"\[table\](?<inner>(.*?))\[/table\]", singleLine);
+			_rgxTable2 = new Regex(@"\[t\](?<inner>(.*?))\[/t\]", singleLine);
+			_rgxTable3 = new Regex(@"\[t=(?<style>[^\]]*)\](?<inner>(.*?))\[/t\]", singleLine);
+			_rgxTableRow = new Regex(@"\[tr\](?<inner>(.*?))\[/tr\]", singleLine);
+			_rgxTableCell = new Regex(@"\[td\](?<inner>(.*?))\[/td\]", singleLine);
+			_rgxTableCell2 = new Regex(@"\[td=(?<colspan>[^\]]*)\](?<inner>(.*?))\[/td\]", singleLine);
+			_rgxTableHeader = new Regex(@"\[th\](?<inner>(.*?))\[/th\]", singleLine);
+			_rgxTableHeader2 = new Regex(@"\[th=(?<color>[^\]]*)\](?<inner>(.*?))\[/th\]", singleLine);
 
-			_rgxH2 = new Regex(@"\[h2\](?<inner>(.*?))\[/h2\]", singleLineOptions);
-			_rgxH2Id = new Regex(@"\[h2=(?<id>[^\]]*)\](?<inner>(.*?))\[/h2\]", singleLineOptions);
-			_rgxH3 = new Regex(@"\[h3\](?<inner>(.*?))\[/h3\]", singleLineOptions);
-			_rgxH3Id = new Regex(@"\[h3=(?<id>[^\]]*)\](?<inner>(.*?))\[/h3\]", singleLineOptions);
+			_rgxH2 = new Regex(@"\[h2\](?<inner>(.*?))\[/h2\]", singleLine);
+			_rgxH2Id = new Regex(@"\[h2=(?<id>[^\]]*)\](?<inner>(.*?))\[/h2\]", singleLine);
+			_rgxH3 = new Regex(@"\[h3\](?<inner>(.*?))\[/h3\]", singleLine);
+			_rgxH3Id = new Regex(@"\[h3=(?<id>[^\]]*)\](?<inner>(.*?))\[/h3\]", singleLine);
 
 			_instance = new ProcessReplaceRules<TContext>();
 
-			const RegexOptions singleLine = RegexOptions.Singleline | RegexOptions.IgnoreCase;
-			const RegexOptions multiLine = RegexOptions.Multiline | RegexOptions.IgnoreCase;
-
-			//AddRule(new SyntaxHighlightedCodeRegexReplaceRule(_rgxCode2, "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", str6)));
 			//AddRule(new CodeRegexReplaceRule(_rgxCode1, "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", str6)));
 			AddRule(new FontSizeRegexReplaceRule<TContext>(_rgxSize, "<span style=\"font-size:${size}\">${inner}</span>", singleLine));
 			//if (doFormatting)
@@ -256,9 +252,9 @@
 			AddRule(new ImageRule(this, _rgxImgIdTitleSize, "<img src=\"${id}\" alt=\"${description}\" title=\"${description}\" />", new[] { "description" }, null, true) { RuleRank = 76 });
 			//AddRule(new VariableRegexReplaceRule(_rgxImg, "<a class=\"thumbnail\" href=\"#thumb\"><img style=\"max-width:400px\" src=\"${http}${inner}\" alt=\"\"/><span><img src=\"${http}${inner}\" alt=\"\"/></span></a>", new[] { "http" }, new[] { "http://" }));
 			//AddRule(new VariableRegexReplaceRule(_rgxImgTitle, "<a class=\"thumbnail\" href=\"#thumb\"><img style=\"max-width:400px\" src=\"${http}${inner}\" alt=\"\"/><span><img src=\"${http}${inner}\" alt=\"${description}\" title=\"${description}\" /><br/>${description}</span></a>", new string[] { "http", "description" }, new string[] { "http://" }));
-			AddRule(new RemoveNewLineRule(_rgxTable, "<table border='0' cellspacing='2' cellpadding='5'>${inner}</table>"));
-			AddRule(new RemoveNewLineRule(_rgxTable2, "<table border='0' cellspacing='2' cellpadding='5'>${inner}</table>"));
-			AddRule(new RemoveNewLineRule(_rgxTable3, "<table style='${style}'>${inner}</table>"));
+			AddRule(new RemoveNewLineRule(_rgxTable, "<table border='0' cellspacing='2' cellpadding='5'>${inner}</table>", false));
+			AddRule(new RemoveNewLineRule(_rgxTable2, "<table border='0' cellspacing='2' cellpadding='5'>${inner}</table>", false));
+			AddRule(new RemoveNewLineRule(_rgxTable3, "<table style='${style}'>${inner}</table>", true));
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxTableRow, "<tr>${inner}</tr>"));
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxTableCell, "<td>${inner}</td>"));
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxTableCell2, "<td colspan=${colspan}>${inner}</td>", new[] { "colspan" }));
@@ -377,23 +373,23 @@
 			AddRule(new SpoilerRule(this, _rgxSpoiler));
 			AddRule(new HtmlRule(_rgxHtml));
 
-			AddRule(new VariableRegexReplaceRuleEx(this, new Regex(@"(?<before>^|[ ]|\>|\[[A-Za-z0-9]\])(?<inner>(([A-Za-z0-9]+_+)|([A-Za-z0-9]+\-+)|([A-Za-z0-9]+\.+)|([A-Za-z0-9]+\++))*[A-Za-z0-9]+@((\w+\-+)|(\w+\.))*\w{1,63}\.[a-zA-Z]{2,6})", multiLineOptions),
+			AddRule(new VariableRegexReplaceRuleEx(this, new Regex(@"(?<before>^|[ ]|\>|\[[A-Za-z0-9]\])(?<inner>(([A-Za-z0-9]+_+)|([A-Za-z0-9]+\-+)|([A-Za-z0-9]+\.+)|([A-Za-z0-9]+\++))*[A-Za-z0-9]+@((\w+\-+)|(\w+\.))*\w{1,63}\.[a-zA-Z]{2,6})", multiLine),
 				"${before}<a href=\"mailto:${inner}\">${inner}</a>", new[] { "before" })
 			{
 				RuleRank = 10
 			});
 			
-			AddRule(new VariableRegexReplaceRuleEx(this, new Regex("(?<before>^|[ ]|\\>|\\[[A-Za-z0-9]\\])(?<!href=\")(?<!src=\")(?<inner>(http://|https://|ftp://)(?:[\\w-]+\\.)+[\\w-]+(?:/[\\w-./?+%#&=;:,]*)?)", multiLineOptions),
+			AddRule(new VariableRegexReplaceRuleEx(this, new Regex("(?<before>^|[ ]|\\>|\\[[A-Za-z0-9]\\])(?<!href=\")(?<!src=\")(?<inner>(http://|https://|ftp://)(?:[\\w-]+\\.)+[\\w-]+(?:/[\\w-./?+%#&=;:,]*)?)", multiLine),
 				"${before}<a {0} {1} href=\"${inner}\" title=\"${inner}\">${innertrunc}</a>".Replace("{0}", _blank).Replace("{1}", _noFollow), new[] { "before" }, new[] { string.Empty }, 50)
 			{
 				RuleRank = 10
 			});
-			AddRule(new VariableRegexReplaceRuleEx(this, new Regex("(?<before>^|[ ]|\\>|\\[[A-Za-z0-9]\\])(?<!href=\")(?<!src=\")(?<inner>(http://|https://|ftp://)(?:[\\w-]+\\.)+[\\w-]+(?:/[\\w-./?%&=+;,:#~$]*[^.<|^.\\[])?)", multiLineOptions),
+			AddRule(new VariableRegexReplaceRuleEx(this, new Regex("(?<before>^|[ ]|\\>|\\[[A-Za-z0-9]\\])(?<!href=\")(?<!src=\")(?<inner>(http://|https://|ftp://)(?:[\\w-]+\\.)+[\\w-]+(?:/[\\w-./?%&=+;,:#~$]*[^.<|^.\\[])?)", multiLine),
 				"${before}<a {0} {1} href=\"${inner}\" title=\"${inner}\">${innertrunc}</a>".Replace("{0}", _blank).Replace("{1}", _noFollow), new[] { "before" }, new[] { string.Empty }, 50)
 			{
 				RuleRank = 10
 			});
-			AddRule(new VariableRegexReplaceRuleEx(this, new Regex(@"(?<before>^|[ ]|\>|\[[A-Za-z0-9]\])(?<!http://)(?<inner>www\.(?:[\w-]+\.)+[\w-]+(?:/[\w-./?%+#&=;,]*)?)", multiLineOptions),
+			AddRule(new VariableRegexReplaceRuleEx(this, new Regex(@"(?<before>^|[ ]|\>|\[[A-Za-z0-9]\])(?<!http://)(?<inner>www\.(?:[\w-]+\.)+[\w-]+(?:/[\w-./?%+#&=;,]*)?)", multiLine),
 				"${before}<a {0} {1} href=\"http://${inner}\" title=\"http://${inner}\">${innertrunc}</a>".Replace("{0}", _blank).Replace("{1}", _noFollow), new[] { "before" }, new[] { string.Empty }, 50)
 			{
 				RuleRank = 10
@@ -1241,6 +1237,7 @@
 		{
 			private readonly string _regExReplace;
 			private readonly Regex _regExSearch;
+			private readonly bool _hasStyle;
 
 			public override string RuleDescription => $"RegExSearch = \"{_regExSearch}\"";
 
@@ -1250,10 +1247,11 @@
 				_regExReplace = regExReplace;
 			}
 
-			public RemoveNewLineRule(Regex regExSearch, string regExReplace)
+			public RemoveNewLineRule(Regex regExSearch, string regExReplace, bool hasStyle)
 			{
 				_regExSearch = regExSearch;
 				_regExReplace = regExReplace;
+				_hasStyle = hasStyle;
 			}
 
 			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
@@ -1263,8 +1261,12 @@
 				for (var match = _regExSearch.Match(text); match.Success; match = _regExSearch.Match(stringBuilder.ToString()))
 				{
 					var strText = _regExReplace.Replace("${inner}", GetInnerValue(match.Groups["inner"].Value.Remove(Environment.NewLine)));
-					replacement.ReplaceHtmlFromText(ref strText);
+					
+					if (_hasStyle)
+						strText = strText.Replace("${style}", GetInnerValue(match.Groups["style"].Value.Remove(Environment.NewLine)));
 
+					replacement.ReplaceHtmlFromText(ref strText);
+					
 					var g = match.Groups[0];
 
 					stringBuilder.Remove(g.Index, g.Length);
