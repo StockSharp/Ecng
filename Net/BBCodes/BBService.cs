@@ -926,7 +926,7 @@
 					{
 						var product = _parent._getProduct(id);
 
-						sb.Replace("${url}", _parent._getProductUrl(product.Id, product.UrlPart));
+						sb.Replace("${url}", _parent._getProductUrl(product.Id, product.GetUrlPart(context.IsEnglish)));
 						sb.Replace("${name}", product.GetName(context.IsEnglish));
 					}
 					else
@@ -973,7 +973,7 @@
 
 						if (product != null)
 						{
-							sb.Replace("${url}", _parent._getProductUrl(product.Id, product.UrlPart));
+							sb.Replace("${url}", _parent._getProductUrl(product.Id, product.GetUrlPart(context.IsEnglish)));
 
 							if (inner.IsEmpty())
 								inner = product.GetName(context.IsEnglish);

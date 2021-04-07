@@ -8,7 +8,7 @@
 
 	public interface IProductObject : INamedObject
 	{
-		public string UrlPart { get; }
+		public string GetUrlPart(bool isEngish);
 	}
 
 	public interface IPage : INamedObject
