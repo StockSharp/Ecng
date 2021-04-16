@@ -188,8 +188,8 @@
 			_rgxModalUrl2 = new Regex(@"\[modalurl\=(?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<url>([^\]]*?))\](?<inner>(.+?))\[/modalurl\]", singleLine);
 			_rgxYouTube = new Regex(@"\[youtube\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?youtube.com/watch\?v=(?<id>[0-9A-Za-z-_]{11}))[^[]*\[/youtube\]", singleLine);
 			_rgxYouTube2 = new Regex(@"\[youtube\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?youtu.be/(?<id>[0-9A-Za-z-_]{11}))[^[]*\[/youtube\]", singleLine);
-			_rgxVimeo = new Regex(@"\[vimeo\](?<inner>http://(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?vimeo.com/(?<vimeoId>[0-9]{8}))[^[]*\[/vimeo\]", singleLine);
-			_rgxVk = new Regex(@"\[vk\](?<inner>http://(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?vk.com/(?<vkId>.+))[^[]*\[/vk\]", singleLine);
+			_rgxVimeo = new Regex(@"\[vimeo\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?vimeo.com/(?<vimeoId>[0-9]{8}))[^[]*\[/vimeo\]", singleLine);
+			_rgxVk = new Regex(@"\[vk\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?vk.com/(?<vkId>.+))[^[]*\[/vk\]", singleLine);
 			_rgxUser = new Regex(@"\[user\](?<id>([0-9]*))\[/user\]", singleLine);
 			_rgxProduct = new Regex(@"\[product\](?<id>([0-9]*))\[/product\]", singleLine);
 			_rgxPackage = new Regex(@"\[package\](?<id>(.+?))\[/package\]", singleLine);
