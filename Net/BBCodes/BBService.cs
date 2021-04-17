@@ -31,10 +31,6 @@
 		private readonly Regex _rgxImgSize;
 		private readonly Regex _rgxImgTitle;
 		private readonly Regex _rgxImgTitleSize;
-		private readonly Regex _rgxImgId;
-		private readonly Regex _rgxImgIdSize;
-		private readonly Regex _rgxImgIdTitle;
-		private readonly Regex _rgxImgIdTitleSize;
 		private readonly string _rgxHighlighted;
 		private readonly string _rgxItalic;
 		private readonly string _rgxLeft;
@@ -155,14 +151,10 @@
 			_rgxEmail2 = new Regex(@"\[email=(?<email>[^\]]*)\](?<inner>(.+?))\[/email\]", singleLine);
 			_rgxFont = @"\[font=(?<font>([-a-z0-9, ]*))\](?<inner>(.*?))\[/font\]";
 			_rgxHr = "^[-][-][-][-][-]*[\r]?[\n]";
-			_rgxImg = new Regex(@"\[img\](?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\[/img\]", singleLine);
-			_rgxImgSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img\](?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\[/img\]\[/size\]", singleLine);
-			_rgxImgTitle = new Regex(@"\[img=(?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\](?<description>(.*?))\[/img\]", singleLine);
-			_rgxImgTitleSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img=(?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?\.((jpg)|(png)|(gif)|(tif)|(ashx(.*?)))))\](?<description>(.*?))\[/img\]\[/size\]", singleLine);
-			_rgxImgId = new Regex(@"\[img\](?<id>([0-9]*))\[/img\]", singleLine);
-			_rgxImgIdSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img\](?<id>([0-9]*))\[/img\]\[/size\]", singleLine);
-			_rgxImgIdTitle = new Regex(@"\[img=(?<id>([0-9]*))\](?<description>(.*?))\[/img\]", singleLine);
-			_rgxImgIdTitleSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img=(?<id>([0-9]*))\](?<description>(.*?))\[/img\]\[/size\]", singleLine);
+			_rgxImg = new Regex(@"\[img\](?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?))\[/img\]", singleLine);
+			_rgxImgSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img\](?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?))\[/img\]\[/size\]", singleLine);
+			_rgxImgTitle = new Regex(@"\[img=(?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?))\](?<description>(.*?))\[/img\]", singleLine);
+			_rgxImgTitleSize = new Regex(@"\[size width=(?<width>[^\]]*) height=(?<height>[^\]]*)\]\[img=(?<http>(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?))\](?<description>(.*?))\[/img\]\[/size\]", singleLine);
 			_rgxHighlighted = @"\[h\](?<inner>(.*?))\[/h\]";
 			_rgxItalic = @"\[I\](?<inner>(.*?))\[/I\]";
 			_rgxLeft = @"\[left\](?<inner>(.*?))\[/left\]";
@@ -242,14 +234,10 @@
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxCenter, "<div align=\"center\">${inner}</div>", singleLine));
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxLeft, "<div align=\"left\">${inner}</div>", singleLine));
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxRight, "<div align=\"right\">${inner}</div>", singleLine));
-			AddRule(new ImageRule(this, _rgxImgSize, "<img src=\"${http}${inner}\" alt=\"\"/>", new[] { "http" }, new[] { "http://" }, false) { RuleRank = 70 });
-			AddRule(new ImageRule(this, _rgxImg, "<img src=\"${http}${inner}\" alt=\"\"/>", new[] { "http" }, new[] { "http://" }, false) { RuleRank = 71 });
-			AddRule(new ImageRule(this, _rgxImgTitle, "<img src=\"${http}${inner}\" alt=\"${description}\" title=\"${description}\" />", new[] { "http", "description" }, new[] { "http://", string.Empty }, false) { RuleRank = 73 });
-			AddRule(new ImageRule(this, _rgxImgTitleSize, "<img src=\"${http}${inner}\" alt=\"${description}\" title=\"${description}\" />", new[] { "http", "description" }, new[] { "http://", string.Empty }, false) { RuleRank = 72 });
-			AddRule(new ImageRule(this, _rgxImgIdSize, "<img src=\"${id}\" alt=\"${description}\" title=\"${description}\" />", ArrayHelper.Empty<string>(), null, true) { RuleRank = 74 });
-			AddRule(new ImageRule(this, _rgxImgId, "<img src=\"${id}\" alt=\"${description}\" title=\"${description}\" />", ArrayHelper.Empty<string>(), null, true) { RuleRank = 75 });
-			AddRule(new ImageRule(this, _rgxImgIdTitle, "<img src=\"${id}\" alt=\"${description}\" title=\"${description}\" />", new[] { "description" }, null, true) { RuleRank = 77 });
-			AddRule(new ImageRule(this, _rgxImgIdTitleSize, "<img src=\"${id}\" alt=\"${description}\" title=\"${description}\" />", new[] { "description" }, null, true) { RuleRank = 76 });
+			AddRule(new ImageRule(this, _rgxImgSize, "<img src=\"${http}${inner}\" style=\"width:${width};height=${height}\" alt=\"\"/>", new[] { "http", "width", "height" }, new[] { "http://", "auto", "auto" }) { RuleRank = 70 });
+			AddRule(new ImageRule(this, _rgxImg, "<img src=\"${http}${inner}\" alt=\"\"/>", new[] { "http" }, new[] { "http://" }) { RuleRank = 71 });
+			AddRule(new ImageRule(this, _rgxImgTitle, "<img src=\"${http}${inner}\" alt=\"${description}\" title=\"${description}\" />", new[] { "http", "description" }, new[] { "http://", string.Empty }) { RuleRank = 73 });
+			AddRule(new ImageRule(this, _rgxImgTitleSize, "<img src=\"${http}${inner}\" style=\"width:${width};height=${height}\" alt=\"${description}\" title=\"${description}\" />", new[] { "http", "width", "height", "description" }, new[] { "http://", "auto", "auto", string.Empty }) { RuleRank = 72 });
 			//AddRule(new VariableRegexReplaceRule(_rgxImg, "<a class=\"thumbnail\" href=\"#thumb\"><img style=\"max-width:400px\" src=\"${http}${inner}\" alt=\"\"/><span><img src=\"${http}${inner}\" alt=\"\"/></span></a>", new[] { "http" }, new[] { "http://" }));
 			//AddRule(new VariableRegexReplaceRule(_rgxImgTitle, "<a class=\"thumbnail\" href=\"#thumb\"><img style=\"max-width:400px\" src=\"${http}${inner}\" alt=\"\"/><span><img src=\"${http}${inner}\" alt=\"${description}\" title=\"${description}\" /><br/>${description}</span></a>", new string[] { "http", "description" }, new string[] { "http://" }));
 			AddRule(new RemoveNewLineRule(_rgxTable, "<table border='0' cellspacing='2' cellpadding='5'>${inner}</table>", false));
@@ -1068,14 +1056,12 @@
 
 		private class ImageRule : VariableRegexReplaceRule<TContext>
 		{
-			private readonly bool _isId;
 			private readonly BBService<TContext> _parent;
 
-			public ImageRule(BBService<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, bool isId)
+			public ImageRule(BBService<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults)
 				: base(regExSearch, regExReplace, variables, varDefaults)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
-				_isId = isId;
 			}
 
 			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
@@ -1086,6 +1072,9 @@
 				{
 					var sb = new StringBuilder(RegExReplace);
 					var index = 0;
+
+					var imgUrl = match.Groups["inner"].Value;
+					var isId = long.TryParse(imgUrl, out var fileId);
 
 					foreach (var str in Variables)
 					{
@@ -1099,6 +1088,9 @@
 							handlingValue = strArray[1];
 						}
 
+						if (isId && variableName == "http")
+							continue;
+
 						var variableValue = match.Groups[variableName].Value;
 						if ((VariableDefaults != null) && (variableValue.Length == 0))
 						{
@@ -1109,10 +1101,9 @@
 						index++;
 					}
 
-					var imgUrl = match.Groups["inner"].Value;
 					var http = match.Groups["http"].Value;
 
-					if (!imgUrl.IsEmpty() && !context.IsEmail)
+					if (!isId && !imgUrl.IsEmpty() && !context.IsEmail)
 					{
 						if (context.IsLocalHost)
 							imgUrl = imgUrl.ReplaceIgnoreCase("stocksharp.ru", context.LocalPath);
@@ -1141,32 +1132,27 @@
 					if (widthGroup.Success && heightGroup.Success)
 						size = widthGroup.Value.Replace("px", string.Empty) + "x" + heightGroup.Value.Replace("px", string.Empty);
 
-					if (_isId)
+					if (isId)
 					{
-						var url = string.Empty;
+						var file = _parent._getFile(fileId);
+						var url = _parent._toFullAbsolute(_parent._getFileUrl(fileId), context.IsEnglish);
 
-						if (long.TryParse(match.Groups["id"].Value, out var fileId))
+						var fileName = file?.GetName(context.IsEnglish);
+						var isGif = Path.GetExtension(fileName).CompareIgnoreCase(".gif");
+
+						if (!context.PreventScaling)
 						{
-							var file = _parent._getFile(fileId);
-							url = _parent._toFullAbsolute(_parent._getFileUrl(fileId), context.IsEnglish);
+							var style = isGif ? "style='max-width: 600px;' " : string.Empty;
+							sb.Insert(0, $"<a href='{url}' class='lightview' {style}data-lightview-options=\"skin: 'mac'\" data-lightview-group='mixed'>");
+							sb.Append("</a>");
 
-							var fileName = file?.GetName(context.IsEnglish);
-							var isGif = Path.GetExtension(fileName).CompareIgnoreCase(".gif");
-
-							if (!context.PreventScaling)
-							{
-								var style = isGif ? "style='max-width: 600px;' " : string.Empty;
-								sb.Insert(0, $"<a href='{url}' class='lightview' {style}data-lightview-options=\"skin: 'mac'\" data-lightview-group='mixed'>");
-								sb.Append("</a>");
-
-								if (!isGif)
-									url += "?size=" + size;
-							}
-
-							sb.Replace("${description}", fileName);
+							if (!isGif)
+								url += "?size=" + size;
 						}
 
-						sb.Replace("${id}", url);
+						sb.Replace("${description}", fileName);
+						sb.Replace("${inner}", url);
+						sb.Replace("${http}", string.Empty);
 					}
 					else
 						sb.Replace("${inner}", imgUrl);
@@ -1176,7 +1162,7 @@
 						sb.Replace("${innertrunc}", imgUrl.TruncateMiddle(TruncateLength));
 					}
 					
-					if (!_isId)
+					if (!isId)
 					{
 						if (http.IsEmpty())
 							http = "http://";
