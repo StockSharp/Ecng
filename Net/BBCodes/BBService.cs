@@ -57,7 +57,6 @@
 		private readonly Regex _rgxYouTube;
 		private readonly Regex _rgxYouTube2;
 		private readonly Regex _rgxVimeo;
-		private readonly Regex _rgxVk;
 		private readonly Regex _rgxUser;
 		private readonly Regex _rgxSpoiler;
 
@@ -181,7 +180,6 @@
 			_rgxYouTube = new Regex(@"\[youtube\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?youtube.com/watch\?v=(?<id>[0-9A-Za-z-_]{11}))[^[]*\[/youtube\]", singleLine);
 			_rgxYouTube2 = new Regex(@"\[youtube\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?youtu.be/(?<id>[0-9A-Za-z-_]{11}))[^[]*\[/youtube\]", singleLine);
 			_rgxVimeo = new Regex(@"\[vimeo\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?vimeo.com/(?<vimeoId>[0-9]{8}))[^[]*\[/vimeo\]", singleLine);
-			_rgxVk = new Regex(@"\[vk\](?<inner>(?<http>(http://)|(https://))(?<prefix>[A-Za-z][A-Za-z][A-Za-z]?\.)?vk.com/(?<vkId>.+))[^[]*\[/vk\]", singleLine);
 			_rgxUser = new Regex(@"\[user\](?<id>([0-9]*))\[/user\]", singleLine);
 			_rgxProduct = new Regex(@"\[product\](?<id>([0-9]*))\[/product\]", singleLine);
 			_rgxPackage = new Regex(@"\[package\](?<id>(.+?))\[/package\]", singleLine);
@@ -351,7 +349,6 @@
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxYouTube, "<iframe width=\"640\" height=\"390\" src=\"//www.youtube.com/embed/${id}\" frameborder=\"0\" allowfullscreen></iframe>", new[] { "id" }));
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxYouTube2, "<iframe width=\"640\" height=\"390\" src=\"//www.youtube.com/embed/${id}\" frameborder=\"0\" allowfullscreen></iframe>", new[] { "id" }));
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxVimeo, "<iframe width=\"560\" height=\"350\" src=\"https://player.vimeo.com/video/${vimeoId}?show_title=1&show_byline=1&show_portrait=1&&fullscreen=1\" frameborder=\"0\"></iframe>", new[] { "prefix", "vimeoId" }));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxVk, "<iframe width=\"607\" height=\"360\" src=\"https://${prefix}vk.com/${vkId}\" frameborder=\"0\"></iframe>", new[] { "prefix", "vkId" }));
 			AddRule(new FacebookRule(new Regex(@"\[fb\]https:\/\/www.facebook.com\/(?<innerUrl>.+)\[/fb\]", singleLine)));
 
 			AddRule(new UserRule(this, _rgxUser, "<a href='${url}'>${name}</a>"));
