@@ -352,6 +352,7 @@
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxYouTube2, "<iframe width=\"640\" height=\"390\" src=\"//www.youtube.com/embed/${id}\" frameborder=\"0\" allowfullscreen></iframe>", new[] { "id" }));
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxVimeo, "<iframe width=\"560\" height=\"350\" src=\"https://player.vimeo.com/video/${vimeoId}?show_title=1&show_byline=1&show_portrait=1&&fullscreen=1\" frameborder=\"0\"></iframe>", new[] { "prefix", "vimeoId" }));
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxVk, "<iframe width=\"607\" height=\"360\" src=\"https://${prefix}vk.com/${vkId}\" frameborder=\"0\"></iframe>", new[] { "prefix", "vkId" }));
+			AddRule(new FacebookRule(new Regex(@"\[fb\]https:\/\/www.facebook.com\/(?<innerUrl>.+)\[/fb\]", singleLine)));
 
 			AddRule(new UserRule(this, _rgxUser, "<a href='${url}'>${name}</a>"));
 			AddRule(new PackageRule(this, _rgxPackage, "<a href='${url}'>${name}</a>"));
@@ -799,6 +800,35 @@
 					var g = match.Groups[0];
 					builder.Remove(g.Index, g.Length);
 					builder.Insert(g.Index, sb.ToString());
+				}
+
+				text = builder.ToString();
+			}
+		}
+
+		private class FacebookRule : VariableRegexReplaceRule<TContext>
+		{
+			public FacebookRule(Regex regex)
+				: base(regex, "<iframe src=\"https://www.facebook.com/plugins/post.php?href=${url}&width=500&show_text=true&height=573&appId\" width=\"500\" height=\"573\" style=\"border:none;overflow:hidden\" scrolling=\"no\" frameborder=\"0\" allowfullscreen=\"true\" allow=\"autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share\"></iframe>", new[] { "innerUrl" })
+			{
+			}
+
+			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			{
+				var builder = new StringBuilder(text);
+
+				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
+				{
+					var sb = new StringBuilder(RegExReplace);
+					var url = match.Groups["innerUrl"].Value;
+
+					sb.Replace("${url}", $"https://www.facebook.com/{url}".EncodeUrl());
+
+					replacement.ReplaceHtmlFromText(ref sb);
+
+					var group = match.Groups[0];
+					builder.Remove(group.Index, group.Length);
+					builder.Insert(group.Index, sb.ToString());
 				}
 
 				text = builder.ToString();
