@@ -120,7 +120,7 @@
 			_resendCommands.Clear();
 
 			var source = new CancellationTokenSource();
-			
+
 			_expectedDisconnect = false;
 			_source = source;
 
@@ -166,7 +166,7 @@
 				_infoLog("Connection {0} cannot be processed. Cancellation invoked.".Translate(), _url);
 				return;
 			}
-			
+
 			if (_immediateConnect)
 				_connected.Invoke();
 
@@ -232,6 +232,8 @@
 				var attempts = ReconnectAttempts;
 
 				var needClose = true;
+
+				_infoLog("Starting receive loop, {0} attempts", attempts);
 
 				while (!source.IsCancellationRequested)
 				{
@@ -306,7 +308,11 @@
 							break;
 
 						if (++errorCount < maxNetworkErrors)
+						{
+							if (!source.IsCancellationRequested)
+								_errorLog("{0} errors", $"{errorCount}/{maxNetworkErrors}");
 							continue;
+						}
 
 						_errorLog("Max network error {0} limit reached.".Translate(), maxNetworkErrors);
 						break;
@@ -338,6 +344,7 @@
 				_ws = null;
 
 				var expected = _disconnectionStates.TryGetAndRemove(source);
+				_infoLog("websocket disconnected, {0}", $"expected={expected}, attempts={attempts}");
 				_disconnected(expected);
 
 				if (!expected && (attempts > 0 || attempts == -1))
