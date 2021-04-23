@@ -28,10 +28,10 @@
     <IsSourcesAllow>true</IsSourcesAllow>
     <LangVersion>default</LangVersion>
 
-    <AWSSDKS3Ver>3.7.0.8</AWSSDKS3Ver>
-    <AWSSDKSQSVer>3.7.0.8</AWSSDKSQSVer>
-    <AWSSDKSimpleNotificationServiceVer>3.7.0.8</AWSSDKSimpleNotificationServiceVer>
-    <AWSSDKGlacierVer>3.7.0.7</AWSSDKGlacierVer>
+    <AWSSDKS3Ver>3.7.0.15</AWSSDKS3Ver>
+    <AWSSDKSQSVer>3.7.0.14</AWSSDKSQSVer>
+    <AWSSDKSimpleNotificationServiceVer>3.7.0.14</AWSSDKSimpleNotificationServiceVer>
+    <AWSSDKGlacierVer>3.7.0.13</AWSSDKGlacierVer>
 
     <MicrosoftWindowsCompatibilityVer>5.0.2</MicrosoftWindowsCompatibilityVer>
 
@@ -52,7 +52,7 @@
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
     <MsTestVer>2.2.3</MsTestVer>
     <MsTestSdkVer>16.9.4</MsTestSdkVer>
-    <SmartFormatVer>2.6.2</SmartFormatVer>
+    <SmartFormatVer>2.7.0</SmartFormatVer>
     <OctodiffVer>1.2.1</OctodiffVer>
     <MoreLinqVer>3.3.2</MoreLinqVer>
     <RestSharpVer>106.11.7</RestSharpVer>
