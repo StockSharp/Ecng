@@ -17,11 +17,11 @@ namespace Ecng.ComponentModel.Expressions
 	[CLSCompliant(false)]
 	public static class ExpressionHelper
 	{
-		private const string _idPattern = @"(#*)(@*)(#*)(\w*\.*)(\**)(\w+(\/*)\w+)@\w+";
+		private const string IdPattern = @"(#*)(@*)(#*)(\w*\.*)(\**)(\w+(\/*)\w+)@\w+";
 
-		private static readonly Regex _idRegex = new Regex($@"(?<id>{_idPattern})");
+		private static readonly Regex _idRegex = new Regex($@"(?<id>{IdPattern})");
 		private static readonly Regex _nameRegex = new Regex(@"(?<name>(\w+))");
-		private static readonly Regex _decodeRegex = new Regex($@"\[.*\]");
+		private static readonly Regex _bracketsVarRegex = new Regex(@"\[(?<name>[^\]]*)\]");
 
 		/// <summary>
 		/// To get all identifiers from mathematical formula.
@@ -68,28 +68,15 @@ namespace Ecng.ComponentModel.Expressions
 		{
 			replaces = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
-			foreach (var match in _decodeRegex.Matches(expression).Cast<Match>().OrderByDescending(m => m.Index))
+			foreach (var match in _bracketsVarRegex.Matches(expression).Cast<Match>().OrderByDescending(m => m.Index))
 			{
-				var varName = match.Value.Substring(1, match.Value.Length - 2);
+				var varName = match.Groups["name"].Value;
 
-				if (!replaces.TryGetValue(varName, out var t))
-				{
-					t = $"VAR{replaces.Count}@VAR";
-					replaces.Add(varName, t);
-				}
-
-				varName = t;
-
-				expression = expression.Remove(match.Index, match.Length);
-				expression = expression.Insert(match.Index, varName);
+				if (!replaces.ContainsKey(varName))
+					replaces.Add(varName, $"VAR{replaces.Count}@VAR");
 			}
 
-			foreach (var pair in replaces)
-			{
-				expression = expression.ReplaceIgnoreCase(pair.Key, pair.Value);
-			}
-
-			return expression;
+			return replaces.Aggregate(expression, (current, pair) => current.ReplaceIgnoreCase($"[{pair.Key}]", pair.Value).ReplaceIgnoreCase(pair.Key, pair.Value));
 		}
 
 		/// <summary>
