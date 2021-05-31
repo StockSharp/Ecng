@@ -45,7 +45,6 @@ namespace Ecng.Security
 			Algo = algo ?? throw new ArgumentNullException(nameof(algo));
 		}
 
-		public const int DefaultPasswordSize = 128;
 		public const int DefaultSaltSize = 128;
 
 		/// <summary>

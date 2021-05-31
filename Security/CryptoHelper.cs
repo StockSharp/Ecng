@@ -303,5 +303,35 @@ namespace Ecng.Security
 		{
 			return value.Hash(SHA512.Create());
 		}
+
+		public static Secret CreateSecret(this string plainText)
+		{
+			return plainText.CreateSecret(TypeHelper.GenerateSalt(Secret.DefaultSaltSize));
+		}
+
+		public static Secret CreateSecret(this string plainText, Secret secret)
+		{
+			if (secret is null)
+				throw new ArgumentNullException(nameof(secret));
+
+			return plainText.CreateSecret(secret.Salt);
+		}
+
+		public static Secret CreateSecret(this string plainText, byte[] salt)
+		{
+			if (plainText.IsEmpty())
+				throw new ArgumentNullException(nameof(plainText));
+
+			if (salt == null)
+				throw new ArgumentNullException(nameof(salt));
+
+			var unencodedBytes = plainText.Unicode();
+			var buffer = new byte[unencodedBytes.Length + salt.Length];
+
+			Buffer.BlockCopy(unencodedBytes, 0, buffer, 0, unencodedBytes.Length);
+			Buffer.BlockCopy(salt, 0, buffer, unencodedBytes.Length - 1, salt.Length);
+
+			return new Secret(buffer, salt);
+		}
 	}
 }
