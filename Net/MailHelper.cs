@@ -7,6 +7,8 @@
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Web;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
@@ -23,6 +25,15 @@
 
 			if (dispose)
 				message.Dispose();
+		}
+
+		public static async Task SendAsync(this MailMessage message)
+		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			using var mail = new SmtpClient();
+			await mail.SendMailAsync(message);
 		}
 
 		public static MailMessage AddHtml(this MailMessage message, string bodyHtml)
