@@ -2,6 +2,7 @@ namespace Ecng.Common
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Dynamic;
 	using System.Linq;
 	using System.Reflection;
 	using System.Runtime.Serialization;
@@ -459,6 +460,15 @@ namespace Ecng.Common
 		public static int LoWord(this int iValue)
 		{
 			return iValue & 0xFFFF;
+		}
+
+		// https://stackoverflow.com/a/30528667
+		public static bool HasProperty(this object settings, string name)
+		{
+			if (settings is ExpandoObject)
+				return ((IDictionary<string, object>)settings).ContainsKey(name);
+
+			return settings.GetType().GetProperty(name) != null;
 		}
 	}
 }
