@@ -9,7 +9,7 @@
 	using Ecng.Common;
 	using Ecng.Net;
 
-	public class BBService<TContext> : IBBService
+	public class BB2HtmlFormatter<TContext> : IHtmlFormatter
 		where TContext : BBCodesContext
 	{
 		//private string _rgxBBCodeLocalizationTag;
@@ -101,7 +101,7 @@
 		private readonly Func<long, INamedObject> _getFile;
 		private readonly Func<long, IPage> _getPage;
 
-		public BBService(bool isEnglish,
+		public BB2HtmlFormatter(bool isEnglish,
 			Func<string, bool, string> getOppositeUrl,
 			Func<long, string> getFileUrl,
 			Func<long, string> getUserUrl,
@@ -392,21 +392,21 @@
 		private class VariableRegexReplaceRuleEx : VariableRegexReplaceRule<TContext>
 		{
 			private readonly Func<string> _getRegExReplace;
-			private readonly BBService<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext> _parent;
 
-			public VariableRegexReplaceRuleEx(BBService<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, int truncateLength)
+			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, int truncateLength)
 				: base(regExSearch, regExReplace, variables, varDefaults, truncateLength)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public VariableRegexReplaceRuleEx(BBService<TContext> parent, Regex regExSearch, string regExReplace, string[] variables)
+			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables)
 				: base(regExSearch, regExReplace, variables)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public VariableRegexReplaceRuleEx(BBService<TContext> parent, Regex regExSearch, Func<string> getRegExReplace, string[] variables)
+			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, Func<string> getRegExReplace, string[] variables)
 				: base(regExSearch, null, variables)
 			{
 				_getRegExReplace = getRegExReplace ?? throw new ArgumentNullException(nameof(getRegExReplace));
@@ -539,7 +539,7 @@
 			}
 		}
 
-		string IBBService.ToHtml(string text, object context) => ToHtml(text, (TContext)context);
+		string IHtmlFormatter.ToHtml(string text, object context) => ToHtml(text, (TContext)context);
 
 		public string ToHtml(string text, TContext context)
 		{
@@ -570,15 +570,15 @@
 
 		private class UrlRule : VariableRegexReplaceRule<TContext>
 		{
-			private readonly BBService<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext> _parent;
 
-			public UrlRule(BBService<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, int truncateLength)
+			public UrlRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, int truncateLength)
 				: base(regExSearch, regExReplace, variables, varDefaults, truncateLength)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public UrlRule(BBService<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults)
+			public UrlRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults)
 				: base(regExSearch, regExReplace, variables, varDefaults)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -732,9 +732,9 @@
 
 		private class SpoilerRule : SimpleRegexReplaceRule<TContext>
 		{
-			private readonly BBService<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext> _parent;
 			
-			public SpoilerRule(BBService<TContext> parent, Regex regExSearch)
+			public SpoilerRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch)
 				: base(regExSearch, "<div class='spoilertitle'>${inner}</div>")
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -834,9 +834,9 @@
 
 		private class UserRule : SimpleRegexReplaceRule<TContext>
 		{
-			private readonly BBService<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext> _parent;
 
-			public UserRule(BBService<TContext> parent, Regex regExSearch, string regExReplace)
+			public UserRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace)
 				: base(regExSearch, regExReplace)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -877,9 +877,9 @@
 
 		private class PackageRule : SimpleRegexReplaceRule<TContext>
 		{
-			private readonly BBService<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext> _parent;
 
-			public PackageRule(BBService<TContext> parent, Regex regExSearch, string regExReplace)
+			public PackageRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace)
 				: base(regExSearch, regExReplace)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -919,9 +919,9 @@
 
 		private class ProductRule : SimpleRegexReplaceRule<TContext>
 		{
-			private readonly BBService<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext> _parent;
 
-			public ProductRule(BBService<TContext> parent, Regex regExSearch, string regExReplace)
+			public ProductRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace)
 				: base(regExSearch, regExReplace)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -963,9 +963,9 @@
 
 		private class Product2Rule : SimpleRegexReplaceRule<TContext>
 		{
-			private readonly BBService<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext> _parent;
 
-			public Product2Rule(BBService<TContext> parent)
+			public Product2Rule(BB2HtmlFormatter<TContext> parent)
 				: base(new Regex(@"\[product=(?<id>([0-9]*))\](?<inner>(.*?))\[/product\]", RegexOptions.Singleline | RegexOptions.IgnoreCase), "<a href='${url}'>${inner}</a>")
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -1023,9 +1023,9 @@
 
 		private class DynamicPageRule : SimpleRegexReplaceRule<TContext>
 		{
-			private readonly BBService<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext> _parent;
 
-			public DynamicPageRule(BBService<TContext> parent)
+			public DynamicPageRule(BB2HtmlFormatter<TContext> parent)
 				: base(new Regex(@"\[page=(?<id>([0-9]*))\](?<inner>(.*?))\[/page\]", RegexOptions.Singleline | RegexOptions.IgnoreCase), "<a href='${url}'>${inner}</a>")
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -1083,9 +1083,9 @@
 
 		private class ImageRule : VariableRegexReplaceRule<TContext>
 		{
-			private readonly BBService<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext> _parent;
 
-			public ImageRule(BBService<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults)
+			public ImageRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults)
 				: base(regExSearch, regExReplace, variables, varDefaults)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -1297,9 +1297,9 @@
 
 		private class TopicRegexReplaceRule : VariableRegexReplaceRule<TContext>
 		{
-			private readonly BBService<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext> _parent;
 
-			public TopicRegexReplaceRule(BBService<TContext> parent, string regExSearch, string regExReplace, RegexOptions regExOptions)
+			public TopicRegexReplaceRule(BB2HtmlFormatter<TContext> parent, string regExSearch, string regExReplace, RegexOptions regExOptions)
 				: base(regExSearch, regExReplace, regExOptions, new[] { "post", "topic", "message" })
 			{
 				RuleRank = 200;

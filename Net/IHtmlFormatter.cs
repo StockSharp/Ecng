@@ -1,6 +1,6 @@
-﻿namespace Ecng.Net.BBCodes
+﻿namespace Ecng.Net
 {
-	public interface IBBService
+	public interface IHtmlFormatter
 	{
 		string ToHtml(string text, object context);
 		string Clean(string text);
