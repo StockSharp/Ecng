@@ -4,6 +4,7 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Threading.Tasks;
 
 	using MoreLinq;
 
@@ -1089,9 +1090,7 @@
 			if (list == null)
 				return null;
 
-			var syncList = list as SynchronizedList<T>;
-
-			if (syncList == null)
+			if (list is not SynchronizedList<T> syncList)
 			{
 				syncList = new SynchronizedList<T>();
 				syncList.AddRange(list);
@@ -1326,5 +1325,9 @@
 
 		public static IEnumerable<T> Append2<T>(this IEnumerable<T> values, T value)
 			=> Enumerable.Append(values, value);
+
+		// https://stackoverflow.com/a/35874937
+		public static async Task<IEnumerable<T1>> SelectManyAsync<T, T1>(this IEnumerable<T> enumeration, Func<T, Task<IEnumerable<T1>>> func)
+			=> (await Task.WhenAll(enumeration.Select(func))).SelectMany(s => s);
 	}
 }
