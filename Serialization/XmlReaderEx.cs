@@ -15,8 +15,10 @@ namespace Ecng.Serialization
 	public class XmlReaderEx : XmlTextReader
 	{
 		private bool _readingDate;
+#if !NETCOREAPP && !NETSTANDARD
 		private static readonly MethodInfo _dateFromString;
 		//const string CustomUtcDateTimeFormat = "ddd MMM dd HH:mm:ss Z yyyy"; // Wed Oct 07 08:00:07 GMT 2009
+#endif
 
 		static XmlReaderEx()
 		{
@@ -66,6 +68,7 @@ namespace Ecng.Serialization
 					dto = new DateTimeOffset();
 				else
 				{
+#if !NETCOREAPP && !NETSTANDARD
 					try
 					{
 						dto = _dateFromString.GetValue<object[], DateTimeOffset>(new object[] { dateString, this });
@@ -77,6 +80,9 @@ namespace Ecng.Serialization
 
 						dto = dateString.ToDateTimeOffset(CustomDateFormat);
 					}
+#else
+					throw new PlatformNotSupportedException();
+#endif
 				}
 
 				return dto.ToString(CultureInfo.CurrentCulture.DateTimeFormat.RFC1123Pattern);

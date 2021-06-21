@@ -190,7 +190,7 @@ namespace IniParser
         /// <summary>
         ///     Represents all sections from an INI file
         /// </summary>
-        protected IniScheme _scheme;
+        private IniScheme _scheme;
 
         #endregion
     }

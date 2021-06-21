@@ -36,12 +36,12 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         /// <summary>
         /// the vertical scroll bar for the control to scroll to html content out of view
         /// </summary>
-        protected ScrollBar _verticalScrollBar;
+        private ScrollBar _verticalScrollBar;
 
         /// <summary>
         /// the horizontal scroll bar for the control to scroll to html content out of view
         /// </summary>
-        protected ScrollBar _horizontalScrollBar;
+        private ScrollBar _horizontalScrollBar;
 
         #endregion
 
@@ -72,7 +72,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF
             AddVisualChild(_horizontalScrollBar);
             AddLogicalChild(_horizontalScrollBar);
 
-            _htmlContainer.ScrollChange += OnScrollChange;
+            HtmlContainer.ScrollChange += OnScrollChange;
         }
 
         /// <summary>
@@ -85,13 +85,13 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         {
             ArgChecker.AssertArgNotNullOrEmpty(elementId, "elementId");
 
-            if (_htmlContainer != null)
+            if (HtmlContainer != null)
             {
-                var rect = _htmlContainer.GetElementRectangle(elementId);
+                var rect = HtmlContainer.GetElementRectangle(elementId);
                 if (rect.HasValue)
                 {
                     ScrollToPoint(rect.Value.Location.X, rect.Value.Location.Y);
-                    _htmlContainer.HandleMouseMove(this, Mouse.GetPosition(this));
+                    HtmlContainer.HandleMouseMove(this, Mouse.GetPosition(this));
                 }
             }
         }
@@ -160,14 +160,14 @@ namespace TheArtOfDev.HtmlRenderer.WPF
             _verticalScrollBar.Arrange(new Rect(System.Math.Max(bounds.Width - _verticalScrollBar.Width - BorderThickness.Right, 0), BorderThickness.Top, _verticalScrollBar.Width, scrollHeight));
             _horizontalScrollBar.Arrange(new Rect(BorderThickness.Left, System.Math.Max(bounds.Height - _horizontalScrollBar.Height - BorderThickness.Bottom, 0), scrollWidth, _horizontalScrollBar.Height));
 
-            if (_htmlContainer != null)
+            if (HtmlContainer != null)
             {
                 if (_verticalScrollBar.Visibility == Visibility.Visible)
                 {
                     _verticalScrollBar.ViewportSize = HtmlHeight(bounds);
                     _verticalScrollBar.SmallChange = 25;
                     _verticalScrollBar.LargeChange = _verticalScrollBar.ViewportSize * .9;
-                    _verticalScrollBar.Maximum = _htmlContainer.ActualSize.Height - _verticalScrollBar.ViewportSize;
+                    _verticalScrollBar.Maximum = HtmlContainer.ActualSize.Height - _verticalScrollBar.ViewportSize;
                 }
 
                 if (_horizontalScrollBar.Visibility == Visibility.Visible)
@@ -175,7 +175,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF
                     _horizontalScrollBar.ViewportSize = HtmlWidth(bounds);
                     _horizontalScrollBar.SmallChange = 25;
                     _horizontalScrollBar.LargeChange = _horizontalScrollBar.ViewportSize * .9;
-                    _horizontalScrollBar.Maximum = _htmlContainer.ActualSize.Width - _horizontalScrollBar.ViewportSize;
+                    _horizontalScrollBar.Maximum = HtmlContainer.ActualSize.Width - _horizontalScrollBar.ViewportSize;
                 }
 
                 // update the scroll offset because the scroll values may have changed
@@ -190,11 +190,11 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         /// </summary>
         protected Size PerformHtmlLayout(Size constraint)
         {
-            if (_htmlContainer != null)
+            if (HtmlContainer != null)
             {
-                _htmlContainer.MaxSize = new Size(HtmlWidth(constraint), 0);
-                _htmlContainer.PerformLayout();
-                return _htmlContainer.ActualSize;
+                HtmlContainer.MaxSize = new Size(HtmlWidth(constraint), 0);
+                HtmlContainer.PerformLayout();
+                return HtmlContainer.ActualSize;
             }
             return Size.Empty;
         }
@@ -348,9 +348,9 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         private void UpdateScrollOffsets()
         {
             var newScrollOffset = new Point(-_horizontalScrollBar.Value, -_verticalScrollBar.Value);
-            if (!newScrollOffset.Equals(_htmlContainer.ScrollOffset))
+            if (!newScrollOffset.Equals(HtmlContainer.ScrollOffset))
             {
-                _htmlContainer.ScrollOffset = newScrollOffset;
+                HtmlContainer.ScrollOffset = newScrollOffset;
                 InvalidateVisual();
             }
         }

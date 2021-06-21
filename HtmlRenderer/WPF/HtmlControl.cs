@@ -58,17 +58,17 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         /// <summary>
         /// Underline html container instance.
         /// </summary>
-        protected readonly HtmlContainer _htmlContainer;
+        protected readonly HtmlContainer HtmlContainer;
 
         /// <summary>
         /// the base stylesheet data used in the control
         /// </summary>
-        protected CssData _baseCssData;
+        private CssData _baseCssData;
 
         /// <summary>
         /// The last position of the scrollbars to know if it has changed to update mouse
         /// </summary>
-        protected Point _lastScrollOffset;
+        private Point _lastScrollOffset;
 
         #endregion
 
@@ -99,13 +99,13 @@ namespace TheArtOfDev.HtmlRenderer.WPF
             // shitty WPF rendering, have no idea why this actually makes everything sharper =/
             SnapsToDevicePixels = false;
 
-            _htmlContainer = new HtmlContainer();
-            _htmlContainer.LoadComplete += OnLoadComplete;
-            _htmlContainer.LinkClicked += OnLinkClicked;
-            _htmlContainer.RenderError += OnRenderError;
-            _htmlContainer.Refresh += OnRefresh;
-            _htmlContainer.StylesheetLoad += OnStylesheetLoad;
-            _htmlContainer.ImageLoad += OnImageLoad;
+            HtmlContainer = new HtmlContainer();
+            HtmlContainer.LoadComplete += OnLoadComplete;
+            HtmlContainer.LinkClicked += OnLinkClicked;
+            HtmlContainer.RenderError += OnRenderError;
+            HtmlContainer.Refresh += OnRefresh;
+            HtmlContainer.StylesheetLoad += OnStylesheetLoad;
+            HtmlContainer.ImageLoad += OnImageLoad;
         }
 
         /// <summary>
@@ -229,7 +229,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         [Browsable(false)]
         public virtual string SelectedText
         {
-            get { return _htmlContainer.SelectedText; }
+            get { return HtmlContainer.SelectedText; }
         }
 
         /// <summary>
@@ -238,7 +238,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         [Browsable(false)]
         public virtual string SelectedHtml
         {
-            get { return _htmlContainer.SelectedHtml; }
+            get { return HtmlContainer.SelectedHtml; }
         }
 
         /// <summary>
@@ -247,7 +247,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         /// <returns>generated html</returns>
         public virtual string GetHtml()
         {
-            return _htmlContainer != null ? _htmlContainer.GetHtml() : null;
+            return HtmlContainer != null ? HtmlContainer.GetHtml() : null;
         }
 
         /// <summary>
@@ -259,7 +259,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         /// <returns>the rectangle of the element or null if not found</returns>
         public virtual Rect? GetElementRectangle(string elementId)
         {
-            return _htmlContainer != null ? _htmlContainer.GetElementRectangle(elementId) : null;
+            return HtmlContainer != null ? HtmlContainer.GetElementRectangle(elementId) : null;
         }
 
         /// <summary>
@@ -267,8 +267,8 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         /// </summary>
         public void ClearSelection()
         {
-            if (_htmlContainer != null)
-                _htmlContainer.ClearSelection();
+            if (HtmlContainer != null)
+                HtmlContainer.ClearSelection();
         }
 
 
@@ -297,7 +297,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF
 
             var htmlWidth = HtmlWidth(RenderSize);
             var htmlHeight = HtmlHeight(RenderSize);
-            if (_htmlContainer != null && htmlWidth > 0 && htmlHeight > 0)
+            if (HtmlContainer != null && htmlWidth > 0 && htmlHeight > 0)
             {
                 var windows = Window.GetWindow(this);
                 if (windows != null)
@@ -311,13 +311,13 @@ namespace TheArtOfDev.HtmlRenderer.WPF
                 }
 
                 context.PushClip(new RectangleGeometry(new Rect(Padding.Left + BorderThickness.Left, Padding.Top + BorderThickness.Top, htmlWidth, (int)htmlHeight)));
-                _htmlContainer.Location = new Point(Padding.Left + BorderThickness.Left, Padding.Top + BorderThickness.Top);
-                _htmlContainer.PerformPaint(context, new Rect(Padding.Left + BorderThickness.Left, Padding.Top + BorderThickness.Top, htmlWidth, htmlHeight));
+                HtmlContainer.Location = new Point(Padding.Left + BorderThickness.Left, Padding.Top + BorderThickness.Top);
+                HtmlContainer.PerformPaint(context, new Rect(Padding.Left + BorderThickness.Left, Padding.Top + BorderThickness.Top, htmlWidth, htmlHeight));
                 context.Pop();
 
-                if (!_lastScrollOffset.Equals(_htmlContainer.ScrollOffset))
+                if (!_lastScrollOffset.Equals(HtmlContainer.ScrollOffset))
                 {
-                    _lastScrollOffset = _htmlContainer.ScrollOffset;
+                    _lastScrollOffset = HtmlContainer.ScrollOffset;
                     InvokeMouseMove();
                 }
             }
@@ -329,8 +329,8 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            if (_htmlContainer != null)
-                _htmlContainer.HandleMouseMove(this, e.GetPosition(this));
+            if (HtmlContainer != null)
+                HtmlContainer.HandleMouseMove(this, e.GetPosition(this));
         }
 
         /// <summary>
@@ -339,8 +339,8 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         protected override void OnMouseLeave(MouseEventArgs e)
         {
             base.OnMouseLeave(e);
-            if (_htmlContainer != null)
-                _htmlContainer.HandleMouseLeave(this);
+            if (HtmlContainer != null)
+                HtmlContainer.HandleMouseLeave(this);
         }
 
         /// <summary>
@@ -349,8 +349,8 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
             base.OnMouseDown(e);
-            if (_htmlContainer != null)
-                _htmlContainer.HandleMouseDown(this, e);
+            if (HtmlContainer != null)
+                HtmlContainer.HandleMouseDown(this, e);
         }
 
         /// <summary>
@@ -359,8 +359,8 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         protected override void OnMouseUp(MouseButtonEventArgs e)
         {
             base.OnMouseUp(e);
-            if (_htmlContainer != null)
-                _htmlContainer.HandleMouseUp(this, e);
+            if (HtmlContainer != null)
+                HtmlContainer.HandleMouseUp(this, e);
         }
 
         /// <summary>
@@ -369,8 +369,8 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         protected override void OnMouseDoubleClick(MouseButtonEventArgs e)
         {
             base.OnMouseDoubleClick(e);
-            if (_htmlContainer != null)
-                _htmlContainer.HandleMouseDoubleClick(this, e);
+            if (HtmlContainer != null)
+                HtmlContainer.HandleMouseDoubleClick(this, e);
         }
 
         /// <summary>
@@ -379,8 +379,8 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
-            if (_htmlContainer != null)
-                _htmlContainer.HandleKeyDown(this, e);
+            if (HtmlContainer != null)
+                HtmlContainer.HandleKeyDown(this, e);
         }
 
         /// <summary>
@@ -459,7 +459,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         /// </summary>
         protected virtual void InvokeMouseMove()
         {
-            _htmlContainer.HandleMouseMove(this, Mouse.GetPosition(this));
+            HtmlContainer.HandleMouseMove(this, Mouse.GetPosition(this));
         }
 
         /// <summary>
@@ -470,7 +470,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF
             var control = dependencyObject as HtmlControl;
             if (control != null)
             {
-                var htmlContainer = control._htmlContainer;
+                var htmlContainer = control.HtmlContainer;
                 if (e.Property == AvoidImagesLateLoadingProperty)
                 {
                     htmlContainer.AvoidImagesLateLoading = (bool)e.NewValue;

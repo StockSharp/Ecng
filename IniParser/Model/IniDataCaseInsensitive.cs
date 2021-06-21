@@ -17,14 +17,14 @@ namespace IniParser.Model
         {
             Sections = new SectionCollection(StringComparer.OrdinalIgnoreCase);
             Global = new PropertyCollection(StringComparer.OrdinalIgnoreCase);
-            _scheme = new IniScheme();
+            Scheme = new IniScheme();
         }
 
         public IniDataCaseInsensitive(IniScheme scheme)
         {
             Sections = new SectionCollection(StringComparer.OrdinalIgnoreCase);
             Global = new PropertyCollection(StringComparer.OrdinalIgnoreCase);
-            _scheme = scheme.DeepClone();
+            Scheme = scheme.DeepClone();
         }
 
 

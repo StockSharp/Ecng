@@ -29,17 +29,17 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         /// <summary>
         /// the global adapter
         /// </summary>
-        protected readonly RAdapter _adapter;
+        protected readonly RAdapter Adapter;
 
         /// <summary>
         /// The clipping bound stack as clips are pushed/poped to/from the graphics
         /// </summary>
-        protected readonly Stack<RRect> _clipStack = new Stack<RRect>();
+        protected readonly Stack<RRect> ClipStack = new Stack<RRect>();
 
         /// <summary>
         /// The suspended clips
         /// </summary>
-        private Stack<RRect> _suspendedClips = new Stack<RRect>();
+        private readonly Stack<RRect> _suspendedClips = new Stack<RRect>();
 
         #endregion
 
@@ -51,8 +51,8 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         {
             ArgChecker.AssertArgNotNull(adapter, "global");
 
-            _adapter = adapter;
-            _clipStack.Push(initialClip);
+            Adapter = adapter;
+            ClipStack.Push(initialClip);
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         /// <returns>pen instance</returns>
         public RPen GetPen(RColor color)
         {
-            return _adapter.GetPen(color);
+            return Adapter.GetPen(color);
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         /// <returns>solid color brush instance</returns>
         public RBrush GetSolidBrush(RColor color)
         {
-            return _adapter.GetSolidBrush(color);
+            return Adapter.GetSolidBrush(color);
         }
 
         /// <summary>
@@ -85,7 +85,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         /// <returns>linear gradient color brush instance</returns>
         public RBrush GetLinearGradientBrush(RRect rect, RColor color1, RColor color2, double angle)
         {
-            return _adapter.GetLinearGradientBrush(rect, color1, color2, angle);
+            return Adapter.GetLinearGradientBrush(rect, color1, color2, angle);
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         /// <returns>A rectangle structure that represents a bounding rectangle for the clipping region of this Graphics.</returns>
         public RRect GetClip()
         {
-            return _clipStack.Peek();
+            return ClipStack.Peek();
         }
 
         /// <summary>
@@ -120,7 +120,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         /// </summary>
         public void SuspendClipping()
         {
-            while (_clipStack.Count > 1)
+            while (ClipStack.Count > 1)
             {
                 var clip = GetClip();
                 _suspendedClips.Push(clip);

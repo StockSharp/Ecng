@@ -47,8 +47,9 @@ namespace IniParser.Configuration
         /// <remarks>
         ///     Defaults to 1 space
         /// </remarks>
-        public uint NumSpacesBetweenKeyAndAssigment
+        public int NumSpacesBetweenKeyAndAssigment
         {
+			get => _numSpacesBetweenKeyAndAssigment;
             set
             {
                 _numSpacesBetweenKeyAndAssigment = value;
@@ -64,8 +65,9 @@ namespace IniParser.Configuration
         /// <remarks>
         ///     Defaults to 1 space
         /// </remarks>
-        public uint NumSpacesBetweenAssigmentAndValue
+        public int NumSpacesBetweenAssigmentAndValue
         {
+			get => _numSpacesBetweenAssigmentAndValue;
             set
             {
                 _numSpacesBetweenAssigmentAndValue = value;
@@ -88,8 +90,8 @@ namespace IniParser.Configuration
         #endregion
 
         #region Fields
-        private uint _numSpacesBetweenKeyAndAssigment;
-        private uint _numSpacesBetweenAssigmentAndValue;
+        private int _numSpacesBetweenKeyAndAssigment;
+        private int _numSpacesBetweenAssigmentAndValue;
         #endregion
     }
 

@@ -70,23 +70,23 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
         public override void PopClip()
         {
             _g.Pop();
-            _clipStack.Pop();
+            ClipStack.Pop();
         }
 
         public override void PushClip(RRect rect)
         {
-            _clipStack.Push(rect);
+            ClipStack.Push(rect);
             _g.PushClip(new RectangleGeometry(Utils.Convert(rect)));
         }
 
         public override void PushClipExclude(RRect rect)
         {
             var geometry = new CombinedGeometry();
-            geometry.Geometry1 = new RectangleGeometry(Utils.Convert(_clipStack.Peek()));
+            geometry.Geometry1 = new RectangleGeometry(Utils.Convert(ClipStack.Peek()));
             geometry.Geometry2 = new RectangleGeometry(Utils.Convert(rect));
             geometry.GeometryCombineMode = GeometryCombineMode.Exclude;
 
-            _clipStack.Push(_clipStack.Peek());
+            ClipStack.Push(ClipStack.Peek());
             _g.PushClip(geometry);
         }
 
@@ -172,7 +172,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 
         public override void DrawString(string str, RFont font, RColor color, RPoint point, RSize size, bool rtl)
         {
-            var colorConv = ((BrushAdapter)_adapter.GetSolidBrush(color)).Brush;
+            var colorConv = ((BrushAdapter)Adapter.GetSolidBrush(color)).Brush;
 
             bool glyphRendered = false;
             GlyphTypeface glyphTypeface = ((FontAdapter)font).GlyphTypeface;

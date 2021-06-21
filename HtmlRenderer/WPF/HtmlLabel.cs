@@ -79,7 +79,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         /// </summary>
         protected override Size MeasureOverride(Size constraint)
         {
-            if (_htmlContainer != null)
+            if (HtmlContainer != null)
             {
                 using (var ig = new GraphicsAdapter())
                 {
@@ -90,7 +90,7 @@ namespace TheArtOfDev.HtmlRenderer.WPF
                     var minSize = new RSize(MinWidth < Double.PositiveInfinity ? MinWidth - horizontal : 0, MinHeight < Double.PositiveInfinity ? MinHeight - vertical : 0);
                     var maxSize = new RSize(MaxWidth < Double.PositiveInfinity ? MaxWidth - horizontal : 0, MaxHeight < Double.PositiveInfinity ? MaxHeight - vertical : 0);
 
-                    var newSize = HtmlRendererUtils.Layout(ig, _htmlContainer.HtmlContainerInt, size, minSize, maxSize, AutoSize, AutoSizeHeightOnly);
+                    var newSize = HtmlRendererUtils.Layout(ig, HtmlContainer.HtmlContainerInt, size, minSize, maxSize, AutoSize, AutoSizeHeightOnly);
 
                     constraint = new Size(newSize.Width + horizontal, newSize.Height + vertical);
                 }

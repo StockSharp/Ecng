@@ -9,6 +9,7 @@ namespace Ecng.Interop.Dde
 
 	using NDde.Server;
 
+	[CLSCompliant(false)]
 	public class XlsDdeServer : DdeServer
 	{
 		private readonly SyncObject _registerWait = new SyncObject();

@@ -8,10 +8,10 @@ namespace IniParser.Exceptions
     public class ParsingException : Exception
     {
         public Version LibVersion {get;}
-        public uint LineNumber {get;}
+        public int LineNumber {get;}
         public string LineContents {get;}
 
-        public ParsingException(string msg, uint lineNumber)
+        public ParsingException(string msg, int lineNumber)
             :this(msg, lineNumber, string.Empty, null)
         {}
 
@@ -19,11 +19,11 @@ namespace IniParser.Exceptions
             :this(msg, 0, string.Empty, innerException) 
         {}
 
-        public ParsingException(string msg, uint lineNumber, string lineContents)
+        public ParsingException(string msg, int lineNumber, string lineContents)
             :this(msg, lineNumber, lineContents, null)
         {}
             
-        public ParsingException(string msg, uint lineNumber, string lineContents, Exception innerException)
+        public ParsingException(string msg, int lineNumber, string lineContents, Exception innerException)
             : base(
                 $"{msg} while parsing line number {lineNumber} with value \'{lineContents}\'", 
                 innerException) 

@@ -480,7 +480,7 @@ namespace IniParser
         #endregion
 
         #region Fields
-        uint _currentLineNumber;
+        int _currentLineNumber;
 
         // Holds a list of the exceptions catched while parsing
         readonly List<Exception> _errorExceptions;
