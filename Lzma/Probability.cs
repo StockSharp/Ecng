@@ -5,6 +5,7 @@ namespace Lzma
 	/// <summary>
 	/// Symbol probability.
 	/// </summary>
+	[System.CLSCompliant(false)]
 	public struct Probability
 	{
 		#region Constants

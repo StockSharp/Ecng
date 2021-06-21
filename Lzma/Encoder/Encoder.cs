@@ -6,6 +6,7 @@ namespace Lzma
 	/// <summary>
 	/// Represents the LZMA encoder.
 	/// </summary>
+	[CLSCompliant(false)]
 	public abstract class Encoder
 	{
 		#region Fields

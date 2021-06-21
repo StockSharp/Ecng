@@ -3,6 +3,7 @@
 	/// <summary>
 	/// State index of the encoder or decoder.
 	/// </summary>
+	[System.CLSCompliant(false)]
 	public struct State
 	{
 		#region Constants

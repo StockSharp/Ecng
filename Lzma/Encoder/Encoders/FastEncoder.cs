@@ -6,6 +6,7 @@ namespace Lzma
 	/// <summary>
 	/// Represents a fast LZMA encoder.
 	/// </summary>
+	[CLSCompliant(false)]
 	public class FastEncoder : Encoder
 	{
 		#region Fields

@@ -8,6 +8,7 @@ namespace Lzma
 	/// Represents an LZMA stream.
 	/// This class is capable of reading and writing data in the simple format used by the .lzma file format.
 	/// </summary>
+	[CLSCompliant(false)]
 	public sealed class LzmaStream : Stream
 	{
 		#region Fields

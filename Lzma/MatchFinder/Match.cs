@@ -3,6 +3,7 @@
 	/// <summary>
 	/// Represents a match.
 	/// </summary>
+	[System.CLSCompliant(false)]
 	public struct Match
 	{
 		#region Fields

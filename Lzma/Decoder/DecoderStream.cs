@@ -9,6 +9,7 @@ namespace Lzma
 	/// <remarks>
 	/// Note that this class does NOT handle/support any of the LZMA container streams/headers.
 	/// </remarks>
+	[CLSCompliant(false)]
 	public sealed class DecoderStream : Stream
 	{
 		#region Fields

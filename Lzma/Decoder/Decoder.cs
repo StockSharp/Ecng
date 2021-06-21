@@ -6,6 +6,7 @@ namespace Lzma
 	/// <summary>
 	/// Represents a decoder for LZMA streams.
 	/// </summary>
+	[CLSCompliant(false)]
 	public sealed class Decoder
 	{
 		#region Fields

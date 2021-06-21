@@ -5,6 +5,7 @@ namespace Lzma
 	/// <summary>
 	/// LZMA decoder properties.
 	/// </summary>
+	[CLSCompliant(false)]
 	public struct DecoderProperties
 	{
 		#region Fields

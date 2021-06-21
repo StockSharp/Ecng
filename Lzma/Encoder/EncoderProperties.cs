@@ -6,6 +6,7 @@ namespace Lzma
 	/// <summary>
 	/// LZMA encoder properties.
 	/// </summary>
+	[CLSCompliant(false)]
 	public struct EncoderProperties
 	{
 		#region Fields

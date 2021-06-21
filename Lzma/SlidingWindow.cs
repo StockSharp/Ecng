@@ -22,6 +22,7 @@ namespace Lzma
 	/// The working position is always equal to or greater than the history position (in terms of a cyclic buffer that is).
 	/// The history position will be moved once the data is processed.
 	/// </remarks>
+	[CLSCompliant(false)]
 	public sealed class SlidingWindow
 	{
 		#region Fields
