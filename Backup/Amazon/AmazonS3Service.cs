@@ -5,6 +5,8 @@ namespace Ecng.Backup.Amazon
 	using System.IO;
 	using System.Linq;
 	using System.Threading;
+	using System.Threading.Tasks;
+	using System.Net;
 
 	using global::Amazon;
 	using global::Amazon.Runtime;
@@ -12,7 +14,7 @@ namespace Ecng.Backup.Amazon
 	using global::Amazon.S3.Model;
 
 	using Ecng.Common;
-	using Ecng.Serialization;
+	using Ecng.Localization;
 
 	/// <summary>
 	/// The data storage service based on Amazon S3 http://aws.amazon.com/s3/.
@@ -55,7 +57,7 @@ namespace Ecng.Backup.Amazon
 			_client = new AmazonS3Client(_credentials, _endpoint);
 		}
 
-		IEnumerable<BackupEntry> IBackupService.Find(BackupEntry parent, string criteria)
+		async Task<IEnumerable<BackupEntry>> IBackupService.FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken)
 		{
 			//if (parent != null && !parent.IsDirectory)
 			//	throw new ArgumentException("{0} should be directory.".Put(parent.Name), "parent");
@@ -69,24 +71,26 @@ namespace Ecng.Backup.Amazon
 			if (!criteria.IsEmpty())
 				request.Prefix += "/" + criteria;
 
+			var retVal = new List<BackupEntry>();
+
 			do
 			{
-				var response = _client.ListObjectsV2Async(request).Result;
+				var response = await _client.ListObjectsV2Async(request, cancellationToken);
 
 				foreach (var entry in response.S3Objects)
 				{
 					var be = GetPath(entry.Key);
 					be.Size = entry.Size;
-					yield return be;
+					retVal.Add(be);
 				}
 
 				foreach (var commonPrefix in response.CommonPrefixes)
 				{
-					yield return new BackupEntry
+					retVal.Add(new BackupEntry
 					{
 						Name = commonPrefix,
 						Parent = parent,
-					};
+					});
 				}
 
 				if (response.IsTruncated)
@@ -95,19 +99,21 @@ namespace Ecng.Backup.Amazon
 					break;
 			}
 			while (true);
+
+			return retVal;
 		}
 
-		IEnumerable<BackupEntry> IBackupService.GetChilds(BackupEntry parent)
+		Task<IEnumerable<BackupEntry>> IBackupService.GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken)
 		{
-			return ((IBackupService)this).Find(parent, null);
+			return ((IBackupService)this).FindAsync(parent, null, cancellationToken);
 		}
 
-		void IBackupService.Delete(BackupEntry entry)
+		async Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
-			_client.DeleteObjectAsync(_bucket, GetKey(entry)).Wait();
+			await _client.DeleteObjectAsync(_bucket, GetKey(entry), cancellationToken);
 		}
 
-		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress)
+		async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 		{
 			if (entry == null)
 				throw new ArgumentNullException(nameof(entry));
@@ -117,8 +123,6 @@ namespace Ecng.Backup.Amazon
 
 			if (progress == null)
 				throw new ArgumentNullException(nameof(progress));
-
-			var source = new CancellationTokenSource();
 
 			var key = GetKey(entry);
 
@@ -137,9 +141,9 @@ namespace Ecng.Backup.Amazon
 			}
 
 			var bytes = new byte[_bufferSize];
-			var readTotal = 0L;
+			var readTotal = 0;
 
-			using (var response = _client.GetObjectAsync(request).Result)
+			using (var response = await _client.GetObjectAsync(request, cancellationToken))
 			using (var responseStream = response.ResponseStream)
 			{
 				response.WriteObjectProgressEvent += (s, a) => progress(a.PercentDone);
@@ -148,17 +152,19 @@ namespace Ecng.Backup.Amazon
 				{
 					var len = (int)(response.ContentLength - readTotal).Min(bytes.Length);
 
-					responseStream.ReadBytes(bytes, len);
-					stream.Write(bytes, 0, len);
+					var read = await responseStream.ReadAsync(bytes, readTotal, len, cancellationToken);
+
+					if (read != len)
+						throw new IOException("Stream returned '{0}' bytes.".Translate().Put(read));
+
+					await stream.WriteAsync(bytes, 0, len, cancellationToken);
 
 					readTotal += len;
 				}
 			}
-
-			return source;
 		}
 
-		CancellationTokenSource IBackupService.Upload(BackupEntry entry, Stream stream, Action<int> progress)
+		async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
 		{
 			if (entry == null)
 				throw new ArgumentNullException(nameof(entry));
@@ -171,11 +177,11 @@ namespace Ecng.Backup.Amazon
 
 			var key = GetKey(entry);
 
-			var initResponse = _client.InitiateMultipartUploadAsync(new InitiateMultipartUploadRequest
+			var initResponse = await _client.InitiateMultipartUploadAsync(new InitiateMultipartUploadRequest
 			{
 				BucketName = _bucket,
 				Key = key,
-			}).Result;
+			}, cancellationToken);
 
 			var filePosition = 0L;
 			var nextProgress = 1;
@@ -186,7 +192,7 @@ namespace Ecng.Backup.Amazon
 
 			while (filePosition < stream.Length)
 			{
-				var response = _client.UploadPartAsync(new UploadPartRequest
+				var response = await _client.UploadPartAsync(new UploadPartRequest
 				{
 					BucketName = _bucket,
 					UploadId = initResponse.UploadId,
@@ -195,7 +201,7 @@ namespace Ecng.Backup.Amazon
 					//FilePosition = filePosition,
 					InputStream = stream,
 					Key = key
-				}).Result;
+				}, cancellationToken);
 
 				etags.Add(new PartETag(partNum, response.ETag));
 
@@ -212,20 +218,16 @@ namespace Ecng.Backup.Amazon
 				partNum++;
 			}
 
-			_client.CompleteMultipartUploadAsync(new CompleteMultipartUploadRequest
+			await _client.CompleteMultipartUploadAsync(new CompleteMultipartUploadRequest
 			{
 				BucketName = _bucket,
 				UploadId = initResponse.UploadId,
 				Key = key,
 				PartETags = etags
-			}).Wait();
-
-			var source = new CancellationTokenSource();
-
-			return source;
+			}, cancellationToken);
 		}
 
-		void IBackupService.FillInfo(BackupEntry entry)
+		async Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
 			var key = GetKey(entry);
 
@@ -235,37 +237,43 @@ namespace Ecng.Backup.Amazon
 				Key = key,
 			};
 
-			var response = _client.GetObjectMetadataAsync(request).Result;
+			var response = await _client.GetObjectMetadataAsync(request, cancellationToken);
 
 			entry.Size = response.ContentLength;
 		}
 
 		bool IBackupService.CanPublish => false;
 
-		string IBackupService.Publish(BackupEntry entry)
+		async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
 			var key = GetKey(entry);
 
-			_client.PutACLAsync(new PutACLRequest
+			var response = await _client.PutACLAsync(new PutACLRequest
 			{
 				BucketName = _bucket,
 				Key = key,
 				CannedACL = S3CannedACL.PublicRead,
-			}).Wait();
+			}, cancellationToken);
+
+			if (response.HttpStatusCode != HttpStatusCode.OK)
+				throw new InvalidOperationException(response.HttpStatusCode.To<string>());
 			
 			return $"https://{_bucket}.s3.{_endpoint.SystemName}.amazonaws.com/{key}";
 		}
 
-		void IBackupService.UnPublish(BackupEntry entry)
+		async Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
 			var key = GetKey(entry);
 
-			_client.PutACLAsync(new PutACLRequest
+			var response = await _client.PutACLAsync(new PutACLRequest
 			{
 				BucketName = _bucket,
 				Key = key,
 				CannedACL = S3CannedACL.Private,
-			}).Wait();
+			}, cancellationToken);
+
+			if (response.HttpStatusCode != HttpStatusCode.OK)
+				throw new InvalidOperationException(response.HttpStatusCode.To<string>());
 		}
 
 		private static string GetKey(BackupEntry entry)

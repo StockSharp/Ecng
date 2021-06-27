@@ -4,6 +4,7 @@ namespace Ecng.Backup.Amazon
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Threading;
+	using System.Threading.Tasks;
 
 	using global::Amazon;
 	using global::Amazon.Runtime;
@@ -51,44 +52,44 @@ namespace Ecng.Backup.Amazon
 			_client = new AmazonS3Client(_credentials, _endpoint);
 		}
 
-		IEnumerable<BackupEntry> IBackupService.Find(BackupEntry parent, string criteria)
+		Task<IEnumerable<BackupEntry>> IBackupService.FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}
 
-		IEnumerable<BackupEntry> IBackupService.GetChilds(BackupEntry parent)
+		Task<IEnumerable<BackupEntry>> IBackupService.GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}
 
-		void IBackupService.Delete(BackupEntry entry)
+		Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}
 
-		void IBackupService.FillInfo(BackupEntry entry)
+		Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}
 
-		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress)
+		Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}
 
-		CancellationTokenSource IBackupService.Upload(BackupEntry entry, Stream stream, Action<int> progress)
+		Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}
 
 		bool IBackupService.CanPublish => false;
 
-		string IBackupService.Publish(BackupEntry entry)
+		Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
 			throw new NotSupportedException();
 		}
 
-		void IBackupService.UnPublish(BackupEntry entry)
+		Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
 			throw new NotSupportedException();
 		}

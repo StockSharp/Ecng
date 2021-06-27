@@ -4,6 +4,7 @@ namespace Ecng.Backup
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Threading;
+	using System.Threading.Tasks;
 
 	/// <summary>
 	/// The interface describing online data storage service.
@@ -21,26 +22,26 @@ namespace Ecng.Backup
 		/// <param name="parent">Parent element. Can be null.</param>
 		/// <param name="criteria">Criteria.</param>
 		/// <returns>File list.</returns>
-		IEnumerable<BackupEntry> Find(BackupEntry parent, string criteria);
+		Task<IEnumerable<BackupEntry>> FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// List of files.
 		/// </summary>
 		/// <param name="parent">Parent element. Can be null.</param>
 		/// <returns>File list.</returns>
-		IEnumerable<BackupEntry> GetChilds(BackupEntry parent);
+		Task<IEnumerable<BackupEntry>> GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Fill file info.
 		/// </summary>
 		/// <param name="entry">Element.</param>
-		void FillInfo(BackupEntry entry);
+		Task FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Delete file from the service.
 		/// </summary>
 		/// <param name="entry">Element.</param>
-		void Delete(BackupEntry entry);
+		Task DeleteAsync(BackupEntry entry, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Save file.
@@ -51,7 +52,7 @@ namespace Ecng.Backup
 		/// <param name="length"></param>
 		/// <param name="progress">Progress notification.</param>
 		/// <returns>Cancellation token.</returns>
-		CancellationTokenSource Download(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress);
+		Task DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Upload file.
@@ -60,19 +61,19 @@ namespace Ecng.Backup
 		/// <param name="stream">The stream of the open file into which data from the service will be downloaded.</param>
 		/// <param name="progress">Progress notification.</param>
 		/// <returns>Cancellation token.</returns>
-		CancellationTokenSource Upload(BackupEntry entry, Stream stream, Action<int> progress);
+		Task UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Get public url for the specified element.
 		/// </summary>
 		/// <param name="entry">Element.</param>
 		/// <returns>Public url.</returns>
-		string Publish(BackupEntry entry);
+		Task<string> PublishAsync(BackupEntry entry, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Remove public url for the specified element.
 		/// </summary>
 		/// <param name="entry">Element.</param>
-		void UnPublish(BackupEntry entry);
+		Task UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken = default);
 	}
 }
