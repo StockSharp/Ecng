@@ -1,6 +1,8 @@
 ﻿namespace Ecng.Net.BBCodes
 {
 	using System;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	/// <summary>
 	/// Replace Rules Interface
@@ -34,7 +36,7 @@
     /// <param name="text">
     /// The text.
     /// </param>
-    void Process(TContext context, ref string text);
+    Task<string> ProcessAsync(TContext context, string text, CancellationToken cancellationToken = default);
 
     #endregion
   }

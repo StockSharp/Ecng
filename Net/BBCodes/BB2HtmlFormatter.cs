@@ -5,6 +5,8 @@
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Web;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 	using Ecng.Net;
@@ -413,7 +415,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var sb = new StringBuilder(text);
 
@@ -521,7 +523,7 @@
 					}
 
 					// pulls the htmls into the replacement collection before it's inserted back into the main text
-					replacement.ReplaceHtmlFromText(ref innerReplace);
+					replacement.ReplaceHtmlFromText(ref innerReplace, cancellationToken);
 
 					var @group = m.Groups[0];
 
@@ -535,22 +537,18 @@
 					m = RegExSearch.Match(sb.ToString());
 				}
 
-				text = sb.ToString();
+				return Task.FromResult(sb.ToString());
 			}
 		}
 
-		string IHtmlFormatter.ToHtml(string text, object context) => ToHtml(text, (TContext)context);
-
-		public string ToHtml(string text, TContext context)
+		public async Task<string> ToHtmlAsync(string text, TContext context, CancellationToken cancellationToken = default)
 		{
 			if (text.IsEmpty())
 				return text;
 
 			text = RepairHtml(text);
 
-			_instance.Process(context, ref text);
-
-			return text;
+			return await _instance.ProcessAsync(context, text, cancellationToken);
 		}
 
 		private static string RepairHtml(string html)
@@ -584,7 +582,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -719,14 +717,14 @@
 						}
 					}
 
-					replacement.ReplaceHtmlFromText(ref sb);
+					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
 					var group = match.Groups[0];
 					builder.Remove(group.Index, group.Length);
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				text = builder.ToString();
+				return Task.FromResult(builder.ToString());
 			}
 		}
 
@@ -745,7 +743,7 @@
 				return $"{sourceUrl}_{Guid.NewGuid():N}";
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -759,14 +757,14 @@
 
 					sb.Replace("${inner}", $@"<input type='button' value='{_parent._getLocString("ShowSpoiler", isEn)}' class='btn btn-primary' onclick=""toggleSpoiler(this, '{id}');"" title='{_parent._getLocString("ShowSpoiler", isEn)}' /></div><div class='spoilerbox' id='{id}' style='display:none'>" + match.Groups["inner"].Value);
 
-					replacement.ReplaceHtmlFromText(ref sb);
+					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
 					var @group = match.Groups[0];
 					builder.Remove(@group.Index, @group.Length);
 					builder.Insert(@group.Index, sb.ToString());
 				}
 
-				text = builder.ToString();
+				return Task.FromResult(builder.ToString());
 			}
 		}
 
@@ -777,7 +775,7 @@
 			{
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -792,14 +790,14 @@
 
 					sb.Replace("${inner}", html);
 
-					replacement.ReplaceHtmlFromText(ref sb);
+					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
 					var g = match.Groups[0];
 					builder.Remove(g.Index, g.Length);
 					builder.Insert(g.Index, sb.ToString());
 				}
 
-				text = builder.ToString();
+				return Task.FromResult(builder.ToString());
 			}
 		}
 
@@ -810,7 +808,7 @@
 			{
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -821,14 +819,14 @@
 
 					sb.Replace("${url}", $"https://www.facebook.com/{url}".EncodeUrl());
 
-					replacement.ReplaceHtmlFromText(ref sb);
+					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
 					var group = match.Groups[0];
 					builder.Remove(group.Index, group.Length);
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				text = builder.ToString();
+				return Task.FromResult(builder.ToString());
 			}
 		}
 
@@ -842,7 +840,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -864,14 +862,14 @@
 						sb.Replace("${name}", idStr);
 					}
 
-					replacement.ReplaceHtmlFromText(ref sb);
+					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
 					var group = match.Groups[0];
 					builder.Remove(group.Index, group.Length);
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				text = builder.ToString();
+				return Task.FromResult(builder.ToString());
 			}
 		}
 
@@ -885,7 +883,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -906,14 +904,14 @@
 						sb.Replace("${name}", string.Empty);
 					}
 
-					replacement.ReplaceHtmlFromText(ref sb);
+					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
 					var group = match.Groups[0];
 					builder.Remove(group.Index, group.Length);
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				text = builder.ToString();
+				return Task.FromResult(builder.ToString());
 			}
 		}
 
@@ -927,7 +925,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -950,14 +948,14 @@
 						sb.Replace("${name}", idStr);
 					}
 
-					replacement.ReplaceHtmlFromText(ref sb);
+					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
 					var group = match.Groups[0];
 					builder.Remove(group.Index, group.Length);
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				text = builder.ToString();
+				return Task.FromResult(builder.ToString());
 			}
 		}
 
@@ -971,7 +969,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -1010,14 +1008,14 @@
 						sb.Replace("${inner}", inner);
 					}
 
-					replacement.ReplaceHtmlFromText(ref sb);
+					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
 					var group = match.Groups[0];
 					builder.Remove(group.Index, group.Length);
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				text = builder.ToString();
+				return Task.FromResult(builder.ToString());
 			}
 		}
 
@@ -1031,7 +1029,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -1070,14 +1068,14 @@
 						sb.Replace("${inner}", inner);
 					}
 
-					replacement.ReplaceHtmlFromText(ref sb);
+					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
 					var group = match.Groups[0];
 					builder.Remove(group.Index, group.Length);
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				text = builder.ToString();
+				return Task.FromResult(builder.ToString());
 			}
 		}
 
@@ -1091,7 +1089,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -1235,14 +1233,14 @@
 						}
 					}
 
-					replacement.ReplaceHtmlFromText(ref sb);
+					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
 					var group = match.Groups[0];
 					builder.Remove(group.Index, group.Length);
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				text = builder.ToString();
+				return Task.FromResult(builder.ToString());
 			}
 		}
 
@@ -1267,26 +1265,26 @@
 				_hasStyle = hasStyle;
 			}
 
-			public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
-				var stringBuilder = new StringBuilder(text);
+				var builder = new StringBuilder(text);
 
-				for (var match = _regExSearch.Match(text); match.Success; match = _regExSearch.Match(stringBuilder.ToString()))
+				for (var match = _regExSearch.Match(text); match.Success; match = _regExSearch.Match(builder.ToString()))
 				{
 					var strText = _regExReplace.Replace("${inner}", GetInnerValue(match.Groups["inner"].Value.Remove(Environment.NewLine)));
 					
 					if (_hasStyle)
 						strText = strText.Replace("${style}", GetInnerValue(match.Groups["style"].Value.Remove(Environment.NewLine)));
 
-					replacement.ReplaceHtmlFromText(ref strText);
+					replacement.ReplaceHtmlFromText(ref strText, cancellationToken);
 					
 					var g = match.Groups[0];
 
-					stringBuilder.Remove(g.Index, g.Length);
-					stringBuilder.Insert(g.Index, strText);
+					builder.Remove(g.Index, g.Length);
+					builder.Insert(g.Index, strText);
 				}
 
-				text = stringBuilder.ToString();
+				return Task.FromResult(builder.ToString());
 			}
 
 			protected virtual string GetInnerValue(string innerValue)
@@ -1327,19 +1325,24 @@
 			}
 		}
 
-		public string Clean(string messageBody)
+		async Task<string> IHtmlFormatter.ToHtmlAsync(string text, object context, CancellationToken cancellationToken)
 		{
-			if (!messageBody.IsEmptyOrWhiteSpace())
+			return await ToHtmlAsync(text, (TContext)context, cancellationToken);
+		}
+
+		public Task<string> CleanAsync(string text, CancellationToken cancellationToken = default)
+		{
+			if (!text.IsEmptyOrWhiteSpace())
 			{
 				// process message... clean html, strip html, remove bbcode, etc...
-				messageBody = messageBody
+				text = text
 					.CleanHtmlString()
 					.StripHtml()
 					.StripBBCode()
 					.RemoveMultipleWhitespace();
 			}
 
-			return messageBody;
+			return Task.FromResult(text);
 		}
 	}
 }

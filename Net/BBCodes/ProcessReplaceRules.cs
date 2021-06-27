@@ -2,6 +2,8 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Threading;
+	using System.Threading.Tasks;
 
     using Ecng.Common;
 
@@ -114,20 +116,20 @@
     /// <param name="text">
     /// The text.
     /// </param>
-    public void Process(TContext context, ref string text)
+    public async Task<string> ProcessAsync(TContext context, string text, CancellationToken cancellationToken)
     {
       if (text.IsEmptyOrWhiteSpace())
       {
-        return;
+        return text;
       }
 
       // sort the rules according to rank...
-      if (this._needSort)
+      if (_needSort)
       {
-        lock (this._rulesLock)
+        lock (_rulesLock)
         {
-          this._rulesList.Sort();
-          this._needSort = false;
+          _rulesList.Sort();
+          _needSort = false;
         }
       }
 
@@ -137,19 +139,21 @@
       // get as local list...
       var localRulesList = new List<IReplaceRule<TContext>>();
 
-      lock (this._rulesLock)
+      lock (_rulesLock)
       {
-        localRulesList.AddRange(this._rulesList);
+        localRulesList.AddRange(_rulesList);
       }
 
       // apply all rules...
       foreach (var rule in localRulesList)
       {
-        rule.Replace(context, ref text, mainCollection);
+        text = await rule.ReplaceAsync(context, text, mainCollection, cancellationToken);
       }
 
       // reconstruct the html
       mainCollection.Reconstruct(ref text);
+
+	  return text;
     }
 
     #endregion

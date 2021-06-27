@@ -2,6 +2,8 @@
 {
 	using System.Text;
 	using System.Text.RegularExpressions;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	/// <summary>
 	/// For basic regex with no variables
@@ -85,17 +87,17 @@
     /// <param name="replacement">
     /// The replacement.
     /// </param>
-    public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+    public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
     {
       var sb = new StringBuilder(text);
 
       Match m = RegExSearch.Match(text);
-      while (m.Success)
+      while (m.Success && !cancellationToken.IsCancellationRequested)
       {
-        string replaceString = RegExReplace.Replace("${inner}", this.GetInnerValue(m.Groups["inner"].Value));
+        string replaceString = RegExReplace.Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
 
         // pulls the htmls into the replacement collection before it's inserted back into the main text
-        replacement.ReplaceHtmlFromText(ref replaceString);
+        replacement.ReplaceHtmlFromText(ref replaceString, cancellationToken);
 
         // remove old bbcode...
         sb.Remove(m.Groups[0].Index, m.Groups[0].Length);
@@ -107,7 +109,7 @@
         m = RegExSearch.Match(sb.ToString());
       }
 
-      text = sb.ToString();
+      return Task.FromResult(sb.ToString());
     }
 
     #endregion

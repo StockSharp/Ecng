@@ -2,6 +2,7 @@
 {
 	using System.Text;
 	using System.Text.RegularExpressions;
+	using System.Threading;
 
 	/// <summary>
 	/// The i replace blocks extensions.
@@ -34,11 +35,11 @@
     /// <param name="strText">
     /// The str Text.
     /// </param>
-    public static void ReplaceHtmlFromText(this IReplaceBlocks replaceBlocks, ref string strText)
+    public static void ReplaceHtmlFromText(this IReplaceBlocks replaceBlocks, ref string strText, CancellationToken cancellationToken)
     {
       var sb = new StringBuilder(strText);
 
-      ReplaceHtmlFromText(replaceBlocks, ref sb);
+      ReplaceHtmlFromText(replaceBlocks, ref sb, cancellationToken);
 
       strText = sb.ToString();
     }
@@ -52,11 +53,11 @@
     /// <param name="sb">
     /// The sb.
     /// </param>
-    public static void ReplaceHtmlFromText(this IReplaceBlocks replaceBlocks, ref StringBuilder sb)
+    public static void ReplaceHtmlFromText(this IReplaceBlocks replaceBlocks, ref StringBuilder sb, CancellationToken cancellationToken)
     {
       Match m = _regExHtml.Match(sb.ToString());
 
-      while (m.Success)
+      while (m.Success && !cancellationToken.IsCancellationRequested)
       {
         // add it to the list...
         int index = replaceBlocks.Add(m.Groups[0].Value);

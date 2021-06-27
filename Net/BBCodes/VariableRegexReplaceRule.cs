@@ -4,6 +4,8 @@
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Web;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 
@@ -190,12 +192,12 @@
     /// <param name="replacement">
     /// The replacement.
     /// </param>
-    public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+    public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
     {
       var sb = new StringBuilder(text);
 
       Match m = RegExSearch.Match(text);
-      while (m.Success)
+      while (m.Success && !cancellationToken.IsCancellationRequested)
       {
         var innerReplace = new StringBuilder(RegExReplace);
         int i = 0;
@@ -235,7 +237,7 @@
         }
 
         // pulls the htmls into the replacement collection before it's inserted back into the main text
-        replacement.ReplaceHtmlFromText(ref innerReplace);
+        replacement.ReplaceHtmlFromText(ref innerReplace, cancellationToken);
 
         // remove old bbcode...
         sb.Remove(m.Groups[0].Index, m.Groups[0].Length);
@@ -247,7 +249,7 @@
         m = RegExSearch.Match(sb.ToString());
       }
 
-      text = sb.ToString();
+      return Task.FromResult(sb.ToString());
     }
 
     #endregion

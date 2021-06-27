@@ -1,5 +1,8 @@
 ﻿namespace Ecng.Net.BBCodes
 {
+	using System.Threading;
+	using System.Threading.Tasks;
+
     using Ecng.Common;
 
 	/// <summary>
@@ -69,24 +72,26 @@
     /// <param name="replacement">
     /// The replacement.
     /// </param>
-    public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+    public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
     {
-      int index = -1;
+      int index;
 
       do
       {
         
-        index = text.FastIndexOf(this._find);
+        index = text.FastIndexOf(_find);
 
         if (index >= 0)
         {
           // replace it...
-          int replaceIndex = replacement.Add(this._replace);
+          int replaceIndex = replacement.Add(_replace);
           text = text.Substring(0, index) + replacement.Get(replaceIndex) +
-                 text.Substring(index + this._find.Length);
+                 text.Substring(index + _find.Length);
         }
       }
-      while (index >= 0);
+      while (index >= 0 && !cancellationToken.IsCancellationRequested);
+
+	  return Task.FromResult(text);
     }
 
     #endregion

@@ -1,6 +1,8 @@
 ﻿namespace Ecng.Net.BBCodes
 {
 	using System.Text.RegularExpressions;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	/// <summary>
 	/// Simple code block regular express replace
@@ -38,10 +40,10 @@
     /// <param name="replacement">
     /// The replacement.
     /// </param>
-    public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+    public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
     {
       Match m = RegExSearch.Match(text);
-      while (m.Success)
+      while (m.Success && !cancellationToken.IsCancellationRequested)
       {
         string replaceItem = RegExReplace.Replace("${inner}", this.GetInnerValue(m.Groups["inner"].Value));
 
@@ -51,6 +53,8 @@
 
         m = RegExSearch.Match(text);
       }
+
+	  return Task.FromResult(text);
     }
 
     #endregion

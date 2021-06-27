@@ -2,6 +2,8 @@
 {
 	using System.Text;
 	using System.Text.RegularExpressions;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	/// <summary>
 	/// For basic regex with no variables
@@ -40,12 +42,12 @@
     /// <param name="replacement">
     /// The replacement.
     /// </param>
-    public override void Replace(TContext context, ref string text, IReplaceBlocks replacement)
+    public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
     {
       var sb = new StringBuilder(text);
 
       Match m = RegExSearch.Match(text);
-      while (m.Success)
+      while (m.Success && !cancellationToken.IsCancellationRequested)
       {
         // just replaces with no "inner"
         int replaceIndex = replacement.Add(RegExReplace);
@@ -60,7 +62,7 @@
         m = RegExSearch.Match(sb.ToString());
       }
 
-      text = sb.ToString();
+      return Task.FromResult(sb.ToString());
     }
 
     #endregion

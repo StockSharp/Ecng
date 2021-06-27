@@ -1,6 +1,8 @@
 ﻿namespace Ecng.Net.BBCodes
 {
 	using System;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	/// <summary>
 	/// Base class for all replacement rules.
@@ -48,7 +50,7 @@
     /// </param>
     /// <exception cref="NotImplementedException">
     /// </exception>
-    public abstract void Replace(TContext context, ref string text, IReplaceBlocks replacement);
+    public abstract Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken);
 
     #endregion
 
