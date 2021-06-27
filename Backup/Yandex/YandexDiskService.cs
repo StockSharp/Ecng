@@ -5,9 +5,10 @@ namespace Ecng.Backup.Yandex
 	using System.IO;
 	using System.Linq;
 	using System.Threading;
+	using System.Threading.Tasks;
 
-	using Disk.SDK;
-	using Disk.SDK.Provider;
+	using YandexDisk.Client.Http;
+	using YandexDisk.Client.Protocol;
 
 	using Ecng.Common;
 	using Ecng.Serialization;
@@ -17,47 +18,30 @@ namespace Ecng.Backup.Yandex
 	/// </summary>
 	public class YandexDiskService : Disposable, IBackupService
 	{
-		private readonly Func<Tuple<string, bool>> _authorize;
-		private DiskSdkClient _client;
+		private readonly Func<CancellationToken, Task<(string token, bool result)>> _authorize;
+		private DiskHttpApi _client;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="YandexDiskService"/>.
 		/// </summary>
-		public YandexDiskService(Func<Tuple<string, bool>> authFunc)
+		public YandexDiskService(Func<CancellationToken, Task<(string token, bool result)>> authFunc)
 		{
 			_authorize = authFunc ?? throw new ArgumentNullException(nameof(authFunc));
 		}
 
-		private void Process(Action<DiskSdkClient> handler, out bool cancelled)
+		private async Task<DiskHttpApi> GetClientAsync(CancellationToken cancellationToken)
 		{
-			if (handler == null)
-				throw new ArgumentNullException(nameof(handler));
-
-			Process<object>(client =>
-			{
-				handler(client);
-				return null;
-			}, out cancelled);
-		}
-
-		private T Process<T>(Func<DiskSdkClient, T> handler, out bool cancelled)
-		{
-			if (handler == null)
-				throw new ArgumentNullException(nameof(handler));
-
-			cancelled = false;
+			//cancelled = false;
 
 			if (_client != null)
-			{
-				return handler(_client);
-			}
+				return _client;
 
-			var tuple = _authorize();
+			var (token, result) = await _authorize(cancellationToken);
 
-			if (!tuple.Item2)
+			if (!result)
 			{
-				_client = new DiskSdkClient(tuple.Item1);
-				return handler(_client);
+				_client = new DiskHttpApi(token);
+				return _client;
 			}
 
 			return default;
@@ -71,9 +55,9 @@ namespace Ecng.Backup.Yandex
 			return GetPath(entry.Parent) + "/" + entry.Name;
 		}
 
-		IEnumerable<BackupEntry> IBackupService.Find(BackupEntry parent, string criteria)
+		async Task<IEnumerable<BackupEntry>> IBackupService.FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken)
 		{
-			var entries = ((IBackupService)this).GetChilds(parent);
+			var entries = await ((IBackupService)this).GetChildsAsync(parent, cancellationToken);
 
 			if (!criteria.IsEmpty())
 				entries = entries.Where(e => e.Name.ContainsIgnoreCase(criteria)).ToArray();
@@ -81,70 +65,55 @@ namespace Ecng.Backup.Yandex
 			return entries;
 		}
 
-		IEnumerable<BackupEntry> IBackupService.GetChilds(BackupEntry parent)
+		async Task<IEnumerable<BackupEntry>> IBackupService.GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken)
 		{
 			//if (parent == null)
 			//	throw new ArgumentNullException(nameof(parent));
 
 			var path = GetPath(parent) + "/";
 
-			var retVal = Process(client =>
+			var client = await GetClientAsync(cancellationToken);
+
+			var resource = await client.MetaInfo.GetInfoAsync(new ResourceRequest { Path = path }, cancellationToken);
+
+			return resource.Embedded.Items.Select(i => new BackupEntry
 			{
-				return client.AsyncWait<GenericSdkEventArgs<IEnumerable<DiskItemInfo>>, IEnumerable<BackupEntry>>(
-					nameof(DiskSdkClient.GetListCompleted),
-					() => client.GetListAsync(path),
-					e => e.Result.Select(i => new BackupEntry
-					{
-						Parent = parent,
-						Name = i.DisplayName,
-						Size = i.ContentLength
-					}).ToArray());
-			}, out var cancelled);
-
-			if (cancelled)
-				throw new UnauthorizedAccessException();
-
-			return retVal;
+				Parent = parent,
+				Name = i.Name,
+				Size = i.Size
+			}).ToArray();
 		}
 
-		void IBackupService.FillInfo(BackupEntry entry)
+		async Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
 			if (entry == null)
 				throw new ArgumentNullException(nameof(entry));
 
 			var path = GetPath(entry);
 
-			var info = Process(client =>
-			{
-				return client.AsyncWait<GenericSdkEventArgs<DiskItemInfo>, DiskItemInfo>(
-					nameof(DiskSdkClient.GetItemInfoCompleted),
-					() => client.GetItemInfoAsync(path),
-					e => e.Result);
-			}, out var cancelled);
+			var client = await GetClientAsync(cancellationToken);
 
-			if (cancelled)
-				throw new UnauthorizedAccessException();
+			var resource = await client.MetaInfo.GetInfoAsync(new ResourceRequest { Path = path }, cancellationToken);
 
-			entry.Size = info.ContentLength;
+			entry.Size = resource.Size;
 		}
 
-		void IBackupService.Delete(BackupEntry entry)
+		async Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
 			if (entry == null)
 				throw new ArgumentNullException(nameof(entry));
 
 			var path = GetPath(entry);
 
-			Process(client =>
+			var client = await GetClientAsync(cancellationToken);
+
+			await client.Commands.DeleteAsync(new DeleteFileRequest
 			{
-				client.AsyncWait<SdkEventArgs, object>(
-					nameof(DiskSdkClient.RemoveCompleted),
-					() => client.RemoveAsync(path),
-					e => e);
-			}, out _);
+				Path = path,
+			}, cancellationToken);
 		}
 
-		CancellationTokenSource IBackupService.Download(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress)
+		async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 		{
 			if (entry == null)
 				throw new ArgumentNullException(nameof(entry));
@@ -158,47 +127,17 @@ namespace Ecng.Backup.Yandex
 			if (offset != null || length != null)
 				throw new NotSupportedException();
 
-			var source = new CancellationTokenSource();
 			var path = GetPath(entry);
 
-			Exception error = null;
+			var client = await GetClientAsync(cancellationToken);
 
-			var sync = new SyncObject();
-			var pulsed = false;
+			var link = await client.Files.GetDownloadLinkAsync(path, cancellationToken);
 
-			Process(client =>
-			{
-				client.DownloadFileAsync(path, stream, new AsyncProgress((curr, total) => progress((int)(curr * 100 / total))), (s, e) =>
-				{
-					error = error ?? e.Error;
-
-					lock (sync)
-					{
-						pulsed = true;
-						sync.Pulse();
-					}
-				});
-			}, out var cancelled);
-
-			if (!cancelled)
-			{
-				lock (sync)
-				{
-					if (!pulsed)
-						sync.Wait();
-				}
-
-				(stream as MemoryStream)?.UndoDispose();
-
-				error?.Throw();
-			}
-			else
-				source.Cancel();
-
-			return source;
+			using var responseStream = await client.Files.DownloadAsync(link, cancellationToken);
+			await responseStream.CopyAsync(stream, offset ?? default, length, progress, cancellationToken);
 		}
 
-		CancellationTokenSource IBackupService.Upload(BackupEntry entry, Stream stream, Action<int> progress)
+		async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
 		{
 			if (entry == null)
 				throw new ArgumentNullException(nameof(entry));
@@ -209,78 +148,39 @@ namespace Ecng.Backup.Yandex
 			if (progress == null)
 				throw new ArgumentNullException(nameof(progress));
 
-			var source = new CancellationTokenSource();
 			var path = GetPath(entry);
 
-			Exception error = null;
+			var client = await GetClientAsync(cancellationToken);
 
-			var sync = new SyncObject();
-			var pulsed = false;
+			var link = await client.Files.GetUploadLinkAsync(path, true, cancellationToken);
 
-			Process(client =>
-			{
-				client.UploadFileAsync(path, stream, new AsyncProgress((curr, total) => progress((int)(curr * 100 / total))), (s, e) =>
-				{
-					error = error ?? e.Error;
-
-					lock (sync)
-					{
-						pulsed = true;
-						sync.Pulse();
-					}
-				});
-			}, out var cancelled);
-
-			if (!cancelled)
-			{
-				lock (sync)
-				{
-					if (!pulsed)
-						sync.Wait();
-				}
-
-				(stream as MemoryStream)?.UndoDispose();
-
-				error?.Throw();
-			}
-			else
-				source.Cancel();
-
-			return source;
+			await client.Files.UploadAsync(link, stream, cancellationToken);
 		}
 
 		bool IBackupService.CanPublish => true;
 
-		string IBackupService.Publish(BackupEntry entry)
+		async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
 			if (entry == null)
 				throw new ArgumentNullException(nameof(entry));
 
 			var path = GetPath(entry);
 
-			return Process(client =>
-			{
-				return client.AsyncWait<GenericSdkEventArgs<string>, string>(
-					nameof(DiskSdkClient.PublishCompleted),
-					() => client.PublishAsync(path),
-					e => e.Result);
-			}, out _);
+			var client = await GetClientAsync(cancellationToken);
+			var link = await client.MetaInfo.PublishFolderAsync(path, cancellationToken);
+
+			return link.Href;
 		}
 
-		void IBackupService.UnPublish(BackupEntry entry)
+		async Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
 			if (entry == null)
 				throw new ArgumentNullException(nameof(entry));
 
 			var path = GetPath(entry);
 
-			Process(client =>
-			{
-				client.AsyncWait<SdkEventArgs, object>(
-					nameof(DiskSdkClient.UnpublishCompleted),
-					() => client.UnpublishAsync(path),
-					e => e);
-			}, out _);
+			var client = await GetClientAsync(cancellationToken);
+			await client.MetaInfo.UnpublishFolderAsync(path, cancellationToken);
 		}
 	}
 }

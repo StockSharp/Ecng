@@ -57,8 +57,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StringSearch", "StringSearc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedWinapi", "ManagedWinapi\ManagedWinapi.csproj", "{9416F8F9-9675-4050-B78B-6D8930F780BE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YandexDisk", "YandexDisk\YandexDisk.csproj", "{55ED6439-B69D-4FCB-AF9C-5D790800C930}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HtmlRenderer", "HtmlRenderer\HtmlRenderer.csproj", "{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}"
 EndProject
 Global
@@ -163,10 +161,6 @@ Global
 		{9416F8F9-9675-4050-B78B-6D8930F780BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9416F8F9-9675-4050-B78B-6D8930F780BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9416F8F9-9675-4050-B78B-6D8930F780BE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}.Release|Any CPU.ActiveCfg = Release|Any CPU

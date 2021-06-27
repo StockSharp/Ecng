@@ -57,8 +57,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedWinapi", "ManagedWin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lzma", "Lzma\Lzma.csproj", "{B7BE663E-389A-4858-A30E-FEAA94D8ADF1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YandexDisk", "YandexDisk\YandexDisk.csproj", "{256C1600-7996-4377-BDC2-C8A97219D3D7}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StringSearch", "StringSearch\StringSearch.csproj", "{2A4342C5-21F2-4DF3-A026-AF1994628E6D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerCollections", "PowerCollections\PowerCollections.csproj", "{5851FD7C-D701-4921-BF44-94799B8B5793}"
@@ -167,10 +165,6 @@ Global
 		{B7BE663E-389A-4858-A30E-FEAA94D8ADF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7BE663E-389A-4858-A30E-FEAA94D8ADF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7BE663E-389A-4858-A30E-FEAA94D8ADF1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{256C1600-7996-4377-BDC2-C8A97219D3D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{256C1600-7996-4377-BDC2-C8A97219D3D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{256C1600-7996-4377-BDC2-C8A97219D3D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{256C1600-7996-4377-BDC2-C8A97219D3D7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2A4342C5-21F2-4DF3-A026-AF1994628E6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2A4342C5-21F2-4DF3-A026-AF1994628E6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A4342C5-21F2-4DF3-A026-AF1994628E6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
