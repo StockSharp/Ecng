@@ -38,7 +38,7 @@
     /// </summary>
     public ProcessReplaceRules()
     {
-      this._rulesList = new List<IReplaceRule<TContext>>();
+      _rulesList = new List<IReplaceRule<TContext>>();
     }
 
     #endregion
@@ -52,9 +52,9 @@
     {
       get
       {
-        lock (this._rulesLock)
+        lock (_rulesLock)
         {
-          return this._rulesList.Count > 0;
+          return _rulesList.Count > 0;
         }
       }
     }
@@ -76,10 +76,10 @@
       var copyReplaceRules = new ProcessReplaceRules<TContext>();
 
       // move the rules over...
-      var ruleArray = new IReplaceRule<TContext>[this._rulesList.Count];
-      this._rulesList.CopyTo(ruleArray);
+      var ruleArray = new IReplaceRule<TContext>[_rulesList.Count];
+      _rulesList.CopyTo(ruleArray);
       copyReplaceRules._rulesList.InsertRange(0, ruleArray);
-      copyReplaceRules._needSort = this._needSort;
+      copyReplaceRules._needSort = _needSort;
 
       return copyReplaceRules;
     }
@@ -103,10 +103,10 @@
         throw new ArgumentNullException("newRule");
       }
 
-      lock (this._rulesLock)
+      lock (_rulesLock)
       {
-        this._rulesList.Add(newRule);
-        this._needSort = true;
+        _rulesList.Add(newRule);
+        _needSort = true;
       }
     }
 

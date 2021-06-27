@@ -42,8 +42,8 @@
     /// </summary>
     public ReplaceBlocksCollection()
     {
-      this._replacementDictionary = new Dictionary<int, string>();
-      this.RandomizeInstance();
+      _replacementDictionary = new Dictionary<int, string>();
+      RandomizeInstance();
     }
 
     #endregion
@@ -57,7 +57,7 @@
     {
       get
       {
-        return this._replacementDictionary;
+        return _replacementDictionary;
       }
     }
 
@@ -76,8 +76,8 @@
     /// </returns>
     public int Add(string newItem)
     {
-      this._replacementDictionary.Add(this._currentIndex, newItem);
-      return this._currentIndex++;
+      _replacementDictionary.Add(_currentIndex, newItem);
+      return _currentIndex++;
     }
 
     /// <summary>
@@ -91,7 +91,7 @@
     /// </returns>
     public string Get(int index)
     {
-      return this._replaceFormat.Put(index, this._randomInstance);
+      return _replaceFormat.Put(index, _randomInstance);
     }
 
     /// <summary>
@@ -101,7 +101,7 @@
     public void RandomizeInstance()
     {
       var rand = new Random();
-      this._randomInstance = rand.Next();
+      _randomInstance = rand.Next();
     }
 
     /// <summary>
@@ -113,9 +113,9 @@
     {
       var sb = new StringBuilder(text);
 
-      foreach (int index in this._replacementDictionary.Keys)
+      foreach (int index in _replacementDictionary.Keys)
       {
-        sb.Replace(this.Get(index), this._replacementDictionary[index]);
+        sb.Replace(Get(index), _replacementDictionary[index]);
       }
 
       text = sb.ToString();

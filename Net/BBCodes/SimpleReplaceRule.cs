@@ -37,11 +37,11 @@
     /// </param>
     public SimpleReplaceRule(string find, string replace)
     {
-      this._find = find;
-      this._replace = replace;
+      _find = find;
+      _replace = replace;
 
       // lower the rank by default
-      this.RuleRank = 100;
+      RuleRank = 100;
     }
 
     #endregion

@@ -24,7 +24,7 @@
       : base(regExSearch, regExReplace)
     {
       // default high rank...
-      this.RuleRank = 2;
+      RuleRank = 2;
     }
 
     #endregion
@@ -45,7 +45,7 @@
       Match m = RegExSearch.Match(text);
       while (m.Success && !cancellationToken.IsCancellationRequested)
       {
-        string replaceItem = RegExReplace.Replace("${inner}", this.GetInnerValue(m.Groups["inner"].Value));
+        string replaceItem = RegExReplace.Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
 
         int replaceIndex = replacement.Add(replaceItem);
         text = text.Substring(0, m.Groups[0].Index) + replacement.Get(replaceIndex) +

@@ -32,8 +32,8 @@
         public SyntaxHighlightedCodeRegexReplaceRule(Regex regExSearch, string regExReplace)
             : base(regExSearch, regExReplace)
         {
-            this._syntaxHighlighter.ReplaceEnter = true;
-            this.RuleRank = 1;
+            _syntaxHighlighter.ReplaceEnter = true;
+            RuleRank = 1;
         }
 
         #endregion
@@ -54,8 +54,8 @@
             Match m = RegExSearch.Match(text);
             while (m.Success && !cancellationToken.IsCancellationRequested)
             {
-                string inner = this._syntaxHighlighter.ColorText(
-                    this.GetInnerValue(m.Groups["inner"].Value), m.Groups["language"].Value);
+                string inner = _syntaxHighlighter.ColorText(
+                    GetInnerValue(m.Groups["inner"].Value), m.Groups["language"].Value);
 
                 string replaceItem = RegExReplace.Replace("${inner}", inner);
 

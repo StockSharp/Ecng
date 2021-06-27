@@ -24,7 +24,7 @@
     public FontSizeRegexReplaceRule(string regExSearch, string regExReplace, RegexOptions regExOptions)
       : base(regExSearch, regExReplace, regExOptions, new[] { "size" }, new[] { "5" })
     {
-      this.RuleRank = 25;
+      RuleRank = 25;
     }
 
     #endregion
@@ -50,7 +50,7 @@
     {
       if (variableName == "size")
       {
-        return this.GetFontSize(variableValue);
+        return GetFontSize(variableValue);
       }
 
       return variableValue;
@@ -68,10 +68,9 @@
     private string GetFontSize(string inputStr)
     {
       int[] sizes = { 50, 70, 80, 90, 100, 120, 140, 160, 180 };
-      int size = 5;
 
       // try to parse the input string...
-      int.TryParse(inputStr, out size);
+      int.TryParse(inputStr, out var size);
 
       if (size < 1)
       {

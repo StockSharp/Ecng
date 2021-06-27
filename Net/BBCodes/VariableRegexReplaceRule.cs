@@ -223,7 +223,7 @@
             tValue = VariableDefaults[i];
           }
 
-          innerReplace.Replace("${" + varName + "}", this.ManageVariableValue(context, varName, tValue, handlingValue));
+          innerReplace.Replace("${" + varName + "}", ManageVariableValue(context, varName, tValue, handlingValue));
           i++;
         }
 

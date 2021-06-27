@@ -16,7 +16,7 @@
         /// </summary>
         public HighLighter()
         {
-            this.ReplaceEnter = false;
+            ReplaceEnter = false;
         }
 
         #endregion

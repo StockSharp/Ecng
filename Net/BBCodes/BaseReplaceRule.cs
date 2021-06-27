@@ -73,11 +73,11 @@
       {
         var otherRule = obj as BaseReplaceRule<TContext>;
 
-        if (this.RuleRank > otherRule.RuleRank)
+        if (RuleRank > otherRule.RuleRank)
         {
           return 1;
         }
-        else if (this.RuleRank < otherRule.RuleRank)
+        else if (RuleRank < otherRule.RuleRank)
         {
           return -1;
         }
