@@ -6,6 +6,8 @@
 	using System.Reflection;
 	using System.Runtime.Serialization;
 	using System.Text;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Reflection;
 #if !SILVERLIGHT
@@ -15,7 +17,7 @@
 	using Ecng.Common;
 	using Ecng.Localization;
 
-	public static unsafe class BinaryHelper
+	public static class BinaryHelper
 	{
 		public static void UndoDispose(this MemoryStream stream)
 		{
@@ -60,7 +62,7 @@
 			stream.Write(buffer, 0, 1);
 		}
 
-		public static void WriteShort(this Stream stream, byte[] buffer, short value, bool isLittleEndian)
+		public static unsafe void WriteShort(this Stream stream, byte[] buffer, short value, bool isLittleEndian)
 		{
 			fixed (byte* b = buffer)
 				*((short*)b) = value;
@@ -74,7 +76,7 @@
 		}
 		
 		[CLSCompliant(false)]
-		public static void WriteUShort(this Stream stream, byte[] buffer, ushort value, bool isLittleEndian)
+		public static unsafe void WriteUShort(this Stream stream, byte[] buffer, ushort value, bool isLittleEndian)
 		{
 			fixed (byte* b = buffer)
 				*((ushort*)b) = value;
@@ -88,7 +90,7 @@
 			return BitConverter.ToUInt16(stream.ReadBytes(buffer, 2).ChangeOrder(2, isLittleEndian), 0);
 		}
 
-		public static void WriteInt(this Stream stream, byte[] buffer, int value, bool isLittleEndian)
+		public static unsafe void WriteInt(this Stream stream, byte[] buffer, int value, bool isLittleEndian)
 		{
 			fixed (byte* b = buffer)
 				*((int*)b) = value;
@@ -102,7 +104,7 @@
 		}
 
 		[CLSCompliant(false)]
-		public static void WriteUInt(this Stream stream, byte[] buffer, uint value, bool isLittleEndian)
+		public static unsafe void WriteUInt(this Stream stream, byte[] buffer, uint value, bool isLittleEndian)
 		{
 			fixed (byte* b = buffer)
 				*((uint*)b) = value;
@@ -116,7 +118,7 @@
 			return BitConverter.ToUInt32(stream.ReadBytes(buffer, 4).ChangeOrder(4, isLittleEndian), 0);
 		}
 
-		public static void WriteLong(this Stream stream, byte[] buffer, long value, bool isLittleEndian, int len = 8)
+		public static unsafe void WriteLong(this Stream stream, byte[] buffer, long value, bool isLittleEndian, int len = 8)
 		{
 			fixed (byte* b = buffer)
 				*((long*)b) = value;
@@ -130,7 +132,7 @@
 		}
 
 		[CLSCompliant(false)]
-		public static void WriteULong(this Stream stream, byte[] buffer, ulong value, bool isLittleEndian, int len = 8)
+		public static unsafe void WriteULong(this Stream stream, byte[] buffer, ulong value, bool isLittleEndian, int len = 8)
 		{
 			fixed (byte* b = buffer)
 				*((ulong*)b) = value;
@@ -187,12 +189,7 @@
 			}
 		}
 
-		public static void CopyAsync(this Stream source, Stream destination, Action completed, Action<Exception> error)
-		{
-			source.CopyAsync(destination, (int)source.Length, completed, error);
-		}
-
-		public static void CopyAsync(this Stream source, Stream destination, int count, Action completed, Action<Exception> error)
+		public static async Task CopyAsync(this Stream source, Stream destination, long skip, long? count, Action<int> progress, CancellationToken cancellationToken = default)
 		{
 			if (source == null)
 				throw new ArgumentNullException(nameof(source));
@@ -200,61 +197,35 @@
 			if (destination == null)
 				throw new ArgumentNullException(nameof(destination));
 
-			if (completed == null)
-				throw new ArgumentNullException(nameof(completed));
-
-			if (error == null)
-				throw new ArgumentNullException(nameof(error));
-
 			if (count < 0)
 				throw new ArgumentOutOfRangeException(nameof(count));
 
-			if (count == 0)
-				completed();
-			else
+			var buffer = new byte[4096];
+			int offset;
+
+			checked
 			{
-				var buffer = new byte[count];
-				var offset = 0;
-
-				AsyncCallback callback = null;
-				callback = result =>
-				{
-					try
-					{
-						var read = source.EndRead(result);
-
-						if (read > 0)
-						{
-							destination.BeginWrite(buffer, 0, read, writeResult =>
-							{
-								offset += read;
-
-								try
-								{
-									destination.EndWrite(writeResult);
-
-									if (offset < count)
-										source.BeginRead(buffer, offset, count - offset, callback, null);
-									else
-										completed();
-								}
-								catch (Exception exc)
-								{
-									error(exc);
-								}
-							}, null);
-						}
-						else
-							error(new ArgumentException("Insufficient source stream."));
-					}
-					catch (Exception exc)
-					{
-						error(exc);
-					}
-				};
-
-				source.BeginRead(buffer, offset, count, callback, null);
+				offset = (int)skip;
 			}
+
+			var left = count;
+
+			while (!cancellationToken.IsCancellationRequested)
+			{
+				var need = left is null ? buffer.Length : (int)left.Value.Min(buffer.Length);
+				var len = await source.ReadAsync(buffer, offset, need, cancellationToken);
+
+				if (left != null)
+					left -= len;
+
+				await destination.WriteAsync(buffer, offset, len, cancellationToken);
+
+				// TODO
+				progress?.Invoke(0);
+			}
+
+			if (!cancellationToken.IsCancellationRequested)
+				progress?.Invoke(100);
 		}
 
 		public static byte[] ReadBuffer(this Stream stream)
