@@ -8,10 +8,9 @@
     <PackageReference Include="AWSSDK.SQS" Version="$(AWSSDKSQSVer)" />
     <PackageReference Include="AWSSDK.SimpleNotificationService" Version="$(AWSSDKSimpleNotificationServiceVer)" />
     <PackageReference Include="AWSSDK.Glacier" Version="$(AWSSDKGlacierVer)" />
-
-	<PackageReference Include="YandexDisk.Client" Version="$(YandexDiskVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
+    <ProjectReference Include="..\YandexDisk\YandexDisk.csproj" />
   </ItemGroup>
 </Project>
