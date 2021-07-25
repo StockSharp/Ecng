@@ -115,13 +115,13 @@ namespace Ecng.Backup.Amazon
 
 		async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 		{
-			if (entry == null)
+			if (entry is null)
 				throw new ArgumentNullException(nameof(entry));
 
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			if (progress == null)
+			if (progress is null)
 				throw new ArgumentNullException(nameof(progress));
 
 			var key = GetKey(entry);
@@ -134,45 +134,54 @@ namespace Ecng.Backup.Amazon
 
 			if (offset != null || length != null)
 			{
-				if (offset == null || length == null)
+				if (offset is null || length is null)
 					throw new NotSupportedException();
 
 				request.ByteRange = new ByteRange(offset.Value, offset.Value + length.Value);
 			}
 
 			var bytes = new byte[_bufferSize];
-			var readTotal = 0;
+			var readTotal = 0L;
+
+			var prevProgress = -1;
 
 			using (var response = await _client.GetObjectAsync(request, cancellationToken))
 			using (var responseStream = response.ResponseStream)
 			{
-				response.WriteObjectProgressEvent += (s, a) => progress(a.PercentDone);
+				var objLen = response.ContentLength;
 
-				while (readTotal < response.ContentLength)
+				while (readTotal < objLen)
 				{
-					var len = (int)(response.ContentLength - readTotal).Min(bytes.Length);
+					var expected = (int)(objLen - readTotal).Min(_bufferSize);
+					var actual = await responseStream.ReadAsync(bytes, 0, expected, cancellationToken);
 
-					var read = await responseStream.ReadAsync(bytes, readTotal, len, cancellationToken);
+					await stream.WriteAsync(bytes, 0, actual, cancellationToken);
 
-					if (read != len)
-						throw new IOException("Stream returned '{0}' bytes.".Translate().Put(read));
+					readTotal += actual;
 
-					await stream.WriteAsync(bytes, 0, len, cancellationToken);
+					var currProgress = (int)(readTotal * 100L / objLen);
 
-					readTotal += len;
+					if (currProgress < 100 && prevProgress < currProgress)
+					{
+						progress(currProgress);
+						prevProgress = currProgress;
+					}
 				}
 			}
+
+			if (prevProgress < 100)
+				progress(100);
 		}
 
 		async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
 		{
-			if (entry == null)
+			if (entry is null)
 				throw new ArgumentNullException(nameof(entry));
 
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			if (progress == null)
+			if (progress is null)
 				throw new ArgumentNullException(nameof(progress));
 
 			var key = GetKey(entry);
@@ -184,7 +193,7 @@ namespace Ecng.Backup.Amazon
 			}, cancellationToken);
 
 			var filePosition = 0L;
-			var nextProgress = 1;
+			var prevProgress = -1;
 
 			var etags = new List<PartETag>();
 
@@ -209,10 +218,10 @@ namespace Ecng.Backup.Amazon
 
 				var currProgress = (int)(filePosition.Min(stream.Length) * 100 / stream.Length);
 
-				if (currProgress >= nextProgress)
+				if (currProgress > prevProgress)
 				{
 					progress(currProgress);
-					nextProgress = currProgress + 1;
+					prevProgress = currProgress;
 				}
 
 				partNum++;
@@ -225,6 +234,9 @@ namespace Ecng.Backup.Amazon
 				Key = key,
 				PartETags = etags
 			}, cancellationToken);
+
+			if (prevProgress < 100)
+				progress(100);
 		}
 
 		async Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
