@@ -16,6 +16,8 @@ namespace Ecng.Backup
 		/// </summary>
 		bool CanPublish { get; }
 
+		bool CanFolders { get; }
+
 		/// <summary>
 		/// Find files by the specified criteria.
 		/// </summary>

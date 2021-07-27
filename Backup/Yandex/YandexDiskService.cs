@@ -29,6 +29,8 @@ namespace Ecng.Backup.Yandex
 			_authorize = authFunc ?? throw new ArgumentNullException(nameof(authFunc));
 		}
 
+		bool IBackupService.CanFolders => true;
+
 		private void Process(Action<DiskSdkClient> handler, out bool cancelled)
 		{
 			if (handler == null)

@@ -22,7 +22,7 @@ namespace Ecng.Backup.Amazon
 	public class AmazonS3Service : Disposable, IBackupService
 	{
 		private readonly string _bucket;
-		private readonly AmazonS3Client _client;
+		private readonly IAmazonS3 _client;
 		private const int _bufferSize = 1024 * 1024 * 10; // 10mb
 		private readonly AWSCredentials _credentials;
 		private readonly RegionEndpoint _endpoint;
@@ -56,6 +56,8 @@ namespace Ecng.Backup.Amazon
 			_bucket = bucket;
 			_client = new AmazonS3Client(_credentials, _endpoint);
 		}
+
+		bool IBackupService.CanFolders => true;
 
 		async Task<IEnumerable<BackupEntry>> IBackupService.FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken)
 		{

@@ -8,7 +8,7 @@ namespace Ecng.Backup.Amazon
 
 	using global::Amazon;
 	using global::Amazon.Runtime;
-	using global::Amazon.S3;
+	using global::Amazon.Glacier;
 
 	using Ecng.Common;
 
@@ -17,7 +17,7 @@ namespace Ecng.Backup.Amazon
 	/// </summary>
 	public class AmazonGlacierService : Disposable, IBackupService
 	{
-		private readonly AmazonS3Client _client;
+		private readonly IAmazonGlacier _client;
 		private readonly string _vaultName;
 		private readonly AWSCredentials _credentials;
 		private readonly RegionEndpoint _endpoint;
@@ -49,8 +49,10 @@ namespace Ecng.Backup.Amazon
 			_credentials = new BasicAWSCredentials(accessKey, secretKey);
 			_endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
 			_vaultName = vaultName;
-			_client = new AmazonS3Client(_credentials, _endpoint);
+			_client = new AmazonGlacierClient(_credentials, _endpoint);
 		}
+
+		bool IBackupService.CanFolders => false;
 
 		Task<IEnumerable<BackupEntry>> IBackupService.FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken)
 		{
@@ -85,14 +87,10 @@ namespace Ecng.Backup.Amazon
 		bool IBackupService.CanPublish => false;
 
 		Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
-		{
-			throw new NotSupportedException();
-		}
+			=> throw new NotSupportedException();
 
 		Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)
-		{
-			throw new NotSupportedException();
-		}
+			=> throw new NotSupportedException();
 
 		/// <summary>
 		/// Disposes the managed resources.
