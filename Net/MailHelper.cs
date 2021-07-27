@@ -27,12 +27,13 @@
 				message.Dispose();
 		}
 
-		public static async Task SendAsync(this MailMessage message)
+		public static async Task SendAsync(this MailMessage message, CancellationToken cancellationToken = default)
 		{
 			if (message == null)
 				throw new ArgumentNullException(nameof(message));
 
 			using var mail = new SmtpClient();
+			// TODO cancellationToken
 			await mail.SendMailAsync(message);
 		}
 
