@@ -256,7 +256,7 @@ namespace Ecng.Backup.Amazon
 			entry.Size = response.ContentLength;
 		}
 
-		bool IBackupService.CanPublish => false;
+		bool IBackupService.CanPublish => true;
 
 		async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
