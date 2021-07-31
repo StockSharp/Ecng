@@ -27,11 +27,8 @@ namespace Ecng.Common
 			Value = value;
 			OwnInstance = ownInstance;
 
-#if !SILVERLIGHT
-			Thread.BeginThreadAffinity();
-#endif
-			Parent = _current;
-			_current = this;
+			Parent = _current.Value;
+			_current.Value = this;
 
 			//_all.Add(this);
 		}
@@ -46,10 +43,10 @@ namespace Ecng.Common
 
 		#region Current
 
-		[ThreadStatic]
-		private static Scope<T> _current;
+		// ReSharper disable once InconsistentNaming
+		private static readonly AsyncLocal<Scope<T>> _current = new();
 
-		public static Scope<T> Current => _current;
+		public static Scope<T> Current => _current.Value;
 
 		#endregion
 
@@ -84,13 +81,10 @@ namespace Ecng.Common
 		[SecuritySafeCritical]
 		protected override void DisposeManaged()
 		{
-			if (this != _current)
+			if (this != _current.Value)
 				throw new InvalidOperationException("Disposed out of order.");
 
-			_current = Parent;
-#if !SILVERLIGHT
-			Thread.EndThreadAffinity();
-#endif
+			_current.Value = Parent;
 
 			if (OwnInstance)
 			{
