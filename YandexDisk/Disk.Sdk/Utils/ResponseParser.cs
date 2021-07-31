@@ -70,7 +70,8 @@ namespace Disk.SDK.Utils
                                     break;
                                 case "d:getcontentlength":
                                     reader.Read();
-                                    itemInfo.ContentLength = int.Parse(reader.Value);
+                                    if(!string.IsNullOrEmpty(reader.Value))
+                                        itemInfo.ContentLength = int.Parse(reader.Value);
                                     break;
                                 case "d:getcontenttype":
                                     reader.Read();
@@ -136,6 +137,8 @@ namespace Disk.SDK.Utils
             }
         }
 
+        private static readonly Regex TokenRegex = new(@"\baccess_token=([a-zA-Z0-9_]+)", RegexOptions.Compiled);
+
         /// <summary>
         /// Parses the token.
         /// </summary>
@@ -143,7 +146,11 @@ namespace Disk.SDK.Utils
         /// <returns>The parsed access token.</returns>
         public static string ParseToken(string resultString)
         {
-            return Regex.Match(resultString, WebdavResources.TokenRegexPattern).Value;
+            var match = TokenRegex.Match(resultString);
+            if (!match.Success)
+                return null;
+
+            return match.Groups[1].Value;
         }
     }
 }
