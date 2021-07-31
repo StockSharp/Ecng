@@ -12,6 +12,7 @@ namespace Ecng.Backup.Yandex
 
 	using Ecng.Common;
 	using Ecng.Serialization;
+	using Ecng.Localization;
 
 	/// <summary>
 	/// The class for work with the Yandex.Disk.
@@ -63,7 +64,7 @@ namespace Ecng.Backup.Yandex
 				return handler(_client);
 			}
 
-			return default;
+			throw new InvalidOperationException("Not authorized".Translate());
 		}
 
 		private static string GetPath(BackupEntry entry)
@@ -287,40 +288,28 @@ namespace Ecng.Backup.Yandex
 		}
 
 
-		public Task<IEnumerable<BackupEntry>> FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken = default) => Task.FromResult(FindAsync(parent, criteria).Result);
+		public async Task<IEnumerable<BackupEntry>> FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken = default)
+			=> await Task.Run(() => Find(parent, criteria), cancellationToken);
 
-		public Task<IEnumerable<BackupEntry>> GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken = default) => Task.FromResult(GetChilds(parent));
+		public async Task<IEnumerable<BackupEntry>> GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken = default)
+			=> await Task.Run(() => GetChilds(parent), cancellationToken);
 
-		public Task FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken = default)
-		{
-			FillInfo(entry);
-			return Task.CompletedTask;
-		}
+		public async Task FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken = default)
+			=> await Task.Run(() => FillInfo(entry), cancellationToken);
 
-		public Task DeleteAsync(BackupEntry entry, CancellationToken cancellationToken = default)
-		{
-			Delete(entry);
-			return Task.CompletedTask;
-		}
+		public async Task DeleteAsync(BackupEntry entry, CancellationToken cancellationToken = default)
+			=> await Task.Run(() => Delete(entry), cancellationToken);
 
-		public Task DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken = default)
-		{
-			Download(entry, stream, offset, length, progress);
-			return Task.CompletedTask;
-		}
+		public async Task DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken = default)
+			=> await Task.Run(() => Download(entry, stream, offset, length, progress), cancellationToken);
 
-		public Task UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken = default)
-		{
-			Upload(entry, stream, progress);
-			return Task.CompletedTask;
-		}
+		public async Task UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken = default)
+			=> await Task.Run(() => Upload(entry, stream, progress), cancellationToken);
 
-		public Task<string> PublishAsync(BackupEntry entry, CancellationToken cancellationToken = default) => Task.FromResult(Publish(entry));
+		public async Task<string> PublishAsync(BackupEntry entry, CancellationToken cancellationToken = default)
+			=> await Task.Run(() => Publish(entry), cancellationToken);
 
-		public Task UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken = default)
-		{
-			UnPublish(entry);
-			return Task.CompletedTask;
-		}
+		public async Task UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken = default)
+			=> await Task.Run(() => UnPublish(entry), cancellationToken);
 	}
 }
