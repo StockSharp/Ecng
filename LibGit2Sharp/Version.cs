@@ -22,7 +22,7 @@ namespace LibGit2Sharp
         /// <summary>
         /// Returns version of the LibGit2Sharp library.
         /// </summary>
-        public virtual string InformationalVersion => ThisAssembly.AssemblyInformationalVersion;
+        public virtual string InformationalVersion => typeof(Version).Assembly.GetName().Version.ToString();
 
         /// <summary>
         /// Returns all the optional features that were compiled into
