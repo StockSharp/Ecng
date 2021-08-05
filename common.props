@@ -1,6 +1,12 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
+
+    <Title>Ecng.$(MSBuildProjectName)</Title>
+    <Product>Ecng system framework</Product>
+    <Company>StockSharp LP</Company>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="
@@ -23,7 +29,7 @@
     <ProductVersion>9.0.30729</ProductVersion>
     <RootNamespace>Ecng.$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>Ecng.$(MSBuildProjectName)</AssemblyName>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <IsSourcesAllow>true</IsSourcesAllow>
     <LangVersion>default</LangVersion>
@@ -64,7 +70,19 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
   </PropertyGroup>
+
   <ItemGroup>
-    <Compile Include="$(SolutionDir)EcngAssemblyInfo.cs" Link="Properties\EcngAssemblyInfo.cs" />
+    <AssemblyAttribute Include="System.Reflection.AssemblyCopyrightAttribute">
+      <_Parameter1>Copyright @ StockSharp $([System.DateTime]::Now.ToString(yyyy))</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyTrademarkAttribute">
+      <_Parameter1>StockSharp</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Resources.NeutralResourcesLanguageAttribute">
+      <_Parameter1>en-US</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 </Project>
