@@ -14,6 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="LibGit2Sharp.NativeBinaries" Version="[2.0.312]" PrivateAssets="none" />
+    <PackageReference Include="Ecng.LibGit2Sharp.NativeBinaries" Version="1.0.4" />
   </ItemGroup>
 </Project>
