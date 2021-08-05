@@ -26,8 +26,8 @@ namespace LibGit2Sharp.Core
         private static NativeShutdownObject shutdownObject;
 #pragma warning restore 0414
 
-        private static SmartSubtransportRegistration<ManagedHttpSmartSubtransport> httpSubtransportRegistration;
-        private static SmartSubtransportRegistration<ManagedHttpSmartSubtransport> httpsSubtransportRegistration;
+        //private static SmartSubtransportRegistration<ManagedHttpSmartSubtransport> httpSubtransportRegistration;
+        //private static SmartSubtransportRegistration<ManagedHttpSmartSubtransport> httpsSubtransportRegistration;
 
         static NativeMethods()
         {
@@ -199,8 +199,8 @@ namespace LibGit2Sharp.Core
             // Configure the .NET HTTP(S) mechanism on the first initialization of the library in the current process.
             if (initCounter == 1)
             {
-                httpSubtransportRegistration = GlobalSettings.RegisterDefaultSmartSubtransport<ManagedHttpSmartSubtransport>("http");
-                httpsSubtransportRegistration = GlobalSettings.RegisterDefaultSmartSubtransport<ManagedHttpSmartSubtransport>("https");
+                //httpSubtransportRegistration = GlobalSettings.RegisterDefaultSmartSubtransport<ManagedHttpSmartSubtransport>("http");
+                //httpsSubtransportRegistration = GlobalSettings.RegisterDefaultSmartSubtransport<ManagedHttpSmartSubtransport>("https");
             }
         }
 
@@ -209,15 +209,15 @@ namespace LibGit2Sharp.Core
         {
             ~NativeShutdownObject()
             {
-                if (httpSubtransportRegistration != null)
-                {
-                    GlobalSettings.UnregisterDefaultSmartSubtransport(httpSubtransportRegistration);
-                }
+                //if (httpSubtransportRegistration != null)
+                //{
+                //    GlobalSettings.UnregisterDefaultSmartSubtransport(httpSubtransportRegistration);
+                //}
 
-                if (httpsSubtransportRegistration != null)
-                {
-                    GlobalSettings.UnregisterDefaultSmartSubtransport(httpsSubtransportRegistration);
-                }
+                //if (httpsSubtransportRegistration != null)
+                //{
+                //    GlobalSettings.UnregisterDefaultSmartSubtransport(httpsSubtransportRegistration);
+                //}
 
                 git_libgit2_shutdown();
             }
