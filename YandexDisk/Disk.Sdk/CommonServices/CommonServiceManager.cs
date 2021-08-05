@@ -12,7 +12,7 @@ namespace Disk.SDK.CommonServices
     /// </summary>
     internal static class CommonServiceManager
     {
-        private const string ASSEMBLY_NAME              = "Ecng.Backup",
+        private const string ASSEMBLY_NAME              = "Ecng.YandexDisk",
                              SERVICE_NAME               = "Disk.SDK.Provider.CommonService",
                              SERVICE_FULL_NAME_FORMAT   = "{0}, {1}";
 
