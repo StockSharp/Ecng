@@ -2,8 +2,6 @@ namespace Ecng.Test
 {
 	#region Using Directives
 
-	using Ecng.Reflection;
-	using Ecng.Reflection.Aspects;
 	using Ecng.Serialization;
 
 	#endregion
@@ -12,7 +10,7 @@ namespace Ecng.Test
 	{
 		public static T Create<T>()
 		{
-			CreateProxy<T>();
+			//CreateProxy<T>();
 			return GetSchema<T>().GetFactory<T>().CreateEntity(null, new SerializationItemCollection());
 		}
 
@@ -21,10 +19,10 @@ namespace Ecng.Test
 			return SchemaManager.GetSchema<T>();
 		}
 
-		public static void CreateProxy<T>()
-		{
-			if (typeof(T).IsAbstract && !ReflectionHelper.ProxyTypes.ContainsKey(typeof(T)))
-				ReflectionHelper.ProxyTypes.Add(typeof(T), MetaExtension.Create(typeof(T)));
-		}
+		//public static void CreateProxy<T>()
+		//{
+		//	if (typeof(T).IsAbstract && !ReflectionHelper.ProxyTypes.ContainsKey(typeof(T)))
+		//		ReflectionHelper.ProxyTypes.Add(typeof(T), MetaExtension.Create(typeof(T)));
+		//}
 	}
 }

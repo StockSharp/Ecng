@@ -14,6 +14,15 @@
     <Page Remove="Data\**" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove="Reflection\GenericMetaExtensionTest.cs" />
+    <Compile Remove="Reflection\InterceptorTest.cs" />
+    <Compile Remove="Reflection\InterceptorValidatorTest.cs" />
+    <Compile Remove="Reflection\InterfaceMetaExtensionTest.cs" />
+    <Compile Remove="Reflection\LazyInstanceTest.cs" />
+    <Compile Remove="Reflection\MetaExtensionTest.cs" />
+    <Compile Remove="Reflection\MultipleMetaExtensionTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MsTestSdkVer)" />
     <PackageReference Include="MSTest.TestAdapter" Version="$(MsTestVer)" />
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />
@@ -45,7 +54,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Interop\Interop.csproj" />
-    <ProjectReference Include="..\Reflection.Aspects\Reflection.Aspects.csproj" />
     <ProjectReference Include="..\Serialization.FieldFactories\Serialization.FieldFactories.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
   </ItemGroup>
