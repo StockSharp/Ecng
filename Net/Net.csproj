@@ -8,6 +8,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonJsonVer)" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Serialization.FieldFactories\Serialization.FieldFactories.csproj" />
+    <ProjectReference Include="..\Serialization\Serialization.csproj" />
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
   </ItemGroup>
 </Project>

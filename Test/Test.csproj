@@ -10,6 +10,7 @@
     <ProjectReference Include="..\IO\IO.csproj" />
     <ProjectReference Include="..\Interop\Interop.csproj" />
     <ProjectReference Include="..\Net\Net.csproj" />
+    <ProjectReference Include="..\Security\Security.csproj" />
     <ProjectReference Include="..\Roslyn\Roslyn.csproj" />
     <ProjectReference Include="..\Backup\Backup.csproj" />
   </ItemGroup>

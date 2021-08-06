@@ -14,22 +14,27 @@
 	using System.Runtime.Serialization.Formatters.Binary;
 	using System.Text;
 	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Backup;
 	using Ecng.Backup.Yandex;
+	using Ecng.Backup.Amazon;
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.ComponentModel;
+	using Ecng.ComponentModel.Expressions;
 	using Ecng.Configuration;
 	using Ecng.Interop;
 	using Ecng.Net;
+	using Ecng.Net.BBCodes;
 	using Ecng.Reflection;
 	using Ecng.Roslyn;
 	using Ecng.Security;
 	using Ecng.Serialization;
 
 	using Wintellect.PowerCollections;
-	using Ecng.ComponentModel.Expressions;
+
+	using LibGit2Sharp;
 
 	public interface ICalc
 	{
@@ -41,7 +46,7 @@
 		[Identity]
 		public int Id { get; set; }
 
-		[TimeSpan]
+		//[TimeSpan]
 		public TimeSpan TimeSpan { get; set; }
 
 		[InnerSchema(Order = 4)]
@@ -54,7 +59,7 @@
 
 	class InnerEntity
 	{
-		[Crypto(PublicKey = "/wSLfzApvDnYlBrGZV1zsichriJC+Eli1KgzdlIWAIQ=", KeyType = KeyTypes.Direct)]
+		//[Crypto(PublicKey = "/wSLfzApvDnYlBrGZV1zsichriJC+Eli1KgzdlIWAIQ=", KeyType = KeyTypes.Direct)]
 		public string Password { get; set; }
 
 		public string UglyName { get; set; }
@@ -79,7 +84,7 @@
 
 	enum F1 : long
 	{
-		[Value("")]
+		//[Value("")]
 		F,
 	}
 
@@ -265,10 +270,120 @@
 			}
 		}
 
-		[STAThread]
-		static void Main()
+		private class NamedObjectImpl : IProductObject
 		{
-			//var database = new LogicDatabase("StockSharp Database", "Server=db.stocksharp.com;Database=StockSharp;User ID=StockSharp;Password=pX1hmKgjVDGBBGJirVLL;") { CommandType = CommandType.StoredProcedure };
+			public string GetName(bool isEngish) => Name;
+
+			public long Id { get; set; }
+			public string Name { get; set; }
+			public string PackageId => Name;
+
+			string IProductObject.GetUrlPart(bool isEnglish) => Name;
+		}
+
+		public static BB2HtmlFormatter<BBCodesContext> CreateBBService()
+		{
+			static string GetOppositeUrl(string original, bool isEnglish)
+			{
+				return isEnglish
+					? original.ReplaceIgnoreCase("stocksharp.ru", "stocksharp.com")
+					: original.ReplaceIgnoreCase("stocksharp.com", "stocksharp.ru");
+			}
+
+			static string GetProductLink(long id, string packageId)
+			{
+				var idStr = packageId.IsEmpty() ? id.To<string>() : packageId.Remove("StockSharp.", true);
+
+				return idStr;
+			}
+
+			static string GetPackageLink(string packageId, bool isEnglish, bool isEmail)
+			{
+				if (packageId.IsEmpty())
+					throw new ArgumentNullException(nameof(packageId));
+
+				return $"https://www.nuget.org/packages/{packageId}/";
+			}
+
+			static string ToFullAbsolute(string virtualPath, bool isEnglish)
+			{
+				if (virtualPath.StartsWithIgnoreCase("http"))
+				{ }
+				else if (virtualPath.StartsWith("/"))
+					virtualPath = $"https://stocksharp.com{virtualPath}";
+				else
+					virtualPath = virtualPath.Replace("~", "https://stocksharp.com");
+
+				return new Url(virtualPath).ToString();
+			}
+
+			return new BB2HtmlFormatter<BBCodesContext>(true,
+			  GetOppositeUrl, id => $"~/file/{id}/", id => $"~/users/{id}",
+			  GetProductLink, GetPackageLink, id => $"~/topic/{id}",
+			  id => $"~/posts/m/{id}", s => s, ToFullAbsolute,
+			  (key, isEn) => key,
+			  id => new NamedObjectImpl { Id = id, Name = id.To<string>() },
+			  id => new NamedObjectImpl { Id = id, Name = id.To<string>() },
+			  id => new NamedObjectImpl { Id = id, Name = id.To<string>() },
+			  id => null);
+		}
+
+		private static void EnsureClean(Repository repository)
+        {
+            var statusOptions = new StatusOptions
+            {
+                IncludeIgnored = false,
+                RecurseUntrackedDirs = false,
+                IncludeUntracked = false
+            };
+
+            var status = repository.RetrieveStatus(statusOptions).ToList();
+
+            if (!status.Any())
+                return;
+
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"({repository.Info.Path}) git repo is dirty:");
+            foreach (var item in status)
+                sb.AppendLine($"{item.State}: {item.FilePath}");
+
+            throw new InvalidOperationException(sb.ToString());
+        }
+
+		private static void SyncRepo(Repository repository, string username, string password)
+		{
+			var signature = new Signature("invalid signature. not used for fast forward merge.", "invalidemail@invalidemail.net", DateTimeOffset.Now);
+			var pullOptions = new PullOptions
+			{
+				MergeOptions = new MergeOptions { FastForwardStrategy = FastForwardStrategy.FastForwardOnly }
+			};
+
+			if (username?.Length > 0 || password?.Length > 0)
+				pullOptions.FetchOptions = new FetchOptions
+				{
+					CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
+					{
+						Username = username,
+						Password = password
+					}
+				};
+
+			var result = Commands.Pull(repository, signature, pullOptions);
+
+			if (result.Status != MergeStatus.FastForward && result.Status != MergeStatus.UpToDate)
+				throw new InvalidOperationException($"unexpected pull status {result.Status}");
+		}
+
+		[STAThread]
+		async static Task Main()
+		{
+			using var repository = new Repository(@"C:\StockSharp\Public\ecng");
+			EnsureClean(repository);
+			SyncRepo(repository, null, null);
+			return;
+
+			//var database = new LogicDatabase("StockSharp Database", "Server=db.stocksharp.com;Database=StockSharp;User ID=StockSharp;Password=;") { CommandType = CommandType.StoredProcedure };
 			//ConfigManager.RegisterService<IStorage>(database);
 
 			//var rootObject = new SiteRootObject("Site Root", database);
@@ -282,6 +397,20 @@
 			//	}
 			//}
 
+			IBackupService backSvc = new AmazonS3Service("eu-central-1", "stocksharpfiles", "", "");
+			var entity = new BackupEntry { Name = "108297.bin" };
+			//var s = new MemoryStream();
+			//backSvc.DownloadAsync(entity, s, null, null, Console.WriteLine).Wait();
+			Console.WriteLine(backSvc.PublishAsync(entity).Result);
+			backSvc.UnPublishAsync(entity).Wait();
+			return;
+
+			var html = await CreateBBService().ToHtmlAsync(@"[vk]https://vk.com/wall-38045320_691[/vk]
+	",
+			new BBCodesContext(false, false, true, false, new Url("https://stocksharp.com"), false, null), new CancellationToken());
+
+
+			Console.WriteLine(html);
 			return;
 
 			var res = new RoslynCompilerService().Compile("LOG([USD##CASH@IDEALPRO]) - (USD_CASH@IDEALPRO / usd_cash@IDEALPRO) + LOG([USD##CASH@IDEALPRO])", true);
@@ -295,7 +424,7 @@
 			Console.WriteLine(settingSotrage["1"]);
 			return;
 
-			Console.WriteLine(new Version(4, 3, 14, 0).Compare(new Version(4, 3, 14, 1)));
+			//Console.WriteLine(new Version(4, 3, 14, 0).Compare(new Version(4, 3, 14, 1)));
 
 			/*
 			return;

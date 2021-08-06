@@ -14,7 +14,7 @@ namespace Ecng.Net
 		private IPAddress _groupAddress;
 
 		[Display(Name = "Group Address", Description = "UDP multicast group address.", Order = 0)]
-		[IpAddress(AsString = true)]
+		//[IpAddress(AsString = true)]
 		public IPAddress GroupAddress
 		{
 			get => _groupAddress;
@@ -29,7 +29,7 @@ namespace Ecng.Net
 		private IPAddress _sourceAddress;
 
 		[Display(Name = "Source Address", Description = "UDP multicast source address.", Order = 1)]
-		[IpAddress(AsString = true)]
+		//[IpAddress(AsString = true)]
 		public IPAddress SourceAddress
 		{
 			get => _sourceAddress;
@@ -89,15 +89,15 @@ namespace Ecng.Net
 
 		public override bool Equals(object obj)
 		{
-			if (!(obj is MulticastSourceAddress addr))
+			if (obj is not MulticastSourceAddress addr)
 				return false;
 
-			if (GroupAddress == null)
+			if (GroupAddress is null)
 			{
 				if (addr.GroupAddress != null)
 					return false;
 			}
-			else if (addr.GroupAddress == null)
+			else if (addr.GroupAddress is null)
 				return false;
 			else if (!GroupAddress.Equals(addr.GroupAddress))
 				return false;
@@ -105,12 +105,12 @@ namespace Ecng.Net
 			if (Port != addr.Port)
 				return false;
 
-			if (SourceAddress == null)
+			if (SourceAddress is null)
 			{
 				if (addr.SourceAddress != null)
 					return false;
 			}
-			else if (addr.SourceAddress == null)
+			else if (addr.SourceAddress is null)
 				return false;
 			else if (!SourceAddress.Equals(addr.SourceAddress))
 				return false;

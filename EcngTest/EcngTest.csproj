@@ -21,6 +21,7 @@
     <Compile Remove="Reflection\LazyInstanceTest.cs" />
     <Compile Remove="Reflection\MetaExtensionTest.cs" />
     <Compile Remove="Reflection\MultipleMetaExtensionTest.cs" />
+    <Compile Remove="Serialization\SchemaSerializationTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MsTestSdkVer)" />
@@ -54,7 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Interop\Interop.csproj" />
-    <ProjectReference Include="..\Serialization.FieldFactories\Serialization.FieldFactories.csproj" />
+    <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
   </ItemGroup>
   <ItemGroup>
