@@ -297,7 +297,7 @@ namespace Ecng.Serialization
 
 		public override ISerializer GetSerializer(Type entityType)
 		{
-			var serializer = typeof(XmlSerializer<>).Make(entityType).CreateInstance<IXmlSerializer>();
+			var serializer = (IXmlSerializer)base.GetSerializer(entityType);
 			serializer.Encoding = Encoding;
 			return serializer;
 		}

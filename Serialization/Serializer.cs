@@ -286,7 +286,8 @@ namespace Ecng.Serialization
 			return (Serializer<TData>)GetSerializer(typeof(TData));
 		}
 
-		public abstract ISerializer GetSerializer(Type entityType);
+		public virtual ISerializer GetSerializer(Type entityType)
+			=> GetType().GetGenericTypeDefinition().Make(entityType).CreateInstance<ISerializer>();
 
 		#region GetId
 
