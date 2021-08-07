@@ -34,10 +34,10 @@
     <IsSourcesAllow>true</IsSourcesAllow>
     <LangVersion>default</LangVersion>
 
-    <AWSSDKS3Ver>3.7.0.15</AWSSDKS3Ver>
-    <AWSSDKSQSVer>3.7.0.14</AWSSDKSQSVer>
-    <AWSSDKSimpleNotificationServiceVer>3.7.0.14</AWSSDKSimpleNotificationServiceVer>
-    <AWSSDKGlacierVer>3.7.0.13</AWSSDKGlacierVer>
+    <AWSSDKS3Ver>3.7.1.21</AWSSDKS3Ver>
+    <AWSSDKSQSVer>3.7.0.50</AWSSDKSQSVer>
+    <AWSSDKSimpleNotificationServiceVer>3.7.2.20</AWSSDKSimpleNotificationServiceVer>
+    <AWSSDKGlacierVer>3.7.0.49</AWSSDKGlacierVer>
 
     <MicrosoftWindowsCompatibilityVer>5.0.2</MicrosoftWindowsCompatibilityVer>
 
@@ -54,15 +54,15 @@
     <SystemTextEncodingCodePagesVer>5.0.0</SystemTextEncodingCodePagesVer>
     <SystemResourcesExtensionsVer>5.0.0</SystemResourcesExtensionsVer>
 
-    <MsCodeVer>3.9.0</MsCodeVer>
+    <MsCodeVer>3.10.0</MsCodeVer>
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
-    <MsTestVer>2.2.3</MsTestVer>
-    <MsTestSdkVer>16.9.4</MsTestSdkVer>
+    <MsTestVer>2.2.5</MsTestVer>
+    <MsTestSdkVer>16.10.0</MsTestSdkVer>
     <SmartFormatVer>2.7.0</SmartFormatVer>
     <OctodiffVer>1.2.1</OctodiffVer>
     <MoreLinqVer>3.3.2</MoreLinqVer>
-    <RestSharpVer>106.11.7</RestSharpVer>
-    <NDdeVer>3.0.6</NDdeVer>
+    <RestSharpVer>106.12.0</RestSharpVer>
+    <NDdeVer>3.1.0</NDdeVer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
