@@ -2,6 +2,8 @@
 {
 	using System;
 	using System.Globalization;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 
@@ -21,6 +23,13 @@
 		/// </summary>
 		/// <param name="storage">Хранилище настроек.</param>
 		void Save(SettingsStorage storage);
+	}
+
+	public interface IAsyncPersistable
+	{
+		Task LoadAsync(SettingsStorage storage, CancellationToken cancellationToken);
+
+		Task SaveAsync(SettingsStorage storage, CancellationToken cancellationToken);
 	}
 
 	public static class PersistableHelper
@@ -46,20 +55,30 @@
 			if (persistable == null)
 				throw new ArgumentNullException(nameof(persistable));
 
-			var storage = new SettingsStorage();
-			storage.SetValue("type", persistable.GetType().GetTypeName(isAssemblyQualifiedName));
-			storage.SetValue("settings", persistable.Save());
-			return storage;
+			return new SettingsStorage()
+				.Set("type", persistable.GetType().GetTypeName(isAssemblyQualifiedName))
+				.Set("settings", persistable.Save());
 		}
 
 		public static T Clone<T>(this T obj)
 			where T : IPersistable
 		{
 			if (obj.IsNull())
-				return default(T);
+				return default;
 
 			var clone = obj.GetType().CreateInstance<T>();
 			clone.Load(obj.Save());
+			return clone;
+		}
+
+		public static async Task<T> CloneAsync<T>(this T obj, CancellationToken cancellationToken = default)
+			where T : IAsyncPersistable
+		{
+			if (obj.IsNull())
+				return default;
+
+			var clone = obj.GetType().CreateInstance<T>();
+			await clone.LoadAsync(await obj.SaveAsync(cancellationToken), cancellationToken);
 			return clone;
 		}
 
@@ -69,6 +88,33 @@
 			obj.Load(clone.Save());
 		}
 
+		public static async Task ApplyAsync<T>(this T obj, T clone, CancellationToken cancellationToken = default)
+			where T : IAsyncPersistable
+		{
+			await obj.LoadAsync(await clone.SaveAsync(cancellationToken), cancellationToken);
+		}
+
+		public static async Task<SettingsStorage> SaveAsync(this IAsyncPersistable persistable, CancellationToken cancellationToken = default)
+		{
+			if (persistable is null)
+				throw new ArgumentNullException(nameof(persistable));
+
+			var storage = new SettingsStorage();
+			await persistable.SaveAsync(storage, cancellationToken);
+			return storage;
+		}
+
+		public static async Task<T> LoadAsync<T>(this SettingsStorage storage, CancellationToken cancellationToken = default)
+			where T : IAsyncPersistable, new()
+		{
+			if (storage is null)
+				throw new ArgumentNullException(nameof(storage));
+
+			var obj = new T();
+			await obj.LoadAsync(storage, cancellationToken);
+			return obj;
+		}
+
 		/// <summary>
 		/// Сохранить настройки.
 		/// </summary>
@@ -76,7 +122,7 @@
 		/// <returns>Хранилище настроек.</returns>
 		public static SettingsStorage Save(this IPersistable persistable)
 		{
-			if (persistable == null)
+			if (persistable is null)
 				throw new ArgumentNullException(nameof(persistable));
 
 			var storage = new SettingsStorage();
@@ -87,7 +133,7 @@
 		public static T Load<T>(this SettingsStorage storage)
 			where T : IPersistable, new()
 		{
-			if (storage == null)
+			if (storage is null)
 				throw new ArgumentNullException(nameof(storage));
 
 			var obj = new T();

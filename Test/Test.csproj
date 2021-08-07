@@ -14,5 +14,6 @@
     <ProjectReference Include="..\Security\Security.csproj" />
     <ProjectReference Include="..\Roslyn\Roslyn.csproj" />
     <ProjectReference Include="..\Backup\Backup.csproj" />
+    <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
   </ItemGroup>
 </Project>

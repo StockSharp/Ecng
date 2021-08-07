@@ -5,6 +5,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonJsonVer)" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Reflection\Reflection.csproj" />
     <ProjectReference Include="..\Localization\Localization.csproj" />
   </ItemGroup>

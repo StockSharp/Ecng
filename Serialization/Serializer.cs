@@ -119,7 +119,7 @@ namespace Ecng.Serialization
 			File.WriteAllBytes(fileName, Serialize(graph));
 		}
 
-		public void Serialize(T graph, Stream stream)
+		public virtual void Serialize(T graph, Stream stream)
 		{
 			Serialize(graph, GetFields(), stream);
 		}
@@ -189,6 +189,9 @@ namespace Ecng.Serialization
 
 		#endregion
 
+		public object CreateObject(SerializationItemCollection source)
+			=> Schema.Factory.CreateObject(this, source);
+
 		#region Deserialize
 
 		public T Deserialize(string fileName)
@@ -203,7 +206,7 @@ namespace Ecng.Serialization
 			return Deserialize(stream);
 		}
 
-		public T Deserialize(Stream stream)
+		public virtual T Deserialize(Stream stream)
 		{
 			return Deserialize(stream, GetFields());
 		}
@@ -228,7 +231,7 @@ namespace Ecng.Serialization
 
 		public T Deserialize(SerializationItemCollection source, FieldList fields)
 		{
-			var graph = (T)Schema.Factory.CreateObject(this, source);
+			var graph = (T)CreateObject(source);
 
 			if (!Schema.Factory.FullInitialize)
 				graph = Deserialize(source, fields, graph);

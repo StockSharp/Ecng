@@ -3,21 +3,33 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Collections;
 	using Ecng.Common;
+
+	using Newtonsoft.Json;
 
 	/// <summary>
 	/// Специальный класс для сохранения и загрузки настроек. Поддерживает еирархическую вложенность через метод <see cref="SetValue{T}"/>.
 	/// </summary>
 	public class SettingsStorage : SynchronizedDictionary<string, object>
 	{
+		private readonly JsonReader _reader;
+
 		/// <summary>
 		/// Создать <see cref="SettingsStorage"/>.
 		/// </summary>
 		public SettingsStorage()
 			: base(StringComparer.InvariantCultureIgnoreCase)
 		{
+		}
+
+		internal SettingsStorage(JsonReader reader)
+			: this()
+		{
+			_reader = reader ?? throw new ArgumentNullException(nameof(reader));
 		}
 
 		/// <summary>
@@ -41,6 +53,9 @@
 		{
 			if (name.IsEmpty())
 				throw new ArgumentNullException(nameof(name));
+
+			if (_reader != null)
+				throw new InvalidOperationException("_reader != null");
 
 			this[name] = value;
 		}
@@ -70,11 +85,49 @@
 			if (name.IsEmpty())
 				throw new ArgumentNullException(nameof(name));
 
-			var value = this.TryGetValue(name);
-			return value != null ? value.To<T>() : defaultValue;
+			if (_reader != null)
+			{
+				if (!_reader.Read())
+					throw new InvalidOperationException("EOF");
+
+				if (_reader.TokenType != JsonToken.PropertyName)
+					throw new InvalidOperationException($"{_reader.TokenType} != {JsonToken.PropertyName}");
+
+				if (!((string)_reader.Value).CompareIgnoreCase(name))
+					throw new InvalidOperationException($"{_reader.Value} != {name}");
+
+				if (!_reader.Read())
+					throw new InvalidOperationException("EOF");
+
+				return _reader.Value.To<T>();
+			}
+
+			return TryGetValue(name, out var value) ? value.To<T>() : default;
 		}
 
 		public T TryGet<T>(string name, T defaultValue = default)
 			=> GetValue(name, defaultValue);
+
+		public async Task<T> GetValueAsync<T>(string name, T defaultValue = default, CancellationToken cancellationToken = default)
+		{
+			if (_reader is null)
+				return GetValue(name, defaultValue);
+			else
+			{
+				if (!await _reader.ReadAsync(cancellationToken))
+					throw new InvalidOperationException("EOF");
+
+				if (_reader.TokenType != JsonToken.PropertyName)
+					throw new InvalidOperationException($"{_reader.TokenType} != {JsonToken.PropertyName}");
+
+				if (!((string)_reader.Value).CompareIgnoreCase(name))
+					throw new InvalidOperationException($"{_reader.Value} != {name}");
+
+				if (!await _reader.ReadAsync(cancellationToken))
+					throw new InvalidOperationException("EOF");
+
+				return _reader.Value.To<T>();
+			}
+		}
 	}
 }

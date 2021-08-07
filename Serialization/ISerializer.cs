@@ -14,6 +14,8 @@ namespace Ecng.Serialization
 		IList<string> IgnoreFields { get; }
 		string FileExtension { get; }
 
+		object CreateObject(SerializationItemCollection source);
+
 		byte[] Serialize(object graph);
 		object Deserialize(byte[] data);
 
