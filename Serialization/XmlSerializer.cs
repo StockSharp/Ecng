@@ -13,6 +13,7 @@ namespace Ecng.Serialization
 	public interface IXmlSerializer : ISerializer
 	{
 		Encoding Encoding { get; set; }
+		bool Indent { get; set; }
 
 		void Serialize(SerializationItemCollection source, XElement element);
 		void Serialize(object graph, XElement element);
@@ -22,33 +23,23 @@ namespace Ecng.Serialization
 
 	public class XmlSerializer<T> : Serializer<T>, IXmlSerializer
 	{
-		private readonly bool _indent;
 		private const string _typeAttr = "type";
 		private const string _isNullAttr = "isNull";
 
-		public XmlSerializer()
-			: this(true)
-		{
-		}
-
-		public XmlSerializer(bool indent)
-		{
-			_indent = indent;
-		}
-
 		private XElement _element;
+
+		public XmlSerializer()
+		{
+		}
+
+		public bool Indent { get; set; } = true;
+
 		private Encoding _encoding = new UTF8Encoding(false);
 
 		public Encoding Encoding
 		{
 			get => _encoding;
-			set
-			{
-				if (value == null)
-					throw new ArgumentNullException(nameof(value));
-
-				_encoding = value;
-			}
+			set => _encoding = value ?? throw new ArgumentNullException(nameof(value));
 		}
 
 		private static string FormatTypeName(Type type)
@@ -157,7 +148,7 @@ namespace Ecng.Serialization
 					}
 					else
 					{
-						itemElem.Value = item.Value is byte[] ? ((byte[])item.Value).Base64() : item.Value.To<string>();
+						itemElem.Value = item.Value is byte[] v ? v.Base64() : item.Value.To<string>();
 					}
 				}
 
@@ -171,7 +162,7 @@ namespace Ecng.Serialization
 			if (doc == null)
 				return;
 
-			using (var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = _indent, OmitXmlDeclaration = true, Encoding = Encoding }))
+			using (var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = Indent, OmitXmlDeclaration = true, Encoding = Encoding }))
 				doc.Save(writer);
 		}
 
@@ -299,6 +290,7 @@ namespace Ecng.Serialization
 		{
 			var serializer = (IXmlSerializer)base.GetSerializer(entityType);
 			serializer.Encoding = Encoding;
+			serializer.Indent = Indent;
 			return serializer;
 		}
 	}
