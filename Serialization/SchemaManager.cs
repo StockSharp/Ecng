@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -28,7 +27,7 @@
 #endif
 #if !SILVERLIGHT
 				{ typeof(System.Drawing.Color), typeof(ColorFieldFactory<System.Drawing.Color>) },
-				{ typeof(System.Security.SecureString), "Ecng.Serialization.SecureStringFieldFactory, Ecng.Serialization.FieldFactories".To<Type>() },
+				//{ typeof(System.Security.SecureString), "Ecng.Serialization.SecureStringFieldFactory, Ecng.Serialization.FieldFactories".To<Type>() },
 #else
 				{ typeof(System.Security.SecureString), typeof(PrimitiveFieldFactory<System.Security.SecureString, string>) },
 #endif
