@@ -11,7 +11,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 {
     public class Polling : Transport
     {
-        public static readonly string NAME = "polling";
+        public static readonly string DefaultName = "polling";
         public static readonly string EVENT_POLL = "poll";
         public static readonly string EVENT_POLL_COMPLETE = "pollComplete";
 
@@ -19,7 +19,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
         public Polling(Options opts) : base(opts)
         {
-            Name = NAME;
+            Name = DefaultName;
         }
 
 

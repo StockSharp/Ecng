@@ -19,7 +19,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
 	public class WebSocket : Transport
     {
-        public static readonly string NAME = "websocket";
+        public static readonly string DefaultName = "websocket";
 
 	    private const bool _isNative = true;
 
@@ -32,7 +32,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
         public WebSocket(Options opts)
             : base(opts)
         {
-            Name = NAME;
+            base.Name = DefaultName;
             Cookies = new List<KeyValuePair<string, string>>();
             foreach (var cookie in opts.Cookies)
             {
@@ -241,7 +241,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 			        //ws.Close();
 			        _client.Disconnect();
 		        }
-		        catch (Exception e)
+		        catch// (Exception e)
 		        {
 			        //var log = LogManager.GetLogger(Global.CallerName());
 			        //log.Info("DoClose ws.Close() Exception= " + e.Message);

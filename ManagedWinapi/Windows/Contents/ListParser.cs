@@ -343,7 +343,7 @@ namespace ManagedWinapi.Windows.Contents
                                 }
                                 else
                                 {
-                                    throw ex;
+                                    throw;
                                 }
                             }
                         }

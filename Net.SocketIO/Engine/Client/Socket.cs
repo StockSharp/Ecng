@@ -160,7 +160,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
             Path = (options.Path ?? "/engine.io").Replace("/$", "") + "/";
             TimestampParam = (options.TimestampParam ?? "t");
             TimestampRequests = options.TimestampRequests;
-            Transports = options.Transports ?? ImmutableList<string>.Empty.Add(Polling.NAME).Add(WebSocket.NAME);
+            Transports = options.Transports ?? ImmutableList<string>.Empty.Add(Polling.DefaultName).Add(WebSocket.DefaultName);
             PolicyPort = options.PolicyPort != 0 ? options.PolicyPort : 843;
             RememberUpgrade = options.RememberUpgrade;
             Cookies = options.Cookies;
@@ -175,9 +175,9 @@ namespace Ecng.Net.SocketIO.Engine.Client
         public Socket Open()
         {
             string transportName;
-            if (RememberUpgrade && PriorWebsocketSuccess && Transports.Contains(WebSocket.NAME))
+            if (RememberUpgrade && PriorWebsocketSuccess && Transports.Contains(WebSocket.DefaultName))
             {
-                transportName = WebSocket.NAME;
+                transportName = WebSocket.DefaultName;
             }
             else
             {
@@ -232,11 +232,11 @@ namespace Ecng.Net.SocketIO.Engine.Client
                 ExtraHeaders = this.ExtraHeaders
             };
 
-            if (name == WebSocket.NAME)
+            if (name == WebSocket.DefaultName)
             {
                 return new WebSocket(options);
             }
-            else if (name == Polling.NAME)
+            else if (name == Polling.DefaultName)
             {
                 return new PollingXHR(options);
             }
@@ -712,7 +712,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
             //log.Info("socket open before call to flush()");
             ReadyState = ReadyStateEnum.OPEN;
-            PriorWebsocketSuccess = WebSocket.NAME == Transport.Name;
+            PriorWebsocketSuccess = WebSocket.DefaultName == Transport.Name;
 
             Flush();
             Emit(EVENT_OPEN);
@@ -843,7 +843,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
                         _onTransportOpenListener.Parameters.Socket.Upgrading = true;
                         _onTransportOpenListener.Parameters.Socket.Emit(EVENT_UPGRADING,
                             _onTransportOpenListener.Parameters.Transport[0]);
-                        Socket.PriorWebsocketSuccess = WebSocket.NAME ==
+                        Socket.PriorWebsocketSuccess = WebSocket.DefaultName ==
                                                        _onTransportOpenListener.Parameters.Transport[0].Name;
 
                         //log.Info(
@@ -887,7 +887,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
                                         _onTransportOpenListener.Parameters.Transport.RemoveAt(0);
 
                                 }
-                                catch (Exception e)
+                                catch// (Exception e)
                                 {
                                     //log.Error("",e);
                                 }
