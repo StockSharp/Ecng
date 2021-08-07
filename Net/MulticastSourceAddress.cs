@@ -71,10 +71,11 @@ namespace Ecng.Net
 
 		public void Save(SettingsStorage storage)
 		{
-			storage.SetValue(nameof(SourceAddress), SourceAddress.To<string>());
-			storage.SetValue(nameof(Port), Port);
-			storage.SetValue(nameof(GroupAddress), GroupAddress.To<string>());
-			storage.SetValue(nameof(IsEnabled), IsEnabled);
+			storage
+				.Set(nameof(SourceAddress), SourceAddress.To<string>())
+				.Set(nameof(Port), Port)
+				.Set(nameof(GroupAddress), GroupAddress.To<string>())
+				.Set(nameof(IsEnabled), IsEnabled);
 		}
 
 		public override string ToString()

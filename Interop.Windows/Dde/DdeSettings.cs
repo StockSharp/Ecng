@@ -76,11 +76,12 @@
 
 		public void Save(SettingsStorage storage)
 		{
-			storage.SetValue(nameof(Server), Server);
-			storage.SetValue(nameof(Topic), Topic);
-			storage.SetValue(nameof(ColumnOffset), ColumnOffset);
-			storage.SetValue(nameof(RowOffset), RowOffset);
-			storage.SetValue(nameof(ShowHeaders), ShowHeaders);
+			storage
+				.Set(nameof(Server), Server)
+				.Set(nameof(Topic), Topic)
+				.Set(nameof(ColumnOffset), ColumnOffset)
+				.Set(nameof(RowOffset), RowOffset)
+				.Set(nameof(ShowHeaders), ShowHeaders);
 		}
 	}
 }

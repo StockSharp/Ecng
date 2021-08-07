@@ -78,9 +78,10 @@ namespace Ecng.ComponentModel
 		/// <param name="storage">Settings storage.</param>
 		public virtual void Save(SettingsStorage storage)
 		{
-			storage.SetValue(nameof(Email), Email);
-			storage.SetValue(nameof(Password), Password);
-			storage.SetValue(nameof(AutoLogon), AutoLogon);
+			storage
+				.Set(nameof(Email), Email)
+				.Set(nameof(Password), Password)
+				.Set(nameof(AutoLogon), AutoLogon);
 		}
 	}
 }
