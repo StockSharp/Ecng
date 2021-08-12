@@ -118,7 +118,7 @@
 			if (_reader != null)
 				return GetValueFromReaderAsync(name, defaultValue).Result;
 
-			return TryGetValue(name, out var value) ? value.To<T>() : default;
+			return TryGetValue(name, out var value) ? value.To<T>() : defaultValue;
 		}
 
 		public T TryGet<T>(string name, T defaultValue = default)
