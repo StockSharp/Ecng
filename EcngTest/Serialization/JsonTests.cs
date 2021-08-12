@@ -5,6 +5,7 @@
 	using System.Collections;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using System.Linq;
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -359,7 +360,8 @@
 			public int IntProp { get; set; }
 			public DateTime DateProp { get; set; }
 			public TimeSpan TimeProp { get; set; }
-			public TestClass Obj2 { get; set; }
+			public TestClass Obj1 { get; set; }
+			public TestClass[] Obj2 { get; set; }
 
 			public override TestComplexClass Clone()
 			{
@@ -372,7 +374,8 @@
 					IntProp == other.IntProp &&
 					DateProp == other.DateProp &&
 					TimeProp == other.TimeProp &&
-					Obj2 == other.Obj2
+					Obj1 == other.Obj1 &&
+					((Obj2 is null && other.Obj2 is null) || Obj2.SequenceEqual(other.Obj2))
 					;
 			}
 
@@ -382,8 +385,11 @@
 				DateProp = storage.GetValue<DateTime>(nameof(DateProp));
 				TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
 
-				if (storage.ContainsKey(nameof(TimeProp)))
-					Obj2 = storage.GetValue<SettingsStorage>(nameof(TimeProp)).Load<TestClass>();
+				if (storage.ContainsKey(nameof(Obj1)))
+					Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1)).Load<TestClass>();
+
+				if (storage.ContainsKey(nameof(Obj2)))
+					Obj2 = storage.GetValue<SettingsStorage[]>(nameof(Obj2)).Select(s => s.Load<TestClass>()).ToArray();
 			}
 
 			void IPersistable.Save(SettingsStorage storage)
@@ -392,8 +398,71 @@
 					.Set(nameof(IntProp), IntProp)
 					.Set(nameof(DateProp), DateProp)
 					.Set(nameof(TimeProp), TimeProp)
-					.Set(nameof(Obj2), Obj2?.Save());
+					.Set(nameof(Obj1), Obj1?.Save())
+					.Set(nameof(Obj2), Obj2?.Select(o => o.Save()));
 			}
+		}
+
+		[TestMethod]
+		public async Task ComplexComplex()
+		{
+			await Do(new TestComplexClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+			});
+		}
+
+		[TestMethod]
+		public async Task ComplexComplex2()
+		{
+			await Do(new TestComplexClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				Obj1 = new TestClass
+				{
+					IntProp = 124,
+					DateProp = DateTime.UtcNow,
+					TimeProp = TimeSpan.FromSeconds(10),
+				}
+			});
+		}
+
+		[TestMethod]
+		public async Task ComplexComplex3()
+		{
+			await Do(new TestComplexClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				Obj1 = new TestClass
+				{
+					IntProp = 124,
+					DateProp = DateTime.UtcNow,
+					TimeProp = TimeSpan.FromSeconds(10),
+				},
+				Obj2 = new[]
+				{
+					null,
+					new TestClass
+					{
+						IntProp = 124,
+						DateProp = DateTime.UtcNow,
+						TimeProp = TimeSpan.FromSeconds(10),
+					},
+					null,
+					new TestClass
+					{
+						IntProp = 124,
+						DateProp = DateTime.UtcNow,
+						TimeProp = TimeSpan.FromSeconds(10),
+					},
+				}
+			});
 		}
 	}
 }

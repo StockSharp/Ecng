@@ -17,6 +17,7 @@
 	public class SettingsStorage : SynchronizedDictionary<string, object>
 	{
 		private readonly JsonReader _reader;
+		private readonly SettingsStorage _parent;
 
 		/// <summary>
 		/// Создать <see cref="SettingsStorage"/>.
@@ -24,6 +25,12 @@
 		public SettingsStorage()
 			: base(StringComparer.InvariantCultureIgnoreCase)
 		{
+		}
+
+		internal SettingsStorage(SettingsStorage parent)
+			: this(parent._reader)
+		{
+			_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 		}
 
 		internal SettingsStorage(JsonReader reader)
@@ -43,6 +50,12 @@
 			return this;
 		}
 
+		private void EnsureIsNotReader()
+		{
+			if (_reader != null)
+				throw new InvalidOperationException("_reader != null");
+		}
+
 		/// <summary>
 		/// Добавить значение в настройки.
 		/// </summary>
@@ -54,8 +67,7 @@
 			if (name.IsEmpty())
 				throw new ArgumentNullException(nameof(name));
 
-			if (_reader != null)
-				throw new InvalidOperationException("_reader != null");
+			EnsureIsNotReader();
 
 			this[name] = value;
 		}
@@ -70,7 +82,25 @@
 			if (name.IsEmpty())
 				throw new ArgumentNullException(nameof(name));
 
+			EnsureIsNotReader();
+
 			return ContainsKey(name);
+		}
+
+		private int _deepLevel;
+
+		public int DeepLevel
+		{
+			get => _deepLevel;
+			private set
+			{
+				var diff = value - _deepLevel;
+				
+				_deepLevel = value;
+
+				if (_parent != null)
+					_parent.DeepLevel += diff;
+			}
 		}
 
 		/// <summary>
@@ -86,21 +116,7 @@
 				throw new ArgumentNullException(nameof(name));
 
 			if (_reader != null)
-			{
-				if (!_reader.Read())
-					throw new InvalidOperationException("EOF");
-
-				if (_reader.TokenType != JsonToken.PropertyName)
-					throw new InvalidOperationException($"{_reader.TokenType} != {JsonToken.PropertyName}");
-
-				if (!((string)_reader.Value).CompareIgnoreCase(name))
-					throw new InvalidOperationException($"{_reader.Value} != {name}");
-
-				if (!_reader.Read())
-					throw new InvalidOperationException("EOF");
-
-				return _reader.Value.To<T>();
-			}
+				return GetValueFromReaderAsync(name, defaultValue).Result;
 
 			return TryGetValue(name, out var value) ? value.To<T>() : default;
 		}
@@ -113,21 +129,52 @@
 			if (_reader is null)
 				return GetValue(name, defaultValue);
 			else
+				return await GetValueFromReaderAsync(name, defaultValue, cancellationToken);
+		}
+
+		internal async Task TryClearDeepLevel(CancellationToken cancellationToken)
+		{
+			var lvl = DeepLevel;
+
+			if (lvl == 0)
+				return;
+
+			for (var i = 1; i < lvl; i++)
+				await _reader.ReadWithCheckAsync(cancellationToken);
+
+			DeepLevel = 0;
+		}
+
+		private async Task<T> GetValueFromReaderAsync<T>(string name, T defaultValue = default, CancellationToken cancellationToken = default)
+		{
+			await TryClearDeepLevel(cancellationToken);
+
+			await _reader.ReadWithCheckAsync(cancellationToken);
+
+			_reader.ChechExpectedToken(JsonToken.PropertyName);
+			
+			if (!((string)_reader.Value).CompareIgnoreCase(name))
+				throw new InvalidOperationException($"{_reader.Value} != {name}");
+
+			await _reader.ReadWithCheckAsync(cancellationToken);
+
+			if (_reader.TokenType == JsonToken.Null)
+				return defaultValue;
+
+			object value;
+
+			if (typeof(T) == typeof(SettingsStorage))
 			{
-				if (!await _reader.ReadAsync(cancellationToken))
-					throw new InvalidOperationException("EOF");
+				//await _reader.ReadWithCheckAsync(cancellationToken);
 
-				if (_reader.TokenType != JsonToken.PropertyName)
-					throw new InvalidOperationException($"{_reader.TokenType} != {JsonToken.PropertyName}");
+				DeepLevel++;
 
-				if (!((string)_reader.Value).CompareIgnoreCase(name))
-					throw new InvalidOperationException($"{_reader.Value} != {name}");
-
-				if (!await _reader.ReadAsync(cancellationToken))
-					throw new InvalidOperationException("EOF");
-
-				return _reader.Value.To<T>();
+				value = new SettingsStorage(this);
 			}
+			else
+				value = _reader.Value;
+
+			return value.To<T>() ?? defaultValue;
 		}
 	}
 }

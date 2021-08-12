@@ -12,7 +12,6 @@
 	using Ecng.Reflection;
 
 	using Newtonsoft.Json;
-	using System.Diagnostics;
 
 	public class JsonSerializer<T> : Serializer<T>
 	{
@@ -42,7 +41,6 @@
 
 		public override T Deserialize(Stream stream)
 			=> Task.Run(async () => await DeserializeAsync(stream, default)).Result;
-
 
 		private static bool IsJsonPrimitive() => typeof(T).IsSerializablePrimitive() && typeof(T) != typeof(byte[]);
 
@@ -81,24 +79,16 @@
 			return retVal;
 		}
 
-		[Conditional("DEBUG")]
-		private void ChechExpectedToken(JsonReader reader, JsonToken token)
-		{
-			if (reader.TokenType != token)
-				throw new InvalidOperationException($"{reader.TokenType} != {token}");
-		}
-
 		private async Task<object> ReadAsync(JsonReader reader, Type type, CancellationToken cancellationToken)
 		{
 			if (typeof(IPersistable).IsAssignableFrom(type) || typeof(IAsyncPersistable).IsAssignableFrom(type))
 			{
-				if (!await reader.ReadAsync(cancellationToken))
-					throw new InvalidOperationException("EOF");
+				await reader.ReadWithCheckAsync(cancellationToken);
 
 				if (reader.TokenType == JsonToken.EndArray || reader.TokenType == JsonToken.Null)
 					return null;
 
-				ChechExpectedToken(reader, JsonToken.StartObject);
+				reader.ChechExpectedToken(JsonToken.StartObject);
 
 				var per = GetSerializer(type).CreateObject(new SerializationItemCollection());
 
@@ -109,22 +99,22 @@
 				else
 					((IPersistable)per).Load(storage);
 
-				if (!await reader.ReadAsync(cancellationToken))
-					throw new InvalidOperationException("EOF");
+				await storage.TryClearDeepLevel(cancellationToken);
 
-				ChechExpectedToken(reader, JsonToken.EndObject);
+				await reader.ReadWithCheckAsync(cancellationToken);
+
+				reader.ChechExpectedToken(JsonToken.EndObject);
 
 				return per;
 			}
 			else if (type == typeof(SettingsStorage))
 			{
-				if (!await reader.ReadAsync(cancellationToken))
-					throw new InvalidOperationException("EOF");
+				await reader.ReadWithCheckAsync(cancellationToken);
 
 				if (reader.TokenType == JsonToken.EndArray || reader.TokenType == JsonToken.Null)
 					return null;
 
-				ChechExpectedToken(reader, JsonToken.StartObject);
+				reader.ChechExpectedToken(JsonToken.StartObject);
 
 				var storage = new SettingsStorage();
 
@@ -156,22 +146,20 @@
 					storage.SetValue(propName, value);
 				}
 
-				//if (!await reader.ReadAsync(cancellationToken))
-				//	throw new InvalidOperationException("EOF");
+				//await reader.ReadWithCheckAsync(cancellationToken);
 
-				ChechExpectedToken(reader, JsonToken.EndObject);
+				reader.ChechExpectedToken(JsonToken.EndObject);
 
 				return storage;
 			}
 			else if (typeof(IEnumerable).IsAssignableFrom(type) && type != typeof(string))
 			{
-				if (!await reader.ReadAsync(cancellationToken))
-					throw new InvalidOperationException("EOF");
+				await reader.ReadWithCheckAsync(cancellationToken);
 
 				if (reader.TokenType == JsonToken.EndArray || reader.TokenType == JsonToken.Null)
 					return null;
 
-				ChechExpectedToken(reader, JsonToken.StartArray);
+				reader.ChechExpectedToken(JsonToken.StartArray);
 
 				var itemType = type.GetItemType();
 
@@ -187,7 +175,7 @@
 					col.Add(item);
 				}
 
-				ChechExpectedToken(reader, JsonToken.EndArray);
+				reader.ChechExpectedToken(JsonToken.EndArray);
 
 				var arr = Array.CreateInstance(itemType, col.Count);
 				var idx = 0;
