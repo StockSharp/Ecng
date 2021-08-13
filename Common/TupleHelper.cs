@@ -144,12 +144,15 @@
 
 		public static object ToTuple(this IEnumerable<object> values)
 		{
+			if (values is null)
+				throw new ArgumentNullException(nameof(values));
+
 			var types = new List<Type>();
 			var args = new List<object>();
 
 			foreach (var value in values)
 			{
-				types.Add(value.GetType());
+				types.Add(value?.GetType() ?? typeof(object));
 				args.Add(value);
 			}
 
@@ -158,5 +161,22 @@
 
 			return specificType.CreateInstance<object>(args.ToArray());
 		}
+
+#if !NETSTANDARD2_1
+		public static IEnumerable<object> ToValues<T>(this T tuple)
+		{
+			if (!typeof(T).FullName.StartsWith("System.Tuple"))
+				throw new InvalidOperationException($"Type {typeof(T)} is not tuple.");
+
+			var count = typeof(T).GetGenericArguments().Length;
+
+			var values = new List<object>(count);
+
+			for (int i = 1; i <= count; i++)
+				values.Add(typeof(T).GetProperty($"Item{i}").GetValue(tuple));
+
+			return values;
+		}
+#endif
 	}
 }
