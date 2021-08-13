@@ -3,6 +3,7 @@
 	using System;
 	using System.IO;
 	using System.Collections;
+	using System.Collections.Generic;
 	using System.Threading;
 	using System.Threading.Tasks;
 	using System.Linq;
@@ -12,6 +13,7 @@
 	using Ecng.Common;
 	using Ecng.Serialization;
 	using Ecng.UnitTesting;
+	using Ecng.Reflection;
 
 	[TestClass]
 	public class JsonTests
@@ -27,32 +29,66 @@
 
 			var actual = await ser.DeserializeAsync(stream, token);
 
-			void CheckValues(object actual, object expected)
+			void CheckValue(object actual, object expected)
 			{
-				object GetTypedValue(object v, Type type)
-					=> needCast ? type is null ? v : v.To(type) : v;
-
-				if (actual is ICollection actCol)
+				void AssertEqual(object actual, object expected)
 				{
-					var expCol = (ICollection)expected;
-					actCol.Count.AssertEqual(expCol.Count);
-
-					var enumerator = expCol.GetEnumerator();
-					foreach (var actItem in actCol)
+					if (expected is null)
+						actual.AssertNull();
+					else
 					{
-						enumerator.MoveNext();
+						actual.AssertNotNull();
 
-						if (actItem is ICollection actCol2)
-							CheckValues(actItem, enumerator.Current);
+						if (!needCast)
+							actual.AssertEqual(expected);
 						else
-							GetTypedValue(actItem, enumerator.Current?.GetType()).AssertEqual(enumerator.Current);
+						{
+							var expType = expected.GetType();
+
+							if (expType.GetGenericType(typeof(KeyValuePair<,>)) != null)
+							{
+								dynamic expDyn = expected;
+								dynamic actDyn = actual;
+
+								((string)actDyn.Key).AssertEqual((string)expDyn.Key);
+
+								CheckValue((object)actDyn.Value, (object)expDyn.Value);
+							}
+							else
+								actual.To(expType).AssertEqual(expected);
+						}
 					}
 				}
+
+				if (expected is IEnumerable expEmu)
+				{
+					actual.AssertNotNull();
+
+					var actEmu = (IEnumerable)actual;
+					//actCol.Count.AssertEqual(expCol.Count);
+
+					var enumerator = expEmu.GetEnumerator();
+					foreach (var actItem in actEmu)
+					{
+						if (!enumerator.MoveNext())
+							throw new InvalidOperationException("Exp is less.");
+
+						var expItem = enumerator.Current;
+
+						if (expItem is IEnumerable)
+							CheckValue(actItem, expItem);
+						else
+							AssertEqual(actItem, expItem);
+					}
+
+					if (enumerator.MoveNext())
+						throw new InvalidOperationException("Exp is more.");
+				}
 				else
-					GetTypedValue(actual, expected?.GetType()).AssertEqual(expected);
+					AssertEqual(actual, expected);
 			}
 
-			CheckValues(actual, value);
+			CheckValue(actual, value);
 		}
 
 		[TestMethod]
@@ -385,11 +421,11 @@
 				DateProp = storage.GetValue<DateTime>(nameof(DateProp));
 				TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
 
-				if (storage.ContainsKey(nameof(Obj1)))
-					Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1)).Load<TestClass>();
+				//if (storage.ContainsKey(nameof(Obj1)))
+					Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1))?.Load<TestClass>();
 
-				if (storage.ContainsKey(nameof(Obj2)))
-					Obj2 = storage.GetValue<SettingsStorage[]>(nameof(Obj2)).Select(s => s.Load<TestClass>()).ToArray();
+				//if (storage.ContainsKey(nameof(Obj2)))
+					Obj2 = storage.GetValue<SettingsStorage[]>(nameof(Obj2))?.Select(s => s?.Load<TestClass>()).ToArray();
 			}
 
 			void IPersistable.Save(SettingsStorage storage)
@@ -399,7 +435,7 @@
 					.Set(nameof(DateProp), DateProp)
 					.Set(nameof(TimeProp), TimeProp)
 					.Set(nameof(Obj1), Obj1?.Save())
-					.Set(nameof(Obj2), Obj2?.Select(o => o.Save()));
+					.Set(nameof(Obj2), Obj2?.Select(o => o?.Save()));
 			}
 		}
 

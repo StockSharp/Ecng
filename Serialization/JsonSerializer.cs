@@ -117,34 +117,7 @@
 				reader.ChechExpectedToken(JsonToken.StartObject);
 
 				var storage = new SettingsStorage();
-
-				while (await reader.ReadAsync(cancellationToken))
-				{
-					if (reader.TokenType == JsonToken.EndObject)
-						break;
-
-					var propName = (string)reader.Value;
-
-					Type valueType;
-
-					switch (reader.TokenType)
-					{
-						case JsonToken.StartObject:
-							valueType = typeof(SettingsStorage);
-							break;
-						case JsonToken.PropertyName:
-							valueType = typeof(string);
-							break;
-						case JsonToken.StartArray:
-							valueType = typeof(string[]);
-							break;
-						default:
-							throw new ArgumentOutOfRangeException(reader.TokenType.ToString());
-					}
-
-					var value = await ReadAsync(reader, valueType, cancellationToken);
-					storage.SetValue(propName, value);
-				}
+				await storage.FillAsync(reader, cancellationToken);
 
 				//await reader.ReadWithCheckAsync(cancellationToken);
 
