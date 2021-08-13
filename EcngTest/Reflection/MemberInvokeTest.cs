@@ -920,7 +920,7 @@ namespace Ecng.Test.Reflection
 			EventsClassEventArgs arg = new EventsClassEventArgs();
 			obj.RaiseEvent1(arg);
 			Assert.AreEqual(10, arg.Field);
-			obj.SetValue("remove_" + nameof(EventsClass.Event1), handler);
+			obj.SetValue(ReflectionHelper.RemovePrefix + nameof(EventsClass.Event1), handler);
 			arg.Field = 1;
 			obj.RaiseEvent1(arg);
 			Assert.AreEqual(1, arg.Field);
@@ -931,11 +931,11 @@ namespace Ecng.Test.Reflection
 		{
 			EventsClass obj = new EventsClass();
 			EventHandler<EventsClassEventArgs> handler = (sender, e) => e.Field = 10;
-			obj.SetValue("add_" + nameof(EventsClass.Event1), handler);
+			obj.SetValue(ReflectionHelper.AddPrefix + nameof(EventsClass.Event1), handler);
 			EventsClassEventArgs arg = new EventsClassEventArgs();
 			obj.RaiseEvent1(arg);
 			Assert.AreEqual(10, arg.Field);
-			obj.SetValue("remove_" + nameof(EventsClass.Event1), handler);
+			obj.SetValue(ReflectionHelper.RemovePrefix + nameof(EventsClass.Event1), handler);
 			arg.Field = 1;
 			obj.RaiseEvent1(arg);
 			Assert.AreEqual(1, arg.Field);
@@ -949,7 +949,7 @@ namespace Ecng.Test.Reflection
 			EventsClassEventArgs arg = new EventsClassEventArgs();
 			EventsClass.RaiseEvent2(arg);
 			Assert.AreEqual(10, arg.Field);
-			typeof(EventsClass).SetValue("remove_" + nameof(EventsClass.Event2), handler);
+			typeof(EventsClass).SetValue(ReflectionHelper.RemovePrefix + nameof(EventsClass.Event2), handler);
 			arg.Field = 1;
 			EventsClass.RaiseEvent2(arg);
 			Assert.AreEqual(1, arg.Field);
@@ -959,11 +959,11 @@ namespace Ecng.Test.Reflection
 		public void RaiseStaticEvent2()
 		{
 			EventHandler<EventsClassEventArgs> handler = (sender, e) => e.Field = 10;
-			typeof(EventsClass).SetValue("add_" + nameof(EventsClass.Event2), handler);
+			typeof(EventsClass).SetValue(ReflectionHelper.AddPrefix + nameof(EventsClass.Event2), handler);
 			EventsClassEventArgs arg = new EventsClassEventArgs();
 			EventsClass.RaiseEvent2(arg);
 			Assert.AreEqual(10, arg.Field);
-			typeof(EventsClass).SetValue("remove_" + nameof(EventsClass.Event2), handler);
+			typeof(EventsClass).SetValue(ReflectionHelper.RemovePrefix + nameof(EventsClass.Event2), handler);
 			arg.Field = 1;
 			EventsClass.RaiseEvent2(arg);
 			Assert.AreEqual(1, arg.Field);

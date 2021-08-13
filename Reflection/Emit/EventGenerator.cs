@@ -52,7 +52,7 @@ namespace Ecng.Reflection.Emit
 			{
 				if (_addMethod == null)
 				{
-					_addMethod = _typeGenerator.CreateMethod("add_" + _eventName, methodAttrs, typeof(void), _eventType);
+					_addMethod = _typeGenerator.CreateMethod(ReflectionHelper.AddPrefix + _eventName, methodAttrs, typeof(void), _eventType);
 					Builder.SetAddOnMethod((MethodBuilder)_addMethod.Builder);
 				}
 			}
@@ -75,7 +75,7 @@ namespace Ecng.Reflection.Emit
 			{
 				if (_removeMethod == null)
 				{
-					_removeMethod = _typeGenerator.CreateMethod("remove_" + _eventName, methodAttrs, typeof(void), _eventType);
+					_removeMethod = _typeGenerator.CreateMethod(ReflectionHelper.RemovePrefix + _eventName, methodAttrs, typeof(void), _eventType);
 					Builder.SetAddOnMethod((MethodBuilder)_removeMethod.Builder);
 				}
 			}

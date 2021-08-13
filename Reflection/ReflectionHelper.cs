@@ -794,6 +794,11 @@ namespace Ecng.Reflection
 
 		#endregion
 
+		public const string GetPrefix = "get_";
+		public const string SetPrefix = "set_";
+		public const string AddPrefix = "add_";
+		public const string RemovePrefix = "remove_";
+
 		#region MakePropertyName
 
 		public static string MakePropertyName(this string accessorName)
@@ -802,10 +807,10 @@ namespace Ecng.Reflection
 				throw new ArgumentNullException(nameof(accessorName));
 
 			return accessorName
-							.Remove("get_")
-							.Remove("set_")
-							.Remove("add_")
-							.Remove("remove_");
+							.Remove(GetPrefix)
+							.Remove(SetPrefix)
+							.Remove(AddPrefix)
+							.Remove(RemovePrefix);
 		}
 
 		#endregion
@@ -823,14 +828,14 @@ namespace Ecng.Reflection
 			{
 				var flags = method.IsStatic ? AllStaticMembers : AllInstanceMembers;
 
-				if (method.Name.Contains("get_") || method.Name.Contains("set_"))
+				if (method.Name.Contains(GetPrefix) || method.Name.Contains(SetPrefix))
 				{
 					var name = MakePropertyName(method.Name);
 
 					return GetMembers<PropertyInfo>(method.ReflectedType, flags, true, name)
 						.FirstOrDefault(property => property.GetGetMethod(true) == method || property.GetSetMethod(true) == method);
 				}
-				else if (method.Name.Contains("add_") || method.Name.Contains("remove_"))
+				else if (method.Name.Contains(AddPrefix) || method.Name.Contains(RemovePrefix))
 				{
 					var name = MakePropertyName(method.Name);
 

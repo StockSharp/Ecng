@@ -27,7 +27,7 @@
 
 		public MethodGenerator CreateGetMethod(MethodAttributes methodAttrs, params Type[] additionalTypes)
 		{
-			MethodGenerator generator = _typeGenerator.CreateMethod("get_" + Builder.Name, methodAttrs, Builder.PropertyType, additionalTypes);
+			MethodGenerator generator = _typeGenerator.CreateMethod(ReflectionHelper.GetPrefix + Builder.Name, methodAttrs, Builder.PropertyType, additionalTypes);
 			Builder.SetGetMethod((MethodBuilder)generator.Builder);
 			return generator;
 		}
@@ -38,7 +38,7 @@
 
 		public MethodGenerator CreateSetMethod(MethodAttributes methodAttrs, params Type[] additionalTypes)
 		{
-			var generator = _typeGenerator.CreateMethod("set_" + Builder.Name, methodAttrs, typeof(void), additionalTypes.Append(Builder.PropertyType).ToArray());
+			var generator = _typeGenerator.CreateMethod(ReflectionHelper.SetPrefix + Builder.Name, methodAttrs, typeof(void), additionalTypes.Append(Builder.PropertyType).ToArray());
 			Builder.SetSetMethod((MethodBuilder)generator.Builder);
 			return generator;
 		}
