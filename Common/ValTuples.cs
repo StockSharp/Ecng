@@ -70,12 +70,12 @@
 
 	public static class ValTuple
 	{
-		public static ValTuple<T1, T2> Create<T1, T2>(T1 i1, T2 i2) => new ValTuple<T1, T2>(i1, i2);
+		public static ValTuple<T1, T2> Create<T1, T2>(T1 i1, T2 i2) => new(i1, i2);
 
-		public static ValTuple<T1, T2, T3> Create<T1, T2, T3>(T1 i1, T2 i2, T3 i3) => new ValTuple<T1, T2, T3>(i1, i2, i3);
+		public static ValTuple<T1, T2, T3> Create<T1, T2, T3>(T1 i1, T2 i2, T3 i3) => new(i1, i2, i3);
 
-		public static ValTuple<T1, T2, T3, T4> Create<T1, T2, T3, T4>(T1 i1, T2 i2, T3 i3, T4 i4) => new ValTuple<T1, T2, T3, T4>(i1, i2, i3, i4);
+		public static ValTuple<T1, T2, T3, T4> Create<T1, T2, T3, T4>(T1 i1, T2 i2, T3 i3, T4 i4) => new(i1, i2, i3, i4);
 
-		public static ValTuple<T1, T2, T3, T4, T5> Create<T1, T2, T3, T4, T5>(T1 i1, T2 i2, T3 i3, T4 i4, T5 i5) => new ValTuple<T1, T2, T3, T4, T5>(i1, i2, i3, i4, i5);
+		public static ValTuple<T1, T2, T3, T4, T5> Create<T1, T2, T3, T4, T5>(T1 i1, T2 i2, T3 i3, T4 i4, T5 i5) => new(i1, i2, i3, i4, i5);
 	}
 }
