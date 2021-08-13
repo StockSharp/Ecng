@@ -28,6 +28,9 @@ namespace Ecng.Reflection
 
 		#endregion
 
+		public static bool IsParams(this PropertyInfo pi)
+			=> pi.GetAttribute<ParamArrayAttribute>() != null;
+
 		#region GetParameterTypes
 
 		public static Type[] GetParameterTypes(this MethodBase method)
@@ -113,9 +116,11 @@ namespace Ecng.Reflection
 
 		#region GetIndexer
 
+		public const string IndexerName = "Item";
+
 		public static PropertyInfo GetIndexer(this Type type, params Type[] additionalTypes)
 		{
-			return GetMember<PropertyInfo>(type, "Item", AllInstanceMembers, additionalTypes);
+			return GetMember<PropertyInfo>(type, IndexerName, AllInstanceMembers, additionalTypes);
 		}
 
 		#endregion
@@ -124,7 +129,7 @@ namespace Ecng.Reflection
 
 		public static PropertyInfo[] GetIndexers(this Type type, params Type[] additionalTypes)
 		{
-			return GetMembers<PropertyInfo>(type, AllInstanceMembers, true, "Item", additionalTypes);
+			return GetMembers<PropertyInfo>(type, AllInstanceMembers, true, IndexerName, additionalTypes);
 		}
 
 		#endregion
