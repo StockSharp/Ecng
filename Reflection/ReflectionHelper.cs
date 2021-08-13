@@ -354,7 +354,12 @@ namespace Ecng.Reflection
 				members = FilterMembers(members, additionalTypes).ToArray();
 
 			if (members.Length != 1)
+			{
+				if (members.Length == 2 && members[0] is EventInfo && members[1] is FieldInfo)
+					return members[1];
+
 				throw new ArgumentException("Type '{0}' has '{1}' members with name '{2}'".Put(type, members.Length, memberName));
+			}
 
 			return members[0];
 		}
