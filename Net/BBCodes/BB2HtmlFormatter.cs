@@ -312,7 +312,7 @@
 				code = code.Replace("<", "&lt;");
 				code = code.Replace("\"", "&quot;");
 
-				var src = _toFullAbsolute(Path.GetExtension(smile.Icon).CompareIgnoreCase(".gif")
+				var src = _toFullAbsolute(Path.GetExtension(smile.Icon).EqualsIgnoreCase(".gif")
 					? $"~/images/smiles/{smile.Icon}"
 					: $"~/images/svg/smiles/{smile.Icon}", isEnglish);
 
@@ -1163,7 +1163,7 @@
 						var url = _parent._toFullAbsolute(_parent._getFileUrl(fileId), context.IsEnglish);
 
 						var fileName = file?.GetName(context.IsEnglish);
-						var isGif = Path.GetExtension(fileName).CompareIgnoreCase(".gif");
+						var isGif = Path.GetExtension(fileName).EqualsIgnoreCase(".gif");
 
 						if (!context.PreventScaling)
 						{

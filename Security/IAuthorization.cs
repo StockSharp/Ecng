@@ -159,7 +159,7 @@ namespace Ecng.Security
 		{
 			if (Login.IsEmpty())
 				return base.ValidateCredentials(login, password, clientAddress);
-			else if (login.CompareIgnoreCase(Login) && password != null && Password != null && password.IsEqualTo(Password))
+			else if (login.EqualsIgnoreCase(Login) && password != null && Password != null && password.IsEqualTo(Password))
 				return Guid.NewGuid();
 
 			throw new UnauthorizedAccessException();

@@ -252,7 +252,7 @@ class TempExpressionFormula : ExpressionFormula
 				var allAssemblies = AppDomain.CurrentDomain.GetAssemblies().ToArray();
 				needLibs.ForEach(name =>
 				{
-					var loaded = allAssemblies.FirstOrDefault(a => a.GetName().Name.CompareIgnoreCase(name));
+					var loaded = allAssemblies.FirstOrDefault(a => a.GetName().Name.EqualsIgnoreCase(name));
 					if(loaded != null)
 						refs.Add(loaded.Location);
 				});

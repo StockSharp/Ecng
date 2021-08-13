@@ -203,7 +203,7 @@
 								type = asm.GetType(parts[0]);
 							}
 
-							if (type == null && parts[1].Trim().CompareIgnoreCase(
+							if (type == null && parts[1].Trim().EqualsIgnoreCase(
 #if NETFRAMEWORK
 								"System.Private.CoreLib"
 #else

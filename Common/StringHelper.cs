@@ -429,6 +429,7 @@
 			return string.Equals(str1, str2, StringComparison.InvariantCultureIgnoreCase);
 		}
 
+		[Obsolete("Use EqualsIgnoreCase.")]
 		public static bool CompareIgnoreCase(this string str1, string str2)
 		{
 			return string.Compare(str1, str2, StringComparison.InvariantCultureIgnoreCase) == 0;
@@ -877,7 +878,7 @@
 		public static bool ComparePaths(this string path1, string path2)
 		{
 			// http://stackoverflow.com/questions/2281531/how-can-i-compare-directory-paths-in-c
-			return Path.GetFullPath(path1).TrimEnd('\\').CompareIgnoreCase(Path.GetFullPath(path2).TrimEnd('\\'));
+			return Path.GetFullPath(path1).TrimEnd('\\').EqualsIgnoreCase(Path.GetFullPath(path2).TrimEnd('\\'));
 		}
 
 		public static bool Like(this string toSearch, string toFind, bool ignoreCase = true)

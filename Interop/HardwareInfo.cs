@@ -49,11 +49,11 @@ namespace Ecng.Interop
 			var mbId = GetWMIId("Win32_BaseBoard", "SerialNumber");
 
 			if (
-				mbId.CompareIgnoreCase("none") ||
-				mbId.CompareIgnoreCase("n/a") ||
-				mbId.CompareIgnoreCase("invalid") ||
-				mbId.CompareIgnoreCase("To be filled by O.E.M.") ||
-				mbId.CompareIgnoreCase("Not Applicable")
+				mbId.EqualsIgnoreCase("none") ||
+				mbId.EqualsIgnoreCase("n/a") ||
+				mbId.EqualsIgnoreCase("invalid") ||
+				mbId.EqualsIgnoreCase("To be filled by O.E.M.") ||
+				mbId.EqualsIgnoreCase("Not Applicable")
 			)
 				mbId = null;
 

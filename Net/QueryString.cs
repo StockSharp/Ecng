@@ -168,7 +168,7 @@
 
 		protected override bool OnEquals(QueryString other)
 		{
-			return _compiledString.CompareIgnoreCase(other._compiledString);
+			return _compiledString.EqualsIgnoreCase(other._compiledString);
 		}
 	}
 }

@@ -34,7 +34,7 @@ namespace Ecng.Net
 			if (endPoint is IPEndPoint ip)
 				return IPAddress.IsLoopback(ip.Address);
 			else if (endPoint is DnsEndPoint dns)
-				return dns.Host.CompareIgnoreCase("localhost");
+				return dns.Host.EqualsIgnoreCase("localhost");
 			else
 				throw new ArgumentOutOfRangeException(nameof(endPoint), endPoint, "Invalid argument value.".Translate());
 		}
@@ -386,7 +386,7 @@ namespace Ecng.Net
 			if (url is null)
 				throw new ArgumentNullException(nameof(url));
 
-			return url.Host.CompareIgnoreCase("localhost");
+			return url.Host.EqualsIgnoreCase("localhost");
 		}
 
 		public static string CheckUrl(this string str) => str.ToLatin().LightScreening().ClearUrl();

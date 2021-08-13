@@ -39,8 +39,8 @@ namespace Ecng.Serialization
 
 		public override void ReadStartElement()
 		{
-			if (NamespaceURI.CompareIgnoreCase(string.Empty)
-				&& (LocalName.CompareIgnoreCase("lastBuildDate") || LocalName.CompareIgnoreCase("pubDate")))
+			if (NamespaceURI.EqualsIgnoreCase(string.Empty)
+				&& (LocalName.EqualsIgnoreCase("lastBuildDate") || LocalName.EqualsIgnoreCase("pubDate")))
 			{
 				_readingDate = true;
 			}

@@ -158,7 +158,7 @@
 
 			_reader.ChechExpectedToken(JsonToken.PropertyName);
 			
-			if (!((string)_reader.Value).CompareIgnoreCase(name))
+			if (!((string)_reader.Value).EqualsIgnoreCase(name))
 				throw new InvalidOperationException($"{_reader.Value} != {name}");
 
 			await _reader.ReadWithCheckAsync(cancellationToken);

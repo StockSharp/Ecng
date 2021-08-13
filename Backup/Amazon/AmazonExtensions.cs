@@ -50,9 +50,9 @@ namespace Ecng.Backup.Amazon
 				throw new ArgumentNullException(nameof(name));
 
 			var region = Endpoints.FirstOrDefault(e =>
-				e.SystemName.CompareIgnoreCase(name) ||
-				e.SystemName.Remove("-").CompareIgnoreCase(name) ||
-				e.DisplayName.CompareIgnoreCase(name));
+				e.SystemName.EqualsIgnoreCase(name) ||
+				e.SystemName.Remove("-").EqualsIgnoreCase(name) ||
+				e.DisplayName.EqualsIgnoreCase(name));
 
 			return region ?? RegionEndpoint.GetBySystemName(name);
 		}
