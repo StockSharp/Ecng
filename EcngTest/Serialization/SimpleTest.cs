@@ -1,17 +1,27 @@
 ﻿namespace Ecng.Test.Serialization
 {
 	using System;
+	using System.Linq;
 
+	using Ecng.Common;
 	using Ecng.Serialization;
+	using Ecng.UnitTesting;
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-	class Entity2
+	class Entity2 : Equatable<Entity2>
 	{
 		public string Name { get; set; }
+
+		public override Entity2 Clone() => throw new NotSupportedException();
+
+		public override bool Equals(Entity2 other)
+		{
+			return Name == other.Name;
+		}
 	}
 
-	class Entity
+	class Entity : Equatable<Entity>
 	{
 		public int Id { get; set; }
 		
@@ -31,6 +41,21 @@
 
 		[Collection]
 		public string[] Names2 { get; set; }
+
+		public override Entity Clone() => throw new NotSupportedException();
+
+		public override bool Equals(Entity other)
+		{
+			return
+				Id == other.Id &&
+				Name == other.Name &&
+				Entity2 == other.Entity2 &&
+				((Entities is null && other.Entities is null) || Entities.SequenceEqual(other.Entities)) &&
+				((Entities2 is null && other.Entities2 is null) || Entities2.SequenceEqual(other.Entities2)) &&
+				((Names is null && other.Names is null) || Names.SequenceEqual(other.Names)) &&
+				((Names2 is null && other.Names2 is null) || Names2.SequenceEqual(other.Names2))
+				;
+		}
 	}
 
 	[TestClass]
@@ -127,7 +152,7 @@
 			where TSerializer : Serializer<TValue>, new()
 		{
 			var serializer = new TSerializer();
-			Assert.AreEqual(value, serializer.Deserialize(serializer.Serialize(value)));
+			serializer.Deserialize(serializer.Serialize(value)).AssertEqual(value);
 		}
 	}
 }

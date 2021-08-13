@@ -4,6 +4,7 @@ namespace Ecng.Test.Serialization
 	using System.Collections.Generic;
 
 	using Ecng.Serialization;
+	using Ecng.UnitTesting;
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -170,7 +171,7 @@ namespace Ecng.Test.Serialization
 			where TCollection : IEnumerable<TItem>
 		{
 			var ser = new TSerializer();
-			Assert.IsTrue(ser.Deserialize(ser.Serialize(collection)).SequenceEqual(collection));
+			ser.Deserialize(ser.Serialize(collection)).SequenceEqual(collection).AssertTrue();
 		}
 	}
 }
