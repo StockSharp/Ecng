@@ -132,9 +132,7 @@
 		/// <returns><c>true</c> if item is found in the priority queue; otherwise, <c>false.</c> </returns>
 		public bool Contains(KeyValuePair<TPriority, TValue> item)
 		{
-			var dic = _dictionary.TryGetValue(item.Key);
-
-			if (dic == null)
+			if (!_dictionary.TryGetValue(item.Key, out var dic))
 				return false;
 
 			return dic.Contains(item.Value);
@@ -189,9 +187,7 @@
 
 		private bool Remove(TPriority key, ICollection<TValue> items)
 		{
-			var queue = _dictionary.TryGetValue(key);
-
-			if (queue == null)
+			if (!_dictionary.TryGetValue(key, out var queue))
 				return false;
 
 			_dictionary.Remove(key);

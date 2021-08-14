@@ -1,11 +1,10 @@
-﻿using Ecng.Collections;
-
-namespace Ecng.ComponentModel
+﻿namespace Ecng.ComponentModel
 {
 	using System;
 	using System.Collections.Generic;
 	
 	using Ecng.Common;
+	using Ecng.Collections;
 
 	public abstract class EventsContainer : Disposable
 	{
@@ -34,7 +33,7 @@ namespace Ecng.ComponentModel
 
 		public static void EndSuspend()
 		{
-			if (_events == null)
+			if (_events is null)
 				throw new InvalidOperationException();
 
 			while (HasNewItems)
@@ -55,19 +54,17 @@ namespace Ecng.ComponentModel
 
 		protected HashSet<T> GetItems<T>(bool create)
 		{
-			if (_events == null)
+			if (_events is null)
 				return null;
 			else
 			{
-				var items = (HashSet<T>)_events.TryGetValue(_id);
-
-				if (items == null && create)
+				if (!_events.TryGetValue(_id, out var items) && create)
 				{
 					items = new HashSet<T>();
 					_events.Add(_id, items);
 				}
 
-				return items;
+				return (HashSet<T>)items;
 			}
 		}
 

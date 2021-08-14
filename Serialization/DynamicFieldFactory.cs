@@ -21,12 +21,7 @@
 			var type = source["Type"].Value.To<Type>();
 			var value = source["Value"].Value;
 
-			var factoryType = SchemaManager.GlobalFieldFactories.TryGetValue(type);
-
-			//if (factoryType == null && typeof(IPersistable).IsAssignableFrom(type))
-			//	factoryType = typeof(PersistableFieldactory<>).Make(type);
-
-			if (factoryType == null)
+			if (!SchemaManager.GlobalFieldFactories.TryGetValue(type, out var factoryType))
 				return value.To(type);
 
 			var factory = GetFactory(factoryType);
@@ -44,12 +39,7 @@
 			
 			if (type == null)
 			{
-				var factoryType = SchemaManager.GlobalFieldFactories.TryGetValue(instanceType);
-
-				//if (factoryType == null && typeof(IPersistable).IsAssignableFrom(instanceType))
-				//	factoryType = typeof(PersistableFieldactory<>).Make(instanceType);
-
-				if (factoryType != null)
+				if (SchemaManager.GlobalFieldFactories.TryGetValue(instanceType, out var factoryType))
 				{
 					var factory = GetFactory(factoryType);
 

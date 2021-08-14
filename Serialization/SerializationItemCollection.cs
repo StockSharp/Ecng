@@ -30,9 +30,7 @@ namespace Ecng.Serialization
 		{
 			get
 			{
-				var retVal = _innerDictionary.TryGetValue(name);
-
-				if (retVal == null)
+				if (!_innerDictionary.TryGetValue(name, out var retVal))
 					throw new ArgumentException("Item with name '{0}' doesn't exists.".Put(name), nameof(name));
 
 				return retVal;

@@ -705,25 +705,6 @@
 				action(collection);
 		}
 
-		//public static TValue TryGetValue<TKey, TValue>(this SynchronizedDictionary<TKey, TValue> dict, TKey key)
-		//{
-		//    if (dict == null)
-		//        throw new ArgumentNullException("dict");
-
-		//    lock (dict.SyncRoot)
-		//        return ((IDictionary<TKey, TValue>)dict).TryGetValue(key);
-		//}
-
-		//public static TValue? TryGetValue2<TKey, TValue>(this SynchronizedDictionary<TKey, TValue> dict, TKey key)
-		//    where TValue : struct
-		//{
-		//    if (dict == null)
-		//        throw new ArgumentNullException("dict");
-
-		//    lock (dict.SyncRoot)
-		//        return ((IDictionary<TKey, TValue>)dict).TryGetValue2(key);
-		//}
-
 		public static ICollection<TValue> TryGetValue<TKey, TValue>(this SynchronizedMultiDictionary<TKey, TValue> dict, TKey key)
 		{
 			if (dict == null)
@@ -1123,30 +1104,6 @@
 			syncList.AddRange(list);
 			return syncList;
 		}
-
-		//// http://stackoverflow.com/questions/3683105/calculate-difference-from-previous-item-with-linq
-		//public static IEnumerable<TResult> SelectWithPrevious<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TSource, TResult> projection)
-		//{
-		//	if (source == null)
-		//		throw new ArgumentNullException("source");
-
-		//	if (projection == null)
-		//		throw new ArgumentNullException("projection");
-
-		//	using (var iterator = source.GetEnumerator())
-		//	{
-		//		if (!iterator.MoveNext())
-		//			yield break;
-
-		//		var previous = iterator.Current;
-
-		//		while (iterator.MoveNext())
-		//		{
-		//			yield return projection(previous, iterator.Current);
-		//			previous = iterator.Current;
-		//		}
-		//	}
-		//}
 
 		public static IEnumerable<TSource> WhereWithPrevious<TSource>(this IEnumerable<TSource> source, Func<TSource, TSource, bool> predicate)
 		{

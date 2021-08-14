@@ -36,7 +36,7 @@ namespace Ecng.ComponentModel
 			}
 		}
 
-		private static readonly SynchronizedDictionary<Type, object> _operators = new SynchronizedDictionary<Type, object>();
+		private static readonly SynchronizedDictionary<Type, IOperator> _operators = new SynchronizedDictionary<Type, IOperator>();
 
 		static OperatorRegistry()
 		{
@@ -66,9 +66,7 @@ namespace Ecng.ComponentModel
 
 		public static IOperator GetOperator(Type type)
 		{
-			var @operator = (IOperator)_operators.TryGetValue(type);
-
-			if (@operator == null)
+			if (!_operators.TryGetValue(type, out var @operator))
 			{
 				if (typeof(IOperable<>).Make(type).IsAssignableFrom(type))
 				{

@@ -51,9 +51,7 @@
 		{
 			return GetSchema(entityType, _schemaFactories.SafeAdd(entityType, key =>
 			{
-				var factory = CustomSchemaFactories.TryGetValue(entityType);
-
-				if (factory == null)
+				if (!CustomSchemaFactories.TryGetValue(entityType, out var factory))
 				{
 					SchemaFactoryAttribute schemaAttr;
 

@@ -103,8 +103,7 @@
 					? new Field(schema, member) { IsIndex = member.GetAttribute<IndexAttribute>() != null }
 					: new IdentityField(schema, member);
 
-				var toType = typeOverides.TryGetValue(field.Type);
-				if (toType != null)
+				if (typeOverides.TryGetValue(field.Type, out var toType))
 					field.Type = toType;
 
 				var fieldAttr = member.GetAttribute<FieldAttribute>();
@@ -151,9 +150,7 @@
 							factoryType = typeof(DynamicFieldFactory);
 						else
 						{
-							factoryType = SchemaManager.GlobalFieldFactories.TryGetValue(field.Type);
-
-							if (factoryType == null)
+							if (!SchemaManager.GlobalFieldFactories.TryGetValue(field.Type, out factoryType))
 							{
 								if (field.Type.IsSerializablePrimitive())
 								{
