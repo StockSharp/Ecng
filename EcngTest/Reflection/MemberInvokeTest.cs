@@ -702,7 +702,7 @@ namespace Ecng.Test.Reflection
 		public void ValuePropStruct()
 		{
 			InvokeFieldsAndPropStruct obj = new InvokeFieldsAndPropStruct();
-			obj.SetValue(nameof(obj.Prop1), 10);
+			obj = obj.SetValue(nameof(obj.Prop1), 10);
 			Assert.AreEqual(10, obj.GetValue<InvokeFieldsAndPropStruct, VoidType, int>(nameof(obj.Prop1), null));
 		}
 
@@ -710,7 +710,7 @@ namespace Ecng.Test.Reflection
 		public void RefPropStruct()
 		{
 			InvokeFieldsAndPropStruct obj = new InvokeFieldsAndPropStruct();
-			obj.SetValue(nameof(obj.Prop2), "John Smith");
+			obj = obj.SetValue(nameof(obj.Prop2), "John Smith");
 			Assert.AreEqual("John Smith", obj.GetValue<InvokeFieldsAndPropStruct, VoidType, string>(nameof(obj.Prop2), null));
 		}
 

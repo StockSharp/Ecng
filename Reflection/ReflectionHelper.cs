@@ -184,17 +184,17 @@ namespace Ecng.Reflection
 
 		#region SetValue
 
-		public static void SetValue<TInstance, TValue>(this TInstance instance, string memberName, TValue value)
+		public static TInstance SetValue<TInstance, TValue>(this TInstance instance, string memberName, TValue value)
 		{
-			instance.SetValue(memberName, AllInstanceMembers, value);
+			return instance.SetValue(memberName, AllInstanceMembers, value);
 		}
 
-		public static void SetValue<TInstance, TValue>(this TInstance instance, string memberName, BindingFlags flags, TValue value)
+		public static TInstance SetValue<TInstance, TValue>(this TInstance instance, string memberName, BindingFlags flags, TValue value)
 		{
 			if (instance.IsNull())
 				throw new ArgumentNullException(nameof(instance));
 
-			instance.SetValue(instance.GetType().GetMember<MemberInfo>(memberName, flags, GetArgTypes(value)), value);
+			return instance.SetValue(instance.GetType().GetMember<MemberInfo>(memberName, flags, GetArgTypes(value)), value);
 		}
 
 		public static void SetValue<TValue>(this Type type, string memberName, TValue value)
