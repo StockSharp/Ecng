@@ -230,31 +230,30 @@ namespace Ecng.Net.SocketIO.Parser
 
                 var next = (i + 1) >= str.Length ? null : str.Substring(i + 1, 1);
 
-                int unused;
-                if (null != next && int.TryParse(next, out unused))
-                {
-                    var id = new StringBuilder();
-                    while (true)
-                    {
-                        ++i;
-                        var c = str.Substring(i, 1);
+				if (null != next && int.TryParse(next, out var unused))
+				{
+					var id = new StringBuilder();
+					while (true)
+					{
+						++i;
+						var c = str.Substring(i, 1);
 
-                        if (!int.TryParse(c, out unused))
-                        {
-                            --i;
-                            break;
-                        }
-                        id.Append(c);
-                        if (i + 1 >= str.Length)
-                        {
-                            break;
-                        }
-                    }
-                    p.Id = int.Parse(id.ToString());
-                }
+						if (!int.TryParse(c, out unused))
+						{
+							--i;
+							break;
+						}
+						id.Append(c);
+						if (i + 1 >= str.Length)
+						{
+							break;
+						}
+					}
+					p.Id = int.Parse(id.ToString());
+				}
 
 
-                if (i++ < str.Length)
+				if (i++ < str.Length)
                 {
                     try
                     {

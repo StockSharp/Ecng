@@ -353,9 +353,8 @@ namespace Ecng.Net.SocketIO.Client
         {
             while (ReceiveBuffer.Count() > 0)
             {
-                List<object> data;
-                ReceiveBuffer = ReceiveBuffer.Dequeue(out data);
-                var eventString = (string) data[0];
+				ReceiveBuffer = ReceiveBuffer.Dequeue(out var data);
+				var eventString = (string) data[0];
                 base.Emit(eventString, data.ToArray());
             }
             ReceiveBuffer = ReceiveBuffer.Clear();
@@ -363,9 +362,8 @@ namespace Ecng.Net.SocketIO.Client
            
             while (SendBuffer.Count() > 0)
             {
-                Packet packet;
-                SendBuffer = SendBuffer.Dequeue(out packet);
-                Packet(packet);
+				SendBuffer = SendBuffer.Dequeue(out var packet);
+				Packet(packet);
             }
             SendBuffer = SendBuffer.Clear();
         }

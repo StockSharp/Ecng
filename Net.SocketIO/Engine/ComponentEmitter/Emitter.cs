@@ -154,14 +154,13 @@ namespace Ecng.Net.SocketIO.Engine.ComponentEmitter
             try
             {
 
-                ImmutableList<IListener> retrievedValue;
-                if (!callbacks.TryGetValue(eventString, out retrievedValue))
-                {
-                    //var log = LogManager.GetLogger(Global.CallerName());
-                    //log.Info(string.Format("Emitter.Off Could not remove {0}", eventString));
-                }
+				if (!callbacks.TryGetValue(eventString, out var retrievedValue))
+				{
+					//var log = LogManager.GetLogger(Global.CallerName());
+					//log.Info(string.Format("Emitter.Off Could not remove {0}", eventString));
+				}
 
-                if (retrievedValue != null)
+				if (retrievedValue != null)
                 {
                     callbacks = callbacks.Remove(eventString);
 
@@ -193,9 +192,8 @@ namespace Ecng.Net.SocketIO.Engine.ComponentEmitter
                 if (this.callbacks.ContainsKey(eventString))
                 {
                     ImmutableList<IListener> callbacksLocal = this.callbacks[eventString];
-                    IListener offListener;
-                    _onceCallbacks.TryGetValue(fn, out offListener);
-                    _onceCallbacks = _onceCallbacks.Remove(fn);
+					_onceCallbacks.TryGetValue(fn, out var offListener);
+					_onceCallbacks = _onceCallbacks.Remove(fn);
 
 
                     if (callbacksLocal.Count > 0 && callbacksLocal.Contains(offListener ?? fn))

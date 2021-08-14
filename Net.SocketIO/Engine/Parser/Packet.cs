@@ -126,9 +126,8 @@ namespace Ecng.Net.SocketIO.Engine.Parser
                 return DecodeBase64Packet(data.Substring(1));
             }
 
-            int type;
-            var s = data.Substring(0, 1);
-            if (!int.TryParse(s, out type))
+			var s = data.Substring(0, 1);
+			if (!int.TryParse(s, out var type))
             {
                 type = -1;
             }
@@ -160,9 +159,8 @@ namespace Ecng.Net.SocketIO.Engine.Parser
 
         private static Packet DecodeBase64Packet(string msg)
         {
-            int type;
-            var s = msg.Substring(0, 1);
-            if (!int.TryParse(s, out type))
+			var s = msg.Substring(0, 1);
+			if (!int.TryParse(s, out var type))
             {
                 type = -1;
             }
@@ -227,14 +225,13 @@ namespace Ecng.Net.SocketIO.Engine.Parser
                 }
                 else
                 {
-                    int n;
-                    if (!int.TryParse(length.ToString(), out n))
-                    {
-                        callback.Call(_err, 0, 1);
-                        return;
-                    }
+					if (!int.TryParse(length.ToString(), out var n))
+					{
+						callback.Call(_err, 0, 1);
+						return;
+					}
 
-                    string msg;
+					string msg;
                     try
                     {
                         msg = data.Substring(i + 1, n);
