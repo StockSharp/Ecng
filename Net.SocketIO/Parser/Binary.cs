@@ -25,7 +25,7 @@ namespace Ecng.Net.SocketIO.Parser
 
         private static JToken _deconstructPacket(object data, List<byte[]> buffers)
         {
-            if (data == null)
+            if (data is null)
             {
                 return null;
             }
@@ -37,7 +37,7 @@ namespace Ecng.Net.SocketIO.Parser
             }
 
             var jToken = data as JToken;
-            if (jToken == null)
+            if (jToken is null)
             {
                 throw new NotImplementedException();
             }

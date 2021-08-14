@@ -171,7 +171,7 @@ namespace Ecng.Net.SocketIO.Parser
 
             public void Add(byte[] obj)
             {
-                if (this.Reconstructor == null)
+                if (this.Reconstructor is null)
                 {
                     throw new SocketIOException("got binary data when not reconstructing a packet");
                 }

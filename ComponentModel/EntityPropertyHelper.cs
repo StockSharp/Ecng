@@ -69,10 +69,10 @@
 
 		public static Type GetPropType(this Type type, string name)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
-			if (name == null)
+			if (name is null)
 				throw new ArgumentNullException(nameof(name));
 
 			type = type.GetUnderlyingType() ?? type;
@@ -81,7 +81,7 @@
 			{
 				var info = type.GetProperty(part);
 
-				if (info == null)
+				if (info is null)
 					return null;
 
 				type = info.PropertyType.GetUnderlyingType() ?? info.PropertyType;
@@ -98,7 +98,7 @@
 			{
 				var info = value?.GetType().GetProperty(part);
 
-				if (info == null || (info.PropertyType.IsNullable() && info.GetValue(value, null) == null))
+				if (info is null || (info.PropertyType.IsNullable() && info.GetValue(value, null) is null))
 					return null;
 
 				value = info.GetValue(value, null);

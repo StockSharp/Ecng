@@ -12,7 +12,7 @@ namespace Ecng.Collections
 
 			public CircularBufferEnumerator(IEnumerator<T> sourceEnumerator)
 			{
-				if (sourceEnumerator == null)
+				if (sourceEnumerator is null)
 					throw new ArgumentNullException(nameof(sourceEnumerator));
 
 				_sourceEnumerator = sourceEnumerator;
@@ -50,7 +50,7 @@ namespace Ecng.Collections
 
 		public CircularBuffer(IEnumerable<T> source)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
 			_source = source;

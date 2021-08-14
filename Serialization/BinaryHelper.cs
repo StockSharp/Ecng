@@ -21,7 +21,7 @@
 	{
 		public static void UndoDispose(this MemoryStream stream)
 		{
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
 			stream.SetValue("_isOpen", true);
@@ -158,7 +158,7 @@
 
 		public static IEnumerable<string> EnumerateLines(this Stream stream, Encoding encoding = null)
 		{
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
 			using (var sr = new LeaveOpenStreamReader(stream, encoding ?? Encoding.UTF8))
@@ -170,10 +170,10 @@
 
 		public static void CopySync(this Stream source, Stream destination, int count)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			if (destination == null)
+			if (destination is null)
 				throw new ArgumentNullException(nameof(destination));
 
 			if (count < 0)
@@ -191,10 +191,10 @@
 
 		public static async Task CopyAsync(this Stream source, Stream destination, long skip, long? count, Action<int> progress, CancellationToken cancellationToken = default)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			if (destination == null)
+			if (destination is null)
 				throw new ArgumentNullException(nameof(destination));
 
 			if (count < 0)
@@ -230,7 +230,7 @@
 
 		public static byte[] ReadBuffer(this Stream stream)
 		{
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
 			return stream.ReadBuffer((int)(stream.Length - stream.Position));
@@ -238,7 +238,7 @@
 
 		public static byte[] ReadBuffer(this Stream stream, int size)
 		{
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
 			if (size < 0)
@@ -275,7 +275,7 @@
 
 		public static IEnumerable<string> ReadLines(this Stream stream)
 		{
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
 			using (var reader = new StreamReader(stream))
@@ -297,10 +297,10 @@
 
 		public static void WriteEx(this Stream stream, object value)
 		{
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			if (value == null)
+			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 
 			if (value is Stream s)
@@ -322,10 +322,10 @@
 
 		public static void WriteRaw(this Stream stream, byte[] buffer)
 		{
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			if (buffer == null)
+			if (buffer is null)
 				throw new ArgumentNullException(nameof(buffer));
 
 			stream.Write(buffer, 0, buffer.Length);
@@ -352,10 +352,10 @@
 
 		public static object Read(this Stream stream, Type type, int size)
 		{
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			if (size < 0)
@@ -455,7 +455,7 @@
 
 		public static bool TrySave(this byte[] data, string fileName, Action<Exception> errorHandler)
 		{
-			if (errorHandler == null)
+			if (errorHandler is null)
 				throw new ArgumentNullException(nameof(errorHandler));
 
 			try
@@ -472,7 +472,7 @@
 
 		public static void Truncate(this StreamWriter writer)
 		{
-			if (writer == null)
+			if (writer is null)
 				throw new ArgumentNullException(nameof(writer));
 
 			writer.Flush();
@@ -494,7 +494,7 @@
 		public static string ToString<T>(this T member, bool isAssemblyQualifiedName)
 			where T : MemberInfo
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			if (member.ReflectedType != null)

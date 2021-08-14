@@ -43,7 +43,7 @@
 
 		private static DataTypes GetXlsType(object cell)
 		{
-			if (cell == null)
+			if (cell is null)
 				return DataTypes.Blank;
 
 			if (cell is float || cell is double || cell is decimal)
@@ -110,7 +110,7 @@
 
 		public static IList<IList<object>> Deserialize(byte[] data)
 		{
-			if (data == null)
+			if (data is null)
 				throw new ArgumentNullException(nameof(data));
 
 			var stream = data.To<Stream>();

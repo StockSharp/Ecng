@@ -109,7 +109,7 @@ namespace Ecng.ComponentModel
 		/// <param name="value">The value.</param>
 		public override void Validate(string value)
 		{
-			if (value == null)
+			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 
 			if (!Length.Contains(value.Length))

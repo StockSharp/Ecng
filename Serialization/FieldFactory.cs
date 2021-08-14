@@ -14,10 +14,7 @@
 
 		protected FieldFactory(Field field, int order)
 		{
-			if (field == null)
-				throw new ArgumentNullException(nameof(field));
-
-			Field = field;
+			Field = field ?? throw new ArgumentNullException(nameof(field));
 			Order = order;
 			//IsNullable = isNullable;
 		}
@@ -33,25 +30,25 @@
 
 		public virtual object CreateInstance(ISerializer serializer, SerializationItem source)
 		{
-			if (serializer == null)
+			if (serializer is null)
 				throw new ArgumentNullException(nameof(serializer), "Serializer for field '{0}' is null.".Put(Field.Name));
 
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source), "Source value for field '{0}' is null.".Put(Field.Name));
 
 			/*IsNullable && */
-			return source.Value == null ? null : OnCreateInstance(serializer, source.Value);
+			return source.Value is null ? null : OnCreateInstance(serializer, source.Value);
 		}
 
 		public virtual SerializationItem CreateSource(ISerializer serializer, object instance)
 		{
-			if (serializer == null)
+			if (serializer is null)
 				throw new ArgumentNullException(nameof(serializer), "Serializer for field '{0}' is null.".Put(Field.Name));
 
-			//if (!IsNullable && instance == null)
+			//if (!IsNullable && instance is null)
 			//	throw new ArgumentNullException(nameof(instance), "Instance value for field '{0}' is null.".Put(Field.Name));
 
-			var source = instance == null ? null : OnCreateSource(serializer, instance);
+			var source = instance is null ? null : OnCreateSource(serializer, instance);
 			return new SerializationItem(Field, source);
 		}
 

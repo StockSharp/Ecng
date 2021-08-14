@@ -125,7 +125,7 @@ namespace Ecng.Common
 		public bool ReadRow(List<string> columns)
 		{
 			// Verify required argument
-			if (columns == null)
+			if (columns is null)
 				throw new ArgumentNullException(nameof(columns));
 
 		ReadNextLine:
@@ -133,7 +133,7 @@ namespace Ecng.Common
 			CurrLine = Reader.ReadLine();
 			CurrPos = 0;
 			// Test for end of file
-			if (CurrLine == null)
+			if (CurrLine is null)
 				return false;
 			// Test for empty line
 			if (CurrLine.Length == 0)
@@ -167,7 +167,7 @@ namespace Ecng.Common
 					columns.Add(column);
 				numColumns++;
 				// Break if we reached the end of the line
-				if (CurrLine == null || CurrPos == CurrLine.Length)
+				if (CurrLine is null || CurrPos == CurrLine.Length)
 					break;
 				// Otherwise skip delimiter
 				Debug.Assert(CurrLine[CurrPos] == Delimiter);
@@ -202,7 +202,7 @@ namespace Ecng.Common
 					CurrLine = Reader.ReadLine();
 					CurrPos = 0;
 					// Done if we reached the end of the file
-					if (CurrLine == null)
+					if (CurrLine is null)
 						return builder.ToString();
 					// Otherwise, treat as a multi-line field
 					builder.Append(Environment.NewLine);
@@ -298,7 +298,7 @@ namespace Ecng.Common
 		public void WriteRow(IEnumerable<string> columns)
 		{
 			// Verify required argument
-			if (columns == null)
+			if (columns is null)
 				throw new ArgumentNullException(nameof(columns));
 
 			var i = 0;
@@ -321,7 +321,7 @@ namespace Ecng.Common
 		public string Encode(string column)
 		{
 			// Ensure we're using current quote character
-			if (OneQuote == null || OneQuote[0] != Quote)
+			if (OneQuote is null || OneQuote[0] != Quote)
 			{
 				OneQuote = $"{Quote}";
 				TwoQuotes = String.Format("{0}{0}", Quote);

@@ -10,10 +10,7 @@ namespace Ecng.Serialization
 
 		public BatchContext(IStorage storage)
 		{
-			if (storage == null)
-				throw new ArgumentNullException(nameof(storage));
-
-			_storage = storage;
+			_storage = storage ?? throw new ArgumentNullException(nameof(storage));
 		}
 
 		public void Commit()

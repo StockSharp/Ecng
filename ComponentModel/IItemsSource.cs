@@ -148,7 +148,7 @@
 			return f.IsEmptyOrWhiteSpace() ? value.GetDisplayName() : string.Format($"{{0:{f}}}", value);
 		}
 
-		protected virtual string GetDescription(T value) => _getDescription == null ? (typeof(T).IsEnum ? value.GetFieldDescription() : null) : _getDescription(value);
+		protected virtual string GetDescription(T value) => _getDescription is null ? (typeof(T).IsEnum ? value.GetFieldDescription() : null) : _getDescription(value);
 
 		protected virtual Uri GetIcon(T value) => typeof(T).IsEnum ? value.GetFieldIcon() : null;
 
@@ -234,7 +234,7 @@
 					return Create(itemValueType.CreateArray(0), itemValueType, excludeObsolete, sortOrder, filter, getName, getDescription);
 
 				case IItemsSource src:
-					if((itemValueType == null || src.ValueType == itemValueType) && (excludeObsolete == null || excludeObsolete == src.ExcludeObsolete) && (sortOrder == null || sortOrder == src.SortOrder) && filter == null)
+					if((itemValueType is null || src.ValueType == itemValueType) && (excludeObsolete is null || excludeObsolete == src.ExcludeObsolete) && (sortOrder is null || sortOrder == src.SortOrder) && filter is null)
 						return src;
 
 					return Create(src.Values, itemValueType, excludeObsolete, sortOrder, filter, getName, getDescription);
@@ -290,7 +290,7 @@
 
 		static Type GetParamType(Type type, Type genericInterfaceType)
 		{
-			if(type == null) return null;
+			if(type is null) return null;
 
 			return new[]{ type }.Concat(type.GetInterfaces())
 			           .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == genericInterfaceType)
@@ -340,7 +340,7 @@
 		/// <param name="type">The type to use.</param>
 		public ItemsSourceAttribute(Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			Type =

@@ -31,10 +31,7 @@ namespace Ecng.Common
 
 		public FastCsvReader(TextReader reader)
 		{
-			if (reader == null)
-				throw new ArgumentNullException(nameof(reader));
-
-			Reader = reader;
+			Reader = reader ?? throw new ArgumentNullException(nameof(reader));
 			LineSeparator = Environment.NewLine;
 
 			for (var i = 0; i < _columnPos.Length; i++)
@@ -231,7 +228,7 @@ namespace Ecng.Common
 		{
 			var str = ReadString();
 
-			if (str == null)
+			if (str is null)
 				return null;
 
 			return _toBool(str);
@@ -266,7 +263,7 @@ namespace Ecng.Common
 		{
 			var str = ReadString();
 
-			if (str == null)
+			if (str is null)
 				return null;
 
 			return _toDouble(str);

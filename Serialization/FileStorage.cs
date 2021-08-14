@@ -17,14 +17,8 @@
 
 			public EntityInfo(Schema schema, ISerializer serializer, string directory)
 			{
-				if (schema == null)
-					throw new ArgumentNullException(nameof(schema));
-
-				if (serializer == null)
-					throw new ArgumentNullException(nameof(serializer));
-
-				Serializer = serializer;
-				Schema = schema;
+				Serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+				Schema = schema ?? throw new ArgumentNullException(nameof(schema));
 
 				_fileName = Path.Combine(directory, schema.Name + "." + serializer.FileExtension);
 
@@ -60,12 +54,8 @@
 		{
 			if (directory.IsEmpty())
 				throw new ArgumentNullException(nameof(directory));
-
-			if (serializer == null)
-				throw new ArgumentNullException(nameof(serializer));
-
 			_directory = directory;
-			_serializer = serializer;
+			_serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
 			//_types = _serializer.GetSerializer<IList<Type>>().Deserialize("meta.info");
 		}
 

@@ -62,7 +62,7 @@
 		///<param name="wnd"></param>
 		public static string GetText(this SystemWindow wnd)
 		{
-			if (wnd == null)
+			if (wnd is null)
 				throw new ArgumentNullException(nameof(wnd));
 
 			var len = wnd.HWnd.SendMessage((int)WM.GETTEXTLENGTH, IntPtr.Zero, IntPtr.Zero);
@@ -73,7 +73,7 @@
 
 		public static int SendMessage<TMessage, TWParam, TLParam>(this SystemWindow wnd, TMessage message, TWParam wParam, TLParam lParam)
 		{
-			if (wnd == null)
+			if (wnd is null)
 				throw new ArgumentNullException(nameof(wnd));
 
 			return wnd.HWnd.SendMessage(message.To<int>(), wParam.To<IntPtr>(), lParam.To<IntPtr>());
@@ -81,7 +81,7 @@
 
 		public static int PostMessage<TMessage, TWParam, TLParam>(this SystemWindow wnd, TMessage message, TWParam wParam, TLParam lParam)
 		{
-			if (wnd == null)
+			if (wnd is null)
 				throw new ArgumentNullException(nameof(wnd));
 
 			return wnd.HWnd.PostMessage(message.To<int>(), wParam.To<IntPtr>(), lParam.To<IntPtr>());
@@ -94,7 +94,7 @@
 		///<exception cref="ArgumentNullException"></exception>
 		public static void SetText(this SystemWindow wnd, string text)
 		{
-			if (wnd == null)
+			if (wnd is null)
 				throw new ArgumentNullException(nameof(wnd));
 
 			wnd.HWnd.SendMessage((int)WM.SETTEXT, 0, text);
@@ -107,10 +107,10 @@
 		///<exception cref="ArgumentNullException"></exception>
 		public static void Command(this SystemWindow wnd, SystemWindow elem)
 		{
-			if (wnd == null)
+			if (wnd is null)
 				throw new ArgumentNullException(nameof(wnd));
 
-			if (elem == null)
+			if (elem is null)
 				throw new ArgumentNullException(nameof(elem));
 
 			wnd.SendMessage(WM.COMMAND, elem.DialogID, 0);
@@ -124,7 +124,7 @@
 
 		public static int GetProcessId(this SystemWindow wnd)
 		{
-			if (wnd == null)
+			if (wnd is null)
 				throw new ArgumentNullException(nameof(wnd));
 
 			wnd.HWnd.GetWindowThreadProcessId(out int pid);
@@ -155,7 +155,7 @@
 			var hwnd = WinApi.GetTopWindow(IntPtr.Zero);
 			if (hwnd != IntPtr.Zero)
 			{
-				while ((!WinApi.IsWindowVisible(hwnd) || frm == null) && hwnd != hWndMainFrm)
+				while ((!WinApi.IsWindowVisible(hwnd) || frm is null) && hwnd != hWndMainFrm)
 				{
 					// Get next window under the current handler
 					hwnd = WinApi.GetNextWindow(hwnd, WinApi.GW_HWNDNEXT);

@@ -8,20 +8,20 @@ namespace Ecng.Common
 	{
 		public static T GetElementValue<T>(this XElement parent, string name, T defaultValue = default(T))
 		{
-			if (parent == null)
+			if (parent is null)
 				throw new ArgumentNullException(nameof(parent));
 
 			var elem = parent.Element(name);
-			return elem == null ? defaultValue : elem.Value.To<T>();
+			return elem is null ? defaultValue : elem.Value.To<T>();
 		}
 
 		public static T GetAttributeValue<T>(this XElement elem, string name, T defaultValue = default(T))
 		{
-			if (elem == null)
+			if (elem is null)
 				throw new ArgumentNullException(nameof(elem));
 
 			var attr = elem.Attribute(name);
-			return attr == null ? defaultValue : attr.Value.To<T>();
+			return attr is null ? defaultValue : attr.Value.To<T>();
 		}
 
 		public static XmlWriter WriteAttribute(this XmlWriter writer, string name, object value)
@@ -36,10 +36,10 @@ namespace Ecng.Common
 
 		public static bool Compare(this XmlNode first, XmlNode second)
 		{
-			if (first == null)
+			if (first is null)
 				throw new ArgumentNullException(nameof(first));
 
-			if (second == null)
+			if (second is null)
 				throw new ArgumentNullException(nameof(second));
 
 			return first.OuterXml == second.OuterXml;

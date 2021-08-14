@@ -14,10 +14,7 @@
 
 		public EventDispatcher(Action<Exception> errorHandler)
 		{
-			if (errorHandler == null)
-				throw new ArgumentNullException(nameof(errorHandler));
-
-			_errorHandler = errorHandler;
+			_errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
 		}
 
 		public void Add(Action evt)
@@ -27,7 +24,7 @@
 
 		public virtual void Add(Action evt, string syncToken)
 		{
-			if (evt == null)
+			if (evt is null)
 				throw new ArgumentNullException(nameof(evt));
 
 			var queue = _events.SafeAdd(syncToken, CreateNewThreadQueuePair);

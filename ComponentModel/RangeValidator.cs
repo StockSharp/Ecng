@@ -95,7 +95,7 @@ namespace Ecng.ComponentModel
 		/// <returns>Validator.</returns>
 		public override BaseValidator CreateValidator(Type validationType)
 		{
-			if (validationType == null)
+			if (validationType is null)
 				throw new ArgumentNullException(nameof(validationType));
 
 			if (validationType.IsByRef)

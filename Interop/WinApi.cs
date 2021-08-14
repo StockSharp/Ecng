@@ -353,10 +353,10 @@
 
 		public static bool Equals(this Process firstProcess, Process secondProcess)
 		{
-			if (firstProcess == null)
+			if (firstProcess is null)
 				throw new ArgumentNullException(nameof(firstProcess));
 
-			if (secondProcess == null)
+			if (secondProcess is null)
 				throw new ArgumentNullException(nameof(secondProcess));
 
 			return firstProcess.Id == secondProcess.Id;
@@ -372,7 +372,7 @@
 		//
 		public static string GetOwner(this Process process)
 		{
-			if (process == null)
+			if (process is null)
 				throw new ArgumentNullException(nameof(process));
 
 			var query = "Select * From Win32_Process Where ProcessID = " + process.Id;
@@ -392,7 +392,7 @@
 
 		public static string GetFileName(this Process process)
 		{
-			if (process == null)
+			if (process is null)
 				throw new ArgumentNullException(nameof(process));
 
 			return process.MainModule.FileName;
@@ -400,7 +400,7 @@
 
 		public static bool WaitForInputIdle(this Process process, TimeSpan timeOut)
 		{
-			if (process == null)
+			if (process is null)
 				throw new ArgumentNullException(nameof(process));
 
 			return process.WaitForInputIdle((int)timeOut.TotalMilliseconds);

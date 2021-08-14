@@ -9,10 +9,7 @@ namespace Ecng.Common
 
 		public DumpableStream(Stream underlying)
 		{
-			if (underlying == null)
-				throw new ArgumentNullException(nameof(underlying));
-
-			_underlying = underlying;
+			_underlying = underlying ?? throw new ArgumentNullException(nameof(underlying));
 		}
 
 		public byte[] GetReadDump()

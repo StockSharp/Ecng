@@ -72,27 +72,27 @@ namespace Ecng.Security
 			if (EnsureGetHashCode() != other.EnsureGetHashCode())
 				return false;
 
-			if (Hash == null)
+			if (Hash is null)
 			{
 				if (other.Hash != null)
 					return false;
 			}
 			else
 			{
-				if (other.Hash == null)
+				if (other.Hash is null)
 					return false;
 				else if (!Hash.SequenceEqual(other.Hash))
 					return false;
 			}
 
-			if (Salt == null)
+			if (Salt is null)
 			{
 				if (other.Salt != null)
 					return false;
 			}
 			else
 			{
-				if (other.Salt == null)
+				if (other.Salt is null)
 					return false;
 				else if (!Salt.SequenceEqual(other.Salt))
 					return false;

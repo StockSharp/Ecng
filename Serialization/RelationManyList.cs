@@ -38,7 +38,7 @@
 
 			protected override TEntity ProcessMove(ref bool canProcess)
 			{
-				if (_temporaryBuffer == null || _posInBuffer >= (_temporaryBuffer.Count - 1))
+				if (_temporaryBuffer is null || _posInBuffer >= (_temporaryBuffer.Count - 1))
 				{
 					if (_startIndex < Source.Count)
 					{
@@ -119,7 +119,7 @@
 		{
 			get
 			{
-				if (_cachedEntities == null)
+				if (_cachedEntities is null)
 				{
 					if (Schema.Identity != null && Schema.Identity.Type == typeof(string))
 						_cachedEntities = new SynchronizedDictionary<object, TEntity>(new StringIdComparer());
@@ -162,7 +162,7 @@
 
 		public virtual TEntity ReadById(object id)
 		{
-			if (id == null)
+			if (id is null)
 				throw new ArgumentNullException(nameof(id));
 
 			ThrowIfStorageNull();
@@ -186,7 +186,7 @@
 
 				var identity = Schema.Identity;
 
-				if (identity == null)
+				if (identity is null)
 					throw new InvalidOperationException("Schema {0} doesn't have identity.".Put(Schema.Name));
 
 				return Read(new SerializationItem(identity, id));
@@ -197,7 +197,7 @@
 
 		public virtual void Save(TEntity item)
 		{
-			if (Schema.Identity == null)
+			if (Schema.Identity is null)
 				throw new InvalidOperationException("Schema {0} doesn't have identity.".Put(Schema.Name));
 
 			if (!CheckExist(item))
@@ -231,7 +231,7 @@
 
 		private void IncrementCount()
 		{
-			if (_count == null)
+			if (_count is null)
 				_count = (int)OnGetCount();
 			else
 				_count++;
@@ -304,7 +304,7 @@
 				{
 					if (CacheCount)
 					{
-						if (_count == null)
+						if (_count is null)
 							_count = (int)OnGetCount();
 
 						return _count.Value;
@@ -320,7 +320,7 @@
 			if (IsReadOnly)
 				throw new ReadOnlyException();
 
-			if (item == null)
+			if (item is null)
 				throw new ArgumentNullException(nameof(item));
 
 			Adding?.Invoke(item);
@@ -538,7 +538,7 @@
 
 		public TEntity Read(SerializationItem by)
 		{
-			if (by == null)
+			if (by is null)
 				throw new ArgumentNullException(nameof(by));
 
 			return Read(new SerializationItemCollection { by });
@@ -633,7 +633,7 @@
 
 		private static object GetCacheId(TEntity entity)
 		{
-			if (Schema.Identity == null)
+			if (Schema.Identity is null)
 				return entity;
 
 			return Schema.Identity.GetAccessor<TEntity>().GetValue(entity);
@@ -641,7 +641,7 @@
 
 		private void ThrowIfStorageNull()
 		{
-			if (Storage == null)
+			if (Storage is null)
 				throw new InvalidOperationException();
 		}
 

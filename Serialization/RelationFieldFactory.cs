@@ -23,7 +23,7 @@ namespace Ecng.Serialization
 			get
 			{
 				var current = Scope<IStorage>.Current;
-				return current == null ? _storage : current.Value;
+				return current is null ? _storage : current.Value;
 			}
 		}
 	}
@@ -56,10 +56,7 @@ namespace Ecng.Serialization
 		public RelationManyFieldFactory(Field field, int order, Type underlyingListType, bool bulkLoad, bool cacheCount, int bufferSize)
 			: base(field, order)
 		{
-			if (underlyingListType == null)
-				throw new ArgumentNullException(nameof(underlyingListType));
-
-			UnderlyingListType = underlyingListType;
+			UnderlyingListType = underlyingListType ?? throw new ArgumentNullException(nameof(underlyingListType));
 			BulkLoad = bulkLoad;
 			CacheCount = cacheCount;
 			BufferSize = bufferSize;
@@ -126,10 +123,7 @@ namespace Ecng.Serialization
 		public RelationManyAttribute(Type underlyingListType)
 			: this()
 		{
-			if (underlyingListType == null)
-				throw new ArgumentNullException(nameof(underlyingListType));
-
-			UnderlyingListType = underlyingListType;
+			UnderlyingListType = underlyingListType ?? throw new ArgumentNullException(nameof(underlyingListType));
 		}
 
 		public Type UnderlyingListType { get; protected set; }

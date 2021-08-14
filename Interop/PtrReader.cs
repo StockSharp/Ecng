@@ -69,7 +69,7 @@
 			var str = _ptr.ToAnsi();
 			_ptr += IntPtr.Size;
 
-			return str == null ? string.Empty : str.Trim();
+			return str is null ? string.Empty : str.Trim();
 		}
 
 		public string GetString(int length)
@@ -78,7 +78,7 @@
 
 			_ptr += length;
 
-			return str == null ? string.Empty : str.Trim();
+			return str is null ? string.Empty : str.Trim();
 		}
 	}
 }

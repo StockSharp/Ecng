@@ -9,10 +9,7 @@ namespace Ecng.Serialization
 		public StorageDelayAction(IStorage storage, Action<Exception> errorHandler)
 			: base(errorHandler)
 		{
-			if (storage == null)
-				throw new ArgumentNullException(nameof(storage));
-
-			_storage = storage;
+			_storage = storage ?? throw new ArgumentNullException(nameof(storage));
 		}
 
 		protected override IBatchContext BeginBatch(IGroup group)

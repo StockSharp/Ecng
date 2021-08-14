@@ -11,7 +11,7 @@ namespace Ecng.Common
 
 		public static bool IsNullable(this Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			return type.GetUnderlyingType() != null;
@@ -39,19 +39,19 @@ namespace Ecng.Common
 		public static TResult Convert<T, TResult>(this T value, Func<T, TResult> notNullFunc, Func<TResult> nullFunc)
 			where T : class
 		{
-			if (notNullFunc == null)
+			if (notNullFunc is null)
 				throw new ArgumentNullException(nameof(notNullFunc));
 
-			if (nullFunc == null)
+			if (nullFunc is null)
 				throw new ArgumentNullException(nameof(nullFunc));
 
-			return value == null ? nullFunc() : notNullFunc(value);
+			return value is null ? nullFunc() : notNullFunc(value);
 		}
 
 		public static T? DefaultAsNull<T>(this T value)
 			where T : struct
 		{
-			return value.IsDefault() ? (T?)null : value;
+			return value.IsDefault() ? null : value;
 		}
 	}
 }

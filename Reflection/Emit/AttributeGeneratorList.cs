@@ -10,10 +10,7 @@ namespace Ecng.Reflection.Emit
 
 		internal AttributeGeneratorList(object owner)
 		{
-			if (owner == null)
-				throw new ArgumentNullException(nameof(owner));
-
-			_owner = owner;
+			_owner = owner ?? throw new ArgumentNullException(nameof(owner));
 		}
 
 		protected override void OnAdded(AttributeGenerator item)

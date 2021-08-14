@@ -24,14 +24,8 @@ namespace Ecng.Serialization
 
 		public Field(Schema schema, MemberInfo member)
 		{
-			if (schema == null)
-				throw new ArgumentNullException(nameof(schema));
-
-			if (member == null)
-				throw new ArgumentNullException(nameof(member));
-
-			Schema = schema;
-			Member = member;
+			Schema = schema ?? throw new ArgumentNullException(nameof(schema));
+			Member = member ?? throw new ArgumentNullException(nameof(member));
 			Init(member.Name, member.GetMemberType());
 		}
 
@@ -44,12 +38,8 @@ namespace Ecng.Serialization
 		{
 			if (name.IsEmpty())
 				throw new ArgumentNullException(nameof(name));
-
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-
 			Name = name;
-			Type = type;
+			Type = type ?? throw new ArgumentNullException(nameof(type));
 			InnerSchemaNameOverrides = new PairSet<string, string>();
 			InnerSchemaIgnoreFields = new List<string>();
 			OrderedIndex = int.MaxValue;

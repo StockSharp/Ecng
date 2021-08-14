@@ -54,38 +54,26 @@ namespace Ecng.Security
 
 		public CryptoAlgorithm(SymmetricCryptographer symmetric)
 		{
-			if (symmetric == null)
-				throw new ArgumentNullException(nameof(symmetric));
-
 			_type = AlgorithmTypes.Symmetric;
-			_symmetric = symmetric;
+			_symmetric = symmetric ?? throw new ArgumentNullException(nameof(symmetric));
 		}
 
 		public CryptoAlgorithm(AsymmetricCryptographer asymmetric)
 		{
-			if (asymmetric == null)
-				throw new ArgumentNullException(nameof(asymmetric));
-
 			_type = AlgorithmTypes.Asymmetric;
-			_asymmetric = asymmetric;
+			_asymmetric = asymmetric ?? throw new ArgumentNullException(nameof(asymmetric));
 		}
 
 		public CryptoAlgorithm(DpapiCryptographer dpapi)
 		{
-			if (dpapi == null)
-				throw new ArgumentNullException(nameof(dpapi));
-
 			_type = AlgorithmTypes.Dpapi;
-			_dpapi = dpapi;
+			_dpapi = dpapi ?? throw new ArgumentNullException(nameof(dpapi));
 		}
 
 		public CryptoAlgorithm(HashCryptographer hash)
 		{
-			if (hash == null)
-				throw new ArgumentNullException(nameof(hash));
-
 			_type = AlgorithmTypes.Hash;
-			_hash = hash;
+			_hash = hash ?? throw new ArgumentNullException(nameof(hash));
 		}
 
 		#endregion

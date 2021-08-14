@@ -18,10 +18,10 @@ namespace Ecng.ComponentModel
 
 			var dpAttr = provider.GetAttribute<DisplayAttribute>();
 
-			if (dpAttr?.Name == null)
+			if (dpAttr?.Name is null)
 			{
 				var nameAttr = provider.GetAttribute<DisplayNameAttribute>();
-				return nameAttr == null ? defaultValue ?? provider.GetTypeName() : nameAttr.DisplayName;
+				return nameAttr is null ? defaultValue ?? provider.GetTypeName() : nameAttr.DisplayName;
 			}
 
 			return dpAttr.GetName();
@@ -50,10 +50,10 @@ namespace Ecng.ComponentModel
 
 			var dpAttr = provider.GetAttribute<DisplayAttribute>();
 
-			if (dpAttr?.Description == null)
+			if (dpAttr?.Description is null)
 			{
 				var descrAttr = provider.GetAttribute<DescriptionAttribute>();
-				return descrAttr == null ? defaultValue ?? provider.GetTypeName() : descrAttr.Description;
+				return descrAttr is null ? defaultValue ?? provider.GetTypeName() : descrAttr.Description;
 			}
 
 			return dpAttr.GetDescription();
@@ -63,10 +63,10 @@ namespace Ecng.ComponentModel
 		{
 			var dpAttr = provider.GetAttribute<DisplayAttribute>();
 
-			if (dpAttr?.GroupName == null)
+			if (dpAttr?.GroupName is null)
 			{
 				var categoryAttr = provider.GetAttribute<CategoryAttribute>();
-				return categoryAttr == null ? defaultValue ?? provider.GetTypeName() : categoryAttr.Category;
+				return categoryAttr is null ? defaultValue ?? provider.GetTypeName() : categoryAttr.Category;
 			}
 
 			return dpAttr.GetGroupName();
@@ -79,7 +79,7 @@ namespace Ecng.ComponentModel
 
 		public static string GetDisplayName(this object value)
 		{
-			if (value == null)
+			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 
 			var str = value.ToString();
@@ -98,7 +98,7 @@ namespace Ecng.ComponentModel
 
 			var fieldInfo = type.GetField(str);
 
-			if (fieldInfo == null)
+			if (fieldInfo is null)
 			{
 				return str;
 				//throw new ArgumentException(field.ToString(), nameof(field));
@@ -122,7 +122,7 @@ namespace Ecng.ComponentModel
 			var type = field.GetType();
 			var attr = type.GetField(field.ToString()).GetAttribute<IconAttribute>();
 			return
-				attr == null ? null :
+				attr is null ? null :
 				attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(type);
 		}
 
@@ -135,7 +135,7 @@ namespace Ecng.ComponentModel
 		public static Uri GetIconUrl(this Type type)
 		{
 			var attr = type.GetAttribute<IconAttribute>();
-			return attr == null ? null : (attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(type));
+			return attr is null ? null : (attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(type));
 		}
 
 		public static Uri GetResourceUrl(this string resName)
@@ -145,7 +145,7 @@ namespace Ecng.ComponentModel
 
 		public static Uri GetResourceUrl(this string resName, Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			return type.Assembly.GetResourceUrl(resName);
@@ -153,7 +153,7 @@ namespace Ecng.ComponentModel
 
 		private static Uri GetResourceUrl(this Assembly assembly, string resName)
 		{
-			if (assembly == null)
+			if (assembly is null)
 				throw new ArgumentNullException(nameof(assembly));
 
 			if (resName.IsEmpty())

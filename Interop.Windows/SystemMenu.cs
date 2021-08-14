@@ -13,10 +13,7 @@
 
 		internal SystemMenuItem(WinApi.MenuItemInfo info, SystemWindow window)
 		{
-			if (window == null)
-				throw new ArgumentNullException(nameof(window));
-
-			_window = window;
+			_window = window ?? throw new ArgumentNullException(nameof(window));
 
 			Info = info;
 

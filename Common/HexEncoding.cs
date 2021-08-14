@@ -51,7 +51,7 @@ namespace Ecng.Common
 		/// <filterpriority>1</filterpriority>
 		public override int GetByteCount(char[] chars, int index, int count)
 		{
-			if (chars == null)
+			if (chars is null)
 				throw new ArgumentNullException(nameof(chars));
 
 			if (chars.Length < (index + count))
@@ -247,7 +247,7 @@ namespace Ecng.Common
 		/// <returns>byte array, in the same left-to-right order as the hexString.</returns>
 		public static byte[] GetBytes(char[] chars, int charIndex, int charCount, out int discarded)
 		{
-			if (chars == null)
+			if (chars is null)
 				throw new ArgumentNullException(nameof(chars));
 
 			if (chars.Length < (charIndex + charCount))

@@ -9,10 +9,7 @@ namespace Ecng.Serialization
 	{
 		protected FieldAccessor(Field field)
 		{
-			if (field == null)
-				throw new ArgumentNullException(nameof(field));
-
-			Field = field;
+			Field = field ?? throw new ArgumentNullException(nameof(field));
 		}
 
 		public Field Field { get; }

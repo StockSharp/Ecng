@@ -143,10 +143,10 @@ namespace Ecng.Serialization
 				if (graph.IsNull())
 					throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
 
-				if (fields == null)
+				if (fields is null)
 					throw new ArgumentNullException(nameof(fields));
 
-				if (source == null)
+				if (source is null)
 					throw new ArgumentNullException(nameof(source));
 
 				var tracking = graph as ISerializationTracking;
@@ -243,10 +243,10 @@ namespace Ecng.Serialization
 		{
 			using (new SerializationContext { Entity = graph }.ToScope())
 			{
-				if (source == null)
+				if (source is null)
 					throw new ArgumentNullException(nameof(source), "Source for type '{0}' doesn't initialized.".Put(typeof(T)));
 
-				if (fields == null)
+				if (fields is null)
 					throw new ArgumentNullException(nameof(fields));
 
 				if (graph.IsNull())
@@ -266,7 +266,7 @@ namespace Ecng.Serialization
 					{
 						var item = source.TryGetItem(field.Name);
 
-						if (item == null)
+						if (item is null)
 							continue;
 
 						graph = field.GetAccessor<T>().SetValue(graph, field.Factory.CreateInstance(this, item));
@@ -301,7 +301,7 @@ namespace Ecng.Serialization
 
 			var identity = Schema.Identity;
 
-			if (identity == null)
+			if (identity is null)
 				throw new InvalidOperationException("Schema '{0}' doesn't provide identity.".Put(typeof(T)));
 
 			return identity.GetAccessor<T>().GetValue(graph);
@@ -316,7 +316,7 @@ namespace Ecng.Serialization
 			if (graph.IsNull())
 				throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
 
-			if (id == null)
+			if (id is null)
 				throw new ArgumentNullException(nameof(id), "Identifier for type '{0}' isn't initialized.".Put(typeof(T)));
 
 			return Schema.Identity.GetAccessor<T>().SetValue(graph, id);

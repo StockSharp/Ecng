@@ -27,7 +27,7 @@ namespace Ecng.ComponentModel
 		public static T Initialize<T>(this ProviderSettings settings)
 			where T : ProviderBase
 		{
-			if (settings == null)
+			if (settings is null)
 				throw new ArgumentNullException(nameof(settings));
 
 			var providerType = settings.Type.To<Type>();
@@ -46,10 +46,10 @@ namespace Ecng.ComponentModel
 		/// <returns></returns>
 		public static ProviderBase Initialize(this ProviderSettings providerSettings, Type providerType)
 		{
-			if (providerSettings == null)
+			if (providerSettings is null)
 				throw new ArgumentNullException(nameof(providerSettings));
 
-			if (providerType == null)
+			if (providerType is null)
 				throw new ArgumentNullException(nameof(providerType));
 
 			var provider = providerType.CreateInstance<ProviderBase>();
@@ -89,10 +89,10 @@ namespace Ecng.ComponentModel
 		/// <param name="removeFields">if set to <c>true</c> [remove fields].</param>
 		public static void Initialize(this ProviderBase provider, NameValueCollection config, bool removeFields)
 		{
-			if (provider == null)
+			if (provider is null)
 				throw new ArgumentNullException(nameof(provider));
 
-			if (config == null)
+			if (config is null)
 				throw new ArgumentNullException(nameof(config));
 
 			var fields = provider.GetType().GetSchema().Fields.SerializableFields;
@@ -101,7 +101,7 @@ namespace Ecng.ComponentModel
 			{
 				var value = config[field.Name].To(field.Type);
 
-				if (value == null)
+				if (value is null)
 				{
 					var attr = field.Member.GetAttribute<DefaultValueAttribute>();
 

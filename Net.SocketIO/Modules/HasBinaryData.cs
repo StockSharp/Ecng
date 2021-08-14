@@ -12,7 +12,7 @@ namespace Ecng.Net.SocketIO.Modules
 
         private static bool RecursiveCheckForBinary(object obj)
         {
-            if (obj == null || obj is string)
+            if (obj is null || obj is string)
             {
                 return false;
             }

@@ -235,7 +235,7 @@ namespace Ecng.Security
 			{
 				var user = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, userName);
 
-				if (user == null)
+				if (user is null)
 					return false;
 
 				user.ChangePassword(oldPassword.UnSecure(), newPassword.UnSecure());

@@ -630,7 +630,7 @@
 					{
 						var file = _parent._getFile(id);
 
-						url = _parent._toFullAbsolute(file == null ? _parent._getFileUrl(id) : _parent._getFileUrl(file.Id), context.IsEnglish);
+						url = _parent._toFullAbsolute(file is null ? _parent._getFileUrl(id) : _parent._getFileUrl(file.Id), context.IsEnglish);
 
 						if (hasTitle)
 							sb.Replace("${url}", url);

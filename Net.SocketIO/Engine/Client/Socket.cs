@@ -106,7 +106,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
         }
 
         public Socket(string uri, Options options)
-            : this(uri == null ? null : String2Uri(uri), options)
+            : this(uri is null ? null : String2Uri(uri), options)
         {
             
         }
@@ -124,7 +124,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
         }
 
         public Socket(Uri uri, Options options)
-            : this(uri == null ? options : Options.FromURI(uri, options))
+            : this(uri is null ? options : Options.FromURI(uri, options))
         {
         }
 
@@ -379,7 +379,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
             public static Options FromURI(Uri uri, Options opts)
             {
-                if (opts == null)
+                if (opts is null)
                 {
                     opts = new Options();
                 }
@@ -647,7 +647,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
         private void SendPacket(Packet packet, Action fn)
         {
-            if (fn == null)
+            if (fn is null)
             {
                 fn = () => { };
             }

@@ -19,7 +19,7 @@ namespace Ecng.Common
 				.GetField("_remoteStackTraceString",
 					BindingFlags.Instance | BindingFlags.NonPublic); // MS.Net
 
-			if (_remoteStackTraceString == null)
+			if (_remoteStackTraceString is null)
 				_remoteStackTraceString = typeof(Exception)
 				.GetField("remote_stack_trace",
 					BindingFlags.Instance | BindingFlags.NonPublic); // Mono
@@ -29,10 +29,10 @@ namespace Ecng.Common
 
 		public static T CreateInstance<T>(this Type type, params object[] args)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
-			if (args == null)
+			if (args is null)
 				throw new ArgumentNullException(nameof(args));
 
 			return Activator.CreateInstance(type, args).To<T>();
@@ -40,10 +40,10 @@ namespace Ecng.Common
 
 		public static T CreateInstanceArgs<T>(this Type type, object[] args)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
-			if (args == null)
+			if (args is null)
 				throw new ArgumentNullException(nameof(args));
 
 			Func<Type, object[], object> func = Activator.CreateInstance;
@@ -52,10 +52,10 @@ namespace Ecng.Common
 
 		public static Type Make(this Type type, params Type[] args)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
-			if (args == null)
+			if (args is null)
 				throw new ArgumentNullException(nameof(args));
 
 			return type.MakeGenericType(args);
@@ -68,7 +68,7 @@ namespace Ecng.Common
 
 		public static bool IsPrimitive(this Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			return (
@@ -108,7 +108,7 @@ namespace Ecng.Common
 
 		public static string GetTypeAsString(this Type type, bool isAssemblyQualifiedName)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			return Converter.GetAlias(type) ?? type.GetTypeName(isAssemblyQualifiedName) /*"{0}, {1}".Put(type.FullName, type.Assembly.GetName().Name)*/;
@@ -116,7 +116,7 @@ namespace Ecng.Common
 
 		public static bool IsStruct(this Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			return type.IsValueType && !type.IsEnum();
@@ -124,7 +124,7 @@ namespace Ecng.Common
 
 		public static bool IsEnum(this Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			//
@@ -146,7 +146,7 @@ namespace Ecng.Common
 #if !SILVERLIGHT
 		public static bool IsWinColor(this Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			return type == typeof(System.Drawing.Color);
@@ -160,7 +160,7 @@ namespace Ecng.Common
 
 		public static object CreateUnitialized(this Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			return FormatterServices.GetUninitializedObject(type);
@@ -170,12 +170,12 @@ namespace Ecng.Common
 		public static void DoIf<TSource, TDestination>(this TSource source, Action<TDestination> handler)
 			where TDestination : class
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			var destination = source as TDestination;
 
-			if (destination == null)
+			if (destination is null)
 				return;
 
 			handler(destination);
@@ -185,10 +185,10 @@ namespace Ecng.Common
 		public static void DoIfElse<T>(this object value, Action<T> ifAction, Action elseAction)
 			where T : class
 		{
-			if (ifAction == null)
+			if (ifAction is null)
 				throw new ArgumentNullException(nameof(ifAction));
 
-			if (elseAction == null)
+			if (elseAction is null)
 				throw new ArgumentNullException(nameof(elseAction));
 
 			if (value is T typedValue)
@@ -207,7 +207,7 @@ namespace Ecng.Common
 		private static readonly Lazy<string> _applicationName = new Lazy<string>(() =>
 		{
 			var asm = Assembly.GetEntryAssembly();
-			if (asm == null)
+			if (asm is null)
 				return "None";
 			var attr = asm.GetAttribute<AssemblyTitleAttribute>();
 			return attr != null ? attr.Title : asm.GetName().Name;
@@ -219,7 +219,7 @@ namespace Ecng.Common
 		{
 			var asm = Assembly.GetEntryAssembly();
 
-			if (asm == null)
+			if (asm is null)
 				return "None";
 
 			return ApplicationName + " v" + asm.GetName().Version;
@@ -237,7 +237,7 @@ namespace Ecng.Common
 
 		public static string GetTypeName(this Type type, bool isAssemblyQualifiedName)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			return isAssemblyQualifiedName ? type.AssemblyQualifiedName : "{0}, {1}".Put(type.FullName,
@@ -257,7 +257,7 @@ namespace Ecng.Common
 		// http://stackoverflow.com/questions/57383/in-c-how-can-i-rethrow-innerexception-without-losing-stack-trace
 		public static void Throw(this Exception ex)
 		{
-			if (ex == null)
+			if (ex is null)
 				throw new ArgumentNullException(nameof(ex));
 
 			_remoteStackTraceString.SetValue(ex, ex.StackTrace + Environment.NewLine);
@@ -282,7 +282,7 @@ namespace Ecng.Common
 
 		public static Exception SingleOrAggr(this IList<Exception> errors)
 		{
-			if (errors == null)
+			if (errors is null)
 				throw new ArgumentNullException(nameof(errors));
 
 			return errors.Count == 1 ? errors[0] : new AggregateException(errors);
@@ -291,7 +291,7 @@ namespace Ecng.Common
 		public static T CheckOnNull<T>(this T value)
 			where T : class
 		{
-			if (value == null)
+			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 
 			return value;

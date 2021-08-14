@@ -15,11 +15,8 @@ namespace Ecng.Common
 				if (unmanagedData.IsNull())
 					throw new ArgumentNullException(nameof(unmanagedData));
 
-				if (disposeAction == null)
-					throw new ArgumentNullException(nameof(disposeAction));
-
 				_unmanagedData = unmanagedData;
-				_disposeAction = disposeAction;
+				_disposeAction = disposeAction ?? throw new ArgumentNullException(nameof(disposeAction));
 			}
 
 			protected override void DisposeManaged()
@@ -31,7 +28,7 @@ namespace Ecng.Common
 
 		public static void DisposeAll(this IEnumerable<IDisposable> disposables)
 		{
-			if (disposables == null)
+			if (disposables is null)
 				throw new ArgumentNullException(nameof(disposables));
 
 			foreach (var disp in disposables)
@@ -43,9 +40,6 @@ namespace Ecng.Common
 		/// </summary>
 		public static Disposable MakeDisposable<T>(this T unmanagedData, Action<T> disposeAction)
 		{
-			if (disposeAction == null)
-				throw new ArgumentNullException(nameof(disposeAction));
-
 			return new DisposableByAction<T>(unmanagedData, disposeAction);
 		}
 	}

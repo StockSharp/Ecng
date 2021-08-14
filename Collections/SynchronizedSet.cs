@@ -67,13 +67,13 @@
 
 		private void CheckIndexingEnabled()
 		{
-			if (_indecies == null)
+			if (_indecies is null)
 				throw new InvalidOperationException("Indexing not switched on.");
 		}
 
 		private void AddIndicies(T item)
 		{
-			if (_indecies == null)
+			if (_indecies is null)
 				return;
 
 			_maxIndex = Count - 1;
@@ -82,7 +82,7 @@
 
 		private bool RemoveIndicies(T item)
 		{
-			if (_indecies == null)
+			if (_indecies is null)
 				return true;
 
 			if (_maxIndex == -1)
@@ -124,7 +124,7 @@
 			if (!InnerCollection.Add(item))
 				return;
 
-			if (_indecies == null)
+			if (_indecies is null)
 				return;
 
 			if (_maxIndex == -1)

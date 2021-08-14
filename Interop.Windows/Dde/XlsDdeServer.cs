@@ -21,14 +21,8 @@ namespace Ecng.Interop.Dde
 		public XlsDdeServer(string service, Action<string, IList<IList<object>>> poke, Action<Exception> error)
 			: base(service)
 		{
-			if (poke == null)
-				throw new ArgumentNullException(nameof(poke));
-
-			if (error == null)
-				throw new ArgumentNullException(nameof(error));
-
-			_poke = poke;
-			_error = error;
+			_poke = poke ?? throw new ArgumentNullException(nameof(poke));
+			_error = error ?? throw new ArgumentNullException(nameof(error));
 			_dispather = new EventDispatcher(error);
 		}
 

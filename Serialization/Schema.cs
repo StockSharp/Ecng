@@ -33,10 +33,7 @@ namespace Ecng.Serialization
 			get => _entityType;
 			set
 			{
-				if (value == null)
-					throw new ArgumentNullException(nameof(value));
-
-				_entityType = value;
+				_entityType = value ?? throw new ArgumentNullException(nameof(value));
 				Name = value.Name;
 			}
 		}

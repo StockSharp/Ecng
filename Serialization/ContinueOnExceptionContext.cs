@@ -12,12 +12,12 @@ namespace Ecng.Serialization
 
 		public static bool TryProcess(Exception ex)
 		{
-			if (ex == null)
+			if (ex is null)
 				throw new ArgumentNullException(nameof(ex));
 
 			var ctx = Scope<ContinueOnExceptionContext>.Current;
 
-			if (ctx == null)
+			if (ctx is null)
 				return false;
 
 			ctx.Value.Process(ex);
@@ -26,7 +26,7 @@ namespace Ecng.Serialization
 
 		public void Process(Exception ex)
 		{
-			if (ex == null)
+			if (ex is null)
 				throw new ArgumentNullException(nameof(ex));
 
 			Error?.Invoke(ex);

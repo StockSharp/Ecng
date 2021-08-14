@@ -13,10 +13,7 @@ namespace Ecng.Net
 
 		public UdpStream(Socket client, int mtuSize = 1600)
 		{
-			if (client == null)
-				throw new ArgumentNullException(nameof(client));
-
-			_client = client;
+			_client = client ?? throw new ArgumentNullException(nameof(client));
 			_mtuBuffer = new byte[mtuSize];
 		}
 

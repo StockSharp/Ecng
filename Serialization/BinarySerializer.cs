@@ -22,7 +22,7 @@ namespace Ecng.Serialization
 				//	stream.Write(item.Value != null);
 				//else
 				//{
-				//	if (item.Value == null)
+				//	if (item.Value is null)
 				//		throw new ArgumentException(nameof(source));
 				//}
 

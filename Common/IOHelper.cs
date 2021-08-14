@@ -57,7 +57,7 @@ namespace Ecng.Common
 
 		public static string ToFullPath(this string path)
 		{
-			if (path == null)
+			if (path is null)
 				throw new ArgumentNullException(nameof(path));
 
 			return Path.GetFullPath(path);
@@ -73,7 +73,7 @@ namespace Ecng.Common
 			do
 			{
 				var str = reader.ReadLine();
-				if (str == null)
+				if (str is null)
 					break;
 
 				if (!str.IsEmptyOrWhiteSpace())
@@ -86,10 +86,10 @@ namespace Ecng.Common
 
 		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, TimeSpan waitForExit = default, string stdInput = null)
 		{
-			if (output == null)
+			if (output is null)
 				throw new ArgumentNullException(nameof(output));
 
-			if (error == null)
+			if (error is null)
 				throw new ArgumentNullException(nameof(error));
 
 			var input = !stdInput.IsEmpty();
@@ -259,7 +259,7 @@ namespace Ecng.Common
 
 		public static string ToFullPathIfNeed(this string path)
 		{
-			if (path == null)
+			if (path is null)
 				throw new ArgumentNullException(nameof(path));
 
 			return path.ReplaceIgnoreCase("%Documents%", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
@@ -358,7 +358,7 @@ namespace Ecng.Common
 
 		public static DateTime GetTimestamp(this Assembly assembly)
 		{
-			if (assembly == null)
+			if (assembly is null)
 				throw new ArgumentNullException(nameof(assembly));
 
 			return GetTimestamp(assembly.Location);

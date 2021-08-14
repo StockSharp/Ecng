@@ -50,7 +50,7 @@ namespace Ecng.Reflection.Emit
 		{
 			lock (this)
 			{
-				if (_addMethod == null)
+				if (_addMethod is null)
 				{
 					_addMethod = _typeGenerator.CreateMethod(ReflectionHelper.AddPrefix + _eventName, methodAttrs, typeof(void), _eventType);
 					Builder.SetAddOnMethod((MethodBuilder)_addMethod.Builder);
@@ -73,7 +73,7 @@ namespace Ecng.Reflection.Emit
 		{
 			lock (this)
 			{
-				if (_removeMethod == null)
+				if (_removeMethod is null)
 				{
 					_removeMethod = _typeGenerator.CreateMethod(ReflectionHelper.RemovePrefix + _eventName, methodAttrs, typeof(void), _eventType);
 					Builder.SetAddOnMethod((MethodBuilder)_removeMethod.Builder);
@@ -91,7 +91,7 @@ namespace Ecng.Reflection.Emit
 		{
 			lock (this)
 			{
-				if (_eventField == null)
+				if (_eventField is null)
 					_eventField = _typeGenerator.CreateField("_" + _eventName, _eventType, FieldAttributes.Private);
 			}
 

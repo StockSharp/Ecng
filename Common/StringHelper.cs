@@ -51,7 +51,7 @@
 
 		public static string Put(this string str, params object[] args)
 		{
-			if (args == null)
+			if (args is null)
 				throw new ArgumentNullException(nameof(args));
 
 			return args.Length == 0 ? str : string.Format(str, args);
@@ -68,7 +68,7 @@
 			{
 				var dictionary = selectorInfo.CurrentValue as IDictionary;
 
-				if (dictionary == null)
+				if (dictionary is null)
 					return false;
 
 				var dictType = dictionary.GetType();
@@ -84,7 +84,7 @@
 					}
 				}
 
-				if (type == null)
+				if (type is null)
 					return false;
 
 				object key;
@@ -106,7 +106,7 @@
 
 		public static string PutEx(this string str, params object[] args)
 		{
-			if (args == null)
+			if (args is null)
 				throw new ArgumentNullException(nameof(args));
 
 			return args.Length == 0 ? str : Smart.Format(str, args);
@@ -114,10 +114,10 @@
 
 		private static Type GetGenericType(this Type targetType, Type genericType)
 		{
-			if (targetType == null)
+			if (targetType is null)
 				throw new ArgumentNullException(nameof(targetType));
 
-			if (genericType == null)
+			if (genericType is null)
 				throw new ArgumentNullException(nameof(genericType));
 
 			if (!genericType.IsGenericTypeDefinition)
@@ -161,7 +161,7 @@
 
 		public static string[] SplitBySep(this string str, string separator, bool removeEmptyEntries = true)
 		{
-			if (str == null)
+			if (str is null)
 				throw new ArgumentNullException(nameof(str));
 
 			if (str.Length == 0)
@@ -187,7 +187,7 @@
 
 		public static int LastIndexOf(this StringBuilder builder, char value)
 		{
-			if (builder == null)
+			if (builder is null)
 				throw new ArgumentNullException(nameof(builder));
 
 			for (var i = builder.Length - 1; i > 0; i--)
@@ -277,7 +277,7 @@
 
 		public static string ReplaceWhiteSpaces(this string s, char c)
 		{
-			if (s == null)
+			if (s is null)
 				return null;
 
 			var sb = new StringBuilder(s);
@@ -440,13 +440,13 @@
 		//
 		public static bool ContainsIgnoreCase(this string str1, string str2)
 		{
-			if (str1 == null)
+			if (str1 is null)
 			{
 				return false;
 				//throw new ArgumentNullException(nameof(str1));
 			}
 
-			if (str2 == null)
+			if (str2 is null)
 				return false;
 
 			return str1.IndexOf(str2, StringComparison.InvariantCultureIgnoreCase) >= 0;
@@ -457,10 +457,10 @@
 		//
 		public static string ReplaceIgnoreCase(this string original, string oldValue, string newValue)
 		{
-			if (oldValue == null)
+			if (oldValue is null)
 				throw new ArgumentNullException(nameof(oldValue));
 
-			if (newValue == null)
+			if (newValue is null)
 				throw new ArgumentNullException(nameof(newValue));
 
 			if (oldValue.Length == 0)
@@ -495,7 +495,7 @@
 
 		public static StringBuilder ReplaceIgnoreCase(this StringBuilder builder, string oldValue, string newValue)
 		{
-			if (builder == null)
+			if (builder is null)
 				throw new ArgumentNullException(nameof(builder));
 
 			var str = builder.ToString().ReplaceIgnoreCase(oldValue, newValue);
@@ -585,7 +585,7 @@
 
 		public static string Times(this string value, int n, string separator)
 		{
-			if (value == null)
+			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 
 			if (n < 0)
@@ -630,7 +630,7 @@
 			if (strLength <= 0)
 				return truncatedString;
 
-			if (text == null || text.Length <= maxLength)
+			if (text is null || text.Length <= maxLength)
 				return truncatedString;
 
 			truncatedString = text.Substring(0, strLength);
@@ -853,7 +853,7 @@
 		[CLSCompliant(false)]
 		public static bool IsEmpty(this SecureString secureString)
 		{
-			return secureString == null
+			return secureString is null
 #if SILVERLIGHT
 				;
 #else
@@ -864,10 +864,10 @@
 #if !SILVERLIGHT
 		public static bool IsEqualTo(this SecureString value1, SecureString value2)
 		{
-			if (value1 == null)
+			if (value1 is null)
 				throw new ArgumentNullException(nameof(value1));
 
-			if (value2 == null)
+			if (value2 is null)
 				throw new ArgumentNullException(nameof(value2));
 
 			if (value1.Length != value2.Length)
@@ -994,7 +994,7 @@
 
 		public static string UnSecure(this SecureString str)
 		{
-			if (str == null)
+			if (str is null)
 				return null;
 
 			var bstr = Marshal.SecureStringToBSTR(str);
@@ -1014,7 +1014,7 @@
 
 		public static string ToBitString(this byte[] buffer, int? index = null, int? count = null, char separator = ' ')
 		{
-			if (buffer == null)
+			if (buffer is null)
 				throw new ArgumentNullException(nameof(buffer));
 
 			var offset = index ?? 0;
@@ -1043,7 +1043,7 @@
 
 		public static byte[] ToByteArray(this string bitString, char separator = ' ')
 		{
-			if (bitString == null)
+			if (bitString is null)
 				throw new ArgumentNullException(nameof(bitString));
 
 			if (bitString.Length == 0)

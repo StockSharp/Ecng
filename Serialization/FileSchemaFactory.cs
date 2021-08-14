@@ -46,10 +46,10 @@
 		//    get { return _formatterType; }
 		//    set
 		//    {
-		//        if (value == null)
+		//        if (value is null)
 		//            throw new ArgumentNullException(nameof(value));
 
-		//        if (value.GetGenericType(typeof(Serializer<Schema>)) == null)
+		//        if (value.GetGenericType(typeof(Serializer<Schema>)) is null)
 		//            throw new ArgumentException(nameof(value));
 
 		//        _formatterType = value;

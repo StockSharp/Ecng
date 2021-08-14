@@ -21,13 +21,10 @@ namespace Ecng.ComponentModel
 		/// <param name="radius"></param>
 		public Circle(Point<T> center, T radius)
 		{
-			if (center == null)
-				throw new ArgumentNullException(nameof(center));
-
 			if (_operator.Compare(radius, 0.To<T>()) < 0)
 				throw new ArgumentOutOfRangeException(nameof(radius));
 
-			Center = center;
+			Center = center ?? throw new ArgumentNullException(nameof(center));
 			Radius = radius;
 		}
 
@@ -48,7 +45,7 @@ namespace Ecng.ComponentModel
 		/// <returns></returns>
 		public bool Contains(Point<T> point)
 		{
-			if (point == null)
+			if (point is null)
 				throw new ArgumentNullException(nameof(point));
 
 			return _operator.Compare(new Line<T>(Center, point).Length.To<T>(), Radius) <= 0;
@@ -73,7 +70,7 @@ namespace Ecng.ComponentModel
 		/// <returns></returns>
 		public Point<double>[] GetIntersection(Line<T> line)
 		{
-			if (line == null)
+			if (line is null)
 				throw new ArgumentNullException(nameof(line));
 
 			//double

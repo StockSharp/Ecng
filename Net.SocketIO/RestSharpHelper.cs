@@ -13,7 +13,7 @@
 	{
 		public static void AddBodyAsStr(this IRestRequest request, string bodyStr)
 		{
-			if (request == null)
+			if (request is null)
 				throw new ArgumentNullException(nameof(request));
 
 			request.AddParameter(RestSharp.Serialization.ContentType.Json, bodyStr, ParameterType.RequestBody);
@@ -26,13 +26,13 @@
 
 		public static T Invoke<T>(this IRestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Action<IRestClient> init = null, Func<string, string> contentConverter = null)
 		{
-			if (request == null)
+			if (request is null)
 				throw new ArgumentNullException(nameof(request));
 
-			if (url == null)
+			if (url is null)
 				throw new ArgumentNullException(nameof(url));
 
-			if (caller == null)
+			if (caller is null)
 				throw new ArgumentNullException(nameof(caller));
 
 			var asm = caller.GetType().Assembly;

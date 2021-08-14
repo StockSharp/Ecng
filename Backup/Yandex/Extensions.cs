@@ -11,16 +11,16 @@ namespace Ecng.Backup.Yandex
 		public static TResult AsyncWait<TArg, TResult>(this DiskSdkClient client, string eventName, Action action, Func<TArg, TResult> process)
 			where TArg : SdkEventArgs
 		{
-			if (client == null)
+			if (client is null)
 				throw new ArgumentNullException(nameof(client));
 
-			if (action == null)
+			if (action is null)
 				throw new ArgumentNullException(nameof(action));
 
 			if (eventName.IsEmpty())
 				throw new ArgumentNullException(nameof(eventName));
 
-			if (process == null)
+			if (process is null)
 				throw new ArgumentNullException(nameof(process));
 
 			var sync = new SyncObject();

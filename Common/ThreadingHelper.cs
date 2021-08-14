@@ -15,7 +15,7 @@ namespace Ecng.Common
 
 		public static Timer Timer(this Action handler)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			return CreateTimer(s => handler());
@@ -23,7 +23,7 @@ namespace Ecng.Common
 
 		public static Timer Timer<T>(this Action<T> handler, T arg)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			return CreateTimer(s => handler(arg));
@@ -31,7 +31,7 @@ namespace Ecng.Common
 
 		public static Timer Timer<T1, T2>(this Action<T1, T2> handler, T1 arg1, T2  arg2)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			return CreateTimer(s => handler(arg1, arg2));
@@ -39,7 +39,7 @@ namespace Ecng.Common
 
 		public static Timer Timer<T1, T2, T3>(this Action<T1, T2, T3> handler, T1 arg1, T2 arg2, T3 arg3)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			return CreateTimer(s => handler(arg1, arg2, arg3));
@@ -47,7 +47,7 @@ namespace Ecng.Common
 
 		public static Timer Timer<T1, T2, T3, T4>(this Action<T1, T2, T3, T4> handler, T1 arg1, T2 arg2, T3 arg3, T4 arg4)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			return CreateTimer(s => handler(arg1, arg2, arg3, arg4));
@@ -68,7 +68,7 @@ namespace Ecng.Common
 
 		public static Timer Interval(this Timer timer, TimeSpan start, TimeSpan interval)
 		{
-			if (timer == null)
+			if (timer is null)
 				throw new ArgumentNullException(nameof(timer));
 
 			timer.Change(start, interval);
@@ -88,7 +88,7 @@ namespace Ecng.Common
 
 		public static Thread Thread(this Action handler)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			return CreateThread(() => handler());
@@ -96,7 +96,7 @@ namespace Ecng.Common
 
 		public static Thread Thread<T>(this Action<T> handler, T arg)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			return CreateThread(() => handler(arg));
@@ -104,7 +104,7 @@ namespace Ecng.Common
 
 		public static Thread Thread<T1, T2>(this Action<T1, T2> handler, T1 arg1, T2 arg2)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			return CreateThread(() => handler(arg1, arg2));
@@ -112,7 +112,7 @@ namespace Ecng.Common
 
 		public static Thread Thread<T1, T2, T3>(this Action<T1, T2, T3> handler, T1 arg1, T2 arg2, T3 arg3)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			return CreateThread(() => handler(arg1, arg2, arg3));
@@ -120,7 +120,7 @@ namespace Ecng.Common
 
 		public static Thread Thread<T1, T2, T3, T4>(this Action<T1, T2, T3, T4> handler, T1 arg1, T2 arg2, T3 arg3, T4 arg4)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			return CreateThread(() => handler(arg1, arg2, arg3, arg4));
@@ -133,7 +133,7 @@ namespace Ecng.Common
 
 		public static Thread Name(this Thread thread, string name)
 		{
-			if (thread == null)
+			if (thread is null)
 				throw new ArgumentNullException(nameof(thread));
 
 			thread.Name = name;
@@ -143,10 +143,10 @@ namespace Ecng.Common
 		[Obsolete]
 		public static Thread Culture(this Thread thread, CultureInfo culture)
 		{
-			if (thread == null)
+			if (thread is null)
 				throw new ArgumentNullException(nameof(thread));
 
-			if (culture == null)
+			if (culture is null)
 				throw new ArgumentNullException(nameof(culture));
 
 			thread.CurrentCulture = culture.TypedClone();
@@ -156,10 +156,10 @@ namespace Ecng.Common
 		[Obsolete]
 		public static Thread UICulture(this Thread thread, CultureInfo culture)
 		{
-			if (thread == null)
+			if (thread is null)
 				throw new ArgumentNullException(nameof(thread));
 
-			if (culture == null)
+			if (culture is null)
 				throw new ArgumentNullException(nameof(culture));
 
 			thread.CurrentUICulture = culture.TypedClone();
@@ -168,7 +168,7 @@ namespace Ecng.Common
 
 		public static Thread Background(this Thread thread, bool isBackground)
 		{
-			if (thread == null)
+			if (thread is null)
 				throw new ArgumentNullException(nameof(thread));
 
 			thread.IsBackground = isBackground;
@@ -177,7 +177,7 @@ namespace Ecng.Common
 
 		public static Thread Launch(this Thread thread)
 		{
-			if (thread == null)
+			if (thread is null)
 				throw new ArgumentNullException(nameof(thread));
 
 			thread.Start();
@@ -192,7 +192,7 @@ namespace Ecng.Common
 
 		public static Thread Priority(this Thread thread, ThreadPriority priority)
 		{
-			if (thread == null)
+			if (thread is null)
 				throw new ArgumentNullException(nameof(thread));
 
 			thread.Priority = priority;
@@ -201,7 +201,7 @@ namespace Ecng.Common
 
 		public static Thread STA(this Thread thread)
 		{
-			if (thread == null)
+			if (thread is null)
 				throw new ArgumentNullException(nameof(thread));
 
 			thread.SetApartmentState(ApartmentState.STA);
@@ -210,7 +210,7 @@ namespace Ecng.Common
 
 		public static Thread MTA(this Thread thread)
 		{
-			if (thread == null)
+			if (thread is null)
 				throw new ArgumentNullException(nameof(thread));
 
 			thread.SetApartmentState(ApartmentState.MTA);
@@ -219,7 +219,7 @@ namespace Ecng.Common
 
 		public static void InvokeAsSTA(this Action action)
 		{
-			if (action == null)
+			if (action is null)
 				throw new ArgumentNullException(nameof(action));
 
 			InvokeAsSTA<object>(() =>
@@ -232,7 +232,7 @@ namespace Ecng.Common
 		// http://stackoverflow.com/questions/518701/clipboard-gettext-returns-null-empty-string
 		public static T InvokeAsSTA<T>(this Func<T> func)
 		{
-			if (func == null)
+			if (func is null)
 				throw new ArgumentNullException(nameof(func));
 
 			var retVal = default(T);
@@ -267,7 +267,7 @@ namespace Ecng.Common
 
 		public static bool TryWrite(this ReaderWriterLockSlim rw, Action handler, int timeOut = 0)
 		{
-			if (rw == null)
+			if (rw is null)
 				throw new ArgumentNullException(nameof(rw));
 
 			return Try(rw.TryEnterWriteLock, rw.ExitWriteLock, handler, timeOut);
@@ -280,7 +280,7 @@ namespace Ecng.Common
 
 		public static bool TryRead(this ReaderWriterLockSlim rw, Action handler, int timeOut = 0)
 		{
-			if (rw == null)
+			if (rw is null)
 				throw new ArgumentNullException(nameof(rw));
 
 			return Try(rw.TryEnterReadLock, rw.ExitReadLock, handler, timeOut);
@@ -293,7 +293,7 @@ namespace Ecng.Common
 
 		public static bool TryUpgrade(this ReaderWriterLockSlim rw, Action handler, int timeOut = 0)
 		{
-			if (rw == null)
+			if (rw is null)
 				throw new ArgumentNullException(nameof(rw));
 
 			return Try(rw.TryEnterUpgradeableReadLock, rw.ExitUpgradeableReadLock, handler, timeOut);
@@ -301,7 +301,7 @@ namespace Ecng.Common
 
 		private static bool Try(Func<int, bool> enter, Action exit, Action handler, int timeOut = 0)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			if (!enter(timeOut))

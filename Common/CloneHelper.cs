@@ -14,10 +14,7 @@ namespace Ecng.Common
 		public static T CloneNullable<T>(this T obj)
 			where T : class, ICloneable
 		{
-			if (obj == null)
-				return null;
-
-			return obj.TypedClone();
+			return obj?.TypedClone();
 		}
 	}
 }

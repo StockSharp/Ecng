@@ -13,10 +13,7 @@
 
 		public XlsDdeClient(DdeSettings settings)
 		{
-			if (settings == null)
-				throw new ArgumentNullException(nameof(settings));
-
-			Settings = settings;
+			Settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		}
 
 		public bool IsStarted => _client != null;
@@ -39,7 +36,7 @@
 
 		public void Poke(IList<IList<object>> rows)
 		{
-			if (rows == null)
+			if (rows is null)
 				throw new ArgumentNullException(nameof(rows));
 
 			if (rows.Count == 0)

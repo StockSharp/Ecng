@@ -39,7 +39,7 @@
 
 		public static void ConsoleWithColor(this Action handler, ConsoleColor color)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			lock (_lock)

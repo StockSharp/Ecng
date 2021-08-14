@@ -254,7 +254,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
         public string Uri()
         {
             Dictionary<string, string> query = null;
-            query = this.Query == null ? new Dictionary<string, string>() : new Dictionary<string, string>(this.Query);
+            query = this.Query is null ? new Dictionary<string, string>() : new Dictionary<string, string>(this.Query);
             var schema = this.Secure ? "wss" : "ws";
             var portString = "";
 

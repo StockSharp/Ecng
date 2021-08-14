@@ -28,7 +28,7 @@ namespace Ecng.Reflection.Emit
 
 		protected override void OnAdded(Constraint item)
 		{
-			if (item == null)
+			if (item is null)
 				throw new ArgumentNullException(nameof(item));
 
 			switch (item.ConstraintType)

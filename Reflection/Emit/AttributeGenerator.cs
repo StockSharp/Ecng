@@ -67,19 +67,16 @@ namespace Ecng.Reflection.Emit
 
 		private void Init(ConstructorInfo ctor, object[] ctorArgs, PropertyInfo[] props, object[] propValues, FieldInfo[] fields, object[] fieldValues)
 		{
-			if (ctor == null)
-				throw new ArgumentNullException(nameof(ctor));
-
-			if (props == null)
+			if (props is null)
 				props = ArrayHelper.Empty<PropertyInfo>();
 
-			if (propValues == null)
+			if (propValues is null)
 				propValues = ArrayHelper.Empty<object>();
 
-			if (fields == null)
+			if (fields is null)
 				fields = ArrayHelper.Empty<FieldInfo>();
 
-			if (fieldValues == null)
+			if (fieldValues is null)
 				fieldValues = ArrayHelper.Empty<object>();
 
 			if (props.HasNullItem())
@@ -94,7 +91,7 @@ namespace Ecng.Reflection.Emit
 			if (fields.Length != fieldValues.Length)
 				throw new ArgumentOutOfRangeException(nameof(fieldValues));
 
-			Ctor = ctor;
+			Ctor = ctor ?? throw new ArgumentNullException(nameof(ctor));
 			CtorArgs = ctorArgs;
 			Props = props;
 			PropValues = propValues;

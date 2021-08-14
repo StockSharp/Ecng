@@ -39,7 +39,7 @@ namespace Ecng.ComponentModel
 		/// <param name="type">The type.</param>
 		public CommonTypeConverter(Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			var attr = type.GetAttribute<CommonTypeConverterNamesAttribute>();
@@ -58,10 +58,10 @@ namespace Ecng.ComponentModel
 			{
 				var info = type.GetMember<MemberInfo>(member);
 
-				if (info is PropertyInfo)
-					_memberInvokers[index] = FastInvoker.Create((PropertyInfo)info, true);
-				else if (info is FieldInfo)
-					_memberInvokers[index] = FastInvoker.Create((FieldInfo)info, true);
+				if (info is PropertyInfo pi)
+					_memberInvokers[index] = FastInvoker.Create(pi, true);
+				else if (info is FieldInfo fi)
+					_memberInvokers[index] = FastInvoker.Create(fi, true);
 				else
 					throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
 
@@ -153,7 +153,7 @@ namespace Ecng.ComponentModel
 		{
 			var text = value as string;
 
-			if (text == null)
+			if (text is null)
 				return base.ConvertFrom(context, culture, value);
 
 			text = text.Trim();
@@ -161,7 +161,7 @@ namespace Ecng.ComponentModel
 			if (text.IsEmpty())
 				return null;
 
-			//if (culture == null)
+			//if (culture is null)
 			//	culture = CultureInfo.CurrentCulture;
 			//culture.NumberFormat.
 			//throw new NotSupportedException();
@@ -197,14 +197,14 @@ namespace Ecng.ComponentModel
 		/// <exception cref="T:System.ArgumentNullException">The destinationType parameter is null. </exception>
 		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
 		{
-			if (destinationType == null)
+			if (destinationType is null)
 				throw new ArgumentNullException(nameof(destinationType));
 
 			if (_type.IsInstanceOfType(value))
 			{
 				if (destinationType == typeof(string))
 				{
-					if (culture == null)
+					if (culture is null)
 						culture = CultureInfo.CurrentCulture;
 
 					var fieldTexts = new List<string>();

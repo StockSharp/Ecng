@@ -12,14 +12,8 @@ namespace Ecng.Serialization
 
 		public TypeOverrideAttribute(Type fromType, Type toType)
 		{
-			if (fromType == null)
-				throw new ArgumentNullException(nameof(fromType));
-
-			if (toType == null)
-				throw new ArgumentNullException(nameof(toType));
-
-			FromType = fromType;
-			ToType = toType;
+			FromType = fromType ?? throw new ArgumentNullException(nameof(fromType));
+			ToType = toType ?? throw new ArgumentNullException(nameof(toType));
 		}
 	}
 }

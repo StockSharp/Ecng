@@ -17,7 +17,7 @@
 	{
 		public static void Send(this MailMessage message, bool dispose = true)
 		{
-			if (message == null)
+			if (message is null)
 				throw new ArgumentNullException(nameof(message));
 
 			using (var mail = new SmtpClient())
@@ -29,7 +29,7 @@
 
 		public static async Task SendAsync(this MailMessage message, CancellationToken cancellationToken = default)
 		{
-			if (message == null)
+			if (message is null)
 				throw new ArgumentNullException(nameof(message));
 
 			using var mail = new SmtpClient();
@@ -39,7 +39,7 @@
 
 		public static MailMessage AddHtml(this MailMessage message, string bodyHtml)
 		{
-			if (message == null)
+			if (message is null)
 				throw new ArgumentNullException(nameof(message));
 
 			message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(bodyHtml, null, MediaTypeNames.Text.Html));
@@ -49,7 +49,7 @@
 
 		public static MailMessage AddPlain(this MailMessage message, string bodyPlain)
 		{
-			if (message == null)
+			if (message is null)
 				throw new ArgumentNullException(nameof(message));
 
 			message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(bodyPlain, null, MediaTypeNames.Text.Plain));
@@ -60,7 +60,7 @@
 		// http://stackoverflow.com/a/9621399
 		public static MemoryStream ToStream(this MailMessage message)
 		{
-			if (message == null)
+			if (message is null)
 				throw new ArgumentNullException(nameof(message));
 
 			var assembly = typeof(SmtpClient).Assembly;
@@ -96,7 +96,7 @@
 
 		public static MailMessage Attach(this MailMessage message, string fileName, Stream fileBody)
 		{
-			if (message == null)
+			if (message is null)
 				throw new ArgumentNullException(nameof(message));
 
 			if (!fileName.IsEmpty())

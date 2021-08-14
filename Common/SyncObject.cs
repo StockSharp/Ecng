@@ -13,7 +13,7 @@
 
 		public bool TryEnter(TimeSpan? timeOut = null)
 		{
-			return timeOut == null ? Monitor.TryEnter(this) : Monitor.TryEnter(this, timeOut.Value);
+			return timeOut is null ? Monitor.TryEnter(this) : Monitor.TryEnter(this, timeOut.Value);
 		}
 
 		public void Enter()
@@ -88,7 +88,7 @@
 
 		private bool WaitInternal(TimeSpan? timeOut)
 		{
-			return timeOut == null
+			return timeOut is null
 				? Monitor.Wait(this)
 				: Monitor.Wait(this, timeOut.Value);
 		}

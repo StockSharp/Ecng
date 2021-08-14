@@ -12,7 +12,7 @@
 
 		public static byte[] CreateSignature(this byte[] file)
 		{
-			if (file == null)
+			if (file is null)
 				throw new ArgumentNullException(nameof(file));
 
 			var signatureBuilder = new SignatureBuilder();
@@ -29,10 +29,10 @@
 
 		public static byte[] CreateDelta(this byte[] signature, byte[] newFile)
 		{
-			if (signature == null)
+			if (signature is null)
 				throw new ArgumentNullException(nameof(signature));
 
-			if (newFile == null)
+			if (newFile is null)
 				throw new ArgumentNullException(nameof(newFile));
 
 			var deltaBuilder = new DeltaBuilder();
@@ -50,10 +50,10 @@
 
 		public static byte[] CreateOriginal(this byte[] signature, byte[] delta)
 		{
-			if (signature == null)
+			if (signature is null)
 				throw new ArgumentNullException(nameof(signature));
 
-			if (delta == null)
+			if (delta is null)
 				throw new ArgumentNullException(nameof(delta));
 
 			var deltaApplier = new DeltaApplier { SkipHashCheck = true };

@@ -14,7 +14,7 @@ namespace Ecng.Security
 	{
 		public static byte[] ToBytes(this ProtectedKey key)
 		{
-			if (key == null)
+			if (key is null)
 				throw new ArgumentNullException(nameof(key));
 
 			return key.DecryptedKey;
@@ -41,7 +41,7 @@ namespace Ecng.Security
 
 		public static RSAParameters ToRsa(this byte[] key)
 		{
-			if (key == null)
+			if (key is null)
 				throw new ArgumentNullException(nameof(key));
 
 			var stream = key.To<Stream>();
@@ -61,7 +61,7 @@ namespace Ecng.Security
 
 		public static RSAParameters ToRsa(this ProtectedKey key)
 		{
-			if (key == null)
+			if (key is null)
 				throw new ArgumentNullException(nameof(key));
 
 			return key.DecryptedKey.ToRsa();
@@ -71,12 +71,12 @@ namespace Ecng.Security
 
 		private static void WriteByteArray(Stream stream, byte[] array)
 		{
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			stream.WriteEx(array == null);
+			stream.WriteEx(array is null);
 
-			if (array == null)
+			if (array is null)
 				return;
 
 			stream.WriteEx(array);
@@ -88,7 +88,7 @@ namespace Ecng.Security
 
 		private static byte[] ReadByteArray(Stream stream)
 		{
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
 			var isNull = stream.Read<bool>();
@@ -148,7 +148,7 @@ namespace Ecng.Security
 
 		public static byte[] Encrypt(this byte[] plain, string passPhrase, byte[] salt, byte[] iv)
 		{
-			if (plain == null)
+			if (plain is null)
 				throw new ArgumentNullException(nameof(plain));
 
 			if (passPhrase.IsEmpty())
@@ -187,7 +187,7 @@ namespace Ecng.Security
 
 		public static byte[] Decrypt(this byte[] cipherText, string passPhrase, byte[] salt, byte[] iv)
 		{
-			if (cipherText == null)
+			if (cipherText is null)
 				throw new ArgumentNullException(nameof(cipherText));
 
 			if (passPhrase.IsEmpty())
@@ -228,7 +228,7 @@ namespace Ecng.Security
 
 		private static byte[] TransformAes(bool isEncrypt, byte[] inputBytes, string passPhrase, byte[] salt, byte[] iv)
 		{
-			if (inputBytes == null)
+			if (inputBytes is null)
 				throw new ArgumentNullException(nameof(inputBytes));
 
 			if (passPhrase.IsEmpty())
@@ -276,13 +276,13 @@ namespace Ecng.Security
 
 		private static string Hash(this byte[] value, HashAlgorithm algo)
 		{
-			if (value == null)
+			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 
 			if (value.Length == 0)
 				throw new ArgumentOutOfRangeException(nameof(value));
 
-			if (algo == null)
+			if (algo is null)
 				throw new ArgumentNullException(nameof(algo));
 
 			using (algo)
@@ -322,7 +322,7 @@ namespace Ecng.Security
 			if (plainText.IsEmpty())
 				throw new ArgumentNullException(nameof(plainText));
 
-			if (salt == null)
+			if (salt is null)
 				throw new ArgumentNullException(nameof(salt));
 
 			var unencodedBytes = plainText.Unicode();

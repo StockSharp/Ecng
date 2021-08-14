@@ -44,7 +44,7 @@ namespace Ecng.Reflection.Emit
 			get => _baseType;
 			set
 			{
-				if (value == null)
+				if (value is null)
 					throw new ArgumentNullException(nameof(value));
 
 				_constraintType = value.IsInterface ? ConstraintTypes.Interface : ConstraintTypes.Type;

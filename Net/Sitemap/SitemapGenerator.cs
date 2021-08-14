@@ -66,13 +66,13 @@ namespace Ecng.Net.Sitemap
 				var urlElement = new XElement(
 					xmlns + "url",
 					new XElement(xmlns + "loc", Uri.EscapeUriString(sitemapNode.Url)),
-						sitemapNode.LastModified == null ? null : new XElement(
+						sitemapNode.LastModified is null ? null : new XElement(
 							xmlns + "lastmod",
 							sitemapNode.LastModified.Value.ToLocalTime().ToString(_timeFormat)),
-						sitemapNode.Frequency == null ? null : new XElement(
+						sitemapNode.Frequency is null ? null : new XElement(
 							xmlns + "changefreq",
 							sitemapNode.Frequency.Value.ToString().ToLowerInvariant()),
-						sitemapNode.Priority == null ? null : new XElement(
+						sitemapNode.Priority is null ? null : new XElement(
 							xmlns + "priority",
 							sitemapNode.Priority.Value.ToString("F1", CultureInfo.InvariantCulture)));
 

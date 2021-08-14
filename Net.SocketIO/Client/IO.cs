@@ -37,7 +37,7 @@ namespace Ecng.Net.SocketIO.Client
         {
 
             //var log = LogManager.GetLogger(Global.CallerName());
-            if (opts == null)
+            if (opts is null)
             {
                 opts = new Options();
             }

@@ -34,7 +34,7 @@ namespace Ecng.Backup.Yandex
 
 		private void Process(Action<DiskSdkClient> handler, out bool cancelled)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			Process<object>(client =>
@@ -46,7 +46,7 @@ namespace Ecng.Backup.Yandex
 
 		private T Process<T>(Func<DiskSdkClient, T> handler, out bool cancelled)
 		{
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			cancelled = false;
@@ -69,7 +69,7 @@ namespace Ecng.Backup.Yandex
 
 		private static string GetPath(BackupEntry entry)
 		{
-			if (entry == null)
+			if (entry is null)
 				return string.Empty;
 
 			return GetPath(entry.Parent) + "/" + entry.Name;
@@ -87,7 +87,7 @@ namespace Ecng.Backup.Yandex
 
 		private IEnumerable<BackupEntry> GetChilds(BackupEntry parent)
 		{
-			//if (parent == null)
+			//if (parent is null)
 			//	throw new ArgumentNullException(nameof(parent));
 
 			var path = GetPath(parent) + "/";
@@ -113,7 +113,7 @@ namespace Ecng.Backup.Yandex
 
 		private void FillInfo(BackupEntry entry)
 		{
-			if (entry == null)
+			if (entry is null)
 				throw new ArgumentNullException(nameof(entry));
 
 			var path = GetPath(entry);
@@ -134,7 +134,7 @@ namespace Ecng.Backup.Yandex
 
 		private void Delete(BackupEntry entry)
 		{
-			if (entry == null)
+			if (entry is null)
 				throw new ArgumentNullException(nameof(entry));
 
 			var path = GetPath(entry);
@@ -150,13 +150,13 @@ namespace Ecng.Backup.Yandex
 
 		private CancellationTokenSource Download(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress)
 		{
-			if (entry == null)
+			if (entry is null)
 				throw new ArgumentNullException(nameof(entry));
 
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			if (progress == null)
+			if (progress is null)
 				throw new ArgumentNullException(nameof(progress));
 
 			if (offset != null || length != null)
@@ -204,13 +204,13 @@ namespace Ecng.Backup.Yandex
 
 		private CancellationTokenSource Upload(BackupEntry entry, Stream stream, Action<int> progress)
 		{
-			if (entry == null)
+			if (entry is null)
 				throw new ArgumentNullException(nameof(entry));
 
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			if (progress == null)
+			if (progress is null)
 				throw new ArgumentNullException(nameof(progress));
 
 			var source = new CancellationTokenSource();
@@ -257,7 +257,7 @@ namespace Ecng.Backup.Yandex
 
 		private string Publish(BackupEntry entry)
 		{
-			if (entry == null)
+			if (entry is null)
 				throw new ArgumentNullException(nameof(entry));
 
 			var path = GetPath(entry);
@@ -273,7 +273,7 @@ namespace Ecng.Backup.Yandex
 
 		private void UnPublish(BackupEntry entry)
 		{
-			if (entry == null)
+			if (entry is null)
 				throw new ArgumentNullException(nameof(entry));
 
 			var path = GetPath(entry);

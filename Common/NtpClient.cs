@@ -17,7 +17,7 @@
 		{
 			//var address = Dns.GetHostEntry(ntpServer).AddressList;
 
-			//if (address == null || address.Length == 0)
+			//if (address is null || address.Length == 0)
 			//    throw new ArgumentException(string.Format("Could not resolve ip address from '{0}'.", ntpServer), "ntpServer");
 
 			//_endPoint = new IPEndPoint(address[0], 123);
@@ -29,15 +29,12 @@
 		/// <param name="ntpServer">NTP server.</param>
 		public NtpClient(EndPoint ntpServer)
 		{
-			if (ntpServer == null)
-				throw new ArgumentNullException(nameof(ntpServer));
-
-			_ntpServer = ntpServer;
+			_ntpServer = ntpServer ?? throw new ArgumentNullException(nameof(ntpServer));
 		}
 
 		public DateTime GetLocalTime(TimeZoneInfo info, int timeout = 5000)
 		{
-			if (info == null)
+			if (info is null)
 				throw new ArgumentNullException(nameof(info));
 
 			var utcTime = GetUtcTime(timeout);

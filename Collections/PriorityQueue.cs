@@ -50,11 +50,8 @@ namespace Ecng.Collections
         /// <param name="comparer">priority comparer</param>
         public PriorityQueue(int capacity, IComparer<TPriority> comparer)
         {
-            if (comparer == null)
-                throw new ArgumentNullException();
-
-            _baseHeap = new List<KeyValuePair<TPriority, TValue>>(capacity);
-            _comparer = comparer;
+			_baseHeap = new List<KeyValuePair<TPriority, TValue>>(capacity);
+            _comparer = comparer ?? throw new ArgumentNullException();
         }
 
         /// <summary>
@@ -63,11 +60,8 @@ namespace Ecng.Collections
         /// <param name="comparer">priority comparer</param>
         public PriorityQueue(IComparer<TPriority> comparer)
         {
-            if (comparer == null)
-                throw new ArgumentNullException();
-
-            _baseHeap = new List<KeyValuePair<TPriority, TValue>>();
-            _comparer = comparer;
+			_baseHeap = new List<KeyValuePair<TPriority, TValue>>();
+            _comparer = comparer ?? throw new ArgumentNullException();
         }
 
         /// <summary>
@@ -86,7 +80,7 @@ namespace Ecng.Collections
         /// <param name="comparer">priority comparer</param>
         public PriorityQueue(IEnumerable<KeyValuePair<TPriority, TValue>> data, IComparer<TPriority> comparer)
         {
-            if (data == null || comparer == null)
+            if (data is null || comparer is null)
                 throw new ArgumentNullException();
 
             _comparer = comparer;
@@ -112,7 +106,7 @@ namespace Ecng.Collections
         /// </remarks>
         public static PriorityQueue<TPriority, TValue> MergeQueues(PriorityQueue<TPriority, TValue> pq1, PriorityQueue<TPriority, TValue> pq2)
         {
-            if (pq1 == null || pq2 == null)
+            if (pq1 is null || pq2 is null)
                 throw new ArgumentNullException();
             if (pq1._comparer != pq2._comparer)
                 throw new InvalidOperationException("Priority queues to be merged must have equal comparers");
@@ -128,7 +122,7 @@ namespace Ecng.Collections
         /// <returns>resultant priority queue</returns>
         public static PriorityQueue<TPriority, TValue> MergeQueues(PriorityQueue<TPriority, TValue> pq1, PriorityQueue<TPriority, TValue> pq2, IComparer<TPriority> comparer)
         {
-            if (pq1 == null || pq2 == null || comparer == null)
+            if (pq1 is null || pq2 is null || comparer is null)
                 throw new ArgumentNullException();
             // merge data
             PriorityQueue<TPriority, TValue> result = new PriorityQueue<TPriority, TValue>(pq1.Count + pq2.Count, pq1._comparer);
@@ -406,5 +400,3 @@ namespace Ecng.Collections
         #endregion
     }
 }
-
-

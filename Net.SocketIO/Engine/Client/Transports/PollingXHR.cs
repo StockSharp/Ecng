@@ -30,7 +30,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
         protected XHRRequest Request(XHRRequest.RequestOptions opts)
         {
-            if (opts == null)
+            if (opts is null)
             {
                 opts = new XHRRequest.RequestOptions();
             }

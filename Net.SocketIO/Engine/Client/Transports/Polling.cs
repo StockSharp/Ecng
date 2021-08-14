@@ -317,7 +317,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
         {
             //var query = this.Query;
             var query = new Dictionary<string, string>(Query);
-            //if (Query == null)
+            //if (Query is null)
             //{
             //    query = new Dictionary<string, string>();
             //}

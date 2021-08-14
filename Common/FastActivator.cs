@@ -24,7 +24,7 @@
 			var objType = typeof(T);
 			var cinfo = objType.GetConstructor(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
 
-			if (_dynMethodNotSupported || objType.IsValueType || cinfo == null)
+			if (_dynMethodNotSupported || objType.IsValueType || cinfo is null)
 			{
 				CreateObject = Activator.CreateInstance<T>;
 			}

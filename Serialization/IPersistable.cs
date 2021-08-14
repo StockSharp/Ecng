@@ -42,7 +42,7 @@
 		public static T LoadEntire<T>(this SettingsStorage storage)
 			where T : IPersistable
 		{
-			if (storage == null)
+			if (storage is null)
 				throw new ArgumentNullException(nameof(storage));
 
 			var instance = storage.GetValue<Type>("type").CreateInstance<T>();
@@ -52,7 +52,7 @@
 
 		public static SettingsStorage SaveEntire(this IPersistable persistable, bool isAssemblyQualifiedName)
 		{
-			if (persistable == null)
+			if (persistable is null)
 				throw new ArgumentNullException(nameof(persistable));
 
 			return new SettingsStorage()
@@ -155,7 +155,7 @@
 		/// <param name="persistable">Сохраняемый объект.</param>
 		public static void SetValue(this SettingsStorage storage, string name, IPersistable persistable)
 		{
-			if (storage == null)
+			if (storage is null)
 				throw new ArgumentNullException(nameof(storage));
 
 			storage.SetValue(name, persistable.Save());
@@ -163,7 +163,7 @@
 
 		public static void LoadFromString(this IPersistable persistable, string value)
 		{
-			if (persistable == null)
+			if (persistable is null)
 				throw new ArgumentNullException(nameof(persistable));
 
 			persistable.Load(value.LoadFromString());
@@ -171,7 +171,7 @@
 
 		public static SettingsStorage LoadFromString(this string value)
 		{
-			if (value == null)
+			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 
 			return CultureInfo.InvariantCulture.DoInCulture(() => new XmlSerializer<SettingsStorage>().Deserialize(value.UTF8()));
@@ -179,7 +179,7 @@
 
 		public static string SaveToString(this IPersistable persistable)
 		{
-			if (persistable == null)
+			if (persistable is null)
 				throw new ArgumentNullException(nameof(persistable));
 
 			return persistable.Save().SaveToString();
@@ -187,7 +187,7 @@
 
 		public static string SaveToString(this SettingsStorage settings)
 		{
-			if (settings == null)
+			if (settings is null)
 				throw new ArgumentNullException(nameof(settings));
 
 			return CultureInfo.InvariantCulture.DoInCulture(() => new XmlSerializer<SettingsStorage>().Serialize(settings).UTF8());

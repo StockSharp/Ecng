@@ -45,7 +45,7 @@
 
 		public static IEnumerable<T> ExcludeObsolete<T>(this IEnumerable<T> values)
 		{
-			return values.Where(v => v.GetAttributeOfType<ObsoleteAttribute>() == null);
+			return values.Where(v => v.GetAttributeOfType<ObsoleteAttribute>() is null);
 		}
 
 		public static IEnumerable<object> GetValues(this Type enumType)
@@ -75,7 +75,7 @@
 #if SILVERLIGHT
 		private static IEnumerable<FieldInfo> GetEnumFields(this Type enumType)
 		{
-			if (enumType == null)
+			if (enumType is null)
 				throw new ArgumentNullException(nameof(enumType));
 
 			return enumType.GetFields().Where(field => field.Name != "value__");
@@ -103,7 +103,7 @@
 
 		public static T JoinMask<T>(this IEnumerable<T> values)
 		{
-			if (values == null)
+			if (values is null)
 				throw new ArgumentNullException(nameof(values));
 
 			return values.Aggregate(default(T), (current, t) => (current.To<long>() | t.To<long>()).To<T>());
@@ -151,7 +151,7 @@
 		public static TAttribute GetAttributeOfType<TAttribute>(this object enumVal)
 			where TAttribute : Attribute
 		{
-			if (enumVal == null)
+			if (enumVal is null)
 				throw new ArgumentNullException(nameof(enumVal));
 
 			var memInfo = enumVal.GetType().GetMember(enumVal.ToString());

@@ -314,7 +314,7 @@
 
 		public static DateTime To(this DateTime time, TimeZoneInfo source = null, TimeZoneInfo destination = null)
 		{
-			if (source == null)
+			if (source is null)
 				source = time.Kind == DateTimeKind.Utc ? TimeZoneInfo.Utc : TimeZoneInfo.Local;
 
 			return TimeZoneInfo.ConvertTime(time, source, destination ?? TimeZoneInfo.Utc);
@@ -392,7 +392,7 @@
 
 		public static DateTimeOffset ToDateTimeOffset(this DateTime date, TimeZoneInfo zone)
 		{
-			if (zone == null)
+			if (zone is null)
 				throw new ArgumentNullException(nameof(zone));
 
 			return date.ToDateTimeOffset(zone.GetUtcOffset(date));
@@ -435,7 +435,7 @@
 
 		public static DateTimeOffset ApplyTimeZone(this DateTime dt, TimeZoneInfo zone)
 		{
-			if (zone == null)
+			if (zone is null)
 				throw new ArgumentNullException(nameof(zone));
 
 			return dt.ApplyTimeZone(zone.GetUtcOffset(dt.ChangeKind()));
@@ -615,7 +615,7 @@
 
 		public static bool IsDateTime(this Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			return type == typeof(DateTimeOffset) || type == typeof(DateTime);

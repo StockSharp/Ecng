@@ -13,10 +13,7 @@ namespace Ecng.Collections
 
 		public WrappedList(IList<TInner> inner)
 		{
-			if (inner == null)
-				throw new ArgumentNullException(nameof(inner));
-
-			_inner = inner;
+			_inner = inner ?? throw new ArgumentNullException(nameof(inner));
 		}
 
 		public override void Add(TOuter item)

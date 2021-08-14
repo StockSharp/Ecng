@@ -172,10 +172,10 @@ namespace Ecng.Interop
 		/// <param name="nativeObject">The native object.</param>
 		public static void RegisterObject(this SafeHandle handle, object nativeObject)
 		{
-			if (handle == null)
+			if (handle is null)
 				throw new ArgumentNullException(nameof(handle));
 
-			if (nativeObject == null)
+			if (nativeObject is null)
 				throw new ArgumentNullException(nameof(nativeObject));
 
 			_nativeObjects.SafeAdd(handle, key => nativeObject);
@@ -188,7 +188,7 @@ namespace Ecng.Interop
 		/// <returns>The registered native object.</returns>
 		public static T GetObject<T>(this SafeHandle handle)
 		{
-			if (handle == null)
+			if (handle is null)
 				throw new ArgumentNullException(nameof(handle));
 
 			return _nativeObjects.TryGetValue(handle).To<T>();
@@ -329,7 +329,7 @@ namespace Ecng.Interop
 
 		public static HGlobalSafeHandle ToHGlobal(this Encoding encoding, string data)
 		{
-			if (encoding == null)
+			if (encoding is null)
 				throw new ArgumentNullException(nameof(encoding));
 
 			var dataEncoded = encoding.GetBytes(data);
@@ -343,7 +343,7 @@ namespace Ecng.Interop
 
 		public static string ToString(this Encoding encoding, IntPtr pData)
 		{
-			if (encoding == null)
+			if (encoding is null)
 				throw new ArgumentNullException(nameof(encoding));
 
 			var errStr = pData.ToAnsi();
@@ -425,7 +425,7 @@ namespace Ecng.Interop
 
 		public static unsafe string GetUnsafeString(this Encoding encoding, ref byte srcChar, int maxBytes)
 		{
-			if (encoding == null)
+			if (encoding is null)
 				throw new ArgumentNullException(nameof(encoding));
 
 			if (maxBytes < 0)
@@ -445,7 +445,7 @@ namespace Ecng.Interop
 
 		public static unsafe void SetUnsafeString(this Encoding encoding, ref byte tgtChar, int maxBytes, string value)
 		{
-			if (encoding == null)
+			if (encoding is null)
 				throw new ArgumentNullException(nameof(encoding));
 
 			if (maxBytes < 0)

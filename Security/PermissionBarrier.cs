@@ -23,7 +23,7 @@ namespace Ecng.Security
 
 		public static void Check(IEnumerable<string> roles)
 		{
-			if (roles == null)
+			if (roles is null)
 				throw new ArgumentNullException(nameof(roles));
 
 			foreach (var role in roles)

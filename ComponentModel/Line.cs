@@ -19,14 +19,8 @@ namespace Ecng.ComponentModel
 		/// <param name="end"></param>
 		public Line(Point<T> start, Point<T> end)
 		{
-			if (start == null)
-				throw new ArgumentNullException(nameof(start));
-
-			if (end == null)
-				throw new ArgumentNullException(nameof(end));
-
-			Start = start;
-			End = end;
+			Start = start ?? throw new ArgumentNullException(nameof(start));
+			End = end ?? throw new ArgumentNullException(nameof(end));
 
 			DeltaX = _operator.Subtract(end.X, start.X);
 			DeltaY = _operator.Subtract(end.Y, start.Y);
@@ -80,10 +74,10 @@ namespace Ecng.ComponentModel
 		/// <returns></returns>
 		private double GetAngle()
 		{
-			//if (start == null)
+			//if (start is null)
 			//    throw new ArgumentNullException(nameof(start));
 
-			//if (End == null)
+			//if (End is null)
 			//    throw new ArgumentNullException(nameof(End));
 
 			if (Start.Equals(End))

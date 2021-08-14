@@ -22,7 +22,7 @@ namespace Ecng.ComponentModel
 		/// <param name="value">The object value.</param>
 		public override void Validate(T value)
 		{
-			if (value == null)
+			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 		}
 

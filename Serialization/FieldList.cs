@@ -44,7 +44,7 @@
 			{
 				var field = TryGet(name);
 
-				if (field == null)
+				if (field is null)
 					throw new ArgumentException("Item with name '{0}' doesn't exists.".Put(name), nameof(name));
 
 				return field;
@@ -122,7 +122,7 @@
 			{
 				return _serializableFields ?? (_serializableFields = new FieldList(this.Where(field =>
 				{
-					if (field.Factory == null)
+					if (field.Factory is null)
 						throw new InvalidOperationException("Field '{0}' doesn't have factory.".Put(field.Name));
 
 					return field.Factory.SourceType != typeof(VoidType);

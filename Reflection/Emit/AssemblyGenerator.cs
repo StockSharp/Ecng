@@ -53,7 +53,7 @@
 			//if (typeName.IsEmpty())
 			//	throw new ArgumentNullException(nameof(typeName));
 
-			//if (baseTypes == null)
+			//if (baseTypes is null)
 			//	throw new ArgumentNullException(nameof(baseTypes));
 
 			var typeGen = new TypeGenerator(Builder.DefineType(typeName, attrs), baseTypes);
@@ -70,7 +70,7 @@
 			//if (typeName.IsEmpty())
 			//	throw new ArgumentNullException(nameof(typeName));
 
-			//if (baseTypes == null)
+			//if (baseTypes is null)
 			//	throw new ArgumentNullException(nameof(baseTypes));
 
 			var gen = new EnumGenerator(Builder.DefineEnum(typeName, attrs, underlyingType));

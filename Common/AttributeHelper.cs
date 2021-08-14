@@ -13,7 +13,7 @@ namespace Ecng.Common
 		public static TAttribute GetAttribute<TAttribute>(this ICustomAttributeProvider provider, bool inherit = true)
 			where TAttribute : Attribute
 		{
-			if (provider == null)
+			if (provider is null)
 				throw new ArgumentNullException(nameof(provider));
 
 			return (TAttribute)_attrCache.SafeAdd(new Tuple<Type, ICustomAttributeProvider>(typeof(TAttribute), provider),
@@ -23,7 +23,7 @@ namespace Ecng.Common
 		public static IEnumerable<TAttribute> GetAttributes<TAttribute>(this ICustomAttributeProvider provider, bool inherit = true)
 			where TAttribute : Attribute
 		{
-			if (provider == null)
+			if (provider is null)
 				throw new ArgumentNullException(nameof(provider));
 
 			return provider.GetCustomAttributes(typeof(TAttribute), inherit).Cast<TAttribute>();
@@ -31,7 +31,7 @@ namespace Ecng.Common
 
 		public static IEnumerable<Attribute> GetAttributes(this ICustomAttributeProvider provider, bool inherit = true)
 		{
-			if (provider == null)
+			if (provider is null)
 				throw new ArgumentNullException(nameof(provider));
 
 			return provider.GetCustomAttributes(inherit).Cast<Attribute>();
@@ -39,10 +39,10 @@ namespace Ecng.Common
 
 		private static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> handler)
 		{
-			if (dictionary == null)
+			if (dictionary is null)
 				throw new ArgumentNullException(nameof(dictionary));
 
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			if (!dictionary.TryGetValue(key, out var value))
@@ -62,7 +62,7 @@ namespace Ecng.Common
 
 		public static bool IsObsolete(this ICustomAttributeProvider provider)
 		{
-			if (provider == null)
+			if (provider is null)
 				throw new ArgumentNullException(nameof(provider));
 
 			return provider.GetAttribute<ObsoleteAttribute>() != null;
@@ -70,7 +70,7 @@ namespace Ecng.Common
 
 		public static bool IsBrowsable(this ICustomAttributeProvider provider)
 		{
-			if (provider == null)
+			if (provider is null)
 				throw new ArgumentNullException(nameof(provider));
 
 			return provider.GetAttribute<BrowsableAttribute>()?.Browsable != false;

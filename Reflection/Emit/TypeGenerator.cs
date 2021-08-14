@@ -18,10 +18,7 @@ namespace Ecng.Reflection.Emit
 
 		public TypeCompiledEventArgs(Type type)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			_type = type;
+			_type = type ?? throw new ArgumentNullException(nameof(type));
 		}
 
 		#endregion

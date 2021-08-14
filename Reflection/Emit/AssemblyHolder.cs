@@ -33,7 +33,7 @@ namespace Ecng.Reflection.Emit
 			get => _assemblyCachePath;
 			set
 			{
-				if (value == null)
+				if (value is null)
 					value = string.Empty;
 
 				_assemblyCachePath = value;
@@ -59,7 +59,7 @@ namespace Ecng.Reflection.Emit
 		{
 			lock (_initializeSync)
 			{
-				if (_assembly == null)
+				if (_assembly is null)
 				{
 					var access = 
 #if SILVERLIGHT || NETCOREAPP || NETSTANDARD

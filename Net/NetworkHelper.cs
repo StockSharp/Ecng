@@ -28,7 +28,7 @@ namespace Ecng.Net
 
 		public static bool IsLocal(this EndPoint endPoint)
 		{
-			if (endPoint == null)
+			if (endPoint is null)
 				throw new ArgumentNullException(nameof(endPoint));
 
 			if (endPoint is IPEndPoint ip)
@@ -64,7 +64,7 @@ namespace Ecng.Net
 
 		public static bool IsConnected(this Socket socket, int timeOut = 1)
 		{
-			if (socket == null)
+			if (socket is null)
 				throw new ArgumentNullException(nameof(socket));
 
 			try
@@ -94,7 +94,7 @@ namespace Ecng.Net
 
 		public static bool Wait(this Socket socket, int timeOut)
 		{
-			if (socket == null)
+			if (socket is null)
 				throw new ArgumentNullException(nameof(socket));
 
 			return socket.Poll(timeOut, SelectMode.SelectRead) && socket.Available != 0;
@@ -102,7 +102,7 @@ namespace Ecng.Net
 
 		public static void JoinMulticast(this Socket socket, IPAddress address)
 		{
-			if (address == null)
+			if (address is null)
 				throw new ArgumentNullException(nameof(address));
 
 			socket.JoinMulticast(new MulticastSourceAddress { GroupAddress = address });
@@ -110,10 +110,10 @@ namespace Ecng.Net
 
 		public static void JoinMulticast(this Socket socket, MulticastSourceAddress address)
 		{
-			if (socket == null)
+			if (socket is null)
 				throw new ArgumentNullException(nameof(socket));
 
-			if (address.SourceAddress == null)
+			if (address.SourceAddress is null)
 				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(address.GroupAddress));
 			else
 				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddSourceMembership, GetBytes(address));
@@ -121,7 +121,7 @@ namespace Ecng.Net
 
 		public static void LeaveMulticast(this Socket socket, IPAddress address)
 		{
-			if (address == null)
+			if (address is null)
 				throw new ArgumentNullException(nameof(address));
 
 			socket.LeaveMulticast(new MulticastSourceAddress { GroupAddress = address });
@@ -129,10 +129,10 @@ namespace Ecng.Net
 
 		public static void LeaveMulticast(this Socket socket, MulticastSourceAddress address)
 		{
-			if (socket == null)
+			if (socket is null)
 				throw new ArgumentNullException(nameof(socket));
 
-			if (address.SourceAddress == null)
+			if (address.SourceAddress is null)
 				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DropMembership, new MulticastOption(address.GroupAddress));
 			else
 				socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DropSourceMembership, GetBytes(address));
@@ -140,7 +140,7 @@ namespace Ecng.Net
 
 		private static byte[] GetBytes(MulticastSourceAddress address)
 		{
-			if (address == null)
+			if (address is null)
 				throw new ArgumentNullException(nameof(address));
 
 			// https://social.msdn.microsoft.com/Forums/en-US/e8063f6d-22f5-445e-a00c-bf46b46c1561/how-to-join-source-specific-multicast-group-in-c?forum=netfxnetcom
@@ -175,7 +175,7 @@ namespace Ecng.Net
 
 		public static void Connect(this TcpClient client, EndPoint address)
 		{
-			if (client == null)
+			if (client is null)
 				throw new ArgumentNullException(nameof(client));
 
 			client.Connect(address.GetHost(), address.GetPort());
@@ -196,7 +196,7 @@ namespace Ecng.Net
 			if (content.IsEmpty())
 				throw new ArgumentNullException(nameof(content));
 
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			try
@@ -214,10 +214,10 @@ namespace Ecng.Net
 
 		public static object DeserializeObject(this JToken token, Type type)
 		{
-			if (token == null)
+			if (token is null)
 				throw new ArgumentNullException(nameof(token));
 
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			try
@@ -275,7 +275,7 @@ namespace Ecng.Net
 
 		public static string UrlEncodeToUpperCase(this string url)
 		{
-			if (url == null)
+			if (url is null)
 				return null;
 
 			var temp = url.ToCharArray();

@@ -81,17 +81,14 @@
 
 		public EventsContainer(Action<Exception> processDataError)
 		{
-			if (processDataError == null)
-				throw new ArgumentNullException(nameof(processDataError));
-
-			_processDataError = processDataError;
+			_processDataError = processDataError ?? throw new ArgumentNullException(nameof(processDataError));
 		}
 
 		public event Action<IEnumerable<TItem>> Event;
 
 		public void Push(IEnumerable<TItem> newItems)
 		{
-			if (newItems == null)
+			if (newItems is null)
 				throw new ArgumentNullException(nameof(newItems));
 
 			if (newItems.IsEmpty())
@@ -115,7 +112,7 @@
 		{
 			var items = GetItems<TItem>(false);
 
-			if (items == null)
+			if (items is null)
 				return;
 
 			Raise(items.CopyAndClear());

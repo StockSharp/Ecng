@@ -8,7 +8,7 @@
 			where TI : class
 			where TR : class
 		{
-			if (input == null)
+			if (input is null)
 				return null;
 			return evaluator(input);
 		}
@@ -30,7 +30,7 @@
 
 		public static TR Return<TI, TR>(this TI input, Func<TI, TR> evaluator, Func<TR> fallback) where TI : class
 		{
-			if (input == null)
+			if (input is null)
 				return fallback != null ? fallback() : default;
 			return evaluator(input);
 		}
@@ -42,21 +42,21 @@
 
 		public static TI If<TI>(this TI input, Func<TI, bool> evaluator) where TI : class
 		{
-			if (input == null)
+			if (input is null)
 				return null;
 			return evaluator(input) ? input : null;
 		}
 
 		public static TI IfNot<TI>(this TI input, Func<TI, bool> evaluator) where TI : class
 		{
-			if (input == null)
+			if (input is null)
 				return null;
 			return evaluator(input) ? null : input;
 		}
 
 		public static TI Do<TI>(this TI input, Action<TI> action) where TI : class
 		{
-			if (input == null)
+			if (input is null)
 				return null;
 			action(input);
 			return input;

@@ -36,7 +36,7 @@ namespace Ecng.Common
 
 		public void Free(byte[] buffer)
 		{
-			if (buffer == null)
+			if (buffer is null)
 				throw new ArgumentNullException(nameof(buffer));
 
 			_allocationBuffers.Add(buffer);

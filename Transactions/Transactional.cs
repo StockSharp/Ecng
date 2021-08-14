@@ -45,7 +45,7 @@ namespace Ecng.Transactions
 				{
 					_lock.Lock();
 
-					if (_currentTransaction == null)
+					if (_currentTransaction is null)
 						Enlist(base.Value);
 
 					return _temporaryValue;
@@ -59,7 +59,7 @@ namespace Ecng.Transactions
 				{
 					_lock.Lock();
 
-					if (_currentTransaction == null)
+					if (_currentTransaction is null)
 						Enlist(value);
 					else
 						_temporaryValue = value;

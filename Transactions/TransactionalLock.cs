@@ -37,12 +37,12 @@ namespace Ecng.Transactions
 
 		public void Lock(Transaction transaction)
 		{
-			if (transaction == null)
+			if (transaction is null)
 				throw new ArgumentNullException(nameof(transaction));
 
 			Enter();
 
-			if (OwningTransaction == null)
+			if (OwningTransaction is null)
 			{
 				//Acquire the transaction lock
 				OwningTransaction = transaction;

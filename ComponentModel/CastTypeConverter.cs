@@ -17,7 +17,7 @@
 		/// <inheritdoc />
 		public override bool CanConvertFrom(ITypeDescriptorContext ctx, Type sourceType)
 		{
-			if (!typeof(IEnumerable).IsAssignableFrom(sourceType) || ctx.PropertyDescriptor == null)
+			if (!typeof(IEnumerable).IsAssignableFrom(sourceType) || ctx.PropertyDescriptor is null)
 				return base.CanConvertFrom(ctx, sourceType);
 
 			var argType = TryGetIEnumerableArg(ctx.PropertyDescriptor.PropertyType);
@@ -30,7 +30,7 @@
 		{
 			var argType = TryGetIEnumerableArg(ctx.PropertyDescriptor?.PropertyType);
 
-			if (value == null || argType == null)
+			if (value is null || argType is null)
 				return null;
 
 			var objects = ((IEnumerable) value).Cast<object>().Distinct().ToArray();
@@ -46,7 +46,7 @@
 
 		static Type TryGetIEnumerableArg(Type type)
 		{
-			if (type == null || !type.IsGenericType || type.GetGenericTypeDefinition() != typeof(IEnumerable<>))
+			if (type is null || !type.IsGenericType || type.GetGenericTypeDefinition() != typeof(IEnumerable<>))
 				return null;
 
 			return type.GetGenericArguments()[0];

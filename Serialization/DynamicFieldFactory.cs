@@ -37,7 +37,7 @@
 
 			object value;
 			
-			if (type == null)
+			if (type is null)
 			{
 				if (SchemaManager.GlobalFieldFactories.TryGetValue(instanceType, out var factoryType))
 				{

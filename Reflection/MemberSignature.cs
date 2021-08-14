@@ -22,10 +22,7 @@ namespace Ecng.Reflection
 		/// <param name="member">The member.</param>
 		public MemberSignature(MemberInfo member)
 		{
-			if (member == null)
-				throw new ArgumentNullException(nameof(member));
-
-			Member = member;
+			Member = member ?? throw new ArgumentNullException(nameof(member));
 
 			ReturnType = member is ConstructorInfo ? typeof(void) : member.GetMemberType();
 

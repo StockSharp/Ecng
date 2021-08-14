@@ -102,7 +102,7 @@ namespace Ecng.ComponentModel
 					return MaxValue;
 				else
 				{
-					if (_operator == null)
+					if (_operator is null)
 						_operator = OperatorRegistry.GetOperator<T>();
 
 					return _operator.Subtract(Max, Min);
@@ -261,7 +261,7 @@ namespace Ecng.ComponentModel
 
 		public bool Contains(Range<T> range)
 		{
-			if (range == null)
+			if (range is null)
 				throw new ArgumentNullException(nameof(range));
 
 			return Contains(range.Min) && Contains(range.Max);
@@ -269,7 +269,7 @@ namespace Ecng.ComponentModel
 
 		public Range<T> Intersect(Range<T> range)
 		{
-			if (range == null)
+			if (range is null)
 				throw new ArgumentNullException(nameof(range));
 
 			if (Contains(range))

@@ -120,7 +120,7 @@
 		/// </summary>
 		protected virtual IEnumerable<EventDescriptor> OnGetEvents()
 		{
-			return Obj == null
+			return Obj is null
 				? null
 				: TypeDescriptor.GetEvents(Obj, true)
 					.OfType<EventDescriptor>()
@@ -132,7 +132,7 @@
 		/// </summary>
 		protected virtual IEnumerable<PropertyDescriptor> OnGetProperties()
 		{
-			return Obj == null
+			return Obj is null
 				? null
 				: TypeDescriptor.GetProperties(Obj, true)
 					.OfType<PropertyDescriptor>()

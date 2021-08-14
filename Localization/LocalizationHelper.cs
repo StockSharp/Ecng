@@ -60,7 +60,7 @@ namespace Ecng.Localization
 		{
 			var manager = ConfigManager.TryGetService<LocalizationManager>();
 
-			if (manager == null)
+			if (manager is null)
 				return text;
 
 			if (to.IsEmpty())

@@ -13,10 +13,10 @@ namespace Ecng.Common
 
 		public static bool Compare(this Type first, Type second, bool useInheritance)
 		{
-			if (first == null)
+			if (first is null)
 				throw new ArgumentNullException(nameof(first));
 
-			if (second == null)
+			if (second is null)
 				throw new ArgumentNullException(nameof(second));
 
 			if (useInheritance)
@@ -27,10 +27,10 @@ namespace Ecng.Common
 
 		public static int Compare(this Type first, Type second)
 		{
-			if (first == null)
+			if (first is null)
 				throw new ArgumentNullException(nameof(first));
 
-			if (second == null)
+			if (second is null)
 				throw new ArgumentNullException(nameof(second));
 
 			if (first == second)
@@ -43,13 +43,13 @@ namespace Ecng.Common
 
 		public static int Compare(this object value1, object value2)
 		{
-			if (value1 == null && value2 == null)
+			if (value1 is null && value2 is null)
 				return 0;
 
-			if (value1 == null)
+			if (value1 is null)
 				return -1;
 
-			if (value2 == null)
+			if (value2 is null)
 				return 1;
 
 			if (value1.GetType() != value2.GetType())
@@ -74,15 +74,15 @@ namespace Ecng.Common
 
 		public static int Compare(this Version first, Version second)
 		{
-			if (first == null)
+			if (first is null)
 			{
-				if (second == null)
+				if (second is null)
 					return 0;
 
 				return -1;
 			}
 
-			if (second == null)
+			if (second is null)
 				return 1;
 
 			var firstBuild = first.Build != -1 ? first.Build : 0;

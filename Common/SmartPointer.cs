@@ -15,14 +15,8 @@ namespace Ecng.Common
 
 		public SmartPointer(T value, Action<T> release)
 		{
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
-
-			if (release == null)
-				throw new ArgumentNullException(nameof(release));
-
-			_value = value;
-			_release = release;
+			_value = value ?? throw new ArgumentNullException(nameof(value));
+			_release = release ?? throw new ArgumentNullException(nameof(release));
 		}
 
 		private int _counter;
@@ -58,7 +52,7 @@ namespace Ecng.Common
 
 		public void Dispose()
 		{
-			if (_value == null)
+			if (_value is null)
 				return;
 
 			_release(_value);
@@ -68,7 +62,7 @@ namespace Ecng.Common
 
 		private void ThrowIfDisposed()
 		{
-			if (_value == null)
+			if (_value is null)
 				throw new ObjectDisposedException(nameof(_value));
 		}
 	}

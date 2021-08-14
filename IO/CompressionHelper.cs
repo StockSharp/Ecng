@@ -53,7 +53,7 @@
 
 		public static string UnGZip(this byte[] input)
 		{
-			if (input == null)
+			if (input is null)
 				throw new ArgumentNullException(nameof(input));
 
 			return input.UnGZip(0, input.Length);
@@ -73,7 +73,7 @@
 
 		public static string UnDeflate(this byte[] input)
 		{
-			if (input == null)
+			if (input is null)
 				throw new ArgumentNullException(nameof(input));
 
 			return input.UnDeflate(0, input.Length);
@@ -93,7 +93,7 @@
 
 		public static byte[] DeflateTo(this byte[] input)
 		{
-			if (input == null)
+			if (input is null)
 				throw new ArgumentNullException(nameof(input));
 
 			using (var output = new MemoryStream())
@@ -107,7 +107,7 @@
 
 		public static byte[] DeflateFrom(this byte[] input)
 		{
-			if (input == null)
+			if (input is null)
 				throw new ArgumentNullException(nameof(input));
 
 			using (var output = new MemoryStream())
@@ -121,7 +121,7 @@
 
 		public static byte[] Un7Zip(this byte[] input)
 		{
-			if (input == null)
+			if (input is null)
 				throw new ArgumentNullException(nameof(input));
 
 			return new Lzma.LzmaStream(input.To<Stream>(), CompressionMode.Decompress).To<byte[]>();

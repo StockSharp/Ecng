@@ -76,10 +76,10 @@
 
 		public static Schema GetSchema(this Type entityType, SchemaFactory factory)
 		{
-			if (entityType == null)
+			if (entityType is null)
 				throw new ArgumentNullException(nameof(entityType));
 
-			if (factory == null)
+			if (factory is null)
 				throw new ArgumentNullException(nameof(factory));
 
 			if (entityType.IsNullable())
@@ -114,10 +114,10 @@
 
 		private static void ValidateSchema(Schema schema)
 		{
-			if (schema == null)
+			if (schema is null)
 				throw new ArgumentNullException(nameof(schema));
 
-			if (schema.EntityType == null)
+			if (schema.EntityType is null)
 				throw new ArgumentException("Entity type is null.", nameof(schema));
 
 			if (schema.Fields.IsEmpty() && !typeof(ISerializable).IsAssignableFrom(schema.EntityType))
@@ -126,7 +126,7 @@
 			if (!(schema.EntityType.IsClass || schema.EntityType.IsStruct() || schema.EntityType.IsInterface))
 				throw new ArgumentException("Type '{0}' must be class, struct or interface.".Put(schema.EntityType));
 
-			if (schema.EntityType.IsClass && schema.Factory == null && !(schema.EntityType.IsAbstract || schema.EntityType.IsInterface) && schema.EntityType.GetConstructor(Type.EmptyTypes) == null)
+			if (schema.EntityType.IsClass && schema.Factory is null && !(schema.EntityType.IsAbstract || schema.EntityType.IsInterface) && schema.EntityType.GetConstructor(Type.EmptyTypes) == null)
 				throw new ArgumentException("Type '{0}' must have factory.".Put(schema.EntityType));
 
 			var names = new List<string>();
@@ -141,10 +141,10 @@
 				if (field.Name.IsEmpty())
 					throw new ArgumentNullException("Field '{0}' can't be null or empty. Entity type is '{1}'.".Put(field.Member.Name, schema.EntityType));
 
-				if (field.Factory == null)
+				if (field.Factory is null)
 					throw new ArgumentException("Field '{0}' must have field factory. Entity type is '{1}'.".Put(field.Member.Name, schema.EntityType));
 
-				if (field.Accessor == null)
+				if (field.Accessor is null)
 					throw new ArgumentException("Field '{0}' must have accessor. Entity type is '{1}'.".Put(field.Member.Name, schema.EntityType));
 			}
 		}

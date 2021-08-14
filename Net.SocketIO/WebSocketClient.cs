@@ -35,7 +35,7 @@
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
 			: this(connected, disconnected, error, (c, s) => process(s), infoLog, errorLog, verbose, verbose2)
 		{
-			if (process == null)
+			if (process is null)
 				throw new ArgumentNullException(nameof(process));
 		}
 
@@ -43,7 +43,7 @@
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
 			: this(connected, disconnected, error, (c, s) => process(s.DeserializeObject<object>()), infoLog, errorLog, verbose, verbose2)
 		{
-			if (process == null)
+			if (process is null)
 				throw new ArgumentNullException(nameof(process));
 		}
 
@@ -55,7 +55,7 @@
 
 		private static Action<WebSocketClient, byte[], int, int> BytesToString(Action<WebSocketClient, string> process, Action<string> verbose2)
 		{
-			if (process == null)
+			if (process is null)
 				throw new ArgumentNullException(nameof(process));
 
 			return (c, b, s, o) =>
@@ -70,7 +70,7 @@
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
 			: this(connected, disconnected, error, (c, b, s, o) => process(b, s, o), infoLog, errorLog, verbose)
 		{
-			if (process == null)
+			if (process is null)
 				throw new ArgumentNullException(nameof(process));
 		}
 
@@ -177,7 +177,7 @@
 
 		public void Disconnect(bool expectedDisconnect = true)
 		{
-			if (_source == null)
+			if (_source is null)
 				throw new InvalidOperationException("Not connected.".Translate());
 
 			_expectedDisconnect = expectedDisconnect;

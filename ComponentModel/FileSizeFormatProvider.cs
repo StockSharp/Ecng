@@ -50,7 +50,7 @@ namespace Ecng.ComponentModel
 		/// </returns>
 		string ICustomFormatter.Format(string format, object arg, IFormatProvider formatProvider)
 		{
-			if (format == null || !format.StartsWith(_fileSizeFormat))
+			if (format is null || !format.StartsWith(_fileSizeFormat))
 			{
 				return DefaultFormat(format, arg, formatProvider);
 			}

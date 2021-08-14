@@ -14,14 +14,8 @@
 
 		public SocketServer(IPAddress address, int port, Action<TcpClient> handler, Action<Exception> error)
 		{
-			if (handler == null)
-				throw new ArgumentNullException(nameof(handler));
-
-			if (error == null)
-				throw new ArgumentNullException(nameof(error));
-
-			_handler = handler;
-			_error = error;
+			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
+			_error = error ?? throw new ArgumentNullException(nameof(error));
 
 			_listener = new TcpListener(address, port);
 			_listener.Start();

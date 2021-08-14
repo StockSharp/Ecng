@@ -16,7 +16,7 @@
 		public FieldFactoryChain(ICollection<FieldFactory> factories, Field field)
 			: base(field, 0)
 		{
-			if (factories == null)
+			if (factories is null)
 				throw new ArgumentNullException(nameof(factories));
 
 			if (factories.IsEmpty())
@@ -43,7 +43,7 @@
 			{
 				instance = factory.OnCreateInstance(serializer, instance);
 
-				if (instance == null)
+				if (instance is null)
 					break;
 			}
 
@@ -58,7 +58,7 @@
 			{
 				source = factory.OnCreateSource(serializer, source);
 
-				if (source == null)
+				if (source is null)
 					break;
 			}
 

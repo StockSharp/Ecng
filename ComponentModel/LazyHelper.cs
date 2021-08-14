@@ -14,7 +14,7 @@
 
 		public static Lazy<T> Track<T>(this Lazy<T> lazy)
 		{
-			if (lazy == null)
+			if (lazy is null)
 				throw new ArgumentNullException(nameof(lazy));
 
 			if (lazy.IsValueCreated)
@@ -31,7 +31,7 @@
 
 		public static void Reset<T>(this Lazy<T> lazy)
 		{
-			if (lazy == null)
+			if (lazy is null)
 				throw new ArgumentNullException(nameof(lazy));
 
 			var factory = _factories[lazy];

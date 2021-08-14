@@ -31,7 +31,7 @@ namespace Ecng.Reflection
 			{
 				if (Member is MethodInfo method)
 				{
-					if (_parameters == null)
+					if (_parameters is null)
 						_parameters = method.GetParameters();
 
 					if (_parameters.Length == 0)
@@ -41,7 +41,7 @@ namespace Ecng.Reflection
 				}
 				else if (Member is ConstructorInfo ctor)
 				{
-					if (_parameters == null)
+					if (_parameters is null)
 						_parameters = ctor.GetParameters();
 
 					if (_parameters.Length == 0)
@@ -68,7 +68,7 @@ namespace Ecng.Reflection
 					{
 						case true:
 						{
-							return prop.GetValue(instance, arg == null ? ArrayHelper.Empty<object>() : (arg is object[] arr ? arr : new[] { arg }));
+							return prop.GetValue(instance, arg is null ? ArrayHelper.Empty<object>() : (arg is object[] arr ? arr : new[] { arg }));
 						}
 						case false:
 						{
@@ -205,7 +205,7 @@ namespace Ecng.Reflection
 
 		private static FastInvoker CreateCore(MemberInfo member, bool? isGetter)
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			return GetCache(member, isGetter).SafeAdd(member, delegate
@@ -249,7 +249,7 @@ namespace Ecng.Reflection
 						else
 							argType = typeof(object[]);
 
-						if (ctor == null)
+						if (ctor is null)
 							returnType = memberType != typeof(void) ? memberType : typeof(VoidType);
 						else
 							returnType = ctor.ReflectedType;
@@ -583,7 +583,7 @@ namespace Ecng.Reflection
 			FastInvoker(MemberInfo member, Delegate callback)
 			: base(member)
 		{
-			if (callback == null)
+			if (callback is null)
 				throw new ArgumentNullException(nameof(callback));
 
 			if (callback is CtorCallback cb1)
@@ -660,7 +660,7 @@ namespace Ecng.Reflection
 
 		public R Ctor(A arg)
 		{
-			if (_invoker == null)
+			if (_invoker is null)
 				return _ctor(arg);
 			else
 				return (R)_invoker.Ctor(arg);
@@ -672,7 +672,7 @@ namespace Ecng.Reflection
 
 		public R GetValue()
 		{
-			if (_invoker == null)
+			if (_invoker is null)
 				return _staticGetValue();
 			else
 				return (R)_invoker.StaticGetValue();
@@ -680,7 +680,7 @@ namespace Ecng.Reflection
 
 		public R GetValue(I instance)
 		{
-			if (_invoker == null)
+			if (_invoker is null)
 				return _getValue(instance);
 			else
 				return (R)_invoker.GetValue(instance);
@@ -692,7 +692,7 @@ namespace Ecng.Reflection
 
 		public void SetValue(A arg)
 		{
-			if (_invoker == null)
+			if (_invoker is null)
 				_staticSetValue(arg);
 			else
 				_invoker.SetValue(arg);
@@ -700,7 +700,7 @@ namespace Ecng.Reflection
 
 		public I SetValue(I instance, A arg)
 		{
-			if (_invoker == null)
+			if (_invoker is null)
 				return _setValue(instance, arg);
 			else
 				return (I)_invoker.SetValue(instance, arg);
@@ -712,7 +712,7 @@ namespace Ecng.Reflection
 
 		public void VoidInvoke(A arg)
 		{
-			if (_invoker == null)
+			if (_invoker is null)
 				_staticVoidMethod(arg);
 			else
 				_invoker.VoidInvoke(arg);
@@ -720,7 +720,7 @@ namespace Ecng.Reflection
 
 		public void VoidInvoke(I instance, A arg)
 		{
-			if (_invoker == null)
+			if (_invoker is null)
 				_voidMethod(instance, arg);
 			else
 				_invoker.VoidInvoke(instance, arg);
@@ -732,7 +732,7 @@ namespace Ecng.Reflection
 
 		public R ReturnInvoke(A arg)
 		{
-			if (_invoker == null)
+			if (_invoker is null)
 				return _staticReturnMethod(arg);
 			else
 				return (R)_invoker.ReturnInvoke(arg);
@@ -740,7 +740,7 @@ namespace Ecng.Reflection
 
 		public R ReturnInvoke(I instance, A arg)
 		{
-			if (_invoker == null)
+			if (_invoker is null)
 				return _returnMethod(instance, arg);
 			else
 				return (R)_invoker.ReturnInvoke(instance, arg);

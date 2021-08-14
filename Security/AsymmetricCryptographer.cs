@@ -28,13 +28,13 @@ namespace Ecng.Security
 
 			private static AsymmetricAlgorithm CreateAlgo(Type algorithmType, byte[] key)
 			{
-				if (algorithmType == null)
+				if (algorithmType is null)
 					throw new ArgumentNullException(nameof(algorithmType));
 
 				if (!typeof(AsymmetricAlgorithm).IsAssignableFrom(algorithmType))
 					throw new ArgumentException("algorithmType");
 
-				if (key == null)
+				if (key is null)
 					throw new ArgumentNullException(nameof(key));
 
 				var retVal = algorithmType.CreateInstance<AsymmetricAlgorithm>();
@@ -47,7 +47,7 @@ namespace Ecng.Security
 
 			private static AsymmetricAlgorithm CreateAlgo(Type algorithmType, ProtectedKey key)
 			{
-				if (key == null)
+				if (key is null)
 					throw new ArgumentNullException(nameof(key));
 
 				return CreateAlgo(algorithmType, key.DecryptedKey);
@@ -123,7 +123,7 @@ namespace Ecng.Security
 		/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
 		/// <param name="privateKey"><para>The private key for the algorithm.</para></param>
 		public AsymmetricCryptographer(Type algorithmType, ProtectedKey publicKey, ProtectedKey privateKey)
-			: this(publicKey == null ? null : new AsymmetricAlgorithmWrapper(algorithmType, publicKey), privateKey == null ? null : new AsymmetricAlgorithmWrapper(algorithmType, privateKey))
+			: this(publicKey is null ? null : new AsymmetricAlgorithmWrapper(algorithmType, publicKey), privateKey is null ? null : new AsymmetricAlgorithmWrapper(algorithmType, privateKey))
 		{
 		}
 
@@ -133,7 +133,7 @@ namespace Ecng.Security
 		/// <param name="algorithmType"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
 		/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
 		public AsymmetricCryptographer(Type algorithmType, byte[] publicKey)
-			: this(publicKey == null ? null : new AsymmetricAlgorithmWrapper(algorithmType, publicKey), null)
+			: this(publicKey is null ? null : new AsymmetricAlgorithmWrapper(algorithmType, publicKey), null)
 		{
 		}
 
@@ -144,7 +144,7 @@ namespace Ecng.Security
 
 		private AsymmetricCryptographer(AsymmetricAlgorithmWrapper encryptor, AsymmetricAlgorithmWrapper decryptor)
 		{
-			if (encryptor == null && decryptor == null)
+			if (encryptor is null && decryptor is null)
 				throw new ArgumentException();
 
 			_encryptor = encryptor;
@@ -172,7 +172,7 @@ namespace Ecng.Security
 		/// <returns><para>The resulting cipher text.</para></returns>
 		public byte[] Encrypt(byte[] plainText)
 		{
-			if (_encryptor == null)
+			if (_encryptor is null)
 				throw new InvalidOperationException();
 
 			return _encryptor.Encrypt(plainText);
@@ -189,7 +189,7 @@ namespace Ecng.Security
 		/// <returns><para>The resulting plaintext.</para></returns>
 		public byte[] Decrypt(byte[] encryptedText)
 		{
-			if (_decryptor == null)
+			if (_decryptor is null)
 				throw new InvalidOperationException();
 
 			return _decryptor.Decrypt(encryptedText);
@@ -214,7 +214,7 @@ namespace Ecng.Security
 
 		public byte[] CreateSignature(byte[] data)
 		{
-			if (_decryptor == null)
+			if (_decryptor is null)
 				throw new InvalidOperationException();
 
 			return _decryptor.CreateSignature(data);
@@ -222,7 +222,7 @@ namespace Ecng.Security
 
 		public bool VerifySignature(byte[] data, byte[] signature)
 		{
-			if (_encryptor == null)
+			if (_encryptor is null)
 				throw new InvalidOperationException();
 
 			return _encryptor.VerifySignature(data, signature);

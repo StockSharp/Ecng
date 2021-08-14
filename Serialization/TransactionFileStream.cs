@@ -62,7 +62,7 @@
 
 		protected override void Dispose(bool disposing)
 		{
-			if (_temp == null)
+			if (_temp is null)
 				return;
 
 			_temp.Dispose();

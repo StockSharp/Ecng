@@ -12,7 +12,7 @@ namespace Ecng.ComponentModel
 		public static bool IsEmpty<T>(this Range<T> range)
 			where T : IComparable<T>
 		{
-			if (range == null)
+			if (range is null)
 				throw new ArgumentNullException(nameof(range));
 
 			return !range.HasMaxValue && !range.HasMinValue;
@@ -63,7 +63,7 @@ namespace Ecng.ComponentModel
 		{
 			var intersectedRange = from.Intersect(excludingRange);
 
-			if (intersectedRange == null)
+			if (intersectedRange is null)
 				yield return from;
 			else
 			{

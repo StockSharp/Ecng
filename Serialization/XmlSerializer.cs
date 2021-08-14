@@ -44,7 +44,7 @@ namespace Ecng.Serialization
 
 		private static string FormatTypeName(Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			if (type.IsArray)
@@ -68,10 +68,7 @@ namespace Ecng.Serialization
 
 		public void Serialize(SerializationItemCollection source, XElement element)
 		{
-			if (element == null)
-				throw new ArgumentNullException(nameof(element));
-
-			_element = element;
+			_element = element ?? throw new ArgumentNullException(nameof(element));
 
 			Serialize(source, new MemoryStream());
 		}
@@ -88,20 +85,14 @@ namespace Ecng.Serialization
 
 		public void Serialize(T graph, XElement element)
 		{
-			if (element == null)
-				throw new ArgumentNullException(nameof(element));
-
-			_element = element;
+			_element = element ?? throw new ArgumentNullException(nameof(element));
 
 			Serialize(graph, new MemoryStream());
 		}
 
 		public T Deserialize(XElement element)
 		{
-			if (element == null)
-				throw new ArgumentNullException(nameof(element));
-
-			_element = element;
+			_element = element ?? throw new ArgumentNullException(nameof(element));
 
 			return Deserialize(new MemoryStream());
 		}
@@ -112,16 +103,16 @@ namespace Ecng.Serialization
 
 		public override void Serialize(FieldList fields, SerializationItemCollection source, Stream stream)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
 			XDocument doc = null;
 			XElement rootElem;
 
-			if (_element == null)
+			if (_element is null)
 			{
 				rootElem = new XElement(FormatTypeName(Schema.EntityType));
 				doc = new XDocument(rootElem);
@@ -129,13 +120,13 @@ namespace Ecng.Serialization
 			else
 				rootElem = _element;
 
-			var isSinglePrimitive = typeof(T).IsSerializablePrimitive() && _element == null;
+			var isSinglePrimitive = typeof(T).IsSerializablePrimitive() && _element is null;
 
 			foreach (var item in source)
 			{
 				var itemElem = isSinglePrimitive ? rootElem : new XElement(IsCollection ? FormatTypeName(item.Field.Type) : item.Field.Name);
 
-				if (item.Value == null)
+				if (item.Value is null)
 					itemElem.Add(new XAttribute(_isNullAttr, true));
 
 				if (item.Value != null)
@@ -159,7 +150,7 @@ namespace Ecng.Serialization
 					rootElem.Add(itemElem);
 			}
 
-			if (doc == null)
+			if (doc is null)
 				return;
 
 			using (var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = Indent, OmitXmlDeclaration = true, Encoding = Encoding }))
@@ -168,24 +159,24 @@ namespace Ecng.Serialization
 
 		public override void Deserialize(Stream stream, FieldList fields, SerializationItemCollection source)
 		{
-			if (stream == null)
+			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			if (fields == null)
+			if (fields is null)
 				throw new ArgumentNullException(nameof(fields));
 
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
 			var root = _element;
 
-			if (root == null)
+			if (root is null)
 			{
 				using (var reader = XmlReader.Create(stream))
 				{
 					var doc = XDocument.Load(reader);
 
-					if (doc.Root == null)
+					if (doc.Root is null)
 						throw new ArgumentException("Root element is null.", nameof(stream));
 
 					root = doc.Root;
@@ -255,7 +246,7 @@ namespace Ecng.Serialization
 						}
 						else
 						{
-							var fieldType = element.Attribute(_typeAttr) == null ? typeof(string) : element.GetAttributeValue<Type>(_typeAttr);
+							var fieldType = element.Attribute(_typeAttr) is null ? typeof(string) : element.GetAttributeValue<Type>(_typeAttr);
 
 							object value;
 

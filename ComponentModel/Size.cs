@@ -63,10 +63,10 @@ namespace Ecng.ComponentModel
 		/// <returns>The result of the operator.</returns>
 		public static Size<T> operator +(Size<T> first, Size<T> second)
 		{
-			if (first == null)
+			if (first is null)
 				throw new ArgumentNullException(nameof(first));
 
-			if (second == null)
+			if (second is null)
 				throw new ArgumentNullException(nameof(second));
 
 			return new Size<T>(_operator.Add(first.Width, second.Width), _operator.Add(first.Height, second.Height));
@@ -80,10 +80,10 @@ namespace Ecng.ComponentModel
 		/// <returns>The result of the operator.</returns>
 		public static Size<T> operator -(Size<T> first, Size<T> second)
 		{
-			if (first == null)
+			if (first is null)
 				throw new ArgumentNullException(nameof(first));
 
-			if (second == null)
+			if (second is null)
 				throw new ArgumentNullException(nameof(second));
 
 			return new Size<T>(_operator.Subtract(first.Width, second.Width), _operator.Subtract(first.Height, second.Height));
@@ -97,10 +97,10 @@ namespace Ecng.ComponentModel
 		/// <returns>The result of the operator.</returns>
 		public static Size<T> operator *(Size<T> first, Size<T> second)
 		{
-			if (first == null)
+			if (first is null)
 				throw new ArgumentNullException(nameof(first));
 
-			if (second == null)
+			if (second is null)
 				throw new ArgumentNullException(nameof(second));
 
 			return new Size<T>(_operator.Multiply(first.Width, second.Width), _operator.Multiply(first.Height, second.Height));
@@ -114,10 +114,10 @@ namespace Ecng.ComponentModel
 		/// <returns>The result of the operator.</returns>
 		public static Size<T> operator /(Size<T> first, Size<T> second)
 		{
-			if (first == null)
+			if (first is null)
 				throw new ArgumentNullException(nameof(first));
 
-			if (second == null)
+			if (second is null)
 				throw new ArgumentNullException(nameof(second));
 
 			return new Size<T>(_operator.Divide(first.Width, second.Width), _operator.Divide(first.Height, second.Height));

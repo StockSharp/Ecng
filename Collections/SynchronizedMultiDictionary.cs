@@ -99,7 +99,7 @@ namespace Ecng.Collections
 		{
 			var ordered = _inner as OrderedMultiDictionary<TKey, TValue>;
 
-			if (ordered == null)
+			if (ordered is null)
 				throw new NotSupportedException();
 
 			lock (SyncRoot)

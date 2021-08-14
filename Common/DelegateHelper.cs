@@ -10,10 +10,10 @@ namespace Ecng.Common
 	{
 		public static void Do(this Action action, Action<Exception> error)
 		{
-			if (action == null)
+			if (action is null)
 				throw new ArgumentNullException(nameof(action));
 
-			if (error == null)
+			if (error is null)
 				throw new ArgumentNullException(nameof(error));
 
 			try
@@ -28,10 +28,10 @@ namespace Ecng.Common
 
 		public static void DoAsync(this Action action, Action<Exception> error)
 		{
-			if (action == null)
+			if (action is null)
 				throw new ArgumentNullException(nameof(action));
 
-			if (error == null)
+			if (error is null)
 				throw new ArgumentNullException(nameof(error));
 
 			Do(() => action.BeginInvoke(result =>
@@ -50,7 +50,7 @@ namespace Ecng.Common
 		//public static EventHandler<TArgs> Cast<TArgs>(this Delegate handler)
 		//	where TArgs : EventArgs 
 		//{
-		//	if (handler == null)
+		//	if (handler is null)
 		//		return null;
 
 		//	dynamic h = handler;

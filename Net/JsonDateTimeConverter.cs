@@ -34,7 +34,7 @@ namespace Ecng.Net
 			{
 				var value = reader.Value.To<double?>();
 
-				if (value == null)
+				if (value is null)
 					return null;
 
 				return Convert(value.Value);

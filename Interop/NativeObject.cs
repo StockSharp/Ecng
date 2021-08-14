@@ -66,7 +66,7 @@ namespace Ecng.Interop
 		/// <returns></returns>
 		protected TValue GetValue<TValue>(Func<TValue> create)
 		{
-			return Value == null ? default(TValue) : create();
+			return Value is null ? default(TValue) : create();
 		}
 
 		/// <summary>

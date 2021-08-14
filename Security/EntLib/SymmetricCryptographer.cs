@@ -40,11 +40,9 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 		/// <param name="key"><para>The key for the algorithm.</para></param>
 		public SymmetricCryptographer(Type algorithmType, ProtectedKey key)
 		{
-			if (algorithmType == null) throw new ArgumentNullException(nameof(algorithmType));
+			if (algorithmType is null) throw new ArgumentNullException(nameof(algorithmType));
 			if (!typeof(SymmetricAlgorithm).IsAssignableFrom(algorithmType)) throw new ArgumentException(Resources.ExceptionCreatingSymmetricAlgorithmInstance, nameof(algorithmType));
-			if (key == null) throw new ArgumentNullException(nameof(key));
-
-			this.key = key;
+			this.key = key ?? throw new ArgumentNullException(nameof(key));
 			this.algorithm = GetSymmetricAlgorithm(algorithmType);
 		}
 
@@ -128,7 +126,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 
         private static byte[] Transform(ICryptoTransform transform, byte[] buffer)
         {
-			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (buffer is null) throw new ArgumentNullException(nameof(buffer));
 
 			byte[] transformBuffer = null;
 
@@ -163,7 +161,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 		/// </param>
 		public static void ZeroOutBytes(byte[] bytes)
 		{
-			if (bytes == null)
+			if (bytes is null)
 				return;
 
 			bytes.Clear();
@@ -173,7 +171,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
         {
             get
             {
-                if (this.algorithm.IV == null)
+                if (this.algorithm.IV is null)
                 {
                     this.algorithm.GenerateIV();
                 }

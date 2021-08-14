@@ -16,7 +16,7 @@ namespace Ecng.Net.SocketIO.Engine.Thread
 
         public static EasyTimer SetTimeout(Action method, int delayInMilliseconds, Action<Exception> errorHandler)
         {
-	        if (errorHandler == null)
+	        if (errorHandler is null)
 		        throw new ArgumentNullException(nameof(errorHandler));
 
 	        var ts = new CancellationTokenSource();

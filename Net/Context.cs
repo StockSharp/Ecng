@@ -13,14 +13,8 @@ namespace Ecng.Net
 	{
 		public Context(FastInvoker<T, object, object> invoker, Tuple<ParameterInfo, ISerializer, ParamConverterAttribute>[] argDeserializers, ISerializer returnSerializer, bool isCached, bool isCompressed)
 		{
-			if (invoker == null)
-				throw new ArgumentNullException(nameof(invoker));
-
-			if (argDeserializers == null)
-				throw new ArgumentNullException(nameof(argDeserializers));
-
-			Invoker = invoker;
-			ArgDeserializers = argDeserializers;
+			Invoker = invoker ?? throw new ArgumentNullException(nameof(invoker));
+			ArgDeserializers = argDeserializers ?? throw new ArgumentNullException(nameof(argDeserializers));
 			ReturnSerializer = returnSerializer;
 			IsCached = isCached;
 			IsCompressed = isCompressed;

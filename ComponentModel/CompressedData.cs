@@ -39,7 +39,7 @@ namespace Ecng.ComponentModel
 		public CompressedData(TItem[][] items)
 			: this()
 		{
-			if (items == null)
+			if (items is null)
 				throw new ArgumentNullException(nameof(items));
 
 			if (items.IsEmpty())
@@ -94,7 +94,7 @@ namespace Ecng.ComponentModel
 
 						if (!PrimaryItem.Equals(item))
 						{
-							if (range == null)
+							if (range is null)
 							{
 								range = new CompressedDataRange<TItem, TBound> { Item = item, Min = x.To<TBound>() };
 							}
@@ -195,7 +195,7 @@ namespace Ecng.ComponentModel
 		{
 			get
 			{
-				if (_stream == null)
+				if (_stream is null)
 				{
 					_stream = new MemoryStream();
 
@@ -239,10 +239,7 @@ namespace Ecng.ComponentModel
 			}
 			set
 			{
-				if (value == null)
-					throw new ArgumentNullException(nameof(value));
-
-                _stream = value;
+				_stream = value ?? throw new ArgumentNullException(nameof(value));
 
 				PrimaryItem = value.Read<TItem>();
 

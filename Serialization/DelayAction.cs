@@ -90,12 +90,12 @@
 
 				bool IInternalGroupItem.Equals(IGroupItem other)
 				{
-					if (_compareStates == null)
+					if (_compareStates is null)
 						return false;
 
 					var item = other as Item<TState>;
 
-					if (item == null)
+					if (item is null)
 						return false;
 
 					return _compareStates(_state, item._state);
@@ -103,7 +103,7 @@
 
 				int IInternalGroupItem.GetStateHashCode()
 				{
-					return typeof(TState).GetHashCode() ^ (_state == null ? 0 : 1) ^ (_compareStates == null ? 0 : 1);
+					return typeof(TState).GetHashCode() ^ (_state is null ? 0 : 1) ^ (_compareStates is null ? 0 : 1);
 				}
 			}
 
@@ -115,7 +115,7 @@
 
 				public FlushItem(DelayAction parent, bool dispose)
 				{
-					if (parent == null)
+					if (parent is null)
 						throw new ArgumentNullException(nameof(parent));
 
 					PostAction = err =>
@@ -165,12 +165,12 @@
 
 			public IDisposable Init()
 			{
-				if (_init == null)
+				if (_init is null)
 					return _dummy;
 
 				var state = _init.Invoke();
 
-				if (state == null)
+				if (state is null)
 					throw new InvalidOperationException();
 
 				return state;
@@ -178,7 +178,7 @@
 
 			public void Add(Action action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true)
 			{
-				if (action == null)
+				if (action is null)
 					throw new ArgumentNullException(nameof(action));
 
 				Add((IDisposable s) => action(), postAction, canBatch, breakBatchOnError);
@@ -186,7 +186,7 @@
 
 			public void Add(Action<IDisposable> action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true)
 			{
-				if (action == null)
+				if (action is null)
 					throw new ArgumentNullException(nameof(action));
 
 				Add((T scope) => action(scope), postAction, canBatch, breakBatchOnError);
@@ -194,7 +194,7 @@
 
 			public void Add(Action<T> action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true)
 			{
-				if (action == null)
+				if (action is null)
 					throw new ArgumentNullException(nameof(action));
 
 				Add<object>((scope, state) => action(scope), null, postAction, canBatch, breakBatchOnError);
@@ -207,7 +207,7 @@
 
 			private void Add<TState>(Item<TState> item)
 			{
-				if (item == null)
+				if (item is null)
 					throw new ArgumentNullException(nameof(item));
 
 				lock (_actions.SyncRoot)
@@ -256,7 +256,7 @@
 
 				lock (_groups.SyncRoot)
 				{
-					if (_flushTimer == null)
+					if (_flushTimer is null)
 						return;
 
 					_flushTimer.Interval(_flushInterval);
@@ -274,7 +274,7 @@
 
 		public void DeleteGroup(IGroup group)
 		{
-			if (group == null)
+			if (group is null)
 				throw new ArgumentNullException(nameof(group));
 
 			if (group == DefaultGroup)
@@ -301,7 +301,7 @@
 		{
 			lock (_groups.SyncRoot)
 			{
-				if (!_isFlushing && _flushTimer == null)
+				if (!_isFlushing && _flushTimer is null)
 				{
 					_flushTimer = ThreadingHelper
 						.TimerInvariant(OnFlush)

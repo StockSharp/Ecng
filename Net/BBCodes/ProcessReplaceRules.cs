@@ -98,7 +98,7 @@
     /// </exception>
     public void AddRule(IReplaceRule<TContext> newRule)
     {
-      if (newRule == null)
+      if (newRule is null)
       {
         throw new ArgumentNullException(nameof(newRule));
       }

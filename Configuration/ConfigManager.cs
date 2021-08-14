@@ -65,7 +65,7 @@
 #else
 			//http://csharp-tipsandtricks.blogspot.com/2010/01/identifying-whether-execution-context.html
 			InnerConfig = //Assembly.GetEntryAssembly() != null
-						HttpRuntime.AppDomainId == null
+						HttpRuntime.AppDomainId is null
 				? ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None)
 				: WebConfigurationManager.OpenWebConfiguration(HttpRuntime.AppDomainAppVirtualPath);
 #endif
@@ -160,7 +160,7 @@
 		{
 			var attr = type.GetAttribute<ConfigSectionAttribute>();
 
-			if (attr == null)
+			if (attr is null)
 				throw new ArgumentException("Type '{0}' isn't marked ConfigSectionAttribute.".Put(type));
 
 			return GetSection(attr.SectionType);
@@ -226,7 +226,7 @@
 
 		public static void SubscribeOnRegister<T>(Action<T> registered)
 		{
-			if (registered == null)
+			if (registered is null)
 				throw new ArgumentNullException(nameof(registered));
 
 			if (!_subscribers.TryGetValue(typeof(T), out var subscribers))

@@ -22,7 +22,7 @@
 		{
 			lock (_sync)
 			{
-				if (_timer == null)
+				if (_timer is null)
 				{
 					_timer = ThreadingHelper
 						.Timer(OnTimer)
@@ -61,7 +61,7 @@
 		{
 			lock (_sync)
 			{
-				if (_timer == null)
+				if (_timer is null)
 					return;
 
 				_changed = false;
@@ -73,7 +73,7 @@
 		{
 			lock (_sync)
 			{
-				if (_timer == null)
+				if (_timer is null)
 					return;
 
 				_changed = true;

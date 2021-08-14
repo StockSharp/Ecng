@@ -7,10 +7,7 @@ namespace Ecng.Reflection.Emit
 	{
 		protected BaseGenerator(T builder)
 		{
-			if (builder == null)
-				throw new ArgumentNullException(nameof(builder));
-
-			Builder = builder;
+			Builder = builder ?? throw new ArgumentNullException(nameof(builder));
 			Attributes = new AttributeGeneratorList(Builder);
 		}
 

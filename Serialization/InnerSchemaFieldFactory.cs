@@ -48,7 +48,7 @@ namespace Ecng.Serialization
 
 		protected internal override TEntity OnCreateInstance(ISerializer serializer, SerializationItemCollection source)
 		{
-			if (_nullWhenAllEmpty && source.All(c => c.Value == null))
+			if (_nullWhenAllEmpty && source.All(c => c.Value is null))
 				return default(TEntity);
 
 			return (TEntity)GetSerializer(serializer, source).Deserialize(source);
@@ -65,7 +65,7 @@ namespace Ecng.Serialization
 
 		private ISerializer GetSerializer(ISerializer serializer, SerializationItemCollection source, TEntity instance = default(TEntity))
 		{
-			if (serializer == null)
+			if (serializer is null)
 				throw new ArgumentNullException(nameof(serializer));
 
 			var entityType = typeof(TEntity);

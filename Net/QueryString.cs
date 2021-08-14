@@ -63,7 +63,7 @@
 				if (queryField.IsEmpty())
 					throw new ArgumentNullException(nameof(queryField));
 
-				if (value == null)
+				if (value is null)
 					throw new ArgumentNullException(nameof(value), "Value for key '{0}' is null.".Translate().Put(queryField));
 
 				if (Contains(queryField))
@@ -96,7 +96,7 @@
 			if (name.IsEmpty())
 				throw new ArgumentNullException(nameof(name));
 
-			if (value == null)
+			if (value is null)
 				throw new ArgumentNullException(nameof(value), "Value for key '{0}' is null.".Translate().Put(name));
 
 			_queryString.Add(name, value.To<string>());

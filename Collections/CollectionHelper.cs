@@ -110,7 +110,7 @@
 
 		public static void TryAdd<T>(this ICollection<T> collection, IEnumerable<T> values)
 		{
-			if (values == null)
+			if (values is null)
 				throw new ArgumentNullException(nameof(values));
 
 			void InternalTryAdd()
@@ -135,7 +135,7 @@
 
 		public static bool TryAdd<T>(this ICollection<T> collection, T value)
 		{
-			if (collection == null)
+			if (collection is null)
 				throw new ArgumentNullException(nameof(collection));
 
 			bool InternalTryAdd()
@@ -158,7 +158,7 @@
 
 		public static bool TryAdd2<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue value)
 		{
-			if (dict == null)
+			if (dict is null)
 				throw new ArgumentNullException(nameof(dict));
 
 			bool InternalTryAdd()
@@ -189,10 +189,10 @@
 
 		public static void AddRange<T>(this ICollection<T> source, IEnumerable<T> items)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			if (items == null)
+			if (items is null)
 				throw new ArgumentNullException(nameof(items));
 
 			if (source is List<T> list)
@@ -210,7 +210,7 @@
 
 		public static void RemoveRange<T>(this ICollection<T> source, IEnumerable<T> items)
 		{
-			if (items == null)
+			if (items is null)
 				throw new ArgumentNullException(nameof(items));
 
 			if (source is ICollectionEx<T> ex)
@@ -246,7 +246,7 @@
 
 		public static int GetHashCodeEx<T>(this IEnumerable<T> collection)
 		{
-			if (collection == null)
+			if (collection is null)
 				throw new ArgumentNullException(nameof(collection));
 
 			var hash = 0;
@@ -345,7 +345,7 @@
 
 		public static T ElementAtFromEnd<T>(this LinkedList<T> list, int index)
 		{
-			if (list == null)
+			if (list is null)
 				throw new ArgumentNullException(nameof(list));
 
 			if (list.IsEmpty())
@@ -358,7 +358,7 @@
 				curr = curr.Previous;
 				index--;
 
-				if (curr == null)
+				if (curr is null)
 					throw new ArgumentOutOfRangeException(nameof(list));
 			}
 
@@ -367,7 +367,7 @@
 
 		public static T ElementAtFromEnd<T>(this SynchronizedLinkedList<T> list, int index)
 		{
-			if (list == null)
+			if (list is null)
 				throw new ArgumentNullException(nameof(list));
 
 			if (list.IsEmpty())
@@ -380,7 +380,7 @@
 				curr = curr.Previous;
 				index--;
 
-				if (curr == null)
+				if (curr is null)
 					throw new ArgumentOutOfRangeException(nameof(list));
 			}
 
@@ -389,7 +389,7 @@
 
 		public static T ElementAtFromEndOrDefault<T>(this LinkedList<T> list, int index)
 		{
-			if (list == null)
+			if (list is null)
 				throw new ArgumentNullException(nameof(list));
 
 			var curr = list.Last;
@@ -400,12 +400,12 @@
 				index--;
 			}
 
-			return curr == null ? default : curr.Value;
+			return curr is null ? default : curr.Value;
 		}
 
 		public static T ElementAtFromEndOrDefault<T>(this SynchronizedLinkedList<T> list, int index)
 		{
-			if (list == null)
+			if (list is null)
 				throw new ArgumentNullException(nameof(list));
 
 			var curr = list.Last;
@@ -416,7 +416,7 @@
 				index--;
 			}
 
-			return curr == null ? default : curr.Value;
+			return curr is null ? default : curr.Value;
 		}
 
 		public static PairSet<TKey, TValue> ToPairSet<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source)
@@ -426,7 +426,7 @@
 
 		public static PairSet<TKey, TValue> ToPairSet<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source, IEqualityComparer<TKey> comparer)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
 			var set = new PairSet<TKey, TValue>();
@@ -441,13 +441,13 @@
 
 		public static PairSet<TKey, TValue> ToPairSet<TSource, TKey, TValue>(this IEnumerable<TSource> source, Func<TSource, int, TKey> keySelector, Func<TSource, int, TValue> valueSelector)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			if (keySelector == null)
+			if (keySelector is null)
 				throw new ArgumentNullException(nameof(keySelector));
 
-			if (valueSelector == null)
+			if (valueSelector is null)
 				throw new ArgumentNullException(nameof(valueSelector));
 
 			var set = new PairSet<TKey, TValue>();
@@ -467,10 +467,10 @@
 
 		public static void CopyTo<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source, IDictionary<TKey, TValue> destination)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			if (destination == null)
+			if (destination is null)
 				throw new ArgumentNullException(nameof(destination));
 
 			foreach (var pair in source)
@@ -479,7 +479,7 @@
 
 		public static IDictionary<TKey, TValue> TypedAs<TKey, TValue>(this IDictionary dictionary)
 		{
-			if (dictionary == null)
+			if (dictionary is null)
 				throw new ArgumentNullException(nameof(dictionary));
 
 			return dictionary.Cast<DictionaryEntry>().ToDictionary(item => item.Key.To<TKey>(), item => item.Value.To<TValue>());
@@ -512,7 +512,7 @@
 
 		public static KeyValuePair<TKey, TValue> ToPair<TKey, TValue>(this Tuple<TKey, TValue> pair)
 		{
-			if (pair == null)
+			if (pair is null)
 				throw new ArgumentNullException(nameof(pair));
 
 			return new KeyValuePair<TKey, TValue>(pair.Item1, pair.Item2);
@@ -520,13 +520,13 @@
 
 		public static IDictionary<TKey, TValue> ToDictionary<TSource, TKey, TValue>(this IEnumerable<TSource> source, Func<TSource, int, TKey> keySelector, Func<TSource, int, TValue> valueSelector)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			if (keySelector == null)
+			if (keySelector is null)
 				throw new ArgumentNullException(nameof(keySelector));
 
-			if (valueSelector == null)
+			if (valueSelector is null)
 				throw new ArgumentNullException(nameof(valueSelector));
 
 			var dict = new Dictionary<TKey, TValue>();
@@ -544,7 +544,7 @@
 
 		public static IDictionary<TKey, IEnumerable<TValue>> ToDictionary<TKey, TValue>(this IEnumerable<IGrouping<TKey, TValue>> grouping)
 		{
-			if (grouping == null)
+			if (grouping is null)
 				throw new ArgumentNullException(nameof(grouping));
 
 			return grouping.ToDictionary(g => g.Key, g => (IEnumerable<TValue>)g);
@@ -552,7 +552,7 @@
 
 		public static MultiDictionary<TKey, TValue> ToMultiDictionary<TKey, TValue>(this IEnumerable<IGrouping<TKey, TValue>> grouping)
 		{
-			if (grouping == null)
+			if (grouping is null)
 				throw new ArgumentNullException(nameof(grouping));
 
 			var retVal = new MultiDictionary<TKey, TValue>(false);
@@ -565,7 +565,7 @@
 
 		public static MultiDictionary<TKey, TValue> ToMultiDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, IEnumerable<TValue>>> pairs)
 		{
-			if (pairs == null)
+			if (pairs is null)
 				throw new ArgumentNullException(nameof(pairs));
 
 			var retVal = new MultiDictionary<TKey, TValue>(false);
@@ -613,10 +613,10 @@
 
 		public static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> handler, out bool isNew)
 		{
-			if (dictionary == null)
+			if (dictionary is null)
 				throw new ArgumentNullException(nameof(dictionary));
 
-			if (handler == null)
+			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
 			isNew = false;
@@ -643,7 +643,7 @@
 		public static TValue TryGetValue<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
 			//where V : class
 		{
-			if (dict == null)
+			if (dict is null)
 				throw new ArgumentNullException(nameof(dict));
 
 			dict.TryGetValue(key, out var value);
@@ -653,7 +653,7 @@
 		public static TValue? TryGetValue2<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
 			where TValue : struct
 		{
-			if (dict == null)
+			if (dict is null)
 				throw new ArgumentNullException(nameof(dict));
 
 			if (dict.TryGetValue(key, out var value))
@@ -682,10 +682,10 @@
 		public static TResult SyncGet<TCollection, TResult>(this TCollection collection, Func<TCollection, TResult> func)
 			where TCollection : class, ISynchronizedCollection
 		{
-			if (collection == null)
+			if (collection is null)
 				throw new ArgumentNullException(nameof(collection));
 
-			if (func == null)
+			if (func is null)
 				throw new ArgumentNullException(nameof(func));
 
 			lock (collection.SyncRoot)
@@ -695,10 +695,10 @@
 		public static void SyncDo<TCollection>(this TCollection collection, Action<TCollection> action)
 			where TCollection : class, ISynchronizedCollection
 		{
-			if (collection == null)
+			if (collection is null)
 				throw new ArgumentNullException(nameof(collection));
 
-			if (action == null)
+			if (action is null)
 				throw new ArgumentNullException(nameof(action));
 
 			lock (collection.SyncRoot)
@@ -707,7 +707,7 @@
 
 		public static ICollection<TValue> TryGetValue<TKey, TValue>(this SynchronizedMultiDictionary<TKey, TValue> dict, TKey key)
 		{
-			if (dict == null)
+			if (dict is null)
 				throw new ArgumentNullException(nameof(dict));
 
 			lock (dict.SyncRoot)
@@ -792,7 +792,7 @@
 		public static T? FirstOr<T>(this IEnumerable<T> source)
 			where T : struct
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
 			foreach (var t in source)
@@ -804,7 +804,7 @@
 		public static T? LastOr<T>(this IEnumerable<T> source)
 			where T : struct
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
 			if (source is IList<T> list)
@@ -828,7 +828,7 @@
 		public static T? ElementAtOr<T>(this IEnumerable<T> source, int index)
 			where T : struct
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
 			if (index < 0)
@@ -879,7 +879,7 @@
 
 		public static bool IsEmpty<T>(this T[] source)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
 			return source.Length == 0;
@@ -994,7 +994,7 @@
 
 		public static long FromBits2(this bool[] bits, int startBit)
 		{
-			if (bits == null)
+			if (bits is null)
 				throw new ArgumentNullException(nameof(bits));
 
 			if (startBit >= bits.Length)
@@ -1010,10 +1010,10 @@
 
 		public static void AddRange(this BitArray array, params bool[] bits)
 		{
-			if (array == null)
+			if (array is null)
 				throw new ArgumentNullException(nameof(array));
 
-			if (bits == null)
+			if (bits is null)
 				throw new ArgumentNullException(nameof(bits));
 
 			var arrayLength = array.Length;
@@ -1068,7 +1068,7 @@
 
 		public static SynchronizedList<T> Sync<T>(this IList<T> list)
 		{
-			if (list == null)
+			if (list is null)
 				return null;
 
 			if (list is not SynchronizedList<T> syncList)
@@ -1082,7 +1082,7 @@
 
 		public static SynchronizedDictionary<TKey, TValue> Sync<TKey, TValue>(this IDictionary<TKey, TValue> dict)
 		{
-			if (dict == null)
+			if (dict is null)
 				return null;
 
 			if (!(dict is SynchronizedDictionary<TKey, TValue> syncDict))
@@ -1097,7 +1097,7 @@
 
 		public static SynchronizedSet<T> Sync<T>(this HashSet<T> list)
 		{
-			if (list == null)
+			if (list is null)
 				return null;
 
 			var syncList = new SynchronizedSet<T>();
@@ -1107,10 +1107,10 @@
 
 		public static IEnumerable<TSource> WhereWithPrevious<TSource>(this IEnumerable<TSource> source, Func<TSource, TSource, bool> predicate)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			if (predicate == null)
+			if (predicate is null)
 				throw new ArgumentNullException(nameof(predicate));
 
 			using (var iterator = source.GetEnumerator())
@@ -1136,10 +1136,10 @@
 
 		public static void Bind<T>(this INotifyList<T> source, IList<T> destination)
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			if (destination == null)
+			if (destination is null)
 				throw new ArgumentNullException(nameof(destination));
 
 			source.Added += destination.Add;
@@ -1161,10 +1161,10 @@
 		public static int DamerauLevenshteinDistance<T>(T[] source, T[] target, int threshold)
 			where T : IEquatable<T>
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			if (target == null)
+			if (target is null)
 				throw new ArgumentNullException(nameof(target));
 
 			var length1 = source.Length;
@@ -1251,7 +1251,7 @@
 
             foreach (var item in source)
             {
-                if (bucket == null)
+                if (bucket is null)
                 {
                     bucket = new TSource[size];
                 }

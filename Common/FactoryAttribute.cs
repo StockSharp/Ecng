@@ -16,10 +16,7 @@
 		/// <param name="factoryType">Type of the factory.</param>
 		protected FactoryAttribute(Type factoryType)
 		{
-			if (factoryType == null)
-				throw new ArgumentNullException(nameof(factoryType));
-
-			FactoryType = factoryType;
+			FactoryType = factoryType ?? throw new ArgumentNullException(nameof(factoryType));
 		}
 
 		#endregion

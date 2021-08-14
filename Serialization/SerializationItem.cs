@@ -14,10 +14,7 @@ namespace Ecng.Serialization
 
 		public SerializationItem(Field field, object value)
 		{
-			if (field == null)
-				throw new ArgumentNullException(nameof(field));
-
-			Field = field;
+			Field = field ?? throw new ArgumentNullException(nameof(field));
 			Value = value;
 		}
 

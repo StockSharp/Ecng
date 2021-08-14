@@ -21,7 +21,7 @@
 	{
 		public static SystemMenu GetMenu(this SystemWindow window)
 		{
-			if (window == null)
+			if (window is null)
 				throw new ArgumentNullException(nameof(window));
 
 			var ptr = window.HWnd.GetMenu();
@@ -31,7 +31,7 @@
 
 		public static IEnumerable<string> GetListBoxItems(this SystemListBox lb)
 		{
-			if (lb == null)
+			if (lb is null)
 				throw new ArgumentNullException(nameof(lb));
 
 			var items = new List<string>();
@@ -44,7 +44,7 @@
 
 		public static IEnumerable<string> GetListContentItems(this ListContent content)
 		{
-			if (content == null)
+			if (content is null)
 				throw new ArgumentNullException(nameof(content));
 
 			var items = new List<string>();
@@ -59,7 +59,7 @@
 		[HandleProcessCorruptedStateExceptions]
 		internal static IList<SystemMenuItem> GetMenuItems(this IntPtr hMenu, SystemWindow window)
 		{
-			if (window == null)
+			if (window is null)
 				throw new ArgumentNullException(nameof(window));
 
 			var items = new List<SystemMenuItem>();
@@ -103,7 +103,7 @@
 
 		public static void SelectListBoxItem(this SystemListBox lb, int index)
 		{
-			if (lb == null)
+			if (lb is null)
 				throw new ArgumentNullException(nameof(lb));
 
 			var lbWnd = lb.SystemWindow;
@@ -114,7 +114,7 @@
 
 		public static void SelectMultiListBoxItem(this SystemListBox lb, int index, bool value)
 		{
-			if (lb == null)
+			if (lb is null)
 				throw new ArgumentNullException(nameof(lb));
 
 			var lbWnd = lb.SystemWindow;
@@ -145,7 +145,7 @@
 
 		private static T Cast<T>(this SystemWindow window, params string[] classNames)
 		{
-			if (window == null)
+			if (window is null)
 				throw new ArgumentNullException(nameof(window));
 
 			if (!classNames.Contains(window.ClassName))

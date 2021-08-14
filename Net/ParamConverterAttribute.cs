@@ -7,18 +7,12 @@
 	{
 		protected ParamConverterAttribute(Type sourceType)
 		{
-			if (sourceType == null)
-				throw new ArgumentNullException(nameof(sourceType));
-
-			SourceType = sourceType;
+			SourceType = sourceType ?? throw new ArgumentNullException(nameof(sourceType));
 		}
 
 		internal void Init(Type destType)
 		{
-			if (destType == null)
-				throw new ArgumentNullException(nameof(destType));
-
-			DestType = destType;
+			DestType = destType ?? throw new ArgumentNullException(nameof(destType));
 		}
 
 		public Type SourceType { get; }

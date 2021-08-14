@@ -99,7 +99,7 @@
 			{
 				TItem elem;
 
-				if (item.Value == null)
+				if (item.Value is null)
 					elem = default(TItem);
 				else
 					elem = primitive ? (TItem)item.Value : itemSer.Deserialize((SerializationItemCollection)item.Value);

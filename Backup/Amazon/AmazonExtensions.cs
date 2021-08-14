@@ -25,7 +25,7 @@ namespace Ecng.Backup.Amazon
 			{
 				lock (typeof(AmazonExtensions))
 				{
-					if (_endpoints == null)
+					if (_endpoints is null)
 					{
 						_endpoints = typeof(RegionEndpoint)
 							.GetFields(BindingFlags.Static | BindingFlags.Public)

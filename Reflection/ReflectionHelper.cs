@@ -70,10 +70,10 @@ namespace Ecng.Reflection
 
 		private static Type GetGenericTypeInternal(this Type targetType, Type genericType)
 		{
-			if (targetType == null)
+			if (targetType is null)
 				throw new ArgumentNullException(nameof(targetType));
 
-			if (genericType == null)
+			if (genericType is null)
 				throw new ArgumentNullException(nameof(genericType));
 
 			if (!genericType.IsGenericTypeDefinition)
@@ -214,7 +214,7 @@ namespace Ecng.Reflection
 
 		public static void SetValue<TValue>(this MemberInfo member, TValue value)
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			if (member is PropertyInfo pi)
@@ -231,7 +231,7 @@ namespace Ecng.Reflection
 
 		public static TInstance SetValue<TInstance, TValue>(this TInstance instance, MemberInfo member, TValue value)
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			if (member is PropertyInfo pi)
@@ -282,7 +282,7 @@ namespace Ecng.Reflection
 
 		public static TValue GetValue<TArg, TValue>(this MemberInfo member, TArg arg)
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			TValue value;
@@ -306,7 +306,7 @@ namespace Ecng.Reflection
 
 		public static TValue GetValue<TInstance, TArg, TValue>(this TInstance instance, MemberInfo member, TArg arg)
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			TValue value;
@@ -347,7 +347,7 @@ namespace Ecng.Reflection
 		public static T GetMember<T>(this Type type, string memberName, BindingFlags flags, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			if (memberName.IsEmpty())
@@ -400,7 +400,7 @@ namespace Ecng.Reflection
 		public static T[] GetMembers<T>(this Type type, BindingFlags flags, bool inheritance, string memberName, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			if (_proxyTypes.TryGetValue(type, out var proxyType))
@@ -494,10 +494,10 @@ namespace Ecng.Reflection
 
 		private static void AddMember<T>(this Dictionary<MemberType, ICollection<T>> members, MemberInfo member)
 		{
-			if (members == null)
+			if (members is null)
 				throw new ArgumentNullException(nameof(members));
 
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			members.SafeAdd(new MemberType(member.Name, member.MemberType, new MemberSignature(member)), delegate
@@ -520,10 +520,10 @@ namespace Ecng.Reflection
 		public static IEnumerable<T> FilterMembers<T>(this IEnumerable<T> members, bool useInheritance, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
-			if (members == null)
+			if (members is null)
 				throw new ArgumentNullException(nameof(members));
 
-			if (additionalTypes == null)
+			if (additionalTypes is null)
 				throw new ArgumentNullException(nameof(additionalTypes));
 
 			return members.Where(arg =>
@@ -585,7 +585,7 @@ namespace Ecng.Reflection
 
 		public static bool IsAbstract(this MemberInfo member)
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			return _isAbstractCache.SafeAdd(member, delegate
@@ -614,7 +614,7 @@ namespace Ecng.Reflection
 
 		public static bool IsVirtual(this MemberInfo member)
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			return _isVirtualCache.SafeAdd(member, delegate
@@ -638,7 +638,7 @@ namespace Ecng.Reflection
 
 		public static bool IsOverloadable(this MemberInfo member)
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			return member is ConstructorInfo || member.IsAbstract() || member.IsVirtual();
@@ -658,7 +658,7 @@ namespace Ecng.Reflection
 
 		public static bool IsIndexer(this PropertyInfo property)
 		{
-			if (property == null)
+			if (property is null)
 				throw new ArgumentNullException(nameof(property));
 
 			return property.GetIndexParameters().Length > 0;
@@ -687,7 +687,7 @@ namespace Ecng.Reflection
 
 		public static bool MemberIs(this MemberInfo member, params MemberTypes[] types)
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			return types.Any(type => member.MemberType == type);
@@ -699,7 +699,7 @@ namespace Ecng.Reflection
 
 		public static bool IsOutput(this ParameterInfo param)
 		{
-			if (param == null)
+			if (param is null)
 				throw new ArgumentNullException(nameof(param));
 
 			return param.IsOut || param.ParameterType.IsByRef;
@@ -739,7 +739,7 @@ namespace Ecng.Reflection
 
 		public static bool IsCollection(this Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			return _isCollectionCache.SafeAdd(type, delegate
@@ -839,7 +839,7 @@ namespace Ecng.Reflection
 
 		public static MemberInfo GetAccessorOwner(this MethodInfo method)
 		{
-			if (method == null)
+			if (method is null)
 				throw new ArgumentNullException(nameof(method));
 
 			return _getAccessorOwnerCache.SafeAdd(method, delegate
@@ -893,7 +893,7 @@ namespace Ecng.Reflection
 
 		private static IEnumerable<GenericArg> GetGenericArgs(this IEnumerable<Type> genericParams)
 		{
-			if (genericParams == null)
+			if (genericParams is null)
 				throw new ArgumentNullException(nameof(genericParams));
 
 			var genericArgs = new List<GenericArg>();

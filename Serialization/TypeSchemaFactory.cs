@@ -66,7 +66,7 @@
 			return entityType.GetMembers<MemberInfo>(_flags).Where(
 			member =>
 					_memberTypes.Contains(member.MemberType) &&
-					(member.GetAttribute<IgnoreAttribute>() == null || !member.GetAttributes<IgnoreAttribute>().Any(a => a.FieldName.IsEmpty())) &&
+					(member.GetAttribute<IgnoreAttribute>() is null || !member.GetAttributes<IgnoreAttribute>().Any(a => a.FieldName.IsEmpty())) &&
 					!member.IsIndexer() &&
 					!member.ReflectedType.IsInterface &&
 					(member is FieldInfo || (member is PropertyInfo && ((PropertyInfo)member).GetAccessors(true).Length == 2)) &&
@@ -99,7 +99,7 @@
 
 			schema.Fields.AddRange(GetMembers(entityType).Select(member =>
 			{
-				var field = member.GetAttribute<IdentityAttribute>() == null
+				var field = member.GetAttribute<IdentityAttribute>() is null
 					? new Field(schema, member) { IsIndex = member.GetAttribute<IndexAttribute>() != null }
 					: new IdentityField(schema, member);
 
@@ -142,7 +142,7 @@
 				else if (fieldFactories.Count == 1)
 					field.Factory = fieldFactories[0];
 
-				if (field.Factory == null)
+				if (field.Factory is null)
 				{
 					if (!SchemaManager.CustomFieldFactories.TryGetValue(new Tuple<Type, string>(entityType, field.Name), out var factoryType))
 					{

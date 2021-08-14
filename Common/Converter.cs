@@ -191,7 +191,7 @@
 
 #if !SILVERLIGHT
 					// в строке может быть записаное не AssemblyQualifiedName, а только полное имя типа + имя сборки.
-					if (type == null)
+					if (type is null)
 					{
 						var parts = input.SplitBySep(", ");
 						if (parts.Length == 2 || parts.Length == 5)
@@ -203,7 +203,7 @@
 								type = asm.GetType(parts[0]);
 							}
 
-							if (type == null && parts[1].Trim().EqualsIgnoreCase(
+							if (type is null && parts[1].Trim().EqualsIgnoreCase(
 #if NETFRAMEWORK
 								"System.Private.CoreLib"
 #else
@@ -393,7 +393,7 @@
 
 		public static void AddTypedConverter<TFrom, TTo>(Func<TFrom, TTo> converter)
 		{
-			if (converter == null)
+			if (converter is null)
 				throw new ArgumentNullException(nameof(converter));
 
 			var key = Tuple.Create(typeof(TFrom), typeof(TTo));
@@ -414,7 +414,7 @@
 
 		public static string GetHost(this EndPoint endPoint)
 		{
-			if (endPoint == null)
+			if (endPoint is null)
 				throw new ArgumentNullException(nameof(endPoint));
 
 			if (endPoint is IPEndPoint ip)
@@ -431,7 +431,7 @@
 
 		public static EndPoint SetHost(this EndPoint endPoint, string host)
 		{
-			if (endPoint == null)
+			if (endPoint is null)
 				throw new ArgumentNullException(nameof(endPoint));
 
 			if (endPoint is IPEndPoint ip)
@@ -450,7 +450,7 @@
 
 		public static int GetPort(this EndPoint endPoint)
 		{
-			if (endPoint == null)
+			if (endPoint is null)
 				throw new ArgumentNullException(nameof(endPoint));
 
 			if (endPoint is IPEndPoint ip)
@@ -467,7 +467,7 @@
 
 		public static EndPoint SetPort(this EndPoint endPoint, int port)
 		{
-			if (endPoint == null)
+			if (endPoint is null)
 				throw new ArgumentNullException(nameof(endPoint));
 
 			if (endPoint is IPEndPoint ip)
@@ -502,12 +502,12 @@
 		/// <returns>Converted object.</returns>
 		public static object To(this object value, Type destinationType)
 		{
-			if (destinationType == null)
+			if (destinationType is null)
 				throw new ArgumentNullException(nameof(destinationType));
 
 			try
 			{
-				if (value == null)
+				if (value is null)
 				{
 					if ((destinationType.IsValueType || destinationType.IsEnum()) && !destinationType.IsNullable())
 						throw new ArgumentNullException(nameof(value));
@@ -807,7 +807,7 @@
 
 		public static void AddAlias(Type type, string name)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			if (name.IsEmpty())
@@ -832,14 +832,11 @@
 
 		public static T DoInCulture<T>(this CultureInfo cultureInfo, Func<T> func)
 		{
-			if (cultureInfo == null)
-				throw new ArgumentNullException(nameof(cultureInfo));
-
-			if (func == null)
+			if (func is null)
 				throw new ArgumentNullException(nameof(func));
 
 			var prevCi = Thread.CurrentThread.CurrentCulture;
-			Thread.CurrentThread.CurrentCulture = cultureInfo;
+			Thread.CurrentThread.CurrentCulture = cultureInfo ?? throw new ArgumentNullException(nameof(cultureInfo));
 
 			try
 			{

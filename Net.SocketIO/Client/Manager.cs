@@ -78,11 +78,11 @@ namespace Ecng.Net.SocketIO.Client
 
         public Manager(Uri uri, Options opts)
         {
-            if (opts == null)
+            if (opts is null)
             {
                 opts = new Options();
             }
-            if (opts.Path == null)
+            if (opts.Path is null)
             {
                 opts.Path = "/socket.io";
             }

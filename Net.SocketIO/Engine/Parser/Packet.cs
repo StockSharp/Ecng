@@ -102,7 +102,7 @@ namespace Ecng.Net.SocketIO.Engine.Parser
                 callback.Call(result.ToString());
                 return;
             }
-            throw new Exception("byteData == null");
+            throw new Exception("byteData is null");
         }
 
         private void EncodeByteArray(IEncodeCallback callback)
@@ -116,7 +116,7 @@ namespace Ecng.Net.SocketIO.Engine.Parser
                 callback.Call(resultArray);
                 return;
             }
-            throw new Exception("byteData == null");
+            throw new Exception("byteData is null");
         }
 
         internal static Packet DecodePacket(string data, bool utf8decode = false)

@@ -58,10 +58,10 @@ namespace Ecng.ComponentModel
 		/// <param name="rightBottom">The right bottom size.</param>
 		public Rectangle(Point<T> leftTop, Point<T> rightBottom)
 		{
-			if (leftTop == null)
+			if (leftTop is null)
 				throw new ArgumentNullException(nameof(leftTop));
 
-			if (rightBottom == null)
+			if (rightBottom is null)
 				throw new ArgumentNullException(nameof(rightBottom));
 
 			if (_operator.Compare(rightBottom.X, leftTop.X) < 0)
@@ -81,15 +81,8 @@ namespace Ecng.ComponentModel
 		/// <param name="size">The size.</param>
 		public Rectangle(Point<T> location, Size<T> size)
 		{
-			if (location == null)
-				throw new ArgumentNullException(nameof(location));
-
-			if (size == null)
-				throw new ArgumentNullException(nameof(size));
-
-
-			Location = location;
-			Size = size;
+			Location = location ?? throw new ArgumentNullException(nameof(location));
+			Size = size ?? throw new ArgumentNullException(nameof(size));
 		}
 
 		#endregion
@@ -172,7 +165,7 @@ namespace Ecng.ComponentModel
 		/// </returns>
 		public bool Contains(Point<T> point)
 		{
-			if (point == null)
+			if (point is null)
 				throw new ArgumentNullException(nameof(point));
 
 			return Contains(point.X, point.Y);
