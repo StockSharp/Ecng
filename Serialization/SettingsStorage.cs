@@ -27,7 +27,7 @@
 		{
 		}
 
-		internal SettingsStorage(SettingsStorage parent)
+		private SettingsStorage(SettingsStorage parent)
 			: this(parent._reader)
 		{
 			_parent = parent ?? throw new ArgumentNullException(nameof(parent));

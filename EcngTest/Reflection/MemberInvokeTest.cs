@@ -3,6 +3,7 @@ namespace Ecng.Test.Reflection
 	using System;
 
 	using Ecng.Reflection;
+	using Ecng.UnitTesting;
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -14,48 +15,48 @@ namespace Ecng.Test.Reflection
 
 		public void VoidMethodWithParams(int param)
 		{
-			Assert.AreEqual(10, param);
+			param.AreEqual(10);
 		}
 
 		public void VoidMethodWithParams2(string param)
 		{
-			Assert.AreEqual("John Smith", param);
+			param.AreEqual("John Smith");
 		}
 
 		public void VoidMethodWithParams3(string param, int param2)
 		{
-			Assert.AreEqual("John Smith", param);
-			Assert.AreEqual(10, param2);
+			param.AreEqual("John Smith");
+			param2.AreEqual(10);
 		}
 
 		public void VoidMethodWithParams4(string param, ref int param2, out string param3)
 		{
-			Assert.AreEqual("John Smith", param);
-			Assert.AreEqual(1, param2);
+			param.AreEqual("John Smith");
+			param2.AreEqual(1);
 			param2 = 10;
 			param3 = "John Smith";
 		}
 
 		public void VoidMethodWithParams5(params object[] args)
 		{
-			Assert.IsTrue(args.Length == 2);
-			Assert.AreEqual("Mark Twain", args[0]);
-			Assert.AreEqual("John Smith", args[1]);
+			(args.Length == 2).AssertTrue();
+			args[0].AreEqual("Mark Twain");
+			args[1].AreEqual("John Smith");
 		}
 
 		public void VoidMethodWithParams6(params int[] args)
 		{
-			Assert.IsTrue(args.Length == 2);
-			Assert.AreEqual(1, args[0]);
-			Assert.AreEqual(10, args[1]);
+			(args.Length == 2).AssertTrue();
+			args[0].AreEqual(1);
+			args[1].AreEqual(10);
 		}
 
 		public void VoidMethodWithParams7(string param, ref int param2, string param3, out string param4, string param5)
 		{
-			Assert.AreEqual("John Smith", param);
-			Assert.AreEqual(1, param2);
-			Assert.AreEqual("Mark Twain", param3);
-			Assert.AreEqual("Billy Bob", param5);
+			param.AreEqual("John Smith");
+			param2.AreEqual(1);
+			param3.AreEqual("Mark Twain");
+			param5.AreEqual("Billy Bob");
 
 			param2 = 10;
 			param4 = "John Smith";
@@ -73,27 +74,27 @@ namespace Ecng.Test.Reflection
 
 		public object ReturnMethodWithParams(int param)
 		{
-			Assert.AreEqual(10, param);
+			param.AreEqual(10);
 			return param;
 		}
 
 		public object ReturnMethodWithParams2(string param)
 		{
-			Assert.AreEqual("John Smith", param);
+			param.AreEqual("John Smith");
 			return param;
 		}
 
 		public object ReturnMethodWithParams3(string param, int param2)
 		{
-			Assert.AreEqual("John Smith ", param);
-			Assert.AreEqual(10, param2);
+			param.AreEqual("John Smith ");
+			param2.AreEqual(10);
 			return param + param2;
 		}
 
 		public object ReturnMethodWithParams4(string param, ref int param2, out string param3)
 		{
-			Assert.AreEqual("Mark Twain ", param);
-			Assert.AreEqual(1, param2);
+			param.AreEqual("Mark Twain ");
+			param2.AreEqual(1);
 			param2 = 10;
 			param3 = " John Smith";
 			return param + param2 + param3;
@@ -101,26 +102,26 @@ namespace Ecng.Test.Reflection
 
 		public object ReturnMethodWithParams5(params object[] args)
 		{
-			Assert.IsTrue(args.Length == 2);
-			Assert.AreEqual("John Smith ", args[0]);
-			Assert.AreEqual("10", args[1]);
+			(args.Length == 2).AssertTrue();
+			args[0].AreEqual("John Smith ");
+			args[1].AreEqual("10");
 
 			return (string)args[0] + (string)args[1];
 		}
 
 		public object ReturnMethodWithParams6(params int[] args)
 		{
-			Assert.IsTrue(args.Length == 2);
-			Assert.AreEqual(1, args[0]);
-			Assert.AreEqual(10, args[1]);
+			(args.Length == 2).AssertTrue();
+			args[0].AreEqual(1);
+			args[1].AreEqual(10);
 
 			return args[0] + args[1];
 		}
 
 		public int ReturnMethodWithParams7(string param, ref int param2, out string param3)
 		{
-			Assert.AreEqual("Mark Twain ", param);
-			Assert.AreEqual(1, param2);
+			param.AreEqual("Mark Twain ");
+			param2.AreEqual(1);
 			param2 = 10;
 			param3 = " John Smith";
 			return param2;
@@ -383,14 +384,12 @@ namespace Ecng.Test.Reflection
 
 		public void RaiseEvent1(EventsClassEventArgs e)
 		{
-			if (Event1 != null)
-				Event1(this, e);
+			Event1?.Invoke(this, e);
 		}
 
 		public static void RaiseEvent2(EventsClassEventArgs e)
 		{
-			if (Event2 != null)
-				Event2(null, e);
+			Event2?.Invoke(null, e);
 		}
 	}
 
@@ -470,12 +469,12 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void InvokeVoidMethodWithParams4()
 		{
-			object[] args = new object[3];
+			var args = new object[3];
 			args[0] = "John Smith";
 			args[1] = 1;
 			InvokeVoidMethod(nameof(InvokeMethod.VoidMethodWithParams4), args);
-			Assert.AreEqual(10, args[1]);
-			Assert.AreEqual("John Smith", args[2]);
+			args[1].AssertEqual(10);
+			args[2].AssertEqual("John Smith");
 		}
 
 		[TestMethod]
@@ -493,70 +492,70 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void InvokeVoidMethodWithParams7()
 		{
-			object[] args = new object[5] { "John Smith", 1, "Mark Twain", null, "Billy Bob" };
+			var args = new object[5] { "John Smith", 1, "Mark Twain", null, "Billy Bob" };
 			InvokeVoidMethod(nameof(InvokeMethod.VoidMethodWithParams7), args);
-			Assert.AreEqual(10, args[1]);
-			Assert.AreEqual("John Smith", args[3]);
+			args[1].AssertEqual(10);
+			args[3].AssertEqual("John Smith");
 		}
 
 		[TestMethod]
 		public void InvokeReturnMethod()
 		{
-			Assert.AreEqual("John Smith", InvokeReturnMethod<object[], object>(nameof(InvokeMethod.ReturnMethod), null));
+			InvokeReturnMethod<object[], object>(nameof(InvokeMethod.ReturnMethod), null).AreEqual("John Smith");
 		}
 
 		[TestMethod]
 		public void InvokeReturnMethod2()
 		{
-			Assert.AreEqual(10, InvokeReturnMethod<object[], int>(nameof(InvokeMethod.ReturnMethod2), null));
+			InvokeReturnMethod<object[], int>(nameof(InvokeMethod.ReturnMethod2), null).AreEqual(10);
 		}
 
 		[TestMethod]
 		public void InvokeReturnMethodWithParams()
 		{
-			Assert.AreEqual(10, InvokeReturnMethod<int, object>(nameof(InvokeMethod.ReturnMethodWithParams), 10));
+			InvokeReturnMethod<int, object>(nameof(InvokeMethod.ReturnMethodWithParams), 10).AreEqual(10);
 		}
 
 		[TestMethod]
 		public void InvokeReturnMethodWithParams2()
 		{
-			Assert.AreEqual("John Smith", InvokeReturnMethod<string, object>(nameof(InvokeMethod.ReturnMethodWithParams2), "John Smith"));
+			InvokeReturnMethod<string, object>(nameof(InvokeMethod.ReturnMethodWithParams2), "John Smith").AreEqual("John Smith");
 		}
 
 		[TestMethod]
 		public void InvokeReturnMethodWithParams3()
 		{
-			Assert.AreEqual("John Smith 10", InvokeReturnMethod<object[], object>(nameof(InvokeMethod.ReturnMethodWithParams3), new object[] { "John Smith ", 10 }));
+			InvokeReturnMethod<object[], object>(nameof(InvokeMethod.ReturnMethodWithParams3), new object[] { "John Smith ", 10 }).AreEqual("John Smith 10");
 		}
 
 		[TestMethod]
 		public void InvokeReturnMethodWithParams4()
 		{
-			object[] args = new object[] { "Mark Twain ", 1, null };
-			Assert.AreEqual("Mark Twain 10 John Smith", InvokeReturnMethod<object[], object>(nameof(InvokeMethod.ReturnMethodWithParams4), args));
-			Assert.AreEqual(10, args[1]);
-			Assert.AreEqual(" John Smith", args[2]);
+			var args = new object[] { "Mark Twain ", 1, null };
+			InvokeReturnMethod<object[], object>(nameof(InvokeMethod.ReturnMethodWithParams4), args).AreEqual("Mark Twain 10 John Smith");
+			args[1].AreEqual(10);
+			args[2].AreEqual(" John Smith");
 		}
 
 		[TestMethod]
 		public void InvokeReturnMethodWithParams5()
 		{
-			Assert.AreEqual("John Smith 10", InvokeReturnMethod<object[], object>(nameof(InvokeMethod.ReturnMethodWithParams5), new object[] { "John Smith ", "10" }));
+			InvokeReturnMethod<object[], object>(nameof(InvokeMethod.ReturnMethodWithParams5), new object[] { "John Smith ", "10" }).AreEqual("John Smith 10");
 		}
 
 		[TestMethod]
 		public void InvokeReturnMethodWithParams6()
 		{
-			Assert.AreEqual(11, InvokeReturnMethod<int[], object>(nameof(InvokeMethod.ReturnMethodWithParams6), new int[] { 1, 10 }));
+			InvokeReturnMethod<int[], object>(nameof(InvokeMethod.ReturnMethodWithParams6), new int[] { 1, 10 }).AreEqual(11);
 		}
 
 		[TestMethod]
 		public void InvokeReturnMethodWithParams7()
 		{
-			object[] args = new object[] { "Mark Twain ", 1, null };
-			Assert.AreEqual(10, InvokeReturnMethod<object[], int>(nameof(InvokeMethod.ReturnMethodWithParams7), args));
-			Assert.AreEqual(10, args[1]);
-			Assert.AreEqual(" John Smith", args[2]);
+			var args = new object[] { "Mark Twain ", 1, null };
+			InvokeReturnMethod<object[], int>(nameof(InvokeMethod.ReturnMethodWithParams7), args).AreEqual(10);
+			args[1].AreEqual(10);
+			args[2].AreEqual(" John Smith");
 		}
 
 		private static void InvokeVoidMethod<V>(string method, V arg)
@@ -606,12 +605,12 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void InvokeStaticPublicOutRefMethodPublicClass()
 		{
-			object[] args = new object[3];
+			var args = new object[3];
 			args[0] = "Mark Twain ";
 			args[1] = 1;
-			Assert.AreEqual("Mark Twain 10 John Smith", typeof(StaticPublicMethodPublicClass).GetValue<object[], object>(nameof(InvokeMethod.ReturnMethodWithParams4), args));
-			Assert.AreEqual(10, args[1]);
-			Assert.AreEqual(" John Smith", args[2]);
+			typeof(StaticPublicMethodPublicClass).GetValue<object[], object>(nameof(InvokeMethod.ReturnMethodWithParams4), args).AreEqual("Mark Twain 10 John Smith");
+			args[1].AreEqual(10);
+			args[2].AreEqual(" John Smith");
 		}
 
 		#endregion
@@ -627,47 +626,47 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void CreatePublicInstancePublicStruct2()
 		{
-			Assert.AreEqual("John Smith", ReflectionHelper.CreateInstance<string, PublicInstancePublicStruct>("John Smith").StrValue);
+			ReflectionHelper.CreateInstance<string, PublicInstancePublicStruct>("John Smith").StrValue.AreEqual("John Smith");
 		}
 
 		[TestMethod]
 		public void CreatePublicInstancePublicStruct3()
 		{
-			Assert.AreEqual(10, ReflectionHelper.CreateInstance<int, PublicInstancePublicStruct>(10).Value);
+			ReflectionHelper.CreateInstance<int, PublicInstancePublicStruct>(10).Value.AreEqual(10);
 		}
 
 		[TestMethod]
 		public void CreatePublicInstancePublicStruct4()
 		{
-			object[] args = new object[] { 10, null };
-			Assert.AreEqual(10, ReflectionHelper.CreateInstance<object[], PublicInstancePublicStruct>(args).Value);
-			Assert.AreEqual("John Smith", args[1]);
+			var args = new object[] { 10, null };
+			ReflectionHelper.CreateInstance<object[], PublicInstancePublicStruct>(args).Value.AreEqual(10);
+			args[1].AreEqual("John Smith");
 		}
 
 		[TestMethod]
 		public void CreatePublicInstancePublicClass5()
 		{
-			object[] args = new object[] { 10, null, 12 };
-			Assert.AreEqual(10, ReflectionHelper.CreateInstance<object[], PublicInstancePublicStruct>(args).Value);
-			Assert.AreEqual("John Smith", args[1]);
+			var args = new object[] { 10, null, 12 };
+			ReflectionHelper.CreateInstance<object[], PublicInstancePublicStruct>(args).Value.AreEqual(10);
+			args[1].AreEqual("John Smith");
 		}
 
 		[TestMethod]
 		public void CreatePublicInstancePublicClass6()
 		{
-			object[] args = new object[] { 10, null, 12, null };
-			Assert.AreEqual(10, ReflectionHelper.CreateInstance<object[], PublicInstancePublicStruct>(args).Value);
-			Assert.AreEqual("John Smith", args[1]);
-			Assert.AreEqual("Mark Twain", args[3]);
+			var args = new object[] { 10, null, 12, null };
+			ReflectionHelper.CreateInstance<object[], PublicInstancePublicStruct>(args).Value.AreEqual(10);
+			args[1].AreEqual("John Smith");
+			args[3].AreEqual("Mark Twain");
 		}
 
 		[TestMethod]
 		public void CreatePublicInstancePublicClassWithParams()
 		{
-			object[] args = new object[] { 10, 20 };
-			PublicInstancePublicClass obj = ReflectionHelper.CreateInstance<object[], PublicInstancePublicClass>(args);
-			Assert.AreEqual(10, obj.Param1);
-			Assert.AreEqual(20, obj.Param2);
+			var args = new object[] { 10, 20 };
+			var obj = ReflectionHelper.CreateInstance<object[], PublicInstancePublicClass>(args);
+			obj.Param1.AreEqual(10);
+			obj.Param2.AreEqual(20);
 		}
 
 		[TestMethod]
@@ -701,23 +700,23 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void ValuePropStruct()
 		{
-			InvokeFieldsAndPropStruct obj = new InvokeFieldsAndPropStruct();
+			var obj = new InvokeFieldsAndPropStruct();
 			obj = obj.SetValue(nameof(obj.Prop1), 10);
-			Assert.AreEqual(10, obj.GetValue<InvokeFieldsAndPropStruct, VoidType, int>(nameof(obj.Prop1), null));
+			obj.GetValue<InvokeFieldsAndPropStruct, VoidType, int>(nameof(obj.Prop1), null).AreEqual(10);
 		}
 
 		[TestMethod]
 		public void RefPropStruct()
 		{
-			InvokeFieldsAndPropStruct obj = new InvokeFieldsAndPropStruct();
+			var obj = new InvokeFieldsAndPropStruct();
 			obj = obj.SetValue(nameof(obj.Prop2), "John Smith");
-			Assert.AreEqual("John Smith", obj.GetValue<InvokeFieldsAndPropStruct, VoidType, string>(nameof(obj.Prop2), null));
+			obj.GetValue<InvokeFieldsAndPropStruct, VoidType, string>(nameof(obj.Prop2), null).AreEqual("John Smith");
 		}
 
 		[TestMethod]
 		public void GetIntFieldValue()
 		{
-			InvokeFieldsAndPropClass obj = new InvokeFieldsAndPropClass();
+			var obj = new InvokeFieldsAndPropClass();
 			obj.Field1 = 10;
 			GetMemberValue(obj, nameof(obj.Field1), 10);
 		}
@@ -725,13 +724,13 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void SetIntFieldValue()
 		{
-			Assert.AreEqual(10, SetMemberValue(nameof(InvokeFieldsAndPropClass.Field1), 10).Field1);
+			SetMemberValue(nameof(InvokeFieldsAndPropClass.Field1), 10).Field1.AreEqual(10);
 		}
 
 		[TestMethod]
 		public void GetObjFieldValue()
 		{
-			InvokeFieldsAndPropClass obj = new InvokeFieldsAndPropClass();
+			var obj = new InvokeFieldsAndPropClass();
 			obj.Field2 = "John Smith";
 			GetMemberValue<object>(obj, nameof(obj.Field2), "John Smith");
 		}
@@ -739,13 +738,13 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void SetObjFieldValue()
 		{
-			Assert.AreEqual("John Smith", SetMemberValue<object>(nameof(InvokeFieldsAndPropClass.Field2), "John Smith").Field2);
+			SetMemberValue<object>(nameof(InvokeFieldsAndPropClass.Field2), "John Smith").Field2.AreEqual("John Smith");
 		}
 
 		[TestMethod]
 		public void GetIntPropValue()
 		{
-			InvokeFieldsAndPropClass obj = new InvokeFieldsAndPropClass();
+			var obj = new InvokeFieldsAndPropClass();
 			obj.Prop1 = 10;
 			GetMemberValue(obj, nameof(obj.Prop1), 10);
 		}
@@ -753,13 +752,13 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void SetIntPropValue()
 		{
-			Assert.AreEqual(10, SetMemberValue(nameof(InvokeFieldsAndPropClass.Prop1), 10).Prop1);
+			SetMemberValue(nameof(InvokeFieldsAndPropClass.Prop1), 10).Prop1.AreEqual(10);
 		}
 
 		[TestMethod]
 		public void GetObjPropValue()
 		{
-			InvokeFieldsAndPropClass obj = new InvokeFieldsAndPropClass();
+			var obj = new InvokeFieldsAndPropClass();
 			obj.Prop2 = "John Smith";
 			GetMemberValue<object>(obj, nameof(obj.Prop2), "John Smith");
 		}
@@ -767,7 +766,7 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void SetObjPropValue()
 		{
-			Assert.AreEqual("John Smith", SetMemberValue<object>(nameof(InvokeFieldsAndPropClass.Prop2), "John Smith").Prop2);
+			SetMemberValue<object>(nameof(InvokeFieldsAndPropClass.Prop2), "John Smith").Prop2.AreEqual("John Smith");
 		}
 
 		[TestMethod]
@@ -781,7 +780,7 @@ namespace Ecng.Test.Reflection
 		public void SetStaticIntFieldValue()
 		{
 			SetStaticMemberValue(nameof(InvokeFieldsAndPropClass.Field5), 10);
-			Assert.AreEqual(10, InvokeFieldsAndPropClass.Field5);
+			InvokeFieldsAndPropClass.Field5.AreEqual(10);
 		}
 
 		[TestMethod]
@@ -795,7 +794,7 @@ namespace Ecng.Test.Reflection
 		public void SetStaticObjFieldValue()
 		{
 			SetStaticMemberValue<object>(nameof(InvokeFieldsAndPropClass.Field6), "John Smith");
-			Assert.AreEqual("John Smith", InvokeFieldsAndPropClass.Field6);
+			InvokeFieldsAndPropClass.Field6.AreEqual("John Smith");
 		}
 
 		[TestMethod]
@@ -809,7 +808,7 @@ namespace Ecng.Test.Reflection
 		public void SetStaticIntPropValue()
 		{
 			SetStaticMemberValue(nameof(InvokeFieldsAndPropClass.Prop5), 10);
-			Assert.AreEqual(10, InvokeFieldsAndPropClass.Prop5);
+			InvokeFieldsAndPropClass.Prop5.AreEqual(10);
 		}
 
 		[TestMethod]
@@ -823,7 +822,7 @@ namespace Ecng.Test.Reflection
 		public void SetStaticObjPropValue()
 		{
 			SetStaticMemberValue<object>(nameof(InvokeFieldsAndPropClass.Prop6), "John Smith");
-			Assert.AreEqual("John Smith", InvokeFieldsAndPropClass.Prop6);
+			InvokeFieldsAndPropClass.Prop6.AreEqual("John Smith");
 		}
 
 		#endregion
@@ -833,33 +832,33 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void GetRefIndexerValue()
 		{
-			InvokeFieldsAndPropClass obj = new InvokeFieldsAndPropClass();
+			var obj = new InvokeFieldsAndPropClass();
 			obj[0] = "John Smith";
-			Assert.AreEqual("John Smith", obj.GetValue<InvokeFieldsAndPropClass, int, object>(ReflectionHelper.IndexerName, 0));
+			obj.GetValue<InvokeFieldsAndPropClass, int, object>(ReflectionHelper.IndexerName, 0).AreEqual("John Smith");
 		}
 
 		[TestMethod]
 		public void SetRefIndexerValue()
 		{
-			InvokeFieldsAndPropClass obj = new InvokeFieldsAndPropClass();
+			var obj = new InvokeFieldsAndPropClass();
 			obj.SetValue(ReflectionHelper.IndexerName, new object[] { 0, "John Smith" });
-			Assert.AreEqual("John Smith", obj[0]);
+			obj[0].AreEqual("John Smith");
 		}
 
 		[TestMethod]
 		public void GetValueIndexerValue()
 		{
-			InvokeFieldsAndPropClass obj = new InvokeFieldsAndPropClass();
+			var obj = new InvokeFieldsAndPropClass();
 			obj["John Smith"] = 10;
-			Assert.AreEqual(10, obj.GetValue<InvokeFieldsAndPropClass, string, int>(ReflectionHelper.IndexerName, "John Smith"));
+			obj.GetValue<InvokeFieldsAndPropClass, string, int>(ReflectionHelper.IndexerName, "John Smith").AreEqual(10);
 		}
 
 		[TestMethod]
 		public void SetValueIndexerValue()
 		{
-			InvokeFieldsAndPropClass obj = new InvokeFieldsAndPropClass();
+			var obj = new InvokeFieldsAndPropClass();
 			obj.SetValue(ReflectionHelper.IndexerName, new object[] { "John Smith", 10 });
-			Assert.AreEqual(10, obj["John Smith"]);
+			obj["John Smith"].AreEqual(10);
 		}
 
 		#endregion
@@ -869,11 +868,11 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void Generic()
 		{
-			DeriveGenericClass obj = new DeriveGenericClass();
+			var obj = new DeriveGenericClass();
 			obj.Parent = new DeriveGenericClass();
 			obj.Parent.Field1 = 100;
-			FastInvoker<DeriveGenericClass, VoidType, DeriveGenericClass> invoker = FastInvoker<DeriveGenericClass, VoidType, DeriveGenericClass>.Create(typeof(DeriveGenericClass).GetProperty("Parent"), true);
-			Assert.AreEqual(100, invoker.GetValue(obj).Field1);
+			var invoker = FastInvoker<DeriveGenericClass, VoidType, DeriveGenericClass>.Create(typeof(DeriveGenericClass).GetProperty("Parent"), true);
+			invoker.GetValue(obj).Field1.AreEqual(100);
 		}
 
 		#endregion
@@ -883,22 +882,22 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void Covariants()
 		{
-			FastInvoker<BaseCovariantClass, VoidType, BaseCovariantValue> invoker = FastInvoker<BaseCovariantClass, VoidType, BaseCovariantValue>.Create(typeof(DeriveCovariantClass).GetMethod("Method"));
-			Assert.AreEqual(typeof(DeriveCovariantValue), invoker.ReturnInvoke(new DeriveCovariantClass(), null).GetType());
+			var invoker = FastInvoker<BaseCovariantClass, VoidType, BaseCovariantValue>.Create(typeof(DeriveCovariantClass).GetMethod("Method"));
+			invoker.ReturnInvoke(new DeriveCovariantClass(), null).GetType().AreEqual(typeof(DeriveCovariantValue));
 		}
 
 		#endregion
 
 		private static InvokeFieldsAndPropClass SetMemberValue<T>(string member, T value)
 		{
-			InvokeFieldsAndPropClass obj = new InvokeFieldsAndPropClass();
+			var obj = new InvokeFieldsAndPropClass();
 			obj.SetValue(member, value);
 			return obj;
 		}
 
 		private static void GetMemberValue<T>(InvokeFieldsAndPropClass obj, string member, T expected)
 		{
-			Assert.AreEqual(expected, obj.GetValue<InvokeFieldsAndPropClass, VoidType, T>(member, null));
+			obj.GetValue<InvokeFieldsAndPropClass, VoidType, T>(member, null).AreEqual(expected);
 		}
 
 		private static void SetStaticMemberValue<T>(string member, T value)
@@ -908,37 +907,37 @@ namespace Ecng.Test.Reflection
 
 		private static void GetStaticMemberValue<T>(string member, T expected)
 		{
-			Assert.AreEqual(expected, typeof(InvokeFieldsAndPropClass).GetValue<VoidType, T>(member, null));
+			typeof(InvokeFieldsAndPropClass).GetValue<VoidType, T>(member, null).AreEqual(expected);
 		}
 
 		[TestMethod]
 		public void RaiseEvent()
 		{
-			EventsClass obj = new EventsClass();
+			var obj = new EventsClass();
 			EventHandler<EventsClassEventArgs> handler = (sender, e) => e.Field = 10;
 			obj.SetValue(nameof(EventsClass.Event1), handler);
-			EventsClassEventArgs arg = new EventsClassEventArgs();
+			var arg = new EventsClassEventArgs();
 			obj.RaiseEvent1(arg);
-			Assert.AreEqual(10, arg.Field);
+			arg.Field.AreEqual(10);
 			obj.SetValue(ReflectionHelper.RemovePrefix + nameof(EventsClass.Event1), handler);
 			arg.Field = 1;
 			obj.RaiseEvent1(arg);
-			Assert.AreEqual(1, arg.Field);
+			arg.Field.AreEqual(1);
 		}
 
 		[TestMethod]
 		public void RaiseEvent2()
 		{
-			EventsClass obj = new EventsClass();
+			var obj = new EventsClass();
 			EventHandler<EventsClassEventArgs> handler = (sender, e) => e.Field = 10;
 			obj.SetValue(ReflectionHelper.AddPrefix + nameof(EventsClass.Event1), handler);
-			EventsClassEventArgs arg = new EventsClassEventArgs();
+			var arg = new EventsClassEventArgs();
 			obj.RaiseEvent1(arg);
-			Assert.AreEqual(10, arg.Field);
+			arg.Field.AreEqual(10);
 			obj.SetValue(ReflectionHelper.RemovePrefix + nameof(EventsClass.Event1), handler);
 			arg.Field = 1;
 			obj.RaiseEvent1(arg);
-			Assert.AreEqual(1, arg.Field);
+			arg.Field.AreEqual(1);
 		}
 
 		[TestMethod]
@@ -946,13 +945,13 @@ namespace Ecng.Test.Reflection
 		{
 			EventHandler<EventsClassEventArgs> handler = (sender, e) => e.Field = 10;
 			typeof(EventsClass).SetValue(nameof(EventsClass.Event2), handler);
-			EventsClassEventArgs arg = new EventsClassEventArgs();
+			var arg = new EventsClassEventArgs();
 			EventsClass.RaiseEvent2(arg);
-			Assert.AreEqual(10, arg.Field);
+			arg.Field.AreEqual(10);
 			typeof(EventsClass).SetValue(ReflectionHelper.RemovePrefix + nameof(EventsClass.Event2), handler);
 			arg.Field = 1;
 			EventsClass.RaiseEvent2(arg);
-			Assert.AreEqual(1, arg.Field);
+			arg.Field.AreEqual(1);
 		}
 
 		[TestMethod]
@@ -960,13 +959,13 @@ namespace Ecng.Test.Reflection
 		{
 			EventHandler<EventsClassEventArgs> handler = (sender, e) => e.Field = 10;
 			typeof(EventsClass).SetValue(ReflectionHelper.AddPrefix + nameof(EventsClass.Event2), handler);
-			EventsClassEventArgs arg = new EventsClassEventArgs();
+			var arg = new EventsClassEventArgs();
 			EventsClass.RaiseEvent2(arg);
-			Assert.AreEqual(10, arg.Field);
+			arg.Field.AreEqual(10);
 			typeof(EventsClass).SetValue(ReflectionHelper.RemovePrefix + nameof(EventsClass.Event2), handler);
 			arg.Field = 1;
 			EventsClass.RaiseEvent2(arg);
-			Assert.AreEqual(1, arg.Field);
+			arg.Field.AreEqual(1);
 		}
 	}
 }
