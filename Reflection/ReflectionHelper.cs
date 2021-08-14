@@ -28,27 +28,29 @@ namespace Ecng.Reflection
 
 		#endregion
 
-		public static bool IsParams(this PropertyInfo pi)
+		public static bool IsParams(this ParameterInfo pi)
 			=> pi.GetAttribute<ParamArrayAttribute>() != null;
 
 		#region GetParameterTypes
 
-		public static Type[] GetParameterTypes(this MethodBase method)
-		{
-			return method.GetParameterTypes(false);
-		}
+		public static (ParameterInfo info, Type type)[] GetParameterTypes(this MethodBase method)
+			=> method.GetParameterTypes(false);
 
-		public static Type[] GetParameterTypes(this MethodBase method, bool removeRef)
+		public static (ParameterInfo info, Type type)[] GetParameterTypes(this MethodBase method, bool removeRef)
 		{
-			if (method == null)
+			if (method is null)
 				throw new ArgumentNullException(nameof(method));
 
 			return method.GetParameters().Select(param =>
 			{
+				Type paramType;
+
 				if (removeRef && IsOutput(param))
-					return param.ParameterType.GetElementType();
+					paramType = param.ParameterType.GetElementType();
 				else
-					return param.ParameterType;
+					paramType = param.ParameterType;
+
+				return (param, paramType);
 			}).ToArray();
 		}
 
@@ -544,7 +546,20 @@ namespace Ecng.Reflection
 				}
 				else if (arg is MethodBase mb)
 				{
-					return mb.GetParameterTypes(true).SequenceEqual(additionalTypes, (paramType, additionalType) =>
+					var tuples = mb.GetParameterTypes(true);
+
+					if (tuples.Length > 0 && tuples.Last().info.IsParams())
+					{
+						// wrap plained params types into object[]
+						var paramsTypes = additionalTypes.Skip(tuples.Length - 1).ToArray();
+
+						if (paramsTypes.Length > 0)
+						{
+							additionalTypes = additionalTypes.Take(tuples.Length - 1).Concat(new[] { tuples.Last().type }).ToArray();
+						}
+					}
+
+					return tuples.Select(t => t.type).SequenceEqual(additionalTypes, (paramType, additionalType) =>
 					{
 						if (additionalType == typeof(void))
 							return true;

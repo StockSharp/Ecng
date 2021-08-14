@@ -30,7 +30,7 @@ namespace Ecng.Reflection
 			ReturnType = member is ConstructorInfo ? typeof(void) : member.GetMemberType();
 
 			if (member is MethodBase mb)
-				ParamTypes = mb.GetParameterTypes();
+				ParamTypes = mb.GetParameterTypes().Select(t => t.type).ToArray();
 			else if (member.IsIndexer())
 				ParamTypes = new [] { ((PropertyInfo)member).GetIndexerType() };
 			else

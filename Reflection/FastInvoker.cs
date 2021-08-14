@@ -382,11 +382,11 @@ namespace Ecng.Reflection
 			if (AssemblyHolder.NeedCache)
 			{
 				var typeGen = AssemblyHolder.CreateType("Test", TypeAttributes.Class);
-				methodGenerator = typeGen.CreateMethod("Method", MethodAttributes.Public | MethodAttributes.Static, returnType, invokeMethod.GetParameterTypes(false));
+				methodGenerator = typeGen.CreateMethod("Method", MethodAttributes.Public | MethodAttributes.Static, returnType, invokeMethod.GetParameterTypes(false).Select(t => t.type).ToArray());
 			}
 			else
 			{
-				var dymMethod = new DynamicMethod("", returnType, invokeMethod.GetParameterTypes()
+				var dymMethod = new DynamicMethod("", returnType, invokeMethod.GetParameterTypes().Select(t => t.type).ToArray()
 #if !SILVERLIGHT
 				, member.ReflectedType, true
 #endif
