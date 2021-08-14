@@ -205,7 +205,7 @@
         foreach (string tVar in Variables)
         {
           string varName = tVar;
-          string handlingValue = String.Empty;
+          string handlingValue = string.Empty;
 
           if (varName.Contains(":"))
           {

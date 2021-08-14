@@ -210,7 +210,7 @@ namespace Ecng.Net.SocketIO.Engine.Parser
         /// <param name="callback"></param>
         public static void DecodePayload(string data, IDecodePayloadCallback callback)
         {
-            if (String.IsNullOrEmpty(data))
+            if (string.IsNullOrEmpty(data))
             {
                 callback.Call(_err, 0, 1);
                 return;

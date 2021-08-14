@@ -62,7 +62,7 @@ namespace Ecng.Common
 			var compilationResult = new CompilationResult
 			{
 				Assembly = result.Errors.HasErrors ? null : result.CompiledAssembly,
-				AssemblyLocation = result.Errors.HasErrors ? String.Empty : result.PathToAssembly,
+				AssemblyLocation = result.Errors.HasErrors ? string.Empty : result.PathToAssembly,
 				Errors = result.Errors.Cast<CompilerError>().Select(e => new CompilationError
 				{
 					Message = e.ErrorText,

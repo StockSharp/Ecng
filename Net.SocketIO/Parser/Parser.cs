@@ -59,7 +59,7 @@ namespace Ecng.Net.SocketIO.Parser
                 }
                 else
                 {
-                    String encoding = EncodeAsString(obj);
+					string encoding = EncodeAsString(obj);
                     callback.Call(new object[] { encoding });
                 }
             }
@@ -110,7 +110,7 @@ namespace Ecng.Net.SocketIO.Parser
             private void EncodeAsBinary(Packet obj, ICallback callback)
             {
                 Binary.DeconstructedPacket deconstruction = Binary.DeconstructPacket(obj);
-                String pack = EncodeAsString(deconstruction.Packet);
+				string pack = EncodeAsString(deconstruction.Packet);
                 var buffers = new List<object>();
                 foreach (var item in deconstruction.Buffers)
                 {

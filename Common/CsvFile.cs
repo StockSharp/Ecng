@@ -248,7 +248,7 @@ namespace Ecng.Common
 				CurrPos = CurrLine.Length;
 			if (CurrPos > startPos)
 				return CurrLine.Substring(startPos, CurrPos - startPos);
-			return String.Empty;
+			return string.Empty;
 		}
 
 		// Propagate Dispose to StreamReader
@@ -324,8 +324,8 @@ namespace Ecng.Common
 			if (OneQuote is null || OneQuote[0] != Quote)
 			{
 				OneQuote = $"{Quote}";
-				TwoQuotes = String.Format("{0}{0}", Quote);
-				QuotedFormat = String.Format("{0}{{0}}{0}", Quote);
+				TwoQuotes = string.Format("{0}{0}", Quote);
+				QuotedFormat = string.Format("{0}{{0}}{0}", Quote);
 			}
 
 			// Write this column

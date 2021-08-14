@@ -8,7 +8,7 @@ namespace Ecng.Net.SocketIO.Parser
     {
         public int Type = -1;
         public int Id = -1;
-        public String Nsp;
+        public string Nsp;
         public T Data;
         public int Attachments;
 
@@ -29,7 +29,7 @@ namespace Ecng.Net.SocketIO.Parser
     {
         public int Type = -1;
         public int Id = -1;
-        public String Nsp;
+        public string Nsp;
         public object Data;
         public int Attachments;
 
