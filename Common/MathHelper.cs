@@ -702,6 +702,7 @@ namespace Ecng.Common
 		// http://www.java-forums.org/advanced-java/4130-rounding-double-two-decimal-places.html
 		public static double RoundToNearest(this double value)
 		{
+			// TODO
 			const double coef = 100;
 			var result = value * coef;
 			result = result.Round();
