@@ -237,7 +237,7 @@ namespace Ecng.Reflection
 			if (member is PropertyInfo pi)
 			{
 				if (IsIndexer(member))
-					FastInvoker<TInstance, TValue, VoidType>.Create(pi, false).VoidInvoke(instance, value);
+					return FastInvoker<TInstance, TValue, TInstance>.Create(pi, false).ReturnInvoke(instance, value);
 				else
 					return FastInvoker<TInstance, TValue, VoidType>.Create(pi, false).SetValue(instance, value);
 			}

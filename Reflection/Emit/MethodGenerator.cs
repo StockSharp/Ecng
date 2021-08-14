@@ -58,7 +58,7 @@
 
 		#region Parameters
 
-		private readonly List<ParameterGenerator> _parameters = new List<ParameterGenerator>();
+		private readonly List<ParameterGenerator> _parameters = new();
 
 		public IEnumerable<ParameterGenerator> Parameters => _parameters;
 
@@ -110,14 +110,12 @@
 			else if (Builder is MethodBuilder)
 				builder = Builder.To<MethodBuilder>().DefineParameter(_parameters.Count + 1, attrs, name);
 			else if (Builder is DynamicMethod)
-			{
-				Builder.To<DynamicMethod>().DefineParameter(_parameters.Count + 1, attrs, name);
-				return null;
-			}
+				builder = Builder.To<DynamicMethod>().DefineParameter(_parameters.Count + 1, attrs, name);
 			else
 				throw new InvalidOperationException();
 
-			var parameter = new ParameterGenerator(builder);
+			// store null for track params count
+			var parameter = builder is null ? null : new ParameterGenerator(builder);
 			_parameters.Add(parameter);
 			return parameter;
 		}

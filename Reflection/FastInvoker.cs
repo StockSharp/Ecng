@@ -266,7 +266,7 @@ namespace Ecng.Reflection
 							else
 							{
 								argType = typeof(object[]);
-								returnType = typeof(VoidType);
+								returnType = instanceType;
 							}
 						}
 						else
@@ -327,7 +327,7 @@ namespace Ecng.Reflection
 					if (isGetter == true)
 						return isStatic ? typeof(FastInvoker<,,>.StaticReturnMethodCallback) : typeof(FastInvoker<,,>.ReturnMethodCallback);
 					else
-						return isStatic ? typeof(FastInvoker<,,>.StaticVoidMethodCallback) : typeof(FastInvoker<,,>.VoidMethodCallback);
+						return isStatic ? typeof(FastInvoker<,,>.StaticVoidMethodCallback) : typeof(FastInvoker<,,>.ReturnMethodCallback);
 				}
 				else
 				{
@@ -362,7 +362,7 @@ namespace Ecng.Reflection
 			var parameters = (member is MethodBase) ? member.To<MethodBase>().GetParameters() : new ParameterInfo[0];
 
 			if (member.IsIndexer() && isGetter == false)
-				parameters = ((PropertyInfo)member).GetGetMethod(true).GetParameters();
+				parameters = ((PropertyInfo)member).GetSetMethod(true).GetParameters();
 
 			var refParameters = parameters.Where(param => param.IsOutput()).ToArray();
 
