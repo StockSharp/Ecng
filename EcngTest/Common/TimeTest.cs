@@ -81,8 +81,8 @@ namespace Ecng.Test.Common
 			new DateTime(2015, 1, 1).UtcKind().GetIso8601WeekOfYear().AssertEqual(1);
 			new DateTime(2015, 12, 31).UtcKind().GetIso8601WeekOfYear().AssertEqual(53);
 
-			new DateTime(2016, 1, 1).UtcKind().GetIso8601WeekOfYear().AssertEqual(1);
-			new DateTime(2016, 12, 31).UtcKind().GetIso8601WeekOfYear().AssertEqual(53);
+			new DateTime(2016, 1, 1).UtcKind().GetIso8601WeekOfYear().AssertEqual(53);
+			new DateTime(2016, 12, 31).UtcKind().GetIso8601WeekOfYear().AssertEqual(52);
 		}
 
 		[TestMethod]

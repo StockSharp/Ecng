@@ -126,12 +126,12 @@ namespace Ecng.Test.Serialization
 			XmlTest<IDictionary<Entity, DataAccessMethod>, KeyValuePair<Entity, DataAccessMethod>>(dict);
 		}
 
-		[TestMethod]
-		public void BinaryDictionaryDynamic()
-		{
-			var dict = new Dictionary<object, object> { { new Entity(), DataAccessMethod.Sequential }, { new Entity2(), TestTimeout.Infinite } };
-			BinaryTest<IDictionary<object, object>, KeyValuePair<object, object>>(dict);
-		}
+		//[TestMethod]
+		//public void BinaryDictionaryDynamic()
+		//{
+		//	var dict = new Dictionary<object, object> { { new Entity(), DataAccessMethod.Sequential }, { new Entity2(), TestTimeout.Infinite } };
+		//	BinaryTest<IDictionary<object, object>, KeyValuePair<object, object>>(dict);
+		//}
 
 		[TestMethod]
 		public void XmlDictionaryDynamic()
