@@ -325,28 +325,28 @@ namespace Ecng.Reflection
 				if (member.IsIndexer())
 				{
 					if (isGetter == true)
-						return (isStatic) ? typeof(FastInvoker<,,>.StaticReturnMethodCallback) : typeof(FastInvoker<,,>.ReturnMethodCallback);
+						return isStatic ? typeof(FastInvoker<,,>.StaticReturnMethodCallback) : typeof(FastInvoker<,,>.ReturnMethodCallback);
 					else
-						return (isStatic) ? typeof(FastInvoker<,,>.StaticVoidMethodCallback) : typeof(FastInvoker<,,>.VoidMethodCallback);
+						return isStatic ? typeof(FastInvoker<,,>.StaticVoidMethodCallback) : typeof(FastInvoker<,,>.VoidMethodCallback);
 				}
 				else
 				{
 					if (isGetter == true)
-						return (isStatic) ? typeof(FastInvoker<,,>.StaticGetValueCallback) : typeof(FastInvoker<,,>.GetValueCallback);
+						return isStatic ? typeof(FastInvoker<,,>.StaticGetValueCallback) : typeof(FastInvoker<,,>.GetValueCallback);
 					else
-						return (isStatic) ? typeof(FastInvoker<,,>.StaticSetValueCallback) : typeof(FastInvoker<,,>.SetValueCallback);
+						return isStatic ? typeof(FastInvoker<,,>.StaticSetValueCallback) : typeof(FastInvoker<,,>.SetValueCallback);
 				}
 			}
 			else if (member is EventInfo)
-				return (isStatic) ? typeof(FastInvoker<,,>.StaticVoidMethodCallback) : typeof(FastInvoker<,,>.VoidMethodCallback);
+				return isStatic ? typeof(FastInvoker<,,>.StaticVoidMethodCallback) : typeof(FastInvoker<,,>.VoidMethodCallback);
 			else
 			{
 				if (member is MethodInfo mi)
 				{
 					if (mi.ReturnType == typeof(void))
-						return (isStatic) ? typeof(FastInvoker<,,>.StaticVoidMethodCallback) : typeof(FastInvoker<,,>.VoidMethodCallback);
+						return isStatic ? typeof(FastInvoker<,,>.StaticVoidMethodCallback) : typeof(FastInvoker<,,>.VoidMethodCallback);
 					else
-						return (isStatic) ? typeof(FastInvoker<,,>.StaticReturnMethodCallback) : typeof(FastInvoker<,,>.ReturnMethodCallback);
+						return isStatic ? typeof(FastInvoker<,,>.StaticReturnMethodCallback) : typeof(FastInvoker<,,>.ReturnMethodCallback);
 				}
 				else
 					return typeof(FastInvoker<,,>.CtorCallback);
@@ -368,11 +368,11 @@ namespace Ecng.Reflection
 
 			var refLocals = new Dictionary<ParameterInfo, LocalGenerator>();
 
-			var invokeMethod = delegType.GetMethod("Invoke");
+			var invokeMethod = delegType.GetInvokeMethod();
 
 			var returnType = invokeMethod.ReturnType;
 
-			var isPropSet = ((instanceType != typeof(VoidType) && (member is PropertyInfo || member is FieldInfo) && isGetter == false));
+			var isPropSet = instanceType != typeof(VoidType) && (member is PropertyInfo || member is FieldInfo) && isGetter == false;
 
 			if (returnType == typeof(void) && isPropSet)
 				returnType = instanceType;

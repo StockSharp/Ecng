@@ -20,6 +20,9 @@ namespace Ecng.Reflection
 		public const BindingFlags AllInstanceMembers = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 		public const BindingFlags AllMembers = AllStaticMembers | AllInstanceMembers;
 
+		public static MethodInfo GetInvokeMethod(this Type delegType)
+			=> delegType.GetMethod("Invoke");
+
 		#region ProxyTypes
 
 		private static readonly Dictionary<Type, Type> _proxyTypes = new Dictionary<Type, Type>();
@@ -460,7 +463,7 @@ namespace Ecng.Reflection
 
 				foreach (var pair in members.Where(arg => arg.Value.Count > 1))
 				{
-					var sortedMembers = pair.Value.OrderBy(((x, y) =>
+					var sortedMembers = pair.Value.OrderBy((x, y) =>
 					{
 						var result = x.ReflectedType.Compare(y.ReflectedType);
 
@@ -468,7 +471,7 @@ namespace Ecng.Reflection
 							result = x.DeclaringType.Compare(y.DeclaringType);
 
 						return result;
-					})).ToArray();
+					}).ToArray();
 
 					for (var i = 1; i < sortedMembers.Length; i++)
 					{
@@ -699,7 +702,7 @@ namespace Ecng.Reflection
 			if (param == null)
 				throw new ArgumentNullException(nameof(param));
 
-			return (param.IsOut || param.ParameterType.IsByRef);
+			return param.IsOut || param.ParameterType.IsByRef;
 		}
 
 		#endregion
