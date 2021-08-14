@@ -293,10 +293,10 @@ namespace Ecng.ComponentModel
 		public Range<T> SubRange(T min, T max)
 		{
 			if (!Contains(min))
-				throw new ArgumentException("min");
+				throw new ArgumentException(nameof(min));
 
 			if (!Contains(max))
-				throw new ArgumentException("max");
+				throw new ArgumentException(nameof(max));
 
 			return new Range<T>(min, max);
 		}

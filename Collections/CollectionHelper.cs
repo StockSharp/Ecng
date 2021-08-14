@@ -925,7 +925,7 @@
 		public static bool[] ToBits(this long value, int bitCount)
 		{
 			//if (value > 2.Pow(bitCount - 1))
-			//	throw new ArgumentOutOfRangeException("value");
+			//	throw new ArgumentOutOfRangeException(nameof(value));
 
 			return value.ToBits(0, bitCount);
 		}
@@ -953,7 +953,7 @@
 		public static bool[] ToBits(this int value, int bitCount)
 		{
 			//if (value > 2.Pow(bitCount - 1))
-			//	throw new ArgumentOutOfRangeException("value");
+			//	throw new ArgumentOutOfRangeException(nameof(value));
 
 			return value.ToBits(0, bitCount);
 		}

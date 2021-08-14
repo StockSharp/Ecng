@@ -113,7 +113,7 @@ namespace Ecng.Security
 
 		public static AlgorithmTypes GetAlgType(Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			if (type == typeof(DpapiCryptographer))
@@ -129,58 +129,6 @@ namespace Ecng.Security
 		}
 
 		#endregion
-
-		//#region GenerateKeys
-
-		//public static ProtectedKey[] GenerateKeys(AlgorithmTypes type)
-		//{
-		//	string name;
-
-		//	switch (type)
-		//	{
-		//		case AlgorithmTypes.Symmetric:
-		//			name = DefaultSymmetricAlgoName;
-		//			break;
-		//		case AlgorithmTypes.Asymmetric:
-		//			name = DefaultAsymmetricAlgoName;
-		//			break;
-		//		case AlgorithmTypes.Dpapi:
-		//			name = DefaultDpapiAlgoName;
-		//			break;
-		//		case AlgorithmTypes.Hash:
-		//			name = DefaultHashAlgoName;
-		//			break;
-		//		default:
-		//			throw new ArgumentOutOfRangeException("type");
-		//	}
-
-		//	return GenerateKeys(name);
-		//}
-
-		//public static ProtectedKey[] GenerateKeys(string name)
-		//{
-		//	if (name.IsEmpty())
-		//		throw new ArgumentNullException("name");
-
-		//	var type = _types[name];
-
-		//	switch (GetAlgType(type))
-		//	{
-		//		case AlgorithmTypes.Symmetric:
-		//			return new[] { new SymmetricKeyGenerator().GenerateKey(type, DefaultScope) };
-		//		case AlgorithmTypes.Asymmetric:
-		//			var newParams = CryptoHelper.GenerateRsa();
-		//			return new[] { newParams.PublicPart().FromRsa(), newParams.FromRsa() };
-		//		case AlgorithmTypes.Dpapi:
-		//			return new ProtectedKey[0];
-		//		case AlgorithmTypes.Hash:
-		//			return new[] { new KeyedHashKeyGenerator().GenerateKey(type, DefaultScope) };
-		//		default:
-		//			throw new ArgumentException("name");
-		//	}
-		//}
-
-		//#endregion
 
 		public static Type GetDefaultAlgo(AlgorithmTypes type)
 		{
@@ -231,10 +179,12 @@ namespace Ecng.Security
 
 		public static CryptoAlgorithm Create(Type type, params ProtectedKey[] keys)
 		{
-			if (keys == null)
+			if (keys is null)
 				throw new ArgumentNullException(nameof(keys));
 
-			switch (GetAlgType(type))
+			var name = GetAlgType(type);
+			
+			switch (name)
 			{
 				case AlgorithmTypes.Symmetric:
 					return new CryptoAlgorithm(new SymmetricCryptographer(type, keys[0]));
@@ -245,7 +195,7 @@ namespace Ecng.Security
 				case AlgorithmTypes.Hash:
 					return new CryptoAlgorithm(keys.Length == 0 ? new HashCryptographer(type) : new HashCryptographer(type, keys[0]));
 				default:
-					throw new ArgumentException("name");
+					throw new ArgumentOutOfRangeException(nameof(name), name.To<string>());
 			}
 		}
 

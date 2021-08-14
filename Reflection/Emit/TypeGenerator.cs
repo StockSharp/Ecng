@@ -53,7 +53,7 @@ namespace Ecng.Reflection.Emit
 				else
 				{
 					if (baseType != null)
-						throw new ArgumentException("baseTypes");
+						throw new ArgumentException(nameof(baseTypes));
 
 					baseType = type;
 				}

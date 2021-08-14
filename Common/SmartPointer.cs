@@ -69,7 +69,7 @@ namespace Ecng.Common
 		private void ThrowIfDisposed()
 		{
 			if (_value == null)
-				throw new ObjectDisposedException("");
+				throw new ObjectDisposedException(nameof(_value));
 		}
 	}
 }

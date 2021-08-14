@@ -11,7 +11,7 @@ namespace Ecng.Collections
 		protected BaseEnumerator(TEnumerable source)
 		{
 			if (source.IsNull())
-				throw new ArgumentException("source");
+				throw new ArgumentException(nameof(source));
 
 			Source = source;
 			Reset();

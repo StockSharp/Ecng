@@ -943,81 +943,10 @@ namespace Ecng.Common
 		public static decimal GetMiddle(this decimal from, decimal to)
 		{
 			//if (from > to)
-			//	throw new ArgumentOutOfRangeException("from");
+			//	throw new ArgumentOutOfRangeException(nameof(from));
 
 			return (from + to) / 2;
 		}
-
-		//public static Point<int> GetEndNearestPoint(Line line, int distance)
-		//{
-		//    double angle = GetAngle(line.Start, line.End);
-
-		//    if (angle == 0)
-		//        return new Point<int>(line.End.X - distance, line.End.Y);
-		//    else if (angle == 90)
-		//        return new Point<int>(line.End.X, line.Start.Y + distance);
-		//    else if (angle == 180)
-		//        return new Point<int>(line.End.X + distance, line.End.Y);
-		//    else if (angle == 270)
-		//        return new Point<int>(line.End.X, line.End.Y - distance);
-		//    else
-		//    {
-		//        int coef;
-
-		//        if (angle > 90 && angle < 180)
-		//        {
-		//            angle = 180 - angle;
-		//            coef = -1;
-		//        }
-		//        else if (angle > 180 && angle < 270)
-		//        {
-		//            angle = angle - 180;
-		//            coef = -1;
-		//        }
-		//        else if (angle > 270 && angle < 360)
-		//        {
-		//            angle = 360 - angle;
-		//            coef = 1;
-		//        }
-		//        else
-		//        {
-		//            coef = 1;
-		//        }
-
-		//        double xLength = distance * Math.Cos(ToRadians(angle));
-
-		//        int x = (int)(line.End.X - coef * xLength);
-		//        return new Point<int>(x, line.GetY(x));
-		//    }
-		//}
-
-		//public static Point<int> GetNearest(Point<int> center, Point<int>[] points)
-		//{
-		//    if (center == null)
-		//        throw new ArgumentNullException("center");
-
-		//    if (points == null)
-		//        throw new ArgumentNullException("points");
-
-		//    if (points.Length < 1)
-		//        throw new ArgumentException("points");
-
-		//    double minLength = double.MaxValue;
-		//    Point<int> nearest = points[0];
-
-		//    foreach (var point in points)
-		//    {
-		//        double length = new Line(center, point).Length;
-
-		//        if (minLength > length)
-		//        {
-		//            minLength = length;
-		//            nearest = point;
-		//        }
-		//    }
-
-		//    return nearest;
-		//}
 
 		private static readonly decimal[] _posPow10 =
 		{

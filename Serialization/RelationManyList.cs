@@ -556,8 +556,8 @@
 
 		public IEnumerable<TEntity> ReadAll(long startIndex, long count, Field orderBy, ListSortDirection direction)
 		{
-			//if (orderBy == null)
-			//	throw new ArgumentNullException("orderBy");
+			//if (orderBy is null)
+			//	throw new ArgumentNullException(nameof(orderBy));
 
 			if (count == 0)
 				return new List<TEntity>();

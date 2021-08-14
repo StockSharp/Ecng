@@ -20,14 +20,14 @@ namespace Ecng.Security
 				throw new ArgumentNullException(nameof(elem));
 
 			if (!elem.Tag.Equals("IPermission"))
-				throw new ArgumentException("elem");
+				throw new ArgumentException(nameof(elem));
 
 			string className = elem.Attribute("class");
 			if (className.IsEmpty())
-				throw new ArgumentException("elem");
+				throw new ArgumentException(nameof(elem));
 
 			if (className.IndexOfIgnoreCase(GetType().FullName) < 0)
-				throw new ArgumentException("elem");
+				throw new ArgumentException(nameof(elem));
 
 			string unrestricted = elem.Attribute("Unrestricted");
 			if (!unrestricted.IsEmpty() && (string.Compare(unrestricted, "true", true, CultureInfo.InvariantCulture) == 0))

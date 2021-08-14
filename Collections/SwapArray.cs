@@ -63,7 +63,7 @@ namespace Ecng.Collections
 			_fileOffset += size * _valueSize;
 
 			if (_fileOffset != _swapFile.Length)
-				throw new ArgumentException("size");
+				throw new ArgumentException(nameof(size));
 
 			_count = size;
 		}

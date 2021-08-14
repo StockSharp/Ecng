@@ -648,7 +648,7 @@
 			else if (type.IsClass)
 				return ldnull();
 			else
-				throw new ArgumentException("type");
+				throw new ArgumentOutOfRangeException(nameof(type), type.To<string>());
 		}
 
 		public MethodGenerator ldlen() { _generator.Emit(OpCodes.Ldlen); return this; }
@@ -976,7 +976,7 @@
 					else
 						return callvirt(method);
 				default:
-					throw new ArgumentException("member");
+					throw new ArgumentOutOfRangeException(nameof(member), member.MemberType.To<string>());
 			}
 		}
 
@@ -999,7 +999,7 @@
 					else
 						return callvirt(method);
 				default:
-					throw new ArgumentException("member");
+					throw new ArgumentOutOfRangeException(nameof(member), member.MemberType.To<string>());
 			}
 		}
 

@@ -76,7 +76,7 @@
 		private static IEnumerable<FieldInfo> GetEnumFields(this Type enumType)
 		{
 			if (enumType == null)
-				throw new ArgumentNullException("enumType");
+				throw new ArgumentNullException(nameof(enumType));
 
 			return enumType.GetFields().Where(field => field.Name != "value__");
 		}
@@ -117,7 +117,7 @@
 		public static T Remove<T>(this Enum enumSource, T enumPart)
 		{
 			if (enumSource.GetType() != typeof(T))
-				throw new ArgumentException("enumPart");
+				throw new ArgumentException(nameof(enumPart));
 
 			return (enumSource.To<long>() & ~enumPart.To<long>()).To<T>();
 		}

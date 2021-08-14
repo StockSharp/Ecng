@@ -121,7 +121,7 @@
 				throw new ArgumentNullException(nameof(genericType));
 
 			if (!genericType.IsGenericTypeDefinition)
-				throw new ArgumentException("genericType");
+				throw new ArgumentException(nameof(genericType));
 
 			if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == genericType)
 				return targetType;
@@ -596,47 +596,6 @@
 
 			return value;
 		}
-
-		////
-		//// http://ppetrov.wordpress.com/2008/06/24/useful-method-4-of-n/
-		////
-		//public static string Aggregate<T>(this IEnumerable<T> values)
-		//{
-		//    return Aggregate(values, ",");
-		//}
-
-		//public static string Aggregate<T>(this IEnumerable<T> values, string separator)
-		//{
-		//    return values.Aggregate(x => x.To<string>(), separator);
-		//}
-
-		//public static string Aggregate<T>(this IEnumerable<T> values, Func<T, string> toString)
-		//{
-		//    return values.Aggregate(toString, ",");
-		//}
-
-		//public static string Aggregate<T>(this IEnumerable<T> values, Func<T, string> toString, string separator)
-		//{
-		//    if (values == null)
-		//        throw new ArgumentNullException("values");
-
-		//    if (toString == null)
-		//        throw new ArgumentNullException("toString");
-
-		//    var buffer = new StringBuilder();
-
-		//    foreach (var v in values)
-		//    {
-		//        if (buffer.Length > 0)
-		//            buffer.Append(separator);
-
-		//        buffer.Append(toString(v));
-		//    }
-
-		//    return buffer.ToString();
-		//}
-
-
 
 		//
 		// http://www.extensionmethod.net/Details.aspx?ID=123

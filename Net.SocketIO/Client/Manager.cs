@@ -241,7 +241,7 @@ namespace Ecng.Net.SocketIO.Client
                     //log2.Info(string.Format("connect attempt timed out after {0}", timeout));
                     openSub.Destroy();
                     socket.Close();
-                    socket.Emit(Engine.EVENT_ERROR, new SocketIOException("timeout"));
+                    socket.Emit(Engine.EVENT_ERROR, new SocketIOException(nameof(timeout)));
                     EmitAll(EVENT_CONNECT_TIMEOUT, timeout);
                     //log2.Info("Manager Open finish");
 

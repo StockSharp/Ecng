@@ -51,10 +51,10 @@
 		public TypeGenerator CreateType(string typeName, TypeAttributes attrs, params Type[] baseTypes)
 		{
 			//if (typeName.IsEmpty())
-			//	throw new ArgumentNullException("typeName");
+			//	throw new ArgumentNullException(nameof(typeName));
 
 			//if (baseTypes == null)
-			//	throw new ArgumentNullException("baseTypes");
+			//	throw new ArgumentNullException(nameof(baseTypes));
 
 			var typeGen = new TypeGenerator(Builder.DefineType(typeName, attrs), baseTypes);
 			_types.Add(typeGen);
@@ -68,10 +68,10 @@
 		public EnumGenerator CreateEnum(string typeName, TypeAttributes attrs, Type underlyingType)
 		{
 			//if (typeName.IsEmpty())
-			//	throw new ArgumentNullException("typeName");
+			//	throw new ArgumentNullException(nameof(typeName));
 
 			//if (baseTypes == null)
-			//	throw new ArgumentNullException("baseTypes");
+			//	throw new ArgumentNullException(nameof(baseTypes));
 
 			var gen = new EnumGenerator(Builder.DefineEnum(typeName, attrs, underlyingType));
 			_enums.Add(gen);

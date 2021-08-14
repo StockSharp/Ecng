@@ -76,7 +76,7 @@ namespace Ecng.ComponentModel
 			}
 
 			if (itemTypeCount.IsEmpty())
-				throw new ArgumentException("tiles");
+				throw new ArgumentException(nameof(items));
 
 			if (itemTypeCount.Count > 1)
 			{
@@ -163,10 +163,10 @@ namespace Ecng.ComponentModel
 			get
 			{
 				//if (x < 0/* || x >= Constants.XCount*/)
-				//	throw new ArgumentOutOfRangeException("x");
+				//	throw new ArgumentOutOfRangeException(nameof(x));
 
 				//if (y < 0/* || y >= Constants.YCount*/)
-				//	throw new ArgumentOutOfRangeException("y");
+				//	throw new ArgumentOutOfRangeException(nameof(y));
 
 				if (!SecondaryItems.IsEmpty())
 				{

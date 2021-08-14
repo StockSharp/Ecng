@@ -81,10 +81,10 @@ namespace Ecng.ComponentModel
 		private double GetAngle()
 		{
 			//if (start == null)
-			//    throw new ArgumentNullException("start");
+			//    throw new ArgumentNullException(nameof(start));
 
 			//if (End == null)
-			//    throw new ArgumentNullException("End");
+			//    throw new ArgumentNullException(nameof(End));
 
 			if (Start.Equals(End))
 				return 0;

@@ -65,10 +65,10 @@ namespace Ecng.ComponentModel
 				throw new ArgumentNullException(nameof(rightBottom));
 
 			if (_operator.Compare(rightBottom.X, leftTop.X) < 0)
-				throw new ArgumentException("rightBottom");
+				throw new ArgumentException(nameof(rightBottom));
 
 			if (_operator.Compare(rightBottom.Y, leftTop.Y) < 0)
-				throw new ArgumentException("rightBottom");
+				throw new ArgumentException(nameof(rightBottom));
 
 			Location = leftTop;
 			Size = new Size<T>(_operator.Subtract(rightBottom.X, leftTop.X), _operator.Subtract(rightBottom.Y, leftTop.Y));

@@ -83,10 +83,10 @@ namespace Ecng.Reflection.Emit
 				fieldValues = ArrayHelper.Empty<object>();
 
 			if (props.HasNullItem())
-				throw new ArgumentException("props");
+				throw new ArgumentException(nameof(props));
 
 			if (fields.HasNullItem())
-				throw new ArgumentException("fields");
+				throw new ArgumentException(nameof(fields));
 
 			if (props.Length != propValues.Length)
 				throw new ArgumentOutOfRangeException(nameof(propValues));
@@ -129,7 +129,7 @@ namespace Ecng.Reflection.Emit
 			foreach (var data in CustomAttributeData.GetCustomAttributes(member))
 			{
 				if (!data.Constructor.DeclaringType.IsPublic)
-					throw new ArgumentException("member");
+					throw new ArgumentException(nameof(member));
 
 				attributes.Add(new AttributeGenerator(data));
 			}

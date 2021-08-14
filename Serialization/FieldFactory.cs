@@ -49,7 +49,7 @@
 				throw new ArgumentNullException(nameof(serializer), "Serializer for field '{0}' is null.".Put(Field.Name));
 
 			//if (!IsNullable && instance == null)
-			//	throw new ArgumentNullException("instance", "Instance value for field '{0}' is null.".Put(Field.Name));
+			//	throw new ArgumentNullException(nameof(instance), "Instance value for field '{0}' is null.".Put(Field.Name));
 
 			var source = instance == null ? null : OnCreateSource(serializer, instance);
 			return new SerializationItem(Field, source);

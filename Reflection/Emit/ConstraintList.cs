@@ -4,6 +4,7 @@ namespace Ecng.Reflection.Emit
 	using System.Reflection;
 	using System.Reflection.Emit;
 
+	using Ecng.Common;
 	using Ecng.Collections;
 
 	public class ConstraintList : BaseList<Constraint>
@@ -33,7 +34,7 @@ namespace Ecng.Reflection.Emit
 			switch (item.ConstraintType)
 			{
 				case ConstraintTypes.None:
-					throw new ArgumentException("item");
+					throw new ArgumentException(nameof(item));
 				case ConstraintTypes.Interface:
 					_builder.SetInterfaceConstraints(item.BaseType);
 					break;
@@ -44,7 +45,7 @@ namespace Ecng.Reflection.Emit
 					_builder.SetGenericParameterAttributes(item.Attribute);
 					break;
 				default:
-					throw new ArgumentException("item");
+					throw new ArgumentOutOfRangeException(nameof(item), item.ConstraintType.To<string>());
 			}
 
 			base.OnAdded(item);

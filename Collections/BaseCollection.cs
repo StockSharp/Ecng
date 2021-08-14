@@ -59,7 +59,7 @@ namespace Ecng.Collections
 		{
 			if (index < 0 || index > Count)
 #if SILVERLIGHT
-				throw new ArgumentOutOfRangeException("index");
+				throw new ArgumentOutOfRangeException(nameof(index));
 #else
 				throw new ArgumentOutOfRangeException(nameof(index), index, "Index has incorrect value.");
 #endif

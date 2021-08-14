@@ -100,7 +100,7 @@
     {
       if (newRule == null)
       {
-        throw new ArgumentNullException("newRule");
+        throw new ArgumentNullException(nameof(newRule));
       }
 
       lock (_rulesLock)

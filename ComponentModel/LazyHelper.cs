@@ -18,7 +18,7 @@
 				throw new ArgumentNullException(nameof(lazy));
 
 			if (lazy.IsValueCreated)
-				throw new ArgumentException("lazy");
+				throw new ArgumentException(nameof(lazy));
 
 #if !NETCOREAPP && !NETSTANDARD
 			_factories.Add(lazy, lazy.GetValue<Lazy<T>, VoidType, Func<T>>("m_valueFactory", null));

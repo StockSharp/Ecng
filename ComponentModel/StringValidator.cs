@@ -116,7 +116,7 @@ namespace Ecng.ComponentModel
 				throw new ArgumentOutOfRangeException(nameof(value), "Value is {0}. Length must be between {1}.".Put(value, Length));
 
 			if (_regex != null && !_regex.IsMatch(value))
-				throw new ArgumentException("value");
+				throw new ArgumentException(nameof(value));
 		}
 
 		#endregion

@@ -19,7 +19,7 @@ namespace Ecng.Configuration
 			: base(sectionType)
 		{
 			if (!typeof(ConfigurationSection).IsAssignableFrom(sectionType))
-				throw new ArgumentException("sectionType");
+				throw new ArgumentException(nameof(sectionType));
 		}
 
 		#endregion

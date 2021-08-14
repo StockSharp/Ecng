@@ -44,8 +44,8 @@ namespace Ecng.ComponentModel
 
 			var attr = type.GetAttribute<CommonTypeConverterNamesAttribute>();
 
-			if (attr == null)
-				throw new ArgumentException("type");
+			if (attr is null)
+				throw new ArgumentException(nameof(type));
 
 #if !SILVERLIGHT
 			_type = type;
@@ -63,7 +63,7 @@ namespace Ecng.ComponentModel
 				else if (info is FieldInfo)
 					_memberInvokers[index] = FastInvoker.Create((FieldInfo)info, true);
 				else
-					throw new ArgumentException("members");
+					throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
 
 				index++;
 			}
@@ -169,7 +169,7 @@ namespace Ecng.ComponentModel
 			var fieldTexts = text.Split(new [] { ',', ';' });
 
 			if (fieldTexts.Length != _memberInvokers.Length)
-				throw new ArgumentException("value");
+				throw new ArgumentException(nameof(value));
 
 			var args = new List<object>();
 

@@ -28,10 +28,10 @@ namespace Ecng.ComponentModel
 			if (members.IsEmpty())
 				throw new ArgumentNullException(nameof(members));
 
-			_members = members.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+			_members = members.SplitByComma(true);
 
 			if (_members.IsEmpty())
-				throw new ArgumentException("members");
+				throw new ArgumentException(nameof(members));
 		}
 
 		#endregion

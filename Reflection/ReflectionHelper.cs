@@ -77,7 +77,7 @@ namespace Ecng.Reflection
 				throw new ArgumentNullException(nameof(genericType));
 
 			if (!genericType.IsGenericTypeDefinition)
-				throw new ArgumentException("genericType");
+				throw new ArgumentException(nameof(genericType));
 
 			if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == genericType)
 				return targetType;
@@ -111,8 +111,8 @@ namespace Ecng.Reflection
 		{
 			genericType = GetGenericType(targetType, genericType);
 
-			if (genericType == null)
-				throw new ArgumentException("targetType");
+			if (genericType is null)
+				throw new ArgumentException(nameof(targetType));
 			else
 				return genericType.GetGenericArguments()[index];
 		}
@@ -226,7 +226,7 @@ namespace Ecng.Reflection
 			else if (member is EventInfo ei)
 				FastInvoker<VoidType, TValue, VoidType>.Create(ei, false).VoidInvoke(value);
 			else
-				throw new ArgumentException("member");
+				throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
 		}
 
 		public static TInstance SetValue<TInstance, TValue>(this TInstance instance, MemberInfo member, TValue value)
@@ -248,7 +248,7 @@ namespace Ecng.Reflection
 			else if (member is EventInfo ei)
 				FastInvoker<TInstance, TValue, VoidType>.Create(ei, false).VoidInvoke(instance, value);
 			else
-				throw new ArgumentException("member");
+				throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
 
 			return instance;
 		}
@@ -299,7 +299,7 @@ namespace Ecng.Reflection
 				value = default;
 			}
 			else
-				throw new ArgumentException("member");
+				throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
 
 			return value;
 		}
@@ -323,7 +323,7 @@ namespace Ecng.Reflection
 				value = default;
 			}
 			else
-				throw new ArgumentException("member");
+				throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
 
 			return value;
 		}
@@ -670,13 +670,13 @@ namespace Ecng.Reflection
 
 		public static Type GetIndexerType(this PropertyInfo property)
 		{
-			if (property == null)
+			if (property is null)
 				throw new ArgumentNullException(nameof(property));
 
 			var accessor = property.GetGetMethod(true) ?? property.GetSetMethod(true);
 
-			if (accessor == null)
-				throw new ArgumentException("property");
+			if (accessor is null)
+				throw new ArgumentException(nameof(property), "No any accessors.");
 
 			return accessor.GetParameters()[0].ParameterType;
 		}
@@ -711,7 +711,7 @@ namespace Ecng.Reflection
 
 		public static Type GetMemberType(this MemberInfo member)
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			switch (member)
@@ -727,7 +727,7 @@ namespace Ecng.Reflection
 				case ConstructorInfo _:
 					return member.ReflectedType;
 				default:
-					throw new ArgumentException("member");
+					throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
 			}
 		}
 
@@ -761,7 +761,7 @@ namespace Ecng.Reflection
 
 		public static bool IsStatic(this MemberInfo member)
 		{
-			if (member == null)
+			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
 			return _isStaticCache.SafeAdd(member, delegate
@@ -775,7 +775,7 @@ namespace Ecng.Reflection
 					else if (prop.CanWrite)
 						return IsStatic(prop.GetSetMethod(true));
 					else
-						throw new ArgumentException("member");
+						throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
 				}
 				else if (member is FieldInfo fi)
 					return fi.IsStatic;
@@ -784,7 +784,7 @@ namespace Ecng.Reflection
 				else if (member is Type type)
 					return type.IsAbstract && type.IsSealed;
 				else
-					throw new ArgumentException("member");
+					throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
 			});
 		}
 
@@ -796,7 +796,7 @@ namespace Ecng.Reflection
 
 		public static Type GetItemType(this Type collectionType)
 		{
-			if (collectionType == null)
+			if (collectionType is null)
 				throw new ArgumentNullException(nameof(collectionType));
 
 			return _getItemTypeCache.SafeAdd(collectionType, delegate
@@ -871,22 +871,22 @@ namespace Ecng.Reflection
 
 		public static IEnumerable<GenericArg> GetGenericArgs(this Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			if (!type.IsGenericTypeDefinition)
-				throw new ArgumentException("type");
+				throw new ArgumentException(nameof(type));
 
 			return type.GetGenericArguments().GetGenericArgs();
 		}
 
 		public static IEnumerable<GenericArg> GetGenericArgs(this MethodInfo method)
 		{
-			if (method == null)
+			if (method is null)
 				throw new ArgumentNullException(nameof(method));
 
 			if (!method.IsGenericMethodDefinition)
-				throw new ArgumentException("method");
+				throw new ArgumentException(nameof(method));
 
 			return method.GetGenericArguments().GetGenericArgs();
 		}
@@ -917,7 +917,7 @@ namespace Ecng.Reflection
 
 		public static MethodInfo Make(this MethodInfo method, params Type[] types)
 		{
-			if (method == null)
+			if (method is null)
 				throw new ArgumentNullException(nameof(method));
 
 			return method.MakeGenericMethod(types);
