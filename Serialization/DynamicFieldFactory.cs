@@ -32,12 +32,10 @@
 		{
 			var instanceType = instance.GetType();
 			var valueType = instanceType;
-			
-			var type = instance as Type;
 
 			object value;
-			
-			if (type is null)
+
+			if (instance is not Type type)
 			{
 				if (SchemaManager.GlobalFieldFactories.TryGetValue(instanceType, out var factoryType))
 				{

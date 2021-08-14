@@ -173,9 +173,8 @@ namespace Ecng.Common
 			if (handler is null)
 				throw new ArgumentNullException(nameof(handler));
 
-			var destination = source as TDestination;
 
-			if (destination is null)
+			if (source is not TDestination destination)
 				return;
 
 			handler(destination);

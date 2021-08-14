@@ -36,13 +36,12 @@ namespace Ecng.Net.SocketIO.Parser
                 return AddPlaceholder(buffers, byteArray);
             }
 
-            var jToken = data as JToken;
-            if (jToken is null)
-            {
-                throw new NotImplementedException();
-            }
+			if (data is not JToken jToken)
+			{
+				throw new NotImplementedException();
+			}
 
-            switch (jToken.Type)
+			switch (jToken.Type)
             {
                 case JTokenType.Object:
                     var newJObject = new JObject();

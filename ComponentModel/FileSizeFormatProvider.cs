@@ -87,8 +87,7 @@ namespace Ecng.ComponentModel
 
 		private static string DefaultFormat(string format, object arg, IFormatProvider formatProvider)
 		{
-			var formattableArg = arg as IFormattable;
-			return formattableArg != null ? formattableArg.ToString(format, formatProvider) : arg.ToString();
+			return arg is IFormattable formattableArg ? formattableArg.ToString(format, formatProvider) : arg.ToString();
 		}
 
 		#endregion

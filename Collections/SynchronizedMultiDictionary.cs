@@ -97,9 +97,7 @@ namespace Ecng.Collections
 
 		public MultiDictionary<TKey, TValue> Range(TKey from, TKey to)
 		{
-			var ordered = _inner as OrderedMultiDictionary<TKey, TValue>;
-
-			if (ordered is null)
+			if (_inner is not OrderedMultiDictionary<TKey, TValue> ordered)
 				throw new NotSupportedException();
 
 			lock (SyncRoot)

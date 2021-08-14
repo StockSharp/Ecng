@@ -93,9 +93,8 @@
 					if (_compareStates is null)
 						return false;
 
-					var item = other as Item<TState>;
 
-					if (item is null)
+					if (other is not Item<TState> item)
 						return false;
 
 					return _compareStates(_state, item._state);

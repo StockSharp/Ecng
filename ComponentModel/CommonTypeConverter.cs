@@ -151,9 +151,7 @@ namespace Ecng.ComponentModel
 		/// <exception cref="T:System.NotSupportedException">The conversion cannot be performed. </exception>
 		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
 		{
-			var text = value as string;
-
-			if (text is null)
+			if (value is not string text)
 				return base.ConvertFrom(context, culture, value);
 
 			text = text.Trim();

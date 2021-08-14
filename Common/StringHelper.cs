@@ -66,9 +66,7 @@
 
 			bool ISource.TryEvaluateSelector(ISelectorInfo selectorInfo)
 			{
-				var dictionary = selectorInfo.CurrentValue as IDictionary;
-
-				if (dictionary is null)
+				if (selectorInfo.CurrentValue is not IDictionary dictionary)
 					return false;
 
 				var dictType = dictionary.GetType();

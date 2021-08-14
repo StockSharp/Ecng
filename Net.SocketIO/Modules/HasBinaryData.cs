@@ -23,37 +23,33 @@ namespace Ecng.Net.SocketIO.Modules
             }
 
 
-            var array = obj as JArray;
-            if (array != null)
-            {
-                if (array.Any(token => RecursiveCheckForBinary(token)))
-                {
-                    return true;
-                }
-            }
+			if (obj is JArray array)
+			{
+				if (array.Any(token => RecursiveCheckForBinary(token)))
+				{
+					return true;
+				}
+			}
 
-            var jobject = obj as JObject;
-            if (jobject != null)
-            {
-                if (jobject.Children().Any(child => RecursiveCheckForBinary(child)))
-                {
-                    return true;
-                }
-            }
+			if (obj is JObject jobject)
+			{
+				if (jobject.Children().Any(child => RecursiveCheckForBinary(child)))
+				{
+					return true;
+				}
+			}
 
-            var jvalue = obj as JValue;
-            if (jvalue != null)
-            {
-                return RecursiveCheckForBinary(jvalue.Value);
-            }
+			if (obj is JValue jvalue)
+			{
+				return RecursiveCheckForBinary(jvalue.Value);
+			}
 
-            var jprop = obj as JProperty;
-            if (jprop != null)
-            {
-                return RecursiveCheckForBinary(jprop.Value);
-            }
+			if (obj is JProperty jprop)
+			{
+				return RecursiveCheckForBinary(jprop.Value);
+			}
 
-            return false;
+			return false;
         }
     }
 }

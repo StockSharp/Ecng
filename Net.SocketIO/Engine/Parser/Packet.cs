@@ -92,31 +92,31 @@ namespace Ecng.Net.SocketIO.Engine.Parser
 
         private void EncodeBase64Packet(IEncodeCallback callback)
         {
-            var byteData = Data as byte[];
-            if (byteData != null)
-            {
-                var result = new StringBuilder();
-                result.Append("b");
-                result.Append(_packets[Type]);
-                result.Append(Convert.ToBase64String(byteData));
-                callback.Call(result.ToString());
-                return;
-            }
-            throw new Exception("byteData is null");
+			if (Data is byte[] byteData)
+			{
+				var result = new StringBuilder();
+				result.Append("b");
+				result.Append(_packets[Type]);
+				result.Append(Convert.ToBase64String(byteData));
+				callback.Call(result.ToString());
+				return;
+			}
+
+			throw new Exception($"Data is {Data?.GetType()}");
         }
 
         private void EncodeByteArray(IEncodeCallback callback)
         {
-            var byteData = Data as byte[];
-            if (byteData != null)
-            {
-                var resultArray = new byte[1 + byteData.Length];
-                resultArray[0] = _packets[Type];
-                Array.Copy(byteData, 0, resultArray, 1, byteData.Length);
-                callback.Call(resultArray);
-                return;
-            }
-            throw new Exception("byteData is null");
+			if (Data is byte[] byteData)
+			{
+				var resultArray = new byte[1 + byteData.Length];
+				resultArray[0] = _packets[Type];
+				Array.Copy(byteData, 0, resultArray, 1, byteData.Length);
+				callback.Call(resultArray);
+				return;
+			}
+
+			throw new Exception($"Data is {Data?.GetType()}");
         }
 
         internal static Packet DecodePacket(string data, bool utf8decode = false)

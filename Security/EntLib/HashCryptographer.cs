@@ -70,8 +70,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 		private HashAlgorithm GetHashAlgorithm()
 		{
 			HashAlgorithm algorithm = Activator.CreateInstance(algorithmType, true) as HashAlgorithm;
-			KeyedHashAlgorithm keyedHashAlgorithm = algorithm as KeyedHashAlgorithm;
-			if ((null != keyedHashAlgorithm) && (key != null))
+			if ((algorithm is KeyedHashAlgorithm keyedHashAlgorithm) && (key != null))
 			{
 				keyedHashAlgorithm.Key = key.DecryptedKey;
 			}
