@@ -5,7 +5,7 @@
 
 	public class SimpleResettableTimer : IDisposable
 	{
-		private readonly SyncObject _sync = new SyncObject();
+		private readonly SyncObject _sync = new();
 		private readonly TimeSpan _period;
 
 		private Timer _timer;

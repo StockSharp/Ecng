@@ -109,7 +109,7 @@
 
 			private class FlushItem : Item<object>
 			{
-				private readonly SyncObject _syncObject = new SyncObject();
+				private readonly SyncObject _syncObject = new();
 				private bool _isProcessed;
 				private Exception _err;
 
@@ -154,8 +154,8 @@
 
 			private readonly DelayAction _parent;
 			private readonly Func<T> _init;
-			private readonly SynchronizedList<IGroupItem> _actions = new SynchronizedList<IGroupItem>();
-			private readonly Dummy _dummy = new Dummy();
+			private readonly SynchronizedList<IGroupItem> _actions = new();
+			private readonly Dummy _dummy = new();
 
 			public Group(DelayAction parent, Func<T> init)
 			{
@@ -235,7 +235,7 @@
 		private Timer _flushTimer;
 		private bool _isFlushing;
 
-		private readonly CachedSynchronizedList<IGroup> _groups = new CachedSynchronizedList<IGroup>();
+		private readonly CachedSynchronizedList<IGroup> _groups = new();
 
 		public DelayAction(Action<Exception> errorHandler)
 		{
@@ -490,7 +490,7 @@
 			}
 		}
 
-		private readonly DummyBatchContext _batchContext = new DummyBatchContext();
+		private readonly DummyBatchContext _batchContext = new();
 
 		protected virtual IBatchContext BeginBatch(IGroup group)
 		{

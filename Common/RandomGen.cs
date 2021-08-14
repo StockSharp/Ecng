@@ -7,8 +7,8 @@ namespace Ecng.Common
 
 	public static class RandomGen
 	{
-		private static readonly SyncObject _sync = new SyncObject();
-		private static readonly Random _value = new Random((int)DateTime.Now.Ticks);
+		private static readonly SyncObject _sync = new();
+		private static readonly Random _value = new((int)DateTime.Now.Ticks);
 
 		public static double GetDouble()
 		{

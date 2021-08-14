@@ -4,8 +4,8 @@
 
 	public class ResettableTimer : Disposable
 	{
-		private readonly SyncObject _sync = new SyncObject();
-		private readonly SyncObject _finish = new SyncObject();
+		private readonly SyncObject _sync = new();
+		private readonly SyncObject _finish = new();
 		private bool _isActivated;
 		private bool _isFinished = true;
 		private bool _isCancelled;

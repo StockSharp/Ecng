@@ -80,7 +80,7 @@ namespace Ecng.Reflection.Emit
 
 		#region Methods
 
-		private readonly List<MethodGenerator> _methods = new List<MethodGenerator>();
+		private readonly List<MethodGenerator> _methods = new();
 
 		public IEnumerable<MethodGenerator> Methods => _methods;
 
@@ -88,7 +88,7 @@ namespace Ecng.Reflection.Emit
 
 		#region Ctors
 
-		private readonly List<MethodGenerator> _ctors = new List<MethodGenerator>();
+		private readonly List<MethodGenerator> _ctors = new();
 
 		public IEnumerable<MethodGenerator> Ctors => _ctors;
 
@@ -96,7 +96,7 @@ namespace Ecng.Reflection.Emit
 
 		#region Properties
 
-		private readonly List<PropertyGenerator> _properties = new List<PropertyGenerator>();
+		private readonly List<PropertyGenerator> _properties = new();
 
 		public IEnumerable<PropertyGenerator> Properties => _properties;
 
@@ -104,7 +104,7 @@ namespace Ecng.Reflection.Emit
 
 		#region Fields
 
-		private readonly List<FieldGenerator> _fields = new List<FieldGenerator>();
+		private readonly List<FieldGenerator> _fields = new();
 
 		public IEnumerable<FieldGenerator> Fields => _fields;
 
@@ -112,7 +112,7 @@ namespace Ecng.Reflection.Emit
 
 		#region Events
 
-		private readonly List<EventGenerator> _events = new List<EventGenerator>();
+		private readonly List<EventGenerator> _events = new();
 
 		public IEnumerable<EventGenerator> Events => _events;
 

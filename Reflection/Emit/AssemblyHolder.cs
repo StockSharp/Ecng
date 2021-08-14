@@ -14,7 +14,7 @@ namespace Ecng.Reflection.Emit
 		#region Private Fields
 
 		private static AssemblyGenerator _assembly;
-		private static readonly object _initializeSync = new object();
+		private static readonly object _initializeSync = new();
 
 		#endregion
 
@@ -47,7 +47,7 @@ namespace Ecng.Reflection.Emit
 
 		#region CachedTypes
 
-		private static readonly List<Type> _cachedTypes = new List<Type>();
+		private static readonly List<Type> _cachedTypes = new();
 
 		public static IList<Type> CachedTypes => _cachedTypes;
 

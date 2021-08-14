@@ -7,7 +7,7 @@ namespace Ecng.Serialization
 
 	public class VoidField : Field
 	{
-		private static readonly SynchronizedDictionary<Tuple<string, Type>, FieldFactory> _cachedFactories = new SynchronizedDictionary<Tuple<string, Type>, FieldFactory>();
+		private static readonly SynchronizedDictionary<Tuple<string, Type>, FieldFactory> _cachedFactories = new();
 
 		public VoidField(string name, Type type)
 			: base(name, type)

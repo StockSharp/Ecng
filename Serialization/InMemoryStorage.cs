@@ -9,7 +9,7 @@
 
 	public class InMemoryStorage : IStorage
 	{
-		private readonly SynchronizedMultiDictionary<Type, object> _cache = new SynchronizedMultiDictionary<Type, object>();
+		private readonly SynchronizedMultiDictionary<Type, object> _cache = new();
 
 		public long GetCount<TEntity>()
 		{

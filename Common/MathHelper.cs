@@ -782,8 +782,8 @@ namespace Ecng.Common
 			};
 		}
 
-		private static readonly SyncObject _syncObject = new SyncObject();
-		private static readonly Dictionary<decimal, int> _decimalsCache = new Dictionary<decimal, int>(); 
+		private static readonly SyncObject _syncObject = new();
+		private static readonly Dictionary<decimal, int> _decimalsCache = new(); 
 
 		public static int GetCachedDecimals(this decimal value)
 		{

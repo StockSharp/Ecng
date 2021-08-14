@@ -15,7 +15,7 @@ namespace Ecng.Interop
 #endif
 	sealed class HardwareInfo
 	{
-		private static readonly Lazy<HardwareInfo> _instance = new Lazy<HardwareInfo>(() => new HardwareInfo());
+		private static readonly Lazy<HardwareInfo> _instance = new(() => new HardwareInfo());
 
 		public static HardwareInfo Instance => _instance.Value;
 
@@ -93,7 +93,7 @@ namespace Ecng.Interop
 			return list;
 		}
 
-		private static readonly Regex _lsblkRegex = new Regex(@"^\s*/\s+([\da-f-]+)\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static readonly Regex _lsblkRegex = new(@"^\s*/\s+([\da-f-]+)\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		private static string GetLinuxVolumeId()
 		{

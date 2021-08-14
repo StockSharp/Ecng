@@ -14,7 +14,7 @@
 
 	public class FieldList : BaseList<Field>
 	{
-		private readonly Dictionary<string, Field> _innerDictionary = new Dictionary<string, Field>();
+		private readonly Dictionary<string, Field> _innerDictionary = new();
 
 		#region FieldList.ctor()
 

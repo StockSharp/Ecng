@@ -12,7 +12,7 @@ namespace Ecng.Transactions
 	{
 		#region Private Fields
 
-		private readonly LinkedList<KeyValuePair<Transaction, ManualResetEvent>> _pendingTransactions = new LinkedList<KeyValuePair<Transaction, ManualResetEvent>>();
+		private readonly LinkedList<KeyValuePair<Transaction, ManualResetEvent>> _pendingTransactions = new();
 
 		#endregion
 

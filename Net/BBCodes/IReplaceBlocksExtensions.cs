@@ -20,7 +20,7 @@
     /// The _reg ex html.
     /// </summary>
     private static readonly Regex _regExHtml =
-      new Regex(@"</?\w+((\s+\w+(\s*=\s*(?:"".*?""|'.*?'|[^'"">\s]+))?)+\s*|\s*)/?>", _options | RegexOptions.Compiled);
+      new(@"</?\w+((\s+\w+(\s*=\s*(?:"".*?""|'.*?'|[^'"">\s]+))?)+\s*|\s*)/?>", _options | RegexOptions.Compiled);
 
     #endregion
 

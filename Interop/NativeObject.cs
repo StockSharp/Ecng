@@ -19,7 +19,7 @@ namespace Ecng.Interop
 	{
 		#region Private Fields
 
-		private readonly List<Action> _actions = new List<Action>();
+		private readonly List<Action> _actions = new();
 
 		#endregion
 

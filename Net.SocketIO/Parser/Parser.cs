@@ -23,7 +23,7 @@ namespace Ecng.Net.SocketIO.Parser
         /// <summary>
         /// Packet types
         /// </summary>
-        public static List<string> types = new List<string>()
+        public static List<string> types = new()
         {
             "CONNECT",
             "DISCONNECT",
@@ -36,7 +36,7 @@ namespace Ecng.Net.SocketIO.Parser
 
         private Parser() { }
 
-        private static Packet ErrorPacket = new Packet(ERROR, "parser error");
+        private static Packet ErrorPacket = new(ERROR, "parser error");
 
         public class Encoder
         {
@@ -188,7 +188,7 @@ namespace Ecng.Net.SocketIO.Parser
 
             private Packet decodeString(string str)
             {
-                Packet p = new Packet();
+                Packet p = new();
                 int i = 0;
 
                 p.Type = int.Parse(str.Substring(0,1));
@@ -196,7 +196,7 @@ namespace Ecng.Net.SocketIO.Parser
 
                 if (BINARY_EVENT == p.Type || BINARY_ACK == p.Type)
                 {
-                    StringBuilder attachments = new StringBuilder();
+                    StringBuilder attachments = new();
                     while (str.Substring(++i, 1) != "-")
                     {
                         attachments.Append(str.Substring(i, 1));

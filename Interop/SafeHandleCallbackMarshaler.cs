@@ -25,7 +25,7 @@ namespace Ecng.Interop
 
 		#region ICustomMarshaler Members
 
-		private static readonly SafeHandleCallbackMarshaler _instance = new SafeHandleCallbackMarshaler();
+		private static readonly SafeHandleCallbackMarshaler _instance = new();
 
 		/// <summary>
 		/// Gets the instance.

@@ -7,9 +7,9 @@
 
 	public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	{
-		private readonly LinkedList<T> _inner = new LinkedList<T>();
+		private readonly LinkedList<T> _inner = new();
 
-		private readonly SyncObject _syncRoot = new SyncObject();
+		private readonly SyncObject _syncRoot = new();
 
 		public SyncObject SyncRoot => _syncRoot;
 

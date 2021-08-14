@@ -14,7 +14,7 @@
         /// <summary>
         ///   The _syntax highlighter.
         /// </summary>
-        private readonly HighLighter _syntaxHighlighter = new HighLighter();
+        private readonly HighLighter _syntaxHighlighter = new();
 
         #endregion
 

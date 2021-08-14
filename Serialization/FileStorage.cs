@@ -38,7 +38,7 @@
 		private readonly string _directory;
 		private readonly ISerializer _serializer;
 		//private readonly IList<Type> _types;
-		private readonly Dictionary<Type, EntityInfo> _info = new Dictionary<Type, EntityInfo>();
+		private readonly Dictionary<Type, EntityInfo> _info = new();
 
 		public FileStorage()
 			: this(Directory.GetCurrentDirectory())

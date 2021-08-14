@@ -130,7 +130,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 
 			byte[] transformBuffer = null;
 
-			using (MemoryStream ms = new MemoryStream())
+			using (MemoryStream ms = new())
 			{
 				CryptoStream cs = null;
 				try

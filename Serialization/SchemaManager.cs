@@ -12,8 +12,8 @@
 
 	public static class SchemaManager
 	{
-		private static readonly Dictionary<Type, Schema> _schemas = new Dictionary<Type, Schema>();
-		private static readonly Dictionary<Type, SchemaFactory> _schemaFactories = new Dictionary<Type, SchemaFactory>();
+		private static readonly Dictionary<Type, Schema> _schemas = new();
+		private static readonly Dictionary<Type, SchemaFactory> _schemaFactories = new();
 
 		static SchemaManager()
 		{

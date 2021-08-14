@@ -28,12 +28,12 @@ namespace Ecng.Interop
 #if !SILVERLIGHT
 		#region Private Fields
 
-		private static readonly List<object> _wrappers = new List<object>();
+		private static readonly List<object> _wrappers = new();
 
 		/// <summary>
 		/// For Newton collision's caching policy./
 		/// </summary>
-		private static readonly Dictionary<SafeHandle, object> _nativeObjects = new Dictionary<SafeHandle, object>();
+		private static readonly Dictionary<SafeHandle, object> _nativeObjects = new();
 
 		#endregion
 #endif

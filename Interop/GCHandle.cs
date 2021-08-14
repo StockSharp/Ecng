@@ -46,7 +46,7 @@ namespace Ecng.Interop
 		{
 		}
 
-		public SafePointer CreatePointer() => new SafePointer(Value.AddrOfPinnedObject(), _size);
+		public SafePointer CreatePointer() => new(Value.AddrOfPinnedObject(), _size);
 
 		/// <summary>
 		/// Disposes the native values.

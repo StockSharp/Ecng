@@ -14,10 +14,10 @@
 
 	public class LocalizationManager
 	{
-		private readonly Dictionary<string, string[]> _stringByResourceId = new Dictionary<string, string[]>();
-		private readonly Dictionary<string, int> _langIdx = new Dictionary<string, int>();
-		private readonly Dictionary<(string lang, string text), Dictionary<string, string>> _stringsByLang = new Dictionary<(string lang, string text), Dictionary<string, string>>();
-		private readonly Dictionary<(string lang, string text), string> _keysByLang = new Dictionary<(string lang, string text), string>();
+		private readonly Dictionary<string, string[]> _stringByResourceId = new();
+		private readonly Dictionary<string, int> _langIdx = new();
+		private readonly Dictionary<(string lang, string text), Dictionary<string, string>> _stringsByLang = new();
+		private readonly Dictionary<(string lang, string text), string> _keysByLang = new();
 
 		public string ActiveLanguage { get; set; } = LangCodes.En;
 

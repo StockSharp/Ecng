@@ -115,7 +115,7 @@ namespace Ecng.ComponentModel
 		#region Min
 
 		//private bool _isMinInit;
-		private readonly NullableEx<T> _min = new NullableEx<T>();
+		private readonly NullableEx<T> _min = new();
 
 		/// <summary>
 		/// Gets or sets the min value.
@@ -140,7 +140,7 @@ namespace Ecng.ComponentModel
 		#region Max
 
 		//private bool _isMaxInit;
-		private readonly NullableEx<T> _max = new NullableEx<T>();
+		private readonly NullableEx<T> _max = new();
 
 		/// <summary>
 		/// Gets or sets the max value.

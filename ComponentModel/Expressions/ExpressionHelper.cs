@@ -19,9 +19,9 @@ namespace Ecng.ComponentModel.Expressions
 	{
 		private const string IdPattern = @"(#*)(@*)(#*)(\w*\.*)(\**)(\w+(\/*)\w+)@\w+";
 
-		private static readonly Regex _idRegex = new Regex($@"(?<id>{IdPattern})");
-		private static readonly Regex _nameRegex = new Regex(@"(?<name>(\w+))");
-		private static readonly Regex _bracketsVarRegex = new Regex(@"\[(?<name>[^\]]*)\]");
+		private static readonly Regex _idRegex = new($@"(?<id>{IdPattern})");
+		private static readonly Regex _nameRegex = new(@"(?<name>(\w+))");
+		private static readonly Regex _bracketsVarRegex = new(@"\[(?<name>[^\]]*)\]");
 
 		/// <summary>
 		/// To get all identifiers from mathematical formula.
@@ -85,7 +85,7 @@ namespace Ecng.ComponentModel.Expressions
 		public static IEnumerable<string> Functions => _funcReplaces.CachedKeys;
 
 		private const string _prefix = nameof(MathHelper) + ".";
-		private static readonly CachedSynchronizedDictionary<string, string> _funcReplaces = new CachedSynchronizedDictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+		private static readonly CachedSynchronizedDictionary<string, string> _funcReplaces = new(StringComparer.InvariantCultureIgnoreCase)
 		{
 			{ "abs", _prefix + nameof(MathHelper.Abs) },
 			{ "acos", _prefix + nameof(MathHelper.Acos) },

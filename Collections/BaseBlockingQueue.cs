@@ -33,7 +33,7 @@
 			}
 		}
 
-		private readonly SyncObject _syncRoot = new SyncObject();
+		private readonly SyncObject _syncRoot = new();
 
 		public SyncObject SyncRoot => _syncRoot;
 

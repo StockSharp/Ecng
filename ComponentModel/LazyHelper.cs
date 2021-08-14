@@ -7,9 +7,9 @@
 
 	public static class LazyHelper
 	{
-		private static readonly SynchronizedDictionary<object, Delegate> _factories = new SynchronizedDictionary<object, Delegate>(); 
+		private static readonly SynchronizedDictionary<object, Delegate> _factories = new(); 
 #if NETCOREAPP || NETSTANDARD
-		private static readonly SynchronizedDictionary<object, object> _states = new SynchronizedDictionary<object, object>(); 
+		private static readonly SynchronizedDictionary<object, object> _states = new(); 
 #endif
 
 		public static Lazy<T> Track<T>(this Lazy<T> lazy)

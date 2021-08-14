@@ -38,7 +38,7 @@ namespace Ecng.Net.SocketIO.Engine.Client.Transports
 
             opts.ExtraHeaders = this.ExtraHeaders;
 
-            XHRRequest req = new XHRRequest(opts);
+            XHRRequest req = new(opts);
 
 
             req.On(EVENT_REQUEST_HEADERS, new EventRequestHeadersListener(this)).

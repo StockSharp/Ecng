@@ -28,7 +28,7 @@ namespace Ecng.Net.SocketIO.Engine.Parser
         //TODO: suport binary?
         private bool SupportsBinary = false;
 
-        private static readonly Dictionary<string, byte> _packets = new Dictionary<string, byte>()
+        private static readonly Dictionary<string, byte> _packets = new()
         {
             {Packet.OPEN, 0},
             {Packet.CLOSE, 1},
@@ -39,7 +39,7 @@ namespace Ecng.Net.SocketIO.Engine.Parser
             {Packet.NOOP, 6}
         };
 
-        private static readonly Dictionary<byte, string> _packetsList = new Dictionary<byte, string>();
+        private static readonly Dictionary<byte, string> _packetsList = new();
 
         static Packet()
         {
@@ -49,7 +49,7 @@ namespace Ecng.Net.SocketIO.Engine.Parser
             }
         }
 
-        private static readonly Packet _err = new Packet(Packet.ERROR,"parser error");
+        private static readonly Packet _err = new(Packet.ERROR,"parser error");
 
         public string Type { get; set; }
         public object Data { get; set; }

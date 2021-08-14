@@ -80,8 +80,8 @@
 		private readonly Regex _rgxPackage;
 		private readonly Regex _rgxProduct;
 
-		private static readonly Regex _isStockSharpEn = new Regex("href=\"(http://)?(https://)?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-		private static readonly Regex _isStockSharpRu = new Regex("href=\"(http://)?(https://)?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static readonly Regex _isStockSharpEn = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static readonly Regex _isStockSharpRu = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		//private const RegexOptions _options = RegexOptions.Multiline | RegexOptions.IgnoreCase;
 

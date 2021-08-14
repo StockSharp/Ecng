@@ -15,7 +15,7 @@ namespace Ecng.Net
 	{
 		#region Private Fields
 
-		private static readonly Dictionary<TId, Context<TBehavior>> _contexts = new Dictionary<TId, Context<TBehavior>>();
+		private static readonly Dictionary<TId, Context<TBehavior>> _contexts = new();
 
 		#endregion
 

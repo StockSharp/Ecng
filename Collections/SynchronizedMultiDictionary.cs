@@ -27,7 +27,7 @@ namespace Ecng.Collections
 			_inner = new OrderedMultiDictionary<TKey, TValue>(false, comparer.ToComparer());
 		}
 
-		private readonly SyncObject _syncRoot = new SyncObject();
+		private readonly SyncObject _syncRoot = new();
 
 		public SyncObject SyncRoot => _syncRoot;
 

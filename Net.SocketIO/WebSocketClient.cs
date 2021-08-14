@@ -19,9 +19,9 @@
 		private CancellationTokenSource _source;
 		private bool _expectedDisconnect;
 
-		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new SynchronizedDictionary<CancellationTokenSource, bool>();
+		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new();
 
-		private readonly SynchronizedList<Tuple<byte[], WebSocketMessageType, long>> _resendCommands = new SynchronizedList<Tuple<byte[], WebSocketMessageType, long>>();
+		private readonly SynchronizedList<Tuple<byte[], WebSocketMessageType, long>> _resendCommands = new();
 
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;

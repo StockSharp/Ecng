@@ -11,7 +11,7 @@
 	[Serializable]
 	public class SynchronizedOrderedList<T> : ISynchronizedCollection<T>, IList<T>
 	{
-		private readonly HashSet<T> _nonOrderedList = new HashSet<T>();
+		private readonly HashSet<T> _nonOrderedList = new();
 		private readonly OrderedBag<T> _inner;
 
 		public SynchronizedOrderedList()
@@ -29,7 +29,7 @@
 			_inner = new OrderedBag<T>(comparison);
 		}
 
-		private readonly SyncObject _syncRoot = new SyncObject();
+		private readonly SyncObject _syncRoot = new();
 
 		public SyncObject SyncRoot => _syncRoot;
 

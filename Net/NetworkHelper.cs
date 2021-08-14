@@ -359,7 +359,7 @@ namespace Ecng.Net
 			return true;
 		}
 
-		private static readonly SynchronizedSet<string> _imgExts = new SynchronizedSet<string>
+		private static readonly SynchronizedSet<string> _imgExts = new()
 		{
 			".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg"
 		};

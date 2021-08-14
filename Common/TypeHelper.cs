@@ -204,7 +204,7 @@ namespace Ecng.Common
 		}
 
 #if !SILVERLIGHT
-		private static readonly Lazy<string> _applicationName = new Lazy<string>(() =>
+		private static readonly Lazy<string> _applicationName = new(() =>
 		{
 			var asm = Assembly.GetEntryAssembly();
 			if (asm is null)
@@ -215,7 +215,7 @@ namespace Ecng.Common
 
 		public static string ApplicationName => _applicationName.Value;
 
-		private static readonly Lazy<string> _applicationNameWithVersion = new Lazy<string>(() =>
+		private static readonly Lazy<string> _applicationNameWithVersion = new(() =>
 		{
 			var asm = Assembly.GetEntryAssembly();
 

@@ -12,7 +12,7 @@ namespace Ecng.Common
 	[Serializable]
 	public abstract class Disposable : IDisposable
 	{
-		private readonly object _lock = new object();
+		private readonly object _lock = new();
 
 		#region IsDisposed
 

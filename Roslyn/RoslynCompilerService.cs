@@ -5,7 +5,7 @@ namespace Ecng.Roslyn
 
 	public class RoslynCompilerService : ICompilerService
 	{
-		private readonly SynchronizedDictionary<CompilationLanguages, ICompiler> _compilers = new SynchronizedDictionary<CompilationLanguages, ICompiler>();
+		private readonly SynchronizedDictionary<CompilationLanguages, ICompiler> _compilers = new();
 
 		public ICompiler GetCompiler(CompilationLanguages language)
 		{

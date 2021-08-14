@@ -16,7 +16,7 @@
 		[ThreadStatic]
 		protected static bool HasNewItems;
 
-		private static readonly List<EventsContainer> _containers = new List<EventsContainer>();
+		private static readonly List<EventsContainer> _containers = new();
 
 		protected EventsContainer()
 		{

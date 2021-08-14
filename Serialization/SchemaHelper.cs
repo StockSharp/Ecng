@@ -53,7 +53,7 @@
 
 		#region MatchFactory
 
-		private static readonly Dictionary<Tuple<Field, Type>, bool> _matchFactoryCache = new Dictionary<Tuple<Field, Type>, bool>();
+		private static readonly Dictionary<Tuple<Field, Type>, bool> _matchFactoryCache = new();
 
 		public static bool MatchFactory(this Field field, Type baseType)
 		{

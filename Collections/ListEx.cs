@@ -9,8 +9,8 @@ namespace Ecng.Collections
 
 	public class ListEx<T> : BaseListEx<T>
 	{
-		private readonly List<T> _innerList = new List<T>();
-		private readonly Dictionary<string, Func<T, object>> _properties = new Dictionary<string, Func<T, object>>(); 
+		private readonly List<T> _innerList = new();
+		private readonly Dictionary<string, Func<T, object>> _properties = new(); 
 
 		public ListEx()
 		{

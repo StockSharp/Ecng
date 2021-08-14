@@ -125,7 +125,7 @@ namespace Ecng.Collections
             if (pq1 is null || pq2 is null || comparer is null)
                 throw new ArgumentNullException();
             // merge data
-            PriorityQueue<TPriority, TValue> result = new PriorityQueue<TPriority, TValue>(pq1.Count + pq2.Count, pq1._comparer);
+            PriorityQueue<TPriority, TValue> result = new(pq1.Count + pq2.Count, pq1._comparer);
             result._baseHeap.AddRange(pq1._baseHeap);
             result._baseHeap.AddRange(pq2._baseHeap);
             // heapify data
@@ -225,7 +225,7 @@ namespace Ecng.Collections
 
         private void Insert(TPriority priority, TValue value)
         {
-            KeyValuePair<TPriority, TValue> val = new KeyValuePair<TPriority, TValue>(priority, value);
+            KeyValuePair<TPriority, TValue> val = new(priority, value);
             _baseHeap.Add(val);
 
             // heap[i] have children heap[2*i + 1] and heap[2*i + 2] and parent heap[(i-1)/ 2];

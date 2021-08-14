@@ -12,7 +12,7 @@ namespace Ecng.Interop.Dde
 	[CLSCompliant(false)]
 	public class XlsDdeServer : DdeServer
 	{
-		private readonly SyncObject _registerWait = new SyncObject();
+		private readonly SyncObject _registerWait = new();
 		private Timer _adviseTimer;
 		private readonly EventDispatcher _dispather;
 		private readonly Action<string, IList<IList<object>>> _poke;

@@ -15,7 +15,7 @@ namespace Ecng.Transactions
 	{
 		#region Private Fields
 
-		private readonly TransactionalLock _lock = new TransactionalLock();
+		private readonly TransactionalLock _lock = new();
 		private T _temporaryValue;
 		private Transaction _currentTransaction;
 

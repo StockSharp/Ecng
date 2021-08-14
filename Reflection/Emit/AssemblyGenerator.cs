@@ -32,7 +32,7 @@
 
 		#region Types
 
-		private readonly List<TypeGenerator> _types = new List<TypeGenerator>();
+		private readonly List<TypeGenerator> _types = new();
 
 		public IEnumerable<TypeGenerator> Types => _types;
 
@@ -40,7 +40,7 @@
 
 		#region Enums
 
-		private readonly List<EnumGenerator> _enums = new List<EnumGenerator>();
+		private readonly List<EnumGenerator> _enums = new();
 
 		public IEnumerable<EnumGenerator> Enums => _enums;
 

@@ -13,7 +13,7 @@ namespace Ecng.Serialization
 
 	public class SerializationItemCollection : BaseList<SerializationItem>, ICloneable<SerializationItemCollection>
 	{
-		private readonly Dictionary<string, SerializationItem> _innerDictionary = new Dictionary<string, SerializationItem>();
+		private readonly Dictionary<string, SerializationItem> _innerDictionary = new();
 
 		public SerializationItemCollection()
 		{

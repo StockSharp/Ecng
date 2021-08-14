@@ -58,7 +58,7 @@ namespace Ecng.Serialization
 	{
 		#region Private Fields
 
-		private static readonly BinarySerializer<T> _serializer = new BinarySerializer<T>();
+		private static readonly BinarySerializer<T> _serializer = new();
 
 		#endregion
 

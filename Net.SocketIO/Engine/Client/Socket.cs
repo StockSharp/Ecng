@@ -64,7 +64,7 @@ namespace Ecng.Net.SocketIO.Engine.Client
         private Dictionary<string, string> Query;
         private ImmutableList<Packet> WriteBuffer = ImmutableList<Packet>.Empty;
         private ImmutableList<Action> CallbackBuffer = ImmutableList<Action>.Empty;
-        private Dictionary<string, string> Cookies = new Dictionary<string, string>();
+        private Dictionary<string, string> Cookies = new();
         /*package*/
         public Transport Transport;
         private EasyTimer PingTimeoutTimer;

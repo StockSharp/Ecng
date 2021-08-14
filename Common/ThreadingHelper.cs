@@ -53,7 +53,7 @@ namespace Ecng.Common
 			return CreateTimer(s => handler(arg1, arg2, arg3, arg4));
 		}
 
-		private static readonly Dictionary<Timer, TimeSpan> _intervals = new Dictionary<Timer,TimeSpan>();
+		private static readonly Dictionary<Timer, TimeSpan> _intervals = new();
 
 		public static TimeSpan Interval(this Timer timer)
 		{

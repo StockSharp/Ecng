@@ -79,7 +79,7 @@ namespace Ecng.Common
 
 	public class Fw40CompilerService : ICompilerService
 	{
-		private readonly Dictionary<CompilationLanguages, ICompiler> _compilers = new Dictionary<CompilationLanguages, ICompiler>();
+		private readonly Dictionary<CompilationLanguages, ICompiler> _compilers = new();
 
 		public Fw40CompilerService(string outputDir, string tempPath)
 		{

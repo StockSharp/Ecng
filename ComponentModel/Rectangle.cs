@@ -93,7 +93,7 @@ namespace Ecng.ComponentModel
 		/// Gets the center.
 		/// </summary>
 		/// <value>The center.</value>
-		public Point<T> Center => new Point<T>(_operator.Add(Location.X, _operator.Divide(Size.Width, 2.To<T>())), _operator.Add(Location.Y, _operator.Divide(Size.Height, 2.To<T>())));
+		public Point<T> Center => new(_operator.Add(Location.X, _operator.Divide(Size.Width, 2.To<T>())), _operator.Add(Location.Y, _operator.Divide(Size.Height, 2.To<T>())));
 
 		#endregion
 

@@ -37,11 +37,11 @@
 		}
 #else
 
-		private static readonly Dictionary<Type, ConfigurationSection> _sections = new Dictionary<Type, ConfigurationSection>();
-		private static readonly Dictionary<Type, ConfigurationSectionGroup> _sectionGroups = new Dictionary<Type, ConfigurationSectionGroup>();
+		private static readonly Dictionary<Type, ConfigurationSection> _sections = new();
+		private static readonly Dictionary<Type, ConfigurationSectionGroup> _sectionGroups = new();
 
-		private static readonly SyncObject _sync = new SyncObject();
-		private static readonly Dictionary<Type, Dictionary<string, object>> _services = new Dictionary<Type, Dictionary<string, object>>();
+		private static readonly SyncObject _sync = new();
+		private static readonly Dictionary<Type, Dictionary<string, object>> _services = new();
 #endif
 #if !NETSTANDARD
 		private static readonly UnityContainer _unityContainer;
@@ -222,7 +222,7 @@
 
 		public static event Action<Type, object> ServiceRegistered;
 
-		private static readonly Dictionary<Type, List<Action<object>>> _subscribers = new Dictionary<Type, List<Action<object>>>();
+		private static readonly Dictionary<Type, List<Action<object>>> _subscribers = new();
 
 		public static void SubscribeOnRegister<T>(Action<T> registered)
 		{

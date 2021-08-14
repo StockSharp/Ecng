@@ -32,7 +32,7 @@ namespace Ecng.Reflection.Emit
 
 		#region Fields
 
-		private readonly List<EnumFieldGenerator> _fields = new List<EnumFieldGenerator>();
+		private readonly List<EnumFieldGenerator> _fields = new();
 
 		public IEnumerable<EnumFieldGenerator> Fields => _fields;
 

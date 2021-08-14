@@ -80,10 +80,10 @@
 			CopyTo((TEntity[])array, index);
 		}
 
-		private readonly SynchronizedSet<TEntity> _cache = new SynchronizedSet<TEntity>();
+		private readonly SynchronizedSet<TEntity> _cache = new();
 		private bool _bulkInitialized;
 		private int? _count;
-		private readonly CachedSynchronizedDictionary<TEntity, object> _pendingAdd = new CachedSynchronizedDictionary<TEntity, object>(); 
+		private readonly CachedSynchronizedDictionary<TEntity, object> _pendingAdd = new(); 
 
 		protected RelationManyList(IStorage storage)
 		{

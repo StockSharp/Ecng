@@ -10,7 +10,7 @@
 	public class EventDispatcher : Disposable
 	{
 		private readonly Action<Exception> _errorHandler;
-		private readonly SynchronizedDictionary<string, BlockingQueue<Action>> _events = new SynchronizedDictionary<string, BlockingQueue<Action>>();
+		private readonly SynchronizedDictionary<string, BlockingQueue<Action>> _events = new();
 
 		public EventDispatcher(Action<Exception> errorHandler)
 		{

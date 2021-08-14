@@ -193,8 +193,8 @@ namespace Ecng.Net.SocketIO.Engine.Client
             public Dictionary<string, string> Query;
             public bool IgnoreServerCertificateValidation = false;
             internal Socket Socket;
-            public Dictionary<string, string> Cookies = new Dictionary<string, string>();
-            public Dictionary<string, string> ExtraHeaders = new Dictionary<string, string>();
+            public Dictionary<string, string> Cookies = new();
+            public Dictionary<string, string> ExtraHeaders = new();
 
             public string GetCookiesAsString()
             {

@@ -22,7 +22,7 @@
     /// <summary>
     ///   The _rules lock.
     /// </summary>
-    private readonly object _rulesLock = new object();
+    private readonly object _rulesLock = new();
 
     /// <summary>
     ///   The _need sort.

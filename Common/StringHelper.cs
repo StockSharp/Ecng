@@ -60,9 +60,9 @@
 #if !SILVERLIGHT
 		private class DictionarySourceEx : ISource
 		{
-			private readonly SyncObject _sync = new SyncObject();
-			private readonly Dictionary<Type, Type> _genericTypes = new Dictionary<Type, Type>();
-			private readonly Dictionary<string, object> _keys = new Dictionary<string, object>();
+			private readonly SyncObject _sync = new();
+			private readonly Dictionary<Type, Type> _genericTypes = new();
+			private readonly Dictionary<string, object> _keys = new();
 
 			bool ISource.TryEvaluateSelector(ISelectorInfo selectorInfo)
 			{
@@ -777,7 +777,7 @@
 				       : str;
 		}
 
-		private static readonly Dictionary<char, string> _charMap = new Dictionary<char, string>
+		private static readonly Dictionary<char, string> _charMap = new()
 		{
 			{ 'а', "a" },
 			{ 'б', "b" },

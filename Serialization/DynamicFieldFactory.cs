@@ -8,8 +8,8 @@
 
 	public class DynamicFieldFactory : InnerSchemaFieldFactory<object>
 	{
-		private readonly Dictionary<Type, FieldFactory> _factoriesByFieldType = new Dictionary<Type, FieldFactory>();
-		private readonly Dictionary<Type, FieldFactory> _factoriesByType = new Dictionary<Type, FieldFactory>();
+		private readonly Dictionary<Type, FieldFactory> _factoriesByFieldType = new();
+		private readonly Dictionary<Type, FieldFactory> _factoriesByType = new();
 
 		public DynamicFieldFactory(Field field, int order)
 			: base(field, order)

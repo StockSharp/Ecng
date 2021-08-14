@@ -25,7 +25,7 @@ namespace Ecng.Reflection
 
 		#region ProxyTypes
 
-		private static readonly Dictionary<Type, Type> _proxyTypes = new Dictionary<Type, Type>();
+		private static readonly Dictionary<Type, Type> _proxyTypes = new();
 
 		public static IDictionary<Type, Type> ProxyTypes => _proxyTypes;
 
@@ -61,7 +61,7 @@ namespace Ecng.Reflection
 
 		#region GetGenericType
 
-		private static readonly SynchronizedDictionary<Tuple<Type, Type>, Type> _genericTypeCache = new SynchronizedDictionary<Tuple<Type, Type>, Type>();
+		private static readonly SynchronizedDictionary<Tuple<Type, Type>, Type> _genericTypeCache = new();
 
 		public static Type GetGenericType(this Type targetType, Type genericType)
 		{
@@ -581,7 +581,7 @@ namespace Ecng.Reflection
 
 		#region IsAbstract
 
-		private static readonly Dictionary<MemberInfo, bool> _isAbstractCache = new Dictionary<MemberInfo, bool>();
+		private static readonly Dictionary<MemberInfo, bool> _isAbstractCache = new();
 
 		public static bool IsAbstract(this MemberInfo member)
 		{
@@ -610,7 +610,7 @@ namespace Ecng.Reflection
 
 		#region IsVirtual
 
-		private static readonly Dictionary<MemberInfo, bool> _isVirtualCache = new Dictionary<MemberInfo, bool>();
+		private static readonly Dictionary<MemberInfo, bool> _isVirtualCache = new();
 
 		public static bool IsVirtual(this MemberInfo member)
 		{
@@ -735,7 +735,7 @@ namespace Ecng.Reflection
 
 		#region IsCollection
 
-		private static readonly Dictionary<Type, bool> _isCollectionCache = new Dictionary<Type, bool>();
+		private static readonly Dictionary<Type, bool> _isCollectionCache = new();
 
 		public static bool IsCollection(this Type type)
 		{
@@ -757,7 +757,7 @@ namespace Ecng.Reflection
 
 		#region IsStatic
 
-		private static readonly Dictionary<MemberInfo, bool> _isStaticCache = new Dictionary<MemberInfo, bool>();
+		private static readonly Dictionary<MemberInfo, bool> _isStaticCache = new();
 
 		public static bool IsStatic(this MemberInfo member)
 		{
@@ -792,7 +792,7 @@ namespace Ecng.Reflection
 
 		#region GetItemType
 
-		private static readonly Dictionary<Type, Type> _getItemTypeCache = new Dictionary<Type, Type>();
+		private static readonly Dictionary<Type, Type> _getItemTypeCache = new();
 
 		public static Type GetItemType(this Type collectionType)
 		{
@@ -835,7 +835,7 @@ namespace Ecng.Reflection
 
 		#region GetAccessorOwner
 
-		private static readonly Dictionary<MethodInfo, MemberInfo> _getAccessorOwnerCache = new Dictionary<MethodInfo, MemberInfo>();
+		private static readonly Dictionary<MethodInfo, MemberInfo> _getAccessorOwnerCache = new();
 
 		public static MemberInfo GetAccessorOwner(this MethodInfo method)
 		{

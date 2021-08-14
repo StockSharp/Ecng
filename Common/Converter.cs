@@ -23,13 +23,13 @@
 
 	public static class Converter
 	{
-		private static readonly Dictionary<Type, DbType> _dbTypes = new Dictionary<Type, DbType>();
-		private static readonly Dictionary<string, Type> _aliases = new Dictionary<string, Type>();
-		private static readonly Dictionary<Type, List<string>> _aliasesByValue = new Dictionary<Type, List<string>>();
-		private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
+		private static readonly Dictionary<Type, DbType> _dbTypes = new();
+		private static readonly Dictionary<string, Type> _aliases = new();
+		private static readonly Dictionary<Type, List<string>> _aliasesByValue = new();
+		private static readonly Dictionary<string, Type> _typeCache = new();
 
-		private static readonly Dictionary<Tuple<Type, Type>, Delegate> _typedConverters = new Dictionary<Tuple<Type, Type>, Delegate>();
-		private static readonly Dictionary<Tuple<Type, Type>, Func<object, object>> _typedConverters2 = new Dictionary<Tuple<Type, Type>, Func<object, object>>();
+		private static readonly Dictionary<Tuple<Type, Type>, Delegate> _typedConverters = new();
+		private static readonly Dictionary<Tuple<Type, Type>, Func<object, object>> _typedConverters2 = new();
 
 		static Converter()
 		{

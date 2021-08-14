@@ -25,7 +25,7 @@ namespace Ecng.Net.SocketIO.Client
         public static readonly string EVENT_RECONNECT_ATTEMPT = Manager.EVENT_RECONNECT_ATTEMPT;
         public static readonly string EVENT_RECONNECTING = Manager.EVENT_RECONNECTING;
 
-        private static readonly List<string> Events = new List<string>()
+        private static readonly List<string> Events = new()
         {
             EVENT_CONNECT,
             EVENT_CONNECT_ERROR,

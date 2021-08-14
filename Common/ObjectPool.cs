@@ -7,7 +7,7 @@
 		where T : new()
 	{
 		private int _approxCount;
-		private readonly ConcurrentBag<T> _pool = new ConcurrentBag<T>();
+		private readonly ConcurrentBag<T> _pool = new();
 
 		public int Count => _pool.Count;
 

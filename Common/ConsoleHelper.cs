@@ -35,7 +35,7 @@
 			ConsoleWithColor(() => Console.WriteLine(message), color);
 		}
 
-		private static readonly SyncObject _lock = new SyncObject();
+		private static readonly SyncObject _lock = new();
 
 		public static void ConsoleWithColor(this Action handler, ConsoleColor color)
 		{

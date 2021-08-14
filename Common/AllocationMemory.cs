@@ -5,7 +5,7 @@ namespace Ecng.Common
 
 	public class AllocationMemory
 	{
-		private readonly List<byte[]> _allocationBuffers = new List<byte[]>();
+		private readonly List<byte[]> _allocationBuffers = new();
 		private readonly int _bufferSize;
 
 		public AllocationMemory(int bufferSize)

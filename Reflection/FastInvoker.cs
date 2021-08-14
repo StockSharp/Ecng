@@ -135,9 +135,9 @@ namespace Ecng.Reflection
 
 		#region Private Fields
 
-		private readonly static Dictionary<MemberInfo, FastInvoker> _getValueInvokeDelegates = new Dictionary<MemberInfo, FastInvoker>();
-		private readonly static Dictionary<MemberInfo, FastInvoker> _setValueInvokeDelegates = new Dictionary<MemberInfo, FastInvoker>();
-		private readonly static Dictionary<MemberInfo, FastInvoker> _methodInvokeDelegates = new Dictionary<MemberInfo, FastInvoker>();
+		private readonly static Dictionary<MemberInfo, FastInvoker> _getValueInvokeDelegates = new();
+		private readonly static Dictionary<MemberInfo, FastInvoker> _setValueInvokeDelegates = new();
+		private readonly static Dictionary<MemberInfo, FastInvoker> _methodInvokeDelegates = new();
 
 		#endregion
 

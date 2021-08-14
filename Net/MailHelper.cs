@@ -77,7 +77,7 @@
 			return stream;
 		}
 
-		private static readonly Regex _emailRegex1 = new Regex(@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,10})+)$", RegexOptions.Compiled | RegexOptions.Singleline);
+		private static readonly Regex _emailRegex1 = new(@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,10})+)$", RegexOptions.Compiled | RegexOptions.Singleline);
 
 		public static bool IsEmailValid(this string email)
 		{

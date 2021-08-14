@@ -50,7 +50,7 @@
 
 		#region Locals
 
-		private readonly List<LocalGenerator> _locals = new List<LocalGenerator>();
+		private readonly List<LocalGenerator> _locals = new();
 
 		public IEnumerable<LocalGenerator> Locals => _locals;
 

@@ -193,7 +193,7 @@ namespace Ecng.Common
 			CurrPos++;
 
 			// Parse column
-			StringBuilder builder = new StringBuilder();
+			StringBuilder builder = new();
 			while (true)
 			{
 				while (CurrPos == CurrLine.Length)

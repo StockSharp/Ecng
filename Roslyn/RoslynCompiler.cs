@@ -14,7 +14,7 @@
 
 	public class RoslynCompiler : ICompiler
 	{
-		private static readonly Dictionary<string, string> _redirects = new Dictionary<string, string>
+		private static readonly Dictionary<string, string> _redirects = new()
 		{
 			{ "System.Collections.Immutable, Version=1.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.Collections.Immutable.dll"},
 			{ "System.IO.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.IO.FileSystem.dll"},
