@@ -6,7 +6,7 @@ namespace Ecng.Common
 
 	public static class XmlHelper
 	{
-		public static T GetElementValue<T>(this XElement parent, string name, T defaultValue = default(T))
+		public static T GetElementValue<T>(this XElement parent, string name, T defaultValue = default)
 		{
 			if (parent is null)
 				throw new ArgumentNullException(nameof(parent));
@@ -15,7 +15,7 @@ namespace Ecng.Common
 			return elem is null ? defaultValue : elem.Value.To<T>();
 		}
 
-		public static T GetAttributeValue<T>(this XElement elem, string name, T defaultValue = default(T))
+		public static T GetAttributeValue<T>(this XElement elem, string name, T defaultValue = default)
 		{
 			if (elem is null)
 				throw new ArgumentNullException(nameof(elem));

@@ -28,8 +28,8 @@ namespace Ecng.ComponentModel
 		/// </summary>
 		static Range()
 		{
-			MinValue = default(T);
-			MaxValue = default(T);
+			MinValue = default;
+			MaxValue = default;
 		}
 
 		/// <summary>

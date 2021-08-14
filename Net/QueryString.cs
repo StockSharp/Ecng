@@ -83,7 +83,7 @@
 
 		public T TryGetValue<T>(string queryField)
 		{
-			return TryGetValue(queryField, default(T));
+			return TryGetValue<T>(queryField, default);
 		}
 
 		public T TryGetValue<T>(string queryField, T defaultValue)

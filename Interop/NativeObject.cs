@@ -61,30 +61,30 @@ namespace Ecng.Interop
 		/// <summary>
 		/// Gets the value.
 		/// </summary>
-		/// <remarks>If object isn't initialized, return default(T)</remarks>
+		/// <remarks>If object isn't initialized, return default</remarks>
 		/// <param name="create">The create.</param>
 		/// <returns></returns>
 		protected TValue GetValue<TValue>(Func<TValue> create)
 		{
-			return Value is null ? default(TValue) : create();
+			return Value is null ? default : create();
 		}
 
 		/// <summary>
 		/// Gets the value.
 		/// </summary>
-		/// <remarks>If object isn't initialized, return default(T)</remarks>
+		/// <remarks>If object isn't initialized, return default</remarks>
 		/// <param name="action">The action.</param>
 		/// <returns></returns>
 		protected TValue GetValue<TValue>(Func<TValue, TValue> action)
 			where TValue : struct
 		{
-			return GetValue(action, default(TValue));
+			return GetValue(action, default);
 		}
 
 		/// <summary>
 		/// Gets the value.
 		/// </summary>
-		/// <remarks>If object isn't initialized, return default(T)</remarks>
+		/// <remarks>If object isn't initialized, return default</remarks>
 		/// <param name="action">The action.</param>
 		/// <param name="defaultValue">The default value.</param>
 		/// <returns></returns>

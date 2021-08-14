@@ -132,7 +132,7 @@
 			{
 				if (!WaitWhileEmpty(exitOnClose, block))
 				{
-					value = default(T);
+					value = default;
 					return false;
 				}
 
@@ -160,7 +160,7 @@
 			{
 				if (!WaitWhileEmpty(exitOnClose, block))
 				{
-					value = default(T);
+					value = default;
 					return false;
 				}
 

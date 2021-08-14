@@ -52,7 +52,7 @@ namespace Ecng.Common
 		/// Gets a value indicating whether this instance has value.
 		/// </summary>
 		/// <value><c>true</c> if this instance has value; otherwise, <c>false</c>.</value>
-		public bool HasValue => !object.ReferenceEquals(Value, default(T));
+		public bool HasValue => !ReferenceEquals(Value, default(T));
 
 		#endregion
 

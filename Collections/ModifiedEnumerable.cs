@@ -27,7 +27,7 @@
 				else
 				{
 					canProcess = false;
-					return default(T);
+					return default;
 				}
 			}
 

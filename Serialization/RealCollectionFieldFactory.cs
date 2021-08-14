@@ -36,7 +36,7 @@ namespace Ecng.Serialization
 				var name = index.ToString();
 
 				if (item.IsNull())
-					source.Add(new SerializationItem<TItem>(new VoidField<TItem>(name), default(TItem)));
+					source.Add(new SerializationItem<TItem>(new VoidField<TItem>(name), default));
 				else
 				{
 					if (primitive)

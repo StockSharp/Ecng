@@ -22,7 +22,7 @@ namespace Ecng.Collections
 		protected override void DisposeManaged()
 		{
 			Reset();
-			Source = default(TEnumerable);
+			Source = default;
 		}
 
 		public override bool MoveNext()
@@ -36,7 +36,7 @@ namespace Ecng.Collections
 
 		public override void Reset()
 		{
-			Current = default(TItem);
+			Current = default;
 		}
 
 		protected abstract TItem ProcessMove(ref bool canProcess);

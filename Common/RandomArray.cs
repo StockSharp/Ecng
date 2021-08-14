@@ -14,7 +14,7 @@
 		{
 			Count = count;
 
-			_data = Enumerable.Repeat(default(T), count).ToArray();
+			_data = Enumerable.Repeat<T>(default, count).ToArray();
 
 			if (typeof(T) == typeof(double))
 			{

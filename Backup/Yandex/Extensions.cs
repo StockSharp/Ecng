@@ -26,7 +26,7 @@ namespace Ecng.Backup.Yandex
 			var sync = new SyncObject();
 			var pulsed = false;
 			Exception error = null;
-			var result = default(TResult);
+			TResult result = default;
 
 			EventHandler<TArg> handler = (s, e) =>
 			{

@@ -235,7 +235,7 @@ namespace Ecng.Common
 			if (func is null)
 				throw new ArgumentNullException(nameof(func));
 
-			var retVal = default(T);
+			T retVal = default;
 			Exception threadEx = null;
 
 			var staThread = Thread(() =>
