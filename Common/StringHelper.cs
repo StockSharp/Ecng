@@ -11,13 +11,11 @@
 	using System.Text.RegularExpressions;
 	using System.Threading;
 
-#if !SILVERLIGHT
 	using System.Collections;
 	using System.Reflection;
 
 	using SmartFormat;
 	using SmartFormat.Core.Extensions;
-#endif
 
 	public static class StringHelper
 	{
@@ -57,7 +55,6 @@
 			return args.Length == 0 ? str : string.Format(str, args);
 		}
 
-#if !SILVERLIGHT
 		private class DictionarySourceEx : ISource
 		{
 			private readonly SyncObject _sync = new();
@@ -144,7 +141,6 @@
 				}
 			}
 		}
-#endif
 
 		public static string[] SplitLines(this string str, bool removeEmptyEntries = true)
 		{
@@ -613,10 +609,8 @@
 		/// <returns>truncated string</returns>
 		public static string Truncate(this string text, int maxLength, string suffix)
 		{
-#if !SILVERLIGHT
 			if (maxLength < 0)
 				throw new ArgumentOutOfRangeException(nameof(maxLength), "maxLength", "maxLength is negative.");
-#endif
 
 			var truncatedString = text;
 
@@ -851,15 +845,9 @@
 		[CLSCompliant(false)]
 		public static bool IsEmpty(this SecureString secureString)
 		{
-			return secureString is null
-#if SILVERLIGHT
-				;
-#else
-				|| secureString.Length == 0;
-#endif
+			return secureString is null	|| secureString.Length == 0;
 		}
 
-#if !SILVERLIGHT
 		public static bool IsEqualTo(this SecureString value1, SecureString value2)
 		{
 			if (value1 is null)
@@ -901,7 +889,6 @@
 					Marshal.ZeroFreeBSTR(bstr1);
 			}
 		}
-#endif
 
 		public static string Digest(this byte[] digest)
 		{

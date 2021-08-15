@@ -21,7 +21,6 @@ namespace Ecng.Common
 			return Math.Round(value, digits);
 		}
 
-#if !SILVERLIGHT
 		public static decimal Ceiling(this decimal value)
 		{
 			return Math.Ceiling(value);
@@ -113,7 +112,7 @@ namespace Ecng.Common
 		{
 			return Math.BigMul(x, y);
 		}
-#endif
+
 		public static long Ceiling(this double value)
 		{
 			return (long)Math.Ceiling(value);

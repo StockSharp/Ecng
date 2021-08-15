@@ -25,10 +25,7 @@ namespace Wintellect.PowerCollections
     /// hashes compares items to hash items into the table.  
     ///</remarks>
     [Serializable]
-    internal class Hash<T> : IEnumerable<T>
-#if !SILVERLIGHT
-		, ISerializable, IDeserializationCallback
-#endif
+    internal class Hash<T> : IEnumerable<T>, ISerializable, IDeserializationCallback
     {
         // NOTE: If you add new member variables, you very well may need to change the serialization
         // code to serialize that member.
@@ -52,9 +49,7 @@ namespace Wintellect.PowerCollections
 
         private const int MINSIZE = 16;       // minimum number of slots.
 
-#if !SILVERLIGHT
         private SerializationInfo serializationInfo;       // Info used during deserialization.
-#endif
 
 		/// <summary>
         /// The structure that has each slot in the hash table. Each slot has three parts:
@@ -589,7 +584,6 @@ namespace Wintellect.PowerCollections
             return clone;
         }
 		
-#if !SILVERLIGHT
         #region Serialization
 
         /// <summary>
@@ -645,7 +639,6 @@ namespace Wintellect.PowerCollections
         }
 
         #endregion Serialization
-#endif
 
 #if DEBUG
         /// <summary>

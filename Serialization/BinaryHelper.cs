@@ -5,14 +5,12 @@
 	using System.IO;
 	using System.Reflection;
 	using System.Runtime.Serialization;
+	using System.Runtime.InteropServices;
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
 
 	using Ecng.Reflection;
-#if !SILVERLIGHT
-	using System.Runtime.InteropServices;
-#endif
 
 	using Ecng.Common;
 	using Ecng.Localization;
@@ -408,30 +406,7 @@
 			else if (type == typeof(char))
 				type = typeof(short);
 
-#if !SILVERLIGHT
 			return Marshal.SizeOf(type);
-#else
-			if (type == typeof(byte))
-				return 1;
-			//else if (type == typeof(bool))
-			//    return 1;
-			//else if (type == typeof(char))
-			//    return 2;
-			else if (type == typeof(short) || type == typeof(ushort))
-				return 2;
-			else if (type == typeof(int) || type == typeof(uint))
-				return 4;
-			else if (type == typeof(long) || type == typeof(ulong))
-				return 8;
-			else if (type == typeof(float))
-				return 4;
-			else if (type == typeof(double))
-				return 8;
-			else if (type == typeof(Guid))
-				return 16;
-			else
-				throw new ArgumentException(type.AssemblyQualifiedName, "type");
-#endif
 		}
 
 		public static Stream Save(this Stream stream, string fileName)

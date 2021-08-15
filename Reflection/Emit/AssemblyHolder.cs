@@ -62,12 +62,12 @@ namespace Ecng.Reflection.Emit
 				if (_assembly is null)
 				{
 					var access = 
-#if SILVERLIGHT || NETCOREAPP || NETSTANDARD
+#if NETCOREAPP || NETSTANDARD
 						AssemblyBuilderAccess.Run;
 #else
 						NeedCache ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run;
 #endif
-					_assembly = new AssemblyGenerator(new AssemblyName(Guid.NewGuid() + ".dll"), access, AssemblyHolder.AssemblyCachePath);
+					_assembly = new AssemblyGenerator(new AssemblyName(Guid.NewGuid() + ".dll"), access, AssemblyCachePath);
 				}
 
 				var type = _assembly.CreateType(typeName, attrs, baseTypes);

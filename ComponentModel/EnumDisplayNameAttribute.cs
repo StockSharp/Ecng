@@ -5,23 +5,6 @@
 
 	using Ecng.Localization;
 
-#if SILVERLIGHT
-	[AttributeUsage(AttributeTargets.Event | AttributeTargets.Property | AttributeTargets.Method | AttributeTargets.Class)]
-	public class DisplayNameAttribute : Attribute
-	{
-		public DisplayNameAttribute()
-		{
-		}
-
-		public DisplayNameAttribute(string displayName)
-		{
-			DisplayName = displayName;
-		}
-
-		public string DisplayName { get; set; }
-	}
-#endif
-
 	[AttributeUsage(AttributeTargets.Field)]
 	[Obsolete("Use DisplayAttribute instead.")]
 	public class EnumDisplayNameAttribute : DisplayNameAttribute

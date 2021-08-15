@@ -6,9 +6,6 @@ namespace Ecng.Common
 
 	#endregion
 
-#if SILVERLIGHT
-	[CLSCompliant(false)]
-#endif
 	public interface ICloneable<T> : ICloneable
 	{
 		new T Clone();

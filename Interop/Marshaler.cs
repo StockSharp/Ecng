@@ -1,11 +1,9 @@
 namespace Ecng.Interop
 {
 	using System;
-#if !SILVERLIGHT
 	using System.Collections.Generic;
 	using System.ComponentModel;
 	using System.Linq;
-#endif
 	using System.Text;
 	using System.Runtime.InteropServices;
 	using System.Runtime.Versioning;
@@ -27,7 +25,6 @@ namespace Ecng.Interop
 	/// </summary>
 	public static class Marshaler
 	{
-#if !SILVERLIGHT
 		#region Private Fields
 
 		private static readonly List<object> _wrappers = new();
@@ -38,7 +35,6 @@ namespace Ecng.Interop
 		private static readonly Dictionary<SafeHandle, object> _nativeObjects = new();
 
 		#endregion
-#endif
 
 		/// <summary>
 		/// Marshals data from an unmanaged block of memory to a newly allocated managed object of the specified type.

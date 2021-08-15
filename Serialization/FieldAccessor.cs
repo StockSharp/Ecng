@@ -52,9 +52,6 @@ namespace Ecng.Serialization
 		public abstract TEntity SetValue(TEntity entity, object value);
 	}
 
-#if SILVERLIGHT
-	public
-#endif
 	class PrimitiveFieldAccessor<TEntity> : FieldAccessor<TEntity>
 	{
 		public PrimitiveFieldAccessor(Field field)

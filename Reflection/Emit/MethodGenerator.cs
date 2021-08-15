@@ -832,9 +832,7 @@
 		public MethodGenerator ldelem_ref() { _generator.Emit(OpCodes.Ldelem_Ref); return this; }
 
 		public MethodGenerator ldc_i8(long value) { _generator.Emit(OpCodes.Ldc_I8, value); return this; }
-#if !SILVERLIGHT
 		[CLSCompliant(false)]
-#endif
 		public MethodGenerator ldc_i8(ulong value) { _generator.Emit(OpCodes.Ldc_I8, value); return this; }
 		public MethodGenerator ldc_r4(float value) { _generator.Emit(OpCodes.Ldc_R4, value); return this; }
 		public MethodGenerator ldc_r8(double value) { _generator.Emit(OpCodes.Ldc_R8, value); return this; }

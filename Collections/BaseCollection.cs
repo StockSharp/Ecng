@@ -58,11 +58,7 @@ namespace Ecng.Collections
 		private void CheckIndex(int index)
 		{
 			if (index < 0 || index > Count)
-#if SILVERLIGHT
-				throw new ArgumentOutOfRangeException(nameof(index));
-#else
 				throw new ArgumentOutOfRangeException(nameof(index), index, "Index has incorrect value.");
-#endif
 		}
 
 		public virtual TItem this[int index]

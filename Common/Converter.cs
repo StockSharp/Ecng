@@ -189,7 +189,6 @@
 
 					type = Type.GetType(input, false, true);
 
-#if !SILVERLIGHT
 					// в строке может быть записаное не AssemblyQualifiedName, а только полное имя типа + имя сборки.
 					if (type is null)
 					{
@@ -217,7 +216,6 @@
 							}
 						}
 					}
-#endif
 
 					if (type != null)
 						_typeCache.Add(key, type);
@@ -638,7 +636,6 @@
 					return uptr1.ToUInt32();
 				else if (value is UIntPtr uptr2 && destinationType == typeof(ulong))
 					return uptr2.ToUInt64();
-#if !SILVERLIGHT
 				else if (value is CultureInfo ci1 && destinationType == typeof(int))
 					return ci1.LCID;
 				else if (value is int i2 && destinationType == typeof(CultureInfo))
@@ -647,7 +644,6 @@
 					return e1.CodePage;
 				else if (value is int i3 && destinationType == typeof(Encoding))
 					return Encoding.GetEncoding(i3);
-#endif
 				else if (destinationType.GetUnderlyingType() != null)
 				{
 					if (value is DBNull)
@@ -685,12 +681,10 @@
 					return dto.Millisecond > 0 ? dto.ToString("o") : value.ToString();
 				else if (value is string str4 && destinationType == typeof(DateTimeOffset))
 					return DateTimeOffset.Parse(str4);
-#if !SILVERLIGHT
 				else if (value is string str5 && destinationType == typeof(TimeZoneInfo))
 					return TZConvert.TryGetTimeZoneInfo(str5, out var tz) ? tz : TimeZoneInfo.Utc;
 				else if (value is TimeZoneInfo tz && destinationType == typeof(string))
 					return tz.Id;
-#endif
 				else if (value is string s5 && destinationType == typeof(Guid))
 					return new Guid(s5);
 				else if (value is Guid && destinationType == typeof(string))

@@ -22,27 +22,11 @@
 
 	public static class ConfigManager
 	{
-#if SILVERLIGHT
-		private sealed class ConfigServiceLocator : ServiceLocatorImplBase
-		{
-			protected override object DoGetInstance(Type serviceType, string key)
-			{
-				throw new NotSupportedException();
-			}
-
-			protected override IEnumerable<object> DoGetAllInstances(Type serviceType)
-			{
-				throw new NotSupportedException();
-			}
-		}
-#else
-
 		private static readonly Dictionary<Type, ConfigurationSection> _sections = new();
 		private static readonly Dictionary<Type, ConfigurationSectionGroup> _sectionGroups = new();
 
 		private static readonly SyncObject _sync = new();
 		private static readonly Dictionary<Type, Dictionary<string, object>> _services = new();
-#endif
 #if !NETSTANDARD
 		private static readonly UnityContainer _unityContainer;
 #endif

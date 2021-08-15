@@ -30,9 +30,6 @@
 			}
 			else
 			{
-#if SILVERLIGHT
-				var dynMethod = new DynamicMethod("DM$OBJ_FACTORY_" + objType.Name, typeof(T), null);
-#else
 				DynamicMethod dynMethod;
 
 				try
@@ -45,7 +42,7 @@
 					CreateObject = Activator.CreateInstance<T>;
 					return;
 				}
-#endif
+
 				ILGenerator ilGen = dynMethod.GetILGenerator();
 				ilGen.Emit(OpCodes.Newobj, cinfo);
 				ilGen.Emit(OpCodes.Ret);

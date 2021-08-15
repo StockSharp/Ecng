@@ -6,11 +6,9 @@ namespace Ecng.ComponentModel
 	using System.ComponentModel;
 	using System.Linq;
 	using System.Reflection;
-#if !SILVERLIGHT
 	using System.Collections.Generic;
 	using System.Globalization;
 	using System.ComponentModel.Design.Serialization;
-#endif
 
 	using Ecng.Common;
 	using Ecng.Reflection;
@@ -24,9 +22,7 @@ namespace Ecng.ComponentModel
 	{
 		#region Private Fields
 
-#if !SILVERLIGHT
 		private readonly Type _type;
-#endif
 		private readonly FastInvoker[] _memberInvokers;
 
 		#endregion
@@ -47,9 +43,7 @@ namespace Ecng.ComponentModel
 			if (attr is null)
 				throw new ArgumentException(nameof(type));
 
-#if !SILVERLIGHT
 			_type = type;
-#endif
 
 			_memberInvokers = new FastInvoker[attr.Members.Length];
 
@@ -71,7 +65,6 @@ namespace Ecng.ComponentModel
 
 		#endregion
 
-#if !SILVERLIGHT
 		#region TypeConverter Members
 
 		/// <summary>
@@ -229,6 +222,5 @@ namespace Ecng.ComponentModel
 		}
 
 		#endregion
-#endif
 	}
 }

@@ -83,11 +83,12 @@ namespace Ecng.ComponentModel
 
 		#region Options
 
-		private RegexOptions _options = RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace
-#if !SILVERLIGHT
-			| RegexOptions.Compiled
-#endif
-			;
+		private RegexOptions _options =
+			RegexOptions.IgnoreCase |
+			RegexOptions.Multiline |
+			RegexOptions.CultureInvariant |
+			RegexOptions.IgnorePatternWhitespace |
+			RegexOptions.Compiled;
 
 		/// <summary>
 		/// Gets or sets the options.

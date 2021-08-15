@@ -445,12 +445,8 @@ namespace Ecng.Reflection
 
 			if (type.IsValueType && (typeof(T) == typeof(ConstructorInfo) || memberName == ".ctor"))
 			{
-#if !SILVERLIGHT
 				MemberInfo member = new DefaultConstructorInfo(type);
 				members.AddMember(member);
-#else
-				throw new NotSupportedException();
-#endif
 			}
 
 			if (inheritance)
@@ -917,7 +913,6 @@ namespace Ecng.Reflection
 			return type.BaseType == typeof(Type);
 		}
 
-#if !SILVERLIGHT
 		public static bool IsAssembly(this string dllName)
 		{
 			return dllName.VerifyAssembly() != null;
@@ -934,6 +929,5 @@ namespace Ecng.Reflection
 				return null;
 			}
 		}
-#endif
 	}
 }

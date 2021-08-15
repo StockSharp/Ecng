@@ -8,9 +8,6 @@ namespace Ecng.Serialization
 
 	using System.Linq;
 
-#if SILVERLIGHT
-	public
-#endif
 	class RealCollectionFieldFactory<TCollection, TItem> : CollectionFieldFactory<TCollection>
 		where TCollection : IEnumerable<TItem>
 	{

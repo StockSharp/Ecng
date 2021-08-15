@@ -1,9 +1,6 @@
 namespace Ecng.Net
 {
 	using System;
-#if SILVERLIGHT
-	using System.Windows;
-#endif
 
 	using Ecng.Common;
 

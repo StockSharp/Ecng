@@ -142,7 +142,6 @@ namespace Ecng.Common
 			return typeof(Delegate).IsAssignableFrom(type);
 		}
 
-#if !SILVERLIGHT
 		public static bool IsWinColor(this Type type)
 		{
 			if (type is null)
@@ -150,7 +149,6 @@ namespace Ecng.Common
 
 			return type == typeof(System.Drawing.Color);
 		}
-#endif
 
 		public static TEntity CreateUnitialized<TEntity>()
 		{
@@ -201,7 +199,6 @@ namespace Ecng.Common
 				disposable.Dispose();
 		}
 
-#if !SILVERLIGHT
 		private static readonly Lazy<string> _applicationName = new(() =>
 		{
 			var asm = Assembly.GetEntryAssembly();
@@ -224,7 +221,6 @@ namespace Ecng.Common
 		});
 
 		public static string ApplicationNameWithVersion => _applicationNameWithVersion.Value;
-#endif
 
 		// http://stackoverflow.com/questions/8517159/how-to-detect-at-runtime-that-net-version-4-5-currently-running-your-code
 		public static bool IsNet45OrNewer()
@@ -238,13 +234,9 @@ namespace Ecng.Common
 			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
-			return isAssemblyQualifiedName ? type.AssemblyQualifiedName : "{0}, {1}".Put(type.FullName,
-#if SILVERLIGHT
-				new AssemblyName(type.Assembly.FullName).Name
-#else
-				type.Assembly.GetName().Name
-#endif
-			);
+			return isAssemblyQualifiedName
+				? type.AssemblyQualifiedName
+				: $"{type.FullName}, {type.Assembly.GetName().Name}";
 		}
 
 		public static object GetDefaultValue(this Type type)

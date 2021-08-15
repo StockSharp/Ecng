@@ -41,9 +41,6 @@
 		}
 	}
 
-#if SILVERLIGHT
-	public
-#endif
 	class PrimitiveEntityFactory<TEntity> : EntityFactory<TEntity>
 	{
 		public PrimitiveEntityFactory(string name)
@@ -64,9 +61,6 @@
 		}
 	}
 
-#if SILVERLIGHT
-	public
-#endif
 	class CollectionEntityFactory<TCollection, TItem> : EntityFactory<TCollection>
 		where TCollection : IEnumerable<TItem>
 	{

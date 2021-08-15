@@ -5,9 +5,6 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-#if SILVERLIGHT
-	using System.Reflection;
-#endif
 
 	#endregion
 
@@ -50,12 +47,7 @@
 
 		public static IEnumerable<object> GetValues(this Type enumType)
 		{
-#if !SILVERLIGHT
 			return Enum.GetValues(enumType).Cast<object>();
-#else
-			var enumObj = enumType.CreateInstance<Enum>();
-			return enumType.GetEnumFields().Convert(field => field.GetValue(enumObj));
-#endif
 		}
 
 		public static IEnumerable<string> GetNames<T>()
@@ -65,27 +57,9 @@
 
 		public static IEnumerable<string> GetNames(this Type enumType)
 		{
-#if !SILVERLIGHT
 			return Enum.GetNames(enumType);
-#else
-			return enumType.GetEnumFields().Convert(field => field.Name);
-#endif	
 		}
 
-#if SILVERLIGHT
-		private static IEnumerable<FieldInfo> GetEnumFields(this Type enumType)
-		{
-			if (enumType is null)
-				throw new ArgumentNullException(nameof(enumType));
-
-			return enumType.GetFields().Where(field => field.Name != "value__");
-		}
-
-		private static IEnumerable<TDest> Convert<TSource, TDest>(this IEnumerable<TSource> source, Converter<TSource, TDest> converter)
-		{
-			return source.Select(item => converter(item)).ToList();
-		}
-#endif
 		public static bool IsDefined<T>(this T enumValue)
 		{
 			return Enum.IsDefined(typeof(T), enumValue);

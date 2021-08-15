@@ -386,11 +386,9 @@ namespace Ecng.Reflection
 			}
 			else
 			{
-				var dymMethod = new DynamicMethod("", returnType, invokeMethod.GetParameterTypes().Select(t => t.type).ToArray()
-#if !SILVERLIGHT
-				, member.ReflectedType, true
-#endif
-				);
+				var dymMethod = new DynamicMethod(string.Empty, returnType,
+					invokeMethod.GetParameterTypes().Select(t => t.type).ToArray(),
+					member.ReflectedType, true);
 
 				methodGenerator = new MethodGenerator(dymMethod);
 			}
@@ -575,12 +573,7 @@ namespace Ecng.Reflection
 
 		#region FastInvoker.ctor()
 
-#if SILVERLIGHT
-		public
-#else
-		private
-#endif
-			FastInvoker(MemberInfo member, Delegate callback)
+		private	FastInvoker(MemberInfo member, Delegate callback)
 			: base(member)
 		{
 			if (callback is null)
