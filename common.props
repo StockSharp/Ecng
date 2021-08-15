@@ -10,16 +10,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="
-           '$(MSBuildProjectName)' == 'Test'
-      ">
-    <TargetFrameworks>net5.0</TargetFrameworks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="
            '$(MSBuildProjectName)' == 'EcngTest'
         or '$(MSBuildProjectName)' == 'Interop.Windows'
         or '$(MSBuildProjectName)' == 'ManagedWinapi'
         or '$(MSBuildProjectName)' == 'HtmlRenderer'
+        or '$(MSBuildProjectName)' == 'Test'
       ">
     <TargetFrameworks>net5.0-windows</TargetFrameworks>
   </PropertyGroup>
