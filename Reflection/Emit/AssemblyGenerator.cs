@@ -13,19 +13,18 @@
 	{
 		#region AssemblyGenerator.ctor()
 
-		public AssemblyGenerator(AssemblyName name, AssemblyBuilderAccess access, string dir)
-			: base(CreateModule(name, access, dir))
+		public AssemblyGenerator(AssemblyName name, AssemblyBuilderAccess access)
+			: base(CreateModule(name, access))
 		{
 		}
 
-		private static ModuleBuilder CreateModule(AssemblyName name, AssemblyBuilderAccess access, string dir)
+		private static ModuleBuilder CreateModule(AssemblyName name, AssemblyBuilderAccess access)
 		{
-#if NETCOREAPP || NETSTANDARD
-			throw new PlatformNotSupportedException();
-#else
-			var assembly = AppDomain.CurrentDomain.DefineDynamicAssembly(name, access, dir);
+			if (name is null)
+				throw new ArgumentNullException(nameof(name));
+
+			var assembly = AssemblyBuilder.DefineDynamicAssembly(name, access);
 			return assembly.DefineDynamicModule(name.Name);
-#endif
 		}
 
 		#endregion
@@ -48,7 +47,7 @@
 
 		#region CreateType
 
-		public TypeGenerator CreateType(string typeName, TypeAttributes attrs, params Type[] baseTypes)
+		public TypeGenerator CreateType(string typeName, TypeAttributes attrs, Type[] baseTypes, Action<Type> typeCompiled)
 		{
 			//if (typeName.IsEmpty())
 			//	throw new ArgumentNullException(nameof(typeName));
@@ -56,7 +55,7 @@
 			//if (baseTypes is null)
 			//	throw new ArgumentNullException(nameof(baseTypes));
 
-			var typeGen = new TypeGenerator(Builder.DefineType(typeName, attrs), baseTypes);
+			var typeGen = new TypeGenerator(Builder.DefineType(typeName, attrs), baseTypes, typeCompiled);
 			_types.Add(typeGen);
 			return typeGen;
 		}

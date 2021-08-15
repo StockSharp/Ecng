@@ -4,6 +4,9 @@
     <ProjectGuid>{A30F5B45-E04B-41D0-B304-ABC1755BF23A}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Lokad.ILPack" Version="$(ILPackVer)" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Collections\Collections.csproj" />
     <ProjectReference Include="..\Configuration\Configuration.csproj" />
 

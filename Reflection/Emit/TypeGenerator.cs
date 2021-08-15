@@ -12,33 +12,18 @@ namespace Ecng.Reflection.Emit
 
 	#endregion
 
-	public class TypeCompiledEventArgs : EventArgs
-	{
-		#region TypeCompiledEventArgs.ctor()
-
-		public TypeCompiledEventArgs(Type type)
-		{
-			_type = type ?? throw new ArgumentNullException(nameof(type));
-		}
-
-		#endregion
-
-		#region Type
-
-		private readonly Type _type;
-
-		public Type Type => _type;
-
-		#endregion
-	}
-
 	public sealed class TypeGenerator : BaseGenerator<TypeBuilder>
 	{
+		private Action<Type> _typeCompiled;
+
 		#region TypeGenerator.ctor()
 
-		internal TypeGenerator(TypeBuilder builder, params Type[] baseTypes)
+		internal TypeGenerator(TypeBuilder builder, Type[] baseTypes, Action<Type> typeCompiled)
 			: base(builder)
 		{
+			if (baseTypes is null)
+				throw new ArgumentNullException(nameof(baseTypes));
+
 			Type baseType = null;
 
 			var interfaceTypes = new List<Type>();
@@ -58,6 +43,7 @@ namespace Ecng.Reflection.Emit
 
 			BaseType = baseType;
 			Interfaces = interfaceTypes;
+			_typeCompiled = typeCompiled ?? throw new ArgumentNullException(nameof(typeCompiled));
 			//_typeBuilder = module.DefineType(typeName, attrs);
 
 			//foreach (Type interfaceType in interfaceTypes)
@@ -214,23 +200,9 @@ namespace Ecng.Reflection.Emit
 
 			Type retVal = Builder.CreateTypeInfo();
 
-			EventHandler<TypeCompiledEventArgs> temp = _typeCompiled;
-			if (temp != null)
-				temp(this, new TypeCompiledEventArgs(retVal));
+			_typeCompiled?.Invoke(retVal);
 
 			return retVal;
-		}
-
-		#endregion
-
-		#region TypeCompiled
-
-		private EventHandler<TypeCompiledEventArgs> _typeCompiled;
-
-		internal event EventHandler<TypeCompiledEventArgs> TypeCompiled
-		{
-			add => _typeCompiled += value;
-			remove => _typeCompiled -= value;
 		}
 
 		#endregion

@@ -1,32 +1,19 @@
 namespace Ecng.Reflection.Emit
 {
-	#region Using Directives
-
 	using System;
 	using System.Collections.Generic;
+	using System.IO;
 	using System.Reflection;
 	using System.Reflection.Emit;
 
 	using Ecng.Common;
 
-	#endregion
-
 	public static class AssemblyHolder
 	{
-		#region Private Fields
-
 		private static AssemblyGenerator _assembly;
 		private static readonly SyncObject _initializeSync = new();
 
-		#endregion
-
-		#region NeedCache
-
 		public static bool NeedCache { get; set; }
-
-		#endregion
-
-		#region AssemblyCachePath
 
 		private static string _assemblyCachePath = string.Empty;
 
@@ -42,34 +29,23 @@ namespace Ecng.Reflection.Emit
 			}
 		}
 
-		#endregion
-
 		public static int CompiledTypeLimit { get; set; }
 		public static int CompiledTypeCount { get; private set; }
 
-		#region CachedTypes
-
-		private static readonly List<Type> _cachedTypes = new();
-
-		public static IList<Type> CachedTypes => _cachedTypes;
-
-		#endregion
-
-		#region CreateType
+		public static IList<Type> CachedTypes { get; } = new List<Type>();
 
 		public static TypeGenerator CreateType(string typeName, TypeAttributes attrs, params Type[] baseTypes)
 		{
 			lock (_initializeSync)
 			{
 				if (_assembly is null)
-					_assembly = new AssemblyGenerator(new AssemblyName(Guid.NewGuid() + ".dll"), AssemblyBuilderAccess.Run, AssemblyCachePath);
+					_assembly = new AssemblyGenerator(new AssemblyName(Guid.NewGuid() + ".dll"), AssemblyBuilderAccess.Run);
 
-				var type = _assembly.CreateType(typeName, attrs, baseTypes);
-				type.TypeCompiled += (sender, e) =>
+				return _assembly.CreateType(typeName, attrs, baseTypes, type =>
 				{
 					lock (_initializeSync)
 					{
-						CachedTypes.Add(e.Type);
+						CachedTypes.Add(type);
 
 						if (NeedCache)
 						{
@@ -77,22 +53,18 @@ namespace Ecng.Reflection.Emit
 
 							if (CompiledTypeCount > CompiledTypeLimit)
 							{
-#if NETCOREAPP || NETSTANDARD
-								throw new PlatformNotSupportedException();
-#else
-								var builder = (AssemblyBuilder)_assembly.Builder.Assembly;
-								builder.Save(builder.GetName(false).Name);
+								var asm = (AssemblyBuilder)_assembly.Builder.Assembly;
+
+								var bytes = new Lokad.ILPack.AssemblyGenerator().GenerateAssemblyBytes(asm);
+								File.WriteAllBytes(Path.Combine(AssemblyCachePath, asm.GetName(false).Name), bytes);
+
 								_assembly = null;
 								CompiledTypeCount = 0;
-#endif
 							}
 						}
 					}
-				};
-				return type;
+				});
 			}
 		}
-
-		#endregion
 	}
 }
