@@ -191,11 +191,11 @@
 
 		IEnumerable<IItemsSourceItem<T>> FilterItems(IEnumerable<IItemsSourceItem<T>> items)
 		{
-			items ??= new IItemsSourceItem<T>[0];
+			items ??= Enumerable.Empty<IItemsSourceItem<T>>();
 
 			items = items.Where(Filter);
 
-			if(SortOrder != null)
+			if (SortOrder != null)
 				items = SortOrder == ListSortDirection.Ascending ?
 					items.OrderBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase) :
 					items.OrderByDescending(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase);
@@ -216,7 +216,7 @@
 
 			excludeObsolete ??= true;
 
-			return (IItemsSource) Activator.CreateInstance(
+			return (IItemsSource)Activator.CreateInstance(
 					srcType,
 					BindingFlags.Instance | BindingFlags.CreateInstance | BindingFlags.Public | BindingFlags.NonPublic,
 					null,
@@ -234,7 +234,7 @@
 					return Create(itemValueType.CreateArray(0), itemValueType, excludeObsolete, sortOrder, filter, getName, getDescription);
 
 				case IItemsSource src:
-					if((itemValueType is null || src.ValueType == itemValueType) && (excludeObsolete is null || excludeObsolete == src.ExcludeObsolete) && (sortOrder is null || sortOrder == src.SortOrder) && filter is null)
+					if ((itemValueType is null || src.ValueType == itemValueType) && (excludeObsolete is null || excludeObsolete == src.ExcludeObsolete) && (sortOrder is null || sortOrder == src.SortOrder) && filter is null)
 						return src;
 
 					return Create(src.Values, itemValueType, excludeObsolete, sortOrder, filter, getName, getDescription);
@@ -247,12 +247,15 @@
 			}
 		}
 
-		static Type GetSourceValueType(IEnumerable values)
+		private static Type GetSourceValueType(IEnumerable values)
 		{
+			if (values is null)
+				throw new ArgumentNullException(nameof(values));
+
 			var itemType = GetParamType(values.GetType(), typeof(IEnumerable<>));
 			var innerType = GetParamType(itemType, typeof(IItemsSourceItem<>));
 
-			if(innerType != null && innerType != typeof(object))
+			if (innerType != null && innerType != typeof(object))
 				return innerType;
 
 			if (itemType != null && !typeof(IItemsSourceItem).IsAssignableFrom(itemType) && itemType != typeof(object))
@@ -266,13 +269,13 @@
 				var t = o.GetType();
 				var innerItemType = GetParamType(t, typeof(IItemsSourceItem<>));
 
-				if(innerItemType != null)
+				if (innerItemType != null)
 				{
 					foundItems = true;
 					return innerItemType;
 				}
 
-				if(o is IItemsSourceItem iisi)
+				if (o is IItemsSourceItem iisi)
 				{
 					foundItems = true;
 					return iisi.Value.GetType();
@@ -282,24 +285,29 @@
 				return t;
 			}).ToArray();
 
-			if(foundItems && foundValues)
+			if (foundItems && foundValues)
 				throw new ArgumentException($"{nameof(values)} contains elements of incompatible types");
 
 			return GetCommonType(types);
 		}
 
-		static Type GetParamType(Type type, Type genericInterfaceType)
+		private static Type GetParamType(Type type, Type genericInterfaceType)
 		{
-			if(type is null) return null;
+			if (type is null)
+				return null;
 
-			return new[]{ type }.Concat(type.GetInterfaces())
-			           .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == genericInterfaceType)
-			           .Select(i => i.GetGenericArguments()[0])
-			           .FirstOrDefault();
+			return new[] { type }
+				.Concat(type.GetInterfaces())
+			    .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == genericInterfaceType)
+			    .Select(i => i.GetGenericArguments()[0])
+			    .FirstOrDefault();
 		}
 
-		static Type GetCommonType(Type[] types)
+		private static Type GetCommonType(Type[] types)
 		{
+			if (types is null)
+				throw new ArgumentNullException(nameof(types));
+
 			if (types.Length == 0)
 				return typeof(object);
 
