@@ -15,7 +15,7 @@
 		// чтобы можно было создавать классы с закрытым конструктором
 		//where T :new()
 	{
-		private static readonly bool _dynMethodNotSupported;
+		public static bool NotSupported { get; set; }
 
 		public static Func<T> CreateObject { get; }
 
@@ -24,7 +24,7 @@
 			var objType = typeof(T);
 			var cinfo = objType.GetConstructor(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
 
-			if (_dynMethodNotSupported || objType.IsValueType || cinfo is null)
+			if (NotSupported || objType.IsValueType || cinfo is null)
 			{
 				CreateObject = Activator.CreateInstance<T>;
 			}
@@ -38,7 +38,7 @@
 				}
 				catch (PlatformNotSupportedException)
 				{
-					_dynMethodNotSupported = true;
+					NotSupported = true;
 					CreateObject = Activator.CreateInstance<T>;
 					return;
 				}
