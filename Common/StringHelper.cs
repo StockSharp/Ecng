@@ -22,9 +22,7 @@
 		static StringHelper()
 		{
 			Smart.Default.AddExtensions(new DictionarySourceEx());
-#if !NETFRAMEWORK
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-#endif
 		}
 
 		public static bool IsEmpty(this string str)

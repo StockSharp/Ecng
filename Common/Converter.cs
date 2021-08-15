@@ -202,17 +202,18 @@
 								type = asm.GetType(parts[0]);
 							}
 
-							if (type is null && parts[1].Trim().EqualsIgnoreCase(
-#if NETFRAMEWORK
-								"System.Private.CoreLib"
-#else
-								"mscorlib"
-#endif
-																				)
-							)
+							if (type is null)
 							{
-								asm = typeof(object).Assembly;
-								type = asm.GetType(parts[0]);
+								var asmName = parts[1].Trim();
+
+								if	(
+									asmName.EqualsIgnoreCase("System.Private.CoreLib") ||
+									asmName.EqualsIgnoreCase("mscorlib")
+									)
+								{
+									asm = typeof(object).Assembly;
+									type = asm.GetType(parts[0]);
+								}
 							}
 						}
 					}

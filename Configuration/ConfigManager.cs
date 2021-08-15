@@ -6,10 +6,6 @@
 	using System.Configuration;
 	using System.Diagnostics;
 	using System.Linq;
-#if NETFRAMEWORK
-	using System.Web;
-	using System.Web.Configuration;
-#endif
 
 	using Ecng.Common;
 
