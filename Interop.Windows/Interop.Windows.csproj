@@ -11,6 +11,8 @@
     <PackageReference Include="Specshell.NDde" Version="$(NDdeVer)" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Localization\Localization.csproj" />
     <ProjectReference Include="..\ManagedWinapi\ManagedWinapi.csproj" />
+    <ProjectReference Include="..\Security\Security.csproj" />
   </ItemGroup>
 </Project>
