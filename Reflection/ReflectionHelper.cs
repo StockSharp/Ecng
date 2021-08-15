@@ -65,7 +65,7 @@ namespace Ecng.Reflection
 
 		public static Type GetGenericType(this Type targetType, Type genericType)
 		{
-			return _genericTypeCache.SafeAdd(new Tuple<Type, Type>(targetType, genericType), key => key.Item1.GetGenericTypeInternal(key.Item2));
+			return _genericTypeCache.GetFromCache(new Tuple<Type, Type>(targetType, genericType), key => key.Item1.GetGenericTypeInternal(key.Item2));
 		}
 
 		private static Type GetGenericTypeInternal(this Type targetType, Type genericType)
@@ -577,14 +577,14 @@ namespace Ecng.Reflection
 
 		#region IsAbstract
 
-		private static readonly Dictionary<MemberInfo, bool> _isAbstractCache = new();
+		private static readonly SynchronizedDictionary<MemberInfo, bool> _isAbstractCache = new();
 
 		public static bool IsAbstract(this MemberInfo member)
 		{
 			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
-			return _isAbstractCache.SafeAdd(member, delegate
+			return _isAbstractCache.GetFromCache(member, delegate
 			{
 				return member switch
 				{
@@ -601,14 +601,14 @@ namespace Ecng.Reflection
 
 		#region IsVirtual
 
-		private static readonly Dictionary<MemberInfo, bool> _isVirtualCache = new();
+		private static readonly SynchronizedDictionary<MemberInfo, bool> _isVirtualCache = new();
 
 		public static bool IsVirtual(this MemberInfo member)
 		{
 			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
-			return _isVirtualCache.SafeAdd(member, delegate
+			return _isVirtualCache.GetFromCache(member, delegate
 			{
 				if (member is MethodBase mb)
 					return mb.IsVirtual;
@@ -720,14 +720,14 @@ namespace Ecng.Reflection
 
 		#region IsCollection
 
-		private static readonly Dictionary<Type, bool> _isCollectionCache = new();
+		private static readonly SynchronizedDictionary<Type, bool> _isCollectionCache = new();
 
 		public static bool IsCollection(this Type type)
 		{
 			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
-			return _isCollectionCache.SafeAdd(type, delegate
+			return _isCollectionCache.GetFromCache(type, delegate
 			{
 				return typeof(ICollection).IsAssignableFrom(type)
 							|| type.GetGenericType(typeof(ICollection<>)) != null
@@ -742,14 +742,14 @@ namespace Ecng.Reflection
 
 		#region IsStatic
 
-		private static readonly Dictionary<MemberInfo, bool> _isStaticCache = new();
+		private static readonly SynchronizedDictionary<MemberInfo, bool> _isStaticCache = new();
 
 		public static bool IsStatic(this MemberInfo member)
 		{
 			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
-			return _isStaticCache.SafeAdd(member, delegate
+			return _isStaticCache.GetFromCache(member, delegate
 			{
 				if (member is MethodBase mb)
 					return mb.IsStatic;
@@ -777,14 +777,14 @@ namespace Ecng.Reflection
 
 		#region GetItemType
 
-		private static readonly Dictionary<Type, Type> _getItemTypeCache = new();
+		private static readonly SynchronizedDictionary<Type, Type> _getItemTypeCache = new();
 
 		public static Type GetItemType(this Type collectionType)
 		{
 			if (collectionType is null)
 				throw new ArgumentNullException(nameof(collectionType));
 
-			return _getItemTypeCache.SafeAdd(collectionType, delegate
+			return _getItemTypeCache.GetFromCache(collectionType, delegate
 			{
 				var interfaceType = collectionType.GetGenericType(typeof(ICollection<>)) ?? collectionType.GetGenericType(typeof(IEnumerable<>));
 
@@ -820,14 +820,14 @@ namespace Ecng.Reflection
 
 		#region GetAccessorOwner
 
-		private static readonly Dictionary<MethodInfo, MemberInfo> _getAccessorOwnerCache = new();
+		private static readonly SynchronizedDictionary<MethodInfo, MemberInfo> _getAccessorOwnerCache = new();
 
 		public static MemberInfo GetAccessorOwner(this MethodInfo method)
 		{
 			if (method is null)
 				throw new ArgumentNullException(nameof(method));
 
-			return _getAccessorOwnerCache.SafeAdd(method, delegate
+			return _getAccessorOwnerCache.GetFromCache(method, delegate
 			{
 				var flags = method.IsStatic ? AllStaticMembers : AllInstanceMembers;
 
@@ -928,6 +928,27 @@ namespace Ecng.Reflection
 			{
 				return null;
 			}
+		}
+
+		public static bool CacheEnabled { get; set; } = true;
+
+		public static void ClearCache()
+		{
+			_genericTypeCache.Clear();
+			_getAccessorOwnerCache.Clear();
+			_getItemTypeCache.Clear();
+			_isAbstractCache.Clear();
+			_isCollectionCache.Clear();
+			_isStaticCache.Clear();
+			_isVirtualCache.Clear();
+		}
+
+		private static TValue GetFromCache<TKey, TValue>(this SynchronizedDictionary<TKey, TValue> cache, TKey key, Func<TKey, TValue> createValue)
+		{
+			if (!CacheEnabled)
+				return createValue(key);
+
+			return cache.SafeAdd(key, createValue);
 		}
 	}
 }
