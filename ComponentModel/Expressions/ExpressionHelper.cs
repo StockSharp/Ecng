@@ -242,7 +242,6 @@ class TempExpressionFormula : ExpressionFormula
 			{
 				var refs = new List<string>(new[] {typeof(object).Assembly.Location, typeof(ExpressionFormula).Assembly.Location, typeof(MathHelper).Assembly.Location});
 
-#if NETCOREAPP || NETSTANDARD
 				var needLibs = new[]
 				{
 					"System.Runtime",
@@ -256,7 +255,6 @@ class TempExpressionFormula : ExpressionFormula
 					if(loaded != null)
 						refs.Add(loaded.Location);
 				});
-#endif
 
 				var code = Escape(expression, useIds, out var identifiers);
 				var result = service.GetCompiler(CompilationLanguages.CSharp).Compile("IndexExpression", _template.Replace("__insert_code", code), refs);

@@ -9,13 +9,6 @@
 
 	using Ecng.Common;
 
-#if !NETSTANDARD
-	using Microsoft.Practices.Unity;
-	using Microsoft.Practices.Unity.Configuration;
-	using Microsoft.Practices.ServiceLocation;
-	using NativeServiceLocator = Microsoft.Practices.ServiceLocation.ServiceLocator;
-#endif
-
 	public static class ConfigManager
 	{
 		private static readonly Dictionary<Type, ConfigurationSection> _sections = new();
@@ -23,15 +16,11 @@
 
 		private static readonly SyncObject _sync = new();
 		private static readonly Dictionary<Type, Dictionary<string, object>> _services = new();
-#if !NETSTANDARD
-		private static readonly UnityContainer _unityContainer;
-#endif
 
 		#region ConfigManager.cctor()
 
 		static ConfigManager()
 		{
-#if NETCOREAPP || NETSTANDARD
 			try 
 			{	        
 				//http://csharp-tipsandtricks.blogspot.com/2010/01/identifying-whether-execution-context.html
@@ -42,13 +31,6 @@
 				Trace.WriteLine(ex);
 				Console.WriteLine(ex);
 			}
-#else
-			//http://csharp-tipsandtricks.blogspot.com/2010/01/identifying-whether-execution-context.html
-			InnerConfig = //Assembly.GetEntryAssembly() != null
-						HttpRuntime.AppDomainId is null
-				? ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None)
-				: WebConfigurationManager.OpenWebConfiguration(HttpRuntime.AppDomainAppVirtualPath);
-#endif
 
 			if (InnerConfig != null)
 			{
@@ -84,17 +66,6 @@
 
 				InitSections(InnerConfig.Sections);
 				InitSectionGroups(InnerConfig.SectionGroups);
-
-#if !NETSTANDARD
-				_unityContainer = new UnityContainer();
-
-				var unity = GetSection<UnityConfigurationSection>();
-				if (unity != null)
-					_unityContainer.LoadConfiguration(unity);
-
-				var locator = new UnityServiceLocator(_unityContainer);
-				NativeServiceLocator.SetLocatorProvider(() => locator);
-#endif
 			}
 		}
 
@@ -250,9 +221,6 @@
 		{
 			lock (_sync)
 			{
-#if !NETSTANDARD
-				_unityContainer.RegisterInstance(name, service);
-#endif
 				GetDict<T>()[name] = service;
 			}
 
@@ -265,15 +233,7 @@
 		{
 			lock (_sync)
 			{
-				if (GetDict<T>().ContainsKey(name))
-					return true;
-
-				return
-#if NETSTANDARD
-					false;
-#else
-				_unityContainer.IsRegistered<T>();
-#endif
+				return GetDict<T>().ContainsKey(name);
 			}
 		}
 
@@ -290,10 +250,6 @@
 			RegisterService(service);
 		}
 
-#if !NETSTANDARD
-		private static IServiceLocator ServiceLocator => NativeServiceLocator.Current;
-#endif
-
 		public static T GetService<T>() => GetService<T>(typeof(T).AssemblyQualifiedName);
 
 		public static T GetService<T>(string name)
@@ -306,10 +262,6 @@
 
 				if (dict.TryGetValue(name, out service) == true)
 					return (T)service;
-
-#if !NETSTANDARD
-				service = ServiceLocator.GetInstance<T>();
-#endif
 
 				if (service != null)
 				{
@@ -329,9 +281,7 @@
 
 			lock (_sync)
 				services = GetDict<T>().Values.Cast<T>().ToArray();
-#if !NETSTANDARD
-			services = services.Concat(ServiceLocator.GetAllInstances<T>()).ToArray();
-#endif
+
 			return services.Distinct();
 		}
 	}
