@@ -10,14 +10,24 @@ namespace Ecng.Common
 	{
 		private static readonly Dictionary<Tuple<Type, ICustomAttributeProvider>, Attribute> _attrCache = new();
 
+		public static bool CacheEnabled { get; set; } = true;
+
+		public static void ClearCache() => _attrCache.Clear();
+
 		public static TAttribute GetAttribute<TAttribute>(this ICustomAttributeProvider provider, bool inherit = true)
 			where TAttribute : Attribute
 		{
 			if (provider is null)
 				throw new ArgumentNullException(nameof(provider));
 
+			TAttribute GetAttribute()
+				=> provider.GetCustomAttributes(typeof(TAttribute), inherit).Cast<TAttribute>().FirstOrDefault();
+
+			if (!CacheEnabled)
+				return GetAttribute();
+
 			return (TAttribute)_attrCache.SafeAdd(new Tuple<Type, ICustomAttributeProvider>(typeof(TAttribute), provider),
-				key => provider.GetCustomAttributes(typeof(TAttribute), inherit).Cast<TAttribute>().FirstOrDefault());
+				key => GetAttribute());
 		}
 
 		public static IEnumerable<TAttribute> GetAttributes<TAttribute>(this ICustomAttributeProvider provider, bool inherit = true)
