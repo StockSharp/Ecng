@@ -409,12 +409,8 @@ namespace Ecng.Net.SocketIO.Engine.Client
             {
                 try
                 {
-                    var callback = this.CallbackBuffer[i];
-                    if (callback != null)
-                    {
-                        callback();
-                    }
-                }
+					CallbackBuffer[i]?.Invoke();
+				}
                 catch (ArgumentOutOfRangeException)
                 {
                     WriteBuffer = WriteBuffer.Clear();

@@ -4,11 +4,11 @@ namespace Ecng.Reflection.Emit
 
 	using Ecng.Collections;
 
-	public class AttributeGeneratorList : BaseList<AttributeGenerator>
+	public class AttributeGeneratorList<T> : BaseList<AttributeGenerator>
 	{
-		private readonly object _owner;
+		private readonly T _owner;
 
-		internal AttributeGeneratorList(object owner)
+		internal AttributeGeneratorList(T owner)
 		{
 			_owner = owner ?? throw new ArgumentNullException(nameof(owner));
 		}

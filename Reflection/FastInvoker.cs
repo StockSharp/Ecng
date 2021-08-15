@@ -641,8 +641,8 @@ namespace Ecng.Reflection
 
 		private static FastInvoker<I, A, R> Create(FastInvoker invoker)
 		{
-			if (invoker is FastInvoker<I, A, R>)
-				return (FastInvoker<I, A, R>)invoker;
+			if (invoker is FastInvoker<I, A, R> typedInvoker)
+				return typedInvoker;
 			else
 				return new FastInvoker<I, A, R>(invoker);
 		}

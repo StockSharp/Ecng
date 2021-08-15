@@ -8,10 +8,10 @@ namespace Ecng.Reflection.Emit
 		protected BaseGenerator(T builder)
 		{
 			Builder = builder ?? throw new ArgumentNullException(nameof(builder));
-			Attributes = new AttributeGeneratorList(Builder);
+			Attributes = new AttributeGeneratorList<T>(Builder);
 		}
 
 		public T Builder { get; }
-		public AttributeGeneratorList Attributes { get; }
+		public AttributeGeneratorList<T> Attributes { get; }
 	}
 }
