@@ -13,17 +13,13 @@
 	{
 		public static bool IsCompatible(this Platforms platform)
 		{
-			switch (platform)
+			return platform switch
 			{
-				case Platforms.x86:
-					return !Environment.Is64BitProcess;
-				case Platforms.x64:
-					return Environment.Is64BitProcess;
-				case Platforms.AnyCPU:
-					return true;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(platform));
-			}
+				Platforms.x86 => !Environment.Is64BitProcess,
+				Platforms.x64 => Environment.Is64BitProcess,
+				Platforms.AnyCPU => true,
+				_ => throw new ArgumentOutOfRangeException(nameof(platform)),
+			};
 		}
 	}
 }

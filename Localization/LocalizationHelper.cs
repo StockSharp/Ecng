@@ -10,48 +10,24 @@ namespace Ecng.Localization
 		[Obsolete]
 		public static string TranslateOld(this string text, Languages from = Languages.English, Languages? to = null)
 		{
-			string fromStr;
-
-			switch (from)
+			var fromStr = from switch
 			{
-				case Languages.English:
-					fromStr = LangCodes.En;
-					break;
-				case Languages.Russian:
-					fromStr = LangCodes.Ru;
-					break;
-				case Languages.Chinese:
-					fromStr = "ch";
-					break;
-				case Languages.Indian:
-					fromStr = "in";
-					break;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(from));
-			}
+				Languages.English => LangCodes.En,
+				Languages.Russian => LangCodes.Ru,
+				Languages.Chinese => "ch",
+				Languages.Indian => "in",
+				_ => throw new ArgumentOutOfRangeException(nameof(from)),
+			};
 
-			string toStr;
-
-			switch (to)
+			var toStr = to switch
 			{
-				case null:
-					toStr = null;
-					break;
-				case Languages.English:
-					toStr = LangCodes.En;
-					break;
-				case Languages.Russian:
-					toStr = LangCodes.Ru;
-					break;
-				case Languages.Chinese:
-					toStr = "ch";
-					break;
-				case Languages.Indian:
-					toStr = "in";
-					break;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(from));
-			}
+				null => null,
+				Languages.English => LangCodes.En,
+				Languages.Russian => LangCodes.Ru,
+				Languages.Chinese => "ch",
+				Languages.Indian => "in",
+				_ => throw new ArgumentOutOfRangeException(nameof(from)),
+			};
 
 			return text.Translate(fromStr, toStr);
 		}

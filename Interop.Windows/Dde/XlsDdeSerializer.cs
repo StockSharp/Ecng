@@ -24,21 +24,15 @@
 
 		private static Type GetCompType(DataTypes type)
 		{
-			switch (type)
+			return type switch
 			{
-				case DataTypes.Float:
-					return typeof(double);
-				case DataTypes.String:
-					return typeof(string);
-				case DataTypes.Bool:
-					return typeof(bool);
-				case DataTypes.Int:
-					return typeof(int);
-				case DataTypes.Skip:
-					return null;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(type));
-			}
+				DataTypes.Float => typeof(double),
+				DataTypes.String => typeof(string),
+				DataTypes.Bool => typeof(bool),
+				DataTypes.Int => typeof(int),
+				DataTypes.Skip => null,
+				_ => throw new ArgumentOutOfRangeException(nameof(type)),
+			};
 		}
 
 		private static DataTypes GetXlsType(object cell)

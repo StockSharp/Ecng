@@ -21,35 +21,21 @@
 			SearchBy = searchBy;
 			Scope = scope;
 
-			switch (searchBy)
+			_memberTypes = searchBy switch
 			{
-				case SearchBy.Fields:
-					_memberTypes = MemberTypes.Field;
-					break;
-				case SearchBy.Properties:
-					_memberTypes = MemberTypes.Property;
-					break;
-				case SearchBy.Both:
-					_memberTypes = MemberTypes.Field | MemberTypes.Property;
-					break;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(searchBy));
-			}
+				SearchBy.Fields => MemberTypes.Field,
+				SearchBy.Properties => MemberTypes.Property,
+				SearchBy.Both => MemberTypes.Field | MemberTypes.Property,
+				_ => throw new ArgumentOutOfRangeException(nameof(searchBy)),
+			};
 
-			switch (scope)
+			_flags = scope switch
 			{
-				case VisibleScopes.Public:
-					_flags = BindingFlags.Instance | BindingFlags.Public;
-					break;
-				case VisibleScopes.NonPublic:
-					_flags = BindingFlags.Instance | BindingFlags.NonPublic;
-					break;
-				case VisibleScopes.Both:
-					_flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-					break;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(scope));
-			}
+				VisibleScopes.Public => BindingFlags.Instance | BindingFlags.Public,
+				VisibleScopes.NonPublic => BindingFlags.Instance | BindingFlags.NonPublic,
+				VisibleScopes.Both => BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+				_ => throw new ArgumentOutOfRangeException(nameof(scope)),
+			};
 		}
 
 		#endregion

@@ -590,19 +590,14 @@ namespace Ecng.Reflection
 
 			return _isAbstractCache.SafeAdd(member, delegate
 			{
-				switch (member)
+				return member switch
 				{
-					case MethodBase mb:
-						return mb.IsAbstract;
-					case Type type:
-						return type.IsAbstract;
-					case PropertyInfo prop:
-						return (prop.CanRead && prop.GetGetMethod(true).IsAbstract) || (prop.CanWrite && prop.GetSetMethod(true).IsAbstract);
-					case EventInfo evt:
-						return evt.GetAddMethod(true).IsAbstract || evt.GetRemoveMethod(true).IsAbstract;
-					default:
-						return false;
-				}
+					MethodBase mb => mb.IsAbstract,
+					Type type => type.IsAbstract,
+					PropertyInfo prop => (prop.CanRead && prop.GetGetMethod(true).IsAbstract) || (prop.CanWrite && prop.GetSetMethod(true).IsAbstract),
+					EventInfo evt => evt.GetAddMethod(true).IsAbstract || evt.GetRemoveMethod(true).IsAbstract,
+					_ => false,
+				};
 			});
 		}
 
@@ -714,21 +709,15 @@ namespace Ecng.Reflection
 			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
-			switch (member)
+			return member switch
 			{
-				case PropertyInfo pi:
-					return pi.PropertyType;
-				case FieldInfo fi:
-					return fi.FieldType;
-				case MethodInfo mi:
-					return mi.ReturnType;
-				case EventInfo ei:
-					return ei.EventHandlerType;
-				case ConstructorInfo _:
-					return member.ReflectedType;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
-			}
+				PropertyInfo pi => pi.PropertyType,
+				FieldInfo fi => fi.FieldType,
+				MethodInfo mi => mi.ReturnType,
+				EventInfo ei => ei.EventHandlerType,
+				ConstructorInfo _ => member.ReflectedType,
+				_ => throw new ArgumentOutOfRangeException(nameof(member), member.To<string>()),
+			};
 		}
 
 		#endregion

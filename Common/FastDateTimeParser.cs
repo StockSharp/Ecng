@@ -139,30 +139,16 @@ namespace Ecng.Common
 
 				parts2.Add(Tuple.Create(part.Value, (string)null));
 
-				switch (part.Value)
+				prevIndex += part.Value switch
 				{
-					case Parts.Year:
-						prevIndex += _isYearTwoChars ? 2 : 4;
-						break;
-					case Parts.Month:
-						prevIndex += _isMonthTwoChars ? 2 : 1;
-						break;
-					case Parts.Day:
-						prevIndex += _isDayTwoChars ? 2 : 1;
-						break;
-					case Parts.Mls:
-						prevIndex += 3;
-						break;
-					case Parts.Mcs:
-						prevIndex += 3;
-						break;
-					case Parts.Nano:
-						prevIndex += 3;
-						break;
-					default:
-						prevIndex += 2;
-						break;
-				}
+					Parts.Year => _isYearTwoChars ? 2 : 4,
+					Parts.Month => _isMonthTwoChars ? 2 : 1,
+					Parts.Day => _isDayTwoChars ? 2 : 1,
+					Parts.Mls => 3,
+					Parts.Mcs => 3,
+					Parts.Nano => 3,
+					_ => 2,
+				};
 			}
 
 			_parts = parts2.ToArray();

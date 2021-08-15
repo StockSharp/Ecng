@@ -26,29 +26,12 @@ namespace Ecng.Common
 		{
 			var providerOptions = new Dictionary<string, string> { { "CompilerVersion", "v4.0" } };
 
-			CodeDomProvider provider;
-
-			switch (Language)
+			CodeDomProvider provider = Language switch
 			{
-				case CompilationLanguages.CSharp:
-					provider = new CSharpCodeProvider(providerOptions);
-					break;
-				case CompilationLanguages.VisualBasic:
-					provider = new VBCodeProvider(providerOptions);
-					break;
-				//case CompilationLanguages.Java:
-				//	provider = CodeDomProvider.CreateProvider("VJSharp");
-				//	break;
-				//case CompilationLanguages.JScript:
-				//	provider = CodeDomProvider.CreateProvider("JScript");
-				//	break;
-				//case CompilationLanguages.Cpp:
-				//	provider = CodeDomProvider.CreateProvider("Cpp");
-				//	break;
-				default:
-					throw new InvalidOperationException();
-			}
-
+				CompilationLanguages.CSharp => new CSharpCodeProvider(providerOptions),
+				CompilationLanguages.VisualBasic => new VBCodeProvider(providerOptions),
+				_ => throw new InvalidOperationException(),
+			};
 			var result = provider.CompileAssemblyFromSource(new CompilerParameters(refs.ToArray())
 			{
 				OutputAssembly = Path.Combine(OutputDir, name + Guid.NewGuid() + ".dll"),

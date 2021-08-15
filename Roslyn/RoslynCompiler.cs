@@ -107,22 +107,13 @@
 						Message = diagnostic.GetMessage()
 					};
 
-					switch (diagnostic.Severity)
+					error.Type = diagnostic.Severity switch
 					{
-						case DiagnosticSeverity.Hidden:
-						case DiagnosticSeverity.Info:
-							error.Type = CompilationErrorTypes.Info;
-							break;
-						case DiagnosticSeverity.Warning:
-							error.Type = CompilationErrorTypes.Warning;
-							break;
-						case DiagnosticSeverity.Error:
-							error.Type = CompilationErrorTypes.Error;
-							break;
-						default:
-							throw new ArgumentOutOfRangeException();
-					}
-
+						DiagnosticSeverity.Hidden or DiagnosticSeverity.Info => CompilationErrorTypes.Info,
+						DiagnosticSeverity.Warning => CompilationErrorTypes.Warning,
+						DiagnosticSeverity.Error => CompilationErrorTypes.Error,
+						_ => throw new ArgumentOutOfRangeException(),
+					};
 					return error;
 				}).ToArray();
 

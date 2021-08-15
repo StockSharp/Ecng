@@ -113,21 +113,13 @@ namespace Ecng.Common
 
 				parts2.Add(Tuple.Create(part.Value, (string)null));
 
-				switch (part.Value)
+				prevIndex += part.Value switch
 				{
-					case Parts.Mls:
-						prevIndex += 3;
-						break;
-					case Parts.Mcs:
-						prevIndex += 3;
-						break;
-					case Parts.Nano:
-						prevIndex += 3;
-						break;
-					default:
-						prevIndex += 2;
-						break;
-				}
+					Parts.Mls => 3,
+					Parts.Mcs => 3,
+					Parts.Nano => 3,
+					_ => 2,
+				};
 			}
 
 			_parts = parts2.ToArray();

@@ -120,26 +120,14 @@ namespace Ecng.Security
 
 		public static Type GetDefaultAlgo(AlgorithmTypes type)
 		{
-			string name;
-
-			switch (type)
+			var name = type switch
 			{
-				case AlgorithmTypes.Symmetric:
-					name = DefaultSymmetricAlgoName;
-					break;
-				case AlgorithmTypes.Asymmetric:
-					name = DefaultAsymmetricAlgoName;
-					break;
-				case AlgorithmTypes.Dpapi:
-					name = DefaultDpapiAlgoName;
-					break;
-				case AlgorithmTypes.Hash:
-					name = DefaultHashAlgoName;
-					break;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(type));
-			}
-
+				AlgorithmTypes.Symmetric => DefaultSymmetricAlgoName,
+				AlgorithmTypes.Asymmetric => DefaultAsymmetricAlgoName,
+				AlgorithmTypes.Dpapi => DefaultDpapiAlgoName,
+				AlgorithmTypes.Hash => DefaultHashAlgoName,
+				_ => throw new ArgumentOutOfRangeException(nameof(type)),
+			};
 			return GetAlgo(name);
 		}
 
@@ -171,20 +159,15 @@ namespace Ecng.Security
 				throw new ArgumentNullException(nameof(keys));
 
 			var name = GetAlgType(type);
-			
-			switch (name)
+
+			return name switch
 			{
-				case AlgorithmTypes.Symmetric:
-					return new CryptoAlgorithm(new SymmetricCryptographer(type, keys[0]));
-				case AlgorithmTypes.Asymmetric:
-					return new CryptoAlgorithm(new AsymmetricCryptographer(type, keys[0], keys[1]));
-				case AlgorithmTypes.Dpapi:
-					return new CryptoAlgorithm(new DpapiCryptographer(DefaultScope));
-				case AlgorithmTypes.Hash:
-					return new CryptoAlgorithm(keys.Length == 0 ? new HashCryptographer(type) : new HashCryptographer(type, keys[0]));
-				default:
-					throw new ArgumentOutOfRangeException(nameof(name), name.To<string>());
-			}
+				AlgorithmTypes.Symmetric => new CryptoAlgorithm(new SymmetricCryptographer(type, keys[0])),
+				AlgorithmTypes.Asymmetric => new CryptoAlgorithm(new AsymmetricCryptographer(type, keys[0], keys[1])),
+				AlgorithmTypes.Dpapi => new CryptoAlgorithm(new DpapiCryptographer(DefaultScope)),
+				AlgorithmTypes.Hash => new CryptoAlgorithm(keys.Length == 0 ? new HashCryptographer(type) : new HashCryptographer(type, keys[0])),
+				_ => throw new ArgumentOutOfRangeException(nameof(name), name.To<string>()),
+			};
 		}
 
 		#endregion
@@ -193,19 +176,14 @@ namespace Ecng.Security
 
 		public byte[] Encrypt(byte[] data)
 		{
-			switch (_type)
+			return _type switch
 			{
-				case AlgorithmTypes.Symmetric:
-					return _symmetric.Encrypt(data);
-				case AlgorithmTypes.Asymmetric:
-					return _asymmetric.Encrypt(data);
-				case AlgorithmTypes.Dpapi:
-					return _dpapi.Encrypt(data);
-				case AlgorithmTypes.Hash:
-					return _hash.ComputeHash(data);
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+				AlgorithmTypes.Symmetric => _symmetric.Encrypt(data),
+				AlgorithmTypes.Asymmetric => _asymmetric.Encrypt(data),
+				AlgorithmTypes.Dpapi => _dpapi.Encrypt(data),
+				AlgorithmTypes.Hash => _hash.ComputeHash(data),
+				_ => throw new ArgumentOutOfRangeException(),
+			};
 		}
 
 		#endregion
@@ -214,43 +192,34 @@ namespace Ecng.Security
 
 		public byte[] Decrypt(byte[] data)
 		{
-			switch (_type)
+			return _type switch
 			{
-				case AlgorithmTypes.Symmetric:
-					return _symmetric.Decrypt(data);
-				case AlgorithmTypes.Asymmetric:
-					return _asymmetric.Decrypt(data);
-				case AlgorithmTypes.Dpapi:
-					return _dpapi.Decrypt(data);
-				case AlgorithmTypes.Hash:
-					throw new NotSupportedException();
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+				AlgorithmTypes.Symmetric => _symmetric.Decrypt(data),
+				AlgorithmTypes.Asymmetric => _asymmetric.Decrypt(data),
+				AlgorithmTypes.Dpapi => _dpapi.Decrypt(data),
+				AlgorithmTypes.Hash => throw new NotSupportedException(),
+				_ => throw new ArgumentOutOfRangeException(),
+			};
 		}
 
 		#endregion
 
 		public byte[] CreateSignature(byte[] data)
 		{
-			switch (_type)
+			return _type switch
 			{
-				case AlgorithmTypes.Asymmetric:
-					return _asymmetric.CreateSignature(data);
-				default:
-					throw new NotSupportedException();
-			}
+				AlgorithmTypes.Asymmetric => _asymmetric.CreateSignature(data),
+				_ => throw new NotSupportedException(),
+			};
 		}
 
 		public bool VerifySignature(byte[] data, byte[] signature)
 		{
-			switch (_type)
+			return _type switch
 			{
-				case AlgorithmTypes.Asymmetric:
-					return _asymmetric.VerifySignature(data, signature);
-				default:
-					throw new NotSupportedException();
-			}
+				AlgorithmTypes.Asymmetric => _asymmetric.VerifySignature(data, signature),
+				_ => throw new NotSupportedException(),
+			};
 		}
 
 		#region Disposable Members
