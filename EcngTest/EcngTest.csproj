@@ -8,63 +8,14 @@
     <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Data\**" />
-    <EmbeddedResource Remove="Data\**" />
-    <None Remove="Data\**" />
-    <Page Remove="Data\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="Reflection\GenericMetaExtensionTest.cs" />
-    <Compile Remove="Reflection\InterceptorTest.cs" />
-    <Compile Remove="Reflection\InterceptorValidatorTest.cs" />
-    <Compile Remove="Reflection\InterfaceMetaExtensionTest.cs" />
-    <Compile Remove="Reflection\LazyInstanceTest.cs" />
-    <Compile Remove="Reflection\MetaExtensionTest.cs" />
-    <Compile Remove="Reflection\MultipleMetaExtensionTest.cs" />
-    <Compile Remove="Serialization\SchemaSerializationTest.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MsTestSdkVer)" />
     <PackageReference Include="MSTest.TestAdapter" Version="$(MsTestVer)" />
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />
     <PackageReference Include="System.Resources.Extensions" Version="$(SystemResourcesExtensionsVer)" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <SubType>Designer</SubType>
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\LazyLoadTestImage.bmp" />
-    <None Include="Resources\LazyLoadTestImage2.jpg" />
-    <None Include="Resources\LazyLoadTestImage2.png" />
-    <None Include="Resources\LazyLoadTestImage2.gif" />
-    <None Include="Resources\LazyLoadTestImage2.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\TestImage.bmp" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Interop\Interop.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="EcngTestDB.mdf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="EcngTestDB_log.ldf">
-      <DependentUpon>EcngTestDB.mdf</DependentUpon>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 </Project>
