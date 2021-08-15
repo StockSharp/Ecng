@@ -72,12 +72,15 @@ namespace Ecng.Reflection
 						}
 						case false:
 						{
-							//if (prop.IsIndexer())
-							//	prop.SetValue(instance, args[0], args.Skip(1).ToArray());
-							//else
-							prop.SetValue(instance, arg is object[] arr ? arr[0] : arg);
+							if (prop.IsIndexer())
+							{
+								var arr = (object[])arg;
+								prop.SetValue(instance, arr.Last(), arr.Take(arr.Length - 1).ToArray());
+							}
+							else
+								prop.SetValue(instance, arg is object[] arr ? arr[0] : arg);
 
-							return null;
+							return instance;
 						}
 						default:
 							throw new InvalidOperationException();
@@ -260,7 +263,8 @@ namespace Ecng.Reflection
 						{
 							if (isGetter == true)
 							{
-								argType = property.GetIndexerType();
+								var types = property.GetIndexerTypes().ToArray();
+								argType = types.Length > 1 ? typeof(object[]) : types[0];
 								returnType = memberType;
 							}
 							else
@@ -375,12 +379,14 @@ namespace Ecng.Reflection
 
 		private static Delegate CreateDelegate(Type delegType, Type instanceType, Type argType, ConstructorInfo ctor, MethodInfo method, MemberInfo member, bool? isGetter)
 		{
-			var parameters = (member is MethodBase) ? member.To<MethodBase>().GetParameters() : new ParameterInfo[0];
+			var parameters = member is MethodBase
+				? member.To<MethodBase>().GetParameters()
+				: ArrayHelper.Empty<ParameterInfo>();
 
 			if (member.IsIndexer() && isGetter == false)
 				parameters = ((PropertyInfo)member).GetSetMethod(true).GetParameters();
 
-			var refParameters = parameters.Where(param => param.IsOutput()).ToArray();
+			var refParameters = parameters.Where(_ => _.IsOutput()).ToArray();
 
 			var refLocals = new Dictionary<ParameterInfo, LocalGenerator>();
 

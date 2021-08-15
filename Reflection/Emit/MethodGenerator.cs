@@ -1024,7 +1024,7 @@
 
 		public MethodGenerator call(Type type, string methodName, BindingFlags bindingAttr, Type[] additionalTypes)
 		{
-			return call(type.GetMember<MethodInfo>(methodName, bindingAttr, additionalTypes));
+			return call(type.GetMember<MethodInfo>(methodName, bindingAttr, default, additionalTypes));
 		}
 
 		public MethodGenerator call(Type type, string methodName, BindingFlags bindingAttr)
@@ -1075,7 +1075,7 @@
 
 		public MethodGenerator callvirt(Type type, string methodName, BindingFlags bindingAttr, params Type[] additionalTypes)
 		{
-			return callvirt(type.GetMember<MethodInfo>(methodName, bindingAttr, additionalTypes));
+			return callvirt(type.GetMember<MethodInfo>(methodName, bindingAttr, default, additionalTypes));
 		}
 
 		public MethodGenerator callvirt(Type type, string methodName, params Type[] additionalTypes)

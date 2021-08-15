@@ -29,7 +29,7 @@ namespace Ecng.Reflection
 			if (member is MethodBase mb)
 				ParamTypes = mb.GetParameterTypes().Select(t => t.type).ToArray();
 			else if (member.IsIndexer())
-				ParamTypes = new [] { ((PropertyInfo)member).GetIndexerType() };
+				ParamTypes = ((PropertyInfo)member).GetIndexerTypes().ToArray();
 			else
 				ParamTypes = ArrayHelper.Empty<Type>();
 		}
@@ -50,13 +50,6 @@ namespace Ecng.Reflection
 		/// <value>The param types.</value>
 		public Type[] ParamTypes { get; }
 
-		#region Equatable<MemberSignature> Members
-
-		/// <summary>
-		/// Called when [equals].
-		/// </summary>
-		/// <param name="other">The other.</param>
-		/// <returns></returns>
 		protected override bool OnEquals(MemberSignature other)
 		{
 			if (ReturnType != other.ReturnType)
@@ -65,26 +58,11 @@ namespace Ecng.Reflection
 			return ParamTypes.SequenceEqual(other.ParamTypes);
 		}
 
-		#endregion
-
-		#region Object Members
-
-		/// <summary>
-		/// Serves as a hash function for a particular type. <see cref="M:System.Object.GetHashCode"></see> is suitable for use in hashing algorithms and data structures like a hash table.
-		/// </summary>
-		/// <returns>
-		/// A hash code for the current <see cref="T:System.Object"></see>.
-		/// </returns>
 		public override int GetHashCode()
-		{
-			return ReturnType.GetHashCode() ^ ParamTypes.GetHashCodeEx();
-		}
+			=> ReturnType.GetHashCode() ^ ParamTypes.GetHashCodeEx();
 
-		#endregion
+		public override MemberSignature Clone()	=> new(Member);
 
-		public override MemberSignature Clone()
-		{
-			return new MemberSignature(Member);
-		}
+		public override string ToString() => Member.ToString();
 	}
 }

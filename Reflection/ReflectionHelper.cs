@@ -125,7 +125,7 @@ namespace Ecng.Reflection
 
 		public static PropertyInfo GetIndexer(this Type type, params Type[] additionalTypes)
 		{
-			return GetMember<PropertyInfo>(type, IndexerName, AllInstanceMembers, additionalTypes);
+			return GetMember<PropertyInfo>(type, IndexerName, AllInstanceMembers, default, additionalTypes);
 		}
 
 		#endregion
@@ -134,7 +134,7 @@ namespace Ecng.Reflection
 
 		public static PropertyInfo[] GetIndexers(this Type type, params Type[] additionalTypes)
 		{
-			return GetMembers<PropertyInfo>(type, AllInstanceMembers, true, IndexerName, additionalTypes);
+			return GetMembers<PropertyInfo>(type, AllInstanceMembers, true, IndexerName, default, additionalTypes);
 		}
 
 		#endregion
@@ -199,7 +199,7 @@ namespace Ecng.Reflection
 			if (instance.IsNull())
 				throw new ArgumentNullException(nameof(instance));
 
-			return instance.SetValue(instance.GetType().GetMember<MemberInfo>(memberName, flags, GetArgTypes(value)), value);
+			return instance.SetValue(instance.GetType().GetMember<MemberInfo>(memberName, flags, true, GetArgTypes(value)), value);
 		}
 
 		public static void SetValue<TValue>(this Type type, string memberName, TValue value)
@@ -209,7 +209,7 @@ namespace Ecng.Reflection
 
 		public static void SetValue<TValue>(this Type type, string memberName, BindingFlags flags, TValue value)
 		{
-			type.GetMember<MemberInfo>(memberName, flags, GetArgTypes(value)).SetValue(value);
+			type.GetMember<MemberInfo>(memberName, flags, true, GetArgTypes(value)).SetValue(value);
 		}
 
 		public static void SetValue<TValue>(this MemberInfo member, TValue value)
@@ -267,7 +267,7 @@ namespace Ecng.Reflection
 			if (instance.IsNull())
 				throw new ArgumentNullException(nameof(instance));
 
-			return instance.GetValue<TInstance, TArg, TValue>(GetMember<MemberInfo>(instance.GetType(), memberName, flags, GetArgTypes(arg)), arg);
+			return instance.GetValue<TInstance, TArg, TValue>(GetMember<MemberInfo>(instance.GetType(), memberName, flags, false, GetArgTypes(arg)), arg);
 		}
 
 		public static TValue GetValue<TArg, TValue>(this Type type, string memberName, TArg arg)
@@ -277,7 +277,7 @@ namespace Ecng.Reflection
 
 		public static TValue GetValue<TArg, TValue>(this Type type, string memberName, BindingFlags flags, TArg arg)
 		{
-			return GetMember<MemberInfo>(type, memberName, flags, GetArgTypes(arg)).GetValue<TArg, TValue>(arg);
+			return GetMember<MemberInfo>(type, memberName, flags, false, GetArgTypes(arg)).GetValue<TArg, TValue>(arg);
 		}
 
 		public static TValue GetValue<TArg, TValue>(this MemberInfo member, TArg arg)
@@ -335,16 +335,16 @@ namespace Ecng.Reflection
 		public static T GetMember<T>(this Type type, params Type[] additionalTypes)
 			where T : ConstructorInfo
 		{
-			return type.GetMember<T>(".ctor", AllInstanceMembers, additionalTypes);
+			return type.GetMember<T>(".ctor", AllInstanceMembers, default, additionalTypes);
 		}
 
 		public static T GetMember<T>(this Type type, string memberName, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
-			return type.GetMember<T>(memberName, AllMembers, additionalTypes);
+			return type.GetMember<T>(memberName, AllMembers, default, additionalTypes);
 		}
 
-		public static T GetMember<T>(this Type type, string memberName, BindingFlags flags, params Type[] additionalTypes)
+		public static T GetMember<T>(this Type type, string memberName, BindingFlags flags, bool? isSetter, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
 			if (type is null)
@@ -353,10 +353,10 @@ namespace Ecng.Reflection
 			if (memberName.IsEmpty())
 				throw new ArgumentNullException(nameof(memberName));
 
-			var members = type.GetMembers<T>(flags, true, memberName, additionalTypes);
+			var members = type.GetMembers<T>(flags, true, memberName, isSetter, additionalTypes);
 
 			if (members.Length > 1)
-				members = FilterMembers(members, additionalTypes).ToArray();
+				members = FilterMembers(members, isSetter, additionalTypes).ToArray();
 
 			if (members.Length != 1)
 			{
@@ -373,12 +373,6 @@ namespace Ecng.Reflection
 
 		#region GetMembers
 
-		//public static T[] GetMembers<T>(this Type type)
-		//    where T : MemberInfo
-		//{
-		//    return type.GetMembers<T>(Type.EmptyTypes);
-		//}
-
 		public static T[] GetMembers<T>(this Type type, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
@@ -394,10 +388,10 @@ namespace Ecng.Reflection
 		public static T[] GetMembers<T>(this Type type, BindingFlags flags, bool inheritance, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
-			return type.GetMembers<T>(flags, inheritance, null, additionalTypes);
+			return type.GetMembers<T>(flags, inheritance, null, default, additionalTypes);
 		}
 
-		public static T[] GetMembers<T>(this Type type, BindingFlags flags, bool inheritance, string memberName, params Type[] additionalTypes)
+		public static T[] GetMembers<T>(this Type type, BindingFlags flags, bool inheritance, string memberName, bool? isSetter, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
 			if (type is null)
@@ -409,7 +403,7 @@ namespace Ecng.Reflection
 			var members = type.GetMembers<T>(memberName, flags, inheritance);
 
 			if (!members.IsEmpty() && additionalTypes.Length > 0)
-				members = FilterMembers(members, additionalTypes);
+				members = FilterMembers(members, isSetter, additionalTypes);
 
 			return members.ToArray();
 		}
@@ -506,14 +500,14 @@ namespace Ecng.Reflection
 
 		#region FilterMembers
 
-		public static IEnumerable<T> FilterMembers<T>(this IEnumerable<T> members, params Type[] additionalTypes)
+		public static IEnumerable<T> FilterMembers<T>(this IEnumerable<T> members, bool? isSetter, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
-			var ms = FilterMembers(members, false, additionalTypes);
-			return ms.IsEmpty() ? FilterMembers(members, true, additionalTypes) : ms;
+			var ms = FilterMembers(members, false, isSetter, additionalTypes);
+			return ms.IsEmpty() ? FilterMembers(members, true, isSetter, additionalTypes) : ms;
 		}
 
-		public static IEnumerable<T> FilterMembers<T>(this IEnumerable<T> members, bool useInheritance, params Type[] additionalTypes)
+		public static IEnumerable<T> FilterMembers<T>(this IEnumerable<T> members, bool useInheritance, bool? isSetter, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
 			if (members is null)
@@ -526,21 +520,18 @@ namespace Ecng.Reflection
 			{
 				if (IsIndexer(arg) && additionalTypes.Length > 0)
 				{
-					//return GetIndexerType(arg as PropertyInfo).IsAssignableFrom(additionalTypes[0]);
-					//return GetIndexerType(arg as PropertyInfo) == additionalTypes[0];
+					var pi = arg.To<PropertyInfo>();
 
-					if (GetIndexerType(arg as PropertyInfo).Compare(additionalTypes[0], useInheritance))
+					return GetIndexerTypes(pi).SequenceEqual(isSetter == true ? additionalTypes.Take(additionalTypes.Length - 1) : additionalTypes, (paramType, additionalType) =>
 					{
-						if (additionalTypes.Length == 2)
-							return GetMemberType(arg).Compare(additionalTypes[1], useInheritance);
-
-						return true;
-					}
+						if (additionalType == typeof(void))
+							return true;
+						else
+							return paramType.Compare(additionalType, useInheritance);
+					});
 				}
 				else if (additionalTypes.Length == 1 && (arg is FieldInfo || arg is PropertyInfo || arg is EventInfo))
 				{
-					//return GetMemberType(arg).IsAssignableFrom(additionalTypes[0]);
-					//return GetMemberType(arg) == additionalTypes[0];
 					return GetMemberType(arg).Compare(additionalTypes[0], useInheritance);
 				}
 				else if (arg is MethodBase mb)
@@ -563,13 +554,11 @@ namespace Ecng.Reflection
 						if (additionalType == typeof(void))
 							return true;
 						else
-							//return paramType.IsAssignableFrom(additionalType);
-							//return paramType == additionalType;
 							return paramType.Compare(additionalType, useInheritance);
 					});
 				}
-
-				return false;
+				else
+					return false;
 			});
 		}
 
@@ -657,9 +646,9 @@ namespace Ecng.Reflection
 
 		#endregion
 
-		#region GetIndexerType
+		#region GetIndexerTypes
 
-		public static Type GetIndexerType(this PropertyInfo property)
+		public static IEnumerable<Type> GetIndexerTypes(this PropertyInfo property)
 		{
 			if (property is null)
 				throw new ArgumentNullException(nameof(property));
@@ -669,7 +658,7 @@ namespace Ecng.Reflection
 			if (accessor is null)
 				throw new ArgumentException(nameof(property), "No any accessors.");
 
-			return accessor.GetParameters()[0].ParameterType;
+			return accessor.GetParameterTypes().Select(t => t.type);
 		}
 
 		#endregion
@@ -835,14 +824,14 @@ namespace Ecng.Reflection
 				{
 					var name = MakePropertyName(method.Name);
 
-					return GetMembers<PropertyInfo>(method.ReflectedType, flags, true, name)
+					return GetMembers<PropertyInfo>(method.ReflectedType, flags, true, name, default)
 						.FirstOrDefault(property => property.GetGetMethod(true) == method || property.GetSetMethod(true) == method);
 				}
 				else if (method.Name.Contains(AddPrefix) || method.Name.Contains(RemovePrefix))
 				{
 					var name = MakePropertyName(method.Name);
 
-					return GetMembers<EventInfo>(method.ReflectedType, flags, true, name)
+					return GetMembers<EventInfo>(method.ReflectedType, flags, true, name, default)
 						.FirstOrDefault(@event => @event.GetAddMethod(true) == method || @event.GetRemoveMethod(true) == method);
 				}
 

@@ -371,6 +371,14 @@ namespace Ecng.Test.Reflection
 			get { return _value2; }
 			set { _value2 = value; }
 		}
+
+		private int _value3;
+
+		public int this[string index, string index2]
+		{
+			get { return _value3; }
+			set { _value3 = value; }
+		}
 	}
 
 	public class EventsClassEventArgs : EventArgs
@@ -869,6 +877,22 @@ namespace Ecng.Test.Reflection
 			var obj = new InvokeFieldsAndPropClass();
 			obj.SetValue(ReflectionHelper.IndexerName, new object[] { "John Smith", 10 });
 			obj["John Smith"].AreEqual(10);
+		}
+
+		[TestMethod]
+		public void GetValueIndexerValue2()
+		{
+			var obj = new InvokeFieldsAndPropClass();
+			obj["John Smith", "1234"] = 10;
+			obj.GetValue<InvokeFieldsAndPropClass, object[], int>(ReflectionHelper.IndexerName, new[] { "John Smith", "1234" }).AreEqual(10);
+		}
+
+		[TestMethod]
+		public void SetValueIndexerValue2()
+		{
+			var obj = new InvokeFieldsAndPropClass();
+			obj.SetValue(ReflectionHelper.IndexerName, new object[] { "John Smith", "1234", 10 });
+			obj["John Smith", "1234"].AreEqual(10);
 		}
 
 		#endregion

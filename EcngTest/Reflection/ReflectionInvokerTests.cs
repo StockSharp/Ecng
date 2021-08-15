@@ -375,6 +375,18 @@
 			new MemberInvokeTest().SetValueIndexerValue();
 		}
 
+		[TestMethod]
+		public void ReflectionSetValueIndexerValue2()
+		{
+			new MemberInvokeTest().SetValueIndexerValue2();
+		}
+
+		[TestMethod]
+		public void ReflectionGetValueIndexerValue2()
+		{
+			new MemberInvokeTest().GetValueIndexerValue2();
+		}
+
 		#endregion
 
 		#region Reflection GenericTest
