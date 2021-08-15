@@ -2,6 +2,7 @@ namespace Ecng.Test.Reflection
 {
 	using System;
 
+	using Ecng.Common;
 	using Ecng.Reflection;
 	using Ecng.UnitTesting;
 
@@ -440,6 +441,15 @@ namespace Ecng.Test.Reflection
 	[TestClass]
 	public class MemberInvokeTest
 	{
+		[ClassInitialize]
+		public static void Initialize(TestContext _)
+		{
+			AttributeHelper.CacheEnabled = false;
+			ReflectionHelper.CacheEnabled = false;
+			FastInvoker.CacheEnabled = false;
+			FastInvoker.NotSupported = false;
+		}
+
 		#region Invoke Method
 
 		[TestMethod]
@@ -910,6 +920,8 @@ namespace Ecng.Test.Reflection
 			typeof(InvokeFieldsAndPropClass).GetValue<VoidType, T>(member, null).AreEqual(expected);
 		}
 
+		#region Events
+
 		[TestMethod]
 		public void RaiseEvent()
 		{
@@ -967,5 +979,7 @@ namespace Ecng.Test.Reflection
 			EventsClass.RaiseEvent2(arg);
 			arg.Field.AreEqual(1);
 		}
+
+		#endregion
 	}
 }
