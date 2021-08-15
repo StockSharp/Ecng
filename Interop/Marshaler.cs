@@ -8,6 +8,8 @@ namespace Ecng.Interop
 #endif
 	using System.Text;
 	using System.Runtime.InteropServices;
+	using System.Runtime.Versioning;
+	using System.Security;
 
 	using Ecng.Common;
 	using Ecng.Collections;
@@ -49,7 +51,6 @@ namespace Ecng.Interop
 			return (T)Marshal.PtrToStructure(ptr, typeof(T));
 		}
 
-#if !SILVERLIGHT
 		/// <summary>
 		/// Marshals data from a managed object to an unmanaged block of memory.
 		/// </summary>
@@ -74,6 +75,30 @@ namespace Ecng.Interop
 			return (T)Marshal.CreateWrapperOfType(target, typeof(T));
 		}
 
+		private const string OLEAUT32 = "oleaut32.dll";
+		private const string OLE32 = "ole32.dll";
+
+		//[DllImport(Microsoft.Win32.Win32Native.OLE32, PreserveSig = false)]
+		[DllImport(OLE32, PreserveSig = false)]
+		[ResourceExposure(ResourceScope.None)]
+		[SuppressUnmanagedCodeSecurity]
+		[SecurityCritical]  // auto-generated
+		private static extern void CLSIDFromProgIDEx([MarshalAs(UnmanagedType.LPWStr)]string progId, out Guid clsid);
+
+		//[DllImport(Microsoft.Win32.Win32Native.OLE32, PreserveSig = false)]
+		[DllImport(OLE32, PreserveSig = false)]
+		[ResourceExposure(ResourceScope.None)]
+		[SuppressUnmanagedCodeSecurity]
+		[SecurityCritical]  // auto-generated
+		private static extern void CLSIDFromProgID([MarshalAs(UnmanagedType.LPWStr)]string progId, out Guid clsid);
+
+		//[DllImport(Microsoft.Win32.Win32Native.OLEAUT32, PreserveSig = false)]
+		[DllImport(OLEAUT32, PreserveSig = false)]
+		[ResourceExposure(ResourceScope.None)]
+		[SuppressUnmanagedCodeSecurity]
+		[SecurityCritical]  // auto-generated
+		private static extern void GetActiveObject(ref Guid rclsid, IntPtr reserved, [MarshalAs(UnmanagedType.Interface)]out object ppunk);
+
 		/// <summary>
 		/// Obtains a running instance of the specified object from the Running Object Table (ROT).
 		/// </summary>
@@ -81,18 +106,29 @@ namespace Ecng.Interop
 		/// <returns>The object requested. You can cast this object to any COM interface that it supports.</returns>
 		public static T GetActiveObject<T>(string progId)
 		{
-#if NETCOREAPP || NETSTANDARD
-			throw new PlatformNotSupportedException();
-#else
-			return (T)Marshal.GetActiveObject(progId);
-#endif
+			// https://stackoverflow.com/a/65496277
+
+			Guid clsid;
+
+			// Call CLSIDFromProgIDEx first then fall back on CLSIDFromProgID if
+			// CLSIDFromProgIDEx doesn't exist.
+			try
+			{
+				CLSIDFromProgIDEx(progId, out clsid);
+			}
+			catch (Exception)
+			{
+				CLSIDFromProgID(progId, out clsid);
+			}
+
+			GetActiveObject(ref clsid, IntPtr.Zero, out var obj);
+			return (T)obj;
 		}
 
 		public static int ReleaseComObject(this object comObject)
 		{
 			return Marshal.ReleaseComObject(comObject);
 		}
-#endif
 
 		/// <summary>
 		/// Writes a value to unmanaged memory.
