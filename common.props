@@ -11,7 +11,6 @@
 
   <PropertyGroup Condition="
            '$(MSBuildProjectName)' == 'Test'
-        or '$(MSBuildProjectName)' == 'UnitTesting'
       ">
     <TargetFrameworks>net5.0</TargetFrameworks>
   </PropertyGroup>
