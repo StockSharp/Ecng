@@ -6,9 +6,6 @@
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Reflection;
-#if !SILVERLIGHT
-	using Ecng.Configuration;
-#endif
 
 	public static class SchemaManager
 	{
@@ -22,9 +19,6 @@
 
 			GlobalFieldFactories = new Dictionary<Type, Type>
 			{
-#if !NETCOREAPP && !NETSTANDARD
-				{ typeof(System.Windows.Media.Color), typeof(ColorFieldFactory<System.Windows.Media.Color>) },
-#endif
 #if !SILVERLIGHT
 				{ typeof(System.Drawing.Color), typeof(ColorFieldFactory<System.Drawing.Color>) },
 				//{ typeof(System.Security.SecureString), "Ecng.Serialization.SecureStringFieldFactory, Ecng.Serialization.FieldFactories".To<Type>() },
