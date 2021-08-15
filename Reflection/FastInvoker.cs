@@ -199,18 +199,18 @@ namespace Ecng.Reflection
 		public abstract object ReturnInvoke(object arg);
 		public abstract object ReturnInvoke(object instance, object arg);
 
-		#region CreateCore
+		public static bool NotSupported;
 
-		private static bool _dynMethodNotSupported;
+		#region CreateCore
 
 		private static FastInvoker CreateCore(MemberInfo member, bool? isGetter)
 		{
 			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
-			return GetCache(member, isGetter).SafeAdd(member, delegate
+			return GetCache(member, isGetter, () =>
 			{
-				if (_dynMethodNotSupported)
+				if (NotSupported)
 					return new ReflectionFastInvoker(member, isGetter);
 
 				try
@@ -294,7 +294,7 @@ namespace Ecng.Reflection
 				}
 				catch (PlatformNotSupportedException)
 				{
-					_dynMethodNotSupported = true;
+					NotSupported = true;
 					return new ReflectionFastInvoker(member, isGetter);
 				}
 			});
@@ -302,14 +302,30 @@ namespace Ecng.Reflection
 
 		#endregion
 
-		#region GetCache
+		#region Cache
 
-		private static Dictionary<MemberInfo, FastInvoker> GetCache(MemberInfo member, bool? isGetter)
+		public static bool CacheEnabled { get; set; } = true;
+
+		private static FastInvoker GetCache(MemberInfo member, bool? isGetter, Func<FastInvoker> createInvoker)
 		{
+			if (!CacheEnabled)
+				return createInvoker();
+
+			Dictionary<MemberInfo, FastInvoker> cache;
+
 			if (member is FieldInfo || member is PropertyInfo || member is EventInfo)
-				return (isGetter == true) ? _getValueInvokeDelegates : _setValueInvokeDelegates;
+				cache = (isGetter == true) ? _getValueInvokeDelegates : _setValueInvokeDelegates;
 			else
-				return _methodInvokeDelegates;
+				cache = _methodInvokeDelegates;
+
+			return cache.SafeAdd(member, key => createInvoker());
+		}
+
+		public static void ClearCache()
+		{
+			_getValueInvokeDelegates.Clear();
+			_setValueInvokeDelegates.Clear();
+			_methodInvokeDelegates.Clear();
 		}
 
 		#endregion
