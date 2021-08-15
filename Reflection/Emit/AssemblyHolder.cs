@@ -7,6 +7,8 @@ namespace Ecng.Reflection.Emit
 	using System.Reflection;
 	using System.Reflection.Emit;
 
+	using Ecng.Common;
+
 	#endregion
 
 	public static class AssemblyHolder
@@ -14,7 +16,7 @@ namespace Ecng.Reflection.Emit
 		#region Private Fields
 
 		private static AssemblyGenerator _assembly;
-		private static readonly object _initializeSync = new();
+		private static readonly SyncObject _initializeSync = new();
 
 		#endregion
 
@@ -60,15 +62,7 @@ namespace Ecng.Reflection.Emit
 			lock (_initializeSync)
 			{
 				if (_assembly is null)
-				{
-					var access = 
-#if NETCOREAPP || NETSTANDARD
-						AssemblyBuilderAccess.Run;
-#else
-						NeedCache ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run;
-#endif
-					_assembly = new AssemblyGenerator(new AssemblyName(Guid.NewGuid() + ".dll"), access, AssemblyCachePath);
-				}
+					_assembly = new AssemblyGenerator(new AssemblyName(Guid.NewGuid() + ".dll"), AssemblyBuilderAccess.Run, AssemblyCachePath);
 
 				var type = _assembly.CreateType(typeName, attrs, baseTypes);
 				type.TypeCompiled += (sender, e) =>

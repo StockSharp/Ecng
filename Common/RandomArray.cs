@@ -6,7 +6,7 @@
 	public class RandomArray<T>
 		where T : struct, IComparable<T>
 	{
-		private readonly object _lock = new();
+		private readonly SyncObject _lock = new();
 		private readonly T[] _data;
 		private int _index;
 

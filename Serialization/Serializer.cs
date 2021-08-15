@@ -26,7 +26,7 @@ namespace Ecng.Serialization
 
 		#region Schema
 
-		private static readonly object _schemaLock = new();
+		private static readonly SyncObject _schemaLock = new();
 
 		private static Schema _schema;
 
