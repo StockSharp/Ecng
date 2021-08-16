@@ -213,7 +213,7 @@ namespace Ecng.Reflection
 
 			return GetCache(member, isGetter, () =>
 			{
-				if (NotSupported)
+				if (NotSupported || Scope<FastEmitNotSupported>.Current != null)
 					return new ReflectionFastInvoker(member, isGetter);
 
 				try

@@ -4,6 +4,10 @@
 	using System.Reflection;
 	using System.Reflection.Emit;
 
+	public class FastEmitNotSupported
+	{
+	}
+
 	/// <summary>
 	/// Fast alternative to Activator.CreateInstance&lt;T> for reference types with default constructor
 	/// </summary>
@@ -24,7 +28,7 @@
 			var objType = typeof(T);
 			var cinfo = objType.GetConstructor(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
 
-			if (NotSupported || objType.IsValueType || cinfo is null)
+			if ((NotSupported || Scope<FastEmitNotSupported>.Current != null) || objType.IsValueType || cinfo is null)
 			{
 				CreateObject = Activator.CreateInstance<T>;
 			}
