@@ -383,8 +383,8 @@ namespace Ecng.Reflection
 				? member.To<MethodBase>().GetParameters()
 				: ArrayHelper.Empty<ParameterInfo>();
 
-			if (member.IsIndexer() && isGetter == false)
-				parameters = ((PropertyInfo)member).GetSetMethod(true).GetParameters();
+			if (member.IsIndexer())
+				parameters = (isGetter == true ? ((PropertyInfo)member).GetGetMethod(true) : ((PropertyInfo)member).GetSetMethod(true)).GetParameters();
 
 			var refParameters = parameters.Where(_ => _.IsOutput()).ToArray();
 
@@ -408,11 +408,11 @@ namespace Ecng.Reflection
 			}
 			else
 			{
-				var dymMethod = new DynamicMethod(string.Empty, returnType,
+				var dynMethod = new DynamicMethod(string.Empty, returnType,
 					invokeMethod.GetParameterTypes().Select(t => t.type).ToArray(),
 					member.ReflectedType, true);
 
-				methodGenerator = new MethodGenerator(dymMethod);
+				methodGenerator = new MethodGenerator(dynMethod);
 			}
 
 			if (instanceType != typeof(VoidType))
@@ -464,7 +464,7 @@ namespace Ecng.Reflection
 
 			if (argType != typeof(VoidType))
 			{
-				if ((member.IsIndexer() && isGetter == false) || !((parameters.IsEmpty() && !(member is MethodBase)) || (parameters.Length == 1 && !parameters[0].IsOutput())))
+				if ((member.IsIndexer() && parameters.Length > 1) || !((parameters.IsEmpty() && !(member is MethodBase)) || (parameters.Length == 1 && !parameters[0].IsOutput())))
 				{
 					// Lay out inRefArgs array onto stack.
 					foreach (var param in parameters)
@@ -478,8 +478,12 @@ namespace Ecng.Reflection
 							methodGenerator
 										.ldarg_s(instanceType == typeof(VoidType) ? (byte)0 : (byte)1)
 										.ldc_i4_s((byte)param.Position)
-										.ldelem_ref()
-										.Cast(param.ParameterType);
+										.ldelem_ref();
+
+							if (param.ParameterType.IsClass)
+								methodGenerator.Cast(param.ParameterType);
+							else
+								methodGenerator.unbox_any(param.ParameterType);
 						}
 						else
 							methodGenerator.ldloca(refLocals[param]);
@@ -532,21 +536,32 @@ namespace Ecng.Reflection
 			else
 			{
 				if (isGetter == true)
-					methodGenerator.GetMember(true, member);
-				else
 				{
+					methodGenerator.GetMember(true, member);
+
 					if (member.IsIndexer())
 					{
+						var local = methodGenerator.CreateLocal(instanceType);
+
 						methodGenerator
-									.ldarg_1()
-									.ldc_i4_1()
-									.ldelem_ref()
-									.Cast(member.GetMemberType());
+									.stloc(local)
+									.ldloc(local);
 					}
-
+				}
+				else
+				{
 					methodGenerator.SetMember(member);
+					
+					if (member.IsIndexer())
+					{
+						var local = methodGenerator.CreateLocal(instanceType);
 
-					if (isPropSet)
+						methodGenerator
+									.ldarg_0()
+									.stloc(local)
+									.ldloc(local);
+					}
+					else if (isPropSet)
 						methodGenerator.ldarg_0();
 				}
 			}
