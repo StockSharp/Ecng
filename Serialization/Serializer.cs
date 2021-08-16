@@ -41,16 +41,21 @@ namespace Ecng.Serialization
 
 					var type = typeof(T);
 
-					if (type.IsCollection() || type.IsSerializablePrimitive() || type == typeof(object) || type == typeof(Type))
+					if (
+						type.IsCollection() ||
+						type.IsSerializablePrimitive() ||
+						type == typeof(object) ||
+						type == typeof(Type) ||
+						(type.IsNullable() && type.GetUnderlyingType().IsSerializablePrimitive()))
 					{
 						_schema = new Schema { EntityType = type };
 
-						var field = new VoidField<T>(type.Name);
+						var field = new VoidField<T>((type.IsNullable() ? type.GetUnderlyingType() : type).Name);
 
 						field.Accessor = typeof(PrimitiveFieldAccessor<T>).CreateInstance<FieldAccessor>(field);
 
 						// NOTE:
-						if (type.IsSerializablePrimitive() || type == typeof(object))
+						if (type.IsSerializablePrimitive() || type == typeof(object) || (type.IsNullable() && type.GetUnderlyingType().IsSerializablePrimitive()))
 						{
 							field.Factory = new PrimitiveFieldFactory<T, T>(field, 0);
 							_schema.Factory = (EntityFactory)typeof(PrimitiveEntityFactory<>).Make(type).CreateInstance(field.Name);
@@ -140,8 +145,9 @@ namespace Ecng.Serialization
 		{
 			using (new SerializationContext { Entity = graph }.ToScope())
 			{
-				if (graph.IsNull())
-					throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
+				// nullable primitive can be null
+				//if (graph.IsNull())
+				//	throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
 
 				if (fields is null)
 					throw new ArgumentNullException(nameof(fields));

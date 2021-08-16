@@ -68,84 +68,100 @@
 			ser.Deserialize(ser.Serialize(new Entity { Name = "11", Entities2 = new[] { new Entity2 { Name = "22" }, null }, Names2 = new[] { "", null } }));
 		}
 
+		[TestMethod]
 		public void BinaryIntTest()
 		{
 			Test<BinarySerializer<int>, int>(10);
 		}
 
+		[TestMethod]
 		public void XmlByteTest()
 		{
-			Test<BinarySerializer<byte>, byte>(10);
+			Test<XmlSerializer<byte>, byte>(10);
 		}
 
+		[TestMethod]
 		public void BinaryEnumTest()
 		{
 			Test<BinarySerializer<VisibleScopes>, VisibleScopes>(VisibleScopes.Public);
 		}
 
+		[TestMethod]
 		public void XmlEnumTest()
 		{
-			Test<BinarySerializer<VisibleScopes>, VisibleScopes>(VisibleScopes.Public);
+			Test<XmlSerializer<VisibleScopes>, VisibleScopes>(VisibleScopes.Public);
 		}
 
+		[TestMethod]
 		public void BinaryStringTest()
 		{
 			Test<BinarySerializer<string>, string>("20");
 		}
 
+		[TestMethod]
 		public void XmlStringTest()
 		{
-			Test<BinarySerializer<string>, string>("20");
+			Test<XmlSerializer<string>, string>("20");
 		}
 
+		[TestMethod]
 		public void BinaryStringNullTest()
 		{
 			Test<BinarySerializer<string>, string>(null);
 		}
 
+		[TestMethod]
 		public void XmlStringNullTest()
 		{
-			Test<BinarySerializer<string>, string>(null);
+			Test<XmlSerializer<string>, string>(null);
 		}
 
+		[TestMethod]
 		public void BinaryDateTimeTest()
 		{
 			Test<BinarySerializer<DateTime>, DateTime>(DateTime.Now);
 		}
 
+		[TestMethod]
 		public void XmlDateTimeTest()
 		{
-			Test<BinarySerializer<DateTime>, DateTime>(DateTime.Now);
+			Test<XmlSerializer<DateTime>, DateTime>(DateTime.Now);
 		}
 
+		[TestMethod]
 		public void BinaryTimeSpanTest()
 		{
 			Test<BinarySerializer<TimeSpan>, TimeSpan>(DateTime.Now.TimeOfDay);
 		}
 
+		[TestMethod]
 		public void XmlTimeSpanTest()
 		{
-			Test<BinarySerializer<TimeSpan>, TimeSpan>(DateTime.Now.TimeOfDay);
+			Test<XmlSerializer<TimeSpan>, TimeSpan>(DateTime.Now.TimeOfDay);
 		}
 
+		[TestMethod]
 		public void BinaryTimeSpanNullTest()
 		{
 			Test<BinarySerializer<TimeSpan?>, TimeSpan?>(DateTime.Now.TimeOfDay);
 		}
 
+		[TestMethod]
 		public void XmlTimeSpanNullTest()
 		{
-			Test<BinarySerializer<TimeSpan?>, TimeSpan?>(DateTime.Now.TimeOfDay);
+			Test<XmlSerializer<TimeSpan?>, TimeSpan?>(DateTime.Now.TimeOfDay);
 		}
 
+		[TestMethod]
 		public void BinaryTimeSpanNullTest2()
 		{
 			Test<BinarySerializer<TimeSpan?>, TimeSpan?>(null);
 		}
 
+		[TestMethod]
 		public void XmlTimeSpanNullTest2()
 		{
-			Test<BinarySerializer<TimeSpan?>, TimeSpan?>(null);
+			Test<XmlSerializer<TimeSpan?>, TimeSpan?>(null);
 		}
 
 		private static void Test<TSerializer, TValue>(TValue value)

@@ -3,6 +3,7 @@ namespace Ecng.Serialization
 	using System.IO;
 	using System.Linq;
 
+	using Ecng.Common;
 	using Ecng.Reflection;
 
 	public class BinarySerializer<T> : Serializer<T>
@@ -78,14 +79,16 @@ namespace Ecng.Serialization
 					var hasValue = stream.Read<bool>();
 					if (hasValue)
 					{
-						if (field.Factory.SourceType == typeof(SerializationItemCollection))
+						var type = field.Factory.SourceType;
+
+						if (type == typeof(SerializationItemCollection))
 						{
 							var innerSource = new SerializationItemCollection();
 							GetSerializer(field.Type).Deserialize(stream, innerSource);
 							itemValue = innerSource;
 						}
 						else
-							itemValue = stream.Read(field.Factory.SourceType);
+							itemValue = stream.Read(type.IsNullable() ? type.GetUnderlyingType() : type);
 					}
 					else
 						itemValue = null;

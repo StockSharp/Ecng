@@ -131,7 +131,6 @@ namespace Ecng.Serialization
 
 				if (item.Value != null)
 				{
-
 					if (item.Value is SerializationItemCollection items)
 					{
 						var serializer = (IXmlSerializer)GetSerializer(item.Field.Type);
@@ -186,8 +185,14 @@ namespace Ecng.Serialization
 			if (typeof(T).IsSerializablePrimitive())
 			{
 				var field = fields.First();
-				var itemValue = field.Factory.SourceType == typeof(byte[]) ? root.Value.Base64() : root.Value.To(field.Factory.SourceType);
-				source.Add(new SerializationItem(field, itemValue));
+
+				if (IsNull(root))
+					source.Add(new SerializationItem(field, null));
+				else
+				{
+					var itemValue = field.Factory.SourceType == typeof(byte[]) ? root.Value.Base64() : root.Value.To(field.Factory.SourceType);
+					source.Add(new SerializationItem(field, itemValue));
+				}
 			}
 			else
 			{
