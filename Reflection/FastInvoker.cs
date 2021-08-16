@@ -29,25 +29,72 @@ namespace Ecng.Reflection
 
 			private object Invoke(object instance, object arg)
 			{
-				if (Member is MethodInfo method)
+				if (Member is MethodBase method)
 				{
 					if (_parameters is null)
 						_parameters = method.GetParameters();
 
 					if (_parameters.Length == 0)
 						arg = ArrayHelper.Empty<object>();
+
+					var copied = false;
+					object[] args;
 					
-					return method.Invoke(instance, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance, null, arg is object[] arr ? arr : new[] { arg }, null);
-				}
-				else if (Member is ConstructorInfo ctor)
-				{
-					if (_parameters is null)
-						_parameters = ctor.GetParameters();
+					if (arg is object[] arr)
+					{
+						args = arr;
 
-					if (_parameters.Length == 0)
-						arg = ArrayHelper.Empty<object>();
+						if (_parameters.Length > 0 && _parameters.Last().IsParams())
+						{
+							var paramArgs = args.Skip(_parameters.Length - 1).ToArray();
 
-					return ctor.Invoke(arg is object[] arr ? arr : new[] { arg });
+							if (paramArgs.Length > 0)
+							{
+								if (paramArgs.Length == 1)
+								{
+									if (paramArgs[0]?.GetType().IsArray == false)
+									{
+										var temp = _parameters.Last().ParameterType.GetItemType().CreateArray(1);
+										temp.SetValue(paramArgs[0], 0);
+										paramArgs[0] = temp;
+									}
+								}
+								else
+								{
+									var temp = _parameters.Last().ParameterType.GetItemType().CreateArray(paramArgs.Length);
+									paramArgs.CopyTo(temp, 0);
+									paramArgs = new object[] { temp };
+								}
+
+								args = args.Take(_parameters.Length - 1).Concat(paramArgs).ToArray();
+								copied = true;
+							}
+						}
+					}
+					else
+						args = new[] { arg };
+					
+					object retVal;
+
+					if (method is ConstructorInfo ctor)
+						retVal = ctor.Invoke(args);
+					else
+						retVal = method.Invoke(instance, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance, null, args, null);
+
+					if (copied && arg is object[] arr2)
+					{
+						for (var i = 0; i < _parameters.Length; i++)
+						{
+							var p = _parameters[i];
+
+							if (p.IsOutput())
+							{
+								arr2[i] = args[i];
+							}
+						}
+					}
+
+					return retVal;
 				}
 				else if (Member is FieldInfo field)
 				{
@@ -439,6 +486,36 @@ namespace Ecng.Reflection
 				refLocals.Add(refParam, local);
 			}
 
+			LocalGenerator arrCopy = null;
+
+			if (parameters.Length > 1 && parameters.Last().IsParams())
+			{
+				var last = parameters.Last();
+
+				var num = methodGenerator.CreateLocal(last.ParameterType);
+				arrCopy = methodGenerator.CreateLocal(last.ParameterType);
+
+				methodGenerator
+					.ldc_i4_s((byte)(parameters.Length - 1))
+					.stloc(num)
+					.ldarg_1()
+					.ldlen()
+					.conv_i4()
+					.ldloc(num)
+					.sub()
+					.newarr(last.ParameterType.GetElementType())
+					.stloc(arrCopy)
+					.ldarg_1()
+					.ldloc(num)
+					.ldloc(arrCopy)
+					.ldc_i4_0()
+					.ldloc(arrCopy)
+					.ldlen()
+					.conv_i4()
+					.CallMethod(typeof(Array).GetMember<MethodInfo>(nameof(Array.Copy), typeof(Array), typeof(int), typeof(Array), typeof(int), typeof(int)))
+					;
+			}
+
 			// If method isn't static push target instance on top of stack. Argument 0 of dynamic method is target instance.
 			if (instanceType != typeof(VoidType))
 			{
@@ -474,16 +551,23 @@ namespace Ecng.Reflection
 
 						if (!param.IsOutput())
 						{
-							// Argument 1 of dynamic method is argument array.
-							methodGenerator
-										.ldarg_s(instanceType == typeof(VoidType) ? (byte)0 : (byte)1)
-										.ldc_i4_s((byte)param.Position)
-										.ldelem_ref();
-
-							if (param.ParameterType.IsClass)
-								methodGenerator.Cast(param.ParameterType);
+							if (param.IsParams())
+							{
+								continue;
+							}
 							else
-								methodGenerator.unbox_any(param.ParameterType);
+							{
+								// Argument 1 of dynamic method is argument array.
+								methodGenerator
+											.ldarg_s(instanceType == typeof(VoidType) ? (byte)0 : (byte)1)
+											.ldc_i4_s((byte)param.Position)
+											.ldelem_ref();
+
+								if (param.ParameterType.IsClass)
+									methodGenerator.Cast(param.ParameterType);
+								else
+									methodGenerator.unbox_any(param.ParameterType);
+							}
 						}
 						else
 							methodGenerator.ldloca(refLocals[param]);
@@ -492,6 +576,9 @@ namespace Ecng.Reflection
 				else
 					methodGenerator.ldarg_s(instanceType == typeof(VoidType) ? (byte)0 : (byte)1);
 			}
+
+			if (arrCopy != null)
+				methodGenerator.ldloc(arrCopy);
 
 			if (member is MethodBase)
 			{

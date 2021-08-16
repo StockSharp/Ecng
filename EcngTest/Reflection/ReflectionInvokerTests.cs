@@ -66,6 +66,20 @@
 		}
 
 		[TestMethod]
+		public void ReflectionInvokeVoidMethodWithParams8()
+		{
+			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
+			new MemberInvokeTest().InvokeVoidMethodWithParams8();
+		}
+
+		[TestMethod]
+		public void ReflectionInvokeVoidMethodWithParams9()
+		{
+			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
+			new MemberInvokeTest().InvokeVoidMethodWithParams9();
+		}
+
+		[TestMethod]
 		public void ReflectionInvokeReturnMethod()
 		{
 			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());

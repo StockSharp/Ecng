@@ -1092,6 +1092,10 @@
 
 		public MethodGenerator nop() { _generator.Emit(OpCodes.Nop); return this; }
 
+		public MethodGenerator sub() { _generator.Emit(OpCodes.Sub); return this; }
+		public MethodGenerator sub_ovf() { _generator.Emit(OpCodes.Sub_Ovf); return this; }
+		public MethodGenerator sub_ovf_un() { _generator.Emit(OpCodes.Sub_Ovf_Un); return this; }
+
 		/// <summary>
 		/// Calls ILGenerator.Emit(<see cref="OpCodes.Break"/>) that
 		/// signals the Common Language Infrastructure (CLI) to inform the debugger that a break point has been tripped.

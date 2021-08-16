@@ -63,6 +63,29 @@ namespace Ecng.Test.Reflection
 			param4 = "John Smith";
 		}
 
+		public void VoidMethodWithParams8(string str, params int[] args)
+		{
+			str.AreEqual("Mark Twain");
+			(args.Length == 2).AssertTrue();
+			args[0].AreEqual(1);
+			args[1].AreEqual(10);
+		}
+
+		public void VoidMethodWithParams9(string param, ref int param2, string param3, out string param4, string param5, params int[] args)
+		{
+			param.AreEqual("John Smith");
+			param2.AreEqual(1);
+			param3.AreEqual("Mark Twain");
+			param5.AreEqual("Billy Bob");
+
+			param2 = 10;
+			param4 = "John Smith";
+
+			(args.Length == 2).AssertTrue();
+			args[0].AreEqual(1);
+			args[1].AreEqual(10);
+		}
+
 		public object ReturnMethod()
 		{
 			return "John Smith";
@@ -490,6 +513,7 @@ namespace Ecng.Test.Reflection
 		public void InvokeVoidMethodWithParams5()
 		{
 			InvokeVoidMethod(nameof(InvokeMethod.VoidMethodWithParams5), new object[] { "Mark Twain", "John Smith" });
+			InvokeVoidMethod(nameof(InvokeMethod.VoidMethodWithParams5), new string[] { "Mark Twain", "John Smith" });
 		}
 
 		[TestMethod]
@@ -501,8 +525,23 @@ namespace Ecng.Test.Reflection
 		[TestMethod]
 		public void InvokeVoidMethodWithParams7()
 		{
-			var args = new object[5] { "John Smith", 1, "Mark Twain", null, "Billy Bob" };
+			var args = new object[] { "John Smith", 1, "Mark Twain", null, "Billy Bob" };
 			InvokeVoidMethod(nameof(InvokeMethod.VoidMethodWithParams7), args);
+			args[1].AssertEqual(10);
+			args[3].AssertEqual("John Smith");
+		}
+
+		[TestMethod]
+		public void InvokeVoidMethodWithParams8()
+		{
+			InvokeVoidMethod(nameof(InvokeMethod.VoidMethodWithParams8), new object[] { "Mark Twain", 1, 10 });
+		}
+
+		[TestMethod]
+		public void InvokeVoidMethodWithParams9()
+		{
+			var args = new object[] { "John Smith", 1, "Mark Twain", null, "Billy Bob", 1, 10 };
+			InvokeVoidMethod(nameof(InvokeMethod.VoidMethodWithParams9), args);
 			args[1].AssertEqual(10);
 			args[3].AssertEqual("John Smith");
 		}
