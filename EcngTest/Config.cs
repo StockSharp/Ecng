@@ -1,28 +1,19 @@
 namespace Ecng.Test
 {
-	#region Using Directives
+	using Ecng.Common;
+	using Ecng.Reflection;
 
-	using Ecng.Serialization;
+	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-	#endregion
-
-	static class Config
+	[TestClass]
+	class Config
 	{
-		public static T Create<T>()
+		[AssemblyInitialize]
+		public static void GlobalInitialize(TestContext context)
 		{
-			//CreateProxy<T>();
-			return GetSchema<T>().GetFactory<T>().CreateEntity(null, new SerializationItemCollection());
+			AttributeHelper.CacheEnabled = false;
+			ReflectionHelper.CacheEnabled = false;
+			FastInvoker.CacheEnabled = false;
 		}
-
-		public static Schema GetSchema<T>()
-		{
-			return SchemaManager.GetSchema<T>();
-		}
-
-		//public static void CreateProxy<T>()
-		//{
-		//	if (typeof(T).IsAbstract && !ReflectionHelper.ProxyTypes.ContainsKey(typeof(T)))
-		//		ReflectionHelper.ProxyTypes.Add(typeof(T), MetaExtension.Create(typeof(T)));
-		//}
 	}
 }

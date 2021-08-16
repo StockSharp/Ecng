@@ -449,15 +449,6 @@ namespace Ecng.Test.Reflection
 	[TestClass]
 	public class MemberInvokeTest
 	{
-		[ClassInitialize]
-		public static void Initialize(TestContext _)
-		{
-			AttributeHelper.CacheEnabled = false;
-			ReflectionHelper.CacheEnabled = false;
-			FastInvoker.CacheEnabled = false;
-			FastInvoker.NotSupported = false;
-		}
-
 		#region Invoke Method
 
 		[TestMethod]

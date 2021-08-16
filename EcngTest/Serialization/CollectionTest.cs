@@ -8,9 +8,6 @@ namespace Ecng.Test.Serialization
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-	/// <summary>
-	/// Summary description for BinaryTest
-	/// </summary>
 	[TestClass]
 	public class CollectionTest
 	{
