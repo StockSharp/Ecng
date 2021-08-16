@@ -244,13 +244,13 @@ namespace Ecng.ComponentModel
 
 		object IRange.Min
 		{
-			get => HasMinValue ? (object)Min : null;
+			get => HasMinValue ? Min : null;
 			set => Min = (T)value;
 		}
 
 		object IRange.Max
 		{
-			get => HasMaxValue ? (object)Max : null;
+			get => HasMaxValue ? Max : null;
 			set => Max = (T)value;
 		}
 

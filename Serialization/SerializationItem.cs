@@ -38,7 +38,7 @@ namespace Ecng.Serialization
 
 		public override string ToString()
 		{
-			return "Field = '{0}' Value = '{1}'".Put(Field, Value);
+			return $"Field = '{Field}' Value = '{Value}'";
 		}
 
 		#endregion

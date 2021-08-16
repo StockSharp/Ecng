@@ -16,13 +16,13 @@
 
 		public IEnumerable<EntityProperty> Properties { get; set; }
 
-		public string FullDisplayName => Parent is null ? DisplayName : "{0} -> {1}".Put(Parent.FullDisplayName, DisplayName);
+		public string FullDisplayName => Parent is null ? DisplayName : $"{Parent.FullDisplayName} -> {DisplayName}";
 
 		public string ParentName => Parent is null ? string.Empty : Parent.Name;
 
 		public override string ToString()
 		{
-			return "{0} ({1})".Put(Name, FullDisplayName);
+			return $"{Name} ({FullDisplayName})";
 		}
 	}
 }

@@ -108,7 +108,7 @@ namespace Ecng.Serialization
 
 		public override string ToString()
 		{
-			return "Name: {0}, Type: {1}".Put(Name, EntityType.Name);
+			return $"Name: {Name}, Type: {EntityType.Name}";
 		}
 
 		public override int GetHashCode()

@@ -177,7 +177,7 @@ namespace Ecng.ComponentModel
 		/// </returns>
 		public override string ToString()
 		{
-			return "{{Width={0}, Height={1}}}".Put(Width, Height);
+			return $"{{Width={Width}, Height={Height}}}";
 		}
 
 		/// <summary>

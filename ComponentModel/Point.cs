@@ -66,7 +66,7 @@ namespace Ecng.ComponentModel
 		/// </returns>
 		public override string ToString()
 		{
-			return "{{X={0}, Y={1}}}".Put(X, Y);
+			return $"{{X={X}, Y={Y}}}";
 		}
 
 		/// <summary>

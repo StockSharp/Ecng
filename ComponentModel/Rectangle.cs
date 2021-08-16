@@ -220,7 +220,7 @@ namespace Ecng.ComponentModel
 		/// </returns>
 		public override string ToString()
 		{
-			return "{{Location={0}, Size={1}}}".Put(Location, Size);
+			return $"{{Location={Location}, Size={Size}}}";
 		}
 
 		/// <summary>
