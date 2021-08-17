@@ -83,7 +83,7 @@
 
 		private async Task<object> ReadAsync(JsonReader reader, Type type, CancellationToken cancellationToken)
 		{
-			if (typeof(IPersistable).IsAssignableFrom(type) || typeof(IAsyncPersistable).IsAssignableFrom(type))
+			if (type.IsPersistable())
 			{
 				if (FillMode)
 				{

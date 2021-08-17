@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Serialization
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Threading;
@@ -8,6 +9,7 @@
 
 	using Ecng.Collections;
 	using Ecng.Common;
+	using Ecng.Reflection;
 
 	using Newtonsoft.Json;
 
@@ -18,7 +20,6 @@
 	{
 		private readonly JsonReader _reader;
 		private readonly Func<JsonReader, SettingsStorage, string, Type, CancellationToken, Task<object>> _readJson;
-		private readonly SettingsStorage _parent;
 
 		/// <summary>
 		/// Создать <see cref="SettingsStorage"/>.
@@ -88,21 +89,7 @@
 			return base.ContainsKey(key);
 		}
 
-		private int _deepLevel;
-
-		internal int DeepLevel
-		{
-			get => _deepLevel;
-			set
-			{
-				var diff = value - _deepLevel;
-				
-				_deepLevel = value;
-
-				if (_parent != null)
-					_parent.DeepLevel += diff;
-			}
-		}
+		internal int DeepLevel { get; set; }
 
 		/// <summary>
 		/// Получить значение из настроек.
@@ -119,7 +106,54 @@
 			if (_reader != null)
 				return GetValueFromReaderAsync(name, defaultValue, default).Result;
 
-			return TryGetValue(name, out var value) ? value.To<T>() : defaultValue;
+			if (!TryGetValue(name, out var value))
+				return defaultValue;
+
+			if (value is SettingsStorage storage)
+			{
+				if (value is T typed)
+					return typed;
+
+				var per = Activator.CreateInstance<T>();
+
+				if (per is IAsyncPersistable asyncPer)
+					asyncPer.LoadAsync(storage, default).Wait();
+				else
+					((IPersistable)per).Load(storage);
+
+				return per;
+			}
+			else if (typeof(T).IsCollection() && typeof(T).GetElementType().IsPersistable())
+			{
+				if (value is null)
+					return default;
+
+				var elemType = typeof(T).GetElementType();
+
+				var arr = ((IEnumerable)value)
+					.Cast<SettingsStorage>()
+					.Select(storage =>
+					{
+						if (storage is null)
+							return null;
+
+						var per = Activator.CreateInstance(elemType);
+
+						if (per is IAsyncPersistable asyncPer)
+							asyncPer.LoadAsync(storage, default).Wait();
+						else
+							((IPersistable)per).Load(storage);
+
+						return per;
+					})
+					.ToArray();
+
+				var typedArr = elemType.CreateArray(arr.Length);
+				arr.CopyTo(typedArr, 0);
+				return typedArr.To<T>();
+			}
+			
+			return value.To<T>();
 		}
 
 		public T TryGet<T>(string name, T defaultValue = default)

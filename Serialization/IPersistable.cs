@@ -34,6 +34,9 @@
 
 	public static class PersistableHelper
 	{
+		public static bool IsPersistable(this Type type)
+			=> typeof(IPersistable).IsAssignableFrom(type) || typeof(IAsyncPersistable).IsAssignableFrom(type);
+
 		/// <summary>
 		/// Создать и инициализировать объем.
 		/// </summary>

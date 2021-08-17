@@ -221,7 +221,7 @@
 				return PersistableHelper.Clone(this);
 			}
 
-			public override bool Equals(TestClass other)
+			protected override bool OnEquals(TestClass other)
 			{
 				return
 					IntProp == other.IntProp &&
@@ -368,7 +368,7 @@
 				return PersistableHelper.CloneAsync(this).Result;
 			}
 
-			public override bool Equals(TestClassAsync other)
+			protected override bool OnEquals(TestClassAsync other)
 			{
 				return
 					IntProp == other.IntProp &&
@@ -423,7 +423,7 @@
 				return PersistableHelper.Clone(this);
 			}
 
-			public override bool Equals(TestComplexClass other)
+			protected override bool OnEquals(TestComplexClass other)
 			{
 				return
 					IntProp == other.IntProp &&
@@ -554,7 +554,7 @@
 				return PersistableHelper.Clone(this);
 			}
 
-			public override bool Equals(TestContainsClass other)
+			protected override bool OnEquals(TestContainsClass other)
 			{
 				return
 					IntProp == other.IntProp &&
@@ -572,10 +572,10 @@
 				TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
 
 				if (storage.ContainsKey(nameof(Obj1)))
-					Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1))?.Load<TestClass>();
+					Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1)).Load<TestClass>();
 
 				if (storage.ContainsKey(nameof(Obj2)))
-					Obj2 = storage.GetValue<SettingsStorage[]>(nameof(Obj2))?.Select(s => s?.Load<TestClass>()).ToArray();
+					Obj2 = storage.GetValue<object[]>(nameof(Obj2)).Select(s => ((SettingsStorage)s)?.Load<TestClass>()).ToArray();
 			}
 
 			void IPersistable.Save(SettingsStorage storage)
@@ -583,9 +583,13 @@
 				storage
 					.Set(nameof(IntProp), IntProp)
 					.Set(nameof(DateProp), DateProp)
-					.Set(nameof(TimeProp), TimeProp)
-					.Set(nameof(Obj1), Obj1?.Save())
-					.Set(nameof(Obj2), Obj2?.Select(o => o?.Save()));
+					.Set(nameof(TimeProp), TimeProp);
+
+				if (Obj1 != null)
+					storage.Set(nameof(Obj1), Obj1.Save());
+
+				if (Obj2 != null)
+					storage.Set(nameof(Obj2), Obj2.Select(o => o?.Save()));
 			}
 		}
 
@@ -604,12 +608,120 @@
 					TimeProp = TimeSpan.FromSeconds(10),
 				}
 			}, true);
+
+			await Do(new TestContainsClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				Obj2 = new TestClass[0],
+			}, true);
+
+			await Do(new TestContainsClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				Obj2 = new TestClass[] { null },
+			}, true);
 		}
 
 		[TestMethod]
 		public async Task ContainsNull()
 		{
 			await Do<TestContainsClass>(null, true);
+		}
+
+		private class TestDirectClass : Equatable<TestDirectClass>, IPersistable
+		{
+			public int IntProp { get; set; }
+			public DateTime DateProp { get; set; }
+			public TimeSpan TimeProp { get; set; }
+			public TestClass Obj1 { get; set; }
+			public TestClass[] Obj2 { get; set; }
+
+			public override TestDirectClass Clone()
+			{
+				return PersistableHelper.Clone(this);
+			}
+
+			protected override bool OnEquals(TestDirectClass other)
+			{
+				return
+					IntProp == other.IntProp &&
+					DateProp == other.DateProp &&
+					TimeProp == other.TimeProp &&
+					Obj1 == other.Obj1 &&
+					((Obj2 is null && other.Obj2 is null) || Obj2.SequenceEqual(other.Obj2))
+					;
+			}
+
+			void IPersistable.Load(SettingsStorage storage)
+			{
+				IntProp = storage.GetValue<int>(nameof(IntProp));
+				DateProp = storage.GetValue<DateTime>(nameof(DateProp));
+				TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
+
+				Obj1 = storage.GetValue<TestClass>(nameof(Obj1));
+
+				if (storage.ContainsKey(nameof(Obj2)))
+					Obj2 = storage.GetValue<TestClass[]>(nameof(Obj2));
+			}
+
+			void IPersistable.Save(SettingsStorage storage)
+			{
+				storage
+					.Set(nameof(IntProp), IntProp)
+					.Set(nameof(DateProp), DateProp)
+					.Set(nameof(TimeProp), TimeProp);
+
+				if (Obj1 != null)
+					storage.Set(nameof(Obj1), Obj1.Save());
+
+				if (Obj2 != null)
+					storage.Set(nameof(Obj2), Obj2.Select(o => o?.Save()));
+			}
+		}
+
+		[TestMethod]
+		public async Task Direct()
+		{
+			await Do(new TestDirectClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				Obj1 = new TestClass
+				{
+					IntProp = 124,
+					DateProp = DateTime.UtcNow,
+					TimeProp = TimeSpan.FromSeconds(10),
+				}
+			}, true);
+
+			await Do(new TestDirectClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				Obj2 = new[] { new TestClass() },
+			}, true);
+
+			await Do(new TestDirectClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				Obj2 = new TestClass[0],
+			}, true);
+
+			await Do(new TestDirectClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				Obj2 = new TestClass[] { null },
+			}, true);
 		}
 	}
 }
