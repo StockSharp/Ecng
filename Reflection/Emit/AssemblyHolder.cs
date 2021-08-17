@@ -8,28 +8,25 @@ namespace Ecng.Reflection.Emit
 
 	using Ecng.Common;
 
+	public class AssemblyHolderSettings
+	{
+		public string AssemblyCachePath { get; set; }
+		public int CompiledTypeLimit { get; set; }
+	}
+
 	public static class AssemblyHolder
 	{
 		private static AssemblyGenerator _assembly;
 		private static readonly SyncObject _initializeSync = new();
 
-		public static bool NeedCache { get; set; }
+		private static AssemblyHolderSettings _settings;
 
-		private static string _assemblyCachePath = string.Empty;
-
-		public static string AssemblyCachePath
+		public static AssemblyHolderSettings Settings
 		{
-			get => _assemblyCachePath;
-			set
-			{
-				if (value is null)
-					value = string.Empty;
-
-				_assemblyCachePath = value;
-			}
+			get => Scope<AssemblyHolderSettings>.Current?.Value ?? _settings;
+			set => _settings = value;
 		}
 
-		public static int CompiledTypeLimit { get; set; }
 		public static int CompiledTypeCount { get; private set; }
 
 		public static IList<Type> CachedTypes { get; } = new List<Type>();
@@ -47,16 +44,21 @@ namespace Ecng.Reflection.Emit
 					{
 						CachedTypes.Add(type);
 
-						if (NeedCache)
+						var settings = Settings;
+
+						if (settings != null)
 						{
 							CompiledTypeCount++;
 
-							if (CompiledTypeCount > CompiledTypeLimit)
+							if (CompiledTypeCount > settings.CompiledTypeLimit)
 							{
 								var asm = (AssemblyBuilder)_assembly.Builder.Assembly;
 
 								var bytes = new Lokad.ILPack.AssemblyGenerator().GenerateAssemblyBytes(asm);
-								File.WriteAllBytes(Path.Combine(AssemblyCachePath, asm.GetName(false).Name), bytes);
+
+								var cachePath = settings.AssemblyCachePath;
+								Directory.CreateDirectory(cachePath);
+								File.WriteAllBytes(Path.Combine(cachePath, asm.GetName(false).Name), bytes);
 
 								_assembly = null;
 								CompiledTypeCount = 0;

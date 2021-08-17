@@ -1,40 +1,30 @@
 namespace Ecng.Test.Reflection
 {
+	using System.IO;
+
+	using Ecng.Common;
+	using Ecng.Reflection.Emit;
+	using Ecng.UnitTesting;
+
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-	/// <summary>
-	/// Summary description for AssemblyCacheTest
-	/// </summary>
 	[TestClass]
 	public class AssemblyCacheTest
 	{
-		public AssemblyCacheTest()
+		private const string _path = "asm_cache";
+
+		[ClassCleanup]
+		public static void Cleanup()
 		{
-			//
-			// TODO: Add constructor logic here
-			//
+			Directory.Delete(_path, true);
 		}
 
-		#region Additional test attributes
-		//
-		// You can use the following additional attributes as you write your tests:
-		//
-		// Use ClassInitialize to run code before running the first test in the class
-		// [ClassInitialize()]
-		// public static void MyClassInitialize(TestContext testContext) { }
-		//
-		// Use ClassCleanup to run code after all tests in a class have run
-		// [ClassCleanup()]
-		// public static void MyClassCleanup() { }
-		//
-		// Use TestInitialize to run code before running each test 
-		// [TestInitialize()]
-		// public void MyTestInitialize() { }
-		//
-		// Use TestCleanup to run code after each test has run
-		// [TestCleanup()]
-		// public void MyTestCleanup() { }
-		//
-		#endregion
+		[TestMethod]
+		public void Test1()
+		{
+			using var _ = new Scope<AssemblyHolderSettings>(new AssemblyHolderSettings { AssemblyCachePath = _path });
+			new MemberInvokeTest().InvokeReturnMethodWithParams7();
+			(Directory.GetFiles(_path).Length > 0).AssertTrue();
+		}
 	}
 }

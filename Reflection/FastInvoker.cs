@@ -448,7 +448,7 @@ namespace Ecng.Reflection
 
 			MethodGenerator methodGenerator;
 
-			if (AssemblyHolder.NeedCache)
+			if (AssemblyHolder.Settings != null)
 			{
 				var typeGen = AssemblyHolder.CreateType("Test", TypeAttributes.Class);
 				methodGenerator = typeGen.CreateMethod("Method", MethodAttributes.Public | MethodAttributes.Static, returnType, invokeMethod.GetParameterTypes(false).Select(t => t.type).ToArray());
@@ -658,7 +658,7 @@ namespace Ecng.Reflection
 
 			methodGenerator.ret();
 
-			if (AssemblyHolder.NeedCache)
+			if (AssemblyHolder.Settings != null)
 				return Delegate.CreateDelegate(delegType, methodGenerator.TypeGenerator.CompileType().GetMethod("Method"));
 			else
 				return ((DynamicMethod)methodGenerator.Builder).CreateDelegate(delegType);
