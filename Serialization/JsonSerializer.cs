@@ -19,12 +19,14 @@
 
 		public bool Indent { get; set; }
 		public Encoding Encoding { get; set; } = Encoding.UTF8;
+		public bool FillMode { get; set; }
 
 		public override ISerializer GetSerializer(Type entityType)
 		{
 			var serializer = base.GetSerializer(entityType);
 			serializer.SetValue(nameof(Indent), Indent);
 			serializer.SetValue(nameof(Encoding), Encoding);
+			serializer.SetValue(nameof(FillMode), FillMode);
 			return serializer;
 		}
 
@@ -83,29 +85,48 @@
 		{
 			if (typeof(IPersistable).IsAssignableFrom(type) || typeof(IAsyncPersistable).IsAssignableFrom(type))
 			{
-				await reader.ReadWithCheckAsync(cancellationToken);
+				if (FillMode)
+				{
+					var storage = (SettingsStorage)await ReadAsync(reader, typeof(SettingsStorage), cancellationToken);
 
-				if (reader.TokenType == JsonToken.EndArray || reader.TokenType == JsonToken.Null)
-					return null;
+					if (storage is null)
+						return null;
 
-				reader.ChechExpectedToken(JsonToken.StartObject);
+					var per = GetSerializer(type).CreateObject(new SerializationItemCollection());
 
-				var per = GetSerializer(type).CreateObject(new SerializationItemCollection());
+					if (per is IAsyncPersistable asyncPer)
+						await asyncPer.LoadAsync(storage, default);
+					else
+						((IPersistable)per).Load(storage);
 
-				var storage = new SettingsStorage(reader, GetValueFromReaderAsync);
-
-				if (per is IAsyncPersistable asyncPer)
-					await asyncPer.LoadAsync(storage, default);
+					return per;
+				}
 				else
-					((IPersistable)per).Load(storage);
+				{
+					await reader.ReadWithCheckAsync(cancellationToken);
 
-				await TryClearDeepLevel(reader, storage, cancellationToken);
+					if (reader.TokenType == JsonToken.EndArray || reader.TokenType == JsonToken.Null)
+						return null;
 
-				await reader.ReadWithCheckAsync(cancellationToken);
+					reader.ChechExpectedToken(JsonToken.StartObject);
 
-				reader.ChechExpectedToken(JsonToken.EndObject);
+					var per = GetSerializer(type).CreateObject(new SerializationItemCollection());
 
-				return per;
+					var storage = new SettingsStorage(reader, GetValueFromReaderAsync);
+
+					if (per is IAsyncPersistable asyncPer)
+						await asyncPer.LoadAsync(storage, default);
+					else
+						((IPersistable)per).Load(storage);
+
+					await TryClearDeepLevel(reader, storage, cancellationToken);
+
+					await reader.ReadWithCheckAsync(cancellationToken);
+
+					reader.ChechExpectedToken(JsonToken.EndObject);
+
+					return per;
+				}
 			}
 			else if (type == typeof(SettingsStorage))
 			{

@@ -18,9 +18,9 @@
 	[TestClass]
 	public class JsonTests
 	{
-		private static async Task Do<T>(T value, CancellationToken token = default)
+		private static async Task Do<T>(T value, bool fillMode = false, CancellationToken token = default)
 		{
-			var ser = new JsonSerializer<T>();
+			var ser = new JsonSerializer<T> { FillMode = fillMode };
 			var stream = new MemoryStream();
 			await ser.SerializeAsync(value, stream, token);
 			stream.Position = 0;
@@ -109,6 +109,21 @@
 			await Do(TimeZoneInfo.Local);
 			await Do(TimeZoneInfo.Utc);
 			await Do(TimeHelper.Moscow);
+		}
+
+		[TestMethod]
+		public async Task PrimitiveNullable()
+		{
+			await Do((int?)null);
+			await Do((string)null);
+			await Do((GCKind?)null);
+			await Do((decimal?)null);
+			await Do((DateTime?)null);
+			await Do((DateTimeOffset?)null);
+			await Do((TimeZoneInfo)null);
+			await Do((TimeSpan?)null);
+			await Do((Guid?)null);
+			await Do((Uri)null);
 		}
 
 		[TestMethod]
@@ -449,6 +464,12 @@
 				TimeProp = TimeSpan.FromSeconds(10),
 			});
 		}
+		
+		[TestMethod]
+		public async Task ComplexComplexNull()
+		{
+			await Do<TestComplexClass>(null);
+		}
 
 		[TestMethod]
 		public async Task ComplexComplex2()
@@ -499,6 +520,77 @@
 					},
 				}
 			});
+		}
+
+		private class TestContainsClass : Equatable<TestContainsClass>, IPersistable
+		{
+			public int IntProp { get; set; }
+			public DateTime DateProp { get; set; }
+			public TimeSpan TimeProp { get; set; }
+			public TestClass Obj1 { get; set; }
+			public TestClass[] Obj2 { get; set; }
+
+			public override TestContainsClass Clone()
+			{
+				return PersistableHelper.Clone(this);
+			}
+
+			public override bool Equals(TestContainsClass other)
+			{
+				return
+					IntProp == other.IntProp &&
+					DateProp == other.DateProp &&
+					TimeProp == other.TimeProp &&
+					Obj1 == other.Obj1 &&
+					((Obj2 is null && other.Obj2 is null) || Obj2.SequenceEqual(other.Obj2))
+					;
+			}
+
+			void IPersistable.Load(SettingsStorage storage)
+			{
+				IntProp = storage.GetValue<int>(nameof(IntProp));
+				DateProp = storage.GetValue<DateTime>(nameof(DateProp));
+				TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
+
+				if (storage.ContainsKey(nameof(Obj1)))
+					Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1))?.Load<TestClass>();
+
+				if (storage.ContainsKey(nameof(Obj2)))
+					Obj2 = storage.GetValue<SettingsStorage[]>(nameof(Obj2))?.Select(s => s?.Load<TestClass>()).ToArray();
+			}
+
+			void IPersistable.Save(SettingsStorage storage)
+			{
+				storage
+					.Set(nameof(IntProp), IntProp)
+					.Set(nameof(DateProp), DateProp)
+					.Set(nameof(TimeProp), TimeProp)
+					.Set(nameof(Obj1), Obj1?.Save())
+					.Set(nameof(Obj2), Obj2?.Select(o => o?.Save()));
+			}
+		}
+
+		[TestMethod]
+		public async Task Contains()
+		{
+			await Do(new TestContainsClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				Obj1 = new TestClass
+				{
+					IntProp = 124,
+					DateProp = DateTime.UtcNow,
+					TimeProp = TimeSpan.FromSeconds(10),
+				}
+			}, true);
+		}
+
+		[TestMethod]
+		public async Task ContainsNull()
+		{
+			await Do<TestContainsClass>(null, true);
 		}
 	}
 }
