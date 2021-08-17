@@ -104,7 +104,7 @@ namespace Ecng.Reflection
 							return field.GetValue(instance);
 						case false:
 							field.SetValue(instance, arg);
-							return null;
+							return instance;
 						default:
 							throw new InvalidOperationException();
 					}
@@ -125,7 +125,7 @@ namespace Ecng.Reflection
 								prop.SetValue(instance, arr.Last(), arr.Take(arr.Length - 1).ToArray());
 							}
 							else
-								prop.SetValue(instance, arg is object[] arr ? arr[0] : arg);
+								prop.SetValue(instance, arg);
 
 							return instance;
 						}

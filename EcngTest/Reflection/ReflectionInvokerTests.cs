@@ -316,6 +316,20 @@
 		}
 
 		[TestMethod]
+		public void ReflectionGetIntArrayFieldValue()
+		{
+			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
+			new MemberInvokeTest().GetIntArrayFieldValue();
+		}
+
+		[TestMethod]
+		public void ReflectionSetIntArrayFieldValue()
+		{
+			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
+			new MemberInvokeTest().SetIntArrayFieldValue();
+		}
+
+		[TestMethod]
 		public void ReflectionGetIntPropValue()
 		{
 			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
@@ -341,6 +355,20 @@
 		{
 			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
 			new MemberInvokeTest().SetObjPropValue();
+		}
+
+		[TestMethod]
+		public void ReflectionGetIntArrayPropValue()
+		{
+			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
+			new MemberInvokeTest().GetIntArrayPropValue();
+		}
+
+		[TestMethod]
+		public void ReflectionSetIntArrayPropValue()
+		{
+			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
+			new MemberInvokeTest().SetIntArrayPropValue();
 		}
 
 		[TestMethod]
@@ -372,6 +400,20 @@
 		}
 
 		[TestMethod]
+		public void ReflectionGetStaticIntArrayFieldValue()
+		{
+			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
+			new MemberInvokeTest().GetStaticIntArrayFieldValue();
+		}
+
+		[TestMethod]
+		public void ReflectionSetStaticIntArrayFieldValue()
+		{
+			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
+			new MemberInvokeTest().SetStaticIntArrayFieldValue();
+		}
+
+		[TestMethod]
 		public void ReflectionGetStaticIntPropValue()
 		{
 			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
@@ -397,6 +439,20 @@
 		{
 			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
 			new MemberInvokeTest().SetStaticObjPropValue();
+		}
+
+		[TestMethod]
+		public void ReflectionGetStaticIntArrayPropValue()
+		{
+			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
+			new MemberInvokeTest().GetStaticIntArrayPropValue();
+		}
+
+		[TestMethod]
+		public void ReflectionSetStaticIntArrayPropValue()
+		{
+			using var _ = new Scope<FastEmitNotSupported>(new FastEmitNotSupported());
+			new MemberInvokeTest().SetStaticIntArrayPropValue();
 		}
 
 		#endregion

@@ -328,8 +328,10 @@ namespace Ecng.Test.Reflection
 	{
 		public int Field1;
 		public object Field2;
+		public int[] Field3;
 		public static int Field5;
 		public static object Field6;
+		public static int[] Field7;
 
 		#region Prop1
 
@@ -355,6 +357,18 @@ namespace Ecng.Test.Reflection
 
 		#endregion
 
+		#region Prop3
+
+		private int[] _prop3;
+
+		public int[] Prop3
+		{
+			get { return _prop3; }
+			set { _prop3 = value; }
+		}
+
+		#endregion
+
 		#region Prop5
 
 		private static int _prop5;
@@ -375,6 +389,18 @@ namespace Ecng.Test.Reflection
 		{
 			get { return _prop6; }
 			set { _prop6 = value; }
+		}
+
+		#endregion
+
+		#region Prop7
+
+		private static int[] _prop7;
+
+		public static int[] Prop7
+		{
+			get { return _prop7; }
+			set { _prop7 = value; }
 		}
 
 		#endregion
@@ -790,6 +816,22 @@ namespace Ecng.Test.Reflection
 		}
 
 		[TestMethod]
+		public void GetIntArrayFieldValue()
+		{
+			var arr = new[] { 10, 20 };
+			var obj = new InvokeFieldsAndPropClass();
+			obj.Field3 = arr;
+			GetMemberValue(obj, nameof(obj.Field3), arr);
+		}
+
+		[TestMethod]
+		public void SetIntArrayFieldValue()
+		{
+			var arr = new[] { 10, 20 };
+			SetMemberValue(nameof(InvokeFieldsAndPropClass.Field3), arr).Field3.AreEqual(arr);
+		}
+
+		[TestMethod]
 		public void GetIntPropValue()
 		{
 			var obj = new InvokeFieldsAndPropClass();
@@ -815,6 +857,22 @@ namespace Ecng.Test.Reflection
 		public void SetObjPropValue()
 		{
 			SetMemberValue<object>(nameof(InvokeFieldsAndPropClass.Prop2), "John Smith").Prop2.AreEqual("John Smith");
+		}
+
+		[TestMethod]
+		public void GetIntArrayPropValue()
+		{
+			var arr = new[] { 10, 20 };
+			var obj = new InvokeFieldsAndPropClass();
+			obj.Prop3 = arr;
+			GetMemberValue(obj, nameof(obj.Prop3), arr);
+		}
+
+		[TestMethod]
+		public void SetIntArrayPropValue()
+		{
+			var arr = new[] { 10, 20 };
+			SetMemberValue(nameof(InvokeFieldsAndPropClass.Prop3), arr).Prop3.AreEqual(arr);
 		}
 
 		[TestMethod]
@@ -846,6 +904,22 @@ namespace Ecng.Test.Reflection
 		}
 
 		[TestMethod]
+		public void GetStaticIntArrayFieldValue()
+		{
+			var arr = new[] { 10, 20 };
+			InvokeFieldsAndPropClass.Field7 = arr;
+			GetStaticMemberValue(nameof(InvokeFieldsAndPropClass.Field7), arr);
+		}
+
+		[TestMethod]
+		public void SetStaticIntArrayFieldValue()
+		{
+			var arr = new[] { 10, 20 };
+			SetStaticMemberValue(nameof(InvokeFieldsAndPropClass.Field7), arr);
+			InvokeFieldsAndPropClass.Field7.AreEqual(arr);
+		}
+
+		[TestMethod]
 		public void GetStaticIntPropValue()
 		{
 			InvokeFieldsAndPropClass.Prop5 = 10;
@@ -871,6 +945,22 @@ namespace Ecng.Test.Reflection
 		{
 			SetStaticMemberValue<object>(nameof(InvokeFieldsAndPropClass.Prop6), "John Smith");
 			InvokeFieldsAndPropClass.Prop6.AreEqual("John Smith");
+		}
+
+		[TestMethod]
+		public void GetStaticIntArrayPropValue()
+		{
+			var arr = new[] { 10, 20 };
+			InvokeFieldsAndPropClass.Prop7 = arr;
+			GetStaticMemberValue(nameof(InvokeFieldsAndPropClass.Prop7), arr);
+		}
+
+		[TestMethod]
+		public void SetStaticIntArrayPropValue()
+		{
+			var arr = new[] { 10, 20 };
+			SetStaticMemberValue(nameof(InvokeFieldsAndPropClass.Prop7), arr);
+			InvokeFieldsAndPropClass.Prop7.AreEqual(arr);
 		}
 
 		#endregion
