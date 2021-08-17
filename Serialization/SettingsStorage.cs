@@ -17,6 +17,7 @@
 	public class SettingsStorage : SynchronizedDictionary<string, object>
 	{
 		private readonly JsonReader _reader;
+		private readonly Func<JsonReader, SettingsStorage, string, Type, CancellationToken, Task<object>> _readJson;
 		private readonly SettingsStorage _parent;
 
 		/// <summary>
@@ -27,16 +28,11 @@
 		{
 		}
 
-		private SettingsStorage(SettingsStorage parent)
-			: this(parent._reader)
-		{
-			_parent = parent ?? throw new ArgumentNullException(nameof(parent));
-		}
-
-		internal SettingsStorage(JsonReader reader)
+		internal SettingsStorage(JsonReader reader, Func<JsonReader, SettingsStorage, string, Type, CancellationToken, Task<object>> readJson)
 			: this()
 		{
 			_reader = reader ?? throw new ArgumentNullException(nameof(reader));
+			_readJson = readJson ?? throw new ArgumentNullException(nameof(readJson));
 		}
 
 		/// <summary>
@@ -94,10 +90,10 @@
 
 		private int _deepLevel;
 
-		public int DeepLevel
+		internal int DeepLevel
 		{
 			get => _deepLevel;
-			private set
+			set
 			{
 				var diff = value - _deepLevel;
 				
@@ -121,7 +117,7 @@
 				throw new ArgumentNullException(nameof(name));
 
 			if (_reader != null)
-				return GetValueFromReaderAsync(name, defaultValue).Result;
+				return GetValueFromReaderAsync(name, defaultValue, default).Result;
 
 			return TryGetValue(name, out var value) ? value.To<T>() : defaultValue;
 		}
@@ -137,147 +133,14 @@
 				return await GetValueFromReaderAsync(name, defaultValue, cancellationToken);
 		}
 
-		internal async Task TryClearDeepLevel(CancellationToken cancellationToken)
+		private async Task<T> GetValueFromReaderAsync<T>(string name, T defaultValue, CancellationToken cancellationToken)
 		{
-			var lvl = DeepLevel;
+			var value = await _readJson(_reader, this, name, typeof(T), cancellationToken);
 
-			if (lvl == 0)
-				return;
-
-			for (var i = 1; i <= lvl; i++)
-				await _reader.ReadWithCheckAsync(cancellationToken);
-
-			DeepLevel = 0;
-		}
-
-		private async Task<T> GetValueFromReaderAsync<T>(string name, T defaultValue = default, CancellationToken cancellationToken = default)
-		{
-			await TryClearDeepLevel(cancellationToken);
-
-			await _reader.ReadWithCheckAsync(cancellationToken);
-
-			_reader.ChechExpectedToken(JsonToken.PropertyName);
-			
-			if (!((string)_reader.Value).EqualsIgnoreCase(name))
-				throw new InvalidOperationException($"{_reader.Value} != {name}");
-
-			await _reader.ReadWithCheckAsync(cancellationToken);
-
-			if (_reader.TokenType == JsonToken.Null)
+			if (value is null)
 				return defaultValue;
 
-			object value;
-
-			if (typeof(T) == typeof(SettingsStorage))
-			{
-				//await _reader.ReadWithCheckAsync(cancellationToken);
-
-				DeepLevel++;
-
-				value = new SettingsStorage(this);
-			}
-			else if (typeof(IEnumerable<SettingsStorage>).IsAssignableFrom(typeof(T)))
-			{
-				await _reader.ReadWithCheckAsync(cancellationToken);
-
-				var list = new List<SettingsStorage>();
-
-				while (_reader.TokenType != JsonToken.EndArray)
-				{
-					switch (_reader.TokenType)
-					{
-						case JsonToken.StartObject:
-						{
-							var inner = new SettingsStorage();
-							await inner.FillAsync(_reader, cancellationToken);
-							list.Add(inner);
-							break;
-						}
-						case JsonToken.Null:
-							list.Add(null);
-							break;
-						default:
-							throw new InvalidOperationException($"{_reader.TokenType} is out of range.");
-					}
-
-					await _reader.ReadWithCheckAsync(cancellationToken);
-				}
-
-				value = list.ToArray();
-			}
-			else
-			{
-				if (!typeof(T).IsSerializablePrimitive())
-					throw new InvalidOperationException($"Type {typeof(T)} is not primitive.");
-
-				value = _reader.Value;
-			}
-
-			return value.To<T>() ?? defaultValue;
-		}
-
-		public async Task FillAsync(JsonReader reader, CancellationToken cancellationToken)
-		{
-			while (true)
-			{
-				await reader.ReadWithCheckAsync(cancellationToken);
-
-				if (reader.TokenType == JsonToken.EndObject)
-					break;
-
-				reader.ChechExpectedToken(JsonToken.PropertyName);
-
-				var propName = (string)reader.Value;
-
-				await reader.ReadWithCheckAsync(cancellationToken);
-
-				object value;
-
-				switch (reader.TokenType)
-				{
-					case JsonToken.StartObject:
-					{
-						var inner = new SettingsStorage();
-						await inner.FillAsync(reader, cancellationToken);
-						//await reader.ReadWithCheckAsync(cancellationToken);
-						value = inner;
-						break;
-					}
-					case JsonToken.StartArray:
-					{
-						await reader.ReadWithCheckAsync(cancellationToken);
-
-						var list = new List<object>();
-
-						while (reader.TokenType != JsonToken.EndArray)
-						{
-							switch (reader.TokenType)
-							{
-								case JsonToken.StartObject:
-								{
-									var inner = new SettingsStorage();
-									await inner.FillAsync(reader, cancellationToken);
-									list.Add(inner);
-									break;
-								}
-								default:
-									list.Add(reader.Value);
-									break;
-							}
-
-							await reader.ReadWithCheckAsync(cancellationToken);
-						}
-
-						value = list.ToArray();
-						break;
-					}
-					default:
-						value = reader.Value;
-						break;
-				}
-
-				Set(propName, value);
-			}
+			return (T)value;
 		}
 	}
 }

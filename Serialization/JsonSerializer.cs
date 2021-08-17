@@ -92,14 +92,14 @@
 
 				var per = GetSerializer(type).CreateObject(new SerializationItemCollection());
 
-				var storage = new SettingsStorage(reader);
+				var storage = new SettingsStorage(reader, GetValueFromReaderAsync);
 
 				if (per is IAsyncPersistable asyncPer)
 					await asyncPer.LoadAsync(storage, default);
 				else
 					((IPersistable)per).Load(storage);
 
-				await storage.TryClearDeepLevel(cancellationToken);
+				await TryClearDeepLevel(reader, storage, cancellationToken);
 
 				await reader.ReadWithCheckAsync(cancellationToken);
 
@@ -117,7 +117,7 @@
 				reader.ChechExpectedToken(JsonToken.StartObject);
 
 				var storage = new SettingsStorage();
-				await storage.FillAsync(reader, cancellationToken);
+				await FillAsync(storage, reader, cancellationToken);
 
 				//await reader.ReadWithCheckAsync(cancellationToken);
 
@@ -220,6 +220,102 @@
 
 				await writer.WriteValueAsync(value, cancellationToken);
 			}
+		}
+
+		private async Task FillAsync(SettingsStorage storage, JsonReader reader, CancellationToken cancellationToken)
+		{
+			if (storage is null)
+				throw new ArgumentNullException(nameof(storage));
+
+			if (reader is null)
+				throw new ArgumentNullException(nameof(reader));
+
+			while (true)
+			{
+				await reader.ReadWithCheckAsync(cancellationToken);
+
+				if (reader.TokenType == JsonToken.EndObject)
+					break;
+
+				reader.ChechExpectedToken(JsonToken.PropertyName);
+
+				var propName = (string)reader.Value;
+
+				await reader.ReadWithCheckAsync(cancellationToken);
+
+				object value;
+
+				switch (reader.TokenType)
+				{
+					case JsonToken.StartObject:
+					{
+						var inner = new SettingsStorage();
+						await FillAsync(inner, reader, cancellationToken);
+						value = inner;
+						break;
+					}
+					case JsonToken.StartArray:
+					{
+						await reader.ReadWithCheckAsync(cancellationToken);
+
+						var list = new List<object>();
+
+						while (reader.TokenType != JsonToken.EndArray)
+						{
+							switch (reader.TokenType)
+							{
+								case JsonToken.StartObject:
+								{
+									var inner = new SettingsStorage();
+									await FillAsync(inner, reader, cancellationToken);
+									list.Add(inner);
+									break;
+								}
+								default:
+									list.Add(reader.Value);
+									break;
+							}
+
+							await reader.ReadWithCheckAsync(cancellationToken);
+						}
+
+						value = list.ToArray();
+						break;
+					}
+					default:
+						value = reader.Value;
+						break;
+				}
+
+				storage.Set(propName, value);
+			}
+		}
+
+		private async Task TryClearDeepLevel(JsonReader reader, SettingsStorage storage, CancellationToken cancellationToken)
+		{
+			var lvl = storage.DeepLevel;
+
+			if (lvl == 0)
+				return;
+
+			for (var i = 1; i <= lvl; i++)
+				await reader.ReadWithCheckAsync(cancellationToken);
+
+			storage.DeepLevel = 0;
+		}
+
+		private async Task<object> GetValueFromReaderAsync(JsonReader reader, SettingsStorage storage, string name, Type type, CancellationToken cancellationToken)
+		{
+			await TryClearDeepLevel(reader, storage, cancellationToken);
+
+			await reader.ReadWithCheckAsync(cancellationToken);
+
+			reader.ChechExpectedToken(JsonToken.PropertyName);
+			
+			if (!((string)reader.Value).EqualsIgnoreCase(name))
+				throw new InvalidOperationException($"{reader.Value} != {name}");
+
+			return await ReadAsync(reader, type, cancellationToken);
 		}
 	}
 }
