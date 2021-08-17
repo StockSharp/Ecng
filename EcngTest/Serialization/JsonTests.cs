@@ -411,8 +411,12 @@
 			public int IntProp { get; set; }
 			public DateTime DateProp { get; set; }
 			public TimeSpan TimeProp { get; set; }
+			public TimeSpan[] TimeArrayProp { get; set; }
 			public TestClass Obj1 { get; set; }
+			public TimeSpan[] TimeArray2Prop { get; set; }
 			public TestClass[] Obj2 { get; set; }
+			public string[] StringArrayProp { get; set; }
+			public string[] StringArray2Prop { get; set; }
 
 			public override TestComplexClass Clone()
 			{
@@ -426,7 +430,11 @@
 					DateProp == other.DateProp &&
 					TimeProp == other.TimeProp &&
 					Obj1 == other.Obj1 &&
-					((Obj2 is null && other.Obj2 is null) || Obj2.SequenceEqual(other.Obj2))
+					((Obj2 is null && other.Obj2 is null) || Obj2.SequenceEqual(other.Obj2)) &&
+					((TimeArrayProp is null && other.TimeArrayProp is null) || TimeArrayProp.SequenceEqual(other.TimeArrayProp)) &&
+					((TimeArray2Prop is null && other.TimeArray2Prop is null) || TimeArray2Prop.SequenceEqual(other.TimeArray2Prop)) &&
+					((StringArrayProp is null && other.StringArrayProp is null) || StringArrayProp.SequenceEqual(other.StringArrayProp)) &&
+					((StringArray2Prop is null && other.StringArray2Prop is null) || StringArray2Prop.SequenceEqual(other.StringArray2Prop))
 					;
 			}
 
@@ -435,6 +443,11 @@
 				IntProp = storage.GetValue<int>(nameof(IntProp));
 				DateProp = storage.GetValue<DateTime>(nameof(DateProp));
 				TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
+
+				TimeArrayProp = storage.GetValue<TimeSpan[]>(nameof(TimeArrayProp));
+				TimeArray2Prop = storage.GetValue<TimeSpan[]>(nameof(TimeArray2Prop));
+				StringArrayProp = storage.GetValue<string[]>(nameof(StringArrayProp));
+				StringArray2Prop = storage.GetValue<string[]>(nameof(StringArray2Prop));
 
 				//if (storage.ContainsKey(nameof(Obj1)))
 					Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1))?.Load<TestClass>();
@@ -449,6 +462,10 @@
 					.Set(nameof(IntProp), IntProp)
 					.Set(nameof(DateProp), DateProp)
 					.Set(nameof(TimeProp), TimeProp)
+					.Set(nameof(TimeArrayProp), TimeArrayProp)
+					.Set(nameof(TimeArray2Prop), TimeArray2Prop)
+					.Set(nameof(StringArrayProp), StringArrayProp)
+					.Set(nameof(StringArray2Prop), StringArray2Prop)
 					.Set(nameof(Obj1), Obj1?.Save())
 					.Set(nameof(Obj2), Obj2?.Select(o => o?.Save()));
 			}
@@ -502,6 +519,8 @@
 					DateProp = DateTime.UtcNow,
 					TimeProp = TimeSpan.FromSeconds(10),
 				},
+				TimeArrayProp = new[] { TimeSpan.FromSeconds(10) },
+				StringArray2Prop = new[] { null, "", "123" },
 				Obj2 = new[]
 				{
 					null,
