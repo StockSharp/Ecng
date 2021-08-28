@@ -206,7 +206,7 @@ namespace Ecng.Common
 				folder += Path.DirectorySeparatorChar;
 
 			var folderUri = new Uri(folder);
-			return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
+			return folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar).DataUnEscape();
 		}
 
 		public static long GetDiskFreeSpace(string driveName)

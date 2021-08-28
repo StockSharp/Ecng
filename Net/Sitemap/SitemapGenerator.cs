@@ -5,6 +5,8 @@ namespace Ecng.Net.Sitemap
 	using System.Globalization;
 	using System.Xml.Linq;
 
+	using Ecng.Common;
+
 	/// <summary>
 	/// Generates sitemap XML.
 	/// </summary>
@@ -65,7 +67,7 @@ namespace Ecng.Net.Sitemap
 			{
 				var urlElement = new XElement(
 					xmlns + "url",
-					new XElement(xmlns + "loc", Uri.EscapeUriString(sitemapNode.Url)),
+					new XElement(xmlns + "loc", sitemapNode.Url.UrlEscape()),
 						sitemapNode.LastModified is null ? null : new XElement(
 							xmlns + "lastmod",
 							sitemapNode.LastModified.Value.ToLocalTime().ToString(_timeFormat)),

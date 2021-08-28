@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using Ecng.Common;
+
 namespace Ecng.Net.SocketIO.Engine.Modules
 {
     /// <remarks>
@@ -27,9 +29,9 @@ namespace Ecng.Net.SocketIO.Engine.Modules
                 {
                     sb.Append("&");
                 }
-                sb.Append(Global.EncodeURIComponent(key));
+                sb.Append(key.DataEscape());
                 sb.Append("=");
-                sb.Append(Global.EncodeURIComponent(obj[key]));
+                sb.Append(obj[key].DataEscape());
             }
             return sb.ToString();
         }
@@ -49,9 +51,9 @@ namespace Ecng.Net.SocketIO.Engine.Modules
                 {
                     sb.Append("&");
                 }
-                sb.Append(Global.EncodeURIComponent(key));
+                sb.Append(key.DataEscape());
                 sb.Append("=");
-                sb.Append(Global.EncodeURIComponent(obj[key]));
+                sb.Append(obj[key].DataEscape());
             }
             return sb.ToString();
         }
@@ -69,7 +71,7 @@ namespace Ecng.Net.SocketIO.Engine.Modules
             {
                 var pair = pairs[i].Split('=');
 
-                qry.Add(Global.DecodeURIComponent(pair[0]), Global.DecodeURIComponent(pair[1]));
+                qry.Add(pair[0].DataUnEscape(), pair[1].DataUnEscape());
             }
             return qry;
         }

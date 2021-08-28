@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -7,17 +6,6 @@ namespace Ecng.Net.SocketIO.Engine.Modules
 {
     public static class Global
     {
-        public static string EncodeURIComponent(string str)
-        {
-            //http://stackoverflow.com/a/4550600/1109316
-            return Uri.EscapeDataString(str);
-        }
-
-        public static string DecodeURIComponent(string str)
-        {
-            return Uri.UnescapeDataString(str);
-        }
-
         public static string CallerName([CallerMemberName]string caller = "", [CallerLineNumber]int number = 0, [CallerFilePath]string path = "")
         {
             var s = path.Split('\\');

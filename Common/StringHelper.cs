@@ -1188,5 +1188,14 @@
 			var r = new Regex(@"\s+");
 			return r.Replace(text, @" ");
 		}
+
+		public static string UrlEscape(this string url)
+			=> Uri.EscapeUriString(url);
+
+		public static string DataEscape(this string url)
+			=> Uri.EscapeDataString(url);
+
+		public static string DataUnEscape(this string url)
+			=> Uri.UnescapeDataString(url);
 	}
 }
