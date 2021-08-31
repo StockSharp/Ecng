@@ -6,6 +6,7 @@ namespace Ecng.Serialization
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
+	using System.Security;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -46,6 +47,7 @@ namespace Ecng.Serialization
 						type.IsSerializablePrimitive() ||
 						type == typeof(object) ||
 						type == typeof(Type) ||
+						type == typeof(SecureString) ||
 						(type.IsNullable() && type.GetUnderlyingType().IsSerializablePrimitive()))
 					{
 						_schema = new Schema { EntityType = type };
@@ -65,11 +67,11 @@ namespace Ecng.Serialization
 							field.Factory = new MemberFieldFactory<Type>(field, 0, false);
 							_schema.Factory = (EntityFactory)typeof(PrimitiveEntityFactory<Type>).CreateInstance(field.Name);
 						}
-							//else if (type == typeof(object))
-							//{
-							//    field.Factory = new DynamicFieldFactory(field, 0, false);
-							//    _schema.Factory = (EntityFactory)typeof(DynamicFieldFactory<>).Make(type).CreateInstance(field.Name);
-							//}
+						else if (type == typeof(SecureString))
+						{
+							field.Factory = SchemaManager.GlobalFieldFactories[type].CreateInstance<FieldFactory>(field, 0);
+							_schema.Factory = new SecureStringEntityFactory(field.Name);
+						}
 						else
 						{
 							field.Factory = typeof(RealCollectionFieldFactory<,>)

@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Linq;
+	using System.Security;
 
 	using Ecng.Common;
 	using Ecng.Serialization;
@@ -169,6 +170,30 @@
 		{
 			var serializer = new TSerializer();
 			serializer.Deserialize(serializer.Serialize(value)).AssertEqual(value);
+		}
+
+		[TestMethod]
+		public void BinarySecureStringTest()
+		{
+			Test<BinarySerializer<SecureString>, SecureString>("20".Secure());
+		}
+
+		[TestMethod]
+		public void XmlSecureStringTest()
+		{
+			Test<XmlSerializer<SecureString>, SecureString>("20".Secure());
+		}
+
+		[TestMethod]
+		public void BinarySecureStringNullTest()
+		{
+			Test<BinarySerializer<SecureString>, SecureString>(null);
+		}
+
+		[TestMethod]
+		public void XmlSecureStringNullTest()
+		{
+			Test<XmlSerializer<SecureString>, SecureString>(null);
 		}
 	}
 }

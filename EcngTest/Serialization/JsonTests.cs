@@ -7,10 +7,12 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 	using System.Linq;
+	using System.Security;
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	using Ecng.Common;
+	using Ecng.Collections;
 	using Ecng.Serialization;
 	using Ecng.UnitTesting;
 	using Ecng.Reflection;
@@ -96,6 +98,7 @@
 		{
 			await Do(123);
 			await Do("123");
+			await Do("123".Secure());
 			await Do(GCKind.Any);
 			await Do(1324554.55M);
 			await Do(DateTime.UtcNow);
@@ -116,6 +119,7 @@
 		{
 			await Do((int?)null);
 			await Do((string)null);
+			await Do((SecureString)null);
 			await Do((GCKind?)null);
 			await Do((decimal?)null);
 			await Do((DateTime?)null);
@@ -134,6 +138,7 @@
 			await Do(new[] { null, "123", "456" });
 			await Do(new[] { null, "", "123", "", "456" });
 			await Do(new[] { "", null, "123", null, "456", null });
+			await Do(new[] { "".Secure(), null, "123".Secure(), null, "456".Secure(), null });
 			await Do(new[] { GCKind.Any, GCKind.Background });
 			await Do(new[] { 1324554.55M, 14554.55M });
 			await Do(new[] { DateTime.UtcNow, DateTime.Now });
@@ -145,6 +150,7 @@
 			await Do(new[] { null, TimeZoneInfo.Local });
 			await Do(new byte[] { 1, 2, 3 });
 			await Do(new string[] { null, null });
+			await Do(new SecureString[] { null, null });
 		}
 
 		[TestMethod]
@@ -153,6 +159,7 @@
 			await Do(new[] { new[] { 1, 2, 3 }, new[] { 4, 5, 6 } });
 			await Do(new[] { new[] { "123", "456" }, new[] { "789", "000" } });
 			await Do(new[] { null, new[] { null, "123", "456" }, new[] { "789", "000", null } });
+			await Do(new[] { null, new[] { null, "123".Secure(), "456".Secure() }, new[] { "789".Secure(), "000".Secure(), null } });
 		}
 
 		[TestMethod]
@@ -186,8 +193,10 @@
 				.Set("IntProp", 124)
 				.Set("DateProp", DateTime.UtcNow)
 				.Set("TimeProp", TimeSpan.FromSeconds(10))
-				.Set("ArrProp", new[] { 1, 2, 3 })
-				.Set("ArrProp2", new[] { "123", null, string.Empty, null })
+				.Set("ArrIntProp", new[] { 1, 2, 3 })
+				.Set("ArrStringProp", new[] { "123", null, string.Empty, null })
+				// TODO
+				//.Set("ArrSecureStringProp", new[] { "123".Secure(), null, string.Empty.Secure(), null })
 				.Set("ComplexProp1", new SettingsStorage())
 				.Set("ComplexProp2", new SettingsStorage()
 					.Set("IntProp", 124)
@@ -214,6 +223,8 @@
 		{
 			public int IntProp { get; set; }
 			public DateTime DateProp { get; set; }
+			public string StringProp { get; set; }
+			public SecureString SecureStringProp { get; set; }
 			public TimeSpan TimeProp { get; set; }
 
 			public override TestClass Clone()
@@ -226,6 +237,8 @@
 				return
 					IntProp == other.IntProp &&
 					DateProp == other.DateProp &&
+					StringProp == other.StringProp &&
+					SecureStringProp.IsEqualTo(other.SecureStringProp) &&
 					TimeProp == other.TimeProp
 					;
 			}
@@ -234,6 +247,8 @@
 			{
 				IntProp = storage.GetValue<int>(nameof(IntProp));
 				DateProp = storage.GetValue<DateTime>(nameof(DateProp));
+				StringProp = storage.GetValue<string>(nameof(StringProp));
+				SecureStringProp = storage.GetValue<SecureString>(nameof(SecureStringProp));
 				TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
 			}
 
@@ -242,6 +257,8 @@
 				storage
 					.Set(nameof(IntProp), IntProp)
 					.Set(nameof(DateProp), DateProp)
+					.Set(nameof(StringProp), StringProp)
+					.Set(nameof(SecureStringProp), SecureStringProp)
 					.Set(nameof(TimeProp), TimeProp);
 			}
 		}
@@ -254,6 +271,30 @@
 				IntProp = 124,
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
+			});
+		}
+
+		[TestMethod]
+		public async Task Complex2()
+		{
+			await Do(new TestClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				StringProp = "123",
+			});
+		}
+
+		[TestMethod]
+		public async Task Complex3()
+		{
+			await Do(new TestClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				SecureStringProp = "123".Secure(),
 			});
 		}
 
@@ -417,6 +458,7 @@
 			public TestClass[] Obj2 { get; set; }
 			public string[] StringArrayProp { get; set; }
 			public string[] StringArray2Prop { get; set; }
+			public SecureString[] SecureStringArrayProp { get; set; }
 
 			public override TestComplexClass Clone()
 			{
@@ -434,7 +476,8 @@
 					((TimeArrayProp is null && other.TimeArrayProp is null) || TimeArrayProp.SequenceEqual(other.TimeArrayProp)) &&
 					((TimeArray2Prop is null && other.TimeArray2Prop is null) || TimeArray2Prop.SequenceEqual(other.TimeArray2Prop)) &&
 					((StringArrayProp is null && other.StringArrayProp is null) || StringArrayProp.SequenceEqual(other.StringArrayProp)) &&
-					((StringArray2Prop is null && other.StringArray2Prop is null) || StringArray2Prop.SequenceEqual(other.StringArray2Prop))
+					((StringArray2Prop is null && other.StringArray2Prop is null) || StringArray2Prop.SequenceEqual(other.StringArray2Prop)) &&
+					((SecureStringArrayProp is null && other.SecureStringArrayProp is null) || SecureStringArrayProp.SequenceEqual(other.SecureStringArrayProp, StringHelper.IsEqualTo))
 					;
 			}
 
@@ -448,6 +491,7 @@
 				TimeArray2Prop = storage.GetValue<TimeSpan[]>(nameof(TimeArray2Prop));
 				StringArrayProp = storage.GetValue<string[]>(nameof(StringArrayProp));
 				StringArray2Prop = storage.GetValue<string[]>(nameof(StringArray2Prop));
+				SecureStringArrayProp = storage.GetValue<SecureString[]>(nameof(SecureStringArrayProp));
 
 				//if (storage.ContainsKey(nameof(Obj1)))
 					Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1))?.Load<TestClass>();
@@ -466,6 +510,7 @@
 					.Set(nameof(TimeArray2Prop), TimeArray2Prop)
 					.Set(nameof(StringArrayProp), StringArrayProp)
 					.Set(nameof(StringArray2Prop), StringArray2Prop)
+					.Set(nameof(SecureStringArrayProp), SecureStringArrayProp)
 					.Set(nameof(Obj1), Obj1?.Save())
 					.Set(nameof(Obj2), Obj2?.Select(o => o?.Save()));
 			}
@@ -521,6 +566,7 @@
 				},
 				TimeArrayProp = new[] { TimeSpan.FromSeconds(10) },
 				StringArray2Prop = new[] { null, "", "123" },
+				SecureStringArrayProp = new[] { null, "".Secure(), "123".Secure() },
 				Obj2 = new[]
 				{
 					null,

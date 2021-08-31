@@ -20,6 +20,7 @@
 			GlobalFieldFactories = new Dictionary<Type, Type>
 			{
 				{ typeof(System.Drawing.Color), typeof(ColorFieldFactory<System.Drawing.Color>) },
+				{ typeof(System.Security.SecureString), typeof(SecureStringFieldFactory) },
 			};
 		}
 

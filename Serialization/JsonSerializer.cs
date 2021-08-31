@@ -7,6 +7,7 @@
 	using System.IO;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using System.Security;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
@@ -191,6 +192,8 @@
 					value = await reader.ReadAsDateTimeOffsetAsync(cancellationToken);
 				else if (type == typeof(byte[]))
 					value = await reader.ReadAsBytesAsync(cancellationToken);
+				else if (type == typeof(SecureString))
+					value = SecureStringEncryptor.Instance.Decrypt(await reader.ReadAsBytesAsync(cancellationToken));
 				else
 					value = await reader.ReadAsStringAsync(cancellationToken);
 
@@ -233,6 +236,10 @@
 					await WriteAsync(writer, item, cancellationToken);
 
 				await writer.WriteEndArrayAsync(cancellationToken);
+			}
+			else if (value is SecureString secStr)
+			{
+				await WriteAsync(writer, SecureStringEncryptor.Instance.Encrypt(secStr), cancellationToken);
 			}
 			else
 			{
