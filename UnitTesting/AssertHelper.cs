@@ -1,6 +1,7 @@
 ﻿namespace Ecng.UnitTesting
 {
 	using System;
+	using System.Security;
 
 	using Ecng.Common;
 
@@ -36,7 +37,12 @@
 			=> value.AssertEqual(expected);
 
 		public static void AssertEqual<T>(this T value, T expected)
-			=> Assert.AreEqual(expected, value);
+		{
+			if (value is SecureString str)
+				str.IsEqualTo(expected.To<SecureString>()).AssertTrue();
+			else
+				Assert.AreEqual(expected, value);
+		}
 
 		public static void AssertNotEqual<T>(this T value, T expected)
 			=> Assert.AreNotEqual(expected, value);
