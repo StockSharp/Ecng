@@ -849,7 +849,12 @@
 		public static bool IsEqualTo(this SecureString value1, SecureString value2)
 		{
 			if (value1 is null)
+			{
+				if (value2 is null)
+					return true;
+
 				throw new ArgumentNullException(nameof(value1));
+			}
 
 			if (value2 is null)
 				throw new ArgumentNullException(nameof(value2));
