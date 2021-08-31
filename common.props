@@ -2,8 +2,9 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
 
-    <Title>Ecng.$(MSBuildProjectName)</Title>
+    <AssemblyTitle>Ecng.$(MSBuildProjectName)</AssemblyTitle>
     <Product>Ecng system framework</Product>
+    <Description>Ecng system framework</Description>
     <Company>StockSharp LP</Company>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
