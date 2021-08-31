@@ -12,6 +12,7 @@
 
 	public static class BinaryHelper
 	{
+		[Obsolete]
 		public static void UndoDispose(this MemoryStream stream)
 		{
 			if (stream is null)
@@ -27,11 +28,10 @@
 			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			using (var sr = new StreamReader(stream, encoding ?? Encoding.UTF8, true, -1, leaveOpen))
-			{
-				while (!sr.EndOfStream)
-					yield return sr.ReadLine();
-			}
+			using var sr = new StreamReader(stream, encoding ?? Encoding.UTF8, true, -1, leaveOpen);
+
+			while (!sr.EndOfStream)
+				yield return sr.ReadLine();
 		}
 
 		#region Write
