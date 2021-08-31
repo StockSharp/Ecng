@@ -42,4 +42,24 @@ namespace Ecng.Serialization
 
 		#endregion
 	}
+
+	class PrimitiveEntityFactory<TEntity> : EntityFactory<TEntity>
+	{
+		public PrimitiveEntityFactory(string name)
+		{
+			if (name.IsEmpty())
+				throw new ArgumentNullException(nameof(name));
+
+			Name = name;
+		}
+
+		public string Name { get; }
+
+		public override bool FullInitialize => true;
+
+		public override TEntity CreateEntity(ISerializer serializer, SerializationItemCollection source)
+		{
+			return source[Name].Value.To<TEntity>();
+		}
+	}
 }
