@@ -6,7 +6,6 @@ namespace Ecng.Security
 	using System.Security.Cryptography;
 
 	using Ecng.Common;
-	using Ecng.Serialization;
 
 	using Microsoft.Practices.EnterpriseLibrary.Security.Cryptography;
 

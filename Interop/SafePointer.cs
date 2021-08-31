@@ -2,7 +2,7 @@
 {
 	using System;
 
-	using Ecng.Serialization;
+	using Ecng.Common;
 
 	public struct SafePointer
 	{
