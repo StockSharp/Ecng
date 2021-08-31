@@ -8,7 +8,7 @@
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
-	public class DictTest
+	public class DictTests
 	{
 		[TestMethod]
 		public void Tuples()
