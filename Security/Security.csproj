@@ -20,6 +20,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Serialization\Serialization.csproj" />
+    <ProjectReference Include="..\Reflection\Reflection.csproj" />
   </ItemGroup>
 </Project>

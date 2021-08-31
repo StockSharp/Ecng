@@ -5,7 +5,6 @@ namespace Ecng.Security
 
 	using Ecng.Common;
 	using Ecng.Collections;
-	using Ecng.Serialization;
 
 	public class Secret : Equatable<Secret>
 	{
@@ -59,7 +58,6 @@ namespace Ecng.Security
 		/// <value>The hash.</value>
 		public byte[] Hash { get; set; }
 
-		[Ignore]
 		public CryptoAlgorithm Algo { get; }
 
 		public bool IsValid(byte[] passwordBytes)

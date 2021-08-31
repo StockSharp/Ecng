@@ -6,7 +6,6 @@ namespace Ecng.Security
 
 	using Ecng.Common;
 	using Ecng.Reflection;
-	using Ecng.Serialization;
 
 	using Microsoft.Practices.EnterpriseLibrary.Security.Cryptography;
 
@@ -19,7 +18,7 @@ namespace Ecng.Security
 	}
 
 	[Serializable]
-	public class CryptoAlgorithm : Serializable<CryptoAlgorithm>, IDisposable
+	public class CryptoAlgorithm : Equatable<CryptoAlgorithm>, IDisposable
 	{
 		#region Private Fields
 
@@ -240,14 +239,18 @@ namespace Ecng.Security
 			return _type == other._type;
 		}
 
-		protected override void Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source)
+		public override CryptoAlgorithm Clone()
 		{
-			throw new NotImplementedException();
-		}
-
-		protected override void Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source)
-		{
-			throw new NotImplementedException();
+			if (_symmetric is not null)
+				return new(_symmetric);
+			else if (_asymmetric is not null)
+				return new(_asymmetric);
+			else if (_dpapi is not null)
+				return new(_dpapi);
+			else if (_hash is not null)
+				return new(_hash);
+			else
+				throw new InvalidOperationException();
 		}
 	}
 }
