@@ -22,22 +22,12 @@
 			stream.SetValue("_expandable", true);
 		}
 
-		// убрать когда перейдем на 4.5 полностью
-		private class LeaveOpenStreamReader : StreamReader
-		{
-			public LeaveOpenStreamReader(Stream stream, Encoding encoding)
-				: base(stream, encoding ?? Encoding.UTF8)
-			{
-				this.SetValue("_closable", false);
-			}
-		}
-
-		public static IEnumerable<string> EnumerateLines(this Stream stream, Encoding encoding = null)
+		public static IEnumerable<string> EnumerateLines(this Stream stream, Encoding encoding = null, bool leaveOpen = true)
 		{
 			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			using (var sr = new LeaveOpenStreamReader(stream, encoding ?? Encoding.UTF8))
+			using (var sr = new StreamReader(stream, encoding ?? Encoding.UTF8, true, -1, leaveOpen))
 			{
 				while (!sr.EndOfStream)
 					yield return sr.ReadLine();
