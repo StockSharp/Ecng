@@ -1286,5 +1286,11 @@
 		// https://stackoverflow.com/a/35874937
 		public static async Task<IEnumerable<T1>> SelectManyAsync<T, T1>(this IEnumerable<T> enumeration, Func<T, Task<IEnumerable<T1>>> func)
 			=> (await Task.WhenAll(enumeration.Select(func))).SelectMany(s => s);
+
+		public static KeyValuePair<TKey, TValue> ToPair<TKey, TValue>(this (TKey key, TValue value) _)
+			=> new(_.key, _.value);
+
+		public static void Add<TKey, TValue>(this IDictionary<TKey, TValue> dict, (TKey key, TValue value) tuple)
+			=> dict.Add(tuple.ToPair());
 	}
 }
