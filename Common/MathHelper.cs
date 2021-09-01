@@ -850,7 +850,7 @@ namespace Ecng.Common
 				return new[] { x1, x2 };
 			}
 			else
-				return ArrayHelper.Empty<double>();
+				return Array.Empty<double>();
 		}
 
 		public static long AsRaw(this double value)

@@ -68,16 +68,16 @@ namespace Ecng.Reflection.Emit
 		private void Init(ConstructorInfo ctor, object[] ctorArgs, PropertyInfo[] props, object[] propValues, FieldInfo[] fields, object[] fieldValues)
 		{
 			if (props is null)
-				props = ArrayHelper.Empty<PropertyInfo>();
+				props = Array.Empty<PropertyInfo>();
 
 			if (propValues is null)
-				propValues = ArrayHelper.Empty<object>();
+				propValues = Array.Empty<object>();
 
 			if (fields is null)
-				fields = ArrayHelper.Empty<FieldInfo>();
+				fields = Array.Empty<FieldInfo>();
 
 			if (fieldValues is null)
-				fieldValues = ArrayHelper.Empty<object>();
+				fieldValues = Array.Empty<object>();
 
 			if (props.HasNullItem())
 				throw new ArgumentException(nameof(props));

@@ -692,7 +692,7 @@ namespace Ecng.Common
 			if (size > int.MaxValue / 10)
 				throw new ArgumentOutOfRangeException(nameof(size), "Size has too big value {0}.".Put(size));
 
-			var buffer = size > 0 ? stream.ReadBuffer(size) : ArrayHelper.Empty<byte>();
+			var buffer = size > 0 ? stream.ReadBuffer(size) : Array.Empty<byte>();
 
 			if (type == typeof(byte[]))
 				return buffer;

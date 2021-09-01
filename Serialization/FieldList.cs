@@ -19,7 +19,7 @@
 		#region FieldList.ctor()
 
 		public FieldList()
-			: this(ArrayHelper.Empty<Field>())
+			: this(Array.Empty<Field>())
 		{
 		}
 

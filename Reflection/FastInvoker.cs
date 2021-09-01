@@ -35,7 +35,7 @@ namespace Ecng.Reflection
 						_parameters = method.GetParameters();
 
 					if (_parameters.Length == 0)
-						arg = ArrayHelper.Empty<object>();
+						arg = Array.Empty<object>();
 
 					var copied = false;
 					object[] args;
@@ -115,7 +115,7 @@ namespace Ecng.Reflection
 					{
 						case true:
 						{
-							return prop.GetValue(instance, arg is null ? ArrayHelper.Empty<object>() : (arg is object[] arr ? arr : new[] { arg }));
+							return prop.GetValue(instance, arg is null ? Array.Empty<object>() : (arg is object[] arr ? arr : new[] { arg }));
 						}
 						case false:
 						{
@@ -428,7 +428,7 @@ namespace Ecng.Reflection
 		{
 			var parameters = member is MethodBase
 				? member.To<MethodBase>().GetParameters()
-				: ArrayHelper.Empty<ParameterInfo>();
+				: Array.Empty<ParameterInfo>();
 
 			if (member.IsIndexer())
 				parameters = (isGetter == true ? ((PropertyInfo)member).GetGetMethod(true) : ((PropertyInfo)member).GetSetMethod(true)).GetParameters();

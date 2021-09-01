@@ -31,7 +31,7 @@ namespace Ecng.Reflection
 			else if (member.IsIndexer())
 				ParamTypes = ((PropertyInfo)member).GetIndexerTypes().ToArray();
 			else
-				ParamTypes = ArrayHelper.Empty<Type>();
+				ParamTypes = Array.Empty<Type>();
 		}
 
 		#endregion
