@@ -142,7 +142,9 @@
 								{
 									factoryType = field.Type.IsEnum()
 												? typeof(EnumFieldFactory<,>).Make(field.Type, field.Type.GetEnumBaseType())
-												: typeof(PrimitiveFieldFactory<,>).Make(field.Type, field.Type);
+												: field.Type == typeof(TimeZoneInfo)
+													? typeof(PrimitiveFieldFactory<TimeZoneInfo, string>)
+													: typeof(PrimitiveFieldFactory<,>).Make(field.Type, field.Type);
 								}
 								else
 								{
