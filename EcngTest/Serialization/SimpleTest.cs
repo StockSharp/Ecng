@@ -27,7 +27,16 @@
 		public int Id { get; set; }
 		
 		public string Name { get; set; }
-		
+
+		[TimeZoneInfo]
+		public TimeZoneInfo TimeZone { get; set; }
+
+		public TimeSpan TimeSpan { get; set; }
+
+		public Guid Guid { get; set; }
+
+		public Guid? NullGuid { get; set; }
+
 		[InnerSchema]
 		public Entity2 Entity2 { get; set; }
 		
@@ -51,12 +60,28 @@
 				Id == other.Id &&
 				Name == other.Name &&
 				Entity2 == other.Entity2 &&
-				((Entities is null && other.Entities is null) || Entities.SequenceEqual(other.Entities)) &&
-				((Entities2 is null && other.Entities2 is null) || Entities2.SequenceEqual(other.Entities2)) &&
-				((Names is null && other.Names is null) || Names.SequenceEqual(other.Names)) &&
-				((Names2 is null && other.Names2 is null) || Names2.SequenceEqual(other.Names2))
+				((Entities is null && other.Entities is null) || Entities?.SequenceEqual(other.Entities) == true) &&
+				((Entities2 is null && other.Entities2 is null) || Entities2?.SequenceEqual(other.Entities2) == true) &&
+				((Names is null && other.Names is null) || Names?.SequenceEqual(other.Names) == true) &&
+				((Names2 is null && other.Names2 is null) || Names2?.SequenceEqual(other.Names2) == true) &&
+				((TimeZone is null && other.TimeZone is null) || TimeZone?.Equals(other.TimeZone) == true) &&
+				TimeSpan == other.TimeSpan &&
+				Guid == other.Guid &&
+				NullGuid == other.NullGuid
 				;
 		}
+	}
+
+	class TZEntity : Equatable<TZEntity>
+	{
+		public TimeZoneInfo TimeZone { get; set; }
+
+		public override bool Equals(TZEntity other)
+		{
+			return TimeZone == other.TimeZone;
+		}
+
+		public override TZEntity Clone() => throw new NotSupportedException();
 	}
 
 	[TestClass]
@@ -67,6 +92,56 @@
 		{
 			var ser = new BinarySerializer<Entity>();
 			ser.Deserialize(ser.Serialize(new Entity { Name = "11", Entities2 = new[] { new Entity2 { Name = "22" }, null }, Names2 = new[] { "", null } }));
+		}
+
+		[TestMethod]
+		public void TimeZoneBin()
+		{
+			Test<BinarySerializer<Entity>, Entity>(new Entity { TimeZone = TimeHelper.Moscow });
+			Test<BinarySerializer<TZEntity>, TZEntity>(new TZEntity { TimeZone = TimeHelper.Moscow });
+		}
+
+		[TestMethod]
+		public void TimeZoneXml()
+		{
+			Test<XmlSerializer<Entity>, Entity>(new Entity { TimeZone = TimeHelper.Moscow });
+			Test<XmlSerializer<TZEntity>, TZEntity>(new TZEntity { TimeZone = TimeHelper.Moscow });
+		}
+
+		[TestMethod]
+		public void TimeSpanBin()
+		{
+			Test<BinarySerializer<Entity>, Entity>(new Entity { TimeSpan = TimeSpan.FromDays(7) });
+		}
+
+		[TestMethod]
+		public void TimeSpanXml()
+		{
+			Test<XmlSerializer<Entity>, Entity>(new Entity { TimeSpan = TimeSpan.FromDays(7) });
+		}
+
+		[TestMethod]
+		public void GuidBin()
+		{
+			Test<BinarySerializer<Entity>, Entity>(new Entity { Guid = Guid.NewGuid() });
+		}
+
+		[TestMethod]
+		public void GuidXml()
+		{
+			Test<XmlSerializer<Entity>, Entity>(new Entity { Guid = Guid.NewGuid() });
+		}
+
+		[TestMethod]
+		public void NullGuidBin()
+		{
+			Test<BinarySerializer<Entity>, Entity>(new Entity { NullGuid = Guid.NewGuid() });
+		}
+
+		[TestMethod]
+		public void NullGuidXml()
+		{
+			Test<XmlSerializer<Entity>, Entity>(new Entity { NullGuid = Guid.NewGuid() });
 		}
 
 		[TestMethod]

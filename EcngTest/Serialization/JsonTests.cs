@@ -472,12 +472,12 @@
 					DateProp == other.DateProp &&
 					TimeProp == other.TimeProp &&
 					Obj1 == other.Obj1 &&
-					((Obj2 is null && other.Obj2 is null) || Obj2.SequenceEqual(other.Obj2)) &&
-					((TimeArrayProp is null && other.TimeArrayProp is null) || TimeArrayProp.SequenceEqual(other.TimeArrayProp)) &&
-					((TimeArray2Prop is null && other.TimeArray2Prop is null) || TimeArray2Prop.SequenceEqual(other.TimeArray2Prop)) &&
-					((StringArrayProp is null && other.StringArrayProp is null) || StringArrayProp.SequenceEqual(other.StringArrayProp)) &&
-					((StringArray2Prop is null && other.StringArray2Prop is null) || StringArray2Prop.SequenceEqual(other.StringArray2Prop)) &&
-					((SecureStringArrayProp is null && other.SecureStringArrayProp is null) || SecureStringArrayProp.SequenceEqual(other.SecureStringArrayProp, StringHelper.IsEqualTo))
+					((Obj2 is null && other.Obj2 is null) || Obj2?.SequenceEqual(other.Obj2) == true) &&
+					((TimeArrayProp is null && other.TimeArrayProp is null) || TimeArrayProp?.SequenceEqual(other.TimeArrayProp) == true) &&
+					((TimeArray2Prop is null && other.TimeArray2Prop is null) || TimeArray2Prop?.SequenceEqual(other.TimeArray2Prop) == true) &&
+					((StringArrayProp is null && other.StringArrayProp is null) || StringArrayProp?.SequenceEqual(other.StringArrayProp) == true) &&
+					((StringArray2Prop is null && other.StringArray2Prop is null) || StringArray2Prop?.SequenceEqual(other.StringArray2Prop) == true) &&
+					((SecureStringArrayProp is null && other.SecureStringArrayProp is null) || SecureStringArrayProp?.SequenceEqual(other.SecureStringArrayProp, StringHelper.IsEqualTo) == true)
 					;
 			}
 
@@ -607,7 +607,7 @@
 					DateProp == other.DateProp &&
 					TimeProp == other.TimeProp &&
 					Obj1 == other.Obj1 &&
-					((Obj2 is null && other.Obj2 is null) || Obj2.SequenceEqual(other.Obj2))
+					((Obj2 is null && other.Obj2 is null) || Obj2?.SequenceEqual(other.Obj2) == true)
 					;
 			}
 
@@ -698,7 +698,7 @@
 					DateProp == other.DateProp &&
 					TimeProp == other.TimeProp &&
 					Obj1 == other.Obj1 &&
-					((Obj2 is null && other.Obj2 is null) || Obj2.SequenceEqual(other.Obj2))
+					((Obj2 is null && other.Obj2 is null) || Obj2?.SequenceEqual(other.Obj2) == true)
 					;
 			}
 
