@@ -252,7 +252,8 @@
 
 				return charArray.TypedTo<char[], SecureString>();
 			});
-
+			AddTypedConverter<string, char[]>(input => input.ToCharArray());
+			AddTypedConverter<char[], string>(input => new string(input));
 			AddTypedConverter<byte, byte[]>(input => new[] { input });
 			AddTypedConverter<byte[], byte>(input => input[0]);
 			AddTypedConverter<bool, byte[]>(BitConverter.GetBytes);
