@@ -14,7 +14,7 @@ namespace Ecng.Serialization
 
 	#endregion
 
-	public abstract class Serializer<T> : ISerializer
+	public abstract class Serializer<T> : ISerializer<T>
 	{
 		protected Serializer()
 		{

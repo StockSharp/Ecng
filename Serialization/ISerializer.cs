@@ -40,4 +40,16 @@ namespace Ecng.Serialization
 
 		object GetId(object graph);
 	}
+
+	public interface ISerializer<T> : ISerializer
+	{
+		void Serialize(T graph, string fileName);
+		new T Deserialize(string fileName);
+
+		void Serialize(T graph, Stream stream);
+		new T Deserialize(Stream stream);
+
+		byte[] Serialize(T graph);
+		new T Deserialize(byte[] data);
+	}
 }
