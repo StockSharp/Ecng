@@ -5,6 +5,7 @@ namespace Ecng.Reflection
 	using System.Collections.Generic;
 	using System.Reflection;
 	using System.Linq;
+	using System.Runtime.CompilerServices;
 	using MemberType = System.Tuple<string, System.Reflection.MemberTypes, MemberSignature>;
 
 	using Ecng.Collections;
@@ -939,5 +940,8 @@ namespace Ecng.Reflection
 
 			return cache.SafeAdd(key, createValue);
 		}
+
+		public static void EnsureRunClass(this Type type)
+			=> RuntimeHelpers.RunClassConstructor(type.TypeHandle);
 	}
 }
