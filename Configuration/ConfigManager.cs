@@ -99,26 +99,6 @@
 
 		#endregion
 
-		#region GetSectionByType
-
-		public static T GetSectionByType<T>()
-			where T : ConfigurationSection
-		{
-			return (T)GetSectionByType(typeof(T));
-		}
-
-		public static ConfigurationSection GetSectionByType(Type type)
-		{
-			var attr = type.GetAttribute<ConfigSectionAttribute>();
-
-			if (attr is null)
-				throw new ArgumentException("Type '{0}' isn't marked ConfigSectionAttribute.".Put(type));
-
-			return GetSection(attr.SectionType);
-		}
-
-		#endregion
-
 		#region GetGroup
 
 		public static T GetGroup<T>()
