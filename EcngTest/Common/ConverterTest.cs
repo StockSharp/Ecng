@@ -1,6 +1,7 @@
 namespace Ecng.Test.Common
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Linq;
 	using System.Net;
@@ -147,6 +148,30 @@ namespace Ecng.Test.Common
 			objArr.To<byte[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
 			objArr.To<long[]>().SequenceEqual(longArr).AssertTrue();
 			objArr.To<long[]>().To<int[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
+		}
+
+		[TestMethod]
+		public void EnumerableCovariance()
+		{
+			IEnumerable<object> objArr = new object[] { 1, 2, 3 };
+			IEnumerable<long> longArr = new long[] { 1, 2, 3 };
+			objArr.To<IEnumerable<int>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<IEnumerable<short>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<IEnumerable<byte>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<IEnumerable<long>>().To<IEnumerable<int>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
+		}
+
+		[TestMethod]
+		public void EnumerableCovariance2()
+		{
+			var objArr = new object[] { 1, 2, 3 };
+			var longArr = new long[] { 1, 2, 3 };
+			objArr.To<IEnumerable<int>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<IEnumerable<short>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<IEnumerable<byte>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<IEnumerable<long>>().To<IEnumerable<int>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
 		}
 	}
 }

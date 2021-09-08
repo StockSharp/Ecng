@@ -589,8 +589,8 @@
 
 					if (TryGetTypedConverter(value is Type ? typeof(Type) : value.GetType(), destinationType, out typedConverter))
 						return typedConverter(value);
-					else if (value is Array arr)
-						return ArrayCovariance(arr, destinationType);
+					else if (value is Array arr && ArrayCovariance(arr, destinationType, out var dest))
+						return dest;
 				}
 				else if (value is byte[])
 				{
@@ -608,8 +608,8 @@
 
 					if (TryGetTypedConverter(typeof(byte[]), destinationType, out typedConverter))
 						retVal = typedConverter(value);
-					else if (destinationType.IsArray)
-						return ArrayCovariance((byte[])value, destinationType);
+					else if (destinationType.IsArray && ArrayCovariance((byte[])value, destinationType, out var dest))
+						return dest;
 					else
 						throw new ArgumentException("Can't convert byte array to '{0}'.".Put(destinationType), nameof(value));
 
@@ -743,8 +743,10 @@
 						}
 					}
 
-					if (value is Array arr && destinationType.IsArray)
-						return ArrayCovariance(arr, destinationType);
+					if (value is Array arr && ArrayCovariance(arr, destinationType, out var dest))
+						return dest;
+					else if (value is ICovarianceEnumerable covarEnu && destinationType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+						return covarEnu.ChangeType(destinationType.GetGenericArguments().First());
 
 					if (FinalTry(ref value, sourceType, destinationType))
 						return value;
@@ -758,15 +760,84 @@
 			}
 		}
 
-		private static Array ArrayCovariance(Array source, Type destinationType)
+		private static bool ArrayCovariance(Array source, Type destinationType, out object result)
 		{
-			var elemType = destinationType.GetElementType();
-			var destArr = Array.CreateInstance(elemType, source.Length);
+			result = null;
 
-			for (var i = 0; i < source.Length; i++)
-				destArr.SetValue(source.GetValue(i).To(elemType), i);
+			if (destinationType.IsArray)
+			{
+				var elemType = destinationType.GetElementType();
+				var destArr = Array.CreateInstance(elemType, source.Length);
 
-			return destArr;
+				for (var i = 0; i < source.Length; i++)
+					destArr.SetValue(source.GetValue(i).To(elemType), i);
+
+				result = destArr;
+				return true;
+			}
+			else if (destinationType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+			{
+				var elemType = destinationType.GetGenericArguments().First();
+				result = new CovarianceEnumerable<object>(source).ChangeType(elemType);
+				return true;
+			}
+			else
+				return false;
+		}
+
+		private interface ICovarianceEnumerable
+		{
+			ICovarianceEnumerable ChangeType(Type newType);
+		}
+
+		private class CovarianceEnumerable<T> : IEnumerable<T>, ICovarianceEnumerable
+		{
+			private class CovarianceEnumerator : IEnumerator<T>
+			{
+				private readonly Array _array;
+				private int _idx;
+
+				public CovarianceEnumerator(Array array)
+				{
+					_array = array ?? throw new ArgumentNullException(nameof(array));
+					Reset();
+				}
+
+				public T Current => _array.GetValue(_idx).To<T>();
+
+				object IEnumerator.Current => Current;
+
+				void IDisposable.Dispose()
+				{
+				}
+
+				bool IEnumerator.MoveNext()
+				{
+					_idx++;
+					return _idx < _array.Length;
+				}
+
+				public void Reset()
+				{
+					_idx = -1;
+				}
+			}
+
+			private readonly Array _array;
+
+			public CovarianceEnumerable(Array array)
+			{
+				_array = array ?? throw new ArgumentNullException(nameof(array));
+			}
+
+			public IEnumerator<T> GetEnumerator()
+				=> new CovarianceEnumerator(_array);
+
+			IEnumerator IEnumerable.GetEnumerator()
+				=> GetEnumerator();
+
+			public ICovarianceEnumerable ChangeType(Type newType)
+				=> typeof(CovarianceEnumerable<>).Make(newType).CreateInstance<ICovarianceEnumerable>(_array);
 		}
 
 		private static bool FinalTry(ref object value, Type sourceType, Type destinationType)
