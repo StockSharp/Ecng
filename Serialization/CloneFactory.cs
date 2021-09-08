@@ -21,7 +21,7 @@ namespace Ecng.Serialization
 			else if (typeof(T).IsAssignableFrom(typeof(Cloneable<T>)) || typeof(T).IsAssignableFrom(typeof(ICloneable)))
 				_factory = new SimpleCloneFactory<T>();
 			else
-				_factory = new BinarySerializerCloneFactory<T>();
+				_factory = new JsonSerializerCloneFactory<T>();
 		}
 
 		#endregion
@@ -52,11 +52,11 @@ namespace Ecng.Serialization
         #endregion
     }
 
-    class BinarySerializerCloneFactory<T> : CloneFactory<T>
+    class JsonSerializerCloneFactory<T> : CloneFactory<T>
 	{
 		#region Private Fields
 
-		private static readonly BinarySerializer<T> _serializer = new();
+		private static readonly JsonSerializer<T> _serializer = new();
 
 		#endregion
 

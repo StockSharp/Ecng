@@ -21,6 +21,7 @@ namespace Ecng.Serialization
 		object Deserialize(XElement element);
 	}
 
+	[Obsolete("Use JsonSerializer<T> insted.")]
 	public class XmlSerializer<T> : Serializer<T>, IXmlSerializer
 	{
 		private const string _typeAttr = "type";

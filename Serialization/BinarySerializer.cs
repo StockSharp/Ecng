@@ -1,11 +1,13 @@
 namespace Ecng.Serialization
 {
+	using System;
 	using System.IO;
 	using System.Linq;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
 
+	[Obsolete("Use JsonSerializer<T> insted.")]
 	public class BinarySerializer<T> : Serializer<T>
 	{
 		public override string FileExtension => "bin";
