@@ -4,6 +4,7 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Security;
 	using System.Threading;
 	using System.Threading.Tasks;
 
@@ -99,22 +100,39 @@
 		/// <param name="defaultValue">Значения по умолчанию, если по названию <paramref name="name"/> не было найдено значения.</param>
 		/// <returns>Значение. Если по названию <paramref name="name"/> не было найдено сохраненного значения, то будет возвращено <paramref name="defaultValue"/>.</returns>
 		public T GetValue<T>(string name, T defaultValue = default)
+			=> (T)GetValue(typeof(T), name, defaultValue);
+
+		/// <summary>
+		/// Получить значение из настроек.
+		/// </summary>
+		/// <typeparam name="T">Тип значения.</typeparam>
+		/// <param name="name">Название значения.</param>
+		/// <param name="defaultValue">Значения по умолчанию, если по названию <paramref name="name"/> не было найдено значения.</param>
+		/// <returns>Значение. Если по названию <paramref name="name"/> не было найдено сохраненного значения, то будет возвращено <paramref name="defaultValue"/>.</returns>
+		public object GetValue(Type type, string name, object defaultValue = default)
 		{
 			if (name.IsEmpty())
 				throw new ArgumentNullException(nameof(name));
 
 			if (_reader != null)
-				return GetValueFromReaderAsync(name, defaultValue, default).Result;
+			{
+				var res = GetValueFromReaderAsync(type, name, default).Result;
+
+				if (res is null)
+					return defaultValue;
+
+				return res;
+			}
 
 			if (!TryGetValue(name, out var value))
 				return defaultValue;
 
 			if (value is SettingsStorage storage)
 			{
-				if (value is T typed)
-					return typed;
+				if (type == typeof(SettingsStorage))
+					return value;
 
-				var per = Activator.CreateInstance<T>();
+				var per = Activator.CreateInstance(type);
 
 				if (per is IAsyncPersistable asyncPer)
 					asyncPer.LoadAsync(storage, default).Wait();
@@ -123,12 +141,12 @@
 
 				return per;
 			}
-			else if (typeof(T).IsCollection() && typeof(T).GetElementType().IsPersistable())
+			else if (type.IsCollection() && type.GetElementType().IsPersistable())
 			{
 				if (value is null)
 					return default;
 
-				var elemType = typeof(T).GetElementType();
+				var elemType = type.GetElementType();
 
 				var arr = ((IEnumerable)value)
 					.Cast<SettingsStorage>()
@@ -150,31 +168,30 @@
 
 				var typedArr = elemType.CreateArray(arr.Length);
 				arr.CopyTo(typedArr, 0);
-				return typedArr.To<T>();
+				return typedArr.To(type);
 			}
 			
-			return value.To<T>();
+			return value.To(type);
 		}
 
 		public T TryGet<T>(string name, T defaultValue = default)
 			=> GetValue(name, defaultValue);
 
+		public object TryGet(Type type, string name, object defaultValue = default)
+			=> GetValue(type, name, defaultValue);
+
 		public async Task<T> GetValueAsync<T>(string name, T defaultValue = default, CancellationToken cancellationToken = default)
+			=> (T)await GetValueAsync(typeof(T), name, defaultValue, cancellationToken);
+
+		public async Task<object> GetValueAsync(Type type, string name, object defaultValue = default, CancellationToken cancellationToken = default)
 		{
 			if (_reader is null)
-				return GetValue(name, defaultValue);
+				return GetValue(type, name, defaultValue);
 			else
-				return await GetValueFromReaderAsync(name, defaultValue, cancellationToken);
+				return await GetValueFromReaderAsync(type, name, cancellationToken) ?? defaultValue;
 		}
 
-		private async Task<T> GetValueFromReaderAsync<T>(string name, T defaultValue, CancellationToken cancellationToken)
-		{
-			var value = await _readJson(_reader, this, name, typeof(T), cancellationToken);
-
-			if (value is null)
-				return defaultValue;
-
-			return (T)value;
-		}
+		private async Task<object> GetValueFromReaderAsync(Type type, string name, CancellationToken cancellationToken)
+			=> await _readJson(_reader, this, name, type, cancellationToken);
 	}
 }
