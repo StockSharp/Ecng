@@ -20,16 +20,20 @@
 		public Encoding Encoding { get; set; } = Encoding.UTF8;
 		public bool FillMode { get; set; }
 		public bool EnumAsString { get; set; }
+		public bool EncryptedAsByteArray { get; set; }
 		public int BufferSize { get; set; } = 1024;
 
 		public override ISerializer GetSerializer(Type entityType)
 		{
 			var serializer = base.GetSerializer(entityType);
+
 			serializer.SetValue(nameof(Indent), Indent);
 			serializer.SetValue(nameof(Encoding), Encoding);
 			serializer.SetValue(nameof(FillMode), FillMode);
 			serializer.SetValue(nameof(EnumAsString), EnumAsString);
+			serializer.SetValue(nameof(EncryptedAsByteArray), EncryptedAsByteArray);
 			serializer.SetValue(nameof(BufferSize), BufferSize);
+
 			return serializer;
 		}
 
@@ -198,7 +202,11 @@
 				else if (type == typeof(byte[]))
 					value = await reader.ReadAsBytesAsync(cancellationToken);
 				else if (type == typeof(SecureString))
-					value = SecureStringEncryptor.Instance.Decrypt(await reader.ReadAsBytesAsync(cancellationToken));
+				{
+					value = SecureStringEncryptor.Instance.Decrypt(EncryptedAsByteArray
+						? await reader.ReadAsBytesAsync(cancellationToken)
+						: (await reader.ReadAsStringAsync(cancellationToken))?.Base64());
+				}
 				else
 					value = await reader.ReadAsStringAsync(cancellationToken);
 
@@ -244,7 +252,8 @@
 			}
 			else if (value is SecureString secStr)
 			{
-				await WriteAsync(writer, SecureStringEncryptor.Instance.Encrypt(secStr), cancellationToken);
+				var encrypted = SecureStringEncryptor.Instance.Encrypt(secStr);
+				await WriteAsync(writer, EncryptedAsByteArray ? encrypted : encrypted?.Base64(), cancellationToken);
 			}
 			else
 			{
