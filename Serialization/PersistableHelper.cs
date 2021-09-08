@@ -174,5 +174,8 @@
 
 			return CultureInfo.InvariantCulture.DoInCulture(() => new TSerializer().Serialize(settings).UTF8());
 		}
+
+		public static bool IsSerializablePrimitive(this Type type)
+			=> type.IsPrimitive() || type == typeof(Uri);
 	}
 }

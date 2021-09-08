@@ -82,11 +82,6 @@
 
 		#endregion
 
-		public static bool IsSerializablePrimitive(this Type type)
-		{
-			return type.IsPrimitive() || type == typeof(Uri);
-		}
-
 		public static LegacySerializer<T> GetLegacySerializer<T>(this ISerializer serializer)
 			=> (LegacySerializer<T>)serializer.GetSerializer<T>();
 
