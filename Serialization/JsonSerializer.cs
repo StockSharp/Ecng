@@ -8,14 +8,29 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 	using System.Security;
+	using System.Linq;
+	using System.Runtime.CompilerServices;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
 
 	using Newtonsoft.Json;
 
+	static class JsonConversions
+	{
+		static JsonConversions()
+		{
+			Converter.AddTypedConverter<object[], SecureString>(val => SecureStringEncryptor.Instance.Decrypt(val.Select(i => i.To<byte>()).ToArray()));
+		}
+	}
+
 	public class JsonSerializer<T> : Serializer<T>
 	{
+		static JsonSerializer()
+		{
+			typeof(JsonConversions).EnsureRunClass();
+		}
+
 		public bool Indent { get; set; }
 		public Encoding Encoding { get; set; } = Encoding.UTF8;
 		public bool FillMode { get; set; }

@@ -170,7 +170,11 @@
 				arr.CopyTo(typedArr, 0);
 				return typedArr.To(type);
 			}
-			
+			else if (type == typeof(SecureString) && value is string str)
+			{
+				value = SecureStringEncryptor.Instance.Decrypt(str.Base64());
+			}
+
 			return value.To(type);
 		}
 

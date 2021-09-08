@@ -20,9 +20,9 @@
 	[TestClass]
 	public class JsonTests
 	{
-		private static async Task Do<T>(T value, bool fillMode = false, bool enumAsString = false, CancellationToken token = default)
+		private static async Task<T> Do<T>(T value, bool fillMode = false, bool enumAsString = false, bool encryptedAsByteArray = false, CancellationToken token = default)
 		{
-			var ser = new JsonSerializer<T> { FillMode = fillMode, EnumAsString = enumAsString };
+			var ser = new JsonSerializer<T> { FillMode = fillMode, EnumAsString = enumAsString, EncryptedAsByteArray = encryptedAsByteArray };
 			var stream = new MemoryStream();
 			await ser.SerializeAsync(value, stream, token);
 			stream.Position = 0;
@@ -62,7 +62,25 @@
 					}
 				}
 
-				if (expected is IEnumerable expEmu)
+				if (expected is SettingsStorage expStorage)
+				{
+					actual.AssertNotNull();
+
+					var actStorage = (SettingsStorage)actual;
+					actStorage.Count.AssertEqual(expStorage.Count);
+
+					foreach (var key in expStorage.Keys)
+					{
+						var expItem = expStorage[key];
+						var actItem = actStorage.GetValue(expItem.GetType(), key);
+
+						if (expItem is IEnumerable)
+							CheckValue(actItem, expItem);
+						else
+							AssertEqual(actItem, expItem);
+					}
+				}
+				else if (expected is IEnumerable expEmu)
 				{
 					actual.AssertNotNull();
 
@@ -91,6 +109,8 @@
 			}
 
 			CheckValue(actual, value);
+
+			return actual;
 		}
 
 		[TestMethod]
@@ -832,6 +852,53 @@
 			{
 				EnumProp = GCKind.Ephemeral,
 			});
+		}
+
+		private class TestSecureString : Equatable<TestSecureString>, IPersistable
+		{
+			public SecureString SecureStringProp { get; set; }
+
+			public override TestSecureString Clone()
+			{
+				return PersistableHelper.Clone(this);
+			}
+
+			protected override bool OnEquals(TestSecureString other)
+			{
+				return
+					SecureStringProp.IsEqualTo(other.SecureStringProp);
+			}
+
+			void IPersistable.Load(SettingsStorage storage)
+			{
+				SecureStringProp = storage.GetValue<SecureString>(nameof(SecureStringProp));
+			}
+
+			void IPersistable.Save(SettingsStorage storage)
+			{
+				storage
+					.Set(nameof(SecureStringProp), SecureStringProp);
+			}
+		}
+
+		[TestMethod]
+		public async Task ComplexSecureString()
+		{
+			var obj = new TestSecureString
+			{
+				SecureStringProp = "123".Secure(),
+			};
+
+			await Do(obj, encryptedAsByteArray: true);
+			await Do(obj);
+
+			var ss = obj.Save();
+
+			await Do(ss, encryptedAsByteArray: true);
+			await Do(ss);
+
+			obj.AssertEqual((await Do(ss, encryptedAsByteArray: true)).Load<TestSecureString>());
+			obj.AssertEqual((await Do(ss)).Load<TestSecureString>());
 		}
 	}
 }
