@@ -51,7 +51,10 @@
 		{
 			var isPrimitive = IsJsonPrimitive();
 
-			using var writer = new JsonTextWriter(new StreamWriter(stream, Encoding, _bufferSize, true));
+			using var writer = new JsonTextWriter(new StreamWriter(stream, Encoding, _bufferSize, true))
+			{
+				Formatting = Indent ? Formatting.Indented : Formatting.None
+			};
 
 			if (isPrimitive)
 				await writer.WriteStartArrayAsync(cancellationToken);
