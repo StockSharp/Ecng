@@ -9,7 +9,6 @@
 	using System.Threading.Tasks;
 	using System.Security;
 	using System.Linq;
-	using System.Runtime.CompilerServices;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
@@ -53,12 +52,6 @@
 		}
 
 		public override string FileExtension => "json";
-
-		public override void Deserialize(Stream stream, FieldList fields, SerializationItemCollection source)
-			=> throw new NotSupportedException();
-
-		public override void Serialize(FieldList fields, SerializationItemCollection source, Stream stream)
-			=> throw new NotSupportedException();
 
 		public override void Serialize(T graph, Stream stream)
 			=> Task.Run(async () => await SerializeAsync(graph, stream, default)).Wait();
