@@ -2,6 +2,7 @@ namespace Ecng.Test.Common
 {
 	using System;
 	using System.Collections.ObjectModel;
+	using System.Linq;
 	using System.Net;
 
 	using Ecng.Common;
@@ -134,6 +135,18 @@ namespace Ecng.Test.Common
 		{
 			decimal.MinValue.To<int[]>().To<decimal>().AssertEqual(decimal.MinValue);
 			decimal.MaxValue.To<int[]>().To<decimal>().AssertEqual(decimal.MaxValue);
+		}
+
+		[TestMethod]
+		public void ArrayCovariance()
+		{
+			var objArr = new object[] { 1, 2, 3 };
+			var longArr = new long[] { 1, 2, 3 };
+			objArr.To<int[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<short[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<byte[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<long[]>().SequenceEqual(longArr).AssertTrue();
+			objArr.To<long[]>().To<int[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
 		}
 	}
 }

@@ -589,6 +589,8 @@
 
 					if (TryGetTypedConverter(value is Type ? typeof(Type) : value.GetType(), destinationType, out typedConverter))
 						return typedConverter(value);
+					else if (value is Array arr)
+						return ArrayCovariance(arr, destinationType);
 				}
 				else if (value is byte[])
 				{
@@ -606,6 +608,8 @@
 
 					if (TryGetTypedConverter(typeof(byte[]), destinationType, out typedConverter))
 						retVal = typedConverter(value);
+					else if (destinationType.IsArray)
+						return ArrayCovariance((byte[])value, destinationType);
 					else
 						throw new ArgumentException("Can't convert byte array to '{0}'.".Put(destinationType), nameof(value));
 
@@ -739,6 +743,9 @@
 						}
 					}
 
+					if (value is Array arr && destinationType.IsArray)
+						return ArrayCovariance(arr, destinationType);
+
 					if (FinalTry(ref value, sourceType, destinationType))
 						return value;
 				}
@@ -749,6 +756,17 @@
 			{
 				throw new InvalidCastException($"Can't convert {value} of type '{value?.GetType()}' to type '{destinationType}'.", ex);
 			}
+		}
+
+		private static Array ArrayCovariance(Array source, Type destinationType)
+		{
+			var elemType = destinationType.GetElementType();
+			var destArr = Array.CreateInstance(elemType, source.Length);
+
+			for (var i = 0; i < source.Length; i++)
+				destArr.SetValue(source.GetValue(i).To(elemType), i);
+
+			return destArr;
 		}
 
 		private static bool FinalTry(ref object value, Type sourceType, Type destinationType)
