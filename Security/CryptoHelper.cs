@@ -27,6 +27,7 @@ namespace Ecng.Security
 		public static ProtectedKey FromRsa(this RSAParameters param)
 		{
 			var stream = new MemoryStream();
+
 			WriteByteArray(stream, param.P);
 			WriteByteArray(stream, param.Q);
 			WriteByteArray(stream, param.D);
@@ -35,6 +36,7 @@ namespace Ecng.Security
 			WriteByteArray(stream, param.InverseQ);
 			WriteByteArray(stream, param.Exponent);
 			WriteByteArray(stream, param.Modulus);
+
 			return stream.To<byte[]>().FromBytes();
 		}
 
@@ -45,7 +47,7 @@ namespace Ecng.Security
 
 			var stream = key.To<Stream>();
 
-			return new RSAParameters
+			return new()
 			{
 				P = ReadByteArray(stream),
 				Q = ReadByteArray(stream),
@@ -111,15 +113,15 @@ namespace Ecng.Security
 		/// </summary>
 		public static RSAParameters GenerateRsa()
 		{
-			using (var provider = new RSACryptoServiceProvider())
-				return provider.ExportParameters(true);
+			using var provider = new RSACryptoServiceProvider();
+			return provider.ExportParameters(true);
 		}
 
 		#endregion
 
 		public static RSAParameters PublicPart(this RSAParameters param)
 		{
-			return new RSAParameters
+			return new()
 			{
 				Exponent = param.Exponent,
 				Modulus = param.Modulus,
@@ -145,6 +147,13 @@ namespace Ecng.Security
 		// This constant determines the number of iterations for the password bytes generation function.
 		private const int _derivationIterations = 1000;
 
+		private static RijndaelManaged CreateRijndaelManaged() => new()
+		{
+			BlockSize = 128,
+			Mode = CipherMode.CBC,
+			Padding = PaddingMode.PKCS7,
+		};
+
 		public static byte[] Encrypt(this byte[] plain, string passPhrase, byte[] salt, byte[] iv)
 		{
 			if (plain is null)
@@ -156,32 +165,21 @@ namespace Ecng.Security
 			if (iv?.Length > 16)
 				iv = iv.Take(16).ToArray();
 
-			using (var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations))
-			{
-				var keyBytes = password.GetBytes(_keySize / 8);
+			using var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations);
 
-				using (var symmetricKey = new RijndaelManaged())
-				{
-					symmetricKey.BlockSize = 128;
-					symmetricKey.Mode = CipherMode.CBC;
-					symmetricKey.Padding = PaddingMode.PKCS7;
+			var keyBytes = password.GetBytes(_keySize / 8);
 
-					using (var encryptor = symmetricKey.CreateEncryptor(keyBytes, iv))
-					{
-						using (var memoryStream = new MemoryStream())
-						{
-							using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
-							{
-								cryptoStream.Write(plain, 0, plain.Length);
-								cryptoStream.FlushFinalBlock();
-								// Create the final bytes as a concatenation of the random salt bytes, the random iv bytes and the cipher bytes.
+			using var symmetricKey = CreateRijndaelManaged();
 
-								return memoryStream.ToArray();
-							}
-						}
-					}
-				}
-			}
+			using var encryptor = symmetricKey.CreateEncryptor(keyBytes, iv);
+			using var memoryStream = new MemoryStream();
+			using var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write);
+
+			cryptoStream.Write(plain, 0, plain.Length);
+			cryptoStream.FlushFinalBlock();
+			// Create the final bytes as a concatenation of the random salt bytes, the random iv bytes and the cipher bytes.
+
+			return memoryStream.ToArray();
 		}
 
 		public static byte[] Decrypt(this byte[] cipherText, string passPhrase, byte[] salt, byte[] iv)
@@ -195,34 +193,23 @@ namespace Ecng.Security
 			if (iv?.Length > 16)
 				iv = iv.Take(16).ToArray();
 
-			using (var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations))
-			{
-				var keyBytes = password.GetBytes(_keySize / 8);
+			using var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations);
 
-				using (var symmetricKey = new RijndaelManaged())
-				{
-					symmetricKey.BlockSize = 128;
-					symmetricKey.Mode = CipherMode.CBC;
-					symmetricKey.Padding = PaddingMode.PKCS7;
+			var keyBytes = password.GetBytes(_keySize / 8);
 
-					using (var decryptor = symmetricKey.CreateDecryptor(keyBytes, iv))
-					{
-						using (var memoryStream = new MemoryStream(cipherText))
-						{
-							using (var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read))
-							{
-								var plainTextBytes = new byte[cipherText.Length];
-								var decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
+			using var symmetricKey = CreateRijndaelManaged();
 
-								if (plainTextBytes.Length > decryptedByteCount)
-									Array.Resize(ref plainTextBytes, decryptedByteCount);
+			using var decryptor = symmetricKey.CreateDecryptor(keyBytes, iv);
+			using var memoryStream = new MemoryStream(cipherText);
+			using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
 
-								return plainTextBytes;
-							}
-						}
-					}
-				}
-			}
+			var plainTextBytes = new byte[cipherText.Length];
+			var decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
+
+			if (plainTextBytes.Length > decryptedByteCount)
+				Array.Resize(ref plainTextBytes, decryptedByteCount);
+
+			return plainTextBytes;
 		}
 
 		private static byte[] TransformAes(bool isEncrypt, byte[] inputBytes, string passPhrase, byte[] salt, byte[] iv)
@@ -233,39 +220,35 @@ namespace Ecng.Security
 			if (passPhrase.IsEmpty())
 				throw new ArgumentNullException(nameof(passPhrase));
 
-			using (var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations))
+			using var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations);
+
+			var keyBytes = password.GetBytes(_keySize / 8);
+
+			using var aes = new AesManaged { Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7 };
+
+			if (isEncrypt)
 			{
-				var keyBytes = password.GetBytes(_keySize / 8);
+				using var encryptor = aes.CreateEncryptor(keyBytes, iv);
+				using var memoryStream = new MemoryStream();
+				using var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write);
 
-				using (var aes = new AesManaged {Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7})
-				{
-					if (isEncrypt)
-					{
-						using(var encryptor = aes.CreateEncryptor(keyBytes, iv))
-						using(var memoryStream = new MemoryStream())
-						using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
-						{
-							cryptoStream.Write(inputBytes, 0, inputBytes.Length);
-							cryptoStream.FlushFinalBlock();
-							return memoryStream.ToArray();
-						}
-					}
-					else
-					{
-						using(var decryptor = aes.CreateDecryptor(keyBytes, iv))
-						using(var memoryStream = new MemoryStream(inputBytes))
-						using (var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read))
-						{
-							var plainTextBytes = new byte[inputBytes.Length];
-							var decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
+				cryptoStream.Write(inputBytes, 0, inputBytes.Length);
+				cryptoStream.FlushFinalBlock();
+				return memoryStream.ToArray();
+			}
+			else
+			{
+				using var decryptor = aes.CreateDecryptor(keyBytes, iv);
+				using var memoryStream = new MemoryStream(inputBytes);
+				using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
 
-							if (plainTextBytes.Length > decryptedByteCount)
-								Array.Resize(ref plainTextBytes, decryptedByteCount);
+				var plainTextBytes = new byte[inputBytes.Length];
+				var decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
 
-							return plainTextBytes;
-						}
-					}
-				}
+				if (plainTextBytes.Length > decryptedByteCount)
+					Array.Resize(ref plainTextBytes, decryptedByteCount);
+
+				return plainTextBytes;
 			}
 		}
 
