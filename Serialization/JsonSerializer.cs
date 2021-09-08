@@ -21,6 +21,7 @@
 		public bool Indent { get; set; }
 		public Encoding Encoding { get; set; } = Encoding.UTF8;
 		public bool FillMode { get; set; }
+		public bool EnumAsString { get; set; }
 
 		public override ISerializer GetSerializer(Type entityType)
 		{
@@ -28,6 +29,7 @@
 			serializer.SetValue(nameof(Indent), Indent);
 			serializer.SetValue(nameof(Encoding), Encoding);
 			serializer.SetValue(nameof(FillMode), FillMode);
+			serializer.SetValue(nameof(EnumAsString), EnumAsString);
 			return serializer;
 		}
 
@@ -248,6 +250,8 @@
 			{
 				if (value is TimeZoneInfo tz)
 					value = tz.To<string>();
+				else if (value is Enum && EnumAsString)
+					value = value.To<string>();
 
 				await writer.WriteValueAsync(value, cancellationToken);
 			}

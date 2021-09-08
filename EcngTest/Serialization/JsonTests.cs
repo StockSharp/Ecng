@@ -20,9 +20,9 @@
 	[TestClass]
 	public class JsonTests
 	{
-		private static async Task Do<T>(T value, bool fillMode = false, CancellationToken token = default)
+		private static async Task Do<T>(T value, bool fillMode = false, bool enumAsString = false, CancellationToken token = default)
 		{
-			var ser = new JsonSerializer<T> { FillMode = fillMode };
+			var ser = new JsonSerializer<T> { FillMode = fillMode, EnumAsString = enumAsString };
 			var stream = new MemoryStream();
 			await ser.SerializeAsync(value, stream, token);
 			stream.Position = 0;
@@ -128,6 +128,13 @@
 			await Do((TimeSpan?)null);
 			await Do((Guid?)null);
 			await Do((Uri)null);
+		}
+
+		[TestMethod]
+		public async Task PrimitiveEnumAsString()
+		{
+			await Do(GCKind.Any, enumAsString: true);
+			await Do((GCKind?)null, enumAsString: true);
 		}
 
 		[TestMethod]
@@ -653,7 +660,7 @@
 					DateProp = DateTime.UtcNow,
 					TimeProp = TimeSpan.FromSeconds(10),
 				}
-			}, true);
+			}, fillMode: true);
 
 			await Do(new TestContainsClass
 			{
@@ -661,7 +668,7 @@
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
 				Obj2 = new TestClass[0],
-			}, true);
+			}, fillMode: true);
 
 			await Do(new TestContainsClass
 			{
@@ -669,7 +676,7 @@
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
 				Obj2 = new TestClass[] { null },
-			}, true);
+			}, fillMode: true);
 		}
 
 		[TestMethod]
@@ -743,7 +750,7 @@
 					DateProp = DateTime.UtcNow,
 					TimeProp = TimeSpan.FromSeconds(10),
 				}
-			}, true);
+			}, fillMode: true);
 
 			await Do(new TestDirectClass
 			{
@@ -751,7 +758,7 @@
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
 				Obj2 = new[] { new TestClass() },
-			}, true);
+			}, fillMode: true);
 
 			await Do(new TestDirectClass
 			{
@@ -759,7 +766,7 @@
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
 				Obj2 = new TestClass[0],
-			}, true);
+			}, fillMode: true);
 
 			await Do(new TestDirectClass
 			{
@@ -767,7 +774,64 @@
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
 				Obj2 = new TestClass[] { null },
-			}, true);
+			}, fillMode: true);
+		}
+
+		private class TestEnumClass : Equatable<TestEnumClass>, IPersistable
+		{
+			public GCKind EnumProp { get; set; }
+			public GCKind? NullableEnumProp { get; set; }
+
+			public override TestEnumClass Clone()
+			{
+				return PersistableHelper.Clone(this);
+			}
+
+			protected override bool OnEquals(TestEnumClass other)
+			{
+				return
+					EnumProp == other.EnumProp &&
+					NullableEnumProp == other.NullableEnumProp;
+			}
+
+			void IPersistable.Load(SettingsStorage storage)
+			{
+				EnumProp = storage.GetValue<GCKind>(nameof(EnumProp));
+				NullableEnumProp = storage.GetValue<GCKind?>(nameof(NullableEnumProp));
+			}
+
+			void IPersistable.Save(SettingsStorage storage)
+			{
+				storage
+					.Set(nameof(EnumProp), EnumProp)
+					.Set(nameof(NullableEnumProp), NullableEnumProp);
+			}
+		}
+
+		[TestMethod]
+		public async Task ComplexEnum()
+		{
+			await Do(new TestEnumClass
+			{
+				EnumProp = GCKind.Ephemeral,
+				NullableEnumProp = GCKind.FullBlocking,
+			}, enumAsString: true);
+
+			await Do(new TestEnumClass
+			{
+				EnumProp = GCKind.Ephemeral,
+			}, enumAsString: true);
+
+			await Do(new TestEnumClass
+			{
+				EnumProp = GCKind.Ephemeral,
+				NullableEnumProp = GCKind.FullBlocking,
+			});
+
+			await Do(new TestEnumClass
+			{
+				EnumProp = GCKind.Ephemeral,
+			});
 		}
 	}
 }
