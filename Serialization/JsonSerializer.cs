@@ -98,7 +98,7 @@
 					if (storage is null)
 						return null;
 
-					var per = GetSerializer(type).CreateObject(new SerializationItemCollection());
+					var per = type.CreateInstance();
 
 					if (per is IAsyncPersistable asyncPer)
 						await asyncPer.LoadAsync(storage, default);
@@ -116,7 +116,7 @@
 
 					reader.ChechExpectedToken(JsonToken.StartObject);
 
-					var per = GetSerializer(type).CreateObject(new SerializationItemCollection());
+					var per = type.CreateInstance();
 
 					var storage = new SettingsStorage(reader, GetValueFromReaderAsync);
 
