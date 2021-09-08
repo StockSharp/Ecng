@@ -16,12 +16,11 @@
 
 	public class JsonSerializer<T> : Serializer<T>
 	{
-		private const int _bufferSize = 1024;
-
 		public bool Indent { get; set; }
 		public Encoding Encoding { get; set; } = Encoding.UTF8;
 		public bool FillMode { get; set; }
 		public bool EnumAsString { get; set; }
+		public int BufferSize { get; set; } = 1024;
 
 		public override ISerializer GetSerializer(Type entityType)
 		{
@@ -30,6 +29,7 @@
 			serializer.SetValue(nameof(Encoding), Encoding);
 			serializer.SetValue(nameof(FillMode), FillMode);
 			serializer.SetValue(nameof(EnumAsString), EnumAsString);
+			serializer.SetValue(nameof(BufferSize), BufferSize);
 			return serializer;
 		}
 
@@ -53,7 +53,7 @@
 		{
 			var isPrimitive = IsJsonPrimitive();
 
-			using var writer = new JsonTextWriter(new StreamWriter(stream, Encoding, _bufferSize, true))
+			using var writer = new JsonTextWriter(new StreamWriter(stream, Encoding, BufferSize, true))
 			{
 				Formatting = Indent ? Formatting.Indented : Formatting.None
 			};
@@ -71,7 +71,7 @@
 		{
 			var isPrimitive = IsJsonPrimitive();
 
-			using var reader = new JsonTextReader(new StreamReader(stream, Encoding, true, _bufferSize, true));
+			using var reader = new JsonTextReader(new StreamReader(stream, Encoding, true, BufferSize, true));
 
 			if (isPrimitive)
 			{
