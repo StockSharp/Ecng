@@ -40,12 +40,9 @@
 			{
 				if (Scope<ContinueOnExceptionContext>.Current?.Value.DoNotEncrypt != true)
 				{
-					var key = EnsureGetKey();
-					var salt = EnsureGetSalt();
-
 					try
 					{
-						source = source.DecryptAes(key, salt, salt);
+						source = source.DecryptAes(_key.UnSecure(), _salt, _salt);
 					}
 					catch (CryptographicException ex)
 					{
@@ -90,30 +87,7 @@
 			if (Scope<ContinueOnExceptionContext>.Current?.Value.DoNotEncrypt == true)
 				return plainText;
 
-			var salt = EnsureGetSalt();
-			var key = EnsureGetKey();
-
-			return plainText.EncryptAes(key, salt, salt);
-		}
-
-		private byte[] EnsureGetSalt()
-		{
-			var salt = Entropy ?? _salt;
-
-			if (salt.Length != 16)
-				throw new InvalidOperationException("Entropy must be 16 bytes.");
-
-			return salt;
-		}
-
-		private string EnsureGetKey()
-		{
-			var key = Key ?? _key;
-
-			if (key.IsEmpty())
-				throw new InvalidOperationException("Key not specified.");
-
-			return key.UnSecure();
+			return plainText.EncryptAes(_key.UnSecure(), _salt, _salt);
 		}
 	}
 }
