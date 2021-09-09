@@ -82,16 +82,19 @@
 			return storage;
 		}
 
-		public static async Task<T> LoadAsync<T>(this SettingsStorage storage, CancellationToken cancellationToken = default)
-			where T : IAsyncPersistable, new()
+		public static async Task<IAsyncPersistable> LoadAsync(this SettingsStorage storage, Type type, CancellationToken cancellationToken = default)
 		{
 			if (storage is null)
 				throw new ArgumentNullException(nameof(storage));
 
-			var obj = new T();
+			var obj = type.CreateInstance<IAsyncPersistable>();
 			await obj.LoadAsync(storage, cancellationToken);
 			return obj;
 		}
+
+		public static async Task<T> LoadAsync<T>(this SettingsStorage storage, CancellationToken cancellationToken = default)
+			where T : IAsyncPersistable, new()
+			=> (T)await storage.LoadAsync(typeof(T), cancellationToken);
 
 		/// <summary>
 		/// Сохранить настройки.
@@ -108,16 +111,19 @@
 			return storage;
 		}
 
-		public static T Load<T>(this SettingsStorage storage)
-			where T : IPersistable, new()
+		public static IPersistable Load(this SettingsStorage storage, Type type)
 		{
 			if (storage is null)
 				throw new ArgumentNullException(nameof(storage));
 
-			var obj = new T();
+			var obj = type.CreateInstance<IPersistable>();
 			obj.Load(storage);
 			return obj;
 		}
+
+		public static T Load<T>(this SettingsStorage storage)
+			where T : IPersistable
+			=> (T)storage.Load(typeof(T));
 
 		public static void ForceLoad<T>(this T t, SettingsStorage storage)
 			where T : IPersistable
