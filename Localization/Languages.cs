@@ -2,7 +2,7 @@
 {
 	using System;
 
-	[Obsolete("Use string code.")]
+	[Obsolete("Use LangCodes code.")]
 	public enum Languages
 	{
 		English,
