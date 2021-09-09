@@ -1,8 +1,15 @@
 ﻿namespace Ecng.Common
 {
+	using System;
+	using System.Linq;
 	using System.Collections.Generic;
 
-	public class RefPair<TFirst, TSecond>
+	public interface IRefTuple
+	{
+		IEnumerable<object> Values { get; set; }
+	}
+
+	public class RefPair<TFirst, TSecond> : IRefTuple
 	{
 		public RefPair()
 		{
@@ -17,20 +24,24 @@
 		public TFirst First { get; set; }
 		public TSecond Second { get; set; }
 
-		public override string ToString()
+		public virtual IEnumerable<object> Values
 		{
-			return "[" + GetValuesString() + "]";
+			get => new object[] { First, Second };
+			set
+			{
+				First = (TFirst)value.ElementAt(0);
+				Second = (TSecond)value.ElementAt(1);
+			}
 		}
+
+		public override string ToString()
+			=> "[" + GetValuesString() + "]";
 
 		protected virtual string GetValuesString()
-		{
-			return First + ", " + Second;
-		}
+			=> First + ", " + Second;
 
 		public KeyValuePair<TFirst, TSecond> ToValuePair()
-		{
-			return new KeyValuePair<TFirst, TSecond>(First, Second);
-		}
+			=> new(First, Second);
 	}
 
 	public class RefTriple<TFirst, TSecond, TThird> : RefPair<TFirst, TSecond>
@@ -47,10 +58,18 @@
 
 		public TThird Third { get; set; }
 
-		protected override string GetValuesString()
+		public override IEnumerable<object> Values
 		{
-			return base.GetValuesString() + ", " + Third;
+			get => base.Values.Concat(new object[] { Third });
+			set
+			{
+				base.Values = value;
+				Third = (TThird)value.ElementAt(2);
+			}
 		}
+
+		protected override string GetValuesString()
+			=> base.GetValuesString() + ", " + Third;
 	}
 
 	public class RefQuadruple<TFirst, TSecond, TThird, TFourth> : RefTriple<TFirst, TSecond, TThird>
@@ -67,10 +86,18 @@
 
 		public TFourth Fourth { get; set; }
 
-		protected override string GetValuesString()
+		public override IEnumerable<object> Values
 		{
-			return base.GetValuesString() + ", " + Fourth;
+			get => base.Values.Concat(new object[] { Fourth });
+			set
+			{
+				base.Values = value;
+				Fourth = (TFourth)value.ElementAt(3);
+			}
 		}
+
+		protected override string GetValuesString()
+			=> base.GetValuesString() + ", " + Fourth;
 	}
 
 	public class RefFive<TFirst, TSecond, TThird, TFourth, TFifth> : RefQuadruple<TFirst, TSecond, TThird, TFourth>
@@ -87,32 +114,47 @@
 
 		public TFifth Fifth { get; set; }
 
-		protected override string GetValuesString()
+		public override IEnumerable<object> Values
 		{
-			return base.GetValuesString() + ", " + Fifth;
+			get => base.Values.Concat(new object[] { Fifth });
+			set
+			{
+				base.Values = value;
+				Fifth = (TFifth)value.ElementAt(4);
+			}
 		}
+
+		protected override string GetValuesString()
+			=> base.GetValuesString() + ", " + Fifth;
 	}
 
 	public static class RefTuple
 	{
 		public static RefPair<TFirst, TSecond> Create<TFirst, TSecond>(TFirst first, TSecond second)
-		{
-			return new RefPair<TFirst, TSecond>(first, second);
-		}
+			=> new(first, second);
 
 		public static RefTriple<TFirst, TSecond, TThird> Create<TFirst, TSecond, TThird>(TFirst first, TSecond second, TThird third)
-		{
-			return new RefTriple<TFirst, TSecond, TThird>(first, second, third);
-		}
+			=> new(first, second, third);
 
 		public static RefQuadruple<TFirst, TSecond, TThird, TFourth> Create<TFirst, TSecond, TThird, TFourth>(TFirst first, TSecond second, TThird third, TFourth fourth)
-		{
-			return new RefQuadruple<TFirst, TSecond, TThird, TFourth>(first, second, third, fourth);
-		}
+			=> new(first, second, third, fourth);
 
 		public static RefFive<TFirst, TSecond, TThird, TFourth, TFifth> Create<TFirst, TSecond, TThird, TFourth, TFifth>(TFirst first, TSecond second, TThird third, TFourth fourth, TFifth fifth)
+			=> new(first, second, third, fourth, fifth);
+
+		private static readonly RefFive<int, int, int, int, int> _t = new();
+
+		public static string GetName(int idx)
 		{
-			return new RefFive<TFirst, TSecond, TThird, TFourth, TFifth>(first, second, third, fourth, fifth);
+			return idx switch
+			{
+				0 => nameof(_t.First),
+				1 => nameof(_t.Second),
+				2 => nameof(_t.Third),
+				3 => nameof(_t.Fourth),
+				4 => nameof(_t.Fifth),
+				_ => throw new ArgumentOutOfRangeException(nameof(idx)),
+			};
 		}
 	}
 }
