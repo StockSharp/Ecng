@@ -177,5 +177,71 @@
 
 		public static bool IsSerializablePrimitive(this Type type)
 			=> type.IsPrimitive() || type == typeof(Uri);
+
+		public static SettingsStorage ToStorage(this IRefTuple tuple)
+		{
+			if (tuple is null)
+				throw new ArgumentNullException(nameof(tuple));
+
+			var storage = new SettingsStorage();
+			var idx = 0;
+
+			foreach (var value in tuple.Values)
+			{
+				storage.Set(RefTuple.GetName(idx++), value);
+			}
+
+			return storage;
+		}
+
+		public static RefPair<T1, T2> ToRefPair<T1, T2>(this SettingsStorage storage)
+		{
+			if (storage is null)
+				throw new ArgumentNullException(nameof(storage));
+
+			var tuple = new RefPair<T1, T2>();
+			tuple.First = storage.GetValue<T1>(nameof(tuple.First));
+			tuple.Second = storage.GetValue<T2>(nameof(tuple.Second));
+			return tuple;
+		}
+
+		public static RefTriple<T1, T2, T3> ToRefTriple<T1, T2, T3>(this SettingsStorage storage)
+		{
+			if (storage is null)
+				throw new ArgumentNullException(nameof(storage));
+
+			var tuple = new RefTriple<T1, T2, T3>();
+			tuple.First = storage.GetValue<T1>(nameof(tuple.First));
+			tuple.Second = storage.GetValue<T2>(nameof(tuple.Second));
+			tuple.Third = storage.GetValue<T3>(nameof(tuple.Third));
+			return tuple;
+		}
+
+		public static RefQuadruple<T1, T2, T3, T4> ToRefQuadruple<T1, T2, T3, T4>(this SettingsStorage storage)
+		{
+			if (storage is null)
+				throw new ArgumentNullException(nameof(storage));
+
+			var tuple = new RefQuadruple<T1, T2, T3, T4>();
+			tuple.First = storage.GetValue<T1>(nameof(tuple.First));
+			tuple.Second = storage.GetValue<T2>(nameof(tuple.Second));
+			tuple.Third = storage.GetValue<T3>(nameof(tuple.Third));
+			tuple.Fourth = storage.GetValue<T4>(nameof(tuple.Fourth));
+			return tuple;
+		}
+
+		public static RefFive<T1, T2, T3, T4, T5> ToRefFive<T1, T2, T3, T4, T5>(this SettingsStorage storage)
+		{
+			if (storage is null)
+				throw new ArgumentNullException(nameof(storage));
+
+			var tuple = new RefFive<T1, T2, T3, T4, T5>();
+			tuple.First = storage.GetValue<T1>(nameof(tuple.First));
+			tuple.Second = storage.GetValue<T2>(nameof(tuple.Second));
+			tuple.Third = storage.GetValue<T3>(nameof(tuple.Third));
+			tuple.Fourth = storage.GetValue<T4>(nameof(tuple.Fourth));
+			tuple.Fifth = storage.GetValue<T5>(nameof(tuple.Fifth));
+			return tuple;
+		}
 	}
 }

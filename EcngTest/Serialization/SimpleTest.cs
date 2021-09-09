@@ -5,6 +5,7 @@
 	using System.Security;
 
 	using Ecng.Common;
+	using Ecng.ComponentModel;
 	using Ecng.Serialization;
 	using Ecng.UnitTesting;
 
@@ -269,6 +270,22 @@
 		public void XmlSecureStringNullTest()
 		{
 			Test<XmlSerializer<SecureString>, SecureString>(null);
+		}
+
+		[TestMethod]
+		public void Range()
+		{
+			var r = new Range<int>(1, 10);
+			r.ToStorage().ToRange<int>().AssertEqual(r);
+		}
+
+		[TestMethod]
+		public void RefTuple()
+		{
+			var p1 = Ecng.Common.RefTuple.Create(123, "123");
+			var p2 = p1.ToStorage().ToRefPair<int, string>();
+			p2.First.AssertEqual(p1.First);
+			p2.Second.AssertEqual(p1.Second);
 		}
 	}
 }
