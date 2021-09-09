@@ -111,6 +111,9 @@
 		/// <returns>Значение. Если по названию <paramref name="name"/> не было найдено сохраненного значения, то будет возвращено <paramref name="defaultValue"/>.</returns>
 		public object GetValue(Type type, string name, object defaultValue = default)
 		{
+			if (type is null)
+				throw new ArgumentNullException(nameof(type));
+
 			if (name.IsEmpty())
 				throw new ArgumentNullException(nameof(name));
 
@@ -129,17 +132,19 @@
 
 			if (value is SettingsStorage storage)
 			{
-				if (type == typeof(SettingsStorage))
+				if (type.IsAssignableFrom(typeof(SettingsStorage)))
 					return value;
 
-				var per = Activator.CreateInstance(type);
+				var obj = Activator.CreateInstance(type);
 
-				if (per is IAsyncPersistable asyncPer)
+				if (obj is IAsyncPersistable asyncPer)
 					asyncPer.LoadAsync(storage, default).Wait();
+				else if (obj is IPersistable per)
+					per.Load(storage);
 				else
-					((IPersistable)per).Load(storage);
+					throw new ArgumentOutOfRangeException(type.To<string>());
 
-				return per;
+				return obj;
 			}
 			else if (type.IsCollection() && type.GetElementType().IsPersistable())
 			{
@@ -179,7 +184,7 @@
 		}
 
 		public T TryGet<T>(string name, T defaultValue = default)
-			=> GetValue(name, defaultValue);
+			=> (T)TryGet(typeof(T), name, defaultValue);
 
 		public object TryGet(Type type, string name, object defaultValue = default)
 			=> GetValue(type, name, defaultValue);
