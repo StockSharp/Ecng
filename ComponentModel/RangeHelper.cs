@@ -6,6 +6,7 @@ namespace Ecng.ComponentModel
 
 	using Ecng.Collections;
 	using Ecng.Common;
+	using Ecng.Serialization;
 
 	public static class RangeHelper
 	{
@@ -124,6 +125,37 @@ namespace Ecng.ComponentModel
 			}
 
 			yield return new Range<long>(beginDate, nextDate - 1);
+		}
+
+		public static SettingsStorage ToStorage<T>(this Range<T> range)
+			where T : IComparable<T>
+		{
+			if (range is null)
+				throw new ArgumentNullException(nameof(range));
+
+			return new SettingsStorage()
+				.Set(nameof(range.Min), range.HasMinValue ? (object)range.Min : null)
+				.Set(nameof(range.Max), range.HasMaxValue ? (object)range.Max : null);
+		}
+
+		public static Range<T> ToRange<T>(this SettingsStorage storage)
+			where T : IComparable<T>
+		{
+			if (storage is null)
+				throw new ArgumentNullException(nameof(storage));
+
+			var range = new Range<T>();
+
+			var min = storage.GetValue<object>(nameof(range.Min));
+			var max = storage.GetValue<object>(nameof(range.Max));
+
+			if (min is not null)
+				range.Min = min.To<T>();
+
+			if (max is not null)
+				range.Max = max.To<T>();
+
+			return range;
 		}
 	}
 }
