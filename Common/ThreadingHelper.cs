@@ -10,7 +10,7 @@ namespace Ecng.Common
 	{
 		public static Timer TimerInvariant(this Action handler)
 		{
-			return handler.Invariant().Timer();
+			return handler.AsInvariant().Timer();
 		}
 
 		public static Timer Timer(this Action handler)
@@ -83,7 +83,7 @@ namespace Ecng.Common
 
 		public static Thread ThreadInvariant(this Action handler)
 		{
-			return handler.Invariant().Thread();
+			return handler.AsInvariant().Thread();
 		}
 
 		public static Thread Thread(this Action handler)

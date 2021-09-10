@@ -945,12 +945,20 @@
 			});
 		}
 
-		public static Action Invariant(this Action action)
+		public static Func<T> AsInvariant<T>(this Func<T> func)
+		{
+			if (func is null)
+				throw new ArgumentNullException(nameof(func));
+
+			return () => Do.Invariant(func);
+		}
+
+		public static Action AsInvariant(this Action action)
 		{
 			if (action is null)
 				throw new ArgumentNullException(nameof(action));
 
-			return () => CultureInfo.InvariantCulture.DoInCulture(action);
+			return () => Do.Invariant(action);
 		}
 
 		/// <summary>
