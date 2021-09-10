@@ -39,7 +39,7 @@
 		[TestMethod]
 		public void Decimals()
 		{
-			CultureInfo.InvariantCulture.DoInCulture(() =>
+			Do.Invariant(() =>
 			{
 				"0.0".To<decimal>().GetDecimalInfo().EffectiveScale.AssertEqual(0);
 				"00.0".To<decimal>().GetDecimalInfo().EffectiveScale.AssertEqual(0);

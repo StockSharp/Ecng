@@ -232,7 +232,7 @@ AGRO@TQBR;ÃÄÐ ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;
 
 		private static void Assert(string value, int lineCount, Action<int, FastCsvReader> assertLine)
 		{
-			CultureInfo.InvariantCulture.DoInCulture(() =>
+			Do.Invariant(() =>
 			{
 				var csvReader = new FastCsvReader(new StringReader(value));
 
