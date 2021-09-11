@@ -30,7 +30,7 @@
 			if (connStr.IsEmpty())
 				throw new InvalidOperationException("Cannot create a connection, because some data was not entered.".Translate());
 
-			return new DataConnection(provider.CreateInstance<IDataProvider>(), connStr);
+			return new DataConnection(DatabaseProviderRegistry.CreateProvider(provider), connStr);
 		}
 
 		/// <summary>

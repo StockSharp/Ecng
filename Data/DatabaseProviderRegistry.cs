@@ -10,13 +10,13 @@
 	[CLSCompliant(false)]
 	public static class DatabaseProviderRegistry
 	{
-		private static readonly CachedSynchronizedSet<Type> _providers = new();
+		private static readonly CachedSynchronizedDictionary<Type, Func<IDataProvider>> _providers = new();
 
-		public static void AddProvider<TProvider>()
+		public static void AddProvider<TProvider>(Func<TProvider> createProvider)
 			where TProvider : IDataProvider
-			=> AddProvider(typeof(TProvider));
+			=> AddProvider(typeof(TProvider), () => createProvider());
 
-		public static void AddProvider(Type provider)
+		public static void AddProvider(Type provider, Func<IDataProvider> createProvider)
 		{
 			if (provider is null)
 				throw new ArgumentNullException(nameof(provider));
@@ -24,7 +24,7 @@
 			if (!typeof(IDataProvider).IsAssignableFrom(provider))
 				throw new ArgumentException(nameof(provider));
 
-			_providers.Add(provider);
+			_providers.Add(provider, createProvider);
 		}
 
 		public static void RemoveProvider<TProvider>()
@@ -33,6 +33,9 @@
 
 		public static void RemoveProvider(Type provider) => _providers.Remove(provider);
 
-		public static IEnumerable<Type> Providers => _providers.Cache;
+		public static IEnumerable<Type> Providers => _providers.CachedKeys;
+
+		public static IDataProvider CreateProvider(Type provider)
+			=> _providers[provider ?? throw new ArgumentNullException(nameof(provider))]();
 	}
 }

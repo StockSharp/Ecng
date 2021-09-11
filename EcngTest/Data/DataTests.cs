@@ -48,8 +48,10 @@
 		[TestMethod]
 		public void ProviderRegistry()
 		{
-			DatabaseProviderRegistry.AddProvider<SqlServerDataProvider>();
+			DatabaseProviderRegistry.AddProvider(() => new SqlServerDataProvider("SQL SRV", SqlServerVersion.v2017));
 			DatabaseProviderRegistry.Providers.Count().AssertEqual(1);
+
+			(DatabaseProviderRegistry.CreateProvider(typeof(SqlServerDataProvider)) is SqlServerDataProvider).AssertTrue();
 
 			DatabaseProviderRegistry.RemoveProvider(typeof(SqlServerDataProvider));
 			DatabaseProviderRegistry.Providers.Count().AssertEqual(0);
