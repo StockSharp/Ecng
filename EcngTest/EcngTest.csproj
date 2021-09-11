@@ -15,6 +15,7 @@
     <PackageReference Include="System.Resources.Extensions" Version="$(SystemResourcesExtensionsVer)" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Data\Data.csproj" />
     <ProjectReference Include="..\Interop\Interop.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />

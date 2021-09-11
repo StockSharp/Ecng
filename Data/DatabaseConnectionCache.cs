@@ -52,7 +52,7 @@ namespace Ecng.Data
 
 			var connection = Connections.FirstOrDefault(p => p.Provider == provider && p.ConnectionString.EqualsIgnoreCase(connectionString));
 
-			if (connection == null)
+			if (connection is null)
 			{
 				connection = new DatabaseConnectionPair { Provider = provider, ConnectionString = connectionString };
 				AddConnection(connection);
@@ -78,13 +78,16 @@ namespace Ecng.Data
 		/// Удалить подключение к базе данных.
 		/// </summary>
 		/// <param name="connection">Подключение.</param>
-		public void DeleteConnection(DatabaseConnectionPair connection)
+		public bool DeleteConnection(DatabaseConnectionPair connection)
 		{
 			if (connection is null)
 				throw new ArgumentNullException(nameof(connection));
 
-			if (_connections.Remove(connection))
-				ConnectionDeleted?.Invoke(connection);
+			if (!_connections.Remove(connection))
+				return false;
+
+			ConnectionDeleted?.Invoke(connection);
+			return true;
 		}
 
 		/// <summary>
