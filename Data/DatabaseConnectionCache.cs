@@ -97,8 +97,7 @@ namespace Ecng.Data
 		public void Load(SettingsStorage storage)
 		{
 			var connections = storage
-				.GetValue<IEnumerable<SettingsStorage>>(nameof(Connections))
-				.Select(s => s.Load<DatabaseConnectionPair>())
+				.GetValue<IEnumerable<DatabaseConnectionPair>>(nameof(Connections))
 				.Where(p => p.Provider != null)
 				.ToArray();
 

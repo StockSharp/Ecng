@@ -21,6 +21,12 @@
 
 		public static void AddProvider(Type provider, Type compiler)
 		{
+			if (compiler is null)
+				throw new ArgumentNullException(nameof(compiler));
+
+			if (provider is null)
+				throw new ArgumentNullException(nameof(provider));
+
 			if (!typeof(IDbConnection).IsAssignableFrom(provider))
 				throw new ArgumentException(nameof(provider));
 
