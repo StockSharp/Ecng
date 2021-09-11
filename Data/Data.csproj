@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
+  <PropertyGroup>
+    <ProjectGuid>{0F5D95EF-F816-447A-B517-DD8E1DA6987F}</ProjectGuid>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SqlKata.Execution" Version="$(SqlKataVer)" />
   </ItemGroup>
