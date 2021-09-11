@@ -146,12 +146,12 @@
 
 				return obj;
 			}
-			else if (type.IsCollection() && type.GetElementType().IsPersistable())
+			else if (type.IsCollection() && type.GetItemType().IsPersistable())
 			{
 				if (value is null)
 					return default;
 
-				var elemType = type.GetElementType();
+				var elemType = type.GetItemType();
 
 				var arr = ((IEnumerable)value)
 					.Cast<SettingsStorage>()
