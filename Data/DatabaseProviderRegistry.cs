@@ -39,7 +39,13 @@
 		public static Compiler CreateCompiler(Type providerType)
 			=> _providerTypes[providerType].CreateInstance<Compiler>();
 
-		public static IEnumerable<Type> Providers { get; } = _providerTypes.CachedKeys;
-		public static IEnumerable<Type> Compilers { get; } = _providerTypes.CachedValues;
+		public static void RemoveProvider<TProvider>()
+			where TProvider : IDbConnection
+			=> RemoveProvider(typeof(TProvider));
+
+		public static void RemoveProvider(Type provider) => _providerTypes.Remove(provider);
+
+		public static IEnumerable<Type> Providers => _providerTypes.CachedKeys;
+		public static IEnumerable<Type> Compilers => _providerTypes.CachedValues;
 	}
 }

@@ -9,6 +9,8 @@
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+	using SqlKata.Compilers;
+
 	[TestClass]
 	public class DataTests
 	{
@@ -42,6 +44,20 @@
 			var pair2 = cache2.Connections.First();
 			pair2.Provider.AssertSame(pair.Provider);
 			pair2.ConnectionString.AssertEqual(pair.ConnectionString);
+		}
+
+		[TestMethod]
+		public void ProviderRegistry()
+		{
+			DatabaseProviderRegistry.AddProvider<SqlConnection, SqlServerCompiler>();
+			DatabaseProviderRegistry.Providers.Count().AssertEqual(1);
+			DatabaseProviderRegistry.Compilers.Count().AssertEqual(1);
+
+			DatabaseProviderRegistry.CreateCompiler(typeof(SqlConnection)).AssertNotNull();
+
+			DatabaseProviderRegistry.RemoveProvider(typeof(SqlConnection));
+			DatabaseProviderRegistry.Providers.Count().AssertEqual(0);
+			DatabaseProviderRegistry.Compilers.Count().AssertEqual(0);
 		}
 	}
 }
