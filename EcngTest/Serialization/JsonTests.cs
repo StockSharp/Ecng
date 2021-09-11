@@ -72,7 +72,7 @@
 					foreach (var key in expStorage.Keys)
 					{
 						var expItem = expStorage[key];
-						var actItem = actStorage.GetValue(expItem.GetType(), key);
+						var actItem = actStorage.GetValue(expItem is Type ? typeof(Type) : expItem.GetType(), key);
 
 						if (expItem is IEnumerable)
 							CheckValue(actItem, expItem);
@@ -132,6 +132,7 @@
 			await Do(TimeZoneInfo.Local);
 			await Do(TimeZoneInfo.Utc);
 			await Do(TimeHelper.Moscow);
+			await Do(typeof(GCKind));
 		}
 
 		[TestMethod]
@@ -148,6 +149,7 @@
 			await Do((TimeSpan?)null);
 			await Do((Guid?)null);
 			await Do((Uri)null);
+			await Do((Type)null);
 		}
 
 		[TestMethod]
@@ -178,6 +180,7 @@
 			await Do(new byte[] { 1, 2, 3 });
 			await Do(new string[] { null, null });
 			await Do(new SecureString[] { null, null });
+			await Do(new Type[] { null, typeof(GCKind) });
 		}
 
 		[TestMethod]
@@ -228,7 +231,8 @@
 				.Set("ComplexProp2", new SettingsStorage()
 					.Set("IntProp", 124)
 					.Set("DateProp", DateTime.UtcNow)
-					.Set("TimeProp", TimeSpan.FromSeconds(10)))
+					.Set("TimeProp", TimeSpan.FromSeconds(10))
+					.Set("TypeProp", typeof(GCKind)))
 				.Set("ArrComplexProp2", new[]
 				{
 					new SettingsStorage()
@@ -253,6 +257,7 @@
 			public string StringProp { get; set; }
 			public SecureString SecureStringProp { get; set; }
 			public TimeSpan TimeProp { get; set; }
+			public Type TypeProp { get; set; }
 
 			public override TestClass Clone()
 			{
@@ -266,7 +271,8 @@
 					DateProp == other.DateProp &&
 					StringProp == other.StringProp &&
 					SecureStringProp.IsEqualTo(other.SecureStringProp) &&
-					TimeProp == other.TimeProp
+					TimeProp == other.TimeProp &&
+					TypeProp == other.TypeProp
 					;
 			}
 
@@ -277,6 +283,7 @@
 				StringProp = storage.GetValue<string>(nameof(StringProp));
 				SecureStringProp = storage.GetValue<SecureString>(nameof(SecureStringProp));
 				TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
+				TypeProp = storage.GetValue<Type>(nameof(TypeProp));
 			}
 
 			void IPersistable.Save(SettingsStorage storage)
@@ -286,7 +293,8 @@
 					.Set(nameof(DateProp), DateProp)
 					.Set(nameof(StringProp), StringProp)
 					.Set(nameof(SecureStringProp), SecureStringProp)
-					.Set(nameof(TimeProp), TimeProp);
+					.Set(nameof(TimeProp), TimeProp)
+					.Set(nameof(TypeProp), TypeProp);
 			}
 		}
 
@@ -322,6 +330,19 @@
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
 				SecureStringProp = "123".Secure(),
+			});
+		}
+
+		[TestMethod]
+		public async Task Complex4()
+		{
+			await Do(new TestClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				StringProp = "123",
+				TypeProp = typeof(GCKind),
 			});
 		}
 

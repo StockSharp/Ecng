@@ -269,6 +269,8 @@
 					value = tz.To<string>();
 				else if (value is Enum && EnumAsString)
 					value = value.To<string>();
+				else if (value is Type t)
+					value = t.GetTypeAsString(false);
 
 				await writer.WriteValueAsync(value, cancellationToken);
 			}
