@@ -59,6 +59,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibGit2Sharp", "LibGit2Shar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EcngTest", "EcngTest\EcngTest.csproj", "{43DCD61B-E735-442E-85F4-B5D5BE199DD2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "Data\Data.csproj", "{0F5D95EF-F816-447A-B517-DD8E1DA6987F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -165,6 +167,10 @@ Global
 		{43DCD61B-E735-442E-85F4-B5D5BE199DD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43DCD61B-E735-442E-85F4-B5D5BE199DD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43DCD61B-E735-442E-85F4-B5D5BE199DD2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F5D95EF-F816-447A-B517-DD8E1DA6987F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F5D95EF-F816-447A-B517-DD8E1DA6987F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F5D95EF-F816-447A-B517-DD8E1DA6987F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F5D95EF-F816-447A-B517-DD8E1DA6987F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
