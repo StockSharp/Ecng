@@ -1,12 +1,9 @@
 namespace Ecng.Data
 {
 	using System;
-	using System.Data;
 	using System.Linq;
 
-	using Ecng.Common;
 	using Ecng.ComponentModel;
-	using Ecng.Localization;
 	using Ecng.Serialization;
 
 	/// <summary>
@@ -56,21 +53,6 @@ namespace Ecng.Data
 
 		/// <inheritdoc />
 		public override string ToString() => Title;
-
-		/// <summary>
-		/// </summary>
-		public IDbConnection CreateConnection()
-		{
-			if (Provider is null)
-				throw new InvalidOperationException("Provider is not set.".Translate());
-
-			if (ConnectionString.IsEmpty())
-				throw new InvalidOperationException("Cannot create a connection, because some data was not entered.".Translate());
-
-			var connection = Provider.CreateInstance<IDbConnection>();
-			connection.ConnectionString = ConnectionString;
-			return connection;
-		}
 
 		void IPersistable.Load(SettingsStorage storage)
 		{
