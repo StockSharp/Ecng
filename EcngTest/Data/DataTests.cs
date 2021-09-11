@@ -1,15 +1,14 @@
 ﻿namespace Ecng.Test.Data
 {
-	using System.Data.SqlClient;
 	using System.Linq;
 
 	using Ecng.Data;
 	using Ecng.Serialization;
 	using Ecng.UnitTesting;
 
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
+	using LinqToDB.DataProvider.SqlServer;
 
-	using SqlKata.Compilers;
+	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class DataTests
@@ -22,7 +21,7 @@
 			var deleted = 0;
 			cache.ConnectionCreated += p => created++;
 			cache.ConnectionDeleted += p => deleted++;
-			var pair = cache.GetConnection(typeof(SqlConnection), "123");
+			var pair = cache.GetConnection(typeof(SqlServerDataProvider), "123");
 			cache.Connections.Count().AssertEqual(1);
 			created.AssertEqual(1);
 			deleted.AssertEqual(0);
@@ -36,7 +35,7 @@
 		public void SaveLoad()
 		{
 			var cache = new DatabaseConnectionCache();
-			var pair = cache.GetConnection(typeof(SqlConnection), "123");
+			var pair = cache.GetConnection(typeof(SqlServerDataProvider), "123");
 			var ser = new JsonSerializer<DatabaseConnectionCache> { FillMode = true };
 			var cache2 = ser.Deserialize(ser.Serialize(cache));
 
@@ -49,15 +48,11 @@
 		[TestMethod]
 		public void ProviderRegistry()
 		{
-			DatabaseProviderRegistry.AddProvider<SqlConnection, SqlServerCompiler>();
+			DatabaseProviderRegistry.AddProvider<SqlServerDataProvider>();
 			DatabaseProviderRegistry.Providers.Count().AssertEqual(1);
-			DatabaseProviderRegistry.Compilers.Count().AssertEqual(1);
 
-			DatabaseProviderRegistry.CreateCompiler(typeof(SqlConnection)).AssertNotNull();
-
-			DatabaseProviderRegistry.RemoveProvider(typeof(SqlConnection));
+			DatabaseProviderRegistry.RemoveProvider(typeof(SqlServerDataProvider));
 			DatabaseProviderRegistry.Providers.Count().AssertEqual(0);
-			DatabaseProviderRegistry.Compilers.Count().AssertEqual(0);
 		}
 	}
 }

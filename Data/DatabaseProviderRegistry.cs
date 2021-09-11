@@ -2,50 +2,37 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Data;
 
 	using Ecng.Collections;
-	using Ecng.Common;
 
-	using SqlKata.Compilers;
+	using LinqToDB.DataProvider;
 
 	[CLSCompliant(false)]
 	public static class DatabaseProviderRegistry
 	{
-		private static readonly CachedSynchronizedDictionary<Type, Type> _providerTypes = new();
+		private static readonly CachedSynchronizedSet<Type> _providers = new();
 
-		public static void AddProvider<TProvider, TCompiler>()
-			where TProvider : IDbConnection
-			where TCompiler : Compiler
-			=> AddProvider(typeof(TProvider), typeof(TCompiler));
+		public static void AddProvider<TProvider>()
+			where TProvider : IDataProvider
+			=> AddProvider(typeof(TProvider));
 
-		public static void AddProvider(Type provider, Type compiler)
+		public static void AddProvider(Type provider)
 		{
-			if (compiler is null)
-				throw new ArgumentNullException(nameof(compiler));
-
 			if (provider is null)
 				throw new ArgumentNullException(nameof(provider));
 
-			if (!typeof(IDbConnection).IsAssignableFrom(provider))
+			if (!typeof(IDataProvider).IsAssignableFrom(provider))
 				throw new ArgumentException(nameof(provider));
 
-			if (!typeof(Compiler).IsAssignableFrom(compiler))
-				throw new ArgumentException(nameof(compiler));
-
-			_providerTypes.Add(provider, compiler);
+			_providers.Add(provider);
 		}
 
-		public static Compiler CreateCompiler(Type providerType)
-			=> _providerTypes[providerType].CreateInstance<Compiler>();
-
 		public static void RemoveProvider<TProvider>()
-			where TProvider : IDbConnection
+			where TProvider : IDataProvider
 			=> RemoveProvider(typeof(TProvider));
 
-		public static void RemoveProvider(Type provider) => _providerTypes.Remove(provider);
+		public static void RemoveProvider(Type provider) => _providers.Remove(provider);
 
-		public static IEnumerable<Type> Providers => _providerTypes.CachedKeys;
-		public static IEnumerable<Type> Compilers => _providerTypes.CachedValues;
+		public static IEnumerable<Type> Providers => _providers.Cache;
 	}
 }

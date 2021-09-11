@@ -4,7 +4,7 @@
     <ProjectGuid>{0F5D95EF-F816-447A-B517-DD8E1DA6987F}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="SqlKata.Execution" Version="$(SqlKataVer)" />
+    <PackageReference Include="linq2db" Version="$(linq2dbVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />

@@ -1,10 +1,12 @@
 ﻿namespace Ecng.Data
 {
 	using System;
-	using System.Data;
 
 	using Ecng.Common;
 	using Ecng.Localization;
+
+	using LinqToDB.Data;
+	using LinqToDB.DataProvider;
 
 	/// <summary>
 	/// Extensions for <see cref="Data"/>.
@@ -13,7 +15,7 @@
 	{
 		/// <summary>
 		/// </summary>
-		public static IDbConnection CreateConnection(this DatabaseConnectionPair pair)
+		public static DataConnection CreateConnection(this DatabaseConnectionPair pair)
 		{
 			if (pair is null)
 				throw new ArgumentNullException(nameof(pair));
@@ -28,9 +30,7 @@
 			if (connStr.IsEmpty())
 				throw new InvalidOperationException("Cannot create a connection, because some data was not entered.".Translate());
 
-			var connection = provider.CreateInstance<IDbConnection>();
-			connection.ConnectionString = connStr;
-			return connection;
+			return new DataConnection(provider.CreateInstance<IDataProvider>(), connStr);
 		}
 
 		/// <summary>
@@ -39,8 +39,8 @@
 		/// <param name="pair">Connection.</param>
 		public static void Verify(this DatabaseConnectionPair pair)
 		{
-			using var testConn = pair.CreateConnection();
-			testConn.Open();
+			using var db = pair.CreateConnection();
+			db.Connection.Open();
 		}
 	}
 }
