@@ -159,7 +159,7 @@
 
 		IItemsSourceItem IItemsSource.CreateNewItem(object value)
 		{
-			if(!(value is T typedVal))
+			if (value is not T typedVal)
 				throw new ArgumentException(nameof(value));
 
 			return CreateNewItem(typedVal);
@@ -168,7 +168,7 @@
 		IItemsSourceItem<T> CreateNewItem(IItemsSourceItem fromItem)
 		{
 			return new ItemsSourceItem<T>(
-				(T) fromItem.Value,
+				(T)fromItem.Value,
 				fromItem.DisplayName,
 				fromItem.Description,
 				fromItem.Icon,

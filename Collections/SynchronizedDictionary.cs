@@ -117,7 +117,7 @@ namespace Ecng.Collections
 		{
 			lock (SyncRoot)
 			{
-				if (!(_inner is OrderedDictionary<TKey, TValue> ordered))
+				if (_inner is not OrderedDictionary<TKey, TValue> ordered)
 					throw new NotSupportedException();
 
 				var retVal = new Dictionary<TKey, TValue>();

@@ -1085,7 +1085,7 @@
 			if (dict is null)
 				return null;
 
-			if (!(dict is SynchronizedDictionary<TKey, TValue> syncDict))
+			if (dict is not SynchronizedDictionary<TKey, TValue> syncDict)
 			{
 				var typedDict = dict as Dictionary<TKey, TValue>;
 				syncDict = new SynchronizedDictionary<TKey, TValue>(typedDict?.Comparer);

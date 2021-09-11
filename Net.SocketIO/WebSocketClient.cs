@@ -361,7 +361,7 @@
 
 		public void Send(object obj, long id = default)
 		{
-			if (!(obj is byte[] sendBuf))
+			if (obj is not byte[] sendBuf)
 			{
 				var json = obj as string ?? JsonConvert.SerializeObject(obj);
 				_verboseLog("Send: '{0}'", json);
