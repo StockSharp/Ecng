@@ -1,15 +1,56 @@
 namespace Ecng.Common
 {
 	using System;
+	using System.Runtime.InteropServices;
 	using System.Linq;
 	using System.Collections.Generic;
 
+	public enum MathRoundingRules
+	{
+		/// <summary>
+		/// Round to nearest mode: when a number is halfway between two others, it is rounded toward the nearest even number.
+		/// </summary>
+		ToEven,
+
+		/// <summary>
+		/// Round to nearest mode: when a number is halfway between two others, it is rounded toward the nearest number that is away from zero.
+		/// </summary>
+		AwayFromZero,
+
+		/// <summary>
+		/// Directed mode: the number is rounded toward zero, with the result closest to and no greater in magnitude than the infinitely precise result.
+		/// </summary>
+		ToZero,
+
+		/// <summary>
+		/// Directed mode: the number is rounded down, with the result closest to and no greater than the infinitely precise result.
+		/// </summary>
+		ToNegativeInfinity,
+
+		/// <summary>
+		/// Directed mode: the number is rounded up, with the result closest to and no less than the infinitely precise result.
+		/// </summary>
+		ToPositiveInfinity,
+	}
+
 	public static class MathHelper
 	{
-		public static decimal Floor(this decimal value, decimal step)
+		static MathHelper()
 		{
-			return value - value % step;
+			var typeStd = typeof(MidpointRounding);
+			var typeLocal = typeof(MathRoundingRules);
+
+			foreach (var n in typeStd.GetEnumNames().Concat(typeLocal.GetEnumNames()).Distinct())
+			{
+				var vstd   = (int)n.To<MidpointRounding>();
+				var vlocal = (int)n.To<MathRoundingRules>();
+
+				if(vstd != vlocal)
+					throw new InvalidOperationException($"unexpected enum value {n} (std={vlocal}, local={vstd}), runtime={RuntimeInformation.FrameworkDescription}");
+			}
 		}
+
+		public static decimal Floor(this decimal value, decimal step) => Math.Floor(value / step) * step;
 
 		public static decimal Round(this decimal value)
 		{
@@ -31,51 +72,23 @@ namespace Ecng.Common
 			return Math.Floor(value);
 		}
 
-		public static decimal Round(this decimal value, int digits, MidpointRounding rounding)
-		{
-			return Math.Round(value, digits, rounding);
-		}
+		public static decimal Round(this decimal value, int digits, MidpointRounding rounding)  => Math.Round(value, digits, rounding);
+		public static decimal Round(this decimal value, int digits, MathRoundingRules rounding) => Math.Round(value, digits, (MidpointRounding)rounding);
 
-		public static decimal Round(this decimal value, MidpointRounding rounding)
-		{
-			return Math.Round(value, rounding);
-		}
+		public static decimal Round(this decimal value, MidpointRounding rounding)  => Math.Round(value, rounding);
+		public static decimal Round(this decimal value, MathRoundingRules rounding) => Math.Round(value, (MidpointRounding)rounding);
 
-		public static decimal Round(this decimal value, decimal step, int? digits, MidpointRounding? rounding = null)
+		public static decimal Round(this decimal value, decimal step, int? digits, MathRoundingRules rounding)
+			=> value.Round(step, digits, (MidpointRounding) rounding);
+
+		public static decimal Round(this decimal value, decimal step, int? digits, MidpointRounding rounding = MidpointRounding.ToEven)
 		{
 			if (step <= 0)
 				throw new ArgumentOutOfRangeException(nameof(step), step, "The 'step' parameter must be more than zero.");
 
-			var retVal = Floor(value, step);
+			value = Math.Round(value / step, rounding) * step;
 
-			if (retVal != value)
-			{
-				var lowBound = retVal;
-				var hiBound = lowBound;
-
-				if (value >= 0)
-					hiBound += step;
-				else
-					hiBound -= step;
-
-				switch (rounding)
-				{
-					case MidpointRounding.AwayFromZero:
-						retVal = lowBound;
-						break;
-					case MidpointRounding.ToEven:
-						retVal = hiBound;
-						break;
-					case null:
-						retVal = ((value - lowBound).Abs() > (hiBound - value).Abs()) ? hiBound : lowBound;
-						break;
-				}
-			}
-
-			if (digits != null)
-				retVal = Round(retVal, digits.Value);
-
-			return retVal;
+			return digits == null ? value : Math.Round(value, digits.Value);
 		}
 
 		public static decimal Truncate(this decimal value)
@@ -98,15 +111,11 @@ namespace Ecng.Common
 			return Math.DivRem(a, b, out result);
 		}
 
-		public static double Round(this double value, int digits, MidpointRounding rounding)
-		{
-			return Math.Round(value, digits, rounding);
-		}
+		public static double Round(this double value, int digits, MathRoundingRules rounding) => Math.Round(value, digits, (MidpointRounding)rounding);
+		public static double Round(this double value, int digits, MidpointRounding  rounding) => Math.Round(value, digits, rounding);
 
-		public static double Round(this double value, MidpointRounding rounding)
-		{
-			return Math.Round(value, rounding);
-		}
+		public static double Round(this double value, MathRoundingRules rounding) => Math.Round(value, (MidpointRounding)rounding);
+		public static double Round(this double value, MidpointRounding rounding)  => Math.Round(value, rounding);
 
 		public static long BigMul(this int x, int y)
 		{
@@ -123,25 +132,10 @@ namespace Ecng.Common
 			return (long)Math.Floor(value);
 		}
 
-		public static int Floor(this int value, int step)
-		{
-			return value - value % step;
-		}
-
-		public static long Floor(this long value, long step)
-		{
-			return value - value % step;
-		}
-
-		public static float Floor(this float value, float step)
-		{
-			return value - value % step;
-		}
-
-		public static double Floor(this double value, double step)
-		{
-			return value - value % step;
-		}
+		public static int     Floor(this int value,    int    step) => (value >= 0 ? value : value - step + 1) / step * step;
+		public static long    Floor(this long value,   long   step) => (value >= 0 ? value : value - step + 1) / step * step;
+		public static float   Floor(this float value,  float  step) => (float) (Math.Floor((double) value / step) * step);
+		public static double  Floor(this double value, double step) => Math.Floor(value / step) * step;
 
 		public static short Abs(this short value)
 		{
@@ -751,7 +745,7 @@ namespace Ecng.Common
 			var scale = (bits[3] >> 16) & 31;
 
 			// Precision: number of times we can divide
-			// by 10 before we get to 0        
+			// by 10 before we get to 0
 			var precision = 0;
 			if (value != 0m)
 			{
@@ -782,7 +776,7 @@ namespace Ecng.Common
 		}
 
 		private static readonly SyncObject _syncObject = new();
-		private static readonly Dictionary<decimal, int> _decimalsCache = new(); 
+		private static readonly Dictionary<decimal, int> _decimalsCache = new();
 
 		public static int GetCachedDecimals(this decimal value)
 		{
@@ -811,7 +805,7 @@ namespace Ecng.Common
 		}
 
 		/// <summary>
-		/// 
+		///
 		/// </summary>
 		/// <param name="angle"></param>
 		/// <returns></returns>
@@ -821,7 +815,7 @@ namespace Ecng.Common
 		}
 
 		/// <summary>
-		/// 
+		///
 		/// </summary>
 		/// <param name="radian"></param>
 		/// <returns></returns>
@@ -831,7 +825,7 @@ namespace Ecng.Common
 		}
 
 		/// <summary>
-		/// 
+		///
 		/// </summary>
 		/// <param name="a"></param>
 		/// <param name="b"></param>
