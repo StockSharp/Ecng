@@ -83,7 +83,10 @@
 		{
 			var isPrimitive = IsJsonPrimitive();
 
-			using var reader = new JsonTextReader(new StreamReader(stream, Encoding, true, BufferSize, true));
+			using var reader = new JsonTextReader(new StreamReader(stream, Encoding, true, BufferSize, true))
+			{
+				FloatParseHandling = FloatParseHandling.Decimal
+			};
 
 			if (isPrimitive)
 			{
@@ -365,7 +368,7 @@
 			await reader.ReadWithCheckAsync(cancellationToken);
 
 			reader.ChechExpectedToken(JsonToken.PropertyName);
-			
+
 			if (!((string)reader.Value).EqualsIgnoreCase(name))
 				throw new InvalidOperationException($"{reader.Value} != {name}");
 
