@@ -54,10 +54,10 @@
 		public override string FileExtension => "json";
 
 		public override void Serialize(T graph, Stream stream)
-			=> Task.Run(async () => await SerializeAsync(graph, stream, default)).Wait();
+			=> SerializeAsync(graph, stream, default).Wait();
 
 		public override T Deserialize(Stream stream)
-			=> Task.Run(async () => await DeserializeAsync(stream, default)).Result;
+			=> DeserializeAsync(stream, default).Result;
 
 		private static bool IsJsonPrimitive() => typeof(T).IsSerializablePrimitive() && typeof(T) != typeof(byte[]);
 
