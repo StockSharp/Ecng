@@ -15,6 +15,8 @@
 
 	using Newtonsoft.Json;
 
+	using Nito.AsyncEx;
+
 	static class JsonConversions
 	{
 		static JsonConversions()
@@ -54,10 +56,10 @@
 		public override string FileExtension => "json";
 
 		public override void Serialize(T graph, Stream stream)
-			=> SerializeAsync(graph, stream, default).Wait();
+			=> AsyncContext.Run(() => SerializeAsync(graph, stream, default));
 
 		public override T Deserialize(Stream stream)
-			=> DeserializeAsync(stream, default).Result;
+			=> AsyncContext.Run(() => DeserializeAsync(stream, default));
 
 		private static bool IsJsonPrimitive() => typeof(T).IsSerializablePrimitive() && typeof(T) != typeof(byte[]);
 
