@@ -51,15 +51,15 @@
 
     <MsCodeVer>3.11.0</MsCodeVer>
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
-    <MsTestVer>2.2.5</MsTestVer>
+    <MsTestVer>2.2.7</MsTestVer>
     <MsTestSdkVer>16.11.0</MsTestSdkVer>
     <SmartFormatVer>2.7.0</SmartFormatVer>
-    <OctodiffVer>1.2.1</OctodiffVer>
+    <OctodiffVer>1.2.36</OctodiffVer>
     <MoreLinqVer>3.3.2</MoreLinqVer>
     <RestSharpVer>106.12.0</RestSharpVer>
     <NDdeVer>3.1.0</NDdeVer>
     <ILPackVer>0.1.6</ILPackVer>
-    <linq2dbVer>4.0.0-preview.5</linq2dbVer>
+    <linq2dbVer>3.4.4</linq2dbVer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
