@@ -8,6 +8,7 @@ namespace Ecng.Backup.Amazon
 
 	using global::Amazon;
 	using global::Amazon.Runtime;
+	using global::Amazon.Glacier.Model;
 	using global::Amazon.Glacier;
 
 	using Ecng.Common;
@@ -21,6 +22,7 @@ namespace Ecng.Backup.Amazon
 		private readonly string _vaultName;
 		private readonly AWSCredentials _credentials;
 		private readonly RegionEndpoint _endpoint;
+		private const int _bufferSize = 1024 * 1024 * 100; // 100mb
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AmazonGlacierService"/>.
@@ -60,23 +62,56 @@ namespace Ecng.Backup.Amazon
 		}
 
 		Task<IEnumerable<BackupEntry>> IBackupService.GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken)
-		{
-			throw new NotImplementedException();
-		}
+			=> throw new NotSupportedException();
 
-		Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
+		async Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
+			await _client.DeleteArchiveAsync(new DeleteArchiveRequest
+			{
+				VaultName = _vaultName,
+				ArchiveId = entry.Name,
+			}, cancellationToken);
 		}
 
 		Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
+			
 			throw new NotImplementedException();
 		}
 
-		Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
+		async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
+			var getJobOutputResponse = await _client.GetJobOutputAsync(new GetJobOutputRequest
+			{
+				//JobId = jobId,
+				VaultName = _vaultName
+			}, cancellationToken);
+			using var webStream = getJobOutputResponse.Body;
+
+			var bytes = new byte[_bufferSize];
+			var readTotal = 0L;
+
+			var prevProgress = -1;
+
+			var objLen = 0L; //TODO
+
+			while (readTotal < objLen)
+			{
+				var expected = (int)(objLen - readTotal).Min(_bufferSize);
+				var actual = await webStream.ReadAsync(bytes, 0, expected, cancellationToken);
+
+				await stream.WriteAsync(bytes, 0, actual, cancellationToken);
+
+				readTotal += actual;
+
+				var currProgress = (int)(readTotal * 100L / objLen);
+
+				if (currProgress < 100 && prevProgress < currProgress)
+				{
+					progress(currProgress);
+					prevProgress = currProgress;
+				}
+			}
 		}
 
 		Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)

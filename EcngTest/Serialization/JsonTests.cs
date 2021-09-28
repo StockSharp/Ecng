@@ -133,6 +133,8 @@
 			await Do(TimeZoneInfo.Utc);
 			await Do(TimeHelper.Moscow);
 			await Do(typeof(GCKind));
+			await Do(decimal.MinValue);
+			await Do(decimal.MaxValue);
 		}
 
 		[TestMethod]
@@ -220,6 +222,8 @@
 		public async Task SettingsStorage()
 		{
 			var storage = new SettingsStorage()
+				.Set("DecimalMax", decimal.MaxValue)
+				.Set("DecimalMin", decimal.MinValue)
 				.Set("IntProp", 124)
 				.Set("DateProp", DateTime.UtcNow)
 				.Set("TimeProp", TimeSpan.FromSeconds(10))
@@ -574,7 +578,7 @@
 				TimeProp = TimeSpan.FromSeconds(10),
 			});
 		}
-		
+
 		[TestMethod]
 		public async Task ComplexComplexNull()
 		{

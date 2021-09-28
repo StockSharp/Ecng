@@ -14,9 +14,16 @@ namespace Ecng.Common
 	{
 		private readonly SyncObject _lock = new();
 
+		enum DisposeState : byte
+		{
+			None,
+			Disposing,
+			Disposed
+		}
+
 		#region IsDisposed
 
-		private bool _isDisposed;
+		private DisposeState _state = DisposeState.None;
 
 		/// <summary>
 		/// Gets a value indicating whether this instance is disposed.
@@ -26,22 +33,19 @@ namespace Ecng.Common
 		/// </value>
 		[XmlIgnore]
 		[Browsable(false)]
-		public bool IsDisposed
-		{
-			get => _isDisposed;
-			private set
-			{
-				if (_isDisposed == value)
-					return;
+		public bool IsDisposed => _state == DisposeState.Disposed;
 
-				_isDisposed = value;
+		/// <summary>
+		/// Gets a value indicating whether dispose process has been started.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance is being disposed; otherwise, <c>false</c>.
+		/// </value>
+		[XmlIgnore]
+		[Browsable(false)]
+		public bool IsDisposeStarted => _state > DisposeState.None;
 
-				if (value)
-					Disposed?.Invoke();
-			}
-		}
-
-        #endregion
+		#endregion
 
 		public event Action Disposed;
 
@@ -54,13 +58,22 @@ namespace Ecng.Common
 		{
 			lock (_lock)
 			{
-				if (!IsDisposed)
-				{
-					DisposeManaged();
-					DisposeNative();
-					IsDisposed = true;
-					GC.SuppressFinalize(this);
-				}
+				if (IsDisposeStarted)
+					return;
+
+				_state = DisposeState.Disposing;
+			}
+
+			try
+			{
+				DisposeManaged();
+				DisposeNative();
+			}
+			finally
+			{
+				_state = DisposeState.Disposed;
+				Disposed?.Invoke();
+				GC.SuppressFinalize(this);
 			}
 		}
 
@@ -79,6 +92,17 @@ namespace Ecng.Common
         protected virtual void DisposeNative()
         {
         }
+
+		/// <summary>
+		/// Throws if the dispose process has been started..
+		/// </summary>
+		protected void ThrowIfDisposeStarted()
+		{
+			ThrowIfDisposed();
+
+			if (IsDisposeStarted)
+				throw new ObjectDisposedException(GetType().Name + " has started dispose process");
+		}
 
 		/// <summary>
 		/// Throws if object is already disposed.

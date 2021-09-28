@@ -44,6 +44,12 @@
 				Assert.AreEqual(expected, value);
 		}
 
+		public static void AssertEqual(this double value, double expected, double delta)
+			=> Assert.AreEqual(expected, value, delta);
+
+		public static void AssertEqual(this float value, float expected, float delta)
+			=> Assert.AreEqual(expected, value, delta);
+
 		public static void AssertNotEqual<T>(this T value, T expected)
 			=> Assert.AreNotEqual(expected, value);
 
@@ -57,7 +63,7 @@
 		{
 			if (nullAsEmpty && value.IsEmpty() && expected.IsEmpty())
 				return;
-			
+
 			value.AssertEqual(expected);
 		}
 	}

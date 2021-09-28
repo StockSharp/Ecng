@@ -15,6 +15,8 @@
 
 	using Newtonsoft.Json;
 
+	using Nito.AsyncEx;
+
 	static class JsonConversions
 	{
 		static JsonConversions()
@@ -54,10 +56,10 @@
 		public override string FileExtension => "json";
 
 		public override void Serialize(T graph, Stream stream)
-			=> Task.Run(async () => await SerializeAsync(graph, stream, default)).Wait();
+			=> AsyncContext.Run(() => SerializeAsync(graph, stream, default));
 
 		public override T Deserialize(Stream stream)
-			=> Task.Run(async () => await DeserializeAsync(stream, default)).Result;
+			=> AsyncContext.Run(() => DeserializeAsync(stream, default));
 
 		private static bool IsJsonPrimitive() => typeof(T).IsSerializablePrimitive() && typeof(T) != typeof(byte[]);
 
@@ -83,7 +85,10 @@
 		{
 			var isPrimitive = IsJsonPrimitive();
 
-			using var reader = new JsonTextReader(new StreamReader(stream, Encoding, true, BufferSize, true));
+			using var reader = new JsonTextReader(new StreamReader(stream, Encoding, true, BufferSize, true))
+			{
+				FloatParseHandling = FloatParseHandling.Decimal
+			};
 
 			if (isPrimitive)
 			{
@@ -365,7 +370,7 @@
 			await reader.ReadWithCheckAsync(cancellationToken);
 
 			reader.ChechExpectedToken(JsonToken.PropertyName);
-			
+
 			if (!((string)reader.Value).EqualsIgnoreCase(name))
 				throw new InvalidOperationException($"{reader.Value} != {name}");
 

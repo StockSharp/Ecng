@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Test.Common
 {
+	using System;
 	using System.Globalization;
 
 	using Ecng.Common;
@@ -10,6 +11,305 @@
 	[TestClass]
 	public class MathHelperTest
 	{
+		const double deltad = 0.00001d;
+		const float  deltaf = 0.00001f;
+
+		[TestMethod]
+		public void Floor()
+		{
+
+			0.5.Floor().AssertEqual(0);
+			(-0.5).Floor().AssertEqual(-1);
+
+			( 10.1).Floor(0.2).AssertEqual(10);
+			(-10.1).Floor(0.2).AssertEqual(-10.2d, deltad);
+
+			( 10.1f).Floor(0.2f).AssertEqual(10f, deltaf);
+			(-10.1f).Floor(0.2f).AssertEqual(-10.2f, deltaf);
+
+			( 11).Floor(2).AssertEqual(10);
+			(-11).Floor(2).AssertEqual(-12);
+
+			( 11L).Floor(2).AssertEqual(10L);
+			(-11L).Floor(2).AssertEqual(-12L);
+		}
+
+		[TestMethod]
+		public void Round_MidpointRounding_double()
+		{
+			( 10.3d).Round(MidpointRounding.ToEven).AssertEqual(10d);
+			(-10.3d).Round(MidpointRounding.ToEven).AssertEqual(-10d);
+			( 10.5d).Round(MidpointRounding.ToEven).AssertEqual(10d);
+			(-10.5d).Round(MidpointRounding.ToEven).AssertEqual(-10d);
+			( 10.8d).Round(MidpointRounding.ToEven).AssertEqual(11d);
+			(-10.8d).Round(MidpointRounding.ToEven).AssertEqual(-11d);
+			( 11.3d).Round(MidpointRounding.ToEven).AssertEqual(11d);
+			(-11.3d).Round(MidpointRounding.ToEven).AssertEqual(-11d);
+			( 11.5d).Round(MidpointRounding.ToEven).AssertEqual(12d);
+			(-11.5d).Round(MidpointRounding.ToEven).AssertEqual(-12d);
+			( 11.8d).Round(MidpointRounding.ToEven).AssertEqual(12d);
+			(-11.8d).Round(MidpointRounding.ToEven).AssertEqual(-12d);
+
+			( 10.3d).Round(MidpointRounding.AwayFromZero).AssertEqual(10d);
+			(-10.3d).Round(MidpointRounding.AwayFromZero).AssertEqual(-10d);
+			( 10.5d).Round(MidpointRounding.AwayFromZero).AssertEqual(11d);
+			(-10.5d).Round(MidpointRounding.AwayFromZero).AssertEqual(-11d);
+			( 10.8d).Round(MidpointRounding.AwayFromZero).AssertEqual(11d);
+			(-10.8d).Round(MidpointRounding.AwayFromZero).AssertEqual(-11d);
+			( 11.3d).Round(MidpointRounding.AwayFromZero).AssertEqual(11d);
+			(-11.3d).Round(MidpointRounding.AwayFromZero).AssertEqual(-11d);
+			( 11.5d).Round(MidpointRounding.AwayFromZero).AssertEqual(12d);
+			(-11.5d).Round(MidpointRounding.AwayFromZero).AssertEqual(-12d);
+			( 11.8d).Round(MidpointRounding.AwayFromZero).AssertEqual(12d);
+			(-11.8d).Round(MidpointRounding.AwayFromZero).AssertEqual(-12d);
+
+			( 10.3d).Round(MidpointRounding.ToZero).AssertEqual(10d);
+			(-10.3d).Round(MidpointRounding.ToZero).AssertEqual(-10d);
+			( 10.5d).Round(MidpointRounding.ToZero).AssertEqual(10d);
+			(-10.5d).Round(MidpointRounding.ToZero).AssertEqual(-10d);
+			( 10.8d).Round(MidpointRounding.ToZero).AssertEqual(10d);
+			(-10.8d).Round(MidpointRounding.ToZero).AssertEqual(-10d);
+			( 11.3d).Round(MidpointRounding.ToZero).AssertEqual(11d);
+			(-11.3d).Round(MidpointRounding.ToZero).AssertEqual(-11d);
+			( 11.5d).Round(MidpointRounding.ToZero).AssertEqual(11d);
+			(-11.5d).Round(MidpointRounding.ToZero).AssertEqual(-11d);
+			( 11.8d).Round(MidpointRounding.ToZero).AssertEqual(11d);
+			(-11.8d).Round(MidpointRounding.ToZero).AssertEqual(-11d);
+
+			( 10.3d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(10d);
+			(-10.3d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-11d);
+			( 10.5d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(10d);
+			(-10.5d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-11d);
+			( 10.8d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(10d);
+			(-10.8d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-11d);
+			( 11.3d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(11d);
+			(-11.3d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-12d);
+			( 11.5d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(11d);
+			(-11.5d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-12d);
+			( 11.8d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(11d);
+			(-11.8d).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-12d);
+
+			( 10.3d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(11d);
+			(-10.3d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-10d);
+			( 10.5d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(11d);
+			(-10.5d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-10d);
+			( 10.8d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(11d);
+			(-10.8d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-10d);
+			( 11.3d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(12d);
+			(-11.3d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-11d);
+			( 11.5d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(12d);
+			(-11.5d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-11d);
+			( 11.8d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(12d);
+			(-11.8d).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-11d);
+		}
+
+		[TestMethod]
+		public void Round_MidpointRounding_decimal()
+		{
+			( 10.3m).Round(MidpointRounding.ToEven).AssertEqual(10m);
+			(-10.3m).Round(MidpointRounding.ToEven).AssertEqual(-10m);
+			( 10.5m).Round(MidpointRounding.ToEven).AssertEqual(10m);
+			(-10.5m).Round(MidpointRounding.ToEven).AssertEqual(-10m);
+			( 10.8m).Round(MidpointRounding.ToEven).AssertEqual(11m);
+			(-10.8m).Round(MidpointRounding.ToEven).AssertEqual(-11m);
+			( 11.3m).Round(MidpointRounding.ToEven).AssertEqual(11m);
+			(-11.3m).Round(MidpointRounding.ToEven).AssertEqual(-11m);
+			( 11.5m).Round(MidpointRounding.ToEven).AssertEqual(12m);
+			(-11.5m).Round(MidpointRounding.ToEven).AssertEqual(-12m);
+			( 11.8m).Round(MidpointRounding.ToEven).AssertEqual(12m);
+			(-11.8m).Round(MidpointRounding.ToEven).AssertEqual(-12m);
+
+			( 10.3m).Round(MidpointRounding.AwayFromZero).AssertEqual(10m);
+			(-10.3m).Round(MidpointRounding.AwayFromZero).AssertEqual(-10m);
+			( 10.5m).Round(MidpointRounding.AwayFromZero).AssertEqual(11m);
+			(-10.5m).Round(MidpointRounding.AwayFromZero).AssertEqual(-11m);
+			( 10.8m).Round(MidpointRounding.AwayFromZero).AssertEqual(11m);
+			(-10.8m).Round(MidpointRounding.AwayFromZero).AssertEqual(-11m);
+			( 11.3m).Round(MidpointRounding.AwayFromZero).AssertEqual(11m);
+			(-11.3m).Round(MidpointRounding.AwayFromZero).AssertEqual(-11m);
+			( 11.5m).Round(MidpointRounding.AwayFromZero).AssertEqual(12m);
+			(-11.5m).Round(MidpointRounding.AwayFromZero).AssertEqual(-12m);
+			( 11.8m).Round(MidpointRounding.AwayFromZero).AssertEqual(12m);
+			(-11.8m).Round(MidpointRounding.AwayFromZero).AssertEqual(-12m);
+
+			( 10.3m).Round(MidpointRounding.ToZero).AssertEqual(10m);
+			(-10.3m).Round(MidpointRounding.ToZero).AssertEqual(-10m);
+			( 10.5m).Round(MidpointRounding.ToZero).AssertEqual(10m);
+			(-10.5m).Round(MidpointRounding.ToZero).AssertEqual(-10m);
+			( 10.8m).Round(MidpointRounding.ToZero).AssertEqual(10m);
+			(-10.8m).Round(MidpointRounding.ToZero).AssertEqual(-10m);
+			( 11.3m).Round(MidpointRounding.ToZero).AssertEqual(11m);
+			(-11.3m).Round(MidpointRounding.ToZero).AssertEqual(-11m);
+			( 11.5m).Round(MidpointRounding.ToZero).AssertEqual(11m);
+			(-11.5m).Round(MidpointRounding.ToZero).AssertEqual(-11m);
+			( 11.8m).Round(MidpointRounding.ToZero).AssertEqual(11m);
+			(-11.8m).Round(MidpointRounding.ToZero).AssertEqual(-11m);
+
+			( 10.3m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(10m);
+			(-10.3m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-11m);
+			( 10.5m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(10m);
+			(-10.5m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-11m);
+			( 10.8m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(10m);
+			(-10.8m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-11m);
+			( 11.3m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(11m);
+			(-11.3m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-12m);
+			( 11.5m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(11m);
+			(-11.5m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-12m);
+			( 11.8m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(11m);
+			(-11.8m).Round(MidpointRounding.ToNegativeInfinity).AssertEqual(-12m);
+
+			( 10.3m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(11m);
+			(-10.3m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-10m);
+			( 10.5m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(11m);
+			(-10.5m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-10m);
+			( 10.8m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(11m);
+			(-10.8m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-10m);
+			( 11.3m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(12m);
+			(-11.3m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-11m);
+			( 11.5m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(12m);
+			(-11.5m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-11m);
+			( 11.8m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(12m);
+			(-11.8m).Round(MidpointRounding.ToPositiveInfinity).AssertEqual(-11m);
+		}
+
+		[TestMethod]
+		public void Round_MathRoundingRules_double()
+		{
+			( 10.3d).Round(MathRoundingRules.ToEven).AssertEqual(10d);
+			(-10.3d).Round(MathRoundingRules.ToEven).AssertEqual(-10d);
+			( 10.5d).Round(MathRoundingRules.ToEven).AssertEqual(10d);
+			(-10.5d).Round(MathRoundingRules.ToEven).AssertEqual(-10d);
+			( 10.8d).Round(MathRoundingRules.ToEven).AssertEqual(11d);
+			(-10.8d).Round(MathRoundingRules.ToEven).AssertEqual(-11d);
+			( 11.3d).Round(MathRoundingRules.ToEven).AssertEqual(11d);
+			(-11.3d).Round(MathRoundingRules.ToEven).AssertEqual(-11d);
+			( 11.5d).Round(MathRoundingRules.ToEven).AssertEqual(12d);
+			(-11.5d).Round(MathRoundingRules.ToEven).AssertEqual(-12d);
+			( 11.8d).Round(MathRoundingRules.ToEven).AssertEqual(12d);
+			(-11.8d).Round(MathRoundingRules.ToEven).AssertEqual(-12d);
+
+			( 10.3d).Round(MathRoundingRules.AwayFromZero).AssertEqual(10d);
+			(-10.3d).Round(MathRoundingRules.AwayFromZero).AssertEqual(-10d);
+			( 10.5d).Round(MathRoundingRules.AwayFromZero).AssertEqual(11d);
+			(-10.5d).Round(MathRoundingRules.AwayFromZero).AssertEqual(-11d);
+			( 10.8d).Round(MathRoundingRules.AwayFromZero).AssertEqual(11d);
+			(-10.8d).Round(MathRoundingRules.AwayFromZero).AssertEqual(-11d);
+			( 11.3d).Round(MathRoundingRules.AwayFromZero).AssertEqual(11d);
+			(-11.3d).Round(MathRoundingRules.AwayFromZero).AssertEqual(-11d);
+			( 11.5d).Round(MathRoundingRules.AwayFromZero).AssertEqual(12d);
+			(-11.5d).Round(MathRoundingRules.AwayFromZero).AssertEqual(-12d);
+			( 11.8d).Round(MathRoundingRules.AwayFromZero).AssertEqual(12d);
+			(-11.8d).Round(MathRoundingRules.AwayFromZero).AssertEqual(-12d);
+
+			( 10.3d).Round(MathRoundingRules.ToZero).AssertEqual(10d);
+			(-10.3d).Round(MathRoundingRules.ToZero).AssertEqual(-10d);
+			( 10.5d).Round(MathRoundingRules.ToZero).AssertEqual(10d);
+			(-10.5d).Round(MathRoundingRules.ToZero).AssertEqual(-10d);
+			( 10.8d).Round(MathRoundingRules.ToZero).AssertEqual(10d);
+			(-10.8d).Round(MathRoundingRules.ToZero).AssertEqual(-10d);
+			( 11.3d).Round(MathRoundingRules.ToZero).AssertEqual(11d);
+			(-11.3d).Round(MathRoundingRules.ToZero).AssertEqual(-11d);
+			( 11.5d).Round(MathRoundingRules.ToZero).AssertEqual(11d);
+			(-11.5d).Round(MathRoundingRules.ToZero).AssertEqual(-11d);
+			( 11.8d).Round(MathRoundingRules.ToZero).AssertEqual(11d);
+			(-11.8d).Round(MathRoundingRules.ToZero).AssertEqual(-11d);
+
+			( 10.3d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(10d);
+			(-10.3d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-11d);
+			( 10.5d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(10d);
+			(-10.5d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-11d);
+			( 10.8d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(10d);
+			(-10.8d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-11d);
+			( 11.3d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(11d);
+			(-11.3d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-12d);
+			( 11.5d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(11d);
+			(-11.5d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-12d);
+			( 11.8d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(11d);
+			(-11.8d).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-12d);
+
+			( 10.3d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(11d);
+			(-10.3d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-10d);
+			( 10.5d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(11d);
+			(-10.5d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-10d);
+			( 10.8d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(11d);
+			(-10.8d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-10d);
+			( 11.3d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(12d);
+			(-11.3d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-11d);
+			( 11.5d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(12d);
+			(-11.5d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-11d);
+			( 11.8d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(12d);
+			(-11.8d).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-11d);
+		}
+
+		[TestMethod]
+		public void Round_MathRoundingRules_decimal()
+		{
+			( 10.3m).Round(MathRoundingRules.ToEven).AssertEqual(10m);
+			(-10.3m).Round(MathRoundingRules.ToEven).AssertEqual(-10m);
+			( 10.5m).Round(MathRoundingRules.ToEven).AssertEqual(10m);
+			(-10.5m).Round(MathRoundingRules.ToEven).AssertEqual(-10m);
+			( 10.8m).Round(MathRoundingRules.ToEven).AssertEqual(11m);
+			(-10.8m).Round(MathRoundingRules.ToEven).AssertEqual(-11m);
+			( 11.3m).Round(MathRoundingRules.ToEven).AssertEqual(11m);
+			(-11.3m).Round(MathRoundingRules.ToEven).AssertEqual(-11m);
+			( 11.5m).Round(MathRoundingRules.ToEven).AssertEqual(12m);
+			(-11.5m).Round(MathRoundingRules.ToEven).AssertEqual(-12m);
+			( 11.8m).Round(MathRoundingRules.ToEven).AssertEqual(12m);
+			(-11.8m).Round(MathRoundingRules.ToEven).AssertEqual(-12m);
+
+			( 10.3m).Round(MathRoundingRules.AwayFromZero).AssertEqual(10m);
+			(-10.3m).Round(MathRoundingRules.AwayFromZero).AssertEqual(-10m);
+			( 10.5m).Round(MathRoundingRules.AwayFromZero).AssertEqual(11m);
+			(-10.5m).Round(MathRoundingRules.AwayFromZero).AssertEqual(-11m);
+			( 10.8m).Round(MathRoundingRules.AwayFromZero).AssertEqual(11m);
+			(-10.8m).Round(MathRoundingRules.AwayFromZero).AssertEqual(-11m);
+			( 11.3m).Round(MathRoundingRules.AwayFromZero).AssertEqual(11m);
+			(-11.3m).Round(MathRoundingRules.AwayFromZero).AssertEqual(-11m);
+			( 11.5m).Round(MathRoundingRules.AwayFromZero).AssertEqual(12m);
+			(-11.5m).Round(MathRoundingRules.AwayFromZero).AssertEqual(-12m);
+			( 11.8m).Round(MathRoundingRules.AwayFromZero).AssertEqual(12m);
+			(-11.8m).Round(MathRoundingRules.AwayFromZero).AssertEqual(-12m);
+
+			( 10.3m).Round(MathRoundingRules.ToZero).AssertEqual(10m);
+			(-10.3m).Round(MathRoundingRules.ToZero).AssertEqual(-10m);
+			( 10.5m).Round(MathRoundingRules.ToZero).AssertEqual(10m);
+			(-10.5m).Round(MathRoundingRules.ToZero).AssertEqual(-10m);
+			( 10.8m).Round(MathRoundingRules.ToZero).AssertEqual(10m);
+			(-10.8m).Round(MathRoundingRules.ToZero).AssertEqual(-10m);
+			( 11.3m).Round(MathRoundingRules.ToZero).AssertEqual(11m);
+			(-11.3m).Round(MathRoundingRules.ToZero).AssertEqual(-11m);
+			( 11.5m).Round(MathRoundingRules.ToZero).AssertEqual(11m);
+			(-11.5m).Round(MathRoundingRules.ToZero).AssertEqual(-11m);
+			( 11.8m).Round(MathRoundingRules.ToZero).AssertEqual(11m);
+			(-11.8m).Round(MathRoundingRules.ToZero).AssertEqual(-11m);
+
+			( 10.3m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(10m);
+			(-10.3m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-11m);
+			( 10.5m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(10m);
+			(-10.5m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-11m);
+			( 10.8m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(10m);
+			(-10.8m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-11m);
+			( 11.3m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(11m);
+			(-11.3m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-12m);
+			( 11.5m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(11m);
+			(-11.5m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-12m);
+			( 11.8m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(11m);
+			(-11.8m).Round(MathRoundingRules.ToNegativeInfinity).AssertEqual(-12m);
+
+			( 10.3m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(11m);
+			(-10.3m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-10m);
+			( 10.5m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(11m);
+			(-10.5m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-10m);
+			( 10.8m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(11m);
+			(-10.8m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-10m);
+			( 11.3m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(12m);
+			(-11.3m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-11m);
+			( 11.5m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(12m);
+			(-11.5m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-11m);
+			( 11.8m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(12m);
+			(-11.8m).Round(MathRoundingRules.ToPositiveInfinity).AssertEqual(-11m);
+		}
+
 		[TestMethod]
 		public void RoundToNearest()
 		{
