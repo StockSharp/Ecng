@@ -21,5 +21,8 @@
 					.Where(p => p.PropertyType == typeof(OSPlatform))
 					.Select(p => (OSPlatform)p.GetValue(null))
 					.ToArray();
+
+		public static bool IsFramework
+			=> RuntimeInformation.FrameworkDescription.StartsWithIgnoreCase(".NET Framework");
 	}
 }
