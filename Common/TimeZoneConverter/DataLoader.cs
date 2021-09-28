@@ -109,11 +109,8 @@ namespace TimeZoneConverter
 
         private static IEnumerable<string> GetEmbeddedData(string resourceName)
         {
-#if NET35 || NET40
-            var assembly = typeof(DataLoader).Assembly;
-#else
             var assembly = typeof(DataLoader).GetTypeInfo().Assembly;
-#endif
+
             using (var compressedStream = assembly.GetManifestResourceStream("Ecng.Common.TimeZoneConverter.Data." + resourceName) ?? throw new MissingManifestResourceException())
             using (var stream = new GZipStream(compressedStream, CompressionMode.Decompress))
             using (var reader = new StreamReader(stream))
