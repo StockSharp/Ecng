@@ -1,6 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
 
     <AssemblyTitle>Ecng.$(MSBuildProjectName)</AssemblyTitle>
     <Product>Ecng system framework</Product>
@@ -17,7 +17,7 @@
         or '$(MSBuildProjectName)' == 'HtmlRenderer'
         or '$(MSBuildProjectName)' == 'Test'
       ">
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFrameworks>net5.0-windows</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
