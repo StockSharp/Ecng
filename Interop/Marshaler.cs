@@ -12,7 +12,6 @@ namespace Ecng.Interop
 	using Ecng.Common;
 	using Ecng.Collections;
 	using Ecng.Localization;
-	using Ecng.Serialization;
 
 #if NETCOREAPP
 	using System.IO;

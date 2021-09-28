@@ -6,7 +6,6 @@
 	using Ecng.Localization;
 
 	using LinqToDB.Data;
-	using LinqToDB.DataProvider;
 
 	/// <summary>
 	/// Extensions for <see cref="Data"/>.
