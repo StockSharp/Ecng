@@ -113,6 +113,15 @@
 				schema.Fields[attribute.FieldName].IsIndex = true;
 			}
 
+			static Type CreateFactoryType(Type fieldType)
+			{
+				return fieldType.IsEnum()
+					? typeof(EnumFieldFactory<,>).Make(fieldType, fieldType.GetEnumBaseType())
+					: fieldType == typeof(TimeZoneInfo)
+						? typeof(PrimitiveFieldFactory<TimeZoneInfo, string>)
+						: typeof(PrimitiveFieldFactory<,>).Make(fieldType, fieldType);
+			}
+
 			foreach (var f in schema.Fields)
 			{
 				var field = f;
@@ -140,11 +149,11 @@
 							{
 								if (field.Type.IsSerializablePrimitive())
 								{
-									factoryType = field.Type.IsEnum()
-												? typeof(EnumFieldFactory<,>).Make(field.Type, field.Type.GetEnumBaseType())
-												: field.Type == typeof(TimeZoneInfo)
-													? typeof(PrimitiveFieldFactory<TimeZoneInfo, string>)
-													: typeof(PrimitiveFieldFactory<,>).Make(field.Type, field.Type);
+									factoryType = CreateFactoryType(field.Type);
+								}
+								else if (field.Type.IsNullable() && field.Type.GetUnderlyingType().IsSerializablePrimitive())
+								{
+									factoryType = CreateFactoryType(field.Type.GetUnderlyingType());
 								}
 								else
 								{

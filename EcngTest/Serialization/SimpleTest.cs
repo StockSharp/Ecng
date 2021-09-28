@@ -38,6 +38,8 @@
 
 		public Guid? NullGuid { get; set; }
 
+		public DateTime? DateTime { get; set; }
+
 		[InnerSchema]
 		public Entity2 Entity2 { get; set; }
 		
@@ -68,7 +70,8 @@
 				((TimeZone is null && other.TimeZone is null) || TimeZone?.Equals(other.TimeZone) == true) &&
 				TimeSpan == other.TimeSpan &&
 				Guid == other.Guid &&
-				NullGuid == other.NullGuid
+				NullGuid == other.NullGuid &&
+				DateTime == other.DateTime
 				;
 		}
 	}
@@ -143,6 +146,19 @@
 		public void NullGuidXml()
 		{
 			Test<XmlSerializer<Entity>, Entity>(new Entity { NullGuid = Guid.NewGuid() });
+		}
+
+		[TestMethod]
+		public void NullDateTimeBin()
+		{
+			Test<BinarySerializer<Entity>, Entity>(new Entity { DateTime = DateTime.UtcNow });
+		}
+
+		[TestMethod]
+		public void NullDateTimeXml()
+		{
+			// TODO DateTime loss ticks
+			//Test<XmlSerializer<Entity>, Entity>(new Entity { DateTime = DateTime.UtcNow });
 		}
 
 		[TestMethod]
@@ -286,6 +302,14 @@
 			var p2 = p1.ToStorage().ToRefPair<int, string>();
 			p2.First.AssertEqual(p1.First);
 			p2.Second.AssertEqual(p1.Second);
+		}
+
+		[TestMethod]
+		public void TestSchema()
+		{
+			var schema = typeof(Entity).GetSchema();
+			var field = schema.Fields[nameof(Entity.DateTime)];
+			field.IsInnerSchema().AssertFalse();
 		}
 	}
 }
