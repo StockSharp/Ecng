@@ -2,7 +2,6 @@
 {
 	using System;
 	
-	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.UnitTesting;
 
@@ -16,16 +15,16 @@
 		{
 			var invokeCount = 0;
 
-			string GetValue()
-				=> (++invokeCount).To<string>();
+			int GetValue()
+				=> ++invokeCount;
 
-			var lazy = new Lazy<string>(GetValue);
+			var lazy = new Lazy<int>(GetValue);
 			lazy.Track();
-			lazy.Value.AssertEqual("1");
-			lazy.Value.AssertEqual("1");
+			lazy.Value.AssertEqual(1);
+			lazy.Value.AssertEqual(1);
 
 			lazy.Reset();
-			lazy.Value.AssertEqual("2");
+			lazy.Value.AssertEqual(2);
 		}
 	}
 }
