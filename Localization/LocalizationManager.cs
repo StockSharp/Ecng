@@ -9,92 +9,87 @@
 	using Ecng.Common;
 
 	using Newtonsoft.Json;
-	using Newtonsoft.Json.Linq;
 
 	public class LocalizationManager
 	{
-		private readonly Dictionary<string, string[]> _stringByResourceId = new();
-		private readonly Dictionary<string, int> _langIdx = new();
-		private readonly Dictionary<(string lang, string text), Dictionary<string, string>> _stringsByLang = new();
-		private readonly Dictionary<(string lang, string text), string> _keysByLang = new();
+		public class Translation
+		{
+			private readonly Dictionary<string, string> _stringsById = new();
+			private readonly Dictionary<string, string> _idsByString = new();
+
+			public string LangCode { get; }
+
+			public IEnumerable<(string id, string text)> Strings => _stringsById.Select(kv => (kv.Key, kv.Value));
+
+			public Translation(string code)
+			{
+				LangCodes.GetId(code, true);
+				LangCode = code;
+			}
+
+			public void Add(string id, string text)
+			{
+				_stringsById.Add(id, text);
+				_idsByString[text] = id;
+			}
+
+			public string GetTextById(string id) => _stringsById.TryGetValue(id, out var text) ? text : null;
+			public string GetIdByText(string text) => _idsByString.TryGetValue(text, out var id) ? id : null;
+		}
+
+		private readonly List<Translation> _translations = new();
+
+		public IEnumerable<Translation> Translations => _translations;
 
 		public string ActiveLanguage { get; set; } = LangCodes.En;
 
-		public IEnumerable<string> AvailableLanguages => _langIdx.Keys;
+		public event Action<string, bool> Missing;
 
-		public IEnumerable<string> AvailableResourceIds => _stringByResourceId.Keys;
+		public LocalizationManager() => _translations.AddRange(LangCodes.Codes.Select(c => (code: c, id: LangCodes.GetId(c))).OrderBy(t => t.id).Select(t => new Translation(t.code)));
 
 		public void Init(TextReader reader)
 		{
 			if (reader is null)
 				throw new ArgumentNullException(nameof(reader));
 
-			var currCulture = CultureInfo.CurrentCulture.Name;
-			var currLang = currCulture.SplitBySep("-").First().ToLowerInvariant();
-
 			using (var jsonReader = new JsonTextReader(reader))
 			{
-				var rows = new JsonSerializer().Deserialize<IDictionary<string, object>>(jsonReader);
+				var resources = new JsonSerializer().Deserialize<IDictionary<string, IDictionary<string, string>>>(jsonReader);
 
-				foreach (var row in rows)
+				// ReSharper disable once PossibleNullReferenceException
+				foreach (var res in resources)
 				{
-					var key = row.Key;
-					if (key.IsEmpty())
-						throw new LocalizationException($"{row}: Empty key found.");
+					var resId = res.Key;
+					if (resId.IsEmpty())
+						throw new LocalizationException($"{res}: Empty key found.");
 
-					var props = ((JObject)row.Value).Properties().ToArray();
-
-					if (!_stringByResourceId.TryGetValue(key, out var stringByResourceId))
-						_stringByResourceId.Add(key, stringByResourceId = new string[props.Length]);
-
-					var tuples = new List<(string, string)>();
-
-					foreach (var prop in props)
-					{
-						var translation = (string)prop.Value;
-
-						var lang = prop.Name;
-
-						if (!_langIdx.TryGetValue(lang, out var i))
-							_langIdx.Add(lang, i = _langIdx.Count);
-
-						stringByResourceId[i] = translation;
-
-						tuples.Add((lang, translation));
-					}
-
-					for (var j = 0; j < tuples.Count; j++)
-					{
-						var dict = tuples
-							        .Where((t, k) => k != j)
-							        .ToDictionary(tuple => tuple.Item1, tuple => tuple.Item2);
-
-						var t1 = tuples[j];
-
-						_stringsByLang[t1] = dict;
-
-						if (!key.IsEmpty())
-							_keysByLang[t1] = key;
-					}
+					var translations = res.Value;
+					foreach (var kv in translations)
+						_translations[LangCodes.GetId(kv.Key, true)].Add(resId, kv.Value);
 				}
 			}
 
-			if (_langIdx.ContainsKey(currLang))
+			var currCulture = CultureInfo.CurrentCulture.Name;
+			var currLang = currCulture.SplitBySep("-").First().ToLowerInvariant();
+			if (LangCodes.GetId(currLang) >= 0)
 				ActiveLanguage = currLang;
 		}
 
-		public event Action<string, bool> Missing;
-
 		public string GetString(string resourceId, string language = null)
 		{
-			if (_stringByResourceId.TryGetValue(resourceId, out var arr))
-			{
-				if (language.IsEmpty())
-					language = ActiveLanguage;
+			if (language.IsEmpty())
+				language = ActiveLanguage;
 
-				if (_langIdx.TryGetValue(language, out var index) && index < arr.Length)
-					return arr[index];
+			var langId = LangCodes.GetId(language);
+			if (langId < 0)
+			{
+				Missing?.Invoke(resourceId, false);
+				return resourceId;
 			}
+
+			var result = _translations[langId].GetTextById(resourceId);
+			if (result != null)
+				return result;
 
 			Missing?.Invoke(resourceId, false);
 			return resourceId;
@@ -105,14 +100,33 @@
 			if (from.IsEmpty())
 				throw new ArgumentNullException(nameof(from));
 
-			if (_stringsByLang.TryGetValue((from, text), out var dict))
+			if (from == to)
+				return text;
+
+			var langIdFrom = LangCodes.GetId(from);
+			var langIdTo   = LangCodes.GetId(to);
+
+			if (langIdFrom < 0 || langIdTo < 0)
 			{
-				if (dict.TryGetValue(to, out var translate))
-					return translate;
+				Missing?.Invoke(text, true);
+				return text;
 			}
 
-			Missing?.Invoke(text, true);
-			return text;
+			var id = _translations[langIdFrom].GetIdByText(text);
+			if (id.IsEmpty())
+			{
+				Missing?.Invoke(text, true);
+				return text;
+			}
+
+			var result = _translations[langIdTo].GetTextById(id);
+			if (result.IsEmpty())
+			{
+				Missing?.Invoke(text, true);
+				return text;
+			}
+
+			return result;
 		}
 
 		public string GetResourceId(string text, string language = LangCodes.En)
@@ -120,7 +134,11 @@
 			if (language.IsEmpty())
 				throw new ArgumentNullException(nameof(language));
 
-			return _keysByLang.TryGetValue((language, text), out var id) ? id : default;
+			var langid = LangCodes.GetId(language);
+			if (langid < 0)
+				return null;
+
+			return _translations[langid].GetIdByText(text);
 		}
 	}
 }
