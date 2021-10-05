@@ -1,17 +1,19 @@
 ﻿namespace Ecng.Net
 {
 	using System;
-	using System.Globalization;
 	using System.Linq;
 	using System.Net.WebSockets;
 	using System.Text;
 	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Localization;
 
 	using Newtonsoft.Json;
+
+	using Nito.AsyncEx;
 
 	public class WebSocketClient : Disposable
 	{
@@ -112,6 +114,9 @@
 		private Action<ClientWebSocket> _init;
 
 		public void Connect(string url, bool immediateConnect, Action<ClientWebSocket> init = null)
+			=> AsyncContext.Run(() => ConnectAsync(url, immediateConnect, init));
+
+		public Task ConnectAsync(string url, bool immediateConnect, Action<ClientWebSocket> init = null, CancellationToken cancellationToken = default)
 		{
 			_url = new Uri(url);
 			_immediateConnect = immediateConnect;
@@ -126,15 +131,15 @@
 
 			_disconnectionStates[source] = _expectedDisconnect;
 
-			ConnectImpl(source, 0);
+			return ConnectImpl(source, cancellationToken == default ? source.Token : cancellationToken, 0);
 		}
 
-		private void ConnectImpl(CancellationTokenSource source, int attempts)
+		private async Task ConnectImpl(CancellationTokenSource source, CancellationToken token, int attempts)
 		{
 			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			while (!source.IsCancellationRequested)
+			while (!token.IsCancellationRequested)
 			{
 				if (attempts > 0)
 					attempts--;
@@ -145,7 +150,7 @@
 				try
 				{
 					_infoLog("Connecting to {0}...".Translate(), _url);
-					_ws.ConnectAsync(_url, source.Token).Wait();
+					await _ws.ConnectAsync(_url, token);
 					break;
 				}
 				catch
@@ -161,7 +166,7 @@
 				}
 			}
 
-			if (source.IsCancellationRequested)
+			if (token.IsCancellationRequested)
 			{
 				_infoLog("Connection {0} cannot be processed. Cancellation invoked.".Translate(), _url);
 				return;
@@ -350,7 +355,7 @@
 				if (!expected && (attempts > 0 || attempts == -1))
 				{
 					_infoLog("Socket re-connecting '{0}'.".Translate(), _url);
-					ConnectImpl(source, attempts);
+					AsyncContext.Run(() => ConnectImpl(source, source.Token, attempts));
 				}
 			}
 			catch (Exception ex)
