@@ -35,6 +35,7 @@
     <AWSSDKGlacierVer>3.7.0.54</AWSSDKGlacierVer>
 
     <MicrosoftWindowsCompatibilityVer>5.0.2</MicrosoftWindowsCompatibilityVer>
+    <MicrosoftAspNetWebApiClientVer>5.2.7</MicrosoftAspNetWebApiClientVer>
 
     <SystemCodeDomVer>5.0.0</SystemCodeDomVer>
     <SystemCollectionsImmutableVer>5.0.0</SystemCollectionsImmutableVer>
