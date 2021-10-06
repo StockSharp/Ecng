@@ -139,8 +139,11 @@ namespace Ecng.Common
 				while (!cancellationToken.IsCancellationRequested);
 			}
 
-			await ReadProcessOutput(process.StandardOutput, output);
-			await ReadProcessOutput(process.StandardError, error);
+			var task1 = ReadProcessOutput(process.StandardOutput, output);
+			var task2 = ReadProcessOutput(process.StandardError, error);
+
+			await task1;
+			await task2;
 
 			await process.WaitForExitAsync(cancellationToken);
 
