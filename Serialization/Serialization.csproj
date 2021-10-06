@@ -9,6 +9,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Security\Security.csproj" />
-    <ProjectReference Include="..\Localization\Localization.csproj" />
   </ItemGroup>
 </Project>

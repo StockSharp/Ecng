@@ -5,12 +5,9 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Lokad.ILPack" Version="$(ILPackVer)" />
+    <PackageReference Include="System.Reflection.Emit" Version="$(SystemReflectionEmitVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Collections\Collections.csproj" />
-    <ProjectReference Include="..\Configuration\Configuration.csproj" />
-    <ProjectReference Include="..\Localization\Localization.csproj" />
-
-    <PackageReference Include="System.Reflection.Emit" Version="$(SystemReflectionEmitVer)" />
   </ItemGroup>
 </Project>
