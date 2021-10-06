@@ -34,7 +34,7 @@ namespace Ecng.Interop
 
 		private static async Task<string> GetWMIIdAsync(string table, string field, CancellationToken cancellationToken)
 		{
-			using var mbs = new ManagementObjectSearcher("Select * From {0}".Put(table));
+			using var mbs = new ManagementObjectSearcher($"Select * From {table}");
 			using var list = await Task.Run(() => mbs.Get(), cancellationToken);
 			return list.Cast<ManagementObject>().Select(o => (string)o[field]).FirstOrDefault(f => !f.IsEmptyOrWhiteSpace());
 		}

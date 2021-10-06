@@ -49,7 +49,7 @@
 			var columnStart = 1 + Settings.ColumnOffset;
 			var colCount = rows.Count == 0 ? 0 : rows[0].Count;
 
-			_client.Poke("R{0}C{1}:R{2}C{3}".Put(rowStart, columnStart, rowStart + rows.Count, columnStart + colCount),
+			_client.Poke($"R{rowStart}C{columnStart}:R{rowStart + rows.Count}C{columnStart + colCount}",
 				XlsDdeSerializer.Serialize(rows), 0x0090 | 0x4000, (int)TimeSpan.FromSeconds(10).TotalMilliseconds);
 		}
 
