@@ -6,7 +6,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	public static class ProcessExtensions
+	static class ProcessExtensions
 	{
 		public static bool Associated(this Process process)
 		{

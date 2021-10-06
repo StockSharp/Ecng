@@ -71,22 +71,6 @@ namespace Ecng.Common
 			return (path + relativePart).ToFullPath();
 		}
 
-		private static void ReadProcessOutput(TextReader reader, Action<string> action, object actionSync)
-		{
-			do
-			{
-				var str = reader.ReadLine();
-				if (str is null)
-					break;
-
-				if (!str.IsEmptyOrWhiteSpace())
-				{
-					lock(actionSync)
-						action(str);
-				}
-			} while (true);
-		}
-
 		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, TimeSpan waitForExit = default, string stdInput = null, ProcessPriorityClass? priority = null)
 		{
 			var source = new CancellationTokenSource();
@@ -138,14 +122,25 @@ namespace Ecng.Common
 				process.StandardInput.Close();
 			}
 
-			// ReSharper disable once AccessToDisposedClosure
-			var outputTask = Task.Run(() => ReadProcessOutput(process.StandardOutput, output, locker));
+			async Task ReadProcessOutput(TextReader reader, Action<string> action)
+			{
+				do
+				{
+					var str = await reader.ReadLineAsync().WithCancellation(cancellationToken);
+					if (str is null)
+						break;
 
-			// ReSharper disable once AccessToDisposedClosure
-			var errorTask = Task.Run(() => ReadProcessOutput(process.StandardError, error, locker));
+					if (!str.IsEmptyOrWhiteSpace())
+					{
+						lock (locker)
+							action(str);
+					}
+				}
+				while (!cancellationToken.IsCancellationRequested);
+			}
 
-			await outputTask;
-			await errorTask;
+			await ReadProcessOutput(process.StandardOutput, output);
+			await ReadProcessOutput(process.StandardError, error);
 
 			await process.WaitForExitAsync(cancellationToken);
 
