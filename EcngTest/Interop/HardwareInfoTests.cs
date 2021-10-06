@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Test.Interop
 {
+	using System.Threading.Tasks;
+
 	using Ecng.UnitTesting;
 	using Ecng.Interop;
 
@@ -9,9 +11,9 @@
 	public class HardwareInfoTests
 	{
 		[TestMethod]
-		public void HddId()
+		public async Task HddId()
 		{
-			(HardwareInfo.Instance.Id.Length > 10).AssertTrue();
+			((await HardwareInfo.GetIdAsync()).Length > 10).AssertTrue();
 		}
 	}
 }

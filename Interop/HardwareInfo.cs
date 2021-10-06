@@ -6,6 +6,8 @@ namespace Ecng.Interop
 	using System.Collections.Generic;
 	using System.Net.NetworkInformation;
 	using System.Text.RegularExpressions;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 	using Ecng.Localization;
@@ -13,40 +15,34 @@ namespace Ecng.Interop
 #if !__STOCKSHARP__
 	public
 #endif
-	sealed class HardwareInfo
+	static class HardwareInfo
 	{
-		private static readonly Lazy<HardwareInfo> _instance = new(() => new HardwareInfo());
-
-		public static HardwareInfo Instance => _instance.Value;
-
-		public string Id { get; }
-
-		private HardwareInfo()
+		public static async Task<string> GetIdAsync(CancellationToken cancellationToken = default)
 		{
 			string id;
 
 			if (OperatingSystemEx.IsWindows())
-				id = GetIdWindows();
+				id = await GetIdWindows(cancellationToken);
 			else
-				id = GetIdLinux();
+				id = await GetIdLinuxAsync(cancellationToken);
 
 			if (id.IsEmpty())
 				throw new InvalidOperationException("Cannot generate HDDID.".Translate());
 
-			Id = id;
+			return id;
 		}
 
-		private static string GetWMIId(string table, string field)
+		private static async Task<string> GetWMIIdAsync(string table, string field, CancellationToken cancellationToken)
 		{
-			using (var mbs = new ManagementObjectSearcher("Select * From {0}".Put(table)))
-			using (var list = mbs.Get())
-				return list.Cast<ManagementObject>().Select(o => (string) o[field]).FirstOrDefault(f => !f.IsEmptyOrWhiteSpace());
+			using var mbs = new ManagementObjectSearcher("Select * From {0}".Put(table));
+			using var list = await Task.Run(() => mbs.Get(), cancellationToken);
+			return list.Cast<ManagementObject>().Select(o => (string)o[field]).FirstOrDefault(f => !f.IsEmptyOrWhiteSpace());
 		}
 
-		private static string GetIdWindows()
+		private static async Task<string> GetIdWindows(CancellationToken cancellationToken)
 		{
-			var cpuid = GetWMIId("Win32_processor", "ProcessorID");
-			var mbId = GetWMIId("Win32_BaseBoard", "SerialNumber");
+			var cpuid = await GetWMIIdAsync("Win32_processor", "ProcessorID", cancellationToken);
+			var mbId = await GetWMIIdAsync("Win32_BaseBoard", "SerialNumber", cancellationToken);
 
 			if (
 				mbId.EqualsIgnoreCase("none") ||
@@ -57,7 +53,7 @@ namespace Ecng.Interop
 			)
 				mbId = null;
 
-			var netId = GetWMIId("Win32_NetworkAdapter", "MACAddress");
+			var netId = await GetWMIIdAsync("Win32_NetworkAdapter", "MACAddress", cancellationToken);
 
 			if (mbId.IsEmpty() && netId.IsEmpty())
 				throw new InvalidOperationException("MotherBoard and Network are both is empty.".Translate());
@@ -65,10 +61,10 @@ namespace Ecng.Interop
 			return cpuid + (mbId.IsEmpty() ? netId : mbId);
 		}
 
-		private static string GetIdLinux()
+		private static async Task<string> GetIdLinuxAsync(CancellationToken cancellationToken)
 		{
 			var macs = GetLinuxMacs();
-			var volId = GetLinuxVolumeId();
+			var volId = await GetLinuxVolumeIdAsync(cancellationToken);
 
 			return macs.Join(string.Empty) + volId;
 		}
@@ -95,19 +91,19 @@ namespace Ecng.Interop
 
 		private static readonly Regex _lsblkRegex = new(@"^\s*/\s+([\da-f-]+)\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-		private static string GetLinuxVolumeId()
+		private static async Task<string> GetLinuxVolumeIdAsync(CancellationToken cancellationToken)
 		{
 			var errors = new List<string>();
 			var result = new List<string>();
 
-			var res = IOHelper.Execute("lsblk", "-r -o MOUNTPOINT,UUID", str =>
+			var res = await IOHelper.ExecuteAsync("lsblk", "-r -o MOUNTPOINT,UUID", str =>
 				{
 					var m = _lsblkRegex.Match(str);
 					if (m.Success)
 						result.Add(m.Groups[1].Value);
 				},
 				errStr => errors.Add(errStr),
-				info => info.EnvironmentVariables["PATH"] = "/bin:/sbin:/usr/bin:/usr/sbin");
+				info => info.EnvironmentVariables["PATH"] = "/bin:/sbin:/usr/bin:/usr/sbin", cancellationToken: cancellationToken);
 
 			if (res != 0 || errors.Any())
 				throw new InvalidOperationException("Unable to execute lsblk. Return code {0}.\n{1}".Translate().Put(res, errors.Join(Environment.NewLine)));
