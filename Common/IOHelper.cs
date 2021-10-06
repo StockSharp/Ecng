@@ -10,7 +10,8 @@ namespace Ecng.Common
 	using System.Reflection;
 	using System.ComponentModel;
 	using System.Runtime.InteropServices;
-	using System.Text;
+
+	using Nito.AsyncEx;
 
 	public static class IOHelper
 	{
@@ -86,7 +87,17 @@ namespace Ecng.Common
 			} while (true);
 		}
 
-		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, TimeSpan waitForExit = default, string stdInput = null)
+		public static int Execute(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, TimeSpan waitForExit = default, string stdInput = null, ProcessPriorityClass? priority = null)
+		{
+			var source = new CancellationTokenSource();
+
+			if (waitForExit != default)
+				source.CancelAfter(waitForExit);
+
+			return AsyncContext.Run(() => ExecuteAsync(fileName, arg, output, error, infoHandler, stdInput, priority, source.Token));
+		}
+
+		public static async Task<int> ExecuteAsync(string fileName, string arg, Action<string> output, Action<string> error, Action<ProcessStartInfo> infoHandler = null, string stdInput = null, ProcessPriorityClass? priority = null, CancellationToken cancellationToken = default)
 		{
 			if (output is null)
 				throw new ArgumentNullException(nameof(output));
@@ -114,7 +125,11 @@ namespace Ecng.Common
 				StartInfo = procInfo
 			};
 
+			if (priority is not null)
+				process.PriorityClass = priority.Value;
+
 			process.Start();
+
 			var locker = new object();
 
 			if (input)
@@ -129,9 +144,10 @@ namespace Ecng.Common
 			// ReSharper disable once AccessToDisposedClosure
 			var errorTask = Task.Run(() => ReadProcessOutput(process.StandardError, error, locker));
 
-			outputTask.Wait();
-			errorTask.Wait();
-			process.WaitForExit(waitForExit == default ? int.MaxValue : (int) waitForExit.TotalMilliseconds);
+			await outputTask;
+			await errorTask;
+
+			await process.WaitForExitAsync(cancellationToken);
 
 			return process.ExitCode;
 		}
