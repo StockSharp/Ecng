@@ -12,11 +12,16 @@ namespace Ecng.Interop
 	using Ecng.Common;
 	using Ecng.Localization;
 
+	using Nito.AsyncEx;
+
 #if !__STOCKSHARP__
 	public
 #endif
 	static class HardwareInfo
 	{
+		public static string GetId()
+			=> AsyncContext.Run(() => GetIdAsync());
+
 		public static async Task<string> GetIdAsync(CancellationToken cancellationToken = default)
 		{
 			string id;
