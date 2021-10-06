@@ -7,7 +7,6 @@
 	using System.Globalization;
 
 	using Ecng.Common;
-	using Ecng.Collections;
 
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Linq;
@@ -121,7 +120,7 @@
 			if (language.IsEmpty())
 				throw new ArgumentNullException(nameof(language));
 
-			return _keysByLang.TryGetValue((language, text));
+			return _keysByLang.TryGetValue((language, text), out var id) ? id : default;
 		}
 	}
 }
