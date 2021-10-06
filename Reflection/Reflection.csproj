@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Collections\Collections.csproj" />
     <ProjectReference Include="..\Configuration\Configuration.csproj" />
+    <ProjectReference Include="..\Localization\Localization.csproj" />
 
     <PackageReference Include="System.Reflection.Emit" Version="$(SystemReflectionEmitVer)" />
   </ItemGroup>

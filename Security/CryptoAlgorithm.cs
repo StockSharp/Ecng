@@ -6,6 +6,7 @@ namespace Ecng.Security
 
 	using Ecng.Common;
 	using Ecng.Reflection;
+	using Ecng.Localization;
 
 	using Microsoft.Practices.EnterpriseLibrary.Security.Cryptography;
 
@@ -112,7 +113,7 @@ namespace Ecng.Security
 			else if (typeof(HashAlgorithm).IsAssignableFrom(type))
 				return AlgorithmTypes.Hash;
 			else
-				throw new ArgumentException("Type {0} doesnt't supported.".Put(type), nameof(type));
+				throw new ArgumentException("Type {0} doesnt't supported.".Translate().Put(type), nameof(type));
 		}
 
 		#endregion
@@ -140,7 +141,7 @@ namespace Ecng.Security
 			else if (name == "SHA")
 				return typeof(SHA1Managed);
 
-			throw new ArgumentException("Algorithm {0} not found".Put(name), nameof(name));
+			throw new ArgumentException("Algorithm {0} not found".Translate().Put(name), nameof(name));
 		}
 
 		#region Create

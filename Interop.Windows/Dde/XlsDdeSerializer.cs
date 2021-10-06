@@ -6,7 +6,7 @@
 	using System.Text;
 
 	using Ecng.Common;
-	using Ecng.Serialization;
+	using Ecng.Localization;
 
 	static class XlsDdeSerializer
 	{
@@ -52,7 +52,7 @@
 			if (cell is bool)
 				return DataTypes.Bool;
 
-			throw new ArgumentException("Unknown cell value type '{0}'.".Put(cell.GetType()), nameof(cell));
+			throw new ArgumentException("Unknown cell value type '{0}'.".Translate().Put(cell.GetType()), nameof(cell));
 		}
 
 		public static byte[] Serialize(IList<IList<object>> rows)
