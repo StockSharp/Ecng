@@ -1,11 +1,9 @@
 ﻿namespace Ecng.Serialization
 {
 	using System;
-	using System.Collections.Generic;
 	using System.IO;
 	using System.Reflection;
 	using System.Runtime.Serialization;
-	using System.Text;
 
 	using Ecng.Reflection;
 	using Ecng.Common;
@@ -21,17 +19,6 @@
 			stream.SetValue("_isOpen", true);
 			stream.SetValue("_writable", true);
 			stream.SetValue("_expandable", true);
-		}
-
-		public static IEnumerable<string> EnumerateLines(this Stream stream, Encoding encoding = null, bool leaveOpen = true)
-		{
-			if (stream is null)
-				throw new ArgumentNullException(nameof(stream));
-
-			using var sr = new StreamReader(stream, encoding ?? Encoding.UTF8, true, -1, leaveOpen);
-
-			while (!sr.EndOfStream)
-				yield return sr.ReadLine();
 		}
 
 		#region Write

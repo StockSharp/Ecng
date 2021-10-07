@@ -1,9 +1,10 @@
 namespace Ecng.Common
 {
 	using System;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using System.Collections.Generic;
-	using System.Threading;
+	using System.Text;
 	using System.Linq;
 	using System.Diagnostics;
 	using System.IO;
@@ -592,16 +593,20 @@ namespace Ecng.Common
 			return buffer;
 		}
 
-		public static IEnumerable<string> ReadLines(this Stream stream)
+		public static IEnumerable<string> EnumerateLines(this Stream stream, Encoding encoding = null, bool leaveOpen = true)
 		{
 			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			using var reader = new StreamReader(stream);
+			using var sr = new StreamReader(stream, encoding ?? Encoding.UTF8, true, -1, leaveOpen);
 
-			while (reader.Peek() >= 0)
-				yield return reader.ReadLine();
+			while (!sr.EndOfStream)
+				yield return sr.ReadLine();
 		}
+
+		[Obsolete("Use EnumerateLines method.")]
+		public static IEnumerable<string> ReadLines(this Stream stream)
+			=> stream.EnumerateLines(leaveOpen: false);
 
 		public static void WriteEx(this Stream stream, object value)
 		{
