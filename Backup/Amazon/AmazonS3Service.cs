@@ -157,6 +157,9 @@ namespace Ecng.Backup.Amazon
 					var expected = (int)(objLen - readTotal).Min(_bufferSize);
 					var actual = await responseStream.ReadAsync(bytes, 0, expected, cancellationToken);
 
+					if (actual == 0)
+						break;
+
 					await stream.WriteAsync(bytes, 0, actual, cancellationToken);
 
 					readTotal += actual;
