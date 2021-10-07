@@ -319,16 +319,6 @@ namespace Ecng.Common
 			return true;
 		}
 
-		public static CultureInfo GetSystemCulture()
-		{
-			CultureInfo culture = null;
-
-			CultureInfo.CurrentCulture.ClearCachedData();
-			Thread(() => { culture = CultureInfo.CurrentCulture; }).Launch().Join();
-
-			return culture;
-		}
-
 		public static bool TryGetUniqueMutex(string name, out Mutex mutex)
 		{
 			mutex = new Mutex(false, name);

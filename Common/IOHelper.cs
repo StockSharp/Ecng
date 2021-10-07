@@ -555,57 +555,6 @@ namespace Ecng.Common
 			}
 		}
 
-		public static async Task CopyAsync(this Stream source, Stream destination, long skip, long? count, Action<int> progress, CancellationToken cancellationToken = default)
-		{
-			if (source is null)
-				throw new ArgumentNullException(nameof(source));
-
-			if (destination is null)
-				throw new ArgumentNullException(nameof(destination));
-
-			if (count < 0)
-				throw new ArgumentOutOfRangeException(nameof(count));
-
-			var buffer = new byte[4096];
-			int offset;
-
-			checked
-			{
-				offset = (int)skip;
-			}
-
-			var left = count;
-
-			while (true)
-			{
-				cancellationToken.ThrowIfCancellationRequested();
-
-				var need = left is null ? buffer.Length : (int)left.Value.Min(buffer.Length);
-				var len = await source.ReadAsync(buffer, offset, need, cancellationToken);
-
-				if (len == 0)
-					break;
-
-				if (left != null)
-					left -= len;
-
-				await destination.WriteAsync(buffer, offset, len, cancellationToken);
-
-				// TODO
-				progress?.Invoke(0);
-			}
-
-			progress?.Invoke(100);
-		}
-
-		public static byte[] ReadBuffer(this Stream stream)
-		{
-			if (stream is null)
-				throw new ArgumentNullException(nameof(stream));
-
-			return stream.ReadBuffer((int)(stream.Length - stream.Position));
-		}
-
 		public static byte[] ReadBuffer(this Stream stream, int size)
 		{
 			if (stream is null)
@@ -648,13 +597,10 @@ namespace Ecng.Common
 			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
 
-			using (var reader = new StreamReader(stream))
-			{
-				while (reader.Peek() >= 0)
-				{
-					yield return reader.ReadLine();
-				}
-			}
+			using var reader = new StreamReader(stream);
+
+			while (reader.Peek() >= 0)
+				yield return reader.ReadLine();
 		}
 
 		public static void WriteEx(this Stream stream, object value)
