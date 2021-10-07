@@ -578,6 +578,8 @@ namespace Ecng.Common
 
 			while (!cancellationToken.IsCancellationRequested)
 			{
+				cancellationToken.ThrowIfCancellationRequested();
+
 				var need = left is null ? buffer.Length : (int)left.Value.Min(buffer.Length);
 				var len = await source.ReadAsync(buffer, offset, need, cancellationToken);
 
@@ -590,8 +592,8 @@ namespace Ecng.Common
 				progress?.Invoke(0);
 			}
 
-			if (!cancellationToken.IsCancellationRequested)
-				progress?.Invoke(100);
+			cancellationToken.ThrowIfCancellationRequested();
+			progress?.Invoke(100);
 		}
 
 		public static byte[] ReadBuffer(this Stream stream)
