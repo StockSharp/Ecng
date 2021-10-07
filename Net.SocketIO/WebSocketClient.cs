@@ -139,37 +139,41 @@
 			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			while (!token.IsCancellationRequested)
+			try
 			{
-				if (attempts > 0)
-					attempts--;
-
-				_ws = new ClientWebSocket();
-				_init?.Invoke(_ws);
-
-				try
+				while (true)
 				{
-					_infoLog("Connecting to {0}...".Translate(), _url);
-					await _ws.ConnectAsync(_url, token);
-					break;
-				}
-				catch
-				{
-					if (attempts > 0 || attempts == -1)
+					token.ThrowIfCancellationRequested();
+
+					if (attempts > 0)
+						attempts--;
+
+					_ws = new ClientWebSocket();
+					_init?.Invoke(_ws);
+
+					try
 					{
-						_errorLog("Reconnect failed. Attemps left {0}.".Translate(), attempts);
-						ResendInterval.Sleep();
-						continue;
+						_infoLog("Connecting to {0}...".Translate(), _url);
+						await _ws.ConnectAsync(_url, token);
+						break;
 					}
+					catch
+					{
+						if (attempts > 0 || attempts == -1)
+						{
+							_errorLog("Reconnect failed. Attemps left {0}.".Translate(), attempts);
+							ResendInterval.Sleep();
+							continue;
+						}
 
-					throw;
+						throw;
+					}
 				}
 			}
-
-			if (token.IsCancellationRequested)
+			catch (OperationCanceledException)
 			{
 				_infoLog("Connection {0} cannot be processed. Cancellation invoked.".Translate(), _url);
-				return;
+				throw;
 			}
 
 			if (_immediateConnect)
@@ -224,6 +228,8 @@
 		{
 			try
 			{
+				var token = source.Token;
+
 				var buf = new byte[BufferSize];
 				var pos = 0;
 
@@ -240,21 +246,21 @@
 
 				_infoLog("Starting receive loop, {0} attempts", attempts);
 
-				while (!source.IsCancellationRequested)
+				while (!token.IsCancellationRequested)
 				{
 					try
 					{
-						var task = _ws.ReceiveAsync(new ArraySegment<byte>(buf, pos, buf.Length - pos), source.Token);
-						task.Wait(source.Token);
+						var task = _ws.ReceiveAsync(new ArraySegment<byte>(buf, pos, buf.Length - pos), token);
+						task.Wait(token);
 
-						if (source.IsCancellationRequested)
+						if (token.IsCancellationRequested)
 							break;
 
 						var result = task.Result;
 
 						if (result.CloseStatus != null)
 						{
-							if (task.Exception != null && !source.IsCancellationRequested)
+							if (task.Exception != null && !token.IsCancellationRequested)
 								_error(task.Exception);
 
 							_infoLog("Socket closed with status {0}.".Translate(), result.CloseStatus);
@@ -306,7 +312,7 @@
 					}
 					catch (AggregateException ex)
 					{
-						if (!source.IsCancellationRequested)
+						if (!token.IsCancellationRequested)
 							_error(ex);
 
 						if (ex.InnerExceptions.FirstOrDefault() is WebSocketException)
@@ -314,8 +320,9 @@
 
 						if (++errorCount < maxNetworkErrors)
 						{
-							if (!source.IsCancellationRequested)
+							if (!token.IsCancellationRequested)
 								_errorLog("{0} errors", $"{errorCount}/{maxNetworkErrors}");
+
 							continue;
 						}
 
@@ -324,7 +331,7 @@
 					}
 					catch (Exception ex)
 					{
-						if (!source.IsCancellationRequested)
+						if (!token.IsCancellationRequested)
 							_error(ex);
 					}
 				}
@@ -336,7 +343,7 @@
 				}
 				catch (Exception ex)
 				{
-					if (!source.IsCancellationRequested)
+					if (!token.IsCancellationRequested)
 						_error(ex);
 				}
 
@@ -355,7 +362,14 @@
 				if (!expected && (attempts > 0 || attempts == -1))
 				{
 					_infoLog("Socket re-connecting '{0}'.".Translate(), _url);
-					AsyncContext.Run(() => ConnectImpl(source, source.Token, attempts));
+
+					try
+					{
+						AsyncContext.Run(() => ConnectImpl(source, token, attempts));
+					}
+					catch (OperationCanceledException)
+					{
+					}
 				}
 			}
 			catch (Exception ex)
