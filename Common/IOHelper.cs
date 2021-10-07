@@ -153,8 +153,10 @@ namespace Ecng.Common
 						lock (locker)
 							action(str);
 					}
+
+					cancellationToken.ThrowIfCancellationRequested();
 				}
-				while (!cancellationToken.IsCancellationRequested);
+				while (true);
 			}
 
 			var task1 = ReadProcessOutput(process.StandardOutput, output);
