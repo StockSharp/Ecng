@@ -52,9 +52,11 @@
         public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
         {
             Match m = RegExSearch.Match(text);
-            while (m.Success && !cancellationToken.IsCancellationRequested)
+            while (m.Success)
             {
-                string inner = _syntaxHighlighter.ColorText(
+				cancellationToken.ThrowIfCancellationRequested();
+
+				string inner = _syntaxHighlighter.ColorText(
                     GetInnerValue(m.Groups["inner"].Value), m.Groups["language"].Value);
 
                 string replaceItem = RegExReplace.Replace("${inner}", inner);

@@ -92,8 +92,10 @@
       var sb = new StringBuilder(text);
 
       Match m = RegExSearch.Match(text);
-      while (m.Success && !cancellationToken.IsCancellationRequested)
+      while (m.Success)
       {
+	    cancellationToken.ThrowIfCancellationRequested();
+
         string replaceString = RegExReplace.Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
 
         // pulls the htmls into the replacement collection before it's inserted back into the main text

@@ -57,8 +57,10 @@
     {
       Match m = _regExHtml.Match(sb.ToString());
 
-      while (m.Success && !cancellationToken.IsCancellationRequested)
+      while (m.Success)
       {
+	    cancellationToken.ThrowIfCancellationRequested();
+
         // add it to the list...
         int index = replaceBlocks.Add(m.Groups[0].Value);
 

@@ -78,7 +78,8 @@
 
       do
       {
-        
+        cancellationToken.ThrowIfCancellationRequested();
+
         index = text.FastIndexOf(_find);
 
         if (index >= 0)
@@ -89,7 +90,7 @@
                  text.Substring(index + _find.Length);
         }
       }
-      while (index >= 0 && !cancellationToken.IsCancellationRequested);
+      while (index >= 0);
 
 	  return Task.FromResult(text);
     }

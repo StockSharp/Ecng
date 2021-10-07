@@ -43,8 +43,10 @@
     public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
     {
       Match m = RegExSearch.Match(text);
-      while (m.Success && !cancellationToken.IsCancellationRequested)
+      while (m.Success)
       {
+	    cancellationToken.ThrowIfCancellationRequested();
+
         string replaceItem = RegExReplace.Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
 
         int replaceIndex = replacement.Add(replaceItem);

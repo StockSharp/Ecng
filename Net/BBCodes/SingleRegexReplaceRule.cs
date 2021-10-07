@@ -47,8 +47,10 @@
       var sb = new StringBuilder(text);
 
       Match m = RegExSearch.Match(text);
-      while (m.Success && !cancellationToken.IsCancellationRequested)
+      while (m.Success)
       {
+	    cancellationToken.ThrowIfCancellationRequested();
+
         // just replaces with no "inner"
         int replaceIndex = replacement.Add(RegExReplace);
 
