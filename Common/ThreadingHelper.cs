@@ -355,5 +355,11 @@ namespace Ecng.Common
 				return await task;
 			}
 		}
+
+		public static (CancellationTokenSource cts, CancellationToken token) CreateChildToken(this CancellationToken token, TimeSpan? delay = null)
+		{
+			var cts = delay == null ? new CancellationTokenSource() : new CancellationTokenSource(delay.Value);
+			return (cts, CancellationTokenSource.CreateLinkedTokenSource(cts.Token, token).Token);
+		}
 	}
 }
