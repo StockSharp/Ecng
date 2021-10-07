@@ -361,5 +361,41 @@ namespace Ecng.Common
 			var cts = delay == null ? new CancellationTokenSource() : new CancellationTokenSource(delay.Value);
 			return (cts, CancellationTokenSource.CreateLinkedTokenSource(cts.Token, token).Token);
 		}
+		public static async Task WithCancellation(this Task task, CancellationToken cancellationToken)
+		{
+			var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+			// This disposes the registration as soon as one of the tasks trigger
+			using (cancellationToken.Register(state => { ((TaskCompletionSource<object>)state).TrySetResult(null); }, tcs))
+			{
+				var resultTask = await Task.WhenAny(task, tcs.Task);
+				if (resultTask == tcs.Task)
+					throw new OperationCanceledException(cancellationToken); // Operation cancelled
+
+				await task;
+			}
+		}
+
+		private class CultureHolder : Disposable
+		{
+			private readonly CultureInfo _culture;
+
+			public CultureHolder() => _culture = System.Threading.Thread.CurrentThread.CurrentCulture;
+
+			protected override void DisposeManaged()
+			{
+				System.Threading.Thread.CurrentThread.CurrentCulture = _culture;
+				base.DisposeManaged();
+			}
+		}
+
+		public static IDisposable WithCulture(CultureInfo culture)
+		{
+			var holder = new CultureHolder();
+			System.Threading.Thread.CurrentThread.CurrentCulture = culture;
+			return holder;
+		}
+
+		public static IDisposable WithInvariantCulture() => WithCulture(CultureInfo.InvariantCulture);
 	}
 }
