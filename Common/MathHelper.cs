@@ -1,55 +1,11 @@
 namespace Ecng.Common
 {
 	using System;
-	using System.Runtime.InteropServices;
 	using System.Linq;
 	using System.Collections.Generic;
 
-	public enum MathRoundingRules
-	{
-		/// <summary>
-		/// Round to nearest mode: when a number is halfway between two others, it is rounded toward the nearest even number.
-		/// </summary>
-		ToEven,
-
-		/// <summary>
-		/// Round to nearest mode: when a number is halfway between two others, it is rounded toward the nearest number that is away from zero.
-		/// </summary>
-		AwayFromZero,
-
-		/// <summary>
-		/// Directed mode: the number is rounded toward zero, with the result closest to and no greater in magnitude than the infinitely precise result.
-		/// </summary>
-		ToZero,
-
-		/// <summary>
-		/// Directed mode: the number is rounded down, with the result closest to and no greater than the infinitely precise result.
-		/// </summary>
-		ToNegativeInfinity,
-
-		/// <summary>
-		/// Directed mode: the number is rounded up, with the result closest to and no less than the infinitely precise result.
-		/// </summary>
-		ToPositiveInfinity,
-	}
-
 	public static class MathHelper
 	{
-		static MathHelper()
-		{
-			var typeStd = typeof(MidpointRounding);
-			var typeLocal = typeof(MathRoundingRules);
-
-			foreach (var n in typeStd.GetEnumNames().Concat(typeLocal.GetEnumNames()).Distinct())
-			{
-				var vstd   = (int)n.To<MidpointRounding>();
-				var vlocal = (int)n.To<MathRoundingRules>();
-
-				if(vstd != vlocal)
-					throw new InvalidOperationException($"unexpected enum value {n} (std={vlocal}, local={vstd}), runtime={RuntimeInformation.FrameworkDescription}");
-			}
-		}
-
 		public static decimal Floor(this decimal value, decimal step) => Math.Floor(value / step) * step;
 
 		public static decimal Round(this decimal value)
@@ -73,13 +29,8 @@ namespace Ecng.Common
 		}
 
 		public static decimal Round(this decimal value, int digits, MidpointRounding rounding)  => Math.Round(value, digits, rounding);
-		public static decimal Round(this decimal value, int digits, MathRoundingRules rounding) => Math.Round(value, digits, (MidpointRounding)rounding);
 
 		public static decimal Round(this decimal value, MidpointRounding rounding)  => Math.Round(value, rounding);
-		public static decimal Round(this decimal value, MathRoundingRules rounding) => Math.Round(value, (MidpointRounding)rounding);
-
-		public static decimal Round(this decimal value, decimal step, int? digits, MathRoundingRules rounding)
-			=> value.Round(step, digits, (MidpointRounding) rounding);
 
 		public static decimal Round(this decimal value, decimal step, int? digits, MidpointRounding rounding = MidpointRounding.ToEven)
 		{
@@ -111,10 +62,8 @@ namespace Ecng.Common
 			return Math.DivRem(a, b, out result);
 		}
 
-		public static double Round(this double value, int digits, MathRoundingRules rounding) => Math.Round(value, digits, (MidpointRounding)rounding);
 		public static double Round(this double value, int digits, MidpointRounding  rounding) => Math.Round(value, digits, rounding);
 
-		public static double Round(this double value, MathRoundingRules rounding) => Math.Round(value, (MidpointRounding)rounding);
 		public static double Round(this double value, MidpointRounding rounding)  => Math.Round(value, rounding);
 
 		public static long BigMul(this int x, int y)
