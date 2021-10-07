@@ -16,36 +16,54 @@ namespace Ecng.Common
 	public static class IOHelper
 	{
 		public static DirectoryInfo ClearDirectory(string releasePath, Func<string, bool> filter = null)
+			=> AsyncContext.Run(() => ClearDirectoryAsync(releasePath, filter));
+		
+		public static Task<DirectoryInfo> ClearDirectoryAsync(string releasePath, Func<string, bool> filter = null, CancellationToken cancellationToken = default)
 		{
 			var releaseDir = new DirectoryInfo(releasePath);
 
-			foreach (var file in releaseDir.GetFiles())
+			foreach (var file in releaseDir.EnumerateFiles())
 			{
 				if (filter != null && !filter(file.FullName))
 					continue;
 
 				file.Delete();
+
+				cancellationToken.ThrowIfCancellationRequested();
 			}
 
-			foreach (var dir in releaseDir.GetDirectories())
+			foreach (var dir in releaseDir.EnumerateDirectories())
+			{
 				dir.Delete(true);
 
-			return releaseDir;
+				cancellationToken.ThrowIfCancellationRequested();
+			}
+
+			return Task.FromResult(releaseDir);
 		}
 
 		public static void CopyDirectory(string sourcePath, string destPath)
+			=> AsyncContext.Run(() => CopyDirectoryAsync(sourcePath, destPath));
+
+		public static Task CopyDirectoryAsync(string sourcePath, string destPath, CancellationToken cancellationToken = default)
 		{
 			Directory.CreateDirectory(destPath);
 
 			foreach (var fileName in Directory.GetFiles(sourcePath))
 			{
 				CopyAndMakeWritable(fileName, destPath);
+
+				cancellationToken.ThrowIfCancellationRequested();
 			}
 
 			foreach (var directory in Directory.GetDirectories(sourcePath))
 			{
 				CopyDirectory(directory, Path.Combine(destPath, Path.GetFileName(directory)));
+
+				cancellationToken.ThrowIfCancellationRequested();
 			}
+
+			return Task.CompletedTask;
 		}
 
 		public static string CopyAndMakeWritable(string fileName, string destPath)
