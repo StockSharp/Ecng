@@ -576,12 +576,15 @@ namespace Ecng.Common
 
 			var left = count;
 
-			while (!cancellationToken.IsCancellationRequested)
+			while (true)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 
 				var need = left is null ? buffer.Length : (int)left.Value.Min(buffer.Length);
 				var len = await source.ReadAsync(buffer, offset, need, cancellationToken);
+
+				if (len == 0)
+					break;
 
 				if (left != null)
 					left -= len;
@@ -592,7 +595,6 @@ namespace Ecng.Common
 				progress?.Invoke(0);
 			}
 
-			cancellationToken.ThrowIfCancellationRequested();
 			progress?.Invoke(100);
 		}
 
