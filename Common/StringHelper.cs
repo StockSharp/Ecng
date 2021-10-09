@@ -947,6 +947,7 @@
 		//}
 
 		public static Encoding WindowsCyrillic => Encoding.GetEncoding(1251);
+		public static readonly HexEncoding HexEncoding = new();
 
 		public static IEnumerable<string> Duplicates(this IEnumerable<string> items)
 			=> items.GroupBy(s => s, s => StringComparer.InvariantCultureIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key);
@@ -975,10 +976,14 @@
 		[CLSCompliant(false)]
 		public static string Cyrillic(this byte[] v, uint count, int index = 0) => Cyrillic(v, index, (int)count);
 
+		public static byte[] Hex(this string v) => HexEncoding.GetBytes(v);
+		public static string Hex(this byte[] v) => Hex(v, 0, v.Length);
+		public static string Hex(this byte[] v, int index, int count) => HexEncoding.GetString(v, index, count);
+		[CLSCompliant(false)]
+		public static string Hex(this byte[] v, uint count, int index = 0) => Hex(v, index, (int)count);
+
 		public static SecureString Secure(this string str)
-		{
-			return str?.ToCharArray().TypedTo<char[], SecureString>();
-		}
+			=> str?.ToCharArray().TypedTo<char[], SecureString>();
 
 		public static string UnSecure(this SecureString str)
 		{
