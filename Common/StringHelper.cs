@@ -1207,5 +1207,11 @@
 
 		public static string DataUnEscape(this string url)
 			=> Uri.UnescapeDataString(url);
+
+		public static char ToLower(this char c, bool invariant = true)
+			=> invariant ? char.ToLowerInvariant(c) : char.ToLower(c);
+
+		public static char ToUpper(this char c, bool invariant = true)
+			=> invariant ? char.ToUpperInvariant(c) : char.ToUpper(c);
 	}
 }

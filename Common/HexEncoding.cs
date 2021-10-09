@@ -298,7 +298,7 @@ namespace Ecng.Common
 			var numA = 'A'.To<int>();
 			var num1 = '0'.To<int>();
 
-			c = char.ToUpper(c);
+			c = c.ToUpper(false);
 
 			var numChar = c.To<int>();
 			if (numChar >= numA && numChar < (numA + 6))

@@ -285,8 +285,8 @@ namespace Ecng.Net
 				if (temp[i] != '%')
 					continue;
 
-				temp[i + 1] = char.ToUpper(temp[i + 1]);
-				temp[i + 2] = char.ToUpper(temp[i + 2]);
+				temp[i + 1] = temp[i + 1].ToUpper(false);
+				temp[i + 2] = temp[i + 2].ToUpper(false);
 			}
 
 			return new string(temp);
