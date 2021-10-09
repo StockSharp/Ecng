@@ -17,15 +17,18 @@
 
 	public abstract class RestBaseApiClient : Disposable
 	{
-		private readonly HttpClient _client = new();
+		private readonly HttpClient _client;
 		private readonly MediaTypeFormatter _request;
 		private readonly MediaTypeFormatter _response;
 
-		protected RestBaseApiClient(string path,
+		protected RestBaseApiClient(Uri baseAddress,
 			MediaTypeFormatter request,
 			MediaTypeFormatter response)
 		{
-			_client.BaseAddress = new Uri(path);
+			if (baseAddress is null)
+				throw new ArgumentNullException(nameof(baseAddress));
+
+			_client = new() { BaseAddress = baseAddress };
 
 			_request = request ?? throw new ArgumentNullException(nameof(request));
 			_response = response ?? throw new ArgumentNullException(nameof(response));
