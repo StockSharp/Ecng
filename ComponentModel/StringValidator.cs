@@ -7,6 +7,7 @@ namespace Ecng.ComponentModel
 	using System.Text.RegularExpressions;
 
 	using Ecng.Common;
+	using Ecng.Localization;
 
 	#endregion
 
@@ -114,7 +115,7 @@ namespace Ecng.ComponentModel
 				throw new ArgumentNullException(nameof(value));
 
 			if (!Length.Contains(value.Length))
-				throw new ArgumentOutOfRangeException(nameof(value), "Value is {0}. Length must be between {1}.".Put(value, Length));
+				throw new ArgumentOutOfRangeException(nameof(value), "Value is {0}. Length must be between {1}.".Translate().Put(value, Length));
 
 			if (_regex != null && !_regex.IsMatch(value))
 				throw new ArgumentException(nameof(value));

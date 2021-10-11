@@ -4,6 +4,7 @@ namespace Ecng.ComponentModel
 
 	using Ecng.Collections;
 	using Ecng.Common;
+	using Ecng.Localization;
 
 	public static class OperatorRegistry
 	{
@@ -74,7 +75,7 @@ namespace Ecng.ComponentModel
 					_operators.Add(type, @operator);
 				}
 				else
-					throw new InvalidOperationException("Operator for type {0} doesn't exist.".Put(type));
+					throw new InvalidOperationException("Operator for type {0} doesn't exist.".Translate().Put(type));
 			}
 
 			return @operator;
