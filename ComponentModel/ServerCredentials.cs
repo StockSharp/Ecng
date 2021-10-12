@@ -5,7 +5,7 @@ namespace Ecng.ComponentModel
 	using Ecng.Serialization;
 
 	/// <summary>
-	/// The class that contains a login and password to access the services https://stocksharp.com .
+	/// The class that contains a login and password.
 	/// </summary>
 	public class ServerCredentials : NotifiableObject, IPersistable
 	{
