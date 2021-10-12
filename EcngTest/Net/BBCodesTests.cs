@@ -88,7 +88,7 @@
 				return $"~/store/{idStr}/";
 			}
 
-			static string GetPackageLink(string packageId, string langCode, bool isEmail)
+			static string GetPackageLink(string packageId, string langCode)
 			{
 				if (packageId.IsEmpty())
 					throw new ArgumentNullException(nameof(packageId));

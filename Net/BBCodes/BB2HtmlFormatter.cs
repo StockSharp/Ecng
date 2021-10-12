@@ -92,7 +92,7 @@
 		private readonly Func<long, string, string> _getFileUrl;
 		private readonly Func<long, string, string> _getUserUrl;
 		private readonly Func<long, string, string, string> _getProductUrl;
-		private readonly Func<string, string, bool, string> _getPackageUrl;
+		private readonly Func<string, string, string> _getPackageFullUrl;
 		private readonly Func<long, string, string> _getTopicUrl;
 		private readonly Func<long, string, string> _getMessageUrl;
 		private readonly Func<string, string> _encryptUrl;
@@ -109,7 +109,7 @@
 			Func<long, string, string> getFileUrl,
 			Func<long, string, string> getUserUrl,
 			Func<long, string, string, string> getProductUrl,
-			Func<string, string, bool, string> getPackageUrl,
+			Func<string, string, string> getPackageFullUrl,
 			Func<long, string, string> getTopicUrl,
 			Func<long, string, string> getMessageUrl,
 			Func<string, string> encryptUrl,
@@ -125,7 +125,7 @@
 			_getFileUrl = getFileUrl ?? throw new ArgumentNullException(nameof(getFileUrl));
 			_getUserUrl = getUserUrl ?? throw new ArgumentNullException(nameof(getUserUrl));
 			_getProductUrl = getProductUrl ?? throw new ArgumentNullException(nameof(getProductUrl));
-			_getPackageUrl = getPackageUrl ?? throw new ArgumentNullException(nameof(getPackageUrl));
+			_getPackageFullUrl = getPackageFullUrl ?? throw new ArgumentNullException(nameof(getPackageFullUrl));
 			_getTopicUrl = getTopicUrl ?? throw new ArgumentNullException(nameof(getTopicUrl));
 			_getMessageUrl = getMessageUrl ?? throw new ArgumentNullException(nameof(getMessageUrl));
 			_encryptUrl = encryptUrl ?? throw new ArgumentNullException(nameof(encryptUrl));
@@ -475,7 +475,7 @@
 					{
 						innerReplace.Replace(_blank + " ", string.Empty);
 
-						if (!context.IsEmail)
+						if (!context.IsUrlLocalizeDisabled)
 						{
 							if (context.IsLocalHost)
 								innerReplace.ReplaceIgnoreCase("stocksharp.com", context.LocalPath);
@@ -497,7 +497,7 @@
 					{
 						innerReplace.Replace(_blank + " ", string.Empty);
 
-						if (!context.IsEmail)
+						if (!context.IsUrlLocalizeDisabled)
 						{
 							if (context.IsLocalHost)
 								innerReplace.ReplaceIgnoreCase("stocksharp.ru", context.LocalPath);
@@ -668,7 +668,7 @@
 						{
 							sb.Replace(_blank + " ", string.Empty);
 
-							if (!context.IsEmail)
+							if (!context.IsUrlLocalizeDisabled)
 							{
 								if (context.IsLocalHost)
 									sb.ReplaceIgnoreCase("stocksharp.com", context.LocalPath);
@@ -687,7 +687,7 @@
 						{
 							sb.Replace(_blank + " ", string.Empty);
 
-							if (!context.IsEmail)
+							if (!context.IsUrlLocalizeDisabled)
 							{
 								if (context.IsLocalHost)
 									sb.ReplaceIgnoreCase("stocksharp.ru", context.LocalPath);
@@ -900,7 +900,7 @@
 
 					if (!packageId.IsEmpty())
 					{
-						sb.Replace("${url}", _parent._getPackageUrl(packageId, context.LangCode, context.IsEmail));
+						sb.Replace("${url}", _parent._getPackageFullUrl(packageId, context.LangCode));
 						sb.Replace("${name}", packageId);
 					}
 					else
@@ -1138,7 +1138,7 @@
 
 					var http = match.Groups["http"].Value;
 
-					if (!isId && !imgUrl.IsEmpty() && !context.IsEmail)
+					if (!isId && !imgUrl.IsEmpty() && !context.IsUrlLocalizeDisabled)
 					{
 						if (context.IsLocalHost)
 							imgUrl = imgUrl.ReplaceIgnoreCase("stocksharp.ru", context.LocalPath);
