@@ -70,7 +70,7 @@
 		}
 
 		private static BBCodesContext CreateContext(bool html)
-			=> new BBCodesContext(false, html, LangCodes.En, false, new Url("https://stocksharp.com"), false, null);
+			=> new(false, html, LangCodes.En, false, new Url("https://stocksharp.com"), false, null);
 
 		private static BB2HtmlFormatter<BBCodesContext> CreateBBService()
 		{
@@ -85,7 +85,7 @@
 			{
 				var idStr = urlPart.IsEmpty() ? id.To<string>() : urlPart.ToLowerInvariant();
 
-				return $"https://stocksharp.com/store/{idStr}/";
+				return $"~/store/{idStr}/";
 			}
 
 			static string GetPackageLink(string packageId, string langCode, bool isEmail)

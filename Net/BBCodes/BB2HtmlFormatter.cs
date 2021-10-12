@@ -945,7 +945,7 @@
 						var product = _parent._getProduct(id);
 						var langCode = context.LangCode;
 
-						sb.Replace("${url}", _parent._getProductUrl(product.Id, langCode, product.GetUrlPart(langCode)));
+						sb.Replace("${url}", _parent._toFullAbsolute(_parent._getProductUrl(product.Id, langCode, product.GetUrlPart(langCode)), langCode));
 						sb.Replace("${name}", product.GetName(langCode));
 					}
 					else
@@ -994,7 +994,7 @@
 						{
 							var langCode = context.LangCode;
 
-							sb.Replace("${url}", _parent._getProductUrl(product.Id, langCode, product.GetUrlPart(langCode)));
+							sb.Replace("${url}", _parent._toFullAbsolute(_parent._getProductUrl(product.Id, langCode, product.GetUrlPart(langCode)), langCode));
 
 							if (inner.IsEmpty())
 								inner = product.GetName(langCode);
