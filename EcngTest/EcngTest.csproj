@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Data\Data.csproj" />
     <ProjectReference Include="..\Interop\Interop.csproj" />
+    <ProjectReference Include="..\Net\Net.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
   </ItemGroup>
