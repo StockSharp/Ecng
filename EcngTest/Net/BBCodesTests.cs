@@ -69,18 +69,14 @@
 			}
 		}
 
-		private static BBCodesContext CreateContext(bool html)
-			=> new(false, html, LangCodes.En, false, new Url("https://stocksharp.com"), false, null);
+		private static BBCodesContext CreateContext(bool allowHtml)
+			=> new(false, allowHtml, LangCodes.En, false, Uri.UriSchemeHttps);
+
+		private static readonly Regex _isStockSharpEn = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static readonly Regex _isStockSharpRu = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		private static BB2HtmlFormatter<BBCodesContext> CreateBBService()
 		{
-			static string GetOppositeUrl(string original, string langCode)
-			{
-				return langCode == LangCodes.En
-					? original.ReplaceIgnoreCase("stocksharp.ru", "stocksharp.com")
-					: original.ReplaceIgnoreCase("stocksharp.com", "stocksharp.ru");
-			}
-
 			static string GetProductLink(long id, string langCode, string urlPart)
 			{
 				var idStr = urlPart.IsEmpty() ? id.To<string>() : urlPart.ToLowerInvariant();
@@ -110,39 +106,33 @@
 
 			static IProductObject GetProduct(long id)
 			{
-				switch (id)
+				return id switch
 				{
-					case 9:
-						return new NamedObjectImpl { Id = id, Name = "S#.Designer", UrlPart = "strategy designer" };
-					default:
-						throw new ArgumentOutOfRangeException(nameof(id));
-				}
+					9 => new NamedObjectImpl { Id = id, Name = "S#.Designer", UrlPart = "strategy designer" },
+					_ => throw new ArgumentOutOfRangeException(nameof(id)),
+				};
 			}
 
 			static INamedObject GetUser(long id)
 			{
-				switch (id)
+				return id switch
 				{
-					case 1:
-						return new NamedObjectImpl { Id = id, Name = "StockSharp" };
-					default:
-						throw new ArgumentOutOfRangeException(nameof(id));
-				}
+					1 => new NamedObjectImpl { Id = id, Name = "StockSharp" },
+					_ => throw new ArgumentOutOfRangeException(nameof(id)),
+				};
 			}
 
 			static IPageObject GetPage(long id)
 			{
-				switch (id)
+				return id switch
 				{
-					case 239:
-						return new NamedObjectImpl { Id = id, Name = "Using S#.Installer to publish user content", UrlPart = "~/store/faq/" };
-					default:
-						throw new ArgumentOutOfRangeException(nameof(id));
-				}
+					239 => new NamedObjectImpl { Id = id, Name = "Using S#.Installer to publish user content", UrlPart = "~/store/faq/" },
+					_ => throw new ArgumentOutOfRangeException(nameof(id)),
+				};
 			}
 
 			var bb = new BB2HtmlFormatter<BBCodesContext>(
-				GetOppositeUrl, (id, langCode) => $"~/file/{id}/", (id, langCode) => $"~/users/{id}/",
+				(id, langCode) => $"~/file/{id}/", (id, langCode) => $"~/users/{id}/",
 				GetProductLink, GetPackageLink, (id, langCode) => $"~/topic/{id}/",
 				(id, langCode) => $"~/posts/m/{id}/", s => s, ToFullAbsolute,
 				(key, langCode) =>
@@ -160,7 +150,31 @@
 				GetProduct, GetUser,
 				id => new NamedObjectImpl { Id = id, Name = id.To<string>() },
 				GetPage,
-				sourceUrl => $"{sourceUrl}_a6f78c5fce344124993798c028a22a3a");
+				sourceUrl => $"{sourceUrl}_a6f78c5fce344124993798c028a22a3a",
+				langCode => "stocksharp.com",
+				url =>
+				{
+					string langCode = null;
+
+					if (_isStockSharpEn.IsMatch(url))
+						langCode = LangCodes.En;
+					else if (_isStockSharpRu.IsMatch(url))
+						langCode = LangCodes.Ru;
+
+					var isAway = langCode.IsEmpty() && !url.TrimStart().StartsWith("<a href=\"mailto:");
+
+					return (langCode, isAway, langCode?.ContainsIgnoreCase("payclick.aspx") ?? false);
+				},
+				(fromLang, toLang, url) =>
+				{
+					if (fromLang != toLang)
+					{
+						if (fromLang == LangCodes.En)
+							url.ReplaceIgnoreCase("stocksharp.com", "stocksharp.ru");
+						else
+							url.ReplaceIgnoreCase("stocksharp.ru", "stocksharp.com");
+					}
+				});
 
 			//bb.AddRule(new VideoStockSharpReplaceRule());
 			bb.AddRule(new RoleRule());

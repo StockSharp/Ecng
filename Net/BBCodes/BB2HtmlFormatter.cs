@@ -80,15 +80,11 @@
 		private readonly Regex _rgxPackage;
 		private readonly Regex _rgxProduct;
 
-		private static readonly Regex _isStockSharpEn = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-		private static readonly Regex _isStockSharpRu = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
 		//private const RegexOptions _options = RegexOptions.Multiline | RegexOptions.IgnoreCase;
 
 		private const string _blank = "target=\"_blank\"";
 		private const string _noFollow = "rel=\"nofollow\"";
 
-		private readonly Func<string, string, string> _getOppositeUrl;
 		private readonly Func<long, string, string> _getFileUrl;
 		private readonly Func<long, string, string> _getUserUrl;
 		private readonly Func<long, string, string, string> _getProductUrl;
@@ -103,9 +99,11 @@
 		private readonly Func<long, INamedObject> _getFile;
 		private readonly Func<long, IPageObject> _getPage;
 		private readonly Func<string, string> _generateId;
+		private readonly Func<string, string> _getHost;
+		private readonly Func<string, (string langCode, bool isAway, bool noFollow)> _getUrlInfo;
+		private readonly Action<string, string, StringBuilder> _localizeUrl;
 
 		public BB2HtmlFormatter(
-			Func<string, string, string> getOppositeUrl,
 			Func<long, string, string> getFileUrl,
 			Func<long, string, string> getUserUrl,
 			Func<long, string, string, string> getProductUrl,
@@ -119,9 +117,11 @@
 			Func<long, INamedObject> getUser,
 			Func<long, INamedObject> getFile,
 			Func<long, IPageObject> getPage,
-			Func<string, string> generateId)
+			Func<string, string> generateId,
+			Func<string, string> getHost,
+			Func<string, (string langCode, bool isAway, bool noFollow)> getUrlInfo,
+			Action<string, string, StringBuilder> localizeUrl)
 		{
-			_getOppositeUrl = getOppositeUrl ?? throw new ArgumentNullException(nameof(getOppositeUrl));
 			_getFileUrl = getFileUrl ?? throw new ArgumentNullException(nameof(getFileUrl));
 			_getUserUrl = getUserUrl ?? throw new ArgumentNullException(nameof(getUserUrl));
 			_getProductUrl = getProductUrl ?? throw new ArgumentNullException(nameof(getProductUrl));
@@ -136,6 +136,9 @@
 			_getFile = getFile ?? throw new ArgumentNullException(nameof(getFile));
 			_getPage = getPage ?? throw new ArgumentNullException(nameof(getPage));
 			_generateId = generateId ?? throw new ArgumentNullException(nameof(generateId));
+			_getHost = getHost ?? throw new ArgumentNullException(nameof(getHost));
+			_getUrlInfo = getUrlInfo ?? throw new ArgumentNullException(nameof(getUrlInfo));
+			_localizeUrl = localizeUrl ?? throw new ArgumentNullException(nameof(localizeUrl));
 
 			const RegexOptions compiledOptions = RegexOptions.IgnoreCase | RegexOptions.Compiled;
 			const RegexOptions singleLine = RegexOptions.Singleline | compiledOptions;
@@ -399,6 +402,14 @@
 			_instance.AddRule(rule);
 		}
 
+		private static void ReplaceSchema(StringBuilder builder, TContext context)
+		{
+			if (context.Scheme == "http")
+				builder.ReplaceIgnoreCase("https://", "http://");
+			else if (context.Scheme == "https")
+				builder.ReplaceIgnoreCase("http://", "https://");
+		}
+
 		private class VariableRegexReplaceRuleEx : VariableRegexReplaceRule<TContext>
 		{
 			private readonly Func<string, string> _getRegExReplace;
@@ -467,57 +478,20 @@
 						  "${innertrunc}", m.Groups["inner"].Value.TruncateMiddle(TruncateLength));
 					}
 
-					//var isPayClick = false;
-					var isAway = false;
-					var innerReplaceStr = innerReplace.ToString();
+					var (langCode, isAway, noFollow) = _parent._getUrlInfo(innerReplace.ToString());
 
-					if (_isStockSharpEn.IsMatch(innerReplaceStr))
+					if (!langCode.IsEmpty())
 					{
 						innerReplace.Replace(_blank + " ", string.Empty);
 
 						if (!context.IsUrlLocalizeDisabled)
 						{
-							if (context.IsLocalHost)
-								innerReplace.ReplaceIgnoreCase("stocksharp.com", context.LocalPath);
-							else if (!context.IsEnglish)
-								innerReplace.ReplaceIgnoreCase("stocksharp.com", "stocksharp.ru");
-
-							if (context.Scheme == "http")
-								innerReplace.ReplaceIgnoreCase("https://", "http://");
-							else if (context.Scheme == "https")
-								innerReplace.ReplaceIgnoreCase("http://", "https://");
+							_parent._localizeUrl(langCode, context.LangCode, innerReplace);
+							ReplaceSchema(innerReplace, context);
 						}
 
-						var isPayClick = innerReplace.ToString().ContainsIgnoreCase("payclick.aspx");
-
-						if (!isPayClick)
+						if (noFollow)
 							innerReplace.Replace(_noFollow + " ", string.Empty);
-					}
-					else if (_isStockSharpRu.IsMatch(innerReplaceStr))
-					{
-						innerReplace.Replace(_blank + " ", string.Empty);
-
-						if (!context.IsUrlLocalizeDisabled)
-						{
-							if (context.IsLocalHost)
-								innerReplace.ReplaceIgnoreCase("stocksharp.ru", context.LocalPath);
-							else if (context.IsEnglish)
-								innerReplace.ReplaceIgnoreCase("stocksharp.ru", "stocksharp.com");
-
-							if (context.Scheme == "http")
-								innerReplace.ReplaceIgnoreCase("https://", "http://");
-							else if (context.Scheme == "https")
-								innerReplace.ReplaceIgnoreCase("http://", "https://");
-						}
-
-						var isPayClick = innerReplace.ToString().ContainsIgnoreCase("payclick.aspx");
-
-						if (!isPayClick)
-							innerReplace.Replace(_noFollow + " ", string.Empty);
-					}
-					else
-					{
-						isAway = !innerReplaceStr.TrimStart().StartsWith("<a href=\"mailto:");
 					}
 
 					if (isAway)
@@ -526,8 +500,7 @@
 						var start = str.IndexOfIgnoreCase("href=") + 6;
 						var end = str.IndexOfIgnoreCase("\"", start);
 						innerReplace.Remove(start, end - start);
-						innerReplace.Insert(start, "{0}://{1}/away/?u={2}"
-							.Put(context.Scheme, context.IsLocalHost ? "localhost/stocksharp" : context.IsEnglish ? "stocksharp.com" : "stocksharp.ru", _parent._encryptUrl(str.Substring(start, end - start))));
+						innerReplace.Insert(start, $"{context.Scheme}://{_parent._getHost(context.LangCode)}/away/?u={_parent._encryptUrl(str.Substring(start, end - start))}");
 					}
 
 					// pulls the htmls into the replacement collection before it's inserted back into the main text
@@ -661,64 +634,30 @@
 
 					if (!isId)
 					{
-						var isPayClick = false;
-						var isAway = false;
+						var (langCode, away, noFollow) = _parent._getUrlInfo(sb.ToString());
 
-						if (_isStockSharpEn.IsMatch(sb.ToString()))
+						if (!langCode.IsEmpty())
 						{
 							sb.Replace(_blank + " ", string.Empty);
 
 							if (!context.IsUrlLocalizeDisabled)
 							{
-								if (context.IsLocalHost)
-									sb.ReplaceIgnoreCase("stocksharp.com", context.LocalPath);
-								else if (!context.IsEnglish)
-									sb.ReplaceIgnoreCase("stocksharp.com", "stocksharp.ru");
-
-								if (context.Scheme == "http")
-									sb.ReplaceIgnoreCase("https://", "http://");
-								else if (context.Scheme == "https")
-									sb.ReplaceIgnoreCase("http://", "https://");
+								_parent._localizeUrl(langCode, context.LangCode, sb);
+								ReplaceSchema(sb, context);
 							}
-
-							isPayClick = sb.ToString().ContainsIgnoreCase("payclick.aspx");
-						}
-						else if (_isStockSharpRu.IsMatch(sb.ToString()))
-						{
-							sb.Replace(_blank + " ", string.Empty);
-
-							if (!context.IsUrlLocalizeDisabled)
-							{
-								if (context.IsLocalHost)
-									sb.ReplaceIgnoreCase("stocksharp.ru", context.LocalPath);
-								else if (context.IsEnglish)
-									sb.ReplaceIgnoreCase("stocksharp.ru", "stocksharp.com");
-
-								if (context.Scheme == "http")
-									sb.ReplaceIgnoreCase("https://", "http://");
-								else if (context.Scheme == "https")
-									sb.ReplaceIgnoreCase("http://", "https://");
-							}
-
-							isPayClick = sb.ToString().ContainsIgnoreCase("payclick.aspx");
-						}
-						else
-						{
-							isAway = true;
 						}
 
 						sb.Replace("/forum/resource.ashx?a", "/file.aspx?t=forum&fid");
 
-						if (isAway)
+						if (away)
 						{
 							var str = sb.ToString();
 							var start = str.IndexOfIgnoreCase("href=") + 6;
 							var end = str.IndexOfIgnoreCase("\"", start);
 							sb.Remove(start, end - start);
-							sb.Insert(start, "{0}://{1}/away/?u={2}"
-								.Put(context.Scheme, context.IsLocalHost ? "localhost/stocksharp" : context.IsEnglish ? "stocksharp.com" : "stocksharp.ru", _parent._encryptUrl(str.Substring(start, end - start))));
+							sb.Insert(start, $"{context.Scheme}://{_parent._getHost(context.LangCode)}/away/?u={_parent._encryptUrl(str.Substring(start, end - start))}");
 						}
-						else if (isPayClick)
+						else if (noFollow)
 						{
 							var str = sb.ToString();
 							var start = str.IndexOfIgnoreCase("href=");
@@ -1140,22 +1079,14 @@
 
 					if (!isId && !imgUrl.IsEmpty() && !context.IsUrlLocalizeDisabled)
 					{
-						if (context.IsLocalHost)
-							imgUrl = imgUrl.ReplaceIgnoreCase("stocksharp.ru", context.LocalPath);
-						else
-							imgUrl = _parent._getOppositeUrl(imgUrl, context.LangCode);
+						var (langCode, _, _) = _parent._getUrlInfo(imgUrl);
 
-						if (context.Scheme == "http")
+						if (!langCode.IsEmpty())
 						{
-							imgUrl
-								.ReplaceIgnoreCase("https://stocksharp.ru", "http://stocksharp.ru")
-								.ReplaceIgnoreCase("https://stocksharp.com", "http://stocksharp.com");
-						}
-						else if (context.Scheme == "https")
-						{
-							imgUrl
-								.ReplaceIgnoreCase("http://stocksharp.ru", "https://stocksharp.ru")
-								.ReplaceIgnoreCase("http://stocksharp.com", "https://stocksharp.com");
+							var imgUrlBuilder = new StringBuilder(imgUrl);
+							_parent._localizeUrl(langCode, context.LangCode, imgUrlBuilder);
+							ReplaceSchema(imgUrlBuilder, context);
+							imgUrl = imgUrlBuilder.ToString();
 						}
 					}
 
