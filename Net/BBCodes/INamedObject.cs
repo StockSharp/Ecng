@@ -3,17 +3,16 @@
 	public interface INamedObject
 	{
 		public long Id { get; }
-		public string GetName(bool isEngish);
+		public string GetName(string langCode);
 	}
 
 	public interface IProductObject : INamedObject
 	{
-		public string GetUrlPart(bool isEngish);
+		public string GetUrlPart(string langCode);
 	}
 
-	public interface IPage : INamedObject
+	public interface IPageObject : IProductObject
 	{
-		public string GetHeader(bool isEngish);
-		public string GetUrl(bool isEngish);
+		public string GetHeader(string langCode);
 	}
 }

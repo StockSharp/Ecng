@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Net.BBCodes
 {
+	using System;
 	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
@@ -8,6 +9,7 @@
 	/// Simple code block regular express replace
 	/// </summary>
 	public class CodeRegexReplaceRule<TContext> : SimpleRegexReplaceRule<TContext>
+		where TContext : BBCodesContext
   {
     #region Constructors and Destructors
 
@@ -20,7 +22,7 @@
     /// <param name="regExReplace">
     /// The reg ex replace.
     /// </param>
-    public CodeRegexReplaceRule(Regex regExSearch, string regExReplace)
+    public CodeRegexReplaceRule(Regex regExSearch, Func<string, string> regExReplace)
       : base(regExSearch, regExReplace)
     {
       // default high rank...
@@ -47,7 +49,7 @@
       {
 	    cancellationToken.ThrowIfCancellationRequested();
 
-        string replaceItem = RegExReplace.Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
+        string replaceItem = RegExReplace(context.LangCode).Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
 
         int replaceIndex = replacement.Add(replaceItem);
         text = text.Substring(0, m.Groups[0].Index) + replacement.Get(replaceIndex) +

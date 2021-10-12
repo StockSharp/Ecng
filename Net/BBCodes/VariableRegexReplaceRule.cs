@@ -13,6 +13,7 @@
 	/// For complex regex with variable/default and truncate support
 	/// </summary>
 	public class VariableRegexReplaceRule<TContext> : SimpleRegexReplaceRule<TContext>
+		where TContext : BBCodesContext
   {
     #region Constants and Fields
 
@@ -201,7 +202,7 @@
       {
 	    cancellationToken.ThrowIfCancellationRequested();
 
-        var innerReplace = new StringBuilder(RegExReplace);
+        var innerReplace = new StringBuilder(RegExReplace(context.LangCode));
         int i = 0;
 
         foreach (string tVar in Variables)

@@ -1,9 +1,12 @@
 ﻿namespace Ecng.Net.BBCodes
 {
+	using System;
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
+
+	using Ecng.Localization;
 
 	/// <summary>
 	/// For basic regex with no variables
@@ -15,7 +18,7 @@
     /// <summary>
     ///   The _reg ex replace.
     /// </summary>
-    protected readonly string RegExReplace;
+    protected readonly Func<string, string> RegExReplace;
 
     /// <summary>
     ///   The _reg ex search.
@@ -39,6 +42,37 @@
     /// The reg ex options.
     /// </param>
     public SimpleRegexReplaceRule(string regExSearch, string regExReplace, RegexOptions regExOptions)
+		: this(regExSearch, c => regExReplace, regExOptions)
+	{
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SimpleRegexReplaceRule"/> class.
+    /// </summary>
+    /// <param name="regExSearch">
+    /// The reg ex search.
+    /// </param>
+    /// <param name="regExReplace">
+    /// The reg ex replace.
+    /// </param>
+    public SimpleRegexReplaceRule(Regex regExSearch, string regExReplace)
+		: this(regExSearch, c => regExReplace)
+    {
+    }
+
+	/// <summary>
+    /// Initializes a new instance of the <see cref="SimpleRegexReplaceRule"/> class.
+    /// </summary>
+    /// <param name="regExSearch">
+    /// The reg ex search.
+    /// </param>
+    /// <param name="regExReplace">
+    /// The reg ex replace.
+    /// </param>
+    /// <param name="regExOptions">
+    /// The reg ex options.
+    /// </param>
+    public SimpleRegexReplaceRule(string regExSearch, Func<string, string> regExReplace, RegexOptions regExOptions)
     {
       RegExSearch = new Regex(regExSearch, regExOptions);
       RegExReplace = regExReplace;
@@ -53,7 +87,7 @@
     /// <param name="regExReplace">
     /// The reg ex replace.
     /// </param>
-    public SimpleRegexReplaceRule(Regex regExSearch, string regExReplace)
+    public SimpleRegexReplaceRule(Regex regExSearch, Func<string, string> regExReplace)
     {
       RegExSearch = regExSearch;
       RegExReplace = regExReplace;
@@ -96,7 +130,7 @@
       {
 	    cancellationToken.ThrowIfCancellationRequested();
 
-        string replaceString = RegExReplace.Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
+        string replaceString = RegExReplace(LangCodes.En).Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
 
         // pulls the htmls into the replacement collection before it's inserted back into the main text
         replacement.ReplaceHtmlFromText(ref replaceString, cancellationToken);

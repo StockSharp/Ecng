@@ -88,36 +88,38 @@
 		private const string _blank = "target=\"_blank\"";
 		private const string _noFollow = "rel=\"nofollow\"";
 
-		private readonly Func<string, bool, string> _getOppositeUrl;
-		private readonly Func<long, string> _getFileUrl;
-		private readonly Func<long, string> _getUserUrl;
-		private readonly Func<long, string, string> _getProductUrl;
-		private readonly Func<string, bool, bool, string> _getPackageUrl;
-		private readonly Func<long, string> _getTopicUrl;
-		private readonly Func<long, string> _getMessageUrl;
+		private readonly Func<string, string, string> _getOppositeUrl;
+		private readonly Func<long, string, string> _getFileUrl;
+		private readonly Func<long, string, string> _getUserUrl;
+		private readonly Func<long, string, string, string> _getProductUrl;
+		private readonly Func<string, string, bool, string> _getPackageUrl;
+		private readonly Func<long, string, string> _getTopicUrl;
+		private readonly Func<long, string, string> _getMessageUrl;
 		private readonly Func<string, string> _encryptUrl;
-		private readonly Func<string, bool, string> _toFullAbsolute;
-		private readonly Func<string, bool, string> _getLocString;
+		private readonly Func<string, string, string> _toFullAbsolute;
+		private readonly Func<string, string, string> _getLocString;
 		private readonly Func<long, IProductObject> _getProduct;
 		private readonly Func<long, INamedObject> _getUser;
 		private readonly Func<long, INamedObject> _getFile;
-		private readonly Func<long, IPage> _getPage;
+		private readonly Func<long, IPageObject> _getPage;
+		private readonly Func<string, string> _generateId;
 
-		public BB2HtmlFormatter(bool isEnglish,
-			Func<string, bool, string> getOppositeUrl,
-			Func<long, string> getFileUrl,
-			Func<long, string> getUserUrl,
-			Func<long, string, string> getProductUrl,
-			Func<string, bool, bool, string> getPackageUrl,
-			Func<long, string> getTopicUrl,
-			Func<long, string> getMessageUrl,
+		public BB2HtmlFormatter(
+			Func<string, string, string> getOppositeUrl,
+			Func<long, string, string> getFileUrl,
+			Func<long, string, string> getUserUrl,
+			Func<long, string, string, string> getProductUrl,
+			Func<string, string, bool, string> getPackageUrl,
+			Func<long, string, string> getTopicUrl,
+			Func<long, string, string> getMessageUrl,
 			Func<string, string> encryptUrl,
-			Func<string, bool, string> toFullAbsolute,
-			Func<string, bool, string> getLocString,
+			Func<string, string, string> toFullAbsolute,
+			Func<string, string, string> getLocString,
 			Func<long, IProductObject> getProduct,
 			Func<long, INamedObject> getUser,
 			Func<long, INamedObject> getFile,
-			Func<long, IPage> getPage)
+			Func<long, IPageObject> getPage,
+			Func<string, string> generateId)
 		{
 			_getOppositeUrl = getOppositeUrl ?? throw new ArgumentNullException(nameof(getOppositeUrl));
 			_getFileUrl = getFileUrl ?? throw new ArgumentNullException(nameof(getFileUrl));
@@ -133,6 +135,7 @@
 			_getUser = getUser ?? throw new ArgumentNullException(nameof(getUser));
 			_getFile = getFile ?? throw new ArgumentNullException(nameof(getFile));
 			_getPage = getPage ?? throw new ArgumentNullException(nameof(getPage));
+			_generateId = generateId ?? throw new ArgumentNullException(nameof(generateId));
 
 			const RegexOptions compiledOptions = RegexOptions.IgnoreCase | RegexOptions.Compiled;
 			const RegexOptions singleLine = RegexOptions.Singleline | compiledOptions;
@@ -208,7 +211,7 @@
 			AddRule(new FontSizeRegexReplaceRule<TContext>(_rgxSize, "<span style=\"font-size:${size}\">${inner}</span>", singleLine));
 			//if (doFormatting)
 			//{
-			AddRule(new CodeRegexReplaceRule<TContext>(_rgxNoParse, "${inner}"));
+			AddRule(new CodeRegexReplaceRule<TContext>(_rgxNoParse, c => "${inner}"));
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxBold, "<b>${inner}</b>"));
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxStrike, "<s>${inner}</s>", singleLine));
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxItalic, "<em>${inner}</em>", singleLine));
@@ -312,13 +315,18 @@
 				code = code.Replace("<", "&lt;");
 				code = code.Replace("\"", "&quot;");
 
-				var src = _toFullAbsolute(Path.GetExtension(smile.Icon).EqualsIgnoreCase(".gif")
-					? $"~/images/smiles/{smile.Icon}"
-					: $"~/images/svg/smiles/{smile.Icon}", isEnglish);
+				
 
 				var alt = smile.Emoticon.EncodeToHtml();
 
-				var replace = $"<img src=\"{src}\" alt=\"{alt}\" class=\"smiles\" />";
+				Func<string, string> replace = langCode =>
+				{
+					var src = _toFullAbsolute(Path.GetExtension(smile.Icon).EqualsIgnoreCase(".gif")
+						? $"~/images/smiles/{smile.Icon}"
+						: $"~/images/svg/smiles/{smile.Icon}", langCode);
+
+					return $"<img src=\"{src}\" alt=\"{alt}\" class=\"smiles\" />";
+				};
 
 				// add new rules for smilies...
 				var lowerRule = new SimpleReplaceRule<TContext>(code.ToLower(), replace);
@@ -336,13 +344,13 @@
 			}
 			//if (convertBBQuotes)
 			//{
-			AddRule(new SyntaxHighlightedCodeRegexReplaceRule<TContext>(_rgxCode2, "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", _getLocString("Code", isEnglish))) { RuleRank = 41 });
-			AddRule(new CodeRegexReplaceRule<TContext>(_rgxCode1, "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", _getLocString("Code", isEnglish))));
+			AddRule(new SyntaxHighlightedCodeRegexReplaceRule<TContext>(_rgxCode2, langCode => "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", _getLocString("Code", langCode))) { RuleRank = 41 });
+			AddRule(new CodeRegexReplaceRule<TContext>(_rgxCode1, langCode =>  "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", _getLocString("Code", langCode))));
 
 			//ForumPage page = new ForumPage();
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxQuote2, "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put("${quote}", "${inner}"), new[] { "quote" }) { RuleRank = 63 });
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxQuote1, "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put($"{_getLocString("Quote", isEnglish)}:", "${inner}")) { RuleRank = 64 });
-			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, () => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute("~/posts/m/${id}/", isEnglish), _toFullAbsolute("~/images/icon_latest_reply.gif", isEnglish), _getLocString("GoTo", isEnglish), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
+			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxQuote1, langCode => "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put($"{_getLocString("Quote", langCode)}:", "${inner}")) { RuleRank = 64 });
+			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, langCode => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute("~/posts/m/${id}/", langCode), _toFullAbsolute("~/images/icon_latest_reply.gif", langCode), _getLocString("GoTo", langCode), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
 			//}
 			AddRule(new TopicRegexReplaceRule(this, _rgxPost, "<a {0} href=\"${post}\">${inner}</a>".Replace("{0}", _blank), singleLine));
 			AddRule(new TopicRegexReplaceRule(this, _rgxTopic, "<a {0} href=\"${topic}\">${inner}</a>".Replace("{0}", _blank), singleLine));
@@ -393,7 +401,7 @@
 
 		private class VariableRegexReplaceRuleEx : VariableRegexReplaceRule<TContext>
 		{
-			private readonly Func<string> _getRegExReplace;
+			private readonly Func<string, string> _getRegExReplace;
 			private readonly BB2HtmlFormatter<TContext> _parent;
 
 			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, int truncateLength)
@@ -408,7 +416,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, Func<string> getRegExReplace, string[] variables)
+			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, Func<string, string> getRegExReplace, string[] variables)
 				: base(regExSearch, null, variables)
 			{
 				_getRegExReplace = getRegExReplace ?? throw new ArgumentNullException(nameof(getRegExReplace));
@@ -422,7 +430,7 @@
 				var m = RegExSearch.Match(text);
 				while (m.Success)
 				{
-					var innerReplace = new StringBuilder(_getRegExReplace?.Invoke() ?? RegExReplace);
+					var innerReplace = new StringBuilder((_getRegExReplace ?? RegExReplace).Invoke(context.LangCode));
 					var i = 0;
 
 					foreach (var tVar in Variables)
@@ -588,7 +596,7 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace);
+					var sb = new StringBuilder(RegExReplace(context.LangCode));
 					var index = 0;
 
 					var url = match.Groups["url"].Value;
@@ -630,14 +638,15 @@
 					{
 						var file = _parent._getFile(id);
 
-						url = _parent._toFullAbsolute(file is null ? _parent._getFileUrl(id) : _parent._getFileUrl(file.Id), context.IsEnglish);
+						var langCode = context.LangCode;
+						url = _parent._toFullAbsolute(_parent._getFileUrl(file?.Id ?? id, langCode), langCode);
 
 						if (hasTitle)
 							sb.Replace("${url}", url);
 						else
 							inner = url;
 
-						if (file?.GetName(context.IsEnglish).IsImage() == true)
+						if (file?.GetName(langCode).IsImage() == true)
 						{
 							sb.Replace("title=", $"data-preview-id='{id}' title=");
 						}
@@ -738,24 +747,19 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			private static string GenerateID(string sourceUrl)
-			{
-				return $"{sourceUrl}_{Guid.NewGuid():N}";
-			}
-
 			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
-				var isEn = context.IsEnglish;
+				var langCode = context.LangCode;
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace);
+					var sb = new StringBuilder(RegExReplace(context.LangCode));
 
-					var id = GenerateID("spolier");
+					var id = _parent._generateId("spolier");
 
-					sb.Replace("${inner}", $@"<input type='button' value='{_parent._getLocString("ShowSpoiler", isEn)}' class='btn btn-primary' onclick=""toggleSpoiler(this, '{id}');"" title='{_parent._getLocString("ShowSpoiler", isEn)}' /></div><div class='spoilerbox' id='{id}' style='display:none'>" + match.Groups["inner"].Value);
+					sb.Replace("${inner}", $@"<input type='button' value='{_parent._getLocString("ShowSpoiler", langCode)}' class='btn btn-primary' onclick=""toggleSpoiler(this, '{id}');"" title='{_parent._getLocString("ShowSpoiler", langCode)}' /></div><div class='spoilerbox' id='{id}' style='display:none'>" + match.Groups["inner"].Value);
 
 					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
@@ -781,7 +785,7 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace);
+					var sb = new StringBuilder(RegExReplace(context.LangCode));
 
 					var html = match.Groups["inner"].Value;
 
@@ -814,7 +818,7 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace);
+					var sb = new StringBuilder(RegExReplace(context.LangCode));
 					var url = match.Groups["innerUrl"].Value;
 
 					sb.Replace("${url}", $"https://www.facebook.com/{url}".EncodeUrl());
@@ -846,15 +850,16 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace);
+					var sb = new StringBuilder(RegExReplace(context.LangCode));
 					var idStr = match.Groups["id"].Value;
 
 					if (long.TryParse(idStr, out var id))
 					{
 						var client = _parent._getUser(id);
+						var langCode = context.LangCode;
 
-						sb.Replace("${url}", _parent._toFullAbsolute(_parent._getUserUrl(client.Id), context.IsEnglish));
-						sb.Replace("${name}", client.GetName(context.IsEnglish)?.CheckUrl());
+						sb.Replace("${url}", _parent._toFullAbsolute(_parent._getUserUrl(client.Id, langCode), langCode));
+						sb.Replace("${name}", client.GetName(langCode)?.CheckUrl());
 					}
 					else
 					{
@@ -889,13 +894,13 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace);
+					var sb = new StringBuilder(RegExReplace(context.LangCode));
 
 					var packageId = match.Groups["id"].Value;
 
 					if (!packageId.IsEmpty())
 					{
-						sb.Replace("${url}", _parent._getPackageUrl(packageId, context.IsEnglish, context.IsEmail));
+						sb.Replace("${url}", _parent._getPackageUrl(packageId, context.LangCode, context.IsEmail));
 						sb.Replace("${name}", packageId);
 					}
 					else
@@ -931,16 +936,17 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace);
+					var sb = new StringBuilder(RegExReplace(context.LangCode));
 
 					var idStr = match.Groups["id"].Value;
 
 					if (long.TryParse(idStr, out var id))
 					{
 						var product = _parent._getProduct(id);
+						var langCode = context.LangCode;
 
-						sb.Replace("${url}", _parent._getProductUrl(product.Id, product.GetUrlPart(context.IsEnglish)));
-						sb.Replace("${name}", product.GetName(context.IsEnglish));
+						sb.Replace("${url}", _parent._getProductUrl(product.Id, langCode, product.GetUrlPart(langCode)));
+						sb.Replace("${name}", product.GetName(langCode));
 					}
 					else
 					{
@@ -975,7 +981,7 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace);
+					var sb = new StringBuilder(RegExReplace(context.LangCode));
 
 					var idStr = match.Groups["id"].Value;
 					var inner = match.Groups["inner"].Value;
@@ -986,10 +992,12 @@
 
 						if (product != null)
 						{
-							sb.Replace("${url}", _parent._getProductUrl(product.Id, product.GetUrlPart(context.IsEnglish)));
+							var langCode = context.LangCode;
+
+							sb.Replace("${url}", _parent._getProductUrl(product.Id, langCode, product.GetUrlPart(langCode)));
 
 							if (inner.IsEmpty())
-								inner = product.GetName(context.IsEnglish);
+								inner = product.GetName(langCode);
 						}
 						else
 							sb.Replace("${url}", idStr);
@@ -1035,7 +1043,7 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace);
+					var sb = new StringBuilder(RegExReplace(context.LangCode));
 
 					var idStr = match.Groups["id"].Value;
 					var inner = match.Groups["inner"].Value;
@@ -1046,10 +1054,12 @@
 
 						if (page != null)
 						{
-							sb.Replace("${url}", _parent._toFullAbsolute(page.GetUrl(context.IsEnglish), context.IsEnglish));
+							var langCode = context.LangCode;
+
+							sb.Replace("${url}", _parent._toFullAbsolute(page.GetUrlPart(langCode), langCode));
 
 							if (inner.IsEmpty())
-								inner = page.GetHeader(context.IsEnglish);
+								inner = page.GetHeader(langCode);
 						}
 						else
 							sb.Replace("${url}", idStr);
@@ -1095,7 +1105,7 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace);
+					var sb = new StringBuilder(RegExReplace(context.LangCode));
 					var index = 0;
 
 					var imgUrl = match.Groups["inner"].Value;
@@ -1133,7 +1143,7 @@
 						if (context.IsLocalHost)
 							imgUrl = imgUrl.ReplaceIgnoreCase("stocksharp.ru", context.LocalPath);
 						else
-							imgUrl = _parent._getOppositeUrl(imgUrl, context.IsEnglish);
+							imgUrl = _parent._getOppositeUrl(imgUrl, context.LangCode);
 
 						if (context.Scheme == "http")
 						{
@@ -1160,9 +1170,11 @@
 					if (isId)
 					{
 						var file = _parent._getFile(fileId);
-						var url = _parent._toFullAbsolute(_parent._getFileUrl(fileId), context.IsEnglish);
+						var langCode = context.LangCode;
 
-						var fileName = file?.GetName(context.IsEnglish);
+						var url = _parent._toFullAbsolute(_parent._getFileUrl(fileId, langCode), langCode);
+
+						var fileName = file?.GetName(langCode);
 						var isGif = Path.GetExtension(fileName).EqualsIgnoreCase(".gif");
 
 						if (!context.PreventScaling)
@@ -1310,13 +1322,15 @@
 				{
 					if (long.TryParse(variableValue, out var id))
 					{
+						var langCode = context.LangCode;
+
 						switch (variableName)
 						{
 							case "post":
 							case "message":
-								return _parent._toFullAbsolute(_parent._getMessageUrl(id), context.IsEnglish);
+								return _parent._toFullAbsolute(_parent._getMessageUrl(id, langCode), langCode);
 							case "topic":
-								return _parent._toFullAbsolute(_parent._getTopicUrl(id), context.IsEnglish);
+								return _parent._toFullAbsolute(_parent._getTopicUrl(id, langCode), langCode);
 						}
 					}
 				}

@@ -9,6 +9,7 @@
 	/// For basic regex with no variables
 	/// </summary>
 	public class SingleRegexReplaceRule<TContext> : SimpleRegexReplaceRule<TContext>
+		where TContext : BBCodesContext
   {
     #region Constructors and Destructors
 
@@ -52,7 +53,7 @@
 	    cancellationToken.ThrowIfCancellationRequested();
 
         // just replaces with no "inner"
-        int replaceIndex = replacement.Add(RegExReplace);
+        int replaceIndex = replacement.Add(RegExReplace(context.LangCode));
 
         // remove old bbcode...
         sb.Remove(m.Groups[0].Index, m.Groups[0].Length);

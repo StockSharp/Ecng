@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Net.BBCodes
 {
+	using System;
 	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
@@ -8,7 +9,8 @@
 	/// Syntax Highlighted code block regular express replace
 	/// </summary>
 	public class SyntaxHighlightedCodeRegexReplaceRule<TContext> : SimpleRegexReplaceRule<TContext>
-    {
+		where TContext : BBCodesContext
+	{
         #region Constants and Fields
 
         /// <summary>
@@ -29,7 +31,7 @@
         /// <param name="regExReplace">
         /// The reg ex replace.
         /// </param>
-        public SyntaxHighlightedCodeRegexReplaceRule(Regex regExSearch, string regExReplace)
+        public SyntaxHighlightedCodeRegexReplaceRule(Regex regExSearch, Func<string, string> regExReplace)
             : base(regExSearch, regExReplace)
         {
             _syntaxHighlighter.ReplaceEnter = true;
@@ -59,7 +61,7 @@
 				string inner = _syntaxHighlighter.ColorText(
                     GetInnerValue(m.Groups["inner"].Value), m.Groups["language"].Value);
 
-                string replaceItem = RegExReplace.Replace("${inner}", inner);
+                string replaceItem = RegExReplace(context.LangCode).Replace("${inner}", inner);
 
                 // pulls the htmls into the replacement collection before it's inserted back into the main text
                 int replaceIndex = replacement.Add(replaceItem);
