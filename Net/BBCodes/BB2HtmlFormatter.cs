@@ -440,7 +440,7 @@
 				var m = RegExSearch.Match(text);
 				while (m.Success)
 				{
-					var innerReplace = new StringBuilder((_getRegExReplace ?? RegExReplace).Invoke(context.Domain));
+					var innerReplace = new StringBuilder((_getRegExReplace ?? RegExReplace).Invoke(domain));
 					var i = 0;
 
 					foreach (var tVar in Variables)
@@ -569,7 +569,7 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.Domain));
+					var sb = new StringBuilder(RegExReplace(domain));
 					var index = 0;
 
 					var url = match.Groups["url"].Value;
@@ -720,10 +720,11 @@
 			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
+				var domain = context.Domain;
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.Domain));
+					var sb = new StringBuilder(RegExReplace(domain));
 
 					var html = match.Groups["inner"].Value;
 
@@ -753,10 +754,11 @@
 			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
+				var domain = context.Domain;
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.Domain));
+					var sb = new StringBuilder(RegExReplace(domain));
 					var url = match.Groups["innerUrl"].Value;
 
 					sb.Replace("${url}", $"https://www.facebook.com/{url}".EncodeUrl());
@@ -830,16 +832,17 @@
 			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
+				var domain = context.Domain;
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.Domain));
+					var sb = new StringBuilder(RegExReplace(domain));
 
 					var packageId = match.Groups["id"].Value;
 
 					if (!packageId.IsEmpty())
 					{
-						sb.Replace("${url}", _parent._getPackageFullUrl(packageId, context.Domain));
+						sb.Replace("${url}", _parent._getPackageFullUrl(packageId, domain));
 						sb.Replace("${name}", packageId);
 					}
 					else
