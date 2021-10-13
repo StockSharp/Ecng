@@ -11,6 +11,14 @@
 
 	public static class RestSharpHelper
 	{
+		public class UnexpectedResponseError : InvalidOperationException
+		{
+			public IRestResponse Response { get; }
+
+			public UnexpectedResponseError(IRestResponse response) : base($"unexpected response code='{response.StatusCode}', msg='{response.ErrorMessage}', desc='{response.StatusDescription}', content='{response.Content}'")
+				=> Response = response;
+		}
+
 		public static void AddBodyAsStr(this IRestRequest request, string bodyStr)
 		{
 			if (request is null)
@@ -45,17 +53,19 @@
 
 			init?.Invoke(client);
 
-			logVerbose?.Invoke("Request '{0}' Args '{1}'.", new object[] { url, request.Parameters.Select(p => $"{p.Name}={p.Value}").JoinAnd() });
+			logVerbose?.Invoke("Request {0}, '{1}' Args '{2}'.", new object[] { request.Method, url, request.Parameters.Select(p => $"{p.Name}={p.Value}").JoinAnd() });
 			var response = client.Execute(request);
 
 			var content = response.Content;
 			logVerbose?.Invoke("Response '{0}' (code {1}).", new object[] { content, response.StatusCode });
 
-			if (response.StatusCode != HttpStatusCode.OK)
-				throw new InvalidOperationException(content.IsEmpty() ? (response.ErrorMessage.IsEmpty() ? response.StatusDescription : response.ErrorMessage) : content);
+			// https://restsharp.dev/usage/exceptions.html
+			var networkFailure = response.ResponseStatus != ResponseStatus.Completed;
+			if(networkFailure)
+				throw new InvalidOperationException($"failed to complete request: {response.ResponseStatus}");
 
-			if (content.IsEmpty())
-				throw new InvalidOperationException();
+			if (response.StatusCode != HttpStatusCode.OK || content.IsEmpty())
+				throw new UnexpectedResponseError(response);
 
 			if (contentConverter != null)
 			{
