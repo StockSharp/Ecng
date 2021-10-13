@@ -12,7 +12,7 @@
 	using Ecng.Net;
 
 	public class BB2HtmlFormatter<TContext, TDomain> : IHtmlFormatter
-		where TContext : BBCodesContext<TDomain>
+		where TContext : BB2HtmlContext<TDomain>
 	{
 		//private string _rgxBBCodeLocalizationTag;
 		private readonly Regex _rgxNoParse;

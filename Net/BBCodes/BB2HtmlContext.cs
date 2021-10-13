@@ -4,9 +4,9 @@
 
 	using Ecng.Common;
 
-	public class BBCodesContext<TDomain>
+	public class BB2HtmlContext<TDomain>
 	{
-		public BBCodesContext(bool preventScaling, bool allowHtml, TDomain domain, bool isUrlLocalizeDisabled, string scheme)
+		public BB2HtmlContext(bool preventScaling, bool allowHtml, TDomain domain, bool isUrlLocalizeDisabled, string scheme)
 		{
 			if (domain.IsDefault())
 				throw new ArgumentNullException(nameof(domain));

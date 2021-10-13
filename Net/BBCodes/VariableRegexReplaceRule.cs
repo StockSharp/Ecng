@@ -12,7 +12,7 @@
 	/// For complex regex with variable/default and truncate support
 	/// </summary>
 	public class VariableRegexReplaceRule<TContext, TDomain> : SimpleRegexReplaceRule<TContext, TDomain>
-		where TContext : BBCodesContext<TDomain>
+		where TContext : BB2HtmlContext<TDomain>
   {
     #region Constants and Fields
 

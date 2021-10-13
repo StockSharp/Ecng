@@ -9,7 +9,7 @@
 	/// Simple code block regular express replace
 	/// </summary>
 	public class CodeRegexReplaceRule<TContext, TDomain> : SimpleRegexReplaceRule<TContext, TDomain>
-		where TContext : BBCodesContext<TDomain>
+		where TContext : BB2HtmlContext<TDomain>
 	{
     #region Constructors and Destructors
 

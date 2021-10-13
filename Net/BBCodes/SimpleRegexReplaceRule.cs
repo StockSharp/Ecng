@@ -10,7 +10,7 @@
 	/// For basic regex with no variables
 	/// </summary>
 	public class SimpleRegexReplaceRule<TContext, TDomain> : BaseReplaceRule<TContext>
-		where TContext : BBCodesContext<TDomain>
+		where TContext : BB2HtmlContext<TDomain>
   {
     #region Constants and Fields
 

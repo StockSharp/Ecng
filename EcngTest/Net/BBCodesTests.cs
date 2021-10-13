@@ -31,7 +31,7 @@
 			string IPageObject<string>.GetHeader(string langCode) => Name;
 		}
 
-		private class RoleRule : BaseReplaceRule<BBCodesContext<string>>
+		private class RoleRule : BaseReplaceRule<BB2HtmlContext<string>>
 		{
 			private readonly Regex _regex;
 
@@ -40,7 +40,7 @@
 				_regex = new Regex(@"\[role=(?<id>([0-9]*))\](?<inner>(.|\n)*)\[/role\]", RegexOptions.Multiline | RegexOptions.IgnoreCase);
 			}
 
-			public override Task<string> ReplaceAsync(BBCodesContext<string> context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override Task<string> ReplaceAsync(BB2HtmlContext<string> context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -69,13 +69,13 @@
 			}
 		}
 
-		private static BBCodesContext<string> CreateContext(bool allowHtml)
+		private static BB2HtmlContext<string> CreateContext(bool allowHtml)
 			=> new(false, allowHtml, LangCodes.En, false, Uri.UriSchemeHttps);
 
 		private static readonly Regex _isStockSharpEn = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static readonly Regex _isStockSharpRu = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-		private static BB2HtmlFormatter<BBCodesContext<string>, string> CreateBBService()
+		private static BB2HtmlFormatter<BB2HtmlContext<string>, string> CreateBBService()
 		{
 			static string GetProductLink(long id, string langCode, string urlPart)
 			{
@@ -131,7 +131,7 @@
 				};
 			}
 
-			var bb = new BB2HtmlFormatter<BBCodesContext<string>, string> (
+			var bb = new BB2HtmlFormatter<BB2HtmlContext<string>, string> (
 				(id, langCode) => $"~/file/{id}/", (id, langCode) => $"~/users/{id}/",
 				GetProductLink, GetPackageLink, (id, langCode) => $"~/topic/{id}/",
 				(id, langCode) => $"~/posts/m/{id}/", s => s, ToFullAbsolute,

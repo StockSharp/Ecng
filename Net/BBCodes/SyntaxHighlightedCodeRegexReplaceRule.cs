@@ -9,7 +9,7 @@
 	/// Syntax Highlighted code block regular express replace
 	/// </summary>
 	public class SyntaxHighlightedCodeRegexReplaceRule<TContext, TDomain> : SimpleRegexReplaceRule<TContext, TDomain>
-		where TContext : BBCodesContext<TDomain>
+		where TContext : BB2HtmlContext<TDomain>
 	{
         #region Constants and Fields
 

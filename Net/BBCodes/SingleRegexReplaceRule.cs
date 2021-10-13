@@ -9,7 +9,7 @@
 	/// For basic regex with no variables
 	/// </summary>
 	public class SingleRegexReplaceRule<TContext, TDomain> : SimpleRegexReplaceRule<TContext, TDomain>
-		where TContext : BBCodesContext<TDomain>
+		where TContext : BB2HtmlContext<TDomain>
   {
     #region Constructors and Destructors
 
