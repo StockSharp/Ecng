@@ -11,8 +11,8 @@
 	using Ecng.Common;
 	using Ecng.Net;
 
-	public class BB2HtmlFormatter<TContext> : IHtmlFormatter
-		where TContext : BBCodesContext
+	public class BB2HtmlFormatter<TContext, TDomain> : IHtmlFormatter
+		where TContext : BBCodesContext<TDomain>
 	{
 		//private string _rgxBBCodeLocalizationTag;
 		private readonly Regex _rgxNoParse;
@@ -85,42 +85,42 @@
 		private const string _blank = "target=\"_blank\"";
 		private const string _noFollow = "rel=\"nofollow\"";
 
-		private readonly Func<long, string, string> _getFileUrl;
-		private readonly Func<long, string, string> _getUserUrl;
-		private readonly Func<long, string, string, string> _getProductUrl;
-		private readonly Func<string, string, string> _getPackageFullUrl;
-		private readonly Func<long, string, string> _getTopicUrl;
-		private readonly Func<long, string, string> _getMessageUrl;
+		private readonly Func<long, TDomain, string> _getFileUrl;
+		private readonly Func<long, TDomain, string> _getUserUrl;
+		private readonly Func<long, TDomain, string, string> _getProductUrl;
+		private readonly Func<string, TDomain, string> _getPackageFullUrl;
+		private readonly Func<long, TDomain, string> _getTopicUrl;
+		private readonly Func<long, TDomain, string> _getMessageUrl;
 		private readonly Func<string, string> _encryptUrl;
-		private readonly Func<string, string, string> _toFullAbsolute;
-		private readonly Func<string, string, string> _getLocString;
-		private readonly Func<long, IProductObject> _getProduct;
-		private readonly Func<long, INamedObject> _getUser;
-		private readonly Func<long, INamedObject> _getFile;
-		private readonly Func<long, IPageObject> _getPage;
+		private readonly Func<string, TDomain, string> _toFullAbsolute;
+		private readonly Func<string, TDomain, string> _getLocString;
+		private readonly Func<long, IProductObject<TDomain>> _getProduct;
+		private readonly Func<long, INamedObject<TDomain>> _getUser;
+		private readonly Func<long, INamedObject<TDomain>> _getFile;
+		private readonly Func<long, IPageObject<TDomain>> _getPage;
 		private readonly Func<string, string> _generateId;
-		private readonly Func<string, string> _getHost;
-		private readonly Func<string, (string langCode, bool isAway, bool noFollow)> _getUrlInfo;
-		private readonly Action<string, string, StringBuilder> _localizeUrl;
+		private readonly Func<TDomain, string> _getHost;
+		private readonly Func<string, (TDomain domain, bool isAway, bool noFollow)> _getUrlInfo;
+		private readonly Action<TDomain, TDomain, StringBuilder> _localizeUrl;
 
 		public BB2HtmlFormatter(
-			Func<long, string, string> getFileUrl,
-			Func<long, string, string> getUserUrl,
-			Func<long, string, string, string> getProductUrl,
-			Func<string, string, string> getPackageFullUrl,
-			Func<long, string, string> getTopicUrl,
-			Func<long, string, string> getMessageUrl,
+			Func<long, TDomain, string> getFileUrl,
+			Func<long, TDomain, string> getUserUrl,
+			Func<long, TDomain, string, string> getProductUrl,
+			Func<string, TDomain, string> getPackageFullUrl,
+			Func<long, TDomain, string> getTopicUrl,
+			Func<long, TDomain, string> getMessageUrl,
 			Func<string, string> encryptUrl,
-			Func<string, string, string> toFullAbsolute,
-			Func<string, string, string> getLocString,
-			Func<long, IProductObject> getProduct,
-			Func<long, INamedObject> getUser,
-			Func<long, INamedObject> getFile,
-			Func<long, IPageObject> getPage,
+			Func<string, TDomain, string> toFullAbsolute,
+			Func<string, TDomain, string> getLocString,
+			Func<long, IProductObject<TDomain>> getProduct,
+			Func<long, INamedObject<TDomain>> getUser,
+			Func<long, INamedObject<TDomain>> getFile,
+			Func<long, IPageObject<TDomain>> getPage,
 			Func<string, string> generateId,
-			Func<string, string> getHost,
-			Func<string, (string langCode, bool isAway, bool noFollow)> getUrlInfo,
-			Action<string, string, StringBuilder> localizeUrl)
+			Func<TDomain, string> getHost,
+			Func<string, (TDomain domain, bool isAway, bool noFollow)> getUrlInfo,
+			Action<TDomain, TDomain, StringBuilder> localizeUrl)
 		{
 			_getFileUrl = getFileUrl ?? throw new ArgumentNullException(nameof(getFileUrl));
 			_getUserUrl = getUserUrl ?? throw new ArgumentNullException(nameof(getUserUrl));
@@ -211,35 +211,35 @@
 			_instance = new ProcessReplaceRules<TContext>();
 
 			//AddRule(new CodeRegexReplaceRule(_rgxCode1, "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", str6)));
-			AddRule(new FontSizeRegexReplaceRule<TContext>(_rgxSize, "<span style=\"font-size:${size}\">${inner}</span>", singleLine));
+			AddRule(new FontSizeRegexReplaceRule<TContext, TDomain>(_rgxSize, "<span style=\"font-size:${size}\">${inner}</span>", singleLine));
 			//if (doFormatting)
 			//{
-			AddRule(new CodeRegexReplaceRule<TContext>(_rgxNoParse, c => "${inner}"));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxBold, "<b>${inner}</b>"));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxStrike, "<s>${inner}</s>", singleLine));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxItalic, "<em>${inner}</em>", singleLine));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxUnderline, "<u>${inner}</u>", singleLine));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxHighlighted, "<span class=\"highlight\">${inner}</span>", singleLine));
-			var emailRule = new VariableRegexReplaceRule<TContext>(_rgxEmail2, "<a href=\"mailto:${email}\">${inner}</a>", new[] { "email" });
+			AddRule(new CodeRegexReplaceRule<TContext, TDomain>(_rgxNoParse, c => "${inner}"));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxBold, "<b>${inner}</b>"));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxStrike, "<s>${inner}</s>", singleLine));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxItalic, "<em>${inner}</em>", singleLine));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxUnderline, "<u>${inner}</u>", singleLine));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxHighlighted, "<span class=\"highlight\">${inner}</span>", singleLine));
+			var emailRule = new VariableRegexReplaceRule<TContext, TDomain>(_rgxEmail2, "<a href=\"mailto:${email}\">${inner}</a>", new[] { "email" });
 			AddRule(emailRule);
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxEmail1, "<a href=\"mailto:${inner}\">${inner}</a>") { RuleRank = emailRule.RuleRank + 1 });
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxEmail1, "<a href=\"mailto:${inner}\">${inner}</a>") { RuleRank = emailRule.RuleRank + 1 });
 			AddRule(new UrlRule(this, _rgxUrl2, "<a {0} href=\"${http}${url}\" title=\"${http}${url}\">${inner}</a>".Replace("{0}", _blank), new[] { "url", "http" }, new[] { string.Empty, "http://" }));
 			AddRule(new UrlRule(this, _rgxUrl1, "<a {0} href=\"${http}${inner}\" title=\"${http}${inner}\">${http}${innertrunc}</a>".Replace("{0}", _blank), new[] { "http" }, new[] { string.Empty, "http://" }, 50));
 			//AddRule(new UrlRule(_rgxUrlId2, "<a {0} href=\"${id}\" title=\"${id}\">${inner}</a>".Replace("{0}", _blank), new[] { "url", "http" }, new[] { string.Empty, "http://" }));
 			//AddRule(new UrlRule(_rgxUrlId1, "<a {0} href=\"${id}\" title=\"${http}${inner}\">${http}${innertrunc}</a>".Replace("{0}", _blank), new[] { "http" }, new[] { string.Empty, "http://" }, 50));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxModalUrl2, "<a {0} {1} href=\"${http}${url}\" title=\"${http}${url}\">${inner}</a>".Replace("{0}", _blank).Replace("{1}", "class=\"ceebox\""), new[] { "url", "http" }, new[] { string.Empty, "http://" }));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxModalUrl1, "<a {0} {1} href=\"${http}${inner}\" title=\"${http}${inner}\">${http}${innertrunc}</a>".Replace("{0}", _blank).Replace("{1}", "class=\"ceebox\""), new[] { "http" }, new[] { string.Empty, "http://" }, 50));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxFont, "<span style=\"font-family:${font}\">${inner}</span>", singleLine, new[] { "font" }));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxColor, "<span style=\"color:${color}\">${inner}</span>", singleLine, new[] { "color" }));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxFloat, "<span style=\"float:${float}; padding:10px\">${inner}</span>", new[] { "float" }));
-			AddRule(new SingleRegexReplaceRule<TContext>(_rgxBullet, "<li>", singleLine));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxList4, "<ol type=\"i\">${inner}</ol>", singleLine));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxList3, "<ol type=\"a\">${inner}</ol>", singleLine));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxList2, "<ol>${inner}</ol>", singleLine));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxList1, "<ul>${inner}</ul>", singleLine));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxCenter, "<div align=\"center\">${inner}</div>", singleLine));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxLeft, "<div align=\"left\">${inner}</div>", singleLine));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxRight, "<div align=\"right\">${inner}</div>", singleLine));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxModalUrl2, "<a {0} {1} href=\"${http}${url}\" title=\"${http}${url}\">${inner}</a>".Replace("{0}", _blank).Replace("{1}", "class=\"ceebox\""), new[] { "url", "http" }, new[] { string.Empty, "http://" }));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxModalUrl1, "<a {0} {1} href=\"${http}${inner}\" title=\"${http}${inner}\">${http}${innertrunc}</a>".Replace("{0}", _blank).Replace("{1}", "class=\"ceebox\""), new[] { "http" }, new[] { string.Empty, "http://" }, 50));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxFont, "<span style=\"font-family:${font}\">${inner}</span>", singleLine, new[] { "font" }));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxColor, "<span style=\"color:${color}\">${inner}</span>", singleLine, new[] { "color" }));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxFloat, "<span style=\"float:${float}; padding:10px\">${inner}</span>", new[] { "float" }));
+			AddRule(new SingleRegexReplaceRule<TContext, TDomain>(_rgxBullet, "<li>", singleLine));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxList4, "<ol type=\"i\">${inner}</ol>", singleLine));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxList3, "<ol type=\"a\">${inner}</ol>", singleLine));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxList2, "<ol>${inner}</ol>", singleLine));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxList1, "<ul>${inner}</ul>", singleLine));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxCenter, "<div align=\"center\">${inner}</div>", singleLine));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxLeft, "<div align=\"left\">${inner}</div>", singleLine));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxRight, "<div align=\"right\">${inner}</div>", singleLine));
 			AddRule(new ImageRule(this, _rgxImgSize, "<img src=\"${http}${inner}\" style=\"width:${width};height=${height}\" alt=\"\"/>", new[] { "http", "width", "height" }, new[] { "http://", "auto", "auto" }) { RuleRank = 70 });
 			AddRule(new ImageRule(this, _rgxImg, "<img src=\"${http}${inner}\" alt=\"\"/>", new[] { "http" }, new[] { "http://" }) { RuleRank = 71 });
 			AddRule(new ImageRule(this, _rgxImgTitle, "<img src=\"${http}${inner}\" alt=\"${description}\" title=\"${description}\" />", new[] { "http", "description" }, new[] { "http://", string.Empty }) { RuleRank = 73 });
@@ -249,17 +249,17 @@
 			AddRule(new RemoveNewLineRule(_rgxTable, "<table border='0' cellspacing='2' cellpadding='5'>${inner}</table>", false));
 			AddRule(new RemoveNewLineRule(_rgxTable2, "<table border='0' cellspacing='2' cellpadding='5'>${inner}</table>", false));
 			AddRule(new RemoveNewLineRule(_rgxTable3, "<table style='${style}'>${inner}</table>", true));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxTableRow, "<tr>${inner}</tr>"));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxTableCell, "<td>${inner}</td>"));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxTableCell2, "<td colspan=${colspan}>${inner}</td>", new[] { "colspan" }));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxTableHeader, "<th>${inner}</th>"));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxTableHeader2, "<th bgcolor=${color}>${inner}</th>", new[] { "color" }));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxH2, "<h2>${inner}</h2>"));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxH2Id, "<a href=#${id}><h2 id=${id}>${inner}</h2></a>", new[] { "id" }));
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxH3, "<h3>${inner}</h3>"));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxH3Id, "<a href=#${id}><h3 id=${id}>${inner}</h3></a>", new[] { "id" }));
-			var newRule = new SingleRegexReplaceRule<TContext>(_rgxHr, "<hr />", multiLine);
-			var brRule = new SingleRegexReplaceRule<TContext>(_rgxBr, "<br />", multiLine) { RuleRank = newRule.RuleRank + 1 };
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxTableRow, "<tr>${inner}</tr>"));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxTableCell, "<td>${inner}</td>"));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxTableCell2, "<td colspan=${colspan}>${inner}</td>", new[] { "colspan" }));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxTableHeader, "<th>${inner}</th>"));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxTableHeader2, "<th bgcolor=${color}>${inner}</th>", new[] { "color" }));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxH2, "<h2>${inner}</h2>"));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxH2Id, "<a href=#${id}><h2 id=${id}>${inner}</h2></a>", new[] { "id" }));
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxH3, "<h3>${inner}</h3>"));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxH3Id, "<a href=#${id}><h3 id=${id}>${inner}</h3></a>", new[] { "id" }));
+			var newRule = new SingleRegexReplaceRule<TContext, TDomain>(_rgxHr, "<hr />", multiLine);
+			var brRule = new SingleRegexReplaceRule<TContext, TDomain>(_rgxBr, "<br />", multiLine) { RuleRank = newRule.RuleRank + 1 };
 			AddRule(newRule);
 			AddRule(brRule);
 			//}
@@ -318,22 +318,20 @@
 				code = code.Replace("<", "&lt;");
 				code = code.Replace("\"", "&quot;");
 
-				
-
 				var alt = smile.Emoticon.EncodeToHtml();
 
-				Func<string, string> replace = langCode =>
+				Func<TDomain, string> replace = domain =>
 				{
 					var src = _toFullAbsolute(Path.GetExtension(smile.Icon).EqualsIgnoreCase(".gif")
 						? $"~/images/smiles/{smile.Icon}"
-						: $"~/images/svg/smiles/{smile.Icon}", langCode);
+						: $"~/images/svg/smiles/{smile.Icon}", domain);
 
 					return $"<img src=\"{src}\" alt=\"{alt}\" class=\"smiles\" />";
 				};
 
 				// add new rules for smilies...
-				var lowerRule = new SimpleReplaceRule<TContext>(code.ToLower(), replace);
-				var upperRule = new SimpleReplaceRule<TContext>(code.ToUpper(), replace);
+				var lowerRule = new SimpleReplaceRule<TContext, TDomain>(code.ToLower(), replace);
+				var upperRule = new SimpleReplaceRule<TContext, TDomain>(code.ToUpper(), replace);
 
 				// increase the rank as we go...
 				lowerRule.RuleRank = lowerRule.RuleRank + 100 + codeOffset;
@@ -347,21 +345,21 @@
 			}
 			//if (convertBBQuotes)
 			//{
-			AddRule(new SyntaxHighlightedCodeRegexReplaceRule<TContext>(_rgxCode2, langCode => "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", _getLocString("Code", langCode))) { RuleRank = 41 });
-			AddRule(new CodeRegexReplaceRule<TContext>(_rgxCode1, langCode =>  "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", _getLocString("Code", langCode))));
+			AddRule(new SyntaxHighlightedCodeRegexReplaceRule<TContext, TDomain>(_rgxCode2, langCode => "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", _getLocString("Code", langCode))) { RuleRank = 41 });
+			AddRule(new CodeRegexReplaceRule<TContext, TDomain>(_rgxCode1, langCode =>  "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", _getLocString("Code", langCode))));
 
 			//ForumPage page = new ForumPage();
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxQuote2, "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put("${quote}", "${inner}"), new[] { "quote" }) { RuleRank = 63 });
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxQuote1, langCode => "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put($"{_getLocString("Quote", langCode)}:", "${inner}")) { RuleRank = 64 });
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxQuote2, "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put("${quote}", "${inner}"), new[] { "quote" }) { RuleRank = 63 });
+			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxQuote1, langCode => "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put($"{_getLocString("Quote", langCode)}:", "${inner}")) { RuleRank = 64 });
 			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, langCode => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute("~/posts/m/${id}/", langCode), _toFullAbsolute("~/images/icon_latest_reply.gif", langCode), _getLocString("GoTo", langCode), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
 			//}
 			AddRule(new TopicRegexReplaceRule(this, _rgxPost, "<a {0} href=\"${post}\">${inner}</a>".Replace("{0}", _blank), singleLine));
 			AddRule(new TopicRegexReplaceRule(this, _rgxTopic, "<a {0} href=\"${topic}\">${inner}</a>".Replace("{0}", _blank), singleLine));
 			AddRule(new TopicRegexReplaceRule(this, _rgxMessage, "<a {0} href=\"${message}\">${inner}</a>".Replace("{0}", _blank), singleLine));
 
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxYouTube, "<iframe width=\"640\" height=\"390\" src=\"//www.youtube.com/embed/${id}\" frameborder=\"0\" allowfullscreen></iframe>", new[] { "id" }));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxYouTube2, "<iframe width=\"640\" height=\"390\" src=\"//www.youtube.com/embed/${id}\" frameborder=\"0\" allowfullscreen></iframe>", new[] { "id" }));
-			AddRule(new VariableRegexReplaceRule<TContext>(_rgxVimeo, "<iframe width=\"560\" height=\"350\" src=\"https://player.vimeo.com/video/${vimeoId}?show_title=1&show_byline=1&show_portrait=1&&fullscreen=1\" frameborder=\"0\"></iframe>", new[] { "prefix", "vimeoId" }));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxYouTube, "<iframe width=\"640\" height=\"390\" src=\"//www.youtube.com/embed/${id}\" frameborder=\"0\" allowfullscreen></iframe>", new[] { "id" }));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxYouTube2, "<iframe width=\"640\" height=\"390\" src=\"//www.youtube.com/embed/${id}\" frameborder=\"0\" allowfullscreen></iframe>", new[] { "id" }));
+			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxVimeo, "<iframe width=\"560\" height=\"350\" src=\"https://player.vimeo.com/video/${vimeoId}?show_title=1&show_byline=1&show_portrait=1&&fullscreen=1\" frameborder=\"0\"></iframe>", new[] { "prefix", "vimeoId" }));
 			AddRule(new FacebookRule(new Regex(@"\[fb\]https:\/\/www.facebook.com\/(?<innerUrl>.+)\[/fb\]", singleLine)));
 
 			AddRule(new UserRule(this, _rgxUser, "<a href='${url}'>${name}</a>"));
@@ -410,24 +408,24 @@
 				builder.ReplaceIgnoreCase("http://", "https://");
 		}
 
-		private class VariableRegexReplaceRuleEx : VariableRegexReplaceRule<TContext>
+		private class VariableRegexReplaceRuleEx : VariableRegexReplaceRule<TContext, TDomain>
 		{
-			private readonly Func<string, string> _getRegExReplace;
-			private readonly BB2HtmlFormatter<TContext> _parent;
+			private readonly Func<TDomain, string> _getRegExReplace;
+			private readonly BB2HtmlFormatter<TContext, TDomain> _parent;
 
-			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, int truncateLength)
+			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext, TDomain> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, int truncateLength)
 				: base(regExSearch, regExReplace, variables, varDefaults, truncateLength)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables)
+			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext, TDomain> parent, Regex regExSearch, string regExReplace, string[] variables)
 				: base(regExSearch, regExReplace, variables)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, Func<string, string> getRegExReplace, string[] variables)
+			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext, TDomain> parent, Regex regExSearch, Func<TDomain, string> getRegExReplace, string[] variables)
 				: base(regExSearch, null, variables)
 			{
 				_getRegExReplace = getRegExReplace ?? throw new ArgumentNullException(nameof(getRegExReplace));
@@ -437,11 +435,12 @@
 			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var sb = new StringBuilder(text);
+				var domain = context.Domain;
 
 				var m = RegExSearch.Match(text);
 				while (m.Success)
 				{
-					var innerReplace = new StringBuilder((_getRegExReplace ?? RegExReplace).Invoke(context.LangCode));
+					var innerReplace = new StringBuilder((_getRegExReplace ?? RegExReplace).Invoke(context.Domain));
 					var i = 0;
 
 					foreach (var tVar in Variables)
@@ -478,15 +477,15 @@
 						  "${innertrunc}", m.Groups["inner"].Value.TruncateMiddle(TruncateLength));
 					}
 
-					var (langCode, isAway, noFollow) = _parent._getUrlInfo(innerReplace.ToString());
+					var (urlDomain, isAway, noFollow) = _parent._getUrlInfo(innerReplace.ToString());
 
-					if (!langCode.IsEmpty())
+					if (!urlDomain.IsDefault())
 					{
 						innerReplace.Replace(_blank + " ", string.Empty);
 
 						if (!context.IsUrlLocalizeDisabled)
 						{
-							_parent._localizeUrl(langCode, context.LangCode, innerReplace);
+							_parent._localizeUrl(urlDomain, domain, innerReplace);
 							ReplaceSchema(innerReplace, context);
 						}
 
@@ -500,7 +499,7 @@
 						var start = str.IndexOfIgnoreCase("href=") + 6;
 						var end = str.IndexOfIgnoreCase("\"", start);
 						innerReplace.Remove(start, end - start);
-						innerReplace.Insert(start, $"{context.Scheme}://{_parent._getHost(context.LangCode)}/away/?u={_parent._encryptUrl(str.Substring(start, end - start))}");
+						innerReplace.Insert(start, $"{context.Scheme}://{_parent._getHost(domain)}/away/?u={_parent._encryptUrl(str.Substring(start, end - start))}");
 					}
 
 					// pulls the htmls into the replacement collection before it's inserted back into the main text
@@ -547,17 +546,17 @@
 			return html.EncodeToHtml();
 		}
 
-		private class UrlRule : VariableRegexReplaceRule<TContext>
+		private class UrlRule : VariableRegexReplaceRule<TContext, TDomain>
 		{
-			private readonly BB2HtmlFormatter<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext, TDomain> _parent;
 
-			public UrlRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, int truncateLength)
+			public UrlRule(BB2HtmlFormatter<TContext, TDomain> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, int truncateLength)
 				: base(regExSearch, regExReplace, variables, varDefaults, truncateLength)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public UrlRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults)
+			public UrlRule(BB2HtmlFormatter<TContext, TDomain> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults)
 				: base(regExSearch, regExReplace, variables, varDefaults)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -566,10 +565,11 @@
 			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
+				var domain = context.Domain;
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.LangCode));
+					var sb = new StringBuilder(RegExReplace(context.Domain));
 					var index = 0;
 
 					var url = match.Groups["url"].Value;
@@ -611,15 +611,14 @@
 					{
 						var file = _parent._getFile(id);
 
-						var langCode = context.LangCode;
-						url = _parent._toFullAbsolute(_parent._getFileUrl(file?.Id ?? id, langCode), langCode);
+						url = _parent._toFullAbsolute(_parent._getFileUrl(file?.Id ?? id, domain), domain);
 
 						if (hasTitle)
 							sb.Replace("${url}", url);
 						else
 							inner = url;
 
-						if (file?.GetName(langCode).IsImage() == true)
+						if (file?.GetName(domain).IsImage() == true)
 						{
 							sb.Replace("title=", $"data-preview-id='{id}' title=");
 						}
@@ -634,15 +633,15 @@
 
 					if (!isId)
 					{
-						var (langCode, away, noFollow) = _parent._getUrlInfo(sb.ToString());
+						var (urlDomain, away, noFollow) = _parent._getUrlInfo(sb.ToString());
 
-						if (!langCode.IsEmpty())
+						if (!urlDomain.IsDefault())
 						{
 							sb.Replace(_blank + " ", string.Empty);
 
 							if (!context.IsUrlLocalizeDisabled)
 							{
-								_parent._localizeUrl(langCode, context.LangCode, sb);
+								_parent._localizeUrl(urlDomain, domain, sb);
 								ReplaceSchema(sb, context);
 							}
 						}
@@ -655,7 +654,7 @@
 							var start = str.IndexOfIgnoreCase("href=") + 6;
 							var end = str.IndexOfIgnoreCase("\"", start);
 							sb.Remove(start, end - start);
-							sb.Insert(start, $"{context.Scheme}://{_parent._getHost(context.LangCode)}/away/?u={_parent._encryptUrl(str.Substring(start, end - start))}");
+							sb.Insert(start, $"{context.Scheme}://{_parent._getHost(domain)}/away/?u={_parent._encryptUrl(str.Substring(start, end - start))}");
 						}
 						else if (noFollow)
 						{
@@ -676,11 +675,11 @@
 			}
 		}
 
-		private class SpoilerRule : SimpleRegexReplaceRule<TContext>
+		private class SpoilerRule : SimpleRegexReplaceRule<TContext, TDomain>
 		{
-			private readonly BB2HtmlFormatter<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext, TDomain> _parent;
 			
-			public SpoilerRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch)
+			public SpoilerRule(BB2HtmlFormatter<TContext, TDomain> parent, Regex regExSearch)
 				: base(regExSearch, "<div class='spoilertitle'>${inner}</div>")
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -690,15 +689,15 @@
 			{
 				var builder = new StringBuilder(text);
 
-				var langCode = context.LangCode;
+				var domain = context.Domain;
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.LangCode));
+					var sb = new StringBuilder(RegExReplace(domain));
 
 					var id = _parent._generateId("spolier");
 
-					sb.Replace("${inner}", $@"<input type='button' value='{_parent._getLocString("ShowSpoiler", langCode)}' class='btn btn-primary' onclick=""toggleSpoiler(this, '{id}');"" title='{_parent._getLocString("ShowSpoiler", langCode)}' /></div><div class='spoilerbox' id='{id}' style='display:none'>" + match.Groups["inner"].Value);
+					sb.Replace("${inner}", $@"<input type='button' value='{_parent._getLocString("ShowSpoiler", domain)}' class='btn btn-primary' onclick=""toggleSpoiler(this, '{id}');"" title='{_parent._getLocString("ShowSpoiler", domain)}' /></div><div class='spoilerbox' id='{id}' style='display:none'>" + match.Groups["inner"].Value);
 
 					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
@@ -711,7 +710,7 @@
 			}
 		}
 
-		private class HtmlRule : SimpleRegexReplaceRule<TContext>
+		private class HtmlRule : SimpleRegexReplaceRule<TContext, TDomain>
 		{
 			public HtmlRule(Regex regExSearch)
 				: base(regExSearch, "<span>${inner}</span>")
@@ -724,7 +723,7 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.LangCode));
+					var sb = new StringBuilder(RegExReplace(context.Domain));
 
 					var html = match.Groups["inner"].Value;
 
@@ -744,7 +743,7 @@
 			}
 		}
 
-		private class FacebookRule : VariableRegexReplaceRule<TContext>
+		private class FacebookRule : VariableRegexReplaceRule<TContext, TDomain>
 		{
 			public FacebookRule(Regex regex)
 				: base(regex, "<iframe src=\"https://www.facebook.com/plugins/post.php?href=${url}&width=500&show_text=true&height=573&appId\" width=\"500\" height=\"573\" style=\"border:none;overflow:hidden\" scrolling=\"no\" frameborder=\"0\" allowfullscreen=\"true\" allow=\"autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share\"></iframe>", new[] { "innerUrl" })
@@ -757,7 +756,7 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.LangCode));
+					var sb = new StringBuilder(RegExReplace(context.Domain));
 					var url = match.Groups["innerUrl"].Value;
 
 					sb.Replace("${url}", $"https://www.facebook.com/{url}".EncodeUrl());
@@ -773,11 +772,11 @@
 			}
 		}
 
-		private class UserRule : SimpleRegexReplaceRule<TContext>
+		private class UserRule : SimpleRegexReplaceRule<TContext, TDomain>
 		{
-			private readonly BB2HtmlFormatter<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext, TDomain> _parent;
 
-			public UserRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace)
+			public UserRule(BB2HtmlFormatter<TContext, TDomain> parent, Regex regExSearch, string regExReplace)
 				: base(regExSearch, regExReplace)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -787,18 +786,19 @@
 			{
 				var builder = new StringBuilder(text);
 
+				var domain = context.Domain;
+
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.LangCode));
+					var sb = new StringBuilder(RegExReplace(domain));
 					var idStr = match.Groups["id"].Value;
 
 					if (long.TryParse(idStr, out var id))
 					{
 						var client = _parent._getUser(id);
-						var langCode = context.LangCode;
 
-						sb.Replace("${url}", _parent._toFullAbsolute(_parent._getUserUrl(client.Id, langCode), langCode));
-						sb.Replace("${name}", client.GetName(langCode)?.CheckUrl());
+						sb.Replace("${url}", _parent._toFullAbsolute(_parent._getUserUrl(client.Id, domain), domain));
+						sb.Replace("${name}", client.GetName(domain)?.CheckUrl());
 					}
 					else
 					{
@@ -817,11 +817,11 @@
 			}
 		}
 
-		private class PackageRule : SimpleRegexReplaceRule<TContext>
+		private class PackageRule : SimpleRegexReplaceRule<TContext, TDomain>
 		{
-			private readonly BB2HtmlFormatter<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext, TDomain> _parent;
 
-			public PackageRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace)
+			public PackageRule(BB2HtmlFormatter<TContext, TDomain> parent, Regex regExSearch, string regExReplace)
 				: base(regExSearch, regExReplace)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -833,13 +833,13 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.LangCode));
+					var sb = new StringBuilder(RegExReplace(context.Domain));
 
 					var packageId = match.Groups["id"].Value;
 
 					if (!packageId.IsEmpty())
 					{
-						sb.Replace("${url}", _parent._getPackageFullUrl(packageId, context.LangCode));
+						sb.Replace("${url}", _parent._getPackageFullUrl(packageId, context.Domain));
 						sb.Replace("${name}", packageId);
 					}
 					else
@@ -859,11 +859,11 @@
 			}
 		}
 
-		private class ProductRule : SimpleRegexReplaceRule<TContext>
+		private class ProductRule : SimpleRegexReplaceRule<TContext, TDomain>
 		{
-			private readonly BB2HtmlFormatter<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext, TDomain> _parent;
 
-			public ProductRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace)
+			public ProductRule(BB2HtmlFormatter<TContext, TDomain> parent, Regex regExSearch, string regExReplace)
 				: base(regExSearch, regExReplace)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -873,19 +873,20 @@
 			{
 				var builder = new StringBuilder(text);
 
+				var domain = context.Domain;
+
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.LangCode));
+					var sb = new StringBuilder(RegExReplace(domain));
 
 					var idStr = match.Groups["id"].Value;
 
 					if (long.TryParse(idStr, out var id))
 					{
 						var product = _parent._getProduct(id);
-						var langCode = context.LangCode;
 
-						sb.Replace("${url}", _parent._toFullAbsolute(_parent._getProductUrl(product.Id, langCode, product.GetUrlPart(langCode)), langCode));
-						sb.Replace("${name}", product.GetName(langCode));
+						sb.Replace("${url}", _parent._toFullAbsolute(_parent._getProductUrl(product.Id, domain, product.GetUrlPart(domain)), domain));
+						sb.Replace("${name}", product.GetName(domain));
 					}
 					else
 					{
@@ -904,11 +905,11 @@
 			}
 		}
 
-		private class Product2Rule : SimpleRegexReplaceRule<TContext>
+		private class Product2Rule : SimpleRegexReplaceRule<TContext, TDomain>
 		{
-			private readonly BB2HtmlFormatter<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext, TDomain> _parent;
 
-			public Product2Rule(BB2HtmlFormatter<TContext> parent)
+			public Product2Rule(BB2HtmlFormatter<TContext, TDomain> parent)
 				: base(new Regex(@"\[product=(?<id>([0-9]*))\](?<inner>(.*?))\[/product\]", RegexOptions.Singleline | RegexOptions.IgnoreCase), "<a href='${url}'>${inner}</a>")
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -917,10 +918,11 @@
 			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
+				var domain = context.Domain;
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.LangCode));
+					var sb = new StringBuilder(RegExReplace(domain));
 
 					var idStr = match.Groups["id"].Value;
 					var inner = match.Groups["inner"].Value;
@@ -931,12 +933,10 @@
 
 						if (product != null)
 						{
-							var langCode = context.LangCode;
-
-							sb.Replace("${url}", _parent._toFullAbsolute(_parent._getProductUrl(product.Id, langCode, product.GetUrlPart(langCode)), langCode));
+							sb.Replace("${url}", _parent._toFullAbsolute(_parent._getProductUrl(product.Id, domain, product.GetUrlPart(domain)), domain));
 
 							if (inner.IsEmpty())
-								inner = product.GetName(langCode);
+								inner = product.GetName(domain);
 						}
 						else
 							sb.Replace("${url}", idStr);
@@ -966,11 +966,11 @@
 			}
 		}
 
-		private class DynamicPageRule : SimpleRegexReplaceRule<TContext>
+		private class DynamicPageRule : SimpleRegexReplaceRule<TContext, TDomain>
 		{
-			private readonly BB2HtmlFormatter<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext, TDomain> _parent;
 
-			public DynamicPageRule(BB2HtmlFormatter<TContext> parent)
+			public DynamicPageRule(BB2HtmlFormatter<TContext, TDomain> parent)
 				: base(new Regex(@"\[page=(?<id>([0-9]*))\](?<inner>(.*?))\[/page\]", RegexOptions.Singleline | RegexOptions.IgnoreCase), "<a href='${url}'>${inner}</a>")
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -979,10 +979,11 @@
 			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
+				var domain = context.Domain;
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.LangCode));
+					var sb = new StringBuilder(RegExReplace(domain));
 
 					var idStr = match.Groups["id"].Value;
 					var inner = match.Groups["inner"].Value;
@@ -993,12 +994,10 @@
 
 						if (page != null)
 						{
-							var langCode = context.LangCode;
-
-							sb.Replace("${url}", _parent._toFullAbsolute(page.GetUrlPart(langCode), langCode));
+							sb.Replace("${url}", _parent._toFullAbsolute(page.GetUrlPart(domain), domain));
 
 							if (inner.IsEmpty())
-								inner = page.GetHeader(langCode);
+								inner = page.GetHeader(domain);
 						}
 						else
 							sb.Replace("${url}", idStr);
@@ -1028,11 +1027,11 @@
 			}
 		}
 
-		private class ImageRule : VariableRegexReplaceRule<TContext>
+		private class ImageRule : VariableRegexReplaceRule<TContext, TDomain>
 		{
-			private readonly BB2HtmlFormatter<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext, TDomain> _parent;
 
-			public ImageRule(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults)
+			public ImageRule(BB2HtmlFormatter<TContext, TDomain> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults)
 				: base(regExSearch, regExReplace, variables, varDefaults)
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -1041,10 +1040,11 @@
 			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
+				var domain = context.Domain;
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
-					var sb = new StringBuilder(RegExReplace(context.LangCode));
+					var sb = new StringBuilder(RegExReplace(domain));
 					var index = 0;
 
 					var imgUrl = match.Groups["inner"].Value;
@@ -1079,12 +1079,12 @@
 
 					if (!isId && !imgUrl.IsEmpty() && !context.IsUrlLocalizeDisabled)
 					{
-						var (langCode, _, _) = _parent._getUrlInfo(imgUrl);
+						var (urlDomain, _, _) = _parent._getUrlInfo(imgUrl);
 
-						if (!langCode.IsEmpty())
+						if (!urlDomain.IsDefault())
 						{
 							var imgUrlBuilder = new StringBuilder(imgUrl);
-							_parent._localizeUrl(langCode, context.LangCode, imgUrlBuilder);
+							_parent._localizeUrl(urlDomain, domain, imgUrlBuilder);
 							ReplaceSchema(imgUrlBuilder, context);
 							imgUrl = imgUrlBuilder.ToString();
 						}
@@ -1101,11 +1101,10 @@
 					if (isId)
 					{
 						var file = _parent._getFile(fileId);
-						var langCode = context.LangCode;
 
-						var url = _parent._toFullAbsolute(_parent._getFileUrl(fileId, langCode), langCode);
+						var url = _parent._toFullAbsolute(_parent._getFileUrl(fileId, domain), domain);
 
-						var fileName = file?.GetName(langCode);
+						var fileName = file?.GetName(domain);
 						var isGif = Path.GetExtension(fileName).EqualsIgnoreCase(".gif");
 
 						if (!context.PreventScaling)
@@ -1236,11 +1235,11 @@
 			}
 		}
 
-		private class TopicRegexReplaceRule : VariableRegexReplaceRule<TContext>
+		private class TopicRegexReplaceRule : VariableRegexReplaceRule<TContext, TDomain>
 		{
-			private readonly BB2HtmlFormatter<TContext> _parent;
+			private readonly BB2HtmlFormatter<TContext, TDomain> _parent;
 
-			public TopicRegexReplaceRule(BB2HtmlFormatter<TContext> parent, string regExSearch, string regExReplace, RegexOptions regExOptions)
+			public TopicRegexReplaceRule(BB2HtmlFormatter<TContext, TDomain> parent, string regExSearch, string regExReplace, RegexOptions regExOptions)
 				: base(regExSearch, regExReplace, regExOptions, new[] { "post", "topic", "message" })
 			{
 				RuleRank = 200;
@@ -1253,15 +1252,15 @@
 				{
 					if (long.TryParse(variableValue, out var id))
 					{
-						var langCode = context.LangCode;
+						var domain = context.Domain;
 
 						switch (variableName)
 						{
 							case "post":
 							case "message":
-								return _parent._toFullAbsolute(_parent._getMessageUrl(id, langCode), langCode);
+								return _parent._toFullAbsolute(_parent._getMessageUrl(id, domain), domain);
 							case "topic":
-								return _parent._toFullAbsolute(_parent._getTopicUrl(id, langCode), langCode);
+								return _parent._toFullAbsolute(_parent._getTopicUrl(id, domain), domain);
 						}
 					}
 				}

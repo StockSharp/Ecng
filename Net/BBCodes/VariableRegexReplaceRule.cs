@@ -1,6 +1,5 @@
 ﻿namespace Ecng.Net.BBCodes
 {
-	using System;
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Web;
@@ -12,8 +11,8 @@
 	/// <summary>
 	/// For complex regex with variable/default and truncate support
 	/// </summary>
-	public class VariableRegexReplaceRule<TContext> : SimpleRegexReplaceRule<TContext>
-		where TContext : BBCodesContext
+	public class VariableRegexReplaceRule<TContext, TDomain> : SimpleRegexReplaceRule<TContext, TDomain>
+		where TContext : BBCodesContext<TDomain>
   {
     #region Constants and Fields
 
@@ -202,7 +201,7 @@
       {
 	    cancellationToken.ThrowIfCancellationRequested();
 
-        var innerReplace = new StringBuilder(RegExReplace(context.LangCode));
+        var innerReplace = new StringBuilder(RegExReplace(context.Domain));
         int i = 0;
 
         foreach (string tVar in Variables)

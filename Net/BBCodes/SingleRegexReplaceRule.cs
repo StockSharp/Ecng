@@ -8,8 +8,8 @@
 	/// <summary>
 	/// For basic regex with no variables
 	/// </summary>
-	public class SingleRegexReplaceRule<TContext> : SimpleRegexReplaceRule<TContext>
-		where TContext : BBCodesContext
+	public class SingleRegexReplaceRule<TContext, TDomain> : SimpleRegexReplaceRule<TContext, TDomain>
+		where TContext : BBCodesContext<TDomain>
   {
     #region Constructors and Destructors
 
@@ -53,7 +53,7 @@
 	    cancellationToken.ThrowIfCancellationRequested();
 
         // just replaces with no "inner"
-        int replaceIndex = replacement.Add(RegExReplace(context.LangCode));
+        int replaceIndex = replacement.Add(RegExReplace(context.Domain));
 
         // remove old bbcode...
         sb.Remove(m.Groups[0].Index, m.Groups[0].Length);

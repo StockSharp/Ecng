@@ -9,8 +9,8 @@
 	/// <summary>
 	/// Not regular expression, just a simple replace
 	/// </summary>
-	public class SimpleReplaceRule<TContext> : BaseReplaceRule<TContext>
-		where TContext : BBCodesContext
+	public class SimpleReplaceRule<TContext, TDomain> : BaseReplaceRule<TContext>
+		where TContext : BBCodesContext<TDomain>
   {
     #region Constants and Fields
 
@@ -22,7 +22,7 @@
     /// <summary>
     ///   The _replace.
     /// </summary>
-    private readonly Func<string, string> _replace;
+    private readonly Func<TDomain, string> _replace;
 
     #endregion
 
@@ -37,7 +37,7 @@
     /// <param name="replace">
     /// The replace.
     /// </param>
-    public SimpleReplaceRule(string find, Func<string, string> replace)
+    public SimpleReplaceRule(string find, Func<TDomain, string> replace)
     {
       _find = find;
       _replace = replace;
@@ -87,7 +87,7 @@
         if (index >= 0)
         {
           // replace it...
-          int replaceIndex = replacement.Add(_replace(context.LangCode));
+          int replaceIndex = replacement.Add(_replace(context.Domain));
           text = text.Substring(0, index) + replacement.Get(replaceIndex) +
                  text.Substring(index + _find.Length);
         }

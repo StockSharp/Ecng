@@ -4,26 +4,26 @@
 
 	using Ecng.Common;
 
-	public class BBCodesContext
+	public class BBCodesContext<TDomain>
 	{
-		public BBCodesContext(bool preventScaling, bool allowHtml, string langCode, bool isUrlLocalizeDisabled, string scheme)
+		public BBCodesContext(bool preventScaling, bool allowHtml, TDomain domain, bool isUrlLocalizeDisabled, string scheme)
 		{
-			if (langCode.IsEmpty())
-				throw new ArgumentNullException(nameof(langCode));
+			if (domain.IsDefault())
+				throw new ArgumentNullException(nameof(domain));
 
 			if (scheme.IsEmpty())
 				throw new ArgumentNullException(nameof(scheme));
 
 			PreventScaling = preventScaling;
 			AllowHtml = allowHtml;
-			LangCode = langCode;
+			Domain = domain;
 			IsUrlLocalizeDisabled = isUrlLocalizeDisabled;
 			Scheme = scheme;
 		}
 
 		public readonly bool PreventScaling;
 		public readonly bool AllowHtml;
-		public readonly string LangCode;
+		public readonly TDomain Domain;
 		public readonly bool IsUrlLocalizeDisabled;
 		public readonly string Scheme;
 	}

@@ -1,4 +1,4 @@
-﻿namespace Ecng.EcngTest.Net
+﻿namespace Ecng.Test.Net
 {
 	using System;
 	using System.Text;
@@ -17,7 +17,7 @@
 	[TestClass]
 	public class BBCodesTests
 	{
-		private class NamedObjectImpl : IPageObject
+		private class NamedObjectImpl : IPageObject<string>
 		{
 			public string GetName(string langCode) => Name;
 
@@ -27,11 +27,11 @@
 
 			public string UrlPart { get; set; }
 
-			string IProductObject.GetUrlPart(string langCode) => UrlPart;
-			string IPageObject.GetHeader(string langCode) => Name;
+			string IProductObject<string>.GetUrlPart(string langCode) => UrlPart;
+			string IPageObject<string>.GetHeader(string langCode) => Name;
 		}
 
-		private class RoleRule : BaseReplaceRule<BBCodesContext>
+		private class RoleRule : BaseReplaceRule<BBCodesContext<string>>
 		{
 			private readonly Regex _regex;
 
@@ -40,7 +40,7 @@
 				_regex = new Regex(@"\[role=(?<id>([0-9]*))\](?<inner>(.|\n)*)\[/role\]", RegexOptions.Multiline | RegexOptions.IgnoreCase);
 			}
 
-			public override Task<string> ReplaceAsync(BBCodesContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override Task<string> ReplaceAsync(BBCodesContext<string> context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -69,13 +69,13 @@
 			}
 		}
 
-		private static BBCodesContext CreateContext(bool allowHtml)
+		private static BBCodesContext<string> CreateContext(bool allowHtml)
 			=> new(false, allowHtml, LangCodes.En, false, Uri.UriSchemeHttps);
 
 		private static readonly Regex _isStockSharpEn = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static readonly Regex _isStockSharpRu = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-		private static BB2HtmlFormatter<BBCodesContext> CreateBBService()
+		private static BB2HtmlFormatter<BBCodesContext<string>, string> CreateBBService()
 		{
 			static string GetProductLink(long id, string langCode, string urlPart)
 			{
@@ -104,7 +104,7 @@
 				return new Url(virtualPath).ToString();
 			}
 
-			static IProductObject GetProduct(long id)
+			static IProductObject<string> GetProduct(long id)
 			{
 				return id switch
 				{
@@ -113,7 +113,7 @@
 				};
 			}
 
-			static INamedObject GetUser(long id)
+			static INamedObject<string> GetUser(long id)
 			{
 				return id switch
 				{
@@ -122,7 +122,7 @@
 				};
 			}
 
-			static IPageObject GetPage(long id)
+			static IPageObject<string> GetPage(long id)
 			{
 				return id switch
 				{
@@ -131,7 +131,7 @@
 				};
 			}
 
-			var bb = new BB2HtmlFormatter<BBCodesContext>(
+			var bb = new BB2HtmlFormatter<BBCodesContext<string>, string> (
 				(id, langCode) => $"~/file/{id}/", (id, langCode) => $"~/users/{id}/",
 				GetProductLink, GetPackageLink, (id, langCode) => $"~/topic/{id}/",
 				(id, langCode) => $"~/posts/m/{id}/", s => s, ToFullAbsolute,

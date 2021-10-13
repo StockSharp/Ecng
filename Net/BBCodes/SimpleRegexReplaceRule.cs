@@ -6,19 +6,18 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using Ecng.Localization;
-
 	/// <summary>
 	/// For basic regex with no variables
 	/// </summary>
-	public class SimpleRegexReplaceRule<TContext> : BaseReplaceRule<TContext>
+	public class SimpleRegexReplaceRule<TContext, TDomain> : BaseReplaceRule<TContext>
+		where TContext : BBCodesContext<TDomain>
   {
     #region Constants and Fields
 
     /// <summary>
     ///   The _reg ex replace.
     /// </summary>
-    protected readonly Func<string, string> RegExReplace;
+    protected readonly Func<TDomain, string> RegExReplace;
 
     /// <summary>
     ///   The _reg ex search.
@@ -72,7 +71,7 @@
     /// <param name="regExOptions">
     /// The reg ex options.
     /// </param>
-    public SimpleRegexReplaceRule(string regExSearch, Func<string, string> regExReplace, RegexOptions regExOptions)
+    public SimpleRegexReplaceRule(string regExSearch, Func<TDomain, string> regExReplace, RegexOptions regExOptions)
     {
       RegExSearch = new Regex(regExSearch, regExOptions);
       RegExReplace = regExReplace;
@@ -87,7 +86,7 @@
     /// <param name="regExReplace">
     /// The reg ex replace.
     /// </param>
-    public SimpleRegexReplaceRule(Regex regExSearch, Func<string, string> regExReplace)
+    public SimpleRegexReplaceRule(Regex regExSearch, Func<TDomain, string> regExReplace)
     {
       RegExSearch = regExSearch;
       RegExReplace = regExReplace;
@@ -130,7 +129,7 @@
       {
 	    cancellationToken.ThrowIfCancellationRequested();
 
-        string replaceString = RegExReplace(LangCodes.En).Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
+        string replaceString = RegExReplace(context.Domain).Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
 
         // pulls the htmls into the replacement collection before it's inserted back into the main text
         replacement.ReplaceHtmlFromText(ref replaceString, cancellationToken);
