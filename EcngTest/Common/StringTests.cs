@@ -1,6 +1,7 @@
 namespace Ecng.Test.Common
 {
 	using System;
+	using System.Globalization;
 
 	using Ecng.Common;
 	using Ecng.UnitTesting;
@@ -62,6 +63,17 @@ namespace Ecng.Test.Common
 		public void ReplaceIgnoreCaseError4()
 		{
 			"11".ReplaceIgnoreCase("11", null);
+		}
+
+		[TestMethod]
+		public void LangCode()
+		{
+			var cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
+
+			foreach (var culture in cultures)
+			{
+				culture.Name.GetLangCode().AssertEqual(culture.TwoLetterISOLanguageName);
+			}
 		}
 	}
 }

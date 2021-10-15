@@ -1213,5 +1213,8 @@
 
 		public static char ToUpper(this char c, bool invariant = true)
 			=> invariant ? char.ToUpperInvariant(c) : char.ToUpper(c);
+
+		public static string GetLangCode(this string cultureName)
+			=> cultureName.To<CultureInfo>().TwoLetterISOLanguageName;
 	}
 }
