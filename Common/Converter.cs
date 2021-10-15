@@ -389,6 +389,8 @@
 			AddTypedConverter<string, char>(char.Parse);
 			AddTypedConverter<OSPlatform, string>(input => input.ToString());
 			AddTypedConverter<string, OSPlatform>(OSPlatform.Create);
+			AddTypedConverter<CultureInfo, string>(input => input.Name);
+			AddTypedConverter<string, CultureInfo>(CultureInfo.GetCultureInfo);
 		}
 
 		public static void AddTypedConverter<TFrom, TTo>(Func<TFrom, TTo> converter)
