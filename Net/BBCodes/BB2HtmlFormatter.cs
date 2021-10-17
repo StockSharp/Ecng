@@ -100,7 +100,7 @@
 		private readonly Func<long, IPageObject<TDomain>> _getPage;
 		private readonly Func<string, string> _generateId;
 		private readonly Func<TDomain, string> _getHost;
-		private readonly Func<string, (TDomain domain, bool isAway, bool noFollow)> _getUrlInfo;
+		private readonly Func<string, (TDomain domain, bool isAway, bool noFollow, bool isBlank)> _getUrlInfo;
 		private readonly Action<TDomain, TDomain, StringBuilder> _localizeUrl;
 		private readonly Func<string, string> _urlEscape;
 
@@ -120,7 +120,7 @@
 			Func<long, IPageObject<TDomain>> getPage,
 			Func<string, string> generateId,
 			Func<TDomain, string> getHost,
-			Func<string, (TDomain domain, bool isAway, bool noFollow)> getUrlInfo,
+			Func<string, (TDomain domain, bool isAway, bool noFollow, bool isBlank)> getUrlInfo,
 			Action<TDomain, TDomain, StringBuilder> localizeUrl,
 			Func<string, string> urlEscape)
 		{
@@ -482,20 +482,15 @@
 						  "${innertrunc}", m.Groups["inner"].Value.TruncateMiddle(TruncateLength));
 					}
 
-					var (urlDomain, isAway, noFollow) = _parent._getUrlInfo(innerReplace.ToString());
+					var (urlDomain, isAway, noFollow, isBlank) = _parent._getUrlInfo(innerReplace.ToString());
 
 					if (!urlDomain.IsDefault())
 					{
-						innerReplace.Replace(_blank + " ", string.Empty);
-
 						if (!context.IsUrlLocalizeDisabled)
 						{
 							_parent._localizeUrl(urlDomain, domain, innerReplace);
 							ReplaceSchema(innerReplace, context);
 						}
-
-						if (noFollow)
-							innerReplace.Replace(_noFollow + " ", string.Empty);
 					}
 
 					if (isAway)
@@ -506,6 +501,12 @@
 						innerReplace.Remove(start, end - start);
 						innerReplace.Insert(start, $"{context.Scheme}://{_parent._getHost(domain)}/away/?u={_parent._encryptUrl(str.Substring(start, end - start))}");
 					}
+
+					if (!noFollow)
+						innerReplace.Replace(_noFollow + " ", string.Empty);
+
+					if (!isBlank)
+						innerReplace.Replace(_blank + " ", string.Empty);
 
 					// pulls the htmls into the replacement collection before it's inserted back into the main text
 					replacement.ReplaceHtmlFromText(ref innerReplace, cancellationToken);
@@ -643,20 +644,16 @@
 
 					if (!isId)
 					{
-						var (urlDomain, away, noFollow) = _parent._getUrlInfo(sb.ToString());
+						var (urlDomain, away, noFollow, isBlank) = _parent._getUrlInfo(sb.ToString());
 
 						if (!urlDomain.IsDefault())
 						{
-							sb.Replace(_blank + " ", string.Empty);
-
 							if (!context.IsUrlLocalizeDisabled)
 							{
 								_parent._localizeUrl(urlDomain, domain, sb);
 								ReplaceSchema(sb, context);
 							}
 						}
-
-						sb.Replace("/forum/resource.ashx?a", "/file.aspx?t=forum&fid");
 
 						if (away)
 						{
@@ -666,12 +663,16 @@
 							sb.Remove(start, end - start);
 							sb.Insert(start, $"{context.Scheme}://{_parent._getHost(domain)}/away/?u={_parent._encryptUrl(str.Substring(start, end - start))}");
 						}
-						else if (noFollow)
+
+						if (noFollow)
 						{
 							var str = sb.ToString();
 							var start = str.IndexOfIgnoreCase("href=");
 							sb.Insert(start, _noFollow + " ");
 						}
+
+						if (!isBlank)
+							sb.Replace(_blank + " ", string.Empty);
 					}
 
 					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
@@ -1092,7 +1093,7 @@
 
 					if (!isId && !imgUrl.IsEmpty() && !context.IsUrlLocalizeDisabled)
 					{
-						var (urlDomain, _, _) = _parent._getUrlInfo(imgUrl);
+						var (urlDomain, _, _, _) = _parent._getUrlInfo(imgUrl);
 
 						if (!urlDomain.IsDefault())
 						{

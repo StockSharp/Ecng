@@ -8,7 +8,6 @@
 
 	using Ecng.Common;
 	using Ecng.Localization;
-	using Ecng.Net;
 	using Ecng.Net.BBCodes;
 	using Ecng.UnitTesting;
 
@@ -70,10 +69,11 @@
 		}
 
 		private static BB2HtmlContext<string> CreateContext(bool allowHtml)
-			=> new(false, allowHtml, LangCodes.En, false, Uri.UriSchemeHttps);
+			=> new(false, allowHtml, "com", false, Uri.UriSchemeHttps);
 
-		private static readonly Regex _isStockSharpEn = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static readonly Regex _isStockSharpCom = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static readonly Regex _isStockSharpRu = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static readonly Regex _isGitHub = new("href=\"https://github.com/stocksharp", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		private static BB2HtmlFormatter<BB2HtmlContext<string>, string> CreateBBService()
 		{
@@ -131,49 +131,43 @@
 				};
 			}
 
-			var bb = new BB2HtmlFormatter<BB2HtmlContext<string>, string> (
-				(id, langCode) => $"~/file/{id}/", (id, langCode) => $"~/users/{id}/",
-				GetProductLink, GetPackageLink, (id, langCode) => $"~/topic/{id}/",
-				(id, langCode) => $"~/posts/m/{id}/", s => s, ToFullAbsolute,
-				(key, langCode) =>
+			var bb = new BB2HtmlFormatter<BB2HtmlContext<string>, string>(
+				(id, domain) => $"~/file/{id}/", (id, domain) => $"~/users/{id}/",
+				GetProductLink, GetPackageLink, (id, domain) => $"~/topic/{id}/",
+				(id, domain) => $"~/posts/m/{id}/", s => s, ToFullAbsolute,
+				(key, domain) =>
 				{
-					switch (key)
+					return key switch
 					{
-						case "ShowSpoiler":
-							return "Show spoiler";
-						case "Code":
-							return "Code";
-						default:
-							throw new ArgumentOutOfRangeException(nameof(key));
-					}
+						"ShowSpoiler" => "Show spoiler",
+						"Code" => "Code",
+						_ => throw new ArgumentOutOfRangeException(nameof(key)),
+					};
 				},
 				GetProduct, GetUser,
 				id => new NamedObjectImpl { Id = id, Name = id.To<string>() },
 				GetPage,
 				sourceUrl => $"{sourceUrl}_a6f78c5fce344124993798c028a22a3a",
-				langCode => "stocksharp.com",
+				domain => $"stocksharp.{domain}",
 				url =>
 				{
-					string langCode = null;
+					string domain = null;
 
-					if (_isStockSharpEn.IsMatch(url))
-						langCode = LangCodes.En;
+					if (_isStockSharpCom.IsMatch(url))
+						domain = "com";
 					else if (_isStockSharpRu.IsMatch(url))
-						langCode = LangCodes.Ru;
+						domain = "ru";
 
-					var isAway = langCode.IsEmpty() && !url.TrimStart().StartsWith("<a href=\"mailto:");
-
-					return (langCode, isAway, langCode?.ContainsIgnoreCase("payclick.aspx") ?? false);
+					var isGitHub = _isGitHub.IsMatch(url);
+					var isAway = domain is null && !isGitHub;
+					var noFollow = isAway;
+					var isBlank = isAway || isGitHub;
+					return (domain, isAway, noFollow, isBlank);
 				},
-				(fromLang, toLang, url) =>
+				(fromDomain, toDomain, url) =>
 				{
-					if (fromLang != toLang)
-					{
-						if (fromLang == LangCodes.En)
-							url.ReplaceIgnoreCase("stocksharp.com", "stocksharp.ru");
-						else
-							url.ReplaceIgnoreCase("stocksharp.ru", "stocksharp.com");
-					}
+					if (fromDomain != toDomain)
+						url.ReplaceIgnoreCase($"stocksharp.{fromDomain}", $"stocksharp.{toDomain}");
 				},
 				url => url.UrlEscape());
 
@@ -567,6 +561,31 @@ var i = 10;</pre>
 
 			html = "<a href=\"https://stocksharp.com/strategy%20designer/\" title=\"https://stocksharp.com/strategy%20designer/\">StockSharp Designer</a>";
 			res.AssertEqual(html);
+		}
+
+		[TestMethod]
+		public async Task Away()
+		{
+			var ctx = CreateContext(false);
+			var svc = CreateBBService();
+
+			async Task Check(string bb, string html)
+			{
+				var res = await svc.ToHtmlAsync(bb, ctx);
+				res.AssertEqual(html);
+			}
+
+			await Check("[url]https://google.com/[/url]", "<a target=\"_blank\" rel=\"nofollow\" href=\"https://stocksharp.com/away/?u=https://google.com/\" title=\"https://google.com/\">https://google.com/</a>");
+			await Check("https://google.com/", "<a target=\"_blank\" rel=\"nofollow\" href=\"https://stocksharp.com/away/?u=https://google.com\" title=\"https://google.com\">https://google.com</a>/");
+			await Check("[url]https://stocksharp.com/[/url]", "<a href=\"https://stocksharp.com/\" title=\"https://stocksharp.com/\">https://stocksharp.com/</a>");
+			await Check("[url=https://stocksharp.ru]StockSharp[/url]", "<a href=\"https://stocksharp.com\" title=\"https://stocksharp.com\">StockSharp</a>");
+			await Check("https://crowd.stocksharp.com/", "<a href=\"https://crowd.stocksharp.com\" title=\"https://crowd.stocksharp.com\">https://crowd.stocksharp.com</a>/");
+			await Check("[url=https://crowd.stocksharp.com/]crowds[/url]", "<a href=\"https://crowd.stocksharp.com/\" title=\"https://crowd.stocksharp.com/\">crowds</a>");
+			await Check("https://github.com/stocksharp/", "<a target=\"_blank\" href=\"https://github.com/stocksharp/\" title=\"https://github.com/stocksharp/\">https://github.com/stocksharp/</a>");
+			await Check("https://github.com/STOCKSHARP/", "<a target=\"_blank\" href=\"https://github.com/STOCKSHARP/\" title=\"https://github.com/STOCKSHARP/\">https://github.com/STOCKSHARP/</a>");
+			await Check("[url]https://github.com/stocksharp/algo/[/url]", "<a target=\"_blank\" href=\"https://github.com/stocksharp/algo/\" title=\"https://github.com/stocksharp/algo/\">https://github.com/stocksharp/algo/</a>");
+			await Check("[url=https://github.com/stocksharp/]github[/url]", "<a target=\"_blank\" href=\"https://github.com/stocksharp/\" title=\"https://github.com/stocksharp/\">github</a>");
+			await Check("https://doc.stocksharp.com/", "<a href=\"https://doc.stocksharp.com\" title=\"https://doc.stocksharp.com\">https://doc.stocksharp.com</a>/");
 		}
 	}
 }
