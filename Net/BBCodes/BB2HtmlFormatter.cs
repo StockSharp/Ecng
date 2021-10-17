@@ -445,6 +445,8 @@
 				var m = RegExSearch.Match(text);
 				while (m.Success)
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var innerReplace = new StringBuilder((_getRegExReplace ?? RegExReplace).Invoke(domain));
 					var i = 0;
 
@@ -532,24 +534,30 @@
 			if (text.IsEmpty())
 				return text;
 
-			text = RepairHtml(text);
+			text = await RepairHtml(text, cancellationToken);
 
 			return await _instance.ProcessAsync(context, text, cancellationToken);
 		}
 
-		private static string RepairHtml(string html)
+		private static Task<string> RepairHtml(string html, CancellationToken cancellationToken)
 		{
 			var matchs = Regex.Matches(html, "[^\r]\n[^\r]", RegexOptions.IgnoreCase);
 
 			for (var i = matchs.Count - 1; i >= 0; i--)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
 				html = html.Insert(matchs[i].Index + 1, " \r");
+			}
 
 			var matchs2 = Regex.Matches(html, "[^\r]\n\r\n[^\r]", RegexOptions.IgnoreCase);
 
 			for (var j = matchs2.Count - 1; j >= 0; j--)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
 				html = html.Insert(matchs2[j].Index + 1, " \r");
+			}
 
-			return html.EncodeToHtml();
+			return Task.FromResult(html.EncodeToHtml());
 		}
 
 		private class UrlRule : VariableRegexReplaceRule<TContext, TDomain>
@@ -575,6 +583,8 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var sb = new StringBuilder(RegExReplace(domain));
 					var index = 0;
 
@@ -704,6 +714,8 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var sb = new StringBuilder(RegExReplace(domain));
 
 					var id = _parent._generateId("spolier");
@@ -735,6 +747,8 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var sb = new StringBuilder(RegExReplace(domain));
 
 					var html = match.Groups["inner"].Value;
@@ -769,6 +783,8 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var sb = new StringBuilder(RegExReplace(domain));
 					var url = match.Groups["innerUrl"].Value;
 
@@ -803,6 +819,8 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var sb = new StringBuilder(RegExReplace(domain));
 					var idStr = match.Groups["id"].Value;
 
@@ -847,6 +865,8 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var sb = new StringBuilder(RegExReplace(domain));
 
 					var packageId = match.Groups["id"].Value;
@@ -891,6 +911,8 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var sb = new StringBuilder(RegExReplace(domain));
 
 					var idStr = match.Groups["id"].Value;
@@ -936,6 +958,8 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var sb = new StringBuilder(RegExReplace(domain));
 
 					var idStr = match.Groups["id"].Value;
@@ -997,6 +1021,8 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var sb = new StringBuilder(RegExReplace(domain));
 
 					var idStr = match.Groups["id"].Value;
@@ -1058,6 +1084,8 @@
 
 				for (var match = RegExSearch.Match(text); match.Success; match = RegExSearch.Match(builder.ToString()))
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var sb = new StringBuilder(RegExReplace(domain));
 					var index = 0;
 
@@ -1227,6 +1255,8 @@
 
 				for (var match = _regExSearch.Match(text); match.Success; match = _regExSearch.Match(builder.ToString()))
 				{
+					cancellationToken.ThrowIfCancellationRequested();
+
 					var strText = _regExReplace.Replace("${inner}", GetInnerValue(match.Groups["inner"].Value.Remove(Environment.NewLine)));
 					
 					if (_hasStyle)
