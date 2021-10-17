@@ -147,6 +147,7 @@
       // apply all rules...
       foreach (var rule in localRulesList)
       {
+	    cancellationToken.ThrowIfCancellationRequested();
         text = await rule.ReplaceAsync(context, text, mainCollection, cancellationToken);
       }
 
