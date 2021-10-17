@@ -102,6 +102,7 @@
 		private readonly Func<TDomain, string> _getHost;
 		private readonly Func<string, (TDomain domain, bool isAway, bool noFollow)> _getUrlInfo;
 		private readonly Action<TDomain, TDomain, StringBuilder> _localizeUrl;
+		private readonly Func<string, string> _urlEscape;
 
 		public BB2HtmlFormatter(
 			Func<long, TDomain, string> getFileUrl,
@@ -120,7 +121,8 @@
 			Func<string, string> generateId,
 			Func<TDomain, string> getHost,
 			Func<string, (TDomain domain, bool isAway, bool noFollow)> getUrlInfo,
-			Action<TDomain, TDomain, StringBuilder> localizeUrl)
+			Action<TDomain, TDomain, StringBuilder> localizeUrl,
+			Func<string, string> urlEscape)
 		{
 			_getFileUrl = getFileUrl ?? throw new ArgumentNullException(nameof(getFileUrl));
 			_getUserUrl = getUserUrl ?? throw new ArgumentNullException(nameof(getUserUrl));
@@ -139,6 +141,9 @@
 			_getHost = getHost ?? throw new ArgumentNullException(nameof(getHost));
 			_getUrlInfo = getUrlInfo ?? throw new ArgumentNullException(nameof(getUrlInfo));
 			_localizeUrl = localizeUrl ?? throw new ArgumentNullException(nameof(localizeUrl));
+			_urlEscape = urlEscape ?? throw new ArgumentNullException(nameof(urlEscape));
+
+			_toFullAbsolute = (url, domain) => _urlEscape(toFullAbsolute(url, domain));
 
 			const RegexOptions compiledOptions = RegexOptions.IgnoreCase | RegexOptions.Compiled;
 			const RegexOptions singleLine = RegexOptions.Singleline | compiledOptions;
@@ -179,7 +184,7 @@
 			_rgxTopic = @"\[topic=(?<topic>[^\]]*)\](?<inner>(.*?))\[/topic\]";
 			_rgxMessage = @"\[message=(?<message>[^\]]*)\](?<inner>(.*?))\[/message\]";
 			_rgxUnderline = @"\[U\](?<inner>(.*?))\[/U\]";
-			_rgxUrl1 = new Regex(@"\[url\](?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?))\[/url\]", singleLine);
+			_rgxUrl1 = new Regex(@"\[url\](?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<url>(.+?))\[/url\]", singleLine);
 			_rgxUrl2 = new Regex(@"\[url\=(?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<url>([^\]]*?))\](?<inner>(.+?))\[/url\]", singleLine);
 			//_rgxUrlId1 = new Regex(@"\[url\](?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<inner>(.+?))\[/url\]", singleLine);
 			//_rgxUrlId2 = new Regex(@"\[url\=(?<http>(skype:)|(http://)|(https://)|(ftp://)|(ftps://))?(?<url>([^\]]*?))\](?<inner>(.+?))\[/url\]", singleLine);
@@ -224,7 +229,7 @@
 			AddRule(emailRule);
 			AddRule(new SimpleRegexReplaceRule<TContext, TDomain>(_rgxEmail1, "<a href=\"mailto:${inner}\">${inner}</a>") { RuleRank = emailRule.RuleRank + 1 });
 			AddRule(new UrlRule(this, _rgxUrl2, "<a {0} href=\"${http}${url}\" title=\"${http}${url}\">${inner}</a>".Replace("{0}", _blank), new[] { "url", "http" }, new[] { string.Empty, "http://" }));
-			AddRule(new UrlRule(this, _rgxUrl1, "<a {0} href=\"${http}${inner}\" title=\"${http}${inner}\">${http}${innertrunc}</a>".Replace("{0}", _blank), new[] { "http" }, new[] { string.Empty, "http://" }, 50));
+			AddRule(new UrlRule(this, _rgxUrl1, "<a {0} href=\"${http}${url}\" title=\"${http}${url}\">${http}${innertrunc}</a>".Replace("{0}", _blank), new[] { "http" }, new[] { string.Empty, "http://" }, 50));
 			//AddRule(new UrlRule(_rgxUrlId2, "<a {0} href=\"${id}\" title=\"${id}\">${inner}</a>".Replace("{0}", _blank), new[] { "url", "http" }, new[] { string.Empty, "http://" }));
 			//AddRule(new UrlRule(_rgxUrlId1, "<a {0} href=\"${id}\" title=\"${http}${inner}\">${http}${innertrunc}</a>".Replace("{0}", _blank), new[] { "http" }, new[] { string.Empty, "http://" }, 50));
 			AddRule(new VariableRegexReplaceRule<TContext, TDomain>(_rgxModalUrl2, "<a {0} {1} href=\"${http}${url}\" title=\"${http}${url}\">${inner}</a>".Replace("{0}", _blank).Replace("{1}", "class=\"ceebox\""), new[] { "url", "http" }, new[] { string.Empty, "http://" }));
@@ -600,7 +605,12 @@
 								variableValue = VariableDefaults[index];
 							}
 
-							sb.Replace("${" + variableName + "}", ManageVariableValue(context, variableName, variableValue, handlingValue));
+							var varValue = ManageVariableValue(context, variableName, variableValue, handlingValue);
+
+							if (variableName == "url")
+								varValue = _parent._urlEscape(varValue);
+
+							sb.Replace("${" + variableName + "}", varValue);
 							index++;
 						}
 					}
@@ -613,9 +623,7 @@
 
 						url = _parent._toFullAbsolute(_parent._getFileUrl(file?.Id ?? id, domain), domain);
 
-						if (hasTitle)
-							sb.Replace("${url}", url);
-						else
+						if (!hasTitle)
 							inner = url;
 
 						if (file?.GetName(domain).IsImage() == true)
@@ -624,11 +632,13 @@
 						}
 					}
 
-					sb.Replace("${inner}", inner);
+					sb
+						.Replace("${url}", _parent._urlEscape(url))
+						.Replace("${inner}", inner);
 
 					if (TruncateLength > 0)
 					{
-						sb.Replace("${innertrunc}", match.Groups["inner"].Value.TruncateMiddle(TruncateLength));
+						sb.Replace("${innertrunc}", match.Groups["url"].Value.TruncateMiddle(TruncateLength));
 					}
 
 					if (!isId)
