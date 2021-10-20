@@ -50,6 +50,7 @@
     <SystemTextEncodingCodePagesVer>5.0.0</SystemTextEncodingCodePagesVer>
     <SystemResourcesExtensionsVer>5.0.0</SystemResourcesExtensionsVer>
 
+    <CSharpVer>4.7.0</CSharpVer>
     <MsCodeVer>3.11.0</MsCodeVer>
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
     <MsTestVer>2.2.7</MsTestVer>
