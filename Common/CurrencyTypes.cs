@@ -1315,6 +1315,114 @@ namespace Ecng.Common
 		/// </summary>
 		[EnumMember]
 		MXP,
-// ReSharper restore InconsistentNaming
+
+		/// <summary>
+		/// Malagasy ariary.
+		/// </summary>
+		[EnumMember]
+		MGA,
+
+		/// <summary>
+		/// Angolan kwanza.
+		/// </summary>
+		[EnumMember]
+		AOA,
+
+		/// <summary>
+		/// Fijian dollar.
+		/// </summary>
+		[EnumMember]
+		FJD,
+
+		/// <summary>
+		/// Congolese franc.
+		/// </summary>
+		[EnumMember]
+		CDF,
+
+		/// <summary>
+		/// Sudanese pound.
+		/// </summary>
+		[EnumMember]
+		SDG,
+
+		/// <summary>
+		/// Mauritanian ouguiya.
+		/// </summary>
+		[EnumMember]
+		MRU,
+
+		/// <summary>
+		/// Iranian rial.
+		/// </summary>
+		[EnumMember]
+		IRR,
+
+		/// <summary>
+		/// Zambian kwacha.
+		/// </summary>
+		[EnumMember]
+		ZMW,
+
+		/// <summary>
+		/// Georgian lari.
+		/// </summary>
+		[EnumMember]
+		GEL,
+
+		/// <summary>
+		/// Sao Tome and Principe dobra.
+		/// </summary>
+		[EnumMember]
+		STN,
+
+		/// <summary>
+		/// Venezuelan bolivar.
+		/// </summary>
+		[EnumMember]
+		VES,
+
+		/// <summary>
+		/// South Sudanese pound.
+		/// </summary>
+		[EnumMember]
+		SSP,
+
+		/// <summary>
+		/// Eritrean nakfa.
+		/// </summary>
+		[EnumMember]
+		ERN,
+
+		/// <summary>
+		/// Bosnia-Herzegovina Convertible Marka.
+		/// </summary>
+		[EnumMember]
+		BAM,
+
+		/// <summary>
+		/// Serbian dinar.
+		/// </summary>
+		[EnumMember]
+		RSD,
+
+		/// <summary>
+		/// Rwandan franc.
+		/// </summary>
+		[EnumMember]
+		RWF,
+
+		/// <summary>
+		/// Mozambican metical.
+		/// </summary>
+		[EnumMember]
+		MZN,
+
+		/// <summary>
+		/// Mozambican metical.
+		/// </summary>
+		[EnumMember]
+		AFN,
+		// ReSharper restore InconsistentNaming
 	}
 }
