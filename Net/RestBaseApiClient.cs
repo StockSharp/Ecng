@@ -37,6 +37,12 @@
 			DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(request.SupportedMediaTypes.First().MediaType));
 		}
 
+		protected Uri BaseAddress
+		{
+			get => _client.BaseAddress;
+			set => _client.BaseAddress = value;
+		}
+
 		protected HttpRequestHeaders DefaultRequestHeaders => _client.DefaultRequestHeaders;
 
 		protected override void DisposeManaged()
