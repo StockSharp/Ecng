@@ -62,9 +62,6 @@
 			return await response.Content.ReadAsAsync<TOutput>(new[] { _response }, cancellationToken);
 		}
 
-		protected virtual string GetName(ParameterInfo pi)
-			=> (pi.GetAttribute<RestApiParamAttribute>()?.Name).IsEmpty(pi.Name);
-
 		protected virtual object FormatRequest(IDictionary<string, object> parameters)
 			=> parameters;
 
@@ -74,20 +71,12 @@
 
 			var body = new Dictionary<string, object>();
 
-			if (parameters.Length > 0)
+			foreach (var (_, isRequired, name, value) in parameters)
 			{
-				var i = 0;
+				if (value is null && !isRequired)
+					continue;
 
-				foreach (var p in parameters)
-				{
-					var arg = args[i];
-					i++;
-
-					if (arg is null && p.GetAttribute<RestApiParamAttribute>()?.IsRequired != true)
-						continue;
-
-					body.Add(GetName(p), TryFormat(arg));
-				}
+				body.Add(name, TryFormat(value));
 			}
 
 			var response = await _client.PostAsync(url, FormatRequest(body), _request, cancellationToken);
@@ -101,7 +90,7 @@
 			if (parameters.Length > 0)
 			{
 				url = $"{url}?" + parameters
-					.Select((p, i) => ((args[i] is null || (p.ParameterType == typeof(bool) && !(bool)args[i])) && p.GetAttribute<RestApiParamAttribute>()?.IsRequired != true) ? null : $"{GetName(p)}={TryFormat(args[i])?.ToString().EncodeToHtml()}")
+					.Select(p => ((p.value is null || (p.info.ParameterType == typeof(bool) && !(bool)p.value)) && !p.isRequired) ? null : $"{p.name}={TryFormat(p.value)?.ToString().EncodeToHtml()}")
 					.Where(s => s != null)
 					.JoinAnd();
 			}
@@ -117,7 +106,7 @@
 			if (parameters.Length > 0)
 			{
 				url = $"{url}?" + parameters
-					.Select((p, i) => ((args[i] is null || (p.ParameterType == typeof(bool) && !(bool)args[i])) && p.GetAttribute<RestApiParamAttribute>()?.IsRequired != true) ? null : $"{GetName(p)}={TryFormat(args[i])?.ToString().EncodeToHtml()}")
+					.Select(p => ((p.value is null || (p.info.ParameterType == typeof(bool) && !(bool)p.value)) && !p.isRequired) ? null : $"{p.name}={TryFormat(p.value)?.ToString().EncodeToHtml()}")
 					.Where(s => s != null)
 					.JoinAnd();
 			}
@@ -138,7 +127,7 @@
 		protected static string GetCurrentMethod([CallerMemberName]string methodName = "")
 			=> methodName;
 
-		private (string url, ParameterInfo[] parameters) GetInfo(string requestUri, object[] args)
+		private (string url, (ParameterInfo info, bool isRequired, string name, object value)[] parameters) GetInfo(string requestUri, object[] args)
 		{
 			if (args is null)
 				throw new ArgumentNullException(nameof(args));
@@ -152,7 +141,11 @@
 			if (args.Length != parameters.Length)
 				throw new ArgumentOutOfRangeException(nameof(args));
 
-			return (FormatRequestUri(requestUri), parameters);
+			return (FormatRequestUri(requestUri), parameters.Select((pi, i) =>
+			{
+				var attr = pi.GetAttribute<RestApiParamAttribute>();
+				return (pi, attr?.IsRequired == true, (attr?.Name).IsEmpty(pi.Name), args[i]);
+			}).ToArray());
 		}
 
 		protected virtual object TryFormat(object arg) => arg;
