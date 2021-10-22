@@ -112,7 +112,17 @@
 
 		protected async Task<TOutput> DeleteAsync<TOutput>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
-			var response = await _client.DeleteAsync(requestUri, cancellationToken);
+			var (url, parameters) = GetInfo(requestUri, args);
+
+			if (parameters.Length > 0)
+			{
+				url = $"{url}?" + parameters
+					.Select((p, i) => ((args[i] is null || (p.ParameterType == typeof(bool) && !(bool)args[i])) && p.GetAttribute<RestApiParamAttribute>()?.IsRequired != true) ? null : $"{GetName(p)}={TryFormat(args[i])?.ToString().EncodeToHtml()}")
+					.Where(s => s != null)
+					.JoinAnd();
+			}
+
+			var response = await _client.DeleteAsync(url, cancellationToken);
 			return await GetResultAsync<TOutput>(response, cancellationToken);
 		}
 
