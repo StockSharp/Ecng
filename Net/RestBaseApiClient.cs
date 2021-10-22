@@ -68,9 +68,9 @@
 		protected virtual object FormatRequest(IDictionary<string, object> parameters)
 			=> parameters;
 
-		protected async Task<TOutput> PostAsync<TOutput>(string methodName, CancellationToken cancellationToken, params object[] args)
+		protected async Task<TOutput> PostAsync<TOutput>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
-			var (url, parameters) = GetInfo(methodName, args);
+			var (url, parameters) = GetInfo(requestUri, args);
 
 			var body = new Dictionary<string, object>();
 
@@ -94,9 +94,9 @@
 			return await GetResultAsync<TOutput>(response, cancellationToken);
 		}
 
-		protected async Task<TOutput> GetAsync<TOutput>(string methodName, CancellationToken cancellationToken, params object[] args)
+		protected async Task<TOutput> GetAsync<TOutput>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
-			var (url, parameters) = GetInfo(methodName, args);
+			var (url, parameters) = GetInfo(requestUri, args);
 
 			if (parameters.Length > 0)
 			{
@@ -110,30 +110,30 @@
 			return await GetResultAsync<TOutput>(response, cancellationToken);
 		}
 
-		protected async Task<TOutput> DeleteAsync<TOutput>(string methodName, CancellationToken cancellationToken)
+		protected async Task<TOutput> DeleteAsync<TOutput>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
-			var response = await _client.DeleteAsync(methodName, cancellationToken);
+			var response = await _client.DeleteAsync(requestUri, cancellationToken);
 			return await GetResultAsync<TOutput>(response, cancellationToken);
 		}
 
-		protected async Task<TOutput> PutAsync<TInput, TOutput>(string methodName, TInput value, CancellationToken cancellationToken)
+		protected async Task<TOutput> PutAsync<TInput, TOutput>(string requestUri, TInput value, CancellationToken cancellationToken)
 		{
-			var response = await _client.PutAsync(methodName, value, _request, cancellationToken);
+			var response = await _client.PutAsync(requestUri, value, _request, cancellationToken);
 			return await GetResultAsync<TOutput>(response, cancellationToken);
 		}
 
-		protected virtual string FormatMethodName(string methodName)
-			=> methodName.Remove("Async").ToLowerInvariant();
+		protected virtual string FormatRequestUri(string requestUri)
+			=> requestUri.Remove("Async").ToLowerInvariant();
 
 		protected static string GetCurrentMethod([CallerMemberName]string methodName = "")
 			=> methodName;
 
-		private (string url, ParameterInfo[] parameters) GetInfo(string methodName, object[] args)
+		private (string url, ParameterInfo[] parameters) GetInfo(string requestUri, object[] args)
 		{
 			if (args is null)
 				throw new ArgumentNullException(nameof(args));
 
-			var callerMethod = GetType().GetMember<MethodInfo>(methodName);
+			var callerMethod = GetType().GetMember<MethodInfo>(requestUri);
 			var parameters = callerMethod.GetParameters();
 
 			if (parameters.Length > 0 && parameters.Last().ParameterType == typeof(CancellationToken))
@@ -142,7 +142,7 @@
 			if (args.Length != parameters.Length)
 				throw new ArgumentOutOfRangeException(nameof(args));
 
-			return (FormatMethodName(methodName), parameters);
+			return (FormatRequestUri(requestUri), parameters);
 		}
 
 		protected virtual object TryFormat(object arg) => arg;
