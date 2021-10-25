@@ -132,7 +132,7 @@
 			if (args is null)
 				throw new ArgumentNullException(nameof(args));
 
-			var callerMethod = GetType().GetMember<MethodInfo>(requestUri);
+			var callerMethod = GetType().GetMember<MethodInfo>(requestUri, BindingFlags.Public | BindingFlags.Instance, null);
 			var parameters = callerMethod.GetParameters();
 
 			if (parameters.Length > 0 && parameters.Last().ParameterType == typeof(CancellationToken))
