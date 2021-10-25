@@ -19,7 +19,8 @@
 			
 			ICurrencyConverter converter = new FloatRatesCurrencyConverter(err1 => err = err1);
 			var rate = await converter.ConvertAsync(CurrencyTypes.EUR, CurrencyTypes.RUB, DateTime.Today);
-			
+			rate = await converter.ConvertAsync(CurrencyTypes.EUR, CurrencyTypes.RUB, DateTime.Today);
+
 			err.AssertNull();
 
 			(rate > 50).AssertTrue();
@@ -31,6 +32,7 @@
 		{
 			ICurrencyConverter converter = new CryptonatorCurrencyConverter();
 			var rate = await converter.ConvertAsync(CurrencyTypes.BTC, CurrencyTypes.USD, DateTime.Today);
+			rate = await converter.ConvertAsync(CurrencyTypes.BTC, CurrencyTypes.USD, DateTime.Today);
 
 			(rate > 1000).AssertTrue();
 			(rate < 100000).AssertTrue();

@@ -36,8 +36,8 @@
 
 			_rateInfo.Add(date, dict = new());
 
-			var client = new HttpClient();
-			var response = await client.GetAsync($"https://api.cryptonator.com/api/ticker/{from}-{to}", cancellationToken);
+			using var client = new HttpClient();
+			using var response = await client.GetAsync($"https://api.cryptonator.com/api/ticker/{from}-{to}", cancellationToken);
 
 			response.EnsureSuccessStatusCode();
 

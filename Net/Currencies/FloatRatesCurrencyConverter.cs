@@ -71,8 +71,8 @@
 
 			_rateInfo.Add(date, dict = new());
 
-			var client = new HttpClient();
-			var response = await client.GetAsync($"https://floatrates.com/daily/{from}.json".ToLowerInvariant(), cancellationToken);
+			using var client = new HttpClient();
+			using var response = await client.GetAsync($"https://floatrates.com/daily/{from}.json".ToLowerInvariant(), cancellationToken);
 
 			response.EnsureSuccessStatusCode();
 

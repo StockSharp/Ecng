@@ -79,7 +79,7 @@
 				body.Add(name, TryFormat(value));
 			}
 
-			var response = await _client.PostAsync(url, FormatRequest(body), _request, cancellationToken);
+			using var response = await _client.PostAsync(url, FormatRequest(body), _request, cancellationToken);
 			return await GetResultAsync<TOutput>(response, cancellationToken);
 		}
 
@@ -95,7 +95,7 @@
 					.JoinAnd();
 			}
 
-			var response = await _client.GetAsync(url, cancellationToken);
+			using var response = await _client.GetAsync(url, cancellationToken);
 			return await GetResultAsync<TOutput>(response, cancellationToken);
 		}
 
@@ -111,13 +111,13 @@
 					.JoinAnd();
 			}
 
-			var response = await _client.DeleteAsync(url, cancellationToken);
+			using var response = await _client.DeleteAsync(url, cancellationToken);
 			return await GetResultAsync<TOutput>(response, cancellationToken);
 		}
 
 		protected async Task<TOutput> PutAsync<TInput, TOutput>(string requestUri, TInput value, CancellationToken cancellationToken)
 		{
-			var response = await _client.PutAsync(requestUri, value, _request, cancellationToken);
+			using var response = await _client.PutAsync(requestUri, value, _request, cancellationToken);
 			return await GetResultAsync<TOutput>(response, cancellationToken);
 		}
 
