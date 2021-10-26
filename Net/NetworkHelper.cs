@@ -310,5 +310,7 @@ namespace Ecng.Net
 		}
 
 		public static string CheckUrl(this string str) => str.ToLatin().LightScreening().ClearUrl();
+
+		public static bool IsLoopback(this IPAddress address) => IPAddress.IsLoopback(address);
 	}
 }
