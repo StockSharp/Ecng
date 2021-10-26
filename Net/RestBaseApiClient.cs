@@ -52,20 +52,20 @@
 			base.DisposeManaged();
 		}
 
-		private async Task<TOutput> GetResultAsync<TOutput>(HttpResponseMessage response, CancellationToken cancellationToken)
+		private async Task<TResult> GetResultAsync<TResult>(HttpResponseMessage response, CancellationToken cancellationToken)
 		{
 			response.EnsureSuccessStatusCode();
 
-			if (typeof(TOutput) == typeof(VoidType))
+			if (typeof(TResult) == typeof(VoidType))
 				return default;
 
-			return await response.Content.ReadAsAsync<TOutput>(new[] { _response }, cancellationToken);
+			return await response.Content.ReadAsAsync<TResult>(new[] { _response }, cancellationToken);
 		}
 
 		protected virtual object FormatRequest(IDictionary<string, object> parameters)
 			=> parameters;
 
-		protected async Task<TOutput> PostAsync<TOutput>(string requestUri, CancellationToken cancellationToken, params object[] args)
+		protected async Task<TResult> PostAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
 			var (url, parameters) = GetInfo(requestUri, args);
 
@@ -80,10 +80,10 @@
 			}
 
 			using var response = await _client.PostAsync(url, FormatRequest(body), _request, cancellationToken);
-			return await GetResultAsync<TOutput>(response, cancellationToken);
+			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
-		protected async Task<TOutput> GetAsync<TOutput>(string requestUri, CancellationToken cancellationToken, params object[] args)
+		protected async Task<TResult> GetAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
 			var (url, parameters) = GetInfo(requestUri, args);
 
@@ -96,10 +96,10 @@
 			}
 
 			using var response = await _client.GetAsync(url, cancellationToken);
-			return await GetResultAsync<TOutput>(response, cancellationToken);
+			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
-		protected async Task<TOutput> DeleteAsync<TOutput>(string requestUri, CancellationToken cancellationToken, params object[] args)
+		protected async Task<TResult> DeleteAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
 			var (url, parameters) = GetInfo(requestUri, args);
 
@@ -112,13 +112,13 @@
 			}
 
 			using var response = await _client.DeleteAsync(url, cancellationToken);
-			return await GetResultAsync<TOutput>(response, cancellationToken);
+			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
-		protected async Task<TOutput> PutAsync<TInput, TOutput>(string requestUri, TInput value, CancellationToken cancellationToken)
+		protected async Task<TResult> PutAsync<TResult>(string requestUri, CancellationToken cancellationToken, object value)
 		{
 			using var response = await _client.PutAsync(requestUri, value, _request, cancellationToken);
-			return await GetResultAsync<TOutput>(response, cancellationToken);
+			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
 		protected virtual string FormatRequestUri(string requestUri)
