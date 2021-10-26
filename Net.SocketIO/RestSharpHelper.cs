@@ -6,6 +6,7 @@
 	using System.Reflection;
 
 	using Ecng.Common;
+	using Ecng.Serialization;
 
 	using RestSharp;
 

@@ -18,10 +18,6 @@ namespace Ecng.Net
 	using Ecng.Collections;
 	using Ecng.Localization;
 
-	using Newtonsoft.Json;
-	using Newtonsoft.Json.Linq;
-	using Newtonsoft.Json.Serialization;
-
 	public static class NetworkHelper
 	{
 		public const int MtuSize = 1600;
@@ -181,71 +177,6 @@ namespace Ecng.Net
 			client.Connect(address.GetHost(), address.GetPort());
 		}
 
-		public static T DeserializeObject<T>(this string content)
-		{
-			return (T)content.DeserializeObject(typeof(T));
-		}
-
-		public static T DeserializeObject<T>(this JToken token)
-		{
-			return (T)token.DeserializeObject(typeof(T));
-		}
-
-		public static object DeserializeObject(this string content, Type type)
-		{
-			if (content.IsEmpty())
-				throw new ArgumentNullException(nameof(content));
-
-			if (type is null)
-				throw new ArgumentNullException(nameof(type));
-
-			try
-			{
-				if (content == "null")
-					return null;
-
-				return JsonConvert.DeserializeObject(content, type);
-			}
-			catch (Exception ex)
-			{
-				throw new InvalidOperationException($"Can't convert {content} to type '{type.Name}'.", ex);
-			}
-		}
-
-		public static object DeserializeObject(this JToken token, Type type)
-		{
-			if (token is null)
-				throw new ArgumentNullException(nameof(token));
-
-			if (type is null)
-				throw new ArgumentNullException(nameof(type));
-
-			try
-			{
-				if (token.Type == JTokenType.String && (string)token == "null")
-					return null;
-
-				return token.ToObject(type);
-			}
-			catch (Exception ex)
-			{
-				throw new InvalidOperationException($"Can't convert {token} to type '{type.Name}'.", ex);
-			}
-		}
-
-		public static JsonSerializerSettings CreateJsonSerializerSettings()
-		{
-			return new JsonSerializerSettings
-			{
-				FloatParseHandling = FloatParseHandling.Decimal,
-				NullValueHandling = NullValueHandling.Ignore,
-				ContractResolver = new DefaultContractResolver
-				{
-					NamingStrategy = new SnakeCaseNamingStrategy()
-				}
-			};
-		}
-
 		public static string EncodeToHtml(this string text)
 		{
 			return HttpUtility.HtmlEncode(text);
@@ -290,17 +221,6 @@ namespace Ecng.Net
 			}
 
 			return new string(temp);
-		}
-
-		public static JsonWriter WriteProperty(this JsonWriter writer, string name, object value)
-		{
-			if (writer is null)
-				throw new ArgumentNullException(nameof(writer));
-
-			writer.WritePropertyName(name);
-			writer.WriteValue(value);
-
-			return writer;
 		}
 
 		public static string XmlEscape(this string content)
