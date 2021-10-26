@@ -69,17 +69,26 @@
 		{
 			var (url, parameters) = GetInfo(requestUri, args);
 
-			var body = new Dictionary<string, object>();
+			object body;
 
-			foreach (var (_, isRequired, name, value) in parameters)
+			if (parameters.Length > 1)
 			{
-				if (value is null && !isRequired)
-					continue;
+				var dict = new Dictionary<string, object>();
 
-				body.Add(name, TryFormat(value));
+				foreach (var (_, isRequired, name, value) in parameters)
+				{
+					if (value is null && !isRequired)
+						continue;
+
+					dict.Add(name, TryFormat(value));
+				}
+
+				body = FormatRequest(dict);
 			}
+			else
+				body = TryFormat(parameters.FirstOrDefault().value);
 
-			using var response = await _client.PostAsync(url, FormatRequest(body), _request, cancellationToken);
+			using var response = await _client.PostAsync(url, body, _request, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
@@ -115,9 +124,30 @@
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
-		protected async Task<TResult> PutAsync<TResult>(string requestUri, CancellationToken cancellationToken, object value)
+		protected async Task<TResult> PutAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
-			using var response = await _client.PutAsync(requestUri, value, _request, cancellationToken);
+			var (url, parameters) = GetInfo(requestUri, args);
+
+			object body;
+
+			if (parameters.Length > 1)
+			{
+				var dict = new Dictionary<string, object>();
+
+				foreach (var (_, isRequired, name, value) in parameters)
+				{
+					if (value is null && !isRequired)
+						continue;
+
+					dict.Add(name, TryFormat(value));
+				}
+
+				body = FormatRequest(dict);
+			}
+			else
+				body = TryFormat(parameters.FirstOrDefault().value);
+
+			using var response = await _client.PutAsync(url, body, _request, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
