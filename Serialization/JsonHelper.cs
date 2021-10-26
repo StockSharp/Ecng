@@ -91,6 +91,7 @@
 			};
 		}
 
+		[Obsolete]
 		public static JsonWriter WriteProperty(this JsonWriter writer, string name, object value)
 		{
 			if (writer is null)
