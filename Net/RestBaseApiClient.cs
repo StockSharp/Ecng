@@ -132,7 +132,27 @@
 			if (args is null)
 				throw new ArgumentNullException(nameof(args));
 
-			var callerMethod = GetType().GetMember<MethodInfo>(requestUri, BindingFlags.Public | BindingFlags.Instance, null);
+			var methods = GetType().GetMembers<MethodInfo>(BindingFlags.Public | BindingFlags.Instance, true, requestUri, null);
+
+			MethodInfo callerMethod;
+
+			if (methods.Length > 1)
+			{
+				callerMethod = methods.First(m =>
+				{
+					var parameters = m.GetParameters();
+
+					var count = parameters.Length;
+
+					if (count > 0 && parameters.Last().ParameterType == typeof(CancellationToken))
+						count--;
+
+					return count == args.Length;
+				});
+			}
+			else
+				callerMethod = methods.First();
+
 			var parameters = callerMethod.GetParameters();
 
 			if (parameters.Length > 0 && parameters.Last().ParameterType == typeof(CancellationToken))
