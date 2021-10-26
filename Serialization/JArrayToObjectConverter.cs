@@ -1,4 +1,4 @@
-namespace Ecng.Net
+namespace Ecng.Serialization
 {
 	using System;
 	using System.Reflection;
