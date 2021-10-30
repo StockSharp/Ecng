@@ -11,29 +11,6 @@ namespace Ecng.Security
 	/// </summary>
 	public interface IAuthorization
 	{
-		///// <summary>
-		///// Save user.
-		///// </summary>
-		///// <param name="login">Login.</param>
-		///// <param name="password">Password.</param>
-		///// <param name="possibleAddresses">Possible addresses.</param>
-		//void SaveUser(string login, SecureString password, IEnumerable<IPAddress> possibleAddresses);
-
-		///// <summary>
-		///// Change password.
-		///// </summary>
-		///// <param name="login">Login.</param>
-		///// <param name="oldPassword">Old password.</param>
-		///// <param name="newPassword">New password.</param>
-		//void ChangePassword(string login, SecureString oldPassword, SecureString newPassword);
-
-		///// <summary>
-		///// Delete user by login.
-		///// </summary>
-		///// <param name="login">Login.</param>
-		///// <returns>Returns <see langword="true"/>, if user was deleted, otherwise return <see langword="false"/>.</returns>
-		//bool DeleteUser(string login);
-
 		/// <summary>
 		/// Check login and password.
 		/// </summary>
@@ -41,7 +18,7 @@ namespace Ecng.Security
 		/// <param name="password">Password.</param>
 		/// <param name="clientAddress">Remote network address.</param>
 		/// <returns>Session identifier.</returns>
-		Guid ValidateCredentials(string login, SecureString password, IPAddress clientAddress);
+		string ValidateCredentials(string login, SecureString password, IPAddress clientAddress);
 	}
 
 	/// <summary>
@@ -57,28 +34,8 @@ namespace Ecng.Security
 		}
 
 		/// <inheritdoc />
-		public virtual Guid ValidateCredentials(string login, SecureString password, IPAddress clientAddress)
-		{
-			return Guid.NewGuid();
-		}
-
-		///// <inheritdoc />
-		//public virtual void SaveUser(string login, SecureString password, IEnumerable<IPAddress> possibleAddresses)
-		//{
-		//	throw new NotSupportedException();
-		//}
-
-		///// <inheritdoc />
-		//public void ChangePassword(string login, SecureString oldPassword, SecureString newPassword)
-		//{
-		//	throw new NotSupportedException();
-		//}
-
-		///// <inheritdoc />
-		//public virtual bool DeleteUser(string login)
-		//{
-		//	throw new NotSupportedException();
-		//}
+		public virtual string ValidateCredentials(string login, SecureString password, IPAddress clientAddress)
+			=> Guid.NewGuid().To<string>();
 	}
 
 	/// <summary>
@@ -104,12 +61,12 @@ namespace Ecng.Security
 		public SecureString Password { get; set; }
 
 		/// <inheritdoc />
-		public override Guid ValidateCredentials(string login, SecureString password, IPAddress clientAddress)
+		public override string ValidateCredentials(string login, SecureString password, IPAddress clientAddress)
 		{
 			if (Login.IsEmpty())
 				return base.ValidateCredentials(login, password, clientAddress);
 			else if (login.EqualsIgnoreCase(Login) && password != null && Password != null && password.IsEqualTo(Password))
-				return Guid.NewGuid();
+				return Guid.NewGuid().To<string>();
 
 			throw new UnauthorizedAccessException();
 		}
