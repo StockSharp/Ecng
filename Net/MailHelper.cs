@@ -33,8 +33,11 @@
 				throw new ArgumentNullException(nameof(message));
 
 			using var mail = new SmtpClient();
-			// TODO cancellationToken
-			await mail.SendMailAsync(message);
+			await mail.SendMailAsync(message
+#if NETSTANDARD2_1
+				, cancellationToken
+#endif
+			);
 		}
 
 		public static MailMessage AddHtml(this MailMessage message, string bodyHtml)
