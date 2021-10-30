@@ -544,7 +544,10 @@ namespace Ecng.Common
 				throw new ArgumentNullException(nameof(destination));
 
 			if (count < 0)
-				throw new ArgumentOutOfRangeException(nameof(count));
+				throw new ArgumentOutOfRangeException(nameof(count), count, "Invalid value.");
+
+			if (count == 0)
+				return;
 
 			var buffer = new byte[count.Min(short.MaxValue)];
 			int read;
