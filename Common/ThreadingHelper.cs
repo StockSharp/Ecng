@@ -361,6 +361,7 @@ namespace Ecng.Common
 			var cts = delay == null ? new CancellationTokenSource() : new CancellationTokenSource(delay.Value);
 			return (cts, CancellationTokenSource.CreateLinkedTokenSource(cts.Token, token).Token);
 		}
+
 		public static async Task WithCancellation(this Task task, CancellationToken cancellationToken)
 		{
 			var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -397,5 +398,8 @@ namespace Ecng.Common
 		}
 
 		public static IDisposable WithInvariantCulture() => WithCulture(CultureInfo.InvariantCulture);
+
+		public static Task Delay(this TimeSpan delay, CancellationToken cancellationToken = default)
+			=> Task.Delay(delay, cancellationToken);
 	}
 }
