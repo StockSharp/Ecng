@@ -56,17 +56,12 @@
 
 			AddAlias(typeof(object), "object");
 			AddAlias(typeof(bool), "bool");
-			AddAlias(typeof(bool), "boolean");
 			AddAlias(typeof(byte), "byte");
 			AddAlias(typeof(sbyte), "sbyte");
 			AddAlias(typeof(char), "char");
-			AddAlias(typeof(char), "character");
 			AddAlias(typeof(decimal), "decimal");
-			AddAlias(typeof(decimal), "money");
 			AddAlias(typeof(double), "double");
 			AddAlias(typeof(float), "float");
-			AddAlias(typeof(float), "single");
-			AddAlias(typeof(float), "real");
 			AddAlias(typeof(int), "int");
 			AddAlias(typeof(uint), "uint");
 			AddAlias(typeof(long), "long");
@@ -74,16 +69,7 @@
 			AddAlias(typeof(short), "short");
 			AddAlias(typeof(ushort), "ushort");
 			AddAlias(typeof(string), "string");
-			AddAlias(typeof(DateTime), "date");
-			AddAlias(typeof(DateTime), "datetime");
-			AddAlias(typeof(TimeSpan), "time");
-			AddAlias(typeof(TimeSpan), "timespan");
-			AddAlias(typeof(IntPtr), "ptr");
-			AddAlias(typeof(IntPtr), "intptr");
-			AddAlias(typeof(UIntPtr), "uptr");
-			AddAlias(typeof(UIntPtr), "uintptr");
 			AddAlias(typeof(void), "void");
-			AddAlias(typeof(Guid), "guid");
 
 			AddTypedConverter<Type, DbType>(input =>
 			{
@@ -517,7 +503,6 @@
 					return null;
 				}
 
-
 				if (TryGetTypedConverter(value is Type ? typeof(Type) : value.GetType(), destinationType, out var typedConverter))
 					return typedConverter(value);
 
@@ -901,7 +886,6 @@
 				throw new ArgumentNullException(nameof(name));
 
 			_aliases.Add(name, type);
-
 
 			if (!_aliasesByValue.TryGetValue(type, out var aliases))
 			{
