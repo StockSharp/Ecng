@@ -110,7 +110,7 @@ namespace Ecng.Common
 			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
-			return Converter.GetAlias(type) ?? type.GetTypeName(isAssemblyQualifiedName) /*"{0}, {1}".Put(type.FullName, type.Assembly.GetName().Name)*/;
+			return type.TryGetCSharpAlias().IsEmpty(type.GetTypeName(isAssemblyQualifiedName)) /*"{0}, {1}".Put(type.FullName, type.Assembly.GetName().Name)*/;
 		}
 
 		public static bool IsStruct(this Type type)

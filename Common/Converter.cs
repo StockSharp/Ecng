@@ -24,8 +24,8 @@
 	public static class Converter
 	{
 		private static readonly Dictionary<Type, DbType> _dbTypes = new();
-		private static readonly Dictionary<string, Type> _aliases = new();
-		private static readonly Dictionary<Type, List<string>> _aliasesByValue = new();
+		private static readonly Dictionary<string, Type> _sharpAliases = new();
+		private static readonly Dictionary<Type, string> _sharpAliasesByValue = new();
 		private static readonly Dictionary<string, Type> _typeCache = new();
 
 		private static readonly Dictionary<Tuple<Type, Type>, Delegate> _typedConverters = new();
@@ -54,22 +54,22 @@
 			_dbTypes.Add(typeof(bool), DbType.Boolean);
 			_dbTypes.Add(typeof(object), DbType.Object);
 
-			AddAlias(typeof(object), "object");
-			AddAlias(typeof(bool), "bool");
-			AddAlias(typeof(byte), "byte");
-			AddAlias(typeof(sbyte), "sbyte");
-			AddAlias(typeof(char), "char");
-			AddAlias(typeof(decimal), "decimal");
-			AddAlias(typeof(double), "double");
-			AddAlias(typeof(float), "float");
-			AddAlias(typeof(int), "int");
-			AddAlias(typeof(uint), "uint");
-			AddAlias(typeof(long), "long");
-			AddAlias(typeof(ulong), "ulong");
-			AddAlias(typeof(short), "short");
-			AddAlias(typeof(ushort), "ushort");
-			AddAlias(typeof(string), "string");
-			AddAlias(typeof(void), "void");
+			AddCSharpAlias(typeof(object), "object");
+			AddCSharpAlias(typeof(bool), "bool");
+			AddCSharpAlias(typeof(byte), "byte");
+			AddCSharpAlias(typeof(sbyte), "sbyte");
+			AddCSharpAlias(typeof(char), "char");
+			AddCSharpAlias(typeof(decimal), "decimal");
+			AddCSharpAlias(typeof(double), "double");
+			AddCSharpAlias(typeof(float), "float");
+			AddCSharpAlias(typeof(int), "int");
+			AddCSharpAlias(typeof(uint), "uint");
+			AddCSharpAlias(typeof(long), "long");
+			AddCSharpAlias(typeof(ulong), "ulong");
+			AddCSharpAlias(typeof(short), "short");
+			AddCSharpAlias(typeof(ushort), "ushort");
+			AddCSharpAlias(typeof(string), "string");
+			AddCSharpAlias(typeof(void), "void");
 
 			AddTypedConverter<Type, DbType>(input =>
 			{
@@ -162,7 +162,7 @@
 			{
 				var key = input.ToLowerInvariant();
 
-				if (_aliases.TryGetValue(key, out var type))
+				if (_sharpAliases.TryGetValue(key, out var type))
 					return type;
 
 				if (_typeCache.TryGetValue(key, out type))
@@ -877,29 +877,29 @@
 			return (T)To(value, typeof(T));
 		}
 
-		public static void AddAlias(Type type, string name)
+		public static void AddCSharpAlias(Type type, string alias)
 		{
 			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
-			if (name.IsEmpty())
-				throw new ArgumentNullException(nameof(name));
+			if (alias.IsEmpty())
+				throw new ArgumentNullException(nameof(alias));
 
-			_aliases.Add(name, type);
+			if (_sharpAliases.ContainsKey(alias))
+				throw new ArgumentOutOfRangeException(nameof(alias));
 
-			if (!_aliasesByValue.TryGetValue(type, out var aliases))
-			{
-				aliases = new List<string>();
-				_aliasesByValue.Add(type, aliases);
-			}
+			if (_sharpAliasesByValue.ContainsKey(type))
+				throw new ArgumentOutOfRangeException(nameof(type));
 
-			aliases.Add(name);
+			_sharpAliases.Add(alias, type);
+			_sharpAliasesByValue.Add(type, alias);
 		}
 
-		public static string GetAlias(Type type)
-		{
-			return _aliasesByValue.TryGetValue(type, out var aliases) ? aliases.FirstOrDefault() : null;
-		}
+		public static string TryGetCSharpAlias(this Type type)
+			=> _sharpAliasesByValue.TryGetValue(type, out var alias) ? alias : null;
+
+		public static Type TryGetTypeByCSharpAlias(this string alias)
+			=> _sharpAliases.TryGetValue(alias, out var type) ? type : null;
 
 		public static T DoInCulture<T>(this CultureInfo cultureInfo, Func<T> func)
 		{
