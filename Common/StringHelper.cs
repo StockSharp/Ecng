@@ -998,6 +998,13 @@
 			}
 		}
 
+		/// <summary>
+		/// Convert key to numeric identifier.
+		/// </summary>
+		/// <param name="key">Key.</param>
+		/// <returns>Identifier.</returns>
+		public static int? ToId(this SecureString key) => key?.UnSecure().GetDeterministicHashCode();
+
 		[CLSCompliant(false)]
 		public static string ToString(this char[] arr, uint count, int index = 0)
 			=> arr.ToString((int)count, index);
