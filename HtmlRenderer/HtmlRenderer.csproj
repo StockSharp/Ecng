@@ -4,4 +4,10 @@
     <UseWPF>true</UseWPF>
     <IsSourcesAllow>false</IsSourcesAllow>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="**\*.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="**\*.png" />
+  </ItemGroup>
 </Project>

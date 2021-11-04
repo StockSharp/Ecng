@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Resources;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core;
 using TheArtOfDev.HtmlRenderer.Core.Entities;
@@ -208,7 +209,9 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
 
         private static Stream GetResource(string name)
         {
-            return typeof(HtmlRendererUtils).Assembly.GetManifestResourceStream($"Ecng.Xaml.HtmlRenderer.Core.Utils.{name}");
+			var resourcesStream = typeof(HtmlRendererUtils).Assembly.GetManifestResourceStream("Ecng.HtmlRenderer.g.resources");
+			var resources = new ResourceSet(resourcesStream);
+			return (UnmanagedMemoryStream)resources.GetObject($"Core/Utils/{name}".ToLowerInvariant());
         }
 
         /// <summary>
