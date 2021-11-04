@@ -22,6 +22,8 @@ using TheArtOfDev.HtmlRenderer.Core.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Handlers;
 using TheArtOfDev.HtmlRenderer.Core.Utils;
 
+using Ecng.Common;
+
 namespace TheArtOfDev.HtmlRenderer.Adapters
 {
     /// <summary>
@@ -160,9 +162,9 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         /// </summary>
         /// <param name="memoryStream">the stream to create image from</param>
         /// <returns>new image instance</returns>
-        public RImage ImageFromStream(string extension, Stream memoryStream)
+        public RImage ImageFromStream(string extension, byte[] body)
         {
-            return ImageFromStreamInt(extension, memoryStream);
+            return ImageFromStreamInt(extension, body);
         }
 
         /// <summary>
@@ -208,12 +210,14 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
             return _fontsHandler.GetCachedFont(family, size, style);
         }
 
-        private static Stream GetResource(string name)
+        private static byte[] GetResource(string name)
         {
-			var resourcesStream = typeof(HtmlRendererUtils).Assembly.GetManifestResourceStream("Ecng.HtmlRenderer.g.resources");
-			var resources = new ResourceSet(resourcesStream);
-			return (UnmanagedMemoryStream)resources.GetObject($"Core/Utils/{name}".ToLowerInvariant());
-        }
+			using var resourcesStream = typeof(HtmlRendererUtils).Assembly.GetManifestResourceStream("Ecng.HtmlRenderer.g.resources");
+			using var resources = new ResourceSet(resourcesStream);
+			using var inner = (UnmanagedMemoryStream)resources.GetObject($"Core/Utils/{name}".ToLowerInvariant());
+			return inner.To<byte[]>();
+
+		}
 
         /// <summary>
         /// Get image to be used while HTML image is loading.
@@ -223,8 +227,8 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
             if (_loadImage == null)
             {
                 var stream = GetResource("Load.svg");
-                if (stream != null)
-                    _loadImage = ImageFromStream(".svg", stream);
+				if (stream != null)
+					_loadImage = ImageFromStream(".svg", stream);
             }
             return _loadImage;
         }
@@ -237,8 +241,8 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
             if (_errorImage == null)
             {
                 var stream = GetResource("Error.svg");
-                if (stream != null)
-                    _errorImage = ImageFromStream(".svg", stream);
+				if (stream != null)
+					_errorImage = ImageFromStream(".svg", stream);
             }
             return _errorImage;
         }
@@ -381,7 +385,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         /// </summary>
         /// <param name="memoryStream">the stream to create image from</param>
         /// <returns>new image instance</returns>
-        protected abstract RImage ImageFromStreamInt(string extension, Stream memoryStream);
+        protected abstract RImage ImageFromStreamInt(string extension, byte[] body);
 
         /// <summary>
         /// Get font instance by given font family name, size and style.

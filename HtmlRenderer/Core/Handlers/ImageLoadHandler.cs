@@ -21,6 +21,8 @@ using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Utils;
 
+using Ecng.Common;
+
 namespace TheArtOfDev.HtmlRenderer.Core.Handlers
 {
     /// <summary>
@@ -54,11 +56,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         /// callback raised when image load process is complete with image or without
         /// </summary>
         private readonly ActionInt<RImage, RRect, bool> _loadCompleteCallback;
-
-        /// <summary>
-        /// Must be open as long as the image is in use
-        /// </summary>
-        private FileStream _imageFileStream;
 
         /// <summary>
         /// the image instance of the loaded image
@@ -242,7 +239,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
                 if (imagePartsCount > 0)
                 {
                     byte[] imageData = base64PartsCount > 0 ? Convert.FromBase64String(s[1].Trim()) : new UTF8Encoding().GetBytes(Uri.UnescapeDataString(s[1].Trim()));
-                    return _htmlContainer.Adapter.ImageFromStream(Path.GetExtension(src), new MemoryStream(imageData));
+                    return _htmlContainer.Adapter.ImageFromStream(Path.GetExtension(src), imageData);
                 }
             }
             return null;
@@ -283,9 +280,9 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             if (source.Exists)
             {
                 if (_htmlContainer.AvoidAsyncImagesLoading)
-                    LoadImageFromFile(source.FullName);
+                    LoadImageFromFile(File.ReadAllBytes(source.FullName));
                 else
-                    ThreadPool.QueueUserWorkItem(state => LoadImageFromFile(source.FullName));
+                    ThreadPool.QueueUserWorkItem(state => LoadImageFromFile(File.ReadAllBytes(source.FullName)));
             }
             else
             {
@@ -293,28 +290,27 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             }
         }
 
-        /// <summary>
-        /// Load the image file on thread-pool thread and calling <see cref="ImageLoadComplete"/> after.<br/>
-        /// Calling <see cref="ImageLoadComplete"/> on the main thread and not thread-pool.
-        /// </summary>
-        /// <param name="source">the file path to get the image from</param>
-        private void LoadImageFromFile(string source)
+		/// <summary>
+		/// Load the image file on thread-pool thread and calling <see cref="ImageLoadComplete"/> after.<br/>
+		/// Calling <see cref="ImageLoadComplete"/> on the main thread and not thread-pool.
+		/// </summary>
+		/// <param name="body">the file path to get the image from</param>
+		private void LoadImageFromFile(byte[] body)
         {
             try
             {
-                var imageFileStream = File.Open(source, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 lock (_loadCompleteCallback)
                 {
-                    _imageFileStream = imageFileStream;
                     if (!_disposed)
-                        _image = _htmlContainer.Adapter.ImageFromStream(Path.GetExtension(source), _imageFileStream);
+                        _image = _htmlContainer.Adapter.ImageFromStream(null, body);
+
                     _releaseImageObject = true;
                 }
                 ImageLoadComplete();
             }
             catch (Exception ex)
             {
-                _htmlContainer.ReportError(HtmlRenderErrorType.Image, "Failed to load image from disk: " + source, ex);
+                _htmlContainer.ReportError(HtmlRenderErrorType.Image, "Failed to load image from disk", ex);
                 ImageLoadComplete();
             }
         }
@@ -333,7 +329,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             }
             else
             {
-                _htmlContainer.GetImageDownloader().DownloadImage(source, filePath.FullName, !_htmlContainer.AvoidAsyncImagesLoading, OnDownloadImageCompleted);
+                _htmlContainer.GetImageDownloader().DownloadImage(source, !_htmlContainer.AvoidAsyncImagesLoading, OnDownloadImageCompleted);
             }
         }
 
@@ -341,13 +337,13 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         /// On download image complete to local file use <see cref="LoadImageFromFile"/> to load the image file.<br/>
         /// If the download canceled do nothing, if failed report error.
         /// </summary>
-        private void OnDownloadImageCompleted(Uri imageUri, string filePath, Exception error, bool canceled)
+        private void OnDownloadImageCompleted(Uri imageUri, byte[] body, Exception error, bool canceled)
         {
             if (!canceled && !_disposed)
             {
                 if (error == null)
                 {
-                    LoadImageFromFile(filePath);
+                    LoadImageFromFile(body);
                 }
                 else
                 {
@@ -380,11 +376,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
                 {
                     _image.Dispose();
                     _image = null;
-                }
-                if (_imageFileStream != null)
-                {
-                    _imageFileStream.Dispose();
-                    _imageFileStream = null;
                 }
             }
         }

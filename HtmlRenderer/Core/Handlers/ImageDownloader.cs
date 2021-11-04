@@ -12,8 +12,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Net;
 using System.Threading;
 using TheArtOfDev.HtmlRenderer.Core.Utils;
@@ -27,7 +25,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
     /// <param name="filePath">the path to the downloaded file</param>
     /// <param name="error">the error if download failed</param>
     /// <param name="canceled">is the file download request was canceled</param>
-    public delegate void DownloadFileAsyncCallback(Uri imageUri, string filePath, Exception error, bool canceled);
+    public delegate void DownloadFileAsyncCallback(Uri imageUri, byte[] body, Exception error, bool canceled);
 
     /// <summary>
     /// Handler for downloading images from the web.<br/>
@@ -41,12 +39,12 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         /// <summary>
         /// the web client used to download image from URL (to cancel on dispose)
         /// </summary>
-        private readonly List<WebClient> _clients = new List<WebClient>();
+        private readonly List<WebClient> _clients = new();
 
         /// <summary>
         /// dictionary of image cache path to callbacks of download to handle multiple requests to download the same image 
         /// </summary>
-        private readonly Dictionary<string, List<DownloadFileAsyncCallback>> _imageDownloadCallbacks = new Dictionary<string, List<DownloadFileAsyncCallback>>();
+        private readonly Dictionary<Uri, List<DownloadFileAsyncCallback>> _imageDownloadCallbacks = new();
 
         /// <summary>
         /// Makes a request to download the image from the server and raises the <see cref="cachedFileCallback"/> when it's down.<br/>
@@ -55,7 +53,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         /// <param name="filePath">the path on disk to download the file to</param>
         /// <param name="async">is to download the file sync or async (true-async)</param>
         /// <param name="cachedFileCallback">This callback will be called with local file path. If something went wrong in the download it will return null.</param>
-        public void DownloadImage(Uri imageUri, string filePath, bool async, DownloadFileAsyncCallback cachedFileCallback)
+        public void DownloadImage(Uri imageUri, bool async, DownloadFileAsyncCallback cachedFileCallback)
         {
             ArgChecker.AssertArgNotNull(imageUri, "imageUri");
             ArgChecker.AssertArgNotNull(cachedFileCallback, "cachedFileCallback");
@@ -64,24 +62,23 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             bool download = true;
             lock (_imageDownloadCallbacks)
             {
-                if (_imageDownloadCallbacks.ContainsKey(filePath))
+                if (_imageDownloadCallbacks.ContainsKey(imageUri))
                 {
                     download = false;
-                    _imageDownloadCallbacks[filePath].Add(cachedFileCallback);
+                    _imageDownloadCallbacks[imageUri].Add(cachedFileCallback);
                 }
                 else
                 {
-                    _imageDownloadCallbacks[filePath] = new List<DownloadFileAsyncCallback> { cachedFileCallback };
+                    _imageDownloadCallbacks[imageUri] = new() { cachedFileCallback };
                 }
             }
 
             if (download)
             {
-                var tempPath = Path.GetTempFileName();
                 if (async)
-                    ThreadPool.QueueUserWorkItem(DownloadImageFromUrlAsync, new DownloadData(imageUri, tempPath, filePath));
+                    ThreadPool.QueueUserWorkItem(DownloadImageFromUrlAsync, imageUri);
                 else
-                    DownloadImageFromUrl(imageUri, tempPath, filePath);
+                    DownloadImageFromUrl(imageUri);
             }
         }
 
@@ -100,20 +97,20 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         /// Download the requested file in the URI to the given file path.<br/>
         /// Use async sockets API to download from web, <see cref="OnDownloadImageAsyncCompleted"/>.
         /// </summary>
-        private void DownloadImageFromUrl(Uri source, string tempPath, string filePath)
+        private void DownloadImageFromUrl(Uri source)
         {
             try
             {
                 using (var client = new WebClient())
                 {
                     _clients.Add(client);
-                    client.DownloadFile(source, tempPath);
-                    OnDownloadImageCompleted(client, source, tempPath, filePath, null, false);
+					var image = client.DownloadData(source);
+                    OnDownloadImageCompleted(client, source, image, null, false);
                 }
             }
             catch (Exception ex)
             {
-                OnDownloadImageCompleted(null, source, tempPath, filePath, ex, false);
+                OnDownloadImageCompleted(null, source, null, ex, false);
             }
         }
 
@@ -124,17 +121,17 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         /// <param name="data">key value pair of URL and file info to download the file to</param>
         private void DownloadImageFromUrlAsync(object data)
         {
-            var downloadData = (DownloadData)data;
+            var downloadUri = (Uri)data;
             try
             {
                 var client = new WebClient();
                 _clients.Add(client);
-                client.DownloadFileCompleted += OnDownloadImageAsyncCompleted;
-                client.DownloadFileAsync(downloadData._uri, downloadData._tempPath, downloadData);
+                client.DownloadDataCompleted += OnDownloadImageAsyncCompleted;
+                client.DownloadDataAsync(downloadUri, downloadUri);
             }
             catch (Exception ex)
             {
-                OnDownloadImageCompleted(null, downloadData._uri, downloadData._tempPath, downloadData._filePath, ex, false);
+                OnDownloadImageCompleted(null, downloadUri, null, ex, false);
             }
         }
 
@@ -142,27 +139,27 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         /// On download image complete to local file.<br/>
         /// If the download canceled do nothing, if failed report error.
         /// </summary>
-        private void OnDownloadImageAsyncCompleted(object sender, AsyncCompletedEventArgs e)
+        private void OnDownloadImageAsyncCompleted(object sender, DownloadDataCompletedEventArgs e)
         {
-            var downloadData = (DownloadData)e.UserState;
+            var downloadUri = (Uri)e.UserState;
             try
             {
                 using (var client = (WebClient)sender)
                 {
-                    client.DownloadFileCompleted -= OnDownloadImageAsyncCompleted;
-                    OnDownloadImageCompleted(client, downloadData._uri, downloadData._tempPath, downloadData._filePath, e.Error, e.Cancelled);
+                    client.DownloadDataCompleted -= OnDownloadImageAsyncCompleted;
+                    OnDownloadImageCompleted(client, downloadUri, e.Result, e.Error, e.Cancelled);
                 }
             }
             catch (Exception ex)
             {
-                OnDownloadImageCompleted(null, downloadData._uri, downloadData._tempPath, downloadData._filePath, ex, false);
+                OnDownloadImageCompleted(null, downloadUri, e.Result, ex, false);
             }
         }
 
         /// <summary>
         /// Checks if the file was downloaded and raises the cachedFileCallback from <see cref="_imageDownloadCallbacks"/>
         /// </summary>
-        private void OnDownloadImageCompleted(WebClient client, Uri source, string tempPath, string filePath, Exception error, bool cancelled)
+        private void OnDownloadImageCompleted(WebClient client, Uri source, byte[] image, Exception error, bool cancelled)
         {
             if (!cancelled)
             {
@@ -175,30 +172,13 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
                     }
 
                 }
-
-                if (error == null)
-                {
-                    if (File.Exists(tempPath))
-                    {
-                        try
-                        {
-                            File.Move(tempPath, filePath);
-                        }
-                        catch (Exception ex)
-                        {
-                            error = new Exception("Failed to move downloaded image from temp to cache location", ex);
-                        }
-                    }
-
-                    error = File.Exists(filePath) ? null : (error ?? new Exception("Failed to download image, unknown error"));
-                }
             }
 
             List<DownloadFileAsyncCallback> callbacksList;
             lock (_imageDownloadCallbacks)
             {
-                if (_imageDownloadCallbacks.TryGetValue(filePath, out callbacksList))
-                    _imageDownloadCallbacks.Remove(filePath);
+                if (_imageDownloadCallbacks.TryGetValue(source, out callbacksList))
+                    _imageDownloadCallbacks.Remove(source);
             }
 
             if (callbacksList != null)
@@ -207,7 +187,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
                 {
                     try
                     {
-                        cachedFileCallback(source, filePath, error, cancelled);
+                        cachedFileCallback(source, image, error, cancelled);
                     }
                     catch
                     { }
@@ -232,25 +212,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
                 }
                 catch
                 { }
-            }
-        }
-
-        #endregion
-
-
-        #region Inner class: DownloadData
-
-        private sealed class DownloadData
-        {
-            public readonly Uri _uri;
-            public readonly string _tempPath;
-            public readonly string _filePath;
-
-            public DownloadData(Uri uri, string tempPath, string filePath)
-            {
-                _uri = uri;
-                _tempPath = tempPath;
-                _filePath = filePath;
             }
         }
 

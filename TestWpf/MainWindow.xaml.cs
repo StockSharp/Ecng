@@ -355,7 +355,7 @@ namespace TestWpf
 [/t]
 [/role]";
 
-			//bb = "[youtube]https://youtu.be/lsbyvqajlZ8[/youtube]";
+			bb = "[img=107130]TerminalBlackEn.png[/img]";
 
 			var ctx = CreateContext(true);
 			var html = AsyncContext.Run(() => CreateBBService().ToHtmlAsync(bb, ctx));

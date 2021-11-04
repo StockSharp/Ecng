@@ -20,8 +20,9 @@ using System.Windows.Media.Imaging;
 using TheArtOfDev.HtmlRenderer.Adapters;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.WPF.Utilities;
-using Microsoft.Win32;
 using DevExpress.Xpf.Core.Native;
+
+using Ecng.Common;
 
 namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 {
@@ -120,22 +121,57 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
             return image != null ? new ImageAdapter(image, 30, 30) : null;
         }
 
-        protected override RImage ImageFromStreamInt(string extension, Stream memoryStream)
+        protected override RImage ImageFromStreamInt(string extension, byte[] body)
         {
-			if (extension == ".svg")
+			var isSvg = false;
+
+			try
 			{
-				return new ImageAdapter(WpfSvgRenderer.CreateImageSource(memoryStream, 1, null), 30, 30);
+				var text = body.UTF8();
+				isSvg = text.StartsWith("<?xml ") || text.StartsWith("<svg ");
 			}
-			else
+			catch
+			{
+			}
+
+			var stream = body.To<Stream>();
+
+			ImageAdapter CreateBmp()
 			{
 				var bitmap = new BitmapImage();
 				bitmap.BeginInit();
-				bitmap.StreamSource = memoryStream;
+				bitmap.StreamSource = stream;
 				bitmap.CacheOption = BitmapCacheOption.OnLoad;
 				bitmap.EndInit();
 				bitmap.Freeze();
 
-				return new ImageAdapter(bitmap, bitmap.PixelWidth, bitmap.PixelHeight);
+				return new(bitmap, bitmap.PixelWidth, bitmap.PixelHeight);
+			}
+
+			ImageAdapter CreateSvg()
+				=> new(WpfSvgRenderer.CreateImageSource(stream, 1, null), 30, 30);
+
+			if (isSvg)
+			{
+				try
+				{
+					return CreateSvg();
+				}
+				catch (Exception)
+				{
+					return CreateBmp();
+				}
+			}
+			else
+			{
+				try
+				{
+					return CreateBmp();
+				}
+				catch (Exception)
+				{
+					return CreateSvg();
+				}
 			}
         }
 
