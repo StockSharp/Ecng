@@ -106,7 +106,9 @@ namespace TheArtOfDev.HtmlRenderer.WPF
             HtmlContainer.Refresh += OnRefresh;
             HtmlContainer.StylesheetLoad += OnStylesheetLoad;
             HtmlContainer.ImageLoad += OnImageLoad;
-        }
+
+			Utilities.Utils.PixelsPerDip = (float)VisualTreeHelper.GetDpi(this).PixelsPerDip;
+		}
 
         /// <summary>
         /// Raised when the set html document has been fully loaded.<br/>

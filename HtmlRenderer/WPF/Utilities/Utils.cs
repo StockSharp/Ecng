@@ -22,6 +22,8 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Utilities
     /// </summary>
     internal static class Utils
     {
+		public static float PixelsPerDip = 1;
+
         /// <summary>
         /// Convert from WPF point to core point.
         /// </summary>
