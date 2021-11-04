@@ -11,11 +11,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="
-           '$(MSBuildProjectName)' == 'EcngTest'
+           '$(MSBuildProjectName)' == 'Tests'
         or '$(MSBuildProjectName)' == 'Interop.Windows'
         or '$(MSBuildProjectName)' == 'ManagedWinapi'
         or '$(MSBuildProjectName)' == 'HtmlRenderer'
-        or '$(MSBuildProjectName)' == 'Test'
+        or '$(MSBuildProjectName)' == 'TestConsole'
       ">
     <TargetFrameworks>net5.0-windows</TargetFrameworks>
   </PropertyGroup>

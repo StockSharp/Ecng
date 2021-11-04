@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
+  <PropertyGroup>
+    <ProjectGuid>{CAF861AA-7473-4EEB-BF41-FFE74A97E072}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LibGit2Sharp\LibGit2Sharp.csproj" />
+    <ProjectReference Include="..\Net.SocketIO\Net.SocketIO.csproj" />
+    <ProjectReference Include="..\IO\IO.csproj" />
+    <ProjectReference Include="..\Interop\Interop.csproj" />
+    <ProjectReference Include="..\Net\Net.csproj" />
+    <ProjectReference Include="..\Security\Security.csproj" />
+    <ProjectReference Include="..\Roslyn\Roslyn.csproj" />
+    <ProjectReference Include="..\Backup\Backup.csproj" />
+    <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
+  </ItemGroup>
+</Project>

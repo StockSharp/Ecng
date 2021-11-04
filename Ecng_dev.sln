@@ -31,9 +31,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Transactions", "Transaction
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Net", "Net\Net.csproj", "{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EcngTest", "EcngTest\EcngTest.csproj", "{43DCD61B-E735-442E-85F4-B5D5BE199DD2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{43DCD61B-E735-442E-85F4-B5D5BE199DD2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{CAF861AA-7473-4EEB-BF41-FFE74A97E072}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestConsole", "TestConsole\TestConsole.csproj", "{CAF861AA-7473-4EEB-BF41-FFE74A97E072}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTesting", "UnitTesting\UnitTesting.csproj", "{38C67615-BE2E-461E-BBED-5217F6DC0AFE}"
 EndProject
@@ -61,7 +61,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HtmlRenderer", "HtmlRendere
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibGit2Sharp", "LibGit2Sharp\LibGit2Sharp.csproj", "{1D641926-07F4-4DE7-A181-A77A9C6E794C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "Data\Data.csproj", "{0F5D95EF-F816-447A-B517-DD8E1DA6987F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data", "Data\Data.csproj", "{0F5D95EF-F816-447A-B517-DD8E1DA6987F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
