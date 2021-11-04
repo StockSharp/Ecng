@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Windows.Media;
 using TheArtOfDev.HtmlRenderer.Adapters;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Entities;
@@ -183,7 +184,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         /// <param name="path">the path to the image to load (file path or uri)</param>
         /// <param name="image">the image to load</param>
         /// <param name="imageRectangle">optional: limit to specific rectangle of the image and not all of it</param>
-        private void OnHtmlImageLoadEventCallback(string path, object image, RRect imageRectangle)
+        private void OnHtmlImageLoadEventCallback(string path, ImageSource image, RRect imageRectangle)
         {
             if (!_disposed)
             {
@@ -241,7 +242,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
                 if (imagePartsCount > 0)
                 {
                     byte[] imageData = base64PartsCount > 0 ? Convert.FromBase64String(s[1].Trim()) : new UTF8Encoding().GetBytes(Uri.UnescapeDataString(s[1].Trim()));
-                    return _htmlContainer.Adapter.ImageFromStream(new MemoryStream(imageData));
+                    return _htmlContainer.Adapter.ImageFromStream(Path.GetExtension(src), new MemoryStream(imageData));
                 }
             }
             return null;
@@ -306,7 +307,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
                 {
                     _imageFileStream = imageFileStream;
                     if (!_disposed)
-                        _image = _htmlContainer.Adapter.ImageFromStream(_imageFileStream);
+                        _image = _htmlContainer.Adapter.ImageFromStream(Path.GetExtension(source), _imageFileStream);
                     _releaseImageObject = true;
                 }
                 ImageLoadComplete();

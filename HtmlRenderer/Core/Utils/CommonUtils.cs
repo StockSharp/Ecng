@@ -18,6 +18,8 @@ using System.Net;
 using System.Text;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 
+using Ecng.Common;
+
 namespace TheArtOfDev.HtmlRenderer.Core.Utils
 {
     internal delegate void ActionInt<in T>(T obj);
@@ -206,7 +208,32 @@ namespace TheArtOfDev.HtmlRenderer.Core.Utils
             return null;
         }
 
-		private const string _defaultExt = ".svg";//".png";
+		private const string _svgExt = ".svg";
+		private const string _pngExt = ".png";
+		private const string _jpgExt = ".jpg";
+
+		private static string GetExt(Uri imageUri)
+		{
+			if (imageUri.Host.ContainsIgnoreCase("stocksharp"))
+			{
+				var path = imageUri.LocalPath;
+
+				if (path.EndsWith('/'))
+					path = path.Substring(0, path.Length - 1);
+
+				var idx = path.LastIndexOf('_');
+				if (idx != -1)
+					path = path.Remove(idx, 1).Insert(idx, ".");
+
+				var ext = Path.GetExtension(path);
+
+				return ext.IsEmpty(_svgExt);
+			}
+			else if (imageUri.Host.ContainsIgnoreCase("vimeo.com"))
+				return _jpgExt;
+
+			return _pngExt;
+		}
 
 		/// <summary>
 		/// Gets the representation of the online uri on the local disk.
@@ -231,7 +258,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Utils
             int indexOfParams = restOfUri.IndexOf('?');
             if (indexOfParams == -1)
             {
-                string ext = _defaultExt;
+                string ext = GetExt(imageUri);
                 int indexOfDot = restOfUri.IndexOf('.');
                 if (indexOfDot > -1)
                 {
@@ -249,7 +276,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Utils
                 {
                     //The uri is not for a filename
                     fileNameBuilder.Append(restOfUri);
-                    fileNameBuilder.Append(_defaultExt);
+                    fileNameBuilder.Append(GetExt(imageUri));
                 }
                 else if (indexOfParams > indexOfDot)
                 {

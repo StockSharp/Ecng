@@ -281,8 +281,9 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 
         public override void DrawImage(RImage image, RRect destRect, RRect srcRect)
         {
-            //CroppedBitmap croppedImage = new CroppedBitmap(((ImageAdapter)image).Image, new Int32Rect((int)srcRect.X, (int)srcRect.Y, (int)srcRect.Width, (int)srcRect.Height));
-            _g.DrawImage(((ImageAdapter)image).Image, Utils.ConvertRound(destRect));
+			var adapter = (ImageAdapter)image;
+			var cropped = adapter.Crop(new Int32Rect((int)srcRect.X, (int)srcRect.Y, (int)srcRect.Width, (int)srcRect.Height));
+			_g.DrawImage(cropped, Utils.ConvertRound(destRect));
         }
 
         public override void DrawImage(RImage image, RRect destRect)

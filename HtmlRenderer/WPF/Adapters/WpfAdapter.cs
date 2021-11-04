@@ -115,15 +115,28 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
             return new BrushAdapter(new LinearGradientBrush(startColor, endColor, new Point(x, y), new Point(1 - x, 1 - y)));
         }
 
-        protected override RImage ConvertImageInt(object image)
+        protected override RImage ConvertImageInt(ImageSource image)
         {
-            return image != null ? new ImageAdapter((ImageSource)image) : null;
+            return image != null ? new ImageAdapter(image, 30, 30) : null;
         }
 
-        protected override RImage ImageFromStreamInt(Stream memoryStream)
+        protected override RImage ImageFromStreamInt(string extension, Stream memoryStream)
         {
-			var image = WpfSvgRenderer.CreateImageSource(memoryStream, 1, null);
-			return new ImageAdapter(image);
+			if (extension == ".svg")
+			{
+				return new ImageAdapter(WpfSvgRenderer.CreateImageSource(memoryStream, 1, null), 30, 30);
+			}
+			else
+			{
+				var bitmap = new BitmapImage();
+				bitmap.BeginInit();
+				bitmap.StreamSource = memoryStream;
+				bitmap.CacheOption = BitmapCacheOption.OnLoad;
+				bitmap.EndInit();
+				bitmap.Freeze();
+
+				return new ImageAdapter(bitmap, bitmap.PixelWidth, bitmap.PixelHeight);
+			}
         }
 
         protected override RFont CreateFontInt(string family, double size, RFontStyle style)

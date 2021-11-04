@@ -13,4 +13,7 @@
   <ItemGroup>
     <Resource Include="**\*.svg" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
 </Project>

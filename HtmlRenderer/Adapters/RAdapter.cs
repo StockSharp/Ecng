@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Resources;
+using System.Windows.Media;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core;
 using TheArtOfDev.HtmlRenderer.Core.Entities;
@@ -148,7 +149,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         /// </summary>
         /// <param name="image">the image returned from load event</param>
         /// <returns>converted image or null</returns>
-        public RImage ConvertImage(object image)
+        public RImage ConvertImage(ImageSource image)
         {
             // TODO:a remove this by creating better API.
             return ConvertImageInt(image);
@@ -159,9 +160,9 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         /// </summary>
         /// <param name="memoryStream">the stream to create image from</param>
         /// <returns>new image instance</returns>
-        public RImage ImageFromStream(Stream memoryStream)
+        public RImage ImageFromStream(string extension, Stream memoryStream)
         {
-            return ImageFromStreamInt(memoryStream);
+            return ImageFromStreamInt(extension, memoryStream);
         }
 
         /// <summary>
@@ -223,7 +224,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
             {
                 var stream = GetResource("Load.svg");
                 if (stream != null)
-                    _loadImage = ImageFromStream(stream);
+                    _loadImage = ImageFromStream(".svg", stream);
             }
             return _loadImage;
         }
@@ -237,7 +238,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
             {
                 var stream = GetResource("Error.svg");
                 if (stream != null)
-                    _errorImage = ImageFromStream(stream);
+                    _errorImage = ImageFromStream(".svg", stream);
             }
             return _errorImage;
         }
@@ -373,14 +374,14 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         /// </summary>
         /// <param name="image">the image returned from load event</param>
         /// <returns>converted image or null</returns>
-        protected abstract RImage ConvertImageInt(object image);
+        protected abstract RImage ConvertImageInt(ImageSource image);
 
         /// <summary>
         /// Create an <see cref="RImage"/> object from the given stream.
         /// </summary>
         /// <param name="memoryStream">the stream to create image from</param>
         /// <returns>new image instance</returns>
-        protected abstract RImage ImageFromStreamInt(Stream memoryStream);
+        protected abstract RImage ImageFromStreamInt(string extension, Stream memoryStream);
 
         /// <summary>
         /// Get font instance by given font family name, size and style.

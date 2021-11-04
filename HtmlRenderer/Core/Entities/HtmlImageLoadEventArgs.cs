@@ -12,6 +12,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Windows.Media;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Utils;
 
@@ -26,7 +27,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Entities
     /// <param name="path">the path to the image to load (file path or URL)</param>
     /// <param name="image">the image to use</param>
     /// <param name="imageRectangle">optional: limit to specific rectangle in the loaded image</param>
-    public delegate void HtmlImageLoadCallback(string path, Object image, RRect imageRectangle);
+    public delegate void HtmlImageLoadCallback(string path, ImageSource image, RRect imageRectangle);
 
     /// <summary>
     /// Invoked when an image is about to be loaded by file path, URL or inline data in 'img' element or background-image CSS style.<br/>
@@ -149,7 +150,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Entities
         /// be used from the loaded image and not all of it, also the rectangle will be used for size and not the actual image size.<br/> 
         /// </summary>
         /// <param name="image">the image to load</param>
-        public void Callback(Object image)
+        public void Callback(ImageSource image)
         {
             ArgChecker.AssertArgNotNull(image, "image");
 
@@ -165,7 +166,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Entities
         /// </summary>
         /// <param name="image">the image to load</param>
         /// <param name="imageRectangle">optional: limit to specific rectangle of the image and not all of it</param>
-        public void Callback(Object image, double x, double y, double width, double height)
+        public void Callback(ImageSource image, double x, double y, double width, double height)
         {
             ArgChecker.AssertArgNotNull(image, "image");
 
