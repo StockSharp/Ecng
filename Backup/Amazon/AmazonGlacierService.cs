@@ -14,7 +14,7 @@ namespace Ecng.Backup.Amazon
 	using Ecng.Common;
 
 	/// <summary>
-	/// The data storage service based on Amazon Glacier http://aws.amazon.com/glacier/.
+	/// The data storage service based on Amazon Glacier https://aws.amazon.com/s3/glacier/ .
 	/// </summary>
 	public class AmazonGlacierService : Disposable, IBackupService
 	{

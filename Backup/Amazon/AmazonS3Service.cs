@@ -14,10 +14,9 @@ namespace Ecng.Backup.Amazon
 	using global::Amazon.S3.Model;
 
 	using Ecng.Common;
-	using Ecng.Localization;
 
 	/// <summary>
-	/// The data storage service based on Amazon S3 http://aws.amazon.com/s3/.
+	/// The data storage service based on Amazon S3 https://aws.amazon.com/s3/ .
 	/// </summary>
 	public class AmazonS3Service : Disposable, IBackupService
 	{
