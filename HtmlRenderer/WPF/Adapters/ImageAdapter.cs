@@ -10,7 +10,7 @@
 // - Sun Tsu,
 // "The Art of War"
 
-using System.Windows.Media.Imaging;
+using System.Windows.Media;
 using TheArtOfDev.HtmlRenderer.Adapters;
 
 namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
@@ -23,12 +23,12 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
         /// <summary>
         /// the underline WPF image.
         /// </summary>
-        private readonly BitmapImage _image;
+        private readonly ImageSource _image;
 
         /// <summary>
         /// Init.
         /// </summary>
-        public ImageAdapter(BitmapImage image)
+        public ImageAdapter(ImageSource image)
         {
             _image = image;
         }
@@ -36,25 +36,25 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
         /// <summary>
         /// the underline WPF image.
         /// </summary>
-        public BitmapImage Image
+        public ImageSource Image
         {
             get { return _image; }
         }
 
         public override double Width
         {
-            get { return _image.PixelWidth; }
+            get { return 30; }
         }
 
         public override double Height
         {
-            get { return _image.PixelHeight; }
+            get { return 30; }
         }
 
         public override void Dispose()
         {
-            if (_image.StreamSource != null)
-                _image.StreamSource.Dispose();
+            //if (_image.StreamSource != null)
+            //    _image.StreamSource.Dispose();
         }
     }
 }

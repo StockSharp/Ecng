@@ -38,8 +38,8 @@ namespace TheArtOfDev.HtmlRenderer.Core.Parse
                 var tagIdx = source.IndexOf('<', startIdx);
                 if (tagIdx >= 0 && tagIdx < source.Length)
                 {
-                    // add the html text as anon css box to the structure
-                    AddTextBox(source, startIdx, tagIdx, ref curBox);
+					// add the html text as anon css box to the structure
+					AddTextBox(source, startIdx, tagIdx, ref curBox);
 
                     if (source[tagIdx + 1] == '!')
                     {

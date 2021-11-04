@@ -221,7 +221,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         {
             if (_loadImage == null)
             {
-                var stream = GetResource("ImageLoad.png");
+                var stream = GetResource("Load.svg");
                 if (stream != null)
                     _loadImage = ImageFromStream(stream);
             }
@@ -235,7 +235,7 @@ namespace TheArtOfDev.HtmlRenderer.Adapters
         {
             if (_errorImage == null)
             {
-                var stream = GetResource("ImageError.png");
+                var stream = GetResource("Error.svg");
                 if (stream != null)
                     _errorImage = ImageFromStream(stream);
             }

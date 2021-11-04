@@ -5,9 +5,12 @@
     <IsSourcesAllow>false</IsSourcesAllow>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="**\*.png" />
+    <PackageReference Include="Ecng.Xaml.DXRefs" Version="$(DXVer)" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="**\*.png" />
+    <None Remove="**\*.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="**\*.svg" />
   </ItemGroup>
 </Project>

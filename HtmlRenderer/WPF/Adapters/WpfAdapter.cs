@@ -21,6 +21,7 @@ using TheArtOfDev.HtmlRenderer.Adapters;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.WPF.Utilities;
 using Microsoft.Win32;
+using DevExpress.Xpf.Core.Native;
 
 namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 {
@@ -116,19 +117,13 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 
         protected override RImage ConvertImageInt(object image)
         {
-            return image != null ? new ImageAdapter((BitmapImage)image) : null;
+            return image != null ? new ImageAdapter((ImageSource)image) : null;
         }
 
         protected override RImage ImageFromStreamInt(Stream memoryStream)
         {
-            var bitmap = new BitmapImage();
-            bitmap.BeginInit();
-            bitmap.StreamSource = memoryStream;
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.EndInit();
-            bitmap.Freeze();
-
-            return new ImageAdapter(bitmap);
+			var image = WpfSvgRenderer.CreateImageSource(memoryStream, 1, null);
+			return new ImageAdapter(image);
         }
 
         protected override RFont CreateFontInt(string family, double size, RFontStyle style)
@@ -144,22 +139,22 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 
         protected override object GetClipboardDataObjectInt(string html, string plainText)
         {
-            return ClipboardHelper.CreateDataObject(html, plainText);
+            return Utilities.ClipboardHelper.CreateDataObject(html, plainText);
         }
 
         protected override void SetToClipboardInt(string text)
         {
-            ClipboardHelper.CopyToClipboard(text);
+			Utilities.ClipboardHelper.CopyToClipboard(text);
         }
 
         protected override void SetToClipboardInt(string html, string plainText)
         {
-            ClipboardHelper.CopyToClipboard(html, plainText);
+			Utilities.ClipboardHelper.CopyToClipboard(html, plainText);
         }
 
         protected override void SetToClipboardInt(RImage image)
         {
-            Clipboard.SetImage(((ImageAdapter)image).Image);
+            //Clipboard.SetImage(((ImageAdapter)image).Image);
         }
 
         public event Func<RContextMenu> CreateContextMenuHandler;

@@ -206,12 +206,14 @@ namespace TheArtOfDev.HtmlRenderer.Core.Utils
             return null;
         }
 
-        /// <summary>
-        /// Gets the representation of the online uri on the local disk.
-        /// </summary>
-        /// <param name="imageUri">The online image uri.</param>
-        /// <returns>The path of the file on the disk.</returns>
-        public static FileInfo GetLocalfileName(Uri imageUri)
+		private const string _defaultExt = ".svg";//".png";
+
+		/// <summary>
+		/// Gets the representation of the online uri on the local disk.
+		/// </summary>
+		/// <param name="imageUri">The online image uri.</param>
+		/// <returns>The path of the file on the disk.</returns>
+		public static FileInfo GetLocalfileName(Uri imageUri)
         {
             StringBuilder fileNameBuilder = new StringBuilder();
             string absoluteUri = imageUri.AbsoluteUri;
@@ -229,7 +231,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Utils
             int indexOfParams = restOfUri.IndexOf('?');
             if (indexOfParams == -1)
             {
-                string ext = ".png";
+                string ext = _defaultExt;
                 int indexOfDot = restOfUri.IndexOf('.');
                 if (indexOfDot > -1)
                 {
@@ -247,7 +249,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Utils
                 {
                     //The uri is not for a filename
                     fileNameBuilder.Append(restOfUri);
-                    fileNameBuilder.Append(".png");
+                    fileNameBuilder.Append(_defaultExt);
                 }
                 else if (indexOfParams > indexOfDot)
                 {

@@ -1,0 +1,30 @@
+﻿<?xml version='1.0' encoding='UTF-8'?>
+<svg x="0px" y="0px" viewBox="0 -0.9994 32 31.9993" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" id="Layer_1" style="enable-background:new 0 0 32 32">
+  <g transform="matrix(1.1429, 0, 0, 1.1429, 0, 0)">
+    <g transform="matrix(0.875, 0, 0, 0.875, 0, 0)">
+      <g transform="matrix(1.1428, 0, 0, 1.1428, 0, 0)">
+        <g transform="matrix(0.875, 0, 0, 0.875, 0, 0)">
+          <g transform="matrix(1.1429, 0, 0, 1.1429, 0, 0)">
+            <g transform="matrix(0.875, 0, 0, 0.875, 0, 0)">
+              <style type="text/css">
+	.Black{fill:#727272;}
+	.Yellow{fill:#FFB115;}
+	.Blue{fill:#1177D7;}
+	.Green{fill:#039C23;}
+	.Red{fill:#D11C1C;}
+	.White{fill:#FFFFFF;}
+	.st0{opacity:0.75;}
+	.st1{opacity:0.5;}
+	.st2{opacity:0.25;}
+</style>
+              <g id="Export">
+                <path d="M10, 12L6, 12L6, 6L10, 6L10, 12zM22, 12L22, 18L22, 27C22, 27.6 21.6, 28 21, 28L1, 28C0.4, 28 0, 27.6 0, 27L0, 7C0, 6.4 0.4, 6 1, 6L4, 6L4, 14L18, 14L18, 12L22, 12zM18, 18L4, 18L4, 24L18, 24L18, 18z" class="Black" />
+                <polygon points="16,10 24,10 24,14 32,8 24,2 24,6 16,6  " class="Green" />
+              </g>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

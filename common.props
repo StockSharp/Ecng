@@ -63,6 +63,7 @@
     <ILPackVer>0.1.7</ILPackVer>
     <linq2dbVer>3.5.1</linq2dbVer>
     <NitoVer>5.1.2</NitoVer>
+    <DXVer>1.0.5</DXVer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
