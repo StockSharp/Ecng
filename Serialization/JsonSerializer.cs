@@ -220,6 +220,13 @@
 						? await reader.ReadAsBytesAsync(cancellationToken)
 						: (await reader.ReadAsStringAsync(cancellationToken))?.Base64());
 				}
+				else if (type.TryGetAdapterType(out var adapterType))
+				{
+					value = await ReadAsync(reader, adapterType, cancellationToken);
+
+					if (value is IPersistableAdapter adapter)
+						value = adapter.UnderlyingValue;
+				}
 				else
 					value = await reader.ReadAsStringAsync(cancellationToken);
 
@@ -276,6 +283,13 @@
 					value = value.To<string>();
 				else if (value is Type t)
 					value = t.GetTypeAsString(false);
+				else if (value != null && value.GetType().TryGetAdapterType(out var adapterType))
+				{
+					var adapter = adapterType.CreateInstance<IPersistableAdapter>();
+					adapter.UnderlyingValue = value;
+					await WriteAsync(writer, adapter, cancellationToken);
+					return;
+				}
 
 				await writer.WriteValueAsync(value, cancellationToken);
 			}

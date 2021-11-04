@@ -6,9 +6,35 @@
 	using System.Threading.Tasks;
 
 	using Ecng.Common;
+	using Ecng.Collections;
 
 	public static class PersistableHelper
 	{
+		private static readonly CachedSynchronizedDictionary<Type, Type> _adapterTypes = new();
+
+		private static Type ValidateAdapterType(Type adapterType)
+		{
+			if (adapterType is null)
+				throw new ArgumentNullException(nameof(adapterType));
+
+			if (!adapterType.IsPersistable())
+				throw new ArgumentException(nameof(adapterType));
+
+			if (!typeof(IPersistableAdapter).IsAssignableFrom(adapterType))
+				throw new ArgumentException(nameof(adapterType));
+
+			return adapterType;
+		}
+
+		public static void RegisterAdapterType(this Type type, Type adapterType)
+			=> _adapterTypes.Add(type, ValidateAdapterType(adapterType));
+
+		public static bool RemoveAdapterType(this Type type)
+			=> _adapterTypes.Remove(type);
+
+		public static bool TryGetAdapterType(this Type type, out Type adapterType)
+			=> _adapterTypes.TryGetValue(type, out adapterType);
+
 		public static bool IsPersistable(this Type type)
 			=> typeof(IPersistable).IsAssignableFrom(type) || typeof(IAsyncPersistable).IsAssignableFrom(type);
 

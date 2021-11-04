@@ -546,10 +546,10 @@
 				SecureStringArrayProp = storage.GetValue<SecureString[]>(nameof(SecureStringArrayProp));
 
 				//if (storage.ContainsKey(nameof(Obj1)))
-					Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1))?.Load<TestClass>();
+				Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1))?.Load<TestClass>();
 
 				//if (storage.ContainsKey(nameof(Obj2)))
-					Obj2 = storage.GetValue<SettingsStorage[]>(nameof(Obj2))?.Select(s => s?.Load<TestClass>()).ToArray();
+				Obj2 = storage.GetValue<SettingsStorage[]>(nameof(Obj2))?.Select(s => s?.Load<TestClass>()).ToArray();
 			}
 
 			void IPersistable.Save(SettingsStorage storage)
@@ -924,6 +924,79 @@
 
 			obj.AssertEqual((await Do(ss, encryptedAsByteArray: true)).Load<TestSecureString>());
 			obj.AssertEqual((await Do(ss)).Load<TestSecureString>());
+		}
+
+		private struct CurrencyPersistableAdapter : IPersistableAdapter, IPersistable
+		{
+			private Currency _underlyingValue;
+
+			object IPersistableAdapter.UnderlyingValue
+			{
+				get => _underlyingValue;
+				set => _underlyingValue = (Currency)value;
+			}
+
+			void IPersistable.Load(SettingsStorage storage)
+			{
+				_underlyingValue = new()
+				{
+					Type = storage.GetValue<CurrencyTypes>(nameof(_underlyingValue.Type)),
+					Value = storage.GetValue<decimal>(nameof(_underlyingValue.Value))
+				};
+			}
+
+			void IPersistable.Save(SettingsStorage storage)
+			{
+				storage
+					.Set(nameof(_underlyingValue.Type), _underlyingValue.Type)
+					.Set(nameof(_underlyingValue.Value), _underlyingValue.Value);
+			}
+		}
+
+		private class TestCurrencyComplex : Equatable<TestCurrencyComplex>, IPersistable
+		{
+			public Currency Currency { get; set; }
+
+			protected override bool OnEquals(TestCurrencyComplex other)
+			{
+				return Currency == other.Currency;
+			}
+
+			public override TestCurrencyComplex Clone()
+			{
+				return new() { Currency = Currency };
+			}
+
+			void IPersistable.Load(SettingsStorage storage)
+			{
+				Currency = storage.GetValue<Currency>(nameof(Currency));
+			}
+
+			void IPersistable.Save(SettingsStorage storage)
+			{
+				storage.Set(nameof(Currency), Currency);
+			}
+		}
+
+		[TestMethod]
+		public async Task Currency()
+		{
+			PersistableHelper.RegisterAdapterType(typeof(Currency), typeof(CurrencyPersistableAdapter));
+
+			try
+			{
+				var curr = 10m.ToCurrency(CurrencyTypes.USD);
+
+				await Do(curr);
+				await Do<Currency>(null);
+				await Do<TestCurrencyComplex>(new() { Currency = curr });
+				await Do<TestCurrencyComplex>(null);
+				await Do<TestCurrencyComplex>(new());
+			}
+			finally
+			{
+				PersistableHelper.RemoveAdapterType(typeof(Currency));
+			}
 		}
 	}
 }
