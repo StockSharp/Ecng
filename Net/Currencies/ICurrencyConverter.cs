@@ -8,6 +8,6 @@
 
 	public interface ICurrencyConverter
 	{
-		Task<decimal> ConvertAsync(CurrencyTypes from, CurrencyTypes to, DateTime date, CancellationToken cancellationToken = default);
+		Task<decimal> GetRateAsync(CurrencyTypes from, CurrencyTypes to, DateTime date, CancellationToken cancellationToken = default);
 	}
 }

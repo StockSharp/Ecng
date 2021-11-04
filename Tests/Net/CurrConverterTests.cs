@@ -18,8 +18,8 @@
 			Exception err = null;
 			
 			ICurrencyConverter converter = new FloatRatesCurrencyConverter(err1 => err = err1);
-			var rate = await converter.ConvertAsync(CurrencyTypes.EUR, CurrencyTypes.RUB, DateTime.Today);
-			rate = await converter.ConvertAsync(CurrencyTypes.EUR, CurrencyTypes.RUB, DateTime.Today);
+			var rate = await converter.GetRateAsync(CurrencyTypes.EUR, CurrencyTypes.RUB, DateTime.Today);
+			rate = await converter.GetRateAsync(CurrencyTypes.EUR, CurrencyTypes.RUB, DateTime.Today);
 
 			err.AssertNull();
 
@@ -31,8 +31,8 @@
 		public async Task Cryptonator()
 		{
 			ICurrencyConverter converter = new CryptonatorCurrencyConverter();
-			var rate = await converter.ConvertAsync(CurrencyTypes.BTC, CurrencyTypes.USD, DateTime.Today);
-			rate = await converter.ConvertAsync(CurrencyTypes.BTC, CurrencyTypes.USD, DateTime.Today);
+			var rate = await converter.GetRateAsync(CurrencyTypes.BTC, CurrencyTypes.USD, DateTime.Today);
+			rate = await converter.GetRateAsync(CurrencyTypes.BTC, CurrencyTypes.USD, DateTime.Today);
 
 			(rate > 1000).AssertTrue();
 			(rate < 100000).AssertTrue();

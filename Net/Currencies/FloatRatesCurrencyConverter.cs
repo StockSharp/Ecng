@@ -48,7 +48,7 @@
 			_currParseError = currParseError ?? throw new ArgumentNullException(nameof(currParseError));
 		}
 
-		async Task<decimal> ICurrencyConverter.ConvertAsync(CurrencyTypes from, CurrencyTypes to, DateTime date, CancellationToken cancellationToken)
+		async Task<decimal> ICurrencyConverter.GetRateAsync(CurrencyTypes from, CurrencyTypes to, DateTime date, CancellationToken cancellationToken)
 		{
 			if (from == to)
 				return 1;

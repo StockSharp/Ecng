@@ -16,7 +16,7 @@
 		private readonly Dictionary<DateTime, Dictionary<(CurrencyTypes, CurrencyTypes), decimal>> _rateInfo = new();
 		private readonly AsyncLock _mutex = new();
 
-		async Task<decimal> ICurrencyConverter.ConvertAsync(CurrencyTypes from, CurrencyTypes to, DateTime date, CancellationToken cancellationToken)
+		async Task<decimal> ICurrencyConverter.GetRateAsync(CurrencyTypes from, CurrencyTypes to, DateTime date, CancellationToken cancellationToken)
 		{
 			if (from == to)
 				return 1;
