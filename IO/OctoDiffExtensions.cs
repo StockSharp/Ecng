@@ -15,13 +15,19 @@
 			if (file is null)
 				throw new ArgumentNullException(nameof(file));
 
-			var signatureBuilder = new SignatureBuilder();
-
 			using var basisStream = new MemoryStream(file);
 			using var signatureStream = new MemoryStream();
-			signatureBuilder.Build(basisStream, new SignatureWriter(signatureStream));
+			basisStream.CreateSignature(signatureStream);
 			signatureStream.Position = 0;
 			return signatureStream.ToArray();
+		}
+
+		public static void CreateSignature(this Stream file, Stream output)
+		{
+			if (file is null)
+				throw new ArgumentNullException(nameof(file));
+
+			new SignatureBuilder().Build(file, new SignatureWriter(output));
 		}
 
 		public static byte[] CreateDelta(this byte[] signature, byte[] newFile)
@@ -32,17 +38,26 @@
 			if (newFile is null)
 				throw new ArgumentNullException(nameof(newFile));
 
-			var deltaBuilder = new DeltaBuilder();
-
 			using var newFileStream = new MemoryStream(newFile);
 			using var signatureFileStream = new MemoryStream(signature);
 			using var deltaStream = new MemoryStream();
-			deltaBuilder.BuildDelta(newFileStream, new SignatureReader(signatureFileStream, _nullReporter), new AggregateCopyOperationsDecorator(new BinaryDeltaWriter(deltaStream)));
+			signatureFileStream.CreateDelta(newFileStream, deltaStream);
 			deltaStream.Position = 0;
 			return deltaStream.ToArray();
 		}
 
-		public static byte[] CreateOriginal(this byte[] signature, byte[] delta)
+		public static void CreateDelta(this Stream signature, Stream newFile, Stream output)
+		{
+			if (signature is null)
+				throw new ArgumentNullException(nameof(signature));
+
+			if (newFile is null)
+				throw new ArgumentNullException(nameof(newFile));
+
+			new DeltaBuilder().BuildDelta(newFile, new SignatureReader(signature, _nullReporter), new AggregateCopyOperationsDecorator(new BinaryDeltaWriter(output)));
+		}
+
+		public static byte[] CreateOriginal(this byte[] signature, byte[] delta, bool checkHash = false)
 		{
 			if (signature is null)
 				throw new ArgumentNullException(nameof(signature));
@@ -50,14 +65,24 @@
 			if (delta is null)
 				throw new ArgumentNullException(nameof(delta));
 
-			var deltaApplier = new DeltaApplier { SkipHashCheck = true };
-
 			using var basisStream = new MemoryStream(signature);
 			using var deltaStream = new MemoryStream(delta);
-			using var newFileStream = new MemoryStream();
-			deltaApplier.Apply(basisStream, new BinaryDeltaReader(deltaStream, _nullReporter), newFileStream);
-			newFileStream.Position = 0;
-			return newFileStream.ToArray();
+			using var output = new MemoryStream();
+			basisStream.CreateOriginal(deltaStream, output, checkHash);
+			output.Position = 0;
+			return output.ToArray();
+		}
+
+		public static void CreateOriginal(this Stream basis, Stream delta, Stream output, bool checkHash = false)
+		{
+			if (basis is null)
+				throw new ArgumentNullException(nameof(basis));
+
+			if (delta is null)
+				throw new ArgumentNullException(nameof(delta));
+
+			new DeltaApplier { SkipHashCheck = checkHash }
+				.Apply(basis, new BinaryDeltaReader(delta, _nullReporter), output);
 		}
 	}
 }
