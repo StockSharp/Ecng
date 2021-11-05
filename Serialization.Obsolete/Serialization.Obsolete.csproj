@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
+  <PropertyGroup>
+    <RootNamespace>Ecng.Serialization</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Serialization\SecureStringEncryptor.cs" Link="SecureStringEncryptor.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Serialization\Serialization.csproj" />
+  </ItemGroup>
+</Project>

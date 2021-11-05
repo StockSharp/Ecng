@@ -63,7 +63,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibGit2Sharp", "LibGit2Shar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data", "Data\Data.csproj", "{0F5D95EF-F816-447A-B517-DD8E1DA6987F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestWpf", "TestWpf\TestWpf.csproj", "{FE6909E7-64D1-4DAE-B4B6-F86CE56D5608}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestWpf", "TestWpf\TestWpf.csproj", "{FE6909E7-64D1-4DAE-B4B6-F86CE56D5608}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serialization.Obsolete", "Serialization.Obsolete\Serialization.Obsolete.csproj", "{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -183,6 +185,10 @@ Global
 		{FE6909E7-64D1-4DAE-B4B6-F86CE56D5608}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FE6909E7-64D1-4DAE-B4B6-F86CE56D5608}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FE6909E7-64D1-4DAE-B4B6-F86CE56D5608}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
