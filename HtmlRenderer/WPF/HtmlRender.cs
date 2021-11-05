@@ -140,23 +140,21 @@ namespace TheArtOfDev.HtmlRenderer.WPF
             Size actualSize = Size.Empty;
             if (!string.IsNullOrEmpty(html))
             {
-                using (var container = new HtmlContainer())
-                {
-                    container.MaxSize = new Size(maxWidth, 0);
-                    container.AvoidAsyncImagesLoading = true;
-                    container.AvoidImagesLateLoading = true;
+				using var container = new HtmlContainer();
+				container.MaxSize = new Size(maxWidth, 0);
+				container.AvoidAsyncImagesLoading = true;
+				container.AvoidImagesLateLoading = true;
 
-                    if (stylesheetLoad != null)
-                        container.StylesheetLoad += stylesheetLoad;
-                    if (imageLoad != null)
-                        container.ImageLoad += imageLoad;
+				if (stylesheetLoad != null)
+					container.StylesheetLoad += stylesheetLoad;
+				if (imageLoad != null)
+					container.ImageLoad += imageLoad;
 
-                    container.SetHtml(html, cssData);
-                    container.PerformLayout();
+				container.SetHtml(html, cssData);
+				container.PerformLayout();
 
-                    actualSize = container.ActualSize;
-                }
-            }
+				actualSize = container.ActualSize;
+			}
             return actualSize;
         }
 
@@ -287,33 +285,31 @@ namespace TheArtOfDev.HtmlRenderer.WPF
             RenderTargetBitmap renderTarget;
             if (!string.IsNullOrEmpty(html))
             {
-                using (var container = new HtmlContainer())
-                {
-                    container.AvoidAsyncImagesLoading = true;
-                    container.AvoidImagesLateLoading = true;
+				using var container = new HtmlContainer();
+				container.AvoidAsyncImagesLoading = true;
+				container.AvoidImagesLateLoading = true;
 
-                    if (stylesheetLoad != null)
-                        container.StylesheetLoad += stylesheetLoad;
-                    if (imageLoad != null)
-                        container.ImageLoad += imageLoad;
-                    container.SetHtml(html, cssData);
+				if (stylesheetLoad != null)
+					container.StylesheetLoad += stylesheetLoad;
+				if (imageLoad != null)
+					container.ImageLoad += imageLoad;
+				container.SetHtml(html, cssData);
 
-                    var finalSize = MeasureHtmlByRestrictions(container, minSize, maxSize);
-                    container.MaxSize = finalSize;
+				var finalSize = MeasureHtmlByRestrictions(container, minSize, maxSize);
+				container.MaxSize = finalSize;
 
-                    renderTarget = new RenderTargetBitmap((int)finalSize.Width, (int)finalSize.Height, 96, 96, PixelFormats.Pbgra32);
+				renderTarget = new RenderTargetBitmap((int)finalSize.Width, (int)finalSize.Height, 96, 96, PixelFormats.Pbgra32);
 
-                    // render HTML into the visual
-                    DrawingVisual drawingVisual = new DrawingVisual();
-                    using (DrawingContext g = drawingVisual.RenderOpen())
-                    {
-                        container.PerformPaint(g, new Rect(new Size(maxSize.Width > 0 ? maxSize.Width : double.MaxValue, maxSize.Height > 0 ? maxSize.Height : double.MaxValue)));
-                    }
+				// render HTML into the visual
+				DrawingVisual drawingVisual = new DrawingVisual();
+				using (DrawingContext g = drawingVisual.RenderOpen())
+				{
+					container.PerformPaint(g, new Rect(new Size(maxSize.Width > 0 ? maxSize.Width : double.MaxValue, maxSize.Height > 0 ? maxSize.Height : double.MaxValue)));
+				}
 
-                    // render visual into target bitmap
-                    renderTarget.Render(drawingVisual);
-                }
-            }
+				// render visual into target bitmap
+				renderTarget.Render(drawingVisual);
+			}
             else
             {
                 renderTarget = new RenderTargetBitmap(0, 0, 96, 96, PixelFormats.Pbgra32);
@@ -334,15 +330,13 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         /// <returns>return: the size of the html to be rendered within the min/max limits</returns>
         private static Size MeasureHtmlByRestrictions(HtmlContainer htmlContainer, Size minSize, Size maxSize)
         {
-            // use desktop created graphics to measure the HTML
-            using (var mg = new GraphicsAdapter())
-            {
-                var sizeInt = HtmlRendererUtils.MeasureHtmlByRestrictions(mg, htmlContainer.HtmlContainerInt, Utils.Convert(minSize), Utils.Convert(maxSize));
-                if (maxSize.Width < 1 && sizeInt.Width > 4096)
-                    sizeInt.Width = 4096;
-                return Utils.ConvertRound(sizeInt);
-            }
-        }
+			// use desktop created graphics to measure the HTML
+			using var mg = new GraphicsAdapter();
+			var sizeInt = HtmlRendererUtils.MeasureHtmlByRestrictions(mg, htmlContainer.HtmlContainerInt, Utils.Convert(minSize), Utils.Convert(maxSize));
+			if (maxSize.Width < 1 && sizeInt.Width > 4096)
+				sizeInt.Width = 4096;
+			return Utils.ConvertRound(sizeInt);
+		}
 
         /// <summary>
         /// Renders the specified HTML source on the specified location and max size restriction.<br/>
@@ -396,25 +390,23 @@ namespace TheArtOfDev.HtmlRenderer.WPF
 
             if (!string.IsNullOrEmpty(html))
             {
-                using (var container = new HtmlContainer())
-                {
-                    container.Location = location;
-                    container.MaxSize = maxSize;
-                    container.AvoidAsyncImagesLoading = true;
-                    container.AvoidImagesLateLoading = true;
+				using var container = new HtmlContainer();
+				container.Location = location;
+				container.MaxSize = maxSize;
+				container.AvoidAsyncImagesLoading = true;
+				container.AvoidImagesLateLoading = true;
 
-                    if (stylesheetLoad != null)
-                        container.StylesheetLoad += stylesheetLoad;
-                    if (imageLoad != null)
-                        container.ImageLoad += imageLoad;
+				if (stylesheetLoad != null)
+					container.StylesheetLoad += stylesheetLoad;
+				if (imageLoad != null)
+					container.ImageLoad += imageLoad;
 
-                    container.SetHtml(html, cssData);
-                    container.PerformLayout();
-                    container.PerformPaint(g, new Rect(0, 0, double.MaxValue, double.MaxValue));
+				container.SetHtml(html, cssData);
+				container.PerformLayout();
+				container.PerformPaint(g, new Rect(0, 0, double.MaxValue, double.MaxValue));
 
-                    actualSize = container.ActualSize;
-                }
-            }
+				actualSize = container.ActualSize;
+			}
 
             return actualSize;
         }

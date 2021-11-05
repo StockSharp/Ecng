@@ -442,29 +442,27 @@
 
 			try
 			{
-				using (var scope = ((IInternalGroup)group).Init())
+				using var scope = ((IInternalGroup)group).Init();
+				foreach (var packet in actions.Distinct(_itemComparer).Batch(MaxBatchSize))
 				{
-					foreach (var packet in actions.Distinct(_itemComparer).Batch(MaxBatchSize))
+					using (var batch = BeginBatch(group))
 					{
-						using (var batch = BeginBatch(group))
+						foreach (var action in packet)
 						{
-							foreach (var action in packet)
-							{
-								if (action.BreakBatchOnError)
-									action.Do(scope);
-								else
-									Flush(action);
+							if (action.BreakBatchOnError)
+								action.Do(scope);
+							else
+								Flush(action);
 
-								if (IsDisposed)
-									break;
-							}
-
-							batch.Commit();
+							if (IsDisposed)
+								break;
 						}
 
-						if (IsDisposed)
-							break;
+						batch.Commit();
 					}
+
+					if (IsDisposed)
+						break;
 				}
 			}
 			catch (Exception ex)

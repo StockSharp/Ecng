@@ -101,13 +101,11 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         {
             try
             {
-                using (var client = new WebClient())
-                {
-                    _clients.Add(client);
-					var image = client.DownloadData(source);
-                    OnDownloadImageCompleted(client, source, image, null, false);
-                }
-            }
+				using var client = new WebClient();
+				_clients.Add(client);
+				var image = client.DownloadData(source);
+				OnDownloadImageCompleted(client, source, image, null, false);
+			}
             catch (Exception ex)
             {
                 OnDownloadImageCompleted(null, source, null, ex, false);
@@ -144,12 +142,10 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             var downloadUri = (Uri)e.UserState;
             try
             {
-                using (var client = (WebClient)sender)
-                {
-                    client.DownloadDataCompleted -= OnDownloadImageAsyncCompleted;
-                    OnDownloadImageCompleted(client, downloadUri, e.Result, e.Error, e.Cancelled);
-                }
-            }
+				using var client = (WebClient)sender;
+				client.DownloadDataCompleted -= OnDownloadImageAsyncCompleted;
+				OnDownloadImageCompleted(client, downloadUri, e.Result, e.Error, e.Cancelled);
+			}
             catch (Exception ex)
             {
                 OnDownloadImageCompleted(null, downloadUri, e.Result, ex, false);

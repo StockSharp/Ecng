@@ -86,11 +86,9 @@ namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 
         public override void MeasureString(string str, RFont font, double maxWidth, out int charFit, out double charFitWidth)
         {
-            using (var g = new GraphicsAdapter())
-            {
-                g.MeasureString(str, font, maxWidth, out charFit, out charFitWidth);
-            }
-        }
+			using var g = new GraphicsAdapter();
+			g.MeasureString(str, font, maxWidth, out charFit, out charFitWidth);
+		}
 
         public override void Invalidate()
         {

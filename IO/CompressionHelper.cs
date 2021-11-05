@@ -24,8 +24,8 @@
 					if (filter?.Invoke(entry.Name) == false)
 						continue;
 
-					using (var stream = entry.Open())
-						yield return Tuple.Create(entry.FullName, stream);
+					using var stream = entry.Open();
+					yield return Tuple.Create(entry.FullName, stream);
 				}
 			}
 
@@ -47,8 +47,8 @@
 
 		public static string StreamToString(this Stream stream, Encoding encoding)
 		{
-			using (var streamReader = new StreamReader(stream, encoding))
-				return streamReader.ReadToEnd();
+			using var streamReader = new StreamReader(stream, encoding);
+			return streamReader.ReadToEnd();
 		}
 
 		public static string UnGZip(this byte[] input)
@@ -61,14 +61,14 @@
 
 		public static string UnGZip(this byte[] input, int index, int count)
 		{
-			using (var zip = new GZipStream(new MemoryStream(input, index, count), CompressionMode.Decompress))
-				return zip.StreamToString();
+			using var zip = new GZipStream(new MemoryStream(input, index, count), CompressionMode.Decompress);
+			return zip.StreamToString();
 		}
 
 		public static int UnGZip(this byte[] input, int index, int count, byte[] destination)
 		{
-			using (var zip = new GZipStream(new MemoryStream(input, index, count), CompressionMode.Decompress))
-				return zip.CopyToBuffer(destination);
+			using var zip = new GZipStream(new MemoryStream(input, index, count), CompressionMode.Decompress);
+			return zip.CopyToBuffer(destination);
 		}
 
 		public static string UnDeflate(this byte[] input)
@@ -81,14 +81,14 @@
 
 		public static string UnDeflate(this byte[] input, int index, int count)
 		{
-			using (var deflate = new DeflateStream(new MemoryStream(input, index, count), CompressionMode.Decompress))
-				return deflate.StreamToString();
+			using var deflate = new DeflateStream(new MemoryStream(input, index, count), CompressionMode.Decompress);
+			return deflate.StreamToString();
 		}
 
 		public static int UnDeflate(this byte[] input, int index, int count, byte[] destination)
 		{
-			using (var deflate = new DeflateStream(new MemoryStream(input, index, count), CompressionMode.Decompress))
-				return deflate.CopyToBuffer(destination);
+			using var deflate = new DeflateStream(new MemoryStream(input, index, count), CompressionMode.Decompress);
+			return deflate.CopyToBuffer(destination);
 		}
 
 		public static byte[] DeflateTo(this byte[] input)
@@ -96,13 +96,11 @@
 			if (input is null)
 				throw new ArgumentNullException(nameof(input));
 
-			using (var output = new MemoryStream())
-			{
-				using (var deflate = new DeflateStream(output, CompressionMode.Compress, true))
-					deflate.Write(input, 0, input.Length);
+			using var output = new MemoryStream();
+			using (var deflate = new DeflateStream(output, CompressionMode.Compress, true))
+				deflate.Write(input, 0, input.Length);
 
-				return output.To<byte[]>();
-			}
+			return output.To<byte[]>();
 		}
 
 		public static byte[] DeflateFrom(this byte[] input)
@@ -110,13 +108,11 @@
 			if (input is null)
 				throw new ArgumentNullException(nameof(input));
 
-			using (var output = new MemoryStream())
-			{
-				using (var deflate = new DeflateStream(new MemoryStream(input), CompressionMode.Decompress))
-					deflate.CopyTo(output);
+			using var output = new MemoryStream();
+			using (var deflate = new DeflateStream(new MemoryStream(input), CompressionMode.Decompress))
+				deflate.CopyTo(output);
 
-				return output.To<byte[]>();
-			}
+			return output.To<byte[]>();
 		}
 
 		public static byte[] Un7Zip(this byte[] input)

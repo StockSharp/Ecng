@@ -17,14 +17,11 @@
 
 			var signatureBuilder = new SignatureBuilder();
 
-			using (var basisStream = new MemoryStream(file))
-			using (var signatureStream = new MemoryStream())
-			{
-				signatureBuilder.Build(basisStream, new SignatureWriter(signatureStream));
-				signatureStream.Position = 0;
-				var result = signatureStream.ToArray();
-				return result;
-			}
+			using var basisStream = new MemoryStream(file);
+			using var signatureStream = new MemoryStream();
+			signatureBuilder.Build(basisStream, new SignatureWriter(signatureStream));
+			signatureStream.Position = 0;
+			return signatureStream.ToArray();
 		}
 
 		public static byte[] CreateDelta(this byte[] signature, byte[] newFile)
@@ -37,15 +34,12 @@
 
 			var deltaBuilder = new DeltaBuilder();
 
-			using (var newFileStream = new MemoryStream(newFile))
-			using (var signatureFileStream = new MemoryStream(signature))
-			using (var deltaStream = new MemoryStream())
-			{
-				deltaBuilder.BuildDelta(newFileStream, new SignatureReader(signatureFileStream, _nullReporter), new AggregateCopyOperationsDecorator(new BinaryDeltaWriter(deltaStream)));
-				deltaStream.Position = 0;
-				var result = deltaStream.ToArray();
-				return result;
-			}
+			using var newFileStream = new MemoryStream(newFile);
+			using var signatureFileStream = new MemoryStream(signature);
+			using var deltaStream = new MemoryStream();
+			deltaBuilder.BuildDelta(newFileStream, new SignatureReader(signatureFileStream, _nullReporter), new AggregateCopyOperationsDecorator(new BinaryDeltaWriter(deltaStream)));
+			deltaStream.Position = 0;
+			return deltaStream.ToArray();
 		}
 
 		public static byte[] CreateOriginal(this byte[] signature, byte[] delta)
@@ -58,15 +52,12 @@
 
 			var deltaApplier = new DeltaApplier { SkipHashCheck = true };
 
-			using (var basisStream = new MemoryStream(signature))
-			using (var deltaStream = new MemoryStream(delta))
-			using (var newFileStream = new MemoryStream())
-			{
-				deltaApplier.Apply(basisStream, new BinaryDeltaReader(deltaStream, _nullReporter), newFileStream);
-				newFileStream.Position = 0;
-				var result = newFileStream.ToArray();
-				return result;
-			}
+			using var basisStream = new MemoryStream(signature);
+			using var deltaStream = new MemoryStream(delta);
+			using var newFileStream = new MemoryStream();
+			deltaApplier.Apply(basisStream, new BinaryDeltaReader(deltaStream, _nullReporter), newFileStream);
+			newFileStream.Position = 0;
+			return newFileStream.ToArray();
 		}
 	}
 }

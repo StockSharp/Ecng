@@ -81,20 +81,18 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         {
             if (HtmlContainer != null)
             {
-                using (var ig = new GraphicsAdapter())
-                {
-                    var horizontal = Padding.Left + Padding.Right + BorderThickness.Left + BorderThickness.Right;
-                    var vertical = Padding.Top + Padding.Bottom + BorderThickness.Top + BorderThickness.Bottom;
+				using var ig = new GraphicsAdapter();
+				var horizontal = Padding.Left + Padding.Right + BorderThickness.Left + BorderThickness.Right;
+				var vertical = Padding.Top + Padding.Bottom + BorderThickness.Top + BorderThickness.Bottom;
 
-                    var size = new RSize(constraint.Width < Double.PositiveInfinity ? constraint.Width - horizontal : 0, constraint.Height < Double.PositiveInfinity ? constraint.Height - vertical : 0);
-                    var minSize = new RSize(MinWidth < Double.PositiveInfinity ? MinWidth - horizontal : 0, MinHeight < Double.PositiveInfinity ? MinHeight - vertical : 0);
-                    var maxSize = new RSize(MaxWidth < Double.PositiveInfinity ? MaxWidth - horizontal : 0, MaxHeight < Double.PositiveInfinity ? MaxHeight - vertical : 0);
+				var size = new RSize(constraint.Width < Double.PositiveInfinity ? constraint.Width - horizontal : 0, constraint.Height < Double.PositiveInfinity ? constraint.Height - vertical : 0);
+				var minSize = new RSize(MinWidth < Double.PositiveInfinity ? MinWidth - horizontal : 0, MinHeight < Double.PositiveInfinity ? MinHeight - vertical : 0);
+				var maxSize = new RSize(MaxWidth < Double.PositiveInfinity ? MaxWidth - horizontal : 0, MaxHeight < Double.PositiveInfinity ? MaxHeight - vertical : 0);
 
-                    var newSize = HtmlRendererUtils.Layout(ig, HtmlContainer.HtmlContainerInt, size, minSize, maxSize, AutoSize, AutoSizeHeightOnly);
+				var newSize = HtmlRendererUtils.Layout(ig, HtmlContainer.HtmlContainerInt, size, minSize, maxSize, AutoSize, AutoSizeHeightOnly);
 
-                    constraint = new Size(newSize.Width + horizontal, newSize.Height + vertical);
-                }
-            }
+				constraint = new Size(newSize.Width + horizontal, newSize.Height + vertical);
+			}
 
             if (double.IsPositiveInfinity(constraint.Width) || double.IsPositiveInfinity(constraint.Height))
                 constraint = Size.Empty;

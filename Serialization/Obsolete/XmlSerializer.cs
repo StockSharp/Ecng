@@ -153,8 +153,8 @@ namespace Ecng.Serialization
 			if (doc is null)
 				return;
 
-			using (var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = Indent, OmitXmlDeclaration = true, Encoding = Encoding }))
-				doc.Save(writer);
+			using var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = Indent, OmitXmlDeclaration = true, Encoding = Encoding });
+			doc.Save(writer);
 		}
 
 		public override void Deserialize(Stream stream, FieldList fields, SerializationItemCollection source)
@@ -172,15 +172,13 @@ namespace Ecng.Serialization
 
 			if (root is null)
 			{
-				using (var reader = XmlReader.Create(stream))
-				{
-					var doc = XDocument.Load(reader);
+				using var reader = XmlReader.Create(stream);
+				var doc = XDocument.Load(reader);
 
-					if (doc.Root is null)
-						throw new ArgumentException("Root element is null.", nameof(stream));
+				if (doc.Root is null)
+					throw new ArgumentException("Root element is null.", nameof(stream));
 
-					root = doc.Root;
-				}
+				root = doc.Root;
 			}
 
 			if (typeof(T).IsSerializablePrimitive())

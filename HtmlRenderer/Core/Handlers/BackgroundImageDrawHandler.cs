@@ -122,11 +122,9 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             while (destRect.X > rectangle.X)
                 destRect.X -= imgSize.Width;
 
-            using (var brush = g.GetTextureBrush(imageLoadHandler.Image, srcRect, destRect.Location))
-            {
-                g.DrawRectangle(brush, rectangle.X, destRect.Y, rectangle.Width, srcRect.Height);
-            }
-        }
+			using var brush = g.GetTextureBrush(imageLoadHandler.Image, srcRect, destRect.Location);
+			g.DrawRectangle(brush, rectangle.X, destRect.Y, rectangle.Width, srcRect.Height);
+		}
 
         /// <summary>
         /// Draw the background image at the required location repeating it over the Y axis.<br/>
@@ -137,11 +135,9 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             while (destRect.Y > rectangle.Y)
                 destRect.Y -= imgSize.Height;
 
-            using (var brush = g.GetTextureBrush(imageLoadHandler.Image, srcRect, destRect.Location))
-            {
-                g.DrawRectangle(brush, destRect.X, rectangle.Y, srcRect.Width, rectangle.Height);
-            }
-        }
+			using var brush = g.GetTextureBrush(imageLoadHandler.Image, srcRect, destRect.Location);
+			g.DrawRectangle(brush, destRect.X, rectangle.Y, srcRect.Width, rectangle.Height);
+		}
 
         /// <summary>
         /// Draw the background image at the required location repeating it over the X and Y axis.<br/>
@@ -154,11 +150,9 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             while (destRect.Y > rectangle.Y)
                 destRect.Y -= imgSize.Height;
 
-            using (var brush = g.GetTextureBrush(imageLoadHandler.Image, srcRect, destRect.Location))
-            {
-                g.DrawRectangle(brush, rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
-            }
-        }
+			using var brush = g.GetTextureBrush(imageLoadHandler.Image, srcRect, destRect.Location);
+			g.DrawRectangle(brush, rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
+		}
 
         #endregion
     }

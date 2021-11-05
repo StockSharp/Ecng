@@ -348,11 +348,9 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         /// </summary>
         public void PerformLayout()
         {
-            using (var ig = new GraphicsAdapter())
-            {
-                _htmlContainerInt.PerformLayout(ig);
-            }
-        }
+			using var ig = new GraphicsAdapter();
+			_htmlContainerInt.PerformLayout(ig);
+		}
 
         /// <summary>
         /// Render the html using the given device.
@@ -363,11 +361,9 @@ namespace TheArtOfDev.HtmlRenderer.WPF
         {
             ArgChecker.AssertArgNotNull(g, "g");
 
-            using (var ig = new GraphicsAdapter(g, Utils.Convert(clip)))
-            {
-                _htmlContainerInt.PerformPaint(ig);
-            }
-        }
+			using var ig = new GraphicsAdapter(g, Utils.Convert(clip));
+			_htmlContainerInt.PerformPaint(ig);
+		}
 
         /// <summary>
         /// Handle mouse down to handle selection.

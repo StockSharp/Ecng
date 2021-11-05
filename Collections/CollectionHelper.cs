@@ -1113,24 +1113,22 @@
 			if (predicate is null)
 				throw new ArgumentNullException(nameof(predicate));
 
-			using (var iterator = source.GetEnumerator())
+			using var iterator = source.GetEnumerator();
+			if (!iterator.MoveNext())
+				yield break;
+
+			var previous = iterator.Current;
+			yield return previous;
+
+			while (iterator.MoveNext())
 			{
-				if (!iterator.MoveNext())
-					yield break;
+				var current = iterator.Current;
 
-				var previous = iterator.Current;
-				yield return previous;
+				if (!predicate(previous, current))
+					continue;
 
-				while (iterator.MoveNext())
-				{
-					var current = iterator.Current;
-
-					if (!predicate(previous, current))
-						continue;
-
-					yield return current;
-					previous = current;
-				}
+				yield return current;
+				previous = current;
 			}
 		}
 

@@ -104,11 +104,9 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             {
                 if (fileInfo.Exists)
                 {
-                    using (var sr = new StreamReader(fileInfo.FullName))
-                    {
-                        return sr.ReadToEnd();
-                    }
-                }
+					using var sr = new StreamReader(fileInfo.FullName);
+					return sr.ReadToEnd();
+				}
                 else
                 {
                     htmlContainer.ReportError(HtmlRenderErrorType.CssParsing, "No stylesheet found by path: " + path);
@@ -129,20 +127,18 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         /// <returns>the loaded stylesheet string</returns>
         private static string LoadStylesheetFromUri(HtmlContainerInt htmlContainer, Uri uri)
         {
-            using (var client = new WebClient())
-            {
-                var stylesheet = client.DownloadString(uri);
-                try
-                {
-                    stylesheet = CorrectRelativeUrls(stylesheet, uri);
-                }
-                catch (Exception ex)
-                {
-                    htmlContainer.ReportError(HtmlRenderErrorType.CssParsing, "Error in correcting relative URL in loaded stylesheet", ex);
-                }
-                return stylesheet;
-            }
-        }
+			using var client = new WebClient();
+			var stylesheet = client.DownloadString(uri);
+			try
+			{
+				stylesheet = CorrectRelativeUrls(stylesheet, uri);
+			}
+			catch (Exception ex)
+			{
+				htmlContainer.ReportError(HtmlRenderErrorType.CssParsing, "Error in correcting relative URL in loaded stylesheet", ex);
+			}
+			return stylesheet;
+		}
 
         /// <summary>
         /// Make relative URLs absolute in the stylesheet using the URI of the stylesheet.

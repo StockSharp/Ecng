@@ -111,16 +111,14 @@ namespace TimeZoneConverter
         {
             var assembly = typeof(DataLoader).GetTypeInfo().Assembly;
 
-            using (var compressedStream = assembly.GetManifestResourceStream("Ecng.Common.TimeZoneConverter.Data." + resourceName) ?? throw new MissingManifestResourceException())
-            using (var stream = new GZipStream(compressedStream, CompressionMode.Decompress))
-            using (var reader = new StreamReader(stream))
-            {
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    yield return line;
-                }
-            }
-        }
+			using var compressedStream = assembly.GetManifestResourceStream("Ecng.Common.TimeZoneConverter.Data." + resourceName) ?? throw new MissingManifestResourceException();
+			using var stream = new GZipStream(compressedStream, CompressionMode.Decompress);
+			using var reader = new StreamReader(stream);
+			string line;
+			while ((line = reader.ReadLine()) != null)
+			{
+				yield return line;
+			}
+		}
     }
 }
