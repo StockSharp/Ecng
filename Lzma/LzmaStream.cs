@@ -78,7 +78,7 @@ namespace Lzma
 		/// <summary>
 		/// Creates a new LzmaStream.
 		/// </summary>
-		public LzmaStream(Stream stream, CompressionMode mode)
+		public LzmaStream(Stream stream, CompressionMode mode, bool leaveOpen)
 		{
 			this.stream = stream;
 			this.mode = mode;
@@ -102,15 +102,21 @@ namespace Lzma
 			}
 		}
 
-		public LzmaStream(Stream stream, EncoderProperties properties)
+		public LzmaStream(Stream stream, CompressionLevel level, bool leaveOpen)
+			: this(stream, CompressionMode.Compress, leaveOpen)
 		{
-			this.stream = stream;
-			this.mode = CompressionMode.Compress;
+		}
 
-			if (!stream.CanWrite)
-				throw new ArgumentException("Compression mode requires a writable stream.");
+		public LzmaStream(Stream stream, EncoderProperties properties)
+			: this(stream, CompressionMode.Compress, false)
+		{
+			//this.stream = stream;
+			//this.mode = CompressionMode.Compress;
 
-			this.encoderStream = new EncoderStream(stream);
+			//if (!stream.CanWrite)
+			//	throw new ArgumentException("Compression mode requires a writable stream.");
+
+			//this.encoderStream = new EncoderStream(stream);
 			this.encoderProperties = properties;
 		}
 
