@@ -121,7 +121,7 @@ namespace Ecng.ComponentModel
 		/// Gets or sets the min value.
 		/// </summary>
 		/// <value>The min value.</value>
-		[Field("Min", Order = 0)]
+		//[Field("Min", Order = 0)]
 		public T Min
 		{
 			get => _min.Value;
@@ -146,7 +146,7 @@ namespace Ecng.ComponentModel
 		/// Gets or sets the max value.
 		/// </summary>
 		/// <value>The max value.</value>
-		[Field("Max", Order = 1)]
+		//[Field("Max", Order = 1)]
 		public T Max
 		{
 			get => _max.Value;

@@ -125,9 +125,15 @@ namespace Ecng.Transactions
 
 		private void Enlist(T value)
 		{
+			if (value is ICloneable<T> clone)
+				_temporaryValue = clone.Clone();
+			else if (value is IPersistable per)
+				_temporaryValue = (T)per.Clone();
+			else
+				throw new NotSupportedException();
+
 			_currentTransaction = Transaction.Current;
 			_currentTransaction.EnlistVolatile(this, EnlistmentOptions.None);
-			_temporaryValue = CloneFactory<T>.Factory.Clone(value);
 		}
 
 		#endregion
