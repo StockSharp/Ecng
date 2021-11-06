@@ -11,6 +11,7 @@ namespace Ecng.Net
 	using System.Security;
 	using System.Security.Authentication;
 	using System.Security.Cryptography.X509Certificates;
+	using System.Security.Cryptography;
 	using System.Text;
 	using System.Web;
 
@@ -312,5 +313,14 @@ namespace Ecng.Net
 		public static string CheckUrl(this string str) => str.ToLatin().LightScreening().ClearUrl();
 
 		public static bool IsLoopback(this IPAddress address) => IPAddress.IsLoopback(address);
+
+		public static string GetGravatarUrl(this string email, int size)
+		{
+			using var md5Hasher = MD5.Create();
+
+			var hash = md5Hasher.ComputeHash(Encoding.Default.GetBytes(email)).Digest().ToLowerInvariant();
+
+			return $"https://www.gravatar.com/avatar/{hash}?size={size}";
+		}
 	}
 }
