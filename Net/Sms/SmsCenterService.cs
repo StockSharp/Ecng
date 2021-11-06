@@ -1,4 +1,4 @@
-﻿namespace StockSharp.Web.Providers.Sms
+﻿namespace Ecng.Net.Sms
 {
 	using System;
 	using System.Collections.Generic;
@@ -11,8 +11,6 @@
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.Net;
-
-	using StockSharp.Web.Providers.Interfaces;
 
 	public enum SmsFormats
 	{

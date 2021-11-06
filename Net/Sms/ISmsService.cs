@@ -1,4 +1,4 @@
-﻿namespace StockSharp.Web.Providers.Interfaces
+﻿namespace Ecng.Net.Sms
 {
 	using System.Threading;
 	using System.Threading.Tasks;
