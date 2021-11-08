@@ -15,42 +15,21 @@
 	using Ecng.Reflection;
 	using Ecng.Collections;
 
-	public abstract class RestBaseApiClient : Disposable
+	public abstract class RestBaseApiClient : HttpClient
 	{
-		private readonly HttpClient _client;
 		private readonly MediaTypeFormatter _request;
 		private readonly MediaTypeFormatter _response;
 
-		protected RestBaseApiClient(Uri baseAddress,
-			MediaTypeFormatter request,
-			MediaTypeFormatter response)
+		protected RestBaseApiClient(MediaTypeFormatter request, MediaTypeFormatter response)
 		{
-			if (baseAddress is null)
-				throw new ArgumentNullException(nameof(baseAddress));
-
-			_client = new() { BaseAddress = baseAddress };
-
 			_request = request ?? throw new ArgumentNullException(nameof(request));
 			_response = response ?? throw new ArgumentNullException(nameof(response));
 
-			//DefaultRequestHeaders.Accept.Clear();
-			DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(request.SupportedMediaTypes.First().MediaType));
+			//Headers.Accept.Clear();
+			Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(request.SupportedMediaTypes.First().MediaType));
 		}
 
-		protected Uri BaseAddress
-		{
-			get => _client.BaseAddress;
-			set => _client.BaseAddress = value;
-		}
-
-		protected HttpRequestHeaders DefaultRequestHeaders => _client.DefaultRequestHeaders;
-
-		protected override void DisposeManaged()
-		{
-			_client.Dispose();
-
-			base.DisposeManaged();
-		}
+		public HttpRequestHeaders Headers => DefaultRequestHeaders;
 
 		private async Task<TResult> GetResultAsync<TResult>(HttpResponseMessage response, CancellationToken cancellationToken)
 		{
@@ -88,7 +67,7 @@
 			else
 				body = TryFormat(parameters.FirstOrDefault().value);
 
-			using var response = await _client.PostAsync(url, body, _request, cancellationToken);
+			using var response = await this.PostAsync(url, body, _request, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
@@ -104,7 +83,7 @@
 					.JoinAnd();
 			}
 
-			using var response = await _client.GetAsync(url, cancellationToken);
+			using var response = await GetAsync(url, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
@@ -120,7 +99,7 @@
 					.JoinAnd();
 			}
 
-			using var response = await _client.DeleteAsync(url, cancellationToken);
+			using var response = await DeleteAsync(url, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
@@ -147,7 +126,7 @@
 			else
 				body = TryFormat(parameters.FirstOrDefault().value);
 
-			using var response = await _client.PutAsync(url, body, _request, cancellationToken);
+			using var response = await this.PutAsync(url, body, _request, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
