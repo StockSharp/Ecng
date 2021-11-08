@@ -25,7 +25,6 @@
     <RootNamespace>Ecng.$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>Ecng.$(MSBuildProjectName)</AssemblyName>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <IsSourcesAllow>true</IsSourcesAllow>
     <LangVersion>default</LangVersion>
 
