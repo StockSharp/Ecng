@@ -18,7 +18,7 @@ namespace Ecng.Serialization
 				_factory = new PrimitiveCloneFactory<T>();
 			else if (typeof(T).IsArray && typeof(T).GetElementType().IsPrimitive)
 				_factory = new ArrayCloneFactory<T>();
-			else if (typeof(T).IsAssignableFrom(typeof(Cloneable<T>)) || typeof(T).IsAssignableFrom(typeof(ICloneable)))
+			else if (typeof(T).Is<ICloneable<T>>() || typeof(T).Is<ICloneable>())
 				_factory = new SimpleCloneFactory<T>();
 			else
 				_factory = new JsonSerializerCloneFactory<T>();
@@ -43,7 +43,7 @@ namespace Ecng.Serialization
 
 		public override T Clone(T value)
 		{
-			if (value is Cloneable<T> cloneable)
+			if (value is ICloneable<T> cloneable)
 				return cloneable.Clone();
 			else
 				return (T)((ICloneable)value).Clone();
