@@ -68,7 +68,7 @@ namespace Ecng.Serialization
 		#region IsSerializable
 
 		[Ignore]
-		public bool IsSerializable => typeof(ISerializable).IsAssignableFrom(EntityType);
+		public bool IsSerializable => EntityType.Is<ISerializable>();
 
 		#endregion
 

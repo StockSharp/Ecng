@@ -258,7 +258,7 @@
 			if (innerType != null && innerType != typeof(object))
 				return innerType;
 
-			if (itemType != null && !typeof(IItemsSourceItem).IsAssignableFrom(itemType) && itemType != typeof(object))
+			if (itemType != null && !itemType.Is<IItemsSourceItem>() && itemType != typeof(object))
 				return itemType;
 
 			bool foundItems, foundValues;
@@ -352,7 +352,7 @@
 				throw new ArgumentNullException(nameof(type));
 
 			Type =
-				typeof(IItemsSource).IsAssignableFrom(type)
+				type.Is<IItemsSource>()
 					? type
 					: type.IsEnum
 						? typeof(ItemsSourceBase<>).Make(type)

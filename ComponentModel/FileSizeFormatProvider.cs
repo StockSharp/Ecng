@@ -32,7 +32,7 @@ namespace Ecng.ComponentModel
 		/// </returns>
 		object IFormatProvider.GetFormat(Type formatType)
 		{
-			return typeof(ICustomFormatter).IsAssignableFrom(formatType) ? this : null;
+			return formatType.Is<ICustomFormatter>() ? this : null;
 		}
 
 		#endregion

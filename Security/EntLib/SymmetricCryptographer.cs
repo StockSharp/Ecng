@@ -41,7 +41,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 		public SymmetricCryptographer(Type algorithmType, ProtectedKey key)
 		{
 			if (algorithmType is null) throw new ArgumentNullException(nameof(algorithmType));
-			if (!typeof(SymmetricAlgorithm).IsAssignableFrom(algorithmType)) throw new ArgumentException(Resources.ExceptionCreatingSymmetricAlgorithmInstance, nameof(algorithmType));
+			if (!algorithmType.Is<SymmetricAlgorithm>()) throw new ArgumentException(Resources.ExceptionCreatingSymmetricAlgorithmInstance, nameof(algorithmType));
 			this.key = key ?? throw new ArgumentNullException(nameof(key));
 			this.algorithm = GetSymmetricAlgorithm(algorithmType);
 		}

@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 
 	using Ecng.Collections;
+	using Ecng.Common;
 
 	using LinqToDB.DataProvider;
 
@@ -21,7 +22,7 @@
 			if (provider is null)
 				throw new ArgumentNullException(nameof(provider));
 
-			if (!typeof(IDataProvider).IsAssignableFrom(provider))
+			if (!provider.Is<IDataProvider>())
 				throw new ArgumentException(nameof(provider));
 
 			_providers.Add(provider, createProvider);

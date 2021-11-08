@@ -720,9 +720,9 @@ namespace Ecng.Reflection
 
 			return _isCollectionCache.GetFromCache(type, delegate
 			{
-				return typeof(ICollection).IsAssignableFrom(type)
+				return type.Is<ICollection>()
 							|| type.GetGenericType(typeof(ICollection<>)) != null
-							|| typeof(IEnumerable).IsAssignableFrom(type)
+							|| type.Is<IEnumerable>()
 							|| type.GetGenericType(typeof(IEnumerable<>)) != null;
 			});
 

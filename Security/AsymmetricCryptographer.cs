@@ -31,7 +31,7 @@ namespace Ecng.Security
 				if (algorithmType is null)
 					throw new ArgumentNullException(nameof(algorithmType));
 
-				if (!typeof(AsymmetricAlgorithm).IsAssignableFrom(algorithmType))
+				if (!algorithmType.Is<AsymmetricAlgorithm>())
 					throw new ArgumentException("algorithmType");
 
 				if (key is null)
@@ -39,7 +39,7 @@ namespace Ecng.Security
 
 				var retVal = algorithmType.CreateInstance<AsymmetricAlgorithm>();
 
-				if (typeof(RSACryptoServiceProvider).IsAssignableFrom(algorithmType))
+				if (algorithmType.Is<RSACryptoServiceProvider>())
 					((RSACryptoServiceProvider)retVal).ImportParameters(key.ToRsa());
 
 				return retVal;

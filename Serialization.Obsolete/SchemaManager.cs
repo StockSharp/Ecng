@@ -110,7 +110,7 @@
 			if (schema.EntityType is null)
 				throw new ArgumentException("Entity type is null.", nameof(schema));
 
-			if (schema.Fields.IsEmpty() && !typeof(ISerializable).IsAssignableFrom(schema.EntityType))
+			if (schema.Fields.IsEmpty() && !schema.EntityType.Is<ISerializable>())
 				throw new ArgumentException("Type '{0}' has no one members.".Put(schema.EntityType));
 
 			if (!(schema.EntityType.IsClass || schema.EntityType.IsStruct() || schema.EntityType.IsInterface))

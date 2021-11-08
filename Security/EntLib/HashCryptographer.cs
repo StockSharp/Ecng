@@ -11,6 +11,7 @@
 
 using System;
 using System.Security.Cryptography;
+using Ecng.Common;
 using Ecng.Security.Properties;
 
 namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
@@ -30,7 +31,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 		public HashCryptographer(Type algorithmType)
 		{
 			if (algorithmType is null) throw new ArgumentNullException(nameof(algorithmType));
-			if (!typeof(HashAlgorithm).IsAssignableFrom(algorithmType)) throw new ArgumentException(Resources.ExceptionCreatingHashAlgorithmInstance, nameof(algorithmType));
+			if (!algorithmType.Is<HashAlgorithm>()) throw new ArgumentException(Resources.ExceptionCreatingHashAlgorithmInstance, nameof(algorithmType));
 
 			this.algorithmType = algorithmType;
 		}

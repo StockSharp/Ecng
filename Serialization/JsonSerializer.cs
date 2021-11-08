@@ -169,7 +169,7 @@
 
 				return storage;
 			}
-			else if (typeof(IEnumerable).IsAssignableFrom(type) && type != typeof(string))
+			else if (type.Is<IEnumerable>() && type != typeof(string))
 			{
 				await reader.ReadWithCheckAsync(cancellationToken);
 

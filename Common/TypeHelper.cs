@@ -133,14 +133,10 @@ namespace Ecng.Common
 		}
 
 		public static bool IsAttribute(this Type type)
-		{
-			return typeof(Attribute).IsAssignableFrom(type);
-		}
+			=> type.Is<Attribute>();
 
 		public static bool IsDelegate(this Type type)
-		{
-			return typeof(Delegate).IsAssignableFrom(type);
-		}
+			=> type.Is<Delegate>();
 
 		public static bool IsWinColor(this Type type)
 		{
@@ -307,5 +303,8 @@ namespace Ecng.Common
 
 			return settings.GetType().GetProperty(name) != null;
 		}
+
+		public static bool Is<TBase>(this Type type)
+			=> typeof(TBase).IsAssignableFrom(type);
 	}
 }

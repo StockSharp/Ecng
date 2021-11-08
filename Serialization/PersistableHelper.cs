@@ -20,7 +20,7 @@
 			if (!adapterType.IsPersistable())
 				throw new ArgumentException(nameof(adapterType));
 
-			if (!typeof(IPersistableAdapter).IsAssignableFrom(adapterType))
+			if (!adapterType.Is<IPersistableAdapter>())
 				throw new ArgumentException(nameof(adapterType));
 
 			return adapterType;
@@ -36,7 +36,7 @@
 			=> _adapterTypes.TryGetValue(type, out adapterType);
 
 		public static bool IsPersistable(this Type type)
-			=> typeof(IPersistable).IsAssignableFrom(type) || typeof(IAsyncPersistable).IsAssignableFrom(type);
+			=> type.Is<IPersistable>() || type.Is<IAsyncPersistable>();
 
 		/// <summary>
 		/// Создать и инициализировать объект.

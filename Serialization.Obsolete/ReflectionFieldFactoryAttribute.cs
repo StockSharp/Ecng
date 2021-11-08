@@ -17,7 +17,7 @@ namespace Ecng.Serialization
 		{
 			var factoryType = GetFactoryType(field);
 
-			if (!typeof(FieldFactory).IsAssignableFrom(factoryType))
+			if (!factoryType.Is<FieldFactory>())
 				throw new InvalidOperationException($"Type {factoryType} is not derived from {typeof(FieldFactory)}.");
 
 			return factoryType.CreateInstanceArgs<FieldFactory>(new object[] { field, Order }.Concat(GetArgs(field)).ToArray());

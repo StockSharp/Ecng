@@ -106,11 +106,11 @@ namespace Ecng.Security
 
 			if (type == typeof(DpapiCryptographer))
 				return AlgorithmTypes.Dpapi;
-			else if (typeof(SymmetricAlgorithm).IsAssignableFrom(type))
+			else if (type.Is<SymmetricAlgorithm>())
 				return AlgorithmTypes.Symmetric;
-			else if (typeof(AsymmetricAlgorithm).IsAssignableFrom(type))
+			else if (type.Is<AsymmetricAlgorithm>())
 				return AlgorithmTypes.Asymmetric;
-			else if (typeof(HashAlgorithm).IsAssignableFrom(type))
+			else if (type.Is<HashAlgorithm>())
 				return AlgorithmTypes.Hash;
 			else
 				throw new ArgumentException("Type {0} doesnt't supported.".Translate().Put(type), nameof(type));
