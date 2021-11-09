@@ -18,7 +18,7 @@
 			get
 			{
 				lock (SyncRoot)
-					return _cache ?? (_cache = ToArray());
+					return _cache ??= ToArray();
 			}
 		}
 

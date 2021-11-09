@@ -7,7 +7,6 @@
 	using System.Threading.Tasks;
 
 	using Ecng.Common;
-	using Ecng.Localization;
 	using Ecng.Net.BBCodes;
 	using Ecng.UnitTesting;
 

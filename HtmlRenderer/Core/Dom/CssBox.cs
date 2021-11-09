@@ -104,7 +104,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         /// </summary>
         public HtmlContainerInt HtmlContainer
         {
-            get { return _htmlContainer ?? (_htmlContainer = _parentBox != null ? _parentBox.HtmlContainer : null); }
+            get { return _htmlContainer ??= _parentBox != null ? _parentBox.HtmlContainer : null; }
             set { _htmlContainer = value; }
         }
 

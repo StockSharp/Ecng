@@ -1,6 +1,5 @@
 ﻿
 using System.Collections.Immutable;
-using Ecng.Net.SocketIO.Engine.Modules;
 using System;
 
 namespace Ecng.Net.SocketIO.Engine.ComponentEmitter

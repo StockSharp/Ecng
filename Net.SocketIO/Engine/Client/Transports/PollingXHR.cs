@@ -2,7 +2,6 @@
 
 
 using Ecng.Net.SocketIO.Engine.ComponentEmitter;
-using Ecng.Net.SocketIO.Engine.Modules;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

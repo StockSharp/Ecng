@@ -3,20 +3,12 @@ using Ecng.Net.SocketIO.Engine.Parser;
 using System;
 using System.Net;
 using System.Collections.Generic;
-using System.Security.Authentication;
+
 //using WebSocket4Net;
 //using SuperSocket.ClientEngine.Proxy;
 
 namespace Ecng.Net.SocketIO.Engine.Client.Transports
 {
-	using System.Globalization;
-	using System.Linq;
-	using System.Net.WebSockets;
-	using System.Text;
-	using System.Threading;
-
-	using Ecng.Common;
-
 	public class WebSocket : Transport
     {
         public static readonly string DefaultName = "websocket";

@@ -2,7 +2,6 @@
 using System.Text;
 using System.Collections.Immutable;
 using Ecng.Net.SocketIO.Engine.ComponentEmitter;
-using Ecng.Net.SocketIO.Engine.Modules;
 using Ecng.Net.SocketIO.Engine.Parser;
 using System;
 using System.Collections.Generic;

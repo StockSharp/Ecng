@@ -4,7 +4,6 @@ namespace Ecng.ComponentModel
 	using System.ComponentModel;
 
 	using Ecng.Common;
-	using Ecng.Serialization;
 
 	public interface IRange
 	{

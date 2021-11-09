@@ -53,7 +53,7 @@ namespace Ecng.Serialization
 		[Ignore]
 		public IdentityField Identity
 		{
-			get { return _identity ?? (_identity = (IdentityField)Fields.FirstOrDefault(arg => arg is IdentityField)); }
+			get { return _identity ??= (IdentityField)Fields.FirstOrDefault(arg => arg is IdentityField); }
 		}
 
 		#endregion

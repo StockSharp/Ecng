@@ -1,8 +1,6 @@
 ﻿namespace Ecng.Tests.Common
 {
 	using System;
-	using System.Globalization;
-
 	using Ecng.Common;
 	using Ecng.UnitTesting;
 

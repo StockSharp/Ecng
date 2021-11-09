@@ -1,11 +1,9 @@
 ﻿using System.Collections.Immutable;
 using Ecng.Net.SocketIO.Engine.ComponentEmitter;
-using Ecng.Net.SocketIO.Engine.Modules;
 using Ecng.Net.SocketIO.Engine.Thread;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Ecng.Net.SocketIO.Client
 {

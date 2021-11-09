@@ -71,7 +71,7 @@
 
 		private object _syncRoot;
 
-		object ICollection.SyncRoot => _syncRoot ?? (_syncRoot = new object());
+		object ICollection.SyncRoot => _syncRoot ??= new object();
 
 		bool ICollection.IsSynchronized => false;
 
@@ -98,7 +98,7 @@
 
 		private static Schema _schema;
 
-		public static Schema Schema => _schema ?? (_schema = SchemaManager.GetSchema<TEntity>());
+		public static Schema Schema => _schema ??= SchemaManager.GetSchema<TEntity>();
 
 		private class StringIdComparer : IEqualityComparer<object>
 		{

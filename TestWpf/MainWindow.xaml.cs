@@ -3,7 +3,6 @@ using Ecng.Common;
 using System;
 using System.Text.RegularExpressions;
 using Nito.AsyncEx;
-using System.Windows.Media;
 
 namespace TestWpf
 {
@@ -353,9 +352,9 @@ namespace TestWpf
 [td][role=133362]This text visible for content managers only[/role][/td]
 [/tr]
 [/t]
-[/role]";
+[/role]
 
-			bb = "[img=107130]TerminalBlackEn.png[/img]";
+[img=107130]TerminalBlackEn.png[/img]";
 
 			var ctx = CreateContext(true);
 			var html = AsyncContext.Run(() => CreateBBService().ToHtmlAsync(bb, ctx));

@@ -7,7 +7,6 @@ namespace Ecng.ComponentModel
 	using System.Reflection;
 
 	using Ecng.Common;
-	using Ecng.Reflection;
 
 	public static class Extensions
 	{

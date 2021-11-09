@@ -74,7 +74,7 @@
 
 		public FieldList NonIdentityFields
 		{
-			get { return _nonIdentityFields ?? (_nonIdentityFields = new FieldList(this.Where(field => !(field is IdentityField)))); }
+			get { return _nonIdentityFields ??= new FieldList(this.Where(field => !(field is IdentityField))); }
 		}
 
 		#endregion
@@ -85,7 +85,7 @@
 
 		public FieldList IndexFields
 		{
-			get { return _indexFields ?? (_indexFields = new FieldList(this.Where(field => field.IsIndex))); }
+			get { return _indexFields ??= new FieldList(this.Where(field => field.IsIndex)); }
 		}
 
 		#endregion
@@ -96,7 +96,7 @@
 
 		public FieldList ReadOnlyFields
 		{
-			get { return _readOnlyFields ?? (_readOnlyFields = new FieldList(this.Where(field => field.IsReadOnly))); }
+			get { return _readOnlyFields ??= new FieldList(this.Where(field => field.IsReadOnly)); }
 		}
 
 		#endregion
@@ -107,7 +107,7 @@
 
 		public FieldList NonReadOnlyFields
 		{
-			get { return _nonReadOnlyFields ?? (_nonReadOnlyFields = new FieldList(this.Where(field => !field.IsReadOnly))); }
+			get { return _nonReadOnlyFields ??= new FieldList(this.Where(field => !field.IsReadOnly)); }
 		}
 
 		#endregion
@@ -120,13 +120,13 @@
 		{
 			get
 			{
-				return _serializableFields ?? (_serializableFields = new FieldList(this.Where(field =>
+				return _serializableFields ??= new FieldList(this.Where(field =>
 				{
 					if (field.Factory is null)
 						throw new InvalidOperationException("Field '{0}' doesn't have factory.".Put(field.Name));
 
 					return field.Factory.SourceType != typeof(VoidType);
-				})));
+				}));
 			}
 		}
 
@@ -138,7 +138,7 @@
 
 		public FieldList RelationManyFields
 		{
-			get { return _relationManyFields ?? (_relationManyFields = new FieldList(this.Where(field => field.IsRelationMany()))); }
+			get { return _relationManyFields ??= new FieldList(this.Where(field => field.IsRelationMany())); }
 		}
 
 		#endregion

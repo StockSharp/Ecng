@@ -2,8 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// Provides utilities for mapping file names and extensions to MIME-types.

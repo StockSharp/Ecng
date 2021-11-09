@@ -13,7 +13,6 @@
 
 	using Ecng.Common;
 	using Ecng.Reflection;
-	using Ecng.Collections;
 
 	public abstract class RestBaseApiClient : HttpClient
 	{

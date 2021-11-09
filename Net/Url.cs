@@ -31,7 +31,7 @@ namespace Ecng.Net
 
 		private QueryString _queryString;
 
-		public QueryString QueryString => _queryString ?? (_queryString = new QueryString(this));
+		public QueryString QueryString => _queryString ??= new QueryString(this);
 
 		object ICloneable.Clone()
 		{

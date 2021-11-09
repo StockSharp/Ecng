@@ -1,7 +1,6 @@
 namespace Ecng.Tests.Common
 {
 	using System;
-	using System.Globalization;
 	using System.IO;
 
 	using Ecng.Common;
@@ -15,9 +14,9 @@ namespace Ecng.Tests.Common
 		[TestMethod]
 		public void DoubleQuotes()
 		{
-			Assert(@"AFKS@TQBR;""АФК """"Система"""" ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
-""AFLT@TQBR"";Аэрофлот-росс.авиалин(ПАО)ао;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
-AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
+			Assert(@"AFKS@TQBR;""РђР¤Рљ """"РЎРёСЃС‚РµРјР°"""" РџРђРћ Р°Рѕ"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
+""AFLT@TQBR"";РђСЌСЂРѕС„Р»РѕС‚-СЂРѕСЃСЃ.Р°РІРёР°Р»РёРЅ(РџРђРћ)Р°Рѕ;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
+AGRO@TQBR;Р“Р”Р  ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
 				(i, r) =>
 				{
 					var id = r.ReadString();
@@ -27,15 +26,15 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;
 					{
 						case 0:
 							id.AssertEqual("AFKS@TQBR");
-							name.AssertEqual(@"АФК ""Система"" ПАО ао");
+							name.AssertEqual(@"РђР¤Рљ ""РЎРёСЃС‚РµРјР°"" РџРђРћ Р°Рѕ");
 							break;
 						case 1:
 							id.AssertEqual("AFLT@TQBR");
-							name.AssertEqual(@"Аэрофлот-росс.авиалин(ПАО)ао");
+							name.AssertEqual(@"РђСЌСЂРѕС„Р»РѕС‚-СЂРѕСЃСЃ.Р°РІРёР°Р»РёРЅ(РџРђРћ)Р°Рѕ");
 							break;
 						case 2:
 							id.AssertEqual("AGRO@TQBR");
-							name.AssertEqual(@"ГДР ROS AGRO PLC ORD SHS");
+							name.AssertEqual(@"Р“Р”Р  ROS AGRO PLC ORD SHS");
 							break;
 						default:
 							throw new InvalidOperationException();
@@ -46,9 +45,9 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;
 		[TestMethod]
 		public void DoubleQuotes2()
 		{
-			Assert(@"""""""AFKS@TQBR"""""";""АФК """"Система"""" ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
-AFLT@TQ""""BR;Аэрофлот-росс.авиалин(ПАО)ао;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
-AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
+			Assert(@"""""""AFKS@TQBR"""""";""РђР¤Рљ """"РЎРёСЃС‚РµРјР°"""" РџРђРћ Р°Рѕ"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
+AFLT@TQ""""BR;РђСЌСЂРѕС„Р»РѕС‚-СЂРѕСЃСЃ.Р°РІРёР°Р»РёРЅ(РџРђРћ)Р°Рѕ;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
+AGRO@TQBR;Р“Р”Р  ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
 				(i, r) =>
 				{
 					var id = r.ReadString();
@@ -58,15 +57,15 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;
 					{
 						case 0:
 							id.AssertEqual(@"""AFKS@TQBR""");
-							name.AssertEqual(@"АФК ""Система"" ПАО ао");
+							name.AssertEqual(@"РђР¤Рљ ""РЎРёСЃС‚РµРјР°"" РџРђРћ Р°Рѕ");
 							break;
 						case 1:
 							id.AssertEqual("AFLT@TQBR");
-							name.AssertEqual(@"Аэрофлот-росс.авиалин(ПАО)ао");
+							name.AssertEqual(@"РђСЌСЂРѕС„Р»РѕС‚-СЂРѕСЃСЃ.Р°РІРёР°Р»РёРЅ(РџРђРћ)Р°Рѕ");
 							break;
 						case 2:
 							id.AssertEqual("AGRO@TQBR");
-							name.AssertEqual(@"ГДР ROS AGRO PLC ORD SHS");
+							name.AssertEqual(@"Р“Р”Р  ROS AGRO PLC ORD SHS");
 							break;
 						default:
 							throw new InvalidOperationException();
@@ -77,9 +76,9 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;
 		[TestMethod]
 		public void SingleQuotes()
 		{
-			Assert(@"AFKS@TQBR;""АФК 'Система' ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
-""AFLT@TQBR"";Аэрофлот-росс.авиалин(ПАО)ао;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
-AGRO@TQ'BR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
+			Assert(@"AFKS@TQBR;""РђР¤Рљ 'РЎРёСЃС‚РµРјР°' РџРђРћ Р°Рѕ"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
+""AFLT@TQBR"";РђСЌСЂРѕС„Р»РѕС‚-СЂРѕСЃСЃ.Р°РІРёР°Р»РёРЅ(РџРђРћ)Р°Рѕ;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
+AGRO@TQ'BR;Р“Р”Р  ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
 				(i, r) =>
 				{
 					var id = r.ReadString();
@@ -89,15 +88,15 @@ AGRO@TQ'BR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;
 					{
 						case 0:
 							id.AssertEqual("AFKS@TQBR");
-							name.AssertEqual(@"АФК 'Система' ПАО ао");
+							name.AssertEqual(@"РђР¤Рљ 'РЎРёСЃС‚РµРјР°' РџРђРћ Р°Рѕ");
 							break;
 						case 1:
 							id.AssertEqual("AFLT@TQBR");
-							name.AssertEqual(@"Аэрофлот-росс.авиалин(ПАО)ао");
+							name.AssertEqual(@"РђСЌСЂРѕС„Р»РѕС‚-СЂРѕСЃСЃ.Р°РІРёР°Р»РёРЅ(РџРђРћ)Р°Рѕ");
 							break;
 						case 2:
 							id.AssertEqual("AGRO@TQ'BR");
-							name.AssertEqual(@"ГДР ROS AGRO PLC ORD SHS");
+							name.AssertEqual(@"Р“Р”Р  ROS AGRO PLC ORD SHS");
 							break;
 						default:
 							throw new InvalidOperationException();
@@ -108,9 +107,9 @@ AGRO@TQ'BR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;
 		[TestMethod]
 		public void SingleQuotes2()
 		{
-			Assert(@"""'AFKS@TQBR'"";""АФК 'Система' ПАО ао"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
-AFLT@TQBR;Аэрофлот-росс.авиалин(ПАО)ао;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
-AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
+			Assert(@"""'AFKS@TQBR'"";""РђР¤Рљ 'РЎРёСЃС‚РµРјР°' РџРђРћ Р°Рѕ"";AFKS;;;TQBR;@TQBR;0.005;;100;3;Stock;;;;;RUB;;;;;;;;
+AFLT@TQBR;РђСЌСЂРѕС„Р»РѕС‚-СЂРѕСЃСЃ.Р°РІРёР°Р»РёРЅ(РџРђРћ)Р°Рѕ;AFLT;;;TQBR;@TQBR;0.05;;100;2;Stock;;;;;RUB;;;;;;;;
+AGRO@TQBR;Р“Р”Р  ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;;", 3,
 				(i, r) =>
 				{
 					var id = r.ReadString();
@@ -120,15 +119,15 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;;;;
 					{
 						case 0:
 							id.AssertEqual(@"'AFKS@TQBR'");
-							name.AssertEqual(@"АФК 'Система' ПАО ао");
+							name.AssertEqual(@"РђР¤Рљ 'РЎРёСЃС‚РµРјР°' РџРђРћ Р°Рѕ");
 							break;
 						case 1:
 							id.AssertEqual("AFLT@TQBR");
-							name.AssertEqual(@"Аэрофлот-росс.авиалин(ПАО)ао");
+							name.AssertEqual(@"РђСЌСЂРѕС„Р»РѕС‚-СЂРѕСЃСЃ.Р°РІРёР°Р»РёРЅ(РџРђРћ)Р°Рѕ");
 							break;
 						case 2:
 							id.AssertEqual("AGRO@TQBR");
-							name.AssertEqual(@"ГДР ROS AGRO PLC ORD SHS");
+							name.AssertEqual(@"Р“Р”Р  ROS AGRO PLC ORD SHS");
 							break;
 						default:
 							throw new InvalidOperationException();

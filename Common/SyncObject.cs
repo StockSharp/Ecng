@@ -5,9 +5,6 @@
 
 	public class SyncObject
 	{
-		// TODO В .NET 4.5 поле стандартно в классе Timeout
-		public static readonly TimeSpan InfiniteTimeSpan = new(0, 0, 0, 0, -1);
-
 		private bool _processed;
 		private object _state;
 

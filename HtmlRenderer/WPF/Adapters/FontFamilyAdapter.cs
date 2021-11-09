@@ -16,9 +16,7 @@ using TheArtOfDev.HtmlRenderer.Adapters;
 
 namespace TheArtOfDev.HtmlRenderer.WPF.Adapters
 {
-	using System.Linq;
-
-	/// <summary>
+    /// <summary>
     /// Adapter for WPF Font family object for core.
     /// </summary>
     internal sealed class FontFamilyAdapter : RFontFamily

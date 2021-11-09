@@ -19,7 +19,7 @@ namespace Ecng.Interop
 		public string DllPath { get; private set; }
 
 		private Version _dllVersion;
-		public Version DllVersion => _dllVersion ?? (_dllVersion = FileVersionInfo.GetVersionInfo(DllPath).ProductVersion?.Replace(',', '.')?.RemoveSpaces()?.To<Version>());
+		public Version DllVersion => _dllVersion ??= FileVersionInfo.GetVersionInfo(DllPath).ProductVersion?.Replace(',', '.')?.RemoveSpaces()?.To<Version>();
 
 		protected IntPtr Handler { get; }
 

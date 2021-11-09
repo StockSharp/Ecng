@@ -69,8 +69,8 @@ namespace Ecng.Serialization
 
 		private FastInvoker<VoidType, object[], RelationManyList<TItem>> _listCreator;
 
-		public FastInvoker<VoidType, object[], RelationManyList<TItem>> ListCreator => _listCreator ?? (_listCreator = FastInvoker<VoidType, object[], RelationManyList<TItem>>
-			.Create(UnderlyingListType.GetMember<ConstructorInfo>(typeof(IStorage), typeof(TEntity))));
+		public FastInvoker<VoidType, object[], RelationManyList<TItem>> ListCreator => _listCreator ??= FastInvoker<VoidType, object[], RelationManyList<TItem>>
+			.Create(UnderlyingListType.GetMember<ConstructorInfo>(typeof(IStorage), typeof(TEntity)));
 
 		public override object CreateInstance(ISerializer serializer, SerializationItem source)
 		{

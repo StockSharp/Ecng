@@ -2,8 +2,6 @@
 {
 	using System.Collections.Generic;
 
-	using Ecng.Common;
-
 	public class EntityProperty
 	{
 		public string Name { get; set; }

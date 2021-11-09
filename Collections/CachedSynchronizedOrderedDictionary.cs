@@ -27,7 +27,7 @@ namespace Ecng.Collections
 			get
 			{
 				lock (SyncRoot)
-					return _cachedKeys ?? (_cachedKeys = Keys.ToArray());
+					return _cachedKeys ??= Keys.ToArray();
 			}
 		}
 
@@ -38,7 +38,7 @@ namespace Ecng.Collections
 			get
 			{
 				lock (SyncRoot)
-					return _cachedValues ?? (_cachedValues = Values.ToArray());
+					return _cachedValues ??= Values.ToArray();
 			}
 		}
 
@@ -49,7 +49,7 @@ namespace Ecng.Collections
 			get
 			{
 				lock (SyncRoot)
-					return _cachedPairs ?? (_cachedPairs = this.ToArray());
+					return _cachedPairs ??= this.ToArray();
 			}
 		}
 

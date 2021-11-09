@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
 using Ecng.Net.SocketIO.Engine.ComponentEmitter;
-using Ecng.Net.SocketIO.Engine.Modules;
 using Ecng.Net.SocketIO.Client;
 using System;
 using System.Collections.Generic;

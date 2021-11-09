@@ -4,7 +4,6 @@ namespace Ecng.Serialization
 	using System.IO;
 
 	using Ecng.Common;
-	using Ecng.Reflection;
 
 	public abstract class Serializer<T> : ISerializer<T>
 	{

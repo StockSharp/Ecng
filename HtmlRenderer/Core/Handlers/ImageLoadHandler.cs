@@ -21,8 +21,6 @@ using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Utils;
 
-using Ecng.Common;
-
 namespace TheArtOfDev.HtmlRenderer.Core.Handlers
 {
     /// <summary>

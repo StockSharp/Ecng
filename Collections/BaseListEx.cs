@@ -33,7 +33,7 @@ namespace Ecng.Collections
 
 		private object _syncRoot;
 
-		object ICollection.SyncRoot => _syncRoot ?? (_syncRoot = new object());
+		object ICollection.SyncRoot => _syncRoot ??= new object();
 
 		bool ICollection.IsSynchronized => false;
 

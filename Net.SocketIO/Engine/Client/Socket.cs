@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Ecng.Net.SocketIO.Engine.Client.Transports;
 using Ecng.Net.SocketIO.Engine.ComponentEmitter;
 using Ecng.Net.SocketIO.Engine.Modules;
