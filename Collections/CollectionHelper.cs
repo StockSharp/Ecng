@@ -267,16 +267,17 @@
 
 		public static T[] CopyAndClear<T>(this ICollection<T> items)
 		{
-			var retVal = items.ToArray();
-			items.Clear();
-			return retVal;
-		}
+			T[] InternalCopyAndClear()
+			{
+				var retVal = items.ToArray();
+				items.Clear();
+				return retVal;
+			}
 
-		public static T[] CopyAndClear<T>(this HashSet<T> items)
-		{
-			var retVal = items.ToArray();
-			items.Clear();
-			return retVal;
+			if (items is not ISynchronizedCollection sync) return InternalCopyAndClear();
+			
+			lock (sync.SyncRoot)
+				return InternalCopyAndClear();
 		}
 
 		public static TValue GetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
@@ -288,13 +289,10 @@
 				return value;
 			}
 
-			if (dict is ISynchronizedCollection sync)
-			{
-				lock (sync.SyncRoot)
-					return InternalGetAndRemove();
-			}
-
-			return InternalGetAndRemove();
+			if (dict is not ISynchronizedCollection sync) return InternalGetAndRemove();
+			
+			lock (sync.SyncRoot)
+				return InternalGetAndRemove();
 		}
 
 		public static TValue? TryGetAndRemove2<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
