@@ -4,9 +4,11 @@
 	using System.Globalization;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using System.Reflection;
 
 	using Ecng.Common;
 	using Ecng.Collections;
+	using Ecng.Reflection;
 
 	public static class PersistableHelper
 	{
@@ -274,6 +276,34 @@
 			tuple.Fourth = storage.GetValue<T4>(nameof(tuple.Fourth));
 			tuple.Fifth = storage.GetValue<T5>(nameof(tuple.Fifth));
 			return tuple;
+		}
+
+		public static T ToMember<T>(this SettingsStorage storage)
+			where T : MemberInfo
+		{
+			if (storage is null)
+				throw new ArgumentNullException(nameof(storage));
+
+			var type = storage.GetValue<Type>("type");
+			var member = storage.GetValue("member", string.Empty);
+
+			return member.IsEmpty() ? type.To<T>() : type.GetMember<T>(member);
+		}
+
+		public static SettingsStorage ToStorage<T>(this T member, bool isAssemblyQualifiedName)
+			where T : MemberInfo
+		{
+			if (member is null)
+				throw new ArgumentNullException(nameof(member));
+
+			var storage = new SettingsStorage();
+
+			storage.Set("type", member.ReflectedType.GetTypeName(isAssemblyQualifiedName));
+
+			if (member.ReflectedType != null)
+				storage.Set("name", member.Name);
+			
+			return storage;
 		}
 	}
 }
