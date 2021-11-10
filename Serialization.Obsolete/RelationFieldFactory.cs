@@ -8,28 +8,28 @@ namespace Ecng.Serialization
 	using Ecng.Reflection;
 
 	[Serializable]
-	public abstract class RelationFieldFactory<TInstance, TSource> : FieldFactory<TInstance, TSource>
+	public abstract class RelationFieldFactory<TInstance, TSource, TId> : FieldFactory<TInstance, TSource>
 	{
 		protected RelationFieldFactory(Field field, int order)
 			: base(field, order)
 		{
-			_storage = ConfigManager.GetService<IStorage>();
+			_storage = ConfigManager.GetService<IStorage<TId>>() ?? (IStorage<TId>)ConfigManager.GetService<IStorage>();
 		}
 
-		private readonly IStorage _storage;
+		private readonly IStorage<TId> _storage;
 
-		public IStorage Storage
+		public IStorage<TId> Storage
 		{
 			get
 			{
-				var current = Scope<IStorage>.Current;
+				var current = Scope<IStorage<TId>>.Current;
 				return current is null ? _storage : current.Value;
 			}
 		}
 	}
 
 	[Serializable]
-	public class RelationSingleFieldFactory<TInstance, TSource> : RelationFieldFactory<TInstance, TSource>
+	public class RelationSingleFieldFactory<TInstance, TSource> : RelationFieldFactory<TInstance, TSource, TSource>
 	{
 		public RelationSingleFieldFactory(Field field, int order)
 			: base(field, order)
@@ -51,7 +51,7 @@ namespace Ecng.Serialization
 	}
 
 	[Serializable]
-	public class RelationManyFieldFactory<TEntity, TItem> : RelationFieldFactory<RelationManyList<TItem>, VoidType>
+	public class RelationManyFieldFactory<TOwner, TItem, TId> : RelationFieldFactory<RelationManyList<TItem, TId>, VoidType, TId>
 	{
 		public RelationManyFieldFactory(Field field, int order, Type underlyingListType, bool bulkLoad, bool cacheCount, int bufferSize)
 			: base(field, order)
@@ -67,17 +67,17 @@ namespace Ecng.Serialization
 		public bool CacheCount { get; }
 		public int BufferSize { get; }
 
-		private FastInvoker<VoidType, object[], RelationManyList<TItem>> _listCreator;
+		private FastInvoker<VoidType, object[], RelationManyList<TItem, TId>> _listCreator;
 
-		public FastInvoker<VoidType, object[], RelationManyList<TItem>> ListCreator => _listCreator ??= FastInvoker<VoidType, object[], RelationManyList<TItem>>
-			.Create(UnderlyingListType.GetMember<ConstructorInfo>(typeof(IStorage), typeof(TEntity)));
+		public FastInvoker<VoidType, object[], RelationManyList<TItem, TId>> ListCreator => _listCreator ??= FastInvoker<VoidType, object[], RelationManyList<TItem, TId>>
+			.Create(UnderlyingListType.GetMember<ConstructorInfo>(typeof(IStorage<TId>), typeof(TOwner)));
 
 		public override object CreateInstance(ISerializer serializer, SerializationItem source)
 		{
 			return OnCreateInstance(serializer, null);
 		}
 
-		protected internal override RelationManyList<TItem> OnCreateInstance(ISerializer serializer, VoidType source)
+		protected internal override RelationManyList<TItem, TId> OnCreateInstance(ISerializer serializer, VoidType source)
 		{
 			var context = Scope<SerializationContext>.Current.Value;
 			var list = ListCreator.Ctor(new[] { Storage, context.Entity });
@@ -88,7 +88,7 @@ namespace Ecng.Serialization
 			return list;
 		}
 
-		protected internal override VoidType OnCreateSource(ISerializer serializer, RelationManyList<TItem> instance)
+		protected internal override VoidType OnCreateSource(ISerializer serializer, RelationManyList<TItem, TId> instance)
 		{
 			return null;
 		}
@@ -133,7 +133,8 @@ namespace Ecng.Serialization
 
 		protected override Type GetFactoryType(Field field)
 		{
-			return typeof(RelationManyFieldFactory<,>).Make(field.Schema.EntityType, field.Type.GetGenericType(typeof(RelationManyList<>)).GetGenericArguments()[0]);
+			var args = field.Type.GetGenericType(typeof(RelationManyList<,>)).GetGenericArguments();
+			return typeof(RelationManyFieldFactory<,,>).Make(field.Schema.EntityType, args[0], args[1]);
 		}
 
 		protected override object[] GetArgs(Field field)

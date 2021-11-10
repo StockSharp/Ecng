@@ -10,11 +10,11 @@
 	using Ecng.Common;
 	using Ecng.Collections;
 
-	public abstract class RelationManyList<TEntity> : INotifyCollection<TEntity>, ICollection<TEntity>, ICollection, IRangeCollection
+	public abstract class RelationManyList<TEntity, TId> : INotifyCollection<TEntity>, ICollection<TEntity>, ICollection, IRangeCollection
 	{
 		#region private class RelationManyListEnumerator
 
-		private sealed class RelationManyListEnumerator : BaseEnumerator<RelationManyList<TEntity>, TEntity>
+		private sealed class RelationManyListEnumerator : BaseEnumerator<RelationManyList<TEntity, TId>, TEntity>
 		{
 			private readonly long _bufferSize;
 
@@ -22,7 +22,7 @@
 			private ICollection<TEntity> _temporaryBuffer;
 			private int _posInBuffer;
 
-			public RelationManyListEnumerator(RelationManyList<TEntity> list, int bufferSize)
+			public RelationManyListEnumerator(RelationManyList<TEntity, TId> list, int bufferSize)
 				: base(list)
 			{
 				_bufferSize = bufferSize;
@@ -85,7 +85,7 @@
 		private int? _count;
 		private readonly CachedSynchronizedDictionary<TEntity, object> _pendingAdd = new(); 
 
-		protected RelationManyList(IStorage storage)
+		protected RelationManyList(IStorage<TId> storage)
 		{
 			Storage = storage ?? throw new ArgumentNullException(nameof(storage));
 			Storage.Added += value => DoIf<TEntity>(value, entity =>
@@ -113,25 +113,25 @@
 			}
 		}
 
-		private SynchronizedDictionary<object, TEntity> _cachedEntities;
+		private SynchronizedDictionary<TId, TEntity> _cachedEntities;
 
-		private SynchronizedDictionary<object, TEntity> CachedEntities
+		private SynchronizedDictionary<TId, TEntity> CachedEntities
 		{
 			get
 			{
 				if (_cachedEntities is null)
 				{
-					if (Schema.Identity != null && Schema.Identity.Type == typeof(string))
-						_cachedEntities = new SynchronizedDictionary<object, TEntity>(new StringIdComparer());
+					if (Schema.Identity != null && typeof(TId) == typeof(string))
+						_cachedEntities = new SynchronizedDictionary<TId, TEntity>(new StringIdComparer().To<IEqualityComparer<TId>>());
 					else
-						_cachedEntities = new SynchronizedDictionary<object, TEntity>();
+						_cachedEntities = new SynchronizedDictionary<TId, TEntity>();
 				}
 
 				return _cachedEntities;
 			}
 		}
 
-		public IStorage Storage { get; }
+		public IStorage<TId> Storage { get; }
 
 		public StorageDelayAction DelayAction { get; set; }
 
@@ -154,13 +154,7 @@
 			_count = null;
 		}
 
-		#region Item
-
-		public TEntity this[object id] => ReadById(id);
-
-		#endregion
-
-		public virtual TEntity ReadById(object id)
+		public virtual TEntity ReadById(TId id)
 		{
 			if (id is null)
 				throw new ArgumentNullException(nameof(id));
@@ -272,7 +266,7 @@
 			if (_cache.Contains(item))
 				return true;
 
-			var id = Schema.Identity.Accessor.GetValue(item);
+			var id = (TId)Schema.Identity.Accessor.GetValue(item);
 
 			return !ReadById(id).IsDefault();
 		}
@@ -626,17 +620,17 @@
 			return entities;
 		}
 
-		public void RemoveById(object id)
+		public void RemoveById(TId id)
 		{
 			Remove(ReadById(id));
 		}
 
-		private static object GetCacheId(TEntity entity)
+		private static TId GetCacheId(TEntity entity)
 		{
 			if (Schema.Identity is null)
-				return entity;
+				return entity.To<TId>();
 
-			return Schema.Identity.GetAccessor<TEntity>().GetValue(entity);
+			return (TId)Schema.Identity.GetAccessor<TEntity>().GetValue(entity);
 		}
 
 		private void ThrowIfStorageNull()

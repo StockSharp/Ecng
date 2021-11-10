@@ -36,7 +36,7 @@
 
 		public static bool IsRelationMany(this Field field)
 		{
-			return field.MatchFactory(typeof(RelationManyFieldFactory<,>));
+			return field.MatchFactory(typeof(RelationManyFieldFactory<,,>));
 		}
 
 		public static bool IsRelationSingle(this Field field)

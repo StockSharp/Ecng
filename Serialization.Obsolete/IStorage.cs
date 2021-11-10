@@ -6,13 +6,22 @@
 
 	public interface IStorage
 	{
+		IBatchContext BeginBatch();
+		void CommitBatch();
+		void EndBatch();
+
+		void ClearCache();
+	}
+
+	public interface IStorage<TId>
+	{
 		long GetCount<TEntity>();
 
 		TEntity Add<TEntity>(TEntity entity);
 
 		TEntity GetBy<TEntity>(SerializationItemCollection by);
 
-		TEntity GetById<TEntity>(object id);
+		TEntity GetById<TEntity>(TId id);
 
 		IEnumerable<TEntity> GetGroup<TEntity>(long startIndex, long count, Field orderBy, ListSortDirection direction);
 
@@ -21,12 +30,6 @@
 		void Remove<TEntity>(TEntity entity);
 
 		void Clear<TEntity>();
-
-		void ClearCache();
-
-		IBatchContext BeginBatch();
-		void CommitBatch();
-		void EndBatch();
 
 		event Action<object> Added;
 		event Action<object> Updated;
