@@ -24,7 +24,7 @@
 
 		static RoslynCompiler()
 		{
-			AppDomain.CurrentDomain.AssemblyResolve += (o, args) =>
+			AppDomain.CurrentDomain.AssemblyResolve += (_, args) =>
 			{
 				if (_redirects.ContainsKey(args.Name))
 				{
@@ -91,37 +91,36 @@
 
 			var compilationResult = new CompilationResult();
 
-			using (var ms = new MemoryStream())
+			using var ms = new MemoryStream();
+
+			var result = compilation.Emit(ms);
+
+			compilationResult.Errors = result.Diagnostics.Select(diagnostic =>
 			{
-				var result = compilation.Emit(ms);
+				var pos = diagnostic.Location.GetLineSpan().StartLinePosition;
 
-				compilationResult.Errors = result.Diagnostics.Select(diagnostic =>
+				var error = new CompilationError
 				{
-					var pos = diagnostic.Location.GetLineSpan().StartLinePosition;
-
-					var error = new CompilationError
-					{
-						Id = diagnostic.Id,
-						Line = pos.Line,
-						Character = pos.Character,
-						Message = diagnostic.GetMessage()
-					};
-
-					error.Type = diagnostic.Severity switch
+					Id = diagnostic.Id,
+					Line = pos.Line,
+					Character = pos.Character,
+					Message = diagnostic.GetMessage(),
+					Type = diagnostic.Severity switch
 					{
 						DiagnosticSeverity.Hidden or DiagnosticSeverity.Info => CompilationErrorTypes.Info,
 						DiagnosticSeverity.Warning => CompilationErrorTypes.Warning,
 						DiagnosticSeverity.Error => CompilationErrorTypes.Error,
 						_ => throw new ArgumentOutOfRangeException(),
-					};
-					return error;
-				}).ToArray();
+					}
+				};
 
-				if (result.Success)
-				{
-					ms.Seek(0, SeekOrigin.Begin);
-					compilationResult.Assembly = Assembly.Load(ms.ToArray());
-				}
+				return error;
+			}).ToArray();
+
+			if (result.Success)
+			{
+				ms.Seek(0, SeekOrigin.Begin);
+				compilationResult.Assembly = Assembly.Load(ms.ToArray());
 			}
 
 			return compilationResult;

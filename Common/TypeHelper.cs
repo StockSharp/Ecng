@@ -255,8 +255,8 @@ namespace Ecng.Common
 		{
 			var salt = new byte[saltSize];
 
-			using (var saltGen = new RNGCryptoServiceProvider())
-				saltGen.GetBytes(salt);
+			using var saltGen = new RNGCryptoServiceProvider();
+			saltGen.GetBytes(salt);
 
 			return salt;
 		}
