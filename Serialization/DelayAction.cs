@@ -222,10 +222,7 @@
 			}
 
 			public IGroupItem[] GetItemsAndClear()
-			{
-				lock (_actions.SyncRoot)
-					return _actions.CopyAndClear();
-			}
+				=> _actions.CopyAndClear();
 		}
 
 		private readonly Action<Exception> _errorHandler;

@@ -24,7 +24,7 @@
 
 		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new();
 
-		private readonly SynchronizedList<Tuple<byte[], WebSocketMessageType, long>> _resendCommands = new();
+		private readonly SynchronizedList<(byte[], WebSocketMessageType, long)> _resendCommands = new();
 
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
@@ -395,7 +395,7 @@
 		public void Send(byte[] sendBuf, WebSocketMessageType type, long id = default)
 		{
 			if (id != default)
-				_resendCommands.Add(Tuple.Create(sendBuf.ToArray(), type, id));
+				_resendCommands.Add((sendBuf.ToArray(), type, id));
 
 			_ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, _source.Token).Wait();
 		}
@@ -406,9 +406,9 @@
 
 			_infoLog("Resending {0} commands.".Translate(), resendCommands.Length);
 
-			foreach (var tuple in resendCommands)
+			foreach (var (bytes, type, id) in resendCommands)
 			{
-				Send(tuple.Item1, tuple.Item2, tuple.Item3);
+				Send(bytes, type, id);
 				ResendInterval.Sleep();
 			}
 		}
