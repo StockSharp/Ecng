@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Linq;
+	using System.Reflection;
 	using System.Security;
 
 	using Ecng.Common;
@@ -310,6 +311,28 @@
 			var schema = typeof(Entity).GetSchema();
 			var field = schema.Fields[nameof(Entity.DateTime)];
 			field.IsInnerSchema().AssertFalse();
+		}
+
+		[TestMethod]
+		public void Member2Storage()
+		{
+			var type = typeof(Disposable);
+			var prop = type.GetProperty(nameof(Disposable.IsDisposed));
+			var method = type.GetMethod(nameof(Disposable.Dispose));
+
+			void Do(bool isAssemblyQualifiedName)
+			{
+				type.ToStorage(isAssemblyQualifiedName).ToMember<Type>().AssertEqual(type);
+				prop.ToStorage(isAssemblyQualifiedName).ToMember<PropertyInfo>().AssertEqual(prop);
+				method.ToStorage(isAssemblyQualifiedName).ToMember<MethodInfo>().AssertEqual(method);
+
+				type.ToStorage(isAssemblyQualifiedName).ToMember().AssertEqual(type);
+				prop.ToStorage(isAssemblyQualifiedName).ToMember().AssertEqual(prop);
+				method.ToStorage(isAssemblyQualifiedName).ToMember().AssertEqual(method);
+			}
+
+			Do(true);
+			Do(false);
 		}
 	}
 }

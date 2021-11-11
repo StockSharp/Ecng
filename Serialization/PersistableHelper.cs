@@ -278,6 +278,9 @@
 			return tuple;
 		}
 
+		public static MemberInfo ToMember(this SettingsStorage storage)
+			=> storage.ToMember<MemberInfo>();
+
 		public static T ToMember<T>(this SettingsStorage storage)
 			where T : MemberInfo
 		{
@@ -285,7 +288,7 @@
 				throw new ArgumentNullException(nameof(storage));
 
 			var type = storage.GetValue<Type>("type");
-			var member = storage.GetValue("member", string.Empty);
+			var member = storage.GetValue("name", string.Empty);
 
 			return member.IsEmpty() ? type.To<T>() : type.GetMember<T>(member);
 		}
@@ -298,7 +301,7 @@
 
 			var storage = new SettingsStorage();
 
-			storage.Set("type", member.ReflectedType.GetTypeName(isAssemblyQualifiedName));
+			storage.Set("type", (member as Type ?? member.ReflectedType).GetTypeName(isAssemblyQualifiedName));
 
 			if (member.ReflectedType != null)
 				storage.Set("name", member.Name);
