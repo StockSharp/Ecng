@@ -31,10 +31,13 @@
 					_rateInfo.Remove(key);
 			}
 
-			if (_rateInfo.TryGetValue(date, out var dict) && dict.TryGetValue((from, to), out var rate))
-				return rate;
-
-			_rateInfo.Add(date, dict = new());
+			if (_rateInfo.TryGetValue(date, out var dict))
+			{
+				if (dict.TryGetValue((from, to), out var rate1))
+					return rate1;
+			}
+			else
+				_rateInfo.Add(date, dict = new());
 
 			using var client = new HttpClient();
 			using var response = await client.GetAsync($"https://api.cryptonator.com/api/ticker/{from}-{to}", cancellationToken);
@@ -43,7 +46,7 @@
 
 			dynamic obj = await response.Content.ReadAsAsync<object>(cancellationToken);
 
-			rate = (decimal)obj.ticker.price;
+			var rate = (decimal)obj.ticker.price;
 
 			dict[(from, to)] = rate;
 
