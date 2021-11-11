@@ -13,7 +13,7 @@
 		void ClearCache();
 	}
 
-	public interface IStorage<TId>
+	public interface IStorage<TId> : IStorage
 	{
 		long GetCount<TEntity>();
 

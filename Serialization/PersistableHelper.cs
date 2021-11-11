@@ -308,5 +308,14 @@
 			
 			return storage;
 		}
+
+		public static bool LoadIfNotNull(this IPersistable persistable, SettingsStorage storage)
+		{
+			if (storage is null)
+				return false;
+
+			persistable.Load(storage);
+			return true;
+		}
 	}
 }
