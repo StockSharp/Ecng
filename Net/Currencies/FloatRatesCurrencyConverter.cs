@@ -65,11 +65,11 @@
 
 			if (_rateInfo.TryGetValue(date, out var dict))
 			{
-				if (dict.TryGetValue((from, to), out var rate))
-					return rate;
+				if (dict.TryGetValue((from, to), out var rate1))
+					return rate1;
 			}
-
-			_rateInfo.Add(date, dict = new());
+			else
+				_rateInfo.Add(date, dict = new());
 
 			using var client = new HttpClient();
 			using var response = await client.GetAsync($"https://floatrates.com/daily/{from}.json".ToLowerInvariant(), cancellationToken);
@@ -95,7 +95,10 @@
 				dict[(from, curr)] = (decimal)pair.Value.Rate;
 			}
 
-			return dict[(from, to)];
+			if (dict.TryGetValue((from, to), out var rate))
+				return rate;
+
+			throw new InvalidOperationException($"{from}-{to} not found.");
 		}
 	}
 }
