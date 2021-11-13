@@ -16,6 +16,7 @@
 	using Ecng.Serialization;
 	using Ecng.UnitTesting;
 	using Ecng.Reflection;
+	using Newtonsoft.Json.Linq;
 
 	[TestClass]
 	public class JsonTests
@@ -997,6 +998,39 @@
 			{
 				PersistableHelper.RemoveAdapterType(typeof(Currency));
 			}
+		}
+
+		[TestMethod]
+		public void NullDeserialize()
+		{
+			((string)null).DeserializeObject<CurrencyTypes?>().AssertEqual(null);
+			string.Empty.DeserializeObject<CurrencyTypes?>().AssertEqual(null);
+			((JToken)null).DeserializeObject<CurrencyTypes?>().AssertEqual(null);
+
+			((string)null).DeserializeObject<TestClass>().AssertEqual(null);
+			string.Empty.DeserializeObject<TestClass>().AssertEqual(null);
+			((JToken)null).DeserializeObject<TestClass>().AssertEqual(null);
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(ArgumentNullException))]
+		public void NullDeserializeError1()
+		{
+			((string)null).DeserializeObject<CurrencyTypes>();
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(ArgumentNullException))]
+		public void NullDeserializeError2()
+		{
+			string.Empty.DeserializeObject<CurrencyTypes>();
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(ArgumentNullException))]
+		public void NullDeserializeError3()
+		{
+			((JToken)null).DeserializeObject<CurrencyTypes>();
 		}
 	}
 }

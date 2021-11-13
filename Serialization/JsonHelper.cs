@@ -38,11 +38,16 @@
 
 		public static object DeserializeObject(this string content, Type type)
 		{
-			if (content.IsEmpty())
-				throw new ArgumentNullException(nameof(content));
-
 			if (type is null)
 				throw new ArgumentNullException(nameof(type));
+
+			if (content.IsEmpty())
+			{
+				if (type.IsClass || type.IsNullable())
+					return null;
+
+				throw new ArgumentNullException(nameof(content));
+			}
 
 			try
 			{
@@ -59,11 +64,16 @@
 
 		public static object DeserializeObject(this JToken token, Type type)
 		{
-			if (token is null)
-				throw new ArgumentNullException(nameof(token));
-
 			if (type is null)
 				throw new ArgumentNullException(nameof(type));
+
+			if (token is null)
+			{
+				if (type.IsClass || type.IsNullable())
+					return null;
+
+				throw new ArgumentNullException(nameof(token));
+			}
 
 			try
 			{
@@ -80,7 +90,7 @@
 
 		public static JsonSerializerSettings CreateJsonSerializerSettings()
 		{
-			return new JsonSerializerSettings
+			return new()
 			{
 				FloatParseHandling = FloatParseHandling.Decimal,
 				NullValueHandling = NullValueHandling.Ignore,
