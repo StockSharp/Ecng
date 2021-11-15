@@ -67,7 +67,7 @@
 
 		public static IEnumerable<T> SplitMask<T>(this T maskedValue)
 		{
-			return GetValues<T>().Where(v => Contains(maskedValue, v));
+			return GetValues<T>().Where(v => HasFlags(maskedValue, v));
 		}
 
 		public static T JoinMask<T>()
@@ -96,14 +96,21 @@
 			return (enumSource.To<long>() & ~enumPart.To<long>()).To<T>();
 		}
 
+		[Obsolete("Use HasFlags method.")]
 		public static bool Contains<T>(T enumSource, T enumPart)
 		{
-			return enumSource.To<Enum>().Contains(enumPart.To<Enum>());
+			return HasFlags(enumSource, enumPart);
 		}
 
+		public static bool HasFlags<T>(T enumSource, T enumPart)
+		{
+			return enumSource.To<Enum>().HasFlag(enumPart.To<Enum>());
+		}
+
+		[Obsolete("Use Enum.HasFlag method.")]
 		public static bool Contains(this Enum enumSource, Enum enumPart)
 		{
-			return (enumSource.To<long>() & enumPart.To<long>()) == enumPart.To<long>();
+			return enumSource.HasFlag(enumPart);
 		}
 
 		public static bool TryParse<T>(this string str, out T value, bool ignoreCase = true)

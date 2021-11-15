@@ -51,7 +51,7 @@
 
 			return entityType.GetMembers<MemberInfo>(_flags).Where(
 			member =>
-					_memberTypes.Contains(member.MemberType) &&
+					_memberTypes.HasFlag(member.MemberType) &&
 					(member.GetAttribute<IgnoreAttribute>() is null || !member.GetAttributes<IgnoreAttribute>().Any(a => a.FieldName.IsEmpty())) &&
 					!member.IsIndexer() &&
 					!member.ReflectedType.IsInterface &&
