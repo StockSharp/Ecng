@@ -427,7 +427,7 @@
 			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			var set = new PairSet<TKey, TValue>();
+			var set = new PairSet<TKey, TValue>(comparer);
 
 			foreach (var item in source)
 			{
