@@ -84,7 +84,7 @@ namespace Ecng.ComponentModel
 			var str = value.ToString();
 			var type = value.GetType();
 
-			if (!(value is Enum))
+			if (value is not Enum)
 			{
 				if (value is ICustomAttributeProvider provider)
 					return provider.GetDisplayName();

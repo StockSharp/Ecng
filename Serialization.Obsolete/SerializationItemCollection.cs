@@ -113,8 +113,8 @@ namespace Ecng.Serialization
 
 		public override bool Equals(object obj)
 		{
-			if (obj is SerializationItemCollection)
-				return this.SequenceEqual((SerializationItemCollection)obj);
+			if (obj is SerializationItemCollection collection)
+				return this.SequenceEqual(collection);
 			else
 				return false;
 		}

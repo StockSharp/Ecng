@@ -21,8 +21,8 @@ namespace Ecng.Collections
     /// <typeparam name="TValue">Type of values</typeparam>
     public class PriorityQueue<TPriority, TValue> : ICollection<KeyValuePair<TPriority, TValue>>
     {
-        private List<KeyValuePair<TPriority, TValue>> _baseHeap;
-        private IComparer<TPriority> _comparer;
+        private readonly List<KeyValuePair<TPriority, TValue>> _baseHeap;
+        private readonly IComparer<TPriority> _comparer;
 
         #region Constructors
 

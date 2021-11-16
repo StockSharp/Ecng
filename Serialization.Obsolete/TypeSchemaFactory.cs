@@ -55,7 +55,7 @@
 					(member.GetAttribute<IgnoreAttribute>() is null || !member.GetAttributes<IgnoreAttribute>().Any(a => a.FieldName.IsEmpty())) &&
 					!member.IsIndexer() &&
 					!member.ReflectedType.IsInterface &&
-					(member is FieldInfo || (member is PropertyInfo && ((PropertyInfo)member).GetAccessors(true).Length == 2)) &&
+					(member is FieldInfo || (member is PropertyInfo info && info.GetAccessors(true).Length == 2)) &&
 					!ignoredMemberNames.Contains(member.Name)
 			).OrderBy(member => member.Name);
 		}

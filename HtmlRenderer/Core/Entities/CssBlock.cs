@@ -131,7 +131,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Entities
         /// <returns>true - the two blocks are the same, false - otherwise</returns>
         public bool Equals(CssBlock other)
         {
-            if (ReferenceEquals(null, other))
+            if (other is null)
                 return false;
             if (ReferenceEquals(this, other))
                 return true;
@@ -162,7 +162,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Entities
         /// <returns>true - the selectors on blocks are the same, false - otherwise</returns>
         public bool EqualsSelector(CssBlock other)
         {
-            if (ReferenceEquals(null, other))
+            if (other is null)
                 return false;
             if (ReferenceEquals(this, other))
                 return true;
@@ -198,7 +198,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Entities
         /// <returns>true - the two blocks are the same, false - otherwise</returns>
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is null)
                 return false;
             if (ReferenceEquals(this, obj))
                 return true;

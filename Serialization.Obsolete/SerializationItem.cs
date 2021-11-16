@@ -51,8 +51,8 @@ namespace Ecng.Serialization
 
 			if (Value != null)
 			{
-				if (Value is SerializationItemCollection)
-					clone.Value = ((SerializationItemCollection)Value).Clone();
+				if (Value is SerializationItemCollection collection)
+					clone.Value = collection.Clone();
 				else
 					clone.Value = Value;
 			}

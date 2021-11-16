@@ -325,18 +325,18 @@
 
 				var alt = smile.Emoticon.EncodeToHtml();
 
-				Func<TDomain, string> replace = domain =>
+				string Replace(TDomain domain)
 				{
 					var src = _toFullAbsolute(Path.GetExtension(smile.Icon).EqualsIgnoreCase(".gif")
 						? $"~/images/smiles/{smile.Icon}"
 						: $"~/images/svg/smiles/{smile.Icon}", domain);
 
 					return $"<img src=\"{src}\" alt=\"{alt}\" class=\"smiles\" />";
-				};
+				}
 
 				// add new rules for smilies...
-				var lowerRule = new SimpleReplaceRule<TContext, TDomain>(code.ToLower(), replace);
-				var upperRule = new SimpleReplaceRule<TContext, TDomain>(code.ToUpper(), replace);
+				var lowerRule = new SimpleReplaceRule<TContext, TDomain>(code.ToLower(), Replace);
+				var upperRule = new SimpleReplaceRule<TContext, TDomain>(code.ToUpper(), Replace);
 
 				// increase the rank as we go...
 				lowerRule.RuleRank = lowerRule.RuleRank + 100 + codeOffset;

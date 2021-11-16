@@ -519,7 +519,7 @@
 				}
 				else if (destinationType == typeof(Type[]))
 				{
-					if (!(value is IEnumerable<object>))
+					if (value is not IEnumerable<object>)
 						value = new[] { value };
 
 					return ((IEnumerable<object>)value).Select(arg => arg?.GetType() ?? typeof(void)).ToArray();
@@ -579,7 +579,7 @@
 					else if (value is Array arr && ArrayCovariance(arr, destinationType, out var dest))
 						return dest;
 				}
-				else if (value is byte[])
+				else if (value is byte[] bytes)
 				{
 					Type enumType;
 
@@ -595,7 +595,7 @@
 
 					if (TryGetTypedConverter(typeof(byte[]), destinationType, out typedConverter))
 						retVal = typedConverter(value);
-					else if (destinationType.IsArray && ArrayCovariance((byte[])value, destinationType, out var dest))
+					else if (destinationType.IsArray && ArrayCovariance(bytes, destinationType, out var dest))
 						return dest;
 					else
 						throw new ArgumentException("Can't convert byte array to '{0}'.".Put(destinationType), nameof(value));
@@ -978,7 +978,7 @@
 			{
 				var remainder = (int)(currentNumber % radix);
 				charArray[index--] = digits[remainder];
-				currentNumber = currentNumber / radix;
+				currentNumber /= radix;
 			}
 
 			var result = new string(charArray, index + 1, bitsInLong - index - 1);

@@ -28,8 +28,8 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
     /// </remarks>
     public class SymmetricCryptographer : IDisposable
     {
-        private SymmetricAlgorithm algorithm;
-        private ProtectedKey key;
+        private readonly SymmetricAlgorithm algorithm;
+        private readonly ProtectedKey key;
 
 		private byte[] Key => key.DecryptedKey;
 
@@ -72,7 +72,6 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 			if(algorithm != null)
 			{
 				algorithm.Clear();
-				algorithm = null;
 			}
 		}
 
@@ -83,7 +82,6 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
         /// <returns><para>The resulting ciphertext.</para></returns>
 		public byte[] Encrypt(byte[] plaintext)
 		{
-			byte[] output = null;
 			byte[] cipherText = null;
 
 			this.algorithm.Key = Key;
@@ -93,7 +91,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 				cipherText = Transform(transform, plaintext);
 			}
 
-			output = new byte[IVLength + cipherText.Length];
+			var output = new byte[IVLength + cipherText.Length];
 			Buffer.BlockCopy(this.algorithm.IV, 0, output, 0, IVLength);
 			Buffer.BlockCopy(cipherText, 0, output, IVLength, cipherText.Length);
 

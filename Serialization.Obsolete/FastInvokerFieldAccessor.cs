@@ -36,18 +36,16 @@ namespace Ecng.Serialization
 
 		private static FastInvoker<TEntity, VoidType, TField> CreateGetInvoker(Field field)
 		{
-			if (field.Member is FieldInfo)
-				return FastInvoker<TEntity, VoidType, TField>.Create((FieldInfo)field.Member, true);
-			else
-				return FastInvoker<TEntity, VoidType, TField>.Create((PropertyInfo)field.Member, true);
+			return field.Member is FieldInfo info
+				? FastInvoker<TEntity, VoidType, TField>.Create(info, true)
+				: FastInvoker<TEntity, VoidType, TField>.Create((PropertyInfo)field.Member, true);
 		}
 
 		private static FastInvoker<TEntity, TField, VoidType> CreateSetInvoker(Field field)
 		{
-			if (field.Member is FieldInfo)
-				return FastInvoker<TEntity, TField, VoidType>.Create((FieldInfo)field.Member, false);
-			else
-				return FastInvoker<TEntity, TField, VoidType>.Create((PropertyInfo)field.Member, false);
+			return field.Member is FieldInfo info
+				? FastInvoker<TEntity, TField, VoidType>.Create(info, false)
+				: FastInvoker<TEntity, TField, VoidType>.Create((PropertyInfo)field.Member, false);
 		}
 	}
 }

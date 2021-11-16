@@ -81,10 +81,10 @@ namespace Ecng.Common
 	public class CsvFileReader : CsvFileCommon, IDisposable
 	{
 		// Private members
-		private TextReader Reader;
+		private readonly TextReader Reader;
 		public string CurrLine;
 		private int CurrPos;
-		private EmptyLineBehavior EmptyLineBehavior;
+		private readonly EmptyLineBehavior EmptyLineBehavior;
 
 		/// <summary>
 		/// Initializes a new instance of the CsvFileReader class for the

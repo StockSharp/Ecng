@@ -12,7 +12,7 @@ namespace Ecng.Serialization
 
 		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 		{
-			existingValue = existingValue ?? Activator.CreateInstance(objectType);
+			existingValue ??= Activator.CreateInstance(objectType);
 			
 			var array = JArray.Load(reader);
 			var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);

@@ -423,7 +423,7 @@ namespace Ecng.Reflection
 
 					foreach (var member in allMembers)
 					{
-						if (member is T && !(member is Type))
+						if (member is T && member is not Type)
 							members.AddMember(member);
 					}
 				}
@@ -434,7 +434,7 @@ namespace Ecng.Reflection
 
 				foreach (var member in allMembers)
 				{
-					if (member is T && !(member is Type) && member.ReflectedType == type)
+					if (member is T && member is not Type && member.ReflectedType == type)
 						members.AddMember(member);
 				}
 			}
