@@ -311,6 +311,7 @@
 		public static readonly TimeZoneInfo China = "China Standard Time".To<TimeZoneInfo>();
 		public static readonly TimeZoneInfo Korea = "Korea Standard Time".To<TimeZoneInfo>();
 		public static readonly TimeZoneInfo Tokyo = "Tokyo Standard Time".To<TimeZoneInfo>();
+		public static readonly TimeZoneInfo Tunisia = "W. Central Africa Standard Time".To<TimeZoneInfo>();
 
 		public static DateTime To(this DateTime time, TimeZoneInfo source = null, TimeZoneInfo destination = null)
 		{
@@ -507,7 +508,7 @@
 		// https://stackoverflow.com/questions/11154673/get-the-correct-week-number-of-a-given-date
 		public static int GetIso8601WeekOfYear(this DateTime time, CultureInfo ci = null)
 		{
-			// Seriously cheat.  If its Monday, Tuesday or Wednesday, then it'll 
+			// Seriously cheat.  If its Monday, Tuesday or Wednesday, then it'll
 			// be the same week# as whatever Thursday, Friday or Saturday are,
 			// and we always get those right
 			var calendar = (ci ?? CultureInfo.InvariantCulture).Calendar;
@@ -549,7 +550,7 @@
 
 			return diff;
 		}
-		
+
 		public static DateTime FromUnix(this long time, bool isSeconds = true)
 		{
 			return isSeconds ? GregorianStart.AddSeconds(time) : GregorianStart.AddMilliseconds(time);
