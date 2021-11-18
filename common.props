@@ -36,9 +36,11 @@
     <MicrosoftWindowsCompatibilityVer>5.0.2</MicrosoftWindowsCompatibilityVer>
     <MicrosoftAspNetWebApiClientVer>5.2.7</MicrosoftAspNetWebApiClientVer>
 
+    <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
+    <EcngSystemComponentModelAnnotationsVer>5.0.0</EcngSystemComponentModelAnnotationsVer>
+
     <SystemCodeDomVer>5.0.0</SystemCodeDomVer>
     <SystemCollectionsImmutableVer>5.0.0</SystemCollectionsImmutableVer>
-    <SystemComponentModelAnnotationsVer>5.0.0</SystemComponentModelAnnotationsVer>
     <SystemConfigurationConfigurationManagerVer>5.0.0</SystemConfigurationConfigurationManagerVer>
     <SystemIOCompressionVer>4.3.0</SystemIOCompressionVer>
     <SystemManagementVer>5.0.0</SystemManagementVer>
@@ -54,7 +56,13 @@
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
     <MsTestVer>2.2.7</MsTestVer>
     <MsTestSdkVer>17.0.0</MsTestSdkVer>
-    <SmartFormatVer>2.7.1</SmartFormatVer>
+
+    <!-- 
+    special version of SmartFormat.NET with reference to newtonsoft.json v13
+    original SmartFormat.NET uses Newtonsoft.Json v12 but our libs use v13. Not a problem in net core, but does not work for .net framework 
+    -->
+    <EcngSmartFormatVer>2.7.1</EcngSmartFormatVer>
+
     <OctodiffVer>1.2.36</OctodiffVer>
     <MoreLinqVer>3.3.2</MoreLinqVer>
     <RestSharpVer>106.13.0</RestSharpVer>

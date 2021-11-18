@@ -4,7 +4,8 @@
     <ProjectGuid>{BCDDCE14-3697-4210-AE13-B820E4F9AE7C}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.ComponentModel.Annotations" Version="$(SystemComponentModelAnnotationsVer)" />
+    <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
+    <PackageReference Include="Ecng.System.ComponentModel.Annotations" Version="$(EcngSystemComponentModelAnnotationsVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
