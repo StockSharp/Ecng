@@ -14,7 +14,7 @@ namespace Ecng.Reflection.Emit
 
 	public sealed class TypeGenerator : BaseGenerator<TypeBuilder>
 	{
-		private Action<Type> _typeCompiled;
+		private readonly Action<Type> _typeCompiled;
 
 		#region TypeGenerator.ctor()
 

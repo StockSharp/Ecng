@@ -3,8 +3,6 @@
 	using System;
 	using System.Collections.Generic;
 
-	using Ecng.Common;
-
 	using ManagedWinapi.Windows;
 
 	public class SystemMenuItem
@@ -18,10 +16,10 @@
 			Info = info;
 
 			Id = info.wID;
-			IsEnabled = !info.fState.Contains(WinApi.MenuItemInfoStates.MFS_DISABLED);
-			IsChecked = info.fState.Contains(WinApi.MenuItemInfoStates.MFS_CHECKED);
+			IsEnabled = !info.fState.HasFlag(WinApi.MenuItemInfoStates.MFS_DISABLED);
+			IsChecked = info.fState.HasFlag(WinApi.MenuItemInfoStates.MFS_CHECKED);
 
-			if (info.fType.Contains(WinApi.MenuItemInfoTypes.MFT_STRING))
+			if (info.fType.HasFlag(WinApi.MenuItemInfoTypes.MFT_STRING))
 				Text = info.dwTypeData;
 
 			Items = info.hSubMenu.GetMenuItems(window);

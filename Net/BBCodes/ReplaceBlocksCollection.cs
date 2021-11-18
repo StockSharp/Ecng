@@ -31,7 +31,7 @@
     /// <summary>
     ///  REPLACEMENT UNIQUE VALUE -- USED TO CREATE A UNIQUE VALUE TO REPLACE -- IT IS NOT SUPPOSED TO BE HUMAN READABLE.
     /// </summary>
-    private string _replaceFormat = "÷ñÒ{1}êÖ{0}õæ÷";
+    private readonly string _replaceFormat = "÷ñÒ{1}êÖ{0}õæ÷";
 
     #endregion
 

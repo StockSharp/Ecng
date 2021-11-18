@@ -21,8 +21,8 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 	/// </summary>
 	public class HashCryptographer
 	{
-		private Type algorithmType;
-		private ProtectedKey key;
+		private readonly Type algorithmType;
+		private readonly ProtectedKey key;
 
 		/// <summary>
 		/// <para>Initialize a new instance of the <see cref="HashCryptographer"/> with an algorithm type.</para>

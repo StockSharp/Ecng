@@ -74,7 +74,7 @@
 
 		public FieldList NonIdentityFields
 		{
-			get { return _nonIdentityFields ??= new FieldList(this.Where(field => !(field is IdentityField))); }
+			get { return _nonIdentityFields ??= new FieldList(this.Where(field => field is not IdentityField)); }
 		}
 
 		#endregion

@@ -33,7 +33,7 @@ namespace Ecng.Common
 			if (ReferenceEquals(left, right))
 				return true;
 
-			return ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.Equals(right);
+			return left is null ? right is null : left.Equals(right);
 		}
 
 		public static bool operator ==(Equatable<T> left, Equatable<T> right)
@@ -41,7 +41,7 @@ namespace Ecng.Common
 			if (ReferenceEquals(left, right))
 				return true;
 
-			return ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.Equals(right as T);
+			return left is null ? right is null : left.Equals(right as T);
 		}
 
 		#region IEquatable<T> Members
@@ -55,7 +55,7 @@ namespace Ecng.Common
 		/// </returns>
 		public virtual bool Equals(T other)
 		{
-			if (ReferenceEquals(other, null))
+			if (other is null)
 				return false;
 			
 			if (ReferenceEquals(other, this))
@@ -98,8 +98,8 @@ namespace Ecng.Common
 		/// </returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is T)
-				return Equals((T)obj);
+			if (obj is T t)
+				return Equals(t);
 			else
 				return false;
 		}

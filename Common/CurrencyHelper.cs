@@ -20,6 +20,6 @@
 		/// <param name="type">Currency type.</param>
 		/// <returns>Currency.</returns>
 		public static Currency ToCurrency(this decimal value, CurrencyTypes type)
-			=> new Currency { Type = type, Value = value };
+			=> new() { Type = type, Value = value };
 	}
 }

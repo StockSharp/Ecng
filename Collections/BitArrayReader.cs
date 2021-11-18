@@ -93,7 +93,7 @@
 			if (shift < count)
 				value |= Get(_dataOffset + 1) << shift;
 
-			bitOffset = bitOffset + count;
+			bitOffset += count;
 			_dataOffset += bitOffset >> 6;
 			_bitOffset = bitOffset & 63;
 
@@ -154,7 +154,7 @@
 			value = (bits & 2) != 0 ? value : -value;
 
 			bitOffset += seek;
-			_dataOffset = _dataOffset + (bitOffset >> 6);
+			_dataOffset += (bitOffset >> 6);
 			_bitOffset = bitOffset & 63;
 
 			return value;

@@ -207,8 +207,8 @@ namespace Ecng.Net
 
 		public static string UrlEncodeToUpperCase(this string url)
 		{
-			if (url is null)
-				return null;
+			if (url.IsEmpty())
+				return url;
 
 			var temp = url.ToCharArray();
 
@@ -225,12 +225,13 @@ namespace Ecng.Net
 		}
 
 		public static string XmlEscape(this string content)
-		{
-			return SecurityElement.Escape(content);
-		}
+			=> content.IsEmpty() ? content : SecurityElement.Escape(content);
 
 		public static string ClearUrl(this string url)
 		{
+			if (url.IsEmpty())
+				return url;
+
 			var chars = new List<char>(url);
 
 			var count = chars.Count;

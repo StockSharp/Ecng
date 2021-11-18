@@ -806,6 +806,9 @@
 
 		public static string ToLatin(this string russianTitle)
 		{
+			if (russianTitle.IsEmpty())
+				return russianTitle;
+
 			var transliter = string.Empty;
 
 			foreach (var letter in russianTitle.ToLower())
@@ -820,9 +823,7 @@
 		}
 
 		public static string LightScreening(this string text)
-		{
-			return text.Replace(' ', '-').Remove(".").Remove("#").Remove("?").Remove(":");
-		}
+			=> text?.Replace(' ', '-').Remove(".").Remove("#").Remove("?").Remove(":");
 
 		public static bool ComparePaths(this string path1, string path2)
 		{

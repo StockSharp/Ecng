@@ -541,7 +541,7 @@ namespace Ecng.Reflection
 
 			if (argType != typeof(VoidType))
 			{
-				if ((member.IsIndexer() && parameters.Length > 1) || !((parameters.IsEmpty() && !(member is MethodBase)) || (parameters.Length == 1 && !parameters[0].IsOutput())))
+				if ((member.IsIndexer() && parameters.Length > 1) || !((parameters.IsEmpty() && member is not MethodBase) || (parameters.Length == 1 && !parameters[0].IsOutput())))
 				{
 					// Lay out inRefArgs array onto stack.
 					foreach (var param in parameters)
