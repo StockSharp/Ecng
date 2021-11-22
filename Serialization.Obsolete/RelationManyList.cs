@@ -81,7 +81,6 @@
 		}
 
 		private readonly SynchronizedSet<TEntity> _cache = new();
-		private bool _bulkInitialized;
 		private int? _count;
 		private readonly CachedSynchronizedDictionary<TEntity, object> _pendingAdd = new(); 
 
@@ -137,6 +136,24 @@
 
 		public bool BulkLoad { get; set; }
 		public bool CacheCount { get; set; }
+		public TimeSpan CacheTimeOut { get; set; } = TimeSpan.MaxValue;
+
+		private DateTime? _cacheExpire;
+		private bool _bulkInitialized;
+
+		private bool BulkInitialized
+		{
+			get
+			{
+				if (_bulkInitialized)
+				{
+					if (_cacheExpire < DateTime.UtcNow)
+						ResetCache();
+				}
+
+				return _bulkInitialized;
+			}
+		}
 
 		//public void ChangeCachedCount(int diff)
 		//{
@@ -149,6 +166,7 @@
 			{
 				CachedEntities.Clear();
 				_bulkInitialized = false;
+				_cacheExpire = null;
 			}
 
 			_count = null;
@@ -163,7 +181,7 @@
 
 			if (BulkLoad)
 			{
-				if (!_bulkInitialized)
+				if (!BulkInitialized)
 					GetRange();
 
 				return CachedEntities.TryGetValue(id);
@@ -209,7 +227,7 @@
 			if (IsReadOnly)
 				throw new ReadOnlyException();
 
-			if (BulkLoad && _bulkInitialized)
+			if (BulkLoad && BulkInitialized)
 			{
 				var id = GetCacheId(entity);
 
@@ -289,7 +307,7 @@
 
 				if (BulkLoad)
 				{
-					if (!_bulkInitialized)
+					if (!BulkInitialized)
 						GetRange(0, 1 /* passed count's value will be ignored and set into OnGetCount() */);
 
 					return CachedEntities.Count;
@@ -334,7 +352,7 @@
 			{
 				lock (CachedEntities.SyncRoot)
 				{
-					if (_bulkInitialized)
+					if (BulkInitialized)
 						CachedEntities.Add(GetCacheId(item), item);
 					else
 						GetRange();
@@ -391,7 +409,7 @@
 			{
 				lock (CachedEntities.SyncRoot)
 				{
-					if (_bulkInitialized)
+					if (BulkInitialized)
 						CachedEntities.Remove(GetCacheId(item));
 				}
 			}
@@ -561,7 +579,7 @@
 
 			if (BulkLoad)
 			{
-				if (_bulkInitialized)
+				if (BulkInitialized)
 				{
 					IEnumerable<TEntity> source = CachedEntities.SyncGet(d => d.Values.ToArray());
 
@@ -590,7 +608,7 @@
 			{
 				lock (CachedEntities.SyncRoot)
 				{
-					if (!_bulkInitialized)
+					if (!BulkInitialized)
 					{
 						//_cachedEntities = new Dictionary<object, E>();
 
@@ -598,6 +616,9 @@
 							CachedEntities.Add(GetCacheId(entity), entity);
 
 						_bulkInitialized = true;
+
+						if (CacheTimeOut < TimeSpan.MaxValue)
+							_cacheExpire = DateTime.UtcNow + CacheTimeOut;
 
 						entities = entities.Skip((int)oldStartIndex).Take((int)oldCount).ToList();
 					}
