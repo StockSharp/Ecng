@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29209.62
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{340C3BD6-6951-4224-8E35-49D2C67A2680}"
 	ProjectSection(SolutionItems) = preProject
@@ -65,7 +65,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data", "Data\Data.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestWpf", "TestWpf\TestWpf.csproj", "{FE6909E7-64D1-4DAE-B4B6-F86CE56D5608}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serialization.Obsolete", "Serialization.Obsolete\Serialization.Obsolete.csproj", "{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serialization.Obsolete", "Serialization.Obsolete\Serialization.Obsolete.csproj", "{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmartFormat", "SmartFormat\SmartFormat\SmartFormat.csproj", "{7359993E-F2D2-4599-B861-F5136E48D8F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -189,6 +191,10 @@ Global
 		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
