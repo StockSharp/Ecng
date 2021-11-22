@@ -91,6 +91,18 @@
 			return Contains(queryField) ? GetValue<T>(queryField) : defaultValue;
 		}
 
+		public bool TryGetValue<T>(string queryField, out T value)
+		{
+			if (_queryString.TryGetValue(queryField, out var str))
+			{
+				value = str.To<T>();
+				return true;
+			}
+
+			value = default;
+			return false;
+		}
+
 		public QueryString Append(string name, object value)
 		{
 			if (name.IsEmpty())
