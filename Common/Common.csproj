@@ -9,7 +9,7 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVer)" />
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVer)" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightVer)" />
-    <PackageReference Include="Ecng.SmartFormat.NET" Version="$(EcngSmartFormatVer)" />
+    <PackageReference Include="SmartFormat.NET" Version="$(SmartFormatVer)" />
     <PackageReference Include="Nito.AsyncEx" Version="$(NitoVer)" />
   </ItemGroup>
   <ItemGroup>
