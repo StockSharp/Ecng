@@ -359,20 +359,22 @@ namespace TestWpf
 
 [img=107130]TerminalBlackEn.png[/img]";
 
-			var ctx = CreateContext(true);
+			var ctx = CreateContext(true, false);
 			var html = AsyncContext.Run(() => CreateBBService().ToHtmlAsync(bb, ctx));
 			HtmlCtrl.Text = $"<html>{html}</html>";
 		}
 
 		private class TextBB2HtmlContext : BB2HtmlContext
 		{
-			public TextBB2HtmlContext(bool preventScaling, bool allowHtml, string scheme, string domainCode)
+			public TextBB2HtmlContext(bool preventScaling, bool allowHtml, string scheme, string domainCode, bool localhost)
 				: base(preventScaling, allowHtml, scheme)
 			{
 				DomainCode = domainCode;
+				Localhost = localhost;
 			}
 
 			public string DomainCode { get; }
+			public bool Localhost { get; }
 		}
 
 		private class NamedObjectImpl : INamedObject<TextBB2HtmlContext>
@@ -387,11 +389,11 @@ namespace TestWpf
 			string INamedObject<TextBB2HtmlContext>.GetUrlPart(TextBB2HtmlContext ctx) => UrlPart;
 		}
 
-		private static TextBB2HtmlContext CreateContext(bool allowHtml)
-			=> new(false, allowHtml, "com", Uri.UriSchemeHttps);
+		private static TextBB2HtmlContext CreateContext(bool allowHtml, bool localhost)
+			=> new(false, allowHtml, Uri.UriSchemeHttps, "com", localhost);
 
-		private static readonly Regex _isStockSharpCom = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-		private static readonly Regex _isStockSharpRu = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static readonly Regex _isStockSharpCom = new("href=\"(?<http>(http://)|(https://))?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static readonly Regex _isStockSharpRu = new("href=\"(?<http>(http://)|(https://))?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static readonly Regex _isGitHub = new("href=\"https://github.com/stocksharp", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		private static BB2HtmlFormatter<TextBB2HtmlContext> CreateBBService()
@@ -406,12 +408,14 @@ namespace TestWpf
 
 			static string ToFullAbsolute(TextBB2HtmlContext ctx, string virtualPath)
 			{
+				var domain = ctx.Localhost ? "http://localhost/stocksharp" : $"{ctx.Scheme}://stocksharp.{ctx.DomainCode}";
+
 				if (virtualPath.StartsWithIgnoreCase("http"))
 				{ }
 				else if (virtualPath.StartsWith("/"))
-					virtualPath = $"https://stocksharp.{ctx.DomainCode}{virtualPath}";
+					virtualPath = $"{domain}{virtualPath}";
 				else
-					virtualPath = virtualPath.Replace("~", "https://stocksharp.com");
+					virtualPath = virtualPath.Replace("~", domain);
 
 				return virtualPath;
 			}
@@ -483,15 +487,17 @@ namespace TestWpf
 
 					var urlStr = url.ToString();
 
-					if (_isStockSharpCom.IsMatch(urlStr))
+					Match match;
+
+					if ((match = _isStockSharpCom.Match(urlStr)).Success)
 						domain = "com";
-					else if (_isStockSharpRu.IsMatch(urlStr))
+					else if ((match = _isStockSharpRu.Match(urlStr)).Success)
 						domain = "ru";
 
-					var changed = !domain.IsEmpty() && domain != ctx.DomainCode;
+					var changed = !domain.IsEmpty() && (ctx.Localhost || domain != ctx.DomainCode);
 					if (changed)
 					{
-						url.ReplaceIgnoreCase($"stocksharp.{domain}", $"stocksharp.{ctx.DomainCode}");
+						url.ReplaceIgnoreCase($"{match.Groups["http"]}stocksharp.{domain}", ToFullAbsolute(ctx, "~"));
 					}
 
 					var isGitHub = _isGitHub.IsMatch(urlStr);

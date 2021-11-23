@@ -18,13 +18,15 @@
 	{
 		private class TextBB2HtmlContext : BB2HtmlContext
 		{
-			public TextBB2HtmlContext(bool preventScaling, bool allowHtml, string scheme, string domainCode)
+			public TextBB2HtmlContext(bool preventScaling, bool allowHtml, string scheme, string domainCode, bool localhost)
 				: base(preventScaling, allowHtml, scheme)
 			{
 				DomainCode = domainCode;
+				Localhost = localhost;
 			}
 
 			public string DomainCode { get; }
+			public bool Localhost { get; }
 		}
 
 		private class NamedObjectImpl : INamedObject<TextBB2HtmlContext>
@@ -77,11 +79,11 @@
 			}
 		}
 
-		private static TextBB2HtmlContext CreateContext(bool allowHtml)
-			=> new(false, allowHtml, Uri.UriSchemeHttps, "com");
+		private static TextBB2HtmlContext CreateContext(bool allowHtml = false, bool localhost = false)
+			=> new(false, allowHtml, Uri.UriSchemeHttps, "com", localhost);
 
-		private static readonly Regex _isStockSharpCom = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-		private static readonly Regex _isStockSharpRu = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static readonly Regex _isStockSharpCom = new("href=\"(?<http>(http://)|(https://))?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static readonly Regex _isStockSharpRu = new("href=\"(?<http>(http://)|(https://))?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static readonly Regex _isGitHub = new("href=\"https://github.com/stocksharp", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		private static BB2HtmlFormatter<TextBB2HtmlContext> CreateBBService()
@@ -96,12 +98,14 @@
 
 			static string ToFullAbsolute(TextBB2HtmlContext ctx, string virtualPath)
 			{
+				var domain = ctx.Localhost ? "http://localhost/stocksharp" : $"{ctx.Scheme}://stocksharp.{ctx.DomainCode}";
+
 				if (virtualPath.StartsWithIgnoreCase("http"))
 				{ }
 				else if (virtualPath.StartsWith("/"))
-					virtualPath = $"https://stocksharp.{ctx.DomainCode}{virtualPath}";
+					virtualPath = $"{domain}{virtualPath}";
 				else
-					virtualPath = virtualPath.Replace("~", "https://stocksharp.com");
+					virtualPath = virtualPath.Replace("~", domain);
 
 				return virtualPath;
 			}
@@ -173,15 +177,17 @@
 
 					var urlStr = url.ToString();
 
-					if (_isStockSharpCom.IsMatch(urlStr))
+					Match match;
+
+					if ((match = _isStockSharpCom.Match(urlStr)).Success)
 						domain = "com";
-					else if (_isStockSharpRu.IsMatch(urlStr))
+					else if ((match = _isStockSharpRu.Match(urlStr)).Success)
 						domain = "ru";
 
-					var changed = !domain.IsEmpty() && domain != ctx.DomainCode;
+					var changed = !domain.IsEmpty() && (ctx.Localhost || domain != ctx.DomainCode);
 					if (changed)
 					{
-						url.ReplaceIgnoreCase($"stocksharp.{domain}", $"stocksharp.{ctx.DomainCode}");
+						url.ReplaceIgnoreCase($"{match.Groups["http"]}stocksharp.{domain}", ToFullAbsolute(ctx, "~"));
 					}
 
 					var isGitHub = _isGitHub.IsMatch(urlStr);
@@ -569,7 +575,7 @@ var i = 10;</pre>
 		[TestMethod]
 		public async Task NoHtml()
 		{
-			var ctx = CreateContext(false);
+			var ctx = CreateContext();
 			var res = await CreateBBService().ToHtmlAsync(@"[html]<script async src=""https://platform.twitter.com/widgets.js"" charset=""utf-8""></script>[/html]", ctx);
 
 			res.AssertEqual("<span>&lt;script async src=&quot;https://platform.twitter.com/widgets.js&quot; charset=&quot;utf-8&quot;&gt;&lt;/script&gt;</span>");
@@ -578,7 +584,7 @@ var i = 10;</pre>
 		[TestMethod]
 		public async Task UrlEncode()
 		{
-			var ctx = CreateContext(false);
+			var ctx = CreateContext();
 			var svc = CreateBBService();
 			var res = await svc.ToHtmlAsync(@"[url]https://stocksharp.com/strategy designer/[/url]", ctx);
 
@@ -594,7 +600,7 @@ var i = 10;</pre>
 		[TestMethod]
 		public async Task Away()
 		{
-			var ctx = CreateContext(false);
+			var ctx = CreateContext();
 			var svc = CreateBBService();
 
 			async Task Check(string bb, string html)
@@ -614,6 +620,32 @@ var i = 10;</pre>
 			await Check("[url]https://github.com/stocksharp/algo/[/url]", "<a target=\"_blank\" href=\"https://github.com/stocksharp/algo/\" title=\"https://github.com/stocksharp/algo/\">https://github.com/stocksharp/algo/</a>");
 			await Check("[url=https://github.com/stocksharp/]github[/url]", "<a target=\"_blank\" href=\"https://github.com/stocksharp/\" title=\"https://github.com/stocksharp/\">github</a>");
 			await Check("https://doc.stocksharp.com/", "<a href=\"https://doc.stocksharp.com\" title=\"https://doc.stocksharp.com\">https://doc.stocksharp.com</a>/");
+		}
+
+		[TestMethod]
+		public async Task Localhost()
+		{
+			var ctx = CreateContext(false, true);
+			var svc = CreateBBService();
+			var res = await svc.ToHtmlAsync(@"[url]https://stocksharp.com/strategy designer/[/url]", ctx);
+
+			var html = "<a href=\"http://localhost/stocksharp/strategy%20designer/\" title=\"http://localhost/stocksharp/strategy%20designer/\">http://localhost/stocksharp/strategy designer/</a>";
+			res.AssertEqual(html);
+
+			res = await svc.ToHtmlAsync(@"[url=https://stocksharp.com/strategy designer/]StockSharp Designer[/url]", ctx);
+
+			html = "<a href=\"http://localhost/stocksharp/strategy%20designer/\" title=\"http://localhost/stocksharp/strategy%20designer/\">StockSharp Designer</a>";
+			res.AssertEqual(html);
+
+			res = await svc.ToHtmlAsync(@"[user]1[/user]", ctx);
+
+			html = "<a href=\'http://localhost/stocksharp/users/1/\'>stocksharp</a>";
+			res.AssertEqual(html);
+
+			res = await svc.ToHtmlAsync(@"[url=https://google.com/]Google[/url]", ctx);
+
+			html = "<a target=\"_blank\" rel=\"nofollow\" href=\"https://stocksharp.com/away/?u=https://google.com/\" title=\"https://google.com/\">Google</a>";
+			res.AssertEqual(html);
 		}
 	}
 }
