@@ -5,8 +5,8 @@
 	/// <summary>
 	/// For the font size with replace
 	/// </summary>
-	public class FontSizeRegexReplaceRule<TContext, TDomain> : VariableRegexReplaceRule<TContext, TDomain>
-		where TContext : BB2HtmlContext<TDomain>
+	public class FontSizeRegexReplaceRule<TContext> : VariableRegexReplaceRule<TContext>
+		where TContext : BB2HtmlContext
   {
     #region Constructors and Destructors
 

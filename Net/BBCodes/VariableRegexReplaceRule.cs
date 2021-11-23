@@ -11,8 +11,8 @@
 	/// <summary>
 	/// For complex regex with variable/default and truncate support
 	/// </summary>
-	public class VariableRegexReplaceRule<TContext, TDomain> : SimpleRegexReplaceRule<TContext, TDomain>
-		where TContext : BB2HtmlContext<TDomain>
+	public class VariableRegexReplaceRule<TContext> : SimpleRegexReplaceRule<TContext>
+		where TContext : BB2HtmlContext
   {
     #region Constants and Fields
 
@@ -201,7 +201,7 @@
       {
 	    cancellationToken.ThrowIfCancellationRequested();
 
-        var innerReplace = new StringBuilder(RegExReplace(context.Domain));
+        var innerReplace = new StringBuilder(RegExReplace(context));
         int i = 0;
 
         foreach (string tVar in Variables)

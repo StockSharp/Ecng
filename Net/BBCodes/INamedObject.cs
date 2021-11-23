@@ -1,18 +1,9 @@
 ﻿namespace Ecng.Net.BBCodes
 {
-	public interface INamedObject<TDomain>
+	public interface INamedObject<TContext>
 	{
 		public long Id { get; }
-		public string GetName(TDomain domain);
-	}
-
-	public interface IProductObject<TDomain> : INamedObject<TDomain>
-	{
-		public string GetUrlPart(TDomain domain);
-	}
-
-	public interface IPageObject<TDomain> : IProductObject<TDomain>
-	{
-		public string GetHeader(TDomain domain);
+		public string GetName(TContext domain);
+		public string GetUrlPart(TContext context);
 	}
 }

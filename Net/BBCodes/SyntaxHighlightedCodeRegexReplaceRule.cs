@@ -8,8 +8,8 @@
 	/// <summary>
 	/// Syntax Highlighted code block regular express replace
 	/// </summary>
-	public class SyntaxHighlightedCodeRegexReplaceRule<TContext, TDomain> : SimpleRegexReplaceRule<TContext, TDomain>
-		where TContext : BB2HtmlContext<TDomain>
+	public class SyntaxHighlightedCodeRegexReplaceRule<TContext> : SimpleRegexReplaceRule<TContext>
+		where TContext : BB2HtmlContext
 	{
         #region Constants and Fields
 
@@ -31,7 +31,7 @@
         /// <param name="regExReplace">
         /// The reg ex replace.
         /// </param>
-        public SyntaxHighlightedCodeRegexReplaceRule(Regex regExSearch, Func<TDomain, string> regExReplace)
+        public SyntaxHighlightedCodeRegexReplaceRule(Regex regExSearch, Func<TContext, string> regExReplace)
             : base(regExSearch, regExReplace)
         {
             _syntaxHighlighter.ReplaceEnter = true;
@@ -61,7 +61,7 @@
 				string inner = _syntaxHighlighter.ColorText(
                     GetInnerValue(m.Groups["inner"].Value), m.Groups["language"].Value);
 
-                string replaceItem = RegExReplace(context.Domain).Replace("${inner}", inner);
+                string replaceItem = RegExReplace(context).Replace("${inner}", inner);
 
                 // pulls the htmls into the replacement collection before it's inserted back into the main text
                 int replaceIndex = replacement.Add(replaceItem);

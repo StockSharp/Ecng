@@ -8,8 +8,8 @@
 	/// <summary>
 	/// Simple code block regular express replace
 	/// </summary>
-	public class CodeRegexReplaceRule<TContext, TDomain> : SimpleRegexReplaceRule<TContext, TDomain>
-		where TContext : BB2HtmlContext<TDomain>
+	public class CodeRegexReplaceRule<TContext> : SimpleRegexReplaceRule<TContext>
+		where TContext : BB2HtmlContext
 	{
     #region Constructors and Destructors
 
@@ -22,7 +22,7 @@
     /// <param name="regExReplace">
     /// The reg ex replace.
     /// </param>
-    public CodeRegexReplaceRule(Regex regExSearch, Func<TDomain, string> regExReplace)
+    public CodeRegexReplaceRule(Regex regExSearch, Func<TContext, string> regExReplace)
       : base(regExSearch, regExReplace)
     {
       // default high rank...
@@ -49,7 +49,7 @@
       {
 	    cancellationToken.ThrowIfCancellationRequested();
 
-        string replaceItem = RegExReplace(context.Domain).Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
+        string replaceItem = RegExReplace(context).Replace("${inner}", GetInnerValue(m.Groups["inner"].Value));
 
         int replaceIndex = replacement.Add(replaceItem);
         text = text.Substring(0, m.Groups[0].Index) + replacement.Get(replaceIndex) +

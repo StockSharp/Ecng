@@ -15,21 +15,30 @@
 	[TestClass]
 	public class BBCodesTests
 	{
-		private class NamedObjectImpl : IPageObject<string>
+		private class TextBB2HtmlContext : BB2HtmlContext
 		{
-			public string GetName(string langCode) => Name;
+			public TextBB2HtmlContext(bool preventScaling, bool allowHtml, string scheme, string domainCode)
+				: base(preventScaling, allowHtml, scheme)
+			{
+				DomainCode = domainCode;
+			}
 
+			public string DomainCode { get; }
+		}
+
+		private class NamedObjectImpl : INamedObject<TextBB2HtmlContext>
+		{
 			public long Id { get; set; }
 			public string Name { get; set; }
 			public string PackageId => Name;
 
 			public string UrlPart { get; set; }
 
-			string IProductObject<string>.GetUrlPart(string langCode) => UrlPart;
-			string IPageObject<string>.GetHeader(string langCode) => Name;
+			string INamedObject<TextBB2HtmlContext>.GetName(TextBB2HtmlContext ctx) => Name;
+			string INamedObject<TextBB2HtmlContext>.GetUrlPart(TextBB2HtmlContext ctx) => UrlPart;
 		}
 
-		private class RoleRule : BaseReplaceRule<BB2HtmlContext<string>>
+		private class RoleRule : BaseReplaceRule<TextBB2HtmlContext>
 		{
 			private readonly Regex _regex;
 
@@ -38,7 +47,7 @@
 				_regex = new Regex(@"\[role=(?<id>([0-9]*))\](?<inner>(.|\n)*)\[/role\]", RegexOptions.Multiline | RegexOptions.IgnoreCase);
 			}
 
-			public override Task<string> ReplaceAsync(BB2HtmlContext<string> context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override Task<string> ReplaceAsync(TextBB2HtmlContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -67,23 +76,16 @@
 			}
 		}
 
-		private static BB2HtmlContext<string> CreateContext(bool allowHtml)
-			=> new(false, allowHtml, "com", false, Uri.UriSchemeHttps);
+		private static TextBB2HtmlContext CreateContext(bool allowHtml)
+			=> new(false, allowHtml, Uri.UriSchemeHttps, "com");
 
 		private static readonly Regex _isStockSharpCom = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.com", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static readonly Regex _isStockSharpRu = new("href=\"(http://)?(https://)?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static readonly Regex _isGitHub = new("href=\"https://github.com/stocksharp", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-		private static BB2HtmlFormatter<BB2HtmlContext<string>, string> CreateBBService()
+		private static BB2HtmlFormatter<TextBB2HtmlContext> CreateBBService()
 		{
-			static string GetProductLink(long id, string langCode, string urlPart)
-			{
-				var idStr = urlPart.IsEmpty() ? id.To<string>() : urlPart.ToLowerInvariant();
-
-				return $"~/store/{idStr}/";
-			}
-
-			static string GetPackageLink(string packageId, string langCode)
+			static string GetPackageLink(TextBB2HtmlContext ctx, string packageId)
 			{
 				if (packageId.IsEmpty())
 					throw new ArgumentNullException(nameof(packageId));
@@ -91,37 +93,49 @@
 				return $"https://www.nuget.org/packages/{packageId}/";
 			}
 
-			static string ToFullAbsolute(string virtualPath, string langCode)
+			static string ToFullAbsolute(TextBB2HtmlContext ctx, string virtualPath)
 			{
 				if (virtualPath.StartsWithIgnoreCase("http"))
 				{ }
 				else if (virtualPath.StartsWith("/"))
-					virtualPath = $"https://stocksharp.com{virtualPath}";
+					virtualPath = $"https://stocksharp.{ctx.DomainCode}{virtualPath}";
 				else
 					virtualPath = virtualPath.Replace("~", "https://stocksharp.com");
 
 				return virtualPath;
 			}
 
-			static IProductObject<string> GetProduct(long id)
+			static INamedObject<TextBB2HtmlContext> GetProduct(long id)
 			{
+				//var idStr = urlPart.IsEmpty() ? id.To<string>() : urlPart.ToLowerInvariant();
+				//return $"~/store/{idStr}/";
+
 				return id switch
 				{
-					9 => new NamedObjectImpl { Id = id, Name = "S#.Designer", UrlPart = "strategy designer" },
+					9 => new NamedObjectImpl { Id = id, Name = "S#.Designer", UrlPart = "~/store/strategy designer/" },
 					_ => throw new ArgumentOutOfRangeException(nameof(id)),
 				};
 			}
 
-			static INamedObject<string> GetUser(long id)
+			static INamedObject<TextBB2HtmlContext> GetFile(long id)
+				=> new NamedObjectImpl { Id = id, UrlPart = $"~/file/{id}/" };
+
+			static INamedObject<TextBB2HtmlContext> GetTopic(long id)
+				=> new NamedObjectImpl { Id = id, UrlPart = $"~/topic/{id}/" };
+
+			static INamedObject<TextBB2HtmlContext> GetMessage(long id)
+				=> new NamedObjectImpl { Id = id, UrlPart = $"~/posts/m/{id}/" };
+
+			static INamedObject<TextBB2HtmlContext> GetUser(long id)
 			{
 				return id switch
 				{
-					1 => new NamedObjectImpl { Id = id, Name = "StockSharp" },
+					1 => new NamedObjectImpl { Id = id, Name = "StockSharp", UrlPart = $"~/users/{id}/" },
 					_ => throw new ArgumentOutOfRangeException(nameof(id)),
 				};
 			}
 
-			static IPageObject<string> GetPage(long id)
+			static INamedObject<TextBB2HtmlContext> GetPage(long id)
 			{
 				return id switch
 				{
@@ -130,11 +144,18 @@
 				};
 			}
 
-			var bb = new BB2HtmlFormatter<BB2HtmlContext<string>, string>(
-				(id, domain) => $"~/file/{id}/", (id, domain) => $"~/users/{id}/",
-				GetProductLink, GetPackageLink, (id, domain) => $"~/topic/{id}/",
-				(id, domain) => $"~/posts/m/{id}/", s => s, ToFullAbsolute,
-				(key, domain) =>
+			var bb = new BB2HtmlFormatter<TextBB2HtmlContext>(
+				GetProduct,
+				GetUser,
+				GetFile,
+				GetTopic,
+				GetMessage,
+				GetPage,
+
+				GetPackageLink,
+				(ctx, s) => s,
+				ToFullAbsolute,
+				(ctx, key) =>
 				{
 					return key switch
 					{
@@ -143,32 +164,32 @@
 						_ => throw new ArgumentOutOfRangeException(nameof(key)),
 					};
 				},
-				GetProduct, GetUser,
-				id => new NamedObjectImpl { Id = id, Name = id.To<string>() },
-				GetPage,
-				sourceUrl => $"{sourceUrl}_a6f78c5fce344124993798c028a22a3a",
-				domain => $"stocksharp.{domain}",
-				url =>
+				(ctx, sourceUrl) => $"{sourceUrl}_a6f78c5fce344124993798c028a22a3a",
+				ctx => $"stocksharp.{ctx.DomainCode}",
+				(ctx, url) =>
 				{
 					string domain = null;
 
-					if (_isStockSharpCom.IsMatch(url))
+					var urlStr = url.ToString();
+
+					if (_isStockSharpCom.IsMatch(urlStr))
 						domain = "com";
-					else if (_isStockSharpRu.IsMatch(url))
+					else if (_isStockSharpRu.IsMatch(urlStr))
 						domain = "ru";
 
-					var isGitHub = _isGitHub.IsMatch(url);
+					var changed = !domain.IsEmpty() && domain != ctx.DomainCode;
+					if (changed)
+					{
+						url.ReplaceIgnoreCase($"stocksharp.{domain}", $"stocksharp.{ctx.DomainCode}");
+					}
+
+					var isGitHub = _isGitHub.IsMatch(urlStr);
 					var isAway = domain is null && !isGitHub;
 					var noFollow = isAway;
 					var isBlank = isAway || isGitHub;
-					return (domain, isAway, noFollow, isBlank);
+					return (changed, isAway, noFollow, isBlank);
 				},
-				(fromDomain, toDomain, url) =>
-				{
-					if (fromDomain != toDomain)
-						url.ReplaceIgnoreCase($"stocksharp.{fromDomain}", $"stocksharp.{toDomain}");
-				},
-				url => url.UrlEscape());
+				(ctx, url) => url.UrlEscape());
 
 			//bb.AddRule(new VideoStockSharpReplaceRule());
 			bb.AddRule(new RoleRule());
