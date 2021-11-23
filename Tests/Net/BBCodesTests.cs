@@ -166,7 +166,8 @@
 					{
 						"ShowSpoiler" => "Show spoiler",
 						"Code" => "Code",
-						_ => throw new ArgumentOutOfRangeException(nameof(key)),
+						"GoTo" => "Go to",
+						_ => throw new ArgumentOutOfRangeException(key),
 					};
 				},
 				(ctx, sourceUrl) => $"{sourceUrl}_a6f78c5fce344124993798c028a22a3a",
@@ -645,6 +646,18 @@ var i = 10;</pre>
 			res = await svc.ToHtmlAsync(@"[url=https://google.com/]Google[/url]", ctx);
 
 			html = "<a target=\"_blank\" rel=\"nofollow\" href=\"https://stocksharp.com/away/?u=https://google.com/\" title=\"https://google.com/\">Google</a>";
+			res.AssertEqual(html);
+		}
+
+		[TestMethod]
+		public async Task Quote()
+		{
+			var ctx = CreateContext();
+			var svc = CreateBBService();
+
+			var res = await svc.ToHtmlAsync(@"[quote=LTrader;42149]Добрый день, уважаемые разработчики, и коллеги.[/quote] ответ", ctx);
+
+			var html = "<div class=\"quote\"><span class=\"quotetitle\">LTrader <a href=\"https://stocksharp.com/posts/m/42149/\"><img src=\"https://stocksharp.com/images/smiles/icon_latest_reply.gif\" title=\"Go to\" alt=\"Go to\" /></a></span><div class=\"innerquote\">Добрый день, уважаемые разработчики, и коллеги.</div></div> ответ";
 			res.AssertEqual(html);
 		}
 	}

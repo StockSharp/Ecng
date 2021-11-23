@@ -347,7 +347,7 @@
 			//ForumPage page = new ForumPage();
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxQuote2, "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put("${quote}", "${inner}"), new[] { "quote" }) { RuleRank = 63 });
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxQuote1, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put($"{_getLocString(ctx, "Quote")}:", "${inner}")) { RuleRank = 64 });
-			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute(ctx, _getMessage(1977).GetUrlPart(ctx).Replace("1977", "${id}")), _toFullAbsolute(ctx, _getImagePath(ctx, "icon_latest_reply.gif")), _getLocString(ctx, "GoTo"), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
+			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute(ctx, _getMessage(1977).GetUrlPart(ctx)).Replace("1977", "${id}"), _toFullAbsolute(ctx, _getImagePath(ctx, "icon_latest_reply.gif")), _getLocString(ctx, "GoTo"), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
 			//}
 			AddRule(new TopicRegexReplaceRule(this, _rgxPost, "<a {0} href=\"${post}\">${inner}</a>".Replace("{0}", _blank), singleLine));
 			AddRule(new TopicRegexReplaceRule(this, _rgxTopic, "<a {0} href=\"${topic}\">${inner}</a>".Replace("{0}", _blank), singleLine));
