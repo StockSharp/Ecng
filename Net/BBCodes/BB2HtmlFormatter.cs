@@ -99,6 +99,7 @@
 		private readonly Func<TContext, string> _getHost;
 		private readonly Func<TContext, StringBuilder, (bool changed, bool isAway, bool noFollow, bool isBlank)> _getUrlInfo;
 		private readonly Func<TContext, string, string> _urlEscape;
+		private readonly Func<TContext, string, string> _getImagePath;
 
 		public BB2HtmlFormatter(
 			Func<long, INamedObject<TContext>> getProduct,
@@ -115,7 +116,8 @@
 			Func<TContext, string, string> generateId,
 			Func<TContext, string> getHost,
 			Func<TContext, StringBuilder, (bool changed, bool isAway, bool noFollow, bool isBlank)> getUrlInfo,
-			Func<TContext, string, string> urlEscape)
+			Func<TContext, string, string> urlEscape,
+			Func<TContext, string, string> getImagePath)
 		{
 			_getProduct = getProduct ?? throw new ArgumentNullException(nameof(getProduct));
 			_getUser = getUser ?? throw new ArgumentNullException(nameof(getUser));
@@ -132,6 +134,7 @@
 			_getHost = getHost ?? throw new ArgumentNullException(nameof(getHost));
 			_getUrlInfo = getUrlInfo ?? throw new ArgumentNullException(nameof(getUrlInfo));
 			_urlEscape = urlEscape ?? throw new ArgumentNullException(nameof(urlEscape));
+			_getImagePath = getImagePath ?? throw new ArgumentNullException(nameof(getImagePath));
 
 			_toFullAbsolute = (ctx, url) => _urlEscape(ctx, toFullAbsolute(ctx, url));
 
@@ -317,9 +320,7 @@
 
 				string Replace(TContext ctx)
 				{
-					var src = _toFullAbsolute(ctx, Path.GetExtension(smile.Icon).EqualsIgnoreCase(".gif")
-						? $"~/images/smiles/{smile.Icon}"
-						: $"~/images/svg/smiles/{smile.Icon}");
+					var src = _toFullAbsolute(ctx, _getImagePath(ctx, smile.Icon));
 
 					return $"<img src=\"{src}\" alt=\"{alt}\" class=\"smiles\" />";
 				}
@@ -346,7 +347,7 @@
 			//ForumPage page = new ForumPage();
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxQuote2, "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put("${quote}", "${inner}"), new[] { "quote" }) { RuleRank = 63 });
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxQuote1, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put($"{_getLocString(ctx, "Quote")}:", "${inner}")) { RuleRank = 64 });
-			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute(ctx, "~/posts/m/${id}/"), _toFullAbsolute(ctx, "~/images/icon_latest_reply.gif"), _getLocString(ctx, "GoTo"), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
+			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute(ctx, _getMessage(1977).GetUrlPart(ctx).Replace("1977", "${id}")), _toFullAbsolute(ctx, _getImagePath(ctx, "icon_latest_reply.gif")), _getLocString(ctx, "GoTo"), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
 			//}
 			AddRule(new TopicRegexReplaceRule(this, _rgxPost, "<a {0} href=\"${post}\">${inner}</a>".Replace("{0}", _blank), singleLine));
 			AddRule(new TopicRegexReplaceRule(this, _rgxTopic, "<a {0} href=\"${topic}\">${inner}</a>".Replace("{0}", _blank), singleLine));

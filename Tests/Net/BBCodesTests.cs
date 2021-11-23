@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Tests.Net
 {
 	using System;
+	using System.IO;
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Threading;
@@ -189,7 +190,14 @@
 					var isBlank = isAway || isGitHub;
 					return (changed, isAway, noFollow, isBlank);
 				},
-				(ctx, url) => url.UrlEscape());
+				(ctx, url) => url.UrlEscape(),
+				(ctx, img) =>
+				{
+					return Path.GetExtension(img).EqualsIgnoreCase(".gif")
+						? $"~/images/smiles/{img}"
+						: $"~/images/svg/smiles/{img}"
+					;
+				});
 
 			//bb.AddRule(new VideoStockSharpReplaceRule());
 			bb.AddRule(new RoleRule());

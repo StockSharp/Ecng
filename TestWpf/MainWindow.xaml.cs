@@ -1,7 +1,10 @@
-﻿using Ecng.Net.BBCodes;
-using Ecng.Common;
-using System;
+﻿using System;
 using System.Text.RegularExpressions;
+using System.IO;
+
+using Ecng.Net.BBCodes;
+using Ecng.Common;
+
 using Nito.AsyncEx;
 
 namespace TestWpf
@@ -497,7 +500,14 @@ namespace TestWpf
 					var isBlank = isAway || isGitHub;
 					return (changed, isAway, noFollow, isBlank);
 				},
-				(ctx, url) => url.UrlEscape());
+				(ctx, url) => url.UrlEscape(),
+				(ctx, img) =>
+				{
+					return Path.GetExtension(img).EqualsIgnoreCase(".gif")
+						? $"~/images/smiles/{img}"
+						: $"~/images/svg/smiles/{img}"
+					;
+				});
 
 			//bb.AddRule(new VideoStockSharpReplaceRule());
 			//bb.AddRule(new RoleRule());
