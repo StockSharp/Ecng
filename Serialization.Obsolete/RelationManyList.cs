@@ -612,6 +612,8 @@
 					{
 						//_cachedEntities = new Dictionary<object, E>();
 
+						CachedEntities.Clear();
+
 						foreach (var entity in entities)
 							CachedEntities.Add(GetCacheId(entity), entity);
 

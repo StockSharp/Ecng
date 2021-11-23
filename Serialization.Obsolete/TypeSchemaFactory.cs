@@ -157,7 +157,7 @@
 								}
 								else
 								{
-									//factoryType = typeof(IPersistable).IsAssignableFrom(field.Type)
+									//factoryType = field.Type.Is<IPersistable>()
 									//	? typeof(PersistableFieldactory<>)
 									//	: (field.Type.IsCollection()
 									//		? typeof(CollectionFieldFactory<>)
