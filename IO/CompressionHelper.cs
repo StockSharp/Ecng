@@ -130,24 +130,24 @@
 			return outputStream.To<byte[]>();
 		}
 
-		public static Task CompressAsync<TCompressStream>(this Stream input, Stream output, CompressionLevel level = CompressionLevel.Optimal, bool leaveOpen = true, int bufferSize = DefaultBufferSize, CancellationToken cancellationToken = default)
+		public static async Task CompressAsync<TCompressStream>(this Stream input, Stream output, CompressionLevel level = CompressionLevel.Optimal, bool leaveOpen = true, int bufferSize = DefaultBufferSize, CancellationToken cancellationToken = default)
 			where TCompressStream : Stream
 		{
 			if (input is null)
 				throw new ArgumentNullException(nameof(input));
 
 			using var compress = (TCompressStream)Activator.CreateInstance(typeof(TCompressStream), output, level, leaveOpen);
-			return input.CopyToAsync(compress, bufferSize, cancellationToken);
+			await input.CopyToAsync(compress, bufferSize, cancellationToken);
 		}
 
-		public static Task UncompressAsync<TCompressStream>(this Stream input, Stream output, bool leaveOpen = true, int bufferSize = DefaultBufferSize, CancellationToken cancellationToken = default)
+		public static async Task UncompressAsync<TCompressStream>(this Stream input, Stream output, bool leaveOpen = true, int bufferSize = DefaultBufferSize, CancellationToken cancellationToken = default)
 			where TCompressStream : Stream
 		{
 			if (input is null)
 				throw new ArgumentNullException(nameof(input));
 
 			using var compress = (TCompressStream)Activator.CreateInstance(typeof(TCompressStream), input, CompressionMode.Decompress, leaveOpen);
-			return compress.CopyToAsync(output, bufferSize, cancellationToken);
+			await compress.CopyToAsync(output, bufferSize, cancellationToken);
 		}
 	}
 }
