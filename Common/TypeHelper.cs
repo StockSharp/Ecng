@@ -274,11 +274,11 @@ namespace Ecng.Common
 			return errors.Count == 1 ? errors[0] : new AggregateException(errors);
 		}
 
-		public static T CheckOnNull<T>(this T value)
+		public static T CheckOnNull<T>(this T value, string paramName = "value")
 			where T : class
 		{
 			if (value is null)
-				throw new ArgumentNullException(nameof(value));
+				throw new ArgumentNullException(paramName);
 
 			return value;
 		}
