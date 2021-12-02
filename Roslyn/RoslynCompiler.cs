@@ -6,7 +6,7 @@
 	using System.Linq;
 	using System.Reflection;
 
-	using Ecng.Common;
+	using Ecng.Compilation;
 
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;

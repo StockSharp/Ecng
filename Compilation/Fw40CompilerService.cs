@@ -1,4 +1,4 @@
-namespace Ecng.Common
+namespace Ecng.Compilation
 {
 	using System;
 	using System.CodeDom.Compiler;

@@ -7,6 +7,7 @@ namespace Ecng.ComponentModel.Expressions
 
 	using Ecng.Collections;
 	using Ecng.Common;
+	using Ecng.Compilation;
 	using Ecng.Localization;
 
 	using MoreLinq;

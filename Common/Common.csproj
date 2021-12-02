@@ -5,9 +5,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.CodeDom" Version="$(SystemCodeDomVer)" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVer)" />
-    <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVer)" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightVer)" />
     <PackageReference Include="Nito.AsyncEx" Version="$(NitoVer)" />
 

@@ -1,7 +1,7 @@
 namespace Ecng.Roslyn
 {
 	using Ecng.Collections;
-	using Ecng.Common;
+	using Ecng.Compilation;
 
 	public class RoslynCompilerService : ICompilerService
 	{

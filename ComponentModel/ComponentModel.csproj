@@ -8,6 +8,7 @@
     <PackageReference Include="Ecng.System.ComponentModel.Annotations" Version="$(EcngSystemComponentModelAnnotationsVer)" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Compilation\Compilation.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
 </Project>

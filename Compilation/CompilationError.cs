@@ -1,12 +1,5 @@
-namespace Ecng.Common
+namespace Ecng.Compilation
 {
-	public enum CompilationErrorTypes
-	{
-		Info,
-		Warning,
-		Error,
-	}
-
 	public class CompilationError
 	{
 		public string Id { get; set; }
