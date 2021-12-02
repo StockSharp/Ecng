@@ -22,6 +22,8 @@
 		static StringHelper()
 		{
 			Smart.Default.AddExtensions(new DictionarySourceEx());
+
+			// https://stackoverflow.com/a/47017180
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		}
 
