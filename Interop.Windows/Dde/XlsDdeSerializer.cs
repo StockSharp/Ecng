@@ -6,7 +6,6 @@
 	using System.Text;
 
 	using Ecng.Common;
-	using Ecng.Localization;
 
 	static class XlsDdeSerializer
 	{
@@ -52,7 +51,7 @@
 			if (cell is bool)
 				return DataTypes.Bool;
 
-			throw new ArgumentException("Unknown cell value type '{0}'.".Translate().Put(cell.GetType()), nameof(cell));
+			throw new ArgumentException($"Unknown cell value type '{cell.GetType()}'.", nameof(cell));
 		}
 
 		public static byte[] Serialize(IList<IList<object>> rows)
@@ -94,7 +93,7 @@
 							stream.WriteEx(cell);
 							break;
 						default:
-							throw new ArgumentOutOfRangeException();
+							throw new ArgumentOutOfRangeException(cellDt.To<string>());
 					}
 				}
 			}

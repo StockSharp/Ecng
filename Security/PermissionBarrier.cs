@@ -7,7 +7,6 @@ namespace Ecng.Security
 	using System.Threading;
 
 	using Ecng.Common;
-	using Ecng.Localization;
 
 	#endregion
 
@@ -44,7 +43,7 @@ namespace Ecng.Security
 
 		private static void ThrowAccessException()
 		{
-			throw new UnauthorizedAccessException("Current principal '{0}' hasn't required permissions.".Translate().Put(Thread.CurrentPrincipal.Identity.Name));
+			throw new UnauthorizedAccessException($"Current principal '{Thread.CurrentPrincipal?.Identity?.Name}' hasn't required permissions.");
 		}
 	}
 }

@@ -8,7 +8,6 @@ namespace Ecng.ComponentModel.Expressions
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Compilation;
-	using Ecng.Localization;
 
 	using MoreLinq;
 
@@ -171,7 +170,7 @@ namespace Ecng.ComponentModel.Expressions
 				}
 
 				if (i == 0)
-					throw new InvalidOperationException("Expression '{0}' do not contains any identifiers.".Translate().Put(text));
+					throw new InvalidOperationException($"Expression '{text}' do not contains any identifiers.");
 
 				return ReplaceFuncs(text);
 			}

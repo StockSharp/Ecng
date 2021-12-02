@@ -9,7 +9,6 @@
 
 	using Ecng.Collections;
 	using Ecng.Common;
-	using Ecng.Localization;
 	using Ecng.Serialization;
 
 	using Newtonsoft.Json;
@@ -154,7 +153,7 @@
 
 					try
 					{
-						_infoLog("Connecting to {0}...".Translate(), _url);
+						_infoLog("Connecting to {0}...", _url);
 						await _ws.ConnectAsync(_url, token);
 						break;
 					}
@@ -162,7 +161,7 @@
 					{
 						if (attempts > 0 || attempts == -1)
 						{
-							_errorLog("Reconnect failed. Attemps left {0}.".Translate(), attempts);
+							_errorLog("Reconnect failed. Attemps left {0}.", attempts);
 							ResendInterval.Sleep();
 							continue;
 						}
@@ -173,7 +172,7 @@
 			}
 			catch (OperationCanceledException)
 			{
-				_infoLog("Connection {0} cannot be processed. Cancellation invoked.".Translate(), _url);
+				_infoLog("Connection {0} cannot be processed. Cancellation invoked.", _url);
 				throw;
 			}
 
@@ -188,7 +187,7 @@
 		public void Disconnect(bool expectedDisconnect = true)
 		{
 			if (_source is null)
-				throw new InvalidOperationException("Not connected.".Translate());
+				throw new InvalidOperationException("Not connected.");
 
 			_expectedDisconnect = expectedDisconnect;
 			_disconnectionStates[_source] = expectedDisconnect;
@@ -264,7 +263,7 @@
 							if (task.Exception != null && !token.IsCancellationRequested)
 								_error(task.Exception);
 
-							_infoLog("Socket closed with status {0}.".Translate(), result.CloseStatus);
+							_infoLog("Socket closed with status {0}.", result.CloseStatus);
 
 							needClose = false;
 							break;
@@ -299,12 +298,12 @@
 						}
 						catch (Exception ex)
 						{
-							_error(new InvalidOperationException("Error parsing string '{0}'.".Translate().Put(recv), ex));
+							_error(new InvalidOperationException($"Error parsing string '{recv}'.", ex));
 
 							if (++errorCount < maxParsingErrors)
 								continue;
 
-							_errorLog("Max parsing error {0} limit reached.".Translate(), maxParsingErrors);
+							_errorLog("Max parsing error {0} limit reached.", maxParsingErrors);
 						}
 						finally
 						{
@@ -327,7 +326,7 @@
 							continue;
 						}
 
-						_errorLog("Max network error {0} limit reached.".Translate(), maxNetworkErrors);
+						_errorLog("Max network error {0} limit reached.", maxNetworkErrors);
 						break;
 					}
 					catch (Exception ex)
@@ -362,7 +361,7 @@
 
 				if (!expected && (attempts > 0 || attempts == -1))
 				{
-					_infoLog("Socket re-connecting '{0}'.".Translate(), _url);
+					_infoLog("Socket re-connecting '{0}'.", _url);
 
 					try
 					{
@@ -404,7 +403,7 @@
 		{
 			var resendCommands = _resendCommands.CopyAndClear();
 
-			_infoLog("Resending {0} commands.".Translate(), resendCommands.Length);
+			_infoLog("Resending {0} commands.", resendCommands.Length);
 
 			foreach (var (bytes, type, id) in resendCommands)
 			{
@@ -415,7 +414,7 @@
 
 		public void RemoveResend(long id)
 		{
-			_infoLog("Removing {0} from resend.".Translate(), id);
+			_infoLog("Removing {0} from resend.", id);
 
 			lock (_resendCommands.SyncRoot)
 				_resendCommands.RemoveWhere(t => t.Item3 == id);

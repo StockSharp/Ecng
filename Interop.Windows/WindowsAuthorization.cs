@@ -6,7 +6,6 @@
 
 	using Ecng.Common;
 	using Ecng.Security;
-	using Ecng.Localization;
 
 	/// <summary>
 	/// Authorization module based on Windows user storage.
@@ -24,7 +23,7 @@
 		public virtual string ValidateCredentials(string login, SecureString password, IPAddress clientAddress)
 		{
 			if (!WindowsIdentityManager.Validate(login, password))
-				throw new UnauthorizedAccessException("User {0} not found or password is incorrect.".Translate().Put(login));
+				throw new UnauthorizedAccessException($"User {login} not found or password is incorrect.");
 
 			return Guid.NewGuid().To<string>();
 		}

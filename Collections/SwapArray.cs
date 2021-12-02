@@ -5,9 +5,6 @@ namespace Ecng.Collections
 	using System.IO;
 	using System.Runtime.InteropServices;
 
-	using Ecng.Common;
-	using Ecng.Localization;
-
 	using Wintellect.PowerCollections;
 
 	public class SwapArray<T> : CollectionBase<T>, IList<T>
@@ -43,7 +40,7 @@ namespace Ecng.Collections
 		public SwapArray(long size)
 		{
 			if (size < 0)
-				throw new ArgumentOutOfRangeException(nameof(size), "Size has incorrect value '{0}'.".Translate().Put(size));
+				throw new ArgumentOutOfRangeException(nameof(size), $"Size has incorrect value '{size}'.");
 
 			//_swapFile = new FileStream(@"swap\__swap" + _number++, FileMode.Create);
 			//_writer = new BinaryWriter(_swapFile);
@@ -148,7 +145,7 @@ namespace Ecng.Collections
 		private void Seek(long index)
 		{
 			if (index < 0 || index >= _count)
-				throw new ArgumentOutOfRangeException(nameof(index), "Index has incorrect value '{0}'.".Translate().Put(index));
+				throw new ArgumentOutOfRangeException(nameof(index), $"Index has incorrect value '{index}'.");
 
 			var newSeekPos = index * _valueSize + _offset;
 
@@ -157,7 +154,7 @@ namespace Ecng.Collections
 				var offset = newSeekPos - _swapFile.Position;
 
 				if ((offset + _swapFile.Position) < 0 || (offset + _swapFile.Position) > _swapFile.Length)
-					throw new ArgumentOutOfRangeException(nameof(index), "Offset is incorrect for position '{0}' and index '{1}'.".Translate().Put(_swapFile.Position, index));
+					throw new ArgumentOutOfRangeException(nameof(index), $"Offset is incorrect for position '{_swapFile.Position}' and index '{index}'.");
 
 				_swapFile.Seek(offset, SeekOrigin.Current);
 

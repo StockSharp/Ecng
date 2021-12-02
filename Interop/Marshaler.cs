@@ -11,7 +11,6 @@ namespace Ecng.Interop
 
 	using Ecng.Common;
 	using Ecng.Collections;
-	using Ecng.Localization;
 
 #if NETCOREAPP
 	using System.IO;
@@ -421,7 +420,7 @@ namespace Ecng.Interop
 #endif
 
 			if (handler == IntPtr.Zero)
-				throw new ArgumentException("Error load library {0}.".Translate().Put(dllPath), nameof(dllPath), new Win32Exception());
+				throw new ArgumentException($"Error load library '{dllPath}'.", nameof(dllPath), new Win32Exception());
 
 			return handler;
 		}
@@ -441,7 +440,7 @@ namespace Ecng.Interop
 			if (TryGetProcAddress(hModule, procName, out var addr))
 				return addr;
 
-			throw new ArgumentException("Error load procedure {0}.".Translate().Put(procName), nameof(procName), new Win32Exception());
+			throw new ArgumentException($"Error load procedure {procName}.", nameof(procName), new Win32Exception());
 		}
 
 		public static bool TryGetProcAddress(this IntPtr hModule, string procName, out IntPtr address)

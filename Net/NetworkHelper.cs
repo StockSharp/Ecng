@@ -17,7 +17,6 @@ namespace Ecng.Net
 
 	using Ecng.Common;
 	using Ecng.Collections;
-	using Ecng.Localization;
 
 	public static class NetworkHelper
 	{
@@ -33,7 +32,7 @@ namespace Ecng.Net
 			else if (endPoint is DnsEndPoint dns)
 				return dns.Host.EqualsIgnoreCase("localhost");
 			else
-				throw new ArgumentOutOfRangeException(nameof(endPoint), endPoint, "Invalid argument value.".Translate());
+				throw new ArgumentOutOfRangeException(nameof(endPoint), endPoint, "Invalid argument value.");
 		}
 
 		public static bool IsLocalIpAddress(this EndPoint endPoint)
@@ -83,7 +82,7 @@ namespace Ecng.Net
 				var read = socket.Receive(buffer, offset + (len - left), left, SocketFlags.None);
 
 				if (read <= 0)
-					throw new IOException("Stream returned '{0}' bytes.".Translate().Put(read));
+					throw new IOException($"Stream returned '{read}' bytes.");
 
 				left -= read;
 			}

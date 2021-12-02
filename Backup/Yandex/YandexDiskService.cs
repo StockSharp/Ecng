@@ -63,7 +63,7 @@ namespace Ecng.Backup.Yandex
 				return handler(_client);
 			}
 
-			throw new InvalidOperationException("Not authorized".Translate());
+			throw new InvalidOperationException("Not authorized");
 		}
 
 		private static string GetPath(BackupEntry entry)

@@ -12,7 +12,6 @@
 
 	using Ecng.Common;
 	using Ecng.Reflection;
-	using Ecng.Localization;
 
 	using ManagedWinapi.Windows;
 	using ManagedWinapi.Windows.Contents;
@@ -150,7 +149,7 @@
 				throw new ArgumentNullException(nameof(window));
 
 			if (!classNames.Contains(window.ClassName))
-				throw new ArgumentException("Window has invalid class name '{0}'.".Translate().Put(window.ClassName), nameof(window));
+				throw new ArgumentException($"Window has invalid class name '{window.ClassName}'.", nameof(window));
 
 			return ReflectionHelper.CreateInstance<SystemWindow, T>(window);
 		}

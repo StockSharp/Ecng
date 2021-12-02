@@ -9,7 +9,6 @@
 
 	using Ecng.Collections;
 	using Ecng.Common;
-	using Ecng.Localization;
 
 	#endregion
 
@@ -968,7 +967,7 @@
 					var method = ((PropertyInfo)member).GetGetMethod(true);
 
 					if (method is null)
-						throw new ArgumentException("Get accessor for property '{0}' of type '{1}' isn't exist.".Translate().Put(member.Name, member.ReflectedType.Name), nameof(member));
+						throw new ArgumentException($"Get accessor for property '{member.Name}' of type '{member.ReflectedType.Name}' isn't exist.", nameof(member));
 
 					if (isStatic || member.DeclaringType.IsValueType)
 						return call(method);
@@ -991,7 +990,7 @@
 					var method = ((PropertyInfo)member).GetSetMethod(true);
 
 					if (method is null)
-						throw new ArgumentException("Set accessor for property '{0}' of type '{1}' doesn't exist.".Translate().Put(member.Name, member.ReflectedType.Name), nameof(member));
+						throw new ArgumentException($"Set accessor for property '{member.Name}' of type '{member.ReflectedType.Name}' doesn't exist.", nameof(member));
 
 					if (isStatic || member.DeclaringType.IsValueType)
 						return call(method);

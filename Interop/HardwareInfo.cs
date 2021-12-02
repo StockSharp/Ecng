@@ -10,7 +10,6 @@ namespace Ecng.Interop
 	using System.Threading.Tasks;
 
 	using Ecng.Common;
-	using Ecng.Localization;
 
 	using Nito.AsyncEx;
 
@@ -32,7 +31,7 @@ namespace Ecng.Interop
 				id = await GetIdLinuxAsync(cancellationToken);
 
 			if (id.IsEmpty())
-				throw new InvalidOperationException("Cannot generate HDDID.".Translate());
+				throw new InvalidOperationException("Cannot generate HDDID.");
 
 			return id;
 		}
@@ -61,7 +60,7 @@ namespace Ecng.Interop
 			var netId = await GetWMIIdAsync("Win32_NetworkAdapter", "MACAddress", cancellationToken);
 
 			if (mbId.IsEmpty() && netId.IsEmpty())
-				throw new InvalidOperationException("MotherBoard and Network are both is empty.".Translate());
+				throw new InvalidOperationException("MotherBoard and Network are both is empty.");
 
 			return cpuid + (mbId.IsEmpty() ? netId : mbId);
 		}
@@ -111,7 +110,7 @@ namespace Ecng.Interop
 				info => info.EnvironmentVariables["PATH"] = "/bin:/sbin:/usr/bin:/usr/sbin", cancellationToken: cancellationToken);
 
 			if (res != 0 || errors.Any())
-				throw new InvalidOperationException("Unable to execute lsblk. Return code {0}.\n{1}".Translate().Put(res, errors.Join(Environment.NewLine)));
+				throw new InvalidOperationException($"Unable to execute lsblk. Return code {res}.\n{errors.Join(Environment.NewLine)}");
 
 			//if (result.Count != 1)
 			//	throw new InvalidOperationException($"invalid lsblk result. got {result.Count} values: {result.JoinComma()}");

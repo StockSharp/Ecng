@@ -8,7 +8,6 @@
 	using System.Reflection;
 
 	using Ecng.Common;
-	using Ecng.Localization;
 
 	public interface IItemsSourceItem
 	{
@@ -356,7 +355,7 @@
 					? type
 					: type.IsEnum
 						? typeof(ItemsSourceBase<>).Make(type)
-						: throw new ArgumentException("Type '{0}' must implement the '{1}' interface or be an enum.".Translate().Put(type, typeof(IItemsSource)), nameof(type));
+						: throw new ArgumentException($"Type '{type}' must implement the '{typeof(IItemsSource)}' interface or be an enum.", nameof(type));
 		}
 	}
 }

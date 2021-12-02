@@ -11,7 +11,6 @@ namespace Ecng.Reflection
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Reflection.Emit;
-	using Ecng.Localization;
 
 	public static class ReflectionHelper
 	{
@@ -365,7 +364,7 @@ namespace Ecng.Reflection
 				if (members.Length == 2 && members[0] is EventInfo && members[1] is FieldInfo)
 					return members[1];
 
-				throw new ArgumentException("Type '{0}' has '{1}' members with name '{2}'.".Translate().Put(type, members.Length, memberName));
+				throw new ArgumentException($"Type '{type}' has '{members.Length}' members with name '{memberName}'.");
 			}
 
 			return members[0];
@@ -782,7 +781,7 @@ namespace Ecng.Reflection
 				if (interfaceType != null)
 					return interfaceType.GetGenericArguments()[0];
 				else
-					throw new InvalidOperationException("Type '{0}' isn't collection.".Translate().Put(collectionType));
+					throw new InvalidOperationException($"Type '{collectionType}' isn't collection.");
 			});
 		}
 

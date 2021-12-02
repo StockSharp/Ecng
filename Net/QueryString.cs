@@ -9,8 +9,6 @@
 	using Ecng.Common;
 	using Ecng.Reflection;
 	using Ecng.Collections;
-	using Ecng.Localization;
-	using Ecng.Net;
 
 	public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<string, string>>
 	{
@@ -64,7 +62,7 @@
 					throw new ArgumentNullException(nameof(queryField));
 
 				if (value is null)
-					throw new ArgumentNullException(nameof(value), "Value for key '{0}' is null.".Translate().Put(queryField));
+					throw new ArgumentNullException(nameof(value), $"Value for key '{queryField}' is null.");
 
 				if (Contains(queryField))
 				{
@@ -109,7 +107,7 @@
 				throw new ArgumentNullException(nameof(name));
 
 			if (value is null)
-				throw new ArgumentNullException(nameof(value), "Value for key '{0}' is null.".Translate().Put(name));
+				throw new ArgumentNullException(nameof(value), $"Value for key '{name}' is null.");
 
 			_queryString.Add(name, value.To<string>());
 			RefreshUri();

@@ -3,7 +3,6 @@
 	using System;
 
 	using Ecng.Common;
-	using Ecng.Localization;
 
 	using LinqToDB.Data;
 
@@ -22,12 +21,12 @@
 			var provider = pair.Provider;
 
 			if (provider is null)
-				throw new InvalidOperationException("Provider is not set.".Translate());
+				throw new InvalidOperationException("Provider is not set.");
 
 			var connStr = pair.ConnectionString;
 
 			if (connStr.IsEmpty())
-				throw new InvalidOperationException("Cannot create a connection, because some data was not entered.".Translate());
+				throw new InvalidOperationException("Cannot create a connection, because some data was not entered.");
 
 			return new DataConnection(DatabaseProviderRegistry.CreateProvider(provider), connStr);
 		}
