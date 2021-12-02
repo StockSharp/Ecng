@@ -11,7 +11,6 @@ namespace Ecng.Backup.Yandex
 	using Disk.SDK.Provider;
 
 	using Ecng.Common;
-	using Ecng.Localization;
 
 	/// <summary>
 	/// The class for work with the Yandex.Disk.
