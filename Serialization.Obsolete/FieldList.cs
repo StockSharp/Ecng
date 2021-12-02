@@ -45,7 +45,7 @@
 				var field = TryGet(name);
 
 				if (field is null)
-					throw new ArgumentException("Item with name '{0}' doesn't exists.".Put(name), nameof(name));
+					throw new ArgumentException($"Item with name '{name}' doesn't exists.", nameof(name));
 
 				return field;
 			}
@@ -123,7 +123,7 @@
 				return _serializableFields ??= new FieldList(this.Where(field =>
 				{
 					if (field.Factory is null)
-						throw new InvalidOperationException("Field '{0}' doesn't have factory.".Put(field.Name));
+						throw new InvalidOperationException($"Field '{field.Name}' doesn't have factory.");
 
 					return field.Factory.SourceType != typeof(VoidType);
 				}));
@@ -148,7 +148,7 @@
 		protected override bool OnAdding(Field item)
 		{
 			if (Contains(item.Name))
-				throw new ArgumentException("Item with name '{0}' already added.".Put(item.Name), nameof(item));
+				throw new ArgumentException($"Item with name '{item.Name}' already added.", nameof(item));
 
 			ResetCachedStates();
 			_innerDictionary.Add(item.Name, item);
@@ -173,7 +173,7 @@
 		protected override bool OnInserting(int index, Field item)
 		{
 			if (Contains(item.Name))
-				throw new ArgumentException("Item with name '{0}' already added.".Put(item.Name), nameof(item));
+				throw new ArgumentException($"Item with name '{item.Name}' already added.", nameof(item));
 
 			ResetCachedStates();
 			_innerDictionary.Add(item.Name, item);

@@ -76,7 +76,7 @@
 				entityType = entityType.GetUnderlyingType();
 
 			if (entityType.IsCollection())
-				throw new ArgumentException("Entity type cannot be a collection. The type is '{0}'.".Put(entityType), nameof(entityType));
+				throw new ArgumentException($"Entity type cannot be a collection. The type is '{entityType}'.", nameof(entityType));
 
 			_schemaFactories.SafeAdd(entityType, key => factory);
 
@@ -111,31 +111,31 @@
 				throw new ArgumentException("Entity type is null.", nameof(schema));
 
 			if (schema.Fields.IsEmpty() && !schema.EntityType.Is<ISerializable>())
-				throw new ArgumentException("Type '{0}' has no one members.".Put(schema.EntityType));
+				throw new ArgumentException($"Type '{schema.EntityType}' has no one members.");
 
 			if (!(schema.EntityType.IsClass || schema.EntityType.IsStruct() || schema.EntityType.IsInterface))
-				throw new ArgumentException("Type '{0}' must be class, struct or interface.".Put(schema.EntityType));
+				throw new ArgumentException($"Type '{schema.EntityType}' must be class, struct or interface.");
 
 			if (schema.EntityType.IsClass && schema.Factory is null && !(schema.EntityType.IsAbstract || schema.EntityType.IsInterface) && schema.EntityType.GetConstructor(Type.EmptyTypes) == null)
-				throw new ArgumentException("Type '{0}' must have factory.".Put(schema.EntityType));
+				throw new ArgumentException($"Type '{schema.EntityType}' must have factory.");
 
 			var names = new List<string>();
 
 			foreach (var field in schema.Fields.SerializableFields)
 			{
 				if (names.Contains(field.Name))
-					throw new ArgumentException("Field '{0}' has duplicate name. Entity type is '{1}'.".Put(field.Member.Name, schema.EntityType));
+					throw new ArgumentException($"Field '{field.Member.Name}' has duplicate name. Entity type is '{schema.EntityType}'.");
 
 				names.Add(field.Name);
 
 				if (field.Name.IsEmpty())
-					throw new ArgumentNullException("Field '{0}' can't be null or empty. Entity type is '{1}'.".Put(field.Member.Name, schema.EntityType));
+					throw new ArgumentNullException($"Field '{field.Member.Name}' can't be null or empty. Entity type is '{schema.EntityType}'.");
 
 				if (field.Factory is null)
-					throw new ArgumentException("Field '{0}' must have field factory. Entity type is '{1}'.".Put(field.Member.Name, schema.EntityType));
+					throw new ArgumentException($"Field '{field.Member.Name}' must have field factory. Entity type is '{schema.EntityType}'.");
 
 				if (field.Accessor is null)
-					throw new ArgumentException("Field '{0}' must have accessor. Entity type is '{1}'.".Put(field.Member.Name, schema.EntityType));
+					throw new ArgumentException($"Field '{field.Member.Name}' must have accessor. Entity type is '{schema.EntityType}'.");
 			}
 		}
 

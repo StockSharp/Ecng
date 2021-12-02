@@ -83,7 +83,7 @@
 				if (_dbTypes.TryGetValue(input, out var dbType))
 					return dbType;
 				else
-					throw new ArgumentException(".NET type {0} doesn't have associated db type.".Put(input));
+					throw new ArgumentException($".NET type {input} doesn't have associated db type.");
 			});
 
 			AddTypedConverter<DbType, Type>(input => _dbTypes.First(pair => pair.Value == input).Key);
@@ -207,7 +207,7 @@
 					if (type != null)
 						_typeCache.Add(key, type);
 					else
-						throw new ArgumentException("Type {0} doesn't exists.".Put(input), nameof(input));
+						throw new ArgumentException($"Type {input} doesn't exists.", nameof(input));
 				}
 
 				return type;
@@ -414,7 +414,7 @@
 				return dns.Host;
 			}
 			else
-				throw new InvalidOperationException("Unknown endpoint {0}.".Put(endPoint));
+				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
 		}
 
 		public static EndPoint SetHost(this EndPoint endPoint, string host)
@@ -431,7 +431,7 @@
 				endPoint = new DnsEndPoint(host, dns.Port, dns.AddressFamily);
 			}
 			else
-				throw new InvalidOperationException("Unknown endpoint {0}.".Put(endPoint));
+				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
 
 			return endPoint;
 		}
@@ -450,7 +450,7 @@
 				return dns.Port;
 			}
 			else
-				throw new InvalidOperationException("Unknown endpoint {0}.".Put(endPoint));
+				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
 		}
 
 		public static EndPoint SetPort(this EndPoint endPoint, int port)
@@ -467,7 +467,7 @@
 				endPoint = new DnsEndPoint(dns.Host, port, dns.AddressFamily);
 			}
 			else
-				throw new InvalidOperationException("Unknown endpoint {0}.".Put(endPoint));
+				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
 
 			return endPoint;
 		}
@@ -598,7 +598,7 @@
 					else if (destinationType.IsArray && ArrayCovariance(bytes, destinationType, out var dest))
 						return dest;
 					else
-						throw new ArgumentException("Can't convert byte array to '{0}'.".Put(destinationType), nameof(value));
+						throw new ArgumentException($"Can't convert byte array to '{destinationType}'.", nameof(value));
 
 					if (enumType != null)
 						retVal = Enum.ToObject(enumType, retVal);
@@ -965,7 +965,7 @@
 			const string digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 			if (radix < 2 || radix > digits.Length)
-				throw new ArgumentOutOfRangeException(nameof(radix), radix, "The radix must be >= 2 and <= {0}.".Put(digits.Length));
+				throw new ArgumentOutOfRangeException(nameof(radix), radix, $"The radix must be >= 2 and <= {digits.Length}.");
 
 			if (decimalNumber == 0)
 				return "0";

@@ -44,7 +44,7 @@ namespace Ecng.Serialization
 		protected internal override TSource OnCreateSource(ISerializer serializer, TInstance instance)
 		{
 			if (instance.IsNull())
-				throw new ArgumentNullException(nameof(instance), "Field '{0}' in schema '{1}' isn't initialized.".Put(Field.Name, Field.Schema.EntityType));
+				throw new ArgumentNullException(nameof(instance), $"Field '{Field.Name}' in schema '{Field.Schema.EntityType}' isn't initialized.");
 
 			return (TSource)serializer.GetLegacySerializer<TInstance>().GetId(instance);
 		}

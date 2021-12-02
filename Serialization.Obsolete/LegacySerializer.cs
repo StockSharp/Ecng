@@ -228,13 +228,13 @@
 			using (new SerializationContext { Entity = graph }.ToScope())
 			{
 				if (source is null)
-					throw new ArgumentNullException(nameof(source), "Source for type '{0}' doesn't initialized.".Put(typeof(T)));
+					throw new ArgumentNullException(nameof(source), $"Source for type '{typeof(T)}' doesn't initialized.");
 
 				if (fields is null)
 					throw new ArgumentNullException(nameof(fields));
 
 				if (graph.IsNull())
-					throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' doesn't initialized.".Put(typeof(T)));
+					throw new ArgumentNullException(nameof(graph), $"Graph for type '{typeof(T)}' doesn't initialized.");
 
 				var tracking = graph as ISerializationTracking;
 
@@ -273,12 +273,12 @@
 		public object GetId(T graph)
 		{
 			if (graph.IsNull())
-				throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
+				throw new ArgumentNullException(nameof(graph), $"Graph for type '{typeof(T)}' isn't initialized.");
 
 			var identity = Schema.Identity;
 
 			if (identity is null)
-				throw new InvalidOperationException("Schema '{0}' doesn't provide identity.".Put(typeof(T)));
+				throw new InvalidOperationException($"Schema '{typeof(T)}' doesn't provide identity.");
 
 			return identity.GetAccessor<T>().GetValue(graph);
 		}
@@ -290,10 +290,10 @@
 		public T SetId(T graph, object id)
 		{
 			if (graph.IsNull())
-				throw new ArgumentNullException(nameof(graph), "Graph for type '{0}' isn't initialized.".Put(typeof(T)));
+				throw new ArgumentNullException(nameof(graph), $"Graph for type '{typeof(T)}' isn't initialized.");
 
 			if (id is null)
-				throw new ArgumentNullException(nameof(id), "Identifier for type '{0}' isn't initialized.".Put(typeof(T)));
+				throw new ArgumentNullException(nameof(id), $"Identifier for type '{typeof(T)}' isn't initialized.");
 
 			return Schema.Identity.GetAccessor<T>().SetValue(graph, id);
 		}

@@ -337,7 +337,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(value, format, typeof(DateTime).Name), ex);
+				throw new InvalidCastException($"Cannot convert {value} with format {format} to {typeof(DateTime).Name}.", ex);
 			}
 		}
 
@@ -362,7 +362,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(value, format, typeof(TimeSpan).Name), ex);
+				throw new InvalidCastException($"Cannot convert {value} with format {format} to {typeof(TimeSpan).Name}.", ex);
 			}
 		}
 
@@ -387,7 +387,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(value, format, typeof(DateTimeOffset).Name), ex);
+				throw new InvalidCastException($"Cannot convert {value} with format {format} to {typeof(DateTimeOffset).Name}.", ex);
 			}
 		}
 

@@ -199,7 +199,7 @@
 				var identity = Schema.Identity;
 
 				if (identity is null)
-					throw new InvalidOperationException("Schema {0} doesn't have identity.".Put(Schema.Name));
+					throw new InvalidOperationException($"Schema {Schema.Name} doesn't have identity.");
 
 				return Read(new SerializationItem(identity, id));
 			}
@@ -210,7 +210,7 @@
 		public virtual void Save(TEntity item)
 		{
 			if (Schema.Identity is null)
-				throw new InvalidOperationException("Schema {0} doesn't have identity.".Put(Schema.Name));
+				throw new InvalidOperationException($"Schema {Schema.Name} doesn't have identity.");
 
 			if (!CheckExist(item))
 				Add(item);

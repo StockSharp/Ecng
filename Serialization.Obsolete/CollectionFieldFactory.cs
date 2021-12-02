@@ -59,7 +59,7 @@ namespace Ecng.Serialization
 					instance = new List<TItem>().To<ICollection<TItem>>();
 			}
 			else
-				throw new InvalidOperationException("Type '{0}' isn't collection.".Put(typeof(TCollection)));
+				throw new InvalidOperationException($"Type '{typeof(TCollection)}' isn't collection.");
 
 			var itemSer = serializer.GetLegacySerializer<TItem>();
 			var primitive = typeof(TItem).IsSerializablePrimitive();

@@ -159,7 +159,7 @@ namespace Ecng.Common
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidCastException("Cannot convert {0} with format {1} to {2}.".Put(input, Template, typeof(TimeSpan).Name), ex);
+				throw new InvalidCastException($"Cannot convert {input} with format {Template} to {typeof(TimeSpan).Name}.", ex);
 			}
 		}
 

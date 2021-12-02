@@ -432,7 +432,7 @@ namespace Ecng.Common
 				var read = stream.Read(buffer, pos + (len - left), left);
 
 				if (read <= 0)
-					throw new IOException("Stream returned '{0}' bytes.".Put(read));
+					throw new IOException($"Stream returned '{read}' bytes.");
 
 				left -= read;
 			}
@@ -565,7 +565,7 @@ namespace Ecng.Common
 				throw new ArgumentNullException(nameof(stream));
 
 			if (size < 0)
-				throw new ArgumentOutOfRangeException(nameof(size), "Size has negative value '{0}'.".Put(size));
+				throw new ArgumentOutOfRangeException(nameof(size), $"Size has negative value '{size}'.");
 
 			var buffer = new byte[size];
 
@@ -574,7 +574,7 @@ namespace Ecng.Common
 				var b = stream.ReadByte();
 
 				if (b == -1)
-					throw new ArgumentException("Insufficient stream size '{0}'.".Put(size), nameof(stream));
+					throw new ArgumentException($"Insufficient stream size '{size}'.", nameof(stream));
 
 				buffer[0] = (byte)b;
 			}
@@ -586,7 +586,7 @@ namespace Ecng.Common
 					var readBytes = stream.Read(buffer, offset, size - offset);
 
 					if (readBytes == 0)
-						throw new ArgumentException("Insufficient stream size '{0}'.".Put(size), nameof(stream));
+						throw new ArgumentException($"Insufficient stream size '{size}'.", nameof(stream));
 
 					offset += readBytes;
 				}
@@ -673,7 +673,7 @@ namespace Ecng.Common
 				throw new ArgumentNullException(nameof(type));
 
 			if (size < 0)
-				throw new ArgumentOutOfRangeException(nameof(size), "Size has negative value '{0}'.".Put(size));
+				throw new ArgumentOutOfRangeException(nameof(size), $"Size has negative value '{size}'.");
 
 			if (size == 0 && !(type == typeof(string) || type == typeof(byte[]) || type == typeof(Stream)))
 				throw new ArgumentOutOfRangeException(nameof(size), "Size has zero value.");
@@ -682,7 +682,7 @@ namespace Ecng.Common
 				size *= 2;
 
 			if (size > int.MaxValue / 10)
-				throw new ArgumentOutOfRangeException(nameof(size), "Size has too big value {0}.".Put(size));
+				throw new ArgumentOutOfRangeException(nameof(size), $"Size has too big value {size}.");
 
 			var buffer = size > 0 ? stream.ReadBuffer(size) : Array.Empty<byte>();
 
