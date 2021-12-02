@@ -138,14 +138,6 @@ namespace Ecng.Common
 		public static bool IsDelegate(this Type type)
 			=> type.Is<Delegate>();
 
-		public static bool IsWinColor(this Type type)
-		{
-			if (type is null)
-				throw new ArgumentNullException(nameof(type));
-
-			return type == typeof(System.Drawing.Color);
-		}
-
 		public static TEntity CreateUnitialized<TEntity>()
 		{
 			return (TEntity)typeof(TEntity).CreateUnitialized();

@@ -62,6 +62,7 @@
     <NUnitVer>3.12.0</NUnitVer>
     <NUnit3TestAdapterVer>3.17.0</NUnit3TestAdapterVer>
     <FluentAssertionsVer>5.10.3</FluentAssertionsVer>
+    <SystemDrawingCommonVer>5.0.3</SystemDrawingCommonVer>
 
     <CSharpVer>4.7.0</CSharpVer>
     <MsCodeVer>3.11.0</MsCodeVer>
