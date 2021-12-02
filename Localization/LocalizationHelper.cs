@@ -2,9 +2,6 @@ namespace Ecng.Localization
 {
 	using System;
 
-	using Ecng.Common;
-	using Ecng.Configuration;
-
 	public static class LocalizationHelper
 	{
 		[Obsolete]
@@ -32,17 +29,10 @@ namespace Ecng.Localization
 			return text.Translate(fromStr, toStr);
 		}
 
+		[Obsolete]
 		public static string Translate(this string text, string from = LangCodes.En, string to = null)
 		{
-			var manager = ConfigManager.TryGetService<LocalizationManager>();
-
-			if (manager is null)
-				return text;
-
-			if (to.IsEmpty())
-				to = manager.ActiveLanguage;
-
-			return manager.Translate(text, from, to);
+			return text;
 		}
 	}
 }
