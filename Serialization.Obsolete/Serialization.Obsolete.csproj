@@ -8,6 +8,7 @@
     <Compile Include="..\Serialization\SecureStringEncryptor.cs" Link="SecureStringEncryptor.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Configuration\Configuration.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
 </Project>
