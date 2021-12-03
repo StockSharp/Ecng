@@ -16,7 +16,7 @@
 		[TestMethod]
 		public async Task Simple()
 		{
-			ICaptchaValidator validator = new ReCaptcha3Validator("123".Secure());
+			ICaptchaValidator<float> validator = new ReCaptcha3Validator("123".Secure());
 
 			try
 			{

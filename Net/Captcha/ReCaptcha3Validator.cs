@@ -12,7 +12,7 @@
 	using Ecng.Collections;
 	using Ecng.Common;
 
-	public class ReCaptcha3Validator : Disposable, ICaptchaValidator
+	public class ReCaptcha3Validator : Disposable, ICaptchaValidator<float>
 	{
 		private class ReCaptcha3Response
 		{
@@ -61,7 +61,7 @@
 			base.DisposeManaged();
 		}
 
-		async Task<float> ICaptchaValidator.ValidateAsync(string response, IPAddress remoteip, CancellationToken cancellationToken)
+		async Task<float> ICaptchaValidator<float>.ValidateAsync(string response, IPAddress remoteip, CancellationToken cancellationToken)
 		{
 			var result = await _client.SiteVerifyAsync(_secret.UnSecure(), response, remoteip, cancellationToken);
 

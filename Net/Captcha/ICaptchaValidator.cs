@@ -5,8 +5,8 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	public interface ICaptchaValidator : IDisposable
+	public interface ICaptchaValidator<TResult> : IDisposable
 	{
-		Task<float> ValidateAsync(string response, IPAddress remoteip, CancellationToken cancellationToken = default);
+		Task<TResult> ValidateAsync(string response, IPAddress remoteip, CancellationToken cancellationToken = default);
 	}
 }
