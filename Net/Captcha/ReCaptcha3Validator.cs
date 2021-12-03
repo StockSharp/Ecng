@@ -61,7 +61,7 @@
 			base.DisposeManaged();
 		}
 
-		async Task<float> ICaptchaValidator.Verify(string response, IPAddress remoteip, CancellationToken cancellationToken)
+		async Task<float> ICaptchaValidator.ValidateAsync(string response, IPAddress remoteip, CancellationToken cancellationToken)
 		{
 			var result = await _client.SiteVerifyAsync(_secret.UnSecure(), response, remoteip, cancellationToken);
 

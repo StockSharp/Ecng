@@ -20,7 +20,7 @@
 
 			try
 			{
-				await validator.Verify("123", IPAddress.Loopback);
+				await validator.ValidateAsync("123", IPAddress.Loopback);
 			}
 			catch (InvalidOperationException ex)
 			{

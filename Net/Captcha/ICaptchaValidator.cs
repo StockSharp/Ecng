@@ -7,6 +7,6 @@
 
 	public interface ICaptchaValidator : IDisposable
 	{
-		Task<float> Verify(string response, IPAddress remoteip, CancellationToken cancellationToken = default);
+		Task<float> ValidateAsync(string response, IPAddress remoteip, CancellationToken cancellationToken = default);
 	}
 }
