@@ -2,11 +2,11 @@
 {
 	using System;
 	using System.Threading.Tasks;
-	
+
 	using Ecng.Common;
 	using Ecng.Net.Currencies;
 	using Ecng.UnitTesting;
-	
+
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
