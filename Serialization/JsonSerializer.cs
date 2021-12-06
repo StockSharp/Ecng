@@ -34,7 +34,7 @@
 
 		public bool Indent { get; set; }
 		public Encoding Encoding { get; set; } = Encoding.UTF8;
-		public bool FillMode { get; set; }
+		public bool FillMode { get; set; } = true;
 		public bool EnumAsString { get; set; }
 		public bool EncryptedAsByteArray { get; set; }
 		public int BufferSize { get; set; } = 1024;

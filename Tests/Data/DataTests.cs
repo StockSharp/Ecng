@@ -36,7 +36,7 @@
 		{
 			var cache = new DatabaseConnectionCache();
 			var pair = cache.GetConnection(typeof(SqlServerDataProvider), "123");
-			var ser = new JsonSerializer<DatabaseConnectionCache> { FillMode = true };
+			var ser = new JsonSerializer<DatabaseConnectionCache>();
 			var cache2 = ser.Deserialize(ser.Serialize(cache));
 
 			cache2.Connections.Count().AssertEqual(cache.Connections.Count());
