@@ -4,6 +4,7 @@ namespace Ecng.Security
 	using System.Linq;
 	using System.IO;
 	using System.Security.Cryptography;
+	using System.Security;
 
 	using Ecng.Common;
 
@@ -286,18 +287,20 @@ namespace Ecng.Security
 			return value.Hash(SHA512.Create());
 		}
 
+		private static byte[] ToBytes(this string password)
+			=> password.Unicode();
+
+		public static bool IsValid(this Secret secret, SecureString password)
+			=> secret.IsValid(password.UnSecure());
+
+		public static bool IsValid(this Secret secret, string password)
+			=> secret.IsValid(password.ToBytes());
+
 		public static Secret CreateSecret(this string plainText)
-		{
-			return plainText.CreateSecret(TypeHelper.GenerateSalt(Secret.DefaultSaltSize));
-		}
+			=> plainText.CreateSecret(TypeHelper.GenerateSalt(Secret.DefaultSaltSize));
 
 		public static Secret CreateSecret(this string plainText, Secret secret)
-		{
-			if (secret is null)
-				throw new ArgumentNullException(nameof(secret));
-
-			return plainText.CreateSecret(secret.Salt);
-		}
+			=> plainText.CreateSecret(secret.CheckOnNull(nameof(secret)).Salt);
 
 		public static Secret CreateSecret(this string plainText, byte[] salt)
 		{
@@ -307,7 +310,7 @@ namespace Ecng.Security
 			if (salt is null)
 				throw new ArgumentNullException(nameof(salt));
 
-			var unencodedBytes = plainText.Unicode();
+			var unencodedBytes = plainText.ToBytes();
 			var buffer = new byte[unencodedBytes.Length + salt.Length];
 
 			Buffer.BlockCopy(unencodedBytes, 0, buffer, 0, unencodedBytes.Length);
