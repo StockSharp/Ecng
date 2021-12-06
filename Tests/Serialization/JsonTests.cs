@@ -16,14 +16,23 @@
 	using Ecng.Serialization;
 	using Ecng.UnitTesting;
 	using Ecng.Reflection;
+
 	using Newtonsoft.Json.Linq;
+	using Newtonsoft.Json;
 
 	[TestClass]
 	public class JsonTests
 	{
-		private static async Task<T> Do<T>(T value, bool fillMode = false, bool enumAsString = false, bool encryptedAsByteArray = false, CancellationToken token = default)
+		private static async Task<T> Do<T>(T value, bool fillMode = false, bool enumAsString = false, bool encryptedAsByteArray = false, NullValueHandling nullValueHandling = NullValueHandling.Include, CancellationToken token = default)
 		{
-			var ser = new JsonSerializer<T> { FillMode = fillMode, EnumAsString = enumAsString, EncryptedAsByteArray = encryptedAsByteArray };
+			var ser = new JsonSerializer<T>
+			{
+				FillMode = fillMode,
+				EnumAsString = enumAsString,
+				EncryptedAsByteArray = encryptedAsByteArray,
+				NullValueHandling = nullValueHandling
+			};
+
 			var stream = new MemoryStream();
 			await ser.SerializeAsync(value, stream, token);
 			stream.Position = 0;
@@ -581,6 +590,17 @@
 		}
 
 		[TestMethod]
+		public async Task ComplexComplexIgnoreNull()
+		{
+			await Do(new TestComplexClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+			}, fillMode: true, nullValueHandling: NullValueHandling.Ignore);
+		}
+
+		[TestMethod]
 		public async Task ComplexComplexNull()
 		{
 			await Do<TestComplexClass>(null);
@@ -601,6 +621,23 @@
 					TimeProp = TimeSpan.FromSeconds(10),
 				}
 			});
+		}
+
+		[TestMethod]
+		public async Task ComplexComplex2IgnoreNull()
+		{
+			await Do(new TestComplexClass
+			{
+				IntProp = 124,
+				DateProp = DateTime.UtcNow,
+				TimeProp = TimeSpan.FromSeconds(10),
+				Obj1 = new TestClass
+				{
+					IntProp = 124,
+					DateProp = DateTime.UtcNow,
+					TimeProp = TimeSpan.FromSeconds(10),
+				}
+			}, fillMode: true, nullValueHandling: NullValueHandling.Ignore);
 		}
 
 		[TestMethod]

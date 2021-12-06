@@ -38,6 +38,7 @@
 		public bool EnumAsString { get; set; }
 		public bool EncryptedAsByteArray { get; set; }
 		public int BufferSize { get; set; } = 1024;
+		public NullValueHandling NullValueHandling { get; set; } = NullValueHandling.Include;
 
 		public override ISerializer GetSerializer(Type entityType)
 		{
@@ -242,6 +243,9 @@
 
 				foreach (var pair in storage)
 				{
+					if (pair.Value is null && NullValueHandling == NullValueHandling.Ignore)
+						continue;
+
 					await writer.WritePropertyNameAsync(pair.Key, cancellationToken);
 					await WriteAsync(writer, pair.Value, cancellationToken);
 				}
