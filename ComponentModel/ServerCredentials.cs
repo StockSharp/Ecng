@@ -46,10 +46,20 @@ namespace Ecng.ComponentModel
 			}
 		}
 
+		private SecureString _token;
+
 		/// <summary>
-		/// <see cref="Password"/> is token.
+		/// Token.
 		/// </summary>
-		public bool IsToken { get; set; }
+		public SecureString Token
+		{
+			get => _token;
+			set
+			{
+				_token = value;
+				NotifyChanged(nameof(Token));
+			}
+		}
 
 		private bool _autoLogon = true;
 
@@ -75,7 +85,7 @@ namespace Ecng.ComponentModel
 			Email = storage.GetValue<string>(nameof(Email));
 			Password = storage.GetValue<SecureString>(nameof(Password));
 			AutoLogon = storage.GetValue<bool>(nameof(AutoLogon));
-			IsToken = storage.GetValue<bool>(nameof(IsToken));
+			Token = storage.GetValue<SecureString>(nameof(Token));
 		}
 
 		/// <summary>
@@ -88,7 +98,7 @@ namespace Ecng.ComponentModel
 				.Set(nameof(Email), Email)
 				.Set(nameof(Password), Password)
 				.Set(nameof(AutoLogon), AutoLogon)
-				.Set(nameof(IsToken), IsToken);
+				.Set(nameof(Token), Token);
 		}
 	}
 }
