@@ -20,9 +20,9 @@ namespace Ecng.Net
 			get => _groupAddress;
 			set
 			{
-				NotifyChanging(nameof(GroupAddress));
+				NotifyChanging();
 				_groupAddress = value;
-				NotifyChanged(nameof(GroupAddress));
+				NotifyChanged();
 			}
 		}
 
@@ -35,9 +35,9 @@ namespace Ecng.Net
 			get => _sourceAddress;
 			set
 			{
-				NotifyChanging(nameof(SourceAddress));
+				NotifyChanging();
 				_sourceAddress = value;
-				NotifyChanged(nameof(SourceAddress));
+				NotifyChanged();
 			}
 		}
 
@@ -49,9 +49,9 @@ namespace Ecng.Net
 			get => _port;
 			set
 			{
-				NotifyChanging(nameof(Port));
+				NotifyChanging();
 				_port = value;
-				NotifyChanged(nameof(Port));
+				NotifyChanged();
 			}
 		}
 

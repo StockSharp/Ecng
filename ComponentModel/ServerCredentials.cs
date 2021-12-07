@@ -27,7 +27,7 @@ namespace Ecng.ComponentModel
 			set
 			{
 				_email = value;
-				NotifyChanged(nameof(Email));
+				NotifyChanged();
 			}
 		}
 
@@ -42,7 +42,7 @@ namespace Ecng.ComponentModel
 			set
 			{
 				_password = value;
-				NotifyChanged(nameof(Password));
+				NotifyChanged();
 			}
 		}
 
@@ -57,7 +57,7 @@ namespace Ecng.ComponentModel
 			set
 			{
 				_token = value;
-				NotifyChanged(nameof(Token));
+				NotifyChanged();
 			}
 		}
 
@@ -72,7 +72,7 @@ namespace Ecng.ComponentModel
 			set
 			{
 				_autoLogon = value;
-				NotifyChanged(nameof(AutoLogon));
+				NotifyChanged();
 			}
 		}
 
