@@ -287,22 +287,22 @@ namespace Ecng.Security
 			return value.Hash(SHA512.Create());
 		}
 
-		private static byte[] ToBytes(this string password)
-			=> password.Unicode();
-
 		public static bool IsValid(this Secret secret, SecureString password)
 			=> secret.IsValid(password.UnSecure());
 
 		public static bool IsValid(this Secret secret, string password)
-			=> secret.IsValid(password.ToBytes());
+			=> secret.Equals(password.CreateSecret(secret));
+
+		public static Secret CreateSecret(this SecureString plainText)
+			=> plainText.UnSecure().CreateSecret();
 
 		public static Secret CreateSecret(this string plainText)
 			=> plainText.CreateSecret(TypeHelper.GenerateSalt(Secret.DefaultSaltSize));
 
 		public static Secret CreateSecret(this string plainText, Secret secret)
-			=> plainText.CreateSecret(secret.CheckOnNull(nameof(secret)).Salt);
+			=> plainText.CreateSecret(secret.CheckOnNull(nameof(secret)).Salt, secret.Algo);
 
-		public static Secret CreateSecret(this string plainText, byte[] salt)
+		public static Secret CreateSecret(this string plainText, byte[] salt, CryptoAlgorithm algo = null)
 		{
 			if (plainText.IsEmpty())
 				throw new ArgumentNullException(nameof(plainText));
@@ -310,13 +310,13 @@ namespace Ecng.Security
 			if (salt is null)
 				throw new ArgumentNullException(nameof(salt));
 
-			var unencodedBytes = plainText.ToBytes();
+			var unencodedBytes = plainText.Unicode();
 			var buffer = new byte[unencodedBytes.Length + salt.Length];
 
 			Buffer.BlockCopy(unencodedBytes, 0, buffer, 0, unencodedBytes.Length);
 			Buffer.BlockCopy(salt, 0, buffer, unencodedBytes.Length - 1, salt.Length);
 
-			return new Secret(buffer, salt);
+			return new Secret(buffer, salt, algo);
 		}
 	}
 }

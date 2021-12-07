@@ -12,8 +12,8 @@ namespace Ecng.Security
 		/// Initializes a new instance of the <see cref="Secret"/> class.
 		/// </summary>
 		public Secret()
-			: this(CryptoAlgorithm.Create(AlgorithmTypes.Hash))
 		{
+			Algo = CreateDefaultAlgo();
 		}
 
 		/// <summary>
@@ -21,28 +21,17 @@ namespace Ecng.Security
 		/// </summary>
 		/// <param name="passwordBytes"></param>
 		/// <param name="salt">The salt.</param>
-		public Secret(byte[] passwordBytes, byte[] salt)
-			: this(passwordBytes, salt, CryptoAlgorithm.Create(AlgorithmTypes.Hash))
-		{
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Secret"/> class.
-		/// </summary>
-		/// <param name="passwordBytes"></param>
-		/// <param name="salt">The salt.</param>
-		/// <param name="algo"> </param>
-		public Secret(byte[] passwordBytes, byte[] salt, CryptoAlgorithm algo)
-			: this(algo)
+		/// <param name="algo">Hash algorithm. Can be <see langword="null"/>.</param>
+		public Secret(byte[] passwordBytes, byte[] salt, CryptoAlgorithm algo = null)
 		{
 			Salt = salt ?? throw new ArgumentNullException(nameof(salt));
-			Hash = algo.Encrypt(passwordBytes ?? throw new ArgumentNullException(nameof(passwordBytes)));
+			Algo = algo ?? CreateDefaultAlgo();
+			Hash = passwordBytes ?? throw new ArgumentNullException(nameof(passwordBytes));
+
+			Hash = Algo.Encrypt(Hash);
 		}
 
-		private Secret(CryptoAlgorithm algo)
-		{
-			Algo = algo ?? throw new ArgumentNullException(nameof(algo));
-		}
+		private static CryptoAlgorithm CreateDefaultAlgo() => CryptoAlgorithm.Create(AlgorithmTypes.Hash);
 
 		public const int DefaultSaltSize = 128;
 
@@ -61,11 +50,6 @@ namespace Ecng.Security
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Newtonsoft.Json.JsonIgnore]
 		public CryptoAlgorithm Algo { get; }
-
-		public bool IsValid(byte[] passwordBytes)
-		{
-			return this == new Secret(passwordBytes, Salt, Algo);
-		}
 
 		protected override bool OnEquals(Secret other)
 		{
@@ -110,15 +94,9 @@ namespace Ecng.Security
 
 			return _hashCode;
 		}
-		
-		public override int GetHashCode()
-		{
-			return EnsureGetHashCode();
-		}
 
-		public override Secret Clone()
-		{
-			return new Secret { Hash = Hash?.ToArray(), Salt = Salt?.ToArray() };
-		}
+		public override int GetHashCode() => EnsureGetHashCode();
+
+		public override Secret Clone() => new Secret { Hash = Hash?.ToArray(), Salt = Salt?.ToArray() };
 	}
 }
