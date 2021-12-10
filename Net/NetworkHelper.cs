@@ -8,6 +8,7 @@ namespace Ecng.Net
 	using System.Net;
 	using System.Net.Security;
 	using System.Net.Sockets;
+	using System.Net.Http;
 	using System.Security;
 	using System.Security.Authentication;
 	using System.Security.Cryptography.X509Certificates;
@@ -322,5 +323,14 @@ namespace Ecng.Net
 
 			return $"https://www.gravatar.com/avatar/{hash}?size={size}";
 		}
+
+		public static bool Unauthorized(this HttpRequestException ex)
+			=> ex.Is(HttpStatusCode.Unauthorized, "Unauthorized");
+
+		public static bool NotFound(this HttpRequestException ex)
+			=> ex.Is(HttpStatusCode.NotFound, "not found");
+
+		private static bool Is(this HttpRequestException ex, HttpStatusCode code, string msg)
+			=> ex.CheckOnNull(nameof(ex)).Message.Contains(((int)code).To<string>()) || ex.Message.ContainsIgnoreCase(msg.CheckOnNull(nameof(msg)));
 	}
 }
