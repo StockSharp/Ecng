@@ -324,13 +324,35 @@ namespace Ecng.Net
 			return $"https://www.gravatar.com/avatar/{hash}?size={size}";
 		}
 
+		[Obsolete("Use TryGetStatusCode method.")]
 		public static bool Unauthorized(this HttpRequestException ex)
-			=> ex.Is(HttpStatusCode.Unauthorized, "Unauthorized");
+			=> ex.TryGetStatusCode() == HttpStatusCode.Unauthorized;
 
+		[Obsolete("Use TryGetStatusCode method.")]
 		public static bool NotFound(this HttpRequestException ex)
-			=> ex.Is(HttpStatusCode.NotFound, "not found");
+			=> ex.TryGetStatusCode() == HttpStatusCode.NotFound;
 
-		private static bool Is(this HttpRequestException ex, HttpStatusCode code, string msg)
-			=> ex.CheckOnNull(nameof(ex)).Message.Contains(((int)code).To<string>()) || ex.Message.ContainsIgnoreCase(msg.CheckOnNull(nameof(msg)));
+		private static readonly CachedSynchronizedDictionary<HttpStatusCode, string> _phrases = new()
+		{
+			{ HttpStatusCode.Unauthorized, "Unauthorized" },
+			{ HttpStatusCode.Forbidden, "Forbidden" },
+			{ HttpStatusCode.NotFound, "not found" },
+		};
+
+		public static void SetStatusCodePhrase(HttpStatusCode code, string str)
+			=> _phrases[code] = str;
+
+		public static HttpStatusCode? TryGetStatusCode(this HttpRequestException ex)
+		{
+			var msg = ex.CheckOnNull(nameof(ex)).Message;
+
+			foreach (var pair in _phrases.CachedPairs)
+			{
+				if (msg.Contains(((int)pair.Key).To<string>()) || msg.ContainsIgnoreCase(pair.Value))
+					return pair.Key;
+			}
+
+			return null;
+		}
 	}
 }
