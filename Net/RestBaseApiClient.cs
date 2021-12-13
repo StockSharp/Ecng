@@ -14,13 +14,15 @@
 	using Ecng.Common;
 	using Ecng.Reflection;
 
-	public abstract class RestBaseApiClient : HttpClient
+	public abstract class RestBaseApiClient
 	{
+		private readonly HttpClient _client;
 		private readonly MediaTypeFormatter _request;
 		private readonly MediaTypeFormatter _response;
 
-		protected RestBaseApiClient(MediaTypeFormatter request, MediaTypeFormatter response)
+		protected RestBaseApiClient(HttpClient client, MediaTypeFormatter request, MediaTypeFormatter response)
 		{
+			_client = client ?? throw new ArgumentNullException(nameof(client));
 			_request = request ?? throw new ArgumentNullException(nameof(request));
 			_response = response ?? throw new ArgumentNullException(nameof(response));
 
@@ -28,7 +30,8 @@
 			Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(request.SupportedMediaTypes.First().MediaType));
 		}
 
-		public HttpRequestHeaders Headers => DefaultRequestHeaders;
+		protected Uri BaseAddress { get; set; }
+		public HttpRequestHeaders Headers => _client.DefaultRequestHeaders;
 
 		private async Task<TResult> GetResultAsync<TResult>(HttpResponseMessage response, CancellationToken cancellationToken)
 		{
@@ -66,7 +69,7 @@
 			else
 				body = TryFormat(parameters.FirstOrDefault().value);
 
-			using var response = await this.PostAsync(url, body, _request, cancellationToken);
+			using var response = await _client.PostAsync(url, body, _request, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
@@ -76,13 +79,16 @@
 
 			if (parameters.Length > 0)
 			{
-				url = $"{url}?" + parameters
-					.Select(p => ((p.value is null || (p.info.ParameterType == typeof(bool) && !(bool)p.value)) && !p.isRequired) ? null : $"{p.name}={TryFormat(p.value)?.ToString().EncodeToHtml()}")
-					.Where(s => s != null)
-					.JoinAnd();
+				foreach (var (info, isRequired, name, value) in parameters)
+				{
+					if ((value is null || (info.ParameterType == typeof(bool) && !(bool)value)) && !isRequired)
+						continue;
+
+					url.QueryString.Append(name, TryFormat(value)?.ToString().EncodeToHtml());
+				}
 			}
 
-			using var response = await GetAsync(url, cancellationToken);
+			using var response = await _client.GetAsync(url, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
@@ -92,13 +98,16 @@
 
 			if (parameters.Length > 0)
 			{
-				url = $"{url}?" + parameters
-					.Select(p => ((p.value is null || (p.info.ParameterType == typeof(bool) && !(bool)p.value)) && !p.isRequired) ? null : $"{p.name}={TryFormat(p.value)?.ToString().EncodeToHtml()}")
-					.Where(s => s != null)
-					.JoinAnd();
+				foreach (var (info, isRequired, name, value) in parameters)
+				{
+					if ((value is null || (info.ParameterType == typeof(bool) && !(bool)value)) && !isRequired)
+						continue;
+
+					url.QueryString.Append(name, TryFormat(value)?.ToString().EncodeToHtml());
+				}
 			}
 
-			using var response = await DeleteAsync(url, cancellationToken);
+			using var response = await _client.DeleteAsync(url, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
@@ -125,7 +134,7 @@
 			else
 				body = TryFormat(parameters.FirstOrDefault().value);
 
-			using var response = await this.PutAsync(url, body, _request, cancellationToken);
+			using var response = await _client.PutAsync(url, body, _request, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
@@ -135,7 +144,7 @@
 		protected static string GetCurrentMethod([CallerMemberName]string methodName = "")
 			=> methodName;
 
-		private (string url, (ParameterInfo info, bool isRequired, string name, object value)[] parameters) GetInfo(string requestUri, object[] args)
+		private (Url url, (ParameterInfo info, bool isRequired, string name, object value)[] parameters) GetInfo(string requestUri, object[] args)
 		{
 			if (args is null)
 				throw new ArgumentNullException(nameof(args));
@@ -169,7 +178,7 @@
 			if (args.Length != parameters.Length)
 				throw new ArgumentOutOfRangeException(nameof(args));
 
-			return (FormatRequestUri(requestUri), parameters.Select((pi, i) =>
+			return (new Url(BaseAddress, FormatRequestUri(requestUri)), parameters.Select((pi, i) =>
 			{
 				var attr = pi.GetAttribute<RestApiParamAttribute>();
 				return (pi, attr?.IsRequired == true, (attr?.Name).IsEmpty(pi.Name), args[i]);

@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Net.Captcha
 {
 	using System;
+	using System.Net.Http;
 	using System.Net.Http.Formatting;
 	using System.Security;
 	using System.Threading;
@@ -11,7 +12,7 @@
 	using Ecng.Collections;
 	using Ecng.Common;
 
-	public class ReCaptcha3Validator : Disposable, ICaptchaValidator<float>
+	public class ReCaptcha3Validator : ICaptchaValidator<float>
 	{
 		private class ReCaptcha3Response
 		{
@@ -33,8 +34,8 @@
 
 		private class ReCaptcha3Client : RestBaseApiClient
 		{
-			public ReCaptcha3Client()
-				: base(new RestApiFormUrlEncodedMediaTypeFormatter(), new JsonMediaTypeFormatter())
+			public ReCaptcha3Client(HttpClient client)
+				: base(client, new RestApiFormUrlEncodedMediaTypeFormatter(), new JsonMediaTypeFormatter())
 			{
 				BaseAddress = new("https://www.google.com/recaptcha/api/");
 			}
@@ -44,20 +45,15 @@
 		}
 
 		private readonly SecureString _secret;
-		private readonly ReCaptcha3Client _client = new();
+		private readonly ReCaptcha3Client _client;
 
-		public ReCaptcha3Validator(SecureString secret)
+		public ReCaptcha3Validator(HttpClient client, SecureString secret)
 		{
 			if (secret.IsEmpty())
 				throw new ArgumentNullException(nameof(secret));
 
+			_client = new(client);
 			_secret = secret;
-		}
-
-		protected override void DisposeManaged()
-		{
-			_client.Dispose();
-			base.DisposeManaged();
 		}
 
 		async Task<float> ICaptchaValidator<float>.ValidateAsync(string response, string address, CancellationToken cancellationToken)

@@ -15,6 +15,12 @@
 	{
 		private readonly Dictionary<DateTime, Dictionary<(CurrencyTypes, CurrencyTypes), decimal>> _rateInfo = new();
 		private readonly AsyncLock _mutex = new();
+		private readonly HttpClient _client;
+
+		public CryptonatorCurrencyConverter(HttpClient client)
+		{
+			_client = client ?? throw new ArgumentNullException(nameof(client));
+		}
 
 		async Task<decimal> ICurrencyConverter.GetRateAsync(CurrencyTypes from, CurrencyTypes to, DateTime date, CancellationToken cancellationToken)
 		{
@@ -39,8 +45,7 @@
 			else
 				_rateInfo.Add(date, dict = new());
 
-			using var client = new HttpClient();
-			using var response = await client.GetAsync($"https://api.cryptonator.com/api/ticker/{from}-{to}", cancellationToken);
+			using var response = await _client.GetAsync($"https://api.cryptonator.com/api/ticker/{from}-{to}", cancellationToken);
 
 			response.EnsureSuccessStatusCode();
 

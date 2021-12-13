@@ -41,10 +41,12 @@
 
 		private readonly Dictionary<DateTime, Dictionary<(CurrencyTypes, CurrencyTypes), decimal>> _rateInfo = new();
 		private readonly AsyncLock _mutex = new();
+		private readonly HttpClient _client;
 		private readonly Action<Exception> _currParseError;
 
-		public FloatRatesCurrencyConverter(Action<Exception> currParseError)
+		public FloatRatesCurrencyConverter(HttpClient client, Action<Exception> currParseError)
 		{
+			_client = client ?? throw new ArgumentNullException(nameof(client));
 			_currParseError = currParseError ?? throw new ArgumentNullException(nameof(currParseError));
 		}
 
@@ -71,8 +73,7 @@
 			else
 				_rateInfo.Add(date, dict = new());
 
-			using var client = new HttpClient();
-			using var response = await client.GetAsync($"https://floatrates.com/daily/{from}.json".ToLowerInvariant(), cancellationToken);
+			using var response = await _client.GetAsync($"https://floatrates.com/daily/{from}.json".ToLowerInvariant(), cancellationToken);
 
 			response.EnsureSuccessStatusCode();
 

@@ -13,10 +13,11 @@
 	[TestClass]
 	public class CaptchaTests
 	{
+
 		[TestMethod]
 		public async Task Simple()
 		{
-			ICaptchaValidator<float> validator = new ReCaptcha3Validator("123".Secure());
+			ICaptchaValidator<float> validator = new ReCaptcha3Validator(Config.HttpClient, "123".Secure());
 
 			try
 			{

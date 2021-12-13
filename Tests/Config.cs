@@ -1,5 +1,7 @@
-namespace Ecng.Test
+namespace Ecng.Tests
 {
+	using System.Net.Http;
+
 	using Ecng.Common;
 	using Ecng.Reflection;
 
@@ -15,5 +17,7 @@ namespace Ecng.Test
 			ReflectionHelper.CacheEnabled = false;
 			FastInvoker.CacheEnabled = false;
 		}
+
+		public static readonly HttpClient HttpClient = new();
 	}
 }
