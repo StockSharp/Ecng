@@ -90,12 +90,14 @@
 				}
 			}
 
-			if (Cache?.TryGet<TResult>(url, out var cached) == true)
+			var cache = Cache;
+
+			if (cache != null && cache.TryGet<TResult>(url, out var cached))
 				return cached;
 
 			using var response = await _client.GetAsync(url, cancellationToken);
 			var result = await GetResultAsync<TResult>(response, cancellationToken);
-			Cache?.Set(url, result);
+			cache?.Set(url, result);
 			return result;
 		}
 
