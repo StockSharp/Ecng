@@ -401,5 +401,8 @@ namespace Ecng.Common
 
 		public static Task Delay(this TimeSpan delay, CancellationToken cancellationToken = default)
 			=> Task.Delay(delay, cancellationToken);
+
+		public static T GetResult<T>(this Task task)
+			=> (T)task.GetType().GetProperty("Result").GetValue(task);
 	}
 }
