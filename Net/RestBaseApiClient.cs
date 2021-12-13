@@ -33,6 +33,8 @@
 		protected Uri BaseAddress { get; set; }
 		public HttpRequestHeaders Headers => _client.DefaultRequestHeaders;
 
+		public IRestApiClientCache Cache { get; set; }
+
 		private async Task<TResult> GetResultAsync<TResult>(HttpResponseMessage response, CancellationToken cancellationToken)
 		{
 			response.EnsureSuccessStatusCode();
@@ -88,8 +90,13 @@
 				}
 			}
 
+			if (Cache?.TryGet<TResult>(url, out var cached) == true)
+				return cached;
+
 			using var response = await _client.GetAsync(url, cancellationToken);
-			return await GetResultAsync<TResult>(response, cancellationToken);
+			var result = await GetResultAsync<TResult>(response, cancellationToken);
+			Cache?.Set(url, result);
+			return result;
 		}
 
 		protected async Task<TResult> DeleteAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)

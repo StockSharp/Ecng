@@ -13,7 +13,6 @@
 	[TestClass]
 	public class CaptchaTests
 	{
-
 		[TestMethod]
 		public async Task Simple()
 		{
