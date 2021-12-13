@@ -1,7 +1,6 @@
 ﻿namespace Ecng.Net.Captcha
 {
 	using System;
-	using System.Net;
 	using System.Net.Http.Formatting;
 	using System.Security;
 	using System.Threading;
@@ -40,8 +39,8 @@
 				BaseAddress = new("https://www.google.com/recaptcha/api/");
 			}
 
-			public Task<ReCaptcha3Response> SiteVerifyAsync(string secret, string response, IPAddress remoteIp, CancellationToken cancellationToken)
-				=> GetAsync<ReCaptcha3Response>(GetCurrentMethod(), cancellationToken, secret, response, remoteIp);
+			public Task<ReCaptcha3Response> SiteVerifyAsync(string secret, string response, string remoteip, CancellationToken cancellationToken)
+				=> GetAsync<ReCaptcha3Response>(GetCurrentMethod(), cancellationToken, secret, response, remoteip);
 		}
 
 		private readonly SecureString _secret;
@@ -61,9 +60,9 @@
 			base.DisposeManaged();
 		}
 
-		async Task<float> ICaptchaValidator<float>.ValidateAsync(string response, IPAddress remoteip, CancellationToken cancellationToken)
+		async Task<float> ICaptchaValidator<float>.ValidateAsync(string response, string address, CancellationToken cancellationToken)
 		{
-			var result = await _client.SiteVerifyAsync(_secret.UnSecure(), response, remoteip, cancellationToken);
+			var result = await _client.SiteVerifyAsync(_secret.UnSecure(), response, address, cancellationToken);
 
 			if (result.Success)
 				return result.Score;
