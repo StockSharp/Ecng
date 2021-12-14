@@ -25,13 +25,11 @@
 			_client = client ?? throw new ArgumentNullException(nameof(client));
 			_request = request ?? throw new ArgumentNullException(nameof(request));
 			_response = response ?? throw new ArgumentNullException(nameof(response));
-
-			//Headers.Accept.Clear();
-			Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(request.SupportedMediaTypes.First().MediaType));
 		}
 
 		protected Uri BaseAddress { get; set; }
-		public HttpRequestHeaders Headers => _client.DefaultRequestHeaders;
+
+		public IDictionary<string, string> PerRequestHeaders { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
 		public IRestApiClientCache Cache { get; set; }
 
@@ -47,6 +45,24 @@
 
 		protected virtual object FormatRequest(IDictionary<string, object> parameters)
 			=> parameters;
+
+		private Task<HttpResponseMessage> SendAsync(HttpMethod method, Uri uri, object body, CancellationToken cancellationToken)
+		{
+			var request = new HttpRequestMessage(method, uri);
+
+			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(_request.SupportedMediaTypes.First().MediaType));
+
+			if (PerRequestHeaders.Count > 0)
+			{
+				foreach (var pair in PerRequestHeaders)
+					request.Headers.Add(pair.Key, pair.Value);
+			}
+
+			if (body is not null)
+				request.Content = new ObjectContent<object>(body, _request);
+
+			return _client.SendAsync(request, cancellationToken);
+		}
 
 		protected async Task<TResult> PostAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
@@ -71,7 +87,7 @@
 			else
 				body = TryFormat(parameters.FirstOrDefault().value);
 
-			using var response = await _client.PostAsync(url, body, _request, cancellationToken);
+			using var response = await SendAsync(HttpMethod.Post, url, body, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
@@ -95,7 +111,7 @@
 			if (cache != null && cache.TryGet<TResult>(url, out var cached))
 				return cached;
 
-			using var response = await _client.GetAsync(url, cancellationToken);
+			using var response = await SendAsync(HttpMethod.Get, url, null, cancellationToken);
 			var result = await GetResultAsync<TResult>(response, cancellationToken);
 			cache?.Set(url, result);
 			return result;
@@ -116,7 +132,7 @@
 				}
 			}
 
-			using var response = await _client.DeleteAsync(url, cancellationToken);
+			using var response = await SendAsync(HttpMethod.Delete, url, null, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
@@ -143,7 +159,7 @@
 			else
 				body = TryFormat(parameters.FirstOrDefault().value);
 
-			using var response = await _client.PutAsync(url, body, _request, cancellationToken);
+			using var response = await SendAsync(HttpMethod.Put, url, body, cancellationToken);
 			return await GetResultAsync<TResult>(response, cancellationToken);
 		}
 
