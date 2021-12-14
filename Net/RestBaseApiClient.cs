@@ -16,13 +16,13 @@
 
 	public abstract class RestBaseApiClient
 	{
-		private readonly HttpClient _client;
+		private readonly HttpMessageInvoker _http;
 		private readonly MediaTypeFormatter _request;
 		private readonly MediaTypeFormatter _response;
 
-		protected RestBaseApiClient(HttpClient client, MediaTypeFormatter request, MediaTypeFormatter response)
+		protected RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormatter request, MediaTypeFormatter response)
 		{
-			_client = client ?? throw new ArgumentNullException(nameof(client));
+			_http = http ?? throw new ArgumentNullException(nameof(http));
 			_request = request ?? throw new ArgumentNullException(nameof(request));
 			_response = response ?? throw new ArgumentNullException(nameof(response));
 		}
@@ -33,21 +33,14 @@
 
 		public IRestApiClientCache Cache { get; set; }
 
-		private async Task<TResult> GetResultAsync<TResult>(HttpResponseMessage response, CancellationToken cancellationToken)
-		{
-			response.EnsureSuccessStatusCode();
-
-			if (typeof(TResult) == typeof(VoidType))
-				return default;
-
-			return await response.Content.ReadAsAsync<TResult>(new[] { _response }, cancellationToken);
-		}
-
 		protected virtual object FormatRequest(IDictionary<string, object> parameters)
 			=> parameters;
 
-		private Task<HttpResponseMessage> SendAsync(HttpMethod method, Uri uri, object body, CancellationToken cancellationToken)
+		private async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, IRestApiClientCache cache, CancellationToken cancellationToken)
 		{
+			if (cache != null && cache.TryGet<TResult>(uri, out var cached))
+				return cached;
+
 			var request = new HttpRequestMessage(method, uri);
 
 			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(_request.SupportedMediaTypes.First().MediaType));
@@ -61,82 +54,19 @@
 			if (body is not null)
 				request.Content = new ObjectContent<object>(body, _request);
 
-			return _client.SendAsync(request, cancellationToken);
-		}
+			var response = await _http.SendAsync(request, cancellationToken);
 
-		protected async Task<TResult> PostAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
-		{
-			var (url, parameters) = GetInfo(requestUri, args);
+			response.EnsureSuccessStatusCode();
 
-			object body;
+			var result = typeof(TResult) == typeof(VoidType)
+				? default
+				: await response.Content.ReadAsAsync<TResult>(new[] { _response }, cancellationToken);
 
-			if (parameters.Length > 1)
-			{
-				var dict = new Dictionary<string, object>();
-
-				foreach (var (_, isRequired, name, value) in parameters)
-				{
-					if (value is null && !isRequired)
-						continue;
-
-					dict.Add(name, TryFormat(value));
-				}
-
-				body = FormatRequest(dict);
-			}
-			else
-				body = TryFormat(parameters.FirstOrDefault().value);
-
-			using var response = await SendAsync(HttpMethod.Post, url, body, cancellationToken);
-			return await GetResultAsync<TResult>(response, cancellationToken);
-		}
-
-		protected async Task<TResult> GetAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
-		{
-			var (url, parameters) = GetInfo(requestUri, args);
-
-			if (parameters.Length > 0)
-			{
-				foreach (var (info, isRequired, name, value) in parameters)
-				{
-					if ((value is null || (info.ParameterType == typeof(bool) && !(bool)value)) && !isRequired)
-						continue;
-
-					url.QueryString.Append(name, TryFormat(value)?.ToString().EncodeToHtml());
-				}
-			}
-
-			var cache = Cache;
-
-			if (cache != null && cache.TryGet<TResult>(url, out var cached))
-				return cached;
-
-			using var response = await SendAsync(HttpMethod.Get, url, null, cancellationToken);
-			var result = await GetResultAsync<TResult>(response, cancellationToken);
-			cache?.Set(url, result);
+			cache?.Set(uri, result);
 			return result;
 		}
 
-		protected async Task<TResult> DeleteAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
-		{
-			var (url, parameters) = GetInfo(requestUri, args);
-
-			if (parameters.Length > 0)
-			{
-				foreach (var (info, isRequired, name, value) in parameters)
-				{
-					if ((value is null || (info.ParameterType == typeof(bool) && !(bool)value)) && !isRequired)
-						continue;
-
-					url.QueryString.Append(name, TryFormat(value)?.ToString().EncodeToHtml());
-				}
-			}
-
-			using var response = await SendAsync(HttpMethod.Delete, url, null, cancellationToken);
-			return await GetResultAsync<TResult>(response, cancellationToken);
-		}
-
-		protected async Task<TResult> PutAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
+		protected Task<TResult> PostAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
 			var (url, parameters) = GetInfo(requestUri, args);
 
@@ -159,8 +89,69 @@
 			else
 				body = TryFormat(parameters.FirstOrDefault().value);
 
-			using var response = await SendAsync(HttpMethod.Put, url, body, cancellationToken);
-			return await GetResultAsync<TResult>(response, cancellationToken);
+			return DoAsync<TResult>(HttpMethod.Post, url, body, null, cancellationToken);
+		}
+
+		protected Task<TResult> GetAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
+		{
+			var (url, parameters) = GetInfo(requestUri, args);
+
+			if (parameters.Length > 0)
+			{
+				foreach (var (info, isRequired, name, value) in parameters)
+				{
+					if ((value is null || (info.ParameterType == typeof(bool) && !(bool)value)) && !isRequired)
+						continue;
+
+					url.QueryString.Append(name, TryFormat(value)?.ToString().EncodeToHtml());
+				}
+			}
+
+			return DoAsync<TResult>(HttpMethod.Get, url, null, Cache, cancellationToken);
+		}
+
+		protected Task<TResult> DeleteAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
+		{
+			var (url, parameters) = GetInfo(requestUri, args);
+
+			if (parameters.Length > 0)
+			{
+				foreach (var (info, isRequired, name, value) in parameters)
+				{
+					if ((value is null || (info.ParameterType == typeof(bool) && !(bool)value)) && !isRequired)
+						continue;
+
+					url.QueryString.Append(name, TryFormat(value)?.ToString().EncodeToHtml());
+				}
+			}
+
+			return DoAsync<TResult>(HttpMethod.Delete, url, null, null, cancellationToken);
+		}
+
+		protected Task<TResult> PutAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
+		{
+			var (url, parameters) = GetInfo(requestUri, args);
+
+			object body;
+
+			if (parameters.Length > 1)
+			{
+				var dict = new Dictionary<string, object>();
+
+				foreach (var (_, isRequired, name, value) in parameters)
+				{
+					if (value is null && !isRequired)
+						continue;
+
+					dict.Add(name, TryFormat(value));
+				}
+
+				body = FormatRequest(dict);
+			}
+			else
+				body = TryFormat(parameters.FirstOrDefault().value);
+
+			return DoAsync<TResult>(HttpMethod.Put, url, body, null, cancellationToken);
 		}
 
 		protected virtual string FormatRequestUri(string requestUri)
