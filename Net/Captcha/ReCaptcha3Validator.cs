@@ -34,8 +34,8 @@
 
 		private class ReCaptcha3Client : RestBaseApiClient
 		{
-			public ReCaptcha3Client(HttpClient client)
-				: base(client, new RestApiFormUrlEncodedMediaTypeFormatter(), new JsonMediaTypeFormatter())
+			public ReCaptcha3Client(HttpMessageInvoker http)
+				: base(http, new RestApiFormUrlEncodedMediaTypeFormatter(), new JsonMediaTypeFormatter())
 			{
 				BaseAddress = new("https://www.google.com/recaptcha/api/");
 			}
@@ -47,12 +47,12 @@
 		private readonly SecureString _secret;
 		private readonly ReCaptcha3Client _client;
 
-		public ReCaptcha3Validator(HttpClient client, SecureString secret)
+		public ReCaptcha3Validator(HttpMessageInvoker http, SecureString secret)
 		{
 			if (secret.IsEmpty())
 				throw new ArgumentNullException(nameof(secret));
 
-			_client = new(client);
+			_client = new(http);
 			_secret = secret;
 		}
 
