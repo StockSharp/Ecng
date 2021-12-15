@@ -43,5 +43,19 @@
 			(rate > 1000).AssertTrue();
 			(rate < 100000).AssertTrue();
 		}
+
+		[TestMethod]
+		public async Task Coinvert()
+		{
+			ICurrencyConverter converter = new CoinvertCurrencyConverter(Config.HttpClient);
+			var rate = await converter.GetRateAsync(CurrencyTypes.BTC, CurrencyTypes.USD, DateTime.Today);
+			(rate > 1000).AssertTrue();
+			(rate < 100000).AssertTrue();
+
+			rate = await converter.GetRateAsync(CurrencyTypes.BTC, CurrencyTypes.USD, DateTime.Today);
+
+			(rate > 1000).AssertTrue();
+			(rate < 100000).AssertTrue();
+		}
 	}
 }
