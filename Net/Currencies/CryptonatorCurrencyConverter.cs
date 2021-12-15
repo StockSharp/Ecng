@@ -11,6 +11,7 @@
 
 	using Nito.AsyncEx;
 
+	[Obsolete("Use CoinvertCurrencyConverter.")]
 	public class CryptonatorCurrencyConverter : ICurrencyConverter
 	{
 		private readonly Dictionary<DateTime, Dictionary<(CurrencyTypes, CurrencyTypes), decimal>> _rateInfo = new();
