@@ -10,6 +10,7 @@
 	using System.Reflection;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Diagnostics;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
@@ -35,6 +36,13 @@
 		protected virtual object FormatRequest(IDictionary<string, object> parameters)
 			=> parameters;
 
+		public bool Tracing { get; set; }
+
+		protected virtual void TraceCall(HttpMethod method, Uri uri, TimeSpan elapsed)
+		{
+			Trace.WriteLine($"{method} {uri}: {elapsed}");
+		}
+
 		private async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, IRestApiClientCache cache, CancellationToken cancellationToken)
 		{
 			if (cache != null && cache.TryGet<TResult>(method, uri, out var cached))
@@ -53,6 +61,9 @@
 			if (body is not null)
 				request.Content = new ObjectContent<object>(body, _request);
 
+			var watch = Tracing ? new Stopwatch() : null;
+			watch?.Start();
+
 			var response = await _http.SendAsync(request, cancellationToken);
 
 			response.EnsureSuccessStatusCode();
@@ -60,6 +71,12 @@
 			var result = typeof(TResult) == typeof(VoidType)
 				? default
 				: await response.Content.ReadAsAsync<TResult>(new[] { _response }, cancellationToken);
+
+			if (watch is not null)
+			{
+				watch.Stop();
+				TraceCall(method, uri, watch.Elapsed);
+			}
 
 			cache?.Set(method, uri, result);
 			return result;
