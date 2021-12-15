@@ -30,7 +30,6 @@
 		protected Uri BaseAddress { get; set; }
 
 		public IDictionary<string, string> PerRequestHeaders { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-
 		public IRestApiClientCache Cache { get; set; }
 
 		protected virtual object FormatRequest(IDictionary<string, object> parameters)
@@ -38,7 +37,7 @@
 
 		private async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, IRestApiClientCache cache, CancellationToken cancellationToken)
 		{
-			if (cache != null && cache.TryGet<TResult>(uri, out var cached))
+			if (cache != null && cache.TryGet<TResult>(method, uri, out var cached))
 				return cached;
 
 			var request = new HttpRequestMessage(method, uri);
@@ -62,7 +61,7 @@
 				? default
 				: await response.Content.ReadAsAsync<TResult>(new[] { _response }, cancellationToken);
 
-			cache?.Set(uri, result);
+			cache?.Set(method, uri, result);
 			return result;
 		}
 
@@ -89,7 +88,7 @@
 			else
 				body = TryFormat(parameters.FirstOrDefault().value);
 
-			return DoAsync<TResult>(HttpMethod.Post, url, body, null, cancellationToken);
+			return DoAsync<TResult>(HttpMethod.Post, url, body, Cache, cancellationToken);
 		}
 
 		protected Task<TResult> GetAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
@@ -125,7 +124,7 @@
 				}
 			}
 
-			return DoAsync<TResult>(HttpMethod.Delete, url, null, null, cancellationToken);
+			return DoAsync<TResult>(HttpMethod.Delete, url, null, Cache, cancellationToken);
 		}
 
 		protected Task<TResult> PutAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
@@ -151,7 +150,7 @@
 			else
 				body = TryFormat(parameters.FirstOrDefault().value);
 
-			return DoAsync<TResult>(HttpMethod.Put, url, body, null, cancellationToken);
+			return DoAsync<TResult>(HttpMethod.Put, url, body, Cache, cancellationToken);
 		}
 
 		protected virtual string FormatRequestUri(string requestUri)
