@@ -4,6 +4,7 @@
 	{
 		public long Id { get; }
 		public string GetName(TContext domain);
+		public string GetDescription(TContext domain);
 		public string GetUrlPart(TContext context);
 	}
 }

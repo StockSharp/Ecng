@@ -355,9 +355,9 @@
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxVimeo, "<iframe width=\"560\" height=\"350\" src=\"https://player.vimeo.com/video/${vimeoId}?show_title=1&show_byline=1&show_portrait=1&&fullscreen=1\" frameborder=\"0\"></iframe>", new[] { "prefix", "vimeoId" }));
 			AddRule(new FacebookRule(new Regex(@"\[fb\]https:\/\/www.facebook.com\/(?<innerUrl>.+)\[/fb\]", singleLine)));
 
-			AddRule(new UserRule(this, _rgxUser, "<a href='${url}'>${name}</a>"));
+			AddRule(new UserRule(this, _rgxUser, "<a href='${url}'${title}>${name}</a>"));
 			AddRule(new PackageRule(this, _rgxPackage, "<a href='${url}'>${name}</a>"));
-			AddRule(new ProductRule(this, _rgxProduct, "<a href='${url}'>${name}</a>"));
+			AddRule(new ProductRule(this, _rgxProduct, "<a href='${url}'${title}>${name}</a>"));
 			AddRule(new Product2Rule(this));
 
 			AddRule(new SpoilerRule(this, _rgxSpoiler));
@@ -777,6 +777,7 @@
 
 					var sb = new StringBuilder(RegExReplace(context));
 					var idStr = match.Groups["id"].Value;
+					var title = string.Empty;
 
 					if (long.TryParse(idStr, out var id))
 					{
@@ -784,12 +785,19 @@
 
 						sb.Replace("${url}", _parent._toFullAbsolute(context, user.GetUrlPart(context)));
 						sb.Replace("${name}", user.GetName(context).CheckUrl());
+
+						title = user.GetDescription(context);
+
+						if (!title.IsEmpty())
+							title = $" title='{title}'";
 					}
 					else
 					{
 						sb.Replace("${url}", idStr);
 						sb.Replace("${name}", idStr);
 					}
+
+					sb.Replace("${title}", title);
 
 					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
@@ -867,6 +875,7 @@
 					var sb = new StringBuilder(RegExReplace(context));
 
 					var idStr = match.Groups["id"].Value;
+					var title = string.Empty;
 
 					if (long.TryParse(idStr, out var id))
 					{
@@ -874,12 +883,19 @@
 
 						sb.Replace("${url}", _parent._toFullAbsolute(context, product.GetUrlPart(context)));
 						sb.Replace("${name}", product.GetName(context));
+
+						title = product.GetDescription(context);
+
+						if (!title.IsEmpty())
+							title = $" title='{title}'";
 					}
 					else
 					{
 						sb.Replace("${url}", idStr);
 						sb.Replace("${name}", idStr);
 					}
+
+					sb.Replace("${title}", title);
 
 					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 
@@ -959,7 +975,7 @@
 			private readonly BB2HtmlFormatter<TContext> _parent;
 
 			public DynamicPageRule(BB2HtmlFormatter<TContext> parent)
-				: base(new Regex(@"\[page=(?<id>([0-9]*))\](?<inner>(.*?))\[/page\]", RegexOptions.Singleline | RegexOptions.IgnoreCase), "<a href='${url}'>${inner}</a>")
+				: base(new Regex(@"\[page=(?<id>([0-9]*))\](?<inner>(.*?))\[/page\]", RegexOptions.Singleline | RegexOptions.IgnoreCase), "<a href='${url}'${title}>${inner}</a>")
 			{
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
@@ -976,6 +992,7 @@
 
 					var idStr = match.Groups["id"].Value;
 					var inner = match.Groups["inner"].Value;
+					var title = string.Empty;
 
 					if (long.TryParse(idStr, out var id))
 					{
@@ -987,6 +1004,11 @@
 
 							if (inner.IsEmpty())
 								inner = page.GetName(context);
+
+							title = page.GetDescription(context);
+
+							if (!title.IsEmpty())
+								title = $" title='{title}'";
 						}
 						else
 							sb.Replace("${url}", idStr);
@@ -1004,6 +1026,8 @@
 						sb.Replace("${url}", idStr);
 						sb.Replace("${inner}", inner);
 					}
+
+					sb.Replace("${title}", title);
 
 					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 

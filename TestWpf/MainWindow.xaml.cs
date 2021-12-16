@@ -391,10 +391,12 @@ namespace TestWpf
 		{
 			public long Id { get; set; }
 			public string Name { get; set; }
+			public string Description { get; set; }
 
 			public string UrlPart { get; set; }
 
 			string INamedObject<TextBB2HtmlContext>.GetName(TextBB2HtmlContext ctx) => Name;
+			string INamedObject<TextBB2HtmlContext>.GetDescription(TextBB2HtmlContext ctx) => Description;
 			string INamedObject<TextBB2HtmlContext>.GetUrlPart(TextBB2HtmlContext ctx) => UrlPart;
 		}
 
@@ -436,7 +438,7 @@ namespace TestWpf
 
 				return id switch
 				{
-					9 => new NamedObjectImpl { Id = id, Name = "S#.Designer", UrlPart = "~/store/strategy designer" },
+					9 => new NamedObjectImpl { Id = id, Name = "S#.Designer", Description = "S#.Designer - free algorithmic visual designer", UrlPart = "~/store/strategy designer" },
 					_ => throw new ArgumentOutOfRangeException(nameof(id)),
 				};
 			}
@@ -454,7 +456,7 @@ namespace TestWpf
 			{
 				return id switch
 				{
-					1 => new NamedObjectImpl { Id = id, Name = "StockSharp", UrlPart = $"~/users/{id}/" },
+					1 => new NamedObjectImpl { Id = id, Name = "StockSharp", Description = "StockSharp", UrlPart = $"~/users/{id}/" },
 					_ => throw new ArgumentOutOfRangeException(nameof(id)),
 				};
 			}

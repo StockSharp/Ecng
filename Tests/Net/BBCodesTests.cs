@@ -44,10 +44,12 @@
 		{
 			public long Id { get; set; }
 			public string Name { get; set; }
+			public string Description { get; set; }
 
 			public string UrlPart { get; set; }
 
 			string INamedObject<TextBB2HtmlContext>.GetName(TextBB2HtmlContext ctx) => Name;
+			string INamedObject<TextBB2HtmlContext>.GetDescription(TextBB2HtmlContext ctx) => Description;
 			string INamedObject<TextBB2HtmlContext>.GetUrlPart(TextBB2HtmlContext ctx) => UrlPart;
 		}
 
