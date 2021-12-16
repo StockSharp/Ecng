@@ -375,13 +375,22 @@ namespace TestWpf
 
 			public string DomainCode { get; }
 			public bool Localhost { get; }
+
+			public override string GetLocString(string key)
+			{
+				return key switch
+				{
+					"ShowSpoiler" => "Show spoiler",
+					"Code" => "Code",
+					_ => throw new ArgumentOutOfRangeException(nameof(key)),
+				};
+			}
 		}
 
 		private class NamedObjectImpl : INamedObject<TextBB2HtmlContext>
 		{
 			public long Id { get; set; }
 			public string Name { get; set; }
-			public string PackageId => Name;
 
 			public string UrlPart { get; set; }
 
@@ -470,15 +479,6 @@ namespace TestWpf
 				GetPackageLink,
 				(ctx, s) => s,
 				ToFullAbsolute,
-				(ctx, key) =>
-				{
-					return key switch
-					{
-						"ShowSpoiler" => "Show spoiler",
-						"Code" => "Code",
-						_ => throw new ArgumentOutOfRangeException(nameof(key)),
-					};
-				},
 				(ctx, sourceUrl) => $"{sourceUrl}_a6f78c5fce344124993798c028a22a3a",
 				ctx => $"stocksharp.{ctx.DomainCode}",
 				(ctx, url) =>

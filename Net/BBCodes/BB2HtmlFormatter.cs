@@ -88,7 +88,6 @@
 		private readonly Func<TContext, string, string> _getPackageFullUrl;
 		private readonly Func<TContext, string, string> _encryptUrl;
 		private readonly Func<TContext, string, string> _toFullAbsolute;
-		private readonly Func<TContext, string, string> _getLocString;
 		private readonly Func<long, INamedObject<TContext>> _getProduct;
 		private readonly Func<long, INamedObject<TContext>> _getUser;
 		private readonly Func<long, INamedObject<TContext>> _getFile;
@@ -112,7 +111,6 @@
 			Func<TContext, string, string> getPackageFullUrl,
 			Func<TContext, string, string> encryptUrl,
 			Func<TContext, string, string> toFullAbsolute,
-			Func<TContext, string, string> getLocString,
 			Func<TContext, string, string> generateId,
 			Func<TContext, string> getHost,
 			Func<TContext, StringBuilder, (bool changed, bool isAway, bool noFollow, bool isBlank)> getUrlInfo,
@@ -129,7 +127,6 @@
 			_getPackageFullUrl = getPackageFullUrl ?? throw new ArgumentNullException(nameof(getPackageFullUrl));
 			_encryptUrl = encryptUrl ?? throw new ArgumentNullException(nameof(encryptUrl));
 			_toFullAbsolute = toFullAbsolute ?? throw new ArgumentNullException(nameof(toFullAbsolute));
-			_getLocString = getLocString ?? throw new ArgumentNullException(nameof(getLocString));
 			_generateId = generateId ?? throw new ArgumentNullException(nameof(generateId));
 			_getHost = getHost ?? throw new ArgumentNullException(nameof(getHost));
 			_getUrlInfo = getUrlInfo ?? throw new ArgumentNullException(nameof(getUrlInfo));
@@ -341,13 +338,13 @@
 			}
 			//if (convertBBQuotes)
 			//{
-			AddRule(new SyntaxHighlightedCodeRegexReplaceRule<TContext>(_rgxCode2, ctx => "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", _getLocString(ctx, "Code"))) { RuleRank = 41 });
-			AddRule(new CodeRegexReplaceRule<TContext>(_rgxCode1, ctx => "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", _getLocString(ctx, "Code"))));
+			AddRule(new SyntaxHighlightedCodeRegexReplaceRule<TContext>(_rgxCode2, ctx => "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", ctx.GetLocString("Code"))) { RuleRank = 41 });
+			AddRule(new CodeRegexReplaceRule<TContext>(_rgxCode1, ctx => "<div class=\"code\"><strong>{0}</strong><div class=\"innercode\">${inner}</div></div>".Replace("{0}", ctx.GetLocString("Code"))));
 
 			//ForumPage page = new ForumPage();
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxQuote2, "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put("${quote}", "${inner}"), new[] { "quote" }) { RuleRank = 63 });
-			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxQuote1, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put($"{_getLocString(ctx, "Quote")}:", "${inner}")) { RuleRank = 64 });
-			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute(ctx, _getMessage(1977).GetUrlPart(ctx)).Replace("1977", "${id}"), _toFullAbsolute(ctx, _getImagePath(ctx, "icon_latest_reply.gif")), _getLocString(ctx, "GoTo"), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
+			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxQuote1, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put($"{ctx.GetLocString("Quote")}:", "${inner}")) { RuleRank = 64 });
+			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute(ctx, _getMessage(1977).GetUrlPart(ctx)).Replace("1977", "${id}"), _toFullAbsolute(ctx, _getImagePath(ctx, "icon_latest_reply.gif")), ctx.GetLocString("GoTo"), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
 			//}
 			AddRule(new TopicRegexReplaceRule(this, _rgxPost, "<a {0} href=\"${post}\">${inner}</a>".Replace("{0}", _blank), singleLine));
 			AddRule(new TopicRegexReplaceRule(this, _rgxTopic, "<a {0} href=\"${topic}\">${inner}</a>".Replace("{0}", _blank), singleLine));
@@ -681,7 +678,7 @@
 
 					var id = _parent._generateId(context, "spolier");
 
-					sb.Replace("${inner}", $@"<input type='button' value='{_parent._getLocString(context, "ShowSpoiler")}' class='btn btn-primary' onclick=""toggleSpoiler(this, '{id}');"" title='{_parent._getLocString(context, "ShowSpoiler")}' /></div><div class='spoilerbox' id='{id}' style='display:none'>" + match.Groups["inner"].Value);
+					sb.Replace("${inner}", $@"<input type='button' value='{context.GetLocString("ShowSpoiler")}' class='btn btn-primary' onclick=""toggleSpoiler(this, '{id}');"" title='{context.GetLocString("ShowSpoiler")}' /></div><div class='spoilerbox' id='{id}' style='display:none'>" + match.Groups["inner"].Value);
 
 					replacement.ReplaceHtmlFromText(ref sb, cancellationToken);
 

@@ -21,5 +21,7 @@
 		public readonly bool AllowHtml;
 		//public readonly bool IsUrlLocalizeDisabled;
 		public readonly string Scheme;
+
+		public virtual string GetLocString(string key) => key;
 	}
 }
