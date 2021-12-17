@@ -192,7 +192,9 @@ FakesAssemblies/
 
 # EditorConfig studio extension
 .editorconfig
-/.vs/
+.vs/
 
 pub/
-/.idea/
+.idea/
+!Net.HPSocket/HPSocket/Src/Common/debug/
+!Net.HPSocket/**/Dependent/**/x64/

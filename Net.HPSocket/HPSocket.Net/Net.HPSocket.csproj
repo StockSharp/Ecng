@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+<Import Project="..\..\common.props" />
+
+<PropertyGroup>
+	<RootNamespace>HPSocket</RootNamespace>
+	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	<NoWarn>3001;3002;3003;3006</NoWarn>
+</PropertyGroup>
+
+<ItemGroup>
+	<None Remove="runtimes\**" />
+</ItemGroup>
+<ItemGroup>
+  <Compile Remove="runtimes\**" />
+</ItemGroup>
+<ItemGroup>
+  <EmbeddedResource Remove="runtimes\**" />
+</ItemGroup>
+
+<ItemGroup>
+<NativeLibs Include="$(MSBuildThisFileDirectory)runtimes\**\*.dll*" />
+<NativeLibs Include="$(MSBuildThisFileDirectory)runtimes\**\*.so" />
+<NativeLibs Include="$(MSBuildThisFileDirectory)runtimes\**\*.a" />
+<NativeLibs Include="$(MSBuildThisFileDirectory)runtimes\**\*.dylib" />
+<Content Include="@(NativeLibs)">
+  <Pack>true</Pack>
+  <PackageCopyToOutput>true</PackageCopyToOutput>
+  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  <PackagePath>runtimes</PackagePath>
+</Content>
+</ItemGroup>
+
+</Project>

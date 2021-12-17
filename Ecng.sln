@@ -63,6 +63,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "Data\Data.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serialization.Obsolete", "Serialization.Obsolete\Serialization.Obsolete.csproj", "{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Net.HPSocket", "Net.HPSocket\HPSocket.Net\Net.HPSocket.csproj", "{766FDE83-5D42-4D6A-9E4D-241D259DD4BB}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartFormat", "SmartFormat\SmartFormat\SmartFormat.csproj", "{7359993E-F2D2-4599-B861-F5136E48D8F3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartFormat.Tests", "SmartFormat\SmartFormat.Tests\SmartFormat.Tests.csproj", "{84BC791D-31CD-4585-90FE-3A059F053F14}"
@@ -185,6 +187,10 @@ Global
 		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{766FDE83-5D42-4D6A-9E4D-241D259DD4BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{766FDE83-5D42-4D6A-9E4D-241D259DD4BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{766FDE83-5D42-4D6A-9E4D-241D259DD4BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{766FDE83-5D42-4D6A-9E4D-241D259DD4BB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
