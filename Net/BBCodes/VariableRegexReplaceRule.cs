@@ -192,7 +192,7 @@
     /// <param name="replacement">
     /// The replacement.
     /// </param>
-    public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+    public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
     {
       var sb = new StringBuilder(text);
 
@@ -225,7 +225,7 @@
             tValue = VariableDefaults[i];
           }
 
-          innerReplace.Replace("${" + varName + "}", ManageVariableValue(context, varName, tValue, handlingValue));
+          innerReplace.Replace("${" + varName + "}", await ManageVariableValue(context, varName, tValue, handlingValue, cancellationToken));
           i++;
         }
 
@@ -251,7 +251,7 @@
         m = RegExSearch.Match(sb.ToString());
       }
 
-      return Task.FromResult(sb.ToString());
+      return sb.ToString();
     }
 
     #endregion
@@ -271,7 +271,7 @@
     /// <returns>
     /// The manage variable value.
     /// </returns>
-    protected virtual string ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue)
+    protected virtual Task<string> ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue, CancellationToken cancellationToken)
     {
       if (!handlingValue.IsEmptyOrWhiteSpace())
       {
@@ -286,7 +286,7 @@
         }
       }
 
-      return variableValue;
+      return Task.FromResult(variableValue);
     }
 
     #endregion

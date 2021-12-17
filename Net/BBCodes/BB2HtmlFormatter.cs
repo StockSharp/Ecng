@@ -88,12 +88,12 @@
 		private readonly Func<TContext, string, string> _getPackageFullUrl;
 		private readonly Func<TContext, string, string> _encryptUrl;
 		private readonly Func<TContext, string, string> _toFullAbsolute;
-		private readonly Func<long, INamedObject<TContext>> _getProduct;
-		private readonly Func<long, INamedObject<TContext>> _getUser;
-		private readonly Func<long, INamedObject<TContext>> _getFile;
-		private readonly Func<long, INamedObject<TContext>> _getTopic;
-		private readonly Func<long, INamedObject<TContext>> _getMessage;
-		private readonly Func<long, INamedObject<TContext>> _getPage;
+		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getProduct;
+		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getUser;
+		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getFile;
+		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getTopic;
+		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getMessage;
+		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getPage;
 		private readonly Func<TContext, string, string> _generateId;
 		private readonly Func<TContext, string> _getHost;
 		private readonly Func<TContext, StringBuilder, (bool changed, bool isAway, bool noFollow, bool isBlank)> _getUrlInfo;
@@ -101,12 +101,12 @@
 		private readonly Func<TContext, string, string> _getImagePath;
 
 		public BB2HtmlFormatter(
-			Func<long, INamedObject<TContext>> getProduct,
-			Func<long, INamedObject<TContext>> getUser,
-			Func<long, INamedObject<TContext>> getFile,
-			Func<long, INamedObject<TContext>> getTopic,
-			Func<long, INamedObject<TContext>> getMessage,
-			Func<long, INamedObject<TContext>> getPage,
+			Func<long, CancellationToken, Task<INamedObject<TContext>>> getProduct,
+			Func<long, CancellationToken, Task<INamedObject<TContext>>> getUser,
+			Func<long, CancellationToken, Task<INamedObject<TContext>>> getFile,
+			Func<long, CancellationToken, Task<INamedObject<TContext>>> getTopic,
+			Func<long, CancellationToken, Task<INamedObject<TContext>>> getMessage,
+			Func<long, CancellationToken, Task<INamedObject<TContext>>> getPage,
 
 			Func<TContext, string, string> getPackageFullUrl,
 			Func<TContext, string, string> encryptUrl,
@@ -344,7 +344,7 @@
 			//ForumPage page = new ForumPage();
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxQuote2, "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put("${quote}", "${inner}"), new[] { "quote" }) { RuleRank = 63 });
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxQuote1, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put($"{ctx.GetLocString("Quote")}:", "${inner}")) { RuleRank = 64 });
-			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute(ctx, _getMessage(1977).GetUrlPart(ctx)).Replace("1977", "${id}"), _toFullAbsolute(ctx, _getImagePath(ctx, "icon_latest_reply.gif")), ctx.GetLocString("GoTo"), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
+			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, async (ctx, t) => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute(ctx, (await _getMessage(1977, t)).GetUrlPart(ctx)).Replace("1977", "${id}"), _toFullAbsolute(ctx, _getImagePath(ctx, "icon_latest_reply.gif")), ctx.GetLocString("GoTo"), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
 			//}
 			AddRule(new TopicRegexReplaceRule(this, _rgxPost, "<a {0} href=\"${post}\">${inner}</a>".Replace("{0}", _blank), singleLine));
 			AddRule(new TopicRegexReplaceRule(this, _rgxTopic, "<a {0} href=\"${topic}\">${inner}</a>".Replace("{0}", _blank), singleLine));
@@ -395,7 +395,7 @@
 
 		private class VariableRegexReplaceRuleEx : VariableRegexReplaceRule<TContext>
 		{
-			private readonly Func<TContext, string> _getRegExReplace;
+			private readonly Func<TContext, CancellationToken, Task<string>> _getRegExReplace;
 			private readonly BB2HtmlFormatter<TContext> _parent;
 
 			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, int truncateLength)
@@ -410,14 +410,14 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, Func<TContext, string> getRegExReplace, string[] variables)
+			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, Func<TContext, CancellationToken, Task<string>> getRegExReplace, string[] variables)
 				: base(regExSearch, null, variables)
 			{
 				_getRegExReplace = getRegExReplace ?? throw new ArgumentNullException(nameof(getRegExReplace));
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var sb = new StringBuilder(text);
 
@@ -426,7 +426,7 @@
 				{
 					cancellationToken.ThrowIfCancellationRequested();
 
-					var innerReplace = new StringBuilder((_getRegExReplace ?? RegExReplace)(context));
+					var innerReplace = new StringBuilder(_getRegExReplace is null ? RegExReplace(context) : await _getRegExReplace(context, cancellationToken));
 					var i = 0;
 
 					foreach (var tVar in Variables)
@@ -450,7 +450,7 @@
 							tValue = VariableDefaults[i];
 						}
 
-						innerReplace.Replace("${" + varName + "}", ManageVariableValue(context, varName, tValue, handlingValue));
+						innerReplace.Replace("${" + varName + "}", await ManageVariableValue(context, varName, tValue, handlingValue, cancellationToken));
 						i++;
 					}
 
@@ -495,7 +495,7 @@
 					m = RegExSearch.Match(sb.ToString());
 				}
 
-				return Task.FromResult(sb.ToString());
+				return sb.ToString();
 			}
 		}
 
@@ -546,7 +546,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -585,7 +585,7 @@
 								variableValue = VariableDefaults[index];
 							}
 
-							var varValue = ManageVariableValue(context, variableName, variableValue, handlingValue);
+							var varValue = await ManageVariableValue(context, variableName, variableValue, handlingValue, cancellationToken);
 
 							if (variableName == "url")
 								varValue = _parent._urlEscape(context, varValue);
@@ -599,7 +599,7 @@
 
 					if (isId)
 					{
-						var file = _parent._getFile(id);
+						var file = await _parent._getFile(id, cancellationToken);
 
 						url = _parent._toFullAbsolute(context, file.GetUrlPart(context));
 
@@ -652,7 +652,7 @@
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				return Task.FromResult(builder.ToString());
+				return builder.ToString();
 			}
 		}
 
@@ -767,7 +767,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -781,7 +781,7 @@
 
 					if (long.TryParse(idStr, out var id))
 					{
-						var user = _parent._getUser(id);
+						var user = await _parent._getUser(id, cancellationToken);
 
 						sb.Replace("${url}", _parent._toFullAbsolute(context, user.GetUrlPart(context)));
 						sb.Replace("${name}", user.GetName(context).CheckUrl());
@@ -806,7 +806,7 @@
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				return Task.FromResult(builder.ToString());
+				return builder.ToString();
 			}
 		}
 
@@ -864,7 +864,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -879,7 +879,7 @@
 
 					if (long.TryParse(idStr, out var id))
 					{
-						var product = _parent._getProduct(id);
+						var product = await _parent._getProduct(id, cancellationToken);
 
 						sb.Replace("${url}", _parent._toFullAbsolute(context, product.GetUrlPart(context)));
 						sb.Replace("${name}", product.GetName(context));
@@ -904,7 +904,7 @@
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				return Task.FromResult(builder.ToString());
+				return builder.ToString();
 			}
 		}
 
@@ -918,7 +918,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -933,7 +933,7 @@
 
 					if (long.TryParse(idStr, out var id))
 					{
-						var product = _parent._getProduct(id);
+						var product = await _parent._getProduct(id, cancellationToken);
 
 						if (product != null)
 						{
@@ -966,7 +966,7 @@
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				return Task.FromResult(builder.ToString());
+				return builder.ToString();
 			}
 		}
 
@@ -980,7 +980,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -996,7 +996,7 @@
 
 					if (long.TryParse(idStr, out var id))
 					{
-						var page = _parent._getPage(id);
+						var page = await _parent._getPage(id, cancellationToken);
 
 						if (page != null)
 						{
@@ -1036,7 +1036,7 @@
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				return Task.FromResult(builder.ToString());
+				return builder.ToString();
 			}
 		}
 
@@ -1050,7 +1050,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -1085,7 +1085,7 @@
 							variableValue = VariableDefaults[index];
 						}
 
-						sb.Replace("${" + variableName + "}", ManageVariableValue(context, variableName, variableValue, handlingValue));
+						sb.Replace("${" + variableName + "}", await ManageVariableValue(context, variableName, variableValue, handlingValue, cancellationToken));
 						index++;
 					}
 
@@ -1113,7 +1113,7 @@
 
 					if (isId)
 					{
-						var file = _parent._getFile(fileId);
+						var file = await _parent._getFile(fileId, cancellationToken);
 
 						var url = _parent._toFullAbsolute(context, file.GetUrlPart(context));
 
@@ -1192,7 +1192,7 @@
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				return Task.FromResult(builder.ToString());
+				return builder.ToString();
 			}
 		}
 
@@ -1258,7 +1258,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			protected override string ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue)
+			protected override async Task<string> ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue, CancellationToken cancellationToken)
 			{
 				if (variableName == "post" || variableName == "topic" || variableName == "message")
 				{
@@ -1268,9 +1268,9 @@
 						{
 							case "post":
 							case "message":
-								return _parent._toFullAbsolute(context, _parent._getMessage(id).GetUrlPart(context));
+								return _parent._toFullAbsolute(context, (await _parent._getMessage(id, cancellationToken)).GetUrlPart(context));
 							case "topic":
-								return _parent._toFullAbsolute(context, _parent._getTopic(id).GetUrlPart(context));
+								return _parent._toFullAbsolute(context, (await _parent._getTopic(id, cancellationToken)).GetUrlPart(context));
 						}
 					}
 				}

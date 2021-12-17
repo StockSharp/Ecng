@@ -1,6 +1,8 @@
 ﻿namespace Ecng.Net.BBCodes
 {
 	using System.Text.RegularExpressions;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	/// <summary>
 	/// For the font size with replace
@@ -47,14 +49,14 @@
     /// <returns>
     /// The manage variable value.
     /// </returns>
-    protected override string ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue)
+    protected override Task<string> ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue, CancellationToken token)
     {
       if (variableName == "size")
       {
-        return GetFontSize(variableValue);
+        return Task.FromResult(GetFontSize(variableValue));
       }
 
-      return variableValue;
+      return Task.FromResult(variableValue);
     }
 
     /// <summary>

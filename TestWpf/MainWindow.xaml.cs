@@ -6,6 +6,8 @@ using Ecng.Net.BBCodes;
 using Ecng.Common;
 
 using Nito.AsyncEx;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace TestWpf
 {
@@ -431,43 +433,43 @@ namespace TestWpf
 				return virtualPath;
 			}
 
-			static INamedObject<TextBB2HtmlContext> GetProduct(long id)
+			static Task<INamedObject<TextBB2HtmlContext>> GetProduct(long id, CancellationToken token)
 			{
 				//var idStr = urlPart.IsEmpty() ? id.To<string>() : urlPart.ToLowerInvariant();
 				//return $"~/store/{idStr}/";
 
-				return id switch
+				return Task.FromResult<INamedObject<TextBB2HtmlContext>>(id switch
 				{
 					9 => new NamedObjectImpl { Id = id, Name = "S#.Designer", Description = "S#.Designer - free algorithmic visual designer", UrlPart = "~/store/strategy designer" },
 					_ => throw new ArgumentOutOfRangeException(nameof(id)),
-				};
+				});
 			}
 
-			static INamedObject<TextBB2HtmlContext> GetFile(long id)
-				=> new NamedObjectImpl { Id = id, UrlPart = $"~/file/{id}" };
+			static Task<INamedObject<TextBB2HtmlContext>> GetFile(long id, CancellationToken token)
+				=> Task.FromResult<INamedObject<TextBB2HtmlContext>>(new NamedObjectImpl { Id = id, UrlPart = $"~/file/{id}" });
 
-			static INamedObject<TextBB2HtmlContext> GetTopic(long id)
-				=> new NamedObjectImpl { Id = id, UrlPart = $"~/topic/{id}" };
+			static Task<INamedObject<TextBB2HtmlContext>> GetTopic(long id, CancellationToken token)
+				=> Task.FromResult<INamedObject<TextBB2HtmlContext>>(new NamedObjectImpl { Id = id, UrlPart = $"~/topic/{id}" });
 
-			static INamedObject<TextBB2HtmlContext> GetMessage(long id)
-				=> new NamedObjectImpl { Id = id, UrlPart = $"~/posts/m/{id}" };
+			static Task<INamedObject<TextBB2HtmlContext>> GetMessage(long id, CancellationToken token)
+				=> Task.FromResult<INamedObject<TextBB2HtmlContext>>(new NamedObjectImpl { Id = id, UrlPart = $"~/posts/m/{id}" });
 
-			static INamedObject<TextBB2HtmlContext> GetUser(long id)
+			static Task<INamedObject<TextBB2HtmlContext>> GetUser(long id, CancellationToken token)
 			{
-				return id switch
+				return Task.FromResult<INamedObject<TextBB2HtmlContext>>(id switch
 				{
 					1 => new NamedObjectImpl { Id = id, Name = "StockSharp", Description = "StockSharp", UrlPart = $"~/users/{id}/" },
 					_ => throw new ArgumentOutOfRangeException(nameof(id)),
-				};
+				});
 			}
 
-			static INamedObject<TextBB2HtmlContext> GetPage(long id)
+			static Task<INamedObject<TextBB2HtmlContext>> GetPage(long id, CancellationToken token)
 			{
-				return id switch
+				return Task.FromResult<INamedObject<TextBB2HtmlContext>>(id switch
 				{
 					239 => new NamedObjectImpl { Id = id, Name = "Using S#.Installer to publish user content", UrlPart = "~/store/faq/" },
 					_ => throw new ArgumentOutOfRangeException(nameof(id)),
-				};
+				});
 			}
 
 			var bb = new BB2HtmlFormatter<TextBB2HtmlContext>(
