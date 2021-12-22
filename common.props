@@ -26,6 +26,10 @@
     <TargetFrameworks>net5.0</TargetFrameworks>
   </PropertyGroup>
   
+  <PropertyGroup Condition="'$(StockSharpTargets)' != ''">
+    <TargetFrameworks>$(StockSharpTargets)</TargetFrameworks>
+  </PropertyGroup>
+
   <PropertyGroup>
     <ProductVersion>9.0.30729</ProductVersion>
     <RootNamespace>Ecng.$(MSBuildProjectName)</RootNamespace>

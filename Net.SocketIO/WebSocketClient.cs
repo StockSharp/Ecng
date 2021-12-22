@@ -7,6 +7,10 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
+#if NETSTANDARD2_1
+	using System.Net.Security;
+#endif
+
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Serialization;
@@ -109,6 +113,12 @@
 
 		public event Func<byte[], int, int, byte[], int> PreProcess;
 
+#if NETSTANDARD2_1
+
+		public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; }
+
+#endif
+
 		private Uri _url;
 		private bool _immediateConnect;
 		private Action<ClientWebSocket> _init;
@@ -149,6 +159,13 @@
 						attempts--;
 
 					_ws = new ClientWebSocket();
+
+#if NETSTANDARD2_1
+
+					_ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
+
+#endif
+
 					_init?.Invoke(_ws);
 
 					try

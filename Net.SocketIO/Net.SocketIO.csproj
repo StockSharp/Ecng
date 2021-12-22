@@ -1,4 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <StockSharpTargets>netstandard2.0;netstandard2.1</StockSharpTargets>
+  </PropertyGroup>
   <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{B79EC630-2FAB-42B9-89BA-4886C1942E96}</ProjectGuid>
