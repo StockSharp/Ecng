@@ -43,12 +43,13 @@
 			Trace.WriteLine($"{method} {uri}: {elapsed}");
 		}
 
-		protected virtual void ValidateResponse(HttpResponseMessage response)
+		protected virtual Task ValidateResponseAsync(HttpResponseMessage response, CancellationToken cancellationToken)
 		{
 			if (response is null)
 				throw new ArgumentNullException(nameof(response));
 
 			response.EnsureSuccessStatusCode();
+			return Task.CompletedTask;
 		}
 
 		private async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, IRestApiClientCache cache, CancellationToken cancellationToken)
@@ -74,7 +75,7 @@
 
 			var response = await _http.SendAsync(request, cancellationToken);
 
-			ValidateResponse(response);
+			await ValidateResponseAsync(response, cancellationToken);
 
 			var result = typeof(TResult) == typeof(VoidType)
 				? default
