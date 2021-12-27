@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 #pragma once
 
 #include <ws2tcpip.h>
@@ -241,25 +241,6 @@ typedef struct hp_sockaddr
 		if(bZeroAddr) ZeroAddr();
 	}
 
-	char *get_ip_str(char *s, size_t maxlen) const
-    {
-		switch(family) {
-			case AF_INET:
-				inet_ntop(AF_INET, &addr4.sin_addr, s, maxlen);
-				break;
-
-			case AF_INET6:
-				inet_ntop(AF_INET6, &addr6.sin6_addr, s, maxlen);
-				break;
-
-			default:
-				strncpy(s, "Unknown AF", maxlen);
-			    break;
-		}
-
-		return s;
-	}
-
 } HP_SOCKADDR, *HP_PSOCKADDR;
 
 /* Server 组件和 Agent 组件内部使用的事件处理结果常量 */
@@ -476,7 +457,7 @@ struct TSocketObjBase
 
 	BOOL TurnOffSmooth()
 		{return ::InterlockedCompareExchange((volatile long*)&smooth, FALSE, TRUE) == TRUE;}
-
+	
 	BOOL HasConnected()							{return connected;}
 	void SetConnected(BOOL bConnected = TRUE)	{connected = bConnected;}
 
@@ -539,7 +520,7 @@ struct TSocketObj : public TSocketObjBase
 		pSocketObj->TSocketObj::~TSocketObj();
 		heap.Free(pSocketObj);
 	}
-
+	
 	TSocketObj(CPrivateHeap& hp, CBufferObjPool& bfPool)
 	: TSocketObjBase(hp), sndBuff(bfPool)
 	{
@@ -577,7 +558,7 @@ struct TSocketObj : public TSocketObjBase
 	void Reset(CONNID dwConnID, SOCKET soClient)
 	{
 		__super::Reset(dwConnID);
-
+		
 		host.Empty();
 
 		socket = soClient;
@@ -627,7 +608,7 @@ struct TUdpSocketObj : public TSocketObjBase
 		pSocketObj->TUdpSocketObj::~TUdpSocketObj();
 		heap.Free(pSocketObj);
 	}
-
+	
 	TUdpSocketObj(CPrivateHeap& hp, CUdpBufferObjPool& bfPool)
 	: TSocketObjBase(hp), sndBuff(bfPool)
 	{
@@ -715,7 +696,7 @@ typedef TSockAddrMap::iterator			TSockAddrMapI;
 /* 地址-连接 ID 哈希表 const 迭代器 */
 typedef TSockAddrMap::const_iterator	TSockAddrMapCI;
 
-/* IClient close status info */
+/* IClient 组件关闭上下文 */
 struct TClientCloseContext
 {
 	BOOL bFireOnClose;
@@ -932,9 +913,7 @@ int NoBlockReceiveFrom(SOCKET sock, TUdpBufferObj* pBufferObj);
 /* 执行非阻塞 WSARecvFrom() */
 int NoBlockReceiveFromNotCheck(SOCKET sock, TUdpBufferObj* pBufferObj);
 /* 设置组播选项 */
-
 BOOL SetMultiCastSocketOptions(SOCKET sock, const HP_SOCKADDR& bindAddr, const HP_SOCKADDR& castAddr, int iMCTtl, BOOL bMCLoop);
-BOOL SetMultiCastSocketOptions2(SOCKET sock, const HP_SOCKADDR& bindAddr, const HP_SOCKADDR& sourceAddr, const HP_SOCKADDR& castAddr, int iMCTtl, BOOL bMCLoop);
 
 // CP_XXX -> UNICODE
 BOOL CodePageToUnicode(int iCodePage, const char szSrc[], WCHAR szDest[], int& iDestLength);

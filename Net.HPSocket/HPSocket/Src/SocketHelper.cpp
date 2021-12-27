@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 #include "stdafx.h"
 #include "Common/GeneralHelper.h"
 #include "Common/SysHelper.h"
@@ -194,7 +194,7 @@ BOOL EnumHostIPAddresses(LPCTSTR lpszHost, EnIPAddrType enType, LPTIPAddr** lppp
 								AF_UNSPEC	: (enType == IPT_IPV4	?
 								AF_INET		: (enType == IPT_IPV6	?
 								AF_INET6	: 0xFF)));
-
+	
 	if(usFamily == 0xFF)
 	{
 		::WSASetLastError(WSAEAFNOSUPPORT);
@@ -641,14 +641,14 @@ int SSO_KeepAliveVals(SOCKET sock, u_long onoff, u_long time, u_long interval)
 	DWORD dwBytes;
 
 	if(::WSAIoctl	(
-						sock,
-						SIO_KEEPALIVE_VALS,
-						(LPVOID)&in,
-						sizeof(in),
-						nullptr,
-						0,
-						&dwBytes,
-						nullptr,
+						sock, 
+						SIO_KEEPALIVE_VALS, 
+						(LPVOID)&in, 
+						sizeof(in), 
+						nullptr, 
+						0, 
+						&dwBytes, 
+						nullptr, 
 						nullptr
 					) == SOCKET_ERROR)
 	{
@@ -721,14 +721,14 @@ int SSO_UDP_ConnReset(SOCKET sock, BOOL bNewBehavior)
 	DWORD dwBytes;
 
 	if(::WSAIoctl	(
-						sock,
-						SIO_UDP_CONNRESET,
-						(LPVOID)&bNewBehavior,
-						sizeof(bNewBehavior),
-						nullptr,
-						0,
-						&dwBytes,
-						nullptr,
+						sock, 
+						SIO_UDP_CONNRESET, 
+						(LPVOID)&bNewBehavior, 
+						sizeof(bNewBehavior), 
+						nullptr, 
+						0, 
+						&dwBytes, 
+						nullptr, 
 						nullptr
 					) == SOCKET_ERROR)
 	{
@@ -747,7 +747,7 @@ CONNID GenerateConnectionID()
 	static volatile CONNID s_dwConnID = 0;
 
 	CONNID dwConnID	= ::InterlockedIncrement(&s_dwConnID);
-
+	
 	if(dwConnID == 0)
 		dwConnID = ::InterlockedIncrement(&s_dwConnID);
 
@@ -971,7 +971,7 @@ int PostReceiveFromNotCheck(SOCKET sock, TUdpBufferObj* pBufferObj)
 	pBufferObj->operation	= SO_RECEIVE;
 	pBufferObj->addrLen		= pBufferObj->remoteAddr.AddrSize();
 
-	do
+	do 
 	{
 		DWORD dwFlag	= 0;
 		DWORD dwBytes	= 0;
@@ -1055,7 +1055,7 @@ int NoBlockReceiveFromNotCheck(SOCKET sock, TUdpBufferObj* pBufferObj)
 	int result			= NO_ERROR;
 	pBufferObj->addrLen	= pBufferObj->remoteAddr.AddrSize();
 
-	do
+	do 
 	{
 		DWORD dwFlag	= 0;
 		DWORD dwBytes	= 0;
@@ -1086,24 +1086,6 @@ int NoBlockReceiveFromNotCheck(SOCKET sock, TUdpBufferObj* pBufferObj)
 
 
 	return result;
-}
-
-BOOL SetMultiCastSocketOptions2(SOCKET sock, const HP_SOCKADDR& bindAddr, const HP_SOCKADDR& sourceAddr, const HP_SOCKADDR& castAddr, int iMCTtl, BOOL bMCLoop)
-{
-	ENSURE(::SSO_SetSocketOption(sock, IPPROTO_IP, IP_MULTICAST_TTL, &iMCTtl, sizeof(iMCTtl)) != SOCKET_ERROR);
-	ENSURE(::SSO_SetSocketOption(sock, IPPROTO_IP, IP_MULTICAST_LOOP, &bMCLoop, sizeof(bMCLoop)) != SOCKET_ERROR);
-
-	ip_mreq_source mcast;
-	::ZeroMemory(&mcast, sizeof(mcast));
-
-	mcast.imr_multiaddr = castAddr.addr4.sin_addr;
-	mcast.imr_sourceaddr = sourceAddr.addr4.sin_addr;
-	mcast.imr_interface = bindAddr.addr4.sin_addr;
-
-	if(::SSO_SetSocketOption(sock, IPPROTO_IP, IP_ADD_SOURCE_MEMBERSHIP, &mcast, sizeof(mcast)) == SOCKET_ERROR)
-		return FALSE;
-
-	return TRUE;
 }
 
 BOOL SetMultiCastSocketOptions(SOCKET sock, const HP_SOCKADDR& bindAddr, const HP_SOCKADDR& castAddr, int iMCTtl, BOOL bMCLoop)
@@ -1318,7 +1300,7 @@ int Base64Encode(const BYTE* lpszSrc, DWORD dwSrcLen, BYTE* lpszDest, DWORD& dwD
 		*p++ = CODES[((a & 3) << 4) + (b >> 4)];
 		*p++ = (i + 1 < dwSrcLen) ? CODES[((b & 0xf) << 2)] : '=';
 		*p++ = '=';
-	}
+	}  
 
 	ASSERT(dwRealLen == (DWORD)(p - lpszDest));
 
@@ -1328,13 +1310,13 @@ int Base64Encode(const BYTE* lpszSrc, DWORD dwSrcLen, BYTE* lpszDest, DWORD& dwD
 		dwDestLen	= dwRealLen;
 	}
 
-	return 0;
+	return 0;  
 }
 
 int Base64Decode(const BYTE* lpszSrc, DWORD dwSrcLen, BYTE* lpszDest, DWORD& dwDestLen)
 {
 	static const BYTE MAP[256]	=
-	{
+	{ 
 		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 253, 255,
 		255, 253, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 		255, 255, 255, 255, 255, 255, 255, 255, 253, 255, 255, 255,
@@ -1470,7 +1452,7 @@ int UrlEncode(BYTE* lpszSrc, DWORD dwSrcLen, BYTE* lpszDest, DWORD& dwDestLen)
 			lpszDest[j++] = '%';
 			HEX_VALUE_TO_DOUBLE_CHAR(lpszDest + j, c);
 			j += 2;
-
+			
 		}
 	}
 

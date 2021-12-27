@@ -9,7 +9,6 @@
 // + Lightweight, distributed as a single source file.
 //
 //=====================================================================
-#include "stdafx.h"
 #include "ikcp.h"
 
 #include <stddef.h>
