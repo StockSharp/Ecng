@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include "stdafx.h"
 #include "WaitFor.h"
 #include "GeneralHelper.h"
@@ -74,7 +74,7 @@ BOOL PeekMessageLoop(BOOL bDispatchQuitMsg)
 	return value;
 }
 
-DWORD WaitForMultipleObjectsWithMessageLoop(DWORD dwHandles, HANDLE szHandles[], DWORD dwMilliseconds, BOOL bWaitAll, DWORD dwWakeMask)
+DWORD WaitForMultipleObjectsWithMessageLoop(DWORD dwNumHandles, HANDLE szHandles[], DWORD dwMilliseconds, BOOL bWaitAll, DWORD dwWakeMask)
 {
 	DWORD dwResult		= WAIT_FAILED;
 	DWORD dwBeginTime	= (dwMilliseconds == INFINITE) ? INFINITE : ::timeGetTime();
@@ -95,9 +95,9 @@ DWORD WaitForMultipleObjectsWithMessageLoop(DWORD dwHandles, HANDLE szHandles[],
 			}
 		}
 
-		dwResult = ::MsgWaitForMultipleObjects(dwHandles, szHandles, bWaitAll, (DWORD)iWaitTime, dwWakeMask);
+		dwResult = ::MsgWaitForMultipleObjects(dwNumHandles, szHandles, bWaitAll, (DWORD)iWaitTime, dwWakeMask);
 
-		if(dwResult == (WAIT_OBJECT_0 + dwHandles))
+		if(dwResult == (WAIT_OBJECT_0 + dwNumHandles))
 			PeekMessageLoop();
 		else
 			break;

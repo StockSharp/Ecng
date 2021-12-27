@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #pragma once
 
 #include "SocketHelper.h"
@@ -58,7 +58,7 @@ public:
 	virtual void SetCastMode			(EnCastMode enCastMode)				{ENSURE_HAS_STOPPED(); m_enCastMode				= enCastMode;}
 	virtual void SetMultiCastTtl		(int iMCTtl)						{ENSURE_HAS_STOPPED(); m_iMCTtl					= iMCTtl;}
 	virtual void SetMultiCastLoop		(BOOL bMCLoop)						{ENSURE_HAS_STOPPED(); m_bMCLoop				= bMCLoop;}
-	virtual void SetExtra				(PVOID pExtra)						{m_pExtra										= pExtra;}						
+	virtual void SetExtra				(PVOID pExtra)						{m_pExtra										= pExtra;}
 
 	virtual EnReuseAddressPolicy GetReuseAddressPolicy	()	{return m_enReusePolicy;}
 	virtual DWORD GetMaxDatagramSize	()	{return m_dwMaxDatagramSize;}
@@ -104,7 +104,7 @@ protected:
 	virtual void OnWorkerThreadEnd(THR_ID dwThreadID) {}
 
 protected:
-	void SetReserved	(PVOID pReserved)	{m_pReserved = pReserved;}						
+	void SetReserved	(PVOID pReserved)	{m_pReserved = pReserved;}
 	PVOID GetReserved	()					{return m_pReserved;}
 	BOOL GetRemoteHost	(LPCSTR* lpszHost, USHORT* pusPort = nullptr);
 
@@ -116,14 +116,15 @@ private:
 	BOOL CheckStoping(DWORD dwCurrentThreadID);
 	BOOL CreateClientSocket(LPCTSTR lpszRemoteAddress, USHORT usPort, LPCTSTR lpszBindAddress, HP_SOCKADDR& bindAddr);
 	BOOL BindClientSocket(HP_SOCKADDR& bindAddr);
-	BOOL ConnectToGroup(const HP_SOCKADDR& bindAddr);
-	BOOL CreateWorkerThread();
+	BOOL ConnectToGroup(const HP_SOCKADDR& bindAddr, const HP_SOCKADDR& sourceADdr);
+	BOOL CreateWorkerThreads();
 	BOOL ProcessNetworkEvent();
 	BOOL ReadData();
+	BOOL ProcessData();
 	BOOL SendData();
 	TItem* GetSendBuffer();
 	int SendInternal(TItemPtr& itPtr);
-	void WaitForWorkerThreadEnd(DWORD dwCurrentThreadID);
+	void WaitForWorkerThreadsEnd(DWORD dwCurrentThreadID);
 
 	BOOL HandleError(WSANETWORKEVENTS& events);
 	BOOL HandleRead(WSANETWORKEVENTS& events);
@@ -131,18 +132,23 @@ private:
 	BOOL HandleConnect(WSANETWORKEVENTS& events);
 	BOOL HandleClose(WSANETWORKEVENTS& events);
 
-	static UINT WINAPI WorkerThreadProc(LPVOID pv);
+    static void WaitForWorkerThreadEnd(DWORD curThreadId, HANDLE& theadHandle, UINT& threadId);
+	static UINT WINAPI NetworkThreadProc(LPVOID pv);
+	static UINT WINAPI ProcessorThreadProc(LPVOID pv);
 
 public:
 	CUdpCast(IUdpCastListener* pListener)
 	: m_pListener			(pListener)
 	, m_lsSend				(m_itPool)
+	, m_lsReceive			(m_receivePool)
 	, m_soClient			(INVALID_SOCKET)
 	, m_evSocket			(nullptr)
 	, m_dwConnID			(0)
 	, m_usPort				(0)
-	, m_hWorker				(nullptr)
-	, m_dwWorkerID			(0)
+	, m_hThreadNetwork		(nullptr)
+	, m_hThreadProcessor    (nullptr)
+	, m_dwNetworkWorkerID			(0)
+	, m_dwProcessorWorkerID			(0)
 	, m_bPaused				(FALSE)
 	, m_iPending			(0)
 	, m_bConnected			(FALSE)
@@ -160,6 +166,10 @@ public:
 	, m_castAddr			(AF_UNSPEC, TRUE)
 	, m_remoteAddr			(AF_UNSPEC, TRUE)
 	, m_evWait				(TRUE, TRUE)
+    , m_evWorker			(TRUE)
+    , m_evReceived			(FALSE)
+	, m_recvCounter			(0)
+	, m_bufWatermark		(0)
 	{
 		ASSERT(sm_wsSocket.IsValid());
 		ASSERT(m_pListener);
@@ -192,8 +202,10 @@ private:
 	BOOL				m_bMCLoop;
 	EnCastMode			m_enCastMode;
 
-	HANDLE				m_hWorker;
-	UINT				m_dwWorkerID;
+	HANDLE				m_hThreadNetwork;
+	HANDLE				m_hThreadProcessor;
+	UINT				m_dwNetworkWorkerID;
+	UINT				m_dwProcessorWorkerID;
 
 	EnSocketError		m_enLastError;
 	volatile BOOL		m_bConnected;
@@ -204,8 +216,6 @@ private:
 
 	HP_SOCKADDR			m_castAddr;
 	HP_SOCKADDR			m_remoteAddr;
-
-	CBufferPtr			m_rcBuffer;
 
 protected:
 	CStringA			m_strHost;
@@ -223,8 +233,17 @@ private:
 	CEvt				m_evWorker;
 	CEvt				m_evUnpause;
 
+
+	CItemPool			m_receivePool;
+	TItemList			m_lsReceive;
+	CEvt				m_evReceived;
+	CCriSec				m_csReceive;
+
 	volatile int		m_iPending;
 	volatile BOOL		m_bPaused;
+
+	std::int32_t m_recvCounter;
+	std::int32_t m_bufWatermark;
 };
 
 #endif

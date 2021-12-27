@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 /******************************************************************************
 Module:  BufferPool.h
 Notices: Copyright (c) 2013 Bruce Liang
@@ -283,12 +283,13 @@ public:
 	{
 		T* pItem = nullptr;
 
+        // no need to lock here because m_lsFreeItem supports concurrent calls
 		if(!m_lsFreeItem.TryGet(&pItem))
 			pItem = T::Construct(m_heap, m_dwItemCapacity);
 
 		ASSERT(pItem);
 		pItem->Reset();
-		
+
 		return pItem;
 	}
 
@@ -585,7 +586,7 @@ public:
 
 		return reduce;
 	}
-	
+
 	typename decay<length_t>::type Length() const {return length;}
 
 	int IncreaseLength	(int length) {return (this->length += length);}

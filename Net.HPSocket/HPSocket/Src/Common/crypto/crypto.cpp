@@ -1,6 +1,8 @@
 ﻿#include "stdafx.h"
 #include "crypto.h"
 
+#pragma warning( disable: 4244 )
+
 /****************************** MACROS ******************************/
 
 #define ROTLEFT(a,b) (((a) << (b)) | ((a) >> (32-(b))))

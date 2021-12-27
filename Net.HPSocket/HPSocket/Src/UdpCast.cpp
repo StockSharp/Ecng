@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include "stdafx.h"
 #include "UdpCast.h"
 #include "Common/WaitFor.h"
@@ -29,7 +29,7 @@
 
 const CInitSocket CUdpCast::sm_wsSocket;
 
-BOOL CUdpCast::Start(LPCTSTR lpszRemoteAddress, USHORT usPort, BOOL bAsyncConnect, LPCTSTR lpszBindAddress, USHORT usLocalPort)
+BOOL CUdpCast::Start(LPCTSTR lpszRemoteAddress, USHORT usPort, BOOL bAsyncConnect, LPCTSTR lpszSourceAddress, USHORT usLocalPort)
 {
 	ASSERT(usLocalPort == 0);
 
@@ -40,7 +40,17 @@ BOOL CUdpCast::Start(LPCTSTR lpszRemoteAddress, USHORT usPort, BOOL bAsyncConnec
 	m_ccContext.Reset();
 
 	BOOL isOK = FALSE;
-	HP_SOCKADDR bindAddr(AF_UNSPEC, TRUE);
+	HP_SOCKADDR bindAddr(AF_INET, TRUE);
+
+    const auto* const lpszBindAddress = "0.0.0.0";
+
+	HP_SOCKADDR sourceAddr(AF_INET, TRUE);
+	inet_pton(AF_INET, lpszSourceAddress, &sourceAddr.addr4.sin_addr);
+	sourceAddr.family = AF_INET;
+
+	m_dwConnID = ::GenerateConnectionID();
+
+	TRACE("conn %Iu: starting... rem=%s, port1=%d, bind=%s, src=%s", m_dwConnID, lpszRemoteAddress, usPort, lpszBindAddress, lpszSourceAddress);
 
 	if(CreateClientSocket(lpszRemoteAddress, usPort, lpszBindAddress, bindAddr))
 	{
@@ -48,9 +58,9 @@ BOOL CUdpCast::Start(LPCTSTR lpszRemoteAddress, USHORT usPort, BOOL bAsyncConnec
 		{
 			if(TRIGGER(FirePrepareConnect(m_soClient)) != HR_ERROR)
 			{
-				if(ConnectToGroup(bindAddr))
+				if(ConnectToGroup(bindAddr, sourceAddr))
 				{
-					if(CreateWorkerThread())
+					if(CreateWorkerThreads())
 					{
 						isOK = TRUE;
 						m_evWait.Reset();
@@ -100,6 +110,12 @@ void CUdpCast::PrepareStart()
 	m_itPool.SetPoolHold((int)m_dwFreeBufferPoolHold);
 
 	m_itPool.Prepare();
+
+	m_receivePool.SetItemCapacity((int)m_dwMaxDatagramSize);
+	m_receivePool.SetPoolSize((int)DEFAULT_CLIENT_FREE_BUFFER_POOL_SIZE_RECEIVE);
+	m_receivePool.SetPoolHold((int)DEFAULT_CLIENT_FREE_BUFFER_POOL_SIZE_RECEIVE);
+
+	m_receivePool.Prepare();
 }
 
 BOOL CUdpCast::CheckStarting()
@@ -172,6 +188,7 @@ BOOL CUdpCast::CreateClientSocket(LPCTSTR lpszRemoteAddress, USHORT usPort, LPCT
 		return FALSE;
 
 	ENSURE(::SSO_UDP_ConnReset(m_soClient, FALSE) == NO_ERROR);
+
 	ENSURE(::SSO_ReuseAddress(m_soClient, m_enReusePolicy) == NO_ERROR);
 
 	m_evSocket = ::WSACreateEvent();
@@ -187,24 +204,20 @@ BOOL CUdpCast::BindClientSocket(HP_SOCKADDR& bindAddr)
 	if(::bind(m_soClient, bindAddr.Addr(), bindAddr.AddrSize()) == SOCKET_ERROR)
 		return FALSE;
 
-	m_dwConnID = ::GenerateConnectionID();
-
 	return TRUE;
 }
 
-BOOL CUdpCast::ConnectToGroup(const HP_SOCKADDR& bindAddr)
+BOOL CUdpCast::ConnectToGroup(const HP_SOCKADDR& bindAddr, const HP_SOCKADDR& sourceAddr)
 {
 	if(m_enCastMode == CM_MULTICAST)
 	{
-		if(!::SetMultiCastSocketOptions(m_soClient, bindAddr, m_castAddr, m_iMCTtl, m_bMCLoop))
+		if(!::SetMultiCastSocketOptions2(m_soClient, bindAddr, sourceAddr, m_castAddr, m_iMCTtl, m_bMCLoop))
 			return FALSE;
 	}
 	else
 	{
-		ASSERT(m_castAddr.IsIPv4());
-
-		BOOL bSet = TRUE;
-		ENSURE(::SSO_SetSocketOption(m_soClient, SOL_SOCKET, SO_BROADCAST, &bSet, sizeof(BOOL)) != SOCKET_ERROR);
+		TRACE("conn %Iu: not multicast", m_dwConnID);
+		return FALSE;
 	}
 
 	BOOL isOK = FALSE;
@@ -222,52 +235,70 @@ BOOL CUdpCast::ConnectToGroup(const HP_SOCKADDR& bindAddr)
 	return isOK;
 }
 
-BOOL CUdpCast::CreateWorkerThread()
+BOOL CUdpCast::CreateWorkerThreads()
 {
-	m_hWorker = (HANDLE)_beginthreadex(nullptr, 0, WorkerThreadProc, (LPVOID)this, 0, &m_dwWorkerID);
+    m_hThreadNetwork    = (HANDLE)_beginthreadex(nullptr, 0, NetworkThreadProc, (LPVOID)this, 0, &m_dwNetworkWorkerID);
 
-	return m_hWorker != nullptr;
+    if(m_hThreadNetwork != nullptr)
+        m_hThreadProcessor  = (HANDLE)_beginthreadex(nullptr, 0, ProcessorThreadProc, (LPVOID)this, 0, &m_dwProcessorWorkerID);
+
+	return m_hThreadNetwork != nullptr && m_hThreadProcessor != nullptr;
 }
 
-UINT WINAPI CUdpCast::WorkerThreadProc(LPVOID pv)
+UINT WINAPI CUdpCast::NetworkThreadProc(LPVOID pv)
 {
-	TRACE("---------------> Client Worker Thread 0x%08X started <---------------\n", SELF_THREAD_ID);
+	auto* pClient	= (CUdpCast*)pv;
 
-	CUdpCast* pClient	= (CUdpCast*)pv;
+	TRACE("conn %Iu: ---------------> Client Network Worker Thread 0x%08X started <---------------\n", pClient->m_dwConnID, SELF_THREAD_ID);
+
+	if(!::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL))
+	{
+		TRACE("conn %Iu: failed to elevate thread 0x%08X priority \n", pClient->m_dwConnID, SELF_THREAD_ID);
+	}
+
 	pClient->OnWorkerThreadStart(SELF_THREAD_ID);
 
 	BOOL bCallStop		= TRUE;
-	HANDLE hEvents[]	= {pClient->m_evSocket, pClient->m_evBuffer, pClient->m_evWorker, pClient->m_evUnpause};
-
-	pClient->m_rcBuffer.Malloc(pClient->m_dwMaxDatagramSize);
+	HANDLE hEvents[]	= {pClient->m_evWorker, pClient->m_evSocket, pClient->m_evBuffer, pClient->m_evUnpause};
 
 	while(pClient->HasStarted())
 	{
 		DWORD retval = ::WSAWaitForMultipleEvents(ARRAY_SIZE(hEvents), hEvents, FALSE, WSA_INFINITE, FALSE);
 
-		if(retval == WSA_WAIT_EVENT_0)
-		{
-			if(!pClient->ProcessNetworkEvent())
-				break;
-		}
-		else if(retval == WSA_WAIT_EVENT_0 + 1)
-		{
-			if(!pClient->SendData())
-				break;
-		}
-		else if(retval == WSA_WAIT_EVENT_0 + 2)
+		if(retval == WSA_WAIT_EVENT_0) // stop event. set only when Stop was called.
 		{
 			bCallStop = FALSE;
+            TRACE("conn %Iu: stopping because stop was called", pClient->m_dwConnID);
 			break;
 		}
-		else if(retval == WSA_WAIT_EVENT_0 + 3)
+		else if(retval == WSA_WAIT_EVENT_0 + 1) // socket poll event. need to process.
+		{
+			if(!pClient->ProcessNetworkEvent())
+            {
+                TRACE("conn %Iu: stopping by network event", pClient->m_dwConnID);
+                break;
+            }
+		}
+		else if(retval == WSA_WAIT_EVENT_0 + 2) // sending data only. should never happen for this case, but even if it happens, nothing to do for the new thread.
+		{
+			if(!pClient->SendData())
+            {
+                TRACE("conn %Iu: stopping because SendData returned false", pClient->m_dwConnID);
+                break;
+            }
+		}
+		else if(retval == WSA_WAIT_EVENT_0 + 3) // unpause
 		{
 			if(!pClient->ReadData())
-				break;
+            {
+                TRACE("conn %Iu: stopping because ReadData returned false", pClient->m_dwConnID);
+                break;
+            }
 		}
 		else if(retval == WSA_WAIT_FAILED)
 		{
 			pClient->m_ccContext.Reset(TRUE, SO_UNKNOWN, ::WSAGetLastError());
+            TRACE("conn %Iu: stopping because wait returned error", pClient->m_dwConnID);
 			break;
 		}
 		else
@@ -279,16 +310,97 @@ UINT WINAPI CUdpCast::WorkerThreadProc(LPVOID pv)
 	if(bCallStop && pClient->HasStarted())
 		pClient->Stop();
 
-	TRACE("---------------> Client Worker Thread 0x%08X stoped <---------------\n", SELF_THREAD_ID);
+	TRACE("conn %Iu: ---------------> Client Network Worker Thread 0x%08X stoped <---------------\n", pClient->m_dwConnID, SELF_THREAD_ID);
 
 	return 0;
 }
+
+BOOL CUdpCast::ProcessData()
+{
+	while(HasStarted())
+	{
+		TItemPtr itPtr(m_receivePool);
+
+		{
+			CCriSecLock locallock(m_csReceive);
+			itPtr.Reset(m_lsReceive.PopFront());
+		}
+
+		if(!itPtr.IsValid())
+			return TRUE;
+
+		if(TRIGGER(FireReceive(itPtr->Ptr(), itPtr->Size())) == HR_ERROR)
+		{
+			TRACE("conn %Iu: OnReceive() event return 'HR_ERROR', connection will be closed !\n", m_dwConnID);
+			m_ccContext.Reset(TRUE, SO_RECEIVE, ENSURE_ERROR_CANCELLED);
+			return FALSE;
+		}
+	}
+
+	return FALSE;
+}
+
+
+UINT WINAPI CUdpCast::ProcessorThreadProc(LPVOID pv)
+{
+	auto* pClient	= (CUdpCast*)pv;
+
+	TRACE("conn %Iu: ---------------> Client Processor Worker Thread 0x%08X started <---------------\n", pClient->m_dwConnID, SELF_THREAD_ID);
+
+	if(!::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL))
+	{
+		TRACE("conn %Iu: failed to elevate thread 0x%08X priority \n", pClient->m_dwConnID, SELF_THREAD_ID);
+	}
+
+	pClient->OnWorkerThreadStart(SELF_THREAD_ID);
+
+	BOOL bCallStop		= TRUE;
+	HANDLE hEvents[]	= {pClient->m_evWorker, pClient->m_evReceived, pClient->m_evUnpause};
+
+	while(pClient->HasStarted())
+	{
+		DWORD retval = ::WSAWaitForMultipleEvents(ARRAY_SIZE(hEvents), hEvents, FALSE, WSA_INFINITE, FALSE);
+
+		if(retval == WSA_WAIT_EVENT_0 + 1 || retval == WSA_WAIT_EVENT_0 + 2)
+		{
+			if(!pClient->ProcessData())
+			{
+				TRACE("conn %Iu: stopping proc thread because processdata returned false", pClient->m_dwConnID);
+				break;
+			}
+		}
+		else if(retval == WSA_WAIT_EVENT_0) // stop event. set only when Stop was called.
+		{
+			bCallStop = FALSE;
+            TRACE("conn %Iu: stopping proc thread because stop was called", pClient->m_dwConnID);
+			break;
+		}
+		else if(retval == WSA_WAIT_FAILED)
+		{
+			pClient->m_ccContext.Reset(TRUE, SO_UNKNOWN, ::WSAGetLastError());
+            TRACE("conn %Iu: stopping proc thread because wait returned error", pClient->m_dwConnID);
+			break;
+		}
+		else
+			ENSURE(FALSE);
+	}
+
+	pClient->OnWorkerThreadEnd(SELF_THREAD_ID);
+
+	if(bCallStop && pClient->HasStarted())
+		pClient->Stop();
+
+	TRACE("conn %Iu: ---------------> Client Processor Worker Thread 0x%08X stoped <---------------\n", pClient->m_dwConnID, SELF_THREAD_ID);
+
+	return 0;
+}
+
 
 BOOL CUdpCast::ProcessNetworkEvent()
 {
 	BOOL bContinue = TRUE;
 	WSANETWORKEVENTS events;
-	
+
 	int rc = ::WSAEnumNetworkEvents(m_soClient, m_evSocket, &events);
 
 	if(rc == SOCKET_ERROR)
@@ -370,22 +482,50 @@ BOOL CUdpCast::HandleClose(WSANETWORKEVENTS& events)
 
 BOOL CUdpCast::ReadData()
 {
+	const auto MaxPendingReceive = 50000;
+
 	while(TRUE)
 	{
 		if(m_bPaused)
 			break;
 
 		int addrLen	= m_remoteAddr.AddrSize();
-		int rc		= recvfrom(m_soClient, (char*)(BYTE*)m_rcBuffer, m_dwMaxDatagramSize, 0, m_remoteAddr.Addr(), &addrLen);
+
+		TItemPtr itPtr(m_receivePool, m_receivePool.PickFreeItem());
+
+		int rc = recvfrom(m_soClient, (char*)itPtr->Ptr(), itPtr->Capacity(), 0, m_remoteAddr.Addr(), &addrLen);
 
 		if(rc >= 0)
 		{
-			if(TRIGGER(FireReceive(m_rcBuffer, rc)) == HR_ERROR)
-			{
-				TRACE("<C-CNNID: %Iu> OnReceive() event return 'HR_ERROR', connection will be closed !\n", m_dwConnID);
+			int iPending;
 
-				m_ccContext.Reset(TRUE, SO_RECEIVE, ENSURE_ERROR_CANCELLED);
-				return FALSE;
+			itPtr->Reset(0, rc);
+
+			{
+				CCriSecLock locallock(m_csReceive);
+
+				iPending = m_lsReceive.Size();
+
+				if(iPending > MaxPendingReceive)
+				{
+					TRACE("conn %Iu: ReadData() max pending is exceeded (%d), connection will be closed !\n", m_dwConnID, iPending);
+					m_ccContext.Reset(TRUE, SO_RECEIVE, ENSURE_ERROR_CANCELLED);
+					return FALSE;
+				}
+
+				m_lsReceive.PushBack(itPtr.Detach());
+			}
+
+			if(iPending == 0)
+				m_evReceived.Set();
+
+			if(iPending > m_bufWatermark)
+				m_bufWatermark = iPending;
+
+			if(++m_recvCounter >= 2000) {
+				TRACE("conn %Iu: ReadData() watermark=%d\n", m_dwConnID, m_bufWatermark);
+				m_recvCounter = 0;
+				m_bufWatermark = 0;
 			}
 		}
 		else if(rc == SOCKET_ERROR)
@@ -425,7 +565,21 @@ BOOL CUdpCast::PauseReceive(BOOL bPause)
 		m_bPaused = bPause;
 
 		if(!bPause)
+		{
 			m_evUnpause.Set();
+		}
+		else
+		{
+			int count;
+
+			{
+				CCriSecLock locallock(m_csReceive);
+				count = m_lsReceive.Size();
+				m_lsReceive.Clear();
+			}
+
+			TRACE("conn %Iu: PauseReceive() discarded %d buffered packets\n", m_dwConnID, count);
+		}
 
 		return TRUE;
 	}
@@ -454,7 +608,7 @@ BOOL CUdpCast::SendData()
 
 				if(TRIGGER(FireSend(itPtr->Ptr(), rc)) == HR_ERROR)
 				{
-					TRACE("<C-CNNID: %Iu> OnSend() event should not return 'HR_ERROR' !!\n", m_dwConnID);
+					TRACE("conn %Iu: OnSend() event should not return 'HR_ERROR' !!\n", m_dwConnID);
 					ASSERT(FALSE);
 				}
 			}
@@ -504,7 +658,9 @@ BOOL CUdpCast::Stop()
 	if(!CheckStoping(dwCurrentThreadID))
 		return FALSE;
 
-	WaitForWorkerThreadEnd(dwCurrentThreadID);
+    TRACE("conn %Iu: stop is called", m_dwConnID);
+
+    WaitForWorkerThreadsEnd(dwCurrentThreadID);
 
 	SetConnected(FALSE);
 
@@ -532,13 +688,17 @@ BOOL CUdpCast::Stop()
 void CUdpCast::Reset()
 {
 	CCriSecLock locallock(m_csSend);
+	CCriSecLock locallock2(m_csReceive);
 
-	m_rcBuffer.Free();
 	m_evBuffer.Reset();
 	m_evWorker.Reset();
 	m_evUnpause.Reset();
 	m_lsSend.Clear();
 	m_itPool.Clear();
+
+	m_receivePool.Clear();
+	m_lsReceive.Clear();
+	m_evReceived.Reset();
 
 	m_castAddr.Reset();
 	m_remoteAddr.Reset();
@@ -551,23 +711,33 @@ void CUdpCast::Reset()
 	m_enState	= SS_STOPPED;
 
 	m_evWait.Set();
+
+	m_recvCounter = 0;
+	m_bufWatermark = 0;
 }
 
-void CUdpCast::WaitForWorkerThreadEnd(DWORD dwCurrentThreadID)
+void CUdpCast::WaitForWorkerThreadEnd(DWORD curThreadId, HANDLE& theadHandle, UINT& threadId)
 {
-	if(m_hWorker != nullptr)
+	if(theadHandle != nullptr)
 	{
-		if(dwCurrentThreadID != m_dwWorkerID)
+		if(curThreadId != threadId)
 		{
-			m_evWorker.Set();
-			ENSURE(::MsgWaitForSingleObject(m_hWorker));
+			ENSURE(::MsgWaitForSingleObject(theadHandle));
 		}
 
-		::CloseHandle(m_hWorker);
+		::CloseHandle(theadHandle);
 
-		m_hWorker		= nullptr;
-		m_dwWorkerID	= 0;
+		theadHandle	= nullptr;
+		threadId	= 0;
 	}
+}
+
+void CUdpCast::WaitForWorkerThreadsEnd(DWORD dwCurrentThreadID)
+{
+	m_evWorker.Set();
+
+    WaitForWorkerThreadEnd(dwCurrentThreadID, m_hThreadNetwork,   m_dwNetworkWorkerID);
+    WaitForWorkerThreadEnd(dwCurrentThreadID, m_hThreadProcessor, m_dwProcessorWorkerID);
 }
 
 BOOL CUdpCast::Send(const BYTE* pBuffer, int iLength, int iOffset)
@@ -668,7 +838,7 @@ int CUdpCast::SendInternal(TItemPtr& itPtr)
 
 void CUdpCast::SetLastError(EnSocketError code, LPCSTR func, int ec)
 {
-	TRACE("%s --> Error: %d, EC: %d\n", func, code, ec);
+	TRACE("conn %Iu: %s --> Error: %d, EC: %d\n", m_dwConnID, func, code, ec);
 
 	m_enLastError = code;
 	::SetLastError(ec);
