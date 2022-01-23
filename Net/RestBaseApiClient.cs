@@ -94,6 +94,7 @@
 		protected Task<TResult> PostAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
 			var (url, parameters) = GetInfo(requestUri, args);
+			var method = HttpMethod.Post;
 
 			object body;
 
@@ -106,20 +107,21 @@
 					if (value is null && !isRequired)
 						continue;
 
-					dict.Add(name, TryFormat(value));
+					dict.Add(name, TryFormat(value, method));
 				}
 
 				body = FormatRequest(dict);
 			}
 			else
-				body = TryFormat(parameters.FirstOrDefault().value);
+				body = TryFormat(parameters.FirstOrDefault().value, method);
 
-			return DoAsync<TResult>(HttpMethod.Post, url, body, Cache, cancellationToken);
+			return DoAsync<TResult>(method, url, body, Cache, cancellationToken);
 		}
 
 		protected Task<TResult> GetAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
 			var (url, parameters) = GetInfo(requestUri, args);
+			var method = HttpMethod.Get;
 
 			if (parameters.Length > 0)
 			{
@@ -128,16 +130,17 @@
 					if ((value is null || (info.ParameterType == typeof(bool) && !(bool)value)) && !isRequired)
 						continue;
 
-					url.QueryString.Append(name, TryFormat(value)?.ToString().EncodeToHtml());
+					url.QueryString.Append(name, TryFormat(value, method)?.ToString().EncodeToHtml());
 				}
 			}
 
-			return DoAsync<TResult>(HttpMethod.Get, url, null, Cache, cancellationToken);
+			return DoAsync<TResult>(method, url, null, Cache, cancellationToken);
 		}
 
 		protected Task<TResult> DeleteAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
 			var (url, parameters) = GetInfo(requestUri, args);
+			var method = HttpMethod.Delete;
 
 			if (parameters.Length > 0)
 			{
@@ -146,16 +149,17 @@
 					if ((value is null || (info.ParameterType == typeof(bool) && !(bool)value)) && !isRequired)
 						continue;
 
-					url.QueryString.Append(name, TryFormat(value)?.ToString().EncodeToHtml());
+					url.QueryString.Append(name, TryFormat(value, method)?.ToString().EncodeToHtml());
 				}
 			}
 
-			return DoAsync<TResult>(HttpMethod.Delete, url, null, Cache, cancellationToken);
+			return DoAsync<TResult>(method, url, null, Cache, cancellationToken);
 		}
 
 		protected Task<TResult> PutAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
 			var (url, parameters) = GetInfo(requestUri, args);
+			var method = HttpMethod.Put;
 
 			object body;
 
@@ -168,15 +172,15 @@
 					if (value is null && !isRequired)
 						continue;
 
-					dict.Add(name, TryFormat(value));
+					dict.Add(name, TryFormat(value, method));
 				}
 
 				body = FormatRequest(dict);
 			}
 			else
-				body = TryFormat(parameters.FirstOrDefault().value);
+				body = TryFormat(parameters.FirstOrDefault().value, method);
 
-			return DoAsync<TResult>(HttpMethod.Put, url, body, Cache, cancellationToken);
+			return DoAsync<TResult>(method, url, body, Cache, cancellationToken);
 		}
 
 		protected virtual string FormatRequestUri(string requestUri)
@@ -226,6 +230,6 @@
 			}).ToArray());
 		}
 
-		protected virtual object TryFormat(object arg) => arg;
+		protected virtual object TryFormat(object arg, HttpMethod method) => arg;
 	}
 }
