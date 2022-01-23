@@ -85,9 +85,20 @@
 
 			schema.Fields.AddRange(GetMembers(entityType).Select(member =>
 			{
-				var field = member.GetAttribute<IdentityAttribute>() is null
-					? new Field(schema, member) { IsIndex = member.GetAttribute<IndexAttribute>() != null }
-					: new IdentityField(schema, member);
+				Field field;
+
+				if (member.GetAttribute<IdentityAttribute>() is null)
+				{
+					var indexAttr = member.GetAttribute<IndexAttribute>();
+
+					field = new Field(schema, member)
+					{
+						IsIndex = indexAttr != null,
+						IsIndexNull = indexAttr?.CacheNull == true,
+					};
+				}
+				else
+					field = new IdentityField(schema, member);
 
 				if (typeOverides.TryGetValue(field.Type, out var toType))
 					field.Type = toType;
@@ -110,7 +121,9 @@
 
 			foreach (var attribute in entityType.GetAttributes<IndexAttribute>())
 			{
-				schema.Fields[attribute.FieldName].IsIndex = true;
+				var field = schema.Fields[attribute.FieldName];
+				field.IsIndex = true;
+				field.IsIndexNull = attribute.CacheNull;
 			}
 
 			static Type CreateFactoryType(Type fieldType)
