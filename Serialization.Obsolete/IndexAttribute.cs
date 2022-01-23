@@ -8,5 +8,6 @@ namespace Ecng.Serialization
 	public class IndexAttribute : Attribute
 	{
 		public string FieldName { get; set; }
+		public bool CacheNull { get; set; }
 	}
 }
