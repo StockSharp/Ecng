@@ -173,5 +173,16 @@ namespace Ecng.Tests.Common
 			objArr.To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
 			objArr.To<IEnumerable<long>>().To<IEnumerable<int>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
 		}
+
+		[TestMethod]
+		public void IPAddr()
+		{
+			const string ip = "95.46.7.4";
+			ip.AssertEqual(ip.To<IPAddress>().To<long>().To<IPAddress>().To<string>());
+
+			var loopback = IPAddress.Loopback;
+			loopback.AssertEqual(loopback.To<long>().To<IPAddress>());
+			loopback.AssertEqual(loopback.To<string>().To<IPAddress>());
+		}
 	}
 }

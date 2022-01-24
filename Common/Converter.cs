@@ -503,7 +503,20 @@
 					return null;
 				}
 
-				if (TryGetTypedConverter(value is Type ? typeof(Type) : value.GetType(), destinationType, out var typedConverter))
+				Type GetValueType()
+				{
+					if (value is Type)
+						return typeof(Type);
+
+					if (value is IPAddress)
+						return typeof(IPAddress);
+
+					return value.GetType();
+				}
+
+				var valueType = GetValueType();
+
+				if (TryGetTypedConverter(valueType, destinationType, out var typedConverter))
 					return typedConverter(value);
 
 				var sourceType = value.GetType();
@@ -574,7 +587,7 @@
 					if (value is Enum)
 						value = value.To(sourceType.GetEnumBaseType());
 
-					if (TryGetTypedConverter(value is Type ? typeof(Type) : value.GetType(), destinationType, out typedConverter))
+					if (TryGetTypedConverter(valueType, destinationType, out typedConverter))
 						return typedConverter(value);
 					else if (value is Array arr && ArrayCovariance(arr, destinationType, out var dest))
 						return dest;
