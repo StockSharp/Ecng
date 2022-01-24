@@ -390,6 +390,15 @@
 			_typedConverters2.Add(key, input => converter((TFrom)input));
 		}
 
+		public static void AddTypedConverter((Type, Type) key, Func<object, object> converter)
+		{
+			if (converter is null)
+				throw new ArgumentNullException(nameof(converter));
+
+			_typedConverters.Add(key, converter);
+			_typedConverters2.Add(key, converter);
+		}
+
 		public static Func<TFrom, TTo> GetTypedConverter<TFrom, TTo>()
 		{
 			return (Func<TFrom, TTo>)_typedConverters[(typeof(TFrom), typeof(TTo))];
