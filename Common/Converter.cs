@@ -28,8 +28,8 @@
 		private static readonly Dictionary<Type, string> _sharpAliasesByValue = new();
 		private static readonly Dictionary<string, Type> _typeCache = new();
 
-		private static readonly Dictionary<Tuple<Type, Type>, Delegate> _typedConverters = new();
-		private static readonly Dictionary<Tuple<Type, Type>, Func<object, object>> _typedConverters2 = new();
+		private static readonly Dictionary<(Type, Type), Delegate> _typedConverters = new();
+		private static readonly Dictionary<(Type, Type), Func<object, object>> _typedConverters2 = new();
 
 		static Converter()
 		{
@@ -384,7 +384,7 @@
 			if (converter is null)
 				throw new ArgumentNullException(nameof(converter));
 
-			var key = Tuple.Create(typeof(TFrom), typeof(TTo));
+			var key = (typeof(TFrom), typeof(TTo));
 
 			_typedConverters.Add(key, converter);
 			_typedConverters2.Add(key, input => converter((TFrom)input));
@@ -392,12 +392,12 @@
 
 		public static Func<TFrom, TTo> GetTypedConverter<TFrom, TTo>()
 		{
-			return (Func<TFrom, TTo>)_typedConverters[Tuple.Create(typeof(TFrom), typeof(TTo))];
+			return (Func<TFrom, TTo>)_typedConverters[(typeof(TFrom), typeof(TTo))];
 		}
 
 		public static Func<object, object> GetTypedConverter(Type from, Type to)
 		{
-			return (Func<object, object>)_typedConverters[Tuple.Create(from, to)];
+			return (Func<object, object>)_typedConverters[(from, to)];
 		}
 
 		public static string GetHost(this EndPoint endPoint)
@@ -479,7 +479,7 @@
 
 		private static bool TryGetTypedConverter(Type from, Type to, out Func<object, object> typedConverter)
 		{
-			return _typedConverters2.TryGetValue(Tuple.Create(from, to), out typedConverter);
+			return _typedConverters2.TryGetValue((from, to), out typedConverter);
 		}
 
 		/// <summary>
