@@ -315,13 +315,22 @@ namespace Ecng.Net
 
 		public static bool IsLoopback(this IPAddress address) => IPAddress.IsLoopback(address);
 
-		public static string GetGravatarUrl(this string email, int size)
+		public static string GetGravatarToken(this string email)
 		{
+			if (email.IsEmpty())
+				throw new ArgumentNullException(nameof(email));
+
 			using var md5Hasher = MD5.Create();
 
-			var hash = md5Hasher.ComputeHash(Encoding.Default.GetBytes(email)).Digest().ToLowerInvariant();
+			return md5Hasher.ComputeHash(Encoding.Default.GetBytes(email)).Digest().ToLowerInvariant();
+		}
 
-			return $"https://www.gravatar.com/avatar/{hash}?size={size}";
+		public static string GetGravatarUrl(this string token, int size)
+		{
+			if (token.IsEmpty())
+				throw new ArgumentNullException(nameof(token));
+
+			return $"https://www.gravatar.com/avatar/{token}?size={size}";
 		}
 
 		[Obsolete("Use TryGetStatusCode method.")]
