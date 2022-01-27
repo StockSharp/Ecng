@@ -2,13 +2,14 @@
 {
 	using System;
 	using System.Net.Http;
+	using System.Linq;
 
 	using Ecng.Common;
 	using Ecng.Collections;
 
 	public class InMemoryRestApiClientCache : IRestApiClientCache
 	{
-		private readonly SynchronizedDictionary<(HttpMethod, string), (object value, DateTime till)> _cache = new();
+		private readonly SynchronizedDictionary<(HttpMethod method, string uri), (object value, DateTime till)> _cache = new();
 		private readonly TimeSpan _timeout;
 
 		public InMemoryRestApiClientCache(TimeSpan timeout)
@@ -53,5 +54,15 @@
 
 		void IRestApiClientCache.Clear() => _cache.Clear();
 		bool IRestApiClientCache.Remove(HttpMethod method, Uri uri) => _cache.Remove(ToKey(method, uri));
+		void IRestApiClientCache.RemoveLike(HttpMethod method, string startWith)
+		{
+			lock (_cache.SyncRoot)
+			{
+				var keys = _cache.Keys.Where(p => p.method == method && p.uri.StartsWithIgnoreCase(startWith)).ToArray();
+
+				foreach (var key in keys)
+					_cache.Remove(key);
+			}
+		}
 	}
 }

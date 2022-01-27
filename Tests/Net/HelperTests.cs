@@ -46,6 +46,10 @@
 
 			cache.Clear();
 			cache.TryGet<object>(method, correctUrl, out _).AssertFalse();
+
+			cache.Set(method, correctUrl, 0);
+			cache.RemoveLike(method, "https://stocksharp.com/api/products");
+			cache.TryGet<object>(method, correctUrl, out _).AssertFalse();
 		}
 	}
 }
