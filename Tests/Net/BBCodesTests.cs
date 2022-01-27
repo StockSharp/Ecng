@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.IO;
+	using System.Linq;
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Threading;
@@ -56,10 +57,12 @@
 		private class RoleRule : BaseReplaceRule<TextBB2HtmlContext>
 		{
 			private readonly Regex _regex;
+			private readonly Func<long, bool> _isInRole;
 
-			public RoleRule()
+			public RoleRule(Func<long, bool> isInRole)
 			{
 				_regex = new Regex(@"\[role=(?<id>([0-9]*))\](?<inner>(.|\n)*)\[/role\]", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+				_isInRole = isInRole ?? throw new ArgumentNullException(nameof(isInRole));
 			}
 
 			public override Task<string> ReplaceAsync(TextBB2HtmlContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
@@ -72,10 +75,8 @@
 
 					if (long.TryParse(match.Groups["id"].Value, out var roleId))
 					{
-						//var role = SiteRootObject.Instance.Clients.ReadById(roleId);
-
-						//if (role != null && context.CurrentClient?.IsInRole(role) == true)
-						what = match.Groups["inner"].Value;
+						if (_isInRole(roleId))
+							what = match.Groups["inner"].Value;
 					}
 
 					var strText = what;
@@ -98,7 +99,7 @@
 		private static readonly Regex _isStockSharpRu = new("href=\"(?<http>(http://)|(https://))?(\\w+.)?stocksharp.ru", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static readonly Regex _isGitHub = new("href=\"https://github.com/stocksharp", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-		private static BB2HtmlFormatter<TextBB2HtmlContext> CreateBBService()
+		private static BB2HtmlFormatter<TextBB2HtmlContext> CreateBBService(Func<long, bool> isInRole = null)
 		{
 			static string GetPackageLink(TextBB2HtmlContext ctx, string packageId)
 			{
@@ -208,8 +209,11 @@
 					;
 				});
 
+			if (isInRole is null)
+				isInRole = i => true;
+
 			//bb.AddRule(new VideoStockSharpReplaceRule());
-			bb.AddRule(new RoleRule());
+			bb.AddRule(new RoleRule(isInRole));
 
 			return bb;
 		}
@@ -661,6 +665,25 @@ var i = 10;</pre>
 
 			var html = "<div class=\"quote\"><span class=\"quotetitle\">LTrader <a href=\"https://stocksharp.com/posts/m/42149/\"><img src=\"https://stocksharp.com/images/smiles/icon_latest_reply.gif\" title=\"Go to\" alt=\"Go to\" /></a></span><div class=\"innerquote\">Добрый день, уважаемые разработчики, и коллеги.</div></div> ответ";
 			res.AssertEqual(html);
+		}
+
+		[TestMethod]
+		public async Task Roles()
+		{
+			var ctx = CreateContext();
+
+			const string txt = @"normal text[role=123] hidden text[/role]";
+
+			var svc = CreateBBService();
+			(await svc.ToHtmlAsync(txt, ctx)).AssertEqual("normal text hidden text");
+			(await svc.CleanAsync(txt, default)).AssertEqual("normal text hidden text");
+			(await svc.ActivateRuleAsync(txt, svc.Rules.First(r => r is RoleRule), default)).AssertEqual("normal text hidden text");
+
+			svc = CreateBBService(i => false);
+			(await svc.ToHtmlAsync(txt, ctx)).AssertEqual("normal text");
+			//TODO (await svc.CleanAsync(txt, default)).AssertEqual("normal text");
+			(await svc.ActivateRuleAsync(txt, svc.Rules.First(r => r is RoleRule), default)).AssertEqual("normal text");
+			(await svc.ActivateRuleAsync($"[b]{txt}[/b]", svc.Rules.First(r => r is RoleRule), default)).AssertEqual("[b]normal text[/b]");
 		}
 	}
 }

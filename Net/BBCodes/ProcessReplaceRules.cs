@@ -45,6 +45,8 @@
 
     #region Properties
 
+    public IList<IReplaceRule<TContext>> Rules => _rulesList;
+
     /// <summary>
     ///   Gets a value indicating whether any rules have been added.
     /// </summary>

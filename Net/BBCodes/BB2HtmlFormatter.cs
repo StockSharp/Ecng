@@ -7,6 +7,7 @@
 	using System.Web;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using System.Collections.Generic;
 
 	using Ecng.Common;
 	using Ecng.Net;
@@ -392,6 +393,8 @@
 		{
 			_instance.AddRule(rule);
 		}
+
+		public IEnumerable<IReplaceRule<TContext>> Rules => _instance.Rules;
 
 		private class VariableRegexReplaceRuleEx : VariableRegexReplaceRule<TContext>
 		{
@@ -1297,6 +1300,23 @@
 			}
 
 			return Task.FromResult(text);
+		}
+
+		public async Task<string> ActivateRuleAsync(string text, IReplaceRule<TContext> rule, TContext context, CancellationToken cancellationToken = default)
+		{
+			if (text.IsEmpty())
+				return text;
+
+			text = await RepairHtml(text, cancellationToken);
+
+			var mainCollection = new ReplaceBlocksCollection();
+
+			return await rule.ReplaceAsync(context, text, mainCollection, cancellationToken);
+		}
+
+		async Task<string> IHtmlFormatter.ActivateRuleAsync(string text, object rule, object context, CancellationToken cancellationToken)
+		{
+			return await ActivateRuleAsync(text, (IReplaceRule<TContext>)rule, (TContext)context, cancellationToken);
 		}
 	}
 }
