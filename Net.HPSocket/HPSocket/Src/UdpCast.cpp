@@ -482,7 +482,7 @@ BOOL CUdpCast::HandleClose(WSANETWORKEVENTS& events)
 
 BOOL CUdpCast::ReadData()
 {
-	const auto MaxPendingReceive = 50000;
+	const auto MaxPendingReceive = 150000;
 
 	while(TRUE)
 	{
