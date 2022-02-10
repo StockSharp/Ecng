@@ -189,7 +189,7 @@
 		protected static string GetCurrentMethod([CallerMemberName]string methodName = "")
 			=> methodName;
 
-		private (Url url, (ParameterInfo info, bool isRequired, string name, object value)[] parameters) GetInfo(string requestUri, object[] args)
+		protected virtual (Url url, (ParameterInfo info, bool isRequired, string name, object value)[] parameters) GetInfo(string requestUri, object[] args)
 		{
 			if (args is null)
 				throw new ArgumentNullException(nameof(args));
