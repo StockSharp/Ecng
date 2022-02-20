@@ -285,6 +285,10 @@ namespace Ecng.ComponentModel
 
 		protected virtual void ProcessCollectionChanged(IEnumerable<NotifyCollectionChangedEventHandler> subscribers, NotifyCollectionChangedAction action, IList<TItem> items, int index)
 		{
+			var e = new NotifyCollectionChangedEventArgs(action, (IList)items, index);
+
+			foreach (var subscriber in subscribers)
+				subscriber(this, e);
 		}
 
 		/// <summary>
