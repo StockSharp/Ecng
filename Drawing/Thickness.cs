@@ -1,4 +1,4 @@
-﻿namespace Ecng.ComponentModel
+﻿namespace Ecng.Drawing
 {
 	/// <summary>
 	/// Thickness.
