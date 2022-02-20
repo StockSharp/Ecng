@@ -10,7 +10,7 @@
 
     using MoreLinq;
 
-	class NotifiableObjectDispatcherTimer
+	class DispatcherNotifiableObjectTimer
 	{
 		private readonly TimeSpan _minInterval = TimeSpan.FromMilliseconds(100);
 		private TimeSpan _interval = TimeSpan.FromMilliseconds(1000);
@@ -32,7 +32,7 @@
 			}
 		}
 
-		public NotifiableObjectDispatcherTimer() => Task.Run(TimerTask);
+		public DispatcherNotifiableObjectTimer() => Task.Run(TimerTask);
 
 		private async Task TimerTask()
 		{
@@ -44,18 +44,18 @@
 			// ReSharper disable once FunctionNeverReturns
 		}
 
-		private static readonly Lazy<NotifiableObjectDispatcherTimer> _instance = new(true);
-		public static NotifiableObjectDispatcherTimer Instance => _instance.Value;
+		private static readonly Lazy<DispatcherNotifiableObjectTimer> _instance = new(true);
+		public static DispatcherNotifiableObjectTimer Instance => _instance.Value;
 	}
 	
 	/// <summary>
 	/// Forward <see cref="INotifyPropertyChanged"/> notifications to dispatcher thread.
 	/// Multiple notifications for the same property may be forwarded only once.
 	/// </summary>
-	public class NotifiableObjectDispatcher<T> : CustomObjectWrapper<T>
+	public class DispatcherNotifiableObject<T> : CustomObjectWrapper<T>
 		where T : class, INotifyPropertyChanged
     {
-		private static NotifiableObjectDispatcherTimer Timer => NotifiableObjectDispatcherTimer.Instance;
+		private static DispatcherNotifiableObjectTimer Timer => DispatcherNotifiableObjectTimer.Instance;
 
 		/// <summary>
 		/// </summary>
@@ -76,7 +76,7 @@
 
         /// <summary>
         /// </summary>
-        public NotifiableObjectDispatcher(IDispatcher dispatcher, T obj)
+        public DispatcherNotifiableObject(IDispatcher dispatcher, T obj)
 			: base(obj)
         {
 			_dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));

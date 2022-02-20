@@ -10,7 +10,7 @@ namespace Ecng.ComponentModel
 
 	/// <summary>
 	/// </summary>
-	public class ThreadSafeObservableCollection<TItem> : BaseObservableCollection, ISynchronizedCollection<TItem>, IListEx<TItem>, IList
+	public class DispatcherObservableCollection<TItem> : BaseObservableCollection, ISynchronizedCollection<TItem>, IListEx<TItem>, IList
 	{
 		private enum ActionTypes
 		{
@@ -65,7 +65,7 @@ namespace Ecng.ComponentModel
 
 		/// <summary>
 		/// </summary>
-		public ThreadSafeObservableCollection(IDispatcher dispatcher, IListEx<TItem> items)
+		public DispatcherObservableCollection(IDispatcher dispatcher, IListEx<TItem> items)
 		{
 			Dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 			Items = items ?? throw new ArgumentNullException(nameof(items));
