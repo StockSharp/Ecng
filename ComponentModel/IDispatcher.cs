@@ -18,5 +18,7 @@
 		/// </summary>
 		/// <param name="action">Action.</param>
 		void InvokeAsync(Action action);
+
+		bool CheckAccess();
 	}
 }
