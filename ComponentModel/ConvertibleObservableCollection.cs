@@ -13,8 +13,8 @@ namespace Ecng.ComponentModel
 	/// </summary>
 	/// <typeparam name="TItem">Original item type.</typeparam>
 	/// <typeparam name="TDisplay">Display item type.</typeparam>
-	class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCollection, IListEx<TItem>
-			where TDisplay : class
+	public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCollection, IListEx<TItem>
+		where TDisplay : class
 	{
 		private readonly ICollection<TDisplay> _collection;
 		private readonly Func<TItem, TDisplay> _converter;
