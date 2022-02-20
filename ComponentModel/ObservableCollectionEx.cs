@@ -1,4 +1,4 @@
-namespace Ecng.Xaml
+namespace Ecng.ComponentModel
 {
 	using System;
 	using System.Collections;
@@ -22,7 +22,6 @@ namespace Ecng.Xaml
 		private const string _indexerName = "Item[]";
 
 		private readonly List<TItem> _items = new();
-		private const int _maxDiff = 10;
 
 		/// <inheritdoc />
 		public event NotifyCollectionChangedEventHandler CollectionChanged;
@@ -281,10 +280,10 @@ namespace Ecng.Xaml
 
 			ProcessCollectionChanged(
 				evt.GetInvocationList().Cast<NotifyCollectionChangedEventHandler>(),
-				new NotifyCollectionChangedEventArgs(action, (IList)items, index));
+				action, items, index);
 		}
 
-		protected virtual void ProcessCollectionChanged(IEnumerable<NotifyCollectionChangedEventHandler> subscribers, NotifyCollectionChangedEventArgs arg)
+		protected virtual void ProcessCollectionChanged(IEnumerable<NotifyCollectionChangedEventHandler> subscribers, NotifyCollectionChangedAction action, IList<TItem> items, int index)
 		{
 		}
 
