@@ -67,7 +67,7 @@
     <NUnit3TestAdapterVer>3.17.0</NUnit3TestAdapterVer>
     <FluentAssertionsVer>5.10.3</FluentAssertionsVer>
     <SystemDrawingCommonVer>5.0.3</SystemDrawingCommonVer>
-
+    <SmartFormatVer>3.0.0</SmartFormatVer>
     <CSharpVer>4.7.0</CSharpVer>
     <MsCodeVer>3.11.0</MsCodeVer>
     <NewtonJsonVer>13.0.1</NewtonJsonVer>

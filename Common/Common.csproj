@@ -8,9 +8,7 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVer)" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightVer)" />
     <PackageReference Include="Nito.AsyncEx" Version="$(NitoVer)" />
-
-    <ProjectReference Include="..\SmartFormat\SmartFormat\SmartFormat.csproj" />
-
+	<PackageReference Include="SmartFormat.Net" Version="$(SmartFormatVer)" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="TimeZoneConverter\Data\*.csv.gz" />

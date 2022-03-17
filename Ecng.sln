@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29209.62
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{340C3BD6-6951-4224-8E35-49D2C67A2680}"
 	ProjectSection(SolutionItems) = preProject
@@ -59,19 +59,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibGit2Sharp", "LibGit2Shar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{43DCD61B-E735-442E-85F4-B5D5BE199DD2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "Data\Data.csproj", "{0F5D95EF-F816-447A-B517-DD8E1DA6987F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data", "Data\Data.csproj", "{0F5D95EF-F816-447A-B517-DD8E1DA6987F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serialization.Obsolete", "Serialization.Obsolete\Serialization.Obsolete.csproj", "{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serialization.Obsolete", "Serialization.Obsolete\Serialization.Obsolete.csproj", "{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Net.HPSocket", "Net.HPSocket\HPSocket.Net\Net.HPSocket.csproj", "{766FDE83-5D42-4D6A-9E4D-241D259DD4BB}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartFormat", "SmartFormat\SmartFormat\SmartFormat.csproj", "{7359993E-F2D2-4599-B861-F5136E48D8F3}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartFormat.Tests", "SmartFormat\SmartFormat.Tests\SmartFormat.Tests.csproj", "{84BC791D-31CD-4585-90FE-3A059F053F14}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Net.HPSocket", "Net.HPSocket\HPSocket.Net\Net.HPSocket.csproj", "{766FDE83-5D42-4D6A-9E4D-241D259DD4BB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Drawing", "Drawing\Drawing.csproj", "{740C5C88-7C14-4B3F-BD93-3AD8A7FCF687}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Compiler", "Compilation\Compilation.csproj", "{375E166E-325A-4EBE-85FC-0D319E6784C0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Compilation", "Compilation\Compilation.csproj", "{375E166E-325A-4EBE-85FC-0D319E6784C0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -191,14 +187,6 @@ Global
 		{766FDE83-5D42-4D6A-9E4D-241D259DD4BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{766FDE83-5D42-4D6A-9E4D-241D259DD4BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{766FDE83-5D42-4D6A-9E4D-241D259DD4BB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{84BC791D-31CD-4585-90FE-3A059F053F14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{84BC791D-31CD-4585-90FE-3A059F053F14}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{84BC791D-31CD-4585-90FE-3A059F053F14}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{84BC791D-31CD-4585-90FE-3A059F053F14}.Release|Any CPU.Build.0 = Release|Any CPU
 		{740C5C88-7C14-4B3F-BD93-3AD8A7FCF687}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{740C5C88-7C14-4B3F-BD93-3AD8A7FCF687}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{740C5C88-7C14-4B3F-BD93-3AD8A7FCF687}.Release|Any CPU.ActiveCfg = Release|Any CPU
