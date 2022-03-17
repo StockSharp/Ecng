@@ -97,6 +97,6 @@ namespace Ecng.Security
 
 		public override int GetHashCode() => EnsureGetHashCode();
 
-		public override Secret Clone() => new Secret { Hash = Hash?.ToArray(), Salt = Salt?.ToArray() };
+		public override Secret Clone() => new() { Hash = Hash?.ToArray(), Salt = Salt?.ToArray() };
 	}
 }

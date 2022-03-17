@@ -161,10 +161,10 @@ namespace Ecng.Security
 
 			return name switch
 			{
-				AlgorithmTypes.Symmetric => new CryptoAlgorithm(new SymmetricCryptographer(type, keys[0])),
-				AlgorithmTypes.Asymmetric => new CryptoAlgorithm(new AsymmetricCryptographer(type, keys[0], keys[1])),
-				AlgorithmTypes.Dpapi => new CryptoAlgorithm(new DpapiCryptographer(DefaultScope)),
-				AlgorithmTypes.Hash => new CryptoAlgorithm(keys.Length == 0 ? new HashCryptographer(type) : new HashCryptographer(type, keys[0])),
+				AlgorithmTypes.Symmetric => new(new SymmetricCryptographer(type, keys[0])),
+				AlgorithmTypes.Asymmetric => new(new AsymmetricCryptographer(type, keys[0], keys[1])),
+				AlgorithmTypes.Dpapi => new(new DpapiCryptographer(DefaultScope)),
+				AlgorithmTypes.Hash => new(keys.Length == 0 ? new HashCryptographer(type) : new HashCryptographer(type, keys[0])),
 				_ => throw new ArgumentOutOfRangeException(nameof(name), name.To<string>()),
 			};
 		}
