@@ -21,4 +21,11 @@
 
 		bool CheckAccess();
 	}
+
+	public class DummyDispatcher : IDispatcher
+	{
+		bool IDispatcher.CheckAccess() => true;
+		void IDispatcher.Invoke(Action action) => action();
+		void IDispatcher.InvokeAsync(Action action) => action.BeginInvoke(action.EndInvoke, null);
+	}
 }
