@@ -1,6 +1,7 @@
 ﻿namespace Ecng.ComponentModel
 {
 	using System;
+	using System.Threading.Tasks;
 
 	/// <summary>
 	/// Threads dispatcher.
@@ -26,6 +27,6 @@
 	{
 		bool IDispatcher.CheckAccess() => true;
 		void IDispatcher.Invoke(Action action) => action();
-		void IDispatcher.InvokeAsync(Action action) => action.BeginInvoke(action.EndInvoke, null);
+		void IDispatcher.InvokeAsync(Action action) => Task.Run(action);
 	}
 }
