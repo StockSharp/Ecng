@@ -4,9 +4,12 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Threading;
 	using System.Threading.Tasks;
 
 	using MoreLinq;
+
+	using Nito.AsyncEx;
 
 	using Wintellect.PowerCollections;
 
@@ -634,6 +637,38 @@
 					}
 				}
 			}
+
+			return value;
+		}
+
+		[CLSCompliant(false)]
+		public static async Task<TValue> SafeAddAsync<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, AsyncReaderWriterLock sync, TKey key, Func<TKey, CancellationToken, Task<TValue>> handler, CancellationToken cancellationToken)
+		{
+			if (dictionary is null)
+				throw new ArgumentNullException(nameof(dictionary));
+
+			if (sync is null)
+				throw new ArgumentNullException(nameof(sync));
+
+			if (handler is null)
+				throw new ArgumentNullException(nameof(handler));
+
+			TValue value;
+
+			using (await sync.ReaderLockAsync(cancellationToken))
+			{
+				if (dictionary.TryGetValue(key, out value))
+					return value;
+			}
+
+			value = await handler(key, cancellationToken);
+
+			using var _ = await sync.WriterLockAsync(cancellationToken);
+
+			if (dictionary.TryGetValue(key, out var temp))
+				return temp;
+
+			dictionary.Add(key, value);
 
 			return value;
 		}
