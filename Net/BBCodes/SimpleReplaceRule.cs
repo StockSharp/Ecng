@@ -22,7 +22,7 @@
     /// <summary>
     ///   The _replace.
     /// </summary>
-    private readonly Func<TContext, string> _replace;
+    private readonly Func<TContext, CancellationToken, Task<string>> _replace;
 
     #endregion
 
@@ -37,7 +37,7 @@
     /// <param name="replace">
     /// The replace.
     /// </param>
-    public SimpleReplaceRule(string find, Func<TContext, string> replace)
+    public SimpleReplaceRule(string find, Func<TContext, CancellationToken, Task<string>> replace)
     {
       _find = find;
       _replace = replace;
@@ -74,7 +74,7 @@
     /// <param name="replacement">
     /// The replacement.
     /// </param>
-    public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+    public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
     {
       int index;
 
@@ -87,14 +87,14 @@
         if (index >= 0)
         {
           // replace it...
-          int replaceIndex = replacement.Add(_replace(context));
+          int replaceIndex = replacement.Add(await _replace(context, cancellationToken));
           text = text.Substring(0, index) + replacement.Get(replaceIndex) +
                  text.Substring(index + _find.Length);
         }
       }
       while (index >= 0);
 
-	  return Task.FromResult(text);
+	  return text;
     }
 
     #endregion

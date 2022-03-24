@@ -49,9 +49,9 @@
 
 			public string UrlPart { get; set; }
 
-			string INamedObject<TextBB2HtmlContext>.GetName(TextBB2HtmlContext ctx) => Name;
-			string INamedObject<TextBB2HtmlContext>.GetDescription(TextBB2HtmlContext ctx) => Description;
-			string INamedObject<TextBB2HtmlContext>.GetUrlPart(TextBB2HtmlContext ctx) => UrlPart;
+			Task<string> INamedObject<TextBB2HtmlContext>.GetName(TextBB2HtmlContext ctx, CancellationToken token) => Task.FromResult(Name);
+			Task<string> INamedObject<TextBB2HtmlContext>.GetDescription(TextBB2HtmlContext ctx, CancellationToken token) => Task.FromResult(Description);
+			Task<string> INamedObject<TextBB2HtmlContext>.GetUrlPart(TextBB2HtmlContext ctx, CancellationToken token) => Task.FromResult(UrlPart);
 		}
 
 		private class RoleRule : BaseReplaceRule<TextBB2HtmlContext>
@@ -101,15 +101,15 @@
 
 		private static BB2HtmlFormatter<TextBB2HtmlContext> CreateBBService(Func<long, bool> isInRole = null)
 		{
-			static string GetPackageLink(TextBB2HtmlContext ctx, string packageId)
+			static Task<string> GetPackageLink(TextBB2HtmlContext ctx, string packageId, CancellationToken token)
 			{
 				if (packageId.IsEmpty())
 					throw new ArgumentNullException(nameof(packageId));
 
-				return $"https://www.nuget.org/packages/{packageId}/";
+				return Task.FromResult($"https://www.nuget.org/packages/{packageId}/");
 			}
 
-			static string ToFullAbsolute(TextBB2HtmlContext ctx, string virtualPath)
+			static Task<string> ToFullAbsolute(TextBB2HtmlContext ctx, string virtualPath, CancellationToken token)
 			{
 				var domain = ctx.Localhost ? "http://localhost/stocksharp" : $"{ctx.Scheme}://stocksharp.{ctx.DomainCode}";
 
@@ -120,7 +120,7 @@
 				else
 					virtualPath = virtualPath.Replace("~", domain);
 
-				return virtualPath;
+				return Task.FromResult(virtualPath);
 			}
 
 			static Task<INamedObject<TextBB2HtmlContext>> GetProduct(long id, CancellationToken token)
@@ -171,11 +171,11 @@
 				GetPage,
 
 				GetPackageLink,
-				(ctx, s) => s,
+				(ctx, s, t) => Task.FromResult(s),
 				ToFullAbsolute,
-				(ctx, sourceUrl) => $"{sourceUrl}_a6f78c5fce344124993798c028a22a3a",
-				ctx => $"stocksharp.{ctx.DomainCode}",
-				(ctx, url) =>
+				(ctx, sourceUrl, t) => Task.FromResult($"{sourceUrl}_a6f78c5fce344124993798c028a22a3a"),
+				(ctx, t) => Task.FromResult($"stocksharp.{ctx.DomainCode}"),
+				async (ctx, url, t) =>
 				{
 					string domain = null;
 
@@ -191,7 +191,7 @@
 					var changed = !domain.IsEmpty() && (ctx.Localhost || domain != ctx.DomainCode);
 					if (changed)
 					{
-						url.ReplaceIgnoreCase($"{match.Groups["http"]}stocksharp.{domain}", ToFullAbsolute(ctx, "~"));
+						url.ReplaceIgnoreCase($"{match.Groups["http"]}stocksharp.{domain}", await ToFullAbsolute(ctx, "~", t));
 					}
 
 					var isGitHub = _isGitHub.IsMatch(urlStr);
@@ -200,12 +200,12 @@
 					var isBlank = isAway || isGitHub;
 					return (changed, isAway, noFollow, isBlank);
 				},
-				(ctx, url) => url.UrlEscape(),
-				(ctx, img) =>
+				(ctx, url, t) => Task.FromResult(url.UrlEscape()),
+				(ctx, img, t) =>
 				{
-					return Path.GetExtension(img).EqualsIgnoreCase(".gif")
+					return Task.FromResult(Path.GetExtension(img).EqualsIgnoreCase(".gif")
 						? $"~/images/smiles/{img}"
-						: $"~/images/svg/smiles/{img}"
+						: $"~/images/svg/smiles/{img}")
 					;
 				});
 

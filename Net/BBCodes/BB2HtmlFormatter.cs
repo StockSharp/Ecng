@@ -86,20 +86,20 @@
 		private const string _blank = "target=\"_blank\"";
 		private const string _noFollow = "rel=\"nofollow\"";
 
-		private readonly Func<TContext, string, string> _getPackageFullUrl;
-		private readonly Func<TContext, string, string> _encryptUrl;
-		private readonly Func<TContext, string, string> _toFullAbsolute;
 		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getProduct;
 		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getUser;
 		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getFile;
 		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getTopic;
 		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getMessage;
 		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getPage;
-		private readonly Func<TContext, string, string> _generateId;
-		private readonly Func<TContext, string> _getHost;
-		private readonly Func<TContext, StringBuilder, (bool changed, bool isAway, bool noFollow, bool isBlank)> _getUrlInfo;
-		private readonly Func<TContext, string, string> _urlEscape;
-		private readonly Func<TContext, string, string> _getImagePath;
+		private readonly Func<TContext, string, CancellationToken, Task<string>> _getPackageFullUrl;
+		private readonly Func<TContext, string, CancellationToken, Task<string>> _encryptUrl;
+		private readonly Func<TContext, string, CancellationToken, Task<string>> _toFullAbsolute;
+		private readonly Func<TContext, string, CancellationToken, Task<string>> _generateId;
+		private readonly Func<TContext, CancellationToken, Task<string>> _getHost;
+		private readonly Func<TContext, StringBuilder, CancellationToken, Task<(bool changed, bool isAway, bool noFollow, bool isBlank)>> _getUrlInfo;
+		private readonly Func<TContext, string, CancellationToken, Task<string>> _urlEscape;
+		private readonly Func<TContext, string, CancellationToken, Task<string>> _getImagePath;
 
 		public BB2HtmlFormatter(
 			Func<long, CancellationToken, Task<INamedObject<TContext>>> getProduct,
@@ -109,14 +109,14 @@
 			Func<long, CancellationToken, Task<INamedObject<TContext>>> getMessage,
 			Func<long, CancellationToken, Task<INamedObject<TContext>>> getPage,
 
-			Func<TContext, string, string> getPackageFullUrl,
-			Func<TContext, string, string> encryptUrl,
-			Func<TContext, string, string> toFullAbsolute,
-			Func<TContext, string, string> generateId,
-			Func<TContext, string> getHost,
-			Func<TContext, StringBuilder, (bool changed, bool isAway, bool noFollow, bool isBlank)> getUrlInfo,
-			Func<TContext, string, string> urlEscape,
-			Func<TContext, string, string> getImagePath)
+			Func<TContext, string, CancellationToken, Task<string>> getPackageFullUrl,
+			Func<TContext, string, CancellationToken, Task<string>> encryptUrl,
+			Func<TContext, string, CancellationToken, Task<string>> toFullAbsolute,
+			Func<TContext, string, CancellationToken, Task<string>> generateId,
+			Func<TContext, CancellationToken, Task<string>> getHost,
+			Func<TContext, StringBuilder, CancellationToken, Task<(bool changed, bool isAway, bool noFollow, bool isBlank)>> getUrlInfo,
+			Func<TContext, string, CancellationToken, Task<string>> urlEscape,
+			Func<TContext, string, CancellationToken, Task<string>> getImagePath)
 		{
 			_getProduct = getProduct ?? throw new ArgumentNullException(nameof(getProduct));
 			_getUser = getUser ?? throw new ArgumentNullException(nameof(getUser));
@@ -134,7 +134,7 @@
 			_urlEscape = urlEscape ?? throw new ArgumentNullException(nameof(urlEscape));
 			_getImagePath = getImagePath ?? throw new ArgumentNullException(nameof(getImagePath));
 
-			_toFullAbsolute = (ctx, url) => _urlEscape(ctx, toFullAbsolute(ctx, url));
+			_toFullAbsolute = async (ctx, url, t) => await _urlEscape(ctx, await toFullAbsolute(ctx, url, t), t);
 
 			const RegexOptions compiledOptions = RegexOptions.IgnoreCase | RegexOptions.Compiled;
 			const RegexOptions singleLine = RegexOptions.Singleline | compiledOptions;
@@ -316,9 +316,9 @@
 
 				var alt = smile.Emoticon.EncodeToHtml();
 
-				string Replace(TContext ctx)
+				async Task<string> Replace(TContext ctx, CancellationToken token)
 				{
-					var src = _toFullAbsolute(ctx, _getImagePath(ctx, smile.Icon));
+					var src = await _toFullAbsolute(ctx, await _getImagePath(ctx, smile.Icon, token), token);
 
 					return $"<img src=\"{src}\" alt=\"{alt}\" class=\"smiles\" />";
 				}
@@ -345,7 +345,7 @@
 			//ForumPage page = new ForumPage();
 			AddRule(new VariableRegexReplaceRule<TContext>(_rgxQuote2, "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put("${quote}", "${inner}"), new[] { "quote" }) { RuleRank = 63 });
 			AddRule(new SimpleRegexReplaceRule<TContext>(_rgxQuote1, ctx => "<div class=\"quote\"><span class=\"quotetitle\">{0}</span><div class=\"innerquote\">{1}</div></div>".Put($"{ctx.GetLocString("Quote")}:", "${inner}")) { RuleRank = 64 });
-			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, async (ctx, t) => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", _toFullAbsolute(ctx, (await _getMessage(1977, t)).GetUrlPart(ctx)).Replace("1977", "${id}"), _toFullAbsolute(ctx, _getImagePath(ctx, "icon_latest_reply.gif")), ctx.GetLocString("GoTo"), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
+			AddRule(new VariableRegexReplaceRuleEx(this, _rgxQuote3, async (ctx, t) => "<div class=\"quote\"><span class=\"quotetitle\">{0} <a href=\"{1}\"><img src=\"{2}\" title=\"{3}\" alt=\"{3}\" /></a></span><div class=\"innerquote\">{4}</div></div>".Put("${quote}", (await _toFullAbsolute(ctx, await (await _getMessage(1977, t)).GetUrlPart(ctx, t), t)).Replace("1977", "${id}"), await _toFullAbsolute(ctx, await _getImagePath(ctx, "icon_latest_reply.gif", t), t), ctx.GetLocString("GoTo"), "${inner}"), new[] { "quote", "id" }) { RuleRank = 62 });
 			//}
 			AddRule(new TopicRegexReplaceRule(this, _rgxPost, "<a {0} href=\"${post}\">${inner}</a>".Replace("{0}", _blank), singleLine));
 			AddRule(new TopicRegexReplaceRule(this, _rgxTopic, "<a {0} href=\"${topic}\">${inner}</a>".Replace("{0}", _blank), singleLine));
@@ -466,7 +466,7 @@
 						  "${innertrunc}", m.Groups["inner"].Value.TruncateMiddle(TruncateLength));
 					}
 
-					var (_, isAway, noFollow, isBlank) = _parent._getUrlInfo(context, innerReplace);
+					var (_, isAway, noFollow, isBlank) = await _parent._getUrlInfo(context, innerReplace, cancellationToken);
 
 					if (isAway)
 					{
@@ -474,7 +474,7 @@
 						var start = str.IndexOfIgnoreCase("href=") + 6;
 						var end = str.IndexOfIgnoreCase("\"", start);
 						innerReplace.Remove(start, end - start);
-						innerReplace.Insert(start, $"{context.Scheme}://{_parent._getHost(context)}/away/?u={_parent._encryptUrl(context, str.Substring(start, end - start))}");
+						innerReplace.Insert(start, $"{context.Scheme}://{await _parent._getHost(context, cancellationToken)}/away/?u={await _parent._encryptUrl(context, str.Substring(start, end - start), cancellationToken)}");
 					}
 
 					if (!noFollow)
@@ -591,7 +591,7 @@
 							var varValue = await ManageVariableValue(context, variableName, variableValue, handlingValue, cancellationToken);
 
 							if (variableName == "url")
-								varValue = _parent._urlEscape(context, varValue);
+								varValue = await _parent._urlEscape(context, varValue, cancellationToken);
 
 							sb.Replace("${" + variableName + "}", varValue);
 							index++;
@@ -604,19 +604,19 @@
 					{
 						var file = await _parent._getFile(id, cancellationToken);
 
-						url = _parent._toFullAbsolute(context, file.GetUrlPart(context));
+						url = await _parent._toFullAbsolute(context, await file.GetUrlPart(context, cancellationToken), cancellationToken);
 
 						if (!hasTitle)
 							inner = url;
 
-						if (file.GetName(context).IsImage() == true)
+						if ((await file.GetName(context, cancellationToken)).IsImage() == true)
 						{
 							sb.Replace("title=", $"data-preview-id='{id}' title=");
 						}
 					}
 
 					sb
-						.Replace("${url}", _parent._urlEscape(context, url))
+						.Replace("${url}", await _parent._urlEscape(context, url, cancellationToken))
 						.Replace("${inner}", inner);
 
 					if (TruncateLength > 0)
@@ -626,7 +626,7 @@
 
 					if (!isId)
 					{
-						var (_, away, noFollow, isBlank) = _parent._getUrlInfo(context, sb);
+						var (_, away, noFollow, isBlank) = await _parent._getUrlInfo(context, sb, cancellationToken);
 
 						if (away)
 						{
@@ -634,7 +634,7 @@
 							var start = str.IndexOfIgnoreCase("href=") + 6;
 							var end = str.IndexOfIgnoreCase("\"", start);
 							sb.Remove(start, end - start);
-							sb.Insert(start, $"{context.Scheme}://{_parent._getHost(context)}/away/?u={_parent._encryptUrl(context, str.Substring(start, end - start))}");
+							sb.Insert(start, $"{context.Scheme}://{await _parent._getHost(context, cancellationToken)}/away/?u={await _parent._encryptUrl(context, str.Substring(start, end - start), cancellationToken)}");
 						}
 
 						if (noFollow)
@@ -669,7 +669,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -679,7 +679,7 @@
 
 					var sb = new StringBuilder(RegExReplace(context));
 
-					var id = _parent._generateId(context, "spolier");
+					var id = await _parent._generateId(context, "spolier", cancellationToken);
 
 					sb.Replace("${inner}", $@"<input type='button' value='{context.GetLocString("ShowSpoiler")}' class='btn btn-primary' onclick=""toggleSpoiler(this, '{id}');"" title='{context.GetLocString("ShowSpoiler")}' /></div><div class='spoilerbox' id='{id}' style='display:none'>" + match.Groups["inner"].Value);
 
@@ -690,7 +690,7 @@
 					builder.Insert(@group.Index, sb.ToString());
 				}
 
-				return Task.FromResult(builder.ToString());
+				return builder.ToString();
 			}
 		}
 
@@ -786,10 +786,10 @@
 					{
 						var user = await _parent._getUser(id, cancellationToken);
 
-						sb.Replace("${url}", _parent._toFullAbsolute(context, user.GetUrlPart(context)));
-						sb.Replace("${name}", user.GetName(context).CheckUrl());
+						sb.Replace("${url}", await _parent._toFullAbsolute(context, await user.GetUrlPart(context, cancellationToken), cancellationToken));
+						sb.Replace("${name}", (await user.GetName(context, cancellationToken)).CheckUrl());
 
-						title = user.GetDescription(context);
+						title = await user.GetDescription(context, cancellationToken);
 
 						if (!title.IsEmpty())
 							title = $" title='{title}'";
@@ -823,7 +823,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -837,7 +837,7 @@
 
 					if (!packageId.IsEmpty())
 					{
-						sb.Replace("${url}", _parent._getPackageFullUrl(context, packageId));
+						sb.Replace("${url}", await _parent._getPackageFullUrl(context, packageId, cancellationToken));
 						sb.Replace("${name}", packageId);
 					}
 					else
@@ -853,7 +853,7 @@
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				return Task.FromResult(builder.ToString());
+				return builder.ToString();
 			}
 		}
 
@@ -884,10 +884,10 @@
 					{
 						var product = await _parent._getProduct(id, cancellationToken);
 
-						sb.Replace("${url}", _parent._toFullAbsolute(context, product.GetUrlPart(context)));
-						sb.Replace("${name}", product.GetName(context));
+						sb.Replace("${url}", await _parent._toFullAbsolute(context, await product.GetUrlPart(context, cancellationToken), cancellationToken));
+						sb.Replace("${name}", await product.GetName(context, cancellationToken));
 
-						title = product.GetDescription(context);
+						title = await product.GetDescription(context, cancellationToken);
 
 						if (!title.IsEmpty())
 							title = $" title='{title}'";
@@ -940,10 +940,10 @@
 
 						if (product != null)
 						{
-							sb.Replace("${url}", _parent._toFullAbsolute(context, product.GetUrlPart(context)));
+							sb.Replace("${url}", await _parent._toFullAbsolute(context, await product.GetUrlPart(context, cancellationToken), cancellationToken));
 
 							if (inner.IsEmpty())
-								inner = product.GetName(context);
+								inner = await product.GetName(context, cancellationToken);
 						}
 						else
 							sb.Replace("${url}", idStr);
@@ -1003,12 +1003,12 @@
 
 						if (page != null)
 						{
-							sb.Replace("${url}", _parent._toFullAbsolute(context, page.GetUrlPart(context)));
+							sb.Replace("${url}", await _parent._toFullAbsolute(context, await page.GetUrlPart(context, cancellationToken), cancellationToken));
 
 							if (inner.IsEmpty())
-								inner = page.GetName(context);
+								inner = await page.GetName(context, cancellationToken);
 
-							title = page.GetDescription(context);
+							title = await page.GetDescription(context, cancellationToken);
 
 							if (!title.IsEmpty())
 								title = $" title='{title}'";
@@ -1100,7 +1100,7 @@
 					if (!isId && !imgUrl.IsEmpty())
 					{
 						var imgUrlBuilder = new StringBuilder(http + imgUrl);
-						var (changed, _, _, _) = _parent._getUrlInfo(context, imgUrlBuilder);
+						var (changed, _, _, _) = await _parent._getUrlInfo(context, imgUrlBuilder, cancellationToken);
 
 						if (changed)
 							imgUrl = imgUrlBuilder.ToString();
@@ -1118,9 +1118,9 @@
 					{
 						var file = await _parent._getFile(fileId, cancellationToken);
 
-						var url = _parent._toFullAbsolute(context, file.GetUrlPart(context));
+						var url = await _parent._toFullAbsolute(context, await file.GetUrlPart(context, cancellationToken), cancellationToken);
 
-						var fileName = file.GetName(context);
+						var fileName = await file.GetName(context, cancellationToken);
 						var isGif = Path.GetExtension(fileName).EqualsIgnoreCase(".gif");
 
 						if (!context.PreventScaling)
@@ -1271,9 +1271,9 @@
 						{
 							case "post":
 							case "message":
-								return _parent._toFullAbsolute(context, (await _parent._getMessage(id, cancellationToken)).GetUrlPart(context));
+								return await _parent._toFullAbsolute(context, await (await _parent._getMessage(id, cancellationToken)).GetUrlPart(context, cancellationToken), cancellationToken);
 							case "topic":
-								return _parent._toFullAbsolute(context, (await _parent._getTopic(id, cancellationToken)).GetUrlPart(context));
+								return await _parent._toFullAbsolute(context, await (await _parent._getTopic(id, cancellationToken)).GetUrlPart(context, cancellationToken), cancellationToken);
 						}
 					}
 				}
