@@ -673,6 +673,45 @@
 			return value;
 		}
 
+		[CLSCompliant(false)]
+		public static async Task<TValue> SafeAddAsync<TKey, TValue>(this IDictionary<TKey, (TaskCompletionSource<TValue>, TValue)> dictionary, AsyncReaderWriterLock sync, TKey key, Func<TKey, CancellationToken, Task<TValue>> handler, CancellationToken cancellationToken)
+		{
+			if (dictionary is null)
+				throw new ArgumentNullException(nameof(dictionary));
+
+			if (sync is null)
+				throw new ArgumentNullException(nameof(sync));
+
+			if (handler is null)
+				throw new ArgumentNullException(nameof(handler));
+
+			async Task<Task<TValue>> InternalSafeAddAsync()
+			{
+				(TaskCompletionSource<TValue> source, TValue value) t;
+
+				using (await sync.ReaderLockAsync(cancellationToken))
+				{
+					if (dictionary.TryGetValue(key, out t))
+						return t.source.Task;
+				}
+
+				var source = new TaskCompletionSource<TValue>();
+				_ = Task.Run(async () => source.SetResult(await handler(key, cancellationToken)));
+
+				using (await sync.WriterLockAsync(cancellationToken))
+				{
+					if (dictionary.TryGetValue(key, out t))
+						return t.source.Task;
+					
+					t = new(source, default);
+					dictionary.Add(key, t);
+					return t.source.Task;
+				}
+			}
+
+			return await (await InternalSafeAddAsync());
+		}
+
 		public static TValue TryGetValue<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
 			//where V : class
 		{

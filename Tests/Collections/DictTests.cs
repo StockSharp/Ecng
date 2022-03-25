@@ -1,9 +1,13 @@
 ﻿namespace Ecng.Tests.Collections
 {
+	using System.Threading;
+	using System.Threading.Tasks;
 	using System.Collections.Generic;
 
 	using Ecng.Collections;
 	using Ecng.UnitTesting;
+
+	using Nito.AsyncEx;
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -22,6 +26,30 @@
 				name.AssertEqual(t.name);
 				value.AssertEqual(t.value);
 			}
+		}
+
+		[TestMethod]
+		public async Task SafeAddAsync()
+		{
+			var sync = new AsyncReaderWriterLock();
+			var dict = new Dictionary<int, string> { { 1, "1" } };
+
+			(await dict.SafeAddAsync(sync, 1, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("1");
+			(await dict.SafeAddAsync(sync, 2, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("2");
+			(await dict.SafeAddAsync(sync, 3, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("3");
+			(await dict.SafeAddAsync(sync, 2, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("2");
+		}
+
+		[TestMethod]
+		public async Task SafeAddAsync2()
+		{
+			var sync = new AsyncReaderWriterLock();
+			var dict = new Dictionary<int, (TaskCompletionSource<string>, string)>();
+
+			(await dict.SafeAddAsync(sync, 1, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("1");
+			(await dict.SafeAddAsync(sync, 2, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("2");
+			(await dict.SafeAddAsync(sync, 3, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("3");
+			(await dict.SafeAddAsync(sync, 2, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("2");
 		}
 	}
 }
