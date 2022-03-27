@@ -51,5 +51,16 @@
 			(await dict.SafeAddAsync(sync, 3, (k, t) => k.ToString().FromResult(), default)).AssertEqual("3");
 			(await dict.SafeAddAsync(sync, 2, (k, t) => k.ToString().FromResult(), default)).AssertEqual("2");
 		}
+
+		[TestMethod]
+		public async Task SafeAddAsync3()
+		{
+			var dict = new Dictionary<int, TaskCompletionSource<string>>();
+
+			(await dict.SafeAddAsync(1, (k, t) => k.ToString().FromResult(), default)).AssertEqual("1");
+			(await dict.SafeAddAsync(2, (k, t) => k.ToString().FromResult(), default)).AssertEqual("2");
+			(await dict.SafeAddAsync(3, (k, t) => k.ToString().FromResult(), default)).AssertEqual("3");
+			(await dict.SafeAddAsync(2, (k, t) => k.ToString().FromResult(), default)).AssertEqual("2");
+		}
 	}
 }

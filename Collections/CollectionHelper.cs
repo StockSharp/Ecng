@@ -674,7 +674,7 @@
 		}
 
 		[CLSCompliant(false)]
-		public static async Task<TValue> SafeAddAsync<TKey, TValue>(this IDictionary<TKey, (TaskCompletionSource<TValue>, TValue)> dictionary, AsyncReaderWriterLock sync, TKey key, Func<TKey, CancellationToken, Task<TValue>> handler, CancellationToken cancellationToken)
+		public static async Task<TValue> SafeAddAsync<TKey, TValue>(this IDictionary<TKey, TaskCompletionSource<TValue>> dictionary, AsyncReaderWriterLock sync, TKey key, Func<TKey, CancellationToken, Task<TValue>> handler, CancellationToken cancellationToken)
 		{
 			if (dictionary is null)
 				throw new ArgumentNullException(nameof(dictionary));
@@ -687,20 +687,20 @@
 
 			async Task<Task<TValue>> InternalSafeAddAsync()
 			{
-				(TaskCompletionSource<TValue> source, TValue value) t;
+				TaskCompletionSource<TValue> source;
 
 				using (await sync.ReaderLockAsync(cancellationToken))
 				{
-					if (dictionary.TryGetValue(key, out t))
-						return t.source.Task;
+					if (dictionary.TryGetValue(key, out source))
+						return source.Task;
 				}
 
 				using (await sync.WriterLockAsync(cancellationToken))
 				{
-					if (dictionary.TryGetValue(key, out t))
-						return t.source.Task;
+					if (dictionary.TryGetValue(key, out source))
+						return source.Task;
 
-					var source = new TaskCompletionSource<TValue>();
+					source = new TaskCompletionSource<TValue>();
 					_ = Task.Factory.StartNew(async () => source.SetResult(await handler(key, cancellationToken)));
 
 					dictionary.Add(key, new(source, default));
