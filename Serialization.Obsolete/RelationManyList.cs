@@ -14,7 +14,7 @@
 
 	using Nito.AsyncEx;
 
-	public abstract class RelationManyList<TEntity, TId> : INotifyCollection<TEntity>, ICollection<TEntity>, ICollection, IRangeCollection
+	public abstract class RelationManyList<TEntity, TId> : ICollection<TEntity>, ICollection, IRangeCollection
 	{
 		#region private class RelationManyListEnumerator
 
@@ -93,12 +93,12 @@
 		protected RelationManyList(IStorage<TId> storage)
 		{
 			Storage = storage ?? throw new ArgumentNullException(nameof(storage));
-			Storage.Added += value => DoIf<TEntity>(value, entity =>
-			{
-				if (_cache.Remove(entity))
-					Added?.Invoke(entity);
-			});
-			Storage.Removed += value => DoIf<TEntity>(value, e => Removed?.Invoke(e));
+			//Storage.Added += value => DoIf<TEntity>(value, entity =>
+			//{
+			//	if (_cache.Remove(entity))
+			//		Added?.Invoke(entity);
+			//});
+			//Storage.Removed += value => DoIf<TEntity>(value, e => Removed?.Invoke(e));
 		}
 
 		private static Schema _schema;
@@ -297,13 +297,13 @@
 			return !(await ReadById(id, cancellationToken)).IsDefault();
 		}
 
-		private static void DoIf<T>(object obj, Action<T> action)
-		{
-			if (obj is T t)
-			{
-				action(t);
-			}
-		}
+		//private static void DoIf<T>(object obj, Action<T> action)
+		//{
+		//	if (obj is T t)
+		//	{
+		//		action(t);
+		//	}
+		//}
 
 		#region BaseListEx<E> Members
 
@@ -350,7 +350,7 @@
 			if (item is null)
 				throw new ArgumentNullException(nameof(item));
 
-			Adding?.Invoke(item);
+			//Adding?.Invoke(item);
 
 			ThrowIfStorageNull();
 
@@ -388,7 +388,7 @@
 			if (IsReadOnly)
 				throw new ReadOnlyException();
 
-			Clearing?.Invoke();
+			//Clearing?.Invoke();
 
 			_cache.Clear();
 
@@ -404,7 +404,7 @@
 
 			_count = 0;
 
-			Cleared?.Invoke();
+			//Cleared?.Invoke();
 		}
 
 		[Obsolete]
@@ -429,7 +429,7 @@
 			if (IsReadOnly)
 				throw new ReadOnlyException();
 
-			Removing?.Invoke(item);
+			//Removing?.Invoke(item);
 
 			//ThrowExceptionIfReadOnly();
 			await OnRemove(item, cancellationToken);
@@ -697,15 +697,15 @@
 				throw new InvalidOperationException();
 		}
 
-		public event Func<TEntity, bool> Adding;
-		public event Action<TEntity> Added;
-		public event Func<TEntity, bool> Removing;
-		public event Func<int, bool> RemovingAt;
-		public event Action<TEntity> Removed;
-		public event Func<bool> Clearing;
-		public event Action Cleared;
-		public event Func<int, TEntity, bool> Inserting;
-		public event Action<int, TEntity> Inserted;
-		public event Action Changed;
+		//public event Func<TEntity, bool> Adding;
+		//public event Action<TEntity> Added;
+		//public event Func<TEntity, bool> Removing;
+		//public event Func<int, bool> RemovingAt;
+		//public event Action<TEntity> Removed;
+		//public event Func<bool> Clearing;
+		//public event Action Cleared;
+		//public event Func<int, TEntity, bool> Inserting;
+		//public event Action<int, TEntity> Inserted;
+		//public event Action Changed;
 	}
 }
