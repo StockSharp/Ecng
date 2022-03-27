@@ -98,7 +98,7 @@
 				}
 			});
 
-			foreach (var field in schema.Fields.Where(f => f.IsInnerSchema()))
+			foreach (var field in schema.Fields.Where(f => f.Type != typeof(object) && f.IsInnerSchema()))
 			{
 				var innerSchema = field.Type.GetSchema();
 
