@@ -3,6 +3,8 @@ namespace Ecng.Serialization
 	using System;
 	using System.IO;
 	using System.Linq;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
@@ -12,7 +14,7 @@ namespace Ecng.Serialization
 	{
 		public override string FileExtension => "bin";
 
-		public override void Serialize(FieldList fields, SerializationItemCollection source, Stream stream)
+		public override async Task Serialize(FieldList fields, SerializationItemCollection source, Stream stream, CancellationToken cancellationToken)
 		{
 			if (IsCollection)
 				stream.WriteEx(source.Count);
@@ -34,7 +36,7 @@ namespace Ecng.Serialization
 					if (item.Value is SerializationItemCollection col)
 					{
 						var serializer = this.GetLegacySerializer(item.Field.Type);
-						serializer.Serialize(col, stream);
+						await serializer.Serialize(col, stream, cancellationToken);
 					}
 					else
 						stream.WriteEx(item.Value);
@@ -42,7 +44,7 @@ namespace Ecng.Serialization
 			}
 		}
 
-		public override void Deserialize(Stream stream, FieldList fields, SerializationItemCollection source)
+		public override async Task Deserialize(Stream stream, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			if (IsCollection)
 			{
@@ -62,7 +64,7 @@ namespace Ecng.Serialization
 						else
 						{
 							var innerSource = new SerializationItemCollection();
-							serializer.Deserialize(stream, innerSource);
+							await serializer.Deserialize(stream, innerSource, cancellationToken);
 							value = serializer.Type.IsSerializablePrimitive() ? innerSource.First().Value : innerSource;
 						}
 					}
@@ -86,7 +88,7 @@ namespace Ecng.Serialization
 						if (type == typeof(SerializationItemCollection))
 						{
 							var innerSource = new SerializationItemCollection();
-							this.GetLegacySerializer(field.Type).Deserialize(stream, innerSource);
+							await this.GetLegacySerializer(field.Type).Deserialize(stream, innerSource, cancellationToken);
 							itemValue = innerSource;
 						}
 						else

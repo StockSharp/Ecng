@@ -1,5 +1,8 @@
 namespace Ecng.Serialization
 {
+	using System.Threading;
+	using System.Threading.Tasks;
+
 	public class PersistableFieldactory<TEntity> : FieldFactory<TEntity, SerializationItemCollection>
 		where TEntity : IPersistable, new()
 	{
@@ -8,18 +11,18 @@ namespace Ecng.Serialization
 		{
 		}
 
-		protected internal override TEntity OnCreateInstance(ISerializer serializer, SerializationItemCollection source)
+		protected internal override async Task<TEntity> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
-			var storage = serializer.GetLegacySerializer<SettingsStorage>().Deserialize(source);
+			var storage = await serializer.GetLegacySerializer<SettingsStorage>().Deserialize(source, cancellationToken);
 			return storage.Load<TEntity>();
 		}
 
-		protected internal override SerializationItemCollection OnCreateSource(ISerializer serializer, TEntity instance)
+		protected internal override async Task<SerializationItemCollection> OnCreateSource(ISerializer serializer, TEntity instance, CancellationToken cancellationToken)
 		{
 			var storage = instance.Save();
 			var source = new SerializationItemCollection();
 
-			serializer.GetLegacySerializer<SettingsStorage>().Serialize(storage, source);
+			await serializer.GetLegacySerializer<SettingsStorage>().Serialize(storage, source, cancellationToken);
 
 			return source;
 		}

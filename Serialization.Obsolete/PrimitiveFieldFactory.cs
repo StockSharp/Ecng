@@ -3,6 +3,8 @@ namespace Ecng.Serialization
 	#region Using Directives
 
 	using System;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 
@@ -15,14 +17,14 @@ namespace Ecng.Serialization
 		{
 		}
 
-		protected internal override I OnCreateInstance(ISerializer serializer, S source)
+		protected internal override Task<I> OnCreateInstance(ISerializer serializer, S source, CancellationToken cancellationToken)
 		{
-			return source.To<I>();
+			return Task.FromResult(source.To<I>());
 		}
 
-		protected internal override S OnCreateSource(ISerializer serializer, I instance)
+		protected internal override Task<S> OnCreateSource(ISerializer serializer, I instance, CancellationToken cancellationToken)
 		{
-			return instance.To<S>();
+			return Task.FromResult(instance.To<S>());
 		}
 
 		public override FieldFactory Clone()
@@ -57,9 +59,9 @@ namespace Ecng.Serialization
 
 		public override bool FullInitialize => true;
 
-		public override TEntity CreateEntity(ISerializer serializer, SerializationItemCollection source)
+		public override Task<TEntity> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
-			return source[Name].Value.To<TEntity>();
+			return Task.FromResult(source[Name].Value.To<TEntity>());
 		}
 	}
 }

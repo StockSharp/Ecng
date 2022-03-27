@@ -2,6 +2,8 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 	using Ecng.Collections;
@@ -16,19 +18,19 @@
 		{
 		}
 
-		protected internal override object OnCreateInstance(ISerializer serializer, SerializationItemCollection source)
+		protected internal override Task<object> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			var type = source["Type"].Value.To<Type>();
 			var value = source["Value"].Value;
 
 			if (!SchemaManager.GlobalFieldFactories.TryGetValue(type, out var factoryType))
-				return value.To(type);
+				return Task.FromResult(value.To(type));
 
 			var factory = GetFactory(factoryType);
-			return factory.CreateInstance(serializer, new SerializationItem(factory.Field, value));
+			return factory.CreateInstance(serializer, new SerializationItem(factory.Field, value), cancellationToken);
 		}
 
-		protected internal override SerializationItemCollection OnCreateSource(ISerializer serializer, object instance)
+		protected internal override async Task<SerializationItemCollection> OnCreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken)
 		{
 			var instanceType = instance.GetType();
 			var valueType = instanceType;
@@ -41,14 +43,14 @@
 				{
 					var factory = GetFactory(factoryType);
 
-					value = factory.CreateSource(serializer, instance).Value;
+					value = (await factory.CreateSource(serializer, instance, cancellationToken)).Value;
 					valueType = factory.SourceType;
 				}
 				else
 				{
 					value = instanceType.IsSerializablePrimitive()
 						? instance 
-						: GetInnerSchemaFactory(instanceType).OnCreateSource(serializer, instance);
+						: await GetInnerSchemaFactory(instanceType).OnCreateSource(serializer, instance, cancellationToken);
 				}
 			}
 			else

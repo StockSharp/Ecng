@@ -2,6 +2,8 @@ namespace Ecng.Serialization
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -16,12 +18,12 @@ namespace Ecng.Serialization
 		{
 		}
 
-		protected internal override TCollection OnCreateInstance(ISerializer serializer, SerializationItemCollection source)
+		protected internal override Task<TCollection> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			throw new NotSupportedException();
 		}
 
-		protected internal override SerializationItemCollection OnCreateSource(ISerializer serializer, TCollection instance)
+		protected internal override async Task<SerializationItemCollection> OnCreateSource(ISerializer serializer, TCollection instance, CancellationToken cancellationToken)
 		{
 			var source = new SerializationItemCollection();
 			var primitive = typeof(TItem).IsSerializablePrimitive();
@@ -41,7 +43,7 @@ namespace Ecng.Serialization
 					else
 					{
 						var innerSource = new SerializationItemCollection();
-						itemSer.Serialize(item, innerSource);
+						await itemSer.Serialize(item, innerSource, cancellationToken);
 						source.Add(new SerializationItem(new VoidField<TItem>(name), innerSource));
 					}
 				}

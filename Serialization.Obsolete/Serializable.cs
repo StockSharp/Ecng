@@ -1,6 +1,8 @@
 namespace Ecng.Serialization
 {
 	using System;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 
@@ -11,15 +13,11 @@ namespace Ecng.Serialization
 	{
 		#region ISerializable Members
 
-		void ISerializable.Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source)
-		{
-			Serialize(serializer, fields, source);
-		}
+		Task ISerializable.Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> Serialize(serializer, fields, source, cancellationToken);
 
-		void ISerializable.Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source)
-		{
-			Deserialize(serializer, fields, source);
-		}
+		Task ISerializable.Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> Deserialize(serializer, fields, source, cancellationToken);
 
 		#endregion
 
@@ -29,7 +27,7 @@ namespace Ecng.Serialization
 		/// <param name="serializer"></param>
 		/// <param name="fields"></param>
 		/// <param name="source">Serialized state.</param>
-		protected abstract void Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source);
+		protected abstract Task Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken);
 
 		/// <summary>
 		/// Deserialize object into specified source.
@@ -37,7 +35,7 @@ namespace Ecng.Serialization
 		/// <param name="serializer"></param>
 		/// <param name="fields"></param>
 		/// <param name="source">Serialized state.</param>
-		protected abstract void Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source);
+		protected abstract Task Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken);
 
 		#region Cloneable<T> Members
 

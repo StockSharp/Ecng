@@ -5,6 +5,8 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Collections;
 
@@ -35,13 +37,13 @@
 
 		#region FieldFactory Members
 
-		protected internal override object OnCreateInstance(ISerializer serializer, object source)
+		protected internal override async Task<object> OnCreateInstance(ISerializer serializer, object source, CancellationToken cancellationToken)
 		{
 			var instance = source;
 
 			foreach (var factory in AscFactories)
 			{
-				instance = factory.OnCreateInstance(serializer, instance);
+				instance = await factory.OnCreateInstance(serializer, instance, cancellationToken);
 
 				if (instance is null)
 					break;
@@ -50,13 +52,13 @@
 			return instance;
 		}
 
-		protected internal override object OnCreateSource(ISerializer serializer, object instance)
+		protected internal override async Task<object> OnCreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken)
 		{
 			var source = instance;
 
 			foreach (var factory in DescFactories)
 			{
-				source = factory.OnCreateSource(serializer, source);
+				source = await factory.OnCreateSource(serializer, source, cancellationToken);
 
 				if (source is null)
 					break;

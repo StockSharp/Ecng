@@ -2,6 +2,8 @@ namespace Ecng.Serialization
 {
 	using System;
 	using System.IO;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 
@@ -18,48 +20,14 @@ namespace Ecng.Serialization
 		public virtual ISerializer GetSerializer(Type entityType)
 			=> GetType().GetGenericTypeDefinition().Make(entityType).CreateInstance<ISerializer>();
 
-		byte[] ISerializer.Serialize(object graph)
-			=> Serialize((T)graph);
+		public abstract Task SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken);
 
-		object ISerializer.Deserialize(byte[] data)
-			=> Deserialize(data);
+		public abstract Task<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken);
 
-		void ISerializer.Serialize(object graph, string fileName)
-			=> Serialize((T)graph, fileName);
+		Task ISerializer.SerializeAsync(object graph, Stream stream, CancellationToken cancellationToken)
+			=> SerializeAsync((T)graph, stream, cancellationToken);
 
-		object ISerializer.Deserialize(string fileName)
-			=> Deserialize(fileName);
-
-		void ISerializer.Serialize(object graph, Stream stream)
-			=> Serialize((T)graph, stream);
-
-		object ISerializer.Deserialize(Stream stream)
-			=> Deserialize(stream);
-
-		public void Serialize(T graph, string fileName)
-			=> File.WriteAllBytes(fileName, Serialize(graph));
-
-		public byte[] Serialize(T graph)
-		{
-			var stream = new MemoryStream();
-			Serialize(graph, stream);
-			return stream.To<byte[]>();
-		}
-
-		public abstract void Serialize(T graph, Stream stream);
-
-		public T Deserialize(string fileName)
-		{
-			using var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
-			return Deserialize(stream);
-		}
-
-		public T Deserialize(byte[] data)
-		{
-			var stream = new MemoryStream(data);
-			return Deserialize(stream);
-		}
-
-		public abstract T Deserialize(Stream stream);
+		async Task<object> ISerializer.DeserializeAsync(Stream stream, CancellationToken cancellationToken)
+			=> await DeserializeAsync(stream, cancellationToken);
 	}
 }

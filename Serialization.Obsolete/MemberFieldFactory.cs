@@ -2,6 +2,8 @@ namespace Ecng.Serialization
 {
 	using System;
 	using System.Reflection;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 
@@ -17,14 +19,14 @@ namespace Ecng.Serialization
 			_isAssemblyQualifiedName = isAssemblyQualifiedName;
 		}
 
-		protected internal override T OnCreateInstance(ISerializer serializer, string source)
+		protected internal override Task<T> OnCreateInstance(ISerializer serializer, string source, CancellationToken cancellationToken)
 		{
-			return source.FromString<T>();
+			return Task.FromResult(source.FromString<T>());
 		}
 
-		protected internal override string OnCreateSource(ISerializer serializer, T instance)
+		protected internal override Task<string> OnCreateSource(ISerializer serializer, T instance, CancellationToken cancellationToken)
 		{
-			return instance.ToString(_isAssemblyQualifiedName);
+			return Task.FromResult(instance.ToString(_isAssemblyQualifiedName));
 		}
 	}
 

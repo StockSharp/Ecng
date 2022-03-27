@@ -3,6 +3,8 @@ namespace Ecng.Serialization
 	using System;
 	using System.Collections.Generic;
 	using System.Reflection;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -15,15 +17,15 @@ namespace Ecng.Serialization
 		{
 		}
 
-		protected internal override TCollection OnCreateInstance(ISerializer serializer, SerializationItemCollection source)
+		protected internal override async Task<TCollection> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
-			return serializer.GetLegacySerializer<TCollection>().Deserialize(source);
+			return await serializer.GetLegacySerializer<TCollection>().Deserialize(source, cancellationToken);
 		}
 
-		protected internal override SerializationItemCollection OnCreateSource(ISerializer serializer, TCollection instance)
+		protected internal override async Task<SerializationItemCollection> OnCreateSource(ISerializer serializer, TCollection instance, CancellationToken cancellationToken)
 		{
 			var source = new SerializationItemCollection();
-			serializer.GetLegacySerializer<TCollection>().Serialize(instance, source);
+			await serializer.GetLegacySerializer<TCollection>().Serialize(instance, source, cancellationToken);
 			return source;
 		}
 	}
@@ -41,7 +43,7 @@ namespace Ecng.Serialization
 	{
 		public override bool FullInitialize => true;
 
-		public override TCollection CreateEntity(ISerializer serializer, SerializationItemCollection source)
+		public override async Task<TCollection> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			ICollection<TItem> instance;
 
@@ -71,7 +73,7 @@ namespace Ecng.Serialization
 				if (item.Value is null)
 					elem = default;
 				else
-					elem = primitive ? (TItem)item.Value : itemSer.Deserialize((SerializationItemCollection)item.Value);
+					elem = primitive ? (TItem)item.Value : await itemSer.Deserialize((SerializationItemCollection)item.Value, cancellationToken);
 
 				instance.Add(elem);
 			}

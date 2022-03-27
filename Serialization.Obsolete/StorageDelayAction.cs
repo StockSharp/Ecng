@@ -2,6 +2,8 @@ namespace Ecng.Serialization
 {
 	using System;
 
+	using Nito.AsyncEx;
+
 	public class StorageDelayAction : DelayAction
 	{
 		private readonly IStorage _storage;
@@ -13,8 +15,6 @@ namespace Ecng.Serialization
 		}
 
 		protected override IBatchContext BeginBatch(IGroup group)
-		{
-			return _storage.BeginBatch();
-		}
+			=> AsyncContext.Run(() => _storage.BeginBatch(default));
 	}
 }

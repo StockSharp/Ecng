@@ -1,6 +1,8 @@
 ﻿namespace Ecng.Serialization
 {
 	using System.Security;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	public class SecureStringFieldFactory : FieldFactory<SecureString, byte[]>
 	{
@@ -11,11 +13,11 @@
 
 		private static SecureStringEncryptor Encryptor => SecureStringEncryptor.Instance;
 
-		protected internal override SecureString OnCreateInstance(ISerializer serializer, byte[] source)
-			=> Encryptor.Decrypt(source);
+		protected internal override Task<SecureString> OnCreateInstance(ISerializer serializer, byte[] source, CancellationToken cancellationToken)
+			=> Task.FromResult(Encryptor.Decrypt(source));
 
-		protected internal override byte[] OnCreateSource(ISerializer serializer, SecureString instance)
-			=> Encryptor.Encrypt(instance);
+		protected internal override Task<byte[]> OnCreateSource(ISerializer serializer, SecureString instance, CancellationToken cancellationToken)
+			=> Task.FromResult(Encryptor.Encrypt(instance));
 	}
 
 	class SecureStringEntityFactory : PrimitiveEntityFactory<SecureString>
@@ -25,7 +27,7 @@
 		{
 		}
 
-		public override SecureString CreateEntity(ISerializer serializer, SerializationItemCollection source)
-			=> SecureStringEncryptor.Instance.Decrypt((byte[])source[Name].Value);
+		public override Task<SecureString> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> Task.FromResult(SecureStringEncryptor.Instance.Decrypt((byte[])source[Name].Value));
 	}
 }

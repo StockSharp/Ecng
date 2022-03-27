@@ -3,33 +3,35 @@
 	using System;
 	using System.Collections.Generic;
 	using System.ComponentModel;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	public interface IStorage
 	{
-		IBatchContext BeginBatch();
-		void CommitBatch();
-		void EndBatch();
+		Task<IBatchContext> BeginBatch(CancellationToken cancellationToken);
+		Task CommitBatch(CancellationToken cancellationToken);
+		Task EndBatch(CancellationToken cancellationToken);
 
-		void ClearCache();
+		Task ClearCache(CancellationToken cancellationToken);
 	}
 
 	public interface IStorage<TId> : IStorage
 	{
-		long GetCount<TEntity>();
+		Task<long> GetCount<TEntity>(CancellationToken cancellationToken);
 
-		TEntity Add<TEntity>(TEntity entity);
+		Task<TEntity> Add<TEntity>(TEntity entity, CancellationToken cancellationToken);
 
-		TEntity GetBy<TEntity>(SerializationItemCollection by);
+		Task<TEntity> GetBy<TEntity>(SerializationItemCollection by, CancellationToken cancellationToken);
 
-		TEntity GetById<TEntity>(TId id);
+		Task<TEntity> GetById<TEntity>(TId id, CancellationToken cancellationToken);
 
-		IEnumerable<TEntity> GetGroup<TEntity>(long startIndex, long count, Field orderBy, ListSortDirection direction);
+		Task<IEnumerable<TEntity>> GetGroup<TEntity>(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken);
 
-		TEntity Update<TEntity>(TEntity entity);
+		Task<TEntity> Update<TEntity>(TEntity entity, CancellationToken cancellationToken);
 
-		void Remove<TEntity>(TEntity entity);
+		Task Remove<TEntity>(TEntity entity, CancellationToken cancellationToken);
 
-		void Clear<TEntity>();
+		Task Clear<TEntity>(CancellationToken cancellationToken);
 
 		event Action<object> Added;
 		event Action<object> Updated;

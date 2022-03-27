@@ -6,6 +6,8 @@ namespace Ecng.Serialization
 	using System.Xml;
 	using System.Linq;
 	using System.Xml.Linq;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 	using Ecng.Reflection;
@@ -15,10 +17,10 @@ namespace Ecng.Serialization
 		Encoding Encoding { get; set; }
 		bool Indent { get; set; }
 
-		void Serialize(SerializationItemCollection source, XElement element);
-		void Serialize(object graph, XElement element);
+		Task Serialize(SerializationItemCollection source, XElement element, CancellationToken cancellationToken);
+		Task Serialize(object graph, XElement element, CancellationToken cancellationToken);
 
-		object Deserialize(XElement element);
+		Task<object> Deserialize(XElement element, CancellationToken cancellationToken);
 	}
 
 	[Obsolete("Use JsonSerializer<T> insted.")]
@@ -67,42 +69,38 @@ namespace Ecng.Serialization
 			}
 		}
 
-		public void Serialize(SerializationItemCollection source, XElement element)
+		public Task Serialize(SerializationItemCollection source, XElement element, CancellationToken cancellationToken)
 		{
 			_element = element ?? throw new ArgumentNullException(nameof(element));
 
-			Serialize(source, new MemoryStream());
+			return Serialize(source, new MemoryStream(), cancellationToken);
 		}
 
-		void IXmlSerializer.Serialize(object graph, XElement element)
-		{
-			Serialize((T)graph, element);
-		}
+		Task IXmlSerializer.Serialize(object graph, XElement element, CancellationToken cancellationToken)
+			=> Serialize((T)graph, element, cancellationToken);
 
-		object IXmlSerializer.Deserialize(XElement element)
-		{
-			return Deserialize(element);
-		}
+		async Task<object> IXmlSerializer.Deserialize(XElement element, CancellationToken cancellationToken)
+			=> await Deserialize(element, cancellationToken);
 
-		public void Serialize(T graph, XElement element)
+		public Task Serialize(T graph, XElement element, CancellationToken cancellationToken)
 		{
 			_element = element ?? throw new ArgumentNullException(nameof(element));
 
-			Serialize(graph, new MemoryStream());
+			return SerializeAsync(graph, new MemoryStream(), cancellationToken);
 		}
 
-		public T Deserialize(XElement element)
+		public Task<T> Deserialize(XElement element, CancellationToken cancellationToken)
 		{
 			_element = element ?? throw new ArgumentNullException(nameof(element));
 
-			return Deserialize(new MemoryStream());
+			return DeserializeAsync(new MemoryStream(), cancellationToken);
 		}
 
 		#region Serializer<T> Members
 
 		public override string FileExtension => "xml";
 
-		public override void Serialize(FieldList fields, SerializationItemCollection source, Stream stream)
+		public override async Task Serialize(FieldList fields, SerializationItemCollection source, Stream stream, CancellationToken cancellationToken)
 		{
 			if (source is null)
 				throw new ArgumentNullException(nameof(source));
@@ -135,7 +133,7 @@ namespace Ecng.Serialization
 					if (item.Value is SerializationItemCollection items)
 					{
 						var serializer = (IXmlSerializer)GetSerializer(item.Field.Type);
-						serializer.Serialize(items, itemElem);
+						await serializer.Serialize(items, itemElem, cancellationToken);
 					}
 					else
 					{
@@ -157,7 +155,7 @@ namespace Ecng.Serialization
 			doc.Save(writer);
 		}
 
-		public override void Deserialize(Stream stream, FieldList fields, SerializationItemCollection source)
+		public override async Task Deserialize(Stream stream, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));
@@ -210,7 +208,7 @@ namespace Ecng.Serialization
 						else
 						{
 							var innerSource = new SerializationItemCollection();
-							serializer.Deserialize(Encoding.GetBytes(elements[i].To<string>()).To<Stream>(), innerSource);
+							await serializer.Deserialize(Encoding.GetBytes(elements[i].To<string>()).To<Stream>(), innerSource, cancellationToken);
 							value = serializer.Type.IsSerializablePrimitive() ? innerSource.First().Value : innerSource;
 						}
 
@@ -237,7 +235,7 @@ namespace Ecng.Serialization
 								if (field.Factory.SourceType == typeof(SerializationItemCollection))
 								{
 									var innerSource = new SerializationItemCollection();
-									this.GetLegacySerializer(field.Type).Deserialize(Encoding.GetBytes(element.To<string>()).To<Stream>(), innerSource);
+									await this.GetLegacySerializer(field.Type).Deserialize(Encoding.GetBytes(element.To<string>()).To<Stream>(), innerSource, cancellationToken);
 									itemValue = innerSource;
 								}
 								else
@@ -263,7 +261,7 @@ namespace Ecng.Serialization
 							else
 							{
 								var xmlSerializer = (IXmlSerializer)GetSerializer(fieldType);
-								value = xmlSerializer.Deserialize(element);
+								value = await xmlSerializer.Deserialize(element, cancellationToken);
 							}
 
 							source.Add(new SerializationItem(new VoidField(elemName, fieldType), value));

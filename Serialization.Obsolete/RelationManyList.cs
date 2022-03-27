@@ -6,9 +6,13 @@
 	using System.ComponentModel;
 	using System.Data;
 	using System.Linq;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 	using Ecng.Collections;
+
+	using Nito.AsyncEx;
 
 	public abstract class RelationManyList<TEntity, TId> : INotifyCollection<TEntity>, ICollection<TEntity>, ICollection, IRangeCollection
 	{
@@ -40,9 +44,10 @@
 			{
 				if (_temporaryBuffer is null || _posInBuffer >= (_temporaryBuffer.Count - 1))
 				{
+#pragma warning disable CS0612 // Type or member is obsolete
 					if (_startIndex < Source.Count)
 					{
-						_temporaryBuffer = (ICollection<TEntity>)Source.GetRange(_startIndex, _bufferSize);
+						_temporaryBuffer = (ICollection<TEntity>)((IRangeCollection)Source).GetRange(_startIndex, _bufferSize, default, default);
 
 						if (!_temporaryBuffer.IsEmpty())
 						{
@@ -51,6 +56,7 @@
 							return _temporaryBuffer.First();	
 						}
 					}
+#pragma warning restore CS0612 // Type or member is obsolete
 				}
 				else
 					return _temporaryBuffer.ElementAt(++_posInBuffer);
@@ -64,7 +70,7 @@
 
 		IEnumerable IRangeCollection.GetRange(long startIndex, long count, string sortExpression, ListSortDirection directions)
 		{
-			return GetRange(startIndex, count, sortExpression, directions);
+			return AsyncContext.Run(() => GetRangeAsync(startIndex, count, sortExpression, directions, default));
 		}
 
 		public virtual bool IsReadOnly => false;
@@ -82,7 +88,7 @@
 
 		private readonly SynchronizedSet<TEntity> _cache = new();
 		private int? _count;
-		private readonly CachedSynchronizedDictionary<TEntity, object> _pendingAdd = new(); 
+		//private readonly CachedSynchronizedDictionary<TEntity, object> _pendingAdd = new(); 
 
 		protected RelationManyList(IStorage<TId> storage)
 		{
@@ -112,27 +118,28 @@
 			}
 		}
 
-		private SynchronizedDictionary<TId, TEntity> _cachedEntities;
+		private AsyncReaderWriterLock _cachedEntitiesLock;
+		private Dictionary<TId, TEntity> _cachedEntities;
 
-		private SynchronizedDictionary<TId, TEntity> CachedEntities
+		private (AsyncReaderWriterLock sync, Dictionary<TId, TEntity> dict) CachedEntities
 		{
 			get
 			{
 				if (_cachedEntities is null)
 				{
+					_cachedEntitiesLock = new();
+
 					if (Schema.Identity != null && typeof(TId) == typeof(string))
-						_cachedEntities = new SynchronizedDictionary<TId, TEntity>(new StringIdComparer().To<IEqualityComparer<TId>>());
+						_cachedEntities = new(new StringIdComparer().To<IEqualityComparer<TId>>());
 					else
-						_cachedEntities = new SynchronizedDictionary<TId, TEntity>();
+						_cachedEntities = new();
 				}
 
-				return _cachedEntities;
+				return (_cachedEntitiesLock, _cachedEntities);
 			}
 		}
 
 		public IStorage<TId> Storage { get; }
-
-		public StorageDelayAction DelayAction { get; set; }
 
 		public bool BulkLoad { get; set; }
 		public bool CacheCount { get; set; }
@@ -141,18 +148,15 @@
 		private DateTime? _cacheExpire;
 		private bool _bulkInitialized;
 
-		private bool BulkInitialized
+		private async Task<bool> BulkInitialized(CancellationToken cancellationToken)
 		{
-			get
+			if (_bulkInitialized)
 			{
-				if (_bulkInitialized)
-				{
-					if (_cacheExpire < DateTime.UtcNow)
-						ResetCache();
-				}
-
-				return _bulkInitialized;
+				if (_cacheExpire < DateTime.UtcNow)
+					await ResetCache(cancellationToken);
 			}
+
+			return _bulkInitialized;
 		}
 
 		//public void ChangeCachedCount(int diff)
@@ -160,91 +164,103 @@
 		//	_count += diff;
 		//}
 
-		public virtual void ResetCache()
+		public virtual async Task ResetCache(CancellationToken cancellationToken)
 		{
-			lock (CachedEntities.SyncRoot)
-			{
-				CachedEntities.Clear();
-				_bulkInitialized = false;
-				_cacheExpire = null;
-			}
+			var (sync, dict) = CachedEntities;
+
+			using var _ = await sync.WriterLockAsync();
+
+			dict.Clear();
+			_bulkInitialized = false;
+			_cacheExpire = null;
 
 			_count = null;
 		}
 
-		public virtual TEntity ReadById(TId id)
+		public virtual Task<TEntity> ReadById(TId id, CancellationToken cancellationToken)
 		{
 			if (id is null)
 				throw new ArgumentNullException(nameof(id));
 
 			ThrowIfStorageNull();
 
-			if (BulkLoad)
-			{
-				if (!BulkInitialized)
-					GetRange();
+			//if (BulkLoad)
+			//{
+			//	if (!BulkInitialized)
+			//		GetRange();
 
-				return CachedEntities.TryGetValue(id);
-			}
-			else
-			{
-				if (DelayAction != null && _pendingAdd.Count > 0)
-				{
-					var pair = _pendingAdd.CachedPairs.FirstOrDefault(p => Equals(p.Value, id));
+			//	return CachedEntities.TryGetValue(id);
+			//}
+			//else
+			//{
+			//if (DelayAction != null && _pendingAdd.Count > 0)
+			//{
+			//	var pair = _pendingAdd.CachedPairs.FirstOrDefault(p => Equals(p.Value, id));
 
-					if (!pair.Key.IsNull())
-						return pair.Key;
-				}
+			//	if (!pair.Key.IsNull())
+			//		return pair.Key;
+			//}
 
-				var identity = Schema.Identity;
+			var identity = Schema.Identity;
 
-				if (identity is null)
-					throw new InvalidOperationException($"Schema {Schema.Name} doesn't have identity.");
+			if (identity is null)
+				throw new InvalidOperationException($"Schema {Schema.Name} doesn't have identity.");
 
-				return Read(new SerializationItem(identity, id));
-			}
+			return Read(new SerializationItem(identity, id), cancellationToken);
+			//}
 		}
 
 		#region Save
 
-		public virtual void Save(TEntity item)
+		public virtual async Task SaveAsync(TEntity item, CancellationToken cancellationToken)
 		{
 			if (Schema.Identity is null)
 				throw new InvalidOperationException($"Schema {Schema.Name} doesn't have identity.");
 
-			if (!CheckExist(item))
-				Add(item);
+			if (!await CheckExist(item, cancellationToken))
+				await AddAsync(item, cancellationToken);
 			else
-				Update(item);
+				await UpdateAsync(item, cancellationToken);
 		}
 
 		#endregion
 
 		#region Update
 
-		public virtual void Update(TEntity entity)
+		public virtual async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken)
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
 
-			if (BulkLoad && BulkInitialized)
+			if (BulkLoad && await BulkInitialized(cancellationToken))
 			{
 				var id = GetCacheId(entity);
 
-				if (!CachedEntities.ContainsKey(id))
+				var isNew = false;
+
+				var (sync, dict) = CachedEntities;
+
+				using (await sync.WriterLockAsync(cancellationToken))
 				{
-					CachedEntities.Add(id, entity);
-					IncrementCount();
+					if (!dict.ContainsKey(id))
+					{
+						dict.Add(id, entity);
+						isNew = true;
+					}
 				}
+
+				if (isNew)
+					await IncrementCount(cancellationToken);
+
 			}
 
-			ProcessDelayed(() => OnUpdate(entity));
+			await OnUpdate(entity, cancellationToken);
 		}
 
-		private void IncrementCount()
+		private async Task IncrementCount(CancellationToken cancellationToken)
 		{
 			if (_count is null)
-				_count = (int)OnGetCount();
+				_count = (int)(await OnGetCount(cancellationToken));
 			else
 				_count++;
 		}
@@ -271,22 +287,14 @@
 
 		#endregion
 
-		private void ProcessDelayed(Action action, Action<Exception> postAction = null)
-		{
-			if (DelayAction != null)
-				DelayAction.DefaultGroup.Add(action, postAction);
-			else
-				action();
-		}
-
-		private bool CheckExist(TEntity item)
+		private async Task<bool> CheckExist(TEntity item, CancellationToken cancellationToken)
 		{
 			if (_cache.Contains(item))
 				return true;
 
 			var id = (TId)Schema.Identity.Accessor.GetValue(item);
 
-			return !ReadById(id).IsDefault();
+			return !(await ReadById(id, cancellationToken)).IsDefault();
 		}
 
 		private static void DoIf<T>(object obj, Action<T> action)
@@ -299,35 +307,42 @@
 
 		#region BaseListEx<E> Members
 
-		public virtual int Count
+		public virtual async Task<int> CountAsync(CancellationToken cancellationToken)
 		{
-			get
+			ThrowIfStorageNull();
+
+			if (BulkLoad)
 			{
-				ThrowIfStorageNull();
+				if (!await BulkInitialized(cancellationToken))
+					await GetRangeAsync(0, 1 /* passed count's value will be ignored and set into OnGetCount() */, default, default, cancellationToken);
 
-				if (BulkLoad)
+				var (sync, dict) = CachedEntities;
+
+				using var _ = await sync.ReaderLockAsync(cancellationToken);
+				return dict.Count;
+			}
+			else
+			{
+				if (CacheCount)
 				{
-					if (!BulkInitialized)
-						GetRange(0, 1 /* passed count's value will be ignored and set into OnGetCount() */);
+					if (_count is null)
+						_count = (int)await OnGetCount(cancellationToken);
 
-					return CachedEntities.Count;
+					return _count.Value;
 				}
 				else
-				{
-					if (CacheCount)
-					{
-						if (_count is null)
-							_count = (int)OnGetCount();
-
-						return _count.Value;
-					}
-					else
-						return (int)OnGetCount();
-				}
+					return (int)await OnGetCount(cancellationToken);
 			}
 		}
 
-		public virtual void Add(TEntity item)
+		[Obsolete]
+		public int Count => AsyncContext.Run(() => CountAsync(default));
+
+		[Obsolete]
+		public void Add(TEntity item)
+			=> AsyncContext.Run(() => AddAsync(item, default));
+
+		public virtual async Task AddAsync(TEntity item, CancellationToken cancellationToken)
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
@@ -341,28 +356,34 @@
 
 			_cache.Add(item);
 
-			var id = GetCacheId(item);
+			//var id = GetCacheId(item);
 
-			if (DelayAction != null)
-				_pendingAdd.Add(item, id);
+			//if (DelayAction != null)
+			//	_pendingAdd.Add(item, id);
 
-			ProcessDelayed(() => OnAdd(item), err => _pendingAdd.Remove(item));
+			await OnAdd(item, cancellationToken);
 
 			if (BulkLoad)
 			{
-				lock (CachedEntities.SyncRoot)
+				if (await BulkInitialized(cancellationToken))
 				{
-					if (BulkInitialized)
-						CachedEntities.Add(GetCacheId(item), item);
-					else
-						GetRange();
+					var (sync, dict) = CachedEntities;
+
+					using var _ = await sync.WriterLockAsync(cancellationToken);
+					dict.Add(GetCacheId(item), item);
 				}
+				else
+					await GetRange(cancellationToken);
 			}
 
-			IncrementCount();
+			await IncrementCount(cancellationToken);
 		}
 
+		[Obsolete]
 		public virtual void Clear()
+			=> AsyncContext.Run(() => ClearAsync(default));
+
+		public virtual async Task ClearAsync(CancellationToken cancellationToken)
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
@@ -372,12 +393,13 @@
 			_cache.Clear();
 
 			ThrowIfStorageNull();
-			ProcessDelayed(OnClear);
+
+			await OnClear(cancellationToken);
 
 			if (BulkLoad)
 			{
-				GetRange();
-				CachedEntities.Clear();
+				await GetRange(cancellationToken);
+				CachedEntities.dict.Clear();
 			}
 
 			_count = 0;
@@ -385,17 +407,24 @@
 			Cleared?.Invoke();
 		}
 
+		[Obsolete]
 		public virtual bool Contains(TEntity item)
-		{
-			return this.Any(arg => arg.Equals(item));
-		}
+			=> AsyncContext.Run(() => ContainsAsync(item, default));
+
+		public virtual Task<bool> ContainsAsync(TEntity item, CancellationToken cancellationToken)
+			=> Task.FromResult(this.Any(arg => arg.Equals(item)));
 
 		public virtual void CopyTo(TEntity[] array, int index)
-		{
-			((ICollection<TEntity>)GetRange(index, Count)).CopyTo(array, 0);
-		}
+			=> AsyncContext.Run(() => CopyTo(array, index, default));
 
+		public virtual async Task CopyTo(TEntity[] array, int index, CancellationToken cancellationToken)
+			=> ((ICollection<TEntity>)await GetRangeAsync(index, await CountAsync(cancellationToken), default, default, cancellationToken)).CopyTo(array, 0);
+
+		[Obsolete]
 		public virtual bool Remove(TEntity item)
+			=> AsyncContext.Run(() => RemoveAsync(item, default));
+
+		public virtual async Task<bool> RemoveAsync(TEntity item, CancellationToken cancellationToken)
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
@@ -403,14 +432,16 @@
 			Removing?.Invoke(item);
 
 			//ThrowExceptionIfReadOnly();
-			ProcessDelayed(() => OnRemove(item));
+			await OnRemove(item, cancellationToken);
 
 			if (BulkLoad)
 			{
-				lock (CachedEntities.SyncRoot)
+				if (await BulkInitialized(cancellationToken))
 				{
-					if (BulkInitialized)
-						CachedEntities.Remove(GetCacheId(item));
+					var (sync, dict) = CachedEntities;
+
+					using var _ = await sync.WriterLockAsync(cancellationToken);
+					dict.Remove(GetCacheId(item));
 				}
 			}
 
@@ -420,10 +451,10 @@
 			return true;
 		}
 
-		public virtual IEnumerable<TEntity> GetRange(long startIndex, long count, string sortExpression = null, ListSortDirection directions = ListSortDirection.Ascending)
+		public virtual Task<IEnumerable<TEntity>> GetRangeAsync(long startIndex, long count, string sortExpression, ListSortDirection directions, CancellationToken cancellationToken)
 		{
 			var orderBy = sortExpression.IsEmpty() ? null : Schema.Fields.TryGet(sortExpression) ?? new VoidField(sortExpression, typeof(object));
-			return ReadAll(startIndex, count, orderBy, directions);
+			return ReadAll(startIndex, count, orderBy, directions, cancellationToken);
 		}
 
 		private int _bufferSize = 20;
@@ -460,13 +491,13 @@
 
 		public virtual void Insert(int index, TEntity item)
 		{
-			Add(item);
+			AsyncContext.Run(() => AddAsync(item, default));
 		}
 
-		public virtual void RemoveAt(int index)
+		public virtual async Task RemoveAtAsync(int index, CancellationToken cancellationToken)
 		{
 			if (BulkLoad)
-				Remove(GetRange().ElementAt(index));
+				await RemoveAsync((await GetRange(cancellationToken)).ElementAt(index), cancellationToken);
 			else
 				throw new NotSupportedException();
 		}
@@ -494,79 +525,79 @@
 
 		#region Virtual CRUD Methods
 
-		protected virtual long OnGetCount()
+		protected virtual Task<long> OnGetCount(CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			return Storage.GetCount<TEntity>();
+			return Storage.GetCount<TEntity>(cancellationToken);
 		}
 
-		protected virtual void OnAdd(TEntity entity)
+		protected virtual Task OnAdd(TEntity entity, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			Storage.Add(entity);
+			return Storage.Add(entity, cancellationToken);
 		}
 
-		protected virtual TEntity OnGet(SerializationItemCollection by)
+		protected virtual Task<TEntity> OnGet(SerializationItemCollection by, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			return Storage.GetBy<TEntity>(by);
+			return Storage.GetBy<TEntity>(by, cancellationToken);
 		}
 
-		protected virtual IEnumerable<TEntity> OnGetGroup(long startIndex, long count, Field orderBy, ListSortDirection direction)
+		protected virtual Task<IEnumerable<TEntity>> OnGetGroup(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			return Storage.GetGroup<TEntity>(startIndex, count, orderBy, direction);
+			return Storage.GetGroup<TEntity>(startIndex, count, orderBy, direction, cancellationToken);
 		}
 
-		protected virtual void OnUpdate(TEntity entity)
+		protected virtual Task OnUpdate(TEntity entity, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			Storage.Update(entity);
+			return Storage.Update(entity, cancellationToken);
 		}
 
-		protected virtual void OnRemove(TEntity entity)
+		protected virtual Task OnRemove(TEntity entity, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			Storage.Remove(entity);
+			return Storage.Remove(entity, cancellationToken);
 		}
 
-		protected virtual void OnClear()
+		protected virtual Task OnClear(CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			Storage.Clear<TEntity>();
+			return Storage.Clear<TEntity>(cancellationToken);
 		}
 
 		#endregion
 
-		public IEnumerable<TEntity> ReadFirsts(long count, Field orderBy)
+		public Task<IEnumerable<TEntity>> ReadFirsts(long count, Field orderBy, CancellationToken cancellationToken)
 		{
-			return ReadAll(0, count, orderBy, ListSortDirection.Ascending);
+			return ReadAll(0, count, orderBy, ListSortDirection.Ascending, cancellationToken);
 		}
 
-		public IEnumerable<TEntity> ReadLasts(long count, Field orderBy)
+		public Task<IEnumerable<TEntity>> ReadLasts(long count, Field orderBy, CancellationToken cancellationToken)
 		{
-			return ReadAll(0, count, orderBy, ListSortDirection.Descending);
+			return ReadAll(0, count, orderBy, ListSortDirection.Descending, cancellationToken);
 		}
 
-		public TEntity Read(SerializationItem by)
+		public Task<TEntity> Read(SerializationItem by, CancellationToken cancellationToken)
 		{
 			if (by is null)
 				throw new ArgumentNullException(nameof(by));
 
-			return Read(new SerializationItemCollection { by });
+			return Read(new SerializationItemCollection { by }, cancellationToken);
 		}
 
-		public TEntity Read(SerializationItemCollection by)
+		public Task<TEntity> Read(SerializationItemCollection by, CancellationToken cancellationToken)
 		{
-			return OnGet(by);
+			return OnGet(by, cancellationToken);
 		}
 
-		private IEnumerable<TEntity> GetRange()
+		private async Task<IEnumerable<TEntity>> GetRange(CancellationToken cancellationToken)
 		{
-			return GetRange(0, Count);
+			return await GetRangeAsync(0, await CountAsync(cancellationToken), default, default, cancellationToken);
 		}
 
-		public IEnumerable<TEntity> ReadAll(long startIndex, long count, Field orderBy, ListSortDirection direction)
+		public async Task<IEnumerable<TEntity>> ReadAll(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
 		{
 			//if (orderBy is null)
 			//	throw new ArgumentNullException(nameof(orderBy));
@@ -579,9 +610,14 @@
 
 			if (BulkLoad)
 			{
-				if (BulkInitialized)
+				if (await BulkInitialized(cancellationToken))
 				{
-					IEnumerable<TEntity> source = CachedEntities.SyncGet(d => d.Values.ToArray());
+					IEnumerable<TEntity> source;
+
+					var (sync, dict) = CachedEntities;
+
+					using (await sync.ReaderLockAsync(cancellationToken))
+						source = dict.Values.ToArray();
 
 					if (orderBy != null)
 					{
@@ -594,46 +630,45 @@
 				else
 				{
 					startIndex = 0;
-					count = OnGetCount();
+					count = await OnGetCount(cancellationToken);
 				}
 			}
 
 			ThrowIfStorageNull();
 
-			var pendingAdd = _pendingAdd.CachedKeys;
+			//var pendingAdd = _pendingAdd.CachedKeys;
 
-			var entities = OnGetGroup(startIndex, count, orderBy ?? Schema.Identity, direction).ToList();
+			var entities = (await OnGetGroup(startIndex, count, orderBy ?? Schema.Identity, direction, cancellationToken)).ToList();
 
 			if (BulkLoad)
 			{
-				lock (CachedEntities.SyncRoot)
+				if (!await BulkInitialized(cancellationToken))
 				{
-					if (!BulkInitialized)
-					{
-						//_cachedEntities = new Dictionary<object, E>();
+					var (sync, dict) = CachedEntities;
 
-						CachedEntities.Clear();
+					using var _ = await sync.WriterLockAsync(cancellationToken);
 
-						foreach (var entity in entities)
-							CachedEntities.Add(GetCacheId(entity), entity);
+					dict.Clear();
 
-						_bulkInitialized = true;
+					foreach (var entity in entities)
+						dict.Add(GetCacheId(entity), entity);
 
-						if (CacheTimeOut < TimeSpan.MaxValue)
-							_cacheExpire = DateTime.UtcNow + CacheTimeOut;
+					_bulkInitialized = true;
 
-						entities = entities.Skip((int)oldStartIndex).Take((int)oldCount).ToList();
-					}
+					if (CacheTimeOut < TimeSpan.MaxValue)
+						_cacheExpire = DateTime.UtcNow + CacheTimeOut;
+
+					entities = entities.Skip((int)oldStartIndex).Take((int)oldCount).ToList();
 				}
 			}
 
-			if (pendingAdd.Length > 0)
-			{
-				var set = new HashSet<TEntity>();
-				set.AddRange(entities);
-				set.AddRange(pendingAdd);
-				entities = set.ToList();
-			}
+			//if (pendingAdd.Length > 0)
+			//{
+			//	var set = new HashSet<TEntity>();
+			//	set.AddRange(entities);
+			//	set.AddRange(pendingAdd);
+			//	entities = set.ToList();
+			//}
 
 			//var added = Added;
 
@@ -643,9 +678,9 @@
 			return entities;
 		}
 
-		public void RemoveById(TId id)
+		public async Task RemoveById(TId id, CancellationToken cancellationToken)
 		{
-			Remove(ReadById(id));
+			await RemoveAsync(await ReadById(id, cancellationToken), cancellationToken);
 		}
 
 		private static TId GetCacheId(TEntity entity)

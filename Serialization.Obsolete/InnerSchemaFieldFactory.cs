@@ -4,6 +4,8 @@ namespace Ecng.Serialization
 
 	using System;
 	using System.Linq;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -46,18 +48,18 @@ namespace Ecng.Serialization
 
 		#region ComplexFieldFactory<E> Members
 
-		protected internal override TEntity OnCreateInstance(ISerializer serializer, SerializationItemCollection source)
+		protected internal override async Task<TEntity> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			if (_nullWhenAllEmpty && source.All(c => c.Value is null))
 				return default;
 
-			return (TEntity)GetSerializer(serializer, source).Deserialize(source);
+			return (TEntity)await GetSerializer(serializer, source).Deserialize(source, cancellationToken);
 		}
 
-		protected internal override SerializationItemCollection OnCreateSource(ISerializer serializer, TEntity instance)
+		protected internal override async Task<SerializationItemCollection> OnCreateSource(ISerializer serializer, TEntity instance, CancellationToken cancellationToken)
 		{
 			var source = new SerializationItemCollection();
-			GetSerializer(serializer, source, instance).Serialize(instance, source);
+			await GetSerializer(serializer, source, instance).Serialize(instance, source, cancellationToken);
 			return source;
 		}
 

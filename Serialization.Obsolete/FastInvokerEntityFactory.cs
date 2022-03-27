@@ -1,6 +1,8 @@
 namespace Ecng.Serialization
 {
 	using System.Reflection;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Reflection;
 
@@ -15,9 +17,9 @@ namespace Ecng.Serialization
 
 		public override bool FullInitialize => false;
 
-		public override E CreateEntity(ISerializer serializer, SerializationItemCollection source)
+		public override Task<E> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
-			return _invoker.Ctor(null);
+			return Task.FromResult(_invoker.Ctor(null));
 		}
 	}
 }

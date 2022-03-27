@@ -2,6 +2,8 @@
 {
 	using System;
 	using System.IO;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 
@@ -13,15 +15,13 @@
 		{
 		}
 
-		protected internal override I OnCreateInstance(ISerializer serializer, Stream source)
-		{
-			return serializer.GetSerializer<I>().Deserialize(source);
-		}
+		protected internal override Task<I> OnCreateInstance(ISerializer serializer, Stream source, CancellationToken cancellationToken)
+			=> serializer.GetSerializer<I>().DeserializeAsync(source, cancellationToken);
 
-		protected internal override Stream OnCreateSource(ISerializer serializer, I instance)
+		protected internal override async Task<Stream> OnCreateSource(ISerializer serializer, I instance, CancellationToken cancellationToken)
 		{
-			var source = new MemoryStream();
-			serializer.GetSerializer<I>().Serialize(instance, source);
+			Stream source = new MemoryStream();
+			await serializer.GetSerializer<I>().SerializeAsync(instance, source, cancellationToken);
 			return source;
 		}
 	}

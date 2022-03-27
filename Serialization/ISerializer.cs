@@ -2,6 +2,8 @@ namespace Ecng.Serialization
 {
 	using System;
 	using System.IO;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	public interface ISerializer
 	{
@@ -10,25 +12,13 @@ namespace Ecng.Serialization
 		ISerializer GetSerializer(Type entityType);
 		string FileExtension { get; }
 
-		byte[] Serialize(object graph);
-		object Deserialize(byte[] data);
-
-		void Serialize(object graph, string fileName);
-		object Deserialize(string fileName);
-
-		void Serialize(object graph, Stream stream);
-		object Deserialize(Stream stream);
+		public abstract Task SerializeAsync(object graph, Stream stream, CancellationToken cancellationToken);
+		public abstract Task<object> DeserializeAsync(Stream stream, CancellationToken cancellationToken);
 	}
 
 	public interface ISerializer<T> : ISerializer
 	{
-		void Serialize(T graph, string fileName);
-		new T Deserialize(string fileName);
-
-		void Serialize(T graph, Stream stream);
-		new T Deserialize(Stream stream);
-
-		byte[] Serialize(T graph);
-		new T Deserialize(byte[] data);
+		public abstract Task SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken);
+		public new abstract Task<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken);
 	}
 }

@@ -1,5 +1,8 @@
 ﻿namespace Ecng.Serialization
 {
+	using System.Threading;
+	using System.Threading.Tasks;
+
 	[TypeSchemaFactory(SearchBy.Properties, VisibleScopes.Public)]
 	[Ignore(FieldName = "IsDisposed")]
 	[EntityFactory(typeof(UnitializedEntityFactory<EntityFactory>))]
@@ -7,29 +10,22 @@
 	{
 		public abstract bool FullInitialize { get; }
 
-		public abstract object CreateObject(ISerializer serializer, SerializationItemCollection source);
+		public abstract Task<object> CreateObject(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken);
 
-		protected override void Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source)
-		{
-		}
+		protected override Task Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> Task.CompletedTask;
 
-		protected override void Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source)
-		{
-		}
+		protected override Task Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> Task.CompletedTask;
 
-		protected override bool OnEquals(EntityFactory other)
-		{
-			return ReferenceEquals(this, other);
-		}
+		protected override bool OnEquals(EntityFactory other) => ReferenceEquals(this, other);
 	}
 
 	public abstract class EntityFactory<TEntity> : EntityFactory
 	{
-		public abstract TEntity CreateEntity(ISerializer serializer, SerializationItemCollection source);
+		public abstract Task<TEntity> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken);
 
-		public override object CreateObject(ISerializer serializer, SerializationItemCollection source)
-		{
-			return CreateEntity(serializer, source);
-		}
+		public override async Task<object> CreateObject(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> await CreateEntity(serializer, source, cancellationToken);
 	}
 }

@@ -2,6 +2,8 @@ namespace Ecng.Serialization
 {
 	using System;
 	using System.Reflection;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 	using Ecng.Configuration;
@@ -36,17 +38,17 @@ namespace Ecng.Serialization
 		{
 		}
 
-		protected internal override TInstance OnCreateInstance(ISerializer serializer, TSource source)
+		protected internal override Task<TInstance> OnCreateInstance(ISerializer serializer, TSource source, CancellationToken cancellationToken)
 		{
-			return Storage.GetById<TInstance>(source);
+			return Storage.GetById<TInstance>(source, cancellationToken);
 		}
 
-		protected internal override TSource OnCreateSource(ISerializer serializer, TInstance instance)
+		protected internal override Task<TSource> OnCreateSource(ISerializer serializer, TInstance instance, CancellationToken cancellationToken)
 		{
 			if (instance.IsNull())
 				throw new ArgumentNullException(nameof(instance), $"Field '{Field.Name}' in schema '{Field.Schema.EntityType}' isn't initialized.");
 
-			return (TSource)serializer.GetLegacySerializer<TInstance>().GetId(instance);
+			return Task.FromResult((TSource)serializer.GetLegacySerializer<TInstance>().GetId(instance));
 		}
 	}
 
@@ -72,25 +74,25 @@ namespace Ecng.Serialization
 		public FastInvoker<VoidType, object[], RelationManyList<TItem, TId>> ListCreator => _listCreator ??= FastInvoker<VoidType, object[], RelationManyList<TItem, TId>>
 			.Create(UnderlyingListType.GetMember<ConstructorInfo>(typeof(IStorage<TId>), typeof(TOwner)));
 
-		public override object CreateInstance(ISerializer serializer, SerializationItem source)
+		public override async Task<object> CreateInstance(ISerializer serializer, SerializationItem source, CancellationToken cancellationToken)
 		{
-			return OnCreateInstance(serializer, null);
+			return await OnCreateInstance(serializer, null, cancellationToken);
 		}
 
-		protected internal override RelationManyList<TItem, TId> OnCreateInstance(ISerializer serializer, VoidType source)
+		protected internal override Task<RelationManyList<TItem, TId>> OnCreateInstance(ISerializer serializer, VoidType source, CancellationToken cancellationToken)
 		{
 			var context = Scope<SerializationContext>.Current.Value;
 			var list = ListCreator.Ctor(new[] { Storage, context.Entity });
 			list.BulkLoad = BulkLoad;
 			list.CacheCount = CacheCount;
-			list.DelayAction = SerializationContext.DelayAction;
+			//list.DelayAction = SerializationContext.DelayAction;
 			list.BufferSize = BufferSize;
-			return list;
+			return Task.FromResult(list);
 		}
 
-		protected internal override VoidType OnCreateSource(ISerializer serializer, RelationManyList<TItem, TId> instance)
+		protected internal override Task<VoidType> OnCreateSource(ISerializer serializer, RelationManyList<TItem, TId> instance, CancellationToken cancellationToken)
 		{
-			return null;
+			return Task.FromResult(default(VoidType));
 		}
 	}
 

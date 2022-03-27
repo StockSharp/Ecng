@@ -1,6 +1,8 @@
 namespace Ecng.Serialization
 {
 	using System;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	[TypeSchemaFactory(SearchBy.Properties, VisibleScopes.Public)]
 	[Ignore(FieldName = "IsDisposed")]
@@ -17,13 +19,11 @@ namespace Ecng.Serialization
 		public abstract object GetValue(object entity);
 		public abstract object SetValue(object entity, object value);
 
-		protected override void Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source)
-		{
-		}
+		protected override Task Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> Task.CompletedTask;
 
-		protected override void Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source)
-		{
-		}
+		protected override Task Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> Task.CompletedTask;
 
 		protected override bool OnEquals(FieldAccessor other)
 		{

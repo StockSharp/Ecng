@@ -2,6 +2,8 @@
 {
 	using System.Collections.Generic;
 	using System.IO;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	public interface ILegacySerializer : ISerializer
 	{
@@ -10,20 +12,20 @@
 		//bool AllowNullableItems { get; set; }
 		IList<string> IgnoreFields { get; }
 
-		object CreateObject(SerializationItemCollection source);
+		Task<object> CreateObject(SerializationItemCollection source, CancellationToken cancellationToken);
 
-		void Serialize(object graph, FieldList fields, Stream stream);
+		Task Serialize(object graph, FieldList fields, Stream stream, CancellationToken cancellationToken);
 
-		void Serialize(object graph, SerializationItemCollection source);
-		object Deserialize(SerializationItemCollection source);
+		Task Serialize(object graph, SerializationItemCollection source, CancellationToken cancellationToken);
+		Task<object> Deserialize(SerializationItemCollection source, CancellationToken cancellationToken);
 
-		void Serialize(object graph, FieldList fields, SerializationItemCollection source);
-		object Deserialize(SerializationItemCollection source, FieldList fields, object graph);
+		Task Serialize(object graph, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken);
+		Task<object> Deserialize(SerializationItemCollection source, FieldList fields, object graph, CancellationToken cancellationToken);
 
-		void Serialize(SerializationItemCollection source, Stream stream);
-		void Deserialize(Stream stream, SerializationItemCollection source);
+		Task Serialize(SerializationItemCollection source, Stream stream, CancellationToken cancellationToken);
+		Task Deserialize(Stream stream, SerializationItemCollection source, CancellationToken cancellationToken);
 
-		void Deserialize(Stream stream, FieldList fields, SerializationItemCollection source);
+		Task Deserialize(Stream stream, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken);
 
 		object GetId(object graph);
 	}
