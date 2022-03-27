@@ -695,21 +695,67 @@
 						return t.source.Task;
 				}
 
-				var source = new TaskCompletionSource<TValue>();
-				_ = Task.Run(async () => source.SetResult(await handler(key, cancellationToken)));
-
 				using (await sync.WriterLockAsync(cancellationToken))
 				{
 					if (dictionary.TryGetValue(key, out t))
 						return t.source.Task;
-					
-					t = new(source, default);
-					dictionary.Add(key, t);
-					return t.source.Task;
+
+					var source = new TaskCompletionSource<TValue>();
+					_ = Task.Factory.StartNew(async () => source.SetResult(await handler(key, cancellationToken)));
+
+					dictionary.Add(key, new(source, default));
+					return source.Task;
 				}
 			}
 
 			return await (await InternalSafeAddAsync());
+		}
+
+		public static Task<TValue> SafeAddAsync<TKey, TValue>(this IDictionary<TKey, TaskCompletionSource<TValue>> dictionary, TKey key, Func<TKey, CancellationToken, Task<TValue>> handler, CancellationToken cancellationToken)
+		{
+			if (dictionary is null)
+				throw new ArgumentNullException(nameof(dictionary));
+
+			if (handler is null)
+				throw new ArgumentNullException(nameof(handler));
+
+			var syncObj = (dictionary as ISynchronizedCollection)?.SyncRoot ?? (object)dictionary;
+
+			TaskCompletionSource<TValue> source;
+
+			lock (syncObj)
+			{
+				if (dictionary.TryGetValue(key, out source))
+					return source.Task;
+
+				source = new();
+				dictionary.Add(key, source);
+			}
+
+			void remove()
+			{
+				lock (syncObj)
+					dictionary.Remove(key);
+			}
+
+			try
+			{
+				handler(key, cancellationToken).ContinueWith(t =>
+				{
+					if (t.IsFaulted || t.IsCanceled)
+						remove();
+
+					source.TryCompleteFromCompletedTask(t);
+
+				}, TaskContinuationOptions.ExecuteSynchronously);
+			}
+			catch
+			{
+				remove();
+				throw;
+			}
+
+			return source.Task;
 		}
 
 		public static TValue TryGetValue<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key)
