@@ -404,5 +404,12 @@ namespace Ecng.Common
 
 		public static T GetResult<T>(this Task task)
 			=> (T)task.GetType().GetProperty("Result").GetValue(task);
+
+		public static TaskCompletionSource<TValue> ToCompleteSource<TValue>(this TValue value)
+		{
+			var source = new TaskCompletionSource<TValue>();
+			source.SetResult(value);
+			return source;
+		}
 	}
 }
