@@ -286,7 +286,7 @@
         }
       }
 
-      return Task.FromResult(variableValue);
+      return variableValue.FromResult();
     }
 
     #endregion

@@ -397,9 +397,9 @@ namespace TestWpf
 
 			public string UrlPart { get; set; }
 
-			Task<string> INamedObject<TextBB2HtmlContext>.GetName(TextBB2HtmlContext ctx, CancellationToken token) => Task.FromResult(Name);
-			Task<string> INamedObject<TextBB2HtmlContext>.GetDescription(TextBB2HtmlContext ctx, CancellationToken token) => Task.FromResult(Description);
-			Task<string> INamedObject<TextBB2HtmlContext>.GetUrlPart(TextBB2HtmlContext ctx, CancellationToken token) => Task.FromResult(UrlPart);
+			Task<string> INamedObject<TextBB2HtmlContext>.GetName(TextBB2HtmlContext ctx, CancellationToken token) => Name.FromResult();
+			Task<string> INamedObject<TextBB2HtmlContext>.GetDescription(TextBB2HtmlContext ctx, CancellationToken token) => Description.FromResult();
+			Task<string> INamedObject<TextBB2HtmlContext>.GetUrlPart(TextBB2HtmlContext ctx, CancellationToken token) => UrlPart.FromResult();
 		}
 
 		private static TextBB2HtmlContext CreateContext(bool allowHtml, bool localhost)
@@ -416,7 +416,7 @@ namespace TestWpf
 				if (packageId.IsEmpty())
 					throw new ArgumentNullException(nameof(packageId));
 
-				return Task.FromResult($"https://www.nuget.org/packages/{packageId}/");
+				return $"https://www.nuget.org/packages/{packageId}/".FromResult();
 			}
 
 			static Task<string> ToFullAbsolute(TextBB2HtmlContext ctx, string virtualPath, CancellationToken token)
@@ -430,7 +430,7 @@ namespace TestWpf
 				else
 					virtualPath = virtualPath.Replace("~", domain);
 
-				return Task.FromResult(virtualPath);
+				return virtualPath.FromResult();
 			}
 
 			static Task<INamedObject<TextBB2HtmlContext>> GetProduct(long id, CancellationToken token)
@@ -481,10 +481,10 @@ namespace TestWpf
 				GetPage,
 
 				GetPackageLink,
-				(ctx, s, t) => Task.FromResult(s),
+				(ctx, s, t) => s.FromResult(),
 				ToFullAbsolute,
-				(ctx, sourceUrl, t) => Task.FromResult($"{sourceUrl}_a6f78c5fce344124993798c028a22a3a"),
-				(ctx, t) => Task.FromResult($"stocksharp.{ctx.DomainCode}"),
+				(ctx, sourceUrl, t) => $"{sourceUrl}_a6f78c5fce344124993798c028a22a3a".FromResult(),
+				(ctx, t) => $"stocksharp.{ctx.DomainCode}".FromResult(),
 				async (ctx, url, t) =>
 				{
 					string domain = null;
@@ -510,12 +510,12 @@ namespace TestWpf
 					var isBlank = isAway || isGitHub;
 					return (changed, isAway, noFollow, isBlank);
 				},
-				(ctx, url, t) => Task.FromResult(url.UrlEscape()),
+				(ctx, url, t) => url.UrlEscape().FromResult(),
 				(ctx, img, t) =>
 				{
-					return Task.FromResult(Path.GetExtension(img).EqualsIgnoreCase(".gif")
+					return (Path.GetExtension(img).EqualsIgnoreCase(".gif")
 						? $"~/images/smiles/{img}"
-						: $"~/images/svg/smiles/{img}")
+						: $"~/images/svg/smiles/{img}").FromResult()
 					;
 				});
 

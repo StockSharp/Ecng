@@ -411,5 +411,7 @@ namespace Ecng.Common
 			source.SetResult(value);
 			return source;
 		}
+
+		public static Task<TValue> FromResult<TValue>(this TValue value) => Task.FromResult(value);
 	}
 }

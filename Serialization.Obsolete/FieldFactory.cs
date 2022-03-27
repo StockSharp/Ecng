@@ -39,7 +39,7 @@
 				throw new ArgumentNullException(nameof(source), $"Source value for field '{Field.Name}' is null.");
 
 			/*IsNullable && */
-			return source.Value is null ? Task.FromResult(default(object)) : OnCreateInstance(serializer, source.Value, cancellationToken);
+			return source.Value is null ? default(object).FromResult() : OnCreateInstance(serializer, source.Value, cancellationToken);
 		}
 
 		public virtual async Task<SerializationItem> CreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken)

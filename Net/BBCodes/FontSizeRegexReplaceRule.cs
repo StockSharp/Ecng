@@ -4,6 +4,8 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
+	using Ecng.Common;
+
 	/// <summary>
 	/// For the font size with replace
 	/// </summary>
@@ -53,10 +55,10 @@
     {
       if (variableName == "size")
       {
-        return Task.FromResult(GetFontSize(variableValue));
+        return GetFontSize(variableValue).FromResult();
       }
 
-      return Task.FromResult(variableValue);
+      return variableValue.FromResult();
     }
 
     /// <summary>

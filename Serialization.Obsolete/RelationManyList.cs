@@ -412,7 +412,7 @@
 			=> AsyncContext.Run(() => ContainsAsync(item, default));
 
 		public virtual Task<bool> ContainsAsync(TEntity item, CancellationToken cancellationToken)
-			=> Task.FromResult(this.Any(arg => arg.Equals(item)));
+			=> this.Any(arg => arg.Equals(item)).FromResult();
 
 		public virtual void CopyTo(TEntity[] array, int index)
 			=> AsyncContext.Run(() => CopyTo(array, index, default));

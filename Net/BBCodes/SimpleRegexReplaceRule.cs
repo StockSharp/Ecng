@@ -6,6 +6,8 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
+	using Ecng.Common;
+
 	/// <summary>
 	/// For basic regex with no variables
 	/// </summary>
@@ -144,7 +146,7 @@
         m = RegExSearch.Match(sb.ToString());
       }
 
-      return Task.FromResult(sb.ToString());
+      return sb.ToString().FromResult();
     }
 
     #endregion

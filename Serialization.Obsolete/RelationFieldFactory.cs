@@ -48,7 +48,7 @@ namespace Ecng.Serialization
 			if (instance.IsNull())
 				throw new ArgumentNullException(nameof(instance), $"Field '{Field.Name}' in schema '{Field.Schema.EntityType}' isn't initialized.");
 
-			return Task.FromResult((TSource)serializer.GetLegacySerializer<TInstance>().GetId(instance));
+			return ((TSource)serializer.GetLegacySerializer<TInstance>().GetId(instance)).FromResult();
 		}
 	}
 
@@ -87,12 +87,12 @@ namespace Ecng.Serialization
 			list.CacheCount = CacheCount;
 			//list.DelayAction = SerializationContext.DelayAction;
 			list.BufferSize = BufferSize;
-			return Task.FromResult(list);
+			return list.FromResult();
 		}
 
 		protected internal override Task<VoidType> OnCreateSource(ISerializer serializer, RelationManyList<TItem, TId> instance, CancellationToken cancellationToken)
 		{
-			return Task.FromResult(default(VoidType));
+			return default(VoidType).FromResult();
 		}
 	}
 

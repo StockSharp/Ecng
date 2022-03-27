@@ -530,7 +530,7 @@
 				html = html.Insert(matchs2[j].Index + 1, " \r");
 			}
 
-			return Task.FromResult(html.EncodeToHtml());
+			return html.EncodeToHtml().FromResult();
 		}
 
 		private class UrlRule : VariableRegexReplaceRule<TContext>
@@ -725,7 +725,7 @@
 					builder.Insert(g.Index, sb.ToString());
 				}
 
-				return Task.FromResult(builder.ToString());
+				return builder.ToString().FromResult();
 			}
 		}
 
@@ -756,7 +756,7 @@
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				return Task.FromResult(builder.ToString());
+				return builder.ToString().FromResult();
 			}
 		}
 
@@ -1241,7 +1241,7 @@
 					builder.Insert(g.Index, strText);
 				}
 
-				return Task.FromResult(builder.ToString());
+				return builder.ToString().FromResult();
 			}
 
 			protected virtual string GetInnerValue(string innerValue)
@@ -1299,7 +1299,7 @@
 					.RemoveMultipleWhitespace();
 			}
 
-			return Task.FromResult(text);
+			return text.FromResult();
 		}
 
 		public async Task<string> ActivateRuleAsync(string text, IReplaceRule<TContext> rule, TContext context, CancellationToken cancellationToken = default)

@@ -1,9 +1,9 @@
 ﻿namespace Ecng.Tests.Collections
 {
-	using System.Threading;
 	using System.Threading.Tasks;
 	using System.Collections.Generic;
 
+	using Ecng.Common;
 	using Ecng.Collections;
 	using Ecng.UnitTesting;
 
@@ -34,22 +34,22 @@
 			var sync = new AsyncReaderWriterLock();
 			var dict = new Dictionary<int, string> { { 1, "1" } };
 
-			(await dict.SafeAddAsync(sync, 1, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("1");
-			(await dict.SafeAddAsync(sync, 2, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("2");
-			(await dict.SafeAddAsync(sync, 3, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("3");
-			(await dict.SafeAddAsync(sync, 2, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("2");
+			(await dict.SafeAddAsync(sync, 1, (k, t) => k.ToString().FromResult(), default)).AssertEqual("1");
+			(await dict.SafeAddAsync(sync, 2, (k, t) => k.ToString().FromResult(), default)).AssertEqual("2");
+			(await dict.SafeAddAsync(sync, 3, (k, t) => k.ToString().FromResult(), default)).AssertEqual("3");
+			(await dict.SafeAddAsync(sync, 2, (k, t) => k.ToString().FromResult(), default)).AssertEqual("2");
 		}
 
 		[TestMethod]
 		public async Task SafeAddAsync2()
 		{
 			var sync = new AsyncReaderWriterLock();
-			var dict = new Dictionary<int, (TaskCompletionSource<string>, string)>();
+			var dict = new Dictionary<int, TaskCompletionSource<string>>();
 
-			(await dict.SafeAddAsync(sync, 1, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("1");
-			(await dict.SafeAddAsync(sync, 2, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("2");
-			(await dict.SafeAddAsync(sync, 3, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("3");
-			(await dict.SafeAddAsync(sync, 2, (k, t) => Task.FromResult(k.ToString()), default)).AssertEqual("2");
+			(await dict.SafeAddAsync(sync, 1, (k, t) => k.ToString().FromResult(), default)).AssertEqual("1");
+			(await dict.SafeAddAsync(sync, 2, (k, t) => k.ToString().FromResult(), default)).AssertEqual("2");
+			(await dict.SafeAddAsync(sync, 3, (k, t) => k.ToString().FromResult(), default)).AssertEqual("3");
+			(await dict.SafeAddAsync(sync, 2, (k, t) => k.ToString().FromResult(), default)).AssertEqual("2");
 		}
 	}
 }

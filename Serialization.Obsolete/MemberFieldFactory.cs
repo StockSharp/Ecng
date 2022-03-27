@@ -21,12 +21,12 @@ namespace Ecng.Serialization
 
 		protected internal override Task<T> OnCreateInstance(ISerializer serializer, string source, CancellationToken cancellationToken)
 		{
-			return Task.FromResult(source.FromString<T>());
+			return source.FromString<T>().FromResult();
 		}
 
 		protected internal override Task<string> OnCreateSource(ISerializer serializer, T instance, CancellationToken cancellationToken)
 		{
-			return Task.FromResult(instance.ToString(_isAssemblyQualifiedName));
+			return instance.ToString(_isAssemblyQualifiedName).FromResult();
 		}
 	}
 

@@ -5,6 +5,7 @@ namespace Ecng.Serialization
 	using System.Threading.Tasks;
 
 	using Ecng.Reflection;
+	using Ecng.Common;
 
 	public class FastInvokerEntityFactory<E> : EntityFactory<E>
 	{
@@ -19,7 +20,7 @@ namespace Ecng.Serialization
 
 		public override Task<E> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
-			return Task.FromResult(_invoker.Ctor(null));
+			return _invoker.Ctor(null).FromResult();
 		}
 	}
 }

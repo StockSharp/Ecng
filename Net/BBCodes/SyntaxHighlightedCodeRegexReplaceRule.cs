@@ -5,6 +5,8 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
+	using Ecng.Common;
+
 	/// <summary>
 	/// Syntax Highlighted code block regular express replace
 	/// </summary>
@@ -72,7 +74,7 @@
                 m = RegExSearch.Match(text);
             }
 
-			return Task.FromResult(text);
+			return text.FromResult();
         }
 
         #endregion

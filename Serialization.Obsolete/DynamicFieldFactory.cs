@@ -24,7 +24,7 @@
 			var value = source["Value"].Value;
 
 			if (!SchemaManager.GlobalFieldFactories.TryGetValue(type, out var factoryType))
-				return Task.FromResult(value.To(type));
+				return value.To(type).FromResult();
 
 			var factory = GetFactory(factoryType);
 			return factory.CreateInstance(serializer, new SerializationItem(factory.Field, value), cancellationToken);

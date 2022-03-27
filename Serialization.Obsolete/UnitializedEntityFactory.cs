@@ -11,7 +11,7 @@
 
 		public override Task<TEntity> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
-			return Task.FromResult((TEntity)serializer.Type.CreateUnitialized());
+			return ((TEntity)serializer.Type.CreateUnitialized()).FromResult();
 		}
 	}
 }

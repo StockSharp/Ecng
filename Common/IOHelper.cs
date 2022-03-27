@@ -40,7 +40,7 @@ namespace Ecng.Common
 				cancellationToken.ThrowIfCancellationRequested();
 			}
 
-			return Task.FromResult(releaseDir);
+			return releaseDir.FromResult();
 		}
 
 		public static void CopyDirectory(string sourcePath, string destPath)
