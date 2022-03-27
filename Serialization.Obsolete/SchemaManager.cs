@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -80,7 +81,7 @@
 
 			_schemaFactories.SafeAdd(entityType, key => factory);
 
-			return _schemas.SafeAdd(entityType, key =>
+			var schema = _schemas.SafeAdd(entityType, key =>
 			{
 				var schema = factory.CreateSchema(entityType);
 
@@ -96,6 +97,19 @@
 					_schemas.Remove(entityType);
 				}
 			});
+
+			foreach (var field in schema.Fields.Where(f => f.IsInnerSchema()))
+			{
+				var innerSchema = field.Type.GetSchema();
+
+				foreach (var innerField in innerSchema.Fields)
+				{
+					if (!field.InnerSchemaIgnoreFields.Contains(innerField.Name))
+						field.InnerSchemaNameOverrides.TryAdd(innerField.Name, field.Name + innerField.Name);
+				}
+			}
+
+			return schema;
 		}
 
 		#endregion
