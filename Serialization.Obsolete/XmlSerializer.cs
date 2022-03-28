@@ -12,7 +12,7 @@ namespace Ecng.Serialization
 	using Ecng.Common;
 	using Ecng.Reflection;
 
-	public interface IXmlSerializer : ISerializer
+	public interface IXmlSerializer : ILegacySerializer
 	{
 		Encoding Encoding { get; set; }
 		bool Indent { get; set; }
