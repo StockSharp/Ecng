@@ -703,7 +703,7 @@
 					source = new TaskCompletionSource<TValue>();
 					_ = Task.Factory.StartNew(async () => source.SetResult(await handler(key, cancellationToken)));
 
-					dictionary.Add(key, new(source, default));
+					dictionary.Add(key, source);
 					return source.Task;
 				}
 			}
