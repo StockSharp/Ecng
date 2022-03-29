@@ -67,6 +67,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestWpf", "TestWpf\TestWpf.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serialization.Obsolete", "Serialization.Obsolete\Serialization.Obsolete.csproj", "{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmartFormat", "SmartFormat\SmartFormat\SmartFormat.csproj", "{7359993E-F2D2-4599-B861-F5136E48D8F3}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Drawing", "Drawing\Drawing.csproj", "{740C5C88-7C14-4B3F-BD93-3AD8A7FCF687}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Compilation", "Compilation\Compilation.csproj", "{375E166E-325A-4EBE-85FC-0D319E6784C0}"
@@ -193,6 +195,10 @@ Global
 		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9747FC7D-38DD-4AAF-BBCD-D7AD5665DF6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7359993E-F2D2-4599-B861-F5136E48D8F3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{740C5C88-7C14-4B3F-BD93-3AD8A7FCF687}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{740C5C88-7C14-4B3F-BD93-3AD8A7FCF687}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{740C5C88-7C14-4B3F-BD93-3AD8A7FCF687}.Release|Any CPU.ActiveCfg = Release|Any CPU
