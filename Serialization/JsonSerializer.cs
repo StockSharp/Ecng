@@ -54,6 +54,14 @@
 
 		public override string FileExtension => "json";
 
+		public static JsonSerializer<T> CreateDefault()
+			=> new()
+			{
+				Indent = true,
+				EnumAsString = true,
+				NullValueHandling = NullValueHandling.Ignore,
+			};
+
 		private static bool IsJsonPrimitive() => typeof(T).IsSerializablePrimitive() && typeof(T) != typeof(byte[]);
 
 		public override async Task SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken)
