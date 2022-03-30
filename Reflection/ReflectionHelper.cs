@@ -776,7 +776,10 @@ namespace Ecng.Reflection
 
 			return _getItemTypeCache.GetFromCache(collectionType, delegate
 			{
-				var interfaceType = collectionType.GetGenericType(typeof(ICollection<>)) ?? collectionType.GetGenericType(typeof(IEnumerable<>));
+				var interfaceType =
+					collectionType.GetGenericType(typeof(ICollection<>)) ??
+					collectionType.GetGenericType(typeof(IEnumerable<>)) ??
+					collectionType.GetGenericType(typeof(IAsyncEnumerable<>));
 
 				if (interfaceType != null)
 					return interfaceType.GetGenericArguments()[0];

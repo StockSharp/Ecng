@@ -19,6 +19,7 @@
 			arr.GetType().GetItemType().AssertSame(typeof(int));
 			list.GetType().GetItemType().AssertSame(typeof(int));
 			enu.GetType().GetItemType().AssertSame(typeof(int));
+			typeof(IAsyncEnumerable<int>).GetItemType().AssertSame(typeof(int));
 		}
 	}
 }
