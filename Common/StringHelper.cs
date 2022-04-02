@@ -1226,5 +1226,8 @@
 
 		public static string GetLangCode(this string cultureName)
 			=> cultureName.To<CultureInfo>().TwoLetterISOLanguageName;
+
+		public static void RemoveLast(this StringBuilder builder, int count)
+			=> builder.Remove(builder.Length - count, count);
 	}
 }
