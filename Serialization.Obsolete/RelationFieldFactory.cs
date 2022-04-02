@@ -39,9 +39,7 @@ namespace Ecng.Serialization
 		}
 
 		protected internal override Task<TInstance> OnCreateInstance(ISerializer serializer, TSource source, CancellationToken cancellationToken)
-		{
-			return Storage.GetById<TInstance>(source, cancellationToken);
-		}
+			=> Storage.GetByIdAsync<TInstance>(default, source, cancellationToken);
 
 		protected internal override Task<TSource> OnCreateSource(ISerializer serializer, TInstance instance, CancellationToken cancellationToken)
 		{

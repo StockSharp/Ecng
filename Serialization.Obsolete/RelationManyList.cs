@@ -263,6 +263,8 @@
 		public bool CacheCount { get; set; }
 		public TimeSpan CacheTimeOut { get; set; } = TimeSpan.MaxValue;
 
+		public CommandType? CommandType { get; set; }
+
 		private DateTime? _cacheExpire;
 		private bool _bulkInitialized;
 
@@ -271,7 +273,7 @@
 			if (_bulkInitialized)
 			{
 				if (_cacheExpire < DateTime.UtcNow)
-					await ResetCache(cancellationToken);
+					await ResetCacheAsync(cancellationToken);
 			}
 
 			return _bulkInitialized;
@@ -282,7 +284,7 @@
 		//	_count += diff;
 		//}
 
-		public virtual async Task ResetCache(CancellationToken cancellationToken)
+		public virtual async Task ResetCacheAsync(CancellationToken cancellationToken)
 		{
 			var (sync, dict) = CachedEntities;
 
@@ -647,43 +649,43 @@
 		protected virtual Task<long> OnGetCount(CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			return Storage.GetCount<TEntity>(cancellationToken);
+			return Storage.GetCountAsync<TEntity>(CommandType, cancellationToken);
 		}
 
 		protected virtual Task OnAdd(TEntity entity, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			return Storage.Add(entity, cancellationToken);
+			return Storage.AddAsync(CommandType, entity, cancellationToken);
 		}
 
 		protected virtual Task<TEntity> OnGet(SerializationItemCollection by, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			return Storage.GetBy<TEntity>(by, cancellationToken);
+			return Storage.GetByAsync<TEntity>(CommandType, by, cancellationToken);
 		}
 
 		protected virtual Task<IEnumerable<TEntity>> OnGetGroup(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			return Storage.GetGroup<TEntity>(startIndex, count, orderBy, direction, cancellationToken);
+			return Storage.GetGroupAsync<TEntity>(CommandType, startIndex, count, orderBy, direction, cancellationToken);
 		}
 
 		protected virtual Task OnUpdate(TEntity entity, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			return Storage.Update(entity, cancellationToken);
+			return Storage.UpdateAsync(CommandType, entity, cancellationToken);
 		}
 
 		protected virtual Task OnRemove(TEntity entity, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			return Storage.Remove(entity, cancellationToken);
+			return Storage.RemoveAsync(CommandType, entity, cancellationToken);
 		}
 
 		protected virtual Task OnClear(CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
-			return Storage.Clear<TEntity>(cancellationToken);
+			return Storage.ClearAsync<TEntity>(CommandType, cancellationToken);
 		}
 
 		#endregion

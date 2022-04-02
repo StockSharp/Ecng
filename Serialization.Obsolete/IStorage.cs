@@ -1,8 +1,8 @@
 ﻿namespace Ecng.Serialization
 {
-	using System;
 	using System.Collections.Generic;
 	using System.ComponentModel;
+	using System.Data;
 	using System.Threading;
 	using System.Threading.Tasks;
 
@@ -12,29 +12,29 @@
 		Task CommitBatch(CancellationToken cancellationToken);
 		Task EndBatch(CancellationToken cancellationToken);
 
-		Task ClearCache(CancellationToken cancellationToken);
+		Task ClearCacheAsync(CancellationToken cancellationToken);
 	}
 
 	public interface IStorage<TId> : IStorage
 	{
-		Task<long> GetCount<TEntity>(CancellationToken cancellationToken);
+		Task<long> GetCountAsync<TEntity>(CommandType? commandType, CancellationToken cancellationToken);
 
-		Task<TEntity> Add<TEntity>(TEntity entity, CancellationToken cancellationToken);
+		Task<TEntity> AddAsync<TEntity>(CommandType? commandType, TEntity entity, CancellationToken cancellationToken);
 
-		Task<TEntity> GetBy<TEntity>(SerializationItemCollection by, CancellationToken cancellationToken);
+		Task<TEntity> GetByAsync<TEntity>(CommandType? commandType, SerializationItemCollection by, CancellationToken cancellationToken);
 
-		Task<TEntity> GetById<TEntity>(TId id, CancellationToken cancellationToken);
+		Task<TEntity> GetByIdAsync<TEntity>(CommandType? commandType, TId id, CancellationToken cancellationToken);
 
-		Task<IEnumerable<TEntity>> GetGroup<TEntity>(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken);
+		Task<IEnumerable<TEntity>> GetGroupAsync<TEntity>(CommandType? commandType, long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken);
 
-		Task<TEntity> Update<TEntity>(TEntity entity, CancellationToken cancellationToken);
+		Task<TEntity> UpdateAsync<TEntity>(CommandType? commandType, TEntity entity, CancellationToken cancellationToken);
 
-		Task Remove<TEntity>(TEntity entity, CancellationToken cancellationToken);
+		Task RemoveAsync<TEntity>(CommandType? commandType, TEntity entity, CancellationToken cancellationToken);
 
-		Task Clear<TEntity>(CancellationToken cancellationToken);
+		Task ClearAsync<TEntity>(CommandType? commandType, CancellationToken cancellationToken);
 
-		event Action<object> Added;
-		event Action<object> Updated;
-		event Action<object> Removed;
+		//event Action<object> Added;
+		//event Action<object> Updated;
+		//event Action<object> Removed;
 	}
 }
