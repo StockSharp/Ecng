@@ -6,7 +6,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	public interface IStorage
+	public interface IStorage : IQueryContext
 	{
 		Task<IBatchContext> BeginBatch(CancellationToken cancellationToken);
 		Task CommitBatch(CancellationToken cancellationToken);
