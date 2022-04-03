@@ -413,5 +413,9 @@ namespace Ecng.Common
 		}
 
 		public static Task<TValue> FromResult<TValue>(this TValue value) => Task.FromResult(value);
+
+		// https://stackoverflow.com/a/61260053
+		public static async ValueTask AsValueTask<T>(this ValueTask<T> valueTask)
+			=> await valueTask;
 	}
 }

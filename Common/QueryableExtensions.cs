@@ -54,12 +54,12 @@
 					));
 		}
 
-		public static Task<long> CountAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
+		public static ValueTask<long> CountAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
 		{
 			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			return source.Provider.Execute<Task<long>>(
+			return source.Provider.Execute<ValueTask<long>>(
 				Expression.Call(
 					null,
 					GetMethodInfo(CountAsync, source, cancellationToken),
