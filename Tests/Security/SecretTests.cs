@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Tests.Security
 {
+	using System.IO;
+
 	using Ecng.Common;
 	using Ecng.Security;
 	using Ecng.UnitTesting;
@@ -49,6 +51,16 @@
 
 			correctPwd.CreateSecret().IsValid(correctPwd).AssertTrue();
 			correctPwd.CreateSecret().IsValid(incorrectPwd).AssertFalse();
+		}
+
+		[TestMethod]
+		public void DecryptReadStreamTest()
+		{
+	        var initVectorBytes = "ss14fgty650h8u82".ASCII();
+	        var txt = File.ReadAllText("encrypted_config").Base64().Decrypt("qwerty", initVectorBytes, initVectorBytes).UTF8();
+
+			txt.Length.AssertEqual(65735);
+			txt.UTF8().Md5().AssertEqual("96FB3B2D0226B0A18903E929E1238557");
 		}
 	}
 }

@@ -183,6 +183,25 @@ namespace Ecng.Security
 			return memoryStream.ToArray();
 		}
 
+		private static byte[] ReadStream(this CryptoStream stream, int maxLen)
+		{
+			var buffer = new byte[maxLen];
+			var offset = 0;
+
+			while (offset < maxLen)
+			{
+				var numRead = stream.Read(buffer, offset, maxLen - offset);
+				if (numRead == 0)
+					break;
+
+				offset += numRead;
+			}
+
+			Array.Resize(ref buffer, offset);
+
+			return buffer;
+		}
+
 		public static byte[] Decrypt(this byte[] cipherText, string passPhrase, byte[] salt, byte[] iv)
 		{
 			if (cipherText is null)
@@ -204,13 +223,7 @@ namespace Ecng.Security
 			using var memoryStream = new MemoryStream(cipherText);
 			using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
 
-			var plainTextBytes = new byte[cipherText.Length];
-			var decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
-
-			if (plainTextBytes.Length > decryptedByteCount)
-				Array.Resize(ref plainTextBytes, decryptedByteCount);
-
-			return plainTextBytes;
+			return cryptoStream.ReadStream(cipherText.Length);
 		}
 
 		private static byte[] TransformAes(bool isEncrypt, byte[] inputBytes, string passPhrase, byte[] salt, byte[] iv)
@@ -243,13 +256,7 @@ namespace Ecng.Security
 				using var memoryStream = new MemoryStream(inputBytes);
 				using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
 
-				var plainTextBytes = new byte[inputBytes.Length];
-				var decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
-
-				if (plainTextBytes.Length > decryptedByteCount)
-					Array.Resize(ref plainTextBytes, decryptedByteCount);
-
-				return plainTextBytes;
+				return cryptoStream.ReadStream(inputBytes.Length);
 			}
 		}
 

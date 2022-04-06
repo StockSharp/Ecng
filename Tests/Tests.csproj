@@ -8,6 +8,15 @@
     <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
     <NoWarn>CS0618</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ContentWithTargetPath Include="Resources\encrypted_config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>encrypted_config</TargetPath>
+    </ContentWithTargetPath>
+    <None Include="Resources\encrypted_config" />    
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MsTestSdkVer)" />
     <PackageReference Include="MSTest.TestAdapter" Version="$(MsTestVer)" />

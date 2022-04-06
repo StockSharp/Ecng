@@ -11,8 +11,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="
-           '$(MSBuildProjectName)' == 'Tests'
-        or '$(MSBuildProjectName)' == 'Interop.Windows'
+           '$(MSBuildProjectName)' == 'Interop.Windows'
         or '$(MSBuildProjectName)' == 'ManagedWinapi'
         or '$(MSBuildProjectName)' == 'HtmlRenderer'
         or '$(MSBuildProjectName)' == 'TestConsole'
@@ -20,6 +19,10 @@
     <TargetFrameworks>net5.0-windows</TargetFrameworks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Tests'">
+    <TargetFrameworks>net5.0-windows;net6.0-windows</TargetFrameworks>
+  </PropertyGroup>
+  
   <PropertyGroup Condition="
            '$(MSBuildProjectName)' == 'SmartFormat.Tests'
       ">
