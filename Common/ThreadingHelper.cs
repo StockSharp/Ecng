@@ -429,6 +429,9 @@ namespace Ecng.Common
 
 		public static async ValueTask<T[]> WhenAll<T>(this IEnumerable<ValueTask<T>> tasks)
 		{
+			if (tasks is null)
+				throw new ArgumentNullException(nameof(tasks));
+
 			// We don't allocate the list if no task throws
 			List<Exception> exceptions = null;
 
@@ -449,9 +452,37 @@ namespace Ecng.Common
 				}
 			}
 
-			return exceptions is null
-				? results
-				: throw new AggregateException(exceptions);
+			if (exceptions is not null)
+				throw new AggregateException(exceptions);
+
+			return results;
+		}
+
+		public static async ValueTask WhenAll(this IEnumerable<ValueTask> tasks)
+		{
+			if (tasks is null)
+				throw new ArgumentNullException(nameof(tasks));
+
+			// We don't allocate the list if no task throws
+			List<Exception> exceptions = null;
+
+			var source = tasks.ToArray();
+
+			for (var i = 0; i < source.Length; i++)
+			{
+				try
+				{
+					await source[i].ConfigureAwait(false);
+				}
+				catch (Exception ex)
+				{
+					exceptions ??= new List<Exception>(source.Length);
+					exceptions.Add(ex);
+				}
+			}
+
+			if (exceptions is not null)
+				throw new AggregateException(exceptions);
 		}
 
 		public static void Run(Func<ValueTask> getTask)
