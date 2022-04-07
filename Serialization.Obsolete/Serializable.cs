@@ -13,10 +13,10 @@ namespace Ecng.Serialization
 	{
 		#region ISerializable Members
 
-		Task ISerializable.Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+		ValueTask ISerializable.Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
 			=> Serialize(serializer, fields, source, cancellationToken);
 
-		Task ISerializable.Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+		ValueTask ISerializable.Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
 			=> Deserialize(serializer, fields, source, cancellationToken);
 
 		#endregion
@@ -27,7 +27,7 @@ namespace Ecng.Serialization
 		/// <param name="serializer"></param>
 		/// <param name="fields"></param>
 		/// <param name="source">Serialized state.</param>
-		protected abstract Task Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken);
+		protected abstract ValueTask Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken);
 
 		/// <summary>
 		/// Deserialize object into specified source.
@@ -35,7 +35,7 @@ namespace Ecng.Serialization
 		/// <param name="serializer"></param>
 		/// <param name="fields"></param>
 		/// <param name="source">Serialized state.</param>
-		protected abstract Task Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken);
+		protected abstract ValueTask Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken);
 
 		#region Cloneable<T> Members
 

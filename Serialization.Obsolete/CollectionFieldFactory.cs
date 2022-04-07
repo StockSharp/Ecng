@@ -17,12 +17,12 @@ namespace Ecng.Serialization
 		{
 		}
 
-		protected internal override async Task<TCollection> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+		protected internal override async ValueTask<TCollection> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			return await serializer.GetLegacySerializer<TCollection>().Deserialize(source, cancellationToken);
 		}
 
-		protected internal override async Task<SerializationItemCollection> OnCreateSource(ISerializer serializer, TCollection instance, CancellationToken cancellationToken)
+		protected internal override async ValueTask<SerializationItemCollection> OnCreateSource(ISerializer serializer, TCollection instance, CancellationToken cancellationToken)
 		{
 			var source = new SerializationItemCollection();
 			await serializer.GetLegacySerializer<TCollection>().Serialize(instance, source, cancellationToken);
@@ -43,7 +43,7 @@ namespace Ecng.Serialization
 	{
 		public override bool FullInitialize => true;
 
-		public override async Task<TCollection> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+		public override async ValueTask<TCollection> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			ICollection<TItem> instance;
 

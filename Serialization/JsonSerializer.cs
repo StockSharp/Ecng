@@ -64,7 +64,7 @@
 
 		private static bool IsJsonPrimitive() => typeof(T).IsSerializablePrimitive() && typeof(T) != typeof(byte[]);
 
-		public override async Task SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken)
+		public override async ValueTask SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken)
 		{
 			var isPrimitive = IsJsonPrimitive();
 
@@ -82,7 +82,7 @@
 				await writer.WriteEndArrayAsync(cancellationToken);
 		}
 
-		public override async Task<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken)
+		public override async ValueTask<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken)
 		{
 			var isPrimitive = IsJsonPrimitive();
 
@@ -105,7 +105,7 @@
 			return retVal;
 		}
 
-		private async Task<object> ReadAsync(JsonReader reader, Type type, CancellationToken cancellationToken)
+		private async ValueTask<object> ReadAsync(JsonReader reader, Type type, CancellationToken cancellationToken)
 		{
 			if (type.IsPersistable())
 			{
@@ -235,7 +235,7 @@
 			}
 		}
 
-		private async Task WriteAsync(JsonWriter writer, object value, CancellationToken cancellationToken)
+		private async ValueTask WriteAsync(JsonWriter writer, object value, CancellationToken cancellationToken)
 		{
 			async Task WriteSettingsStorageAsync(SettingsStorage storage)
 			{
@@ -299,7 +299,7 @@
 			}
 		}
 
-		private async Task FillAsync(SettingsStorage storage, JsonReader reader, CancellationToken cancellationToken)
+		private async ValueTask FillAsync(SettingsStorage storage, JsonReader reader, CancellationToken cancellationToken)
 		{
 			if (storage is null)
 				throw new ArgumentNullException(nameof(storage));
@@ -368,7 +368,7 @@
 			}
 		}
 
-		private async Task TryClearDeepLevel(JsonReader reader, SettingsStorage storage, CancellationToken cancellationToken)
+		private async ValueTask TryClearDeepLevel(JsonReader reader, SettingsStorage storage, CancellationToken cancellationToken)
 		{
 			var lvl = storage.DeepLevel;
 
@@ -381,7 +381,7 @@
 			storage.DeepLevel = 0;
 		}
 
-		private async Task<object> GetValueFromReaderAsync(JsonReader reader, SettingsStorage storage, string name, Type type, CancellationToken cancellationToken)
+		private async ValueTask<object> GetValueFromReaderAsync(JsonReader reader, SettingsStorage storage, string name, Type type, CancellationToken cancellationToken)
 		{
 			await TryClearDeepLevel(reader, storage, cancellationToken);
 

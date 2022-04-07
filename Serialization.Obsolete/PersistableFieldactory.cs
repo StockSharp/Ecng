@@ -11,13 +11,13 @@ namespace Ecng.Serialization
 		{
 		}
 
-		protected internal override async Task<TEntity> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+		protected internal override async ValueTask<TEntity> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			var storage = await serializer.GetLegacySerializer<SettingsStorage>().Deserialize(source, cancellationToken);
 			return storage.Load<TEntity>();
 		}
 
-		protected internal override async Task<SerializationItemCollection> OnCreateSource(ISerializer serializer, TEntity instance, CancellationToken cancellationToken)
+		protected internal override async ValueTask<SerializationItemCollection> OnCreateSource(ISerializer serializer, TEntity instance, CancellationToken cancellationToken)
 		{
 			var storage = instance.Save();
 			var source = new SerializationItemCollection();

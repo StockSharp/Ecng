@@ -20,14 +20,14 @@ namespace Ecng.Serialization
 		public virtual ISerializer GetSerializer(Type entityType)
 			=> GetType().GetGenericTypeDefinition().Make(entityType).CreateInstance<ISerializer>();
 
-		public abstract Task SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken);
+		public abstract ValueTask SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken);
 
-		public abstract Task<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken);
+		public abstract ValueTask<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken);
 
-		Task ISerializer.SerializeAsync(object graph, Stream stream, CancellationToken cancellationToken)
+		ValueTask ISerializer.SerializeAsync(object graph, Stream stream, CancellationToken cancellationToken)
 			=> SerializeAsync((T)graph, stream, cancellationToken);
 
-		async Task<object> ISerializer.DeserializeAsync(Stream stream, CancellationToken cancellationToken)
+		async ValueTask<object> ISerializer.DeserializeAsync(Stream stream, CancellationToken cancellationToken)
 			=> await DeserializeAsync(stream, cancellationToken);
 	}
 }

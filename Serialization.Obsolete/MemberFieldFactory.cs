@@ -19,14 +19,14 @@ namespace Ecng.Serialization
 			_isAssemblyQualifiedName = isAssemblyQualifiedName;
 		}
 
-		protected internal override Task<T> OnCreateInstance(ISerializer serializer, string source, CancellationToken cancellationToken)
+		protected internal override ValueTask<T> OnCreateInstance(ISerializer serializer, string source, CancellationToken cancellationToken)
 		{
-			return source.FromString<T>().FromResult();
+			return new(source.FromString<T>());
 		}
 
-		protected internal override Task<string> OnCreateSource(ISerializer serializer, T instance, CancellationToken cancellationToken)
+		protected internal override ValueTask<string> OnCreateSource(ISerializer serializer, T instance, CancellationToken cancellationToken)
 		{
-			return instance.ToString(_isAssemblyQualifiedName).FromResult();
+			return new(instance.ToString(_isAssemblyQualifiedName));
 		}
 	}
 

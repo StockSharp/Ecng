@@ -9,7 +9,7 @@
 		IEnumerable<TEntity> ExecuteEnum<TEntity>(Expression expression);
 		IAsyncEnumerable<TEntity> ExecuteEnumAsync<TEntity>(Expression expression);
 
-		Task ExecuteAsync<TEntity>(Expression expression);
-		Task<TResult> ExecuteResultAsync<TEntity, TResult>(Expression expression);
+		ValueTask ExecuteAsync<TEntity>(Expression expression);
+		ValueTask<TResult> ExecuteResultAsync<TEntity, TResult>(Expression expression);
 	}
 }

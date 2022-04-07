@@ -31,7 +31,7 @@
     /// </param>
     /// <exception cref="NotImplementedException">
     /// </exception>
-    Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken = default);
+    ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken = default);
 
     #endregion
   }

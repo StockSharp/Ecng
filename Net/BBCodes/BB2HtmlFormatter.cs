@@ -86,37 +86,37 @@
 		private const string _blank = "target=\"_blank\"";
 		private const string _noFollow = "rel=\"nofollow\"";
 
-		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getProduct;
-		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getUser;
-		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getFile;
-		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getTopic;
-		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getMessage;
-		private readonly Func<long, CancellationToken, Task<INamedObject<TContext>>> _getPage;
-		private readonly Func<TContext, string, CancellationToken, Task<string>> _getPackageFullUrl;
-		private readonly Func<TContext, string, CancellationToken, Task<string>> _encryptUrl;
-		private readonly Func<TContext, string, CancellationToken, Task<string>> _toFullAbsolute;
-		private readonly Func<TContext, string, CancellationToken, Task<string>> _generateId;
-		private readonly Func<TContext, CancellationToken, Task<string>> _getHost;
-		private readonly Func<TContext, StringBuilder, CancellationToken, Task<(bool changed, bool isAway, bool noFollow, bool isBlank)>> _getUrlInfo;
-		private readonly Func<TContext, string, CancellationToken, Task<string>> _urlEscape;
-		private readonly Func<TContext, string, CancellationToken, Task<string>> _getImagePath;
+		private readonly Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> _getProduct;
+		private readonly Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> _getUser;
+		private readonly Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> _getFile;
+		private readonly Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> _getTopic;
+		private readonly Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> _getMessage;
+		private readonly Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> _getPage;
+		private readonly Func<TContext, string, CancellationToken, ValueTask<string>> _getPackageFullUrl;
+		private readonly Func<TContext, string, CancellationToken, ValueTask<string>> _encryptUrl;
+		private readonly Func<TContext, string, CancellationToken, ValueTask<string>> _toFullAbsolute;
+		private readonly Func<TContext, string, CancellationToken, ValueTask<string>> _generateId;
+		private readonly Func<TContext, CancellationToken, ValueTask<string>> _getHost;
+		private readonly Func<TContext, StringBuilder, CancellationToken, ValueTask<(bool changed, bool isAway, bool noFollow, bool isBlank)>> _getUrlInfo;
+		private readonly Func<TContext, string, CancellationToken, ValueTask<string>> _urlEscape;
+		private readonly Func<TContext, string, CancellationToken, ValueTask<string>> _getImagePath;
 
 		public BB2HtmlFormatter(
-			Func<long, CancellationToken, Task<INamedObject<TContext>>> getProduct,
-			Func<long, CancellationToken, Task<INamedObject<TContext>>> getUser,
-			Func<long, CancellationToken, Task<INamedObject<TContext>>> getFile,
-			Func<long, CancellationToken, Task<INamedObject<TContext>>> getTopic,
-			Func<long, CancellationToken, Task<INamedObject<TContext>>> getMessage,
-			Func<long, CancellationToken, Task<INamedObject<TContext>>> getPage,
+			Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> getProduct,
+			Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> getUser,
+			Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> getFile,
+			Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> getTopic,
+			Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> getMessage,
+			Func<long, CancellationToken, ValueTask<INamedObject<TContext>>> getPage,
 
-			Func<TContext, string, CancellationToken, Task<string>> getPackageFullUrl,
-			Func<TContext, string, CancellationToken, Task<string>> encryptUrl,
-			Func<TContext, string, CancellationToken, Task<string>> toFullAbsolute,
-			Func<TContext, string, CancellationToken, Task<string>> generateId,
-			Func<TContext, CancellationToken, Task<string>> getHost,
-			Func<TContext, StringBuilder, CancellationToken, Task<(bool changed, bool isAway, bool noFollow, bool isBlank)>> getUrlInfo,
-			Func<TContext, string, CancellationToken, Task<string>> urlEscape,
-			Func<TContext, string, CancellationToken, Task<string>> getImagePath)
+			Func<TContext, string, CancellationToken, ValueTask<string>> getPackageFullUrl,
+			Func<TContext, string, CancellationToken, ValueTask<string>> encryptUrl,
+			Func<TContext, string, CancellationToken, ValueTask<string>> toFullAbsolute,
+			Func<TContext, string, CancellationToken, ValueTask<string>> generateId,
+			Func<TContext, CancellationToken, ValueTask<string>> getHost,
+			Func<TContext, StringBuilder, CancellationToken, ValueTask<(bool changed, bool isAway, bool noFollow, bool isBlank)>> getUrlInfo,
+			Func<TContext, string, CancellationToken, ValueTask<string>> urlEscape,
+			Func<TContext, string, CancellationToken, ValueTask<string>> getImagePath)
 		{
 			_getProduct = getProduct ?? throw new ArgumentNullException(nameof(getProduct));
 			_getUser = getUser ?? throw new ArgumentNullException(nameof(getUser));
@@ -316,7 +316,7 @@
 
 				var alt = smile.Emoticon.EncodeToHtml();
 
-				async Task<string> Replace(TContext ctx, CancellationToken token)
+				async ValueTask<string> Replace(TContext ctx, CancellationToken token)
 				{
 					var src = await _toFullAbsolute(ctx, await _getImagePath(ctx, smile.Icon, token), token);
 
@@ -398,7 +398,7 @@
 
 		private class VariableRegexReplaceRuleEx : VariableRegexReplaceRule<TContext>
 		{
-			private readonly Func<TContext, CancellationToken, Task<string>> _getRegExReplace;
+			private readonly Func<TContext, CancellationToken, ValueTask<string>> _getRegExReplace;
 			private readonly BB2HtmlFormatter<TContext> _parent;
 
 			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, string regExReplace, string[] variables, string[] varDefaults, int truncateLength)
@@ -413,14 +413,14 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, Func<TContext, CancellationToken, Task<string>> getRegExReplace, string[] variables)
+			public VariableRegexReplaceRuleEx(BB2HtmlFormatter<TContext> parent, Regex regExSearch, Func<TContext, CancellationToken, ValueTask<string>> getRegExReplace, string[] variables)
 				: base(regExSearch, null, variables)
 			{
 				_getRegExReplace = getRegExReplace ?? throw new ArgumentNullException(nameof(getRegExReplace));
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var sb = new StringBuilder(text);
 
@@ -502,7 +502,7 @@
 			}
 		}
 
-		public async Task<string> ToHtmlAsync(string text, TContext context, CancellationToken cancellationToken = default)
+		public async ValueTask<string> ToHtmlAsync(string text, TContext context, CancellationToken cancellationToken = default)
 		{
 			if (text.IsEmpty())
 				return text;
@@ -512,7 +512,7 @@
 			return await _instance.ProcessAsync(context, text, cancellationToken);
 		}
 
-		private static Task<string> RepairHtml(string html, CancellationToken cancellationToken)
+		private static ValueTask<string> RepairHtml(string html, CancellationToken cancellationToken)
 		{
 			var matchs = Regex.Matches(html, "[^\r]\n[^\r]", RegexOptions.IgnoreCase);
 
@@ -530,7 +530,7 @@
 				html = html.Insert(matchs2[j].Index + 1, " \r");
 			}
 
-			return html.EncodeToHtml().FromResult();
+			return new(html.EncodeToHtml());
 		}
 
 		private class UrlRule : VariableRegexReplaceRule<TContext>
@@ -549,7 +549,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -669,7 +669,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -701,7 +701,7 @@
 			{
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -725,7 +725,7 @@
 					builder.Insert(g.Index, sb.ToString());
 				}
 
-				return builder.ToString().FromResult();
+				return new(builder.ToString());
 			}
 		}
 
@@ -736,7 +736,7 @@
 			{
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -756,7 +756,7 @@
 					builder.Insert(group.Index, sb.ToString());
 				}
 
-				return builder.ToString().FromResult();
+				return new(builder.ToString());
 			}
 		}
 
@@ -770,7 +770,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -823,7 +823,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -867,7 +867,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -921,7 +921,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -983,7 +983,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -1053,7 +1053,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override async ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -1220,7 +1220,7 @@
 				_hasStyle = hasStyle;
 			}
 
-			public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+			public override ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
 			{
 				var builder = new StringBuilder(text);
 
@@ -1241,7 +1241,7 @@
 					builder.Insert(g.Index, strText);
 				}
 
-				return builder.ToString().FromResult();
+				return new(builder.ToString());
 			}
 
 			protected virtual string GetInnerValue(string innerValue)
@@ -1261,7 +1261,7 @@
 				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
 
-			protected override async Task<string> ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue, CancellationToken cancellationToken)
+			protected override async ValueTask<string> ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue, CancellationToken cancellationToken)
 			{
 				if (variableName == "post" || variableName == "topic" || variableName == "message")
 				{
@@ -1282,12 +1282,10 @@
 			}
 		}
 
-		async Task<string> IHtmlFormatter.ToHtmlAsync(string text, object context, CancellationToken cancellationToken)
-		{
-			return await ToHtmlAsync(text, (TContext)context, cancellationToken);
-		}
+		ValueTask<string> IHtmlFormatter.ToHtmlAsync(string text, object context, CancellationToken cancellationToken)
+			=> ToHtmlAsync(text, (TContext)context, cancellationToken);
 
-		public Task<string> CleanAsync(string text, CancellationToken cancellationToken = default)
+		public ValueTask<string> CleanAsync(string text, CancellationToken cancellationToken = default)
 		{
 			if (!text.IsEmptyOrWhiteSpace())
 			{
@@ -1299,10 +1297,10 @@
 					.RemoveMultipleWhitespace();
 			}
 
-			return text.FromResult();
+			return new(text);
 		}
 
-		public async Task<string> ActivateRuleAsync(string text, IReplaceRule<TContext> rule, TContext context, CancellationToken cancellationToken = default)
+		public async ValueTask<string> ActivateRuleAsync(string text, IReplaceRule<TContext> rule, TContext context, CancellationToken cancellationToken = default)
 		{
 			if (text.IsEmpty())
 				return text;
@@ -1314,9 +1312,7 @@
 			return await rule.ReplaceAsync(context, text, mainCollection, cancellationToken);
 		}
 
-		async Task<string> IHtmlFormatter.ActivateRuleAsync(string text, object rule, object context, CancellationToken cancellationToken)
-		{
-			return await ActivateRuleAsync(text, (IReplaceRule<TContext>)rule, (TContext)context, cancellationToken);
-		}
+		ValueTask<string> IHtmlFormatter.ActivateRuleAsync(string text, object rule, object context, CancellationToken cancellationToken)
+			=> ActivateRuleAsync(text, (IReplaceRule<TContext>)rule, (TContext)context, cancellationToken);
 	}
 }

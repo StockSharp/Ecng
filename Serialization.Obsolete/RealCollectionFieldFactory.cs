@@ -4,11 +4,10 @@ namespace Ecng.Serialization
 	using System.Collections.Generic;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using System.Linq;
 
 	using Ecng.Collections;
 	using Ecng.Common;
-
-	using System.Linq;
 
 	class RealCollectionFieldFactory<TCollection, TItem> : CollectionFieldFactory<TCollection>
 		where TCollection : IEnumerable<TItem>
@@ -18,12 +17,12 @@ namespace Ecng.Serialization
 		{
 		}
 
-		protected internal override Task<TCollection> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+		protected internal override ValueTask<TCollection> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			throw new NotSupportedException();
 		}
 
-		protected internal override async Task<SerializationItemCollection> OnCreateSource(ISerializer serializer, TCollection instance, CancellationToken cancellationToken)
+		protected internal override async ValueTask<SerializationItemCollection> OnCreateSource(ISerializer serializer, TCollection instance, CancellationToken cancellationToken)
 		{
 			var source = new SerializationItemCollection();
 			var primitive = typeof(TItem).IsSerializablePrimitive();

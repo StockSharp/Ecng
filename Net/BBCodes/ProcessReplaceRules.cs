@@ -118,7 +118,7 @@
     /// <param name="text">
     /// The text.
     /// </param>
-    public async Task<string> ProcessAsync(TContext context, string text, CancellationToken cancellationToken)
+    public async ValueTask<string> ProcessAsync(TContext context, string text, CancellationToken cancellationToken)
     {
       if (text.IsEmptyOrWhiteSpace())
       {

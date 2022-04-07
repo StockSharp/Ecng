@@ -4,8 +4,6 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using Ecng.Common;
-
 	public class SecureStringFieldFactory : FieldFactory<SecureString, byte[]>
 	{
 		public SecureStringFieldFactory(Field field, int order)
@@ -15,11 +13,11 @@
 
 		private static SecureStringEncryptor Encryptor => SecureStringEncryptor.Instance;
 
-		protected internal override Task<SecureString> OnCreateInstance(ISerializer serializer, byte[] source, CancellationToken cancellationToken)
-			=> Encryptor.Decrypt(source).FromResult();
+		protected internal override ValueTask<SecureString> OnCreateInstance(ISerializer serializer, byte[] source, CancellationToken cancellationToken)
+			=> new(Encryptor.Decrypt(source));
 
-		protected internal override Task<byte[]> OnCreateSource(ISerializer serializer, SecureString instance, CancellationToken cancellationToken)
-			=> Encryptor.Encrypt(instance).FromResult();
+		protected internal override ValueTask<byte[]> OnCreateSource(ISerializer serializer, SecureString instance, CancellationToken cancellationToken)
+			=> new(Encryptor.Encrypt(instance));
 	}
 
 	class SecureStringEntityFactory : PrimitiveEntityFactory<SecureString>
@@ -29,7 +27,7 @@
 		{
 		}
 
-		public override Task<SecureString> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
-			=> SecureStringEncryptor.Instance.Decrypt((byte[])source[Name].Value).FromResult();
+		public override ValueTask<SecureString> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> new(SecureStringEncryptor.Instance.Decrypt((byte[])source[Name].Value));
 	}
 }

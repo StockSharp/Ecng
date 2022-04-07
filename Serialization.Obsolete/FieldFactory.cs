@@ -30,7 +30,7 @@
 		public abstract Type InstanceType { get; }
 		public abstract Type SourceType { get; }
 
-		public virtual Task<object> CreateInstance(ISerializer serializer, SerializationItem source, CancellationToken cancellationToken)
+		public virtual ValueTask<object> CreateInstance(ISerializer serializer, SerializationItem source, CancellationToken cancellationToken)
 		{
 			if (serializer is null)
 				throw new ArgumentNullException(nameof(serializer), $"Serializer for field '{Field.Name}' is null.");
@@ -39,10 +39,10 @@
 				throw new ArgumentNullException(nameof(source), $"Source value for field '{Field.Name}' is null.");
 
 			/*IsNullable && */
-			return source.Value is null ? default(object).FromResult() : OnCreateInstance(serializer, source.Value, cancellationToken);
+			return source.Value is null ? new(default(object)) : OnCreateInstance(serializer, source.Value, cancellationToken);
 		}
 
-		public virtual async Task<SerializationItem> CreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken)
+		public virtual async ValueTask<SerializationItem> CreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken)
 		{
 			if (serializer is null)
 				throw new ArgumentNullException(nameof(serializer), $"Serializer for field '{Field.Name}' is null.");
@@ -54,23 +54,23 @@
 			return new SerializationItem(Field, source);
 		}
 
-		protected internal abstract Task<object> OnCreateInstance(ISerializer serializer, object source, CancellationToken cancellationToken);
-		protected internal abstract Task<object> OnCreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken);
+		protected internal abstract ValueTask<object> OnCreateInstance(ISerializer serializer, object source, CancellationToken cancellationToken);
+		protected internal abstract ValueTask<object> OnCreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken);
 
 		#region Serializable<FieldFactory> Members
 
-		protected override Task Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+		protected override ValueTask Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			source.Add(new SerializationItem<int>(new VoidField<int>("Order"), Order));
 			//source.Add(new SerializationItem<bool>(new VoidField<bool>("IsNullable"), IsNullable));
-			return Task.CompletedTask;
+			return default;
 		}
 
-		protected override Task Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+		protected override ValueTask Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			Order = source["Order"].Value.To<int>();
 			//IsNullable = source["IsNullable"].Value.To<bool>();
-			return Task.CompletedTask;
+			return default;
 		}
 
 		#endregion
@@ -108,17 +108,17 @@
 		public override Type InstanceType => typeof(I);
 		public override Type SourceType => typeof(S);
 
-		protected internal abstract Task<I> OnCreateInstance(ISerializer serializer, S source, CancellationToken cancellationToken);
-		protected internal abstract Task<S> OnCreateSource(ISerializer serializer, I instance, CancellationToken cancellationToken);
+		protected internal abstract ValueTask<I> OnCreateInstance(ISerializer serializer, S source, CancellationToken cancellationToken);
+		protected internal abstract ValueTask<S> OnCreateSource(ISerializer serializer, I instance, CancellationToken cancellationToken);
 
 		#region FieldFactory Members
 
-		protected internal override async Task<object> OnCreateInstance(ISerializer serializer, object source, CancellationToken cancellationToken)
+		protected internal override async ValueTask<object> OnCreateInstance(ISerializer serializer, object source, CancellationToken cancellationToken)
 		{
 			return await OnCreateInstance(serializer, source.To<S>(), cancellationToken);
 		}
 
-		protected internal override async Task<object> OnCreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken)
+		protected internal override async ValueTask<object> OnCreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken)
 		{
 			return await OnCreateSource(serializer, instance.To<I>(), cancellationToken);
 		}

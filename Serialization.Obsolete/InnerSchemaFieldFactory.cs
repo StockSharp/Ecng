@@ -48,7 +48,7 @@ namespace Ecng.Serialization
 
 		#region ComplexFieldFactory<E> Members
 
-		protected internal override async Task<TEntity> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+		protected internal override async ValueTask<TEntity> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			if (_nullWhenAllEmpty && source.All(c => c.Value is null))
 				return default;
@@ -56,7 +56,7 @@ namespace Ecng.Serialization
 			return (TEntity)await GetSerializer(serializer, source).Deserialize(source, cancellationToken);
 		}
 
-		protected internal override async Task<SerializationItemCollection> OnCreateSource(ISerializer serializer, TEntity instance, CancellationToken cancellationToken)
+		protected internal override async ValueTask<SerializationItemCollection> OnCreateSource(ISerializer serializer, TEntity instance, CancellationToken cancellationToken)
 		{
 			var source = new SerializationItemCollection();
 			await GetSerializer(serializer, source, instance).Serialize(instance, source, cancellationToken);

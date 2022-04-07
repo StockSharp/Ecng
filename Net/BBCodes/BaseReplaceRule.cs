@@ -50,7 +50,7 @@
     /// </param>
     /// <exception cref="NotImplementedException">
     /// </exception>
-    public abstract Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken);
+    public abstract ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken);
 
     #endregion
 

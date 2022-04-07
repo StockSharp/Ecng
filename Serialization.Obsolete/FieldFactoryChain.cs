@@ -37,7 +37,7 @@
 
 		#region FieldFactory Members
 
-		protected internal override async Task<object> OnCreateInstance(ISerializer serializer, object source, CancellationToken cancellationToken)
+		protected internal override async ValueTask<object> OnCreateInstance(ISerializer serializer, object source, CancellationToken cancellationToken)
 		{
 			var instance = source;
 
@@ -52,7 +52,7 @@
 			return instance;
 		}
 
-		protected internal override async Task<object> OnCreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken)
+		protected internal override async ValueTask<object> OnCreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken)
 		{
 			var source = instance;
 

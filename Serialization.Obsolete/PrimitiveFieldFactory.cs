@@ -17,14 +17,14 @@ namespace Ecng.Serialization
 		{
 		}
 
-		protected internal override Task<I> OnCreateInstance(ISerializer serializer, S source, CancellationToken cancellationToken)
+		protected internal override ValueTask<I> OnCreateInstance(ISerializer serializer, S source, CancellationToken cancellationToken)
 		{
-			return source.To<I>().FromResult();
+			return new(source.To<I>());
 		}
 
-		protected internal override Task<S> OnCreateSource(ISerializer serializer, I instance, CancellationToken cancellationToken)
+		protected internal override ValueTask<S> OnCreateSource(ISerializer serializer, I instance, CancellationToken cancellationToken)
 		{
-			return instance.To<S>().FromResult();
+			return new(instance.To<S>());
 		}
 
 		public override FieldFactory Clone()
@@ -59,9 +59,9 @@ namespace Ecng.Serialization
 
 		public override bool FullInitialize => true;
 
-		public override Task<TEntity> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+		public override ValueTask<TEntity> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
-			return source[Name].Value.To<TEntity>().FromResult();
+			return new(source[Name].Value.To<TEntity>());
 		}
 	}
 }

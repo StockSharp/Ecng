@@ -18,19 +18,19 @@
 		{
 		}
 
-		protected internal override Task<object> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+		protected internal override ValueTask<object> OnCreateInstance(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			var type = source["Type"].Value.To<Type>();
 			var value = source["Value"].Value;
 
 			if (!SchemaManager.GlobalFieldFactories.TryGetValue(type, out var factoryType))
-				return value.To(type).FromResult();
+				return new(value.To(type));
 
 			var factory = GetFactory(factoryType);
 			return factory.CreateInstance(serializer, new SerializationItem(factory.Field, value), cancellationToken);
 		}
 
-		protected internal override async Task<SerializationItemCollection> OnCreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken)
+		protected internal override async ValueTask<SerializationItemCollection> OnCreateSource(ISerializer serializer, object instance, CancellationToken cancellationToken)
 		{
 			var instanceType = instance.GetType();
 			var valueType = instanceType;

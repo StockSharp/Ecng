@@ -116,20 +116,20 @@
 
 		#region Serialize
 
-		public override Task SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken)
+		public override ValueTask SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken)
 			=> Serialize(graph, GetFields(), stream, cancellationToken);
 
-		public async Task Serialize(T graph, FieldList fields, Stream stream, CancellationToken cancellationToken)
+		public async ValueTask Serialize(T graph, FieldList fields, Stream stream, CancellationToken cancellationToken)
 		{
 			var source = new SerializationItemCollection();
 			await Serialize(graph, fields, source, cancellationToken);
 			await Serialize(fields, source, stream, cancellationToken);
 		}
 
-		public Task Serialize(T graph, SerializationItemCollection source, CancellationToken cancellationToken)
+		public ValueTask Serialize(T graph, SerializationItemCollection source, CancellationToken cancellationToken)
 			=> Serialize(graph, GetFields(), source, cancellationToken);
 
-		public async Task Serialize(T graph, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+		public async ValueTask Serialize(T graph, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			using (new SerializationContext { Entity = graph }.ToScope())
 			{
@@ -174,35 +174,35 @@
 			}
 		}
 
-		public Task Serialize(SerializationItemCollection source, Stream stream, CancellationToken cancellationToken)
+		public ValueTask Serialize(SerializationItemCollection source, Stream stream, CancellationToken cancellationToken)
 			=> Serialize(GetFields(), source, stream, cancellationToken);
 
-		public abstract Task Serialize(FieldList fields, SerializationItemCollection source, Stream stream, CancellationToken cancellationToken);
+		public abstract ValueTask Serialize(FieldList fields, SerializationItemCollection source, Stream stream, CancellationToken cancellationToken);
 
 		#endregion
 
-		public Task<object> CreateObject(SerializationItemCollection source, CancellationToken cancellationToken)
+		public ValueTask<object> CreateObject(SerializationItemCollection source, CancellationToken cancellationToken)
 			=> Schema.Factory.CreateObject(this, source, cancellationToken);
 
 		#region Deserialize
 
-		public override Task<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken)
+		public override ValueTask<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken)
 			=> Deserialize(stream, GetFields(), cancellationToken);
 
-		public Task Deserialize(Stream stream, SerializationItemCollection source, CancellationToken cancellationToken)
+		public ValueTask Deserialize(Stream stream, SerializationItemCollection source, CancellationToken cancellationToken)
 			=> Deserialize(stream, GetFields(), source, cancellationToken);
 
-		public async Task<T> Deserialize(Stream stream, FieldList fields, CancellationToken cancellationToken)
+		public async ValueTask<T> Deserialize(Stream stream, FieldList fields, CancellationToken cancellationToken)
 		{
 			var source = new SerializationItemCollection();
 			await Deserialize(stream, fields, source, cancellationToken);
 			return await Deserialize(source, fields, cancellationToken);
 		}
 
-		public Task<T> Deserialize(SerializationItemCollection source, CancellationToken cancellationToken)
+		public ValueTask<T> Deserialize(SerializationItemCollection source, CancellationToken cancellationToken)
 			=> Deserialize(source, GetFields(), cancellationToken);
 
-		public async Task<T> Deserialize(SerializationItemCollection source, FieldList fields, CancellationToken cancellationToken)
+		public async ValueTask<T> Deserialize(SerializationItemCollection source, FieldList fields, CancellationToken cancellationToken)
 		{
 			var graph = (T)await CreateObject(source, cancellationToken);
 
@@ -212,7 +212,7 @@
 			return graph;
 		}
 
-		public async Task<T> Deserialize(SerializationItemCollection source, FieldList fields, T graph, CancellationToken cancellationToken)
+		public async ValueTask<T> Deserialize(SerializationItemCollection source, FieldList fields, T graph, CancellationToken cancellationToken)
 		{
 			using (new SerializationContext { Entity = graph }.ToScope())
 			{
@@ -253,7 +253,7 @@
 			}
 		}
 
-		public abstract Task Deserialize(Stream stream, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken);
+		public abstract ValueTask Deserialize(Stream stream, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken);
 
 		#endregion
 
@@ -295,19 +295,19 @@
 
 		object ILegacySerializer.GetId(object graph) => GetId((T)graph);
 
-		Task ILegacySerializer.Serialize(object graph, FieldList fields, Stream stream, CancellationToken cancellationToken)
+		ValueTask ILegacySerializer.Serialize(object graph, FieldList fields, Stream stream, CancellationToken cancellationToken)
 			=> Serialize((T)graph, fields, stream, cancellationToken);
 
-		Task ILegacySerializer.Serialize(object graph, SerializationItemCollection source, CancellationToken cancellationToken)
+		ValueTask ILegacySerializer.Serialize(object graph, SerializationItemCollection source, CancellationToken cancellationToken)
 			=> Serialize((T)graph, source, cancellationToken);
 
-		async Task<object> ILegacySerializer.Deserialize(SerializationItemCollection source, CancellationToken cancellationToken)
+		async ValueTask<object> ILegacySerializer.Deserialize(SerializationItemCollection source, CancellationToken cancellationToken)
 			=> await Deserialize(source, cancellationToken);
 
-		Task ILegacySerializer.Serialize(object graph, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+		ValueTask ILegacySerializer.Serialize(object graph, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
 			=> Serialize((T)graph, fields, source, cancellationToken);
 
-		async Task<object> ILegacySerializer.Deserialize(SerializationItemCollection source, FieldList fields, object graph, CancellationToken cancellationToken)
+		async ValueTask<object> ILegacySerializer.Deserialize(SerializationItemCollection source, FieldList fields, object graph, CancellationToken cancellationToken)
 			=> await Deserialize(source, fields, (T)graph, cancellationToken);
 		
 		#endregion

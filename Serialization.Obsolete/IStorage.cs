@@ -8,30 +8,30 @@
 
 	public interface IStorage : IQueryContext
 	{
-		Task<IBatchContext> BeginBatch(CancellationToken cancellationToken);
-		Task CommitBatch(CancellationToken cancellationToken);
-		Task EndBatch(CancellationToken cancellationToken);
+		ValueTask<IBatchContext> BeginBatch(CancellationToken cancellationToken);
+		ValueTask CommitBatch(CancellationToken cancellationToken);
+		ValueTask EndBatch(CancellationToken cancellationToken);
 
-		Task ClearCacheAsync(CancellationToken cancellationToken);
+		ValueTask ClearCacheAsync(CancellationToken cancellationToken);
 	}
 
 	public interface IStorage<TId> : IStorage
 	{
-		Task<long> GetCountAsync<TEntity>(CommandType? commandType, CancellationToken cancellationToken);
+		ValueTask<long> GetCountAsync<TEntity>(CommandType? commandType, CancellationToken cancellationToken);
 
-		Task<TEntity> AddAsync<TEntity>(CommandType? commandType, TEntity entity, CancellationToken cancellationToken);
+		ValueTask<TEntity> AddAsync<TEntity>(CommandType? commandType, TEntity entity, CancellationToken cancellationToken);
 
-		Task<TEntity> GetByAsync<TEntity>(CommandType? commandType, SerializationItemCollection by, CancellationToken cancellationToken);
+		ValueTask<TEntity> GetByAsync<TEntity>(CommandType? commandType, SerializationItemCollection by, CancellationToken cancellationToken);
 
-		Task<TEntity> GetByIdAsync<TEntity>(CommandType? commandType, TId id, CancellationToken cancellationToken);
+		ValueTask<TEntity> GetByIdAsync<TEntity>(CommandType? commandType, TId id, CancellationToken cancellationToken);
 
-		Task<IEnumerable<TEntity>> GetGroupAsync<TEntity>(CommandType? commandType, long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken);
+		ValueTask<IEnumerable<TEntity>> GetGroupAsync<TEntity>(CommandType? commandType, long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken);
 
-		Task<TEntity> UpdateAsync<TEntity>(CommandType? commandType, TEntity entity, CancellationToken cancellationToken);
+		ValueTask<TEntity> UpdateAsync<TEntity>(CommandType? commandType, TEntity entity, CancellationToken cancellationToken);
 
-		Task RemoveAsync<TEntity>(CommandType? commandType, TEntity entity, CancellationToken cancellationToken);
+		ValueTask RemoveAsync<TEntity>(CommandType? commandType, TEntity entity, CancellationToken cancellationToken);
 
-		Task ClearAsync<TEntity>(CommandType? commandType, CancellationToken cancellationToken);
+		ValueTask ClearAsync<TEntity>(CommandType? commandType, CancellationToken cancellationToken);
 
 		//event Action<object> Added;
 		//event Action<object> Updated;

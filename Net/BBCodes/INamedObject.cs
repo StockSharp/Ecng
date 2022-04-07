@@ -7,8 +7,8 @@
 	{
 		public long Id { get; }
 
-		public Task<string> GetName(TContext domain, CancellationToken cancellationToken);
-		public Task<string> GetDescription(TContext domain, CancellationToken cancellationToken);
-		public Task<string> GetUrlPart(TContext context, CancellationToken cancellationToken);
+		public ValueTask<string> GetName(TContext domain, CancellationToken cancellationToken);
+		public ValueTask<string> GetDescription(TContext domain, CancellationToken cancellationToken);
+		public ValueTask<string> GetUrlPart(TContext context, CancellationToken cancellationToken);
 	}
 }

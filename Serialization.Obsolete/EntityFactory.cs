@@ -10,22 +10,22 @@
 	{
 		public abstract bool FullInitialize { get; }
 
-		public abstract Task<object> CreateObject(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken);
+		public abstract ValueTask<object> CreateObject(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken);
 
-		protected override Task Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
-			=> Task.CompletedTask;
+		protected override ValueTask Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> default;
 
-		protected override Task Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
-			=> Task.CompletedTask;
+		protected override ValueTask Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> default;
 
 		protected override bool OnEquals(EntityFactory other) => ReferenceEquals(this, other);
 	}
 
 	public abstract class EntityFactory<TEntity> : EntityFactory
 	{
-		public abstract Task<TEntity> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken);
+		public abstract ValueTask<TEntity> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken);
 
-		public override async Task<object> CreateObject(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+		public override async ValueTask<object> CreateObject(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 			=> await CreateEntity(serializer, source, cancellationToken);
 	}
 }

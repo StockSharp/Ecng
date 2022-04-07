@@ -18,9 +18,9 @@ namespace Ecng.Serialization
 
 		public override bool FullInitialize => false;
 
-		public override Task<E> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+		public override ValueTask<E> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
-			return _invoker.Ctor(null).FromResult();
+			return new(_invoker.Ctor(null));
 		}
 	}
 }

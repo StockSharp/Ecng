@@ -30,13 +30,13 @@
     /// </exception>
     void AddRule(IReplaceRule<TContext> newRule);
 
-    /// <summary>
-    /// Process text using the rules.
-    /// </summary>
-    /// <param name="text">
-    /// The text.
-    /// </param>
-    Task<string> ProcessAsync(TContext context, string text, CancellationToken cancellationToken = default);
+		/// <summary>
+		/// Process text using the rules.
+		/// </summary>
+		/// <param name="text">
+		/// The text.
+		/// </param>
+		ValueTask<string> ProcessAsync(TContext context, string text, CancellationToken cancellationToken = default);
 
     #endregion
   }

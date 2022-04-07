@@ -77,7 +77,7 @@
 			return clone;
 		}
 
-		public static async Task<T> CloneAsync<T>(this T obj, CancellationToken cancellationToken = default)
+		public static async ValueTask<T> CloneAsync<T>(this T obj, CancellationToken cancellationToken = default)
 			where T : IAsyncPersistable
 		{
 			if (obj.IsNull())
@@ -94,13 +94,13 @@
 			obj.Load(clone.Save());
 		}
 
-		public static async Task ApplyAsync<T>(this T obj, T clone, CancellationToken cancellationToken = default)
+		public static async ValueTask ApplyAsync<T>(this T obj, T clone, CancellationToken cancellationToken = default)
 			where T : IAsyncPersistable
 		{
 			await obj.LoadAsync(await clone.SaveAsync(cancellationToken), cancellationToken);
 		}
 
-		public static async Task<SettingsStorage> SaveAsync(this IAsyncPersistable persistable, CancellationToken cancellationToken = default)
+		public static async ValueTask<SettingsStorage> SaveAsync(this IAsyncPersistable persistable, CancellationToken cancellationToken = default)
 		{
 			if (persistable is null)
 				throw new ArgumentNullException(nameof(persistable));
@@ -110,7 +110,7 @@
 			return storage;
 		}
 
-		public static async Task<IAsyncPersistable> LoadAsync(this SettingsStorage storage, Type type, CancellationToken cancellationToken = default)
+		public static async ValueTask<IAsyncPersistable> LoadAsync(this SettingsStorage storage, Type type, CancellationToken cancellationToken = default)
 		{
 			if (storage is null)
 				throw new ArgumentNullException(nameof(storage));
@@ -120,7 +120,7 @@
 			return obj;
 		}
 
-		public static async Task<T> LoadAsync<T>(this SettingsStorage storage, CancellationToken cancellationToken = default)
+		public static async ValueTask<T> LoadAsync<T>(this SettingsStorage storage, CancellationToken cancellationToken = default)
 			where T : IAsyncPersistable, new()
 			=> (T)await storage.LoadAsync(typeof(T), cancellationToken);
 
@@ -155,9 +155,7 @@
 
 		public static void ForceLoad<T>(this T t, SettingsStorage storage)
 			where T : IPersistable
-		{
-			t.Load(storage);
-		}
+			=> t.Load(storage);
 
 		/// <summary>
 		/// Добавить значение в настройки.

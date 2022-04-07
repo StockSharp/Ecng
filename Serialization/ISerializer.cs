@@ -12,13 +12,13 @@ namespace Ecng.Serialization
 		ISerializer GetSerializer(Type entityType);
 		string FileExtension { get; }
 
-		public abstract Task SerializeAsync(object graph, Stream stream, CancellationToken cancellationToken);
-		public abstract Task<object> DeserializeAsync(Stream stream, CancellationToken cancellationToken);
+		public abstract ValueTask SerializeAsync(object graph, Stream stream, CancellationToken cancellationToken);
+		public abstract ValueTask<object> DeserializeAsync(Stream stream, CancellationToken cancellationToken);
 	}
 
 	public interface ISerializer<T> : ISerializer
 	{
-		public abstract Task SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken);
-		public new abstract Task<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken);
+		public abstract ValueTask SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken);
+		public new abstract ValueTask<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken);
 	}
 }

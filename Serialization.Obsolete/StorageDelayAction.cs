@@ -15,6 +15,6 @@ namespace Ecng.Serialization
 		}
 
 		protected override IBatchContext BeginBatch(IGroup group)
-			=> AsyncContext.Run(() => _storage.BeginBatch(default));
+			=> AsyncContext.Run(() => _storage.BeginBatch(default).AsTask());
 	}
 }

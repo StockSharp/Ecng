@@ -192,7 +192,7 @@
     /// <param name="replacement">
     /// The replacement.
     /// </param>
-    public override async Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+    public override async ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
     {
       var sb = new StringBuilder(text);
 
@@ -271,7 +271,7 @@
     /// <returns>
     /// The manage variable value.
     /// </returns>
-    protected virtual Task<string> ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue, CancellationToken cancellationToken)
+    protected virtual ValueTask<string> ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue, CancellationToken cancellationToken)
     {
       if (!handlingValue.IsEmptyOrWhiteSpace())
       {
@@ -286,7 +286,7 @@
         }
       }
 
-      return variableValue.FromResult();
+      return new(variableValue);
     }
 
     #endregion

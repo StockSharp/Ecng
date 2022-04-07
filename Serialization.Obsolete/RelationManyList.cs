@@ -268,7 +268,7 @@
 		private DateTime? _cacheExpire;
 		private bool _bulkInitialized;
 
-		private async Task<bool> BulkInitialized(CancellationToken cancellationToken)
+		private async ValueTask<bool> BulkInitialized(CancellationToken cancellationToken)
 		{
 			if (_bulkInitialized)
 			{
@@ -284,7 +284,7 @@
 		//	_count += diff;
 		//}
 
-		public virtual async Task ResetCacheAsync(CancellationToken cancellationToken)
+		public virtual async ValueTask ResetCacheAsync(CancellationToken cancellationToken)
 		{
 			var (sync, dict) = CachedEntities;
 
@@ -297,7 +297,7 @@
 			_count = null;
 		}
 
-		public virtual Task<TEntity> ReadById(TId id, CancellationToken cancellationToken)
+		public virtual ValueTask<TEntity> ReadById(TId id, CancellationToken cancellationToken)
 		{
 			if (id is null)
 				throw new ArgumentNullException(nameof(id));
@@ -332,22 +332,21 @@
 
 		#region Save
 
-		public virtual async Task SaveAsync(TEntity item, CancellationToken cancellationToken)
+		public virtual async ValueTask<TEntity> SaveAsync(TEntity item, CancellationToken cancellationToken)
 		{
 			if (Schema.Identity is null)
 				throw new InvalidOperationException($"Schema {Schema.Name} doesn't have identity.");
 
-			if (!await CheckExist(item, cancellationToken))
-				await AddAsync(item, cancellationToken);
-			else
-				await UpdateAsync(item, cancellationToken);
+			return await IsSaved(item, cancellationToken)
+				? await UpdateAsync(item, cancellationToken)
+				: await AddAsync(item, cancellationToken);
 		}
 
 		#endregion
 
 		#region Update
 
-		public virtual async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken)
+		public virtual async ValueTask<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken)
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
@@ -374,10 +373,10 @@
 
 			}
 
-			await OnUpdate(entity, cancellationToken);
+			return await OnUpdate(entity, cancellationToken);
 		}
 
-		private async Task IncrementCount(CancellationToken cancellationToken)
+		private async ValueTask IncrementCount(CancellationToken cancellationToken)
 		{
 			if (_count is null)
 				_count = (int)(await OnGetCount(cancellationToken));
@@ -407,7 +406,7 @@
 
 		#endregion
 
-		private async Task<bool> CheckExist(TEntity item, CancellationToken cancellationToken)
+		protected virtual async ValueTask<bool> IsSaved(TEntity item, CancellationToken cancellationToken)
 		{
 			if (_cache.Contains(item))
 				return true;
@@ -427,7 +426,7 @@
 
 		#region BaseListEx<E> Members
 
-		public virtual async Task<int> CountAsync(CancellationToken cancellationToken)
+		public virtual async ValueTask<int> CountAsync(CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
 
@@ -456,13 +455,13 @@
 		}
 
 		[Obsolete]
-		public int Count => AsyncContext.Run(() => CountAsync(default));
+		public int Count => AsyncContext.Run(() => CountAsync(default).AsTask());
 
 		[Obsolete]
 		public void Add(TEntity item)
 			=> AsyncContext.Run(() => AddAsync(item, default));
 
-		public virtual async Task AddAsync(TEntity item, CancellationToken cancellationToken)
+		public virtual async ValueTask<TEntity> AddAsync(TEntity item, CancellationToken cancellationToken)
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
@@ -481,7 +480,7 @@
 			//if (DelayAction != null)
 			//	_pendingAdd.Add(item, id);
 
-			await OnAdd(item, cancellationToken);
+			item = await OnAdd(item, cancellationToken);
 
 			if (BulkLoad)
 			{
@@ -497,13 +496,15 @@
 			}
 
 			await IncrementCount(cancellationToken);
+
+			return item;
 		}
 
 		[Obsolete]
 		public virtual void Clear()
 			=> AsyncContext.Run(() => ClearAsync(default));
 
-		public virtual async Task ClearAsync(CancellationToken cancellationToken)
+		public virtual async ValueTask ClearAsync(CancellationToken cancellationToken)
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
@@ -529,22 +530,22 @@
 
 		[Obsolete]
 		public virtual bool Contains(TEntity item)
-			=> AsyncContext.Run(() => ContainsAsync(item, default));
+			=> AsyncContext.Run(async () => await ContainsAsync(item, default));
 
-		public virtual Task<bool> ContainsAsync(TEntity item, CancellationToken cancellationToken)
-			=> Task.FromResult(this.Any(arg => arg.Equals(item)));
+		public virtual ValueTask<bool> ContainsAsync(TEntity item, CancellationToken cancellationToken)
+			=> new(this.Any(arg => arg.Equals(item)));
 
 		public virtual void CopyTo(TEntity[] array, int index)
 			=> AsyncContext.Run(() => CopyTo(array, index, default));
 
-		public virtual async Task CopyTo(TEntity[] array, int index, CancellationToken cancellationToken)
+		public virtual async ValueTask CopyTo(TEntity[] array, int index, CancellationToken cancellationToken)
 			=> ((ICollection<TEntity>)await GetRangeAsync(index, await CountAsync(cancellationToken), default, default, cancellationToken)).CopyTo(array, 0);
 
 		[Obsolete]
 		public virtual bool Remove(TEntity item)
-			=> AsyncContext.Run(() => RemoveAsync(item, default));
+			=> AsyncContext.Run(async () => await RemoveAsync(item, default));
 
-		public virtual async Task<bool> RemoveAsync(TEntity item, CancellationToken cancellationToken)
+		public virtual async ValueTask<bool> RemoveAsync(TEntity item, CancellationToken cancellationToken)
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
@@ -572,9 +573,9 @@
 		}
 
 		IEnumerable IRangeCollection.GetRange(long startIndex, long count, string sortExpression, ListSortDirection directions)
-			=> AsyncContext.Run(() => GetRangeAsync(startIndex, count, sortExpression, directions, default));
+			=> AsyncContext.Run(() => GetRangeAsync(startIndex, count, sortExpression, directions, default).AsTask());
 
-		public virtual Task<IEnumerable<TEntity>> GetRangeAsync(long startIndex, long count, string sortExpression, ListSortDirection directions, CancellationToken cancellationToken)
+		public virtual ValueTask<IEnumerable<TEntity>> GetRangeAsync(long startIndex, long count, string sortExpression, ListSortDirection directions, CancellationToken cancellationToken)
 		{
 			var orderBy = sortExpression.IsEmpty() ? null : Schema.Fields.TryGet(sortExpression) ?? new VoidField(sortExpression, typeof(object));
 			return ReadAll(startIndex, count, orderBy, directions, cancellationToken);
@@ -612,10 +613,10 @@
 
 		public virtual void Insert(int index, TEntity item)
 		{
-			AsyncContext.Run(() => AddAsync(item, default));
+			AsyncContext.Run(async () => await AddAsync(item, default));
 		}
 
-		public virtual async Task RemoveAtAsync(int index, CancellationToken cancellationToken)
+		public virtual async ValueTask RemoveAtAsync(int index, CancellationToken cancellationToken)
 		{
 			if (BulkLoad)
 				await RemoveAsync((await GetRange(cancellationToken)).ElementAt(index), cancellationToken);
@@ -646,43 +647,43 @@
 
 		#region Virtual CRUD Methods
 
-		protected virtual Task<long> OnGetCount(CancellationToken cancellationToken)
+		protected virtual ValueTask<long> OnGetCount(CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
 			return Storage.GetCountAsync<TEntity>(CommandType, cancellationToken);
 		}
 
-		protected virtual Task OnAdd(TEntity entity, CancellationToken cancellationToken)
+		protected virtual ValueTask<TEntity> OnAdd(TEntity entity, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
 			return Storage.AddAsync(CommandType, entity, cancellationToken);
 		}
 
-		protected virtual Task<TEntity> OnGet(SerializationItemCollection by, CancellationToken cancellationToken)
+		protected virtual ValueTask<TEntity> OnGet(SerializationItemCollection by, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
 			return Storage.GetByAsync<TEntity>(CommandType, by, cancellationToken);
 		}
 
-		protected virtual Task<IEnumerable<TEntity>> OnGetGroup(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
+		protected virtual ValueTask<IEnumerable<TEntity>> OnGetGroup(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
 			return Storage.GetGroupAsync<TEntity>(CommandType, startIndex, count, orderBy, direction, cancellationToken);
 		}
 
-		protected virtual Task OnUpdate(TEntity entity, CancellationToken cancellationToken)
+		protected virtual ValueTask<TEntity> OnUpdate(TEntity entity, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
 			return Storage.UpdateAsync(CommandType, entity, cancellationToken);
 		}
 
-		protected virtual Task OnRemove(TEntity entity, CancellationToken cancellationToken)
+		protected virtual ValueTask OnRemove(TEntity entity, CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
 			return Storage.RemoveAsync(CommandType, entity, cancellationToken);
 		}
 
-		protected virtual Task OnClear(CancellationToken cancellationToken)
+		protected virtual ValueTask OnClear(CancellationToken cancellationToken)
 		{
 			ThrowIfStorageNull();
 			return Storage.ClearAsync<TEntity>(CommandType, cancellationToken);
@@ -690,17 +691,17 @@
 
 		#endregion
 
-		public Task<IEnumerable<TEntity>> ReadFirsts(long count, Field orderBy, CancellationToken cancellationToken)
+		public ValueTask<IEnumerable<TEntity>> ReadFirsts(long count, Field orderBy, CancellationToken cancellationToken)
 		{
 			return ReadAll(0, count, orderBy, ListSortDirection.Ascending, cancellationToken);
 		}
 
-		public Task<IEnumerable<TEntity>> ReadLasts(long count, Field orderBy, CancellationToken cancellationToken)
+		public ValueTask<IEnumerable<TEntity>> ReadLasts(long count, Field orderBy, CancellationToken cancellationToken)
 		{
 			return ReadAll(0, count, orderBy, ListSortDirection.Descending, cancellationToken);
 		}
 
-		public Task<TEntity> Read(SerializationItem by, CancellationToken cancellationToken)
+		public ValueTask<TEntity> Read(SerializationItem by, CancellationToken cancellationToken)
 		{
 			if (by is null)
 				throw new ArgumentNullException(nameof(by));
@@ -708,17 +709,17 @@
 			return Read(new SerializationItemCollection { by }, cancellationToken);
 		}
 
-		public Task<TEntity> Read(SerializationItemCollection by, CancellationToken cancellationToken)
+		public ValueTask<TEntity> Read(SerializationItemCollection by, CancellationToken cancellationToken)
 		{
 			return OnGet(by, cancellationToken);
 		}
 
-		private async Task<IEnumerable<TEntity>> GetRange(CancellationToken cancellationToken)
+		private async ValueTask<IEnumerable<TEntity>> GetRange(CancellationToken cancellationToken)
 		{
 			return await GetRangeAsync(0, await CountAsync(cancellationToken), default, default, cancellationToken);
 		}
 
-		public async Task<IEnumerable<TEntity>> ReadAll(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
+		public async ValueTask<IEnumerable<TEntity>> ReadAll(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
 		{
 			//if (orderBy is null)
 			//	throw new ArgumentNullException(nameof(orderBy));
@@ -799,7 +800,7 @@
 			return entities;
 		}
 
-		public async Task RemoveById(TId id, CancellationToken cancellationToken)
+		public async ValueTask RemoveById(TId id, CancellationToken cancellationToken)
 		{
 			await RemoveAsync(await ReadById(id, cancellationToken), cancellationToken);
 		}

@@ -45,7 +45,7 @@
     /// <param name="replacement">
     /// The replacement.
     /// </param>
-    public override Task<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
+    public override ValueTask<string> ReplaceAsync(TContext context, string text, IReplaceBlocks replacement, CancellationToken cancellationToken)
     {
       var sb = new StringBuilder(text);
 
@@ -67,7 +67,7 @@
         m = RegExSearch.Match(sb.ToString());
       }
 
-      return sb.ToString().FromResult();
+      return new(sb.ToString());
     }
 
     #endregion

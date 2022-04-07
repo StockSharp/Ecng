@@ -51,14 +51,14 @@
     /// <returns>
     /// The manage variable value.
     /// </returns>
-    protected override Task<string> ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue, CancellationToken token)
+    protected override ValueTask<string> ManageVariableValue(TContext context, string variableName, string variableValue, string handlingValue, CancellationToken token)
     {
       if (variableName == "size")
       {
-        return GetFontSize(variableValue).FromResult();
+        return new(GetFontSize(variableValue));
       }
 
-      return variableValue.FromResult();
+      return new(variableValue);
     }
 
     /// <summary>

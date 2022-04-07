@@ -17,10 +17,10 @@ namespace Ecng.Serialization
 		Encoding Encoding { get; set; }
 		bool Indent { get; set; }
 
-		Task Serialize(SerializationItemCollection source, XElement element, CancellationToken cancellationToken);
-		Task Serialize(object graph, XElement element, CancellationToken cancellationToken);
+		ValueTask Serialize(SerializationItemCollection source, XElement element, CancellationToken cancellationToken);
+		ValueTask Serialize(object graph, XElement element, CancellationToken cancellationToken);
 
-		Task<object> Deserialize(XElement element, CancellationToken cancellationToken);
+		ValueTask<object> Deserialize(XElement element, CancellationToken cancellationToken);
 	}
 
 	[Obsolete("Use JsonSerializer<T> insted.")]
@@ -69,38 +69,38 @@ namespace Ecng.Serialization
 			}
 		}
 
-		public Task Serialize(SerializationItemCollection source, XElement element, CancellationToken cancellationToken)
+		public ValueTask Serialize(SerializationItemCollection source, XElement element, CancellationToken cancellationToken)
 		{
 			_element = element ?? throw new ArgumentNullException(nameof(element));
 
 			return Serialize(source, new MemoryStream(), cancellationToken);
 		}
 
-		Task IXmlSerializer.Serialize(object graph, XElement element, CancellationToken cancellationToken)
+		ValueTask IXmlSerializer.Serialize(object graph, XElement element, CancellationToken cancellationToken)
 			=> Serialize((T)graph, element, cancellationToken);
 
-		async Task<object> IXmlSerializer.Deserialize(XElement element, CancellationToken cancellationToken)
+		async ValueTask<object> IXmlSerializer.Deserialize(XElement element, CancellationToken cancellationToken)
 			=> await Deserialize(element, cancellationToken);
 
-		public Task Serialize(T graph, XElement element, CancellationToken cancellationToken)
+		public async ValueTask Serialize(T graph, XElement element, CancellationToken cancellationToken)
 		{
 			_element = element ?? throw new ArgumentNullException(nameof(element));
 
-			return SerializeAsync(graph, new MemoryStream(), cancellationToken);
+			await SerializeAsync(graph, new MemoryStream(), cancellationToken);
 		}
 
-		public Task<T> Deserialize(XElement element, CancellationToken cancellationToken)
+		public async ValueTask<T> Deserialize(XElement element, CancellationToken cancellationToken)
 		{
 			_element = element ?? throw new ArgumentNullException(nameof(element));
 
-			return DeserializeAsync(new MemoryStream(), cancellationToken);
+			return await DeserializeAsync(new MemoryStream(), cancellationToken);
 		}
 
 		#region Serializer<T> Members
 
 		public override string FileExtension => "xml";
 
-		public override async Task Serialize(FieldList fields, SerializationItemCollection source, Stream stream, CancellationToken cancellationToken)
+		public override async ValueTask Serialize(FieldList fields, SerializationItemCollection source, Stream stream, CancellationToken cancellationToken)
 		{
 			if (source is null)
 				throw new ArgumentNullException(nameof(source));
@@ -155,7 +155,7 @@ namespace Ecng.Serialization
 			doc.Save(writer);
 		}
 
-		public override async Task Deserialize(Stream stream, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+		public override async ValueTask Deserialize(Stream stream, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			if (stream is null)
 				throw new ArgumentNullException(nameof(stream));

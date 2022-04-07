@@ -34,7 +34,7 @@
 		}
 
 		public static T Deserialize<T>(this ISerializer<T> serializer, Stream stream)
-			=> AsyncContext.Run(() => serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, default));
+			=> AsyncContext.Run(() => serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, default).AsTask());
 
 		public static object Deserialize(this ISerializer serializer, byte[] data)
 		{

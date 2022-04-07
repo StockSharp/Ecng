@@ -397,9 +397,9 @@ namespace TestWpf
 
 			public string UrlPart { get; set; }
 
-			Task<string> INamedObject<TextBB2HtmlContext>.GetName(TextBB2HtmlContext ctx, CancellationToken token) => Name.FromResult();
-			Task<string> INamedObject<TextBB2HtmlContext>.GetDescription(TextBB2HtmlContext ctx, CancellationToken token) => Description.FromResult();
-			Task<string> INamedObject<TextBB2HtmlContext>.GetUrlPart(TextBB2HtmlContext ctx, CancellationToken token) => UrlPart.FromResult();
+			ValueTask<string> INamedObject<TextBB2HtmlContext>.GetName(TextBB2HtmlContext ctx, CancellationToken token) => new(Name);
+			ValueTask<string> INamedObject<TextBB2HtmlContext>.GetDescription(TextBB2HtmlContext ctx, CancellationToken token) => new(Description);
+			ValueTask<string> INamedObject<TextBB2HtmlContext>.GetUrlPart(TextBB2HtmlContext ctx, CancellationToken token) => new(UrlPart);
 		}
 
 		private static TextBB2HtmlContext CreateContext(bool allowHtml, bool localhost)
@@ -411,15 +411,15 @@ namespace TestWpf
 
 		private static BB2HtmlFormatter<TextBB2HtmlContext> CreateBBService()
 		{
-			static Task<string> GetPackageLink(TextBB2HtmlContext ctx, string packageId, CancellationToken token)
+			static ValueTask<string> GetPackageLink(TextBB2HtmlContext ctx, string packageId, CancellationToken token)
 			{
 				if (packageId.IsEmpty())
 					throw new ArgumentNullException(nameof(packageId));
 
-				return $"https://www.nuget.org/packages/{packageId}/".FromResult();
+				return new($"https://www.nuget.org/packages/{packageId}/");
 			}
 
-			static Task<string> ToFullAbsolute(TextBB2HtmlContext ctx, string virtualPath, CancellationToken token)
+			static ValueTask<string> ToFullAbsolute(TextBB2HtmlContext ctx, string virtualPath, CancellationToken token)
 			{
 				var domain = ctx.Localhost ? "http://localhost/stocksharp" : $"{ctx.Scheme}://stocksharp.{ctx.DomainCode}";
 
@@ -430,42 +430,42 @@ namespace TestWpf
 				else
 					virtualPath = virtualPath.Replace("~", domain);
 
-				return virtualPath.FromResult();
+				return new(virtualPath);
 			}
 
-			static Task<INamedObject<TextBB2HtmlContext>> GetProduct(long id, CancellationToken token)
+			static ValueTask<INamedObject<TextBB2HtmlContext>> GetProduct(long id, CancellationToken token)
 			{
 				//var idStr = urlPart.IsEmpty() ? id.To<string>() : urlPart.ToLowerInvariant();
 				//return $"~/store/{idStr}/";
 
-				return Task.FromResult<INamedObject<TextBB2HtmlContext>>(id switch
+				return new(id switch
 				{
 					9 => new NamedObjectImpl { Id = id, Name = "S#.Designer", Description = "S#.Designer - free algorithmic visual designer", UrlPart = "~/store/strategy designer" },
 					_ => throw new ArgumentOutOfRangeException(nameof(id)),
 				});
 			}
 
-			static Task<INamedObject<TextBB2HtmlContext>> GetFile(long id, CancellationToken token)
-				=> Task.FromResult<INamedObject<TextBB2HtmlContext>>(new NamedObjectImpl { Id = id, UrlPart = $"~/file/{id}" });
+			static ValueTask<INamedObject<TextBB2HtmlContext>> GetFile(long id, CancellationToken token)
+				=> new(new NamedObjectImpl { Id = id, UrlPart = $"~/file/{id}" });
 
-			static Task<INamedObject<TextBB2HtmlContext>> GetTopic(long id, CancellationToken token)
-				=> Task.FromResult<INamedObject<TextBB2HtmlContext>>(new NamedObjectImpl { Id = id, UrlPart = $"~/topic/{id}" });
+			static ValueTask<INamedObject<TextBB2HtmlContext>> GetTopic(long id, CancellationToken token)
+				=> new(new NamedObjectImpl { Id = id, UrlPart = $"~/topic/{id}" });
 
-			static Task<INamedObject<TextBB2HtmlContext>> GetMessage(long id, CancellationToken token)
-				=> Task.FromResult<INamedObject<TextBB2HtmlContext>>(new NamedObjectImpl { Id = id, UrlPart = $"~/posts/m/{id}" });
+			static ValueTask<INamedObject<TextBB2HtmlContext>> GetMessage(long id, CancellationToken token)
+				=> new(new NamedObjectImpl { Id = id, UrlPart = $"~/posts/m/{id}" });
 
-			static Task<INamedObject<TextBB2HtmlContext>> GetUser(long id, CancellationToken token)
+			static ValueTask<INamedObject<TextBB2HtmlContext>> GetUser(long id, CancellationToken token)
 			{
-				return Task.FromResult<INamedObject<TextBB2HtmlContext>>(id switch
+				return new(id switch
 				{
 					1 => new NamedObjectImpl { Id = id, Name = "StockSharp", Description = "StockSharp", UrlPart = $"~/users/{id}/" },
 					_ => throw new ArgumentOutOfRangeException(nameof(id)),
 				});
 			}
 
-			static Task<INamedObject<TextBB2HtmlContext>> GetPage(long id, CancellationToken token)
+			static ValueTask<INamedObject<TextBB2HtmlContext>> GetPage(long id, CancellationToken token)
 			{
-				return Task.FromResult<INamedObject<TextBB2HtmlContext>>(id switch
+				return new(id switch
 				{
 					239 => new NamedObjectImpl { Id = id, Name = "Using S#.Installer to publish user content", UrlPart = "~/store/faq/" },
 					_ => throw new ArgumentOutOfRangeException(nameof(id)),
@@ -481,10 +481,10 @@ namespace TestWpf
 				GetPage,
 
 				GetPackageLink,
-				(ctx, s, t) => s.FromResult(),
+				(ctx, s, t) => new(s),
 				ToFullAbsolute,
-				(ctx, sourceUrl, t) => $"{sourceUrl}_a6f78c5fce344124993798c028a22a3a".FromResult(),
-				(ctx, t) => $"stocksharp.{ctx.DomainCode}".FromResult(),
+				(ctx, sourceUrl, t) => new($"{sourceUrl}_a6f78c5fce344124993798c028a22a3a"),
+				(ctx, t) => new($"stocksharp.{ctx.DomainCode}"),
 				async (ctx, url, t) =>
 				{
 					string domain = null;
@@ -510,13 +510,12 @@ namespace TestWpf
 					var isBlank = isAway || isGitHub;
 					return (changed, isAway, noFollow, isBlank);
 				},
-				(ctx, url, t) => url.UrlEscape().FromResult(),
+				(ctx, url, t) => new(url.UrlEscape()),
 				(ctx, img, t) =>
 				{
-					return (Path.GetExtension(img).EqualsIgnoreCase(".gif")
+					return new(Path.GetExtension(img).EqualsIgnoreCase(".gif")
 						? $"~/images/smiles/{img}"
-						: $"~/images/svg/smiles/{img}").FromResult()
-					;
+						: $"~/images/svg/smiles/{img}");
 				});
 
 			//bb.AddRule(new VideoStockSharpReplaceRule());

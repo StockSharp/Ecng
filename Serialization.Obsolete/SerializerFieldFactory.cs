@@ -15,10 +15,10 @@
 		{
 		}
 
-		protected internal override Task<I> OnCreateInstance(ISerializer serializer, Stream source, CancellationToken cancellationToken)
-			=> serializer.GetSerializer<I>().DeserializeAsync(source, cancellationToken);
+		protected internal override async ValueTask<I> OnCreateInstance(ISerializer serializer, Stream source, CancellationToken cancellationToken)
+			=> await serializer.GetSerializer<I>().DeserializeAsync(source, cancellationToken);
 
-		protected internal override async Task<Stream> OnCreateSource(ISerializer serializer, I instance, CancellationToken cancellationToken)
+		protected internal override async ValueTask<Stream> OnCreateSource(ISerializer serializer, I instance, CancellationToken cancellationToken)
 		{
 			Stream source = new MemoryStream();
 			await serializer.GetSerializer<I>().SerializeAsync(instance, source, cancellationToken);

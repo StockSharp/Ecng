@@ -9,9 +9,9 @@
 	{
 		public override bool FullInitialize => false;
 
-		public override Task<TEntity> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
+		public override ValueTask<TEntity> CreateEntity(ISerializer serializer, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
-			return ((TEntity)serializer.Type.CreateUnitialized()).FromResult();
+			return new(((TEntity)serializer.Type.CreateUnitialized()));
 		}
 	}
 }

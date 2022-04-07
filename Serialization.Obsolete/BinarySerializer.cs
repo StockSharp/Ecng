@@ -14,7 +14,7 @@ namespace Ecng.Serialization
 	{
 		public override string FileExtension => "bin";
 
-		public override async Task Serialize(FieldList fields, SerializationItemCollection source, Stream stream, CancellationToken cancellationToken)
+		public override async ValueTask Serialize(FieldList fields, SerializationItemCollection source, Stream stream, CancellationToken cancellationToken)
 		{
 			if (IsCollection)
 				stream.WriteEx(source.Count);
@@ -44,7 +44,7 @@ namespace Ecng.Serialization
 			}
 		}
 
-		public override async Task Deserialize(Stream stream, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+		public override async ValueTask Deserialize(Stream stream, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
 			if (IsCollection)
 			{

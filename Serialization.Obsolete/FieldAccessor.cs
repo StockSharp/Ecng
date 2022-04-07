@@ -19,11 +19,11 @@ namespace Ecng.Serialization
 		public abstract object GetValue(object entity);
 		public abstract object SetValue(object entity, object value);
 
-		protected override Task Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
-			=> Task.CompletedTask;
+		protected override ValueTask Serialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> default;
 
-		protected override Task Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
-			=> Task.CompletedTask;
+		protected override ValueTask Deserialize(ISerializer serializer, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
+			=> default;
 
 		protected override bool OnEquals(FieldAccessor other)
 		{

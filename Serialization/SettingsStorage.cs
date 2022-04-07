@@ -20,7 +20,7 @@
 	public class SettingsStorage : SynchronizedDictionary<string, object>
 	{
 		private readonly JsonReader _reader;
-		private readonly Func<JsonReader, SettingsStorage, string, Type, CancellationToken, Task<object>> _readJson;
+		private readonly Func<JsonReader, SettingsStorage, string, Type, CancellationToken, ValueTask<object>> _readJson;
 
 		/// <summary>
 		/// Создать <see cref="SettingsStorage"/>.
@@ -30,7 +30,7 @@
 		{
 		}
 
-		internal SettingsStorage(JsonReader reader, Func<JsonReader, SettingsStorage, string, Type, CancellationToken, Task<object>> readJson)
+		internal SettingsStorage(JsonReader reader, Func<JsonReader, SettingsStorage, string, Type, CancellationToken, ValueTask<object>> readJson)
 			: this()
 		{
 			_reader = reader ?? throw new ArgumentNullException(nameof(reader));
@@ -189,10 +189,10 @@
 		public object TryGet(Type type, string name, object defaultValue = default)
 			=> GetValue(type, name, defaultValue);
 
-		public async Task<T> GetValueAsync<T>(string name, T defaultValue = default, CancellationToken cancellationToken = default)
+		public async ValueTask<T> GetValueAsync<T>(string name, T defaultValue = default, CancellationToken cancellationToken = default)
 			=> (T)await GetValueAsync(typeof(T), name, defaultValue, cancellationToken);
 
-		public async Task<object> GetValueAsync(Type type, string name, object defaultValue = default, CancellationToken cancellationToken = default)
+		public async ValueTask<object> GetValueAsync(Type type, string name, object defaultValue = default, CancellationToken cancellationToken = default)
 		{
 			if (_reader is null)
 				return GetValue(type, name, defaultValue);
@@ -200,7 +200,7 @@
 				return await GetValueFromReaderAsync(type, name, cancellationToken) ?? defaultValue;
 		}
 
-		private async Task<object> GetValueFromReaderAsync(Type type, string name, CancellationToken cancellationToken)
+		private async ValueTask<object> GetValueFromReaderAsync(Type type, string name, CancellationToken cancellationToken)
 			=> await _readJson(_reader, this, name, type, cancellationToken);
 	}
 }
