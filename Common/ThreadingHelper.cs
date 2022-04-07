@@ -3,6 +3,7 @@ namespace Ecng.Common
 	using System;
 	using System.Collections.Generic;
 	using System.Globalization;
+	using System.Linq;
 	using System.Threading;
 	using System.Threading.Tasks;
 
@@ -417,5 +418,32 @@ namespace Ecng.Common
 		// https://stackoverflow.com/a/61260053
 		public static async ValueTask AsValueTask<T>(this ValueTask<T> valueTask)
 			=> await valueTask;
+
+		public static async ValueTask<T[]> WhenAll<T>(this IEnumerable<ValueTask<T>> tasks)
+		{
+			// We don't allocate the list if no task throws
+			List<Exception> exceptions = null;
+
+			var source = tasks.ToArray();
+
+			var results = new T[source.Length];
+
+			for (var i = 0; i < source.Length; i++)
+			{
+				try
+				{
+					results[i] = await source[i].ConfigureAwait(false);
+				}
+				catch (Exception ex)
+				{
+					exceptions ??= new List<Exception>(source.Length);
+					exceptions.Add(ex);
+				}
+			}
+
+			return exceptions is null
+				? results
+				: throw new AggregateException(exceptions);
+		}
 	}
 }
