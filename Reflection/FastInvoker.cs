@@ -491,9 +491,11 @@ namespace Ecng.Reflection
 			if (parameters.Length > 1 && parameters.Last().IsParams())
 			{
 				var last = parameters.Last();
+				var paramType = last.ParameterType;
+				var elemType = paramType.GetElementType();
 
-				var num = methodGenerator.CreateLocal(last.ParameterType);
-				arrCopy = methodGenerator.CreateLocal(last.ParameterType);
+				var num = methodGenerator.CreateLocal(elemType);
+				arrCopy = methodGenerator.CreateLocal(paramType);
 
 				methodGenerator
 					.ldc_i4_s((byte)(parameters.Length - 1))
@@ -503,7 +505,7 @@ namespace Ecng.Reflection
 					.conv_i4()
 					.ldloc(num)
 					.sub()
-					.newarr(last.ParameterType.GetElementType())
+					.newarr(elemType)
 					.stloc(arrCopy)
 					.ldarg_1()
 					.ldloc(num)
