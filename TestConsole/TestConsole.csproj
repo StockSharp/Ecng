@@ -3,7 +3,11 @@
   <PropertyGroup>
     <ProjectGuid>{CAF861AA-7473-4EEB-BF41-FFE74A97E072}</ProjectGuid>
     <OutputType>Exe</OutputType>
+	<TargetFrameworks>net5.0;net6.0</TargetFrameworks>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(MsBclAsyncInterfacesVer)" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LibGit2Sharp\LibGit2Sharp.csproj" />
     <ProjectReference Include="..\Net.SocketIO\Net.SocketIO.csproj" />

@@ -5,6 +5,7 @@ namespace Ecng.Reflection
 	using System.Collections.Generic;
 	using System.Reflection;
 	using System.Linq;
+	using System.IO;
 	using System.Runtime.CompilerServices;
 	using MemberType = System.Tuple<string, System.Reflection.MemberTypes, MemberSignature>;
 
@@ -767,6 +768,19 @@ namespace Ecng.Reflection
 
 		#region GetItemType
 
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private static Type TryGetAsyncEnumerableItem(this Type collectionType)
+		{
+			try
+			{
+				return collectionType.GetGenericType(typeof(IAsyncEnumerable<>));
+			}
+			catch (FileNotFoundException)
+			{
+				return null;
+			}
+		}
+
 		private static readonly SynchronizedDictionary<Type, Type> _getItemTypeCache = new();
 
 		public static Type GetItemType(this Type collectionType)
@@ -779,7 +793,7 @@ namespace Ecng.Reflection
 				var interfaceType =
 					collectionType.GetGenericType(typeof(ICollection<>)) ??
 					collectionType.GetGenericType(typeof(IEnumerable<>)) ??
-					collectionType.GetGenericType(typeof(IAsyncEnumerable<>));
+					collectionType.TryGetAsyncEnumerableItem();
 
 				if (interfaceType != null)
 					return interfaceType.GetGenericArguments()[0];

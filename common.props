@@ -76,6 +76,7 @@
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
     <MsTestVer>2.2.7</MsTestVer>
     <MsTestSdkVer>17.0.0</MsTestSdkVer>
+    <MsBclAsyncInterfacesVer>5.0.0</MsBclAsyncInterfacesVer>
 
     <OctodiffVer>1.2.36</OctodiffVer>
     <MoreLinqVer>3.3.2</MoreLinqVer>
