@@ -455,11 +455,11 @@
 		}
 
 		[Obsolete]
-		public int Count => AsyncContext.Run(() => CountAsync(default).AsTask());
+		public int Count => ThreadingHelper.Run(() => CountAsync(default));
 
 		[Obsolete]
 		public void Add(TEntity item)
-			=> AsyncContext.Run(() => AddAsync(item, default));
+			=> ThreadingHelper.Run(() => AddAsync(item, default));
 
 		public virtual async ValueTask<TEntity> AddAsync(TEntity item, CancellationToken cancellationToken)
 		{
@@ -502,7 +502,7 @@
 
 		[Obsolete]
 		public virtual void Clear()
-			=> AsyncContext.Run(() => ClearAsync(default));
+			=> ThreadingHelper.Run(() => ClearAsync(default));
 
 		public virtual async ValueTask ClearAsync(CancellationToken cancellationToken)
 		{
@@ -530,20 +530,20 @@
 
 		[Obsolete]
 		public virtual bool Contains(TEntity item)
-			=> AsyncContext.Run(async () => await ContainsAsync(item, default));
+			=> ThreadingHelper.Run(() => ContainsAsync(item, default));
 
 		public virtual ValueTask<bool> ContainsAsync(TEntity item, CancellationToken cancellationToken)
 			=> new(this.Any(arg => arg.Equals(item)));
 
 		public virtual void CopyTo(TEntity[] array, int index)
-			=> AsyncContext.Run(() => CopyTo(array, index, default));
+			=> ThreadingHelper.Run(() => CopyTo(array, index, default));
 
 		public virtual async ValueTask CopyTo(TEntity[] array, int index, CancellationToken cancellationToken)
 			=> ((ICollection<TEntity>)await GetRangeAsync(index, await CountAsync(cancellationToken), default, default, cancellationToken)).CopyTo(array, 0);
 
 		[Obsolete]
 		public virtual bool Remove(TEntity item)
-			=> AsyncContext.Run(async () => await RemoveAsync(item, default));
+			=> ThreadingHelper.Run(() => RemoveAsync(item, default));
 
 		public virtual async ValueTask<bool> RemoveAsync(TEntity item, CancellationToken cancellationToken)
 		{
@@ -573,7 +573,7 @@
 		}
 
 		IEnumerable IRangeCollection.GetRange(long startIndex, long count, string sortExpression, ListSortDirection directions)
-			=> AsyncContext.Run(() => GetRangeAsync(startIndex, count, sortExpression, directions, default).AsTask());
+			=> ThreadingHelper.Run(() => GetRangeAsync(startIndex, count, sortExpression, directions, default));
 
 		public virtual ValueTask<IEnumerable<TEntity>> GetRangeAsync(long startIndex, long count, string sortExpression, ListSortDirection directions, CancellationToken cancellationToken)
 		{
@@ -612,9 +612,7 @@
 		}
 
 		public virtual void Insert(int index, TEntity item)
-		{
-			AsyncContext.Run(async () => await AddAsync(item, default));
-		}
+			=> ThreadingHelper.Run(() => AddAsync(item, default));
 
 		public virtual async ValueTask RemoveAtAsync(int index, CancellationToken cancellationToken)
 		{

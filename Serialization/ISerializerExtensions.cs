@@ -4,8 +4,6 @@
 
 	using Ecng.Common;
 
-	using Nito.AsyncEx;
-
 	public static class ISerializerExtensions
 	{
 		public static void Serialize(this ISerializer serializer, object graph, string fileName)
@@ -19,7 +17,7 @@
 		}
 
 		public static void Serialize(this ISerializer serializer, object graph, Stream stream)
-			=> AsyncContext.Run(() => serializer.CheckOnNull(nameof(serializer)).SerializeAsync(graph, stream, default));
+			=> ThreadingHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).SerializeAsync(graph, stream, default));
 
 		public static T Deserialize<T>(this ISerializer<T> serializer, string fileName)
 		{
@@ -34,7 +32,7 @@
 		}
 
 		public static T Deserialize<T>(this ISerializer<T> serializer, Stream stream)
-			=> AsyncContext.Run(() => serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, default).AsTask());
+			=> ThreadingHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, default));
 
 		public static object Deserialize(this ISerializer serializer, byte[] data)
 		{
@@ -43,6 +41,6 @@
 		}
 
 		public static object Deserialize(this ISerializer serializer, Stream stream)
-			=> AsyncContext.Run(() => serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, default));
+			=> ThreadingHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, default));
 	}
 }

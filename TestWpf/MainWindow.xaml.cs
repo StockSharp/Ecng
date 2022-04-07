@@ -362,7 +362,7 @@ namespace TestWpf
 [img=107130]TerminalBlackEn.png[/img]";
 
 			var ctx = CreateContext(true, false);
-			var html = AsyncContext.Run(() => CreateBBService().ToHtmlAsync(bb, ctx));
+			var html = ThreadingHelper.Run(() => CreateBBService().ToHtmlAsync(bb, ctx));
 			HtmlCtrl.Text = $"<html>{html}</html>";
 		}
 

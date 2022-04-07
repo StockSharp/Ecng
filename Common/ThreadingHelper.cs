@@ -7,6 +7,8 @@ namespace Ecng.Common
 	using System.Threading;
 	using System.Threading.Tasks;
 
+	using Nito.AsyncEx;
+
 	public static class ThreadingHelper
 	{
 		public static Timer TimerInvariant(this Action handler)
@@ -450,6 +452,22 @@ namespace Ecng.Common
 			return exceptions is null
 				? results
 				: throw new AggregateException(exceptions);
+		}
+
+		public static void Run(Func<ValueTask> getTask)
+		{
+			if (getTask is null)
+				throw new ArgumentNullException(nameof(getTask));
+
+			AsyncContext.Run(() => getTask().AsTask());
+		}
+
+		public static T Run<T>(Func<ValueTask<T>> getTask)
+		{
+			if (getTask is null)
+				throw new ArgumentNullException(nameof(getTask));
+
+			return AsyncContext.Run(() => getTask().AsTask());
 		}
 	}
 }

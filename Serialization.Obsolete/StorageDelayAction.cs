@@ -2,7 +2,7 @@ namespace Ecng.Serialization
 {
 	using System;
 
-	using Nito.AsyncEx;
+	using Ecng.Common;
 
 	public class StorageDelayAction : DelayAction
 	{
@@ -15,6 +15,6 @@ namespace Ecng.Serialization
 		}
 
 		protected override IBatchContext BeginBatch(IGroup group)
-			=> AsyncContext.Run(() => _storage.BeginBatch(default).AsTask());
+			=> ThreadingHelper.Run(() => _storage.BeginBatch(default));
 	}
 }
