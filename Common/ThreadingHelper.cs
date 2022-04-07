@@ -421,11 +421,11 @@ namespace Ecng.Common
 		public static async ValueTask AsValueTask<T>(this ValueTask<T> valueTask)
 			=> await valueTask;
 
-		public static async ValueTask<T> AsValueTask<T>(this Task<T> task)
-			=> await task;
+		public static ValueTask<T> AsValueTask<T>(this Task<T> task)
+			=> new(task);
 
-		public static async ValueTask AsValueTask<T>(this Task task)
-			=> await task;
+		public static ValueTask AsValueTask<T>(this Task task)
+			=> new(task);
 
 		public static async ValueTask<T[]> WhenAll<T>(this IEnumerable<ValueTask<T>> tasks)
 		{
