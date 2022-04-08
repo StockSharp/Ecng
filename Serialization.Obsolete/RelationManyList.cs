@@ -302,8 +302,6 @@
 			if (id is null)
 				throw new ArgumentNullException(nameof(id));
 
-			ThrowIfStorageNull();
-
 			//if (BulkLoad)
 			//{
 			//	if (!BulkInitialized)
@@ -428,8 +426,6 @@
 
 		public virtual async ValueTask<int> CountAsync(CancellationToken cancellationToken)
 		{
-			ThrowIfStorageNull();
-
 			if (BulkLoad)
 			{
 				if (!await BulkInitialized(cancellationToken))
@@ -471,8 +467,6 @@
 
 			//Adding?.Invoke(item);
 
-			ThrowIfStorageNull();
-
 			_cache.Add(item);
 
 			//var id = GetCacheId(item);
@@ -512,8 +506,6 @@
 			//Clearing?.Invoke();
 
 			_cache.Clear();
-
-			ThrowIfStorageNull();
 
 			await OnClear(cancellationToken);
 
@@ -646,58 +638,33 @@
 		#region Virtual CRUD Methods
 
 		protected virtual ValueTask<long> OnGetCount(CancellationToken cancellationToken)
-		{
-			ThrowIfStorageNull();
-			return Storage.GetCountAsync<TEntity>(CommandType, cancellationToken);
-		}
+			=> Storage.GetCountAsync<TEntity>(CommandType, cancellationToken);
 
 		protected virtual ValueTask<TEntity> OnAdd(TEntity entity, CancellationToken cancellationToken)
-		{
-			ThrowIfStorageNull();
-			return Storage.AddAsync(CommandType, entity, cancellationToken);
-		}
+			=> Storage.AddAsync(CommandType, entity, cancellationToken);
 
 		protected virtual ValueTask<TEntity> OnGet(SerializationItemCollection by, CancellationToken cancellationToken)
-		{
-			ThrowIfStorageNull();
-			return Storage.GetByAsync<TEntity>(CommandType, by, cancellationToken);
-		}
+			=> Storage.GetByAsync<TEntity>(CommandType, by, cancellationToken);
 
 		protected virtual ValueTask<IEnumerable<TEntity>> OnGetGroup(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
-		{
-			ThrowIfStorageNull();
-			return Storage.GetGroupAsync<TEntity>(CommandType, startIndex, count, orderBy, direction, cancellationToken);
-		}
+			=> Storage.GetGroupAsync<TEntity>(CommandType, startIndex, count, orderBy, direction, cancellationToken);
 
 		protected virtual ValueTask<TEntity> OnUpdate(TEntity entity, CancellationToken cancellationToken)
-		{
-			ThrowIfStorageNull();
-			return Storage.UpdateAsync(CommandType, entity, cancellationToken);
-		}
+			=> Storage.UpdateAsync(CommandType, entity, cancellationToken);
 
 		protected virtual ValueTask OnRemove(TEntity entity, CancellationToken cancellationToken)
-		{
-			ThrowIfStorageNull();
-			return Storage.RemoveAsync(CommandType, entity, cancellationToken);
-		}
+			=> Storage.RemoveAsync(CommandType, entity, cancellationToken);
 
 		protected virtual ValueTask OnClear(CancellationToken cancellationToken)
-		{
-			ThrowIfStorageNull();
-			return Storage.ClearAsync<TEntity>(CommandType, cancellationToken);
-		}
+			=> Storage.ClearAsync<TEntity>(CommandType, cancellationToken);
 
 		#endregion
 
 		public ValueTask<IEnumerable<TEntity>> ReadFirsts(long count, Field orderBy, CancellationToken cancellationToken)
-		{
-			return ReadAll(0, count, orderBy, ListSortDirection.Ascending, cancellationToken);
-		}
+			=> ReadAll(0, count, orderBy, ListSortDirection.Ascending, cancellationToken);
 
 		public ValueTask<IEnumerable<TEntity>> ReadLasts(long count, Field orderBy, CancellationToken cancellationToken)
-		{
-			return ReadAll(0, count, orderBy, ListSortDirection.Descending, cancellationToken);
-		}
+			=> ReadAll(0, count, orderBy, ListSortDirection.Descending, cancellationToken);
 
 		public ValueTask<TEntity> Read(SerializationItem by, CancellationToken cancellationToken)
 		{
@@ -708,14 +675,10 @@
 		}
 
 		public ValueTask<TEntity> Read(SerializationItemCollection by, CancellationToken cancellationToken)
-		{
-			return OnGet(by, cancellationToken);
-		}
+			=> OnGet(by, cancellationToken);
 
 		private async ValueTask<IEnumerable<TEntity>> GetRange(CancellationToken cancellationToken)
-		{
-			return await GetRangeAsync(0, await CountAsync(cancellationToken), default, default, cancellationToken);
-		}
+			=> await GetRangeAsync(0, await CountAsync(cancellationToken), default, default, cancellationToken);
 
 		public async ValueTask<IEnumerable<TEntity>> ReadAll(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
 		{
@@ -753,8 +716,6 @@
 					count = await OnGetCount(cancellationToken);
 				}
 			}
-
-			ThrowIfStorageNull();
 
 			//var pendingAdd = _pendingAdd.CachedKeys;
 
@@ -809,12 +770,6 @@
 				return entity.To<TId>();
 
 			return (TId)Schema.Identity.GetAccessor<TEntity>().GetValue(entity);
-		}
-
-		private void ThrowIfStorageNull()
-		{
-			if (Storage is null)
-				throw new InvalidOperationException();
 		}
 
 		//public event Func<TEntity, bool> Adding;
