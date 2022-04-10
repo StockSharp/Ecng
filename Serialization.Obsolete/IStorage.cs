@@ -25,7 +25,7 @@
 
 		ValueTask<TEntity> GetByIdAsync<TEntity>(CommandType? commandType, TId id, CancellationToken cancellationToken);
 
-		ValueTask<IEnumerable<TEntity>> GetGroupAsync<TEntity>(CommandType? commandType, long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken);
+		ValueTask<IEnumerable<TEntity>> GetGroupAsync<TEntity>(CommandType? commandType, long startIndex, long count, bool deleted, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken);
 
 		ValueTask<TEntity> UpdateAsync<TEntity>(CommandType? commandType, TEntity entity, CancellationToken cancellationToken);
 

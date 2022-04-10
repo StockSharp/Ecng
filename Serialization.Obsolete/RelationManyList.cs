@@ -429,7 +429,7 @@
 			if (BulkLoad)
 			{
 				if (!await BulkInitialized(cancellationToken))
-					await GetRangeAsync(0, 1 /* passed count's value will be ignored and set into OnGetCount() */, default, default, cancellationToken);
+					await GetRangeAsync(0, 1 /* passed count's value will be ignored and set into OnGetCount() */, default, default, default, cancellationToken);
 
 				var (sync, dict) = CachedEntities;
 
@@ -531,7 +531,7 @@
 			=> ThreadingHelper.Run(() => CopyTo(array, index, default));
 
 		public virtual async ValueTask CopyTo(TEntity[] array, int index, CancellationToken cancellationToken)
-			=> ((ICollection<TEntity>)await GetRangeAsync(index, await CountAsync(cancellationToken), default, default, cancellationToken)).CopyTo(array, 0);
+			=> ((ICollection<TEntity>)await GetRangeAsync(index, await CountAsync(cancellationToken), default, default, default, cancellationToken)).CopyTo(array, 0);
 
 		[Obsolete]
 		public virtual bool Remove(TEntity item)
@@ -565,12 +565,12 @@
 		}
 
 		IEnumerable IRangeCollection.GetRange(long startIndex, long count, string sortExpression, ListSortDirection directions)
-			=> ThreadingHelper.Run(() => GetRangeAsync(startIndex, count, sortExpression, directions, default));
+			=> ThreadingHelper.Run(() => GetRangeAsync(startIndex, count, default, sortExpression, directions, default));
 
-		public virtual ValueTask<IEnumerable<TEntity>> GetRangeAsync(long startIndex, long count, string sortExpression, ListSortDirection directions, CancellationToken cancellationToken)
+		public virtual ValueTask<IEnumerable<TEntity>> GetRangeAsync(long startIndex, long count, bool deleted, string sortExpression, ListSortDirection directions, CancellationToken cancellationToken)
 		{
 			var orderBy = sortExpression.IsEmpty() ? null : Schema.Fields.TryGet(sortExpression) ?? new VoidField(sortExpression, typeof(object));
-			return ReadAll(startIndex, count, orderBy, directions, cancellationToken);
+			return ReadAll(startIndex, count, deleted, orderBy, directions, cancellationToken);
 		}
 
 		private int _bufferSize = 20;
@@ -646,8 +646,8 @@
 		protected virtual ValueTask<TEntity> OnGet(SerializationItemCollection by, CancellationToken cancellationToken)
 			=> Storage.GetByAsync<TEntity>(CommandType, by, cancellationToken);
 
-		protected virtual ValueTask<IEnumerable<TEntity>> OnGetGroup(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
-			=> Storage.GetGroupAsync<TEntity>(CommandType, startIndex, count, orderBy, direction, cancellationToken);
+		protected virtual ValueTask<IEnumerable<TEntity>> OnGetGroup(long startIndex, long count, bool deleted, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
+			=> Storage.GetGroupAsync<TEntity>(CommandType, startIndex, count, deleted, orderBy, direction, cancellationToken);
 
 		protected virtual ValueTask<TEntity> OnUpdate(TEntity entity, CancellationToken cancellationToken)
 			=> Storage.UpdateAsync(CommandType, entity, cancellationToken);
@@ -661,10 +661,10 @@
 		#endregion
 
 		public ValueTask<IEnumerable<TEntity>> ReadFirsts(long count, Field orderBy, CancellationToken cancellationToken)
-			=> ReadAll(0, count, orderBy, ListSortDirection.Ascending, cancellationToken);
+			=> ReadAll(0, count, default, orderBy, ListSortDirection.Ascending, cancellationToken);
 
 		public ValueTask<IEnumerable<TEntity>> ReadLasts(long count, Field orderBy, CancellationToken cancellationToken)
-			=> ReadAll(0, count, orderBy, ListSortDirection.Descending, cancellationToken);
+			=> ReadAll(0, count, default, orderBy, ListSortDirection.Descending, cancellationToken);
 
 		public ValueTask<TEntity> Read(SerializationItem by, CancellationToken cancellationToken)
 		{
@@ -678,9 +678,9 @@
 			=> OnGet(by, cancellationToken);
 
 		private async ValueTask<IEnumerable<TEntity>> GetRange(CancellationToken cancellationToken)
-			=> await GetRangeAsync(0, await CountAsync(cancellationToken), default, default, cancellationToken);
+			=> await GetRangeAsync(0, await CountAsync(cancellationToken), default, default, default, cancellationToken);
 
-		public async ValueTask<IEnumerable<TEntity>> ReadAll(long startIndex, long count, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
+		public async ValueTask<IEnumerable<TEntity>> ReadAll(long startIndex, long count, bool deleted, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
 		{
 			//if (orderBy is null)
 			//	throw new ArgumentNullException(nameof(orderBy));
@@ -691,7 +691,7 @@
 			var oldStartIndex = startIndex;
 			var oldCount = count;
 
-			if (BulkLoad)
+			if (!deleted && BulkLoad)
 			{
 				if (await BulkInitialized(cancellationToken))
 				{
@@ -719,9 +719,9 @@
 
 			//var pendingAdd = _pendingAdd.CachedKeys;
 
-			var entities = (await OnGetGroup(startIndex, count, orderBy ?? Schema.Identity, direction, cancellationToken)).ToList();
+			var entities = (await OnGetGroup(startIndex, count, deleted, orderBy ?? Schema.Identity, direction, cancellationToken)).ToList();
 
-			if (BulkLoad)
+			if (!deleted && BulkLoad)
 			{
 				if (!await BulkInitialized(cancellationToken))
 				{
