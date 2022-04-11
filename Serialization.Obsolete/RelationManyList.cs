@@ -6,109 +6,16 @@
 	using System.ComponentModel;
 	using System.Data;
 	using System.Linq;
-	using System.Linq.Expressions;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using System.Reflection;
 
 	using Ecng.Common;
 	using Ecng.Collections;
-	using Ecng.Reflection;
 
 	using Nito.AsyncEx;
 
-	public abstract class RelationManyList<TEntity, TId> : ICollection<TEntity>, ICollection, IRangeCollection//, IAsyncEnumerable<TEntity>
+	public class RelationManyList<TEntity, TId> : ICollection<TEntity>, ICollection, IRangeCollection//, IAsyncEnumerable<TEntity>
 	{
-		private class QueryProvider : IQueryProvider
-		{
-			private readonly IQueryContext _context;
-
-			private readonly MethodInfo _execEnum;
-			private readonly MethodInfo _execEnumAsync;
-			private readonly MethodInfo _execAsync;
-			private readonly MethodInfo _execResultAsync;
-
-			public QueryProvider(IQueryContext context)
-			{
-				_context = context ?? throw new ArgumentNullException(nameof(context));
-
-				_execEnum = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteEnum));
-				_execEnumAsync = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteEnumAsync));
-				_execAsync = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteAsync));
-				_execResultAsync = typeof(IQueryContext).GetMethod(nameof(IQueryContext.ExecuteResultAsync));
-			}
-
-			IQueryable IQueryProvider.CreateQuery(Expression expression)
-			{
-				Type elementType = expression.Type;
-
-				try
-				{
-					return
-					   (IQueryable)Activator.CreateInstance(typeof(RelationManyList<,>).
-							  Make(elementType, typeof(long)), new object[] { this, expression });
-				}
-				catch (TargetInvocationException e)
-				{
-					throw e.InnerException;
-				}
-			}
-
-			IQueryable<T> IQueryProvider.CreateQuery<T>(Expression expression)
-				=> new Queryable<T>(this, expression);
-
-			object IQueryProvider.Execute(Expression expression)
-				=> throw new NotSupportedException();
-
-			T IQueryProvider.Execute<T>(Expression expression)
-			{
-				if (typeof(T).GetGenericType(typeof(IEnumerable<>)) is not null)
-				{
-					return (T)_execEnum.Make(typeof(TEntity)).Invoke(_context, new object[] { expression });
-				}
-				else if (typeof(T).GetGenericType(typeof(IAsyncEnumerable<>)) is not null)
-				{
-					return (T)_execEnumAsync.Make(typeof(TEntity)).Invoke(_context, new object[] { expression });
-				}
-				else if (typeof(T) == typeof(Task))
-				{
-					return (T)_execAsync.Make(typeof(TEntity)).Invoke(_context, new object[] { expression });
-				}
-				else if (typeof(T).IsSubclassOf(typeof(Task)))
-				{
-					return (T)_execResultAsync.Make(typeof(TEntity), typeof(T).GetGenericArguments().First()).Invoke(_context, new object[] { expression });
-				}
-				else
-					throw new NotSupportedException();
-			}
-		}
-
-		private class Queryable<T> : IOrderedQueryable<T>, IAsyncEnumerable<T>
-		{
-			public Queryable(IQueryProvider provider, Expression expression)
-			{
-				if (expression != null && !typeof(IQueryable<T>).IsAssignableFrom(expression.Type))
-					throw new ArgumentException($"Not assignable from {expression.Type}.", nameof(expression));
-
-				_provider = provider ?? throw new ArgumentNullException(nameof(provider));
-				_expression = expression ?? Expression.Constant(this);
-			}
-
-			Type IQueryable.ElementType => typeof(T);
-
-			private readonly Expression _expression;
-			Expression IQueryable.Expression => _expression;
-
-			private readonly IQueryProvider _provider;
-			IQueryProvider IQueryable.Provider => _provider;
-
-			IEnumerator<T> IEnumerable<T>.GetEnumerator() => _provider.Execute<IEnumerable<T>>(_expression).GetEnumerator();
-			IEnumerator IEnumerable.GetEnumerator() => _provider.Execute<IEnumerable>(_expression).GetEnumerator();
-
-			IAsyncEnumerator<T> IAsyncEnumerable<T>.GetAsyncEnumerator(CancellationToken cancellationToken)
-				=> _provider.Execute<IAsyncEnumerable<T>>(_expression).GetAsyncEnumerator(cancellationToken);
-		}
-
 		#region private class RelationManyListEnumerator
 
 		private sealed class RelationManyListEnumerator : BaseEnumerator<RelationManyList<TEntity, TId>, TEntity>//, IAsyncEnumerator<TEntity>
@@ -208,7 +115,7 @@
 		private int? _count;
 		//private readonly CachedSynchronizedDictionary<TEntity, object> _pendingAdd = new(); 
 
-		protected RelationManyList(IStorage<TId> storage)
+		public RelationManyList(IStorage<TId> storage)
 		{
 			Storage = storage ?? throw new ArgumentNullException(nameof(storage));
 			//Storage.Added += value => DoIf<TEntity>(value, entity =>
@@ -223,7 +130,7 @@
 			=> ToQueryable(Storage);
 
 		public IQueryable<TEntity> ToQueryable(IQueryContext queryContext)
-			=> new Queryable<TEntity>(new QueryProvider(queryContext), null);
+			=> new DefaultQueryable<TEntity>(new DefaultQueryProvider<TEntity>(queryContext), null);
 
 		private static Schema _schema;
 		public static Schema Schema => _schema ??= SchemaManager.GetSchema<TEntity>();
