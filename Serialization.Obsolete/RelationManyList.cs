@@ -102,7 +102,7 @@
 
 		#endregion
 
-		public virtual bool IsReadOnly => false;
+		public virtual bool IsReadOnly { get; protected set; }
 
 		private object _syncRoot;
 		object ICollection.SyncRoot => _syncRoot ??= new object();
@@ -275,7 +275,6 @@
 
 				if (isNew)
 					await IncrementCount(cancellationToken);
-
 			}
 
 			return await OnUpdate(entity, cancellationToken);
@@ -666,10 +665,8 @@
 			return entities;
 		}
 
-		public async ValueTask RemoveById(TId id, CancellationToken cancellationToken)
-		{
-			await RemoveAsync(await ReadById(id, cancellationToken), cancellationToken);
-		}
+		public async ValueTask<bool> RemoveById(TId id, CancellationToken cancellationToken)
+			=> await RemoveAsync(await ReadById(id, cancellationToken), cancellationToken);
 
 		private static TId GetCacheId(TEntity entity)
 		{
@@ -677,6 +674,15 @@
 				return entity.To<TId>();
 
 			return (TId)Schema.Identity.GetAccessor<TEntity>().GetValue(entity);
+		}
+
+		public async ValueTask<bool> TryAddAsync(TEntity entity, CancellationToken cancellationToken)
+		{
+			if (await ContainsAsync(entity, cancellationToken))
+				return false;
+
+			await AddAsync(entity, cancellationToken);
+			return true;
 		}
 
 		//public event Func<TEntity, bool> Adding;
