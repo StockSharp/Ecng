@@ -501,13 +501,7 @@
 		//IAsyncEnumerator<TEntity> IAsyncEnumerable<TEntity>.GetAsyncEnumerator(CancellationToken cancellationToken)
 		//	=> new RelationManyListEnumerator(this, BufferSize, cancellationToken);
 
-		public virtual int IndexOf(TEntity item)
-		{
-			if (BulkLoad)
-				throw new NotImplementedException();
-			else
-				throw new NotSupportedException();
-		}
+		public virtual int IndexOf(TEntity item) => throw new NotSupportedException();
 
 		public virtual void Insert(int index, TEntity item)
 			=> ThreadingHelper.Run(() => AddAsync(item, default));
