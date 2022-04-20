@@ -6,10 +6,10 @@
 
 	public interface IQueryContext
 	{
-		IEnumerable<TEntity> ExecuteEnum<TEntity>(Expression expression);
-		IAsyncEnumerable<TEntity> ExecuteEnumAsync<TEntity>(Expression expression);
+		IEnumerable<TResult> ExecuteEnum<TSource, TResult>(Expression expression);
+		IAsyncEnumerable<TResult> ExecuteEnumAsync<TSource, TResult>(Expression expression);
 
-		ValueTask ExecuteAsync<TEntity>(Expression expression);
-		ValueTask<TResult> ExecuteResultAsync<TEntity, TResult>(Expression expression);
+		ValueTask ExecuteAsync<TSource>(Expression expression);
+		ValueTask<TResult> ExecuteResultAsync<TSource, TResult>(Expression expression);
 	}
 }

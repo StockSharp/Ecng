@@ -53,11 +53,11 @@
 		{
 			if (typeof(T).GetGenericType(typeof(IEnumerable<>)) is not null)
 			{
-				return (T)_execEnum.Make(typeof(TEntity)).Invoke(_context, new object[] { expression });
+				return (T)_execEnum.Make(typeof(TEntity), typeof(T).GetGenericArguments().First()).Invoke(_context, new object[] { expression });
 			}
 			else if (typeof(T).GetGenericType(typeof(IAsyncEnumerable<>)) is not null)
 			{
-				return (T)_execEnumAsync.Make(typeof(TEntity)).Invoke(_context, new object[] { expression });
+				return (T)_execEnumAsync.Make(typeof(TEntity), typeof(T).GetGenericArguments().First()).Invoke(_context, new object[] { expression });
 			}
 			else if (typeof(T) == typeof(ValueTask))
 			{
