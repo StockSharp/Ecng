@@ -8,10 +8,6 @@
 
 	public interface IStorage : IQueryContext
 	{
-		ValueTask<IBatchContext> BeginBatch(CancellationToken cancellationToken);
-		ValueTask CommitBatch(CancellationToken cancellationToken);
-		ValueTask EndBatch(CancellationToken cancellationToken);
-
 		ValueTask ClearCacheAsync(CancellationToken cancellationToken);
 	}
 

@@ -101,16 +101,6 @@
 
 			fields = fields.Where(f => !IgnoreFields.Contains(f.Name));
 
-			var cxt = Scope<SerializationContext>.Current;
-
-			while (cxt != null)
-			{
-				if (cxt.Value.Filter != null)
-					fields = cxt.Value.Filter(fields);
-
-				cxt = cxt.Parent;
-			}
-
 			return new FieldList(fields);
 		}
 
@@ -131,7 +121,7 @@
 
 		public async ValueTask Serialize(T graph, FieldList fields, SerializationItemCollection source, CancellationToken cancellationToken)
 		{
-			using (new SerializationContext { Entity = graph }.ToScope())
+			using (new SerializationContext(graph).ToScope())
 			{
 				// nullable primitive can be null
 				//if (graph.IsNull())
@@ -214,7 +204,7 @@
 
 		public async ValueTask<T> Deserialize(SerializationItemCollection source, FieldList fields, T graph, CancellationToken cancellationToken)
 		{
-			using (new SerializationContext { Entity = graph }.ToScope())
+			using (new SerializationContext(graph).ToScope())
 			{
 				if (source is null)
 					throw new ArgumentNullException(nameof(source), $"Source for type '{typeof(T)}' doesn't initialized.");
