@@ -231,7 +231,7 @@
 			if (identity is null)
 				throw new InvalidOperationException($"Schema {Schema.Name} doesn't have identity.");
 
-			return Read(new SerializationItem(identity, id), cancellationToken);
+			return Storage.GetByIdAsync<TEntity>(CommandType, id, cancellationToken);
 			//}
 		}
 
@@ -619,7 +619,7 @@
 
 			//var pendingAdd = _pendingAdd.CachedKeys;
 
-			var entities = (await OnGetGroup(startIndex, count, deleted, orderBy ?? Schema.Identity, direction, cancellationToken)).ToList();
+			var entities = count == 0 ? new() : (await OnGetGroup(startIndex, count, deleted, orderBy ?? Schema.Identity, direction, cancellationToken)).ToList();
 
 			if (!deleted && BulkLoad)
 			{
