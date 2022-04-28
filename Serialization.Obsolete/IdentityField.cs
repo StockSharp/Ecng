@@ -8,6 +8,7 @@
 			: base(schema, member)
 		{
 			IsIndex = true;
+			IsUnique = true;
 		}
 	}
 }

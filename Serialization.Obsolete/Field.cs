@@ -63,6 +63,7 @@ namespace Ecng.Serialization
 
 		public bool IsReadOnly { get; set; }
 
+		public bool IsUnique { get; set; }
 		public bool IsIndex { get; set; }
 		public bool IsIndexNull { get; set; }
 

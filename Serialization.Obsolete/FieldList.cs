@@ -90,6 +90,17 @@
 
 		#endregion
 
+		#region UniqueFields
+
+		private FieldList _uniqueFields;
+
+		public FieldList UniqueFields
+		{
+			get { return _uniqueFields ??= new FieldList(this.Where(field => field.IsUnique)); }
+		}
+
+		#endregion
+
 		#region ReadOnlyFields
 
 		private FieldList _readOnlyFields;
@@ -189,6 +200,7 @@
 		{
 			_nonIdentityFields = null;
 			_indexFields = null;
+			_uniqueFields = null;
 			_readOnlyFields = null;
 			_nonReadOnlyFields = null;
 		}

@@ -95,6 +95,7 @@
 					{
 						IsIndex = indexAttr != null,
 						IsIndexNull = indexAttr?.CacheNull == true,
+						IsUnique = indexAttr is UniqueAttribute,
 					};
 				}
 				else
@@ -122,6 +123,7 @@
 			foreach (var attribute in entityType.GetAttributes<IndexAttribute>())
 			{
 				var field = schema.Fields[attribute.FieldName];
+				field.IsUnique = attribute is UniqueAttribute;
 				field.IsIndex = true;
 				field.IsIndexNull = attribute.CacheNull;
 			}
