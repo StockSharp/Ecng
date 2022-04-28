@@ -60,8 +60,11 @@ namespace Ecng.Common
 
 		public static TimeSpan Interval(this Timer timer)
 		{
-			_intervals.TryGetValue(timer, out var interval);
-			return interval;
+			lock (_intervals)
+			{
+				_intervals.TryGetValue(timer, out var interval);
+				return interval;
+			}
 		}
 
 		public static Timer Interval(this Timer timer, TimeSpan interval)
@@ -75,7 +78,10 @@ namespace Ecng.Common
 				throw new ArgumentNullException(nameof(timer));
 
 			timer.Change(start, interval);
-			_intervals[timer] = interval;
+
+			lock(_intervals)
+				_intervals[timer] = interval;
+
 			return timer;
 		}
 
