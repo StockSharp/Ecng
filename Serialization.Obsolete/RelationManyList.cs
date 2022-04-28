@@ -113,17 +113,10 @@
 
 		private readonly SynchronizedSet<TEntity> _cache = new();
 		private int? _count;
-		//private readonly CachedSynchronizedDictionary<TEntity, object> _pendingAdd = new(); 
 
 		public RelationManyList(IStorage<TId> storage)
 		{
 			Storage = storage ?? throw new ArgumentNullException(nameof(storage));
-			//Storage.Added += value => DoIf<TEntity>(value, entity =>
-			//{
-			//	if (_cache.Remove(entity))
-			//		Added?.Invoke(entity);
-			//});
-			//Storage.Removed += value => DoIf<TEntity>(value, e => Removed?.Invoke(e));
 		}
 
 		public IQueryable<TEntity> ToQueryable()
@@ -186,11 +179,6 @@
 			return _bulkInitialized;
 		}
 
-		//public void ChangeCachedCount(int diff)
-		//{
-		//	_count += diff;
-		//}
-
 		public virtual async ValueTask ResetCacheAsync(CancellationToken cancellationToken)
 		{
 			var (sync, dict) = CachedEntities;
@@ -209,30 +197,12 @@
 			if (id is null)
 				throw new ArgumentNullException(nameof(id));
 
-			//if (BulkLoad)
-			//{
-			//	if (!BulkInitialized)
-			//		GetRange();
-
-			//	return CachedEntities.TryGetValue(id);
-			//}
-			//else
-			//{
-			//if (DelayAction != null && _pendingAdd.Count > 0)
-			//{
-			//	var pair = _pendingAdd.CachedPairs.FirstOrDefault(p => Equals(p.Value, id));
-
-			//	if (!pair.Key.IsNull())
-			//		return pair.Key;
-			//}
-
 			var identity = Schema.Identity;
 
 			if (identity is null)
 				throw new InvalidOperationException($"Schema {Schema.Name} doesn't have identity.");
 
 			return Storage.GetByIdAsync<TEntity>(CommandType, id, cancellationToken);
-			//}
 		}
 
 		#region Save
@@ -288,26 +258,6 @@
 				_count++;
 		}
 
-		//public void Update(TEntity entity, Field valueField)
-		//{
-		//    Update(entity, new FieldCollection(valueField));
-		//}
-
-		//public void Update(TEntity entity, FieldCollection valueFields)
-		//{
-		//    Update(entity, Schema.Identity, valueFields);
-		//}
-
-		//public void Update(TEntity entity, Field keyField, FieldCollection valueFields)
-		//{
-		//    Update(entity, new FieldCollection(keyField), valueFields);
-		//}
-
-		//public void Update(TEntity entity, FieldCollection keyFields, FieldCollection valueFields)
-		//{
-		//    OnUpdate(entity, keyFields, valueFields);
-		//}
-
 		#endregion
 
 		protected virtual async ValueTask<bool> IsSaved(TEntity item, CancellationToken cancellationToken)
@@ -319,14 +269,6 @@
 
 			return !(await ReadById(id, cancellationToken)).IsDefault();
 		}
-
-		//private static void DoIf<T>(object obj, Action<T> action)
-		//{
-		//	if (obj is T t)
-		//	{
-		//		action(t);
-		//	}
-		//}
 
 		#region BaseListEx<E> Members
 
@@ -371,14 +313,7 @@
 			if (item is null)
 				throw new ArgumentNullException(nameof(item));
 
-			//Adding?.Invoke(item);
-
 			_cache.Add(item);
-
-			//var id = GetCacheId(item);
-
-			//if (DelayAction != null)
-			//	_pendingAdd.Add(item, id);
 
 			item = await OnAdd(item, cancellationToken);
 
@@ -401,15 +336,13 @@
 		}
 
 		[Obsolete]
-		public virtual void Clear()
+		public void Clear()
 			=> ThreadingHelper.Run(() => ClearAsync(default));
 
 		public virtual async ValueTask ClearAsync(CancellationToken cancellationToken)
 		{
 			if (IsReadOnly)
 				throw new ReadOnlyException();
-
-			//Clearing?.Invoke();
 
 			_cache.Clear();
 
@@ -422,12 +355,10 @@
 			}
 
 			_count = 0;
-
-			//Cleared?.Invoke();
 		}
 
 		[Obsolete]
-		public virtual bool Contains(TEntity item)
+		public bool Contains(TEntity item)
 			=> ThreadingHelper.Run(() => ContainsAsync(item, default));
 
 		public virtual ValueTask<bool> ContainsAsync(TEntity item, CancellationToken cancellationToken)
@@ -440,7 +371,7 @@
 			=> ((ICollection<TEntity>)await GetRangeAsync(index, await CountAsync(cancellationToken), default, default, default, cancellationToken)).CopyTo(array, 0);
 
 		[Obsolete]
-		public virtual bool Remove(TEntity item)
+		public bool Remove(TEntity item)
 			=> ThreadingHelper.Run(() => RemoveAsync(item, default));
 
 		public virtual async ValueTask<bool> RemoveAsync(TEntity item, CancellationToken cancellationToken)
@@ -448,9 +379,6 @@
 			if (IsReadOnly)
 				throw new ReadOnlyException();
 
-			//Removing?.Invoke(item);
-
-			//ThrowExceptionIfReadOnly();
 			await OnRemove(item, cancellationToken);
 
 			if (BulkLoad)
@@ -498,9 +426,6 @@
 		public virtual IEnumerator<TEntity> GetEnumerator()
 			=> new RelationManyListEnumerator(this, BufferSize);
 
-		//IAsyncEnumerator<TEntity> IAsyncEnumerable<TEntity>.GetAsyncEnumerator(CancellationToken cancellationToken)
-		//	=> new RelationManyListEnumerator(this, BufferSize, cancellationToken);
-
 		public virtual int IndexOf(TEntity item) => throw new NotSupportedException();
 
 		public virtual void Insert(int index, TEntity item)
@@ -513,25 +438,6 @@
 			else
 				throw new NotSupportedException();
 		}
-
-		//public override TEntity this[int index]
-		//{
-		//	get
-		//	{
-		//		if (BulkLoad)
-		//		{
-		//			return GetRange().ElementAt(index);
-		//		}
-		//		else
-		//		{
-		//			if (index != 0)
-		//				throw new NotImplementedException();
-		//			else
-		//				return ReadFirsts(1, Schema.Identity).FirstOrDefault();
-		//		}
-		//	}
-		//	set => throw new NotImplementedException();
-		//}
 
 		#endregion
 
@@ -582,11 +488,8 @@
 
 		public async ValueTask<IEnumerable<TEntity>> ReadAll(long startIndex, long count, bool deleted, Field orderBy, ListSortDirection direction, CancellationToken cancellationToken)
 		{
-			//if (orderBy is null)
-			//	throw new ArgumentNullException(nameof(orderBy));
-
 			if (count == 0)
-				return new List<TEntity>();
+				return Enumerable.Empty<TEntity>();
 
 			var oldStartIndex = startIndex;
 			var oldCount = count;
@@ -617,8 +520,6 @@
 				}
 			}
 
-			//var pendingAdd = _pendingAdd.CachedKeys;
-
 			var entities = count == 0 ? new() : (await OnGetGroup(startIndex, count, deleted, orderBy ?? Schema.Identity, direction, cancellationToken)).ToList();
 
 			if (!deleted && BulkLoad)
@@ -643,19 +544,6 @@
 				}
 			}
 
-			//if (pendingAdd.Length > 0)
-			//{
-			//	var set = new HashSet<TEntity>();
-			//	set.AddRange(entities);
-			//	set.AddRange(pendingAdd);
-			//	entities = set.ToList();
-			//}
-
-			//var added = Added;
-
-			//if (added != null)
-			//	entities.ForEach(added);
-
 			return entities;
 		}
 
@@ -678,16 +566,5 @@
 			await AddAsync(entity, cancellationToken);
 			return true;
 		}
-
-		//public event Func<TEntity, bool> Adding;
-		//public event Action<TEntity> Added;
-		//public event Func<TEntity, bool> Removing;
-		//public event Func<int, bool> RemovingAt;
-		//public event Action<TEntity> Removed;
-		//public event Func<bool> Clearing;
-		//public event Action Cleared;
-		//public event Func<int, TEntity, bool> Inserting;
-		//public event Action<int, TEntity> Inserted;
-		//public event Action Changed;
 	}
 }
