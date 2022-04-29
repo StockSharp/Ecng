@@ -36,5 +36,12 @@
 			((Range<T>)range.To<string>()).AssertEqual(range);
 			range.To<string>().To<Range<T>>().AssertEqual(range);
 		}
+
+		[TestMethod]
+		public void ToStorage()
+		{
+			var r = new Range<int>(1, 10);
+			r.ToStorage().ToRange<int>().AssertEqual(r);
+		}
 	}
 }

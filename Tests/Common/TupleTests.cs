@@ -10,6 +10,7 @@
 
 	using Ecng.Common;
 	using Ecng.UnitTesting;
+	using Ecng.Serialization;
 
 	[TestClass]
 	public class TupleTests
@@ -56,6 +57,15 @@
 			values[2].AssertEqual(f.Third);
 			values[3].AssertEqual(f.Fourth);
 			values[4].AssertEqual(f.Fifth);
+		}
+
+		[TestMethod]
+		public void ToStorage()
+		{
+			var p1 = RefTuple.Create(123, "123");
+			var p2 = p1.ToStorage().ToRefPair<int, string>();
+			p2.First.AssertEqual(p1.First);
+			p2.Second.AssertEqual(p1.Second);
 		}
 	}
 }

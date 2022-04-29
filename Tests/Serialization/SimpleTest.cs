@@ -290,49 +290,11 @@
 		}
 
 		[TestMethod]
-		public void Range()
-		{
-			var r = new Range<int>(1, 10);
-			r.ToStorage().ToRange<int>().AssertEqual(r);
-		}
-
-		[TestMethod]
-		public void RefTuple()
-		{
-			var p1 = Ecng.Common.RefTuple.Create(123, "123");
-			var p2 = p1.ToStorage().ToRefPair<int, string>();
-			p2.First.AssertEqual(p1.First);
-			p2.Second.AssertEqual(p1.Second);
-		}
-
-		[TestMethod]
 		public void TestSchema()
 		{
 			var schema = typeof(Entity).GetSchema();
 			var field = schema.Fields[nameof(Entity.DateTime)];
 			field.IsInnerSchema().AssertFalse();
-		}
-
-		[TestMethod]
-		public void Member2Storage()
-		{
-			var type = typeof(Disposable);
-			var prop = type.GetProperty(nameof(Disposable.IsDisposed));
-			var method = type.GetMethod(nameof(Disposable.Dispose));
-
-			void Do(bool isAssemblyQualifiedName)
-			{
-				type.ToStorage(isAssemblyQualifiedName).ToMember<Type>().AssertEqual(type);
-				prop.ToStorage(isAssemblyQualifiedName).ToMember<PropertyInfo>().AssertEqual(prop);
-				method.ToStorage(isAssemblyQualifiedName).ToMember<MethodInfo>().AssertEqual(method);
-
-				type.ToStorage(isAssemblyQualifiedName).ToMember().AssertEqual(type);
-				prop.ToStorage(isAssemblyQualifiedName).ToMember().AssertEqual(prop);
-				method.ToStorage(isAssemblyQualifiedName).ToMember().AssertEqual(method);
-			}
-
-			Do(true);
-			Do(false);
 		}
 	}
 }
