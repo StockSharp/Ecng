@@ -23,7 +23,6 @@
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.ComponentModel.Expressions;
-	using Ecng.Configuration;
 	using Ecng.Interop;
 	using Ecng.Net;
 	using Ecng.Net.BBCodes;
@@ -39,22 +38,6 @@
 	public interface ICalc
 	{
 		decimal Calc(decimal[] prices);
-	}
-
-	class TestEntity
-	{
-		[Identity]
-		public int Id { get; set; }
-
-		//[TimeSpan]
-		public TimeSpan TimeSpan { get; set; }
-
-		[InnerSchema(Order = 4)]
-		[NameOverride("UglyName", "BeautyName")]
-		[Ignore(FieldName = "IgnoreField")]
-		public InnerEntity InnerEntity { get; set; }
-
-		public InnerEntity2 InnerEntity2 { get; set; }
 	}
 
 	class InnerEntity
