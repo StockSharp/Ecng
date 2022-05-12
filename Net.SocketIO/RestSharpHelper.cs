@@ -1,6 +1,8 @@
 ﻿namespace Ecng.Net
 {
 	using System;
+	using System.Threading;
+	using System.Threading.Tasks;
 	using System.Linq;
 	using System.Net;
 	using System.Reflection;
@@ -8,6 +10,8 @@
 	using Ecng.Common;
 	using Ecng.Serialization;
 
+	using Nito.AsyncEx;
+	
 	using RestSharp;
 
 	public static class RestSharpHelper
@@ -29,11 +33,15 @@
 		}
 
 		public static object Invoke(this IRestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Action<IRestClient> init = null, Func<string, string> contentConverter = null)
-		{
-			return request.Invoke<object>(url, caller, logVerbose, init, contentConverter);
-		}
+			=> request.Invoke<object>(url, caller, logVerbose, init, contentConverter);
 
+		public static Task<object> InvokeAsync(this IRestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Action<IRestClient> init = null, Func<string, string> contentConverter = null)
+			=> request.InvokeAsync<object>(url, caller, logVerbose, token, init, contentConverter);
+		
 		public static T Invoke<T>(this IRestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Action<IRestClient> init = null, Func<string, string> contentConverter = null)
+			=> AsyncContext.Run(() => request.InvokeAsync<T>(url, caller, logVerbose, CancellationToken.None, init, contentConverter));
+
+		public static async Task<T> InvokeAsync<T>(this IRestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Action<IRestClient> init = null, Func<string, string> contentConverter = null)
 		{
 			if (request is null)
 				throw new ArgumentNullException(nameof(request));
@@ -55,7 +63,7 @@
 			init?.Invoke(client);
 
 			logVerbose?.Invoke("Request {0}, '{1}' Args '{2}'.", new object[] { request.Method, url, request.Parameters.Select(p => $"{p.Name}={p.Value}").JoinAnd() });
-			var response = client.Execute(request);
+			var response = await client.ExecuteAsync<object>(request, token);
 
 			var content = response.Content;
 			logVerbose?.Invoke("Response '{0}' (code {1}).", new object[] { content, response.StatusCode });
