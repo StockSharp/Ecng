@@ -22,36 +22,67 @@
 					));
 		}
 
-		public static IOrderedQueryable<TSource> OrderByAscending<TSource>(this IQueryable<TSource> source, string propertyName)
+		public static async ValueTask<bool> AnyAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
+			=> await source.FirstOrDefaultAsync(cancellationToken) is not null;
+
+		public static ValueTask<T> FirstOrDefaultAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
+			=> source.Provider.Execute<ValueTask<T>>(
+					Expression.Call(
+						null,
+						GetMethodInfo(FirstOrDefaultAsync, source, cancellationToken),
+						new Expression[]
+						{
+							source.Expression,
+							Expression.Constant(cancellationToken),
+						}
+				)
+			);
+
+		public static IOrderedQueryable<T> OrderBy<T>(this IQueryable<T> source, string property)
+			=> ApplyOrder(source, property, nameof(OrderBy));
+
+		public static IOrderedQueryable<T> OrderByDescending<T>(this IQueryable<T> source, string property)
+			=> ApplyOrder(source, property, nameof(OrderByDescending));
+
+		public static IOrderedQueryable<T> ThenBy<T>(this IOrderedQueryable<T> source, string property)
+			=> ApplyOrder(source, property, nameof(ThenBy));
+
+		public static IOrderedQueryable<T> ThenByDescending<T>(this IOrderedQueryable<T> source, string property)
+			=> ApplyOrder(source, property, nameof(ThenByDescending));
+
+		// https://stackoverflow.com/a/233505
+		private static IOrderedQueryable<T> ApplyOrder<T>(this IQueryable<T> source, string propertyName, string methodName)
 		{
-			if (source is null)
-				throw new ArgumentNullException(nameof(source));
+			var props = propertyName.Split('.');
 
-			if (propertyName.IsEmpty())
-				throw new ArgumentNullException(nameof(propertyName));
+			var type = typeof(T);
+			var arg = Expression.Parameter(type, "x");
 
-			return (IOrderedQueryable<TSource>)source.Provider.CreateQuery<TSource>(
-				Expression.Call(
-					null,
-					GetMethodInfo(OrderByAscending, source, propertyName),
-					new Expression[] { source.Expression, Expression.Constant(propertyName) }
-					));
-		}
+			Expression expr = arg;
 
-		public static IOrderedQueryable<TSource> OrderByDescending<TSource>(this IQueryable<TSource> source, string propertyName)
-		{
-			if (source is null)
-				throw new ArgumentNullException(nameof(source));
+			foreach (var prop in props)
+			{
+				var pi = type.GetProperty(prop);
 
-			if (propertyName.IsEmpty())
-				throw new ArgumentNullException(nameof(propertyName));
+				if (pi is null)
+					throw new InvalidOperationException($"Type '{type}' doesn't contains {prop} property.");
 
-			return (IOrderedQueryable<TSource>)source.Provider.CreateQuery<TSource>(
-				Expression.Call(
-					null,
-					GetMethodInfo(OrderByDescending, source, propertyName),
-					new Expression[] { source.Expression, Expression.Constant(propertyName) }
-					));
+				expr = Expression.Property(expr, pi);
+				type = pi.PropertyType;
+			}
+
+			var delegateType = typeof(Func<,>).Make(typeof(T), type);
+			var lambda = Expression.Lambda(delegateType, expr, arg);
+
+			object result = typeof(Queryable).GetMethods().Single(
+					method => method.Name == methodName
+							&& method.IsGenericMethodDefinition
+							&& method.GetGenericArguments().Length == 2
+							&& method.GetParameters().Length == 2)
+					.MakeGenericMethod(typeof(T), type)
+					.Invoke(null, new object[] { source, lambda });
+
+			return (IOrderedQueryable<T>)result;
 		}
 
 		public static ValueTask<long> CountAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
