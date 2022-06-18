@@ -38,31 +38,34 @@
 				)
 			);
 
-		public static IOrderedQueryable<T> OrderBy<T>(this IQueryable<T> source, string property)
-			=> ApplyOrder(source, property, nameof(OrderBy));
+		public static IOrderedQueryable<T> OrderBy<T>(this IQueryable<T> source, string propertyName, bool ignoreCase)
+			=> ApplyOrder(source, propertyName, ignoreCase, nameof(OrderBy));
 
-		public static IOrderedQueryable<T> OrderByDescending<T>(this IQueryable<T> source, string property)
-			=> ApplyOrder(source, property, nameof(OrderByDescending));
+		public static IOrderedQueryable<T> OrderByDescending<T>(this IQueryable<T> source, string propertyName, bool ignoreCase)
+			=> ApplyOrder(source, propertyName, ignoreCase, nameof(OrderByDescending));
 
-		public static IOrderedQueryable<T> ThenBy<T>(this IOrderedQueryable<T> source, string property)
-			=> ApplyOrder(source, property, nameof(ThenBy));
+		public static IOrderedQueryable<T> ThenBy<T>(this IOrderedQueryable<T> source, string propertyName, bool ignoreCase)
+			=> ApplyOrder(source, propertyName, ignoreCase, nameof(ThenBy));
 
-		public static IOrderedQueryable<T> ThenByDescending<T>(this IOrderedQueryable<T> source, string property)
-			=> ApplyOrder(source, property, nameof(ThenByDescending));
+		public static IOrderedQueryable<T> ThenByDescending<T>(this IOrderedQueryable<T> source, string propertyName, bool ignoreCase)
+			=> ApplyOrder(source, propertyName, ignoreCase, nameof(ThenByDescending));
 
 		// https://stackoverflow.com/a/233505
-		private static IOrderedQueryable<T> ApplyOrder<T>(this IQueryable<T> source, string propertyName, string methodName)
+		private static IOrderedQueryable<T> ApplyOrder<T>(this IQueryable<T> source, string propertyName, bool ignoreCase, string methodName)
 		{
-			var props = propertyName.Split('.');
-
 			var type = typeof(T);
 			var arg = Expression.Parameter(type, "x");
 
+			var flags = BindingFlags.Public | BindingFlags.Instance;
+
+			if (ignoreCase)
+				flags |= BindingFlags.IgnoreCase;
+
 			Expression expr = arg;
 
-			foreach (var prop in props)
+			foreach (var prop in propertyName.Split('.'))
 			{
-				var pi = type.GetProperty(prop);
+				var pi = type.GetProperty(prop, flags);
 
 				if (pi is null)
 					throw new InvalidOperationException($"Type '{type}' doesn't contains {prop} property.");
