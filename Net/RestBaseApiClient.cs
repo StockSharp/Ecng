@@ -229,6 +229,7 @@
 			return (url, list.ToArray());
 		}
 
-		protected virtual object TryFormat(object arg, Url url, HttpMethod method) => arg;
+		protected virtual object TryFormat(object arg, Url url, HttpMethod method)
+			=> (arg is Enum || arg is bool) ? arg.To<long>() : arg;
 	}
 }
