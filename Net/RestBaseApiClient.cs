@@ -93,8 +93,8 @@
 
 		protected Task<TResult> PostAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
-			var (url, parameters) = GetInfo(requestUri, args);
 			var method = HttpMethod.Post;
+			var (url, parameters) = GetInfo(method, requestUri, args);
 
 			object body;
 
@@ -102,36 +102,26 @@
 			{
 				var dict = new Dictionary<string, object>();
 
-				foreach (var (_, isRequired, name, value) in parameters)
-				{
-					if (value is null && !isRequired)
-						continue;
-
-					dict.Add(name, TryFormat(value, method));
-				}
+				foreach (var (name, value) in parameters)
+					dict.Add(name, value);
 
 				body = FormatRequest(dict);
 			}
 			else
-				body = TryFormat(parameters.FirstOrDefault().value, method);
+				body = TryFormat(parameters.FirstOrDefault().value, url, method);
 
 			return DoAsync<TResult>(method, url, body, Cache, cancellationToken);
 		}
 
 		protected Task<TResult> GetAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
-			var (url, parameters) = GetInfo(requestUri, args);
 			var method = HttpMethod.Get;
+			var (url, parameters) = GetInfo(method, requestUri, args);
 
 			if (parameters.Length > 0)
 			{
-				foreach (var (info, isRequired, name, value) in parameters)
-				{
-					if ((value is null || (info.ParameterType == typeof(bool) && !(bool)value)) && !isRequired)
-						continue;
-
-					url.QueryString.Append(name, TryFormat(value, method)?.ToString().EncodeToHtml());
-				}
+				foreach (var (name, value) in parameters)
+					url.QueryString.Append(name, value?.ToString().EncodeToHtml());
 			}
 
 			return DoAsync<TResult>(method, url, null, Cache, cancellationToken);
@@ -139,18 +129,13 @@
 
 		protected Task<TResult> DeleteAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
-			var (url, parameters) = GetInfo(requestUri, args);
 			var method = HttpMethod.Delete;
+			var (url, parameters) = GetInfo(method, requestUri, args);
 
 			if (parameters.Length > 0)
 			{
-				foreach (var (info, isRequired, name, value) in parameters)
-				{
-					if ((value is null || (info.ParameterType == typeof(bool) && !(bool)value)) && !isRequired)
-						continue;
-
-					url.QueryString.Append(name, TryFormat(value, method)?.ToString().EncodeToHtml());
-				}
+				foreach (var (name, value) in parameters)
+					url.QueryString.Append(name, value?.ToString().EncodeToHtml());
 			}
 
 			return DoAsync<TResult>(method, url, null, Cache, cancellationToken);
@@ -158,8 +143,8 @@
 
 		protected Task<TResult> PutAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
 		{
-			var (url, parameters) = GetInfo(requestUri, args);
 			var method = HttpMethod.Put;
+			var (url, parameters) = GetInfo(method, requestUri, args);
 
 			object body;
 
@@ -167,18 +152,13 @@
 			{
 				var dict = new Dictionary<string, object>();
 
-				foreach (var (_, isRequired, name, value) in parameters)
-				{
-					if (value is null && !isRequired)
-						continue;
-
-					dict.Add(name, TryFormat(value, method));
-				}
+				foreach (var (name, value) in parameters)
+					dict.Add(name, value);
 
 				body = FormatRequest(dict);
 			}
 			else
-				body = TryFormat(parameters.FirstOrDefault().value, method);
+				body = TryFormat(parameters.FirstOrDefault().value, url, method);
 
 			return DoAsync<TResult>(method, url, body, Cache, cancellationToken);
 		}
@@ -189,7 +169,7 @@
 		protected static string GetCurrentMethod([CallerMemberName]string methodName = "")
 			=> methodName;
 
-		protected virtual (Url url, (ParameterInfo info, bool isRequired, string name, object value)[] parameters) GetInfo(string requestUri, object[] args)
+		protected virtual (Url url, (string name, object value)[] parameters) GetInfo(HttpMethod method, string requestUri, object[] args)
 		{
 			if (args is null)
 				throw new ArgumentNullException(nameof(args));
@@ -223,13 +203,32 @@
 			if (args.Length != parameters.Length)
 				throw new ArgumentOutOfRangeException(nameof(args));
 
-			return (new Url(BaseAddress, FormatRequestUri(requestUri)), parameters.Select((pi, i) =>
+			var url = new Url(BaseAddress, FormatRequestUri(requestUri));
+
+			List<(string name, object value)> list = new();
+
+			var i = 0;
+			foreach (var pi in parameters)
 			{
 				var attr = pi.GetAttribute<RestApiParamAttribute>();
-				return (pi, attr?.IsRequired == true, (attr?.Name).IsEmpty(pi.Name), args[i]);
-			}).ToArray());
+				var arg = args[i];
+
+				if (attr?.IsRequired != true)
+				{
+					if (pi.DefaultValue is null && arg is null)
+						continue;
+					else if (pi.DefaultValue is not null && arg is not null && pi.DefaultValue.Equals(arg))
+						continue;
+				}
+
+				list.Add(((attr?.Name).IsEmpty(pi.Name), TryFormat(arg, url, method)));
+
+				i++;
+			}
+
+			return (url, list.ToArray());
 		}
 
-		protected virtual object TryFormat(object arg, HttpMethod method) => arg;
+		protected virtual object TryFormat(object arg, Url url, HttpMethod method) => arg;
 	}
 }
