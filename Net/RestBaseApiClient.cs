@@ -211,7 +211,7 @@
 			foreach (var pi in parameters)
 			{
 				var attr = pi.GetAttribute<RestApiParamAttribute>();
-				var arg = args[i];
+				var arg = args[i++];
 
 				if (attr?.IsRequired != true)
 				{
@@ -222,8 +222,6 @@
 				}
 
 				list.Add(((attr?.Name).IsEmpty(pi.Name), TryFormat(arg, url, method)));
-
-				i++;
 			}
 
 			return (url, list.ToArray());
