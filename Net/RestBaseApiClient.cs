@@ -102,8 +102,11 @@
 			{
 				var dict = new Dictionary<string, object>();
 
-				foreach (var (name, value) in parameters)
-					dict.Add(name, value);
+				foreach (var (name, value, required) in parameters)
+				{
+					if (required)
+						dict.Add(name, value);
+				}
 
 				body = FormatRequest(dict);
 			}
@@ -120,8 +123,11 @@
 
 			if (parameters.Length > 0)
 			{
-				foreach (var (name, value) in parameters)
-					url.QueryString.Append(name, value?.ToString().EncodeToHtml());
+				foreach (var (name, value, required) in parameters)
+				{
+					if (required)
+						url.QueryString.Append(name, value?.ToString().EncodeToHtml());
+				}
 			}
 
 			return DoAsync<TResult>(method, url, null, Cache, cancellationToken);
@@ -134,8 +140,11 @@
 
 			if (parameters.Length > 0)
 			{
-				foreach (var (name, value) in parameters)
-					url.QueryString.Append(name, value?.ToString().EncodeToHtml());
+				foreach (var (name, value, required) in parameters)
+				{
+					if (required)
+						url.QueryString.Append(name, value?.ToString().EncodeToHtml());
+				}
 			}
 
 			return DoAsync<TResult>(method, url, null, Cache, cancellationToken);
@@ -152,8 +161,11 @@
 			{
 				var dict = new Dictionary<string, object>();
 
-				foreach (var (name, value) in parameters)
-					dict.Add(name, value);
+				foreach (var (name, value, required) in parameters)
+				{
+					if (required)
+						dict.Add(name, value);
+				}
 
 				body = FormatRequest(dict);
 			}
@@ -169,7 +181,7 @@
 		protected static string GetCurrentMethod([CallerMemberName]string methodName = "")
 			=> methodName;
 
-		protected virtual (Url url, (string name, object value)[] parameters) GetInfo(HttpMethod method, string requestUri, object[] args)
+		protected virtual (Url url, (string name, object value, bool required)[] parameters) GetInfo(HttpMethod method, string requestUri, object[] args)
 		{
 			if (args is null)
 				throw new ArgumentNullException(nameof(args));
@@ -205,7 +217,7 @@
 
 			var url = new Url(BaseAddress, FormatRequestUri(requestUri));
 
-			List<(string name, object value)> list = new();
+			List<(string name, object value, bool required)> list = new();
 
 			var i = 0;
 			foreach (var pi in parameters)
@@ -213,15 +225,17 @@
 				var attr = pi.GetAttribute<RestApiParamAttribute>();
 				var arg = args[i++];
 
+				var required = true;
+
 				if (attr?.IsRequired != true)
 				{
 					if (pi.DefaultValue is null && arg is null)
-						continue;
+						required = false;
 					else if (pi.DefaultValue is not null && arg is not null && pi.DefaultValue.Equals(arg))
-						continue;
+						required = false;
 				}
 
-				list.Add(((attr?.Name).IsEmpty(pi.Name), TryFormat(arg, url, method)));
+				list.Add(((attr?.Name).IsEmpty(pi.Name), TryFormat(arg, url, method), required));
 			}
 
 			return (url, list.ToArray());
