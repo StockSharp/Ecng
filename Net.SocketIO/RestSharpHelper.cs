@@ -11,7 +11,7 @@
 	using Ecng.Serialization;
 
 	using Nito.AsyncEx;
-	
+
 	using RestSharp;
 
 	public static class RestSharpHelper
@@ -37,7 +37,7 @@
 
 		public static Task<object> InvokeAsync(this IRestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Action<IRestClient> init = null, Func<string, string> contentConverter = null)
 			=> request.InvokeAsync<object>(url, caller, logVerbose, token, init, contentConverter);
-		
+
 		public static T Invoke<T>(this IRestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Action<IRestClient> init = null, Func<string, string> contentConverter = null)
 			=> AsyncContext.Run(() => request.InvokeAsync<T>(url, caller, logVerbose, CancellationToken.None, init, contentConverter));
 
@@ -71,7 +71,10 @@
 			// https://restsharp.dev/usage/exceptions.html
 			var networkFailure = response.ResponseStatus != ResponseStatus.Completed;
 			if(networkFailure)
+			{
+				logVerbose?.Invoke("failed to complete reqeust: status={0}, msg={1}, err={2}", new object[] { response.ResponseStatus, response.ErrorMessage, response.ErrorException });
 				throw new InvalidOperationException($"failed to complete request: {response.ResponseStatus}");
+			}
 
 			if (response.StatusCode != HttpStatusCode.OK || content.IsEmpty())
 				throw new UnexpectedResponseError(response);
