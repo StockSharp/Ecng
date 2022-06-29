@@ -70,8 +70,7 @@
 			if (body is not null)
 				request.Content = new ObjectContent<object>(body, _request);
 
-			var watch = Tracing ? new Stopwatch() : null;
-			watch?.Start();
+			var watch = Tracing ? Stopwatch.StartNew() : null;
 
 			var response = await _http.SendAsync(request, cancellationToken);
 

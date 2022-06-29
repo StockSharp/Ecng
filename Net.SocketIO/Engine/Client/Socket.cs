@@ -678,11 +678,10 @@ namespace Ecng.Net.SocketIO.Engine.Client
 
             var tcs = new TaskCompletionSource<object>();
             const int TIMEOUT = 1000;
-            var sw = new System.Diagnostics.Stopwatch();
+            var sw = System.Diagnostics.Stopwatch.StartNew();
 
             try
             {
-                sw.Start();
                 while (Upgrading)
                 {
                     if (sw.ElapsedMilliseconds > TIMEOUT)

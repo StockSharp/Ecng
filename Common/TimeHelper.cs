@@ -13,9 +13,8 @@
 
 		static TimeHelper()
 		{
-			_timer = new Stopwatch();
 			_start = DateTime.Now;
-			_timer.Start();
+			_timer = Stopwatch.StartNew();
 
 			NowOffset = TimeSpan.Zero;
 		}

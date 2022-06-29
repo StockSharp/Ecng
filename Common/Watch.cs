@@ -7,8 +7,7 @@ namespace Ecng.Common
 	{
 		public static TimeSpan Do(Action action)
 		{
-			var watch = new Stopwatch();
-			watch.Start();
+			var watch = Stopwatch.StartNew();
 			action();
 			watch.Stop();
 			return watch.Elapsed;
