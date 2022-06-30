@@ -1,44 +1,64 @@
 ﻿namespace Test
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
-	using System.Data;
-	using System.Diagnostics;
-	using System.Globalization;
 	using System.IO;
 	using System.Linq;
-	using System.Management;
-	using System.Net;
-	using System.Reflection;
-	using System.Runtime.Serialization;
-	using System.Runtime.Serialization.Formatters.Binary;
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
 
 	using Ecng.Backup;
-	using Ecng.Backup.Yandex;
 	using Ecng.Backup.Amazon;
-	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.ComponentModel;
 	using Ecng.ComponentModel.Expressions;
-	using Ecng.Interop;
 	using Ecng.Net;
-	using Ecng.Net.BBCodes;
 	using Ecng.Reflection;
 	using Ecng.Roslyn;
-	using Ecng.Security;
 	using Ecng.Serialization;
-
-	using Wintellect.PowerCollections;
-
+	using Ecng.UnitTesting;
+	using Ecng.Collections;
+	using Ecng.Security;
 	using LibGit2Sharp;
+	using System.Security;
+	// using LinqToDB.Data;
+	// using LinqToDB.DataProvider.SQLite;
+	// using LinqToDB.DataProvider.SqlServer;
+	// using LinqToDB;
+	//using Microsoft.Data.SqlClient;
+	using System.Net.Http.Formatting;
+	using System.Net.Http;
+	using System.Diagnostics;
+	using System.Net;
+	using Nito.AsyncEx;
+	using Ecng.Reflection.Emit;
+	using Newtonsoft.Json;
+	using System.Reflection;
+
+	//using ISO._4217;
 
 	public interface ICalc
 	{
 		decimal Calc(decimal[] prices);
 	}
+
+	//class TestEntity
+	//{
+	//	[Identity]
+	//	public int Id { get; set; }
+
+	//	//[TimeSpan]
+	//	public TimeSpan TimeSpan { get; set; }
+
+	//	[InnerSchema(Order = 4)]
+	//	[NameOverride("UglyName", "BeautyName")]
+	//	[Ignore(FieldName = "IgnoreField")]
+	//	public InnerEntity InnerEntity { get; set; }
+
+	//	public InnerEntity2 InnerEntity2 { get; set; }
+	//}
 
 	class InnerEntity
 	{
@@ -235,27 +255,27 @@
 		}
 
 		private static void EnsureClean(Repository repository)
-        {
-            var statusOptions = new StatusOptions
-            {
-                IncludeIgnored = false,
-                RecurseUntrackedDirs = false,
-                IncludeUntracked = false
-            };
+		{
+			var statusOptions = new StatusOptions
+			{
+				IncludeIgnored = false,
+				RecurseUntrackedDirs = false,
+				IncludeUntracked = false
+			};
 
-            var status = repository.RetrieveStatus(statusOptions).ToList();
+			var status = repository.RetrieveStatus(statusOptions).ToList();
 
-            if (!status.Any())
-                return;
+			if (!status.Any())
+				return;
 
-            var sb = new StringBuilder();
+			var sb = new StringBuilder();
 
-            sb.AppendLine($"({repository.Info.Path}) git repo is dirty:");
-            foreach (var item in status)
-                sb.AppendLine($"{item.State}: {item.FilePath}");
+			sb.AppendLine($"({repository.Info.Path}) git repo is dirty:");
+			foreach (var item in status)
+				sb.AppendLine($"{item.State}: {item.FilePath}");
 
-            throw new InvalidOperationException(sb.ToString());
-        }
+			throw new InvalidOperationException(sb.ToString());
+		}
 
 		private static void SyncRepo(Repository repository, string username, string password)
 		{
@@ -281,9 +301,438 @@
 				throw new InvalidOperationException($"unexpected pull status {result.Status}");
 		}
 
+		private class TestJsonObj : Equatable<TestJsonObj>, IPersistable
+		{
+			public int IntProp { get; set; }
+			public DateTime DateProp { get; set; }
+			public TimeSpan TimeProp { get; set; }
+			public TestJson2Obj Obj1 { get; set; }
+			public TestJson2Obj[] Obj2 { get; set; }
+
+			public override TestJsonObj Clone()
+			{
+				return PersistableHelper.Clone(this);
+			}
+
+			public override bool Equals(TestJsonObj other)
+			{
+				return
+					IntProp == other.IntProp &&
+					DateProp == other.DateProp &&
+					TimeProp == other.TimeProp &&
+					Obj1 == other.Obj1 &&
+					((Obj2 is null && other.Obj2 is null) || Obj2.SequenceEqual(other.Obj2))
+					;
+			}
+
+			void IPersistable.Load(SettingsStorage storage)
+			{
+				IntProp = storage.GetValue<int>(nameof(IntProp));
+				DateProp = storage.GetValue<DateTime>(nameof(DateProp));
+				TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
+
+				//if (storage.ContainsKey(nameof(Obj1)))
+				Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1)).Load<TestJson2Obj>();
+
+				//if (storage.ContainsKey(nameof(Obj2)))
+				Obj2 = storage.GetValue<SettingsStorage[]>(nameof(Obj2))?.Select(s => s?.Load<TestJson2Obj>()).ToArray();
+			}
+
+			void IPersistable.Save(SettingsStorage storage)
+			{
+				storage
+					.Set(nameof(IntProp), IntProp)
+					.Set(nameof(DateProp), DateProp)
+					.Set(nameof(TimeProp), TimeProp)
+					.Set(nameof(Obj1), Obj1?.Save())
+					.Set(nameof(Obj2), Obj2?.Select(o => o?.Save()));
+			}
+		}
+
+		private class TestJson2Obj : Equatable<TestJson2Obj>, IPersistable
+		{
+			public int IntProp { get; set; }
+			public DateTime DateProp { get; set; }
+			public TimeSpan TimeProp { get; set; }
+
+			public override TestJson2Obj Clone()
+			{
+				return PersistableHelper.Clone(this);
+			}
+
+			public override bool Equals(TestJson2Obj other)
+			{
+				return
+					IntProp == other.IntProp &&
+					DateProp == other.DateProp &&
+					TimeProp == other.TimeProp
+					;
+			}
+
+			void IPersistable.Load(SettingsStorage storage)
+			{
+				IntProp = storage.GetValue<int>(nameof(IntProp));
+				DateProp = storage.GetValue<DateTime>(nameof(DateProp));
+				TimeProp = storage.GetValue<TimeSpan>(nameof(TimeProp));
+			}
+
+			void IPersistable.Save(SettingsStorage storage)
+			{
+				storage
+					.Set(nameof(IntProp), IntProp)
+					.Set(nameof(DateProp), DateProp)
+					.Set(nameof(TimeProp), TimeProp);
+			}
+		}
+
+		private static async Task Do<T>(T value, CancellationToken token = default)
+		{
+			var ser = new JsonSerializer<T> { FillMode = false };
+			var stream = new MemoryStream();
+			await ser.SerializeAsync(value, stream, token);
+			stream.Position = 0;
+
+			Console.WriteLine(stream.To<byte[]>().UTF8());
+
+			var needCast = value is SettingsStorage;
+
+			var actual = await ser.DeserializeAsync(stream, token);
+
+			void CheckValue(object actual, object expected)
+			{
+				void AssertEqual(object actual, object expected)
+				{
+					if (expected is null)
+						actual.AssertNull();
+					else
+					{
+						actual.AssertNotNull();
+
+						if (!needCast)
+							actual.AssertEqual(expected);
+						else
+						{
+							var expType = expected.GetType();
+
+							if (expType.GetGenericType(typeof(KeyValuePair<,>)) != null)
+							{
+								dynamic expDyn = expected;
+								dynamic actDyn = actual;
+
+								((string)actDyn.Key).AssertEqual((string)expDyn.Key);
+
+								CheckValue((object)actDyn.Value, (object)expDyn.Value);
+							}
+							else
+								actual.To(expType).AssertEqual(expected);
+						}
+					}
+				}
+
+				if (expected is IEnumerable expEmu)
+				{
+					actual.AssertNotNull();
+
+					var actEmu = (IEnumerable)actual;
+					//actCol.Count.AssertEqual(expCol.Count);
+
+					var enumerator = expEmu.GetEnumerator();
+					foreach (var actItem in actEmu)
+					{
+						if (!enumerator.MoveNext())
+							throw new InvalidOperationException("Exp is less.");
+
+						var expItem = enumerator.Current;
+
+						if (expItem is IEnumerable)
+							CheckValue(actItem, expItem);
+						else
+							AssertEqual(actItem, expItem);
+					}
+
+					if (enumerator.MoveNext())
+						throw new InvalidOperationException("Exp is more.");
+				}
+				else
+					AssertEqual(actual, expected);
+			}
+
+			CheckValue(actual, value);
+		}
+
+		public class InvokeMethod
+		{
+			public void VoidMethodWithParams5(params object[] args)
+			{
+				(args.Length == 2).AssertTrue();
+				args[0].AreEqual("Mark Twain");
+				args[1].AreEqual("John Smith");
+			}
+
+			public void VoidMethodWithParams8(string str, params int[] args)
+			{
+				str.AreEqual("Mark Twain");
+				(args.Length == 2).AssertTrue();
+				args[0].AreEqual(1);
+				args[1].AreEqual(10);
+			}
+		}
+
+		public static void Invoke8(InvokeMethod instance, object[] args)
+		{
+			var offset = 7;
+			var arr2 = new int[args.Length - offset];
+			Array.Copy(args, offset, arr2, 0, arr2.Length);
+			instance.VoidMethodWithParams8((string)args[0], arr2);
+		}
+
+		private static void Temp<T>(T value)
+		{
+			Console.WriteLine(value is SecureString);
+		}
+
+		private class TestTable
+		{
+			public long Id { get; set; }
+			public string Field1 { get; set; }
+		}
+
+		private class SberRestRegisterResponse
+		{
+			public string OrderId { get; set; }
+			public string FormUrl { get; set; }
+			public string ErrorCode { get; set; }
+			public string ErrorMessage { get; set; }
+			public string ExternalParams { get; set; }
+		}
+
+		private class SberRestClient : RestBaseApiClient
+		{
+			public SberRestClient(HttpClient client)
+				: base(client, new JsonMediaTypeFormatter { Indent = true }, new JsonMediaTypeFormatter())
+			{
+				BaseAddress = new Uri("https://3dsec.sberbank.ru".To<Uri>(), "payment/rest/");
+			}
+
+			protected override string FormatRequestUri(string requestUri)
+				=> $"{requestUri[0].ToLower()}{requestUri.Substring(1).Remove("Async")}.do";
+
+			public Task<SberRestRegisterResponse> RegisterAsync(string token, string orderNumber, string amount, string currency, string returnUrl, string failUrl, string description, string language, string expirationDate, string features, int skip = default, CancellationToken cancellationToken = default)
+				=> GetAsync<SberRestRegisterResponse>(GetCurrentMethod(), cancellationToken, token, orderNumber, amount, currency, returnUrl, failUrl, description, language, expirationDate, features, skip);
+		}
+
+		//private static readonly int _connections = 10;
+		//private static readonly HttpClient _httpClient = new HttpClient();
+
+		//private static void TestHttpClientWithUsing()
+		//{
+		//	try
+		//	{
+		//		for (var i = 0; i < _connections; i++)
+		//		{
+		//			using (var httpClient = new HttpClient())
+		//			{
+		//				var result = httpClient.GetAsync(new Uri("http://bing.com")).Result;
+		//			}
+		//		}
+		//	}
+		//	catch (Exception exception)
+		//	{
+		//		Console.WriteLine(exception);
+		//	}
+		//}
+
+		//private static void TestHttpClientWithStaticInstance()
+		//{
+		//	try
+		//	{
+		//		for (var i = 0; i < _connections; i++)
+		//		{
+		//			var result = _httpClient.GetAsync(new Uri("http://bing.com")).Result;
+		//		}
+		//	}
+		//	catch (Exception exception)
+		//	{
+		//		Console.WriteLine(exception);
+		//	}
+		//}
+
+		static Task InvokeAsync(Func<string> action)
+		{
+			action();
+			return Task.CompletedTask;
+		}
+
+		static Task DoNothing() => Task.CompletedTask;
+
+
+		internal class Test
+		{
+			public static void Method(Program.InvokeMethod instance, object[] arg)
+			{
+				int numArray = 1;
+				int[] args = new int[arg.Length - numArray];
+				Array.Copy(arg, numArray, args, 0, args.Length);
+				instance.VoidMethodWithParams8((string)((string)arg[0]), args);
+			}
+		}
+
 		[STAThread]
 		async static Task Main()
 		{
+			//var obj = Ecng.Common.Do.Invariant(() =>
+			//{
+			//	ISerializer serializer = new JsonSerializer<SettingsStorage>
+			//	{
+			//		Indent = true,
+			//		EnumAsString = true,
+			//		NullValueHandling = NullValueHandling.Ignore,
+			//	};
+			//	return serializer.Deserialize(File.ReadAllBytes(@"C:\StockSharp\sma_enc.json"));
+			//});
+			var flags = BindingFlags.Public | BindingFlags.Instance;
+
+			if (false)
+				flags |= BindingFlags.IgnoreCase;
+			Console.WriteLine(typeof(SberRestRegisterResponse).GetProperty(nameof(SberRestRegisterResponse.ErrorCode).ToLowerInvariant(), flags));
+			return;
+			//AssemblyHolder.Settings = new()
+			//{
+			//	AssemblyCachePath = "asms"
+			//};
+			//new InvokeMethod().SetValue(nameof(InvokeMethod.VoidMethodWithParams8), new object[] { "Mark Twain", 1, 10 });
+			//return;
+			//Console.WriteLine(typeof(int[]).GetItemType());
+			//return;
+
+			//var sync = new AsyncReaderWriterLock();
+			//var dict = new Dictionary<int, TaskCompletionSource<string>>();
+
+			////(await dict.SafeAddAsync(sync, 1, (k, t) => k.ToString().FromResult(), default)).AssertEqual("1");
+			//Console.WriteLine(await dict.SafeAddAsync(sync, 2, (k, t) => k.ToString().FromResult(), default));
+			////(await dict.SafeAddAsync(sync, 3, (k, t) => k.ToString().FromResult(), default)).AssertEqual("3");
+			//Console.WriteLine(await dict.SafeAddAsync(sync, 2, (k, t) => k.ToString().FromResult(), default));
+
+			////byte[] _initVectorBytes = "ss14fgty650h8u82".ASCII();
+			////var txt = File.ReadAllText(@"C:\StockSharp\1.txt").Base64().Decrypt("qwerty", _initVectorBytes, _initVectorBytes).UTF8();
+			////Console.WriteLine(txt.Length);
+			////await InvokeAsync(async () =>
+			////{
+			////	Console.WriteLine("123");
+			////	await DoNothing();
+			////	return "123";
+			////});
+			//return;
+
+			using var http = new HttpClient();
+
+			var sber = new SberRestClient(http) { Tracing = true };
+
+			//var rubIso4217 = CurrencyCodesResolver.GetCurrenciesByCode(CurrencyTypes.RUB.To<string>()).First().Num;
+			var res3 = await sber.RegisterAsync("hsgndkuf00459gfm0k6e49om8m", Guid.NewGuid().ToString().Remove("-"), "39000", "643", "https://stocksharp.com/pay/status/?data=AQAAAAAAAACPpDnxXQs4AIJUDggrVbWI", "https://stocksharp.com/pay/status/?data=AQAAAAAAAACPpDnxXQs4AIJUDggrVbWI", "shuobi-(n29911-2021-10-08_19_24)", "en", string.Empty, string.Empty);
+
+			Console.WriteLine(res3.ErrorMessage);
+
+			if (!res3.FormUrl.IsEmpty())
+				res3.FormUrl.OpenLink(false);
+
+			return;
+
+			//await Do(new TestJsonObj
+			//{
+			//	IntProp = 123,
+			//	DateProp = DateTime.UtcNow,
+			//	TimeProp = TimeSpan.FromSeconds(10),
+			//	Obj1 = new TestJson2Obj
+			//	{
+			//		IntProp = 456,
+			//		DateProp = DateTime.UtcNow.AddDays(-10),
+			//		TimeProp = TimeSpan.FromSeconds(-10),
+			//	},
+			//	Obj2 = new[]
+			//	{
+			//		null,
+			//		new TestJson2Obj
+			//		{
+			//			IntProp = 124,
+			//			DateProp = DateTime.UtcNow,
+			//			TimeProp = TimeSpan.FromSeconds(10),
+			//		},
+			//		null,
+			//		new TestJson2Obj
+			//		{
+			//			IntProp = 124,
+			//			DateProp = DateTime.UtcNow,
+			//			TimeProp = TimeSpan.FromSeconds(10),
+			//		},
+			//	}
+			//});
+
+			//await Do(new SettingsStorage()
+			//	.Set("IntProp", 124)
+			//	.Set("DateProp", DateTime.UtcNow)
+			//	.Set("TimeProp", TimeSpan.FromSeconds(10))
+			//	.Set("ArrProp", new[] { 1, 2, 3 })
+			//	.Set("ArrProp2", new[] { "123", null, string.Empty, null })
+			//	.Set("NullProp", (string)null)
+			//	.Set("ComplexProp1", new SettingsStorage())
+			//	.Set("ComplexProp2", new SettingsStorage()
+			//		.Set("IntProp", 124)
+			//		.Set("DateProp", DateTime.UtcNow)
+			//		.Set("TimeProp", TimeSpan.FromSeconds(10))
+			//		.Set("ComplexProp1", new SettingsStorage())
+			//		.Set("IntProp2", 124)
+			//		.Set("ComplexProp2", new SettingsStorage()
+			//			.Set("IntProp", 124)
+			//			.Set("DateProp", DateTime.UtcNow)
+			//			.Set("TimeProp", TimeSpan.FromSeconds(10))
+			//			)
+			//		)
+			//	.Set("ArrComplexProp2", new[]
+			//	{
+			//		new SettingsStorage()
+			//			.Set("IntProp", 124)
+			//			.Set("DateProp", DateTime.UtcNow)
+			//			.Set("TimeProp", TimeSpan.FromSeconds(10)),
+			//		null,
+			//		new SettingsStorage(),
+			//		new SettingsStorage()
+			//			.Set("IntProp", 345)
+			//			.Set("DateProp", DateTime.UtcNow)
+			//			.Set("TimeProp", TimeSpan.FromSeconds(10)),
+			//	})
+			//);
+
+			//ISerializer ser = new JsonSerializer<TestJsonObj[]>();
+			//Console.WriteLine(ser.Serialize(new TestJsonObj[] { null, new TestJsonObj { Obj1 = new TestJson2Obj() } }).UTF8());
+			//Console.WriteLine(ser.Deserialize(ser.Serialize(new TestJsonObj[] { null, new TestJsonObj { Obj1 = new TestJson2Obj() } })));
+			//return;
+
+			//using (var db = new DataConnection(new SQLiteDataProvider("SQLite"), @"Data Source=..\..\TestData2.sqlite"))
+			//using var db = new DataConnection(new SqlServerDataProvider("SqlSrv", SqlServerVersion.v2017), @"Data Source=test");
+			//db.Connection.Open();
+			//db.MappingSchema.GetFluentMappingBuilder()
+			//	.Entity<TestTable>()
+			//		.Property(t => t.Id)
+			//			//.IsIdentity()
+			//			.IsPrimaryKey()
+			//		.Property(t => t.Field1)
+			//			.HasLength(50);
+
+			//db.DropTable<TestTable>(throwExceptionIfNotExists: false);
+
+			//var table = db.CreateTable<TestTable>();
+			//var table = db.GetTable<TestTable>();
+			//var br = table.BulkCopy(new[] { new TestTable { Id = 1, Field1 = "123" }, new TestTable { Id = 2, Field1 = "456" } });
+			//Console.WriteLine(br.Abort);
+			//var list = table.ToList();
+
+			//Console.WriteLine(list.Count);
+
+			//db.DropTable<TestTable>();
+
+			return;
+
 			using var repository = new Repository(@"C:\StockSharp\Public\ecng");
 			EnsureClean(repository);
 			SyncRepo(repository, null, null);
@@ -299,7 +748,7 @@
 			//{
 			//	foreach (var file in email.Files)
 			//	{
-					
+
 			//	}
 			//}
 
