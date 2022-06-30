@@ -1266,13 +1266,6 @@
 			source.ForEach(destination.Add);
 		}
 
-		private static void Swap<T>(ref T arg1, ref T arg2)
-		{
-			var temp = arg1;
-			arg1 = arg2;
-			arg2 = temp;
-		}
-
 		// http://stackoverflow.com/a/9454016
 		public static int DamerauLevenshteinDistance<T>(T[] source, T[] target, int threshold)
 			where T : IEquatable<T>
@@ -1293,8 +1286,8 @@
 			// Ensure arrays [i] / length1 use shorter length
 			if (length1 > length2)
 			{
-				Swap(ref target, ref source);
-				Swap(ref length1, ref length2);
+				(target, source) = (source, target);
+				(length1, length2) = (length2, length1);
 			}
 
 			var maxi = length1;
