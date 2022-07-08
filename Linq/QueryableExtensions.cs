@@ -1,4 +1,4 @@
-﻿namespace Ecng.Async
+﻿namespace Ecng.Linq
 {
 	using System;
 	using System.Linq;
