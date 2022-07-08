@@ -328,6 +328,37 @@ namespace Ecng.Common
 			return true;
 		}
 
+		private struct ReaderWriterLockSlimDispose : IDisposable
+		{
+			private readonly ReaderWriterLockSlim _rwLock;
+			private readonly bool _isRead;
+
+			public ReaderWriterLockSlimDispose(ReaderWriterLockSlim rwLock, bool isRead)
+			{
+				_rwLock = rwLock ?? throw new ArgumentNullException(nameof(rwLock));
+				_isRead = isRead;
+
+				if (_isRead)
+					rwLock.EnterReadLock();
+				else
+					rwLock.EnterWriteLock();
+			}
+
+			void IDisposable.Dispose()
+			{
+				if (_isRead)
+					_rwLock.ExitReadLock();
+				else
+					_rwLock.ExitWriteLock();
+			}
+		}
+
+		public static IDisposable WriterLock(this ReaderWriterLockSlim rwLock)
+			=> new ReaderWriterLockSlimDispose(rwLock, false);
+
+		public static IDisposable ReaderLock(this ReaderWriterLockSlim rwLock)
+			=> new ReaderWriterLockSlimDispose(rwLock, true);
+
 		public static bool TryGetUniqueMutex(string name, out Mutex mutex)
 		{
 			mutex = new Mutex(false, name);
