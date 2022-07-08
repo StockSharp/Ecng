@@ -2,7 +2,6 @@
   <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}</ProjectGuid>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="$(CSharpVer)"/>
