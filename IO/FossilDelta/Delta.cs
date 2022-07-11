@@ -88,7 +88,8 @@ namespace Ecng.IO.Fossil
 						iSrc = iBlock*NHASH;
 						for (j = 0, x = iSrc, y = _base+i; x < lenSrc && y < lenOut; j++, x++, y++) {
 							token.ThrowIfCancellationRequested();
-							if (origin[x] != target[y]) break;
+							if (origin[x] != target[y])
+								break;
 						}
 						j--;
 
@@ -96,7 +97,8 @@ namespace Ecng.IO.Fossil
 						// k counts the number of characters that match.
 						for (k = 1; k < iSrc && k <= i; k++) {
 							token.ThrowIfCancellationRequested();
-							if (origin[iSrc-k] != target[_base+i-k]) break;
+							if (origin[iSrc-k] != target[_base+i-k])
+								break;
 						}
 						k--;
 
@@ -234,11 +236,30 @@ namespace Ecng.IO.Fossil
 			return size;
 		}
 
-		static int DigitCount(int v){
-			int i, x;
-			for(i=1, x=64; v>=x; i++, x <<= 6){}
-			return i;
+		private const int _lvl5 = _lvl4 * 64;
+		private const int _lvl4 = _lvl3 * 64;
+		private const int _lvl3 = _lvl2 * 64;
+		private const int _lvl2 = 64;
+
+		static int DigitCount(int v)
+		{
+			if (v >= _lvl5)
+				return 5;
+			else if (v >= _lvl4)
+				return 4;
+			else if (v >= _lvl3)
+				return 3;
+			else if (v >= _lvl2)
+				return 2;
+			else
+				return 1;
 		}
+
+		//static int DigitCount(int v){
+		//	int i, x;
+		//	for(i=1, x=64; v>=x; i++, x <<= 6){}
+		//	return i;
+		//}
 
 		// Return a 32-bit checksum of the array.
 		static uint Checksum(byte[] arr, int count = 0, uint sum = 0) {
