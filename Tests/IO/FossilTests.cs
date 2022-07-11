@@ -1,9 +1,12 @@
 ﻿namespace Ecng.Tests.IO
 {
 	using System.Linq;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 	using Ecng.UnitTesting;
+	using Ecng.IO.Fossil;
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -11,14 +14,16 @@
 	public class FossilTests
 	{
 		[TestMethod]
-		public void Diff()
+		public async Task Diff()
 		{
+			var token = CancellationToken.None;
+
 			var bytes1 = RandomGen.GetBytes(1024 * 1024);
 			var bytes2 = RandomGen.GetBytes(1024 * 1024);
 
-			var delta = Fossil.Delta.Create(bytes1, bytes2);
+			var delta = await Delta.Create(bytes1, bytes2, token);
 
-			Fossil.Delta.Apply(bytes1, delta).SequenceEqual(bytes2).AssertTrue();
+			(await Delta.Apply(bytes1, delta, token)).SequenceEqual(bytes2).AssertTrue();
 		}
 	}
 }

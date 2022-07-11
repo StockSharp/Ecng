@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Fossil
+namespace Ecng.IO.Fossil
 {
 	class RollingHash
 	{

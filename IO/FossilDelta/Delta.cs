@@ -1,13 +1,15 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Fossil
+namespace Ecng.IO.Fossil
 {
 	public class Delta
 	{
 		internal static UInt16 NHASH = 16;
 
-		public static byte[] Create(byte[] origin, byte[] target) {
+		public static ValueTask<byte[]> Create(byte[] origin, byte[] target, CancellationToken token) {
 			var zDelta = new Writer();
 			int lenOut = target.Length;
 			int lenSrc = origin.Length;
@@ -25,7 +27,7 @@ namespace Fossil
 				zDelta.PutArray(target, 0, lenOut);
 				zDelta.PutInt(Checksum(target));
 				zDelta.PutChar(';');
-				return zDelta.ToArray();
+				return new(zDelta.ToArray());
 			}
 
 			// Compute the hash table used to locate matching sections in the source.
@@ -37,6 +39,8 @@ namespace Fossil
 			int hv;
 			RollingHash h = new RollingHash();
 			for (i = 0; i < lenSrc-NHASH; i += NHASH) {
+				token.ThrowIfCancellationRequested();
+
 				h.Init(origin, i);
 				hv = (int) (h.Value() % nHash);
 				collide[i/NHASH] = landmark[hv];
@@ -47,16 +51,19 @@ namespace Fossil
 			int iSrc, iBlock;
 			int bestCnt, bestOfst=0, bestLitsz=0;
 			while (_base+NHASH<lenOut) {
+				token.ThrowIfCancellationRequested();
 				bestOfst=0;
 				bestLitsz=0;
 				h.Init(target, _base);
 				i = 0; // Trying to match a landmark against zOut[_base+i]
 				bestCnt = 0;
 				while (true) {
+					token.ThrowIfCancellationRequested();
 					int limit = 250;
 					hv = (int) (h.Value() % nHash);
 					iBlock = landmark[hv];
 					while (iBlock >= 0 && (limit--)>0 ) {
+						token.ThrowIfCancellationRequested();
 						//
 						// The hash window has identified a potential match against
 						// landmark block iBlock.  But we need to investigate further.
@@ -80,6 +87,7 @@ namespace Fossil
 						// j counts the number of characters that match.
 						iSrc = iBlock*NHASH;
 						for (j = 0, x = iSrc, y = _base+i; x < lenSrc && y < lenOut; j++, x++, y++) {
+							token.ThrowIfCancellationRequested();
 							if (origin[x] != target[y]) break;
 						}
 						j--;
@@ -87,6 +95,7 @@ namespace Fossil
 						// Beginning at iSrc-1, match backwards as far as we can.
 						// k counts the number of characters that match.
 						for (k = 1; k < iSrc && k <= i; k++) {
+							token.ThrowIfCancellationRequested();
 							if (origin[iSrc-k] != target[_base+i-k]) break;
 						}
 						k--;
@@ -158,10 +167,10 @@ namespace Fossil
 			// Output the final checksum record.
 			zDelta.PutInt(Checksum(target));
 			zDelta.PutChar(';');
-			return zDelta.ToArray();
+			return new(zDelta.ToArray());
 		}
 
-		public static byte[] Apply(byte[] origin, byte[] delta) {
+		public static ValueTask<byte[]> Apply(byte[] origin, byte[] delta, CancellationToken token) {
 			uint limit, total = 0;
 			uint lenSrc = (uint) origin.Length;
 			uint lenDelta = (uint) delta.Length;
@@ -173,6 +182,8 @@ namespace Fossil
 
 			Writer zOut = new Writer();
 			while(zDelta.HaveBytes()) {
+				token.ThrowIfCancellationRequested();
+
 				uint cnt, ofst;
 				cnt = zDelta.GetInt();
 
@@ -205,104 +216,10 @@ namespace Fossil
 						throw new Exception("bad checksum");
 					if (total != limit)
 						throw new Exception("generated size does not match predicted size");
-					return output;
+					return new(output);
 
 				default:
 					throw new Exception("unknown delta operator");
-				}
-			}
-			throw new Exception("unterminated delta");
-		}
-
-		public static void Apply(Stream origin, byte[] delta, Stream target) {
-			uint limit, total = 0;
-			uint lenSrc = (uint) origin.Length;
-			uint lenDelta = (uint) delta.Length;
-			Reader zDelta = new Reader(delta);
-
-			limit = zDelta.GetInt();
-			if (zDelta.GetChar() != '\n')
-				throw new Exception("size integer not terminated by \'\\n\'");
-
-			uint checksum = 0;
-			const int BufferSize = 64 * 1024;
-			// We need additional 4 for bytes that might remain unprocessed from previous loop traversal
-			var buffer = new byte[BufferSize + 4];
-			int remainingChecksumBytes = 0;
-			while(zDelta.HaveBytes()) {
-				uint cnt, ofst;
-				cnt = zDelta.GetInt();
-
-				switch (zDelta.GetChar()) {
-					case '@':
-						ofst = zDelta.GetInt();
-						if (zDelta.HaveBytes() && zDelta.GetChar() != ',')
-							throw new Exception("copy command not terminated by \',\'");
-						total += cnt;
-						if (total > limit)
-							throw new Exception("copy exceeds output file size");
-						if (ofst+cnt > lenSrc)
-							throw new Exception("copy extends past end of input");
-
-						origin.Position = ofst;
-						int remainingBytes = (int) cnt;
-						while (remainingBytes > 0)
-						{
-							int totalRead = origin.Read(buffer, remainingChecksumBytes, Math.Min(remainingBytes, BufferSize));
-							remainingBytes -= totalRead;
-							target.Write(buffer, remainingChecksumBytes, totalRead);
-
-							totalRead += remainingChecksumBytes;
-
-							remainingChecksumBytes = totalRead % 4;
-							int checksumBytes = totalRead - remainingChecksumBytes;
-							checksum = Checksum(buffer, checksumBytes, checksum);
-							for (int i = 0; i < remainingChecksumBytes; i++)
-							{
-								buffer[i] = buffer[i + checksumBytes];
-							}
-						}
-						break;
-
-					case ':':
-						total += cnt;
-						if (total > limit)
-							throw new Exception("insert command gives an output larger than predicted");
-						if (cnt > lenDelta)
-							throw new Exception("insert count exceeds size of delta");
-						remainingBytes = (int) cnt;
-						int pos = (int) zDelta.pos;
-						while (remainingBytes > 0)
-						{
-							var totalCopied = Math.Min(remainingBytes, BufferSize);
-							Array.Copy(zDelta.a, pos, buffer, remainingChecksumBytes, totalCopied);
-							remainingBytes -= totalCopied;
-
-							totalCopied += remainingChecksumBytes;
-
-							remainingChecksumBytes = totalCopied % 4;
-							int checksumBytes = totalCopied - remainingChecksumBytes;
-							checksum = Checksum(buffer, checksumBytes, checksum);
-							for (int i = 0; i < remainingChecksumBytes; i++)
-							{
-								buffer[i] = buffer[i + checksumBytes];
-							}
-						}
-
-						target.Write(zDelta.a, (int) zDelta.pos, (int) cnt);
-						zDelta.pos += cnt;
-						break;
-
-					case ';':
-						if (remainingChecksumBytes > 0) checksum = Checksum(buffer, remainingChecksumBytes, checksum);
-						if (cnt != checksum)
-							throw new Exception("bad checksum");
-						if (total != limit)
-							throw new Exception("generated size does not match predicted size");
-						return;
-
-					default:
-						throw new Exception("unknown delta operator");
 				}
 			}
 			throw new Exception("unterminated delta");

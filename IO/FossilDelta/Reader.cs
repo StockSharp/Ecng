@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 
-namespace Fossil
+namespace Ecng.IO.Fossil
 {
 	class Reader
 	{
