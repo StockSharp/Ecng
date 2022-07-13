@@ -35,5 +35,25 @@
 			var field = expression.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic).First();
 			field.SetValue(expression, provider);
 		}
+
+		public static Expression StripQuotes(this Expression e)
+		{
+			while (e.NodeType == ExpressionType.Quote)
+			{
+				e = ((UnaryExpression)e).Operand;
+			}
+
+			return e;
+		}
+
+		public static object GetMemberValue(this MemberInfo member, object instance)
+		{
+			if (member is PropertyInfo pi)
+				return pi.GetValue(instance);
+			else if (member is FieldInfo fi)
+				return fi.GetValue(instance);
+			else
+				throw new NotSupportedException();
+		}
 	}
 }
