@@ -2,6 +2,7 @@
   <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{4E2D9D8A-6E5A-4482-96F6-2544DE6611B9}</ProjectGuid>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />

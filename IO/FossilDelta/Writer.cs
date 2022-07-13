@@ -42,7 +42,7 @@ namespace Ecng.IO.Fossil
 			}
 		}
 
-		public void PutArray (byte[] a, int start, int end) {
+		public unsafe void PutArray (byte* a, int start, int end) {
 			for (var i = start; i < end; i++) this.a.Add(a[i]);
 		}
 

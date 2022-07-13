@@ -1,18 +1,25 @@
 ﻿using System;
-using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ecng.IO.Fossil
 {
-	public class Delta
+	public unsafe class Delta
 	{
 		internal static UInt16 NHASH = 16;
 
-		public static ValueTask<byte[]> Create(byte[] origin, byte[] target, CancellationToken token) {
+		public static ValueTask<byte[]> Create(byte[] origin, byte[] target, CancellationToken token)
+		{
+			fixed (byte* originPtr = origin)
+			fixed (byte* targetPtr = target)
+				return Create(originPtr, targetPtr, origin.Length, target.Length, token);
+		}
+
+		private static ValueTask<byte[]> Create(byte* origin, byte* target, int originLength, int targetLength, CancellationToken token) {
 			var zDelta = new Writer();
-			int lenOut = target.Length;
-			int lenSrc = origin.Length;
+			int lenOut = targetLength;
+			int lenSrc = originLength;
 			int i, lastRead = -1;
 
 			zDelta.PutInt((uint) lenOut);
@@ -25,7 +32,7 @@ namespace Ecng.IO.Fossil
 				zDelta.PutInt((uint) lenOut);
 				zDelta.PutChar(':');
 				zDelta.PutArray(target, 0, lenOut);
-				zDelta.PutInt(Checksum(target));
+				zDelta.PutInt(Checksum(target, targetLength));
 				zDelta.PutChar(';');
 				return new(zDelta.ToArray());
 			}
@@ -167,16 +174,23 @@ namespace Ecng.IO.Fossil
 				zDelta.PutArray(target, _base, _base+lenOut-_base);
 			}
 			// Output the final checksum record.
-			zDelta.PutInt(Checksum(target));
+			zDelta.PutInt(Checksum(target, targetLength));
 			zDelta.PutChar(';');
 			return new(zDelta.ToArray());
 		}
 
-		public static ValueTask<byte[]> Apply(byte[] origin, byte[] delta, CancellationToken token) {
+		public static ValueTask<byte[]> Apply(byte[] origin, byte[] delta, CancellationToken token)
+		{
+			fixed (byte* originPtr = origin)
+			fixed (byte* deltaPtr = delta)
+				return Apply(originPtr, deltaPtr, origin.Length, delta.Length, token);
+		}
+
+		private static ValueTask<byte[]> Apply(byte* origin, byte* delta, int originLength, int deltaLength, CancellationToken token) {
 			uint limit, total = 0;
-			uint lenSrc = (uint) origin.Length;
-			uint lenDelta = (uint) delta.Length;
-			Reader zDelta = new Reader(delta);
+			uint lenSrc = (uint) originLength;
+			uint lenDelta = (uint) deltaLength;
+			Reader zDelta = new Reader(delta, deltaLength);
 
 			limit = zDelta.GetInt();
 			if (zDelta.GetChar() != '\n')
@@ -214,8 +228,11 @@ namespace Ecng.IO.Fossil
 
 				case ';':
 					byte[] output = zOut.ToArray();
-					if (cnt != Checksum(output))
-						throw new Exception("bad checksum");
+					fixed (byte* outputPtr = output)
+					{
+						if (cnt != Checksum(outputPtr, output.Length))
+							throw new Exception("bad checksum");
+					}
 					if (total != limit)
 						throw new Exception("generated size does not match predicted size");
 					return new(output);
@@ -229,11 +246,14 @@ namespace Ecng.IO.Fossil
 
 		[CLSCompliant(false)]
 		public static uint OutputSize(byte[] delta) {
-			Reader zDelta = new Reader(delta);
-			uint size = zDelta.GetInt();
-			if (zDelta.GetChar() != '\n')
-				throw new Exception("size integer not terminated by \'\\n\'");
-			return size;
+			fixed (byte* deltaPtr = delta)
+			{
+				Reader zDelta = new Reader(deltaPtr, delta.Length);
+				uint size = zDelta.GetInt();
+				if (zDelta.GetChar() != '\n')
+					throw new Exception("size integer not terminated by \'\\n\'");
+				return size;
+			}
 		}
 
 		private const int _lvl5 = _lvl4 * 64;
@@ -241,6 +261,7 @@ namespace Ecng.IO.Fossil
 		private const int _lvl3 = _lvl2 * 64;
 		private const int _lvl2 = 64;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static int DigitCount(int v)
 		{
 			if (v >= _lvl5)
@@ -262,9 +283,9 @@ namespace Ecng.IO.Fossil
 		//}
 
 		// Return a 32-bit checksum of the array.
-		static uint Checksum(byte[] arr, int count = 0, uint sum = 0) {
+		static uint Checksum(byte* arr, int arrLength, int count = 0, uint sum = 0) {
 			uint sum0 = 0, sum1 = 0, sum2 = 0,
-			z = 0, N = (uint) (count == 0 ? arr.Length : count);
+			z = 0, N = (uint) (count == 0 ? arrLength : count);
 
 			while(N >= 16){
 				sum0 += (uint) arr[z+0] + arr[z+4] + arr[z+8]  + arr[z+12];

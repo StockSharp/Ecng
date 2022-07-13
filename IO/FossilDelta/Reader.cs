@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace Ecng.IO.Fossil
 {
-	class Reader
+	unsafe class Reader
 	{
 		static readonly int[] zValue = {
 			-1, -1, -1, -1, -1, -1, -1, -1,   -1, -1, -1, -1, -1, -1, -1, -1,
@@ -16,25 +16,27 @@ namespace Ecng.IO.Fossil
 			52, 53, 54, 55, 56, 57, 58, 59,   60, 61, 62, -1, -1, -1, 63, -1
 		};
 			
-		public byte[] a;
+		public byte* a;
 		public uint pos;
+		private int _length;
 
-		public Reader (byte[] array)
+		public Reader (byte* array, int length)
 		{
 			this.a = array;
 			this.pos = 0;
+			_length = length;
 		}
 
 		public bool HaveBytes () 
 		{
-			return this.pos < this.a.Length;
+			return this.pos < _length;
 		}
 
 		public byte GetByte () 
 		{
 			byte b = this.a[this.pos];
 			this.pos++;
-			if (this.pos > this.a.Length) 
+			if (this.pos > _length) 
 				throw new IndexOutOfRangeException("out of bounds");
 			return b;
 		}

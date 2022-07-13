@@ -21,7 +21,7 @@ namespace Ecng.IO.Fossil
 		/**
 		 * Initialize the rolling hash using the first NHASH characters of z[]
 		 */
-		public void Init (byte[] z, int pos)
+		public unsafe void Init (byte* z, int pos)
 		{
 			UInt16 a = 0, b = 0, i, x;
 			for(i = 0; i < Delta.NHASH; i++){
