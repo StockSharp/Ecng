@@ -22,13 +22,13 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Tests'">
     <TargetFrameworks>net5.0-windows;net6.0-windows</TargetFrameworks>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="
            '$(MSBuildProjectName)' == 'SmartFormat.Tests'
       ">
     <TargetFrameworks>net5.0</TargetFrameworks>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(StockSharpTargets)' != ''">
     <TargetFrameworks>$(StockSharpTargets)</TargetFrameworks>
   </PropertyGroup>
@@ -70,6 +70,8 @@
     <NUnit3TestAdapterVer>3.17.0</NUnit3TestAdapterVer>
     <FluentAssertionsVer>5.10.3</FluentAssertionsVer>
     <SystemDrawingCommonVer>5.0.3</SystemDrawingCommonVer>
+    <MsExtensionsLoggingVer>6.0.1</MsExtensionsLoggingVer>
+    <SysPipelinesVer>6.0.3</SysPipelinesVer>
 
     <CSharpVer>4.7.0</CSharpVer>
     <MsCodeVer>3.11.0</MsCodeVer>
@@ -77,6 +79,9 @@
     <MsTestVer>2.2.7</MsTestVer>
     <MsTestSdkVer>17.0.0</MsTestSdkVer>
     <MsBclAsyncInterfacesVer>5.0.0</MsBclAsyncInterfacesVer>
+
+    <MessagePackVer>2.3.85</MessagePackVer>
+    <MessagePipeVer>1.7.4</MessagePipeVer>
 
     <MoreLinqVer>3.3.2</MoreLinqVer>
     <RestSharpVer>106.13.0</RestSharpVer>
@@ -106,5 +111,8 @@
     <AssemblyAttribute Include="System.Resources.NeutralResourcesLanguageAttribute">
       <_Parameter1>en-US</_Parameter1>
     </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)IsExternalInit.cs" Link="Properties\IsExternalInit.cs" />
   </ItemGroup>
 </Project>

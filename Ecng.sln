@@ -73,6 +73,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Compiler", "Compilation\Com
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Linq", "Linq\Linq.csproj", "{37AFC401-F01C-4D4F-8129-7ECED0E67122}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePipe.Interprocess", "MessagePipe\Interprocess\MessagePipe.Interprocess.csproj", "{290ACCC4-6F13-48EE-BAB7-79C0D2B7EC0E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -207,6 +209,10 @@ Global
 		{37AFC401-F01C-4D4F-8129-7ECED0E67122}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{37AFC401-F01C-4D4F-8129-7ECED0E67122}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{37AFC401-F01C-4D4F-8129-7ECED0E67122}.Release|Any CPU.Build.0 = Release|Any CPU
+		{290ACCC4-6F13-48EE-BAB7-79C0D2B7EC0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{290ACCC4-6F13-48EE-BAB7-79C0D2B7EC0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{290ACCC4-6F13-48EE-BAB7-79C0D2B7EC0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{290ACCC4-6F13-48EE-BAB7-79C0D2B7EC0E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

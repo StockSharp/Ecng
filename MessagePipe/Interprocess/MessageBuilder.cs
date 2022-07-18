@@ -185,7 +185,6 @@ namespace MessagePipe.Interprocess
 
     // (messageId:int, (reqType,resType):(string,string))
 
-    [Preserve]
     [MessagePackFormatter(typeof(Formatter))]
     internal class RequestHeader
     {
@@ -200,7 +199,6 @@ namespace MessagePipe.Interprocess
             ResponseType = responseType;
         }
 
-        [Preserve]
         public class Formatter : IMessagePackFormatter<RequestHeader>
         {
             public RequestHeader Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)

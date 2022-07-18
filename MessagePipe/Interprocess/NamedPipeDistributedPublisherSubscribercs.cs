@@ -6,12 +6,10 @@ using System.Threading.Tasks;
 
 namespace MessagePipe.Interprocess
 {
-    [Preserve]
     public sealed class NamedPipeDistributedPublisher<TKey, TMessage> : IDistributedPublisher<TKey, TMessage>
     {
         readonly NamedPipeWorker worker;
 
-        [Preserve]
         public NamedPipeDistributedPublisher(NamedPipeWorker worker)
         {
             this.worker = worker;
@@ -24,7 +22,6 @@ namespace MessagePipe.Interprocess
         }
     }
 
-    [Preserve]
     public sealed class NamedPipeDistributedSubscriber<TKey, TMessage> : IDistributedSubscriber<TKey, TMessage>
     {
         // Pubsished from worker.
@@ -33,15 +30,12 @@ namespace MessagePipe.Interprocess
         readonly FilterAttachedMessageHandlerFactory syncHandlerFactory;
         readonly FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory;
 
-        [Preserve]
         public NamedPipeDistributedSubscriber(NamedPipeWorker worker, MessagePipeInterprocessNamedPipeOptions options, IAsyncSubscriber<IInterprocessKey, IInterprocessValue> subscriberCore, FilterAttachedMessageHandlerFactory syncHandlerFactory, FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory)
         {
             this.options = options;
             this.subscriberCore = subscriberCore;
             this.syncHandlerFactory = syncHandlerFactory;
             this.asyncHandlerFactory = asyncHandlerFactory;
-
-            worker.StartReceiver();
         }
 
         public ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, CancellationToken cancellationToken = default)

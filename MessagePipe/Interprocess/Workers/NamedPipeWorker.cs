@@ -1,9 +1,6 @@
 ﻿using MessagePack;
-using MessagePipe.Interprocess.Internal;
-#if !UNITY_2018_3_OR_NEWER
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Channels;
-#endif
 using System;
 using System.Collections.Concurrent;
 using System.IO;
@@ -13,343 +10,501 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
 
-namespace MessagePipe.Interprocess.Workers
+namespace MessagePipe.Interprocess.Workers;
+
+public sealed class NamedPipeWorker : IDisposable
 {
-    [Preserve]
-    public sealed class NamedPipeWorker : IDisposable
+    readonly struct ChannelMsg
     {
-        readonly string pipeName;
-        readonly IServiceProvider provider;
-        readonly CancellationTokenSource cancellationTokenSource;
-        readonly IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher;
-        readonly MessagePipeInterprocessNamedPipeOptions options;
+        public byte[] Data { get; init; }
+        public CancellationToken Token { get; init; }
+    }
 
-        // Channel is used from publisher for thread safety of write packet
-        int initializedServer = 0;
-        Lazy<NamedPipeServerStream> server;
-        Channel<byte[]> channel;
+    readonly IServiceProvider _provider;
+    readonly ILogger<NamedPipeWorker> _log;
+    readonly CancellationTokenSource _workerCts;
+    readonly IAsyncPublisher<IInterprocessKey, IInterprocessValue> _publisher;
+    readonly MessagePipeInterprocessNamedPipeOptions _options;
+    private readonly bool _isServer;
 
-        int initializedClient = 0;
-        Lazy<NamedPipeClientStream> client;
+    // Channel is used from publisher for thread safety of write packet
+    readonly Channel<ChannelMsg> _channel;
 
-        // request-response
-        int messageId = 0;
-        ConcurrentDictionary<int, TaskCompletionSource<IInterprocessValue>> responseCompletions = new ConcurrentDictionary<int, TaskCompletionSource<IInterprocessValue>>();
+    private byte[]? _inMessageBuffer;
 
-        // create from DI
-        [Preserve]
-        public NamedPipeWorker(IServiceProvider provider, MessagePipeInterprocessNamedPipeOptions options, IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher)
+    private bool _workerStarted;
+    private bool _workerStopped;
+    private bool _pipeWasStarted;
+
+    private TaskCompletionSource<PipeStream> _pipeConnectTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    // request-response
+    int _requestMsgId;
+    readonly ConcurrentDictionary<int, TaskCompletionSource<IInterprocessValue>> _responseCompletions = new();
+
+    // create from DI
+    public NamedPipeWorker(IServiceProvider provider, MessagePipeInterprocessNamedPipeOptions options, IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher, ILogger<NamedPipeWorker> logger)
+    {
+        _provider = provider;
+        _log = logger;
+        _workerCts = new CancellationTokenSource();
+        _options = options;
+        _publisher = publisher;
+        _isServer = options.HostAsServer == true;
+
+        _channel = Channel.CreateUnbounded<ChannelMsg>(new UnboundedChannelOptions
         {
-            this.pipeName = options.PipeName;
-            this.provider = provider;
-            this.cancellationTokenSource = new CancellationTokenSource();
-            this.options = options;
-            this.publisher = publisher;
+            SingleReader = true,
+            SingleWriter = false,
+            AllowSynchronousContinuations = false
+        });
 
-            this.server = CreateLazyServerStream();
+        if (_isServer)
+            EnsurePipe();
+    }
 
-            this.client = new Lazy<NamedPipeClientStream>(() =>
-            {
-                return new NamedPipeClientStream(options.ServerName, options.PipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-            });
+    public void Publish<TKey, TMessage>(TKey key, TMessage message)
+    {
+        EnsureWorkerIsActive();
 
-#if !UNITY_2018_3_OR_NEWER
-            this.channel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
-            {
-                SingleReader = true,
-                SingleWriter = false,
-                AllowSynchronousContinuations = true
-            });
-#else
-            this.channel = Channel.CreateSingleConsumerUnbounded<byte[]>();
-#endif
+        var buffer = MessageBuilder.BuildPubSubMessage(key, message, _options.MessagePackSerializerOptions);
 
-            if (options.HostAsServer != null && options.HostAsServer.Value)
-            {
-                StartReceiver();
-            }
-        }
+        if (!_channel.Writer.TryWrite(new ChannelMsg { Data = buffer, Token = CancellationToken.None }))
+            throw new IOException("+cant write to channel");
+    }
 
-        Lazy<NamedPipeServerStream> CreateLazyServerStream()
+    public async ValueTask<TResponse> RequestAsync<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken)
+    {
+        EnsureWorkerIsActive();
+
+        var mid = Interlocked.Increment(ref _requestMsgId);
+        var tcs = new TaskCompletionSource<IInterprocessValue>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _responseCompletions[mid] = tcs;
+        var buffer = MessageBuilder.BuildRemoteRequestMessage(typeof(TRequest), typeof(TResponse), mid, request, _options.MessagePackSerializerOptions);
+
+        await using (cancellationToken.Register(() => tcs.TrySetCanceled()))
         {
-            return new Lazy<NamedPipeServerStream>(() => new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous));
-        }
+            if(!_channel.Writer.TryWrite(new ChannelMsg { Data = buffer, Token = cancellationToken }))
+                throw new IOException("+cant write to channel2");
 
-        public void Publish<TKey, TMessage>(TKey key, TMessage message)
-        {
-            if (Interlocked.Increment(ref initializedClient) == 1) // first incr, channel not yet started
-            {
-                _ = client.Value; // init
-                RunPublishLoop();
-            }
-
-            var buffer = MessageBuilder.BuildPubSubMessage(key, message, options.MessagePackSerializerOptions);
-            channel.Writer.TryWrite(buffer);
-        }
-
-        public async ValueTask<TResponse> RequestAsync<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken)
-        {
-            if (Interlocked.Increment(ref initializedClient) == 1) // first incr, channel not yet started
-            {
-                _ = client.Value; // init
-                RunPublishLoop();
-            }
-
-            var mid = Interlocked.Increment(ref messageId);
-            var tcs = new TaskCompletionSource<IInterprocessValue>();
-            responseCompletions[mid] = tcs;
-            var buffer = MessageBuilder.BuildRemoteRequestMessage(typeof(TRequest), typeof(TResponse), mid, request, options.MessagePackSerializerOptions);
-            channel.Writer.TryWrite(buffer);
             var memoryValue = await tcs.Task.ConfigureAwait(false);
-            return MessagePackSerializer.Deserialize<TResponse>(memoryValue.ValueMemory, options.MessagePackSerializerOptions);
+
+            return MessagePackSerializer.Deserialize<TResponse>(memoryValue.ValueMemory, _options.MessagePackSerializerOptions);
+        }
+    }
+
+    private async Task RunWorkerTask(string name, Func<Task> runner)
+    {
+        try
+        {
+            await runner();
+        }
+        catch (Exception e)
+        {
+            if (e is not OperationCanceledException ce || ce.CancellationToken != _workerCts.Token)
+                LogMsg(LogLevel.Error, e, "{worker}: stopping with error", name);
+
+            TryStopWorker(e);
+        }
+    }
+
+    private void EnsureWorkerIsActive()
+    {
+        bool checkActive()
+        {
+            if (_workerStopped)
+                throw new NamedPipeWorkerStoppedException();
+
+            return _workerStarted;
         }
 
-        public void StartReceiver()
+        if (checkActive())
+            return;
+
+        lock (this)
         {
-            if (Interlocked.Increment(ref initializedServer) == 1) // first incr, channel not yet started
+            if (checkActive())
+                return;
+
+            _workerStarted = true;
+        }
+
+        LogMsg(LogLevel.Debug, "starting send/recv tasks");
+
+        _ = RunWorkerTask("send", RunSendLoop);
+        _ = RunWorkerTask("recv", RunReceiveLoop);
+    }
+
+    private Task<PipeStream> WhenPipeIsConnected()
+    {
+        EnsurePipe();
+        return _pipeConnectTcs.Task;
+    }
+
+    private async Task<NamedPipeServerStream> CreateServerPipe(TimeSpan maxTime, TimeSpan retryInterval)
+    {
+        var till = DateTime.UtcNow + maxTime;
+
+        do
+        {
+            try
             {
-                RunReceiveLoop(server.Value, x =>
-                {
-#if !UNITY_2018_3_OR_NEWER
-                    return server.Value.WaitForConnectionAsync(x);
-#else
-                    return System.Threading.Tasks.Task.Run(()=> server.Value.WaitForConnection(), x);
-#endif
-                });
+                return new NamedPipeServerStream(_options.PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
             }
+            catch (IOException e)
+            {
+                LogMsg(LogLevel.Warning, e, "server pipe ctor error");
+
+                if (DateTime.UtcNow > till)
+                    throw new InvalidOperationException("+unable to create server pipe", e);
+
+                LogMsg(LogLevel.Trace, e, "waiting for {delay}", retryInterval);
+                await Task.Delay(retryInterval, _workerCts.Token);
+            }
+        } while (true);
+    }
+
+    private async void EnsurePipe(bool forceRestart = false)
+    {
+        async Task<PipeStream> createPipe()
+        {
+            LogMsg(LogLevel.Debug, "creating pipe object");
+            return _isServer ?
+                await CreateServerPipe(TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(300)) :
+                new NamedPipeClientStream(_options.ServerName, _options.PipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         }
 
-        // Send packet to udp socket from publisher
-        async void RunPublishLoop()
+        try
         {
-            var reader = channel.Reader;
-            var token = cancellationTokenSource.Token;
-            var pipeStream = client.Value;
+            if (_pipeWasStarted && !forceRestart)
+                return;
+
+            TaskCompletionSource<PipeStream>? oldTcs = null;
+
+            lock (this)
+            {
+                if (_pipeWasStarted)
+                {
+                    if (!forceRestart)
+                        return;
+
+                    oldTcs = _pipeConnectTcs;
+                    oldTcs.TrySetException(new IOException("+force recreate pipe"));
+
+                    _pipeConnectTcs = new TaskCompletionSource<PipeStream>(TaskCreationOptions.RunContinuationsAsynchronously);
+                }
+                else
+                {
+                    var state = _pipeConnectTcs.Task.Status;
+                    if (state != TaskStatus.WaitingForActivation)
+                        throw new InvalidOperationException($"+unexpected state of connect tcs: {state}");
+
+                    _pipeWasStarted = true;
+                }
+            }
+
+            if(oldTcs != null)
+                await DisposePipe(() => oldTcs.Task, "old on recreate");
+
+            EnsureWorkerIsActive();
+
+            var newPipe = await createPipe();
 
             try
             {
-#if !UNITY_2018_3_OR_NEWER
-                await pipeStream.ConnectAsync(Timeout.Infinite, token).ConfigureAwait(false);
-#else
-                await System.Threading.Tasks.Task.Run(() => pipeStream.Connect(), token);
-#endif
+                LogMsg(LogLevel.Debug, "connecting pipe");
+
+                if (_isServer)
+                    await ((NamedPipeServerStream)newPipe).WaitForConnectionAsync(_workerCts.Token);
+                else
+                    await ((NamedPipeClientStream)newPipe).ConnectAsync(Timeout.Infinite, _workerCts.Token);
+
+                LogMsg(LogLevel.Debug, "pipe is connected!");
+
+                _pipeConnectTcs.TrySetResult(newPipe);
+            }
+            catch (Exception e)
+            {
+                var msg = e is OperationCanceledException ? "connection canceled" : $"connection failed {e.GetType().Name} {e.Message}";
+                await DisposePipe(() => Task.FromResult(newPipe), msg);
+
+                throw;
+            }
+        }
+        catch(Exception e)
+        {
+            if (e is OperationCanceledException ce && ce.CancellationToken == _workerCts.Token)
+                _pipeConnectTcs.TrySetCanceled();
+            else
+                _pipeConnectTcs.TrySetException(e);
+        }
+    }
+
+    async ValueTask RunPipeOperation(Func<PipeStream, Task> doit)
+    {
+        while (true)
+        {
+            try
+            {
+                var pipe = await WhenPipeIsConnected().ConfigureAwait(false);
+                EnsureWorkerIsActive();
+                await doit(pipe).ConfigureAwait(false);
+                return;
             }
             catch (IOException)
             {
-                return; // connection closed.
-            }
-            RunReceiveLoop(pipeStream, null); // client connected, setup receive loop
+                if (_workerCts.IsCancellationRequested)
+                    throw;
 
-            while (await reader.WaitToReadAsync(token).ConfigureAwait(false))
-            {
-                while (reader.TryRead(out var item))
-                {
-                    try
-                    {
-                        await pipeStream.WriteAsync(item, 0, item.Length, token).ConfigureAwait(false);
-                    }
-                    catch (IOException)
-                    {
-                        return; // connection closed.
-                    }
-                    catch (Exception ex)
-                    {
-                        if (ex is OperationCanceledException) return;
-                        if (token.IsCancellationRequested) return;
-
-                        // network error, terminate.
-                        options.UnhandledErrorHandler("network error, publish loop will terminate." + Environment.NewLine, ex);
-                        return;
-                    }
-                }
+                EnsurePipe(true);
             }
         }
+    }
 
-        // Receive from udp socket and push value to subscribers.
-        async void RunReceiveLoop(Stream pipeStream, Func<CancellationToken, Task>? waitForConnection)
+    private async Task RunSendLoop()
+    {
+        var reader = _channel.Reader;
+
+        while (await reader.WaitToReadAsync(_workerCts.Token).ConfigureAwait(false))
+            while (reader.TryRead(out var item))
+                await RunPipeOperation(async pipe =>
+                {
+                    await pipe.WriteAsync(item.Data, 0, item.Data.Length, item.Token);
+                    //LogMsg(LogLevel.Trace, $"sent {item.Data.Length} bytes");
+                });
+    }
+
+    private async Task RunReceiveLoop()
+    {
+        while (true)
+            await RunPipeOperation(async pipe => await ProcessPipeMessage(pipe, await ReadPipeMessage(pipe)));
+        // ReSharper disable once FunctionNeverReturns
+    }
+
+    private async Task<ReadOnlyMemory<byte>> ReadPipeMessage(PipeStream pipe)
+    {
+        ReadOnlyMemory<byte> value;
+
+        _inMessageBuffer ??= new byte[0xffff];
+
+        var readLen = await ReadCheckPipe(pipe, _inMessageBuffer, 0, _inMessageBuffer.Length, _workerCts.Token).ConfigureAwait(false);
+
+        var messageLen = MessageBuilder.FetchMessageLength(_inMessageBuffer);
+        if (readLen == (messageLen + 4))
         {
-        RECONNECT:
-            var token = cancellationTokenSource.Token;
-            if (waitForConnection != null)
-            {
-                try
-                {
-                    await waitForConnection(token).ConfigureAwait(false);
-                }
-                catch (IOException)
-                {
-                    return; // connection closed.
-                }
-            }
-            var buffer = new byte[65536];
-            while (!token.IsCancellationRequested)
-            {
-                ReadOnlyMemory<byte> value = Array.Empty<byte>();
-                try
-                {
-                    var readLen = await pipeStream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
-                    if (readLen == 0)
-                    {
-                        if (waitForConnection != null)
-                        {
-                            server.Value.Dispose();
-                            server = CreateLazyServerStream();
-                            pipeStream = server.Value;
-                            goto RECONNECT; // end of stream(disconnect, wait reconnect)
-                        }
-                    }
+            value = _inMessageBuffer.AsMemory(4, messageLen); // skip length header
+        }
+        else
+        {
+            // read more
+            if (_inMessageBuffer.Length < messageLen + 4)
+                Array.Resize(ref _inMessageBuffer, messageLen + 4);
 
-                    var messageLen = MessageBuilder.FetchMessageLength(buffer);
-                    if (readLen == (messageLen + 4))
+            var remain = messageLen - (readLen - 4);
+
+            await ReadFullyAsync(_inMessageBuffer, pipe, readLen, remain, _workerCts.Token).ConfigureAwait(false);
+
+            value = _inMessageBuffer.AsMemory(4, messageLen);
+        }
+
+        return value;
+    }
+
+    async ValueTask ProcessPipeMessage(PipeStream pipe, ReadOnlyMemory<byte> value)
+    {
+        var message = MessageBuilder.ReadPubSubMessage(value.ToArray()); // can avoid copy?
+        switch (message.MessageType)
+        {
+            case MessageType.PubSub:
+            {
+                // ReSharper disable once MethodHasAsyncOverload
+                _publisher.Publish(message, message);
+                break;
+            }
+
+            case MessageType.RemoteRequest:
+            {
+                // NOTE: should use without reflection(Expression.Compile)
+                var header = Deserialize<RequestHeader>(message.KeyMemory, _options.MessagePackSerializerOptions);
+                var (mid, reqTypeName, resTypeName) = (header.MessageId, header.RequestType, header.ResponseType);
+                byte[] resultBytes;
+                try
+                {
+                    var t = AsyncRequestHandlerRegistory.Get(reqTypeName, resTypeName);
+                    var interfaceType = t.GetInterfaces().Where(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandler"))
+                        .First(x => x.GetGenericArguments().Any(y => y.FullName == header.RequestType));
+                    var coreInterfaceType = t.GetInterfaces().Where(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandlerCore"))
+                        .First(x => x.GetGenericArguments().Any(y => y.FullName == header.RequestType));
+                    var service = _provider.GetRequiredService(interfaceType); // IAsyncRequestHandler<TRequest,TResponse>
+                    var genericArgs = interfaceType.GetGenericArguments(); // [TRequest, TResponse]
+                    var request = MessagePackSerializer.Deserialize(genericArgs[0], message.ValueMemory, _options.MessagePackSerializerOptions);
+                    var responseTask = coreInterfaceType.GetMethod("InvokeAsync")!.Invoke(service, new[] { request, CancellationToken.None });
+                    var task = typeof(ValueTask<>).MakeGenericType(genericArgs[1]).GetMethod("AsTask")!.Invoke(responseTask, null);
+
+                    // TODO: cache reflection requests
+                    // TODO: this await is not async, we are blocking message processing by this await, may do this asynchronously
+                    await ((Task)task!); // Task<T> -> Task
+
+                    var result = task.GetType().GetProperty("Result")!.GetValue(task);
+                    resultBytes = MessageBuilder.BuildRemoteResponseMessage(mid, genericArgs[1], result!, _options.MessagePackSerializerOptions);
+                }
+                catch (Exception ex)
+                {
+                    // NOTE: ok to send stacktrace?
+                    resultBytes = MessageBuilder.BuildRemoteResponseError(mid, ex.ToString(), _options.MessagePackSerializerOptions);
+                }
+
+                // no need to RunPipeOperation. if it fails we'll reconnect anyway
+                await pipe.WriteAsync(resultBytes, 0, resultBytes.Length).ConfigureAwait(false);
+
+                break;
+            }
+
+            case MessageType.RemoteResponse:
+            case MessageType.RemoteError:
+            {
+                var mid = Deserialize<int>(message.KeyMemory, _options.MessagePackSerializerOptions);
+                if (_responseCompletions.TryRemove(mid, out var tcs))
+                {
+                    if (message.MessageType == MessageType.RemoteResponse)
                     {
-                        value = buffer.AsMemory(4, messageLen); // skip length header
+                        tcs.TrySetResult(message); // synchronous completion, use memory buffer immediately.
                     }
                     else
                     {
-                        // read more
-                        if (buffer.Length < (messageLen + 4))
-                        {
-                            Array.Resize(ref buffer, messageLen + 4);
-                        }
-                        var remain = messageLen - (readLen - 4);
-                        await ReadFullyAsync(buffer, pipeStream, readLen, remain, token).ConfigureAwait(false);
-                        value = buffer.AsMemory(4, messageLen);
+                        var errorMsg = MessagePackSerializer.Deserialize<string>(message.ValueMemory, _options.MessagePackSerializerOptions);
+                        tcs.TrySetException(new RemoteRequestException(errorMsg));
                     }
                 }
-                catch (IOException)
-                {
-                    return; // connection closed.
-                }
-                catch (Exception ex)
-                {
-                    if (ex is OperationCanceledException) return;
-                    if (token.IsCancellationRequested) return;
-
-                    // network error, terminate.
-                    options.UnhandledErrorHandler("network error, receive loop will terminate." + Environment.NewLine, ex);
-                    return;
-                }
-
-                try
-                {
-                    var message = MessageBuilder.ReadPubSubMessage(value.ToArray()); // can avoid copy?
-                    switch (message.MessageType)
-                    {
-                        case MessageType.PubSub:
-                            publisher.Publish(message, message, CancellationToken.None);
-                            break;
-                        case MessageType.RemoteRequest:
-                            {
-                                // NOTE: should use without reflection(Expression.Compile)
-                                var header = Deserialize<RequestHeader>(message.KeyMemory, options.MessagePackSerializerOptions);
-                                var (mid, reqTypeName, resTypeName) = (header.MessageId, header.RequestType, header.ResponseType);
-                                byte[] resultBytes;
-                                try
-                                {
-                                    var t = AsyncRequestHandlerRegistory.Get(reqTypeName, resTypeName);
-                                    var interfaceType = t.GetInterfaces().Where(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandler"))
-                                        .First(x => x.GetGenericArguments().Any(y => y.FullName == header.RequestType));
-                                    var coreInterfaceType = t.GetInterfaces().Where(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandlerCore"))
-                                        .First(x => x.GetGenericArguments().Any(y => y.FullName == header.RequestType));
-                                    var service = provider.GetRequiredService(interfaceType); // IAsyncRequestHandler<TRequest,TResponse>
-                                    var genericArgs = interfaceType.GetGenericArguments(); // [TRequest, TResponse]
-                                    var request = MessagePackSerializer.Deserialize(genericArgs[0], message.ValueMemory, options.MessagePackSerializerOptions);
-                                    var responseTask = coreInterfaceType.GetMethod("InvokeAsync")!.Invoke(service, new[] { request, CancellationToken.None });
-                                    var task = typeof(ValueTask<>).MakeGenericType(genericArgs[1]).GetMethod("AsTask")!.Invoke(responseTask, null);
-                                    await ((System.Threading.Tasks.Task)task!); // Task<T> -> Task
-                                    var result = task.GetType().GetProperty("Result")!.GetValue(task);
-                                    resultBytes = MessageBuilder.BuildRemoteResponseMessage(mid, genericArgs[1], result!, options.MessagePackSerializerOptions);
-                                }
-                                catch (Exception ex)
-                                {
-                                    // NOTE: ok to send stacktrace?
-                                    resultBytes = MessageBuilder.BuildRemoteResponseError(mid, ex.ToString(), options.MessagePackSerializerOptions);
-                                }
-
-                                await pipeStream.WriteAsync(resultBytes, 0, resultBytes.Length).ConfigureAwait(false);
-                            }
-                            break;
-                        case MessageType.RemoteResponse:
-                        case MessageType.RemoteError:
-                            {
-                                var mid = Deserialize<int>(message.KeyMemory, options.MessagePackSerializerOptions);
-                                if (responseCompletions.TryRemove(mid, out var tcs))
-                                {
-                                    if (message.MessageType == MessageType.RemoteResponse)
-                                    {
-                                        tcs.TrySetResult(message); // synchronous completion, use memory buffer immediately.
-                                    }
-                                    else
-                                    {
-                                        var errorMsg = MessagePackSerializer.Deserialize<string>(message.ValueMemory, options.MessagePackSerializerOptions);
-                                        tcs.TrySetException(new RemoteRequestException(errorMsg));
-                                    }
-                                }
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                catch (IOException)
-                {
-                    return; // connection closed.
-                }
-                catch (Exception ex)
-                {
-                    if (ex is OperationCanceledException) continue;
-                    options.UnhandledErrorHandler("", ex);
-                }
+                break;
             }
         }
+    }
 
-        // omajinai.
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static T Deserialize<T>(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options)
+    // omajinai.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static T Deserialize<T>(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options)
+    {
+        if (buffer.IsEmpty && MemoryMarshal.TryGetArray(buffer, out var segment))
         {
-            if (buffer.IsEmpty && MemoryMarshal.TryGetArray(buffer, out var segment))
-            {
-                buffer = segment;
-            }
-            return MessagePackSerializer.Deserialize<T>(buffer, options);
+            buffer = segment;
+        }
+        return MessagePackSerializer.Deserialize<T>(buffer, options);
+    }
+
+    async ValueTask ReadFullyAsync(byte[] buffer, PipeStream stream, int index, int remain, CancellationToken token)
+    {
+        while (remain > 0)
+        {
+            var len = await ReadCheckPipe(stream, buffer, index, remain, token).ConfigureAwait(false);
+
+            index += len;
+            remain -= len;
+        }
+    }
+
+    private async ValueTask<int> ReadCheckPipe(PipeStream pipe, byte[] buf, int offset, int count, CancellationToken token)
+    {
+        if (!pipe.IsConnected)
+            throw new IOException("+pipe is not connected");
+
+        var len = await pipe.ReadAsync(buf, offset, count, token).ConfigureAwait(false);
+
+        if (len == 0)
+            throw new IOException("+pipe read returned zero");
+
+        //LogMsg(LogLevel.Trace, $"received {len} bytes");
+
+        return len;
+    }
+
+    class NamedPipeWorkerStoppedException : ObjectDisposedException
+    {
+        public NamedPipeWorkerStoppedException() : base(nameof(NamedPipeWorker)) { }
+    }
+
+    private async ValueTask DisposePipe(Func<Task<PipeStream>> getPipe, string name)
+    {
+        try
+        {
+            var pipe = await getPipe();
+            LogMsg(LogLevel.Debug, "disposing pipe: {name}", name);
+            await pipe.DisposeAsync();
+        }
+        catch
+        {
+            // ignored
+        }
+    }
+
+    private void TryStopWorker(Exception? e)
+    {
+        lock (this)
+        {
+            if (_workerStopped)
+                return;
+
+            _workerStopped = true;
         }
 
-        static async ValueTask ReadFullyAsync(byte[] buffer, Stream stream, int index, int remain, CancellationToken token)
+        try
         {
-            while (remain > 0)
+            if (e is OperationCanceledException ce && ce.CancellationToken == _workerCts.Token)
             {
-                var len = await stream.ReadAsync(buffer, index, remain, token).ConfigureAwait(false);
-                index += len;
-                remain -= len;
+                LogMsg(LogLevel.Debug, "stopping worker: canceled");
+                e = null;
             }
-        }
-
-        public void Dispose()
-        {
-            channel.Writer.TryComplete();
-
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
-
-            if (server.IsValueCreated)
+            else if(e != null)
             {
-                server.Value.Dispose();
+                LogMsg(LogLevel.Error, e, "stopping worker with error");
+            }
+            else
+            {
+                LogMsg(LogLevel.Debug, "stopping worker");
             }
 
-            if (client.IsValueCreated)
-            {
-                client.Value.Dispose();
-            }
+            _channel.Writer.TryComplete();
+            _workerCts.Cancel();
 
-            foreach (var item in responseCompletions)
+            DisposePipe(() => _pipeConnectTcs.Task, "main(in dispose)").GetAwaiter().GetResult();
+
+            //_cancellationTokenSource.Dispose();
+
+            foreach (var item in _responseCompletions)
             {
                 try
                 {
-                    item.Value.TrySetCanceled();
+                    if (e is null)
+                        item.Value.TrySetCanceled();
+                    else
+                        item.Value.TrySetException(e);
                 }
-                catch { }
+                catch
+                {
+                    // ignored
+                }
             }
+
+            if (e != null)
+                _options.UnhandledErrorHandler("unhandled exception", e);
         }
+        catch
+        {
+            // do nothing
+        }
+    }
+
+    public void Dispose() => TryStopWorker(null);
+
+    void LogMsg(LogLevel level, string m, params object[] args) => LogMsg(level, null, m, args);
+
+    void LogMsg(LogLevel level, Exception? e, string m, params object[] args)
+    {
+        const string format = "({pipeType} {pipeName}): ";
+        var pipeType = _isServer ? "server" : "client";
+
+        _log.Log(level, e, format + m, new[] { pipeType, _options.PipeName }.Concat(args).ToArray());
     }
 }
