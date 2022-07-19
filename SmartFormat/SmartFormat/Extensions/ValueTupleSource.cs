@@ -9,7 +9,7 @@ using SmartFormat.Utilities;
 
 namespace SmartFormat.Extensions
 {
-    public class ValueTupleSource : ISource
+    public class ValueTupleSource : BaseSource
     {
         private readonly SmartFormatter _formatter;
 
@@ -18,7 +18,7 @@ namespace SmartFormat.Extensions
             _formatter = formatter;
         }
 
-        public bool TryEvaluateSelector(ISelectorInfo selectorInfo)
+        public override bool TryEvaluateSelector(ISelectorInfo selectorInfo)
         {
             if (!(selectorInfo is FormattingInfo formattingInfo)) return false;
             if (!(formattingInfo.CurrentValue != null && formattingInfo.CurrentValue.IsValueTuple())) return false;

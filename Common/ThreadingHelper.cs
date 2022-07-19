@@ -443,7 +443,7 @@ namespace Ecng.Common
 			=> Task.Delay(delay, cancellationToken);
 
 		public static T GetResult<T>(this Task task)
-			=> (T)task.GetType().GetProperty("Result").GetValue(task);
+			=> (T)task.GetType().GetProperty(nameof(Task<object>.Result)).GetValue(task);
 
 		public static TaskCompletionSource<TValue> ToCompleteSource<TValue>(this TValue value)
 		{

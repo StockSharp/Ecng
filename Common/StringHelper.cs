@@ -10,12 +10,13 @@
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Threading;
-
+	using System.Threading.Tasks;
 	using System.Collections;
 	using System.Reflection;
 
 	using SmartFormat;
 	using SmartFormat.Core.Extensions;
+	using SmartFormat.Extensions;
 
 	public static class StringHelper
 	{
@@ -55,13 +56,13 @@
 			return args.Length == 0 ? str : string.Format(str, args);
 		}
 
-		private class DictionarySourceEx : ISource
+		private class DictionarySourceEx : BaseSource
 		{
 			private readonly SyncObject _sync = new();
 			private readonly Dictionary<Type, Type> _genericTypes = new();
 			private readonly Dictionary<string, object> _keys = new();
 
-			bool ISource.TryEvaluateSelector(ISelectorInfo selectorInfo)
+			public override bool TryEvaluateSelector(ISelectorInfo selectorInfo)
 			{
 				if (selectorInfo.CurrentValue is not IDictionary dictionary)
 					return false;
@@ -105,6 +106,14 @@
 				throw new ArgumentNullException(nameof(args));
 
 			return args.Length == 0 ? str : Smart.Format(str, args);
+		}
+
+		public static ValueTask<string> PutExAsync(this string str, object[] args, CancellationToken cancellationToken)
+		{
+			if (args is null)
+				throw new ArgumentNullException(nameof(args));
+
+			return args.Length == 0 ? new(str) : Smart.FormatAsync(str, args, cancellationToken);
 		}
 
 		private static Type GetGenericType(this Type targetType, Type genericType)

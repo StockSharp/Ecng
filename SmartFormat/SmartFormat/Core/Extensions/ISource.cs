@@ -4,6 +4,8 @@
 //
 
 using SmartFormat.Core.Parsing;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SmartFormat.Core.Extensions
 {
@@ -19,5 +21,7 @@ namespace SmartFormat.Core.Extensions
         /// </summary>
         /// <param name="selectorInfo"></param>
         bool TryEvaluateSelector(ISelectorInfo selectorInfo);
-    }
+
+		ValueTask<bool> TryEvaluateSelectorAsync(ISelectorInfo selectorInfo, CancellationToken cancellationToken);
+	}
 }

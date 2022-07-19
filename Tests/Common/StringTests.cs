@@ -2,6 +2,8 @@ namespace Ecng.Tests.Common
 {
 	using System;
 	using System.Globalization;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 	using Ecng.UnitTesting;
@@ -74,6 +76,21 @@ namespace Ecng.Tests.Common
 			{
 				culture.Name.GetLangCode().AssertEqual(culture.TwoLetterISOLanguageName);
 			}
+		}
+
+		private class SmartFormatObj
+		{
+			public int PropSync { get; } = 1;
+			public ValueTask<int> PropAsync(CancellationToken token) => new(2);
+			public Task<int> PropAsync2(CancellationToken token) => 3.FromResult();
+		}
+
+		[TestMethod]
+		public async Task SmartFormatAsync()
+		{
+			var template = @"{PropSync} <> {PropAsync} <> {PropAsync2}";
+			var res = await template.PutExAsync(new object[] { new SmartFormatObj() }, default);
+			res.AssertEqual("1 <> 2 <> 3");
 		}
 	}
 }

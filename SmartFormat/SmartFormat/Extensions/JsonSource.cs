@@ -11,8 +11,8 @@ using System.Linq;
 
 namespace SmartFormat.Extensions
 {
-    public class JsonSource : ISource
-    {
+    public class JsonSource : BaseSource
+	{
         public JsonSource(SmartFormatter formatter)
         {
             // Note: We only have ONE parser at a time.
@@ -27,7 +27,7 @@ namespace SmartFormat.Extensions
             formatter.Parser.AddOperators("."); 
         }
 
-        public bool TryEvaluateSelector(ISelectorInfo selectorInfo)
+		public override bool TryEvaluateSelector(ISelectorInfo selectorInfo)
         {
             // Note: Operators are processed by ListFormatter
             return selectorInfo.CurrentValue switch

@@ -10,7 +10,7 @@ using SmartFormat.Core.Extensions;
 
 namespace SmartFormat.Extensions
 {
-    public class DictionarySource : ISource
+    public class DictionarySource : BaseSource
     {
         public DictionarySource(SmartFormatter formatter)
         {
@@ -20,7 +20,7 @@ namespace SmartFormat.Extensions
             formatter.Parser.AddOperators(".");
         }
 
-        public bool TryEvaluateSelector(ISelectorInfo selectorInfo)
+        public override bool TryEvaluateSelector(ISelectorInfo selectorInfo)
         {
             var current = selectorInfo.CurrentValue;
             var selector = selectorInfo.SelectorText;

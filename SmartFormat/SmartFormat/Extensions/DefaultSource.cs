@@ -7,7 +7,7 @@ using SmartFormat.Core.Extensions;
 
 namespace SmartFormat.Extensions
 {
-    public class DefaultSource : ISource
+    public class DefaultSource : BaseSource
     {
         public DefaultSource(SmartFormatter formatter)
         {
@@ -18,7 +18,7 @@ namespace SmartFormat.Extensions
         /// <summary>
         /// Performs the default index-based selector, same as String.Format.
         /// </summary>
-        public bool TryEvaluateSelector(ISelectorInfo selectorInfo)
+		public override bool TryEvaluateSelector(ISelectorInfo selectorInfo)
         {
             var current = selectorInfo.CurrentValue;
             var selector = selectorInfo.SelectorText;

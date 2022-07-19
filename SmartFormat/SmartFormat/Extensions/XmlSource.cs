@@ -9,7 +9,7 @@ using SmartFormat.Core.Extensions;
 
 namespace SmartFormat.Extensions
 {
-    public class XmlSource : ISource
+    public class XmlSource : BaseSource
     {
         public XmlSource(SmartFormatter formatter)
         {
@@ -19,7 +19,7 @@ namespace SmartFormat.Extensions
             formatter.Parser.AddOperators(".");
         }
 
-        public bool TryEvaluateSelector(ISelectorInfo selectorInfo)
+        public override bool TryEvaluateSelector(ISelectorInfo selectorInfo)
         {
             var element = selectorInfo.CurrentValue as XElement;
             if (element != null)

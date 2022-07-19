@@ -6,6 +6,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using SmartFormat.Core.Extensions;
 using SmartFormat.Core.Formatting;
 using SmartFormat.Core.Output;
@@ -125,17 +127,71 @@ namespace SmartFormat
         /// </summary>
         public SmartSettings Settings { get; }
 
-        #endregion
+		#endregion
 
-        #region: Format Overloads :
+		#region: Format Overloads :
 
-        /// <summary>
-        /// Replaces one or more format items in as specified string with the string representation of a specific object.
-        /// </summary>
-        /// <param name="format">A composite format string.</param>
-        /// <param name="args">The object to format.</param>
-        /// <returns>Returns the formatted input with items replaced with their string representation.</returns>
-        public string Format(string format, params object[] args)
+		public async ValueTask<string> FormatAsync(string format, object[] args, CancellationToken cancellationToken)
+		{
+			IFormatProvider? provider = null;
+
+			var output = new StringOutput(format.Length + args.Length * 8);
+			var formatParsed = Parser.ParseFormat(format, GetNotEmptyFormatterExtensionNames());
+			var current = args.Length > 0 ? args[0] : args; // The first item is the default.
+			var formatDetails = new FormatDetails(this, formatParsed, args, null, provider, output);
+
+			var formattingInfo = new FormattingInfo(formatDetails, formatParsed, current);
+
+			// Before we start, make sure we have at least one source extension and one formatter extension:
+			CheckForExtensions();
+			if (formattingInfo.Format is not null)
+			{
+				foreach (var item in formattingInfo.Format.Items)
+				{
+					if (item is LiteralText literalItem)
+					{
+						formattingInfo.Write(literalItem.ToString());
+						continue;
+					}
+
+					// Otherwise, the item must be a placeholder.
+					var placeholder = (Placeholder)item;
+					var childFormattingInfo = formattingInfo.CreateChild(placeholder);
+					try
+					{
+						await EvaluateSelectorsAsync(childFormattingInfo, cancellationToken);
+					}
+					catch (Exception ex)
+					{
+						// An error occurred while evaluation selectors
+						var errorIndex = placeholder.Format?.startIndex ?? placeholder.Selectors.Last().endIndex;
+						FormatError(item, ex, errorIndex, childFormattingInfo);
+						continue;
+					}
+
+					try
+					{
+						EvaluateFormatters(childFormattingInfo);
+					}
+					catch (Exception ex)
+					{
+						// An error occurred while evaluating formatters
+						var errorIndex = placeholder.Format?.startIndex ?? placeholder.Selectors.Last().endIndex;
+						FormatError(item, ex, errorIndex, childFormattingInfo);
+					}
+				}
+			}
+
+			return output.ToString();
+		}
+
+		/// <summary>
+		/// Replaces one or more format items in as specified string with the string representation of a specific object.
+		/// </summary>
+		/// <param name="format">A composite format string.</param>
+		/// <param name="args">The object to format.</param>
+		/// <returns>Returns the formatted input with items replaced with their string representation.</returns>
+		public string Format(string format, params object[] args)
         {
             return Format(null, format, args);
         }
@@ -343,12 +399,56 @@ namespace SmartFormat
             return false;
         }
 
-        /// <summary>
-        /// Try to get a suitable formatter.
-        /// </summary>
-        /// <param name="formattingInfo"></param>
-        /// <exception cref="FormattingException"></exception>
-        private void EvaluateFormatters(FormattingInfo formattingInfo)
+		private async ValueTask EvaluateSelectorsAsync(FormattingInfo formattingInfo, CancellationToken cancellationToken)
+		{
+			if (formattingInfo.Placeholder is null) return;
+
+			var firstSelector = true;
+			foreach (var selector in formattingInfo.Placeholder.Selectors)
+			{
+				formattingInfo.Selector = selector;
+				formattingInfo.Result = null;
+				var handled = await InvokeSourceExtensionsAsync(formattingInfo, cancellationToken);
+				if (handled) formattingInfo.CurrentValue = formattingInfo.Result;
+
+				if (firstSelector)
+				{
+					firstSelector = false;
+					// Handle "nested scopes" by traversing the stack:
+					var parentFormattingInfo = formattingInfo;
+					while (!handled && parentFormattingInfo.Parent != null)
+					{
+						parentFormattingInfo = parentFormattingInfo.Parent;
+						parentFormattingInfo.Selector = selector;
+						parentFormattingInfo.Result = null;
+						handled = await InvokeSourceExtensionsAsync(parentFormattingInfo, cancellationToken);
+						if (handled) formattingInfo.CurrentValue = parentFormattingInfo.Result;
+					}
+				}
+
+				if (!handled)
+					throw formattingInfo.FormattingException($"Could not evaluate the selector \"{selector.RawText}\"",
+						selector);
+			}
+		}
+
+		private async ValueTask<bool> InvokeSourceExtensionsAsync(FormattingInfo formattingInfo, CancellationToken cancellationToken)
+		{
+			foreach (var sourceExtension in SourceExtensions)
+			{
+				var handled = await sourceExtension.TryEvaluateSelectorAsync(formattingInfo, cancellationToken);
+				if (handled) return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Try to get a suitable formatter.
+		/// </summary>
+		/// <param name="formattingInfo"></param>
+		/// <exception cref="FormattingException"></exception>
+		private void EvaluateFormatters(FormattingInfo formattingInfo)
         {
             var handled = InvokeFormatterExtensions(formattingInfo);
             if (!handled)

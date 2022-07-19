@@ -4,6 +4,8 @@
 //
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using SmartFormat.Core.Extensions;
 using SmartFormat.Extensions;
 
@@ -22,7 +24,12 @@ namespace SmartFormat
             return Default.Format(format, args);
         }
 
-        public static string Format(IFormatProvider provider, string format, params object[] args)
+		public static ValueTask<string> FormatAsync(string format, object[] args, CancellationToken cancellationToken)
+		{
+			return Default.FormatAsync(format, args, cancellationToken);
+		}
+
+		public static string Format(IFormatProvider provider, string format, params object[] args)
         {
             return Default.Format(provider, format, args);
         }
