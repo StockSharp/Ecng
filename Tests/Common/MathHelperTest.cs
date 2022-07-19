@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Tests.Common
 {
 	using System;
+
 	using Ecng.Common;
 	using Ecng.UnitTesting;
 
@@ -15,7 +16,6 @@
 		[TestMethod]
 		public void Floor()
 		{
-
 			0.5.Floor().AssertEqual(0);
 			(-0.5).Floor().AssertEqual(-1);
 
