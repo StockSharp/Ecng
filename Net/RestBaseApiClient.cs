@@ -33,6 +33,8 @@
 		public IDictionary<string, string> PerRequestHeaders { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 		public IRestApiClientCache Cache { get; set; }
 
+		protected virtual bool PlainSingleArg => true;
+
 		protected virtual object FormatRequest(IDictionary<string, object> parameters)
 			=> parameters;
 
@@ -97,7 +99,7 @@
 
 			object body;
 
-			if (parameters.Length > 1)
+			if (parameters.Length > 1 || !PlainSingleArg)
 			{
 				var dict = new Dictionary<string, object>();
 
@@ -156,7 +158,7 @@
 
 			object body;
 
-			if (parameters.Length > 1)
+			if (parameters.Length > 1 || !PlainSingleArg)
 			{
 				var dict = new Dictionary<string, object>();
 
