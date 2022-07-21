@@ -79,7 +79,7 @@ namespace SmartFormat.Tests.OldTests
                 },
             };
 
-            const int iterations = 100000;
+            const int iterations = 10000;
             foreach (var test in tests)
             {
                 cache = null;
