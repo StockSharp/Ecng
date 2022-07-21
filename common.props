@@ -72,6 +72,7 @@
     <SystemDrawingCommonVer>5.0.3</SystemDrawingCommonVer>
     <MsExtensionsLoggingVer>6.0.1</MsExtensionsLoggingVer>
     <SysPipelinesVer>6.0.3</SysPipelinesVer>
+    <MicrosoftNetHttpHeadersVer>2.2.8</MicrosoftNetHttpHeadersVer>
 
     <CSharpVer>4.7.0</CSharpVer>
     <MsCodeVer>3.11.0</MsCodeVer>

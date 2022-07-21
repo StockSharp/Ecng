@@ -4,8 +4,9 @@
     <ProjectGuid>{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="$(CSharpVer)"/>
+    <PackageReference Include="Microsoft.CSharp" Version="$(CSharpVer)" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="$(MicrosoftAspNetWebApiClientVer)" />
+    <PackageReference Include="Microsoft.Net.Http.Headers" Version="$(MicrosoftNetHttpHeadersVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />

@@ -34,6 +34,7 @@
 		public IRestApiClientCache Cache { get; set; }
 
 		protected virtual bool PlainSingleArg => true;
+		protected virtual bool ThrowIfNonSuccessStatusCode => true;
 
 		protected virtual object FormatRequest(IDictionary<string, object> parameters)
 			=> parameters;
@@ -50,7 +51,9 @@
 			if (response is null)
 				throw new ArgumentNullException(nameof(response));
 
-			response.EnsureSuccessStatusCode();
+			if (ThrowIfNonSuccessStatusCode)
+				response.EnsureSuccessStatusCode();
+
 			return Task.CompletedTask;
 		}
 
