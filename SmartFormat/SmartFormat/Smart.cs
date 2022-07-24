@@ -74,7 +74,9 @@ namespace SmartFormat
                 (ISource) listFormatter, // ListFormatter MUST be first
                 new DictionarySource(formatter),
                 new ValueTupleSource(formatter),
+#pragma warning disable CS0618 // Type or member is obsolete
                 new SmartObjectsSource(formatter),
+#pragma warning restore CS0618 // Type or member is obsolete
                 new JsonSource(formatter),
                 new XmlSource(formatter),
                 new ReflectionSource(formatter),
