@@ -27,8 +27,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Security", "Security\Securi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serialization", "Serialization\Serialization.csproj", "{408006C6-A8EB-43F8-9D0C-5A519DFF5873}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Transactions", "Transactions\Transactions.csproj", "{8DE0D8CB-561B-43E3-B89F-02CDEE71415B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Net", "Net\Net.csproj", "{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTesting", "UnitTesting\UnitTesting.csproj", "{38C67615-BE2E-461E-BBED-5217F6DC0AFE}"
@@ -117,10 +115,6 @@ Global
 		{408006C6-A8EB-43F8-9D0C-5A519DFF5873}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{408006C6-A8EB-43F8-9D0C-5A519DFF5873}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{408006C6-A8EB-43F8-9D0C-5A519DFF5873}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8DE0D8CB-561B-43E3-B89F-02CDEE71415B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8DE0D8CB-561B-43E3-B89F-02CDEE71415B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8DE0D8CB-561B-43E3-B89F-02CDEE71415B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8DE0D8CB-561B-43E3-B89F-02CDEE71415B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}.Release|Any CPU.ActiveCfg = Release|Any CPU

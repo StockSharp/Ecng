@@ -8,6 +8,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
-    <ProjectReference Include="..\Transactions\Transactions.csproj" />
   </ItemGroup>
 </Project>
