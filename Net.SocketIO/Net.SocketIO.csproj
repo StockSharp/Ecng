@@ -8,7 +8,6 @@
     <DefineConstants>$(DefineConstants);CLIENT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonJsonVer)" />
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVer)" />
     <PackageReference Include="RestSharp" Version="$(RestSharpVer)" />
   </ItemGroup>
