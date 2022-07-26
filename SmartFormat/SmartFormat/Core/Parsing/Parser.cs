@@ -185,7 +185,7 @@ namespace SmartFormat.Core.Parsing
             // Cache properties:
             var openingBrace = _openingBrace;
             var closingBrace = _closingBrace;
-
+			var doubleBrace = Settings.DoubleBrace;
 
             var nestedDepth = 0;
             var lastI = 0;
@@ -196,7 +196,7 @@ namespace SmartFormat.Core.Parsing
                 var c = format[i];
                 if (currentPlaceholder == null)
                 {
-                    if (c == openingBrace)
+                    if (c == openingBrace && (!doubleBrace || (i > 0 && format[i - 1] == openingBrace)))
                     {
                         // Finish the last text item:
                         if (i != lastI) current.Items.Add(new LiteralText(Settings, current, lastI) {endIndex = i});
@@ -213,16 +213,23 @@ namespace SmartFormat.Core.Parsing
                             }
                         }
 
+						if (doubleBrace && current.Items.Count > 0)
+						{
+							var prev = current.Items.Last();
+							if (prev is not Placeholder)
+								prev.endIndex--;
+						}
+
                         // New placeholder:
                         nestedDepth++;
-                        currentPlaceholder = new Placeholder(Settings, current, i, nestedDepth);
+                        currentPlaceholder = new Placeholder(Settings, current, doubleBrace ? i - 1 : i, nestedDepth);
                         current.Items.Add(currentPlaceholder);
                         current.HasNested = true;
                         operatorIndex = i + 1;
                         selectorIndex = 0;
                         namedFormatterStartIndex = -1;
                     }
-                    else if (c == closingBrace)
+                    else if (c == closingBrace && (!doubleBrace || (i > 0 && format[i - 1] == closingBrace)))
                     {
                         // Finish the last text item:
                         if (i != lastI)
@@ -413,11 +420,11 @@ namespace SmartFormat.Core.Parsing
                         namedFormatterOptionsStartIndex = -1;
                         namedFormatterOptionsEndIndex = -1;
                     }
-                    else if (c == closingBrace)
+                    else if (c == closingBrace && (!doubleBrace || (i > 0 && format[i - 1] == closingBrace)))
                     {
                         // Add the selector:
                         if (i != lastI)
-                            currentPlaceholder.Selectors.Add(new Selector(Settings, format, lastI, i, operatorIndex,
+                            currentPlaceholder.Selectors.Add(new Selector(Settings, format, lastI, doubleBrace ? i - 1 : i, operatorIndex,
                                 selectorIndex));
                         else if (operatorIndex != i)
                             parsingErrors.AddIssue(current, $"'0x{Convert.ToUInt32(c):X}': " + parsingErrorText[ParsingError.TrailingOperatorsInSelector],
@@ -437,7 +444,8 @@ namespace SmartFormat.Core.Parsing
                         var isValidSelectorChar =
                             '0' <= c && c <= '9'
                             || _alphanumericSelectors && ('a' <= c && c <= 'z' || 'A' <= c && c <= 'Z')
-                            || _allowedSelectorChars.IndexOf(c) != -1;
+                            || _allowedSelectorChars.IndexOf(c) != -1
+							|| doubleBrace && (c == openingBrace || c == closingBrace);
                         if (!isValidSelectorChar)
                             parsingErrors.AddIssue(current, $"'0x{Convert.ToUInt32(c):X}': " +  parsingErrorText[ParsingError.InvalidCharactersInSelector],
                                 i, i + 1);

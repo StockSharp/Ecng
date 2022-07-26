@@ -38,6 +38,8 @@ namespace SmartFormat.Core.Settings
         /// </summary>
         public CaseSensitivityType CaseSensitivity { get; set; }
 
+		public bool DoubleBrace { get; set; }
+
         /// <summary>
         /// This setting is relevant for the <see cref="Parsing.LiteralText" />.
         /// If true (the default), character string literals are treated like in "normal" string.Format:
