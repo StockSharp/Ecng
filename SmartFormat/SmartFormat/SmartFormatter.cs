@@ -436,8 +436,15 @@ namespace SmartFormat
 		{
 			foreach (var sourceExtension in SourceExtensions)
 			{
-				var handled = await sourceExtension.TryEvaluateSelectorAsync(formattingInfo, cancellationToken);
-				if (handled) return true;
+				bool handled;
+
+				if (sourceExtension is IAsyncSource async)
+					handled = await async.TryEvaluateSelectorAsync(formattingInfo, cancellationToken);
+				else
+					handled = sourceExtension.TryEvaluateSelector(formattingInfo);
+
+				if (handled)
+					return true;
 			}
 
 			return false;

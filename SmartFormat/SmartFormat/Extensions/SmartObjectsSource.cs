@@ -13,7 +13,7 @@ namespace SmartFormat.Extensions
     /// <see cref="SmartObjectsSource"/> processes <see cref="SmartObjects"/> as arguments to the formatter.
     /// </summary>
     [Obsolete("Depreciated in favor of ValueTupleSource", false)]
-    public class SmartObjectsSource : BaseSource
+    public class SmartObjectsSource : ISource
     {
         private readonly SmartFormatter _formatter;
 
@@ -31,7 +31,7 @@ namespace SmartFormat.Extensions
         /// </summary>
         /// <param name="selectorInfo"></param>
         /// <returns>Returns true, if the current value of the <see cref="ISelectorInfo"/> is of type <see cref="SmartObjects"/>.</returns>
-        public override bool TryEvaluateSelector(ISelectorInfo selectorInfo)
+        public bool TryEvaluateSelector(ISelectorInfo selectorInfo)
         {
             if (!(selectorInfo is FormattingInfo formattingInfo)) return false;
             if (!(formattingInfo.CurrentValue is SmartObjects smartObjects)) return false;

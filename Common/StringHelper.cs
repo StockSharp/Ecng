@@ -56,13 +56,13 @@
 			return args.Length == 0 ? str : string.Format(str, args);
 		}
 
-		private class DictionarySourceEx : BaseSource
+		private class DictionarySourceEx : ISource
 		{
 			private readonly SyncObject _sync = new();
 			private readonly Dictionary<Type, Type> _genericTypes = new();
 			private readonly Dictionary<string, object> _keys = new();
 
-			public override bool TryEvaluateSelector(ISelectorInfo selectorInfo)
+			bool ISource.TryEvaluateSelector(ISelectorInfo selectorInfo)
 			{
 				if (selectorInfo.CurrentValue is not IDictionary dictionary)
 					return false;

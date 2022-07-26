@@ -33,7 +33,7 @@ namespace SmartFormat.Extensions
     /// CustomFormat("{Sizes:{Width}x{Height}|, }", {new Size(4,3), new Size(16,9)}) = "4x3, 16x9"
     /// In this example, format = "{Width}x{Height}".  Notice the nested braces.
     /// </summary>
-    public class ListFormatter : BaseSource, IFormatter
+    public class ListFormatter : ISource, IFormatter
     {
         private readonly SmartSettings _smartSettings;
 
@@ -51,7 +51,7 @@ namespace SmartFormat.Extensions
         /// CustomFormat("{Dates.2.Year}", {#1/1/2000#, #12/31/2999#, #9/9/9999#}) = "9999"
         /// The ".2" selector is used to reference Dates[2].
         /// </summary>
-		public override bool TryEvaluateSelector(ISelectorInfo selectorInfo)
+		public bool TryEvaluateSelector(ISelectorInfo selectorInfo)
         {
             var current = selectorInfo.CurrentValue;
             var selector = selectorInfo.SelectorText;

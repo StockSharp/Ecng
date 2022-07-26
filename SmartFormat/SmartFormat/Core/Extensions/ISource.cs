@@ -21,7 +21,10 @@ namespace SmartFormat.Core.Extensions
         /// </summary>
         /// <param name="selectorInfo"></param>
         bool TryEvaluateSelector(ISelectorInfo selectorInfo);
+	}
 
+	public interface IAsyncSource : ISource
+	{
 		ValueTask<bool> TryEvaluateSelectorAsync(ISelectorInfo selectorInfo, CancellationToken cancellationToken);
 	}
 }

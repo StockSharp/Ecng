@@ -12,7 +12,7 @@ using SmartFormat.Core.Extensions;
 
 namespace SmartFormat.Extensions
 {
-    public class ReflectionSource : ISource
+    public class ReflectionSource : IAsyncSource
     {
         public ReflectionSource(SmartFormatter formatter)
         {
@@ -22,7 +22,7 @@ namespace SmartFormat.Extensions
             formatter.Parser.AddOperators(".");
         }
 
-		async ValueTask<bool> ISource.TryEvaluateSelectorAsync(ISelectorInfo selectorInfo, CancellationToken cancellationToken)
+		async ValueTask<bool> IAsyncSource.TryEvaluateSelectorAsync(ISelectorInfo selectorInfo, CancellationToken cancellationToken)
 		{
 			const BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public;
 
