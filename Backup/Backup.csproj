@@ -4,12 +4,6 @@
     <ProjectGuid>{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="$(AWSSDKS3Ver)" />
-    <PackageReference Include="AWSSDK.SQS" Version="$(AWSSDKSQSVer)" />
-    <PackageReference Include="AWSSDK.SimpleNotificationService" Version="$(AWSSDKSimpleNotificationServiceVer)" />
-    <PackageReference Include="AWSSDK.Glacier" Version="$(AWSSDKGlacierVer)" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\YandexDisk\YandexDisk.csproj" />
   </ItemGroup>

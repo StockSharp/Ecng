@@ -9,6 +9,7 @@
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(MsBclAsyncInterfacesVer)" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Backup.AWS\Backup.AWS.csproj" />
     <ProjectReference Include="..\LibGit2Sharp\LibGit2Sharp.csproj" />
     <ProjectReference Include="..\Net.SocketIO\Net.SocketIO.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />
@@ -16,7 +17,6 @@
     <ProjectReference Include="..\Net\Net.csproj" />
     <ProjectReference Include="..\Security\Security.csproj" />
     <ProjectReference Include="..\Roslyn\Roslyn.csproj" />
-    <ProjectReference Include="..\Backup\Backup.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
   </ItemGroup>
