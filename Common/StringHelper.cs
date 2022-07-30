@@ -16,7 +16,6 @@
 
 	using SmartFormat;
 	using SmartFormat.Core.Extensions;
-	using SmartFormat.Extensions;
 
 	public static class StringHelper
 	{
