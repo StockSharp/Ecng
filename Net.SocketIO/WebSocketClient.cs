@@ -27,7 +27,7 @@
 
 		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new();
 
-		private readonly SynchronizedList<(byte[], WebSocketMessageType, long)> _resendCommands = new();
+		private readonly SynchronizedList<(byte[] buffer, WebSocketMessageType type, long id)> _resendCommands = new();
 
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
@@ -179,7 +179,7 @@
 						if (attempts > 0 || attempts == -1)
 						{
 							_errorLog("Reconnect failed. Attemps left {0}.", attempts);
-							ResendInterval.Sleep();
+							await Task.Delay(ResendInterval, token);
 							continue;
 						}
 
@@ -218,13 +218,7 @@
 		public int BufferSize
 		{
 			get => _bufferSize;
-			set
-			{
-				if (value <= 0)
-					throw new ArgumentOutOfRangeException();
-
-				_bufferSize = value;
-			}
+			set => _bufferSize = value <= 0 ? throw new ArgumentOutOfRangeException() : value;
 		}
 
 		private int _bufferSizeUncompress;
@@ -232,13 +226,7 @@
 		public int BufferSizeUncompress
 		{
 			get => _bufferSizeUncompress;
-			set
-			{
-				if (value <= 0)
-					throw new ArgumentOutOfRangeException();
-
-				_bufferSizeUncompress = value;
-			}
+			set => _bufferSizeUncompress = value <= 0 ? throw new ArgumentOutOfRangeException() : value;
 		}
 
 		private void OnReceive(CancellationTokenSource source)
@@ -356,7 +344,7 @@
 				try
 				{
 					if (needClose)
-						_ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, new CancellationToken()).Wait((int)DisconnectTimeout.TotalMilliseconds);
+						_ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, default).Wait((int)DisconnectTimeout.TotalMilliseconds);
 				}
 				catch (Exception ex)
 				{
@@ -409,23 +397,33 @@
 		}
 
 		public void Send(byte[] sendBuf, WebSocketMessageType type, long id = default)
+			=> AsyncContext.Run(() => SendAsync(sendBuf, type, id));
+
+		public Task SendAsync(byte[] sendBuf, WebSocketMessageType type, long id)
+			=> SendAsync(sendBuf, type, id, _source.Token);
+
+		public Task SendAsync(byte[] sendBuf, WebSocketMessageType type, long id, CancellationToken cancellationToken)
 		{
 			if (id != default)
 				_resendCommands.Add((sendBuf.ToArray(), type, id));
 
-			_ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, _source.Token).Wait();
+			return _ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken);
 		}
 
 		public void Resend()
+			=> AsyncContext.Run(() => ResendAsync());
+
+		public async ValueTask ResendAsync()
 		{
 			var resendCommands = _resendCommands.CopyAndClear();
+			var token = _source.Token;
 
 			_infoLog("Resending {0} commands.", resendCommands.Length);
 
 			foreach (var (bytes, type, id) in resendCommands)
 			{
-				Send(bytes, type, id);
-				ResendInterval.Sleep();
+				await SendAsync(bytes, type, id, token);
+				await Task.Delay(ResendInterval, token);
 			}
 		}
 
@@ -434,7 +432,7 @@
 			_infoLog("Removing {0} from resend.", id);
 
 			lock (_resendCommands.SyncRoot)
-				_resendCommands.RemoveWhere(t => t.Item3 == id);
+				_resendCommands.RemoveWhere(t => t.id == id);
 		}
 
 		protected override void DisposeManaged()
