@@ -103,6 +103,18 @@
 					));
 		}
 
+		public static ValueTask<T[]> ToArrayAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
+		{
+			if (source is null)
+				throw new ArgumentNullException(nameof(source));
+
+			return source.Provider.Execute<ValueTask<T[]>>(Expression.Call(null, GetMethodInfo(ToArrayAsync, source, cancellationToken), new Expression[]
+			{
+				source.Expression,
+				Expression.Constant(cancellationToken)
+			}));
+		}
+
 		#region Helper methods to obtain MethodInfo in a safe way
 
 #pragma warning disable IDE0051 // Remove unused private members
