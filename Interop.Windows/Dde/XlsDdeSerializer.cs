@@ -78,7 +78,7 @@
 						case DataTypes.String:
 							var str = (string)cell;
 							stream.WriteEx((byte)str.Length);
-							stream.WriteRaw(Encoding.Default.GetBytes(str));
+							stream.WriteRaw(str.Default());
 							break;
 						case DataTypes.Bool:
 							stream.WriteEx((short)2);

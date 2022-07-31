@@ -963,6 +963,12 @@
 		public static IEnumerable<string> Duplicates(this IEnumerable<string> items)
 			=> items.GroupBy(s => s, s => StringComparer.InvariantCultureIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key);
 
+		public static byte[] Default(this string v) => Encoding.Default.GetBytes(v);
+		public static string Default(this byte[] v) => Default(v, 0, v.Length);
+		public static string Default(this byte[] v, int index, int count) => Encoding.Default.GetString(v, index, count);
+		[CLSCompliant(false)]
+		public static string Default(this byte[] v, uint count, int index = 0) => Default(v, index, (int)count);
+
 		public static byte[] ASCII(this string v) => Encoding.ASCII.GetBytes(v);
 		public static string ASCII(this byte[] v) => ASCII(v, 0, v.Length);
 		public static string ASCII(this byte[] v, int index, int count) => Encoding.ASCII.GetString(v, index, count);

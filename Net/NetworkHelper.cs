@@ -322,7 +322,7 @@ namespace Ecng.Net
 
 			using var md5Hasher = MD5.Create();
 
-			return md5Hasher.ComputeHash(Encoding.Default.GetBytes(email)).Digest().ToLowerInvariant();
+			return md5Hasher.ComputeHash(email.Default()).Digest().ToLowerInvariant();
 		}
 
 		public static string GetGravatarUrl(this string token, int size)
