@@ -124,9 +124,9 @@
 		private Action<ClientWebSocket> _init;
 
 		public void Connect(string url, bool immediateConnect, Action<ClientWebSocket> init = null)
-			=> AsyncContext.Run(() => ConnectAsync(url, immediateConnect, init));
+			=> ThreadingHelper.Run(() => ConnectAsync(url, immediateConnect, init));
 
-		public Task ConnectAsync(string url, bool immediateConnect, Action<ClientWebSocket> init = null, CancellationToken cancellationToken = default)
+		public ValueTask ConnectAsync(string url, bool immediateConnect, Action<ClientWebSocket> init = null, CancellationToken cancellationToken = default)
 		{
 			_url = new Uri(url);
 			_immediateConnect = immediateConnect;
@@ -144,7 +144,7 @@
 			return ConnectImpl(source, cancellationToken == default ? source.Token : cancellationToken, 0);
 		}
 
-		private async Task ConnectImpl(CancellationTokenSource source, CancellationToken token, int attempts)
+		private async ValueTask ConnectImpl(CancellationTokenSource source, CancellationToken token, int attempts)
 		{
 			if (source is null)
 				throw new ArgumentNullException(nameof(source));
@@ -370,7 +370,7 @@
 
 					try
 					{
-						AsyncContext.Run(() => ConnectImpl(source, token, attempts));
+						ThreadingHelper.Run(() => ConnectImpl(source, token, attempts));
 					}
 					catch (OperationCanceledException)
 					{
@@ -384,34 +384,39 @@
 		}
 
 		public void Send(object obj, long id = default)
+			=> ThreadingHelper.Run(() => SendAsync(obj, id));
+
+		public ValueTask SendAsync(object obj, long id)
+			=> SendAsync(obj, id, _source.Token);
+
+		public ValueTask SendAsync(object obj, long id, CancellationToken cancellationToken)
 		{
 			if (obj is not byte[] sendBuf)
 			{
 				var json = obj as string ?? JsonConvert.SerializeObject(obj);
 				_verboseLog("Send: '{0}'", json);
 
-				sendBuf = Encoding.UTF8.GetBytes(json);
+				sendBuf = json.UTF8();
 			}
 
-			Send(sendBuf, WebSocketMessageType.Text, id);
+			return SendAsync(sendBuf, WebSocketMessageType.Text, id, cancellationToken);
 		}
 
 		public void Send(byte[] sendBuf, WebSocketMessageType type, long id = default)
-			=> AsyncContext.Run(() => SendAsync(sendBuf, type, id));
+			=> ThreadingHelper.Run(() => SendAsync(sendBuf, type, id));
 
-		public Task SendAsync(byte[] sendBuf, WebSocketMessageType type, long id)
+		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, long id)
 			=> SendAsync(sendBuf, type, id, _source.Token);
 
-		public Task SendAsync(byte[] sendBuf, WebSocketMessageType type, long id, CancellationToken cancellationToken)
+		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, long id, CancellationToken cancellationToken)
 		{
 			if (id != default)
 				_resendCommands.Add((sendBuf.ToArray(), type, id));
 
-			return _ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken);
+			return _ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken).AsValueTask();
 		}
 
-		public void Resend()
-			=> AsyncContext.Run(() => ResendAsync());
+		public void Resend() => ThreadingHelper.Run(() => ResendAsync());
 
 		public async ValueTask ResendAsync()
 		{
