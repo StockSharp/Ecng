@@ -17,8 +17,6 @@
 
 	using Newtonsoft.Json;
 
-	using Nito.AsyncEx;
-
 	public class WebSocketClient : Disposable
 	{
 		private ClientWebSocket _ws;
@@ -26,8 +24,6 @@
 		private bool _expectedDisconnect;
 
 		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new();
-
-		private readonly SynchronizedList<(byte[] buffer, WebSocketMessageType type, long id)> _resendCommands = new();
 
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
@@ -131,8 +127,6 @@
 			_url = new Uri(url);
 			_immediateConnect = immediateConnect;
 			_init = init;
-
-			_resendCommands.Clear();
 
 			var source = new CancellationTokenSource();
 
@@ -383,13 +377,12 @@
 			}
 		}
 
-		public void Send(object obj, long id = default)
-			=> ThreadingHelper.Run(() => SendAsync(obj, id));
+		public void Send(object obj)
+			=> ThreadingHelper.Run(() => SendAsync(obj));
 
-		public ValueTask SendAsync(object obj, long id)
-			=> SendAsync(obj, id, _source.Token);
+		public ValueTask SendAsync(object obj) => SendAsync(obj, _source.Token);
 
-		public ValueTask SendAsync(object obj, long id, CancellationToken cancellationToken)
+		public ValueTask SendAsync(object obj, CancellationToken cancellationToken)
 		{
 			if (obj is not byte[] sendBuf)
 			{
@@ -399,46 +392,17 @@
 				sendBuf = json.UTF8();
 			}
 
-			return SendAsync(sendBuf, WebSocketMessageType.Text, id, cancellationToken);
+			return SendAsync(sendBuf, WebSocketMessageType.Text, cancellationToken);
 		}
 
-		public void Send(byte[] sendBuf, WebSocketMessageType type, long id = default)
-			=> ThreadingHelper.Run(() => SendAsync(sendBuf, type, id));
+		public void Send(byte[] sendBuf, WebSocketMessageType type)
+			=> ThreadingHelper.Run(() => SendAsync(sendBuf, type));
 
-		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, long id)
-			=> SendAsync(sendBuf, type, id, _source.Token);
+		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type)
+			=> SendAsync(sendBuf, type, _source.Token);
 
-		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, long id, CancellationToken cancellationToken)
-		{
-			if (id != default)
-				_resendCommands.Add((sendBuf.ToArray(), type, id));
-
-			return _ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken).AsValueTask();
-		}
-
-		public void Resend() => ThreadingHelper.Run(() => ResendAsync());
-
-		public async ValueTask ResendAsync()
-		{
-			var resendCommands = _resendCommands.CopyAndClear();
-			var token = _source.Token;
-
-			_infoLog("Resending {0} commands.", resendCommands.Length);
-
-			foreach (var (bytes, type, id) in resendCommands)
-			{
-				await SendAsync(bytes, type, id, token);
-				await Task.Delay(ResendInterval, token);
-			}
-		}
-
-		public void RemoveResend(long id)
-		{
-			_infoLog("Removing {0} from resend.", id);
-
-			lock (_resendCommands.SyncRoot)
-				_resendCommands.RemoveWhere(t => t.id == id);
-		}
+		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken)
+			=> _ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken).AsValueTask();
 
 		protected override void DisposeManaged()
 		{
