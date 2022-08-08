@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
+  <PropertyGroup>
+    <ProjectGuid>{45C5AEFF-26EE-4B4D-B758-C717B914351D}</ProjectGuid>
+  </PropertyGroup>
+	
+  <ItemGroup>
+    <PackageReference Include="NuGet.Packaging" Version="$(NuGetApiVer)" />
+  </ItemGroup>
+</Project>

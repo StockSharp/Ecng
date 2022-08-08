@@ -80,6 +80,7 @@
     <MsTestVer>2.2.7</MsTestVer>
     <MsTestSdkVer>17.0.0</MsTestSdkVer>
     <MsBclAsyncInterfacesVer>5.0.0</MsBclAsyncInterfacesVer>
+    <NuGetApiVer>6.2.0</NuGetApiVer>
 
     <MessagePackVer>2.3.85</MessagePackVer>
     <MessagePipeVer>1.7.4</MessagePipeVer>
