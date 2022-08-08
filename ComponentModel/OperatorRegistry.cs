@@ -102,5 +102,21 @@ namespace Ecng.ComponentModel
 
 			_operators.Remove(typeof(T));
 		}
+
+		public static long? ThrowIfNegative(this long? value, string name)
+		{
+			if (value is null)
+				return null;
+
+			return value.Value.ThrowIfNegative(name);
+		}
+
+		public static long ThrowIfNegative(this long value, string name)
+		{
+			if (value < 0)
+				throw new ArgumentOutOfRangeException(name, value, "Invalid value.");
+
+			return value;
+		}
 	}
 }
