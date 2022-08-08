@@ -276,6 +276,9 @@
 			return tuple;
 		}
 
+		private const string _typeKey = "type";
+		private const string _valueKey = "value";
+
 		public static MemberInfo ToMember(this SettingsStorage storage)
 			=> storage.ToMember<MemberInfo>();
 
@@ -285,13 +288,13 @@
 			if (storage is null)
 				throw new ArgumentNullException(nameof(storage));
 
-			var type = storage.GetValue<Type>("type");
-			var member = storage.GetValue("name", string.Empty);
+			var type = storage.GetValue<Type>(_typeKey);
+			var member = storage.GetValue(_valueKey, storage.GetValue("name", string.Empty));
 
 			return member.IsEmpty() ? type.To<T>() : type.GetMember<T>(member);
 		}
 
-		public static SettingsStorage ToStorage<T>(this T member, bool isAssemblyQualifiedName)
+		public static SettingsStorage ToStorage<T>(this T member, bool isAssemblyQualifiedName = default)
 			where T : MemberInfo
 		{
 			if (member is null)
@@ -299,10 +302,10 @@
 
 			var storage = new SettingsStorage();
 
-			storage.Set("type", (member as Type ?? member.ReflectedType).GetTypeName(isAssemblyQualifiedName));
+			storage.Set(_typeKey, (member as Type ?? member.ReflectedType).GetTypeName(isAssemblyQualifiedName));
 
 			if (member.ReflectedType != null)
-				storage.Set("name", member.Name);
+				storage.Set(_valueKey, member.Name);
 			
 			return storage;
 		}
@@ -314,6 +317,25 @@
 
 			persistable.Load(storage);
 			return true;
+		}
+
+		public static SettingsStorage ToStorage(this object value, bool isAssemblyQualifiedName = default)
+			=> new SettingsStorage()
+				.Set(_typeKey, value.CheckOnNull().GetType().GetTypeName(isAssemblyQualifiedName))
+				.Set(_valueKey, value.To<string>())
+			;
+
+		public static object FromStorage(this SettingsStorage storage)
+		{
+			if (storage is null)
+				throw new ArgumentNullException(nameof(storage));
+
+			var value = storage.GetValue<string>(_valueKey).To(storage.GetValue<Type>(_typeKey));
+
+			if (value is DateTime dt)
+				value = dt.ToUniversalTime();
+
+			return value;
 		}
 	}
 }

@@ -1069,5 +1069,19 @@
 		{
 			((JToken)null).DeserializeObject<CurrencyTypes>();
 		}
+
+		[TestMethod]
+		public void Object2Storage()
+		{
+			static void Do<T>(T v) => v.ToStorage().FromStorage().AssertEqual(v);
+
+			Do("123");
+			Do(123);
+			Do(123L);
+			Do(DateTime.UtcNow);
+			Do(DateTimeOffset.UtcNow);
+			Do(TimeSpan.FromSeconds(123));
+			Do(new Uri("https://google.com"));
+		}
 	}
 }
