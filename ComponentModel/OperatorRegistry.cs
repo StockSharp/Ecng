@@ -64,7 +64,7 @@ namespace Ecng.ComponentModel
 			_operators.Add(typeof(T), @operator);
 		}
 
-		public static IOperator GetOperator(Type type)
+		public static IOperator GetOperator(this Type type)
 		{
 			if (!_operators.TryGetValue(type, out var @operator))
 			{
