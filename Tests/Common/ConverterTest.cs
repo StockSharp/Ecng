@@ -184,5 +184,18 @@ namespace Ecng.Tests.Common
 			loopback.AssertEqual(loopback.To<long>().To<IPAddress>());
 			loopback.AssertEqual(loopback.To<string>().To<IPAddress>());
 		}
+
+		[TestMethod]
+		public void DateTimeConvert()
+		{
+			static void Do<T>(T v)
+			{
+				v.To<long>().To<T>().AssertEqual(v);
+				//v.To<string>().To<T>().AssertEqual(v);
+			}
+
+			Do(DateTime.UtcNow);
+			Do(DateTimeOffset.UtcNow);
+		}
 	}
 }
