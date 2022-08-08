@@ -62,7 +62,7 @@
 				throw new ArgumentNullException(nameof(persistable));
 
 			return new SettingsStorage()
-				.Set("type", persistable.GetType().GetTypeName(isAssemblyQualifiedName))
+				.Set("type", persistable.GetType().GetTypeAsString(isAssemblyQualifiedName))
 				.Set("settings", persistable.Save());
 		}
 
@@ -302,7 +302,7 @@
 
 			var storage = new SettingsStorage();
 
-			storage.Set(_typeKey, (member as Type ?? member.ReflectedType).GetTypeName(isAssemblyQualifiedName));
+			storage.Set(_typeKey, (member as Type ?? member.ReflectedType).GetTypeAsString(isAssemblyQualifiedName));
 
 			if (member.ReflectedType != null)
 				storage.Set(_valueKey, member.Name);
@@ -321,7 +321,7 @@
 
 		public static SettingsStorage ToStorage(this object value, bool isAssemblyQualifiedName = default)
 			=> new SettingsStorage()
-				.Set(_typeKey, value.CheckOnNull().GetType().GetTypeName(isAssemblyQualifiedName))
+				.Set(_typeKey, value.CheckOnNull().GetType().GetTypeAsString(isAssemblyQualifiedName))
 				.Set(_valueKey, value.To<string>())
 			;
 
