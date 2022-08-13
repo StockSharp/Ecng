@@ -17,15 +17,15 @@ namespace Ecng.Backup.Yandex
 	/// </summary>
 	public class YandexDiskService : Disposable, IBackupService
 	{
-		private readonly Func<Tuple<string, bool>> _authorize;
+		private readonly IYandexDiskOAuthProvider _authProvider;
 		private DiskSdkClient _client;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="YandexDiskService"/>.
 		/// </summary>
-		public YandexDiskService(Func<Tuple<string, bool>> authFunc)
+		public YandexDiskService(IYandexDiskOAuthProvider authProvider)
 		{
-			_authorize = authFunc ?? throw new ArgumentNullException(nameof(authFunc));
+			_authProvider = authProvider ?? throw new ArgumentNullException(nameof(authProvider));
 		}
 
 		bool IBackupService.CanFolders => true;
@@ -50,19 +50,15 @@ namespace Ecng.Backup.Yandex
 			cancelled = false;
 
 			if (_client != null)
-			{
 				return handler(_client);
-			}
 
-			var tuple = _authorize();
+			var token = _authProvider.GetToken();
 
-			if (!tuple.Item2)
-			{
-				_client = new DiskSdkClient(tuple.Item1);
-				return handler(_client);
-			}
+			if (token.IsEmpty())
+				throw new InvalidOperationException("Not authorized");
 
-			throw new InvalidOperationException("Not authorized");
+			_client = new DiskSdkClient(token);
+			return handler(_client);
 		}
 
 		private static string GetPath(BackupEntry entry)
