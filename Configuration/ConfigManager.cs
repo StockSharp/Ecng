@@ -29,7 +29,6 @@
 			catch (Exception ex)
 			{
 				Trace.WriteLine(ex);
-				Console.WriteLine(ex);
 			}
 
 			if (InnerConfig != null)
@@ -77,25 +76,17 @@
 
 		public static T GetSection<T>()
 			where T : ConfigurationSection
-		{
-			return (T)GetSection(typeof(T));
-		}
+			=> (T)GetSection(typeof(T));
 
 		public static ConfigurationSection GetSection(Type sectionType)
-		{
-			return _sections.ContainsKey(sectionType) ? _sections[sectionType] : null;
-		}
+			=> _sections.ContainsKey(sectionType) ? _sections[sectionType] : null;
 
 		public static T GetSection<T>(string sectionName)
 			where T : ConfigurationSection
-		{
-			return (T)GetSection(sectionName);
-		}
+			=> (T)GetSection(sectionName);
 
 		public static ConfigurationSection GetSection(string sectionName)
-		{
-			return InnerConfig.GetSection(sectionName);
-		}
+			=> InnerConfig.GetSection(sectionName);
 
 		#endregion
 
@@ -103,25 +94,19 @@
 
 		public static T GetGroup<T>()
 			where T : ConfigurationSectionGroup
-		{
-			return (T)GetGroup(typeof(T));
-		}
+			=> (T)GetGroup(typeof(T));
 
 		public static ConfigurationSectionGroup GetGroup(Type sectionGroupType)
-		{
-			return _sectionGroups.ContainsKey(sectionGroupType) ? _sectionGroups[sectionGroupType] : null;
-		}
+			=> _sectionGroups.ContainsKey(sectionGroupType)
+				? _sectionGroups[sectionGroupType]
+				: null;
 
 		public static T GetGroup<T>(string sectionName)
 			where T : ConfigurationSectionGroup
-		{
-			return (T)GetGroup(sectionName);
-		}
+			=> (T)GetGroup(sectionName);
 
 		public static ConfigurationSectionGroup GetGroup(string sectionName)
-		{
-			return InnerConfig.GetSectionGroup(sectionName);
-		}
+			=> InnerConfig.GetSectionGroup(sectionName);
 
 		#endregion
 
@@ -134,19 +119,9 @@
 		/// <returns>Value.</returns>
 		public static T TryGet<T>(string name, T defaultValue = default)
 		{
-			try
-			{
-				var str = AppSettings.Get(name);
+			var str = AppSettings.Get(name);
 
-				if (!str.IsEmpty())
-					return str.To<T>();
-			}
-			catch (Exception ex)
-			{
-				Trace.WriteLine(ex);
-			}
-
-			return defaultValue;
+			return str.IsEmpty() ? defaultValue : str.To<T>();
 		}
 
 		public static NameValueCollection AppSettings => ConfigurationManager.AppSettings;
@@ -193,34 +168,27 @@
 		}
 
 		public static void RegisterService<T>(T service)
-		{
-			RegisterService(typeof(T).AssemblyQualifiedName, service);
-		}
+			=> RegisterService(typeof(T).AssemblyQualifiedName, service);
 
 		public static void RegisterService<T>(string name, T service)
 		{
 			lock (_sync)
-			{
 				GetDict<T>()[name] = service;
-			}
 
 			RaiseServiceRegistered(typeof(T), service);
 		}
 
-		public static bool IsServiceRegistered<T>() => IsServiceRegistered<T>(typeof(T).AssemblyQualifiedName);
+		public static bool IsServiceRegistered<T>()
+			=> IsServiceRegistered<T>(typeof(T).AssemblyQualifiedName);
 
 		public static bool IsServiceRegistered<T>(string name)
 		{
 			lock (_sync)
-			{
 				return GetDict<T>().ContainsKey(name);
-			}
 		}
 
 		public static T TryGetService<T>()
-		{
-			return IsServiceRegistered<T>() ? GetService<T>() : default;
-		}
+			=> IsServiceRegistered<T>() ? GetService<T>() : default;
 
 		public static void TryRegisterService<T>(T service)
 		{
@@ -230,39 +198,26 @@
 			RegisterService(service);
 		}
 
-		public static T GetService<T>() => GetService<T>(typeof(T).AssemblyQualifiedName);
+		public static T GetService<T>()
+			=> GetService<T>(typeof(T).AssemblyQualifiedName);
 
 		public static T GetService<T>(string name)
 		{
-			object service = null;
-
 			lock (_sync)
 			{
 				var dict = GetDict<T>();
 
-				if (dict.TryGetValue(name, out service) == true)
+				if (dict.TryGetValue(name, out var service))
 					return (T)service;
-
-				if (service != null)
-				{
-					// service T can register itself in the constructor
-					if (!dict.ContainsKey(name))
-						dict.Add(name, service);
-				}
 			}
 
-			//(service as IDelayInitService)?.Init();
-			return (T)service;
+			return default;
 		}
 
 		public static IEnumerable<T> GetServices<T>()
 		{
-			IEnumerable<T> services;
-
 			lock (_sync)
-				services = GetDict<T>().Values.Cast<T>().ToArray();
-
-			return services.Distinct();
+				return GetDict<T>().Values.Cast<T>().Distinct().ToArray();
 		}
 	}
 }
