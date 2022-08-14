@@ -41,7 +41,8 @@
 		public static void Verify(this DatabaseConnectionPair pair)
 		{
 			using var db = pair.CreateConnection();
-			db.Connection.Open();
+			using var conn = db.DataProvider.CreateConnection(db.ConnectionString);
+			conn.Open();
 		}
 	}
 }
