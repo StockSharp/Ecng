@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
+  <PropertyGroup>
+    <ProjectGuid>{96D8E6D9-4744-4CA1-9000-24C0F80C5DDC}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Backup\Backup.csproj" />
+    <ProjectReference Include="..\Reflection\Reflection.csproj" />
+    <ProjectReference Include="..\YandexDisk\YandexDisk.csproj" />
+  </ItemGroup>
+</Project>

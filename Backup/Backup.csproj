@@ -3,8 +3,4 @@
   <PropertyGroup>
     <ProjectGuid>{A0809B1A-FF83-4DDF-9186-A9BD4D410FE8}</ProjectGuid>
   </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Serialization\Serialization.csproj" />
-    <ProjectReference Include="..\YandexDisk\YandexDisk.csproj" />
-  </ItemGroup>
 </Project>
