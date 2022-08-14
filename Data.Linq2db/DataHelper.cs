@@ -12,7 +12,10 @@
 	public static class DataHelper
 	{
 		/// <summary>
+		/// Create connection.
 		/// </summary>
+		/// <param name="pair"><see cref="DatabaseConnectionPair"/>.</param>
+		/// <returns><see cref="DataConnection"/>.</returns>
 		public static DataConnection CreateConnection(this DatabaseConnectionPair pair)
 		{
 			if (pair is null)

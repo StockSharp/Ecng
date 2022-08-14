@@ -1,7 +1,6 @@
 namespace Ecng.Data
 {
 	using System;
-	using System.Linq;
 
 	using Ecng.ComponentModel;
 	using Ecng.Serialization;
@@ -11,7 +10,7 @@ namespace Ecng.Data
 	/// </summary>
 	public class DatabaseConnectionPair : NotifiableObject, IPersistable
 	{
-		private Type _provider = DatabaseProviderRegistry.Providers.FirstOrDefault();
+		private Type _provider;
 
 		/// <summary>
 		/// Provider type.
@@ -44,7 +43,7 @@ namespace Ecng.Data
 		/// <summary>
 		/// Connection title.
 		/// </summary>
-		public string Title => $"({Provider.Name}) {ConnectionString}";
+		public string Title => $"({Provider?.Name}) {ConnectionString}";
 
 		private void UpdateTitle()
 		{

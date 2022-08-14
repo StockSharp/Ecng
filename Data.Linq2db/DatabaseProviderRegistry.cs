@@ -15,7 +15,12 @@
 
 		public static void AddProvider<TProvider>(Func<TProvider> createProvider)
 			where TProvider : IDataProvider
-			=> AddProvider(typeof(TProvider), () => createProvider());
+		{
+			if (createProvider is null)
+				throw new ArgumentNullException(nameof(createProvider));
+
+			AddProvider(typeof(TProvider), () => createProvider());
+		}
 
 		public static void AddProvider(Type provider, Func<IDataProvider> createProvider)
 		{
