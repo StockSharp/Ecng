@@ -1,4 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="common_versions.props" />
+
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
 
@@ -40,59 +42,8 @@
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <IsSourcesAllow>true</IsSourcesAllow>
     <LangVersion>default</LangVersion>
-
-    <AWSSDKS3Ver>3.7.3.24</AWSSDKS3Ver>
-    <AWSSDKSQSVer>3.7.1.34</AWSSDKSQSVer>
-    <AWSSDKSimpleNotificationServiceVer>3.7.2.62</AWSSDKSimpleNotificationServiceVer>
-    <AWSSDKGlacierVer>3.7.0.91</AWSSDKGlacierVer>
-
-    <MicrosoftWindowsCompatibilityVer>5.0.2</MicrosoftWindowsCompatibilityVer>
-    <MicrosoftAspNetWebApiClientVer>5.2.7</MicrosoftAspNetWebApiClientVer>
-
-    <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
-    <EcngSystemComponentModelAnnotationsVer>5.0.0</EcngSystemComponentModelAnnotationsVer>
-
-    <SystemCodeDomVer>5.0.0</SystemCodeDomVer>
-    <SystemCollectionsImmutableVer>5.0.0</SystemCollectionsImmutableVer>
-    <SystemConfigurationConfigurationManagerVer>5.0.0</SystemConfigurationConfigurationManagerVer>
-    <SystemIOCompressionVer>4.3.0</SystemIOCompressionVer>
-    <SystemManagementVer>5.0.0</SystemManagementVer>
-    <SystemReflectionEmitVer>4.7.0</SystemReflectionEmitVer>
-    <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
-    <SystemSecurityCryptographyProtectedDataVer>5.0.0</SystemSecurityCryptographyProtectedDataVer>
-    <SystemSecurityPermissionsVer>5.0.0</SystemSecurityPermissionsVer>
-    <SystemTextEncodingCodePagesVer>5.0.0</SystemTextEncodingCodePagesVer>
-    <SystemResourcesExtensionsVer>5.0.0</SystemResourcesExtensionsVer>
-    <SystemTextJsonVer>4.7.2</SystemTextJsonVer>
-    <SystemValueTupleVer>4.5.0</SystemValueTupleVer>
-    <MsSourceLinkGitHubVer>1.0.0</MsSourceLinkGitHubVer>
-    <NUnitVer>3.12.0</NUnitVer>
-    <NUnit3TestAdapterVer>3.17.0</NUnit3TestAdapterVer>
-    <FluentAssertionsVer>5.10.3</FluentAssertionsVer>
-    <SystemDrawingCommonVer>5.0.3</SystemDrawingCommonVer>
-    <MsExtensionsLoggingVer>6.0.1</MsExtensionsLoggingVer>
-    <SysPipelinesVer>6.0.3</SysPipelinesVer>
-    <MicrosoftNetHttpHeadersVer>2.2.8</MicrosoftNetHttpHeadersVer>
-
-    <CSharpVer>4.7.0</CSharpVer>
-    <MsCodeVer>3.11.0</MsCodeVer>
-    <NewtonJsonVer>13.0.1</NewtonJsonVer>
-    <MsTestVer>2.2.7</MsTestVer>
-    <MsTestSdkVer>17.0.0</MsTestSdkVer>
-    <MsBclAsyncInterfacesVer>5.0.0</MsBclAsyncInterfacesVer>
-    <NuGetApiVer>6.2.0</NuGetApiVer>
-
-    <MessagePackVer>2.3.85</MessagePackVer>
-    <MessagePipeVer>1.7.4</MessagePipeVer>
-
-    <MoreLinqVer>3.3.2</MoreLinqVer>
-    <RestSharpVer>106.13.0</RestSharpVer>
-    <NDdeVer>3.1.0</NDdeVer>
-    <ILPackVer>0.1.7</ILPackVer>
-    <linq2dbVer>3.5.1</linq2dbVer>
-    <NitoVer>5.1.2</NitoVer>
-    <DXVer>1.0.5</DXVer>
   </PropertyGroup>
+
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
   </PropertyGroup>
