@@ -70,9 +70,14 @@
 			}
 
 			var currCulture = CultureInfo.CurrentCulture.Name;
-			var currLang = currCulture.SplitBySep("-").First().ToLowerInvariant();
-			if (LangCodes.GetId(currLang) >= 0)
-				ActiveLanguage = currLang;
+
+			if (!currCulture.IsEmpty() && currCulture.Contains('-'))
+			{
+				currCulture = currCulture.SplitBySep("-").First().ToLowerInvariant();
+
+				if (LangCodes.GetId(currCulture) >= 0)
+					ActiveLanguage = currCulture;
+			}
 		}
 
 		public string GetString(string resourceId, string language = null)
