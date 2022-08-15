@@ -41,7 +41,7 @@
     <RestSharpVer>106.13.0</RestSharpVer>
     <NDdeVer>3.1.0</NDdeVer>
     <ILPackVer>0.1.7</ILPackVer>
-    <linq2dbVer>3.5.1</linq2dbVer>
+    <linq2dbVer>4.1.1</linq2dbVer>
     <NitoVer>5.1.2</NitoVer>
     <DXVer>1.0.5</DXVer>
   </PropertyGroup>

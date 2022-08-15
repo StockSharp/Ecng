@@ -10,12 +10,12 @@ namespace Ecng.Data
 	/// </summary>
 	public class DatabaseConnectionPair : NotifiableObject, IPersistable
 	{
-		private Type _provider;
+		private string _provider;
 
 		/// <summary>
 		/// Provider type.
 		/// </summary>
-		public Type Provider
+		public string Provider
 		{
 			get => _provider;
 			set
@@ -43,7 +43,7 @@ namespace Ecng.Data
 		/// <summary>
 		/// Connection title.
 		/// </summary>
-		public string Title => $"({Provider?.Name}) {ConnectionString}";
+		public string Title => $"({Provider}) {ConnectionString}";
 
 		private void UpdateTitle()
 		{
@@ -55,7 +55,7 @@ namespace Ecng.Data
 
 		void IPersistable.Load(SettingsStorage storage)
 		{
-			Provider = storage.GetValue<Type>(nameof(Provider));
+			Provider = storage.GetValue<string>(nameof(Provider));
 			ConnectionString = storage.GetValue<string>(nameof(ConnectionString));
 		}
 

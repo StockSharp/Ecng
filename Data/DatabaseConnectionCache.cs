@@ -42,9 +42,9 @@ namespace Ecng.Data
 		/// <param name="provider">Провайдер баз данных.</param>
 		/// <param name="connectionString">Строка подключения.</param>
 		/// <returns>Подключение к базе данных.</returns>
-		public DatabaseConnectionPair GetConnection(Type provider, string connectionString)
+		public DatabaseConnectionPair GetConnection(string provider, string connectionString)
 		{
-			if (provider is null)
+			if (provider.IsEmpty())
 				throw new ArgumentNullException(nameof(provider));
 
 			if (connectionString.IsEmpty())

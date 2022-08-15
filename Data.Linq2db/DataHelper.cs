@@ -23,7 +23,7 @@
 
 			var provider = pair.Provider;
 
-			if (provider is null)
+			if (provider.IsEmpty())
 				throw new InvalidOperationException("Provider is not set.");
 
 			var connStr = pair.ConnectionString;
@@ -31,7 +31,7 @@
 			if (connStr.IsEmpty())
 				throw new InvalidOperationException("Cannot create a connection, because some data was not entered.");
 
-			return new DataConnection(DatabaseProviderRegistry.CreateProvider(provider), connStr);
+			return new DataConnection(provider, connStr);
 		}
 
 		/// <summary>
