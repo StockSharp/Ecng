@@ -24,8 +24,8 @@
     <SystemSecurityPermissionsVer>5.0.0</SystemSecurityPermissionsVer>
     <SystemTextEncodingCodePagesVer>5.0.0</SystemTextEncodingCodePagesVer>
     <SystemTextJsonVer>4.7.2</SystemTextJsonVer>
-    <NUnitVer>3.12.0</NUnitVer>
-    <NUnit3TestAdapterVer>3.17.0</NUnit3TestAdapterVer>
+    <NUnitVer>3.13.3</NUnitVer>
+    <NUnit3TestAdapterVer>4.2.1</NUnit3TestAdapterVer>
     <FluentAssertionsVer>5.10.3</FluentAssertionsVer>
     <SystemDrawingCommonVer>5.0.3</SystemDrawingCommonVer>
     <MsExtensionsLoggingVer>6.0.1</MsExtensionsLoggingVer>
