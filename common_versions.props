@@ -23,10 +23,7 @@
     <SystemSecurityCryptographyProtectedDataVer>5.0.0</SystemSecurityCryptographyProtectedDataVer>
     <SystemSecurityPermissionsVer>5.0.0</SystemSecurityPermissionsVer>
     <SystemTextEncodingCodePagesVer>5.0.0</SystemTextEncodingCodePagesVer>
-    <SystemResourcesExtensionsVer>5.0.0</SystemResourcesExtensionsVer>
     <SystemTextJsonVer>4.7.2</SystemTextJsonVer>
-    <SystemValueTupleVer>4.5.0</SystemValueTupleVer>
-    <MsSourceLinkGitHubVer>1.0.0</MsSourceLinkGitHubVer>
     <NUnitVer>3.12.0</NUnitVer>
     <NUnit3TestAdapterVer>3.17.0</NUnit3TestAdapterVer>
     <FluentAssertionsVer>5.10.3</FluentAssertionsVer>
