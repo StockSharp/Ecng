@@ -16,12 +16,6 @@ namespace Ecng.Data
 		private readonly CachedSynchronizedSet<DatabaseConnectionPair> _connections = new();
 
 		/// <summary>
-		/// </summary>
-		public DatabaseConnectionCache()
-		{
-		}
-
-		/// <summary>
 		/// Список всех подключений.
 		/// </summary>
 		public IEnumerable<DatabaseConnectionPair> Connections => _connections.Cache;
@@ -42,7 +36,7 @@ namespace Ecng.Data
 		/// <param name="provider">Провайдер баз данных.</param>
 		/// <param name="connectionString">Строка подключения.</param>
 		/// <returns>Подключение к базе данных.</returns>
-		public DatabaseConnectionPair GetConnection(string provider, string connectionString)
+		public DatabaseConnectionPair GetOrAddCache(string provider, string connectionString)
 		{
 			if (provider.IsEmpty())
 				throw new ArgumentNullException(nameof(provider));
@@ -50,28 +44,26 @@ namespace Ecng.Data
 			if (connectionString.IsEmpty())
 				throw new ArgumentNullException(nameof(connectionString));
 
-			var connection = Connections.FirstOrDefault(p => p.Provider == provider && p.ConnectionString.EqualsIgnoreCase(connectionString));
-
-			if (connection is null)
-			{
-				connection = new DatabaseConnectionPair { Provider = provider, ConnectionString = connectionString };
-				AddConnection(connection);
-			}
-
-			return connection;
+			return GetOrAddCache(new() { Provider = provider, ConnectionString = connectionString });
 		}
 
-		/// <summary>
-		/// Добавить новое подключение к базе данных.
-		/// </summary>
-		/// <param name="connection">Новое подключение.</param>
-		private void AddConnection(DatabaseConnectionPair connection)
+		public DatabaseConnectionPair GetOrAddCache(DatabaseConnectionPair pair)
 		{
-			if (connection is null)
-				throw new ArgumentNullException(nameof(connection));
+			if (pair is null)
+				throw new ArgumentNullException(nameof(pair));
 
-			_connections.Add(connection);
-			ConnectionCreated?.Invoke(connection);
+			lock (_connections.SyncRoot)
+			{
+				var connection = _connections.FirstOrDefault(p => p.Provider == pair.Provider && p.ConnectionString.EqualsIgnoreCase(pair.ConnectionString));
+
+				if (connection is not null)
+					return connection;
+
+				_connections.Add(pair);
+			}
+
+			ConnectionCreated?.Invoke(pair);
+			return pair;
 		}
 
 		/// <summary>
