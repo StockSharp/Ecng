@@ -87,7 +87,7 @@ namespace Ecng.Backup.Amazon
 
 				foreach (var commonPrefix in response.CommonPrefixes)
 				{
-					retVal.Add(new BackupEntry
+					retVal.Add(new()
 					{
 						Name = commonPrefix,
 						Parent = parent,
@@ -105,14 +105,10 @@ namespace Ecng.Backup.Amazon
 		}
 
 		Task<IEnumerable<BackupEntry>> IBackupService.GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken)
-		{
-			return ((IBackupService)this).FindAsync(parent, null, cancellationToken);
-		}
+			=> ((IBackupService)this).FindAsync(parent, null, cancellationToken);
 
-		async Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
-		{
-			await _client.DeleteObjectAsync(_bucket, GetKey(entry), cancellationToken);
-		}
+		Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
+			=> _client.DeleteObjectAsync(_bucket, GetKey(entry), cancellationToken);
 
 		async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 		{
@@ -138,7 +134,7 @@ namespace Ecng.Backup.Amazon
 				if (offset is null || length is null)
 					throw new NotSupportedException();
 
-				request.ByteRange = new ByteRange(offset.Value, offset.Value + length.Value);
+				request.ByteRange = new(offset.Value, offset.Value + length.Value);
 			}
 
 			var bytes = new byte[_bufferSize];
@@ -190,7 +186,7 @@ namespace Ecng.Backup.Amazon
 
 			var key = GetKey(entry);
 
-			var initResponse = await _client.InitiateMultipartUploadAsync(new InitiateMultipartUploadRequest
+			var initResponse = await _client.InitiateMultipartUploadAsync(new()
 			{
 				BucketName = _bucket,
 				Key = key,
@@ -205,7 +201,7 @@ namespace Ecng.Backup.Amazon
 
 			while (filePosition < stream.Length)
 			{
-				var response = await _client.UploadPartAsync(new UploadPartRequest
+				var response = await _client.UploadPartAsync(new()
 				{
 					BucketName = _bucket,
 					UploadId = initResponse.UploadId,
@@ -216,7 +212,7 @@ namespace Ecng.Backup.Amazon
 					Key = key
 				}, cancellationToken);
 
-				etags.Add(new PartETag(partNum, response.ETag));
+				etags.Add(new(partNum, response.ETag));
 
 				filePosition += _bufferSize;
 
@@ -231,7 +227,7 @@ namespace Ecng.Backup.Amazon
 				partNum++;
 			}
 
-			await _client.CompleteMultipartUploadAsync(new CompleteMultipartUploadRequest
+			await _client.CompleteMultipartUploadAsync(new()
 			{
 				BucketName = _bucket,
 				UploadId = initResponse.UploadId,
@@ -247,13 +243,11 @@ namespace Ecng.Backup.Amazon
 		{
 			var key = GetKey(entry);
 
-			var request = new GetObjectMetadataRequest
+			var response = await _client.GetObjectMetadataAsync(new()
 			{
 				BucketName = _bucket,
 				Key = key,
-			};
-
-			var response = await _client.GetObjectMetadataAsync(request, cancellationToken);
+			}, cancellationToken);
 
 			entry.Size = response.ContentLength;
 		}
@@ -264,7 +258,7 @@ namespace Ecng.Backup.Amazon
 		{
 			var key = GetKey(entry);
 
-			var response = await _client.PutACLAsync(new PutACLRequest
+			var response = await _client.PutACLAsync(new()
 			{
 				BucketName = _bucket,
 				Key = key,
@@ -281,7 +275,7 @@ namespace Ecng.Backup.Amazon
 		{
 			var key = GetKey(entry);
 
-			var response = await _client.PutACLAsync(new PutACLRequest
+			var response = await _client.PutACLAsync(new()
 			{
 				BucketName = _bucket,
 				Key = key,

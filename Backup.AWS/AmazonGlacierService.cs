@@ -64,28 +64,24 @@ namespace Ecng.Backup.Amazon
 		Task<IEnumerable<BackupEntry>> IBackupService.GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken)
 			=> throw new NotSupportedException();
 
-		async Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
-		{
-			await _client.DeleteArchiveAsync(new DeleteArchiveRequest
+		Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
+			=> _client.DeleteArchiveAsync(new()
 			{
 				VaultName = _vaultName,
 				ArchiveId = entry.Name,
 			}, cancellationToken);
-		}
 
 		Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
-		{
-			
-			throw new NotImplementedException();
-		}
+			=> throw new NotImplementedException();
 
 		async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 		{
-			var getJobOutputResponse = await _client.GetJobOutputAsync(new GetJobOutputRequest
+			var getJobOutputResponse = await _client.GetJobOutputAsync(new()
 			{
 				//JobId = jobId,
 				VaultName = _vaultName
 			}, cancellationToken);
+
 			using var webStream = getJobOutputResponse.Body;
 
 			var bytes = new byte[_bufferSize];
@@ -118,9 +114,7 @@ namespace Ecng.Backup.Amazon
 		}
 
 		Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
-		{
-			throw new NotImplementedException();
-		}
+			=> throw new NotImplementedException();
 
 		bool IBackupService.CanPublish => false;
 

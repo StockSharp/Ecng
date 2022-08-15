@@ -2,7 +2,6 @@
   <Import Project="..\common.props" />
   <PropertyGroup>
     <ProjectGuid>{38C67615-BE2E-461E-BBED-5217F6DC0AFE}</ProjectGuid>
-    <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />
