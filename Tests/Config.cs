@@ -8,7 +8,7 @@ namespace Ecng.Tests
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
-	class Config
+	public class Config
 	{
 		[AssemblyInitialize]
 		public static void GlobalInitialize(TestContext context)
