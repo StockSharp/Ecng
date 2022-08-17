@@ -1,6 +1,4 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\StockSharp (GitHub)\common_versions.props" />
-
   <PropertyGroup>
     <AWSSDKS3Ver>3.7.3.24</AWSSDKS3Ver>
     <AWSSDKSQSVer>3.7.1.34</AWSSDKSQSVer>
