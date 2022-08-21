@@ -56,7 +56,6 @@
 		}
 
 		//http://msdn.microsoft.com/en-us/magazine/dd419661.aspx
-		[HandleProcessCorruptedStateExceptions]
 		internal static IList<SystemMenuItem> GetMenuItems(this IntPtr hMenu, SystemWindow window)
 		{
 			if (window is null)

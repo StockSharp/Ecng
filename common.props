@@ -18,18 +18,11 @@
         or '$(MSBuildProjectName)' == 'ManagedWinapi'
         or '$(MSBuildProjectName)' == 'HtmlRenderer'
         or '$(MSBuildProjectName)' == 'TestConsole'
+        or '$(MSBuildProjectName)' == 'TestWpf'
+        or '$(MSBuildProjectName)' == 'Tests'
+        or '$(MSBuildProjectName)' == 'SmartFormat.Tests'
       ">
-    <TargetFrameworks>net5.0-windows</TargetFrameworks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Tests'">
-    <TargetFrameworks>net5.0-windows;net6.0-windows</TargetFrameworks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="
-           '$(MSBuildProjectName)' == 'SmartFormat.Tests'
-      ">
-    <TargetFrameworks>net5.0</TargetFrameworks>
+    <TargetFrameworks>net6.0-windows</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(StockSharpTargets)' != ''">
