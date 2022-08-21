@@ -22,7 +22,7 @@
         or '$(MSBuildProjectName)' == 'Tests'
         or '$(MSBuildProjectName)' == 'SmartFormat.Tests'
       ">
-    <TargetFrameworks>net6.0-windows</TargetFrameworks>
+    <TargetFrameworks>net5.0-windows</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(StockSharpTargets)' != ''">
