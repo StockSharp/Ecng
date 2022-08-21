@@ -29,7 +29,6 @@
     <MsExtensionsLoggingVer>6.0.1</MsExtensionsLoggingVer>
     <MicrosoftNetHttpHeadersVer>2.2.8</MicrosoftNetHttpHeadersVer>
 
-    <MsCodeVer>3.11.0</MsCodeVer>
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
 
     <MessagePackVer>2.3.85</MessagePackVer>
