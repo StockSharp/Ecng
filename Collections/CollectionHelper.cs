@@ -971,6 +971,10 @@
 			return null;
 		}
 
+		[Obsolete("Use StringHelper.IsEmpty.")]
+		public static bool IsEmpty(this IEnumerable<char> source)
+			=> source is null || !source.Any();
+
 		public static bool IsEmpty<T>(this IEnumerable<T> source)
 		{
 			if (source is ICollection<T> col)
