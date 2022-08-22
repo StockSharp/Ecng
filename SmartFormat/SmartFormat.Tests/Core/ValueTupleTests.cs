@@ -44,22 +44,6 @@ namespace SmartFormat.Tests
         }
 
         [Test]
-        public void Nested_Scope()
-        {
-            var clubOrMember = new { Member = new { Name = "Joe" }, Club = new { Name = "The Strikers" } };
-            var clubNoMember = new { Member = default(object), Club = new { Name = "The Strikers" } };
-            var say = new { Hello = "Good morning" };
-            var formatter = Smart.CreateDefaultSmartFormat();
-            formatter.Settings.ParseErrorAction = formatter.Settings.FormatErrorAction = ErrorAction.ThrowError;
-
-            var result = formatter.Format("{Member:choose(null):{Club.Name}|{Name}} - {Hello}", new SmartObjects(new object[] { clubOrMember, say }));
-            Assert.AreEqual($"{clubOrMember.Member.Name} - {say.Hello}", result);
-
-            result = formatter.Format("{Member:choose(null):{Club.Name}|{Name}} - {Hello}", new SmartObjects(new object[] { clubNoMember, say }));
-            Assert.AreEqual($"{clubOrMember.Club.Name} - {say.Hello}", result);
-        }
-
-        [Test]
         public void Not_Invoked_With_FormattingInfo()
         {
             Assert.IsFalse(new ValueTupleSource(new SmartFormatter()).TryEvaluateSelector(new SelectorInfo()));
