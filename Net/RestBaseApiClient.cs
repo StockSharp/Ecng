@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Net
 {
 	using System;
+	using System.Net;
 	using System.Net.Http;
 	using System.Net.Http.Headers;
 	using System.Net.Http.Formatting;
@@ -14,6 +15,8 @@
 
 	using Ecng.Common;
 	using Ecng.Reflection;
+
+	using Microsoft.Net.Http.Headers;
 
 	public abstract class RestBaseApiClient
 	{
@@ -35,6 +38,12 @@
 
 		protected virtual bool PlainSingleArg => true;
 		protected virtual bool ThrowIfNonSuccessStatusCode => true;
+
+		protected void AddAuth(AuthenticationSchemes schema, string value)
+			=> AddAuth(schema.ToString(), value);
+
+		protected void AddAuth(string schema, string value)
+			=> PerRequestHeaders.Add(HeaderNames.Authorization, $"{schema} {value}");
 
 		protected virtual object FormatRequest(IDictionary<string, object> parameters)
 			=> parameters;
