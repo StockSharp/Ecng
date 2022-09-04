@@ -11,6 +11,7 @@
 // "The Art of War"
 
 using System;
+using System.Net.Http;
 using TheArtOfDev.HtmlRenderer.Adapters;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 
@@ -21,6 +22,9 @@ namespace TheArtOfDev.HtmlRenderer.Core
     /// </summary>
     public static class HtmlRendererUtils
     {
+		public static HttpClient GlobalHttp { get; set; }
+		public static HttpClient EnsureGetHttp() => GlobalHttp ??= new();
+
         /// <summary>
         /// Measure the size of the html by performing layout under the given restrictions.
         /// </summary>

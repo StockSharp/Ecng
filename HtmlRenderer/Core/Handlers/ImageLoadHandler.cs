@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Media;
 using TheArtOfDev.HtmlRenderer.Adapters;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
@@ -277,10 +278,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         {
             if (source.Exists)
             {
-                if (_htmlContainer.AvoidAsyncImagesLoading)
-                    LoadImageFromFile(File.ReadAllBytes(source.FullName));
-                else
-                    ThreadPool.QueueUserWorkItem(state => LoadImageFromFile(File.ReadAllBytes(source.FullName)));
+                Task.Run(() => LoadImageFromFile(File.ReadAllBytes(source.FullName)));
             }
             else
             {
@@ -327,7 +325,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             }
             else
             {
-                _htmlContainer.GetImageDownloader().DownloadImage(source, !_htmlContainer.AvoidAsyncImagesLoading, OnDownloadImageCompleted);
+                _htmlContainer.GetImageDownloader().DownloadImage(source, OnDownloadImageCompleted);
             }
         }
 
@@ -354,13 +352,13 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
         /// <summary>
         /// Flag image load complete and request refresh for re-layout and invalidate.
         /// </summary>
-        private void ImageLoadComplete(bool async = true)
+        private void ImageLoadComplete(bool refresh = true)
         {
             // can happen if some operation return after the handler was disposed
             if (_disposed)
                 ReleaseObjects();
             else
-                _loadCompleteCallback(_image, _imageRectangle, async);
+                _loadCompleteCallback(_image, _imageRectangle, refresh);
         }
 
         /// <summary>

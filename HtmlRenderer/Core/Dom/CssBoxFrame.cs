@@ -14,6 +14,7 @@ using System;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using TheArtOfDev.HtmlRenderer.Adapters;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Entities;
@@ -284,16 +285,16 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
 		/// </summary>
 		private void LoadVimeoDataAsync(Uri uri)
         {
-            ThreadPool.QueueUserWorkItem(state =>
+            Task.Run(async () =>
             {
                 try
                 {
-                    var apiUri = new Uri(string.Format("https://vimeo.com/api/v2/video/{0}.json", uri.Segments[2]));
+					var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
-                    var client = new WebClient();
-                    client.Encoding = Encoding.UTF8;
-                    client.DownloadStringCompleted += OnDownloadVimeoApiCompleted;
-                    client.DownloadStringAsync(apiUri);
+					var apiUri = new Uri(string.Format("https://vimeo.com/api/v2/video/{0}.json", uri.Segments[2]));
+
+                    var client = HtmlRendererUtils.EnsureGetHttp();
+					OnDownloadVimeoApiCompleted(await client.GetStringAsync(apiUri, cts.Token));
                 }
                 catch (Exception ex)
                 {
@@ -302,102 +303,85 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
                     HtmlContainer.ReportError(HtmlRenderErrorType.Iframe, "Failed to get vimeo video data: " + uri, ex);
                     HtmlContainer.RequestRefresh(false);
                 }
-            });
+
+				HandlePostApiCall();
+			});
         }
 
         /// <summary>
         /// Parse Vimeo API response to get video data (title, image, link).
         /// </summary>
-        private void OnDownloadVimeoApiCompleted(object sender, DownloadStringCompletedEventArgs e)
+        private void OnDownloadVimeoApiCompleted(string result)
         {
-            try
-            {
-                if (!e.Cancelled)
-                {
-                    if (e.Error == null)
-                    {
-						var idx = e.Result.IndexOf("\"title\"", StringComparison.Ordinal);
-                        if (idx > -1)
-                        {
-                            idx = e.Result.IndexOf('"', idx + 7);
-                            if (idx > -1)
-                            {
-                                var endIdx = e.Result.IndexOf('"', idx + 1);
-                                while (e.Result[endIdx - 1] == '\\')
-                                    endIdx = e.Result.IndexOf('"', endIdx + 1);
-                                if (endIdx > -1)
-                                {
-                                    _videoTitle = e.Result.Substring(idx + 1, endIdx - idx - 1).Replace("\\\"", "\"");
-                                }
-                            }
-                        }
+			var idx = result.IndexOf("\"title\"", StringComparison.Ordinal);
+			if (idx > -1)
+			{
+				idx = result.IndexOf('"', idx + 7);
+				if (idx > -1)
+				{
+					var endIdx = result.IndexOf('"', idx + 1);
+					while (result[endIdx - 1] == '\\')
+						endIdx = result.IndexOf('"', endIdx + 1);
+					if (endIdx > -1)
+					{
+						_videoTitle = result.Substring(idx + 1, endIdx - idx - 1).Replace("\\\"", "\"");
+					}
+				}
+			}
 
-                        idx = e.Result.IndexOf("\"thumbnail_large\"", StringComparison.Ordinal);
-                        if (idx > -1)
-                        {
-                            if (string.IsNullOrEmpty(Width))
-                                Width = "640";
-                            if (string.IsNullOrEmpty(Height))
-                                Height = "360";
-                        }
-                        else
-                        {
-                            idx = e.Result.IndexOf("thumbnail_medium", idx);
-                            if (idx > -1)
-                            {
-                                if (string.IsNullOrEmpty(Width))
-                                    Width = "200";
-                                if (string.IsNullOrEmpty(Height))
-                                    Height = "150";
-                            }
-                            else
-                            {
-                                idx = e.Result.IndexOf("thumbnail_small", idx);
-                                if (string.IsNullOrEmpty(Width))
-                                    Width = "100";
-                                if (string.IsNullOrEmpty(Height))
-                                    Height = "75";
-                            }
-                        }
-                        if (idx > -1)
-                        {
-                            idx = e.Result.IndexOf("https:", idx);
-                            if (idx > -1)
-                            {
-                                var endIdx = e.Result.IndexOf('"', idx);
-                                if (endIdx > -1)
-                                {
-                                    _videoImageUrl = e.Result.Substring(idx, endIdx - idx).Replace("\\\"", "\"").Replace("\\", "");
-                                }
-                            }
-                        }
+			idx = result.IndexOf("\"thumbnail_large\"", StringComparison.Ordinal);
+			if (idx > -1)
+			{
+				if (string.IsNullOrEmpty(Width))
+					Width = "640";
+				if (string.IsNullOrEmpty(Height))
+					Height = "360";
+			}
+			else
+			{
+				idx = result.IndexOf("thumbnail_medium", idx);
+				if (idx > -1)
+				{
+					if (string.IsNullOrEmpty(Width))
+						Width = "200";
+					if (string.IsNullOrEmpty(Height))
+						Height = "150";
+				}
+				else
+				{
+					idx = result.IndexOf("thumbnail_small", idx);
+					if (string.IsNullOrEmpty(Width))
+						Width = "100";
+					if (string.IsNullOrEmpty(Height))
+						Height = "75";
+				}
+			}
+			if (idx > -1)
+			{
+				idx = result.IndexOf("https:", idx);
+				if (idx > -1)
+				{
+					var endIdx = result.IndexOf('"', idx);
+					if (endIdx > -1)
+					{
+						_videoImageUrl = result.Substring(idx, endIdx - idx).Replace("\\\"", "\"").Replace("\\", "");
+					}
+				}
+			}
 
-                        idx = e.Result.IndexOf("\"url\"", StringComparison.Ordinal);
-                        if (idx > -1)
-                        {
-                            idx = e.Result.IndexOf("https:", idx);
-                            if (idx > -1)
-                            {
-                                var endIdx = e.Result.IndexOf('"', idx);
-                                if (endIdx > -1)
-                                {
-                                    _videoLinkUrl = e.Result.Substring(idx, endIdx - idx).Replace("\\\"", "\"").Replace("\\", "");
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        HandleDataLoadFailure(e.Error, "Vimeo");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                HtmlContainer.ReportError(HtmlRenderErrorType.Iframe, "Failed to parse Vimeo video response", ex);
-            }
-
-            HandlePostApiCall(sender);
+			idx = result.IndexOf("\"url\"", StringComparison.Ordinal);
+			if (idx > -1)
+			{
+				idx = result.IndexOf("https:", idx);
+				if (idx > -1)
+				{
+					var endIdx = result.IndexOf('"', idx);
+					if (endIdx > -1)
+					{
+						_videoLinkUrl = result.Substring(idx, endIdx - idx).Replace("\\\"", "\"").Replace("\\", "");
+					}
+				}
+			}
         }
 
         /// <summary>
@@ -422,7 +406,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         /// <summary>
         /// Create image handler for downloading video image if found and release the WebClient instance used for API call.
         /// </summary>
-        private void HandlePostApiCall(object sender)
+        private void HandlePostApiCall()
         {
             try
             {
@@ -431,11 +415,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
                     _imageLoadingComplete = true;
                     SetErrorBorder();
                 }
-
-                var webClient = (WebClient)sender;
-                //webClient.DownloadStringCompleted -= OnDownloadYoutubeApiCompleted;
-                webClient.DownloadStringCompleted -= OnDownloadVimeoApiCompleted;
-                webClient.Dispose();
 
                 HtmlContainer.RequestRefresh(IsLayoutRequired());
             }
@@ -584,8 +563,8 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         /// </summary>
         /// <param name="image">the image loaded or null if failed</param>
         /// <param name="rectangle">the source rectangle to draw in the image (empty - draw everything)</param>
-        /// <param name="async">is the callback was called async to load image call</param>
-        private void OnLoadImageComplete(RImage image, RRect rectangle, bool async)
+		/// <param name="refresh">is the callback was called async to load image call</param>
+		private void OnLoadImageComplete(RImage image, RRect rectangle, bool refresh)
         {
             _imageWord.Image = image;
             _imageWord.ImageRectangle = rectangle;
@@ -597,7 +576,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
                 SetErrorBorder();
             }
 
-            if (async)
+            if (refresh)
             {
                 HtmlContainer.RequestRefresh(IsLayoutRequired());
             }

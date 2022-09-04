@@ -3,6 +3,7 @@
 	using System;
 	using System.Net;
 
+	[Obsolete]
 	public class WebClientEx : WebClient
 	{
 		public WebClientEx()

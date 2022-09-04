@@ -14,8 +14,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using TheArtOfDev.HtmlRenderer.Core.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Utils;
+using Nito.AsyncEx;
 
 namespace TheArtOfDev.HtmlRenderer.Core.Handlers
 {
@@ -87,7 +90,23 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             }
             else
             {
-                return LoadStylesheetFromUri(htmlContainer, uri);
+				return AsyncContext.Run(async () =>
+				{
+					var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+					var client = HtmlRendererUtils.EnsureGetHttp();
+
+					try
+					{
+						var stylesheet = await client.GetStringAsync(uri, cts.Token);
+						stylesheet = CorrectRelativeUrls(stylesheet, uri);
+						return stylesheet;
+					}
+					catch (Exception ex)
+					{
+						htmlContainer.ReportError(HtmlRenderErrorType.CssParsing, "Error in correcting relative URL in loaded stylesheet", ex);
+						return string.Empty;
+					}
+				});
             }
         }
 
@@ -118,27 +137,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Handlers
             }
             return string.Empty;
         }
-
-        /// <summary>
-        /// Load the stylesheet from uri by downloading the string.
-        /// </summary>
-        /// <param name="htmlContainer">the container of the html to handle load stylesheet for</param>
-        /// <param name="uri">the uri to download from</param>
-        /// <returns>the loaded stylesheet string</returns>
-        private static string LoadStylesheetFromUri(HtmlContainerInt htmlContainer, Uri uri)
-        {
-			using var client = new WebClient();
-			var stylesheet = client.DownloadString(uri);
-			try
-			{
-				stylesheet = CorrectRelativeUrls(stylesheet, uri);
-			}
-			catch (Exception ex)
-			{
-				htmlContainer.ReportError(HtmlRenderErrorType.CssParsing, "Error in correcting relative URL in loaded stylesheet", ex);
-			}
-			return stylesheet;
-		}
 
         /// <summary>
         /// Make relative URLs absolute in the stylesheet using the URI of the stylesheet.

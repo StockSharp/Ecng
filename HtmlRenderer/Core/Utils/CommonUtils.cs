@@ -193,21 +193,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Utils
             return null;
         }
 
-        /// <summary>
-        /// Get web client response content type.
-        /// </summary>
-        /// <param name="client">the web client to get the response content type from</param>
-        /// <returns>response content type or null</returns>
-        public static string GetResponseContentType(WebClient client)
-        {
-            foreach (string header in client.ResponseHeaders)
-            {
-                if (header.Equals("Content-Type", StringComparison.InvariantCultureIgnoreCase))
-                    return client.ResponseHeaders[header];
-            }
-            return null;
-        }
-
 		private const string _svgExt = ".svg";
 		private const string _pngExt = ".png";
 		private const string _jpgExt = ".jpg";
