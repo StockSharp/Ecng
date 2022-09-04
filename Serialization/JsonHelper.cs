@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Serialization
 {
 	using System;
+	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
 	using System.Diagnostics;
@@ -13,6 +14,8 @@
 
 	public static class JsonHelper
 	{
+		public static readonly Encoding UTF8NoBom = new UTF8Encoding(false);
+
 		[Conditional("DEBUG")]
 		public static void ChechExpectedToken(this JsonReader reader, JsonToken token)
 		{

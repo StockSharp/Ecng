@@ -1083,5 +1083,22 @@
 			Do(TimeSpan.FromSeconds(123));
 			Do(new Uri("https://google.com"));
 		}
+
+		[TestMethod]
+		public async Task Bom()
+		{
+			var requestBody = new MemoryStream();
+			await new JsonSerializer<TestClass> { Encoding = JsonHelper.UTF8NoBom }.SerializeAsync(new(), requestBody, default);
+			requestBody.To<byte[]>().UTF8().DeserializeObject<TestClass>();
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(InvalidOperationException))]
+		public async Task BomError()
+		{
+			var requestBody = new MemoryStream();
+			await new JsonSerializer<TestClass>().SerializeAsync(new(), requestBody, default);
+			requestBody.To<byte[]>().UTF8().DeserializeObject<TestClass>();
+		}
 	}
 }
