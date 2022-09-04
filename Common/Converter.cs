@@ -578,12 +578,13 @@
 
 					return output.ToArray();
 				}
+				else if (value is ArraySegment<byte> seg && (destinationType == typeof(Stream) || destinationType == typeof(MemoryStream)))
+				{
+					return new MemoryStream(seg.Array, seg.Offset, seg.Count);
+				}
 				else if (value is byte[] ba && (destinationType == typeof(Stream) || destinationType == typeof(MemoryStream)))
 				{
-					var stream = new MemoryStream(ba.Length);
-					stream.Write(ba, 0, stream.Capacity);
-					stream.Position = 0;
-					return stream;
+					return new MemoryStream(ba);
 				}
 				else if (value is string && (destinationType == typeof(Stream) || destinationType == typeof(MemoryStream)))
 				{

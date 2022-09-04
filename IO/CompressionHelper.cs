@@ -61,6 +61,9 @@
 		public static string UnGZip(this byte[] input)
 			=> input.UnGZip(0, input.Length);
 
+		public static string UnGZip(this ArraySegment<byte> v)
+			=> v.Array.UnGZip(v.Offset, v.Count);
+
 		public static string UnGZip(this byte[] input, int index, int count)
 			=> input.Uncompress<GZipStream>(index, count).UTF8();
 
@@ -75,6 +78,9 @@
 		public static string UnDeflate(this byte[] input)
 			=> input.UnDeflate(0, input.Length);
 
+		public static string UnDeflate(this ArraySegment<byte> v)
+			=> v.Array.UnDeflate(v.Offset, v.Count);
+
 		public static string UnDeflate(this byte[] input, int index, int count)
 			=> input.DeflateFrom(index, count).UTF8();
 
@@ -88,6 +94,9 @@
 
 		public static byte[] DeflateTo(this byte[] input)
 			=> input.Compress<DeflateStream>();
+
+		public static byte[] DeflateFrom(this ArraySegment<byte> v)
+			=> v.Array.DeflateFrom(v.Offset, v.Count);
 
 		public static byte[] DeflateFrom(this byte[] input, int? index = default, int? count = default, int bufferSize = DefaultBufferSize)
 			=> input.Uncompress<DeflateStream>(index, count, bufferSize);
@@ -105,6 +114,10 @@
 		public static byte[] Uncompress<TCompressStream>(this byte[] input, int? index = default, int? count = default, int bufferSize = DefaultBufferSize)
 			where TCompressStream : Stream
 			=> AsyncContext.Run(() => input.UncompressAsync<TCompressStream>(index, count, bufferSize));
+
+		public static Task<byte[]> CompressAsync<TCompressStream>(this ArraySegment<byte> v, CompressionLevel level = CompressionLevel.Optimal, int bufferSize = DefaultBufferSize)
+			where TCompressStream : Stream
+			=> v.Array.CompressAsync<TCompressStream>(v.Offset, v.Count, level, bufferSize);
 
 		public static async Task<byte[]> CompressAsync<TCompressStream>(this byte[] input, int? index = default, int? count = default, CompressionLevel level = CompressionLevel.Optimal, int bufferSize = DefaultBufferSize, CancellationToken cancellationToken = default)
 			where TCompressStream : Stream

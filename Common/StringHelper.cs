@@ -966,36 +966,42 @@
 		public static byte[] Default(this string v) => Encoding.Default.GetBytes(v);
 		public static string Default(this byte[] v) => Default(v, 0, v.Length);
 		public static string Default(this byte[] v, int index, int count) => Encoding.Default.GetString(v, index, count);
+		public static string Default(this ArraySegment<byte> v) => v.Array.Default(v.Offset, v.Count);
 		[CLSCompliant(false)]
 		public static string Default(this byte[] v, uint count, int index = 0) => Default(v, index, (int)count);
 
 		public static byte[] ASCII(this string v) => Encoding.ASCII.GetBytes(v);
 		public static string ASCII(this byte[] v) => ASCII(v, 0, v.Length);
 		public static string ASCII(this byte[] v, int index, int count) => Encoding.ASCII.GetString(v, index, count);
+		public static string ASCII(this ArraySegment<byte> v) => v.Array.ASCII(v.Offset, v.Count);
 		[CLSCompliant(false)]
 		public static string ASCII(this byte[] v, uint count, int index = 0) => ASCII(v, index, (int)count);
 
 		public static byte[] UTF8(this string v) => Encoding.UTF8.GetBytes(v);
 		public static string UTF8(this byte[] v) => UTF8(v, 0, v.Length);
 		public static string UTF8(this byte[] v, int index, int count) => Encoding.UTF8.GetString(v, index, count);
+		public static string UTF8(this ArraySegment<byte> v) => v.Array.UTF8(v.Offset, v.Count);
 		[CLSCompliant(false)]
 		public static string UTF8(this byte[] v, uint count, int index = 0) => UTF8(v, index, (int)count);
 
 		public static byte[] Unicode(this string v) => Encoding.Unicode.GetBytes(v);
 		public static string Unicode(this byte[] v) => Unicode(v, 0, v.Length);
 		public static string Unicode(this byte[] v, int index, int count) => Encoding.Unicode.GetString(v, index, count);
+		public static string Unicode(this ArraySegment<byte> v) => v.Array.Unicode(v.Offset, v.Count);
 		[CLSCompliant(false)]
 		public static string Unicode(this byte[] v, uint count, int index = 0) => Unicode(v, index, (int)count);
 
 		public static byte[] Cyrillic(this string v) => WindowsCyrillic.GetBytes(v);
 		public static string Cyrillic(this byte[] v) => Cyrillic(v, 0, v.Length);
 		public static string Cyrillic(this byte[] v, int index, int count) => WindowsCyrillic.GetString(v, index, count);
+		public static string Cyrillic(this ArraySegment<byte> v) => v.Array.Cyrillic(v.Offset, v.Count);
 		[CLSCompliant(false)]
 		public static string Cyrillic(this byte[] v, uint count, int index = 0) => Cyrillic(v, index, (int)count);
 
 		public static byte[] Hex(this string v) => HexEncoding.GetBytes(v);
 		public static string Hex(this byte[] v) => Hex(v, 0, v.Length);
 		public static string Hex(this byte[] v, int index, int count) => HexEncoding.GetString(v, index, count);
+		public static string Hex(this ArraySegment<byte> v) => v.Array.Hex(v.Offset, v.Count);
 		[CLSCompliant(false)]
 		public static string Hex(this byte[] v, uint count, int index = 0) => Hex(v, index, (int)count);
 
@@ -1028,6 +1034,9 @@
 
 		public static string ToString(this char[] arr, int count, int index = 0)
 			=> count == 0 ? string.Empty : new string(arr, index, count);
+
+		public static string ToBitString(this ArraySegment<byte> buffer, char separator = ' ')
+			=> buffer.Array.ToBitString(buffer.Offset, buffer.Count, separator);
 
 		public static string ToBitString(this byte[] buffer, int? index = null, int? count = null, char separator = ' ')
 		{
