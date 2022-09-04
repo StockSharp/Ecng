@@ -86,8 +86,6 @@ namespace Disk.SDK.Provider
                                             progress.UpdateProgress(current, total);
                                             count = responseStream.Read(buffer, 0, BUFFER_LENGTH);
                                         }
-
-                                        fileStream.Dispose();
                                     }
                                 }
 
@@ -142,8 +140,6 @@ namespace Disk.SDK.Provider
                                     progress.UpdateProgress(current, total);
                                     count = fileStream.Read(buffer, 0, BUFFER_LENGTH);
                                 }
-
-                                fileStream.Dispose();
                             }
 
                             getRequestStreamRequest.BeginGetResponse(

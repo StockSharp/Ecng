@@ -186,8 +186,6 @@ namespace Ecng.Backup.Yandex
 						sync.Wait();
 				}
 
-				(stream as MemoryStream)?.UndoDispose();
-
 				error?.Throw();
 			}
 			else
@@ -236,8 +234,6 @@ namespace Ecng.Backup.Yandex
 					if (!pulsed)
 						sync.Wait();
 				}
-
-				(stream as MemoryStream)?.UndoDispose();
 
 				error?.Throw();
 			}

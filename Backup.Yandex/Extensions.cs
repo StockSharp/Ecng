@@ -10,17 +10,6 @@ namespace Ecng.Backup.Yandex
 
 	static class Extensions
 	{
-		[Obsolete]
-		public static void UndoDispose(this MemoryStream stream)
-		{
-			if (stream is null)
-				throw new ArgumentNullException(nameof(stream));
-
-			stream.SetValue("_isOpen", true);
-			stream.SetValue("_writable", true);
-			stream.SetValue("_expandable", true);
-		}
-
 		public static TResult AsyncWait<TArg, TResult>(this DiskSdkClient client, string eventName, Action action, Func<TArg, TResult> process)
 			where TArg : SdkEventArgs
 		{
