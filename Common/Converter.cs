@@ -584,7 +584,10 @@
 				}
 				else if (value is byte[] ba && (destinationType == typeof(Stream) || destinationType == typeof(MemoryStream)))
 				{
-					return new MemoryStream(ba);
+					var stream = new MemoryStream(ba.Length);
+					stream.Write(ba, 0, stream.Capacity);
+					stream.Position = 0;
+					return stream;
 				}
 				else if (value is string && (destinationType == typeof(Stream) || destinationType == typeof(MemoryStream)))
 				{
