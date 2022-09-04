@@ -181,7 +181,18 @@
 						var parts = input.SplitBySep(", ");
 						if (parts.Length == 2 || parts.Length == 5)
 						{
-							var asm = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == parts[1]) ?? Assembly.LoadWithPartialName(parts[1]);
+							var asm = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == parts[1]);
+							
+							if (asm is null)
+							{
+								try
+								{
+									asm = Assembly.Load(parts[1]);
+								}
+								catch (FileNotFoundException)
+								{
+								}
+							}
 
 							if (asm != null)
 							{
