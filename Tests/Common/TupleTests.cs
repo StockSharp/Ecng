@@ -2,7 +2,7 @@
 {
 	using System;
 	using System.Linq;
-#if NETSTANDARD2_1
+#if NET5_0_OR_GREATER
 	using System.Runtime.CompilerServices;
 #endif
 
@@ -16,7 +16,7 @@
 	public class TupleTests
 	{
 		private static void ValuesAndBack<T>(T tuple)
-#if NETSTANDARD2_1
+#if NET5_0_OR_GREATER
 			where T : ITuple
 #endif
 		{

@@ -278,7 +278,7 @@
 			}
 
 			if (items is not ISynchronizedCollection sync) return InternalCopyAndClear();
-			
+
 			lock (sync.SyncRoot)
 				return InternalCopyAndClear();
 		}
@@ -293,7 +293,7 @@
 			}
 
 			if (dict is not ISynchronizedCollection sync) return InternalGetAndRemove();
-			
+
 			lock (sync.SyncRoot)
 				return InternalGetAndRemove();
 		}
@@ -1353,8 +1353,8 @@
 			return result > threshold ? int.MaxValue : result;
 		}
 
-		public static ISet<T> ToSet<T>(this IEnumerable<T> values) => values.ToHashSet();
-		public static ISet<string> ToIgnoreCaseSet(this IEnumerable<string> values) => values.ToHashSet(StringComparer.InvariantCultureIgnoreCase);
+		public static ISet<T> ToSet<T>(this IEnumerable<T> values) => MoreLinq.Extensions.ToHashSetExtension.ToHashSet(values);
+		public static ISet<string> ToIgnoreCaseSet(this IEnumerable<string> values) => MoreLinq.Extensions.ToHashSetExtension.ToHashSet(values, StringComparer.InvariantCultureIgnoreCase);
 
 		public static IEnumerable<TResult> Batch<TSource, TResult>(this IEnumerable<TSource> source, int size,
             Func<IEnumerable<TSource>, TResult> resultSelector, Func<bool> needStop)
@@ -1380,7 +1380,7 @@
 
                 // Select is necessary so bucket contents are streamed too
                 yield return resultSelector(bucket);
-               
+
                 bucket = null;
                 count = 0;
             }

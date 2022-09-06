@@ -7,7 +7,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-#if NETSTANDARD2_1
+#if NET5_0_OR_GREATER
 	using System.Net.Security;
 #endif
 
@@ -109,7 +109,7 @@
 
 		public event Func<byte[], int, int, byte[], int> PreProcess;
 
-#if NETSTANDARD2_1
+#if NET5_0_OR_GREATER
 
 		public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; }
 
@@ -154,7 +154,7 @@
 
 					_ws = new ClientWebSocket();
 
-#if NETSTANDARD2_1
+#if NET5_0_OR_GREATER
 
 					_ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
 

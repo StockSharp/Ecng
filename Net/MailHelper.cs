@@ -34,7 +34,7 @@
 
 			using var mail = new SmtpClient();
 			await mail.SendMailAsync(message
-#if NETSTANDARD2_1
+#if NET5_0_OR_GREATER
 				, cancellationToken
 #endif
 			);

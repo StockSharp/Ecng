@@ -162,7 +162,6 @@
 			return specificType.CreateInstance<object>(args.ToArray());
 		}
 
-#if !NETSTANDARD2_1
 		public static IEnumerable<object> ToValues<T>(this T tuple)
 		{
 			if (!typeof(T).FullName.StartsWith("System.Tuple"))
@@ -177,6 +176,5 @@
 
 			return values;
 		}
-#endif
 	}
 }
