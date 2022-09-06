@@ -3,6 +3,8 @@ namespace Ecng.Common
 	#region Using Directives
 
 	using System;
+	using System.Threading;
+	using System.Threading.Tasks;
 	using System.ComponentModel;
 	using System.Diagnostics;
 	using System.Xml.Serialization;
@@ -134,4 +136,40 @@ namespace Ecng.Common
 
 		#endregion
 	}
+
+	public class Disposer : IDisposable
+	{
+		private readonly Action _dispose;
+
+		public Disposer(Action dispose) => _dispose = dispose ?? throw new ArgumentNullException(nameof(dispose));
+
+		public void Dispose() => _dispose();
+	}
+
+	#if NET5_0_OR_GREATER
+
+	public class AsyncDisposer : IAsyncDisposable
+	{
+		private TaskCompletionSource _disposeTcs;
+		public bool IsDisposeStarted => _disposeTcs != null;
+
+		private readonly Func<Task> _getDisposer;
+
+		public AsyncDisposer(Func<Task> getDisposer = null) => _getDisposer = getDisposer;
+
+		protected virtual ValueTask OnDisposeAsync() => (_getDisposer?.Invoke()).CheckNull();
+
+		public ValueTask DisposeAsync()
+		{
+			if(Interlocked.CompareExchange(ref _disposeTcs, AsyncHelper.CreateAsyncTaskSource(), null) != null)
+				return new ValueTask(_disposeTcs.Task);
+
+			return AsyncHelper.CatchHandle(OnDisposeAsync,
+				rethrowCancel: true,
+				rethrowErr: true,
+				finalizer: () => _disposeTcs.TrySetResult());
+		}
+	}
+
+	#endif
 }

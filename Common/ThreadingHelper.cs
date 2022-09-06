@@ -3,7 +3,6 @@ namespace Ecng.Common
 	using System;
 	using System.Collections.Generic;
 	using System.Globalization;
-	using System.Linq;
 	using System.Threading;
 	using System.Threading.Tasks;
 
@@ -380,43 +379,6 @@ namespace Ecng.Common
 			return true;
 		}
 
-		// https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md
-		public static async Task<T> WithCancellation<T>(this Task<T> task, CancellationToken cancellationToken)
-		{
-			var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-			// This disposes the registration as soon as one of the tasks trigger
-			using (cancellationToken.Register(state => { ((TaskCompletionSource<object>)state).TrySetResult(null); }, tcs))
-			{
-				var resultTask = await Task.WhenAny(task, tcs.Task);
-				if (resultTask == tcs.Task)
-					throw new OperationCanceledException(cancellationToken); // Operation cancelled
-
-				return await task;
-			}
-		}
-
-		public static (CancellationTokenSource cts, CancellationToken token) CreateChildToken(this CancellationToken token, TimeSpan? delay = null)
-		{
-			var cts = delay == null ? new CancellationTokenSource() : new CancellationTokenSource(delay.Value);
-			return (cts, CancellationTokenSource.CreateLinkedTokenSource(cts.Token, token).Token);
-		}
-
-		public static async Task WithCancellation(this Task task, CancellationToken cancellationToken)
-		{
-			var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-			// This disposes the registration as soon as one of the tasks trigger
-			using (cancellationToken.Register(state => { ((TaskCompletionSource<object>)state).TrySetResult(null); }, tcs))
-			{
-				var resultTask = await Task.WhenAny(task, tcs.Task);
-				if (resultTask == tcs.Task)
-					throw new OperationCanceledException(cancellationToken); // Operation cancelled
-
-				await task;
-			}
-		}
-
 		private class CultureHolder : Disposable
 		{
 			private readonly CultureInfo _culture;
@@ -438,89 +400,6 @@ namespace Ecng.Common
 		}
 
 		public static IDisposable WithInvariantCulture() => WithCulture(CultureInfo.InvariantCulture);
-
-		public static Task Delay(this TimeSpan delay, CancellationToken cancellationToken = default)
-			=> Task.Delay(delay, cancellationToken);
-
-		public static T GetResult<T>(this Task task)
-			=> (T)task.GetType().GetProperty(nameof(Task<object>.Result)).GetValue(task);
-
-		public static TaskCompletionSource<TValue> ToCompleteSource<TValue>(this TValue value)
-		{
-			var source = new TaskCompletionSource<TValue>();
-			source.SetResult(value);
-			return source;
-		}
-
-		public static Task<TValue> FromResult<TValue>(this TValue value) => Task.FromResult(value);
-
-		// https://stackoverflow.com/a/61260053
-		public static async ValueTask AsValueTask<T>(this ValueTask<T> valueTask)
-			=> await valueTask;
-
-		public static ValueTask<T> AsValueTask<T>(this Task<T> task)
-			=> new(task);
-
-		public static ValueTask AsValueTask(this Task task)
-			=> new(task);
-
-		public static async ValueTask<T[]> WhenAll<T>(this IEnumerable<ValueTask<T>> tasks)
-		{
-			if (tasks is null)
-				throw new ArgumentNullException(nameof(tasks));
-
-			// We don't allocate the list if no task throws
-			List<Exception> exceptions = null;
-
-			var source = tasks.ToArray();
-
-			var results = new T[source.Length];
-
-			for (var i = 0; i < source.Length; i++)
-			{
-				try
-				{
-					results[i] = await source[i].ConfigureAwait(false);
-				}
-				catch (Exception ex)
-				{
-					exceptions ??= new List<Exception>(source.Length);
-					exceptions.Add(ex);
-				}
-			}
-
-			if (exceptions is not null)
-				throw new AggregateException(exceptions);
-
-			return results;
-		}
-
-		public static async ValueTask WhenAll(this IEnumerable<ValueTask> tasks)
-		{
-			if (tasks is null)
-				throw new ArgumentNullException(nameof(tasks));
-
-			// We don't allocate the list if no task throws
-			List<Exception> exceptions = null;
-
-			var source = tasks.ToArray();
-
-			for (var i = 0; i < source.Length; i++)
-			{
-				try
-				{
-					await source[i].ConfigureAwait(false);
-				}
-				catch (Exception ex)
-				{
-					exceptions ??= new List<Exception>(source.Length);
-					exceptions.Add(ex);
-				}
-			}
-
-			if (exceptions is not null)
-				throw new AggregateException(exceptions);
-		}
 
 		public static void Run(Func<ValueTask> getTask)
 		{
