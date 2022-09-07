@@ -222,7 +222,7 @@ public static class AsyncHelper
 		}
 	}
 
-	public static TaskCompletionSource<T> CreateAsyncTaskSource<T>(bool forceAsync = true) => new(forceAsync ? TaskCreationOptions.RunContinuationsAsynchronously : TaskCreationOptions.None);
+	public static TaskCompletionSource<T> CreateTaskCompletionSource<T>(bool forceAsync = true) => new(forceAsync ? TaskCreationOptions.RunContinuationsAsynchronously : TaskCreationOptions.None);
 
 	public static void TrySetFrom<T>(this TaskCompletionSource<T> tcs, Exception e)
 	{
@@ -232,7 +232,7 @@ public static class AsyncHelper
 			tcs.TrySetException(e);
 	}
 
-	public static Task WhenCanceled(this CancellationToken token) => CreateAsyncTaskSource<object>().Task.WaitAsync(token);
+	public static Task WhenCanceled(this CancellationToken token) => CreateTaskCompletionSource<object>().Task.WaitAsync(token);
 
 	public static bool IsCancellation(this Exception e) => e.IsCancellation(out _);
 
@@ -292,7 +292,7 @@ public static class AsyncHelper
 			tcs.TrySetException(e);
 	}
 
-	public static TaskCompletionSource CreateAsyncTaskSource(bool forceAsync = true) => new(forceAsync ? TaskCreationOptions.RunContinuationsAsynchronously : TaskCreationOptions.None);
+	public static TaskCompletionSource CreateTaskCompletionSource(bool forceAsync = true) => new(forceAsync ? TaskCreationOptions.RunContinuationsAsynchronously : TaskCreationOptions.None);
 
 	#endif
 }

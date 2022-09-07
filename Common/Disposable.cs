@@ -161,7 +161,7 @@ namespace Ecng.Common
 
 		public ValueTask DisposeAsync()
 		{
-			if(Interlocked.CompareExchange(ref _disposeTcs, AsyncHelper.CreateAsyncTaskSource(), null) != null)
+			if(Interlocked.CompareExchange(ref _disposeTcs, AsyncHelper.CreateTaskCompletionSource(), null) != null)
 				return new ValueTask(_disposeTcs.Task);
 
 			return AsyncHelper.CatchHandle(OnDisposeAsync,
