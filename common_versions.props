@@ -26,11 +26,12 @@
     <NUnit3TestAdapterVer>4.2.1</NUnit3TestAdapterVer>
     <FluentAssertionsVer>5.10.3</FluentAssertionsVer>
     <SystemDrawingCommonVer>5.0.3</SystemDrawingCommonVer>
-    <MsExtensionsLoggingVer>6.0.1</MsExtensionsLoggingVer>
     <MicrosoftNetHttpHeadersVer>2.2.8</MicrosoftNetHttpHeadersVer>
     <TaskExtensionsVer>4.5.4</TaskExtensionsVer>
     <SysChannelsVer>6.0.0</SysChannelsVer>
 
+    <MsExtensionsVer>6.0.*</MsExtensionsVer>
+    
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
 
     <MessagePackVer>2.3.85</MessagePackVer>
