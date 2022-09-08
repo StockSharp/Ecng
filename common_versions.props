@@ -7,30 +7,30 @@
 
     <MicrosoftWindowsCompatibilityVer>5.0.2</MicrosoftWindowsCompatibilityVer>
     <MicrosoftAspNetWebApiClientVer>5.2.7</MicrosoftAspNetWebApiClientVer>
+    <MicrosoftDataSqlClientVer>5.0.0</MicrosoftDataSqlClientVer>
 
     <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
     <EcngSystemComponentModelAnnotationsVer>5.0.0</EcngSystemComponentModelAnnotationsVer>
 
-    <SystemCodeDomVer>5.0.0</SystemCodeDomVer>
-    <SystemCollectionsImmutableVer>5.0.0</SystemCollectionsImmutableVer>
-    <SystemConfigurationConfigurationManagerVer>5.0.0</SystemConfigurationConfigurationManagerVer>
+    <SystemCodeDomVer>6.*</SystemCodeDomVer>
+    <SystemCollectionsImmutableVer>6.*</SystemCollectionsImmutableVer>
+    <SystemConfigurationConfigurationManagerVer>6.*</SystemConfigurationConfigurationManagerVer>
     <SystemIOCompressionVer>4.3.0</SystemIOCompressionVer>
-    <SystemManagementVer>5.0.0</SystemManagementVer>
+    <SystemManagementVer>6.*</SystemManagementVer>
     <SystemReflectionEmitVer>4.7.0</SystemReflectionEmitVer>
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
-    <SystemSecurityCryptographyProtectedDataVer>5.0.0</SystemSecurityCryptographyProtectedDataVer>
-    <SystemSecurityPermissionsVer>5.0.0</SystemSecurityPermissionsVer>
-    <SystemTextEncodingCodePagesVer>5.0.0</SystemTextEncodingCodePagesVer>
-    <SystemTextJsonVer>4.7.2</SystemTextJsonVer>
+    <SystemSecurityCryptographyProtectedDataVer>6.*</SystemSecurityCryptographyProtectedDataVer>
+    <SystemSecurityPermissionsVer>6.*</SystemSecurityPermissionsVer>
+    <SystemTextEncodingCodePagesVer>6.*</SystemTextEncodingCodePagesVer>
+    <SystemTextJsonVer>6.*</SystemTextJsonVer>
     <NUnitVer>3.13.3</NUnitVer>
     <NUnit3TestAdapterVer>4.2.1</NUnit3TestAdapterVer>
     <FluentAssertionsVer>5.10.3</FluentAssertionsVer>
-    <SystemDrawingCommonVer>5.0.3</SystemDrawingCommonVer>
+    <SystemDrawingCommonVer>6.*</SystemDrawingCommonVer>
     <MicrosoftNetHttpHeadersVer>2.2.8</MicrosoftNetHttpHeadersVer>
     <TaskExtensionsVer>4.5.4</TaskExtensionsVer>
-    <SysChannelsVer>6.0.0</SysChannelsVer>
-
-    <MsExtensionsVer>6.0.*</MsExtensionsVer>
+    <SysChannelsVer>6.*</SysChannelsVer>
+    <MsExtensionsVer>6.*</MsExtensionsVer>
     
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
 
@@ -38,7 +38,7 @@
     <MessagePipeVer>1.7.4</MessagePipeVer>
 
     <MoreLinqVer>3.3.2</MoreLinqVer>
-    <RestSharpVer>106.13.0</RestSharpVer>
+    <RestSharpVer>106.15.0</RestSharpVer>
     <NDdeVer>3.1.0</NDdeVer>
     <ILPackVer>0.1.7</ILPackVer>
     <linq2dbVer>4.1.1</linq2dbVer>
