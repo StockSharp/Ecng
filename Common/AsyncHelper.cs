@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Nito.AsyncEx;
+
+#if NET5_0_OR_GREATER
 using Nito.AsyncEx.Synchronous;
+#else
+using Nito.AsyncEx;
+#endif
 
 namespace Ecng.Common;
 
@@ -252,12 +256,6 @@ public static class AsyncHelper
 		}
 	}
 
-	public static bool IsCompletedSuccessfully(this ValueTask t) => t.IsCompleted && !(t.IsCanceled || t.IsFaulted);
-	public static bool IsCompletedSuccessfully<T>(this ValueTask<T> t) => t.IsCompleted && !(t.IsCanceled || t.IsFaulted);
-
-	public static bool IsCompletedSuccessfully(this Task t) => t.IsCompleted && !(t.IsCanceled || t.IsFaulted);
-	public static bool IsCompletedSuccessfully<T>(this Task<T> t) => t.IsCompleted && !(t.IsCanceled || t.IsFaulted);
-
 	#if NET5_0_OR_GREATER
 
 	public static bool TryCompleteFromCompletedTask(this TaskCompletionSource tcs, Task task)
@@ -293,6 +291,11 @@ public static class AsyncHelper
 	}
 
 	public static TaskCompletionSource CreateTaskCompletionSource(bool forceAsync = true) => new(forceAsync ? TaskCreationOptions.RunContinuationsAsynchronously : TaskCreationOptions.None);
+
+	#else
+
+	public static bool IsCompletedSuccessfully(this Task t) => t.Status == TaskStatus.RanToCompletion;
+	public static bool IsCompletedSuccessfully<T>(this Task<T> t) => t.Status == TaskStatus.RanToCompletion;
 
 	#endif
 }
