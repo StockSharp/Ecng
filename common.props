@@ -17,15 +17,20 @@
            '$(MSBuildProjectName)' == 'Interop.Windows'
         or '$(MSBuildProjectName)' == 'ManagedWinapi'
         or '$(MSBuildProjectName)' == 'HtmlRenderer'
-        or '$(MSBuildProjectName)' == 'TestConsole'
-        or '$(MSBuildProjectName)' == 'TestWpf'
-        or '$(MSBuildProjectName)' == 'Tests'
-        or '$(MSBuildProjectName)' == 'SmartFormat.Tests'
       ">
     <!-- 8sep22: temporary net5 support for installer. TODO remove in a couple of months -->
     <TargetFrameworks>net5.0-windows;net6.0-windows</TargetFrameworks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="
+           '$(MSBuildProjectName)' == 'TestConsole'
+        or '$(MSBuildProjectName)' == 'TestWpf'
+        or '$(MSBuildProjectName)' == 'Tests'
+        or '$(MSBuildProjectName)' == 'SmartFormat.Tests'
+      ">
+    <TargetFrameworks>net6.0-windows</TargetFrameworks>
+  </PropertyGroup>
+  
   <PropertyGroup Condition="'$(StockSharpTargets)' != ''">
     <TargetFrameworks>$(StockSharpTargets)</TargetFrameworks>
   </PropertyGroup>
