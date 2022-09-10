@@ -1,12 +1,22 @@
 ﻿namespace Ecng.Interop
 {
 	using System;
+	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Diagnostics;
+	using System.Linq;
 	using System.Management;
 	using System.Runtime.InteropServices;
 	using System.Text;
+	using System.Windows.Forms;
 
 	using Ecng.Common;
+	using Ecng.Reflection;
+
+	using ManagedWinapi.Windows;
+	using ManagedWinapi.Windows.Contents;
+
+	using Microsoft.Win32;
 
 	///<summary>
 	///</summary>
@@ -479,6 +489,283 @@
 		public static T Wrapper<T>(this object target)
 		{
 			return (T)Marshal.CreateWrapperOfType(target, typeof(T));
+		}
+
+		///<summary>
+		///</summary>
+		///<param name="wnd"></param>
+		public static string GetText(this SystemWindow wnd)
+		{
+			if (wnd is null)
+				throw new ArgumentNullException(nameof(wnd));
+
+			var len = wnd.HWnd.SendMessage((int)WM.GETTEXTLENGTH, IntPtr.Zero, IntPtr.Zero);
+			var retVal = new StringBuilder(len);
+			wnd.HWnd.SendMessage((int)WM.GETTEXT, new IntPtr(len + 1), retVal);
+			return retVal.ToString();
+		}
+
+		public static int SendMessage<TMessage, TWParam, TLParam>(this SystemWindow wnd, TMessage message, TWParam wParam, TLParam lParam)
+		{
+			if (wnd is null)
+				throw new ArgumentNullException(nameof(wnd));
+
+			return wnd.HWnd.SendMessage(message.To<int>(), wParam.To<IntPtr>(), lParam.To<IntPtr>());
+		}
+
+		public static int PostMessage<TMessage, TWParam, TLParam>(this SystemWindow wnd, TMessage message, TWParam wParam, TLParam lParam)
+		{
+			if (wnd is null)
+				throw new ArgumentNullException(nameof(wnd));
+
+			return wnd.HWnd.PostMessage(message.To<int>(), wParam.To<IntPtr>(), lParam.To<IntPtr>());
+		}
+
+		///<summary>
+		///</summary>
+		///<param name="wnd"></param>
+		///<param name="text"></param>
+		///<exception cref="ArgumentNullException"></exception>
+		public static void SetText(this SystemWindow wnd, string text)
+		{
+			if (wnd is null)
+				throw new ArgumentNullException(nameof(wnd));
+
+			wnd.HWnd.SendMessage((int)WM.SETTEXT, 0, text);
+		}
+
+		///<summary>
+		///</summary>
+		///<param name="wnd"></param>
+		///<param name="elem"></param>
+		///<exception cref="ArgumentNullException"></exception>
+		public static void Command(this SystemWindow wnd, SystemWindow elem)
+		{
+			if (wnd is null)
+				throw new ArgumentNullException(nameof(wnd));
+
+			if (elem is null)
+				throw new ArgumentNullException(nameof(elem));
+
+			wnd.SendMessage(WM.COMMAND, elem.DialogID, 0);
+		}
+
+		public static void PressKeyButton(this SystemWindow window, VirtualKeys key)
+		{
+			window.SendMessage(WM.KEYDOWN, (int)key, 0);
+			window.SendMessage(WM.KEYUP, (int)key, 0);
+		}
+
+		public static int GetProcessId(this SystemWindow wnd)
+		{
+			if (wnd is null)
+				throw new ArgumentNullException(nameof(wnd));
+
+			wnd.HWnd.GetWindowThreadProcessId(out int pid);
+			return pid;
+		}
+
+		/// <summary>
+		/// Searches for the topmost visible form of your app in all the forms opened in the current Windows session.
+		/// </summary>
+		/// <returns>The Form that is currently TopMost, or null</returns>
+		public static Form GetTopMostWindow()
+		{
+			// http://social.msdn.microsoft.com/Forums/en/winforms/thread/99df9c07-c117-465a-9207-fa3534982021
+			return GetTopMostWindow(Application.OpenForms[0].Handle);
+		}
+
+		/// <summary>
+		/// Searches for the topmost visible form of your app in all the forms opened in the current Windows session.
+		/// </summary>
+		/// <param name="hWndMainFrm">Handle of the main form</param>
+		/// <returns>The Form that is currently TopMost, or null</returns>
+		public static Form GetTopMostWindow(IntPtr hWndMainFrm)
+		{
+			// http://stackoverflow.com/questions/1000847/how-to-get-the-handle-of-the-topmost-form-in-a-winform-app
+
+			Form frm = null;
+
+			var hwnd = WinApi.GetTopWindow(IntPtr.Zero);
+			if (hwnd != IntPtr.Zero)
+			{
+				while ((!WinApi.IsWindowVisible(hwnd) || frm is null) && hwnd != hWndMainFrm)
+				{
+					// Get next window under the current handler
+					hwnd = WinApi.GetNextWindow(hwnd, WinApi.GW_HWNDNEXT);
+
+					try
+					{
+						frm = (Form)Control.FromHandle(hwnd);
+					}
+					catch
+					{
+						// Weird behaviour: In some cases, trying to cast to a Form a handle of an object
+						// that isn't a form will just return null. In other cases, will throw an exception.
+					}
+				}
+			}
+
+			return frm;
+		}
+
+		public static void GetScreenParams(IntPtr hwnd, out int left, out int top, out int width, out int height)
+		{
+			var activeScreen = Screen.FromHandle(hwnd);
+			var bounds = activeScreen.Bounds;
+
+			left = bounds.Left;
+			top = bounds.Top;
+			width = bounds.Width;
+			height = bounds.Height;
+		}
+
+		public static SystemMenu GetMenu(this SystemWindow window)
+		{
+			if (window is null)
+				throw new ArgumentNullException(nameof(window));
+
+			var ptr = window.HWnd.GetMenu();
+
+			return ptr != IntPtr.Zero ? new SystemMenu(ptr, window) : null;
+		}
+
+		public static IEnumerable<string> GetListBoxItems(this SystemListBox lb)
+		{
+			if (lb is null)
+				throw new ArgumentNullException(nameof(lb));
+
+			var items = new List<string>();
+
+			for (var i = 0; i < lb.Count; i++)
+				items.Add(lb[i]);
+
+			return items;
+		}
+
+		public static IEnumerable<string> GetListContentItems(this ListContent content)
+		{
+			if (content is null)
+				throw new ArgumentNullException(nameof(content));
+
+			var items = new List<string>();
+
+			for (var i = 0; i < content.Count; i++)
+				items.Add(content[i]);
+
+			return items;
+		}
+
+		//http://msdn.microsoft.com/en-us/magazine/dd419661.aspx
+		internal static IList<SystemMenuItem> GetMenuItems(this IntPtr hMenu, SystemWindow window)
+		{
+			if (window is null)
+				throw new ArgumentNullException(nameof(window));
+
+			var items = new List<SystemMenuItem>();
+
+			if (hMenu != IntPtr.Zero)
+			{
+				var count = hMenu.GetMenuItemCount();
+
+				if (count == -1)
+					throw new Win32Exception();
+
+				for (var i = 0; i < count; i++)
+				{
+					var info = new WinApi.MenuItemInfo();
+					info.cbSize = (uint)Marshal.SizeOf(info);
+					info.fMask =
+						WinApi.MenuItemInfoMasks.MIIM_TYPE |
+						WinApi.MenuItemInfoMasks.MIIM_ID |
+						WinApi.MenuItemInfoMasks.MIIM_STATE |
+						WinApi.MenuItemInfoMasks.MIIM_SUBMENU;
+
+					try
+					{
+						if (hMenu.GetMenuItemInfo((uint)i, true, ref info))
+						{
+							var text = new StringBuilder(info.cch + 1);
+							hMenu.GetMenuString(i, text, text.Capacity, WinApi.MF_BYPOSITION);
+							info.dwTypeData = text.ToString();
+							items.Add(new SystemMenuItem(info, window));
+						}
+					}
+					catch (AccessViolationException) // MDI
+					{
+						continue;
+					}
+				}
+			}
+
+			return items;
+		}
+
+		public static void SelectListBoxItem(this SystemListBox lb, int index)
+		{
+			if (lb is null)
+				throw new ArgumentNullException(nameof(lb));
+
+			var lbWnd = lb.SystemWindow;
+
+			lbWnd.SendMessage(Messages.LB_SETCURSEL, index, 0);
+			lbWnd.Parent.SendMessage(WM.COMMAND, WinApi.MakeParam(lbWnd.DialogID, WinApi.LBN_SELCHANGE), lbWnd.HWnd);
+		}
+
+		public static void SelectMultiListBoxItem(this SystemListBox lb, int index, bool value)
+		{
+			if (lb is null)
+				throw new ArgumentNullException(nameof(lb));
+
+			var lbWnd = lb.SystemWindow;
+
+			lbWnd.SendMessage(Messages.LB_SETSEL, value ? 1 : 0, index);
+			lbWnd.Parent.SendMessage(WM.COMMAND, WinApi.MakeParam(lbWnd.DialogID, WinApi.LBN_SELCHANGE), lbWnd.HWnd);
+		}
+
+		public static SystemComboBox ToComboBox(this SystemWindow window)
+		{
+			return window.Cast<SystemComboBox>("ComboBox");
+		}
+
+		public static SystemListView ToListView(this SystemWindow window)
+		{
+			return window.Cast<SystemListView>("ListView", "SysListView32");
+		}
+
+		public static SystemTreeView ToTreeView(this SystemWindow window)
+		{
+			return window.Cast<SystemTreeView>("TreeView");
+		}
+
+		public static SystemListBox ToListBox(this SystemWindow window)
+		{
+			return window.Cast<SystemListBox>("ListBox");
+		}
+
+		private static T Cast<T>(this SystemWindow window, params string[] classNames)
+		{
+			if (window is null)
+				throw new ArgumentNullException(nameof(window));
+
+			if (!classNames.Contains(window.ClassName))
+				throw new ArgumentException($"Window has invalid class name '{window.ClassName}'.", nameof(window));
+
+			return ReflectionHelper.CreateInstance<SystemWindow, T>(window);
+		}
+
+		private const string _path = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+
+		private static RegistryKey BaseKey => Registry.CurrentUser;
+
+		public static void UpdateAutoRun(string appName, string path, bool enabled)
+		{
+			using var key = BaseKey.OpenSubKey(_path, true) ?? throw new InvalidOperationException($"autorun not found ({_path})");
+
+			if (enabled)
+				key.SetValue(appName, path);
+			else
+				key.DeleteValue(appName, false);
 		}
 	}
 }
