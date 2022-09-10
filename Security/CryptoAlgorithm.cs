@@ -13,6 +13,7 @@ namespace Ecng.Security
 	{
 		Symmetric,
 		Asymmetric,
+		[Obsolete]
 		Dpapi,
 		Hash,
 	}
@@ -27,7 +28,6 @@ namespace Ecng.Security
 		private readonly AlgorithmTypes _type;
 		private readonly SymmetricCryptographer _symmetric;
 		private readonly AsymmetricCryptographer _asymmetric;
-		private readonly DpapiCryptographer _dpapi;
 		private readonly HashCryptographer _hash;
 
 		#endregion
@@ -43,8 +43,6 @@ namespace Ecng.Security
 				if (entry.Value is Type value)
 					_types.Add(entry.Key, value);
 			}
-
-			_types.Add(DefaultDpapiAlgoName, typeof(DpapiCryptographer));
 		}
 
 		#endregion
@@ -63,12 +61,6 @@ namespace Ecng.Security
 			_asymmetric = asymmetric ?? throw new ArgumentNullException(nameof(asymmetric));
 		}
 
-		public CryptoAlgorithm(DpapiCryptographer dpapi)
-		{
-			_type = AlgorithmTypes.Dpapi;
-			_dpapi = dpapi ?? throw new ArgumentNullException(nameof(dpapi));
-		}
-
 		public CryptoAlgorithm(HashCryptographer hash)
 		{
 			_type = AlgorithmTypes.Hash;
@@ -81,10 +73,7 @@ namespace Ecng.Security
 
 		public const string DefaultSymmetricAlgoName = "Rijndael";
 		public const string DefaultAsymmetricAlgoName = "RSA";
-		public const string DefaultDpapiAlgoName = "Dpapi";
 		public const string DefaultHashAlgoName = "SHA";
-
-		public const DataProtectionScope DefaultScope = DataProtectionScope.LocalMachine;
 
 		#endregion
 
@@ -103,9 +92,7 @@ namespace Ecng.Security
 			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
-			if (type == typeof(DpapiCryptographer))
-				return AlgorithmTypes.Dpapi;
-			else if (type.Is<SymmetricAlgorithm>())
+			if (type.Is<SymmetricAlgorithm>())
 				return AlgorithmTypes.Symmetric;
 			else if (type.Is<AsymmetricAlgorithm>())
 				return AlgorithmTypes.Asymmetric;
@@ -123,7 +110,6 @@ namespace Ecng.Security
 			{
 				AlgorithmTypes.Symmetric => DefaultSymmetricAlgoName,
 				AlgorithmTypes.Asymmetric => DefaultAsymmetricAlgoName,
-				AlgorithmTypes.Dpapi => DefaultDpapiAlgoName,
 				AlgorithmTypes.Hash => DefaultHashAlgoName,
 				_ => throw new ArgumentOutOfRangeException(nameof(type)),
 			};
@@ -138,7 +124,7 @@ namespace Ecng.Security
 			if (name == "RSA")
 				return typeof(RSACryptoServiceProvider);
 			else if (name == "SHA")
-				return typeof(SHA1Managed);
+				return typeof(SHA1);
 
 			throw new ArgumentException($"Algorithm {name} not found", nameof(name));
 		}
@@ -147,12 +133,12 @@ namespace Ecng.Security
 
 		public static CryptoAlgorithm CreateAssymetricVerifier(byte[] publicKey) => new(new AsymmetricCryptographer(GetDefaultAlgo(AlgorithmTypes.Asymmetric), publicKey));
 
-		public static CryptoAlgorithm Create(AlgorithmTypes type, params ProtectedKey[] keys)
+		public static CryptoAlgorithm Create(AlgorithmTypes type, params byte[][] keys)
 		{
 			return Create(GetDefaultAlgo(type), keys);
 		}
 
-		public static CryptoAlgorithm Create(Type type, params ProtectedKey[] keys)
+		public static CryptoAlgorithm Create(Type type, params byte[][] keys)
 		{
 			if (keys is null)
 				throw new ArgumentNullException(nameof(keys));
@@ -163,7 +149,6 @@ namespace Ecng.Security
 			{
 				AlgorithmTypes.Symmetric => new(new SymmetricCryptographer(type, keys[0])),
 				AlgorithmTypes.Asymmetric => new(new AsymmetricCryptographer(type, keys[0], keys[1])),
-				AlgorithmTypes.Dpapi => new(new DpapiCryptographer(DefaultScope)),
 				AlgorithmTypes.Hash => new(keys.Length == 0 ? new HashCryptographer(type) : new HashCryptographer(type, keys[0])),
 				_ => throw new ArgumentOutOfRangeException(nameof(name), name.To<string>()),
 			};
@@ -179,7 +164,6 @@ namespace Ecng.Security
 			{
 				AlgorithmTypes.Symmetric => _symmetric.Encrypt(data),
 				AlgorithmTypes.Asymmetric => _asymmetric.Encrypt(data),
-				AlgorithmTypes.Dpapi => _dpapi.Encrypt(data),
 				AlgorithmTypes.Hash => _hash.ComputeHash(data),
 				_ => throw new ArgumentOutOfRangeException(),
 			};
@@ -195,7 +179,6 @@ namespace Ecng.Security
 			{
 				AlgorithmTypes.Symmetric => _symmetric.Decrypt(data),
 				AlgorithmTypes.Asymmetric => _asymmetric.Decrypt(data),
-				AlgorithmTypes.Dpapi => _dpapi.Decrypt(data),
 				AlgorithmTypes.Hash => throw new NotSupportedException(),
 				_ => throw new ArgumentOutOfRangeException(),
 			};
@@ -245,8 +228,6 @@ namespace Ecng.Security
 				return new(_symmetric);
 			else if (_asymmetric is not null)
 				return new(_asymmetric);
-			else if (_dpapi is not null)
-				return new(_dpapi);
 			else if (_hash is not null)
 				return new(_hash);
 			else
