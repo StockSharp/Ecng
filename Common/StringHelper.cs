@@ -1232,6 +1232,7 @@
 			return r.Replace(text, @" ");
 		}
 
+		[Obsolete]
 		public static string UrlEscape(this string url)
 			=> Uri.EscapeUriString(url);
 
