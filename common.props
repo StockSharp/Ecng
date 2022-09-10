@@ -30,7 +30,7 @@
       ">
     <TargetFrameworks>net6.0-windows</TargetFrameworks>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(StockSharpTargets)' != ''">
     <TargetFrameworks>$(StockSharpTargets)</TargetFrameworks>
   </PropertyGroup>

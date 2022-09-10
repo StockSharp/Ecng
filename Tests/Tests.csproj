@@ -29,7 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Data.Linq2db\Data.Linq2db.csproj" />
-    <ProjectReference Include="..\Interop\Interop.csproj" />
+    <ProjectReference Include="..\Interop.Windows\Interop.Windows.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />
     <ProjectReference Include="..\Net\Net.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
