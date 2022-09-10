@@ -465,5 +465,20 @@
 
 		[DllImport("user32.dll", CharSet = CharSet.Auto, EntryPoint = "GetWindow", SetLastError = true)]
 		public static extern IntPtr GetNextWindow(IntPtr hwnd, [MarshalAs(UnmanagedType.U4)] int wFlag);
+
+		public static int ReleaseComObject(this object comObject)
+		{
+			return Marshal.ReleaseComObject(comObject);
+		}
+
+		/// <summary>
+		/// Wraps the specified COM object in an object of the specified type.
+		/// </summary>
+		/// <param name="target">The object to be wrapped.</param>
+		/// <returns>The newly wrapped object.</returns>
+		public static T Wrapper<T>(this object target)
+		{
+			return (T)Marshal.CreateWrapperOfType(target, typeof(T));
+		}
 	}
 }

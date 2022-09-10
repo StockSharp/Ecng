@@ -59,16 +59,6 @@ namespace Ecng.Interop
 			return ptr;
 		}
 
-		/// <summary>
-		/// Wraps the specified COM object in an object of the specified type.
-		/// </summary>
-		/// <param name="target">The object to be wrapped.</param>
-		/// <returns>The newly wrapped object.</returns>
-		public static T Wrapper<T>(this object target)
-		{
-			return (T)Marshal.CreateWrapperOfType(target, typeof(T));
-		}
-
 		private const string OLEAUT32 = "oleaut32.dll";
 		private const string OLE32 = "ole32.dll";
 
@@ -117,11 +107,6 @@ namespace Ecng.Interop
 
 			GetActiveObject(ref clsid, IntPtr.Zero, out var obj);
 			return (T)obj;
-		}
-
-		public static int ReleaseComObject(this object comObject)
-		{
-			return Marshal.ReleaseComObject(comObject);
 		}
 
 		/// <summary>
