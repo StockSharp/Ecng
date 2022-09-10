@@ -15,19 +15,6 @@
 		private readonly SecureString _key = "RClVEDn0O3EUsKqym1qd".Secure();
 		private readonly byte[] _salt = "3hj67-!3".To<byte[]>();
 
-		private readonly DpapiCryptographer _dpapi;
-
-		private SecureStringEncryptor()
-		{
-			try
-			{
-				_dpapi = new DpapiCryptographer(DataProtectionScope.CurrentUser);
-			}
-			catch
-			{
-			}
-		}
-
 		public SecureString Key { get; set; }
 		public byte[] Entropy { get; set; }
 
@@ -39,32 +26,7 @@
 			try
 			{
 				if (Scope<ContinueOnExceptionContext>.Current?.Value.DoNotEncrypt != true)
-				{
-					try
-					{
-						source = source.DecryptAes(_key.UnSecure(), _salt, _salt);
-					}
-					catch (CryptographicException ex)
-					{
-						if (_dpapi == null)
-							throw;
-
-						try
-						{
-							source = _dpapi.Decrypt(source, Entropy);
-						}
-						catch (CryptographicException)
-						{
-							// throws original error
-							throw ex;
-						}
-						catch (PlatformNotSupportedException)
-						{
-							// throws original error
-							throw ex;
-						}
-					}
-				}
+					source = source.DecryptAes(_key.UnSecure(), _salt, _salt);
 
 				return source.To<string>().Secure();
 			}
