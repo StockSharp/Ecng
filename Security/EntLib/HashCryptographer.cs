@@ -22,7 +22,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 	public class HashCryptographer
 	{
 		private readonly Type algorithmType;
-		private readonly ProtectedKey key;
+		private readonly byte[] key;
 
 		/// <summary>
 		/// <para>Initialize a new instance of the <see cref="HashCryptographer"/> with an algorithm type.</para>
@@ -45,7 +45,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 		/// While this overload will work with a specified <see cref="HashAlgorithm"/>, the protectedKey 
 		/// is only relevant when initializing with a specified <see cref="KeyedHashAlgorithm"/>.
 		/// </remarks>
-		public HashCryptographer(Type algorithmType, ProtectedKey protectedKey)
+		public HashCryptographer(Type algorithmType, byte[] protectedKey)
 			: this(algorithmType)
 		{
 			this.key = protectedKey;
@@ -73,7 +73,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
 			HashAlgorithm algorithm = Activator.CreateInstance(algorithmType, true) as HashAlgorithm;
 			if ((algorithm is KeyedHashAlgorithm keyedHashAlgorithm) && (key != null))
 			{
-				keyedHashAlgorithm.Key = key.DecryptedKey;
+				keyedHashAlgorithm.Key = key;
 			}
 			return algorithm;
 		}

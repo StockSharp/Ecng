@@ -29,16 +29,16 @@ namespace Microsoft.Practices.EnterpriseLibrary.Security.Cryptography
     public class SymmetricCryptographer : IDisposable
     {
         private readonly SymmetricAlgorithm algorithm;
-        private readonly ProtectedKey key;
+        private readonly byte[] key;
 
-		private byte[] Key => key.DecryptedKey;
+		private byte[] Key => key;
 
 	    /// <summary>
 		/// <para>Initalize a new instance of the <see cref="SymmetricCryptographer"/> class with an algorithm type and a key.</para>
 		/// </summary>
 		/// <param name="algorithmType"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
 		/// <param name="key"><para>The key for the algorithm.</para></param>
-		public SymmetricCryptographer(Type algorithmType, ProtectedKey key)
+		public SymmetricCryptographer(Type algorithmType, byte[] key)
 		{
 			if (algorithmType is null) throw new ArgumentNullException(nameof(algorithmType));
 			if (!algorithmType.Is<SymmetricAlgorithm>()) throw new ArgumentException(Resources.ExceptionCreatingSymmetricAlgorithmInstance, nameof(algorithmType));

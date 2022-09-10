@@ -8,24 +8,9 @@ namespace Ecng.Security
 
 	using Ecng.Common;
 
-	using Microsoft.Practices.EnterpriseLibrary.Security.Cryptography;
-
 	public static class CryptoHelper
 	{
-		public static byte[] ToBytes(this ProtectedKey key)
-		{
-			if (key is null)
-				throw new ArgumentNullException(nameof(key));
-
-			return key.DecryptedKey;
-		}
-
-		public static ProtectedKey FromBytes(this byte[] data)
-		{
-			return ProtectedKey.CreateFromPlaintextKey(data, CryptoAlgorithm.DefaultScope);
-		}
-
-		public static ProtectedKey FromRsa(this RSAParameters param)
+		public static byte[] FromRsa(this RSAParameters param)
 		{
 			var stream = new MemoryStream();
 
@@ -38,7 +23,7 @@ namespace Ecng.Security
 			WriteByteArray(stream, param.Exponent);
 			WriteByteArray(stream, param.Modulus);
 
-			return stream.To<byte[]>().FromBytes();
+			return stream.To<byte[]>();
 		}
 
 		public static RSAParameters ToRsa(this byte[] key)
@@ -59,14 +44,6 @@ namespace Ecng.Security
 				Exponent = ReadByteArray(stream),
 				Modulus = ReadByteArray(stream)
 			};
-		}
-
-		public static RSAParameters ToRsa(this ProtectedKey key)
-		{
-			if (key is null)
-				throw new ArgumentNullException(nameof(key));
-
-			return key.DecryptedKey.ToRsa();
 		}
 
 		#region WriteByteArray
@@ -127,16 +104,6 @@ namespace Ecng.Security
 				Exponent = param.Exponent,
 				Modulus = param.Modulus,
 			};
-		}
-
-		public static byte[] Protect(this byte[] plainText, byte[] entropy = null, DataProtectionScope scope = CryptoAlgorithm.DefaultScope)
-		{
-			return ProtectedData.Protect(plainText, entropy, scope);
-		}
-
-		public static byte[] Unprotect(this byte[] cipherText, byte[] entropy = null, DataProtectionScope scope = CryptoAlgorithm.DefaultScope)
-		{
-			return ProtectedData.Unprotect(cipherText, entropy, scope);
 		}
 
 		// https://stackoverflow.com/a/10177020/8029915

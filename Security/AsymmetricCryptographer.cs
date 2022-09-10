@@ -5,17 +5,10 @@ namespace Ecng.Security
 
 	using Ecng.Common;
 
-	using Microsoft.Practices.EnterpriseLibrary.Security.Cryptography;
-
 	public class AsymmetricCryptographer : Disposable
 	{
 		private sealed class AsymmetricAlgorithmWrapper : Wrapper<AsymmetricAlgorithm>
 		{
-			public AsymmetricAlgorithmWrapper(Type algorithmType, ProtectedKey key)
-				: this(CreateAlgo(algorithmType, key))
-			{
-			}
-
 			public AsymmetricAlgorithmWrapper(Type algorithmType, byte[] key)
 				: this(CreateAlgo(algorithmType, key))
 			{
@@ -43,14 +36,6 @@ namespace Ecng.Security
 					((RSACryptoServiceProvider)retVal).ImportParameters(key.ToRsa());
 
 				return retVal;
-			}
-
-			private static AsymmetricAlgorithm CreateAlgo(Type algorithmType, ProtectedKey key)
-			{
-				if (key is null)
-					throw new ArgumentNullException(nameof(key));
-
-				return CreateAlgo(algorithmType, key.DecryptedKey);
 			}
 
 			public byte[] Encrypt(byte[] plainText)
@@ -122,7 +107,7 @@ namespace Ecng.Security
 		/// <param name="algorithmType"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
 		/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
 		/// <param name="privateKey"><para>The private key for the algorithm.</para></param>
-		public AsymmetricCryptographer(Type algorithmType, ProtectedKey publicKey, ProtectedKey privateKey)
+		public AsymmetricCryptographer(Type algorithmType, byte[] publicKey, byte[] privateKey)
 			: this(publicKey is null ? null : new AsymmetricAlgorithmWrapper(algorithmType, publicKey), privateKey is null ? null : new AsymmetricAlgorithmWrapper(algorithmType, privateKey))
 		{
 		}
@@ -153,12 +138,12 @@ namespace Ecng.Security
 
 		#endregion
 
-		public static AsymmetricCryptographer CreateFromPublicKey(Type algorithmType, ProtectedKey publicKey)
+		public static AsymmetricCryptographer CreateFromPublicKey(Type algorithmType, byte[] publicKey)
 		{
 			return new AsymmetricCryptographer(new AsymmetricAlgorithmWrapper(algorithmType, publicKey), null);
 		}
 
-		public static AsymmetricCryptographer CreateFromPrivateKey(Type algorithmType, ProtectedKey privateKey)
+		public static AsymmetricCryptographer CreateFromPrivateKey(Type algorithmType, byte[] privateKey)
 		{
 			return new AsymmetricCryptographer(null, new AsymmetricAlgorithmWrapper(algorithmType, privateKey));
 		}
