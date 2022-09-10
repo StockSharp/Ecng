@@ -245,6 +245,9 @@ namespace Ecng.Common
 		}
 
 		public static byte[] GenerateSalt(int saltSize)
+#if NET5_0_OR_GREATER
+			=> RandomNumberGenerator.GetBytes(saltSize);
+#else
 		{
 			var salt = new byte[saltSize];
 
@@ -253,6 +256,7 @@ namespace Ecng.Common
 
 			return salt;
 		}
+#endif
 
 		public static Scope<T> ToScope<T>(this T value, bool ownInstance = true)
 		{
