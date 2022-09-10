@@ -11,7 +11,7 @@ namespace Ecng.Security
 		#region X509Cryptographer.ctor()
 
 		public X509Cryptographer(X509Certificate2 certificate)
-			: base(certificate.PublicKey.Key, certificate.PrivateKey)
+			: base(certificate.GetRSAPublicKey(), certificate.GetRSAPrivateKey())
 		{
 		}
 

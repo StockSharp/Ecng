@@ -58,7 +58,7 @@ namespace Ecng.Security
 			{
 				if (Value is RSACryptoServiceProvider rsa)
 				{
-					using var hash = new SHA1CryptoServiceProvider();
+					using var hash = SHA1.Create();
 					return rsa.SignData(data, hash);
 				}
 				else if (Value is DSACryptoServiceProvider dsa)
@@ -71,7 +71,7 @@ namespace Ecng.Security
 			{
 				if (Value is RSACryptoServiceProvider rsa)
 				{
-					using var hash = new SHA1CryptoServiceProvider();
+					using var hash = SHA1.Create();
 					return rsa.VerifyData(data, hash, signature);
 				}
 				else if (Value is DSACryptoServiceProvider dsa)

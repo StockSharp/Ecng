@@ -115,12 +115,16 @@ namespace Ecng.Security
 		// This constant determines the number of iterations for the password bytes generation function.
 		private const int _derivationIterations = 1000;
 
-		private static RijndaelManaged CreateRijndaelManaged() => new()
+		private static SymmetricAlgorithm CreateRijndaelManaged()
 		{
-			BlockSize = 128,
-			Mode = CipherMode.CBC,
-			Padding = PaddingMode.PKCS7,
-		};
+			var algo = Aes.Create();
+
+			algo.BlockSize = 128;
+			algo.Mode = CipherMode.CBC;
+			algo.Padding = PaddingMode.PKCS7;
+
+			return algo;
+		}
 
 		public static byte[] Encrypt(this byte[] plain, string passPhrase, byte[] salt, byte[] iv)
 		{
@@ -205,7 +209,10 @@ namespace Ecng.Security
 
 			var keyBytes = password.GetBytes(_keySize / 8);
 
-			using var aes = new AesManaged { Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7 };
+			using var aes = Aes.Create();
+
+			aes.Mode = CipherMode.CBC;
+			aes.Padding = PaddingMode.PKCS7;
 
 			if (isEncrypt)
 			{
