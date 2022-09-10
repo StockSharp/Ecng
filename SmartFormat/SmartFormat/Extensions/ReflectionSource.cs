@@ -85,15 +85,23 @@ namespace SmartFormat.Extensions
 							{
 								var result = method.Invoke(current, new object[] { cancellationToken });
 
-								Task task;
+								Task? task;
 
 								if (retType.GetGenericTypeDefinition() == typeof(ValueTask<>))
-									task = (Task)result.GetType().GetMethod(nameof(ValueTask<object>.AsTask)).Invoke(result, Array.Empty<object>());
+								{
+									if (result is null)
+										throw new InvalidOperationException("result is null.");
+
+									task = (Task?)result.GetType().GetMethod(nameof(ValueTask<object>.AsTask))!.Invoke(result, Array.Empty<object>());
+								}
 								else
-									task = (Task)result;
+									task = (Task?)result;
+
+								if (task is null)
+									throw new InvalidOperationException("task is null.");
 
 								await task;
-								selectorInfo.Result = task.GetType().GetProperty(nameof(Task<object>.Result)).GetValue(task);
+								selectorInfo.Result = task.GetType().GetProperty(nameof(Task<object>.Result))!.GetValue(task);
 							}
 							else
 								selectorInfo.Result = method.Invoke(current, Array.Empty<object>());
