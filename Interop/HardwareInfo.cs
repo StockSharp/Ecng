@@ -38,9 +38,11 @@ namespace Ecng.Interop
 
 		private static async Task<string> GetWMIIdAsync(string table, string field, CancellationToken cancellationToken)
 		{
+#pragma warning disable CA1416
 			using var mbs = new ManagementObjectSearcher($"Select * From {table}");
 			using var list = await Task.Run(() => mbs.Get(), cancellationToken);
 			return list.Cast<ManagementObject>().Select(o => (string)o[field]).FirstOrDefault(f => !f.IsEmptyOrWhiteSpace());
+#pragma warning restore CA1416
 		}
 
 		private static async Task<string> GetIdWindows(CancellationToken cancellationToken)
