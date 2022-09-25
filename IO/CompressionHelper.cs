@@ -67,6 +67,9 @@
 		public static string UnGZip(this byte[] input, int index, int count)
 			=> input.Uncompress<GZipStream>(index, count).UTF8();
 
+		public static int UnGZip(this ArraySegment<byte> input, byte[] destination)
+			=> UnGZip(input.Array, input.Offset, input.Count, destination);
+
 		public static int UnGZip(this byte[] input, int index, int count, byte[] destination)
 		{
 			using var inputStream = new MemoryStream(input, index, count);
@@ -83,6 +86,9 @@
 
 		public static string UnDeflate(this byte[] input, int index, int count)
 			=> input.DeflateFrom(index, count).UTF8();
+
+		public static int UnDeflate(this ArraySegment<byte> input, byte[] destination)
+			=> UnDeflate(input.Array, input.Offset, input.Count, destination);
 
 		public static int UnDeflate(this byte[] input, int index, int count, byte[] destination)
 		{
