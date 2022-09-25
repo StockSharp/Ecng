@@ -48,5 +48,11 @@
 		/// </summary>
 		[Display(Name = "Any")]
 		Any,
+
+		/// <summary>
+		/// Значение левого параметра содержится в правом.
+		/// </summary>
+		[Display(Name = "IN")]
+		In,
 	}
 }
