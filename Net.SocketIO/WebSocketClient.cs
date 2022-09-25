@@ -3,10 +3,9 @@
 	using System;
 	using System.Linq;
 	using System.Net.WebSockets;
-	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
-
+	using System.IO;
 #if NET5_0_OR_GREATER
 	using System.Net.Security;
 #endif
@@ -28,7 +27,7 @@
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
 		private readonly Action<bool> _disconnected;
-		private readonly Action<WebSocketClient, byte[], int, int> _process;
+		private readonly Action<WebSocketClient, ArraySegment<byte>> _process;
 		private readonly Action<string, object> _infoLog;
 		private readonly Action<string, object> _errorLog;
 		private readonly Action<string, object> _verboseLog;
@@ -55,28 +54,28 @@
 		{
 		}
 
-		private static Action<WebSocketClient, byte[], int, int> BytesToString(Action<WebSocketClient, string> process, Action<string> verbose2)
+		private static Action<WebSocketClient, ArraySegment<byte>> BytesToString(Action<WebSocketClient, string> process, Action<string> verbose2)
 		{
 			if (process is null)
 				throw new ArgumentNullException(nameof(process));
 
-			return (c, b, s, o) =>
+			return (c, b) =>
 			{
-				var recv = Encoding.UTF8.GetString(b, s, o);
+				var recv = b.UTF8();
 				verbose2(recv);
 				process(c, recv);
 			};
 		}
 
-		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<byte[], int, int> process,
+		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<ArraySegment<byte>> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
-			: this(connected, disconnected, error, (c, b, s, o) => process(b, s, o), infoLog, errorLog, verbose)
+			: this(connected, disconnected, error, (c, b) => process(b), infoLog, errorLog, verbose)
 		{
 			if (process is null)
 				throw new ArgumentNullException(nameof(process));
 		}
 
-		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<WebSocketClient, byte[], int, int> process,
+		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<WebSocketClient, ArraySegment<byte>> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
 		{
 			_connected = connected ?? throw new ArgumentNullException(nameof(connected));
@@ -107,7 +106,7 @@
 
 		public int ReconnectAttempts { get; set; }
 
-		public event Func<byte[], int, int, byte[], int> PreProcess;
+		public event Func<ArraySegment<byte>, byte[], int> PreProcess;
 
 #if NET5_0_OR_GREATER
 
@@ -230,10 +229,10 @@
 				var token = source.Token;
 
 				var buf = new byte[BufferSize];
-				var pos = 0;
+				var responseBody = new MemoryStream();
 
 				var preProcess = PreProcess;
-				var buf2 = preProcess != null ? new byte[BufferSizeUncompress] : null;
+				var preProcessBuf = preProcess != null ? new byte[BufferSizeUncompress] : null;
 
 				var errorCount = 0;
 				const int maxParsingErrors = 100;
@@ -249,7 +248,7 @@
 				{
 					try
 					{
-						var task = _ws.ReceiveAsync(new ArraySegment<byte>(buf, pos, buf.Length - pos), token);
+						var task = _ws.ReceiveAsync(new(buf), token);
 						task.Wait(token);
 
 						if (token.IsCancellationRequested)
@@ -268,36 +267,34 @@
 							break;
 						}
 
-						pos += result.Count;
+						responseBody.Write(buf, 0, result.Count);
 
 						if (!result.EndOfMessage)
 							continue;
 
-						if (pos == 0)
+						if (responseBody.Length == 0)
 							continue;
 
-						string recv = null;
-						var count = pos;
-
-						pos = 0;
-
-						var temp = buf;
+						if (!responseBody.TryGetBuffer(out var processBuf))
+							throw new InvalidOperationException("Cannot get buffer.");
 
 						try
 						{
-							if (buf2 != null)
+							responseBody.Position = 0;
+
+							if (preProcessBuf != null)
 							{
-								count = preProcess(buf, 0, count, buf2);
-								buf = buf2;
+								var count = preProcess(processBuf, preProcessBuf);
+								processBuf = new(preProcessBuf, 0, count);
 							}
 
-							_process(this, buf, 0, count);
+							_process(this, processBuf);
 
 							errorCount = 0;
 						}
 						catch (Exception ex)
 						{
-							_error(new InvalidOperationException($"Error parsing string '{recv}'.", ex));
+							_error(new InvalidOperationException($"Error parsing string '{processBuf.UTF8()}'.", ex));
 
 							if (++errorCount < maxParsingErrors)
 								continue;
@@ -306,7 +303,7 @@
 						}
 						finally
 						{
-							buf = temp;
+							responseBody.SetLength(0);
 						}
 					}
 					catch (AggregateException ex)
