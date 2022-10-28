@@ -197,8 +197,8 @@ namespace Ecng.Common
 			else
 			{
 				var bytes = byteCount.Abs();
-				place = (int)Math.Log(bytes, 1024).Floor();
-				num = (int)(Math.Sign(byteCount) * Math.Round(bytes / Math.Pow(1024, place), 1));
+				place = (int)Math.Log(bytes, FileSizes.KB).Floor();
+				num = (int)(Math.Sign(byteCount) * Math.Round(bytes / Math.Pow(FileSizes.KB, place), 1));
 			}
 
 			return num + " " + _suf[place];

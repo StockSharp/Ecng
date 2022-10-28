@@ -18,8 +18,8 @@
 		{
 			var token = CancellationToken.None;
 
-			var bytes1 = RandomGen.GetBytes(1024 * 1024);
-			var bytes2 = RandomGen.GetBytes(1024 * 1024);
+			var bytes1 = RandomGen.GetBytes(FileSizes.MB);
+			var bytes2 = RandomGen.GetBytes(FileSizes.MB);
 
 			var delta = await Delta.Create(bytes1, bytes2, token);
 

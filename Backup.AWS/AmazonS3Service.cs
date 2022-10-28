@@ -22,7 +22,7 @@ namespace Ecng.Backup.Amazon
 	{
 		private readonly string _bucket;
 		private readonly IAmazonS3 _client;
-		private const int _bufferSize = 1024 * 1024 * 10; // 10mb
+		private const int _bufferSize = FileSizes.MB * 10;
 		private readonly AWSCredentials _credentials;
 		private readonly RegionEndpoint _endpoint;
 

@@ -22,7 +22,7 @@ namespace Ecng.Backup.Amazon
 		private readonly string _vaultName;
 		private readonly AWSCredentials _credentials;
 		private readonly RegionEndpoint _endpoint;
-		private const int _bufferSize = 1024 * 1024 * 100; // 100mb
+		private const int _bufferSize = FileSizes.MB * 100;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AmazonGlacierService"/>.

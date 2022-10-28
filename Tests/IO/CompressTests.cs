@@ -17,7 +17,7 @@
 		[TestMethod]
 		public void Deflate()
 		{
-			var bytes = RandomGen.GetBytes(1024 * 1024);
+			var bytes = RandomGen.GetBytes(FileSizes.MB);
 
 			bytes.DeflateTo().DeflateFrom().SequenceEqual(bytes).AssertTrue();
 			bytes.Compress<DeflateStream>().DeflateFrom().SequenceEqual(bytes).AssertTrue();
@@ -27,7 +27,7 @@
 		[TestMethod]
 		public void GZip()
 		{
-			var bytes = RandomGen.GetBytes(1024 * 1024);
+			var bytes = RandomGen.GetBytes(FileSizes.MB);
 
 			bytes.Compress<GZipStream>().Uncompress<GZipStream>().SequenceEqual(bytes).AssertTrue();
 		}
@@ -42,7 +42,7 @@
 		[TestMethod]
 		public void GZipToBuffer()
 		{
-			var bytes = RandomGen.GetBytes(1024);
+			var bytes = RandomGen.GetBytes(FileSizes.KB);
 			var rangeCount = 100;
 			var destination = new byte[rangeCount * 2];
 			var range = bytes.Compress<GZipStream>(count: rangeCount);
@@ -54,7 +54,7 @@
 		[TestMethod]
 		public void UnDeflateToBuffer()
 		{
-			var bytes = RandomGen.GetBytes(1024);
+			var bytes = RandomGen.GetBytes(FileSizes.KB);
 			var rangeCount = 100;
 			var destination = new byte[rangeCount * 2];
 			var range = bytes.Compress<DeflateStream>(count: rangeCount);
@@ -66,7 +66,7 @@
 		[TestMethod]
 		public void Zip7()
 		{
-			var bytes = RandomGen.GetBytes(1024 * 1024);
+			var bytes = RandomGen.GetBytes(FileSizes.MB);
 
 			// TODO 7Zip compression not implemented
 			//bytes.Do7Zip().Un7Zip().SequenceEqual(bytes).AssertTrue();
@@ -76,7 +76,7 @@
 		[TestMethod]
 		public async Task Async()
 		{
-			var bytes = RandomGen.GetBytes(1024 * 1024);
+			var bytes = RandomGen.GetBytes(FileSizes.MB);
 
 			async Task Do<TCompress>()
 				where TCompress : Stream
