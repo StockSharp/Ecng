@@ -35,7 +35,7 @@
 		public bool FillMode { get; set; } = true;
 		public bool EnumAsString { get; set; }
 		public bool EncryptedAsByteArray { get; set; }
-		public int BufferSize { get; set; } = 1024;
+		public int BufferSize { get; set; } = FileSizes.KB;
 		public NullValueHandling NullValueHandling { get; set; } = NullValueHandling.Include;
 
 		public override ISerializer GetSerializer(Type entityType)

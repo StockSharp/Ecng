@@ -56,7 +56,7 @@
 			return streamReader.ReadToEnd();
 		}
 
-		public const int DefaultBufferSize = 1024 * 80;
+		public const int DefaultBufferSize = FileSizes.KB * 80;
 
 		public static string UnGZip(this byte[] input)
 			=> input.UnGZip(0, input.Length);

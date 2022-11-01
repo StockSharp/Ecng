@@ -67,10 +67,10 @@ namespace Ecng.ComponentModel
 			}
 
 			byte i = 0;
-			while ((size >= 1024) && (i < _letters.Length - 1))
+			while ((size >= FileSizes.KB) && (i < _letters.Length - 1))
 			{
 				i++;
-				size /= 1024;
+				size /= FileSizes.KB;
 			}
 
 			var precision = format.Substring(2);

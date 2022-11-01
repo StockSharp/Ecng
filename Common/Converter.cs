@@ -567,18 +567,17 @@
 						output = memoryStream;
 					else
 					{
-						const int buffSize = 1024;
-						const int capacity = buffSize * 4;
+						const int capacity = FileSizes.KB * 4;
 
 						output = new MemoryStream(capacity);
 
-						var buffer = new byte[buffSize];
+						var buffer = new byte[FileSizes.KB];
 
 						//int offset = 0;
 
 						while (true)
 						{
-							int readBytes = st2.Read(buffer, 0, buffSize);
+							int readBytes = st2.Read(buffer, 0, FileSizes.KB);
 							if (readBytes == 0)
 								break;
 

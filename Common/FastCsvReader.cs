@@ -11,7 +11,7 @@ namespace Ecng.Common
 		private static readonly Func<string, bool> _toBool = Converter.GetTypedConverter<string, bool>();
 		private static readonly Func<string, double> _toDouble = Converter.GetTypedConverter<string, double>();
 
-		private const int _buffSize = 1024 * 1024;
+		private const int _buffSize = FileSizes.MB;
 		private readonly char[] _buffer = new char[_buffSize];
 		private int _bufferLen;
 		private int _bufferPos;
