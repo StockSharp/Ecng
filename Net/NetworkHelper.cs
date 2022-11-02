@@ -334,7 +334,6 @@ namespace Ecng.Net
 			return $"https://www.gravatar.com/avatar/{token}?size={size}";
 		}
 
-#if !NET5_0_OR_GREATER
 		[Obsolete("Use TryGetStatusCode method.")]
 		public static bool Unauthorized(this HttpRequestException ex)
 			=> ex.TryGetStatusCode() == HttpStatusCode.Unauthorized;
@@ -383,6 +382,5 @@ namespace Ecng.Net
 			else
 				return (HttpRequestException)_ctorWithStatusCode.Invoke(new object[] { message, null, code });
 		}
-#endif
 	}
 }
