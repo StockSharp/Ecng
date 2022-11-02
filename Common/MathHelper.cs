@@ -6,7 +6,8 @@ namespace Ecng.Common
 
 	public static class MathHelper
 	{
-		public static decimal Floor(this decimal value, decimal step) => Math.Floor(value / step) * step;
+		public static decimal Floor(this decimal value, decimal step)   => Math.Floor(value / step) * step;
+		public static decimal Ceiling(this decimal value, decimal step) => Math.Ceiling(value / step) * step;
 
 		public static decimal Round(this decimal value)
 		{
