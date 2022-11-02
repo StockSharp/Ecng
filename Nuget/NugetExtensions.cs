@@ -13,7 +13,7 @@ using NuGet.Configuration;
 
 namespace Ecng.Nuget;
 
-public static class Extensions
+public static class NugetExtensions
 {
 	public static string[] GetTargetFrameworks(this PackageArchiveReader reader)
 	{
