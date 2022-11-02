@@ -15,6 +15,7 @@ namespace Ecng.Net
 	using System.Security.Cryptography;
 	using System.Text;
 	using System.Web;
+	using System.Reflection;
 
 	using Ecng.Common;
 	using Ecng.Collections;
@@ -362,6 +363,24 @@ namespace Ecng.Net
 			}
 
 			return null;
+		}
+
+		// TODO can remove when .net standard 2.1 will be applied
+		private static ConstructorInfo _ctorWithStatusCode;
+		private static bool _initialized;
+
+		public static HttpRequestException CreateHttpRequestException(this HttpStatusCode code, string message)
+		{
+			if (!_initialized)
+			{
+				_ctorWithStatusCode = typeof(HttpRequestException).GetConstructors().FirstOrDefault(c => c.GetParameters().Any(p => p.ParameterType == typeof(HttpStatusCode?)));
+				_initialized = true;
+			}
+
+			if (_ctorWithStatusCode is null)
+				return new HttpRequestException($"{(int)code} ({code}): {message}");
+			else
+				return (HttpRequestException)_ctorWithStatusCode.Invoke(new object[] { message, null, code });
 		}
 	}
 }
