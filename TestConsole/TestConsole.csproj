@@ -15,7 +15,7 @@
     <ProjectReference Include="..\Interop\Interop.csproj" />
     <ProjectReference Include="..\Net\Net.csproj" />
     <ProjectReference Include="..\Security\Security.csproj" />
-    <ProjectReference Include="..\Roslyn\Roslyn.csproj" />
+    <ProjectReference Include="..\Compilation.Roslyn\Compilation.Roslyn.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
   </ItemGroup>

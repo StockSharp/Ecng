@@ -16,7 +16,7 @@
 	using Ecng.ComponentModel.Expressions;
 	using Ecng.Net;
 	using Ecng.Reflection;
-	using Ecng.Roslyn;
+	using Ecng.Compilation.Roslyn;
 	using Ecng.Serialization;
 	using Ecng.UnitTesting;
 	using Ecng.Collections;

@@ -1,4 +1,4 @@
-﻿namespace Ecng.Roslyn
+﻿namespace Ecng.Compilation.Roslyn
 {
 	using System;
 	using System.Collections.Generic;
