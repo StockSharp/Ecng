@@ -1,4 +1,4 @@
-namespace Ecng.Compilation
+namespace Ecng.Compilation.CodeDom
 {
 	using System;
 	using System.CodeDom.Compiler;
@@ -9,9 +9,9 @@ namespace Ecng.Compilation
 	using Microsoft.CSharp;
 	using Microsoft.VisualBasic;
 
-	public class Fw40Compiler : ICompiler
+	public class CodeDomCompiler : ICompiler
 	{
-		public Fw40Compiler(CompilationLanguages language, string outputDir, string tempPath)
+		public CodeDomCompiler(CompilationLanguages language, string outputDir, string tempPath)
 		{
 			Language = language;
 			OutputDir = outputDir;
@@ -57,28 +57,6 @@ namespace Ecng.Compilation
 			};
 
 			return compilationResult;
-		}
-	}
-
-	public class Fw40CompilerService : ICompilerService
-	{
-		private readonly Dictionary<CompilationLanguages, ICompiler> _compilers = new();
-
-		public Fw40CompilerService(string outputDir, string tempPath)
-		{
-			OutputDir = outputDir;
-			TempPath = tempPath;
-		}
-
-		public string OutputDir { get; }
-		public string TempPath { get; }
-
-		public ICompiler GetCompiler(CompilationLanguages language)
-		{
-			if (!_compilers.ContainsKey(language))
-				_compilers.Add(language, new Fw40Compiler(language, OutputDir, TempPath));
-
-			return _compilers[language];
 		}
 	}
 }

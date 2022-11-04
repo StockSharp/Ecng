@@ -35,8 +35,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backup", "Backup\Backup.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backup.AWS", "Backup.AWS\Backup.AWS.csproj", "{4EC489C3-7846-4100-A871-4A6045CA41FF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Roslyn", "Roslyn\Roslyn.csproj", "{78884141-5A63-4EAE-81A4-512FBD2195C5}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Net.SocketIO", "Net.SocketIO\Net.SocketIO.csproj", "{B79EC630-2FAB-42B9-89BA-4886C1942E96}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO", "IO\IO.csproj", "{4E2D9D8A-6E5A-4482-96F6-2544DE6611B9}"
@@ -73,13 +71,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Compilation", "Compilation\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Linq", "Linq\Linq.csproj", "{37AFC401-F01C-4D4F-8129-7ECED0E67122}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePipe.Interprocess", "MessagePipe\Interprocess\MessagePipe.Interprocess.csproj", "{290ACCC4-6F13-48EE-BAB7-79C0D2B7EC0E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePipe.Interprocess", "MessagePipe\Interprocess\MessagePipe.Interprocess.csproj", "{290ACCC4-6F13-48EE-BAB7-79C0D2B7EC0E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nuget", "Nuget\Nuget.csproj", "{45C5AEFF-26EE-4B4D-B758-C717B914351D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backup.Yandex", "Backup.Yandex\Backup.Yandex.csproj", "{96D8E6D9-4744-4CA1-9000-24C0F80C5DDC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data.Linq2db", "Data.Linq2db\Data.Linq2db.csproj", "{CB828F77-50EB-4BB9-87F3-A8C740213B26}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Compilation.Roslyn", "Compilation.Roslyn\Compilation.Roslyn.csproj", "{78884141-5A63-4EAE-81A4-512FBD2195C5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compilation.CodeDom", "Compilation.CodeDom\Compilation.CodeDom.csproj", "{88BA3569-C61C-4BEC-A3A6-81E2555DEB87}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -139,10 +141,6 @@ Global
 		{4EC489C3-7846-4100-A871-4A6045CA41FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4EC489C3-7846-4100-A871-4A6045CA41FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4EC489C3-7846-4100-A871-4A6045CA41FF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B79EC630-2FAB-42B9-89BA-4886C1942E96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B79EC630-2FAB-42B9-89BA-4886C1942E96}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B79EC630-2FAB-42B9-89BA-4886C1942E96}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -231,6 +229,14 @@ Global
 		{CB828F77-50EB-4BB9-87F3-A8C740213B26}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CB828F77-50EB-4BB9-87F3-A8C740213B26}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CB828F77-50EB-4BB9-87F3-A8C740213B26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88BA3569-C61C-4BEC-A3A6-81E2555DEB87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88BA3569-C61C-4BEC-A3A6-81E2555DEB87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88BA3569-C61C-4BEC-A3A6-81E2555DEB87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88BA3569-C61C-4BEC-A3A6-81E2555DEB87}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
