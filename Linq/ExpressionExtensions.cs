@@ -6,6 +6,7 @@
 	using System.Reflection;
 
 	using Ecng.Common;
+	using Ecng.ComponentModel;
 
 	public static class ExpressionExtensions
 	{
@@ -54,6 +55,38 @@
 				return fi.GetValue(instance);
 			else
 				throw new NotSupportedException();
+		}
+
+		public static MemberExpression GetInnerMember(this MemberExpression exp)
+		{
+			if (exp.Expression is MemberExpression d)
+				return GetInnerMember(d);
+
+			return exp;
+		}
+
+		public static TValue GetValue<TValue>(this Expression exp)
+		{
+			if (exp is ConstantExpression c)
+				return c.Value.To<TValue>();
+			else if (exp is MemberExpression me)
+				return me.Member.GetMemberValue(GetValue<object>(me.Expression)).To<TValue>();
+
+			throw new ArgumentOutOfRangeException(exp.NodeType.ToString());
+		}
+
+		public static ComparisonOperator ToOperator(this ExpressionType type)
+		{
+			return type switch
+			{
+				ExpressionType.GreaterThan => ComparisonOperator.Greater,
+				ExpressionType.GreaterThanOrEqual => ComparisonOperator.GreaterOrEqual,
+				ExpressionType.LessThan => ComparisonOperator.Less,
+				ExpressionType.LessThanOrEqual => ComparisonOperator.LessOrEqual,
+				ExpressionType.Equal => ComparisonOperator.Equal,
+				ExpressionType.NotEqual => ComparisonOperator.NotEqual,
+				_ => throw new ArgumentOutOfRangeException(type.To<string>()),
+			};
 		}
 	}
 }
