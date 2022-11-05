@@ -7,7 +7,6 @@
     <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Management" Version="$(SystemManagementVer)" />
     <PackageReference Include="Specshell.NDde" Version="$(NDdeVer)" />
   </ItemGroup>
   <ItemGroup>

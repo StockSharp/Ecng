@@ -4,9 +4,6 @@
     <ProjectGuid>{408006C6-A8EB-43F8-9D0C-5A519DFF5873}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonJsonVer)" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Security\Security.csproj" />
   </ItemGroup>
 </Project>
