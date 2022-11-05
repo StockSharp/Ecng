@@ -17,7 +17,6 @@
     <SystemIOCompressionVer>4.3.0</SystemIOCompressionVer>
     <SystemManagementVer>6.*</SystemManagementVer>
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
-    <SystemSecurityCryptographyProtectedDataVer>6.*</SystemSecurityCryptographyProtectedDataVer>
     <SystemSecurityPermissionsVer>6.*</SystemSecurityPermissionsVer>
     <SystemTextEncodingCodePagesVer>6.*</SystemTextEncodingCodePagesVer>
     <NUnitVer>3.13.3</NUnitVer>
