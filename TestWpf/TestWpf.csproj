@@ -5,6 +5,10 @@
     <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+	
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="$(MsExtensionsVer)" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\HtmlRenderer\HtmlRenderer.csproj" />
