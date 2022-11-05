@@ -16,7 +16,6 @@
     <SystemConfigurationConfigurationManagerVer>6.*</SystemConfigurationConfigurationManagerVer>
     <SystemIOCompressionVer>4.3.0</SystemIOCompressionVer>
     <SystemManagementVer>6.*</SystemManagementVer>
-    <SystemReflectionEmitVer>4.7.0</SystemReflectionEmitVer>
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
     <SystemSecurityCryptographyProtectedDataVer>6.*</SystemSecurityCryptographyProtectedDataVer>
     <SystemSecurityPermissionsVer>6.*</SystemSecurityPermissionsVer>
