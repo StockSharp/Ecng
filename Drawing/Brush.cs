@@ -25,9 +25,8 @@
 	public class LinearGradientBrush : Brush
 	{
 		public LinearGradientBrush(Point stop0, Point stop1, Color color0, Color color1)
+			: this(new[] { color0, color1 }, new(stop0, new((stop1.X - stop0.X).Abs(), (stop1.Y - stop0.Y).Abs())))
 		{
-			LinearColors = new[] { color0, color1 };
-			Rectangle = new(stop0, new((stop1.X - stop0.X).Abs(), (stop1.Y - stop0.Y).Abs()));
 		}
 
 		public LinearGradientBrush(Color[] linearColors, Rectangle rectangle)
