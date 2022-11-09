@@ -17,7 +17,7 @@
 		}
 
 		public static void Serialize(this ISerializer serializer, object graph, Stream stream)
-			=> ThreadingHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).SerializeAsync(graph, stream, default));
+			=> AsyncHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).SerializeAsync(graph, stream, default));
 
 		public static T Deserialize<T>(this ISerializer<T> serializer, string fileName)
 		{
@@ -32,7 +32,7 @@
 		}
 
 		public static T Deserialize<T>(this ISerializer<T> serializer, Stream stream)
-			=> ThreadingHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, default));
+			=> AsyncHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, default));
 
 		public static object Deserialize(this ISerializer serializer, byte[] data)
 		{
@@ -41,6 +41,6 @@
 		}
 
 		public static object Deserialize(this ISerializer serializer, Stream stream)
-			=> ThreadingHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, default));
+			=> AsyncHelper.Run(() => serializer.CheckOnNull(nameof(serializer)).DeserializeAsync(stream, default));
 	}
 }

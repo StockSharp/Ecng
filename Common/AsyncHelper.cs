@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Nito.AsyncEx;
+
 #if NET5_0_OR_GREATER
 using Nito.AsyncEx.Synchronous;
-#else
-using Nito.AsyncEx;
 #endif
 
 namespace Ecng.Common;
@@ -256,7 +256,23 @@ public static class AsyncHelper
 		}
 	}
 
-	#if NET5_0_OR_GREATER
+	public static void Run(Func<ValueTask> getTask)
+	{
+		if (getTask is null)
+			throw new ArgumentNullException(nameof(getTask));
+
+		AsyncContext.Run(() => getTask().AsTask());
+	}
+
+	public static T Run<T>(Func<ValueTask<T>> getTask)
+	{
+		if (getTask is null)
+			throw new ArgumentNullException(nameof(getTask));
+
+		return AsyncContext.Run(() => getTask().AsTask());
+	}
+
+#if NET5_0_OR_GREATER
 
 	public static bool TryCompleteFromCompletedTask(this TaskCompletionSource tcs, Task task)
 	{

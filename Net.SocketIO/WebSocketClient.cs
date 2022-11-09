@@ -119,7 +119,7 @@
 		private Action<ClientWebSocket> _init;
 
 		public void Connect(string url, bool immediateConnect, Action<ClientWebSocket> init = null)
-			=> ThreadingHelper.Run(() => ConnectAsync(url, immediateConnect, init));
+			=> AsyncHelper.Run(() => ConnectAsync(url, immediateConnect, init));
 
 		public ValueTask ConnectAsync(string url, bool immediateConnect, Action<ClientWebSocket> init = null, CancellationToken cancellationToken = default)
 		{
@@ -361,7 +361,7 @@
 
 					try
 					{
-						ThreadingHelper.Run(() => ConnectImpl(source, token, attempts));
+						AsyncHelper.Run(() => ConnectImpl(source, token, attempts));
 					}
 					catch (OperationCanceledException)
 					{
@@ -375,7 +375,7 @@
 		}
 
 		public void Send(object obj)
-			=> ThreadingHelper.Run(() => SendAsync(obj));
+			=> AsyncHelper.Run(() => SendAsync(obj));
 
 		public ValueTask SendAsync(object obj) => SendAsync(obj, _source.Token);
 
@@ -393,7 +393,7 @@
 		}
 
 		public void Send(byte[] sendBuf, WebSocketMessageType type)
-			=> ThreadingHelper.Run(() => SendAsync(sendBuf, type));
+			=> AsyncHelper.Run(() => SendAsync(sendBuf, type));
 
 		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type)
 			=> SendAsync(sendBuf, type, _source.Token);
