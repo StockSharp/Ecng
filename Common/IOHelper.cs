@@ -46,7 +46,7 @@ namespace Ecng.Common
 		public static void CopyDirectory(string sourcePath, string destPath)
 			=> AsyncContext.Run(() => CopyDirectoryAsync(sourcePath, destPath));
 
-		public static Task CopyDirectoryAsync(string sourcePath, string destPath, CancellationToken cancellationToken = default)
+		public static async Task CopyDirectoryAsync(string sourcePath, string destPath, CancellationToken cancellationToken = default)
 		{
 			Directory.CreateDirectory(destPath);
 
@@ -59,12 +59,8 @@ namespace Ecng.Common
 
 			foreach (var directory in Directory.GetDirectories(sourcePath))
 			{
-				CopyDirectory(directory, Path.Combine(destPath, Path.GetFileName(directory)));
-
-				cancellationToken.ThrowIfCancellationRequested();
+				await CopyDirectoryAsync(directory, Path.Combine(destPath, Path.GetFileName(directory)), cancellationToken);
 			}
-
-			return Task.CompletedTask;
 		}
 
 		public static string CopyAndMakeWritable(string fileName, string destPath)
