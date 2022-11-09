@@ -186,7 +186,7 @@
 			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 
-			return CultureInfo.InvariantCulture.DoInCulture(() => new TSerializer().Deserialize(value.UTF8()));
+			return Do.Invariant(() => new TSerializer().Deserialize(value.UTF8()));
 		}
 
 		public static string SaveToString<TSerializer>(this IPersistable persistable)
@@ -204,7 +204,7 @@
 			if (settings is null)
 				throw new ArgumentNullException(nameof(settings));
 
-			return CultureInfo.InvariantCulture.DoInCulture(() => new TSerializer().Serialize(settings).UTF8());
+			return Do.Invariant(() => new TSerializer().Serialize(settings).UTF8());
 		}
 
 		public static bool IsSerializablePrimitive(this Type type)
