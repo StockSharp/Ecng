@@ -147,14 +147,16 @@ public static class AsyncHelper
 	public static ValueTask CheckNull(this ValueTask? task) => task ?? default;
 
 	public static ValueTask CatchHandle(this Task task,
-									Action<Exception> handleError = null,
-									Action<Exception> handleCancel = null,
-									Action finalizer = null,
-									bool rethrowErr = false,
-									bool rethrowCancel = false)
+		CancellationToken token,
+		Action<Exception> handleError = null,
+		Action<Exception> handleCancel = null,
+		Action finalizer = null,
+		bool rethrowErr = false,
+		bool rethrowCancel = false)
 	{
 		return CatchHandle(
-			() => new ValueTask(task),
+			() => new(task),
+			token,
 			handleError:   handleError,
 			handleCancel:  handleCancel,
 			finalizer:     finalizer,
@@ -164,14 +166,16 @@ public static class AsyncHelper
 	}
 
 	public static ValueTask CatchHandle(this ValueTask task,
-									Action<Exception> handleError = null,
-									Action<Exception> handleCancel = null,
-									Action finalizer = null,
-									bool rethrowErr = false,
-									bool rethrowCancel = false)
+		CancellationToken token,
+		Action<Exception> handleError = null,
+		Action<Exception> handleCancel = null,
+		Action finalizer = null,
+		bool rethrowErr = false,
+		bool rethrowCancel = false)
 	{
 		return CatchHandle(
 			() => task,
+			token,
 			handleError:   handleError,
 			handleCancel:  handleCancel,
 			finalizer:     finalizer,
@@ -181,14 +185,16 @@ public static class AsyncHelper
 	}
 
 	public static ValueTask CatchHandle(Func<Task> getTask,
-											Action<Exception> handleError = null,
-											Action<Exception> handleCancel = null,
-											Action finalizer = null,
-											bool rethrowErr = false,
-											bool rethrowCancel = false)
+		CancellationToken token,
+		Action<Exception> handleError = null,
+		Action<Exception> handleCancel = null,
+		Action finalizer = null,
+		bool rethrowErr = false,
+		bool rethrowCancel = false)
 	{
 		return CatchHandle(
-			() => new ValueTask(getTask()),
+			() => new(getTask()),
+			token,
 			handleError:   handleError,
 			handleCancel:  handleCancel,
 			finalizer:     finalizer,
@@ -198,6 +204,7 @@ public static class AsyncHelper
 	}
 
 	public static async ValueTask CatchHandle(Func<ValueTask> getTask,
+		CancellationToken token,
 		Action<Exception> handleError = null,
 		Action<Exception> handleCancel = null,
 		Action finalizer = null,
@@ -208,7 +215,7 @@ public static class AsyncHelper
 		{
 			await getTask().ConfigureAwait(false);
 		}
-		catch (Exception e) when (e.IsCancellation(out var flattened))
+		catch (Exception e) when (e.IsCancellation(token, out var flattened))
 		{
 			handleCancel?.Invoke(flattened);
 			if (rethrowCancel)
@@ -228,9 +235,9 @@ public static class AsyncHelper
 
 	public static TaskCompletionSource<T> CreateTaskCompletionSource<T>(bool forceAsync = true) => new(forceAsync ? TaskCreationOptions.RunContinuationsAsynchronously : TaskCreationOptions.None);
 
-	public static void TrySetFrom<T>(this TaskCompletionSource<T> tcs, Exception e)
+	public static void TrySetFrom<T>(this TaskCompletionSource<T> tcs, Exception e, CancellationToken token)
 	{
-		if(e.IsCancellation())
+		if(e.IsCancellation(token))
 			tcs.TrySetCanceled();
 		else
 			tcs.TrySetException(e);
@@ -238,18 +245,18 @@ public static class AsyncHelper
 
 	public static Task WhenCanceled(this CancellationToken token) => CreateTaskCompletionSource<object>().Task.WaitAsync(token);
 
-	public static bool IsCancellation(this Exception e) => e.IsCancellation(out _);
+	public static bool IsCancellation(this Exception e, CancellationToken token) => e.IsCancellation(token, out _);
 
-	public static bool IsCancellation(this Exception e, out Exception flattened)
+	public static bool IsCancellation(this Exception e, CancellationToken token, out Exception flattened)
 	{
 		switch (e)
 		{
 			case OperationCanceledException:
 				flattened = e;
-				return true;
+				return token.IsCancellationRequested;
 			case AggregateException ae:
 				flattened = ae.Flatten();
-				return ((AggregateException)flattened).InnerExceptions.All(ie => ie is OperationCanceledException);
+				return token.IsCancellationRequested && ((AggregateException)flattened).InnerExceptions.All(ie => ie is OperationCanceledException);
 			default:
 				flattened = e;
 				return false;
@@ -298,9 +305,9 @@ public static class AsyncHelper
 		throw new InvalidOperationException("invalid task state " + task.Status); // should never happen
 	}
 
-	public static void TrySetFrom(this TaskCompletionSource tcs, Exception e)
+	public static void TrySetFrom(this TaskCompletionSource tcs, Exception e, CancellationToken token)
 	{
-		if(e.IsCancellation())
+		if(e.IsCancellation(token))
 			tcs.TrySetCanceled();
 		else
 			tcs.TrySetException(e);

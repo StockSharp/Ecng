@@ -165,6 +165,7 @@ namespace Ecng.Common
 				return new ValueTask(_disposeTcs.Task);
 
 			return AsyncHelper.CatchHandle(OnDisposeAsync,
+				default,
 				rethrowCancel: true,
 				rethrowErr: true,
 				finalizer: () => _disposeTcs.TrySetResult());
