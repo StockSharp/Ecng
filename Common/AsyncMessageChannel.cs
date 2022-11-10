@@ -70,7 +70,7 @@ public class AsyncMessageChannel
 				return;
 
 			// ReSharper disable once MethodSupportsCancellation
-			ChannelTask = Task.Run(() => RunChannelAsync(default));
+			ChannelTask = Task.Run(RunChannelAsync);
 		}
 	}
 
@@ -86,14 +86,14 @@ public class AsyncMessageChannel
 		return result;
 	}
 
-	private async ValueTask<Msg> ReadMsgAsync(CancellationToken token)
+	private async ValueTask<Msg> ReadMsgAsync()
 	{
 		try
 		{
 			// ReSharper disable once MethodSupportsCancellation
-			return await _channel.Reader.ReadAsync(token).ConfigureAwait(false);
+			return await _channel.Reader.ReadAsync().ConfigureAwait(false);
 		}
-		catch (Exception e) when (e.IsCancellation(token))
+		catch (Exception e) when (e.IsCancellation())
 		{
 			_log?.LogDebug("{name}: channel is canceled", Name);
 
@@ -124,7 +124,7 @@ public class AsyncMessageChannel
 		return default;
 	}
 
-	private async Task RunChannelAsync(CancellationToken token)
+	private async Task RunChannelAsync()
 	{
 		Exception e = null;
 
@@ -132,11 +132,11 @@ public class AsyncMessageChannel
 
 		try
 		{
-			await RunChannelAsyncImpl(token);
+			await RunChannelAsyncImpl();
 		}
 		catch (Exception ex)
 		{
-			if(!ex.IsCancellation(token))
+			if(!ex.IsCancellation())
 			{
 				e = ex;
 				_log?.LogError("{name} channel finished with error: {err}", Name, e);
@@ -150,7 +150,7 @@ public class AsyncMessageChannel
 		}
 	}
 
-	private async ValueTask Handle(Msg msg, CancellationToken token)
+	private async ValueTask Handle(Msg msg)
 	{
 		void handleError(Exception e)
 		{
@@ -182,7 +182,6 @@ public class AsyncMessageChannel
 
 				return msg.Action(token);
 			},
-			token,
 			handleError:   handleError,
 			handleCancel:  handleCancel,
 			rethrowErr:    false,
@@ -191,18 +190,18 @@ public class AsyncMessageChannel
 		);
 	}
 
-	private async Task RunChannelAsyncImpl(CancellationToken token)
+	private async Task RunChannelAsyncImpl()
 	{
 		while(true)
 		{
-			var msg = await ReadMsgAsync(token).ConfigureAwait(false);
+			var msg = await ReadMsgAsync().ConfigureAwait(false);
 			if (msg?.Action == null)
 			{
 				_log?.LogDebug("{name}: null message '{msgname}'. stopping...", Name, msg?.Name);
 				break;
 			}
 
-			await Handle(msg, token).ConfigureAwait(false);
+			await Handle(msg).ConfigureAwait(false);
 		}
 	}
 }
