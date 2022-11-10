@@ -238,6 +238,9 @@ public static class AsyncHelper
 
 	public static Task WhenCanceled(this CancellationToken token) => CreateTaskCompletionSource<object>().Task.WaitAsync(token);
 
+	public static bool IsCancellation(this Exception ex, CancellationToken token)
+		=> ex is OperationCanceledException && token.IsCancellationRequested;
+
 	public static bool IsCancellation(this Exception e) => e.IsCancellation(out _);
 
 	public static bool IsCancellation(this Exception e, out Exception flattened)
