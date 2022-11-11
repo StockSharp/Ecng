@@ -14,18 +14,13 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="
-           '$(MSBuildProjectName)' == 'Interop.Windows'
-        or '$(MSBuildProjectName)' == 'ManagedWinapi'
-        or '$(MSBuildProjectName)' == 'HtmlRenderer'
-      ">
-    <TargetFrameworks>$(TempNet5Net6)</TargetFrameworks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="
            '$(MSBuildProjectName)' == 'TestConsole'
         or '$(MSBuildProjectName)' == 'TestWpf'
         or '$(MSBuildProjectName)' == 'Tests'
         or '$(MSBuildProjectName)' == 'SmartFormat.Tests'
+        or '$(MSBuildProjectName)' == 'Interop.Windows'
+        or '$(MSBuildProjectName)' == 'ManagedWinapi'
+        or '$(MSBuildProjectName)' == 'HtmlRenderer'
       ">
     <TargetFrameworks>net6.0-windows</TargetFrameworks>
   </PropertyGroup>
