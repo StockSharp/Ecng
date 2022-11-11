@@ -10,6 +10,7 @@ using NuGet.Versioning;
 using NuGet.Packaging;
 using NuGet.Protocol.Core.Types;
 using NuGet.Configuration;
+using NuGet.Frameworks;
 
 namespace Ecng.Nuget;
 
@@ -31,15 +32,32 @@ public static class NugetExtensions
 		return targetFrameworks.ToArray();
 	}
 
-	public static async Task<NuGetVersion> GetLastVersionAsync(this SourceRepository repo, string packageId, bool allowPreview, CancellationToken token = default, ILogger log = null, SourceCacheContext cacheCtx = null)
+	public static NuGetFramework RemovePlatformVersion(this NuGetFramework fwk) => new(fwk.Framework, fwk.Version, fwk.Platform, FrameworkConstants.EmptyVersion);
+
+	public static async Task<NuGetVersion[]> GetAllVersionsOrderedAsync(this SourceRepository repo, string packageId, CancellationToken token = default, ILogger log = null, SourceCacheContext cacheCtx = null)
 	{
 		var cache = cacheCtx ?? new SourceCacheContext();
 		var resource = await repo.GetResourceAsync<FindPackageByIdResource>(token);
-		var versions = (await resource.GetAllVersionsAsync(packageId, cache, log ?? NullLogger.Instance, token)).OrderBy(v => v).ToArray();
 
+		return (await resource.GetAllVersionsAsync(packageId, cache, log ?? NullLogger.Instance, token)).OrderBy(v => v).ToArray();
+	}
+
+	public static async Task<NuGetVersion> GetLastVersionAsync(this SourceRepository repo, string packageId, bool allowPreview, CancellationToken token = default, ILogger log = null, SourceCacheContext cacheCtx = null)
+	{
+		var versions = await repo.GetAllVersionsOrderedAsync(packageId, token, log, cacheCtx);
 		Func<NuGetVersion, bool> cond = allowPreview ? _ => true : v => !v.IsPrerelease;
 
 		return versions.LastOrDefault(cond);
+	}
+
+	public static async Task<NuGetVersion> GetLastVersionInFloatingRangeAsync(this SourceRepository repo, string packageId, string floatingVer, CancellationToken token = default, ILogger log = null, SourceCacheContext cacheCtx = null)
+	{
+		if (!FloatRange.TryParse(floatingVer, out var range))
+			throw new ArgumentException($"invalid floating version '{floatingVer}'", nameof(floatingVer));
+
+		var versions = await repo.GetAllVersionsOrderedAsync(packageId, token, log, cacheCtx);
+
+		return versions.LastOrDefault(v => range.Satisfies(v));
 	}
 
 	private class DummySettings : ISettings
