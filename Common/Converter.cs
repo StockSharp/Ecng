@@ -232,12 +232,13 @@
 			AddTypedConverter<string, SecureString>(input => input.Secure());
 			AddTypedConverter<char[], SecureString>(input =>
 			{
-				var s = new SecureString();
+				unsafe static SecureString Secure(char[] input)
+				{
+					fixed (char* p = input)
+						return new SecureString(p, input.Length);
+				}
 
-				foreach (var c in input)
-					s.AppendChar(c);
-
-				return s;
+				return Secure(input);
 			});
 			AddTypedConverter<byte[], SecureString>(input =>
 			{
