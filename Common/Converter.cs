@@ -234,8 +234,11 @@
 			{
 				unsafe static SecureString Secure(char[] input)
 				{
+					if (input.Length == 0)
+						return new();
+
 					fixed (char* p = input)
-						return new SecureString(p, input.Length);
+						return new(p, input.Length);
 				}
 
 				return Secure(input);
