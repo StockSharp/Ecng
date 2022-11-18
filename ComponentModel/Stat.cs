@@ -67,7 +67,7 @@
 
 	public class Stat<TAction>
 	{
-		public class Item : IDisposable
+		public class Item : Disposable
 		{
 			private readonly Stat<TAction> _parent;
 			private readonly Stopwatch _watch;
@@ -83,10 +83,12 @@
 			internal readonly TAction Action;
 			internal readonly IPAddress Address;
 
-			void IDisposable.Dispose()
+			protected override void DisposeManaged()
 			{
 				_watch.Stop();
 				_parent.End(this, _watch);
+
+				base.DisposeManaged();
 			}
 		}
 

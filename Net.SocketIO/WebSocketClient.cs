@@ -134,10 +134,10 @@
 
 			_disconnectionStates[source] = _expectedDisconnect;
 
-			return ConnectImpl(source, cancellationToken == default ? source.Token : cancellationToken, 0);
+			return ConnectImpl(source, 0, cancellationToken == default ? source.Token : cancellationToken);
 		}
 
-		private async ValueTask ConnectImpl(CancellationTokenSource source, CancellationToken token, int attempts)
+		private async ValueTask ConnectImpl(CancellationTokenSource source, int attempts, CancellationToken token)
 		{
 			if (source is null)
 				throw new ArgumentNullException(nameof(source));
@@ -211,7 +211,7 @@
 		public int BufferSize
 		{
 			get => _bufferSize;
-			set => _bufferSize = value <= 0 ? throw new ArgumentOutOfRangeException() : value;
+			set => _bufferSize = value <= 0 ? throw new ArgumentOutOfRangeException(nameof(value)) : value;
 		}
 
 		private int _bufferSizeUncompress;
@@ -219,7 +219,7 @@
 		public int BufferSizeUncompress
 		{
 			get => _bufferSizeUncompress;
-			set => _bufferSizeUncompress = value <= 0 ? throw new ArgumentOutOfRangeException() : value;
+			set => _bufferSizeUncompress = value <= 0 ? throw new ArgumentOutOfRangeException(nameof(value)) : value;
 		}
 
 		private void OnReceive(CancellationTokenSource source)
@@ -361,7 +361,7 @@
 
 					try
 					{
-						AsyncHelper.Run(() => ConnectImpl(source, token, attempts));
+						AsyncHelper.Run(() => ConnectImpl(source, attempts, token));
 					}
 					catch (OperationCanceledException)
 					{
