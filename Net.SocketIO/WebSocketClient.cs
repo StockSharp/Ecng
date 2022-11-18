@@ -275,8 +275,7 @@
 						if (responseBody.Length == 0)
 							continue;
 
-						if (!responseBody.TryGetBuffer(out var processBuf))
-							throw new InvalidOperationException("Cannot get buffer.");
+						var processBuf = responseBody.GetActualBuffer();
 
 						try
 						{

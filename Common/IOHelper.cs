@@ -765,5 +765,13 @@ namespace Ecng.Common
 			writer.Flush();
 			writer.BaseStream.SetLength(0);
 		}
+
+		public static ArraySegment<byte> GetActualBuffer(this MemoryStream stream)
+		{
+			if (stream is null)
+				throw new ArgumentNullException(nameof(stream));
+
+			return new(stream.GetBuffer(), 0, (int)stream.Position);
+		}
 	}
 }
