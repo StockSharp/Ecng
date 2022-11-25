@@ -15,7 +15,6 @@
 
   <PropertyGroup Condition="
            '$(MSBuildProjectName)' == 'TestConsole'
-        or '$(MSBuildProjectName)' == 'TestWpf'
         or '$(MSBuildProjectName)' == 'Tests'
         or '$(MSBuildProjectName)' == 'SmartFormat.Tests'
         or '$(MSBuildProjectName)' == 'Interop.Windows'
