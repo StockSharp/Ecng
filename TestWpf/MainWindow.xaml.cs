@@ -516,7 +516,8 @@ namespace TestWpf
 					return new(Path.GetExtension(img).EqualsIgnoreCase(".gif")
 						? $"~/images/smiles/{img}"
 						: $"~/images/svg/smiles/{img}");
-				});
+				},
+				(ctx, source, error) => throw error);
 
 			//bb.AddRule(new VideoStockSharpReplaceRule());
 			//bb.AddRule(new RoleRule());

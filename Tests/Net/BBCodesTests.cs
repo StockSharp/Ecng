@@ -139,16 +139,17 @@
 				=> new(new NamedObjectImpl { Id = id, UrlPart = $"~/file/{id}/" });
 
 			static ValueTask<INamedObject<TextBB2HtmlContext>> GetTopic(long id, CancellationToken token)
-				=> new(new NamedObjectImpl { Id = id, UrlPart = $"~/topic/{id}/" });
+				=> new(new NamedObjectImpl { Id = id, UrlPart = $"~/topic/{id}/", Name = $"Test topic {id}" });
 
 			static ValueTask<INamedObject<TextBB2HtmlContext>> GetMessage(long id, CancellationToken token)
-				=> new(new NamedObjectImpl { Id = id, UrlPart = $"~/posts/m/{id}/" });
+				=> new(new NamedObjectImpl { Id = id, UrlPart = $"~/posts/m/{id}/", Name = $"Test message {id}" });
 
 			static ValueTask<INamedObject<TextBB2HtmlContext>> GetUser(long id, CancellationToken token)
 			{
 				return new(id switch
 				{
-					1 => new NamedObjectImpl { Id = id, Name = "StockSharp", UrlPart = $"~/users/{id}/" },
+					1 => new NamedObjectImpl { Id = id, Name = "StockSharp", UrlPart = $"~/users/{id}/", Description = "StockSharp" },
+					777 => new NamedObjectImpl { Id = id, Name = "Some user", UrlPart = $"~/users/{id}/", Description = "Some user" },
 					_ => throw new ArgumentOutOfRangeException(nameof(id)),
 				});
 			}
@@ -206,7 +207,8 @@
 					return new(Path.GetExtension(img).EqualsIgnoreCase(".gif")
 						? $"~/images/smiles/{img}"
 						: $"~/images/svg/smiles/{img}");
-				});
+				},
+				(ctx, source, error) => throw error);
 
 			if (isInRole is null)
 				isInRole = i => true;
@@ -568,14 +570,10 @@
 [/t]
 [/role]";
 
-			var html = @"<a href=#text_format><h2 id=text_format>Text format</h2></a><br /><table style='width:100%'><th>BB code</th><th>Description</th><th>Syntax</th><th>Example</th><tr><td>noparse</td><td>Block any BB parsing inside</td><td>&#91;b&#93;This text not parsed&#91;/b&#93;</td><td>&#91;b&#93;This text not parsed&#91;/b&#93;</td></tr><tr><td>b</td><td>Bold font</td><td>&#91;b&#93;This text is bold&#91;/b&#93;</td><td><b>This text is bold</b></td></tr><tr><td>i</td><td>Italic font</td><td>&#91;i&#93;This text is italic&#91;/i&#93;</td><td><em>This text is italic</em></td></tr><tr><td>font</td><td>Font family</td><td>&#91;font=cursive&#93;Cursive text&#91;/font&#93;</td><td><span style=""font-family:cursive"">Cursive text</span></td></tr><tr><td>color</td><td>Text color</td><td>&#91;color=red&#93;Red text&#91;/color&#93;</td><td><span style=""color:red"">Red text</span></td></tr><tr><td>size</td><td>Text size</td><td>&#91;size=10&#93;This text has 7 size&#91;/size&#93;</td><td><span style=""font-size:140%"">This text has 7 size</span></td></tr><tr><td>highlight</td><td>Text highlight</td><td>&#91;h&#93;This text highlighted&#91;/h&#93;</td><td><span class=""highlight"">This text highlighted</span></td></tr></table><br /><br /><a href=#text_align><h2 id=text_align>Text align</h2></a><br /><table style='width:100%'><th>BB code</th><th>Description</th><th>Syntax</th><th>Example</th><tr><td>float</td><td>Floating text</td><td>&#91;float=right&#93;This text floated to right&#91;/float&#93;</td><td><span style=""float:right; padding:10px"">This text floated to right</span></td></tr><tr><td>left</td><td>Align to left</td><td>&#91;left&#93;This text aligned to left&#91;/left&#93;</td><td><div align=""left"">This text aligned to left</div></td></tr><tr><td>right</td><td>Align to right</td><td>&#91;right&#93;This text aligned to right&#91;/right&#93;</td><td><div align=""right"">This text aligned to right</div></td></tr><tr><td>center</td><td>Align to center</td><td>&#91;center&#93;This text aligned to center&#91;/center&#93;</td><td><div align=""center"">This text aligned to center</div></td></tr><tr><td>code</td><td>Code block</td><td>&#91;code&#93;var i = 10;&#91;/code&#93;</td><td><div class=""code""><strong>Code</strong><div class=""innercode"">var i = 10;</div></div></td></tr><tr><td>code</td><td>Code block</td><td>&#91;code=c#&#93;var i = 10;&#91;/code&#93;</td><td><div class=""code""><strong>Code</strong><div class=""innercode""><pre class=""brush:c#"">
-var i = 10;</pre>
-</div></div></td></tr><tr><td>spoiler</td><td>Collapsed text</td><td>&#91;spoiler&#93;This test is collapsed&#91;/spoiler&#93;</td><td><div class='spoilertitle'><input type='button' value='Show spoiler' class='btn btn-primary' onclick=""toggleSpoiler(this, 'spolier_a6f78c5fce344124993798c028a22a3a');"" title='Show spoiler' /></div><div class='spoilerbox' id='spolier_a6f78c5fce344124993798c028a22a3a' style='display:none'>This test is collapsed</div></td></tr></table><br /><br /><a href=#links><h2 id=links>Links</h2></a><br /><table style='width:100%'><th>BB code</th><th>Description</th><th>Syntax</th><th>Example</th><tr><td>url</td><td>Link</td><td>&#91;url&#93;https://stocksharp.com/&#91;/url&#93;</td><td><a href=""https://stocksharp.com/"" title=""https://stocksharp.com/"">https://stocksharp.com/</a></td></tr><tr><td>url</td><td>Link with text</td><td>&#91;url=https://stocksharp.com/&#93;StockSharp Web site&#91;/url&#93;</td><td><a href=""https://stocksharp.com/"" title=""https://stocksharp.com/"">StockSharp Web site</a></td></tr><tr><td>email</td><td>Email link</td><td>&#91;email&#93;info@stocksharp.com&#91;/email&#93;</td><td><a href=""mailto:info@stocksharp.com"">info@stocksharp.com</a></td></tr><tr><td>email</td><td>Email link with text</td><td>&#91;email=info@stocksharp.com&#93;Send me&#91;/email&#93;</td><td><a href=""mailto:info@stocksharp.com"">Send me</a></td></tr><tr><td>topic</td><td>Topic link by id</td><td>&#91;topic=12374&#93;Link to topic&#91;/topic&#93;</td><td><a target=""_blank"" href=""https://stocksharp.com/topic/12374/"">Link to topic</a></td></tr><tr><td>message</td><td>Message link by id</td><td>&#91;message=51317&#93;Link to message&#91;/message&#93;</td><td><a target=""_blank"" href=""https://stocksharp.com/posts/m/51317/"">Link to message</a></td></tr><tr><td>product</td><td>Product link by id</td><td>&#91;product&#93;9&#91;/product&#93;</td><td><a href='https://stocksharp.com/store/strategy%20designer/'>S#.Designer</a></td></tr><tr><td>product</td><td>Product link by id with text</td><td>&#91;product=9&#93;Link to S#.Designer&#91;/product&#93;</td><td><a href='https://stocksharp.com/store/strategy%20designer/'>Link to S#.Designer</a></td></tr><tr><td>user</td><td>User link by id</td><td>&#91;user&#93;1&#91;/user&#93;</td><td><a href='https://stocksharp.com/users/1/'>stocksharp</a></td></tr></table><br /><br /><a href=#images><h2 id=images>Images</h2></a><br /><table style='width:100%'><th>BB code</th><th>Description</th><th>Syntax</th><th>Example</th><tr><td>img</td><td>Image by url</td><td>&#91;img&#93;https://stocksharp.com/file/122179/cup_svg/&#91;/img&#93;</td><td><a href='https://stocksharp.com/file/122179/cup_svg/' class='lightview' data-lightview-options=""skin: 'mac'"" data-lightview-group='mixed'><img src=""https://stocksharp.com/file/122179/cup_svg/"" style='max-width: 600px;' alt=""""/></a></td></tr><tr><td>img</td><td>Image by url with tooltip</td><td>&#91;img=https://stocksharp.com/file/122179/cup_svg/&#93;This is custom tooltip.&#91;/img&#93;</td><td><a href='https://stocksharp.com/file/122179/cup_svg/' class='lightview' data-lightview-options=""skin: 'mac'"" data-lightview-group='mixed'><img src=""https://stocksharp.com/file/122179/cup_svg/"" style='max-width: 600px;' alt=""This is custom tooltip."" title=""This is custom tooltip."" /></a></td></tr><tr><td>img</td><td>Image by id</td><td>&#91;img&#93;122179&#91;/img&#93;</td><td><a href='https://stocksharp.com/file/122179/' class='lightview' data-lightview-options=""skin: 'mac'"" data-lightview-group='mixed'><img src=""https://stocksharp.com/file/122179/?size=500x500"" alt=""""/></a></td></tr><tr><td>img</td><td>Image by id with tooltip</td><td>&#91;img=122179&#93;This is custom tooltip.&#91;/img&#93;</td><td><a href='https://stocksharp.com/file/122179/' class='lightview' data-lightview-options=""skin: 'mac'"" data-lightview-group='mixed'><img src=""https://stocksharp.com/file/122179/?size=500x500"" alt=""This is custom tooltip."" title=""This is custom tooltip."" /></a></td></tr><tr><td>img size</td><td>Image with fixed size</td><td><br />&#91;size width=10px height=10px&#93;&#91;img&#93;https://stocksharp.com/file/122179/cup_svg/&#91;/img&#93;&#91;/size&#93;<br />&#91;size width=10px height=10px&#93;&#91;img&#93;122179&#91;/img&#93;&#91;/size&#93;<br />&#91;size width=10px height=10px&#93;&#91;img=122179&#93;This is custom tooltip.&#91;/img&#93;&#91;/size&#93;<br /></td><td><a href='https://stocksharp.com/file/122179/cup_svg/' class='lightview' data-lightview-options=""skin: 'mac'"" data-lightview-group='mixed'><img src=""https://stocksharp.com/file/122179/cup_svg/"" style=""width:10px;height=10px"" style='max-width: 600px;' alt=""""/></a><a href='https://stocksharp.com/file/122179/' class='lightview' data-lightview-options=""skin: 'mac'"" data-lightview-group='mixed'><img src=""https://stocksharp.com/file/122179/?size=10x10"" style=""width:10px;height=10px"" alt=""""/></a><a href='https://stocksharp.com/file/122179/' class='lightview' data-lightview-options=""skin: 'mac'"" data-lightview-group='mixed'><img src=""https://stocksharp.com/file/122179/?size=10x10"" style=""width:10px;height=10px"" alt=""This is custom tooltip."" title=""This is custom tooltip."" /></a></td></tr></table><br /><br /><a href=#lists><h2 id=lists>Lists</h2></a><br /><table style='width:100%'><th>BB code</th><th>Description</th><th>Syntax</th><th>Example</th><tr><td>list</td><td>List with bullet</td><td><br />&#91;list&#93;<br />&#91;*&#93;Item 1<br />&#91;*&#93;Item 2<br />&#91;*&#93;Item 3<br />&#91;/list&#93;<br /></td><td><ul><li>Item 1<li>Item 2<li>Item 3</ul></td></tr><tr><td>list</td><td>List with number</td><td><br />&#91;list=1&#93;<br />&#91;*&#93;Item 1<br />&#91;*&#93;Item 2<br />&#91;*&#93;Item 3<br />&#91;/list&#93;<br /></td><td><ol><li>Item 1<li>Item 2<li>Item 3</ol></td></tr><tr><td>list</td><td>List with letter</td><td><br />&#91;list=a&#93;<br />&#91;*&#93;Item 1<br />&#91;*&#93;Item 2<br />&#91;*&#93;Item 3<br />&#91;/list&#93;<br /></td><td><ol type=""a""><li>Item 1<li>Item 2<li>Item 3</ol></td></tr><tr><td>list</td><td>List with latin</td><td><br />&#91;list=i&#93;<br />&#91;*&#93;Item 1<br />&#91;*&#93;Item 2<br />&#91;*&#93;Item 3<br />&#91;/list&#93;<br /></td><td><ol type=""i""><li>Item 1<li>Item 2<li>Item 3</ol></td></tr></table><br /><br /><a href=#social><h2 id=social>Social</h2></a><br /><table style='width:100%'><th>BB code</th><th>Description</th><th>Syntax</th><th>Example</th><tr><td>youtube</td><td>YouTube</td><td>&#91;youtube&#93;https://youtu.be/lsbyvqajlZ8&#91;/youtube&#93;</td><td><iframe width=""640"" height=""390"" src=""//www.youtube.com/embed/lsbyvqajlZ8"" frameborder=""0"" allowfullscreen></iframe></td></tr><tr><td>vimeo</td><td>Vimeo</td><td>&#91;vimeo&#93;https://vimeo.com/60238948&#91;/vimeo&#93;</td><td><iframe width=""560"" height=""350"" src=""https://player.vimeo.com/video/60238948?show_title=1&show_byline=1&show_portrait=1&&fullscreen=1"" frameborder=""0""></iframe></td></tr><tr><td>fb</td><td>Facebook</td><td>&#91;fb&#93;https://www.facebook.com/stocksharp/posts/4554987014515465&#91;/fb&#93;</td><td><iframe src=""https://www.facebook.com/plugins/post.php?href=https%3a%2f%2fwww.facebook.com%2fstocksharp%2fposts%2f4554987014515465&width=500&show_text=true&height=573&appId"" width=""500"" height=""573"" style=""border:none;overflow:hidden"" scrolling=""no"" frameborder=""0"" allowfullscreen=""true"" allow=""autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share""></iframe></td></tr></table><br /><br /><br /><a href=#extended><h2 id=extended>Extended (allowed only for administrators)</h2></a><br /><table style='width:100%'><th>BB code</th><th>Description</th><th>Syntax</th><th>Example</th><tr><td>page</td><td>Page link by id</td><td>&#91;page=239&#93;Link to store FAQ&#91;/page&#93;</td><td><a href='https://stocksharp.com/store/faq/'>Link to store FAQ</a></td></tr><tr><td>page</td><td>Page link by id</td><td>&#91;page=239&#93;&#91;/page&#93;</td><td><a href='https://stocksharp.com/store/faq/'>Using S#.Installer to publish user content</a></td></tr><tr><td>html</td><td>Embedded html code</td><td>&#91;html&#93;any html code here&#91;/html&#93;</td><td><span><blockquote class=""twitter-tweet""><p lang=""en"" dir=""ltr"">Hi all!<br><br>Do you know what benefits and knowledge you can get from our training in algorithmic training course?<br>- Create your own trading robot<br>- Real made working examples of trading strategies<br>- Training chat<br><br>Follow the link below to learn more!<a href=""https://t.co/YpsKldZ2GO"">https://t.co/YpsKldZ2GO</a> <a href=""https://t.co/U1hxgfY3nc"">pic.twitter.com/U1hxgfY3nc</a></p>&mdash; StockSharp (@StockSharp) <a href=""https://twitter.com/StockSharp/status/1383028699780554759?ref_src=twsrc%5Etfw"">April 16, 2021</a></blockquote> <script async src=""https://platform.twitter.com/widgets.js"" charset=""utf-8""></script></span></td></tr><tr><td>role</td><td>Hidden for public access text</td><td>&#91;role=133362&#93;This text visible for content managers only&#91;/role&#93;</td><td>This text visible for content managers only</td></tr></table><br />";
-
 			var ctx = CreateContext(true);
 			var res = await CreateBBService().ToHtmlAsync(bb, ctx);
 
-			res.AssertEqual(html);
+			res.AssertEqual(BBHelper.Html);
 		}
 
 		[TestMethod]
@@ -645,7 +643,7 @@ var i = 10;</pre>
 
 			res = await svc.ToHtmlAsync(@"[user]1[/user]", ctx);
 
-			html = "<a href=\'http://localhost/stocksharp/users/1/\'>stocksharp</a>";
+			html = "<a href=\"http://localhost/stocksharp/users/1/\" title=\"StockSharp\">StockSharp</a>";
 			res.AssertEqual(html);
 
 			res = await svc.ToHtmlAsync(@"[url=https://google.com/]Google[/url]", ctx);
@@ -683,6 +681,43 @@ var i = 10;</pre>
 			//TODO (await svc.CleanAsync(txt, default)).AssertEqual("normal text");
 			(await svc.ActivateRuleAsync(txt, svc.Rules.First(r => r is RoleRule), default)).AssertEqual("normal text");
 			(await svc.ActivateRuleAsync($"[b]{txt}[/b]", svc.Rules.First(r => r is RoleRule), default)).AssertEqual("[b]normal text[/b]");
+		}
+
+		[TestMethod]
+		public async Task Links()
+		{
+			var ctx = CreateContext();
+			var svc = CreateBBService();
+
+			async ValueTask Do(string bb, string html)
+			{
+				var res = await svc.ToHtmlAsync(bb, ctx);
+				res.AssertEqual(html);
+			}
+
+			await Do("[user=777]Link to user[/user]", "<a href=\"https://stocksharp.com/users/777/\" title=\"Some user\">Link to user</a>");
+			await Do("[user=777][/user]", "<a href=\"https://stocksharp.com/users/777/\" title=\"Some user\">Some user</a>");
+			await Do("[user]777[/user]", "<a href=\"https://stocksharp.com/users/777/\" title=\"Some user\">Some user</a>");
+
+			await Do("[topic=42149]Link to topic[/topic]", "<a href=\"https://stocksharp.com/topic/42149/\" title=\"Test topic 42149\">Link to topic</a>");
+			await Do("[topic=42149][/topic]", "<a href=\"https://stocksharp.com/topic/42149/\" title=\"Test topic 42149\">Test topic 42149</a>");
+			await Do("[topic]42149[/topic]", "<a href=\"https://stocksharp.com/topic/42149/\" title=\"Test topic 42149\">Test topic 42149</a>");
+
+			await Do("[post=42149]Link to post[/post]", "<a href=\"https://stocksharp.com/posts/m/42149/\" title=\"Test message 42149\">Link to post</a>");
+			await Do("[post=42149][/post]", "<a href=\"https://stocksharp.com/posts/m/42149/\" title=\"Test message 42149\">Test message 42149</a>");
+			await Do("[post]42149[/post]", "<a href=\"https://stocksharp.com/posts/m/42149/\" title=\"Test message 42149\">Test message 42149</a>");
+
+			await Do("[message=42149]Link to message[/message]", "<a href=\"https://stocksharp.com/posts/m/42149/\" title=\"Test message 42149\">Link to message</a>");
+			await Do("[message=42149][/message]", "<a href=\"https://stocksharp.com/posts/m/42149/\" title=\"Test message 42149\">Test message 42149</a>");
+			await Do("[message]42149[/message]", "<a href=\"https://stocksharp.com/posts/m/42149/\" title=\"Test message 42149\">Test message 42149</a>");
+
+			await Do("[page=239]Link to page[/page]", "<a href=\"https://stocksharp.com/store/faq/\" title=\"Using S#.Installer to publish user content\">Link to page</a>");
+			await Do("[page=239][/page]", "<a href=\"https://stocksharp.com/store/faq/\" title=\"Using S#.Installer to publish user content\">Using S#.Installer to publish user content</a>");
+			await Do("[page]239[/page]", "<a href=\"https://stocksharp.com/store/faq/\" title=\"Using S#.Installer to publish user content\">Using S#.Installer to publish user content</a>");
+
+			await Do("[product=9]Link to product[/product]", "<a href=\"https://stocksharp.com/store/strategy%20designer/\" title=\"S#.Designer\">Link to product</a>");
+			await Do("[product=9][/product]", "<a href=\"https://stocksharp.com/store/strategy%20designer/\" title=\"S#.Designer\">S#.Designer</a>");
+			await Do("[product]9[/product]", "<a href=\"https://stocksharp.com/store/strategy%20designer/\" title=\"S#.Designer\">S#.Designer</a>");
 		}
 	}
 }
