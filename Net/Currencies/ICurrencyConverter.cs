@@ -1,13 +1,6 @@
-﻿namespace Ecng.Net.Currencies
+﻿namespace Ecng.Net.Currencies;
+
+public interface ICurrencyConverter
 {
-	using System;
-	using System.Threading;
-	using System.Threading.Tasks;
-
-	using Ecng.Common;
-
-	public interface ICurrencyConverter
-	{
-		Task<decimal> GetRateAsync(CurrencyTypes from, CurrencyTypes to, DateTime date, CancellationToken cancellationToken = default);
-	}
+	Task<decimal> GetRateAsync(CurrencyTypes from, CurrencyTypes to, DateTime date, CancellationToken cancellationToken = default);
 }

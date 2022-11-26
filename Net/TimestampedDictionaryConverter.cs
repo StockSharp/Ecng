@@ -1,49 +1,44 @@
-namespace Ecng.Net
+namespace Ecng.Net;
+
+public class TimestampedDictionaryConverter : JsonConverter
 {
-	using System;
+	public override bool CanConvert(Type objectType) => true;
 
-	using Newtonsoft.Json;
-
-	public class TimestampedDictionaryConverter : JsonConverter
+	public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 	{
-		public override bool CanConvert(Type objectType) => true;
+		var result = Activator.CreateInstance(objectType);
 
-		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+		var types = objectType.GetGenericArguments();
+
+		var typeKey = types[0];
+		var typeValue = types[1];
+
+		var propLast = objectType.GetProperty(nameof(TimestampedDictionary<int, int>.Last));
+		var methodAdd = objectType.GetMethod(nameof(TimestampedDictionary<int, int>.Add), new[] { typeKey, typeValue });
+
+		reader.Read();
+		while (reader.TokenType != JsonToken.EndObject)
 		{
-			var result = Activator.CreateInstance(objectType);
-
-			var types = objectType.GetGenericArguments();
-
-			var typeKey = types[0];
-			var typeValue = types[1];
-
-			var propLast = objectType.GetProperty(nameof(TimestampedDictionary<int, int>.Last));
-			var methodAdd = objectType.GetMethod(nameof(TimestampedDictionary<int, int>.Add), new[] { typeKey, typeValue });
-
+			var key = reader.Value.ToString();
 			reader.Read();
-			while (reader.TokenType != JsonToken.EndObject)
+
+			if (key == "last")
 			{
-				var key = reader.Value.ToString();
-				reader.Read();
-
-				if (key == "last")
-				{
-					propLast.SetValue(result, serializer.Deserialize<long>(reader), null);
-				}
-				else
-				{
-					methodAdd.Invoke(result, new[] { key, serializer.Deserialize(reader, typeValue) });
-				}
-				
-				reader.Read();
+				propLast.SetValue(result, serializer.Deserialize<long>(reader), null);
 			}
-
-			return result;
+			else
+			{
+				methodAdd.Invoke(result, new[] { key, serializer.Deserialize(reader, typeValue) });
+			}
+			
+			reader.Read();
 		}
 
-		public override bool CanWrite => false;
-
-		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-			=> throw new NotSupportedException();
+		return result;
 	}
+
+	public override bool CanWrite => false;
+
+	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+		=> throw new NotSupportedException();
 }

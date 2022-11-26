@@ -1,10 +1,6 @@
-﻿namespace Ecng.Net.Sms
-{
-	using System.Threading;
-	using System.Threading.Tasks;
+﻿namespace Ecng.Net.Sms;
 
-	public interface ISmsService
-	{
-		Task<string> SendAsync(string phone, string message, CancellationToken cancellationToken = default);
-	}
+public interface ISmsService
+{
+	Task<string> SendAsync(string phone, string message, CancellationToken cancellationToken = default);
 }

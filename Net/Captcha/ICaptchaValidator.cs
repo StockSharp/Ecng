@@ -1,10 +1,6 @@
-﻿namespace Ecng.Net.Captcha
-{
-	using System.Threading;
-	using System.Threading.Tasks;
+﻿namespace Ecng.Net.Captcha;
 
-	public interface ICaptchaValidator<TResult>
-	{
-		Task<TResult> ValidateAsync(string response, string address, CancellationToken cancellationToken = default);
-	}
+public interface ICaptchaValidator<TResult>
+{
+	Task<TResult> ValidateAsync(string response, string address, CancellationToken cancellationToken = default);
 }
