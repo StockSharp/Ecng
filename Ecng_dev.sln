@@ -81,6 +81,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Compilation.CodeDom", "Comp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Compilation.Roslyn", "Compilation.Roslyn\Compilation.Roslyn.csproj", "{78884141-5A63-4EAE-81A4-512FBD2195C5}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Net.Clients", "Net.Clients\Net.Clients.csproj", "{D0D7ACCA-456B-4C43-B8FC-647C2FF603C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -231,6 +233,10 @@ Global
 		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{78884141-5A63-4EAE-81A4-512FBD2195C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0D7ACCA-456B-4C43-B8FC-647C2FF603C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0D7ACCA-456B-4C43-B8FC-647C2FF603C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0D7ACCA-456B-4C43-B8FC-647C2FF603C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0D7ACCA-456B-4C43-B8FC-647C2FF603C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
