@@ -2,32 +2,32 @@
 
 using Microsoft.Net.Http.Headers;
 
-public class MjmlResponse
-{
-	[JsonProperty("errors")]
-	public object[] Errors { get; set; }
-
-	[JsonProperty("html")]
-	public string Html { get; set; }
-
-	[JsonProperty("mjml")]
-	public string Mjml { get; set; }
-
-	[JsonProperty("mjml_version")]
-	public string MjmlVersion { get; set; }
-
-	[JsonProperty("message")]
-	public string Message { get; set; }
-
-	[JsonProperty("request_id")]
-	public string RequestId { get; set; }
-
-	[JsonProperty("started_at")]
-	public string StartedAt { get; set; }
-}
-
 public class MjmlRestClient : RestBaseApiClient
 {
+	public struct MjmlResponse
+	{
+		[JsonProperty("errors")]
+		public object[] Errors { get; set; }
+
+		[JsonProperty("html")]
+		public string Html { get; set; }
+
+		[JsonProperty("mjml")]
+		public string Mjml { get; set; }
+
+		[JsonProperty("mjml_version")]
+		public string MjmlVersion { get; set; }
+
+		[JsonProperty("message")]
+		public string Message { get; set; }
+
+		[JsonProperty("request_id")]
+		public string RequestId { get; set; }
+
+		[JsonProperty("started_at")]
+		public string StartedAt { get; set; }
+	}
+
 	public MjmlRestClient(HttpMessageInvoker http, string userName, string password)
 		: base(http, new JsonMediaTypeFormatter(), new JsonMediaTypeFormatter())
 	{
