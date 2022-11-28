@@ -53,8 +53,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YandexDisk", "YandexDisk\Ya
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StringSearch", "StringSearch\StringSearch.csproj", "{2A4342C5-21F2-4DF3-A026-AF1994628E6D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerCollections", "PowerCollections\PowerCollections.csproj", "{5851FD7C-D701-4921-BF44-94799B8B5793}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HtmlRenderer", "HtmlRenderer\HtmlRenderer.csproj", "{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibGit2Sharp", "LibGit2Sharp\LibGit2Sharp.csproj", "{1D641926-07F4-4DE7-A181-A77A9C6E794C}"
@@ -177,10 +175,6 @@ Global
 		{2A4342C5-21F2-4DF3-A026-AF1994628E6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A4342C5-21F2-4DF3-A026-AF1994628E6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A4342C5-21F2-4DF3-A026-AF1994628E6D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5851FD7C-D701-4921-BF44-94799B8B5793}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5851FD7C-D701-4921-BF44-94799B8B5793}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5851FD7C-D701-4921-BF44-94799B8B5793}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5851FD7C-D701-4921-BF44-94799B8B5793}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}.Release|Any CPU.ActiveCfg = Release|Any CPU

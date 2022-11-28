@@ -5,6 +5,5 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\PowerCollections\PowerCollections.csproj" />
   </ItemGroup>
 </Project>

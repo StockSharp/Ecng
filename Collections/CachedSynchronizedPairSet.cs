@@ -48,7 +48,7 @@
 			get
 			{
 				lock (SyncRoot)
-					return _cachedPairs ??= ToArray();
+					return _cachedPairs ??= this.ToArray();
 			}
 		}
 

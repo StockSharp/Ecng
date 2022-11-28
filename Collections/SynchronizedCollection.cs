@@ -75,18 +75,6 @@
 				return OnIndexOf(item);
 		}
 
-		public override void CopyTo(TItem[] array, int arrayIndex)
-		{
-			lock (SyncRoot)
-				base.CopyTo(array, arrayIndex);
-		}
-
-		public override void ForEach(Action<TItem> action)
-		{
-			lock (SyncRoot)
-				base.ForEach(action);
-		}
-
 		public override bool Contains(TItem item)
 		{
 			lock (SyncRoot)

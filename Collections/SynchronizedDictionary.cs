@@ -6,8 +6,6 @@ namespace Ecng.Collections
 
 	using Ecng.Common;
 
-	using Wintellect.PowerCollections;
-
 	[Serializable]
 	public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyValuePair<TKey, TValue>>, IDictionary<TKey, TValue>
 	{
@@ -111,19 +109,6 @@ namespace Ecng.Collections
 		{
 			lock (SyncRoot)
 				return _inner.TryGetValue(key, out value);
-		}
-
-		public IDictionary<TKey, TValue> Range(TKey from, TKey to)
-		{
-			lock (SyncRoot)
-			{
-				if (_inner is not OrderedDictionary<TKey, TValue> ordered)
-					throw new NotSupportedException();
-
-				var retVal = new Dictionary<TKey, TValue>();
-				retVal.AddRange(ordered.Range(from, true, to, true));
-				return retVal;
-			}
 		}
 
 		public virtual TValue this[TKey key]

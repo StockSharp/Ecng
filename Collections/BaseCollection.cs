@@ -6,10 +6,8 @@ namespace Ecng.Collections
 
 	using Ecng.Common;
 
-	using Wintellect.PowerCollections;
-
 	[Serializable]
-	public abstract class BaseCollection<TItem, TCollection> : CollectionBase<TItem>, INotifyList<TItem>, IList
+	public abstract class BaseCollection<TItem, TCollection> : ICollection<TItem>, ICollection, INotifyList<TItem>, IList
 		where TCollection : ICollection<TItem>
 	{
 		protected BaseCollection(TCollection innerCollection)
@@ -43,17 +41,15 @@ namespace Ecng.Collections
 			InnerCollection.Clear();
 		}
 
-		public override IEnumerator<TItem> GetEnumerator()
-		{
-			return InnerCollection.GetEnumerator();
-		}
+		IEnumerator IEnumerable.GetEnumerator()
+			=> ((IEnumerable<TItem>)this).GetEnumerator();
 
-		public override int Count => InnerCollection.Count;
+		public virtual IEnumerator<TItem> GetEnumerator()
+			=> InnerCollection.GetEnumerator();
 
-		public override bool Contains(TItem item)
-		{
-			return InnerCollection.Contains(item);
-		}
+		public virtual int Count => InnerCollection.Count;
+
+		public virtual bool Contains(TItem item) => InnerCollection.Contains(item);
 
 		private void CheckIndex(int index)
 		{
@@ -105,7 +101,7 @@ namespace Ecng.Collections
 
 		public virtual bool IsReadOnly => false;
 
-		public override void Add(TItem item)
+		public virtual void Add(TItem item)
 		{
 			if (CheckNullableItems && item.IsNull())
 				throw new ArgumentNullException(nameof(item));
@@ -117,7 +113,7 @@ namespace Ecng.Collections
 			}
 		}
 
-		public override void Clear()
+		public virtual void Clear()
 		{
 			if (OnClearing())
 			{
@@ -126,7 +122,7 @@ namespace Ecng.Collections
 			}
 		}
 
-		public override bool Remove(TItem item)
+		public virtual bool Remove(TItem item)
 		{
 			if (CheckNullableItems && item.IsNull())
 				throw new ArgumentNullException(nameof(item));
@@ -286,9 +282,32 @@ namespace Ecng.Collections
 
 		private static readonly bool _isValueType = typeof(TItem).IsValueType;
 
-		private static bool IsCompatible(object value)
+		private static bool IsCompatible(object value) => !_isValueType || value != null;
+
+		bool ICollection.IsSynchronized => false;
+		object ICollection.SyncRoot => this;
+
+		void ICollection.CopyTo(Array array, int index)
+			=> ((ICollection<TItem>)this).CopyTo((TItem[])array, index);
+
+		void ICollection<TItem>.CopyTo(TItem[] array, int index)
 		{
-			return !_isValueType || value != null;
+			int count = Count;
+
+			if (count == 0)
+				return;
+
+			var i = 0;
+			foreach (var item in (ICollection<TItem>)this)
+			{
+				if (i >= count)
+					break;
+
+				array[index] = item;
+
+				index++;
+				i++;
+			}
 		}
 	}
 }

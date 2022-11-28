@@ -1,12 +1,11 @@
 namespace Ecng.Collections
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 
-	using Wintellect.PowerCollections;
-
 	[Serializable]
-	public abstract class KeyedCollection<TKey, TValue> : DictionaryBase<TKey, TValue>
+	public abstract class KeyedCollection<TKey, TValue> : IDictionary<TKey, TValue>
 	{
 		protected KeyedCollection()
 			: this(new Dictionary<TKey, TValue>())
@@ -25,7 +24,7 @@ namespace Ecng.Collections
 
 		protected IDictionary<TKey, TValue> InnerDictionary { get; }
 
-		public override void Add(TKey key, TValue value)
+		public virtual void Add(TKey key, TValue value)
 		{
 			if (!CanAdd(key, value))
 				throw new ArgumentException();
@@ -37,8 +36,9 @@ namespace Ecng.Collections
 
 		#region DictionaryBase<TKey, TValue> Members
 
-		public override TValue this[TKey key]
+		public virtual TValue this[TKey key]
 		{
+			get => InnerDictionary[key];
 			set
 			{
 				OnSetting(key, value);
@@ -47,14 +47,14 @@ namespace Ecng.Collections
 			}
 		}
 
-		public override void Clear()
+		public virtual void Clear()
 		{
 			OnClearing();
 			InnerDictionary.Clear();
 			OnCleared();
 		}
 
-		public override bool Remove(TKey key)
+		public virtual bool Remove(TKey key)
 		{
 			if (InnerDictionary.TryGetValue(key, out var value))
 			{
@@ -67,14 +67,14 @@ namespace Ecng.Collections
 				return false;
 		}
 
-		public override bool TryGetValue(TKey key, out TValue value)
+		public virtual bool TryGetValue(TKey key, out TValue value)
 		{
 			return InnerDictionary.TryGetValue(key, out value);
 		}
 
-		public override int Count => InnerDictionary.Count;
+		public virtual int Count => InnerDictionary.Count;
 
-		public override IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+		public virtual IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
 		{
 			return InnerDictionary.GetEnumerator();
 		}
@@ -94,5 +94,18 @@ namespace Ecng.Collections
 		protected virtual void OnRemoved(TKey key, TValue value) { }
 
 		protected virtual bool CanAdd(TKey key, TValue value) => true;
+
+		public ICollection<TKey> Keys => InnerDictionary.Keys;
+		public ICollection<TValue> Values => InnerDictionary.Values;
+
+		bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => InnerDictionary.IsReadOnly;
+
+		public bool ContainsKey(TKey key) => InnerDictionary.ContainsKey(key);
+		public void Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
+		public bool Contains(KeyValuePair<TKey, TValue> item) => ContainsKey(item.Key);
+		public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => InnerDictionary.CopyTo(array, arrayIndex);
+		public bool Remove(KeyValuePair<TKey, TValue> item) => Remove(item.Key);
+
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 	}
 }

@@ -9,26 +9,10 @@
 
 	using Nito.AsyncEx;
 
-	using Wintellect.PowerCollections;
-
 	using Ecng.Common;
 
 	public static class CollectionHelper
 	{
-		#region PowerCollections Algorithms Methods
-
-		public static ICollection UnCast<T>(this ICollection<T> collection)
-		{
-			return Algorithms.Untyped(collection);
-		}
-
-		public static IList UnCast<T>(this IList<T> list)
-		{
-			return Algorithms.Untyped(list);
-		}
-
-		#endregion
-
 		private sealed class EqualityComparer<T> : IEqualityComparer<T>
 		{
 			private readonly Func<T, T, bool> _comparer;
@@ -549,40 +533,9 @@
 			return grouping.ToDictionary(g => g.Key, g => (IEnumerable<TValue>)g);
 		}
 
-		public static MultiDictionary<TKey, TValue> ToMultiDictionary<TKey, TValue>(this IEnumerable<IGrouping<TKey, TValue>> grouping)
-		{
-			if (grouping is null)
-				throw new ArgumentNullException(nameof(grouping));
-
-			var retVal = new MultiDictionary<TKey, TValue>(false);
-
-			foreach (var group in grouping)
-				retVal.AddMany(group.Key, group);
-
-			return retVal;
-		}
-
-		public static MultiDictionary<TKey, TValue> ToMultiDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, IEnumerable<TValue>>> pairs)
-		{
-			if (pairs is null)
-				throw new ArgumentNullException(nameof(pairs));
-
-			var retVal = new MultiDictionary<TKey, TValue>(false);
-
-			foreach (var pair in pairs)
-				retVal.AddMany(pair.Key, pair.Value);
-
-			return retVal;
-		}
-
 		public static IEnumerable<TKey> GetKeys<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TValue value)
 		{
 			return from pair in dictionary where pair.Value.Equals(value) select pair.Key;
-		}
-
-		public static IEnumerable<TKey> GetKeys<TKey, TValue>(this MultiDictionaryBase<TKey, TValue> dictionary, TValue value)
-		{
-			return from pair in dictionary where pair.Value.Contains(value) select pair.Key;
 		}
 
 		public static TValue SafeAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
@@ -821,28 +774,10 @@
 				action(collection);
 		}
 
-		public static ICollection<TValue> TryGetValue<TKey, TValue>(this SynchronizedMultiDictionary<TKey, TValue> dict, TKey key)
-		{
-			if (dict is null)
-				throw new ArgumentNullException(nameof(dict));
-
-			lock (dict.SyncRoot)
-			{
-				var retVal = ((MultiDictionaryBase<TKey, TValue>)dict).TryGetValue(key);
-				return retVal?.ToArray();
-			}
-		}
-
 		public static IEnumerable<TKey> GetKeys<TKey, TValue>(this SynchronizedDictionary<TKey, TValue> dictionary, TValue value)
 		{
 			lock (dictionary.SyncRoot)
 				return ((IDictionary<TKey, TValue>)dictionary).GetKeys(value);
-		}
-
-		public static IEnumerable<TKey> GetKeys<TKey, TValue>(this SynchronizedMultiDictionary<TKey, TValue> dictionary, TValue value)
-		{
-			lock (dictionary.SyncRoot)
-				return ((MultiDictionaryBase<TKey, TValue>)dictionary).GetKeys(value).ToArray();
 		}
 
 		public static T TryDequeue<T>(this Queue<T> queue)

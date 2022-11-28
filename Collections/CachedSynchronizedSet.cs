@@ -1,6 +1,7 @@
 namespace Ecng.Collections
 {
 	using System.Collections.Generic;
+	using System.Linq;
 
 	public class CachedSynchronizedSet<T> : SynchronizedSet<T>
 	{
@@ -45,7 +46,7 @@ namespace Ecng.Collections
 			get
 			{
 				lock (SyncRoot)
-					return _cache ??= ToArray();
+					return _cache ??= this.ToArray();
 			}
 		}
 
