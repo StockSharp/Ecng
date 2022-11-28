@@ -5,7 +5,6 @@
 	using System.Security.Cryptography;
 
 	using Ecng.Common;
-	using Ecng.Security.Properties;
 
 	/// <summary>
 	/// <para>Represents basic cryptography services for a <see cref="SymmetricAlgorithm"/>.</para>
@@ -144,7 +143,7 @@
 
 			if (encryptedText.Length < IVLength + 1)
 			{
-				throw new CryptographicException(Resources.ExceptionDecrypting);
+				throw new CryptographicException("Unable to decrypt data.");
 			}
 
 			byte[] data = new byte[encryptedText.Length - IVLength];
