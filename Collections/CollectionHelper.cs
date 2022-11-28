@@ -7,8 +7,6 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using MoreLinq;
-
 	using Nito.AsyncEx;
 
 	using Wintellect.PowerCollections;
@@ -1353,8 +1351,32 @@
 			return result > threshold ? int.MaxValue : result;
 		}
 
-		public static ISet<T> ToSet<T>(this IEnumerable<T> values) => MoreLinq.Extensions.ToHashSetExtension.ToHashSet(values);
-		public static ISet<string> ToIgnoreCaseSet(this IEnumerable<string> values) => MoreLinq.Extensions.ToHashSetExtension.ToHashSet(values, StringComparer.InvariantCultureIgnoreCase);
+		public static ISet<T> ToSet<T>(this IEnumerable<T> values)
+		{
+#if NETSTANDARD2_0
+			return new HashSet<T>(values);
+#else
+			return values.ToHashSet();
+#endif
+		}
+
+		public static ISet<string> ToIgnoreCaseSet(this IEnumerable<string> values)
+		{
+#if NETSTANDARD2_0
+			return new HashSet<string>(values, StringComparer.InvariantCultureIgnoreCase);
+#else
+			return values.ToHashSet(StringComparer.InvariantCultureIgnoreCase);
+#endif
+		}
+
+		public static IEnumerable<T[]> Batch<T>(this IEnumerable<T> source, int size)
+		{
+#if NETSTANDARD2_0
+			return Batch<T, T[]>(source, size, source => source.ToArray(), () => false);
+#else
+			return source.Chunk(size);
+#endif
+		}
 
 		public static IEnumerable<TResult> Batch<TSource, TResult>(this IEnumerable<TSource> source, int size,
             Func<IEnumerable<TSource>, TResult> resultSelector, Func<bool> needStop)
@@ -1364,10 +1386,7 @@
 
             foreach (var item in source)
             {
-                if (bucket is null)
-                {
-                    bucket = new TSource[size];
-                }
+                bucket ??= new TSource[size];
 
                 bucket[count++] = item;
 
@@ -1405,5 +1424,17 @@
 
 		public static void Add<TKey, TValue>(this IDictionary<TKey, TValue> dict, (TKey key, TValue value) tuple)
 			=> dict.Add(tuple.ToPair());
+
+		public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
+		{
+			if (source is null)
+				throw new ArgumentNullException(nameof(source));
+
+			if (action is null)
+				throw new ArgumentNullException(nameof(action));
+
+			foreach (var item in source)
+				action(item);
+		}
 	}
 }

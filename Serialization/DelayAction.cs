@@ -9,8 +9,6 @@
 	using Ecng.Collections;
 	using Ecng.Common;
 
-	using MoreLinq;
-
 	public class DelayAction : Disposable
 	{
 		public interface IGroup
@@ -439,6 +437,7 @@
 			try
 			{
 				using var scope = ((IInternalGroup)group).Init();
+
 				foreach (var packet in actions.Distinct(_itemComparer).Batch(MaxBatchSize))
 				{
 					using (var batch = BeginBatch(group))

@@ -6,8 +6,6 @@
 
 	using Ecng.Common;
 
-	using MoreLinq;
-
 	[Serializable]
 	public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, ICollectionEx<T>
 	{

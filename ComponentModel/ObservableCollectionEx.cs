@@ -9,8 +9,6 @@ namespace Ecng.ComponentModel
 
 	using Ecng.Collections;
 
-	using MoreLinq;
-
 	/// <summary>
 	/// </summary>
 	public class ObservableCollectionEx<TItem> : IListEx<TItem>, IList, INotifyCollectionChanged, INotifyPropertyChanged

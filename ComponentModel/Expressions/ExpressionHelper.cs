@@ -9,8 +9,6 @@ namespace Ecng.ComponentModel.Expressions
 	using Ecng.Common;
 	using Ecng.Compilation;
 
-	using MoreLinq;
-
 	/// <summary>
 	/// Extension class for <see cref="ExpressionFormula"/>.
 	/// </summary>

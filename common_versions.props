@@ -32,7 +32,6 @@
     <MessagePackVer>2.3.85</MessagePackVer>
     <MessagePipeVer>1.7.4</MessagePipeVer>
 
-    <MoreLinqVer>3.3.2</MoreLinqVer>
     <RestSharpVer>108.0.2</RestSharpVer>
     <NDdeVer>3.1.0</NDdeVer>
     <ILPackVer>0.1.7</ILPackVer>

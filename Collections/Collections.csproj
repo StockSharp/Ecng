@@ -4,9 +4,6 @@
     <ProjectGuid>{62A4ADD9-9D89-48E6-984B-73BF023D7E50}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MoreLinq" Version="$(MoreLinqVer)" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\PowerCollections\PowerCollections.csproj" />
   </ItemGroup>

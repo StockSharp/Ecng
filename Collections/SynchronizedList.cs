@@ -6,8 +6,6 @@ namespace Ecng.Collections
 
 	using Ecng.Common;
 
-	using MoreLinq;
-
 	[Serializable]
 	public class SynchronizedList<T> : SynchronizedCollection<T, List<T>>, INotifyListEx<T>
 	{

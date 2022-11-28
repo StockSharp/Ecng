@@ -8,8 +8,6 @@
 
 	using Ecng.Collections;
 
-	using MoreLinq;
-
 	class DispatcherNotifiableObjectTimer
 	{
 		private readonly TimeSpan _minInterval = TimeSpan.FromMilliseconds(100);
