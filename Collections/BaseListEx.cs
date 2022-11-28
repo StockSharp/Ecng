@@ -136,7 +136,7 @@ namespace Ecng.Collections
 			RemoveAt(index);
 		}
 
-		bool IList.IsFixedSize => throw new NotImplementedException();
+		bool IList.IsFixedSize => false;
 
 		private static readonly bool _isValueType = typeof(T).IsValueType;
 
