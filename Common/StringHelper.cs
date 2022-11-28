@@ -457,8 +457,20 @@
 
 		public static string ReplaceIgnoreCase(this string original, string oldValue, string newValue)
 		{
+			if (oldValue is null)
+				throw new ArgumentNullException(nameof(oldValue));
+
+			if (newValue is null)
+				throw new ArgumentNullException(nameof(newValue));
+
 			if (original is null)
-				throw new ArgumentNullException(nameof(original));
+			{
+				return null;
+				//throw new ArgumentNullException(nameof(original));
+			}
+
+			if (oldValue.Length == 0)
+				return original.IsEmpty() ? newValue : original;
 
 #if NETSTANDARD2_0
 			return Regex.Replace(original, oldValue, newValue, RegexOptions.IgnoreCase);
