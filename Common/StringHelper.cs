@@ -437,9 +437,6 @@
 			return string.Compare(str1, str2, StringComparison.InvariantCultureIgnoreCase) == 0;
 		}
 
-		//
-		// http://ppetrov.wordpress.com/2008/06/27/useful-method-6-of-n-ignore-case-on-stringcontains/
-		//
 		public static bool ContainsIgnoreCase(this string str1, string str2)
 		{
 			if (str1 is null)
@@ -451,48 +448,23 @@
 			if (str2 is null)
 				return false;
 
+#if NETSTANDARD2_0
 			return str1.IndexOf(str2, StringComparison.InvariantCultureIgnoreCase) >= 0;
+#else
+			return str1.Contains(str2, StringComparison.InvariantCultureIgnoreCase);
+#endif
 		}
 
-		//
-		// http://ppetrov.wordpress.com/2008/06/27/useful-method-6-of-n-ignore-case-on-stringreplace/
-		//
 		public static string ReplaceIgnoreCase(this string original, string oldValue, string newValue)
 		{
-			if (oldValue is null)
-				throw new ArgumentNullException(nameof(oldValue));
+			if (original is null)
+				throw new ArgumentNullException(nameof(original));
 
-			if (newValue is null)
-				throw new ArgumentNullException(nameof(newValue));
-
-			if (oldValue.Length == 0)
-				return original?.Length == 0 ? newValue : original;
-
-			var result = original;
-
-			if (oldValue != newValue)
-			{
-				int index;
-				var lastIndex = 0;
-
-				var buffer = new StringBuilder();
-
-				while ((index = original.IndexOf(oldValue, lastIndex, StringComparison.InvariantCultureIgnoreCase)) >= 0)
-				{
-					if (lastIndex != (index - lastIndex))
-						buffer.Append(original, lastIndex, index - lastIndex);
-
-					buffer.Append(newValue);
-
-					lastIndex = index + oldValue.Length;
-				}
-
-				buffer.Append(original, lastIndex, original.Length - lastIndex);
-
-				result = buffer.ToString();
-			}
-
-			return result;
+#if NETSTANDARD2_0
+			return Regex.Replace(original, oldValue, newValue, RegexOptions.IgnoreCase);
+#else
+			return original.Replace(oldValue, newValue, StringComparison.InvariantCultureIgnoreCase);
+#endif
 		}
 
 		public static StringBuilder ReplaceIgnoreCase(this StringBuilder builder, string oldValue, string newValue)
@@ -618,7 +590,7 @@
 		public static string Truncate(this string text, int maxLength, string suffix)
 		{
 			if (maxLength < 0)
-				throw new ArgumentOutOfRangeException(nameof(maxLength), "maxLength", "maxLength is negative.");
+				throw new ArgumentOutOfRangeException(nameof(maxLength), nameof(maxLength), "maxLength is negative.");
 
 			var truncatedString = text;
 
