@@ -11,11 +11,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Net\Net.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Update="SignalR\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
 </Project>
