@@ -6,4 +6,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'netstandard2.0' ">
+	  <Compile Remove="EnumerableEx.cs" />
+  </ItemGroup>
 </Project>
