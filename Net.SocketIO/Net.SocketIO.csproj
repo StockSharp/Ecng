@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <PropertyGroup>
-    <ProjectGuid>{B79EC630-2FAB-42B9-89BA-4886C1942E96}</ProjectGuid>
     <DefineConstants>$(DefineConstants);CLIENT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>

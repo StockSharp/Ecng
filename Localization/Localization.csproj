@@ -1,8 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
-  <PropertyGroup>
-    <ProjectGuid>{5EC44477-9E8C-4425-8F3A-6648D0C38B9D}</ProjectGuid>
-  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>

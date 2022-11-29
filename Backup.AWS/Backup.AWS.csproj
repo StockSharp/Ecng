@@ -1,8 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
-  <PropertyGroup>
-    <ProjectGuid>{4EC489C3-7846-4100-A871-4A6045CA41FF}</ProjectGuid>
-  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="$(AWSSDKS3Ver)" />
     <PackageReference Include="AWSSDK.SQS" Version="$(AWSSDKSQSVer)" />

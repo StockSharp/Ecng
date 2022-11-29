@@ -1,8 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
-  <PropertyGroup>
-    <ProjectGuid>{685A7BF3-5C51-42EA-954F-1DEC176F9DFC}</ProjectGuid>
-  </PropertyGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="Microsoft.CSharp" Version="$(CSharpVer)" />
   </ItemGroup>

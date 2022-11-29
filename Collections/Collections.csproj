@@ -1,12 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
-  <PropertyGroup>
-    <ProjectGuid>{62A4ADD9-9D89-48E6-984B-73BF023D7E50}</ProjectGuid>
-  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'netstandard2.0' ">
-	  <Compile Remove="EnumerableEx.cs" />
+    <Compile Remove="EnumerableEx.cs" />
   </ItemGroup>
 </Project>

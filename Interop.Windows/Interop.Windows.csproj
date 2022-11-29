@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <PropertyGroup>
-    <ProjectGuid>{E07110B3-2D56-474D-9668-7A4488774F33}</ProjectGuid>
     <RootNamespace>Ecng.Interop</RootNamespace>
     <UseWindowsForms>true</UseWindowsForms>
     <NoWarn>CA1416</NoWarn>

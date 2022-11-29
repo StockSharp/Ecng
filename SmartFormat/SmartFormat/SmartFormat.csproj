@@ -5,7 +5,6 @@
     <!-- EmbedUntrackedSources for deterministic build -->
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <Nullable>enable</Nullable>
-    <ProjectGuid>{7359993E-F2D2-4599-B861-F5136E48D8F3}</ProjectGuid>
     <NoWarn>3008</NoWarn>
   </PropertyGroup>
 

@@ -3,7 +3,6 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
-    <ProjectGuid>{84BC791D-31CD-4585-90FE-3A059F053F14}</ProjectGuid>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,5 +16,4 @@
   <ItemGroup>
     <ProjectReference Include="..\SmartFormat\SmartFormat.csproj" />
   </ItemGroup>
-
 </Project>
