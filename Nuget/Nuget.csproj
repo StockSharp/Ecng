@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <ItemGroup>
-    <PackageReference Include="NuGet.Packaging" Version="$(NuGetApiVer)" />
     <PackageReference Include="NuGet.Protocol" Version="$(NuGetApiVer)" />
   </ItemGroup>
 </Project>
