@@ -14,12 +14,14 @@ public class AyrshareRestClient : RestBaseApiClient
 		public AutoHashtagPositions Position { get; set; }
 	}
 
-	public struct PostResultPostId
+	public struct PostResultItem
 	{
 		public string Status { get; set; }
 		public string Id { get; set; }
 		public string PostUrl { get; set; }
 		public string Platform { get; set; }
+		public string Code { get; set; }
+		public string Message { get; set; }
 	}
 
 	public struct PostResult
@@ -27,8 +29,8 @@ public class AyrshareRestClient : RestBaseApiClient
 		public string Status { get; set; }
 		public string Id { get; set; }
 		public string Post { get; set; }
-		public string[] Errors { get; set; }
-		public PostResultPostId[] PostIds { get; set; }
+		public PostResultItem[] Errors { get; set; }
+		public PostResultItem[] PostIds { get; set; }
 	}
 
 	public AyrshareRestClient(HttpMessageInvoker http, SecureString token)
