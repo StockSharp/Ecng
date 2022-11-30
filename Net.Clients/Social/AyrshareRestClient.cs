@@ -25,6 +25,8 @@ public class AyrshareRestClient : RestBaseApiClient
 	public struct PostResult
 	{
 		public string Status { get; set; }
+		public string Id { get; set; }
+		public string Post { get; set; }
 		public string[] Errors { get; set; }
 		public PostResultPostId[] PostIds { get; set; }
 	}
