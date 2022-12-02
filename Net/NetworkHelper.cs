@@ -302,7 +302,19 @@ public static class NetworkHelper
 		return url.Host.EqualsIgnoreCase("localhost");
 	}
 
-	public static string CheckUrl(this string str) => str.ToLatin().LightScreening().ClearUrl();
+	public static string CheckUrl(this string str, bool latin = true, bool screen = true, bool clear = true)
+	{
+		if (latin)
+			str = str.ToLatin();
+
+		if (screen)
+			str = str.LightScreening();
+
+		if (clear)
+			str = str.ClearUrl();
+
+		return str;
+	}
 
 	public static bool IsLoopback(this IPAddress address) => IPAddress.IsLoopback(address);
 
