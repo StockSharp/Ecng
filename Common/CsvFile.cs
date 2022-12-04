@@ -85,6 +85,7 @@ namespace Ecng.Common
 		public string CurrLine;
 		private int CurrPos;
 		private readonly EmptyLineBehavior EmptyLineBehavior;
+		private readonly string _lineSeparator;
 
 		/// <summary>
 		/// Initializes a new instance of the CsvFileReader class for the
@@ -93,8 +94,9 @@ namespace Ecng.Common
 		/// <param name="stream">The stream to read from</param>
 		/// <param name="emptyLineBehavior">Determines how empty lines are handled</param>
 		public CsvFileReader(Stream stream,
+			string lineSeparator,
 			EmptyLineBehavior emptyLineBehavior = EmptyLineBehavior.NoColumns)
-			: this(new StreamReader(stream), emptyLineBehavior)
+			: this(new StreamReader(stream), lineSeparator, emptyLineBehavior)
 		{
 		}
 
@@ -105,15 +107,21 @@ namespace Ecng.Common
 		/// <param name="path">The name of the CSV file to read from</param>
 		/// <param name="emptyLineBehavior">Determines how empty lines are handled</param>
 		public CsvFileReader(string path,
+			string lineSeparator,
 			EmptyLineBehavior emptyLineBehavior = EmptyLineBehavior.NoColumns)
-			: this(new StreamReader(path), emptyLineBehavior)
+			: this(new StreamReader(path), lineSeparator, emptyLineBehavior)
 		{
 		}
 
 		public CsvFileReader(TextReader reader,
+			string lineSeparator,
 			EmptyLineBehavior emptyLineBehavior = EmptyLineBehavior.NoColumns)
 		{
+			if (lineSeparator.IsEmpty())
+				throw new ArgumentNullException(nameof(lineSeparator));
+
 			Reader = reader;
+			_lineSeparator = lineSeparator;
 			EmptyLineBehavior = emptyLineBehavior;
 		}
 
@@ -205,7 +213,7 @@ namespace Ecng.Common
 					if (CurrLine is null)
 						return builder.ToString();
 					// Otherwise, treat as a multi-line field
-					builder.Append(Environment.NewLine);
+					builder.Append(_lineSeparator);
 				}
 
 				// Test for quote character

@@ -18,45 +18,34 @@ namespace Ecng.Common
 		private char[] _line = new char[_buffSize];
 		private int _lineLen;
 		private RefPair<int, int>[] _columnPos = new RefPair<int, int>[_buffSize];
+		private readonly char[] _lineSeparatorChars;
 
-		public FastCsvReader(Stream stream, Encoding encoding)
-			: this(new StreamReader(stream, encoding))
+		private int _lineSeparatorCharPos;
+
+		public FastCsvReader(Stream stream, Encoding encoding, string lineSeparator)
+			: this(new StreamReader(stream, encoding), lineSeparator)
 		{
 		}
 
-		public FastCsvReader(string content)
-			: this(new StringReader(content))
+		public FastCsvReader(string content, string lineSeparator)
+			: this(new StringReader(content), lineSeparator)
 		{
 		}
 
-		public FastCsvReader(TextReader reader)
+		public FastCsvReader(TextReader reader, string lineSeparator)
 		{
+			if (lineSeparator.IsEmpty())
+				throw new ArgumentNullException(nameof(lineSeparator));
+
 			Reader = reader ?? throw new ArgumentNullException(nameof(reader));
-			LineSeparator = Environment.NewLine;
+			_lineSeparatorChars = lineSeparator.ToArray();
 
 			for (var i = 0; i < _columnPos.Length; i++)
 				_columnPos[i] = new RefPair<int, int>();
 		}
 
 		public TextReader Reader { get; }
-
-		private int _lineSeparatorCharPos;
-		private char[] _lineSeparatorChars;
-		private string _lineSeparator;
-
-		public string LineSeparator
-		{
-			get => _lineSeparator;
-			set
-			{
-				if (value.IsEmpty())
-					throw new ArgumentNullException(nameof(value));
-
-				_lineSeparator = value;
-				_lineSeparatorChars = value.ToArray();
-			}
-		}
-
+		
 		public char ColumnSeparator { get; set; } = ';';
 
 		public string CurrentLine

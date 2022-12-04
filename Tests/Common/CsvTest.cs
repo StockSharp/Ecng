@@ -233,7 +233,7 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 		{
 			Do.Invariant(() =>
 			{
-				var csvReader = new FastCsvReader(new StringReader(value));
+				var csvReader = new FastCsvReader(new StringReader(value), StringHelper.RN);
 
 				var lines = 0;
 
