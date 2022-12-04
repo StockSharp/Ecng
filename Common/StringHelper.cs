@@ -150,6 +150,16 @@
 			}
 		}
 
+		public const string N = "\n";
+		public const string RN = "\r\n";
+
+		public static string[] SplitByRN(this string str, bool removeEmptyEntries = true)
+			=> str.SplitBySep(RN, removeEmptyEntries);
+
+		public static string[] SplitByN(this string str, bool removeEmptyEntries = true)
+			=> str.SplitBySep(N, removeEmptyEntries);
+
+		[Obsolete("Use SplitByRN or SplitByN methods.")]
 		public static string[] SplitLines(this string str, bool removeEmptyEntries = true)
 		{
 			return str.SplitBySep(Environment.NewLine, removeEmptyEntries);
@@ -182,10 +192,9 @@
 			return str.SplitBySep(";", removeEmptyEntries);
 		}
 
+		[Obsolete("Use SplitByN methods.")]
 		public static string[] SplitByLine(this string str, bool removeEmptyEntries = false)
-		{
-			return str.SplitBySep("\n", removeEmptyEntries);
-		}
+			=> str.SplitByN(removeEmptyEntries);
 
 		public static int LastIndexOf(this StringBuilder builder, char value)
 		{
@@ -390,7 +399,7 @@
 		/// <returns></returns>
 		public static string Nl2Br(this string s)
 		{
-			return s.Replace("\r\n", "<br />").Replace("\n", "<br />");
+			return s.Replace(RN, "<br />").Replace(N, "<br />");
 		}
 
 		public static string Trim(this string value, int maxLength)
@@ -419,6 +428,16 @@
 		public static string JoinAnd(this IEnumerable<string> parts)
 		{
 			return parts.Join("&");
+		}
+
+		public static string JoinN(this IEnumerable<string> parts)
+		{
+			return parts.Join(N);
+		}
+
+		public static string JoinRN(this IEnumerable<string> parts)
+		{
+			return parts.Join(RN);
 		}
 
 		public static string Join(this IEnumerable<string> parts, string separator)

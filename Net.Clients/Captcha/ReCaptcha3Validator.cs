@@ -51,6 +51,6 @@ public class ReCaptcha3Validator : ICaptchaValidator<float>
 		if (result.Success)
 			return result.Score;
 
-		throw new InvalidOperationException(result.ErrorCodes.Join(Environment.NewLine));
+		throw new InvalidOperationException(result.ErrorCodes.JoinN());
 	}
 }

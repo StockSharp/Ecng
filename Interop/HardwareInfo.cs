@@ -112,7 +112,7 @@ namespace Ecng.Interop
 				info => info.EnvironmentVariables["PATH"] = "/bin:/sbin:/usr/bin:/usr/sbin", cancellationToken: cancellationToken);
 
 			if (res != 0 || errors.Any())
-				throw new InvalidOperationException($"Unable to execute lsblk. Return code {res}.\n{errors.Join(Environment.NewLine)}");
+				throw new InvalidOperationException($"Unable to execute lsblk. Return code {res}.\n{errors.JoinN()}");
 
 			//if (result.Count != 1)
 			//	throw new InvalidOperationException($"invalid lsblk result. got {result.Count} values: {result.JoinComma()}");
