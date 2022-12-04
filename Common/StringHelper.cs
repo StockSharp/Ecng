@@ -440,6 +440,11 @@
 			return parts.Join(RN);
 		}
 
+		public static string JoinNL(this IEnumerable<string> parts)
+		{
+			return parts.Join(Environment.NewLine);
+		}
+
 		public static string Join(this IEnumerable<string> parts, string separator)
 		{
 			return string.Join(separator, parts.ToArray());

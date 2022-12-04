@@ -258,7 +258,7 @@ class TempExpressionFormula : ExpressionFormula
 				var result = service.GetCompiler(CompilationLanguages.CSharp).Compile("IndexExpression", _template.Replace("__insert_code", code), refs);
 
 				var formula = result.Assembly is null
-					? new ErrorExpressionFormula(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinN())
+					? new ErrorExpressionFormula(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL())
 					: result.Assembly.GetType("TempExpressionFormula").CreateInstance<ExpressionFormula>(expression, identifiers);
 
 				return formula;
