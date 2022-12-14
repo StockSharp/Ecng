@@ -44,8 +44,7 @@ public unsafe static class ProcessExtensions
 			ProcessMemoryLimit = (UIntPtr)limit
 		};
 
-		int? length = default;
-		var extendedInfoPtr = extendedInfo.StructToPtr(ref length);
+		var (extendedInfoPtr, length) = extendedInfo.StructToPtrEx();
 
 		if (!PInvoke.SetInformationJobObject(jobHandle, JOBOBJECTINFOCLASS.JobObjectExtendedLimitInformation, extendedInfoPtr.ToPointer(), (uint)length))
 			throw new InvalidOperationException($"Unable to set information.  Error: {Marshal.GetLastWin32Error()}");
@@ -71,8 +70,7 @@ public unsafe static class ProcessExtensions
 			}
 		};
 
-		int? length = default;
-		var extendedInfoPtr = extendedInfo.StructToPtr(ref length);
+		var (extendedInfoPtr, length) = extendedInfo.StructToPtrEx();
 
 		if (!PInvoke.SetInformationJobObject(jobHandle, JOBOBJECTINFOCLASS.JobObjectExtendedLimitInformation, extendedInfoPtr.ToPointer(), (uint)length))
 			throw new InvalidOperationException($"Unable to set information.  Error: {Marshal.GetLastWin32Error()}");
