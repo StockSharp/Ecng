@@ -13,10 +13,7 @@ namespace Ecng.Interop
 	using Ecng.Collections;
 
 #if NETCOREAPP
-	using System.IO;
-
 	using CoreNativeLib = System.Runtime.InteropServices.NativeLibrary;
-
 #endif
 
 	/// <summary>
