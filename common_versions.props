@@ -26,12 +26,7 @@
     <MicrosoftNetHttpHeadersVer>2.2.8</MicrosoftNetHttpHeadersVer>
     <TaskExtensionsVer>4.5.4</TaskExtensionsVer>
     <SysChannelsVer>6.*</SysChannelsVer>
-    
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
-
-    <MessagePackVer>2.3.85</MessagePackVer>
-    <MessagePipeVer>1.7.4</MessagePipeVer>
-
     <RestSharpVer>108.0.2</RestSharpVer>
     <NDdeVer>3.1.0</NDdeVer>
     <ILPackVer>0.1.7</ILPackVer>
