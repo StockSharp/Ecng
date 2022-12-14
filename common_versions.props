@@ -33,5 +33,6 @@
     <linq2dbVer>4.1.1</linq2dbVer>
     <NitoVer>5.1.2</NitoVer>
     <DXVer>1.0.7</DXVer>
+    <CsWin32Ver>0.2.164-beta</CsWin32Ver>
   </PropertyGroup>
 </Project>
