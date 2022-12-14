@@ -27,7 +27,7 @@ public static class ProcessExtensions
 		public const uint JOB_OBJECT_LIMIT_WORKINGSET = 0x00000001;
 	}
 
-	public static void LimitByCPU(this Process process, long cpu)
+	public static void SetProcessorAffinity(this Process process, long cpu)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
