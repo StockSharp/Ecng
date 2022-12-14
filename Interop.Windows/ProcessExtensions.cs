@@ -16,11 +16,9 @@ public unsafe static class ProcessExtensions
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 
-#pragma warning disable CA1416 // Validate platform compatibility
 		var mask = (long)process.ProcessorAffinity;
 		mask &= cpu;
 		process.ProcessorAffinity = (IntPtr)mask;
-#pragma warning restore CA1416 // Validate platform compatibility
 	}
 
 	public static SafeFileHandle LimitByMemory(this Process process, long limit)
