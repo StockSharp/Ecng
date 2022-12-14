@@ -49,6 +49,19 @@ namespace Ecng.Interop
 		/// <param name="structure">A managed object holding the data to be marshaled. This object must be an instance of a formatted class.</param>
 		/// <param name="size"></param>
 		/// <returns>A pointer to an unmanaged block of memory.</returns>
+		public static IntPtr StructToPtr<T>(this T structure)
+			where T : struct
+		{
+			int? size = default;
+			return structure.StructToPtr<T>(ref size);
+		}
+
+		/// <summary>
+		/// Marshals data from a managed object to an unmanaged block of memory.
+		/// </summary>
+		/// <param name="structure">A managed object holding the data to be marshaled. This object must be an instance of a formatted class.</param>
+		/// <param name="size"></param>
+		/// <returns>A pointer to an unmanaged block of memory.</returns>
 		public static IntPtr StructToPtr<T>(this T structure, ref int? size)
 			where T : struct
 		{
