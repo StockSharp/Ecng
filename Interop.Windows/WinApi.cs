@@ -1,7 +1,6 @@
 ﻿namespace Ecng.Interop
 {
 	using System;
-	using System.Runtime.InteropServices;
 	using System.Windows.Forms;
 
 	using Microsoft.Win32;
@@ -11,17 +10,6 @@
 	[CLSCompliant(false)]
 	public static class WinApi
 	{
-		public static int ReleaseComObject(this object comObject)
-			=> Marshal.ReleaseComObject(comObject);
-
-		/// <summary>
-		/// Wraps the specified COM object in an object of the specified type.
-		/// </summary>
-		/// <param name="target">The object to be wrapped.</param>
-		/// <returns>The newly wrapped object.</returns>
-		public static T Wrapper<T>(this object target)
-			=> (T)Marshal.CreateWrapperOfType(target, typeof(T));
-
 		public static void GetScreenParams(IntPtr hwnd, out int left, out int top, out int width, out int height)
 		{
 			var activeScreen = Screen.FromHandle(hwnd);

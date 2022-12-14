@@ -1,13 +1,9 @@
 namespace Ecng.Interop
 {
 	using System;
-	using System.Collections.Generic;
 	using System.ComponentModel;
-	using System.Linq;
 	using System.Text;
 	using System.Runtime.InteropServices;
-	using System.Runtime.Versioning;
-	using System.Security;
 
 	using Ecng.Common;
 	using Ecng.Collections;
@@ -21,17 +17,6 @@ namespace Ecng.Interop
 	/// </summary>
 	public static class Marshaler
 	{
-		#region Private Fields
-
-		private static readonly List<object> _wrappers = new();
-
-		/// <summary>
-		/// For Newton collision's caching policy./
-		/// </summary>
-		private static readonly Dictionary<SafeHandle, object> _nativeObjects = new();
-
-		#endregion
-
 		/// <summary>
 		/// Marshals data from an unmanaged block of memory to a newly allocated managed object of the specified type.
 		/// </summary>
@@ -51,7 +36,7 @@ namespace Ecng.Interop
 		/// <returns>A pointer to an unmanaged block of memory.</returns>
 		public static IntPtr StructToPtr<T>(this T structure, int? size = default)
 			where T : struct
-			=> structure.StructToPtrEx<T>(size).ptr;
+			=> structure.StructToPtrEx(size).ptr;
 
 		public static (IntPtr ptr, int size) StructToPtrEx<T>(this T structure, int? size = default)
 			where T : struct
@@ -60,56 +45,6 @@ namespace Ecng.Interop
 			var ptr = Marshal.AllocHGlobal(size.Value);
 			Marshal.StructureToPtr(structure, ptr, false);
 			return (ptr, size.Value);
-		}
-
-		private const string OLEAUT32 = "oleaut32.dll";
-		private const string OLE32 = "ole32.dll";
-
-		//[DllImport(Microsoft.Win32.Win32Native.OLE32, PreserveSig = false)]
-		[DllImport(OLE32, PreserveSig = false)]
-		[ResourceExposure(ResourceScope.None)]
-		[SuppressUnmanagedCodeSecurity]
-		[SecurityCritical]  // auto-generated
-		private static extern void CLSIDFromProgIDEx([MarshalAs(UnmanagedType.LPWStr)]string progId, out Guid clsid);
-
-		//[DllImport(Microsoft.Win32.Win32Native.OLE32, PreserveSig = false)]
-		[DllImport(OLE32, PreserveSig = false)]
-		[ResourceExposure(ResourceScope.None)]
-		[SuppressUnmanagedCodeSecurity]
-		[SecurityCritical]  // auto-generated
-		private static extern void CLSIDFromProgID([MarshalAs(UnmanagedType.LPWStr)]string progId, out Guid clsid);
-
-		//[DllImport(Microsoft.Win32.Win32Native.OLEAUT32, PreserveSig = false)]
-		[DllImport(OLEAUT32, PreserveSig = false)]
-		[ResourceExposure(ResourceScope.None)]
-		[SuppressUnmanagedCodeSecurity]
-		[SecurityCritical]  // auto-generated
-		private static extern void GetActiveObject(ref Guid rclsid, IntPtr reserved, [MarshalAs(UnmanagedType.Interface)]out object ppunk);
-
-		/// <summary>
-		/// Obtains a running instance of the specified object from the Running Object Table (ROT).
-		/// </summary>
-		/// <param name="progId">The ProgID of the object being requested.</param>
-		/// <returns>The object requested. You can cast this object to any COM interface that it supports.</returns>
-		public static T GetActiveObject<T>(string progId)
-		{
-			// https://stackoverflow.com/a/65496277
-
-			Guid clsid;
-
-			// Call CLSIDFromProgIDEx first then fall back on CLSIDFromProgID if
-			// CLSIDFromProgIDEx doesn't exist.
-			try
-			{
-				CLSIDFromProgIDEx(progId, out clsid);
-			}
-			catch (Exception)
-			{
-				CLSIDFromProgID(progId, out clsid);
-			}
-
-			GetActiveObject(ref clsid, IntPtr.Zero, out var obj);
-			return (T)obj;
 		}
 
 		/// <summary>
@@ -131,7 +66,7 @@ namespace Ecng.Interop
 			else if (typeof(T) == typeof(IntPtr) || typeof(T) == typeof(UIntPtr))
 				Marshal.WriteIntPtr(ptr, value.To<IntPtr>());
 			else
-				throw new ArgumentException(nameof(ptr));
+				throw new ArgumentException(typeof(T).Name, nameof(value));
 		}
 
 		/// <summary>
@@ -155,21 +90,9 @@ namespace Ecng.Interop
 			else if (typeof(T) == typeof(IntPtr) || typeof(T) == typeof(UIntPtr))
 				retVal = Marshal.ReadIntPtr(ptr);
 			else
-				throw new ArgumentException(nameof(ptr));
+				throw new ArgumentException(typeof(T).Name, nameof(ptr));
 
 			return retVal.To<T>();
-		}
-
-		/// <summary>
-		/// Wraps the delegate for prevent garbage collection.
-		/// </summary>
-		/// <param name="delegate">The @delegate.</param>
-		/// <returns></returns>
-		public static T WrapDelegate<T>(T @delegate)
-		{
-			var handle = new GCHandle<T>(@delegate, GCHandleType.Normal, null);
-			_wrappers.Add(handle);
-			return @delegate;
 		}
 
 		/// <summary>
@@ -183,157 +106,20 @@ namespace Ecng.Interop
 			return Marshal.GetDelegateForFunctionPointer(ptr, typeof(T)).To<T>();
 		}
 
-		/// <summary>
-		/// Registers the specified native object.
-		/// </summary>
-		/// <param name="handle">The handle of native object.</param>
-		/// <param name="nativeObject">The native object.</param>
-		public static void RegisterObject(this SafeHandle handle, object nativeObject)
-		{
-			if (handle is null)
-				throw new ArgumentNullException(nameof(handle));
+		public static string ToAnsi(this IntPtr ptr) => Marshal.PtrToStringAnsi(ptr);
+		public static string ToAnsi(this IntPtr ptr, int len) => Marshal.PtrToStringAnsi(ptr, len);
+		public static IntPtr FromAnsi(this string str) => Marshal.StringToHGlobalAnsi(str);
 
-			if (nativeObject is null)
-				throw new ArgumentNullException(nameof(nativeObject));
+		public static string ToAuto(this IntPtr ptr) => Marshal.PtrToStringAuto(ptr);
+		public static string ToAuto(this IntPtr ptr, int len) => Marshal.PtrToStringAuto(ptr, len);
+		public static IntPtr FromAuto(this string str) => Marshal.StringToHGlobalAuto(str);
 
-			_nativeObjects.SafeAdd(handle, key => nativeObject);
-		}
+		public static string ToBSTR(this IntPtr ptr) => Marshal.PtrToStringBSTR(ptr);
+		public static IntPtr FromBSTR(this string str) => Marshal.StringToBSTR(str);
 
-		/// <summary>
-		/// Gets the registered native object. If object for <paramref name="handle"/> isn't registered, return null.
-		/// </summary>
-		/// <param name="handle">The handle.</param>
-		/// <returns>The registered native object.</returns>
-		public static T GetObject<T>(this SafeHandle handle)
-		{
-			if (handle is null)
-				throw new ArgumentNullException(nameof(handle));
-
-			return _nativeObjects.TryGetValue(handle).To<T>();
-		}
-
-		/// <summary>
-		/// Gets the cached safe handle for the specified IntPtr.
-		/// </summary>
-		/// <param name="value">The value.</param>
-		/// <returns></returns>
-		public static SafeHandle GetSafeHandle(this IntPtr value)
-		{
-			return _nativeObjects.Keys.First(handle => handle.DangerousGetHandle() == value);
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="ptr"></param>
-		/// <returns></returns>
-		public static string ToAnsi(this IntPtr ptr)
-		{
-			return Marshal.PtrToStringAnsi(ptr);
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="ptr"></param>
-		/// <param name="len"></param>
-		/// <returns></returns>
-		public static string ToAnsi(this IntPtr ptr, int len)
-		{
-			return Marshal.PtrToStringAnsi(ptr, len);
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="str"></param>
-		/// <returns></returns>
-		public static IntPtr FromAnsi(this string str)
-		{
-			return Marshal.StringToHGlobalAnsi(str);
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="ptr"></param>
-		/// <returns></returns>
-		public static string ToAuto(this IntPtr ptr)
-		{
-			return Marshal.PtrToStringAuto(ptr);
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="ptr"></param>
-		/// <param name="len"></param>
-		/// <returns></returns>
-		public static string ToAuto(this IntPtr ptr, int len)
-		{
-			return Marshal.PtrToStringAuto(ptr, len);
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="str"></param>
-		/// <returns></returns>
-		public static IntPtr FromAuto(this string str)
-		{
-			return Marshal.StringToHGlobalAuto(str);
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="ptr"></param>
-		/// <returns></returns>
-		public static string ToBSTR(this IntPtr ptr)
-		{
-			return Marshal.PtrToStringBSTR(ptr);
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="str"></param>
-		/// <returns></returns>
-		public static IntPtr FromBSTR(this string str)
-		{
-			return Marshal.StringToBSTR(str);
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="ptr"></param>
-		/// <returns></returns>
-		public static string ToUnicode(this IntPtr ptr)
-		{
-			return Marshal.PtrToStringUni(ptr);
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="ptr"></param>
-		/// <param name="len"></param>
-		/// <returns></returns>
-		public static string ToUnicode(this IntPtr ptr, int len)
-		{
-			return Marshal.PtrToStringUni(ptr, len);
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="str"></param>
-		/// <returns></returns>
-		public static IntPtr FromUnicode(this string str)
-		{
-			return Marshal.StringToHGlobalUni(str);
-		}
+		public static string ToUnicode(this IntPtr ptr) => Marshal.PtrToStringUni(ptr);
+		public static string ToUnicode(this IntPtr ptr, int len) => Marshal.PtrToStringUni(ptr, len);
+		public static IntPtr FromUnicode(this string str) => Marshal.StringToHGlobalUni(str);
 
 		public static HGlobalSafeHandle ToHGlobal(this int ptr)
 		{
