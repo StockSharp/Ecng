@@ -16,6 +16,7 @@ namespace Ecng.Interop
 	using System.IO;
 
 	using CoreNativeLib = System.Runtime.InteropServices.NativeLibrary;
+
 #endif
 
 	/// <summary>
@@ -51,10 +52,11 @@ namespace Ecng.Interop
 		/// <param name="structure">A managed object holding the data to be marshaled. This object must be an instance of a formatted class.</param>
 		/// <param name="size"></param>
 		/// <returns>A pointer to an unmanaged block of memory.</returns>
-		public static IntPtr StructToPtr<T>(this T structure, int? size = null)
+		public static IntPtr StructToPtr<T>(this T structure, ref int? size)
 			where T : struct
 		{
-			var ptr = Marshal.AllocHGlobal(size ?? typeof(T).SizeOf());
+			size ??= typeof(T).SizeOf();
+			var ptr = Marshal.AllocHGlobal(size.Value);
 			Marshal.StructureToPtr(structure, ptr, false);
 			return ptr;
 		}
