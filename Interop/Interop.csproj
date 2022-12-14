@@ -5,6 +5,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Management" Version="$(SystemManagementVer)" />
+
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="$(CsWin32Ver)">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />

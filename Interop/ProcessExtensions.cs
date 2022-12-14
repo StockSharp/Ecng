@@ -4,6 +4,8 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
+using Ecng.Common;
+
 using Windows.Win32;
 using Windows.Win32.System.JobObjects;
 
@@ -11,14 +13,21 @@ using Microsoft.Win32.SafeHandles;
 
 public unsafe static class ProcessExtensions
 {
+#pragma warning disable CA1416 // Validate platform compatibility
+
 	public static void SetProcessorAffinity(this Process process, long cpu)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 
-		var mask = (long)process.ProcessorAffinity;
-		mask &= cpu;
-		process.ProcessorAffinity = (IntPtr)mask;
+		if (OperatingSystemEx.IsWindows() || OperatingSystemEx.IsLinux())
+		{
+			var mask = (long)process.ProcessorAffinity;
+			mask &= cpu;
+			process.ProcessorAffinity = (IntPtr)mask;
+		}
+		else
+			throw new PlatformNotSupportedException();
 	}
 
 	public static SafeFileHandle LimitByMemory(this Process process, long limit)
@@ -28,6 +37,12 @@ public unsafe static class ProcessExtensions
 
 		if (limit <= 0)
 			throw new ArgumentOutOfRangeException(nameof(limit));
+
+		if (!OperatingSystemEx.IsWindows())
+		{
+			// TODO implement for Linux
+			throw new PlatformNotSupportedException();
+		}
 
 		var jobHandle = PInvoke.CreateJobObject(default, default(string));
 
@@ -59,6 +74,9 @@ public unsafe static class ProcessExtensions
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
+
+		if (!OperatingSystemEx.IsWindows())
+			throw new PlatformNotSupportedException();
 
 		var jobHandle = PInvoke.CreateJobObject(default, default(string));
 
