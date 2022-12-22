@@ -22,8 +22,11 @@ namespace Ecng.Compilation.CodeDom
 		public string OutputDir { get; }
 		public string TempPath { get; }
 
-		public CompilationResult Compile(string name, string body, IEnumerable<string> refs)
+		public CompilationResult Compile(AssemblyLoadContextVisitor context, string name, string body, IEnumerable<string> refs)
 		{
+			if (context is null)
+				throw new ArgumentNullException(nameof(context));
+
 			var providerOptions = new Dictionary<string, string> { { "CompilerVersion", "v4.0" } };
 
 			CodeDomProvider provider = Language switch
@@ -44,7 +47,7 @@ namespace Ecng.Compilation.CodeDom
 
 			var compilationResult = new CompilationResult
 			{
-				Assembly = result.Errors.HasErrors ? null : result.CompiledAssembly,
+				Assembly = result.Errors.HasErrors ? null : context.LoadFromAssemblyPath(result.PathToAssembly),
 				AssemblyLocation = result.Errors.HasErrors ? string.Empty : result.PathToAssembly,
 				Errors = result.Errors.Cast<CompilerError>().Select(e => new CompilationError
 				{

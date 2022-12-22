@@ -43,8 +43,11 @@
 
 		public CompilationLanguages Language { get; }
 
-		public CompilationResult Compile(string name, string body, IEnumerable<string> refs)
+		public CompilationResult Compile(AssemblyLoadContextVisitor context, string name, string body, IEnumerable<string> refs)
 		{
+			if (context is null)
+				throw new ArgumentNullException(nameof(context));
+
 			var assemblyName = name + Path.GetRandomFileName();
 
 			var references = refs.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
@@ -110,7 +113,7 @@
 						DiagnosticSeverity.Hidden or DiagnosticSeverity.Info => CompilationErrorTypes.Info,
 						DiagnosticSeverity.Warning => CompilationErrorTypes.Warning,
 						DiagnosticSeverity.Error => CompilationErrorTypes.Error,
-						_ => throw new ArgumentOutOfRangeException(),
+						_ => throw new ArgumentOutOfRangeException(nameof(diagnostic), diagnostic.Severity, "Invalid value."),
 					}
 				};
 
@@ -120,7 +123,7 @@
 			if (result.Success)
 			{
 				ms.Seek(0, SeekOrigin.Begin);
-				compilationResult.Assembly = Assembly.Load(ms.ToArray());
+				compilationResult.Assembly = context.LoadFromStream(ms);
 			}
 
 			return compilationResult;

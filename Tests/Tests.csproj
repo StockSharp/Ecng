@@ -14,7 +14,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>encrypted_config</TargetPath>
     </ContentWithTargetPath>
-    <None Include="Resources\encrypted_config" />    
+    <None Include="Resources\encrypted_config" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +26,7 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="$(MicrosoftDataSqlClientVer)" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Compilation.Roslyn\Compilation.Roslyn.csproj" />
     <ProjectReference Include="..\Data.Linq2db\Data.Linq2db.csproj" />
     <ProjectReference Include="..\Interop.Windows\Interop.Windows.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />

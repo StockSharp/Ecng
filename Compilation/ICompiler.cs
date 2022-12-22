@@ -5,6 +5,6 @@ namespace Ecng.Compilation
 	public interface ICompiler
 	{
 		CompilationLanguages Language { get; }
-		CompilationResult Compile(string name, string body, IEnumerable<string> refs);
+		CompilationResult Compile(AssemblyLoadContextVisitor context, string name, string body, IEnumerable<string> refs);
 	}
 }
