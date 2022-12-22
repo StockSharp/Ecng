@@ -15,7 +15,7 @@
 		public string OutputDir { get; }
 		public string TempPath { get; }
 
-		public ICompiler GetCompiler(CompilationLanguages language)
+		ICompiler ICompilerService.GetCompiler(CompilationLanguages language)
 			=> _compilers.SafeAdd(language, key => new CodeDomCompiler(key, OutputDir, TempPath));
 	}
 }

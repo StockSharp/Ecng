@@ -7,9 +7,7 @@ namespace Ecng.Compilation.Roslyn
 	{
 		private readonly SynchronizedDictionary<CompilationLanguages, ICompiler> _compilers = new();
 
-		public ICompiler GetCompiler(CompilationLanguages language)
-		{
-			return _compilers.SafeAdd(language, key => new RoslynCompiler(key));
-		}
+		ICompiler ICompilerService.GetCompiler(CompilationLanguages language)
+			=> _compilers.SafeAdd(language, key => new RoslynCompiler(key));
 	}
 }
