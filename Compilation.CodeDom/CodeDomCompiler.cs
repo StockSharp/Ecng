@@ -5,6 +5,7 @@ namespace Ecng.Compilation.CodeDom
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
+	using System.Threading;
 
 	using Microsoft.CSharp;
 	using Microsoft.VisualBasic;
@@ -22,7 +23,7 @@ namespace Ecng.Compilation.CodeDom
 		public string OutputDir { get; }
 		public string TempPath { get; }
 
-		public CompilationResult Compile(AssemblyLoadContextVisitor context, string name, string body, IEnumerable<string> refs)
+		CompilationResult ICompiler.Compile(AssemblyLoadContextVisitor context, string name, string body, IEnumerable<string> refs, CancellationToken cancellationToken)
 		{
 			if (context is null)
 				throw new ArgumentNullException(nameof(context));

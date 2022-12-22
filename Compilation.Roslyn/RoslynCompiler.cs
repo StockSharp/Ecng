@@ -5,6 +5,7 @@
 	using System.IO;
 	using System.Linq;
 	using System.Reflection;
+	using System.Threading;
 
 	using Ecng.Compilation;
 
@@ -43,7 +44,7 @@
 
 		public CompilationLanguages Language { get; }
 
-		public CompilationResult Compile(AssemblyLoadContextVisitor context, string name, string body, IEnumerable<string> refs)
+		CompilationResult ICompiler.Compile(AssemblyLoadContextVisitor context, string name, string body, IEnumerable<string> refs, CancellationToken cancellationToken)
 		{
 			if (context is null)
 				throw new ArgumentNullException(nameof(context));
@@ -64,7 +65,7 @@
 				case CompilationLanguages.CSharp:
 				{
 					compilation = CSharpCompilation.Create(assemblyName,
-						new[] { CSharpSyntaxTree.ParseText(body) },
+						new[] { CSharpSyntaxTree.ParseText(body, cancellationToken: cancellationToken) },
 						references,
 						new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
@@ -73,7 +74,7 @@
 				case CompilationLanguages.VisualBasic:
 				{
 					compilation = VisualBasicCompilation.Create(assemblyName,
-						new[] { VisualBasicSyntaxTree.ParseText(body) },
+						new[] { VisualBasicSyntaxTree.ParseText(body, cancellationToken: cancellationToken) },
 						references,
 						new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
@@ -96,7 +97,7 @@
 
 			using var ms = new MemoryStream();
 
-			var result = compilation.Emit(ms);
+			var result = compilation.Emit(ms, cancellationToken: cancellationToken);
 
 			compilationResult.Errors = result.Diagnostics.Select(diagnostic =>
 			{
