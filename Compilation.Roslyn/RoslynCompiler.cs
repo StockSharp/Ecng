@@ -36,7 +36,7 @@
 			};
 		}
 
-		public RoslynCompiler(CompilationLanguages language)
+		public RoslynCompiler(CompilationLanguages language = CompilationLanguages.CSharp)
 		{
 			Language = language;
 		}
