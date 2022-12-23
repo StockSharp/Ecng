@@ -1,4 +1,4 @@
-namespace Ecng.ComponentModel.Expressions
+namespace Ecng.Compilation.Expressions
 {
 	using System;
 	using System.Collections.Generic;

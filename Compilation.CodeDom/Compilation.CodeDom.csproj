@@ -4,7 +4,6 @@
     <PackageReference Include="System.CodeDom" Version="$(SystemCodeDomVer)" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Collections\Collections.csproj" />
     <ProjectReference Include="..\Compilation\Compilation.csproj" />
   </ItemGroup>
 </Project>

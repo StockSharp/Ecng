@@ -1,4 +1,4 @@
-namespace Ecng.ComponentModel.Expressions
+namespace Ecng.Compilation.Expressions
 {
 	using System;
 	using System.Collections.Generic;
@@ -7,7 +7,6 @@ namespace Ecng.ComponentModel.Expressions
 
 	using Ecng.Collections;
 	using Ecng.Common;
-	using Ecng.Compilation;
 
 	/// <summary>
 	/// Extension class for <see cref="ExpressionFormula"/>.
@@ -15,9 +14,9 @@ namespace Ecng.ComponentModel.Expressions
 	[CLSCompliant(false)]
 	public static class ExpressionHelper
 	{
-		private const string IdPattern = @"(#*)(@*)(#*)(\w*\.*)(\**)(\w+(\/*)\w+)@\w+";
+		private const string _idPattern = @"(#*)(@*)(#*)(\w*\.*)(\**)(\w+(\/*)\w+)@\w+";
 
-		private static readonly Regex _idRegex = new($@"(?<id>{IdPattern})");
+		private static readonly Regex _idRegex = new($@"(?<id>{_idPattern})");
 		private static readonly Regex _nameRegex = new(@"(?<name>(\w+))");
 		private static readonly Regex _bracketsVarRegex = new(@"\[(?<name>[^\]]*)\]");
 

@@ -13,7 +13,7 @@
 	using Ecng.Backup.Amazon;
 	using Ecng.Common;
 	using Ecng.ComponentModel;
-	using Ecng.ComponentModel.Expressions;
+	using Ecng.Compilation.Expressions;
 	using Ecng.Net;
 	using Ecng.Reflection;
 	using Ecng.Compilation.Roslyn;
@@ -91,7 +91,7 @@
 		F,
 	}
 
-	class Program
+	static class Program
 	{
 		static Range<TimeSpan> Method(Range<TimeSpan> range, TimeSpan value)
 		{
