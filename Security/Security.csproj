@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <ItemGroup>
-    <ProjectReference Include="..\Reflection\Reflection.csproj" />
+    <ProjectReference Include="..\Collections\Collections.csproj" />
   </ItemGroup>
 </Project>
