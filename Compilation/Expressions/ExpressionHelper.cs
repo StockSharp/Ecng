@@ -210,7 +210,6 @@ namespace Ecng.Compilation.Expressions
 using System.Collections.Generic;
 
 using Ecng.Common;
-
 using Ecng.Compilation.Expressions;
 
 class TempExpressionFormula : ExpressionFormula
@@ -230,10 +229,11 @@ class TempExpressionFormula : ExpressionFormula
 		/// Compile mathematical formula.
 		/// </summary>
 		/// <param name="compiler"><see cref="ICompiler"/>.</param>
+		/// <param name="context"><see cref="AssemblyLoadContextVisitor"/>.</param>
 		/// <param name="expression">Text expression.</param>
 		/// <param name="useIds">Use ids as variables.</param>
 		/// <returns>Compiled mathematical formula.</returns>
-		public static ExpressionFormula Compile(this ICompiler compiler, string expression, bool useIds)
+		public static ExpressionFormula Compile(this ICompiler compiler, AssemblyLoadContextVisitor context, string expression, bool useIds)
 		{
 			if (compiler is null)
 				throw new ArgumentNullException(nameof(compiler));
@@ -260,7 +260,7 @@ class TempExpressionFormula : ExpressionFormula
 				});
 
 				var code = Escape(expression, useIds, out var identifiers);
-				var result = compiler.Compile("IndexExpression", _template.Replace("__insert_code", code), refs);
+				var result = compiler.Compile(context, "IndexExpression", _template.Replace("__insert_code", code), refs);
 
 				var formula = result.Assembly is null
 					? new ErrorExpressionFormula(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL())

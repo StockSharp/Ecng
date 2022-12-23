@@ -12,11 +12,13 @@
 	[TestClass]
 	public class CompilerTests
 	{
+		private static readonly AssemblyLoadContextVisitor _context = new();
+
 		[TestMethod]
 		public void Compile()
 		{
 			ICompiler compiler = new RoslynCompiler(CompilationLanguages.CSharp);
-			var res = compiler.Compile(new(), "test", "class Class1 {}", new string[]
+			var res = compiler.Compile(_context, "test", "class Class1 {}", new string[]
 			{
 				"System.Private.CoreLib.dll".ToFullRuntimePath(),
 			});
@@ -28,7 +30,7 @@
 		public void CompileError()
 		{
 			ICompiler compiler = new RoslynCompiler(CompilationLanguages.CSharp);
-			var res = compiler.Compile(new(), "test", "class Class1 {", new string[]
+			var res = compiler.Compile(_context, "test", "class Class1 {", new string[]
 			{
 				"System.Private.CoreLib.dll".ToFullRuntimePath(),
 			});
@@ -43,7 +45,7 @@
 			var cts = new CancellationTokenSource();
 			cts.Cancel();
 			ICompiler compiler = new RoslynCompiler(CompilationLanguages.CSharp);
-			var res = compiler.Compile(new(), "test", "class Class1 {", new string[]
+			var res = compiler.Compile(_context, "test", "class Class1 {", new string[]
 			{
 				"System.Private.CoreLib.dll".ToFullRuntimePath(),
 			}, cts.Token);

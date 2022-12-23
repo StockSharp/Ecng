@@ -11,9 +11,10 @@
 	public class ExpressionTests
 	{
 		private static readonly ICompiler _compiler = new RoslynCompiler();
+		private static readonly AssemblyLoadContextVisitor _context = new();
 
 		private static ExpressionFormula Compile(string expression, bool useIdentifiers = true)
-			=> _compiler.Compile(expression, useIdentifiers);
+			=> _compiler.Compile(_context, expression, useIdentifiers);
 
 		[TestMethod]
 		public void Parse()
