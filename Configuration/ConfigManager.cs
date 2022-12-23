@@ -204,14 +204,7 @@
 		public static T GetService<T>(string name)
 		{
 			lock (_sync)
-			{
-				var dict = GetDict<T>();
-
-				if (dict.TryGetValue(name, out var service))
-					return (T)service;
-			}
-
-			return default;
+				return (T)GetDict<T>()[name];
 		}
 
 		public static IEnumerable<T> GetServices<T>()
