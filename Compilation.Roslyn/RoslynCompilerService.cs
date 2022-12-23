@@ -1,8 +1,11 @@
 namespace Ecng.Compilation.Roslyn
 {
+	using System;
+
 	using Ecng.Collections;
 	using Ecng.Compilation;
 
+	[Obsolete("Use RoslynCompiler directly.")]
 	public class RoslynCompilerService : ICompilerService
 	{
 		private readonly SynchronizedDictionary<CompilationLanguages, ICompiler> _compilers = new();

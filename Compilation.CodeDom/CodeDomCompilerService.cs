@@ -1,7 +1,10 @@
 ﻿namespace Ecng.Compilation.CodeDom
 {
+	using System;
+
 	using Ecng.Collections;
 
+	[Obsolete("Use CodeDomCompiler directly.")]
 	public class CodeDomCompilerService : ICompilerService
 	{
 		private readonly SynchronizedDictionary<CompilationLanguages, ICompiler> _compilers = new();

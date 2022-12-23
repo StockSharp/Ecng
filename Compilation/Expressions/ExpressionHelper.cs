@@ -229,12 +229,18 @@ class TempExpressionFormula : ExpressionFormula
 		/// <summary>
 		/// Compile mathematical formula.
 		/// </summary>
-		/// <param name="service">Compiler service.</param>
+		/// <param name="compiler"><see cref="ICompiler"/>.</param>
 		/// <param name="expression">Text expression.</param>
 		/// <param name="useIds">Use ids as variables.</param>
 		/// <returns>Compiled mathematical formula.</returns>
-		public static ExpressionFormula Compile(this ICompilerService service, string expression, bool useIds)
+		public static ExpressionFormula Compile(this ICompiler compiler, string expression, bool useIds)
 		{
+			if (compiler is null)
+				throw new ArgumentNullException(nameof(compiler));
+
+			if (expression.IsEmpty())
+				throw new ArgumentNullException(nameof(expression));
+
 			try
 			{
 				var refs = new List<string>(new[] {typeof(object).Assembly.Location, typeof(ExpressionFormula).Assembly.Location, typeof(MathHelper).Assembly.Location});
@@ -254,7 +260,7 @@ class TempExpressionFormula : ExpressionFormula
 				});
 
 				var code = Escape(expression, useIds, out var identifiers);
-				var result = service.GetCompiler(CompilationLanguages.CSharp).Compile("IndexExpression", _template.Replace("__insert_code", code), refs);
+				var result = compiler.Compile("IndexExpression", _template.Replace("__insert_code", code), refs);
 
 				var formula = result.Assembly is null
 					? new ErrorExpressionFormula(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL())
