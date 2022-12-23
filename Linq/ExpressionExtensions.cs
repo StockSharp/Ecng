@@ -6,7 +6,6 @@
 	using System.Reflection;
 
 	using Ecng.Common;
-	using Ecng.ComponentModel;
 
 	public static class ExpressionExtensions
 	{

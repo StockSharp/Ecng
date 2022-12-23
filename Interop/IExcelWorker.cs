@@ -3,7 +3,7 @@
 	using System;
 	using System.IO;
 
-	using Ecng.ComponentModel;
+	using Ecng.Common;
 
 	public interface IExcelWorker : IDisposable
 	{

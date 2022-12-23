@@ -1,10 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <ItemGroup>
-    <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
-    <PackageReference Include="Ecng.System.ComponentModel.Annotations" Version="$(EcngSystemComponentModelAnnotationsVer)" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
 </Project>

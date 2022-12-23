@@ -12,6 +12,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
+    <ProjectReference Include="..\Collections\Collections.csproj" />
   </ItemGroup>
 </Project>
