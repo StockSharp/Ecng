@@ -14,9 +14,14 @@
 #if NETCOREAPP
 		private readonly AssemblyLoadContext _context;
 
-		public AssemblyLoadContextVisitor(AssemblyLoadContext context = null)
+		public AssemblyLoadContextVisitor()
+			: this(AssemblyLoadContext.CurrentContextualReflectionContext ?? AssemblyLoadContext.Default)
 		{
-			_context = context ?? AssemblyLoadContext.CurrentContextualReflectionContext ?? AssemblyLoadContext.Default;
+		}
+
+		public AssemblyLoadContextVisitor(AssemblyLoadContext context)
+		{
+			_context = context ?? throw new ArgumentNullException(nameof(context));
 		}
 
 		public Assembly LoadFromAssemblyPath(string pathToAssembly) => _context.LoadFromAssemblyPath(pathToAssembly);
