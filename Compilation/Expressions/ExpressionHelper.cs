@@ -211,7 +211,7 @@ using System.Collections.Generic;
 
 using Ecng.Common;
 
-using Ecng.ComponentModel.Expressions;
+using Ecng.Compilation.Expressions;
 
 class TempExpressionFormula : ExpressionFormula
 {
