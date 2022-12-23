@@ -2,12 +2,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 using Ecng.Common;
 
 public static class ICompilerExtensions
 {
+	public static string RuntimePath { get; } = Path.GetDirectoryName(typeof(object).Assembly.Location);
+
+	public static string ToFullRuntimePath(this string assemblyName)
+		=> Path.Combine(RuntimePath, assemblyName);
+
 	[Obsolete("Use Compile with specified context.")]
 	public static CompilationResult Compile(this ICompiler compiler, string name, string body, IEnumerable<string> refs)
 		=> compiler.CheckOnNull(nameof(compiler)).Compile(new(), name, body, refs);

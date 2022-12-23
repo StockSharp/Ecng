@@ -1,5 +1,8 @@
 ﻿namespace Ecng.Tests.Compilation
 {
+	using System;
+	using System.Threading;
+
 	using Ecng.Compilation;
 	using Ecng.Compilation.Roslyn;
 	using Ecng.UnitTesting;
@@ -15,13 +18,37 @@
 			ICompiler compiler = new RoslynCompiler(CompilationLanguages.CSharp);
 			var res = compiler.Compile(new(), "test", "class Class1 {}", new string[]
 			{
-				//"C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\6.0.12\\mscorlib.dll",
-				//"C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\6.0.12\\netstandard.dll",
-				//"C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\6.0.12\\System.dll",
-				//"C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\6.0.12\\System.Core.dll",
-				"C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\6.0.12\\System.Private.CoreLib.dll",
+				"System.Private.CoreLib.dll".ToFullRuntimePath(),
 			});
 			res.Assembly.AssertNotNull();
+			res.HasErrors().AssertFalse();
+		}
+
+		[TestMethod]
+		public void CompileError()
+		{
+			ICompiler compiler = new RoslynCompiler(CompilationLanguages.CSharp);
+			var res = compiler.Compile(new(), "test", "class Class1 {", new string[]
+			{
+				"System.Private.CoreLib.dll".ToFullRuntimePath(),
+			});
+			res.Assembly.AssertNull();
+			res.HasErrors().AssertTrue();
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(OperationCanceledException))]
+		public void CompileCancel()
+		{
+			var cts = new CancellationTokenSource();
+			cts.Cancel();
+			ICompiler compiler = new RoslynCompiler(CompilationLanguages.CSharp);
+			var res = compiler.Compile(new(), "test", "class Class1 {", new string[]
+			{
+				"System.Private.CoreLib.dll".ToFullRuntimePath(),
+			}, cts.Token);
+			res.Assembly.AssertNull();
+			res.HasErrors().AssertTrue();
 		}
 	}
 }
