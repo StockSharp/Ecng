@@ -10,6 +10,7 @@ namespace Ecng.Compilation.CodeDom
 	using Microsoft.CSharp;
 	using Microsoft.VisualBasic;
 
+	[Obsolete("Use RoslynCompiler.")]
 	public class CodeDomCompiler : ICompiler
 	{
 		public CodeDomCompiler(CompilationLanguages language, string outputDir, string tempPath)
