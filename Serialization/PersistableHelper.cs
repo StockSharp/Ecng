@@ -1,7 +1,6 @@
 ﻿namespace Ecng.Serialization
 {
 	using System;
-	using System.Globalization;
 	using System.Threading;
 	using System.Threading.Tasks;
 	using System.Reflection;
@@ -20,10 +19,10 @@
 				throw new ArgumentNullException(nameof(adapterType));
 
 			if (!adapterType.IsPersistable())
-				throw new ArgumentException(nameof(adapterType));
+				throw new ArgumentException($"Not {typeof(IPersistable)}.", nameof(adapterType));
 
 			if (!adapterType.Is<IPersistableAdapter>())
-				throw new ArgumentException(nameof(adapterType));
+				throw new ArgumentException($"Not {typeof(IPersistableAdapter)}.", nameof(adapterType));
 
 			return adapterType;
 		}
