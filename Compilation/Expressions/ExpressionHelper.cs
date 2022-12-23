@@ -245,21 +245,13 @@ class TempExpressionFormula : ExpressionFormula
 
 			try
 			{
-				var refs = new List<string>(new[] {typeof(object).Assembly.Location, typeof(ExpressionFormula).Assembly.Location, typeof(MathHelper).Assembly.Location});
-
-				var needLibs = new[]
+				var refs = new HashSet<string>(new[]
 				{
-					"System.Runtime",
-					"netstandard",
-				};
-
-				var allAssemblies = AppDomain.CurrentDomain.GetAssemblies().ToArray();
-				needLibs.ForEach(name =>
-				{
-					var loaded = allAssemblies.FirstOrDefault(a => a.GetName().Name.EqualsIgnoreCase(name));
-					if(loaded != null)
-						refs.Add(loaded.Location);
-				});
+					typeof(object).Assembly.Location,
+					typeof(ExpressionFormula).Assembly.Location,
+					typeof(MathHelper).Assembly.Location,
+					"System.Runtime.dll".ToFullRuntimePath(),
+				}, StringComparer.InvariantCultureIgnoreCase);
 
 				var code = Escape(expression, useIds, out var identifiers);
 				var result = compiler.Compile(context, "IndexExpression", _template.Replace("__insert_code", code), refs, cancellationToken);
