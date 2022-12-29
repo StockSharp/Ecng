@@ -274,7 +274,7 @@ public static class NetworkHelper
 
 	private static readonly SynchronizedSet<string> _imgExts = new()
 	{
-		".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg"
+		".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg", ".webp", ".ico", ".tiff", ".avif", ".apng"
 	};
 
 	public static bool IsImage(this string fileName)
