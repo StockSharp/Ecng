@@ -30,10 +30,7 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 
 	public Url Url { get; }
 
-	public string Raw
-	{
-		get { return _queryString.Select(p => p.Key + "=" + p.Value).JoinAnd(); }
-	}
+	public string Raw => _queryString.ToQueryString();
 
 	public bool Contains(string queryField)
 	{
@@ -134,8 +131,8 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 			{
 				var key = Url.PreventEncodeUrl ? p.Key : p.Key.EncodeUrl();
 				var value = Url.PreventEncodeUrl ? p.Value : p.Value.EncodeUrl();
-				return $"{key}={value}";
-			}).Join("&");
+				return (key, value);
+			}).ToQueryString();
 		}
 
 		Url.SetValue("CreateUri", new object[] { Url.Clone(), Url.LocalPath + _compiledString, false });

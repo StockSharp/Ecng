@@ -384,4 +384,10 @@ public static class NetworkHelper
 		else
 			return (HttpRequestException)_ctorWithStatusCode.Invoke(new object[] { message, null, code });
 	}
+
+	public static string ToQueryString<TValue>(this IEnumerable<KeyValuePair<string, TValue>> args)
+		=> args.Select(p => $"{p.Key}={p.Value}").JoinAnd();
+
+	public static string ToQueryString<TValue>(this IEnumerable<(string, TValue)> args)
+		=> args.Select(p => $"{p.Item1}={p.Item2}").JoinAnd();
 }
