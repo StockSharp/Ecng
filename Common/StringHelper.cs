@@ -151,7 +151,18 @@
 		}
 
 		public const string N = "\n";
+		public const string R = "\r";
 		public const string RN = "\r\n";
+
+		public static string[] SplitByLineSeps(this string str, bool removeEmptyEntries = true)
+			// https://stackoverflow.com/a/1547483/8029915
+			=> str.Split(
+				new[] { RN, R, N },
+				removeEmptyEntries ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None
+			);
+
+		public static string[] SplitByR(this string str, bool removeEmptyEntries = true)
+			=> str.SplitBySep(R, removeEmptyEntries);
 
 		public static string[] SplitByRN(this string str, bool removeEmptyEntries = true)
 			=> str.SplitBySep(RN, removeEmptyEntries);
