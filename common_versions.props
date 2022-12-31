@@ -5,8 +5,8 @@
     <AWSSDKSimpleNotificationServiceVer>3.7.2.62</AWSSDKSimpleNotificationServiceVer>
     <AWSSDKGlacierVer>3.7.0.91</AWSSDKGlacierVer>
 
-    <MicrosoftWindowsCompatibilityVer>5.0.2</MicrosoftWindowsCompatibilityVer>
-    <MicrosoftAspNetWebApiClientVer>5.2.7</MicrosoftAspNetWebApiClientVer>
+    <MicrosoftWindowsCompatibilityVer>6.0.2</MicrosoftWindowsCompatibilityVer>
+    <MicrosoftAspNetWebApiClientVer>5.2.9</MicrosoftAspNetWebApiClientVer>
 
     <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
     <EcngSystemComponentModelAnnotationsVer>5.0.0</EcngSystemComponentModelAnnotationsVer>
