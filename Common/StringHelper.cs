@@ -419,7 +419,12 @@
 		{
 			return parts.Join(";");
 		}
-		
+
+		public static string JoinDot(this IEnumerable<string> parts)
+		{
+			return parts.Join(".");
+		}
+
 		public static string JoinCommaSpace(this IEnumerable<string> parts)
 		{
 			return parts.Join(", ");
