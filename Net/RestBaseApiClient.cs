@@ -27,6 +27,8 @@ public abstract class RestBaseApiClient
 	public IDictionary<string, string> PerRequestHeaders { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 	public IRestApiClientCache Cache { get; set; }
 
+	public Action<string> LogBadResponse { get; set; }
+
 	protected virtual bool PlainSingleArg => true;
 	protected virtual bool ThrowIfNonSuccessStatusCode => true;
 
@@ -46,15 +48,26 @@ public abstract class RestBaseApiClient
 		Trace.WriteLine($"{method} {uri}: {elapsed}");
 	}
 
-	protected virtual Task ValidateResponseAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+	protected virtual async Task ValidateResponseAsync(HttpResponseMessage response, CancellationToken cancellationToken)
 	{
 		if (response is null)
 			throw new ArgumentNullException(nameof(response));
 
-		if (ThrowIfNonSuccessStatusCode)
-			response.EnsureSuccessStatusCode();
+		if (!ThrowIfNonSuccessStatusCode || response.IsSuccessStatusCode)
+			return;
 
-		return Task.CompletedTask;
+		var evt = LogBadResponse;
+
+		if (evt is not null)
+		{
+			evt(await response.Content.ReadAsStringAsync(
+#if NET5_0_OR_GREATER
+						cancellationToken
+#endif
+			));
+		}
+
+		response.EnsureSuccessStatusCode();
 	}
 
 	private async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, IRestApiClientCache cache, CancellationToken cancellationToken)
