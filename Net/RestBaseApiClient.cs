@@ -35,6 +35,9 @@ public abstract class RestBaseApiClient
 	protected void AddAuth(AuthenticationSchemes schema, string value)
 		=> AddAuth(schema.ToString(), value);
 
+	protected void AddAuthBearer(string token)
+		=> AddAuth("Bearer", token);
+
 	protected void AddAuth(string schema, string value)
 		=> PerRequestHeaders.Add(HeaderNames.Authorization, $"{schema} {value}");
 
