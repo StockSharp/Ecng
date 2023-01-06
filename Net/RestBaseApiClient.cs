@@ -73,6 +73,13 @@ public abstract class RestBaseApiClient
 		response.EnsureSuccessStatusCode();
 	}
 
+	protected virtual Task<TResult> GetResultAsync<TResult>(HttpResponseMessage response, CancellationToken cancellationToken)
+	{
+		return typeof(TResult) == typeof(VoidType)
+			? default
+			: response.Content.ReadAsAsync<TResult>(new[] { _response }, cancellationToken);
+	}
+
 	private async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, IRestApiClientCache cache, CancellationToken cancellationToken)
 	{
 		if (cache != null && cache.TryGet<TResult>(method, uri, out var cached))
@@ -97,9 +104,7 @@ public abstract class RestBaseApiClient
 
 		await ValidateResponseAsync(response, cancellationToken);
 
-		var result = typeof(TResult) == typeof(VoidType)
-			? default
-			: await response.Content.ReadAsAsync<TResult>(new[] { _response }, cancellationToken);
+		var result = await GetResultAsync<TResult>(response, cancellationToken);
 
 		if (watch is not null)
 		{
