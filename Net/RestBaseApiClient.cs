@@ -76,7 +76,7 @@ public abstract class RestBaseApiClient
 	protected virtual Task<TResult> GetResultAsync<TResult>(HttpResponseMessage response, CancellationToken cancellationToken)
 	{
 		return typeof(TResult) == typeof(VoidType)
-			? default
+			? default(TResult).FromResult()
 			: response.Content.ReadAsAsync<TResult>(new[] { _response }, cancellationToken);
 	}
 
