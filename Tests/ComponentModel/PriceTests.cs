@@ -272,7 +272,17 @@
 			var u1 = "1".ToPriceType(true);
 			var u2 = "1L".ToPriceType(true);
 			(u1 == u2).AssertFalse();
+			(u1 != u2).AssertTrue();
 			u1.AssertNotEqual(u2);
+		}
+
+		[TestMethod]
+		public void NotEquals2()
+		{
+			var u1 = "1".ToPriceType(true);
+			var u2 = "2".ToPriceType(true);
+			(u1 == u2).AssertFalse();
+			(u1 != u2).AssertTrue();
 		}
 	}
 }

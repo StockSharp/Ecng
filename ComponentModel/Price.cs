@@ -155,7 +155,7 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>
 		if (v2 is null)
 			return true;
 
-		return v1.EqualsImpl(v2);
+		return !v1.EqualsImpl(v2);
 	}
 
 	/// <summary>
