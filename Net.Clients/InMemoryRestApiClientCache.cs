@@ -4,16 +4,17 @@ using Ecng.ComponentModel;
 
 public class InMemoryRestApiClientCache : IRestApiClientCache
 {
-	private readonly SynchronizedDictionary<(HttpMethod method, string uri), (object value, DateTime till)> _cache = new();
-	private readonly TimeSpan _timeout;
-
 	public InMemoryRestApiClientCache(TimeSpan timeout)
 	{
 		if (timeout <= TimeSpan.Zero)
 			throw new ArgumentOutOfRangeException(nameof(timeout));
 
-		_timeout = timeout;
+		Timeout = timeout;
 	}
+
+	public TimeSpan Timeout { get; }
+
+	protected readonly SynchronizedDictionary<(HttpMethod method, string uri), (object value, DateTime till)> Cache = new();
 
 	private static (HttpMethod, string) ToKey(HttpMethod method, Uri uri)
 		=> (method.CheckOnNull(nameof(method)), uri.CheckOnNull(nameof(uri)).To<string>().ToLowerInvariant());
@@ -25,7 +26,7 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 		if (value is null || !IsSupported(method))
 			return;
 
-		_cache[ToKey(method, uri)] = new(value, DateTime.UtcNow + _timeout);
+		Cache[ToKey(method, uri)] = new(value, DateTime.UtcNow + Timeout);
 	}
 
 	bool IRestApiClientCache.TryGet<T>(HttpMethod method, Uri uri, out T value)
@@ -34,12 +35,12 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 
 		var key = ToKey(method, uri);
 
-		if (!IsSupported(method) || !_cache.TryGetValue(key, out var tuple))
+		if (!IsSupported(method) || !Cache.TryGetValue(key, out var tuple))
 			return false;
 
 		if (tuple.till < DateTime.UtcNow)
 		{
-			_cache.Remove(key);
+			Cache.Remove(key);
 			return false;
 		}
 
@@ -51,16 +52,16 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 	{
 		if (method is null && uriLike.IsEmpty())
 		{
-			_cache.Clear();
+			Cache.Clear();
 			return;
 		}
 
-		lock (_cache.SyncRoot)
+		lock (Cache.SyncRoot)
 		{
-			var keys = _cache.Keys.Where(p => (method is null || p.method == method) && (uriLike.IsEmpty() || p.uri.Like(uriLike, op))).ToArray();
+			var keys = Cache.Keys.Where(p => (method is null || p.method == method) && (uriLike.IsEmpty() || p.uri.Like(uriLike, op))).ToArray();
 
 			foreach (var key in keys)
-				_cache.Remove(key);
+				Cache.Remove(key);
 		}
 	}
 }
