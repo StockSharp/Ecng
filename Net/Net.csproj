@@ -4,10 +4,6 @@
     <PackageReference Include="Microsoft.CSharp" Version="$(CSharpVer)" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="$(MicrosoftAspNetWebApiClientVer)" />
-    <PackageReference Include="Microsoft.Net.Http.Headers" Version="$(MicrosoftNetHttpHeadersVer)" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
   </ItemGroup>
 </Project>
