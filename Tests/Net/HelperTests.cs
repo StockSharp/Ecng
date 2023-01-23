@@ -32,8 +32,8 @@
 			cache.TryGet<object>(method, correctUrl, out _).AssertTrue();
 			cache.TryGet<object>(method, wrongUrl, out _).AssertFalse();
 
-			cache.Remove(method, wrongUrl).AssertFalse();
-			cache.Remove(method, correctUrl).AssertTrue();
+			cache.Remove(method, wrongUrl.To<string>());
+			cache.Remove(method, correctUrl.To<string>());
 
 			cache.TryGet<object>(method, correctUrl, out _).AssertFalse();
 			cache.TryGet<object>(method, wrongUrl, out _).AssertFalse();
@@ -44,11 +44,11 @@
 			cache.Set(method, correctUrl, 0);
 			cache.TryGet<object>(method, correctUrl, out _).AssertTrue();
 
-			cache.Clear();
+			cache.Remove();
 			cache.TryGet<object>(method, correctUrl, out _).AssertFalse();
 
 			cache.Set(method, correctUrl, 0);
-			cache.RemoveLike(method, "https://stocksharp.com/api/products");
+			cache.Remove(method, "https://stocksharp.com/api/products");
 			cache.TryGet<object>(method, correctUrl, out _).AssertFalse();
 		}
 	}

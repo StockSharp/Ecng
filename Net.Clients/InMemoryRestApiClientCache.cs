@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Net;
 
+using Ecng.ComponentModel;
+
 public class InMemoryRestApiClientCache : IRestApiClientCache
 {
 	private readonly SynchronizedDictionary<(HttpMethod method, string uri), (object value, DateTime till)> _cache = new();
@@ -13,10 +15,10 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 		_timeout = timeout;
 	}
 
-	private (HttpMethod, string) ToKey(HttpMethod method, Uri uri)
+	private static (HttpMethod, string) ToKey(HttpMethod method, Uri uri)
 		=> (method.CheckOnNull(nameof(method)), uri.CheckOnNull(nameof(uri)).To<string>().ToLowerInvariant());
 
-	private bool IsSupported(HttpMethod method) => method == HttpMethod.Get;
+	protected virtual bool IsSupported(HttpMethod method) => method == HttpMethod.Get;
 
 	void IRestApiClientCache.Set<T>(HttpMethod method, Uri uri, T value)
 	{
@@ -45,13 +47,17 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 		return true;
 	}
 
-	void IRestApiClientCache.Clear() => _cache.Clear();
-	bool IRestApiClientCache.Remove(HttpMethod method, Uri uri) => _cache.Remove(ToKey(method, uri));
-	void IRestApiClientCache.RemoveLike(HttpMethod method, string startWith)
+	void IRestApiClientCache.Remove(HttpMethod method, string uriLike, ComparisonOperator op)
 	{
+		if (method is null && uriLike.IsEmpty())
+		{
+			_cache.Clear();
+			return;
+		}
+
 		lock (_cache.SyncRoot)
 		{
-			var keys = _cache.Keys.Where(p => p.method == method && p.uri.StartsWithIgnoreCase(startWith)).ToArray();
+			var keys = _cache.Keys.Where(p => (method is null || p.method == method) && (uriLike.IsEmpty() || p.uri.Like(uriLike, op))).ToArray();
 
 			foreach (var key in keys)
 				_cache.Remove(key);
