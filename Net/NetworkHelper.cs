@@ -299,7 +299,7 @@ public static class NetworkHelper
 		if (url is null)
 			throw new ArgumentNullException(nameof(url));
 
-		return url.Host.EqualsIgnoreCase("localhost");
+		return url.Host.StartsWithIgnoreCase("localhost");
 	}
 
 	public static string CheckUrl(this string str, bool latin = true, bool screen = true, bool clear = true)
