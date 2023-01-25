@@ -82,7 +82,7 @@ public abstract class RestBaseApiClient
 
 	private async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, IRestApiClientCache cache, CancellationToken cancellationToken)
 	{
-		if (cache != null && cache.TryGet<TResult>(method, uri, out var cached))
+		if (cache != null && cache.TryGet<TResult>(method, uri, body, out var cached))
 			return cached;
 
 		var request = new HttpRequestMessage(method, uri);
@@ -112,7 +112,7 @@ public abstract class RestBaseApiClient
 			TraceCall(method, uri, watch.Elapsed);
 		}
 
-		cache?.Set(method, uri, result);
+		cache?.Set(method, uri, body, result);
 		return result;
 	}
 

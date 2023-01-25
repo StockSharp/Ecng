@@ -27,29 +27,29 @@
 			var method = HttpMethod.Get;
 
 			IRestApiClientCache cache = new InMemoryRestApiClientCache(TimeSpan.FromHours(1));
-			cache.Set(method, correctUrl, new { });
+			cache.Set(method, correctUrl, default, new { });
 
-			cache.TryGet<object>(method, correctUrl, out _).AssertTrue();
-			cache.TryGet<object>(method, wrongUrl, out _).AssertFalse();
+			cache.TryGet<object>(method, correctUrl, default, out _).AssertTrue();
+			cache.TryGet<object>(method, wrongUrl, default, out _).AssertFalse();
 
 			cache.Remove(method, wrongUrl.To<string>());
 			cache.Remove(method, correctUrl.To<string>());
 
-			cache.TryGet<object>(method, correctUrl, out _).AssertFalse();
-			cache.TryGet<object>(method, wrongUrl, out _).AssertFalse();
+			cache.TryGet<object>(method, correctUrl, default, out _).AssertFalse();
+			cache.TryGet<object>(method, wrongUrl, default, out _).AssertFalse();
 
-			cache.Set<object>(method, correctUrl, null);
-			cache.TryGet<object>(method, correctUrl, out _).AssertFalse();
+			cache.Set<object>(method, correctUrl, default, null);
+			cache.TryGet<object>(method, correctUrl, default, out _).AssertFalse();
 
-			cache.Set(method, correctUrl, 0);
-			cache.TryGet<object>(method, correctUrl, out _).AssertTrue();
+			cache.Set(method, correctUrl, default, 0);
+			cache.TryGet<object>(method, correctUrl, default, out _).AssertTrue();
 
 			cache.Remove();
-			cache.TryGet<object>(method, correctUrl, out _).AssertFalse();
+			cache.TryGet<object>(method, correctUrl, default, out _).AssertFalse();
 
-			cache.Set(method, correctUrl, 0);
+			cache.Set(method, correctUrl, default, 0);
 			cache.Remove(method, "https://stocksharp.com/api/products");
-			cache.TryGet<object>(method, correctUrl, out _).AssertFalse();
+			cache.TryGet<object>(method, correctUrl, default, out _).AssertFalse();
 		}
 	}
 }
