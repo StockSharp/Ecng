@@ -346,9 +346,11 @@ public static class NetworkHelper
 
 	private static readonly CachedSynchronizedDictionary<HttpStatusCode, string> _phrases = new()
 	{
-		{ HttpStatusCode.Unauthorized, "Unauthorized" },
-		{ HttpStatusCode.Forbidden, "Forbidden" },
+		{ HttpStatusCode.Unauthorized, nameof(HttpStatusCode.Unauthorized) },
+		{ HttpStatusCode.Forbidden, nameof(HttpStatusCode.Forbidden) },
 		{ HttpStatusCode.NotFound, "not found" },
+		{ HttpStatusCode.Conflict, nameof(HttpStatusCode.Conflict) },
+		{ HttpStatusCode.Gone, nameof(HttpStatusCode.Gone) },
 	};
 
 	public static void SetStatusCodePhrase(HttpStatusCode code, string str)
