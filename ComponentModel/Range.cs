@@ -211,7 +211,7 @@ namespace Ecng.ComponentModel
 		/// </returns>
 		public override int GetHashCode()
 		{
-			return Min.GetHashCode() ^ Max.GetHashCode();
+			return (HasMinValue ? Min.GetHashCode() : 0) ^ (HasMaxValue ? Max.GetHashCode() : 0);
 		}
 
 		/// <summary>
@@ -292,12 +292,12 @@ namespace Ecng.ComponentModel
 		public Range<T> SubRange(T min, T max)
 		{
 			if (!Contains(min))
-				throw new ArgumentException(nameof(min));
+				throw new ArgumentException("Not in range.", nameof(min));
 
 			if (!Contains(max))
-				throw new ArgumentException(nameof(max));
+				throw new ArgumentException("Not in range.", nameof(max));
 
-			return new Range<T>(min, max);
+			return new(min, max);
 		}
 
 		/// <summary>

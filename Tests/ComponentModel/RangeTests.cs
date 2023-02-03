@@ -43,5 +43,22 @@
 			var r = new Range<int>(1, 10);
 			r.ToStorage().ToRange<int>().AssertEqual(r);
 		}
+
+		[TestMethod]
+		public void Empty()
+		{
+			var r = new Range<int>();
+			r.GetHashCode().AssertEqual(0);
+			r.Equals(new()).AssertTrue();
+
+			r.Min = 10;
+			(r.GetHashCode() > 0).AssertTrue();
+			r.Equals(new() { Min = 10 }).AssertTrue();
+
+			r.Max = 11;
+			(r.GetHashCode() > 0).AssertTrue();
+			r.Equals(new() { Max = 11 }).AssertFalse();
+			r.Equals(new() { Min = 10, Max = 11 }).AssertTrue();
+		}
 	}
 }
