@@ -387,9 +387,19 @@ public static class NetworkHelper
 			return (HttpRequestException)_ctorWithStatusCode.Invoke(new object[] { message, null, code });
 	}
 
-	public static string ToQueryString<TValue>(this IEnumerable<KeyValuePair<string, TValue>> args)
-		=> args.Select(p => $"{p.Key}={p.Value}").JoinAnd();
+	public static string Format<T>(this T value, bool encode)
+	{
+		var str = value?.ToString();
 
-	public static string ToQueryString<TValue>(this IEnumerable<(string, TValue)> args)
-		=> args.Select(p => $"{p.Item1}={p.Item2}").JoinAnd();
+		if (encode && !str.IsEmpty())
+			str = str.EncodeUrl();
+
+		return str;
+	}
+
+	public static string ToQueryString<TValue>(this IEnumerable<KeyValuePair<string, TValue>> args, bool encodeValue = false)
+		=> args.Select(p => $"{p.Key}={p.Value.Format(encodeValue)}").JoinAnd();
+
+	public static string ToQueryString<TValue>(this IEnumerable<(string key, TValue value)> args, bool encodeValue = false)
+		=> args.Select(p => $"{p.key}={p.value.Format(encodeValue)}").JoinAnd();
 }
