@@ -3,7 +3,7 @@
 	using System;
 
 	/// <summary>
-	/// The member marked as associated with crypto currency.
+	/// Marks property as basic to be included into basic settings UI.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property)]
 	public class BasicSettingAttribute : Attribute
