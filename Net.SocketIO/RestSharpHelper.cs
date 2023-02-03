@@ -117,7 +117,7 @@ public static class RestSharpHelper
 
 		request.Resource = url.IsAbsoluteUri ? url.AbsoluteUri : url.OriginalString;
 
-		logVerbose?.Invoke("Request {0}, '{1}' Args '{2}'.", new object[] { request.Method, url, request.Parameters.Select(p => $"{p.Name}={p.Value}").JoinAnd() });
+		logVerbose?.Invoke("Request {0}, '{1}' Args '{2}'.", new object[] { request.Method, url, request.Parameters.ToQueryString() });
 
 		var client = GetClient(caller);
 		using var _ = ((AuthenticatorWrapper)client.Authenticator!).RegisterRequest(request, auth);
@@ -155,4 +155,7 @@ public static class RestSharpHelper
 
 		return result;
 	}
+
+	public static string ToQueryString(this ParametersCollection parameters, bool encodeValue = false)
+		=> parameters.CheckOnNull(nameof(parameters)).Select(p => $"{p.Name}={p.Value.Format(encodeValue)}").JoinAnd();
 }
