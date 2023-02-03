@@ -34,7 +34,7 @@
     <AssemblyName>Ecng.$(MSBuildProjectName)</AssemblyName>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <IsSourcesAllow>true</IsSourcesAllow>
-    <LangVersion>default</LangVersion>
+    <LangVersion>11.0</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
