@@ -204,6 +204,40 @@
 				items.ForEach(i => source.Remove(i));
 		}
 
+		public static int RemoveWhere2<T>(this IList<T> list, Func<T, bool> filter)
+		{
+			// https://referencesource.microsoft.com/#mscorlib/system/collections/generic/list.cs,82567b42bbfc416e,references
+
+			var newLen = 0;
+			var len = list.Count;
+
+			// Find the first item which needs to be removed.
+			while(newLen < len && !filter(list[newLen]))
+				newLen++;
+
+			if(newLen >= len)
+				return 0;
+
+			var current = newLen + 1;
+
+			while(current < len)
+			{
+				// Find the first item which needs to be kept.
+				while(current < len && filter(list[current]))
+					current++;
+
+				if(current < len) {
+					// copy item to the free slot.
+					list[newLen++] = list[current++];
+				}
+			}
+
+			while(list.Count > newLen)
+				list.RemoveAt(list.Count - 1);
+
+			return len - newLen;
+		}
+
 		public static IEnumerable<T> RemoveWhere<T>(this ICollection<T> collection, Func<T, bool> filter)
 		{
 			var removingItems = collection.Where(filter).ToArray();
