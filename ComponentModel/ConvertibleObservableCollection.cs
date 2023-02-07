@@ -20,6 +20,12 @@ namespace Ecng.ComponentModel
 		private readonly Func<TItem, TDisplay> _converter;
 		private readonly OrderedDictionary _convertedValues = new();
 
+		readonly struct KVPair
+		{
+			public TItem Item { get; init; }
+			public TDisplay Display { get; init; }
+		}
+
 		/// <summary>
 		/// </summary>
 		public ConvertibleObservableCollection(ICollection<TDisplay> collection, Func<TItem, TDisplay> converter)
@@ -47,7 +53,7 @@ namespace Ecng.ComponentModel
 		public TDisplay TryGet(TItem item)
 		{
 			lock (SyncRoot)
-				return _convertedValues.Contains(item) ? (TDisplay) _convertedValues[item] : default;
+				return _convertedValues.Contains(item) ? ((KVPair)_convertedValues[item]!).Display : default;
 		}
 
 		/// <summary>
@@ -76,7 +82,7 @@ namespace Ecng.ComponentModel
 					if(_convertedValues.Contains(item))
 						continue;
 
-					_convertedValues.Add(item, display);
+					_convertedValues.Add(item, new KVPair { Item = item, Display = display });
 
 					converted.Add(display);
 					added.Add(item);
@@ -169,7 +175,7 @@ namespace Ecng.ComponentModel
 			lock (SyncRoot)
 			{
 				var display = _converter(item);
-				_convertedValues.Add(item, display);
+				_convertedValues.Add(item, new KVPair { Item = item, Display = display });
 				_collection.Add(display);
 			}
 
@@ -286,7 +292,7 @@ namespace Ecng.ComponentModel
 			get
 			{
 				lock (SyncRoot)
-					return (TItem) _convertedValues.Cast<DictionaryEntry>().ElementAt(index).Key;
+					return ((KVPair)_convertedValues[index]!).Item;
 			}
 			set => throw new NotSupportedException();
 		}
