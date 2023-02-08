@@ -285,13 +285,21 @@ namespace Ecng.ComponentModel
 		/// <inheritdoc />
 		public void Insert(int index, TItem item)
 		{
-			throw new NotSupportedException();
+			if (!Dispatcher.CheckAccess())
+				throw new NotSupportedException();
+
+			Items.Insert(index, item);
+			_pendingCount = Items.Count;
 		}
 
 		/// <inheritdoc cref="IList{T}" />
 		public void RemoveAt(int index)
 		{
-			throw new NotSupportedException();
+			if (!Dispatcher.CheckAccess())
+				throw new NotSupportedException();
+
+			Items.RemoveAt(index);
+			_pendingCount = Items.Count;
 		}
 
 		object IList.this[int index]
@@ -313,7 +321,13 @@ namespace Ecng.ComponentModel
 
 				return Items[index];
 			}
-			set => throw new NotSupportedException();
+			set
+			{
+				if (!Dispatcher.CheckAccess())
+					throw new NotSupportedException();
+
+				Items[index] = value;
+			}
 		}
 
 		/// <summary>

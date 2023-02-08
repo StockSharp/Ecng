@@ -13,12 +13,6 @@ namespace Ecng.ComponentModel
 	/// </summary>
 	public class ObservableCollectionEx<TItem> : IListEx<TItem>, IList, INotifyCollectionChanged, INotifyPropertyChanged
 	{
-		private const string _countString = "Count";
-
-		// This must agree with Binding.IndexerName.  It is declared separately
-		// here so as to avoid a dependency on PresentationFramework.dll.
-		private const string _indexerName = "Item[]";
-
 		private readonly List<TItem> _items = new();
 
 		/// <inheritdoc />
@@ -59,8 +53,8 @@ namespace Ecng.ComponentModel
 
 			_items.AddRange(arr);
 
-			OnPropertyChanged(_countString);
-			OnPropertyChanged(_indexerName);
+			OnCountPropertyChanged();
+			OnIndexerPropertyChanged();
 
 			OnCollectionChanged(NotifyCollectionChangedAction.Add, arr, index);
 		}
@@ -148,8 +142,8 @@ namespace Ecng.ComponentModel
 		{
 			_items.Clear();
 
-			OnPropertyChanged(_countString);
-			OnPropertyChanged(_indexerName);
+			OnCountPropertyChanged();
+			OnIndexerPropertyChanged();
 			OnCollectionReset();
 		}
 
@@ -209,13 +203,21 @@ namespace Ecng.ComponentModel
 		/// <inheritdoc />
 		public void Insert(int index, TItem item)
 		{
-			throw new NotSupportedException();
+			_items.Insert(index, item);
+
+			OnCountPropertyChanged();
+			OnIndexerPropertyChanged();
+
+			OnCollectionChanged(NotifyCollectionChangedAction.Add, new[] { item }, index);
 		}
 
 		/// <inheritdoc cref="IList{T}" />
 		public void RemoveAt(int index)
 		{
-			throw new NotSupportedException();
+			var item = _items[index];
+			_items.RemoveAt(index);
+
+			OnRemove(new[] { item }, index);
 		}
 
 		object IList.this[int index]
@@ -228,13 +230,20 @@ namespace Ecng.ComponentModel
 		public TItem this[int index]
 		{
 			get => _items[index];
-			set => throw new NotSupportedException();
+			set
+			{
+				var originalItem = _items[index];
+				_items[index] = value;
+
+				OnIndexerPropertyChanged();
+				OnCollectionChanged(NotifyCollectionChangedAction.Replace, originalItem, value, index);
+			}
 		}
 
 		private void OnRemove(IList<TItem> items, int index)
 		{
-			OnPropertyChanged(_countString);
-			OnPropertyChanged(_indexerName);
+			OnCountPropertyChanged();
+			OnIndexerPropertyChanged();
 
 			OnCollectionChanged(NotifyCollectionChangedAction.Remove, items, index);
 		}
@@ -248,45 +257,36 @@ namespace Ecng.ComponentModel
 			evt?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
-		/// <summary>
-		/// Helper to raise CollectionChanged event to any listeners
-		/// </summary>
-		private void OnCollectionChanged(NotifyCollectionChangedAction action, IList<TItem> items, int index)
+		private void OnCountPropertyChanged() => OnPropertyChanged("Count");
+
+		// This must agree with Binding.IndexerName.  It is declared separately
+		// here so as to avoid a dependency on PresentationFramework.dll.
+		private void OnIndexerPropertyChanged() => OnPropertyChanged("Item[]");
+
+		private void OnCollectionChanged(NotifyCollectionChangedAction action, IList<TItem> items, int index)              => OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, (IList)items, index));
+        private void OnCollectionChanged(NotifyCollectionChangedAction action, object item, int index)                     => OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, item, index));
+		private void OnCollectionChanged(NotifyCollectionChangedAction action, object item, int index, int oldIndex)       => OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, item, index, oldIndex));
+		private void OnCollectionChanged(NotifyCollectionChangedAction action, object oldItem, object newItem, int index)  => OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, newItem, oldItem, index));
+
+		private void OnCollectionChanged(NotifyCollectionChangedEventArgs args)
 		{
-			if (items == null)
-				throw new ArgumentNullException(nameof(items));
+			if(args.OldItems?.Count > 0)
+				_removedRange?.Invoke(args.OldItems.Cast<TItem>());
 
-			if (index < 0)
-				throw new ArgumentOutOfRangeException(nameof(index));
-
-			switch (action)
-			{
-				case NotifyCollectionChangedAction.Add:
-					_addedRange?.Invoke(items);
-					break;
-				case NotifyCollectionChangedAction.Remove:
-					_removedRange?.Invoke(items);
-					break;
-				case NotifyCollectionChangedAction.Reset:
-					break;
-			}
+			if(args.NewItems?.Count > 0)
+				_addedRange?.Invoke(args.NewItems.Cast<TItem>());
 
 			var evt = CollectionChanged;
-
 			if (evt == null)
 				return;
 
-			ProcessCollectionChanged(
-				evt.GetInvocationList().Cast<NotifyCollectionChangedEventHandler>(),
-				action, items, index);
+			ProcessCollectionChanged(evt.GetInvocationList().Cast<NotifyCollectionChangedEventHandler>(), args);
 		}
 
-		protected virtual void ProcessCollectionChanged(IEnumerable<NotifyCollectionChangedEventHandler> subscribers, NotifyCollectionChangedAction action, IList<TItem> items, int index)
+		protected virtual void ProcessCollectionChanged(IEnumerable<NotifyCollectionChangedEventHandler> subscribers, NotifyCollectionChangedEventArgs args)
 		{
-			var e = new NotifyCollectionChangedEventArgs(action, (IList)items, index);
-
 			foreach (var subscriber in subscribers)
-				subscriber(this, e);
+				subscriber(this, args);
 		}
 
 		/// <summary>
