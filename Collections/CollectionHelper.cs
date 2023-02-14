@@ -1115,20 +1115,6 @@
 
 		#endregion
 
-		public static void Shrink<TCollection, TItem>(this TCollection collection, int bufferSize)
-			where TCollection : class, ISynchronizedCollection<TItem>
-		{
-			if (collection.Count > bufferSize * 1.5)
-			{
-				collection.SyncDo(c =>
-				{
-					var elapsed = c.Skip(bufferSize / 2).ToList();
-					c.Clear();
-					c.AddRange(elapsed);
-				});
-			}
-		}
-
 		private sealed class EnumerableEx<T> : SimpleEnumerable<T>, IEnumerableEx<T>
 		{
 			private readonly int _count;
