@@ -58,7 +58,7 @@ namespace Ecng.ComponentModel
 		public abstract T Divide(T first, T second);
 	}
 
-	class IntOperator : BaseOperator<int>
+	public class IntOperator : BaseOperator<int>
 	{
 		public override int Add(int first, int second)
 		{
@@ -86,7 +86,8 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class UIntOperator : BaseOperator<uint>
+	[CLSCompliant(false)]
+	public class UIntOperator : BaseOperator<uint>
 	{
 		public override uint Add(uint first, uint second)
 		{
@@ -114,7 +115,7 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class ShortOperator : BaseOperator<short>
+	public class ShortOperator : BaseOperator<short>
 	{
 		public override short Add(short first, short second)
 		{
@@ -142,7 +143,8 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class UShortOperator : BaseOperator<ushort>
+	[CLSCompliant(false)]
+	public class UShortOperator : BaseOperator<ushort>
 	{
 		public override ushort Add(ushort first, ushort second)
 		{
@@ -170,7 +172,7 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class LongOperator : BaseOperator<long>
+	public class LongOperator : BaseOperator<long>
 	{
 		public override long Add(long first, long second)
 		{
@@ -198,7 +200,8 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class ULongOperator : BaseOperator<ulong>
+	[CLSCompliant(false)]
+	public class ULongOperator : BaseOperator<ulong>
 	{
 		public override ulong Add(ulong first, ulong second)
 		{
@@ -226,7 +229,7 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class FloatOperator : BaseOperator<float>
+	public class FloatOperator : BaseOperator<float>
 	{
 		public override float Add(float first, float second)
 		{
@@ -254,7 +257,7 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class DoubleOperator : BaseOperator<double>
+	public class DoubleOperator : BaseOperator<double>
 	{
 		public override double Add(double first, double second)
 		{
@@ -282,7 +285,7 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class ByteOperator : BaseOperator<byte>
+	public class ByteOperator : BaseOperator<byte>
 	{
 		public override byte Add(byte first, byte second)
 		{
@@ -310,7 +313,8 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class SByteOperator : BaseOperator<sbyte>
+	[CLSCompliant(false)]
+	public class SByteOperator : BaseOperator<sbyte>
 	{
 		public override sbyte Add(sbyte first, sbyte second)
 		{
@@ -338,7 +342,7 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class DecimalOperator : BaseOperator<decimal>
+	public class DecimalOperator : BaseOperator<decimal>
 	{
 		public override decimal Add(decimal first, decimal second)
 		{
@@ -366,7 +370,7 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class TimeSpanOperator : BaseOperator<TimeSpan>
+	public class TimeSpanOperator : BaseOperator<TimeSpan>
 	{
 		public override TimeSpan Add(TimeSpan first, TimeSpan second)
 		{
@@ -394,7 +398,7 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class DateTimeOperator : BaseOperator<DateTime>
+	public class DateTimeOperator : BaseOperator<DateTime>
 	{
 		public override DateTime Add(DateTime first, DateTime second)
 		{
@@ -422,7 +426,7 @@ namespace Ecng.ComponentModel
 		}
 	}
 
-	class DateTimeOffsetOperator : BaseOperator<DateTimeOffset>
+	public class DateTimeOffsetOperator : BaseOperator<DateTimeOffset>
 	{
 		public override DateTimeOffset Add(DateTimeOffset first, DateTimeOffset second)
 		{
