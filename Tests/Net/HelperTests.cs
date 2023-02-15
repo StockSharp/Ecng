@@ -51,5 +51,24 @@
 			cache.Remove(method, "https://stocksharp.com/api/products");
 			cache.TryGet<object>(method, correctUrl, default, out _).AssertFalse();
 		}
+
+		[TestMethod]
+		public void Image()
+		{
+			"1.png".IsImage().AssertTrue();
+			"C:\\1.png".IsImage().AssertTrue();
+
+			"1.svg".IsImage().AssertTrue();
+			"C:\\1.svg".IsImage().AssertTrue();
+
+			"1.doc".IsImage().AssertFalse();
+			"C:\\1.doc".IsImage().AssertFalse();
+
+			"1.doc".IsImageVector().AssertFalse();
+			"C:\\1.doc".IsImageVector().AssertFalse();
+
+			"1.svg".IsImageVector().AssertTrue();
+			"C:\\1.svg".IsImageVector().AssertTrue();
+		}
 	}
 }

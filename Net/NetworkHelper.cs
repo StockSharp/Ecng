@@ -272,20 +272,31 @@ public static class NetworkHelper
 		return true;
 	}
 
-	private static readonly SynchronizedSet<string> _imgExts = new()
-	{
-		".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg", ".webp", ".ico", ".tiff", ".avif", ".apng"
-	};
-
-	public static bool IsImage(this string fileName)
+	private static bool IsImage(this string fileName, SynchronizedSet<string> extensions)
 	{
 		var ext = Path.GetExtension(fileName);
 
 		if (ext.IsEmpty())
 			return false;
 
-		return _imgExts.Contains(ext.ToLowerInvariant());
+		return extensions.Contains(ext);
 	}
+
+	private static readonly SynchronizedSet<string> _imgExts = new(StringComparer.InvariantCultureIgnoreCase)
+	{
+		".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg", ".webp", ".ico", ".tiff", ".avif", ".apng"
+	};
+
+	public static bool IsImage(this string fileName)
+		=> fileName.IsImage(_imgExts);
+
+	private static readonly SynchronizedSet<string> _imgVectorExts = new(StringComparer.InvariantCultureIgnoreCase)
+	{
+		".svg"
+	};
+
+	public static bool IsImageVector(this string fileName)
+		=> fileName.IsImage(_imgVectorExts);
 
 	private static readonly string[] _urlParts = { "href=", "http:", "https:", "ftp:" };
 
