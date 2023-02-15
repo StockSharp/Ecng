@@ -5,7 +5,10 @@ namespace Ecng.Collections
 	using System.Collections.Generic;
 	using System.ComponentModel;
 
-	public abstract class BaseListEx<T> : IList<T>, IList, IRangeCollection
+	public abstract class BaseListEx<T> : IList<T>, IList
+#pragma warning disable CS0612 // Type or member is obsolete
+		, IRangeCollection
+#pragma warning restore CS0612 // Type or member is obsolete
 	{
 		#region IRangeCollection Members
 

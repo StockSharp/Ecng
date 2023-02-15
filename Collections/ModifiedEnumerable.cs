@@ -5,6 +5,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	[Obsolete]
 	public class ModifiedEnumerable<T> : IEnumerable<T>
 	{
 		private sealed class Enumerator : BaseEnumerator<IEnumerable<T>, T>

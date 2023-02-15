@@ -2,6 +2,7 @@
 {
 	using System;
 
+	[Obsolete("Due to poor performance, this collection will no longer be supported. The applied code should be corrected to avoid unnecessary collection shrinking (for example, use Queue or CircularBuffer).")]
 	public class FixedSynchronizedList<T> : SynchronizedList<T>
 	{
 		public FixedSynchronizedList()

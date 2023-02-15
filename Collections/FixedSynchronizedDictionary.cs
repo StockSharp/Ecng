@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 
+	[Obsolete("Due to poor performance, this collection will no longer be supported. The applied code should be corrected to avoid unnecessary collection shrinking (for example, use Queue or CircularBuffer).")]
 	public class FixedSynchronizedDictionary<TKey, TValue> : SynchronizedDictionary<TKey, TValue>
 	{
 		public FixedSynchronizedDictionary()

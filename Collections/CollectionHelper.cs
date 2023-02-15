@@ -1115,6 +1115,7 @@
 
 		#endregion
 
+		[Obsolete]
 		public static void Shrink<TCollection, TItem>(this TCollection collection, int bufferSize)
 			where TCollection : class, ISynchronizedCollection<TItem>
 		{

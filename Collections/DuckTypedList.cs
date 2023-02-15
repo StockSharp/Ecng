@@ -7,6 +7,7 @@
 
 	using Ecng.Common;
 
+	[Obsolete("Due to poor performance, this collection will no longer be supported. The applied code should be corrected to avoid unnecessary type conversion.")]
 	public class DuckTypedList<TInner, TOuter> : Disposable, INotifyList<TOuter>
 	{
 		private readonly INotifyList<TInner> _innerList;

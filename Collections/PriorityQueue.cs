@@ -13,13 +13,14 @@ namespace Ecng.Collections
 	using System.Collections.Generic;
 
 
-    /// <summary>
-    /// Priority queue based on binary heap,
-    /// Elements with minimum priority dequeued first
-    /// </summary>G
-    /// <typeparam name="TPriority">Type of priorities</typeparam>
-    /// <typeparam name="TValue">Type of values</typeparam>
-    public class PriorityQueue<TPriority, TValue> : ICollection<KeyValuePair<TPriority, TValue>>
+	/// <summary>
+	/// Priority queue based on binary heap,
+	/// Elements with minimum priority dequeued first
+	/// </summary>G
+	/// <typeparam name="TPriority">Type of priorities</typeparam>
+	/// <typeparam name="TValue">Type of values</typeparam>
+	[Obsolete("Starting from .NET 6 the same collection in standard framework.")]
+	public class PriorityQueue<TPriority, TValue> : ICollection<KeyValuePair<TPriority, TValue>>
     {
         private readonly List<KeyValuePair<TPriority, TValue>> _baseHeap;
         private readonly IComparer<TPriority> _comparer;
