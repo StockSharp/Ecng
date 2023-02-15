@@ -69,6 +69,12 @@
 
 			"1.svg".IsImageVector().AssertTrue();
 			"C:\\1.svg".IsImageVector().AssertTrue();
+
+			".png".IsImage().AssertTrue();
+			"C:\\.png".IsImage().AssertTrue();
+
+			".svg".IsImageVector().AssertTrue();
+			"C:\\.svg".IsImageVector().AssertTrue();
 		}
 	}
 }
