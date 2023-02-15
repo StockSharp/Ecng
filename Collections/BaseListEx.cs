@@ -5,8 +5,17 @@ namespace Ecng.Collections
 	using System.Collections.Generic;
 	using System.ComponentModel;
 
-	public abstract class BaseListEx<T> : IList<T>, IList
+	public abstract class BaseListEx<T> : IList<T>, IList, IRangeCollection
 	{
+		#region IRangeCollection Members
+
+		IEnumerable IRangeCollection.GetRange(long startIndex, long count, string sortExpression, ListSortDirection directions)
+		{
+			return GetRange(startIndex, count, sortExpression, directions);
+		}
+
+		#endregion
+
 		#region IListEx<T> Members
 
 		public abstract IEnumerable<T> GetRange(long startIndex, long count, string sortExpression, ListSortDirection directions);
