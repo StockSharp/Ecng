@@ -19,7 +19,7 @@ namespace Ecng.Collections
 	/// </summary>
 	public class CircularBuffer<T> : IEnumerable<T>, IList<T>
 	{
-		private readonly T[] _buffer;
+		private T[] _buffer;
 
 		/// <summary>
 		/// The _start. Index of the first element in buffer.
@@ -90,7 +90,14 @@ namespace Ecng.Collections
 		/// Maximum capacity of the buffer. Elements pushed into the buffer after
 		/// maximum capacity is reached (IsFull = true), will remove an element.
 		/// </summary>
-		public int Capacity { get { return _buffer.Length; } }
+		public int Capacity
+		{
+			get => _buffer.Length;
+			set
+			{
+				Array.Resize(ref _buffer, value);
+			}
+		}
 
 		/// <summary>
 		/// Boolean indicating if Circular is at full capacity.
