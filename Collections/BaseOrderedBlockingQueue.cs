@@ -12,14 +12,14 @@
 		/// Initializes a new instance of the <see cref="BaseOrderedBlockingQueue{TSort, TValue}"/>.
 		/// </summary>
 		protected BaseOrderedBlockingQueue()
-			: base(new OrderedPriorityQueue<TSort, TValue>())
+			: base(new())
 		{
 		}
 
 		/// <inheritdoc />
 		public bool TryDequeue(out TValue value, bool exitOnClose = true, bool block = true)
 		{
-			if (TryDequeue(out KeyValuePair<TSort, TValue> pair, exitOnClose, block))
+			if (base.TryDequeue(out var pair, exitOnClose, block))
 			{
 				value = pair.Value;
 				return true;
@@ -36,11 +36,9 @@
 		/// Add new message.
 		/// </summary>
 		/// <param name="sort">Sort order.</param>
-		/// <param name="message">Message.</param>
+		/// <param name="value">value.</param>
 		protected void Enqueue(TSort sort, TValue value)
-		{
-			Enqueue(new KeyValuePair<TSort, TValue>(sort, value));
-		}
+			=> base.Enqueue(new(sort, value));
 
 		/// <summary>
 		/// 
@@ -48,26 +46,18 @@
 		/// <param name="item"></param>
 		/// <param name="force"></param>
 		protected override void OnEnqueue(KeyValuePair<TSort, TValue> item, bool force)
-		{
-			InnerCollection.Enqueue(item.Key, item.Value);
-		}
+			=> InnerCollection.Enqueue(item.Key, item.Value);
 
 		/// <summary>
 		/// Dequeue the next element.
 		/// </summary>
 		/// <returns>The next element.</returns>
-		protected override KeyValuePair<TSort, TValue> OnDequeue()
-		{
-			return InnerCollection.Dequeue();
-		}
+		protected override KeyValuePair<TSort, TValue> OnDequeue() => InnerCollection.Dequeue();
 
 		/// <summary>
 		/// To get from top the current element.
 		/// </summary>
 		/// <returns>The current element.</returns>
-		protected override KeyValuePair<TSort, TValue> OnPeek()
-		{
-			return InnerCollection.Peek();
-		}
+		protected override KeyValuePair<TSort, TValue> OnPeek() => InnerCollection.Peek();
 	}
 }
