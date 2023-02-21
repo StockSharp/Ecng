@@ -25,9 +25,11 @@
 		/// <summary>
 		/// Enqueues element into priority queue
 		/// </summary>
-		public void Enqueue(KeyValuePair<TPriority, TValue> item)
+		/// <param name="priority">element priority</param>
+		/// <param name="value">element value</param>
+		public void Enqueue(TPriority priority, TValue value)
 		{
-			_dictionary.SafeAdd(item.Key).Enqueue(item.Value);
+			_dictionary.SafeAdd(priority).Enqueue(value);
 			Count++;
 		}
 
@@ -112,7 +114,7 @@
 		/// <param name="item">element to add</param>
 		public void Add(KeyValuePair<TPriority, TValue> item)
 		{
-			Enqueue(item);
+			Enqueue(item.Key, item.Value);
 		}
 
 		/// <summary>
@@ -236,5 +238,8 @@
 		}
 
 		#endregion
+
+		void IQueue<KeyValuePair<TPriority, TValue>>.Enqueue(KeyValuePair<TPriority, TValue> item) =>
+			Enqueue(item.Key, item.Value);
 	}
 }
