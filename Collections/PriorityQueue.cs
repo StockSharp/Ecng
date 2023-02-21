@@ -1,403 +1,970 @@
-﻿/*
- * This code implements priority queue which uses min-heap as underlying storage
- * 
- * Copyright (C) 2010 Alexey Kurakin
- * www.avk.name
- * alexey[ at ]kurakin.me
- */
+﻿namespace Ecng.Collections;
 
-namespace Ecng.Collections
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+
+// source: https://github.com/dotnet/runtime/blob/main/src/libraries/System.Collections/src/System/Collections/Generic/PriorityQueue.cs
+// modifications:
+// 1) generic arg reorder
+
+/// <summary>
+///  Represents a min priority queue.
+/// </summary>
+/// <typeparam name="TElement">Specifies the type of elements in the queue.</typeparam>
+/// <typeparam name="TPriority">Specifies the type of priority associated with enqueued elements.</typeparam>
+/// <remarks>
+///  Implements an array-backed quaternary min-heap. Each element is enqueued with an associated priority
+///  that determines the dequeue order: elements with the lowest priority get dequeued first.
+/// </remarks>
+[DebuggerDisplay("Count = {Count}")]
+public class PriorityQueue<TPriority, TElement>
 {
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
-
+	/// <summary>
+	/// Represents an implicit heap-ordered complete d-ary tree, stored as an array.
+	/// </summary>
+	private (TElement Element, TPriority Priority)[] _nodes;
 
 	/// <summary>
-	/// Priority queue based on binary heap,
-	/// Elements with minimum priority dequeued first
-	/// </summary>G
-	/// <typeparam name="TPriority">Type of priorities</typeparam>
-	/// <typeparam name="TValue">Type of values</typeparam>
-	[Obsolete("Starting from .NET 6 the same collection in standard framework.")]
-	public class PriorityQueue<TPriority, TValue> : ICollection<KeyValuePair<TPriority, TValue>>
-    {
-        private readonly List<KeyValuePair<TPriority, TValue>> _baseHeap;
-        private readonly IComparer<TPriority> _comparer;
+	/// Custom comparer used to order the heap.
+	/// </summary>
+	private readonly IComparer<TPriority> _comparer;
 
-        #region Constructors
+	/// <summary>
+	/// Lazily-initialized collection used to expose the contents of the queue.
+	/// </summary>
+	private UnorderedItemsCollection _unorderedItems;
 
-        /// <summary>
-        /// Initializes a new instance of priority queue with default initial capacity and default priority comparer
-        /// </summary>
-        public PriorityQueue()
-            : this(Comparer<TPriority>.Default)
-        {
-        }
+	/// <summary>
+	/// The number of nodes in the heap.
+	/// </summary>
+	private int _size;
 
-        /// <summary>
-        /// Initializes a new instance of priority queue with specified initial capacity and default priority comparer
-        /// </summary>
-        /// <param name="capacity">initial capacity</param>
-        public PriorityQueue(int capacity)
-            : this(capacity, Comparer<TPriority>.Default)
-        {
-        }
+	/// <summary>
+	/// Version updated on mutation to help validate enumerators operate on a consistent state.
+	/// </summary>
+	private int _version;
 
-        /// <summary>
-        /// Initializes a new instance of priority queue with specified initial capacity and specified priority comparer
-        /// </summary>
-        /// <param name="capacity">initial capacity</param>
-        /// <param name="comparer">priority comparer</param>
-        public PriorityQueue(int capacity, IComparer<TPriority> comparer)
-        {
-			_baseHeap = new List<KeyValuePair<TPriority, TValue>>(capacity);
-            _comparer = comparer ?? throw new ArgumentNullException();
-        }
+	/// <summary>
+	/// Specifies the arity of the d-ary heap, which here is quaternary.
+	/// It is assumed that this value is a power of 2.
+	/// </summary>
+	private const int _arity = 4;
 
-        /// <summary>
-        /// Initializes a new instance of priority queue with default initial capacity and specified priority comparer
-        /// </summary>
-        /// <param name="comparer">priority comparer</param>
-        public PriorityQueue(IComparer<TPriority> comparer)
-        {
-			_baseHeap = new List<KeyValuePair<TPriority, TValue>>();
-            _comparer = comparer ?? throw new ArgumentNullException();
-        }
+	/// <summary>
+	/// The binary logarithm of <see cref="_arity" />.
+	/// </summary>
+	private const int _log2Arity = 2;
 
-        /// <summary>
-        /// Initializes a new instance of priority queue with specified data and default priority comparer
-        /// </summary>
-        /// <param name="data">data to be inserted into priority queue</param>
-        public PriorityQueue(IEnumerable<KeyValuePair<TPriority, TValue>> data)
-            : this(data, Comparer<TPriority>.Default)
-        {
-        }
+#if DEBUG
+	static PriorityQueue()
+	{
+		Debug.Assert(_log2Arity > 0 && Math.Pow(2, _log2Arity) == _arity);
+	}
+#endif
 
-        /// <summary>
-        /// Initializes a new instance of priority queue with specified data and specified priority comparer
-        /// </summary>
-        /// <param name="data">data to be inserted into priority queue</param>
-        /// <param name="comparer">priority comparer</param>
-        public PriorityQueue(IEnumerable<KeyValuePair<TPriority, TValue>> data, IComparer<TPriority> comparer)
-        {
-            if (data is null || comparer is null)
-                throw new ArgumentNullException();
+	/// <summary>
+	///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class.
+	/// </summary>
+	public PriorityQueue()
+	{
+		_nodes = Array.Empty<(TElement, TPriority)>();
+		_comparer = InitializeComparer(null);
+	}
 
-            _comparer = comparer;
-            _baseHeap = new List<KeyValuePair<TPriority, TValue>>(data);
-            // heapify data
-            for (int pos = _baseHeap.Count / 2 - 1; pos >= 0; pos--)
-                HeapifyFromBeginningToEnd(pos);
-        }
+	/// <summary>
+	///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class
+	///  with the specified initial capacity.
+	/// </summary>
+	/// <param name="initialCapacity">Initial capacity to allocate in the underlying heap array.</param>
+	/// <exception cref="ArgumentOutOfRangeException">
+	///  The specified <paramref name="initialCapacity"/> was negative.
+	/// </exception>
+	public PriorityQueue(int initialCapacity)
+		: this(initialCapacity, comparer: null)
+	{
+	}
 
-        #endregion
+	/// <summary>
+	///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class
+	///  with the specified custom priority comparer.
+	/// </summary>
+	/// <param name="comparer">
+	///  Custom comparer dictating the ordering of elements.
+	///  Uses <see cref="Comparer{T}.Default" /> if the argument is <see langword="null"/>.
+	/// </param>
+	public PriorityQueue(IComparer<TPriority> comparer)
+	{
+		_nodes = Array.Empty<(TElement, TPriority)>();
+		_comparer = InitializeComparer(comparer);
+	}
 
-        #region Merging
+	/// <summary>
+	///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class
+	///  with the specified initial capacity and custom priority comparer.
+	/// </summary>
+	/// <param name="initialCapacity">Initial capacity to allocate in the underlying heap array.</param>
+	/// <param name="comparer">
+	///  Custom comparer dictating the ordering of elements.
+	///  Uses <see cref="Comparer{T}.Default" /> if the argument is <see langword="null"/>.
+	/// </param>
+	/// <exception cref="ArgumentOutOfRangeException">
+	///  The specified <paramref name="initialCapacity"/> was negative.
+	/// </exception>
+	public PriorityQueue(int initialCapacity, IComparer<TPriority> comparer)
+	{
+		if (initialCapacity < 0)
+			throw new ArgumentOutOfRangeException(nameof(initialCapacity));
 
-        /// <summary>
-        /// Merges two priority queues
-        /// </summary>
-        /// <param name="pq1">first priority queue</param>
-        /// <param name="pq2">second priority queue</param>
-        /// <returns>resultant priority queue</returns>
-        /// <remarks>
-        /// source priority queues must have equal comparers,
-        /// otherwise <see cref="InvalidOperationException"/> will be thrown
-        /// </remarks>
-        public static PriorityQueue<TPriority, TValue> MergeQueues(PriorityQueue<TPriority, TValue> pq1, PriorityQueue<TPriority, TValue> pq2)
-        {
-            if (pq1 is null || pq2 is null)
-                throw new ArgumentNullException();
-            if (pq1._comparer != pq2._comparer)
-                throw new InvalidOperationException("Priority queues to be merged must have equal comparers");
-            return MergeQueues(pq1, pq2, pq1._comparer);
-        }
+		_nodes = new (TElement, TPriority)[initialCapacity];
+		_comparer = InitializeComparer(comparer);
+	}
 
-        /// <summary>
-        /// Merges two priority queues and sets specified comparer for resultant priority queue
-        /// </summary>
-        /// <param name="pq1">first priority queue</param>
-        /// <param name="pq2">second priority queue</param>
-        /// <param name="comparer">comparer for resultant priority queue</param>
-        /// <returns>resultant priority queue</returns>
-        public static PriorityQueue<TPriority, TValue> MergeQueues(PriorityQueue<TPriority, TValue> pq1, PriorityQueue<TPriority, TValue> pq2, IComparer<TPriority> comparer)
-        {
-            if (pq1 is null || pq2 is null || comparer is null)
-                throw new ArgumentNullException();
-            // merge data
-            PriorityQueue<TPriority, TValue> result = new(pq1.Count + pq2.Count, pq1._comparer);
-            result._baseHeap.AddRange(pq1._baseHeap);
-            result._baseHeap.AddRange(pq2._baseHeap);
-            // heapify data
-            for (int pos = result._baseHeap.Count / 2 - 1; pos >= 0; pos--)
-                result.HeapifyFromBeginningToEnd(pos);
+	/// <summary>
+	///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class
+	///  that is populated with the specified elements and priorities.
+	/// </summary>
+	/// <param name="items">The pairs of elements and priorities with which to populate the queue.</param>
+	/// <exception cref="ArgumentNullException">
+	///  The specified <paramref name="items"/> argument was <see langword="null"/>.
+	/// </exception>
+	/// <remarks>
+	///  Constructs the heap using a heapify operation,
+	///  which is generally faster than enqueuing individual elements sequentially.
+	/// </remarks>
+	public PriorityQueue(IEnumerable<(TElement Element, TPriority Priority)> items)
+		: this(items, comparer: null)
+	{
+	}
 
-            return result;
-        }
+	/// <summary>
+	///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class
+	///  that is populated with the specified elements and priorities,
+	///  and with the specified custom priority comparer.
+	/// </summary>
+	/// <param name="items">The pairs of elements and priorities with which to populate the queue.</param>
+	/// <param name="comparer">
+	///  Custom comparer dictating the ordering of elements.
+	///  Uses <see cref="Comparer{T}.Default" /> if the argument is <see langword="null"/>.
+	/// </param>
+	/// <exception cref="ArgumentNullException">
+	///  The specified <paramref name="items"/> argument was <see langword="null"/>.
+	/// </exception>
+	/// <remarks>
+	///  Constructs the heap using a heapify operation,
+	///  which is generally faster than enqueuing individual elements sequentially.
+	/// </remarks>
+	public PriorityQueue(IEnumerable<(TElement Element, TPriority Priority)> items, IComparer<TPriority> comparer)
+	{
+		if (items is null)
+			throw new ArgumentNullException(nameof(items));
 
-        #endregion
+		_nodes = items.ToArray();
+		_size = _nodes.Length;
+		_comparer = InitializeComparer(comparer);
 
-        #region Priority queue operations
+		if (_size > 1)
+		{
+			Heapify();
+		}
+	}
 
-        /// <summary>
-        /// Enqueues element into priority queue
-        /// </summary>
-        /// <param name="priority">element priority</param>
-        /// <param name="value">element value</param>
-        public void Enqueue(TPriority priority, TValue value)
-        {
-            Insert(priority, value);
-        }
+	/// <summary>
+	///  Gets the number of elements contained in the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// </summary>
+	public int Count => _size;
 
-        /// <summary>
-        /// Dequeues element with minimum priority and return its priority and value as <see cref="KeyValuePair{TPriority,TValue}"/> 
-        /// </summary>
-        /// <returns>priority and value of the dequeued element</returns>
-        /// <remarks>
-        /// Method throws <see cref="InvalidOperationException"/> if priority queue is empty
-        /// </remarks>
-        public KeyValuePair<TPriority, TValue> Dequeue()
-        {
-            if (!IsEmpty)
-            {
-                KeyValuePair<TPriority, TValue> result = _baseHeap[0];
-                DeleteRoot();
-                return result;
-            }
-            else
-                throw new InvalidOperationException("Priority queue is empty");
-        }
+	/// <summary>
+	///  Gets the priority comparer used by the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// </summary>
+	public IComparer<TPriority> Comparer => _comparer ?? Comparer<TPriority>.Default;
 
-        /// <summary>
-        /// Dequeues element with minimum priority and return its value
-        /// </summary>
-        /// <returns>value of the dequeued element</returns>
-        /// <remarks>
-        /// Method throws <see cref="InvalidOperationException"/> if priority queue is empty
-        /// </remarks>
-        public TValue DequeueValue()
-        {
-            return Dequeue().Value;
-        }
+	/// <summary>
+	///  Gets a collection that enumerates the elements of the queue in an unordered manner.
+	/// </summary>
+	/// <remarks>
+	///  The enumeration does not order items by priority, since that would require N * log(N) time and N space.
+	///  Items are instead enumerated following the internal array heap layout.
+	/// </remarks>
+	public UnorderedItemsCollection UnorderedItems => _unorderedItems ??= new UnorderedItemsCollection(this);
 
-        /// <summary>
-        /// Returns priority and value of the element with minimun priority, without removing it from the queue
-        /// </summary>
-        /// <returns>priority and value of the element with minimum priority</returns>
-        /// <remarks>
-        /// Method throws <see cref="InvalidOperationException"/> if priority queue is empty
-        /// </remarks>
-        public KeyValuePair<TPriority, TValue> Peek()
-        {
-            if (!IsEmpty)
-                return _baseHeap[0];
-            else
-                throw new InvalidOperationException("Priority queue is empty");
-        }
+	/// <summary>
+	///  Adds the specified element with associated priority to the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// </summary>
+	/// <param name="element">The element to add to the <see cref="PriorityQueue{TPriority, TElement}"/>.</param>
+	/// <param name="priority">The priority with which to associate the new element.</param>
+	public void Enqueue(TElement element, TPriority priority)
+	{
+		// Virtually add the node at the end of the underlying array.
+		// Note that the node being enqueued does not need to be physically placed
+		// there at this point, as such an assignment would be redundant.
 
-        /// <summary>
-        /// Returns value of the element with minimun priority, without removing it from the queue
-        /// </summary>
-        /// <returns>value of the element with minimum priority</returns>
-        /// <remarks>
-        /// Method throws <see cref="InvalidOperationException"/> if priority queue is empty
-        /// </remarks>
-        public TValue PeekValue()
-        {
-            return Peek().Value;
-        }
+		int currentSize = _size;
+		_version++;
 
-        /// <summary>
-        /// Gets whether priority queue is empty
-        /// </summary>
-        public bool IsEmpty => _baseHeap.Count == 0;
+		if (_nodes.Length == currentSize)
+		{
+			Grow(currentSize + 1);
+		}
 
-	    #endregion
+		_size = currentSize + 1;
 
-        #region Heap operations
+		if (_comparer == null)
+		{
+			MoveUpDefaultComparer((element, priority), currentSize);
+		}
+		else
+		{
+			MoveUpCustomComparer((element, priority), currentSize);
+		}
+	}
 
-        private void ExchangeElements(int pos1, int pos2)
-        {
-            KeyValuePair<TPriority, TValue> val = _baseHeap[pos1];
-            _baseHeap[pos1] = _baseHeap[pos2];
-            _baseHeap[pos2] = val;
-        }
+	/// <summary>
+	///  Returns the minimal element from the <see cref="PriorityQueue{TPriority, TElement}"/> without removing it.
+	/// </summary>
+	/// <exception cref="InvalidOperationException">The <see cref="PriorityQueue{TPriority, TElement}"/> is empty.</exception>
+	/// <returns>The minimal element of the <see cref="PriorityQueue{TPriority, TElement}"/>.</returns>
+	public TElement Peek()
+	{
+		if (_size == 0)
+		{
+			throw new InvalidOperationException("Empty queue.");
+		}
 
-        private void Insert(TPriority priority, TValue value)
-        {
-            KeyValuePair<TPriority, TValue> val = new(priority, value);
-            _baseHeap.Add(val);
+		return _nodes[0].Element;
+	}
 
-            // heap[i] have children heap[2*i + 1] and heap[2*i + 2] and parent heap[(i-1)/ 2];
+	/// <summary>
+	///  Removes and returns the minimal element from the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// </summary>
+	/// <exception cref="InvalidOperationException">The queue is empty.</exception>
+	/// <returns>The minimal element of the <see cref="PriorityQueue{TPriority, TElement}"/>.</returns>
+	public TElement Dequeue()
+	{
+		if (_size == 0)
+		{
+			throw new InvalidOperationException("Empty queue.");
+		}
 
-            // heapify after insert, from end to beginning
-            HeapifyFromEndToBeginning(_baseHeap.Count - 1);
-        }
+		TElement element = _nodes[0].Element;
+		RemoveRootNode();
+		return element;
+	}
 
+	/// <summary>
+	///  Removes the minimal element and then immediately adds the specified element with associated priority to the <see cref="PriorityQueue{TPriority, TElement}"/>,
+	/// </summary>
+	/// <param name="element">The element to add to the <see cref="PriorityQueue{TPriority, TElement}"/>.</param>
+	/// <param name="priority">The priority with which to associate the new element.</param>
+	/// <exception cref="InvalidOperationException">The queue is empty.</exception>
+	/// <returns>The minimal element removed before performing the enqueue operation.</returns>
+	/// <remarks>
+	///  Implements an extract-then-insert heap operation that is generally more efficient
+	///  than sequencing Dequeue and Enqueue operations: in the worst case scenario only one
+	///  shift-down operation is required.
+	/// </remarks>
+	public TElement DequeueEnqueue(TElement element, TPriority priority)
+	{
+		if (_size == 0)
+		{
+			throw new InvalidOperationException("Empty queue.");
+		}
 
-        private int HeapifyFromEndToBeginning(int pos)
-        {
-            if (pos >= _baseHeap.Count) return -1;
+		(TElement Element, TPriority Priority) = _nodes[0];
 
-            while (pos > 0)
-            {
-                int parentPos = (pos - 1) / 2;
-                if (_comparer.Compare(_baseHeap[parentPos].Key, _baseHeap[pos].Key) > 0)
-                {
-                    ExchangeElements(parentPos, pos);
-                    pos = parentPos;
-                }
-                else break;
-            }
-            return pos;
-        }
+		if (_comparer == null)
+		{
+			if (Comparer<TPriority>.Default.Compare(priority, Priority) > 0)
+			{
+				MoveDownDefaultComparer((element, priority), 0);
+			}
+			else
+			{
+				_nodes[0] = (element, priority);
+			}
+		}
+		else
+		{
+			if (_comparer.Compare(priority, Priority) > 0)
+			{
+				MoveDownCustomComparer((element, priority), 0);
+			}
+			else
+			{
+				_nodes[0] = (element, priority);
+			}
+		}
 
+		_version++;
+		return Element;
+	}
 
-        private void DeleteRoot()
-        {
-            if (_baseHeap.Count <= 1)
-            {
-                _baseHeap.Clear();
-                return;
-            }
+	/// <summary>
+	///  Removes the minimal element from the <see cref="PriorityQueue{TPriority, TElement}"/>,
+	///  and copies it to the <paramref name="element"/> parameter,
+	///  and its associated priority to the <paramref name="priority"/> parameter.
+	/// </summary>
+	/// <param name="element">The removed element.</param>
+	/// <param name="priority">The priority associated with the removed element.</param>
+	/// <returns>
+	///  <see langword="true"/> if the element is successfully removed;
+	///  <see langword="false"/> if the <see cref="PriorityQueue{TPriority, TElement}"/> is empty.
+	/// </returns>
+	public bool TryDequeue(out TElement element, out TPriority priority)
+	{
+		if (_size != 0)
+		{
+			(element, priority) = _nodes[0];
+			RemoveRootNode();
+			return true;
+		}
 
-            _baseHeap[0] = _baseHeap[_baseHeap.Count - 1];
-            _baseHeap.RemoveAt(_baseHeap.Count - 1);
+		element = default;
+		priority = default;
+		return false;
+	}
 
-            // heapify
-            HeapifyFromBeginningToEnd(0);
-        }
+	/// <summary>
+	///  Returns a value that indicates whether there is a minimal element in the <see cref="PriorityQueue{TPriority, TElement}"/>,
+	///  and if one is present, copies it to the <paramref name="element"/> parameter,
+	///  and its associated priority to the <paramref name="priority"/> parameter.
+	///  The element is not removed from the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// </summary>
+	/// <param name="element">The minimal element in the queue.</param>
+	/// <param name="priority">The priority associated with the minimal element.</param>
+	/// <returns>
+	///  <see langword="true"/> if there is a minimal element;
+	///  <see langword="false"/> if the <see cref="PriorityQueue{TPriority, TElement}"/> is empty.
+	/// </returns>
+	public bool TryPeek(out TElement element, out TPriority priority)
+	{
+		if (_size != 0)
+		{
+			(element, priority) = _nodes[0];
+			return true;
+		}
 
-        private void HeapifyFromBeginningToEnd(int pos)
-        {
-            if (pos >= _baseHeap.Count) return;
+		element = default;
+		priority = default;
+		return false;
+	}
 
-            // heap[i] have children heap[2*i + 1] and heap[2*i + 2] and parent heap[(i-1)/ 2];
+	/// <summary>
+	///  Adds the specified element with associated priority to the <see cref="PriorityQueue{TPriority, TElement}"/>,
+	///  and immediately removes the minimal element, returning the result.
+	/// </summary>
+	/// <param name="element">The element to add to the <see cref="PriorityQueue{TPriority, TElement}"/>.</param>
+	/// <param name="priority">The priority with which to associate the new element.</param>
+	/// <returns>The minimal element removed after the enqueue operation.</returns>
+	/// <remarks>
+	///  Implements an insert-then-extract heap operation that is generally more efficient
+	///  than sequencing Enqueue and Dequeue operations: in the worst case scenario only one
+	///  shift-down operation is required.
+	/// </remarks>
+	public TElement EnqueueDequeue(TElement element, TPriority priority)
+	{
+		if (_size != 0)
+		{
+			(TElement Element, TPriority Priority) = _nodes[0];
 
-            while (true)
-            {
-                // on each iteration exchange element with its smallest child
-                int smallest = pos;
-                int left = 2 * pos + 1;
-                int right = 2 * pos + 2;
-                if (left < _baseHeap.Count && _comparer.Compare(_baseHeap[smallest].Key, _baseHeap[left].Key) > 0)
-                    smallest = left;
-                if (right < _baseHeap.Count && _comparer.Compare(_baseHeap[smallest].Key, _baseHeap[right].Key) > 0)
-                    smallest = right;
+			if (_comparer == null)
+			{
+				if (Comparer<TPriority>.Default.Compare(priority, Priority) > 0)
+				{
+					MoveDownDefaultComparer((element, priority), 0);
+					_version++;
+					return Element;
+				}
+			}
+			else
+			{
+				if (_comparer.Compare(priority, Priority) > 0)
+				{
+					MoveDownCustomComparer((element, priority), 0);
+					_version++;
+					return Element;
+				}
+			}
+		}
 
-                if (smallest != pos)
-                {
-                    ExchangeElements(smallest, pos);
-                    pos = smallest;
-                }
-                else break;
-            }
-        }
+		return element;
+	}
 
-        #endregion
+	/// <summary>
+	///  Enqueues a sequence of element/priority pairs to the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// </summary>
+	/// <param name="items">The pairs of elements and priorities to add to the queue.</param>
+	/// <exception cref="ArgumentNullException">
+	///  The specified <paramref name="items"/> argument was <see langword="null"/>.
+	/// </exception>
+	public void EnqueueRange(IEnumerable<(TElement Element, TPriority Priority)> items)
+	{
+		if (items is null)
+			throw new ArgumentNullException(nameof(items));
 
-        #region ICollection<KeyValuePair<TPriority, TValue>> implementation
+		int count = 0;
+		var collection = items as ICollection<(TElement Element, TPriority Priority)>;
+		if (collection is not null && (count = collection.Count) > _nodes.Length - _size)
+		{
+			Grow(checked(_size + count));
+		}
 
-        /// <summary>
-        /// Enqueus element into priority queue
-        /// </summary>
-        /// <param name="item">element to add</param>
-        public void Add(KeyValuePair<TPriority, TValue> item)
-        {
-            Enqueue(item.Key, item.Value);
-        }
+		if (_size == 0)
+		{
+			// build using Heapify() if the queue is empty.
 
-        /// <summary>
-        /// Clears the collection
-        /// </summary>
-        public void Clear()
-        {
-            _baseHeap.Clear();
-        }
+			if (collection is not null)
+			{
+				collection.CopyTo(_nodes, 0);
+				_size = count;
+			}
+			else
+			{
+				int i = 0;
+				(TElement, TPriority)[] nodes = _nodes;
+				foreach ((TElement element, TPriority priority) in items)
+				{
+					if (nodes.Length == i)
+					{
+						Grow(i + 1);
+						nodes = _nodes;
+					}
 
-        /// <summary>
-        /// Determines whether the priority queue contains a specific element
-        /// </summary>
-        /// <param name="item">The object to locate in the priority queue</param>
-        /// <returns><c>true</c> if item is found in the priority queue; otherwise, <c>false.</c> </returns>
-        public bool Contains(KeyValuePair<TPriority, TValue> item)
-        {
-            return _baseHeap.Contains(item);
-        }
+					nodes[i++] = (element, priority);
+				}
 
-        /// <summary>
-        /// Gets number of elements in the priority queue
-        /// </summary>
-        public int Count => _baseHeap.Count;
+				_size = i;
+			}
 
-	    /// <summary>
-        /// Copies the elements of the priority queue to an Array, starting at a particular Array index. 
-        /// </summary>
-        /// <param name="array">The one-dimensional Array that is the destination of the elements copied from the priority queue. The Array must have zero-based indexing. </param>
-        /// <param name="arrayIndex">The zero-based index in array at which copying begins.</param>
-        /// <remarks>
-        /// It is not guaranteed that items will be copied in the sorted order.
-        /// </remarks>
-        public void CopyTo(KeyValuePair<TPriority, TValue>[] array, int arrayIndex)
-        {
-            _baseHeap.CopyTo(array, arrayIndex);
-        }
+			_version++;
 
-        /// <summary>
-        /// Gets a value indicating whether the collection is read-only. 
-        /// </summary>
-        /// <remarks>
-        /// For priority queue this property returns <c>false</c>.
-        /// </remarks>
-        public bool IsReadOnly => false;
+			if (_size > 1)
+			{
+				Heapify();
+			}
+		}
+		else
+		{
+			foreach ((TElement element, TPriority priority) in items)
+			{
+				Enqueue(element, priority);
+			}
+		}
+	}
 
-	    /// <summary>
-        /// Removes the first occurrence of a specific object from the priority queue. 
-        /// </summary>
-        /// <param name="item">The object to remove from the ICollection <(Of <(T >)>). </param>
-        /// <returns><c>true</c> if item was successfully removed from the priority queue.
-        /// This method returns false if item is not found in the collection. </returns>
-        public bool Remove(KeyValuePair<TPriority, TValue> item)
-        {
-            // find element in the collection and remove it
-            int elementIdx = _baseHeap.IndexOf(item);
-            if (elementIdx < 0) return false;
+	/// <summary>
+	///  Enqueues a sequence of elements pairs to the <see cref="PriorityQueue{TPriority, TElement}"/>,
+	///  all associated with the specified priority.
+	/// </summary>
+	/// <param name="elements">The elements to add to the queue.</param>
+	/// <param name="priority">The priority to associate with the new elements.</param>
+	/// <exception cref="ArgumentNullException">
+	///  The specified <paramref name="elements"/> argument was <see langword="null"/>.
+	/// </exception>
+	public void EnqueueRange(IEnumerable<TElement> elements, TPriority priority)
+	{
+		if (elements is null)
+			throw new ArgumentNullException(nameof(elements));
 
-            //remove element
-            _baseHeap[elementIdx] = _baseHeap[_baseHeap.Count - 1];
-            _baseHeap.RemoveAt(_baseHeap.Count - 1);
+		int count;
+		if (elements is ICollection<TElement> collection &&
+			(count = collection.Count) > _nodes.Length - _size)
+		{
+			Grow(checked(_size + count));
+		}
 
-            // heapify
-            int newPos = HeapifyFromEndToBeginning(elementIdx);
-            if (newPos == elementIdx)
-                HeapifyFromBeginningToEnd(elementIdx);
+		if (_size == 0)
+		{
+			// build using Heapify() if the queue is empty.
 
-            return true;
-        }
+			int i = 0;
+			(TElement, TPriority)[] nodes = _nodes;
+			foreach (TElement element in elements)
+			{
+				if (nodes.Length == i)
+				{
+					Grow(i + 1);
+					nodes = _nodes;
+				}
 
-        /// <summary>
-        /// Returns an enumerator that iterates through the collection.
-        /// </summary>
-        /// <returns>Enumerator</returns>
-        /// <remarks>
-        /// Returned enumerator does not iterate elements in sorted order.</remarks>
-        public IEnumerator<KeyValuePair<TPriority, TValue>> GetEnumerator()
-        {
-            return _baseHeap.GetEnumerator();
-        }
+				nodes[i++] = (element, priority);
+			}
 
-        /// <summary>
-        /// Returns an enumerator that iterates through the collection.
-        /// </summary>
-        /// <returns>Enumerator</returns>
-        /// <remarks>
-        /// Returned enumerator does not iterate elements in sorted order.</remarks>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
-        }
+			_size = i;
+			_version++;
 
-        #endregion
-    }
+			if (i > 1)
+			{
+				Heapify();
+			}
+		}
+		else
+		{
+			foreach (TElement element in elements)
+			{
+				Enqueue(element, priority);
+			}
+		}
+	}
+
+	/// <summary>
+	///  Removes all items from the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// </summary>
+	public void Clear()
+	{
+		// Clear the elements so that the gc can reclaim the references
+		Array.Clear(_nodes, 0, _size);
+		_size = 0;
+		_version++;
+	}
+
+	/// <summary>
+	///  Ensures that the <see cref="PriorityQueue{TPriority, TElement}"/> can hold up to
+	///  <paramref name="capacity"/> items without further expansion of its backing storage.
+	/// </summary>
+	/// <param name="capacity">The minimum capacity to be used.</param>
+	/// <exception cref="ArgumentOutOfRangeException">
+	///  The specified <paramref name="capacity"/> is negative.
+	/// </exception>
+	/// <returns>The current capacity of the <see cref="PriorityQueue{TPriority, TElement}"/>.</returns>
+	public int EnsureCapacity(int capacity)
+	{
+		if (capacity < 0)
+			throw new ArgumentOutOfRangeException(nameof(capacity));
+
+		if (_nodes.Length < capacity)
+		{
+			Grow(capacity);
+			_version++;
+		}
+
+		return _nodes.Length;
+	}
+
+	/// <summary>
+	///  Sets the capacity to the actual number of items in the <see cref="PriorityQueue{TPriority, TElement}"/>,
+	///  if that is less than 90 percent of current capacity.
+	/// </summary>
+	/// <remarks>
+	///  This method can be used to minimize a collection's memory overhead
+	///  if no new elements will be added to the collection.
+	/// </remarks>
+	public void TrimExcess()
+	{
+		int threshold = (int)(_nodes.Length * 0.9);
+		if (_size < threshold)
+		{
+			Array.Resize(ref _nodes, _size);
+			_version++;
+		}
+	}
+
+	/// <summary>
+	/// Grows the priority queue to match the specified min capacity.
+	/// </summary>
+	private void Grow(int minCapacity)
+	{
+		Debug.Assert(_nodes.Length < minCapacity);
+
+		const int GrowFactor = 2;
+		const int MinimumGrow = 4;
+
+		int newcapacity = GrowFactor * _nodes.Length;
+
+		// Allow the queue to grow to maximum possible capacity (~2G elements) before encountering overflow.
+		// Note that this check works even when _nodes.Length overflowed thanks to the (uint) cast
+		if ((uint)newcapacity > 0X7FFFFFC7) newcapacity = 0X7FFFFFC7;
+
+		// Ensure minimum growth is respected.
+		newcapacity = Math.Max(newcapacity, _nodes.Length + MinimumGrow);
+
+		// If the computed capacity is still less than specified, set to the original argument.
+		// Capacities exceeding Array.MaxLength will be surfaced as OutOfMemoryException by Array.Resize.
+		if (newcapacity < minCapacity) newcapacity = minCapacity;
+
+		Array.Resize(ref _nodes, newcapacity);
+	}
+
+	/// <summary>
+	/// Removes the node from the root of the heap
+	/// </summary>
+	private void RemoveRootNode()
+	{
+		int lastNodeIndex = --_size;
+		_version++;
+
+		if (lastNodeIndex > 0)
+		{
+			(TElement Element, TPriority Priority) lastNode = _nodes[lastNodeIndex];
+			if (_comparer == null)
+			{
+				MoveDownDefaultComparer(lastNode, 0);
+			}
+			else
+			{
+				MoveDownCustomComparer(lastNode, 0);
+			}
+		}
+
+		_nodes[lastNodeIndex] = default;
+	}
+
+	/// <summary>
+	/// Gets the index of an element's parent.
+	/// </summary>
+	private static int GetParentIndex(int index) => (index - 1) >> _log2Arity;
+
+	/// <summary>
+	/// Gets the index of the first child of an element.
+	/// </summary>
+	private static int GetFirstChildIndex(int index) => (index << _log2Arity) + 1;
+
+	/// <summary>
+	/// Converts an unordered list into a heap.
+	/// </summary>
+	private void Heapify()
+	{
+		// Leaves of the tree are in fact 1-element heaps, for which there
+		// is no need to correct them. The heap property needs to be restored
+		// only for higher nodes, starting from the first node that has children.
+		// It is the parent of the very last element in the array.
+
+		(TElement Element, TPriority Priority)[] nodes = _nodes;
+		int lastParentWithChildren = GetParentIndex(_size - 1);
+
+		if (_comparer == null)
+		{
+			for (int index = lastParentWithChildren; index >= 0; --index)
+			{
+				MoveDownDefaultComparer(nodes[index], index);
+			}
+		}
+		else
+		{
+			for (int index = lastParentWithChildren; index >= 0; --index)
+			{
+				MoveDownCustomComparer(nodes[index], index);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Moves a node up in the tree to restore heap order.
+	/// </summary>
+	private void MoveUpDefaultComparer((TElement Element, TPriority Priority) node, int nodeIndex)
+	{
+		// Instead of swapping items all the way to the root, we will perform
+		// a similar optimization as in the insertion sort.
+
+		Debug.Assert(_comparer is null);
+		Debug.Assert(0 <= nodeIndex && nodeIndex < _size);
+
+		(TElement Element, TPriority Priority)[] nodes = _nodes;
+
+		while (nodeIndex > 0)
+		{
+			int parentIndex = GetParentIndex(nodeIndex);
+			(TElement Element, TPriority Priority) parent = nodes[parentIndex];
+
+			if (Comparer<TPriority>.Default.Compare(node.Priority, parent.Priority) < 0)
+			{
+				nodes[nodeIndex] = parent;
+				nodeIndex = parentIndex;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		nodes[nodeIndex] = node;
+	}
+
+	/// <summary>
+	/// Moves a node up in the tree to restore heap order.
+	/// </summary>
+	private void MoveUpCustomComparer((TElement Element, TPriority Priority) node, int nodeIndex)
+	{
+		// Instead of swapping items all the way to the root, we will perform
+		// a similar optimization as in the insertion sort.
+
+		Debug.Assert(_comparer is not null);
+		Debug.Assert(0 <= nodeIndex && nodeIndex < _size);
+
+		IComparer<TPriority> comparer = _comparer;
+		(TElement Element, TPriority Priority)[] nodes = _nodes;
+
+		while (nodeIndex > 0)
+		{
+			int parentIndex = GetParentIndex(nodeIndex);
+			(TElement Element, TPriority Priority) parent = nodes[parentIndex];
+
+			if (comparer.Compare(node.Priority, parent.Priority) < 0)
+			{
+				nodes[nodeIndex] = parent;
+				nodeIndex = parentIndex;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		nodes[nodeIndex] = node;
+	}
+
+	/// <summary>
+	/// Moves a node down in the tree to restore heap order.
+	/// </summary>
+	private void MoveDownDefaultComparer((TElement Element, TPriority Priority) node, int nodeIndex)
+	{
+		// The node to move down will not actually be swapped every time.
+		// Rather, values on the affected path will be moved up, thus leaving a free spot
+		// for this value to drop in. Similar optimization as in the insertion sort.
+
+		Debug.Assert(_comparer is null);
+		Debug.Assert(0 <= nodeIndex && nodeIndex < _size);
+
+		(TElement Element, TPriority Priority)[] nodes = _nodes;
+		int size = _size;
+
+		int i;
+		while ((i = GetFirstChildIndex(nodeIndex)) < size)
+		{
+			// Find the child node with the minimal priority
+			(TElement Element, TPriority Priority) minChild = nodes[i];
+			int minChildIndex = i;
+
+			int childIndexUpperBound = Math.Min(i + _arity, size);
+			while (++i < childIndexUpperBound)
+			{
+				(TElement Element, TPriority Priority) nextChild = nodes[i];
+				if (Comparer<TPriority>.Default.Compare(nextChild.Priority, minChild.Priority) < 0)
+				{
+					minChild = nextChild;
+					minChildIndex = i;
+				}
+			}
+
+			// Heap property is satisfied; insert node in this location.
+			if (Comparer<TPriority>.Default.Compare(node.Priority, minChild.Priority) <= 0)
+			{
+				break;
+			}
+
+			// Move the minimal child up by one node and
+			// continue recursively from its location.
+			nodes[nodeIndex] = minChild;
+			nodeIndex = minChildIndex;
+		}
+
+		nodes[nodeIndex] = node;
+	}
+
+	/// <summary>
+	/// Moves a node down in the tree to restore heap order.
+	/// </summary>
+	private void MoveDownCustomComparer((TElement Element, TPriority Priority) node, int nodeIndex)
+	{
+		// The node to move down will not actually be swapped every time.
+		// Rather, values on the affected path will be moved up, thus leaving a free spot
+		// for this value to drop in. Similar optimization as in the insertion sort.
+
+		Debug.Assert(_comparer is not null);
+		Debug.Assert(0 <= nodeIndex && nodeIndex < _size);
+
+		IComparer<TPriority> comparer = _comparer;
+		(TElement Element, TPriority Priority)[] nodes = _nodes;
+		int size = _size;
+
+		int i;
+		while ((i = GetFirstChildIndex(nodeIndex)) < size)
+		{
+			// Find the child node with the minimal priority
+			(TElement Element, TPriority Priority) minChild = nodes[i];
+			int minChildIndex = i;
+
+			int childIndexUpperBound = Math.Min(i + _arity, size);
+			while (++i < childIndexUpperBound)
+			{
+				(TElement Element, TPriority Priority) nextChild = nodes[i];
+				if (comparer.Compare(nextChild.Priority, minChild.Priority) < 0)
+				{
+					minChild = nextChild;
+					minChildIndex = i;
+				}
+			}
+
+			// Heap property is satisfied; insert node in this location.
+			if (comparer.Compare(node.Priority, minChild.Priority) <= 0)
+			{
+				break;
+			}
+
+			// Move the minimal child up by one node and continue recursively from its location.
+			nodes[nodeIndex] = minChild;
+			nodeIndex = minChildIndex;
+		}
+
+		nodes[nodeIndex] = node;
+	}
+
+	/// <summary>
+	/// Initializes the custom comparer to be used internally by the heap.
+	/// </summary>
+	private static IComparer<TPriority> InitializeComparer(IComparer<TPriority> comparer)
+	{
+		if (typeof(TPriority).IsValueType)
+		{
+			if (comparer == Comparer<TPriority>.Default)
+			{
+				// if the user manually specifies the default comparer,
+				// revert to using the optimized path.
+				return null;
+			}
+
+			return comparer;
+		}
+		else
+		{
+			// Currently the JIT doesn't optimize direct Comparer<T>.Default.Compare
+			// calls for reference types, so we want to cache the comparer instance instead.
+			// TODO https://github.com/dotnet/runtime/issues/10050: Update if this changes in the future.
+			return comparer ?? Comparer<TPriority>.Default;
+		}
+	}
+
+	/// <summary>
+	///  Enumerates the contents of a <see cref="PriorityQueue{TPriority, TElement}"/>, without any ordering guarantees.
+	/// </summary>
+	[DebuggerDisplay("Count = {Count}")]
+	public sealed class UnorderedItemsCollection : IReadOnlyCollection<(TElement Element, TPriority Priority)>, ICollection
+	{
+		internal readonly PriorityQueue<TPriority, TElement> _queue;
+
+		internal UnorderedItemsCollection(PriorityQueue<TPriority, TElement> queue) => _queue = queue;
+
+		public int Count => _queue._size;
+		object ICollection.SyncRoot => this;
+		bool ICollection.IsSynchronized => false;
+
+		void ICollection.CopyTo(Array array, int index)
+		{
+			if (array is null)
+				throw new ArgumentNullException(nameof(array));
+
+			if (array.Rank != 1)
+			{
+				throw new ArgumentException("Multi dimensions.", nameof(array));
+			}
+
+			if (array.GetLowerBound(0) != 0)
+			{
+				throw new ArgumentException("Non zero lower bound.", nameof(array));
+			}
+
+			if (index < 0 || index > array.Length)
+			{
+				throw new ArgumentOutOfRangeException(nameof(index), index, "Index invalid.");
+			}
+
+			if (array.Length - index < _queue._size)
+			{
+				throw new ArgumentException("Index offset.");
+			}
+
+			try
+			{
+				Array.Copy(_queue._nodes, 0, array, index, _queue._size);
+			}
+			catch (ArrayTypeMismatchException)
+			{
+				throw new ArgumentException("Incompatible array type", nameof(array));
+			}
+		}
+
+		/// <summary>
+		///  Enumerates the element and priority pairs of a <see cref="PriorityQueue{TPriority, TElement}"/>,
+		///  without any ordering guarantees.
+		/// </summary>
+		public struct Enumerator : IEnumerator<(TElement Element, TPriority Priority)>
+		{
+			private readonly PriorityQueue<TPriority, TElement> _queue;
+			private readonly int _version;
+			private int _index;
+			private (TElement, TPriority) _current;
+
+			internal Enumerator(PriorityQueue<TPriority, TElement> queue)
+			{
+				_queue = queue;
+				_index = 0;
+				_version = queue._version;
+				_current = default;
+			}
+
+			/// <summary>
+			/// Releases all resources used by the <see cref="Enumerator"/>.
+			/// </summary>
+			public void Dispose() { }
+
+			/// <summary>
+			/// Advances the enumerator to the next element of the <see cref="UnorderedItems"/>.
+			/// </summary>
+			/// <returns><see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.</returns>
+			public bool MoveNext()
+			{
+				PriorityQueue<TPriority, TElement> localQueue = _queue;
+
+				if (_version == localQueue._version && ((uint)_index < (uint)localQueue._size))
+				{
+					_current = localQueue._nodes[_index];
+					_index++;
+					return true;
+				}
+
+				return MoveNextRare();
+			}
+
+			private bool MoveNextRare()
+			{
+				if (_version != _queue._version)
+				{
+					throw new InvalidOperationException("Version mistmach.");
+				}
+
+				_index = _queue._size + 1;
+				_current = default;
+				return false;
+			}
+
+			/// <summary>
+			/// Gets the element at the current position of the enumerator.
+			/// </summary>
+			public (TElement Element, TPriority Priority) Current => _current;
+			object IEnumerator.Current => _current;
+
+			void IEnumerator.Reset()
+			{
+				if (_version != _queue._version)
+				{
+					throw new InvalidOperationException("Version mistmach.");
+				}
+
+				_index = 0;
+				_current = default;
+			}
+		}
+
+		/// <summary>
+		/// Returns an enumerator that iterates through the <see cref="UnorderedItems"/>.
+		/// </summary>
+		/// <returns>An <see cref="Enumerator"/> for the <see cref="UnorderedItems"/>.</returns>
+		public Enumerator GetEnumerator() => new(_queue);
+
+		IEnumerator<(TElement Element, TPriority Priority)> IEnumerable<(TElement Element, TPriority Priority)>.GetEnumerator() => GetEnumerator();
+
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+	}
 }
