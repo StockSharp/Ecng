@@ -195,10 +195,10 @@
 					}
 				}
 
-				_longests.Enqueue(watch.Elapsed, item.Action);
-
-				if (_longests.Count > LongestLimit)
-					_longests.Dequeue();
+				if (_longests.Count >= LongestLimit)
+					_longests.EnqueueDequeue(watch.Elapsed, item.Action);
+				else
+					_longests.Enqueue(watch.Elapsed, item.Action);
 			}
 		}
 

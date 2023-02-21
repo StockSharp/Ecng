@@ -258,8 +258,8 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 	/// <summary>
 	///  Removes the minimal element and then immediately adds the specified element with associated priority to the <see cref="PriorityQueue{TPriority, TElement}"/>,
 	/// </summary>
-	/// <param name="element">The element to add to the <see cref="PriorityQueue{TPriority, TElement}"/>.</param>
 	/// <param name="priority">The priority with which to associate the new element.</param>
+	/// <param name="element">The element to add to the <see cref="PriorityQueue{TPriority, TElement}"/>.</param>
 	/// <exception cref="InvalidOperationException">The queue is empty.</exception>
 	/// <returns>The minimal element removed before performing the enqueue operation.</returns>
 	/// <remarks>
@@ -267,7 +267,7 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 	///  than sequencing Dequeue and Enqueue operations: in the worst case scenario only one
 	///  shift-down operation is required.
 	/// </remarks>
-	public TElement DequeueEnqueue(TElement element, TPriority priority)
+	public TElement DequeueEnqueue(TPriority priority, TElement element)
 	{
 		if (_size == 0)
 		{
@@ -357,15 +357,15 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 	///  Adds the specified element with associated priority to the <see cref="PriorityQueue{TPriority, TElement}"/>,
 	///  and immediately removes the minimal element, returning the result.
 	/// </summary>
-	/// <param name="element">The element to add to the <see cref="PriorityQueue{TPriority, TElement}"/>.</param>
 	/// <param name="priority">The priority with which to associate the new element.</param>
+	/// <param name="element">The element to add to the <see cref="PriorityQueue{TPriority, TElement}"/>.</param>
 	/// <returns>The minimal element removed after the enqueue operation.</returns>
 	/// <remarks>
 	///  Implements an insert-then-extract heap operation that is generally more efficient
 	///  than sequencing Enqueue and Dequeue operations: in the worst case scenario only one
 	///  shift-down operation is required.
 	/// </remarks>
-	public TElement EnqueueDequeue(TElement element, TPriority priority)
+	public TElement EnqueueDequeue(TPriority priority, TElement element)
 	{
 		if (_size != 0)
 		{
