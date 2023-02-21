@@ -5,7 +5,8 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	public class OrderedPriorityQueue<TPriority, TValue> : ICollection<KeyValuePair<TPriority, TValue>>
+	[Obsolete("Use PriorityQueue.")]
+	public class OrderedPriorityQueue<TPriority, TValue> : ICollection<KeyValuePair<TPriority, TValue>>, IQueue<KeyValuePair<TPriority, TValue>>
 	{
 		private readonly SortedDictionary<TPriority, Queue<TValue>> _dictionary;
 
@@ -24,11 +25,9 @@
 		/// <summary>
 		/// Enqueues element into priority queue
 		/// </summary>
-		/// <param name="priority">element priority</param>
-		/// <param name="value">element value</param>
-		public void Enqueue(TPriority priority, TValue value)
+		public void Enqueue(KeyValuePair<TPriority, TValue> item)
 		{
-			_dictionary.SafeAdd(priority).Enqueue(value);
+			_dictionary.SafeAdd(item.Key).Enqueue(item.Value);
 			Count++;
 		}
 
@@ -113,7 +112,7 @@
 		/// <param name="item">element to add</param>
 		public void Add(KeyValuePair<TPriority, TValue> item)
 		{
-			Enqueue(item.Key, item.Value);
+			Enqueue(item);
 		}
 
 		/// <summary>
