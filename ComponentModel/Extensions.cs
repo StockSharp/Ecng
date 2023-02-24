@@ -159,7 +159,7 @@ namespace Ecng.ComponentModel
 				throw new ArgumentNullException(nameof(resName));
 
 			var name = assembly.FullName;
-			return new Uri("/" + name.Substring(0, name.IndexOf(',')) + ";component/" + resName, UriKind.Relative);
+			return new Uri($"/{name.Substring(0, name.IndexOf(','))};component/" + resName, UriKind.Relative);
 		}
 
 		public static IEnumerable<IItemsSourceItem> GetValues(this ItemsSourceAttribute attr)
