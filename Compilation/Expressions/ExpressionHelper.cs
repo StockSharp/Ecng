@@ -240,11 +240,10 @@ class TempExpressionFormula : ExpressionFormula
 			if (compiler is null)
 				throw new ArgumentNullException(nameof(compiler));
 
-			if (expression.IsEmpty())
-				throw new ArgumentNullException(nameof(expression));
-
 			try
 			{
+				var code = Escape(expression, useIds, out var identifiers);
+
 				var refs = new HashSet<string>(new[]
 				{
 					typeof(object).Assembly.Location,
@@ -253,7 +252,6 @@ class TempExpressionFormula : ExpressionFormula
 					"System.Runtime.dll".ToFullRuntimePath(),
 				}, StringComparer.InvariantCultureIgnoreCase);
 
-				var code = Escape(expression, useIds, out var identifiers);
 				var result = compiler.Compile(context, "IndexExpression", _template.Replace("__insert_code", code), refs, cancellationToken);
 
 				var formula = result.Assembly is null

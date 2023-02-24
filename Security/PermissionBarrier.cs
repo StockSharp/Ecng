@@ -5,7 +5,7 @@ namespace Ecng.Security
 	using System;
 	using System.Collections.Generic;
 	using System.Threading;
-
+	
 	using Ecng.Common;
 
 	#endregion
@@ -14,10 +14,7 @@ namespace Ecng.Security
 	{
 		public static void Check(string userName)
 		{
-			if (userName.IsEmpty())
-				throw new ArgumentNullException(nameof(userName));
-
-			if (string.Compare(Thread.CurrentPrincipal.Identity.Name, userName, StringComparison.OrdinalIgnoreCase) != 0)
+			if (string.Compare(Thread.CurrentPrincipal.Identity.Name, userName.ThrowIfEmpty(nameof(userName)), StringComparison.OrdinalIgnoreCase) != 0)
 				ThrowAccessException();
 		}
 

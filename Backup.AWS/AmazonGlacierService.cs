@@ -45,12 +45,9 @@ namespace Ecng.Backup.Amazon
 		/// <param name="secretKey">Secret.</param>
 		public AmazonGlacierService(RegionEndpoint endpoint, string vaultName, string accessKey, string secretKey)
 		{
-			if (vaultName.IsEmpty())
-				throw new ArgumentNullException(nameof(vaultName));
-
 			_credentials = new BasicAWSCredentials(accessKey, secretKey);
 			_endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
-			_vaultName = vaultName;
+			_vaultName = vaultName.ThrowIfEmpty(nameof(vaultName));
 			_client = new AmazonGlacierClient(_credentials, _endpoint);
 		}
 

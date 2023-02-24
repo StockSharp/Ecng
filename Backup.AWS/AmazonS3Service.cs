@@ -47,12 +47,9 @@ namespace Ecng.Backup.Amazon
 		/// <param name="secretKey">Secret.</param>
 		public AmazonS3Service(RegionEndpoint endpoint, string bucket, string accessKey, string secretKey)
 		{
-			if (bucket.IsEmpty())
-				throw new ArgumentNullException(nameof(bucket));
-
 			_credentials = new BasicAWSCredentials(accessKey, secretKey);
 			_endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
-			_bucket = bucket;
+			_bucket = bucket.ThrowIfEmpty(nameof(bucket));
 			_client = new AmazonS3Client(_credentials, _endpoint);
 		}
 

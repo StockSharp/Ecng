@@ -37,6 +37,9 @@
 			return str.IsEmpty() ? defaultValue : str;
 		}
 
+		public static string ThrowIfEmpty(this string str, string paramName)
+			=> str.IsEmpty() ? throw new ArgumentNullException(paramName) : str;
+
 		public static bool IsEmptyOrWhiteSpace(this string str)
 		{
 			return string.IsNullOrWhiteSpace(str);

@@ -24,19 +24,13 @@ namespace Ecng.Compilation.Expressions
 		/// <param name="identifiers">Identifiers.</param>
 		protected ExpressionFormula(string expression, IEnumerable<string> identifiers)
 		{
-			if (expression.IsEmpty())
-				throw new ArgumentNullException(nameof(expression));
-
-			Expression = expression;
+			Expression = expression.ThrowIfEmpty(nameof(expression));
 			Identifiers = identifiers ?? throw new ArgumentNullException(nameof(identifiers));
 		}
 
 		internal ExpressionFormula(string error)
 		{
-			if (error.IsEmpty())
-				throw new ArgumentNullException(nameof(error));
-
-			Error = error;
+			Error = error.ThrowIfEmpty(nameof(error));
 		}
 
 		/// <summary>

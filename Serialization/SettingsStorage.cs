@@ -62,12 +62,9 @@
 		/// <param name="value">Значение.</param>
 		public void SetValue<T>(string name, T value)
 		{
-			if (name.IsEmpty())
-				throw new ArgumentNullException(nameof(name));
-
 			EnsureIsNotReader();
 
-			this[name] = value;
+			this[name.ThrowIfEmpty(nameof(name))] = value;
 		}
 
 		/// <summary>
@@ -77,10 +74,7 @@
 		/// <returns>True, если значение содержится, иначе, false.</returns>
 		public bool Contains(string name)
 		{
-			if (name.IsEmpty())
-				throw new ArgumentNullException(nameof(name));
-
-			return ContainsKey(name);
+			return ContainsKey(name.ThrowIfEmpty(nameof(name)));
 		}
 
 		public override bool ContainsKey(string key)

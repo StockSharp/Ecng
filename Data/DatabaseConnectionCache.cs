@@ -38,13 +38,11 @@ namespace Ecng.Data
 		/// <returns>Подключение к базе данных.</returns>
 		public DatabaseConnectionPair GetOrAddCache(string provider, string connectionString)
 		{
-			if (provider.IsEmpty())
-				throw new ArgumentNullException(nameof(provider));
-
-			if (connectionString.IsEmpty())
-				throw new ArgumentNullException(nameof(connectionString));
-
-			return GetOrAddCache(new() { Provider = provider, ConnectionString = connectionString });
+			return GetOrAddCache(new()
+			{
+				Provider = provider.ThrowIfEmpty(nameof(provider)),
+				ConnectionString = connectionString.ThrowIfEmpty(nameof(connectionString))
+			});
 		}
 
 		public DatabaseConnectionPair GetOrAddCache(DatabaseConnectionPair pair)

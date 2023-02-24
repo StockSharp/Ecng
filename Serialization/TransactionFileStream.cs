@@ -15,10 +15,7 @@
 
 		public TransactionFileStream(string name, FileMode mode)
 		{
-			if (name.IsEmpty())
-				throw new ArgumentNullException(nameof(name));
-
-			_name = name;
+			_name = name.ThrowIfEmpty(nameof(name));
 			_nameTemp = _name + ".tmp";
 
 			switch (mode)

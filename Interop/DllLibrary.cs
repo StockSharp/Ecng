@@ -9,10 +9,7 @@ namespace Ecng.Interop
 	{
 		protected DllLibrary(string dllPath)
 		{
-			if (dllPath.IsEmpty())
-				throw new ArgumentNullException(nameof(dllPath));
-
-			DllPath = dllPath;
+			DllPath = dllPath.ThrowIfEmpty(nameof(dllPath));
 			Handler = Marshaler.LoadLibrary(dllPath);
 		}
 

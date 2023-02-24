@@ -813,10 +813,7 @@ namespace Ecng.Reflection
 
 		public static string MakePropertyName(this string accessorName)
 		{
-			if (accessorName.IsEmpty())
-				throw new ArgumentNullException(nameof(accessorName));
-
-			return accessorName
+			return accessorName.ThrowIfEmpty(nameof(accessorName))
 							.Remove(GetPrefix)
 							.Remove(SetPrefix)
 							.Remove(AddPrefix)

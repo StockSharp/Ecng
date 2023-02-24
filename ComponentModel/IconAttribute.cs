@@ -23,10 +23,7 @@ namespace Ecng.ComponentModel
 		/// <param name="isFullPath"></param>
 		public IconAttribute(string icon, bool isFullPath = false)
 		{
-			if (icon.IsEmpty())
-				throw new ArgumentNullException(nameof(icon));
-
-			Icon = icon;
+			Icon = icon.ThrowIfEmpty(nameof(icon));
 			IsFullPath = isFullPath;
 		}
 	}

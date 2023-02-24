@@ -20,10 +20,7 @@
 		/// <param name="docUrl">Online doc url.</param>
 		public DocAttribute(string docUrl)
 		{
-			if (docUrl.IsEmpty())
-				throw new ArgumentNullException(nameof(docUrl));
-
-			DocUrl = docUrl;
+			DocUrl = docUrl.ThrowIfEmpty(nameof(docUrl));
 		}
 	}
 }

@@ -10,10 +10,7 @@
 
 		public VectorIconAttribute(string icon)
 		{
-			if (icon.IsEmpty())
-				throw new ArgumentNullException(nameof(icon));
-
-			Icon = icon;
+			Icon = icon.ThrowIfEmpty(nameof(icon));
 		}
 	}
 }

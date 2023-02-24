@@ -106,10 +106,7 @@ public static class MailHelper
 
 	public static Attachment ToAttachment(string fileName, Stream fileBody)
 	{
-		if (fileName.IsEmpty())
-			throw new ArgumentNullException(nameof(fileName));
-
-		return CreateAttachment(fileBody, fileName);
+		return CreateAttachment(fileBody, fileName.ThrowIfEmpty(nameof(fileName)));
 	}
 
 	// http://social.msdn.microsoft.com/Forums/en-US/dotnetframeworkde/thread/b6c764f7-4697-4394-b45f-128a24306d55
