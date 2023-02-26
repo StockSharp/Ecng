@@ -8,17 +8,18 @@ namespace Ecng.Compilation.Expressions
 	/// <summary>
 	/// Compiled mathematical formula.
 	/// </summary>
-	public abstract class ExpressionFormula
+	/// <typeparam name="TResult">Result type.</typeparam>
+	public abstract class ExpressionFormula<TResult>
 	{
 		/// <summary>
 		/// To calculate the basket value.
 		/// </summary>
 		/// <param name="values">Inner values.</param>
 		/// <returns>The basket value.</returns>
-		public abstract decimal Calculate(decimal[] values);
+		public abstract TResult Calculate(decimal[] values);
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="ExpressionFormula"/>.
+		/// Initializes a new instance of the <see cref="ExpressionFormula{TResult}"/>.
 		/// </summary>
 		/// <param name="expression">Mathematical formula.</param>
 		/// <param name="identifiers">Identifiers.</param>

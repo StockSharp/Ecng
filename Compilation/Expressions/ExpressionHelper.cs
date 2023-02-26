@@ -10,14 +10,15 @@ namespace Ecng.Compilation.Expressions
 	using Ecng.Common;
 
 	/// <summary>
-	/// Extension class for <see cref="ExpressionFormula"/>.
+	/// Extension class for <see cref="ExpressionFormula{TResult}"/>.
 	/// </summary>
 	[CLSCompliant(false)]
 	public static class ExpressionHelper
 	{
 		private const string _idPattern = @"(#*)(@*)(#*)(\w*\.*)(\**)(\w+(\/*)\w+)@\w+";
 
-		private static readonly Regex _idRegex = new($@"(?<id>{_idPattern})");
+		public static readonly Regex IdRegex = new($@"(?<id>{_idPattern})");
+		public static readonly Regex CandleRegex = new(@"(?<id>\b[O|H|L|C|V|B]\b|TS|BS|LEN|OI)", RegexOptions.IgnoreCase);
 		private static readonly Regex _nameRegex = new(@"(?<name>(\w+))");
 		private static readonly Regex _bracketsVarRegex = new(@"\[(?<name>[^\]]*)\]");
 
@@ -26,10 +27,13 @@ namespace Ecng.Compilation.Expressions
 		/// </summary>
 		/// <param name="expression">Mathematical formula.</param>
 		/// <returns>Identifiers.</returns>
-		public static IEnumerable<string> GetIds(string expression)
+		public static IEnumerable<string> GetIds(Regex idRegex, string expression)
 		{
+			if (idRegex is null)
+				throw new ArgumentNullException(nameof(idRegex));
+
 			return
-				from Match match in _idRegex.Matches(expression)
+				from Match match in idRegex.Matches(expression)
 				where match.Success
 				select match.Groups["id"].Value;
 		}
@@ -47,9 +51,9 @@ namespace Ecng.Compilation.Expressions
 		/// </summary>
 		/// <param name="expression">Unescaped text.</param>
 		/// <returns>Escaped text.</returns>
-		public static string Encode(string expression)
+		public static string Encode(Regex idRegex, string expression)
 		{
-			foreach (var id in GetIds(expression).Distinct(StringComparer.InvariantCultureIgnoreCase))
+			foreach (var id in GetIds(idRegex, expression).Distinct(StringComparer.InvariantCultureIgnoreCase))
 			{
 				expression = expression.Replace(id, $"[{{{id}}}]");
 			}
@@ -107,58 +111,54 @@ namespace Ecng.Compilation.Expressions
 			{ "truncate", _prefix + nameof(MathHelper.Truncate) },
 		};
 
-		private class ErrorExpressionFormula : ExpressionFormula
+		private class ErrorExpressionFormula<TResult> : ExpressionFormula<TResult>
 		{
 			public ErrorExpressionFormula(string error)
 				: base(error)
 			{
 			}
 
-			public override decimal Calculate(decimal[] prices)
-			{
-				throw new NotSupportedException(Error);
-			}
+			public override TResult Calculate(decimal[] prices)
+				=> throw new NotSupportedException(Error);
 		}
 
-		public static ExpressionFormula CreateError(string errorText)
-		{
-			return new ErrorExpressionFormula(errorText);
-		}
+		public static ExpressionFormula<TResult> CreateError<TResult>(string errorText)
+			=> new ErrorExpressionFormula<TResult>(errorText);
 
-		private static string ReplaceFuncs(string text)
+		private static string Escape(Regex idRegex, string text, bool useIds, out IEnumerable<string> identifiers)
 		{
-			var dict = new Dictionary<string, string>();
-
-			foreach (var pair in _funcReplaces.CachedPairs)
+			static string ReplaceFuncs(string text)
 			{
-				var what = pair.Key + "(";
+				var dict = new Dictionary<string, string>();
 
-				if (!text.ContainsIgnoreCase(what))
-					continue;
+				foreach (var pair in _funcReplaces.CachedPairs)
+				{
+					var what = pair.Key + "(";
 
-				var rnd = TypeHelper.GenerateSalt(16).Base64();
+					if (!text.ContainsIgnoreCase(what))
+						continue;
 
-				dict.Add(rnd, pair.Value + "(");
-				text = text.ReplaceIgnoreCase(what, rnd);
+					var rnd = TypeHelper.GenerateSalt(16).Base64();
+
+					dict.Add(rnd, pair.Value + "(");
+					text = text.ReplaceIgnoreCase(what, rnd);
+				}
+
+				foreach (var pair in dict)
+				{
+					text = text.ReplaceIgnoreCase(pair.Key, pair.Value);
+				}
+
+				return text;
 			}
 
-			foreach (var pair in dict)
-			{
-				text = text.ReplaceIgnoreCase(pair.Key, pair.Value);
-			}
-
-			return text;
-		}
-
-		private static string Escape(string text, bool useIds, out IEnumerable<string> identifiers)
-		{
 			if (text.IsEmptyOrWhiteSpace())
 				throw new ArgumentNullException(nameof(text));
 
 			if (useIds)
 			{
 				text = Decode(text.ToUpperInvariant(), out _);
-				identifiers = GetIds(text).Distinct().ToArray();
+				identifiers = GetIds(idRegex, text).Distinct().ToArray();
 
 				var i = 0;
 				foreach (var id in identifiers)
@@ -213,19 +213,18 @@ using System.Collections.Generic;
 using Ecng.Common;
 using Ecng.Compilation.Expressions;
 
-class TempExpressionFormula : ExpressionFormula
+class TempExpressionFormula : ExpressionFormula<__result_type>
 {
 	public TempExpressionFormula(string expression, IEnumerable<string> identifiers)
 		: base(expression, identifiers)
 	{
 	}
 
-	public override decimal Calculate(decimal[] values)
+	public override __result_type Calculate(decimal[] values)
 	{
 		return __insert_code;
 	}
 }";
-
 		/// <summary>
 		/// Compile mathematical formula.
 		/// </summary>
@@ -235,34 +234,47 @@ class TempExpressionFormula : ExpressionFormula
 		/// <param name="useIds">Use ids as variables.</param>
 		/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
 		/// <returns>Compiled mathematical formula.</returns>
-		public static ExpressionFormula Compile(this ICompiler compiler, AssemblyLoadContextVisitor context, string expression, bool useIds, CancellationToken cancellationToken = default)
+		public static ExpressionFormula<decimal> Compile(this ICompiler compiler, AssemblyLoadContextVisitor context, string expression, bool useIds, CancellationToken cancellationToken = default)
+			=> Compile<decimal>(compiler, context, expression, IdRegex, useIds, cancellationToken);
+
+		/// <summary>
+		/// Compile mathematical formula.
+		/// </summary>
+		/// <typeparam name="TResult">Result type.</typeparam>
+		/// <param name="compiler"><see cref="ICompiler"/>.</param>
+		/// <param name="context"><see cref="AssemblyLoadContextVisitor"/>.</param>
+		/// <param name="expression">Text expression.</param>
+		/// <param name="useIds">Use ids as variables.</param>
+		/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
+		/// <returns>Compiled mathematical formula.</returns>
+		public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextVisitor context, string expression, Regex idRegex, bool useIds, CancellationToken cancellationToken = default)
 		{
 			if (compiler is null)
 				throw new ArgumentNullException(nameof(compiler));
 
 			try
 			{
-				var code = Escape(expression, useIds, out var identifiers);
+				var code = Escape(idRegex, expression, useIds, out var identifiers);
 
 				var refs = new HashSet<string>(new[]
 				{
 					typeof(object).Assembly.Location,
-					typeof(ExpressionFormula).Assembly.Location,
+					typeof(ExpressionHelper).Assembly.Location,
 					typeof(MathHelper).Assembly.Location,
 					"System.Runtime.dll".ToFullRuntimePath(),
 				}, StringComparer.InvariantCultureIgnoreCase);
 
-				var result = compiler.Compile(context, "IndexExpression", _template.Replace("__insert_code", code), refs, cancellationToken);
+				var result = compiler.Compile(context, "IndexExpression", _template.Replace("__insert_code", code).Replace("__result_type", typeof(TResult).TryGetCSharpAlias() ?? typeof(TResult).Name), refs, cancellationToken);
 
 				var formula = result.Assembly is null
-					? new ErrorExpressionFormula(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL())
-					: result.Assembly.GetType("TempExpressionFormula").CreateInstance<ExpressionFormula>(expression, identifiers);
+					? new ErrorExpressionFormula<TResult>(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL())
+					: result.Assembly.GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, identifiers);
 
 				return formula;
 			}
 			catch (Exception ex)
 			{
-				return new ErrorExpressionFormula(ex.ToString());
+				return new ErrorExpressionFormula<TResult>(ex.ToString());
 			}
 		}
 	}
