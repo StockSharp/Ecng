@@ -202,6 +202,13 @@
 		}
 
 		[TestMethod]
+		public void ParsePow9()
+		{
+			var formula = Compile("   Pow(RI@FORTS*[SBER@TQBR],1m/3) ");
+			formula.Calculate(new decimal[] { 2, 4.5m }).AssertEqual(2.0800838230519m);
+		}
+
+		[TestMethod]
 		public void ParsePow8()
 		{
 			var formula = Compile("Pow(RI@FORTS*[RI@FORTS],1m/RI@FORTS)");
@@ -264,6 +271,13 @@
 			formula.Calculate(new decimal[] { 2, 12334545 }).AssertEqual(2 + 12334545);
 		}
 
+		[TestMethod]
+		public void ParseFormula9()
+		{
+			var formula = Compile("    x*   y");
+			formula.Calculate(new decimal[] { 2, -4 }).AssertEqual(-8);
+		}
+
 		private static ExpressionFormula<bool> CompileBool(string expression)
 			=> _compiler.Compile<bool>(_context, expression);
 
@@ -303,6 +317,30 @@
 		public void BoolMath2()
 		{
 			var formula = CompileBool("pow([C],2) > sin(O)");
+			formula.Calculate(new decimal[] { 6, 4 }).AssertTrue();
+			formula.Calculate(new decimal[] { 0.1m, 360m }).AssertFalse();
+		}
+
+		[TestMethod]
+		public void BoolMath3()
+		{
+			var formula = CompileBool("    Pow(   [C],2) > sin(    O)  ");
+			formula.Calculate(new decimal[] { 6, 4 }).AssertTrue();
+			formula.Calculate(new decimal[] { 0.1m, 360m }).AssertFalse();
+		}
+
+		[TestMethod]
+		public void BoolMath4()
+		{
+			var formula = CompileBool("    Pow(   (C*O)/O,2) > sin(    O)  ");
+			formula.Calculate(new decimal[] { 6, 4 }).AssertTrue();
+			formula.Calculate(new decimal[] { 0.1m, 360m }).AssertFalse();
+		}
+
+		[TestMethod]
+		public void BoolMath5()
+		{
+			var formula = CompileBool("    Pow(   C*(O/O),2) > sin(    O)  ");
 			formula.Calculate(new decimal[] { 6, 4 }).AssertTrue();
 			formula.Calculate(new decimal[] { 0.1m, 360m }).AssertFalse();
 		}
