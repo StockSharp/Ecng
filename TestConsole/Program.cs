@@ -760,7 +760,7 @@
 			backSvc.UnPublishAsync(entity).Wait();
 			return;
 
-			var res = new RoslynCompiler().Compile(new(), "LOG([USD##CASH@IDEALPRO]) - (USD_CASH@IDEALPRO / usd_cash@IDEALPRO) + LOG([USD##CASH@IDEALPRO])", true);
+			var res = new RoslynCompiler().Compile<decimal>(new(), "LOG([USD##CASH@IDEALPRO]) - (USD_CASH@IDEALPRO / usd_cash@IDEALPRO) + LOG([USD##CASH@IDEALPRO])");
 			Console.WriteLine(res.Calculate(new[] { 10m, 11m }));
 			return;
 

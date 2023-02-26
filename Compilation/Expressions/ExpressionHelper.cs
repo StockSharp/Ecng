@@ -1,213 +1,216 @@
-namespace Ecng.Compilation.Expressions
-{
-	using System;
-	using System.Collections.Generic;
-	using System.Linq;
-	using System.Text.RegularExpressions;
-	using System.Threading;
+namespace Ecng.Compilation.Expressions;
 
-	using Ecng.Collections;
-	using Ecng.Common;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+using Ecng.Collections;
+using Ecng.Common;
+
+/// <summary>
+/// Extension class for <see cref="ExpressionFormula{TResult}"/>.
+/// </summary>
+[CLSCompliant(false)]
+public static class ExpressionHelper
+{
+	private class Parser
+	{
+		private enum States
+		{
+			None,
+			Name,
+			SquareBracket,
+			//Function,
+		}
+
+		private readonly Stack<States> _state = new();
+
+		public (string expression, string[] variables) Parse(string input)
+		{
+			if (input.IsEmpty())
+				throw new ArgumentNullException(nameof(input));
+
+			var variables = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
+
+			var i = 0;
+			var state = States.None;
+
+			var code = new StringBuilder();
+			var nameBuilder = new StringBuilder();
+
+			void AppendVar(string name)
+			{
+				var varIdx = variables.SafeAdd(name, key => variables.Count);
+				code.Append($"values[{varIdx}]");
+			}
+
+			States PushState(States newState)
+			{
+				_state.Push(state);
+				return newState;
+			}
+
+			while (i < input.Length)
+			{
+				var c = input[i];
+
+				switch (state)
+				{
+					case States.None:
+					{
+						switch (c)
+						{
+							case '[':
+							{
+								state = PushState(States.SquareBracket);
+
+								if (!nameBuilder.IsEmpty())
+									throw new InvalidOperationException($"Var is not empty and {nameBuilder}.");
+
+								break;
+							}
+
+							case ']':
+								code.Append(c);
+								break;
+
+							case '+':
+							case '-':
+							case '*':
+							case '/':
+							case '(':
+							case ')':
+							case '>':
+							case '<':
+							case '=':
+							case '!':
+							case '&':
+							case '|':
+							case ' ':
+							case ',':
+								code.Append(c);
+								break;
+
+							default:
+								if (c.IsDigit() || c == '.' || (c == 'm' && i > 0 && input[i - 1].IsDigit()))
+								{
+									code.Append(c);
+								}
+								else
+								{
+									state = PushState(States.Name);
+									nameBuilder.Append(c);
+								}
+								
+								break;
+						}
+
+						break;
+					}
+					case States.Name:
+					{
+						switch (c)
+						{
+							case '+':
+							case '-':
+							case '*':
+							case '/':
+							case '(':
+							case ')':
+							case '>':
+							case '<':
+							case '=':
+							case '!':
+							case '&':
+							case '|':
+							case ' ':
+							case ',':
+							{
+								var name = nameBuilder.GetAndClear();
+
+								if (_funcReplaces.TryGetValue(name, out var replace))
+								{
+									code.Append(replace);
+									//state = PushState(States.Function);
+								}
+								else
+								{
+									AppendVar(name);
+								}
+
+								state = _state.Pop();
+								code.Append(c);
+								break;
+							}
+							default:
+								nameBuilder.Append(c);
+								break;
+						}
+
+						break;
+					}
+					case States.SquareBracket:
+					{
+						switch (c)
+						{
+							case ']':
+								state = _state.Pop();
+								AppendVar(nameBuilder.GetAndClear());
+								break;
+							default:
+								nameBuilder.Append(c);
+								break;
+						}
+
+						break;
+					}
+					default:
+						throw new InvalidOperationException($"State: {state}");
+				}
+
+				i++;
+			}
+
+			if (!nameBuilder.IsEmpty())
+				AppendVar(nameBuilder.GetAndClear());
+
+			return (code.ToString(), variables.Keys.ToArray());
+		}
+	}
 
 	/// <summary>
-	/// Extension class for <see cref="ExpressionFormula{TResult}"/>.
+	/// Available functions.
 	/// </summary>
-	[CLSCompliant(false)]
-	public static class ExpressionHelper
+	public static IEnumerable<string> Functions => _funcReplaces.CachedKeys;
+
+	private const string _prefix = nameof(MathHelper) + ".";
+	private static readonly CachedSynchronizedDictionary<string, string> _funcReplaces = new(StringComparer.InvariantCultureIgnoreCase)
 	{
-		private const string _idPattern = @"(#*)(@*)(#*)(\w*\.*)(\**)(\w+(\/*)\w+)@\w+";
+		{ "abs", _prefix + nameof(MathHelper.Abs) },
+		{ "acos", _prefix + nameof(MathHelper.Acos) },
+		{ "asin", _prefix + nameof(MathHelper.Asin) },
+		{ "atan", _prefix + nameof(MathHelper.Atan) },
+		{ "ceiling", _prefix + nameof(MathHelper.Ceiling) },
+		{ "cos", _prefix + nameof(MathHelper.Cos) },
+		{ "exp", _prefix + nameof(MathHelper.Exp) },
+		{ "floor", _prefix + nameof(MathHelper.Floor) },
+		//{ "ieeeremainder", _prefix + nameof(MathHelper.IEEERemainer) },
+		{ "log", _prefix + nameof(MathHelper.Log) },
+		{ "log10", _prefix + nameof(MathHelper.Log10) },
+		{ "max", _prefix + nameof(MathHelper.Max) },
+		{ "min", _prefix + nameof(MathHelper.Min) },
+		{ "pow", _prefix + nameof(MathHelper.Pow) },
+		{ "round", _prefix + nameof(MathHelper.Round) },
+		{ "sign", _prefix + nameof(MathHelper.Sign) },
+		{ "sin", _prefix + nameof(MathHelper.Sin) },
+		{ "sqrt", _prefix + nameof(MathHelper.Sqrt) },
+		{ "tan", _prefix + nameof(MathHelper.Tan) },
+		{ "truncate", _prefix + nameof(MathHelper.Truncate) },
+	};
 
-		public static readonly Regex IdRegex = new($@"(?<id>{_idPattern})");
-		public static readonly Regex CandleRegex = new(@"(?<id>\b[O|H|L|C|V|B]\b|TS|BS|LEN|OI)", RegexOptions.IgnoreCase);
-		private static readonly Regex _nameRegex = new(@"(?<name>(\w+))");
-		private static readonly Regex _bracketsVarRegex = new(@"\[(?<name>[^\]]*)\]");
-
-		/// <summary>
-		/// To get all identifiers from mathematical formula.
-		/// </summary>
-		/// <param name="expression">Mathematical formula.</param>
-		/// <returns>Identifiers.</returns>
-		public static IEnumerable<string> GetIds(Regex idRegex, string expression)
-		{
-			if (idRegex is null)
-				throw new ArgumentNullException(nameof(idRegex));
-
-			return
-				from Match match in idRegex.Matches(expression)
-				where match.Success
-				select match.Groups["id"].Value;
-		}
-
-		private static IEnumerable<Group> GetVariableNames(string expression)
-		{
-			return
-				from Match match in _nameRegex.Matches(expression)
-				where match.Success
-				select match.Groups["name"];
-		}
-
-		/// <summary>
-		/// Escape mathematical formula from identifiers.
-		/// </summary>
-		/// <param name="expression">Unescaped text.</param>
-		/// <returns>Escaped text.</returns>
-		public static string Encode(Regex idRegex, string expression)
-		{
-			foreach (var id in GetIds(idRegex, expression).Distinct(StringComparer.InvariantCultureIgnoreCase))
-			{
-				expression = expression.Replace(id, $"[{{{id}}}]");
-			}
-
-			return expression;
-		}
-
-		/// <summary>
-		/// Undo escape mathematical formula with identifiers.
-		/// </summary>
-		/// <param name="expression">Escaped text.</param>
-		/// <returns>Unescaped text.</returns>
-		public static string Decode(string expression, out IDictionary<string, string> replaces)
-		{
-			replaces = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-
-			foreach (var match in _bracketsVarRegex.Matches(expression).Cast<Match>().OrderByDescending(m => m.Index))
-			{
-				var varName = match.Groups["name"].Value;
-
-				if (!replaces.ContainsKey(varName))
-					replaces.Add(varName, $"VAR{replaces.Count}@VAR");
-			}
-
-			return replaces.Aggregate(expression, (current, pair) => current.ReplaceIgnoreCase($"[{pair.Key}]", pair.Value).ReplaceIgnoreCase(pair.Key, pair.Value));
-		}
-
-		/// <summary>
-		/// Available functions.
-		/// </summary>
-		public static IEnumerable<string> Functions => _funcReplaces.CachedKeys;
-
-		private const string _prefix = nameof(MathHelper) + ".";
-		private static readonly CachedSynchronizedDictionary<string, string> _funcReplaces = new(StringComparer.InvariantCultureIgnoreCase)
-		{
-			{ "abs", _prefix + nameof(MathHelper.Abs) },
-			{ "acos", _prefix + nameof(MathHelper.Acos) },
-			{ "asin", _prefix + nameof(MathHelper.Asin) },
-			{ "atan", _prefix + nameof(MathHelper.Atan) },
-			{ "ceiling", _prefix + nameof(MathHelper.Ceiling) },
-			{ "cos", _prefix + nameof(MathHelper.Cos) },
-			{ "exp", _prefix + nameof(MathHelper.Exp) },
-			{ "floor", _prefix + nameof(MathHelper.Floor) },
-			//{ "ieeeremainder", _prefix + nameof(MathHelper.IEEERemainer) },
-			{ "log", _prefix + nameof(MathHelper.Log) },
-			{ "log10", _prefix + nameof(MathHelper.Log10) },
-			{ "max", _prefix + nameof(MathHelper.Max) },
-			{ "min", _prefix + nameof(MathHelper.Min) },
-			{ "pow", _prefix + nameof(MathHelper.Pow) },
-			{ "round", _prefix + nameof(MathHelper.Round) },
-			{ "sign", _prefix + nameof(MathHelper.Sign) },
-			{ "sin", _prefix + nameof(MathHelper.Sin) },
-			{ "sqrt", _prefix + nameof(MathHelper.Sqrt) },
-			{ "tan", _prefix + nameof(MathHelper.Tan) },
-			{ "truncate", _prefix + nameof(MathHelper.Truncate) },
-		};
-
-		private class ErrorExpressionFormula<TResult> : ExpressionFormula<TResult>
-		{
-			public ErrorExpressionFormula(string error)
-				: base(error)
-			{
-			}
-
-			public override TResult Calculate(decimal[] prices)
-				=> throw new NotSupportedException(Error);
-		}
-
-		public static ExpressionFormula<TResult> CreateError<TResult>(string errorText)
-			=> new ErrorExpressionFormula<TResult>(errorText);
-
-		private static string Escape(Regex idRegex, string text, bool useIds, out IEnumerable<string> identifiers)
-		{
-			static string ReplaceFuncs(string text)
-			{
-				var dict = new Dictionary<string, string>();
-
-				foreach (var pair in _funcReplaces.CachedPairs)
-				{
-					var what = pair.Key + "(";
-
-					if (!text.ContainsIgnoreCase(what))
-						continue;
-
-					var rnd = TypeHelper.GenerateSalt(16).Base64();
-
-					dict.Add(rnd, pair.Value + "(");
-					text = text.ReplaceIgnoreCase(what, rnd);
-				}
-
-				foreach (var pair in dict)
-				{
-					text = text.ReplaceIgnoreCase(pair.Key, pair.Value);
-				}
-
-				return text;
-			}
-
-			if (text.IsEmptyOrWhiteSpace())
-				throw new ArgumentNullException(nameof(text));
-
-			if (useIds)
-			{
-				text = Decode(text.ToUpperInvariant(), out _);
-				identifiers = GetIds(idRegex, text).Distinct().ToArray();
-
-				var i = 0;
-				foreach (var id in identifiers)
-				{
-					text = text.ReplaceIgnoreCase(id, $"values[{i}]");
-					i++;
-				}
-
-				if (i == 0)
-					throw new InvalidOperationException($"Expression '{text}' do not contains any identifiers.");
-
-				return ReplaceFuncs(text);
-			}
-			else
-			{
-				//var textWithoutFunctions = _funcReplaces
-				//	.CachedPairs
-				//	.Aggregate(text, (current, pair) => current.ReplaceIgnoreCase(pair.Key, string.Empty));
-
-				const string dotSep = "__DOT__";
-
-				text = text.Replace(".", dotSep);
-
-				var groups = GetVariableNames(text)
-					.Where(g => !g.Value.ContainsIgnoreCase(dotSep) && !long.TryParse(g.Value, out _) && !_funcReplaces.ContainsKey(g.Value))
-					.ToArray();
-
-				var dict = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
-
-				foreach (var g in groups.OrderByDescending(g => g.Index))
-				{
-					if (!dict.TryGetValue(g.Value, out var i))
-					{
-						i = dict.Count;
-						dict.Add(g.Value, i);
-					}
-
-					text = text.Remove(g.Index, g.Length).Insert(g.Index, $"values[{i}]");
-				}
-
-				identifiers = dict.Keys.ToArray();
-
-				text = text.Replace(dotSep, ".");
-
-				return ReplaceFuncs(text);
-			}
-		}
-
-		private const string _template = @"using System;
+	private const string _template = @"using System;
 using System.Collections.Generic;
 
 using Ecng.Common;
@@ -215,8 +218,8 @@ using Ecng.Compilation.Expressions;
 
 class TempExpressionFormula : ExpressionFormula<__result_type>
 {
-	public TempExpressionFormula(string expression, IEnumerable<string> identifiers)
-		: base(expression, identifiers)
+	public TempExpressionFormula(string expression, IEnumerable<string> variables)
+		: base(expression, variables)
 	{
 	}
 
@@ -225,57 +228,56 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 		return __insert_code;
 	}
 }";
-		/// <summary>
-		/// Compile mathematical formula.
-		/// </summary>
-		/// <param name="compiler"><see cref="ICompiler"/>.</param>
-		/// <param name="context"><see cref="AssemblyLoadContextVisitor"/>.</param>
-		/// <param name="expression">Text expression.</param>
-		/// <param name="useIds">Use ids as variables.</param>
-		/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
-		/// <returns>Compiled mathematical formula.</returns>
-		public static ExpressionFormula<decimal> Compile(this ICompiler compiler, AssemblyLoadContextVisitor context, string expression, bool useIds, CancellationToken cancellationToken = default)
-			=> Compile<decimal>(compiler, context, expression, IdRegex, useIds, cancellationToken);
 
-		/// <summary>
-		/// Compile mathematical formula.
-		/// </summary>
-		/// <typeparam name="TResult">Result type.</typeparam>
-		/// <param name="compiler"><see cref="ICompiler"/>.</param>
-		/// <param name="context"><see cref="AssemblyLoadContextVisitor"/>.</param>
-		/// <param name="expression">Text expression.</param>
-		/// <param name="useIds">Use ids as variables.</param>
-		/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
-		/// <returns>Compiled mathematical formula.</returns>
-		public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextVisitor context, string expression, Regex idRegex, bool useIds, CancellationToken cancellationToken = default)
+	/// <summary>
+	/// Get variables from the expression.
+	/// </summary>
+	/// <param name="expression">Text expression.</param>
+	/// <returns>Variables.</returns>
+	public static string[] GetVariables(string expression)
+	{
+		var (_, variables) = new Parser().Parse(expression);
+
+		return variables;
+	}
+
+	/// <summary>
+	/// Compile mathematical formula.
+	/// </summary>
+	/// <typeparam name="TResult">Result type.</typeparam>
+	/// <param name="compiler"><see cref="ICompiler"/>.</param>
+	/// <param name="context"><see cref="AssemblyLoadContextVisitor"/>.</param>
+	/// <param name="expression">Text expression.</param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
+	/// <returns>Compiled mathematical formula.</returns>
+	public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextVisitor context, string expression, CancellationToken cancellationToken = default)
+	{
+		if (compiler is null)
+			throw new ArgumentNullException(nameof(compiler));
+
+		try
 		{
-			if (compiler is null)
-				throw new ArgumentNullException(nameof(compiler));
+			var (code, variables) = new Parser().Parse(expression);
 
-			try
+			var refs = new HashSet<string>(new[]
 			{
-				var code = Escape(idRegex, expression, useIds, out var identifiers);
+				typeof(object).Assembly.Location,
+				typeof(ExpressionHelper).Assembly.Location,
+				typeof(MathHelper).Assembly.Location,
+				"System.Runtime.dll".ToFullRuntimePath(),
+			}, StringComparer.InvariantCultureIgnoreCase);
 
-				var refs = new HashSet<string>(new[]
-				{
-					typeof(object).Assembly.Location,
-					typeof(ExpressionHelper).Assembly.Location,
-					typeof(MathHelper).Assembly.Location,
-					"System.Runtime.dll".ToFullRuntimePath(),
-				}, StringComparer.InvariantCultureIgnoreCase);
+			var result = compiler.Compile(context, "IndexExpression", _template.Replace("__insert_code", code).Replace("__result_type", typeof(TResult).TryGetCSharpAlias() ?? typeof(TResult).Name), refs, cancellationToken);
 
-				var result = compiler.Compile(context, "IndexExpression", _template.Replace("__insert_code", code).Replace("__result_type", typeof(TResult).TryGetCSharpAlias() ?? typeof(TResult).Name), refs, cancellationToken);
+			var formula = result.Assembly is null
+				? ExpressionFormula<TResult>.CreateError(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL())
+				: result.Assembly.GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
 
-				var formula = result.Assembly is null
-					? new ErrorExpressionFormula<TResult>(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL())
-					: result.Assembly.GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, identifiers);
-
-				return formula;
-			}
-			catch (Exception ex)
-			{
-				return new ErrorExpressionFormula<TResult>(ex.ToString());
-			}
+			return formula;
+		}
+		catch (Exception ex)
+		{
+			return ExpressionFormula<TResult>.CreateError(ex.ToString());
 		}
 	}
 }
