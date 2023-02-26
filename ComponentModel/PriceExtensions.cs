@@ -26,7 +26,7 @@
 
 			var last = str[str.Length - 1];
 			
-			if (!char.IsDigit(last))
+			if (!last.IsDigit())
 			{
 				last = last.ToLower();
 				str = str.Substring(0, str.Length - 1);

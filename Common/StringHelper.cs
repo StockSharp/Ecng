@@ -371,7 +371,7 @@
 
 			foreach (var c in s)
 			{
-				if (char.IsDigit(c))
+				if (c.IsDigit())
 					continue;
 
 				if (floatPoint && (c == '.' || c == ','))
@@ -382,6 +382,9 @@
 
 			return true;
 		}
+
+		public static bool IsDigit(this char c)
+			=> char.IsDigit(c);
 
 		/// <summary>
 		/// Remove accent from strings 
@@ -1280,5 +1283,18 @@
 
 		public static void RemoveLast(this StringBuilder builder, int count)
 			=> builder.Remove(builder.Length - count, count);
+
+		public static bool IsEmpty(this StringBuilder builder)
+			=> builder.CheckOnNull(nameof(builder)).Length == 0;
+
+		public static string GetAndClear(this StringBuilder builder)
+		{
+			if (builder is null)
+				throw new ArgumentNullException(nameof(builder));
+
+			var str = builder.ToString();
+			builder.Clear();
+			return str;
+		}
 	}
 }
