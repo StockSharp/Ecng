@@ -174,7 +174,7 @@ public class AsyncMessageChannel
 
 		await AsyncHelper.CatchHandle(
 			() => {
-				var token = msg.Token.IsDefault() ? DefaultActionToken : msg.Token;
+				var token = msg.Token == default ? DefaultActionToken : msg.Token;
 				token.ThrowIfCancellationRequested();
 
 				if (IsComplete && !HandleRemainingMessages)
