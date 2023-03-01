@@ -24,16 +24,18 @@ namespace Ecng.Common
 
 		public static bool IsNull<T>(this T value, bool checkValueTypeOnDefault)
 		{
-			if (!(value is ValueType))
+			if (value is not ValueType)
 				return value is null;
+
+			if (!checkValueTypeOnDefault)
+				return false;
 
 			var defValue = default(T);
 
-			// T is object
-			if (defValue is null)
-				defValue = (T)Activator.CreateInstance(value.GetType());
+			// typeof(T) == typeof(object)
+			defValue ??= (T)Activator.CreateInstance(value.GetType());
 
-			return checkValueTypeOnDefault && value.Equals(defValue);
+			return value.Equals(defValue);
 		}
 
 		public static TResult Convert<T, TResult>(this T value, Func<T, TResult> notNullFunc, Func<TResult> nullFunc)
