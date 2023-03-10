@@ -30,38 +30,45 @@ namespace Ecng.Data
 		/// </summary>
 		public event Action<DatabaseConnectionPair> ConnectionDeleted;
 
+		public event Action Updated;
+
 		/// <summary>
 		/// Получить подключение к базе данных.
 		/// </summary>
 		/// <param name="provider">Провайдер баз данных.</param>
 		/// <param name="connectionString">Строка подключения.</param>
 		/// <returns>Подключение к базе данных.</returns>
-		public DatabaseConnectionPair GetOrAddCache(string provider, string connectionString)
+		public DatabaseConnectionPair GetOrAdd(string provider, string connectionString)
 		{
-			return GetOrAddCache(new()
-			{
-				Provider = provider.ThrowIfEmpty(nameof(provider)),
-				ConnectionString = connectionString.ThrowIfEmpty(nameof(connectionString))
-			});
-		}
+			if (provider.IsEmpty())
+				throw new ArgumentNullException(nameof(provider));
 
-		public DatabaseConnectionPair GetOrAddCache(DatabaseConnectionPair pair)
-		{
-			if (pair is null)
-				throw new ArgumentNullException(nameof(pair));
+			if (connectionString.IsEmpty())
+				throw new ArgumentNullException(nameof(connectionString));
+
+			var isNew = false;
+			DatabaseConnectionPair connection;
 
 			lock (_connections.SyncRoot)
 			{
-				var connection = _connections.FirstOrDefault(p => p.Provider == pair.Provider && p.ConnectionString.EqualsIgnoreCase(pair.ConnectionString));
+				connection = _connections.FirstOrDefault(p => p.Provider == provider && p.ConnectionString.EqualsIgnoreCase(connectionString));
 
-				if (connection is not null)
-					return connection;
-
-				_connections.Add(pair);
+				if (connection is null)
+				{
+					isNew = true;
+					_connections.Add(connection = new()
+					{
+						Provider = provider,
+						ConnectionString = connectionString,
+					});
+				}
 			}
 
-			ConnectionCreated?.Invoke(pair);
-			return pair;
+			if (isNew)
+				ConnectionCreated?.Invoke(connection);
+
+			Updated?.Invoke();
+			return connection;
 		}
 
 		/// <summary>
@@ -77,6 +84,7 @@ namespace Ecng.Data
 				return false;
 
 			ConnectionDeleted?.Invoke(connection);
+			Updated?.Invoke();
 			return true;
 		}
 
@@ -86,13 +94,9 @@ namespace Ecng.Data
 		/// <param name="storage">Хранилище настроек.</param>
 		public void Load(SettingsStorage storage)
 		{
-			var connections = storage
+			_connections.AddRange(storage
 				.GetValue<IEnumerable<DatabaseConnectionPair>>(nameof(Connections))
-				.Where(p => p.Provider != null)
-				.ToArray();
-
-			lock (_connections.SyncRoot)
-				_connections.AddRange(connections);
+				.Where(p => p.Provider != null));
 		}
 
 		/// <summary>
