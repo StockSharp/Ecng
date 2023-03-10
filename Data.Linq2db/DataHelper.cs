@@ -33,16 +33,5 @@
 
 			return new DataConnection(provider, connStr);
 		}
-
-		/// <summary>
-		/// Verify the connection is ok.
-		/// </summary>
-		/// <param name="pair">Connection.</param>
-		public static void Verify(this DatabaseConnectionPair pair)
-		{
-			using var db = pair.CreateConnection();
-			using var conn = db.DataProvider.CreateConnection(db.ConnectionString);
-			conn.Open();
-		}
 	}
 }
