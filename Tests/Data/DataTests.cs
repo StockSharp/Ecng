@@ -21,7 +21,7 @@
 			var deleted = 0;
 			cache.ConnectionCreated += p => created++;
 			cache.ConnectionDeleted += p => deleted++;
-			var pair = cache.GetOrAddCache(ProviderName.SqlServer, "123");
+			var pair = cache.GetOrAdd(ProviderName.SqlServer, "123");
 			cache.Connections.Count().AssertEqual(1);
 			created.AssertEqual(1);
 			deleted.AssertEqual(0);
@@ -35,7 +35,7 @@
 		public void SaveLoad()
 		{
 			var cache = new DatabaseConnectionCache();
-			var pair = cache.GetOrAddCache(ProviderName.SqlServer, "123");
+			var pair = cache.GetOrAdd(ProviderName.SqlServer, "123");
 			var ser = new JsonSerializer<DatabaseConnectionCache>();
 			var cache2 = ser.Deserialize(ser.Serialize(cache));
 
