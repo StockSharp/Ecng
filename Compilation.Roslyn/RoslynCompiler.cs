@@ -44,7 +44,7 @@
 
 		public CompilationLanguages Language { get; }
 
-		CompilationResult ICompiler.Compile(AssemblyLoadContextVisitor context, string name, string body, IEnumerable<string> refs, CancellationToken cancellationToken)
+		CompilationResult ICompiler.Compile(AssemblyLoadContextVisitor context, string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
 		{
 			if (context is null)
 				throw new ArgumentNullException(nameof(context));
@@ -53,11 +53,6 @@
 
 			var references = refs.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
 
-			//var providerOptions = new Dictionary<string, string>
-			//{
-			//	{ "CompilerVersion", "v4.0" }
-			//};
-
 			Compilation compilation;
 
 			switch (Language)
@@ -65,7 +60,7 @@
 				case CompilationLanguages.CSharp:
 				{
 					compilation = CSharpCompilation.Create(assemblyName,
-						new[] { CSharpSyntaxTree.ParseText(body, cancellationToken: cancellationToken) },
+						sources.Select(source => CSharpSyntaxTree.ParseText(source, cancellationToken: cancellationToken)),
 						references,
 						new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
@@ -74,21 +69,12 @@
 				case CompilationLanguages.VisualBasic:
 				{
 					compilation = VisualBasicCompilation.Create(assemblyName,
-						new[] { VisualBasicSyntaxTree.ParseText(body, cancellationToken: cancellationToken) },
+						sources.Select(source => VisualBasicSyntaxTree.ParseText(source, cancellationToken: cancellationToken)),
 						references,
 						new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
 					break;
 				}
-				//case CompilationLanguages.Java:
-				//	provider = CodeDomProvider.CreateProvider("VJSharp");
-				//	break;
-				//case CompilationLanguages.JScript:
-				//	provider = CodeDomProvider.CreateProvider("JScript");
-				//	break;
-				//case CompilationLanguages.Cpp:
-				//	provider = CodeDomProvider.CreateProvider("Cpp");
-				//	break;
 				default:
 					throw new InvalidOperationException();
 			}

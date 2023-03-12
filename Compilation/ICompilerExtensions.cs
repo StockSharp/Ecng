@@ -20,7 +20,7 @@ public static class ICompilerExtensions
 
 	[Obsolete("Use Compile with specified context.")]
 	public static CompilationResult Compile(this ICompiler compiler, string name, string body, IEnumerable<string> refs)
-		=> compiler.CheckOnNull(nameof(compiler)).Compile(new(), name, body, refs);
+		=> compiler.CheckOnNull(nameof(compiler)).Compile(new(), name, new[] { body }, refs);
 
 	/// <summary>
 	/// Are there any errors in the compilation.
@@ -29,6 +29,9 @@ public static class ICompilerExtensions
 	/// <returns><see langword="true" /> - If there are errors, <see langword="true" /> - If the compilation is performed without errors.</returns>
 	public static bool HasErrors(this CompilationResult result)
 		=> result.CheckOnNull(nameof(result)).Errors.Any(e => e.Type == CompilationErrorTypes.Error);
+
+	public static CompilationResult Compile(this ICompiler compiler, AssemblyLoadContextVisitor context, string name, string body, IEnumerable<string> refs, CancellationToken cancellationToken = default)
+		=> compiler.Compile(context, name, new[] { body }, refs, cancellationToken);
 
 #if NETCOREAPP
 	/// <summary>
@@ -41,7 +44,7 @@ public static class ICompilerExtensions
 	/// <param name="references">References.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
 	/// <returns>The result of the compilation.</returns>
-	public static CompilationResult CompileCode(this ICompiler compiler, AssemblyLoadContext context, string code, string name, IEnumerable<CodeReference> references, CancellationToken cancellationToken = default)
-		=> compiler.Compile(new(context), name, code, references.Where(r => r.IsValid).Select(r => r.FullLocation).ToArray(), cancellationToken);
+	public static CompilationResult CompileCode(this ICompiler compiler, AssemblyLoadContext context, IEnumerable<string> sources, string name, IEnumerable<CodeReference> references, CancellationToken cancellationToken = default)
+		=> compiler.Compile(new(context), name, sources, references.Where(r => r.IsValid).Select(r => r.FullLocation).ToArray(), cancellationToken);
 #endif
 }

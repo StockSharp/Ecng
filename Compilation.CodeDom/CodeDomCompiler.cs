@@ -24,7 +24,7 @@ namespace Ecng.Compilation.CodeDom
 		public string OutputDir { get; }
 		public string TempPath { get; }
 
-		CompilationResult ICompiler.Compile(AssemblyLoadContextVisitor context, string name, string body, IEnumerable<string> refs, CancellationToken cancellationToken)
+		CompilationResult ICompiler.Compile(AssemblyLoadContextVisitor context, string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
 		{
 			if (context is null)
 				throw new ArgumentNullException(nameof(context));
@@ -45,7 +45,7 @@ namespace Ecng.Compilation.CodeDom
 				GenerateExecutable = false,
 				IncludeDebugInformation = true,
 				TempFiles = new TempFileCollection(TempPath),
-			}, body);
+			}, sources.ToArray());
 
 			var compilationResult = new CompilationResult
 			{
