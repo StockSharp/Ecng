@@ -32,7 +32,7 @@
     <ILPackVer>0.1.7</ILPackVer>
     <linq2dbVer>5.0.0</linq2dbVer>
     <NitoVer>5.1.2</NitoVer>
-    <DXVer>1.0.7</DXVer>
+    <DXVer>1.*</DXVer>
     <CsWin32Ver>0.2.164-beta</CsWin32Ver>
   </PropertyGroup>
 </Project>
