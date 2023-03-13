@@ -1,9 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <AWSSDKS3Ver>3.7.3.24</AWSSDKS3Ver>
-    <AWSSDKSQSVer>3.7.1.34</AWSSDKSQSVer>
-    <AWSSDKSimpleNotificationServiceVer>3.7.2.62</AWSSDKSimpleNotificationServiceVer>
-    <AWSSDKGlacierVer>3.7.0.91</AWSSDKGlacierVer>
+    <AWSSDKVer>3.*</AWSSDKVer>
 
     <MicrosoftWindowsCompatibilityVer>6.0.2</MicrosoftWindowsCompatibilityVer>
     <MicrosoftAspNetWebApiClientVer>5.2.9</MicrosoftAspNetWebApiClientVer>
@@ -19,8 +16,8 @@
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
     <SystemSecurityPermissionsVer>6.*</SystemSecurityPermissionsVer>
     <SystemTextEncodingCodePagesVer>6.*</SystemTextEncodingCodePagesVer>
-    <NUnitVer>3.13.3</NUnitVer>
-    <NUnit3TestAdapterVer>4.2.1</NUnit3TestAdapterVer>
+    <NUnitVer>3.*</NUnitVer>
+    <NUnit3TestAdapterVer>4.*</NUnit3TestAdapterVer>
     <FluentAssertionsVer>5.10.3</FluentAssertionsVer>
     <SystemDrawingCommonVer>6.*</SystemDrawingCommonVer>
     <MicrosoftNetHttpHeadersVer>2.2.8</MicrosoftNetHttpHeadersVer>
