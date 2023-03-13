@@ -196,6 +196,32 @@ namespace Ecng.Tests.Common
 
 			Do(DateTime.UtcNow);
 			Do(DateTimeOffset.UtcNow);
+
+			Do(DateTime.MinValue);
+			Do(DateTime.MaxValue);
+
+			Do(DateTimeOffset.MinValue);
+			Do(DateTimeOffset.MaxValue);
+		}
+
+		[TestMethod]
+		public void DateTimeOffsetConvert()
+		{
+			static void ToDt(DateTimeOffset dto)
+				=> dto.To<DateTime>().AssertEqual(dto.UtcDateTime);
+
+			static void ToDto(DateTime dt, DateTimeOffset? expected = default)
+				=> dt.To<DateTimeOffset>().AssertEqual(expected ?? dt);
+
+			ToDt(DateTimeOffset.Now);
+			ToDt(DateTimeOffset.UtcNow);
+			ToDt(DateTimeOffset.MinValue);
+			ToDt(DateTimeOffset.MaxValue);
+
+			ToDto(DateTime.Now);
+			ToDto(DateTime.UtcNow);
+			ToDto(DateTime.MinValue, DateTimeOffset.MinValue);
+			ToDto(DateTime.MaxValue, DateTimeOffset.MaxValue);
 		}
 	}
 }

@@ -353,6 +353,15 @@
 				else
 					return new DateTimeOffset(input);
 			});
+			AddTypedConverter<DateTimeOffset, DateTime>(input =>
+			{
+				if (input == DateTimeOffset.MinValue)
+					return DateTime.MinValue;
+				else if (input == DateTimeOffset.MaxValue)
+					return DateTime.MaxValue;
+				else
+					return input.UtcDateTime;
+			});
 
 			AddTypedConverter<byte, string>(input => input.ToString());
 			AddTypedConverter<string, byte>(byte.Parse);
