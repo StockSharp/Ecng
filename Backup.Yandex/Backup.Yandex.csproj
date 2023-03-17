@@ -1,8 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <ItemGroup>
+    <PackageReference Include="YandexDisk.Client" Version="$(YDCVer)" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Backup\Backup.csproj" />
     <ProjectReference Include="..\Reflection\Reflection.csproj" />
-    <ProjectReference Include="..\YandexDisk\YandexDisk.csproj" />
   </ItemGroup>
 </Project>

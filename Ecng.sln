@@ -45,8 +45,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lzma", "Lzma\Lzma.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StringSearch", "StringSearch\StringSearch.csproj", "{337D3CF8-08C6-4453-AB76-2A16B2742292}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YandexDisk", "YandexDisk\YandexDisk.csproj", "{55ED6439-B69D-4FCB-AF9C-5D790800C930}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HtmlRenderer", "HtmlRenderer\HtmlRenderer.csproj", "{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibGit2Sharp", "LibGit2Sharp\LibGit2Sharp.csproj", "{AF06F5C5-8E05-4911-AEA7-583031AAE993}"
@@ -159,10 +157,6 @@ Global
 		{337D3CF8-08C6-4453-AB76-2A16B2742292}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{337D3CF8-08C6-4453-AB76-2A16B2742292}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{337D3CF8-08C6-4453-AB76-2A16B2742292}.Release|Any CPU.Build.0 = Release|Any CPU
-		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{55ED6439-B69D-4FCB-AF9C-5D790800C930}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D62C14AC-0D49-4CB5-901D-5847DFEEACB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
