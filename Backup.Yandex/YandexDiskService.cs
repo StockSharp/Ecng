@@ -26,6 +26,9 @@ public class YandexDiskService : Disposable, IBackupService
 	/// </summary>
 	public YandexDiskService(SecureString token)
 	{
+		if (token.IsEmpty())
+			throw new ArgumentNullException(nameof(token));
+
 		_client = new DiskHttpApi(token.UnSecure());
 	}
 
