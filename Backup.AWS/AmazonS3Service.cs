@@ -54,7 +54,7 @@ namespace Ecng.Backup.Amazon
 			_client = new AmazonS3Client(_credentials, _endpoint);
 		}
 
-		bool IBackupService.CanFolders => true;
+		bool IBackupService.CanFolders => false;
 		bool IBackupService.CanPublish => true;
 		bool IBackupService.CanPartialDownload => true;
 
@@ -232,6 +232,9 @@ namespace Ecng.Backup.Amazon
 			if (prevProgress < 100)
 				progress(100);
 		}
+
+		Task IBackupService.CreateFolder(BackupEntry entry, CancellationToken cancellationToken)
+			=> throw new NotSupportedException();
 
 		async Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{

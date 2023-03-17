@@ -20,6 +20,8 @@ namespace Ecng.Backup
 
 		bool CanPartialDownload { get; }
 
+		Task CreateFolder(BackupEntry entry, CancellationToken cancellationToken = default);
+
 		/// <summary>
 		/// Find files by the specified criteria.
 		/// </summary>

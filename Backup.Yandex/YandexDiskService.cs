@@ -3,6 +3,7 @@ namespace Ecng.Backup.Yandex;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Threading;
@@ -39,14 +40,14 @@ public class YandexDiskService : Disposable, IBackupService
 	private static string GetPath(BackupEntry entry)
 	{
 		if (entry is null)
-			return string.Empty;
+			throw new ArgumentNullException(nameof(entry));
 
-		return GetPath(entry.Parent) + "/" + entry.Name;
+		return (entry.Parent is null ? string.Empty : GetPath(entry.Parent)) + $"/{entry.Name}";
 	}
 
 	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
 	{
-		var path = GetPath(parent) + "/";
+		var path = parent is null ? string.Empty : GetPath(parent) + "/";
 
 		var offset = 0;
 		var limit = 100;
@@ -113,6 +114,51 @@ public class YandexDiskService : Disposable, IBackupService
 	{
 		var link = await _client.Files.GetUploadLinkAsync(GetPath(entry), true, cancellationToken);
 		await _client.Files.UploadAsync(link, stream, cancellationToken);
+	}
+
+	async Task IBackupService.CreateFolder(BackupEntry entry, CancellationToken cancellationToken)
+	{
+		if (entry is null)
+			throw new ArgumentNullException(nameof(entry));
+
+		var folders = new List<BackupEntry>();
+
+		do
+		{
+			folders.Add(entry);
+			entry = entry.Parent;
+		}
+		while (entry is not null);
+
+		folders.Reverse();
+
+		var needCheck = true;
+
+		foreach (var folder in folders)
+		{
+			var path = GetPath(folder);
+
+			if (!needCheck)
+			{
+				await _client.Commands.CreateDictionaryAsync(path, cancellationToken);
+				continue;
+			}
+
+			try
+			{
+				await _client.MetaInfo.GetInfoAsync(new() { Path = path }, cancellationToken);
+			}
+			catch (YandexApiException ex)
+			{
+				if (ex.StatusCode == HttpStatusCode.NotFound)
+				{
+					await _client.Commands.CreateDictionaryAsync(path, cancellationToken);
+					needCheck = false;
+				}
+				else
+					throw;
+			}
+		}
 	}
 
 	async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)

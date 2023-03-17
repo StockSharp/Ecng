@@ -128,6 +128,9 @@ namespace Ecng.Backup.Amazon
 		Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 			=> throw new NotSupportedException();
 
+		Task IBackupService.CreateFolder(BackupEntry entry, CancellationToken cancellationToken)
+			=> throw new NotSupportedException();
+
 		/// <summary>
 		/// Disposes the managed resources.
 		/// </summary>
