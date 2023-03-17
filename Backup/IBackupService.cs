@@ -18,20 +18,15 @@ namespace Ecng.Backup
 
 		bool CanFolders { get; }
 
+		bool CanPartialDownload { get; }
+
 		/// <summary>
 		/// Find files by the specified criteria.
 		/// </summary>
 		/// <param name="parent">Parent element. Can be null.</param>
 		/// <param name="criteria">Criteria.</param>
 		/// <returns>File list.</returns>
-		Task<IEnumerable<BackupEntry>> FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken = default);
-
-		/// <summary>
-		/// List of files.
-		/// </summary>
-		/// <param name="parent">Parent element. Can be null.</param>
-		/// <returns>File list.</returns>
-		Task<IEnumerable<BackupEntry>> GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken = default);
+		IAsyncEnumerable<BackupEntry> FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Fill file info.

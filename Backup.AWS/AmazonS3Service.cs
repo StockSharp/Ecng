@@ -7,6 +7,7 @@ namespace Ecng.Backup.Amazon
 	using System.Threading;
 	using System.Threading.Tasks;
 	using System.Net;
+	using System.Runtime.CompilerServices;
 
 	using global::Amazon;
 	using global::Amazon.Runtime;
@@ -54,8 +55,10 @@ namespace Ecng.Backup.Amazon
 		}
 
 		bool IBackupService.CanFolders => true;
+		bool IBackupService.CanPublish => true;
+		bool IBackupService.CanPartialDownload => true;
 
-		async Task<IEnumerable<BackupEntry>> IBackupService.FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken)
+		async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
 		{
 			//if (parent != null && !parent.IsDirectory)
 			//	throw new ArgumentException("{0} should be directory.".Put(parent.Name), "parent");
@@ -69,8 +72,6 @@ namespace Ecng.Backup.Amazon
 			if (!criteria.IsEmpty())
 				request.Prefix += "/" + criteria;
 
-			var retVal = new List<BackupEntry>();
-
 			do
 			{
 				var response = await _client.ListObjectsV2Async(request, cancellationToken);
@@ -78,17 +79,18 @@ namespace Ecng.Backup.Amazon
 				foreach (var entry in response.S3Objects)
 				{
 					var be = GetPath(entry.Key);
+					be.LastModified = entry.LastModified;
 					be.Size = entry.Size;
-					retVal.Add(be);
+					yield return be;
 				}
 
 				foreach (var commonPrefix in response.CommonPrefixes)
 				{
-					retVal.Add(new()
+					yield return new()
 					{
 						Name = commonPrefix,
 						Parent = parent,
-					});
+					};
 				}
 
 				if (response.IsTruncated)
@@ -97,12 +99,7 @@ namespace Ecng.Backup.Amazon
 					break;
 			}
 			while (true);
-
-			return retVal;
 		}
-
-		Task<IEnumerable<BackupEntry>> IBackupService.GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken)
-			=> ((IBackupService)this).FindAsync(parent, null, cancellationToken);
 
 		Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
 			=> _client.DeleteObjectAsync(_bucket, GetKey(entry), cancellationToken);
@@ -248,8 +245,6 @@ namespace Ecng.Backup.Amazon
 
 			entry.Size = response.ContentLength;
 		}
-
-		bool IBackupService.CanPublish => true;
 
 		async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{

@@ -1,5 +1,7 @@
 namespace Ecng.Backup
 {
+	using System;
+
 	/// <summary>
 	/// Storage element.
 	/// </summary>
@@ -26,6 +28,11 @@ namespace Ecng.Backup
 		/// Size in bytes.
 		/// </summary>
 		public long Size { get; set; }
+
+		/// <summary>
+		/// Last time modified.
+		/// </summary>
+		public DateTime LastModified { get; set; }
 
 		/// <summary>
 		/// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.

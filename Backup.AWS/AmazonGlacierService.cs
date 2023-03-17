@@ -52,14 +52,13 @@ namespace Ecng.Backup.Amazon
 		}
 
 		bool IBackupService.CanFolders => false;
+		bool IBackupService.CanPublish => false;
+		bool IBackupService.CanPartialDownload => true;
 
-		Task<IEnumerable<BackupEntry>> IBackupService.FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken)
+		IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}
-
-		Task<IEnumerable<BackupEntry>> IBackupService.GetChildsAsync(BackupEntry parent, CancellationToken cancellationToken)
-			=> throw new NotSupportedException();
 
 		Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
 			=> _client.DeleteArchiveAsync(new()
@@ -73,13 +72,23 @@ namespace Ecng.Backup.Amazon
 
 		async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 		{
-			var getJobOutputResponse = await _client.GetJobOutputAsync(new()
+			GetJobOutputRequest request = new()
 			{
 				//JobId = jobId,
-				VaultName = _vaultName
-			}, cancellationToken);
+				VaultName = _vaultName,
+			};
 
-			using var webStream = getJobOutputResponse.Body;
+			if (offset != null || length != null)
+			{
+				if (offset is null || length is null)
+					throw new NotSupportedException();
+
+				request.Range = $"bytes={offset}-{offset + length}";
+			}
+
+			var response = await _client.GetJobOutputAsync(request, cancellationToken);
+
+			using var webStream = response.Body;
 
 			var bytes = new byte[_bufferSize];
 			var readTotal = 0L;
@@ -112,8 +121,6 @@ namespace Ecng.Backup.Amazon
 
 		Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
 			=> throw new NotImplementedException();
-
-		bool IBackupService.CanPublish => false;
 
 		Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 			=> throw new NotSupportedException();
