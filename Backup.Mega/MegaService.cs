@@ -143,17 +143,19 @@ public class MegaService : Disposable, IBackupService
 	async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
 		=> await (await EnsureLogin(cancellationToken)).Upload(stream, entry.Name, entry.Parent is null ? GetRoot() : Find(entry.Parent), cancellationToken: cancellationToken);
 
-	Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
+	async Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
 	{
+		await EnsureLogin(cancellationToken);
+
 		var node = Find(entry);
 		entry.LastModified = node.ModificationDate ?? default;
 		entry.Size = node.Size;
-		return Task.CompletedTask;
 	}
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
 	{
+		await EnsureLogin(cancellationToken);
+
 		var child = GetChild(parent is null ? GetRoot() : Find(parent));
 
 		if (!criteria.IsEmpty())
@@ -170,7 +172,6 @@ public class MegaService : Disposable, IBackupService
 			};
 		}
 	}
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 
 	Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken) => throw new NotSupportedException();
 	Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken) => throw new NotSupportedException();
