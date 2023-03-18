@@ -33,6 +33,12 @@ public class YandexDiskService : Disposable, IBackupService
 		_client = new DiskHttpApi(token.UnSecure());
 	}
 
+	protected override void DisposeManaged()
+	{
+		_client.Dispose();
+		base.DisposeManaged();
+	}
+
 	bool IBackupService.CanFolders => true;
 	bool IBackupService.CanPublish => true;
 	bool IBackupService.CanPartialDownload => false;
