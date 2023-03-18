@@ -8,6 +8,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Backup\Backup.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
 </Project>

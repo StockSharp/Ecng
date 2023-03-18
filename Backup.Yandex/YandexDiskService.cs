@@ -37,17 +37,9 @@ public class YandexDiskService : Disposable, IBackupService
 	bool IBackupService.CanPublish => true;
 	bool IBackupService.CanPartialDownload => false;
 
-	private static string GetPath(BackupEntry entry)
-	{
-		if (entry is null)
-			throw new ArgumentNullException(nameof(entry));
-
-		return (entry.Parent is null ? string.Empty : GetPath(entry.Parent)) + $"/{entry.Name}";
-	}
-
 	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
 	{
-		var path = parent is null ? string.Empty : GetPath(parent) + "/";
+		var path = parent is null ? string.Empty : parent.GetFullPath() + "/";
 
 		var offset = 0;
 		var limit = 100;
@@ -86,7 +78,7 @@ public class YandexDiskService : Disposable, IBackupService
 	{
 		var info = await _client.MetaInfo.GetInfoAsync(new()
 		{
-			Path = GetPath(entry),
+			Path = entry.GetFullPath(),
 		}, cancellationToken);
 
 		entry.Size = info.Size;
@@ -97,7 +89,7 @@ public class YandexDiskService : Disposable, IBackupService
 	{
 		return _client.Commands.DeleteAsync(new()
 		{
-			Path = GetPath(entry),
+			Path = entry.GetFullPath(),
 		}, cancellationToken);
 	}
 
@@ -106,13 +98,13 @@ public class YandexDiskService : Disposable, IBackupService
 		if (offset is not null || length is not null)
 			throw new NotSupportedException();
 
-		var file = await _client.Files.DownloadFileAsync(GetPath(entry), cancellationToken);
+		var file = await _client.Files.DownloadFileAsync(entry.GetFullPath(), cancellationToken);
 		await file.CopyToAsync(stream, cancellationToken);
 	}
 
 	async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
 	{
-		var link = await _client.Files.GetUploadLinkAsync(GetPath(entry), true, cancellationToken);
+		var link = await _client.Files.GetUploadLinkAsync(entry.GetFullPath(), true, cancellationToken);
 		await _client.Files.UploadAsync(link, stream, cancellationToken);
 	}
 
@@ -136,7 +128,7 @@ public class YandexDiskService : Disposable, IBackupService
 
 		foreach (var folder in folders)
 		{
-			var path = GetPath(folder);
+			var path = folder.GetFullPath();
 
 			if (!needCheck)
 			{
@@ -163,10 +155,10 @@ public class YandexDiskService : Disposable, IBackupService
 
 	async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 	{
-		var link = await _client.MetaInfo.PublishFolderAsync(GetPath(entry), cancellationToken);
+		var link = await _client.MetaInfo.PublishFolderAsync(entry.GetFullPath(), cancellationToken);
 		return link.Href;
 	}
 
 	Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)
-		=> _client.MetaInfo.UnpublishFolderAsync(GetPath(entry), cancellationToken);
+		=> _client.MetaInfo.UnpublishFolderAsync(entry.GetFullPath(), cancellationToken);
 }

@@ -66,7 +66,7 @@ namespace Ecng.Backup.Amazon
 			var request = new ListObjectsV2Request
 			{
 				BucketName = _bucket,
-				Prefix = parent != null ? GetKey(parent) : null,
+				Prefix = parent != null ? parent.GetFullPath() : null,
 			};
 
 			if (!criteria.IsEmpty())
@@ -102,7 +102,7 @@ namespace Ecng.Backup.Amazon
 		}
 
 		Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
-			=> _client.DeleteObjectAsync(_bucket, GetKey(entry), cancellationToken);
+			=> _client.DeleteObjectAsync(_bucket, entry.GetFullPath(), cancellationToken);
 
 		async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 		{
@@ -115,7 +115,7 @@ namespace Ecng.Backup.Amazon
 			if (progress is null)
 				throw new ArgumentNullException(nameof(progress));
 
-			var key = GetKey(entry);
+			var key = entry.GetFullPath();
 
 			var request = new GetObjectRequest
 			{
@@ -178,7 +178,7 @@ namespace Ecng.Backup.Amazon
 			if (progress is null)
 				throw new ArgumentNullException(nameof(progress));
 
-			var key = GetKey(entry);
+			var key = entry.GetFullPath();
 
 			var initResponse = await _client.InitiateMultipartUploadAsync(new()
 			{
@@ -238,7 +238,7 @@ namespace Ecng.Backup.Amazon
 
 		async Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
-			var key = GetKey(entry);
+			var key = entry.GetFullPath();
 
 			var response = await _client.GetObjectMetadataAsync(new()
 			{
@@ -251,7 +251,7 @@ namespace Ecng.Backup.Amazon
 
 		async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
-			var key = GetKey(entry);
+			var key = entry.GetFullPath();
 
 			var response = await _client.PutACLAsync(new()
 			{
@@ -268,7 +268,7 @@ namespace Ecng.Backup.Amazon
 
 		async Task IBackupService.UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 		{
-			var key = GetKey(entry);
+			var key = entry.GetFullPath();
 
 			var response = await _client.PutACLAsync(new()
 			{
@@ -279,19 +279,6 @@ namespace Ecng.Backup.Amazon
 
 			if (response.HttpStatusCode != HttpStatusCode.OK)
 				throw new InvalidOperationException(response.HttpStatusCode.To<string>());
-		}
-
-		private static string GetKey(BackupEntry entry)
-		{
-			var key = entry.Name;
-
-			if (key.IsEmpty())
-				throw new ArgumentException(nameof(entry));
-
-			if (entry.Parent != null)
-				key = GetKey(entry.Parent) + "/" + key;
-
-			return key;
 		}
 
 		private static BackupEntry GetPath(string key)
