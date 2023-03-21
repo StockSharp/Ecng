@@ -957,5 +957,30 @@ namespace Ecng.Reflection
 
 		public static void EnsureRunClass(this Type type)
 			=> RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+
+		/// <summary>
+		/// Find all <typeparamref name="T"/> implementation in the specified assembly.
+		/// </summary>
+		/// <typeparam name="T">Filter interface type.</typeparam>
+		/// <param name="assembly">Assembly in where types scan required.</param>
+		/// <param name="showObsolete">Show types marked as obsolete.</param>
+		/// <param name="showNonPublic">Show non public types.</param>
+		/// <param name="extraFilter">Extra filter.</param>
+		/// <returns>Found types.</returns>
+		public static IEnumerable<Type> FindImplementations<T>(this Assembly assembly, bool showObsolete = default, bool showNonPublic = default, bool showNonBrowsable = default, Func<Type, bool> extraFilter = default)
+		{
+			if (assembly is null)
+				throw new ArgumentNullException(nameof(assembly));
+
+			extraFilter ??= t => true;
+
+			return assembly
+				.GetTypes()
+				.Where(t => t.Is<T>() && !t.IsAbstract && !t.IsInterface &&
+					(showNonPublic || t.IsPublic) &&
+					(showObsolete || !t.IsObsolete()) &&
+					(showNonBrowsable || t.IsBrowsable()) &&
+					extraFilter(t));
+		}
 	}
 }
