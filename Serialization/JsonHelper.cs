@@ -46,10 +46,10 @@
 
 			if (content.IsEmpty())
 			{
-				if (type.IsClass || type.IsNullable())
+				if (type.IsClass || type.IsNullable() || type.IsInterface)
 					return null;
 
-				throw new ArgumentNullException(nameof(content));
+				throw new ArgumentNullException(nameof(content), $"Can't null for {type}.");
 			}
 
 			try
@@ -72,10 +72,10 @@
 
 			if (token is null)
 			{
-				if (type.IsClass || type.IsNullable())
+				if (type.IsClass || type.IsNullable() || type.IsInterface)
 					return null;
 
-				throw new ArgumentNullException(nameof(token));
+				throw new ArgumentNullException(nameof(token), $"Can't null for {type}.");
 			}
 
 			try
