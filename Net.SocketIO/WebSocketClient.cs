@@ -382,7 +382,7 @@
 		{
 			if (obj is not byte[] sendBuf)
 			{
-				var json = obj as string ?? JsonConvert.SerializeObject(obj);
+				var json = obj as string ?? obj.ToJson();
 				_verboseLog("Send: '{0}'", json);
 
 				sendBuf = json.UTF8();

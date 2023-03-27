@@ -57,13 +57,16 @@
 				if (content == "null")
 					return null;
 
-				return JsonConvert.DeserializeObject(content, type);
+				return content.FromJson(type);
 			}
 			catch (Exception ex)
 			{
 				throw new InvalidOperationException($"Can't convert {content} to type '{type.Name}'.", ex);
 			}
 		}
+
+		public static object FromJson(this string json, Type type)
+			=> JsonConvert.DeserializeObject(json, type);
 
 		public static object DeserializeObject(this JToken token, Type type)
 		{
@@ -90,6 +93,9 @@
 				throw new InvalidOperationException($"Can't convert {token} to type '{type.Name}'.", ex);
 			}
 		}
+
+		public static string ToJson(this object obj)
+			=> JsonConvert.SerializeObject(obj);
 
 		public static JsonSerializerSettings CreateJsonSerializerSettings()
 		{
