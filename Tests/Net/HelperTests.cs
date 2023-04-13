@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Tests.Net
 {
 	using System;
+	using System.Net;
 	using System.Net.Http;
 
 	using Ecng.Common;
@@ -75,6 +76,18 @@
 
 			".svg".IsImageVector().AssertTrue();
 			"C:\\.svg".IsImageVector().AssertTrue();
+		}
+
+		[TestMethod]
+		public void IsInSubnet()
+		{
+			static bool IsInSubnet(string addr)
+				=> addr.To<IPAddress>().IsInSubnet("95.31.0.0/16");
+
+			IsInSubnet("95.31.174.147").AssertTrue();
+			IsInSubnet("95.31.174.134").AssertTrue();
+			IsInSubnet("95.31.174.112").AssertTrue();
+			IsInSubnet("95.32.161.158").AssertFalse();
 		}
 	}
 }

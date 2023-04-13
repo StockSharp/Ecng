@@ -1,5 +1,6 @@
 namespace Ecng.Net;
 
+using System.Collections;
 using System.Collections.Specialized;
 using System.IO;
 using System.Net.Security;
@@ -413,4 +414,85 @@ public static class NetworkHelper
 
 	public static string ToQueryString<TValue>(this IEnumerable<(string key, TValue value)> args, bool encodeValue = false)
 		=> args.Select(p => $"{p.key}={p.value.Format(encodeValue)}").JoinAnd();
+
+	// https://stackoverflow.com/a/56461160
+	public static bool IsInSubnet(this IPAddress address, string subnetMask)
+	{
+		var slashIdx = subnetMask.IndexOf("/");
+		if (slashIdx == -1)
+		{
+			// We only handle netmasks in format "IP/PrefixLength".
+			throw new NotSupportedException("Only SubNetMasks with a given prefix length are supported.");
+		}
+
+		// First parse the address of the netmask before the prefix length.
+		var maskAddress = subnetMask.Substring(0, slashIdx).To<IPAddress>();
+
+		if (maskAddress.AddressFamily != address.AddressFamily)
+		{
+			// We got something like an IPV4-Address for an IPv6-Mask. This is not valid.
+			return false;
+		}
+
+		// Now find out how long the prefix is.
+		var maskLength = subnetMask.Substring(slashIdx + 1).To<int>();
+
+		if (maskLength == 0)
+		{
+			return true;
+		}
+
+		if (maskLength < 0)
+		{
+			throw new NotSupportedException("A Subnetmask should not be less than 0.");
+		}
+
+		var maskBytes = maskAddress.GetAddressBytes().Reverse().ToArray();
+		var addrBytes = address.GetAddressBytes().Reverse().ToArray();
+
+		if (maskAddress.AddressFamily == AddressFamily.InterNetwork)
+		{
+			// Convert the mask address to an unsigned integer.
+			var maskAddressBits = maskBytes.To<uint>();
+
+			// And convert the IpAddress to an unsigned integer.
+			var ipAddressBits = addrBytes.To<uint>();
+
+			// Get the mask/network address as unsigned integer.
+			uint mask = uint.MaxValue << (32 - maskLength);
+
+			// https://stackoverflow.com/a/1499284/3085985
+			// Bitwise AND mask and MaskAddress, this should be the same as mask and IpAddress
+			// as the end of the mask is 0000 which leads to both addresses to end with 0000
+			// and to start with the prefix.
+			return (maskAddressBits & mask) == (ipAddressBits & mask);
+		}
+		else if (maskAddress.AddressFamily == AddressFamily.InterNetworkV6)
+		{
+			// Convert the mask address to a BitArray. Reverse the BitArray to compare the bits of each byte in the right order.
+			var maskAddressBits = new BitArray(maskBytes);
+
+			// And convert the IpAddress to a BitArray. Reverse the BitArray to compare the bits of each byte in the right order.
+			var ipAddressBits = new BitArray(addrBytes);
+			var ipAddressLength = ipAddressBits.Length;
+
+			if (maskAddressBits.Length != ipAddressBits.Length)
+			{
+				throw new ArgumentException("Length of IP Address and Subnet Mask do not match.");
+			}
+
+			// Compare the prefix bits.
+			for (var i = ipAddressLength - 1; i >= ipAddressLength - maskLength; i--)
+			{
+				if (ipAddressBits[i] != maskAddressBits[i])
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+		else
+			throw new NotSupportedException(maskAddress.AddressFamily.To<string>());
+	}
 }
