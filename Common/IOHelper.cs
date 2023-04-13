@@ -16,14 +16,14 @@ namespace Ecng.Common
 
 	public static class IOHelper
 	{
-		public static DirectoryInfo ClearDirectory(string releasePath, Func<string, bool> filter = null)
-			=> AsyncContext.Run(() => ClearDirectoryAsync(releasePath, filter));
+		public static DirectoryInfo ClearDirectory(string path, Func<string, bool> filter = null)
+			=> AsyncContext.Run(() => ClearDirectoryAsync(path, filter));
 		
-		public static Task<DirectoryInfo> ClearDirectoryAsync(string releasePath, Func<string, bool> filter = null, CancellationToken cancellationToken = default)
+		public static Task<DirectoryInfo> ClearDirectoryAsync(string path, Func<string, bool> filter = null, CancellationToken cancellationToken = default)
 		{
-			var releaseDir = new DirectoryInfo(releasePath);
+			var parentDir = new DirectoryInfo(path);
 
-			foreach (var file in releaseDir.EnumerateFiles())
+			foreach (var file in parentDir.EnumerateFiles())
 			{
 				if (filter != null && !filter(file.FullName))
 					continue;
@@ -33,14 +33,14 @@ namespace Ecng.Common
 				cancellationToken.ThrowIfCancellationRequested();
 			}
 
-			foreach (var dir in releaseDir.EnumerateDirectories())
+			foreach (var dir in parentDir.EnumerateDirectories())
 			{
 				dir.Delete(true);
 
 				cancellationToken.ThrowIfCancellationRequested();
 			}
 
-			return releaseDir.FromResult();
+			return parentDir.FromResult();
 		}
 
 		public static void CopyDirectory(string sourcePath, string destPath)
