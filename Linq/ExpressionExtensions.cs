@@ -66,10 +66,13 @@
 
 		public static TValue GetValue<TValue>(this Expression exp)
 		{
+			if (exp is null)
+				throw new ArgumentNullException(nameof(exp));
+
 			if (exp is ConstantExpression c)
 				return c.Value.To<TValue>();
 			else if (exp is MemberExpression me)
-				return me.Member.GetMemberValue(GetValue<object>(me.Expression)).To<TValue>();
+				return me.Member.GetMemberValue(me.Expression is null ? null : GetValue<object>(me.Expression)).To<TValue>();
 
 			throw new ArgumentOutOfRangeException(exp.NodeType.ToString());
 		}
