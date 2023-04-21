@@ -4,7 +4,6 @@
     <DefineConstants>$(DefineConstants);CLIENT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVer)" />
     <PackageReference Include="RestSharp" Version="$(RestSharpVer)" />
   </ItemGroup>
   <ItemGroup>
