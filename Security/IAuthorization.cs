@@ -3,6 +3,8 @@ namespace Ecng.Security
 	using System;
 	using System.Net;
 	using System.Security;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 
@@ -18,7 +20,9 @@ namespace Ecng.Security
 		/// <param name="password">Password.</param>
 		/// <param name="clientAddress">Remote network address.</param>
 		/// <returns>Session identifier.</returns>
-		string ValidateCredentials(string login, SecureString password, IPAddress clientAddress);
+		/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+		/// <returns><see cref="ValueTask{string}"/></returns>
+		ValueTask<string> ValidateCredentials(string login, SecureString password, IPAddress clientAddress, CancellationToken cancellationToken);
 	}
 
 	/// <summary>
@@ -34,8 +38,8 @@ namespace Ecng.Security
 		}
 
 		/// <inheritdoc />
-		public virtual string ValidateCredentials(string login, SecureString password, IPAddress clientAddress)
-			=> Guid.NewGuid().To<string>();
+		public virtual ValueTask<string> ValidateCredentials(string login, SecureString password, IPAddress clientAddress, CancellationToken cancellationToken)
+			=> new(Guid.NewGuid().To<string>());
 	}
 
 	/// <summary>
@@ -61,12 +65,12 @@ namespace Ecng.Security
 		public SecureString Password { get; set; }
 
 		/// <inheritdoc />
-		public override string ValidateCredentials(string login, SecureString password, IPAddress clientAddress)
+		public override ValueTask<string> ValidateCredentials(string login, SecureString password, IPAddress clientAddress, CancellationToken cancellationToken)
 		{
 			if (Login.IsEmpty())
-				return base.ValidateCredentials(login, password, clientAddress);
+				return base.ValidateCredentials(login, password, clientAddress, cancellationToken);
 			else if (login.EqualsIgnoreCase(Login) && password != null && Password != null && password.IsEqualTo(Password))
-				return Guid.NewGuid().To<string>();
+				return new(Guid.NewGuid().To<string>());
 
 			throw new UnauthorizedAccessException();
 		}
