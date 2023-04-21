@@ -495,4 +495,7 @@ public static class NetworkHelper
 		else
 			throw new NotSupportedException(maskAddress.AddressFamily.To<string>());
 	}
+
+	public static void ApplyChromeAgent(this HttpClient client)
+		=> client.CheckOnNull(nameof(client)).DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36");
 }
