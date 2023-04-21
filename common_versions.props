@@ -8,23 +8,15 @@
     <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
     <EcngSystemComponentModelAnnotationsVer>5.0.0</EcngSystemComponentModelAnnotationsVer>
 
-    <SystemCodeDomVer>6.*</SystemCodeDomVer>
-    <SystemConfigurationConfigurationManagerVer>6.*</SystemConfigurationConfigurationManagerVer>
-    <SystemIOCompressionVer>4.3.0</SystemIOCompressionVer>
-    <SystemManagementVer>6.*</SystemManagementVer>
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
-    <SystemSecurityPermissionsVer>6.*</SystemSecurityPermissionsVer>
-    <SystemTextEncodingCodePagesVer>6.*</SystemTextEncodingCodePagesVer>
     <NUnitVer>3.*</NUnitVer>
     <NUnit3TestAdapterVer>4.*</NUnit3TestAdapterVer>
-    <FluentAssertionsVer>5.10.3</FluentAssertionsVer>
-    <SystemDrawingCommonVer>6.*</SystemDrawingCommonVer>
+    <FluentAssertionsVer>6.*</FluentAssertionsVer>
     <MicrosoftNetHttpHeadersVer>2.2.8</MicrosoftNetHttpHeadersVer>
     <TaskExtensionsVer>4.5.4</TaskExtensionsVer>
-    <SysChannelsVer>6.*</SysChannelsVer>
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
     <RestSharpVer>108.0.2</RestSharpVer>
-    <NDdeVer>3.1.0</NDdeVer>
+    <NDdeVer>4.0.0</NDdeVer>
     <ILPackVer>0.1.7</ILPackVer>
     <linq2dbVer>5.0.0</linq2dbVer>
     <NitoVer>5.1.2</NitoVer>

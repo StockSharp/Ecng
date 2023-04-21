@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVer)" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="$(MsExtensionsVer)" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightVer)" />
     <PackageReference Include="Nito.AsyncEx" Version="$(NitoVer)" />
 	  
@@ -17,7 +17,7 @@
   
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="$(TaskExtensionsVer)" />
-    <PackageReference Include="System.Threading.Channels" Version="$(SysChannelsVer)" />
+    <PackageReference Include="System.Threading.Channels" Version="$(MsExtensionsVer)" />
   </ItemGroup>
   
   <ItemGroup>
