@@ -1,8 +1,9 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\StockSharp (GitHub)\common_versions.props" />
+
   <PropertyGroup>
     <AWSSDKVer>3.*</AWSSDKVer>
 
-    <MicrosoftWindowsCompatibilityVer>6.0.2</MicrosoftWindowsCompatibilityVer>
     <MicrosoftAspNetWebApiClientVer>5.2.9</MicrosoftAspNetWebApiClientVer>
 
     <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->

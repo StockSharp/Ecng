@@ -16,6 +16,6 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonJsonVer)" />
-    <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVer)" />
+    <PackageReference Include="System.Text.Json" Version="$(MsExtensionsVer)" />
   </ItemGroup>
 </Project>

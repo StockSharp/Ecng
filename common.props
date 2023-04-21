@@ -1,5 +1,4 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\StockSharp (GitHub)\common_versions.props" />
   <Import Project="common_versions.props" />
 
   <PropertyGroup>
@@ -38,12 +37,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <ProductVersion>9.0.30729</ProductVersion>
     <RootNamespace>Ecng.$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>Ecng.$(MSBuildProjectName)</AssemblyName>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <IsSourcesAllow>true</IsSourcesAllow>
-    <LangVersion>11.0</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

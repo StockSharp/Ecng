@@ -4,10 +4,12 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(MsBclAsyncInterfacesVer)" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(MsExtensionsVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Backup.AWS\Backup.AWS.csproj" />
+    <ProjectReference Include="..\Backup.Mega\Backup.Mega.csproj" />
+    <ProjectReference Include="..\Backup.Yandex\Backup.Yandex.csproj" />
     <ProjectReference Include="..\LibGit2Sharp\LibGit2Sharp.csproj" />
     <ProjectReference Include="..\Net.SocketIO\Net.SocketIO.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />

@@ -22,7 +22,7 @@
     <PackageReference Include="MSTest.TestAdapter" Version="$(MsTestVer)" />
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />
 
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="$(MicrosoftDataSqliteVer)" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="$(MsExtensionsVer)" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="$(MicrosoftDataSqlClientVer)" />
   </ItemGroup>
   <ItemGroup>
