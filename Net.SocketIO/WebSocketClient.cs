@@ -14,8 +14,6 @@
 	using Ecng.Common;
 	using Ecng.Serialization;
 
-	using Newtonsoft.Json;
-
 	public class WebSocketClient : Disposable
 	{
 		private ClientWebSocket _ws;
