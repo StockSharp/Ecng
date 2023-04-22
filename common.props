@@ -1,4 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\StockSharp (GitHub)\common_versions.props" />
   <Import Project="common_versions.props" />
 
   <PropertyGroup>
