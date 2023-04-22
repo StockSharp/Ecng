@@ -75,4 +75,10 @@ namespace Ecng.Security
 			throw new UnauthorizedAccessException();
 		}
 	}
+
+	public class UnauthorizedAuthorization : IAuthorization
+	{
+		ValueTask<string> IAuthorization.ValidateCredentials(string login, SecureString password, IPAddress clientAddress, CancellationToken cancellationToken)
+			=> throw new UnauthorizedAccessException();
+	}
 }
