@@ -381,6 +381,26 @@
 		}
 
 		[TestMethod]
+		public async Task ComplexEnumerable()
+		{
+			await Do<IEnumerable<TestClass>>(new[]
+			{
+				new TestClass
+				{
+					IntProp = 124,
+					DateProp = DateTime.UtcNow,
+					TimeProp = TimeSpan.FromSeconds(10),
+				},
+				new TestClass
+				{
+					IntProp = 456,
+					DateProp = DateTime.UtcNow.AddDays(1),
+					TimeProp = TimeSpan.FromSeconds(20),
+				},
+			});
+		}
+
+		[TestMethod]
 		public async Task ComplexArrayOfArray()
 		{
 			await Do(new[]

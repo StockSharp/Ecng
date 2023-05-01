@@ -195,6 +195,9 @@
 
 				reader.ChechExpectedToken(JsonToken.EndArray);
 
+				if (!type.IsArray && type != typeof(IEnumerable<>).Make(itemType))
+					return col;
+
 				var arr = Array.CreateInstance(itemType, col.Count);
 				var idx = 0;
 
@@ -203,7 +206,7 @@
 					arr.SetValue(item, idx++);
 				}
 
-				return type.IsArray ? arr : col;
+				return arr;
 			}
 			else
 			{
