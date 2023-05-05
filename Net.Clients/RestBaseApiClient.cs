@@ -126,9 +126,9 @@ public abstract class RestBaseApiClient
 		{
 			var dict = new Dictionary<string, object>();
 
-			foreach (var (name, value, required) in parameters)
+			foreach (var (name, value) in parameters)
 			{
-				if (required)
+				if (value is not null)
 					dict.Add(name, value);
 			}
 
@@ -147,9 +147,9 @@ public abstract class RestBaseApiClient
 
 		if (parameters.Length > 0)
 		{
-			foreach (var (name, value, required) in parameters)
+			foreach (var (name, value) in parameters)
 			{
-				if (required)
+				if (value is not null)
 					url.QueryString.Append(name, value?.ToString().EncodeToHtml());
 			}
 		}
@@ -164,9 +164,9 @@ public abstract class RestBaseApiClient
 
 		if (parameters.Length > 0)
 		{
-			foreach (var (name, value, required) in parameters)
+			foreach (var (name, value) in parameters)
 			{
-				if (required)
+				if (value is not null)
 					url.QueryString.Append(name, value?.ToString().EncodeToHtml());
 			}
 		}
@@ -185,9 +185,9 @@ public abstract class RestBaseApiClient
 		{
 			var dict = new Dictionary<string, object>();
 
-			foreach (var (name, value, required) in parameters)
+			foreach (var (name, value) in parameters)
 			{
-				if (required)
+				if (value is not null)
 					dict.Add(name, value);
 			}
 
@@ -205,7 +205,7 @@ public abstract class RestBaseApiClient
 	protected static MethodInfo GetCurrentMethod()
 		=> (MethodInfo)new StackTrace().GetFrame(1).GetMethod();
 
-	protected virtual (Url url, (string name, object value, bool required)[] parameters) GetInfo(HttpMethod method, MethodInfo callerMethod, object[] args)
+	protected virtual (Url url, (string name, object value)[] parameters) GetInfo(HttpMethod method, MethodInfo callerMethod, object[] args)
 	{
 		if (callerMethod is null)
 			throw new ArgumentNullException(nameof(callerMethod));
@@ -222,9 +222,26 @@ public abstract class RestBaseApiClient
 		if (args.Length != parameters.Length)
 			throw new ArgumentOutOfRangeException(nameof(args));
 
-		var url = new Url(BaseAddress, methodAttr is null ? FormatRequestUri(callerMethod.Name) : methodAttr.Name);
+		string relativeUrl;
 
-		List<(string name, object value, bool required)> list = new();
+		if (methodAttr is null)
+		{
+			relativeUrl = callerMethod.Name;
+
+			var idx = relativeUrl.LastIndexOf('.');
+
+			// explicit interface implemented method
+			if (idx != -1)
+				relativeUrl = relativeUrl.Substring(idx + 1);
+
+			relativeUrl = FormatRequestUri(relativeUrl);
+		}
+		else
+			relativeUrl = methodAttr.Name;
+
+		var url = new Url(BaseAddress, relativeUrl);
+
+		List<(string name, object value)> list = new();
 
 		var i = 0;
 		foreach (var pi in parameters)
@@ -232,17 +249,7 @@ public abstract class RestBaseApiClient
 			var paramAttr = pi.GetAttribute<RestApiParamAttribute>();
 			var arg = args[i++];
 
-			var required = true;
-
-			if (paramAttr?.IsRequired != true)
-			{
-				if (pi.DefaultValue is null && arg is null)
-					required = false;
-				else if (pi.DefaultValue is not null && arg is not null && pi.DefaultValue.Equals(arg))
-					required = false;
-			}
-
-			list.Add(((paramAttr?.Name).IsEmpty(pi.Name), TryFormat(arg, url, method), required));
+			list.Add(((paramAttr?.Name).IsEmpty(pi.Name), TryFormat(arg, url, method)));
 		}
 
 		return (url, list.ToArray());
