@@ -1,7 +1,6 @@
 ﻿namespace Ecng.Net;
 
 using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
 using System.Reflection;
 using System.Diagnostics;
 
@@ -116,10 +115,10 @@ public abstract class RestBaseApiClient
 		return result;
 	}
 
-	protected Task<TResult> PostAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
+	protected Task<TResult> PostAsync<TResult>(MethodInfo callerMethod, CancellationToken cancellationToken, params object[] args)
 	{
 		var method = HttpMethod.Post;
-		var (url, parameters) = GetInfo(method, requestUri, args);
+		var (url, parameters) = GetInfo(method, callerMethod, args);
 
 		object body;
 
@@ -141,10 +140,10 @@ public abstract class RestBaseApiClient
 		return DoAsync<TResult>(method, url, body, Cache, cancellationToken);
 	}
 
-	protected Task<TResult> GetAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
+	protected Task<TResult> GetAsync<TResult>(MethodInfo callerMethod, CancellationToken cancellationToken, params object[] args)
 	{
 		var method = HttpMethod.Get;
-		var (url, parameters) = GetInfo(method, requestUri, args);
+		var (url, parameters) = GetInfo(method, callerMethod, args);
 
 		if (parameters.Length > 0)
 		{
@@ -158,10 +157,10 @@ public abstract class RestBaseApiClient
 		return DoAsync<TResult>(method, url, null, Cache, cancellationToken);
 	}
 
-	protected Task<TResult> DeleteAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
+	protected Task<TResult> DeleteAsync<TResult>(MethodInfo callerMethod, CancellationToken cancellationToken, params object[] args)
 	{
 		var method = HttpMethod.Delete;
-		var (url, parameters) = GetInfo(method, requestUri, args);
+		var (url, parameters) = GetInfo(method, callerMethod, args);
 
 		if (parameters.Length > 0)
 		{
@@ -175,10 +174,10 @@ public abstract class RestBaseApiClient
 		return DoAsync<TResult>(method, url, null, Cache, cancellationToken);
 	}
 
-	protected Task<TResult> PutAsync<TResult>(string requestUri, CancellationToken cancellationToken, params object[] args)
+	protected Task<TResult> PutAsync<TResult>(MethodInfo callerMethod, CancellationToken cancellationToken, params object[] args)
 	{
 		var method = HttpMethod.Put;
-		var (url, parameters) = GetInfo(method, requestUri, args);
+		var (url, parameters) = GetInfo(method, callerMethod, args);
 
 		object body;
 
@@ -203,35 +202,18 @@ public abstract class RestBaseApiClient
 	protected virtual string FormatRequestUri(string requestUri)
 		=> requestUri.Remove("Async").ToLowerInvariant();
 
-	protected static string GetCurrentMethod([CallerMemberName]string methodName = "")
-		=> methodName;
+	protected static MethodInfo GetCurrentMethod()
+		=> (MethodInfo)new StackTrace().GetFrame(1).GetMethod();
 
-	protected virtual (Url url, (string name, object value, bool required)[] parameters) GetInfo(HttpMethod method, string requestUri, object[] args)
+	protected virtual (Url url, (string name, object value, bool required)[] parameters) GetInfo(HttpMethod method, MethodInfo callerMethod, object[] args)
 	{
+		if (callerMethod is null)
+			throw new ArgumentNullException(nameof(callerMethod));
+
 		if (args is null)
 			throw new ArgumentNullException(nameof(args));
 
-		var methods = GetType().GetMembers<MethodInfo>(BindingFlags.Public | BindingFlags.Instance, true, requestUri, null);
-
-		MethodInfo callerMethod;
-
-		if (methods.Length > 1)
-		{
-			callerMethod = methods.First(m =>
-			{
-				var parameters = m.GetParameters();
-
-				var count = parameters.Length;
-
-				if (count > 0 && parameters.Last().ParameterType == typeof(CancellationToken))
-					count--;
-
-				return count == args.Length;
-			});
-		}
-		else
-			callerMethod = methods.First();
-
+		var methodAttr = callerMethod.GetAttribute<RestApiMethodAttribute>();
 		var parameters = callerMethod.GetParameters();
 
 		if (parameters.Length > 0 && parameters.Last().ParameterType == typeof(CancellationToken))
@@ -240,19 +222,19 @@ public abstract class RestBaseApiClient
 		if (args.Length != parameters.Length)
 			throw new ArgumentOutOfRangeException(nameof(args));
 
-		var url = new Url(BaseAddress, FormatRequestUri(requestUri));
+		var url = new Url(BaseAddress, methodAttr is null ? FormatRequestUri(callerMethod.Name) : methodAttr.Name);
 
 		List<(string name, object value, bool required)> list = new();
 
 		var i = 0;
 		foreach (var pi in parameters)
 		{
-			var attr = pi.GetAttribute<RestApiParamAttribute>();
+			var paramAttr = pi.GetAttribute<RestApiParamAttribute>();
 			var arg = args[i++];
 
 			var required = true;
 
-			if (attr?.IsRequired != true)
+			if (paramAttr?.IsRequired != true)
 			{
 				if (pi.DefaultValue is null && arg is null)
 					required = false;
@@ -260,7 +242,7 @@ public abstract class RestBaseApiClient
 					required = false;
 			}
 
-			list.Add(((attr?.Name).IsEmpty(pi.Name), TryFormat(arg, url, method), required));
+			list.Add(((paramAttr?.Name).IsEmpty(pi.Name), TryFormat(arg, url, method), required));
 		}
 
 		return (url, list.ToArray());
