@@ -10,18 +10,18 @@ using Microsoft.Net.Http.Headers;
 
 public abstract class RestBaseApiClient
 {
-	private readonly HttpMessageInvoker _http;
-	private readonly MediaTypeFormatter _request;
-	private readonly MediaTypeFormatter _response;
-
 	protected RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormatter request, MediaTypeFormatter response)
 	{
-		_http = http ?? throw new ArgumentNullException(nameof(http));
-		_request = request ?? throw new ArgumentNullException(nameof(request));
-		_response = response ?? throw new ArgumentNullException(nameof(response));
+		Http = http ?? throw new ArgumentNullException(nameof(http));
+		RequestFormatter = request ?? throw new ArgumentNullException(nameof(request));
+		ResponseFormatter = response ?? throw new ArgumentNullException(nameof(response));
 	}
 
 	protected Uri BaseAddress { get; set; }
+
+	protected HttpMessageInvoker Http { get; }
+	protected MediaTypeFormatter RequestFormatter { get; }
+	protected MediaTypeFormatter ResponseFormatter { get; }
 
 	public IDictionary<string, string> PerRequestHeaders { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 	public IRestApiClientCache Cache { get; set; }
@@ -76,17 +76,17 @@ public abstract class RestBaseApiClient
 	{
 		return typeof(TResult) == typeof(VoidType)
 			? default(TResult).FromResult()
-			: response.Content.ReadAsAsync<TResult>(new[] { _response }, cancellationToken);
+			: response.Content.ReadAsAsync<TResult>(new[] { ResponseFormatter }, cancellationToken);
 	}
 
-	private async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, IRestApiClientCache cache, CancellationToken cancellationToken)
+	protected async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, IRestApiClientCache cache, CancellationToken cancellationToken)
 	{
 		if (cache != null && cache.TryGet<TResult>(method, uri, body, out var cached))
 			return cached;
 
 		var request = new HttpRequestMessage(method, uri);
 
-		request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(_request.SupportedMediaTypes.First().MediaType));
+		request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(RequestFormatter.SupportedMediaTypes.First().MediaType));
 
 		if (PerRequestHeaders.Count > 0)
 		{
@@ -95,11 +95,11 @@ public abstract class RestBaseApiClient
 		}
 
 		if (body is not null)
-			request.Content = new ObjectContent<object>(body, _request);
+			request.Content = new ObjectContent<object>(body, RequestFormatter);
 
 		var watch = Tracing ? Stopwatch.StartNew() : null;
 
-		var response = await _http.SendAsync(request, cancellationToken);
+		var response = await Http.SendAsync(request, cancellationToken);
 
 		await ValidateResponseAsync(response, cancellationToken);
 
