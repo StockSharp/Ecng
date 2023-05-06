@@ -79,8 +79,10 @@ public abstract class RestBaseApiClient
 			: response.Content.ReadAsAsync<TResult>(new[] { ResponseFormatter }, cancellationToken);
 	}
 
-	protected async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, IRestApiClientCache cache, CancellationToken cancellationToken)
+	protected async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, CancellationToken cancellationToken)
 	{
+		var cache = Cache;
+
 		if (cache != null && cache.TryGet<TResult>(method, uri, body, out var cached))
 			return cached;
 
@@ -135,9 +137,9 @@ public abstract class RestBaseApiClient
 			body = FormatRequest(dict);
 		}
 		else
-			body = TryFormat(parameters.FirstOrDefault().value, url, method);
+			body = TryFormat(parameters.FirstOrDefault().value, callerMethod, method);
 
-		return DoAsync<TResult>(method, url, body, Cache, cancellationToken);
+		return DoAsync<TResult>(method, url, body, cancellationToken);
 	}
 
 	protected Task<TResult> GetAsync<TResult>(MethodInfo callerMethod, CancellationToken cancellationToken, params object[] args)
@@ -154,7 +156,7 @@ public abstract class RestBaseApiClient
 			}
 		}
 
-		return DoAsync<TResult>(method, url, null, Cache, cancellationToken);
+		return DoAsync<TResult>(method, url, null, cancellationToken);
 	}
 
 	protected Task<TResult> DeleteAsync<TResult>(MethodInfo callerMethod, CancellationToken cancellationToken, params object[] args)
@@ -171,7 +173,7 @@ public abstract class RestBaseApiClient
 			}
 		}
 
-		return DoAsync<TResult>(method, url, null, Cache, cancellationToken);
+		return DoAsync<TResult>(method, url, null, cancellationToken);
 	}
 
 	protected Task<TResult> PutAsync<TResult>(MethodInfo callerMethod, CancellationToken cancellationToken, params object[] args)
@@ -194,16 +196,26 @@ public abstract class RestBaseApiClient
 			body = FormatRequest(dict);
 		}
 		else
-			body = TryFormat(parameters.FirstOrDefault().value, url, method);
+			body = TryFormat(parameters.FirstOrDefault().value, callerMethod, method);
 
-		return DoAsync<TResult>(method, url, body, Cache, cancellationToken);
+		return DoAsync<TResult>(method, url, body, cancellationToken);
 	}
 
-	protected virtual string FormatRequestUri(string requestUri)
-		=> requestUri.Remove("Async").ToLowerInvariant();
+	protected static MethodInfo GetCurrentMethod(int frameIdx = 1)
+		=> (MethodInfo)new StackTrace().GetFrame(frameIdx).GetMethod();
 
-	protected static MethodInfo GetCurrentMethod()
-		=> (MethodInfo)new StackTrace().GetFrame(1).GetMethod();
+	protected virtual string ToRequestUri(MethodInfo callerMethod)
+	{
+		var requestUri = callerMethod.Name;
+
+		var idx = requestUri.LastIndexOf('.');
+
+		// explicit interface implemented method
+		if (idx != -1)
+			requestUri = requestUri.Substring(idx + 1);
+
+		return requestUri.Remove("Async").ToLowerInvariant();
+	}
 
 	protected virtual (Url url, (string name, object value)[] parameters) GetInfo(HttpMethod method, MethodInfo callerMethod, object[] args)
 	{
@@ -222,25 +234,6 @@ public abstract class RestBaseApiClient
 		if (args.Length != parameters.Length)
 			throw new ArgumentOutOfRangeException(nameof(args));
 
-		string relativeUrl;
-
-		if (methodAttr is null)
-		{
-			relativeUrl = callerMethod.Name;
-
-			var idx = relativeUrl.LastIndexOf('.');
-
-			// explicit interface implemented method
-			if (idx != -1)
-				relativeUrl = relativeUrl.Substring(idx + 1);
-
-			relativeUrl = FormatRequestUri(relativeUrl);
-		}
-		else
-			relativeUrl = methodAttr.Name;
-
-		var url = new Url(BaseAddress, relativeUrl);
-
 		List<(string name, object value)> list = new();
 
 		var i = 0;
@@ -249,12 +242,14 @@ public abstract class RestBaseApiClient
 			var paramAttr = pi.GetAttribute<RestApiParamAttribute>();
 			var arg = args[i++];
 
-			list.Add(((paramAttr?.Name).IsEmpty(pi.Name), TryFormat(arg, url, method)));
+			list.Add(((paramAttr?.Name).IsEmpty(pi.Name), TryFormat(arg, callerMethod, method)));
 		}
+
+		var url = new Url(BaseAddress, methodAttr is null ? ToRequestUri(callerMethod) : methodAttr.Name);
 
 		return (url, list.ToArray());
 	}
 
-	protected virtual object TryFormat(object arg, Url url, HttpMethod method)
+	protected virtual object TryFormat(object arg, MethodInfo callerMethod, HttpMethod method)
 		=> (arg is Enum || arg is bool) ? arg.To<long>() : arg;
 }
