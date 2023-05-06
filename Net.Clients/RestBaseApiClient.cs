@@ -225,9 +225,9 @@ public abstract class RestBaseApiClient
 		if (args is null)
 			throw new ArgumentNullException(nameof(args));
 
-		var methodAttr = callerMethod.GetAttribute<RestApiMethodAttribute>();
+		var methodAttr = callerMethod.GetAttribute<RestAttribute>();
 		var parameters = callerMethod.GetParameters();
-		var paramDict = parameters.ToDictionary(pi => pi, pi => pi.GetAttribute<RestApiParamAttribute>());
+		var paramDict = parameters.ToDictionary(pi => pi, pi => pi.GetAttribute<RestAttribute>());
 
 		if (parameters.Length > 0)
 		{
