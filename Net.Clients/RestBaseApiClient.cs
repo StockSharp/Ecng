@@ -227,9 +227,16 @@ public abstract class RestBaseApiClient
 
 		var methodAttr = callerMethod.GetAttribute<RestApiMethodAttribute>();
 		var parameters = callerMethod.GetParameters();
+		var paramDict = parameters.ToDictionary(pi => pi, pi => pi.GetAttribute<RestApiParamAttribute>());
 
-		if (parameters.Length > 0 && parameters.Last().ParameterType == typeof(CancellationToken))
-			parameters = parameters.Take(parameters.Length - 1).ToArray();
+		if (parameters.Length > 0)
+		{
+			if (parameters.Last().ParameterType == typeof(CancellationToken))
+				parameters = parameters.Take(parameters.Length - 1).ToArray();
+
+			foreach (var pair in paramDict.Where(p => p.Value?.Ignore == true).ToArray())
+				paramDict.Remove(pair.Key);
+		}
 
 		if (args.Length != parameters.Length)
 			throw new ArgumentOutOfRangeException(nameof(args));
@@ -237,12 +244,11 @@ public abstract class RestBaseApiClient
 		List<(string name, object value)> list = new();
 
 		var i = 0;
-		foreach (var pi in parameters)
+		foreach (var pair in paramDict)
 		{
-			var paramAttr = pi.GetAttribute<RestApiParamAttribute>();
 			var arg = args[i++];
 
-			list.Add(((paramAttr?.Name).IsEmpty(pi.Name), TryFormat(arg, callerMethod, method)));
+			list.Add(((pair.Value?.Name).IsEmpty(pair.Key.Name), TryFormat(arg, callerMethod, method)));
 		}
 
 		var url = new Url(BaseAddress, methodAttr is null ? ToRequestUri(callerMethod) : methodAttr.Name);
