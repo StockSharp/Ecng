@@ -204,6 +204,9 @@ public abstract class RestBaseApiClient
 	protected static MethodInfo GetCurrentMethod(int frameIdx = 1)
 		=> (MethodInfo)new StackTrace().GetFrame(frameIdx).GetMethod();
 
+	protected virtual string FormatRequestUri(string requestUri)
+		=> requestUri.Remove("Async").ToLowerInvariant();
+
 	protected virtual string ToRequestUri(MethodInfo callerMethod)
 	{
 		var requestUri = callerMethod.Name;
@@ -214,7 +217,7 @@ public abstract class RestBaseApiClient
 		if (idx != -1)
 			requestUri = requestUri.Substring(idx + 1);
 
-		return requestUri.Remove("Async").ToLowerInvariant();
+		return FormatRequestUri(requestUri);
 	}
 
 	protected virtual (Url url, (string name, object value)[] parameters) GetInfo(HttpMethod method, MethodInfo callerMethod, object[] args)
@@ -231,14 +234,16 @@ public abstract class RestBaseApiClient
 
 		if (parameters.Length > 0)
 		{
-			if (parameters.Last().ParameterType == typeof(CancellationToken))
-				parameters = parameters.Take(parameters.Length - 1).ToArray();
+			var last = parameters.Last();
+
+			if (last.ParameterType == typeof(CancellationToken))
+				paramDict.Remove(last);
 
 			foreach (var pair in paramDict.Where(p => p.Value?.Ignore == true).ToArray())
 				paramDict.Remove(pair.Key);
 		}
 
-		if (args.Length != parameters.Length)
+		if (args.Length != paramDict.Count)
 			throw new ArgumentOutOfRangeException(nameof(args));
 
 		List<(string name, object value)> list = new();
