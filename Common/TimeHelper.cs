@@ -147,6 +147,16 @@
 		/// </summary>
 		public const long TicksPerMillenium = TicksPerCentury * 10;
 
+		public static readonly TimeSpan Minute1 = TimeSpan.FromMinutes(1);
+		public static readonly TimeSpan Minute5 = TimeSpan.FromMinutes(5);
+		public static readonly TimeSpan Minute10 = TimeSpan.FromMinutes(10);
+		public static readonly TimeSpan Minute15 = TimeSpan.FromMinutes(15);
+		public static readonly TimeSpan Hour = TimeSpan.FromHours(1);
+		public static readonly TimeSpan Day = TimeSpan.FromDays(1);
+		public static readonly TimeSpan Week = TimeSpan.FromTicks(TicksPerWeek);
+		public static readonly TimeSpan Month = TimeSpan.FromTicks(TicksPerMonth);
+		public static readonly TimeSpan Year = TimeSpan.FromTicks(TicksPerYear);
+
 		public static readonly TimeSpan LessOneDay = TimeSpan.FromTicks(TimeSpan.TicksPerDay - 1);
 
 		public static int GetMicroseconds(this TimeSpan ts)
