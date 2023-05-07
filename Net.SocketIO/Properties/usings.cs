@@ -8,3 +8,5 @@ global using global::System.Linq;
 global using global::Ecng.Common;
 global using global::Ecng.Collections;
 global using global::Ecng.Serialization;
+
+global using global::RestSharp;

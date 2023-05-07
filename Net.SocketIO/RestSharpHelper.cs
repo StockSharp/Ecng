@@ -4,7 +4,6 @@ using System.Reflection;
 
 using Nito.AsyncEx;
 
-using RestSharp;
 using RestSharp.Authenticators;
 
 public static class RestSharpHelper
@@ -116,8 +115,10 @@ public static class RestSharpHelper
 			throw new InvalidOperationException($"failed to complete request (err={response.StatusCode}): {response.Content}");
 		}
 
-		if (response.StatusCode != HttpStatusCode.OK || (throwIfEmptyResponse && response.Content.IsEmpty()))
+		if (response.StatusCode != HttpStatusCode.OK)
 			throw response.ToError();
+		else if (throwIfEmptyResponse && response.Content.IsEmpty())
+			throw response.ToError("Empty content.");
 
 		var result = RestResponse<T>.FromResponse(response);
 
@@ -138,8 +139,8 @@ public static class RestSharpHelper
 		return result;
 	}
 
-	public static InvalidOperationException ToError(this RestResponse response)
-		=> new($"unexpected response code='{response.StatusCode}', msg='{response.ErrorMessage}', desc='{response.StatusDescription}', content='{response.Content}'");
+	public static RestSharpException ToError(this RestResponse response, string message = default)
+		=> new(message.IsEmpty($"unexpected response code='{response.StatusCode}', msg='{response.ErrorMessage}', desc='{response.StatusDescription}', content='{response.Content}'"), response);
 
 	public static string ToQueryString(this IEnumerable<Parameter> parameters, bool encodeValue = true)
 		=> parameters.CheckOnNull(nameof(parameters)).Select(p => $"{p.Name}={p.Value.Format(encodeValue)}").JoinAnd();
