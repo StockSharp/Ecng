@@ -1,18 +1,10 @@
 ﻿namespace Ecng.Net
 {
-	using System;
-	using System.Linq;
 	using System.Net.WebSockets;
-	using System.Threading;
-	using System.Threading.Tasks;
 	using System.IO;
 #if NET5_0_OR_GREATER
 	using System.Net.Security;
 #endif
-
-	using Ecng.Collections;
-	using Ecng.Common;
-	using Ecng.Serialization;
 
 	public class WebSocketClient : Disposable
 	{
