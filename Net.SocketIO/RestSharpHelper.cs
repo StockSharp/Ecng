@@ -1,37 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
-using System.Net;
-using System.Reflection;
+﻿namespace Ecng.Net;
 
-using Ecng.Common;
-using Ecng.Serialization;
-using Ecng.Collections;
+using System.Reflection;
 
 using Nito.AsyncEx;
 
 using RestSharp;
 using RestSharp.Authenticators;
 
-namespace Ecng.Net;
-
 public static class RestSharpHelper
 {
-	public class UnexpectedResponseError : InvalidOperationException
-	{
-		public RestResponse Response { get; }
-
-		public UnexpectedResponseError(RestResponse response) : base($"unexpected response code='{response.StatusCode}', msg='{response.ErrorMessage}', desc='{response.StatusDescription}', content='{response.Content}'")
-			=> Response = response;
-	}
-
-	class AuthenticatorWrapper : IAuthenticator
+	private class AuthenticatorWrapper : IAuthenticator
 	{
 		private readonly SynchronizedDictionary<RestRequest, IAuthenticator> _authenticators = new();
 
-		class Holder : Disposable
+		private class Holder : Disposable
 		{
 			private readonly RestRequest _request;
 			private readonly AuthenticatorWrapper _parent;
@@ -89,22 +71,22 @@ public static class RestSharpHelper
 		request.AddStringBody(bodyStr, DataFormat.Json);
 	}
 
-	public static object Invoke(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Func<string, string> contentConverter = null)
-		=> request.Invoke<object>(url, caller, logVerbose, contentConverter);
+	public static object Invoke(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Func<string, string> contentConverter = null, bool throwIfEmptyResponse = true)
+		=> request.Invoke<object>(url, caller, logVerbose, contentConverter, throwIfEmptyResponse);
 
-	public static Task<object> InvokeAsync(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Func<string, string> contentConverter = null)
-		=> request.InvokeAsync<object>(url, caller, logVerbose, token, contentConverter);
+	public static Task<object> InvokeAsync(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Func<string, string> contentConverter = null, bool throwIfEmptyResponse = true)
+		=> request.InvokeAsync<object>(url, caller, logVerbose, token, contentConverter, throwIfEmptyResponse);
 
-	public static T Invoke<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Func<string, string> contentConverter = null)
-		=> AsyncContext.Run(() => request.InvokeAsync<T>(url, caller, logVerbose, CancellationToken.None, contentConverter));
+	public static T Invoke<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Func<string, string> contentConverter = null, bool throwIfEmptyResponse = true)
+		=> AsyncContext.Run(() => request.InvokeAsync<T>(url, caller, logVerbose, CancellationToken.None, contentConverter, throwIfEmptyResponse));
 
-	public static RestResponse<T> Invoke2<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Func<string, string> contentConverter = null)
-		=> AsyncContext.Run(() => request.InvokeAsync2<T>(url, caller, logVerbose, CancellationToken.None, contentConverter));
+	public static RestResponse<T> Invoke2<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, Func<string, string> contentConverter = null, bool throwIfEmptyResponse = true)
+		=> AsyncContext.Run(() => request.InvokeAsync2<T>(url, caller, logVerbose, CancellationToken.None, contentConverter, null, throwIfEmptyResponse));
 
-	public static async Task<T> InvokeAsync<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Func<string, string> contentConverter = null)
-		=> (await request.InvokeAsync2<T>(url, caller, logVerbose, token, contentConverter)).Data;
+	public static async Task<T> InvokeAsync<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Func<string, string> contentConverter = null, bool throwIfEmptyResponse = true)
+		=> (await request.InvokeAsync2<T>(url, caller, logVerbose, token, contentConverter, null, throwIfEmptyResponse)).Data;
 
-	public static async Task<RestResponse<T>> InvokeAsync2<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Func<string, string> contentConverter = null, IAuthenticator auth = null)
+	public static async Task<RestResponse<T>> InvokeAsync2<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Func<string, string> contentConverter = null, IAuthenticator auth = null, bool throwIfEmptyResponse = true)
 	{
 		if (request is null)
 			throw new ArgumentNullException(nameof(request));
@@ -131,11 +113,11 @@ public static class RestSharpHelper
 		if(networkFailure)
 		{
 			logVerbose?.Invoke("failed to complete reqeust: status={0}, msg={1}, err={2}", new object[] { response.ResponseStatus, response.ErrorMessage, response.ErrorException });
-			throw new InvalidOperationException($"failed to complete request: {response.ResponseStatus}");
+			throw new InvalidOperationException($"failed to complete request (err={response.StatusCode}): {response.Content}");
 		}
 
-		if (response.StatusCode != HttpStatusCode.OK || response.Content.IsEmpty())
-			throw new UnexpectedResponseError(response);
+		if (response.StatusCode != HttpStatusCode.OK || (throwIfEmptyResponse && response.Content.IsEmpty()))
+			throw response.ToError();
 
 		var result = RestResponse<T>.FromResponse(response);
 
@@ -155,6 +137,9 @@ public static class RestSharpHelper
 
 		return result;
 	}
+
+	public static InvalidOperationException ToError(this RestResponse response)
+		=> new($"unexpected response code='{response.StatusCode}', msg='{response.ErrorMessage}', desc='{response.StatusDescription}', content='{response.Content}'");
 
 	public static string ToQueryString(this IEnumerable<Parameter> parameters, bool encodeValue = true)
 		=> parameters.CheckOnNull(nameof(parameters)).Select(p => $"{p.Name}={p.Value.Format(encodeValue)}").JoinAnd();
