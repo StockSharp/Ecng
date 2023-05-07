@@ -187,6 +187,11 @@ public static class NetworkHelper
 		return HttpUtility.UrlEncode(url, _urlEncoding);
 	}
 
+	public static string EncodeUrlUpper(this string url)
+	{
+		return WebUtility.UrlEncode(url);
+	}
+
 	public static string DecodeUrl(this string url)
 	{
 		return HttpUtility.UrlDecode(url, _urlEncoding);

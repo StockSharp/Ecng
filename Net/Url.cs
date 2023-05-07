@@ -1,5 +1,12 @@
 namespace Ecng.Net;
 
+public enum UrlEncodes
+{
+	None,
+	Lower,
+	Upper,
+}
+
 public class Url : Uri, ICloneable<Url>
 {
 	public Url(Uri url)
@@ -23,7 +30,7 @@ public class Url : Uri, ICloneable<Url>
 	}
 
 	public bool KeepDefaultPage { get; set; }
-	public bool PreventEncodeUrl { get; set; }
+	public UrlEncodes Encode { get; set; } = UrlEncodes.Lower;
 
 	private QueryString _queryString;
 

@@ -127,16 +127,22 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 			_compiledString = string.Empty;
 		else
 		{
-			_compiledString = "?" + _queryString.Select(p =>
-			{
-				var key = Url.PreventEncodeUrl ? p.Key : p.Key.EncodeUrl();
-				var value = Url.PreventEncodeUrl ? p.Value : p.Value.EncodeUrl();
-				return (key, value);
-			}).ToQueryString();
+			_compiledString = "?" + _queryString
+				.Select(p => (Encode(p.Key), Encode(p.Value)))
+				.ToQueryString();
 		}
 
 		Url.SetValue("CreateUri", new object[] { Url.Clone(), Url.LocalPath + _compiledString, false });
 	}
+
+	private string Encode(string str)
+		=> Url.Encode switch
+		{
+			UrlEncodes.None => str,
+			UrlEncodes.Lower => str.EncodeUrl(),
+			UrlEncodes.Upper => str.EncodeUrlUpper(),
+			_ => throw new ArgumentOutOfRangeException(Url.Encode.ToString()),
+		};
 
 	public override string ToString()
 	{
