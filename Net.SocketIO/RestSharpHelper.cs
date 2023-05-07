@@ -117,8 +117,13 @@ public static class RestSharpHelper
 
 		if (response.StatusCode != HttpStatusCode.OK)
 			throw response.ToError();
-		else if (throwIfEmptyResponse && response.Content.IsEmpty())
-			throw response.ToError("Empty content.");
+		else if (response.Content.IsEmpty())
+		{
+			if (throwIfEmptyResponse)
+				throw response.ToError("Empty content.");
+
+			return RestResponse<T>.FromResponse(response);
+		}
 
 		var result = RestResponse<T>.FromResponse(response);
 
