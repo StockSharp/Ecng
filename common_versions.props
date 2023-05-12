@@ -1,7 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <AWSSDKVer>3.*</AWSSDKVer>
-
     <MicrosoftAspNetWebApiClientVer>5.2.9</MicrosoftAspNetWebApiClientVer>
 
     <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
