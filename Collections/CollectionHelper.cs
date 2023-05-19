@@ -1406,5 +1406,46 @@
 			foreach (var item in source)
 				action(item);
 		}
+
+		// https://stackoverflow.com/a/27328512
+		public static IEnumerable<TValue[]> Permutations<TKey, TValue>(this IEnumerable<TKey> keys, Func<TKey, IEnumerable<TValue>> selector)
+		{
+			if (keys is null)
+				throw new ArgumentNullException(nameof(keys));
+
+			if (selector is null)
+				throw new ArgumentNullException(nameof(selector));
+
+			var keyArray = keys.ToArray();
+
+			if (keyArray.Length < 1)
+				yield break;
+
+			static IEnumerable<TValue[]> Permutations(TKey[] keys, int index, Func<TKey, IEnumerable<TValue>> selector, TValue[] values)
+			{
+				var key = keys[index];
+
+				foreach (var value in selector(key))
+				{
+					values[index] = value;
+
+					if (index < keys.Length - 1)
+					{
+						foreach (var array in Permutations(keys, index + 1, selector, values))
+							yield return array;
+					}
+					else
+					{
+						// Clone the array
+						yield return values.ToArray();
+					}
+				}
+			}
+
+			var values = new TValue[keyArray.Length];
+
+			foreach (var array in Permutations(keyArray, 0, selector, values))
+				yield return array;
+		}
 	}
 }
