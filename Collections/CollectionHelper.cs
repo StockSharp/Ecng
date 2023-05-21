@@ -1447,5 +1447,10 @@
 			foreach (var array in Permutations(keyArray, 0, selector, values))
 				yield return array;
 		}
+
+#if NETSTANDARD2_0
+		public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count)
+			=> source.Take(source.Count() - count);
+#endif
 	}
 }
