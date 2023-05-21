@@ -230,30 +230,31 @@ public abstract class RestBaseApiClient
 
 		var methodAttr = callerMethod.GetAttribute<RestAttribute>();
 		var parameters = callerMethod.GetParameters();
-		var paramDict = parameters.ToDictionary(pi => pi, pi => pi.GetAttribute<RestAttribute>());
+		var paramsEnum = parameters
+			.Select(pi => (pi, pi.GetAttribute<RestAttribute>()))
+			.Where(t => t.Item2?.Ignore == true);
 
 		if (parameters.Length > 0)
 		{
 			var last = parameters.Last();
 
 			if (last.ParameterType == typeof(CancellationToken))
-				paramDict.Remove(last);
-
-			foreach (var pair in paramDict.Where(p => p.Value?.Ignore == true).ToArray())
-				paramDict.Remove(pair.Key);
+				paramsEnum = paramsEnum.SkipLast(1);
 		}
 
-		if (args.Length != paramDict.Count)
-			throw new ArgumentOutOfRangeException(nameof(args));
+		var paramsArr = paramsEnum.ToArray();
+
+		if (args.Length != paramsArr.Length)
+			throw new ArgumentOutOfRangeException(nameof(args), $"Args='{args.Select(a => a.To<string>()).JoinCommaSpace()}' != Params='{paramsArr.Select(t => t.pi.Name).JoinCommaSpace()}'");
 
 		List<(string name, object value)> list = new();
 
 		var i = 0;
-		foreach (var pair in paramDict)
+		foreach (var pair in paramsArr)
 		{
 			var arg = args[i++];
 
-			list.Add(((pair.Value?.Name).IsEmpty(pair.Key.Name), TryFormat(arg, callerMethod, method)));
+			list.Add(((pair.Item2?.Name).IsEmpty(pair.pi.Name), TryFormat(arg, callerMethod, method)));
 		}
 
 		var url = new Url(BaseAddress, methodAttr is null ? ToRequestUri(callerMethod) : methodAttr.Name);
