@@ -14,6 +14,7 @@ using Ecng.Common;
 using YandexDisk.Client;
 using YandexDisk.Client.Clients;
 using YandexDisk.Client.Http;
+using YandexDisk.Client.Protocol;
 
 /// <summary>
 /// The class for work with the Yandex.Disk.
@@ -45,19 +46,28 @@ public class YandexDiskService : Disposable, IBackupService
 
 	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
 	{
-		var path = parent is null ? string.Empty : parent.GetFullPath() + "/";
+		var path = $"{parent?.GetFullPath()}/";
 
 		var offset = 0;
 		var limit = 100;
 
 		while (true)
 		{
-			var info = await _client.MetaInfo.GetInfoAsync(new()
+			Resource info;
+
+			try
 			{
-				Path = path,
-				Offset = offset,
-				Limit = limit,
-			}, cancellationToken);
+				info = await _client.MetaInfo.GetInfoAsync(new()
+				{
+					Path = path,
+					Offset = offset,
+					Limit = limit,
+				}, cancellationToken);
+			}
+			catch (YandexApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+			{
+				yield break;
+			}
 
 			foreach (var item in info.Embedded.Items)
 			{

@@ -72,7 +72,10 @@ public class MegaService : Disposable, IBackupService
 
 		foreach (var folder in folders)
 		{
-			curr = GetChild(curr).First(n => n.Name.EqualsIgnoreCase(folder.Name));
+			curr = GetChild(curr).FirstOrDefault(n => n.Name.EqualsIgnoreCase(folder.Name));
+
+			if (curr is null)
+				break;
 		}
 
 		return curr;
@@ -156,7 +159,12 @@ public class MegaService : Disposable, IBackupService
 	{
 		await EnsureLogin(cancellationToken);
 
-		var child = GetChild(parent is null ? GetRoot() : Find(parent));
+		var pe = parent is null ? GetRoot() : Find(parent);
+
+		if (pe is null)
+			yield break;
+
+		var child = GetChild(pe);
 
 		if (!criteria.IsEmpty())
 			child = child.Where(i => i.Name.ContainsIgnoreCase(criteria));
