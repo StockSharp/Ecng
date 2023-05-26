@@ -150,5 +150,11 @@ namespace Ecng.Common
 
 			throw new InvalidOperationException();
 		}
+
+		public static decimal GetDecimal(decimal min, decimal max, int precision)
+		{
+			var value = RandomGen.GetDouble() * ((double)max - (double)min) + (double)min;
+			return (decimal)value.Round(precision);
+		}
 	}
 }
