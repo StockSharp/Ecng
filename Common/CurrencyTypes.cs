@@ -1423,6 +1423,90 @@ namespace Ecng.Common
 		/// </summary>
 		[EnumMember]
 		AFN,
+
+		/// <summary>
+		/// USD Coin.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		USDC,
+
+		/// <summary>
+		/// Binance USD.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		BUSD,
+
+		/// <summary>
+		/// Dai.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		DAI,
+
+		/// <summary>
+		/// True USD.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		TUSD,
+
+		/// <summary>
+		/// Pax Dollar.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		USDP,
+
+		/// <summary>
+		/// Frax.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		FRAX,
+
+		/// <summary>
+		/// USDD.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		USDD,
+
+		/// <summary>
+		/// Gemini Dollar.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		GUSD,
+
+		/// <summary>
+		/// XSGD.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		XSGD,
+
+		/// <summary>
+		/// Pax Gold.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		PAXG,
+
+		/// <summary>
+		/// Tether Gold.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		XAUT,
+
+		/// <summary>
+		/// Liquity USD.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		LUSD,
 		// ReSharper restore InconsistentNaming
 	}
 }
