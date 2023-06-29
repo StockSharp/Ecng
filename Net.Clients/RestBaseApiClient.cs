@@ -82,13 +82,8 @@ public abstract class RestBaseApiClient
 			: response.Content.ReadAsAsync<TResult>(new[] { ResponseFormatter }, cancellationToken);
 	}
 
-	protected async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, CancellationToken cancellationToken)
+	protected virtual HttpRequestMessage GetRequest(HttpMethod method, Uri uri, object body)
 	{
-		var cache = Cache;
-
-		if (cache != null && cache.TryGet<TResult>(method, uri, body, out var cached))
-			return cached;
-
 		var request = new HttpRequestMessage(method, uri);
 
 		request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(RequestFormatter.SupportedMediaTypes.First().MediaType));
@@ -101,6 +96,18 @@ public abstract class RestBaseApiClient
 
 		if (body is not null)
 			request.Content = new ObjectContent<object>(body, RequestFormatter);
+
+		return request;
+	}
+
+	protected async Task<TResult> DoAsync<TResult>(HttpMethod method, Uri uri, object body, CancellationToken cancellationToken)
+	{
+		var cache = Cache;
+
+		if (cache != null && cache.TryGet<TResult>(method, uri, body, out var cached))
+			return cached;
+
+		var request = GetRequest(method, uri, body);
 
 		var watch = Tracing ? Stopwatch.StartNew() : null;
 
