@@ -16,5 +16,10 @@ namespace Ecng.Common
 		{
 			return obj?.TypedClone();
 		}
+
+		/// <summary>
+		/// Helper to clone object without UI related parts. Use with <see cref="Scope{T}"/> and clone.
+		/// </summary>
+		public class CloneWithoutUI {}
 	}
 }

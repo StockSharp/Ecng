@@ -14,6 +14,11 @@ namespace Ecng.Common
 	{
 		#region Scope.ctor()
 
+		public Scope()
+			: this(Activator.CreateInstance<T>(), true)
+		{
+		}
+
 		public Scope(T value)
 			: this(value, true)
 		{
@@ -47,6 +52,8 @@ namespace Ecng.Common
 		private static readonly AsyncLocal<Scope<T>> _current = new();
 
 		public static Scope<T> Current => _current.Value;
+
+		public static bool IsDefined => Current != null;
 
 		#endregion
 
