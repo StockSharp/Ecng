@@ -5,6 +5,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 	using System.Diagnostics;
+	using System.Linq;
 
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Linq;
@@ -120,6 +121,17 @@
 			writer.WriteValue(value);
 
 			return writer;
+		}
+
+		public static byte[] SkipBom(this byte[] array)
+		{
+			if (array is null)
+				throw new ArgumentNullException(nameof(array));
+
+			if (array.Length >= 3 && array[0] == 239 && array[1] == 187 && array[2] == 191)
+				array = array.Skip(3).ToArray();
+
+			return array;
 		}
 	}
 }
