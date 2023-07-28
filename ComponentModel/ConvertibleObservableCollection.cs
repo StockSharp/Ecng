@@ -11,9 +11,17 @@ namespace Ecng.ComponentModel;
 /// <summary>
 /// Collection which maps items to another type to display.
 /// </summary>
+public interface IConvertibleObservableCollection<TItem> : IListEx<TItem>
+{
+	void RemoveAll(Func<TItem, bool> pred);
+}
+
+/// <summary>
+/// Collection which maps items to another type to display.
+/// </summary>
 /// <typeparam name="TItem">Original item type.</typeparam>
 /// <typeparam name="TDisplay">Display item type.</typeparam>
-public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCollection, IListEx<TItem>
+public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCollection, IConvertibleObservableCollection<TItem>
 	where TDisplay : class
 {
 	private readonly ICollection<TDisplay> _collection;
@@ -299,6 +307,28 @@ public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCo
 	}
 
 	/// <summary>
+	/// Remove items for which <see cref="pred"/> returns true.
+	/// </summary>
+	public void RemoveAll(Func<TItem, bool> pred)
+	{
+		if (_collection is not IList<TDisplay> coll)
+			throw new NotSupportedException($"base collection must implement IList<{typeof(TDisplay).Name}>");
+
+		lock (SyncRoot)
+		{
+			for (var i = _convertedValues.Count - 1; i >= 0; --i)
+			{
+				var kvp = (KVPair)_convertedValues[i];
+				if (!pred(kvp.Item))
+					continue;
+
+				_convertedValues.RemoveAt(i);
+				coll.RemoveAt(i);
+			}
+		}
+	}
+
+	/// <summary>
 	/// Gets or sets the element at the specified index.
 	/// </summary>
 	/// <returns>
@@ -312,18 +342,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCo
 			lock (SyncRoot)
 				return ((KVPair)_convertedValues[index]!).Item;
 		}
-		set
-		{
-			if (_collection is not IList<TDisplay> coll)
-				throw new NotSupportedException($"base collection must implement IList<{typeof(TDisplay).Name}>");
-
-			lock (SyncRoot)
-			{
-				var pair = new KVPair { Item = value, Display = _converter(value) };
-				_convertedValues[index] = pair;
-				coll[index] = pair.Display;
-			}
-		}
+		set => throw new NotSupportedException();
 	}
 
 	/// <summary>
