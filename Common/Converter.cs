@@ -876,31 +876,25 @@
 
 		private static bool FinalTry(ref object value, Type sourceType, Type destinationType)
 		{
-			//var key = Tuple.Create(sourceType, destinationType);
+			static bool IsConversion(MethodInfo mi)
+				=> mi.Name != "op_Implicit" || mi.Name != "op_Explicit";
+			
+			var method =
+				sourceType
+					.GetMethods(BindingFlags.Public | BindingFlags.Static)
+					.FirstOrDefault(mi => IsConversion(mi) && mi.ReturnType == destinationType)
+				??
+				destinationType
+					.GetMethods(BindingFlags.Public | BindingFlags.Static)
+					.FirstOrDefault(mi =>
+					{
+						if (!IsConversion(mi))
+							return false;
 
-			MethodInfo method;
+						var parameters = mi.GetParameters();
 
-			//if (!_castOperators.TryGetValue(key, out method))
-			{
-				method =
-					sourceType
-						.GetMethods(BindingFlags.Public | BindingFlags.Static)
-						.FirstOrDefault(mi => mi.Name == "op_Explicit" && mi.ReturnType == destinationType)
-					??
-					destinationType
-						.GetMethods(BindingFlags.Public | BindingFlags.Static)
-						.FirstOrDefault(mi =>
-						{
-							if (mi.Name != "op_Implicit")
-								return false;
-
-							var parameters = mi.GetParameters();
-
-							return parameters.Length == 1 && parameters[0].ParameterType == sourceType;
-						});
-
-				//_castOperators.Add(key, method);
-			}
+						return parameters.Length == 1 && parameters[0].ParameterType == sourceType;
+					});
 
 			if (method != null)
 				value = method.Invoke(null, new[] { value });
