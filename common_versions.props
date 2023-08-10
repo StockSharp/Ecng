@@ -15,7 +15,7 @@
     <RestSharpVer>108.0.2</RestSharpVer>
     <NDdeVer>4.0.0</NDdeVer>
     <ILPackVer>0.1.7</ILPackVer>
-    <linq2dbVer>5.2.0</linq2dbVer>
+    <linq2dbVer>5.2.2</linq2dbVer>
     <NitoVer>5.1.2</NitoVer>
     <DXVer>1.*</DXVer>
     <CsWin32Ver>0.2.164-beta</CsWin32Ver>
