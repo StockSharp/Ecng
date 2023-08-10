@@ -7,6 +7,7 @@ namespace Ecng.Tests.Common
 	using System.Net;
 
 	using Ecng.Common;
+	using Ecng.ComponentModel;
 	using Ecng.UnitTesting;
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -222,6 +223,46 @@ namespace Ecng.Tests.Common
 			ToDto(DateTime.UtcNow);
 			ToDto(DateTime.MinValue, DateTimeOffset.MinValue);
 			ToDto(DateTime.MaxValue, DateTimeOffset.MaxValue);
+		}
+
+		[TestMethod]
+		public void ImplicitExplicit()
+		{
+			10m.To<Price>().To<decimal>().AssertEqual(10m);
+		}
+
+		private class Price2
+		{
+			public decimal Value { get; set; }
+
+			public static explicit operator Price(Price2 v)
+				=> new() { Value = v.Value };
+
+			public static implicit operator Price2(Price v)
+				=> new() { Value = v.Value };
+		}
+
+		[TestMethod]
+		public void ImplicitExplicit2()
+		{
+			10m.To<Price>().To<Price2>().To<Price>().To<decimal>().AssertEqual(10m);
+		}
+
+		private class TestConvert<T>
+		{
+			public T Value { get; set; }
+
+			public static explicit operator T(TestConvert<T> v)
+				=> v.Value;
+
+			public static implicit operator TestConvert<T>(T v)
+				=> new() { Value = v };
+		}
+
+		[TestMethod]
+		public void ImplicitExplicitGeneric()
+		{
+			10m.To<TestConvert<decimal>>().To<decimal>().AssertEqual(10m);
 		}
 	}
 }

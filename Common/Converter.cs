@@ -885,13 +885,13 @@
 				method =
 					sourceType
 						.GetMethods(BindingFlags.Public | BindingFlags.Static)
-						.FirstOrDefault(mi => mi.Name == "op_Implicit" && mi.ReturnType == destinationType)
+						.FirstOrDefault(mi => mi.Name == "op_Explicit" && mi.ReturnType == destinationType)
 					??
 					destinationType
 						.GetMethods(BindingFlags.Public | BindingFlags.Static)
 						.FirstOrDefault(mi =>
 						{
-							if (mi.Name != "op_Explicit")
+							if (mi.Name != "op_Implicit")
 								return false;
 
 							var parameters = mi.GetParameters();
