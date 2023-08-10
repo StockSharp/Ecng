@@ -955,9 +955,6 @@ namespace Ecng.Reflection
 			return cache.SafeAdd(key, createValue);
 		}
 
-		public static void EnsureRunClass(this Type type)
-			=> RuntimeHelpers.RunClassConstructor(type.TypeHandle);
-
 		/// <summary>
 		/// Find all <typeparamref name="T"/> implementation in the specified assembly.
 		/// </summary>
