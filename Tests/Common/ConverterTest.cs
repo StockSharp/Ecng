@@ -264,5 +264,22 @@ namespace Ecng.Tests.Common
 		{
 			10m.To<TestConvert<decimal>>().To<decimal>().AssertEqual(10m);
 		}
+
+		private class Price3
+		{
+            static Price3()
+            {
+				Converter.AddTypedConverter<Price3, decimal>(input => input.Value);
+				Converter.AddTypedConverter<decimal, Price3>(input => new() { Value = input });
+			}
+
+            public decimal Value { get; set; }
+        }
+
+		[TestMethod]
+		public void ImplicitExplicitStatic()
+		{
+			10m.To<Price3>().To<decimal>().AssertEqual(10m);
+		}
 	}
 }

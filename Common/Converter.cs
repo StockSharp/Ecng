@@ -544,8 +544,12 @@
 					if (value is IPAddress)
 						return typeof(IPAddress);
 
-					return value.GetType();
+					var type = value.GetType();
+					type.EnsureRunClass();
+					return type;
 				}
+
+				destinationType.EnsureRunClass();
 
 				if (TryGetTypedConverter(GetValueType(), destinationType, out var typedConverter))
 					return typedConverter(value);
