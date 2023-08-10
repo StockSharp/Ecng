@@ -10,6 +10,12 @@ using Ecng.Serialization;
 [DataContract]
 public class Price : Equatable<Price>, IPersistable, IOperable<Price>
 {
+	static Price()
+	{
+		Converter.AddTypedConverter<Price, decimal>(input => (decimal)input);
+		Converter.AddTypedConverter<decimal, Price>(input => input);
+	}
+
 	public Price() { }
 
 	public Price(decimal value, PriceTypes type)
