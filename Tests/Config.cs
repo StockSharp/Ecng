@@ -15,7 +15,6 @@ namespace Ecng.Tests
 		{
 			AttributeHelper.CacheEnabled = false;
 			ReflectionHelper.CacheEnabled = false;
-			FastInvoker.CacheEnabled = false;
 		}
 
 		public static readonly HttpClient HttpClient = new();

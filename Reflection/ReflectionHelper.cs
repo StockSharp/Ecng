@@ -11,7 +11,6 @@ namespace Ecng.Reflection
 
 	using Ecng.Collections;
 	using Ecng.Common;
-	using Ecng.Reflection.Emit;
 
 	public static class ReflectionHelper
 	{
@@ -141,193 +140,11 @@ namespace Ecng.Reflection
 
 		#endregion
 
-		#region CreateInstance
-
-		public static T CreateInstance<T>(this Type type, object arg)
-		{
-			return (T)type.CreateInstance(arg);
-		}
-
-		public static object CreateInstance(this Type type)
-		{
-			return type.CreateInstance(null);
-		}
-
-		public static object CreateInstance(this Type type, object arg)
-		{
-			return GetMember<ConstructorInfo>(type, GetArgTypes(arg)).CreateInstance<object>(arg);
-		}
-
-		public static T CreateInstance<T>(this ConstructorInfo ctor, object arg)
-		{
-			return (T)FastInvoker.Create(ctor).Ctor(arg);
-		}
-
-		public static TInstance CreateInstance<TInstance>()
-		{
-			return CreateInstance<object[], TInstance>(null);
-		}
-
-		public static TInstance CreateInstance<TArg, TInstance>(TArg arg)
-		{
-			return CreateInstance<TArg, TInstance>(GetMember<ConstructorInfo>(typeof(TInstance), GetArgTypes(arg)), arg);
-		}
-
-		public static TInstance CreateInstance<TArg, TInstance>(ConstructorInfo ctor, TArg arg)
-		{
-			return FastInvoker<VoidType, TArg, TInstance>.Create(ctor).Ctor(arg);
-		}
-
-		#endregion
-
 		#region GetArgTypes
 
 		public static Type[] GetArgTypes<TArg>(TArg arg)
 		{
 			return arg.IsNull() ? Type.EmptyTypes : arg.To<Type[]>();
-		}
-
-		#endregion
-
-		#region SetValue
-
-		public static TInstance SetValue<TInstance, TValue>(this TInstance instance, string memberName, TValue value)
-		{
-			return instance.SetValue(memberName, AllInstanceMembers, value);
-		}
-
-		public static TInstance SetValue<TInstance, TValue>(this TInstance instance, string memberName, BindingFlags flags, TValue value)
-		{
-			if (instance.IsNull())
-				throw new ArgumentNullException(nameof(instance));
-
-			return instance.SetValue(instance.GetType().GetMember<MemberInfo>(memberName, flags, true, GetArgTypes(value)), value);
-		}
-
-		public static void SetValue<TValue>(this Type type, string memberName, TValue value)
-		{
-			type.SetValue(memberName, AllStaticMembers, value);
-		}
-
-		public static void SetValue<TValue>(this Type type, string memberName, BindingFlags flags, TValue value)
-		{
-			type.GetMember<MemberInfo>(memberName, flags, true, GetArgTypes(value)).SetValue(value);
-		}
-
-		public static void SetValue<TValue>(this MemberInfo member, TValue value)
-		{
-			if (member is null)
-				throw new ArgumentNullException(nameof(member));
-
-			if (member is PropertyInfo pi)
-				FastInvoker<VoidType, TValue, VoidType>.Create(pi, false).SetValue(value);
-			else if (member is FieldInfo fi)
-				FastInvoker<VoidType, TValue, VoidType>.Create(fi, false).SetValue(value);
-			else if (member is MethodInfo mi)
-				FastInvoker<VoidType, TValue, VoidType>.Create(mi).VoidInvoke(value);
-			else if (member is EventInfo ei)
-				FastInvoker<VoidType, TValue, VoidType>.Create(ei, false).VoidInvoke(value);
-			else
-				throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
-		}
-
-		public static TInstance SetValue<TInstance, TValue>(this TInstance instance, MemberInfo member, TValue value)
-		{
-			if (member is null)
-				throw new ArgumentNullException(nameof(member));
-
-			if (member is PropertyInfo pi)
-			{
-				if (IsIndexer(member))
-					return FastInvoker<TInstance, TValue, TInstance>.Create(pi, false).ReturnInvoke(instance, value);
-				else
-					return FastInvoker<TInstance, TValue, VoidType>.Create(pi, false).SetValue(instance, value);
-			}
-			else if (member is FieldInfo fi)
-				return FastInvoker<TInstance, TValue, VoidType>.Create(fi, false).SetValue(instance, value);
-			else if (member is MethodInfo mi)
-				FastInvoker<TInstance, TValue, VoidType>.Create(mi).VoidInvoke(instance, value);
-			else if (member is EventInfo ei)
-				FastInvoker<TInstance, TValue, VoidType>.Create(ei, false).VoidInvoke(instance, value);
-			else
-				throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
-
-			return instance;
-		}
-
-		#endregion
-
-		#region GetValue
-
-		public static TValue GetValue<TInstance, TArg, TValue>(this TInstance instance, string memberName, TArg arg)
-		{
-			return instance.GetValue<TInstance, TArg, TValue>(memberName, AllInstanceMembers, arg);
-		}
-
-		public static TValue GetValue<TInstance, TArg, TValue>(this TInstance instance, string memberName, BindingFlags flags, TArg arg)
-		{
-			if (instance.IsNull())
-				throw new ArgumentNullException(nameof(instance));
-
-			return instance.GetValue<TInstance, TArg, TValue>(GetMember<MemberInfo>(instance.GetType(), memberName, flags, false, GetArgTypes(arg)), arg);
-		}
-
-		public static TValue GetValue<TArg, TValue>(this Type type, string memberName, TArg arg)
-		{
-			return type.GetValue<TArg, TValue>(memberName, AllStaticMembers, arg);
-		}
-
-		public static TValue GetValue<TArg, TValue>(this Type type, string memberName, BindingFlags flags, TArg arg)
-		{
-			return GetMember<MemberInfo>(type, memberName, flags, false, GetArgTypes(arg)).GetValue<TArg, TValue>(arg);
-		}
-
-		public static TValue GetValue<TArg, TValue>(this MemberInfo member, TArg arg)
-		{
-			if (member is null)
-				throw new ArgumentNullException(nameof(member));
-
-			TValue value;
-
-			if (member is PropertyInfo prop)
-				value = FastInvoker<VoidType, VoidType, TValue>.Create(prop, true).GetValue();
-			else if (member is FieldInfo field)
-				value = FastInvoker<VoidType, VoidType, TValue>.Create(field, true).GetValue();
-			else if (member is MethodInfo method)
-				value = FastInvoker<VoidType, TArg, TValue>.Create(method).ReturnInvoke(arg);
-			else if (member is EventInfo evt)
-			{
-				FastInvoker<VoidType, TArg, VoidType>.Create(evt, true).VoidInvoke(arg);
-				value = default;
-			}
-			else
-				throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
-
-			return value;
-		}
-
-		public static TValue GetValue<TInstance, TArg, TValue>(this TInstance instance, MemberInfo member, TArg arg)
-		{
-			if (member is null)
-				throw new ArgumentNullException(nameof(member));
-
-			TValue value;
-
-			if (member is PropertyInfo prop)
-				value = IsIndexer(member) ? FastInvoker<TInstance, TArg, TValue>.Create(prop, true).ReturnInvoke(instance, arg) : FastInvoker<TInstance, VoidType, TValue>.Create(prop, true).GetValue(instance);
-			else if (member is FieldInfo field)
-				value = FastInvoker<TInstance, VoidType, TValue>.Create(field, true).GetValue(instance);
-			else if (member is MethodInfo method)
-				value = FastInvoker<TInstance, TArg, TValue>.Create(method).ReturnInvoke(instance, arg);
-			else if (member is EventInfo evt)
-			{
-				FastInvoker<TInstance, TArg, VoidType>.Create(evt, true).VoidInvoke(instance, arg);
-				value = default;
-			}
-			else
-				throw new ArgumentOutOfRangeException(nameof(member), member.To<string>());
-
-			return value;
 		}
 
 		#endregion
@@ -852,54 +669,6 @@ namespace Ecng.Reflection
 
 				return null;
 			});
-		}
-
-		#endregion
-
-		#region GetGenericArgs
-
-		public static IEnumerable<GenericArg> GetGenericArgs(this Type type)
-		{
-			if (type is null)
-				throw new ArgumentNullException(nameof(type));
-
-			if (!type.IsGenericTypeDefinition)
-				throw new ArgumentException(nameof(type));
-
-			return type.GetGenericArguments().GetGenericArgs();
-		}
-
-		public static IEnumerable<GenericArg> GetGenericArgs(this MethodInfo method)
-		{
-			if (method is null)
-				throw new ArgumentNullException(nameof(method));
-
-			if (!method.IsGenericMethodDefinition)
-				throw new ArgumentException(nameof(method));
-
-			return method.GetGenericArguments().GetGenericArgs();
-		}
-
-		private static IEnumerable<GenericArg> GetGenericArgs(this IEnumerable<Type> genericParams)
-		{
-			if (genericParams is null)
-				throw new ArgumentNullException(nameof(genericParams));
-
-			var genericArgs = new List<GenericArg>();
-
-			foreach (var genericParam in genericParams)
-			{
-				var constraints = genericParam.GetGenericParameterConstraints()
-					.Select(constraintBaseType => new Constraint(constraintBaseType))
-					.ToList();
-
-				if (genericParam.GenericParameterAttributes != GenericParameterAttributes.None)
-					constraints.Add(new Constraint(genericParam.GenericParameterAttributes));
-
-				genericArgs.Add(new GenericArg(genericParam, genericParam.Name, constraints));
-			}
-
-			return genericArgs;
 		}
 
 		#endregion

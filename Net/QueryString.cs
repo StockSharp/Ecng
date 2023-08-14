@@ -2,12 +2,20 @@
 
 using System.Collections;
 using System.Collections.Specialized;
+using System.Reflection;
 
 using Ecng.Reflection;
 
 public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<string, string>>
 {
-	private Dictionary<string, string> _queryString;
+	private static readonly MethodInfo _createUri;
+
+	static QueryString()
+    {
+		_createUri = typeof(Uri).GetMethod("CreateUri", ReflectionHelper.AllInstanceMembers);
+    }
+
+    private Dictionary<string, string> _queryString;
 
 	private string _compiledString;
 
@@ -132,7 +140,7 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 				.ToQueryString();
 		}
 
-		Url.SetValue("CreateUri", new object[] { Url.Clone(), Url.LocalPath + _compiledString, false });
+		_createUri.Invoke(Url, new object[] { Url.Clone(), Url.LocalPath + _compiledString, false });
 	}
 
 	private string Encode(string str)

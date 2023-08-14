@@ -56,26 +56,6 @@ public static class MailHelper
 		return message;
 	}
 
-	// http://stackoverflow.com/a/9621399
-	public static MemoryStream ToStream(this MailMessage message)
-	{
-		if (message is null)
-			throw new ArgumentNullException(nameof(message));
-
-		var assembly = typeof(SmtpClient).Assembly;
-		var mailWriterType = assembly.GetType("System.Net.Mail.MailWriter");
-
-		var stream = new MemoryStream();
-
-		var mailWriter = mailWriterType.CreateInstance(new[] { (object)stream, true });
-
-		message.SetValue<object, object[]>("Send", new[] { mailWriter, true, true });
-
-		mailWriter.SetValue<object, VoidType>("Close", null);
-
-		return stream;
-	}
-
 	private static readonly Regex _emailRegex1 = new(@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,10})+)$", RegexOptions.Compiled | RegexOptions.Singleline);
 
 	public static bool IsEmailValid(this string email)

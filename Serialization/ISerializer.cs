@@ -7,9 +7,6 @@ namespace Ecng.Serialization
 
 	public interface ISerializer
 	{
-		Type Type { get; }
-		Serializer<T> GetSerializer<T>();
-		ISerializer GetSerializer(Type entityType);
 		string FileExtension { get; }
 
 		public abstract ValueTask SerializeAsync(object graph, Stream stream, CancellationToken cancellationToken);

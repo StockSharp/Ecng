@@ -1,9 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <ItemGroup>
-    <PackageReference Include="Lokad.ILPack" Version="$(ILPackVer)" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Collections\Collections.csproj" />
   </ItemGroup>
 </Project>

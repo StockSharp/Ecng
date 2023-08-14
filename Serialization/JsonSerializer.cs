@@ -38,20 +38,6 @@
 		public int BufferSize { get; set; } = FileSizes.KB;
 		public NullValueHandling NullValueHandling { get; set; } = NullValueHandling.Include;
 
-		public override ISerializer GetSerializer(Type entityType)
-		{
-			var serializer = base.GetSerializer(entityType);
-
-			serializer.SetValue(nameof(Indent), Indent);
-			serializer.SetValue(nameof(Encoding), Encoding);
-			serializer.SetValue(nameof(FillMode), FillMode);
-			serializer.SetValue(nameof(EnumAsString), EnumAsString);
-			serializer.SetValue(nameof(EncryptedAsByteArray), EncryptedAsByteArray);
-			serializer.SetValue(nameof(BufferSize), BufferSize);
-
-			return serializer;
-		}
-
 		public override string FileExtension => "json";
 
 		public static JsonSerializer<T> CreateDefault()
@@ -116,7 +102,7 @@
 					if (storage is null)
 						return null;
 
-					var per = type.CreateInstance();
+					var per = type.CreateInstance<object>();
 
 					if (per is IAsyncPersistable asyncPer)
 						await asyncPer.LoadAsync(storage, default);
@@ -134,7 +120,7 @@
 
 					reader.ChechExpectedToken(JsonToken.StartObject);
 
-					var per = type.CreateInstance();
+					var per = type.CreateInstance<object>();
 
 					var storage = new SettingsStorage(reader, GetValueFromReaderAsync);
 
