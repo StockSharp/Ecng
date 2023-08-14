@@ -28,6 +28,9 @@ namespace Ecng.Common
 
 		private static readonly Type _enumType = typeof(Enum);
 
+		public static object CreateInstance(this Type type, params object[] args)
+			=> type.CreateInstance<object>(args);
+
 		public static T CreateInstance<T>(this Type type, params object[] args)
 		{
 			if (type is null)

@@ -701,7 +701,7 @@
 						else if (destinationType == typeof(long?))
 							return new decimal?();
 						else
-							return destinationType.CreateInstance<object>();
+							return destinationType.CreateInstance();
 					}
 					else
 					{
@@ -712,7 +712,7 @@
 						else if (destinationType == typeof(long?))
 							return value.To(typeof(long));
 						else
-							return destinationType.CreateInstance<object>(value.To(destinationType.GetUnderlyingType()));
+							return destinationType.CreateInstance(value.To(destinationType.GetUnderlyingType()));
 					}
 				}
 				else if (value is string s4 && destinationType == typeof(TimeSpan))

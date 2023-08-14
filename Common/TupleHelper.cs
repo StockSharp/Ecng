@@ -159,7 +159,7 @@
 			var genericType = ("System.Tuple`" + types.Count).To<Type>();
 			var specificType = genericType.Make(types);
 
-			return specificType.CreateInstance<object>(args.ToArray());
+			return specificType.CreateInstance(args.ToArray());
 		}
 
 		public static IEnumerable<object> ToValues<T>(this T tuple)

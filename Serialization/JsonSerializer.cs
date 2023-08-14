@@ -102,7 +102,7 @@
 					if (storage is null)
 						return null;
 
-					var per = type.CreateInstance<object>();
+					var per = type.CreateInstance();
 
 					if (per is IAsyncPersistable asyncPer)
 						await asyncPer.LoadAsync(storage, default);
@@ -120,7 +120,7 @@
 
 					reader.ChechExpectedToken(JsonToken.StartObject);
 
-					var per = type.CreateInstance<object>();
+					var per = type.CreateInstance();
 
 					var storage = new SettingsStorage(reader, GetValueFromReaderAsync);
 

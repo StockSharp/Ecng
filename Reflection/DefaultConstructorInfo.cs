@@ -87,7 +87,7 @@ namespace Ecng.Reflection
 		/// <exception cref="T:System.Security.SecurityException">The caller does not have the necessary code access permissions.</exception>
 		public override object Invoke(BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
 		{
-			return _type.CreateInstance<object>();
+			return _type.CreateInstance();
 		}
 
 		/// <summary>
@@ -109,7 +109,7 @@ namespace Ecng.Reflection
 		/// <exception cref="T:System.Reflection.TargetException">The obj parameter is null and the method is not static.-or- The method is not declared or inherited by the class of obj. -or-A static constructor is invoked, and obj is neither null nor an instance of the class that declared the constructor.</exception>
 		public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
 		{
-			return _type.CreateInstance<object>();
+			return _type.CreateInstance();
 		}
 
 		/// <summary>
