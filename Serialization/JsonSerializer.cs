@@ -23,7 +23,18 @@
 		}
 	}
 
-	public class JsonSerializer<T> : Serializer<T>
+	public interface IJsonSerializer
+	{
+		bool Indent { get; set; }
+		Encoding Encoding { get; set; }
+		bool FillMode { get; set; }
+		bool EnumAsString { get; set; }
+		bool EncryptedAsByteArray { get; set; }
+		int BufferSize { get; set; }
+		NullValueHandling NullValueHandling { get; set; }
+	}
+
+	public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 	{
 		static JsonSerializer()
 		{
