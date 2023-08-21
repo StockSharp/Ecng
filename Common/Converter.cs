@@ -881,7 +881,7 @@
 		private static bool FinalTry(ref object value, Type sourceType, Type destinationType)
 		{
 			static bool IsConversion(MethodInfo mi)
-				=> mi.Name != "op_Implicit" || mi.Name != "op_Explicit";
+				=> mi.Name == "op_Implicit" || mi.Name == "op_Explicit";
 			
 			var method =
 				sourceType

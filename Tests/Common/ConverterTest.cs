@@ -274,12 +274,20 @@ namespace Ecng.Tests.Common
 			}
 
             public decimal Value { get; set; }
-        }
+
+			public static string SomeMethod(int _)
+			{
+				return string.Empty;
+			}
+
+			public override string ToString() => Value.To<string>();
+		}
 
 		[TestMethod]
 		public void ImplicitExplicitStatic()
 		{
 			10m.To<Price3>().To<decimal>().AssertEqual(10m);
+			10m.To<Price3>().To<string>().AssertEqual("10");
 		}
 	}
 }
