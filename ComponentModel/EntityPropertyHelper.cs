@@ -1,6 +1,7 @@
 ﻿namespace Ecng.ComponentModel
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
@@ -75,8 +76,16 @@
 
 			type = type.GetUnderlyingType() ?? type;
 
-			foreach (var part in name.Split('.'))
+			foreach (var p in name.Split('.'))
 			{
+				var part = p;
+
+				var brIdx = part.IndexOf('[');
+				var index = brIdx != -1 ? part.Substring(brIdx + 1, part.IndexOf(']') - (brIdx + 1)) : null;
+
+				if (index is not null)
+					part = part.Substring(0, brIdx);
+
 				var info = type.GetProperty(part);
 
 				if (info is null)
@@ -92,6 +101,24 @@
 					type = info.PropertyType;
 
 				type = type.GetUnderlyingType() ?? type;
+
+				if (type is not null && index is not null)
+				{
+					if (type.Is<IList>())
+					{
+						type = type.GetItemType();
+					}
+					else if (type.Is<IDictionary>())
+					{
+						type = typeof(object);
+					}
+					else if (type.GetGenericType(typeof(IDictionary<,>)) is not null)
+					{
+						type = type.GetGenericArguments()[1];
+					}
+					else
+						return null;
+				}
 			}
 
 			return type;
@@ -103,10 +130,18 @@
 
 			getVirtualProp ??= (t, n) => null;
 
-			foreach (var part in name.Split('.'))
+			foreach (var p in name.Split('.'))
 			{
+				var part = p;
+
 				if (value is null)
 					return null;
+
+				var brIdx = part.IndexOf('[');
+				var index = brIdx != -1 ? part.Substring(brIdx + 1, part.IndexOf(']') - (brIdx + 1)) : null;
+
+				if (index is not null)
+					part = part.Substring(0, brIdx);
 
 				var info = value.GetType().GetProperty(part);
 
@@ -121,6 +156,38 @@
 				}
 				else
 					value = info.GetValue(value, null);
+
+				if (value is not null && index is not null)
+				{
+					if (value is IList list)
+					{
+						var i = index.To<int>();
+
+						if (i < 0 || i >= list.Count)
+							return null;
+
+						value = list[i];
+					}
+					else if (value is IDictionary dict)
+					{
+						object key = index;
+
+						var type = dict.GetType();
+
+						if (type.IsGenericType)
+						{
+							var argTypes = type.GetGenericArguments();
+							key = key.To(argTypes[0]);
+						}
+
+						if (!dict.Contains(key))
+							return null;
+
+						value = dict[key];
+					}
+					else
+						return null;
+				}
 			}
 
 			return value;
