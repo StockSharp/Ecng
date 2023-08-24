@@ -10,28 +10,26 @@
 
 	public static class EntityPropertyHelper
 	{
-		public static List<EntityProperty> GetEntityProperties(this Type type, Func<PropertyInfo, bool> filter = null)
+		public static IEnumerable<EntityProperty> GetEntityProperties(this Type type, Func<PropertyInfo, bool> filter = null)
 		{
 			return type.GetEntityProperties(null, filter);
 		}
 
-		public static List<EntityProperty> GetEntityProperties(this Type type, EntityProperty parent, Func<PropertyInfo, bool> filter = null)
+		public static IEnumerable<EntityProperty> GetEntityProperties(this Type type, EntityProperty parent, Func<PropertyInfo, bool> filter = null)
 		{
 			return type.GetEntityProperties(parent, new HashSet<Type>(), filter ?? (p => true));
 		}
 
-		private static List<EntityProperty> GetEntityProperties(this Type type, EntityProperty parent, HashSet<Type> processed, Func<PropertyInfo, bool> filter)
+		private static IEnumerable<EntityProperty> GetEntityProperties(this Type type, EntityProperty parent, HashSet<Type> processed, Func<PropertyInfo, bool> filter)
 		{
-			var properties = new List<EntityProperty>();
-
 			if (processed.Contains(type))
-				return properties;
+				yield break;
 
 			type = type.GetUnderlyingType() ?? type;
 
 			var propertyInfos = type
-	            .GetMembers<PropertyInfo>(BindingFlags.Public | BindingFlags.Instance)
-	            .Where(filter);
+				.GetMembers<PropertyInfo>(BindingFlags.Public | BindingFlags.Instance)
+				.Where(filter);
 
 			var names = new HashSet<string>();
 
@@ -59,12 +57,10 @@
 					prop.Properties = GetEntityProperties(propType, prop, processed, filter);
 				}
 
-				properties.Add(prop);
+				yield return prop;
 			}
 
 			processed.Remove(type);
-
-			return properties;
 		}
 
 		public static Type GetPropType(this Type type, string name)
