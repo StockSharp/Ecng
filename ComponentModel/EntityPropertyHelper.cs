@@ -63,13 +63,15 @@
 			processed.Remove(type);
 		}
 
-		public static Type GetPropType(this Type type, string name)
+		public static Type GetPropType(this Type type, string name, Func<Type, string, Type> getVirtualProp = null)
 		{
 			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			if (name is null)
 				throw new ArgumentNullException(nameof(name));
+
+			getVirtualProp ??= (t, n) => null;
 
 			type = type.GetUnderlyingType() ?? type;
 
@@ -78,26 +80,47 @@
 				var info = type.GetProperty(part);
 
 				if (info is null)
-					return null;
+				{
+					var virtualPropType = getVirtualProp(type, part);
 
-				type = info.PropertyType.GetUnderlyingType() ?? info.PropertyType;
+					if (virtualPropType is null)
+						return null;
+
+					type = virtualPropType;
+				}
+				else
+					type = info.PropertyType;
+
+				type = type.GetUnderlyingType() ?? type;
 			}
 
 			return type;
 		}
 
-		public static object GetPropValue(this object entity, string name)
+		public static object GetPropValue(this object entity, string name, Func<object, string, object> getVirtualProp = null)
 		{
 			var value = entity;
 
+			getVirtualProp ??= (t, n) => null;
+
 			foreach (var part in name.Split('.'))
 			{
-				var info = value?.GetType().GetProperty(part);
-
-				if (info is null || (info.PropertyType.IsNullable() && info.GetValue(value, null) is null))
+				if (value is null)
 					return null;
 
-				value = info.GetValue(value, null);
+				var info = value.GetType().GetProperty(part);
+
+				if (info is null)
+				{
+					var virtualPropValue = getVirtualProp(value, part);
+
+					if (virtualPropValue is null)
+						return null;
+
+					value = virtualPropValue;
+				}
+				else
+					value = info.GetValue(value, null);
 			}
 
 			return value;
