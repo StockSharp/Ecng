@@ -124,7 +124,7 @@
 			return type;
 		}
 
-		public static object GetPropValue(this object entity, string name, Func<object, string, object> getVirtualProp = null)
+		public static object GetPropValue(this object entity, string name, Func<object, string, object> getVirtualProp = null, IDictionary<string, object> vars = null)
 		{
 			var value = entity;
 
@@ -161,7 +161,13 @@
 				{
 					if (value is IList list)
 					{
-						var i = index.To<int>();
+						if (!int.TryParse(index, out var i))
+						{
+							if (vars is null)
+								throw new InvalidOperationException($"{index} is not index.");
+
+							i = vars[index].To<int>();
+						}
 
 						if (i < 0 || i >= list.Count)
 							return null;
@@ -191,6 +197,55 @@
 			}
 
 			return value;
+		}
+
+		public static IEnumerable<string> GetVars(this Type type, string name, Func<Type, string, Type> getVirtualProp = null)
+		{
+			if (type is null)
+				throw new ArgumentNullException(nameof(type));
+
+			if (name is null)
+				throw new ArgumentNullException(nameof(name));
+
+			getVirtualProp ??= (t, n) => null;
+
+			type = type.GetUnderlyingType() ?? type;
+
+			foreach (var p in name.Split('.'))
+			{
+				var part = p;
+
+				var brIdx = part.IndexOf('[');
+				var index = brIdx != -1 ? part.Substring(brIdx + 1, part.IndexOf(']') - (brIdx + 1)) : null;
+
+				if (index is not null)
+					part = part.Substring(0, brIdx);
+
+				var info = type.GetProperty(part);
+
+				if (info is null)
+				{
+					var virtualPropType = getVirtualProp(type, part);
+
+					if (virtualPropType is null)
+						yield break;
+
+					type = virtualPropType;
+				}
+				else
+					type = info.PropertyType;
+
+				type = type.GetUnderlyingType() ?? type;
+
+				if (type is not null && index is not null)
+				{
+					if (type.Is<IList>())
+					{
+						if (!int.TryParse(index, out _))
+							yield return index;
+					}
+				}
+			}
 		}
 	}
 }

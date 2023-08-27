@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.Linq;
 using Ecng.ComponentModel;
 using Ecng.UnitTesting;
 
@@ -196,5 +196,55 @@ public class EntityPropertyTests
 			return null;
 		}).AssertEqual(typeof(string));
 
+	}
+
+	[TestMethod]
+	public void Vars()
+	{
+		var vars = typeof(TestIndexerEntity).GetVars("Arr2[a].VirtProp.Dict[x].Prop1", (o, n) =>
+		{
+			if (o == typeof(TestEntity) && n == "VirtProp")
+				return typeof(TestIndexerEntity);
+			
+			return null;
+		}).ToArray();
+
+		vars.Length.AssertEqual(1);
+		vars[0].AssertEqual("a");
+
+		var entity = new TestIndexerEntity
+		{
+			Arr2 = new[] { new TestEntity(), new TestEntity() }
+		};
+
+		var obj = entity.GetPropValue("Arr2[a].VirtProp.Dict[x].Prop1", (o, n) =>
+		{
+			if (o is TestEntity && n == "VirtProp")
+				return new TestIndexerEntity { Dict = new Dictionary<string, TestEntity> { { "x", new TestEntity { Prop1 = 123 } } } };
+
+			return null;
+		}, vars: new Dictionary<string, object> { { "a", 0 } });
+
+		obj.AssertEqual(123);
+
+		//obj = entity.GetPropValue("Arr2[a].VirtProp.Dict[x].Prop1", (o, n) =>
+		//{
+		//	if (o is TestEntity && n == "VirtProp")
+		//		return new TestIndexerEntity { Dict = new Dictionary<string, TestEntity> { { "x", new TestEntity { Prop1 = 123 } } } };
+
+		//	return null;
+		//}, vars: new Dictionary<string, object> { { "b", 0 } });
+
+		//obj.AssertNull();
+
+		obj = entity.GetPropValue("Arr2[a].VirtProp.Dict[x].Prop1", (o, n) =>
+		{
+			if (o is TestEntity && n == "VirtProp")
+				return new TestIndexerEntity { Dict = new Dictionary<string, TestEntity> { { "x", new TestEntity { Prop1 = 123 } } } };
+
+			return null;
+		}, vars: new Dictionary<string, object> { { "a", 4 } });
+
+		obj.AssertNull();
 	}
 }
