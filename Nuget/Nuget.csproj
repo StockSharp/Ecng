@@ -3,4 +3,7 @@
   <ItemGroup>
     <PackageReference Include="NuGet.Protocol" Version="$(NuGetApiVer)" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
+  </ItemGroup>
 </Project>

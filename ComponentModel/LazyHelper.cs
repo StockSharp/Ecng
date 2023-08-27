@@ -18,6 +18,7 @@
 			private static readonly FieldInfo _boxed;
 			private static readonly FieldInfo _state;
 			private static readonly FieldInfo _factory;
+			private static readonly FieldInfo _value;
 
 			static Holder()
 			{
@@ -33,6 +34,7 @@
 				{
 					_state = GetField("_state");
 					_factory = GetField("_factory");
+					_value = GetField("_value");
 				}
 			}
 
@@ -73,6 +75,18 @@
 					_factory.SetValue(lazy, factory);
 				}
 			}
+
+			public static void SetValue(Lazy<T> lazy, T value)
+			{
+				if (lazy is null)
+					throw new ArgumentNullException(nameof(lazy));
+
+				if (_value is null)
+					throw new PlatformNotSupportedException();
+
+				_state.SetValue(lazy, null);
+				_value.SetValue(lazy, value);
+			}
 		}
 
 		public static Lazy<T> Track<T>(this Lazy<T> lazy)
@@ -80,5 +94,8 @@
 
 		public static void Reset<T>(this Lazy<T> lazy)
 			=> Holder<T>.Reset(lazy);
+
+		public static void SetValue<T>(this Lazy<T> lazy, T value)
+			=> Holder<T>.SetValue(lazy, value);
 	}
 }

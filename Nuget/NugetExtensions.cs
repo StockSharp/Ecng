@@ -12,6 +12,8 @@ using NuGet.Protocol.Core.Types;
 using NuGet.Configuration;
 using NuGet.Frameworks;
 
+using Ecng.ComponentModel;
+
 namespace Ecng.Nuget;
 
 public static class NugetExtensions
@@ -100,7 +102,6 @@ public static class NugetExtensions
 
 		var f = typeof(ProxyCache).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
 		var lazy = (Lazy<ProxyCache>)f.GetValue(null);
-		lazy.GetType().GetField("_state", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(lazy, null);
-		lazy.GetType().GetField("_value", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(lazy, proxy);
+		lazy.SetValue(proxy);
 	}
 }
