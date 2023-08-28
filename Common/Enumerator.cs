@@ -4,6 +4,7 @@
 
 	using System;
 	using System.Collections.Generic;
+	using System.ComponentModel;
 	using System.Linq;
 
 	#endregion
@@ -138,5 +139,8 @@
 			var memInfo = enumVal.GetType().GetMember(enumVal.ToString());
 			return memInfo[0].GetAttribute<TAttribute>(false);
 		}
+
+		public static bool IsEnumBrowsable(this object enumVal)
+			=> enumVal.GetAttributeOfType<BrowsableAttribute>()?.Browsable ?? true;
 	}
 }
