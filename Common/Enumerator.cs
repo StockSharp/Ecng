@@ -142,5 +142,8 @@
 
 		public static bool IsEnumBrowsable(this object enumVal)
 			=> enumVal.GetAttributeOfType<BrowsableAttribute>()?.Browsable ?? true;
+
+		public static IEnumerable<T> ExcludeNonBrowsable<T>(this IEnumerable<T> values)
+			=> values.Where(v => v.IsEnumBrowsable());
 	}
 }
