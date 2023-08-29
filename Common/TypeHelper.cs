@@ -90,8 +90,7 @@ namespace Ecng.Common
 		}
 
 		public static bool IsNumeric(this Type type)
-		{
-			return Type.GetTypeCode(type) switch
+			=> Type.GetTypeCode(type) switch
 			{
 				TypeCode.Byte or
 				TypeCode.SByte or
@@ -107,7 +106,21 @@ namespace Ecng.Common
 					=> true,
 				_ => false,
 			};
-		}
+
+		public static bool IsNumericInteger(this Type type)
+			=> Type.GetTypeCode(type) switch
+			{
+				TypeCode.Byte or
+				TypeCode.SByte or
+				TypeCode.UInt16 or
+				TypeCode.UInt32 or
+				TypeCode.UInt64 or
+				TypeCode.Int16 or
+				TypeCode.Int32 or
+				TypeCode.Int64
+					=> true,
+				_ => false,
+			};
 
 		public static string GetTypeAsString(this Type type, bool isAssemblyQualifiedName)
 		{
