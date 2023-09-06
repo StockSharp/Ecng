@@ -1,4 +1,4 @@
-﻿namespace StockSharp.Web.StrategyServer;
+﻿namespace Ecng.Interop;
 
 using System;
 using System.Linq;
