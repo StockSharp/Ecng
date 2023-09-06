@@ -6,6 +6,9 @@ AssignProcessToJobObject
 CreateIoCompletionPort
 SetInformationJobObject
 QueryInformationJobObject
+GetProcessWindowStation
+GetThreadDesktop
+GetCurrentThreadId
 
 // structures
 JOBOBJECT_BASIC_ACCOUNTING_INFORMATION
