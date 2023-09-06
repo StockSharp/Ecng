@@ -1,8 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);CLS_DISABLE</DefineConstants>
+    <NoWarn>8632</NoWarn>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(MicrosoftCodeAnalysisCSharpVer)" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(MicrosoftCodeAnalysisCSharpVer)" />
+    <PackageReference Include="Ecng.Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="$(EcngVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Compilation\Compilation.csproj" />

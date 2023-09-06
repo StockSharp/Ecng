@@ -2,16 +2,19 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Collections.Immutable;
 	using System.IO;
 	using System.Linq;
 	using System.Reflection;
 	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Ecng.Common;
 	using Ecng.Compilation;
 
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.VisualBasic;
 
 	public class RoslynCompiler : ICompiler
@@ -45,7 +48,7 @@
 
 		public CompilationLanguages Language { get; }
 
-		CompilationResult ICompiler.Compile(string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
+		private Compilation Create(string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
 		{
 			if (sources is null)
 				throw new ArgumentNullException(nameof(sources));
@@ -54,31 +57,73 @@
 
 			var references = refs.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
 
-			Compilation compilation;
-
 			switch (Language)
 			{
 				case CompilationLanguages.CSharp:
 				{
-					compilation = CSharpCompilation.Create(assemblyName,
+					return CSharpCompilation.Create(assemblyName,
 						sources.Select(source => CSharpSyntaxTree.ParseText(source, cancellationToken: cancellationToken)),
 						references,
 						new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-
-					break;
 				}
 				case CompilationLanguages.VisualBasic:
 				{
-					compilation = VisualBasicCompilation.Create(assemblyName,
+					return VisualBasicCompilation.Create(assemblyName,
 						sources.Select(source => VisualBasicSyntaxTree.ParseText(source, cancellationToken: cancellationToken)),
 						references,
 						new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-
-					break;
 				}
 				default:
-					throw new InvalidOperationException();
+					throw new InvalidOperationException(Language.ToString());
 			}
+		}
+
+		async Task<CompilationError[]> ICompiler.Analyse(object analyzer, IEnumerable<object> analyzerSettings, string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
+		{
+			if (analyzer is null)
+				throw new ArgumentNullException(nameof(analyzer));
+
+			if (analyzerSettings is null)
+				throw new ArgumentNullException(nameof(analyzerSettings));
+
+			var compilation = Create(name, sources, refs, cancellationToken);
+
+			var compilationWithAnalyzers = compilation.WithAnalyzers(
+				ImmutableArray.Create((DiagnosticAnalyzer)analyzer),
+				new AnalyzerOptions(analyzerSettings.Cast<AdditionalText>().ToImmutableArray()),
+				cancellationToken);
+
+			static CompilationErrorTypes ToType(DiagnosticSeverity severity)
+				=> severity switch
+				{
+					DiagnosticSeverity.Info => CompilationErrorTypes.Info,
+					DiagnosticSeverity.Warning => CompilationErrorTypes.Warning,
+					DiagnosticSeverity.Error => CompilationErrorTypes.Error,
+					_ => throw new ArgumentOutOfRangeException(severity.To<string>()),
+				};
+
+			var analyzerDiagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
+			return analyzerDiagnostics.Select(e =>
+			{
+				var lineSpan = e.Location.GetLineSpan();
+
+				return new CompilationError
+				{
+					Type = ToType(e.Severity),
+					Message = e.GetMessage(),
+					Line = lineSpan.StartLinePosition.Line,
+					Character = lineSpan.StartLinePosition.Character,
+					Id = e.Id,
+				};
+			}).Distinct().ToArray();
+		}
+
+		CompilationResult ICompiler.Compile(string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
+		{
+			if (sources is null)
+				throw new ArgumentNullException(nameof(sources));
+
+			var compilation = Create(name, sources, refs, cancellationToken);
 
 			var compilationResult = new CompilationResult();
 

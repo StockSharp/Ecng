@@ -6,6 +6,7 @@ namespace Ecng.Compilation.CodeDom
 	using System.IO;
 	using System.Linq;
 	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Microsoft.CSharp;
 	using Microsoft.VisualBasic;
@@ -23,6 +24,9 @@ namespace Ecng.Compilation.CodeDom
 		public CompilationLanguages Language { get; }
 		public string OutputDir { get; }
 		public string TempPath { get; }
+
+		Task<CompilationError[]> ICompiler.Analyse(object analyzer, IEnumerable<object> analyzerSettings, string name,IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
+			=> throw new NotSupportedException();
 
 		CompilationResult ICompiler.Compile(string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
 		{
