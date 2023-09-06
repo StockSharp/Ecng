@@ -58,7 +58,7 @@
     <AssemblyAttribute Include="System.Reflection.AssemblyTrademarkAttribute">
       <_Parameter1>StockSharp</_Parameter1>
     </AssemblyAttribute>
-    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+    <AssemblyAttribute Condition=" !$(DefineConstants.Contains('CLS_DISABLE')) " Include="System.CLSCompliantAttribute">
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Resources.NeutralResourcesLanguageAttribute">
