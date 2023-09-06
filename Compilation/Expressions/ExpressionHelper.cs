@@ -2,6 +2,7 @@ namespace Ecng.Compilation.Expressions;
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -267,11 +268,11 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 				"System.Runtime.dll".ToFullRuntimePath(),
 			}, StringComparer.InvariantCultureIgnoreCase);
 
-			var result = compiler.Compile(context, "IndexExpression", _template.Replace("__insert_code", code).Replace("__result_type", typeof(TResult).TryGetCSharpAlias() ?? typeof(TResult).Name), refs, cancellationToken);
+			var result = compiler.Compile("IndexExpression", _template.Replace("__insert_code", code).Replace("__result_type", typeof(TResult).TryGetCSharpAlias() ?? typeof(TResult).Name), refs, cancellationToken);
 
 			var formula = result.Assembly is null
 				? ExpressionFormula<TResult>.CreateError(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL())
-				: result.Assembly.GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
+				: context.LoadFromStream(result.Assembly.To<Stream>()).GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
 
 			return formula;
 		}

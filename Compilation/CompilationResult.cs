@@ -1,11 +1,10 @@
 namespace Ecng.Compilation
 {
 	using System.Collections.Generic;
-	using System.Reflection;
 
 	public class CompilationResult
 	{
-		public Assembly Assembly { get; set; }
+		public byte[] Assembly { get; set; }
 
 		public string AssemblyLocation { get; set; }
 

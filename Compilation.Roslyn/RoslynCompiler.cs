@@ -7,6 +7,7 @@
 	using System.Reflection;
 	using System.Threading;
 
+	using Ecng.Common;
 	using Ecng.Compilation;
 
 	using Microsoft.CodeAnalysis;
@@ -44,10 +45,10 @@
 
 		public CompilationLanguages Language { get; }
 
-		CompilationResult ICompiler.Compile(AssemblyLoadContextVisitor context, string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
+		CompilationResult ICompiler.Compile(string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
 		{
-			if (context is null)
-				throw new ArgumentNullException(nameof(context));
+			if (sources is null)
+				throw new ArgumentNullException(nameof(sources));
 
 			var assemblyName = name + Path.GetRandomFileName();
 
@@ -110,7 +111,7 @@
 			if (result.Success)
 			{
 				ms.Seek(0, SeekOrigin.Begin);
-				compilationResult.Assembly = context.LoadFromStream(ms);
+				compilationResult.Assembly = ms.To<byte[]>();
 			}
 
 			return compilationResult;

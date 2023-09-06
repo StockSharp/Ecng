@@ -24,10 +24,10 @@ namespace Ecng.Compilation.CodeDom
 		public string OutputDir { get; }
 		public string TempPath { get; }
 
-		CompilationResult ICompiler.Compile(AssemblyLoadContextVisitor context, string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
+		CompilationResult ICompiler.Compile(string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
 		{
-			if (context is null)
-				throw new ArgumentNullException(nameof(context));
+			if (sources is null)
+				throw new ArgumentNullException(nameof(sources));
 
 			var providerOptions = new Dictionary<string, string> { { "CompilerVersion", "v4.0" } };
 
@@ -47,9 +47,9 @@ namespace Ecng.Compilation.CodeDom
 				TempFiles = new TempFileCollection(TempPath),
 			}, sources.ToArray());
 
-			var compilationResult = new CompilationResult
+			return new()
 			{
-				Assembly = result.Errors.HasErrors ? null : context.LoadFromAssemblyPath(result.PathToAssembly),
+				Assembly = result.Errors.HasErrors ? null : File.ReadAllBytes(result.PathToAssembly),
 				AssemblyLocation = result.Errors.HasErrors ? string.Empty : result.PathToAssembly,
 				Errors = result.Errors.Cast<CompilerError>().Select(e => new CompilationError
 				{
@@ -60,8 +60,6 @@ namespace Ecng.Compilation.CodeDom
 					Character = e.Column
 				}).ToArray(),
 			};
-
-			return compilationResult;
 		}
 	}
 }
