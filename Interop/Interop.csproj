@@ -2,7 +2,7 @@
   <Import Project="..\common.props" />
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>$(DefineConstants);CLS_DISABLE</DefineConstants>
+    <NoWarn>3001,3002,3003,3008,3009</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Management" Version="6.0.0" />
