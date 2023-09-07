@@ -1,5 +1,8 @@
 ﻿namespace Ecng.Tests.Compilation
 {
+	using System.IO;
+	using System.Linq;
+
 	using Ecng.Compilation;
 	using Ecng.Compilation.Expressions;
 	using Ecng.Compilation.Roslyn;
@@ -20,7 +23,8 @@
 		public void Cache()
 		{
 			var cache = new InMemoryCompilerCache();
-			
+			cache.Init();
+
 			var formula = Compile("RI@FORTS - SBER@TQBR", cache);
 			formula.Calculate(new decimal[] { 6, 4 }).AssertEqual(2);
 
@@ -33,6 +37,34 @@
 
 			cache.Clear();
 			cache.Count.AssertEqual(0);
+		}
+
+		[TestMethod]
+		public void FileCache()
+		{
+			const string dir = "asm_cache";
+
+			var cache = new FileCompilerCache(dir);
+			cache.Init();
+
+			Directory.GetFiles(dir).Count().AssertEqual(0);
+
+			var formula = Compile("RI@FORTS - SBER@TQBR", cache);
+			formula.Calculate(new decimal[] { 6, 4 }).AssertEqual(2);
+
+			cache.Count.AssertEqual(1);
+			Directory.GetFiles(dir).Count().AssertEqual(1);
+
+			formula = Compile("RI@FORTS - SBER@TQBR", cache);
+			formula.Calculate(new decimal[] { 6, 5 }).AssertEqual(1);
+
+			cache.Count.AssertEqual(1);
+			Directory.GetFiles(dir).Count().AssertEqual(1);
+
+			cache.Clear();
+			cache.Count.AssertEqual(0);
+
+			Directory.Exists(dir).AssertFalse();
 		}
 
 		[TestMethod]
