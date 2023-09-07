@@ -271,7 +271,7 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 
 			var sources = new[] { _template.Replace("__insert_code", code).Replace("__result_type", typeof(TResult).TryGetCSharpAlias() ?? typeof(TResult).Name) };
 
-			if (cache?.TryGetBuild(sources, refs, out var assembly) != true)
+			if (cache?.TryGet(sources, refs, out var assembly) != true)
 			{
 				var result = compiler.Compile("IndexExpression", sources, refs, cancellationToken);
 
@@ -280,7 +280,7 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 				if (assembly is null)
 					return ExpressionFormula<TResult>.CreateError(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL());
 				else
-					cache?.AddBuild(sources, refs, assembly);
+					cache?.Add(sources, refs, assembly);
 			}
 
 			return context.LoadFromStream(assembly.To<Stream>()).GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
