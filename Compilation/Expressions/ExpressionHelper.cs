@@ -283,7 +283,7 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 					cache?.Add(sources, refs, assembly);
 			}
 
-			return context.LoadFromStream(assembly.To<Stream>()).GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
+			return context.LoadFromStream(assembly).GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
 		}
 		catch (Exception ex)
 		{
