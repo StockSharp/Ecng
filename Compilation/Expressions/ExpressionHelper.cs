@@ -249,17 +249,16 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 	/// <param name="compiler"><see cref="ICompiler"/>.</param>
 	/// <param name="context"><see cref="AssemblyLoadContextVisitor"/>.</param>
 	/// <param name="expression">Text expression.</param>
+	/// <param name="cache"><see cref="ICompilerCache"/>.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
 	/// <returns>Compiled mathematical formula.</returns>
-	public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextVisitor context, string expression, CancellationToken cancellationToken = default)
+	public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextVisitor context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
 	{
 		if (compiler is null)
 			throw new ArgumentNullException(nameof(compiler));
 
 		try
 		{
-			var (code, variables) = new Parser().Parse(expression);
-
 			var refs = new HashSet<string>(new[]
 			{
 				typeof(object).Assembly.Location,
@@ -268,13 +267,23 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 				"System.Runtime.dll".ToFullRuntimePath(),
 			}, StringComparer.InvariantCultureIgnoreCase);
 
-			var result = compiler.Compile("IndexExpression", _template.Replace("__insert_code", code).Replace("__result_type", typeof(TResult).TryGetCSharpAlias() ?? typeof(TResult).Name), refs, cancellationToken);
+			var (code, variables) = new Parser().Parse(expression);
 
-			var formula = result.Assembly is null
-				? ExpressionFormula<TResult>.CreateError(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL())
-				: context.LoadFromStream(result.Assembly.To<Stream>()).GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
+			var sources = new[] { _template.Replace("__insert_code", code).Replace("__result_type", typeof(TResult).TryGetCSharpAlias() ?? typeof(TResult).Name) };
 
-			return formula;
+			if (cache?.TryGetBuild(sources, refs, out var assembly) != true)
+			{
+				var result = compiler.Compile("IndexExpression", sources, refs, cancellationToken);
+
+				assembly = result.Assembly;
+
+				if (assembly is null)
+					return ExpressionFormula<TResult>.CreateError(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL());
+				else
+					cache?.AddBuild(sources, refs, assembly);
+			}
+
+			return context.LoadFromStream(assembly.To<Stream>()).GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
 		}
 		catch (Exception ex)
 		{

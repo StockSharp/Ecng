@@ -13,8 +13,27 @@
 		private static readonly ICompiler _compiler = new RoslynCompiler();
 		private static readonly AssemblyLoadContextVisitor _context = new();
 
-		private static ExpressionFormula<decimal> Compile(string expression)
-			=> _compiler.Compile<decimal>(_context, expression);
+		private static ExpressionFormula<decimal> Compile(string expression, ICompilerCache cache = default)
+			=> _compiler.Compile<decimal>(_context, expression, cache);
+
+		[TestMethod]
+		public void Cache()
+		{
+			var cache = new InMemoryCompilerCache();
+			
+			var formula = Compile("RI@FORTS - SBER@TQBR", cache);
+			formula.Calculate(new decimal[] { 6, 4 }).AssertEqual(2);
+
+			cache.Count.AssertEqual(1);
+
+			formula = Compile("RI@FORTS - SBER@TQBR", cache);
+			formula.Calculate(new decimal[] { 6, 5 }).AssertEqual(1);
+
+			cache.Count.AssertEqual(1);
+
+			cache.Clear();
+			cache.Count.AssertEqual(0);
+		}
 
 		[TestMethod]
 		public void Parse()
