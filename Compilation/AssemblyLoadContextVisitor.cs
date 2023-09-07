@@ -90,6 +90,13 @@
 				}
 			}
 		}
+
+		public void Unload()
+		{
+			_context.Unload();
+			_refs?.Clear();
+		}
+
 #else
 		public AssemblyLoadContextVisitor()
 		{
