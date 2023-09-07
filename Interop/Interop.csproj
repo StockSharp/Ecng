@@ -11,7 +11,7 @@
       <PrivateAssets>all</PrivateAssets>
       <!--Tip: Remove the IncludeAssets metadata from the package reference so that you get better code generation by allowing nuget to bring in the System.Memory package as a transitive dependency.-->
       <!--<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
-	</PackageReference>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
