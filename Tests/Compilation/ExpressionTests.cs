@@ -2,6 +2,7 @@
 {
 	using System.IO;
 	using System.Linq;
+	using System.Runtime.Loader;
 
 	using Ecng.Compilation;
 	using Ecng.Compilation.Expressions;
@@ -14,7 +15,7 @@
 	public class ExpressionTests
 	{
 		private static readonly ICompiler _compiler = new RoslynCompiler();
-		private static readonly AssemblyLoadContextVisitor _context = new(false);
+		private static readonly AssemblyLoadContext _context = new(default, false);
 
 		private static ExpressionFormula<decimal> Compile(string expression, ICompilerCache cache = default)
 			=> _compiler.Compile<decimal>(_context, expression, cache);

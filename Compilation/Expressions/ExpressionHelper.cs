@@ -2,8 +2,11 @@ namespace Ecng.Compilation.Expressions;
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using System.Reflection;
+#if NETCOREAPP
+using System.Runtime.Loader;
+#endif
 using System.Text;
 using System.Threading;
 
@@ -242,17 +245,25 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 		return variables;
 	}
 
+#if NETCOREAPP
+	public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, AssemblyLoadContext context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
+		=> Compile<TResult>(compiler, context.LoadFromStream, expression, cache, cancellationToken);
+
+	public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextTracker context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
+		=> Compile<TResult>(compiler, context.LoadFromStream, expression, cache, cancellationToken);
+#endif
+
 	/// <summary>
 	/// Compile mathematical formula.
 	/// </summary>
 	/// <typeparam name="TResult">Result type.</typeparam>
 	/// <param name="compiler"><see cref="ICompiler"/>.</param>
-	/// <param name="context"><see cref="AssemblyLoadContextVisitor"/>.</param>
+	/// <param name="toAssembly"></param>
 	/// <param name="expression">Text expression.</param>
 	/// <param name="cache"><see cref="ICompilerCache"/>.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
 	/// <returns>Compiled mathematical formula.</returns>
-	public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextVisitor context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
+	public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, Func<byte[], Assembly> toAssembly, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
 	{
 		if (compiler is null)
 			throw new ArgumentNullException(nameof(compiler));
@@ -283,7 +294,7 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 					cache?.Add(sources, refs, assembly);
 			}
 
-			return context.LoadFromStream(assembly).GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
+			return toAssembly(assembly).GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
 		}
 		catch (Exception ex)
 		{
