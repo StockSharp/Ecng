@@ -7,7 +7,6 @@ namespace Ecng.Tests.Common
 
 	using Ecng.Common;
 	using Ecng.UnitTesting;
-
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
@@ -116,6 +115,16 @@ namespace Ecng.Tests.Common
 			var template = @"{ComplexProp.PropAsync2} == {ComplexPropAsync.PropAsync2}";
 			var res = await template.PutExAsync(new object[] { new SmartFormatObj() }, default);
 			res.AssertEqual("3 == 3");
+		}
+
+		[TestMethod]
+		public void Truncate()
+		{
+			var str = "1234567890";
+			str.Truncate(int.MaxValue).AssertEqual("1234567890");
+			str.Truncate(10).AssertEqual("1234567890");
+			str.Truncate(2).AssertEqual("12...");
+			str.Truncate(0).AssertEqual("...");
 		}
 	}
 }

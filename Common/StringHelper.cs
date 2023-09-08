@@ -650,25 +650,12 @@
 		{
 			if (maxLength < 0)
 				throw new ArgumentOutOfRangeException(nameof(maxLength), nameof(maxLength), "maxLength is negative.");
-
-			var truncatedString = text;
-
-			if (maxLength == 0)
-				return truncatedString;
-
-			var strLength = maxLength - suffix.Length;
-
-			if (strLength <= 0)
-				return truncatedString;
-
-			if (text is null || text.Length <= maxLength)
-				return truncatedString;
-
-			truncatedString = text.Substring(0, strLength);
-			truncatedString = truncatedString.TrimEnd();
-			truncatedString += suffix;
-
-			return truncatedString;
+			else if (maxLength == 0)
+				return suffix;
+			else if (maxLength >= text.Length)
+				return text;
+			else
+				return text.Substring(0, maxLength) + suffix;
 		}
 
 		public static string TruncateMiddle(this string input, int limit)
