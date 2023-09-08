@@ -197,14 +197,19 @@
 		}
 
 		public static string[] SplitByComma(this string str, bool removeEmptyEntries = false)
-		{
-			return str.SplitBySep(",", removeEmptyEntries);
-		}
+			=> str.SplitBySep(",", removeEmptyEntries);
 
 		public static string[] SplitByDotComma(this string str, bool removeEmptyEntries = false)
-		{
-			return str.SplitBySep(";", removeEmptyEntries);
-		}
+			=> str.SplitBySep(";", removeEmptyEntries);
+
+		public static string[] SplitByColon(this string str, bool removeEmptyEntries = true)
+			=> str.SplitBySep(":", removeEmptyEntries);
+
+		public static string[] SplitBySpace(this string str, bool removeEmptyEntries = true)
+			=> str.SplitBySep(" ", removeEmptyEntries);
+
+		public static string[] SplitByEqual(this string str, bool removeEmptyEntries = true)
+			=> str.SplitBySep("=", removeEmptyEntries);
 
 		[Obsolete("Use SplitByN methods.")]
 		public static string[] SplitByLine(this string str, bool removeEmptyEntries = false)
@@ -428,44 +433,40 @@
 		}
 
 		public static string JoinComma(this IEnumerable<string> parts)
-		{
-			return parts.Join(",");
-		}
+			=> parts.Join(",");
 
 		public static string JoinDotComma(this IEnumerable<string> parts)
-		{
-			return parts.Join(";");
-		}
+			=> parts.Join(";");
 
 		public static string JoinDot(this IEnumerable<string> parts)
-		{
-			return parts.Join(".");
-		}
+			=> parts.Join(".");
 
 		public static string JoinCommaSpace(this IEnumerable<string> parts)
-		{
-			return parts.Join(", ");
-		}
+			=> parts.Join(", ");
+
+		public static string JoinSpace(this IEnumerable<string> parts)
+			=> parts.Join(" ");
+
+		public static string JoinPipe(this IEnumerable<string> parts)
+			=> parts.Join("|");
+
+		public static string JoinColon(this IEnumerable<string> parts)
+			=> parts.Join(":");
+
+		public static string JoinEqual(this IEnumerable<string> parts)
+			=> parts.Join("=");
 
 		public static string JoinAnd(this IEnumerable<string> parts)
-		{
-			return parts.Join("&");
-		}
+			=> parts.Join("&");
 
 		public static string JoinN(this IEnumerable<string> parts)
-		{
-			return parts.Join(N);
-		}
+			=> parts.Join(N);
 
 		public static string JoinRN(this IEnumerable<string> parts)
-		{
-			return parts.Join(RN);
-		}
+			=> parts.Join(RN);
 
 		public static string JoinNL(this IEnumerable<string> parts)
-		{
-			return parts.Join(Environment.NewLine);
-		}
+			=> parts.Join(Environment.NewLine);
 
 		public static string Join(this IEnumerable<string> parts, string separator)
 		{
