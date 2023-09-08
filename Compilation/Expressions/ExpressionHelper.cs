@@ -284,7 +284,7 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 
 			if (cache?.TryGet(sources, refs, out var assembly) != true)
 			{
-				var result = compiler.Compile("IndexExpression", sources, refs, cancellationToken);
+				var result = compiler.Compile("Formula", sources, refs, cancellationToken);
 
 				assembly = result.Assembly;
 
