@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Tests.Compilation
 {
+	using System;
 	using System.IO;
 	using System.Linq;
 	using System.Runtime.Loader;
@@ -23,7 +24,7 @@
 		[TestMethod]
 		public void Cache()
 		{
-			var cache = new InMemoryCompilerCache();
+			var cache = new InMemoryCompilerCache(TimeSpan.MaxValue);
 			cache.Init();
 
 			var formula = Compile("RI@FORTS - SBER@TQBR", cache);
@@ -45,7 +46,7 @@
 		{
 			const string dir = "asm_cache";
 
-			var cache = new FileCompilerCache(dir);
+			var cache = new FileCompilerCache(dir, TimeSpan.MaxValue);
 			cache.Init();
 
 			Directory.GetFiles(dir).Count().AssertEqual(0);

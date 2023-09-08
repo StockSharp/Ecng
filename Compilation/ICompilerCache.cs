@@ -21,7 +21,25 @@ public interface ICompilerCache
 
 public class InMemoryCompilerCache : ICompilerCache
 {
-	private readonly SynchronizedDictionary<string, byte[]> _cache = new();
+	private readonly SynchronizedDictionary<string, (DateTime till, byte[] assembly)> _cache = new();
+
+	public InMemoryCompilerCache(TimeSpan timeout)
+    {
+		if (timeout <= TimeSpan.Zero)
+			throw new ArgumentOutOfRangeException(nameof(timeout), timeout, "Must be positive");
+
+		Timeout = timeout;
+	}
+
+	public TimeSpan Timeout { get; }
+
+	protected DateTime GetTill()
+	{
+		if (Timeout == TimeSpan.MaxValue)
+			return DateTime.MaxValue;
+
+		return DateTime.UtcNow + Timeout;
+	}
 
 	public virtual int Count => _cache.Count;
 
@@ -37,10 +55,19 @@ public class InMemoryCompilerCache : ICompilerCache
 		=> _cache.Remove(key);
 
 	protected void Set(string key, byte[] assembly)
-		=> _cache[key] = assembly ?? throw new ArgumentNullException(nameof(assembly));
+		=> _cache[key] = (GetTill(), assembly ?? throw new ArgumentNullException(nameof(assembly)));
 
 	protected bool TryGet(string key, out byte[] assembly)
-		=> _cache.TryGetValue(key, out assembly);
+	{
+		if (_cache.TryGetValue(key, out var t) && t.till >= DateTime.UtcNow)
+		{
+			assembly = t.assembly;
+			return true;
+		}
+
+		assembly = null;
+		return false;
+	}
 
 	public virtual void Add(IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly)
 		=> Set(GetKey(sources, refs), assembly);
@@ -59,7 +86,8 @@ public class FileCompilerCache : InMemoryCompilerCache
 {
 	private readonly string _path;
 
-	public FileCompilerCache(string path)
+	public FileCompilerCache(string path, TimeSpan timeout)
+		: base(timeout)
     {
 		_path = path.IsEmpty(Directory.GetCurrentDirectory());
 	}
@@ -69,6 +97,19 @@ public class FileCompilerCache : InMemoryCompilerCache
 		base.Init();
 
 		Directory.CreateDirectory(_path);
+
+		var till = DateTime.UtcNow;
+
+		foreach (var fileName in Directory.GetFiles(_path, "*.dll"))
+		{
+			if ((till - File.GetLastWriteTimeUtc(fileName)) > Timeout)
+			{
+				File.Delete(fileName);
+				continue;
+			}
+
+			Set(Path.GetFileNameWithoutExtension(fileName), File.ReadAllBytes(fileName));
+		}
 	}
 
 	private string GetFileName(string key)
