@@ -51,10 +51,17 @@ namespace Ecng.Compilation.CodeDom
 				TempFiles = new TempFileCollection(TempPath),
 			}, sources.ToArray());
 
+			byte[] asm = null;
+
+			if (result.Errors.HasErrors)
+			{
+				asm = File.ReadAllBytes(result.PathToAssembly);
+				File.Delete(result.PathToAssembly);
+			}
+
 			return new()
 			{
-				Assembly = result.Errors.HasErrors ? null : File.ReadAllBytes(result.PathToAssembly),
-				AssemblyLocation = result.Errors.HasErrors ? string.Empty : result.PathToAssembly,
+				Assembly = asm,
 				Errors = result.Errors.Cast<CompilerError>().Select(e => new CompilationError
 				{
 					Message = e.ErrorText,
