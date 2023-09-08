@@ -8,7 +8,7 @@ using System.Runtime.Loader;
 
 using Ecng.Common;
 
-public class AssemblyLoadContextTracker
+public class AssemblyLoadContextTracker : Disposable
 {
 	private readonly SyncObject _lock = new();
 	private readonly Action<Exception> _uploadingError;
@@ -68,6 +68,12 @@ public class AssemblyLoadContextTracker
 			_context = null;
 			_assembly = null;
 		}
+	}
+
+	protected override void DisposeManaged()
+	{
+		base.DisposeManaged();
+		Unload();
 	}
 }
 #endif
