@@ -85,6 +85,7 @@ public class InMemoryCompilerCache : ICompilerCache
 public class FileCompilerCache : InMemoryCompilerCache
 {
 	private readonly string _path;
+	private const string _ext = "dll";
 
 	public FileCompilerCache(string path, TimeSpan timeout)
 		: base(timeout)
@@ -100,7 +101,7 @@ public class FileCompilerCache : InMemoryCompilerCache
 
 		var till = DateTime.UtcNow;
 
-		foreach (var fileName in Directory.GetFiles(_path, "*.dll"))
+		foreach (var fileName in Directory.GetFiles(_path, $"*.{_ext}"))
 		{
 			if ((till - File.GetLastWriteTimeUtc(fileName)) > Timeout)
 			{
@@ -113,7 +114,7 @@ public class FileCompilerCache : InMemoryCompilerCache
 	}
 
 	private string GetFileName(string key)
-		=> Path.Combine(_path, $"{key}.dll");
+		=> Path.Combine(_path, $"{key}.{_ext}");
 
 	public override void Add(IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly)
 	{
