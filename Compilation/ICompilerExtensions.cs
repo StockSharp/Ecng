@@ -1,6 +1,5 @@
 ﻿namespace Ecng.Compilation;
 
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -26,19 +25,6 @@ public static class ICompilerExtensions
 	public static CompilationResult Compile(this ICompiler compiler, string name, string body, IEnumerable<string> refs, CancellationToken cancellationToken = default)
 		=> compiler.Compile(name, new[] { body }, refs, cancellationToken);
 
-	public static IEnumerable<string> ToPaths(this IEnumerable<CodeReference> references)
+	public static IEnumerable<string> ToValidPaths(this IEnumerable<CodeReference> references)
 		=> references.Where(r => r.IsValid).Select(r => r.FullLocation).ToArray();
-
-#if NETCOREAPP
-	/// <summary>
-	/// To compile the code.
-	/// </summary>
-	/// <param name="compiler">Compiler.</param>
-	/// <param name="name">The reference name.</param>
-	/// <param name="references">References.</param>
-	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
-	/// <returns>The result of the compilation.</returns>
-	public static CompilationResult CompileCode(this ICompiler compiler, IEnumerable<string> sources, string name, IEnumerable<CodeReference> references, CancellationToken cancellationToken = default)
-		=> compiler.Compile(name, sources, references.ToPaths(), cancellationToken);
-#endif
 }
