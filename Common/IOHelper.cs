@@ -290,12 +290,14 @@ namespace Ecng.Common
 			catch (UnauthorizedAccessException) { }
 		}
 
+		public const string DocsVar = "%Documents%";
+
 		public static string ToFullPathIfNeed(this string path)
 		{
 			if (path is null)
 				throw new ArgumentNullException(nameof(path));
 
-			return path.ReplaceIgnoreCase("%Documents%", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+			return path.ReplaceIgnoreCase(DocsVar, Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
 		}
 
 		// http://social.msdn.microsoft.com/Forums/eu/windowssearch/thread/55582d9d-77ea-47d9-91ce-cff7ca7ef528
