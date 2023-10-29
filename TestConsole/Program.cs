@@ -33,7 +33,6 @@
 	using System.Diagnostics;
 	using System.Net;
 	using Nito.AsyncEx;
-	using Ecng.Reflection.Emit;
 	using Newtonsoft.Json;
 	using System.Reflection;
 
@@ -760,9 +759,9 @@
 			backSvc.UnPublishAsync(entity).Wait();
 			return;
 
-			var res = new RoslynCompiler().Compile<decimal>(new(), "LOG([USD##CASH@IDEALPRO]) - (USD_CASH@IDEALPRO / usd_cash@IDEALPRO) + LOG([USD##CASH@IDEALPRO])");
-			Console.WriteLine(res.Calculate(new[] { 10m, 11m }));
-			return;
+			//var res = new RoslynCompiler().Compile<decimal>(new(), "LOG([USD##CASH@IDEALPRO]) - (USD_CASH@IDEALPRO / usd_cash@IDEALPRO) + LOG([USD##CASH@IDEALPRO])");
+			//Console.WriteLine(res.Calculate(new[] { 10m, 11m }));
+			//return;
 
 			var settingSotrage = new SettingsStorage();
 			settingSotrage.SetValue("1", TimeZoneInfo.Local);
