@@ -15,22 +15,32 @@
 	[TestClass]
 	public class TupleTests
 	{
-		private static void ValuesAndBack<T>(T tuple)
+		private static void ValuesAndBack<T>(T tuple, bool isValue)
 #if NET5_0_OR_GREATER
 			where T : ITuple
 #endif
 		{
-			tuple.AssertEqual(tuple.ToValues().ToTuple());
+			tuple.AssertEqual(tuple.ToValues().ToTuple(isValue));
 		}
 
 		[TestMethod]
 		public void ValuesAndBack()
 		{
-			ValuesAndBack(Tuple.Create(1, "123"));
-			ValuesAndBack(Tuple.Create(1, 5.6, "123"));
-			ValuesAndBack(Tuple.Create(1, DateTime.Now, "123"));
-			ValuesAndBack(Tuple.Create(1, 1, 4, "123"));
-			ValuesAndBack(Tuple.Create(1, 1, 4, (object)null, "123"));
+			ValuesAndBack(Tuple.Create(1, "123"), false);
+			ValuesAndBack(Tuple.Create(1, 5.6, "123"), false);
+			ValuesAndBack(Tuple.Create(1, DateTime.Now, "123"), false);
+			ValuesAndBack(Tuple.Create(1, 1, 4, "123"), false);
+			ValuesAndBack(Tuple.Create(1, 1, 4, (object)null, "123"), false);
+		}
+
+		[TestMethod]
+		public void ValuesAndBack2()
+		{
+			ValuesAndBack((1, "123"), true);
+			ValuesAndBack((1, 5.6, "123"), true);
+			ValuesAndBack((1, DateTime.Now, "123"), true);
+			ValuesAndBack((1, 1, 4, "123"), true);
+			ValuesAndBack((1, 1, 4, (object)null, "123"), true);
 		}
 
 		[TestMethod]
@@ -72,7 +82,7 @@
 		public void ToValuesTupleTests()
 		{
 			var t = Tuple.Create(10, "10");
-			var values = t.TryTupleToValues();
+			var values = t.ToValues().ToArray();
 			values.Length.AssertEqual(2);
 			values[0].AssertEqual(t.Item1);
 			values[1].AssertEqual(t.Item2);
@@ -82,7 +92,7 @@
 		public void ToValuesValueTupleTests()
 		{
 			var t = ValueTuple.Create(10, "10");
-			var values = t.TryTupleToValues();
+			var values = t.ToValues().ToArray();
 			values.Length.AssertEqual(2);
 			values[0].AssertEqual(t.Item1);
 			values[1].AssertEqual(t.Item2);
@@ -92,7 +102,7 @@
 		public void ToValuesValTupleTests()
 		{
 			var t = (10, "10");
-			var values = t.TryTupleToValues();
+			var values = t.ToValues().ToArray();
 			values.Length.AssertEqual(2);
 			values[0].AssertEqual(t.Item1);
 			values[1].AssertEqual(t.Item2);
@@ -102,7 +112,7 @@
 		//public void ToValuesRefTupleTests()
 		//{
 		//	var t = RefTuple.Create(10, "10");
-		//	var values = t.TryTupleToValues();
+		//	var values = t.ToValues().ToArray();
 		//	values.Length.AssertEqual(2);
 		//	values[0].AssertEqual(t.First);
 		//	values[1].AssertEqual(t.Second);

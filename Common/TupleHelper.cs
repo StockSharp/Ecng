@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Runtime.CompilerServices;
 
 	public static class TupleHelper
 	{
@@ -33,36 +34,6 @@
 				throw new ArgumentNullException(nameof(tupleType));
 
 			return tupleType.IsGenericType && _tupleTypes.Contains(tupleType.GetGenericTypeDefinition());
-		}
-
-		public static object[] TryTupleToValues(this object tuple)
-		{
-			if (tuple is null)
-				throw new ArgumentNullException(nameof(tuple));
-
-			var type = tuple.GetType();
-
-			if (!type.IsTuple())
-				return null;
-
-			if (type.IsClass)
-			{
-				return type
-					.GetProperties()
-					.Where(m => m.Name.StartsWith("Item"))
-					.OrderBy(m => m.Name)
-					.Select(m => m.GetValue(tuple))
-					.ToArray();
-			}
-			else
-			{
-				return type
-					.GetFields()
-					.Where(m => m.Name.StartsWith("Item"))
-					.OrderBy(m => m.Name)
-					.Select(m => m.GetValue(tuple))
-					.ToArray();
-			}
 		}
 
 		public static IEnumerable<object> ToValues<T>(this Tuple<T> tuple)
@@ -155,7 +126,7 @@
 			yield return tuple.Item6;
 		}
 
-		public static object ToTuple(this IEnumerable<object> values)
+		public static object ToTuple(this IEnumerable<object> values, bool isValue)
 		{
 			if (values is null)
 				throw new ArgumentNullException(nameof(values));
@@ -169,7 +140,9 @@
 				args.Add(value);
 			}
 
-			var genericType = ("System.Tuple`" + types.Count).To<Type>();
+			var prefix = isValue ? "Value" : string.Empty;
+
+			var genericType = $"System.{prefix}Tuple`{types.Count}".To<Type>();
 			var specificType = genericType.Make(types);
 
 			return specificType.CreateInstance(args.ToArray());
@@ -177,17 +150,32 @@
 
 		public static IEnumerable<object> ToValues<T>(this T tuple)
 		{
-			if (!typeof(T).FullName.StartsWith("System.Tuple"))
+#if NETSTANDARD2_0
+			if (!tuple.GetType().IsTuple())
 				throw new InvalidOperationException($"Type {typeof(T)} is not tuple.");
+#else
+			if (tuple is not ITuple)
+				throw new InvalidOperationException($"{tuple} is not tuple.");
+#endif
 
-			var count = typeof(T).GetGenericArguments().Length;
+			var type = tuple.GetType();
 
-			var values = new List<object>(count);
-
-			for (int i = 1; i <= count; i++)
-				values.Add(typeof(T).GetProperty($"Item{i}").GetValue(tuple));
-
-			return values;
+			if (type.IsClass)
+			{
+				return type
+					.GetProperties()
+					.Where(m => m.Name.StartsWith("Item"))
+					.OrderBy(m => m.Name)
+					.Select(m => m.GetValue(tuple));
+			}
+			else
+			{
+				return type
+					.GetFields()
+					.Where(m => m.Name.StartsWith("Item"))
+					.OrderBy(m => m.Name)
+					.Select(m => m.GetValue(tuple));
+			}
 		}
 	}
 }
