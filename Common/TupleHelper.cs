@@ -6,7 +6,7 @@
 
 	public static class TupleHelper
 	{
-		private static readonly HashSet<Type> TupleTypes = new()
+		private static readonly HashSet<Type> _tupleTypes = new()
 		{
 			typeof(Tuple<>),
 			typeof(Tuple<,>),
@@ -29,27 +29,40 @@
 
 		public static bool IsTuple(this Type tupleType)
 		{
-			return
-				tupleType != null &&
-				tupleType.IsGenericType &&
-				TupleTypes.Contains(tupleType.GetGenericTypeDefinition());
+			if (tupleType is null)
+				throw new ArgumentNullException(nameof(tupleType));
+
+			return tupleType.IsGenericType && _tupleTypes.Contains(tupleType.GetGenericTypeDefinition());
 		}
 
 		public static object[] TryTupleToValues(this object tuple)
 		{
-			var type = tuple?.GetType();
+			if (tuple is null)
+				throw new ArgumentNullException(nameof(tuple));
 
-			if(type?.IsTuple() != true)
+			var type = tuple.GetType();
+
+			if (!type.IsTuple())
 				return null;
 
-			var numValues = type.GetProperties().Count(pi => pi.Name.StartsWith("Item"));
-
-			var arr = new object[numValues];
-
-			for (var i = 1; i <= numValues; ++i)
-				arr[i - 1] = type.GetProperty("Item" + i).GetValue(tuple);
-
-			return arr;
+			if (type.IsClass)
+			{
+				return type
+					.GetProperties()
+					.Where(m => m.Name.StartsWith("Item"))
+					.OrderBy(m => m.Name)
+					.Select(m => m.GetValue(tuple))
+					.ToArray();
+			}
+			else
+			{
+				return type
+					.GetFields()
+					.Where(m => m.Name.StartsWith("Item"))
+					.OrderBy(m => m.Name)
+					.Select(m => m.GetValue(tuple))
+					.ToArray();
+			}
 		}
 
 		public static IEnumerable<object> ToValues<T>(this Tuple<T> tuple)

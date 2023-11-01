@@ -67,5 +67,45 @@
 			p2.First.AssertEqual(p1.First);
 			p2.Second.AssertEqual(p1.Second);
 		}
+
+		[TestMethod]
+		public void ToValuesTupleTests()
+		{
+			var t = Tuple.Create(10, "10");
+			var values = t.TryTupleToValues();
+			values.Length.AssertEqual(2);
+			values[0].AssertEqual(t.Item1);
+			values[1].AssertEqual(t.Item2);
+		}
+
+		[TestMethod]
+		public void ToValuesValueTupleTests()
+		{
+			var t = ValueTuple.Create(10, "10");
+			var values = t.TryTupleToValues();
+			values.Length.AssertEqual(2);
+			values[0].AssertEqual(t.Item1);
+			values[1].AssertEqual(t.Item2);
+		}
+
+		[TestMethod]
+		public void ToValuesValTupleTests()
+		{
+			var t = (10, "10");
+			var values = t.TryTupleToValues();
+			values.Length.AssertEqual(2);
+			values[0].AssertEqual(t.Item1);
+			values[1].AssertEqual(t.Item2);
+		}
+
+		//[TestMethod]
+		//public void ToValuesRefTupleTests()
+		//{
+		//	var t = RefTuple.Create(10, "10");
+		//	var values = t.TryTupleToValues();
+		//	values.Length.AssertEqual(2);
+		//	values[0].AssertEqual(t.First);
+		//	values[1].AssertEqual(t.Second);
+		//}
 	}
 }
