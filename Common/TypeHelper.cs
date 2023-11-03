@@ -325,5 +325,15 @@ namespace Ecng.Common
 
 		public static void EnsureRunClass(this Type type)
 			=> RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+
+		/// <summary>
+		/// </summary>
+		public static bool IsValidWebLink(this string link)
+			=> Uri.TryCreate(link, UriKind.Absolute, out var uri) && uri.IsWebLink();
+
+		/// <summary>
+		/// </summary>
+		public static bool IsWebLink(this Uri uri)
+			=> uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeFtp;
 	}
 }
