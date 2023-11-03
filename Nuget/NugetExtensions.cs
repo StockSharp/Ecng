@@ -12,6 +12,7 @@ using NuGet.Protocol.Core.Types;
 using NuGet.Configuration;
 using NuGet.Frameworks;
 
+using Ecng.Common;
 using Ecng.ComponentModel;
 
 namespace Ecng.Nuget;
@@ -103,5 +104,24 @@ public static class NugetExtensions
 		var f = typeof(ProxyCache).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
 		var lazy = (Lazy<ProxyCache>)f.GetValue(null);
 		lazy.SetValue(proxy);
+	}
+
+	public static NuGetVersion Increment(this NuGetVersion version)
+	{
+		if (version is null)
+			throw new ArgumentNullException(nameof(version));
+
+		return new(version.Major, version.Minor, version.Patch + 1);
+	}
+
+	public static NuGetVersion WithSuffix(this NuGetVersion version, string suffix)
+	{
+		if (version is null)
+			throw new ArgumentNullException(nameof(version));
+
+		if (suffix.IsEmpty())
+			throw new ArgumentNullException(nameof(version));
+
+		return new(version.Major, version.Minor, version.Patch, suffix);
 	}
 }
