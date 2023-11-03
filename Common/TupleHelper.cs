@@ -177,5 +177,23 @@
 					.Select(m => m.GetValue(tuple));
 			}
 		}
+
+		/// <summary>
+		/// </summary>
+		public static IEnumerable<Exception> UnwrapExceptions(this Exception exception)
+		{
+			if (exception == null)
+				yield break;
+
+			yield return exception;
+
+			if (exception is AggregateException ae)
+				foreach (var innerException in ae.InnerExceptions.SelectMany(ie => ie.UnwrapExceptions()))
+					yield return innerException;
+
+			if (exception.InnerException != null)
+				foreach (var innerException in exception.InnerException.UnwrapExceptions())
+					yield return innerException;
+		}
 	}
 }
