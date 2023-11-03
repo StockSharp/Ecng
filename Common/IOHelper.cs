@@ -775,5 +775,54 @@ namespace Ecng.Common
 
 			return new(stream.GetBuffer(), 0, (int)stream.Position);
 		}
+
+		/// <summary>
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public static bool CheckDirContainFiles(string path)
+		{
+			return
+				Directory.Exists(path) &&
+				(Directory.GetFiles(path).Any() || Directory.GetDirectories(path).Any(CheckDirContainFiles));
+		}
+
+		/// <summary>
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public static bool CheckDirContainsAnything(string path)
+		{
+			if (!Directory.Exists(path))
+				return false;
+
+			return Directory.EnumerateFileSystemEntries(path).Any();
+		}
+
+		/// <summary>
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public static bool IsFileLocked(string path)
+		{
+			var info = new FileInfo(path);
+
+			if (!info.Exists)
+				return false;
+
+			try
+			{
+				using var stream = info.Open(FileMode.Open, FileAccess.Read, FileShare.None);
+			}
+			catch (IOException)
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+		public static bool IsPathIsDir(this string path)
+			=> File.GetAttributes(path).HasFlag(FileAttributes.Directory);
 	}
 }
