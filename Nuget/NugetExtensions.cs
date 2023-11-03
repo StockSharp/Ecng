@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using NuGet.Common;
 using NuGet.Versioning;
 using NuGet.Packaging;
+using NuGet.Packaging.Core;
 using NuGet.Protocol.Core.Types;
 using NuGet.Configuration;
 using NuGet.Frameworks;
@@ -123,5 +124,19 @@ public static class NugetExtensions
 			throw new ArgumentNullException(nameof(version));
 
 		return new(version.Major, version.Minor, version.Patch, suffix);
+	}
+
+	public static PackageIdentity ParsePackageIdentity(this string pi)
+	{
+		var arr = pi?.Split('|');
+		return arr?.Length != 2 ? null : new PackageIdentity(arr[0], arr[1].IsEmptyOrWhiteSpace() ? null : NuGetVersion.Parse(arr[1]));
+	}
+
+	public static string SerializePackageIdentity(this PackageIdentity pi)
+	{
+		if (pi is null)
+			throw new ArgumentNullException(nameof(pi));
+
+		return $"{pi.Id}|{pi.Version}";
 	}
 }
