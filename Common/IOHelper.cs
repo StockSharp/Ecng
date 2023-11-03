@@ -11,6 +11,7 @@ namespace Ecng.Common
 	using System.Reflection;
 	using System.ComponentModel;
 	using System.Runtime.InteropServices;
+	using System.Globalization;
 
 	using Nito.AsyncEx;
 
@@ -824,5 +825,42 @@ namespace Ecng.Common
 
 		public static bool IsPathIsDir(this string path)
 			=> File.GetAttributes(path).HasFlag(FileAttributes.Directory);
+
+		/// <summary>
+		/// Normalize path for comparison (without case change).
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public static string NormalizePathNoLowercase(this string path)
+		{
+			if (path.IsEmptyOrWhiteSpace())
+				return null;
+
+			path = Path.GetFullPath(path);
+
+			return Path.GetFullPath(new Uri(path).LocalPath)
+					   .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+					   .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+		}
+
+		/// <summary>
+		/// Normalize path for comparison.
+		/// </summary>
+		/// <param name="path"></param>
+		/// <param name="culture"></param>
+		/// <returns></returns>
+		public static string NormalizePath(this string path, CultureInfo culture = null)
+		{
+			return path.NormalizePathNoLowercase()?.ToLower(culture ?? CultureInfo.InstalledUICulture);
+		}
+
+		/// <summary>
+		/// Compare paths.
+		/// </summary>
+		/// <param name="path1"></param>
+		/// <param name="path2"></param>
+		/// <returns></returns>
+		public static bool IsPathsEqual(string path1, string path2) => path1.NormalizePath() == path2.NormalizePath();
+
 	}
 }
