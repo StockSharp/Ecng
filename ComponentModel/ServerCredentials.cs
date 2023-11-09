@@ -32,7 +32,6 @@ namespace Ecng.ComponentModel
 
 				_email = value;
 				NotifyChanged();
-				NotifyAutoLogon();
 			}
 		}
 
@@ -51,7 +50,6 @@ namespace Ecng.ComponentModel
 
 				_password = value;
 				NotifyChanged();
-				NotifyAutoLogon();
 			}
 		}
 
@@ -70,16 +68,8 @@ namespace Ecng.ComponentModel
 
 				_token = value;
 				NotifyChanged();
-				NotifyAutoLogon();
 			}
 		}
-
-		/// <summary>
-		/// Auto login.
-		/// </summary>
-		public bool AutoLogon => !Token.IsEmpty() || (!Email.IsEmpty() && !Password.IsEmpty());
-
-		private void NotifyAutoLogon() => NotifyChanged(nameof(AutoLogon));
 
 		/// <summary>
 		/// Load settings.
