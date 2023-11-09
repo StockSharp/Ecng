@@ -2,6 +2,7 @@ namespace Ecng.ComponentModel
 {
 	using System.Security;
 
+	using Ecng.Common;
 	using Ecng.Serialization;
 
 	/// <summary>
@@ -26,8 +27,12 @@ namespace Ecng.ComponentModel
 			get => _email;
 			set
 			{
+				if (_email == value)
+					return;
+
 				_email = value;
 				NotifyChanged();
+				NotifyAutoLogon();
 			}
 		}
 
@@ -41,8 +46,12 @@ namespace Ecng.ComponentModel
 			get => _password;
 			set
 			{
+				if (_password.IsEqualTo(value))
+					return;
+
 				_password = value;
 				NotifyChanged();
+				NotifyAutoLogon();
 			}
 		}
 
@@ -56,25 +65,21 @@ namespace Ecng.ComponentModel
 			get => _token;
 			set
 			{
+				if (_token.IsEqualTo(value))
+					return;
+
 				_token = value;
 				NotifyChanged();
+				NotifyAutoLogon();
 			}
 		}
-
-		private bool _autoLogon = true;
 
 		/// <summary>
 		/// Auto login.
 		/// </summary>
-		public bool AutoLogon
-		{
-			get => _autoLogon;
-			set
-			{
-				_autoLogon = value;
-				NotifyChanged();
-			}
-		}
+		public bool AutoLogon => !Token.IsEmpty() || (!Email.IsEmpty() && !Password.IsEmpty());
+
+		private void NotifyAutoLogon() => NotifyChanged(nameof(AutoLogon));
 
 		/// <summary>
 		/// Load settings.
@@ -84,7 +89,6 @@ namespace Ecng.ComponentModel
 		{
 			Email = storage.GetValue<string>(nameof(Email));
 			Password = storage.GetValue<SecureString>(nameof(Password));
-			AutoLogon = storage.GetValue<bool>(nameof(AutoLogon));
 			Token = storage.GetValue<SecureString>(nameof(Token));
 		}
 
@@ -97,7 +101,6 @@ namespace Ecng.ComponentModel
 			storage
 				.Set(nameof(Email), Email)
 				.Set(nameof(Password), Password)
-				.Set(nameof(AutoLogon), AutoLogon)
 				.Set(nameof(Token), Token);
 		}
 	}
