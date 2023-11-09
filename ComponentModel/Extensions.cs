@@ -169,5 +169,18 @@ namespace Ecng.ComponentModel
 
 			return attr.Type.CreateInstance<IItemsSource>().Values;
 		}
+
+		/// <summary>
+		/// Determines the <paramref name="credentials"/> contains necessary data for auto login.
+		/// </summary>
+		/// <param name="credentials"><see cref="ServerCredentials"/></param>
+		/// <returns>Check result.</returns>
+		public static bool CanAutoLogin(this ServerCredentials credentials)
+		{
+			if (credentials is null)
+				throw new ArgumentNullException(nameof(credentials));
+
+			return !credentials.Token.IsEmpty() || (!credentials.Email.IsEmptyOrWhiteSpace() && !credentials.Password.IsEmpty());
+		}
 	}
 }
