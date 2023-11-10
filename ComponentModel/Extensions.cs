@@ -81,34 +81,23 @@ namespace Ecng.ComponentModel
 			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 
-			var str = value.ToString();
-			var type = value.GetType();
-
 			if (value is not Enum)
 			{
 				if (value is ICustomAttributeProvider provider)
 					return provider.GetDisplayName();
 
-				return type.GetDisplayName(str);
+				return value.GetType().GetDisplayName(value.ToString());
 				//throw new ArgumentException(str, nameof(value));
 			}
 
-			// Enum field
-
-			var fieldInfo = type.GetField(str);
-
-			if (fieldInfo is null)
-			{
-				return str;
-				//throw new ArgumentException(field.ToString(), nameof(field));
-			}
-
-			return fieldInfo.GetDisplayName();
+			return value.GetFieldDisplayName();
 		}
 
 		public static string GetFieldDisplayName<TField>(this TField field)
 		{
-			return field.GetType().GetField(field.ToString()).GetDisplayName();
+			var str = field.ToString();
+			var fi = field.GetType().GetField(str);
+			return fi is null ? str : fi.GetDisplayName();
 		}
 
 		public static string GetFieldDescription<TField>(this TField field)
