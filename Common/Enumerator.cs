@@ -66,6 +66,14 @@
 			return Enum.IsDefined(typeof(T), enumValue);
 		}
 
+		public static IEnumerable<object> SplitMask2(this object maskedValue)
+		{
+			if (maskedValue is null)
+				throw new ArgumentNullException(nameof(maskedValue));
+
+			return maskedValue.GetType().GetValues().Where(v => HasFlags(maskedValue, v));
+		}
+
 		public static IEnumerable<T> SplitMask<T>(this T maskedValue)
 		{
 			return GetValues<T>().Where(v => HasFlags(maskedValue, v));

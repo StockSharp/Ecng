@@ -4,6 +4,7 @@ namespace Ecng.ComponentModel
 	using System.Collections.Generic;
 	using System.ComponentModel;
 	using System.ComponentModel.DataAnnotations;
+	using System.Linq;
 	using System.Reflection;
 
 	using Ecng.Common;
@@ -93,8 +94,21 @@ namespace Ecng.ComponentModel
 			return value.GetFieldDisplayName();
 		}
 
-		private static TValue Get<TField, TValue>(TField field, Func<FieldInfo, TValue> func, Func<TField, TValue> getDefault)
+		private static TValue Get<TValue>(object field, Func<FieldInfo, TValue> func, Func<object, TValue> getDefault, Func<TValue, TValue, TValue> aggregate)
 		{
+			if (field is null)			throw new ArgumentNullException(nameof(field));
+			if (func is null)			throw new ArgumentNullException(nameof(func));
+			if (getDefault is null)		throw new ArgumentNullException(nameof(getDefault));
+			if (aggregate is null)		throw new ArgumentNullException(nameof(aggregate));
+
+			if (field is not Enum)
+				throw new ArgumentException($"{field}", nameof(field));
+
+			var parts = field.SplitMask2().ToArray();
+
+			if (parts.Length > 1)
+				return parts.Select(p => Get(p, func, getDefault, (_, _) => throw new NotSupportedException())).Aggregate(aggregate);
+
 			var fi = field.GetType().GetField(field.ToString());
 
 			// bit mask value or external constant
@@ -104,13 +118,13 @@ namespace Ecng.ComponentModel
 			return func(fi);
 		}
 
-		public static string GetFieldDisplayName<TField>(this TField field)
-			=> Get(field, fi => fi.GetDisplayName(), f => f.ToString());
+		public static string GetFieldDisplayName(this object field)
+			=> Get(field, fi => fi.GetDisplayName(), f => f.ToString(), (s1, s2) => s1.IsEmpty() ? s2 : (s2.IsEmpty() ? s1 : $"{s1}, {s2}"));
 
-		public static string GetFieldDescription<TField>(this TField field)
-			=> Get(field, fi => fi.GetAttribute<DisplayAttribute>()?.GetDescription(), f => null) ?? string.Empty;
+		public static string GetFieldDescription(this object field)
+			=> Get(field, fi => fi.GetAttribute<DisplayAttribute>()?.GetDescription(), f => null, (s1, s2) => s1.IsEmpty() ? s2 : (s2.IsEmpty() ? s1 : $"{s1}, {s2}")) ?? string.Empty;
 
-		public static Uri GetFieldIcon<TField>(this TField field)
+		public static Uri GetFieldIcon(this object field)
 			=> Get(field, fi =>
 			{
 				var attr = fi.GetAttribute<IconAttribute>();
@@ -118,7 +132,7 @@ namespace Ecng.ComponentModel
 				return
 					attr is null ? null :
 					attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(fi.ReflectedType);
-			}, f => null);
+			}, f => null, (s1, s2) => throw new NotSupportedException());
 
 		public static string GetDocUrl(this Type type)
 			=> type.GetAttribute<DocAttribute>()?.DocUrl;
