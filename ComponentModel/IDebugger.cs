@@ -30,6 +30,11 @@ public interface IDebugger : IPersistable
 	event Action Continued;
 
 	/// <summary>
+	/// The event of the stop at the breakpoint.
+	/// </summary>
+	event Action Break;
+
+	/// <summary>
 	/// The event of changes breakpoints.
 	/// </summary>
 	event Action Changed;
@@ -58,7 +63,7 @@ public interface IDebugger<TLine, TMethod> : IDebugger
 	/// <summary>
 	/// The event of the stop at the breakpoint.
 	/// </summary>
-	event Action<TLine> Break;
+	new event Action<TLine> Break;
 
 	/// <summary>
 	/// To add a breakpoint in the line.
