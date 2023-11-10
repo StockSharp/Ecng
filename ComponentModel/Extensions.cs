@@ -93,38 +93,35 @@ namespace Ecng.ComponentModel
 			return value.GetFieldDisplayName();
 		}
 
-		private static string Get<TField>(TField field, Func<FieldInfo, string> func)
+		private static TValue Get<TField, TValue>(TField field, Func<FieldInfo, TValue> func, Func<TField, TValue> getDefault)
 		{
-			var str = field.ToString();
-			var fi = field.GetType().GetField(str);
+			var fi = field.GetType().GetField(field.ToString());
 
 			// bit mask value or external constant
 			if (fi is null)
-				return str;
+				return getDefault(field);
 
 			return func(fi);
 		}
 
 		public static string GetFieldDisplayName<TField>(this TField field)
-			=> Get(field, fi => fi.GetDisplayName());
+			=> Get(field, fi => fi.GetDisplayName(), f => f.ToString());
 
 		public static string GetFieldDescription<TField>(this TField field)
-			=> Get(field, fi => fi.GetAttribute<DisplayAttribute>()?.GetDescription());
+			=> Get(field, fi => fi.GetAttribute<DisplayAttribute>()?.GetDescription(), f => null) ?? string.Empty;
 
 		public static Uri GetFieldIcon<TField>(this TField field)
-		{
-			var type = field.GetType();
-			var attr = type.GetField(field.ToString()).GetAttribute<IconAttribute>();
-			return
-				attr is null ? null :
-				attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(type);
-		}
+			=> Get(field, fi =>
+			{
+				var attr = fi.GetAttribute<IconAttribute>();
+
+				return
+					attr is null ? null :
+					attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(fi.ReflectedType);
+			}, f => null);
 
 		public static string GetDocUrl(this Type type)
-		{
-			var attr = type.GetAttribute<DocAttribute>();
-			return attr?.DocUrl;
-		}
+			=> type.GetAttribute<DocAttribute>()?.DocUrl;
 
 		public static Uri GetIconUrl(this Type type)
 		{
