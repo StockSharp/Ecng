@@ -25,6 +25,11 @@ public interface IDebugger : IPersistable
 	bool IsWaiting { get; }
 
 	/// <summary>
+	/// The event of continue execution.
+	/// </summary>
+	event Action Continued;
+
+	/// <summary>
 	/// The event of changes breakpoints.
 	/// </summary>
 	event Action Changed;
@@ -50,6 +55,11 @@ public interface IDebugger : IPersistable
 /// </summary>
 public interface IDebugger<TLine, TMethod> : IDebugger
 {
+	/// <summary>
+	/// The event of the stop at the breakpoint.
+	/// </summary>
+	event Action<TLine> Break;
+
 	/// <summary>
 	/// To add a breakpoint in the line.
 	/// </summary>
