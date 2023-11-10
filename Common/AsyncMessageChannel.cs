@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace Ecng.Common;
 
@@ -24,9 +23,11 @@ public class AsyncMessageChannel
 		public Msg(Func<ValueTask> action)                     : this(_ => action()) {}
 	}
 
-	private readonly ILogger _log;
 	private readonly Channel<Msg> _channel;
 	private readonly AsyncLocal<bool> _channelFlag = new();
+	private readonly Action<string, object[]> _logDebug;
+	private readonly Action<string, object[]> _logWarning;
+	private readonly Action<string, object[]> _logError;
 
 	public bool RethrowChannelCancellation   { get; init; }
 	public bool RethrowChannelClose          { get; init; }
@@ -48,10 +49,13 @@ public class AsyncMessageChannel
 	// handle remaining messages when stopping.
 	public bool HandleRemainingMessages { get; set; }
 
-	public AsyncMessageChannel(string name, Action<UnboundedChannelOptions> initOptions = null, ILogger log = null)
+	public AsyncMessageChannel(string name, Action<UnboundedChannelOptions> initOptions = null, Action<string, object[]> logDebug = null, Action<string, object[]> logWarning = null, Action<string, object[]> logError = null)
 	{
-		_log = log;
 		Name = name;
+
+		_logDebug = logDebug;
+		_logWarning = logWarning;
+		_logError = logError;
 
 		var opts = new UnboundedChannelOptions();
 		initOptions?.Invoke(opts);
@@ -95,7 +99,7 @@ public class AsyncMessageChannel
 		}
 		catch (Exception e) when (e.IsCancellation())
 		{
-			_log?.LogDebug("{name}: channel is canceled", Name);
+			_logDebug?.Invoke("{name}: channel is canceled", new object[] { Name });
 
 			if (RethrowChannelCancellation)
 				throw;
@@ -104,20 +108,20 @@ public class AsyncMessageChannel
 		{
 			if(e.InnerException == null)
 			{
-				_log?.LogDebug("{name}: channel is closed", Name);
+				_logDebug?.Invoke("{name}: channel is closed", new object[] { Name });
 				if (RethrowChannelClose)
 					throw;
 			}
 			else
 			{
-				_log?.LogError("{name}: channel is closed with error {errtype}: {msg}", Name, e.InnerException.GetType().Name, e.InnerException.Message);
+				_logError?.Invoke("{name}: channel is closed with error {errtype}: {msg}", new object[] { Name, e.InnerException.GetType().Name, e.InnerException.Message });
 				if (RethrowChannelClose || RethrowChannelCloseError)
 					throw;
 			}
 		}
 		catch (Exception e) // should never happen
 		{
-			_log?.LogError("{name}: unexpected channel error: {err}", Name, e);
+			_logError?.Invoke("{name}: unexpected channel error: {err}", new object[] { Name, e });
 			throw;
 		}
 
@@ -139,7 +143,7 @@ public class AsyncMessageChannel
 			if(!ex.IsCancellation())
 			{
 				e = ex;
-				_log?.LogError("{name} channel finished with error: {err}", Name, e);
+				_logError?.Invoke("{name} channel finished with error: {err}", new object[] { Name, e });
 			}
 
 			throw;
@@ -154,7 +158,7 @@ public class AsyncMessageChannel
 	{
 		void handleError(Exception e)
 		{
-			_log?.LogError("{name}: action '{msgname}' error: {err}", Name, msg.Name, e);
+			_logError?.Invoke("{name}: action '{msgname}' error: {err}", new object[] { Name, msg.Name, e });
 
 			if (msg.HandleError != null)
 				msg.HandleError(e);
@@ -164,7 +168,7 @@ public class AsyncMessageChannel
 
 		void handleCancel(Exception e)
 		{
-			_log?.LogWarning("{name}: action '{msgname}' canceled: {err}", Name, msg.Name, e);
+			_logWarning?.Invoke("{name}: action '{msgname}' canceled: {err}", new object[] { Name, msg.Name, e });
 
 			if (msg.HandleCancel != null)
 				msg.HandleCancel(e);
@@ -197,7 +201,7 @@ public class AsyncMessageChannel
 			var msg = await ReadMsgAsync().ConfigureAwait(false);
 			if (msg?.Action == null)
 			{
-				_log?.LogDebug("{name}: null message '{msgname}'. stopping...", Name, msg?.Name);
+				_logDebug?.Invoke("{name}: null message '{msgname}'. stopping...", new object[] { Name, msg?.Name });
 				break;
 			}
 
