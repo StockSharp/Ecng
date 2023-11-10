@@ -9,7 +9,7 @@ using Ecng.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [TestClass]
-public class EnumMetaInfo
+public class EnumMetaInfoTests
 {
 	[Flags]
 	private enum TestFlags
@@ -43,8 +43,8 @@ public class EnumMetaInfo
 		TestFlags2.F1.GetFieldDisplayName().AssertEqual("F1");
 		TestFlags2.F1.GetFieldDescription().AssertEqual(string.Empty);
 
-		(TestFlags2.F1 | TestFlags2.F2).GetDisplayName().AssertEqual("F1, F2");
-		(TestFlags2.F1 | TestFlags2.F2).GetFieldDisplayName().AssertEqual("F1, F2");
+		(TestFlags2.F1 | TestFlags2.F2).GetDisplayName().AssertEqual("3");
+		(TestFlags2.F1 | TestFlags2.F2).GetFieldDisplayName().AssertEqual("3");
 		(TestFlags2.F1 | TestFlags2.F2).GetFieldDescription().AssertEqual(string.Empty);
 	}
 
@@ -86,8 +86,38 @@ public class EnumMetaInfo
 		NameTestFlags2.F1.GetFieldDisplayName().AssertEqual("F 1");
 		NameTestFlags2.F1.GetFieldDescription().AssertEqual(string.Empty);
 
-		(NameTestFlags2.F1 | NameTestFlags2.F2).GetDisplayName().AssertEqual("F 1, F 2");
-		(NameTestFlags2.F1 | NameTestFlags2.F2).GetFieldDisplayName().AssertEqual("F 1, F 2");
+		(NameTestFlags2.F1 | NameTestFlags2.F2).GetDisplayName().AssertEqual("3");
+		(NameTestFlags2.F1 | NameTestFlags2.F2).GetFieldDisplayName().AssertEqual("3");
 		(NameTestFlags2.F1 | NameTestFlags2.F2).GetFieldDescription().AssertEqual(string.Empty);
+	}
+
+	private enum TestEnum
+	{
+		F1,
+		F2,
+	}
+
+	[TestMethod]
+	public void NoFlagsEnums()
+	{
+		TestEnum.F1.GetDisplayName().AssertEqual("F1");
+		TestEnum.F1.GetFieldDisplayName().AssertEqual("F1");
+		TestEnum.F1.GetFieldDescription().AssertEqual(string.Empty);
+	}
+
+	private enum LocTestEnum
+	{
+		[Display(Name = "F 1")]
+		F1,
+		[Display(Name = "F 2")]
+		F2,
+	}
+
+	[TestMethod]
+	public void LocNoFlagsEnums()
+	{
+		LocTestEnum.F1.GetDisplayName().AssertEqual("F 1");
+		LocTestEnum.F1.GetFieldDisplayName().AssertEqual("F 1");
+		LocTestEnum.F1.GetFieldDescription().AssertEqual(string.Empty);
 	}
 }

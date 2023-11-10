@@ -66,6 +66,9 @@
 			return Enum.IsDefined(typeof(T), enumValue);
 		}
 
+		public static bool IsFlags(this Type enumType)
+			=> enumType.GetAttribute<FlagsAttribute>() is not null;
+
 		public static IEnumerable<object> SplitMask2(this object maskedValue)
 		{
 			if (maskedValue is null)

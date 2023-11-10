@@ -94,7 +94,7 @@ namespace Ecng.ComponentModel
 			return value.GetFieldDisplayName();
 		}
 
-		private static TValue Get<TValue>(object field, Func<FieldInfo, TValue> func, Func<object, TValue> getDefault, Func<TValue, TValue, TValue> aggregate)
+		private static TValue Get<TValue>(object field, Func<FieldInfo, TValue> func, Func<object, TValue> getDefault, Func<TValue, TValue, TValue> aggregate, bool canSplit = true)
 		{
 			if (field is null)			throw new ArgumentNullException(nameof(field));
 			if (func is null)			throw new ArgumentNullException(nameof(func));
@@ -104,12 +104,17 @@ namespace Ecng.ComponentModel
 			if (field is not Enum)
 				throw new ArgumentException($"{field}", nameof(field));
 
-			var parts = field.SplitMask2().ToArray();
+			var type = field.GetType();
 
-			if (parts.Length > 1)
-				return parts.Select(p => Get(p, func, getDefault, (_, _) => throw new NotSupportedException())).Aggregate(aggregate);
+			if (canSplit && type.IsFlags())
+			{
+				var parts = field.SplitMask2().ToArray();
 
-			var fi = field.GetType().GetField(field.ToString());
+				if (parts.Length > 1)
+					return parts.Select(p => Get(p, func, getDefault, (_, _) => throw new NotSupportedException(), false)).Aggregate(aggregate);
+			}
+
+			var fi = type.GetField(field.ToString());
 
 			// bit mask value or external constant
 			if (fi is null)
