@@ -93,17 +93,23 @@ namespace Ecng.ComponentModel
 			return value.GetFieldDisplayName();
 		}
 
-		public static string GetFieldDisplayName<TField>(this TField field)
+		private static string Get<TField>(TField field, Func<FieldInfo, string> func)
 		{
 			var str = field.ToString();
 			var fi = field.GetType().GetField(str);
-			return fi is null ? str : fi.GetDisplayName();
+
+			// bit mask value or external constant
+			if (fi is null)
+				return str;
+
+			return func(fi);
 		}
 
+		public static string GetFieldDisplayName<TField>(this TField field)
+			=> Get(field, fi => fi.GetDisplayName());
+
 		public static string GetFieldDescription<TField>(this TField field)
-		{
-			return field.GetType().GetField(field.ToString()).GetAttribute<DisplayAttribute>()?.GetDescription();
-		}
+			=> Get(field, fi => fi.GetAttribute<DisplayAttribute>()?.GetDescription());
 
 		public static Uri GetFieldIcon<TField>(this TField field)
 		{
