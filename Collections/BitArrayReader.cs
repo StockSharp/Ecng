@@ -25,11 +25,13 @@
 
 		public long Offset
 		{
+#pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
 			get => (_dataOffset << 6) | _bitOffset;
+#pragma warning restore CS0675 // Bitwise-or operator used on a sign-extended operand
 			set
 			{
 				if (value < 0)// || value >= _bits.Length)
-					throw new ArgumentOutOfRangeException();
+					throw new ArgumentOutOfRangeException(nameof(value));
 
 				_dataOffset = value >> 6;
 				_bitOffset = (int)(value & 63);
