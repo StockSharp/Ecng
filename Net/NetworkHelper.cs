@@ -353,14 +353,6 @@ public static class NetworkHelper
 		return $"https://www.gravatar.com/avatar/{token}?size={size}";
 	}
 
-	[Obsolete("Use TryGetStatusCode method.")]
-	public static bool Unauthorized(this HttpRequestException ex)
-		=> ex.TryGetStatusCode() == HttpStatusCode.Unauthorized;
-
-	[Obsolete("Use TryGetStatusCode method.")]
-	public static bool NotFound(this HttpRequestException ex)
-		=> ex.TryGetStatusCode() == HttpStatusCode.NotFound;
-
 	private static readonly CachedSynchronizedDictionary<HttpStatusCode, string> _phrases = new()
 	{
 		{ HttpStatusCode.Unauthorized, nameof(HttpStatusCode.Unauthorized) },
