@@ -37,25 +37,6 @@
 				input.Close();
 		}
 
-		[Obsolete]
-		public static int CopyToBuffer(this Stream stream, byte[] destination)
-		{
-			var output = new MemoryStream(destination);
-			stream.CopyTo(output);
-			return (int)output.Position;
-		}
-
-		[Obsolete]
-		public static string StreamToString(this Stream stream)
-			=> stream.StreamToString(Encoding.UTF8);
-
-		[Obsolete]
-		public static string StreamToString(this Stream stream, Encoding encoding)
-		{
-			using var streamReader = new StreamReader(stream, encoding);
-			return streamReader.ReadToEnd();
-		}
-
 		public const int DefaultBufferSize = FileSizes.KB * 80;
 
 		public static string UnGZip(this byte[] input)
