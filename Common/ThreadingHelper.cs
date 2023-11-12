@@ -145,32 +145,6 @@ namespace Ecng.Common
 			return thread;
 		}
 
-		[Obsolete]
-		public static Thread Culture(this Thread thread, CultureInfo culture)
-		{
-			if (thread is null)
-				throw new ArgumentNullException(nameof(thread));
-
-			if (culture is null)
-				throw new ArgumentNullException(nameof(culture));
-
-			thread.CurrentCulture = culture.TypedClone();
-			return thread;
-		}
-
-		[Obsolete]
-		public static Thread UICulture(this Thread thread, CultureInfo culture)
-		{
-			if (thread is null)
-				throw new ArgumentNullException(nameof(thread));
-
-			if (culture is null)
-				throw new ArgumentNullException(nameof(culture));
-
-			thread.CurrentUICulture = culture.TypedClone();
-			return thread;
-		}
-
 		public static Thread Background(this Thread thread, bool isBackground)
 		{
 			if (thread is null)

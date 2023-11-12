@@ -606,10 +606,6 @@ namespace Ecng.Common
 				yield return sr.ReadLine();
 		}
 
-		[Obsolete("Use EnumerateLines method.")]
-		public static IEnumerable<string> ReadLines(this Stream stream)
-			=> stream.EnumerateLines(leaveOpen: false);
-
 		public static void WriteEx(this Stream stream, object value)
 		{
 			if (stream is null)

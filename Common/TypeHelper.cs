@@ -168,36 +168,6 @@ namespace Ecng.Common
 			return FormatterServices.GetUninitializedObject(type);
 		}
 
-		[Obsolete("Use pattern matching.")]
-		public static void DoIf<TSource, TDestination>(this TSource source, Action<TDestination> handler)
-			where TDestination : class
-		{
-			if (handler is null)
-				throw new ArgumentNullException(nameof(handler));
-
-
-			if (source is not TDestination destination)
-				return;
-
-			handler(destination);
-		}
-
-		[Obsolete("Use pattern matching.")]
-		public static void DoIfElse<T>(this object value, Action<T> ifAction, Action elseAction)
-			where T : class
-		{
-			if (ifAction is null)
-				throw new ArgumentNullException(nameof(ifAction));
-
-			if (elseAction is null)
-				throw new ArgumentNullException(nameof(elseAction));
-
-			if (value is T typedValue)
-				ifAction(typedValue);
-			else
-				elseAction();
-		}
-
 		public static void DoDispose<TSource>(this TSource source)
 		{
 			if (source is IDisposable disposable)

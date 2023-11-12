@@ -8,9 +8,6 @@
 	/// </summary>
 	public static class ArrayHelper
 	{
-		[Obsolete("Use Array.Empty<T>")]
-		public static T[] Empty<T>() => Array.Empty<T>();
-
 		/// <summary>
 		/// Sets all of elements in the <see cref="Array"/> to zero, to false, or to null, depending on the element type.
 		/// </summary>
