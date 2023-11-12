@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
-  <ItemGroup>
-    <PackageReference Include="System.CodeDom" Version="$(MsExtensionsVer)" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Compilation\Compilation.csproj" />
-  </ItemGroup>
-</Project>
