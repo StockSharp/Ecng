@@ -1,4 +1,6 @@
-﻿using System;
+﻿namespace Ecng.Common;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -9,8 +11,6 @@ using Nito.AsyncEx;
 #if NET5_0_OR_GREATER
 using Nito.AsyncEx.Synchronous;
 #endif
-
-namespace Ecng.Common;
 
 public static class AsyncHelper
 {

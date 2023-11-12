@@ -14,11 +14,6 @@
 
     <ProjectReference Include="..\SmartFormat\SmartFormat\SmartFormat.csproj" />
   </ItemGroup>
-  
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="$(TaskExtensionsVer)" />
-    <PackageReference Include="System.Threading.Channels" Version="$(MsExtensionsVer)" />
-  </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="TimeZoneConverter\Data\*.csv.gz" />
