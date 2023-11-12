@@ -10,6 +10,11 @@ using Ecng.Serialization;
 public interface IDebugger : IPersistable
 {
 	/// <summary>
+	/// <see langword="false" />, if the debugger is used. Otherwise, <see langword="true" />.
+	/// </summary>
+	bool IsDisabled { get; set; }
+
+	/// <summary>
 	/// <see langword="true" />, if it is possible to go inside of the current method. Otherwise, <see langword="false" />.
 	/// </summary>
 	bool CanStepInto { get; }
@@ -25,6 +30,11 @@ public interface IDebugger : IPersistable
 	bool IsWaiting { get; }
 
 	/// <summary>
+	/// <see langword="true" />, if the debugger is stopped at the error. Otherwise, <see langword="false" />.
+	/// </summary>
+	bool IsWaitingOnError { get; }
+
+	/// <summary>
 	/// The event of continue execution.
 	/// </summary>
 	event Action Continued;
@@ -33,6 +43,11 @@ public interface IDebugger : IPersistable
 	/// The event of the stop at the breakpoint.
 	/// </summary>
 	event Action Break;
+
+	/// <summary>
+	/// The event of the stop at the error.
+	/// </summary>
+	event Action Error;
 
 	/// <summary>
 	/// The event of changes breakpoints.
@@ -64,6 +79,11 @@ public interface IDebugger<TLine, TMethod> : IDebugger
 	/// The event of the stop at the breakpoint.
 	/// </summary>
 	new event Action<TLine> Break;
+
+	/// <summary>
+	/// The event of the stop at the error.
+	/// </summary>
+	new event Action<TMethod> Error;
 
 	/// <summary>
 	/// To add a breakpoint in the line.
