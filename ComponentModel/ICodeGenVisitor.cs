@@ -55,7 +55,14 @@ public abstract class BaseCodeGenVisitor : ICodeGenVisitor
 
 	ICodeGenVisitor ICodeGenVisitor.AddWithIndent(string text)
 	{
+		if (text == "}")
+			ChangeIndent(false);
+
 		Write($"{_indent}{text}");
+
+		if (text == "{")
+			ChangeIndent(true);
+
 		return this;
 	}
 

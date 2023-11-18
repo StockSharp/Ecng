@@ -12,6 +12,14 @@ public static class ICodeGenVisitorExtensions
 		return visitor.AddLine(string.Empty);
 	}
 
+	public static ICodeGenVisitor AddWithIndent(this ICodeGenVisitor visitor)
+	{
+		if (visitor is null)
+			throw new ArgumentNullException(nameof(visitor));
+
+		return visitor.AddWithIndent(string.Empty);
+	}
+
 	private class IndentToken : IDisposable
 	{
 		private readonly ICodeGenVisitor _visitor;
