@@ -17,15 +17,17 @@ public interface ICodeGenVisitor
 	/// Add code line.
 	/// </summary>
 	/// <param name="line">Code line.</param>
-	/// <returns><see cref="IDiagramCodeGenVisitor"/></returns>
+	/// <returns><see cref="ICodeGenVisitor"/></returns>
 	ICodeGenVisitor AddLine(string line);
 
 	/// <summary>
 	/// Add text.
 	/// </summary>
 	/// <param name="text">Text.</param>
-	/// <returns><see cref="IDiagramCodeGenVisitor"/></returns>
+	/// <returns><see cref="ICodeGenVisitor"/></returns>
 	ICodeGenVisitor Add(string text);
+
+	ICodeGenVisitor AddWithIndent(string text);
 }
 
 public abstract class BaseCodeGenVisitor : ICodeGenVisitor
@@ -48,6 +50,12 @@ public abstract class BaseCodeGenVisitor : ICodeGenVisitor
 		if (text == "{")
 			ChangeIndent(true);
 
+		return this;
+	}
+
+	ICodeGenVisitor ICodeGenVisitor.AddWithIndent(string text)
+	{
+		Write($"{_indent}{text}");
 		return this;
 	}
 
