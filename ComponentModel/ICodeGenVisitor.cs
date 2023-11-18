@@ -1,6 +1,7 @@
 ﻿namespace Ecng.ComponentModel;
 
 using System;
+using System.IO;
 using System.Text;
 
 /// <summary>
@@ -8,21 +9,79 @@ using System.Text;
 /// </summary>
 public interface ICodeGenVisitor
 {
+	int CurrIndent { get; }
+
+	ICodeGenVisitor ChangeIndent(bool increase);
+
 	/// <summary>
 	/// Add code line.
 	/// </summary>
 	/// <param name="line">Code line.</param>
 	/// <returns><see cref="IDiagramCodeGenVisitor"/></returns>
 	ICodeGenVisitor AddLine(string line);
+
+	/// <summary>
+	/// Add text.
+	/// </summary>
+	/// <param name="text">Text.</param>
+	/// <returns><see cref="IDiagramCodeGenVisitor"/></returns>
+	ICodeGenVisitor Add(string text);
+}
+
+public abstract class BaseCodeGenVisitor : ICodeGenVisitor
+{
+	private string _indent = string.Empty;
+
+	protected BaseCodeGenVisitor()
+    {
+    }
+
+	int ICodeGenVisitor.CurrIndent => _indent.Length;
+
+	ICodeGenVisitor ICodeGenVisitor.AddLine(string text)
+	{
+		if (text == "}")
+			ChangeIndent(false);
+
+		WriteLine($"{_indent}{text}");
+
+		if (text == "{")
+			ChangeIndent(true);
+
+		return this;
+	}
+
+	ICodeGenVisitor ICodeGenVisitor.Add(string text)
+	{
+		Write(text);
+		return this;
+	}
+
+	protected abstract void WriteLine(string text);
+	protected abstract void Write(string text);
+
+	public ICodeGenVisitor ChangeIndent(bool increase)
+	{
+		if (increase)
+			_indent += "\t";
+		else
+		{
+			if (_indent.Length == 0)
+				throw new InvalidOperationException("Mismatched closing brace.");
+
+			_indent = _indent.Substring(0, _indent.Length - 1);
+		}
+
+		return this;
+	}
 }
 
 /// <summary>
 /// <see cref="ICodeGenVisitor"/> implementation for <see cref="StringBuilder"/>.
 /// </summary>
-public class StringBuilderCodeGenVisitor : ICodeGenVisitor
+public class StringBuilderCodeGenVisitor : BaseCodeGenVisitor
 {
 	private readonly StringBuilder _builder;
-	private string _indent = string.Empty;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="StringBuilderCodeGenVisitor"/>.
@@ -33,21 +92,32 @@ public class StringBuilderCodeGenVisitor : ICodeGenVisitor
 		_builder = builder ?? throw new ArgumentNullException(nameof(builder));
 	}
 
-	ICodeGenVisitor ICodeGenVisitor.AddLine(string line)
+	protected override void WriteLine(string text)
+		=> _builder.AppendLine(text);
+
+	protected override void Write(string text)
+		=> _builder.Append(text);
+}
+
+/// <summary>
+/// <see cref="ICodeGenVisitor"/> implementation for <see cref="StreamWriter"/>.
+/// </summary>
+public class StreamWriterCodeGenVisitor : BaseCodeGenVisitor
+{
+	private readonly StreamWriter _writer;
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="StreamWriterCodeGenVisitor"/>.
+	/// </summary>
+	/// <param name="writer"><see cref="StringBuilder"/></param>
+	public StreamWriterCodeGenVisitor(StreamWriter writer)
 	{
-		if (line == "}")
-		{
-			if (_indent.Length == 0)
-				throw new InvalidOperationException("Mismatched closing brace.");
-
-			_indent = _indent.Substring(0, _indent.Length - 1);
-		}
-		
-		_builder.AppendLine($"{_indent}{line}");
-
-		if (line == "{")
-			_indent += "\t";
-
-		return this;
+		_writer = writer ?? throw new ArgumentNullException(nameof(writer));
 	}
+
+	protected override void WriteLine(string text)
+		=> _writer.WriteLine(text);
+
+	protected override void Write(string text)
+		=> _writer.Write(text);
 }

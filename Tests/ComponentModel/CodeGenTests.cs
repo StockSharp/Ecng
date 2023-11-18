@@ -44,4 +44,26 @@ public class CodeGenTests
 			.AddLine("}")
 			.AddLine("}");
 	}
+
+	[TestMethod]
+	public void Indent()
+	{
+		var sb = new StringBuilder();
+
+		ICodeGenVisitor visitor = new StringBuilderCodeGenVisitor(sb);
+
+		visitor.CurrIndent.AssertEqual(0);
+
+		visitor.AddLine("{");
+		visitor.CurrIndent.AssertEqual(1);
+
+		visitor.AddLine("}");
+		visitor.CurrIndent.AssertEqual(0);
+
+		visitor.AddLine("{");
+		visitor.CurrIndent.AssertEqual(1);
+
+		visitor.AddLine("{");
+		visitor.CurrIndent.AssertEqual(2);
+	}
 }
