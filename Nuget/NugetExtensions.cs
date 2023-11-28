@@ -121,7 +121,7 @@ public static class NugetExtensions
 			throw new ArgumentNullException(nameof(version));
 
 		if (suffix.IsEmpty())
-			throw new ArgumentNullException(nameof(version));
+			throw new ArgumentNullException(nameof(suffix));
 
 		return new(version.Major, version.Minor, version.Patch, suffix);
 	}
