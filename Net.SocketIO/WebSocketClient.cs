@@ -141,20 +141,21 @@
 					if (attempts > 0)
 						attempts--;
 
-					_ws = new ClientWebSocket();
+					var ws = new ClientWebSocket();
+					_ws = ws;
 
 #if NET5_0_OR_GREATER
 
-					_ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
+					ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
 
 #endif
 
-					_init?.Invoke(_ws);
+					_init?.Invoke(ws);
 
 					try
 					{
 						_infoLog("Connecting to {0}...", _url);
-						await _ws.ConnectAsync(_url, token);
+						await ws.ConnectAsync(_url, token);
 						break;
 					}
 					catch
@@ -238,7 +239,11 @@
 				{
 					try
 					{
-						var task = _ws.ReceiveAsync(new(buf), token);
+						var task = _ws?.ReceiveAsync(new(buf), token);
+
+						if (task is null)
+							break;
+
 						task.Wait(token);
 
 						if (token.IsCancellationRequested)
@@ -324,7 +329,7 @@
 				try
 				{
 					if (needClose)
-						_ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, default).Wait((int)DisconnectTimeout.TotalMilliseconds);
+						_ws?.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, default).Wait((int)DisconnectTimeout.TotalMilliseconds);
 				}
 				catch (Exception ex)
 				{
@@ -334,7 +339,7 @@
 
 				try
 				{
-					_ws.Dispose();
+					_ws?.Dispose();
 				}
 				catch { }
 
@@ -388,7 +393,7 @@
 			=> SendAsync(sendBuf, type, _source.Token);
 
 		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken)
-			=> _ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken).AsValueTask();
+			=> _ws?.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken).AsValueTask() ?? default;
 
 		protected override void DisposeManaged()
 		{
