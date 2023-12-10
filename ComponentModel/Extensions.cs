@@ -108,7 +108,7 @@ namespace Ecng.ComponentModel
 
 			if (canSplit && type.IsFlags())
 			{
-				var parts = field.SplitMask2().ToArray();
+				var parts = field.SplitMask2().Where(f => f.To<long>() != default).ToArray();
 
 				if (parts.Length > 1)
 					return parts.Select(p => Get(p, func, getDefault, (_, _) => throw new NotSupportedException(), false)).Aggregate(aggregate);

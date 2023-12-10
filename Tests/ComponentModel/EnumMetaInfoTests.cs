@@ -120,4 +120,45 @@ public class EnumMetaInfoTests
 		LocTestEnum.F1.GetFieldDisplayName().AssertEqual("F 1");
 		LocTestEnum.F1.GetFieldDescription().AssertEqual(string.Empty);
 	}
+
+	[Flags]
+	private enum ZeroFieldFlags
+	{
+		F0 = 0,
+		F1 = 1,
+		F2 = F1 << 1
+	}
+
+	[Flags]
+	private enum LocZeroFieldFlags
+	{
+		[Display(Name = "F 0")]
+		F0 = 0,
+
+		[Display(Name = "F 1")]
+		F1 = 1,
+
+		[Display(Name = "F 2")]
+		F2 = F1 << 1
+	}
+
+	[TestMethod]
+	public void FieldsZeroFieldFlags()
+	{
+		ZeroFieldFlags.F1.GetDisplayName().AssertEqual("F1");
+		ZeroFieldFlags.F1.GetFieldDisplayName().AssertEqual("F1");
+		ZeroFieldFlags.F1.GetFieldDescription().AssertEqual(string.Empty);
+
+		(ZeroFieldFlags.F1 | ZeroFieldFlags.F2).GetDisplayName().AssertEqual("F1, F2");
+		(ZeroFieldFlags.F1 | ZeroFieldFlags.F2).GetFieldDisplayName().AssertEqual("F1, F2");
+		(ZeroFieldFlags.F1 | ZeroFieldFlags.F2).GetFieldDescription().AssertEqual(string.Empty);
+
+		LocZeroFieldFlags.F1.GetDisplayName().AssertEqual("F 1");
+		LocZeroFieldFlags.F1.GetFieldDisplayName().AssertEqual("F 1");
+		LocZeroFieldFlags.F1.GetFieldDescription().AssertEqual(string.Empty);
+
+		(LocZeroFieldFlags.F1 | LocZeroFieldFlags.F2).GetDisplayName().AssertEqual("F 1, F 2");
+		(LocZeroFieldFlags.F1 | LocZeroFieldFlags.F2).GetFieldDisplayName().AssertEqual("F 1, F 2");
+		(LocZeroFieldFlags.F1 | LocZeroFieldFlags.F2).GetFieldDescription().AssertEqual(string.Empty);
+	}
 }
