@@ -51,7 +51,7 @@
 				throw new ArgumentNullException(nameof(storage));
 
 			var instance = storage.GetValue<Type>("type").CreateInstance<T>();
-			instance.Load(storage.GetValue<SettingsStorage>("settings"));
+			instance.Load(storage, "settings");
 			return instance;
 		}
 
@@ -309,12 +309,23 @@
 			return storage;
 		}
 
-		public static void LoadIfNotNull(this IPersistable obj, SettingsStorage settings, string name)
+		public static void Load(this IPersistable persistable, SettingsStorage settings, string name)
+		{
+			if (persistable is null)
+				throw new ArgumentNullException(nameof(persistable));
+
+			if (settings is null)
+				throw new ArgumentNullException(nameof(settings));
+
+			persistable.Load(settings.GetValue<SettingsStorage>(name));
+		}
+
+		public static bool LoadIfNotNull(this IPersistable persistable, SettingsStorage settings, string name)
 		{
 			if (settings is null)
 				throw new ArgumentNullException(nameof(settings));
 
-			obj.LoadIfNotNull(settings.GetValue<SettingsStorage>(name));
+			return persistable.LoadIfNotNull(settings.GetValue<SettingsStorage>(name));
 		}
 
 		public static bool LoadIfNotNull(this IPersistable persistable, SettingsStorage storage)
