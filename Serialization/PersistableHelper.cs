@@ -309,8 +309,19 @@
 			return storage;
 		}
 
+		public static void LoadIfNotNull(this IPersistable obj, SettingsStorage settings, string name)
+		{
+			if (settings is null)
+				throw new ArgumentNullException(nameof(settings));
+
+			obj.LoadIfNotNull(settings.GetValue<SettingsStorage>(name));
+		}
+
 		public static bool LoadIfNotNull(this IPersistable persistable, SettingsStorage storage)
 		{
+			if (persistable is null)
+				throw new ArgumentNullException(nameof(persistable));
+
 			if (storage is null)
 				return false;
 
