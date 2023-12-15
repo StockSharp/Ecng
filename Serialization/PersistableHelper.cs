@@ -170,40 +170,59 @@
 			storage.SetValue(name, persistable.Save());
 		}
 
+		[Obsolete("Use overload with serializer param.")]
 		public static void LoadFromString<TSerializer>(this IPersistable persistable, string value)
 			where TSerializer : ISerializer<SettingsStorage>, new()
+			=> new TSerializer().LoadFromString(persistable, value);
+
+		[Obsolete("Use overload with serializer param.")]
+		public static SettingsStorage LoadFromString<TSerializer>(this string value)
+			where TSerializer : ISerializer<SettingsStorage>, new()
+			=> new TSerializer().LoadFromString(value);
+
+		public static void LoadFromString(this ISerializer<SettingsStorage> serializer, IPersistable persistable, string value)
 		{
 			if (persistable is null)
 				throw new ArgumentNullException(nameof(persistable));
 
-			persistable.Load(value.LoadFromString<TSerializer>());
+			persistable.Load(serializer.LoadFromString(value));
 		}
 
-		public static SettingsStorage LoadFromString<TSerializer>(this string value)
-			where TSerializer : ISerializer<SettingsStorage>, new()
+		public static TValue LoadFromString<TValue>(this ISerializer<TValue> serializer, string value)
 		{
 			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 
-			return Do.Invariant(() => new TSerializer().Deserialize(value.UTF8()));
+			return Do.Invariant(() => serializer.Deserialize(value.UTF8()));
 		}
 
+		[Obsolete("Use overload with serializer param.")]
 		public static string SaveToString<TSerializer>(this IPersistable persistable)
 			where TSerializer : ISerializer<SettingsStorage>, new()
+			=> new TSerializer().SaveToString(persistable);
+
+		[Obsolete("Use overload with serializer param.")]
+		public static string SaveToString<TSerializer>(this SettingsStorage settings)
+			where TSerializer : ISerializer<SettingsStorage>, new()
+			=> new TSerializer().SaveToString(settings);
+
+		public static string SaveToString(this ISerializer<SettingsStorage> serializer, IPersistable persistable)
 		{
 			if (persistable is null)
 				throw new ArgumentNullException(nameof(persistable));
 
-			return persistable.Save().SaveToString<TSerializer>();
+			return serializer.SaveToString(persistable.Save());
 		}
 
-		public static string SaveToString<TSerializer>(this SettingsStorage settings)
-			where TSerializer : ISerializer<SettingsStorage>, new()
+		public static string SaveToString<TValue>(this ISerializer<TValue> serializer, TValue settings)
 		{
+			if (serializer is null)
+				throw new ArgumentNullException(nameof(serializer));
+
 			if (settings is null)
 				throw new ArgumentNullException(nameof(settings));
 
-			return Do.Invariant(() => new TSerializer().Serialize(settings).UTF8());
+			return Do.Invariant(() => serializer.Serialize(settings).UTF8());
 		}
 
 		public static bool IsSerializablePrimitive(this Type type)
