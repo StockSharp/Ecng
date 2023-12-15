@@ -137,7 +137,7 @@ namespace Ecng.ComponentModel
 				return
 					attr is null ? null :
 					attr.IsFullPath ? new Uri(attr.Icon, UriKind.Relative) : attr.Icon.GetResourceUrl(fi.ReflectedType);
-			}, f => null, (s1, s2) => throw new NotSupportedException());
+			}, f => null, (s1, s2) => s1);
 
 		public static string GetDocUrl(this Type type)
 			=> type.GetAttribute<DocAttribute>()?.DocUrl;
