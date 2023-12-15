@@ -2,7 +2,7 @@
 {
 	using System;
 	
-	using Ecng.ComponentModel;
+	using Ecng.Reflection;
 	using Ecng.UnitTesting;
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;

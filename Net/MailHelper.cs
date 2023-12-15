@@ -7,8 +7,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 
-using Ecng.Reflection;
-
 public static class MailHelper
 {
 	public static void Send(this MailMessage message, bool dispose = true)

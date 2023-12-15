@@ -14,7 +14,7 @@ using NuGet.Configuration;
 using NuGet.Frameworks;
 
 using Ecng.Common;
-using Ecng.ComponentModel;
+using Ecng.Reflection;
 
 namespace Ecng.Nuget;
 
