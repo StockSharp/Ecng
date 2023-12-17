@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(MsExtensionsVer)" />
+    <PackageReference Include="LibGit2Sharp" Version="0.29.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Backup.AWS\Backup.AWS.csproj" />
