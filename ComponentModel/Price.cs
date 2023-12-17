@@ -8,7 +8,7 @@ using Ecng.Serialization;
 
 [Serializable]
 [DataContract]
-public class Price : Equatable<Price>, IPersistable, IOperable<Price>
+public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormattable
 {
 	static Price()
 	{
@@ -301,9 +301,12 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>
 	private bool IsLimit => Type == PriceTypes.Limit;
 
 	/// <inheritdoc />
-	public override string ToString()
+	public override string ToString() => ToString(null, null);
+
+	/// <inheritdoc />
+	public string ToString(string format, IFormatProvider formatProvider)
 	{
-		var str = $"{Value}";
+		var str = Value.ToString(format, formatProvider);
 
 		if (Type != PriceTypes.Absolute)
 			str += IsPercent ? PercentChar : LimitChar;
