@@ -1,6 +1,7 @@
 namespace Ecng.Common
 {
 	using System;
+	using System.Linq;
 	using System.Xml;
 	using System.Xml.Linq;
 
@@ -44,5 +45,11 @@ namespace Ecng.Common
 
 			return first.OuterXml == second.OuterXml;
 		}
+
+		public static bool IsXmlString(this string value)
+			=> value.All(IsXmlChar);
+
+		public static bool IsXmlChar(this char c)
+			=> XmlConvert.IsXmlChar(c);
 	}
 }
