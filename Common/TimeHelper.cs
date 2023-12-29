@@ -544,7 +544,7 @@
 			return isSeconds ? diff.TotalSeconds : diff.TotalMilliseconds;
 		}
 
-		private static TimeSpan GetUnixDiff(this DateTime time)
+		public static TimeSpan GetUnixDiff(this DateTime time)
 		{
 			if (time.Kind != DateTimeKind.Utc)
 			{
