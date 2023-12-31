@@ -136,13 +136,6 @@ public static class AsyncHelper
 
 	public static CancellationToken CreateTimeoutToken(this TimeSpan timeout) => new CancellationTokenSource(timeout).Token;
 
-	public static CancellationTokenSource CreateDelayedToken(this CancellationToken source, TimeSpan timeout)
-	{
-		var cts = new CancellationTokenSource();
-		source.Register(() => Task.Delay(timeout, cts.Token).ContinueWith(_ => cts.Cancel(), cts.Token));
-		return cts;
-	}
-
 	public static ValueTask CheckNull(this Task task) => new(task ?? Task.CompletedTask);
 	public static ValueTask CheckNull(this ValueTask? task) => task ?? default;
 
