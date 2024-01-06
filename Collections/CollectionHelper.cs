@@ -1433,6 +1433,14 @@
 				yield return array;
 		}
 
+		public static T SingleWhenOnly<T>(IEnumerable<T> source)
+		{
+			if (source is ICollection<T> coll)
+				return coll.Count == 1 ? coll.First() : default;
+			else
+				return source.Count() == 1 ? source.First() : default;
+		}
+
 #if NETSTANDARD2_0
 		public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count)
 			=> source.Take(source.Count() - count);
