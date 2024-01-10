@@ -1507,6 +1507,13 @@ namespace Ecng.Common
 		[EnumMember]
 		[Crypto]
 		LUSD,
+
+		/// <summary>
+		/// Micro Bitcoin.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		MBC,
 		// ReSharper restore InconsistentNaming
 	}
 }
