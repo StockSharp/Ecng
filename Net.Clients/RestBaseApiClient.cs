@@ -270,8 +270,8 @@ public abstract class RestBaseApiClient
 		var methodAttr = callerMethod.GetAttribute<RestAttribute>();
 		var parameters = callerMethod.GetParameters();
 		var paramsEnum = parameters
-			.Select(pi => (pi, pi.GetAttribute<RestAttribute>()))
-			.Where(t => t.Item2?.Ignore != true);
+			.Select(pi => (pi, attr: pi.GetAttribute<RestAttribute>()))
+			.Where(t => t.attr?.Ignore != true);
 
 		if (parameters.Length > 0)
 		{
@@ -289,17 +289,20 @@ public abstract class RestBaseApiClient
 		List<(string name, object value)> list = new();
 
 		var i = 0;
-		foreach (var pair in paramsArr)
+		foreach (var (pi, attr) in paramsArr)
 		{
 			var arg = args[i++];
 
-			list.Add(((pair.Item2?.Name).IsEmpty(pair.pi.Name), TryFormat(arg, callerMethod, method)));
+			list.Add(((attr?.Name).IsEmpty(FormatArgName(pi.Name)), TryFormat(arg, callerMethod, method)));
 		}
 
 		var url = new Url(BaseAddress, methodAttr is null ? ToRequestUri(callerMethod) : methodAttr.Name);
 
 		return (url, list.ToArray(), callerMethod);
 	}
+
+	protected virtual string FormatArgName(string argName)
+		=> argName;
 
 	protected virtual object TryFormat(object arg, MethodInfo callerMethod, HttpMethod method)
 		=> (arg is Enum || arg is bool) ? arg.To<long>() : arg;
