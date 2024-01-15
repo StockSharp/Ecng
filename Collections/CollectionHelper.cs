@@ -1433,7 +1433,7 @@
 				yield return array;
 		}
 
-		public static T SingleWhenOnly<T>(IEnumerable<T> source)
+		public static T SingleWhenOnly<T>(this IEnumerable<T> source)
 		{
 			if (source is ICollection<T> coll)
 				return coll.Count == 1 ? coll.First() : default;
