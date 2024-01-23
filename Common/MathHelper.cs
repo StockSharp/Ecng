@@ -19,6 +19,13 @@ namespace Ecng.Common
 			return Math.Round(value, digits);
 		}
 
+		// for dynamic code compilation
+		// see ExpressionTests.Round method
+		public static decimal Round(this decimal value, decimal digits)
+		{
+			return Round(value, (int)digits);
+		}
+
 		public static decimal Ceiling(this decimal value)
 		{
 			return Math.Ceiling(value);

@@ -397,5 +397,14 @@
 			formula.Calculate(new decimal[] { 6, 4 }).AssertTrue();
 			formula.Calculate(new decimal[] { 0.1m, 360m }).AssertFalse();
 		}
+
+		[TestMethod]
+		public void Round()
+		{
+			var formula = Compile(" ROUND(a, b) ");
+			formula.Calculate(new decimal[] { 6, 4 }).AssertEqual(6);
+			formula.Calculate(new decimal[] { 0.01m, 2 }).AssertEqual(0.01m);
+			formula.Calculate(new decimal[] { 0.011m, 2 }).AssertEqual(0.01m);
+		}
 	}
 }
