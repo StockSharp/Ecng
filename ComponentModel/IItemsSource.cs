@@ -9,7 +9,7 @@
 
 	using Ecng.Common;
 
-	public interface IItemsSourceItem
+	public interface IItemsSourceItem : INotifyPropertyChangedEx
 	{
 		string DisplayName {get;}
 		string Description {get;}
@@ -24,22 +24,26 @@
 		new TValue Value {get;}
 	}
 
-	public class ItemsSourceItem<T> : IItemsSourceItem<T>
+	public class ItemsSourceItem<T> : NotifiableObject, IItemsSourceItem<T>
 	{
+		private readonly Func<string> _getDisplayName;
+		private readonly Func<string> _getDescription;
+
 		object IItemsSourceItem.Value => Value;
 
 		public T Value { get; }
 
-		public string DisplayName { get; }
-		public string Description { get; }
+		public string DisplayName => _getDisplayName();
+		public string Description => _getDescription();
 		public Uri Icon { get; }
 		public bool IsObsolete { get; }
 
-		public ItemsSourceItem(T value, string displayName, string description, Uri iconUri, bool isObsolete)
+		public ItemsSourceItem(T value, Func<string> getDisplayName, Func<string> getDescription, Uri iconUri, bool isObsolete)
 		{
+			_getDisplayName = getDisplayName ?? throw new ArgumentNullException(nameof(getDisplayName));
+			_getDescription = getDescription ?? throw new ArgumentNullException(nameof(getDescription));
+
 			Value         = value;
-			DisplayName   = displayName;
-			Description   = description;
 			Icon          = iconUri;
 			IsObsolete    = isObsolete;
 		}
@@ -164,12 +168,12 @@
 			return CreateNewItem(typedVal);
 		}
 
-		IItemsSourceItem<T> CreateNewItem(IItemsSourceItem fromItem)
+		private IItemsSourceItem<T> CreateNewItem(IItemsSourceItem fromItem)
 		{
 			return new ItemsSourceItem<T>(
 				(T)fromItem.Value,
-				fromItem.DisplayName,
-				fromItem.Description,
+				() => fromItem.DisplayName,
+				() => fromItem.Description,
 				fromItem.Icon,
 				fromItem.IsObsolete
 			);
@@ -179,8 +183,8 @@
 		{
 			return new ItemsSourceItem<T>(
 				value,
-				GetName(value),
-				GetDescription(value),
+				() => GetName(value),
+				() => GetDescription(value),
 				GetIcon(value),
 				GetIsObsolete(value)
 			);
@@ -329,6 +333,7 @@
 	/// <summary>
 	/// Represents an attribute that is set on a property to identify the IItemsSource-derived class that will be used.
 	/// </summary>
+	[AttributeUsage(AttributeTargets.Property)]
 	public class ItemsSourceAttribute : Attribute
 	{
 		/// <summary>
