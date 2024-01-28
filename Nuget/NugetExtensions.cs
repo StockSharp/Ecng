@@ -1,9 +1,13 @@
-﻿using System;
+﻿namespace Ecng.Nuget;
+
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections.Generic;
+using System.IO;
+using System.Net.Http;
 
 using NuGet.Common;
 using NuGet.Versioning;
@@ -12,11 +16,10 @@ using NuGet.Packaging.Core;
 using NuGet.Protocol.Core.Types;
 using NuGet.Configuration;
 using NuGet.Frameworks;
+using NuGet.Protocol;
 
 using Ecng.Common;
 using Ecng.Reflection;
-
-namespace Ecng.Nuget;
 
 public static class NugetExtensions
 {
@@ -138,5 +141,41 @@ public static class NugetExtensions
 			throw new ArgumentNullException(nameof(pi));
 
 		return $"{pi.Id}|{pi.Version}";
+	}
+
+	public static async Task<Uri> GetBaseUrl(this SourceRepository repo, CancellationToken cancellationToken)
+	{
+		if (repo is null)
+			throw new ArgumentNullException(nameof(repo));
+
+		var serviceIndex = await repo.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken)
+			?? throw new InvalidOperationException($"ServiceIndexResourceV3 for {repo.PackageSource.Name} is null.");
+
+		var baseUrl = serviceIndex.GetServiceEntryUri(ServiceTypes.PackageBaseAddress)
+			?? throw new InvalidOperationException($"No PackageBaseAddress endpoint for {repo.PackageSource.Name}.");
+
+		var str = baseUrl.To<string>();
+
+		if (!str.EndsWith('/'))
+			baseUrl = (str + "/").To<Uri>();
+
+		return baseUrl;
+	}
+
+	public static HttpClient CreatePrivateHttp(string apiKey)
+	{
+		var http = new HttpClient();
+		http.DefaultRequestHeaders.Add(ProtocolConstants.ApiKeyHeader, apiKey);
+		return http;
+	}
+
+	public static Task<Stream> GetNuspecAsync(this HttpClient http, Uri baseUrl, string packageId, NuGetVersion version, CancellationToken cancellationToken)
+	{
+		if (http is null)			throw new ArgumentNullException(nameof(http));
+		if (baseUrl is null)		throw new ArgumentNullException(nameof(baseUrl));
+		if (packageId.IsEmpty())	throw new ArgumentNullException(nameof(packageId));
+		if (version is null)		throw new ArgumentNullException(nameof(version));
+
+		return http.GetStreamAsync(new Uri(baseUrl, $"{packageId}/{version}/{packageId}{NuGetConstants.ManifestExtension}".ToLowerInvariant()), cancellationToken);
 	}
 }
