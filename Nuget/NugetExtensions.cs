@@ -12,7 +12,6 @@ using System.Net.Http;
 using NuGet.Common;
 using NuGet.Versioning;
 using NuGet.Packaging;
-using NuGet.Packaging.Core;
 using NuGet.Protocol.Core.Types;
 using NuGet.Configuration;
 using NuGet.Frameworks;
@@ -39,32 +38,32 @@ public static class NugetExtensions
 		return targetFrameworks.ToArray();
 	}
 
-	public static NuGetFramework RemovePlatformVersion(this NuGetFramework fwk) => new(fwk.Framework, fwk.Version, fwk.Platform, FrameworkConstants.EmptyVersion);
+	public static NuGetFramework RemovePlatformVersion(this NuGetFramework fwk)
+		=> new(fwk.Framework, fwk.Version, fwk.Platform, FrameworkConstants.EmptyVersion);
 
-	public static async Task<NuGetVersion[]> GetAllVersionsOrderedAsync(this SourceRepository repo, string packageId, CancellationToken token = default, ILogger log = null, SourceCacheContext cacheCtx = null)
+	public static async Task<NuGetVersion[]> GetAllVersionsOrderedAsync(this SourceRepository repo, string packageId, ILogger logger, SourceCacheContext cache, CancellationToken token)
 	{
-		var cache = cacheCtx ?? new SourceCacheContext();
 		var resource = await repo.GetResourceAsync<FindPackageByIdResource>(token);
 
-		return (await resource.GetAllVersionsAsync(packageId, cache, log ?? NullLogger.Instance, token)).OrderBy(v => v).ToArray();
+		return (await resource.GetAllVersionsAsync(packageId, cache, logger, token)).OrderBy(v => v).ToArray();
 	}
 
-	public static async Task<NuGetVersion> GetLastVersionAsync(this SourceRepository repo, string packageId, bool allowPreview, CancellationToken token = default, ILogger log = null, SourceCacheContext cacheCtx = null)
+	public static async Task<NuGetVersion> GetLastVersionAsync(this SourceRepository repo, string packageId, bool allowPreview, ILogger logger, SourceCacheContext cache, CancellationToken token)
 	{
-		var versions = await repo.GetAllVersionsOrderedAsync(packageId, token, log, cacheCtx);
+		var versions = await repo.GetAllVersionsOrderedAsync(packageId, logger, cache, token);
 		Func<NuGetVersion, bool> cond = allowPreview ? _ => true : v => !v.IsPrerelease;
 
 		return versions.LastOrDefault(cond);
 	}
 
-	public static async Task<NuGetVersion> GetLastVersionInFloatingRangeAsync(this SourceRepository repo, string packageId, string floatingVer, CancellationToken token = default, ILogger log = null, SourceCacheContext cacheCtx = null)
+	public static async Task<NuGetVersion> GetLastVersionInFloatingRangeAsync(this SourceRepository repo, string packageId, string floatingVer, ILogger logger, SourceCacheContext cache, CancellationToken token)
 	{
 		if (!FloatRange.TryParse(floatingVer, out var range))
 			throw new ArgumentException($"invalid floating version '{floatingVer}'", nameof(floatingVer));
 
-		var versions = await repo.GetAllVersionsOrderedAsync(packageId, token, log, cacheCtx);
+		var versions = await repo.GetAllVersionsOrderedAsync(packageId, logger, cache, token);
 
-		return versions.LastOrDefault(v => range.Satisfies(v));
+		return versions.LastOrDefault(range.Satisfies);
 	}
 
 	private class DummySettings : ISettings
@@ -127,20 +126,6 @@ public static class NugetExtensions
 			throw new ArgumentNullException(nameof(suffix));
 
 		return new(version.Major, version.Minor, version.Patch, suffix);
-	}
-
-	public static PackageIdentity ParsePackageIdentity(this string pi)
-	{
-		var arr = pi?.Split('|');
-		return arr?.Length != 2 ? null : new PackageIdentity(arr[0], arr[1].IsEmptyOrWhiteSpace() ? null : NuGetVersion.Parse(arr[1]));
-	}
-
-	public static string SerializePackageIdentity(this PackageIdentity pi)
-	{
-		if (pi is null)
-			throw new ArgumentNullException(nameof(pi));
-
-		return $"{pi.Id}|{pi.Version}";
 	}
 
 	public static async Task<Uri> GetBaseUrl(this SourceRepository repo, CancellationToken cancellationToken)

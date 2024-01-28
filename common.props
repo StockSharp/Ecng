@@ -29,6 +29,7 @@
         or '$(MSBuildProjectName)' == 'Backup.AWS'
         or '$(MSBuildProjectName)' == 'Backup.Yandex'
         or '$(MSBuildProjectName)' == 'Backup.Mega'
+        or '$(MSBuildProjectName)' == 'Nuget'
       ">
     <TargetFrameworks>net6.0</TargetFrameworks>
   </PropertyGroup>
