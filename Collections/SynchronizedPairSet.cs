@@ -140,6 +140,17 @@
 				return _values.TryGetValue(value, out key);
 		}
 
+		public bool TryGetKeyAndRemove(TValue value, out TKey key)
+		{
+			lock (SyncRoot)
+			{
+				if (!_values.TryGetAndRemove(value, out key))
+					return false;
+
+				return base.Remove(key);
+			}
+		}
+
 		public bool RemoveByValue(TValue value)
 		{
 			lock (SyncRoot)
