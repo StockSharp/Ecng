@@ -199,6 +199,9 @@
 		public static string[] SplitByComma(this string str, bool removeEmptyEntries = false)
 			=> str.SplitBySep(",", removeEmptyEntries);
 
+		public static string[] SplitByDot(this string str, bool removeEmptyEntries = false)
+			=> str.SplitBySep(".", removeEmptyEntries);
+
 		public static string[] SplitByDotComma(this string str, bool removeEmptyEntries = false)
 			=> str.SplitBySep(";", removeEmptyEntries);
 
