@@ -751,7 +751,7 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 			}
 
 			// Heap property is satisfied; insert node in this location.
-			if (Comparer<TPriority>.Default.Compare(node.Priority, minChild.Priority) <= 0)
+			if (Comparer<TPriority>.Default.Compare(node.Priority, minChild.Priority) < 0)
 			{
 				break;
 			}
