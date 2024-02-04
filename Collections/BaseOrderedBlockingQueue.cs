@@ -1,6 +1,5 @@
 ﻿namespace Ecng.Collections
 {
-	using System;
 	using System.Collections.Generic;
 
 	/// <summary>
@@ -8,13 +7,13 @@
 	/// </summary>
 	public abstract class BaseOrderedBlockingQueue<TSort, TValue, TCollection> :
 		BaseBlockingQueue<(TSort sort, TValue elem), TCollection>
-		where TCollection : ICollection<(TSort, TValue)>, IQueue<(TSort, TValue)>, new()
+		where TCollection : ICollection<(TSort, TValue)>, IQueue<(TSort, TValue)>
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BaseOrderedBlockingQueue{TSort, TValue}"/>.
 		/// </summary>
-		protected BaseOrderedBlockingQueue()
-			: base(new())
+		protected BaseOrderedBlockingQueue(TCollection collection)
+			: base(collection)
 		{
 		}
 
