@@ -214,6 +214,12 @@
 		public static string[] SplitByEqual(this string str, bool removeEmptyEntries = true)
 			=> str.SplitBySep("=", removeEmptyEntries);
 
+		public static string[] SplitByTab(this string str, bool removeEmptyEntries = true)
+			=> str.SplitBySep("\t", removeEmptyEntries);
+
+		public static string[] SplitByAt(this string str, bool removeEmptyEntries = true)
+			=> str.SplitBySep("@", removeEmptyEntries);
+
 		[Obsolete("Use SplitByN methods.")]
 		public static string[] SplitByLine(this string str, bool removeEmptyEntries = false)
 			=> str.SplitByN(removeEmptyEntries);
@@ -434,6 +440,12 @@
 			else
 				return value;
 		}
+
+		public static string JoinAt(this IEnumerable<string> parts)
+			=> parts.Join("@");
+
+		public static string JoinTab(this IEnumerable<string> parts)
+			=> parts.Join("\t");
 
 		public static string JoinComma(this IEnumerable<string> parts)
 			=> parts.Join(",");
