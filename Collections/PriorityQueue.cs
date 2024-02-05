@@ -132,6 +132,9 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+		public override string ToString()
+			=> $"Pr={Priority} Elem={(HasData ? (_elements is null ? _element : _elements.Count) : null)}";
 	}
 
 	private readonly LinkedList<Node> _nodes = new();
@@ -141,11 +144,13 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 	/// </summary>
 	private int _version;
 
+	private readonly Func<TPriority, TPriority, TPriority> _subtractAbs;
+
 	/// <summary>
 	///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class.
 	/// </summary>
-	public PriorityQueue()
-		: this(Comparer<TPriority>.Default)
+	public PriorityQueue(Func<TPriority, TPriority, TPriority> subtractAbs)
+		: this(subtractAbs, Comparer<TPriority>.Default)
 	{
 	}
 
@@ -157,8 +162,9 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 	///  Custom comparer dictating the ordering of elements.
 	///  Uses <see cref="Comparer{T}.Default" /> if the argument is <see langword="null"/>.
 	/// </param>
-	public PriorityQueue(IComparer<TPriority> comparer)
+	public PriorityQueue(Func<TPriority, TPriority, TPriority> subtractAbs, IComparer<TPriority> comparer)
 	{
+		_subtractAbs = subtractAbs ?? throw new ArgumentNullException(nameof(subtractAbs));
 		_comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
 	}
 
@@ -192,50 +198,123 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 		}
 		else
 		{
+			var best = _nodes.First.Value;
 			var worst = _nodes.Last.Value;
 
-			var res = _comparer.Compare(priority, worst.Priority);
+			var nearestRes = _comparer.Compare(_subtractAbs(best.Priority, priority), _subtractAbs(worst.Priority, priority));
 
-			if (res > 0)
-			{
-				_nodes.AddLast(new Node(priority, element));
-			}
-			else if (res == 0)
-			{
-				worst.Enqueue(element);
-			}
-			else
-			{
-				var curr = _nodes.Last.Previous;
+			var walkToBest = true;
 
-				if (curr == null)
+			if (nearestRes > 0)
+			{
+				// closer to worst
+			}
+			else if (nearestRes < 0)
+			{
+				// closer to best
+
+				walkToBest = false;
+			}
+			else if (nearestRes == 0)
+			{
+				// worst and best are same
+			}
+
+			if (walkToBest)
+			{
+				var res = _comparer.Compare(priority, worst.Priority);
+
+				if (res > 0)
 				{
-					_nodes.AddBefore(_nodes.Last, new Node(priority, element));
+					_nodes.AddLast(new Node(priority, element));
+				}
+				else if (res == 0)
+				{
+					worst.Enqueue(element);
 				}
 				else
 				{
-					while (true)
+					var curr = _nodes.Last.Previous;
+
+					if (curr == null)
 					{
-						res = _comparer.Compare(priority, curr.Value.Priority);
+						_nodes.AddBefore(_nodes.Last, new Node(priority, element));
+					}
+					else
+					{
+						while (true)
+						{
+							res = _comparer.Compare(priority, curr.Value.Priority);
 
-						if (res > 0)
-						{
-							_nodes.AddAfter(curr, new Node(priority, element));
-							break;
-						}
-						else if (res == 0)
-						{
-							curr.Value.Enqueue(element);
-							break;
-						}
-						else
-						{
-							curr = curr.Previous;
-
-							if (curr is null)
+							if (res > 0)
 							{
-								_nodes.AddFirst(new Node(priority, element));
+								_nodes.AddAfter(curr, new Node(priority, element));
 								break;
+							}
+							else if (res == 0)
+							{
+								curr.Value.Enqueue(element);
+								break;
+							}
+							else
+							{
+								curr = curr.Previous;
+
+								if (curr is null)
+								{
+									_nodes.AddFirst(new Node(priority, element));
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				var res = _comparer.Compare(priority, best.Priority);
+
+				if (res < 0)
+				{
+					_nodes.AddFirst(new Node(priority, element));
+				}
+				else if (res == 0)
+				{
+					best.Enqueue(element);
+				}
+				else
+				{
+					var curr = _nodes.First.Next;
+
+					if (curr == null)
+					{
+						_nodes.AddAfter(_nodes.First, new Node(priority, element));
+					}
+					else
+					{
+						while (true)
+						{
+							res = _comparer.Compare(priority, curr.Value.Priority);
+
+							if (res < 0)
+							{
+								_nodes.AddBefore(curr, new Node(priority, element));
+								break;
+							}
+							else if (res == 0)
+							{
+								curr.Value.Enqueue(element);
+								break;
+							}
+							else
+							{
+								curr = curr.Next;
+
+								if (curr is null)
+								{
+									_nodes.AddLast(new Node(priority, element));
+									break;
+								}
 							}
 						}
 					}

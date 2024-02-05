@@ -98,7 +98,7 @@
 		private IPAddress _aggressiveIp;
 		private TimeSpan _aggressiveTime;
 		private readonly Dictionary<TAction, int> _freq = new();
-		private readonly Collections.PriorityQueue<TimeSpan, TAction> _longests = new(new BackwardComparer<TimeSpan>());
+		private readonly Collections.PriorityQueue<TimeSpan, TAction> _longests = new((p1, p2) => (p1 - p2).Abs(), new BackwardComparer<TimeSpan>());
 		private readonly Dictionary<Stopwatch, (IPAddress, TAction)> _pendings = new();
 		private readonly Dictionary<IPAddress, RefTriple<HashSet<Stopwatch>, long, TimeSpan>> _allWatches = new();
 		private readonly SyncObject _sync = new();

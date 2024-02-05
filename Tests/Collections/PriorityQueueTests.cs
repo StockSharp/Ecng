@@ -11,7 +11,7 @@ public class PriorityQueueTests
 	[TestMethod]
 	public void SameOrder()
 	{
-		var pq = new Ecng.Collections.PriorityQueue<long, int>();
+		var pq = new Ecng.Collections.PriorityQueue<long, int>((p1, p2) => (p1 - p2).Abs());
 		pq.Enqueue(0, 0);
 		pq.Enqueue(1, 1);
 		pq.Enqueue(0, 0);
@@ -47,7 +47,7 @@ public class PriorityQueueTests
 	[TestMethod]
 	public void Random()
 	{
-		var pq = new Ecng.Collections.PriorityQueue<long, int>();
+		var pq = new Ecng.Collections.PriorityQueue<long, int>((p1, p2) => (p1 - p2).Abs());
 
 		var count = 100000;
 
@@ -75,7 +75,7 @@ public class PriorityQueueTests
 	[TestMethod]
 	public void Seq()
 	{
-		var pq = new Ecng.Collections.PriorityQueue<long, int>();
+		var pq = new Ecng.Collections.PriorityQueue<long, int>((p1, p2) => (p1 - p2).Abs());
 
 		var count = 100000;
 
