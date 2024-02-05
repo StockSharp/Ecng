@@ -1,8 +1,9 @@
-﻿using Ecng.UnitTesting;
+﻿namespace Ecng.Tests.Collections;
+
+using Ecng.Common;
+using Ecng.UnitTesting;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-namespace Ecng.Tests.Collections;
 
 [TestClass]
 public class PriorityQueueTests
@@ -15,11 +16,22 @@ public class PriorityQueueTests
 		pq.Enqueue(1, 1);
 		pq.Enqueue(0, 0);
 		pq.Enqueue(1, 2);
+		pq.Enqueue(2, 30);
+		pq.Enqueue(3, 40);
+		pq.Enqueue(1, 3);
+		pq.Enqueue(0, 0);
+		pq.Count.AssertEqual(8);
+
+		pq.Dequeue();
+		pq.Count.AssertEqual(7);
 
 		var emptyCnt = 2;
 
 		for (var i = 0; i < emptyCnt; i++)
 			pq.Dequeue();
+
+		var left = 7 - emptyCnt;
+		pq.Count.AssertEqual(left);
 
 		var prev = 0;
 
@@ -28,6 +40,63 @@ public class PriorityQueueTests
 			var curr = pq.Dequeue().element;
 			(curr > prev).AssertTrue();
 			prev = curr;
+			pq.Count.AssertEqual(--left);
+		}
+	}
+
+	[TestMethod]
+	public void Random()
+	{
+		var pq = new Ecng.Collections.PriorityQueue<long, int>();
+
+		var count = 100000;
+
+		var prev = 0;
+
+		for (var i = 0; i < count; i++)
+			pq.Enqueue(RandomGen.GetInt(0, 100), ++prev);
+
+		pq.Count.AssertEqual(count);
+
+		var prevPriority = 0L;
+		var left = count;
+
+		while (pq.Count > 0)
+		{
+			var (priority, _) = pq.Dequeue();
+
+			(prevPriority <= priority).AssertTrue();
+			prevPriority = priority;
+
+			pq.Count.AssertEqual(--left);
+		}
+	}
+
+	[TestMethod]
+	public void Seq()
+	{
+		var pq = new Ecng.Collections.PriorityQueue<long, int>();
+
+		var count = 100000;
+
+		var prev = 0;
+
+		for (var i = 0; i < count; i++)
+			pq.Enqueue(i, ++prev);
+
+		pq.Count.AssertEqual(count);
+
+		var prevPriority = 0L;
+		var left = count;
+
+		while (pq.Count > 0)
+		{
+			var (priority, _) = pq.Dequeue();
+
+			(prevPriority <= priority).AssertTrue();
+			prevPriority = priority;
+
+			pq.Count.AssertEqual(--left);
 		}
 	}
 }
