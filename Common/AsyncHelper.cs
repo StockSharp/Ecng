@@ -310,4 +310,19 @@ public static class AsyncHelper
 	public static bool IsCompletedSuccessfully<T>(this Task<T> t) => t.Status == TaskStatus.RanToCompletion;
 
 	#endif
+
+	// https://stackoverflow.com/a/58234950/8029915
+	public static async IAsyncEnumerable<T> WithEnforcedCancellation<T>(this IAsyncEnumerable<T> source, [EnumeratorCancellation]CancellationToken cancellationToken)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+
+		cancellationToken.ThrowIfCancellationRequested();
+
+		await foreach (var item in source)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			yield return item;
+		}
+	}
 }
