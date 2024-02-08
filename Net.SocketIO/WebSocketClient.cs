@@ -2,6 +2,10 @@
 {
 	using System.Net.WebSockets;
 	using System.IO;
+	using System.Reflection;
+
+	using Ecng.Reflection;
+
 #if NET5_0_OR_GREATER
 	using System.Net.Security;
 #endif
@@ -400,6 +404,31 @@
 			_source?.Cancel();
 
 			base.DisposeManaged();
+		}
+
+		private FieldInfo _innerSocketField;
+		private PropertyInfo _socketProp;
+		private Type _opCodeEnum;
+		private MethodInfo _sendMethod;
+
+		/// <summary>
+		/// This hack sends direct op codes (like ping frames instead of pong).
+		/// Right now not uses anywhere.
+		/// </summary>
+		/// <returns></returns>
+		public ValueTask SendOpCode(byte code = 0x9 /* ping */)
+		{
+			_innerSocketField ??= typeof(ClientWebSocket).GetMember<FieldInfo>("_innerWebSocket");
+			var handle = _innerSocketField.GetValue(_ws);
+
+			_socketProp ??= handle.GetType().GetMember<PropertyInfo>("WebSocket");
+			var socket = (WebSocket)_socketProp.GetValue(handle);
+
+			_opCodeEnum ??= typeof(WebSocket).Assembly.GetType("System.Net.WebSockets.ManagedWebSocket+MessageOpcode");
+			var opCode = Enum.ToObject(_opCodeEnum, code);
+
+			_sendMethod ??= socket.GetType().GetMember<MethodInfo>("SendFrameLockAcquiredNonCancelableAsync");
+			return (ValueTask)_sendMethod.Invoke(socket, new[] { opCode, true, true, ReadOnlyMemory<byte>.Empty });
 		}
 	}
 }
