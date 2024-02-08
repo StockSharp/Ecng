@@ -34,10 +34,10 @@ namespace Ecng.Serialization
 			{
 				var value = reader.Value.To<double?>();
 
-				if (value is null)
+				if (value is not double d || (int)d == 0)
 					return null;
 
-				return Convert(value.Value);
+				return Convert(d);
 			}
 			catch (Exception ex)
 			{
