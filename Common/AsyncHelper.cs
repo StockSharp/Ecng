@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -304,12 +305,12 @@ public static class AsyncHelper
 
 	public static TaskCompletionSource CreateTaskCompletionSource(bool forceAsync = true) => new(forceAsync ? TaskCreationOptions.RunContinuationsAsynchronously : TaskCreationOptions.None);
 
-	#else
+#else
 
 	public static bool IsCompletedSuccessfully(this Task t) => t.Status == TaskStatus.RanToCompletion;
 	public static bool IsCompletedSuccessfully<T>(this Task<T> t) => t.Status == TaskStatus.RanToCompletion;
 
-	#endif
+#endif
 
 	// https://stackoverflow.com/a/58234950/8029915
 	public static async IAsyncEnumerable<T> WithEnforcedCancellation<T>(this IAsyncEnumerable<T> source, [EnumeratorCancellation]CancellationToken cancellationToken)
