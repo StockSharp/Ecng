@@ -593,12 +593,12 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 		private int _currVer;
 
 		public Enumerator(PriorityQueue<TPriority, TElement> queue)
-        {
+		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
 			_currVer = _queue._version;
 		}
 
-        public (TPriority, TElement) Current => (_current.Value.Priority, _currentEnum.Current);
+		public (TPriority, TElement) Current => (_current.Value.Priority, _currentEnum.Current);
 		object IEnumerator.Current => Current;
 
 		bool IEnumerator.MoveNext()
