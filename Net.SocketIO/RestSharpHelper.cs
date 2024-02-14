@@ -108,10 +108,17 @@ public static class RestSharpHelper
 		logVerbose?.Invoke("Response '{0}' (code {1}).", new object[] { response.Content, response.StatusCode });
 
 		// https://restsharp.dev/usage/exceptions.html
-		var networkFailure = response.ResponseStatus != ResponseStatus.Completed;
-		if(networkFailure)
+		if(response.ResponseStatus != ResponseStatus.Completed)
 		{
-			logVerbose?.Invoke("failed to complete reqeust: status={0}, msg={1}, err={2}", new object[] { response.ResponseStatus, response.ErrorMessage, response.ErrorException });
+			if (response.StatusCode == HttpStatusCode.NoContent)
+			{
+				if (throwIfEmptyResponse)
+					throw response.ToError("Empty content.");
+
+				return RestResponse<T>.FromResponse(response);
+			}
+
+			logVerbose?.Invoke("failed to complete request: status={0}, msg={1}, err={2}", new object[] { response.ResponseStatus, response.ErrorMessage, response.ErrorException });
 			throw new InvalidOperationException($"failed to complete request (err={response.StatusCode}): {response.Content}");
 		}
 
