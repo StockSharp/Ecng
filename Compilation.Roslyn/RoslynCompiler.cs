@@ -90,8 +90,7 @@
 
 			var compilationWithAnalyzers = compilation.WithAnalyzers(
 				ImmutableArray.Create((DiagnosticAnalyzer)analyzer),
-				new AnalyzerOptions(analyzerSettings.Cast<AdditionalText>().ToImmutableArray()),
-				cancellationToken);
+				new AnalyzerOptions(analyzerSettings.Cast<AdditionalText>().ToImmutableArray()));
 
 			static CompilationErrorTypes ToType(DiagnosticSeverity severity)
 				=> severity switch
