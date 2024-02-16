@@ -411,6 +411,30 @@
 			AddTypedConverter<string, OSPlatform>(OSPlatform.Create);
 			AddTypedConverter<CultureInfo, string>(input => input.Name);
 			AddTypedConverter<string, CultureInfo>(CultureInfo.GetCultureInfo);
+			AddTypedConverter<Uri, string>(input => input.ToString());
+			AddTypedConverter<string, Uri>(input => new(input));
+			AddTypedConverter<Version, string>(input => input.ToString());
+			AddTypedConverter<string, Version>(input => new(input));
+			AddTypedConverter<Encoding, int>(input => input.CodePage);
+			AddTypedConverter<int, Encoding>(input => Encoding.GetEncoding(input));
+			AddTypedConverter<CultureInfo, int>(input => input.LCID);
+			AddTypedConverter<int, CultureInfo>(input => new(input));
+			AddTypedConverter<IntPtr, int>(input => input.ToInt32());
+			AddTypedConverter<int, IntPtr>(input => new(input));
+			AddTypedConverter<IntPtr, long>(input => input.ToInt64());
+			AddTypedConverter<long, IntPtr>(input => new(input));
+			AddTypedConverter<UIntPtr, uint>(input => input.ToUInt32());
+			AddTypedConverter<uint, UIntPtr>(input => new(input));
+			AddTypedConverter<UIntPtr, ulong>(input => input.ToUInt64());
+			AddTypedConverter<ulong, UIntPtr>(input => new(input));
+			AddTypedConverter<TimeSpan, string>(input => input.ToString());
+			AddTypedConverter<string, TimeSpan>(TimeSpan.Parse);
+			AddTypedConverter<string, TimeSpan?>(s => s.IsEmpty() ? null : TimeSpan.Parse(s));
+			AddTypedConverter<Guid, string>(input => input.ToString());
+			AddTypedConverter<string, Guid>(Guid.Parse);
+			AddTypedConverter<string, Guid?>(s => s.IsEmpty() ? null : Guid.Parse(s));
+			AddTypedConverter<TimeZoneInfo, string>(input => input.Id);
+			AddTypedConverter<string, TimeZoneInfo>(s => TZConvert.TryGetTimeZoneInfo(s, out var tz) ? tz : TimeZoneInfo.Utc);
 		}
 
 		public static void AddTypedConverter<TFrom, TTo>(Func<TFrom, TTo> converter)
@@ -666,52 +690,13 @@
 
 					return retVal;
 				}
-				else if (value is Uri && destinationType == typeof(string))
-					return value.ToString();
-				else if (value is string s1 && destinationType == typeof(Uri))
-					return new Uri(s1);
-				else if (value is Version && destinationType == typeof(string))
-					return value.ToString();
-				else if (value is string s2 && destinationType == typeof(Version))
-					return new Version(s2);
-				else if (value is int i1 && destinationType == typeof(IntPtr))
-					return new IntPtr(i1);
-				else if (value is long l1 && destinationType == typeof(IntPtr))
-					return new IntPtr(l1);
-				else if (value is uint ui1 && destinationType == typeof(UIntPtr))
-					return new UIntPtr(ui1);
-				else if (value is ulong ul1 && destinationType == typeof(UIntPtr))
-					return new UIntPtr(ul1);
-				else if (value is IntPtr iptr1 && destinationType == typeof(int))
-					return iptr1.ToInt32();
-				else if (value is IntPtr iptr2 && destinationType == typeof(long))
-					return iptr2.ToInt64();
-				else if (value is UIntPtr uptr1 && destinationType == typeof(uint))
-					return uptr1.ToUInt32();
-				else if (value is UIntPtr uptr2 && destinationType == typeof(ulong))
-					return uptr2.ToUInt64();
-				else if (value is CultureInfo ci1 && destinationType == typeof(int))
-					return ci1.LCID;
-				else if (value is int i2 && destinationType == typeof(CultureInfo))
-					return new CultureInfo(i2);
-				else if (value is Encoding e1 && destinationType == typeof(int))
-					return e1.CodePage;
-				else if (value is int i3 && destinationType == typeof(Encoding))
-					return Encoding.GetEncoding(i3);
-				else if (destinationType.GetUnderlyingType() != null)
+				else if (value is DBNull)
+					return null;
+				else if (destinationType.GetUnderlyingType() is Type underlying)
 				{
-					if (value is DBNull)
-						return null;
-					else if (value is string s3 && s3 == string.Empty)
+					if (value is null || (value is string s3 && s3.Length == 0))
 					{
-						if (destinationType == typeof(decimal?))
-							return new decimal?();
-						else if (destinationType == typeof(int?))
-							return new int?();
-						else if (destinationType == typeof(long?))
-							return new long?();
-						else
-							return destinationType.CreateInstance();
+						return destinationType.CreateInstance();
 					}
 					else
 					{
@@ -722,27 +707,15 @@
 						else if (destinationType == typeof(long?))
 							return value.To(typeof(long));
 						else
-							return destinationType.CreateInstance(value.To(destinationType.GetUnderlyingType()));
+							return destinationType.CreateInstance(value.To(underlying));
 					}
 				}
-				else if (value is string s4 && destinationType == typeof(TimeSpan))
-					return TimeSpan.Parse(s4);
-				else if (value is TimeSpan && destinationType == typeof(string))
-					return value.ToString();
 				else if (value is DateTime dt && destinationType == typeof(string))
 					return dt.Millisecond > 0 ? dt.ToString("o") : value.ToString();
 				else if (value is DateTimeOffset dto && destinationType == typeof(string))
 					return dto.Millisecond > 0 ? dto.ToString("o") : value.ToString();
 				else if (value is string str4 && destinationType == typeof(DateTimeOffset))
 					return DateTimeOffset.Parse(str4);
-				else if (value is string str5 && destinationType == typeof(TimeZoneInfo))
-					return TZConvert.TryGetTimeZoneInfo(str5, out var tz) ? tz : TimeZoneInfo.Utc;
-				else if (value is TimeZoneInfo tz && destinationType == typeof(string))
-					return tz.Id;
-				else if (value is string s5 && destinationType == typeof(Guid))
-					return new Guid(s5);
-				else if (value is Guid && destinationType == typeof(string))
-					return value.ToString();
 				else if (value is string s6 && destinationType == typeof(XDocument))
 					return XDocument.Parse(s6);
 				else if (value is string s7 && destinationType == typeof(XElement))
@@ -757,10 +730,6 @@
 				}
 				else if (value is XmlNode n1 && destinationType == typeof(string))
 					return n1.OuterXml;
-				else if (value is string s9 && destinationType == typeof(decimal))
-					return decimal.Parse(s9, NumberStyles.Any, null);
-				else if (value is DBNull)
-					return null;
 				else
 				{
 					var attr = destinationType.GetAttribute<TypeConverterAttribute>();
