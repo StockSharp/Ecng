@@ -184,7 +184,7 @@
 			if (_immediateConnect)
 				_connected.Invoke();
 
-			ThreadingHelper.ThreadInvariant(() => OnReceive(source)).Launch();
+			_ = Task.Run(() => OnReceive(source), token);
 		}
 
 		public bool IsConnected => _ws != null;
@@ -217,7 +217,7 @@
 			set => _bufferSizeUncompress = value <= 0 ? throw new ArgumentOutOfRangeException(nameof(value)) : value;
 		}
 
-		private void OnReceive(CancellationTokenSource source)
+		private async Task OnReceive(CancellationTokenSource source)
 		{
 			try
 			{
@@ -243,23 +243,15 @@
 				{
 					try
 					{
-						var task = _ws?.ReceiveAsync(new(buf), token);
+						var ws = _ws;
 
-						if (task is null)
+						if (ws is null)
 							break;
 
-						task.Wait(token);
-
-						if (token.IsCancellationRequested)
-							break;
-
-						var result = task.Result;
+						var result = await ws.ReceiveAsync(new(buf), token);
 
 						if (result.CloseStatus != null)
 						{
-							if (task.Exception != null && !token.IsCancellationRequested)
-								_error(task.Exception);
-
 							_infoLog("Socket closed with status {0}.", result.CloseStatus);
 
 							needClose = false;
@@ -359,7 +351,7 @@
 
 					try
 					{
-						AsyncHelper.Run(() => ConnectImpl(source, attempts, token));
+						await ConnectImpl(source, attempts, token);
 					}
 					catch (OperationCanceledException)
 					{
