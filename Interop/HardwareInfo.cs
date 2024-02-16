@@ -2,7 +2,6 @@ namespace Ecng.Interop
 {
 	using System;
 	using System.Linq;
-	using System.Management;
 	using System.Collections.Generic;
 	using System.Net.NetworkInformation;
 	using System.Text.RegularExpressions;
@@ -12,6 +11,8 @@ namespace Ecng.Interop
 	using Ecng.Common;
 
 	using Nito.AsyncEx;
+
+	using WmiLight;
 
 #if !__STOCKSHARP__
 	public
@@ -38,11 +39,10 @@ namespace Ecng.Interop
 
 		private static async Task<string> GetWMIIdAsync(string table, string field, CancellationToken cancellationToken)
 		{
-#pragma warning disable CA1416
-			using var mbs = new ManagementObjectSearcher($"Select * From {table}");
-			using var list = await Task.Run(() => mbs.Get(), cancellationToken);
-			return list.Cast<ManagementObject>().Select(o => (string)o[field]).FirstOrDefault(f => !f.IsEmptyOrWhiteSpace());
-#pragma warning restore CA1416
+			using var con = new WmiConnection();
+			var query = con.CreateQuery($"Select * From {table}");
+			var list = await Task.Run(() => query.ToArray(), cancellationToken);
+			return list.Select(o => (string)o[field]).FirstOrDefault(f => !f.IsEmptyOrWhiteSpace());
 		}
 
 		private static async Task<string> GetIdWindows(CancellationToken cancellationToken)
