@@ -886,9 +886,10 @@
 
 		[CLSCompliant(false)]
 		public static bool IsEmpty(this SecureString secureString)
-		{
-			return secureString is null	|| secureString.Length == 0;
-		}
+			=> secureString is null	|| secureString.Length == 0;
+
+		public static SecureString ThrowIfEmpty(this SecureString str, string paramName)
+			=> str.IsEmpty() ? throw new ArgumentNullException(paramName) : str;
 
 		public static bool IsEqualTo(this SecureString value1, SecureString value2)
 		{
