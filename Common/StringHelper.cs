@@ -884,7 +884,6 @@
 			return new Regex(@"\A" + new Regex(@"\.|\$|\^|\{|\[|\(|\||\)|\*|\+|\?|\\").Replace(toFind, ch => @"\" + ch).Replace('_', '.').Replace("%", ".*") + @"\z", option).IsMatch(toSearch);
 		}
 
-		[CLSCompliant(false)]
 		public static bool IsEmpty(this SecureString secureString)
 			=> secureString is null	|| secureString.Length == 0;
 
