@@ -14,6 +14,8 @@
 
 	using Newtonsoft.Json;
 
+	using Nito.AsyncEx;
+
 	/// <summary>
 	/// Специальный класс для сохранения и загрузки настроек. Поддерживает еирархическую вложенность через метод <see cref="SetValue{T}"/>.
 	/// </summary>
@@ -132,7 +134,7 @@
 				var obj = Activator.CreateInstance(type);
 
 				if (obj is IAsyncPersistable asyncPer)
-					asyncPer.LoadAsync(storage, default).Wait();
+					AsyncContext.Run(() => asyncPer.LoadAsync(storage, default));
 				else if (obj is IPersistable per)
 					per.Load(storage);
 				else
@@ -157,7 +159,7 @@
 						var per = Activator.CreateInstance(elemType);
 
 						if (per is IAsyncPersistable asyncPer)
-							asyncPer.LoadAsync(storage, default).Wait();
+							AsyncContext.Run(() => asyncPer.LoadAsync(storage, default));
 						else
 							((IPersistable)per).Load(storage);
 
