@@ -377,24 +377,34 @@
 				else
 					return bool.Parse(input);
 			});
+			AddTypedConverter<string, bool?>(s => s.IsEmpty() ? null : s.To<bool>());
 			AddTypedConverter<float, string>(input => input.ToString());
 			AddTypedConverter<string, float>(float.Parse);
+			AddTypedConverter<string, float?>(s => s.IsEmpty() ? null : float.Parse(s));
 			AddTypedConverter<double, string>(input => input.ToString());
 			AddTypedConverter<string, double>(double.Parse);
+			AddTypedConverter<string, double?>(s => s.IsEmpty() ? null : double.Parse(s));
 			AddTypedConverter<decimal, string>(input => input.ToString());
 			AddTypedConverter<string, decimal>(decimal.Parse);
+			AddTypedConverter<string, decimal?>(s => s.IsEmpty() ? null : decimal.Parse(s));
 			AddTypedConverter<short, string>(input => input.ToString());
 			AddTypedConverter<string, short>(short.Parse);
+			AddTypedConverter<string, short?>(s => s.IsEmpty() ? null : short.Parse(s));
 			AddTypedConverter<int, string>(input => input.ToString());
 			AddTypedConverter<string, int>(int.Parse);
+			AddTypedConverter<string, int?>(s => s.IsEmpty() ? null : int.Parse(s));
 			AddTypedConverter<long, string>(input => input.ToString());
 			AddTypedConverter<string, long>(long.Parse);
+			AddTypedConverter<string, long?>(s => s.IsEmpty() ? null : long.Parse(s));
 			AddTypedConverter<ushort, string>(input => input.ToString());
 			AddTypedConverter<string, ushort>(ushort.Parse);
+			AddTypedConverter<string, ushort?>(s => s.IsEmpty() ? null : ushort.Parse(s));
 			AddTypedConverter<uint, string>(input => input.ToString());
 			AddTypedConverter<string, uint>(uint.Parse);
+			AddTypedConverter<string, uint?>(s => s.IsEmpty() ? null : uint.Parse(s));
 			AddTypedConverter<ulong, string>(input => input.ToString());
 			AddTypedConverter<string, ulong>(ulong.Parse);
+			AddTypedConverter<string, ulong?>(s => s.IsEmpty() ? null : ulong.Parse(s));
 			AddTypedConverter<char, string>(input => input.ToString());
 			AddTypedConverter<string, char>(char.Parse);
 			AddTypedConverter<OSPlatform, string>(input => input.ToString());
@@ -697,9 +707,9 @@
 						if (destinationType == typeof(decimal?))
 							return new decimal?();
 						else if (destinationType == typeof(int?))
-							return new decimal?();
+							return new int?();
 						else if (destinationType == typeof(long?))
-							return new decimal?();
+							return new long?();
 						else
 							return destinationType.CreateInstance();
 					}
