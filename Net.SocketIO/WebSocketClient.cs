@@ -230,6 +230,7 @@
 				var preProcessBuf = preProcess != null ? new byte[BufferSizeUncompress] : null;
 
 				var errorCount = 0;
+
 				const int maxParsingErrors = 100;
 				const int maxNetworkErrors = 10;
 
@@ -248,7 +249,22 @@
 						if (ws is null)
 							break;
 
-						var result = await ws.ReceiveAsync(new(buf), token);
+						WebSocketReceiveResult result;
+
+						try
+						{
+							result = await ws.ReceiveAsync(new(buf), token);
+						}
+						catch (Exception ex)
+						{
+							if (!token.IsCancellationRequested)
+							{
+								_error(ex);
+								needClose = false;
+							}
+
+							break;
+						}
 
 						if (result.CloseStatus != null)
 						{
