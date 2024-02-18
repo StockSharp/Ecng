@@ -129,9 +129,11 @@ namespace Ecng.Collections
 
 			if (OnRemoving(item))
 			{
-				var retVal = OnRemove(item);
-				OnRemoved(item);
-				return retVal;
+				if (OnRemove(item))
+				{
+					OnRemoved(item);
+					return true;
+				}
 			}
 
 			return false;
