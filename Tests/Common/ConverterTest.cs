@@ -5,6 +5,7 @@ namespace Ecng.Tests.Common
 	using System.Collections.ObjectModel;
 	using System.Linq;
 	using System.Net;
+	using System.Text;
 
 	using Ecng.Common;
 	using Ecng.ComponentModel;
@@ -288,6 +289,27 @@ namespace Ecng.Tests.Common
 		{
 			10m.To<Price3>().To<decimal>().AssertEqual(10m);
 			10m.To<Price3>().To<string>().AssertEqual("10");
+		}
+
+		[TestMethod]
+		public void EncodingTest()
+		{
+			static void _(Encoding e)
+				=> e.To<int>().To<Encoding>().AssertEqual(e);
+
+			_(Encoding.UTF8);
+			_(StringHelper.WindowsCyrillic);
+		}
+
+		[TestMethod]
+		public void EndpointTest()
+		{
+			static void _<T>(T e)
+				=> e.To<string>().To<T>().AssertEqual(e);
+
+			_(IPEndPoint.Parse("127.0.0.1:443"));
+			_(new DnsEndPoint("google.com", 443));
+			_<EndPoint>(new DnsEndPoint("google.com", 443));
 		}
 	}
 }

@@ -156,8 +156,6 @@
 				}
 			});
 			AddTypedConverter<EndPoint, string>(input => input.GetHost() + ":" + input.GetPort());
-			AddTypedConverter<IPEndPoint, string>(input => input.TypedTo<EndPoint, string>());
-			AddTypedConverter<DnsEndPoint, string>(input => input.TypedTo<EndPoint, string>());
 			AddTypedConverter<string, Type>(input =>
 			{
 				var key = input.ToLowerInvariant();
@@ -574,9 +572,14 @@
 				{
 					if (value is Type)
 						return typeof(Type);
-
-					if (value is IPAddress)
+					else if (value is IPAddress)
 						return typeof(IPAddress);
+					else if (value is EndPoint)
+						return typeof(EndPoint);
+					else if (value is Encoding)
+						return typeof(Encoding);
+					else if (value is CultureInfo)
+						return typeof(CultureInfo);
 
 					var type = value.GetType();
 					type.EnsureRunClass();
