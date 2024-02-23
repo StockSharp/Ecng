@@ -47,7 +47,6 @@ namespace Ecng.Security
 		/// <value>The hash.</value>
 		public byte[] Hash { get; set; }
 
-		[System.Text.Json.Serialization.JsonIgnore]
 		[Newtonsoft.Json.JsonIgnore]
 		public CryptoAlgorithm Algo { get; }
 

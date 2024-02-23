@@ -5,9 +5,7 @@
 
 using System;
 using Newtonsoft.Json.Linq;
-using System.Text.Json;
 using SmartFormat.Core.Extensions;
-using System.Linq;
 
 namespace SmartFormat.Extensions
 {
@@ -33,7 +31,6 @@ namespace SmartFormat.Extensions
             return selectorInfo.CurrentValue switch
             {
                 JObject _ => NewtonSoftJson.TryEvaluateSelector(selectorInfo),
-                JsonElement _ => SystemTextJson.TryEvaluateSelector(selectorInfo),
                 _ => false
             };
         }
@@ -52,47 +49,6 @@ namespace SmartFormat.Extensions
                     selectorInfo.FormatDetails.Settings.GetCaseSensitivityComparison());
 
                 selectorInfo.Result = result ?? throw new FormatException($"'{selectorInfo.SelectorText}'");
-                return true;
-            }
-        }
-
-        /// <summary>
-        /// Evaluation class for <see cref="System.Text.Json"/>
-        /// </summary>
-        private static class SystemTextJson
-        {
-            // Note: Operators are processed by ListFormatter
-            public static bool TryEvaluateSelector(ISelectorInfo selectorInfo)
-            {
-                if (selectorInfo.CurrentValue is null) return false;
-
-                var jsonElement = (JsonElement) selectorInfo.CurrentValue;
-            
-                var je = jsonElement.Clone();
-                JsonElement targetElement;
-                if (selectorInfo.FormatDetails.Settings.CaseSensitivity == SmartFormat.Core.Settings.CaseSensitivityType.CaseInsensitive)
-                {
-                    targetElement = je.EnumerateObject().FirstOrDefault(jp => jp.Name.Equals(selectorInfo.SelectorText,
-                        selectorInfo.FormatDetails.Settings.GetCaseSensitivityComparison())).Value;
-                }
-                else
-                {
-                    targetElement = je.GetProperty(selectorInfo.SelectorText!);
-                }
-
-                selectorInfo.Result = targetElement.ValueKind switch
-                {
-                    JsonValueKind.Undefined => throw new FormatException($"'{selectorInfo.SelectorText}'"),
-                    JsonValueKind.Null => null,
-                    JsonValueKind.Number => targetElement.GetDouble(),
-                    JsonValueKind.False => false,
-                    JsonValueKind.True => true,
-                    JsonValueKind.String => targetElement.GetString(),
-                    JsonValueKind.Object => targetElement,
-                    JsonValueKind.Array => targetElement.EnumerateArray().ToArray(),
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-
                 return true;
             }
         }

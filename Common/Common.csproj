@@ -14,6 +14,9 @@
 
     <ProjectReference Include="..\SmartFormat\SmartFormat\SmartFormat.csproj" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces " Version="$(MsExtensionsVer)" />
+  </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="TimeZoneConverter\Data\*.csv.gz" />
