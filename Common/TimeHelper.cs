@@ -635,5 +635,23 @@
 		{
 			return type.IsDateTime() || type == typeof(TimeSpan);
 		}
+
+		public static bool IsWeekday(this DateTimeOffset date)
+			=> date.DayOfWeek.IsWeekday();
+
+		public static bool IsWeekend(this DateTimeOffset date)
+			=> date.DayOfWeek.IsWeekend();
+
+		public static bool IsWeekday(this DateTime date)
+			=> date.DayOfWeek.IsWeekday();
+
+		public static bool IsWeekend(this DateTime date)
+			=> date.DayOfWeek.IsWeekend();
+
+		public static bool IsWeekday(this DayOfWeek dow)
+			=> !dow.IsWeekend();
+
+		public static bool IsWeekend(this DayOfWeek dow)
+			=> dow == DayOfWeek.Saturday || dow == DayOfWeek.Sunday;
 	}
 }
