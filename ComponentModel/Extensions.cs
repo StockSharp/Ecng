@@ -6,6 +6,7 @@ namespace Ecng.ComponentModel
 	using System.ComponentModel.DataAnnotations;
 	using System.Linq;
 	using System.Reflection;
+	using System.Runtime.InteropServices;
 
 	using Ecng.Common;
 
@@ -193,5 +194,14 @@ namespace Ecng.ComponentModel
 
 			return !credentials.Token.IsEmpty() || (!credentials.Email.IsEmptyOrWhiteSpace() && !credentials.Password.IsEmpty());
 		}
+
+		public static Guid? TryGetGuid(this Type controlType)
+		{
+			var guidAttr = controlType.GetAttribute<GuidAttribute>();
+			return guidAttr is null ? null : controlType.GUID;
+		}
+
+		public static string ToN(this Guid id)
+			=> id.ToString("N");
 	}
 }
