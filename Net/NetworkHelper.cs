@@ -167,6 +167,9 @@ public static class NetworkHelper
 		if (client is null)
 			throw new ArgumentNullException(nameof(client));
 
+		if (address is null)
+			throw new ArgumentNullException(nameof(address));
+
 		client.Connect(address.GetHost(), address.GetPort());
 	}
 

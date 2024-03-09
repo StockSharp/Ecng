@@ -5,7 +5,7 @@ namespace Ecng.ComponentModel
 
 	using Ecng.Common;
 
-	public  class GreaterThanZeroAttribute : ValidationAttribute
+	public class GreaterThanZeroAttribute : ValidationAttribute
 	{
 		public override bool IsValid(object value)
 		{
