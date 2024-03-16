@@ -125,10 +125,11 @@ namespace Ecng.Common
 				StartInfo = procInfo
 			};
 
+			process.Start();
+
+			// https://stackoverflow.com/a/1010377/8029915
 			if (priority is not null)
 				process.PriorityClass = priority.Value;
-
-			process.Start();
 
 			var locker = new object();
 
