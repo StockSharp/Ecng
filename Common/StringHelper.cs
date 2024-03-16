@@ -1294,5 +1294,8 @@
 			builder.Clear();
 			return str;
 		}
+
+		public static string Intern(this string str)
+			=> string.Intern(str);
 	}
 }
