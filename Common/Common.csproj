@@ -9,13 +9,12 @@
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightVer)" />
     <PackageReference Include="Nito.AsyncEx" Version="$(NitoVer)" />
 	  
-    <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
-    <PackageReference Include="Ecng.System.ComponentModel.Annotations" Version="$(EcngSystemComponentModelAnnotationsVer)" />
-
     <ProjectReference Include="..\SmartFormat\SmartFormat\SmartFormat.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces " Version="$(MsExtensionsVer)" />
+
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>

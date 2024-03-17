@@ -3,7 +3,8 @@
     <MicrosoftAspNetWebApiClientVer>5.2.9</MicrosoftAspNetWebApiClientVer>
 
     <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
-    <EcngSystemComponentModelAnnotationsVer>5.0.0</EcngSystemComponentModelAnnotationsVer>
+    <!-- reverted cause other issue happened - https://github.com/dotnet/docfx/issues/9796 -->
+    <!--<EcngSystemComponentModelAnnotationsVer>5.0.0</EcngSystemComponentModelAnnotationsVer>-->
 
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
     <NUnitVer>3.*</NUnitVer>
