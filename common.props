@@ -16,7 +16,6 @@
   <PropertyGroup Condition="
            '$(MSBuildProjectName)' == 'TestConsole'
         or '$(MSBuildProjectName)' == 'Tests'
-        or '$(MSBuildProjectName)' == 'SmartFormat.Tests'
         or '$(MSBuildProjectName)' == 'Interop.Windows'
       ">
     <TargetFrameworks>net6.0-windows</TargetFrameworks>
@@ -50,7 +49,7 @@
     <DebugType>none</DebugType>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(MSBuildProjectName)' != 'SmartFormat.Tests' and '$(MSBuildProjectName)' != 'Tests' ">
+  <ItemGroup Condition=" '$(MSBuildProjectName)' != 'Tests' ">
     <AssemblyAttribute Include="System.Reflection.AssemblyCopyrightAttribute">
       <_Parameter1>Copyright @ StockSharp 2010 - $([System.DateTime]::Now.ToString(yyyy))</_Parameter1>
     </AssemblyAttribute>

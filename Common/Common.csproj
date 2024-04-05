@@ -9,7 +9,7 @@
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightVer)" />
     <PackageReference Include="Nito.AsyncEx" Version="$(NitoVer)" />
 	  
-    <ProjectReference Include="..\SmartFormat\SmartFormat\SmartFormat.csproj" />
+    <ProjectReference Include="..\SmartFormat\SmartFormat.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces " Version="$(MsExtensionsVer)" />
