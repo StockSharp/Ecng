@@ -107,11 +107,11 @@ public abstract class RestBaseApiClient
 		if (cache != null && cache.TryGet<TResult>(method, uri, body, out var cached))
 			return cached;
 
-		var request = GetRequest(method, uri, body);
+		using var request = GetRequest(method, uri, body);
 
 		var watch = Tracing ? Stopwatch.StartNew() : null;
 
-		var response = await Http.SendAsync(request, cancellationToken);
+		using var response = await Http.SendAsync(request, cancellationToken);
 
 		await ValidateResponseAsync(response, cancellationToken);
 
