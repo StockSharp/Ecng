@@ -82,7 +82,7 @@ public abstract class RestBaseApiClient
 			: response.Content.ReadAsAsync<TResult>(new[] { ResponseFormatter }, cancellationToken);
 	}
 
-	protected virtual HttpRequestMessage GetRequest(HttpMethod method, Uri uri, object body)
+	protected HttpRequestMessage CreateRequest(HttpMethod method, Uri uri)
 	{
 		var request = new HttpRequestMessage(method, uri);
 
@@ -93,6 +93,13 @@ public abstract class RestBaseApiClient
 			foreach (var pair in PerRequestHeaders)
 				request.Headers.Add(pair.Key, pair.Value);
 		}
+
+		return request;
+	}
+
+	protected virtual HttpRequestMessage GetRequest(HttpMethod method, Uri uri, object body)
+	{
+		var request = CreateRequest(method, uri);
 
 		if (body is not null)
 			request.Content = new ObjectContent<object>(body, RequestFormatter);
