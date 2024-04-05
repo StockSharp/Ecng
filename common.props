@@ -66,7 +66,7 @@
       <_Parameter1>en-US</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
-  <ItemGroup>
+  <!--<ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)IsExternalInit.cs" Link="Properties\IsExternalInit.cs" />
-  </ItemGroup>
+  </ItemGroup>-->
 </Project>

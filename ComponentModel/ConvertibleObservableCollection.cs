@@ -30,8 +30,14 @@ public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCo
 
 	readonly struct KVPair
 	{
-		public TItem Item { get; init; }
-		public TDisplay Display { get; init; }
+        public KVPair(TItem item, TDisplay display)
+        {
+			Item = item;
+			Display = display;
+		}
+
+        public TItem Item { get; }
+		public TDisplay Display { get; }
 	}
 
 	/// <summary>
@@ -90,7 +96,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCo
 				if(_convertedValues.Contains(item))
 					continue;
 
-				_convertedValues.Add(item, new KVPair { Item = item, Display = display });
+				_convertedValues.Add(item, new KVPair(item, display));
 
 				converted.Add(display);
 				added.Add(item);
@@ -183,7 +189,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCo
 		lock (SyncRoot)
 		{
 			var display = _converter(item);
-			_convertedValues.Add(item, new KVPair { Item = item, Display = display });
+			_convertedValues.Add(item, new KVPair(item, display));
 			_collection.Add(display);
 		}
 
@@ -284,7 +290,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCo
 
 		lock (SyncRoot)
 		{
-			var pair = new KVPair { Item = item, Display = _converter(item) };
+			var pair = new KVPair(item, _converter(item));
 			_convertedValues.Insert(index, item, pair);
 			coll.Insert(index, pair.Display);
 		}
