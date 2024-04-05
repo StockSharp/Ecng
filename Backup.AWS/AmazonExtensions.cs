@@ -19,6 +19,7 @@ namespace Ecng.Backup.Amazon
 		/// <summary>
 		/// All regions.
 		/// </summary>
+		[CLSCompliant(false)]
 		public static IEnumerable<RegionEndpoint> Endpoints
 		{
 			get

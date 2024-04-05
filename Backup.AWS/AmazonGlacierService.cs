@@ -43,6 +43,7 @@ namespace Ecng.Backup.Amazon
 		/// <param name="vaultName">Storage name.</param>
 		/// <param name="accessKey">Key.</param>
 		/// <param name="secretKey">Secret.</param>
+		[CLSCompliant(false)]
 		public AmazonGlacierService(RegionEndpoint endpoint, string vaultName, string accessKey, string secretKey)
 		{
 			_credentials = new BasicAWSCredentials(accessKey, secretKey);

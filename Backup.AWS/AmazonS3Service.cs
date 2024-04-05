@@ -46,6 +46,7 @@ namespace Ecng.Backup.Amazon
 		/// <param name="bucket">Storage name.</param>
 		/// <param name="accessKey">Key.</param>
 		/// <param name="secretKey">Secret.</param>
+		[CLSCompliant(false)]
 		public AmazonS3Service(RegionEndpoint endpoint, string bucket, string accessKey, string secretKey)
 		{
 			_credentials = new BasicAWSCredentials(accessKey, secretKey);
