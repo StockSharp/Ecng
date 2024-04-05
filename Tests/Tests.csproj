@@ -4,12 +4,6 @@
     <IsPackable>false</IsPackable>
     <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Reflection\MemberInvokeTest.cs" />
-    <Compile Remove="Reflection\ReflectionInvokerTests.cs" />
-    <Compile Remove="Serialization\CollectionTest.cs" />
-    <Compile Remove="Serialization\SimpleTest.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <ContentWithTargetPath Include="Resources\encrypted_config">
