@@ -19,7 +19,6 @@
         or '$(MSBuildProjectName)' == 'SmartFormat.Tests'
         or '$(MSBuildProjectName)' == 'Interop.Windows'
         or '$(MSBuildProjectName)' == 'ManagedWinapi'
-        or '$(MSBuildProjectName)' == 'HtmlRenderer'
       ">
     <TargetFrameworks>net6.0-windows</TargetFrameworks>
   </PropertyGroup>
