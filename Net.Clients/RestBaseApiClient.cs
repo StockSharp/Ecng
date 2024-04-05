@@ -296,10 +296,13 @@ public abstract class RestBaseApiClient
 			list.Add(((attr?.Name).IsEmpty(FormatArgName(pi.Name)), TryFormat(arg, callerMethod, method)));
 		}
 
-		var url = new Url(BaseAddress, methodAttr is null ? ToRequestUri(callerMethod) : methodAttr.Name);
+		var url = GetAbsolute(methodAttr is null ? ToRequestUri(callerMethod) : methodAttr.Name);
 
 		return (url, list.ToArray(), callerMethod);
 	}
+
+	protected Url GetAbsolute(string relative)
+		=> new(BaseAddress, relative);
 
 	protected virtual string FormatArgName(string argName)
 		=> argName;
