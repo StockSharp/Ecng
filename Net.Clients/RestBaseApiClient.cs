@@ -118,11 +118,7 @@ public abstract class RestBaseApiClient
 
 		var watch = Tracing ? Stopwatch.StartNew() : null;
 
-		using var response = await Http.SendAsync(request, cancellationToken);
-
-		await ValidateResponseAsync(response, cancellationToken);
-
-		var result = await GetResultAsync<TResult>(response, cancellationToken);
+		var result = await DoAsync<TResult>(request, cancellationToken);
 
 		if (watch is not null)
 		{
@@ -132,6 +128,15 @@ public abstract class RestBaseApiClient
 
 		cache?.Set(method, uri, body, result);
 		return result;
+	}
+
+	protected async Task<TResult> DoAsync<TResult>(HttpRequestMessage request, CancellationToken cancellationToken)
+	{
+		using var response = await Http.SendAsync(request, cancellationToken);
+
+		await ValidateResponseAsync(response, cancellationToken);
+
+		return await GetResultAsync<TResult>(response, cancellationToken);
 	}
 
 	protected Task<TResult> PostAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
