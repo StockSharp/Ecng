@@ -15,19 +15,18 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="
-           '$(MSBuildProjectName)' == 'TestConsole'
-        or '$(MSBuildProjectName)' == 'Tests'
-        or '$(MSBuildProjectName)' == 'Interop.Windows'
+        '$(MSBuildProjectName)' == 'Tests' or
+        '$(MSBuildProjectName)' == 'Interop.Windows'
       ">
     <TargetFrameworks>net6.0-windows</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup Condition="
-           '$(MSBuildProjectName)' == 'Backup'
-        or '$(MSBuildProjectName)' == 'Backup.AWS'
-        or '$(MSBuildProjectName)' == 'Backup.Yandex'
-        or '$(MSBuildProjectName)' == 'Backup.Mega'
-        or '$(MSBuildProjectName)' == 'Nuget'
+        '$(MSBuildProjectName)' == 'Backup' or
+        '$(MSBuildProjectName)' == 'Backup.AWS' or
+        '$(MSBuildProjectName)' == 'Backup.Yandex' or
+        '$(MSBuildProjectName)' == 'Backup.Mega' or
+        '$(MSBuildProjectName)' == 'Nuget'
       ">
     <TargetFrameworks>net6.0</TargetFrameworks>
   </PropertyGroup>
