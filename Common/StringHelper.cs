@@ -636,8 +636,8 @@
 			if (value is null)
 				throw new ArgumentNullException(nameof(value));
 
-			if (n < 0)
-				throw new ArgumentException("Must be a positive number.", nameof(n));
+			if (n < 1)
+				throw new ArgumentOutOfRangeException(nameof(n), n, "Must be a positive number.");
 
 			if (value.Length > 0 && n > 0)
 				return Enumerable.Repeat(value, n).Join(separator);
