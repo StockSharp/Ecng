@@ -1445,5 +1445,15 @@
 		public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count)
 			=> source.Take(source.Count() - count);
 #endif
+
+		public static int Count(this IEnumerable source)
+		{
+			if (source is IList list)
+				return list.Count;
+			else if (source is ICollection c)
+				return c.Count;
+			else
+				return source.Cast<object>().Count();
+		}
 	}
 }
