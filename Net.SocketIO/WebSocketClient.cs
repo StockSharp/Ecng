@@ -21,7 +21,7 @@
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
 		private readonly Action<bool> _disconnected;
-		private readonly Action<WebSocketClient, ArraySegment<byte>> _process;
+		private readonly Func<WebSocketClient, ArraySegment<byte>, CancellationToken, ValueTask> _process;
 		private readonly Action<string, object> _infoLog;
 		private readonly Action<string, object> _errorLog;
 		private readonly Action<string, object> _verboseLog;
@@ -70,6 +70,19 @@
 		}
 
 		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<WebSocketClient, ArraySegment<byte>> process,
+			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
+			: this(connected, disconnected, error, (ws, buffer, token) =>
+			{
+				process(ws, buffer);
+				return default;
+			}, infoLog, errorLog, verbose)
+		{
+			if (process is null)
+				throw new ArgumentNullException(nameof(process));
+		}
+
+		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error,
+			Func<WebSocketClient, ArraySegment<byte>, CancellationToken, ValueTask> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
 		{
 			_connected = connected ?? throw new ArgumentNullException(nameof(connected));
@@ -294,7 +307,7 @@
 								processBuf = new(preProcessBuf, 0, count);
 							}
 
-							_process(this, processBuf);
+							await _process(this, processBuf, token);
 
 							errorCount = 0;
 						}
