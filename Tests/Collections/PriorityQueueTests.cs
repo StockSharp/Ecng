@@ -99,4 +99,29 @@ public class PriorityQueueTests
 			pq.Count.AssertEqual(--left);
 		}
 	}
+
+	[TestMethod]
+	public void Enumeration()
+	{
+		var pq = new Ecng.Collections.PriorityQueue<long, int>((p1, p2) => (p1 - p2).Abs());
+		pq.Enqueue(1, 1);
+		pq.Enqueue(2, 2);
+
+		var counter = 0;
+
+		foreach (var item in pq)
+			counter++;
+
+		counter.AssertEqual(2);
+
+		pq.Enqueue(1, 1);
+		pq.Enqueue(2, 2);
+
+		counter = 0;
+
+		foreach (var item in pq)
+			counter++;
+
+		counter.AssertEqual(4);
+	}
 }

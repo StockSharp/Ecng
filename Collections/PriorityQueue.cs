@@ -625,6 +625,9 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 
 				_currentEnum.Dispose();
 				_currentEnum = _current.Value.GetEnumerator();
+
+				if (!_currentEnum.MoveNext())
+					return false;
 			}
 
 			return true;
