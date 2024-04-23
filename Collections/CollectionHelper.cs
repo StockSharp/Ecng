@@ -1446,7 +1446,7 @@
 			=> source.Take(source.Count() - count);
 #endif
 
-		public static int Count(this IEnumerable source)
+		public static int Count2(this IEnumerable source)
 		{
 			if (source is IList list)
 				return list.Count;
