@@ -12,6 +12,7 @@ namespace Ecng.Backup.Amazon
 	/// <summary>
 	/// Extension class for AWS.
 	/// </summary>
+	[CLSCompliant(false)]
 	public static class AmazonExtensions
 	{
 		private static RegionEndpoint[] _endpoints;
@@ -19,7 +20,6 @@ namespace Ecng.Backup.Amazon
 		/// <summary>
 		/// All regions.
 		/// </summary>
-		[CLSCompliant(false)]
 		public static IEnumerable<RegionEndpoint> Endpoints
 		{
 			get
