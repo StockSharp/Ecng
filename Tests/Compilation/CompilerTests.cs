@@ -15,13 +15,15 @@
 	[TestClass]
 	public class CompilerTests
 	{
+		private static readonly string _coreLibPath = typeof(object).Assembly.Location;
+
 		[TestMethod]
 		public void Compile()
 		{
 			ICompiler compiler = new RoslynCompiler();
 			var res = compiler.Compile("test", "class Class1 {}", new string[]
 			{
-				"System.Private.CoreLib.dll".ToFullRuntimePath(),
+				_coreLibPath,
 			});
 			res.Assembly.AssertNotNull();
 			res.HasErrors().AssertFalse();
@@ -33,7 +35,7 @@
 			ICompiler compiler = new RoslynCompiler();
 			var res = compiler.Compile("test", "class Class1 {", new string[]
 			{
-				"System.Private.CoreLib.dll".ToFullRuntimePath(),
+				_coreLibPath,
 			});
 			res.Assembly.AssertNull();
 			res.HasErrors().AssertTrue();
@@ -48,7 +50,7 @@
 			ICompiler compiler = new RoslynCompiler();
 			var res = compiler.Compile("test", "class Class1 {", new string[]
 			{
-				"System.Private.CoreLib.dll".ToFullRuntimePath(),
+				_coreLibPath,
 			}, cts.Token);
 			res.Assembly.AssertNull();
 			res.HasErrors().AssertTrue();
@@ -69,7 +71,7 @@ class Class1
 
 			var refs = new HashSet<string>(new[]
 			{
-				typeof(object).Assembly.Location,
+				_coreLibPath,
 				typeof(Process).Assembly.Location,
 				typeof(System.ComponentModel.Component).Assembly.Location,
 				"System.Runtime.dll".ToFullRuntimePath(),
