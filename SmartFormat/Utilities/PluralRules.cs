@@ -81,6 +81,8 @@ namespace SmartFormat.Utilities
                 {"is", DualOneOther}, // Icelandic
                 {"it", DualOneOther}, // Italian
                 {"kk", DualOneOther}, // Kazakh
+				{"uz", DualOneOther}, // Uzbek
+                {"ky", DualOneOther}, // Kyrgiz
                 {"kl", DualOneOther}, // Kalaallisut
                 {"ku", DualOneOther}, // Kurdish
                 {"lb", DualOneOther}, // Luxembourgish
