@@ -1444,6 +1444,15 @@
 #if NETSTANDARD2_0
 		public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count)
 			=> source.Take(source.Count() - count);
+
+		// .NET Standard 2.0 doesn't has Clear
+		public static void Clear<T>(this System.Collections.Concurrent.ConcurrentQueue<T> queue)
+		{
+			if (queue is null)
+				throw new ArgumentNullException(nameof(queue));
+
+			while (queue.TryDequeue(out _)) { }
+		}
 #endif
 
 		public static int Count2(this IEnumerable source)
