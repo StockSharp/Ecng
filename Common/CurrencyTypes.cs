@@ -1514,6 +1514,13 @@ namespace Ecng.Common
 		[EnumMember]
 		[Crypto]
 		MBC,
+
+		/// <summary>
+		/// TerraUSD.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		UST,		
 		// ReSharper restore InconsistentNaming
 	}
 }
