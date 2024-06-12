@@ -1520,7 +1520,21 @@ namespace Ecng.Common
 		/// </summary>
 		[EnumMember]
 		[Crypto]
-		UST,		
+		UST,
+
+		/// <summary>
+		/// Brazilian Digital Token.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		BRZ,
+
+		/// <summary>
+		/// USDe.
+		/// </summary>
+		[EnumMember]
+		[Crypto]
+		USDE
 		// ReSharper restore InconsistentNaming
 	}
 }
