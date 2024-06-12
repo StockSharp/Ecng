@@ -11,5 +11,5 @@ public interface IOAuthProvider
 	/// <param name="socialId"></param>
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
-	Task<(SecureString token, DateTime? till)> RequestToken(long socialId, CancellationToken cancellationToken);
+	Task<IOAuthToken> RequestToken(long socialId, CancellationToken cancellationToken);
 }
