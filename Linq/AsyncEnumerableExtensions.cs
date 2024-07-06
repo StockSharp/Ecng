@@ -9,7 +9,7 @@ using Ecng.Common;
 
 public static class AsyncEnumerableExtensions
 {
-	public static async ValueTask<T[]> ToArrayAsync<T>(this IAsyncEnumerable<T> enu, CancellationToken cancellationToken)
+	public static async ValueTask<T[]> ToArrayAsync2<T>(this IAsyncEnumerable<T> enu, CancellationToken cancellationToken)
 	{
 		if (enu is null)
 			throw new ArgumentNullException(nameof(enu));
