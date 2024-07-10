@@ -21,4 +21,26 @@ public static class AsyncEnumerableExtensions
 
 		return list.ToArray();
 	}
+
+	public static async ValueTask<T> FirstAsync2<T>(this IAsyncEnumerable<T> enu, CancellationToken cancellationToken)
+	{
+		if (enu is null)
+			throw new ArgumentNullException(nameof(enu));
+
+		await foreach (var item in enu.WithEnforcedCancellation(cancellationToken))
+			return item;
+
+		throw new InvalidOperationException();
+	}
+
+	public static async ValueTask<T> FirstOrDefaultAsync2<T>(this IAsyncEnumerable<T> enu, CancellationToken cancellationToken)
+	{
+		if (enu is null)
+			throw new ArgumentNullException(nameof(enu));
+
+		await foreach (var item in enu.WithEnforcedCancellation(cancellationToken))
+			return item;
+
+		return default;
+	}
 }
