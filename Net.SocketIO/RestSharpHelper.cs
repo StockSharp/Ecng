@@ -98,14 +98,39 @@ public static class RestSharpHelper
 
 		request.Resource = url.IsAbsoluteUri ? url.AbsoluteUri : url.OriginalString;
 
-		logVerbose?.Invoke("Request {0}, '{1}' Args '{2}'.", new object[] { request.Method, url, request.Parameters.ToQueryString(false) });
+		if (logVerbose is not null)
+		{
+			static string formatParams(IEnumerable<Parameter> parameters)
+			{
+				var arr = parameters.Where(p => p.Type != ParameterType.HttpHeader).ToArray();
+
+				if (arr.Any(p => p.Type == ParameterType.RequestBody))
+					return arr[0].Value.ToJson();
+
+				return arr.Select(p => $"{p.Name}={p.Value}").JoinAnd();
+			}
+
+			static string formatHeaders(IEnumerable<Parameter> parameters)
+			{
+				var arr = parameters.Where(p => p.Type == ParameterType.HttpHeader).ToArray();
+				return arr.Select(p => $"{p.Name}={p.Value}").JoinN();
+			}
+
+			logVerbose(@"Request ({0}): '{1}'
+Headers:
+{2}
+
+Args:
+{3}", new object[] { request.Method, url, formatHeaders(request.Parameters), formatParams(request.Parameters) });
+		}
 
 		var client = GetClient(caller);
 		using var _ = ((AuthenticatorWrapper)client.Authenticator!).RegisterRequest(request, auth);
 
 		var response = await client.ExecuteAsync<object>(request, token);
 
-		logVerbose?.Invoke("Response '{0}' (code {1}).", new object[] { response.Content, response.StatusCode });
+		if (logVerbose is not null)
+			logVerbose("Response '{0}' (code {1}).", new object[] { response.Content, response.StatusCode });
 
 		// https://restsharp.dev/usage/exceptions.html
 		if(response.ResponseStatus != ResponseStatus.Completed)
@@ -118,7 +143,9 @@ public static class RestSharpHelper
 				return RestResponse<T>.FromResponse(response);
 			}
 
-			logVerbose?.Invoke("failed to complete request: status={0}, msg={1}, err={2}", new object[] { response.ResponseStatus, response.ErrorMessage, response.ErrorException });
+			if (logVerbose is not null)
+				logVerbose("failed to complete request: status={0}, msg={1}, err={2}", new object[] { response.ResponseStatus, response.ErrorMessage, response.ErrorException });
+
 			throw new InvalidOperationException($"failed to complete request (err={response.StatusCode}): {response.Content}");
 		}
 
