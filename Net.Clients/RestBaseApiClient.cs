@@ -72,7 +72,7 @@ public abstract class RestBaseApiClient
 			);
 
 #if NET5_0_OR_GREATER
-			throw new HttpRequestException(errorText, null, response.StatusCode);
+			throw new HttpRequestException($"{response.StatusCode} ({(int)response.StatusCode}): {errorText}", null, response.StatusCode);
 #else
 			throw new HttpRequestException($"{response.StatusCode} ({(int)response.StatusCode}): {errorText}");
 #endif
