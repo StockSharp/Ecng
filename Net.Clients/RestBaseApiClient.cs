@@ -29,7 +29,7 @@ public abstract class RestBaseApiClient
 	public IDictionary<string, string> PerRequestHeaders { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 	public IRestApiClientCache Cache { get; set; }
 
-	public Action<string> LogBadResponse { get; set; }
+	public bool ExtractBadResponse { get; set; }
 
 	protected virtual bool PlainSingleArg => true;
 	protected virtual bool ThrowIfNonSuccessStatusCode => true;
@@ -61,15 +61,19 @@ public abstract class RestBaseApiClient
 		if (!ThrowIfNonSuccessStatusCode || response.IsSuccessStatusCode)
 			return;
 
-		var evt = LogBadResponse;
-
-		if (evt is not null)
+		if (ExtractBadResponse)
 		{
-			evt(await response.Content.ReadAsStringAsync(
+			var errorText = await response.Content.ReadAsStringAsync(
 #if NET5_0_OR_GREATER
 						cancellationToken
 #endif
-			));
+			);
+
+#if NET5_0_OR_GREATER
+			throw new HttpRequestException(errorText, null, response.StatusCode);
+#else
+			throw new HttpRequestException($"{response.StatusCode} ({(int)response.StatusCode}): {errorText}");
+#endif
 		}
 
 		response.EnsureSuccessStatusCode();
