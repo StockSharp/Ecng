@@ -29,6 +29,8 @@ public abstract class RestBaseApiClient
 	public IDictionary<string, string> PerRequestHeaders { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 	public IRestApiClientCache Cache { get; set; }
 
+	public event Action<HttpMethod, Uri, object> LogRequest;
+
 	public bool ExtractBadResponse { get; set; }
 
 	protected virtual bool PlainSingleArg => true;
@@ -117,6 +119,8 @@ public abstract class RestBaseApiClient
 
 		if (cache != null && cache.TryGet<TResult>(method, uri, body, out var cached))
 			return cached;
+
+		LogRequest?.Invoke(method, uri, body);
 
 		using var request = GetRequest(method, uri, body);
 
