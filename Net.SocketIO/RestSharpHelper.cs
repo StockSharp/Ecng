@@ -183,4 +183,21 @@ Args:
 
 	public static string ToQueryString(this IEnumerable<Parameter> parameters, bool encodeValue = true)
 		=> parameters.CheckOnNull(nameof(parameters)).Select(p => $"{p.Name}={p.Value.Format(encodeValue)}").JoinAnd();
+
+	public static IEnumerable<string> DecodeJWT(this string jwt)
+	{
+		if (jwt.IsEmpty())
+			return Enumerable.Empty<string>();
+
+		static string decode(string base64Url)
+		{
+			var padded = base64Url.PadRight(base64Url.Length + (4 - base64Url.Length % 4) % 4, '=');
+			var base64 = padded.Replace('-', '+').Replace('_', '/');
+			return base64.Base64().UTF8();
+		}
+
+		var parts = jwt.SplitByDot();
+
+		return parts.Select(decode);
+	}
 }
