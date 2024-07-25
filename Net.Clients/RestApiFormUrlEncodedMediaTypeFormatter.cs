@@ -20,7 +20,7 @@ public class RestApiFormUrlEncodedMediaTypeFormatter : FormUrlEncodedMediaTypeFo
 
 		if (value is IDictionary<string, object> args)
 		{
-			value = args.Select(p => (p.Key, p.Value?.ToString().EncodeToHtml())).ToQueryString();
+			value = args.Select(p => (p.Key.EncodeUrl(), p.Value?.ToString().EncodeUrl())).ToQueryString();
 		}
 
 		if (value is string str)
