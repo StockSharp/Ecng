@@ -96,7 +96,10 @@
 		}
 
 		public static string ToJson(this object obj, bool indent = true)
-			=> JsonConvert.SerializeObject(obj, indent ? Formatting.Indented : Formatting.None);
+			=> ToJson(obj, indent, null);
+
+		public static string ToJson(this object obj, bool indent, JsonSerializerSettings settings)
+			=> JsonConvert.SerializeObject(obj, indent ? Formatting.Indented : Formatting.None, settings);
 
 		public static JsonSerializerSettings CreateJsonSerializerSettings()
 		{

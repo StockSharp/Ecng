@@ -8,6 +8,7 @@
 
 #if NET5_0_OR_GREATER
 	using System.Net.Security;
+	using Newtonsoft.Json;
 #endif
 
 	public class WebSocketClient : Disposable
@@ -396,13 +397,24 @@
 		public void Send(object obj)
 			=> AsyncHelper.Run(() => SendAsync(obj));
 
+		public bool Indent { get; set; } = true;
+#if NET5_0_OR_GREATER
+		public JsonSerializerSettings SendSettings { get; set; }
+
+		private string ToJson(object obj)
+			=> obj.ToJson(Indent, SendSettings);
+#else
+		private string ToJson(object obj)
+			=> obj.ToJson(Indent);
+#endif
+
 		public ValueTask SendAsync(object obj) => SendAsync(obj, _source.Token);
 
 		public ValueTask SendAsync(object obj, CancellationToken cancellationToken)
 		{
 			if (obj is not byte[] sendBuf)
 			{
-				var json = obj as string ?? obj.ToJson();
+				var json = obj as string ?? ToJson(obj);
 				_verboseLog("Send: '{0}'", json);
 
 				sendBuf = json.UTF8();
