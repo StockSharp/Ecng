@@ -88,7 +88,7 @@ public static class RestSharpHelper
 	public static Task<RestResponse<T>> InvokeAsync2<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Func<string, string> contentConverter = null, IAuthenticator auth = null, bool throwIfEmptyResponse = true)
 		=> InvokeAsync3<T>(request, url, caller, logVerbose, token, contentConverter, auth, throwIfEmptyResponse);
 
-	public static async Task<RestResponse<T>> InvokeAsync3<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Func<string, string> contentConverter = null, IAuthenticator auth = null, bool throwIfEmptyResponse = true, Action<HttpStatusCode> handleErrorStatus = null)
+	public static async Task<RestResponse<T>> InvokeAsync3<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Func<string, string> contentConverter = null, IAuthenticator auth = null, bool throwIfEmptyResponse = true, Func<HttpStatusCode, bool> handleErrorStatus = null)
 	{
 		if (request is null)
 			throw new ArgumentNullException(nameof(request));
@@ -154,9 +154,7 @@ Args:
 
 		if (response.StatusCode != HttpStatusCode.OK)
 		{
-			if (handleErrorStatus is not null)
-				handleErrorStatus(response.StatusCode);
-			else
+			if (handleErrorStatus?.Invoke(response.StatusCode) != true)
 				throw response.ToError();
 		}
 		else if (response.Content.IsEmpty())
