@@ -9,6 +9,7 @@ QueryInformationJobObject
 GetProcessWindowStation
 GetThreadDesktop
 GetCurrentThreadId
+LoadLibrary
 
 // structures
 JOBOBJECT_BASIC_ACCOUNTING_INFORMATION
