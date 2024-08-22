@@ -46,20 +46,20 @@ public class AssemblyResolver : Disposable
 			if (File.Exists(dllPath))
 				return Assembly.LoadFile(dllPath);
 
-			var runtimesPath = Path.Combine(dir, "runtimes");
+			var runtimesPath = Path.Combine(dir, Constants.Runtimes);
 
 			if (Directory.Exists(runtimesPath))
 			{
-				var architecture = Environment.Is64BitProcess ? "x64" : "x86";
-				var os = Environment.OSVersion.Platform == PlatformID.Win32NT ? "win" : "unix";
+				var architecture = Constants.GetArchitecture();
+				var os = Constants.GetOS();
 
 				var searchPaths = new[]
 				{
 					Path.Combine(runtimesPath, $"{os}-{architecture}"),
 					Path.Combine(runtimesPath, os),
 					Path.Combine(runtimesPath, architecture),
-					Path.Combine(runtimesPath, "aot", "lib", "netcore50"),
-					Path.Combine(runtimesPath, $"{os}-{architecture}", "lib", "netstandard2.0"),
+					Path.Combine(runtimesPath, Constants.Aot, Constants.Lib, Constants.NetCore50),
+					Path.Combine(runtimesPath, $"{os}-{architecture}", Constants.Lib, Constants.NetStandard20),
 					runtimesPath
 				};
 
@@ -70,7 +70,7 @@ public class AssemblyResolver : Disposable
 					if (File.Exists(runtimeDllPath))
 						return Assembly.LoadFile(runtimeDllPath);
 
-					runtimeDllPath = Path.Combine(searchPath, "native", name);
+					runtimeDllPath = Path.Combine(searchPath, Constants.Native, name);
 
 					if (File.Exists(runtimeDllPath))
 						return Assembly.LoadFile(runtimeDllPath);
