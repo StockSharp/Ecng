@@ -3,7 +3,6 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.IO;
 
 using Ecng.Common;
 
@@ -98,14 +97,5 @@ public unsafe static class ProcessExtensions
 			throw new InvalidOperationException("Unable to add the this process to the job");
 
 		return jobHandle;
-	}
-
-	// for non .NET Core
-	public static void LoadWmiLightNative(string currDir)
-	{
-		var architecture = Constants.GetArchitecture();
-		var os = Constants.GetOS();
-		var path = Path.Combine(Path.GetDirectoryName(currDir), Constants.Runtimes, $"{os}-{architecture}", Constants.Native, "WmiLight.Native.dll");
-		PInvoke.LoadLibrary(path);
 	}
 }
