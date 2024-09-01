@@ -27,4 +27,53 @@ public static class EnumerableEx
 			}
 		}
 	}
+
+	public static TItem Min<TItem>(this IEnumerable<TItem> source, IComparer<TItem> comparer)
+	{
+		if (source == null)		throw new ArgumentNullException(nameof(source));
+		if (comparer == null)	throw new ArgumentNullException(nameof(comparer));
+
+		using var enumerator = source.GetEnumerator();
+
+		if (!enumerator.MoveNext())
+			throw new InvalidOperationException("Sequence contains no elements.");
+
+		TItem min = enumerator.Current;
+
+		while (enumerator.MoveNext())
+		{
+			TItem current = enumerator.Current;
+
+			if (comparer.Compare(current, min) < 0)
+			{
+				min = current;
+			}
+		}
+
+		return min;
+	}
+
+	public static TItem Max<TItem>(this IEnumerable<TItem> source, IComparer<TItem> comparer)
+	{
+		if (source == null)		throw new ArgumentNullException(nameof(source));
+		if (comparer == null)	throw new ArgumentNullException(nameof(comparer));
+
+		using var enumerator = source.GetEnumerator();
+
+		if (!enumerator.MoveNext())
+			throw new InvalidOperationException("Sequence contains no elements.");
+
+		TItem max = enumerator.Current;
+
+		while (enumerator.MoveNext())
+		{
+			TItem current = enumerator.Current;
+			if (comparer.Compare(current, max) > 0)
+			{
+				max = current;
+			}
+		}
+
+		return max;
+	}
 }
