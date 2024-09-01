@@ -204,6 +204,11 @@ namespace Ecng.Common
 			return value1 <= value2 ? value1 : value2;
 		}
 
+		public static DateTimeOffset Min(this DateTimeOffset value1, DateTimeOffset value2)
+		{
+			return value1 <= value2 ? value1 : value2;
+		}
+
 		public static short Max(this short value1, short value2)
 		{
 			return Math.Max(value1, value2);
@@ -269,6 +274,11 @@ namespace Ecng.Common
 		}
 
 		public static DateTime Max(this DateTime value1, DateTime value2)
+		{
+			return value1 >= value2 ? value1 : value2;
+		}
+
+		public static DateTimeOffset Max(this DateTimeOffset value1, DateTimeOffset value2)
 		{
 			return value1 >= value2 ? value1 : value2;
 		}
