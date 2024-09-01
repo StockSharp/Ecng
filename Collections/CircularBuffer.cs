@@ -90,7 +90,7 @@ namespace Ecng.Collections
 		/// Maximum capacity of the buffer. Elements pushed into the buffer after
 		/// maximum capacity is reached (IsFull = true), will remove an element.
 		/// </summary>
-		public int Capacity
+		public virtual int Capacity
 		{
 			get => _buffer.Length;
 			set
