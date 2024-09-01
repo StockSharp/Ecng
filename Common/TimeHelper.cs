@@ -653,5 +653,30 @@
 
 		public static bool IsWeekend(this DayOfWeek dow)
 			=> dow == DayOfWeek.Saturday || dow == DayOfWeek.Sunday;
+
+		public static LunarPhases GetLunarPhase(this DateTime date)
+		{
+			// Convert the date to Julian Date
+			var julianDate = ToJulianDate(date);
+
+			// Calculate days since the last known new moon (Jan 6, 2000)
+			var daysSinceNew = julianDate - 2451549.5;
+
+			// Calculate the number of lunar cycles since the reference date
+			var newMoons = daysSinceNew / 29.53; // 29.53 is the length of a lunar cycle in days
+
+			// Get the current position in the lunar cycle (0 to 1)
+			var phase = newMoons - Math.Floor(newMoons);
+
+			// Convert the phase (0 to 1) to one of 8 moon phases (0 to 7)
+			var phaseIndex = (LunarPhases)Math.Floor(phase * 8);
+
+			return phaseIndex;
+		}
+
+		public static double ToJulianDate(this DateTime date)
+		{
+			return date.ToOADate() + 2415018.5;
+		}
 	}
 }
