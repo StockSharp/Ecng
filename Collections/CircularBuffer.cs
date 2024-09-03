@@ -188,7 +188,7 @@ namespace Ecng.Collections
 		/// popped to allow for this new element to fit.
 		/// </summary>
 		/// <param name="item">Item to push to the back of the buffer</param>
-		public void PushBack(T item)
+		public virtual void PushBack(T item)
 		{
 			if (IsFull)
 			{
@@ -256,7 +256,7 @@ namespace Ecng.Collections
 		/// Clears the contents of the array. Size = 0, Capacity is unchanged.
 		/// </summary>
 		/// <exception cref="NotImplementedException"></exception>
-		public void Clear()
+		public virtual void Clear()
 		{
 			// to clear we just reset everything.
 			_start = 0;

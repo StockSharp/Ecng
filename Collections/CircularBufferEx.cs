@@ -17,7 +17,7 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 	public CircularBufferEx(int capacity)
 		: base(capacity)
 	{
-		Reset();
+		Clear();
 	}
 
 	/// <summary>
@@ -55,11 +55,8 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 	/// </summary>
 	public TItem SumNoFirst => Count == 0 ? default : Operator.Subtract(Sum, this[0]);
 
-	/// <summary>
-	/// Add with <see cref="CircularBuffer{TItem}.Capacity"/> auto adjust.
-	/// </summary>
-	/// <param name="result">Value.</param>
-	public void AddEx(TItem result)
+	/// <inheritdoc />
+	public override void PushBack(TItem result)
 	{
 		var op = Operator;
 		var maxComparer = MaxComparer;
@@ -80,7 +77,7 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 				recalcMin = true;
 		}
 
-		PushBack(result);
+		base.PushBack(result);
 
 		if (op is not null)
 			Sum = op.Add(Sum, result);
@@ -108,16 +105,16 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 		set
 		{
 			base.Capacity = value;
-			Reset();
+			Clear();
 		}
 	}
 
 	/// <summary>
 	/// Reset state.
 	/// </summary>
-	public void Reset()
+	public override void Clear()
 	{
-		Clear();
+		base.Clear();
 
 		Sum = default;
 		Max = new();
