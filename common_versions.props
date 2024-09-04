@@ -19,6 +19,6 @@
     <NitoVer>5.1.2</NitoVer>
     <CsWin32Ver>0.2.164-beta</CsWin32Ver>
     <YDCVer>1.3.27</YDCVer>
-    <WmiLightVer>6.5.1</WmiLightVer>
+    <WmiLightVer>6.5.2</WmiLightVer>
   </PropertyGroup>
 </Project>
