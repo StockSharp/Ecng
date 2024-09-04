@@ -14,10 +14,7 @@ namespace Ecng.Interop
 
 	using WmiLight;
 
-#if !__STOCKSHARP__
-	public
-#endif
-	static class HardwareInfo
+	public static class HardwareInfo
 	{
 		public static string GetId()
 			=> AsyncContext.Run(() => GetIdAsync());
