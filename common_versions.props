@@ -7,8 +7,6 @@
     <!--<EcngSystemComponentModelAnnotationsVer>5.0.0</EcngSystemComponentModelAnnotationsVer>-->
 
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
-    <NUnitVer>3.*</NUnitVer>
-    <NUnit3TestAdapterVer>4.*</NUnit3TestAdapterVer>
     <FluentAssertionsVer>6.*</FluentAssertionsVer>
     <MicrosoftNetHttpHeadersVer>2.2.8</MicrosoftNetHttpHeadersVer>
     <TaskExtensionsVer>4.5.4</TaskExtensionsVer>
