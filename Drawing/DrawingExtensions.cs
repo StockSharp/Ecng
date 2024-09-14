@@ -2,6 +2,7 @@
 
 #if NETSTANDARD2_0
 using System;
+using Ecng.Common;
 #endif
 using System.Drawing;
 
@@ -16,12 +17,11 @@ public static class DrawingExtensions
 		Color c = Color.Empty;
 
 		// empty color
-		if ((htmlColor == null) || (htmlColor.Length == 0))
+		if (htmlColor.IsEmpty())
 			return c;
 
 		// #RRGGBB or #RGB
-		if ((htmlColor[0] == '#') &&
-			((htmlColor.Length == 7) || (htmlColor.Length == 4)))
+		if ((htmlColor[0] == '#') && ((htmlColor.Length == 7) || (htmlColor.Length == 4)))
 		{
 			if (htmlColor.Length == 7)
 			{
