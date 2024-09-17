@@ -106,13 +106,13 @@ public class EntityPropertyTests
 	{
 		var entity = new TestIndexerEntity
 		{
-			Arr = new[] { 1, 4, 7 },
-			Arr2 = new[]
-			{
+			Arr = [1, 4, 7],
+			Arr2 =
+			[
 				new TestEntity { Prop1 = 123 },
 				new TestEntity { Prop1 = 456 },
 				new TestEntity { Prop1 = 789 },
-			},
+			],
 			Dict = new Dictionary<string, TestEntity>
 			{
 				{ "123", new TestEntity { Prop1 = 123 } },
@@ -214,7 +214,7 @@ public class EntityPropertyTests
 
 		var entity = new TestIndexerEntity
 		{
-			Arr2 = new[] { new TestEntity(), new TestEntity() }
+			Arr2 = [new TestEntity(), new TestEntity()]
 		};
 
 		var obj = entity.GetPropValue("Arr2[a].VirtProp.Dict[x].Prop1", (o, n) =>

@@ -20,7 +20,7 @@
 				Expression.Call(
 					null,
 					GetMethodInfo(SkipLong, source, count),
-					new Expression[] { source.Expression, Expression.Constant(count) }
+					[source.Expression, Expression.Constant(count)]
 					));
 		}
 
@@ -32,11 +32,10 @@
 					Expression.Call(
 						null,
 						GetMethodInfo(FirstOrDefaultAsync, source, cancellationToken),
-						new Expression[]
-						{
+						[
 							source.Expression,
 							Expression.Constant(cancellationToken),
-						}
+						]
 				)
 			);
 
@@ -85,7 +84,7 @@
 							&& method.GetGenericArguments().Length == 2
 							&& method.GetParameters().Length == 2)
 					.MakeGenericMethod(typeof(T), type)
-					.Invoke(null, new object[] { source, lambda });
+					.Invoke(null, [source, lambda]);
 
 			return (IOrderedQueryable<T>)result;
 		}
@@ -99,7 +98,7 @@
 				Expression.Call(
 					null,
 					GetMethodInfo(CountAsync, source, cancellationToken),
-					new Expression[] { source.Expression, Expression.Constant(cancellationToken) }
+					[source.Expression, Expression.Constant(cancellationToken)]
 					));
 		}
 
@@ -108,11 +107,11 @@
 			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			return source.Provider.Execute<ValueTask<T[]>>(Expression.Call(null, GetMethodInfo(ToArrayAsync, source, cancellationToken), new Expression[]
-			{
+			return source.Provider.Execute<ValueTask<T[]>>(Expression.Call(null, GetMethodInfo(ToArrayAsync, source, cancellationToken),
+			[
 				source.Expression,
 				Expression.Constant(cancellationToken)
-			}));
+			]));
 		}
 
 		#region Helper methods to obtain MethodInfo in a safe way

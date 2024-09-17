@@ -12,7 +12,7 @@
 
 		public OrderedPriorityQueue()
 		{
-			_dictionary = new SortedDictionary<TPriority, Queue<TValue>>();
+			_dictionary = [];
 		}
 
 		public OrderedPriorityQueue(IComparer<TPriority> comparer)
@@ -173,7 +173,7 @@
 		/// This method returns false if item is not found in the collection. </returns>
 		public bool Remove(KeyValuePair<TPriority, TValue> item)
 		{
-			return Remove(item.Key, new List<TValue> { item.Value });
+			return Remove(item.Key, [item.Value]);
 		}
 
 		public void RemoveRange(IEnumerable<KeyValuePair<TPriority, TValue>> items)

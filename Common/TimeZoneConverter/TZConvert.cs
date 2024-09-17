@@ -302,7 +302,7 @@ namespace TimeZoneConverter
                 TryIanaToRails(ianaTimeZoneName, out railsTimeZoneNames))
                 return true;
 
-            railsTimeZoneNames = new string[0];
+            railsTimeZoneNames = [];
             return false;
         }
 

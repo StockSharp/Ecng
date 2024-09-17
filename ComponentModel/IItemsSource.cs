@@ -223,7 +223,7 @@
 					srcType,
 					BindingFlags.Instance | BindingFlags.CreateInstance | BindingFlags.Public | BindingFlags.NonPublic,
 					null,
-					new object[] { values, excludeObsolete.Value, sortOrder, filter, getName, getDescription },
+					[values, excludeObsolete.Value, sortOrder, filter, getName, getDescription],
 					null,
 					null);
 		}

@@ -23,13 +23,13 @@
 
 	public static class Converter
 	{
-		private static readonly Dictionary<Type, DbType> _dbTypes = new();
-		private static readonly Dictionary<string, Type> _sharpAliases = new();
-		private static readonly Dictionary<Type, string> _sharpAliasesByValue = new();
-		private static readonly Dictionary<string, Type> _typeCache = new();
+		private static readonly Dictionary<Type, DbType> _dbTypes = [];
+		private static readonly Dictionary<string, Type> _sharpAliases = [];
+		private static readonly Dictionary<Type, string> _sharpAliasesByValue = [];
+		private static readonly Dictionary<string, Type> _typeCache = [];
 
-		private static readonly Dictionary<(Type, Type), Delegate> _typedConverters = new();
-		private static readonly Dictionary<(Type, Type), Func<object, object>> _typedConverters2 = new();
+		private static readonly Dictionary<(Type, Type), Delegate> _typedConverters = [];
+		private static readonly Dictionary<(Type, Type), Func<object, object>> _typedConverters2 = [];
 
 		static Converter()
 		{
@@ -247,13 +247,13 @@
 
 				var offset = 0;
 				for (var i = 0; i < input.Length; i += 2)
-					charArray[offset++] = BitConverter.ToChar(new[] { input[i], input[i + 1] }, 0);
+					charArray[offset++] = BitConverter.ToChar([input[i], input[i + 1]], 0);
 
 				return charArray.TypedTo<char[], SecureString>();
 			});
 			AddTypedConverter<string, char[]>(input => input.ToCharArray());
 			AddTypedConverter<char[], string>(input => new string(input));
-			AddTypedConverter<byte, byte[]>(input => new[] { input });
+			AddTypedConverter<byte, byte[]>(input => [input]);
 			AddTypedConverter<byte[], byte>(input => input[0]);
 			AddTypedConverter<bool, byte[]>(BitConverter.GetBytes);
 			AddTypedConverter<byte[], bool>(input => BitConverter.ToBoolean(input, 0));
@@ -744,7 +744,7 @@
 						if (ctors.Length == 1)
 						{
 							var ctor = ctors[0];
-							var converter = (TypeConverter)(ctor.GetParameters().Length == 0 ? ctor.Invoke(null) : ctor.Invoke(new object[] { destinationType }));
+							var converter = (TypeConverter)(ctor.GetParameters().Length == 0 ? ctor.Invoke(null) : ctor.Invoke([destinationType]));
 							if (converter.CanConvertFrom(sourceType))
 								return converter.ConvertFrom(value);
 						}
@@ -883,7 +883,7 @@
 					});
 
 			if (method != null)
-				value = method.Invoke(null, new[] { value });
+				value = method.Invoke(null, [value]);
 			else if (destinationType == typeof(string))
 				value = value.ToString();
 			else

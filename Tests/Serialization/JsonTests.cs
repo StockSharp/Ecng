@@ -198,17 +198,17 @@
 		[TestMethod]
 		public async Task PrimitiveArrayOfArray()
 		{
-			await Do(new[] { new[] { 1, 2, 3 }, new[] { 4, 5, 6 } });
-			await Do(new[] { new[] { "123", "456" }, new[] { "789", "000" } });
-			await Do(new[] { null, new[] { null, "123", "456" }, new[] { "789", "000", null } });
-			await Do(new[] { null, new[] { null, "123".Secure(), "456".Secure() }, new[] { "789".Secure(), "000".Secure(), null } });
+			await Do(new[] { new[] { 1, 2, 3 }, [4, 5, 6] });
+			await Do(new[] { new[] { "123", "456" }, ["789", "000"] });
+			await Do(new[] { null, new[] { null, "123", "456" }, ["789", "000", null] });
+			await Do(new[] { null, new[] { null, "123".Secure(), "456".Secure() }, ["789".Secure(), "000".Secure(), null] });
 		}
 
 		[TestMethod]
 		public async Task PrimitiveArrayOfArrayOfArray()
 		{
-			await Do(new[] { null, new[] { new[] { 1, 2, 3 }, new[] { 4, 5, 6 }, new[] { 7, 8, 9 } }, new[] { new[] { -1, -2, -3 }, null, new[] { -4, -5, -6 }, new[] { -7, -8, -9 } } });
-			await Do(new[] { new[] { new[] { "123", "456" }, null, new[] { "789", "000" } }, new[] { new[] { "123", "456" }, new[] { "123", "456" } } });
+			await Do(new[] { null, new[] { new[] { 1, 2, 3 }, [4, 5, 6], [7, 8, 9] }, [new[] { -1, -2, -3 }, null, [-4, -5, -6], [-7, -8, -9]] });
+			await Do(new[] { new[] { new[] { "123", "456" }, null, ["789", "000"] }, [new[] { "123", "456" }, ["123", "456"]] });
 		}
 
 		[TestMethod]
@@ -254,7 +254,7 @@
 						.Set("DateProp", DateTime.UtcNow)
 						.Set("TimeProp", TimeSpan.FromSeconds(10)),
 					null,
-					new SettingsStorage(),
+					[],
 					new SettingsStorage()
 						.Set("IntProp", 345)
 						.Set("DateProp", DateTime.UtcNow)
@@ -383,8 +383,8 @@
 		[TestMethod]
 		public async Task ComplexEnumerable()
 		{
-			await Do<IEnumerable<TestClass>>(new[]
-			{
+			await Do<IEnumerable<TestClass>>(
+			[
 				new TestClass
 				{
 					IntProp = 124,
@@ -397,7 +397,7 @@
 					DateProp = DateTime.UtcNow.AddDays(1),
 					TimeProp = TimeSpan.FromSeconds(20),
 				},
-			});
+			]);
 		}
 
 		[TestMethod]
@@ -422,8 +422,7 @@
 					},
 				},
 				null,
-				new[]
-				{
+				[
 					new TestClass
 					{
 						IntProp = 124,
@@ -437,7 +436,7 @@
 						DateProp = DateTime.UtcNow.AddDays(1),
 						TimeProp = TimeSpan.FromSeconds(20),
 					},
-				},
+				],
 			});
 		}
 
@@ -674,11 +673,11 @@
 					DateProp = DateTime.UtcNow,
 					TimeProp = TimeSpan.FromSeconds(10),
 				},
-				TimeArrayProp = new[] { TimeSpan.FromSeconds(10) },
-				StringArray2Prop = new[] { null, "", "123" },
-				SecureStringArrayProp = new[] { null, "".Secure(), "123".Secure() },
-				Obj2 = new[]
-				{
+				TimeArrayProp = [TimeSpan.FromSeconds(10)],
+				StringArray2Prop = [null, "", "123"],
+				SecureStringArrayProp = [null, "".Secure(), "123".Secure()],
+				Obj2 =
+				[
 					null,
 					new TestClass
 					{
@@ -693,7 +692,7 @@
 						DateProp = DateTime.UtcNow,
 						TimeProp = TimeSpan.FromSeconds(10),
 					},
-				}
+				]
 			});
 		}
 
@@ -770,7 +769,7 @@
 				IntProp = 124,
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
-				Obj2 = new TestClass[0],
+				Obj2 = [],
 			}, fillMode: true);
 
 			await Do(new TestContainsClass
@@ -778,7 +777,7 @@
 				IntProp = 124,
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
-				Obj2 = new TestClass[] { null },
+				Obj2 = [null],
 			}, fillMode: true);
 		}
 
@@ -860,7 +859,7 @@
 				IntProp = 124,
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
-				Obj2 = new[] { new TestClass() },
+				Obj2 = [new TestClass()],
 			}, fillMode: true);
 
 			await Do(new TestDirectClass
@@ -868,7 +867,7 @@
 				IntProp = 124,
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
-				Obj2 = new TestClass[0],
+				Obj2 = [],
 			}, fillMode: true);
 
 			await Do(new TestDirectClass
@@ -876,7 +875,7 @@
 				IntProp = 124,
 				DateProp = DateTime.UtcNow,
 				TimeProp = TimeSpan.FromSeconds(10),
-				Obj2 = new TestClass[] { null },
+				Obj2 = [null],
 			}, fillMode: true);
 		}
 

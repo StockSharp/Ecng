@@ -22,12 +22,12 @@ namespace Lzma
 		// lookup table for finding the most significant set bit (used in getPrefix).
 		// inspired by http://www.hackersdelight.org/hdcodetxt/nlz.c.txt (nlz10b).
 		private static readonly int[] flsTable =
-		{
+		[
 			-1, 11, 12, 00, 00, 13, 00, 24, 21, 14, 00, 00, 17, 00, 25, 00,
 			00, 22, 00, 15, 00, 00, 30, 05, 00, 18, 00, 00, 07, 26, 00, 00,
 			00, 10, 00, 23, 20, 00, 16, 00, 00, 00, 00, 29, 04, 31, 06, 00,
 			09, 00, 19, 00, 00, 28, 03, 00, 08, 00, 27, 02, 00, 00, 01, 00
-		};
+		];
 
 		// fast lookup table for small distances which are used more often than large distances.
 		private static readonly byte[] prefixTable;

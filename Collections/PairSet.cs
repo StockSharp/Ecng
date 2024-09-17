@@ -14,13 +14,13 @@
 
 		public PairSet()
 		{
-			_values = new Dictionary<TValue, TKey>();
+			_values = [];
 		}
 
 		public PairSet(IEqualityComparer<TKey> comparer)
 			: base(comparer)
 		{
-			_values = new Dictionary<TValue, TKey>();
+			_values = [];
 		}
 
 		public PairSet(IEqualityComparer<TKey> keyComparer, IEqualityComparer<TValue> valueComparer)

@@ -14,7 +14,7 @@ public class TimestampedDictionaryConverter : JsonConverter
 		var typeValue = types[1];
 
 		var propLast = objectType.GetProperty(nameof(TimestampedDictionary<int, int>.Last));
-		var methodAdd = objectType.GetMethod(nameof(TimestampedDictionary<int, int>.Add), new[] { typeKey, typeValue });
+		var methodAdd = objectType.GetMethod(nameof(TimestampedDictionary<int, int>.Add), [typeKey, typeValue]);
 
 		reader.Read();
 		while (reader.TokenType != JsonToken.EndObject)
@@ -28,7 +28,7 @@ public class TimestampedDictionaryConverter : JsonConverter
 			}
 			else
 			{
-				methodAdd.Invoke(result, new[] { key, serializer.Deserialize(reader, typeValue) });
+				methodAdd.Invoke(result, [key, serializer.Deserialize(reader, typeValue)]);
 			}
 			
 			reader.Read();

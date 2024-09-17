@@ -26,7 +26,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCo
 {
 	private readonly ICollection<TDisplay> _collection;
 	private readonly Func<TItem, TDisplay> _converter;
-	private readonly OrderedDictionary _convertedValues = new();
+	private readonly OrderedDictionary _convertedValues = [];
 
 	readonly struct KVPair
 	{

@@ -13,7 +13,7 @@ namespace Ecng.ComponentModel
 	/// </summary>
 	public class ObservableCollectionEx<TItem> : IListEx<TItem>, IList, INotifyCollectionChanged, INotifyPropertyChanged
 	{
-		private readonly List<TItem> _items = new();
+		private readonly List<TItem> _items = [];
 
 		/// <inheritdoc />
 		public event NotifyCollectionChangedEventHandler CollectionChanged;
@@ -109,7 +109,7 @@ namespace Ecng.ComponentModel
 		/// <inheritdoc />
 		public virtual void Add(TItem item)
 		{
-			AddRange(new[] { item });
+			AddRange([item]);
 		}
 
 		/// <inheritdoc />
@@ -122,7 +122,7 @@ namespace Ecng.ComponentModel
 
 			_items.RemoveAt(index);
 
-			OnRemove(new[] { item }, index);
+			OnRemove([item], index);
 			return true;
 		}
 
@@ -208,7 +208,7 @@ namespace Ecng.ComponentModel
 			OnCountPropertyChanged();
 			OnIndexerPropertyChanged();
 
-			OnCollectionChanged(NotifyCollectionChangedAction.Add, new[] { item }, index);
+			OnCollectionChanged(NotifyCollectionChangedAction.Add, [item], index);
 		}
 
 		/// <inheritdoc cref="IList{T}" />
@@ -217,7 +217,7 @@ namespace Ecng.ComponentModel
 			var item = _items[index];
 			_items.RemoveAt(index);
 
-			OnRemove(new[] { item }, index);
+			OnRemove([item], index);
 		}
 
 		object IList.this[int index]

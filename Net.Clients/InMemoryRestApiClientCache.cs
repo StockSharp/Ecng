@@ -14,7 +14,7 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 
 	public TimeSpan Timeout { get; }
 
-	protected readonly SynchronizedDictionary<(HttpMethod method, string uri, object body), (object value, DateTime till)> Cache = new();
+	protected readonly SynchronizedDictionary<(HttpMethod method, string uri, object body), (object value, DateTime till)> Cache = [];
 
 	protected virtual (HttpMethod, string, object) ToKey(HttpMethod method, Uri uri, object body)
 	{

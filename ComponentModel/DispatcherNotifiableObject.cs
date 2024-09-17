@@ -68,7 +68,7 @@
         }
 
 		private readonly IDispatcher _dispatcher;
-		private readonly SynchronizedSet<string> _names = new();
+		private readonly SynchronizedSet<string> _names = [];
         private DateTime _nextTime;
         private TimeSpan _notifyInterval;
 
@@ -135,7 +135,7 @@
             return
                 base.OnGetEvents()
                     .Where(ed => ed.Name != nameof(PropertyChanged))
-                    .Concat(new[] { descriptor });
+                    .Concat([descriptor]);
         }
     }
 }

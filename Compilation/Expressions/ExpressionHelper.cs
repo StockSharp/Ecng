@@ -270,13 +270,13 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 
 		try
 		{
-			var refs = new HashSet<string>(new[]
-			{
+			var refs = new HashSet<string>(
+			[
 				typeof(object).Assembly.Location,
 				typeof(ExpressionHelper).Assembly.Location,
 				typeof(MathHelper).Assembly.Location,
 				"System.Runtime.dll".ToFullRuntimePath(),
-			}, StringComparer.InvariantCultureIgnoreCase);
+			], StringComparer.InvariantCultureIgnoreCase);
 
 			var (code, variables) = new Parser().Parse(expression);
 

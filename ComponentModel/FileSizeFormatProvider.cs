@@ -17,7 +17,7 @@ namespace Ecng.ComponentModel
 
 		private const string _fileSizeFormat = "fs";
 
-		private static readonly string[] _letters = new[] { "b", "kb", "mb", "gb", "tb", "pb" };
+		private static readonly string[] _letters = ["b", "kb", "mb", "gb", "tb", "pb"];
 
 		#endregion
 

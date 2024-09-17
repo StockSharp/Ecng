@@ -52,7 +52,7 @@
 			: base(innerCollection)
 		{
 			if (allowIndexing)
-				_indecies = new PairSet<int, T>();
+				_indecies = [];
 		}
 
 		public bool ThrowIfDuplicate { get; set; }
@@ -261,7 +261,7 @@
 			base.OnAdded(item);
 
 			if (_raiseRangeEvents)
-				AddedRange?.Invoke(new[] { item });
+				AddedRange?.Invoke([item]);
 		}
 
 		protected override void OnRemoved(T item)
@@ -269,7 +269,7 @@
 			base.OnRemoved(item);
 
 			if (_raiseRangeEvents)
-				RemovedRange?.Invoke(new[] { item });
+				RemovedRange?.Invoke([item]);
 		}
 
 		public void AddRange(IEnumerable<T> items)

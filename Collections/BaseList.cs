@@ -7,7 +7,7 @@ namespace Ecng.Collections
 	public abstract class BaseList<TItem> : BaseCollection<TItem, IList<TItem>>
 	{
 		protected BaseList()
-			: this(new List<TItem>())
+			: this([])
 		{
 		}
 

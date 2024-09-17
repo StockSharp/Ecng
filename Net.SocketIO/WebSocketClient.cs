@@ -17,7 +17,7 @@
 		private CancellationTokenSource _source;
 		private bool _expectedDisconnect;
 
-		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = new();
+		private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = [];
 
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
@@ -461,7 +461,7 @@
 			var opCode = Enum.ToObject(_opCodeEnum, code);
 
 			_sendMethod ??= socket.GetType().GetMember<MethodInfo>("SendFrameLockAcquiredNonCancelableAsync");
-			return (ValueTask)_sendMethod.Invoke(socket, new[] { opCode, true, true, ReadOnlyMemory<byte>.Empty });
+			return (ValueTask)_sendMethod.Invoke(socket, [opCode, true, true, ReadOnlyMemory<byte>.Empty]);
 		}
 	}
 }

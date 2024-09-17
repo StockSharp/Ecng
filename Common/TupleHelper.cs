@@ -7,8 +7,8 @@
 
 	public static class TupleHelper
 	{
-		private static readonly HashSet<Type> _tupleTypes = new()
-		{
+		private static readonly HashSet<Type> _tupleTypes =
+		[
 			typeof(Tuple<>),
 			typeof(Tuple<,>),
 			typeof(Tuple<,,>),
@@ -26,7 +26,7 @@
 			typeof(ValueTuple<,,,,,>),
 			typeof(ValueTuple<,,,,,,>),
 			typeof(ValueTuple<,,,,,,,>),
-		};
+		];
 
 		public static bool IsTuple(this Type tupleType)
 		{

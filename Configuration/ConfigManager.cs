@@ -11,11 +11,11 @@
 
 	public static class ConfigManager
 	{
-		private static readonly Dictionary<Type, ConfigurationSection> _sections = new();
-		private static readonly Dictionary<Type, ConfigurationSectionGroup> _sectionGroups = new();
+		private static readonly Dictionary<Type, ConfigurationSection> _sections = [];
+		private static readonly Dictionary<Type, ConfigurationSectionGroup> _sectionGroups = [];
 
 		private static readonly SyncObject _sync = new();
-		private static readonly Dictionary<Type, Dictionary<string, object>> _services = new();
+		private static readonly Dictionary<Type, Dictionary<string, object>> _services = [];
 
 		#region ConfigManager.cctor()
 
@@ -128,7 +128,7 @@
 
 		public static event Action<Type, object> ServiceRegistered;
 
-		private static readonly Dictionary<Type, List<Action<object>>> _subscribers = new();
+		private static readonly Dictionary<Type, List<Action<object>>> _subscribers = [];
 
 		public static void SubscribeOnRegister<T>(Action<T> registered)
 		{
@@ -137,7 +137,7 @@
 
 			if (!_subscribers.TryGetValue(typeof(T), out var subscribers))
 			{
-				subscribers = new List<Action<object>>();
+				subscribers = [];
 				_subscribers.Add(typeof(T), subscribers);
 			}
 

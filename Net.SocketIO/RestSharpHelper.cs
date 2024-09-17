@@ -10,7 +10,7 @@ public static class RestSharpHelper
 {
 	private class AuthenticatorWrapper : IAuthenticator
 	{
-		private readonly SynchronizedDictionary<RestRequest, IAuthenticator> _authenticators = new();
+		private readonly SynchronizedDictionary<RestRequest, IAuthenticator> _authenticators = [];
 
 		private class Holder : Disposable
 		{
@@ -37,7 +37,7 @@ public static class RestSharpHelper
 			=> _authenticators.TryGetValue(request, out var auth) && auth != null ? auth.Authenticate(client, request) : default;
 	}
 
-	private static readonly SynchronizedDictionary<object, RestClient> _clients = new();
+	private static readonly SynchronizedDictionary<object, RestClient> _clients = [];
 
 	private static RestClient GetClient(object key)
 	{
@@ -124,7 +124,7 @@ Headers:
 {2}
 
 Args:
-{3}", new object[] { request.Method, url, formatHeaders(request.Parameters), formatParams(request.Parameters) });
+{3}", [request.Method, url, formatHeaders(request.Parameters), formatParams(request.Parameters)]);
 		}
 
 		var client = GetClient(caller);
@@ -133,7 +133,7 @@ Args:
 		var response = await client.ExecuteAsync<object>(request, token);
 
 		if (logVerbose is not null)
-			logVerbose("Response '{0}' (code {1}).", new object[] { response.Content, response.StatusCode });
+			logVerbose("Response '{0}' (code {1}).", [response.Content, response.StatusCode]);
 
 		// https://restsharp.dev/usage/exceptions.html
 		if(response.ResponseStatus != ResponseStatus.Completed)
@@ -147,7 +147,7 @@ Args:
 			}
 
 			if (logVerbose is not null)
-				logVerbose("failed to complete request: status={0}, msg={1}, err={2}", new object[] { response.ResponseStatus, response.ErrorMessage, response.ErrorException });
+				logVerbose("failed to complete request: status={0}, msg={1}, err={2}", [response.ResponseStatus, response.ErrorMessage, response.ErrorException]);
 
 			throw new InvalidOperationException($"failed to complete request (err={response.StatusCode}): {response.Content}");
 		}

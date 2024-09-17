@@ -11,7 +11,7 @@ using Microsoft.Net.Http.Headers;
 
 public abstract class RestBaseApiClient
 {
-	private static readonly SynchronizedDictionary<(Type type, string methodName), MethodInfo> _methodsCache = new();
+	private static readonly SynchronizedDictionary<(Type type, string methodName), MethodInfo> _methodsCache = [];
 
 	protected RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormatter request, MediaTypeFormatter response)
 	{
@@ -85,7 +85,7 @@ public abstract class RestBaseApiClient
 	{
 		return typeof(TResult) == typeof(VoidType)
 			? default(TResult).FromResult()
-			: response.Content.ReadAsAsync<TResult>(new[] { ResponseFormatter }, cancellationToken);
+			: response.Content.ReadAsAsync<TResult>([ResponseFormatter], cancellationToken);
 	}
 
 	protected HttpRequestMessage CreateRequest(HttpMethod method, Uri uri)
@@ -306,7 +306,7 @@ public abstract class RestBaseApiClient
 		if (args.Length != paramsArr.Length)
 			throw new ArgumentOutOfRangeException(nameof(args), $"Args='{args.Select(a => a.To<string>()).JoinCommaSpace()}' != Params='{paramsArr.Select(t => t.pi.Name).JoinCommaSpace()}'");
 
-		List<(string name, object value)> list = new();
+		List<(string name, object value)> list = [];
 
 		var i = 0;
 		foreach (var (pi, attr) in paramsArr)

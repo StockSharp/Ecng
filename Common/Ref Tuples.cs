@@ -26,7 +26,7 @@
 
 		public virtual IEnumerable<object> Values
 		{
-			get => new object[] { First, Second };
+			get => [First, Second];
 			set
 			{
 				First = (TFirst)value.ElementAt(0);
@@ -60,7 +60,7 @@
 
 		public override IEnumerable<object> Values
 		{
-			get => base.Values.Concat(new object[] { Third });
+			get => base.Values.Concat([Third]);
 			set
 			{
 				base.Values = value;
@@ -88,7 +88,7 @@
 
 		public override IEnumerable<object> Values
 		{
-			get => base.Values.Concat(new object[] { Fourth });
+			get => base.Values.Concat([Fourth]);
 			set
 			{
 				base.Values = value;
@@ -116,7 +116,7 @@
 
 		public override IEnumerable<object> Values
 		{
-			get => base.Values.Concat(new object[] { Fifth });
+			get => base.Values.Concat([Fifth]);
 			set
 			{
 				base.Values = value;

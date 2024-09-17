@@ -11,7 +11,7 @@
 
 	public static class PersistableHelper
 	{
-		private static readonly CachedSynchronizedDictionary<Type, Type> _adapterTypes = new();
+		private static readonly CachedSynchronizedDictionary<Type, Type> _adapterTypes = [];
 
 		private static Type ValidateAdapterType(Type adapterType)
 		{

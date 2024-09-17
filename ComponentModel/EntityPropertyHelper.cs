@@ -18,7 +18,7 @@
 
 		public static IEnumerable<EntityProperty> GetEntityProperties(this Type type, EntityProperty parent, Func<PropertyInfo, bool> filter = null)
 		{
-			return type.GetEntityProperties(parent, new HashSet<Type>(), filter ?? (p => true));
+			return type.GetEntityProperties(parent, [], filter ?? (p => true));
 		}
 
 		private static IEnumerable<EntityProperty> GetEntityProperties(this Type type, EntityProperty parent, HashSet<Type> processed, Func<PropertyInfo, bool> filter)

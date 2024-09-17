@@ -4,12 +4,12 @@ using LinqToDB;
 
 public class DatabaseProviderRegistry : IDatabaseProviderRegistry
 {
-	public virtual string[] Providers { get; } = new[]
-	{
+	public virtual string[] Providers { get; } =
+	[
 		ProviderName.SqlServer,
 		ProviderName.SQLite,
 		ProviderName.MySql,
-	};
+	];
 
 	public virtual void Verify(DatabaseConnectionPair connection)
 	{

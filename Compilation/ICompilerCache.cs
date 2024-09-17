@@ -21,7 +21,7 @@ public interface ICompilerCache
 
 public class InMemoryCompilerCache : ICompilerCache
 {
-	private readonly SynchronizedDictionary<string, (DateTime till, byte[] assembly)> _cache = new();
+	private readonly SynchronizedDictionary<string, (DateTime till, byte[] assembly)> _cache = [];
 
 	public InMemoryCompilerCache(TimeSpan timeout)
     {

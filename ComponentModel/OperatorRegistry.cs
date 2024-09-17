@@ -36,7 +36,7 @@ namespace Ecng.ComponentModel
 			}
 		}
 
-		private static readonly SynchronizedDictionary<Type, IOperator> _operators = new();
+		private static readonly SynchronizedDictionary<Type, IOperator> _operators = [];
 
 		static OperatorRegistry()
 		{

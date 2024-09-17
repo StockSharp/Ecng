@@ -519,19 +519,19 @@ namespace Ecng.Common
 			var high = (int)((value >> 32) & 0xFFFFFFFF);
 			var low = (int)(value & 0xFFFFFFFF);
 
-			return new[] { low, high };
+			return [low, high];
 		}
 
 		public static double[] GetParts(this double value)
 		{
 			var floor = value.Floor();
-			return new[] { floor, value - floor };
+			return [floor, value - floor];
 		}
 
 		public static float[] GetParts(this float value)
 		{
 			var floor = value.Floor();
-			return new[] { floor, value - floor };
+			return [floor, value - floor];
 		}
 
 		public static bool GetBit(this int value, int index)
@@ -743,7 +743,7 @@ namespace Ecng.Common
 		}
 
 		private static readonly SyncObject _syncObject = new();
-		private static readonly Dictionary<decimal, int> _decimalsCache = new();
+		private static readonly Dictionary<decimal, int> _decimalsCache = [];
 
 		public static int GetCachedDecimals(this decimal value)
 		{
@@ -808,7 +808,7 @@ namespace Ecng.Common
 				var x1 = (-b + sqrt) / divisor;
 				var x2 = (-b - sqrt) / divisor;
 
-				return new[] { x1, x2 };
+				return [x1, x2];
 			}
 			else
 				return Array.Empty<double>();
@@ -909,7 +909,7 @@ namespace Ecng.Common
 		}
 
 		private static readonly decimal[] _posPow10 =
-		{
+		[
 			1M,
 			10M,
 			100M,
@@ -922,7 +922,7 @@ namespace Ecng.Common
 			1000000000M,
 			10000000000M,
 			100000000000M,
-		};
+		];
 
 		private static readonly decimal[] _negPow10 = _posPow10.Select(v => 1M / v).ToArray();
 

@@ -61,8 +61,8 @@
 		private class DictionarySourceEx : ISource
 		{
 			private readonly SyncObject _sync = new();
-			private readonly Dictionary<Type, Type> _genericTypes = new();
-			private readonly Dictionary<string, object> _keys = new();
+			private readonly Dictionary<Type, Type> _genericTypes = [];
+			private readonly Dictionary<string, object> _keys = [];
 
 			bool ISource.TryEvaluateSelector(ISelectorInfo selectorInfo)
 			{

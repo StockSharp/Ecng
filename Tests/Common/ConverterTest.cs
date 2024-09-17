@@ -155,8 +155,8 @@ namespace Ecng.Tests.Common
 		[TestMethod]
 		public void EnumerableCovariance()
 		{
-			IEnumerable<object> objArr = new object[] { 1, 2, 3 };
-			IEnumerable<long> longArr = new long[] { 1, 2, 3 };
+			IEnumerable<object> objArr = [1, 2, 3];
+			IEnumerable<long> longArr = [1, 2, 3];
 			objArr.To<IEnumerable<int>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
 			objArr.To<IEnumerable<short>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
 			objArr.To<IEnumerable<byte>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();

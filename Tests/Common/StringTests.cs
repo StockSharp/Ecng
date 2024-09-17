@@ -97,7 +97,7 @@ namespace Ecng.Tests.Common
 		public async Task SmartFormatAsync()
 		{
 			var template = @"{PropSync} <> {PropAsync} <> {PropAsync2}";
-			var res = await template.PutExAsync(new object[] { new SmartFormatObj() }, default);
+			var res = await template.PutExAsync([new SmartFormatObj()], default);
 			res.AssertEqual("1 <> 2 <> 3");
 		}
 
@@ -105,7 +105,7 @@ namespace Ecng.Tests.Common
 		public async Task SmartFormatComplexAsync()
 		{
 			var template = @"{ComplexProp.PropAsync} == {ComplexPropAsync.PropAsync}";
-			var res = await template.PutExAsync(new object[] { new SmartFormatObj() }, default);
+			var res = await template.PutExAsync([new SmartFormatObj()], default);
 			res.AssertEqual("2 == 2");
 		}
 
@@ -113,7 +113,7 @@ namespace Ecng.Tests.Common
 		public async Task SmartFormatComplex2Async()
 		{
 			var template = @"{ComplexProp.PropAsync2} == {ComplexPropAsync.PropAsync2}";
-			var res = await template.PutExAsync(new object[] { new SmartFormatObj() }, default);
+			var res = await template.PutExAsync([new SmartFormatObj()], default);
 			res.AssertEqual("3 == 3");
 		}
 

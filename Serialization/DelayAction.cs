@@ -150,7 +150,7 @@
 
 			private readonly DelayAction _parent;
 			private readonly Func<T> _init;
-			private readonly SynchronizedList<IGroupItem> _actions = new();
+			private readonly SynchronizedList<IGroupItem> _actions = [];
 			private readonly Dummy _dummy = new();
 
 			public Group(DelayAction parent, Func<T> init)
@@ -228,7 +228,7 @@
 		private Timer _flushTimer;
 		private bool _isFlushing;
 
-		private readonly CachedSynchronizedList<IGroup> _groups = new();
+		private readonly CachedSynchronizedList<IGroup> _groups = [];
 
 		public DelayAction(Action<Exception> errorHandler)
 		{

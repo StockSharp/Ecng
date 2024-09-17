@@ -803,7 +803,7 @@
 		private readonly KeyedDictionaryEntryCollection _keyedEntryCollection;
 
 		private int _countCache;
-		private readonly Dictionary<TKey, TValue> _dictionaryCache = new();
+		private readonly Dictionary<TKey, TValue> _dictionaryCache = [];
 		private int _dictionaryCacheVersion;
 		private int _version;
 

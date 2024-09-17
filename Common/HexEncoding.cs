@@ -280,7 +280,7 @@ namespace Ecng.Common
 			var j = 0;
 			for (var i = 0; i < bytes.Length; i++)
 			{
-				var hex = new string(new[] { newString[j], newString[j + 1] });
+				var hex = new string([newString[j], newString[j + 1]]);
 				bytes[i] = HexToByte(hex);
 				j = j + 2;
 			}

@@ -97,10 +97,10 @@
 
 		private IPAddress _aggressiveIp;
 		private TimeSpan _aggressiveTime;
-		private readonly Dictionary<TAction, int> _freq = new();
+		private readonly Dictionary<TAction, int> _freq = [];
 		private readonly Collections.PriorityQueue<TimeSpan, TAction> _longests = new((p1, p2) => (p1 - p2).Abs(), new BackwardComparer<TimeSpan>());
-		private readonly Dictionary<Stopwatch, (IPAddress, TAction)> _pendings = new();
-		private readonly Dictionary<IPAddress, RefTriple<HashSet<Stopwatch>, long, TimeSpan>> _allWatches = new();
+		private readonly Dictionary<Stopwatch, (IPAddress, TAction)> _pendings = [];
+		private readonly Dictionary<IPAddress, RefTriple<HashSet<Stopwatch>, long, TimeSpan>> _allWatches = [];
 		private readonly SyncObject _sync = new();
 
 		public StatInfo<TAction> GetInfo(int skip, int take)
@@ -147,7 +147,7 @@
 			lock (_sync)
 			{
 				_pendings.Add(watch, new(address, action));
-				var tuple = _allWatches.SafeAdd(address, key => new(new(), default, default));
+				var tuple = _allWatches.SafeAdd(address, key => new([], default, default));
 				tuple.First.Add(watch);
 				tuple.Second++;
 

@@ -19,7 +19,7 @@ public class MegaService : Disposable, IBackupService
 	private readonly MegaApiClient _client;
 	private readonly string _email;
 	private readonly SecureString _password;
-	private readonly List<INode> _nodes = new();
+	private readonly List<INode> _nodes = [];
 
 	public MegaService(string email, SecureString password)
     {

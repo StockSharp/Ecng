@@ -21,10 +21,10 @@
 		public void Compile()
 		{
 			ICompiler compiler = new RoslynCompiler();
-			var res = compiler.Compile("test", "class Class1 {}", new string[]
-			{
+			var res = compiler.Compile("test", "class Class1 {}",
+			[
 				_coreLibPath,
-			});
+			]);
 			res.Assembly.AssertNotNull();
 			res.HasErrors().AssertFalse();
 		}
@@ -33,10 +33,10 @@
 		public void CompileError()
 		{
 			ICompiler compiler = new RoslynCompiler();
-			var res = compiler.Compile("test", "class Class1 {", new string[]
-			{
+			var res = compiler.Compile("test", "class Class1 {",
+			[
 				_coreLibPath,
-			});
+			]);
 			res.Assembly.AssertNull();
 			res.HasErrors().AssertTrue();
 		}
@@ -48,10 +48,10 @@
 			var cts = new CancellationTokenSource();
 			cts.Cancel();
 			ICompiler compiler = new RoslynCompiler();
-			var res = compiler.Compile("test", "class Class1 {", new string[]
-			{
+			var res = compiler.Compile("test", "class Class1 {",
+			[
 				_coreLibPath,
-			}, cts.Token);
+			], cts.Token);
 			res.Assembly.AssertNull();
 			res.HasErrors().AssertTrue();
 		}
@@ -69,17 +69,17 @@ class Class1
 	}
 }";
 
-			var refs = new HashSet<string>(new[]
-			{
+			var refs = new HashSet<string>(
+			[
 				_coreLibPath,
 				typeof(Process).Assembly.Location,
 				typeof(System.ComponentModel.Component).Assembly.Location,
 				"System.Runtime.dll".ToFullRuntimePath(),
-			}, StringComparer.InvariantCultureIgnoreCase);
+			], StringComparer.InvariantCultureIgnoreCase);
 
 			ICompiler compiler = new RoslynCompiler();
 			var (analyzer, settings) = @"T:System.Diagnostics.Process;Don't use Process".ToBannedSymbolsAnalyzer();
-			var res = await compiler.Analyse(analyzer, new[] { settings }, "test", new[] { testCode }, refs);
+			var res = await compiler.Analyse(analyzer, [settings], "test", [testCode], refs);
 
 			res.Length.AssertEqual(1);
 			res[0].Message.AssertEqual("The symbol 'Process' is banned in this project: Don't use Process");

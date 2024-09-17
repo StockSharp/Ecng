@@ -1148,8 +1148,7 @@
 
 			if (list is not SynchronizedList<T> syncList)
 			{
-				syncList = new SynchronizedList<T>();
-				syncList.AddRange(list);
+				syncList = [.. list];
 			}
 
 			return syncList;

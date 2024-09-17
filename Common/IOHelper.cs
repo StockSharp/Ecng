@@ -180,7 +180,7 @@ namespace Ecng.Common
 			return true;
 		}
 
-		private static readonly string[] _suf = { "B", "KB", "MB", "GB", "TB", "PB", "EB" }; //Longs run out around EB
+		private static readonly string[] _suf = ["B", "KB", "MB", "GB", "TB", "PB", "EB"]; //Longs run out around EB
 
 		public static string ToHumanReadableFileSize(this long byteCount)
 		{

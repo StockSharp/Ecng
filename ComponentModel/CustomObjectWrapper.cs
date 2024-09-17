@@ -146,7 +146,7 @@
 			if(_eventCollection != null)
 				return _eventCollection;
 
-			_eventCollection = new EventDescriptorCollection(OnGetEvents()?.ToArray() ?? new EventDescriptor[0]);
+			_eventCollection = new EventDescriptorCollection(OnGetEvents()?.ToArray() ?? []);
 
 			return _eventCollection;
 		}
@@ -158,7 +158,7 @@
 			if(_propCollection != null)
 				return _propCollection;
 
-			_propCollection = new PropertyDescriptorCollection(OnGetProperties()?.ToArray() ?? new PropertyDescriptor[0]);
+			_propCollection = new PropertyDescriptorCollection(OnGetProperties()?.ToArray() ?? []);
 
 			return _propCollection;
 		}

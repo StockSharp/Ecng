@@ -47,7 +47,7 @@ namespace Ecng.Collections
 			base.OnAdded(item);
 
 			var evt = AddedRange;
-			evt?.Invoke(new[] { item });
+			evt?.Invoke([item]);
 		}
 
 		protected override void OnRemoved(T item)
@@ -55,7 +55,7 @@ namespace Ecng.Collections
 			base.OnRemoved(item);
 
 			var evt = RemovedRange;
-			evt?.Invoke(new[] { item });
+			evt?.Invoke([item]);
 		}
 
 		public void AddRange(IEnumerable<T> items)

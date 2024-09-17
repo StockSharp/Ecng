@@ -14,13 +14,13 @@
 
 		public SynchronizedPairSet()
 		{
-			_values = new Dictionary<TValue, TKey>();
+			_values = [];
 		}
 
 		public SynchronizedPairSet(IEqualityComparer<TKey> comparer)
 			: base(comparer)
 		{
-			_values = new Dictionary<TValue, TKey>();
+			_values = [];
 		}
 
 		public SynchronizedPairSet(IEqualityComparer<TKey> keyComparer, IEqualityComparer<TValue> valueComparer)

@@ -23,7 +23,7 @@ public static class ICompilerExtensions
 		=> result.CheckOnNull(nameof(result)).Errors.Any(e => e.Type == CompilationErrorTypes.Error);
 
 	public static CompilationResult Compile(this ICompiler compiler, string name, string body, IEnumerable<string> refs, CancellationToken cancellationToken = default)
-		=> compiler.Compile(name, new[] { body }, refs, cancellationToken);
+		=> compiler.Compile(name, [body], refs, cancellationToken);
 
 	public static IEnumerable<string> ToValidPaths(this IEnumerable<CodeReference> references)
 		=> references.Where(r => r.IsValid).Select(r => r.FullLocation).ToArray();

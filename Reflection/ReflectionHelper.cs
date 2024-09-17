@@ -26,7 +26,7 @@ namespace Ecng.Reflection
 
 		#region ProxyTypes
 
-		private static readonly Dictionary<Type, Type> _proxyTypes = new();
+		private static readonly Dictionary<Type, Type> _proxyTypes = [];
 
 		public static IDictionary<Type, Type> ProxyTypes => _proxyTypes;
 
@@ -62,7 +62,7 @@ namespace Ecng.Reflection
 
 		#region GetGenericType
 
-		private static readonly SynchronizedDictionary<Tuple<Type, Type>, Type> _genericTypeCache = new();
+		private static readonly SynchronizedDictionary<Tuple<Type, Type>, Type> _genericTypeCache = [];
 
 		public static Type GetGenericType(this Type targetType, Type genericType)
 		{
@@ -234,7 +234,7 @@ namespace Ecng.Reflection
 
 			if (inheritance)
 			{
-				foreach (Type item in type.GetInterfaces().Concat(new[] { type } ))
+				foreach (Type item in type.GetInterfaces().Concat([type] ))
 				{
 					var allMembers = memberName.IsEmpty() ? item.GetMembers(flags) : item.GetMember(memberName, flags);
 
@@ -311,7 +311,7 @@ namespace Ecng.Reflection
 
 			members.SafeAdd(new MemberType(member.Name, member.MemberType, new MemberSignature(member)), delegate
 			{
-				return new List<T>();
+				return [];
 			}).Add(member.To<T>());
 		}
 
@@ -364,7 +364,7 @@ namespace Ecng.Reflection
 
 						if (paramsTypes.Length > 0)
 						{
-							additionalTypes = additionalTypes.Take(tuples.Length - 1).Concat(new[] { tuples.Last().type }).ToArray();
+							additionalTypes = additionalTypes.Take(tuples.Length - 1).Concat([tuples.Last().type]).ToArray();
 						}
 					}
 
@@ -385,7 +385,7 @@ namespace Ecng.Reflection
 
 		#region IsAbstract
 
-		private static readonly SynchronizedDictionary<MemberInfo, bool> _isAbstractCache = new();
+		private static readonly SynchronizedDictionary<MemberInfo, bool> _isAbstractCache = [];
 
 		public static bool IsAbstract(this MemberInfo member)
 		{
@@ -409,7 +409,7 @@ namespace Ecng.Reflection
 
 		#region IsVirtual
 
-		private static readonly SynchronizedDictionary<MemberInfo, bool> _isVirtualCache = new();
+		private static readonly SynchronizedDictionary<MemberInfo, bool> _isVirtualCache = [];
 
 		public static bool IsVirtual(this MemberInfo member)
 		{
@@ -528,7 +528,7 @@ namespace Ecng.Reflection
 
 		#region IsCollection
 
-		private static readonly SynchronizedDictionary<Type, bool> _isCollectionCache = new();
+		private static readonly SynchronizedDictionary<Type, bool> _isCollectionCache = [];
 
 		public static bool IsCollection(this Type type)
 		{
@@ -550,7 +550,7 @@ namespace Ecng.Reflection
 
 		#region IsStatic
 
-		private static readonly SynchronizedDictionary<MemberInfo, bool> _isStaticCache = new();
+		private static readonly SynchronizedDictionary<MemberInfo, bool> _isStaticCache = [];
 
 		public static bool IsStatic(this MemberInfo member)
 		{
@@ -598,7 +598,7 @@ namespace Ecng.Reflection
 			}
 		}
 
-		private static readonly SynchronizedDictionary<Type, Type> _getItemTypeCache = new();
+		private static readonly SynchronizedDictionary<Type, Type> _getItemTypeCache = [];
 
 		public static Type GetItemType(this Type collectionType)
 		{
@@ -641,7 +641,7 @@ namespace Ecng.Reflection
 
 		#region GetAccessorOwner
 
-		private static readonly SynchronizedDictionary<MethodInfo, MemberInfo> _getAccessorOwnerCache = new();
+		private static readonly SynchronizedDictionary<MethodInfo, MemberInfo> _getAccessorOwnerCache = [];
 
 		public static MemberInfo GetAccessorOwner(this MethodInfo method)
 		{

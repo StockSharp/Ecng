@@ -140,7 +140,7 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 				.ToQueryString();
 		}
 
-		_createUri.Invoke(Url, new object[] { Url.Clone(), Url.LocalPath + _compiledString, false });
+		_createUri.Invoke(Url, [Url.Clone(), Url.LocalPath + _compiledString, false]);
 	}
 
 	private string Encode(string str)

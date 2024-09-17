@@ -8,7 +8,7 @@ namespace Ecng.Common
 
 	public static class AttributeHelper
 	{
-		private static readonly Dictionary<Tuple<Type, ICustomAttributeProvider>, Attribute> _attrCache = new();
+		private static readonly Dictionary<Tuple<Type, ICustomAttributeProvider>, Attribute> _attrCache = [];
 
 		public static bool CacheEnabled { get; set; } = true;
 

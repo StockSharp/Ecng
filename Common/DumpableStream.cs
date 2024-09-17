@@ -30,9 +30,9 @@ namespace Ecng.Common
 			return buffer;
 		}
 
-		public AllocationArray<byte> ReadDump { get; } = new AllocationArray<byte>();
+		public AllocationArray<byte> ReadDump { get; } = [];
 
-		public AllocationArray<byte> WriteDump { get; } = new AllocationArray<byte>();
+		public AllocationArray<byte> WriteDump { get; } = [];
 
 		/// <summary>
 		/// When overridden in a derived class, clears all buffers for this stream and causes any buffered data to be written to the underlying device.

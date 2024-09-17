@@ -8,8 +8,8 @@
 
 	public static class LazyHelper
 	{
-		private static readonly SynchronizedDictionary<object, Delegate> _factories = new();
-		private static readonly SynchronizedDictionary<object, object> _states = new();
+		private static readonly SynchronizedDictionary<object, Delegate> _factories = [];
+		private static readonly SynchronizedDictionary<object, object> _states = [];
 
 		private class Holder<T>
 		{

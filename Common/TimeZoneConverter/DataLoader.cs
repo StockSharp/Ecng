@@ -49,7 +49,7 @@ namespace TimeZoneConverter
                 if (ianaZones.Length > 1)
                 {
                     foreach (var ianaZone in ianaZones)
-                        similarIanaZones.Add(ianaZone, ianaZones.Except(new[] {ianaZone}).ToArray());
+                        similarIanaZones.Add(ianaZone, ianaZones.Except([ianaZone]).ToArray());
                 }
             }
 

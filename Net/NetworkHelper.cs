@@ -156,7 +156,7 @@ public static class NetworkHelper
 		else
 		{
 			var cert = new X509Certificate2(sslCertificate, sslCertificatePassword);
-			ssl.AuthenticateAsClient(targetHost, new X509CertificateCollection { cert }, sslProtocol, checkCertificateRevocation);
+			ssl.AuthenticateAsClient(targetHost, [cert], sslProtocol, checkCertificateRevocation);
 		}
 
 		return ssl;
@@ -307,7 +307,7 @@ public static class NetworkHelper
 	public static bool IsImageVector(this string fileName)
 		=> fileName.IsImage(_imgVectorExts);
 
-	private static readonly string[] _urlParts = { "href=", "http:", "https:", "ftp:" };
+	private static readonly string[] _urlParts = ["href=", "http:", "https:", "ftp:"];
 
 	public static bool CheckContainsUrl(this string url)
 	{
@@ -396,7 +396,7 @@ public static class NetworkHelper
 		if (_ctorWithStatusCode is null)
 			return new HttpRequestException($"{(int)code} ({code}): {message}");
 		else
-			return (HttpRequestException)_ctorWithStatusCode.Invoke(new object[] { message, null, code });
+			return (HttpRequestException)_ctorWithStatusCode.Invoke([message, null, code]);
 	}
 
 	public static string Format<T>(this T value, bool encode)
