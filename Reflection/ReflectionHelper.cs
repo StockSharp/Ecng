@@ -7,7 +7,6 @@ namespace Ecng.Reflection
 	using System.Linq;
 	using System.IO;
 	using System.Runtime.CompilerServices;
-	using MemberType = System.Tuple<string, System.Reflection.MemberTypes, MemberSignature>;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -62,11 +61,11 @@ namespace Ecng.Reflection
 
 		#region GetGenericType
 
-		private static readonly SynchronizedDictionary<Tuple<Type, Type>, Type> _genericTypeCache = [];
+		private static readonly SynchronizedDictionary<(Type, Type), Type> _genericTypeCache = [];
 
 		public static Type GetGenericType(this Type targetType, Type genericType)
 		{
-			return _genericTypeCache.GetFromCache(new Tuple<Type, Type>(targetType, genericType), key => key.Item1.GetGenericTypeInternal(key.Item2));
+			return _genericTypeCache.GetFromCache(new(targetType, genericType), key => key.Item1.GetGenericTypeInternal(key.Item2));
 		}
 
 		private static Type GetGenericTypeInternal(this Type targetType, Type genericType)
@@ -230,7 +229,7 @@ namespace Ecng.Reflection
 		private static IEnumerable<T> GetMembers<T>(this Type type, string memberName, BindingFlags flags, bool inheritance)
 			where T : MemberInfo
 		{
-			var members = new Dictionary<MemberType, ICollection<T>>();
+			var members = new Dictionary<(string, MemberTypes, MemberSignature), ICollection<T>>();
 
 			if (inheritance)
 			{
@@ -301,7 +300,7 @@ namespace Ecng.Reflection
 			return retVal;
 		}
 
-		private static void AddMember<T>(this Dictionary<MemberType, ICollection<T>> members, MemberInfo member)
+		private static void AddMember<T>(this Dictionary<(string, MemberTypes, MemberSignature), ICollection<T>> members, MemberInfo member)
 		{
 			if (members is null)
 				throw new ArgumentNullException(nameof(members));
@@ -309,7 +308,7 @@ namespace Ecng.Reflection
 			if (member is null)
 				throw new ArgumentNullException(nameof(member));
 
-			members.SafeAdd(new MemberType(member.Name, member.MemberType, new MemberSignature(member)), delegate
+			members.SafeAdd(new(member.Name, member.MemberType, new(member)), delegate
 			{
 				return [];
 			}).Add(member.To<T>());

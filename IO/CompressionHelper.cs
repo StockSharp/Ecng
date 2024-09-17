@@ -4,7 +4,6 @@
 	using System.Collections.Generic;
 	using System.IO;
 	using System.IO.Compression;
-	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
 
@@ -14,12 +13,12 @@
 
 	public static class CompressionHelper
 	{
-		public static IEnumerable<Tuple<string, Stream>> Unzip(this byte[] input, bool leaveOpen = false, Func<string, bool> filter = null)
+		public static IEnumerable<(string name, Stream body)> Unzip(this byte[] input, bool leaveOpen = false, Func<string, bool> filter = null)
 		{
 			return input.To<MemoryStream>().Unzip(leaveOpen, filter);
 		}
 
-		public static IEnumerable<Tuple<string, Stream>> Unzip(this Stream input, bool leaveOpen = false, Func<string, bool> filter = null)
+		public static IEnumerable<(string name, Stream body)> Unzip(this Stream input, bool leaveOpen = false, Func<string, bool> filter = null)
 		{
 			using (var zip = new ZipArchive(input, ZipArchiveMode.Read, leaveOpen))
 			{
@@ -29,7 +28,7 @@
 						continue;
 
 					using var stream = entry.Open();
-					yield return Tuple.Create(entry.FullName, stream);
+					yield return (entry.FullName, stream);
 				}
 			}
 
