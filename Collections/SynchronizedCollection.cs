@@ -6,14 +6,9 @@
 	using Ecng.Common;
 
 	[Serializable]
-	public abstract class SynchronizedCollection<TItem, TCollection> : BaseCollection<TItem, TCollection>, ISynchronizedCollection<TItem>
+	public abstract class SynchronizedCollection<TItem, TCollection>(TCollection innerCollection) : BaseCollection<TItem, TCollection>(innerCollection), ISynchronizedCollection<TItem>
 		where TCollection : ICollection<TItem>
 	{
-		protected SynchronizedCollection(TCollection innerCollection)
-			: base(innerCollection)
-		{
-		}
-
 		public SyncObject SyncRoot { get; } = new SyncObject();
 
 		public override int Count

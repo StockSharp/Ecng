@@ -8,15 +8,10 @@
 	using Ecng.Common;
 
 	// http://stackoverflow.com/questions/530211/creating-a-blocking-queuet-in-net
-	public abstract class BaseBlockingQueue<T, TF> : ISynchronizedCollection<T>, IBlockingQueue<T>
+	public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchronizedCollection<T>, IBlockingQueue<T>
 		where TF : ICollection<T>
 	{
-		protected BaseBlockingQueue(TF innerCollection)
-		{
-			InnerCollection = innerCollection;
-		}
-
-		protected TF InnerCollection { get; }
+		protected TF InnerCollection { get; } = innerCollection;
 
 		// -1 is unlimited
 		private int _maxSize = -1;

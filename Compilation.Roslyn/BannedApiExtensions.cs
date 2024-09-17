@@ -9,14 +9,9 @@ using Microsoft.CodeAnalysis.CSharp.BannedApiAnalyzers;
 
 public static class BannedApiExtensions
 {
-	private class BannedSymbolsAdditionalText : AdditionalText
+	private class BannedSymbolsAdditionalText(string content) : AdditionalText
 	{
-		private readonly string _content;
-
-		public BannedSymbolsAdditionalText(string content)
-		{
-			_content = content;
-		}
+		private readonly string _content = content;
 
 		public override string Path => "BannedSymbols.txt";
 

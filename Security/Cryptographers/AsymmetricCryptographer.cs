@@ -7,19 +7,14 @@ namespace Ecng.Security.Cryptographers
 
     public class AsymmetricCryptographer : Disposable
     {
-        private sealed class AsymmetricAlgorithmWrapper : Wrapper<AsymmetricAlgorithm>
+        private sealed class AsymmetricAlgorithmWrapper(AsymmetricAlgorithm value) : Wrapper<AsymmetricAlgorithm>(value)
         {
             public AsymmetricAlgorithmWrapper(AsymmetricAlgorithm algorithm, byte[] key)
                 : this(CreateAlgo(algorithm, key))
             {
             }
 
-            public AsymmetricAlgorithmWrapper(AsymmetricAlgorithm value)
-                : base(value)
-            {
-            }
-
-            private static AsymmetricAlgorithm CreateAlgo(AsymmetricAlgorithm algorithm, byte[] key)
+			private static AsymmetricAlgorithm CreateAlgo(AsymmetricAlgorithm algorithm, byte[] key)
             {
                 if (algorithm is RSACryptoServiceProvider rsa)
                     rsa.ImportParameters(key.ToRsa());

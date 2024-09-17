@@ -12,30 +12,19 @@ public abstract class Brush
 	}
 }
 
-public class SolidBrush : Brush
+public class SolidBrush(Color color) : Brush
 {
-	public SolidBrush(Color color)
-	{
-		Color = color;
-	}
-
-	public Color Color { get; }
+	public Color Color { get; } = color;
 }
 
-public class LinearGradientBrush : Brush
+public class LinearGradientBrush(Color[] linearColors, Rectangle rectangle) : Brush
 {
 	public LinearGradientBrush(Point stop0, Point stop1, Color color0, Color color1)
 		: this([color0, color1], new(stop0, new((stop1.X - stop0.X).Abs(), (stop1.Y - stop0.Y).Abs())))
 	{
 	}
 
-	public LinearGradientBrush(Color[] linearColors, Rectangle rectangle)
-	{
-		LinearColors = linearColors ?? throw new ArgumentNullException(nameof(linearColors));
-		Rectangle = rectangle;
-	}
+	public Color[] LinearColors { get; } = linearColors ?? throw new ArgumentNullException(nameof(linearColors));
 
-	public Color[] LinearColors { get; }
-
-	public Rectangle Rectangle { get; }
+	public Rectangle Rectangle { get; } = rectangle;
 }

@@ -82,16 +82,10 @@ public class InMemoryCompilerCache : ICompilerCache
 	public virtual void Init() { }
 }
 
-public class FileCompilerCache : InMemoryCompilerCache
+public class FileCompilerCache(string path, TimeSpan timeout) : InMemoryCompilerCache(timeout)
 {
-	private readonly string _path;
+	private readonly string _path = path.IsEmpty(Directory.GetCurrentDirectory());
 	private const string _ext = "dll";
-
-	public FileCompilerCache(string path, TimeSpan timeout)
-		: base(timeout)
-    {
-		_path = path.IsEmpty(Directory.GetCurrentDirectory());
-	}
 
 	public override void Init()
 	{

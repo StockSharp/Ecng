@@ -4,15 +4,10 @@ namespace Ecng.Collections
 	using System.Collections.Generic;
 
 	[Serializable]
-	public abstract class BaseList<TItem> : BaseCollection<TItem, IList<TItem>>
+	public abstract class BaseList<TItem>(IList<TItem> innerList) : BaseCollection<TItem, IList<TItem>>(innerList)
 	{
 		protected BaseList()
 			: this([])
-		{
-		}
-
-		protected BaseList(IList<TItem> innerList)
-			: base(innerList) 
 		{
 		}
 

@@ -45,7 +45,7 @@
 			int GetStateHashCode();
 		}
 
-		private class Group<T> : IGroup<T>, IInternalGroup
+		private class Group<T>(DelayAction parent, Func<T> init) : IGroup<T>, IInternalGroup
 			where T : IDisposable
 		{
 			private class Dummy : IDisposable
@@ -148,16 +148,10 @@
 				}
 			}
 
-			private readonly DelayAction _parent;
-			private readonly Func<T> _init;
+			private readonly DelayAction _parent = parent ?? throw new ArgumentNullException(nameof(parent));
+			private readonly Func<T> _init = init;
 			private readonly SynchronizedList<IGroupItem> _actions = [];
 			private readonly Dummy _dummy = new();
-
-			public Group(DelayAction parent, Func<T> init)
-			{
-				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
-				_init = init;
-			}
 
 			public IDisposable Init()
 			{

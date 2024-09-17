@@ -7,18 +7,13 @@
 
 	using NDde.Client;
 
-	public class XlsDdeClient : Disposable
+	public class XlsDdeClient(DdeSettings settings) : Disposable
 	{
 		private DdeClient _client;
 
-		public XlsDdeClient(DdeSettings settings)
-		{
-			Settings = settings ?? throw new ArgumentNullException(nameof(settings));
-		}
-
 		public bool IsStarted => _client != null;
 
-		public DdeSettings Settings { get; }
+		public DdeSettings Settings { get; } = settings ?? throw new ArgumentNullException(nameof(settings));
 
 		public void Start()
 		{

@@ -14,7 +14,11 @@ namespace Ecng.ComponentModel
 	/// Class for validation throughout <see cref="Range"/>. 
 	/// </summary>
 	/// <typeparam name="T">The type of objects that can be validated.</typeparam>
-	public class RangeValidator<T> : BaseValidator<T>
+	/// <remarks>
+	/// Initializes a new instance of the <see cref="RangeValidator{T}"/> class.
+	/// </remarks>
+	/// <param name="range">The range.</param>
+	public class RangeValidator<T>(Range<T> range) : BaseValidator<T>
 		where T : IComparable<T>
 	{
 		#region RangeValidator.ctor()
@@ -37,22 +41,13 @@ namespace Ecng.ComponentModel
 		{
 		}
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="RangeValidator{T}"/> class.
-		/// </summary>
-		/// <param name="range">The range.</param>
-		public RangeValidator(Range<T> range)
-		{
-			Range = range;
-		}
-
 		#endregion
 
 		/// <summary>
 		/// Gets the range.
 		/// </summary>
 		/// <value>The range.</value>
-		public Range<T> Range { get; }
+		public Range<T> Range { get; } = range;
 
 		#region BaseValidator<T> Members
 

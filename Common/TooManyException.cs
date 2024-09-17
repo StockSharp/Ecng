@@ -2,10 +2,6 @@
 
 using System;
 
-public class TooManyException : InvalidOperationException
+public class TooManyException(string message) : InvalidOperationException(message)
 {
-	public TooManyException(string message)
-		: base(message)
-	{
-	}
 }

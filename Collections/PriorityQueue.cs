@@ -17,18 +17,21 @@ using Ecng.Common;
 ///  Implements an array-backed quaternary min-heap. Each element is enqueued with an associated priority
 ///  that determines the dequeue order: elements with the lowest priority get dequeued first.
 /// </remarks>
+/// <remarks>
+///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class
+///  with the specified custom priority comparer.
+/// </remarks>
+/// <param name="comparer">
+///  Custom comparer dictating the ordering of elements.
+///  Uses <see cref="Comparer{T}.Default" /> if the argument is <see langword="null"/>.
+/// </param>
 [DebuggerDisplay("Count = {Count}")]
-public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TElement)>, IQueue<(TPriority priority, TElement element)>
+public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPriority> subtractAbs, IComparer<TPriority> comparer) : ICollection<(TPriority, TElement)>, IQueue<(TPriority priority, TElement element)>
 {
-	private class Node : IEnumerable<TElement>
+	private class Node(TPriority priority) : IEnumerable<TElement>
 	{
 		private TElement _element;
 		private Queue<TElement> _elements;
-
-		public Node(TPriority priority)
-        {
-			Priority = priority;
-		}
 
 		public Node(TPriority priority, TElement element)
 			: this(priority)
@@ -45,7 +48,7 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 		}
 
 		public bool HasData;
-		public readonly TPriority Priority;
+		public readonly TPriority Priority = priority;
 
 		private void CheckData()
 		{
@@ -144,7 +147,7 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 	/// </summary>
 	private int _version;
 
-	private readonly Func<TPriority, TPriority, TPriority> _subtractAbs;
+	private readonly Func<TPriority, TPriority, TPriority> _subtractAbs = subtractAbs ?? throw new ArgumentNullException(nameof(subtractAbs));
 
 	/// <summary>
 	///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class.
@@ -154,20 +157,6 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 	{
 	}
 
-	/// <summary>
-	///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class
-	///  with the specified custom priority comparer.
-	/// </summary>
-	/// <param name="comparer">
-	///  Custom comparer dictating the ordering of elements.
-	///  Uses <see cref="Comparer{T}.Default" /> if the argument is <see langword="null"/>.
-	/// </param>
-	public PriorityQueue(Func<TPriority, TPriority, TPriority> subtractAbs, IComparer<TPriority> comparer)
-	{
-		_subtractAbs = subtractAbs ?? throw new ArgumentNullException(nameof(subtractAbs));
-		_comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
-	}
-
 	private int _count;
 
 	/// <summary>
@@ -175,7 +164,7 @@ public class PriorityQueue<TPriority, TElement> : ICollection<(TPriority, TEleme
 	/// </summary>
 	public int Count => _count;
 
-	private readonly IComparer<TPriority> _comparer;
+	private readonly IComparer<TPriority> _comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
 
 	/// <summary>
 	///  Gets the priority comparer used by the <see cref="PriorityQueue{TPriority, TElement}"/>.

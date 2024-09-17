@@ -3,12 +3,7 @@
 using System;
 
 [AttributeUsage(AttributeTargets.Property)]
-public class OAuthAttribute : Attribute
+public class OAuthAttribute(long serviceId) : Attribute
 {
-	public OAuthAttribute(long serviceId)
-	{
-		ServiceId = serviceId;
-	}
-
-	public long ServiceId { get; }
+	public long ServiceId { get; } = serviceId;
 }

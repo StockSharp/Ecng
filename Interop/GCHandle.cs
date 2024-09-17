@@ -9,7 +9,10 @@ namespace Ecng.Interop
 	/// Generic version of structure <see cref="T:System.Runtime.InteropServices.GCHandle"/>.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	public class GCHandle<T> : Wrapper<GCHandle>
+	/// <remarks>
+	/// Initializes a new instance of the <see cref="GCHandle{T}"/> class.
+	/// </remarks>
+	public class GCHandle<T>(GCHandle handle) : Wrapper<GCHandle>(handle)
 	{
 		private readonly int? _size;
 
@@ -36,14 +39,6 @@ namespace Ecng.Interop
 				throw new ArgumentOutOfRangeException(nameof(size));
 
 			_size = size;
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="GCHandle{T}"/> class.
-		/// </summary>
-		public GCHandle(GCHandle handle)
-			: base(handle)
-		{
 		}
 
 		public SafePointer CreatePointer() => new(Value.AddrOfPinnedObject(), _size);

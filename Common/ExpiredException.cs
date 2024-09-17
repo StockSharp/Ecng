@@ -2,10 +2,6 @@
 
 using System;
 
-public class ExpiredException : InvalidOperationException
+public class ExpiredException(string message) : InvalidOperationException(message)
 {
-	public ExpiredException(string message)
-		: base(message)
-	{
-	}
 }

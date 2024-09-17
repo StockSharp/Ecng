@@ -7,15 +7,10 @@ namespace Ecng.Collections
 	using Ecng.Common;
 
 	[Serializable]
-	public class SynchronizedList<T> : SynchronizedCollection<T, List<T>>, INotifyListEx<T>
+	public class SynchronizedList<T>(int capacity) : SynchronizedCollection<T, List<T>>(new List<T>(capacity)), INotifyListEx<T>
 	{
 		public SynchronizedList()
 			: this(0)
-		{
-		}
-
-		public SynchronizedList(int capacity)
-			: base(new List<T>(capacity))
 		{
 		}
 

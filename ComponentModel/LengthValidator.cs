@@ -15,7 +15,11 @@ namespace Ecng.ComponentModel
 	/// </summary>
 	/// <typeparam name="TCollectiom"></typeparam>
 	/// <typeparam name="TItem"></typeparam>
-	public class LengthValidator<TCollectiom, TItem> : BaseValidator<TCollectiom>
+	/// <remarks>
+	/// Initializes a new instance of the <see cref="LengthValidator&lt;TCollectiom, TItem&gt;"/> class.
+	/// </remarks>
+	/// <param name="length">The length.</param>
+	public class LengthValidator<TCollectiom, TItem>(Range<int> length) : BaseValidator<TCollectiom>
 		where TCollectiom : ICollection<TItem>
 	{
 		#region LengthValidator.ctor()
@@ -28,22 +32,13 @@ namespace Ecng.ComponentModel
 		{
 		}
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="LengthValidator&lt;TCollectiom, TItem&gt;"/> class.
-		/// </summary>
-		/// <param name="length">The length.</param>
-		public LengthValidator(Range<int> length)
-		{
-			Length = length;
-		}
-
 		#endregion
 
 		/// <summary>
 		/// Gets the length.
 		/// </summary>
 		/// <value>The length.</value>
-		public Range<int> Length { get; }
+		public Range<int> Length { get; } = length;
 
 		#region BaseValidator<ICollection<T>> Members
 
@@ -66,7 +61,12 @@ namespace Ecng.ComponentModel
 	/// <summary>
 	/// 
 	/// </summary>
-	public class LengthAttribute : BaseValidatorAttribute
+	/// <remarks>
+	/// Initializes a new instance of the <see cref="LengthAttribute"/> class.
+	/// </remarks>
+	/// <param name="minLength">Length of the min.</param>
+	/// <param name="maxLength">Length of the max.</param>
+	public class LengthAttribute(int minLength, int maxLength) : BaseValidatorAttribute
 	{
 		#region LengthAttribute.ctor()
 
@@ -87,23 +87,13 @@ namespace Ecng.ComponentModel
 		{
 		}
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="LengthAttribute"/> class.
-		/// </summary>
-		/// <param name="minLength">Length of the min.</param>
-		/// <param name="maxLength">Length of the max.</param>
-		public LengthAttribute(int minLength, int maxLength)
-		{
-			Length = new Range<int>(minLength, maxLength);
-		}
-
 		#endregion
 
 		/// <summary>
 		/// Gets the length.
 		/// </summary>
 		/// <value>The length.</value>
-		public Range<int> Length { get; }
+		public Range<int> Length { get; } = new Range<int>(minLength, maxLength);
 
 		#region BaseValidatorAttribute Members
 

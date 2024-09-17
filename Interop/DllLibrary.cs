@@ -5,20 +5,14 @@ namespace Ecng.Interop
 
 	using Ecng.Common;
 
-	public abstract class DllLibrary : Disposable
+	public abstract class DllLibrary(string dllPath) : Disposable
 	{
-		protected DllLibrary(string dllPath)
-		{
-			DllPath = dllPath.ThrowIfEmpty(nameof(dllPath));
-			Handler = Marshaler.LoadLibrary(dllPath);
-		}
-
-		public string DllPath { get; private set; }
+		public string DllPath { get; private set; } = dllPath.ThrowIfEmpty(nameof(dllPath));
 
 		private Version _dllVersion;
 		public Version DllVersion => _dllVersion ??= FileVersionInfo.GetVersionInfo(DllPath).ProductVersion?.Replace(',', '.')?.RemoveSpaces()?.To<Version>();
 
-		protected IntPtr Handler { get; }
+		protected IntPtr Handler { get; } = Marshaler.LoadLibrary(dllPath);
 
 		protected T GetHandler<T>(string procName) => Handler.GetHandler<T>(procName);
 

@@ -3,20 +3,15 @@
 	using System;
 	using System.Threading;
 
-	public class SimpleResettableTimer : IDisposable
+	public class SimpleResettableTimer(TimeSpan period) : IDisposable
 	{
 		private readonly SyncObject _sync = new();
-		private readonly TimeSpan _period;
+		private readonly TimeSpan _period = period;
 
 		private Timer _timer;
 		private bool _changed;
 
 		public event Action Elapsed;
-
-		public SimpleResettableTimer(TimeSpan period)
-		{
-			_period = period;
-		}
 
 		public void Reset()
 		{

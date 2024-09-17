@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace Ecng.IO.Fossil
 {
-	unsafe class Reader
+	unsafe class Reader(byte* array, int length)
 	{
 		static readonly int[] zValue = [
 			-1, -1, -1, -1, -1, -1, -1, -1,   -1, -1, -1, -1, -1, -1, -1, -1,
@@ -16,16 +16,9 @@ namespace Ecng.IO.Fossil
 			52, 53, 54, 55, 56, 57, 58, 59,   60, 61, 62, -1, -1, -1, 63, -1
 		];
 			
-		public byte* a;
-		public uint pos;
-		private int _length;
-
-		public Reader (byte* array, int length)
-		{
-			this.a = array;
-			this.pos = 0;
-			_length = length;
-		}
+		public byte* a = array;
+		public uint pos = 0;
+		private int _length = length;
 
 		public bool HaveBytes () 
 		{

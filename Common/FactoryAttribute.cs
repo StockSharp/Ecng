@@ -6,18 +6,14 @@
 
 	#endregion
 
-	public abstract class FactoryAttribute : Attribute
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FactoryAttribute"/> class.
+	/// </summary>
+	/// <param name="factoryType">Type of the factory.</param>
+	public abstract class FactoryAttribute(Type factoryType) : Attribute
 	{
-		#region FactoryAttribute.ctor()
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="FactoryAttribute"/> class.
-		/// </summary>
-		/// <param name="factoryType">Type of the factory.</param>
-		protected FactoryAttribute(Type factoryType)
-		{
-			FactoryType = factoryType ?? throw new ArgumentNullException(nameof(factoryType));
-		}
+		#region FactoryAttribute.ctor()
 
 		#endregion
 
@@ -27,7 +23,7 @@
 		/// Gets the type of the factory.
 		/// </summary>
 		/// <value>The type of the factory.</value>
-		public Type FactoryType { get; }
+		public Type FactoryType { get; } = factoryType ?? throw new ArgumentNullException(nameof(factoryType));
 
 		#endregion
 	}

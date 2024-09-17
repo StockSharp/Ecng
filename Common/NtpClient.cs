@@ -4,9 +4,13 @@
 	using System.Net;
 	using System.Net.Sockets;
 
-	public class NtpClient
+	/// <summary>
+	/// Create <see cref="NtpClient"/>.
+	/// </summary>
+	/// <param name="ntpServer">NTP server.</param>
+	public class NtpClient(EndPoint ntpServer)
 	{
-		private readonly EndPoint _ntpServer;
+		private readonly EndPoint _ntpServer = ntpServer ?? throw new ArgumentNullException(nameof(ntpServer));
 
 		/// <summary>
 		/// Create <see cref="NtpClient"/>.
@@ -21,15 +25,6 @@
 			//    throw new ArgumentException(string.Format("Could not resolve ip address from '{0}'.", ntpServer), "ntpServer");
 
 			//_endPoint = new IPEndPoint(address[0], 123);
-		}
-
-		/// <summary>
-		/// Create <see cref="NtpClient"/>.
-		/// </summary>
-		/// <param name="ntpServer">NTP server.</param>
-		public NtpClient(EndPoint ntpServer)
-		{
-			_ntpServer = ntpServer ?? throw new ArgumentNullException(nameof(ntpServer));
 		}
 
 		public DateTime GetLocalTime(TimeZoneInfo info, int timeout = 5000)

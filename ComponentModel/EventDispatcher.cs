@@ -5,15 +5,10 @@
 	using Ecng.Common;
 	using Ecng.Collections;
 
-	public class EventDispatcher : Disposable
+	public class EventDispatcher(Action<Exception> errorHandler) : Disposable
 	{
-		private readonly Action<Exception> _errorHandler;
+		private readonly Action<Exception> _errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
 		private readonly SynchronizedDictionary<string, BlockingQueue<Action>> _events = [];
-
-		public EventDispatcher(Action<Exception> errorHandler)
-		{
-			_errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
-		}
 
 		public void Add(Action evt)
 		{

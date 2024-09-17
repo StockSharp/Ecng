@@ -5,17 +5,13 @@
 	/// <summary>
 	/// Message queue.
 	/// </summary>
-	public abstract class BaseOrderedBlockingQueue<TSort, TValue, TCollection> :
-		BaseBlockingQueue<(TSort sort, TValue elem), TCollection>
+	/// <remarks>
+	/// Initializes a new instance of the <see cref="BaseOrderedBlockingQueue{TSort, TValue}"/>.
+	/// </remarks>
+	public abstract class BaseOrderedBlockingQueue<TSort, TValue, TCollection>(TCollection collection) :
+		BaseBlockingQueue<(TSort sort, TValue elem), TCollection>(collection)
 		where TCollection : ICollection<(TSort, TValue)>, IQueue<(TSort, TValue)>
 	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="BaseOrderedBlockingQueue{TSort, TValue}"/>.
-		/// </summary>
-		protected BaseOrderedBlockingQueue(TCollection collection)
-			: base(collection)
-		{
-		}
 
 		/// <inheritdoc />
 		public bool TryDequeue(out TValue value, bool exitOnClose = true, bool block = true)

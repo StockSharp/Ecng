@@ -10,7 +10,9 @@ namespace Ecng.ComponentModel
 
 	/// <summary>
 	/// </summary>
-	public class DispatcherObservableCollection<TItem> : BaseObservableCollection, ISynchronizedCollection<TItem>, IListEx<TItem>, IList
+	/// <remarks>
+	/// </remarks>
+	public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IListEx<TItem> items) : BaseObservableCollection, ISynchronizedCollection<TItem>, IListEx<TItem>, IList
 	{
 		private enum ActionTypes
 		{
@@ -65,19 +67,11 @@ namespace Ecng.ComponentModel
 
 		/// <summary>
 		/// </summary>
-		public DispatcherObservableCollection(IDispatcher dispatcher, IListEx<TItem> items)
-		{
-			Dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
-			Items = items ?? throw new ArgumentNullException(nameof(items));
-		}
+		public IListEx<TItem> Items { get; } = items ?? throw new ArgumentNullException(nameof(items));
 
 		/// <summary>
 		/// </summary>
-		public IListEx<TItem> Items { get; }
-
-		/// <summary>
-		/// </summary>
-		public IDispatcher Dispatcher { get; }
+		public IDispatcher Dispatcher { get; } = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 
 		/// <summary>
 		/// </summary>

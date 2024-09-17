@@ -8,19 +8,14 @@ using System.Runtime.Loader;
 
 using Ecng.Common;
 
-public class AssemblyLoadContextTracker : Disposable
+public class AssemblyLoadContextTracker(Action<Exception> uploadingError = default) : Disposable
 {
 	private readonly SyncObject _lock = new();
-	private readonly Action<Exception> _uploadingError;
+	private readonly Action<Exception> _uploadingError = uploadingError;
 	private AssemblyLoadContext _context;
 	private byte[] _assembly;
 
-    public AssemblyLoadContextTracker(Action<Exception> uploadingError = default)
-    {
-		_uploadingError = uploadingError;
-	}
-
-    public Assembly LoadFromStream(byte[] assembly)
+	public Assembly LoadFromStream(byte[] assembly)
 	{
 		void init()
 		{

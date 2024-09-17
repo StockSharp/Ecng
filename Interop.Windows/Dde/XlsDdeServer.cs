@@ -10,21 +10,13 @@ namespace Ecng.Interop.Dde
 	using NDde.Server;
 
 	[CLSCompliant(false)]
-	public class XlsDdeServer : DdeServer
+	public class XlsDdeServer(string service, Action<string, IList<IList<object>>> poke, Action<Exception> error) : DdeServer(service)
 	{
 		private readonly SyncObject _registerWait = new();
 		private Timer _adviseTimer;
-		private readonly EventDispatcher _dispather;
-		private readonly Action<string, IList<IList<object>>> _poke;
-		private readonly Action<Exception> _error;
-
-		public XlsDdeServer(string service, Action<string, IList<IList<object>>> poke, Action<Exception> error)
-			: base(service)
-		{
-			_poke = poke ?? throw new ArgumentNullException(nameof(poke));
-			_error = error ?? throw new ArgumentNullException(nameof(error));
-			_dispather = new EventDispatcher(error);
-		}
+		private readonly EventDispatcher _dispather = new EventDispatcher(error);
+		private readonly Action<string, IList<IList<object>>> _poke = poke ?? throw new ArgumentNullException(nameof(poke));
+		private readonly Action<Exception> _error = error ?? throw new ArgumentNullException(nameof(error));
 
 		public void Start()
 		{

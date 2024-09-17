@@ -5,16 +5,11 @@ namespace Ecng.Collections
 
 	using Ecng.Common;
 
-	public class BitArrayWriter : Disposable
+	public class BitArrayWriter(Stream underlyingStream) : Disposable
 	{
-		private readonly Stream _underlyingStream;
+		private readonly Stream _underlyingStream = underlyingStream ?? throw new ArgumentNullException(nameof(underlyingStream));
 		private int _temp;
 		private int _bitOffset;
-
-		public BitArrayWriter(Stream underlyingStream)
-		{
-			_underlyingStream = underlyingStream ?? throw new ArgumentNullException(nameof(underlyingStream));
-		}
 
 		private void Flush()
 		{

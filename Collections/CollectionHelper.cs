@@ -13,14 +13,9 @@
 
 	public static class CollectionHelper
 	{
-		private sealed class EqualityComparer<T> : IEqualityComparer<T>
+		private sealed class EqualityComparer<T>(Func<T, T, bool> comparer) : IEqualityComparer<T>
 		{
-			private readonly Func<T, T, bool> _comparer;
-
-			public EqualityComparer(Func<T, T, bool> comparer)
-			{
-				_comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
-			}
+			private readonly Func<T, T, bool> _comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
 
 			public bool Equals(T x, T y)
 			{
@@ -33,14 +28,9 @@
 			}
 		}
 
-		private sealed class Comparer<T> : IComparer<T>
+		private sealed class Comparer<T>(Func<T, T, int> comparer) : IComparer<T>
 		{
-			private readonly Func<T, T, int> _comparer;
-
-			public Comparer(Func<T, T, int> comparer)
-			{
-				_comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
-			}
+			private readonly Func<T, T, int> _comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
 
 			public int Compare(T x, T y)
 			{

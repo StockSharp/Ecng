@@ -6,18 +6,13 @@ namespace Ecng.Serialization
 
 	using Newtonsoft.Json;
 
-	public class JsonDateTimeConverter : JsonConverter
+	public class JsonDateTimeConverter(bool isSeconds) : JsonConverter
 	{
-		private readonly bool _isSeconds;
+		private readonly bool _isSeconds = isSeconds;
 
 		public JsonDateTimeConverter()
 			: this(true)
 		{
-		}
-
-		public JsonDateTimeConverter(bool isSeconds)
-		{
-			_isSeconds = isSeconds;
 		}
 
 		public override bool CanConvert(Type objectType)

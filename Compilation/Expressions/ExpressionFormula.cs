@@ -52,13 +52,8 @@ public abstract class ExpressionFormula<TResult>
 	/// <inheritdoc />
 	public override string ToString() => Error ?? Expression;
 
-	private class ErrorExpressionFormula : ExpressionFormula<TResult>
+	private class ErrorExpressionFormula(string error) : ExpressionFormula<TResult>(error)
 	{
-		public ErrorExpressionFormula(string error)
-			: base(error)
-		{
-		}
-
 		public override TResult Calculate(decimal[] prices)
 			=> throw new NotSupportedException(Error);
 	}

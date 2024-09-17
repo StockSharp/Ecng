@@ -7,20 +7,15 @@
 	/// <summary>
 	/// Online doc url attribute.
 	/// </summary>
-	public class DocAttribute : Attribute
+	/// <remarks>
+	/// Initializes a new instance of the <see cref="DocAttribute"/>.
+	/// </remarks>
+	/// <param name="docUrl">Online doc url.</param>
+	public class DocAttribute(string docUrl) : Attribute
 	{
 		/// <summary>
 		/// Online doc url.
 		/// </summary>
-		public string DocUrl { get; }
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="DocAttribute"/>.
-		/// </summary>
-		/// <param name="docUrl">Online doc url.</param>
-		public DocAttribute(string docUrl)
-		{
-			DocUrl = docUrl.ThrowIfEmpty(nameof(docUrl));
-		}
+		public string DocUrl { get; } = docUrl.ThrowIfEmpty(nameof(docUrl));
 	}
 }

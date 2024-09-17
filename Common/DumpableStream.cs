@@ -3,14 +3,9 @@ namespace Ecng.Common
 	using System;
 	using System.IO;
 
-	public class DumpableStream : Stream
+	public class DumpableStream(Stream underlying) : Stream
 	{
-		private readonly Stream _underlying;
-
-		public DumpableStream(Stream underlying)
-		{
-			_underlying = underlying ?? throw new ArgumentNullException(nameof(underlying));
-		}
+		private readonly Stream _underlying = underlying ?? throw new ArgumentNullException(nameof(underlying));
 
 		public byte[] GetReadDump()
 		{

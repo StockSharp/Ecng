@@ -24,29 +24,19 @@
 		new TValue Value {get;}
 	}
 
-	public class ItemsSourceItem<T> : NotifiableObject, IItemsSourceItem<T>
+	public class ItemsSourceItem<T>(T value, Func<string> getDisplayName, Func<string> getDescription, Uri iconUri, bool isObsolete) : NotifiableObject, IItemsSourceItem<T>
 	{
-		private readonly Func<string> _getDisplayName;
-		private readonly Func<string> _getDescription;
+		private readonly Func<string> _getDisplayName = getDisplayName ?? throw new ArgumentNullException(nameof(getDisplayName));
+		private readonly Func<string> _getDescription = getDescription ?? throw new ArgumentNullException(nameof(getDescription));
 
 		object IItemsSourceItem.Value => Value;
 
-		public T Value { get; }
+		public T Value { get; } = value;
 
 		public string DisplayName => _getDisplayName();
 		public string Description => _getDescription();
-		public Uri Icon { get; }
-		public bool IsObsolete { get; }
-
-		public ItemsSourceItem(T value, Func<string> getDisplayName, Func<string> getDescription, Uri iconUri, bool isObsolete)
-		{
-			_getDisplayName = getDisplayName ?? throw new ArgumentNullException(nameof(getDisplayName));
-			_getDescription = getDescription ?? throw new ArgumentNullException(nameof(getDescription));
-
-			Value         = value;
-			Icon          = iconUri;
-			IsObsolete    = isObsolete;
-		}
+		public Uri Icon { get; } = iconUri;
+		public bool IsObsolete { get; } = isObsolete;
 
 		public override string ToString() => DisplayName;
 	}

@@ -21,31 +21,19 @@ public interface IConvertibleObservableCollection<TItem> : IListEx<TItem>
 /// </summary>
 /// <typeparam name="TItem">Original item type.</typeparam>
 /// <typeparam name="TDisplay">Display item type.</typeparam>
-public class ConvertibleObservableCollection<TItem, TDisplay> : BaseObservableCollection, IConvertibleObservableCollection<TItem>
+/// <remarks>
+/// </remarks>
+public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDisplay> collection, Func<TItem, TDisplay> converter) : BaseObservableCollection, IConvertibleObservableCollection<TItem>
 	where TDisplay : class
 {
-	private readonly ICollection<TDisplay> _collection;
-	private readonly Func<TItem, TDisplay> _converter;
+	private readonly ICollection<TDisplay> _collection = collection ?? throw new ArgumentNullException(nameof(collection));
+	private readonly Func<TItem, TDisplay> _converter = converter ?? throw new ArgumentNullException(nameof(converter));
 	private readonly OrderedDictionary _convertedValues = [];
 
-	readonly struct KVPair
+	readonly struct KVPair(TItem item, TDisplay display)
 	{
-        public KVPair(TItem item, TDisplay display)
-        {
-			Item = item;
-			Display = display;
-		}
-
-        public TItem Item { get; }
-		public TDisplay Display { get; }
-	}
-
-	/// <summary>
-	/// </summary>
-	public ConvertibleObservableCollection(ICollection<TDisplay> collection, Func<TItem, TDisplay> converter)
-	{
-		_collection = collection ?? throw new ArgumentNullException(nameof(collection));
-		_converter = converter ?? throw new ArgumentNullException(nameof(converter));
+		public TItem Item { get; } = item;
+		public TDisplay Display { get; } = display;
 	}
 
 	private object SyncRoot => ((ICollection)_collection).SyncRoot;

@@ -2,10 +2,7 @@
 {
 	using System;
 
-	public class ForbiddenException : InvalidOperationException
+	public class ForbiddenException(string message) : InvalidOperationException(message)
 	{
-		public ForbiddenException(string message) : base(message)
-		{
-		}
 	}
 }

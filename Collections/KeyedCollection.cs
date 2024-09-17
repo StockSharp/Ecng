@@ -5,7 +5,7 @@ namespace Ecng.Collections
 	using System.Collections.Generic;
 
 	[Serializable]
-	public abstract class KeyedCollection<TKey, TValue> : IDictionary<TKey, TValue>
+	public abstract class KeyedCollection<TKey, TValue>(IDictionary<TKey, TValue> innerDictionary) : IDictionary<TKey, TValue>
 	{
 		protected KeyedCollection()
 			: this(new Dictionary<TKey, TValue>())
@@ -17,12 +17,7 @@ namespace Ecng.Collections
 		{
 		}
 
-		protected KeyedCollection(IDictionary<TKey, TValue> innerDictionary)
-		{
-			InnerDictionary = innerDictionary ?? throw new ArgumentNullException(nameof(innerDictionary));
-		}
-
-		protected IDictionary<TKey, TValue> InnerDictionary { get; }
+		protected IDictionary<TKey, TValue> InnerDictionary { get; } = innerDictionary ?? throw new ArgumentNullException(nameof(innerDictionary));
 
 		public virtual void Add(TKey key, TValue value)
 		{

@@ -13,7 +13,11 @@ namespace Ecng.ComponentModel
 	/// <summary>
 	/// 
 	/// </summary>
-	public class StringValidator : BaseValidator<string>
+	/// <remarks>
+	/// Initializes a new instance of the <see cref="StringValidator"/> class.
+	/// </remarks>
+	/// <param name="length">The length.</param>
+	public class StringValidator(Range<int> length) : BaseValidator<string>
 	{
 		#region StringValidator.ctor()
 
@@ -23,15 +27,6 @@ namespace Ecng.ComponentModel
 		public StringValidator()
 			: this(new Range<int>(0, int.MaxValue))
 		{
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="StringValidator"/> class.
-		/// </summary>
-		/// <param name="length">The length.</param>
-		public StringValidator(Range<int> length)
-		{
-			Length = length;
 		}
 
 		/// <summary>
@@ -53,7 +48,7 @@ namespace Ecng.ComponentModel
 		/// Gets the length.
 		/// </summary>
 		/// <value>The length.</value>
-		public Range<int> Length { get; }
+		public Range<int> Length { get; } = length;
 
 		#endregion
 

@@ -94,18 +94,13 @@ public abstract class BaseCodeGenVisitor : ICodeGenVisitor
 /// <summary>
 /// <see cref="ICodeGenVisitor"/> implementation for <see cref="StringBuilder"/>.
 /// </summary>
-public class StringBuilderCodeGenVisitor : BaseCodeGenVisitor
+/// <remarks>
+/// Initializes a new instance of the <see cref="StringBuilderCodeGenVisitor"/>.
+/// </remarks>
+/// <param name="builder"><see cref="StringBuilder"/></param>
+public class StringBuilderCodeGenVisitor(StringBuilder builder) : BaseCodeGenVisitor
 {
-	private readonly StringBuilder _builder;
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="StringBuilderCodeGenVisitor"/>.
-	/// </summary>
-	/// <param name="builder"><see cref="StringBuilder"/></param>
-	public StringBuilderCodeGenVisitor(StringBuilder builder)
-    {
-		_builder = builder ?? throw new ArgumentNullException(nameof(builder));
-	}
+	private readonly StringBuilder _builder = builder ?? throw new ArgumentNullException(nameof(builder));
 
 	protected override void WriteLine(string text)
 		=> _builder.AppendLine(text);
@@ -117,18 +112,13 @@ public class StringBuilderCodeGenVisitor : BaseCodeGenVisitor
 /// <summary>
 /// <see cref="ICodeGenVisitor"/> implementation for <see cref="StreamWriter"/>.
 /// </summary>
-public class StreamWriterCodeGenVisitor : BaseCodeGenVisitor
+/// <remarks>
+/// Initializes a new instance of the <see cref="StreamWriterCodeGenVisitor"/>.
+/// </remarks>
+/// <param name="writer"><see cref="StringBuilder"/></param>
+public class StreamWriterCodeGenVisitor(StreamWriter writer) : BaseCodeGenVisitor
 {
-	private readonly StreamWriter _writer;
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="StreamWriterCodeGenVisitor"/>.
-	/// </summary>
-	/// <param name="writer"><see cref="StringBuilder"/></param>
-	public StreamWriterCodeGenVisitor(StreamWriter writer)
-	{
-		_writer = writer ?? throw new ArgumentNullException(nameof(writer));
-	}
+	private readonly StreamWriter _writer = writer ?? throw new ArgumentNullException(nameof(writer));
 
 	protected override void WriteLine(string text)
 		=> _writer.WriteLine(text);

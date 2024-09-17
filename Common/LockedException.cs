@@ -2,10 +2,6 @@
 
 using System;
 
-public class LockedException : InvalidOperationException
+public class LockedException(string message) : InvalidOperationException(message)
 {
-	public LockedException(string message)
-		: base(message)
-	{
-	}
 }

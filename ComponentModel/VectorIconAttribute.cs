@@ -4,13 +4,8 @@
 
 	using Ecng.Common;
 
-	public class VectorIconAttribute : Attribute
+	public class VectorIconAttribute(string icon) : Attribute
 	{
-		public string Icon { get; }
-
-		public VectorIconAttribute(string icon)
-		{
-			Icon = icon.ThrowIfEmpty(nameof(icon));
-		}
+		public string Icon { get; } = icon.ThrowIfEmpty(nameof(icon));
 	}
 }

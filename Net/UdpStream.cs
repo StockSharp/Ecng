@@ -2,18 +2,12 @@ namespace Ecng.Net;
 
 using System.IO;
 
-public class UdpStream : Stream
+public class UdpStream(Socket client, int mtuSize = 1600) : Stream
 {
-	private readonly Socket _client;
-	private readonly byte[] _mtuBuffer;
+	private readonly Socket _client = client ?? throw new ArgumentNullException(nameof(client));
+	private readonly byte[] _mtuBuffer = new byte[mtuSize];
 	private int _dtgrmSize;
 	private int _readOffset;
-
-	public UdpStream(Socket client, int mtuSize = 1600)
-	{
-		_client = client ?? throw new ArgumentNullException(nameof(client));
-		_mtuBuffer = new byte[mtuSize];
-	}
 
 	/// <summary>
 	/// When overridden in a derived class, clears all buffers for this stream and causes any buffered data to be written to the underlying device.

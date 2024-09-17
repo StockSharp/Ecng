@@ -810,7 +810,7 @@
 			ICovarianceEnumerable ChangeType(Type newType);
 		}
 
-		private class CovarianceEnumerable<T> : IEnumerable<T>, ICovarianceEnumerable
+		private class CovarianceEnumerable<T>(Array array) : IEnumerable<T>, ICovarianceEnumerable
 		{
 			private class CovarianceEnumerator : IEnumerator<T>
 			{
@@ -843,12 +843,7 @@
 				}
 			}
 
-			private readonly Array _array;
-
-			public CovarianceEnumerable(Array array)
-			{
-				_array = array ?? throw new ArgumentNullException(nameof(array));
-			}
+			private readonly Array _array = array ?? throw new ArgumentNullException(nameof(array));
 
 			public IEnumerator<T> GetEnumerator()
 				=> new CovarianceEnumerator(_array);

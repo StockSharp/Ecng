@@ -13,20 +13,12 @@ using Ecng.Common;
 // https://stackoverflow.com/a/30687230/8029915
 public static class WindowsGrandAccess
 {
-	private class Token : Disposable
+	private class Token(WindowsGrandAccess.GenericSecurity wsSecurity, WindowsGrandAccess.GenericSecurity dsSecurity, int? oldWindowStationMaskm, int? oldDesktopMask) : Disposable
 	{
-		private readonly GenericSecurity _wsSecurity;
-		private readonly GenericSecurity _dsSecurity;
-		private readonly int? _oldWindowStationMaskm;
-		private readonly int? _oldDesktopMask;
-
-		public Token(GenericSecurity wsSecurity, GenericSecurity dsSecurity, int? oldWindowStationMaskm, int? oldDesktopMask)
-		{
-			_wsSecurity = wsSecurity ?? throw new ArgumentNullException(nameof(wsSecurity));
-			_dsSecurity = dsSecurity ?? throw new ArgumentNullException(nameof(dsSecurity));
-			_oldWindowStationMaskm = oldWindowStationMaskm;
-			_oldDesktopMask = oldDesktopMask;
-		}
+		private readonly GenericSecurity _wsSecurity = wsSecurity ?? throw new ArgumentNullException(nameof(wsSecurity));
+		private readonly GenericSecurity _dsSecurity = dsSecurity ?? throw new ArgumentNullException(nameof(dsSecurity));
+		private readonly int? _oldWindowStationMaskm = oldWindowStationMaskm;
+		private readonly int? _oldDesktopMask = oldDesktopMask;
 
 		protected override void DisposeManaged()
 		{
@@ -103,17 +95,10 @@ public static class WindowsGrandAccess
 		public int PublicAccessMask => AccessMask;
 	}
 
-	private class GenericSecurity : NativeObjectSecurity
+	private class GenericSecurity(NTAccount account, bool isContainer, ResourceType resType, SafeHandle handle, AccessControlSections sectionsRequested) : NativeObjectSecurity(isContainer, resType, handle, sectionsRequested)
 	{
-		private readonly NTAccount _account;
-		private readonly SafeHandle _handle;
-
-		public GenericSecurity(NTAccount account, bool isContainer, ResourceType resType, SafeHandle handle, AccessControlSections sectionsRequested)
-			: base(isContainer, resType, handle, sectionsRequested)
-		{
-			_account = account ?? throw new ArgumentNullException(nameof(account));
-			_handle = handle ?? throw new ArgumentNullException(nameof(handle));
-		}
+		private readonly NTAccount _account = account ?? throw new ArgumentNullException(nameof(account));
+		private readonly SafeHandle _handle = handle ?? throw new ArgumentNullException(nameof(handle));
 
 		private void Persist() => Persist(_handle, AccessControlSections.Access);
 
@@ -171,13 +156,8 @@ public static class WindowsGrandAccess
 		#endregion
 	}
 
-	private class NoopSafeHandle : SafeHandle
+	private class NoopSafeHandle(IntPtr handle) : SafeHandle(handle, false)
 	{
-		public NoopSafeHandle(IntPtr handle)
-			: base(handle, false)
-		{
-		}
-
 		public override bool IsInvalid => false;
 
 		// Handles returned by GetProcessWindowStation and GetThreadDesktop

@@ -10,24 +10,18 @@ namespace Ecng.Reflection
 
 	#endregion
 
-	public class DefaultConstructorInfo : ConstructorInfo
+	/// <summary>
+	/// Initializes a new instance of the <see cref="T:Ecng.Reflection.DefaultConstructorInfo"/> class.
+	/// </summary>
+	/// <param name="type">The type.</param>
+	public class DefaultConstructorInfo(Type type) : ConstructorInfo
 	{
 		#region Private Fields
 
-		private readonly Type _type;
+		private readonly Type _type = type;
 
 		#endregion
-
 		#region DefaultConstructorInfo.ctor()
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Ecng.Reflection.DefaultConstructorInfo"/> class.
-		/// </summary>
-		/// <param name="type">The type.</param>
-		public DefaultConstructorInfo(Type type)
-		{
-			_type = type;
-		}
 
 		#endregion
 

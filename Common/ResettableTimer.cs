@@ -2,7 +2,7 @@
 {
 	using System;
 
-	public class ResettableTimer : Disposable
+	public class ResettableTimer(TimeSpan period, string name) : Disposable
 	{
 		private readonly SyncObject _sync = new();
 		private readonly SyncObject _finish = new();
@@ -10,14 +10,8 @@
 		private bool _isFinished = true;
 		private bool _isCancelled;
 
-		private readonly TimeSpan _period;
-		private readonly string _name;
-
-		public ResettableTimer(TimeSpan period, string name)
-		{
-			_period = period;
-			_name = name;
-		}
+		private readonly TimeSpan _period = period;
+		private readonly string _name = name;
 
 		public event Action<Func<bool>> Elapsed;
 

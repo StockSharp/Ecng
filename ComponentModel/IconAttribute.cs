@@ -7,24 +7,18 @@ namespace Ecng.ComponentModel
 	/// <summary>
 	/// Icon attribute.
 	/// </summary>
-	public class IconAttribute : Attribute
+	/// <remarks>
+	/// Create <see cref="IconAttribute"/>.
+	/// </remarks>
+	/// <param name="icon">Icon url.</param>
+	/// <param name="isFullPath"></param>
+	public class IconAttribute(string icon, bool isFullPath = false) : Attribute
 	{
 		/// <summary>
 		/// Icon url.
 		/// </summary>
-		public string Icon { get; }
+		public string Icon { get; } = icon.ThrowIfEmpty(nameof(icon));
 
-		public bool IsFullPath { get; }
-
-		/// <summary>
-		/// Create <see cref="IconAttribute"/>.
-		/// </summary>
-		/// <param name="icon">Icon url.</param>
-		/// <param name="isFullPath"></param>
-		public IconAttribute(string icon, bool isFullPath = false)
-		{
-			Icon = icon.ThrowIfEmpty(nameof(icon));
-			IsFullPath = isFullPath;
-		}
+		public bool IsFullPath { get; } = isFullPath;
 	}
 }

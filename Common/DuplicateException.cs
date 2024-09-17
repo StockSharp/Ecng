@@ -2,10 +2,7 @@
 {
 	using System;
 
-	public class DuplicateException : InvalidOperationException
+	public class DuplicateException(string message) : InvalidOperationException(message)
 	{
-		public DuplicateException(string message) : base(message)
-		{
-		}
 	}
 }

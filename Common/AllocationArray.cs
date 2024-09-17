@@ -6,16 +6,11 @@ namespace Ecng.Common
 
 	public class AllocationArray<T> : IEnumerable<T>
 	{
-		private class AllocationArrayEnumerator : IEnumerator<T>
+		private class AllocationArrayEnumerator(AllocationArray<T> parent) : IEnumerator<T>
 		{
-			private readonly AllocationArray<T> _parent;
+			private readonly AllocationArray<T> _parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			private T _current;
 			private int _pos;
-
-			public AllocationArrayEnumerator(AllocationArray<T> parent)
-			{
-				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
-			}
 
 			void IDisposable.Dispose() => _pos = 0;
 

@@ -7,7 +7,11 @@
 
 	using Ecng.Common;
 
-	public abstract class CustomObjectWrapper<T> : Disposable, INotifyPropertyChanged, ICustomTypeDescriptor where T : class
+	/// <summary>
+	/// Create instance.
+	/// </summary>
+	/// <param name="obj">Parent chart element or indicator.</param>
+	public abstract class CustomObjectWrapper<T>(T obj) : Disposable, INotifyPropertyChanged, ICustomTypeDescriptor where T : class
 	{
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -16,23 +20,17 @@
 		/// <summary>
 		/// Specialization of <see cref="PropertyDescriptor"/>.
 		/// </summary>
-		protected class ProxyPropDescriptor : PropertyDescriptor
+		/// <remarks>
+		/// Create instance.
+		/// </remarks>
+		protected class ProxyPropDescriptor(PropertyDescriptor orig, object owner) : PropertyDescriptor(orig)
 		{
-			private readonly PropertyDescriptor _orig;
-
-			/// <summary>
-			/// Create instance.
-			/// </summary>
-			public ProxyPropDescriptor(PropertyDescriptor orig, object owner) : base(orig)
-			{
-				Owner = owner;
-				_orig = orig;
-			}
+			private readonly PropertyDescriptor _orig = orig;
 
 			/// <summary>
 			/// Parent object.
 			/// </summary>
-			public object Owner { get; }
+			public object Owner { get; } = owner;
 
 			/// <inheritdoc />
 			public override object GetValue(object c)  => _orig.GetValue(c);
@@ -58,23 +56,17 @@
 		/// <summary>
 		/// Specialization of <see cref="EventDescriptor"/>.
 		/// </summary>
-		protected class ProxyEventDescriptor : EventDescriptor
+		/// <remarks>
+		/// Create instance.
+		/// </remarks>
+		protected class ProxyEventDescriptor(EventDescriptor orig, object owner) : EventDescriptor(orig)
 		{
-			private readonly EventDescriptor _orig;
-
-			/// <summary>
-			/// Create instance.
-			/// </summary>
-			public ProxyEventDescriptor(EventDescriptor orig, object owner) : base(orig)
-			{
-				Owner = owner;
-				_orig = orig;
-			}
+			private readonly EventDescriptor _orig = orig;
 
 			/// <summary>
 			/// Parent object.
 			/// </summary>
-			public object Owner { get; }
+			public object Owner { get; } = owner;
 
 			public override void AddEventHandler(object component, Delegate value) => _orig.AddEventHandler(component, value);
 			public override void RemoveEventHandler(object component, Delegate value) => _orig.RemoveEventHandler(component, value);
@@ -87,13 +79,7 @@
 		/// <summary>
 		/// Parent object.
 		/// </summary>
-		public T Obj { get; }
-
-		/// <summary>
-		/// Create instance.
-		/// </summary>
-		/// <param name="obj">Parent chart element or indicator.</param>
-		protected CustomObjectWrapper(T obj) => Obj = obj ?? throw new ArgumentNullException(nameof(obj));
+		public T Obj { get; } = obj ?? throw new ArgumentNullException(nameof(obj));
 
 		object ICustomTypeDescriptor.GetPropertyOwner(PropertyDescriptor pd) => Obj;
 

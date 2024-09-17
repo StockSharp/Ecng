@@ -9,22 +9,15 @@ using Ecng.Reflection;
 
 using Microsoft.Net.Http.Headers;
 
-public abstract class RestBaseApiClient
+public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormatter request, MediaTypeFormatter response)
 {
 	private static readonly SynchronizedDictionary<(Type type, string methodName), MethodInfo> _methodsCache = [];
 
-	protected RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormatter request, MediaTypeFormatter response)
-	{
-		Http = http ?? throw new ArgumentNullException(nameof(http));
-		RequestFormatter = request ?? throw new ArgumentNullException(nameof(request));
-		ResponseFormatter = response ?? throw new ArgumentNullException(nameof(response));
-	}
-
 	protected Uri BaseAddress { get; set; }
 
-	protected HttpMessageInvoker Http { get; }
-	protected MediaTypeFormatter RequestFormatter { get; }
-	protected MediaTypeFormatter ResponseFormatter { get; }
+	protected HttpMessageInvoker Http { get; } = http ?? throw new ArgumentNullException(nameof(http));
+	protected MediaTypeFormatter RequestFormatter { get; } = request ?? throw new ArgumentNullException(nameof(request));
+	protected MediaTypeFormatter ResponseFormatter { get; } = response ?? throw new ArgumentNullException(nameof(response));
 
 	public IDictionary<string, string> PerRequestHeaders { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 	public IRestApiClientCache Cache { get; set; }

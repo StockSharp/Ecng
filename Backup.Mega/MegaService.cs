@@ -14,19 +14,12 @@ using Ecng.Common;
 
 using Nito.AsyncEx;
 
-public class MegaService : Disposable, IBackupService
+public class MegaService(string email, SecureString password) : Disposable, IBackupService
 {
-	private readonly MegaApiClient _client;
-	private readonly string _email;
-	private readonly SecureString _password;
+	private readonly MegaApiClient _client = new();
+	private readonly string _email = email.ThrowIfEmpty(nameof(email));
+	private readonly SecureString _password = password ?? throw new ArgumentNullException(nameof(password));
 	private readonly List<INode> _nodes = [];
-
-	public MegaService(string email, SecureString password)
-    {
-		_client = new();
-		_email = email.ThrowIfEmpty(nameof(email));
-		_password = password ?? throw new ArgumentNullException(nameof(password));
-	}
 
 	protected override void DisposeManaged()
 	{
