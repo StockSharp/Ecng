@@ -33,7 +33,7 @@ public static class RestSharpHelper
 
 		public IDisposable RegisterRequest(RestRequest req, IAuthenticator authenticator) => new Holder(this, req, authenticator);
 
-		ValueTask IAuthenticator.Authenticate(RestClient client, RestRequest request)
+		ValueTask IAuthenticator.Authenticate(IRestClient client, RestRequest request)
 			=> _authenticators.TryGetValue(request, out var auth) && auth != null ? auth.Authenticate(client, request) : default;
 	}
 
@@ -47,19 +47,12 @@ public static class RestSharpHelper
 			var prod = asm.GetAttribute<AssemblyProductAttribute>()?.Product;
 			var ver = asm.GetName().Version;
 
-			var options = new RestClientOptions
+			return new(new RestClientOptions
 			{
 				UserAgent = $"{prod}/{ver}",
-			};
-
-			return new RestClient(options) { Authenticator = new AuthenticatorWrapper() };
+				Authenticator = new AuthenticatorWrapper(),
+			});
 		});
-	}
-
-	public static void RemoveWhere(this ParametersCollection collection, Func<Parameter, bool> filter)
-	{
-		foreach (var par in collection.Where(filter).ToArray())
-			collection.RemoveParameter(par);
 	}
 
 	public static void AddBodyAsStr(this RestRequest request, string bodyStr)
@@ -128,7 +121,7 @@ Args:
 		}
 
 		var client = GetClient(caller);
-		using var _ = ((AuthenticatorWrapper)client.Authenticator!).RegisterRequest(request, auth);
+		using var _ = ((AuthenticatorWrapper)client.Options.Authenticator!).RegisterRequest(request, auth);
 
 		var response = await client.ExecuteAsync<object>(request, token);
 

@@ -11,7 +11,7 @@
     <MicrosoftNetHttpHeadersVer>2.2.8</MicrosoftNetHttpHeadersVer>
     <TaskExtensionsVer>4.5.4</TaskExtensionsVer>
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
-    <RestSharpVer>108.0.2</RestSharpVer>
+    <RestSharpVer>112.0.0</RestSharpVer>
     <NDdeVer>4.0.0</NDdeVer>
     <linq2dbVer>5.2.2</linq2dbVer>
     <NitoVer>5.1.2</NitoVer>
