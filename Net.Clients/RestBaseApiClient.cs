@@ -7,8 +7,6 @@ using System.Diagnostics;
 
 using Ecng.Reflection;
 
-using Microsoft.Net.Http.Headers;
-
 public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormatter request, MediaTypeFormatter response)
 {
 	private static readonly SynchronizedDictionary<(Type type, string methodName), MethodInfo> _methodsCache = [];
@@ -36,7 +34,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 		=> AddAuth(AuthSchemas.Bearer, token);
 
 	protected void AddAuth(string schema, string value)
-		=> PerRequestHeaders.Add(HeaderNames.Authorization, schema.FormatAuth(value));
+		=> PerRequestHeaders.Add(AuthSchemas.Header, schema.FormatAuth(value));
 
 	protected virtual object FormatRequest(IDictionary<string, object> parameters)
 		=> parameters;

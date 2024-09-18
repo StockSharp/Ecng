@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Net;
 
 using System.Reflection;
+using System.Security;
 
 using Nito.AsyncEx;
 
@@ -199,4 +200,7 @@ Args:
 
 		return parts.Select(decode);
 	}
+
+	public static RestRequest SetBearer(this RestRequest client, SecureString token)
+		=> client.AddHeader("Authorization", AuthSchemas.Bearer.FormatAuth(token));
 }
