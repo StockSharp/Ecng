@@ -56,6 +56,12 @@ public static class RestSharpHelper
 		});
 	}
 
+	public static void RemoveWhere(this RestRequest request, Func<Parameter, bool> filter)
+	{
+		foreach (var par in request.Parameters.Where(filter).ToArray())
+			request.RemoveParameter(par);
+	}
+
 	public static void AddBodyAsStr(this RestRequest request, string bodyStr)
 	{
 		if (request is null)
