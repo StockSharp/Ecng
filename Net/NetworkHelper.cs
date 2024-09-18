@@ -498,4 +498,7 @@ public static class NetworkHelper
 
 	public static void ApplyChromeAgent(this HttpClient client)
 		=> client.CheckOnNull(nameof(client)).DefaultRequestHeaders.Add(HttpHeaders.UserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36");
+
+	public static void SetBearer(this HttpClient client, SecureString token)
+		=> client.CheckOnNull(nameof(client)).DefaultRequestHeaders.Add(HttpHeaders.Authorization, AuthSchemas.Bearer.FormatAuth(token));
 }
