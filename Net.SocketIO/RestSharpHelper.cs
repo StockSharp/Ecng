@@ -208,5 +208,5 @@ Args:
 	}
 
 	public static RestRequest SetBearer(this RestRequest client, SecureString token)
-		=> client.AddHeader("Authorization", AuthSchemas.Bearer.FormatAuth(token));
+		=> client.AddHeader(HttpHeaders.Authorization, AuthSchemas.Bearer.FormatAuth(token));
 }

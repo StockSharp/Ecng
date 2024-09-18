@@ -8,7 +8,6 @@
 
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
     <FluentAssertionsVer>6.*</FluentAssertionsVer>
-    <MicrosoftNetHttpHeadersVer>2.2.8</MicrosoftNetHttpHeadersVer>
     <TaskExtensionsVer>4.5.4</TaskExtensionsVer>
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
     <RestSharpVer>112.0.0</RestSharpVer>

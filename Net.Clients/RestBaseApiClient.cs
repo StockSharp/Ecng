@@ -34,7 +34,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 		=> AddAuth(AuthSchemas.Bearer, token);
 
 	protected void AddAuth(string schema, string value)
-		=> PerRequestHeaders.Add(AuthSchemas.Header, schema.FormatAuth(value));
+		=> PerRequestHeaders.Add(HttpHeaders.Authorization, schema.FormatAuth(value));
 
 	protected virtual object FormatRequest(IDictionary<string, object> parameters)
 		=> parameters;
