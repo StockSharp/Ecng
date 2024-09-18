@@ -186,7 +186,7 @@ Args:
 	public static IEnumerable<string> DecodeJWT(this string jwt)
 	{
 		if (jwt.IsEmpty())
-			return Enumerable.Empty<string>();
+			return [];
 
 		static string decode(string base64Url)
 		{

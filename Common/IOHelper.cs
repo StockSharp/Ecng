@@ -389,7 +389,7 @@ namespace Ecng.Common
 			SearchOption searchOption = SearchOption.TopDirectoryOnly)
 		{
 			return !Directory.Exists(path)
-				? Enumerable.Empty<string>()
+				? []
 				: Directory.EnumerateDirectories(path, searchPattern, searchOption);
 		}
 
@@ -680,7 +680,7 @@ namespace Ecng.Common
 			if (size > int.MaxValue / 10)
 				throw new ArgumentOutOfRangeException(nameof(size), $"Size has too big value {size}.");
 
-			var buffer = size > 0 ? stream.ReadBuffer(size) : Array.Empty<byte>();
+			var buffer = size > 0 ? stream.ReadBuffer(size) : [];
 
 			if (type == typeof(byte[]))
 				return buffer;

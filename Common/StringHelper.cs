@@ -191,7 +191,7 @@
 				throw new ArgumentNullException(nameof(str));
 
 			if (str.Length == 0)
-				return Array.Empty<string>();
+				return [];
 
 			return str.Split(new[] { separator }, removeEmptyEntries ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
 		}
@@ -1101,7 +1101,7 @@
 				throw new ArgumentNullException(nameof(bitString));
 
 			if (bitString.Length == 0)
-				return Array.Empty<byte>();
+				return [];
 
 			var bitStrings = bitString.Split(separator);
 			var bytes = new byte[bitStrings.Length];

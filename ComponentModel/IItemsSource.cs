@@ -184,7 +184,7 @@
 
 		IEnumerable<IItemsSourceItem<T>> FilterItems(IEnumerable<IItemsSourceItem<T>> items)
 		{
-			items ??= Enumerable.Empty<IItemsSourceItem<T>>();
+			items ??= [];
 
 			items = items.Where(Filter);
 

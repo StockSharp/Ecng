@@ -811,7 +811,7 @@ namespace Ecng.Common
 				return [x1, x2];
 			}
 			else
-				return Array.Empty<double>();
+				return [];
 		}
 
 		public static long AsRaw(this double value)

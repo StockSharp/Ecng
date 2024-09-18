@@ -44,7 +44,7 @@ namespace Ecng.Collections
 		/// Buffer capacity. Must be positive.
 		/// </param>
 		public CircularBuffer(int capacity)
-			: this(capacity, Array.Empty<T>())
+			: this(capacity, [])
 		{
 		}
 
@@ -387,7 +387,7 @@ namespace Ecng.Collections
 		{
 			if (IsEmpty)
 			{
-				return new(Array.Empty<T>());
+				return new([]);
 			}
 			else if (_start < _end)
 			{
@@ -403,7 +403,7 @@ namespace Ecng.Collections
 		{
 			if (IsEmpty)
 			{
-				return new(Array.Empty<T>());
+				return new([]);
 			}
 			else if (_start < _end)
 			{

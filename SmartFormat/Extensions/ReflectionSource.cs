@@ -92,7 +92,7 @@ namespace SmartFormat.Extensions
 									if (result is null)
 										throw new InvalidOperationException("result is null.");
 
-									task = (Task?)result.GetType().GetMethod(nameof(ValueTask<object>.AsTask))!.Invoke(result, Array.Empty<object>());
+									task = (Task?)result.GetType().GetMethod(nameof(ValueTask<object>.AsTask))!.Invoke(result, []);
 								}
 								else
 									task = (Task?)result;
@@ -104,7 +104,7 @@ namespace SmartFormat.Extensions
 								selectorInfo.Result = task.GetType().GetProperty(nameof(Task<object>.Result))!.GetValue(task);
 							}
 							else
-								selectorInfo.Result = method.Invoke(current, Array.Empty<object>());
+								selectorInfo.Result = method.Invoke(current, []);
 						}
 						
 						return true;

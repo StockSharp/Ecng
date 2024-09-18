@@ -40,7 +40,7 @@ namespace Ecng.ComponentModel
 			public CollectionAction(Func<object> convert)
 			{
 				Type = ActionTypes.Wait;
-				Items = Array.Empty<TItem>();
+				Items = [];
 				Convert = convert ?? throw new ArgumentNullException(nameof(convert));
 			}
 

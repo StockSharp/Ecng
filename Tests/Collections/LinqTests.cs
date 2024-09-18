@@ -36,6 +36,6 @@ public class LinqTests
 		test([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9], i => i < 5);
 		test([5, 5, 5, 5, 5], i => i < 5);
 		test([5, 5, 5, 5, 5], i => i == 5);
-		test(Array.Empty<int>(), i => i < 5);
+		test([], i => i < 5);
 	}
 }

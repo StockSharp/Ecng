@@ -103,7 +103,7 @@ namespace Ecng.Common
 
 		public static IEnumerable<TDelegate> GetInvocationList<TDelegate>(this TDelegate @delegate)
 		{
-			return @delegate.To<Delegate>()?.GetInvocationList().Cast<TDelegate>() ?? Enumerable.Empty<TDelegate>();
+			return @delegate.To<Delegate>()?.GetInvocationList().Cast<TDelegate>() ?? [];
 		}
 	}
 }
