@@ -965,5 +965,59 @@ namespace Ecng.Common
 		{
 			return value.IsInfinity() || value.IsNaN() || value < _minValue || value > _maxValue ? (decimal?)null : (decimal)value;
 		}
+
+		public static int GetDigitCount(this int x)
+		{
+			if (x < 0)
+				throw new ArgumentOutOfRangeException(nameof(x));
+
+			if (x < 1000000)
+			{
+				if (x < 10) return 1;
+				if (x < 100) return 2;
+				if (x < 1000) return 3;
+				if (x < 10000) return 4;
+				if (x < 100000) return 5;
+
+				return 6;
+			}
+
+			if (x < 10000000) return 7;
+			if (x < 100000000) return 8;
+			if (x < 1000000000) return 9;
+
+			return 10;
+		}
+
+		public static int GetDigitCount(this long x)
+		{
+			if (x < 0)
+				throw new ArgumentOutOfRangeException(nameof(x));
+
+			if (x < 1000000)
+			{
+				if (x < 10) return 1;
+				if (x < 100) return 2;
+				if (x < 1000) return 3;
+				if (x < 10000) return 4;
+				if (x < 100000) return 5;
+
+				return 6;
+			}
+
+			if (x < 10000000) return 7;
+			if (x < 100000000) return 8;
+			if (x < 1000000000) return 9;
+			if (x < 10000000000) return 10;
+			if (x < 100000000000) return 11;
+			if (x < 1000000000000) return 12;
+			if (x < 10000000000000) return 13;
+			if (x < 100000000000000) return 14;
+			if (x < 1000000000000000) return 15;
+			if (x < 10000000000000000) return 16;
+			if (x < 100000000000000000) return 17;
+
+			return 18;
+		}
 	}
 }

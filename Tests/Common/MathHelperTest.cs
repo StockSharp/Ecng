@@ -388,5 +388,18 @@
 				v.RemoveTrailingZeros().AssertEqual(removeTrailingZeros(v));
 			}
 		}
+
+		[TestMethod]
+		public void DigitCount()
+		{
+			for (var i = 0; i < 100000; i++)
+			{
+				var v = RandomGen.GetInt();
+				v.GetDigitCount().AssertEqual(v.ToString().Length);
+
+				var l = RandomGen.GetInt();
+				l.GetDigitCount().AssertEqual(l.ToString().Length);
+			}
+		}
 	}
 }
