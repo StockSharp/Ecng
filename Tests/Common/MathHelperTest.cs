@@ -361,5 +361,32 @@
 				//0.056570006674.GetDecimals().AssertEqual(12);
 			});
 		}
+
+		[TestMethod]
+		public void TrailingZeros()
+		{
+			static decimal removeTrailingZeros(decimal value)
+			{
+				var strValue = value.ToString("G29").TrimEnd('0');
+
+				var decimalPointIndex = strValue.IndexOf('.');
+				if (decimalPointIndex == -1)
+					return value;
+
+				var integerPart = strValue[..decimalPointIndex];
+				var fractionalPart = strValue[(decimalPointIndex + 1)..].TrimEnd('0');
+
+				if (fractionalPart.IsEmpty())
+					return integerPart.To<long>();
+
+				return $"{integerPart}.{fractionalPart}".To<decimal>();
+			}
+
+			for (var i = 0; i < 100000; i++)
+			{
+				var v = RandomGen.GetDecimal();
+				v.RemoveTrailingZeros().AssertEqual(removeTrailingZeros(v));
+			}
+		}
 	}
 }

@@ -683,7 +683,7 @@ namespace Ecng.Common
 
 		public static decimal RemoveTrailingZeros(this decimal value)
 		{
-			return (decimal)((double)value);
+			return value / 1.000000000000000000000000000000000m;
 		}
 
 		public struct DecimalInfo
