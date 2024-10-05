@@ -141,7 +141,7 @@ namespace Ecng.Common
 			for (var k = 0; k < 10; k++)
 			{
 				var i1 = Enumerable.Repeat(9, GetInt(1, integer)).Select(i => GetInt(9).ToString()).Join(string.Empty).To<long>();
-				var i2 = Enumerable.Repeat(9, GetInt(1, integer)).Select(i => GetInt(9).ToString()).Join(string.Empty).To<long>();
+				var i2 = Enumerable.Repeat(9, GetInt(1, fractional)).Select(i => GetInt(9).ToString()).Join(string.Empty).To<long>();
 				var value = decimal.Parse(i1 + "." + i2, CultureInfo.InvariantCulture);
 
 				if (value != 0)
@@ -153,7 +153,7 @@ namespace Ecng.Common
 
 		public static decimal GetDecimal(decimal min, decimal max, int precision)
 		{
-			var value = RandomGen.GetDouble() * ((double)max - (double)min) + (double)min;
+			var value = GetDouble() * ((double)max - (double)min) + (double)min;
 			return (decimal)value.Round(precision);
 		}
 	}
