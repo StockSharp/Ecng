@@ -1,22 +1,7 @@
-namespace Ecng.ComponentModel
+namespace Ecng.ComponentModel;
+
+public class GreaterThanZeroAttribute : DecimalValidationAttribute
 {
-	using System;
-	using System.ComponentModel.DataAnnotations;
-
-	using Ecng.Common;
-
-	public class GreaterThanZeroAttribute : ValidationAttribute
-	{
-		public override bool IsValid(object value)
-		{
-			try
-			{
-				return value.To<decimal?>() > 0;
-			}
-			catch (Exception)
-			{
-				return false;
-			}
-		}
-	}
+	protected override bool Validate(decimal? value)
+		=> value > 0;
 }
