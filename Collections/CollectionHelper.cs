@@ -258,14 +258,17 @@
 			if (collection is null)
 				throw new ArgumentNullException(nameof(collection));
 
-			var hash = 0;
+			unchecked
+			{
+				var hash = 0;
 
-			var index = 0;
-			foreach (var item in collection)
-				hash ^= (31 ^ index++) * item.GetHashCode();
+				var index = 0;
+				foreach (var item in collection)
+					hash ^= (31 ^ index++) * (item?.GetHashCode() ?? 0);
 
-			hash %= 2 ^ 32;
-			return hash;
+				hash %= 2 ^ 32;
+				return hash;
+			}
 		}
 
 		public static bool HasNullItem<T>(this IEnumerable<T> items)
