@@ -27,6 +27,8 @@
 		private readonly Action<string, object> _errorLog;
 		private readonly Action<string, object> _verboseLog;
 
+		private readonly CachedSynchronizedList<(byte[] buffer, WebSocketMessageType type)> _reConnectCommands = [];
+
 		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<string> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
 			: this(connected, disconnected, error, (c, s) => process(s), infoLog, errorLog, verbose, verbose2)
@@ -142,10 +144,10 @@
 
 			_disconnectionStates[source] = _expectedDisconnect;
 
-			return ConnectImpl(source, 0, cancellationToken == default ? source.Token : cancellationToken);
+			return ConnectImpl(source, false, 0, cancellationToken == default ? source.Token : cancellationToken);
 		}
 
-		private async ValueTask ConnectImpl(CancellationTokenSource source, int attempts, CancellationToken token)
+		private async ValueTask ConnectImpl(CancellationTokenSource source, bool reconnect, int attempts, CancellationToken token)
 		{
 			if (source is null)
 				throw new ArgumentNullException(nameof(source));
@@ -199,6 +201,21 @@
 				_connected.Invoke();
 
 			_ = Task.Run(() => OnReceive(source), token);
+
+			if (reconnect && _reConnectCommands.Count > 0)
+			{
+				try
+				{
+					_infoLog("Reconnect commands: {0}", _reConnectCommands.Count);
+
+					foreach (var (buf, type) in _reConnectCommands.Cache)
+						await SendAsync(buf, type, token);
+				}
+				catch (Exception ex)
+				{
+					_error(ex);
+				}
+			}
 		}
 
 		public bool IsConnected => _ws != null;
@@ -211,6 +228,9 @@
 			_expectedDisconnect = expectedDisconnect;
 			_disconnectionStates[_source] = expectedDisconnect;
 			_source.Cancel();
+
+			if (expectedDisconnect)
+				_reConnectCommands.Clear();
 		}
 
 		public TimeSpan DisconnectTimeout = TimeSpan.FromSeconds(10);
@@ -381,7 +401,7 @@
 
 					try
 					{
-						await ConnectImpl(source, attempts, token);
+						await ConnectImpl(source, true, attempts, token);
 					}
 					catch (OperationCanceledException)
 					{
@@ -394,10 +414,8 @@
 			}
 		}
 
-		public void Send(object obj)
-			=> AsyncHelper.Run(() => SendAsync(obj));
-
 		public bool Indent { get; set; } = true;
+
 #if NET5_0_OR_GREATER
 		public JsonSerializerSettings SendSettings { get; set; }
 
@@ -408,9 +426,13 @@
 			=> obj.ToJson(Indent);
 #endif
 
-		public ValueTask SendAsync(object obj) => SendAsync(obj, _source.Token);
+		public void Send(object obj, bool reconnect = false)
+			=> AsyncHelper.Run(() => SendAsync(obj, reconnect));
 
-		public ValueTask SendAsync(object obj, CancellationToken cancellationToken)
+		public ValueTask SendAsync(object obj, bool reconnect = false)
+			=> SendAsync(obj, _source.Token, reconnect);
+
+		public ValueTask SendAsync(object obj, CancellationToken cancellationToken, bool reconnect = false)
 		{
 			if (obj is not byte[] sendBuf)
 			{
@@ -420,17 +442,25 @@
 				sendBuf = json.UTF8();
 			}
 
-			return SendAsync(sendBuf, WebSocketMessageType.Text, cancellationToken);
+			return SendAsync(sendBuf, WebSocketMessageType.Text, cancellationToken, reconnect);
 		}
 
-		public void Send(byte[] sendBuf, WebSocketMessageType type)
-			=> AsyncHelper.Run(() => SendAsync(sendBuf, type));
+		public void Send(byte[] sendBuf, WebSocketMessageType type, bool reconnect = false)
+			=> AsyncHelper.Run(() => SendAsync(sendBuf, type, reconnect));
 
-		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type)
-			=> SendAsync(sendBuf, type, _source.Token);
+		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, bool reconnect = false)
+			=> SendAsync(sendBuf, type, _source.Token, reconnect);
 
-		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken)
-			=> _ws?.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken).AsValueTask() ?? default;
+		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken, bool reconnect = false)
+		{
+			if (_ws is not ClientWebSocket ws)
+				return default;
+
+			if (reconnect)
+				_reConnectCommands.Add((sendBuf.ToArray(), type));
+
+			return ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken).AsValueTask();
+		}
 
 		protected override void DisposeManaged()
 		{
