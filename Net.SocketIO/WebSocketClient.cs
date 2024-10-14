@@ -27,7 +27,7 @@
 		private readonly Action<string, object> _errorLog;
 		private readonly Action<string, object> _verboseLog;
 
-		private readonly CachedSynchronizedList<(byte[] buffer, WebSocketMessageType type)> _reConnectCommands = [];
+		private readonly CachedSynchronizedList<(long subId, byte[] buffer, WebSocketMessageType type)> _reConnectCommands = [];
 
 		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<string> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
@@ -137,6 +137,8 @@
 			_immediateConnect = immediateConnect;
 			_init = init;
 
+			_reConnectCommands.Clear();
+
 			var source = new CancellationTokenSource();
 
 			_expectedDisconnect = false;
@@ -204,17 +206,7 @@
 
 			if (reconnect && _reConnectCommands.Count > 0)
 			{
-				try
-				{
-					_infoLog("Reconnect commands: {0}", _reConnectCommands.Count);
-
-					foreach (var (buf, type) in _reConnectCommands.Cache)
-						await SendAsync(buf, type, token);
-				}
-				catch (Exception ex)
-				{
-					_error(ex);
-				}
+				await ResendAsync(token);
 			}
 		}
 
@@ -426,13 +418,13 @@
 			=> obj.ToJson(Indent);
 #endif
 
-		public void Send(object obj, bool reconnect = false)
-			=> AsyncHelper.Run(() => SendAsync(obj, reconnect));
+		public void Send(object obj, long subId = default)
+			=> AsyncHelper.Run(() => SendAsync(obj, subId));
 
-		public ValueTask SendAsync(object obj, bool reconnect = false)
-			=> SendAsync(obj, _source.Token, reconnect);
+		public ValueTask SendAsync(object obj, long subId = default)
+			=> SendAsync(obj, _source.Token, subId);
 
-		public ValueTask SendAsync(object obj, CancellationToken cancellationToken, bool reconnect = false)
+		public ValueTask SendAsync(object obj, CancellationToken cancellationToken, long subId = default)
 		{
 			if (obj is not byte[] sendBuf)
 			{
@@ -442,25 +434,53 @@
 				sendBuf = json.UTF8();
 			}
 
-			return SendAsync(sendBuf, WebSocketMessageType.Text, cancellationToken, reconnect);
+			return SendAsync(sendBuf, WebSocketMessageType.Text, cancellationToken, subId);
 		}
 
-		public void Send(byte[] sendBuf, WebSocketMessageType type, bool reconnect = false)
-			=> AsyncHelper.Run(() => SendAsync(sendBuf, type, reconnect));
+		public void Send(byte[] sendBuf, WebSocketMessageType type, long subId = default)
+			=> AsyncHelper.Run(() => SendAsync(sendBuf, type, subId));
 
-		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, bool reconnect = false)
-			=> SendAsync(sendBuf, type, _source.Token, reconnect);
+		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, long subId = default)
+			=> SendAsync(sendBuf, type, _source.Token, subId);
 
-		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken, bool reconnect = false)
+		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken, long subId = default)
 		{
 			if (_ws is not ClientWebSocket ws)
 				return default;
 
-			if (reconnect)
-				_reConnectCommands.Add((sendBuf.ToArray(), type));
+			if (subId > 0)
+				_reConnectCommands.Add((subId, sendBuf.ToArray(), type));
+			else if (subId < 0) // unsubscribe
+				RemoveResend(subId);
 
 			return ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken).AsValueTask();
 		}
+
+		public async ValueTask ResendAsync(CancellationToken cancellationToken)
+		{
+			try
+			{
+				_infoLog("Reconnect commands: {0}", _reConnectCommands.Count);
+
+				foreach (var (_, buf, type) in _reConnectCommands.Cache)
+					await SendAsync(buf, type, cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				_error(ex);
+			}
+		}
+
+		public void RemoveResend(long subId)
+		{
+			subId = subId.Abs();
+
+			lock (_reConnectCommands.SyncRoot)
+				_reConnectCommands.RemoveWhere(t => t.subId == subId);
+		}
+
+		public void RemoveResend()
+			=> _reConnectCommands.Clear();
 
 		protected override void DisposeManaged()
 		{
