@@ -3,13 +3,13 @@
 	using System.Net.WebSockets;
 	using System.IO;
 	using System.Reflection;
-
-	using Ecng.Reflection;
-
+	using System.Text;
 #if NET5_0_OR_GREATER
 	using System.Net.Security;
 	using Newtonsoft.Json;
 #endif
+
+	using Ecng.Reflection;
 
 	public class WebSocketClient : Disposable
 	{
@@ -58,7 +58,7 @@
 
 			return (c, b) =>
 			{
-				var recv = b.UTF8();
+				var recv = c.GetString(b);
 				verbose2(recv);
 				process(c, recv);
 			};
@@ -99,6 +99,17 @@
 			BufferSize = 1024 * 1024;
 			BufferSizeUncompress = BufferSize * 10;
 		}
+
+		private Encoding _encoding = Encoding.UTF8;
+
+		public Encoding Encoding
+		{
+			get => _encoding;
+			set => _encoding = value ?? throw new ArgumentNullException(nameof(value));
+		}
+
+		private string GetString(ArraySegment<byte> buffer)
+			=> Encoding.GetString(buffer.Array, buffer.Offset, buffer.Count);
 
 		private TimeSpan _reconnectInterval = TimeSpan.FromSeconds(2);
 
@@ -343,7 +354,7 @@
 							if (token.IsCancellationRequested)
 								break;
 
-							_error(new InvalidOperationException($"Error parsing string '{processBuf.UTF8()}'.", ex));
+							_error(new InvalidOperationException($"Error parsing string '{GetString(processBuf)}'.", ex));
 
 							if (++errorCount < maxParsingErrors)
 								continue;
@@ -450,7 +461,7 @@
 				var json = obj as string ?? ToJson(obj);
 				_verboseLog("Send: '{0}'", json);
 
-				sendBuf = json.UTF8();
+				sendBuf = Encoding.GetBytes(json);
 			}
 
 			return SendAsync(sendBuf, WebSocketMessageType.Text, cancellationToken, subId, pre);
@@ -483,6 +494,8 @@
 			{
 				try
 				{
+					_verboseLog("ReSend: '{0}'", Encoding.GetString(buf));
+
 					if (pre is not null)
 						await pre(id, cancellationToken);
 
