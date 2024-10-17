@@ -100,6 +100,20 @@
 			BufferSizeUncompress = BufferSize * 10;
 		}
 
+		private TimeSpan _reconnectInterval = TimeSpan.FromSeconds(2);
+
+		public TimeSpan ReconnectInterval
+		{
+			get => _reconnectInterval;
+			set
+			{
+				if (value < TimeSpan.Zero)
+					throw new ArgumentOutOfRangeException(nameof(value));
+
+				_reconnectInterval = value;
+			}
+		}
+
 		private TimeSpan _resendInterval = TimeSpan.FromSeconds(2);
 
 		public TimeSpan ResendInterval
@@ -185,7 +199,7 @@
 						if (attempts > 0 || attempts == -1)
 						{
 							_errorLog("Reconnect failed. Attemps left {0}.", attempts);
-							await Task.Delay(ResendInterval, token);
+							await ReconnectInterval.Delay(token);
 							continue;
 						}
 
@@ -326,6 +340,9 @@
 						}
 						catch (Exception ex)
 						{
+							if (token.IsCancellationRequested)
+								break;
+
 							_error(new InvalidOperationException($"Error parsing string '{processBuf.UTF8()}'.", ex));
 
 							if (++errorCount < maxParsingErrors)
@@ -395,8 +412,10 @@
 					{
 						await ConnectImpl(source, true, attempts, token);
 					}
-					catch (OperationCanceledException)
+					catch
 					{
+						if (!token.IsCancellationRequested)
+							throw;
 					}
 				}
 			}
@@ -468,10 +487,12 @@
 						await pre(id, cancellationToken);
 
 					await SendAsync(buf, type, cancellationToken);
+					await ResendInterval.Delay(cancellationToken);
 				}
 				catch (Exception ex)
 				{
-					_error(ex);
+					if (!cancellationToken.IsCancellationRequested)
+						_error(ex);
 				}
 			}
 		}
