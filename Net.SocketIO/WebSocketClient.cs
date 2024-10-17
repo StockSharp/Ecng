@@ -21,7 +21,7 @@
 
 		private readonly Action<Exception> _error;
 		private readonly Action _connected;
-		private readonly Action<bool> _disconnected;
+		private readonly Action<WebSocketDropReasons> _disconnected;
 		private readonly Func<WebSocketClient, ArraySegment<byte>, CancellationToken, ValueTask> _process;
 		private readonly Action<string, object> _infoLog;
 		private readonly Action<string, object> _errorLog;
@@ -29,7 +29,7 @@
 
 		private readonly CachedSynchronizedList<(long subId, byte[] buffer, WebSocketMessageType type, Func<long, CancellationToken, ValueTask> pre)> _reConnectCommands = [];
 
-		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<string> process,
+		public WebSocketClient(Action connected, Action<WebSocketDropReasons> disconnected, Action<Exception> error, Action<string> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
 			: this(connected, disconnected, error, (c, s) => process(s), infoLog, errorLog, verbose, verbose2)
 		{
@@ -37,7 +37,7 @@
 				throw new ArgumentNullException(nameof(process));
 		}
 
-		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<object> process,
+		public WebSocketClient(Action connected, Action<WebSocketDropReasons> disconnected, Action<Exception> error, Action<object> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
 			: this(connected, disconnected, error, (c, s) => process(s.DeserializeObject<object>()), infoLog, errorLog, verbose, verbose2)
 		{
@@ -45,7 +45,7 @@
 				throw new ArgumentNullException(nameof(process));
 		}
 
-		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<WebSocketClient, string> process,
+		public WebSocketClient(Action connected, Action<WebSocketDropReasons> disconnected, Action<Exception> error, Action<WebSocketClient, string> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
 			: this(connected, disconnected, error, BytesToString(process, verbose2), infoLog, errorLog, verbose)
 		{
@@ -64,7 +64,7 @@
 			};
 		}
 
-		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<ArraySegment<byte>> process,
+		public WebSocketClient(Action connected, Action<WebSocketDropReasons> disconnected, Action<Exception> error, Action<ArraySegment<byte>> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
 			: this(connected, disconnected, error, (c, b) => process(b), infoLog, errorLog, verbose)
 		{
@@ -72,7 +72,7 @@
 				throw new ArgumentNullException(nameof(process));
 		}
 
-		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<WebSocketClient, ArraySegment<byte>> process,
+		public WebSocketClient(Action connected, Action<WebSocketDropReasons> disconnected, Action<Exception> error, Action<WebSocketClient, ArraySegment<byte>> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
 			: this(connected, disconnected, error, (ws, buffer, token) =>
 			{
@@ -84,7 +84,7 @@
 				throw new ArgumentNullException(nameof(process));
 		}
 
-		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error,
+		public WebSocketClient(Action connected, Action<WebSocketDropReasons> disconnected, Action<Exception> error,
 			Func<WebSocketClient, ArraySegment<byte>, CancellationToken, ValueTask> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
 		{
@@ -139,7 +139,23 @@
 			}
 		}
 
-		public int ReconnectAttempts { get; set; }
+		private int _reconnectAttempts;
+
+		/// <summary>
+		/// -1 means infinite.
+		/// 0 means no reconnect.
+		/// </summary>
+		public int ReconnectAttempts
+		{
+			get => _reconnectAttempts;
+			set
+			{
+				if (value < -1)
+					throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+
+				_reconnectAttempts = value;
+			}
+		}
 
 		public event Func<ArraySegment<byte>, byte[], int> PreProcess;
 
@@ -179,49 +195,41 @@
 			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
-			try
+			while (true)
 			{
-				while (true)
-				{
-					token.ThrowIfCancellationRequested();
+				token.ThrowIfCancellationRequested();
 
-					if (attempts > 0)
-						attempts--;
+				if (attempts > 0)
+					attempts--;
 
-					var ws = new ClientWebSocket();
-					_ws = ws;
+				var ws = new ClientWebSocket();
+				_ws = ws;
 
 #if NET5_0_OR_GREATER
 
-					ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
+				ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
 
 #endif
 
-					_init?.Invoke(ws);
+				_init?.Invoke(ws);
 
-					try
-					{
-						_infoLog("Connecting to {0}...", _url);
-						await ws.ConnectAsync(_url, token);
-						break;
-					}
-					catch
-					{
-						if (attempts > 0 || attempts == -1)
-						{
-							_errorLog("Reconnect failed. Attemps left {0}.", attempts);
-							await ReconnectInterval.Delay(token);
-							continue;
-						}
-
-						throw;
-					}
+				try
+				{
+					_infoLog("Connecting to {0}...", _url);
+					await ws.ConnectAsync(_url, token);
+					break;
 				}
-			}
-			catch (OperationCanceledException)
-			{
-				_infoLog("Connection {0} cannot be processed. Cancellation invoked.", _url);
-				throw;
+				catch
+				{
+					if (attempts > 0 || attempts == -1)
+					{
+						_errorLog("Reconnect failed. Attemps left {0}.", attempts);
+						await ReconnectInterval.Delay(token);
+						continue;
+					}
+
+					throw;
+				}
 			}
 
 			if (_immediateConnect)
@@ -413,21 +421,30 @@
 
 				var expected = _disconnectionStates.TryGetAndRemove(source);
 				_infoLog("websocket disconnected, {0}", $"expected={expected}, attempts={attempts}");
-				_disconnected(expected);
 
-				if (!expected && (attempts > 0 || attempts == -1))
+				if (expected)
+					_disconnected(WebSocketDropReasons.Expected);
+				else
 				{
-					_infoLog("Socket re-connecting '{0}'.", _url);
+					if (attempts > 0 || attempts == -1)
+					{
+						_disconnected(WebSocketDropReasons.Reconnecting);
 
-					try
-					{
-						await ConnectImpl(source, true, attempts, token);
+						_infoLog("Socket re-connecting '{0}'.", _url);
+
+						try
+						{
+							await ConnectImpl(source, true, attempts, token);
+							return;
+						}
+						catch (Exception ex)
+						{
+							if (!token.IsCancellationRequested)
+								_error(ex);
+						}
 					}
-					catch
-					{
-						if (!token.IsCancellationRequested)
-							throw;
-					}
+
+					_disconnected(WebSocketDropReasons.Unexpected);
 				}
 			}
 			catch (Exception ex)
