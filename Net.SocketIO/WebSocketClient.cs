@@ -27,7 +27,7 @@
 		private readonly Action<string, object> _errorLog;
 		private readonly Action<string, object> _verboseLog;
 
-		private readonly CachedSynchronizedList<(long subId, byte[] buffer, WebSocketMessageType type)> _reConnectCommands = [];
+		private readonly CachedSynchronizedList<(long subId, byte[] buffer, WebSocketMessageType type, Func<long, CancellationToken, ValueTask> pre)> _reConnectCommands = [];
 
 		public WebSocketClient(Action connected, Action<bool> disconnected, Action<Exception> error, Action<string> process,
 			Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
@@ -418,13 +418,13 @@
 			=> obj.ToJson(Indent);
 #endif
 
-		public void Send(object obj, long subId = default)
-			=> AsyncHelper.Run(() => SendAsync(obj, subId));
+		public void Send(object obj, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
+			=> AsyncHelper.Run(() => SendAsync(obj, subId, pre));
 
-		public ValueTask SendAsync(object obj, long subId = default)
-			=> SendAsync(obj, _source.Token, subId);
+		public ValueTask SendAsync(object obj, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
+			=> SendAsync(obj, _source.Token, subId, pre);
 
-		public ValueTask SendAsync(object obj, CancellationToken cancellationToken, long subId = default)
+		public ValueTask SendAsync(object obj, CancellationToken cancellationToken, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 		{
 			if (obj is not byte[] sendBuf)
 			{
@@ -434,22 +434,22 @@
 				sendBuf = json.UTF8();
 			}
 
-			return SendAsync(sendBuf, WebSocketMessageType.Text, cancellationToken, subId);
+			return SendAsync(sendBuf, WebSocketMessageType.Text, cancellationToken, subId, pre);
 		}
 
-		public void Send(byte[] sendBuf, WebSocketMessageType type, long subId = default)
-			=> AsyncHelper.Run(() => SendAsync(sendBuf, type, subId));
+		public void Send(byte[] sendBuf, WebSocketMessageType type, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
+			=> AsyncHelper.Run(() => SendAsync(sendBuf, type, subId, pre));
 
-		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, long subId = default)
-			=> SendAsync(sendBuf, type, _source.Token, subId);
+		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
+			=> SendAsync(sendBuf, type, _source.Token, subId, pre);
 
-		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken, long subId = default)
+		public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 		{
 			if (_ws is not ClientWebSocket ws)
 				return default;
 
 			if (subId > 0)
-				_reConnectCommands.Add((subId, sendBuf.ToArray(), type));
+				_reConnectCommands.Add((subId, sendBuf.ToArray(), type, pre));
 			else if (subId < 0) // unsubscribe
 				RemoveResend(subId);
 
@@ -458,16 +458,21 @@
 
 		public async ValueTask ResendAsync(CancellationToken cancellationToken)
 		{
-			try
-			{
-				_infoLog("Reconnect commands: {0}", _reConnectCommands.Count);
+			_infoLog("Reconnect commands: {0}", _reConnectCommands.Count);
 
-				foreach (var (_, buf, type) in _reConnectCommands.Cache)
-					await SendAsync(buf, type, cancellationToken);
-			}
-			catch (Exception ex)
+			foreach (var (id, buf, type, pre) in _reConnectCommands.Cache)
 			{
-				_error(ex);
+				try
+				{
+					if (pre is not null)
+						await pre(id, cancellationToken);
+
+					await SendAsync(buf, type, cancellationToken);
+				}
+				catch (Exception ex)
+				{
+					_error(ex);
+				}
 			}
 		}
 
