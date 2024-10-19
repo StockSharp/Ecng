@@ -56,14 +56,15 @@ public class WebSocketClient : Disposable
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 
-		if (verboseLog is null)
-			throw new ArgumentNullException(nameof(verboseLog));
+		//if (verboseLog is null)
+		//	throw new ArgumentNullException(nameof(verboseLog));
 
 		return (c, b) =>
 		{
+			if (verboseLog is not null)
+				verboseLog("{0}", c.GetString(b));
+
 			using var reader = new JsonTextReader(new StreamReader(new MemoryStream(b.Array, b.Offset, b.Count), c.Encoding));
-			var recv = c.GetString(b);
-			verboseLog("{0}", recv);
 			process(reader);
 		};
 	}
@@ -79,13 +80,13 @@ public class WebSocketClient : Disposable
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 
-		if (verboseLog is null)
-			throw new ArgumentNullException(nameof(verboseLog));
+		//if (verboseLog is null)
+		//	throw new ArgumentNullException(nameof(verboseLog));
 
 		return (c, b) =>
 		{
 			var recv = c.GetString(b);
-			verboseLog("{0}", recv);
+			verboseLog?.Invoke("{0}", recv);
 			process(c, recv);
 		};
 	}
@@ -119,7 +120,7 @@ public class WebSocketClient : Disposable
 		_process = process ?? throw new ArgumentNullException(nameof(process));
 		_infoLog = infoLog ?? throw new ArgumentNullException(nameof(infoLog));
 		_errorLog = errorLog ?? throw new ArgumentNullException(nameof(errorLog));
-		_verboseLog = verboseLog ?? throw new ArgumentNullException(nameof(verboseLog));
+		_verboseLog = verboseLog/* ?? throw new ArgumentNullException(nameof(verboseLog))*/;
 
 		BufferSize = 1024 * 1024;
 		BufferSizeUncompress = BufferSize * 10;
@@ -513,8 +514,7 @@ public class WebSocketClient : Disposable
 		if (obj is not byte[] sendBuf)
 		{
 			var json = obj as string ?? ToJson(obj);
-			_verboseLog("Send: '{0}'", json);
-
+			_verboseLog?.Invoke("Send: '{0}'", json);
 			sendBuf = Encoding.GetBytes(json);
 		}
 
@@ -548,7 +548,8 @@ public class WebSocketClient : Disposable
 		{
 			try
 			{
-				_verboseLog("ReSend: '{0}'", Encoding.GetString(buf));
+				if (_verboseLog is not null)
+					_verboseLog("ReSend: '{0}'", Encoding.GetString(buf));
 
 				if (pre is not null)
 					await pre(id, cancellationToken);
