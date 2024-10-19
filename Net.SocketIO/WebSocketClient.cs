@@ -17,7 +17,6 @@ public class WebSocketClient : Disposable
 {
 	private ClientWebSocket _ws;
 	private CancellationTokenSource _source;
-	private bool _expectedDisconnect;
 
 	private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = [];
 
@@ -208,10 +207,9 @@ public class WebSocketClient : Disposable
 
 		var source = new CancellationTokenSource();
 
-		_expectedDisconnect = false;
 		_source = source;
 
-		_disconnectionStates[source] = _expectedDisconnect;
+		_disconnectionStates[source] = false;
 
 		return ConnectImpl(source, false, 0, cancellationToken == default ? source.Token : cancellationToken);
 	}
@@ -281,19 +279,17 @@ public class WebSocketClient : Disposable
 
 	public bool IsConnected => _ws != null;
 
-	public void Disconnect(bool expectedDisconnect = true)
+	public void Disconnect()
 	{
 		if (_source is null)
 			throw new InvalidOperationException("Not connected.");
 
 		RaiseStateChanged(ConnectionStates.Disconnecting);
 
-		_expectedDisconnect = expectedDisconnect;
-		_disconnectionStates[_source] = expectedDisconnect;
+		_disconnectionStates[_source] = true;
 		_source.Cancel();
-
-		if (expectedDisconnect)
-			_reConnectCommands.Clear();
+		
+		_reConnectCommands.Clear();
 	}
 
 	public TimeSpan DisconnectTimeout = TimeSpan.FromSeconds(10);
