@@ -234,7 +234,7 @@ public class WebSocketClient : Disposable
 		}
 
 		if (_immediateConnect)
-			_stateChanged.Invoke(WebSocketStates.Connected);
+			_stateChanged.Invoke(reconnect ? WebSocketStates.Restored : WebSocketStates.Connected);
 
 		_ = Task.Run(() => OnReceive(source), token);
 

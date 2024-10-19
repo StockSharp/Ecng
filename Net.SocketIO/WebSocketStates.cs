@@ -6,5 +6,6 @@ public enum WebSocketStates
 	Connecting,
 	Connected,
 	Reconnecting,
+	Restored,
 	Failed,
 }
