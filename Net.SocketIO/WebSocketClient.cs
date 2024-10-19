@@ -173,9 +173,9 @@ public class WebSocketClient : Disposable
 
 	public ValueTask ConnectAsync(string url, bool immediateConnect, Action<ClientWebSocket> init = null, CancellationToken cancellationToken = default)
 	{
-		_stateChanged(WebSocketStates.Connecting);
+		RaiseStateChanged(WebSocketStates.Connecting);
 
-		_url = new Uri(url);
+		_url = new(url);
 		_immediateConnect = immediateConnect;
 		_init = init;
 
@@ -189,6 +189,16 @@ public class WebSocketClient : Disposable
 		_disconnectionStates[source] = _expectedDisconnect;
 
 		return ConnectImpl(source, false, 0, cancellationToken == default ? source.Token : cancellationToken);
+	}
+
+	private void RaiseStateChanged(WebSocketStates state)
+	{
+		if (state == WebSocketStates.Failed)
+			_errorLog("{0}", state);
+		else
+			_infoLog("{0}", state);
+
+		_stateChanged(state);
 	}
 
 	private async ValueTask ConnectImpl(CancellationTokenSource source, bool reconnect, int attempts, CancellationToken token)
@@ -234,7 +244,7 @@ public class WebSocketClient : Disposable
 		}
 
 		if (_immediateConnect)
-			_stateChanged.Invoke(reconnect ? WebSocketStates.Restored : WebSocketStates.Connected);
+			RaiseStateChanged(reconnect ? WebSocketStates.Restored : WebSocketStates.Connected);
 
 		_ = Task.Run(() => OnReceive(source), token);
 
@@ -424,12 +434,12 @@ public class WebSocketClient : Disposable
 			_infoLog("websocket disconnected, {0}", $"expected={expected}, attempts={attempts}");
 
 			if (expected)
-				_stateChanged(WebSocketStates.Disconnected);
+				RaiseStateChanged(WebSocketStates.Disconnected);
 			else
 			{
 				if (attempts > 0 || attempts == -1)
 				{
-					_stateChanged(WebSocketStates.Reconnecting);
+					RaiseStateChanged(WebSocketStates.Reconnecting);
 
 					_infoLog("Socket re-connecting '{0}'.", _url);
 
@@ -445,7 +455,7 @@ public class WebSocketClient : Disposable
 					}
 				}
 
-				_stateChanged(WebSocketStates.Failed);
+				RaiseStateChanged(WebSocketStates.Failed);
 			}
 		}
 		catch (Exception ex)
