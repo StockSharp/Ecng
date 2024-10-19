@@ -189,18 +189,16 @@ public class WebSocketClient : Disposable
 #endif
 
 	private Uri _url;
-	private bool _immediateConnect;
 	private Action<ClientWebSocket> _init;
 
-	public void Connect(string url, bool immediateConnect, Action<ClientWebSocket> init = null)
-		=> AsyncHelper.Run(() => ConnectAsync(url, immediateConnect, init));
+	public void Connect(string url, Action<ClientWebSocket> init = null)
+		=> AsyncHelper.Run(() => ConnectAsync(url, init));
 
-	public ValueTask ConnectAsync(string url, bool immediateConnect, Action<ClientWebSocket> init = null, CancellationToken cancellationToken = default)
+	public ValueTask ConnectAsync(string url, Action<ClientWebSocket> init = null, CancellationToken cancellationToken = default)
 	{
 		RaiseStateChanged(ConnectionStates.Connecting);
 
 		_url = new(url);
-		_immediateConnect = immediateConnect;
 		_init = init;
 
 		_reConnectCommands.Clear();
@@ -266,8 +264,7 @@ public class WebSocketClient : Disposable
 			}
 		}
 
-		if (_immediateConnect)
-			RaiseStateChanged(reconnect ? ConnectionStates.Restored : ConnectionStates.Connected);
+		RaiseStateChanged(reconnect ? ConnectionStates.Restored : ConnectionStates.Connected);
 
 		_ = Task.Run(() => OnReceive(source), token);
 
