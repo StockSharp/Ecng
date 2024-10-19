@@ -1,14 +1,14 @@
 ﻿namespace Ecng.Net;
 
-using System.Net.WebSockets;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Net.WebSockets;
 #if NET5_0_OR_GREATER
 using System.Net.Security;
+#endif
 
 using Newtonsoft.Json;
-#endif
 
 using Ecng.Reflection;
 
@@ -43,6 +43,24 @@ public class WebSocketClient : Disposable
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
+	}
+
+	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<JsonTextReader> process,
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
+		: this(stateChanged, error, BytesToReader(process), infoLog, errorLog, verbose)
+	{
+	}
+
+	private static Action<ArraySegment<byte>> BytesToReader(Action<JsonTextReader> process)
+	{
+		if (process is null)
+			throw new ArgumentNullException(nameof(process));
+
+		return buffer =>
+		{
+			using var reader = new JsonTextReader(new StreamReader(new MemoryStream(buffer.Array, buffer.Offset, buffer.Count), Encoding.UTF8));
+			process(reader);
+		};
 	}
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<WebSocketClient, string> process,
