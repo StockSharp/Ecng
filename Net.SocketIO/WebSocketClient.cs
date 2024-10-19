@@ -289,6 +289,8 @@ public class WebSocketClient : Disposable
 		if (_source is null)
 			throw new InvalidOperationException("Not connected.");
 
+		RaiseStateChanged(ConnectionStates.Disconnecting);
+
 		_expectedDisconnect = expectedDisconnect;
 		_disconnectionStates[_source] = expectedDisconnect;
 		_source.Cancel();
