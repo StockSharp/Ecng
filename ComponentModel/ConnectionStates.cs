@@ -1,6 +1,6 @@
-﻿namespace Ecng.Net;
+﻿namespace Ecng.ComponentModel;
 
-public enum WebSocketStates
+public enum ConnectionStates
 {
 	Disconnected,
 	Connecting,
