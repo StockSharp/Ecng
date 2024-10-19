@@ -4,9 +4,6 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Net.WebSockets;
-#if NET5_0_OR_GREATER
-using System.Net.Security;
-#endif
 
 using Newtonsoft.Json;
 
@@ -182,12 +179,6 @@ public class WebSocketClient : Disposable
 
 	public event Func<ArraySegment<byte>, byte[], int> PreProcess;
 
-#if NET5_0_OR_GREATER
-
-	public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; }
-
-#endif
-
 	private Uri _url;
 	private Action<ClientWebSocket> _init;
 
@@ -236,12 +227,6 @@ public class WebSocketClient : Disposable
 
 			var ws = new ClientWebSocket();
 			_ws = ws;
-
-#if NET5_0_OR_GREATER
-
-			ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
-
-#endif
 
 			_init?.Invoke(ws);
 
@@ -486,15 +471,10 @@ public class WebSocketClient : Disposable
 
 	public bool Indent { get; set; } = true;
 
-#if NET5_0_OR_GREATER
 	public JsonSerializerSettings SendSettings { get; set; }
 
 	private string ToJson(object obj)
 		=> obj.ToJson(Indent, SendSettings);
-#else
-	private string ToJson(object obj)
-		=> obj.ToJson(Indent);
-#endif
 
 	public void Send(object obj, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 		=> AsyncHelper.Run(() => SendAsync(obj, subId, pre));
