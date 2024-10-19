@@ -30,81 +30,81 @@ public class WebSocketClient : Disposable
 	private readonly CachedSynchronizedList<(long subId, byte[] buffer, WebSocketMessageType type, Func<long, CancellationToken, ValueTask> pre)> _reConnectCommands = [];
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<string> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
-		: this(stateChanged, error, (c, s) => process(s), infoLog, errorLog, verbose)
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
+		: this(stateChanged, error, (c, s) => process(s), infoLog, errorLog, verboseLog)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 	}
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<object> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
-		: this(stateChanged, error, (c, s) => process(s.DeserializeObject<object>()), infoLog, errorLog, verbose)
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
+		: this(stateChanged, error, (c, s) => process(s.DeserializeObject<object>()), infoLog, errorLog, verboseLog)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 	}
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<JsonTextReader> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
-		: this(stateChanged, error, BytesToReader(process, verbose), infoLog, errorLog, verbose)
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
+		: this(stateChanged, error, BytesToReader(process, verboseLog), infoLog, errorLog, verboseLog)
 	{
 	}
 
-	private static Action<WebSocketClient, ArraySegment<byte>> BytesToReader(Action<JsonTextReader> process, Action<string, object> verbose)
+	private static Action<WebSocketClient, ArraySegment<byte>> BytesToReader(Action<JsonTextReader> process, Action<string, object> verboseLog)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 
-		if (verbose is null)
-			throw new ArgumentNullException(nameof(verbose));
+		if (verboseLog is null)
+			throw new ArgumentNullException(nameof(verboseLog));
 
 		return (c, b) =>
 		{
 			using var reader = new JsonTextReader(new StreamReader(new MemoryStream(b.Array, b.Offset, b.Count), c.Encoding));
 			var recv = c.GetString(b);
-			verbose("{0}", recv);
+			verboseLog("{0}", recv);
 			process(reader);
 		};
 	}
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<WebSocketClient, string> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
-		: this(stateChanged, error, BytesToString(process, verbose), infoLog, errorLog, verbose)
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
+		: this(stateChanged, error, BytesToString(process, verboseLog), infoLog, errorLog, verboseLog)
 	{
 	}
 
-	private static Action<WebSocketClient, ArraySegment<byte>> BytesToString(Action<WebSocketClient, string> process, Action<string, object> verbose)
+	private static Action<WebSocketClient, ArraySegment<byte>> BytesToString(Action<WebSocketClient, string> process, Action<string, object> verboseLog)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 
-		if (verbose is null)
-			throw new ArgumentNullException(nameof(verbose));
+		if (verboseLog is null)
+			throw new ArgumentNullException(nameof(verboseLog));
 
 		return (c, b) =>
 		{
 			var recv = c.GetString(b);
-			verbose("{0}", recv);
+			verboseLog("{0}", recv);
 			process(c, recv);
 		};
 	}
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<ArraySegment<byte>> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
-		: this(stateChanged, error, (c, b) => process(b), infoLog, errorLog, verbose)
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
+		: this(stateChanged, error, (c, b) => process(b), infoLog, errorLog, verboseLog)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 	}
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<WebSocketClient, ArraySegment<byte>> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
 		: this(stateChanged, error, (ws, buffer, token) =>
 		{
 			process(ws, buffer);
 			return default;
-		}, infoLog, errorLog, verbose)
+		}, infoLog, errorLog, verboseLog)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
@@ -112,14 +112,14 @@ public class WebSocketClient : Disposable
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error,
 		Func<WebSocketClient, ArraySegment<byte>, CancellationToken, ValueTask> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
 	{
 		_stateChanged = stateChanged ?? throw new ArgumentNullException(nameof(stateChanged));
 		_error = error ?? throw new ArgumentNullException(nameof(error));
 		_process = process ?? throw new ArgumentNullException(nameof(process));
 		_infoLog = infoLog ?? throw new ArgumentNullException(nameof(infoLog));
 		_errorLog = errorLog ?? throw new ArgumentNullException(nameof(errorLog));
-		_verboseLog = verbose ?? throw new ArgumentNullException(nameof(verbose));
+		_verboseLog = verboseLog ?? throw new ArgumentNullException(nameof(verboseLog));
 
 		BufferSize = 1024 * 1024;
 		BufferSizeUncompress = BufferSize * 10;
