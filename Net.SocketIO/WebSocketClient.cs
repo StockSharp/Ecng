@@ -1,11 +1,7 @@
 ﻿namespace Ecng.Net;
 
-using System.IO;
-using System.Reflection;
 using System.Text;
 using System.Net.WebSockets;
-
-using Newtonsoft.Json;
 
 using Ecng.Reflection;
 using Ecng.ComponentModel;
@@ -19,97 +15,24 @@ public class WebSocketClient : Disposable
 
 	private readonly Action<Exception> _error;
 	private readonly Action<ConnectionStates> _stateChanged;
-	private readonly Func<WebSocketClient, ArraySegment<byte>, CancellationToken, ValueTask> _process;
+	private readonly Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> _process;
 	private readonly Action<string, object> _infoLog;
 	private readonly Action<string, object> _errorLog;
 	private readonly Action<string, object> _verboseLog;
 
 	private readonly CachedSynchronizedList<(long subId, byte[] buffer, WebSocketMessageType type, Func<long, CancellationToken, ValueTask> pre)> _reConnectCommands = [];
 
-	public WebSocketClient(Action<ConnectionStates> stateChanged, Action<Exception> error, Action<string> process,
+	public WebSocketClient(Action<ConnectionStates> stateChanged, Action<Exception> error,
+		Func<WebSocketMessage, CancellationToken, ValueTask> process,
 		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(stateChanged, error, (c, s) => process(s), infoLog, errorLog, verboseLog)
-	{
-		if (process is null)
-			throw new ArgumentNullException(nameof(process));
-	}
-
-	public WebSocketClient(Action<ConnectionStates> stateChanged, Action<Exception> error, Action<object> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(stateChanged, error, (c, s) => process(s.DeserializeObject<object>()), infoLog, errorLog, verboseLog)
-	{
-		if (process is null)
-			throw new ArgumentNullException(nameof(process));
-	}
-
-	public WebSocketClient(Action<ConnectionStates> stateChanged, Action<Exception> error, Action<JsonTextReader> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(stateChanged, error, BytesToReader(process, verboseLog), infoLog, errorLog, verboseLog)
-	{
-	}
-
-	private static Action<WebSocketClient, ArraySegment<byte>> BytesToReader(Action<JsonTextReader> process, Action<string, object> verboseLog)
-	{
-		if (process is null)
-			throw new ArgumentNullException(nameof(process));
-
-		//if (verboseLog is null)
-		//	throw new ArgumentNullException(nameof(verboseLog));
-
-		return (c, b) =>
-		{
-			if (verboseLog is not null)
-				verboseLog("{0}", c.Encoding.GetString(b));
-
-			using var reader = new JsonTextReader(new StreamReader(new MemoryStream(b.Array, b.Offset, b.Count), c.Encoding));
-			process(reader);
-		};
-	}
-
-	public WebSocketClient(Action<ConnectionStates> stateChanged, Action<Exception> error, Action<WebSocketClient, string> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(stateChanged, error, BytesToString(process, verboseLog), infoLog, errorLog, verboseLog)
-	{
-	}
-
-	private static Action<WebSocketClient, ArraySegment<byte>> BytesToString(Action<WebSocketClient, string> process, Action<string, object> verboseLog)
-	{
-		if (process is null)
-			throw new ArgumentNullException(nameof(process));
-
-		//if (verboseLog is null)
-		//	throw new ArgumentNullException(nameof(verboseLog));
-
-		return (c, b) =>
-		{
-			var recv = c.Encoding.GetString(b);
-			verboseLog?.Invoke("{0}", recv);
-			process(c, recv);
-		};
-	}
-
-	public WebSocketClient(Action<ConnectionStates> stateChanged, Action<Exception> error, Action<ArraySegment<byte>> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(stateChanged, error, (c, b) => process(b), infoLog, errorLog, verboseLog)
-	{
-		if (process is null)
-			throw new ArgumentNullException(nameof(process));
-	}
-
-	public WebSocketClient(Action<ConnectionStates> stateChanged, Action<Exception> error, Action<WebSocketClient, ArraySegment<byte>> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(stateChanged, error, (ws, buffer, token) =>
-		{
-			process(ws, buffer);
-			return default;
-		}, infoLog, errorLog, verboseLog)
+		: this(stateChanged, error, (cl, msg, t) => process(msg, t), infoLog, errorLog, verboseLog)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 	}
 
 	public WebSocketClient(Action<ConnectionStates> stateChanged, Action<Exception> error,
-		Func<WebSocketClient, ArraySegment<byte>, CancellationToken, ValueTask> process,
+		Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> process,
 		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
 	{
 		_stateChanged = stateChanged ?? throw new ArgumentNullException(nameof(stateChanged));
@@ -369,7 +292,10 @@ public class WebSocketClient : Disposable
 							processBuf = new(preProcessBuf, 0, count);
 						}
 
-						await _process(this, processBuf, token);
+						if (_verboseLog is not null)
+							_verboseLog("{0}", Encoding.GetString(processBuf));
+
+						await _process(this, new(this, processBuf), token);
 
 						errorCount = 0;
 					}
