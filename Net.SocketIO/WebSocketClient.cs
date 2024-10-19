@@ -30,16 +30,16 @@ public class WebSocketClient : Disposable
 	private readonly CachedSynchronizedList<(long subId, byte[] buffer, WebSocketMessageType type, Func<long, CancellationToken, ValueTask> pre)> _reConnectCommands = [];
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<string> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
-		: this(stateChanged, error, (c, s) => process(s), infoLog, errorLog, verbose, verbose2)
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
+		: this(stateChanged, error, (c, s) => process(s), infoLog, errorLog, verbose)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 	}
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<object> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
-		: this(stateChanged, error, (c, s) => process(s.DeserializeObject<object>()), infoLog, errorLog, verbose, verbose2)
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
+		: this(stateChanged, error, (c, s) => process(s.DeserializeObject<object>()), infoLog, errorLog, verbose)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
@@ -47,37 +47,45 @@ public class WebSocketClient : Disposable
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<JsonTextReader> process,
 		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
-		: this(stateChanged, error, BytesToReader(process), infoLog, errorLog, verbose)
+		: this(stateChanged, error, BytesToReader(process, verbose), infoLog, errorLog, verbose)
 	{
 	}
 
-	private static Action<ArraySegment<byte>> BytesToReader(Action<JsonTextReader> process)
+	private static Action<WebSocketClient, ArraySegment<byte>> BytesToReader(Action<JsonTextReader> process, Action<string, object> verbose)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 
-		return buffer =>
+		if (verbose is null)
+			throw new ArgumentNullException(nameof(verbose));
+
+		return (c, b) =>
 		{
-			using var reader = new JsonTextReader(new StreamReader(new MemoryStream(buffer.Array, buffer.Offset, buffer.Count), Encoding.UTF8));
+			using var reader = new JsonTextReader(new StreamReader(new MemoryStream(b.Array, b.Offset, b.Count), c.Encoding));
+			var recv = c.GetString(b);
+			verbose("{0}", recv);
 			process(reader);
 		};
 	}
 
 	public WebSocketClient(Action<WebSocketStates> stateChanged, Action<Exception> error, Action<WebSocketClient, string> process,
-		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose, Action<string> verbose2)
-		: this(stateChanged, error, BytesToString(process, verbose2), infoLog, errorLog, verbose)
+		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verbose)
+		: this(stateChanged, error, BytesToString(process, verbose), infoLog, errorLog, verbose)
 	{
 	}
 
-	private static Action<WebSocketClient, ArraySegment<byte>> BytesToString(Action<WebSocketClient, string> process, Action<string> verbose2)
+	private static Action<WebSocketClient, ArraySegment<byte>> BytesToString(Action<WebSocketClient, string> process, Action<string, object> verbose)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 
+		if (verbose is null)
+			throw new ArgumentNullException(nameof(verbose));
+
 		return (c, b) =>
 		{
 			var recv = c.GetString(b);
-			verbose2(recv);
+			verbose("{0}", recv);
 			process(c, recv);
 		};
 	}
