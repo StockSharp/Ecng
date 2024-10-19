@@ -1033,6 +1033,9 @@
 		[CLSCompliant(false)]
 		public static string Hex(this byte[] v, uint count, int index = 0) => Hex(v, index, (int)count);
 
+		public static string GetString(this Encoding encoding, ArraySegment<byte> buffer)
+			=> encoding.CheckOnNull(nameof(encoding)).GetString(buffer.Array, buffer.Offset, buffer.Count);
+
 		public static SecureString Secure(this string str)
 			=> str?.ToCharArray().TypedTo<char[], SecureString>();
 

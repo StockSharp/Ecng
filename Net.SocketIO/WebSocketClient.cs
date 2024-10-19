@@ -63,7 +63,7 @@ public class WebSocketClient : Disposable
 		return (c, b) =>
 		{
 			if (verboseLog is not null)
-				verboseLog("{0}", c.GetString(b));
+				verboseLog("{0}", c.Encoding.GetString(b));
 
 			using var reader = new JsonTextReader(new StreamReader(new MemoryStream(b.Array, b.Offset, b.Count), c.Encoding));
 			process(reader);
@@ -86,7 +86,7 @@ public class WebSocketClient : Disposable
 
 		return (c, b) =>
 		{
-			var recv = c.GetString(b);
+			var recv = c.Encoding.GetString(b);
 			verboseLog?.Invoke("{0}", recv);
 			process(c, recv);
 		};
@@ -134,9 +134,6 @@ public class WebSocketClient : Disposable
 		get => _encoding;
 		set => _encoding = value ?? throw new ArgumentNullException(nameof(value));
 	}
-
-	private string GetString(ArraySegment<byte> buffer)
-		=> Encoding.GetString(buffer.Array, buffer.Offset, buffer.Count);
 
 	private TimeSpan _reconnectInterval = TimeSpan.FromSeconds(2);
 
@@ -403,7 +400,7 @@ public class WebSocketClient : Disposable
 						if (token.IsCancellationRequested)
 							break;
 
-						_error(new InvalidOperationException($"Error parsing string '{GetString(processBuf)}'.", ex));
+						_error(new InvalidOperationException($"Error parsing string '{Encoding.GetString(processBuf)}'.", ex));
 
 						if (++errorCount < maxParsingErrors)
 							continue;
