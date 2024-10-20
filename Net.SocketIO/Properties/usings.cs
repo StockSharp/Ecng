@@ -6,6 +6,7 @@ global using global::System.Net;
 global using global::System.Linq;
 global using global::System.IO;
 global using global::System.Reflection;
+global using global::System.Text;
 
 global using global::Ecng.Common;
 global using global::Ecng.Collections;

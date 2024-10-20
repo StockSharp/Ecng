@@ -1,6 +1,5 @@
 ﻿namespace Ecng.Net;
 
-using System.Text;
 using System.Net.WebSockets;
 
 using Ecng.Reflection;
@@ -295,7 +294,7 @@ public class WebSocketClient : Disposable
 						if (_verboseLog is not null)
 							_verboseLog("{0}", Encoding.GetString(processBuf));
 
-						await _process(this, new(this, processBuf), token);
+						await _process(this, new(Encoding, processBuf), token);
 
 						errorCount = 0;
 					}
