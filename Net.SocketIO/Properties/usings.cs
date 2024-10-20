@@ -11,6 +11,7 @@ global using global::System.Text;
 global using global::Ecng.Common;
 global using global::Ecng.Collections;
 global using global::Ecng.Serialization;
+global using global::Ecng.ComponentModel;
 
 global using global::RestSharp;
 

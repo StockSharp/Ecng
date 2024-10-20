@@ -3,7 +3,6 @@
 using System.Net.WebSockets;
 
 using Ecng.Reflection;
-using Ecng.ComponentModel;
 
 public class WebSocketClient : Disposable
 {
