@@ -98,7 +98,7 @@ public class WebSocketClient : Disposable
 		}
 	}
 
-    public Func<bool, CancellationToken, ValueTask> PostConnect { get; set; }
+	public Func<bool, CancellationToken, ValueTask> PostConnect { get; set; }
 
 	public event Func<ArraySegment<byte>, byte[], int> PreProcess;
 
