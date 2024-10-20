@@ -11,7 +11,7 @@ public readonly struct WebSocketMessage(Encoding encoding, ArraySegment<byte> bu
 	public dynamic AsObject()
 		=> AsObject<object>();
 
-	public dynamic AsObject<T>()
+	public T AsObject<T>()
 		=> AsString().DeserializeObject<T>();
 
 	public JsonTextReader AsReader()
