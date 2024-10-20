@@ -98,6 +98,8 @@ public class WebSocketClient : Disposable
 		}
 	}
 
+    public Func<bool, CancellationToken, ValueTask> PostConnect { get; set; }
+
 	public event Func<ArraySegment<byte>, byte[], int> PreProcess;
 
 	private Uri _url;
@@ -155,6 +157,10 @@ public class WebSocketClient : Disposable
 			{
 				_infoLog("Connecting to {0}...", _url);
 				await ws.ConnectAsync(_url, token);
+
+				if (PostConnect is not null)
+					await PostConnect(reconnect, token);
+
 				break;
 			}
 			catch
