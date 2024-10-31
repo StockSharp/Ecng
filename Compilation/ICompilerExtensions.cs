@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Compilation;
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -27,4 +28,17 @@ public static class ICompilerExtensions
 
 	public static IEnumerable<string> ToValidPaths(this IEnumerable<CodeReference> references)
 		=> references.Where(r => r.IsValid).Select(r => r.FullLocation).ToArray();
+
+	/// <summary>
+	/// Throw if errors.
+	/// </summary>
+	/// <param name="res"><see cref="CompilationResult"/></param>
+	/// <returns><see cref="CompilationResult"/></returns>
+	public static CompilationResult ThrowIfErrors(this CompilationResult res)
+	{
+		if (res.HasErrors())
+			throw new InvalidOperationException($"Compilation error: {res.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Take(2).Select(e => e.ToString()).JoinN()}");
+
+		return res;
+	}
 }
