@@ -20,12 +20,12 @@ public class CodeReference : IPersistable
 	/// <summary>
 	/// The assembly name.
 	/// </summary>
-	public string Name => Path.GetFileNameWithoutExtension(Location);
+	public virtual string Name => Path.GetFileNameWithoutExtension(Location);
 
 	/// <summary>
 	/// The path to the assembly.
 	/// </summary>
-	public string Location { get; set; }
+	public virtual string Location { get; set; }
 
 	/// <summary>
 	/// <see cref="Location"/>.
@@ -56,13 +56,13 @@ public class CodeReference : IPersistable
 	/// <summary>
 	/// Is valid.
 	/// </summary>
-	public bool IsValid => File.Exists(FullLocation);
+	public virtual bool IsValid => File.Exists(FullLocation);
 
 	/// <summary>
 	/// Load settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public void Load(SettingsStorage storage)
+	public virtual void Load(SettingsStorage storage)
 	{
 		Location = storage.GetValue<string>(nameof(Location));
 	}
@@ -71,7 +71,7 @@ public class CodeReference : IPersistable
 	/// Save settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public void Save(SettingsStorage storage)
+	public virtual void Save(SettingsStorage storage)
 	{
 		storage.SetValue(nameof(Location), Location);
 	}

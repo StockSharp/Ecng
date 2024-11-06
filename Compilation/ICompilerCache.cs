@@ -24,7 +24,7 @@ public class InMemoryCompilerCache : ICompilerCache
 	private readonly SynchronizedDictionary<string, (DateTime till, byte[] assembly)> _cache = [];
 
 	public InMemoryCompilerCache(TimeSpan timeout)
-    {
+	{
 		if (timeout <= TimeSpan.Zero)
 			throw new ArgumentOutOfRangeException(nameof(timeout), timeout, "Must be positive");
 
