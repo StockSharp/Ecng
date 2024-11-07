@@ -1,6 +1,9 @@
 namespace Ecng.Compilation;
 
+using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Ecng.Common;
 using Ecng.Serialization;
@@ -8,7 +11,7 @@ using Ecng.Serialization;
 /// <summary>
 /// The reference to the .NET assembly.
 /// </summary>
-public class AssemblyReference : BaseFileReference
+public class AssemblyReference : BaseCodeReference
 {
 	/// <summary>
 	/// Initializes a new instance of the <see cref="AssemblyReference"/>.
@@ -16,6 +19,11 @@ public class AssemblyReference : BaseFileReference
 	public AssemblyReference()
 	{
 	}
+
+	public override string Name => Path.GetFileNameWithoutExtension(FileName);
+	public override bool IsValid => File.Exists(FileName);
+
+	public string FileName { get; set; }
 
 	/// <summary>
 	/// <see cref="Location"/>.
@@ -43,9 +51,18 @@ public class AssemblyReference : BaseFileReference
 		}
 	}
 
-	// TODO 2024-11-07 Remove few years later
 	public override void Load(SettingsStorage storage)
 	{
 		FileName = storage.GetValue<string>(nameof(FileName)) ?? storage.GetValue<string>(nameof(Location));
+	}
+
+	public override void Save(SettingsStorage storage)
+	{
+		storage.SetValue(nameof(FileName), FileName);
+	}
+
+	public override ValueTask<IEnumerable<(string name, byte[] body)>> GetImages(CancellationToken cancellationToken)
+	{
+		return new([FileName.ToRef()]);
 	}
 }
