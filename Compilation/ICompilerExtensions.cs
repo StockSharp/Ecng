@@ -26,8 +26,9 @@ public static class ICompilerExtensions
 	public static CompilationResult Compile(this ICompiler compiler, string name, string body, IEnumerable<string> refs, CancellationToken cancellationToken = default)
 		=> compiler.Compile(name, [body], refs, cancellationToken);
 
-	public static IEnumerable<string> ToValidPaths(this IEnumerable<CodeReference> references)
-		=> references.Where(r => r.IsValid).Select(r => r.FullLocation).ToArray();
+	public static IEnumerable<string> ToValidPaths<TRef>(this IEnumerable<TRef> references)
+		where TRef : ICodeReference
+		=> references.Where(r => r.IsValid).Select(r => r.Location).ToArray();
 
 	/// <summary>
 	/// Throw if errors.

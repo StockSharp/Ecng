@@ -8,40 +8,40 @@ using Ecng.Serialization;
 /// <summary>
 /// The reference to the .NET assembly.
 /// </summary>
-public class CodeReference : IPersistable
+public class AssemblyReference : ICodeReference
 {
 	/// <summary>
-	/// Initializes a new instance of the <see cref="CodeReference"/>.
+	/// Initializes a new instance of the <see cref="AssemblyReference"/>.
 	/// </summary>
-	public CodeReference()
+	public AssemblyReference()
 	{
 	}
 
 	/// <summary>
 	/// The assembly name.
 	/// </summary>
-	public virtual string Name => Path.GetFileNameWithoutExtension(Location);
+	public string Name => Path.GetFileNameWithoutExtension(FileName);
 
 	/// <summary>
 	/// The path to the assembly.
 	/// </summary>
-	public virtual string Location { get; set; }
+	public string FileName { get; set; }
 
 	/// <summary>
 	/// <see cref="Location"/>.
 	/// </summary>
-	public string FullLocation
+	public string Location
 	{
 		get
 		{
-			var location = Location;
+			var fileName = FileName;
 
-			if (location.IsEmpty())
+			if (fileName.IsEmpty())
 				return string.Empty;
 
-			var fileName = Path.GetFileName(Location);
+			fileName = Path.GetFileName(fileName);
 
-			if (location.EqualsIgnoreCase(fileName))
+			if (fileName.EqualsIgnoreCase(FileName))
 			{
 				var tmp = Path.Combine(ICompilerExtensions.RuntimePath, fileName);
 
@@ -49,33 +49,33 @@ public class CodeReference : IPersistable
 					return tmp;
 			}
 
-			return location;
+			return fileName;
 		}
 	}
 
 	/// <summary>
 	/// Is valid.
 	/// </summary>
-	public virtual bool IsValid => File.Exists(FullLocation);
+	public bool IsValid => File.Exists(Location);
 
 	/// <summary>
 	/// Load settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public virtual void Load(SettingsStorage storage)
+	public void Load(SettingsStorage storage)
 	{
-		Location = storage.GetValue<string>(nameof(Location));
+		FileName = storage.GetValue<string>(nameof(FileName)) ?? storage.GetValue<string>(nameof(Location));
 	}
 
 	/// <summary>
 	/// Save settings.
 	/// </summary>
 	/// <param name="storage">Settings storage.</param>
-	public virtual void Save(SettingsStorage storage)
+	public void Save(SettingsStorage storage)
 	{
-		storage.SetValue(nameof(Location), Location);
+		storage.SetValue(nameof(FileName), FileName);
 	}
 
 	/// <inheritdoc />
-	public override string ToString() => FullLocation;
+	public override string ToString() => Location;
 }
