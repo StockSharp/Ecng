@@ -43,14 +43,17 @@
 
 		public CompilationLanguages Language { get; } = language;
 
-		private Compilation Create(string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
+		private Compilation Create(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
 		{
 			if (sources is null)
 				throw new ArgumentNullException(nameof(sources));
 
+			if (refs is null)
+				throw new ArgumentNullException(nameof(refs));
+
 			var assemblyName = name + Path.GetRandomFileName();
 
-			var references = refs.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
+			var references = refs.Select(r => MetadataReference.CreateFromImage(r.body)).ToArray();
 
 			switch (Language)
 			{
@@ -73,7 +76,7 @@
 			}
 		}
 
-		async Task<CompilationError[]> ICompiler.Analyse(object analyzer, IEnumerable<object> analyzerSettings, string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
+		async Task<CompilationError[]> ICompiler.Analyse(object analyzer, IEnumerable<object> analyzerSettings, string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
 		{
 			if (analyzer is null)
 				throw new ArgumentNullException(nameof(analyzer));
@@ -84,7 +87,7 @@
 			var compilation = Create(name, sources, refs, cancellationToken);
 
 			var compilationWithAnalyzers = compilation.WithAnalyzers(
-				ImmutableArray.Create((DiagnosticAnalyzer)analyzer),
+				[(DiagnosticAnalyzer)analyzer],
 				new AnalyzerOptions(analyzerSettings.Cast<AdditionalText>().ToImmutableArray()));
 
 			static CompilationErrorTypes ToType(DiagnosticSeverity severity)
@@ -112,7 +115,7 @@
 			}).Distinct().ToArray();
 		}
 
-		CompilationResult ICompiler.Compile(string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken)
+		CompilationResult ICompiler.Compile(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
 		{
 			if (sources is null)
 				throw new ArgumentNullException(nameof(sources));

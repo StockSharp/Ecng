@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Diagnostics;
+	using System.Linq;
 	using System.Threading;
 	using System.Threading.Tasks;
 
@@ -79,7 +80,7 @@ class Class1
 
 			ICompiler compiler = new RoslynCompiler();
 			var (analyzer, settings) = @"T:System.Diagnostics.Process;Don't use Process".ToBannedSymbolsAnalyzer();
-			var res = await compiler.Analyse(analyzer, [settings], "test", [testCode], refs);
+			var res = await compiler.Analyse(analyzer, [settings], "test", [testCode], refs.Select(r => r.ToRef()));
 
 			res.Length.AssertEqual(1);
 			res[0].Message.AssertEqual("The symbol 'Process' is banned in this project: Don't use Process");
