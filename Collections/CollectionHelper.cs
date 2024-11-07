@@ -1024,7 +1024,7 @@
 			if ((startBit + bitCount) > 32)
 				bits.AddRange(ints[1].ToBits((startBit - 32).Max(0), (bitCount - 32)));
 
-			return bits.ToArray();
+			return [.. bits];
 		}
 
 		public static bool[] ToBits(this int value)

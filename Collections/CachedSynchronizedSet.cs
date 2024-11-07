@@ -46,7 +46,7 @@ namespace Ecng.Collections
 			get
 			{
 				lock (SyncRoot)
-					return _cache ??= this.ToArray();
+					return _cache ??= [.. this];
 			}
 		}
 

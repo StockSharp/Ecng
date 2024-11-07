@@ -35,7 +35,7 @@ public static class NugetExtensions
 			targetFrameworks.Add("any");
 		}
 
-		return targetFrameworks.ToArray();
+		return [.. targetFrameworks];
 	}
 
 	public static NuGetFramework RemovePlatformVersion(this NuGetFramework fwk)
@@ -45,7 +45,7 @@ public static class NugetExtensions
 	{
 		var resource = await repo.GetResourceAsync<FindPackageByIdResource>(token);
 
-		return (await resource.GetAllVersionsAsync(packageId, cache, logger, token)).OrderBy(v => v).ToArray();
+		return [.. (await resource.GetAllVersionsAsync(packageId, cache, logger, token)).OrderBy(v => v)];
 	}
 
 	public static async Task<NuGetVersion> GetLastVersionAsync(this SourceRepository repo, string packageId, bool allowPreview, ILogger logger, SourceCacheContext cache, CancellationToken token)

@@ -19,7 +19,7 @@ public static class AsyncEnumerableExtensions
 		await foreach (var item in enu.WithEnforcedCancellation(cancellationToken))
 			list.Add(item);
 
-		return list.ToArray();
+		return [.. list];
 	}
 
 	public static async ValueTask<T> FirstAsync2<T>(this IAsyncEnumerable<T> enu, CancellationToken cancellationToken)

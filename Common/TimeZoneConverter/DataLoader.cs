@@ -72,7 +72,7 @@ namespace TimeZoneConverter
 
             foreach (var grouping in railsMap.GroupBy(x => x.Value, x => x.Key))
             {
-                inverseRailsMap.Add(grouping.Key, grouping.ToList());
+                inverseRailsMap.Add(grouping.Key, [.. grouping]);
             }
 
             // Expand the Inverse Rails map to include similar IANA zones

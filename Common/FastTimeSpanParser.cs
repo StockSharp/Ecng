@@ -122,7 +122,7 @@ namespace Ecng.Common
 				};
 			}
 
-			_parts = parts2.ToArray();
+			_parts = [.. parts2];
 
 			//TimeHelper.InitBounds(template, 'd', out _dayStart, out _dayLen);
 			//TimeHelper.InitBounds(template, 'h', out _hourStart, out _hourLen);

@@ -182,7 +182,7 @@
 
 			foreach (var g in groups)
 			{
-				Remove(g.Key, g.ToList());
+				Remove(g.Key, [.. g]);
 			}
 		}
 

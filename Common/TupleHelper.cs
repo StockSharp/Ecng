@@ -145,7 +145,7 @@
 			var genericType = $"System.{prefix}Tuple`{types.Count}".To<Type>();
 			var specificType = genericType.Make(types);
 
-			return specificType.CreateInstance(args.ToArray());
+			return specificType.CreateInstance([.. args]);
 		}
 
 		public static IEnumerable<object> ToValues<T>(this T tuple)

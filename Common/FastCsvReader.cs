@@ -38,7 +38,7 @@ namespace Ecng.Common
 				throw new ArgumentNullException(nameof(lineSeparator));
 
 			Reader = reader ?? throw new ArgumentNullException(nameof(reader));
-			_lineSeparatorChars = lineSeparator.ToArray();
+			_lineSeparatorChars = [.. lineSeparator];
 
 			for (var i = 0; i < _columnPos.Length; i++)
 				_columnPos[i] = new RefPair<int, int>();

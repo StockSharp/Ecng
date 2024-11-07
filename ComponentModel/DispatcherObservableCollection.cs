@@ -392,7 +392,7 @@ namespace Ecng.ComponentModel
 				lock (SyncRoot)
 				{
 					_isTimerStarted = false;
-					actions = _pendingActions.ToArray();
+					actions = [.. _pendingActions];
 					_pendingActions.Clear();
 				}
 

@@ -151,7 +151,7 @@ namespace Ecng.Common
 				};
 			}
 
-			_parts = parts2.ToArray();
+			_parts = [.. parts2];
 
 			//TimeHelper.InitBounds(template, 'y', out _yearStart, out _yearLen);
 			//TimeHelper.InitBounds(template, 'M', out _monthStart, out _monthLen);

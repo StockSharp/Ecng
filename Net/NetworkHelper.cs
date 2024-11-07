@@ -246,7 +246,7 @@ public static class NetworkHelper
 			}
 		}
 
-		return new string(chars.ToArray());
+		return new string([.. chars]);
 	}
 
 	public static bool IsUrlSafeChar(this char ch)

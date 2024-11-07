@@ -26,7 +26,7 @@
 			get
 			{
 				lock (SyncRoot)
-					return _cachedKeys ??= Keys.ToArray();
+					return _cachedKeys ??= [.. Keys];
 			}
 		}
 
@@ -37,7 +37,7 @@
 			get
 			{
 				lock (SyncRoot)
-					return _cachedValues ??= Values.ToArray();
+					return _cachedValues ??= [.. Values];
 			}
 		}
 
@@ -48,7 +48,7 @@
 			get
 			{
 				lock (SyncRoot)
-					return _cachedPairs ??= this.ToArray();
+					return _cachedPairs ??= [.. this];
 			}
 		}
 

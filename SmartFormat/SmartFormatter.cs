@@ -65,7 +65,7 @@ namespace SmartFormat
             var names = new List<string>();
             foreach (var extension in FormatterExtensions)
                 names.AddRange(extension.Names.Where(n => n != string.Empty).ToArray());
-            return names.ToArray();
+            return [.. names];
         }
 
         /// <summary>

@@ -48,7 +48,7 @@ namespace Ecng.IO.Fossil
 
 		public byte[] ToArray ()
 		{
-			return this.a.ToArray();
+			return [.. this.a];
 		}
 
 	}
