@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 using Ecng.Common;
 
@@ -32,9 +33,14 @@ public static class ICompilerExtensions
 	public static (string name, byte[] body) ToRef(this string path)
 		=> (Path.GetFileNameWithoutExtension(path), File.ReadAllBytes(path));
 
-	public static IEnumerable<string> ToValidPaths<TRef>(this IEnumerable<TRef> references)
+	public static async ValueTask<IEnumerable<(string name, byte[] body)>> ToValidRefImages<TRef>(this IEnumerable<TRef> references, CancellationToken cancellationToken)
 		where TRef : ICodeReference
-		=> references.Where(r => r.IsValid).Select(r => r.Location).ToArray();
+	{
+		if (references is null)
+			throw new ArgumentNullException(nameof(references));
+
+		return (await references.Where(r => r.IsValid).Select(r => r.GetImages(cancellationToken)).WhenAll()).SelectMany(i => i).ToArray();
+	}
 
 	/// <summary>
 	/// Throw if errors.

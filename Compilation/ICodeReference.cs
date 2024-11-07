@@ -1,6 +1,9 @@
 ﻿namespace Ecng.Compilation;
 
+using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Ecng.Serialization;
 
@@ -10,6 +13,8 @@ public interface ICodeReference : IPersistable
 	string Name { get; }
 	string Location { get; }
 	bool IsValid { get; }
+
+	ValueTask<IEnumerable<(string name, byte[] body)>> GetImages(CancellationToken cancellationToken);
 }
 
 public abstract class BaseCodeReference : ICodeReference
@@ -24,6 +29,8 @@ public abstract class BaseCodeReference : ICodeReference
 	public abstract void Save(SettingsStorage storage);
 
 	public override string ToString() => Location;
+
+	public abstract ValueTask<IEnumerable<(string name, byte[] body)>> GetImages(CancellationToken cancellationToken);
 }
 
 public abstract class BaseFileReference : BaseCodeReference
@@ -42,5 +49,10 @@ public abstract class BaseFileReference : BaseCodeReference
 	public override void Save(SettingsStorage storage)
 	{
 		storage.SetValue(nameof(FileName), FileName);
+	}
+
+	public override ValueTask<IEnumerable<(string name, byte[] body)>> GetImages(CancellationToken cancellationToken)
+	{
+		return new([FileName.ToRef()]);
 	}
 }
