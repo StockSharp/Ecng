@@ -3,11 +3,11 @@
 using System;
 using System.Threading;
 
-public class Timeout
+public class AsyncTimeout
 {
     public TimeSpan Value { get; }
 
-	public Timeout(TimeSpan value)
+	public AsyncTimeout(TimeSpan value)
 	{
 		if (value <= TimeSpan.Zero)
 			throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
