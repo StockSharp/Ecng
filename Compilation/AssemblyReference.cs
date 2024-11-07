@@ -21,7 +21,7 @@ public class AssemblyReference : BaseCodeReference
 	}
 
 	public override string Name => Path.GetFileNameWithoutExtension(FileName);
-	public override bool IsValid => File.Exists(FileName);
+	public override bool IsValid => File.Exists(Location);
 
 	public string FileName { get; set; }
 

@@ -8,10 +8,10 @@ using Ecng.Serialization;
 
 public class NuGetReference : BaseCodeReference
 {
-    public string PackageId { get; set; }
-    public string Version { get; set; }
+	public string PackageId { get; set; }
+	public string Version { get; set; }
 
-    public override string Name => $"{PackageId} v{Version}";
+	public override string Name => $"{PackageId} v{Version}";
 	public override string Location => string.Empty;
 	public override bool IsValid => true;
 
