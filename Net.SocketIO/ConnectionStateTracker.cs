@@ -30,28 +30,38 @@ public class ConnectionStateTracker : Disposable, IConnection
 		public event Action<ConnectionWrapper, ConnectionStates> StateChanged;
 	}
 
-	private readonly ConnectionWrapper[] _connections;
+	private readonly CachedSynchronizedDictionary<IConnection, ConnectionWrapper> _connections = [];
 	private readonly SyncObject _currStateLock = new();
 	private ConnectionStates _currState = ConnectionStates.Disconnected;
 
 	public event Action<ConnectionStates> StateChanged;
 
-	public ConnectionStateTracker(IEnumerable<IConnection> connections)
+	public ValueTask Connect(CancellationToken cancellationToken)
+		=> Connections.Select(c => c.Connect(cancellationToken)).WhenAll();
+
+	public void Disconnect()
+		=> Connections.ForEach(c => c.Disconnect());
+
+	public void Add(IConnection connection)
+		=> _connections.Add(connection, new(connection));
+
+	public bool Remove(IConnection connection)
 	{
-		if (connections is null)
-			throw new ArgumentNullException(nameof(connections));
+		if (!_connections.TryGetAndRemove(connection, out var wrapper))
+			return false;
 
-		_connections = connections.Select(c => new ConnectionWrapper(c)).ToArray();
+		wrapper.StateChanged -= OnConnectionStateChanged;
+		wrapper.Dispose();
 
-		foreach (var wrapper in _connections)
-		{
-			wrapper.StateChanged += OnConnectionStateChanged;
-		}
+		return true;
 	}
+
+	private IConnection[] Connections => _connections.CachedKeys;
+	private ConnectionWrapper[] Wrappers => _connections.CachedValues;
 
 	protected override void DisposeManaged()
 	{
-		foreach (var wrapper in _connections)
+		foreach (var wrapper in Wrappers)
 		{
 			wrapper.StateChanged -= OnConnectionStateChanged;
 			wrapper.Dispose();
@@ -71,23 +81,23 @@ public class ConnectionStateTracker : Disposable, IConnection
 		{
 			ConnectionStates newState;
 
-			if (_connections.All(c => c.State == ConnectionStates.Connected))
+			if (Wrappers.All(c => c.State == ConnectionStates.Connected))
 			{
 				newState = ConnectionStates.Connected;
 			}
-			else if (_connections.Any(c => c.State == ConnectionStates.Reconnecting))
+			else if (Wrappers.Any(c => c.State == ConnectionStates.Reconnecting))
 			{
 				newState = ConnectionStates.Reconnecting;
 			}
-			else if (_connections.All(c => c.State == ConnectionStates.Connected || c.State == ConnectionStates.Restored))
+			else if (Wrappers.All(c => c.State == ConnectionStates.Connected || c.State == ConnectionStates.Restored))
 			{
 				newState = ConnectionStates.Restored;
 			}
-			else if (_connections.All(c => c.State == ConnectionStates.Disconnected || c.State == ConnectionStates.Failed))
+			else if (Wrappers.All(c => c.State == ConnectionStates.Disconnected || c.State == ConnectionStates.Failed))
 			{
 				newState = ConnectionStates.Disconnected;
 			}
-			else if (_connections.All(c => c.State == ConnectionStates.Failed))
+			else if (Wrappers.All(c => c.State == ConnectionStates.Failed))
 			{
 				newState = ConnectionStates.Failed;
 			}
