@@ -130,6 +130,7 @@ public class WebSocketClient : Disposable, IConnection
 		else
 			_infoLog("{0}", state);
 
+		State = state;
 		StateChanged?.Invoke(state);
 	}
 
@@ -177,11 +178,16 @@ public class WebSocketClient : Disposable, IConnection
 
 		_ = Task.Run(() => OnReceive(source), token);
 
-		if (reconnect && _reConnectCommands.Count > 0)
+		if (reconnect && !DisableAutoResend && _reConnectCommands.Count > 0)
 		{
+			await ResendTimeout.Delay(token);
 			await ResendAsync(token);
 		}
 	}
+
+	public bool DisableAutoResend { get; set; }
+	public TimeSpan ResendTimeout { get; set; }
+	public ConnectionStates State { get; private set; }
 
 	public bool IsConnected => _ws != null;
 
