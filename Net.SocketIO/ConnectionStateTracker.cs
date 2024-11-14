@@ -5,11 +5,15 @@ public class ConnectionStateTracker : Disposable, IConnection
 	private class ConnectionWrapper : Disposable
 	{
 		private readonly IConnection _connection;
+		private readonly Action _stateChanged;
+
 		public ConnectionStates State { get; private set; }
 
-		public ConnectionWrapper(IConnection connection)
+		public ConnectionWrapper(IConnection connection, Action stateChanged)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
+			_stateChanged = stateChanged ?? throw new ArgumentNullException(nameof(stateChanged));
+
 			State = ConnectionStates.Disconnected;
 
 			_connection.StateChanged += OnStateChanged;
@@ -24,10 +28,8 @@ public class ConnectionStateTracker : Disposable, IConnection
 		private void OnStateChanged(ConnectionStates newState)
 		{
 			State = newState;
-			StateChanged?.Invoke(this, newState);
+			_stateChanged();
 		}
-
-		public event Action<ConnectionWrapper, ConnectionStates> StateChanged;
 	}
 
 	private readonly CachedSynchronizedDictionary<IConnection, ConnectionWrapper> _connections = [];
@@ -50,14 +52,13 @@ public class ConnectionStateTracker : Disposable, IConnection
 		=> Connections.ForEach(c => c.Disconnect());
 
 	public void Add(IConnection connection)
-		=> _connections.Add(connection, new(connection));
+		=> _connections.Add(connection, new(connection, UpdateOverallState));
 
 	public bool Remove(IConnection connection)
 	{
 		if (!_connections.TryGetAndRemove(connection, out var wrapper))
 			return false;
 
-		wrapper.StateChanged -= OnConnectionStateChanged;
 		wrapper.Dispose();
 
 		return true;
@@ -69,17 +70,9 @@ public class ConnectionStateTracker : Disposable, IConnection
 	protected override void DisposeManaged()
 	{
 		foreach (var wrapper in Wrappers)
-		{
-			wrapper.StateChanged -= OnConnectionStateChanged;
 			wrapper.Dispose();
-		}
 
 		base.DisposeManaged();
-	}
-
-	private void OnConnectionStateChanged(ConnectionWrapper connection, ConnectionStates newState)
-	{
-		UpdateOverallState();
 	}
 
 	private void UpdateOverallState()
