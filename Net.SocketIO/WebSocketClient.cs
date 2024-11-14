@@ -4,7 +4,7 @@ using System.Net.WebSockets;
 
 using Ecng.Reflection;
 
-public class WebSocketClient : Disposable
+public class WebSocketClient : Disposable, IConnection
 {
 	private ClientWebSocket _ws;
 	private CancellationTokenSource _source;
@@ -12,28 +12,30 @@ public class WebSocketClient : Disposable
 	private readonly SynchronizedDictionary<CancellationTokenSource, bool> _disconnectionStates = [];
 
 	private readonly Action<Exception> _error;
-	private readonly Action<ConnectionStates> _stateChanged;
 	private readonly Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> _process;
 	private readonly Action<string, object> _infoLog;
 	private readonly Action<string, object> _errorLog;
 	private readonly Action<string, object> _verboseLog;
+	private readonly Uri _url;
 
 	private readonly CachedSynchronizedList<(long subId, byte[] buffer, WebSocketMessageType type, Func<long, CancellationToken, ValueTask> pre)> _reConnectCommands = [];
 
-	public WebSocketClient(Action<ConnectionStates> stateChanged, Action<Exception> error,
+	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
 		Func<WebSocketMessage, CancellationToken, ValueTask> process,
 		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
-		: this(stateChanged, error, (cl, msg, t) => process(msg, t), infoLog, errorLog, verboseLog)
+		: this(url, stateChanged, error, (cl, msg, t) => process(msg, t), infoLog, errorLog, verboseLog)
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 	}
 
-	public WebSocketClient(Action<ConnectionStates> stateChanged, Action<Exception> error,
+	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
 		Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> process,
 		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
 	{
-		_stateChanged = stateChanged ?? throw new ArgumentNullException(nameof(stateChanged));
+		_url = new(url.ThrowIfEmpty(nameof(url)));
+
+		StateChanged = stateChanged ?? throw new ArgumentNullException(nameof(stateChanged));
 		_error = error ?? throw new ArgumentNullException(nameof(error));
 		_process = process ?? throw new ArgumentNullException(nameof(process));
 		_infoLog = infoLog ?? throw new ArgumentNullException(nameof(infoLog));
@@ -98,22 +100,17 @@ public class WebSocketClient : Disposable
 		}
 	}
 
-	public Func<bool, CancellationToken, ValueTask> PostConnect { get; set; }
-
+	public event Action<ConnectionStates> StateChanged;
+	public event Action<ClientWebSocket> Init;
+	public event Func<bool, CancellationToken, ValueTask> PostConnect;
 	public event Func<ArraySegment<byte>, byte[], int> PreProcess;
 
-	private Uri _url;
-	private Action<ClientWebSocket> _init;
+	public void Connect()
+		=> AsyncHelper.Run(() => ConnectAsync(default));
 
-	public void Connect(string url, Action<ClientWebSocket> init = null)
-		=> AsyncHelper.Run(() => ConnectAsync(url, init));
-
-	public ValueTask ConnectAsync(string url, Action<ClientWebSocket> init = null, CancellationToken cancellationToken = default)
+	public ValueTask ConnectAsync(CancellationToken cancellationToken)
 	{
 		RaiseStateChanged(ConnectionStates.Connecting);
-
-		_url = new(url);
-		_init = init;
 
 		_reConnectCommands.Clear();
 
@@ -133,7 +130,7 @@ public class WebSocketClient : Disposable
 		else
 			_infoLog("{0}", state);
 
-		_stateChanged(state);
+		StateChanged?.Invoke(state);
 	}
 
 	private async ValueTask ConnectImpl(CancellationTokenSource source, bool reconnect, int attempts, CancellationToken token)
@@ -151,7 +148,7 @@ public class WebSocketClient : Disposable
 			var ws = new ClientWebSocket();
 			_ws = ws;
 
-			_init?.Invoke(ws);
+			Init?.Invoke(ws);
 
 			try
 			{

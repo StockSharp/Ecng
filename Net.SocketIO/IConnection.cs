@@ -4,6 +4,6 @@ public interface IConnection
 {
 	event Action<ConnectionStates> StateChanged;
 
-	ValueTask Connect(CancellationToken cancellationToken);
+	ValueTask ConnectAsync(CancellationToken cancellationToken);
 	void Disconnect();
 }
