@@ -36,8 +36,8 @@ public class ConnectionStateTracker : Disposable, IConnection
 
 	public event Action<ConnectionStates> StateChanged;
 
-	public ValueTask Connect(CancellationToken cancellationToken)
-		=> Connections.Select(c => c.Connect(cancellationToken)).WhenAll();
+	public ValueTask ConnectAsync(CancellationToken cancellationToken)
+		=> Connections.Select(c => c.ConnectAsync(cancellationToken)).WhenAll();
 
 	public void Disconnect()
 		=> Connections.ForEach(c => c.Disconnect());
