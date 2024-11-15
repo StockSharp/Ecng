@@ -93,13 +93,13 @@ public class ConnectionStateTracker : Disposable, IConnection
 			{
 				newState = ConnectionStates.Restored;
 			}
-			else if (Wrappers.All(c => c.State == ConnectionStates.Disconnected || c.State == ConnectionStates.Failed))
-			{
-				newState = ConnectionStates.Disconnected;
-			}
 			else if (Wrappers.All(c => c.State == ConnectionStates.Failed))
 			{
 				newState = ConnectionStates.Failed;
+			}
+			else if (Wrappers.All(c => c.State == ConnectionStates.Disconnected || c.State == ConnectionStates.Failed))
+			{
+				newState = ConnectionStates.Disconnected;
 			}
 			else
 			{
