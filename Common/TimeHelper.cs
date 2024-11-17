@@ -266,6 +266,9 @@
 
 		public static IEnumerable<DateTime> Range(this DateTime from, DateTime to, TimeSpan interval)
 		{
+			if (interval <= TimeSpan.Zero)
+				throw new ArgumentOutOfRangeException(nameof(interval), interval, "Invalid value.");
+
 			while (from <= to)
 			{
 				yield return from;
