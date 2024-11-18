@@ -1,6 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <MicrosoftAspNetWebApiClientVer>5.2.9</MicrosoftAspNetWebApiClientVer>
+    <MicrosoftAspNetWebApiClientVer>6.*</MicrosoftAspNetWebApiClientVer>
 
     <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
     <!-- reverted cause other issue happened - https://github.com/dotnet/docfx/issues/9796 -->
