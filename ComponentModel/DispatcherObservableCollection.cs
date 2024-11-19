@@ -41,21 +41,42 @@ namespace Ecng.ComponentModel
 				Count = count;
 			}
 
-			public CollectionAction(Func<object> convert)
-			{
-				Type = ActionTypes.Wait;
-				Items = [];
-				Convert = convert ?? throw new ArgumentNullException(nameof(convert));
-			}
-
 			public ActionTypes Type { get; }
 			public TItem[] Items { get; }
 			public int Index { get; set; }
 			public int Count { get; }
-			public SyncObject SyncRoot { get; set; }
 
-			public Func<object> Convert { get; }
-			public object ConvertResult { get; set; }
+			public virtual void Do() => throw new NotSupportedException();
+		}
+
+		private class CollectionAction<T>(Func<T> convert)
+			: CollectionAction(ActionTypes.Wait)
+		{
+			private readonly SyncObject _sync = new();
+			private readonly Func<T> _convert = convert ?? throw new ArgumentNullException(nameof(convert));
+			private readonly NullableEx<T> _result = new();
+
+			public T Get()
+			{
+				lock (_sync)
+				{
+					if (!_result.HasValue)
+						_sync.Wait();
+
+					return _result.Value;
+				}
+			}
+
+			public override void Do()
+			{
+				var result = _convert();
+
+				lock (_sync)
+				{
+					_result.Value = result;
+					_sync.Pulse();
+				}
+			}
 		}
 
 		private readonly Queue<CollectionAction> _pendingActions = new();
@@ -225,7 +246,7 @@ namespace Ecng.ComponentModel
 		public bool Contains(TItem item)
 		{
 			if (!Dispatcher.CheckAccess())
-				throw new NotSupportedException();
+				return Get(() => Items.Contains(item));
 
 			return Items.Contains(item);
 		}
@@ -251,7 +272,7 @@ namespace Ecng.ComponentModel
 			get
 			{
 				if (!Dispatcher.CheckAccess())
-					return (int)Do(() => Count);
+					return Get(() => Items.Count);
 
 				return Items.Count;
 			}
@@ -274,7 +295,7 @@ namespace Ecng.ComponentModel
 				// NOTE: DevExpress.Data.Helpers.BindingListAdapterBase.RaiseChangedIfNeeded access to IndexOf
 				// https://pastebin.com/4X8yPmwa
 
-				return (int)Do(() => IndexOf(item));
+				return Get(() => Items.IndexOf(item));
 				//throw new NotSupportedException();
 			}
 
@@ -320,7 +341,7 @@ namespace Ecng.ComponentModel
 			{
 				if (!Dispatcher.CheckAccess())
 				{
-					return (TItem)Do(() => this[index]);
+					return Get(() => Items[index]);
 					//throw new NotSupportedException();
 				}
 
@@ -340,21 +361,11 @@ namespace Ecng.ComponentModel
 
 		/// <summary>
 		/// </summary>
-		public object Do(Func<object> func)
+		public T Get<T>(Func<T> func)
 		{
-			if (func == null)
-				throw new ArgumentNullException(nameof(func));
-
-			var action = new CollectionAction(func) { SyncRoot = new SyncObject() };
+			var action = new CollectionAction<T>(func);
 			AddAction(action);
-
-			lock (action.SyncRoot)
-			{
-				if (action.ConvertResult == null)
-					action.SyncRoot.Wait();
-
-				return action.ConvertResult;
-			}
+			return action.Get();
 		}
 
 		private void AddAction(CollectionAction item)
@@ -492,14 +503,7 @@ namespace Ecng.ComponentModel
 						}
 						case ActionTypes.Wait:
 						{
-							var result = action.Convert();
-
-							lock (action.SyncRoot)
-							{
-								action.ConvertResult = result;
-								action.SyncRoot.Pulse();
-							}
-
+							action.Do();
 							break;
 						}
 						default:
