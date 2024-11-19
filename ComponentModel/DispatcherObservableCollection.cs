@@ -19,7 +19,11 @@ namespace Ecng.ComponentModel
 			Add,
 			Remove,
 			Clear,
-			Wait
+			Wait,
+			CopyTo,
+			Insert,
+			RemoveAt,
+			Set
 		}
 
 		private class CollectionAction
@@ -46,7 +50,7 @@ namespace Ecng.ComponentModel
 
 			public ActionTypes Type { get; }
 			public TItem[] Items { get; }
-			public int Index { get; }
+			public int Index { get; set; }
 			public int Count { get; }
 			public SyncObject SyncRoot { get; set; }
 
@@ -95,7 +99,7 @@ namespace Ecng.ComponentModel
 		{
 			if (!Dispatcher.CheckAccess())
 			{
-				AddAction(new CollectionAction(ActionTypes.Add, items.ToArray()));
+				AddAction(new(ActionTypes.Add, items.ToArray()));
 				return;
 			}
 
@@ -110,7 +114,7 @@ namespace Ecng.ComponentModel
 		{
 			if (!Dispatcher.CheckAccess())
 			{
-				AddAction(new CollectionAction(ActionTypes.Remove, items.ToArray()));
+				AddAction(new(ActionTypes.Remove, items.ToArray()));
 				return;
 			}
 
@@ -132,8 +136,8 @@ namespace Ecng.ComponentModel
 			{
 				var realCount = _pendingCount;
 				realCount -= index;
-				AddAction(new CollectionAction(index, count));
-				return (realCount.Min(count)).Max(0);
+				AddAction(new(index, count));
+				return realCount.Min(count).Max(0);
 			}
 
 			return Items.RemoveRange(index, count);
@@ -155,7 +159,7 @@ namespace Ecng.ComponentModel
 		{
 			if (!Dispatcher.CheckAccess())
 			{
-				AddAction(new CollectionAction(ActionTypes.Add, item));
+				AddAction(new(ActionTypes.Add, item));
 				return;
 			}
 
@@ -169,7 +173,7 @@ namespace Ecng.ComponentModel
 		{
 			if (!Dispatcher.CheckAccess())
 			{
-				AddAction(new CollectionAction(ActionTypes.Remove, item));
+				AddAction(new(ActionTypes.Remove, item));
 				return true;
 			}
 
@@ -194,7 +198,7 @@ namespace Ecng.ComponentModel
 		{
 			if (!Dispatcher.CheckAccess())
 			{
-				AddAction(new CollectionAction(ActionTypes.Clear));
+				AddAction(new(ActionTypes.Clear));
 				return;
 			}
 
@@ -230,15 +234,16 @@ namespace Ecng.ComponentModel
 		public void CopyTo(TItem[] array, int arrayIndex)
 		{
 			if (!Dispatcher.CheckAccess())
-				throw new NotSupportedException();
+			{
+				AddAction(new(ActionTypes.CopyTo, array) { Index = arrayIndex });
+				return;
+			}
 
 			Items.CopyTo(array, arrayIndex);
 		}
 
 		void ICollection.CopyTo(Array array, int index)
-		{
-			CopyTo((TItem[])array, index);
-		}
+			=> CopyTo((TItem[])array, index);
 
 		/// <inheritdoc cref="ICollection{T}" />
 		public override int Count
@@ -246,7 +251,7 @@ namespace Ecng.ComponentModel
 			get
 			{
 				if (!Dispatcher.CheckAccess())
-					throw new NotSupportedException();
+					return (int)Do(() => Count);
 
 				return Items.Count;
 			}
@@ -280,7 +285,10 @@ namespace Ecng.ComponentModel
 		public void Insert(int index, TItem item)
 		{
 			if (!Dispatcher.CheckAccess())
-				throw new NotSupportedException();
+			{
+				AddAction(new(ActionTypes.Insert, item) { Index = index });
+				return;
+			}
 
 			Items.Insert(index, item);
 			_pendingCount = Items.Count;
@@ -290,7 +298,10 @@ namespace Ecng.ComponentModel
 		public void RemoveAt(int index)
 		{
 			if (!Dispatcher.CheckAccess())
-				throw new NotSupportedException();
+			{
+				AddAction(new(ActionTypes.RemoveAt) { Index = index });
+				return;
+			}
 
 			Items.RemoveAt(index);
 			_pendingCount = Items.Count;
@@ -318,7 +329,10 @@ namespace Ecng.ComponentModel
 			set
 			{
 				if (!Dispatcher.CheckAccess())
-					throw new NotSupportedException();
+				{
+					AddAction(new(ActionTypes.Set, value) { Index = index });
+					return;
+				}
 
 				Items[index] = value;
 			}
@@ -361,6 +375,12 @@ namespace Ecng.ComponentModel
 						else
 							_pendingCount -= item.Items.Length;
 						break;
+					case ActionTypes.RemoveAt:
+						_pendingCount--;
+						break;
+					case ActionTypes.Insert:
+						_pendingCount++;
+						break;
 					case ActionTypes.Clear:
 						_pendingCount = 0;
 						break;
@@ -402,6 +422,10 @@ namespace Ecng.ComponentModel
 					{
 						case ActionTypes.Add:
 						case ActionTypes.Remove:
+						case ActionTypes.CopyTo:
+						case ActionTypes.Insert:
+						case ActionTypes.RemoveAt:
+						case ActionTypes.Set:
 							pendingActions.Add(action);
 							break;
 						case ActionTypes.Clear:
@@ -444,6 +468,26 @@ namespace Ecng.ComponentModel
 							else
 								Items.RemoveRange(action.Index, action.Count);
 
+							break;
+						}
+						case ActionTypes.CopyTo:
+						{
+							Items.CopyTo(action.Items, action.Index);
+							break;
+						}
+						case ActionTypes.Insert:
+						{
+							Items.Insert(action.Index, action.Items[0]);
+							break;
+						}
+						case ActionTypes.RemoveAt:
+						{
+							Items.RemoveAt(action.Index);
+							break;
+						}
+						case ActionTypes.Set:
+						{
+							Items[action.Index] = action.Items[0];
 							break;
 						}
 						case ActionTypes.Wait:
