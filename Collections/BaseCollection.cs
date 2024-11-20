@@ -290,9 +290,9 @@ namespace Ecng.Collections
 		object ICollection.SyncRoot => this;
 
 		void ICollection.CopyTo(Array array, int index)
-			=> ((ICollection<TItem>)this).CopyTo((TItem[])array, index);
+			=> CopyTo((TItem[])array, index);
 
-		void ICollection<TItem>.CopyTo(TItem[] array, int index)
+		public void CopyTo(TItem[] array, int index)
 		{
 			int count = Count;
 
