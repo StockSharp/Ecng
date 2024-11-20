@@ -19,7 +19,6 @@ namespace Ecng.ComponentModel
 			Add,
 			Remove,
 			Clear,
-			Wait,
 			CopyTo,
 			Insert,
 			RemoveAt,
@@ -45,42 +44,10 @@ namespace Ecng.ComponentModel
 			public TItem[] Items { get; }
 			public int Index { get; set; }
 			public int Count { get; }
-
-			public virtual void Do() => throw new NotSupportedException();
 		}
 
-		private class CollectionAction<T>(Func<T> convert)
-			: CollectionAction(ActionTypes.Wait)
-		{
-			private readonly SyncObject _sync = new();
-			private readonly Func<T> _convert = convert ?? throw new ArgumentNullException(nameof(convert));
-			private readonly NullableEx<T> _result = new();
-
-			public T Get()
-			{
-				lock (_sync)
-				{
-					if (!_result.HasValue)
-						_sync.Wait();
-
-					return _result.Value;
-				}
-			}
-
-			public override void Do()
-			{
-				var result = _convert();
-
-				lock (_sync)
-				{
-					_result.Value = result;
-					_sync.Pulse();
-				}
-			}
-		}
-
-		private readonly Queue<CollectionAction> _pendingActions = new();
-		private int _pendingCount;
+		private readonly SynchronizedList<TItem> _syncCopy = [];
+		private readonly Queue<CollectionAction> _pendingActions = [];
 		private bool _isTimerStarted;
 
 		/// <summary>
@@ -125,7 +92,7 @@ namespace Ecng.ComponentModel
 			}
 
 			Items.AddRange(items);
-			_pendingCount = Items.Count;
+			_syncCopy.AddRange(items);
 			CheckCount();
 		}
 
@@ -140,7 +107,7 @@ namespace Ecng.ComponentModel
 			}
 
 			Items.RemoveRange(items);
-			_pendingCount = Items.Count;
+			_syncCopy.RemoveRange(items);
 		}
 
 		/// <summary>
@@ -155,19 +122,19 @@ namespace Ecng.ComponentModel
 
 			if (!Dispatcher.CheckAccess())
 			{
-				var realCount = _pendingCount;
-				realCount -= index;
 				AddAction(new(index, count));
-				return realCount.Min(count).Max(0);
+				return -1;
 			}
 
-			return Items.RemoveRange(index, count);
+			var retVal = Items.RemoveRange(index, count);
+			_syncCopy.RemoveRange(index, count);
+			return retVal;
 		}
 
 		/// <inheritdoc />
 		public IEnumerator<TItem> GetEnumerator()
 		{
-			return Items.GetEnumerator();
+			return _syncCopy.GetEnumerator();
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
@@ -185,7 +152,7 @@ namespace Ecng.ComponentModel
 			}
 
 			Items.Add(item);
-			_pendingCount = Items.Count;
+			_syncCopy.Add(item);
 			CheckCount();
 		}
 
@@ -199,7 +166,7 @@ namespace Ecng.ComponentModel
 			}
 
 			var removed = Items.Remove(item);
-			_pendingCount = Items.Count;
+			_syncCopy.Remove(item);
 			return removed;
 		}
 
@@ -224,7 +191,7 @@ namespace Ecng.ComponentModel
 			}
 
 			Items.Clear();
-			_pendingCount = 0;
+			_syncCopy.Clear();
 		}
 
 		int IList.IndexOf(object value)
@@ -244,12 +211,7 @@ namespace Ecng.ComponentModel
 
 		/// <inheritdoc />
 		public bool Contains(TItem item)
-		{
-			if (!Dispatcher.CheckAccess())
-				return Get(() => Items.Contains(item));
-
-			return Items.Contains(item);
-		}
+			=> _syncCopy.Contains(item);
 
 		/// <inheritdoc />
 		public void CopyTo(TItem[] array, int arrayIndex)
@@ -261,22 +223,14 @@ namespace Ecng.ComponentModel
 			}
 
 			Items.CopyTo(array, arrayIndex);
+			_syncCopy.CopyTo(array, arrayIndex);
 		}
 
 		void ICollection.CopyTo(Array array, int index)
 			=> CopyTo((TItem[])array, index);
 
 		/// <inheritdoc cref="ICollection{T}" />
-		public override int Count
-		{
-			get
-			{
-				if (!Dispatcher.CheckAccess())
-					return Get(() => Items.Count);
-
-				return Items.Count;
-			}
-		}
+		public override int Count => _syncCopy.Count;
 
 		object ICollection.SyncRoot => SyncRoot;
 
@@ -290,16 +244,14 @@ namespace Ecng.ComponentModel
 		/// <inheritdoc />
 		public int IndexOf(TItem item)
 		{
-			if (!Dispatcher.CheckAccess())
-			{
-				// NOTE: DevExpress.Data.Helpers.BindingListAdapterBase.RaiseChangedIfNeeded access to IndexOf
-				// https://pastebin.com/4X8yPmwa
+			//if (!Dispatcher.CheckAccess())
+			//{
+			//	// NOTE: DevExpress.Data.Helpers.BindingListAdapterBase.RaiseChangedIfNeeded access to IndexOf
+			//	// https://pastebin.com/4X8yPmwa
+			//	//throw new NotSupportedException();
+			//}
 
-				return Get(() => Items.IndexOf(item));
-				//throw new NotSupportedException();
-			}
-
-			return Items.IndexOf(item);
+			return _syncCopy.IndexOf(item);
 		}
 
 		/// <inheritdoc />
@@ -312,7 +264,7 @@ namespace Ecng.ComponentModel
 			}
 
 			Items.Insert(index, item);
-			_pendingCount = Items.Count;
+			_syncCopy.Insert(index, item);
 		}
 
 		/// <inheritdoc cref="IList{T}" />
@@ -325,7 +277,7 @@ namespace Ecng.ComponentModel
 			}
 
 			Items.RemoveAt(index);
-			_pendingCount = Items.Count;
+			_syncCopy.RemoveAt(index);
 		}
 
 		object IList.this[int index]
@@ -337,16 +289,7 @@ namespace Ecng.ComponentModel
 		/// <inheritdoc />
 		public TItem this[int index]
 		{
-			get
-			{
-				if (!Dispatcher.CheckAccess())
-				{
-					return Get(() => Items[index]);
-					//throw new NotSupportedException();
-				}
-
-				return Items[index];
-			}
+			get => _syncCopy[index];
 			set
 			{
 				if (!Dispatcher.CheckAccess())
@@ -356,16 +299,8 @@ namespace Ecng.ComponentModel
 				}
 
 				Items[index] = value;
+				_syncCopy[index] = value;
 			}
-		}
-
-		/// <summary>
-		/// </summary>
-		public T Get<T>(Func<T> func)
-		{
-			var action = new CollectionAction<T>(func);
-			AddAction(action);
-			return action.Get();
 		}
 
 		private void AddAction(CollectionAction item)
@@ -375,28 +310,6 @@ namespace Ecng.ComponentModel
 
 			lock (SyncRoot)
 			{
-				switch (item.Type)
-				{
-					case ActionTypes.Add:
-						_pendingCount += item.Count;
-						break;
-					case ActionTypes.Remove:
-						if (item.Items == null)
-							_pendingCount -= item.Count;
-						else
-							_pendingCount -= item.Items.Length;
-						break;
-					case ActionTypes.RemoveAt:
-						_pendingCount--;
-						break;
-					case ActionTypes.Insert:
-						_pendingCount++;
-						break;
-					case ActionTypes.Clear:
-						_pendingCount = 0;
-						break;
-				}
-
 				_pendingActions.Enqueue(item);
 
 				if (_isTimerStarted)
@@ -422,9 +335,9 @@ namespace Ecng.ComponentModel
 
 				lock (SyncRoot)
 				{
-					_isTimerStarted = false;
 					actions = [.. _pendingActions];
 					_pendingActions.Clear();
+					_isTimerStarted = false;
 				}
 
 				foreach (var action in actions)
@@ -443,10 +356,6 @@ namespace Ecng.ComponentModel
 							pendingActions.Clear();
 							hasClear = true;
 							break;
-						case ActionTypes.Wait:
-							pendingActions.Add(action);
-							//Dispatcher.AddAction(action.SyncRoot.Pulse);
-							break;
 						default:
 							throw new ArgumentOutOfRangeException();
 					}
@@ -462,7 +371,10 @@ namespace Ecng.ComponentModel
 				BeforeUpdate?.Invoke();
 
 				if (hasClear)
+				{
 					Items.Clear();
+					_syncCopy.Clear();
+				}
 
 				foreach (var action in pendingActions)
 				{
@@ -470,44 +382,50 @@ namespace Ecng.ComponentModel
 					{
 						case ActionTypes.Add:
 							Items.AddRange(action.Items);
+							_syncCopy.AddRange(action.Items);
 							CheckCount();
 							break;
 						case ActionTypes.Remove:
 						{
 							if (action.Items != null)
+							{
 								Items.RemoveRange(action.Items);
+								_syncCopy.RemoveRange(action.Items);
+							}
 							else
+							{
 								Items.RemoveRange(action.Index, action.Count);
+								_syncCopy.RemoveRange(action.Index, action.Count);
+							}
 
 							break;
 						}
 						case ActionTypes.CopyTo:
 						{
 							Items.CopyTo(action.Items, action.Index);
+							_syncCopy.CopyTo(action.Items, action.Index);
 							break;
 						}
 						case ActionTypes.Insert:
 						{
 							Items.Insert(action.Index, action.Items[0]);
+							_syncCopy.Insert(action.Index, action.Items[0]);
 							break;
 						}
 						case ActionTypes.RemoveAt:
 						{
 							Items.RemoveAt(action.Index);
+							_syncCopy.RemoveAt(action.Index);
 							break;
 						}
 						case ActionTypes.Set:
 						{
 							Items[action.Index] = action.Items[0];
-							break;
-						}
-						case ActionTypes.Wait:
-						{
-							action.Do();
+							_syncCopy[action.Index] = action.Items[0];
 							break;
 						}
 						default:
-							throw new ArgumentOutOfRangeException();
+							throw new ArgumentOutOfRangeException(action.Type.To<string>());
 					}
 				}
 
@@ -520,6 +438,6 @@ namespace Ecng.ComponentModel
 
 		/// <summary>
 		/// </summary>
-		public SyncObject SyncRoot { get; } = new SyncObject();
+		public SyncObject SyncRoot => _syncCopy.SyncRoot;
 	}
 }
