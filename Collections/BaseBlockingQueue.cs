@@ -28,9 +28,7 @@
 			}
 		}
 
-		private readonly SyncObject _syncRoot = new();
-
-		public SyncObject SyncRoot => _syncRoot;
+		public SyncObject SyncRoot { get; } = new();
 
 		public int Count => InnerCollection.Count;
 
@@ -43,7 +41,7 @@
 			lock (SyncRoot)
 			{
 				_isClosed = true;
-				Monitor.PulseAll(_syncRoot);
+				Monitor.PulseAll(SyncRoot);
 			}
 		}
 
@@ -59,22 +57,22 @@
 		{
 			while (InnerCollection.Count >= _maxSize && !_isClosed)
 			{
-				Monitor.Wait(_syncRoot);
+				Monitor.Wait(SyncRoot);
 			}
 		}
 
 		public void WaitUntilEmpty()
 		{
-			lock (_syncRoot)
+			lock (SyncRoot)
 			{
 				while (InnerCollection.Count > 0 && !_isClosed)
-					Monitor.Wait(_syncRoot);
+					Monitor.Wait(SyncRoot);
 			}
 		}
 
 		public void Enqueue(T item, bool force = false)
 		{
-			lock (_syncRoot)
+			lock (SyncRoot)
 			{
 				if (_isClosed)
 					return;
@@ -90,7 +88,7 @@
 				if (InnerCollection.Count == 1)
 				{
 					// wake up any blocked dequeue
-					Monitor.PulseAll(_syncRoot);
+					Monitor.PulseAll(SyncRoot);
 				}
 			}
 		}
@@ -115,7 +113,7 @@
 				if (!block)
 					return false;
 
-				Monitor.Wait(_syncRoot);
+				Monitor.Wait(SyncRoot);
 			}
 
 			return true;
@@ -123,7 +121,7 @@
 
 		public bool TryDequeue(out T value, bool exitOnClose = true, bool block = true)
 		{
-			lock (_syncRoot)
+			lock (SyncRoot)
 			{
 				if (!WaitWhileEmpty(exitOnClose, block))
 				{
@@ -136,7 +134,7 @@
 				if (InnerCollection.Count == (_maxSize - 1) || InnerCollection.Count == 0)
 				{
 					// wake up any blocked enqueue
-					Monitor.PulseAll(_syncRoot);
+					Monitor.PulseAll(SyncRoot);
 				}
 
 				return true;
@@ -188,7 +186,8 @@
 
 		bool ICollection<T>.Contains(T item)
 		{
-			return InnerCollection.Contains(item);
+			lock (SyncRoot)
+				return InnerCollection.Contains(item);
 		}
 
 		void ICollection<T>.CopyTo(T[] array, int arrayIndex)
