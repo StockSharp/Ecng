@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
+using Ecng.Reflection;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -17,7 +19,11 @@ public class JArrayToObjectConverter : JsonConverter
 		existingValue ??= Activator.CreateInstance(objectType);
 		
 		var array = JArray.Load(reader);
-		var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
+
+		var fields = objectType
+			.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+			.OrderByDeclaration()
+			.ToArray();
 		
 		for (var i = 0; i < fields.Length; i++)
 		{
@@ -74,6 +80,7 @@ public class JArrayToObjectConverter<T> : JsonConverter
 	{
 		_fields = typeof(T)
 			.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+			.OrderByDeclaration()
 			.Select(f => (f.FieldType, CreateFieldSetter(f)))
 			.ToArray();
 	}

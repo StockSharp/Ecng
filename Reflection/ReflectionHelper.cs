@@ -768,5 +768,9 @@ namespace Ecng.Reflection
 			else
 				return asm.GetTypes().FirstOrDefault(isTypeCompatible);
 		}
+
+		public static IEnumerable<TMember> OrderByDeclaration<TMember>(this IEnumerable<TMember> members)
+			where TMember : MemberInfo
+			=> members.OrderBy(m => m.MetadataToken);
 	}
 }

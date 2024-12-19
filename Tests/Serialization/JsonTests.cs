@@ -1119,5 +1119,65 @@
 			await new JsonSerializer<TestClass>().SerializeAsync(new(), requestBody, default);
 			requestBody.To<byte[]>().UTF8().DeserializeObject<TestClass>();
 		}
+
+		[JsonConverter(typeof(JArrayToObjectConverter<OrderBookEntry>))]
+		private class OrderBookEntry
+		{
+			public double Price { get; set; }
+			public double Size { get; set; }
+		}
+
+		[TestMethod]
+		public void JArray()
+		{
+			var jArray = new JArray
+			{
+				new JArray { 1.1, 2.2 },
+				new JArray { 3.3, 4.4 },
+			};
+
+			var entries = jArray.DeserializeObject<OrderBookEntry[]>();
+			entries[0].Price.AssertEqual(1.1);
+			entries[0].Size.AssertEqual(2.2);
+			entries[1].Price.AssertEqual(3.3);
+			entries[1].Size.AssertEqual(4.4);
+
+			var str = jArray.ToString();
+			entries = str.DeserializeObject<OrderBookEntry[]>();
+			entries[0].Price.AssertEqual(1.1);
+			entries[0].Size.AssertEqual(2.2);
+			entries[1].Price.AssertEqual(3.3);
+			entries[1].Size.AssertEqual(4.4);
+		}
+
+		[JsonConverter(typeof(JArrayToObjectConverter))]
+		private class OrderBookEntry2
+		{
+			public double Price { get; set; }
+			public double Size { get; set; }
+		}
+
+		[TestMethod]
+		public void JArrayGeneric()
+		{
+			var jArray = new JArray
+			{
+				new JArray { 1.1, 2.2 },
+				new JArray { 3.3, 4.4 },
+			};
+
+			var entries = jArray.DeserializeObject<OrderBookEntry2[]>();
+			entries[0].Price.AssertEqual(1.1);
+			entries[0].Size.AssertEqual(2.2);
+			entries[1].Price.AssertEqual(3.3);
+			entries[1].Size.AssertEqual(4.4);
+
+			var str = jArray.ToString();
+			entries = str.DeserializeObject<OrderBookEntry2[]>();
+			entries[0].Price.AssertEqual(1.1);
+			entries[0].Size.AssertEqual(2.2);
+			entries[1].Price.AssertEqual(3.3);
+			entries[1].Size.AssertEqual(4.4);
+		}
 	}
 }
