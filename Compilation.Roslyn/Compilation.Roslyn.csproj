@@ -5,8 +5,8 @@
     <NoWarn>8632</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(MicrosoftCodeAnalysisCSharpVer)" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(MicrosoftCodeAnalysisCSharpVer)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(MicrosoftCodeAnalysisVer)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(MicrosoftCodeAnalysisVer)" />
     <PackageReference Include="Ecng.Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="$(EcngVer)" />
   </ItemGroup>
   <ItemGroup>
