@@ -211,10 +211,7 @@
 
 				if (!dict.TryGetValue(name, out var service))
 				{
-					var fallback = ServiceFallback;
-
-					if (fallback is null)
-						throw new InvalidOperationException($"Service '{name}' not registered.");
+					var fallback = ServiceFallback ?? throw new InvalidOperationException($"Service '{name}' not registered.");
 
 					RegisterService(name, service = fallback(typeof(T), name));
 				}
