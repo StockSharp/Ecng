@@ -213,7 +213,9 @@
 				{
 					var fallback = ServiceFallback ?? throw new InvalidOperationException($"Service '{name}' not registered.");
 
-					RegisterService(name, service = fallback(typeof(T), name));
+					service = (T)fallback(typeof(T), name) ?? throw new InvalidOperationException($"Service '{name}' not constructed.");
+
+					RegisterService(name, service);
 				}
 
 				return (T)service;
