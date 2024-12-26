@@ -198,13 +198,29 @@
 			RegisterService(service);
 		}
 
+		public static event Func<Type, string, object> ServiceFallback;
+
 		public static T GetService<T>()
 			=> GetService<T>(typeof(T).AssemblyQualifiedName);
 
 		public static T GetService<T>(string name)
 		{
 			lock (_sync)
-				return (T)GetDict<T>()[name];
+			{
+				var dict = GetDict<T>();
+
+				if (!dict.TryGetValue(name, out var service))
+				{
+					var fallback = ServiceFallback;
+
+					if (fallback is null)
+						throw new InvalidOperationException($"Service '{name}' not registered.");
+
+					RegisterService(name, service = fallback(typeof(T), name));
+				}
+
+				return (T)service;
+			}
 		}
 
 		public static IEnumerable<T> GetServices<T>()
