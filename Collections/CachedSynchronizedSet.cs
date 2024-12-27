@@ -1,7 +1,6 @@
 namespace Ecng.Collections
 {
 	using System.Collections.Generic;
-	using System.Linq;
 
 	public class CachedSynchronizedSet<T> : SynchronizedSet<T>
 	{

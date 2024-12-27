@@ -1,7 +1,6 @@
 ﻿namespace Ecng.Collections
 {
 	using System.Collections.Generic;
-	using System.Linq;
 
 	public class CachedSynchronizedDictionary<TKey, TValue> : SynchronizedDictionary<TKey, TValue>
 	{

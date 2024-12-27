@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Collections
 {
-	using System.Linq;
-
 	public class CachedSynchronizedList<T> : SynchronizedList<T>
 	{
 		public CachedSynchronizedList()

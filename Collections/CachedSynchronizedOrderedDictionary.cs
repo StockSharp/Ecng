@@ -2,7 +2,6 @@ namespace Ecng.Collections
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 
 	public class CachedSynchronizedOrderedDictionary<TKey, TValue> : SynchronizedOrderedDictionary<TKey, TValue>
 	{
