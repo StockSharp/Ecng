@@ -59,11 +59,12 @@ namespace Ecng.Collections
 			{
 				lock (SyncRoot)
 				{
-					_cachedValues = null;
-					_cachedPairs = null;
+					var isKey = false;
 
 					if (!ContainsKey(key))
-						_cachedKeys = null;
+						isKey = true;
+
+					OnResetCache(isKey);
 
 					base[key] = value;
 				}
@@ -76,9 +77,7 @@ namespace Ecng.Collections
 			{
 				base.Add(key, value);
 
-				_cachedKeys = null;
-				_cachedValues = null;
-				_cachedPairs = null;
+				OnResetCache(true);
 			}
 		}
 
@@ -88,9 +87,7 @@ namespace Ecng.Collections
 			{
 				if (base.Remove(key))
 				{
-					_cachedKeys = null;
-					_cachedValues = null;
-					_cachedPairs = null;
+					OnResetCache(true);
 
 					return true;
 				}
@@ -105,10 +102,15 @@ namespace Ecng.Collections
 			{
 				base.Clear();
 
-				_cachedKeys = null;
-				_cachedValues = null;
-				_cachedPairs = null;
+				OnResetCache(true);
 			}
+		}
+
+		protected virtual void OnResetCache(bool isKey)
+		{
+			_cachedKeys = null;
+			_cachedValues = null;
+			_cachedPairs = null;
 		}
 	}
 }

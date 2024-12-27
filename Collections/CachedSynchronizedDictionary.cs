@@ -63,11 +63,12 @@
 			{
 				lock (SyncRoot)
 				{
-					_cachedValues = null;
-					_cachedPairs = null;
+					var isKey = false;
 
 					if (_cachedKeys != null && !ContainsKey(key))
-						_cachedKeys = null;
+						isKey = true;
+
+					OnResetCache(isKey);
 
 					base[key] = value;
 				}
@@ -80,9 +81,7 @@
 			{
 				base.Add(key, value);
 
-				_cachedKeys = null;
-				_cachedValues = null;
-				_cachedPairs = null;
+				OnResetCache(true);
 			}
 		}
 
@@ -92,9 +91,7 @@
 			{
 				if (base.Remove(key))
 				{
-					_cachedKeys = null;
-					_cachedValues = null;
-					_cachedPairs = null;
+					OnResetCache(true);
 
 					return true;
 				}
@@ -109,10 +106,15 @@
 			{
 				base.Clear();
 
-				_cachedKeys = null;
-				_cachedValues = null;
-				_cachedPairs = null;
+				OnResetCache(true);
 			}
+		}
+
+		protected virtual void OnResetCache(bool isKey)
+		{
+			_cachedKeys = null;
+			_cachedValues = null;
+			_cachedPairs = null;
 		}
 	}
 }
