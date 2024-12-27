@@ -209,17 +209,17 @@
 			{
 				var dict = GetDict<T>();
 
-				if (!dict.TryGetValue(name, out var service))
-				{
-					var fallback = ServiceFallback ?? throw new InvalidOperationException($"Service '{name}' not registered.");
-
-					service = (T)fallback(typeof(T), name) ?? throw new InvalidOperationException($"Service '{name}' not constructed.");
-
-					RegisterService(name, service);
-				}
-
-				return (T)service;
+				if (dict.TryGetValue(name, out var service))
+					return (T)service;
 			}
+
+			var fallback = ServiceFallback ?? throw new InvalidOperationException($"Service '{name}' not registered.");
+
+			var typed = (T)fallback(typeof(T), name) ?? throw new InvalidOperationException($"Service '{name}' not constructed.");
+
+			RegisterService(name, typed);
+
+			return typed;
 		}
 
 		public static IEnumerable<T> GetServices<T>()
