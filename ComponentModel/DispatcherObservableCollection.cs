@@ -33,9 +33,9 @@ namespace Ecng.ComponentModel
 				Items = items ?? throw new ArgumentNullException(nameof(items));
 			}
 
-			public CollectionAction(int index, int count)
+			public CollectionAction(ActionTypes type, int index, int count)
 			{
-				Type = ActionTypes.Remove;
+				Type = type;
 				Index = index;
 				Count = count;
 			}
@@ -85,88 +85,76 @@ namespace Ecng.ComponentModel
 		/// </summary>
 		public virtual void AddRange(IEnumerable<TItem> items)
 		{
-			if (!Dispatcher.CheckAccess())
-			{
-				AddAction(new(ActionTypes.Add, items.ToArray()));
-				return;
-			}
-
-			Items.AddRange(items);
 			_syncCopy.AddRange(items);
+
+			if (Dispatcher.CheckAccess())
+				Items.AddRange(items);
+			else
+				AddAction(new(ActionTypes.Add, items.ToArray()));
+
 			CheckCount();
 		}
 
-		/// <summary>
-		/// </summary>
 		public virtual void RemoveRange(IEnumerable<TItem> items)
 		{
-			if (!Dispatcher.CheckAccess())
-			{
-				AddAction(new(ActionTypes.Remove, items.ToArray()));
-				return;
-			}
-
-			Items.RemoveRange(items);
 			_syncCopy.RemoveRange(items);
+
+			if (Dispatcher.CheckAccess())
+				Items.RemoveRange(items);
+			else
+				AddAction(new(ActionTypes.Remove, items.ToArray()));
 		}
 
-		/// <summary>
-		/// </summary>
 		public override int RemoveRange(int index, int count)
 		{
-			if (index < -1)
+			if (index < 0)
 				throw new ArgumentOutOfRangeException(nameof(index));
 
 			if (count <= 0)
 				throw new ArgumentOutOfRangeException(nameof(count));
 
-			if (!Dispatcher.CheckAccess())
-			{
-				AddAction(new(index, count));
-				return -1;
-			}
+			var retVal = _syncCopy.RemoveRange(index, count);
 
-			var retVal = Items.RemoveRange(index, count);
-			_syncCopy.RemoveRange(index, count);
+			if (Dispatcher.CheckAccess())
+				Items.RemoveRange(index, count);
+			else
+				AddAction(new(ActionTypes.Remove, index, count));
+
 			return retVal;
 		}
 
-		/// <inheritdoc />
 		public IEnumerator<TItem> GetEnumerator()
-		{
-			return _syncCopy.GetEnumerator();
-		}
+			=> _syncCopy.GetEnumerator();
 
 		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
-		}
+			=> GetEnumerator();
 
 		/// <inheritdoc />
 		public virtual void Add(TItem item)
 		{
-			if (!Dispatcher.CheckAccess())
-			{
-				AddAction(new(ActionTypes.Add, item));
-				return;
-			}
-
-			Items.Add(item);
 			_syncCopy.Add(item);
+
+			if (Dispatcher.CheckAccess())
+				Items.Add(item);
+			else
+				AddAction(new(ActionTypes.Add, item));
+
 			CheckCount();
 		}
 
 		/// <inheritdoc />
 		public virtual bool Remove(TItem item)
 		{
-			if (!Dispatcher.CheckAccess())
+			var removed = _syncCopy.Remove(item);
+
+			if (removed)
 			{
-				AddAction(new(ActionTypes.Remove, item));
-				return true;
+				if (Dispatcher.CheckAccess())
+					Items.Remove(item);
+				else
+					AddAction(new(ActionTypes.Remove, item));
 			}
 
-			var removed = Items.Remove(item);
-			_syncCopy.Remove(item);
 			return removed;
 		}
 
@@ -177,37 +165,27 @@ namespace Ecng.ComponentModel
 		}
 
 		bool IList.Contains(object value)
-		{
-			return Contains((TItem)value);
-		}
+			=> Contains((TItem)value);
 
 		/// <inheritdoc cref="ICollection{T}" />
 		public virtual void Clear()
 		{
-			if (!Dispatcher.CheckAccess())
-			{
-				AddAction(new(ActionTypes.Clear));
-				return;
-			}
-
-			Items.Clear();
 			_syncCopy.Clear();
+
+			if (Dispatcher.CheckAccess())
+				Items.Clear();
+			else
+				AddAction(new(ActionTypes.Clear));
 		}
 
 		int IList.IndexOf(object value)
-		{
-			return IndexOf((TItem)value);
-		}
+			=> IndexOf((TItem)value);
 
 		void IList.Insert(int index, object value)
-		{
-			Insert(index, (TItem)value);
-		}
+			=> Insert(index, (TItem)value);
 
 		void IList.Remove(object value)
-		{
-			Remove((TItem)value);
-		}
+			=> Remove((TItem)value);
 
 		/// <inheritdoc />
 		public bool Contains(TItem item)
@@ -215,16 +193,7 @@ namespace Ecng.ComponentModel
 
 		/// <inheritdoc />
 		public void CopyTo(TItem[] array, int arrayIndex)
-		{
-			if (!Dispatcher.CheckAccess())
-			{
-				AddAction(new(ActionTypes.CopyTo, array) { Index = arrayIndex });
-				return;
-			}
-
-			Items.CopyTo(array, arrayIndex);
-			_syncCopy.CopyTo(array, arrayIndex);
-		}
+			=> _syncCopy.CopyTo(array, arrayIndex);
 
 		void ICollection.CopyTo(Array array, int index)
 			=> CopyTo((TItem[])array, index);
@@ -243,41 +212,28 @@ namespace Ecng.ComponentModel
 
 		/// <inheritdoc />
 		public int IndexOf(TItem item)
-		{
-			//if (!Dispatcher.CheckAccess())
-			//{
-			//	// NOTE: DevExpress.Data.Helpers.BindingListAdapterBase.RaiseChangedIfNeeded access to IndexOf
-			//	// https://pastebin.com/4X8yPmwa
-			//	//throw new NotSupportedException();
-			//}
-
-			return _syncCopy.IndexOf(item);
-		}
+			=> _syncCopy.IndexOf(item);
 
 		/// <inheritdoc />
 		public void Insert(int index, TItem item)
 		{
-			if (!Dispatcher.CheckAccess())
-			{
-				AddAction(new(ActionTypes.Insert, item) { Index = index });
-				return;
-			}
-
-			Items.Insert(index, item);
 			_syncCopy.Insert(index, item);
+
+			if (Dispatcher.CheckAccess())
+				Items.Insert(index, item);
+			else
+				AddAction(new(ActionTypes.Insert, item) { Index = index });
 		}
 
 		/// <inheritdoc cref="IList{T}" />
 		public void RemoveAt(int index)
 		{
-			if (!Dispatcher.CheckAccess())
-			{
-				AddAction(new(ActionTypes.RemoveAt) { Index = index });
-				return;
-			}
-
-			Items.RemoveAt(index);
 			_syncCopy.RemoveAt(index);
+
+			if (Dispatcher.CheckAccess())
+				Items.RemoveAt(index);
+			else
+				AddAction(new(ActionTypes.RemoveAt) { Index = index });
 		}
 
 		object IList.this[int index]
@@ -292,14 +248,12 @@ namespace Ecng.ComponentModel
 			get => _syncCopy[index];
 			set
 			{
-				if (!Dispatcher.CheckAccess())
-				{
-					AddAction(new(ActionTypes.Set, value) { Index = index });
-					return;
-				}
-
-				Items[index] = value;
 				_syncCopy[index] = value;
+
+				if (Dispatcher.CheckAccess())
+					Items[index] = value;
+				else
+					AddAction(new(ActionTypes.Set, value) { Index = index });
 			}
 		}
 
@@ -325,45 +279,33 @@ namespace Ecng.ComponentModel
 
 		private void OnFlush()
 		{
-			var pendingActions = new List<CollectionAction>();
+			List<CollectionAction> pendingActions;
 			var hasClear = false;
 			Exception error = null;
 
 			try
 			{
-				CollectionAction[] actions;
-
 				lock (SyncRoot)
 				{
-					actions = [.. _pendingActions];
+					pendingActions = [.. _pendingActions];
 					_pendingActions.Clear();
 					_isTimerStarted = false;
 				}
 
-				foreach (var action in actions)
+				for (var i = 0; i < pendingActions.Count; i++)
 				{
-					switch (action.Type)
-					{
-						case ActionTypes.Add:
-						case ActionTypes.Remove:
-						case ActionTypes.CopyTo:
-						case ActionTypes.Insert:
-						case ActionTypes.RemoveAt:
-						case ActionTypes.Set:
-							pendingActions.Add(action);
-							break;
-						case ActionTypes.Clear:
-							pendingActions.Clear();
-							hasClear = true;
-							break;
-						default:
-							throw new ArgumentOutOfRangeException();
-					}
+					if (pendingActions[i].Type != ActionTypes.Clear)
+						continue;
+
+					pendingActions.RemoveRange(0, i + 1);
+					hasClear = true;
+					i = -1;
 				}
 			}
 			catch (Exception ex)
 			{
 				error = ex;
+				pendingActions = [];
 			}
 
 			Dispatcher.InvokeAsync(() =>
@@ -371,10 +313,7 @@ namespace Ecng.ComponentModel
 				BeforeUpdate?.Invoke();
 
 				if (hasClear)
-				{
 					Items.Clear();
-					_syncCopy.Clear();
-				}
 
 				foreach (var action in pendingActions)
 				{
@@ -382,48 +321,25 @@ namespace Ecng.ComponentModel
 					{
 						case ActionTypes.Add:
 							Items.AddRange(action.Items);
-							_syncCopy.AddRange(action.Items);
-							CheckCount();
 							break;
 						case ActionTypes.Remove:
-						{
 							if (action.Items != null)
-							{
 								Items.RemoveRange(action.Items);
-								_syncCopy.RemoveRange(action.Items);
-							}
 							else
-							{
 								Items.RemoveRange(action.Index, action.Count);
-								_syncCopy.RemoveRange(action.Index, action.Count);
-							}
-
 							break;
-						}
 						case ActionTypes.CopyTo:
-						{
 							Items.CopyTo(action.Items, action.Index);
-							_syncCopy.CopyTo(action.Items, action.Index);
 							break;
-						}
 						case ActionTypes.Insert:
-						{
 							Items.Insert(action.Index, action.Items[0]);
-							_syncCopy.Insert(action.Index, action.Items[0]);
 							break;
-						}
 						case ActionTypes.RemoveAt:
-						{
 							Items.RemoveAt(action.Index);
-							_syncCopy.RemoveAt(action.Index);
 							break;
-						}
 						case ActionTypes.Set:
-						{
 							Items[action.Index] = action.Items[0];
-							_syncCopy[action.Index] = action.Items[0];
 							break;
-						}
 						default:
 							throw new ArgumentOutOfRangeException(action.Type.To<string>());
 					}
