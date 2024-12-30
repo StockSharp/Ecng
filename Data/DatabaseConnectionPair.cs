@@ -1,7 +1,5 @@
 namespace Ecng.Data
 {
-	using System;
-
 	using Ecng.ComponentModel;
 	using Ecng.Serialization;
 
