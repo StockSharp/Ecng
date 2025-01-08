@@ -9,6 +9,7 @@ using System.Runtime.Loader;
 #endif
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 using Ecng.Collections;
 using Ecng.Common;
@@ -246,10 +247,10 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 	}
 
 #if NETCOREAPP
-	public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, AssemblyLoadContext context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
+	public static Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, AssemblyLoadContext context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
 		=> Compile<TResult>(compiler, context.LoadFromStream, expression, cache, cancellationToken);
 
-	public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextTracker context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
+	public static Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextTracker context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
 		=> Compile<TResult>(compiler, context.LoadFromStream, expression, cache, cancellationToken);
 #endif
 
@@ -263,7 +264,7 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 	/// <param name="cache"><see cref="ICompilerCache"/>.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
 	/// <returns>Compiled mathematical formula.</returns>
-	public static ExpressionFormula<TResult> Compile<TResult>(this ICompiler compiler, Func<byte[], Assembly> toAssembly, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
+	public static async Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, Func<byte[], Assembly> toAssembly, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
 	{
 		if (compiler is null)
 			throw new ArgumentNullException(nameof(compiler));
@@ -284,7 +285,7 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 
 			if (cache?.TryGet(sources, refs, out var assembly) != true)
 			{
-				var result = compiler.Compile("Formula", sources, refs, cancellationToken);
+				var result = await compiler.Compile("Formula", sources, refs, cancellationToken);
 
 				assembly = result.Assembly;
 

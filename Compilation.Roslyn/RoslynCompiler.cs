@@ -115,7 +115,7 @@
 			}).Distinct().ToArray();
 		}
 
-		CompilationResult ICompiler.Compile(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
+		Task<CompilationResult> ICompiler.Compile(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
 		{
 			if (sources is null)
 				throw new ArgumentNullException(nameof(sources));
@@ -156,7 +156,7 @@
 				compilationResult.Assembly = ms.To<byte[]>();
 			}
 
-			return compilationResult;
+			return compilationResult.FromResult();
 		}
 	}
 }

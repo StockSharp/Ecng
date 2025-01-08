@@ -24,14 +24,14 @@ public static class ICompilerExtensions
 	public static bool HasErrors(this CompilationResult result)
 		=> result.CheckOnNull(nameof(result)).Errors.Any(e => e.Type == CompilationErrorTypes.Error);
 
-	public static CompilationResult Compile(this ICompiler compiler, string name, string source, IEnumerable<string> refs, CancellationToken cancellationToken = default)
+	public static Task<CompilationResult> Compile(this ICompiler compiler, string name, string source, IEnumerable<string> refs, CancellationToken cancellationToken = default)
 		=> Compile(compiler, name, [source], refs, cancellationToken);
 
-	public static CompilationResult Compile(this ICompiler compiler, string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken = default)
+	public static Task<CompilationResult> Compile(this ICompiler compiler, string name, IEnumerable<string> sources, IEnumerable<string> refs, CancellationToken cancellationToken = default)
 		=> compiler.Compile(name, sources, refs.Select(ToRef), cancellationToken);
 
 	public static (string name, byte[] body) ToRef(this string path)
-		=> (Path.GetFileNameWithoutExtension(path), File.ReadAllBytes(path));
+		=> (Path.GetFileName(path), File.ReadAllBytes(path));
 
 	public static async ValueTask<IEnumerable<(string name, byte[] body)>> ToValidRefImages<TRef>(this IEnumerable<TRef> references, CancellationToken cancellationToken)
 		where TRef : ICodeReference

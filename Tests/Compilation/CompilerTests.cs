@@ -19,10 +19,10 @@
 		private static readonly string _coreLibPath = typeof(object).Assembly.Location;
 
 		[TestMethod]
-		public void Compile()
+		public async Task Compile()
 		{
 			ICompiler compiler = new RoslynCompiler();
-			var res = compiler.Compile("test", "class Class1 {}",
+			var res = await compiler.Compile("test", "class Class1 {}",
 			[
 				_coreLibPath,
 			]);
@@ -31,10 +31,10 @@
 		}
 
 		[TestMethod]
-		public void CompileError()
+		public async Task CompileError()
 		{
 			ICompiler compiler = new RoslynCompiler();
-			var res = compiler.Compile("test", "class Class1 {",
+			var res = await compiler.Compile("test", "class Class1 {",
 			[
 				_coreLibPath,
 			]);
@@ -44,12 +44,12 @@
 
 		[TestMethod]
 		[ExpectedException(typeof(OperationCanceledException))]
-		public void CompileCancel()
+		public async Task CompileCancel()
 		{
 			var cts = new CancellationTokenSource();
 			cts.Cancel();
 			ICompiler compiler = new RoslynCompiler();
-			var res = compiler.Compile("test", "class Class1 {",
+			var res = await compiler.Compile("test", "class Class1 {",
 			[
 				_coreLibPath,
 			], cts.Token);

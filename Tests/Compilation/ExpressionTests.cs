@@ -4,6 +4,7 @@
 	using System.IO;
 	using System.Linq;
 	using System.Runtime.Loader;
+	using System.Threading.Tasks;
 
 	using Ecng.Compilation;
 	using Ecng.Compilation.Expressions;
@@ -12,6 +13,8 @@
 
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+	using Nito.AsyncEx;
+
 	[TestClass]
 	public class ExpressionTests
 	{
@@ -19,7 +22,7 @@
 		private static readonly AssemblyLoadContext _context = new(default, false);
 
 		private static ExpressionFormula<decimal> Compile(string expression, ICompilerCache cache = default)
-			=> _compiler.Compile<decimal>(_context, expression, cache);
+			=> AsyncContext.Run(() => _compiler.Compile<decimal>(_context, expression, cache));
 
 		[TestMethod]
 		public void Cache()
@@ -331,69 +334,69 @@
 			formula.Calculate([2, -4]).AssertEqual(-8);
 		}
 
-		private static ExpressionFormula<bool> CompileBool(string expression)
+		private static Task<ExpressionFormula<bool>> CompileBool(string expression)
 			=> _compiler.Compile<bool>(_context, expression);
 
 		[TestMethod]
-		public void Bool()
+		public async Task Bool()
 		{
-			var formula = CompileBool("C > O");
+			var formula = await CompileBool("C > O");
 			formula.Calculate([6, 4]).AssertTrue();
 			formula.Calculate([4, 6]).AssertFalse();
 		}
 
 		[TestMethod]
-		public void BoolComples()
+		public async Task BoolComples()
 		{
-			var formula = CompileBool("(C > O) && (B < C)");
+			var formula = await CompileBool("(C > O) && (B < C)");
 			formula.Calculate([6, 4, 3]).AssertTrue();
 			formula.Calculate([4, 6, 8]).AssertFalse();
 		}
 
 		[TestMethod]
-		public void BoolComples2()
+		public async Task BoolComples2()
 		{
-			var formula = CompileBool("([C] > O) && ([B] < C)");
+			var formula = await CompileBool("([C] > O) && ([B] < C)");
 			formula.Calculate([6, 4, 3]).AssertTrue();
 			formula.Calculate([4, 6, 8]).AssertFalse();
 		}
 
 		[TestMethod]
-		public void BoolMath()
+		public async Task BoolMath()
 		{
-			var formula = CompileBool("pow(C,2) > sin(O)");
+			var formula = await CompileBool("pow(C,2) > sin(O)");
 			formula.Calculate([6, 4]).AssertTrue();
 			formula.Calculate([0.1m, 360m]).AssertFalse();
 		}
 
 		[TestMethod]
-		public void BoolMath2()
+		public async Task BoolMath2()
 		{
-			var formula = CompileBool("pow([C],2) > sin(O)");
+			var formula = await CompileBool("pow([C],2) > sin(O)");
 			formula.Calculate([6, 4]).AssertTrue();
 			formula.Calculate([0.1m, 360m]).AssertFalse();
 		}
 
 		[TestMethod]
-		public void BoolMath3()
+		public async Task BoolMath3()
 		{
-			var formula = CompileBool("    Pow(   [C],2) > sin(    O)  ");
+			var formula = await CompileBool("    Pow(   [C],2) > sin(    O)  ");
 			formula.Calculate([6, 4]).AssertTrue();
 			formula.Calculate([0.1m, 360m]).AssertFalse();
 		}
 
 		[TestMethod]
-		public void BoolMath4()
+		public async Task BoolMath4()
 		{
-			var formula = CompileBool("    Pow(   (C*O)/O,2) > sin(    O)  ");
+			var formula = await CompileBool("    Pow(   (C*O)/O,2) > sin(    O)  ");
 			formula.Calculate([6, 4]).AssertTrue();
 			formula.Calculate([0.1m, 360m]).AssertFalse();
 		}
 
 		[TestMethod]
-		public void BoolMath5()
+		public async Task BoolMath5()
 		{
-			var formula = CompileBool("    Pow(   C*(O/O),2) > sin(    O)  ");
+			var formula = await CompileBool("    Pow(   C*(O/O),2) > sin(    O)  ");
 			formula.Calculate([6, 4]).AssertTrue();
 			formula.Calculate([0.1m, 360m]).AssertFalse();
 		}
