@@ -37,7 +37,7 @@ public class FSharpCompiler : ICompiler
 				return base.FileExistsShim(fileName);
 			}
 
-			ublic override Stream OpenFileForReadShim(string filePath, FSharpOption<bool> useMemoryMappedFile, FSharpOption<bool> shouldShadowCopy)
+			public override Stream OpenFileForReadShim(string filePath, FSharpOption<bool> useMemoryMappedFile, FSharpOption<bool> shouldShadowCopy)
 			{
 				if (_input.TryGetValue(Path.GetFileName(filePath), out var body))
 					return new MemoryStream(body);
