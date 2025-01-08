@@ -4,8 +4,6 @@
 	{
 		CSharp,
 		VisualBasic,
-		//Java,
-		//JScript,
-		//Cpp,
+		FSharp,
 	}
 }
