@@ -254,6 +254,8 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 		=> Compile<TResult>(compiler, context.LoadFromStream, expression, cache, cancellationToken);
 #endif
 
+	private const CompilationLanguages _lang = CompilationLanguages.CSharp;
+
 	/// <summary>
 	/// Compile mathematical formula.
 	/// </summary>
@@ -283,7 +285,7 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 
 			var sources = new[] { _template.Replace("__insert_code", code).Replace("__result_type", typeof(TResult).TryGetCSharpAlias() ?? typeof(TResult).Name) };
 
-			if (cache?.TryGet(sources, refs, out var assembly) != true)
+			if (cache?.TryGet(_lang, sources, refs, out var assembly) != true)
 			{
 				var result = await compiler.Compile("Formula", sources, refs, cancellationToken);
 
@@ -292,7 +294,7 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 				if (assembly is null)
 					return ExpressionFormula<TResult>.CreateError(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL());
 				else
-					cache?.Add(sources, refs, assembly);
+					cache?.Add(_lang, sources, refs, assembly);
 			}
 
 			return toAssembly(assembly).GetType("TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
