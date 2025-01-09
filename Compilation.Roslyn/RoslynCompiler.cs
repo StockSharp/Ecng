@@ -117,9 +117,6 @@
 
 		Task<CompilationResult> ICompiler.Compile(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
 		{
-			if (sources is null)
-				throw new ArgumentNullException(nameof(sources));
-
 			var compilation = Create(name, sources, refs, cancellationToken);
 
 			var compilationResult = new CompilationResult();
