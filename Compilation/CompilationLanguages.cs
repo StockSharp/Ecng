@@ -5,5 +5,6 @@
 		CSharp,
 		VisualBasic,
 		FSharp,
+		Python,
 	}
 }

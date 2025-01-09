@@ -18,5 +18,6 @@
     <YDCVer>1.3.27</YDCVer>
     <WmiLightVer>6.5.2</WmiLightVer>
     <FSharpVer>43.9.100</FSharpVer>
+    <IronPythonVer>3.4.2</IronPythonVer>
   </PropertyGroup>
 </Project>

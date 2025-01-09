@@ -6,6 +6,8 @@ namespace Ecng.Compilation
 	{
 		public byte[] Assembly { get; set; }
 
+		public object Custom { get; set; }
+
 		public IEnumerable<CompilationError> Errors { get; set; }
 	}
 }
