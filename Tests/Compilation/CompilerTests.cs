@@ -21,7 +21,7 @@
 		[TestMethod]
 		public async Task Compile()
 		{
-			ICompiler compiler = new RoslynCompiler();
+			ICompiler compiler = new CSharpCompiler();
 			var res = await compiler.Compile("test", "class Class1 {}",
 			[
 				_coreLibPath,
@@ -33,7 +33,7 @@
 		[TestMethod]
 		public async Task CompileError()
 		{
-			ICompiler compiler = new RoslynCompiler();
+			ICompiler compiler = new CSharpCompiler();
 			var res = await compiler.Compile("test", "class Class1 {",
 			[
 				_coreLibPath,
@@ -48,7 +48,7 @@
 		{
 			var cts = new CancellationTokenSource();
 			cts.Cancel();
-			ICompiler compiler = new RoslynCompiler();
+			ICompiler compiler = new CSharpCompiler();
 			var res = await compiler.Compile("test", "class Class1 {",
 			[
 				_coreLibPath,
@@ -78,7 +78,7 @@ class Class1
 				"System.Runtime.dll".ToFullRuntimePath(),
 			], StringComparer.InvariantCultureIgnoreCase);
 
-			ICompiler compiler = new RoslynCompiler();
+			ICompiler compiler = new CSharpCompiler();
 			var (analyzer, settings) = @"T:System.Diagnostics.Process;Don't use Process".ToBannedSymbolsAnalyzer();
 			var res = await compiler.Analyse(analyzer, [settings], "test", [testCode], refs.Select(r => r.ToRef()));
 

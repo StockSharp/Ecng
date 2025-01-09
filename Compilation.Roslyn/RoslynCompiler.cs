@@ -17,7 +17,7 @@
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.VisualBasic;
 
-	public class RoslynCompiler(CompilationLanguages language = CompilationLanguages.CSharp) : ICompiler
+	public abstract class RoslynCompiler(CompilationLanguages language) : ICompiler
 	{
 		private static readonly Dictionary<string, string> _redirects = new()
 		{
@@ -55,26 +55,14 @@
 
 			var references = refs.Select(r => MetadataReference.CreateFromImage(r.body)).ToArray();
 
-			switch (Language)
-			{
-				case CompilationLanguages.CSharp:
-				{
-					return CSharpCompilation.Create(assemblyName,
-						sources.Select(source => CSharpSyntaxTree.ParseText(source, cancellationToken: cancellationToken)),
-						references,
-						new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-				}
-				case CompilationLanguages.VisualBasic:
-				{
-					return VisualBasicCompilation.Create(assemblyName,
-						sources.Select(source => VisualBasicSyntaxTree.ParseText(source, cancellationToken: cancellationToken)),
-						references,
-						new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-				}
-				default:
-					throw new InvalidOperationException(Language.ToString());
-			}
+			return Create(assemblyName, sources, references, cancellationToken);
 		}
+
+		protected abstract Compilation Create(
+			string assemblyName,
+			IEnumerable<string> sources,
+			PortableExecutableReference[] references,
+			CancellationToken cancellationToken);
 
 		async Task<CompilationError[]> ICompiler.Analyse(object analyzer, IEnumerable<object> analyzerSettings, string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
 		{
@@ -155,5 +143,37 @@
 
 			return compilationResult.FromResult();
 		}
+	}
+
+	public class CSharpCompiler : RoslynCompiler
+	{
+		public CSharpCompiler()
+			: base(CompilationLanguages.CSharp)
+		{
+		}
+
+		protected override Compilation Create(string assemblyName, IEnumerable<string> sources, PortableExecutableReference[] references, CancellationToken cancellationToken)
+			=> CSharpCompilation.Create(
+				assemblyName,
+				sources.Select(source => CSharpSyntaxTree.ParseText(source, cancellationToken: cancellationToken)),
+				references,
+				new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+			);
+	}
+
+	public class VisualBasicCompiler : RoslynCompiler
+	{
+		public VisualBasicCompiler()
+			: base(CompilationLanguages.VisualBasic)
+		{
+		}
+
+		protected override Compilation Create(string assemblyName, IEnumerable<string> sources, PortableExecutableReference[] references, CancellationToken cancellationToken)
+			=> VisualBasicCompilation.Create(
+				assemblyName,
+				sources.Select(source => VisualBasicSyntaxTree.ParseText(source, cancellationToken: cancellationToken)),
+				references,
+				new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+			);
 	}
 }

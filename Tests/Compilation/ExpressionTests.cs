@@ -18,7 +18,7 @@
 	[TestClass]
 	public class ExpressionTests
 	{
-		private static readonly ICompiler _compiler = new RoslynCompiler();
+		private static readonly ICompiler _compiler = new CSharpCompiler();
 		private static readonly AssemblyLoadContext _context = new(default, false);
 
 		private static ExpressionFormula<decimal> Compile(string expression, ICompilerCache cache = default)
