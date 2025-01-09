@@ -1,4 +1,4 @@
-﻿namespace Ecng.Compilation.All;
+﻿namespace Ecng.Compilation;
 
 using Ecng.Compilation.FSharp;
 using Ecng.Compilation.Python;
