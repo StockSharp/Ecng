@@ -42,7 +42,7 @@ public class PythonCompiler : ICompiler
 		_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 	}
 
-	public CompilationLanguages Language { get; } = CompilationLanguages.Python;
+	string ICompiler.Extension { get; } = FileExts.Python;
 
 	Task<CompilationError[]> ICompiler.Analyse(
 		object analyzer,

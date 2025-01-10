@@ -17,7 +17,7 @@
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.VisualBasic;
 
-	public abstract class RoslynCompiler(CompilationLanguages language) : ICompiler
+	public abstract class RoslynCompiler(string extension) : ICompiler
 	{
 		private static readonly Dictionary<string, string> _redirects = new()
 		{
@@ -41,7 +41,7 @@
 			};
 		}
 
-		public CompilationLanguages Language { get; } = language;
+		string ICompiler.Extension { get; } = extension;
 
 		private Compilation Create(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
 		{
@@ -148,7 +148,7 @@
 	public class CSharpCompiler : RoslynCompiler
 	{
 		public CSharpCompiler()
-			: base(CompilationLanguages.CSharp)
+			: base(FileExts.CSharp)
 		{
 		}
 
@@ -164,7 +164,7 @@
 	public class VisualBasicCompiler : RoslynCompiler
 	{
 		public VisualBasicCompiler()
-			: base(CompilationLanguages.VisualBasic)
+			: base(FileExts.VisualBasic)
 		{
 		}
 

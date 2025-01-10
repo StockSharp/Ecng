@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Compilation;
 
+using Ecng.Common;
 using Ecng.Compilation.FSharp;
 using Ecng.Compilation.Python;
 using Ecng.Compilation.Roslyn;
@@ -9,9 +10,9 @@ public static class CompilerProviderExtensions
 	public static CompilerProvider CreateCompilerProvider()
 		=> new()
 		{
-			{ CompilationLanguages.CSharp, new CSharpCompiler() },
-			{ CompilationLanguages.VisualBasic, new VisualBasicCompiler() },
-			{ CompilationLanguages.FSharp, new FSharpCompiler() },
-			{ CompilationLanguages.Python, new PythonCompiler() }
+			{ FileExts.CSharp, new CSharpCompiler() },
+			{ FileExts.VisualBasic, new VisualBasicCompiler() },
+			{ FileExts.FSharp, new FSharpCompiler() },
+			{ FileExts.Python, new PythonCompiler() }
 		};
 }

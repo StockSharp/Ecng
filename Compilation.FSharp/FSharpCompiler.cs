@@ -72,7 +72,7 @@ public class FSharpCompiler : ICompiler
 
 	private static readonly AsyncLock _lock = new();
 
-	public CompilationLanguages Language { get; } = CompilationLanguages.FSharp;
+	string ICompiler.Extension { get; } = FileExts.FSharp;
 
 	private readonly FSharpChecker _checker;
 

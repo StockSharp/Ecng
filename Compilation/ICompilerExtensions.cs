@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Ecng.Collections;
 using Ecng.Common;
 
 public static class ICompilerExtensions
@@ -55,28 +54,4 @@ public static class ICompilerExtensions
 
 		return res;
 	}
-
-	private static readonly PairSet<string, CompilationLanguages> _langExtensions = new(StringComparer.InvariantCultureIgnoreCase)
-	{
-		{ FileExts.CsEx, CompilationLanguages.CSharp },
-		{ FileExts.VbEx, CompilationLanguages.VisualBasic },
-		{ FileExts.FsEx, CompilationLanguages.FSharp },
-		{ FileExts.PyEx, CompilationLanguages.Python },
-	};
-
-	/// <summary>
-	/// Convert file extension to <see cref="CompilationLanguages"/>.
-	/// </summary>
-	/// <param name="ext">File extension.</param>
-	/// <returns><see cref="CompilationLanguages"/></returns>
-	public static CompilationLanguages? TryToLanguage(this string ext)
-		=> _langExtensions.TryGetValue(ext);
-
-	/// <summary>
-	/// Convert <see cref="CompilationLanguages"/> to file extension.
-	/// </summary>
-	/// <param name="language"><see cref="CompilationLanguages"/></param>
-	/// <returns>File extension.</returns>
-	public static string ToExtension(this CompilationLanguages language)
-		=> _langExtensions[language];
 }

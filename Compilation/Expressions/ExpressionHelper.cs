@@ -254,7 +254,7 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 		=> Compile<TResult>(compiler, context.LoadFromStream, expression, cache, cancellationToken);
 #endif
 
-	private const CompilationLanguages _lang = CompilationLanguages.CSharp;
+	private const string _lang = FileExts.CSharp;
 
 	/// <summary>
 	/// Compile mathematical formula.

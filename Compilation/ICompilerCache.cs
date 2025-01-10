@@ -12,9 +12,9 @@ public interface ICompilerCache
 {
 	int Count { get; }
 
-	bool TryGet(CompilationLanguages language, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly);
-	void Add(CompilationLanguages language, IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly);
-	bool Remove(CompilationLanguages language, IEnumerable<string> sources, IEnumerable<string> refs);
+	bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly);
+	void Add(string ext, IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly);
+	bool Remove(string ext, IEnumerable<string> sources, IEnumerable<string> refs);
 	void Clear();
 	void Init();
 }
@@ -43,12 +43,13 @@ public class InMemoryCompilerCache : ICompilerCache
 
 	public virtual int Count => _cache.Count;
 
-	protected static string GetKey(CompilationLanguages language, IEnumerable<string> sources, IEnumerable<string> refs)
+	protected static string GetKey(string ext, IEnumerable<string> sources, IEnumerable<string> refs)
 	{
+		if (ext.IsEmpty())		throw new ArgumentNullException(nameof(ext));
 		if (sources is null)	throw new ArgumentNullException(nameof(sources));
 		if (refs is null)		throw new ArgumentNullException(nameof(refs));
 
-		return language + (sources.JoinN() + refs.JoinN()).UTF8().Sha512();
+		return $"{ext.Substring(1)}{(sources.JoinN() + refs.JoinN()).UTF8().Sha512()}";
 	}
 
 	protected bool Remove(string key)
@@ -69,14 +70,14 @@ public class InMemoryCompilerCache : ICompilerCache
 		return false;
 	}
 
-	public virtual void Add(CompilationLanguages language, IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly)
-		=> Set(GetKey(language, sources, refs), assembly);
+	public virtual void Add(string ext, IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly)
+		=> Set(GetKey(ext, sources, refs), assembly);
 
-	public virtual bool Remove(CompilationLanguages language, IEnumerable<string> sources, IEnumerable<string> refs)
-		=> Remove(GetKey(language, sources, refs));
+	public virtual bool Remove(string ext, IEnumerable<string> sources, IEnumerable<string> refs)
+		=> Remove(GetKey(ext, sources, refs));
 
-	public virtual bool TryGet(CompilationLanguages language, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly)
-		=> TryGet(GetKey(language, sources, refs), out assembly);
+	public virtual bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly)
+		=> TryGet(GetKey(ext, sources, refs), out assembly);
 
 	public virtual void Clear() => _cache.Clear();
 	public virtual void Init() { }
@@ -85,7 +86,6 @@ public class InMemoryCompilerCache : ICompilerCache
 public class FileCompilerCache(string path, TimeSpan timeout) : InMemoryCompilerCache(timeout)
 {
 	private readonly string _path = path.IsEmpty(Directory.GetCurrentDirectory());
-	private const string _ext = "dll";
 
 	public override void Init()
 	{
@@ -95,7 +95,7 @@ public class FileCompilerCache(string path, TimeSpan timeout) : InMemoryCompiler
 
 		var till = DateTime.UtcNow;
 
-		foreach (var fileName in Directory.GetFiles(_path, $"*.{_ext}"))
+		foreach (var fileName in Directory.GetFiles(_path, $"*{FileExts.Bin}"))
 		{
 			if ((till - File.GetLastWriteTimeUtc(fileName)) > Timeout)
 			{
@@ -108,20 +108,20 @@ public class FileCompilerCache(string path, TimeSpan timeout) : InMemoryCompiler
 	}
 
 	private string GetFileName(string key)
-		=> Path.Combine(_path, $"{key}.{_ext}");
+		=> Path.Combine(_path, $"{key}{FileExts.Bin}");
 
-	public override void Add(CompilationLanguages language, IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly)
+	public override void Add(string ext, IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly)
 	{
-		var key = GetKey(language, sources, refs);
+		var key = GetKey(ext, sources, refs);
 		var fileName = GetFileName(key);
 
 		File.WriteAllBytes(fileName, assembly);
 		Set(key, assembly);
 	}
 
-	public override bool Remove(CompilationLanguages language, IEnumerable<string> sources, IEnumerable<string> refs)
+	public override bool Remove(string ext, IEnumerable<string> sources, IEnumerable<string> refs)
 	{
-		var key = GetKey(language, sources, refs);
+		var key = GetKey(ext, sources, refs);
 		var fileName = GetFileName(key);
 
 		if (File.Exists(fileName))
@@ -130,9 +130,9 @@ public class FileCompilerCache(string path, TimeSpan timeout) : InMemoryCompiler
 		return Remove(key);
 	}
 
-	public override bool TryGet(CompilationLanguages language, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly)
+	public override bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly)
 	{
-		var key = GetKey(language, sources, refs);
+		var key = GetKey(ext, sources, refs);
 
 		if (TryGet(key, out assembly))
 			return true;
