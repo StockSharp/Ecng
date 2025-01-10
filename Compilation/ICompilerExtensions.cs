@@ -22,7 +22,15 @@ public static class ICompilerExtensions
 	/// <param name="result">The result of the compilation.</param>
 	/// <returns><see langword="true" /> - If there are errors, <see langword="true" /> - If the compilation is performed without errors.</returns>
 	public static bool HasErrors(this CompilationResult result)
-		=> result.CheckOnNull(nameof(result)).Errors.Any(e => e.Type == CompilationErrorTypes.Error);
+		=> result.CheckOnNull(nameof(result)).Errors.HasErrors();
+
+	/// <summary>
+	/// Are there any errors in the compilation.
+	/// </summary>
+	/// <param name="errors">The result of the compilation.</param>
+	/// <returns><see langword="true" /> - If there are errors, <see langword="true" /> - If the compilation is performed without errors.</returns>
+	public static bool HasErrors(this IEnumerable<CompilationError> errors)
+		=> errors.CheckOnNull(nameof(errors)).Any(e => e.Type == CompilationErrorTypes.Error);
 
 	public static Task<CompilationResult> Compile(this ICompiler compiler, string name, string source, IEnumerable<string> refs, CancellationToken cancellationToken = default)
 		=> Compile(compiler, name, [source], refs, cancellationToken);
