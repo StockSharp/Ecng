@@ -5,37 +5,37 @@ public static class FileExts
 	/// <summary>
 	/// Backup extension for settings file.
 	/// </summary>
-	public const string BackupExt = ".bak";
+	public const string Backup = ".bak";
 
 	/// <summary>
 	/// C# file extension.
 	/// </summary>
-	public const string CsEx = ".cs";
+	public const string CSharp = ".cs";
 
 	/// <summary>
 	/// F# file extension.
 	/// </summary>
-	public const string FsEx = ".fs";
+	public const string FSharp = ".fs";
 
 	/// <summary>
 	/// Visual Basic file extension.
 	/// </summary>
-	public const string VbEx = ".vb";
+	public const string VisualBasic = ".vb";
 
 	/// <summary>
 	/// Python file extension.
 	/// </summary>
-	public const string PyEx = ".py";
+	public const string Python = ".py";
 
 	/// <summary>
 	/// Assembly file extension.
 	/// </summary>
-	public const string DllEx = ".dll";
+	public const string Dll = ".dll";
 
 	/// <summary>
 	/// JSON file extension.
 	/// </summary>
-	public const string JsonEx = ".json";
+	public const string Json = ".json";
 
 	/// <summary>
 	/// XML file extension.
