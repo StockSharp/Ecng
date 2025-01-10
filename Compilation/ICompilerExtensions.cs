@@ -69,7 +69,7 @@ public static class ICompilerExtensions
 	/// </summary>
 	/// <param name="ext">File extension.</param>
 	/// <returns><see cref="CompilationLanguages"/></returns>
-	public static CompilationLanguages? ToLanguage(this string ext)
+	public static CompilationLanguages? TryToLanguage(this string ext)
 		=> _langExtensions.TryGetValue(ext);
 
 	/// <summary>
