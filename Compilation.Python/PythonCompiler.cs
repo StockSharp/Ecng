@@ -83,8 +83,17 @@ public class PythonCompiler : ICompiler
 				Optimized = true
 			}, new CustomErrorListener(errors));
 
+			if (errors.HasErrors())
+			{
+				return new CompilationResult
+				{
+					Errors = errors,
+				}.FromResult();
+			}
+
 			var scope = _engine.CreateScope();
-			compiled.Execute(scope);
+
+			compiled?.Execute(scope);
 
 			return new CompilationResult
 			{
