@@ -24,6 +24,24 @@ public static class PythonExtensions
 		=> (Type)_underlyingSystemTypeProp.GetValue(type ?? throw new ArgumentNullException(nameof(type)));
 
 	[CLSCompliant(false)]
+	public static bool Is<TBase>(this PythonType type)
+		=> type.Is(typeof(TBase));
+
+	[CLSCompliant(false)]
+	public static bool Is(this PythonType type, Type baseType)
+	{
+		if (type is null)		throw new ArgumentNullException(nameof(type));
+		if (baseType is null)	throw new ArgumentNullException(nameof(baseType));
+
+		var underlying = type.GetUnderlyingSystemType();
+
+		if (underlying is null || underlying == baseType)
+			return false;
+
+		return baseType.IsAssignableFrom(underlying);
+	}
+
+	[CLSCompliant(false)]
 	public static IEnumerable<PythonType> GetTypes(this ScriptScope scope)
 	{
 		if (scope is null)
