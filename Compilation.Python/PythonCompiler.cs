@@ -42,6 +42,7 @@ public class PythonCompiler : ICompiler
 		_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 	}
 
+	bool ICompiler.IsAssembly { get; } = false;
 	string ICompiler.Extension { get; } = FileExts.Python;
 
 	Task<CompilationError[]> ICompiler.Analyse(

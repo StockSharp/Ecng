@@ -41,6 +41,7 @@
 			};
 		}
 
+		bool ICompiler.IsAssembly { get; } = true;
 		string ICompiler.Extension { get; } = extension;
 
 		private Compilation Create(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
