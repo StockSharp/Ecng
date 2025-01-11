@@ -80,16 +80,7 @@ public class PythonCompiler : ICompiler
 				Optimized = true
 			}, new CustomErrorListener(errors));
 
-			result = new(errors);
-
-			if (compiled is not null)
-			{
-				var scope = _engine.CreateScope();
-
-				compiled.Execute(scope);
-
-				result.Scope = scope;
-			}
+			result = new(errors) { CompiledCode = compiled };
 		}
 		catch (SyntaxErrorException ex)
 		{
