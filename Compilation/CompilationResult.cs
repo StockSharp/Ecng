@@ -1,13 +1,15 @@
-namespace Ecng.Compilation
+namespace Ecng.Compilation;
+
+using System.Collections.Generic;
+using System.Linq;
+
+public abstract class CompilationResult(IEnumerable<CompilationError> errors)
 {
-	using System.Collections.Generic;
+	public IEnumerable<CompilationError> Errors { get; } = errors.ToArray();
+}
 
-	public class CompilationResult
-	{
-		public byte[] Assembly { get; set; }
-
-		public object Custom { get; set; }
-
-		public IEnumerable<CompilationError> Errors { get; set; }
-	}
+public class AssemblyCompilationResult(IEnumerable<CompilationError> errors)
+	: CompilationResult(errors)
+{
+	public byte[] Assembly { get; set; }
 }

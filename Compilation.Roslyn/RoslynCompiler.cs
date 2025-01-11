@@ -108,13 +108,11 @@
 		{
 			var compilation = Create(name, sources, refs, cancellationToken);
 
-			var compilationResult = new CompilationResult();
-
 			using var ms = new MemoryStream();
 
 			var result = compilation.Emit(ms, cancellationToken: cancellationToken);
 
-			compilationResult.Errors = result.Diagnostics.Select(diagnostic =>
+			var compilationResult = new AssemblyCompilationResult(result.Diagnostics.Select(diagnostic =>
 			{
 				var pos = diagnostic.Location.GetLineSpan().StartLinePosition;
 
@@ -134,7 +132,7 @@
 				};
 
 				return error;
-			}).ToArray();
+			}));
 
 			if (result.Success)
 			{
@@ -142,7 +140,7 @@
 				compilationResult.Assembly = ms.To<byte[]>();
 			}
 
-			return compilationResult.FromResult();
+			return ((CompilationResult)compilationResult).FromResult();
 		}
 	}
 
