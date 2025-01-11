@@ -26,7 +26,7 @@ public class PythonCompiler : ICompiler
 				Line = span.Start.Line,
 				Character = span.Start.Column,
 				Message = message,
-				Type = ToErrorType(severity),
+				Type = severity.ToErrorType(),
 			});
 	}
 
@@ -53,11 +53,8 @@ public class PythonCompiler : ICompiler
 		IEnumerable<(string name, byte[] body)> refs,
 		CancellationToken cancellationToken)
 	{
-		if (sources == null)
-			throw new ArgumentNullException(nameof(sources));
-
-		if (refs is null)
-			throw new ArgumentNullException(nameof(refs));
+		if (sources is null)	throw new ArgumentNullException(nameof(sources));
+		if (refs is null)		throw new ArgumentNullException(nameof(refs));
 
 		return Array.Empty<CompilationError>().FromResult();
 	}
@@ -68,11 +65,10 @@ public class PythonCompiler : ICompiler
 		IEnumerable<(string name, byte[] body)> refs,
 		CancellationToken cancellationToken)
 	{
-		if (sources == null)
-			throw new ArgumentNullException(nameof(sources));
+		if (sources is null)	throw new ArgumentNullException(nameof(sources));
+		if (refs is null)		throw new ArgumentNullException(nameof(refs));
 
-		if (refs is null)
-			throw new ArgumentNullException(nameof(refs));
+		PythonCompilationResult result;
 
 		try
 		{
@@ -84,56 +80,37 @@ public class PythonCompiler : ICompiler
 				Optimized = true
 			}, new CustomErrorListener(errors));
 
-			if (errors.HasErrors())
+			result = new(errors);
+
+			if (compiled is not null)
 			{
-				return new CompilationResult
-				{
-					Errors = errors,
-				}.FromResult();
+				var scope = _engine.CreateScope();
+
+				compiled.Execute(scope);
+
+				result.Scope = scope;
 			}
-
-			var scope = _engine.CreateScope();
-
-			compiled?.Execute(scope);
-
-			return new CompilationResult
-			{
-				Errors = errors,
-				Custom = scope,
-			}.FromResult();
 		}
 		catch (SyntaxErrorException ex)
 		{
-			return new CompilationResult
+			result = new([new CompilationError
 			{
-				Errors = [new CompilationError
-				{
-					Type = ToErrorType(ex.Severity),
-					Line = ex.Line,
-					Character = ex.Column,
-					Message = ex.Message,
-					Id = ex.ErrorCode.ToString(),
-				}],
-			}.FromResult();
+				Type = ex.Severity.ToErrorType(),
+				Line = ex.Line,
+				Character = ex.Column,
+				Message = ex.Message,
+				Id = ex.ErrorCode.ToString(),
+			}]);
 		}
 		catch (Exception ex)
 		{
-			return new CompilationResult
+			result = new([new CompilationError
 			{
-				Errors = [new CompilationError
-				{
-					Type = CompilationErrorTypes.Error,
-					Message = ex.Message,
-				}],
-			}.FromResult();
+				Type = CompilationErrorTypes.Error,
+				Message = ex.Message,
+			}]);
 		}
-	}
 
-	private static CompilationErrorTypes ToErrorType(Severity severity)
-		=> severity switch
-		{
-			Severity.Error or Severity.FatalError => CompilationErrorTypes.Error,
-			Severity.Warning => CompilationErrorTypes.Warning,
-			_ => CompilationErrorTypes.Info,
-		};
+		return ((CompilationResult)result).FromResult();
+	}
 }

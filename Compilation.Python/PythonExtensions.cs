@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
+using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 
 using IronPython.Runtime.Types;
@@ -30,4 +31,12 @@ public static class PythonExtensions
 
 		return scope.GetVariableNames().Select(scope.GetVariable).OfType<PythonType>();
 	}
+
+	public static CompilationErrorTypes ToErrorType(this Severity severity)
+		=> severity switch
+		{
+			Severity.Error or Severity.FatalError => CompilationErrorTypes.Error,
+			Severity.Warning => CompilationErrorTypes.Warning,
+			_ => CompilationErrorTypes.Info,
+		};
 }
