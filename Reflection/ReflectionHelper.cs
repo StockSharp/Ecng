@@ -781,5 +781,19 @@ namespace Ecng.Reflection
 				type.Is(required) &&
 				type.GetConstructor([]) is not null;
 		}
+
+		public static Type TryFindType(this IEnumerable<Type> types, Func<Type, bool> isTypeCompatible, string typeName)
+		{
+			if (types is null)
+				throw new ArgumentNullException(nameof(types));
+
+			if (isTypeCompatible is null && typeName.IsEmpty())
+				throw new ArgumentNullException(nameof(typeName));
+
+			if (!typeName.IsEmpty())
+				return types.FirstOrDefault(t => t.Name.EqualsIgnoreCase(typeName));
+			else
+				return types.FirstOrDefault(isTypeCompatible);
+		}
 	}
 }
