@@ -12,8 +12,8 @@ public interface ICompilerCache
 {
 	int Count { get; }
 
-	bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly);
-	void Add(string ext, IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly);
+	bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out IAssembly assembly);
+	void Add(string ext, IEnumerable<string> sources, IEnumerable<string> refs, IAssembly assembly);
 	bool Remove(string ext, IEnumerable<string> sources, IEnumerable<string> refs);
 	void Clear();
 	void Init();
@@ -21,7 +21,7 @@ public interface ICompilerCache
 
 public class InMemoryCompilerCache : ICompilerCache
 {
-	private readonly SynchronizedDictionary<string, (DateTime till, byte[] assembly)> _cache = [];
+	private readonly SynchronizedDictionary<string, (DateTime till, IAssembly assembly)> _cache = [];
 
 	public InMemoryCompilerCache(TimeSpan timeout)
 	{
@@ -55,10 +55,10 @@ public class InMemoryCompilerCache : ICompilerCache
 	protected bool Remove(string key)
 		=> _cache.Remove(key);
 
-	protected void Set(string key, byte[] assembly)
+	protected void Set(string key, IAssembly assembly)
 		=> _cache[key] = (GetTill(), assembly ?? throw new ArgumentNullException(nameof(assembly)));
 
-	protected bool TryGet(string key, out byte[] assembly)
+	protected bool TryGet(string key, out IAssembly assembly)
 	{
 		if (_cache.TryGetValue(key, out var t) && t.till >= DateTime.UtcNow)
 		{
@@ -70,13 +70,13 @@ public class InMemoryCompilerCache : ICompilerCache
 		return false;
 	}
 
-	public virtual void Add(string ext, IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly)
+	public virtual void Add(string ext, IEnumerable<string> sources, IEnumerable<string> refs, IAssembly assembly)
 		=> Set(GetKey(ext, sources, refs), assembly);
 
 	public virtual bool Remove(string ext, IEnumerable<string> sources, IEnumerable<string> refs)
 		=> Remove(GetKey(ext, sources, refs));
 
-	public virtual bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly)
+	public virtual bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out IAssembly assembly)
 		=> TryGet(GetKey(ext, sources, refs), out assembly);
 
 	public virtual void Clear() => _cache.Clear();
@@ -103,19 +103,22 @@ public class FileCompilerCache(string path, TimeSpan timeout) : InMemoryCompiler
 				continue;
 			}
 
-			Set(Path.GetFileNameWithoutExtension(fileName), File.ReadAllBytes(fileName));
+			Set(Path.GetFileNameWithoutExtension(fileName), new AssemblyImpl(File.ReadAllBytes(fileName)));
 		}
 	}
 
 	private string GetFileName(string key)
 		=> Path.Combine(_path, $"{key}{FileExts.Bin}");
 
-	public override void Add(string ext, IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly)
+	public override void Add(string ext, IEnumerable<string> sources, IEnumerable<string> refs, IAssembly assembly)
 	{
+		if (assembly is null)
+			throw new ArgumentNullException(nameof(assembly));
+
 		var key = GetKey(ext, sources, refs);
 		var fileName = GetFileName(key);
 
-		File.WriteAllBytes(fileName, assembly);
+		File.WriteAllBytes(fileName, assembly.AsBytes);
 		Set(key, assembly);
 	}
 
@@ -130,7 +133,7 @@ public class FileCompilerCache(string path, TimeSpan timeout) : InMemoryCompiler
 		return Remove(key);
 	}
 
-	public override bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly)
+	public override bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out IAssembly assembly)
 	{
 		var key = GetKey(ext, sources, refs);
 
@@ -142,7 +145,7 @@ public class FileCompilerCache(string path, TimeSpan timeout) : InMemoryCompiler
 		if (!File.Exists(fileName))
 			return false;
 
-		assembly = File.ReadAllBytes(fileName);
+		assembly = new AssemblyImpl(File.ReadAllBytes(fileName));
 		Set(key, assembly);
 		return true;
 	}

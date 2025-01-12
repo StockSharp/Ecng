@@ -15,6 +15,35 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 {
 	private class AssemblyImpl(CompiledCode compiledCode) : IAssembly
 	{
+		private class TypeImpl(CompiledCode code, PythonType pythonType) : IType
+		{
+			private readonly CompiledCode _code = code ?? throw new ArgumentNullException(nameof(code));
+			private readonly PythonType _pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
+
+			string IType.Name => _pythonType.GetName();
+			string IType.DisplayName => TryGetAttr("display_name");
+			string IType.Description => TryGetAttr("description");
+			string IType.DocUrl => TryGetAttr("__doc__");
+			Uri IType.IconUri => TryGetAttr("icon") is string url ? new(url) : (Uri)default;
+
+			//private dynamic AsDynamic => _pythonType;
+			private ScriptEngine Engine => _code.Engine;
+			private ObjectOperations Ops => Engine.Operations;
+
+			private string TryGetAttr(string name)
+				=> Ops.TryGetMember(_pythonType, name, out object value) ? value as string : null;
+
+			object IType.CreateInstance(object[] args)
+			{
+				if (args is null)
+					throw new ArgumentNullException(nameof(args));
+
+				return Ops.Invoke(_pythonType, args);
+			}
+
+			bool IType.Is(Type type) => _pythonType.Is(type);
+		}
+
 		private readonly CompiledCode _compiledCode = compiledCode ?? throw new ArgumentNullException(nameof(compiledCode));
 		private readonly SynchronizedSet<ScriptScope> _execScopes = [];
 
@@ -32,35 +61,6 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 
 			return scope.GetTypes().Select(t => new TypeImpl(_compiledCode, t)).ToArray();
 		}
-	}
-
-	private class TypeImpl(CompiledCode code, PythonType pythonType) : IType
-	{
-		private readonly CompiledCode _code = code ?? throw new ArgumentNullException(nameof(code));
-		private readonly PythonType _pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
-
-		string IType.Name => _pythonType.GetName();
-		string IType.DisplayName => TryGetAttr("display_name");
-		string IType.Description => TryGetAttr("description");
-		string IType.DocUrl => TryGetAttr("__doc__");
-		Uri IType.IconUri => TryGetAttr("icon") is string url ? new(url) : (Uri)default;
-
-		//private dynamic AsDynamic => _pythonType;
-		private ScriptEngine Engine => _code.Engine;
-		private ObjectOperations Ops => Engine.Operations;
-
-		private string TryGetAttr(string name)
-			=> Ops.TryGetMember(_pythonType, name, out object value) ? value as string : null;
-
-		object IType.CreateInstance(object[] args)
-		{
-			if (args is null)
-				throw new ArgumentNullException(nameof(args));
-
-			return Ops.Invoke(_pythonType, args);
-		}
-
-		bool IType.Is(Type type) => _pythonType.Is(type);
 	}
 
 	public CompiledCode CompiledCode { get; set; }
