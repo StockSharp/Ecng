@@ -169,10 +169,7 @@ public class FSharpCompiler : ICompiler
 			diagnostics.Add(ToError(diag));
 		}
 
-		return new AssemblyCompilationResult([.. diagnostics])
-		{
-			Assembly = errorCode == 0 ? stream.To<byte[]>() : null
-		};
+		return new AssemblyCompilationResult([.. diagnostics], errorCode == 0 ? stream.To<byte[]>() : null);
 	}
 
 	private static CompilationError ToError(FSharpDiagnostic diag)

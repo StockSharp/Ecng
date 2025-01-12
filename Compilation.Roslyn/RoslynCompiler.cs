@@ -110,6 +110,12 @@
 
 			using var ms = new MemoryStream();
 
+			byte[] getBody()
+			{
+				ms.Seek(0, SeekOrigin.Begin);
+				return ms.To<byte[]>();
+			}
+
 			var result = compilation.Emit(ms, cancellationToken: cancellationToken);
 
 			var compilationResult = new AssemblyCompilationResult(result.Diagnostics.Select(diagnostic =>
@@ -132,13 +138,7 @@
 				};
 
 				return error;
-			}));
-
-			if (result.Success)
-			{
-				ms.Seek(0, SeekOrigin.Begin);
-				compilationResult.Assembly = ms.To<byte[]>();
-			}
+			}), result.Success ? getBody() : null);
 
 			return ((CompilationResult)compilationResult).FromResult();
 		}

@@ -287,9 +287,9 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 
 			if (cache?.TryGet(_lang, sources, refs, out var assembly) != true)
 			{
-				var result = (AssemblyCompilationResult)await compiler.Compile("Formula", sources, refs, cancellationToken);
+				var result = await compiler.Compile("Formula", sources, refs, cancellationToken);
 
-				assembly = result.Assembly;
+				assembly = result.Assembly.AsBytes;
 
 				if (assembly is null)
 					return ExpressionFormula<TResult>.CreateError(result.Errors.ErrorsOnly().Select(e => e.Message).JoinNL());

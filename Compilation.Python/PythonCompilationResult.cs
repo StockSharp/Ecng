@@ -4,13 +4,36 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using IronPython.Runtime.Types;
+using Ecng.Collections;
 
 using Microsoft.Scripting.Hosting;
 
-public class PythonCompilationResult(IEnumerable<CompilationError> errors)
+using IronPython.Runtime.Types;
+
+class PythonCompilationResult(IEnumerable<CompilationError> errors)
 	: CompilationResult(errors)
 {
+	private class AssemblyImpl(CompiledCode compiledCode) : IAssembly
+	{
+		private readonly CompiledCode _compiledCode = compiledCode ?? throw new ArgumentNullException(nameof(compiledCode));
+		private readonly SynchronizedSet<ScriptScope> _execScopes = [];
+
+		byte[] IAssembly.AsBytes => throw new NotSupportedException();
+
+		IEnumerable<IType> IAssembly.GetExportTypes(object context)
+		{
+			if (context is null)
+				throw new ArgumentNullException(nameof(context));
+
+			var scope = (ScriptScope)context;
+
+			if (_execScopes.TryAdd(scope))
+				_compiledCode.Execute(scope);
+
+			return scope.GetTypes().Select(t => new TypeImpl(_compiledCode, t)).ToArray();
+		}
+	}
+
 	private class TypeImpl(CompiledCode code, PythonType pythonType) : IType
 	{
 		private readonly CompiledCode _code = code ?? throw new ArgumentNullException(nameof(code));
@@ -40,25 +63,8 @@ public class PythonCompilationResult(IEnumerable<CompilationError> errors)
 		bool IType.Is(Type type) => _pythonType.Is(type);
 	}
 
-	private bool _executed;
-
 	public CompiledCode CompiledCode { get; set; }
 
-	public override IEnumerable<IType> GetExportTypes(object context)
-	{
-		if (context is null)
-			throw new ArgumentNullException(nameof(context));
-
-		var code = CompiledCode ?? throw new InvalidOperationException("Compiled code is not set.");
-
-		var scope = (ScriptScope)context;
-
-		if (!_executed)
-		{
-			code.Execute(scope);
-			_executed = true;
-		}
-
-		return scope.GetTypes().Select(t => new TypeImpl(code, t)).ToArray();
-	}
+	private IAssembly _assembly;
+	public override IAssembly Assembly => CompiledCode is null ? null : _assembly ??= new AssemblyImpl(CompiledCode);
 }

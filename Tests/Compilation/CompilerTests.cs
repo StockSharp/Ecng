@@ -22,7 +22,7 @@
 		public async Task Compile()
 		{
 			ICompiler compiler = new CSharpCompiler();
-			var res = (AssemblyCompilationResult)await compiler.Compile("test", "class Class1 {}",
+			var res = await compiler.Compile("test", "class Class1 {}",
 			[
 				_coreLibPath,
 			]);
@@ -34,7 +34,7 @@
 		public async Task CompileError()
 		{
 			ICompiler compiler = new CSharpCompiler();
-			var res = (AssemblyCompilationResult)await compiler.Compile("test", "class Class1 {",
+			var res = await compiler.Compile("test", "class Class1 {",
 			[
 				_coreLibPath,
 			]);
@@ -49,7 +49,7 @@
 			var cts = new CancellationTokenSource();
 			cts.Cancel();
 			ICompiler compiler = new CSharpCompiler();
-			var res = (AssemblyCompilationResult)await compiler.Compile("test", "class Class1 {",
+			var res = await compiler.Compile("test", "class Class1 {",
 			[
 				_coreLibPath,
 			], cts.Token);
