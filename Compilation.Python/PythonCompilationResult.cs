@@ -26,9 +26,13 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 			string IType.DocUrl => TryGetAttr("__doc__");
 			Uri IType.IconUri => TryGetAttr("icon") is string url ? new(url) : (Uri)default;
 
-			//private dynamic AsDynamic => _pythonType;
 			private ScriptEngine Engine => _code.Engine;
 			private ObjectOperations Ops => Engine.Operations;
+
+			bool IType.IsAbstract => false;
+			bool IType.IsPublic => true;
+			bool IType.IsGenericTypeDefinition => false;
+			object IType.GetConstructor(IType[] value) => new object();
 
 			private string TryGetAttr(string name)
 				=> Ops.TryGetMember(_pythonType, name, out object value) ? value as string : null;

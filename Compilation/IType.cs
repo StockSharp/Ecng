@@ -9,6 +9,11 @@ public interface IType
 	string Description { get; }
 	string DocUrl { get; }
 	Uri IconUri { get; }
+	bool IsAbstract { get; }
+	bool IsPublic { get; }
+	bool IsGenericTypeDefinition { get; }
+
 	bool Is(Type type);
 	object CreateInstance(params object[] args);
+	object GetConstructor(IType[] value);
 }

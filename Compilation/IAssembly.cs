@@ -26,6 +26,11 @@ class AssemblyImpl(byte[] body) : IAssembly
 		string IType.DocUrl => _real.GetDocUrl();
 		Uri IType.IconUri => _real.GetIconUrl();
 
+		bool IType.IsAbstract => _real.IsAbstract;
+		bool IType.IsPublic => _real.IsPublic;
+		bool IType.IsGenericTypeDefinition => _real.IsGenericTypeDefinition;
+		object IType.GetConstructor(IType[] value) => _real.GetConstructor(value.Select(t => ((TypeImpl)t)._real).ToArray());
+
 		object IType.CreateInstance(object[] args) => _real.CreateInstance(args);
 		bool IType.Is(Type type) => _real.Is(type, false);
 	}
