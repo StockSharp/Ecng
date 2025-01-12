@@ -42,18 +42,6 @@ namespace Ecng.Common
 			return Activator.CreateInstance(type, args).To<T>();
 		}
 
-		public static T CreateInstanceArgs<T>(this Type type, object[] args)
-		{
-			if (type is null)
-				throw new ArgumentNullException(nameof(type));
-
-			if (args is null)
-				throw new ArgumentNullException(nameof(args));
-
-			Func<Type, object[], object> func = Activator.CreateInstance;
-			return func(type, args).To<T>();
-		}
-
 		public static Type Make(this Type type, params Type[] args)
 		{
 			if (type is null)
