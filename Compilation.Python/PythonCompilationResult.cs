@@ -15,19 +15,29 @@ public class PythonCompilationResult(IEnumerable<CompilationError> errors)
 	{
 		private readonly CompiledCode _code = code ?? throw new ArgumentNullException(nameof(code));
 		private readonly PythonType _pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
-		public object Native => _pythonType;
-		public string Name => _pythonType.GetName();
-		public Type DotNet => _pythonType.GetUnderlyingSystemType();
 
-		public object CreateInstance(params object[] args)
+		string IType.Name => _pythonType.GetName();
+		string IType.DisplayName => TryGetAttr("display_name");
+		string IType.Description => TryGetAttr("description");
+		string IType.DocUrl => TryGetAttr("__doc__");
+		Uri IType.IconUri => TryGetAttr("icon") is string url ? new(url) : (Uri)default;
+
+		//private dynamic AsDynamic => _pythonType;
+		private ScriptEngine Engine => _code.Engine;
+		private ObjectOperations Ops => Engine.Operations;
+
+		private string TryGetAttr(string name)
+			=> Ops.TryGetMember(_pythonType, name, out object value) ? value as string : null;
+
+		object IType.CreateInstance(object[] args)
 		{
 			if (args is null)
 				throw new ArgumentNullException(nameof(args));
 
-			return _code.Engine.Operations.Invoke(_pythonType, args);
+			return Ops.Invoke(_pythonType, args);
 		}
 
-		public bool Is(Type type) => _pythonType.Is(type);
+		bool IType.Is(Type type) => _pythonType.Is(type);
 	}
 
 	private bool _executed;

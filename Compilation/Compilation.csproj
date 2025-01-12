@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <ItemGroup>
+    <ProjectReference Include="..\ComponentModel\ComponentModel.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
   </ItemGroup>
 </Project>

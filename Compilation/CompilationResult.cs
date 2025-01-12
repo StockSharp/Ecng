@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 
 using Ecng.Common;
+using Ecng.ComponentModel;
 
 public abstract class CompilationResult(IEnumerable<CompilationError> errors)
 {
@@ -17,18 +18,18 @@ public abstract class CompilationResult(IEnumerable<CompilationError> errors)
 public class AssemblyCompilationResult(IEnumerable<CompilationError> errors)
 	: CompilationResult(errors)
 {
-	private class TypeImpl(Type dotNet) : IType
+	private class TypeImpl(Type real) : IType
 	{
-		public string Name => DotNet.Name;
-		public object Native => DotNet;
+		private readonly Type _real = real ?? throw new ArgumentNullException(nameof(real));
 
-		public Type DotNet { get; } = dotNet ?? throw new ArgumentNullException(nameof(dotNet));
+		string IType.Name => _real.FullName;
+		string IType.DisplayName => _real.GetDisplayName();
+		string IType.Description => _real.GetDescription();
+		string IType.DocUrl => _real.GetDocUrl();
+		Uri IType.IconUri => _real.GetIconUrl();
 
-		public object CreateInstance(params object[] args)
-			=> DotNet.CreateInstance(args);
-
-		public bool Is(Type type)
-			=> DotNet.Is(type, false);
+		object IType.CreateInstance(object[] args) => _real.CreateInstance(args);
+		bool IType.Is(Type type) => _real.Is(type, false);
 	}
 
 	public byte[] Assembly { get; set; }
