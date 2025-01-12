@@ -71,4 +71,20 @@ public static class ICompilerExtensions
 
 	public static IEnumerable<CompilationError> ErrorsOnly(this IEnumerable<CompilationError> errors)
 		=> errors.Where(e => e.Type == CompilationErrorTypes.Error);
+
+	public static bool Is<T>(this IType type)
+	{
+		if (type is null)
+			throw new ArgumentNullException(nameof(type));
+
+		return type.Is(typeof(T));
+	}
+
+	public static T CreateInstance<T>(this IType type, params object[] args)
+	{
+		if (type is null)
+			throw new ArgumentNullException(nameof(type));
+
+		return (T)type.CreateInstance(args);
+	}
 }

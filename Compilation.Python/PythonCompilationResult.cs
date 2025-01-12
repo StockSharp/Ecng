@@ -11,12 +11,23 @@ using Microsoft.Scripting.Hosting;
 public class PythonCompilationResult(IEnumerable<CompilationError> errors)
 	: CompilationResult(errors)
 {
-	private class TypeImpl(PythonType pythonType) : IType
+	private class TypeImpl(CompiledCode code, PythonType pythonType) : IType
 	{
+		private readonly CompiledCode _code = code ?? throw new ArgumentNullException(nameof(code));
 		private readonly PythonType _pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
 		public object Native => _pythonType;
 		public string Name => _pythonType.GetName();
 		public Type DotNet => _pythonType.GetUnderlyingSystemType();
+
+		public object CreateInstance(params object[] args)
+		{
+			if (args is null)
+				throw new ArgumentNullException(nameof(args));
+
+			return _code.Engine.Operations.Invoke(_pythonType, args);
+		}
+
+		public bool Is(Type type) => _pythonType.Is(type);
 	}
 
 	private bool _executed;
@@ -38,6 +49,6 @@ public class PythonCompilationResult(IEnumerable<CompilationError> errors)
 			_executed = true;
 		}
 
-		return scope.GetTypes().Select(t => new TypeImpl(t)).ToArray();
+		return scope.GetTypes().Select(t => new TypeImpl(code, t)).ToArray();
 	}
 }

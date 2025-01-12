@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
+using Ecng.Common;
+
 public abstract class CompilationResult(IEnumerable<CompilationError> errors)
 {
 	public IEnumerable<CompilationError> Errors { get; } = errors.ToArray();
@@ -21,6 +23,17 @@ public class AssemblyCompilationResult(IEnumerable<CompilationError> errors)
 		public object Native => DotNet;
 
 		public Type DotNet { get; } = dotNet ?? throw new ArgumentNullException(nameof(dotNet));
+
+		public object CreateInstance(params object[] args)
+			=> DotNet.CreateInstance(args);
+
+		public bool Is(Type type)
+		{
+			if (type is null)
+				throw new ArgumentNullException(nameof(type));
+
+			return DotNet != type && type.IsAssignableFrom(DotNet);
+		}
 	}
 
 	public byte[] Assembly { get; set; }
