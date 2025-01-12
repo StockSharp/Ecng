@@ -104,4 +104,6 @@ public class PythonCompiler : ICompiler
 
 		return ((CompilationResult)result).FromResult();
 	}
+
+	object ICompiler.CreateContext() => _engine.CreateScope();
 }

@@ -172,6 +172,15 @@ public class FSharpCompiler : ICompiler
 		return new AssemblyCompilationResult([.. diagnostics], errorCode == 0 ? stream.To<byte[]>() : null);
 	}
 
+	object ICompiler.CreateContext()
+	{
+#if NETCOREAPP
+		return new AssemblyLoadContextTracker();
+#else
+		throw new NotSupportedException();
+#endif
+	}
+
 	private static CompilationError ToError(FSharpDiagnostic diag)
 	{
 		static CompilationErrorTypes toType(FSharpDiagnosticSeverity severity)
