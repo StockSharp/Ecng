@@ -751,5 +751,35 @@ namespace Ecng.Reflection
 		public static IEnumerable<TMember> OrderByDeclaration<TMember>(this IEnumerable<TMember> members)
 			where TMember : MemberInfo
 			=> members.OrderBy(m => m.MetadataToken);
+
+		/// <summary>
+		/// Is type compatible.
+		/// </summary>
+		/// <typeparam name="T">Required type.</typeparam>
+		/// <param name="type">Type.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsRequiredType<T>(this Type type)
+			=> IsRequiredType(type, typeof(T));
+
+		/// <summary>
+		/// Is type compatible.
+		/// </summary>
+		/// <param name="type">Type.</param>
+		/// <param name="required">Required type.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsRequiredType(this Type type, Type required)
+		{
+			if (type is null)
+				throw new ArgumentNullException(nameof(type));
+
+			if (required is null)
+				throw new ArgumentNullException(nameof(required));
+
+			return !type.IsAbstract &&
+				type.IsPublic &&
+				!type.IsGenericTypeDefinition &&
+				type.Is(required) &&
+				type.GetConstructor([]) is not null;
+		}
 	}
 }
