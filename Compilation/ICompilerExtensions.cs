@@ -87,4 +87,18 @@ public static class ICompilerExtensions
 
 		return (T)type.CreateInstance(args);
 	}
+
+	public static IType TryFindType(this IEnumerable<IType> types, Func<IType, bool> isTypeCompatible, string typeName)
+	{
+		if (types is null)
+			throw new ArgumentNullException(nameof(types));
+
+		if (isTypeCompatible is null && typeName.IsEmpty())
+			throw new ArgumentNullException(nameof(typeName));
+
+		if (!typeName.IsEmpty())
+			return types.FirstOrDefault(t => t.Name.EqualsIgnoreCase(typeName));
+		else
+			return types.FirstOrDefault(isTypeCompatible);
+	}
 }
