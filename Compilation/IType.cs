@@ -22,7 +22,7 @@ public interface IType
 	object GetConstructor(IType[] value);
 }
 
-public class TypeImpl(Type real) : IType
+class TypeImpl(Type real) : IType
 {
 	private readonly Type _real = real ?? throw new ArgumentNullException(nameof(real));
 

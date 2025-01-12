@@ -13,7 +13,7 @@ public interface IAssembly
 	IEnumerable<IType> GetExportTypes(object context);
 }
 
-public class AssemblyImpl(byte[] body) : IAssembly
+class AssemblyImpl(byte[] body) : IAssembly
 {
 	private readonly byte[] _body = body ?? throw new ArgumentNullException(nameof(body));
 	private Assembly _assembly;

@@ -131,4 +131,10 @@ public static class ICompilerExtensions
 			type.Is(required) &&
 			type.GetConstructor([]) is not null;
 	}
+
+	public static IAssembly ToIAssembly(this byte[] body)
+		=> new AssemblyImpl(body);
+
+	public static IType ToIType(this Type type)
+		=> new TypeImpl(type);
 }
