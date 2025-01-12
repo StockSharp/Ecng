@@ -44,14 +44,12 @@ class AssemblyImpl(byte[] body) : IAssembly
 
 		Assembly load()
 		{
-#if NETCOREAPP
-				if (context is AssemblyLoadContextTracker tracker)
-					return tracker.LoadFromStream(asm);
-				else if (context is System.Runtime.Loader.AssemblyLoadContext alc)
-					return alc.LoadFromStream(asm);
-#endif
-
-			throw new NotSupportedException(context.To<string>());
+			if (context is AssemblyLoadContextTracker tracker)
+				return tracker.LoadFromStream(asm);
+			else if (context is System.Runtime.Loader.AssemblyLoadContext alc)
+				return alc.LoadFromStream(asm);
+			else
+				throw new NotSupportedException(context.To<string>());
 		}
 
 		_assembly ??= load();

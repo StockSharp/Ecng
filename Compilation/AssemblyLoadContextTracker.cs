@@ -1,5 +1,4 @@
-﻿#if NETCOREAPP
-namespace Ecng.Compilation;
+﻿namespace Ecng.Compilation;
 
 using System;
 using System.Linq;
@@ -71,4 +70,3 @@ public class AssemblyLoadContextTracker(Action<Exception> uploadingError = defau
 		Unload();
 	}
 }
-#endif

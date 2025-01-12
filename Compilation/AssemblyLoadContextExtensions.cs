@@ -1,5 +1,4 @@
-﻿#if NETCOREAPP
-namespace Ecng.Compilation;
+﻿namespace Ecng.Compilation;
 
 using System.IO;
 using System.Reflection;
@@ -12,4 +11,3 @@ public static class AssemblyLoadContextExtensions
 	public static Assembly LoadFromStream(this AssemblyLoadContext visitor, byte[] assembly)
 		=> visitor.CheckOnNull(nameof(visitor)).LoadFromStream(assembly.To<Stream>());
 }
-#endif
