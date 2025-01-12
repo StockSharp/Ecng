@@ -137,4 +137,7 @@ public static class ICompilerExtensions
 
 	public static IType ToIType(this Type type)
 		=> new TypeImpl(type);
+
+	public static IEnumerable<IType> ToIType(this IEnumerable<Type> types)
+		=> types.Select(ToIType);
 }
