@@ -292,7 +292,7 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 				assembly = result.Assembly;
 
 				if (assembly is null)
-					return ExpressionFormula<TResult>.CreateError(result.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Select(e => e.Message).JoinNL());
+					return ExpressionFormula<TResult>.CreateError(result.Errors.ErrorsOnly().Select(e => e.Message).JoinNL());
 				else
 					cache?.Add(_lang, sources, refs, assembly);
 			}

@@ -30,7 +30,7 @@ public static class ICompilerExtensions
 	/// <param name="errors">The result of the compilation.</param>
 	/// <returns><see langword="true" /> - If there are errors, <see langword="true" /> - If the compilation is performed without errors.</returns>
 	public static bool HasErrors(this IEnumerable<CompilationError> errors)
-		=> errors.CheckOnNull(nameof(errors)).Any(e => e.Type == CompilationErrorTypes.Error);
+		=> errors.CheckOnNull(nameof(errors)).ErrorsOnly().Any();
 
 	public static Task<CompilationResult> Compile(this ICompiler compiler, string name, string source, IEnumerable<string> refs, CancellationToken cancellationToken = default)
 		=> Compile(compiler, name, [source], refs, cancellationToken);
@@ -57,9 +57,18 @@ public static class ICompilerExtensions
 	/// <returns><see cref="CompilationResult"/></returns>
 	public static CompilationResult ThrowIfErrors(this CompilationResult res)
 	{
-		if (res.HasErrors())
-			throw new InvalidOperationException($"Compilation error: {res.Errors.Where(e => e.Type == CompilationErrorTypes.Error).Take(2).Select(e => e.ToString()).JoinN()}");
-
+		res.Errors.ThrowIfErrors();
 		return res;
 	}
+
+	public static IEnumerable<CompilationError> ThrowIfErrors(this IEnumerable<CompilationError> errors)
+	{
+		if (errors.HasErrors())
+			throw new InvalidOperationException($"Compilation error: {errors.ErrorsOnly().Take(2).Select(e => e.ToString()).JoinN()}");
+
+		return errors;
+	}
+
+	public static IEnumerable<CompilationError> ErrorsOnly(this IEnumerable<CompilationError> errors)
+		=> errors.Where(e => e.Type == CompilationErrorTypes.Error);
 }
