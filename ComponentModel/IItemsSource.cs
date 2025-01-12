@@ -308,11 +308,11 @@
 
 			for (var i = 1; i < types.Length; ++i)
 			{
-				if (types[i].IsAssignableFrom(type))
+				if (type.Is(types[i]))
 					type = types[i];
 				else
 					// ReSharper disable once PossibleNullReferenceException
-					while (!type.IsAssignableFrom(types[i]))
+					while (!types[i].Is(type))
 						type = type.BaseType;
 			}
 

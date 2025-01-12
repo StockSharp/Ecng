@@ -20,7 +20,7 @@ namespace Ecng.Common
 				throw new ArgumentNullException(nameof(second));
 
 			if (useInheritance)
-				return first.IsAssignableFrom(second);
+				return second.Is(first);
 			else
 				return first == second;
 		}
@@ -35,7 +35,7 @@ namespace Ecng.Common
 
 			if (first == second)
 				return 0;
-			else if (first.IsAssignableFrom(second))
+			else if (second.Is(first))
 				return 1;
 			else
 				return -1;

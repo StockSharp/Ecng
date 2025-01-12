@@ -68,7 +68,7 @@ namespace Ecng.ComponentModel
 		{
 			if (!_operators.TryGetValue(type, out var @operator))
 			{
-				if (typeof(IOperable<>).Make(type).IsAssignableFrom(type))
+				if (type.Is(typeof(IOperable<>).Make(type)))
 				{
 					@operator = typeof(OperableOperator<>).Make(type).CreateInstance<IOperator>();
 					_operators.Add(type, @operator);

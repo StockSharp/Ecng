@@ -128,8 +128,8 @@
 
 			if (value is SettingsStorage storage)
 			{
-				if (type.IsAssignableFrom(typeof(SettingsStorage)))
-					return value;
+				if (typeof(SettingsStorage).Is(type))
+					return storage;
 
 				var obj = Activator.CreateInstance(type);
 

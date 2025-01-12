@@ -28,12 +28,7 @@ public class AssemblyCompilationResult(IEnumerable<CompilationError> errors)
 			=> DotNet.CreateInstance(args);
 
 		public bool Is(Type type)
-		{
-			if (type is null)
-				throw new ArgumentNullException(nameof(type));
-
-			return DotNet != type && type.IsAssignableFrom(DotNet);
-		}
+			=> DotNet.Is(type, false);
 	}
 
 	public byte[] Assembly { get; set; }

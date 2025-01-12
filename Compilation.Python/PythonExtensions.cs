@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
+using Ecng.Common;
+
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 
@@ -35,10 +37,7 @@ public static class PythonExtensions
 
 		var underlying = type.GetUnderlyingSystemType();
 
-		if (underlying is null || underlying == baseType)
-			return false;
-
-		return baseType.IsAssignableFrom(underlying);
+		return underlying?.Is(baseType, false) == true;
 	}
 
 	[CLSCompliant(false)]

@@ -593,7 +593,7 @@
 
 				var sourceType = value.GetType();
 
-				if (destinationType.IsAssignableFrom(sourceType))
+				if (sourceType.Is(destinationType))
 					return value;
 				else if ((value is string || sourceType.IsPrimitive) && destinationType.IsEnum())
 				{
