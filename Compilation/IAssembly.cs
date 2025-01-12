@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 
 using Ecng.Common;
-using Ecng.ComponentModel;
 
 public interface IAssembly
 {
@@ -14,27 +13,8 @@ public interface IAssembly
 	IEnumerable<IType> GetExportTypes(object context);
 }
 
-class AssemblyImpl(byte[] body) : IAssembly
+public class AssemblyImpl(byte[] body) : IAssembly
 {
-	private class TypeImpl(Type real) : IType
-	{
-		private readonly Type _real = real ?? throw new ArgumentNullException(nameof(real));
-
-		string IType.Name => _real.FullName;
-		string IType.DisplayName => _real.GetDisplayName();
-		string IType.Description => _real.GetDescription();
-		string IType.DocUrl => _real.GetDocUrl();
-		Uri IType.IconUri => _real.GetIconUrl();
-
-		bool IType.IsAbstract => _real.IsAbstract;
-		bool IType.IsPublic => _real.IsPublic;
-		bool IType.IsGenericTypeDefinition => _real.IsGenericTypeDefinition;
-		object IType.GetConstructor(IType[] value) => _real.GetConstructor(value.Select(t => ((TypeImpl)t)._real).ToArray());
-
-		object IType.CreateInstance(object[] args) => _real.CreateInstance(args);
-		bool IType.Is(Type type) => _real.Is(type, false);
-	}
-
 	private readonly byte[] _body = body ?? throw new ArgumentNullException(nameof(body));
 	private Assembly _assembly;
 
