@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <ItemGroup>
-    <PackageReference Include="IronPython" Version="$(IronPythonVer)" />
+    <PackageReference Include="IronPython.StdLib" Version="$(IronPythonVer)" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="Microsoft.CSharp" Version="$(CSharpVer)" />
