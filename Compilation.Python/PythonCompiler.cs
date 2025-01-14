@@ -80,11 +80,15 @@ public class PythonCompiler : ICompiler
 				Optimized = true
 			}, new CustomErrorListener(errors));
 
+			// try to execute the code to catch runtime errors
+			var scope = _engine.CreateScope();
+			compiled.Execute(scope);
+
 			result = new(errors) { CompiledCode = compiled };
 		}
 		catch (SyntaxErrorException ex)
 		{
-			result = new([new CompilationError
+			result = new([new()
 			{
 				Type = ex.Severity.ToErrorType(),
 				Line = ex.Line,
@@ -95,7 +99,7 @@ public class PythonCompiler : ICompiler
 		}
 		catch (Exception ex)
 		{
-			result = new([new CompilationError
+			result = new([new()
 			{
 				Type = CompilationErrorTypes.Error,
 				Message = ex.Message,
