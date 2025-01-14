@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Common;
 
+using System;
+
 public static class FileExts
 {
 	/// <summary>
@@ -66,4 +68,20 @@ public static class FileExts
 	/// Xslx file extension.
 	/// </summary>
 	public const string Xlsx = ".xslx";
+
+	public static string ToDisplayName(this string fileExt)
+		=> (fileExt?.ToLowerInvariant()) switch
+		{
+			CSharp => "C#",
+			FSharp => "F#",
+			Python => "Python",
+			VisualBasic => "VB",
+			Txt => "TXT",
+			Csv => "CSV",
+			Xml => "XML",
+			Xls or Xlsx => "Excel",
+			Dll => "DLL",
+			Json => "JSON",
+			_ => throw new ArgumentOutOfRangeException(nameof(fileExt), fileExt, "Invalid value."),
+		};
 }
