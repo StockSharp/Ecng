@@ -16,17 +16,31 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 		{
 		}
 
-		private int _maxCount;
+		private int _readMaxCount;
 
-		public int MaxCount
+		public int ReadMaxCount
 		{
-			get => _maxCount;
+			get => _readMaxCount;
 			set
 			{
 				if (value < 0)
 					throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
 
-				_maxCount = value;
+				_readMaxCount = value;
+			}
+		}
+
+		private int _writeMaxCount;
+
+		public int WriteMaxCount
+		{
+			get => _writeMaxCount;
+			set
+			{
+				if (value < 0)
+					throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+
+				_writeMaxCount = value;
 			}
 		}
 
@@ -57,6 +71,13 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 				_maxDelay = value;
 			}
 		}
+
+		public ISet<SocketError> Track { get; } = new SynchronizedSet<SocketError>
+		{
+			SocketError.TimedOut,
+			SocketError.NoData,
+			SocketError.HostNotFound,
+		};
 	}
 
 	private static readonly SynchronizedDictionary<(Type type, string methodName), MethodInfo> _methodsCache = [];
@@ -214,7 +235,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 				body = TryFormat(parameters.FirstOrDefault().value, callerMethod, method);
 
 			return DoAsync<TResult>(method, url, body, cancellationToken);
-		}, cancellationToken);
+		}, RetryPolicy.WriteMaxCount, cancellationToken);
 
 	protected Task<TResult> GetAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
 		=> TryRepeat(() =>
@@ -232,7 +253,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 			}
 
 			return DoAsync<TResult>(method, url, null, cancellationToken);
-		}, cancellationToken);
+		}, RetryPolicy.ReadMaxCount, cancellationToken);
 
 	protected Task<TResult> DeleteAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
 		=> TryRepeat(() =>
@@ -250,7 +271,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 			}
 
 			return DoAsync<TResult>(method, url, null, cancellationToken);
-		}, cancellationToken);
+		}, RetryPolicy.WriteMaxCount, cancellationToken);
 
 	protected Task<TResult> PutAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
 		=> TryRepeat(() =>
@@ -276,7 +297,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 				body = TryFormat(parameters.FirstOrDefault().value, callerMethod, method);
 
 			return DoAsync<TResult>(method, url, body, cancellationToken);
-		}, cancellationToken);
+		}, RetryPolicy.WriteMaxCount, cancellationToken);
 
 	protected static string GetCurrentMethod([CallerMemberName]string methodName = "")
 		=> methodName;
@@ -377,7 +398,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	protected virtual object TryFormat(object arg, MethodInfo callerMethod, HttpMethod method)
 		=> (arg is Enum || arg is bool) ? arg.To<long>() : arg;
 
-	private async Task<T> TryRepeat<T>(Func<Task<T>> handler, CancellationToken cancellationToken)
+	private async Task<T> TryRepeat<T>(Func<Task<T>> handler, int maxCount, CancellationToken cancellationToken)
 	{
 		if (handler is null)
 			throw new ArgumentNullException(nameof(handler));
@@ -396,12 +417,12 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 			{
 				bool shouldRetry()
 				{
-					if (attemptNumber >= RetryPolicy.MaxCount)
+					if (attemptNumber >= maxCount)
 						return false;
 
 					while (ex != null)
 					{
-						if (ex is SocketException sockEx && (sockEx.SocketErrorCode is SocketError.TimedOut or SocketError.NoData))
+						if (ex is SocketException sockEx && RetryPolicy.Track.Contains(sockEx.SocketErrorCode))
 							return true;
 
 						ex = ex.InnerException;
