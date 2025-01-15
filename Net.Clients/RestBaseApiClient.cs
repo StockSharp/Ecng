@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Net;
 
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Reflection;
 using System.Diagnostics;
@@ -9,6 +10,55 @@ using Ecng.Reflection;
 
 public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormatter request, MediaTypeFormatter response)
 {
+	public class RetryPolicyInfo
+	{
+		internal RetryPolicyInfo()
+		{
+		}
+
+		private int _maxCount;
+
+		public int MaxCount
+		{
+			get => _maxCount;
+			set
+			{
+				if (value < 0)
+					throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+
+				_maxCount = value;
+			}
+		}
+
+		private TimeSpan _initialDelay = TimeSpan.FromSeconds(1);
+
+		public TimeSpan InitialDelay
+		{
+			get => _initialDelay;
+			set
+			{
+				if (value <= TimeSpan.Zero)
+					throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+
+				_initialDelay = value;
+			}
+		}
+
+		private TimeSpan _maxDelay = TimeSpan.FromSeconds(30);
+
+		public TimeSpan MaxDelay
+		{
+			get => _maxDelay;
+			set
+			{
+				if (value <= TimeSpan.Zero)
+					throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+
+				_maxDelay = value;
+			}
+		}
+	}
+
 	private static readonly SynchronizedDictionary<(Type type, string methodName), MethodInfo> _methodsCache = [];
 
 	protected Uri BaseAddress { get; set; }
@@ -23,6 +73,8 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	public event Action<HttpMethod, Uri, object> LogRequest;
 
 	public bool ExtractBadResponse { get; set; }
+
+	public RetryPolicyInfo RetryPolicy { get; } = new();
 
 	protected virtual bool PlainSingleArg => true;
 	protected virtual bool ThrowIfNonSuccessStatusCode => true;
@@ -139,88 +191,92 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	}
 
 	protected Task<TResult> PostAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-	{
-		var method = HttpMethod.Post;
-		var (url, parameters, callerMethod) = GetInfo(method, methodName, args);
-
-		object body;
-
-		if (parameters.Length > 1 || !PlainSingleArg)
+		=> TryRepeat(() =>
 		{
-			var dict = new Dictionary<string, object>();
+			var method = HttpMethod.Post;
+			var (url, parameters, callerMethod) = GetInfo(method, methodName, args);
 
-			foreach (var (name, value) in parameters)
+			object body;
+
+			if (parameters.Length > 1 || !PlainSingleArg)
 			{
-				if (value is not null)
-					dict.Add(name, value);
+				var dict = new Dictionary<string, object>();
+
+				foreach (var (name, value) in parameters)
+				{
+					if (value is not null)
+						dict.Add(name, value);
+				}
+
+				body = FormatRequest(dict);
 			}
+			else
+				body = TryFormat(parameters.FirstOrDefault().value, callerMethod, method);
 
-			body = FormatRequest(dict);
-		}
-		else
-			body = TryFormat(parameters.FirstOrDefault().value, callerMethod, method);
-
-		return DoAsync<TResult>(method, url, body, cancellationToken);
-	}
+			return DoAsync<TResult>(method, url, body, cancellationToken);
+		}, cancellationToken);
 
 	protected Task<TResult> GetAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-	{
-		var method = HttpMethod.Get;
-		var (url, parameters, _) = GetInfo(method, methodName, args);
-
-		if (parameters.Length > 0)
+		=> TryRepeat(() =>
 		{
-			foreach (var (name, value) in parameters)
-			{
-				if (value is not null)
-					url.QueryString.Append(name, value?.ToString().EncodeToHtml());
-			}
-		}
+			var method = HttpMethod.Get;
+			var (url, parameters, _) = GetInfo(method, methodName, args);
 
-		return DoAsync<TResult>(method, url, null, cancellationToken);
-	}
+			if (parameters.Length > 0)
+			{
+				foreach (var (name, value) in parameters)
+				{
+					if (value is not null)
+						url.QueryString.Append(name, value?.ToString().EncodeToHtml());
+				}
+			}
+
+			return DoAsync<TResult>(method, url, null, cancellationToken);
+		}, cancellationToken);
 
 	protected Task<TResult> DeleteAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-	{
-		var method = HttpMethod.Delete;
-		var (url, parameters, _) = GetInfo(method, methodName, args);
-
-		if (parameters.Length > 0)
+		=> TryRepeat(() =>
 		{
-			foreach (var (name, value) in parameters)
-			{
-				if (value is not null)
-					url.QueryString.Append(name, value?.ToString().EncodeToHtml());
-			}
-		}
+			var method = HttpMethod.Delete;
+			var (url, parameters, _) = GetInfo(method, methodName, args);
 
-		return DoAsync<TResult>(method, url, null, cancellationToken);
-	}
+			if (parameters.Length > 0)
+			{
+				foreach (var (name, value) in parameters)
+				{
+					if (value is not null)
+						url.QueryString.Append(name, value?.ToString().EncodeToHtml());
+				}
+			}
+
+			return DoAsync<TResult>(method, url, null, cancellationToken);
+		}, cancellationToken);
 
 	protected Task<TResult> PutAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-	{
-		var method = HttpMethod.Put;
-		var (url, parameters, callerMethod) = GetInfo(method, methodName, args);
-
-		object body;
-
-		if (parameters.Length > 1 || !PlainSingleArg)
+		=> TryRepeat(() =>
 		{
-			var dict = new Dictionary<string, object>();
+			var method = HttpMethod.Put;
+			var (url, parameters, callerMethod) = GetInfo(method, methodName, args);
 
-			foreach (var (name, value) in parameters)
+			object body;
+
+			if (parameters.Length > 1 || !PlainSingleArg)
 			{
-				if (value is not null)
-					dict.Add(name, value);
+				var dict = new Dictionary<string, object>();
+
+				foreach (var (name, value) in parameters)
+				{
+					if (value is not null)
+						dict.Add(name, value);
+				}
+
+				body = FormatRequest(dict);
 			}
+			else
+				body = TryFormat(parameters.FirstOrDefault().value, callerMethod, method);
 
-			body = FormatRequest(dict);
-		}
-		else
-			body = TryFormat(parameters.FirstOrDefault().value, callerMethod, method);
-
-		return DoAsync<TResult>(method, url, body, cancellationToken);
-	}
+			return DoAsync<TResult>(method, url, body, cancellationToken);
+		}, cancellationToken);
 
 	protected static string GetCurrentMethod([CallerMemberName]string methodName = "")
 		=> methodName;
@@ -320,4 +376,50 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 
 	protected virtual object TryFormat(object arg, MethodInfo callerMethod, HttpMethod method)
 		=> (arg is Enum || arg is bool) ? arg.To<long>() : arg;
+
+	private async Task<T> TryRepeat<T>(Func<Task<T>> handler, CancellationToken cancellationToken)
+	{
+		if (handler is null)
+			throw new ArgumentNullException(nameof(handler));
+
+		var attemptNumber = 0;
+
+		while (true)
+		{
+			attemptNumber++;
+
+			try
+			{
+				return await handler();
+			}
+			catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+			{
+				bool shouldRetry()
+				{
+					if (attemptNumber >= RetryPolicy.MaxCount)
+						return false;
+
+					while (ex != null)
+					{
+						if (ex is SocketException sockEx && (sockEx.SocketErrorCode is SocketError.TimedOut or SocketError.NoData))
+							return true;
+
+						ex = ex.InnerException;
+					}
+
+					return false;
+				}
+
+				if (!shouldRetry())
+					throw;
+
+				var delay = (RetryPolicy.InitialDelay.Ticks * 2.Pow(attemptNumber - 1)).To<TimeSpan>();
+				var jitter = RandomGen.GetDouble() * delay.TotalMilliseconds * 0.1;
+
+				delay = TimeSpan.FromMilliseconds(delay.TotalMilliseconds + jitter).Max(RetryPolicy.MaxDelay);
+
+				await delay.Delay(cancellationToken);
+			}
+		}
+	}
 }
