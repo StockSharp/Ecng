@@ -205,6 +205,15 @@ public static class NetworkHelper
 		return HttpUtility.ParseQueryString(url, _urlEncoding);
 	}
 
+	public static IEnumerable<(string key, string value)> ExcludeEmpty(this NameValueCollection col)
+	{
+		if (col is null)
+			throw new ArgumentNullException(nameof(col));
+
+		foreach (var key in col.AllKeys.Where(k => !k.IsEmpty()))
+			yield return (key, col[key]);
+	}
+
 	public static string UrlEncodeToUpperCase(this string url)
 	{
 		if (url.IsEmpty())
