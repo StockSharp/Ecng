@@ -214,6 +214,37 @@ public static class NetworkHelper
 			yield return (key, col[key]);
 	}
 
+	public static Encoding TryExtractEncoding(this string contentType)
+	{
+		try
+		{
+			if (contentType.IsEmpty())
+				return null;
+
+			const string charsetMarker = "charset=";
+
+			var charsetIndex = contentType.IndexOfIgnoreCase(charsetMarker);
+
+			if (charsetIndex < 0)
+				return null;
+
+			var charset = contentType.Substring(charsetIndex + charsetMarker.Length).Trim();
+
+			var separatorIndex = charset.IndexOf(';');
+
+			if (separatorIndex >= 0)
+				charset = charset.Substring(0, separatorIndex);
+
+			charset = charset.Trim(' ', '"');
+
+			return Encoding.GetEncoding(charset);
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
 	public static string UrlEncodeToUpperCase(this string url)
 	{
 		if (url.IsEmpty())

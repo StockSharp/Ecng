@@ -3,7 +3,7 @@
 	using System;
 	using System.Net;
 	using System.Net.Http;
-
+	using System.Text;
 	using Ecng.Common;
 	using Ecng.Net;
 	using Ecng.UnitTesting;
@@ -88,6 +88,35 @@
 			IsInSubnet("95.31.174.134").AssertTrue();
 			IsInSubnet("95.31.174.112").AssertTrue();
 			IsInSubnet("95.32.161.158").AssertFalse();
+		}
+
+		[TestMethod]
+		public void ContentType2Encoding()
+		{
+			var result = ((string)null).TryExtractEncoding();
+			result.AssertNull();
+
+			string.Empty.TryExtractEncoding().AssertNull();
+			"text/html".TryExtractEncoding().AssertNull();
+
+			result = "text/html; charset=utf-8".TryExtractEncoding();
+			result.AssertNotNull();
+			result.WebName.AreEqual(Encoding.UTF8.WebName);
+
+			result = "application/json; charset=\"ISO-8859-1\"".TryExtractEncoding();
+			result.AssertNotNull();
+			result.WebName.AreEqual(Encoding.GetEncoding("iso-8859-1").WebName);
+
+			result = "text/plain; charset=windows-1252; format=flowed".TryExtractEncoding();
+			result.AssertNotNull();
+			result.WebName.AreEqual(Encoding.GetEncoding("windows-1252").WebName);
+
+			result = "text/html; charset=invalid-charset".TryExtractEncoding();
+			result.AssertNull();
+
+			result = "charset=UTF-16; text/html".TryExtractEncoding();
+			result.AssertNotNull();
+			result.WebName.AreEqual(Encoding.Unicode.WebName);
 		}
 	}
 }
