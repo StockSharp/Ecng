@@ -565,4 +565,43 @@ public static class NetworkHelper
 
 		return TimeSpan.FromMilliseconds(delay.TotalMilliseconds + jitter).Max(policy.MaxDelay);
 	}
+
+	public static async Task<T> TryRepeat<T>(this RetryPolicyInfo policy, Func<Task<T>> handler, int maxCount, CancellationToken cancellationToken)
+	{
+		if (policy is null)
+			throw new ArgumentNullException(nameof(policy));
+
+		if (handler is null)
+			throw new ArgumentNullException(nameof(handler));
+
+		var attemptNumber = 0;
+
+		while (true)
+		{
+			attemptNumber++;
+
+			try
+			{
+				return await handler();
+			}
+			catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+			{
+				bool shouldRetry()
+				{
+					if (attemptNumber >= maxCount)
+						return false;
+
+					if (ex.TryGetSocketError() is not SocketError error)
+						return false;
+
+					return policy.Track.Contains(error);
+				}
+
+				if (!shouldRetry())
+					throw;
+
+				await policy.GetDelay(attemptNumber).Delay(cancellationToken);
+			}
+		}
+	}
 }

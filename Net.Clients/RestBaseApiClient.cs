@@ -1,7 +1,6 @@
 ﻿namespace Ecng.Net;
 
 using System.Net.Http.Headers;
-using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Reflection;
 using System.Diagnostics;
@@ -142,7 +141,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	}
 
 	protected Task<TResult> PostAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-		=> TryRepeat(() =>
+		=> RetryPolicy.TryRepeat(() =>
 		{
 			var method = HttpMethod.Post;
 			var (url, parameters, callerMethod) = GetInfo(method, methodName, args);
@@ -168,7 +167,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 		}, RetryPolicy.WriteMaxCount, cancellationToken);
 
 	protected Task<TResult> GetAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-		=> TryRepeat(() =>
+		=> RetryPolicy.TryRepeat(() =>
 		{
 			var method = HttpMethod.Get;
 			var (url, parameters, _) = GetInfo(method, methodName, args);
@@ -186,7 +185,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 		}, RetryPolicy.ReadMaxCount, cancellationToken);
 
 	protected Task<TResult> DeleteAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-		=> TryRepeat(() =>
+		=> RetryPolicy.TryRepeat(() =>
 		{
 			var method = HttpMethod.Delete;
 			var (url, parameters, _) = GetInfo(method, methodName, args);
@@ -204,7 +203,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 		}, RetryPolicy.WriteMaxCount, cancellationToken);
 
 	protected Task<TResult> PutAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-		=> TryRepeat(() =>
+		=> RetryPolicy.TryRepeat(() =>
 		{
 			var method = HttpMethod.Put;
 			var (url, parameters, callerMethod) = GetInfo(method, methodName, args);
@@ -327,40 +326,4 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 
 	protected virtual object TryFormat(object arg, MethodInfo callerMethod, HttpMethod method)
 		=> (arg is Enum || arg is bool) ? arg.To<long>() : arg;
-
-	private async Task<T> TryRepeat<T>(Func<Task<T>> handler, int maxCount, CancellationToken cancellationToken)
-	{
-		if (handler is null)
-			throw new ArgumentNullException(nameof(handler));
-
-		var attemptNumber = 0;
-
-		while (true)
-		{
-			attemptNumber++;
-
-			try
-			{
-				return await handler();
-			}
-			catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
-			{
-				bool shouldRetry()
-				{
-					if (attemptNumber >= maxCount)
-						return false;
-
-					if (ex.TryGetSocketError() is not SocketError error)
-						return false;
-
-					return RetryPolicy.Track.Contains(error);
-				}
-
-				if (!shouldRetry())
-					throw;
-
-				await RetryPolicy.GetDelay(attemptNumber).Delay(cancellationToken);
-			}
-		}
-	}
 }
