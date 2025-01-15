@@ -541,4 +541,28 @@ public static class NetworkHelper
 
 	public static void SetBearer(this HttpClient client, SecureString token)
 		=> client.CheckOnNull(nameof(client)).DefaultRequestHeaders.Add(HttpHeaders.Authorization, AuthSchemas.Bearer.FormatAuth(token));
+
+	public static SocketError? TryGetSocketError(this Exception ex)
+	{
+		while (ex != null)
+		{
+			if (ex is SocketException sockEx)
+				return sockEx.SocketErrorCode;
+
+			ex = ex.InnerException;
+		}
+
+		return null;
+	}
+
+	public static TimeSpan GetDelay(this RetryPolicyInfo policy, int attemptNumber)
+	{
+		if (policy is null)
+			throw new ArgumentNullException(nameof(policy));
+
+		var delay = (policy.InitialDelay.Ticks * 2.Pow(attemptNumber - 1)).To<TimeSpan>();
+		var jitter = RandomGen.GetDouble() * delay.TotalMilliseconds * 0.1;
+
+		return TimeSpan.FromMilliseconds(delay.TotalMilliseconds + jitter).Max(policy.MaxDelay);
+	}
 }

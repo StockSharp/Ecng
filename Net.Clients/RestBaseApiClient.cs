@@ -10,76 +10,6 @@ using Ecng.Reflection;
 
 public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormatter request, MediaTypeFormatter response)
 {
-	public class RetryPolicyInfo
-	{
-		internal RetryPolicyInfo()
-		{
-		}
-
-		private int _readMaxCount;
-
-		public int ReadMaxCount
-		{
-			get => _readMaxCount;
-			set
-			{
-				if (value < 0)
-					throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
-
-				_readMaxCount = value;
-			}
-		}
-
-		private int _writeMaxCount;
-
-		public int WriteMaxCount
-		{
-			get => _writeMaxCount;
-			set
-			{
-				if (value < 0)
-					throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
-
-				_writeMaxCount = value;
-			}
-		}
-
-		private TimeSpan _initialDelay = TimeSpan.FromSeconds(1);
-
-		public TimeSpan InitialDelay
-		{
-			get => _initialDelay;
-			set
-			{
-				if (value <= TimeSpan.Zero)
-					throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
-
-				_initialDelay = value;
-			}
-		}
-
-		private TimeSpan _maxDelay = TimeSpan.FromSeconds(30);
-
-		public TimeSpan MaxDelay
-		{
-			get => _maxDelay;
-			set
-			{
-				if (value <= TimeSpan.Zero)
-					throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
-
-				_maxDelay = value;
-			}
-		}
-
-		public ISet<SocketError> Track { get; } = new SynchronizedSet<SocketError>
-		{
-			SocketError.TimedOut,
-			SocketError.NoData,
-			SocketError.HostNotFound,
-		};
-	}
-
 	private static readonly SynchronizedDictionary<(Type type, string methodName), MethodInfo> _methodsCache = [];
 
 	protected Uri BaseAddress { get; set; }
@@ -420,26 +350,16 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 					if (attemptNumber >= maxCount)
 						return false;
 
-					while (ex != null)
-					{
-						if (ex is SocketException sockEx && RetryPolicy.Track.Contains(sockEx.SocketErrorCode))
-							return true;
+					if (ex.TryGetSocketError() is not SocketError error)
+						return false;
 
-						ex = ex.InnerException;
-					}
-
-					return false;
+					return RetryPolicy.Track.Contains(error);
 				}
 
 				if (!shouldRetry())
 					throw;
 
-				var delay = (RetryPolicy.InitialDelay.Ticks * 2.Pow(attemptNumber - 1)).To<TimeSpan>();
-				var jitter = RandomGen.GetDouble() * delay.TotalMilliseconds * 0.1;
-
-				delay = TimeSpan.FromMilliseconds(delay.TotalMilliseconds + jitter).Max(RetryPolicy.MaxDelay);
-
-				await delay.Delay(cancellationToken);
+				await RetryPolicy.GetDelay(attemptNumber).Delay(cancellationToken);
 			}
 		}
 	}
