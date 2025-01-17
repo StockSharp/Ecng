@@ -29,10 +29,10 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 			private ScriptEngine Engine => _code.Engine;
 			private ObjectOperations Ops => Engine.Operations;
 
-			bool IType.IsAbstract => false;
-			bool IType.IsPublic => true;
-			bool IType.IsGenericTypeDefinition => false;
-			object IType.GetConstructor(IType[] value) => new object();
+			bool IType.IsAbstract => _pythonType.GetUnderlyingSystemType()?.IsAbstract == true;
+			bool IType.IsPublic => _pythonType.GetUnderlyingSystemType()?.IsPublic == true;
+			bool IType.IsGenericTypeDefinition => _pythonType.GetUnderlyingSystemType()?.IsGenericTypeDefinition == true;
+			object IType.GetConstructor(IType[] value) => new();
 
 			private string TryGetAttr(string name)
 				=> Ops.TryGetMember(_pythonType, name, out object value) ? value as string : null;
