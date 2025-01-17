@@ -44,6 +44,10 @@
 		bool ICompiler.IsAssembly { get; } = true;
 		string ICompiler.Extension { get; } = extension;
 
+		public abstract bool IsTabsSupported { get; }
+		public abstract bool IsCaseSensitive { get; }
+		public abstract bool IsReferencesSupported { get; }
+
 		private Compilation Create(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
 		{
 			if (sources is null)
@@ -160,6 +164,10 @@
 		{
 		}
 
+		public override bool IsTabsSupported => true;
+		public override bool IsCaseSensitive => true;
+		public override bool IsReferencesSupported => true;
+
 		protected override Compilation Create(string assemblyName, IEnumerable<string> sources, PortableExecutableReference[] references, CancellationToken cancellationToken)
 			=> CSharpCompilation.Create(
 				assemblyName,
@@ -175,6 +183,10 @@
 			: base(FileExts.VisualBasic)
 		{
 		}
+
+		public override bool IsTabsSupported => true;
+		public override bool IsCaseSensitive => false;
+		public override bool IsReferencesSupported => true;
 
 		protected override Compilation Create(string assemblyName, IEnumerable<string> sources, PortableExecutableReference[] references, CancellationToken cancellationToken)
 			=> VisualBasicCompilation.Create(

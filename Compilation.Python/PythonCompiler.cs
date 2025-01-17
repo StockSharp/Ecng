@@ -45,6 +45,10 @@ public class PythonCompiler : ICompiler
 	bool ICompiler.IsAssembly { get; } = false;
 	string ICompiler.Extension { get; } = FileExts.Python;
 
+	bool ICompiler.IsTabsSupported { get; } = false;
+	bool ICompiler.IsCaseSensitive { get; } = true;
+	bool ICompiler.IsReferencesSupported { get; } = false;
+
 	Task<CompilationError[]> ICompiler.Analyse(
 		object analyzer,
 		IEnumerable<object> analyzerSettings,

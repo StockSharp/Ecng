@@ -75,6 +75,10 @@ public class FSharpCompiler : ICompiler
 	bool ICompiler.IsAssembly { get; } = true;
 	string ICompiler.Extension { get; } = FileExts.FSharp;
 
+	bool ICompiler.IsTabsSupported { get; } = false;
+	bool ICompiler.IsCaseSensitive { get; } = true;
+	bool ICompiler.IsReferencesSupported { get; } = true;
+
 	private readonly FSharpChecker _checker;
 
 	public FSharpCompiler()
