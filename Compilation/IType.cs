@@ -26,7 +26,7 @@ class TypeImpl(Type real) : IType
 {
 	private readonly Type _real = real ?? throw new ArgumentNullException(nameof(real));
 
-	string IType.Name => _real.FullName;
+	public string Name => _real.FullName;
 	string IType.DisplayName => _real.GetDisplayName();
 	string IType.Description => _real.GetDescription();
 	string IType.DocUrl => _real.GetDocUrl();
@@ -39,4 +39,6 @@ class TypeImpl(Type real) : IType
 
 	object IType.CreateInstance(object[] args) => _real.CreateInstance(args);
 	bool IType.Is(Type type) => _real.Is(type, false);
+
+	public override string ToString() => Name;
 }

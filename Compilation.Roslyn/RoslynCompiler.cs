@@ -41,7 +41,7 @@
 			};
 		}
 
-		bool ICompiler.IsAssembly { get; } = true;
+		bool ICompiler.IsAssemblyPersistable { get; } = true;
 		string ICompiler.Extension { get; } = extension;
 
 		public abstract bool IsTabsSupported { get; }

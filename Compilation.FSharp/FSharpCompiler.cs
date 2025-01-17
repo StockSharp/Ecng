@@ -72,7 +72,7 @@ public class FSharpCompiler : ICompiler
 
 	private static readonly AsyncLock _lock = new();
 
-	bool ICompiler.IsAssembly { get; } = true;
+	bool ICompiler.IsAssemblyPersistable { get; } = true;
 	string ICompiler.Extension { get; } = FileExts.FSharp;
 
 	bool ICompiler.IsTabsSupported { get; } = false;

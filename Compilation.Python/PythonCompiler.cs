@@ -42,7 +42,7 @@ public class PythonCompiler : ICompiler
 		_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 	}
 
-	bool ICompiler.IsAssembly { get; } = false;
+	bool ICompiler.IsAssemblyPersistable { get; } = false;
 	string ICompiler.Extension { get; } = FileExts.Python;
 
 	bool ICompiler.IsTabsSupported { get; } = false;

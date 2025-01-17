@@ -20,7 +20,7 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 			private readonly CompiledCode _code = code ?? throw new ArgumentNullException(nameof(code));
 			private readonly PythonType _pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
 
-			string IType.Name => _pythonType.GetName();
+			public string Name => _pythonType.GetName();
 			string IType.DisplayName => TryGetAttr("display_name");
 			string IType.Description => TryGetAttr("description");
 			string IType.DocUrl => TryGetAttr("__doc__");
@@ -46,6 +46,8 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 			}
 
 			bool IType.Is(Type type) => _pythonType.Is(type);
+
+			public override string ToString() => Name;
 		}
 
 		private readonly CompiledCode _compiledCode = compiledCode ?? throw new ArgumentNullException(nameof(compiledCode));
