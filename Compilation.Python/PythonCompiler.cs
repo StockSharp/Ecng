@@ -84,9 +84,12 @@ public class PythonCompiler : ICompiler
 				Optimized = true
 			}, new CustomErrorListener(errors));
 
-			// try to execute the code to catch runtime errors
-			var scope = _engine.CreateScope();
-			compiled.Execute(scope);
+			if (compiled is not null)
+			{
+				// try to execute the code to catch runtime errors
+				var scope = _engine.CreateScope();
+				compiled.Execute(scope);
+			}
 
 			result = new(errors) { CompiledCode = compiled };
 		}
