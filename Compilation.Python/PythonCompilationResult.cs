@@ -22,8 +22,8 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 
 			public string Name => _pythonType.GetName();
 			string IType.DisplayName => TryGetAttr("display_name");
-			string IType.Description => TryGetAttr("description");
-			string IType.DocUrl => TryGetAttr("__doc__");
+			string IType.Description => TryGetAttr("__doc__")?.Trim();
+			string IType.DocUrl => TryGetAttr("documentation_url");
 			Uri IType.IconUri => TryGetAttr("icon") is string url ? new(url) : (Uri)default;
 
 			private ScriptEngine Engine => _code.Engine;
