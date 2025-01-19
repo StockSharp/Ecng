@@ -20,14 +20,18 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 	{
 		private class TypeImpl(CompiledCode code, PythonType pythonType) : IType
 		{
-			private class PythonPropertyImpl(AssemblyImpl.TypeImpl parent, PythonProperty property, Type type) : IProperty
+			private class PythonPropertyImpl(TypeImpl parent, PythonProperty property, Type type) : IProperty
 			{
 				private readonly TypeImpl _parent = parent ?? throw new ArgumentNullException(nameof(parent));
 				private readonly PythonProperty _property = property ?? throw new ArgumentNullException(nameof(property));
 				private readonly Type _type = type ?? throw new ArgumentNullException(nameof(type));
 
 				public string Name => ((PythonFunction)_property.fget).__name__;
-				string IProperty.DisplayName => Name;
+				string IMember.DisplayName => Name;
+				string IMember.Description => string.Empty;
+				bool IMember.IsPublic => true;
+				bool IMember.IsAbstract => false;
+				bool IMember.IsGenericDefinition => false;
 
 				Type IProperty.Type => _type;
 
@@ -36,7 +40,7 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 
 				object IProperty.GetValue(object instance) => _parent.Ops.GetMember(instance, Name);
 				void IProperty.SetValue(object instance, object value) => _parent.Ops.SetMember(instance, Name, value);
-				T IProperty.GetAttribute<T>() => default;
+				T IMember.GetAttribute<T>() => default;
 
 				public override string ToString() => _property.ToString();
 			}
@@ -48,7 +52,12 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 				private readonly PropertyInfo _baseTypeProp = baseTypeProp;
 
 				public string Name => _property.__name__;
-				string IProperty.DisplayName => Name;
+				string IMember.DisplayName => Name;
+				string IMember.Description => string.Empty;
+				bool IMember.IsPublic => true;
+				bool IMember.IsAbstract => false;
+				bool IMember.IsGenericDefinition => false;
+
 				Type IProperty.Type => _property.PropertyType;
 
 				bool IProperty.IsBrowsable => _baseTypeProp?.IsBrowsable() != false;
@@ -56,7 +65,7 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 
 				object IProperty.GetValue(object instance) => _parent.Ops.GetMember(instance, Name);
 				void IProperty.SetValue(object instance, object value) => _parent.Ops.SetMember(instance, Name, value);
-				T IProperty.GetAttribute<T>() => default;
+				T IMember.GetAttribute<T>() => default;
 
 				public override string ToString() => _property.ToString();
 			}
@@ -65,17 +74,17 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 			private readonly PythonType _pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
 
 			public string Name => _pythonType.GetName();
-			string IType.DisplayName => TryGetAttr("display_name");
-			string IType.Description => TryGetAttr("__doc__")?.Trim();
+			string IMember.DisplayName => TryGetAttr("display_name");
+			string IMember.Description => TryGetAttr("__doc__")?.Trim();
 			string IType.DocUrl => TryGetAttr("documentation_url");
 			Uri IType.IconUri => TryGetAttr("icon") is string url ? new(url) : (Uri)default;
 
 			private ScriptEngine Engine => _code.Engine;
 			private ObjectOperations Ops => Engine.Operations;
 
-			bool IType.IsAbstract => ToType()?.IsAbstract == true;
-			bool IType.IsPublic => ToType()?.IsPublic == true;
-			bool IType.IsGenericTypeDefinition => ToType()?.IsGenericTypeDefinition == true;
+			bool IMember.IsAbstract => ToType()?.IsAbstract == true;
+			bool IMember.IsPublic => ToType()?.IsPublic == true;
+			bool IMember.IsGenericDefinition => ToType()?.IsGenericTypeDefinition == true;
 			object IType.GetConstructor(IType[] value) => new();
 
 			private string TryGetAttr(string name)
@@ -118,7 +127,7 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 				;
 			}
 
-			T IType.GetAttribute<T>() => ToType().GetAttribute<T>();
+			T IMember.GetAttribute<T>() => ToType().GetAttribute<T>();
 			public Type ToType() => _pythonType.GetUnderlyingSystemType();
 			string IType.GetTypeName(bool isAssemblyQualifiedName) => Name;
 

@@ -128,7 +128,7 @@ public static class ICompilerExtensions
 
 		return !type.IsAbstract &&
 			type.IsPublic &&
-			!type.IsGenericTypeDefinition &&
+			!type.IsGenericDefinition &&
 			type.Is(required) &&
 			type.GetConstructor([]) is not null;
 	}
