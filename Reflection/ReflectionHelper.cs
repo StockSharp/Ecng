@@ -1,6 +1,7 @@
 namespace Ecng.Reflection
 {
 	using System;
+	using System.ComponentModel;
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Reflection;
@@ -751,5 +752,8 @@ namespace Ecng.Reflection
 		public static IEnumerable<TMember> OrderByDeclaration<TMember>(this IEnumerable<TMember> members)
 			where TMember : MemberInfo
 			=> members.OrderBy(m => m.MetadataToken);
+
+		public static bool IsModifiable(this PropertyInfo pi)
+			=> pi.CanWrite && pi.GetAttribute<ReadOnlyAttribute>()?.IsReadOnly != true && pi.SetMethod?.IsPublic == true;
 	}
 }
