@@ -7,19 +7,6 @@ using System.Linq;
 using Ecng.Common;
 using Ecng.ComponentModel;
 
-public interface IMember
-{
-	string Name { get; }
-	string DisplayName { get; }
-	string Description { get; }
-	bool IsPublic { get; }
-	bool IsAbstract { get; }
-	bool IsGenericDefinition { get; }
-
-	T GetAttribute<T>()
-		where T : Attribute;
-}
-
 public interface IType : IMember
 {
 	string DocUrl { get; }
