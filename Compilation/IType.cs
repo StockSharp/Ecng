@@ -28,6 +28,8 @@ public interface IType
 	IEnumerable<IProperty> GetProperties();
 
 	Type ToType();
+
+	string GetTypeName(bool isAssemblyQualifiedName);
 }
 
 class TypeImpl(Type real) : IType
@@ -51,6 +53,7 @@ class TypeImpl(Type real) : IType
 
 	T IType.GetAttribute<T>() => _real.GetAttribute<T>();
 	Type IType.ToType() => _real;
+	string IType.GetTypeName(bool isAssemblyQualifiedName) => _real.GetTypeName(isAssemblyQualifiedName);
 
 	public override string ToString() => _real.ToString();
 }

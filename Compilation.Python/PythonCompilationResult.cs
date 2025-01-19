@@ -116,6 +116,7 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 
 			T IType.GetAttribute<T>() => ToType().GetAttribute<T>();
 			public Type ToType() => _pythonType.GetUnderlyingSystemType();
+			string IType.GetTypeName(bool isAssemblyQualifiedName) => Name;
 
 			public override string ToString() => Name;
 		}
