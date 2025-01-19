@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -140,4 +141,12 @@ public static class ICompilerExtensions
 
 	public static IEnumerable<IType> ToIType(this IEnumerable<Type> types)
 		=> types.Select(ToIType);
+
+	public static bool IsObsolete(this IType type)
+	{
+		if (type is null)
+			throw new ArgumentNullException(nameof(type));
+
+		return type.GetAttribute<ObsoleteAttribute>() != null;
+	}
 }
