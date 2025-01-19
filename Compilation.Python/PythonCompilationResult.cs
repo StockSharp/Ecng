@@ -3,11 +3,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
+using Ecng.Common;
 using Ecng.Collections;
+using Ecng.ComponentModel;
 
 using Microsoft.Scripting.Hosting;
 
+using IronPython.Runtime;
 using IronPython.Runtime.Types;
 
 class PythonCompilationResult(IEnumerable<CompilationError> errors)
@@ -17,6 +21,43 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 	{
 		private class TypeImpl(CompiledCode code, PythonType pythonType) : IType
 		{
+			private class PythonPropertyImpl(AssemblyImpl.TypeImpl parent, PythonProperty property, Type type) : IProperty
+			{
+				private readonly TypeImpl _parent = parent ?? throw new ArgumentNullException(nameof(parent));
+				private readonly PythonProperty _property = property ?? throw new ArgumentNullException(nameof(property));
+				private readonly Type _type = type ?? throw new ArgumentNullException(nameof(type));
+
+				public string Name => ((PythonFunction)_property.fget).__name__;
+				string IProperty.DisplayName => Name;
+
+				Type IProperty.Type => _type;
+
+				bool IProperty.IsBrowsable => true;
+				bool IProperty.IsReadOnly => _property.fset is null;
+
+				object IProperty.GetValue(object instance) => _parent.Ops.GetMember(instance, Name);
+				void IProperty.SetValue(object instance, object value) => _parent.Ops.SetMember(instance, Name, value);
+			}
+
+			private class ReflectedPropertyImpl(TypeImpl parent, ReflectedProperty property, PropertyInfo baseTypeProp) : IProperty
+			{
+				private readonly TypeImpl _parent = parent ?? throw new ArgumentNullException(nameof(parent));
+				private readonly ReflectedProperty _property = property ?? throw new ArgumentNullException(nameof(property));
+				private readonly PropertyInfo _baseTypeProp = baseTypeProp;
+
+				public string Name => _property.__name__;
+				string IProperty.DisplayName => Name;
+				Type IProperty.Type => _property.PropertyType;
+
+				bool IProperty.IsBrowsable => _baseTypeProp?.IsBrowsable() != false;
+				bool IProperty.IsReadOnly => !_property.GetSetters().Any();
+
+				object IProperty.GetValue(object instance) => _parent.Ops.GetMember(instance, Name);
+				void IProperty.SetValue(object instance, object value) => _parent.Ops.SetMember(instance, Name, value);
+
+				public override string ToString() => _property.ToString();
+			}
+
 			private readonly CompiledCode _code = code ?? throw new ArgumentNullException(nameof(code));
 			private readonly PythonType _pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
 
@@ -46,6 +87,33 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 			}
 
 			bool IType.Is(Type type) => _pythonType.Is(type);
+
+			IEnumerable<IProperty> IType.GetProperties()
+			{
+				var baseType = _pythonType.GetUnderlyingSystemType();
+
+				while (baseType?.IsPythonType() == true)
+					baseType = baseType.BaseType;
+
+				var dotNetProperties = baseType is null
+					? []
+					: baseType.GetProperties().ToDictionary(p => p.Name);
+
+				var properties = Ops
+					.GetMemberNames(_pythonType)
+					.Select(p => Ops.GetMember(_pythonType, p))
+					.ToArray();
+
+				var instance = Ops.Invoke(_pythonType);
+
+				return properties.OfType<PythonProperty>().Select(p =>
+				{
+					var v = ((PythonFunction)p.fget).__call__(DefaultContext.Default, instance);
+					return (IProperty)new PythonPropertyImpl(this, p, v?.GetType() ?? typeof(object));
+				})
+				.Concat(properties.OfType<ReflectedProperty>().Select(p => new ReflectedPropertyImpl(this, p, dotNetProperties.TryGetValue(p.__name__))))
+				;
+			}
 
 			public override string ToString() => Name;
 		}

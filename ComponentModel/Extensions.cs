@@ -204,22 +204,6 @@ namespace Ecng.ComponentModel
 		public static string ToN(this Guid id)
 			=> id.ToString("N");
 
-		public static bool IsPythonObject(this object obj)
-		{
-			if (obj is null)
-				throw new ArgumentNullException(nameof(obj));
-
-			return obj.GetType().IsPythonType();
-		}
-
-		public static bool IsPythonType(this Type type)
-		{
-			if (type is null)
-				throw new ArgumentNullException(nameof(type));
-
-			return type.FullName?.StartsWith("IronPython") ?? false;
-		}
-
 		public static IEnumerable<PropertyDescriptor> Typed(this PropertyDescriptorCollection col)
 			=> col.Cast<PropertyDescriptor>();
 	}

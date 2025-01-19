@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Compilation;
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using Ecng.Common;
@@ -20,6 +21,8 @@ public interface IType
 	bool Is(Type type);
 	object CreateInstance(params object[] args);
 	object GetConstructor(IType[] value);
+
+	IEnumerable<IProperty> GetProperties();
 }
 
 class TypeImpl(Type real) : IType
@@ -39,6 +42,7 @@ class TypeImpl(Type real) : IType
 
 	object IType.CreateInstance(object[] args) => _real.CreateInstance(args);
 	bool IType.Is(Type type) => _real.Is(type, false);
+	IEnumerable<IProperty> IType.GetProperties() => _real.GetProperties().Select(p => new PropertyImpl(p));
 
-	public override string ToString() => Name;
+	public override string ToString() => _real.ToString();
 }
