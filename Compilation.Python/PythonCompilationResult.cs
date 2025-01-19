@@ -7,7 +7,6 @@ using System.Reflection;
 
 using Ecng.Common;
 using Ecng.Collections;
-using Ecng.ComponentModel;
 
 using Microsoft.Scripting.Hosting;
 
@@ -70,9 +69,9 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 			private ScriptEngine Engine => _code.Engine;
 			private ObjectOperations Ops => Engine.Operations;
 
-			bool IType.IsAbstract => _pythonType.GetUnderlyingSystemType()?.IsAbstract == true;
-			bool IType.IsPublic => _pythonType.GetUnderlyingSystemType()?.IsPublic == true;
-			bool IType.IsGenericTypeDefinition => _pythonType.GetUnderlyingSystemType()?.IsGenericTypeDefinition == true;
+			bool IType.IsAbstract => ToType()?.IsAbstract == true;
+			bool IType.IsPublic => ToType()?.IsPublic == true;
+			bool IType.IsGenericTypeDefinition => ToType()?.IsGenericTypeDefinition == true;
 			object IType.GetConstructor(IType[] value) => new();
 
 			private string TryGetAttr(string name)
@@ -90,7 +89,7 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 
 			IEnumerable<IProperty> IType.GetProperties()
 			{
-				var baseType = _pythonType.GetUnderlyingSystemType();
+				var baseType = ToType();
 
 				while (baseType?.IsPythonType() == true)
 					baseType = baseType.BaseType;
@@ -114,6 +113,9 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 				.Concat(properties.OfType<ReflectedProperty>().Select(p => new ReflectedPropertyImpl(this, p, dotNetProperties.TryGetValue(p.__name__))))
 				;
 			}
+
+			T IType.GetAttribute<T>() => ToType().GetAttribute<T>();
+			public Type ToType() => _pythonType.GetUnderlyingSystemType();
 
 			public override string ToString() => Name;
 		}

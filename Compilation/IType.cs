@@ -22,7 +22,12 @@ public interface IType
 	object CreateInstance(params object[] args);
 	object GetConstructor(IType[] value);
 
+	T GetAttribute<T>()
+		where T : Attribute;
+
 	IEnumerable<IProperty> GetProperties();
+
+	Type ToType();
 }
 
 class TypeImpl(Type real) : IType
@@ -43,6 +48,9 @@ class TypeImpl(Type real) : IType
 	object IType.CreateInstance(object[] args) => _real.CreateInstance(args);
 	bool IType.Is(Type type) => _real.Is(type, false);
 	IEnumerable<IProperty> IType.GetProperties() => _real.GetProperties().Select(p => new PropertyImpl(p));
+
+	T IType.GetAttribute<T>() => _real.GetAttribute<T>();
+	Type IType.ToType() => _real;
 
 	public override string ToString() => _real.ToString();
 }
