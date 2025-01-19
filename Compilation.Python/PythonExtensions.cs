@@ -56,4 +56,20 @@ public static class PythonExtensions
 			Severity.Warning => CompilationErrorTypes.Warning,
 			_ => CompilationErrorTypes.Info,
 		};
+
+	public static bool IsPythonObject(this object obj)
+	{
+		if (obj is null)
+			throw new ArgumentNullException(nameof(obj));
+
+		return obj.GetType().IsPythonType();
+	}
+
+	public static bool IsPythonType(this Type type)
+	{
+		if (type is null)
+			throw new ArgumentNullException(nameof(type));
+
+		return type.FullName?.StartsWith(nameof(IronPython)) ?? false;
+	}
 }
