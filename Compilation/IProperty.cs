@@ -18,6 +18,9 @@ public interface IProperty
 
 	object GetValue(object instance);
 	void SetValue(object instance, object value);
+
+	T GetAttribute<T>()
+		where T : Attribute;
 }
 
 class PropertyImpl(PropertyInfo property) : IProperty
@@ -36,6 +39,8 @@ class PropertyImpl(PropertyInfo property) : IProperty
 
 	void IProperty.SetValue(object instance, object value)
 		=> _property.SetValue(instance, value);
+
+	T IProperty.GetAttribute<T>() => _property.GetAttribute<T>();
 
 	public override string ToString() => _property.ToString();
 }

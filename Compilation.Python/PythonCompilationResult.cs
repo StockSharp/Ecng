@@ -36,6 +36,9 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 
 				object IProperty.GetValue(object instance) => _parent.Ops.GetMember(instance, Name);
 				void IProperty.SetValue(object instance, object value) => _parent.Ops.SetMember(instance, Name, value);
+				T IProperty.GetAttribute<T>() => default;
+
+				public override string ToString() => _property.ToString();
 			}
 
 			private class ReflectedPropertyImpl(TypeImpl parent, ReflectedProperty property, PropertyInfo baseTypeProp) : IProperty
@@ -53,6 +56,7 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 
 				object IProperty.GetValue(object instance) => _parent.Ops.GetMember(instance, Name);
 				void IProperty.SetValue(object instance, object value) => _parent.Ops.SetMember(instance, Name, value);
+				T IProperty.GetAttribute<T>() => default;
 
 				public override string ToString() => _property.ToString();
 			}
