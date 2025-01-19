@@ -19,12 +19,12 @@ public class PythonObjectTypeDescriptor(object pythonObject) : ICustomTypeDescri
 			? []
 			: TypeDescriptor
 			.GetProperties(baseType)
-			.Cast<PropertyDescriptor>()
+			.Typed()
 			.ToDictionary(p => p.Name);
 
 		var pythonProperties = TypeDescriptor
 			.GetProperties(_pythonObject)
-			.Cast<PropertyDescriptor>()
+			.Typed()
 			.Where(pd => pd.PropertyType.IsPrimitive && !pd.Name.StartsWith("_") && !dotNetProperties.ContainsKey(pd.Name));
 
 		return new PropertyDescriptorCollection(dotNetProperties.Values.Concat(pythonProperties).Where(pd => pd.IsBrowsable).ToArray());

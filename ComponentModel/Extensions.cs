@@ -219,5 +219,8 @@ namespace Ecng.ComponentModel
 
 			return type.FullName?.StartsWith("IronPython") ?? false;
 		}
+
+		public static IEnumerable<PropertyDescriptor> Typed(this PropertyDescriptorCollection col)
+			=> col.Cast<PropertyDescriptor>();
 	}
 }

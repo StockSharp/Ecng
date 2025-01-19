@@ -121,7 +121,7 @@
 			return Obj is null
 				? null
 				: TypeDescriptor.GetProperties(Obj, true)
-					.OfType<PropertyDescriptor>()
+					.Typed()
 					.Select(pd => new ProxyPropDescriptor(pd, this));
 		}
 
