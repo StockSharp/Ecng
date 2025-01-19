@@ -1,9 +1,8 @@
-﻿namespace Ecng.Compilation.Python;
+﻿namespace Ecng.ComponentModel;
 
 using System;
 using System.Linq;
 using System.ComponentModel;
-using System.Collections.Generic;
 
 public class PythonObjectTypeDescriptor(object pythonObject) : ICustomTypeDescriptor
 {
