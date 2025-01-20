@@ -4,9 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-#if NETCOREAPP
-using System.Runtime.Loader;
-#endif
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -221,7 +218,7 @@ using System.Collections.Generic;
 using Ecng.Common;
 using Ecng.Compilation.Expressions;
 
-class TempExpressionFormula : ExpressionFormula<__result_type>
+public class TempExpressionFormula : ExpressionFormula<__result_type>
 {
 	public TempExpressionFormula(string expression, IEnumerable<string> variables)
 		: base(expression, variables)
@@ -246,16 +243,11 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 		return variables;
 	}
 
-#if NETCOREAPP
-	private static IType GetType(IAssembly asm, object context, string typeName)
-		=> asm.GetExportTypes(context).First(t => t.Name == typeName);
-
-	public static Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, AssemblyLoadContext context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
-		=> Compile<TResult>(compiler, (asm, typeName) => GetType(asm, context, typeName), expression, cache, cancellationToken);
+	private static Type GetType(Assembly asm, string typeName)
+		=> asm.GetExportedTypes().First(t => t.Name == typeName);
 
 	public static Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextTracker context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
-		=> Compile<TResult>(compiler, (asm, typeName) => GetType(asm, context, typeName), expression, cache, cancellationToken);
-#endif
+		=> Compile<TResult>(compiler, context, GetType, expression, cache, cancellationToken);
 
 	private const string _lang = FileExts.CSharp;
 
@@ -269,13 +261,11 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 	/// <param name="cache"><see cref="ICompilerCache"/>.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
 	/// <returns>Compiled mathematical formula.</returns>
-	public static async Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, Func<IAssembly, string, IType> getType, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
+	public static async Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextTracker context, Func<Assembly, string, Type> getType, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
 	{
-		if (compiler is null)
-			throw new ArgumentNullException(nameof(compiler));
-
-		if (getType is null)
-			throw new ArgumentNullException(nameof(getType));
+		if (compiler is null)	throw new ArgumentNullException(nameof(compiler));
+		if (context is null)	throw new ArgumentNullException(nameof(context));
+		if (getType is null)	throw new ArgumentNullException(nameof(getType));
 
 		try
 		{
@@ -291,17 +281,23 @@ class TempExpressionFormula : ExpressionFormula<__result_type>
 
 			var sources = new[] { _template.Replace("__insert_code", code).Replace("__result_type", typeof(TResult).TryGetCSharpAlias() ?? typeof(TResult).Name) };
 
-			if (cache?.TryGet(_lang, sources, refs, out var assembly) != true)
+			Assembly assembly;
+
+			if (cache?.TryGet(_lang, sources, refs, out var assemblyBody) != true)
 			{
 				var result = await compiler.Compile("Formula", sources, refs, cancellationToken);
 
-				assembly = result.Assembly;
+				assembly = result.GetAssembly(context);
 
 				if (assembly is null)
 					return ExpressionFormula<TResult>.CreateError(result.Errors.ErrorsOnly().Select(e => e.Message).JoinNL());
 				else
-					cache?.Add(_lang, sources, refs, assembly);
+				{
+					cache?.Add(_lang, sources, refs, ((AssemblyCompilationResult)result).AssemblyBody);
+				}
 			}
+			else
+				assembly = context.LoadFromStream(assemblyBody);
 
 			return getType(assembly, "TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
 		}

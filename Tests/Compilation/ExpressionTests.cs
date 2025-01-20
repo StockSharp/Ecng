@@ -2,10 +2,9 @@
 {
 	using System;
 	using System.IO;
-	using System.Linq;
-	using System.Runtime.Loader;
 	using System.Threading.Tasks;
 
+	using Ecng.Common;
 	using Ecng.Compilation;
 	using Ecng.Compilation.Expressions;
 	using Ecng.Compilation.Roslyn;
@@ -19,10 +18,18 @@
 	public class ExpressionTests
 	{
 		private static readonly ICompiler _compiler = new CSharpCompiler();
-		private static readonly AssemblyLoadContext _context = new(default, false);
+		private static readonly AssemblyLoadContextTracker _context = new();
+
+		private const string _cacheDir = "asm_cache";
 
 		private static ExpressionFormula<decimal> Compile(string expression, ICompilerCache cache = default)
 			=> AsyncContext.Run(() => _compiler.Compile<decimal>(_context, expression, cache));
+
+		[ClassInitialize]
+		public static void Init(TestContext _)
+		{
+			_cacheDir.SafeDeleteDir();
+		}
 
 		[TestMethod]
 		public void Cache()
@@ -47,29 +54,27 @@
 		[TestMethod]
 		public void FileCache()
 		{
-			const string dir = "asm_cache";
-
-			var cache = new FileCompilerCache(dir, TimeSpan.MaxValue);
+			var cache = new FileCompilerCache(_cacheDir, TimeSpan.MaxValue);
 			cache.Init();
 
-			Directory.GetFiles(dir).Count().AssertEqual(0);
+			Directory.GetFiles(_cacheDir).Length.AssertEqual(0);
 
 			var formula = Compile("RI@FORTS - SBER@TQBR", cache);
 			formula.Calculate([6, 4]).AssertEqual(2);
 
 			cache.Count.AssertEqual(1);
-			Directory.GetFiles(dir).Count().AssertEqual(1);
+			Directory.GetFiles(_cacheDir).Length.AssertEqual(1);
 
 			formula = Compile("RI@FORTS - SBER@TQBR", cache);
 			formula.Calculate([6, 5]).AssertEqual(1);
 
 			cache.Count.AssertEqual(1);
-			Directory.GetFiles(dir).Count().AssertEqual(1);
+			Directory.GetFiles(_cacheDir).Length.AssertEqual(1);
 
 			cache.Clear();
 			cache.Count.AssertEqual(0);
 
-			Directory.Exists(dir).AssertFalse();
+			Directory.Exists(_cacheDir).AssertFalse();
 		}
 
 		[TestMethod]

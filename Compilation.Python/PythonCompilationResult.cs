@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Globalization;
 
 using Ecng.Common;
 using Ecng.Collections;
@@ -16,145 +17,329 @@ using IronPython.Runtime.Types;
 class PythonCompilationResult(IEnumerable<CompilationError> errors)
 	: CompilationResult(errors)
 {
-	private class AssemblyImpl(CompiledCode compiledCode) : IAssembly
+	private class AssemblyImpl : Assembly
 	{
-		private class TypeImpl(CompiledCode code, PythonType pythonType) : IType
+		private class TypeImpl : Type
 		{
-			private class PythonPropertyImpl(TypeImpl parent, PythonProperty property, Type type) : IProperty
+			private class EventImpl(string name, Type eventType, TypeImpl declaringType) : EventInfo
 			{
-				private readonly TypeImpl _parent = parent ?? throw new ArgumentNullException(nameof(parent));
-				private readonly PythonProperty _property = property ?? throw new ArgumentNullException(nameof(property));
-				private readonly Type _type = type ?? throw new ArgumentNullException(nameof(type));
+				private readonly string _name = name;
+				private readonly Type _eventType = eventType;
+				private readonly TypeImpl _declaringType = declaringType;
 
-				public string Name => ((PythonFunction)_property.fget).__name__;
-				string IMember.DisplayName => Name;
-				string IMember.Description => string.Empty;
-				bool IMember.IsPublic => true;
-				bool IMember.IsAbstract => false;
-				bool IMember.IsGenericDefinition => false;
+				public override string Name => _name;
+				public override Type EventHandlerType => _eventType;
+				public override Type DeclaringType => _declaringType;
+				public override Type ReflectedType => _declaringType;
+				public override EventAttributes Attributes => EventAttributes.None;
 
-				Type IProperty.Type => _type;
+				public override MethodInfo GetAddMethod(bool nonPublic) => null;
+				public override MethodInfo GetRaiseMethod(bool nonPublic) => null;
+				public override MethodInfo GetRemoveMethod(bool nonPublic) => null;
+				public override MethodInfo[] GetOtherMethods(bool nonPublic) => [];
 
-				bool IProperty.IsBrowsable => true;
-				bool IProperty.IsReadOnly => _property.fset is null;
-
-				object IProperty.GetValue(object instance) => _parent.Ops.GetMember(instance, Name);
-				void IProperty.SetValue(object instance, object value) => _parent.Ops.SetMember(instance, Name, value);
-				T IMember.GetAttribute<T>() => default;
-
-				public override string ToString() => _property.ToString();
+				public override object[] GetCustomAttributes(bool inherit) => [];
+				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => [];
+				public override bool IsDefined(Type attributeType, bool inherit) => false;
 			}
 
-			private class ReflectedPropertyImpl(TypeImpl parent, ReflectedProperty property, PropertyInfo baseTypeProp) : IProperty
+			private class MethodImpl(PythonFunction function, TypeImpl declaringType) : MethodInfo
 			{
-				private readonly TypeImpl _parent = parent ?? throw new ArgumentNullException(nameof(parent));
-				private readonly ReflectedProperty _property = property ?? throw new ArgumentNullException(nameof(property));
-				private readonly PropertyInfo _baseTypeProp = baseTypeProp;
+				private class ParameterImpl(string name, Type parameterType, int position, MethodInfo method) : ParameterInfo
+				{
+					private readonly string _name = name;
+					private readonly Type _parameterType = parameterType;
+					private readonly int _position = position;
+					private readonly MethodInfo _method = method;
 
-				public string Name => _property.__name__;
-				string IMember.DisplayName => Name;
-				string IMember.Description => string.Empty;
-				bool IMember.IsPublic => true;
-				bool IMember.IsAbstract => false;
-				bool IMember.IsGenericDefinition => false;
+					public override string Name => _name;
+					public override Type ParameterType => _parameterType;
+					public override int Position => _position;
+					public override ParameterAttributes Attributes => ParameterAttributes.None;
+					public override MemberInfo Member => _method;
+					public override object DefaultValue => null;
+					public override object RawDefaultValue => null;
+					public override bool HasDefaultValue => false;
+				}
 
-				Type IProperty.Type => _property.PropertyType;
+				private readonly PythonFunction _function = function;
+				private readonly TypeImpl _declaringType = declaringType;
+				private readonly ParameterInfo[] _parameters;
 
-				bool IProperty.IsBrowsable => _baseTypeProp?.IsBrowsable() != false;
-				bool IProperty.IsReadOnly => !_property.GetSetters().Any();
+				public MethodImpl(PythonFunction function, TypeImpl declaringType, Type[] paramTypes)
+					: this(function, declaringType)
+				{
+					_parameters = paramTypes.Select((t, i) => new ParameterImpl($"param{i}", t, i, this)).ToArray();
+				}
 
-				object IProperty.GetValue(object instance) => _parent.Ops.GetMember(instance, Name);
-				void IProperty.SetValue(object instance, object value) => _parent.Ops.SetMember(instance, Name, value);
-				T IMember.GetAttribute<T>() => default;
+				public override string Name => _function.__name__;
+				public override Type DeclaringType => _declaringType;
+				public override Type ReflectedType => _declaringType;
+				public override RuntimeMethodHandle MethodHandle => throw new NotImplementedException();
+				public override MethodAttributes Attributes => MethodAttributes.Public;
+				public override CallingConventions CallingConvention => CallingConventions.Standard;
+				public override Type ReturnType => typeof(object);
 
-				public override string ToString() => _property.ToString();
+				public override ParameterInfo[] GetParameters() => _parameters;
+				public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
+					=> _function.__call__(DefaultContext.Default, obj, parameters);
+
+				public override ICustomAttributeProvider ReturnTypeCustomAttributes => null;
+				public override MethodInfo GetBaseDefinition() => this;
+				public override object[] GetCustomAttributes(bool inherit) => [];
+				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => [];
+				public override bool IsDefined(Type attributeType, bool inherit) => false;
+				public override MethodImplAttributes GetMethodImplementationFlags() => throw new NotImplementedException();
 			}
 
-			private readonly CompiledCode _code = code ?? throw new ArgumentNullException(nameof(code));
-			private readonly PythonType _pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
+			private class PythonPropertyImpl(PythonProperty property, Type propertyType, TypeImpl declaringType) : PropertyInfo
+			{
+				private readonly PythonProperty _property = property;
+				private readonly Type _propertyType = propertyType;
+				private readonly TypeImpl _declaringType = declaringType;
 
-			public string Name => _pythonType.GetName();
-			string IMember.DisplayName => TryGetAttr("display_name");
-			string IMember.Description => TryGetAttr("__doc__")?.Trim();
-			string IType.DocUrl => TryGetAttr("documentation_url");
-			Uri IType.IconUri => TryGetAttr("icon") is string url ? new(url) : (Uri)default;
+				public override string Name => ((PythonFunction)_property.fget).__name__;
+				public override Type PropertyType => _propertyType;
+				public override PropertyAttributes Attributes => PropertyAttributes.None;
+				public override bool CanRead => true;
+				public override bool CanWrite => _property.fset != null;
+				public override Type DeclaringType => _declaringType;
+				public override Type ReflectedType => _declaringType;
 
-			private ScriptEngine Engine => _code.Engine;
-			private ObjectOperations Ops => Engine.Operations;
+				public override MethodInfo GetGetMethod(bool nonPublic) => null;
+				public override MethodInfo GetSetMethod(bool nonPublic) => null;
+				public override ParameterInfo[] GetIndexParameters() => [];
 
-			bool IMember.IsAbstract => ToType()?.IsAbstract == true;
-			bool IMember.IsPublic => ToType()?.IsPublic == true;
-			bool IMember.IsGenericDefinition => ToType()?.IsGenericTypeDefinition == true;
-			object IType.GetConstructor(IType[] value) => new();
+				public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
+					=> _declaringType._ops.GetMember(obj, Name);
+
+				public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
+					=> _declaringType._ops.SetMember(obj, Name, value);
+
+				public override MethodInfo[] GetAccessors(bool nonPublic) => throw new NotImplementedException();
+				public override object[] GetCustomAttributes(bool inherit) => throw new NotImplementedException();
+				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => throw new NotImplementedException();
+				public override bool IsDefined(Type attributeType, bool inherit) => throw new NotImplementedException();
+			}
+
+			private class ReflectedPropertyImpl(ReflectedProperty property, TypeImpl declaringType) : PropertyInfo
+			{
+				private readonly ReflectedProperty _property = property;
+				private readonly TypeImpl _declaringType = declaringType;
+
+				public override string Name => _property.__name__;
+				public override Type PropertyType => _property.PropertyType;
+				public override PropertyAttributes Attributes => PropertyAttributes.None;
+				public override bool CanRead => true;
+				public override bool CanWrite => _property.GetSetters().Any();
+				public override Type DeclaringType => _declaringType;
+				public override Type ReflectedType => _declaringType;
+
+				public override MethodInfo GetGetMethod(bool nonPublic) => null;
+				public override MethodInfo GetSetMethod(bool nonPublic) => null;
+				public override ParameterInfo[] GetIndexParameters() => [];
+
+				public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
+					=> _declaringType._ops.GetMember(obj, Name);
+
+				public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
+					=> _declaringType._ops.SetMember(obj, Name, value);
+
+				public override MethodInfo[] GetAccessors(bool nonPublic) => throw new NotImplementedException();
+				public override object[] GetCustomAttributes(bool inherit) => throw new NotImplementedException();
+				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => throw new NotImplementedException();
+				public override bool IsDefined(Type attributeType, bool inherit) => throw new NotImplementedException();
+			}
+
+			private class ConstructorImpl(Type declaringType, PythonFunction init) : ConstructorInfo
+			{
+				private readonly Type _declaringType = declaringType ?? throw new ArgumentNullException(nameof(declaringType));
+				private readonly PythonFunction _init = init;
+
+				public override Type DeclaringType => _declaringType;
+				public override string Name => ConstructorName;
+				public override Type ReflectedType => _declaringType;
+				public override MethodAttributes Attributes => MethodAttributes.Public;
+				public override RuntimeMethodHandle MethodHandle => throw new NotImplementedException();
+
+				public override ParameterInfo[] GetParameters() => [];
+
+				public override object[] GetCustomAttributes(bool inherit) => [];
+				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => [];
+				public override bool IsDefined(Type attributeType, bool inherit) => false;
+
+				public override object Invoke(BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture) => null;
+				public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture) => null;
+				public override MethodImplAttributes GetMethodImplementationFlags() => throw new NotImplementedException();
+			}
+
+			private readonly CompiledCode _code;
+			private readonly PythonType _pythonType;
+			private readonly ScriptEngine _engine;
+			private readonly ObjectOperations _ops;
+			private readonly Type _underlyingType;
+
+			public TypeImpl(CompiledCode code, PythonType pythonType)
+			{
+				_code = code ?? throw new ArgumentNullException(nameof(code));
+				_pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
+				_engine = code.Engine;
+				_ops = _engine.Operations;
+				_underlyingType = pythonType.GetUnderlyingSystemType();
+			}
 
 			private string TryGetAttr(string name)
-				=> Ops.TryGetMember(_pythonType, name, out object value) ? value as string : null;
+				=> _ops.TryGetMember(_pythonType, name, out object value) ? value as string : null;
 
-			object IType.CreateInstance(object[] args)
+			private object CreateInstance(params object[] args)
+				=> _ops.Invoke(_pythonType, args);
+
+			public override Assembly Assembly => _underlyingType?.Assembly;
+			public override string AssemblyQualifiedName => _underlyingType?.AssemblyQualifiedName;
+			public override Type BaseType => _underlyingType?.BaseType;
+			public override string FullName => _pythonType.GetName();
+			public override Guid GUID => _underlyingType?.GUID ?? Guid.Empty;
+			public override Module Module => _underlyingType?.Module;
+			public override string Namespace => string.Empty;
+			public override string Name => _pythonType.GetName();
+			public override Type UnderlyingSystemType => _underlyingType;
+
+			public override bool IsGenericType => _underlyingType?.IsGenericType ?? false;
+			public override bool IsGenericTypeDefinition => _underlyingType?.IsGenericTypeDefinition ?? false;
+
+			public override ConstructorInfo[] GetConstructors(BindingFlags bindingAttr)
 			{
-				if (args is null)
-					throw new ArgumentNullException(nameof(args));
+				var init = _ops.GetMemberNames(_pythonType)
+					.Select(name => _ops.GetMember(_pythonType, name))
+					.OfType<PythonFunction>()
+					.FirstOrDefault(f => f.__name__ == "__init__");
 
-				return Ops.Invoke(_pythonType, args);
+				return [new ConstructorImpl(_underlyingType, init)];
 			}
 
-			bool IType.Is(Type type) => _pythonType.Is(type);
+			protected override ConstructorInfo GetConstructorImpl(BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
+				=> GetConstructors(bindingAttr).FirstOrDefault();
 
-			IEnumerable<IProperty> IType.GetProperties()
+			public override PropertyInfo[] GetProperties(BindingFlags bindingAttr)
 			{
-				var baseType = ToType();
+				var baseType = _underlyingType;
 
 				while (baseType?.IsPythonType() == true)
 					baseType = baseType.BaseType;
 
-				var dotNetProperties = baseType is null
-					? []
-					: baseType.GetProperties().ToDictionary(p => p.Name);
+				var dotNetProperties = baseType?.GetProperties(bindingAttr) ?? [];
 
-				var properties = Ops
+				var pythonProperties = _ops
 					.GetMemberNames(_pythonType)
-					.Select(p => Ops.GetMember(_pythonType, p))
+					.Select(p => _ops.GetMember(_pythonType, p))
 					.ToArray();
 
-				var instance = Ops.Invoke(_pythonType);
+				var propertyInfos = new List<PropertyInfo>();
 
-				return properties.OfType<PythonProperty>().Select(p =>
+				foreach (var prop in pythonProperties)
 				{
-					var v = ((PythonFunction)p.fget).__call__(DefaultContext.Default, instance);
-					return (IProperty)new PythonPropertyImpl(this, p, v?.GetType() ?? typeof(object));
-				})
-				.Concat(properties.OfType<ReflectedProperty>().Select(p => new ReflectedPropertyImpl(this, p, dotNetProperties.TryGetValue(p.__name__))))
-				;
+					if (prop is PythonProperty pythonProp)
+					{
+						var instance = CreateInstance();
+						var value = ((PythonFunction)pythonProp.fget).__call__(DefaultContext.Default, instance);
+						propertyInfos.Add(new PythonPropertyImpl(pythonProp, value?.GetType() ?? typeof(object), this));
+					}
+					else if (prop is ReflectedProperty reflectedProp)
+					{
+						propertyInfos.Add(new ReflectedPropertyImpl(reflectedProp, this));
+					}
+				}
+
+				return [.. propertyInfos, .. dotNetProperties];
 			}
 
-			T IMember.GetAttribute<T>() => ToType().GetAttribute<T>();
-			public Type ToType() => _pythonType.GetUnderlyingSystemType();
-			string IType.GetTypeName(bool isAssemblyQualifiedName) => Name;
+			protected override PropertyInfo GetPropertyImpl(string name, BindingFlags bindingAttr, Binder binder, Type returnType, Type[] types, ParameterModifier[] modifiers)
+				=> throw new NotImplementedException();
 
-			public override string ToString() => Name;
+			protected override TypeAttributes GetAttributeFlagsImpl() => TypeAttributes.Public;
+
+			public override Type GetElementType() => null;
+			protected override bool HasElementTypeImpl() => false;
+
+			protected override bool IsArrayImpl() => false;
+			protected override bool IsByRefImpl() => false;
+			protected override bool IsCOMObjectImpl() => false;
+			protected override bool IsPointerImpl() => false;
+			protected override bool IsPrimitiveImpl() => false;
+
+			public override FieldInfo GetField(string name, BindingFlags bindingAttr) => null;
+			public override FieldInfo[] GetFields(BindingFlags bindingAttr) => [];
+			
+			public override Type GetInterface(string name, bool ignoreCase) => null;
+			public override Type[] GetInterfaces() => [];
+			
+			public override MemberInfo[] GetMembers(BindingFlags bindingAttr)
+				=> [.. GetProperties(bindingAttr), .. GetMethods(bindingAttr), .. GetEvents(bindingAttr)];
+			
+			public override Type GetNestedType(string name, BindingFlags bindingAttr) => null;
+			public override Type[] GetNestedTypes(BindingFlags bindingAttr) => [];
+			
+			public override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
+				=> throw new NotImplementedException();
+			
+			public override object[] GetCustomAttributes(bool inherit) => [];
+			public override object[] GetCustomAttributes(Type attributeType, bool inherit) => [];
+			
+			public override bool IsDefined(Type attributeType, bool inherit) => false;
+			
+			public override EventInfo GetEvent(string name, BindingFlags bindingAttr)
+				=> GetEvents(bindingAttr).FirstOrDefault(e => e.Name == name);
+			
+			public override EventInfo[] GetEvents(BindingFlags bindingAttr)
+			{
+				var events = new List<EventInfo>();
+
+				var pythonEvents = _ops
+					.GetMemberNames(_pythonType)
+					.Where(name => name.StartsWith("on_", StringComparison.InvariantCultureIgnoreCase))
+					.Select(name => new EventImpl(name, typeof(EventHandler), this));
+
+				return [.. events, .. pythonEvents];
+			}
+
+			public override MethodInfo[] GetMethods(BindingFlags bindingAttr) => throw new NotImplementedException();
+
+			protected override MethodInfo GetMethodImpl(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
+				=> null;
 		}
 
-		private readonly CompiledCode _compiledCode = compiledCode ?? throw new ArgumentNullException(nameof(compiledCode));
-		private readonly SynchronizedSet<ScriptScope> _execScopes = [];
+		private readonly CompiledCode _compiledCode;
+		private readonly Type[] _types;
 
-		byte[] IAssembly.AsBytes => throw new NotSupportedException();
-
-		IEnumerable<IType> IAssembly.GetExportTypes(object context)
+		public AssemblyImpl(CompiledCode compiledCode, ScriptScope scope)
 		{
-			if (context is null)
-				throw new ArgumentNullException(nameof(context));
-
-			var scope = (ScriptScope)context;
-
-			if (_execScopes.TryAdd(scope))
-				_compiledCode.Execute(scope);
-
-			return scope.GetTypes().Select(t => new TypeImpl(_compiledCode, t)).ToArray();
+			_compiledCode = compiledCode ?? throw new ArgumentNullException(nameof(compiledCode));
+			_types = scope.CheckOnNull(nameof(scope)).GetTypes().Select(t => new TypeImpl(_compiledCode, t)).ToArray();
 		}
+
+		public override Type[] GetTypes() => GetExportedTypes();
+		public override Type[] GetExportedTypes() => _types;
 	}
+
+	private readonly SynchronizedSet<ScriptScope> _execScopes = [];
 
 	public CompiledCode CompiledCode { get; set; }
 
-	private IAssembly _assembly;
-	public override IAssembly Assembly => CompiledCode is null ? null : _assembly ??= new AssemblyImpl(CompiledCode);
+	public override Assembly GetAssembly(object context)
+	{
+		if (context is null)
+			throw new ArgumentNullException(nameof(context));
+
+		var code = CompiledCode;
+
+		if (code is null)
+			return null;
+
+		var scope = (ScriptScope)context;
+
+		if (_execScopes.TryAdd(scope))
+			code.Execute(scope);
+
+		return new AssemblyImpl(code, scope);
+	}
 }

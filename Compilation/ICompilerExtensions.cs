@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -72,81 +71,4 @@ public static class ICompilerExtensions
 
 	public static IEnumerable<CompilationError> ErrorsOnly(this IEnumerable<CompilationError> errors)
 		=> errors.Where(e => e.Type == CompilationErrorTypes.Error);
-
-	public static bool Is<T>(this IType type)
-	{
-		if (type is null)
-			throw new ArgumentNullException(nameof(type));
-
-		return type.Is(typeof(T));
-	}
-
-	public static T CreateInstance<T>(this IType type, params object[] args)
-	{
-		if (type is null)
-			throw new ArgumentNullException(nameof(type));
-
-		return (T)type.CreateInstance(args);
-	}
-
-	public static IType TryFindType(this IEnumerable<IType> types, Func<IType, bool> isTypeCompatible, string typeName)
-	{
-		if (types is null)
-			throw new ArgumentNullException(nameof(types));
-
-		if (isTypeCompatible is null && typeName.IsEmpty())
-			throw new ArgumentNullException(nameof(typeName));
-
-		if (!typeName.IsEmpty())
-			return types.FirstOrDefault(t => t.Name.EqualsIgnoreCase(typeName));
-		else
-			return types.FirstOrDefault(isTypeCompatible);
-	}
-
-	/// <summary>
-	/// Is type compatible.
-	/// </summary>
-	/// <typeparam name="T">Required type.</typeparam>
-	/// <param name="type">Type.</param>
-	/// <returns>Check result.</returns>
-	public static bool IsRequiredType<T>(this IType type)
-		=> IsRequiredType(type, typeof(T));
-
-	/// <summary>
-	/// Is type compatible.
-	/// </summary>
-	/// <param name="type">Type.</param>
-	/// <param name="required">Required type.</param>
-	/// <returns>Check result.</returns>
-	public static bool IsRequiredType(this IType type, Type required)
-	{
-		if (type is null)
-			throw new ArgumentNullException(nameof(type));
-
-		if (required is null)
-			throw new ArgumentNullException(nameof(required));
-
-		return !type.IsAbstract &&
-			type.IsPublic &&
-			!type.IsGenericDefinition &&
-			type.Is(required) &&
-			type.GetConstructor([]) is not null;
-	}
-
-	public static IAssembly ToIAssembly(this byte[] body)
-		=> new AssemblyImpl(body);
-
-	public static IType ToIType(this Type type)
-		=> new TypeImpl(type);
-
-	public static IEnumerable<IType> ToIType(this IEnumerable<Type> types)
-		=> types.Select(ToIType);
-
-	public static bool IsObsolete(this IType type)
-	{
-		if (type is null)
-			throw new ArgumentNullException(nameof(type));
-
-		return type.GetAttribute<ObsoleteAttribute>() != null;
-	}
 }
