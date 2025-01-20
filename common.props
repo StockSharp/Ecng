@@ -30,6 +30,10 @@
         '$(MSBuildProjectName)' == 'Backup.AWS' or
         '$(MSBuildProjectName)' == 'Backup.Yandex' or
         '$(MSBuildProjectName)' == 'Backup.Mega' or
+        '$(MSBuildProjectName)' == 'Compilation' or
+        '$(MSBuildProjectName)' == 'Compilation.Roslyn' or
+        '$(MSBuildProjectName)' == 'Compilation.FSharp' or
+        '$(MSBuildProjectName)' == 'Compilation.Python' or
         '$(MSBuildProjectName)' == 'Nuget'
       ">
     <TargetFrameworks>net6.0</TargetFrameworks>

@@ -147,14 +147,7 @@
 			return ((CompilationResult)compilationResult).FromResult();
 		}
 
-		object ICompiler.CreateContext()
-		{
-#if NETCOREAPP
-			return new AssemblyLoadContextTracker();
-#else
-			throw new NotSupportedException();
-#endif
-		}
+		object ICompiler.CreateContext() => new AssemblyLoadContextTracker();
 	}
 
 	public class CSharpCompiler : RoslynCompiler
