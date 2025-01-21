@@ -2,11 +2,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
 using Ecng.Common;
+using Ecng.ComponentModel;
 
 using IronPython.Runtime;
 using IronPython.Runtime.Types;
@@ -280,8 +282,42 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 			public override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
 				=> throw new NotImplementedException();
 
-			public override object[] GetCustomAttributes(bool inherit) => [];
-			public override object[] GetCustomAttributes(Type attributeType, bool inherit) => [];
+			public override object[] GetCustomAttributes(bool inherit)
+			{
+				var attrs = new List<object>();
+
+				if (TryGetAttr("documentation_url") is string docUrl)
+					attrs.Add(new DocAttribute(docUrl.Trim()));
+
+				var dispName = TryGetAttr("display_name");
+				var desc = TryGetAttr("__doc__");
+
+				if (!dispName.IsEmpty() || !desc.IsEmpty())
+					attrs.Add(new DisplayAttribute() { Name = dispName, Description = desc });
+
+				if (TryGetAttr("icon") is string icon)
+					attrs.Add(new IconAttribute(icon));
+
+				return [.. attrs];
+			}
+
+			public override object[] GetCustomAttributes(Type attributeType, bool inherit)
+			{
+				if (attributeType == typeof(DocAttribute) && TryGetAttr("documentation_url") is string docUrl)
+					return [new DocAttribute(docUrl.Trim())];
+				else if (attributeType == typeof(DisplayAttribute))
+				{
+					var dispName = TryGetAttr("display_name");
+					var desc = TryGetAttr("__doc__");
+
+					if (!dispName.IsEmpty() || !desc.IsEmpty())
+						return [new DisplayAttribute() { Name = dispName, Description = desc }];
+				}
+				else if (attributeType == typeof(IconAttribute) && TryGetAttr("icon") is string icon)
+					return [new IconAttribute(icon)];
+
+				return [];
+			}
 
 			public override bool IsDefined(Type attributeType, bool inherit) => false;
 
@@ -312,7 +348,7 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 		public AssemblyImpl(CompiledCode compiledCode, ScriptScope scope)
 		{
 			_compiledCode = compiledCode ?? throw new ArgumentNullException(nameof(compiledCode));
-			_types = scope.CheckOnNull(nameof(scope)).GetTypes().Select(t => new TypeImpl(_compiledCode, t)).ToArray();
+			_types = scope.CheckOnNull(nameof(scope)).GetTypes().Where(t => t.GetUnderlyingSystemType()?.IsPythonType() == true).Select(t => new TypeImpl(_compiledCode, t)).ToArray();
 		}
 
 		public override Type[] GetTypes() => GetExportedTypes();
