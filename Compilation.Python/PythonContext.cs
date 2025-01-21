@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 
 using Ecng.Common;
 using Ecng.ComponentModel;
+using Ecng.Reflection;
 
 using IronPython.Runtime;
 using IronPython.Runtime.Types;
@@ -141,7 +142,7 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				public override IList<CustomAttributeData> GetCustomAttributesData() => base.GetCustomAttributesData();
 			}
 
-			private class MethodImpl(PythonFunction function, TypeImpl declaringType) : MethodInfo
+			private class MethodImpl : MethodInfo
 			{
 				private class ParameterImpl(string name, Type parameterType, int position, MethodInfo method) : ParameterInfo
 				{
@@ -158,23 +159,40 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 					public override object DefaultValue => null;
 					public override object RawDefaultValue => null;
 					public override bool HasDefaultValue => false;
+
+					public override string ToString() => Name;
 				}
 
-				private readonly PythonFunction _function = function ?? throw new ArgumentNullException(nameof(function));
-				private readonly TypeImpl _declaringType = declaringType ?? throw new ArgumentNullException(nameof(declaringType));
-				private readonly ParameterInfo[] _parameters;
+				private readonly PythonFunction _function;
+				private readonly TypeImpl _declaringType;
+				private readonly ParameterImpl[] _parameters;
 
-				public MethodImpl(PythonFunction function, TypeImpl declaringType, Type[] paramTypes)
-					: this(function, declaringType)
+				public MethodImpl(PythonFunction function, TypeImpl declaringType)
 				{
-					_parameters = paramTypes.Select((t, i) => new ParameterImpl($"param{i}", t, i, this)).ToArray();
+					_function = function ?? throw new ArgumentNullException(nameof(function));
+					_declaringType = declaringType ?? throw new ArgumentNullException(nameof(declaringType));
+
+					var code = function.__code__;
+
+					var argNames = code.co_varnames;
+					var argCount = code.co_argcount;
+
+					_parameters = new ParameterImpl[argCount];
+
+					for (var i = 0; i < argCount; i++)
+					{
+						var paramName = (string)argNames[i];
+						var paramType = typeof(object);
+
+						_parameters[i] = new(paramName, paramType, i, this);
+					}
 				}
 
 				public override string Name => _function.__name__;
 				public override Type DeclaringType => _declaringType;
 				public override Type ReflectedType => _declaringType;
 				public override RuntimeMethodHandle MethodHandle => throw new NotSupportedException();
-				public override MethodAttributes Attributes => MethodAttributes.Public;
+				public override MethodAttributes Attributes => MethodAttributes.Public | (_function.IsStatic() ? MethodAttributes.Static : 0);
 				public override CallingConventions CallingConvention => CallingConventions.Standard;
 				public override Type ReturnType => typeof(object);
 
@@ -192,7 +210,9 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				public override IList<CustomAttributeData> GetCustomAttributesData()
 					=> _declaringType._ops.GetCustomAttributesData(_function);
 
-				public override MethodImplAttributes GetMethodImplementationFlags() => throw new NotImplementedException();
+				public override MethodImplAttributes GetMethodImplementationFlags() => MethodImplAttributes.Managed;
+
+				public override string ToString() => Name;
 			}
 
 			private class PythonPropertyImpl(PythonProperty property, Type propertyType, TypeImpl declaringType) : PropertyInfo
@@ -210,8 +230,8 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				public override Type ReflectedType => _declaringType;
 				public override IEnumerable<CustomAttributeData> CustomAttributes => GetCustomAttributesData();
 
-				public override MethodInfo GetGetMethod(bool nonPublic) => null;
-				public override MethodInfo GetSetMethod(bool nonPublic) => null;
+				public override MethodInfo GetGetMethod(bool nonPublic) => _property.fget is null ? null : new MethodImpl((PythonFunction)_property.fget, _declaringType);
+				public override MethodInfo GetSetMethod(bool nonPublic) => _property.fset is null ? null : new MethodImpl((PythonFunction)_property.fset, _declaringType);
 				public override ParameterInfo[] GetIndexParameters() => [];
 
 				public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
@@ -220,7 +240,13 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
 					=> _declaringType._ops.SetMember(obj, Name, value);
 
-				public override MethodInfo[] GetAccessors(bool nonPublic) => throw new NotImplementedException();
+				public override MethodInfo[] GetAccessors(bool nonPublic)
+				{
+					var getter = GetGetMethod(nonPublic);
+					var setter = GetSetMethod(nonPublic);
+
+					return new MethodInfo[] { getter, setter }.Where(m => m is not null).ToArray();
+				}
 
 				public override object[] GetCustomAttributes(bool inherit)
 					=> _declaringType._ops.GetCustomAttributes(_property, inherit);
@@ -288,7 +314,7 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 
 				public override object Invoke(BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture) => null;
 				public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture) => null;
-				public override MethodImplAttributes GetMethodImplementationFlags() => throw new NotImplementedException();
+				public override MethodImplAttributes GetMethodImplementationFlags() => MethodImplAttributes.Managed;
 			}
 
 			private readonly Assembly _assembly;
@@ -353,12 +379,9 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 
 			public override PropertyInfo[] GetProperties(BindingFlags bindingAttr)
 			{
-				var baseType = _underlyingType;
+				var baseType = _pythonType.GetDotNetType();
 
-				while (baseType?.IsPythonType() == true)
-					baseType = baseType.BaseType;
-
-				var dotNetProps = baseType?.GetProperties(bindingAttr).ToDictionary(p => p.Name) ?? [];
+				var dotNetProps = baseType.GetProperties(ReflectionHelper.AllMembers).ToDictionary(p => p.Name);
 
 				var pythonProperties = _ops
 					.GetMemberNames(_pythonType)
@@ -384,11 +407,11 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 					}
 				}
 
-				return [.. pythonProps, .. dotNetProps.Values];
+				return [.. pythonProps.Concat(dotNetProps.Values).Where(p => p.IsMatch(bindingAttr))];
 			}
 
 			protected override PropertyInfo GetPropertyImpl(string name, BindingFlags bindingAttr, Binder binder, Type returnType, Type[] types, ParameterModifier[] modifiers)
-				=> throw new NotImplementedException();
+				=> GetProperties(bindingAttr).FirstOrDefault(p => p.Name == name);
 
 			protected override TypeAttributes GetAttributeFlagsImpl() => TypeAttributes.Public;
 
@@ -414,7 +437,33 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 			public override Type[] GetNestedTypes(BindingFlags bindingAttr) => [];
 
 			public override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
-				=> throw new NotImplementedException();
+			{
+				var ops = _engine.Operations;
+
+				if (!ops.ContainsMember(target, name))
+					throw new MissingMemberException($"Member '{name}' doesn't exist.");
+
+				var member = ops.GetMember(target, name);
+
+				switch (member)
+				{
+					case PythonFunction pythonFunction:
+						return pythonFunction.__call__(DefaultContext.Default, target, args);
+
+					case PythonProperty:
+
+						if (args == null || args.Length == 0)
+							return ops.GetMember(target, name);
+						else
+						{
+							ops.SetMember(target, name, args[0]);
+							return null;
+						}
+
+					default:
+						return ops.InvokeMember(target, name, args);
+				}
+			}
 
 			public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 
@@ -442,10 +491,34 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				return [.. events, .. pythonEvents];
 			}
 
-			public override MethodInfo[] GetMethods(BindingFlags bindingAttr) => throw new NotImplementedException();
+			public override MethodInfo[] GetMethods(BindingFlags bindingAttr)
+			{
+				var methods = new List<MethodInfo>();
+
+				var dotNetMethods = _pythonType.GetDotNetType().GetMethods(ReflectionHelper.AllMembers).ToDictionary(m => m.Name);
+
+				methods.AddRange(dotNetMethods.Values);
+
+				var pythonMethods = _ops
+					.GetMemberNames(_pythonType)
+					.Select(name => _ops.GetMember(_pythonType, name))
+					.OfType<PythonFunction>();
+
+				foreach (var pythonMethod in pythonMethods)
+				{
+					var impl = new MethodImpl(pythonMethod, this);
+
+					if (dotNetMethods.TryGetValue(impl.Name, out var existing) && existing.IsStatic == impl.IsStatic && existing.GetParameters().Length == (impl.GetParameters().Length - (impl.IsStatic ? 0 : 1)))
+						continue;
+
+					methods.Add(impl);
+				}
+
+				return [.. methods.Where(m => m.IsMatch(bindingAttr))];
+			}
 
 			protected override MethodInfo GetMethodImpl(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
-				=> null;
+				=> GetMethods(bindingAttr).FirstOrDefault(m => m.Name == name && m.GetParameters().Select(p => p.ParameterType).SequenceEqual(types));
 
 			object ITypeConstructor.CreateInstance(object[] args)
 				=> _ops.Invoke(_pythonType, args);

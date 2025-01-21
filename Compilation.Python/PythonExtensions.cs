@@ -13,6 +13,7 @@ using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 
 using IronPython.Runtime.Types;
+using IronPython.Runtime;
 
 public static class PythonExtensions
 {
@@ -88,14 +89,25 @@ public static class PythonExtensions
 		=> (PropertyInfo)_propInfo.GetValue(property);
 
 	[CLSCompliant(false)]
-	public static IEnumerable<PropertyDescriptor> GetProperties(this PythonType type)
+	public static Type GetDotNetType(this PythonType type)
 	{
+		if (type is null)
+			throw new ArgumentNullException(nameof(type));
+
 		var baseType = type.GetUnderlyingSystemType();
 
 		while (baseType?.IsPythonType() == true)
 			baseType = baseType.BaseType;
 
-		var dotNetProperties = baseType is null
+		return baseType ?? typeof(object);
+	}
+
+	[CLSCompliant(false)]
+	public static IEnumerable<PropertyDescriptor> GetProperties(this PythonType type)
+	{
+		var baseType = type.GetDotNetType();
+
+		var dotNetProperties = baseType == typeof(object)
 			? []
 			: TypeDescriptor
 			.GetProperties(baseType)
@@ -108,5 +120,24 @@ public static class PythonExtensions
 			.Where(pd => pd.PropertyType.IsPrimitive && !pd.Name.StartsWith("_") && !dotNetProperties.ContainsKey(pd.Name));
 
 		return dotNetProperties.Values.Concat(pythonProperties).Where(pd => pd.IsBrowsable);
+	}
+
+	[CLSCompliant(false)]
+	public static bool IsStatic(this PythonFunction function)
+	{
+		var code = function.__code__;
+
+		if (code != null)
+		{
+			var argNames = code.co_varnames;
+			if (code.co_argcount > 0 && argNames[0] as string == "self")
+				return false;
+		}
+
+		var functionDict = function.__dict__;
+		if (functionDict != null && functionDict.ContainsKey("__staticmethod__"))
+			return true;
+
+		return false;
 	}
 }
