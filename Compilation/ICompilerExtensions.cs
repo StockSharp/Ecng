@@ -71,4 +71,11 @@ public static class ICompilerExtensions
 
 	public static IEnumerable<CompilationError> ErrorsOnly(this IEnumerable<CompilationError> errors)
 		=> errors.Where(e => e.Type == CompilationErrorTypes.Error);
+
+	public static CompilationError ToError(this Exception ex)
+		=> new()
+		{
+			Type = CompilationErrorTypes.Error,
+			Message = ex.Message,
+		};
 }

@@ -106,11 +106,7 @@ public class PythonCompiler : ICompiler
 		}
 		catch (Exception ex)
 		{
-			result = new([new()
-			{
-				Type = CompilationErrorTypes.Error,
-				Message = ex.Message,
-			}]);
+			result = new([ex.ToError()]);
 		}
 
 		return ((CompilationResult)result).FromResult();
