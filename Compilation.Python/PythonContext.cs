@@ -13,7 +13,7 @@ using IronPython.Runtime.Types;
 
 using Microsoft.Scripting.Hosting;
 
-class PythonContext(ScriptScope scope) : ICompilerContext
+class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 {
 	private class AssemblyImpl : Assembly
 	{
