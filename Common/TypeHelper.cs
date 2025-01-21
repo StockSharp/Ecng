@@ -39,7 +39,11 @@ namespace Ecng.Common
 			if (args is null)
 				throw new ArgumentNullException(nameof(args));
 
-			return Activator.CreateInstance(type, args).To<T>();
+			var obj = type is ITypeConstructor ctor
+				? ctor.CreateInstance(args)
+				: Activator.CreateInstance(type, args);
+
+			return obj.To<T>();
 		}
 
 		public static Type Make(this Type type, params Type[] args)

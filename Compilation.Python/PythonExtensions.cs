@@ -21,6 +21,7 @@ public static class PythonExtensions
 	private static readonly PropertyInfo _nameProp = typeof(PythonType).GetProperty("Name", _nonPublic);
 	private static readonly PropertyInfo _underlyingSystemTypeProp = typeof(PythonType).GetProperty("UnderlyingSystemType", _nonPublic);
 	private static readonly PropertyInfo _setters = typeof(ReflectedGetterSetter).GetProperty("Setter", _nonPublic);
+	private static readonly FieldInfo _propInfo = typeof(ReflectedProperty).GetField("_info", _nonPublic);
 
 	[CLSCompliant(false)]
 	public static string GetName(this PythonType type)
@@ -81,6 +82,10 @@ public static class PythonExtensions
 	[CLSCompliant(false)]
 	public static MethodInfo[] GetSetters(this ReflectedProperty property)
 		=> (MethodInfo[])_setters.GetValue(property);
+
+	[CLSCompliant(false)]
+	public static PropertyInfo GetPropInfo(this ReflectedProperty property)
+		=> (PropertyInfo)_propInfo.GetValue(property);
 
 	[CLSCompliant(false)]
 	public static IEnumerable<PropertyDescriptor> GetProperties(this PythonType type)

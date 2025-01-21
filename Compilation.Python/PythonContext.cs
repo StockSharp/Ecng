@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 using Ecng.Common;
 using Ecng.ComponentModel;
@@ -15,23 +16,119 @@ using IronPython.Runtime.Types;
 
 using Microsoft.Scripting.Hosting;
 
+static class PythonAttrs
+{
+	private class PythonCustomAttributeData(
+		ConstructorInfo ctor,
+		IList<CustomAttributeTypedArgument> constructorArgs,
+		IList<CustomAttributeNamedArgument> namedArgs = null) : CustomAttributeData
+	{
+		public override ConstructorInfo Constructor { get; } = ctor ?? throw new ArgumentNullException(nameof(ctor));
+		public override IList<CustomAttributeTypedArgument> ConstructorArguments { get; } = constructorArgs ?? throw new ArgumentNullException(nameof(constructorArgs));
+		public override IList<CustomAttributeNamedArgument> NamedArguments { get; } = namedArgs ?? [];
+	}
+
+	private const string DocumentationUrl = "documentation_url";
+	private const string DisplayName = "display_name";
+	private const string Description = "__doc__";
+	private const string Icon = "icon";
+
+	private static string TryGetAttr(ObjectOperations ops, object obj, string name)
+		=> ops.TryGetMember(obj, name, out object value) ? value as string : null;
+
+	public static object[] GetCustomAttributes(this ObjectOperations ops, object obj, bool inherit)
+	{
+		var attrs = new List<object>();
+
+		if (TryGetAttr(ops, obj, DocumentationUrl) is string docUrl)
+			attrs.Add(new DocAttribute(docUrl.Trim()));
+
+		var dispName = TryGetAttr(ops, obj, DisplayName);
+		var desc = TryGetAttr(ops, obj, Description);
+
+		if (!dispName.IsEmpty() || !desc.IsEmpty())
+			attrs.Add(new DisplayAttribute() { Name = dispName, Description = desc });
+
+		if (TryGetAttr(ops, obj, Icon) is string icon)
+			attrs.Add(new IconAttribute(icon));
+
+		return [.. attrs];
+	}
+
+	public static object[] GetCustomAttributes(this ObjectOperations ops, object obj, Type attributeType, bool inherit)
+	{
+		if (attributeType == typeof(DocAttribute) && TryGetAttr(ops, obj, DocumentationUrl) is string docUrl)
+			return [new DocAttribute(docUrl.Trim())];
+		else if (attributeType == typeof(DisplayAttribute))
+		{
+			var dispName = TryGetAttr(ops, obj, DisplayName);
+			var desc = TryGetAttr(ops, obj, Description);
+
+			if (!dispName.IsEmpty() || !desc.IsEmpty())
+				return [new DisplayAttribute() { Name = dispName, Description = desc }];
+		}
+		else if (attributeType == typeof(IconAttribute) && TryGetAttr(ops, obj, Icon) is string icon)
+			return [new IconAttribute(icon)];
+
+		return [];
+	}
+
+	public static IList<CustomAttributeData> GetCustomAttributesData(this ObjectOperations ops, object obj)
+		=> GetCustomAttributes(ops, obj, true).Select(attr =>
+		{
+			if (attr is DocAttribute doc)
+			{
+				var ctor = typeof(DocAttribute).GetConstructor([typeof(string)]);
+				return (CustomAttributeData)new PythonCustomAttributeData(ctor, [new CustomAttributeTypedArgument(typeof(string), doc.DocUrl)]);
+			}
+
+			if (attr is DisplayAttribute display)
+			{
+				var ctor = typeof(DisplayAttribute).GetConstructor([]);
+				var namedProps = new List<CustomAttributeNamedArgument>();
+
+				if (display.Name != null)
+					namedProps.Add(new(typeof(DisplayAttribute).GetProperty(nameof(DisplayAttribute.Name)),
+						new CustomAttributeTypedArgument(typeof(string), display.Name)));
+
+				if (display.Description != null)
+					namedProps.Add(new(typeof(DisplayAttribute).GetProperty(nameof(DisplayAttribute.Description)),
+						new CustomAttributeTypedArgument(typeof(string), display.Description)));
+
+				return new PythonCustomAttributeData(ctor, [], namedProps);
+			}
+
+			if (attr is IconAttribute icon)
+			{
+				var ctor = typeof(IconAttribute).GetConstructor([typeof(string)]);
+				return new PythonCustomAttributeData(ctor, [new CustomAttributeTypedArgument(typeof(string), icon.Icon)]);
+			}
+
+			return null;
+		})
+		.Where(attr => attr != null)
+		.ToList();
+}
+
 class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 {
 	private class AssemblyImpl : Assembly
 	{
-		private class TypeImpl : Type
+		private class TypeImpl : Type, ITypeConstructor
 		{
 			private class EventImpl(string name, Type eventType, TypeImpl declaringType) : EventInfo
 			{
-				private readonly string _name = name;
-				private readonly Type _eventType = eventType;
-				private readonly TypeImpl _declaringType = declaringType;
+				private readonly string _name = name.ThrowIfEmpty(nameof(name));
+				private readonly Type _eventType = eventType ?? throw new ArgumentNullException(nameof(eventType));
+				private readonly TypeImpl _declaringType = declaringType ?? throw new ArgumentNullException(nameof(declaringType));
 
 				public override string Name => _name;
 				public override Type EventHandlerType => _eventType;
 				public override Type DeclaringType => _declaringType;
 				public override Type ReflectedType => _declaringType;
 				public override EventAttributes Attributes => EventAttributes.None;
+
+				public override IEnumerable<CustomAttributeData> CustomAttributes => GetCustomAttributesData();
 
 				public override MethodInfo GetAddMethod(bool nonPublic) => null;
 				public override MethodInfo GetRaiseMethod(bool nonPublic) => null;
@@ -40,7 +137,8 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 
 				public override object[] GetCustomAttributes(bool inherit) => [];
 				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => [];
-				public override bool IsDefined(Type attributeType, bool inherit) => false;
+				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
+				public override IList<CustomAttributeData> GetCustomAttributesData() => base.GetCustomAttributesData();
 			}
 
 			private class MethodImpl(PythonFunction function, TypeImpl declaringType) : MethodInfo
@@ -62,8 +160,8 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 					public override bool HasDefaultValue => false;
 				}
 
-				private readonly PythonFunction _function = function;
-				private readonly TypeImpl _declaringType = declaringType;
+				private readonly PythonFunction _function = function ?? throw new ArgumentNullException(nameof(function));
+				private readonly TypeImpl _declaringType = declaringType ?? throw new ArgumentNullException(nameof(declaringType));
 				private readonly ParameterInfo[] _parameters;
 
 				public MethodImpl(PythonFunction function, TypeImpl declaringType, Type[] paramTypes)
@@ -75,7 +173,7 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				public override string Name => _function.__name__;
 				public override Type DeclaringType => _declaringType;
 				public override Type ReflectedType => _declaringType;
-				public override RuntimeMethodHandle MethodHandle => throw new NotImplementedException();
+				public override RuntimeMethodHandle MethodHandle => throw new NotSupportedException();
 				public override MethodAttributes Attributes => MethodAttributes.Public;
 				public override CallingConventions CallingConvention => CallingConventions.Standard;
 				public override Type ReturnType => typeof(object);
@@ -86,9 +184,14 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 
 				public override ICustomAttributeProvider ReturnTypeCustomAttributes => null;
 				public override MethodInfo GetBaseDefinition() => this;
-				public override object[] GetCustomAttributes(bool inherit) => [];
-				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => [];
-				public override bool IsDefined(Type attributeType, bool inherit) => false;
+				public override object[] GetCustomAttributes(bool inherit)
+					=> _declaringType._ops.GetCustomAttributes(_function, inherit);
+				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
+					=> _declaringType._ops.GetCustomAttributes(_function, attributeType, inherit);
+				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
+				public override IList<CustomAttributeData> GetCustomAttributesData()
+					=> _declaringType._ops.GetCustomAttributesData(_function);
+
 				public override MethodImplAttributes GetMethodImplementationFlags() => throw new NotImplementedException();
 			}
 
@@ -105,6 +208,7 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				public override bool CanWrite => _property.fset != null;
 				public override Type DeclaringType => _declaringType;
 				public override Type ReflectedType => _declaringType;
+				public override IEnumerable<CustomAttributeData> CustomAttributes => GetCustomAttributesData();
 
 				public override MethodInfo GetGetMethod(bool nonPublic) => null;
 				public override MethodInfo GetSetMethod(bool nonPublic) => null;
@@ -117,27 +221,38 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 					=> _declaringType._ops.SetMember(obj, Name, value);
 
 				public override MethodInfo[] GetAccessors(bool nonPublic) => throw new NotImplementedException();
-				public override object[] GetCustomAttributes(bool inherit) => throw new NotImplementedException();
-				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => throw new NotImplementedException();
-				public override bool IsDefined(Type attributeType, bool inherit) => throw new NotImplementedException();
+
+				public override object[] GetCustomAttributes(bool inherit)
+					=> _declaringType._ops.GetCustomAttributes(_property, inherit);
+
+				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
+					=> _declaringType._ops.GetCustomAttributes(_property, attributeType, inherit);
+
+				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
+				public override IList<CustomAttributeData> GetCustomAttributesData()
+					=> _declaringType._ops.GetCustomAttributesData(_property);
+
+				public override string ToString() => Name;
 			}
 
 			private class ReflectedPropertyImpl(ReflectedProperty property, TypeImpl declaringType) : PropertyInfo
 			{
-				private readonly ReflectedProperty _property = property;
-				private readonly TypeImpl _declaringType = declaringType;
+				private readonly ReflectedProperty _property = property ?? throw new ArgumentNullException(nameof(property));
+				private readonly TypeImpl _declaringType = declaringType ?? throw new ArgumentNullException(nameof(declaringType));
+				private readonly PropertyInfo _propInfo = property.GetPropInfo();
 
-				public override string Name => _property.__name__;
-				public override Type PropertyType => _property.PropertyType;
-				public override PropertyAttributes Attributes => PropertyAttributes.None;
-				public override bool CanRead => true;
-				public override bool CanWrite => _property.GetSetters().Any();
+				public override string Name => _propInfo.Name;
+				public override Type PropertyType => _propInfo.PropertyType;
+				public override PropertyAttributes Attributes => _propInfo.Attributes;
+				public override bool CanRead => _propInfo.CanRead;
+				public override bool CanWrite => _propInfo.CanWrite;
 				public override Type DeclaringType => _declaringType;
 				public override Type ReflectedType => _declaringType;
+				public override IEnumerable<CustomAttributeData> CustomAttributes => _propInfo.CustomAttributes;
 
-				public override MethodInfo GetGetMethod(bool nonPublic) => null;
-				public override MethodInfo GetSetMethod(bool nonPublic) => null;
-				public override ParameterInfo[] GetIndexParameters() => [];
+				public override MethodInfo GetGetMethod(bool nonPublic) => _propInfo.GetGetMethod(nonPublic);
+				public override MethodInfo GetSetMethod(bool nonPublic) => _propInfo.GetSetMethod(nonPublic);
+				public override ParameterInfo[] GetIndexParameters() => _propInfo.GetIndexParameters();
 
 				public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
 					=> _declaringType._ops.GetMember(obj, Name);
@@ -145,10 +260,13 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
 					=> _declaringType._ops.SetMember(obj, Name, value);
 
-				public override MethodInfo[] GetAccessors(bool nonPublic) => throw new NotImplementedException();
-				public override object[] GetCustomAttributes(bool inherit) => throw new NotImplementedException();
-				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => throw new NotImplementedException();
-				public override bool IsDefined(Type attributeType, bool inherit) => throw new NotImplementedException();
+				public override MethodInfo[] GetAccessors(bool nonPublic) => _propInfo.GetAccessors();
+				public override object[] GetCustomAttributes(bool inherit) => _propInfo.GetCustomAttributes(inherit);
+				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => _propInfo.GetCustomAttributes(attributeType, inherit);
+				public override bool IsDefined(Type attributeType, bool inherit) => _propInfo.IsDefined(attributeType, inherit);
+				public override IList<CustomAttributeData> GetCustomAttributesData() => _propInfo.GetCustomAttributesData();
+
+				public override string ToString() => Name;
 			}
 
 			private class ConstructorImpl(Type declaringType, PythonFunction init) : ConstructorInfo
@@ -160,7 +278,7 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				public override string Name => ConstructorName;
 				public override Type ReflectedType => _declaringType;
 				public override MethodAttributes Attributes => MethodAttributes.Public;
-				public override RuntimeMethodHandle MethodHandle => throw new NotImplementedException();
+				public override RuntimeMethodHandle MethodHandle => throw new NotSupportedException();
 
 				public override ParameterInfo[] GetParameters() => [];
 
@@ -173,39 +291,52 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				public override MethodImplAttributes GetMethodImplementationFlags() => throw new NotImplementedException();
 			}
 
+			private readonly Assembly _assembly;
 			private readonly CompiledCode _code;
 			private readonly PythonType _pythonType;
 			private readonly ScriptEngine _engine;
 			private readonly ObjectOperations _ops;
 			private readonly Type _underlyingType;
 
-			public TypeImpl(CompiledCode code, PythonType pythonType)
+			public TypeImpl(Assembly assembly, CompiledCode code, PythonType pythonType, Type underlyingType)
 			{
+				_assembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
 				_code = code ?? throw new ArgumentNullException(nameof(code));
 				_pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
 				_engine = code.Engine;
 				_ops = _engine.Operations;
-				_underlyingType = pythonType.GetUnderlyingSystemType();
+				_underlyingType = underlyingType ?? throw new ArgumentNullException(nameof(underlyingType));
 			}
-
-			private string TryGetAttr(string name)
-				=> _ops.TryGetMember(_pythonType, name, out object value) ? value as string : null;
 
 			private object CreateInstance(params object[] args)
 				=> _ops.Invoke(_pythonType, args);
 
-			public override Assembly Assembly => _underlyingType?.Assembly;
-			public override string AssemblyQualifiedName => _underlyingType?.AssemblyQualifiedName;
-			public override Type BaseType => _underlyingType?.BaseType;
+			public override Assembly Assembly => _assembly;
+			public override string AssemblyQualifiedName => _underlyingType.AssemblyQualifiedName;
+			public override Type BaseType => _underlyingType.BaseType;
 			public override string FullName => _pythonType.GetName();
-			public override Guid GUID => _underlyingType?.GUID ?? Guid.Empty;
-			public override Module Module => _underlyingType?.Module;
+			public override Guid GUID => _underlyingType.GUID;
+			public override Module Module => _underlyingType.Module;
 			public override string Namespace => string.Empty;
 			public override string Name => _pythonType.GetName();
 			public override Type UnderlyingSystemType => _underlyingType;
 
-			public override bool IsGenericType => _underlyingType?.IsGenericType ?? false;
-			public override bool IsGenericTypeDefinition => _underlyingType?.IsGenericTypeDefinition ?? false;
+			public override bool IsGenericType => _underlyingType.IsGenericType;
+			public override bool IsGenericTypeDefinition => _underlyingType.IsGenericTypeDefinition;
+			public override bool IsTypeDefinition => _underlyingType.IsTypeDefinition;
+			public override bool IsByRefLike => _underlyingType.IsByRefLike;
+			public override bool IsConstructedGenericType => _underlyingType.IsConstructedGenericType;
+
+			public override bool IsSecurityCritical => _underlyingType.IsSecurityCritical;
+			public override bool IsSecuritySafeCritical => _underlyingType.IsSecuritySafeCritical;
+			public override bool IsSecurityTransparent => _underlyingType.IsSecurityTransparent;
+			
+			public override bool IsSZArray => _underlyingType.IsSZArray;
+			public override int MetadataToken => _underlyingType.MetadataToken;
+			public override StructLayoutAttribute StructLayoutAttribute => _underlyingType.StructLayoutAttribute;
+			public override RuntimeTypeHandle TypeHandle => _underlyingType.TypeHandle;
+
+			public override IEnumerable<CustomAttributeData> CustomAttributes => GetCustomAttributesData();
 
 			public override ConstructorInfo[] GetConstructors(BindingFlags bindingAttr)
 			{
@@ -227,14 +358,14 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				while (baseType?.IsPythonType() == true)
 					baseType = baseType.BaseType;
 
-				var dotNetProperties = baseType?.GetProperties(bindingAttr) ?? [];
+				var dotNetProps = baseType?.GetProperties(bindingAttr).ToDictionary(p => p.Name) ?? [];
 
 				var pythonProperties = _ops
 					.GetMemberNames(_pythonType)
 					.Select(p => _ops.GetMember(_pythonType, p))
 					.ToArray();
 
-				var propertyInfos = new List<PropertyInfo>();
+				var pythonProps = new List<PropertyInfo>();
 
 				foreach (var prop in pythonProperties)
 				{
@@ -242,15 +373,18 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 					{
 						var instance = CreateInstance();
 						var value = ((PythonFunction)pythonProp.fget).__call__(DefaultContext.Default, instance);
-						propertyInfos.Add(new PythonPropertyImpl(pythonProp, value?.GetType() ?? typeof(object), this));
+						pythonProps.Add(new PythonPropertyImpl(pythonProp, value?.GetType() ?? typeof(object), this));
 					}
 					else if (prop is ReflectedProperty reflectedProp)
 					{
-						propertyInfos.Add(new ReflectedPropertyImpl(reflectedProp, this));
+						if (dotNetProps.ContainsKey(reflectedProp.__name__))
+							continue;
+
+						pythonProps.Add(new ReflectedPropertyImpl(reflectedProp, this));
 					}
 				}
 
-				return [.. propertyInfos, .. dotNetProperties];
+				return [.. pythonProps, .. dotNetProps.Values];
 			}
 
 			protected override PropertyInfo GetPropertyImpl(string name, BindingFlags bindingAttr, Binder binder, Type returnType, Type[] types, ParameterModifier[] modifiers)
@@ -282,44 +416,16 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 			public override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
 				=> throw new NotImplementedException();
 
+			public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
+
 			public override object[] GetCustomAttributes(bool inherit)
-			{
-				var attrs = new List<object>();
-
-				if (TryGetAttr("documentation_url") is string docUrl)
-					attrs.Add(new DocAttribute(docUrl.Trim()));
-
-				var dispName = TryGetAttr("display_name");
-				var desc = TryGetAttr("__doc__");
-
-				if (!dispName.IsEmpty() || !desc.IsEmpty())
-					attrs.Add(new DisplayAttribute() { Name = dispName, Description = desc });
-
-				if (TryGetAttr("icon") is string icon)
-					attrs.Add(new IconAttribute(icon));
-
-				return [.. attrs];
-			}
+				=> _ops.GetCustomAttributes(_pythonType, inherit);
 
 			public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-			{
-				if (attributeType == typeof(DocAttribute) && TryGetAttr("documentation_url") is string docUrl)
-					return [new DocAttribute(docUrl.Trim())];
-				else if (attributeType == typeof(DisplayAttribute))
-				{
-					var dispName = TryGetAttr("display_name");
-					var desc = TryGetAttr("__doc__");
+				=> _ops.GetCustomAttributes(_pythonType, attributeType, inherit);
 
-					if (!dispName.IsEmpty() || !desc.IsEmpty())
-						return [new DisplayAttribute() { Name = dispName, Description = desc }];
-				}
-				else if (attributeType == typeof(IconAttribute) && TryGetAttr("icon") is string icon)
-					return [new IconAttribute(icon)];
-
-				return [];
-			}
-
-			public override bool IsDefined(Type attributeType, bool inherit) => false;
+			public override IList<CustomAttributeData> GetCustomAttributesData()
+				=> _ops.GetCustomAttributesData(_pythonType);
 
 			public override EventInfo GetEvent(string name, BindingFlags bindingAttr)
 				=> GetEvents(bindingAttr).FirstOrDefault(e => e.Name == name);
@@ -340,6 +446,9 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 
 			protected override MethodInfo GetMethodImpl(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
 				=> null;
+
+			object ITypeConstructor.CreateInstance(object[] args)
+				=> _ops.Invoke(_pythonType, args);
 		}
 
 		private readonly CompiledCode _compiledCode;
@@ -348,7 +457,7 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 		public AssemblyImpl(CompiledCode compiledCode, ScriptScope scope)
 		{
 			_compiledCode = compiledCode ?? throw new ArgumentNullException(nameof(compiledCode));
-			_types = scope.CheckOnNull(nameof(scope)).GetTypes().Where(t => t.GetUnderlyingSystemType()?.IsPythonType() == true).Select(t => new TypeImpl(_compiledCode, t)).ToArray();
+			_types = scope.CheckOnNull(nameof(scope)).GetTypes().Where(t => t.GetUnderlyingSystemType()?.IsPythonType() == true).Select(t => new TypeImpl(this, _compiledCode, t, t.GetUnderlyingSystemType())).ToArray();
 		}
 
 		public override Type[] GetTypes() => GetExportedTypes();
