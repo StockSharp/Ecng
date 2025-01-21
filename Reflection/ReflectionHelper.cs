@@ -799,5 +799,104 @@ namespace Ecng.Reflection
 
 		public static bool IsModifiable(this PropertyInfo pi)
 			=> pi.CanWrite && pi.GetAttribute<ReadOnlyAttribute>()?.IsReadOnly != true && pi.SetMethod?.IsPublic == true;
+
+		public static bool IsMatch(this PropertyInfo propertyInfo, BindingFlags bindingFlags)
+		{
+			var hasPublic = bindingFlags.HasFlag(BindingFlags.Public);
+			var hasNonPublic = bindingFlags.HasFlag(BindingFlags.NonPublic);
+
+			if (!hasPublic || !hasNonPublic)
+			{
+				var isPublic = propertyInfo.GetMethod?.IsPublic == true || propertyInfo.SetMethod?.IsPublic == true;
+
+				if (hasPublic && !isPublic)
+					return false;
+
+				if (hasNonPublic && isPublic)
+					return false;
+			}
+
+			var hasStatic = bindingFlags.HasFlag(BindingFlags.Static);
+			var hasInstance = bindingFlags.HasFlag(BindingFlags.Instance);
+
+			if (!hasStatic || !hasInstance)
+			{
+				var isStatic = propertyInfo.IsStatic();
+
+				if (hasStatic && !isStatic)
+					return false;
+
+				if (hasInstance && isStatic)
+					return false;
+			}
+
+			return true;
+		}
+
+		public static bool IsMatch(this MethodBase methodInfo, BindingFlags bindingFlags)
+		{
+			var hasPublic = bindingFlags.HasFlag(BindingFlags.Public);
+			var hasNonPublic = bindingFlags.HasFlag(BindingFlags.NonPublic);
+
+			if (!hasPublic || !hasNonPublic)
+			{
+				var isPublic = methodInfo.IsPublic;
+
+				if (hasPublic && !isPublic)
+					return false;
+
+				if (hasNonPublic && isPublic)
+					return false;
+			}
+
+			var hasStatic = bindingFlags.HasFlag(BindingFlags.Static);
+			var hasInstance = bindingFlags.HasFlag(BindingFlags.Instance);
+
+			if (!hasStatic || !hasInstance)
+			{
+				var isStatic = methodInfo.IsStatic;
+
+				if (hasStatic && !isStatic)
+					return false;
+
+				if (hasInstance && isStatic)
+					return false;
+			}
+
+			return true;
+		}
+
+		public static bool IsMatch(this FieldInfo field, BindingFlags bindingFlags)
+		{
+			var hasPublic = bindingFlags.HasFlag(BindingFlags.Public);
+			var hasNonPublic = bindingFlags.HasFlag(BindingFlags.NonPublic);
+
+			if (!hasPublic || !hasNonPublic)
+			{
+				var isPublic = field.IsPublic;
+
+				if (hasPublic && !isPublic)
+					return false;
+
+				if (hasNonPublic && isPublic)
+					return false;
+			}
+
+			var hasStatic = bindingFlags.HasFlag(BindingFlags.Static);
+			var hasInstance = bindingFlags.HasFlag(BindingFlags.Instance);
+
+			if (!hasStatic || !hasInstance)
+			{
+				var isStatic = field.IsStatic;
+
+				if (hasStatic && !isStatic)
+					return false;
+
+				if (hasInstance && isStatic)
+					return false;
+			}
+
+			return true;
+		}
 	}
 }
