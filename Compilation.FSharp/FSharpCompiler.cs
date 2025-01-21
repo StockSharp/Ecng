@@ -176,7 +176,7 @@ public class FSharpCompiler : ICompiler
 		return new AssemblyCompilationResult([.. diagnostics], errorCode == 0 ? stream.To<byte[]>() : null);
 	}
 
-	object ICompiler.CreateContext() => new AssemblyLoadContextTracker();
+	ICompilerContext ICompiler.CreateContext() => new AssemblyLoadContextTracker();
 
 	private static CompilationError ToError(FSharpDiagnostic diag)
 	{

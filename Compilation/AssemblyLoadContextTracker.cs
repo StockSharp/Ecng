@@ -7,14 +7,14 @@ using System.Runtime.Loader;
 
 using Ecng.Common;
 
-public class AssemblyLoadContextTracker(Action<Exception> uploadingError = default) : Disposable
+public class AssemblyLoadContextTracker(Action<Exception> uploadingError = default) : Disposable, ICompilerContext
 {
 	private readonly SyncObject _lock = new();
 	private readonly Action<Exception> _uploadingError = uploadingError;
 	private AssemblyLoadContext _context;
 	private byte[] _assembly;
 
-	public Assembly LoadFromStream(byte[] assembly)
+	public Assembly LoadFromBinary(byte[] assembly)
 	{
 		void init()
 		{
@@ -48,7 +48,7 @@ public class AssemblyLoadContextTracker(Action<Exception> uploadingError = defau
 		if (error is not null && _uploadingError is not null)
 			_uploadingError(error);
 		
-		return _context.LoadFromStream(assembly);
+		return _context.LoadFromBinary(assembly);
 	}
 
 	public void Unload()

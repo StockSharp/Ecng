@@ -246,7 +246,7 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 	private static Type GetType(Assembly asm, string typeName)
 		=> asm.GetExportedTypes().First(t => t.Name == typeName);
 
-	public static Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextTracker context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
+	public static Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, ICompilerContext context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
 		=> Compile<TResult>(compiler, context, GetType, expression, cache, cancellationToken);
 
 	private const string _lang = FileExts.CSharp;
@@ -261,7 +261,7 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 	/// <param name="cache"><see cref="ICompilerCache"/>.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
 	/// <returns>Compiled mathematical formula.</returns>
-	public static async Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, AssemblyLoadContextTracker context, Func<Assembly, string, Type> getType, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
+	public static async Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, ICompilerContext context, Func<Assembly, string, Type> getType, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
 	{
 		if (compiler is null)	throw new ArgumentNullException(nameof(compiler));
 		if (context is null)	throw new ArgumentNullException(nameof(context));
@@ -297,7 +297,7 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 				}
 			}
 			else
-				assembly = context.LoadFromStream(assemblyBody);
+				assembly = context.LoadFromBinary(assemblyBody);
 
 			return getType(assembly, "TempExpressionFormula").CreateInstance<ExpressionFormula<TResult>>(expression, variables);
 		}

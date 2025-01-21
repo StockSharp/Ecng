@@ -18,7 +18,7 @@
 	public class ExpressionTests
 	{
 		private static readonly ICompiler _compiler = new CSharpCompiler();
-		private static readonly AssemblyLoadContextTracker _context = new();
+		private static readonly ICompilerContext _context = _compiler.CreateContext();
 
 		private const string _cacheDir = "asm_cache";
 

@@ -4,7 +4,6 @@
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
-	using System.Runtime.Loader;
 	using System.Threading;
 	using System.Threading.Tasks;
 
@@ -18,7 +17,6 @@
 	public class CompilerTests
 	{
 		private static readonly string _coreLibPath = typeof(object).Assembly.Location;
-		private static readonly AssemblyLoadContext _context = new(default, default);
 
 		[TestMethod]
 		public async Task Compile()
@@ -28,7 +26,7 @@
 			[
 				_coreLibPath,
 			]);
-			res.GetAssembly(_context).AssertNotNull();
+			res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 			res.HasErrors().AssertFalse();
 		}
 
@@ -40,7 +38,7 @@
 			[
 				_coreLibPath,
 			]);
-			res.GetAssembly(_context).AssertNull();
+			res.GetAssembly(compiler.CreateContext()).AssertNull();
 			res.HasErrors().AssertTrue();
 		}
 
@@ -55,7 +53,7 @@
 			[
 				_coreLibPath,
 			], cts.Token);
-			res.GetAssembly(_context).AssertNull();
+			res.GetAssembly(compiler.CreateContext()).AssertNull();
 			res.HasErrors().AssertTrue();
 		}
 

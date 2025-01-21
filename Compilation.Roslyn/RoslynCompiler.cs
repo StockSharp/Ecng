@@ -147,7 +147,7 @@
 			return ((CompilationResult)compilationResult).FromResult();
 		}
 
-		object ICompiler.CreateContext() => new AssemblyLoadContextTracker();
+		ICompilerContext ICompiler.CreateContext() => new AssemblyLoadContextTracker();
 	}
 
 	public class CSharpCompiler : RoslynCompiler

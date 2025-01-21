@@ -5,13 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-using Ecng.Common;
-
 public abstract class CompilationResult(IEnumerable<CompilationError> errors)
 {
 	public IEnumerable<CompilationError> Errors { get; } = errors.ToArray();
 
-	public abstract Assembly GetAssembly(object context);
+	public abstract Assembly GetAssembly(ICompilerContext context);
 }
 
 public class AssemblyCompilationResult(IEnumerable<CompilationError> errors, byte[] assemblyBody = null)
@@ -19,7 +17,7 @@ public class AssemblyCompilationResult(IEnumerable<CompilationError> errors, byt
 {
 	public byte[] AssemblyBody { get; } = assemblyBody;
 
-	public override Assembly GetAssembly(object context)
+	public override Assembly GetAssembly(ICompilerContext context)
 	{
 		if (context is null)
 			throw new ArgumentNullException(nameof(context));
@@ -29,11 +27,6 @@ public class AssemblyCompilationResult(IEnumerable<CompilationError> errors, byt
 		if (asm is null)
 			return null;
 
-		if (context is AssemblyLoadContextTracker tracker)
-			return tracker.LoadFromStream(asm);
-		else if (context is System.Runtime.Loader.AssemblyLoadContext alc)
-			return alc.LoadFromStream(asm);
-		else
-			throw new NotSupportedException(context.To<string>());
+		return context.LoadFromBinary(asm);
 	}
 }
