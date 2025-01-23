@@ -17,6 +17,7 @@ using IronPython.Runtime;
 using IronPython.Runtime.Types;
 
 using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting.Actions;
 
 static class PythonAttrs
 {
@@ -200,6 +201,13 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 				public override object RawDefaultValue => null;
 				public override bool HasDefaultValue => false;
 
+				public override IEnumerable<CustomAttributeData> CustomAttributes => GetCustomAttributesData();
+
+				public override object[] GetCustomAttributes(bool inherit) => [];
+				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => [];
+				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
+				public override IList<CustomAttributeData> GetCustomAttributesData() => [];
+
 				public override string ToString() => Name;
 			}
 
@@ -217,6 +225,18 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 					_parameters = [.. function.GetParams().Select((p, i) => new ParameterImpl(p.name, p.type, i, this))];
 
 					Attributes = MethodAttributes.Public | (function.IsStatic() ? MethodAttributes.Static : 0);
+
+					ReturnType = typeof(object);
+
+					if (function.__annotations__.TryGetValue("return", out var retType))
+					{
+						if (retType is null)
+							ReturnType = typeof(void);
+						else if (retType is PythonType pt)
+							ReturnType = pt.GetUnderlyingSystemType() ?? ReturnType;
+						else if (retType is TypeGroup tg)
+							ReturnType = tg.Types.First();
+					}
 				}
 
 				public override string Name => _function.__name__;
@@ -225,7 +245,7 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 				public override RuntimeMethodHandle MethodHandle => throw new NotSupportedException();
 				public override MethodAttributes Attributes { get; }
 				public override CallingConventions CallingConvention => CallingConventions.Standard;
-				public override Type ReturnType => typeof(object);
+				public override Type ReturnType { get; }
 				public override IEnumerable<CustomAttributeData> CustomAttributes => GetCustomAttributesData();
 
 				public override bool IsSecurityCritical => true;

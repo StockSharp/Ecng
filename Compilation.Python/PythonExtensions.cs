@@ -11,6 +11,7 @@ using Ecng.Collections;
 
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting.Actions;
 
 using IronPython.Runtime;
 using IronPython.Runtime.Types;
@@ -133,8 +134,13 @@ public static class PythonExtensions
 
 			var paramType = typeof(object);
 
-			if (dict?.TryGetValue(paramName, out var type) == true && type is PythonType pt)
-				paramType = pt.GetUnderlyingSystemType() ?? paramType;
+			if (dict?.TryGetValue(paramName, out var type) == true)
+			{
+				if (type is PythonType pt)
+					paramType = pt.GetUnderlyingSystemType() ?? paramType;
+				else if (type is TypeGroup tg)
+					paramType = tg.Types.First();
+			}
 
 			yield return new(paramName, paramType);
 		}
