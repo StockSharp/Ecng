@@ -38,6 +38,18 @@ static class PythonAttrs
 	private static string TryGetAttr(ObjectOperations ops, object obj, string name)
 		=> ops.TryGetMember(obj, name, out object value) ? value as string : null;
 
+	private static bool TryGetDict(ObjectOperations ops, object obj, out IDictionary<object, object> dict)
+	{
+		if (ops.TryGetMember(obj, "__dict__", out object d) && d is IDictionary<object, object> typed)
+		{
+			dict = typed;
+			return true;
+		}
+
+		dict = default;
+		return false;
+	}
+
 	public static object[] GetCustomAttributes(this ObjectOperations ops, object obj, bool inherit)
 	{
 		var attrs = new List<object>();
@@ -54,10 +66,19 @@ static class PythonAttrs
 		if (TryGetAttr(ops, obj, Icon) is string icon)
 			attrs.Add(new IconAttribute(icon));
 
+		if (TryGetDict(ops, obj, out var dict))
+		{
+			foreach (var (_, value) in dict)
+			{
+				if (value is Attribute attr)
+					attrs.Add(attr);
+			}
+		}
+
 		return [.. attrs];
 	}
 
-	public static object[] GetCustomAttributes(this ObjectOperations ops, object obj, Type attributeType, bool inherit)
+	public static object[] GetCustomAttributes(this ObjectOperations ops, IPythonMembersList obj, Type attributeType, bool inherit)
 	{
 		if (attributeType == typeof(DocAttribute) && TryGetAttr(ops, obj, DocumentationUrl) is string docUrl)
 			return [new DocAttribute(docUrl.Trim())];
@@ -71,6 +92,14 @@ static class PythonAttrs
 		}
 		else if (attributeType == typeof(IconAttribute) && TryGetAttr(ops, obj, Icon) is string icon)
 			return [new IconAttribute(icon)];
+		else if (TryGetDict(ops, obj, out var dict))
+		{
+			foreach (var (_, value) in dict)
+			{
+				if (value is Attribute attr && attr.GetType().Is(attributeType))
+					return [attr];
+			}
+		}
 
 		return [];
 	}
@@ -83,8 +112,7 @@ static class PythonAttrs
 				var ctor = typeof(DocAttribute).GetConstructor([typeof(string)]);
 				return (CustomAttributeData)new PythonCustomAttributeData(ctor, [new CustomAttributeTypedArgument(typeof(string), doc.DocUrl)], []);
 			}
-
-			if (attr is DisplayAttribute display)
+			else if (attr is DisplayAttribute display)
 			{
 				var ctor = typeof(DisplayAttribute).GetConstructor([]);
 				var namedProps = new List<CustomAttributeNamedArgument>();
@@ -99,11 +127,16 @@ static class PythonAttrs
 
 				return new PythonCustomAttributeData(ctor, [], namedProps);
 			}
-
-			if (attr is IconAttribute icon)
+			else if (attr is IconAttribute icon)
 			{
 				var ctor = typeof(IconAttribute).GetConstructor([typeof(string)]);
 				return new PythonCustomAttributeData(ctor, [new CustomAttributeTypedArgument(typeof(string), icon.Icon)], []);
+			}
+			else if (attr is Attribute customAttr)
+			{
+				var ctor = customAttr.GetType().GetConstructor(Type.EmptyTypes);
+				if (ctor != null)
+					return new PythonCustomAttributeData(ctor, [], []);
 			}
 
 			return null;
@@ -118,13 +151,14 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 	{
 		private class TypeImpl : Type, ITypeConstructor
 		{
-			private class EventImpl(string name, Type eventType, PythonFunction addMethod, PythonFunction removeMethod, TypeImpl declaringType) : EventInfo
+			private class EventImpl(string name, Type eventType, PythonFunction addFunc, PythonFunction removeFunc, TypeImpl declaringType) : EventInfo
 			{
 				private readonly string _name = name.ThrowIfEmpty(nameof(name));
 				private readonly Type _eventType = eventType ?? throw new ArgumentNullException(nameof(eventType));
+				private readonly PythonFunction _addFunc = addFunc ?? throw new ArgumentNullException(nameof(addFunc));
 				private readonly TypeImpl _declaringType = declaringType ?? throw new ArgumentNullException(nameof(declaringType));
-				private readonly MethodInfo _addMethod = new MethodImpl(addMethod ?? throw new ArgumentNullException(nameof(addMethod)), declaringType);
-				private readonly MethodInfo _removeMethod = new MethodImpl(removeMethod ?? throw new ArgumentNullException(nameof(removeMethod)), declaringType);
+				private readonly MethodInfo _addMethod = new MethodImpl(addFunc ?? throw new ArgumentNullException(nameof(addFunc)), declaringType);
+				private readonly MethodInfo _removeMethod = new MethodImpl(removeFunc ?? throw new ArgumentNullException(nameof(removeFunc)), declaringType);
 
 				public override string Name => _name;
 				public override Type EventHandlerType => _eventType;
@@ -140,12 +174,12 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 				public override MethodInfo[] GetOtherMethods(bool nonPublic) => [];
 
 				public override object[] GetCustomAttributes(bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_addMethod, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_addFunc, inherit);
 				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_addMethod, attributeType, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_addFunc, attributeType, inherit);
 				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 				public override IList<CustomAttributeData> GetCustomAttributesData()
-					=> _declaringType._ops.GetCustomAttributesData(_addMethod);
+					=> _declaringType._ops.GetCustomAttributesData(_addFunc);
 
 				public override string ToString() => Name;
 			}
@@ -220,29 +254,43 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 			private class PythonPropertyImpl : PropertyInfo
 			{
 				private readonly PythonProperty _property;
+				private readonly PythonFunction _getter;
+				private readonly PythonFunction _setter;
+				private readonly PythonFunction _accessor;
 				private readonly Type _propertyType;
 				private readonly TypeImpl _declaringType;
+
+				private readonly MethodImpl _getterInfo;
+				private readonly MethodImpl _setterInfo;
 
 				public PythonPropertyImpl(PythonProperty property, TypeImpl declaringType)
 				{
 					_property = property ?? throw new ArgumentNullException(nameof(property));
 					_declaringType = declaringType ?? throw new ArgumentNullException(nameof(declaringType));
 
-					var pt = ((PythonFunction)property.fget)?.__annotations__.TryGetValue("return") as PythonType;
+					_getter = (PythonFunction)_property.fget;
+					_setter = (PythonFunction)_property.fset;
+
+					_accessor = (_getter ?? _setter) ?? throw new ArgumentException("No accessor.", nameof(property));
+
+					_getterInfo = _getter is not null ? new(_getter, declaringType) : null;
+					_setterInfo = _setter is not null ? new(_setter, declaringType) : null;
+
+					var pt = _getter?.__annotations__.TryGetValue("return") as PythonType;
 					_propertyType = (pt?.GetUnderlyingSystemType()) ?? typeof(object);
 				}
 
-				public override string Name => ((PythonFunction)_property.fget).__name__;
+				public override string Name => _accessor.__name__;
 				public override Type PropertyType => _propertyType;
 				public override PropertyAttributes Attributes => PropertyAttributes.None;
-				public override bool CanRead => true;
-				public override bool CanWrite => _property.fset != null;
+				public override bool CanRead => _getter != null;
+				public override bool CanWrite => _setter != null;
 				public override Type DeclaringType => _declaringType;
 				public override Type ReflectedType => _declaringType;
 				public override IEnumerable<CustomAttributeData> CustomAttributes => GetCustomAttributesData();
 
-				public override MethodInfo GetGetMethod(bool nonPublic) => _property.fget is null ? null : new MethodImpl((PythonFunction)_property.fget, _declaringType);
-				public override MethodInfo GetSetMethod(bool nonPublic) => _property.fset is null ? null : new MethodImpl((PythonFunction)_property.fset, _declaringType);
+				public override MethodInfo GetGetMethod(bool nonPublic) => _getterInfo;
+				public override MethodInfo GetSetMethod(bool nonPublic) => _setterInfo;
 				public override ParameterInfo[] GetIndexParameters() => [];
 
 				public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
@@ -260,14 +308,14 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 				}
 
 				public override object[] GetCustomAttributes(bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_property, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_accessor, inherit);
 
 				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_property, attributeType, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_accessor, attributeType, inherit);
 
 				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 				public override IList<CustomAttributeData> GetCustomAttributesData()
-					=> _declaringType._ops.GetCustomAttributesData(_property);
+					=> _declaringType._ops.GetCustomAttributesData(_accessor);
 
 				public override string ToString() => Name;
 			}
@@ -524,15 +572,15 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 					.Where(name => name.StartsWithIgnoreCase(prefix))
 					.Select(name => _ops.GetMember(_pythonType, name))
 					.OfType<PythonFunction>()
-					.Select(addMethod =>
+					.Select(addFunc =>
 					{
-						var name = addMethod.__name__.Remove(prefix, true);
+						var name = addFunc.__name__.Remove(prefix, true);
 
-						if (!_ops.TryGetMember(_pythonType, "remove_" + name, true, out var r) || r is not PythonFunction removeMethod)
+						if (!_ops.TryGetMember(_pythonType, "remove_" + name, true, out var r) || r is not PythonFunction removeFunc)
 							return null;
 
-						var eventType = ((addMethod.__annotations__.TryGetValue("handler") as PythonType)?.GetUnderlyingSystemType()) ?? typeof(EventHandler);
-						return new EventImpl(name, eventType, addMethod, removeMethod, this);
+						var eventType = ((addFunc.__annotations__.TryGetValue("handler") as PythonType)?.GetUnderlyingSystemType()) ?? typeof(EventHandler);
+						return new EventImpl(name, eventType, addFunc, removeFunc, this);
 					})
 					.Where(e => e?.GetAddMethod().IsMatch(bindingAttr) == true);
 
