@@ -577,24 +577,25 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 
 			private EventInfo[] _events;
 
+			private const string _eventAddPrefix = "add_";
+			private const string _eventRemovePrefix = "remove_";
+
 			public override EventInfo[] GetEvents(BindingFlags bindingAttr)
 			{
 				if (_events is null)
 				{
 					var dotNetEvents = _dotNetBaseType.GetEvents(ReflectionHelper.AllMembers);
 
-					const string prefix = "add_";
-
 					var pythonEvents = _ops
 						.GetMemberNames(_pythonType)
-						.Where(name => name.StartsWithIgnoreCase(prefix))
+						.Where(name => name.StartsWithIgnoreCase(_eventAddPrefix))
 						.Select(name => _ops.GetMember(_pythonType, name))
 						.OfType<PythonFunction>()
 						.Select(addFunc =>
 						{
-							var name = addFunc.__name__.Remove(prefix, true);
+							var name = addFunc.__name__.Remove(_eventAddPrefix, true);
 
-							if (!_ops.TryGetMember(_pythonType, "remove_" + name, true, out var r) || r is not PythonFunction removeFunc)
+							if (!_ops.TryGetMember(_pythonType, _eventRemovePrefix + name, true, out var r) || r is not PythonFunction removeFunc)
 								return null;
 
 							var eventType = ((addFunc.__annotations__.TryGetValue("handler") as PythonType)?.GetUnderlyingSystemType()) ?? typeof(EventHandler);
@@ -620,6 +621,7 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 
 					var pythonMethods = _ops
 						.GetMemberNames(_pythonType)
+						.Where(n => !n.StartsWithIgnoreCase(_eventAddPrefix) && !n.StartsWithIgnoreCase(_eventRemovePrefix))
 						.Select(name => _ops.GetMember(_pythonType, name))
 						.OfType<PythonFunction>();
 
