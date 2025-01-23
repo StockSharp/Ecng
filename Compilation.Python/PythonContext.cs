@@ -362,21 +362,19 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 			}
 
 			private readonly Assembly _assembly;
-			private readonly CompiledCode _code;
 			private readonly PythonType _pythonType;
 			private readonly ScriptEngine _engine;
 			private readonly ObjectOperations _ops;
 			private readonly Type _underlyingType;
 			private readonly Type _dotNetBaseType;
 
-			public TypeImpl(Assembly assembly, CompiledCode code, PythonType pythonType, Type underlyingType)
+			public TypeImpl(Assembly assembly, PythonType pythonType, ScriptEngine engine)
 			{
 				_assembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
-				_code = code ?? throw new ArgumentNullException(nameof(code));
 				_pythonType = pythonType ?? throw new ArgumentNullException(nameof(pythonType));
-				_engine = code.Engine;
+				_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 				_ops = _engine.Operations;
-				_underlyingType = underlyingType ?? throw new ArgumentNullException(nameof(underlyingType));
+				_underlyingType = pythonType.GetUnderlyingSystemType() ?? throw new ArgumentException(nameof(pythonType));
 				_dotNetBaseType = pythonType.GetDotNetType();
 			}
 
@@ -574,13 +572,11 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 				=> _ops.CreateInstance(_pythonType, args);
 		}
 
-		private readonly CompiledCode _compiledCode;
 		private readonly Type[] _types;
 
-		public AssemblyImpl(CompiledCode compiledCode, ScriptScope scope)
+		public AssemblyImpl(ScriptScope scope)
 		{
-			_compiledCode = compiledCode ?? throw new ArgumentNullException(nameof(compiledCode));
-			_types = scope.CheckOnNull(nameof(scope)).GetTypes().Where(t => t.GetUnderlyingSystemType()?.IsPythonType() == true).Select(t => new TypeImpl(this, _compiledCode, t, t.GetUnderlyingSystemType())).ToArray();
+			_types = scope.CheckOnNull(nameof(scope)).GetTypes().Where(t => t.GetUnderlyingSystemType()?.IsPythonType() == true).Select(t => new TypeImpl(this, t, scope.Engine)).ToArray();
 		}
 
 		public override Type[] GetTypes() => GetExportedTypes();
@@ -596,7 +592,7 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 
 		code.Execute(_scope);
 
-		return new AssemblyImpl(code, scope);
+		return new AssemblyImpl(scope);
 	}
 
 	Assembly ICompilerContext.LoadFromBinary(byte[] body)

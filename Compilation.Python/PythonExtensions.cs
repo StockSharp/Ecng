@@ -78,7 +78,7 @@ public static class PythonExtensions
 		if (obj is null)
 			throw new ArgumentNullException(nameof(obj));
 
-		return obj.GetType().IsPythonType();
+		return obj is IPythonObject;
 	}
 
 	public static bool IsPythonType(this Type type)
