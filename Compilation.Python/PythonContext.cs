@@ -112,7 +112,7 @@ static class PythonAttrs
 		.ToList();
 }
 
-class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
+class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 {
 	private class AssemblyImpl : Assembly
 	{
@@ -574,25 +574,28 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 
 		private readonly Type[] _types;
 
-		public AssemblyImpl(ScriptScope scope)
+		public AssemblyImpl(ScriptEngine engine, IEnumerable<PythonType> types)
 		{
-			_types = scope.CheckOnNull(nameof(scope)).GetTypes().Where(t => t.GetUnderlyingSystemType()?.IsPythonType() == true).Select(t => new TypeImpl(this, t, scope.Engine)).ToArray();
+			_types = types
+				.Where(t => t.GetUnderlyingSystemType()?.IsPythonType() == true)
+				.Select(t => new TypeImpl(this, t, engine))
+				.ToArray();
 		}
 
 		public override Type[] GetTypes() => GetExportedTypes();
 		public override Type[] GetExportedTypes() => _types;
 	}
 
-	private readonly ScriptScope _scope = scope ?? throw new ArgumentNullException(nameof(scope));
+	private readonly ScriptEngine _engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
 	public Assembly LoadFromCode(CompiledCode code)
 	{
 		if (code is null)
 			throw new ArgumentNullException(nameof(code));
 
-		code.Execute(_scope);
+		code.Execute();
 
-		return new AssemblyImpl(scope);
+		return new AssemblyImpl(_engine, code.DefaultScope.GetTypes());
 	}
 
 	Assembly ICompilerContext.LoadFromBinary(byte[] body)

@@ -112,5 +112,5 @@ public class PythonCompiler : ICompiler
 		return ((CompilationResult)result).FromResult();
 	}
 
-	ICompilerContext ICompiler.CreateContext() => new PythonContext(_engine.CreateScope());
+	ICompilerContext ICompiler.CreateContext() => new PythonContext(_engine);
 }
