@@ -1,13 +1,13 @@
 ﻿namespace Ecng.Compilation.Python;
 
 using System;
-using System.ComponentModel;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Numerics;
 
 using Ecng.Common;
-using Ecng.ComponentModel;
+using Ecng.Collections;
 
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
@@ -30,7 +30,14 @@ public static class PythonExtensions
 
 	[CLSCompliant(false)]
 	public static Type GetUnderlyingSystemType(this PythonType type)
-		=> (Type)_underlyingSystemTypeProp.GetValue(type ?? throw new ArgumentNullException(nameof(type)));
+	{
+		var retVal = (Type)_underlyingSystemTypeProp.GetValue(type ?? throw new ArgumentNullException(nameof(type)));
+
+		if (retVal == typeof(BigInteger))
+			retVal = typeof(long);
+
+		return retVal;
+	}
 
 	[CLSCompliant(false)]
 	public static bool Is<TBase>(this PythonType type)
@@ -103,28 +110,40 @@ public static class PythonExtensions
 	}
 
 	[CLSCompliant(false)]
-	public static IEnumerable<PropertyDescriptor> GetProperties(this PythonType type)
+	public static IEnumerable<(string name, Type type)> GetParams(this PythonFunction function)
 	{
-		var baseType = type.GetDotNetType();
+		if (function is null)
+			throw new ArgumentNullException(nameof(function));
 
-		var dotNetProperties = baseType == typeof(object)
-			? []
-			: TypeDescriptor
-			.GetProperties(baseType)
-			.Typed()
-			.ToDictionary(p => p.Name);
+		var code = function.__code__;
 
-		var pythonProperties = TypeDescriptor
-			.GetProperties(type)
-			.Typed()
-			.Where(pd => pd.PropertyType.IsPrimitive && !pd.Name.StartsWith("_") && !dotNetProperties.ContainsKey(pd.Name));
+		var dict = function.__annotations__?.ToDictionary();
 
-		return dotNetProperties.Values.Concat(pythonProperties).Where(pd => pd.IsBrowsable);
+		var argNames = code.co_varnames;
+		var argCount = code.co_argcount;
+
+		for (var i = 0; i < argCount; i++)
+		{
+			var paramName = (string)argNames[i];
+
+			if (i == 0 && paramName == "self")
+				continue;
+
+			var paramType = typeof(object);
+
+			if (dict?.TryGetValue(paramName, out var type) == true && type is PythonType pt)
+				paramType = pt.GetUnderlyingSystemType() ?? paramType;
+
+			yield return new(paramName, paramType);
+		}
 	}
 
 	[CLSCompliant(false)]
 	public static bool IsStatic(this PythonFunction function)
 	{
+		if (function is null)
+			throw new ArgumentNullException(nameof(function));
+
 		var code = function.__code__;
 
 		if (code != null)
