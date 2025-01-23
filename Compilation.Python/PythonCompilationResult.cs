@@ -9,7 +9,22 @@ using Microsoft.Scripting.Hosting;
 class PythonCompilationResult(IEnumerable<CompilationError> errors)
 	: CompilationResult(errors)
 {
-	public CompiledCode CompiledCode { get; set; }
+	private Assembly _assembly;
+
+	private CompiledCode _compiledCode;
+
+	public CompiledCode CompiledCode
+	{
+		get => _compiledCode;
+		set
+		{
+			if (_compiledCode == value)
+				return;
+
+			_compiledCode = value;
+			_assembly = default;
+		}
+	}
 
 	public override Assembly GetAssembly(ICompilerContext context)
 	{
@@ -21,7 +36,12 @@ class PythonCompilationResult(IEnumerable<CompilationError> errors)
 		if (code is null)
 			return null;
 
-		var pythonContext = (PythonContext)context;
-		return pythonContext.LoadFromCode(code);
+		if (_assembly is null)
+		{
+			var pythonContext = (PythonContext)context;
+			_assembly = pythonContext.LoadFromCode(code);
+		}
+
+		return _assembly;
 	}
 }

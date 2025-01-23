@@ -322,7 +322,7 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 
 			private class ReflectedPropertyImpl(ReflectedProperty property, TypeImpl declaringType) : PropertyInfo
 			{
-				private readonly ReflectedProperty _property = property ?? throw new ArgumentNullException(nameof(property));
+				//private readonly ReflectedProperty _property = property ?? throw new ArgumentNullException(nameof(property));
 				private readonly TypeImpl _declaringType = declaringType ?? throw new ArgumentNullException(nameof(declaringType));
 				private readonly PropertyInfo _propInfo = property.GetPropInfo();
 
@@ -453,43 +453,57 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 
 			public override IEnumerable<CustomAttributeData> CustomAttributes => GetCustomAttributesData();
 
+			private ConstructorInfo[] _ctors;
+
 			public override ConstructorInfo[] GetConstructors(BindingFlags bindingAttr)
 			{
-				var init = _ops.GetMemberNames(_pythonType)
-					.Select(name => _ops.GetMember(_pythonType, name))
-					.OfType<PythonFunction>()
-					.FirstOrDefault(f => f.__name__ == "__init__");
+				if (_ctors is null)
+				{
+					var init = _ops.GetMemberNames(_pythonType)
+						.Select(name => _ops.GetMember(_pythonType, name))
+						.OfType<PythonFunction>()
+						.FirstOrDefault(f => f.__name__ == "__init__");
 
-				return [new ConstructorImpl(init, this)];
+					_ctors = [new ConstructorImpl(init, this)];
+				}
+
+				return _ctors.Where(c => c.IsMatch(bindingAttr)).ToArray();
 			}
 
 			protected override ConstructorInfo GetConstructorImpl(BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
 				=> GetConstructors(bindingAttr).FirstOrDefault();
 
+			private PropertyInfo[] _props;
+
 			public override PropertyInfo[] GetProperties(BindingFlags bindingAttr)
 			{
-				var dotNetProps = _dotNetBaseType.GetProperties(ReflectionHelper.AllMembers).GroupBy(p => p.Name).ToDictionary();
-
-				var pythonProps = new List<PropertyInfo>();
-
-				foreach (var prop in _ops
-					.GetMemberNames(_pythonType)
-					.Select(p => _ops.GetMember(_pythonType, p)))
+				if (_props is null)
 				{
-					if (prop is PythonProperty pythonProp)
-					{
-						pythonProps.Add(new PythonPropertyImpl(pythonProp, this));
-					}
-					else if (prop is ReflectedProperty reflectedProp)
-					{
-						if (dotNetProps.ContainsKey(reflectedProp.__name__))
-							continue;
+					var dotNetProps = _dotNetBaseType.GetProperties(ReflectionHelper.AllMembers).GroupBy(p => p.Name).ToDictionary();
 
-						pythonProps.Add(new ReflectedPropertyImpl(reflectedProp, this));
+					var pythonProps = new List<PropertyInfo>();
+
+					foreach (var prop in _ops
+						.GetMemberNames(_pythonType)
+						.Select(p => _ops.GetMember(_pythonType, p)))
+					{
+						if (prop is PythonProperty pythonProp)
+						{
+							pythonProps.Add(new PythonPropertyImpl(pythonProp, this));
+						}
+						else if (prop is ReflectedProperty reflectedProp)
+						{
+							if (dotNetProps.ContainsKey(reflectedProp.__name__))
+								continue;
+
+							pythonProps.Add(new ReflectedPropertyImpl(reflectedProp, this));
+						}
 					}
+
+					_props = [.. pythonProps.Concat(dotNetProps.Values.SelectMany())];
 				}
 
-				return [.. pythonProps.Concat(dotNetProps.Values.SelectMany()).Where(p => p.IsMatch(bindingAttr))];
+				return [.. _props.Where(p => p.IsMatch(bindingAttr))];
 			}
 
 			protected override PropertyInfo GetPropertyImpl(string name, BindingFlags bindingAttr, Binder binder, Type returnType, Type[] types, ParameterModifier[] modifiers)
@@ -561,56 +575,70 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 			public override EventInfo GetEvent(string name, BindingFlags bindingAttr)
 				=> GetEvents(bindingAttr).FirstOrDefault(e => e.Name == name);
 
+			private EventInfo[] _events;
+
 			public override EventInfo[] GetEvents(BindingFlags bindingAttr)
 			{
-				var dotNetEvents = _dotNetBaseType.GetEvents(bindingAttr);
+				if (_events is null)
+				{
+					var dotNetEvents = _dotNetBaseType.GetEvents(ReflectionHelper.AllMembers);
 
-				const string prefix = "add_";
+					const string prefix = "add_";
 
-				var pythonEvents = _ops
-					.GetMemberNames(_pythonType)
-					.Where(name => name.StartsWithIgnoreCase(prefix))
-					.Select(name => _ops.GetMember(_pythonType, name))
-					.OfType<PythonFunction>()
-					.Select(addFunc =>
-					{
-						var name = addFunc.__name__.Remove(prefix, true);
+					var pythonEvents = _ops
+						.GetMemberNames(_pythonType)
+						.Where(name => name.StartsWithIgnoreCase(prefix))
+						.Select(name => _ops.GetMember(_pythonType, name))
+						.OfType<PythonFunction>()
+						.Select(addFunc =>
+						{
+							var name = addFunc.__name__.Remove(prefix, true);
 
-						if (!_ops.TryGetMember(_pythonType, "remove_" + name, true, out var r) || r is not PythonFunction removeFunc)
-							return null;
+							if (!_ops.TryGetMember(_pythonType, "remove_" + name, true, out var r) || r is not PythonFunction removeFunc)
+								return null;
 
-						var eventType = ((addFunc.__annotations__.TryGetValue("handler") as PythonType)?.GetUnderlyingSystemType()) ?? typeof(EventHandler);
-						return new EventImpl(name, eventType, addFunc, removeFunc, this);
-					})
-					.Where(e => e?.GetAddMethod().IsMatch(bindingAttr) == true);
+							var eventType = ((addFunc.__annotations__.TryGetValue("handler") as PythonType)?.GetUnderlyingSystemType()) ?? typeof(EventHandler);
+							return new EventImpl(name, eventType, addFunc, removeFunc, this);
+						})
+						;
 
-				return [.. dotNetEvents, .. pythonEvents];
+					_events = [.. dotNetEvents, .. pythonEvents];
+				}
+
+				return _events.Where(e => e.GetAddMethod()?.IsMatch(bindingAttr) == true).ToArray();
 			}
+
+			private MethodInfo[] _methods;
 
 			public override MethodInfo[] GetMethods(BindingFlags bindingAttr)
 			{
-				var dotNetMethods = _dotNetBaseType.GetMethods(ReflectionHelper.AllMembers).GroupBy(m => m.Name).ToDictionary();
-
-				var methods = new List<MethodInfo>();
-
-				var pythonMethods = _ops
-					.GetMemberNames(_pythonType)
-					.Select(name => _ops.GetMember(_pythonType, name))
-					.OfType<PythonFunction>();
-
-				foreach (var pythonMethod in pythonMethods)
+				if (_methods is null)
 				{
-					var impl = new MethodImpl(pythonMethod, this);
+					var dotNetMethods = _dotNetBaseType.GetMethods(ReflectionHelper.AllMembers).GroupBy(m => m.Name).ToDictionary();
 
-					if (dotNetMethods.TryGetValue(impl.Name, out var existing) && existing.Any(m => m.IsStatic == impl.IsStatic && m.GetParameters().Length == impl.GetParameters().Length))
-						continue;
+					var methods = new List<MethodInfo>();
 
-					methods.Add(impl);
+					var pythonMethods = _ops
+						.GetMemberNames(_pythonType)
+						.Select(name => _ops.GetMember(_pythonType, name))
+						.OfType<PythonFunction>();
+
+					foreach (var pythonMethod in pythonMethods)
+					{
+						var impl = new MethodImpl(pythonMethod, this);
+
+						if (dotNetMethods.TryGetValue(impl.Name, out var existing) && existing.Any(m => m.IsStatic == impl.IsStatic && m.GetParameters().Length == impl.GetParameters().Length))
+							continue;
+
+						methods.Add(impl);
+					}
+
+					methods.AddRange(dotNetMethods.Values.SelectMany());
+
+					_methods = [.. methods];
 				}
-
-				methods.AddRange(dotNetMethods.Values.SelectMany());
-
-				return [.. methods.Where(m => m.IsMatch(bindingAttr))];
+				
+				return [.. _methods.Where(m => m.IsMatch(bindingAttr))];
 			}
 
 			protected override MethodInfo GetMethodImpl(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
