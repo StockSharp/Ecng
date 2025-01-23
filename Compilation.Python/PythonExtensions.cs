@@ -12,15 +12,14 @@ using Ecng.Collections;
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 
-using IronPython.Runtime.Types;
 using IronPython.Runtime;
+using IronPython.Runtime.Types;
 
 public static class PythonExtensions
 {
 	private const BindingFlags _nonPublic = BindingFlags.Instance | BindingFlags.NonPublic;
 
 	private static readonly PropertyInfo _nameProp = typeof(PythonType).GetProperty("Name", _nonPublic);
-	private static readonly PropertyInfo _underlyingSystemTypeProp = typeof(PythonType).GetProperty("UnderlyingSystemType", _nonPublic);
 	private static readonly PropertyInfo _setters = typeof(ReflectedGetterSetter).GetProperty("Setter", _nonPublic);
 	private static readonly FieldInfo _propInfo = typeof(ReflectedProperty).GetField("_info", _nonPublic);
 
@@ -31,7 +30,10 @@ public static class PythonExtensions
 	[CLSCompliant(false)]
 	public static Type GetUnderlyingSystemType(this PythonType type)
 	{
-		var retVal = (Type)_underlyingSystemTypeProp.GetValue(type ?? throw new ArgumentNullException(nameof(type)));
+		if (type is null)
+			throw new ArgumentNullException(nameof(type));
+
+		var retVal = type.__clrtype__();
 
 		if (retVal == typeof(BigInteger))
 			retVal = typeof(long);
@@ -117,7 +119,7 @@ public static class PythonExtensions
 
 		var code = function.__code__;
 
-		var dict = function.__annotations__?.ToDictionary();
+		var dict = function.__annotations__.ToDictionary();
 
 		var argNames = code.co_varnames;
 		var argCount = code.co_argcount;

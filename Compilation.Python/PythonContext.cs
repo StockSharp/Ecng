@@ -118,11 +118,13 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 	{
 		private class TypeImpl : Type, ITypeConstructor
 		{
-			private class EventImpl(string name, Type eventType, TypeImpl declaringType) : EventInfo
+			private class EventImpl(string name, Type eventType, PythonFunction addMethod, PythonFunction removeMethod, TypeImpl declaringType) : EventInfo
 			{
 				private readonly string _name = name.ThrowIfEmpty(nameof(name));
 				private readonly Type _eventType = eventType ?? throw new ArgumentNullException(nameof(eventType));
 				private readonly TypeImpl _declaringType = declaringType ?? throw new ArgumentNullException(nameof(declaringType));
+				private readonly MethodInfo _addMethod = new MethodImpl(addMethod ?? throw new ArgumentNullException(nameof(addMethod)), declaringType);
+				private readonly MethodInfo _removeMethod = new MethodImpl(removeMethod ?? throw new ArgumentNullException(nameof(removeMethod)), declaringType);
 
 				public override string Name => _name;
 				public override Type EventHandlerType => _eventType;
@@ -132,15 +134,20 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 
 				public override IEnumerable<CustomAttributeData> CustomAttributes => GetCustomAttributesData();
 
-				public override MethodInfo GetAddMethod(bool nonPublic) => null;
+				public override MethodInfo GetAddMethod(bool nonPublic) => _addMethod;
 				public override MethodInfo GetRaiseMethod(bool nonPublic) => null;
-				public override MethodInfo GetRemoveMethod(bool nonPublic) => null;
+				public override MethodInfo GetRemoveMethod(bool nonPublic) => _removeMethod;
 				public override MethodInfo[] GetOtherMethods(bool nonPublic) => [];
 
-				public override object[] GetCustomAttributes(bool inherit) => [];
-				public override object[] GetCustomAttributes(Type attributeType, bool inherit) => [];
+				public override object[] GetCustomAttributes(bool inherit)
+					=> _declaringType._ops.GetCustomAttributes(_addMethod, inherit);
+				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
+					=> _declaringType._ops.GetCustomAttributes(_addMethod, attributeType, inherit);
 				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
-				public override IList<CustomAttributeData> GetCustomAttributesData() => base.GetCustomAttributesData();
+				public override IList<CustomAttributeData> GetCustomAttributesData()
+					=> _declaringType._ops.GetCustomAttributesData(_addMethod);
+
+				public override string ToString() => Name;
 			}
 
 			private class ParameterImpl(string name, Type parameterType, int position, MemberInfo method) : ParameterInfo
@@ -193,7 +200,7 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 
 				public override ParameterInfo[] GetParameters() => _parameters;
 				public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
-					=> _function.__call__(DefaultContext.Default, obj, parameters);
+					=> _function.__call__(DefaultContext.Default, [obj, .. parameters]);
 
 				public override ICustomAttributeProvider ReturnTypeCustomAttributes => null;
 				public override MethodInfo GetBaseDefinition() => this;
@@ -317,12 +324,15 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 
 					_parameters = [.. parameters];
 
-					Attributes = MethodAttributes.Public | (function?.IsStatic() == true ? MethodAttributes.Static : 0);
+					var isStatic = function?.IsStatic() == true;
+					Attributes = MethodAttributes.Public | (isStatic ? MethodAttributes.Static : 0);
+
+					Name = isStatic ? TypeConstructorName : ConstructorName;
 				}
 
 				public override Type DeclaringType => _declaringType;
-				public override string Name => ConstructorName;
-				public override Type ReflectedType => _declaringType;
+				public override string Name { get; }
+				public override Type ReflectedType => DeclaringType;
 				public override MethodAttributes Attributes { get; }
 				public override RuntimeMethodHandle MethodHandle => throw new NotSupportedException();
 				public override IEnumerable<CustomAttributeData> CustomAttributes => GetCustomAttributesData();
@@ -347,6 +357,8 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 					=> Invoke(invokeAttr, binder, parameters, culture);
 
 				public override MethodImplAttributes GetMethodImplementationFlags() => MethodImplAttributes.IL;
+
+				public override string ToString() => Name;
 			}
 
 			private readonly Assembly _assembly;
@@ -412,14 +424,11 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 			{
 				var dotNetProps = _dotNetBaseType.GetProperties(ReflectionHelper.AllMembers).GroupBy(p => p.Name).ToDictionary();
 
-				var pythonProperties = _ops
-					.GetMemberNames(_pythonType)
-					.Select(p => _ops.GetMember(_pythonType, p))
-					.ToArray();
-
 				var pythonProps = new List<PropertyInfo>();
 
-				foreach (var prop in pythonProperties)
+				foreach (var prop in _ops
+					.GetMemberNames(_pythonType)
+					.Select(p => _ops.GetMember(_pythonType, p)))
 				{
 					if (prop is PythonProperty pythonProp)
 					{
@@ -508,14 +517,28 @@ class PythonContext(ScriptScope scope) : Disposable, ICompilerContext
 
 			public override EventInfo[] GetEvents(BindingFlags bindingAttr)
 			{
-				var events = new List<EventInfo>();
+				var dotNetEvents = _dotNetBaseType.GetEvents(bindingAttr);
+
+				const string prefix = "add_";
 
 				var pythonEvents = _ops
 					.GetMemberNames(_pythonType)
-					.Where(name => name.StartsWith("on_", StringComparison.InvariantCultureIgnoreCase))
-					.Select(name => new EventImpl(name, typeof(EventHandler), this));
+					.Where(name => name.StartsWithIgnoreCase(prefix))
+					.Select(name => _ops.GetMember(_pythonType, name))
+					.OfType<PythonFunction>()
+					.Select(addMethod =>
+					{
+						var name = addMethod.__name__.Remove(prefix, true);
 
-				return [.. events, .. pythonEvents];
+						if (!_ops.TryGetMember(_pythonType, "remove_" + name, true, out var r) || r is not PythonFunction removeMethod)
+							return null;
+
+						var eventType = ((addMethod.__annotations__.TryGetValue("handler") as PythonType)?.GetUnderlyingSystemType()) ?? typeof(EventHandler);
+						return new EventImpl(name, eventType, addMethod, removeMethod, this);
+					})
+					.Where(e => e?.GetAddMethod().IsMatch(bindingAttr) == true);
+
+				return [.. dotNetEvents, .. pythonEvents];
 			}
 
 			public override MethodInfo[] GetMethods(BindingFlags bindingAttr)
