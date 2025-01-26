@@ -449,10 +449,10 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 			public override Assembly Assembly => _assembly;
 			public override string AssemblyQualifiedName => _underlyingType.AssemblyQualifiedName;
 			public override Type BaseType => _underlyingType.BaseType;
-			public override string FullName => _pythonType.GetName();
+			public override string FullName => $"{Namespace}.{Name}";
 			public override Guid GUID => _underlyingType.GUID;
 			public override Module Module => _underlyingType.Module;
-			public override string Namespace => string.Empty;
+			public override string Namespace => _underlyingType.Namespace;
 			public override string Name => _pythonType.GetName();
 			public override Type UnderlyingSystemType => _underlyingType;
 
