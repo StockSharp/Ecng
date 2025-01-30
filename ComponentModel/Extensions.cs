@@ -206,5 +206,13 @@ namespace Ecng.ComponentModel
 
 		public static IEnumerable<PropertyDescriptor> Typed(this PropertyDescriptorCollection col)
 			=> col.Cast<PropertyDescriptor>();
+
+		/// <summary>
+		/// Get basic properties (properties with <see cref="BasicSettingAttribute"/>).
+		/// </summary>
+		/// <param name="instance">Object instance.</param>
+		/// <returns>Basic properties</returns>
+		public static IEnumerable<PropertyDescriptor> GetBasicProperties(this object instance)
+			=> TypeDescriptor.GetProperties(instance, [new BasicSettingAttribute()]).Typed();
 	}
 }
