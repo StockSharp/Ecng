@@ -9,6 +9,7 @@ namespace Ecng.ComponentModel
 	using System.Runtime.InteropServices;
 
 	using Ecng.Common;
+	using Ecng.Serialization;
 
 	public static class Extensions
 	{
@@ -211,8 +212,84 @@ namespace Ecng.ComponentModel
 		/// Get basic properties (properties with <see cref="BasicSettingAttribute"/>).
 		/// </summary>
 		/// <param name="instance">Object instance.</param>
+		/// <param name="recursive">Find nested basic properties.</param>
 		/// <returns>Basic properties</returns>
-		public static IEnumerable<PropertyDescriptor> GetBasicProperties(this object instance)
-			=> TypeDescriptor.GetProperties(instance, [new BasicSettingAttribute()]).Typed();
+		public static IEnumerable<PropertyDescriptor> GetBasicProperties(this object instance, bool recursive = false)
+		{
+			static IEnumerable<PropertyDescriptor> getRecursive(object instance, int left)
+			{
+				if (instance is null)
+					throw new ArgumentNullException(nameof(instance));
+
+				if (left < 0)
+					throw new ArgumentOutOfRangeException(nameof(left), left, "Invalid value.");
+
+				var properties = TypeDescriptor.GetProperties(instance, [new BasicSettingAttribute()]).Typed();
+
+				foreach (var property in properties)
+				{
+					yield return property;
+
+					if (left == 0)
+						continue;
+
+					if (property.PropertyType.IsSerializablePrimitive())
+						continue;
+
+					var nestedInstance = property.GetValue(instance);
+
+					if (nestedInstance == null)
+						continue;
+
+					foreach (var nestedProperty in getRecursive(nestedInstance, left - 1))
+						yield return nestedProperty;
+				}
+			}
+
+			return getRecursive(instance, recursive ? int.MaxValue : 0);
+		}
+
+		public static PropertyDescriptorCollection GetFilteredProperties(this ICustomTypeDescriptor descriptor, Attribute[] attributes)
+		{
+			var allProperties = descriptor.GetProperties();
+
+			if (attributes == null || attributes.Length == 0)
+				return allProperties;
+
+			return new(allProperties.Typed().Where(p => attributes.All(attr =>
+			{
+				var propAttr = p.Attributes[attr.GetType()];
+
+				if (propAttr is null)
+				{
+					if (attr.GetType().GetField("Default", BindingFlags.Static | BindingFlags.Public)?.GetValue(null) is not Attribute defaultAttr)
+						return false;
+
+					propAttr = defaultAttr;
+				}
+
+				return attr.Match(propAttr);
+			})).ToArray());
+		}
+
+		public static PropertyDescriptor TryGetDefault(this PropertyDescriptorCollection properties, Type type)
+		{
+			var attr = type.GetAttribute<DefaultPropertyAttribute>();
+
+			if (attr != null)
+				return properties.Find(attr.Name, ignoreCase: true);
+
+			return null;
+		}
+
+		public static EventDescriptor TryGetDefault(this EventDescriptorCollection events, Type type)
+		{
+			var attr = type.GetAttribute<DefaultEventAttribute>();
+
+			if (attr != null)
+				return events.Find(attr.Name, ignoreCase: true);
+
+			return null;
+		}
 	}
 }
