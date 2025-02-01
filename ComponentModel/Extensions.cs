@@ -214,39 +214,41 @@ namespace Ecng.ComponentModel
 		/// <param name="instance">Object instance.</param>
 		/// <param name="recursive">Find nested basic properties.</param>
 		/// <returns>Basic properties</returns>
-		public static IEnumerable<PropertyDescriptor> GetBasicProperties(this object instance, bool recursive = false)
+		public static IEnumerable<(PropertyDescriptor prop, string path)> GetBasicProperties(this object instance, int maxDepth = 0)
 		{
-			static IEnumerable<PropertyDescriptor> getRecursive(object instance, int left)
+			static IEnumerable<(PropertyDescriptor, string)> getRecursive(object instance, int maxDepth, string prefix)
 			{
 				if (instance is null)
 					throw new ArgumentNullException(nameof(instance));
 
-				if (left < 0)
-					throw new ArgumentOutOfRangeException(nameof(left), left, "Invalid value.");
+				if (maxDepth < 0)
+					throw new ArgumentOutOfRangeException(nameof(maxDepth), maxDepth, "Invalid value.");
 
 				var properties = TypeDescriptor.GetProperties(instance, [new BasicSettingAttribute()]).Typed();
 
 				foreach (var property in properties)
 				{
-					yield return property;
+					var fullPath = $"{prefix}{property.Name}";
 
-					if (left == 0)
-						continue;
+					var hasNested = false;
 
-					if (property.PropertyType.IsSerializablePrimitive())
-						continue;
+					if (maxDepth > 0 &&
+						!property.PropertyType.IsSerializablePrimitive() &&
+						property.GetValue(instance) is object nestedInstance)
+					{
+						foreach (var nestedProperty in getRecursive(nestedInstance, maxDepth - 1, $"{fullPath}."))
+						{
+							hasNested = true;
+							yield return nestedProperty;
+						}
+					}
 
-					var nestedInstance = property.GetValue(instance);
-
-					if (nestedInstance == null)
-						continue;
-
-					foreach (var nestedProperty in getRecursive(nestedInstance, left - 1))
-						yield return nestedProperty;
+					if (!hasNested)
+						yield return (property, fullPath);
 				}
 			}
 
-			return getRecursive(instance, recursive ? int.MaxValue : 0);
+			return getRecursive(instance, maxDepth, string.Empty);
 		}
 
 		public static PropertyDescriptorCollection GetFilteredProperties(this ICustomTypeDescriptor descriptor, Attribute[] attributes)
