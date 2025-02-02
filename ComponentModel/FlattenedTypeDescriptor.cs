@@ -7,12 +7,10 @@ using System.Linq;
 
 using Ecng.Common;
 
-public class FlattenedTypeDescriptor : ICustomTypeDescriptor
+public class FlattenedTypeDescriptor : Disposable, ICustomTypeDescriptor, INotifyPropertiesChanged, INotifyPropertyChanged, INotifyPropertyChanging
 {
 	private class FlattenedPropertyDescriptor(object root, PropertyDescriptor originalDescriptor, string parentPath)
-#pragma warning disable CS9107 // Parameter is captured into the state of the enclosing type and its value is also passed to the base constructor. The value might be captured by the base class as well.
 		: PropertyDescriptor(parentPath.Remove("."), originalDescriptor.Attributes.Cast<Attribute>().ToArray())
-#pragma warning restore CS9107 // Parameter is captured into the state of the enclosing type and its value is also passed to the base constructor. The value might be captured by the base class as well.
 	{
 		public override Type ComponentType => root.GetType();
 		public override bool IsReadOnly => originalDescriptor.IsReadOnly;
@@ -90,7 +88,43 @@ public class FlattenedTypeDescriptor : ICustomTypeDescriptor
 		_props = new(_descriptors
 			.Select(d => (PropertyDescriptor)new FlattenedPropertyDescriptor(_root, d.prop, d.path))
 			.ToArray());
+
+		if (_root is INotifyPropertiesChanged npc)
+			npc.PropertiesChanged += OnPropertiesChanged;
+
+		if (_root is INotifyPropertyChanged npc1)
+			npc1.PropertyChanged += OnPropertyChanged;
+
+		if (_root is INotifyPropertyChanging npc2)
+			npc2.PropertyChanging += OnPropertyChanging;
 	}
+
+	protected override void DisposeManaged()
+	{
+		base.DisposeManaged();
+
+		if (_root is INotifyPropertiesChanged npc)
+			npc.PropertiesChanged -= OnPropertiesChanged;
+
+		if (_root is INotifyPropertyChanged npc1)
+			npc1.PropertyChanged -= OnPropertyChanged;
+
+		if (_root is INotifyPropertyChanging npc2)
+			npc2.PropertyChanging -= OnPropertyChanging;
+	}
+
+	public event Action PropertiesChanged;
+	public event PropertyChangedEventHandler PropertyChanged;
+	public event PropertyChangingEventHandler PropertyChanging;
+
+	private void OnPropertiesChanged()
+		=> PropertiesChanged?.Invoke();
+
+	private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+		=> PropertyChanged?.Invoke(this, e);
+
+	private void OnPropertyChanging(object sender, PropertyChangingEventArgs e)
+		=> PropertyChanging?.Invoke(this, e);
 
 	AttributeCollection ICustomTypeDescriptor.GetAttributes()
 		=> TypeDescriptor.GetAttributes(_root, noCustomTypeDesc: true);
