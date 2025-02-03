@@ -8,6 +8,7 @@ namespace Ecng.ComponentModel
 	using System.Reflection;
 	using System.Runtime.InteropServices;
 
+	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Serialization;
 
@@ -293,5 +294,124 @@ namespace Ecng.ComponentModel
 
 			return null;
 		}
+
+		/// <summary>
+		/// To set the <see cref="ExpandableObjectConverter"/> attribute for the diagram element parameter.
+		/// </summary>
+		/// <param name="expandable">Value.</param>
+		/// <returns>The diagram element parameter.</returns>
+		public static TEntity SetExpandable<TEntity>(this TEntity entity, bool expandable)
+			where TEntity : IAttributesEntity
+			=> SetAttribute(entity, expandable, () => new TypeConverterAttribute(typeof(ExpandableObjectConverter)));
+
+		/// <summary>
+		/// To add the attribute <see cref="Attribute"/> for the diagram element parameter.
+		/// </summary>
+		/// <param name="editor">Attribute.</param>
+		/// <returns>The diagram element parameter.</returns>
+		public static TEntity SetEditor<TEntity>(this TEntity entity, Attribute editor)
+			where TEntity : IAttributesEntity
+		{
+			if (editor == null)
+				throw new ArgumentNullException(nameof(editor));
+
+			return SetAttribute(entity, true, () => editor);
+		}
+
+		/// <summary>
+		/// To set the <see cref="DisplayAttribute"/> attribute for the diagram element parameter.
+		/// </summary>
+		/// <param name="groupName">The category of the diagram element parameter.</param>
+		/// <param name="displayName">The display name.</param>
+		/// <param name="description">The description of the diagram element parameter.</param>
+		/// <param name="order">The property order.</param>
+		/// <returns>The diagram element parameter.</returns>
+		public static TEntity SetDisplay<TEntity>(this TEntity entity, string groupName, string displayName, string description, int order)
+			where TEntity : IAttributesEntity
+			=> SetAttribute(entity, true, () => new DisplayAttribute
+			{
+				Name = displayName,
+				Description = description,
+				GroupName = groupName,
+				Order = order,
+			});
+
+		/// <summary>
+		/// To set the <see cref="ReadOnlyAttribute"/> attribute for the diagram element parameter.
+		/// </summary>
+		/// <param name="readOnly">Read-only.</param>
+		/// <returns>The diagram element parameter.</returns>
+		public static TEntity SetReadOnly<TEntity>(this TEntity entity, bool readOnly = true)
+			where TEntity : IAttributesEntity
+			=> SetAttribute(entity, readOnly, () => new ReadOnlyAttribute(true));
+
+		/// <summary>
+		/// To set the <see cref="BasicSettingAttribute"/> attribute for the diagram element parameter.
+		/// </summary>
+		/// <param name="isBasic">Is basic parameter.</param>
+		/// <returns>The diagram element parameter.</returns>
+		public static TEntity SetBasic<TEntity>(this TEntity entity, bool isBasic = true)
+			where TEntity : IAttributesEntity
+			=> SetAttribute(entity, isBasic, () => new BasicSettingAttribute());
+
+		/// <summary>
+		/// To set the <see cref="BrowsableAttribute"/> attribute for the diagram element parameter.
+		/// </summary>
+		/// <param name="nonBrowsable">Hidden parameter.</param>
+		/// <returns>The diagram element parameter.</returns>
+		public static TEntity SetNonBrowsable<TEntity>(this TEntity entity, bool nonBrowsable = true)
+			where TEntity : IAttributesEntity
+			=> SetAttribute(entity, nonBrowsable, () => new BrowsableAttribute(false));
+
+		public static TEntity SetAttribute<TEntity, TAttribute>(this TEntity entity, bool value, Func<TAttribute> create)
+			where TEntity : IAttributesEntity
+			where TAttribute : Attribute
+		{
+			if (create is null)
+				throw new ArgumentNullException(nameof(create));
+
+			entity.Attributes.RemoveWhere(a => a is TAttribute);
+
+			if (value)
+				entity.Attributes.Add(create());
+
+			return entity;
+		}
+
+		public static bool IsReadOnly<TEntity>(this TEntity entity)
+			where TEntity : IAttributesEntity
+			=> IsAny(entity, (ReadOnlyAttribute a) => a.IsReadOnly);
+
+		public static bool IsBrowsable<TEntity>(this TEntity entity)
+			where TEntity : IAttributesEntity
+			=> IsAll(entity, (BrowsableAttribute a) => a.Browsable);
+
+		public static string GetDisplayName<TEntity>(this TEntity entity)
+			where TEntity : IAttributesEntity
+			=> entity.GetDisplay()?.Name;
+
+		public static string GetDescription<TEntity>(this TEntity entity)
+			where TEntity : IAttributesEntity
+			=> entity.GetDisplay()?.Description;
+
+		public static string GetGroupName<TEntity>(this TEntity entity)
+			where TEntity : IAttributesEntity
+			=> entity.GetDisplay()?.GroupName;
+
+		public static DisplayAttribute GetDisplay<TEntity>(this TEntity entity)
+			where TEntity : IAttributesEntity
+			=> entity.Attributes.OfType<DisplayAttribute>().FirstOrDefault();
+
+		private static bool IsAny<TEntity, TAttribute>(this TEntity entity, Func<TAttribute, bool> condition)
+			where TEntity : IAttributesEntity
+			=> Attrs<TEntity, TAttribute>(entity).Any(condition);
+
+		private static bool IsAll<TEntity, TAttribute>(this TEntity entity, Func<TAttribute, bool> condition)
+			where TEntity : IAttributesEntity
+			=> Attrs<TEntity, TAttribute>(entity).All(condition);
+
+		private static IEnumerable<TAttribute> Attrs<TEntity, TAttribute>(this TEntity entity)
+			where TEntity : IAttributesEntity
+			=> entity.Attributes.OfType<TAttribute>();
 	}
 }
