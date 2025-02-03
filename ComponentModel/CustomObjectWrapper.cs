@@ -23,7 +23,7 @@
 		/// <remarks>
 		/// Create instance.
 		/// </remarks>
-		protected class ProxyPropDescriptor(PropertyDescriptor orig, object owner) : PropertyDescriptor(orig)
+		protected class ProxyPropDescriptor(PropertyDescriptor orig, object owner) : NamedPropertyDescriptor(orig)
 		{
 			private readonly PropertyDescriptor _orig = orig;
 

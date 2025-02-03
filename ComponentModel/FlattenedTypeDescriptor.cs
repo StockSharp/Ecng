@@ -10,7 +10,7 @@ using Ecng.Common;
 public class FlattenedTypeDescriptor : Disposable, ICustomTypeDescriptor, INotifyPropertiesChanged, INotifyPropertyChanged, INotifyPropertyChanging
 {
 	private class FlattenedPropertyDescriptor(object root, PropertyDescriptor originalDescriptor, string parentPath)
-		: PropertyDescriptor(parentPath.Remove("."), originalDescriptor.Attributes.Cast<Attribute>().ToArray())
+		: NamedPropertyDescriptor(parentPath.Remove("."), originalDescriptor.Attributes.Cast<Attribute>().ToArray())
 	{
 		public override Type ComponentType => root.GetType();
 		public override bool IsReadOnly => originalDescriptor.IsReadOnly;
@@ -72,8 +72,6 @@ public class FlattenedTypeDescriptor : Disposable, ICustomTypeDescriptor, INotif
 
 			return current;
 		}
-
-		public override string ToString() => Name;
 	}
 
 	private readonly object _root;
