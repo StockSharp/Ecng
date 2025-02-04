@@ -21,7 +21,7 @@ public class TraceSource : BaseLogSource
 
 		public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string message)
 		{
-			var level = ToStockSharp(eventType);
+			var level = ToEcng(eventType);
 
 			if (level == null)
 				return;
@@ -31,7 +31,7 @@ public class TraceSource : BaseLogSource
 
 		public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string format, params object[] args)
 		{
-			var level = ToStockSharp(eventType);
+			var level = ToEcng(eventType);
 
 			if (level == null)
 				return;
@@ -39,7 +39,7 @@ public class TraceSource : BaseLogSource
 			_source.RaiseLog(new LogMessage(_source, TimeHelper.NowWithOffset, level.Value, format, args));
 		}
 
-		private static LogLevels? ToStockSharp(TraceEventType eventType)
+		private static LogLevels? ToEcng(TraceEventType eventType)
 		{
 			return eventType switch
 			{
