@@ -73,15 +73,9 @@ public class FileLogListener : LogListener
 			_digitChars[i] = (char)(i + '0');
 	}
 
-	private class StreamWriterEx : StreamWriter
+	private class StreamWriterEx(string path, bool append, Encoding encoding) : StreamWriter(path, append, encoding)
 	{
-		public StreamWriterEx(string path, bool append, Encoding encoding)
-			: base(path, append, encoding)
-		{
-			Path = path;
-		}
-
-		public string Path { get; }
+		public string Path { get; } = path;
 	}
 
 	private readonly PairSet<(string, DateTime), StreamWriterEx> _writers = [];

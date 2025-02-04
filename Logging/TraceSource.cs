@@ -10,14 +10,9 @@ using Ecng.Common;
 /// </summary>
 public class TraceSource : BaseLogSource
 {
-	private class TraceListenerEx : TraceListener
+	private class TraceListenerEx(TraceSource source) : TraceListener
 	{
-		private readonly TraceSource _source;
-
-		public TraceListenerEx(TraceSource source)
-		{
-			_source = source ?? throw new ArgumentNullException(nameof(source));
-		}
+		private readonly TraceSource _source = source ?? throw new ArgumentNullException(nameof(source));
 
 		public override void Write(string message)
 		{

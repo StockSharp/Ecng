@@ -24,14 +24,9 @@ public class LogManager : Disposable, IPersistable
 		}
 	}
 
-	private sealed class LogSourceList : BaseList<ILogSource>
+	private sealed class LogSourceList(LogManager parent) : BaseList<ILogSource>
 	{
-		private readonly LogManager _parent;
-
-		public LogSourceList(LogManager parent)
-		{
-			_parent = parent ?? throw new ArgumentNullException(nameof(parent));
-		}
+		private readonly LogManager _parent = parent ?? throw new ArgumentNullException(nameof(parent));
 
 		protected override bool OnAdding(ILogSource item)
 		{
