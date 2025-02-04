@@ -1,10 +1,5 @@
 namespace Ecng.Logging;
 
-using System;
-using System.Diagnostics;
-
-using Ecng.Common;
-
 /// <summary>
 /// The logs source which receives information from <see cref="Trace"/>.
 /// </summary>

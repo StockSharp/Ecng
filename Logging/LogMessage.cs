@@ -1,9 +1,5 @@
 namespace Ecng.Logging;
 
-using System;
-
-using Ecng.Common;
-
 /// <summary>
 /// A debug message.
 /// </summary>

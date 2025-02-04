@@ -1,9 +1,5 @@
 namespace Ecng.Logging;
 
-using System;
-
-using Ecng.Common;
-
 /// <summary>
 /// Logs recipient interface.
 /// </summary>

@@ -1,14 +1,6 @@
 namespace Ecng.Logging;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading;
-
-using Ecng.Collections;
-using Ecng.Common;
-using Ecng.Serialization;
 
 /// <summary>
 /// Messages logging manager that monitors the <see cref="ILogSource.Log"/> event and forwards messages to the <see cref="LogManager.Listeners"/>.

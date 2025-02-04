@@ -1,12 +1,7 @@
 namespace Ecng.Logging;
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-
-using Ecng.Common;
 
 /// <summary>
 /// Extension class for <see cref="ILogSource"/>.

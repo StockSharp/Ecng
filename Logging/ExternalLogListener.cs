@@ -1,8 +1,5 @@
 namespace Ecng.Logging;
 
-using System;
-using System.Collections.Generic;
-
 /// <summary>
 /// The logger sending messages to the external recipient <see cref="ILogListener"/>.
 /// </summary>
@@ -12,7 +9,6 @@ using System.Collections.Generic;
 /// <param name="logger">External recipient of messages.</param>
 public class ExternalLogListener(ILogListener logger) : LogListener
 {
-
 	/// <summary>
 	/// External recipient of messages.
 	/// </summary>

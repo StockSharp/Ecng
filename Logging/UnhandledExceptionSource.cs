@@ -1,9 +1,6 @@
 namespace Ecng.Logging;
 
-using System;
 using System.Threading.Tasks;
-
-using Ecng.Common;
 
 /// <summary>
 /// The logs source sending information about unhandled errors <see cref="AppDomain.UnhandledException"/> and <see cref="TaskScheduler.UnobservedTaskException"/>.

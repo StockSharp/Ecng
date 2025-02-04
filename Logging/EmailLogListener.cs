@@ -1,12 +1,6 @@
 namespace Ecng.Logging;
 
-using System;
-using System.Diagnostics;
 using System.Net.Mail;
-
-using Ecng.Collections;
-using Ecng.Common;
-using Ecng.Serialization;
 
 /// <summary>
 /// The logger sending data to the email.

@@ -1,15 +1,8 @@
 namespace Ecng.Logging;
 
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Text;
-
-using Ecng.Collections;
-using Ecng.Common;
-using Ecng.Serialization;
 
 /// <summary>
 /// Modes of log files splitting by date.

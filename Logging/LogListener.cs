@@ -1,12 +1,5 @@
 namespace Ecng.Logging;
 
-using System;
-using System.Collections.Generic;
-
-using Ecng.Common;
-using Ecng.Serialization;
-using Ecng.Collections;
-
 /// <summary>
 /// The base class that monitors the event <see cref="ILogSource.Log"/> and saves to some storage.
 /// </summary>

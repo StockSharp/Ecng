@@ -1,9 +1,5 @@
 namespace Ecng.Logging;
 
-using System;
-
-using Ecng.Common;
-
 /// <summary>
 /// The logger that records the data to the console window.
 /// </summary>
