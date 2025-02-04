@@ -291,7 +291,12 @@ public class LogManager : Disposable, IPersistable
 	{
 		FlushInterval = storage.GetValue<TimeSpan>(nameof(FlushInterval));
 		//MaxMessageCount = storage.GetValue<int>(nameof(MaxMessageCount));
-		Listeners.AddRange(storage.GetValue<IEnumerable<SettingsStorage>>(nameof(Listeners)).Select(s => s.LoadEntire<ILogListener>()));
+		Listeners.AddRange(storage.GetValue<IEnumerable<SettingsStorage>>(nameof(Listeners)).Select(s =>
+		{
+			// TODO 2025-02-04: remove 1 year after
+			s.Set("type", s.GetValue<string>("type").Replace("StockSharp.Logging", "Ecng.Logging"));
+			return s.LoadEntire<ILogListener>();
+		}));
 
 		if (storage.Contains(nameof(LocalTimeZone)))
 			LocalTimeZone = storage.GetValue<TimeZoneInfo>(nameof(LocalTimeZone));
