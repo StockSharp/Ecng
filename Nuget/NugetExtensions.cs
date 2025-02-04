@@ -1,23 +1,7 @@
 ﻿namespace Ecng.Nuget;
 
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Reflection;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
 
-using NuGet.Common;
-using NuGet.Versioning;
-using NuGet.Packaging;
-using NuGet.Protocol.Core.Types;
-using NuGet.Configuration;
-using NuGet.Frameworks;
-using NuGet.Protocol;
-
-using Ecng.Common;
 using Ecng.Reflection;
 
 public static class NugetExtensions

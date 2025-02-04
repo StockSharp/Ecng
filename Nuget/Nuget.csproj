@@ -4,6 +4,6 @@
     <PackageReference Include="NuGet.Protocol" Version="$(NuGetApiVer)" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Reflection\Reflection.csproj" />
+    <ProjectReference Include="..\Logging\Logging.csproj" />
   </ItemGroup>
 </Project>
