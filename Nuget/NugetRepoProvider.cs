@@ -36,6 +36,9 @@ public class NugetRepoProvider : CachingSourceProvider
 
 		public static async Task GetAsync(string privateUrl, CancellationToken token)
 		{
+			if (privateUrl.IsEmpty())
+				throw new ArgumentNullException(nameof(privateUrl));
+
 			var tcs = new TaskCompletionSource<PrivatePackageSource>();
 
 			lock (_log)
@@ -56,8 +59,9 @@ public class NugetRepoProvider : CachingSourceProvider
 	private static readonly AsyncLock _instanceLock = new();
 	private static NugetRepoProvider _instance;
 
-	/// <summary>
-	/// </summary>
+	public static Task<NugetRepoProvider> GetInstanceAsync(Func<string> getAuthToken, string packagesFolder, CancellationToken token)
+		=> GetInstanceAsync("https://nuget.stocksharp.com/x/v3/index.json", getAuthToken, packagesFolder, token);
+
 	public static async Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, Func<string> getAuthToken, string packagesFolder, CancellationToken token)
 	{
 		await PrivatePackageSource.GetAsync(privateUrl, token);
