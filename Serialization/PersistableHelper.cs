@@ -39,6 +39,10 @@
 		public static bool IsPersistable(this Type type)
 			=> type.Is<IPersistable>() || type.Is<IAsyncPersistable>();
 
+		private const string _typeKey = "type";
+		private const string _valueKey = "value";
+		private const string _settingsKey = "settings";
+
 		/// <summary>
 		/// Создать и инициализировать объект.
 		/// </summary>
@@ -50,8 +54,8 @@
 			if (storage is null)
 				throw new ArgumentNullException(nameof(storage));
 
-			var instance = storage.GetValue<Type>("type").CreateInstance<T>();
-			instance.Load(storage, "settings");
+			var instance = storage.GetValue<Type>(_typeKey).CreateInstance<T>();
+			instance.Load(storage, _settingsKey);
 			return instance;
 		}
 
@@ -61,8 +65,8 @@
 				throw new ArgumentNullException(nameof(persistable));
 
 			return new SettingsStorage()
-				.Set("type", persistable.GetType().GetTypeAsString(isAssemblyQualifiedName))
-				.Set("settings", persistable.Save());
+				.Set(_typeKey, persistable.GetType().GetTypeAsString(isAssemblyQualifiedName))
+				.Set(_settingsKey, persistable.Save());
 		}
 
 		public static T Clone<T>(this T obj)
@@ -294,9 +298,6 @@
 			return tuple;
 		}
 
-		private const string _typeKey = "type";
-		private const string _valueKey = "value";
-
 		public static MemberInfo ToMember(this SettingsStorage storage)
 			=> storage.ToMember<MemberInfo>();
 
@@ -376,6 +377,41 @@
 				value = dt.ToUniversalTime();
 
 			return value;
+		}
+
+		private static readonly SynchronizedDictionary<Type, (Func<object, SettingsStorage> serialize, Func<SettingsStorage, object> deserialize)> _customSerializers = [];
+
+		public static void RegisterCustomSerializer<T>(Func<T, SettingsStorage> serialize, Func<SettingsStorage, T> deserialize)
+		{
+			if (serialize is null)		throw new ArgumentNullException(nameof(serialize));
+			if (deserialize is null)	throw new ArgumentNullException(nameof(deserialize));
+
+			_customSerializers[typeof(T)] = (o => serialize((T)o), s => deserialize(s));
+		}
+
+		public static void UnRegisterCustomSerializer<T>()
+			=> _customSerializers.Remove(typeof(T));
+
+		public static bool TrySerialize<T>(this T value, out SettingsStorage storage)
+		{
+			storage = default;
+
+			if (!_customSerializers.TryGetValue(typeof(T), out var serializer))
+				return false;
+
+			storage = serializer.serialize(value);
+			return true;
+		}
+
+		public static bool TryDeserialize<T>(this SettingsStorage storage, out T value)
+		{
+			value = default;
+
+			if (!_customSerializers.TryGetValue(typeof(T), out var serializer))
+				return false;
+
+			value = (T)serializer.deserialize(storage);
+			return true;
 		}
 	}
 }
