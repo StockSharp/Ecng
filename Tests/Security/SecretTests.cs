@@ -1,62 +1,61 @@
-﻿namespace Ecng.Tests.Security
+﻿namespace Ecng.Tests.Security;
+
+using System.IO;
+
+using Ecng.Security;
+
+[TestClass]
+public class SecretTests
 {
-	using System.IO;
+	private const string _correctPwd = "mpoi3e/4nn3(&T(*^R";
+	private const string _incorrectPwd = "mpo3e/4nn3(&T(*^R";
 
-	using Ecng.Security;
-
-	[TestClass]
-	public class SecretTests
+	[TestMethod]
+	public void EqualsTest()
 	{
-		private const string _correctPwd = "mpoi3e/4nn3(&T(*^R";
-		private const string _incorrectPwd = "mpo3e/4nn3(&T(*^R";
+		var pwd1 = _correctPwd.CreateSecret();
+		var pwd2 = _correctPwd.CreateSecret();
 
-		[TestMethod]
-		public void EqualsTest()
-		{
-			var pwd1 = _correctPwd.CreateSecret();
-			var pwd2 = _correctPwd.CreateSecret();
+		pwd1.Equals(pwd1).AssertTrue();
+		pwd1.Equals(pwd2).AssertFalse();
 
-			pwd1.Equals(pwd1).AssertTrue();
-			pwd1.Equals(pwd2).AssertFalse();
+		pwd1.IsValid(_correctPwd).AssertTrue();
+		pwd2.IsValid(_correctPwd).AssertTrue();
+	}
 
-			pwd1.IsValid(_correctPwd).AssertTrue();
-			pwd2.IsValid(_correctPwd).AssertTrue();
-		}
+	[TestMethod]
+	public void NonEqualsTest()
+	{
+		var pwd1 = _correctPwd.CreateSecret();
+		var pwd2 = _incorrectPwd.CreateSecret();
 
-		[TestMethod]
-		public void NonEqualsTest()
-		{
-			var pwd1 = _correctPwd.CreateSecret();
-			var pwd2 = _incorrectPwd.CreateSecret();
+		pwd1.Equals(pwd2).AssertFalse();
+	}
 
-			pwd1.Equals(pwd2).AssertFalse();
-		}
+	[TestMethod]
+	public void IsValidTest()
+	{
+		_correctPwd.CreateSecret().IsValid(_correctPwd).AssertTrue();
+		_correctPwd.CreateSecret().IsValid(_incorrectPwd).AssertFalse();
+	}
 
-		[TestMethod]
-		public void IsValidTest()
-		{
-			_correctPwd.CreateSecret().IsValid(_correctPwd).AssertTrue();
-			_correctPwd.CreateSecret().IsValid(_incorrectPwd).AssertFalse();
-		}
+	[TestMethod]
+	public void SecureStringTest()
+	{
+		var correctPwd = _correctPwd.Secure();
+		var incorrectPwd = _incorrectPwd.Secure();
 
-		[TestMethod]
-		public void SecureStringTest()
-		{
-			var correctPwd = _correctPwd.Secure();
-			var incorrectPwd = _incorrectPwd.Secure();
+		correctPwd.CreateSecret().IsValid(correctPwd).AssertTrue();
+		correctPwd.CreateSecret().IsValid(incorrectPwd).AssertFalse();
+	}
 
-			correctPwd.CreateSecret().IsValid(correctPwd).AssertTrue();
-			correctPwd.CreateSecret().IsValid(incorrectPwd).AssertFalse();
-		}
+	[TestMethod]
+	public void DecryptReadStreamTest()
+	{
+        var initVectorBytes = "ss14fgty650h8u82".ASCII();
+        var txt = File.ReadAllText("encrypted_config").Base64().Decrypt("qwerty", initVectorBytes, initVectorBytes).UTF8();
 
-		[TestMethod]
-		public void DecryptReadStreamTest()
-		{
-	        var initVectorBytes = "ss14fgty650h8u82".ASCII();
-	        var txt = File.ReadAllText("encrypted_config").Base64().Decrypt("qwerty", initVectorBytes, initVectorBytes).UTF8();
-
-			txt.Length.AssertEqual(65735);
-			txt.UTF8().Md5().AssertEqual("96FB3B2D0226B0A18903E929E1238557");
-		}
+		txt.Length.AssertEqual(65735);
+		txt.UTF8().Md5().AssertEqual("96FB3B2D0226B0A18903E929E1238557");
 	}
 }

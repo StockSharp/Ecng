@@ -1,96 +1,95 @@
-﻿namespace Ecng.Tests.Common
+﻿namespace Ecng.Tests.Common;
+
+[TestClass]
+public class CurrencyTests
 {
-	[TestClass]
-	public class CurrencyTests
+	[TestMethod]
+	public void CheckCrypto()
 	{
-		[TestMethod]
-		public void CheckCrypto()
-		{
-			CurrencyTypes.ADA.IsCrypto().AssertTrue();
-			CurrencyTypes.BTC.IsCrypto().AssertTrue();
-			CurrencyTypes.ETH.IsCrypto().AssertTrue();
-			CurrencyTypes.USDT.IsCrypto().AssertTrue();
+		CurrencyTypes.ADA.IsCrypto().AssertTrue();
+		CurrencyTypes.BTC.IsCrypto().AssertTrue();
+		CurrencyTypes.ETH.IsCrypto().AssertTrue();
+		CurrencyTypes.USDT.IsCrypto().AssertTrue();
 
-			CurrencyTypes.USD.IsCrypto().AssertFalse();
-			CurrencyTypes.RUB.IsCrypto().AssertFalse();
-			CurrencyTypes.EUR.IsCrypto().AssertFalse();
-			CurrencyTypes.MKD.IsCrypto().AssertFalse();
-		}
+		CurrencyTypes.USD.IsCrypto().AssertFalse();
+		CurrencyTypes.RUB.IsCrypto().AssertFalse();
+		CurrencyTypes.EUR.IsCrypto().AssertFalse();
+		CurrencyTypes.MKD.IsCrypto().AssertFalse();
+	}
 
-		[TestMethod]
-		[ExpectedException(typeof(InvalidOperationException))]
-		public void InconsistMath1()
-		{
-			var v1 = 10m.ToCurrency(CurrencyTypes.USD);
-			var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
+	[TestMethod]
+	[ExpectedException(typeof(InvalidOperationException))]
+	public void InconsistMath1()
+	{
+		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
+		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-			(v1 * v2).AssertEqual(null);
-		}
+		(v1 * v2).AssertEqual(null);
+	}
 
-		[TestMethod]
-		[ExpectedException(typeof(InvalidOperationException))]
-		public void InconsistMath2()
-		{
-			var v1 = 10m.ToCurrency(CurrencyTypes.USD);
-			var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
+	[TestMethod]
+	[ExpectedException(typeof(InvalidOperationException))]
+	public void InconsistMath2()
+	{
+		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
+		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-			(v1 - v2).AssertEqual(null);
-		}
+		(v1 - v2).AssertEqual(null);
+	}
 
-		[TestMethod]
-		[ExpectedException(typeof(InvalidOperationException))]
-		public void InconsistMath3()
-		{
-			var v1 = 10m.ToCurrency(CurrencyTypes.USD);
-			var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
+	[TestMethod]
+	[ExpectedException(typeof(InvalidOperationException))]
+	public void InconsistMath3()
+	{
+		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
+		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-			(v1 + v2).AssertEqual(null);
-		}
+		(v1 + v2).AssertEqual(null);
+	}
 
-		[TestMethod]
-		[ExpectedException(typeof(InvalidOperationException))]
-		public void InconsistMath4()
-		{
-			var v1 = 10m.ToCurrency(CurrencyTypes.USD);
-			var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
+	[TestMethod]
+	[ExpectedException(typeof(InvalidOperationException))]
+	public void InconsistMath4()
+	{
+		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
+		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-			(v1 / v2).AssertEqual(null);
-		}
+		(v1 / v2).AssertEqual(null);
+	}
 
-		[TestMethod]
-		public void Math1()
-		{
-			var v1 = 10m.ToCurrency(CurrencyTypes.USD);
-			var v2 = 1.8m.ToCurrency(CurrencyTypes.USD);
+	[TestMethod]
+	public void Math1()
+	{
+		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
+		var v2 = 1.8m.ToCurrency(CurrencyTypes.USD);
 
-			(v1 * v2).AssertEqual((v1.Value * v2.Value).ToCurrency(v1.Type));
-		}
+		(v1 * v2).AssertEqual((v1.Value * v2.Value).ToCurrency(v1.Type));
+	}
 
-		[TestMethod]
-		public void Math2()
-		{
-			var v1 = 10m.ToCurrency(CurrencyTypes.USD);
-			var v2 = 1.8m.ToCurrency(CurrencyTypes.USD);
+	[TestMethod]
+	public void Math2()
+	{
+		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
+		var v2 = 1.8m.ToCurrency(CurrencyTypes.USD);
 
-			(v1 - v2).AssertEqual((v1.Value - v2.Value).ToCurrency(v1.Type));
-		}
+		(v1 - v2).AssertEqual((v1.Value - v2.Value).ToCurrency(v1.Type));
+	}
 
-		[TestMethod]
-		public void Math3()
-		{
-			var v1 = 10m.ToCurrency(CurrencyTypes.USD);
-			var v2 = 1.8m.ToCurrency(CurrencyTypes.USD);
+	[TestMethod]
+	public void Math3()
+	{
+		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
+		var v2 = 1.8m.ToCurrency(CurrencyTypes.USD);
 
-			(v1 + v2).AssertEqual((v1.Value + v2.Value).ToCurrency(v1.Type));
-		}
+		(v1 + v2).AssertEqual((v1.Value + v2.Value).ToCurrency(v1.Type));
+	}
 
-		[TestMethod]
-		public void Math4()
-		{
-			var v1 = 10m.ToCurrency(CurrencyTypes.USD);
-			var v2 = 1.8m.ToCurrency(CurrencyTypes.USD);
+	[TestMethod]
+	public void Math4()
+	{
+		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
+		var v2 = 1.8m.ToCurrency(CurrencyTypes.USD);
 
-			(v1 / v2).AssertEqual((v1.Value / v2.Value).ToCurrency(v1.Type));
-		}
+		(v1 / v2).AssertEqual((v1.Value / v2.Value).ToCurrency(v1.Type));
 	}
 }

@@ -1,15 +1,13 @@
-﻿namespace Ecng.Tests.Interop
-{
-	using Ecng.UnitTesting;
-	using Ecng.Interop;
+﻿namespace Ecng.Tests.Interop;
 
-	[TestClass]
-	public class HardwareInfoTests
+using Ecng.Interop;
+
+[TestClass]
+public class HardwareInfoTests
+{
+	[TestMethod]
+	public async Task HddId()
 	{
-		[TestMethod]
-		public async Task HddId()
-		{
-			((await HardwareInfo.GetIdAsync()).Length > 10).AssertTrue();
-		}
+		((await HardwareInfo.GetIdAsync()).Length > 10).AssertTrue();
 	}
 }
