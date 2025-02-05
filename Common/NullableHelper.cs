@@ -55,5 +55,16 @@ namespace Ecng.Common
 		{
 			return value.IsDefault() ? null : value;
 		}
+
+		public static Type MakeNullable(this Type type)
+			=> typeof(Nullable<>).Make(type);
+
+		public static Type TryMakeNullable(this Type type)
+		{
+			if (!type.IsNullable() && type.IsValueType)
+				type = typeof(Nullable<>).Make(type);
+
+			return type;
+		}
 	}
 }
