@@ -1,17 +1,10 @@
 ﻿namespace Ecng.Tests.Compilation
 {
-	using System;
-	using System.Collections.Generic;
 	using System.Diagnostics;
-	using System.Linq;
 	using System.Threading;
-	using System.Threading.Tasks;
 
 	using Ecng.Compilation;
 	using Ecng.Compilation.Roslyn;
-	using Ecng.UnitTesting;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class CompilerTests

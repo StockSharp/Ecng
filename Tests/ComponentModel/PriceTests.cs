@@ -1,12 +1,6 @@
 ﻿namespace Ecng.Tests.ComponentModel
 {
-	using System;
-
-	using Ecng.Common;
 	using Ecng.ComponentModel;
-	using Ecng.UnitTesting;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class PriceTests

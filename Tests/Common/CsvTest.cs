@@ -1,12 +1,6 @@
 namespace Ecng.Tests.Common
 {
-	using System;
 	using System.IO;
-
-	using Ecng.Common;
-	using Ecng.UnitTesting;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class CsvTest

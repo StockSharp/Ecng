@@ -1,11 +1,6 @@
 ﻿namespace Ecng.Tests.ComponentModel
 {
-	using System;
-	
 	using Ecng.Reflection;
-	using Ecng.UnitTesting;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class LazyTests

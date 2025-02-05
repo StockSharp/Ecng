@@ -1,16 +1,10 @@
 ﻿namespace Ecng.Tests.Compilation
 {
-	using System;
 	using System.IO;
-	using System.Threading.Tasks;
 
-	using Ecng.Common;
 	using Ecng.Compilation;
 	using Ecng.Compilation.Expressions;
 	using Ecng.Compilation.Roslyn;
-	using Ecng.UnitTesting;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	using Nito.AsyncEx;
 

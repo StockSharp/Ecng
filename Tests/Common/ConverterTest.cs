@@ -1,17 +1,10 @@
 namespace Ecng.Tests.Common
 {
-	using System;
-	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
-	using System.Linq;
 	using System.Net;
 	using System.Text;
 
-	using Ecng.Common;
 	using Ecng.ComponentModel;
-	using Ecng.UnitTesting;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class ConverterTest

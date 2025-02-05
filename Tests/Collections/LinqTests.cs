@@ -1,13 +1,4 @@
-﻿using System.Linq;
-using System;
-using System.Collections.Generic;
-
-using Ecng.Collections;
-using Ecng.UnitTesting;
-
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-namespace Ecng.Tests.Collections;
+﻿namespace Ecng.Tests.Collections;
 
 [TestClass]
 public class LinqTests

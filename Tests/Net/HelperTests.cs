@@ -1,14 +1,10 @@
 ﻿namespace Ecng.Tests.Net
 {
-	using System;
 	using System.Net;
 	using System.Net.Http;
 	using System.Text;
-	using Ecng.Common;
-	using Ecng.Net;
-	using Ecng.UnitTesting;
 
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
+	using Ecng.Net;
 
 	[TestClass]
 	public class HelperTests

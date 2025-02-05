@@ -1,9 +1,6 @@
 ﻿namespace Ecng.Tests.Common;
 
-using System.Collections.Generic;
 using System.Globalization;
-
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using SmartFormat;
 

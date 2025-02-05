@@ -1,15 +1,9 @@
 ﻿namespace Ecng.Tests.Reflection
 {
-	using System;
-	using System.Collections.Generic;
 	using System.Reflection;
 
-	using Ecng.Common;
 	using Ecng.Reflection;
-	using Ecng.UnitTesting;
 	using Ecng.Serialization;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class ReflectionTests

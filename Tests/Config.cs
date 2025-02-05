@@ -2,10 +2,7 @@ namespace Ecng.Tests
 {
 	using System.Net.Http;
 
-	using Ecng.Common;
 	using Ecng.Reflection;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class Config

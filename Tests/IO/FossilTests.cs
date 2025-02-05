@@ -1,14 +1,8 @@
 ﻿namespace Ecng.Tests.IO
 {
-	using System.Linq;
 	using System.Threading;
-	using System.Threading.Tasks;
 
-	using Ecng.Common;
-	using Ecng.UnitTesting;
 	using Ecng.IO.Fossil;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class FossilTests

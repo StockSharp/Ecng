@@ -2,11 +2,7 @@
 {
 	using System.IO;
 
-	using Ecng.Common;
 	using Ecng.Security;
-	using Ecng.UnitTesting;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class SecretTests

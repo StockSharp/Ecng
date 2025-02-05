@@ -1,14 +1,5 @@
 namespace Ecng.Tests.Collections
 {
-	using System.IO;
-	using System.Collections.Generic;
-
-	using Ecng.Common;
-	using Ecng.Collections;
-	using Ecng.UnitTesting;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
-	
 	[TestClass]
 	public class BitArrayTest
 	{

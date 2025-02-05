@@ -2,14 +2,8 @@
 {
 	using System.IO;
 	using System.IO.Compression;
-	using System.Linq;
-	using System.Threading.Tasks;
 
-	using Ecng.Common;
 	using Ecng.IO;
-	using Ecng.UnitTesting;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class CompressTests

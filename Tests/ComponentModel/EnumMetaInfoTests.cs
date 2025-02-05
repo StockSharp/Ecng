@@ -1,12 +1,8 @@
 ﻿namespace Ecng.Tests.ComponentModel;
 
-using System;
 using System.ComponentModel.DataAnnotations;
 
 using Ecng.ComponentModel;
-using Ecng.UnitTesting;
-
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [TestClass]
 public class EnumMetaInfoTests

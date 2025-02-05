@@ -1,20 +1,11 @@
 ﻿namespace Ecng.Tests.Serialization
 {
-	using System;
 	using System.IO;
 	using System.Collections;
-	using System.Collections.Generic;
 	using System.Threading;
-	using System.Threading.Tasks;
-	using System.Linq;
 	using System.Security;
 
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-	using Ecng.Common;
-	using Ecng.Collections;
 	using Ecng.Serialization;
-	using Ecng.UnitTesting;
 	using Ecng.Reflection;
 
 	using Newtonsoft.Json.Linq;

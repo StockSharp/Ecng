@@ -1,14 +1,9 @@
 ﻿namespace Ecng.Tests.Data
 {
-	using System.Linq;
-
 	using Ecng.Data;
 	using Ecng.Serialization;
-	using Ecng.UnitTesting;
 
 	using LinqToDB;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class DataTests

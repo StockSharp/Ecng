@@ -1,15 +1,6 @@
 ﻿namespace Ecng.Tests.Collections
 {
-	using System.Threading.Tasks;
-	using System.Collections.Generic;
-
-	using Ecng.Common;
-	using Ecng.Collections;
-	using Ecng.UnitTesting;
-
 	using Nito.AsyncEx;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class DictTests

@@ -1,11 +1,7 @@
 ﻿namespace Ecng.Tests.Interop
 {
-	using System.Threading.Tasks;
-
 	using Ecng.UnitTesting;
 	using Ecng.Interop;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 	[TestClass]
 	public class HardwareInfoTests

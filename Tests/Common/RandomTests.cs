@@ -1,12 +1,5 @@
 ﻿namespace Ecng.Tests.Common
 {
-	using System;
-	using System.Linq;
-
-	using Ecng.Common;
-
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 	[TestClass]
 	public class RandomTests
 	{

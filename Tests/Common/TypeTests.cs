@@ -2,11 +2,6 @@
 {
 	using System.Dynamic;
 
-	using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-	using Ecng.Common;
-	using Ecng.UnitTesting;
-
 	[TestClass]
 	public class TypeTests
 	{
