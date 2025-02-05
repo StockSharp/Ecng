@@ -379,6 +379,10 @@ namespace Ecng.ComponentModel
 			return entity;
 		}
 
+		public static bool IsBasic<TEntity>(this TEntity entity)
+			where TEntity : IAttributesEntity
+			=> IsAny(entity, (BasicSettingAttribute a) => true);
+
 		public static bool IsReadOnly<TEntity>(this TEntity entity)
 			where TEntity : IAttributesEntity
 			=> IsAny(entity, (ReadOnlyAttribute a) => a.IsReadOnly);
@@ -414,5 +418,20 @@ namespace Ecng.ComponentModel
 		private static IEnumerable<TAttribute> Attrs<TEntity, TAttribute>(this TEntity entity)
 			where TEntity : IAttributesEntity
 			=> entity.Attributes.OfType<TAttribute>();
+
+		public static TEntity SetRequired<TEntity>(this TEntity entity)
+			where TEntity : IAttributesEntity
+			=> entity.SetValidator(new RequiredAttribute());
+
+		public static TEntity SetValidator<TEntity>(this TEntity entity, ValidationAttribute validator)
+			where TEntity : IAttributesEntity
+		{
+			entity.Attributes.Add(validator);
+			return entity;
+		}
+
+		public static bool IsValid<TEntity>(this TEntity entity, object value)
+			where TEntity : IAttributesEntity
+			=> entity.Attrs<TEntity, ValidationAttribute>().All(v => v.IsValid(value));
 	}
 }
