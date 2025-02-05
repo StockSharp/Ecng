@@ -26,6 +26,7 @@
     <ProjectReference Include="..\Data.Linq2db\Data.Linq2db.csproj" />
     <ProjectReference Include="..\Interop.Windows\Interop.Windows.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />
+    <ProjectReference Include="..\Logging\Logging.csproj" />
     <ProjectReference Include="..\Net.Clients\Net.Clients.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />

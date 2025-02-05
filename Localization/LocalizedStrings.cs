@@ -6,19 +6,19 @@ public static class LocalizedStrings
 {
 	public static ILocalizer Localizer { get; set; }
 
-	public const string InheritedKey = nameof(InheritedKey);
-	public const string VerboseKey = nameof(VerboseKey);
-	public const string DebugKey = nameof(DebugKey);
-	public const string InfoKey = nameof(InfoKey);
-	public const string WarningsKey = nameof(WarningsKey);
-	public const string ErrorsKey = nameof(ErrorsKey);
-	public const string OffKey = nameof(OffKey);
-	public const string IdKey = nameof(IdKey);
-	public const string LoggingKey = nameof(LoggingKey);
-	public const string NameKey = nameof(NameKey);
-	public const string LogSourceNameKey = nameof(LogSourceNameKey);
-	public const string LogLevelKey = nameof(LogLevelKey);
-	public const string LogLevelDescKey = nameof(LogLevelDescKey);
+	public const string InheritedKey = nameof(Inherited);
+	public const string VerboseKey = nameof(Verbose);
+	public const string DebugKey = nameof(Debug);
+	public const string InfoKey = nameof(Info);
+	public const string WarningsKey = nameof(Warnings);
+	public const string ErrorsKey = nameof(Errors);
+	public const string OffKey = nameof(Off);
+	public const string IdKey = nameof(Id);
+	public const string LoggingKey = nameof(Logging);
+	public const string NameKey = nameof(Name);
+	public const string LogSourceNameKey = nameof(LogSourceName);
+	public const string LogLevelKey = nameof(LogLevel);
+	public const string LogLevelDescKey = nameof(LogLevelDesc);
 
 	public static string Inherited => Localize(nameof(Inherited));
 	public static string Verbose => Localize(nameof(Verbose));
