@@ -2,6 +2,8 @@
 
 using System.Net.Sockets;
 
+using Ecng.Localization;
+
 public class RetryPolicyInfo
 {
 	private int _readMaxCount;
@@ -12,7 +14,7 @@ public class RetryPolicyInfo
 		set
 		{
 			if (value < 0)
-				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.".Localize());
 
 			_readMaxCount = value;
 		}
@@ -26,7 +28,7 @@ public class RetryPolicyInfo
 		set
 		{
 			if (value < 0)
-				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.".Localize());
 
 			_writeMaxCount = value;
 		}
@@ -40,7 +42,7 @@ public class RetryPolicyInfo
 		set
 		{
 			if (value <= TimeSpan.Zero)
-				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.".Localize());
 
 			_initialDelay = value;
 		}
@@ -54,7 +56,7 @@ public class RetryPolicyInfo
 		set
 		{
 			if (value <= TimeSpan.Zero)
-				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.".Localize());
 
 			_maxDelay = value;
 		}

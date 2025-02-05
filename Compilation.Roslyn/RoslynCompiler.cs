@@ -11,6 +11,7 @@
 
 	using Ecng.Common;
 	using Ecng.Compilation;
+	using Ecng.Localization;
 
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
@@ -137,7 +138,7 @@
 						DiagnosticSeverity.Hidden or DiagnosticSeverity.Info => CompilationErrorTypes.Info,
 						DiagnosticSeverity.Warning => CompilationErrorTypes.Warning,
 						DiagnosticSeverity.Error => CompilationErrorTypes.Error,
-						_ => throw new ArgumentOutOfRangeException(nameof(diagnostic), diagnostic.Severity, "Invalid value."),
+						_ => throw new ArgumentOutOfRangeException(nameof(diagnostic), diagnostic.Severity, "Invalid value.".Localize()),
 					}
 				};
 

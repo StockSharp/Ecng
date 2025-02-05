@@ -1,6 +1,9 @@
 namespace Ecng.Logging;
 
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
+
+using Ecng.Localization;
 
 /// <summary>
 /// Levels of log messages <see cref="LogMessage"/>.
@@ -11,7 +14,7 @@ public enum LogLevels
 	/// <summary>
 	/// To use the logging level of the container.
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.InheritedKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.InheritedKey)]
 	[EnumMember]
 	Inherit,
 
@@ -19,41 +22,41 @@ public enum LogLevels
 	/// Verbose message, debug message, information, warnings and errors.
 	/// </summary>
 	[EnumMember]
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.VerboseKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.VerboseKey)]
 	Verbose,
 
 	/// <summary>
 	/// Debug message, information, warnings and errors.
 	/// </summary>
 	[EnumMember]
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.DebugKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.DebugKey)]
 	Debug,
 	
 	/// <summary>
 	/// Information, warnings and errors.
 	/// </summary>
 	[EnumMember]
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.InfoKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.InfoKey)]
 	Info,
 
 	/// <summary>
 	/// Warnings and errors.
 	/// </summary>
 	[EnumMember]
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.WarningsKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.WarningsKey)]
 	Warning,
 	
 	/// <summary>
 	/// Errors only.
 	/// </summary>
 	[EnumMember]
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.ErrorsKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.ErrorsKey)]
 	Error,
 
 	/// <summary>
 	/// Logs off.
 	/// </summary>
 	[EnumMember]
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.OffKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.OffKey)]
 	Off,
 }

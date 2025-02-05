@@ -11,6 +11,7 @@ namespace Ecng.ComponentModel
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Serialization;
+	using Ecng.Localization;
 
 	public static class Extensions
 	{
@@ -223,7 +224,7 @@ namespace Ecng.ComponentModel
 					throw new ArgumentNullException(nameof(instance));
 
 				if (maxDepth < 0)
-					throw new ArgumentOutOfRangeException(nameof(maxDepth), maxDepth, "Invalid value.");
+					throw new ArgumentOutOfRangeException(nameof(maxDepth), maxDepth, "Invalid value.".Localize());
 
 				var properties = TypeDescriptor.GetProperties(instance, [new BasicSettingAttribute()]).Typed();
 

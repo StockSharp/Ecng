@@ -4,6 +4,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 
+using Ecng.Localization;
+
 /// <summary>
 /// Modes of log files splitting by date.
 /// </summary>
@@ -136,7 +138,7 @@ public class FileLogListener : LogListener
 		set
 		{
 			if (value < 0)
-				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.".Localize());
 
 			_maxLength = value;
 		}
@@ -153,7 +155,7 @@ public class FileLogListener : LogListener
 		set
 		{
 			if (value < 0)
-				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.".Localize());
 
 			_maxCount = value;
 		}
@@ -296,7 +298,7 @@ public class FileLogListener : LogListener
 				Directory.CreateDirectory(dirName);
 				break;
 			default:
-				throw new ArgumentOutOfRangeException();
+				throw new ArgumentOutOfRangeException(nameof(SeparateByDates), SeparateByDates, "Invalid value.".Localize());
 		}
 
 		fileName = Path.Combine(dirName, fileName);
@@ -330,7 +332,7 @@ public class FileLogListener : LogListener
 				isDir = true;
 				break;
 			default:
-				throw new ArgumentOutOfRangeException(nameof(SeparateByDates), SeparateByDates, "Invalid value.");
+				throw new ArgumentOutOfRangeException(nameof(SeparateByDates), SeparateByDates, "Invalid value.".Localize());
 		}
 
 		if (SeparateByDates == SeparateByDateModes.None)
@@ -356,7 +358,7 @@ public class FileLogListener : LogListener
 				break;
 			}
 			default:
-				throw new ArgumentOutOfRangeException(nameof(HistoryPolicy), policy, "Invalid value.");
+				throw new ArgumentOutOfRangeException(nameof(HistoryPolicy), policy, "Invalid value.".Localize());
 		}
 
 		var files = new List<string>();

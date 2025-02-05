@@ -1,8 +1,10 @@
 namespace Ecng.Logging;
 
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 using Ecng.ComponentModel;
+using Ecng.Localization;
 
 /// <summary>
 /// Logs source interface.
@@ -65,12 +67,12 @@ public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
 
 	/// <inheritdoc />
 	[Browsable(false)]
-	//[Display(
-	//	ResourceType = typeof(LocalizedStrings),
-	//	Name = LocalizedStrings.IdKey,
-	//	Description = LocalizedStrings.IdKey,
-	//	GroupName = LocalizedStrings.LoggingKey,
-	//	Order = 1000)]
+	[Display(
+		ResourceType = typeof(LocalizedStrings),
+		Name = LocalizedStrings.IdKey,
+		Description = LocalizedStrings.IdKey,
+		GroupName = LocalizedStrings.LoggingKey,
+		Order = 1000)]
 	[ReadOnly(true)]
 	public virtual Guid Id { get; set; } = Guid.NewGuid();
 
@@ -78,12 +80,12 @@ public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
 
 	/// <inheritdoc />
 	[ReadOnly(true)]
-	//[Display(
-	//	ResourceType = typeof(LocalizedStrings),
-	//	Name = LocalizedStrings.NameKey,
-	//	Description = LocalizedStrings.LogSourceNameKey,
-	//	GroupName = LocalizedStrings.LoggingKey,
-	//	Order = 1001)]
+	[Display(
+		ResourceType = typeof(LocalizedStrings),
+		Name = LocalizedStrings.NameKey,
+		Description = LocalizedStrings.LogSourceNameKey,
+		GroupName = LocalizedStrings.LoggingKey,
+		Order = 1001)]
 	public virtual string Name
 	{
 		get => _name;
@@ -125,12 +127,12 @@ public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
 	public event Action<ILogSource> ParentRemoved;
 
 	/// <inheritdoc />
-	//[Display(
-	//	ResourceType = typeof(LocalizedStrings),
-	//	Name = LocalizedStrings.LogLevelKey,
-	//	Description = LocalizedStrings.LogLevelKey + LocalizedStrings.Dot,
-	//	GroupName = LocalizedStrings.LoggingKey,
-	//	Order = 1001)]
+	[Display(
+		ResourceType = typeof(LocalizedStrings),
+		Name = LocalizedStrings.LogLevelKey,
+		Description = LocalizedStrings.LogLevelDescKey,
+		GroupName = LocalizedStrings.LoggingKey,
+		Order = 1001)]
 	public virtual LogLevels LogLevel { get; set; } = LogLevels.Inherit;
 
 	/// <inheritdoc />

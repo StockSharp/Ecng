@@ -2,6 +2,8 @@ namespace Ecng.Logging;
 
 using System.Text;
 
+using Ecng.Localization;
+
 /// <summary>
 /// The strategy logger that records the data to the debug window.
 /// </summary>
@@ -56,7 +58,7 @@ public class DebugLogListener : LogListener
 				Trace.TraceError(str);
 				break;
 			default:
-				throw new ArgumentOutOfRangeException(nameof(level), level, "Invalid value.");
+				throw new ArgumentOutOfRangeException(nameof(level), level, "Invalid value.".Localize());
 		}
 
 		builder.Clear();

@@ -3,6 +3,8 @@
 using System;
 using System.Threading;
 
+using Ecng.Localization;
+
 public class AsyncTimeout
 {
     public TimeSpan Value { get; }
@@ -10,7 +12,7 @@ public class AsyncTimeout
 	public AsyncTimeout(TimeSpan value)
 	{
 		if (value <= TimeSpan.Zero)
-			throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+			throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.".Localize());
 
 		Value = value;
 	}

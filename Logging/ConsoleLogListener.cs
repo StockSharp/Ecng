@@ -1,5 +1,7 @@
 namespace Ecng.Logging;
 
+using Ecng.Localization;
+
 /// <summary>
 /// The logger that records the data to the console window.
 /// </summary>
@@ -26,7 +28,7 @@ public class ConsoleLogListener : LogListener
 			LogLevels.Verbose or LogLevels.Debug or LogLevels.Info => ConsoleHelper.Info,
 			LogLevels.Warning => ConsoleHelper.Warning,
 			LogLevels.Error => ConsoleHelper.Error,
-			_ => throw new ArgumentOutOfRangeException(nameof(message), message.Level, "Invalid value."),
+			_ => throw new ArgumentOutOfRangeException(nameof(message), message.Level, "Invalid value.".Localize()),
 		};
 		var newLine = "{0} | {1, -15} | {2}".Put(message.Time.ToString(TimeFormat), message.Source.Name, message.Message);
 

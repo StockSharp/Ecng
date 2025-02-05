@@ -4,6 +4,7 @@ namespace Ecng.ComponentModel
 
 	using Ecng.Collections;
 	using Ecng.Common;
+	using Ecng.Localization;
 
 	public static class OperatorRegistry
 	{
@@ -114,7 +115,7 @@ namespace Ecng.ComponentModel
 		public static long ThrowIfNegative(this long value, string name)
 		{
 			if (value < 0)
-				throw new ArgumentOutOfRangeException(name, value, "Invalid value.");
+				throw new ArgumentOutOfRangeException(name, value, "Invalid value.".Localize());
 
 			return value;
 		}

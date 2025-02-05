@@ -3,6 +3,7 @@
 using System.Net.WebSockets;
 
 using Ecng.Reflection;
+using Ecng.Localization;
 
 public class WebSocketClient : Disposable, IConnection
 {
@@ -94,7 +95,7 @@ public class WebSocketClient : Disposable, IConnection
 		set
 		{
 			if (value < -1)
-				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.".Localize());
 
 			_reconnectAttempts = value;
 		}

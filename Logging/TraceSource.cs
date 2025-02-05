@@ -1,5 +1,7 @@
 namespace Ecng.Logging;
 
+using Ecng.Localization;
+
 /// <summary>
 /// The logs source which receives information from <see cref="Trace"/>.
 /// </summary>
@@ -48,7 +50,7 @@ public class TraceSource : BaseLogSource
 				TraceEventType.Information => LogLevels.Info,
 				TraceEventType.Verbose => LogLevels.Debug,
 				TraceEventType.Start or TraceEventType.Stop or TraceEventType.Suspend or TraceEventType.Resume or TraceEventType.Transfer => null,
-				_ => throw new ArgumentOutOfRangeException(nameof(eventType), eventType, "Invalid value."),
+				_ => throw new ArgumentOutOfRangeException(nameof(eventType), eventType, "Invalid value.".Localize()),
 			};
 		}
 	}
