@@ -4,7 +4,7 @@ namespace Ecng.Interop.Dde
 	using System.Collections.Generic;
 	using System.Threading;
 
-	using Ecng.ComponentModel;
+	using Ecng.Collections;
 	using Ecng.Common;
 
 	using NDde.Server;
@@ -12,6 +12,64 @@ namespace Ecng.Interop.Dde
 	[CLSCompliant(false)]
 	public class XlsDdeServer(string service, Action<string, IList<IList<object>>> poke, Action<Exception> error) : DdeServer(service)
 	{
+		private class EventDispatcher(Action<Exception> errorHandler) : Disposable
+		{
+			private readonly Action<Exception> _errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
+			private readonly SynchronizedDictionary<string, BlockingQueue<Action>> _events = [];
+
+			public void Add(Action evt)
+			{
+				Add(evt, string.Empty);
+			}
+
+			public virtual void Add(Action evt, string syncToken)
+			{
+				if (evt is null)
+					throw new ArgumentNullException(nameof(evt));
+
+				var queue = _events.SafeAdd(syncToken, CreateNewThreadQueuePair);
+
+				queue.Enqueue(() =>
+				{
+					try
+					{
+						evt();
+					}
+					catch (Exception ex)
+					{
+						_errorHandler(ex);
+					}
+				});
+			}
+
+			private static BlockingQueue<Action> CreateNewThreadQueuePair(string syncToken)
+			{
+				var queue = new BlockingQueue<Action>();
+
+				ThreadingHelper
+					.Thread(() =>
+					{
+						while (!queue.IsClosed)
+						{
+							if (!queue.TryDequeue(out var evt))
+								break;
+
+							evt();
+						}
+					})
+					.Name("EventDispatcher thread #" + syncToken)
+					.Start();
+
+				return queue;
+			}
+
+			protected override void DisposeManaged()
+			{
+				_events.SyncDo(d => d.ForEach(p => p.Value.Close()));
+				base.DisposeManaged();
+			}
+		}
+
 		private readonly SyncObject _registerWait = new();
 		private Timer _adviseTimer;
 		private readonly EventDispatcher _dispather = new EventDispatcher(error);
