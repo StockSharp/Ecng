@@ -433,8 +433,12 @@ namespace Ecng.ComponentModel
 			return entity;
 		}
 
-		public static bool IsValid<TEntity>(this TEntity entity, object value)
+		public static bool IsValid<TEntity>(this TEntity entity, object value, bool checkOnNull = true)
 			where TEntity : IAttributesEntity
-			=> entity.Attrs<TEntity, ValidationAttribute>().All(v => v.IsValid(value));
+			=> entity.Attrs<TEntity, ValidationAttribute>().All(v =>
+				v is IValidator validator
+					? validator.IsValid(value, checkOnNull)
+					: v.IsValid(value)
+			);
 	}
 }
