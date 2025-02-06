@@ -43,3 +43,10 @@ public abstract class ComparableNullOrNotNegativeAttribute<T> : ComparableValida
 	protected override bool Validate(T? value)
 		=> value is null || value.Value.CompareTo(default) >= 0;
 }
+
+public abstract class ComparableNotNegativeAttribute<T> : ComparableValidationAttribute<T>
+	where T : struct, IComparable<T>
+{
+	protected override bool Validate(T? value)
+		=> value is not null && value.Value.CompareTo(default) >= 0;
+}

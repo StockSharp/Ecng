@@ -11,3 +11,7 @@ public class IntNullOrMoreZeroAttribute : ComparableNullOrMoreZeroAttribute<int>
 public class IntNullOrNotNegativeAttribute : ComparableNullOrNotNegativeAttribute<int>
 {
 }
+
+public class IntNotNegativeAttribute : ComparableNotNegativeAttribute<int>
+{
+}

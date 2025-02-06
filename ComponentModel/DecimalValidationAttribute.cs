@@ -11,3 +11,7 @@ public class DecimalNullOrMoreZeroAttribute : ComparableNullOrMoreZeroAttribute<
 public class DecimalNullOrNotNegativeAttribute : ComparableNullOrNotNegativeAttribute<decimal>
 {
 }
+
+public class DecimalNotNegativeAttribute : ComparableNotNegativeAttribute<decimal>
+{
+}

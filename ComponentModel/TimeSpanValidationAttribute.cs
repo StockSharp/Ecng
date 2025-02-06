@@ -13,3 +13,7 @@ public class TimeSpanNullOrMoreZeroAttribute : ComparableNullOrMoreZeroAttribute
 public class TimeSpanNullOrNotNegativeAttribute : ComparableNullOrNotNegativeAttribute<TimeSpan>
 {
 }
+
+public class TimeSpanNotNegativeAttribute : ComparableNotNegativeAttribute<TimeSpan>
+{
+}
