@@ -2,5 +2,5 @@
 
 public interface IValidator
 {
-	bool IsValid(object value, bool checkOnNull);
+	bool DisableNullCheck { get; set; }
 }

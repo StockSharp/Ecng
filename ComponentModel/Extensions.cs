@@ -371,13 +371,24 @@ namespace Ecng.ComponentModel
 			if (create is null)
 				throw new ArgumentNullException(nameof(create));
 
+			var attrs = entity.Attributes;
+
 			if (typeof(TAttribute) == typeof(Attribute))
-				throw new ArgumentException("Type '{0}' must derived from the Attribute class.".Localize().Put(typeof(TAttribute)));
+			{
+				var attr = create();
+				var type = attr.GetType();
+				attrs.RemoveWhere(a => a.GetType().Is(type));
 
-			entity.Attributes.RemoveWhere(a => a is TAttribute);
+				if (value)
+					attrs.Add(attr);
+			}
+			else
+			{
+				attrs.RemoveWhere(a => a is TAttribute);
 
-			if (value)
-				entity.Attributes.Add(create());
+				if (value)
+					attrs.Add(create());
+			}
 
 			return entity;
 		}
@@ -433,12 +444,8 @@ namespace Ecng.ComponentModel
 			return entity;
 		}
 
-		public static bool IsValid<TEntity>(this TEntity entity, object value, bool checkOnNull = true)
+		public static bool IsValid<TEntity>(this TEntity entity, object value)
 			where TEntity : IAttributesEntity
-			=> entity.Attrs<TEntity, ValidationAttribute>().All(v =>
-				v is IValidator validator
-					? validator.IsValid(value, checkOnNull)
-					: v.IsValid(value)
-			);
+			=> entity.Attrs<TEntity, ValidationAttribute>().All(v => v.IsValid(value));
 	}
 }
