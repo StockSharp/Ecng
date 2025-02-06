@@ -371,6 +371,9 @@ namespace Ecng.ComponentModel
 			if (create is null)
 				throw new ArgumentNullException(nameof(create));
 
+			if (typeof(TAttribute) == typeof(Attribute))
+				throw new ArgumentException("Type '{0}' must derived from the Attribute class.".Localize().Put(typeof(TAttribute)));
+
 			entity.Attributes.RemoveWhere(a => a is TAttribute);
 
 			if (value)
