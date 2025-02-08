@@ -25,14 +25,24 @@ public interface IDebugger : IPersistable
 	bool CanStepOut { get; }
 
 	/// <summary>
-	/// <see langword="true" />, if the debugger is stopped at the entry or exit of the method. Otherwise, <see langword="false" />.
-	/// </summary>
-	bool IsWaiting { get; }
-
-	/// <summary>
 	/// <see langword="true" />, if the debugger is stopped at the error. Otherwise, <see langword="false" />.
 	/// </summary>
 	bool IsWaitingOnError { get; }
+
+	/// <summary>
+	/// <see langword="true" />, if the debugger is stopped at the entry of the diagram element. Otherwise, <see langword="false" />.
+	/// </summary>
+	bool IsWaitingOnInput { get; }
+
+	/// <summary>
+	/// <see langword="true" />, if the debugger is stopped at the exit of the diagram element. Otherwise, <see langword="false" />.
+	/// </summary>
+	bool IsWaitingOnOutput { get; }
+
+	/// <summary>
+	/// Current block.
+	/// </summary>
+	object CurrentBlock { get; }
 
 	/// <summary>
 	/// The event of continue execution.
@@ -68,6 +78,16 @@ public interface IDebugger : IPersistable
 	/// To go to the next line.
 	/// </summary>
 	void StepNext();
+
+	/// <summary>
+	/// Step into the method.
+	/// </summary>
+	void StepInto();
+
+	/// <summary>
+	/// Step out from the method.
+	/// </summary>
+	void StepOut();
 
 	/// <summary>
 	/// Remove all breakpoints from the code.

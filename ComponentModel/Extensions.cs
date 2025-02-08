@@ -447,5 +447,13 @@ namespace Ecng.ComponentModel
 		public static bool IsValid<TEntity>(this TEntity entity, object value)
 			where TEntity : IAttributesEntity
 			=> entity.Attrs<TEntity, ValidationAttribute>().All(v => v.IsValid(value));
+
+		public static bool IsWaiting(this IDebugger debugger)
+		{
+			if (debugger is null)
+				throw new ArgumentNullException(nameof(debugger));
+
+			return debugger.IsWaitingOnInput || debugger.IsWaitingOnOutput;
+		}
 	}
 }
