@@ -7,7 +7,7 @@ using Ecng.Serialization;
 /// <summary>
 /// The interfaces describes debugger.
 /// </summary>
-public interface IDebugger : IPersistable
+public interface IDebugger : IPersistable, IDisposable
 {
 	/// <summary>
 	/// <see langword="false" />, if the debugger is used. Otherwise, <see langword="true" />.
@@ -98,39 +98,4 @@ public interface IDebugger : IPersistable
 	/// Remove all breakpoints from the code.
 	/// </summary>
 	void RemoveAllBreaks();
-}
-
-/// <summary>
-/// The interfaces describes debugger.
-/// </summary>
-public interface IDebugger<TLine, TMethod> : IDebugger
-{
-	/// <summary>
-	/// The event of the stop at the breakpoint.
-	/// </summary>
-	new event Action<TLine> Break;
-
-	/// <summary>
-	/// The event of the stop at the error.
-	/// </summary>
-	new event Action<TMethod> Error;
-
-	/// <summary>
-	/// To add a breakpoint in the line.
-	/// </summary>
-	/// <param name="line">Line.</param>
-	void AddBreak(TLine line);
-
-	/// <summary>
-	/// To remove the breakpoint from the line.
-	/// </summary>
-	/// <param name="line">Line.</param>
-	void RemoveBreak(TLine line);
-
-	/// <summary>
-	/// Whether the line is the breakpoint.
-	/// </summary>
-	/// <param name="line">Line.</param>
-	/// <returns><see langword="true" />, if the line is the breakpoint, otherwise, <see langword="false" />.</returns>
-	bool IsBreak(TLine line);
 }
