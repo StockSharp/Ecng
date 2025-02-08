@@ -40,9 +40,14 @@ public interface IDebugger : IPersistable
 	bool IsWaitingOnOutput { get; }
 
 	/// <summary>
-	/// Current block.
+	/// Current executing block.
 	/// </summary>
-	object CurrentBlock { get; }
+	object ExecBlock { get; }
+
+	/// <summary>
+	/// Current hover block.
+	/// </summary>
+	object HoverBlock { get; }
 
 	/// <summary>
 	/// The event of continue execution.
@@ -128,16 +133,4 @@ public interface IDebugger<TLine, TMethod> : IDebugger
 	/// <param name="line">Line.</param>
 	/// <returns><see langword="true" />, if the line is the breakpoint, otherwise, <see langword="false" />.</returns>
 	bool IsBreak(TLine line);
-
-	/// <summary>
-	/// To go inside the method.
-	/// </summary>
-	/// <param name="method">Method.</param>
-	void StepInto(TMethod method);
-
-	/// <summary>
-	/// To exit from the method.
-	/// </summary>
-	/// <param name="method">Method.</param>
-	void StepOut(TMethod method);
 }
