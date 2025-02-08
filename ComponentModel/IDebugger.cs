@@ -42,12 +42,17 @@ public interface IDebugger : IPersistable
 	/// <summary>
 	/// The event of the stop at the breakpoint.
 	/// </summary>
-	event Action Break;
+	event Action<object> Break;
 
 	/// <summary>
 	/// The event of the stop at the error.
 	/// </summary>
-	event Action Error;
+	event Action<object> Error;
+
+	/// <summary>
+	/// The event of the bock changed.
+	/// </summary>
+	event Action<object> BlockChanged;
 
 	/// <summary>
 	/// The event of changes breakpoints.
