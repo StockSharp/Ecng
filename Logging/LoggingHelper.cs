@@ -2,6 +2,7 @@ namespace Ecng.Logging;
 
 using System.Collections;
 using System.Reflection;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Extension class for <see cref="ILogSource"/>.
@@ -327,4 +328,40 @@ public static class LoggingHelper
 	/// <param name="message"><see cref="LogMessage"/></param>
 	public static void WriteMessage(this ILogListener listener, LogMessage message)
 		=> listener.CheckOnNull(nameof(message)).WriteMessages([message]);
+
+	public static Task ObserveError(this Task task, Action<Exception> observer, Action<Task> other = null)
+	{
+		if (task is null) throw new ArgumentNullException(nameof(task));
+		if (observer is null) throw new ArgumentNullException(nameof(observer));
+
+		return task.ContinueWith(t =>
+		{
+			// observe
+			if (t.IsFaulted)
+				observer(t.Exception);
+			else
+				other?.Invoke(t);
+		});
+	}
+
+	public static Task ObserveError<T>(this Task<T> task, Action<Exception> observer, Action<Task<T>> other = null)
+	{
+		if (task is null) throw new ArgumentNullException(nameof(task));
+		if (observer is null) throw new ArgumentNullException(nameof(observer));
+
+		return task.ContinueWith(t =>
+		{
+			// observe
+			if (t.IsFaulted)
+				observer(t.Exception);
+			else
+				other?.Invoke(t);
+		});
+	}
+
+	public static Task ObserveErrorAndLog(this Task task)
+		=> task.ObserveError(ex => ex.LogError());
+
+	public static Task ObserveErrorAndTrace(this Task task)
+		=> task.ObserveError(ex => Trace.WriteLine(ex));
 }
