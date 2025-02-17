@@ -45,7 +45,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 		get
 		{
 			lock (SyncRoot)
-				return _convertedValues.Keys.Cast<TItem>().ToArray();
+				return [.. _convertedValues.Keys.Cast<TItem>()];
 		}
 	}
 
@@ -147,7 +147,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 
 		lock (SyncRoot)
 		{
-			removedItems = _convertedValues.Keys.Cast<TItem>().ToArray();
+			removedItems = [.. _convertedValues.Keys.Cast<TItem>()];
 
 			_convertedValues.Clear();
 			_collection.Clear();

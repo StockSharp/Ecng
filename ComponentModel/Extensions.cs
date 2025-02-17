@@ -260,7 +260,7 @@ namespace Ecng.ComponentModel
 			if (attributes == null || attributes.Length == 0)
 				return allProperties;
 
-			return new(allProperties.Typed().Where(p => attributes.All(attr =>
+			return new([.. allProperties.Typed().Where(p => attributes.All(attr =>
 			{
 				var propAttr = p.Attributes[attr.GetType()];
 
@@ -273,7 +273,7 @@ namespace Ecng.ComponentModel
 				}
 
 				return attr.Match(propAttr);
-			})).ToArray());
+			}))]);
 		}
 
 		public static PropertyDescriptor TryGetDefault(this PropertyDescriptorCollection properties, Type type)

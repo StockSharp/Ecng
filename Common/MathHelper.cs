@@ -924,7 +924,7 @@ namespace Ecng.Common
 			100000000000M,
 		];
 
-		private static readonly decimal[] _negPow10 = _posPow10.Select(v => 1M / v).ToArray();
+		private static readonly decimal[] _negPow10 = [.. _posPow10.Select(v => 1M / v)];
 
 		// https://stackoverflow.com/q/9993417/8029915
 		public static decimal ToDecimal(long mantissa, int exponent)

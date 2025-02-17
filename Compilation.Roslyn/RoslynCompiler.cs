@@ -82,7 +82,7 @@
 
 			var compilationWithAnalyzers = compilation.WithAnalyzers(
 				[(DiagnosticAnalyzer)analyzer],
-				new AnalyzerOptions(analyzerSettings.Cast<AdditionalText>().ToImmutableArray()));
+				new AnalyzerOptions([.. analyzerSettings.Cast<AdditionalText>()]));
 
 			static CompilationErrorTypes ToType(DiagnosticSeverity severity)
 				=> severity switch
@@ -94,7 +94,7 @@
 				};
 
 			var analyzerDiagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
-			return analyzerDiagnostics.Select(e =>
+			return [.. analyzerDiagnostics.Select(e =>
 			{
 				var lineSpan = e.Location.GetLineSpan();
 
@@ -106,7 +106,7 @@
 					Character = lineSpan.StartLinePosition.Character,
 					Id = e.Id,
 				};
-			}).Distinct().ToArray();
+			}).Distinct()];
 		}
 
 		Task<CompilationResult> ICompiler.Compile(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)

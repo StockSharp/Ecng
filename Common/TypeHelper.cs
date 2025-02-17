@@ -59,7 +59,7 @@ namespace Ecng.Common
 
 		public static Type Make(this Type type, IEnumerable<Type> args)
 		{
-			return type.Make(args.ToArray());
+			return type.Make([.. args]);
 		}
 
 		public static bool IsPrimitive(this Type type)

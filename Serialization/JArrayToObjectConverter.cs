@@ -78,11 +78,10 @@ public class JArrayToObjectConverter<T> : JsonConverter
 
 	static JArrayToObjectConverter()
 	{
-		_fields = typeof(T)
+		_fields = [.. typeof(T)
 			.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
 			.OrderByDeclaration()
-			.Select(f => (f.FieldType, CreateFieldSetter(f)))
-			.ToArray();
+			.Select(f => (f.FieldType, CreateFieldSetter(f)))];
 	}
 
 	public override bool CanConvert(Type objectType) => true;

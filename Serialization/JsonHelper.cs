@@ -120,7 +120,7 @@
 				throw new ArgumentNullException(nameof(array));
 
 			if (array.Length >= 3 && array[0] == 239 && array[1] == 187 && array[2] == 191)
-				array = array.Skip(3).ToArray();
+				array = [.. array.Skip(3)];
 
 			return array;
 		}

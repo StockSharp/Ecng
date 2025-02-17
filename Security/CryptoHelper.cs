@@ -135,7 +135,7 @@ namespace Ecng.Security
 				throw new ArgumentNullException(nameof(passPhrase));
 
 			if (iv?.Length > 16)
-				iv = iv.Take(16).ToArray();
+				iv = [.. iv.Take(16)];
 
 			using var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations);
 
@@ -182,7 +182,7 @@ namespace Ecng.Security
 				throw new ArgumentNullException(nameof(passPhrase));
 
 			if (iv?.Length > 16)
-				iv = iv.Take(16).ToArray();
+				iv = [.. iv.Take(16)];
 
 			using var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations);
 

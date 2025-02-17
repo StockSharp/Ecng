@@ -53,7 +53,7 @@
         array[i >> 2] |= (uint)(data[i] << (24 - (i & 3) * 8));
       }
 
-      return array.SelectMany(x =>
+      return [.. array.SelectMany(x =>
       {
         var bytes = BitConverter.GetBytes(x);
         if (BitConverter.IsLittleEndian)
@@ -62,7 +62,7 @@
         }
 
         return bytes;
-      }).ToArray();
+      })];
     }
 
     public static T[] CopySubArray<T>(this T[] source, int length, int offset = 0)

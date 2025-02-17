@@ -19,7 +19,7 @@
 	{
 		static JsonConversions()
 		{
-			Converter.AddTypedConverter<object[], SecureString>(val => SecureStringEncryptor.Instance.Decrypt(val.Select(i => i.To<byte>()).ToArray()));
+			Converter.AddTypedConverter<object[], SecureString>(val => SecureStringEncryptor.Instance.Decrypt([.. val.Select(i => i.To<byte>())]));
 		}
 	}
 

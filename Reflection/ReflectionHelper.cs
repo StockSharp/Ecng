@@ -45,7 +45,7 @@ namespace Ecng.Reflection
 			if (method is null)
 				throw new ArgumentNullException(nameof(method));
 
-			return method.GetParameters().Select(param =>
+			return [.. method.GetParameters().Select(param =>
 			{
 				Type paramType;
 
@@ -55,7 +55,7 @@ namespace Ecng.Reflection
 					paramType = param.ParameterType;
 
 				return (param, paramType);
-			}).ToArray();
+			})];
 		}
 
 		#endregion
@@ -175,7 +175,7 @@ namespace Ecng.Reflection
 			var members = type.GetMembers<T>(flags, true, memberName, isSetter, additionalTypes);
 
 			if (members.Length > 1)
-				members = FilterMembers(members, isSetter, additionalTypes).ToArray();
+				members = [.. FilterMembers(members, isSetter, additionalTypes)];
 
 			if (members.Length != 1)
 			{
@@ -224,7 +224,7 @@ namespace Ecng.Reflection
 			if (!members.IsEmpty() && additionalTypes.Length > 0)
 				members = FilterMembers(members, isSetter, additionalTypes);
 
-			return members.ToArray();
+			return [.. members];
 		}
 
 		private static IEnumerable<T> GetMembers<T>(this Type type, string memberName, BindingFlags flags, bool inheritance)
@@ -364,7 +364,7 @@ namespace Ecng.Reflection
 
 						if (paramsTypes.Length > 0)
 						{
-							additionalTypes = additionalTypes.Take(tuples.Length - 1).Concat([tuples.Last().type]).ToArray();
+							additionalTypes = [.. additionalTypes.Take(tuples.Length - 1), tuples.Last().type];
 						}
 					}
 

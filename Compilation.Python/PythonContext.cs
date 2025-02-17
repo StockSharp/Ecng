@@ -106,7 +106,7 @@ static class PythonAttrs
 	}
 
 	public static IList<CustomAttributeData> GetCustomAttributesData(this ObjectOperations ops, object obj)
-		=> GetCustomAttributes(ops, obj, true).Select(attr =>
+		=> [.. GetCustomAttributes(ops, obj, true).Select(attr =>
 		{
 			if (attr is DocAttribute doc)
 			{
@@ -142,8 +142,7 @@ static class PythonAttrs
 
 			return null;
 		})
-		.Where(attr => attr != null)
-		.ToList();
+		.Where(attr => attr != null)];
 }
 
 class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
@@ -324,7 +323,7 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 					var getter = GetGetMethod(nonPublic);
 					var setter = GetSetMethod(nonPublic);
 
-					return new MethodInfo[] { getter, setter }.Where(m => m is not null).ToArray();
+					return [.. new MethodInfo[] { getter, setter }.Where(m => m is not null)];
 				}
 
 				public override object[] GetCustomAttributes(bool inherit)
@@ -487,7 +486,7 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 					_ctors = [new ConstructorImpl(init, this)];
 				}
 
-				return _ctors.Where(c => c.IsMatch(bindingAttr)).ToArray();
+				return [.. _ctors.Where(c => c.IsMatch(bindingAttr))];
 			}
 
 			protected override ConstructorInfo GetConstructorImpl(BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
@@ -626,7 +625,7 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 					_events = [.. dotNetEvents, .. pythonEvents];
 				}
 
-				return _events.Where(e => e.GetAddMethod()?.IsMatch(bindingAttr) == true).ToArray();
+				return [.. _events.Where(e => e.GetAddMethod()?.IsMatch(bindingAttr) == true)];
 			}
 
 			private MethodInfo[] _methods;

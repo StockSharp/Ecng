@@ -102,7 +102,7 @@
 
             lock(_names.SyncRoot)
             {
-                names = _names.Where(NeedToNotify).ToArray();
+                names = [.. _names.Where(NeedToNotify)];
                 _names.Clear();
             }
 

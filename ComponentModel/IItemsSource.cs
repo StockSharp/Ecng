@@ -91,19 +91,19 @@
 			{
 				if(objects.All(o => o is T))
 				{
-					_values = objects.Cast<T>().ToArray();
+					_values = [.. objects.Cast<T>()];
 					_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => CreateItems(GetValues()));
 				}
 				else if (objects.All(o => o is IItemsSourceItem<T>))
 				{
 					var itemsArr = objects.Cast<IItemsSourceItem<T>>().ToArray();
-					_values = itemsArr.Select(item => item.Value).ToArray();
+					_values = [.. itemsArr.Select(item => item.Value)];
 					_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => FilterItems(itemsArr));
 				}
 				else if (objects.All(o => o is IItemsSourceItem iisi && iisi.Value is T))
 				{
 					var itemsArr = objects.Cast<IItemsSourceItem>().Select(CreateNewItem).ToArray();
-					_values = itemsArr.Select(item => item.Value).ToArray();
+					_values = [.. itemsArr.Select(item => item.Value)];
 					_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => FilterItems(itemsArr));
 				}
 				else
@@ -114,7 +114,7 @@
 			else
 			{
 				if (typeof(T).IsEnum)
-					_values = Enumerator.GetValues<T>().ToArray();
+					_values = [.. Enumerator.GetValues<T>()];
 
 				_items = new Lazy<IEnumerable<IItemsSourceItem<T>>>(() => CreateItems(GetValues()));
 			}

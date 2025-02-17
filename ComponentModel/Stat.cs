@@ -115,24 +115,24 @@
 					AggressiveAddress = _aggressiveIp,
 					AggressiveTime = _aggressiveTime,
 
-					Freq = _freq.OrderByDescending(p => p.Value).Skip(skip).Take(take).Select(p => new StatInfo<TAction>.Item<int>
+					Freq = [.. _freq.OrderByDescending(p => p.Value).Skip(skip).Take(take).Select(p => new StatInfo<TAction>.Item<int>
 					{
 						Value = p.Value,
 						Action = p.Key,
-					}).ToArray(),
+					})],
 
-					Longest = _longests.Skip(skip).Take(take).Select(p => new StatInfo<TAction>.Item<TimeSpan>
+					Longest = [.. _longests.Skip(skip).Take(take).Select(p => new StatInfo<TAction>.Item<TimeSpan>
 					{
 						Value = p.Item1,
 						Action = p.Item2,
-					}).ToArray(),
+					})],
 
-					Pendings = _pendings.Skip(skip).Take(take).Select(p => new StatInfo<TAction>.Item<TimeSpan>
+					Pendings = [.. _pendings.Skip(skip).Take(take).Select(p => new StatInfo<TAction>.Item<TimeSpan>
 					{
 						Value = p.Key.Elapsed,
 						Address = p.Value.Item1,
 						Action = p.Value.Item2,
-					}).ToArray(),
+					})],
 				};
 			}
 		}

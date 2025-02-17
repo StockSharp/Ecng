@@ -721,7 +721,7 @@ public class JsonTests
 				Obj1 = storage.GetValue<SettingsStorage>(nameof(Obj1)).Load<TestClass>();
 
 			if (storage.ContainsKey(nameof(Obj2)))
-				Obj2 = storage.GetValue<object[]>(nameof(Obj2)).Select(s => ((SettingsStorage)s)?.Load<TestClass>()).ToArray();
+				Obj2 = [.. storage.GetValue<object[]>(nameof(Obj2)).Select(s => ((SettingsStorage)s)?.Load<TestClass>())];
 		}
 
 		void IPersistable.Save(SettingsStorage storage)

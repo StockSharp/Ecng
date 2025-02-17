@@ -14,7 +14,7 @@
 		{
 			Count = count;
 
-			_data = Enumerable.Repeat<T>(default, count).ToArray();
+			_data = [.. Enumerable.Repeat<T>(default, count)];
 
 			if (typeof(T) == typeof(double))
 			{
@@ -53,7 +53,7 @@
 			if (min.CompareTo(max) > 0)
 				throw new ArgumentException("min > max");
 
-			_data = Enumerable.Repeat(min, count).ToArray();
+			_data = [.. Enumerable.Repeat(min, count)];
 
 			if (min.CompareTo(max) != 0)
 			{

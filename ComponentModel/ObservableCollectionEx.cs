@@ -177,7 +177,7 @@ namespace Ecng.ComponentModel
 		void ICollection.CopyTo(Array array, int index)
 		{
 			if (array is not TItem[] items)
-				items = array.Cast<TItem>().ToArray();
+				items = [.. array.Cast<TItem>()];
 
 			CopyTo(items, index);
 		}

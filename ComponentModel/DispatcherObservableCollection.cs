@@ -90,7 +90,7 @@ namespace Ecng.ComponentModel
 			if (Dispatcher.CheckAccess())
 				Items.AddRange(items);
 			else
-				AddAction(new(ActionTypes.Add, items.ToArray()));
+				AddAction(new(ActionTypes.Add, [.. items]));
 
 			CheckCount();
 		}
@@ -102,7 +102,7 @@ namespace Ecng.ComponentModel
 			if (Dispatcher.CheckAccess())
 				Items.RemoveRange(items);
 			else
-				AddAction(new(ActionTypes.Remove, items.ToArray()));
+				AddAction(new(ActionTypes.Remove, [.. items]));
 		}
 
 		public override int RemoveRange(int index, int count)

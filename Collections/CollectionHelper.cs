@@ -1319,7 +1319,7 @@
 		public static IEnumerable<T[]> Batch<T>(this IEnumerable<T> source, int size)
 		{
 #if NETSTANDARD2_0
-			return Batch<T, T[]>(source, size, source => source.ToArray(), () => false);
+			return Batch<T, T[]>(source, size, source => [.. source], () => false);
 #else
 			return source.Chunk(size);
 #endif
