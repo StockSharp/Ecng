@@ -5,7 +5,10 @@ namespace Ecng.Security.Cryptographers
 
     using Ecng.Common;
 
-    public class AsymmetricCryptographer : Disposable
+	/// <summary>
+	/// Asymmetric cryptographer.
+	/// </summary>
+	public class AsymmetricCryptographer : Disposable
     {
         private sealed class AsymmetricAlgorithmWrapper(AsymmetricAlgorithm value) : Wrapper<AsymmetricAlgorithm>(value)
         {
@@ -81,32 +84,37 @@ namespace Ecng.Security.Cryptographers
         private readonly AsymmetricAlgorithmWrapper _encryptor;
         private readonly AsymmetricAlgorithmWrapper _decryptor;
 
-        #endregion
+		#endregion
 
-        #region AsymmetricCryptographer.ctor()
+		#region AsymmetricCryptographer.ctor()
 
-        /// <summary>
-        /// <para>Initialize a new instance of the <see cref="AsymmetricCryptographer"/> class with an algorithm type and a key.</para>
-        /// </summary>
-        /// <param name="algorithmType"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
-        /// <param name="publicKey"><para>The public key for the algorithm.</para></param>
-        /// <param name="privateKey"><para>The private key for the algorithm.</para></param>
-        public AsymmetricCryptographer(AsymmetricAlgorithm algorithm, byte[] publicKey, byte[] privateKey)
+		/// <summary>
+		/// <para>Initialize a new instance of the <see cref="AsymmetricCryptographer"/> class with an algorithm type and a key.</para>
+		/// </summary>
+		/// <param name="algorithm"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
+		/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
+		/// <param name="privateKey"><para>The private key for the algorithm.</para></param>
+		public AsymmetricCryptographer(AsymmetricAlgorithm algorithm, byte[] publicKey, byte[] privateKey)
             : this(publicKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, publicKey), privateKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, privateKey))
         {
         }
 
-        /// <summary>
-        /// <para>Initialize a new instance of the <see cref="AsymmetricCryptographer"/> class with an algorithm type and a key.</para>
-        /// </summary>
-        /// <param name="algorithmType"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
-        /// <param name="publicKey"><para>The public key for the algorithm.</para></param>
-        public AsymmetricCryptographer(AsymmetricAlgorithm algorithm, byte[] publicKey)
+		/// <summary>
+		/// <para>Initialize a new instance of the <see cref="AsymmetricCryptographer"/> class with an algorithm type and a key.</para>
+		/// </summary>
+		/// <param name="algorithm"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
+		/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
+		public AsymmetricCryptographer(AsymmetricAlgorithm algorithm, byte[] publicKey)
             : this(publicKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, publicKey), null)
         {
         }
 
-        protected AsymmetricCryptographer(AsymmetricAlgorithm encryptor, AsymmetricAlgorithm decryptor)
+		/// <summary>
+		/// <para>Initialize a new instance of the <see cref="AsymmetricCryptographer"/> class with an algorithm type and a key.</para>
+		/// </summary>
+		/// <param name="encryptor">The encryptor.</param>
+		/// <param name="decryptor">The decryptor.</param>
+		protected AsymmetricCryptographer(AsymmetricAlgorithm encryptor, AsymmetricAlgorithm decryptor)
             : this(new AsymmetricAlgorithmWrapper(encryptor), new AsymmetricAlgorithmWrapper(decryptor))
         {
         }
@@ -114,20 +122,32 @@ namespace Ecng.Security.Cryptographers
         private AsymmetricCryptographer(AsymmetricAlgorithmWrapper encryptor, AsymmetricAlgorithmWrapper decryptor)
         {
             if (encryptor is null && decryptor is null)
-                throw new ArgumentException();
+                throw new InvalidOperationException();
 
             _encryptor = encryptor;
             _decryptor = decryptor;
         }
 
-        #endregion
+		#endregion
 
-        public static AsymmetricCryptographer CreateFromPublicKey(AsymmetricAlgorithm algorithm, byte[] publicKey)
+		/// <summary>
+		/// <para>Creates a new instance of the <see cref="AsymmetricCryptographer"/> class with a public key.</para>
+		/// </summary>
+		/// <param name="algorithm"><see cref="AsymmetricAlgorithm"/></param>
+		/// <param name="publicKey">The public key for the algorithm.</param>
+		/// <returns><see cref="AsymmetricCryptographer"/></returns>
+		public static AsymmetricCryptographer CreateFromPublicKey(AsymmetricAlgorithm algorithm, byte[] publicKey)
         {
             return new AsymmetricCryptographer(new AsymmetricAlgorithmWrapper(algorithm, publicKey), null);
         }
 
-        public static AsymmetricCryptographer CreateFromPrivateKey(AsymmetricAlgorithm algorithm, byte[] privateKey)
+		/// <summary>
+		/// <para>Creates a new instance of the <see cref="AsymmetricCryptographer"/> class with a private key.</para>
+		/// </summary>
+		/// <param name="algorithm"><see cref="AsymmetricAlgorithm"/></param>
+		/// <param name="privateKey">The private key for the algorithm.</param>
+		/// <returns><see cref="AsymmetricCryptographer"/></returns>
+		public static AsymmetricCryptographer CreateFromPrivateKey(AsymmetricAlgorithm algorithm, byte[] privateKey)
         {
             return new AsymmetricCryptographer(null, new AsymmetricAlgorithmWrapper(algorithm, privateKey));
         }
@@ -164,24 +184,27 @@ namespace Ecng.Security.Cryptographers
             return _decryptor.Decrypt(encryptedText);
         }
 
-        #endregion
+		#endregion
 
-        #region Disposable Members
+		#region Disposable Members
 
-        protected override void DisposeManaged()
+		/// <inheritdoc />
+		protected override void DisposeManaged()
         {
-            if (_encryptor != null)
-                _encryptor.Dispose();
-
-            if (_decryptor != null)
-                _decryptor.Dispose();
+            _encryptor?.Dispose();
+            _decryptor?.Dispose();
 
             base.DisposeManaged();
         }
 
-        #endregion
+		#endregion
 
-        public byte[] CreateSignature(byte[] data)
+		/// <summary>
+		/// <para>Computes the hash value of the plaintext.</para>
+		/// </summary>
+		/// <param name="data">The plaintext in which you wish to hash.</param>
+		/// <returns>The resulting hash.</returns>
+		public byte[] CreateSignature(byte[] data)
         {
             if (_decryptor is null)
                 throw new InvalidOperationException();
@@ -189,7 +212,13 @@ namespace Ecng.Security.Cryptographers
             return _decryptor.CreateSignature(data);
         }
 
-        public bool VerifySignature(byte[] data, byte[] signature)
+		/// <summary>
+		/// <para>Verifies the signature.</para>
+		/// </summary>
+		/// <param name="data">The data.</param>
+		/// <param name="signature">The signature.</param>
+		/// <returns><c>true</c> if the signature is valid; otherwise, <c>false</c>.</returns>
+		public bool VerifySignature(byte[] data, byte[] signature)
         {
             if (_encryptor is null)
                 throw new InvalidOperationException();

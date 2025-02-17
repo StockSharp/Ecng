@@ -9,8 +9,14 @@
 	using Ecng.Collections;
 	using Ecng.Common;
 
+	/// <summary>
+	/// Delayed action execution with batching support.
+	/// </summary>
 	public class DelayAction : Disposable
 	{
+		/// <summary>
+		/// Group of actions.
+		/// </summary>
 		public interface IGroup
 		{
 			void Add(Action action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true);
@@ -18,6 +24,10 @@
 			void WaitFlush(bool dispose);
 		}
 
+		/// <summary>
+		/// Group of actions.
+		/// </summary>
+		/// <typeparam name="T">Type of the group state.</typeparam>
 		public interface IGroup<T> : IGroup
 			where T : IDisposable
 		{

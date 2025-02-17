@@ -21,6 +21,7 @@ namespace Ecng.Reflection
 		private readonly Type _type = type;
 
 		#endregion
+
 		#region DefaultConstructorInfo.ctor()
 
 		#endregion
@@ -167,7 +168,6 @@ namespace Ecng.Reflection
 		}
 
 		#endregion
-//#endif
 
 		#region Object Members
 

@@ -21,7 +21,7 @@ namespace Ecng.Security
 		/// <param name="clientAddress">Remote network address.</param>
 		/// <returns>Session identifier.</returns>
 		/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-		/// <returns><see cref="ValueTask{string}"/></returns>
+		/// <returns><see cref="ValueTask{T}"/></returns>
 		ValueTask<string> ValidateCredentials(string login, SecureString password, IPAddress clientAddress, CancellationToken cancellationToken);
 	}
 
@@ -76,6 +76,9 @@ namespace Ecng.Security
 		}
 	}
 
+	/// <summary>
+	/// <see cref="IAuthorization"/> do not allow access.
+	/// </summary>
 	public class UnauthorizedAuthorization : IAuthorization
 	{
 		ValueTask<string> IAuthorization.ValidateCredentials(string login, SecureString password, IPAddress clientAddress, CancellationToken cancellationToken)

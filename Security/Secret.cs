@@ -6,6 +6,9 @@ namespace Ecng.Security
 	using Ecng.Common;
 	using Ecng.Collections;
 
+	/// <summary>
+	/// Secret.
+	/// </summary>
 	public class Secret : Equatable<Secret>
 	{
 		/// <summary>
@@ -33,6 +36,9 @@ namespace Ecng.Security
 
 		private static CryptoAlgorithm CreateDefaultAlgo() => CryptoAlgorithm.Create(AlgorithmTypes.Hash);
 
+		/// <summary>
+		/// The default salt size.
+		/// </summary>
 		public const int DefaultSaltSize = 128;
 
 		/// <summary>
@@ -47,9 +53,13 @@ namespace Ecng.Security
 		/// <value>The hash.</value>
 		public byte[] Hash { get; set; }
 
+		/// <summary>
+		/// Gets the hash algorithm.
+		/// </summary>
 		[Newtonsoft.Json.JsonIgnore]
 		public CryptoAlgorithm Algo { get; }
 
+		/// <inheritdoc />
 		protected override bool OnEquals(Secret other)
 		{
 			if (EnsureGetHashCode() != other.EnsureGetHashCode())
@@ -94,8 +104,10 @@ namespace Ecng.Security
 			return _hashCode;
 		}
 
+		/// <inheritdoc />
 		public override int GetHashCode() => EnsureGetHashCode();
 
+		/// <inheritdoc />
 		public override Secret Clone() => new() { Hash = Hash?.ToArray(), Salt = Salt?.ToArray() };
 	}
 }

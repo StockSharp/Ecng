@@ -19,10 +19,10 @@
 	{
         private readonly SymmetricAlgorithm _algorithm;
 
-	    /// <summary>
+		/// <summary>
 		/// <para>Initalize a new instance of the <see cref="SymmetricCryptographer"/> class with an algorithm type and a key.</para>
 		/// </summary>
-		/// <param name="algorithmType"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
+		/// <param name="algorithm"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
 		/// <param name="key"><para>The key for the algorithm.</para></param>
 		public SymmetricCryptographer(SymmetricAlgorithm algorithm, byte[] key)
 		{
@@ -30,6 +30,7 @@
 			_algorithm.Key = key;
 		}
 
+		/// <inheritdoc />
 		protected override void DisposeManaged()
 		{
 			if (IsDisposed)

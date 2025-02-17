@@ -12,34 +12,83 @@ namespace Ecng.Reflection
 	using Ecng.Collections;
 	using Ecng.Common;
 
+	/// <summary>
+	/// Provides helper methods for reflection.
+	/// </summary>
 	public static class ReflectionHelper
 	{
-        public const AttributeTargets Members = AttributeTargets.Field | AttributeTargets.Property;
-        public const AttributeTargets Types = AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface;
+		/// <summary>
+		/// Attribute targets for fields and properties.
+		/// </summary>
+		public const AttributeTargets Members = AttributeTargets.Field | AttributeTargets.Property;
 
+		/// <summary>
+		/// Attribute targets for classes, structs, and interfaces.
+		/// </summary>
+		public const AttributeTargets Types = AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface;
+
+		/// <summary>
+		/// Binding flags for all static members.
+		/// </summary>
 		public const BindingFlags AllStaticMembers = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+
+		/// <summary>
+		/// Binding flags for all instance members.
+		/// </summary>
 		public const BindingFlags AllInstanceMembers = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+		/// <summary>
+		/// Binding flags for all members.
+		/// </summary>
 		public const BindingFlags AllMembers = AllStaticMembers | AllInstanceMembers;
 
+		#region Public Methods
+
+		/// <summary>
+		/// Gets the invoke method from the specified delegate type.
+		/// </summary>
+		/// <param name="delegType">The delegate type.</param>
+		/// <returns>The MethodInfo representing the Invoke method.</returns>
 		public static MethodInfo GetInvokeMethod(this Type delegType)
 			=> delegType.GetMethod("Invoke");
+
+		#endregion
 
 		#region ProxyTypes
 
 		private static readonly Dictionary<Type, Type> _proxyTypes = [];
 
+		/// <summary>
+		/// Gets the proxy types.
+		/// </summary>
 		public static IDictionary<Type, Type> ProxyTypes => _proxyTypes;
 
 		#endregion
 
+		/// <summary>
+		/// Determines whether the specified parameter is a params array.
+		/// </summary>
+		/// <param name="pi">The parameter info.</param>
+		/// <returns>True if the parameter is marked as params; otherwise, false.</returns>
 		public static bool IsParams(this ParameterInfo pi)
 			=> pi.GetAttribute<ParamArrayAttribute>() != null;
 
 		#region GetParameterTypes
 
+		/// <summary>
+		/// Gets the parameter types for the specified method.
+		/// </summary>
+		/// <param name="method">The method base.</param>
+		/// <returns>An array of tuples with parameter info and its type.</returns>
 		public static (ParameterInfo info, Type type)[] GetParameterTypes(this MethodBase method)
 			=> method.GetParameterTypes(false);
 
+		/// <summary>
+		/// Gets the parameter types for the specified method.
+		/// </summary>
+		/// <param name="method">The method base.</param>
+		/// <param name="removeRef">True to remove reference type wrappers.</param>
+		/// <returns>An array of tuples with parameter info and its type.</returns>
 		public static (ParameterInfo info, Type type)[] GetParameterTypes(this MethodBase method, bool removeRef)
 		{
 			if (method is null)
@@ -64,6 +113,12 @@ namespace Ecng.Reflection
 
 		private static readonly SynchronizedDictionary<(Type, Type), Type> _genericTypeCache = [];
 
+		/// <summary>
+		/// Gets the generic type from the target type based on the provided generic type definition.
+		/// </summary>
+		/// <param name="targetType">The target type.</param>
+		/// <param name="genericType">The generic type definition.</param>
+		/// <returns>The found generic type or null if not found.</returns>
 		public static Type GetGenericType(this Type targetType, Type genericType)
 		{
 			return _genericTypeCache.GetFromCache(new(targetType, genericType), key => key.Item1.GetGenericTypeInternal(key.Item2));
@@ -108,6 +163,13 @@ namespace Ecng.Reflection
 
 		#region GetGenericTypeArg
 
+		/// <summary>
+		/// Gets the specific generic argument type from the target type.
+		/// </summary>
+		/// <param name="targetType">The target type.</param>
+		/// <param name="genericType">The generic type definition.</param>
+		/// <param name="index">The index of the generic argument.</param>
+		/// <returns>The generic argument type.</returns>
 		public static Type GetGenericTypeArg(this Type targetType, Type genericType, int index)
 		{
 			genericType = GetGenericType(targetType, genericType);
@@ -122,8 +184,17 @@ namespace Ecng.Reflection
 
 		#region GetIndexer
 
+		/// <summary>
+		/// The name for indexer members.
+		/// </summary>
 		public const string IndexerName = "Item";
 
+		/// <summary>
+		/// Gets the default indexer property of the specified type.
+		/// </summary>
+		/// <param name="type">The type to search.</param>
+		/// <param name="additionalTypes">Additional types to match.</param>
+		/// <returns>The PropertyInfo of the indexer.</returns>
 		public static PropertyInfo GetIndexer(this Type type, params Type[] additionalTypes)
 		{
 			return GetMember<PropertyInfo>(type, IndexerName, AllInstanceMembers, default, additionalTypes);
@@ -133,6 +204,12 @@ namespace Ecng.Reflection
 
 		#region GetIndexers
 
+		/// <summary>
+		/// Gets all indexer properties of the specified type.
+		/// </summary>
+		/// <param name="type">The type to search.</param>
+		/// <param name="additionalTypes">Additional types to match.</param>
+		/// <returns>An array with the indexer properties.</returns>
 		public static PropertyInfo[] GetIndexers(this Type type, params Type[] additionalTypes)
 		{
 			return GetMembers<PropertyInfo>(type, AllInstanceMembers, true, IndexerName, default, additionalTypes);
@@ -142,6 +219,12 @@ namespace Ecng.Reflection
 
 		#region GetArgTypes
 
+		/// <summary>
+		/// Gets the argument types from the specified argument.
+		/// </summary>
+		/// <typeparam name="TArg">The type of the argument.</typeparam>
+		/// <param name="arg">The argument.</param>
+		/// <returns>An array of argument types.</returns>
 		public static Type[] GetArgTypes<TArg>(TArg arg)
 		{
 			return arg.IsNull() ? Type.EmptyTypes : arg.To<Type[]>();
@@ -151,18 +234,43 @@ namespace Ecng.Reflection
 
 		#region GetMember
 
+		/// <summary>
+		/// Gets a constructor member info from the specified type.
+		/// </summary>
+		/// <typeparam name="T">The member type.</typeparam>
+		/// <param name="type">The target type.</param>
+		/// <param name="additionalTypes">Additional types to match.</param>
+		/// <returns>The member info.</returns>
 		public static T GetMember<T>(this Type type, params Type[] additionalTypes)
 			where T : ConstructorInfo
 		{
 			return type.GetMember<T>(".ctor", AllInstanceMembers, default, additionalTypes);
 		}
 
+		/// <summary>
+		/// Gets a member info by name from the specified type.
+		/// </summary>
+		/// <typeparam name="T">The member type.</typeparam>
+		/// <param name="type">The target type.</param>
+		/// <param name="memberName">The name of the member.</param>
+		/// <param name="additionalTypes">Additional types to match.</param>
+		/// <returns>The member info.</returns>
 		public static T GetMember<T>(this Type type, string memberName, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
 			return type.GetMember<T>(memberName, AllMembers, default, additionalTypes);
 		}
 
+		/// <summary>
+		/// Gets a member info by name with specified binding flags.
+		/// </summary>
+		/// <typeparam name="T">The member type.</typeparam>
+		/// <param name="type">The target type.</param>
+		/// <param name="memberName">The member name.</param>
+		/// <param name="flags">Binding flags to use for lookup.</param>
+		/// <param name="isSetter">Indicates if it's a setter.</param>
+		/// <param name="additionalTypes">Additional types to match.</param>
+		/// <returns>The member info.</returns>
 		public static T GetMember<T>(this Type type, string memberName, BindingFlags flags, bool? isSetter, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
@@ -192,24 +300,59 @@ namespace Ecng.Reflection
 
 		#region GetMembers
 
+		/// <summary>
+		/// Gets members from the type that match the additional types.
+		/// </summary>
+		/// <typeparam name="T">The member type.</typeparam>
+		/// <param name="type">The target type.</param>
+		/// <param name="additionalTypes">Additional types to match.</param>
+		/// <returns>An array of matched members.</returns>
 		public static T[] GetMembers<T>(this Type type, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
 			return type.GetMembers<T>(AllMembers, additionalTypes);
 		}
 
+		/// <summary>
+		/// Gets members with specified binding flags that match the additional types.
+		/// </summary>
+		/// <typeparam name="T">The member type.</typeparam>
+		/// <param name="type">The target type.</param>
+		/// <param name="flags">Binding flags for lookup.</param>
+		/// <param name="additionalTypes">Additional types to match.</param>
+		/// <returns>An array of matched members.</returns>
 		public static T[] GetMembers<T>(this Type type, BindingFlags flags, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
 			return type.GetMembers<T>(flags, true, additionalTypes);
 		}
 
+		/// <summary>
+		/// Gets members with an option for inheritance and additional types matching.
+		/// </summary>
+		/// <typeparam name="T">The member type.</typeparam>
+		/// <param name="type">The target type.</param>
+		/// <param name="flags">Binding flags for lookup.</param>
+		/// <param name="inheritance">True to include inherited members.</param>
+		/// <param name="additionalTypes">Additional types to match.</param>
+		/// <returns>An array of matched members.</returns>
 		public static T[] GetMembers<T>(this Type type, BindingFlags flags, bool inheritance, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
 			return type.GetMembers<T>(flags, inheritance, null, default, additionalTypes);
 		}
 
+		/// <summary>
+		/// Gets members by name with options for inheritance, setter indication, and additional types matching.
+		/// </summary>
+		/// <typeparam name="T">The member type.</typeparam>
+		/// <param name="type">The target type.</param>
+		/// <param name="flags">Binding flags for lookup.</param>
+		/// <param name="inheritance">True to include inherited members.</param>
+		/// <param name="memberName">The member name.</param>
+		/// <param name="isSetter">Indicates if the member is a setter.</param>
+		/// <param name="additionalTypes">Additional types to match.</param>
+		/// <returns>An array of matched members.</returns>
 		public static T[] GetMembers<T>(this Type type, BindingFlags flags, bool inheritance, string memberName, bool? isSetter, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
@@ -319,6 +462,14 @@ namespace Ecng.Reflection
 
 		#region FilterMembers
 
+		/// <summary>
+		/// Filters members based on setter indication and additional type parameters.
+		/// </summary>
+		/// <typeparam name="T">The member type.</typeparam>
+		/// <param name="members">The collection of members.</param>
+		/// <param name="isSetter">Indicates if filtering by setter should be applied.</param>
+		/// <param name="additionalTypes">Additional types to match.</param>
+		/// <returns>An enumerable of filtered members.</returns>
 		public static IEnumerable<T> FilterMembers<T>(this IEnumerable<T> members, bool? isSetter, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
@@ -326,6 +477,15 @@ namespace Ecng.Reflection
 			return ms.IsEmpty() ? FilterMembers(members, true, isSetter, additionalTypes) : ms;
 		}
 
+		/// <summary>
+		/// Filters members based on inheritance, setter indication, and additional type parameters.
+		/// </summary>
+		/// <typeparam name="T">The member type.</typeparam>
+		/// <param name="members">The collection of members.</param>
+		/// <param name="useInheritance">True to use inheritance comparison.</param>
+		/// <param name="isSetter">Indicates if filtering by setter should be applied.</param>
+		/// <param name="additionalTypes">Additional types to match.</param>
+		/// <returns>An enumerable of filtered members.</returns>
 		public static IEnumerable<T> FilterMembers<T>(this IEnumerable<T> members, bool useInheritance, bool? isSetter, params Type[] additionalTypes)
 			where T : MemberInfo
 		{
@@ -359,7 +519,7 @@ namespace Ecng.Reflection
 
 					if (tuples.Length > 0 && tuples.Last().info.IsParams())
 					{
-						// wrap plained params types into object[]
+						// wrap plain params types into object[]
 						var paramsTypes = additionalTypes.Skip(tuples.Length - 1).ToArray();
 
 						if (paramsTypes.Length > 0)
@@ -387,6 +547,11 @@ namespace Ecng.Reflection
 
 		private static readonly SynchronizedDictionary<MemberInfo, bool> _isAbstractCache = [];
 
+		/// <summary>
+		/// Determines whether the specified member is abstract.
+		/// </summary>
+		/// <param name="member">The member info.</param>
+		/// <returns>True if the member is abstract; otherwise, false.</returns>
 		public static bool IsAbstract(this MemberInfo member)
 		{
 			if (member is null)
@@ -411,6 +576,11 @@ namespace Ecng.Reflection
 
 		private static readonly SynchronizedDictionary<MemberInfo, bool> _isVirtualCache = [];
 
+		/// <summary>
+		/// Determines whether the specified member is virtual.
+		/// </summary>
+		/// <param name="member">The member info.</param>
+		/// <returns>True if the member is virtual; otherwise, false.</returns>
 		public static bool IsVirtual(this MemberInfo member)
 		{
 			if (member is null)
@@ -435,6 +605,11 @@ namespace Ecng.Reflection
 
 		#region IsOverloadable
 
+		/// <summary>
+		/// Determines whether the specified member is overloadable.
+		/// </summary>
+		/// <param name="member">The member info.</param>
+		/// <returns>True if the member is overloadable; otherwise, false.</returns>
 		public static bool IsOverloadable(this MemberInfo member)
 		{
 			if (member is null)
@@ -447,6 +622,11 @@ namespace Ecng.Reflection
 
 		#region IsIndexer
 
+		/// <summary>
+		/// Determines whether the specified member is an indexer.
+		/// </summary>
+		/// <param name="member">The member info.</param>
+		/// <returns>True if the member is an indexer; otherwise, false.</returns>
 		public static bool IsIndexer(this MemberInfo member)
 		{
 			if (member is PropertyInfo prop)
@@ -455,6 +635,11 @@ namespace Ecng.Reflection
 				return false;
 		}
 
+		/// <summary>
+		/// Determines whether the specified property is an indexer.
+		/// </summary>
+		/// <param name="property">The property info.</param>
+		/// <returns>True if the property is an indexer; otherwise, false.</returns>
 		public static bool IsIndexer(this PropertyInfo property)
 		{
 			if (property is null)
@@ -467,6 +652,11 @@ namespace Ecng.Reflection
 
 		#region GetIndexerTypes
 
+		/// <summary>
+		/// Gets the types of the parameters of the indexer property.
+		/// </summary>
+		/// <param name="property">The indexer property.</param>
+		/// <returns>An enumerable of parameter types.</returns>
 		public static IEnumerable<Type> GetIndexerTypes(this PropertyInfo property)
 		{
 			if (property is null)
@@ -484,6 +674,12 @@ namespace Ecng.Reflection
 
 		#region MemberIs
 
+		/// <summary>
+		/// Determines whether the member has one of the specified member types.
+		/// </summary>
+		/// <param name="member">The member info.</param>
+		/// <param name="types">The member types to check.</param>
+		/// <returns>True if the member matches one of the types; otherwise, false.</returns>
 		public static bool MemberIs(this MemberInfo member, params MemberTypes[] types)
 		{
 			if (member is null)
@@ -496,6 +692,11 @@ namespace Ecng.Reflection
 
 		#region IsOutput
 
+		/// <summary>
+		/// Determines whether the specified parameter is an output parameter.
+		/// </summary>
+		/// <param name="param">The parameter info.</param>
+		/// <returns>True if the parameter is output; otherwise, false.</returns>
 		public static bool IsOutput(this ParameterInfo param)
 		{
 			if (param is null)
@@ -508,6 +709,11 @@ namespace Ecng.Reflection
 
 		#region GetMemberType
 
+		/// <summary>
+		/// Gets the type associated with the member.
+		/// </summary>
+		/// <param name="member">The member info.</param>
+		/// <returns>The type of the member.</returns>
 		public static Type GetMemberType(this MemberInfo member)
 		{
 			if (member is null)
@@ -530,6 +736,11 @@ namespace Ecng.Reflection
 
 		private static readonly SynchronizedDictionary<Type, bool> _isCollectionCache = [];
 
+		/// <summary>
+		/// Determines whether the specified type is a collection.
+		/// </summary>
+		/// <param name="type">The type to check.</param>
+		/// <returns>True if the type is a collection; otherwise, false.</returns>
 		public static bool IsCollection(this Type type)
 		{
 			if (type is null)
@@ -552,6 +763,11 @@ namespace Ecng.Reflection
 
 		private static readonly SynchronizedDictionary<MemberInfo, bool> _isStaticCache = [];
 
+		/// <summary>
+		/// Determines whether the specified member is static.
+		/// </summary>
+		/// <param name="member">The member info.</param>
+		/// <returns>True if the member is static; otherwise, false.</returns>
 		public static bool IsStatic(this MemberInfo member)
 		{
 			if (member is null)
@@ -600,6 +816,11 @@ namespace Ecng.Reflection
 
 		private static readonly SynchronizedDictionary<Type, Type> _getItemTypeCache = [];
 
+		/// <summary>
+		/// Gets the item type for a collection type.
+		/// </summary>
+		/// <param name="collectionType">The collection type.</param>
+		/// <returns>The item type contained in the collection.</returns>
 		public static Type GetItemType(this Type collectionType)
 		{
 			if (collectionType is null)
@@ -621,13 +842,34 @@ namespace Ecng.Reflection
 
 		#endregion
 
+		/// <summary>
+		/// Getters prefix.
+		/// </summary>
 		public const string GetPrefix = "get_";
+
+		/// <summary>
+		/// Setters prefix.
+		/// </summary>
 		public const string SetPrefix = "set_";
+
+		/// <summary>
+		/// Adders prefix.
+		/// </summary>
 		public const string AddPrefix = "add_";
+
+		/// <summary>
+		/// Removers prefix.
+		/// </summary>
 		public const string RemovePrefix = "remove_";
 
 		#region MakePropertyName
 
+		/// <summary>
+		/// Makes the property name from the accessor name.
+		/// </summary>
+		/// <param name="accessorName">The accessor name.</param>
+		/// <returns>
+		/// The property name.</returns>
 		public static string MakePropertyName(this string accessorName)
 		{
 			return accessorName.ThrowIfEmpty(nameof(accessorName))
@@ -643,6 +885,11 @@ namespace Ecng.Reflection
 
 		private static readonly SynchronizedDictionary<MethodInfo, MemberInfo> _getAccessorOwnerCache = [];
 
+		/// <summary>
+		/// Gets the owner of the accessor method.
+		/// </summary>
+		/// <param name="method"></param>
+		/// <returns></returns>
 		public static MemberInfo GetAccessorOwner(this MethodInfo method)
 		{
 			if (method is null)
@@ -673,6 +920,12 @@ namespace Ecng.Reflection
 
 		#endregion
 
+		/// <summary>
+		/// Makes the generic method.
+		/// </summary>
+		/// <param name="method"></param>
+		/// <param name="types"></param>
+		/// <returns></returns>
 		public static MethodInfo Make(this MethodInfo method, params Type[] types)
 		{
 			if (method is null)
@@ -681,16 +934,31 @@ namespace Ecng.Reflection
 			return method.MakeGenericMethod(types);
 		}
 
+		/// <summary>
+		/// Makes the generic method.
+		/// </summary>
+		/// <param name="type"></param>
+		/// <returns></returns>
 		public static bool IsRuntimeType(this Type type)
 		{
 			return type.BaseType == typeof(Type);
 		}
 
+		/// <summary>
+		/// Determines whether the specified type is an assembly.
+		/// </summary>
+		/// <param name="dllName"></param>
+		/// <returns></returns>
 		public static bool IsAssembly(this string dllName)
 		{
 			return dllName.VerifyAssembly() != null;
 		}
 
+		/// <summary>
+		/// Verifies the assembly.
+		/// </summary>
+		/// <param name="dllName"></param>
+		/// <returns></returns>
 		public static AssemblyName VerifyAssembly(this string dllName)
 		{
 			try
@@ -703,8 +971,14 @@ namespace Ecng.Reflection
 			}
 		}
 
+		/// <summary>
+		/// Is cache enabled.
+		/// </summary>
 		public static bool CacheEnabled { get; set; } = true;
 
+		/// <summary>
+		/// Clear cache.
+		/// </summary>
 		public static void ClearCache()
 		{
 			_genericTypeCache.Clear();
@@ -731,6 +1005,7 @@ namespace Ecng.Reflection
 		/// <param name="assembly">Assembly in where types scan required.</param>
 		/// <param name="showObsolete">Show types marked as obsolete.</param>
 		/// <param name="showNonPublic">Show non public types.</param>
+		/// <param name="showNonBrowsable">Show types marked as non browsable.</param>
 		/// <param name="extraFilter">Extra filter.</param>
 		/// <returns>Found types.</returns>
 		public static IEnumerable<Type> FindImplementations<T>(this Assembly assembly, bool showObsolete = default, bool showNonPublic = default, bool showNonBrowsable = default, Func<Type, bool> extraFilter = default)
@@ -779,6 +1054,13 @@ namespace Ecng.Reflection
 				type.GetConstructor([]) is not null;
 		}
 
+		/// <summary>
+		/// Try find type.
+		/// </summary>
+		/// <param name="types">Types.</param>
+		/// <param name="isTypeCompatible">Is type compatible.</param>
+		/// <param name="typeName">The type name.</param>
+		/// <returns>The found type.</returns>
 		public static Type TryFindType(this IEnumerable<Type> types, Func<Type, bool> isTypeCompatible, string typeName)
 		{
 			if (types is null)
@@ -793,13 +1075,30 @@ namespace Ecng.Reflection
 				return types.FirstOrDefault(isTypeCompatible);
 		}
 
+		/// <summary>
+		/// Order the members by declaration.
+		/// </summary>
+		/// <typeparam name="TMember">Member type.</typeparam>
+		/// <param name="members">Members.</param>
+		/// <returns>Ordered members.</returns>
 		public static IEnumerable<TMember> OrderByDeclaration<TMember>(this IEnumerable<TMember> members)
 			where TMember : MemberInfo
 			=> members.OrderBy(m => m.MetadataToken);
 
+		/// <summary>
+		/// Determines the property is modifiable.
+		/// </summary>
+		/// <param name="pi">The property info.</param>
+		/// <returns>Operations result.</returns>
 		public static bool IsModifiable(this PropertyInfo pi)
 			=> pi.CanWrite && pi.GetAttribute<ReadOnlyAttribute>()?.IsReadOnly != true && pi.SetMethod?.IsPublic == true;
 
+		/// <summary>
+		/// Determines the property is match.
+		/// </summary>
+		/// <param name="propertyInfo">The property info.</param>
+		/// <param name="bindingFlags"><see cref="BindingFlags"/></param>
+		/// <returns>Operations result.</returns>
 		public static bool IsMatch(this PropertyInfo propertyInfo, BindingFlags bindingFlags)
 		{
 			var hasPublic = bindingFlags.HasFlag(BindingFlags.Public);
@@ -833,6 +1132,12 @@ namespace Ecng.Reflection
 			return true;
 		}
 
+		/// <summary>
+		/// Determines the method is match.
+		/// </summary>
+		/// <param name="methodInfo">The method info.</param>
+		/// <param name="bindingFlags"><see cref="BindingFlags"/></param>
+		/// <returns>Operations result.</returns>
 		public static bool IsMatch(this MethodBase methodInfo, BindingFlags bindingFlags)
 		{
 			var hasPublic = bindingFlags.HasFlag(BindingFlags.Public);
@@ -866,6 +1171,12 @@ namespace Ecng.Reflection
 			return true;
 		}
 
+		/// <summary>
+		/// Determines the field is match.
+		/// </summary>
+		/// <param name="field">The field.</param>
+		/// <param name="bindingFlags"><see cref="BindingFlags"/></param>
+		/// <returns>Operations result.</returns>
 		public static bool IsMatch(this FieldInfo field, BindingFlags bindingFlags)
 		{
 			var hasPublic = bindingFlags.HasFlag(BindingFlags.Public);

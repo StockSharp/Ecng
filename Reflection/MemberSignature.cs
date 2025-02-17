@@ -11,6 +11,9 @@ namespace Ecng.Reflection
 
 	#endregion
 
+	/// <summary>
+	/// Member signature.
+	/// </summary>
 	[Serializable]
 	public class MemberSignature : Equatable<MemberSignature>
 	{
@@ -36,6 +39,9 @@ namespace Ecng.Reflection
 
 		#endregion
 
+		/// <summary>
+		/// Gets the member.
+		/// </summary>
 		public MemberInfo Member { get; }
 
 		/// <summary>
@@ -50,6 +56,7 @@ namespace Ecng.Reflection
 		/// <value>The param types.</value>
 		public Type[] ParamTypes { get; }
 
+		/// <inheritdoc />
 		protected override bool OnEquals(MemberSignature other)
 		{
 			if (ReturnType != other.ReturnType)
@@ -58,11 +65,14 @@ namespace Ecng.Reflection
 			return ParamTypes.SequenceEqual(other.ParamTypes);
 		}
 
+		/// <inheritdoc />
 		public override int GetHashCode()
 			=> ReturnType.GetHashCode() ^ ParamTypes.GetHashCodeEx();
 
+		/// <inheritdoc />
 		public override MemberSignature Clone()	=> new(Member);
 
+		/// <inheritdoc />
 		public override string ToString() => Member.ToString();
 	}
 }

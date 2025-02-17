@@ -17,8 +17,8 @@ namespace Ecng.Security.Cryptographers
 		/// <summary>
 		/// <para>Initialize a new instance of the <see cref="HashCryptographer"/> with an algorithm type and key.</para>
 		/// </summary>
-		/// <param name="algorithmType">A fully qualifed type name derived from <see cref="HashAlgorithm"/>.</param>
-		/// <param name="protectedKey"><para>The key for a <see cref="KeyedHashAlgorithm"/>.</para></param>
+		/// <param name="algorithm">A fully qualifed type name derived from <see cref="HashAlgorithm"/>.</param>
+		/// <param name="key"><para>The key for a <see cref="KeyedHashAlgorithm"/>.</para></param>
 		/// <remarks>
 		/// While this overload will work with a specified <see cref="HashAlgorithm"/>, the protectedKey 
 		/// is only relevant when initializing with a specified <see cref="KeyedHashAlgorithm"/>.
@@ -31,6 +31,7 @@ namespace Ecng.Security.Cryptographers
 				keyAlgo.Key = key;
 		}
 
+		/// <inheritdoc />
 		protected override void DisposeManaged()
 		{
 			if (IsDisposed)

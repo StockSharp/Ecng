@@ -6,6 +6,9 @@
 	using Ecng.Common;
 	using Ecng.Collections;
 
+	/// <summary>
+	/// Lazy helper.
+	/// </summary>
 	public static class LazyHelper
 	{
 		private static readonly SynchronizedDictionary<object, Delegate> _factories = [];
@@ -88,12 +91,29 @@
 			}
 		}
 
+		/// <summary>
+		/// Tracks the lazy.
+		/// </summary>
+		/// <typeparam name="T">The type of the lazy.</typeparam>
+		/// <param name="lazy">The lazy.</param>
+		/// <returns>The lazy.</returns>
 		public static Lazy<T> Track<T>(this Lazy<T> lazy)
 			=> Holder<T>.Track(lazy);
 
+		/// <summary>
+		/// Resets the lazy.
+		/// </summary>
+		/// <typeparam name="T">The type of the lazy.</typeparam>
+		/// <param name="lazy">The lazy.</param>
 		public static void Reset<T>(this Lazy<T> lazy)
 			=> Holder<T>.Reset(lazy);
 
+		/// <summary>
+		/// Sets the value.
+		/// </summary>
+		/// <typeparam name="T">The type of the lazy.</typeparam>
+		/// <param name="lazy">The lazy.</param>
+		/// <param name="value">Value.</param>
 		public static void SetValue<T>(this Lazy<T> lazy, T value)
 			=> Holder<T>.SetValue(lazy, value);
 	}

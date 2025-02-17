@@ -8,8 +8,16 @@ namespace Ecng.Security
 
 	using Ecng.Common;
 
+	/// <summary>
+	/// Crypto helper.
+	/// </summary>
 	public static class CryptoHelper
 	{
+		/// <summary>
+		/// Converts the <see cref="RSAParameters"/> to a byte array.
+		/// </summary>
+		/// <param name="param"><see cref="RSAParameters"/></param>
+		/// <returns>Byte array.</returns>
 		public static byte[] FromRsa(this RSAParameters param)
 		{
 			var stream = new MemoryStream();
@@ -26,6 +34,11 @@ namespace Ecng.Security
 			return stream.To<byte[]>();
 		}
 
+		/// <summary>
+		/// Converts the byte array to <see cref="RSAParameters"/>.
+		/// </summary>
+		/// <param name="key">Byte array.</param>
+		/// <returns><see cref="RSAParameters"/></returns>
 		public static RSAParameters ToRsa(this byte[] key)
 		{
 			if (key is null)
@@ -97,6 +110,11 @@ namespace Ecng.Security
 
 		#endregion
 
+		/// <summary>
+		/// Returns the public part of the <see cref="RSAParameters"/>.
+		/// </summary>
+		/// <param name="param"><see cref="RSAParameters"/></param>
+		/// <returns>The public part of the <see cref="RSAParameters"/>.</returns>
 		public static RSAParameters PublicPart(this RSAParameters param)
 		{
 			return new()
@@ -126,6 +144,14 @@ namespace Ecng.Security
 			return algo;
 		}
 
+		/// <summary>
+		/// Encrypts the plain text.
+		/// </summary>
+		/// <param name="plain">The plain text.</param>
+		/// <param name="passPhrase">The pass phrase.</param>
+		/// <param name="salt">The salt.</param>
+		/// <param name="iv">The iv.</param>
+		/// <returns>The encrypted bytes.</returns>
 		public static byte[] Encrypt(this byte[] plain, string passPhrase, byte[] salt, byte[] iv)
 		{
 			if (plain is null)
@@ -173,6 +199,14 @@ namespace Ecng.Security
 			return buffer;
 		}
 
+		/// <summary>
+		/// Decrypts the cipher text.
+		/// </summary>
+		/// <param name="cipherText">The cipher text.</param>
+		/// <param name="passPhrase">The pass phrase.</param>
+		/// <param name="salt">The salt.</param>
+		/// <param name="iv">The iv.</param>
+		/// <returns>The decrypted bytes.</returns>
 		public static byte[] Decrypt(this byte[] cipherText, string passPhrase, byte[] salt, byte[] iv)
 		{
 			if (cipherText is null)
@@ -234,8 +268,24 @@ namespace Ecng.Security
 			}
 		}
 
+		/// <summary>
+		/// Encrypts the plain text.
+		/// </summary>
+		/// <param name="plain">The plain text.</param>
+		/// <param name="passPhrase">The pass phrase.</param>
+		/// <param name="salt">The salt.</param>
+		/// <param name="iv">The iv.</param>
+		/// <returns>The cipher text.</returns>
 		public static byte[] EncryptAes(this byte[] plain, string passPhrase, byte[] salt, byte[] iv) => TransformAes(true, plain, passPhrase, salt, iv);
 
+		/// <summary>
+		/// Decrypts the cipher text.
+		/// </summary>
+		/// <param name="cipherText">The cipher text.</param>
+		/// <param name="passPhrase">The pass phrase.</param>
+		/// <param name="salt">The salt.</param>
+		/// <param name="iv">The iv.</param>
+		/// <returns>The plain text.</returns>
 		public static byte[] DecryptAes(this byte[] cipherText, string passPhrase, byte[] salt, byte[] iv) => TransformAes(false, cipherText, passPhrase, salt, iv);
 
 		private static string Hash(this byte[] value, HashAlgorithm algo)
@@ -253,36 +303,86 @@ namespace Ecng.Security
 				return algo.ComputeHash(value).Digest();
 		}
 
+		/// <summary>
+		/// MD5 hash.
+		/// </summary>
+		/// <param name="value">The value to hash.</param>
+		/// <returns>The hash.</returns>
 		public static string Md5(this byte[] value)
 		{
 			return value.Hash(MD5.Create());
 		}
 
+		/// <summary>
+		/// SHA1 hash.
+		/// </summary>
+		/// <param name="value">The value to hash.</param>
+		/// <returns>The hash.</returns>
 		public static string Sha256(this byte[] value)
 		{
 			return value.Hash(SHA256.Create());
 		}
 
+		/// <summary>
+		/// SHA512 hash.
+		/// </summary>
+		/// <param name="value">The value to hash.</param>
+		/// <returns>The hash.</returns>
 		public static string Sha512(this byte[] value)
 		{
 			return value.Hash(SHA512.Create());
 		}
 
+		/// <summary>
+		/// Validates the password.
+		/// </summary>
+		/// <param name="secret"><see cref="Secret"/></param>
+		/// <param name="password">The password to check.</param>
+		/// <returns>Operation result.</returns>
 		public static bool IsValid(this Secret secret, SecureString password)
 			=> secret.IsValid(password.UnSecure());
 
+		/// <summary>
+		/// Validates the password.
+		/// </summary>
+		/// <param name="secret"><see cref="Secret"/></param>
+		/// <param name="password">The password to check.</param>
+		/// <returns>Operation result.</returns>
 		public static bool IsValid(this Secret secret, string password)
 			=> secret.Equals(password.CreateSecret(secret));
 
+		/// <summary>
+		/// Creates a new <see cref="Secret"/> from the plain text.
+		/// </summary>
+		/// <param name="plainText">The plain text.</param>
+		/// <returns><see cref="Secret"/></returns>
 		public static Secret CreateSecret(this SecureString plainText)
 			=> plainText.UnSecure().CreateSecret();
 
+		/// <summary>
+		/// Creates a new <see cref="Secret"/> from the plain text.
+		/// </summary>
+		/// <param name="plainText">The plain text.</param>
+		/// <returns><see cref="Secret"/></returns>
 		public static Secret CreateSecret(this string plainText)
 			=> plainText.CreateSecret(TypeHelper.GenerateSalt(Secret.DefaultSaltSize));
 
+		/// <summary>
+		/// Creates a new <see cref="Secret"/> from the plain text.
+		/// </summary>
+		/// <param name="plainText">The plain text.</param>
+		/// <param name="secret"><see cref="Secret"/></param>
+		/// <returns><see cref="Secret"/></returns>
 		public static Secret CreateSecret(this string plainText, Secret secret)
 			=> plainText.CreateSecret(secret.CheckOnNull(nameof(secret)).Salt, secret.Algo);
 
+		/// <summary>
+		/// Creates a new <see cref="Secret"/> from the plain text.
+		/// </summary>
+		/// <param name="plainText">The plain text.</param>
+		/// <param name="salt">The salt.</param>
+		/// <param name="algo">The hash algorithm.</param>
+		/// <returns><see cref="Secret"/></returns>
 		public static Secret CreateSecret(this string plainText, byte[] salt, CryptoAlgorithm algo = null)
 		{
 			if (plainText.IsEmpty())

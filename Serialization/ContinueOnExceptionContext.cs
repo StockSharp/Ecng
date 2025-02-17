@@ -4,12 +4,26 @@ namespace Ecng.Serialization
 
 	using Ecng.Common;
 
+	/// <summary>
+	/// Context for continue on exception.
+	/// </summary>
 	public class ContinueOnExceptionContext
 	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ContinueOnExceptionContext"/>.
+		/// </summary>
 		public event Action<Exception> Error;
 
+		/// <summary>
+		/// Do not encrypt.
+		/// </summary>
 		public bool DoNotEncrypt { get; set; }
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ContinueOnExceptionContext"/>.
+		/// </summary>
+		/// <param name="ex">The exception.</param>
+		/// <returns>Operation result.</returns>
 		public static bool TryProcess(Exception ex)
 		{
 			if (ex is null)
@@ -24,6 +38,10 @@ namespace Ecng.Serialization
 			return true;
 		}
 
+		/// <summary>
+		/// Process the exception.
+		/// </summary>
+		/// <param name="ex">The exception.</param>
 		public void Process(Exception ex)
 		{
 			if (ex is null)
