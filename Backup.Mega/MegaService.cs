@@ -14,6 +14,11 @@ using Ecng.Common;
 
 using Nito.AsyncEx;
 
+/// <summary>
+/// The data storage service based on Mega https://mega.nz/ .
+/// </summary>
+/// <param name="email">Email.</param>
+/// <param name="password">Password.</param>
 public class MegaService(string email, SecureString password) : Disposable, IBackupService
 {
 	private readonly MegaApiClient _client = new();
@@ -21,6 +26,7 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 	private readonly SecureString _password = password ?? throw new ArgumentNullException(nameof(password));
 	private readonly List<INode> _nodes = [];
 
+	/// <inheritdoc />
 	protected override void DisposeManaged()
 	{
 		if (_client.IsLoggedIn)

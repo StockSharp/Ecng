@@ -34,6 +34,7 @@ public class YandexDiskService : Disposable, IBackupService
 		_client = new DiskHttpApi(token.UnSecure());
 	}
 
+	/// <inheritdoc />
 	protected override void DisposeManaged()
 	{
 		_client.Dispose();

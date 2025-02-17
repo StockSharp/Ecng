@@ -39,6 +39,10 @@ public class BackupEntry
 	/// <inheritdoc />
 	public override string ToString() => GetFullPath();
 
+	/// <summary>
+	/// Gets the full path of the element.
+	/// </summary>
+	/// <returns>Full path.</returns>
 	public string GetFullPath()
 	{
 		var path = Name;

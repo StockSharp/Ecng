@@ -16,10 +16,22 @@ namespace Ecng.Backup
 		/// </summary>
 		bool CanPublish { get; }
 
+		/// <summary>
+		/// Is folders feature available.
+		/// </summary>
 		bool CanFolders { get; }
 
+		/// <summary>
+		/// Is partial download feature available.
+		/// </summary>
 		bool CanPartialDownload { get; }
 
+		/// <summary>
+		/// Is partial upload feature available.
+		/// </summary>
+		/// <param name="entry"><see cref="BackupEntry"/></param>
+		/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+		/// <returns><see cref="Task"/></returns>
 		Task CreateFolder(BackupEntry entry, CancellationToken cancellationToken = default);
 
 		/// <summary>
@@ -27,6 +39,7 @@ namespace Ecng.Backup
 		/// </summary>
 		/// <param name="parent">Parent element. Can be null.</param>
 		/// <param name="criteria">Criteria.</param>
+		/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
 		/// <returns>File list.</returns>
 		IAsyncEnumerable<BackupEntry> FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken = default);
 
@@ -34,12 +47,16 @@ namespace Ecng.Backup
 		/// Fill file info.
 		/// </summary>
 		/// <param name="entry">Element.</param>
+		/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+		/// <returns><see cref="Task"/></returns>
 		Task FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Delete file from the service.
 		/// </summary>
 		/// <param name="entry">Element.</param>
+		/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+		/// <returns><see cref="Task"/></returns>
 		Task DeleteAsync(BackupEntry entry, CancellationToken cancellationToken = default);
 
 		/// <summary>
@@ -50,7 +67,8 @@ namespace Ecng.Backup
 		/// <param name="offset"></param>
 		/// <param name="length"></param>
 		/// <param name="progress">Progress notification.</param>
-		/// <returns>Cancellation token.</returns>
+		/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+		/// <returns><see cref="Task"/></returns>
 		Task DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken = default);
 
 		/// <summary>
@@ -59,13 +77,15 @@ namespace Ecng.Backup
 		/// <param name="entry">Element.</param>
 		/// <param name="stream">The stream of the open file into which data from the service will be downloaded.</param>
 		/// <param name="progress">Progress notification.</param>
-		/// <returns>Cancellation token.</returns>
+		/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+		/// <returns><see cref="Task"/></returns>
 		Task UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Get public url for the specified element.
 		/// </summary>
 		/// <param name="entry">Element.</param>
+		/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
 		/// <returns>Public url.</returns>
 		Task<string> PublishAsync(BackupEntry entry, CancellationToken cancellationToken = default);
 
@@ -73,6 +93,8 @@ namespace Ecng.Backup
 		/// Remove public url for the specified element.
 		/// </summary>
 		/// <param name="entry">Element.</param>
+		/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+		/// <returns><see cref="Task"/></returns>
 		Task UnPublishAsync(BackupEntry entry, CancellationToken cancellationToken = default);
 	}
 }
