@@ -5,6 +5,9 @@ using System.Net.WebSockets;
 using Ecng.Reflection;
 using Ecng.Localization;
 
+/// <summary>
+/// Represents a client for WebSocket connections.
+/// </summary>
 public class WebSocketClient : Disposable, IConnection
 {
 	private ClientWebSocket _ws;
@@ -21,6 +24,17 @@ public class WebSocketClient : Disposable, IConnection
 
 	private readonly CachedSynchronizedList<(long subId, byte[] buffer, WebSocketMessageType type, Func<long, CancellationToken, ValueTask> pre)> _reConnectCommands = [];
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="WebSocketClient"/> class.
+	/// </summary>
+	/// <param name="url">The URL to connect to.</param>
+	/// <param name="stateChanged">Action to call when connection state changes.</param>
+	/// <param name="error">Action to handle errors.</param>
+	/// <param name="process">Function to process incoming messages.</param>
+	/// <param name="infoLog">Action to log informational messages.</param>
+	/// <param name="errorLog">Action to log error messages.</param>
+	/// <param name="verboseLog">Action to log verbose messages.</param>
+	/// <exception cref="ArgumentNullException">If any required parameter is null.</exception>
 	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
 		Func<WebSocketMessage, CancellationToken, ValueTask> process,
 		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
@@ -30,6 +44,17 @@ public class WebSocketClient : Disposable, IConnection
 			throw new ArgumentNullException(nameof(process));
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="WebSocketClient"/> class.
+	/// </summary>
+	/// <param name="url">The URL to connect to.</param>
+	/// <param name="stateChanged">Action to call when the connection state changes.</param>
+	/// <param name="error">Action to handle errors.</param>
+	/// <param name="process">Function to process incoming messages with reference to the client instance.</param>
+	/// <param name="infoLog">Action to log informational messages.</param>
+	/// <param name="errorLog">Action to log error messages.</param>
+	/// <param name="verboseLog">Action to log verbose messages.</param>
+	/// <exception cref="ArgumentNullException">If any required parameter is null.</exception>
 	public WebSocketClient(string url, Action<ConnectionStates> stateChanged, Action<Exception> error,
 		Func<WebSocketClient, WebSocketMessage, CancellationToken, ValueTask> process,
 		Action<string, object> infoLog, Action<string, object> errorLog, Action<string, object> verboseLog)
@@ -49,6 +74,10 @@ public class WebSocketClient : Disposable, IConnection
 
 	private Encoding _encoding = Encoding.UTF8;
 
+	/// <summary>
+	/// Gets or sets the encoding used to convert between bytes and string data.
+	/// </summary>
+	/// <exception cref="ArgumentNullException">Thrown if a null value is set.</exception>
 	public Encoding Encoding
 	{
 		get => _encoding;
@@ -57,6 +86,10 @@ public class WebSocketClient : Disposable, IConnection
 
 	private TimeSpan _reconnectInterval = TimeSpan.FromSeconds(2);
 
+	/// <summary>
+	/// Gets or sets the interval between reconnection attempts.
+	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown if a negative time span is set.</exception>
 	public TimeSpan ReconnectInterval
 	{
 		get => _reconnectInterval;
@@ -71,6 +104,10 @@ public class WebSocketClient : Disposable, IConnection
 
 	private TimeSpan _resendInterval = TimeSpan.FromSeconds(2);
 
+	/// <summary>
+	/// Gets or sets the interval between resend attempts for messages.
+	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown if a negative time span is set.</exception>
 	public TimeSpan ResendInterval
 	{
 		get => _resendInterval;
@@ -86,9 +123,10 @@ public class WebSocketClient : Disposable, IConnection
 	private int _reconnectAttempts;
 
 	/// <summary>
-	/// -1 means infinite.
-	/// 0 means no reconnect.
+	/// Gets or sets the number of reconnection attempts.
+	/// -1 means infinite attempts, 0 means no reconnect.
 	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown if value is less than -1.</exception>
 	public int ReconnectAttempts
 	{
 		get => _reconnectAttempts;
@@ -101,14 +139,38 @@ public class WebSocketClient : Disposable, IConnection
 		}
 	}
 
+	/// <summary>
+	/// Occurs when the connection state changes.
+	/// </summary>
 	public event Action<ConnectionStates> StateChanged;
+
+	/// <summary>
+	/// Occurs when the client web socket is initialized.
+	/// </summary>
 	public event Action<ClientWebSocket> Init;
+
+	/// <summary>
+	/// Occurs after a successful connection.
+	/// </summary>
 	public event Func<bool, CancellationToken, ValueTask> PostConnect;
+
+	/// <summary>
+	/// Occurs before processing received data.
+	/// </summary>
 	public event Func<ArraySegment<byte>, byte[], int> PreProcess;
 
+	/// <summary>
+	/// Connects to the server synchronously.
+	/// </summary>
+	/// <remarks>This method runs the asynchronous connection method synchronously.</remarks>
 	public void Connect()
 		=> AsyncHelper.Run(() => ConnectAsync(default));
 
+	/// <summary>
+	/// Asynchronously connects to the server.
+	/// </summary>
+	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+	/// <returns>A task that represents the asynchronous connect operation.</returns>
 	public ValueTask ConnectAsync(CancellationToken cancellationToken)
 	{
 		RaiseStateChanged(ConnectionStates.Connecting);
@@ -186,12 +248,30 @@ public class WebSocketClient : Disposable, IConnection
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets a value that indicates whether auto resend is disabled.
+	/// </summary>
 	public bool DisableAutoResend { get; set; }
+
+	/// <summary>
+	/// Gets or sets the timeout before resend of commands after reconnection.
+	/// </summary>
 	public TimeSpan ResendTimeout { get; set; }
+
+	/// <summary>
+	/// Gets the current connection state.
+	/// </summary>
 	public ConnectionStates State { get; private set; }
 
+	/// <summary>
+	/// Gets a value indicating whether the client is connected.
+	/// </summary>
 	public bool IsConnected => _ws != null;
 
+	/// <summary>
+	/// Disconnects from the server.
+	/// </summary>
+	/// <exception cref="InvalidOperationException">Thrown if the client is not connected.</exception>
 	public void Disconnect()
 	{
 		if (_source is null)
@@ -205,10 +285,16 @@ public class WebSocketClient : Disposable, IConnection
 		_reConnectCommands.Clear();
 	}
 
+	/// <summary>
+	/// Gets or sets the disconnect timeout period.
+	/// </summary>
 	public TimeSpan DisconnectTimeout = TimeSpan.FromSeconds(10);
 
 	private int _bufferSize;
 
+	/// <summary>
+	/// Gets or sets the buffer size for compressed data.
+	/// </summary>
 	public int BufferSize
 	{
 		get => _bufferSize;
@@ -217,6 +303,9 @@ public class WebSocketClient : Disposable, IConnection
 
 	private int _bufferSizeUncompress;
 
+	/// <summary>
+	/// Gets or sets the buffer size for uncompressed data.
+	/// </summary>
 	public int BufferSizeUncompress
 	{
 		get => _bufferSizeUncompress;
@@ -403,19 +492,46 @@ public class WebSocketClient : Disposable, IConnection
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets a value that indicates whether output JSON should be indented.
+	/// </summary>
 	public bool Indent { get; set; } = true;
 
+	/// <summary>
+	/// Gets or sets the JSON serializer settings used when sending objects.
+	/// </summary>
 	public JsonSerializerSettings SendSettings { get; set; }
 
 	private string ToJson(object obj)
 		=> obj.ToJson(Indent, SendSettings);
 
+	/// <summary>
+	/// Sends an object to the server synchronously.
+	/// </summary>
+	/// <param name="obj">The object to send. If not a byte array, it is converted to JSON.</param>
+	/// <param name="subId">The subscription identifier.</param>
+	/// <param name="pre">A pre-send callback function.</param>
 	public void Send(object obj, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 		=> AsyncHelper.Run(() => SendAsync(obj, subId, pre));
 
+	/// <summary>
+	/// Asynchronously sends an object to the server.
+	/// </summary>
+	/// <param name="obj">The object to send. If not a byte array, it is converted to JSON.</param>
+	/// <param name="subId">The subscription identifier.</param>
+	/// <param name="pre">A pre-send callback function.</param>
+	/// <returns>A task that represents the asynchronous send operation.</returns>
 	public ValueTask SendAsync(object obj, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 		=> SendAsync(obj, _source.Token, subId, pre);
 
+	/// <summary>
+	/// Asynchronously sends an object to the server.
+	/// </summary>
+	/// <param name="obj">The object to send. If not a byte array, it is converted to JSON.</param>
+	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+	/// <param name="subId">The subscription identifier.</param>
+	/// <param name="pre">A pre-send callback function.</param>
+	/// <returns>A task that represents the asynchronous send operation.</returns>
 	public ValueTask SendAsync(object obj, CancellationToken cancellationToken, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 	{
 		if (obj is not byte[] sendBuf)
@@ -428,12 +544,36 @@ public class WebSocketClient : Disposable, IConnection
 		return SendAsync(sendBuf, WebSocketMessageType.Text, cancellationToken, subId, pre);
 	}
 
+	/// <summary>
+	/// Sends a byte array message to the server synchronously.
+	/// </summary>
+	/// <param name="sendBuf">The byte array to send.</param>
+	/// <param name="type">The type of WebSocket message.</param>
+	/// <param name="subId">The subscription identifier.</param>
+	/// <param name="pre">A pre-send callback function.</param>
 	public void Send(byte[] sendBuf, WebSocketMessageType type, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 		=> AsyncHelper.Run(() => SendAsync(sendBuf, type, subId, pre));
 
+	/// <summary>
+	/// Asynchronously sends a byte array message to the server.
+	/// </summary>
+	/// <param name="sendBuf">The byte array to send.</param>
+	/// <param name="type">The type of WebSocket message.</param>
+	/// <param name="subId">The subscription identifier.</param>
+	/// <param name="pre">A pre-send callback function.</param>
+	/// <returns>A task that represents the asynchronous send operation.</returns>
 	public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 		=> SendAsync(sendBuf, type, _source.Token, subId, pre);
 
+	/// <summary>
+	/// Asynchronously sends a byte array message to the server.
+	/// </summary>
+	/// <param name="sendBuf">The byte array to send.</param>
+	/// <param name="type">The type of WebSocket message.</param>
+	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+	/// <param name="subId">The subscription identifier.</param>
+	/// <param name="pre">A pre-send callback function.</param>
+	/// <returns>A task that represents the asynchronous send operation.</returns>
 	public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 	{
 		if (_ws is not ClientWebSocket ws)
@@ -447,6 +587,11 @@ public class WebSocketClient : Disposable, IConnection
 		return ws.SendAsync(new ArraySegment<byte>(sendBuf), type, true, cancellationToken).AsValueTask();
 	}
 
+	/// <summary>
+	/// Asynchronously resends stored commands after reconnecting.
+	/// </summary>
+	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+	/// <returns>A task that represents the asynchronous resend operation.</returns>
 	public async ValueTask ResendAsync(CancellationToken cancellationToken)
 	{
 		_infoLog("Reconnect commands: {0}", _reConnectCommands.Count);
@@ -472,6 +617,10 @@ public class WebSocketClient : Disposable, IConnection
 		}
 	}
 
+	/// <summary>
+	/// Removes a resend command for the specified subscription identifier.
+	/// </summary>
+	/// <param name="subId">The subscription identifier.</param>
 	public void RemoveResend(long subId)
 	{
 		subId = subId.Abs();
@@ -480,9 +629,13 @@ public class WebSocketClient : Disposable, IConnection
 			_reConnectCommands.RemoveWhere(t => t.subId == subId);
 	}
 
+	/// <summary>
+	/// Removes all resend commands.
+	/// </summary>
 	public void RemoveResend()
 		=> _reConnectCommands.Clear();
 
+	/// <inheritdoc />
 	protected override void DisposeManaged()
 	{
 		_source?.Cancel();
@@ -490,16 +643,18 @@ public class WebSocketClient : Disposable, IConnection
 		base.DisposeManaged();
 	}
 
+	// The following members are internal or private and hence not documented with XML comments for public API.
+
 	private FieldInfo _innerSocketField;
 	private PropertyInfo _socketProp;
 	private Type _opCodeEnum;
 	private MethodInfo _sendMethod;
 
 	/// <summary>
-	/// This hack sends direct op codes (like ping frames instead of pong).
-	/// Right now not uses anywhere.
+	/// Sends an operation code directly.
 	/// </summary>
-	/// <returns></returns>
+	/// <param name="code">The operation code to send (default is 0x9 for ping).</param>
+	/// <returns>A task that represents the asynchronous operation.</returns>
 	public ValueTask SendOpCode(byte code = 0x9 /* ping */)
 	{
 		_innerSocketField ??= typeof(ClientWebSocket).GetMember<FieldInfo>("_innerWebSocket");
