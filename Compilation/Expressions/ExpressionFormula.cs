@@ -58,6 +58,11 @@ public abstract class ExpressionFormula<TResult>
 			=> throw new NotSupportedException(Error);
 	}
 
+	/// <summary>
+	/// Create a error stub.
+	/// </summary>
+	/// <param name="errorText">The error text.</param>
+	/// <returns>The stub.</returns>
 	public static ExpressionFormula<TResult> CreateError(string errorText)
 		=> new ErrorExpressionFormula(errorText);
 }

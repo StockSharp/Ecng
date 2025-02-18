@@ -270,11 +270,15 @@
 			storage.SetValue(name, persistable.Save());
 		}
 
+		/// <summary>
+		/// </summary>
 		[Obsolete("Use overload with serializer param.")]
 		public static void LoadFromString<TSerializer>(this IPersistable persistable, string value)
 			where TSerializer : ISerializer<SettingsStorage>, new()
 			=> new TSerializer().LoadFromString(persistable, value);
 
+		/// <summary>
+		/// </summary>
 		[Obsolete("Use overload with serializer param.")]
 		public static SettingsStorage LoadFromString<TSerializer>(this string value)
 			where TSerializer : ISerializer<SettingsStorage>, new()
@@ -309,11 +313,15 @@
 			return Do.Invariant(() => serializer.Deserialize(value.UTF8()));
 		}
 
+		/// <summary>
+		/// </summary>
 		[Obsolete("Use overload with serializer param.")]
 		public static string SaveToString<TSerializer>(this IPersistable persistable)
 			where TSerializer : ISerializer<SettingsStorage>, new()
 			=> new TSerializer().SaveToString(persistable);
 
+		/// <summary>
+		/// </summary>
 		[Obsolete("Use overload with serializer param.")]
 		public static string SaveToString<TSerializer>(this SettingsStorage settings)
 			where TSerializer : ISerializer<SettingsStorage>, new()

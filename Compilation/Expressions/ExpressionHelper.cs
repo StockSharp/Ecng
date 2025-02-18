@@ -246,6 +246,16 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 	private static Type GetType(Assembly asm, string typeName)
 		=> asm.GetExportedTypes().First(t => t.Name == typeName);
 
+	/// <summary>
+	/// Compile mathematical formula.
+	/// </summary>
+	/// <typeparam name="TResult"></typeparam>
+	/// <param name="compiler"><see cref="ICompiler"/>.</param>
+	/// <param name="context"><see cref="ICompilerContext"/></param>
+	/// <param name="expression">Text expression.</param>
+	/// <param name="cache"><see cref="ICompilerCache"/>.</param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
+	//// <returns>Compiled mathematical formula.</returns>
 	public static Task<ExpressionFormula<TResult>> Compile<TResult>(this ICompiler compiler, ICompilerContext context, string expression, ICompilerCache cache = default, CancellationToken cancellationToken = default)
 		=> Compile<TResult>(compiler, context, GetType, expression, cache, cancellationToken);
 
@@ -256,7 +266,8 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 	/// </summary>
 	/// <typeparam name="TResult">Result type.</typeparam>
 	/// <param name="compiler"><see cref="ICompiler"/>.</param>
-	/// <param name="toAssembly"></param>
+	/// <param name="context"><see cref="ICompilerContext"/></param>
+	/// <param name="getType">Function to get type from the assembly.</param>
 	/// <param name="expression">Text expression.</param>
 	/// <param name="cache"><see cref="ICompilerCache"/>.</param>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
