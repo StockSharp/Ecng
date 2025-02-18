@@ -1,9 +1,14 @@
 ﻿namespace Ecng.Nuget;
 
+/// <summary>
+/// The logger for Nuget.
+/// </summary>
+/// <param name="logger"><see cref="ILogReceiver"/></param>
 public class NugetLogger(ILogReceiver logger) : LoggerBase
 {
 	private readonly ILogReceiver _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+	/// <inheritdoc />
 	public override void Log(ILogMessage message)
 	{
 		switch (message.Level)
@@ -20,6 +25,7 @@ public class NugetLogger(ILogReceiver logger) : LoggerBase
 		}
 	}
 
+	/// <inheritdoc />
 	public override Task LogAsync(ILogMessage message)
 	{
 		Log(message);

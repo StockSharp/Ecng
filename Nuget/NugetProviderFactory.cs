@@ -2,6 +2,11 @@
 
 using Newtonsoft.Json.Linq;
 
+/// <summary>
+/// The factory for the Nuget provider.
+/// </summary>
+/// <param name="log"><see cref="ILogReceiver"/></param>
+/// <param name="privateNugetToken">The private Nuget token.</param>
 public class NugetProviderFactory(ILogReceiver log, SecureString privateNugetToken) : Repository.ProviderFactory
 {
 	private class NugetRegistrationResourceProvider : ResourceProvider
@@ -111,6 +116,7 @@ public class NugetProviderFactory(ILogReceiver log, SecureString privateNugetTok
 	private readonly SecureString _privateNugetToken = privateNugetToken ?? throw new ArgumentNullException(nameof(privateNugetToken));
 	private readonly ILogReceiver _log = log ?? throw new ArgumentNullException(nameof(log));
 
+	/// <inheritdoc />
 	public override IEnumerable<Lazy<INuGetResourceProvider>> GetCoreV3()
 	{
 		yield return new Lazy<INuGetResourceProvider>(() => new NugetHttpHandlerProvider(_log, _privateNugetToken));

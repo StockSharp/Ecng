@@ -3,6 +3,7 @@ namespace Ecng.Nuget;
 using Nito.AsyncEx;
 
 /// <summary>
+/// Nuget repository provider.
 /// </summary>
 public class NugetRepoProvider : CachingSourceProvider
 {
@@ -59,9 +60,24 @@ public class NugetRepoProvider : CachingSourceProvider
 	private static readonly AsyncLock _instanceLock = new();
 	private static NugetRepoProvider _instance;
 
+	/// <summary>
+	/// Get instance.
+	/// </summary>
+	/// <param name="getAuthToken">Get auth token.</param>
+	/// <param name="packagesFolder"><see cref="Directory"/></param>
+	/// <param name="token"><see cref="CancellationToken"/></param>
+	/// <returns>Task.</returns>
 	public static Task<NugetRepoProvider> GetInstanceAsync(Func<string> getAuthToken, string packagesFolder, CancellationToken token)
 		=> GetInstanceAsync("https://nuget.stocksharp.com/x/v3/index.json", getAuthToken, packagesFolder, token);
 
+	/// <summary>
+	/// Get instance.
+	/// </summary>
+	/// <param name="privateUrl">Private url.</param>
+	/// <param name="getAuthToken">Get auth token.</param>
+	/// <param name="packagesFolder"><see cref="Directory"/></param>
+	/// <param name="token"><see cref="CancellationToken"/></param>
+	/// <returns>Task.</returns>
 	public static async Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, Func<string> getAuthToken, string packagesFolder, CancellationToken token)
 	{
 		await PrivatePackageSource.GetAsync(privateUrl, token);
@@ -90,6 +106,7 @@ public class NugetRepoProvider : CachingSourceProvider
 	private static readonly ISettings _settings = NullSettings.Instance;
 
 	/// <summary>
+	/// Settings.
 	/// </summary>
 	public ISettings Settings => ((PackageSourceProvider)PackageSourceProvider).Settings;
 
@@ -125,6 +142,15 @@ public class NugetRepoProvider : CachingSourceProvider
 		await initBaseUrl(_privateRepo);
 	}
 
+	/// <summary>
+	/// Try to find version.
+	/// </summary>
+	/// <param name="packageId">The package id.</param>
+	/// <param name="versionRange">The version range.</param>
+	/// <param name="cache"><see cref="SourceCacheContext"/></param>
+	/// <param name="logger"><see cref="ILogger"/></param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns>Found version, repository and base url.</returns>
 	public async Task<(NuGetVersion version, SourceRepository repo, Uri baseUrl)> TryFindVersion(string packageId, VersionRange versionRange, SourceCacheContext cache, ILogger logger, CancellationToken cancellationToken)
 	{
 		foreach (var (repo, baseUrl) in _repoUrls)
@@ -148,6 +174,16 @@ public class NugetRepoProvider : CachingSourceProvider
 		throw new InvalidOperationException($"Package {packageId} for version range {versionRange} not found.");
 	}
 
+	/// <summary>
+	/// Get dependencies.
+	/// </summary>
+	/// <param name="identities">The package identities.</param>
+	/// <param name="framework">The framework.</param>
+	/// <param name="localFiles">The local files.</param>
+	/// <param name="cache"><see cref="SourceCacheContext"/></param>
+	/// <param name="logger"><see cref="ILogger"/></param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns>Dependencies.</returns>
 	public async Task<IDictionary<PackageIdentity, IEnumerable<(PackageIdentity identity, SourceRepository repo)>>> GetDependenciesAsync(IEnumerable<PackageIdentity> identities, NuGetFramework framework, IDictionary<string, NuGetVersion> localFiles, SourceCacheContext cache, ILogger logger, CancellationToken cancellationToken)
 	{
 		if (identities is null)			throw new ArgumentNullException(nameof(identities));

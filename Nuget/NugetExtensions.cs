@@ -4,8 +4,16 @@ using System.Reflection;
 
 using Ecng.Reflection;
 
+/// <summary>
+/// NuGET extensions.
+/// </summary>
 public static class NugetExtensions
 {
+	/// <summary>
+	/// Get the target frameworks for the package.
+	/// </summary>
+	/// <param name="reader"><see cref="PackageArchiveReader"/></param>
+	/// <returns>Target frameworks.</returns>
 	public static string[] GetTargetFrameworks(this PackageArchiveReader reader)
 	{
 		var targetFrameworks = reader
@@ -22,9 +30,23 @@ public static class NugetExtensions
 		return [.. targetFrameworks];
 	}
 
+	/// <summary>
+	/// Remove the platform version.
+	/// </summary>
+	/// <param name="fwk"><see cref="NuGetFramework"/></param>
+	/// <returns>The framework without the platform version.</returns>
 	public static NuGetFramework RemovePlatformVersion(this NuGetFramework fwk)
 		=> new(fwk.Framework, fwk.Version, fwk.Platform, FrameworkConstants.EmptyVersion);
 
+	/// <summary>
+	/// Get all versions.
+	/// </summary>
+	/// <param name="repo"><see cref="SourceRepository"/></param>
+	/// <param name="packageId">The package ID.</param>
+	/// <param name="logger"><see cref="ILogger"/></param>
+	/// <param name="cache"><see cref="SourceCacheContext"/></param>
+	/// <param name="token"><see cref="CancellationToken"/></param>
+	/// <returns>All versions ordered.</returns>
 	public static async Task<NuGetVersion[]> GetAllVersionsOrderedAsync(this SourceRepository repo, string packageId, ILogger logger, SourceCacheContext cache, CancellationToken token)
 	{
 		var resource = await repo.GetResourceAsync<FindPackageByIdResource>(token);
@@ -32,6 +54,16 @@ public static class NugetExtensions
 		return [.. (await resource.GetAllVersionsAsync(packageId, cache, logger, token)).OrderBy(v => v)];
 	}
 
+	/// <summary>
+	/// Get the last version.
+	/// </summary>
+	/// <param name="repo"><see cref="SourceRepository"/></param>
+	/// <param name="packageId">The package ID.</param>
+	/// <param name="allowPreview">Allow preview versions.</param>
+	/// <param name="logger"><see cref="ILogger"/></param>
+	/// <param name="cache"><see cref="SourceCacheContext"/></param>
+	/// <param name="token"><see cref="CancellationToken"/></param>
+	/// <returns>The last version.</returns>
 	public static async Task<NuGetVersion> GetLastVersionAsync(this SourceRepository repo, string packageId, bool allowPreview, ILogger logger, SourceCacheContext cache, CancellationToken token)
 	{
 		var versions = await repo.GetAllVersionsOrderedAsync(packageId, logger, cache, token);
@@ -40,6 +72,16 @@ public static class NugetExtensions
 		return versions.LastOrDefault(cond);
 	}
 
+	/// <summary>
+	/// Get the last version in the floating range.
+	/// </summary>
+	/// <param name="repo"><see cref="SourceRepository"/></param>
+	/// <param name="packageId">The package ID.</param>
+	/// <param name="floatingVer">The floating version.</param>
+	/// <param name="logger"><see cref="ILogger"/></param>
+	/// <param name="cache"><see cref="SourceCacheContext"/></param>
+	/// <param name="token"><see cref="CancellationToken"/></param>
+	/// <returns>The last version in the floating range.</returns>
 	public static async Task<NuGetVersion> GetLastVersionInFloatingRangeAsync(this SourceRepository repo, string packageId, string floatingVer, ILogger logger, SourceCacheContext cache, CancellationToken token)
 	{
 		if (!FloatRange.TryParse(floatingVer, out var range))
@@ -82,6 +124,9 @@ public static class NugetExtensions
 		void ISettings.SaveToDisk() => throw new NotSupportedException();
 	}
 
+	/// <summary>
+	/// Disable access to the nuget.config file.
+	/// </summary>
 	public static void DisableNugetConfig()
 	{
 		// disable access nuget.config file
@@ -93,6 +138,11 @@ public static class NugetExtensions
 		lazy.SetValue(proxy);
 	}
 
+	/// <summary>
+	/// Increment the version.
+	/// </summary>
+	/// <param name="version"><see cref="NuGetVersion"/></param>
+	/// <returns>The incremented version.</returns>
 	public static NuGetVersion Increment(this NuGetVersion version)
 	{
 		if (version is null)
@@ -101,6 +151,12 @@ public static class NugetExtensions
 		return new(version.Major, version.Minor, version.Patch + 1);
 	}
 
+	/// <summary>
+	/// Add a suffix to the version.
+	/// </summary>
+	/// <param name="version"><see cref="NuGetVersion"/></param>
+	/// <param name="suffix">The suffix to add.</param>
+	/// <returns>The version with the suffix.</returns>
 	public static NuGetVersion WithSuffix(this NuGetVersion version, string suffix)
 	{
 		if (version is null)
@@ -112,6 +168,12 @@ public static class NugetExtensions
 		return new(version.Major, version.Minor, version.Patch, suffix);
 	}
 
+	/// <summary>
+	/// Get the base URL for the repository.
+	/// </summary>
+	/// <param name="repo"><see cref="SourceRepository"/></param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns>The base URL for the repository.</returns>
 	public static async Task<Uri> GetBaseUrl(this SourceRepository repo, CancellationToken cancellationToken)
 	{
 		if (repo is null)
@@ -131,6 +193,11 @@ public static class NugetExtensions
 		return baseUrl;
 	}
 
+	/// <summary>
+	/// Create a private HTTP client.
+	/// </summary>
+	/// <param name="apiKey">The API key.</param>
+	/// <returns>The private HTTP client.</returns>
 	public static HttpClient CreatePrivateHttp(string apiKey)
 	{
 		var http = new HttpClient();
@@ -138,6 +205,15 @@ public static class NugetExtensions
 		return http;
 	}
 
+	/// <summary>
+	/// Get the nuspec file.
+	/// </summary>
+	/// <param name="http"><see cref="HttpClient"/></param>
+	/// <param name="baseUrl">The base URL for the repository.</param>
+	/// <param name="packageId">The package ID.</param>
+	/// <param name="version">The package version.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>The nuspec file.</returns>
 	public static Task<Stream> GetNuspecAsync(this HttpClient http, Uri baseUrl, string packageId, NuGetVersion version, CancellationToken cancellationToken)
 	{
 		if (http is null)			throw new ArgumentNullException(nameof(http));
