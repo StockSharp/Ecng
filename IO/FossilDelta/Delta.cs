@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Ecng.IO.Fossil
 {
-	public unsafe class Delta
+	unsafe class Delta
 	{
 		internal static UInt16 NHASH = 16;
 
@@ -244,7 +244,6 @@ namespace Ecng.IO.Fossil
 			throw new Exception("unterminated delta");
 		}
 
-		[CLSCompliant(false)]
 		public static uint OutputSize(byte[] delta) {
 			fixed (byte* deltaPtr = delta)
 			{
