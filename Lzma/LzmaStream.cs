@@ -102,11 +102,22 @@ namespace Lzma
 			}
 		}
 
+		/// <summary>
+		/// Creates a new <see cref="LzmaStream"/> in decompression mode.
+		/// </summary>
+		/// <param name="stream">The stream to read from or write to.</param>
+		/// <param name="level"><see cref="CompressionLevel"/></param>
+		/// <param name="leaveOpen">true to leave the stream open after the <see cref="LzmaStream"/> object is disposed; otherwise, false.</param>
 		public LzmaStream(Stream stream, CompressionLevel level, bool leaveOpen)
 			: this(stream, CompressionMode.Compress, leaveOpen)
 		{
 		}
 
+		/// <summary>
+		/// Creates a new <see cref="LzmaStream"/> and initializes it with the specified properties.
+		/// </summary>
+		/// <param name="stream">The stream to read from or write to.</param>
+		/// <param name="properties">The encoder properties.</param>
 		public LzmaStream(Stream stream, EncoderProperties properties)
 			: this(stream, CompressionMode.Compress, false)
 		{

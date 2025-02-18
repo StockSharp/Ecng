@@ -76,6 +76,7 @@
 			this.Value = this.Value < 7u ? 9u : 11u;
 		}
 
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return this.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);

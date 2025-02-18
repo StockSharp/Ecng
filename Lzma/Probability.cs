@@ -147,6 +147,7 @@ namespace Lzma
 			this.Value = (ushort)(this.Value - (this.Value >> MoveBits));
 		}
 
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return $"{(float)this.Value / MaxValue * 100.0f:0.0}% ({this.Value})";

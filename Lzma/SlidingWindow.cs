@@ -346,6 +346,12 @@ namespace Lzma
 			return maxLength - len;
 		}
 
+		/// <summary>
+		/// Gets the distance between two positions.
+		/// </summary>
+		/// <param name="originalPos"></param>
+		/// <param name="matchPos"></param>
+		/// <returns></returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint GetDistance(uint originalPos, uint matchPos)
 		{
