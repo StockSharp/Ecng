@@ -9,35 +9,38 @@ namespace Ecng.Data
 	using Ecng.Serialization;
 
 	/// <summary>
-	/// Кэш <see cref="DatabaseConnectionPair"/>.
+	/// Represents a cache for <see cref="DatabaseConnectionPair"/> objects.
 	/// </summary>
 	public class DatabaseConnectionCache : IPersistable
 	{
-		private readonly CachedSynchronizedSet<DatabaseConnectionPair> _connections = [];
+		private readonly CachedSynchronizedSet<DatabaseConnectionPair> _connections = new();
 
 		/// <summary>
-		/// Список всех подключений.
+		/// Gets all database connection pairs.
 		/// </summary>
 		public IEnumerable<DatabaseConnectionPair> Connections => _connections.Cache;
 
 		/// <summary>
-		/// Событие создания нового подключения.
+		/// Occurs when a new database connection pair is created.
 		/// </summary>
 		public event Action<DatabaseConnectionPair> ConnectionCreated;
 
 		/// <summary>
-		/// Событие удаления подключения.
+		/// Occurs when a database connection pair is deleted.
 		/// </summary>
 		public event Action<DatabaseConnectionPair> ConnectionDeleted;
 
+		/// <summary>
+		/// Occurs when the connection cache is updated.
+		/// </summary>
 		public event Action Updated;
 
 		/// <summary>
-		/// Получить подключение к базе данных.
+		/// Retrieves an existing connection matching the specified provider and connection string or adds a new connection if it does not exist.
 		/// </summary>
-		/// <param name="provider">Провайдер баз данных.</param>
-		/// <param name="connectionString">Строка подключения.</param>
-		/// <returns>Подключение к базе данных.</returns>
+		/// <param name="provider">The database provider.</param>
+		/// <param name="connectionString">The connection string.</param>
+		/// <returns>The corresponding <see cref="DatabaseConnectionPair"/>.</returns>
 		public DatabaseConnectionPair GetOrAdd(string provider, string connectionString)
 		{
 			if (provider.IsEmpty())
@@ -72,9 +75,12 @@ namespace Ecng.Data
 		}
 
 		/// <summary>
-		/// Удалить подключение к базе данных.
+		/// Deletes the specified database connection pair from the cache.
 		/// </summary>
-		/// <param name="connection">Подключение.</param>
+		/// <param name="connection">The database connection pair to delete.</param>
+		/// <returns>
+		/// True if the connection was successfully removed; otherwise, false.
+		/// </returns>
 		public bool DeleteConnection(DatabaseConnectionPair connection)
 		{
 			if (connection is null)
@@ -89,9 +95,9 @@ namespace Ecng.Data
 		}
 
 		/// <summary>
-		/// Загрузить настройки.
+		/// Loads the database connection pairs from the specified settings storage.
 		/// </summary>
-		/// <param name="storage">Хранилище настроек.</param>
+		/// <param name="storage">The settings storage to load from.</param>
 		public void Load(SettingsStorage storage)
 		{
 			_connections.AddRange(storage
@@ -100,9 +106,9 @@ namespace Ecng.Data
 		}
 
 		/// <summary>
-		/// Сохранить настройки.
+		/// Saves the database connection pairs to the specified settings storage.
 		/// </summary>
-		/// <param name="storage">Хранилище настроек.</param>
+		/// <param name="storage">The settings storage to save to.</param>
 		public void Save(SettingsStorage storage)
 		{
 			storage.SetValue(nameof(Connections), Connections.Select(pair => pair.Save()).ToArray());
