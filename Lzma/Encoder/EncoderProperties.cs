@@ -20,6 +20,9 @@ namespace Lzma
 
 		private bool writeEndMarker;
 
+		/// <summary>
+		/// The default value.
+		/// </summary>
 		public static readonly EncoderProperties Default = new EncoderProperties(1u << 12, 1u << 24, 3, 0, 2, true);
 
 		#endregion
@@ -124,6 +127,7 @@ namespace Lzma
 
 		#region Methods
 
+		/// <inheritdoc />
 		[Pure]
 		public override bool Equals(object obj)
 		{
@@ -165,6 +169,7 @@ namespace Lzma
 				this.writeEndMarker == prop.writeEndMarker;
 		}
 
+		/// <inheritdoc />
 		[Pure]
 		public override int GetHashCode()
 		{
@@ -174,6 +179,7 @@ namespace Lzma
 			return unchecked((int)hash);
 		}
 
+		/// <inheritdoc />
 		[Pure]
 		public override string ToString()
 		{

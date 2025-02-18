@@ -15,6 +15,9 @@ namespace Lzma
 		private int lp;
 		private int pb;
 
+		/// <summary>
+		/// The default settings.
+		/// </summary>
 		public static readonly DecoderProperties Default = new DecoderProperties(1 << 24, 3, 0, 2);
 
 		#endregion
@@ -108,6 +111,7 @@ namespace Lzma
 				this.pb == prop.pb;
 		}
 
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return $"dict = 0x{this.dictionarySize:X8}; lc = {this.lc}; lp = {this.lp}; pb = {this.pb}";

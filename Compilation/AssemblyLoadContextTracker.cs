@@ -7,6 +7,10 @@ using System.Runtime.Loader;
 
 using Ecng.Common;
 
+/// <summary>
+/// Provides tracking functionality for AssemblyLoadContext instances when loading assemblies dynamically.
+/// Implements ICompilerContext and manages unloading of previous contexts when loading a new assembly.
+/// </summary>
 public class AssemblyLoadContextTracker(Action<Exception> uploadingError = default) : Disposable, ICompilerContext
 {
 	private readonly SyncObject _lock = new();
@@ -14,6 +18,12 @@ public class AssemblyLoadContextTracker(Action<Exception> uploadingError = defau
 	private AssemblyLoadContext _context;
 	private byte[] _assembly;
 
+	/// <summary>
+	/// Loads an assembly from the provided binary data.
+	/// If a different assembly is passed than the one previously loaded, the previous context is unloaded.
+	/// </summary>
+	/// <param name="assembly">The binary representation of the assembly to load.</param>
+	/// <returns>The loaded <see cref="Assembly"/> instance.</returns>
 	public Assembly LoadFromBinary(byte[] assembly)
 	{
 		void init()
@@ -51,6 +61,9 @@ public class AssemblyLoadContextTracker(Action<Exception> uploadingError = defau
 		return _context.LoadFromBinary(assembly);
 	}
 
+	/// <summary>
+	/// Unloads the current AssemblyLoadContext and resets the internal state.
+	/// </summary>
 	public void Unload()
 	{
 		lock (_lock)
@@ -64,6 +77,7 @@ public class AssemblyLoadContextTracker(Action<Exception> uploadingError = defau
 		}
 	}
 
+	/// <inheritdoc />
 	protected override void DisposeManaged()
 	{
 		base.DisposeManaged();

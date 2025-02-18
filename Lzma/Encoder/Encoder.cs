@@ -31,14 +31,25 @@ namespace Lzma
 		private readonly BitEncoder[] isRep2;
 
 		// constants.
-		protected readonly uint PositionMask;
+		private readonly uint PositionMask;
 
-		// encode loop state
+		/// <summary>
+		/// encode loop state
+		/// </summary>
 		protected uint Rep0;
+		/// <summary>
+		/// encode loop state
+		/// </summary>
 		protected uint Rep1;
+		/// <summary>
+		/// encode loop state
+		/// </summary>
 		protected uint Rep2;
+		/// <summary>
+		/// encode loop state
+		/// </summary>
 		protected uint Rep3;
-		protected State State;
+		private State State;
 		
 		#endregion
 

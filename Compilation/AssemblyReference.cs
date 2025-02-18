@@ -20,9 +20,19 @@ public class AssemblyReference : BaseCodeReference
 	{
 	}
 
+	/// <summary>
+	/// Gets the display name of the assembly reference.
+	/// </summary>
 	public override string Name => Path.GetFileNameWithoutExtension(FileName);
+
+	/// <summary>
+	/// Determines whether the assembly reference is valid.
+	/// </summary>
 	public override bool IsValid => File.Exists(Location);
 
+	/// <summary>
+	/// Gets or sets the file name of the assembly reference.
+	/// </summary>
 	public string FileName { get; set; }
 
 	/// <summary>
@@ -51,16 +61,19 @@ public class AssemblyReference : BaseCodeReference
 		}
 	}
 
+	/// <inheritdoc />
 	public override void Load(SettingsStorage storage)
 	{
 		FileName = storage.GetValue<string>(nameof(FileName)) ?? storage.GetValue<string>(nameof(Location));
 	}
 
+	/// <inheritdoc />
 	public override void Save(SettingsStorage storage)
 	{
 		storage.SetValue(nameof(FileName), FileName);
 	}
 
+	/// <inheritdoc />
 	public override ValueTask<IEnumerable<(string name, byte[] body)>> GetImages(CancellationToken cancellationToken)
 	{
 		return new([Location.ToRef()]);
