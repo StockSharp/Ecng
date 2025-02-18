@@ -2,6 +2,11 @@ namespace Ecng.Net;
 
 using System.IO;
 
+/// <summary>
+/// Provides a stream interface for reading and writing data over a UDP socket.
+/// </summary>
+/// <param name="client"><see cref="Socket"/></param>
+/// <param name="mtuSize">The maximum transmission unit (MTU) size for the UDP stream.</param>
 public class UdpStream(Socket client, int mtuSize = 1600) : Stream
 {
 	private readonly Socket _client = client ?? throw new ArgumentNullException(nameof(client));

@@ -7,8 +7,17 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 
+/// <summary>
+/// Provides helper methods to send emails and to manage mail attachments.
+/// </summary>
 public static class MailHelper
 {
+	/// <summary>
+	/// Sends the specified <see cref="MailMessage"/> synchronously.
+	/// </summary>
+	/// <param name="message">The mail message to send.</param>
+	/// <param name="dispose">If set to <c>true</c>, disposes the mail message after sending.</param>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="message"/> is null.</exception>
 	public static void Send(this MailMessage message, bool dispose = true)
 	{
 		if (message is null)
@@ -21,6 +30,13 @@ public static class MailHelper
 			message.Dispose();
 	}
 
+	/// <summary>
+	/// Sends the specified <see cref="MailMessage"/> asynchronously.
+	/// </summary>
+	/// <param name="message">The mail message to send.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the asynchronous send operation.</param>
+	/// <returns>A task that represents the asynchronous send operation.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="message"/> is null.</exception>
 	public static async Task SendAsync(this MailMessage message, CancellationToken cancellationToken = default)
 	{
 		if (message is null)
@@ -34,6 +50,13 @@ public static class MailHelper
 		);
 	}
 
+	/// <summary>
+	/// Adds an HTML body alternate view to the specified <see cref="MailMessage"/>.
+	/// </summary>
+	/// <param name="message">The mail message to add the HTML body to.</param>
+	/// <param name="bodyHtml">The HTML string representing the body content.</param>
+	/// <returns>The updated <see cref="MailMessage"/> instance.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="message"/> is null.</exception>
 	public static MailMessage AddHtml(this MailMessage message, string bodyHtml)
 	{
 		if (message is null)
@@ -44,6 +67,13 @@ public static class MailHelper
 		return message;
 	}
 
+	/// <summary>
+	/// Adds a plain text body alternate view to the specified <see cref="MailMessage"/>.
+	/// </summary>
+	/// <param name="message">The mail message to add the plain text body to.</param>
+	/// <param name="bodyPlain">The plain text string representing the body content.</param>
+	/// <returns>The updated <see cref="MailMessage"/> instance.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="message"/> is null.</exception>
 	public static MailMessage AddPlain(this MailMessage message, string bodyPlain)
 	{
 		if (message is null)
@@ -56,6 +86,11 @@ public static class MailHelper
 
 	private static readonly Regex _emailRegex1 = new(@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,10})+)$", RegexOptions.Compiled | RegexOptions.Singleline);
 
+	/// <summary>
+	/// Validates whether the specified email address string is in a correct format.
+	/// </summary>
+	/// <param name="email">The email address string to validate.</param>
+	/// <returns><c>true</c> if the email format is valid; otherwise, <c>false</c>.</returns>
 	public static bool IsEmailValid(this string email)
 	{
 		// https://stackoverflow.com/questions/5342375/regex-email-validation
@@ -71,6 +106,14 @@ public static class MailHelper
 		}
 	}
 
+	/// <summary>
+	/// Attaches a file to the specified <see cref="MailMessage"/> using the provided stream.
+	/// </summary>
+	/// <param name="message">The mail message to attach the file to.</param>
+	/// <param name="fileName">The name of the file to attach.</param>
+	/// <param name="fileBody">The stream that represents the file content.</param>
+	/// <returns>The updated <see cref="MailMessage"/> instance.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="message"/> is null.</exception>
 	public static MailMessage Attach(this MailMessage message, string fileName, Stream fileBody)
 	{
 		if (message is null)
@@ -82,12 +125,27 @@ public static class MailHelper
 		return message;
 	}
 
+	/// <summary>
+	/// Creates a new <see cref="Attachment"/> from the specified file name and file stream.
+	/// </summary>
+	/// <param name="fileName">The name of the file for the attachment.</param>
+	/// <param name="fileBody">The stream representing the attachment content.</param>
+	/// <returns>A new instance of <see cref="Attachment"/>.</returns>
 	public static Attachment ToAttachment(string fileName, Stream fileBody)
 	{
 		return CreateAttachment(fileBody, fileName.ThrowIfEmpty(nameof(fileName)));
 	}
 
-	// http://social.msdn.microsoft.com/Forums/en-US/dotnetframeworkde/thread/b6c764f7-4697-4394-b45f-128a24306d55
+	/// <summary>
+	/// Creates an <see cref="Attachment"/> from the provided stream and display name, with specified transfer encoding.
+	/// </summary>
+	/// <param name="attachmentFile">The stream containing the attachment file.</param>
+	/// <param name="displayName">The display name for the attachment.</param>
+	/// <param name="transferEncoding">The transfer encoding to use. Defaults to Base64.</param>
+	/// <returns>A new instance of <see cref="Attachment"/> configured with the provided parameters.</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if the specified <paramref name="transferEncoding"/> is not supported.
+	/// </exception>
 	public static Attachment CreateAttachment(Stream attachmentFile, string displayName, TransferEncoding transferEncoding = TransferEncoding.Base64)
 	{
 		var attachment = new Attachment(attachmentFile, string.Empty)
@@ -131,6 +189,14 @@ public static class MailHelper
 		return attachment;
 	}
 
+	/// <summary>
+	/// Splits the encoded attachment name into chunks based on the specified parameters.
+	/// </summary>
+	/// <param name="encodingtoken">The encoding token to use as prefix.</param>
+	/// <param name="softbreak">The soft break token to use.</param>
+	/// <param name="maxChunkLength">The maximum length of each chunk.</param>
+	/// <param name="encoded">The full encoded string to split.</param>
+	/// <returns>The formatted and split encoded attachment name.</returns>
 	private static string SplitEncodedAttachmentName(string encodingtoken, string softbreak, int maxChunkLength, string encoded)
 	{
 		var splitLength = maxChunkLength - encodingtoken.Length - (softbreak.Length * 2);

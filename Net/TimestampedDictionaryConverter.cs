@@ -1,9 +1,14 @@
 namespace Ecng.Net;
 
+/// <summary>
+/// Represents a collection of keys and values.
+/// </summary>
 public class TimestampedDictionaryConverter : JsonConverter
 {
+	/// <inheritdoc />
 	public override bool CanConvert(Type objectType) => true;
 
+	/// <inheritdoc />
 	public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 	{
 		var result = Activator.CreateInstance(objectType);
@@ -37,8 +42,10 @@ public class TimestampedDictionaryConverter : JsonConverter
 		return result;
 	}
 
+	/// <inheritdoc />
 	public override bool CanWrite => false;
 
+	/// <inheritdoc />
 	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
 		=> throw new NotSupportedException();
 }
