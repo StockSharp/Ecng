@@ -6,11 +6,26 @@ using Ecng.Common;
 #endif
 using System.Drawing;
 
+/// <summary>
+/// Provides extension methods for converting between integer, HTML color string representations and <see cref="Color"/>.
+/// </summary>
 public static class DrawingExtensions
 {
+	/// <summary>
+	/// Creates a Color from the specified ARGB integer.
+	/// </summary>
+	/// <param name="argb">An integer representing the ARGB value.</param>
+	/// <returns>A <see cref="Color"/> corresponding to the ARGB value specified.</returns>
 	public static Color ToColor(this int argb)
 		=> Color.FromArgb(argb);
 
+	/// <summary>
+	/// Converts an HTML color representation to a <see cref="Color"/>.
+	/// </summary>
+	/// <param name="htmlColor">
+	/// A string representing the HTML color. Accepts formats such as "#RRGGBB", "#RGB" or the special case "LightGrey".
+	/// </param>
+	/// <returns>A <see cref="Color"/> corresponding to the HTML color provided.</returns>
 	public static Color ToColor(this string htmlColor)
 	{
 #if NETSTANDARD2_0
@@ -77,6 +92,11 @@ public static class DrawingExtensions
 #endif
 	}
 
+	/// <summary>
+	/// Converts a <see cref="Color"/> to its HTML representation.
+	/// </summary>
+	/// <param name="color">The <see cref="Color"/> to convert.</param>
+	/// <returns>A string representing the HTML color value. Returns an empty string if the color is empty.</returns>
 	public static string ToHtml(this Color color)
 	{
 #if NETSTANDARD2_0
