@@ -16,6 +16,7 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <IsSourcesAllow>false</IsSourcesAllow>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="
@@ -37,6 +38,17 @@
         '$(MSBuildProjectName)' == 'Nuget'
       ">
     <TargetFrameworks>net6.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="
+        '$(MSBuildProjectName)' == 'Common' or
+        '$(MSBuildProjectName)' == 'Collections' or
+        '$(MSBuildProjectName)' == 'Net.HPSocket' or
+        '$(MSBuildProjectName)' == 'SmartFormat' or
+        '$(MSBuildProjectName)' == 'StringSearch' or
+        '$(MSBuildProjectName)' == 'Tests'
+      ">
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(StockSharpTargets)' != ''">

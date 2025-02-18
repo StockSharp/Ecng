@@ -16,6 +16,9 @@ using Microsoft.Scripting.Actions;
 using IronPython.Runtime;
 using IronPython.Runtime.Types;
 
+/// <summary>
+/// Provides extension methods for working with IronPython types and functions.
+/// </summary>
 public static class PythonExtensions
 {
 	private const BindingFlags _nonPublic = BindingFlags.Instance | BindingFlags.NonPublic;
@@ -24,10 +27,22 @@ public static class PythonExtensions
 	private static readonly PropertyInfo _setters = typeof(ReflectedGetterSetter).GetProperty("Setter", _nonPublic);
 	private static readonly FieldInfo _propInfo = typeof(ReflectedProperty).GetField("_info", _nonPublic);
 
+	/// <summary>
+	/// Gets the name of the specified Python type.
+	/// </summary>
+	/// <param name="type">The Python type.</param>
+	/// <returns>The name of the Python type.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="type"/> is null.</exception>
 	[CLSCompliant(false)]
 	public static string GetName(this PythonType type)
 		=> (string)_nameProp.GetValue(type ?? throw new ArgumentNullException(nameof(type)));
 
+	/// <summary>
+	/// Gets the underlying system type for the specified Python type.
+	/// </summary>
+	/// <param name="type">The Python type.</param>
+	/// <returns>The underlying .NET type.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="type"/> is null.</exception>
 	[CLSCompliant(false)]
 	public static Type GetUnderlyingSystemType(this PythonType type)
 	{
@@ -42,10 +57,23 @@ public static class PythonExtensions
 		return retVal;
 	}
 
+	/// <summary>
+	/// Determines whether the specified Python type is assignable to the base type <typeparamref name="TBase"/>.
+	/// </summary>
+	/// <typeparam name="TBase">The base type to check against.</typeparam>
+	/// <param name="type">The Python type.</param>
+	/// <returns><c>true</c> if the Python type is assignable to <typeparamref name="TBase"/>; otherwise, <c>false</c>.</returns>
 	[CLSCompliant(false)]
 	public static bool Is<TBase>(this PythonType type)
 		=> type.Is(typeof(TBase));
 
+	/// <summary>
+	/// Determines whether the specified Python type is assignable to the provided base type.
+	/// </summary>
+	/// <param name="type">The Python type.</param>
+	/// <param name="baseType">The base type to check against.</param>
+	/// <returns><c>true</c> if the Python type is assignable to <paramref name="baseType"/>; otherwise, <c>false</c>.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="type"/> or <paramref name="baseType"/> is null.</exception>
 	[CLSCompliant(false)]
 	public static bool Is(this PythonType type, Type baseType)
 	{
@@ -57,6 +85,12 @@ public static class PythonExtensions
 		return underlying?.Is(baseType, false) == true;
 	}
 
+	/// <summary>
+	/// Retrieves all Python types defined in the specified script scope.
+	/// </summary>
+	/// <param name="scope">The script scope.</param>
+	/// <returns>An enumerable of Python types contained in the scope.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="scope"/> is null.</exception>
 	[CLSCompliant(false)]
 	public static IEnumerable<PythonType> GetTypes(this ScriptScope scope)
 	{
@@ -66,6 +100,11 @@ public static class PythonExtensions
 		return scope.GetVariableNames().Select(scope.GetVariable).OfType<PythonType>();
 	}
 
+	/// <summary>
+	/// Converts a <see cref="Severity"/> value to its corresponding <see cref="CompilationErrorTypes"/>.
+	/// </summary>
+	/// <param name="severity">The severity of the error or warning.</param>
+	/// <returns>The corresponding <see cref="CompilationErrorTypes"/> value.</returns>
 	public static CompilationErrorTypes ToErrorType(this Severity severity)
 		=> severity switch
 		{
@@ -74,6 +113,12 @@ public static class PythonExtensions
 			_ => CompilationErrorTypes.Info,
 		};
 
+	/// <summary>
+	/// Determines whether the specified object is an IronPython object.
+	/// </summary>
+	/// <param name="obj">The object to test.</param>
+	/// <returns><c>true</c> if the object implements <see cref="IPythonObject"/>; otherwise, <c>false</c>.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="obj"/> is null.</exception>
 	public static bool IsPythonObject(this object obj)
 	{
 		if (obj is null)
@@ -82,6 +127,12 @@ public static class PythonExtensions
 		return obj is IPythonObject;
 	}
 
+	/// <summary>
+	/// Determines whether the specified type is an IronPython type.
+	/// </summary>
+	/// <param name="type">The type to test.</param>
+	/// <returns><c>true</c> if the type is an IronPython type; otherwise, <c>false</c>.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="type"/> is null.</exception>
 	public static bool IsPythonType(this Type type)
 	{
 		if (type is null)
@@ -90,14 +141,30 @@ public static class PythonExtensions
 		return type.FullName?.StartsWith(nameof(IronPython)) ?? false;
 	}
 
+	/// <summary>
+	/// Gets the setter methods of the reflected property.
+	/// </summary>
+	/// <param name="property">The reflected property.</param>
+	/// <returns>An array of setter <see cref="MethodInfo"/> objects.</returns>
 	[CLSCompliant(false)]
 	public static MethodInfo[] GetSetters(this ReflectedProperty property)
 		=> (MethodInfo[])_setters.GetValue(property);
 
+	/// <summary>
+	/// Gets the underlying property information for the reflected property.
+	/// </summary>
+	/// <param name="property">The reflected property.</param>
+	/// <returns>The underlying <see cref="PropertyInfo"/> object.</returns>
 	[CLSCompliant(false)]
 	public static PropertyInfo GetPropInfo(this ReflectedProperty property)
 		=> (PropertyInfo)_propInfo.GetValue(property);
 
+	/// <summary>
+	/// Gets the .NET type corresponding to the specified Python type.
+	/// </summary>
+	/// <param name="type">The Python type.</param>
+	/// <returns>The underlying .NET type; or <see cref="object"/> if not found.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="type"/> is null.</exception>
 	[CLSCompliant(false)]
 	public static Type GetDotNetType(this PythonType type)
 	{
@@ -112,6 +179,14 @@ public static class PythonExtensions
 		return baseType ?? typeof(object);
 	}
 
+	/// <summary>
+	/// Retrieves the parameters of the specified Python function along with their corresponding types.
+	/// </summary>
+	/// <param name="function">The Python function.</param>
+	/// <returns>
+	/// An enumerable of tuples where each tuple contains the name of the parameter and its corresponding type.
+	/// </returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="function"/> is null.</exception>
 	[CLSCompliant(false)]
 	public static IEnumerable<(string name, Type type)> GetParams(this PythonFunction function)
 	{
@@ -146,6 +221,12 @@ public static class PythonExtensions
 		}
 	}
 
+	/// <summary>
+	/// Determines whether the specified Python function is static.
+	/// </summary>
+	/// <param name="function">The Python function.</param>
+	/// <returns><c>true</c> if the function is static; otherwise, <c>false</c>.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="function"/> is null.</exception>
 	[CLSCompliant(false)]
 	public static bool IsStatic(this PythonFunction function)
 	{

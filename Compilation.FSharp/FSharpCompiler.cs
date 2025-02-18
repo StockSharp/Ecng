@@ -20,6 +20,9 @@ using global::FSharp.Compiler.CodeAnalysis;
 using global::FSharp.Compiler.Diagnostics;
 using global::FSharp.Compiler.IO;
 
+/// <summary>
+/// F# compiler.
+/// </summary>
 public class FSharpCompiler : ICompiler
 {
 	private class FileSystemContext : Disposable
@@ -81,6 +84,9 @@ public class FSharpCompiler : ICompiler
 
 	private readonly FSharpChecker _checker;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FSharpCompiler"/> class.
+	/// </summary>
 	public FSharpCompiler()
 	{
 		_checker = FSharpChecker.Create(

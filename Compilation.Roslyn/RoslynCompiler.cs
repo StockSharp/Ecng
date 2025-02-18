@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
 	using System.IO;
 	using System.Linq;
 	using System.Reflection;
@@ -18,6 +17,10 @@
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.VisualBasic;
 
+	/// <summary>
+	/// Represents a Roslyn compiler.
+	/// </summary>
+	/// <param name="extension">The file extension of the source files that the compiler supports.</param>
 	public abstract class RoslynCompiler(string extension) : ICompiler
 	{
 		private static readonly Dictionary<string, string> _redirects = new()
@@ -45,8 +48,11 @@
 		bool ICompiler.IsAssemblyPersistable { get; } = true;
 		string ICompiler.Extension { get; } = extension;
 
+		/// <inheritdoc />
 		public abstract bool IsTabsSupported { get; }
+		/// <inheritdoc />
 		public abstract bool IsCaseSensitive { get; }
+		/// <inheritdoc />
 		public abstract bool IsReferencesSupported { get; }
 
 		private Compilation Create(string name, IEnumerable<string> sources, IEnumerable<(string name, byte[] body)> refs, CancellationToken cancellationToken)
@@ -64,6 +70,14 @@
 			return Create(assemblyName, sources, references, cancellationToken);
 		}
 
+		/// <summary>
+		/// Creates a new compilation instance.
+		/// </summary>
+		/// <param name="assemblyName">The name of the assembly.</param>
+		/// <param name="sources">The source code files as strings.</param>
+		/// <param name="references">A collection of references.</param>
+		/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+		/// <returns><see cref="Compilation"/></returns>
 		protected abstract Compilation Create(
 			string assemblyName,
 			IEnumerable<string> sources,
@@ -151,17 +165,27 @@
 		ICompilerContext ICompiler.CreateContext() => new AssemblyLoadContextTracker();
 	}
 
+	/// <summary>
+	/// Represents a C# compiler that supports compiling source files into an assembly.
+	/// </summary>
 	public class CSharpCompiler : RoslynCompiler
 	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="CSharpCompiler"/> class.
+		/// </summary>
 		public CSharpCompiler()
 			: base(FileExts.CSharp)
 		{
 		}
 
+		/// <inheritdoc />
 		public override bool IsTabsSupported => true;
+		/// <inheritdoc />
 		public override bool IsCaseSensitive => true;
+		/// <inheritdoc />
 		public override bool IsReferencesSupported => true;
 
+		/// <inheritdoc />
 		protected override Compilation Create(string assemblyName, IEnumerable<string> sources, PortableExecutableReference[] references, CancellationToken cancellationToken)
 			=> CSharpCompilation.Create(
 				assemblyName,
@@ -171,17 +195,27 @@
 			);
 	}
 
+	/// <summary>
+	/// Represents a Visual Basic compiler that supports compiling source files into an assembly.
+	/// </summary>
 	public class VisualBasicCompiler : RoslynCompiler
 	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VisualBasicCompiler"/> class.
+		/// </summary>
 		public VisualBasicCompiler()
 			: base(FileExts.VisualBasic)
 		{
 		}
 
+		/// <inheritdoc />
 		public override bool IsTabsSupported => true;
+		/// <inheritdoc />
 		public override bool IsCaseSensitive => false;
+		/// <inheritdoc />
 		public override bool IsReferencesSupported => true;
 
+		/// <inheritdoc />
 		protected override Compilation Create(string assemblyName, IEnumerable<string> sources, PortableExecutableReference[] references, CancellationToken cancellationToken)
 			=> VisualBasicCompilation.Create(
 				assemblyName,

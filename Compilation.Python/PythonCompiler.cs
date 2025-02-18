@@ -13,6 +13,9 @@ using Microsoft.Scripting.Hosting;
 using IronPython.Hosting;
 using IronPython.Compiler;
 
+/// <summary>
+/// Python compiler.
+/// </summary>
 public class PythonCompiler : ICompiler
 {
 	private class CustomErrorListener(IList<CompilationError> errors) : ErrorListener
@@ -32,11 +35,18 @@ public class PythonCompiler : ICompiler
 
 	private readonly ScriptEngine _engine;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PythonCompiler"/> class.
+	/// </summary>
 	public PythonCompiler()
 		: this(Python.CreateEngine())
 	{
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PythonCompiler"/> class.
+	/// </summary>
+	/// <param name="engine"><see cref="ScriptEngine"/></param>
 	public PythonCompiler(ScriptEngine engine)
 	{
 		_engine = engine ?? throw new ArgumentNullException(nameof(engine));
