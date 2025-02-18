@@ -44,7 +44,7 @@ public static class LoggingHelper
 	/// </summary>
 	/// <param name="receiver">Logs receiver.</param>
 	/// <param name="level">The level of the log message.</param>
-	/// <param name="getMessage">The function returns the text for <see cref="LogMessage.Message"/>.</param>
+	/// <param name="getMessage">The function that returns the text for <see cref="LogMessage.Message"/>.</param>
 	public static void AddLog(this ILogReceiver receiver, LogLevels level, Func<string> getMessage)
 	{
 		if (receiver == null)
@@ -58,7 +58,7 @@ public static class LoggingHelper
 	/// </summary>
 	/// <param name="receiver">Logs receiver.</param>
 	/// <param name="message">Text message.</param>
-	/// <param name="args">Text message settings. Used if a message is the format string. For details, see <see cref="string.Format(string,object[])"/>.</param>
+	/// <param name="args">Text message settings. Used if the message is a format string.</param>
 	public static void AddInfoLog(this ILogReceiver receiver, string message, params object[] args)
 	{
 		receiver.AddMessage(LogLevels.Info, message, args);
@@ -69,7 +69,7 @@ public static class LoggingHelper
 	/// </summary>
 	/// <param name="receiver">Logs receiver.</param>
 	/// <param name="message">Text message.</param>
-	/// <param name="args">Text message settings. Used if a message is the format string. For details, see <see cref="string.Format(string,object[])"/>.</param>
+	/// <param name="args">Text message settings. Used if the message is a format string.</param>
 	public static void AddVerboseLog(this ILogReceiver receiver, string message, params object[] args)
 	{
 		receiver.AddMessage(LogLevels.Verbose, message, args);
@@ -80,7 +80,7 @@ public static class LoggingHelper
 	/// </summary>
 	/// <param name="receiver">Logs receiver.</param>
 	/// <param name="message">Text message.</param>
-	/// <param name="args">Text message settings. Used if a message is the format string. For details, see <see cref="string.Format(string,object[])"/>.</param>
+	/// <param name="args">Text message settings. Used if the message is a format string.</param>
 	public static void AddDebugLog(this ILogReceiver receiver, string message, params object[] args)
 	{
 		receiver.AddMessage(LogLevels.Debug, message, args);
@@ -91,7 +91,7 @@ public static class LoggingHelper
 	/// </summary>
 	/// <param name="receiver">Logs receiver.</param>
 	/// <param name="message">Text message.</param>
-	/// <param name="args">Text message settings. Used if a message is the format string. For details, see <see cref="string.Format(string,object[])"/>.</param>
+	/// <param name="args">Text message settings. Used if the message is a format string.</param>
 	public static void AddWarningLog(this ILogReceiver receiver, string message, params object[] args)
 	{
 		receiver.AddMessage(LogLevels.Warning, message, args);
@@ -146,7 +146,7 @@ public static class LoggingHelper
 	/// </summary>
 	/// <param name="receiver">Logs receiver.</param>
 	/// <param name="message">Text message.</param>
-	/// <param name="args">Text message settings. Used if a message is the format string. For details, see <see cref="string.Format(string,object[])"/>.</param>
+	/// <param name="args">Text message settings. Used if the message is a format string.</param>
 	public static void AddErrorLog(this ILogReceiver receiver, string message, params object[] args)
 	{
 		receiver.AddMessage(LogLevels.Error, message, args);
@@ -177,10 +177,11 @@ public static class LoggingHelper
 	}
 
 	/// <summary>
-	/// Get <see cref="ILogSource.LogLevel"/> for the source. If the value is equal to <see cref="LogLevels.Inherit"/>, then parental source level is taken.
+	/// Get <see cref="ILogSource.LogLevel"/> for the source. If the value is equal to <see cref="LogLevels.Inherit"/>,
+	/// then the parental source level is taken.
 	/// </summary>
 	/// <param name="source">The log source.</param>
-	/// <returns>Logging level.</returns>
+	/// <returns>The logging level.</returns>
 	public static LogLevels GetLogLevel(this ILogSource source)
 	{
 		if (source == null)
@@ -201,9 +202,9 @@ public static class LoggingHelper
 	}
 
 	/// <summary>
-	/// Wrap the specified action in try/catch clause with logging.
+	/// Wrap the specified action in a try/catch clause with logging.
 	/// </summary>
-	/// <param name="action">The action.</param>
+	/// <param name="action">The action to execute.</param>
 	public static void DoWithLog(this Action action)
 	{
 		if (action == null)
@@ -220,11 +221,11 @@ public static class LoggingHelper
 	}
 
 	/// <summary>
-	/// Wrap the specified action in try/catch clause with logging.
+	/// Wrap the specified function in a try/catch clause with logging.
 	/// </summary>
-	/// <typeparam name="T">The type of returned result.</typeparam>
-	/// <param name="action">The action.</param>
-	/// <returns>The resulting value.</returns>
+	/// <typeparam name="T">The type of the returned result.</typeparam>
+	/// <param name="action">The function to execute.</param>
+	/// <returns>The resulting value, or the default value of T if an error occurs.</returns>
 	public static T DoWithLog<T>(this Func<T> action)
 	{
 		if (action == null)
@@ -242,11 +243,10 @@ public static class LoggingHelper
 	}
 
 	/// <summary>
-	/// Wrap the specified action in try/catch clause with logging.
+	/// Executes the function that returns a dictionary, logs any exceptions, and logs a specific error for each key/value pair.
 	/// </summary>
-	/// <typeparam name="T">The type of returned result.</typeparam>
-	/// <param name="action">The action.</param>
-	/// <returns>The resulting value.</returns>
+	/// <typeparam name="T">The type of the dictionary key.</typeparam>
+	/// <param name="action">The function to execute that returns a dictionary.</param>
 	public static void DoWithLog<T>(Func<IDictionary<T, Exception>> action)
 	{
 		if (action == null)
@@ -268,13 +268,14 @@ public static class LoggingHelper
 	}
 
 	/// <summary>
-	/// Wrap the specified action in try/catch clause with logging.
+	/// Safely converts each element of an enumerable collection using a specified converter function.
+	/// Logs any exceptions that occur during conversion.
 	/// </summary>
-	/// <typeparam name="T1">The type of source values.</typeparam>
-	/// <typeparam name="T2">The type of returned result.</typeparam>
-	/// <param name="from">Source values</param>
-	/// <param name="func">Converter.</param>
-	/// <returns>Result.</returns>
+	/// <typeparam name="T1">The type of the elements in the source enumerable.</typeparam>
+	/// <typeparam name="T2">The type of the elements in the resulting array.</typeparam>
+	/// <param name="from">The source enumerable.</param>
+	/// <param name="func">The converter function.</param>
+	/// <returns>An array containing the converted elements.</returns>
 	public static T2[] SafeAdd<T1, T2>(this IEnumerable from, Func<T1, T2> func)
 	{
 		if (from == null)
@@ -308,11 +309,11 @@ public static class LoggingHelper
 	public static readonly Func<LogMessage, bool> OnlyError = message => message.Level == LogLevels.Error;
 
 	/// <summary>
-	/// Filter messages.
+	/// Filters messages based on provided filters.
 	/// </summary>
-	/// <param name="messages">Incoming messages.</param>
-	/// <param name="filters">Messages filters that specify which messages should be handled.</param>
-	/// <returns>Filtered collection.</returns>
+	/// <param name="messages">The collection of messages to filter.</param>
+	/// <param name="filters">A collection of filter predicates to determine which messages to include.</param>
+	/// <returns>An enumerable of filtered messages.</returns>
 	public static IEnumerable<LogMessage> Filter(this IEnumerable<LogMessage> messages, ICollection<Func<LogMessage, bool>> filters)
 	{
 		if (filters.Count > 0)
@@ -322,13 +323,20 @@ public static class LoggingHelper
 	}
 
 	/// <summary>
-	/// Write message.
+	/// Writes a single log message using the specified listener.
 	/// </summary>
-	/// <param name="listener"><see cref="ILogListener"/></param>
-	/// <param name="message"><see cref="LogMessage"/></param>
+	/// <param name="listener">The log listener.</param>
+	/// <param name="message">The log message to write.</param>
 	public static void WriteMessage(this ILogListener listener, LogMessage message)
-		=> listener.CheckOnNull(nameof(message)).WriteMessages([message]);
+		=> listener.CheckOnNull(nameof(message)).WriteMessages(new[] { message });
 
+	/// <summary>
+	/// Continues the task, observing any errors and optionally executing the specified action.
+	/// </summary>
+	/// <param name="task">The task to observe.</param>
+	/// <param name="observer">An action to handle exceptions if the task faults.</param>
+	/// <param name="other">An optional action to execute if the task completes successfully.</param>
+	/// <returns>A new task representing the continuation.</returns>
 	public static Task ObserveError(this Task task, Action<Exception> observer, Action<Task> other = null)
 	{
 		if (task is null) throw new ArgumentNullException(nameof(task));
@@ -344,6 +352,14 @@ public static class LoggingHelper
 		});
 	}
 
+	/// <summary>
+	/// Continues the generic task, observing any errors and optionally executing the specified action.
+	/// </summary>
+	/// <typeparam name="T">The type of the task result.</typeparam>
+	/// <param name="task">The task to observe.</param>
+	/// <param name="observer">An action to handle exceptions if the task faults.</param>
+	/// <param name="other">An optional action to execute if the task completes successfully.</param>
+	/// <returns>A new task representing the continuation.</returns>
 	public static Task ObserveError<T>(this Task<T> task, Action<Exception> observer, Action<Task<T>> other = null)
 	{
 		if (task is null) throw new ArgumentNullException(nameof(task));
@@ -359,9 +375,19 @@ public static class LoggingHelper
 		});
 	}
 
+	/// <summary>
+	/// Observes errors from the task and logs them.
+	/// </summary>
+	/// <param name="task">The task to observe.</param>
+	/// <returns>A new task representing the continuation.</returns>
 	public static Task ObserveErrorAndLog(this Task task)
 		=> task.ObserveError(ex => ex.LogError());
 
+	/// <summary>
+	/// Observes errors from the task and traces them using <see cref="Trace.WriteLine(object)"/>.
+	/// </summary>
+	/// <param name="task">The task to observe.</param>
+	/// <returns>A new task representing the continuation.</returns>
 	public static Task ObserveErrorAndTrace(this Task task)
 		=> task.ObserveError(ex => Trace.WriteLine(ex));
 }

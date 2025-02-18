@@ -46,6 +46,8 @@
         '$(MSBuildProjectName)' == 'Net.HPSocket' or
         '$(MSBuildProjectName)' == 'SmartFormat' or
         '$(MSBuildProjectName)' == 'StringSearch' or
+        '$(MSBuildProjectName)' == 'Interop' or
+        '$(MSBuildProjectName)' == 'Interop.Windows' or
         '$(MSBuildProjectName)' == 'Tests'
       ">
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
