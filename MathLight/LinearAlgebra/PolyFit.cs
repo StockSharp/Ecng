@@ -5,7 +5,10 @@ using System.Linq;
 
 namespace Ecng.MathLight.LinearAlgebra
 {
-    public class PolyFit
+	/// <summary>
+	/// Implements simple Matrix functions needed for polynomial fitting
+	/// </summary>
+	public class PolyFit
     {
         /// <summary>
         /// Coefficients of a polynomial starting at the constant coefficient 

@@ -11,8 +11,14 @@ namespace Ecng.MathLight.LinearAlgebra
     /// </summary>
     public class LUDecomposition
     {
-        public double[,] L { private set; get; }
-        public double[,] U { private set; get; }
+		/// <summary>
+		/// The lower triangular matrix.
+		/// </summary>
+		public double[,] L { private set; get; }
+		/// <summary>
+		/// The upper triangular matrix.
+		/// </summary>
+		public double[,] U { private set; get; }
 
         private readonly int[] _permutation;
         private readonly double[] _rowBuffer;
@@ -80,7 +86,12 @@ namespace Ecng.MathLight.LinearAlgebra
             }
         }
 
-        public double[,] Solve(double[,] matrix)
+		/// <summary>
+		/// Solve the system of linear equations.
+		/// </summary>
+		/// <param name="matrix">The matrix.</param>
+		/// <returns>The value.</returns>
+		public double[,] Solve(double[,] matrix)
         {
             if (matrix.Rows() != L.Rows())
             {
@@ -109,6 +120,11 @@ namespace Ecng.MathLight.LinearAlgebra
             return ret;
         }
 
+		/// <summary>
+		/// Solve the system of linear equations.
+		/// </summary>
+		/// <param name="vector">The vector.</param>
+		/// <returns>The value.</returns>
 		[CLSCompliant(false)]
         public double[] Solve(double[] vector)
         {

@@ -2,6 +2,9 @@
 
 using System;
 
+/// <summary>
+/// The normal distribution.
+/// </summary>
 public static class Normal
 {
 	// MathNet.Numerics
@@ -35,11 +38,17 @@ public static class Normal
 	private static readonly double[] ErfImpNn = [-7.892247039787227E-06, 6.22088451660987E-07, 1.457284456768824E-08, 6.0371550554271534E-11];
 	private static readonly double[] ErfImpNd = [1.0, 0.037532884635629371, 0.00046791953597462532, 1.9384703927584565E-06];
 
+	/// <summary>
+	/// Evaluate the polynomial.
+	/// </summary>
+	/// <param name="z">The z.</param>
+	/// <param name="coefficients">The coefficients.</param>
+	/// <returns>The result.</returns>
 	public static double Evaluate(double z, params double[] coefficients)
 	{
 		if (coefficients == null)
 		{
-			throw new ArgumentNullException("coefficients");
+			throw new ArgumentNullException(nameof(coefficients));
 		}
 
 		int num = coefficients.Length;
@@ -58,6 +67,11 @@ public static class Normal
 		return num2;
 	}
 
+	/// <summary>
+	/// The cumulative distribution.
+	/// </summary>
+	/// <param name="x">The x.</param>
+	/// <returns>The cumulative distribution.</returns>
 	public static double CumulativeDistribution(double x)
 	{
 		static double ErfImp(double z, bool invert)
