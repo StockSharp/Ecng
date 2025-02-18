@@ -5,10 +5,20 @@ using System.Threading.Tasks;
 
 namespace Ecng.IO.Fossil
 {
-	unsafe class Delta
+	/// <summary>
+	/// Create and apply deltas to files.
+	/// </summary>
+	public unsafe class Delta
 	{
 		internal static UInt16 NHASH = 16;
 
+		/// <summary>
+		/// Create a delta between two files.
+		/// </summary>
+		/// <param name="origin">The original file.</param>
+		/// <param name="target">The target file.</param>
+		/// <param name="token">A cancellation token that can be used to cancel the operation.</param>
+		/// <returns>The delta.</returns>
 		public static ValueTask<byte[]> Create(byte[] origin, byte[] target, CancellationToken token)
 		{
 			fixed (byte* originPtr = origin)
@@ -179,6 +189,13 @@ namespace Ecng.IO.Fossil
 			return new(zDelta.ToArray());
 		}
 
+		/// <summary>
+		/// Apply a delta to a source file to create a new target file.
+		/// </summary>
+		/// <param name="origin">The source file. This is the file that was used to create the delta.</param>
+		/// <param name="delta">The delta to apply to the source file.</param>
+		/// <param name="token">A cancellation token that can be used to cancel the operation.</param>
+		/// <returns>The target file.</returns>
 		public static ValueTask<byte[]> Apply(byte[] origin, byte[] delta, CancellationToken token)
 		{
 			fixed (byte* originPtr = origin)
@@ -244,6 +261,12 @@ namespace Ecng.IO.Fossil
 			throw new Exception("unterminated delta");
 		}
 
+		/// <summary>
+		/// Return the size of the output file given a delta.
+		/// </summary>
+		/// <param name="delta">A delta obtained from the <see cref="Create(byte[], byte[], CancellationToken)"/> method.</param>
+		/// <returns>The size of the output file.</returns>
+		[CLSCompliant(false)]
 		public static uint OutputSize(byte[] delta) {
 			fixed (byte* deltaPtr = delta)
 			{
