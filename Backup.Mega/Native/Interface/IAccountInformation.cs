@@ -2,7 +2,7 @@
 {
   using System.Collections.Generic;
 
-  public interface IAccountInformation
+  interface IAccountInformation
   {
     long TotalQuota { get; }
 
@@ -11,7 +11,7 @@
     IEnumerable<IStorageMetrics> Metrics { get; }
   }
 
-  public interface IStorageMetrics
+  interface IStorageMetrics
   {
     string NodeId { get; }
 

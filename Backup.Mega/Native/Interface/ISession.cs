@@ -3,7 +3,7 @@
   using System;
   using System.Net;
 
-  public interface ISession
+  interface ISession
   {
     string Client { get; }
 
@@ -21,7 +21,7 @@
   }
 
   [Flags]
-  public enum SessionStatus
+  enum SessionStatus
   {
     Undefined = 0,
     Current = 1 << 0,

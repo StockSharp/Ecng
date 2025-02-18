@@ -2,7 +2,7 @@
 {
   using System;
 
-  public interface INode : IEquatable<INode>
+  interface INode : IEquatable<INode>
   {
     string Id { get; }
 
@@ -38,7 +38,7 @@
     byte[] FullKey { get; }
   }
 
-  public interface IFileAttribute
+  interface IFileAttribute
   {
     int Id { get; }
 
@@ -47,13 +47,13 @@
     string Handle { get; }
   }
 
-  public enum FileAttributeType
+  enum FileAttributeType
   {
     Thumbnail = 0,
     Preview = 1
   }
 
-  public enum NodeType
+  enum NodeType
   {
     File = 0,
     Directory,

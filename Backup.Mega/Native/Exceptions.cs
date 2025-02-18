@@ -30,7 +30,7 @@
     }
   }
 
-  public enum ApiResultCode
+  enum ApiResultCode
   {
     /// <summary>
     /// API_OK (0): Success

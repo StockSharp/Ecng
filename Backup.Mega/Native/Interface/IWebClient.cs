@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-public interface IWebClient
+interface IWebClient
 {
 	int BufferSize { get; set; }
 
