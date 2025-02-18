@@ -10,28 +10,66 @@
 	using Ecng.Common;
 
 	/// <summary>
-	/// Delayed action execution with batching support.
+	/// Provides delayed action execution with batching support.
 	/// </summary>
 	public class DelayAction : Disposable
 	{
 		/// <summary>
-		/// Group of actions.
+		/// Represents a group of delayed actions.
 		/// </summary>
 		public interface IGroup
 		{
+			/// <summary>
+			/// Adds an action to the group.
+			/// </summary>
+			/// <param name="action">The action to execute.</param>
+			/// <param name="postAction">An action to execute after the main action, with an exception parameter if an error occurred.</param>
+			/// <param name="canBatch">Determines if the action can be batched.</param>
+			/// <param name="breakBatchOnError">Determines if batching should break on error.</param>
 			void Add(Action action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true);
+
+			/// <summary>
+			/// Adds an action that receives an IDisposable scope to the group.
+			/// </summary>
+			/// <param name="action">The action to execute with the provided scope.</param>
+			/// <param name="postAction">An action to execute after the main action, with an exception parameter if an error occurred.</param>
+			/// <param name="canBatch">Determines if the action can be batched.</param>
+			/// <param name="breakBatchOnError">Determines if batching should break on error.</param>
 			void Add(Action<IDisposable> action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true);
+
+			/// <summary>
+			/// Waits until all actions in the group have been flushed.
+			/// </summary>
+			/// <param name="dispose">Determines if the DelayAction instance should be disposed after flushing.</param>
 			void WaitFlush(bool dispose);
 		}
 
 		/// <summary>
-		/// Group of actions.
+		/// Represents a group of delayed actions with a specific group state.
 		/// </summary>
-		/// <typeparam name="T">Type of the group state.</typeparam>
+		/// <typeparam name="T">The type of the group state, which implements IDisposable.</typeparam>
 		public interface IGroup<T> : IGroup
 			where T : IDisposable
 		{
+			/// <summary>
+			/// Adds an action that receives the group state.
+			/// </summary>
+			/// <param name="action">The action to execute with the group state.</param>
+			/// <param name="postAction">An action to execute after the main action, with an exception parameter if an error occurred.</param>
+			/// <param name="canBatch">Determines if the action can be batched.</param>
+			/// <param name="breakBatchOnError">Determines if batching should break on error.</param>
 			void Add(Action<T> action, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true);
+
+			/// <summary>
+			/// Adds an action that receives the group state and an additional state parameter.
+			/// </summary>
+			/// <typeparam name="TState">The type of the additional state.</typeparam>
+			/// <param name="action">The action to execute with the group state and additional state.</param>
+			/// <param name="state">The additional state for the action.</param>
+			/// <param name="postAction">An action to execute after the main action, with an exception parameter if an error occurred.</param>
+			/// <param name="canBatch">Determines if the action can be batched.</param>
+			/// <param name="breakBatchOnError">Determines if batching should break on error.</param>
+			/// <param name="compareStates">A function to compare two state values for batching decisions.</param>
 			void Add<TState>(Action<T, TState> action, TState state, Action<Exception> postAction = null, bool canBatch = true, bool breakBatchOnError = true, Func<TState, TState, bool> compareStates = null);
 		}
 
@@ -119,6 +157,11 @@
 				private bool _isProcessed;
 				private Exception _err;
 
+				/// <summary>
+				/// Initializes a new instance of the FlushItem class.
+				/// </summary>
+				/// <param name="parent">The parent DelayAction.</param>
+				/// <param name="dispose">Indicates if the parent should be disposed after flushing.</param>
 				public FlushItem(DelayAction parent, bool dispose)
 				{
 					if (parent is null)
@@ -145,6 +188,9 @@
 				{
 				}
 
+				/// <summary>
+				/// Waits for this flush item to be processed.
+				/// </summary>
 				public void Wait()
 				{
 					lock (_syncObject)
@@ -234,16 +280,26 @@
 
 		private readonly CachedSynchronizedList<IGroup> _groups = [];
 
+		/// <summary>
+		/// Initializes a new instance of the DelayAction class.
+		/// </summary>
+		/// <param name="errorHandler">A delegate to handle errors that occur during execution.</param>
 		public DelayAction(Action<Exception> errorHandler)
 		{
 			_errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
 			DefaultGroup = CreateGroup<IDisposable>(null);
 		}
 
+		/// <summary>
+		/// Gets the default group for delayed actions.
+		/// </summary>
 		public IGroup DefaultGroup { get; }
 
 		private TimeSpan _flushInterval = TimeSpan.FromSeconds(1);
 
+		/// <summary>
+		/// Gets or sets the flush interval for batching actions.
+		/// </summary>
 		public TimeSpan FlushInterval
 		{
 			get => _flushInterval;
@@ -261,6 +317,15 @@
 			}
 		}
 
+		/// <summary>
+		/// Creates a new group of delayed actions with a specific state.
+		/// </summary>
+		/// <typeparam name="T">The type of the group state, which implements IDisposable.</typeparam>
+		/// <param name="init">
+		/// A function to initialize the group state.
+		/// If null, a dummy state is used.
+		/// </param>
+		/// <returns>A new group for handling delayed actions.</returns>
 		public IGroup<T> CreateGroup<T>(Func<T> init)
 			where T : IDisposable
 		{
@@ -269,6 +334,10 @@
 			return group;
 		}
 
+		/// <summary>
+		/// Deletes a previously created group of delayed actions.
+		/// </summary>
+		/// <param name="group">The group to delete.</param>
 		public void DeleteGroup(IGroup group)
 		{
 			if (group is null)
@@ -282,6 +351,9 @@
 
 		private int _maxBatchSize = 1000;
 
+		/// <summary>
+		/// Gets or sets the maximum number of actions in a single batch.
+		/// </summary>
 		public int MaxBatchSize
 		{
 			get => _maxBatchSize;
@@ -307,6 +379,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Flushes all queued actions by executing them in batches.
+		/// </summary>
 		public void OnFlush()
 		{
 			try
@@ -408,6 +483,10 @@
 			item.PostAction?.Invoke(error);
 		}
 
+		/// <summary>
+		/// Waits until all queued actions are flushed and optionally disposes the DelayAction instance.
+		/// </summary>
+		/// <param name="dispose">If set to true, disposes the DelayAction instance after flushing.</param>
 		public void WaitFlush(bool dispose)
 		{
 			_groups.Cache.Where(g => g != DefaultGroup).ForEach(g => g.WaitFlush(false));
@@ -488,6 +567,11 @@
 
 		private readonly DummyBatchContext _batchContext = new();
 
+		/// <summary>
+		/// Begins a new batch for the specified group.
+		/// </summary>
+		/// <param name="group">The group for which to begin the batch.</param>
+		/// <returns>An IBatchContext representing the batch operation.</returns>
 		protected virtual IBatchContext BeginBatch(IGroup group)
 		{
 			return _batchContext;

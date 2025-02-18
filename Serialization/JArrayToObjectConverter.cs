@@ -10,10 +10,26 @@ using Ecng.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+/// <summary>
+/// Converts a JSON array to an object by mapping array elements to the object's fields in declaration order.
+/// </summary>
 public class JArrayToObjectConverter : JsonConverter
 {
+	/// <summary>
+	/// Determines whether this converter can convert the specified object type.
+	/// </summary>
+	/// <param name="objectType">Type of the object.</param>
+	/// <returns>Always returns true.</returns>
 	public override bool CanConvert(Type objectType) => true;
 
+	/// <summary>
+	/// Reads the JSON representation of the object and maps JSON array elements to object fields.
+	/// </summary>
+	/// <param name="reader">The JSON reader.</param>
+	/// <param name="objectType">Type of the object.</param>
+	/// <param name="existingValue">The existing value of the object being populated.</param>
+	/// <param name="serializer">The JSON serializer.</param>
+	/// <returns>The deserialized object with fields set from the JSON array.</returns>
 	public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 	{
 		existingValue ??= Activator.CreateInstance(objectType);
@@ -35,12 +51,28 @@ public class JArrayToObjectConverter : JsonConverter
 		return existingValue;
 	}
 
+	/// <summary>
+	/// Gets a value indicating whether this converter can write JSON.
+	/// </summary>
+	/// <value>Always false because writing is not supported.</value>
 	public override bool CanWrite => false;
 
+	/// <summary>
+	/// Not supported. Throws a <see cref="NotSupportedException"/>.
+	/// </summary>
+	/// <param name="writer">The JSON writer.</param>
+	/// <param name="value">The object value.</param>
+	/// <param name="serializer">The JSON serializer.</param>
+	/// <exception cref="NotSupportedException">Always thrown because writing is not supported.</exception>
 	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
 		=> throw new NotSupportedException();
 }
 
+/// <summary>
+/// Converts a JSON array to an object of type <typeparamref name="T"/> by mapping array elements to the object's fields 
+/// in declaration order using compiled IL for performance.
+/// </summary>
+/// <typeparam name="T">The type of the object to convert to. Must have a parameterless constructor.</typeparam>
 public class JArrayToObjectConverter<T> : JsonConverter
 	where T : new()
 {
@@ -84,8 +116,21 @@ public class JArrayToObjectConverter<T> : JsonConverter
 			.Select(f => (f.FieldType, CreateFieldSetter(f)))];
 	}
 
+	/// <summary>
+	/// Determines whether this converter can convert the specified object type.
+	/// </summary>
+	/// <param name="objectType">Type of the object.</param>
+	/// <returns>Always returns true.</returns>
 	public override bool CanConvert(Type objectType) => true;
 
+	/// <summary>
+	/// Reads the JSON representation of the object and maps JSON array elements to the corresponding fields of an instance of <typeparamref name="T"/>.
+	/// </summary>
+	/// <param name="reader">The JSON reader.</param>
+	/// <param name="objectType">Type of the object.</param>
+	/// <param name="existingValue">The existing instance of <typeparamref name="T"/> to populate.</param>
+	/// <param name="serializer">The JSON serializer.</param>
+	/// <returns>The deserialized object of type <typeparamref name="T"/>.</returns>
 	public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 	{
 		existingValue ??= new T();
@@ -105,8 +150,19 @@ public class JArrayToObjectConverter<T> : JsonConverter
 		return existingValue;
 	}
 
+	/// <summary>
+	/// Gets a value indicating whether this converter can write JSON.
+	/// </summary>
+	/// <value>Always false because writing is not supported.</value>
 	public override bool CanWrite => false;
 
+	/// <summary>
+	/// Not supported. Throws a <see cref="NotSupportedException"/>.
+	/// </summary>
+	/// <param name="writer">The JSON writer.</param>
+	/// <param name="value">The object value.</param>
+	/// <param name="serializer">The JSON serializer.</param>
+	/// <exception cref="NotSupportedException">Always thrown because writing is not supported.</exception>
 	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
 		=> throw new NotSupportedException();
 }

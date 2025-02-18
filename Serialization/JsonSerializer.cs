@@ -15,6 +15,9 @@
 
 	using Newtonsoft.Json;
 
+	/// <summary>
+	/// Contains custom JSON conversion logic.
+	/// </summary>
 	static class JsonConversions
 	{
 		static JsonConversions()
@@ -23,17 +26,51 @@
 		}
 	}
 
+	/// <summary>
+	/// Provides JSON serialization settings.
+	/// </summary>
 	public interface IJsonSerializer
 	{
+		/// <summary>
+		/// Gets or sets a value indicating whether the JSON output should be indented.
+		/// </summary>
 		bool Indent { get; set; }
+
+		/// <summary>
+		/// Gets or sets the text encoding used for serialization.
+		/// </summary>
 		Encoding Encoding { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the fill mode is enabled.
+		/// </summary>
 		bool FillMode { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether enums should be serialized as strings.
+		/// </summary>
 		bool EnumAsString { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether encrypted values are handled as byte arrays.
+		/// </summary>
 		bool EncryptedAsByteArray { get; set; }
+
+		/// <summary>
+		/// Gets or sets the buffer size used during serialization and deserialization.
+		/// </summary>
 		int BufferSize { get; set; }
+
+		/// <summary>
+		/// Gets or sets the null value handling option for JSON serialization.
+		/// </summary>
 		NullValueHandling NullValueHandling { get; set; }
 	}
 
+	/// <summary>
+	/// Provides JSON serialization and deserialization for a given type.
+	/// </summary>
+	/// <typeparam name="T">The type of the graph to serialize and deserialize.</typeparam>
 	public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 	{
 		static JsonSerializer()
@@ -41,16 +78,50 @@
 			typeof(JsonConversions).EnsureRunClass();
 		}
 
+		/// <summary>
+		/// Gets or sets a value indicating whether the JSON output should be indented.
+		/// </summary>
 		public bool Indent { get; set; }
+
+		/// <summary>
+		/// Gets or sets the text encoding used for serialization. Defaults to UTF8.
+		/// </summary>
 		public Encoding Encoding { get; set; } = Encoding.UTF8;
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the fill mode is enabled.
+		/// </summary>
 		public bool FillMode { get; set; } = true;
+
+		/// <summary>
+		/// Gets or sets a value indicating whether enums should be serialized as strings.
+		/// </summary>
 		public bool EnumAsString { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether encrypted values are handled as byte arrays.
+		/// </summary>
 		public bool EncryptedAsByteArray { get; set; }
+
+		/// <summary>
+		/// Gets or sets the buffer size used during serialization and deserialization.
+		/// </summary>
 		public int BufferSize { get; set; } = FileSizes.KB;
+
+		/// <summary>
+		/// Gets or sets the null value handling option for JSON serialization.
+		/// </summary>
 		public NullValueHandling NullValueHandling { get; set; } = NullValueHandling.Include;
 
+		/// <summary>
+		/// Gets the file extension associated with the JSON serializer.
+		/// </summary>
 		public override string FileExtension => "json";
 
+		/// <summary>
+		/// Creates a default instance of the JSON serializer with preconfigured settings.
+		/// </summary>
+		/// <returns>A default <see cref="JsonSerializer{T}"/> instance.</returns>
 		public static JsonSerializer<T> CreateDefault()
 			=> new()
 			{
@@ -61,6 +132,13 @@
 
 		private static bool IsJsonPrimitive() => typeof(T).IsSerializablePrimitive() && typeof(T) != typeof(byte[]);
 
+		/// <summary>
+		/// Asynchronously serializes the specified object graph to the provided stream as JSON.
+		/// </summary>
+		/// <param name="graph">The object graph to serialize.</param>
+		/// <param name="stream">The stream to which the graph is serialized.</param>
+		/// <param name="cancellationToken">A token that can be used to cancel the serialization operation.</param>
+		/// <returns>A task representing the asynchronous serialization operation.</returns>
 		public override async ValueTask SerializeAsync(T graph, Stream stream, CancellationToken cancellationToken)
 		{
 			var isPrimitive = IsJsonPrimitive();
@@ -79,6 +157,12 @@
 				await writer.WriteEndArrayAsync(cancellationToken);
 		}
 
+		/// <summary>
+		/// Asynchronously deserializes an object graph from the provided JSON stream.
+		/// </summary>
+		/// <param name="stream">The stream from which the object graph is deserialized.</param>
+		/// <param name="cancellationToken">A token that can be used to cancel the deserialization operation.</param>
+		/// <returns>A task representing the asynchronous deserialization operation. The task result contains the deserialized object graph.</returns>
 		public override async ValueTask<T> DeserializeAsync(Stream stream, CancellationToken cancellationToken)
 		{
 			var isPrimitive = IsJsonPrimitive();
