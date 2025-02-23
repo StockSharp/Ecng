@@ -904,6 +904,13 @@
 				return str1.IndexOf(str2, index, StringComparison.InvariantCultureIgnoreCase);
 		}
 
+		/// <summary>
+		/// Searches for the last occurrence of a specified string, ignoring case.
+		/// </summary>
+		/// <param name="str1">The string to search within.</param>
+		/// <param name="str2">The string to search for.</param>
+		/// <param name="index">The starting position of the search. The search is conducted from this position to the beginning. Default is -1 (entire string).</param>
+		/// <returns>The index of the last occurrence of str2 in str1, or -1 if not found or if either string is null.</returns>
 		public static int LastIndexOfIgnoreCase(this string str1, string str2, int index = -1)
 		{
 			if (str1 is null)
@@ -924,6 +931,12 @@
 		//
 		// http://ppetrov.wordpress.com/2008/06/30/useful-method-8-of-n-string-capitalize-firsttotitlecase/
 		//
+
+		/// <summary>
+		/// Converts the string to title case using the current culture.
+		/// </summary>
+		/// <param name="value">The string to convert.</param>
+		/// <returns>The string converted to title case.</returns>
 		public static string ToTitleCase(this string value)
 		{
 			var ti = Thread.CurrentThread.CurrentCulture.TextInfo;
@@ -933,11 +946,27 @@
 		//
 		// http://ppetrov.wordpress.com/2008/06/13/useful-method-1-of-n/
 		//
+
+		/// <summary>
+		/// Repeats the string a specified number of times.
+		/// </summary>
+		/// <param name="value">The string to repeat.</param>
+		/// <param name="n">The number of times to repeat the string.</param>
+		/// <returns>A new string containing the original string repeated n times.</returns>
 		public static string Times(this string value, int n)
 		{
 			return value.Times(n, string.Empty);
 		}
 
+		/// <summary>
+		/// Repeats the string a specified number of times with a separator between each repetition.
+		/// </summary>
+		/// <param name="value">The string to repeat.</param>
+		/// <param name="n">The number of times to repeat the string.</param>
+		/// <param name="separator">The string to use as a separator between repetitions.</param>
+		/// <returns>A new string containing the original string repeated n times with the specified separator.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown when n is less than 1.</exception>
 		public static string Times(this string value, int n, string separator)
 		{
 			if (value is null)
@@ -956,18 +985,25 @@
 		// http://www.extensionmethod.net/Details.aspx?ID=123
 		//
 
+		/// <summary>
+		/// Truncates the string to a specified length and appends "..." if truncated.
+		/// </summary>
+		/// <param name="text">The string to truncate.</param>
+		/// <param name="maxLength">The maximum length of the resulting string.</param>
+		/// <returns>The truncated string.</returns>
 		public static string Truncate(this string text, int maxLength)
 		{
 			return text.Truncate(maxLength, "...");
 		}
 
 		/// <summary>
-		/// Truncates the string to a specified length and replace the truncated to a ...
+		/// Truncates the string to a specified length and appends a custom suffix if truncated.
 		/// </summary>
-		/// <param name="text">string that will be truncated</param>
-		/// <param name="maxLength">total length of characters to maintain before the truncate happens</param>
-		/// <param name="suffix"></param>
-		/// <returns>truncated string</returns>
+		/// <param name="text">The string to truncate.</param>
+		/// <param name="maxLength">The maximum length of the resulting string before adding the suffix.</param>
+		/// <param name="suffix">The string to append if truncation occurs.</param>
+		/// <returns>The truncated string with the suffix if truncation occurred.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown when maxLength is negative.</exception>
 		public static string Truncate(this string text, int maxLength, string suffix)
 		{
 			if (maxLength < 0)
@@ -980,6 +1016,12 @@
 				return text.Substring(0, maxLength) + suffix;
 		}
 
+		/// <summary>
+		/// Truncates a string in the middle, preserving the start and end portions while adding an ellipsis in between.
+		/// </summary>
+		/// <param name="input">The string to truncate.</param>
+		/// <param name="limit">The maximum length of the resulting string including the ellipsis.</param>
+		/// <returns>The truncated string with ellipsis in the middle if truncation was necessary, otherwise the original string.</returns>
 		public static string TruncateMiddle(this string input, int limit)
 		{
 			if (input.IsEmpty())
@@ -1017,7 +1059,6 @@
 
 			return output;
 		}
-
 
 		/// <summary>
 		/// Removes trailing zeros from the string using the current thread's number format decimal separator.

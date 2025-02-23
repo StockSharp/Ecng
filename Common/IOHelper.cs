@@ -408,6 +408,9 @@ namespace Ecng.Common
 			catch (UnauthorizedAccessException) { }
 		}
 
+		/// <summary>
+		/// The %Documents% variable.
+		/// </summary>
 		public const string DocsVar = "%Documents%";
 
 		/// <summary>
