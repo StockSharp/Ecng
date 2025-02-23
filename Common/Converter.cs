@@ -438,6 +438,13 @@
 			AddTypedConverter<string, TimeZoneInfo>(s => TZConvert.TryGetTimeZoneInfo(s, out var tz) ? tz : TimeZoneInfo.Utc);
 		}
 
+		/// <summary>
+		/// Adds a typed converter function for converting from TFrom to TTo type.
+		/// </summary>
+		/// <typeparam name="TFrom">The source type to convert from.</typeparam>
+		/// <typeparam name="TTo">The destination type to convert to.</typeparam>
+		/// <param name="converter">The converter function to add.</param>
+		/// <exception cref="ArgumentNullException">Thrown when converter is null.</exception>
 		public static void AddTypedConverter<TFrom, TTo>(Func<TFrom, TTo> converter)
 		{
 			if (converter is null)
@@ -449,6 +456,12 @@
 			_typedConverters2.Add(key, input => converter((TFrom)input));
 		}
 
+		/// <summary>
+		/// Adds a typed converter function for converting between specified types.
+		/// </summary>
+		/// <param name="key">Tuple containing source and destination types.</param>
+		/// <param name="converter">The converter function to add.</param>
+		/// <exception cref="ArgumentNullException">Thrown when converter is null.</exception>
 		public static void AddTypedConverter((Type, Type) key, Func<object, object> converter)
 		{
 			if (converter is null)
@@ -458,16 +471,35 @@
 			_typedConverters2.Add(key, converter);
 		}
 
+		/// <summary>
+		/// Gets the typed converter function for converting between specified types.
+		/// </summary>
+		/// <typeparam name="TFrom">The source type to convert from.</typeparam>
+		/// <typeparam name="TTo">The destination type to convert to.</typeparam>
+		/// <returns>A converter function for the specified types.</returns>
 		public static Func<TFrom, TTo> GetTypedConverter<TFrom, TTo>()
 		{
 			return (Func<TFrom, TTo>)_typedConverters[(typeof(TFrom), typeof(TTo))];
 		}
 
+		/// <summary>
+		/// Gets the typed converter function for converting between specified types.
+		/// </summary>
+		/// <param name="from">The source type to convert from.</param>
+		/// <param name="to">The destination type to convert to.</param>
+		/// <returns>A converter function for the specified types.</returns>
 		public static Func<object, object> GetTypedConverter(Type from, Type to)
 		{
 			return (Func<object, object>)_typedConverters[(from, to)];
 		}
 
+		/// <summary>
+		/// Converts the value from source type to destination type using registered type converters.
+		/// </summary>
+		/// <typeparam name="TFrom">The source type to convert from.</typeparam>
+		/// <typeparam name="TTo">The destination type to convert to.</typeparam>
+		/// <param name="from">The value to convert.</param>
+		/// <returns>The converted value.</returns>
 		public static TTo TypedTo<TFrom, TTo>(this TFrom from)
 		{
 			return GetTypedConverter<TFrom, TTo>()(from);
@@ -830,6 +862,13 @@
 			return (T)To(value, typeof(T));
 		}
 
+		/// <summary>
+		/// Adds a C# language alias for a type.
+		/// </summary>
+		/// <param name="type">The type to add an alias for.</param>
+		/// <param name="alias">The C# alias to associate with the type.</param>
+		/// <exception cref="ArgumentNullException">Thrown when type or alias is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown when alias or type already exists.</exception>
 		public static void AddCSharpAlias(Type type, string alias)
 		{
 			if (type is null)
@@ -848,12 +887,30 @@
 			_sharpAliasesByValue.Add(type, alias);
 		}
 
+		/// <summary>
+		/// Attempts to get the C# language alias for a type.
+		/// </summary>
+		/// <param name="type">The type to get the alias for.</param>
+		/// <returns>The C# alias if found; otherwise null.</returns>
 		public static string TryGetCSharpAlias(this Type type)
 			=> _sharpAliasesByValue.TryGetValue(type, out var alias) ? alias : null;
 
+		/// <summary>
+		/// Attempts to get a type by its C# language alias.
+		/// </summary>
+		/// <param name="alias">The C# alias to look up.</param>
+		/// <returns>The corresponding type if found; otherwise null.</returns>
 		public static Type TryGetTypeByCSharpAlias(this string alias)
 			=> _sharpAliases.TryGetValue(alias, out var type) ? type : null;
 
+		/// <summary>
+		/// Executes a function using the specified culture.
+		/// </summary>
+		/// <typeparam name="T">The return type of the function.</typeparam>
+		/// <param name="cultureInfo">The culture to use during execution.</param>
+		/// <param name="func">The function to execute.</param>
+		/// <returns>The result of the function execution.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when cultureInfo or func is null.</exception>
 		public static T DoInCulture<T>(this CultureInfo cultureInfo, Func<T> func)
 		{
 			if (func is null)
@@ -872,6 +929,12 @@
 			}
 		}
 
+		/// <summary>
+		/// Executes an action using the specified culture.
+		/// </summary>
+		/// <param name="cultureInfo">The culture to use during execution.</param>
+		/// <param name="action">The action to execute.</param>
+		/// <exception cref="ArgumentNullException">Thrown when cultureInfo or action is null.</exception>
 		public static void DoInCulture(this CultureInfo cultureInfo, Action action)
 		{
 			if (action is null)
@@ -884,6 +947,13 @@
 			});
 		}
 
+		/// <summary>
+		/// Wraps a function to execute using the invariant culture.
+		/// </summary>
+		/// <typeparam name="T">The return type of the function.</typeparam>
+		/// <param name="func">The function to wrap.</param>
+		/// <returns>A function that executes using the invariant culture.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when func is null.</exception>
 		public static Func<T> AsInvariant<T>(this Func<T> func)
 		{
 			if (func is null)
@@ -892,6 +962,12 @@
 			return () => Do.Invariant(func);
 		}
 
+		/// <summary>
+		/// Wraps an action to execute using the invariant culture.
+		/// </summary>
+		/// <param name="action">The action to wrap.</param>
+		/// <returns>An action that executes using the invariant culture.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when action is null.</exception>
 		public static Action AsInvariant(this Action action)
 		{
 			if (action is null)
