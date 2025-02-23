@@ -44,7 +44,7 @@ namespace Ecng.Common
 	/// <summary>
 	/// Common base class for CSV reader and writer classes.
 	/// </summary>
-	public abstract class CsvFileCommon
+	public abstract class CsvFileCommon : Disposable
 	{
 		/// <summary>
 		/// These are special characters in CSV files. If a column contains any
@@ -82,7 +82,7 @@ namespace Ecng.Common
 	{
 		// Private members
 		private readonly TextReader Reader;
-		public string CurrLine;
+		private string CurrLine;
 		private int CurrPos;
 		private readonly EmptyLineBehavior EmptyLineBehavior;
 		private readonly string _lineSeparator;
@@ -92,6 +92,7 @@ namespace Ecng.Common
 		/// specified stream.
 		/// </summary>
 		/// <param name="stream">The stream to read from</param>
+		/// <param name="lineSeparator">The line separator to use.</param>
 		/// <param name="emptyLineBehavior">Determines how empty lines are handled</param>
 		public CsvFileReader(Stream stream,
 			string lineSeparator,
@@ -105,6 +106,7 @@ namespace Ecng.Common
 		/// specified file path.
 		/// </summary>
 		/// <param name="path">The name of the CSV file to read from</param>
+		/// <param name="lineSeparator">The line separator to use.</param>
 		/// <param name="emptyLineBehavior">Determines how empty lines are handled</param>
 		public CsvFileReader(string path,
 			string lineSeparator,
@@ -113,6 +115,13 @@ namespace Ecng.Common
 		{
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the CsvFileReader class for the
+		/// specified file path.
+		/// </summary>
+		/// <param name="reader">The file reader.</param>
+		/// <param name="lineSeparator">The line separator to use.</param>
+		/// <param name="emptyLineBehavior">Determines how empty lines are handled</param>
 		public CsvFileReader(TextReader reader,
 			string lineSeparator,
 			EmptyLineBehavior emptyLineBehavior = EmptyLineBehavior.NoColumns)
@@ -259,10 +268,11 @@ namespace Ecng.Common
 			return string.Empty;
 		}
 
-		// Propagate Dispose to StreamReader
-		public void Dispose()
+		/// <inheritdoc />
+		protected override void DisposeManaged()
 		{
 			Reader.Dispose();
+			base.DisposeManaged();
 		}
 	}
 
@@ -271,7 +281,7 @@ namespace Ecng.Common
 	/// </summary>
 	public class CsvFileWriter : CsvFileCommon, IDisposable
 	{
-		public StreamWriter Writer { get; }
+		private StreamWriter Writer { get; }
 
 		// Private members
 		private string OneQuote;
@@ -283,6 +293,7 @@ namespace Ecng.Common
 		/// specified stream.
 		/// </summary>
 		/// <param name="stream">The stream to write to</param>
+		/// <param name="encoding">The text encoding.</param>
 		public CsvFileWriter(Stream stream, Encoding encoding = null) {
 			Writer = encoding != null ?
 				new StreamWriter(stream, encoding) :
@@ -326,6 +337,11 @@ namespace Ecng.Common
 			Writer.WriteLine();
 		}
 
+		/// <summary>
+		/// Encodes a column's value for output.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <returns></returns>
 		public string Encode(string column)
 		{
 			// Ensure we're using current quote character
@@ -343,10 +359,11 @@ namespace Ecng.Common
 			return column;
 		}
 
-		// Propagate Dispose to StreamWriter
-		public void Dispose()
+		/// <inheritdoc />
+		protected override void DisposeManaged()
 		{
 			Writer.Dispose();
+			base.DisposeManaged();
 		}
 	}
 }

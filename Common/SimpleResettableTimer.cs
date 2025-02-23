@@ -3,6 +3,10 @@
 	using System;
 	using System.Threading;
 
+	/// <summary>
+	/// Represents a simple timer that can be reset.
+	/// When the timer period elapses without a reset, the <see cref="Elapsed"/> event is invoked.
+	/// </summary>
 	public class SimpleResettableTimer(TimeSpan period) : IDisposable
 	{
 		private readonly SyncObject _sync = new();
@@ -11,8 +15,15 @@
 		private Timer _timer;
 		private bool _changed;
 
+		/// <summary>
+		/// Occurs when the timer elapses without being reset.
+		/// </summary>
 		public event Action Elapsed;
 
+		/// <summary>
+		/// Resets the timer. If the timer is not already running, it starts the timer with the specified period.
+		/// If it is running, it marks that the timer should restart the count.
+		/// </summary>
 		public void Reset()
 		{
 			lock (_sync)
@@ -52,6 +63,10 @@
 				Elapsed?.Invoke();
 		}
 
+		/// <summary>
+		/// Forces the timer to immediately run its elapsed logic if it is running,
+		/// effectively flushing the timer cycle.
+		/// </summary>
 		public void Flush()
 		{
 			lock (_sync)
@@ -64,6 +79,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Disposes the timer and stops any further executions.
+		/// </summary>
 		public void Dispose()
 		{
 			lock (_sync)

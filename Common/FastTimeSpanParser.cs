@@ -4,6 +4,9 @@ namespace Ecng.Common
 	using System.Collections.Generic;
 	using System.Text;
 
+	/// <summary>
+	/// Provides high-performance parsing and formatting of TimeSpan values based on a specified template.
+	/// </summary>
 	public class FastTimeSpanParser
 	{
 		private enum Parts
@@ -28,8 +31,16 @@ namespace Ecng.Common
 		private readonly int _microStart;
 		private readonly int _nanoStart;
 
+		/// <summary>
+		/// Gets the template string used for parsing and formatting TimeSpan values.
+		/// </summary>
 		public string Template { get; }
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FastTimeSpanParser"/> class using the specified template.
+		/// </summary>
+		/// <param name="template">A format template that defines how TimeSpan values are parsed and formatted. Must not be null or empty.</param>
+		/// <exception cref="ArgumentNullException">Thrown when the provided template is null or empty.</exception>
 		public FastTimeSpanParser(string template)
 		{
 			if (template.IsEmpty())
@@ -131,6 +142,12 @@ namespace Ecng.Common
 			//TimeHelper.InitBounds(template, 'f', out _milliStart, out _milliLen);
 		}
 
+		/// <summary>
+		/// Parses the specified input string into a <see cref="TimeSpan"/> value based on the parser's template.
+		/// </summary>
+		/// <param name="input">The string representation of a time span to parse.</param>
+		/// <returns>A <see cref="TimeSpan"/> value that corresponds to the given input.</returns>
+		/// <exception cref="InvalidCastException">Thrown when the input cannot be converted to a TimeSpan using the provided template.</exception>
 		public TimeSpan Parse(string input)
 		{
 			try
@@ -163,6 +180,11 @@ namespace Ecng.Common
 			}
 		}
 
+		/// <summary>
+		/// Formats the specified <see cref="TimeSpan"/> value into a string using the parser's template.
+		/// </summary>
+		/// <param name="value">The <see cref="TimeSpan"/> value to format.</param>
+		/// <returns>A string representation of the <see cref="TimeSpan"/> value according to the template.</returns>
 		public string ToString(TimeSpan value)
 		{
 			var builder = new StringBuilder();
@@ -218,6 +240,7 @@ namespace Ecng.Common
 			}
 		}
 
+		/// <inheritdoc />
 		public override string ToString() => Template;
 	}
 }

@@ -10,9 +10,9 @@ namespace Ecng.Common
 	#endregion
 
 	/// <summary>
-	/// This class implement patters "Wrapper".
+	/// Represents an abstract wrapper class for a value of type <typeparamref name="T"/> that supports equality, cloning, and disposal.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="T">The type of the wrapped value.</typeparam>
 	[Serializable]
 	public abstract class Wrapper<T> : Equatable<Wrapper<T>>, IDisposable
 	{
@@ -26,9 +26,9 @@ namespace Ecng.Common
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="Wrapper{T}"/> class.
+		/// Initializes a new instance of the <see cref="Wrapper{T}"/> class with the specified value.
 		/// </summary>
-		/// <param name="value">The value.</param>
+		/// <param name="value">The value to wrap.</param>
 		protected Wrapper(T value)
 		{
 			Value = value;
@@ -36,43 +36,41 @@ namespace Ecng.Common
 
 		#endregion
 
-		#region Value
+		#region Properties
 
 		/// <summary>
-		/// Gets or sets the value.
+		/// Gets or sets the wrapped value.
 		/// </summary>
-		/// <value>The value.</value>
 		public virtual T Value { get; set; }
 
-		#endregion
-
-		#region HasValue
-
 		/// <summary>
-		/// Gets a value indicating whether this instance has value.
+		/// Gets a value indicating whether the wrapped value is not equal to the default value of type <typeparamref name="T"/>.
 		/// </summary>
-		/// <value><c>true</c> if this instance has value; otherwise, <c>false</c>.</value>
 		public bool HasValue => !ReferenceEquals(Value, default(T));
 
 		#endregion
 
+		#region Operators
+
 		/// <summary>
-		/// Explicit operators the specified wrapper.
+		/// Defines an explicit conversion operator from <see cref="Wrapper{T}"/> to <typeparamref name="T"/>.
 		/// </summary>
-		/// <param name="wrapper">The wrapper.</param>
-		/// <returns></returns>
+		/// <param name="wrapper">The wrapper instance.</param>
+		/// <returns>The wrapped value.</returns>
 		public static explicit operator T(Wrapper<T> wrapper)
 		{
 			return wrapper.Value;
 		}
 
-		#region Equatable<Wrapper<T>> Members
+		#endregion
+
+		#region Equality Members
 
 		/// <summary>
-		/// Called when [equals].
+		/// Determines whether the wrapped value of this instance equals the wrapped value of another instance.
 		/// </summary>
-		/// <param name="other">The other.</param>
-		/// <returns></returns>
+		/// <param name="other">Another instance of <see cref="Wrapper{T}"/> to compare with.</param>
+		/// <returns><c>true</c> if the wrapped values are equal; otherwise, <c>false</c>.</returns>
 		protected override bool OnEquals(Wrapper<T> other)
 		{
 			if (Value is IEnumerable<T>)
@@ -81,16 +79,10 @@ namespace Ecng.Common
 				return Value.Equals(other.Value);
 		}
 
-		#endregion
-
-		#region Object Members
-
 		/// <summary>
-		/// Serves as a hash function for a particular type. <see cref="M:System.Object.GetHashCode"></see> is suitable for use in hashing algorithms and data structures like a hash table.
+		/// Returns a hash code for this instance based on the wrapped value.
 		/// </summary>
-		/// <returns>
-		/// A hash code for the current <see cref="T:System.Object"></see>.
-		/// </returns>
+		/// <returns>A hash code for the current object.</returns>
 		public override int GetHashCode()
 		{
 			int hash = 0;
@@ -106,8 +98,18 @@ namespace Ecng.Common
 			return hash;
 		}
 
+		#endregion
+
+		#region IDisposable Members
+
+		/// <summary>
+		/// Gets a value indicating whether this instance has already been disposed.
+		/// </summary>
 		public bool IsDisposed { get; private set; }
 
+		/// <summary>
+		/// Releases all resources used by the current instance.
+		/// </summary>
 		public void Dispose()
 		{
 			lock (this)
@@ -122,55 +124,42 @@ namespace Ecng.Common
 			}
 		}
 
+		/// <summary>
+		/// Releases managed resources used by the current instance.
+		/// </summary>
 		protected virtual void DisposeManaged()
 		{
 			Value.DoDispose();
 		}
 
+		/// <summary>
+		/// Releases unmanaged (native) resources used by the current instance.
+		/// </summary>
 		protected virtual void DisposeNative()
 		{
 		}
 
+		/// <summary>
+		/// Finalizes an instance of the <see cref="Wrapper{T}"/> class.
+		/// </summary>
 		~Wrapper()
 		{
-            DisposeNative();
+			DisposeNative();
 		}
 
+		#endregion
+
+		#region Object Overrides
+
 		/// <summary>
-		/// Returns a <see cref="T:System.String"></see> that represents the current <see cref="T:System.Object"></see>.
+		/// Returns a string that represents the current instance.
 		/// </summary>
-		/// <returns>
-		/// A <see cref="T:System.String"></see> that represents the current <see cref="T:System.Object"></see>.
-		/// </returns>
+		/// <returns>A string representation of the wrapped value, or an empty string if no value is present.</returns>
 		public override string ToString()
 		{
 			return HasValue ? Value.To<string>() : string.Empty;
 		}
 
 		#endregion
-
-		//#region Serializable Members
-
-		///// <summary>
-		///// Serializes the specified source.
-		///// </summary>
-		///// <param name="serializer"></param>
-		///// <param name="source">Serialized state.</param>
-		//protected override void Serialize(Serializer<Wrapper<T>> serializer, SerializationItemCollection source)
-		//{
-		//    source.Add(new SerializationItem("Value", Serializer<T>.Default.Serialize(Value)));
-		//}
-
-		///// <summary>
-		///// Deserializes the specified data.
-		///// </summary>
-		///// <param name="serializer"></param>
-		///// <param name="source">Serialized state.</param>
-		//protected override void Deserialize(Serializer<Wrapper<T>> serializer, SerializationItemCollection source)
-		//{
-		//    Value = Serializer<T>.Default.Deserialize((byte[])source["Value"].Value);
-		//}
-
-		//#endregion
 	}
 }

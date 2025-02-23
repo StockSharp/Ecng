@@ -2,6 +2,9 @@
 
 using System;
 
+/// <summary>
+/// File extensions.
+/// </summary>
 public static class FileExts
 {
 	/// <summary>
@@ -69,6 +72,11 @@ public static class FileExts
 	/// </summary>
 	public const string Xlsx = ".xslx";
 
+	/// <summary>
+	/// Convert the extension into display name format.
+	/// </summary>
+	/// <param name="fileExt">The extension.</param>
+	/// <returns>The display name.</returns>
 	public static string ToDisplayName(this string fileExt)
 		=> (fileExt?.ToLowerInvariant()) switch
 		{

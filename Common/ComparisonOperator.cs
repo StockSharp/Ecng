@@ -3,54 +3,54 @@
 	using System.ComponentModel.DataAnnotations;
 
 	/// <summary>
-	/// Способ сравнения двух значений параметров.
+	/// Represents the method for comparing two parameter values.
 	/// </summary>
 	public enum ComparisonOperator
 	{
 		/// <summary>
-		/// Значения параметров равны.
+		/// Indicates that the parameter values are equal.
 		/// </summary>
 		[Display(Name = "=")]
 		Equal,
-		
+
 		/// <summary>
-		/// Значения параметров не равны.
+		/// Indicates that the parameter values are not equal.
 		/// </summary>
 		[Display(Name = "!=")]
 		NotEqual,
-		
+
 		/// <summary>
-		/// Значение левого параметра строго больше значения правого параметра.
+		/// Indicates that the left parameter value is strictly greater than the right parameter value.
 		/// </summary>
 		[Display(Name = ">")]
 		Greater,
-		
+
 		/// <summary>
-		/// Значение левого параметра нестрого больше (больше или равно) значения правого параметра.
+		/// Indicates that the left parameter value is greater than or equal to the right parameter value.
 		/// </summary>
 		[Display(Name = ">=")]
 		GreaterOrEqual,
-		
+
 		/// <summary>
-		/// Значение левого параметра строго меньше значения правого параметра.
+		/// Indicates that the left parameter value is strictly less than the right parameter value.
 		/// </summary>
 		[Display(Name = "<")]
 		Less,
-		
+
 		/// <summary>
-		/// Значение левого параметра нестрого меньше (меньше или равно) значения правого параметра.
+		/// Indicates that the left parameter value is less than or equal to the right parameter value.
 		/// </summary>
 		[Display(Name = "<=")]
 		LessOrEqual,
 
 		/// <summary>
-		/// Значение левого параметра имеет любое значение.
+		/// Indicates that the left parameter value can be any value.
 		/// </summary>
 		[Display(Name = "Any")]
 		Any,
 
 		/// <summary>
-		/// Значение левого параметра содержится в правом.
+		/// Indicates that the left parameter value is contained within the right parameter value.
 		/// </summary>
 		[Display(Name = "IN")]
 		In,

@@ -11,6 +11,10 @@ namespace Ecng.Common
 
 	#endregion
 
+	/// <summary>
+	/// Provides a base class for implementing the dispose pattern. 
+	/// This class helps manage the disposal of managed and native resources.
+	/// </summary>
 	[Serializable]
 	public abstract class Disposable : IDisposable
 	{
@@ -31,17 +35,17 @@ namespace Ecng.Common
 		/// Gets a value indicating whether this instance is disposed.
 		/// </summary>
 		/// <value>
-		/// 	<c>true</c> if this instance is disposed; otherwise, <c>false</c>.
+		///   <c>true</c> if this instance is disposed; otherwise, <c>false</c>.
 		/// </value>
 		[XmlIgnore]
 		[Browsable(false)]
 		public bool IsDisposed => _state == DisposeState.Disposed;
 
 		/// <summary>
-		/// Gets a value indicating whether dispose process has been started.
+		/// Gets a value indicating whether the dispose process has been started.
 		/// </summary>
 		/// <value>
-		/// 	<c>true</c> if this instance is being disposed; otherwise, <c>false</c>.
+		///   <c>true</c> if the dispose process has been initiated; otherwise, <c>false</c>.
 		/// </value>
 		[XmlIgnore]
 		[Browsable(false)]
@@ -49,12 +53,15 @@ namespace Ecng.Common
 
 		#endregion
 
+		/// <summary>
+		/// Occurs when the object has been disposed.
+		/// </summary>
 		public event Action Disposed;
 
 		#region IDisposable Members
 
 		/// <summary>
-		/// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+		/// Performs tasks associated with freeing, releasing, or resetting unmanaged resources.
 		/// </summary>
 		public virtual void Dispose()
 		{
@@ -83,21 +90,24 @@ namespace Ecng.Common
 
 		/// <summary>
 		/// Disposes the managed resources.
+		/// Override this method to add custom clean up of managed resources.
 		/// </summary>
-        protected virtual void DisposeManaged()
-        {
-        }
+		protected virtual void DisposeManaged()
+		{
+		}
 
 		/// <summary>
 		/// Disposes the native resources.
+		/// Override this method to add custom clean up of native resources.
 		/// </summary>
-        protected virtual void DisposeNative()
-        {
-        }
+		protected virtual void DisposeNative()
+		{
+		}
 
 		/// <summary>
-		/// Throws if the dispose process has been started..
+		/// Throws an exception if the dispose process has already been started.
 		/// </summary>
+		/// <exception cref="ObjectDisposedException">Thrown if the dispose process has already been initiated.</exception>
 		protected void ThrowIfDisposeStarted()
 		{
 			ThrowIfDisposed();
@@ -107,8 +117,9 @@ namespace Ecng.Common
 		}
 
 		/// <summary>
-		/// Throws if object is already disposed.
+		/// Throws an exception if the object is already disposed.
 		/// </summary>
+		/// <exception cref="ObjectDisposedException">Thrown if the object is already disposed.</exception>
 		protected void ThrowIfDisposed()
 		{
 			if (IsDisposed)
@@ -119,7 +130,7 @@ namespace Ecng.Common
 
 		/// <summary>
 		/// Releases unmanaged resources and performs other cleanup operations before the
-		/// <see cref="Disposable"/> is reclaimed by garbage collection.
+		/// object is reclaimed by garbage collection.
 		/// </summary>
 		~Disposable()
 		{

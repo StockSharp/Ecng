@@ -5,17 +5,17 @@
 	using System.Net.Sockets;
 
 	/// <summary>
-	/// Create <see cref="NtpClient"/>.
+	/// Provides functionality to retrieve time from a remote NTP server.
 	/// </summary>
-	/// <param name="ntpServer">NTP server.</param>
+	/// <param name="ntpServer">The endpoint of the NTP server.</param>
 	public class NtpClient(EndPoint ntpServer)
 	{
 		private readonly EndPoint _ntpServer = ntpServer ?? throw new ArgumentNullException(nameof(ntpServer));
 
 		/// <summary>
-		/// Create <see cref="NtpClient"/>.
+		/// Initializes a new instance of the <see cref="NtpClient"/> class using the NTP server address.
 		/// </summary>
-		/// <param name="ntpServer">NTP server.</param>
+		/// <param name="ntpServer">The NTP server address in the format "hostname:port". Default is "time-a.nist.gov:123".</param>
 		public NtpClient(string ntpServer = "time-a.nist.gov:123")
 			: this(ntpServer.To<EndPoint>())
 		{
@@ -27,6 +27,13 @@
 			//_endPoint = new IPEndPoint(address[0], 123);
 		}
 
+		/// <summary>
+		/// Retrieves the local time based on the specified time zone.
+		/// </summary>
+		/// <param name="info">The time zone information.</param>
+		/// <param name="timeout">The timeout in milliseconds for the NTP request. Default is 5000ms.</param>
+		/// <returns>The local time adjusted to the specified time zone.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="info"/> is null.</exception>
 		public DateTime GetLocalTime(TimeZoneInfo info, int timeout = 5000)
 		{
 			if (info is null)
@@ -36,6 +43,11 @@
 			return utcTime + info.GetUtcOffset(utcTime);
 		}
 
+		/// <summary>
+		/// Retrieves the UTC time from the NTP server.
+		/// </summary>
+		/// <param name="timeout">The timeout in milliseconds for the NTP request. Default is 5000ms.</param>
+		/// <returns>The UTC time as provided by the NTP server.</returns>
 		public DateTime GetUtcTime(int timeout = 5000)
 		{
 			using var s = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);

@@ -4,6 +4,9 @@ namespace Ecng.Common
 	using System.Collections.Generic;
 	using System.Text;
 
+	/// <summary>
+	/// Provides methods to parse and format date and time strings using a fast custom parser.
+	/// </summary>
 	public class FastDateTimeParser
 	{
 		private enum Parts
@@ -38,8 +41,16 @@ namespace Ecng.Common
 		private readonly bool _isMonthTwoChars = true;
 		private readonly bool _isDayTwoChars = true;
 
+		/// <summary>
+		/// Gets the date and time format template used for parsing and formatting.
+		/// </summary>
 		public string Template { get; }
-	
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FastDateTimeParser"/> class with the specified format template.
+		/// </summary>
+		/// <param name="template">The date and time format template.</param>
+		/// <exception cref="ArgumentNullException">Thrown when the template is null or empty.</exception>
 		public FastDateTimeParser(string template)
 		{
 			if (template.IsEmpty())
@@ -162,6 +173,12 @@ namespace Ecng.Common
 			//TimeHelper.InitBounds(template, 'f', out _milliStart, out _milliLen);
 		}
 
+		/// <summary>
+		/// Parses the specified input string into a <see cref="DateTime"/> based on the predefined template.
+		/// </summary>
+		/// <param name="input">The string input representing the date and time.</param>
+		/// <returns>A <see cref="DateTime"/> object parsed from the input string.</returns>
+		/// <exception cref="InvalidCastException">Thrown when the input cannot be parsed into a valid <see cref="DateTime"/>.</exception>
 		public DateTime Parse(string input)
 		{
 			try
@@ -199,6 +216,12 @@ namespace Ecng.Common
 			}
 		}
 
+		/// <summary>
+		/// Parses the specified input string into a <see cref="DateTimeOffset"/> based on the predefined template,
+		/// applying the time zone if specified.
+		/// </summary>
+		/// <param name="input">The string input representing the date and time with time zone.</param>
+		/// <returns>A <see cref="DateTimeOffset"/> object parsed from the input string.</returns>
 		public DateTimeOffset ParseDto(string input)
 		{
 			var dt = Parse(input);
@@ -217,6 +240,11 @@ namespace Ecng.Common
 			return dt.ApplyTimeZone(timeZone);
 		}
 
+		/// <summary>
+		/// Converts the specified <see cref="DateTime"/> to its string representation based on the predefined template.
+		/// </summary>
+		/// <param name="value">The <see cref="DateTime"/> value to format.</param>
+		/// <returns>A string representation of the date and time.</returns>
 		public string ToString(DateTime value)
 		{
 			var builder = new StringBuilder();
@@ -263,6 +291,12 @@ namespace Ecng.Common
 			return builder.ToString();
 		}
 
+		/// <summary>
+		/// Appends the specified integer value to the <see cref="StringBuilder"/> with a given size.
+		/// </summary>
+		/// <param name="builder">The <see cref="StringBuilder"/> to append to.</param>
+		/// <param name="value">The integer value to append.</param>
+		/// <param name="size">The number of digits to include.</param>
 		private static void Append(StringBuilder builder, int value, int size = 2)
 		{
 			if (size == 1)
@@ -291,6 +325,7 @@ namespace Ecng.Common
 			}
 		}
 
+		/// <inheritdoc />
 		public override string ToString() => Template;
 	}
 }

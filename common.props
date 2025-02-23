@@ -41,7 +41,6 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="
-        '$(MSBuildProjectName)' == 'Common' or
         '$(MSBuildProjectName)' == 'Collections' or
         '$(MSBuildProjectName)' == 'Net.HPSocket' or
         '$(MSBuildProjectName)' == 'SmartFormat' or

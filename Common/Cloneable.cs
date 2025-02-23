@@ -6,6 +6,10 @@ namespace Ecng.Common
 
 	#endregion
 
+	/// <summary>
+	/// The base class for objects that can be cloned.
+	/// </summary>
+	/// <typeparam name="T">The type of cloned object.</typeparam>
 	[Serializable]
 	public abstract class Cloneable<T> : ICloneable<T>
 		//where T : Cloneable<T>

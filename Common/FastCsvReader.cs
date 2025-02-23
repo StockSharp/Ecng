@@ -6,6 +6,9 @@ namespace Ecng.Common
 	using System.Numerics;
 	using System.Text;
 
+	/// <summary>
+	/// Provides fast CSV reading capabilities from various input sources.
+	/// </summary>
 	public class FastCsvReader
 	{
 		private static readonly Func<string, bool> _toBool = Converter.GetTypedConverter<string, bool>();
@@ -22,16 +25,32 @@ namespace Ecng.Common
 
 		private int _lineSeparatorCharPos;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FastCsvReader"/> class using a stream, encoding, and line separator.
+		/// </summary>
+		/// <param name="stream">The input stream to read CSV data from.</param>
+		/// <param name="encoding">The character encoding to use.</param>
+		/// <param name="lineSeparator">The string that separates lines.</param>
 		public FastCsvReader(Stream stream, Encoding encoding, string lineSeparator)
 			: this(new StreamReader(stream, encoding), lineSeparator)
 		{
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FastCsvReader"/> class using a string content and line separator.
+		/// </summary>
+		/// <param name="content">The string content to read CSV data from.</param>
+		/// <param name="lineSeparator">The string that separates lines.</param>
 		public FastCsvReader(string content, string lineSeparator)
 			: this(new StringReader(content), lineSeparator)
 		{
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FastCsvReader"/> class using a TextReader and line separator.
+		/// </summary>
+		/// <param name="reader">The TextReader to read CSV data from.</param>
+		/// <param name="lineSeparator">The string that separates lines.</param>
 		public FastCsvReader(TextReader reader, string lineSeparator)
 		{
 			if (lineSeparator.IsEmpty())
@@ -44,10 +63,19 @@ namespace Ecng.Common
 				_columnPos[i] = new RefPair<int, int>();
 		}
 
+		/// <summary>
+		/// Gets the underlying text reader.
+		/// </summary>
 		public TextReader Reader { get; }
-		
+
+		/// <summary>
+		/// Gets or sets the character used to separate columns.
+		/// </summary>
 		public char ColumnSeparator { get; set; } = ';';
 
+		/// <summary>
+		/// Gets the current CSV line as a string.
+		/// </summary>
 		public string CurrentLine
 		{
 			get
@@ -61,10 +89,16 @@ namespace Ecng.Common
 
 		private int _columnCount;
 
+		/// <summary>
+		/// Gets the number of columns in the current CSV line.
+		/// </summary>
 		public int ColumnCount => _columnCount;
 
 		private int _columnCurr;
 
+		/// <summary>
+		/// Gets the current column index being processed.
+		/// </summary>
 		public int ColumnCurr => _columnCurr;
 
 		private RefPair<int, int> GetColumnPos()
@@ -84,6 +118,10 @@ namespace Ecng.Common
 			return _columnPos[_columnCount];
 		}
 
+		/// <summary>
+		/// Reads the next CSV line from the underlying stream or reader.
+		/// </summary>
+		/// <returns><c>true</c> if a new line was successfully read; otherwise, <c>false</c>.</returns>
 		public bool NextLine()
 		{
 			_lineLen = 0;
@@ -197,6 +235,12 @@ namespace Ecng.Common
 			return _lineLen > 0;
 		}
 
+		/// <summary>
+		/// Skips the specified number of columns.
+		/// </summary>
+		/// <param name="count">The number of columns to skip. Defaults to 1.</param>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown if the count is less than or equal to 0.</exception>
+		/// <exception cref="ArgumentException">Thrown if skipping the specified columns would exceed the number of columns available in the current line.</exception>
 		public void Skip(int count = 1)
 		{
 			if (count <= 0)
@@ -208,11 +252,19 @@ namespace Ecng.Common
 			_columnCurr += count;
 		}
 
+		/// <summary>
+		/// Reads the next column as a boolean value.
+		/// </summary>
+		/// <returns>The boolean value read from the column.</returns>
 		public bool ReadBool()
 		{
 			return ReadNullableBool().Value;
 		}
 
+		/// <summary>
+		/// Reads the next column as a nullable boolean value.
+		/// </summary>
+		/// <returns>A nullable boolean value read from the column, or null if the column is empty.</returns>
 		public bool? ReadNullableBool()
 		{
 			var str = ReadString();
@@ -223,12 +275,22 @@ namespace Ecng.Common
 			return _toBool(str);
 		}
 
+		/// <summary>
+		/// Reads the next column as an enum value of type <typeparamref name="T"/>.
+		/// </summary>
+		/// <typeparam name="T">The enum type to convert to.</typeparam>
+		/// <returns>The enum value read from the column.</returns>
 		public T ReadEnum<T>()
 			where T : struct
 		{
 			return ReadNullableEnum<T>().Value;
 		}
 
+		/// <summary>
+		/// Reads the next column as a nullable enum value of type <typeparamref name="T"/>.
+		/// </summary>
+		/// <typeparam name="T">The enum type to convert to.</typeparam>
+		/// <returns>A nullable enum value read from the column, or null if the column is empty.</returns>
 		public T? ReadNullableEnum<T>()
 			where T : struct
 		{
@@ -243,11 +305,19 @@ namespace Ecng.Common
 			return str.To<T>();
 		}
 
+		/// <summary>
+		/// Reads the next column as a double value.
+		/// </summary>
+		/// <returns>The double value read from the column.</returns>
 		public double ReadDouble()
 		{
 			return ReadNullableDouble().Value;
 		}
 
+		/// <summary>
+		/// Reads the next column as a nullable double value.
+		/// </summary>
+		/// <returns>A nullable double value read from the column, or null if the column is empty.</returns>
 		public double? ReadNullableDouble()
 		{
 			var str = ReadString();
@@ -258,11 +328,19 @@ namespace Ecng.Common
 			return _toDouble(str);
 		}
 
+		/// <summary>
+		/// Reads the next column as a decimal value.
+		/// </summary>
+		/// <returns>The decimal value read from the column.</returns>
 		public decimal ReadDecimal()
 		{
 			return ReadNullableDecimal().Value;
 		}
 
+		/// <summary>
+		/// Reads the next column as a nullable decimal value.
+		/// </summary>
+		/// <returns>A nullable decimal value read from the column, or null if the column is empty.</returns>
 		public decimal? ReadNullableDecimal()
 		{
 			var pair = GetNextColumnPos();
@@ -351,11 +429,19 @@ namespace Ecng.Common
 			return retVal;
 		}
 
+		/// <summary>
+		/// Reads the next column as an integer value.
+		/// </summary>
+		/// <returns>The integer value read from the column.</returns>
 		public int ReadInt()
 		{
 			return ReadNullableInt().Value;
 		}
 
+		/// <summary>
+		/// Reads the next column as a nullable integer value.
+		/// </summary>
+		/// <returns>A nullable integer value read from the column, or null if the column is empty.</returns>
 		public int? ReadNullableInt()
 		{
 			var pair = GetNextColumnPos();
@@ -397,11 +483,19 @@ namespace Ecng.Common
 			return retVal;
 		}
 
+		/// <summary>
+		/// Reads the next column as a long value.
+		/// </summary>
+		/// <returns>The long value read from the column.</returns>
 		public long ReadLong()
 		{
 			return ReadNullableLong().Value;
 		}
 
+		/// <summary>
+		/// Reads the next column as a nullable long value.
+		/// </summary>
+		/// <returns>A nullable long value read from the column, or null if the column is empty.</returns>
 		public long? ReadNullableLong()
 		{
 			var pair = GetNextColumnPos();
@@ -443,6 +537,10 @@ namespace Ecng.Common
 			return retVal;
 		}
 
+		/// <summary>
+		/// Reads the next column as a string.
+		/// </summary>
+		/// <returns>The string read from the column, or null if the column is empty.</returns>
 		public string ReadString()
 		{
 			var pair = GetNextColumnPos();
@@ -455,11 +553,21 @@ namespace Ecng.Common
 			return new string(_line, pair.First, len);
 		}
 
+		/// <summary>
+		/// Reads the next column as a DateTime value using the specified format.
+		/// </summary>
+		/// <param name="format">The date and time format string.</param>
+		/// <returns>The DateTime value read from the column.</returns>
 		public DateTime ReadDateTime(string format)
 		{
 			return ReadNullableDateTime(format).Value;
 		}
 
+		/// <summary>
+		/// Reads the next column as a nullable DateTime value using the specified format.
+		/// </summary>
+		/// <param name="format">The date and time format string.</param>
+		/// <returns>A nullable DateTime value read from the column, or null if the column is empty.</returns>
 		public DateTime? ReadNullableDateTime(string format)
 		{
 			var str = ReadString();
@@ -467,11 +575,21 @@ namespace Ecng.Common
 			return str?.ToDateTime(format);
 		}
 
+		/// <summary>
+		/// Reads the next column as a TimeSpan value using the specified format.
+		/// </summary>
+		/// <param name="format">The time span format string.</param>
+		/// <returns>The TimeSpan value read from the column.</returns>
 		public TimeSpan ReadTimeSpan(string format)
 		{
 			return ReadNullableTimeSpan(format).Value;
 		}
 
+		/// <summary>
+		/// Reads the next column as a nullable TimeSpan value using the specified format.
+		/// </summary>
+		/// <param name="format">The time span format string.</param>
+		/// <returns>A nullable TimeSpan value read from the column, or null if the column is empty.</returns>
 		public TimeSpan? ReadNullableTimeSpan(string format)
 		{
 			var str = ReadString();

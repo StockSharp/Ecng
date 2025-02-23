@@ -4,6 +4,9 @@
 	using System.Reflection;
 	using System.Reflection.Emit;
 
+	/// <summary>
+	/// <see cref="FastActivator{T}"/> isn't supported.
+	/// </summary>
 	public class FastEmitNotSupported
 	{
 	}
@@ -19,8 +22,14 @@
 		// чтобы можно было создавать классы с закрытым конструктором
 		//where T :new()
 	{
+		/// <summary>
+		/// Not supported mode.
+		/// </summary>
 		public static bool NotSupported { get; set; }
 
+		/// <summary>
+		/// Create object handler.
+		/// </summary>
 		public static Func<T> CreateObject { get; }
 
 		static FastActivator()

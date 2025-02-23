@@ -22,6 +22,11 @@
 		public static Currency ToCurrency(this decimal value, CurrencyTypes type)
 			=> new() { Type = type, Value = value };
 
+		/// <summary>
+		/// Get the currency symbol.
+		/// </summary>
+		/// <param name="currency"><see cref="CurrencyTypes"/></param>
+		/// <returns>The currency symbol.</returns>
 		public static string GetPrefix(this CurrencyTypes currency)
 			=> currency switch
 			{
