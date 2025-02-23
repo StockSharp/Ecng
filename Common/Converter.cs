@@ -21,6 +21,9 @@
 
 	using TimeZoneConverter;
 
+	/// <summary>
+	/// The converter class.
+	/// </summary>
 	public static class Converter
 	{
 		private static readonly Dictionary<Type, DbType> _dbTypes = [];
@@ -463,78 +466,6 @@
 		public static Func<object, object> GetTypedConverter(Type from, Type to)
 		{
 			return (Func<object, object>)_typedConverters[(from, to)];
-		}
-
-		public static string GetHost(this EndPoint endPoint)
-		{
-			if (endPoint is null)
-				throw new ArgumentNullException(nameof(endPoint));
-
-			if (endPoint is IPEndPoint ip)
-			{
-				return ip.Address.ToString();
-			}
-			else if (endPoint is DnsEndPoint dns)
-			{
-				return dns.Host;
-			}
-			else
-				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
-		}
-
-		public static EndPoint SetHost(this EndPoint endPoint, string host)
-		{
-			if (endPoint is null)
-				throw new ArgumentNullException(nameof(endPoint));
-
-			if (endPoint is IPEndPoint ip)
-			{
-				ip.Address = host.To<IPAddress>();
-			}
-			else if (endPoint is DnsEndPoint dns)
-			{
-				endPoint = new DnsEndPoint(host, dns.Port, dns.AddressFamily);
-			}
-			else
-				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
-
-			return endPoint;
-		}
-
-		public static int GetPort(this EndPoint endPoint)
-		{
-			if (endPoint is null)
-				throw new ArgumentNullException(nameof(endPoint));
-
-			if (endPoint is IPEndPoint ip)
-			{
-				return ip.Port;
-			}
-			else if (endPoint is DnsEndPoint dns)
-			{
-				return dns.Port;
-			}
-			else
-				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
-		}
-
-		public static EndPoint SetPort(this EndPoint endPoint, int port)
-		{
-			if (endPoint is null)
-				throw new ArgumentNullException(nameof(endPoint));
-
-			if (endPoint is IPEndPoint ip)
-			{
-				ip.Port = port;
-			}
-			else if (endPoint is DnsEndPoint dns)
-			{
-				endPoint = new DnsEndPoint(dns.Host, port, dns.AddressFamily);
-			}
-			else
-				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
-
-			return endPoint;
 		}
 
 		public static TTo TypedTo<TFrom, TTo>(this TFrom from)
@@ -1011,6 +942,116 @@
 			return result;
 		}
 
+		/// <summary>
+		/// Retrieves the host from the specified endpoint.
+		/// </summary>
+		/// <param name="endPoint">The endpoint to extract the host from.</param>
+		/// <returns>The host string.</returns>
+		/// <exception cref="ArgumentNullException">Thrown if endPoint is null.</exception>
+		/// <exception cref="InvalidOperationException">Thrown if the endpoint type is unknown.</exception>
+		public static string GetHost(this EndPoint endPoint)
+		{
+			if (endPoint is null)
+				throw new ArgumentNullException(nameof(endPoint));
+
+			if (endPoint is IPEndPoint ip)
+			{
+				return ip.Address.ToString();
+			}
+			else if (endPoint is DnsEndPoint dns)
+			{
+				return dns.Host;
+			}
+			else
+				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
+		}
+
+		/// <summary>
+		/// Sets the host on the specified endpoint.
+		/// </summary>
+		/// <param name="endPoint">The endpoint to modify.</param>
+		/// <param name="host">The new host name or IP address.</param>
+		/// <returns>The modified endpoint.</returns>
+		/// <exception cref="ArgumentNullException">Thrown if endPoint is null.</exception>
+		/// <exception cref="InvalidOperationException">Thrown if the endpoint type is unknown.</exception>
+		public static EndPoint SetHost(this EndPoint endPoint, string host)
+		{
+			if (endPoint is null)
+				throw new ArgumentNullException(nameof(endPoint));
+
+			if (endPoint is IPEndPoint ip)
+			{
+				ip.Address = host.To<IPAddress>();
+			}
+			else if (endPoint is DnsEndPoint dns)
+			{
+				endPoint = new DnsEndPoint(host, dns.Port, dns.AddressFamily);
+			}
+			else
+				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
+
+			return endPoint;
+		}
+
+		/// <summary>
+		/// Retrieves the port number from the specified endpoint.
+		/// </summary>
+		/// <param name="endPoint">The endpoint to extract the port from.</param>
+		/// <returns>The port number.</returns>
+		/// <exception cref="ArgumentNullException">Thrown if endPoint is null.</exception>
+		/// <exception cref="InvalidOperationException">Thrown if the endpoint type is unknown.</exception>
+		public static int GetPort(this EndPoint endPoint)
+		{
+			if (endPoint is null)
+				throw new ArgumentNullException(nameof(endPoint));
+
+			if (endPoint is IPEndPoint ip)
+			{
+				return ip.Port;
+			}
+			else if (endPoint is DnsEndPoint dns)
+			{
+				return dns.Port;
+			}
+			else
+				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
+		}
+
+		/// <summary>
+		/// Sets the port number on the specified endpoint.
+		/// </summary>
+		/// <param name="endPoint">The endpoint to modify.</param>
+		/// <param name="port">The new port number.</param>
+		/// <returns>The modified endpoint.</returns>
+		/// <exception cref="ArgumentNullException">Thrown if endPoint is null.</exception>
+		/// <exception cref="InvalidOperationException">Thrown if the endpoint type is unknown.</exception>
+		public static EndPoint SetPort(this EndPoint endPoint, int port)
+		{
+			if (endPoint is null)
+				throw new ArgumentNullException(nameof(endPoint));
+
+			if (endPoint is IPEndPoint ip)
+			{
+				ip.Port = port;
+			}
+			else if (endPoint is DnsEndPoint dns)
+			{
+				endPoint = new DnsEndPoint(dns.Host, port, dns.AddressFamily);
+			}
+			else
+				throw new InvalidOperationException($"Unknown endpoint {endPoint}.");
+
+			return endPoint;
+		}
+
+		/// <summary>
+		/// Reverses the byte order if the specified endianness differs from the system endianness.
+		/// </summary>
+		/// <param name="bytes">The byte array to modify.</param>
+		/// <param name="length">The number of bytes to consider.</param>
+		/// <param name="isLittleEndian">Specifies the desired endianness.</param>
+		/// <param name="pos">The starting position within the array.</param>
+		/// <returns>The modified byte array.</returns>
 		public static byte[] ChangeOrder(this byte[] bytes, int length, bool isLittleEndian, int pos = 0)
 		{
 			if (isLittleEndian == BitConverter.IsLittleEndian)
