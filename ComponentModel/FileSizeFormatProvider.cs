@@ -9,7 +9,7 @@ namespace Ecng.ComponentModel
 	#endregion
 
 	/// <summary>
-	/// 
+	/// File size format provider.
 	/// </summary>
 	public class FileSizeFormatProvider : IFormatProvider, ICustomFormatter
 	{

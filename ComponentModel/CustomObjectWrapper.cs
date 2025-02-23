@@ -13,8 +13,13 @@
 	/// <param name="obj">Parent chart element or indicator.</param>
 	public abstract class CustomObjectWrapper<T>(T obj) : Disposable, INotifyPropertyChanged, ICustomTypeDescriptor where T : class
 	{
+		/// <inheritdoc />
 		public event PropertyChangedEventHandler PropertyChanged;
 
+		/// <summary>
+		/// Call <see cref="PropertyChanged"/> event.
+		/// </summary>
+		/// <param name="name">Member name.</param>
 		protected virtual void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
 		/// <summary>
@@ -68,11 +73,16 @@
 			/// </summary>
 			public object Owner { get; } = owner;
 
+			/// <inheritdoc />
 			public override void AddEventHandler(object component, Delegate value) => _orig.AddEventHandler(component, value);
+			/// <inheritdoc />
 			public override void RemoveEventHandler(object component, Delegate value) => _orig.RemoveEventHandler(component, value);
 
+			/// <inheritdoc />
 			public override Type ComponentType => Owner.GetType();
+			/// <inheritdoc />
 			public override Type EventType => _orig.EventType;
+			/// <inheritdoc />
 			public override bool IsMulticast => _orig.IsMulticast;
 		}
 

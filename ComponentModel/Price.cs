@@ -6,6 +6,12 @@ using System.Runtime.Serialization;
 using Ecng.Common;
 using Ecng.Serialization;
 
+/// <summary>
+/// Represents a price with a specific value and type.
+/// </summary>
+/// <remarks>
+/// This class supports arithmetic operations, cloning, formatting, and persistence.
+/// </remarks>
 [Serializable]
 [DataContract]
 public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormattable
@@ -16,8 +22,16 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 		Converter.AddTypedConverter<decimal, Price>(input => input);
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Price"/> class.
+	/// </summary>
 	public Price() { }
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Price"/> class with the specified value and type.
+	/// </summary>
+	/// <param name="value">The numeric value.</param>
+	/// <param name="type">The price type (measure).</param>
 	public Price(decimal value, PriceTypes type)
 	{
 		Value = value;
@@ -25,21 +39,21 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	}
 
 	/// <summary>
-	/// Measure value.
+	/// Gets or sets the price type.
 	/// </summary>
 	[DataMember]
 	public PriceTypes Type { get; set; }
 
 	/// <summary>
-	/// Value.
+	/// Gets or sets the numeric value of the price.
 	/// </summary>
 	[DataMember]
 	public decimal Value { get; set; }
 
 	/// <summary>
-	/// Create a copy of <see cref="Price"/>.
+	/// Creates a copy of the current <see cref="Price"/>.
 	/// </summary>
-	/// <returns>Copy.</returns>
+	/// <returns>A new <see cref="Price"/> instance that is a copy of this instance.</returns>
 	public override Price Clone()
 	{
 		return new()
@@ -50,10 +64,13 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	}
 
 	/// <summary>
-	/// Compare <see cref="Price"/> on the equivalence.
+	/// Compares the current instance with another <see cref="Price"/> object.
 	/// </summary>
-	/// <param name="other">Another value with which to compare.</param>
-	/// <returns>The result of the comparison.</returns>
+	/// <param name="other">The other <see cref="Price"/> to compare with.</param>
+	/// <returns>
+	/// A value less than zero if this instance is less than <paramref name="other"/>,
+	/// zero if they are equal, or a value greater than zero if this instance is greater than <paramref name="other"/>.
+	/// </returns>
 	public override int CompareTo(Price other)
 	{
 		if (this == other)
@@ -79,24 +96,25 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 		=> Type == p.Type && Value == p.Value;
 
 	/// <summary>
-	/// Cast <see cref="int"/> object to the type <see cref="Price"/>.
+	/// Implicitly converts an <see cref="int"/> to a <see cref="Price"/>.
 	/// </summary>
-	/// <param name="value"><see cref="int"/> value.</param>
-	/// <returns>Object <see cref="Price"/>.</returns>
+	/// <param name="value">The integer value to convert.</param>
+	/// <returns>A new <see cref="Price"/> with the specified value.</returns>
 	public static implicit operator Price(int value) => new() { Value = value };
 
 	/// <summary>
-	/// Cast <see cref="decimal"/> object to the type <see cref="Price"/>.
+	/// Implicitly converts a <see cref="decimal"/> to a <see cref="Price"/>.
 	/// </summary>
-	/// <param name="value"><see cref="decimal"/> value.</param>
-	/// <returns>Object <see cref="Price"/>.</returns>
+	/// <param name="value">The decimal value to convert.</param>
+	/// <returns>A new <see cref="Price"/> with the specified value.</returns>
 	public static implicit operator Price(decimal value) => new() { Value = value };
 
 	/// <summary>
-	/// Cast object from <see cref="Price"/> to <see cref="double"/>.
+	/// Explicitly converts a <see cref="Price"/> to a <see cref="double"/>.
 	/// </summary>
-	/// <param name="value">Object <see cref="Price"/>.</param>
-	/// <returns><see cref="double"/> value.</returns>
+	/// <param name="value">The <see cref="Price"/> to convert.</param>
+	/// <returns>The double representation of the price value.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
 	public static explicit operator double(Price value)
 	{
 		if (value is null)
@@ -106,10 +124,10 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	}
 
 	/// <summary>
-	/// Cast object from <see cref="Price"/> to nullable <see cref="double"/>.
+	/// Explicitly converts a <see cref="Price"/> to a nullable <see cref="double"/>.
 	/// </summary>
-	/// <param name="value">Object <see cref="Price"/>.</param>
-	/// <returns>Nullable <see cref="double"/> value.</returns>
+	/// <param name="value">The <see cref="Price"/> to convert.</param>
+	/// <returns>The nullable double representation of the price value, or null if <paramref name="value"/> is null.</returns>
 	public static explicit operator double?(Price value)
 	{
 		if (value is null)
@@ -119,10 +137,12 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	}
 
 	/// <summary>
-	/// Cast object from <see cref="Price"/> to <see cref="decimal"/>.
+	/// Explicitly converts a <see cref="Price"/> to a <see cref="decimal"/>.
 	/// </summary>
-	/// <param name="value">Object <see cref="Price"/>.</param>
-	/// <returns><see cref="decimal"/> value.</returns>
+	/// <param name="value">The <see cref="Price"/> to convert.</param>
+	/// <returns>The decimal representation of the price value.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+	/// <exception cref="InvalidOperationException">Thrown when the price type is <see cref="PriceTypes.Percent"/>.</exception>
 	public static explicit operator decimal(Price value)
 	{
 		if (value is null)
@@ -135,10 +155,10 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	}
 
 	/// <summary>
-	/// Cast object from <see cref="Price"/> to nullable <see cref="decimal"/>.
+	/// Explicitly converts a <see cref="Price"/> to a nullable <see cref="decimal"/>.
 	/// </summary>
-	/// <param name="value">Object <see cref="Price"/>.</param>
-	/// <returns>Nullable <see cref="decimal"/> value.</returns>
+	/// <param name="value">The <see cref="Price"/> to convert.</param>
+	/// <returns>The nullable decimal representation of the price value, or null if <paramref name="value"/> is null.</returns>
 	public static explicit operator decimal?(Price value)
 	{
 		if (value is null)
@@ -148,11 +168,11 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	}
 
 	/// <summary>
-	/// Compare two values in the inequality (if the value of different types, the conversion will be used).
+	/// Determines whether two <see cref="Price"/> objects are not equal.
 	/// </summary>
-	/// <param name="v1">First value.</param>
-	/// <param name="v2">Second value.</param>
-	/// <returns><see langword="true" />, if the values are equals, otherwise, <see langword="false" />.</returns>
+	/// <param name="v1">The first <see cref="Price"/> object.</param>
+	/// <param name="v2">The second <see cref="Price"/> object.</param>
+	/// <returns><c>true</c> if the prices are not equal; otherwise, <c>false</c>.</returns>
 	public static bool operator !=(Price v1, Price v2)
 	{
 		if (v1 is null)
@@ -165,11 +185,11 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	}
 
 	/// <summary>
-	/// Compare two values for equality (if the value of different types, the conversion will be used).
+	/// Determines whether two <see cref="Price"/> objects are equal.
 	/// </summary>
-	/// <param name="v1">First value.</param>
-	/// <param name="v2">Second value.</param>
-	/// <returns><see langword="true" />, if the values are equals, otherwise, <see langword="false" />.</returns>
+	/// <param name="v1">The first <see cref="Price"/> object.</param>
+	/// <param name="v2">The second <see cref="Price"/> object.</param>
+	/// <returns><c>true</c> if the prices are equal; otherwise, <c>false</c>.</returns>
 	public static bool operator ==(Price v1, Price v2)
 	{
 		if (v1 is null)
@@ -221,38 +241,38 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	}
 
 	/// <summary>
-	/// Add the two objects <see cref="Price"/>.
+	/// Adds two <see cref="Price"/> instances.
 	/// </summary>
-	/// <param name="v1">First object <see cref="Price"/>.</param>
-	/// <param name="v2">Second object <see cref="Price"/>.</param>
-	/// <returns>The result of addition.</returns>
+	/// <param name="v1">The first <see cref="Price"/>.</param>
+	/// <param name="v2">The second <see cref="Price"/>.</param>
+	/// <returns>The sum of the two prices.</returns>
 	public static Price operator +(Price v1, Price v2)
 		=> CreateResult(v1, v2, (v1, v2) => v1 + v2, (nonPer, per) => nonPer + per);
 
 	/// <summary>
-	/// Multiply the two objects <see cref="Price"/>.
+	/// Multiplies two <see cref="Price"/> instances.
 	/// </summary>
-	/// <param name="v1">First object <see cref="Price"/>.</param>
-	/// <param name="v2">Second object <see cref="Price"/>.</param>
-	/// <returns>The result of the multiplication.</returns>
+	/// <param name="v1">The first <see cref="Price"/>.</param>
+	/// <param name="v2">The second <see cref="Price"/>.</param>
+	/// <returns>The product of the two prices.</returns>
 	public static Price operator *(Price v1, Price v2)
 		=> CreateResult(v1, v2, (v1, v2) => v1 * v2, (nonPer, per) => nonPer * per);
 
 	/// <summary>
-	/// Subtract the value <see cref="Price"/> from another.
+	/// Subtracts one <see cref="Price"/> from another.
 	/// </summary>
-	/// <param name="v1">First object <see cref="Price"/>.</param>
-	/// <param name="v2">Second object <see cref="Price"/>.</param>
-	/// <returns>The result of the subtraction.</returns>
+	/// <param name="v1">The <see cref="Price"/> to subtract from.</param>
+	/// <param name="v2">The <see cref="Price"/> to subtract.</param>
+	/// <returns>The difference of the two prices.</returns>
 	public static Price operator -(Price v1, Price v2)
 		=> CreateResult(v1, v2, (v1, v2) => v1 - v2, (nonPer, per) => (v1.IsPercent ? (per - nonPer) : (nonPer - per)));
 
 	/// <summary>
-	/// Divide the value <see cref="Price"/> to another.
+	/// Divides one <see cref="Price"/> by another.
 	/// </summary>
-	/// <param name="v1">First object <see cref="Price"/>.</param>
-	/// <param name="v2">Second object <see cref="Price"/>.</param>
-	/// <returns>The result of the division.</returns>
+	/// <param name="v1">The numerator <see cref="Price"/>.</param>
+	/// <param name="v2">The denominator <see cref="Price"/>.</param>
+	/// <returns>The quotient of the division.</returns>
 	public static Price operator /(Price v1, Price v2)
 		=> CreateResult(v1, v2, (v1, v2) => v1 / v2, (nonPer, per) => v1.IsPercent ? per / nonPer : nonPer / per);
 
@@ -270,9 +290,36 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 		return v1.Value > v2.Value;
 	}
 
+	/// <summary>
+	/// Determines whether one <see cref="Price"/> is greater than another.
+	/// </summary>
+	/// <param name="v1">The first <see cref="Price"/>.</param>
+	/// <param name="v2">The second <see cref="Price"/>.</param>
+	/// <returns><c>true</c> if <paramref name="v1"/> is greater than <paramref name="v2"/>; otherwise, <c>false</c>.</returns>
 	public static bool operator >(Price v1, Price v2) => MoreThan(v1, v2) == true;
+
+	/// <summary>
+	/// Determines whether one <see cref="Price"/> is greater than or equal to another.
+	/// </summary>
+	/// <param name="v1">The first <see cref="Price"/>.</param>
+	/// <param name="v2">The second <see cref="Price"/>.</param>
+	/// <returns><c>true</c> if <paramref name="v1"/> is greater than or equal to <paramref name="v2"/>; otherwise, <c>false</c>.</returns>
 	public static bool operator >=(Price v1, Price v2) => v1 == v2 || v1 > v2;
+
+	/// <summary>
+	/// Determines whether one <see cref="Price"/> is less than another.
+	/// </summary>
+	/// <param name="v1">The first <see cref="Price"/>.</param>
+	/// <param name="v2">The second <see cref="Price"/>.</param>
+	/// <returns><c>true</c> if <paramref name="v1"/> is less than <paramref name="v2"/>; otherwise, <c>false</c>.</returns>
 	public static bool operator <(Price v1, Price v2) => MoreThan(v2, v1) == true;
+
+	/// <summary>
+	/// Determines whether one <see cref="Price"/> is less than or equal to another.
+	/// </summary>
+	/// <param name="v1">The first <see cref="Price"/>.</param>
+	/// <param name="v2">The second <see cref="Price"/>.</param>
+	/// <returns><c>true</c> if <paramref name="v1"/> is less than or equal to <paramref name="v2"/>; otherwise, <c>false</c>.</returns>
 	public static bool operator <=(Price v1, Price v2) => v1 == v2 || MoreThan(v2, v1) == true;
 
 	Price IOperable<Price>.Add(Price other) => this + other;
@@ -281,10 +328,10 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	Price IOperable<Price>.Divide(Price other) => this / other;
 
 	/// <summary>
-	/// Get the value with the opposite sign from the value <see cref="Price.Value"/>.
+	/// Returns a <see cref="Price"/> whose value is the negation of the specified price.
 	/// </summary>
-	/// <param name="v">Price.</param>
-	/// <returns>Opposite value.</returns>
+	/// <param name="v">The <see cref="Price"/> to negate.</param>
+	/// <returns>A new <see cref="Price"/> with the opposite sign.</returns>
 	public static Price operator -(Price v)
 	{
 		if (v is null)
@@ -314,7 +361,14 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 		return str;
 	}
 
+	/// <summary>
+	/// Percent sign.
+	/// </summary>
 	public const char PercentChar = '%';
+
+	/// <summary>
+	/// Limit sign.
+	/// </summary>
 	public const char LimitChar = 'l';
 
 	void IPersistable.Load(SettingsStorage storage)

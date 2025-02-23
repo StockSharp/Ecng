@@ -2,8 +2,17 @@
 
 using System;
 
+/// <summary>
+/// Provides extension methods for <see cref="ICodeGenVisitor"/> for code generation tasks.
+/// </summary>
 public static class ICodeGenVisitorExtensions
 {
+	/// <summary>
+	/// Adds an empty line to the code generation output.
+	/// </summary>
+	/// <param name="visitor">The code generation visitor.</param>
+	/// <returns>The code generation visitor with the added empty line.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="visitor"/> is null.</exception>
 	public static ICodeGenVisitor AddLine(this ICodeGenVisitor visitor)
 	{
 		if (visitor is null)
@@ -12,6 +21,12 @@ public static class ICodeGenVisitorExtensions
 		return visitor.AddLine(string.Empty);
 	}
 
+	/// <summary>
+	/// Adds an empty text line with the current indentation.
+	/// </summary>
+	/// <param name="visitor">The code generation visitor.</param>
+	/// <returns>The code generation visitor with the added indented line.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="visitor"/> is null.</exception>
 	public static ICodeGenVisitor AddWithIndent(this ICodeGenVisitor visitor)
 	{
 		if (visitor is null)
@@ -37,6 +52,12 @@ public static class ICodeGenVisitorExtensions
 		}
 	}
 
+	/// <summary>
+	/// Changes the indentation level of the code generation visitor.
+	/// Returns an <see cref="IDisposable"/> token that resets the indentation when disposed.
+	/// </summary>
+	/// <param name="visitor">The code generation visitor.</param>
+	/// <returns>An <see cref="IDisposable"/> token for managing the indentation scope.</returns>
 	public static IDisposable ChangeIndent(this ICodeGenVisitor visitor)
 		=> new IndentToken(visitor);
 }

@@ -3,15 +3,13 @@ namespace Ecng.ComponentModel
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.Linq;
 
 	using Ecng.Collections;
 	using Ecng.Common;
 
 	/// <summary>
+	/// The class represents a synchronized collection that can be used in WPF applications.
 	/// </summary>
-	/// <remarks>
-	/// </remarks>
 	public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IListEx<TItem> items) : BaseObservableCollection, ISynchronizedCollection<TItem>, IListEx<TItem>, IList
 	{
 		private enum ActionTypes
@@ -95,6 +93,10 @@ namespace Ecng.ComponentModel
 			CheckCount();
 		}
 
+		/// <summary>
+		/// Remove range of items.
+		/// </summary>
+		/// <param name="items">Items.</param>
 		public virtual void RemoveRange(IEnumerable<TItem> items)
 		{
 			_syncCopy.RemoveRange(items);
@@ -105,6 +107,7 @@ namespace Ecng.ComponentModel
 				AddAction(new(ActionTypes.Remove, [.. items]));
 		}
 
+		/// <inheritdoc />
 		public override int RemoveRange(int index, int count)
 		{
 			if (index < 0)
@@ -123,6 +126,7 @@ namespace Ecng.ComponentModel
 			return retVal;
 		}
 
+		/// <inheritdoc />
 		public IEnumerator<TItem> GetEnumerator()
 			=> _syncCopy.GetEnumerator();
 

@@ -9,13 +9,29 @@
 	using Ecng.Common;
 	using Ecng.Reflection;
 
+	/// <summary>
+	/// Provides helper methods for retrieving entity properties from a specified type.
+	/// </summary>
 	public static class EntityPropertyHelper
 	{
+		/// <summary>
+		/// Retrieves the entity properties for the specified type.
+		/// </summary>
+		/// <param name="type">The type to retrieve entity properties from.</param>
+		/// <param name="filter">An optional filter to apply to the property information.</param>
+		/// <returns>An enumerable collection of <see cref="EntityProperty"/>.</returns>
 		public static IEnumerable<EntityProperty> GetEntityProperties(this Type type, Func<PropertyInfo, bool> filter = null)
 		{
 			return type.GetEntityProperties(null, filter);
 		}
 
+		/// <summary>
+		/// Retrieves the entity properties for the specified type with a specified parent entity property.
+		/// </summary>
+		/// <param name="type">The type to retrieve entity properties from.</param>
+		/// <param name="parent">The parent <see cref="EntityProperty"/> in the hierarchy.</param>
+		/// <param name="filter">An optional filter to apply to the property information.</param>
+		/// <returns>An enumerable collection of <see cref="EntityProperty"/>.</returns>
 		public static IEnumerable<EntityProperty> GetEntityProperties(this Type type, EntityProperty parent, Func<PropertyInfo, bool> filter = null)
 		{
 			return type.GetEntityProperties(parent, [], filter ?? (p => true));
@@ -64,6 +80,13 @@
 			processed.Remove(type);
 		}
 
+		/// <summary>
+		/// Gets the type of a nested property specified by its name.
+		/// </summary>
+		/// <param name="type">The type that contains the property.</param>
+		/// <param name="name">The dot-separated name of the property.</param>
+		/// <param name="getVirtualProp">An optional function to retrieve the type of a virtual property.</param>
+		/// <returns>The <see cref="Type"/> of the property if found; otherwise, null.</returns>
 		public static Type GetPropType(this Type type, string name, Func<Type, string, Type> getVirtualProp = null)
 		{
 			if (type is null)
@@ -124,6 +147,14 @@
 			return type;
 		}
 
+		/// <summary>
+		/// Gets the value of a nested property from an object.
+		/// </summary>
+		/// <param name="entity">The object to retrieve the value from.</param>
+		/// <param name="name">The dot-separated name of the property.</param>
+		/// <param name="getVirtualProp">An optional function to retrieve the value of a virtual property.</param>
+		/// <param name="vars">An optional dictionary of variables for indexing.</param>
+		/// <returns>The value of the property if found; otherwise, null.</returns>
 		public static object GetPropValue(this object entity, string name, Func<object, string, object> getVirtualProp = null, IDictionary<string, object> vars = null)
 		{
 			var value = entity;
@@ -199,6 +230,13 @@
 			return value;
 		}
 
+		/// <summary>
+		/// Retrieves variable names from a nested property path for the specified type.
+		/// </summary>
+		/// <param name="type">The type that contains the property.</param>
+		/// <param name="name">The dot-separated property path.</param>
+		/// <param name="getVirtualProp">An optional function to retrieve the type of a virtual property.</param>
+		/// <returns>An enumerable collection of variable names present in the property path.</returns>
 		public static IEnumerable<string> GetVars(this Type type, string name, Func<Type, string, Type> getVirtualProp = null)
 		{
 			if (type is null)

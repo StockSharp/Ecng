@@ -21,6 +21,9 @@
 	/// </summary>
 	public static class NotifyPropertyChangedExHelper
 	{
+		/// <summary>
+		/// Filter.
+		/// </summary>
 		public static Func<object, string, bool> Filter { get; set; }
 
 		/// <summary>

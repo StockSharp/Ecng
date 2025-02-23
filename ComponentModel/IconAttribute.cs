@@ -10,8 +10,8 @@ namespace Ecng.ComponentModel
 	/// <remarks>
 	/// Create <see cref="IconAttribute"/>.
 	/// </remarks>
-	/// <param name="icon">Icon url.</param>
-	/// <param name="isFullPath"></param>
+	/// <param name="icon"><see cref="Icon"/></param>
+	/// <param name="isFullPath"><see cref="IsFullPath"/></param>
 	public class IconAttribute(string icon, bool isFullPath = false) : Attribute
 	{
 		/// <summary>
@@ -19,6 +19,9 @@ namespace Ecng.ComponentModel
 		/// </summary>
 		public string Icon { get; } = icon.ThrowIfEmpty(nameof(icon));
 
+		/// <summary>
+		/// <see cref="Icon"/> is full path.
+		/// </summary>
 		public bool IsFullPath { get; } = isFullPath;
 	}
 }

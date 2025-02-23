@@ -283,6 +283,11 @@ namespace Ecng.ComponentModel
 			ProcessCollectionChanged(evt.GetInvocationList().Cast<NotifyCollectionChangedEventHandler>(), args);
 		}
 
+		/// <summary>
+		/// Processes a collection of NotifyCollectionChangedEventHandler to raise the CollectionChanged event.
+		/// </summary>
+		/// <param name="subscribers">Subscribers.</param>
+		/// <param name="args">Args.</param>
 		protected virtual void ProcessCollectionChanged(IEnumerable<NotifyCollectionChangedEventHandler> subscribers, NotifyCollectionChangedEventArgs args)
 		{
 			foreach (var subscriber in subscribers)

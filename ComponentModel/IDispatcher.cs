@@ -20,9 +20,16 @@
 		/// <param name="action">Action.</param>
 		void InvokeAsync(Action action);
 
+		/// <summary>
+		/// Verify that current thread is dispatcher thread.
+		/// </summary>
+		/// <returns>Operation result.</returns>
 		bool CheckAccess();
 	}
 
+	/// <summary>
+	/// Dummy dispatcher.
+	/// </summary>
 	public class DummyDispatcher : IDispatcher
 	{
 		bool IDispatcher.CheckAccess() => true;

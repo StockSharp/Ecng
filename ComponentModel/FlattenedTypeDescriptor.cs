@@ -7,6 +7,9 @@ using System.Linq;
 
 using Ecng.Common;
 
+/// <summary>
+/// Represents a type descriptor that flattens the properties of the specified object.
+/// </summary>
 public class FlattenedTypeDescriptor : Disposable, ICustomTypeDescriptor, INotifyPropertiesChanged, INotifyPropertyChanged, INotifyPropertyChanging
 {
 	private class FlattenedPropertyDescriptor(object root, PropertyDescriptor originalDescriptor, string parentPath)
@@ -78,6 +81,11 @@ public class FlattenedTypeDescriptor : Disposable, ICustomTypeDescriptor, INotif
 	private readonly IEnumerable<(PropertyDescriptor prop, string path)> _descriptors;
 	private readonly PropertyDescriptorCollection _props;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FlattenedTypeDescriptor"/> class.
+	/// </summary>
+	/// <param name="root">The root instance.</param>
+	/// <param name="descriptors">The collection of property descriptors with their paths relative to the root object.</param>
 	public FlattenedTypeDescriptor(object root, IEnumerable<(PropertyDescriptor prop, string path)> descriptors)
 	{
 		_root = root ?? throw new ArgumentNullException(nameof(root));
@@ -95,6 +103,7 @@ public class FlattenedTypeDescriptor : Disposable, ICustomTypeDescriptor, INotif
 			npc2.PropertyChanging += OnPropertyChanging;
 	}
 
+	/// <inheritdoc/>
 	protected override void DisposeManaged()
 	{
 		base.DisposeManaged();
@@ -109,8 +118,17 @@ public class FlattenedTypeDescriptor : Disposable, ICustomTypeDescriptor, INotif
 			npc2.PropertyChanging -= OnPropertyChanging;
 	}
 
+	/// <summary>
+	/// <see cref="INotifyPropertiesChanged.PropertiesChanged"/>.
+	/// </summary>
 	public event Action PropertiesChanged;
+	/// <summary>
+	/// <see cref="INotifyPropertyChanged.PropertyChanged"/>.
+	/// </summary>
 	public event PropertyChangedEventHandler PropertyChanged;
+	/// <summary>
+	/// <see cref="INotifyPropertyChanging.PropertyChanging"/>.
+	/// </summary>
 	public event PropertyChangingEventHandler PropertyChanging;
 
 	private void OnPropertiesChanged()

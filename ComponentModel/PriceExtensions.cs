@@ -4,6 +4,9 @@
 
 	using Ecng.Common;
 
+	/// <summary>
+	/// <see cref="Price"/> extension methods.
+	/// </summary>
 	public static class PriceExtensions
 	{
 		/// <summary>

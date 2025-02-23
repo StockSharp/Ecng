@@ -6,14 +6,24 @@ using System.Threading;
 using Ecng.Common;
 using Ecng.Security;
 
+/// <summary>
+/// Provides functionality to ensure that only one instance of the application is running.
+/// </summary>
 public static class ProcessSingleton
 {
 	private static Locker _isRunningMutex;
 
 	/// <summary>
-	/// Check if an instance of the application already started.
+	/// Checks whether an instance of the application is already running.
 	/// </summary>
-	/// <returns>Check result.</returns>
+	/// <param name="appKey">A unique key used to enforce the single instance.</param>
+	/// <returns>
+	/// True if this is the first instance and the mutex was successfully acquired; 
+	/// otherwise, false.
+	/// </returns>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown if the mutex has already been initialized.
+	/// </exception>
 	public static bool StartIsRunning(string appKey)
 	{
 		if (_isRunningMutex != null)
@@ -32,7 +42,7 @@ public static class ProcessSingleton
 	}
 
 	/// <summary>
-	/// Release all resources allocated by <see cref="StartIsRunning()"/>.
+	/// Releases all resources allocated by the StartIsRunning method.
 	/// </summary>
 	public static void StopIsRunning()
 	{
@@ -40,18 +50,25 @@ public static class ProcessSingleton
 		_isRunningMutex = null;
 	}
 
+	// Although this class is private, internal details are documented for clarity.
 	private class Locker : Disposable
 	{
 		private readonly ManualResetEvent _stop = new(false);
 		private readonly ManualResetEvent _stopped = new(false);
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Locker"/> class with the specified key.
+		/// </summary>
+		/// <param name="key">The key used to generate a unique mutex.</param>
+		/// <exception cref="InvalidOperationException">
+		/// Thrown if the mutex cannot be acquired with the computed unique name.
+		/// </exception>
 		public Locker(string key)
 		{
 			Exception error = null;
 			var started = new ManualResetEvent(false);
 
-			// mutex должен освобождаться из того же потока, в котором захвачен. некоторые приложения вызывают StopIsRunning из другого потока нежели StartIsRunning
-			// выделяя отдельный поток, обеспечивается гарантия корректной работы в любом случае
+			// Mutex must be released from the same thread it was captured; launching a dedicated thread ensures correctness.
 			ThreadingHelper.Thread(() =>
 			{
 				Mutex mutex;
@@ -91,6 +108,7 @@ public static class ProcessSingleton
 				throw error;
 		}
 
+		/// <inheritdoc />
 		protected override void DisposeManaged()
 		{
 			_stop.Set();

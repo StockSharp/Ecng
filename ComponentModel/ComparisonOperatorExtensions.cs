@@ -4,8 +4,22 @@
 
 	using Ecng.Common;
 
+	/// <summary>
+	/// Provides extension methods for comparing string values using a specified comparison operator.
+	/// </summary>
 	public static class LikeComparesExtensions
 	{
+		/// <summary>
+		/// Determines if the specified string value matches a pattern based on the provided comparison operator.
+		/// </summary>
+		/// <param name="value">The string value to evaluate.</param>
+		/// <param name="like">The pattern to compare against.</param>
+		/// <param name="likeCompare">The comparison operator to use for the evaluation.</param>
+		/// <returns>
+		/// True if the value satisfies the comparison; otherwise, false.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown when the comparison operator is not supported.</exception>
 		public static bool Like(this string value, string like, ComparisonOperator? likeCompare)
 		{
 			if (value is null)
@@ -25,6 +39,18 @@
 			};
 		}
 
+		/// <summary>
+		/// Converts a pattern into an expression according to the specified comparison operator.
+		/// </summary>
+		/// <param name="like">The pattern to convert.</param>
+		/// <param name="likeCompare">
+		/// The comparison operator that determines how the expression is formed. 
+		/// Defaults to ComparisonOperator.In if null.
+		/// </param>
+		/// <returns>A string expression representing the pattern.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="like"/> is empty.</exception>
+		/// <exception cref="NotSupportedException">Thrown when the NotEqual operator is used.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown when the comparison operator is not supported.</exception>
 		public static string ToExpression(this string like, ComparisonOperator? likeCompare = default)
 		{
 			if (like.IsEmpty())

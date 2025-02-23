@@ -13,6 +13,10 @@ namespace Ecng.ComponentModel;
 /// </summary>
 public interface IConvertibleObservableCollection<TItem> : IListEx<TItem>
 {
+	/// <summary>
+	/// Remove items for which <paramref name="pred"/> returns true.
+	/// </summary>
+	/// <param name="pred">Filter.</param>
 	void RemoveAll(Func<TItem, bool> pred);
 }
 
@@ -301,7 +305,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	}
 
 	/// <summary>
-	/// Remove items for which <see cref="pred"/> returns true.
+	/// Remove items for which <paramref name="pred"/> returns true.
 	/// </summary>
 	public void RemoveAll(Func<TItem, bool> pred)
 	{

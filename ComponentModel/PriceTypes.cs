@@ -23,7 +23,7 @@ public enum PriceTypes
 	Percent,
 
 	/// <summary>
-	/// The limited value. This unit allows to set a specific change number, which cannot be used in arithmetic operations <see cref="Unit"/>.
+	/// The limited value. This unit allows to set a specific change number, which cannot be used in arithmetic operations <see cref="Price"/>.
 	/// </summary>
 	[EnumMember]
 	Limit,

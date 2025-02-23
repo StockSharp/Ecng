@@ -5,25 +5,42 @@ namespace Ecng.ComponentModel
 
 	using Ecng.Common;
 
+	/// <summary>
+	/// Represents a range with a minimum and maximum value.
+	/// </summary>
 	public interface IRange
 	{
+		/// <summary>
+		/// Gets a value indicating whether this instance has a minimum value.
+		/// </summary>
 		bool HasMinValue { get; }
+
+		/// <summary>
+		/// Gets a value indicating whether this instance has a maximum value.
+		/// </summary>
 		bool HasMaxValue { get; }
 
+		/// <summary>
+		/// Gets or sets the minimum value of the range.
+		/// </summary>
 		object Min { get; set; }
+
+		/// <summary>
+		/// Gets or sets the maximum value of the range.
+		/// </summary>
 		object Max { get; set; }
 	}
 
 	/// <summary>
-	/// 
+	/// Represents a generic range defined by a minimum and maximum value.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="T">The type of the range values. Must implement IComparable&lt;T&gt;.</typeparam>
 	[Serializable]
 	public class Range<T> : Equatable<Range<T>>, IConvertible, IRange
 		where T : IComparable<T>
 	{
 		/// <summary>
-		/// Initializes the <see cref="Range{T}"/> class.
+		/// Initializes static members of the <see cref="Range{T}"/> class.
 		/// </summary>
 		static Range()
 		{
@@ -39,33 +56,30 @@ namespace Ecng.ComponentModel
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="Range{T}"/> class.
+		/// Initializes a new instance of the <see cref="Range{T}"/> class with specified minimum and maximum values.
 		/// </summary>
-		/// <param name="min">The min.</param>
-		/// <param name="max">The max.</param>
+		/// <param name="min">The minimum value of the range.</param>
+		/// <param name="max">The maximum value of the range.</param>
 		public Range(T min, T max)
 		{
 			Init(min, max);
 		}
 
 		/// <summary>
-		/// Represents the smallest possible value of a T.
+		/// Represents the smallest possible value of type <typeparamref name="T"/>.
 		/// </summary>
 		public static readonly T MinValue;
 
 		/// <summary>
-		/// Represents the largest possible value of a T.
+		/// Represents the largest possible value of type <typeparamref name="T"/>.
 		/// </summary>
 		public static readonly T MaxValue;
 
 		#region HasMinValue
 
 		/// <summary>
-		/// Gets a value indicating whether this instance has min value.
+		/// Gets a value indicating whether the range has a specified minimum value.
 		/// </summary>
-		/// <value>
-		/// 	<c>true</c> if this instance has min value; otherwise, <c>false</c>.
-		/// </value>
 		[Browsable(false)]
 		public bool HasMinValue => _min.HasValue;
 
@@ -74,11 +88,8 @@ namespace Ecng.ComponentModel
 		#region HasMaxValue
 
 		/// <summary>
-		/// Gets a value indicating whether this instance has max value.
+		/// Gets a value indicating whether the range has a specified maximum value.
 		/// </summary>
-		/// <value>
-		/// 	<c>true</c> if this instance has max value; otherwise, <c>false</c>.
-		/// </value>
 		[Browsable(false)]
 		public bool HasMaxValue => _max.HasValue;
 
@@ -89,9 +100,9 @@ namespace Ecng.ComponentModel
 		private static IOperator<T> _operator;
 
 		/// <summary>
-		/// Gets the length.
+		/// Gets the difference between the maximum and minimum values of the range.
+		/// Returns <see cref="MaxValue"/> if either bound is not defined.
 		/// </summary>
-		/// <value>The length.</value>
 		[Browsable(false)]
 		public T Length
 		{
@@ -117,10 +128,11 @@ namespace Ecng.ComponentModel
 		private readonly NullableEx<T> _min = new();
 
 		/// <summary>
-		/// Gets or sets the min value.
+		/// Gets or sets the minimum value of the range.
 		/// </summary>
-		/// <value>The min value.</value>
-		//[Field("Min", Order = 0)]
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown when the new minimum value is greater than the current maximum value.
+		/// </exception>
 		public T Min
 		{
 			get => _min.Value;
@@ -142,10 +154,11 @@ namespace Ecng.ComponentModel
 		private readonly NullableEx<T> _max = new();
 
 		/// <summary>
-		/// Gets or sets the max value.
+		/// Gets or sets the maximum value of the range.
 		/// </summary>
-		/// <value>The max value.</value>
-		//[Field("Max", Order = 1)]
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown when the new maximum value is less than the current minimum value.
+		/// </exception>
 		public T Max
 		{
 			get => _max.Value;
@@ -163,16 +176,22 @@ namespace Ecng.ComponentModel
 
 		#region Parse
 
+		/// <summary>
+		/// Defines an explicit conversion of a string representation to a <see cref="Range{T}"/>.
+		/// </summary>
+		/// <param name="str">The string representation of the range.</param>
 		public static explicit operator Range<T>(string str)
 		{
 			return Parse(str);
 		}
 
 		/// <summary>
-		/// Parses the specified value.
+		/// Parses the specified string representation and returns a new <see cref="Range{T}"/> instance.
 		/// </summary>
-		/// <param name="value">The value.</param>
-		/// <returns></returns>
+		/// <param name="value">The string representation of the range.</param>
+		/// <returns>A new instance of <see cref="Range{T}"/> representing the parsed range.</returns>
+		/// <exception cref="ArgumentNullException">Thrown if the input string is empty.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown if the string length is less than 3.</exception>
 		public static Range<T> Parse(string value)
 		{
 			if (value.IsEmpty())
@@ -203,23 +222,13 @@ namespace Ecng.ComponentModel
 
 		#region Object Members
 
-		/// <summary>
-		/// Serves as a hash function for a particular type. <see cref="M:System.Object.GetHashCode"></see> is suitable for use in hashing algorithms and data structures like a hash table.
-		/// </summary>
-		/// <returns>
-		/// A hash code for the current <see cref="T:System.Object"></see>.
-		/// </returns>
+		/// <inheritdoc/>
 		public override int GetHashCode()
 		{
 			return (HasMinValue ? Min.GetHashCode() : 0) ^ (HasMaxValue ? Max.GetHashCode() : 0);
 		}
 
-		/// <summary>
-		/// Returns a <see cref="T:System.String"></see> that represents the current <see cref="T:System.Object"></see>.
-		/// </summary>
-		/// <returns>
-		/// A <see cref="T:System.String"></see> that represents the current <see cref="T:System.Object"></see>.
-		/// </returns>
+		/// <inheritdoc/>
 		public override string ToString()
 		{
 			return "{{Min:{0} Max:{1}}}".Put(HasMinValue ? Min.ToString() : "null", HasMaxValue ? Max.ToString() : "null");
@@ -229,11 +238,7 @@ namespace Ecng.ComponentModel
 
 		#region Equatable<Range<T>> Members
 
-		/// <summary>
-		/// Called when [equals].
-		/// </summary>
-		/// <param name="other">The value.</param>
-		/// <returns></returns>
+		/// <inheritdoc/>
 		protected override bool OnEquals(Range<T> other)
 		{
 			return _min == other._min && _max == other._max;
@@ -253,11 +258,18 @@ namespace Ecng.ComponentModel
 			set => Max = (T)value;
 		}
 
+		/// <inheritdoc/>
 		public override Range<T> Clone()
 		{
 			return new Range<T>(Min, Max);
 		}
 
+		/// <summary>
+		/// Determines whether the current range completely contains another range.
+		/// </summary>
+		/// <param name="range">The range to check against.</param>
+		/// <returns>true if the range is contained; otherwise, false.</returns>
+		/// <exception cref="ArgumentNullException">Thrown if the provided range is null.</exception>
 		public bool Contains(Range<T> range)
 		{
 			if (range is null)
@@ -266,6 +278,14 @@ namespace Ecng.ComponentModel
 			return Contains(range.Min) && Contains(range.Max);
 		}
 
+		/// <summary>
+		/// Returns the intersection of the current range with another range.
+		/// </summary>
+		/// <param name="range">The range with which to intersect.</param>
+		/// <returns>
+		/// A new <see cref="Range{T}"/> representing the overlap between the two ranges, or null if there is no intersection.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">Thrown if the provided range is null.</exception>
 		public Range<T> Intersect(Range<T> range)
 		{
 			if (range is null)
@@ -289,6 +309,13 @@ namespace Ecng.ComponentModel
 			}
 		}
 
+		/// <summary>
+		/// Creates a sub-range from the current range given the specified minimum and maximum values.
+		/// </summary>
+		/// <param name="min">The minimum value of the sub-range.</param>
+		/// <param name="max">The maximum value of the sub-range.</param>
+		/// <returns>A new <see cref="Range{T}"/> representing the sub-range.</returns>
+		/// <exception cref="ArgumentException">Thrown if either min or max is not contained within the current range.</exception>
 		public Range<T> SubRange(T min, T max)
 		{
 			if (!Contains(min))
@@ -301,12 +328,10 @@ namespace Ecng.ComponentModel
 		}
 
 		/// <summary>
-		/// Determines whether [contains] [the specified value].
+		/// Determines whether the specified value is within the current range.
 		/// </summary>
-		/// <param name="value">The value.</param>
-		/// <returns>
-		/// 	<c>true</c> if [contains] [the specified value]; otherwise, <c>false</c>.
-		/// </returns>
+		/// <param name="value">The value to test.</param>
+		/// <returns>true if the value is within the range; otherwise, false.</returns>
 		public bool Contains(T value)
 		{
 			if (_min.HasValue && Min.CompareTo(value) > 0)
@@ -317,6 +342,12 @@ namespace Ecng.ComponentModel
 				return true;
 		}
 
+		/// <summary>
+		/// Initializes the range with the specified minimum and maximum values.
+		/// </summary>
+		/// <param name="min">The minimum value.</param>
+		/// <param name="max">The maximum value.</param>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown if the minimum value is greater than the maximum value.</exception>
 		private void Init(T min, T max)
 		{
 			ValidateBounds(min, max);
