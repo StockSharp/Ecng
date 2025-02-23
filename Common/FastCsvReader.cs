@@ -2,7 +2,6 @@ namespace Ecng.Common
 {
 	using System;
 	using System.IO;
-	using System.Linq;
 	using System.Numerics;
 	using System.Text;
 
