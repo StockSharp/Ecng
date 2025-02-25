@@ -4,20 +4,20 @@ namespace Ecng.Collections
 	using System.Collections.Generic;
 
 	/// <summary>
-	/// Расширенная версия <see cref="IEnumerable"/> с получением общего количества элементов.
+	/// Extended version of <see cref="IEnumerable"/> that provides the total number of elements.
 	/// </summary>
 	public interface IEnumerableEx : IEnumerable
 	{
 		/// <summary>
-		/// Количество элементов.
+		/// Gets the total number of elements.
 		/// </summary>
 		int Count { get; }
 	}
 
 	/// <summary>
-	/// Расширенная версия <see cref="IEnumerable{T}"/> с получением общего количества элементов.
+	/// Extended version of <see cref="IEnumerable{T}"/> that provides the total number of elements.
 	/// </summary>
-	/// <typeparam name="T">Тип элемента.</typeparam>
+	/// <typeparam name="T">The type of the element.</typeparam>
 	public interface IEnumerableEx<out T> : IEnumerable<T>, IEnumerableEx
 	{
 	}

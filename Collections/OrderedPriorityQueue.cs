@@ -5,16 +5,32 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	/// <summary>
+	/// Represents a priority queue that sorts elements based on a specified key.
+	/// </summary>
+	/// <typeparam name="TPriority">
+	/// The type used to determine the sort order of elements.
+	/// </typeparam>
+	/// <typeparam name="TValue">
+	/// The type of the values stored in the queue.
+	/// </typeparam>
 	[Obsolete("Use PriorityQueue.")]
 	public class OrderedPriorityQueue<TPriority, TValue> : ICollection<KeyValuePair<TPriority, TValue>>, IQueue<KeyValuePair<TPriority, TValue>>
 	{
 		private readonly SortedDictionary<TPriority, Queue<TValue>> _dictionary;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrderedPriorityQueue{TPriority, TValue}"/> class.
+		/// </summary>
 		public OrderedPriorityQueue()
 		{
 			_dictionary = [];
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrderedPriorityQueue{TPriority, TValue}"/> class using the specified comparer.
+		/// </summary>
+		/// <param name="comparer">The comparer used to sort the keys.</param>
 		public OrderedPriorityQueue(IComparer<TPriority> comparer)
 		{
 			_dictionary = new SortedDictionary<TPriority, Queue<TValue>>(comparer);
@@ -168,7 +184,7 @@
 		/// <summary>
 		/// Removes the first occurrence of a specific object from the priority queue. 
 		/// </summary>
-		/// <param name="item">The object to remove from the ICollection <(Of <(T >)>). </param>
+		/// <param name="item">The object to remove from the <see cref="ICollection{T}"/>.</param>
 		/// <returns><c>true</c> if item was successfully removed from the priority queue.
 		/// This method returns false if item is not found in the collection. </returns>
 		public bool Remove(KeyValuePair<TPriority, TValue> item)
@@ -176,6 +192,10 @@
 			return Remove(item.Key, [item.Value]);
 		}
 
+		/// <summary>
+		/// Removes the range of elements from the priority queue.
+		/// </summary>
+		/// <param name="items">The range of elements to remove from the priority queue.</param>
 		public void RemoveRange(IEnumerable<KeyValuePair<TPriority, TValue>> items)
 		{
 			var groups = items.GroupBy(i => i.Key, i => i.Value);

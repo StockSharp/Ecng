@@ -5,6 +5,9 @@
 
 	using Ecng.Common;
 
+	/// <summary>
+	/// Provides a reader for bit-level data from a stream.
+	/// </summary>
 	public class BitArrayReader
 	{
 		private int _bitOffset;
@@ -12,6 +15,11 @@
 		private readonly ulong[] _data;
 		private readonly Stream _underlyingStream;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="BitArrayReader"/> class with the specified underlying stream.
+		/// </summary>
+		/// <param name="underlyingStream">The stream to read bit-level data from.</param>
+		/// <exception cref="ArgumentNullException">Thrown if <paramref name="underlyingStream"/> is null.</exception>
 		public BitArrayReader(Stream underlyingStream)
 		{
 			_underlyingStream = underlyingStream ?? throw new ArgumentNullException(nameof(underlyingStream));
@@ -23,6 +31,10 @@
 			Buffer.BlockCopy(bytes, 0, _data, 0, bytes.Length);
 		}
 
+		/// <summary>
+		/// Gets or sets the current bit offset within the stream.
+		/// </summary>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown if the value is negative.</exception>
 		public long Offset
 		{
 #pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
@@ -38,11 +50,20 @@
 			}
 		}
 
+		/// <summary>
+		/// Retrieves the 64-bit value at the specified offset.
+		/// </summary>
+		/// <param name="offset">The offset to read from.</param>
+		/// <returns>The 64-bit value at the specified offset.</returns>
 		private ulong Get(long offset)
 		{
 			return _data[offset];
 		}
 
+		/// <summary>
+		/// Reads a single bit from the stream.
+		/// </summary>
+		/// <returns>The value of the bit read.</returns>
 		public bool Read()
 		{
 			var b = Get(_dataOffset);
@@ -60,6 +81,11 @@
 			return value;
 		}
 
+		/// <summary>
+		/// Reads an array of bits from the stream.
+		/// </summary>
+		/// <param name="count">The number of bits to read.</param>
+		/// <returns>An array of boolean values representing the bits read.</returns>
 		public bool[] ReadArray(int count)
 		{
 			var retVal = new bool[count];
@@ -70,11 +96,21 @@
 			return retVal;
 		}
 
+		/// <summary>
+		/// Reads a specified number of bits from the stream as an integer.
+		/// </summary>
+		/// <param name="count">The number of bits to read.</param>
+		/// <returns>The integer value represented by the bits read.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="count"/> is invalid.</exception>
 		public int Read(int count)
 		{
 			return (int)ReadLong(count);
 		}
 
+		/// <summary>
+		/// Moves the current bit offset by the specified number of bits.
+		/// </summary>
+		/// <param name="offset">The number of bits to move the offset by.</param>
 		public void Seek(int offset)
 		{
 			var newOffset = _bitOffset + offset;
@@ -82,6 +118,12 @@
 			_bitOffset = newOffset & 63;
 		}
 
+		/// <summary>
+		/// Reads a specified number of bits from the stream as a long integer.
+		/// </summary>
+		/// <param name="count">The number of bits to read.</param>
+		/// <returns>The long integer value represented by the bits read.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="count"/> is invalid.</exception>
 		public long ReadLong(int count)
 		{
 			if (count <= 0 || count > 64)
@@ -104,6 +146,10 @@
 			return (long)value;
 		}
 
+		/// <summary>
+		/// Reads an integer value from the stream using a variable-length encoding.
+		/// </summary>
+		/// <returns>The integer value read from the stream.</returns>
 		public int ReadInt()
 		{
 			var bits = Get(_dataOffset);
@@ -162,6 +208,10 @@
 			return value;
 		}
 
+		/// <summary>
+		/// Reads a long integer value from the stream using a variable-length encoding.
+		/// </summary>
+		/// <returns>The long integer value read from the stream.</returns>
 		public long ReadLong()
 		{
 			var offset = _dataOffset;
@@ -248,6 +298,10 @@
 			return value;
 		}
 
+		/// <summary>
+		/// Reads a decimal value from the stream.
+		/// </summary>
+		/// <returns>The decimal value read from the stream.</returns>
 		public decimal ReadDecimal()
 		{
 			var isPos = Read();

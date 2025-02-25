@@ -99,6 +99,7 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 		}
 	}
 
+	/// <inheritdoc />
 	public override int Capacity
 	{
 		get => base.Capacity;

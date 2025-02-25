@@ -21,6 +21,7 @@ using Ecng.Common;
 ///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class
 ///  with the specified custom priority comparer.
 /// </remarks>
+/// <param name="subtractAbs">The function that calculates the absolute difference between two priorities.</param>
 /// <param name="comparer">
 ///  Custom comparer dictating the ordering of elements.
 ///  Uses <see cref="Comparer{T}.Default" /> if the argument is <see langword="null"/>.
