@@ -5,6 +5,7 @@ namespace Ecng.Collections
 	/// <summary>
 	/// Represents a synchronized stack of items.
 	/// </summary>
+	/// <typeparam name="T">The type of elements in the stack.</typeparam>
 	[Serializable]
 	public class SynchronizedStack<T> : SynchronizedCollection<T, StackEx<T>>
 	{
@@ -46,21 +47,44 @@ namespace Ecng.Collections
 				return InnerCollection.Peek();
 		}
 
+		/// <summary>
+		/// Throws a <see cref="NotSupportedException"/> as this operation is not supported for a stack.
+		/// </summary>
+		/// <param name="index">The index of the item to retrieve.</param>
+		/// <returns>This method always throws an exception.</returns>
+		/// <exception cref="NotSupportedException">This operation is not supported for a stack.</exception>
 		protected override T OnGetItem(int index)
 		{
 			throw new NotSupportedException();
 		}
 
+		/// <summary>
+		/// Throws a <see cref="NotSupportedException"/> as this operation is not supported for a stack.
+		/// </summary>
+		/// <param name="index">The index at which the item should be inserted.</param>
+		/// <param name="item">The item to insert.</param>
+		/// <exception cref="NotSupportedException">This operation is not supported for a stack.</exception>
 		protected override void OnInsert(int index, T item)
 		{
 			throw new NotSupportedException();
 		}
 
+		/// <summary>
+		/// Throws a <see cref="NotSupportedException"/> as this operation is not supported for a stack.
+		/// </summary>
+		/// <param name="index">The index of the item to remove.</param>
+		/// <exception cref="NotSupportedException">This operation is not supported for a stack.</exception>
 		protected override void OnRemoveAt(int index)
 		{
 			throw new NotSupportedException();
 		}
 
+		/// <summary>
+		/// Throws a <see cref="NotSupportedException"/> as this operation is not supported for a stack.
+		/// </summary>
+		/// <param name="item">The item to locate in the stack.</param>
+		/// <returns>This method always throws an exception.</returns>
+		/// <exception cref="NotSupportedException">This operation is not supported for a stack.</exception>
 		protected override int OnIndexOf(T item)
 		{
 			throw new NotSupportedException();

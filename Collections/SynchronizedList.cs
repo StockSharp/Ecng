@@ -98,7 +98,7 @@ namespace Ecng.Collections
 		/// Adds a range of items to the list in a thread-safe manner.
 		/// </summary>
 		/// <param name="items">The items to add.</param>
-		/// <exception cref="ArgumentNullException">Thrown when an item is null and <see cref="SynchronizedCollection{T, TCollection}.CheckNullableItems"/> is true.</exception>
+		/// <exception cref="ArgumentNullException">Thrown when an item is null and <see cref="BaseCollection{TItem,TCollection}.CheckNullableItems"/> is true.</exception>
 		public void AddRange(IEnumerable<T> items)
 		{
 			lock (SyncRoot)
