@@ -63,20 +63,18 @@ namespace Ecng.ComponentModel
 		/// </summary>
 		public virtual void RemoveRange(IEnumerable<TItem> items)
 		{
-			items = [.. items];
+			var arr = items.ToArray();
 
-			if (items.Count() > 10000 || items.Count() > Count * 0.1)
+			if (arr.Length > 10000 || arr.Length > Count * 0.1)
 			{
 				var temp = new HashSet<TItem>(_items);
-				temp.RemoveRange(items);
+				temp.RemoveRange(arr);
 
 				Clear();
 				AddRange(temp);
-
-				return;
 			}
-
-			items.ForEach(i => Remove(i));
+			else
+				arr.ForEach(i => Remove(i));
 		}
 
 		/// <summary>

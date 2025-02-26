@@ -3,6 +3,7 @@ namespace Ecng.ComponentModel
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -83,12 +84,14 @@ namespace Ecng.ComponentModel
 		/// </summary>
 		public virtual void AddRange(IEnumerable<TItem> items)
 		{
-			_syncCopy.AddRange(items);
+			var arr = items.ToArray();
+
+			_syncCopy.AddRange(arr);
 
 			if (Dispatcher.CheckAccess())
-				Items.AddRange(items);
+				Items.AddRange(arr);
 			else
-				AddAction(new(ActionTypes.Add, [.. items]));
+				AddAction(new(ActionTypes.Add, arr));
 
 			CheckCount();
 		}
@@ -99,12 +102,14 @@ namespace Ecng.ComponentModel
 		/// <param name="items">Items.</param>
 		public virtual void RemoveRange(IEnumerable<TItem> items)
 		{
-			_syncCopy.RemoveRange(items);
+			var arr = items.ToArray();
+
+			_syncCopy.RemoveRange(arr);
 
 			if (Dispatcher.CheckAccess())
-				Items.RemoveRange(items);
+				Items.RemoveRange(arr);
 			else
-				AddAction(new(ActionTypes.Remove, [.. items]));
+				AddAction(new(ActionTypes.Remove, arr));
 		}
 
 		/// <inheritdoc />
