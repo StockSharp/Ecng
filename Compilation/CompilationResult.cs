@@ -14,7 +14,7 @@ public abstract class CompilationResult(IEnumerable<CompilationError> errors)
 	/// <summary>
 	/// Gets the collection of compilation errors.
 	/// </summary>
-	public IEnumerable<CompilationError> Errors { get; } = errors.ToArray();
+	public IEnumerable<CompilationError> Errors { get; } = [.. errors];
 
 	/// <summary>
 	/// Loads the compiled assembly using the provided compiler context.

@@ -63,7 +63,7 @@ namespace Ecng.ComponentModel
 		/// </summary>
 		public virtual void RemoveRange(IEnumerable<TItem> items)
 		{
-			items = items.ToArray();
+			items = [.. items];
 
 			if (items.Count() > 10000 || items.Count() > Count * 0.1)
 			{
@@ -264,7 +264,7 @@ namespace Ecng.ComponentModel
 		private void OnIndexerPropertyChanged() => OnPropertyChanged("Item[]");
 
 		private void OnCollectionChanged(NotifyCollectionChangedAction action, IList<TItem> items, int index)              => OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, (IList)items, index));
-        private void OnCollectionChanged(NotifyCollectionChangedAction action, object item, int index)                     => OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, item, index));
+		private void OnCollectionChanged(NotifyCollectionChangedAction action, object item, int index)                     => OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, item, index));
 		private void OnCollectionChanged(NotifyCollectionChangedAction action, object item, int index, int oldIndex)       => OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, item, index, oldIndex));
 		private void OnCollectionChanged(NotifyCollectionChangedAction action, object oldItem, object newItem, int index)  => OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, newItem, oldItem, index));
 

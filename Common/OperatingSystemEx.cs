@@ -41,11 +41,10 @@
 		/// Gets all available operating system platforms defined in <see cref="OSPlatform"/>.
 		/// </summary>
 		public static IEnumerable<OSPlatform> Platforms =>
-			typeof(OSPlatform)
+			[.. typeof(OSPlatform)
 				.GetProperties()
 					.Where(p => p.PropertyType == typeof(OSPlatform))
-					.Select(p => (OSPlatform)p.GetValue(null))
-					.ToArray();
+					.Select(p => (OSPlatform)p.GetValue(null))];
 
 		/// <summary>
 		/// Gets a value indicating whether the current runtime framework is .NET Framework.

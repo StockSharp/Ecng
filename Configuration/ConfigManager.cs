@@ -335,7 +335,7 @@
 		public static IEnumerable<T> GetServices<T>()
 		{
 			lock (_sync)
-				return GetDict<T>().Values.Cast<T>().Distinct().ToArray();
+				return [.. GetDict<T>().Values.Cast<T>().Distinct()];
 		}
 	}
 }

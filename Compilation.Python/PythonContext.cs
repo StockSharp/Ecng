@@ -673,10 +673,9 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 
 		public AssemblyImpl(ScriptEngine engine, IEnumerable<PythonType> types)
 		{
-			_types = types
+			_types = [.. types
 				.Where(t => t.GetUnderlyingSystemType()?.IsPythonType() == true)
-				.Select(t => new TypeImpl(this, t, engine))
-				.ToArray();
+				.Select(t => new TypeImpl(this, t, engine))];
 		}
 
 		public override Type[] GetTypes() => GetExportedTypes();

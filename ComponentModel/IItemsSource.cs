@@ -366,7 +366,7 @@
 					items.OrderBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase) :
 					items.OrderByDescending(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase);
 
-			return items.ToArray();
+			return [.. items];
 		}
 
 		private IEnumerable<IItemsSourceItem<T>> CreateItems(IEnumerable<T> values) => FilterItems(values?.Select(CreateNewItem));
