@@ -53,16 +53,16 @@ namespace Ecng.Common
 		protected char[] SpecialChars = [';', '"', '\r', '\n'];
 
 		// Indexes into SpecialChars for characters with specific meaning
-		private const int DelimiterIndex = 0;
-		private const int QuoteIndex = 1;
+		private const int _delimiterIndex = 0;
+		private const int _quoteIndex = 1;
 
 		/// <summary>
 		/// Gets/sets the character used for column delimiters.
 		/// </summary>
 		public char Delimiter
 		{
-			get => SpecialChars[DelimiterIndex];
-			set => SpecialChars[DelimiterIndex] = value;
+			get => SpecialChars[_delimiterIndex];
+			set => SpecialChars[_delimiterIndex] = value;
 		}
 
 		/// <summary>
@@ -70,8 +70,8 @@ namespace Ecng.Common
 		/// </summary>
 		public char Quote
 		{
-			get => SpecialChars[QuoteIndex];
-			set => SpecialChars[QuoteIndex] = value;
+			get => SpecialChars[_quoteIndex];
+			set => SpecialChars[_quoteIndex] = value;
 		}
 	}
 
@@ -81,11 +81,15 @@ namespace Ecng.Common
 	public class CsvFileReader : CsvFileCommon, IDisposable
 	{
 		// Private members
-		private readonly TextReader Reader;
-		private string CurrLine;
-		private int CurrPos;
-		private readonly EmptyLineBehavior EmptyLineBehavior;
+		private readonly TextReader _reader;
+		private int _currPos;
+		private readonly EmptyLineBehavior _emptyLineBehavior;
 		private readonly string _lineSeparator;
+
+		/// <summary>
+		/// The current line being read.
+		/// </summary>
+		public string CurrLine { get; private set; }
 
 		/// <summary>
 		/// Initializes a new instance of the CsvFileReader class for the
@@ -129,9 +133,9 @@ namespace Ecng.Common
 			if (lineSeparator.IsEmpty())
 				throw new ArgumentNullException(nameof(lineSeparator));
 
-			Reader = reader;
+			_reader = reader;
 			_lineSeparator = lineSeparator;
-			EmptyLineBehavior = emptyLineBehavior;
+			_emptyLineBehavior = emptyLineBehavior;
 		}
 
 		/// <summary>
@@ -147,15 +151,15 @@ namespace Ecng.Common
 
 		ReadNextLine:
 			// Read next line from the file
-			CurrLine = Reader.ReadLine();
-			CurrPos = 0;
+			CurrLine = _reader.ReadLine();
+			_currPos = 0;
 			// Test for end of file
 			if (CurrLine is null)
 				return false;
 			// Test for empty line
 			if (CurrLine.Length == 0)
 			{
-				switch (EmptyLineBehavior)
+				switch (_emptyLineBehavior)
 				{
 					case EmptyLineBehavior.NoColumns:
 						columns.Clear();
@@ -173,7 +177,7 @@ namespace Ecng.Common
 			while (true)
 			{
 				// Read next column
-				if (CurrPos < CurrLine.Length && CurrLine[CurrPos] == Quote)
+				if (_currPos < CurrLine.Length && CurrLine[_currPos] == Quote)
 					column = ReadQuotedColumn();
 				else
 					column = ReadUnquotedColumn();
@@ -184,11 +188,11 @@ namespace Ecng.Common
 					columns.Add(column);
 				numColumns++;
 				// Break if we reached the end of the line
-				if (CurrLine is null || CurrPos == CurrLine.Length)
+				if (CurrLine is null || _currPos == CurrLine.Length)
 					break;
 				// Otherwise skip delimiter
-				Debug.Assert(CurrLine[CurrPos] == Delimiter);
-				CurrPos++;
+				Debug.Assert(CurrLine[_currPos] == Delimiter);
+				_currPos++;
 			}
 			// Remove any unused columns from collection
 			if (numColumns < columns.Count)
@@ -206,18 +210,18 @@ namespace Ecng.Common
 		private string ReadQuotedColumn()
 		{
 			// Skip opening quote character
-			Debug.Assert(CurrPos < CurrLine.Length && CurrLine[CurrPos] == Quote);
-			CurrPos++;
+			Debug.Assert(_currPos < CurrLine.Length && CurrLine[_currPos] == Quote);
+			_currPos++;
 
 			// Parse column
 			StringBuilder builder = new();
 			while (true)
 			{
-				while (CurrPos == CurrLine.Length)
+				while (_currPos == CurrLine.Length)
 				{
 					// End of line so attempt to read the next line
-					CurrLine = Reader.ReadLine();
-					CurrPos = 0;
+					CurrLine = _reader.ReadLine();
+					_currPos = 0;
 					// Done if we reached the end of the file
 					if (CurrLine is null)
 						return builder.ToString();
@@ -226,24 +230,24 @@ namespace Ecng.Common
 				}
 
 				// Test for quote character
-				if (CurrLine[CurrPos] == Quote)
+				if (CurrLine[_currPos] == Quote)
 				{
 					// If two quotes, skip first and treat second as literal
-					int nextPos = (CurrPos + 1);
+					int nextPos = (_currPos + 1);
 					if (nextPos < CurrLine.Length && CurrLine[nextPos] == Quote)
-						CurrPos++;
+						_currPos++;
 					else
 						break;  // Single quote ends quoted sequence
 				}
 				// Add current character to the column
-				builder.Append(CurrLine[CurrPos++]);
+				builder.Append(CurrLine[_currPos++]);
 			}
 
-			if (CurrPos < CurrLine.Length)
+			if (_currPos < CurrLine.Length)
 			{
 				// Consume closing quote
-				Debug.Assert(CurrLine[CurrPos] == Quote);
-				CurrPos++;
+				Debug.Assert(CurrLine[_currPos] == Quote);
+				_currPos++;
 				// Append any additional characters appearing before next delimiter
 				builder.Append(ReadUnquotedColumn());
 			}
@@ -259,19 +263,19 @@ namespace Ecng.Common
 		/// </summary>
 		private string ReadUnquotedColumn()
 		{
-			int startPos = CurrPos;
-			CurrPos = CurrLine.IndexOf(Delimiter, CurrPos);
-			if (CurrPos == -1)
-				CurrPos = CurrLine.Length;
-			if (CurrPos > startPos)
-				return CurrLine.Substring(startPos, CurrPos - startPos);
+			int startPos = _currPos;
+			_currPos = CurrLine.IndexOf(Delimiter, _currPos);
+			if (_currPos == -1)
+				_currPos = CurrLine.Length;
+			if (_currPos > startPos)
+				return CurrLine.Substring(startPos, _currPos - startPos);
 			return string.Empty;
 		}
 
 		/// <inheritdoc />
 		protected override void DisposeManaged()
 		{
-			Reader.Dispose();
+			_reader.Dispose();
 			base.DisposeManaged();
 		}
 	}
@@ -281,12 +285,12 @@ namespace Ecng.Common
 	/// </summary>
 	public class CsvFileWriter : CsvFileCommon, IDisposable
 	{
-		private StreamWriter Writer { get; }
+		private readonly StreamWriter _writer;
 
 		// Private members
-		private string OneQuote;
-		private string TwoQuotes;
-		private string QuotedFormat;
+		private string _oneQuote;
+		private string _twoQuotes;
+		private string _quotedFormat;
 
 		/// <summary>
 		/// Initializes a new instance of the CsvFileWriter class for the
@@ -295,7 +299,7 @@ namespace Ecng.Common
 		/// <param name="stream">The stream to write to</param>
 		/// <param name="encoding">The text encoding.</param>
 		public CsvFileWriter(Stream stream, Encoding encoding = null) {
-			Writer = encoding != null ?
+			_writer = encoding != null ?
 				new StreamWriter(stream, encoding) :
 				new StreamWriter(stream);
 		}
@@ -307,7 +311,7 @@ namespace Ecng.Common
 		/// <param name="path">The name of the CSV file to write to</param>
 		public CsvFileWriter(string path)
 		{
-			Writer = new StreamWriter(path);
+			_writer = new StreamWriter(path);
 		}
 
 		/// <summary>
@@ -327,14 +331,14 @@ namespace Ecng.Common
 			{
 				// Add delimiter if this isn't the first column
 				if (i > 0)
-					Writer.Write(Delimiter);
+					_writer.Write(Delimiter);
 
 				// Write this column
-				Writer.Write(Encode(c ?? string.Empty));
+				_writer.Write(Encode(c ?? string.Empty));
 				i++;
 			}
 
-			Writer.WriteLine();
+			_writer.WriteLine();
 		}
 
 		/// <summary>
@@ -345,24 +349,34 @@ namespace Ecng.Common
 		public string Encode(string column)
 		{
 			// Ensure we're using current quote character
-			if (OneQuote is null || OneQuote[0] != Quote)
+			if (_oneQuote is null || _oneQuote[0] != Quote)
 			{
-				OneQuote = $"{Quote}";
-				TwoQuotes = string.Format("{0}{0}", Quote);
-				QuotedFormat = string.Format("{0}{{0}}{0}", Quote);
+				_oneQuote = $"{Quote}";
+				_twoQuotes = string.Format("{0}{0}", Quote);
+				_quotedFormat = string.Format("{0}{{0}}{0}", Quote);
 			}
 
 			// Write this column
 			if (column.IndexOfAny(SpecialChars) != -1)
-				column = QuotedFormat.Put(column.Replace(OneQuote, TwoQuotes));
+				column = _quotedFormat.Put(column.Replace(_oneQuote, _twoQuotes));
 
 			return column;
 		}
 
+		/// <summary>
+		/// Clears all buffers for the current writer and causes any buffered data to be written to the underlying stream.
+		/// </summary>
+		public void Flush() => _writer.Flush();
+
+		/// <summary>
+		/// Truncates the underlying stream used by the <see cref="CsvFileWriter"/> by clearing its content.
+		/// </summary>
+		public void Truncate() => _writer.Truncate();
+
 		/// <inheritdoc />
 		protected override void DisposeManaged()
 		{
-			Writer.Dispose();
+			_writer.Dispose();
 			base.DisposeManaged();
 		}
 	}
