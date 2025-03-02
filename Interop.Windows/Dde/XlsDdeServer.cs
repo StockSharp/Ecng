@@ -90,7 +90,7 @@ namespace Ecng.Interop.Dde
 
 		private readonly SyncObject _registerWait = new();
 		private Timer _adviseTimer;
-		private readonly EventDispatcher _dispather = new EventDispatcher(error);
+		private readonly EventDispatcher _dispather = new(error);
 		private readonly Action<string, IList<IList<object>>> _poke = poke ?? throw new ArgumentNullException(nameof(poke));
 		private readonly Action<Exception> _error = error ?? throw new ArgumentNullException(nameof(error));
 
@@ -153,7 +153,7 @@ namespace Ecng.Interop.Dde
 		/// <param name="item">The item name requested.</param>
 		/// <param name="data">The data payload in byte array format.</param>
 		/// <param name="format">The format of the data received.</param>
-		/// <returns>A <see cref="PokeResult"/> indicating that the poke has been processed.</returns>
+		/// <returns>A result indicating that the poke has been processed.</returns>
 		protected override PokeResult OnPoke(DdeConversation conversation, string item, byte[] data, int format)
 		{
 			_dispather.Add(() =>

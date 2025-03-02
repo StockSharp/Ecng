@@ -123,8 +123,8 @@
 
 			var stream = data.To<Stream>();
 
-			var dt = stream.Read<DataTypes>();
-			var size = stream.Read<short>();
+			/*var dt = */stream.Read<DataTypes>();
+			/*var size = */stream.Read<short>();
 			var rowCount = stream.Read<short>();
 			var columnCount = stream.Read<short>();
 
