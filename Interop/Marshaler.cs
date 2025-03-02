@@ -12,15 +12,16 @@ namespace Ecng.Interop
 #endif
 
 	/// <summary>
-	/// Provides a collection of extended methods, that manipulate with class <see cref="Marshal"/>.
+	/// Provides a collection of extended methods that manipulate and extend the functionality of the <see cref="Marshal"/> class for interoperating with unmanaged memory and libraries.
 	/// </summary>
 	public static class Marshaler
 	{
 		/// <summary>
 		/// Marshals data from an unmanaged block of memory to a newly allocated managed object of the specified type.
 		/// </summary>
-		/// <param name="ptr">A pointer to an unmanaged block of memory.</param>
-		/// <returns>A managed object containing the data pointed to by the ptr parameter.</returns>
+		/// <typeparam name="T">The type of the structure to marshal. Must be a value type.</typeparam>
+		/// <param name="ptr">The pointer to the unmanaged block of memory.</param>
+		/// <returns>A managed object of type <typeparamref name="T"/> containing the data from the unmanaged memory.</returns>
 		public static T ToStruct<T>(this IntPtr ptr)
 			where T : struct
 		{
@@ -28,15 +29,23 @@ namespace Ecng.Interop
 		}
 
 		/// <summary>
-		/// Marshals data from a managed object to an unmanaged block of memory.
+		/// Marshals data from a managed object to an unmanaged block of memory and returns the pointer.
 		/// </summary>
-		/// <param name="structure">A managed object holding the data to be marshaled. This object must be an instance of a formatted class.</param>
-		/// <param name="size"></param>
-		/// <returns>A pointer to an unmanaged block of memory.</returns>
+		/// <typeparam name="T">The type of the structure to marshal. Must be a value type.</typeparam>
+		/// <param name="structure">The managed object to marshal.</param>
+		/// <param name="size">The optional size of the unmanaged memory block. If null, the size of <typeparamref name="T"/> is used.</param>
+		/// <returns>A pointer to the allocated unmanaged memory containing the marshaled data.</returns>
 		public static IntPtr StructToPtr<T>(this T structure, int? size = default)
 			where T : struct
 			=> structure.StructToPtrEx(size).ptr;
 
+		/// <summary>
+		/// Marshals data from a managed object to an unmanaged block of memory and returns the pointer along with the size.
+		/// </summary>
+		/// <typeparam name="T">The type of the structure to marshal. Must be a value type.</typeparam>
+		/// <param name="structure">The managed object to marshal.</param>
+		/// <param name="size">The optional size of the unmanaged memory block. If null, the size of <typeparamref name="T"/> is used.</param>
+		/// <returns>A tuple containing the pointer to the unmanaged memory and its size in bytes.</returns>
 		public static (IntPtr ptr, int size) StructToPtrEx<T>(this T structure, int? size = default)
 			where T : struct
 		{
@@ -47,10 +56,12 @@ namespace Ecng.Interop
 		}
 
 		/// <summary>
-		/// Writes a value to unmanaged memory.
+		/// Writes a value to the specified unmanaged memory location.
 		/// </summary>
-		/// <param name="ptr">The address in unmanaged memory from which to write.</param>
+		/// <typeparam name="T">The type of the value to write. Must be a supported primitive type (e.g., byte, short, int, long, IntPtr).</typeparam>
+		/// <param name="ptr">The address in unmanaged memory to write to.</param>
 		/// <param name="value">The value to write.</param>
+		/// <exception cref="ArgumentException">Thrown when <typeparamref name="T"/> is not a supported type.</exception>
 		public static void Write<T>(this IntPtr ptr, T value)
 			where T : struct
 		{
@@ -69,10 +80,12 @@ namespace Ecng.Interop
 		}
 
 		/// <summary>
-		/// Reads a value from an unmanaged pointer.
+		/// Reads a value from the specified unmanaged memory location.
 		/// </summary>
-		/// <param name="ptr">The address in unmanaged memory from which to read.</param>
-		/// <returns>The value read from the ptr parameter.</returns>
+		/// <typeparam name="T">The type of the value to read. Must be a supported primitive type (e.g., byte, short, int, long, IntPtr).</typeparam>
+		/// <param name="ptr">The address in unmanaged memory to read from.</param>
+		/// <returns>The value read from the unmanaged memory, cast to type <typeparamref name="T"/>.</returns>
+		/// <exception cref="ArgumentException">Thrown when <typeparamref name="T"/> is not a supported type.</exception>
 		public static T Read<T>(this IntPtr ptr)
 			where T : struct
 		{
@@ -95,41 +108,123 @@ namespace Ecng.Interop
 		}
 
 		/// <summary>
-		/// Converts an unmanaged function pointer to a delegate.
+		/// Converts an unmanaged function pointer to a delegate of the specified type.
 		/// </summary>
-		/// <typeparam name="T">The type of the delegate to be returned.</typeparam>
-		/// <param name="ptr">An <see cref="IntPtr"/> type that is the unmanaged function pointer to be converted.</param>
-		/// <returns>A delegate instance that can be cast to the appropriate delegate type.</returns>
+		/// <typeparam name="T">The type of the delegate to create.</typeparam>
+		/// <param name="ptr">The unmanaged function pointer to convert.</param>
+		/// <returns>A delegate of type <typeparamref name="T"/> that wraps the unmanaged function.</returns>
 		public static T GetDelegateForFunctionPointer<T>(this IntPtr ptr)
 		{
 			return Marshal.GetDelegateForFunctionPointer(ptr, typeof(T)).To<T>();
 		}
 
+		/// <summary>
+		/// Converts an unmanaged ANSI string pointer to a managed string.
+		/// </summary>
+		/// <param name="ptr">The pointer to the ANSI string in unmanaged memory.</param>
+		/// <returns>The managed string representation of the ANSI string.</returns>
 		public static string ToAnsi(this IntPtr ptr) => Marshal.PtrToStringAnsi(ptr);
+
+		/// <summary>
+		/// Converts an unmanaged ANSI string pointer to a managed string with a specified length.
+		/// </summary>
+		/// <param name="ptr">The pointer to the ANSI string in unmanaged memory.</param>
+		/// <param name="len">The length of the string to read.</param>
+		/// <returns>The managed string representation of the ANSI string.</returns>
 		public static string ToAnsi(this IntPtr ptr, int len) => Marshal.PtrToStringAnsi(ptr, len);
+
+		/// <summary>
+		/// Converts a managed string to an unmanaged ANSI string and returns a pointer to it.
+		/// </summary>
+		/// <param name="str">The managed string to convert.</param>
+		/// <returns>A pointer to the unmanaged ANSI string.</returns>
 		public static IntPtr FromAnsi(this string str) => Marshal.StringToHGlobalAnsi(str);
 
+		/// <summary>
+		/// Converts an unmanaged string pointer (platform-dependent encoding) to a managed string.
+		/// </summary>
+		/// <param name="ptr">The pointer to the string in unmanaged memory.</param>
+		/// <returns>The managed string representation.</returns>
 		public static string ToAuto(this IntPtr ptr) => Marshal.PtrToStringAuto(ptr);
+
+		/// <summary>
+		/// Converts an unmanaged string pointer (platform-dependent encoding) to a managed string with a specified length.
+		/// </summary>
+		/// <param name="ptr">The pointer to the string in unmanaged memory.</param>
+		/// <param name="len">The length of the string to read.</param>
+		/// <returns>The managed string representation.</returns>
 		public static string ToAuto(this IntPtr ptr, int len) => Marshal.PtrToStringAuto(ptr, len);
+
+		/// <summary>
+		/// Converts a managed string to an unmanaged string (platform-dependent encoding) and returns a pointer to it.
+		/// </summary>
+		/// <param name="str">The managed string to convert.</param>
+		/// <returns>A pointer to the unmanaged string.</returns>
 		public static IntPtr FromAuto(this string str) => Marshal.StringToHGlobalAuto(str);
 
+		/// <summary>
+		/// Converts an unmanaged BSTR pointer to a managed string.
+		/// </summary>
+		/// <param name="ptr">The pointer to the BSTR in unmanaged memory.</param>
+		/// <returns>The managed string representation of the BSTR.</returns>
 		public static string ToBSTR(this IntPtr ptr) => Marshal.PtrToStringBSTR(ptr);
+
+		/// <summary>
+		/// Converts a managed string to an unmanaged BSTR and returns a pointer to it.
+		/// </summary>
+		/// <param name="str">The managed string to convert.</param>
+		/// <returns>A pointer to the unmanaged BSTR.</returns>
 		public static IntPtr FromBSTR(this string str) => Marshal.StringToBSTR(str);
 
+		/// <summary>
+		/// Converts an unmanaged Unicode string pointer to a managed string.
+		/// </summary>
+		/// <param name="ptr">The pointer to the Unicode string in unmanaged memory.</param>
+		/// <returns>The managed string representation of the Unicode string.</returns>
 		public static string ToUnicode(this IntPtr ptr) => Marshal.PtrToStringUni(ptr);
+
+		/// <summary>
+		/// Converts an unmanaged Unicode string pointer to a managed string with a specified length.
+		/// </summary>
+		/// <param name="ptr">The pointer to the Unicode string in unmanaged memory.</param>
+		/// <param name="len">The length of the string to read.</param>
+		/// <returns>The managed string representation of the Unicode string.</returns>
 		public static string ToUnicode(this IntPtr ptr, int len) => Marshal.PtrToStringUni(ptr, len);
+
+		/// <summary>
+		/// Converts a managed string to an unmanaged Unicode string and returns a pointer to it.
+		/// </summary>
+		/// <param name="str">The managed string to convert.</param>
+		/// <returns>A pointer to the unmanaged Unicode string.</returns>
 		public static IntPtr FromUnicode(this string str) => Marshal.StringToHGlobalUni(str);
 
+		/// <summary>
+		/// Allocates unmanaged memory of the specified size and wraps it in a safe handle.
+		/// </summary>
+		/// <param name="ptr">The size of the memory to allocate, interpreted as an integer.</param>
+		/// <returns>A <see cref="HGlobalSafeHandle"/> wrapping the allocated unmanaged memory.</returns>
 		public static HGlobalSafeHandle ToHGlobal(this int ptr)
 		{
 			return ((IntPtr)ptr).ToHGlobal();
 		}
 
+		/// <summary>
+		/// Allocates unmanaged memory of the specified size and wraps it in a safe handle.
+		/// </summary>
+		/// <param name="ptr">The size of the memory to allocate, as an <see cref="IntPtr"/>.</param>
+		/// <returns>A <see cref="HGlobalSafeHandle"/> wrapping the allocated unmanaged memory.</returns>
 		public static HGlobalSafeHandle ToHGlobal(this IntPtr ptr)
 		{
 			return new HGlobalSafeHandle(Marshal.AllocHGlobal(ptr));
 		}
 
+		/// <summary>
+		/// Encodes a string using the specified encoding, allocates unmanaged memory for it, and returns a safe handle.
+		/// </summary>
+		/// <param name="encoding">The encoding to use for the string.</param>
+		/// <param name="data">The string to encode and allocate.</param>
+		/// <returns>A <see cref="HGlobalSafeHandle"/> wrapping the allocated unmanaged memory containing the encoded string.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="encoding"/> is null.</exception>
 		public static HGlobalSafeHandle ToHGlobal(this Encoding encoding, string data)
 		{
 			if (encoding is null)
@@ -144,6 +239,13 @@ namespace Ecng.Interop
 			return pData;
 		}
 
+		/// <summary>
+		/// Decodes an unmanaged ANSI string from a pointer into a managed string using the specified encoding.
+		/// </summary>
+		/// <param name="encoding">The encoding to use for decoding the string.</param>
+		/// <param name="pData">The pointer to the ANSI string in unmanaged memory.</param>
+		/// <returns>The decoded managed string.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="encoding"/> is null.</exception>
 		public static string ToString(this Encoding encoding, IntPtr pData)
 		{
 			if (encoding is null)
@@ -158,9 +260,24 @@ namespace Ecng.Interop
 			return encoding.GetString(data);
 		}
 
+		/// <summary>
+		/// Retrieves a delegate for a named procedure from an unmanaged library.
+		/// </summary>
+		/// <typeparam name="T">The type of the delegate to retrieve.</typeparam>
+		/// <param name="library">The handle to the loaded unmanaged library.</param>
+		/// <param name="procName">The name of the procedure to retrieve.</param>
+		/// <returns>A delegate of type <typeparamref name="T"/> for the specified procedure.</returns>
+		/// <exception cref="ArgumentException">Thrown when the procedure cannot be found in the library.</exception>
 		public static T GetHandler<T>(this IntPtr library, string procName)
 			=> GetDelegateForFunctionPointer<T>(GetProcAddress(library, procName));
 
+		/// <summary>
+		/// Attempts to retrieve a delegate for a named procedure from an unmanaged library.
+		/// </summary>
+		/// <typeparam name="T">The type of the delegate to retrieve. Must inherit from <see cref="Delegate"/>.</typeparam>
+		/// <param name="library">The handle to the loaded unmanaged library.</param>
+		/// <param name="procName">The name of the procedure to retrieve.</param>
+		/// <returns>A delegate of type <typeparamref name="T"/> if found; otherwise, <c>null</c>.</returns>
 		public static T TryGetHandler<T>(this IntPtr library, string procName)
 			where T : Delegate
 		{
@@ -181,6 +298,13 @@ namespace Ecng.Interop
 		private static extern IntPtr Kernel32GetProcAddress([In] IntPtr hModule, [In] string procName);
 #endif
 
+		/// <summary>
+		/// Loads an unmanaged library from the specified path.
+		/// </summary>
+		/// <param name="dllPath">The file path to the unmanaged library (DLL).</param>
+		/// <returns>A handle to the loaded library.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="dllPath"/> is null or empty.</exception>
+		/// <exception cref="ArgumentException">Thrown when the library cannot be loaded.</exception>
 		public static IntPtr LoadLibrary(string dllPath)
 		{
 			if (dllPath.IsEmpty())
@@ -198,6 +322,11 @@ namespace Ecng.Interop
 			return handler;
 		}
 
+		/// <summary>
+		/// Frees a previously loaded unmanaged library.
+		/// </summary>
+		/// <param name="hModule">The handle to the library to free.</param>
+		/// <returns><c>true</c> if the library was successfully freed; otherwise, <c>false</c>.</returns>
 		public static bool FreeLibrary(this IntPtr hModule)
 		{
 #if NETCOREAPP
@@ -208,6 +337,13 @@ namespace Ecng.Interop
 #endif
 		}
 
+		/// <summary>
+		/// Retrieves the address of a named procedure from an unmanaged library.
+		/// </summary>
+		/// <param name="hModule">The handle to the loaded unmanaged library.</param>
+		/// <param name="procName">The name of the procedure to retrieve.</param>
+		/// <returns>The address of the procedure in unmanaged memory.</returns>
+		/// <exception cref="ArgumentException">Thrown when the procedure cannot be found in the library.</exception>
 		public static IntPtr GetProcAddress(this IntPtr hModule, string procName)
 		{
 			if (TryGetProcAddress(hModule, procName, out var addr))
@@ -216,6 +352,13 @@ namespace Ecng.Interop
 			throw new ArgumentException($"Error load procedure {procName}.", nameof(procName), new Win32Exception());
 		}
 
+		/// <summary>
+		/// Attempts to retrieve the address of a named procedure from an unmanaged library.
+		/// </summary>
+		/// <param name="hModule">The handle to the loaded unmanaged library.</param>
+		/// <param name="procName">The name of the procedure to retrieve.</param>
+		/// <param name="address">When this method returns, contains the address of the procedure if found; otherwise, <see cref="IntPtr.Zero"/>.</param>
+		/// <returns><c>true</c> if the procedure address was found; otherwise, <c>false</c>.</returns>
 		public static bool TryGetProcAddress(this IntPtr hModule, string procName, out IntPtr address)
 		{
 #if NETCOREAPP
@@ -226,6 +369,15 @@ namespace Ecng.Interop
 #endif
 		}
 
+		/// <summary>
+		/// Converts an unmanaged byte reference to a managed string using the specified encoding, with a maximum byte length.
+		/// </summary>
+		/// <param name="encoding">The encoding to use for decoding the string.</param>
+		/// <param name="srcChar">A reference to the starting byte in unmanaged memory.</param>
+		/// <param name="maxBytes">The maximum number of bytes to read.</param>
+		/// <returns>The decoded managed string, or <c>null</c> if the source is zero.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="encoding"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="maxBytes"/> is negative.</exception>
 		public static unsafe string GetUnsafeString(this Encoding encoding, ref byte srcChar, int maxBytes)
 		{
 			if (encoding is null)
@@ -246,6 +398,17 @@ namespace Ecng.Interop
 			}
 		}
 
+		/// <summary>
+		/// Writes a managed string to an unmanaged byte reference using the specified encoding, with a maximum byte length.
+		/// </summary>
+		/// <param name="encoding">The encoding to use for encoding the string.</param>
+		/// <param name="tgtChar">A reference to the target byte in unmanaged memory.</param>
+		/// <param name="maxBytes">The maximum number of bytes to write.</param>
+		/// <param name="value">The string to write.</param>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="encoding"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown when <paramref name="maxBytes"/> is negative or the string length exceeds <paramref name="maxBytes"/>.
+		/// </exception>
 		public static unsafe void SetUnsafeString(this Encoding encoding, ref byte tgtChar, int maxBytes, string value)
 		{
 			if (encoding is null)
@@ -257,15 +420,15 @@ namespace Ecng.Interop
 			if (value.IsEmpty())
 				return;
 
+			if (value.Length >= maxBytes)
+				throw new ArgumentOutOfRangeException(nameof(maxBytes), maxBytes, "Invalid value.");
+
 			var charBuffer = stackalloc char[maxBytes];
 
 			fixed (byte* ptr8 = &tgtChar)
 			{
 				for (var b = 0; b < maxBytes; b++)
 					ptr8[b] = 0;
-
-				if (value.Length >= maxBytes)
-					throw new ArgumentOutOfRangeException();
 
 				for (var c = 0; c < value.Length; c++)
 					charBuffer[c] = value[c];
@@ -274,16 +437,32 @@ namespace Ecng.Interop
 			}
 		}
 
+		/// <summary>
+		/// Copies data from an unmanaged pointer to a byte array.
+		/// </summary>
+		/// <param name="ptr">The pointer to the unmanaged memory to copy from.</param>
+		/// <param name="buffer">The byte array to copy the data into.</param>
 		public static void CopyTo(this IntPtr ptr, byte[] buffer)
 		{
 			ptr.CopyTo(buffer, 0, buffer.Length);
 		}
 
+		/// <summary>
+		/// Copies a specified amount of data from an unmanaged pointer to a byte array.
+		/// </summary>
+		/// <param name="ptr">The pointer to the unmanaged memory to copy from.</param>
+		/// <param name="buffer">The byte array to copy the data into.</param>
+		/// <param name="offset">The starting index in the buffer where data should be copied.</param>
+		/// <param name="length">The number of bytes to copy.</param>
 		public static void CopyTo(this IntPtr ptr, byte[] buffer, int offset, int length)
 		{
 			Marshal.Copy(ptr, buffer, offset, length);
 		}
 
+		/// <summary>
+		/// Frees an unmanaged memory block previously allocated with <see cref="Marshal.AllocHGlobal(IntPtr)"/>.
+		/// </summary>
+		/// <param name="ptr">The pointer to the unmanaged memory to free.</param>
 		public static void FreeHGlobal(this IntPtr ptr) => Marshal.FreeHGlobal(ptr);
 	}
 }

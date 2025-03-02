@@ -11,9 +11,13 @@ using Windows.Win32;
 using Ecng.Common;
 
 // https://stackoverflow.com/a/30687230/8029915
+
+/// <summary>
+/// Provides methods to modify access rights for the Windows window station and desktop.
+/// </summary>
 public static class WindowsGrandAccess
 {
-	private class Token(WindowsGrandAccess.GenericSecurity wsSecurity, WindowsGrandAccess.GenericSecurity dsSecurity, int? oldWindowStationMaskm, int? oldDesktopMask) : Disposable
+	private class Token(GenericSecurity wsSecurity, WindowsGrandAccess.GenericSecurity dsSecurity, int? oldWindowStationMaskm, int? oldDesktopMask) : Disposable
 	{
 		private readonly GenericSecurity _wsSecurity = wsSecurity ?? throw new ArgumentNullException(nameof(wsSecurity));
 		private readonly GenericSecurity _dsSecurity = dsSecurity ?? throw new ArgumentNullException(nameof(dsSecurity));
@@ -35,6 +39,13 @@ public static class WindowsGrandAccess
 	private const int _desktopRightsAllAccess = 0x000f01ff;
 	private const int _windowStationAllAccess = 0x000f037f;
 
+	/// <summary>
+	/// Grants full access rights to the current process window station and thread desktop for the specified user.
+	/// </summary>
+	/// <param name="username">The user account to which access rights are to be granted.</param>
+	/// <returns>
+	/// An <see cref="IDisposable"/> token that, when disposed, restores the original access rights.
+	/// </returns>
 	public static IDisposable GrantAccessToWindowStationAndDesktop(string username)
 	{
 		var wsHandle = new NoopSafeHandle(PInvoke.GetProcessWindowStation());

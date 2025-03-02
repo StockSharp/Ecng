@@ -11,10 +11,24 @@ using Windows.Win32.System.JobObjects;
 
 using Microsoft.Win32.SafeHandles;
 
+/// <summary>
+/// Provides extension methods for the <see cref="Process"/> class to manage processor affinity, memory limits, and job behavior on Windows.
+/// </summary>
 public unsafe static class ProcessExtensions
 {
 #pragma warning disable CA1416 // Validate platform compatibility
 
+	/// <summary>
+	/// Sets the processor affinity for the process, allowing control over which CPU cores the process can execute on.
+	/// </summary>
+	/// <param name="process">The process whose processor affinity is to be set.</param>
+	/// <param name="cpu">
+	/// The bitmask representing the allowed CPU cores. The mask is applied to the process's current affinity.
+	/// </param>
+	/// <exception cref="ArgumentNullException">Thrown when the provided process is null.</exception>
+	/// <exception cref="PlatformNotSupportedException">
+	/// Thrown when the current operating system is not Windows or Linux.
+	/// </exception>
 	public static void SetProcessorAffinity(this Process process, long cpu)
 	{
 		if (process is null)
@@ -30,6 +44,22 @@ public unsafe static class ProcessExtensions
 			throw new PlatformNotSupportedException();
 	}
 
+	/// <summary>
+	/// Limits the process memory usage by assigning it to a Windows Job Object with a specified process memory limit.
+	/// </summary>
+	/// <param name="process">The process to limit memory usage for.</param>
+	/// <param name="limit">The maximum allowed memory in bytes.</param>
+	/// <returns>
+	/// A <see cref="SafeFileHandle"/> representing the job object that manages the memory limit.
+	/// </returns>
+	/// <exception cref="ArgumentNullException">Thrown when the provided process is null.</exception>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when the provided limit is less than or equal to zero.</exception>
+	/// <exception cref="PlatformNotSupportedException">
+	/// Thrown when the current operating system is not Windows.
+	/// </exception>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when setting the job object information or assigning the process to the job object fails.
+	/// </exception>
 	public static SafeFileHandle LimitByMemory(this Process process, long limit)
 	{
 		if (process is null)
@@ -70,6 +100,21 @@ public unsafe static class ProcessExtensions
 		return jobHandle;
 	}
 
+	/// <summary>
+	/// Configures the process to automatically kill its child processes when the process is closed by
+	/// assigning it to a Windows Job Object with the kill-on-job-close flag.
+	/// </summary>
+	/// <param name="process">The process whose child processes should be terminated on close.</param>
+	/// <returns>
+	/// A <see cref="SafeFileHandle"/> representing the job object that enforces the kill-on-job-close behavior.
+	/// </returns>
+	/// <exception cref="ArgumentNullException">Thrown when the provided process is null.</exception>
+	/// <exception cref="PlatformNotSupportedException">
+	/// Thrown when the current operating system is not Windows.
+	/// </exception>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when setting the job object information or assigning the process to the job object fails.
+	/// </exception>
 	public static SafeFileHandle SetKillChildsOnClose(this Process process)
 	{
 		if (process is null)

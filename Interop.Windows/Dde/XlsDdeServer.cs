@@ -9,19 +9,34 @@ namespace Ecng.Interop.Dde
 
 	using NDde.Server;
 
+	/// <summary>
+	/// Provides a DDE server for Excel that handles poke requests and advises clients of updated data.
+	/// </summary>
 	[CLSCompliant(false)]
 	public class XlsDdeServer(string service, Action<string, IList<IList<object>>> poke, Action<Exception> error) : DdeServer(service)
 	{
+		/// <summary>
+		/// Private helper class that dispatches events on dedicated threads.
+		/// </summary>
 		private class EventDispatcher(Action<Exception> errorHandler) : Disposable
 		{
 			private readonly Action<Exception> _errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
 			private readonly SynchronizedDictionary<string, BlockingQueue<Action>> _events = [];
 
+			/// <summary>
+			/// Adds an event to be executed.
+			/// </summary>
+			/// <param name="evt">The event action to add.</param>
 			public void Add(Action evt)
 			{
 				Add(evt, string.Empty);
 			}
 
+			/// <summary>
+			/// Adds an event to be executed with a synchronization token.
+			/// </summary>
+			/// <param name="evt">The event action to add.</param>
+			/// <param name="syncToken">The synchronization token to group events.</param>
 			public virtual void Add(Action evt, string syncToken)
 			{
 				if (evt is null)
@@ -63,6 +78,9 @@ namespace Ecng.Interop.Dde
 				return queue;
 			}
 
+			/// <summary>
+			/// Disposes the managed resources by closing all event queues.
+			/// </summary>
 			protected override void DisposeManaged()
 			{
 				_events.SyncDo(d => d.ForEach(p => p.Value.Close()));
@@ -76,6 +94,9 @@ namespace Ecng.Interop.Dde
 		private readonly Action<string, IList<IList<object>>> _poke = poke ?? throw new ArgumentNullException(nameof(poke));
 		private readonly Action<Exception> _error = error ?? throw new ArgumentNullException(nameof(error));
 
+		/// <summary>
+		/// Starts the DDE server and initializes the timer to advise clients.
+		/// </summary>
 		public void Start()
 		{
 			Exception error = null;
@@ -125,6 +146,14 @@ namespace Ecng.Interop.Dde
 			.Interval(TimeSpan.FromSeconds(1));
 		}
 
+		/// <summary>
+		/// Handles poke requests from DDE conversations.
+		/// </summary>
+		/// <param name="conversation">The DDE conversation instance.</param>
+		/// <param name="item">The item name requested.</param>
+		/// <param name="data">The data payload in byte array format.</param>
+		/// <param name="format">The format of the data received.</param>
+		/// <returns>A <see cref="PokeResult"/> indicating that the poke has been processed.</returns>
 		protected override PokeResult OnPoke(DdeConversation conversation, string item, byte[] data, int format)
 		{
 			_dispather.Add(() =>
@@ -136,6 +165,10 @@ namespace Ecng.Interop.Dde
 			return PokeResult.Processed;
 		}
 
+		/// <summary>
+		/// Releases the unmanaged resources and, optionally, the managed resources.
+		/// </summary>
+		/// <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
 		protected override void Dispose(bool disposing)
 		{
 			_dispather.Dispose();

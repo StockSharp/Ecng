@@ -7,6 +7,9 @@
 
 	using Ecng.Common;
 
+	/// <summary>
+	/// Provides methods for serializing and deserializing data to and from a format compatible with Excel DDE.
+	/// </summary>
 	static class XlsDdeSerializer
 	{
 		private enum DataTypes : short
@@ -54,6 +57,12 @@
 			throw new ArgumentException($"Unknown cell value type '{cell.GetType()}'.", nameof(cell));
 		}
 
+		/// <summary>
+		/// Serializes a table of data into a byte array compatible with Excel DDE.
+		/// </summary>
+		/// <param name="rows">A list of rows, where each row is a list of cell values to serialize.</param>
+		/// <returns>A byte array representing the serialized data.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown when an unsupported cell type is encountered.</exception>
 		public static byte[] Serialize(IList<IList<object>> rows)
 		{
 			var stream = new MemoryStream();
@@ -101,6 +110,12 @@
 			return stream.ToArray();
 		}
 
+		/// <summary>
+		/// Deserializes a byte array from Excel DDE format into a table of data.
+		/// </summary>
+		/// <param name="data">The byte array containing the serialized DDE data.</param>
+		/// <returns>A list of rows, where each row is a list of cell values.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="data"/> is null.</exception>
 		public static IList<IList<object>> Deserialize(byte[] data)
 		{
 			if (data is null)

@@ -14,11 +14,23 @@ namespace Ecng.Interop
 
 	using WmiLight;
 
+	/// <summary>
+	/// Provides methods to generate a hardware-based identifier.
+	/// </summary>
 	public static class HardwareInfo
 	{
+		/// <summary>
+		/// Gets the hardware identifier.
+		/// </summary>
+		/// <returns>A string representing the hardware identifier.</returns>
 		public static string GetId()
 			=> AsyncContext.Run(() => GetIdAsync());
 
+		/// <summary>
+		/// Asynchronously gets the hardware identifier.
+		/// </summary>
+		/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+		/// <returns>A task that represents the asynchronous operation. The task result contains a string representing the hardware identifier.</returns>
 		public static async Task<string> GetIdAsync(CancellationToken cancellationToken = default)
 		{
 			string id;

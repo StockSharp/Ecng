@@ -41,6 +41,10 @@ namespace Ecng.Interop
 			_size = size;
 		}
 
+		/// <summary>
+		/// Create safe pointer.
+		/// </summary>
+		/// <returns><see cref="SafePointer"/></returns>
 		public SafePointer CreatePointer() => new(Value.AddrOfPinnedObject(), _size);
 
 		/// <summary>
