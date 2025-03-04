@@ -10,19 +10,27 @@ namespace Ecng.ComponentModel
 	using Ecng.Collections;
 
 	/// <summary>
+	/// Represents an observable collection with extended methods, including range operations.
 	/// </summary>
+	/// <typeparam name="TItem">The type of items contained in the collection.</typeparam>
 	public class ObservableCollectionEx<TItem> : IListEx<TItem>, IList, INotifyCollectionChanged, INotifyPropertyChanged
 	{
 		private readonly List<TItem> _items = [];
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Occurs when the collection changes.
+		/// </summary>
 		public event NotifyCollectionChangedEventHandler CollectionChanged;
-		/// <inheritdoc />
+
+		/// <summary>
+		/// Occurs when a property value changes.
+		/// </summary>
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		private Action<IEnumerable<TItem>> _addedRange;
 
 		/// <summary>
+		/// Occurs after a range of items has been added to the collection.
 		/// </summary>
 		public event Action<IEnumerable<TItem>> AddedRange
 		{
@@ -33,6 +41,7 @@ namespace Ecng.ComponentModel
 		private Action<IEnumerable<TItem>> _removedRange;
 
 		/// <summary>
+		/// Occurs after a range of items has been removed from the collection.
 		/// </summary>
 		public event Action<IEnumerable<TItem>> RemovedRange
 		{
@@ -41,7 +50,9 @@ namespace Ecng.ComponentModel
 		}
 
 		/// <summary>
+		/// Adds a range of items to the collection.
 		/// </summary>
+		/// <param name="items">The items to add.</param>
 		public virtual void AddRange(IEnumerable<TItem> items)
 		{
 			var arr = items.ToArray();
@@ -60,7 +71,9 @@ namespace Ecng.ComponentModel
 		}
 
 		/// <summary>
+		/// Removes a range of items from the collection.
 		/// </summary>
+		/// <param name="items">The items to remove.</param>
 		public virtual void RemoveRange(IEnumerable<TItem> items)
 		{
 			var arr = items.ToArray();
@@ -78,7 +91,11 @@ namespace Ecng.ComponentModel
 		}
 
 		/// <summary>
+		/// Removes a specified range of items starting at a given index.
 		/// </summary>
+		/// <param name="index">The starting index.</param>
+		/// <param name="count">The number of items to remove.</param>
+		/// <returns>The number of removed items.</returns>
 		public virtual int RemoveRange(int index, int count)
 		{
 			var items = _items.GetRange(index, count).ToArray();
@@ -93,7 +110,10 @@ namespace Ecng.ComponentModel
 			return items.Length;
 		}
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Returns an enumerator that iterates through the collection.
+		/// </summary>
+		/// <returns>An enumerator for the collection.</returns>
 		public IEnumerator<TItem> GetEnumerator()
 		{
 			return _items.GetEnumerator();
@@ -104,13 +124,20 @@ namespace Ecng.ComponentModel
 			return GetEnumerator();
 		}
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Adds an item to the collection.
+		/// </summary>
+		/// <param name="item">The item to add.</param>
 		public virtual void Add(TItem item)
 		{
 			AddRange([item]);
 		}
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Removes the first occurrence of a specific item from the collection.
+		/// </summary>
+		/// <param name="item">The item to remove.</param>
+		/// <returns>true if the item was successfully removed; otherwise, false.</returns>
 		public virtual bool Remove(TItem item)
 		{
 			var index = _items.IndexOf(item);
@@ -135,7 +162,9 @@ namespace Ecng.ComponentModel
 			return Contains((TItem)value);
 		}
 
-		/// <inheritdoc cref="ICollection{T}" />
+		/// <summary>
+		/// Removes all items from the collection.
+		/// </summary>
 		public virtual void Clear()
 		{
 			_items.Clear();
@@ -160,13 +189,21 @@ namespace Ecng.ComponentModel
 			Remove((TItem)value);
 		}
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Determines whether the collection contains a specific value.
+		/// </summary>
+		/// <param name="item">The item to locate.</param>
+		/// <returns>true if the item is found; otherwise, false.</returns>
 		public bool Contains(TItem item)
 		{
 			return _items.Contains(item);
 		}
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Copies the elements of the collection to an array, starting at a particular index.
+		/// </summary>
+		/// <param name="array">The destination array.</param>
+		/// <param name="arrayIndex">The zero-based index at which copying begins.</param>
 		public void CopyTo(TItem[] array, int arrayIndex)
 		{
 			_items.CopyTo(array, arrayIndex);
@@ -180,25 +217,37 @@ namespace Ecng.ComponentModel
 			CopyTo(items, index);
 		}
 
-		/// <inheritdoc cref="ICollection{T}" />
+		/// <summary>
+		/// Gets the number of elements contained in the collection.
+		/// </summary>
 		public int Count => _items.Count;
 
 		object ICollection.SyncRoot => this;
 
 		bool ICollection.IsSynchronized => true;
 
-		/// <inheritdoc cref="ICollection{T}" />
+		/// <summary>
+		/// Gets a value indicating whether the collection is read-only.
+		/// </summary>
 		public bool IsReadOnly => false;
 
 		bool IList.IsFixedSize => false;
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Determines the index of a specific item in the collection.
+		/// </summary>
+		/// <param name="item">The item to locate.</param>
+		/// <returns>The index of the item if found; otherwise, -1.</returns>
 		public int IndexOf(TItem item)
 		{
 			return _items.IndexOf(item);
 		}
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Inserts an item into the collection at the specified index.
+		/// </summary>
+		/// <param name="index">The index at which the item should be inserted.</param>
+		/// <param name="item">The item to insert.</param>
 		public void Insert(int index, TItem item)
 		{
 			_items.Insert(index, item);
@@ -209,7 +258,10 @@ namespace Ecng.ComponentModel
 			OnCollectionChanged(NotifyCollectionChangedAction.Add, [item], index);
 		}
 
-		/// <inheritdoc cref="IList{T}" />
+		/// <summary>
+		/// Removes the item at the specified index of the collection.
+		/// </summary>
+		/// <param name="index">The zero-based index of the item to remove.</param>
 		public void RemoveAt(int index)
 		{
 			var item = _items[index];
@@ -224,7 +276,11 @@ namespace Ecng.ComponentModel
 			set => this[index] = (TItem)value;
 		}
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Gets or sets the element at the specified index.
+		/// </summary>
+		/// <param name="index">The zero-based index of the element to get or set.</param>
+		/// <returns>The element at the specified index.</returns>
 		public TItem this[int index]
 		{
 			get => _items[index];
@@ -238,6 +294,11 @@ namespace Ecng.ComponentModel
 			}
 		}
 
+		/// <summary>
+		/// Raises the collection changed event for a removal.
+		/// </summary>
+		/// <param name="items">The items removed.</param>
+		/// <param name="index">The index from which the items were removed.</param>
 		private void OnRemove(IList<TItem> items, int index)
 		{
 			OnCountPropertyChanged();
@@ -247,8 +308,9 @@ namespace Ecng.ComponentModel
 		}
 
 		/// <summary>
-		/// Helper to raise a PropertyChanged event.
+		/// Raises the PropertyChanged event.
 		/// </summary>
+		/// <param name="propertyName">The name of the property that changed.</param>
 		protected void OnPropertyChanged(string propertyName)
 		{
 			var evt = PropertyChanged;
@@ -266,12 +328,16 @@ namespace Ecng.ComponentModel
 		private void OnCollectionChanged(NotifyCollectionChangedAction action, object item, int index, int oldIndex)       => OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, item, index, oldIndex));
 		private void OnCollectionChanged(NotifyCollectionChangedAction action, object oldItem, object newItem, int index)  => OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, newItem, oldItem, index));
 
+		/// <summary>
+		/// Raises the CollectionChanged event.
+		/// </summary>
+		/// <param name="args">Details about the change.</param>
 		private void OnCollectionChanged(NotifyCollectionChangedEventArgs args)
 		{
-			if(args.OldItems?.Count > 0)
+			if (args.OldItems?.Count > 0)
 				_removedRange?.Invoke(args.OldItems.Cast<TItem>());
 
-			if(args.NewItems?.Count > 0)
+			if (args.NewItems?.Count > 0)
 				_addedRange?.Invoke(args.NewItems.Cast<TItem>());
 
 			var evt = CollectionChanged;
@@ -282,10 +348,10 @@ namespace Ecng.ComponentModel
 		}
 
 		/// <summary>
-		/// Processes a collection of NotifyCollectionChangedEventHandler to raise the CollectionChanged event.
+		/// Processes the NotifyCollectionChangedEventHandler subscribers.
 		/// </summary>
-		/// <param name="subscribers">Subscribers.</param>
-		/// <param name="args">Args.</param>
+		/// <param name="subscribers">The collection of subscribers.</param>
+		/// <param name="args">Details about the change.</param>
 		protected virtual void ProcessCollectionChanged(IEnumerable<NotifyCollectionChangedEventHandler> subscribers, NotifyCollectionChangedEventArgs args)
 		{
 			foreach (var subscriber in subscribers)
@@ -293,7 +359,7 @@ namespace Ecng.ComponentModel
 		}
 
 		/// <summary>
-		/// Helper to raise CollectionChanged event with action == Reset to any listeners
+		/// Raises the CollectionChanged event with a reset action.
 		/// </summary>
 		private void OnCollectionReset()
 		{
