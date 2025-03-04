@@ -1,182 +1,181 @@
-﻿namespace Ecng.Interop.Dde
-{
-	using System;
-	using System.Collections.Generic;
-	using System.IO;
-	using System.Text;
+﻿namespace Ecng.Interop.Dde;
 
-	using Ecng.Common;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+
+using Ecng.Common;
+
+/// <summary>
+/// Provides methods for serializing and deserializing data to and from a format compatible with Excel DDE.
+/// </summary>
+static class XlsDdeSerializer
+{
+	private enum DataTypes : short
+	{
+		Table = 0x0010,
+		Float = 0x0001,
+		String = 0x0002,
+		Bool = 0x0003,
+		Error = 0x0004,
+		Blank = 0x0005,
+		Int = 0x0006,
+		Skip = 0x0007,
+	}
+
+	private static Type GetCompType(DataTypes type)
+	{
+		return type switch
+		{
+			DataTypes.Float => typeof(double),
+			DataTypes.String => typeof(string),
+			DataTypes.Bool => typeof(bool),
+			DataTypes.Int => typeof(int),
+			DataTypes.Skip => null,
+			_ => throw new ArgumentOutOfRangeException(nameof(type)),
+		};
+	}
+
+	private static DataTypes GetXlsType(object cell)
+	{
+		if (cell is null)
+			return DataTypes.Blank;
+
+		if (cell is float || cell is double || cell is decimal)
+			return DataTypes.Float;
+
+		if (cell is byte || cell is sbyte || cell is short || cell is int || cell is long || cell is ushort || cell is uint || cell is ulong)
+			return DataTypes.Int;
+
+		if (cell is string)
+			return DataTypes.String;
+
+		if (cell is bool)
+			return DataTypes.Bool;
+
+		throw new ArgumentException($"Unknown cell value type '{cell.GetType()}'.", nameof(cell));
+	}
 
 	/// <summary>
-	/// Provides methods for serializing and deserializing data to and from a format compatible with Excel DDE.
+	/// Serializes a table of data into a byte array compatible with Excel DDE.
 	/// </summary>
-	static class XlsDdeSerializer
+	/// <param name="rows">A list of rows, where each row is a list of cell values to serialize.</param>
+	/// <returns>A byte array representing the serialized data.</returns>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when an unsupported cell type is encountered.</exception>
+	public static byte[] Serialize(IList<IList<object>> rows)
 	{
-		private enum DataTypes : short
-		{
-			Table = 0x0010,
-			Float = 0x0001,
-			String = 0x0002,
-			Bool = 0x0003,
-			Error = 0x0004,
-			Blank = 0x0005,
-			Int = 0x0006,
-			Skip = 0x0007,
-		}
+		var stream = new MemoryStream();
 
-		private static Type GetCompType(DataTypes type)
+		stream.WriteEx(DataTypes.Table);
+		stream.WriteEx((short)4);
+		stream.WriteEx((short)rows.Count);
+		stream.WriteEx((short)(rows.Count == 0 ? 0 : rows[0].Count));
+
+		foreach (var row in rows)
 		{
-			return type switch
+			foreach (var cell in row)
 			{
-				DataTypes.Float => typeof(double),
-				DataTypes.String => typeof(string),
-				DataTypes.Bool => typeof(bool),
-				DataTypes.Int => typeof(int),
-				DataTypes.Skip => null,
-				_ => throw new ArgumentOutOfRangeException(nameof(type)),
-			};
-		}
+				var cellDt = GetXlsType(cell);
 
-		private static DataTypes GetXlsType(object cell)
-		{
-			if (cell is null)
-				return DataTypes.Blank;
-
-			if (cell is float || cell is double || cell is decimal)
-				return DataTypes.Float;
-
-			if (cell is byte || cell is sbyte || cell is short || cell is int || cell is long || cell is ushort || cell is uint || cell is ulong)
-				return DataTypes.Int;
-
-			if (cell is string)
-				return DataTypes.String;
-
-			if (cell is bool)
-				return DataTypes.Bool;
-
-			throw new ArgumentException($"Unknown cell value type '{cell.GetType()}'.", nameof(cell));
-		}
-
-		/// <summary>
-		/// Serializes a table of data into a byte array compatible with Excel DDE.
-		/// </summary>
-		/// <param name="rows">A list of rows, where each row is a list of cell values to serialize.</param>
-		/// <returns>A byte array representing the serialized data.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">Thrown when an unsupported cell type is encountered.</exception>
-		public static byte[] Serialize(IList<IList<object>> rows)
-		{
-			var stream = new MemoryStream();
-
-			stream.WriteEx(DataTypes.Table);
-			stream.WriteEx((short)4);
-			stream.WriteEx((short)rows.Count);
-			stream.WriteEx((short)(rows.Count == 0 ? 0 : rows[0].Count));
-
-			foreach (var row in rows)
-			{
-				foreach (var cell in row)
+				switch (cellDt)
 				{
-					var cellDt = GetXlsType(cell);
-
-					switch (cellDt)
-					{
-						case DataTypes.Float:
-							stream.WriteEx((short)8);
-							stream.WriteEx(cell);
-							break;
-						case DataTypes.String:
-							var str = (string)cell;
-							stream.WriteEx((byte)str.Length);
-							stream.WriteRaw(str.Default());
-							break;
-						case DataTypes.Bool:
-							stream.WriteEx((short)2);
-							stream.WriteEx(cell);
-							break;
-						case DataTypes.Blank:
-							stream.WriteEx((short)2);
-							stream.WriteEx(new byte[2]);
-							break;
-						case DataTypes.Int:
-							stream.WriteEx((short)4);
-							stream.WriteEx(cell);
-							break;
-						default:
-							throw new ArgumentOutOfRangeException(cellDt.To<string>());
-					}
+					case DataTypes.Float:
+						stream.WriteEx((short)8);
+						stream.WriteEx(cell);
+						break;
+					case DataTypes.String:
+						var str = (string)cell;
+						stream.WriteEx((byte)str.Length);
+						stream.WriteRaw(str.Default());
+						break;
+					case DataTypes.Bool:
+						stream.WriteEx((short)2);
+						stream.WriteEx(cell);
+						break;
+					case DataTypes.Blank:
+						stream.WriteEx((short)2);
+						stream.WriteEx(new byte[2]);
+						break;
+					case DataTypes.Int:
+						stream.WriteEx((short)4);
+						stream.WriteEx(cell);
+						break;
+					default:
+						throw new ArgumentOutOfRangeException(cellDt.To<string>());
 				}
 			}
-
-			return stream.ToArray();
 		}
 
-		/// <summary>
-		/// Deserializes a byte array from Excel DDE format into a table of data.
-		/// </summary>
-		/// <param name="data">The byte array containing the serialized DDE data.</param>
-		/// <returns>A list of rows, where each row is a list of cell values.</returns>
-		/// <exception cref="ArgumentNullException">Thrown when <paramref name="data"/> is null.</exception>
-		public static IList<IList<object>> Deserialize(byte[] data)
+		return stream.ToArray();
+	}
+
+	/// <summary>
+	/// Deserializes a byte array from Excel DDE format into a table of data.
+	/// </summary>
+	/// <param name="data">The byte array containing the serialized DDE data.</param>
+	/// <returns>A list of rows, where each row is a list of cell values.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="data"/> is null.</exception>
+	public static IList<IList<object>> Deserialize(byte[] data)
+	{
+		if (data is null)
+			throw new ArgumentNullException(nameof(data));
+
+		var stream = data.To<Stream>();
+
+		/*var dt = */stream.Read<DataTypes>();
+		/*var size = */stream.Read<short>();
+		var rowCount = stream.Read<short>();
+		var columnCount = stream.Read<short>();
+
+		var rows = new List<IList<object>>();
+
+		for (var row = 0; row < rowCount; row++)
 		{
-			if (data is null)
-				throw new ArgumentNullException(nameof(data));
+			var cells = new List<object>();
 
-			var stream = data.To<Stream>();
-
-			/*var dt = */stream.Read<DataTypes>();
-			/*var size = */stream.Read<short>();
-			var rowCount = stream.Read<short>();
-			var columnCount = stream.Read<short>();
-
-			var rows = new List<IList<object>>();
-
-			for (var row = 0; row < rowCount; row++)
+			do
 			{
-				var cells = new List<object>();
+				var cellDt = stream.Read<DataTypes>();
+				var cellSize = stream.Read<short>();
 
-				do
+				if (cellDt != DataTypes.Skip)
 				{
-					var cellDt = stream.Read<DataTypes>();
-					var cellSize = stream.Read<short>();
+					var type = GetCompType(cellDt);
+					var typeSize = type == typeof(string) ? cellSize : type.SizeOf();
 
-					if (cellDt != DataTypes.Skip)
+					var cellColumnCount = cellSize / typeSize;
+
+					for (var column = 0; column < cellColumnCount; column++)
 					{
-						var type = GetCompType(cellDt);
-						var typeSize = type == typeof(string) ? cellSize : type.SizeOf();
-
-						var cellColumnCount = cellSize / typeSize;
-
-						for (var column = 0; column < cellColumnCount; column++)
+						if (type == typeof(string))
 						{
-							if (type == typeof(string))
+							var pos = 0;
+							var buffer = stream.ReadBuffer(typeSize);
+							while (pos < buffer.Length)
 							{
-								var pos = 0;
-								var buffer = stream.ReadBuffer(typeSize);
-								while (pos < buffer.Length)
-								{
-									var len = buffer[pos];
-									var str = new byte[len];
-									Buffer.BlockCopy(buffer, pos + 1, str, 0, len);
-									cells.Add(Encoding.Default.GetString(str));
-									pos += len + 1;
-								}
+								var len = buffer[pos];
+								var str = new byte[len];
+								Buffer.BlockCopy(buffer, pos + 1, str, 0, len);
+								cells.Add(Encoding.Default.GetString(str));
+								pos += len + 1;
 							}
-							else
-								cells.Add(stream.Read(type));
 						}
-					}
-					else
-					{
-						stream.ReadBuffer(cellSize);
-						cells.AddRange(new object[cellSize]);
+						else
+							cells.Add(stream.Read(type));
 					}
 				}
-				while (cells.Count < columnCount);
-
-				rows.Add(cells);
+				else
+				{
+					stream.ReadBuffer(cellSize);
+					cells.AddRange(new object[cellSize]);
+				}
 			}
+			while (cells.Count < columnCount);
 
-			return rows;
+			rows.Add(cells);
 		}
+
+		return rows;
 	}
 }

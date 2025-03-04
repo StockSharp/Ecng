@@ -1,71 +1,70 @@
-﻿namespace Ecng.Server.Utils
+﻿namespace Ecng.Server.Utils;
+
+using System;
+using System.Collections.Generic;
+
+using Microsoft.Extensions.Logging;
+
+using Ecng.Serialization;
+using Ecng.Logging;
+
+/// <summary>
+/// The logger recording the data to a <see cref="ILogger"/>.
+/// </summary>
+public class ServiceLogListener : ILogListener
 {
-	using System;
-	using System.Collections.Generic;
-
-	using Microsoft.Extensions.Logging;
-
-	using Ecng.Serialization;
-	using Ecng.Logging;
+	private readonly ILogger _logger;
 
 	/// <summary>
-	/// The logger recording the data to a <see cref="ILogger"/>.
+	/// Initializes a new instance of the <see cref="ServiceLogListener"/>.
 	/// </summary>
-	public class ServiceLogListener : ILogListener
+	/// <param name="logger">Logger.</param>
+	public ServiceLogListener(ILogger logger)
 	{
-		private readonly ILogger _logger;
+		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
+	}
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ServiceLogListener"/>.
-		/// </summary>
-		/// <param name="logger">Logger.</param>
-		public ServiceLogListener(ILogger logger)
+	bool ILogListener.CanSave => false;
+
+	void IDisposable.Dispose()
+	{
+		GC.SuppressFinalize(this);
+	}
+
+	void IPersistable.Load(SettingsStorage storage)
+	{
+	}
+
+	void IPersistable.Save(SettingsStorage storage)
+	{
+	}
+
+	void ILogListener.WriteMessages(IEnumerable<LogMessage> messages)
+	{
+		foreach (var message in messages)
 		{
-			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
-		}
-
-		bool ILogListener.CanSave => false;
-
-		void IDisposable.Dispose()
-		{
-			GC.SuppressFinalize(this);
-		}
-
-		void IPersistable.Load(SettingsStorage storage)
-		{
-		}
-
-		void IPersistable.Save(SettingsStorage storage)
-		{
-		}
-
-		void ILogListener.WriteMessages(IEnumerable<LogMessage> messages)
-		{
-			foreach (var message in messages)
+			switch (message.Level)
 			{
-				switch (message.Level)
-				{
-					//case LogLevels.Inherit:
-					//case LogLevels.Off:
-					//	break;
-					case LogLevels.Verbose:
-						_logger.Log(LogLevel.Trace, message.Message);
-						break;
-					case LogLevels.Debug:
-						_logger.Log(LogLevel.Debug, message.Message);
-						break;
-					case LogLevels.Info:
-						_logger.Log(LogLevel.Information, message.Message);
-						break;
-					case LogLevels.Warning:
-						_logger.Log(LogLevel.Warning, message.Message);
-						break;
-					case LogLevels.Error:
-						_logger.Log(LogLevel.Error, message.Message);
-						break;
-					//default:
-					//	break;
-				}
+				//case LogLevels.Inherit:
+				//case LogLevels.Off:
+				//	break;
+				case LogLevels.Verbose:
+					_logger.Log(LogLevel.Trace, message.Message);
+					break;
+				case LogLevels.Debug:
+					_logger.Log(LogLevel.Debug, message.Message);
+					break;
+				case LogLevels.Info:
+					_logger.Log(LogLevel.Information, message.Message);
+					break;
+				case LogLevels.Warning:
+					_logger.Log(LogLevel.Warning, message.Message);
+					break;
+				case LogLevels.Error:
+					_logger.Log(LogLevel.Error, message.Message);
+					break;
+				//default:
+				//	break;
 			}
 		}
 	}

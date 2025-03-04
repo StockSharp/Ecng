@@ -1,3 +1,5 @@
+namespace Ecng.ComponentModel;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5,8 +7,6 @@ using System.Collections.Specialized;
 using System.Linq;
 
 using Ecng.Collections;
-
-namespace Ecng.ComponentModel;
 
 /// <summary>
 /// Collection which maps items to another type to display.

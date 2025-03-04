@@ -1,136 +1,135 @@
-﻿namespace Ecng.Common
+﻿namespace Ecng.Common;
+
+using System;
+using System.Security;
+
+/// <summary>
+/// Provides helper methods for writing colored messages to the console and reading secure passwords.
+/// </summary>
+public static class ConsoleHelper
 {
-	using System;
-	using System.Security;
+	/// <summary>
+	/// Gets or sets the color used to display information messages.
+	/// </summary>
+	public static ConsoleColor Info = ConsoleColor.White;
 
 	/// <summary>
-	/// Provides helper methods for writing colored messages to the console and reading secure passwords.
+	/// Gets or sets the color used to display warning messages.
 	/// </summary>
-	public static class ConsoleHelper
+	public static ConsoleColor Warning = ConsoleColor.Yellow;
+
+	/// <summary>
+	/// Gets or sets the color used to display error messages.
+	/// </summary>
+	public static ConsoleColor Error = ConsoleColor.Red;
+
+	/// <summary>
+	/// Gets or sets the color used to display success messages.
+	/// </summary>
+	public static ConsoleColor Success = ConsoleColor.Green;
+
+	/// <summary>
+	/// Writes an information message to the console.
+	/// </summary>
+	/// <param name="message">The message to write.</param>
+	public static void ConsoleInfo(this string message)
 	{
-		/// <summary>
-		/// Gets or sets the color used to display information messages.
-		/// </summary>
-		public static ConsoleColor Info = ConsoleColor.White;
+		Console.WriteLine(message);
+	}
 
-		/// <summary>
-		/// Gets or sets the color used to display warning messages.
-		/// </summary>
-		public static ConsoleColor Warning = ConsoleColor.Yellow;
+	/// <summary>
+	/// Writes a warning message to the console using the predefined warning color.
+	/// </summary>
+	/// <param name="message">The warning message to write.</param>
+	public static void ConsoleWarning(this string message)
+	{
+		message.ConsoleWithColor(Warning);
+	}
 
-		/// <summary>
-		/// Gets or sets the color used to display error messages.
-		/// </summary>
-		public static ConsoleColor Error = ConsoleColor.Red;
+	/// <summary>
+	/// Writes an error message to the console using the predefined error color.
+	/// </summary>
+	/// <param name="message">The error message to write.</param>
+	public static void ConsoleError(this string message)
+	{
+		message.ConsoleWithColor(Error);
+	}
 
-		/// <summary>
-		/// Gets or sets the color used to display success messages.
-		/// </summary>
-		public static ConsoleColor Success = ConsoleColor.Green;
+	/// <summary>
+	/// Writes a success message to the console using the predefined success color.
+	/// </summary>
+	/// <param name="message">The success message to write.</param>
+	public static void ConsoleSuccess(this string message)
+	{
+		message.ConsoleWithColor(Success);
+	}
 
-		/// <summary>
-		/// Writes an information message to the console.
-		/// </summary>
-		/// <param name="message">The message to write.</param>
-		public static void ConsoleInfo(this string message)
+	/// <summary>
+	/// Writes a message to the console with the specified color.
+	/// </summary>
+	/// <param name="message">The message to write.</param>
+	/// <param name="color">The color to use for the message.</param>
+	public static void ConsoleWithColor(this string message, ConsoleColor color)
+	{
+		ConsoleWithColor(() => Console.WriteLine(message), color);
+	}
+
+	private static readonly SyncObject _lock = new();
+
+	/// <summary>
+	/// Executes the provided action while displaying console output in the specified color.
+	/// </summary>
+	/// <param name="handler">The action to execute.</param>
+	/// <param name="color">The color to use for the console output.</param>
+	/// <exception cref="ArgumentNullException">Thrown when the handler is null.</exception>
+	public static void ConsoleWithColor(this Action handler, ConsoleColor color)
+	{
+		if (handler is null)
+			throw new ArgumentNullException(nameof(handler));
+
+		lock (_lock)
 		{
-			Console.WriteLine(message);
-		}
+			var prevColor = Console.ForegroundColor;
 
-		/// <summary>
-		/// Writes a warning message to the console using the predefined warning color.
-		/// </summary>
-		/// <param name="message">The warning message to write.</param>
-		public static void ConsoleWarning(this string message)
-		{
-			message.ConsoleWithColor(Warning);
-		}
+			Console.ForegroundColor = color;
 
-		/// <summary>
-		/// Writes an error message to the console using the predefined error color.
-		/// </summary>
-		/// <param name="message">The error message to write.</param>
-		public static void ConsoleError(this string message)
-		{
-			message.ConsoleWithColor(Error);
-		}
-
-		/// <summary>
-		/// Writes a success message to the console using the predefined success color.
-		/// </summary>
-		/// <param name="message">The success message to write.</param>
-		public static void ConsoleSuccess(this string message)
-		{
-			message.ConsoleWithColor(Success);
-		}
-
-		/// <summary>
-		/// Writes a message to the console with the specified color.
-		/// </summary>
-		/// <param name="message">The message to write.</param>
-		/// <param name="color">The color to use for the message.</param>
-		public static void ConsoleWithColor(this string message, ConsoleColor color)
-		{
-			ConsoleWithColor(() => Console.WriteLine(message), color);
-		}
-
-		private static readonly SyncObject _lock = new();
-
-		/// <summary>
-		/// Executes the provided action while displaying console output in the specified color.
-		/// </summary>
-		/// <param name="handler">The action to execute.</param>
-		/// <param name="color">The color to use for the console output.</param>
-		/// <exception cref="ArgumentNullException">Thrown when the handler is null.</exception>
-		public static void ConsoleWithColor(this Action handler, ConsoleColor color)
-		{
-			if (handler is null)
-				throw new ArgumentNullException(nameof(handler));
-
-			lock (_lock)
+			try
 			{
-				var prevColor = Console.ForegroundColor;
-
-				Console.ForegroundColor = color;
-
-				try
-				{
-					handler();
-				}
-				finally
-				{
-					Console.ForegroundColor = prevColor;
-				}
+				handler();
+			}
+			finally
+			{
+				Console.ForegroundColor = prevColor;
 			}
 		}
+	}
 
-		/// <summary>
-		/// Reads a password from the console without displaying it, outputting a masked version.
-		/// </summary>
-		/// <returns>A <see cref="SecureString"/> that contains the password.</returns>
-		public static SecureString ReadPassword()
+	/// <summary>
+	/// Reads a password from the console without displaying it, outputting a masked version.
+	/// </summary>
+	/// <returns>A <see cref="SecureString"/> that contains the password.</returns>
+	public static SecureString ReadPassword()
+	{
+		var pass = new SecureString();
+		ConsoleKeyInfo key;
+
+		do
 		{
-			var pass = new SecureString();
-			ConsoleKeyInfo key;
+			key = Console.ReadKey(true);
 
-			do
+			if (!char.IsControl(key.KeyChar))
 			{
-				key = Console.ReadKey(true);
-
-				if (!char.IsControl(key.KeyChar))
-				{
-					pass.AppendChar(key.KeyChar);
-					Console.Write("*");
-				}
-				else if (key.Key == ConsoleKey.Backspace && pass.Length > 0)
-				{
-					pass.RemoveAt(pass.Length - 1);
-					Console.Write("\b \b");
-				}
+				pass.AppendChar(key.KeyChar);
+				Console.Write("*");
 			}
-			while (key.Key != ConsoleKey.Enter);
-
-			return pass;
+			else if (key.Key == ConsoleKey.Backspace && pass.Length > 0)
+			{
+				pass.RemoveAt(pass.Length - 1);
+				Console.Write("\b \b");
+			}
 		}
+		while (key.Key != ConsoleKey.Enter);
+
+		return pass;
 	}
 }

@@ -1,23 +1,22 @@
-﻿namespace Ecng.Compilation
+﻿namespace Ecng.Compilation;
+
+/// <summary>
+/// Represents the type of a compilation error.
+/// </summary>
+public enum CompilationErrorTypes
 {
 	/// <summary>
-	/// Represents the type of a compilation error.
+	/// Represents an informational message.
 	/// </summary>
-	public enum CompilationErrorTypes
-	{
-		/// <summary>
-		/// Represents an informational message.
-		/// </summary>
-		Info,
+	Info,
 
-		/// <summary>
-		/// Represents a warning message.
-		/// </summary>
-		Warning,
+	/// <summary>
+	/// Represents a warning message.
+	/// </summary>
+	Warning,
 
-		/// <summary>
-		/// Represents an error message.
-		/// </summary>
-		Error,
-	}
+	/// <summary>
+	/// Represents an error message.
+	/// </summary>
+	Error,
 }

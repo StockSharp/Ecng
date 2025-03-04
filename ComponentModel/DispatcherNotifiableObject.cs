@@ -1,85 +1,85 @@
-﻿namespace Ecng.ComponentModel
+﻿namespace Ecng.ComponentModel;
+
+using System;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+
+using Ecng.Collections;
+
+class DispatcherNotifiableObjectTimer
 {
-	using System;
-	using System.Threading.Tasks;
-	using System.Collections.Generic;
-	using System.ComponentModel;
-	using System.Linq;
+	private readonly TimeSpan _minInterval = TimeSpan.FromMilliseconds(100);
+	private TimeSpan _interval = TimeSpan.FromMilliseconds(1000);
 
-	using Ecng.Collections;
+	public event Action Tick;
 
-	class DispatcherNotifiableObjectTimer
+	public TimeSpan Interval
 	{
-		private readonly TimeSpan _minInterval = TimeSpan.FromMilliseconds(100);
-		private TimeSpan _interval = TimeSpan.FromMilliseconds(1000);
-
-		public event Action Tick;
-
-		public TimeSpan Interval
+		get => _interval;
+		set
 		{
-			get => _interval;
-			set
-			{
-				if (value > _interval)
-					return;
+			if (value > _interval)
+				return;
 
-				if (value < _minInterval)
-					value = _minInterval;
+			if (value < _minInterval)
+				value = _minInterval;
 
-				_interval = value;
-			}
+			_interval = value;
 		}
-
-		public DispatcherNotifiableObjectTimer() => Task.Run(TimerTask);
-
-		private async Task TimerTask()
-		{
-			while (true)
-			{
-				await Task.Delay(_interval);
-				Tick?.Invoke();
-			}
-			// ReSharper disable once FunctionNeverReturns
-		}
-
-		private static readonly Lazy<DispatcherNotifiableObjectTimer> _instance = new(true);
-		public static DispatcherNotifiableObjectTimer Instance => _instance.Value;
 	}
-	
-	/// <summary>
-	/// Forward <see cref="INotifyPropertyChanged"/> notifications to dispatcher thread.
-	/// Multiple notifications for the same property may be forwarded only once.
-	/// </summary>
-	public class DispatcherNotifiableObject<T> : CustomObjectWrapper<T>
-		where T : class, INotifyPropertyChanged
-    {
-		private static DispatcherNotifiableObjectTimer Timer => DispatcherNotifiableObjectTimer.Instance;
 
-		/// <summary>
-		/// </summary>
-		protected TimeSpan NotifyInterval
+	public DispatcherNotifiableObjectTimer() => Task.Run(TimerTask);
+
+	private async Task TimerTask()
+	{
+		while (true)
+		{
+			await Task.Delay(_interval);
+			Tick?.Invoke();
+		}
+		// ReSharper disable once FunctionNeverReturns
+	}
+
+	private static readonly Lazy<DispatcherNotifiableObjectTimer> _instance = new(true);
+	public static DispatcherNotifiableObjectTimer Instance => _instance.Value;
+}
+
+/// <summary>
+/// Forward <see cref="INotifyPropertyChanged"/> notifications to dispatcher thread.
+/// Multiple notifications for the same property may be forwarded only once.
+/// </summary>
+public class DispatcherNotifiableObject<T> : CustomObjectWrapper<T>
+	where T : class, INotifyPropertyChanged
+    {
+	private static DispatcherNotifiableObjectTimer Timer => DispatcherNotifiableObjectTimer.Instance;
+
+	/// <summary>
+	/// </summary>
+	protected TimeSpan NotifyInterval
         {
             get => _notifyInterval;
             set
             {
                 _notifyInterval = value;
-				Timer.Interval = value;
+			Timer.Interval = value;
             }
         }
 
-		private readonly IDispatcher _dispatcher;
-		private readonly SynchronizedSet<string> _names = [];
+	private readonly IDispatcher _dispatcher;
+	private readonly SynchronizedSet<string> _names = [];
         private DateTime _nextTime;
         private TimeSpan _notifyInterval;
 
         /// <summary>
         /// </summary>
         public DispatcherNotifiableObject(IDispatcher dispatcher, T obj)
-			: base(obj)
+		: base(obj)
         {
-			_dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
-			NotifyInterval = TimeSpan.FromMilliseconds(333);
-			Timer.Tick += NotifiableObjectGuiWrapperTimerOnTick;
+		_dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+		NotifyInterval = TimeSpan.FromMilliseconds(333);
+		Timer.Tick += NotifiableObjectGuiWrapperTimerOnTick;
 
             Obj.PropertyChanged += (_, args) => _names.Add(args.PropertyName);
         }
@@ -109,13 +109,13 @@
             if (names.Length == 0)
                 return;
 
-			_dispatcher.InvokeAsync(() => names.ForEach(OnPropertyChanged));
+		_dispatcher.InvokeAsync(() => names.ForEach(OnPropertyChanged));
         }
 
         /// <inheritdoc />
         protected override void DisposeManaged()
         {
-			Timer.Tick -= NotifiableObjectGuiWrapperTimerOnTick;
+		Timer.Tick -= NotifiableObjectGuiWrapperTimerOnTick;
 
             base.DisposeManaged();
         }
@@ -128,9 +128,9 @@
         protected override IEnumerable<EventDescriptor> OnGetEvents()
         {
             var descriptor = TypeDescriptor
-				.GetEvents(this, true)
-				.OfType<EventDescriptor>()
-				.First(ed => ed.Name == nameof(PropertyChanged));
+			.GetEvents(this, true)
+			.OfType<EventDescriptor>()
+			.First(ed => ed.Name == nameof(PropertyChanged));
 
             return
                 base.OnGetEvents()
@@ -138,4 +138,3 @@
                     .Concat([descriptor]);
         }
     }
-}

@@ -1,83 +1,82 @@
-﻿namespace Ecng.Server.Utils
+﻿namespace Ecng.Server.Utils;
+
+using System;
+using System.IO;
+using System.Reflection;
+
+using Ecng.Serialization;
+using Ecng.Logging;
+
+using Microsoft.Extensions.Logging;
+
+/// <summary>
+/// Services IO utils.
+/// </summary>
+public static class ServicePath
 {
-	using System;
-	using System.IO;
-	using System.Reflection;
-
-	using Ecng.Serialization;
-	using Ecng.Logging;
-
-	using Microsoft.Extensions.Logging;
+	/// <summary>
+	/// Current service directory.
+	/// </summary>
+	public static string ServiceDir => Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
 
 	/// <summary>
-	/// Services IO utils.
+	/// Get path to Data directory.
 	/// </summary>
-	public static class ServicePath
+	public static string DataDir => Path.Combine(ServiceDir, "Data");
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="logger"></param>
+	/// <param name="dataDir"></param>
+	/// <param name="defaultLevel"></param>
+	/// <returns></returns>
+	public static LogManager CreateLogManager(this ILogger logger, string dataDir, LogLevels defaultLevel)
 	{
-		/// <summary>
-		/// Current service directory.
-		/// </summary>
-		public static string ServiceDir => Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+		if (logger is null)
+			throw new ArgumentNullException(nameof(logger));
 
-		/// <summary>
-		/// Get path to Data directory.
-		/// </summary>
-		public static string DataDir => Path.Combine(ServiceDir, "Data");
+		Directory.CreateDirectory(dataDir);
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="logger"></param>
-		/// <param name="dataDir"></param>
-		/// <param name="defaultLevel"></param>
-		/// <returns></returns>
-		public static LogManager CreateLogManager(this ILogger logger, string dataDir, LogLevels defaultLevel)
+		var serializer = JsonSerializer<SettingsStorage>.CreateDefault();
+
+		var logSettingsFile = Path.Combine(dataDir, $"logManager.{serializer.FileExtension}");
+
+		var logManager = new LogManager
 		{
-			if (logger is null)
-				throw new ArgumentNullException(nameof(logger));
+			Application = { LogLevel = defaultLevel }
+		};
 
-			Directory.CreateDirectory(dataDir);
-
-			var serializer = JsonSerializer<SettingsStorage>.CreateDefault();
-
-			var logSettingsFile = Path.Combine(dataDir, $"logManager.{serializer.FileExtension}");
-
-			var logManager = new LogManager
+		if (File.Exists(logSettingsFile))
+		{
+			logManager.Load(serializer.Deserialize(logSettingsFile));
+		}
+		else
+		{
+			logManager.Listeners.Add(new FileLogListener
 			{
-				Application = { LogLevel = defaultLevel }
-			};
+				Append = true,
+				FileName = "logs",
+				LogDirectory = Path.Combine(dataDir, "Logs"),
+				SeparateByDates = SeparateByDateModes.SubDirectories,
+				HistoryPolicy = FileLogHistoryPolicies.Delete,
+			});
 
-			if (File.Exists(logSettingsFile))
-			{
-				logManager.Load(serializer.Deserialize(logSettingsFile));
-			}
-			else
-			{
-				logManager.Listeners.Add(new FileLogListener
-				{
-					Append = true,
-					FileName = "logs",
-					LogDirectory = Path.Combine(dataDir, "Logs"),
-					SeparateByDates = SeparateByDateModes.SubDirectories,
-					HistoryPolicy = FileLogHistoryPolicies.Delete,
-				});
-
-				serializer.Serialize(logManager.Save(), logSettingsFile);
-			}
-
-			logManager.Listeners.Add(new ServiceLogListener(logger));
-
-			return logManager;
+			serializer.Serialize(logManager.Save(), logSettingsFile);
 		}
 
-		/// <summary>
-		/// Restart service.
-		/// </summary>
-		public static void Restart()
-		{
-			// https://stackoverflow.com/a/220451
-			// solution required setup
-			Environment.Exit(1);
-		}
+		logManager.Listeners.Add(new ServiceLogListener(logger));
+
+		return logManager;
+	}
+
+	/// <summary>
+	/// Restart service.
+	/// </summary>
+	public static void Restart()
+	{
+		// https://stackoverflow.com/a/220451
+		// solution required setup
+		Environment.Exit(1);
 	}
 }

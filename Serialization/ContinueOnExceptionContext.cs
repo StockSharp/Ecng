@@ -1,53 +1,52 @@
-namespace Ecng.Serialization
-{
-	using System;
+namespace Ecng.Serialization;
 
-	using Ecng.Common;
+using System;
+
+using Ecng.Common;
+
+/// <summary>
+/// Context for continue on exception.
+/// </summary>
+public class ContinueOnExceptionContext
+{
+	/// <summary>
+	/// Initializes a new instance of the <see cref="ContinueOnExceptionContext"/>.
+	/// </summary>
+	public event Action<Exception> Error;
 
 	/// <summary>
-	/// Context for continue on exception.
+	/// Do not encrypt.
 	/// </summary>
-	public class ContinueOnExceptionContext
+	public bool DoNotEncrypt { get; set; }
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="ContinueOnExceptionContext"/>.
+	/// </summary>
+	/// <param name="ex">The exception.</param>
+	/// <returns>Operation result.</returns>
+	public static bool TryProcess(Exception ex)
 	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ContinueOnExceptionContext"/>.
-		/// </summary>
-		public event Action<Exception> Error;
+		if (ex is null)
+			throw new ArgumentNullException(nameof(ex));
 
-		/// <summary>
-		/// Do not encrypt.
-		/// </summary>
-		public bool DoNotEncrypt { get; set; }
+		var ctx = Scope<ContinueOnExceptionContext>.Current;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ContinueOnExceptionContext"/>.
-		/// </summary>
-		/// <param name="ex">The exception.</param>
-		/// <returns>Operation result.</returns>
-		public static bool TryProcess(Exception ex)
-		{
-			if (ex is null)
-				throw new ArgumentNullException(nameof(ex));
+		if (ctx is null)
+			return false;
 
-			var ctx = Scope<ContinueOnExceptionContext>.Current;
+		ctx.Value.Process(ex);
+		return true;
+	}
 
-			if (ctx is null)
-				return false;
+	/// <summary>
+	/// Process the exception.
+	/// </summary>
+	/// <param name="ex">The exception.</param>
+	public void Process(Exception ex)
+	{
+		if (ex is null)
+			throw new ArgumentNullException(nameof(ex));
 
-			ctx.Value.Process(ex);
-			return true;
-		}
-
-		/// <summary>
-		/// Process the exception.
-		/// </summary>
-		/// <param name="ex">The exception.</param>
-		public void Process(Exception ex)
-		{
-			if (ex is null)
-				throw new ArgumentNullException(nameof(ex));
-
-			Error?.Invoke(ex);
-		}
+		Error?.Invoke(ex);
 	}
 }

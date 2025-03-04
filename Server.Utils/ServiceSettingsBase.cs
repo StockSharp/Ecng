@@ -1,27 +1,26 @@
-﻿namespace Ecng.Server.Utils
+﻿namespace Ecng.Server.Utils;
+
+using Ecng.Logging;
+
+/// <summary>
+/// Base server settings.
+/// </summary>
+public abstract class ServiceSettingsBase
 {
-	using Ecng.Logging;
+	/// <summary>
+	/// Initializes a new instance of the <see cref="ServiceSettingsBase"/>.
+	/// </summary>
+	protected ServiceSettingsBase()
+	{
+	}
 
 	/// <summary>
-	/// Base server settings.
+	/// WebAPI address.
 	/// </summary>
-	public abstract class ServiceSettingsBase
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ServiceSettingsBase"/>.
-		/// </summary>
-		protected ServiceSettingsBase()
-		{
-		}
+	public string WebApiAddress { get; set; }
 
-		/// <summary>
-		/// WebAPI address.
-		/// </summary>
-		public string WebApiAddress { get; set; }
-
-		/// <summary>
-		/// <see cref="LogLevels"/>.
-		/// </summary>
-		public LogLevels LogLevel { get; set; }
-	}
+	/// <summary>
+	/// <see cref="LogLevels"/>.
+	/// </summary>
+	public LogLevels LogLevel { get; set; }
 }

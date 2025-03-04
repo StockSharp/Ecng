@@ -1,9 +1,8 @@
-﻿namespace Ecng.ComponentModel
+﻿namespace Ecng.ComponentModel;
+
+/// <summary>
+/// Defines methods for performing file browser editing operations.
+/// </summary>
+public interface IFileBrowserEditor
 {
-	/// <summary>
-	/// Defines methods for performing file browser editing operations.
-	/// </summary>
-	public interface IFileBrowserEditor
-	{
-	}
 }
