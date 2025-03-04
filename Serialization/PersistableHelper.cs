@@ -601,7 +601,7 @@
 			return value;
 		}
 
-		private static readonly SynchronizedDictionary<Type, (Func<object, SettingsStorage> serialize, Func<SettingsStorage, object> deserialize)> _customSerializers = new SynchronizedDictionary<Type, (Func<object, SettingsStorage> serialize, Func<SettingsStorage, object> deserialize)>();
+		private static readonly SynchronizedDictionary<Type, (Func<object, SettingsStorage> serialize, Func<SettingsStorage, object> deserialize)> _customSerializers = new();
 
 		/// <summary>
 		/// Registers a custom serializer for a specific type.

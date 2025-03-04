@@ -799,21 +799,8 @@
 		#region Enumerator
 
 		[Serializable, StructLayout(LayoutKind.Sequential)]
-		private struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>, IDictionaryEnumerator
+		private struct Enumerator(ObservableDictionary<TKey, TValue> dictionary, bool isDictionaryEntryEnumerator) : IEnumerator<KeyValuePair<TKey, TValue>>, IDictionaryEnumerator
 		{
-			#region constructors
-
-			public Enumerator(ObservableDictionary<TKey, TValue> dictionary, bool isDictionaryEntryEnumerator)
-			{
-				_dictionary = dictionary;
-				_version = dictionary._version;
-				_index = -1;
-				_isDictionaryEntryEnumerator = isDictionaryEntryEnumerator;
-				_current = new KeyValuePair<TKey, TValue>();
-			}
-
-			#endregion constructors
-
 			#region properties
 
 			public readonly KeyValuePair<TKey, TValue> Current
@@ -838,9 +825,9 @@
 			{
 				ValidateVersion();
 				_index++;
-				if (_index < _dictionary._keyedEntryCollection.Count)
+				if (_index < dictionary._keyedEntryCollection.Count)
 				{
-					_current = new KeyValuePair<TKey, TValue>((TKey)_dictionary._keyedEntryCollection[_index].Key, (TValue)_dictionary._keyedEntryCollection[_index].Value);
+					_current = new KeyValuePair<TKey, TValue>((TKey)dictionary._keyedEntryCollection[_index].Key, (TValue)dictionary._keyedEntryCollection[_index].Value);
 					return true;
 				}
 				_index = -2;
@@ -862,7 +849,7 @@
 
 			private readonly void ValidateVersion()
 			{
-				if (_version != _dictionary._version)
+				if (_version != dictionary._version)
 				{
 					throw new InvalidOperationException("The enumerator is not valid because the dictionary changed.");
 				}
@@ -877,7 +864,7 @@
 				get
 				{
 					ValidateCurrent();
-					if (_isDictionaryEntryEnumerator)
+					if (isDictionaryEntryEnumerator)
 					{
 						return new DictionaryEntry(_current.Key, _current.Value);
 					}
@@ -922,14 +909,11 @@
 			}
 
 			#endregion
-
 			#region fields
 
-			private readonly ObservableDictionary<TKey, TValue> _dictionary;
-			private readonly int _version;
-			private int _index;
-			private KeyValuePair<TKey, TValue> _current;
-			private readonly bool _isDictionaryEntryEnumerator;
+			private readonly int _version = dictionary._version;
+			private int _index = -1;
+			private KeyValuePair<TKey, TValue> _current = new();
 
 			#endregion fields
 		}

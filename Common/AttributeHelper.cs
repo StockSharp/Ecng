@@ -11,7 +11,7 @@ namespace Ecng.Common
 	/// </summary>
 	public static class AttributeHelper
 	{
-		private static readonly Dictionary<(Type, ICustomAttributeProvider), Attribute> _attrCache = new Dictionary<(Type, ICustomAttributeProvider), Attribute>();
+		private static readonly Dictionary<(Type, ICustomAttributeProvider), Attribute> _attrCache = new();
 
 		/// <summary>
 		/// Gets or sets a value indicating whether attribute caching is enabled.
