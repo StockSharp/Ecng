@@ -26,7 +26,7 @@ public class MathHelperTest
 	}
 
 	[TestMethod]
-	public void Round_MidpointRounding_double()
+	public void RoundMidpointDouble()
 	{
 		( 10.3d).Round(MidpointRounding.ToEven).AssertEqual(10d);
 		(-10.3d).Round(MidpointRounding.ToEven).AssertEqual(-10d);
@@ -95,7 +95,7 @@ public class MathHelperTest
 	}
 
 	[TestMethod]
-	public void Round_MidpointRounding_decimal()
+	public void RoundMidpointDecimal()
 	{
 		( 10.3m).Round(MidpointRounding.ToEven).AssertEqual(10m);
 		(-10.3m).Round(MidpointRounding.ToEven).AssertEqual(-10m);
@@ -393,5 +393,99 @@ public class MathHelperTest
 			var l = RandomGen.GetInt();
 			l.GetDigitCount().AssertEqual(l.ToString().Length);
 		}
+	}
+
+	private static (long mantissa, int exponent) ParseDecimalToMantissaExponent(decimal value)
+	{
+		var isNegative = value < 0;
+		var str = Math.Abs(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
+		long mantissa;
+		int exponent;
+
+		if (str.Contains('.'))
+		{
+			var parts = str.Split('.');
+			var integerPart = parts[0].TrimStart('0');
+			if (integerPart.Length == 0) integerPart = "0";
+			var fractionalPart = parts[1];
+
+			var combined = integerPart + fractionalPart;
+			if (combined.Length > 19)
+				throw new OverflowException("Mantissa exceeds long range.");
+
+			mantissa = combined.To<long>();
+			exponent = -fractionalPart.Length; // Экспонента = -scale
+		}
+		else
+		{
+			var trimmed = str.TrimStart('0');
+			
+			if (trimmed.Length == 0) trimmed = "0";
+			
+			if (trimmed.Length > 19)
+				throw new OverflowException("Mantissa exceeds long range.");
+
+			mantissa = trimmed.To<long>();
+			exponent = 0;
+		}
+
+		if (isNegative)
+			mantissa = -mantissa;
+
+		return (mantissa, exponent);
+	}
+
+	[TestMethod]
+	public void TestDecimalInfo()
+	{
+		TestValue(123.456m);
+		TestValue(-2920000.00m);
+		TestValue(0.00m);
+		TestValue(123456m);
+		TestValue(0.00123m);
+		TestValue(123456789.12345m);
+
+		for (var i = 0; i < 100; i++)
+		{
+			decimal value;
+
+			if (RandomGen.GetInt(0, 2) == 0)
+			{
+				value = RandomGen.GetInt(int.MinValue, int.MaxValue);
+			}
+			else
+			{
+				value = RandomGen.GetDecimal();
+			}
+
+			if (RandomGen.GetInt(0, 2) == 0)
+				value = -value;
+
+			TestValue(value);
+		}
+	}
+
+	private static void TestValue(decimal value)
+	{
+		var info = value.GetDecimalInfo();
+		var (parsedMantissa, parsedExponent) = ParseDecimalToMantissaExponent(value);
+
+		// Сравнение с GetDecimalInfo
+		info.Mantissa.AssertEqual(parsedMantissa);
+		info.Exponent.AssertEqual(parsedExponent);
+
+		// Проверка восстановления значения
+		var reconstructed = MathHelper.ToDecimal(info.Mantissa, info.Exponent);
+		reconstructed.AssertEqual(value);
+
+		var parsedReconstructed = MathHelper.ToDecimal(parsedMantissa, parsedExponent);
+		parsedReconstructed.AssertEqual(value);
+	}
+
+	[TestMethod]
+	public void TestOverflowMantissa()
+	{
+		var value = 9999999999999999999999999999m;
+		Assert.ThrowsExactly<OverflowException>(() => value.GetDecimalInfo());
 	}
 }

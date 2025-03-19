@@ -1313,16 +1313,14 @@ public static class MathHelper
 	}
 
 	/// <summary>
-	/// Extracts the mantissa and scale (exponent) from the decimal value.
+	/// Extracts the mantissa and exponent from the decimal value.
 	/// </summary>
 	/// <param name="value">The decimal value.</param>
-	/// <param name="mantissa">The extracted mantissa.</param>
-	/// <param name="exponent">The extracted scale factor.</param>
-	public static void ExtractMantissaExponent(this decimal value, out long mantissa, out int exponent)
+	/// <returns>The extracted mantissa and exponent.</returns>
+	public static (long mantissa, int exponent) ExtractMantissaExponent(this decimal value)
 	{
 		var info = value.GetDecimalInfo();
-		mantissa = info.Mantissa;
-		exponent = -info.Scale;
+		return (info.Mantissa, info.Exponent);
 	}
 
 	// http://www.java-forums.org/advanced-java/4130-rounding-double-two-decimal-places.html
@@ -1341,17 +1339,6 @@ public static class MathHelper
 		result = result / coef;
 		return result;
 	}
-
-	//public static int GetDecimals(this double value)
-	//{
-	//    return ((decimal)value).GetDecimals();
-	//}
-
-	//public static int GetDecimals(this decimal value)
-	//{
-	//    // see SqlDecimal.Scale;
-	//    return (decimal.GetBits(value)[3] & 0x00FF0000) >> 16;
-	//}
 
 	/// <summary>
 	/// Removes insignificant trailing zeros from the decimal value.
@@ -1388,7 +1375,12 @@ public static class MathHelper
 		/// <summary>
 		/// Gets the effective scale (scale minus trailing zeros) of the decimal.
 		/// </summary>
-		public int EffectiveScale => Scale - TrailingZeros;
+		public readonly int EffectiveScale => Scale - TrailingZeros;
+
+		/// <summary>
+		/// Gets the exponent of the decimal.
+		/// </summary>
+		public readonly int Exponent => -Scale;
 	}
 
 	// http://stackoverflow.com/questions/763942/calculate-system-decimal-precision-and-scale
@@ -1410,6 +1402,7 @@ public static class MathHelper
 			(bits[1] * 4294967296m) +
 			bits[0];
 
+		var isNegative = (bits[3] & 0x80000000) != 0;
 		var scale = (bits[3] >> 16) & 31;
 
 		// Precision: number of times we can divide
@@ -1436,7 +1429,7 @@ public static class MathHelper
 
 		return new DecimalInfo
 		{
-			Mantissa = (long)mantissa,
+			Mantissa = (long)(isNegative ? -mantissa : mantissa),
 			Precision = precision,
 			TrailingZeros = trailingZeros,
 			Scale = (int)scale,
