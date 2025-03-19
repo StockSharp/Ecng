@@ -50,21 +50,27 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	private bool _isTimerStarted;
 
 	/// <summary>
+	/// Occurs before the collection is updated.
 	/// </summary>
 	public event Action BeforeUpdate;
+
 	/// <summary>
+	/// Occurs after the collection is updated.
 	/// </summary>
 	public event Action AfterUpdate;
 
 	/// <summary>
+	/// The underlying collection.
 	/// </summary>
 	public IListEx<TItem> Items { get; } = items ?? throw new ArgumentNullException(nameof(items));
 
 	/// <summary>
+	/// The dispatcher used to update the collection.
 	/// </summary>
 	public IDispatcher Dispatcher { get; } = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 
 	/// <summary>
+	/// Occurs when a range of elements is added.
 	/// </summary>
 	public event Action<IEnumerable<TItem>> AddedRange
 	{
@@ -73,6 +79,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	}
 
 	/// <summary>
+	/// Occurs when a range of elements is removed.
 	/// </summary>
 	public event Action<IEnumerable<TItem>> RemovedRange
 	{
@@ -81,7 +88,9 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	}
 
 	/// <summary>
+	/// Adds a range of elements to the collection.
 	/// </summary>
+	/// <param name="items">The range of elements.</param>
 	public virtual void AddRange(IEnumerable<TItem> items)
 	{
 		var arr = items.ToArray();
