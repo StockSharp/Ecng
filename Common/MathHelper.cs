@@ -1322,7 +1322,7 @@ public static class MathHelper
 	{
 		var info = value.GetDecimalInfo();
 		mantissa = info.Mantissa;
-		exponent = info.Scale;
+		exponent = -info.Scale;
 	}
 
 	// http://www.java-forums.org/advanced-java/4130-rounding-double-two-decimal-places.html
