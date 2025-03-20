@@ -1706,21 +1706,28 @@ public static class MathHelper
 		return (from + to) / 2;
 	}
 
-	private static readonly decimal[] _posPow10 =
-	[
-		1M,
-		10M,
-		100M,
-		1000M,
-		10000M,
-		100000M,
-		1000000M,
-		10000000M,
-		100000000M,
-		1000000000M,
-		10000000000M,
-		100000000000M,
-	];
+	/// <summary>
+	/// Maximum exponent value for decimal mantissa scaling.
+	/// </summary>
+	public const int MaxExponent = 28;
+
+	/// <summary>
+	/// Minimum exponent value for decimal mantissa scaling.
+	/// </summary>
+	public const int MinExponent = -MaxExponent;
+
+	private static decimal[] CreatePow10Array(int size)
+		=>
+		[.. 
+			Enumerable
+				.Range(0, size)
+				.Select(i =>
+					Enumerable
+						.Range(0, i)
+						.Aggregate(1M, (acc, _) => acc * 10M))
+		];
+
+	private static readonly decimal[] _posPow10 = CreatePow10Array(MaxExponent);
 
 	private static readonly decimal[] _negPow10 = [.. _posPow10.Select(v => 1M / v)];
 
@@ -1732,6 +1739,9 @@ public static class MathHelper
 	/// <returns>The resulting decimal value.</returns>
 	public static decimal ToDecimal(long mantissa, int exponent)
 	{
+		if (exponent > MaxExponent || exponent < MinExponent)
+			throw new ArgumentOutOfRangeException(nameof(exponent), exponent, "Invalid value.");
+
 		decimal result = mantissa;
 
 		if (exponent >= 0)
