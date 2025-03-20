@@ -2326,4 +2326,14 @@ public static class CollectionHelper
 		else
 			return source.Cast<object>().Count();
 	}
+
+	/// <summary>
+	/// Filters a sequence of nullable elements to exclude null values.
+	/// </summary>
+	/// <typeparam name="T">Type of element.</typeparam>
+	/// <param name="enu">Source sequence.</param>
+	/// <returns>The sequence of non-null elements.</returns>
+	public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T> enu)
+		where T : class
+		=> enu.Where(x => x is not null);
 }
