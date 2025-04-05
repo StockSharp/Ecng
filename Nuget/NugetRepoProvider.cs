@@ -1,5 +1,7 @@
 namespace Ecng.Nuget;
 
+using Ecng.Net;
+
 using Nito.AsyncEx;
 
 /// <summary>
@@ -110,6 +112,11 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// </summary>
 	public ISettings Settings => ((PackageSourceProvider)PackageSourceProvider).Settings;
 
+	/// <summary>
+	/// <see cref="RetryPolicyInfo"/>
+	/// </summary>
+	public RetryPolicyInfo RetryPolicy { get; } = new();
+
 	private readonly SourceRepository _privateRepo;
 	private readonly SourceRepository _nugetRepo;
 	private readonly FrameworkReducer _fwkReducer = new();
@@ -157,11 +164,13 @@ public class NugetRepoProvider : CachingSourceProvider
 		{
 			var resource = await repo.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
 
-			var versions = await resource.GetAllVersionsAsync(
-				packageId,
-				cache,
-				logger,
-				cancellationToken);
+			var versions = await RetryPolicy.TryRepeat(t =>
+				resource.GetAllVersionsAsync(
+					packageId,
+					cache,
+					logger,
+					t),
+				RetryPolicy.ReadMaxCount, cancellationToken);
 
 			var foundVer = versionRange.FindBestMatch(versions);
 
@@ -232,7 +241,8 @@ public class NugetRepoProvider : CachingSourceProvider
 				return [];
 			}
 
-			var nuspec = await (repo == _privateRepo ? privateHttp : publicHttp).GetNuspecAsync(baseUrl, packageId, foundVersion, cancellationToken);
+			var http = repo == _privateRepo ? privateHttp : publicHttp;
+			var nuspec = await RetryPolicy.TryRepeat(t => http.GetNuspecAsync(baseUrl, packageId, foundVersion, t), RetryPolicy.ReadMaxCount, cancellationToken);
 			var reader = new NuspecReader(nuspec);
 			var groups = reader.GetDependencyGroups().ToDictionary(g => g.TargetFramework);
 
