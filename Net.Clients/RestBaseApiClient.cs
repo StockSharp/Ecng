@@ -262,7 +262,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	/// <param name="args">The arguments for the API method.</param>
 	/// <returns>A task representing the asynchronous operation with the result.</returns>
 	protected Task<TResult> PostAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-		=> RetryPolicy.TryRepeat(() =>
+		=> RetryPolicy.TryRepeat(t =>
 		{
 			var method = HttpMethod.Post;
 			var (url, parameters, callerMethod) = GetInfo(method, methodName, args);
@@ -284,7 +284,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 			else
 				body = TryFormat(parameters.FirstOrDefault().value, callerMethod, method);
 
-			return DoAsync<TResult>(method, url, body, cancellationToken);
+			return DoAsync<TResult>(method, url, body, t);
 		}, RetryPolicy.WriteMaxCount, cancellationToken);
 
 	/// <summary>
@@ -296,7 +296,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	/// <param name="args">The arguments for the API method.</param>
 	/// <returns>A task representing the asynchronous operation with the result.</returns>
 	protected Task<TResult> GetAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-		=> RetryPolicy.TryRepeat(() =>
+		=> RetryPolicy.TryRepeat(t =>
 		{
 			var method = HttpMethod.Get;
 			var (url, parameters, _) = GetInfo(method, methodName, args);
@@ -310,7 +310,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 				}
 			}
 
-			return DoAsync<TResult>(method, url, null, cancellationToken);
+			return DoAsync<TResult>(method, url, null, t);
 		}, RetryPolicy.ReadMaxCount, cancellationToken);
 
 	/// <summary>
@@ -322,7 +322,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	/// <param name="args">The arguments for the API method.</param>
 	/// <returns>A task representing the asynchronous operation with the result.</returns>
 	protected Task<TResult> DeleteAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-		=> RetryPolicy.TryRepeat(() =>
+		=> RetryPolicy.TryRepeat(t =>
 		{
 			var method = HttpMethod.Delete;
 			var (url, parameters, _) = GetInfo(method, methodName, args);
@@ -336,7 +336,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 				}
 			}
 
-			return DoAsync<TResult>(method, url, null, cancellationToken);
+			return DoAsync<TResult>(method, url, null, t);
 		}, RetryPolicy.WriteMaxCount, cancellationToken);
 
 	/// <summary>
@@ -348,7 +348,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	/// <param name="args">The arguments for the API method.</param>
 	/// <returns>A task representing the asynchronous operation with the result.</returns>
 	protected Task<TResult> PutAsync<TResult>(string methodName, CancellationToken cancellationToken, params object[] args)
-		=> RetryPolicy.TryRepeat(() =>
+		=> RetryPolicy.TryRepeat(t =>
 		{
 			var method = HttpMethod.Put;
 			var (url, parameters, callerMethod) = GetInfo(method, methodName, args);
@@ -370,7 +370,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 			else
 				body = TryFormat(parameters.FirstOrDefault().value, callerMethod, method);
 
-			return DoAsync<TResult>(method, url, body, cancellationToken);
+			return DoAsync<TResult>(method, url, body, t);
 		}, RetryPolicy.WriteMaxCount, cancellationToken);
 
 	/// <summary>

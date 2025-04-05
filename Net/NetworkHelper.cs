@@ -817,7 +817,7 @@ public static class NetworkHelper
 	/// <param name="maxCount">The maximum number of attempts.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>The result of the function if successful.</returns>
-	public static async Task<T> TryRepeat<T>(this RetryPolicyInfo policy, Func<Task<T>> handler, int maxCount, CancellationToken cancellationToken)
+	public static async Task<T> TryRepeat<T>(this RetryPolicyInfo policy, Func<CancellationToken, Task<T>> handler, int maxCount, CancellationToken cancellationToken)
 	{
 		if (policy is null)
 			throw new ArgumentNullException(nameof(policy));
@@ -833,7 +833,7 @@ public static class NetworkHelper
 
 			try
 			{
-				return await handler();
+				return await handler(cancellationToken);
 			}
 			catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
 			{
