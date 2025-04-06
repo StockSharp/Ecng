@@ -3,11 +3,12 @@
 using System.Net.Sockets;
 
 using Ecng.Localization;
+using Ecng.Serialization;
 
 /// <summary>
 /// Provides configuration information for retry policies, including retry counts and delays.
 /// </summary>
-public class RetryPolicyInfo
+public class RetryPolicyInfo : IPersistable
 {
 	private int _readMaxCount;
 
@@ -98,4 +99,30 @@ public class RetryPolicyInfo
 		SocketError.NoData,
 		SocketError.HostNotFound,
 	};
+
+	/// <inheritdoc />
+	public void Load(SettingsStorage storage)
+	{
+		ReadMaxCount = storage.GetValue(nameof(ReadMaxCount), ReadMaxCount);
+		WriteMaxCount = storage.GetValue(nameof(WriteMaxCount), WriteMaxCount);
+		InitialDelay = storage.GetValue(nameof(InitialDelay), InitialDelay);
+		MaxDelay = storage.GetValue(nameof(MaxDelay), MaxDelay);
+		
+		var strs = storage.GetValue(nameof(Track), string.Empty).SplitByComma();
+
+		Track.Clear();
+		Track.AddRange(strs.Select(s => (SocketError)s.To<int>()));
+	}
+
+	/// <inheritdoc />
+	public void Save(SettingsStorage storage)
+	{
+		storage
+			.Set(nameof(ReadMaxCount), ReadMaxCount)
+			.Set(nameof(WriteMaxCount), WriteMaxCount)
+			.Set(nameof(InitialDelay), InitialDelay)
+			.Set(nameof(MaxDelay), MaxDelay)
+			.Set(nameof(Track), Track.Select(e => ((int)e).ToString()).JoinComma())
+		;
+	}
 }
