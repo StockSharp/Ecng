@@ -65,22 +65,22 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// <summary>
 	/// Get instance.
 	/// </summary>
-	/// <param name="getAuthToken">Get auth token.</param>
+	/// <param name="authToken">Auth token.</param>
 	/// <param name="packagesFolder"><see cref="Directory"/></param>
 	/// <param name="token"><see cref="CancellationToken"/></param>
 	/// <returns>Task.</returns>
-	public static Task<NugetRepoProvider> GetInstanceAsync(Func<string> getAuthToken, string packagesFolder, CancellationToken token)
-		=> GetInstanceAsync("https://nuget.stocksharp.com/x/v3/index.json", getAuthToken, packagesFolder, token);
+	public static Task<NugetRepoProvider> GetInstanceAsync(SecureString authToken, string packagesFolder, CancellationToken token)
+		=> GetInstanceAsync("https://nuget.stocksharp.com/x/v3/index.json", authToken, packagesFolder, token);
 
 	/// <summary>
 	/// Get instance.
 	/// </summary>
 	/// <param name="privateUrl">Private url.</param>
-	/// <param name="getAuthToken">Get auth token.</param>
+	/// <param name="authToken">Auth token.</param>
 	/// <param name="packagesFolder"><see cref="Directory"/></param>
 	/// <param name="token"><see cref="CancellationToken"/></param>
 	/// <returns>Task.</returns>
-	public static async Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, Func<string> getAuthToken, string packagesFolder, CancellationToken token)
+	public static async Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, SecureString authToken, string packagesFolder, CancellationToken token)
 	{
 		await PrivatePackageSource.GetAsync(privateUrl, token);
 
@@ -88,7 +88,7 @@ public class NugetRepoProvider : CachingSourceProvider
 		{
 			if (_instance is null)
 			{
-				_instance = new(getAuthToken, packagesFolder);
+				_instance = new(authToken, packagesFolder);
 				await _instance.InitBaseUrls(token);
 			}
 		}
@@ -124,12 +124,12 @@ public class NugetRepoProvider : CachingSourceProvider
 	private readonly TimeSpan _cacheLen = TimeSpan.FromMinutes(10);
 	private readonly List<(SourceRepository repo, Uri baseUrl)> _repoUrls = [];
 
-	private readonly Func<string> _getAuthToken;
+	private readonly SecureString _authToken;
 
-	private NugetRepoProvider(Func<string> getAuthToken, string packagesFolder)
+	private NugetRepoProvider(SecureString authToken, string packagesFolder)
 		: base(new PackageSourceProvider(_settings, GetPackageSources(packagesFolder)))
 	{
-		_getAuthToken = getAuthToken ?? throw new ArgumentNullException(nameof(getAuthToken));
+		_authToken = authToken.ThrowIfEmpty(nameof(authToken));
 		
 		if (!packagesFolder.IsEmpty())
 			Directory.CreateDirectory(packagesFolder);
@@ -200,7 +200,7 @@ public class NugetRepoProvider : CachingSourceProvider
 		if (localFiles is null)			throw new ArgumentNullException(nameof(localFiles));
 
 		var publicHttp = new HttpClient();
-		var privateHttp = NugetExtensions.CreatePrivateHttp(_getAuthToken());
+		var privateHttp = NugetExtensions.CreatePrivateHttp(_authToken.UnSecure());
 
 		var fwkComparer = NuGetFrameworkFullComparer.Instance;
 
