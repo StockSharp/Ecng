@@ -55,10 +55,16 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	/// </summary>
 	public bool ExtractBadResponse { get; set; }
 
+	private RetryPolicyInfo _retryPolicy = new();
+
 	/// <summary>
 	/// Gets the retry policy configuration for API calls.
 	/// </summary>
-	public RetryPolicyInfo RetryPolicy { get; } = new();
+	public RetryPolicyInfo RetryPolicy
+	{
+		get => _retryPolicy;
+		set => _retryPolicy = value ?? throw new ArgumentNullException(nameof(value));
+	}
 
 	/// <summary>
 	/// Gets a value indicating whether a single argument should be sent as a plain value.

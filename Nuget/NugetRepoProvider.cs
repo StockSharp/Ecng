@@ -67,10 +67,11 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// </summary>
 	/// <param name="authToken">Auth token.</param>
 	/// <param name="packagesFolder"><see cref="Directory"/></param>
+	/// <param name="retryPolicy"><see cref="RetryPolicyInfo"/></param>
 	/// <param name="token"><see cref="CancellationToken"/></param>
 	/// <returns>Task.</returns>
-	public static Task<NugetRepoProvider> GetInstanceAsync(SecureString authToken, string packagesFolder, CancellationToken token)
-		=> GetInstanceAsync("https://nuget.stocksharp.com/x/v3/index.json", authToken, packagesFolder, token);
+	public static Task<NugetRepoProvider> GetInstanceAsync(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, CancellationToken token)
+		=> GetInstanceAsync("https://nuget.stocksharp.com/x/v3/index.json", authToken, packagesFolder, retryPolicy, token);
 
 	/// <summary>
 	/// Get instance.
@@ -78,9 +79,10 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// <param name="privateUrl">Private url.</param>
 	/// <param name="authToken">Auth token.</param>
 	/// <param name="packagesFolder"><see cref="Directory"/></param>
+	/// <param name="retryPolicy"><see cref="RetryPolicyInfo"/></param>
 	/// <param name="token"><see cref="CancellationToken"/></param>
 	/// <returns>Task.</returns>
-	public static async Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, SecureString authToken, string packagesFolder, CancellationToken token)
+	public static async Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, CancellationToken token)
 	{
 		await PrivatePackageSource.GetAsync(privateUrl, token);
 
@@ -88,7 +90,7 @@ public class NugetRepoProvider : CachingSourceProvider
 		{
 			if (_instance is null)
 			{
-				_instance = new(authToken, packagesFolder);
+				_instance = new(authToken, packagesFolder, retryPolicy);
 				await _instance.InitBaseUrls(token);
 			}
 		}
@@ -115,7 +117,7 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// <summary>
 	/// <see cref="RetryPolicyInfo"/>
 	/// </summary>
-	public RetryPolicyInfo RetryPolicy { get; } = new();
+	public RetryPolicyInfo RetryPolicy { get; }
 
 	private readonly SourceRepository _privateRepo;
 	private readonly SourceRepository _nugetRepo;
@@ -126,7 +128,7 @@ public class NugetRepoProvider : CachingSourceProvider
 
 	private readonly SecureString _authToken;
 
-	private NugetRepoProvider(SecureString authToken, string packagesFolder)
+	private NugetRepoProvider(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy)
 		: base(new PackageSourceProvider(_settings, GetPackageSources(packagesFolder)))
 	{
 		_authToken = authToken.ThrowIfEmpty(nameof(authToken));
@@ -138,6 +140,7 @@ public class NugetRepoProvider : CachingSourceProvider
 
 		_privateRepo = repos.First(r => r.PackageSource.Name.EqualsIgnoreCase(PrivateRepoKey));
 		_nugetRepo = repos.First(r => r.PackageSource.Name.EqualsIgnoreCase(NugetFeedRepoKey));
+		RetryPolicy = retryPolicy ?? throw new ArgumentNullException(nameof(retryPolicy));
 	}
 
 	private async Task InitBaseUrls(CancellationToken cancellationToken)
