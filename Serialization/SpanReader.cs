@@ -9,15 +9,18 @@ public ref struct SpanReader
 {
 	private readonly ReadOnlySpan<byte> _span;
 	private int _position;
+	private readonly bool _isBigEndian;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="SpanReader"/> struct.
 	/// </summary>
 	/// <param name="span">The span of bytes to read from.</param>
-	public SpanReader(ReadOnlySpan<byte> span)
+	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	public SpanReader(ReadOnlySpan<byte> span, bool isBigEndian = false)
 	{
 		_span = span;
 		_position = 0;
+		_isBigEndian = isBigEndian;
 	}
 
 	/// <summary>
@@ -58,40 +61,40 @@ public ref struct SpanReader
 	/// Reads a 16-bit integer from the current position and advances the position by 2 bytes.
 	/// </summary>
 	/// <returns>The 16-bit integer at the current position.</returns>
-	public short ReadInt16() => _span.ReadInt16(ref _position);
+	public short ReadInt16() => _span.ReadInt16(ref _position, _isBigEndian);
 
 	/// <summary>
 	/// Reads an unsigned 16-bit integer from the current position and advances the position by 2 bytes.
 	/// </summary>
 	/// <returns>The unsigned 16-bit integer at the current position.</returns>
 	[CLSCompliant(false)]
-	public ushort ReadUInt16() => _span.ReadUInt16(ref _position);
+	public ushort ReadUInt16() => _span.ReadUInt16(ref _position, _isBigEndian);
 
 	/// <summary>
 	/// Reads a 32-bit integer from the current position and advances the position by 4 bytes.
 	/// </summary>
 	/// <returns>The 32-bit integer at the current position.</returns>
-	public int ReadInt32() => _span.ReadInt32(ref _position);
+	public int ReadInt32() => _span.ReadInt32(ref _position, _isBigEndian);
 
 	/// <summary>
 	/// Reads an unsigned 32-bit integer from the current position and advances the position by 4 bytes.
 	/// </summary>
 	/// <returns>The unsigned 32-bit integer at the current position.</returns>
 	[CLSCompliant(false)]
-	public uint ReadUInt32() => _span.ReadUInt32(ref _position);
+	public uint ReadUInt32() => _span.ReadUInt32(ref _position, _isBigEndian);
 
 	/// <summary>
 	/// Reads a 64-bit integer from the current position and advances the position by 8 bytes.
 	/// </summary>
 	/// <returns>The 64-bit integer at the current position.</returns>
-	public long ReadInt64() => _span.ReadInt64(ref _position);
+	public long ReadInt64() => _span.ReadInt64(ref _position, _isBigEndian);
 
 	/// <summary>
 	/// Reads an unsigned 64-bit integer from the current position and advances the position by 8 bytes.
 	/// </summary>
 	/// <returns>The unsigned 64-bit integer at the current position.</returns>
 	[CLSCompliant(false)]
-	public ulong ReadUInt64() => _span.ReadUInt64(ref _position);
+	public ulong ReadUInt64() => _span.ReadUInt64(ref _position, _isBigEndian);
 
 	/// <summary>
 	/// Reads a decimal value from the current position and advances the position by 16 bytes.
@@ -117,31 +120,31 @@ public ref struct SpanReader
 	/// </summary>
 	/// <returns>The character at the current position.</returns>
 	public char ReadChar() => _span.ReadChar(ref _position);
-	
+    
 	/// <summary>
 	/// Reads a half-precision floating-point value from the current position and advances the position by 2 bytes.
 	/// </summary>
 	/// <returns>The half-precision floating-point value at the current position.</returns>
-	public Half ReadHalf() => _span.ReadHalf(ref _position);
-	
+	public Half ReadHalf() => _span.ReadHalf(ref _position, _isBigEndian);
+    
 	/// <summary>
 	/// Reads a single-precision floating-point value from the current position and advances the position by 4 bytes.
 	/// </summary>
 	/// <returns>The single-precision floating-point value at the current position.</returns>
-	public float ReadSingle() => _span.ReadSingle(ref _position);
-	
+	public float ReadSingle() => _span.ReadSingle(ref _position, _isBigEndian);
+    
 	/// <summary>
 	/// Reads a double-precision floating-point value from the current position and advances the position by 8 bytes.
 	/// </summary>
 	/// <returns>The double-precision floating-point value at the current position.</returns>
-	public double ReadDouble() => _span.ReadDouble(ref _position);
-	
+	public double ReadDouble() => _span.ReadDouble(ref _position, _isBigEndian);
+    
 	/// <summary>
 	/// Reads a GUID value from the current position and advances the position by 16 bytes.
 	/// </summary>
 	/// <returns>The GUID value at the current position.</returns>
 	public Guid ReadGuid() => _span.ReadGuid(ref _position);
-	
+    
 	/// <summary>
 	/// Reads a string from the current position and advances the position.
 	/// </summary>

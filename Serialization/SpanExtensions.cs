@@ -30,7 +30,7 @@ public static class SpanExtensions
 	/// <param name="span">The read-only span of bytes.</param>
 	/// <param name="position">The position to read from; will be advanced by 1.</param>
 	/// <returns>The sbyte value read.</returns>
-	[CLSCompliant(false)]	
+	[CLSCompliant(false)]
 	public static sbyte ReadSByte(this ReadOnlySpan<byte> span, ref int position)
 	{
 		var value = (sbyte)span[position];
@@ -56,10 +56,13 @@ public static class SpanExtensions
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
 	/// <param name="position">The position to read from; will be advanced by 2.</param>
+	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
 	/// <returns>The 16-bit signed integer read.</returns>
-	public static short ReadInt16(this ReadOnlySpan<byte> span, ref int position)
+	public static short ReadInt16(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
 	{
-		var value = BinaryPrimitives.ReadInt16LittleEndian(span.Slice(position, sizeof(short)));
+		var value = isBigEndian
+			? BinaryPrimitives.ReadInt16BigEndian(span.Slice(position, sizeof(short)))
+			: BinaryPrimitives.ReadInt16LittleEndian(span.Slice(position, sizeof(short)));
 		position += sizeof(short);
 		return value;
 	}
@@ -69,11 +72,14 @@ public static class SpanExtensions
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
 	/// <param name="position">The position to read from; will be advanced by 2.</param>
+	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
 	/// <returns>The 16-bit unsigned integer read.</returns>
 	[CLSCompliant(false)]
-	public static ushort ReadUInt16(this ReadOnlySpan<byte> span, ref int position)
+	public static ushort ReadUInt16(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
 	{
-		var value = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(position, sizeof(ushort)));
+		var value = isBigEndian
+			? BinaryPrimitives.ReadUInt16BigEndian(span.Slice(position, sizeof(ushort)))
+			: BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(position, sizeof(ushort)));
 		position += sizeof(ushort);
 		return value;
 	}
@@ -83,10 +89,13 @@ public static class SpanExtensions
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
 	/// <param name="position">The position to read from; will be advanced by 4.</param>
+	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
 	/// <returns>The 32-bit signed integer read.</returns>
-	public static int ReadInt32(this ReadOnlySpan<byte> span, ref int position)
+	public static int ReadInt32(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
 	{
-		var value = BinaryPrimitives.ReadInt32LittleEndian(span.Slice(position, sizeof(int)));
+		var value = isBigEndian
+			? BinaryPrimitives.ReadInt32BigEndian(span.Slice(position, sizeof(int)))
+			: BinaryPrimitives.ReadInt32LittleEndian(span.Slice(position, sizeof(int)));
 		position += sizeof(int);
 		return value;
 	}
@@ -96,11 +105,14 @@ public static class SpanExtensions
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
 	/// <param name="position">The position to read from; will be advanced by 4.</param>
+	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
 	/// <returns>The 32-bit unsigned integer read.</returns>
 	[CLSCompliant(false)]
-	public static uint ReadUInt32(this ReadOnlySpan<byte> span, ref int position)
+	public static uint ReadUInt32(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
 	{
-		var value = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(position, sizeof(uint)));
+		var value = isBigEndian
+			? BinaryPrimitives.ReadUInt32BigEndian(span.Slice(position, sizeof(uint)))
+			: BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(position, sizeof(uint)));
 		position += sizeof(uint);
 		return value;
 	}
@@ -110,10 +122,13 @@ public static class SpanExtensions
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
 	/// <param name="position">The position to read from; will be advanced by 8.</param>
+	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
 	/// <returns>The 64-bit signed integer read.</returns>
-	public static long ReadInt64(this ReadOnlySpan<byte> span, ref int position)
+	public static long ReadInt64(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
 	{
-		var value = BinaryPrimitives.ReadInt64LittleEndian(span.Slice(position, sizeof(long)));
+		var value = isBigEndian
+			? BinaryPrimitives.ReadInt64BigEndian(span.Slice(position, sizeof(long)))
+			: BinaryPrimitives.ReadInt64LittleEndian(span.Slice(position, sizeof(long)));
 		position += sizeof(long);
 		return value;
 	}
@@ -123,11 +138,14 @@ public static class SpanExtensions
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
 	/// <param name="position">The position to read from; will be advanced by 8.</param>
+	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
 	/// <returns>The 64-bit unsigned integer read.</returns>
 	[CLSCompliant(false)]
-	public static ulong ReadUInt64(this ReadOnlySpan<byte> span, ref int position)
+	public static ulong ReadUInt64(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
 	{
-		var value = BinaryPrimitives.ReadUInt64LittleEndian(span.Slice(position, sizeof(ulong)));
+		var value = isBigEndian
+			? BinaryPrimitives.ReadUInt64BigEndian(span.Slice(position, sizeof(ulong)))
+			: BinaryPrimitives.ReadUInt64LittleEndian(span.Slice(position, sizeof(ulong)));
 		position += sizeof(ulong);
 		return value;
 	}
@@ -151,10 +169,13 @@ public static class SpanExtensions
     /// </summary>
     /// <param name="span">The read-only span of bytes.</param>
     /// <param name="position">The position to read from; will be advanced by the size of a Half.</param>
+    /// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
     /// <returns>The Half value read.</returns>
-    public static Half ReadHalf(this ReadOnlySpan<byte> span, ref int position)
+    public static Half ReadHalf(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
     {
-        var value = BinaryPrimitives.ReadHalfLittleEndian(span.Slice(position, sizeof(Half)));
+        var value = isBigEndian
+            ? BinaryPrimitives.ReadHalfBigEndian(span.Slice(position, sizeof(Half)))
+            : BinaryPrimitives.ReadHalfLittleEndian(span.Slice(position, sizeof(Half)));
         position += sizeof(Half);
         return value;
     }
@@ -164,10 +185,13 @@ public static class SpanExtensions
     /// </summary>
     /// <param name="span">The read-only span of bytes.</param>
     /// <param name="position">The position to read from; will be advanced by the size of a float.</param>
+    /// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
     /// <returns>The float value read.</returns>
-    public static float ReadSingle(this ReadOnlySpan<byte> span, ref int position)
+    public static float ReadSingle(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
     {
-        var value = BinaryPrimitives.ReadSingleLittleEndian(span.Slice(position, sizeof(float)));
+        var value = isBigEndian
+            ? BinaryPrimitives.ReadSingleBigEndian(span.Slice(position, sizeof(float)))
+            : BinaryPrimitives.ReadSingleLittleEndian(span.Slice(position, sizeof(float)));
         position += sizeof(float);
         return value;
     }
@@ -177,10 +201,13 @@ public static class SpanExtensions
     /// </summary>
     /// <param name="span">The read-only span of bytes.</param>
     /// <param name="position">The position to read from; will be advanced by the size of a double.</param>
+    /// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
     /// <returns>The double value read.</returns>
-    public static double ReadDouble(this ReadOnlySpan<byte> span, ref int position)
+    public static double ReadDouble(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
     {
-        var value = BinaryPrimitives.ReadDoubleLittleEndian(span.Slice(position, sizeof(double)));
+        var value = isBigEndian
+            ? BinaryPrimitives.ReadDoubleBigEndian(span.Slice(position, sizeof(double)))
+            : BinaryPrimitives.ReadDoubleLittleEndian(span.Slice(position, sizeof(double)));
         position += sizeof(double);
         return value;
     }
@@ -341,9 +368,13 @@ public static class SpanExtensions
 	/// <param name="span">The span of bytes.</param>
 	/// <param name="position">The position to write to; will be advanced by 2.</param>
 	/// <param name="value">The 16-bit signed integer value to write.</param>
-	public static void WriteInt16(this Span<byte> span, ref int position, short value)
+	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
+	public static void WriteInt16(this Span<byte> span, ref int position, short value, bool isBigEndian = false)
 	{
-		BinaryPrimitives.WriteInt16LittleEndian(span.Slice(position, sizeof(short)), value);
+		if (isBigEndian)
+			BinaryPrimitives.WriteInt16BigEndian(span.Slice(position, sizeof(short)), value);
+		else
+			BinaryPrimitives.WriteInt16LittleEndian(span.Slice(position, sizeof(short)), value);
 		position += sizeof(short);
 	}
 
@@ -353,10 +384,14 @@ public static class SpanExtensions
 	/// <param name="span">The span of bytes.</param>
 	/// <param name="position">The position to write to; will be advanced by 2.</param>
 	/// <param name="value">The 16-bit unsigned integer value to write.</param>
+	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
 	[CLSCompliant(false)]
-	public static void WriteUInt16(this Span<byte> span, ref int position, ushort value)
+	public static void WriteUInt16(this Span<byte> span, ref int position, ushort value, bool isBigEndian = false)
 	{
-		BinaryPrimitives.WriteUInt16LittleEndian(span.Slice(position, sizeof(ushort)), value);
+		if (isBigEndian)
+			BinaryPrimitives.WriteUInt16BigEndian(span.Slice(position, sizeof(ushort)), value);
+		else
+			BinaryPrimitives.WriteUInt16LittleEndian(span.Slice(position, sizeof(ushort)), value);
 		position += sizeof(ushort);
 	}
 
@@ -366,9 +401,13 @@ public static class SpanExtensions
 	/// <param name="span">The span of bytes.</param>
 	/// <param name="position">The position to write to; will be advanced by 4.</param>
 	/// <param name="value">The 32-bit signed integer value to write.</param>
-	public static void WriteInt32(this Span<byte> span, ref int position, int value)
+	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
+	public static void WriteInt32(this Span<byte> span, ref int position, int value, bool isBigEndian = false)
 	{
-		BinaryPrimitives.WriteInt32LittleEndian(span.Slice(position, sizeof(int)), value);
+		if (isBigEndian)
+			BinaryPrimitives.WriteInt32BigEndian(span.Slice(position, sizeof(int)), value);
+		else
+			BinaryPrimitives.WriteInt32LittleEndian(span.Slice(position, sizeof(int)), value);
 		position += sizeof(int);
 	}
 
@@ -378,10 +417,14 @@ public static class SpanExtensions
 	/// <param name="span">The span of bytes.</param>
 	/// <param name="position">The position to write to; will be advanced by 4.</param>
 	/// <param name="value">The 32-bit unsigned integer value to write.</param>
+	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
 	[CLSCompliant(false)]
-	public static void WriteUInt32(this Span<byte> span, ref int position, uint value)
+	public static void WriteUInt32(this Span<byte> span, ref int position, uint value, bool isBigEndian = false)
 	{
-		BinaryPrimitives.WriteUInt32LittleEndian(span.Slice(position, sizeof(uint)), value);
+		if (isBigEndian)
+			BinaryPrimitives.WriteUInt32BigEndian(span.Slice(position, sizeof(uint)), value);
+		else
+			BinaryPrimitives.WriteUInt32LittleEndian(span.Slice(position, sizeof(uint)), value);
 		position += sizeof(uint);
 	}
 
@@ -391,9 +434,13 @@ public static class SpanExtensions
 	/// <param name="span">The span of bytes.</param>
 	/// <param name="position">The position to write to; will be advanced by 8.</param>
 	/// <param name="value">The 64-bit signed integer value to write.</param>
-	public static void WriteInt64(this Span<byte> span, ref int position, long value)
+	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
+	public static void WriteInt64(this Span<byte> span, ref int position, long value, bool isBigEndian = false)
 	{
-		BinaryPrimitives.WriteInt64LittleEndian(span.Slice(position, sizeof(long)), value);
+		if (isBigEndian)
+			BinaryPrimitives.WriteInt64BigEndian(span.Slice(position, sizeof(long)), value);
+		else
+			BinaryPrimitives.WriteInt64LittleEndian(span.Slice(position, sizeof(long)), value);
 		position += sizeof(long);
 	}
 
@@ -403,10 +450,14 @@ public static class SpanExtensions
 	/// <param name="span">The span of bytes.</param>
 	/// <param name="position">The position to write to; will be advanced by 8.</param>
 	/// <param name="value">The 64-bit unsigned integer value to write.</param>
+	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
 	[CLSCompliant(false)]
-	public static void WriteUInt64(this Span<byte> span, ref int position, ulong value)
+	public static void WriteUInt64(this Span<byte> span, ref int position, ulong value, bool isBigEndian = false)
 	{
-		BinaryPrimitives.WriteUInt64LittleEndian(span.Slice(position, sizeof(ulong)), value);
+		if (isBigEndian)
+			BinaryPrimitives.WriteUInt64BigEndian(span.Slice(position, sizeof(ulong)), value);
+		else
+			BinaryPrimitives.WriteUInt64LittleEndian(span.Slice(position, sizeof(ulong)), value);
 		position += sizeof(ulong);
 	}
 
@@ -429,9 +480,13 @@ public static class SpanExtensions
     /// <param name="span">The span of bytes.</param>
     /// <param name="position">The position to write to; will be advanced by the size of a Half.</param>
     /// <param name="value">The Half value to write.</param>
-    public static void WriteHalf(this Span<byte> span, ref int position, Half value)
+    /// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
+    public static void WriteHalf(this Span<byte> span, ref int position, Half value, bool isBigEndian = false)
     {
-        BinaryPrimitives.WriteHalfLittleEndian(span.Slice(position, sizeof(Half)), value);
+        if (isBigEndian)
+            BinaryPrimitives.WriteHalfBigEndian(span.Slice(position, sizeof(Half)), value);
+        else
+            BinaryPrimitives.WriteHalfLittleEndian(span.Slice(position, sizeof(Half)), value);
         position += sizeof(Half);
     }
 
@@ -441,9 +496,13 @@ public static class SpanExtensions
     /// <param name="span">The span of bytes.</param>
     /// <param name="position">The position to write to; will be advanced by the size of a float.</param>
     /// <param name="value">The float value to write.</param>
-    public static void WriteSingle(this Span<byte> span, ref int position, float value)
+    /// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
+    public static void WriteSingle(this Span<byte> span, ref int position, float value, bool isBigEndian = false)
     {
-        BinaryPrimitives.WriteSingleLittleEndian(span.Slice(position, sizeof(float)), value);
+        if (isBigEndian)
+            BinaryPrimitives.WriteSingleBigEndian(span.Slice(position, sizeof(float)), value);
+        else
+            BinaryPrimitives.WriteSingleLittleEndian(span.Slice(position, sizeof(float)), value);
         position += sizeof(float);
     }
 
@@ -453,9 +512,13 @@ public static class SpanExtensions
     /// <param name="span">The span of bytes.</param>
     /// <param name="position">The position to write to; will be advanced by the size of a double.</param>
     /// <param name="value">The double value to write.</param>
-    public static void WriteDouble(this Span<byte> span, ref int position, double value)
+    /// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
+    public static void WriteDouble(this Span<byte> span, ref int position, double value, bool isBigEndian = false)
     {
-        BinaryPrimitives.WriteDoubleLittleEndian(span.Slice(position, sizeof(double)), value);
+        if (isBigEndian)
+            BinaryPrimitives.WriteDoubleBigEndian(span.Slice(position, sizeof(double)), value);
+        else
+            BinaryPrimitives.WriteDoubleLittleEndian(span.Slice(position, sizeof(double)), value);
         position += sizeof(double);
     }
 
