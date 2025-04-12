@@ -4,6 +4,10 @@ using System;
 using System.ComponentModel;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using System.Reflection;
+using System.Collections.Concurrent;
+using System.Linq;
 
 using Ecng.Common;
 
@@ -464,4 +468,85 @@ public static class Marshaler
 	/// </summary>
 	/// <param name="ptr">The pointer to the unmanaged memory to free.</param>
 	public static void FreeHGlobal(this IntPtr ptr) => Marshal.FreeHGlobal(ptr);
+
+	/// <summary>
+	/// Copies the contents of the string into unmanaged memory using the specified encoding.
+	/// </summary>
+	/// <param name="value">The managed string to copy.</param>
+	/// <param name="encoding">The encoding to use.</param>
+	/// <param name="ptr">A pointer to the target unmanaged memory.</param>
+	public static unsafe void FillString(this string value, Encoding encoding, byte* ptr)
+	{
+		if (value == null)
+			throw new ArgumentNullException(nameof(value));
+		if (encoding == null)
+			throw new ArgumentNullException(nameof(encoding));
+
+		fixed (char* s = value)
+			encoding.GetBytes(s, value.Length, ptr, value.Length);
+	}
+
+	/// <summary>
+	/// Formats a field's value to a string using the specified encoding.
+	/// </summary>
+	/// <param name="f">The field information.</param>
+	/// <param name="value">The value of the field.</param>
+	/// <param name="encoding">The encoding to use when converting byte arrays to strings.</param>
+	/// <returns>The formatted string representation of the field value.</returns>
+	private static object FormatToString(FieldInfo f, object value, Encoding encoding)
+	{
+		if (f is null)
+			throw new ArgumentNullException(nameof(f));
+
+		var attr = f.GetAttribute<FixedBufferAttribute>();
+
+		if (attr != null)
+		{
+			using var hdl = new GCHandle<object>(value, GCHandleType.Pinned, null);
+
+			unsafe
+			{
+				var array = new byte[attr.Length];
+
+				var b = (byte*)hdl.Value.AddrOfPinnedObject();
+
+				for (var i = 0; i < array.Length; ++i)
+				{
+					array[i] = *(b + i);
+				}
+
+				value = encoding.GetString(array).Replace("\0", "");
+			}
+		}
+		else if (value is Enum)
+		{
+			value = value.To<byte>();
+		}
+
+		return value;
+	}
+
+	private static readonly ConcurrentDictionary<Type, FieldInfo[]> _fields = [];
+
+	/// <summary>
+	/// Formats the object's fields and values into a string using the specified encoding.
+	/// </summary>
+	/// <param name="obj">The object whose fields are to be formatted.</param>
+	/// <param name="encoding">The encoding to use for formatting byte arrays.</param>
+	/// <returns>A string representation of the object's fields and values.</returns>
+	public static string FormatToString(this object obj, Encoding encoding)
+	{
+		if (obj is null)
+			throw new ArgumentNullException(nameof(obj));
+
+		if (encoding is null)
+			throw new ArgumentNullException(nameof(encoding));
+
+		var type = obj.GetType();
+
+		return _fields
+			.GetOrAdd(type, key => key.GetFields())
+			.Select(f => $"{f.Name}={FormatToString(f, f.GetValue(obj), encoding)}")
+			.JoinCommaSpace();
+	}
 }
