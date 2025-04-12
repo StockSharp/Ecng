@@ -114,7 +114,7 @@ public ref struct SpanReader
 	/// <returns>The TimeSpan value at the current position.</returns>
 	public TimeSpan ReadTimeSpan() => _span.ReadTimeSpan(ref _position);
 
-#if NETSTANDARD2_1
+#if NET5_0_OR_GREATER
 	/// <summary>
 	/// Reads a character from the current position and advances the position.
 	/// </summary>

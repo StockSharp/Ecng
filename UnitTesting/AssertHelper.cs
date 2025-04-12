@@ -147,4 +147,27 @@ public static class AssertHelper
 
 		value.AssertEqual(expected);
 	}
+
+
+	/// <summary>
+	/// Asserts that two arrays are equal by comparing their lengths and elements.
+	/// </summary>
+	/// <typeparam name="T">The type of the array elements.</typeparam>
+	/// <param name="value">The actual array to be tested. Can be null.</param>
+	/// <param name="expected">The expected array. If <paramref name="value"/> is null, then <paramref name="expected"/> must also be null.</param>
+	public static void AssertEqual<T>(this T[] value, T[] expected)
+	{
+		if (value is null)
+		{
+			expected.AssertNull();
+			return;
+		}
+
+		expected.AssertNotNull();
+
+		value.Length.AssertEqual(expected.Length);
+
+		for (var i = 0; i < value.Length; i++)
+			value[i].AssertEqual(expected[i]);
+	}
 }

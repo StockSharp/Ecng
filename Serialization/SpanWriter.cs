@@ -120,7 +120,7 @@ public ref struct SpanWriter
 	/// <param name="value">The string value to write.</param>
 	public void WriteString(string value) => _span.WriteString(ref _position, value);
 
-#if NETSTANDARD2_1
+#if NET5_0_OR_GREATER
 	/// <summary>
 	/// Writes a character value to the span at the current position and advances the position.
 	/// </summary>
