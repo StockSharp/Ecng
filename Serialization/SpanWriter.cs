@@ -1,9 +1,11 @@
 namespace Ecng.Serialization;
 
 using System;
+#if NET5_0_OR_GREATER
 using System.Text;
 
 using Ecng.Common;
+#endif
 
 /// <summary>
 /// Provides functionality for writing primitive data types to a span of bytes.

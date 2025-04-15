@@ -1,7 +1,9 @@
 namespace Ecng.Serialization;
 
 using System;
+#if NET5_0_OR_GREATER
 using System.Text;
+#endif
 
 /// <summary>
 /// A ref struct that reads primitive types from a span of bytes.
@@ -157,15 +159,10 @@ public ref struct SpanReader
 		if (encoding is null)
 			throw new ArgumentNullException(nameof(encoding));
 
-		if (length < 0 || (_position + length) > _span.Length)
-			throw new ArgumentOutOfRangeException(nameof(length), length, "Invalid value.");
-
 		if (length == 0)
 			return string.Empty;
 
-		var str = encoding.GetString(_span.Slice(_position, length));
-		_position += length;
-		return str;
+		return encoding.GetString(ReadSpan(length));
 	}
 #endif
 
