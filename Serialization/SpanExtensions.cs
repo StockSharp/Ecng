@@ -4,7 +4,6 @@ using System;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 
 /// <summary>
 /// Provides extension methods for reading from and writing to spans.
@@ -256,23 +255,6 @@ public static class SpanExtensions
         position += 16;
         return value;
     }
-
-    /// <summary>
-    /// Reads a UTF-8 encoded string from the specified read-only span at the current position.
-    /// </summary>
-    /// <param name="span">The read-only span of bytes.</param>
-    /// <param name="position">The position to read from; the position advances by 4 plus the length of the string in bytes.</param>
-    /// <returns>The string read, or null if the length is negative.</returns>
-    public static string ReadString(this ReadOnlySpan<byte> span, ref int position)
-    {
-        var length = span.ReadInt32(ref position);
-        if (length < 0)
-            return null;
-
-        var value = Encoding.UTF8.GetString(span.Slice(position, length));
-        position += length;
-        return value;
-    }
 #endif
 
 	/// <summary>
@@ -280,38 +262,15 @@ public static class SpanExtensions
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
 	/// <param name="position">The position to read from; will be advanced by 16 bytes.</param>
+	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
 	/// <returns>The decimal value read.</returns>
-	public static decimal ReadDecimal(this ReadOnlySpan<byte> span, ref int position)
+	public static decimal ReadDecimal(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
 	{
-		var lo = span.ReadInt32(ref position);
-		var mid = span.ReadInt32(ref position);
-		var hi = span.ReadInt32(ref position);
-		var flags = span.ReadInt32(ref position);
+		var lo = span.ReadInt32(ref position, isBigEndian);
+		var mid = span.ReadInt32(ref position, isBigEndian);
+		var hi = span.ReadInt32(ref position, isBigEndian);
+		var flags = span.ReadInt32(ref position, isBigEndian);
 		return new(lo, mid, hi, (flags & 0x80000000) != 0, (byte)((flags >> 16) & 0x7F));
-	}
-
-	/// <summary>
-	/// Reads a DateTime value from the specified read-only span at the current position.
-	/// </summary>
-	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by 8 bytes.</param>
-	/// <returns>The DateTime value read.</returns>
-	public static DateTime ReadDateTime(this ReadOnlySpan<byte> span, ref int position)
-	{
-		var ticks = span.ReadInt64(ref position);
-		return new(ticks);
-	}
-
-	/// <summary>
-	/// Reads a TimeSpan value from the specified read-only span at the current position.
-	/// </summary>
-	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by 8 bytes.</param>
-	/// <returns>The TimeSpan value read.</returns>
-	public static TimeSpan ReadTimeSpan(this ReadOnlySpan<byte> span, ref int position)
-	{
-		var ticks = span.ReadInt64(ref position);
-		return new(ticks);
 	}
 
 	/// <summary>
@@ -582,55 +541,14 @@ public static class SpanExtensions
 	/// <param name="span">The span of bytes.</param>
 	/// <param name="position">The position to write to; will be advanced by 16 bytes.</param>
 	/// <param name="value">The decimal value to write.</param>
-	public static void WriteDecimal(this Span<byte> span, ref int position, decimal value)
+	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
+	public static void WriteDecimal(this Span<byte> span, ref int position, decimal value, bool isBigEndian = false)
 	{
 		var bits = decimal.GetBits(value);
-		span.WriteInt32(ref position, bits[0]);
-		span.WriteInt32(ref position, bits[1]);
-		span.WriteInt32(ref position, bits[2]);
-		span.WriteInt32(ref position, bits[3]);
-	}
-
-	/// <summary>
-	/// Writes a DateTime value to the specified span at the current position.
-	/// </summary>
-	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 8 bytes.</param>
-	/// <param name="value">The DateTime value to write.</param>
-	public static void WriteDateTime(this Span<byte> span, ref int position, DateTime value)
-	{
-		span.WriteInt64(ref position, value.Ticks);
-	}
-
-	/// <summary>
-	/// Writes a TimeSpan value to the specified span at the current position.
-	/// </summary>
-	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 8 bytes.</param>
-	/// <param name="value">The TimeSpan value to write.</param>
-	public static void WriteTimeSpan(this Span<byte> span, ref int position, TimeSpan value)
-	{
-		span.WriteInt64(ref position, value.Ticks);
-	}
-
-	/// <summary>
-	/// Writes a UTF-8 encoded string to the specified span at the current position.
-	/// </summary>
-	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 4 plus the length of the string in bytes.</param>
-	/// <param name="value">The string value to write. If null, -1 is written as the length.</param>
-	public static void WriteString(this Span<byte> span, ref int position, string value)
-	{
-		if (value == null)
-		{
-			span.WriteInt32(ref position, -1);
-			return;
-		}
-
-		var bytes = Encoding.UTF8.GetBytes(value);
-		span.WriteInt32(ref position, bytes.Length);
-		bytes.AsSpan().CopyTo(span.Slice(position));
-		position += bytes.Length;
+		span.WriteInt32(ref position, bits[0], isBigEndian);
+		span.WriteInt32(ref position, bits[1], isBigEndian);
+		span.WriteInt32(ref position, bits[2], isBigEndian);
+		span.WriteInt32(ref position, bits[3], isBigEndian);
 	}
 
 	/// <summary>

@@ -140,32 +140,54 @@ public class SpanTests
 	[TestMethod]
 	public void WriteAndReadString()
 	{
+		var encoding = Encoding.UTF8;
+
 		string value = "Hello, World!";
-		var bytes = Encoding.UTF8.GetBytes(value);
-		Span<byte> buffer = new byte[4 + bytes.Length]; // 4 bytes for length + string bytes
+		var bytes = encoding.GetBytes(value);
+		Span<byte> buffer = new byte[bytes.Length]; // 4 bytes for length + string bytes
 
 		var writer = new SpanWriter(buffer);
-		writer.WriteString(value);
-		writer.Position.AssertEqual(4 + bytes.Length);
+		writer.WriteString(value, encoding);
+		writer.Position.AssertEqual(bytes.Length);
 
 		var reader = new SpanReader(buffer);
-		var readValue = reader.ReadString();
+		var readValue = reader.ReadString(bytes.Length, encoding);
 		readValue.AssertEqual(value);
-		reader.Position.AssertEqual(4 + bytes.Length);
+		reader.Position.AssertEqual(bytes.Length);
+
+		string value2 = "Hello World!";
+		var bytes2 = encoding.GetBytes(value + value2);
+		buffer = new byte[bytes2.Length];
+
+		writer = new SpanWriter(buffer);
+		writer.WriteString(value, encoding);
+		writer.WriteString(value2, encoding);
+		writer.Position.AssertEqual(bytes2.Length);
+
+		reader = new SpanReader(buffer);
+		readValue = reader.ReadString(bytes.Length, encoding);
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(bytes.Length);
+
+		readValue = reader.ReadString(bytes2.Length - bytes.Length, encoding);
+		readValue.AssertEqual(value2);
+		reader.Position.AssertEqual(bytes2.Length);
 	}
 
 	[TestMethod]
 	public void WriteAndReadNullString()
 	{
+		var encoding = Encoding.UTF8;
+
 		Span<byte> buffer = new byte[4];
 		var writer = new SpanWriter(buffer);
-		writer.WriteString(null);
-		writer.Position.AssertEqual(4);
+		writer.WriteString(null, encoding);
+		writer.Position.AssertEqual(0);
 
 		var reader = new SpanReader(buffer);
-		var readValue = reader.ReadString();
-		readValue.AssertNull();
-		reader.Position.AssertEqual(4);
+		var readValue = reader.ReadString(0, encoding);
+		readValue.IsEmpty().AssertTrue();
+		reader.Position.AssertEqual(0);
 	}
 
 	[TestMethod]

@@ -1,6 +1,7 @@
 namespace Ecng.Serialization;
 
 using System;
+using System.Text;
 
 /// <summary>
 /// A ref struct that reads primitive types from a span of bytes.
@@ -100,19 +101,19 @@ public ref struct SpanReader
 	/// Reads a decimal value from the current position and advances the position by 16 bytes.
 	/// </summary>
 	/// <returns>The decimal value at the current position.</returns>
-	public decimal ReadDecimal() => _span.ReadDecimal(ref _position);
+	public decimal ReadDecimal() => _span.ReadDecimal(ref _position, _isBigEndian);
 
 	/// <summary>
 	/// Reads a DateTime value from the current position and advances the position.
 	/// </summary>
 	/// <returns>The DateTime value at the current position.</returns>
-	public DateTime ReadDateTime() => _span.ReadDateTime(ref _position);
+	public DateTime ReadDateTime() => new(_span.ReadInt64(ref _position, _isBigEndian));
 
 	/// <summary>
 	/// Reads a TimeSpan value from the current position and advances the position.
 	/// </summary>
 	/// <returns>The TimeSpan value at the current position.</returns>
-	public TimeSpan ReadTimeSpan() => _span.ReadTimeSpan(ref _position);
+	public TimeSpan ReadTimeSpan() => new(_span.ReadInt64(ref _position, _isBigEndian));
 
 #if NET5_0_OR_GREATER
 	/// <summary>
@@ -144,12 +145,28 @@ public ref struct SpanReader
 	/// </summary>
 	/// <returns>The GUID value at the current position.</returns>
 	public Guid ReadGuid() => _span.ReadGuid(ref _position);
-    
+
 	/// <summary>
 	/// Reads a string from the current position and advances the position.
 	/// </summary>
+	/// <param name="length">The length of the string in bytes. The length must be a multiple of the character size.</param>
+	/// <param name="encoding">The encoding to use for the string. This parameter cannot be null.</param>
 	/// <returns>The string at the current position.</returns>
-	public string ReadString() => _span.ReadString(ref _position);
+	public string ReadString(int length, Encoding encoding)
+	{
+		if (encoding is null)
+			throw new ArgumentNullException(nameof(encoding));
+
+		if (length < 0 || (_position + length) > _span.Length)
+			throw new ArgumentOutOfRangeException(nameof(length), length, "Invalid value.");
+
+		if (length == 0)
+			return string.Empty;
+
+		var str = encoding.GetString(_span.Slice(_position, length));
+		_position += length;
+		return str;
+	}
 #endif
 
 	/// <summary>

@@ -1,6 +1,9 @@
 namespace Ecng.Serialization;
 
 using System;
+using System.Text;
+
+using Ecng.Common;
 
 /// <summary>
 /// Provides functionality for writing primitive data types to a span of bytes.
@@ -37,6 +40,12 @@ public ref struct SpanWriter
 	/// Gets the number of bytes remaining in the span.
 	/// </summary>
 	public readonly int Remaining => _span.Length - _position;
+
+	/// <summary>
+	/// Gets a <see cref="ReadOnlySpan{Byte}"/> containing the data written so far.
+	/// </summary>
+	/// <returns>A <see cref="ReadOnlySpan{Byte}"/> containing the written data.</returns>
+	public readonly ReadOnlySpan<byte> GetWrittenSpan() => _span.Slice(0, _position);
 
 	/// <summary>
 	/// Writes a byte value to the span at the current position and advances the position.
@@ -100,27 +109,37 @@ public ref struct SpanWriter
 	/// Writes a decimal value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The decimal value to write.</param>
-	public void WriteDecimal(decimal value) => _span.WriteDecimal(ref _position, value);
+	public void WriteDecimal(decimal value) => _span.WriteDecimal(ref _position, value, _isBigEndian);
 
 	/// <summary>
 	/// Writes a DateTime value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The DateTime value to write.</param>
-	public void WriteDateTime(DateTime value) => _span.WriteDateTime(ref _position, value);
+	public void WriteDateTime(DateTime value) => _span.WriteInt64(ref _position, value.Ticks, _isBigEndian);
 
 	/// <summary>
 	/// Writes a TimeSpan value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The TimeSpan value to write.</param>
-	public void WriteTimeSpan(TimeSpan value) => _span.WriteTimeSpan(ref _position, value);
+	public void WriteTimeSpan(TimeSpan value) => _span.WriteInt64(ref _position, value.Ticks, _isBigEndian);
 
+#if NET5_0_OR_GREATER
 	/// <summary>
 	/// Writes a string value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The string value to write.</param>
-	public void WriteString(string value) => _span.WriteString(ref _position, value);
+	/// <param name="encoding">The encoding to use for the string. This parameter cannot be null.</param>
+	public void WriteString(string value, Encoding encoding)
+	{
+		if (value.IsEmpty())
+			return;
 
-#if NET5_0_OR_GREATER
+		if (encoding is null)
+			throw new ArgumentNullException(nameof(encoding));
+
+		_position += encoding.GetBytes(value, _span.Slice(_position));
+	}
+
 	/// <summary>
 	/// Writes a character value to the span at the current position and advances the position.
 	/// </summary>
