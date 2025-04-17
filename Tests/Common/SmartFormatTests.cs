@@ -8,8 +8,8 @@ using SmartFormat;
 public class SmartFormatTests
 {
 	[TestMethod]
-    public void Plural()
-    {
+	public void Plural()
+	{
 		var cultureCodes = new Dictionary<string, string>
 		{
 			{ "en", "en-US" },

@@ -292,56 +292,56 @@ public class SpanTests
 		reader.Position.AssertEqual(5);
 	}
 
-    [TestMethod]
-    public void WriteAndReadFloat_LittleEndian()
-    {
-        Span<byte> buffer = new byte[4];
-        var writer = new SpanWriter(buffer);
-        float value = 123.456f;
-        writer.WriteSingle(value);
-        writer.Position.AssertEqual(4);
-
-        var expectedBytes = BitConverter.GetBytes(value);
-        buffer.ToArray().AssertEqual(expectedBytes);
-
-        var reader = new SpanReader(buffer);
-        var readValue = reader.ReadSingle();
-        readValue.AssertEqual(value, 0.0001f);
-        reader.Position.AssertEqual(4);
-    }
-
-    [TestMethod]
-    public void WriteAndReadFloat_BigEndian()
-    {
-        Span<byte> buffer = new byte[4];
-        var writer = new SpanWriter(buffer, isBigEndian: true);
+	[TestMethod]
+	public void WriteAndReadFloat_LittleEndian()
+	{
+		Span<byte> buffer = new byte[4];
+		var writer = new SpanWriter(buffer);
 		float value = 123.456f;
-        writer.WriteSingle(value);
-        writer.Position.AssertEqual(4);
+		writer.WriteSingle(value);
+		writer.Position.AssertEqual(4);
 
-        var expectedBytes = BitConverter.GetBytes(value);
-        if (BitConverter.IsLittleEndian)
-            Array.Reverse(expectedBytes);
-        buffer.ToArray().AssertEqual(expectedBytes);
+		var expectedBytes = BitConverter.GetBytes(value);
+		buffer.ToArray().AssertEqual(expectedBytes);
 
-        var reader = new SpanReader(buffer, isBigEndian: true);
-        var readValue = reader.ReadSingle();
-        readValue.AssertEqual(value, 0.0001f);
-        reader.Position.AssertEqual(4);
-    }
+		var reader = new SpanReader(buffer);
+		var readValue = reader.ReadSingle();
+		readValue.AssertEqual(value, 0.0001f);
+		reader.Position.AssertEqual(4);
+	}
 
-    [TestMethod]
-    public void WriteAndReadGuid()
-    {
-        Span<byte> buffer = new byte[16];
-        var value = Guid.NewGuid();
-        var writer = new SpanWriter(buffer);
-        writer.WriteGuid(value);
-        writer.Position.AssertEqual(16);
+	[TestMethod]
+	public void WriteAndReadFloat_BigEndian()
+	{
+		Span<byte> buffer = new byte[4];
+		var writer = new SpanWriter(buffer, isBigEndian: true);
+		float value = 123.456f;
+		writer.WriteSingle(value);
+		writer.Position.AssertEqual(4);
 
-        var reader = new SpanReader(buffer);
-        var readValue = reader.ReadGuid();
-        readValue.AssertEqual(value);
-        reader.Position.AssertEqual(16);
-    }
+		var expectedBytes = BitConverter.GetBytes(value);
+		if (BitConverter.IsLittleEndian)
+			Array.Reverse(expectedBytes);
+		buffer.ToArray().AssertEqual(expectedBytes);
+
+		var reader = new SpanReader(buffer, isBigEndian: true);
+		var readValue = reader.ReadSingle();
+		readValue.AssertEqual(value, 0.0001f);
+		reader.Position.AssertEqual(4);
+	}
+
+	[TestMethod]
+	public void WriteAndReadGuid()
+	{
+		Span<byte> buffer = new byte[16];
+		var value = Guid.NewGuid();
+		var writer = new SpanWriter(buffer);
+		writer.WriteGuid(value);
+		writer.Position.AssertEqual(16);
+
+		var reader = new SpanReader(buffer);
+		var readValue = reader.ReadGuid();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(16);
+	}
 }

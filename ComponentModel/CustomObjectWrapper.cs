@@ -38,7 +38,7 @@ public abstract class CustomObjectWrapper<T>(T obj) : Disposable, INotifyPropert
 		public object Owner { get; } = owner;
 
 		/// <inheritdoc />
-		public override object GetValue(object c)  => _orig.GetValue(c);
+		public override object GetValue(object c) => _orig.GetValue(c);
 		/// <inheritdoc />
 		public override void SetValue(object c, object value) => throw new NotSupportedException();
 

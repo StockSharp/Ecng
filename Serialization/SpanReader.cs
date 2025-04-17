@@ -123,25 +123,25 @@ public ref struct SpanReader
 	/// </summary>
 	/// <returns>The character at the current position.</returns>
 	public char ReadChar() => _span.ReadChar(ref _position);
-    
+
 	/// <summary>
 	/// Reads a half-precision floating-point value from the current position and advances the position by 2 bytes.
 	/// </summary>
 	/// <returns>The half-precision floating-point value at the current position.</returns>
 	public Half ReadHalf() => _span.ReadHalf(ref _position, _isBigEndian);
-    
+
 	/// <summary>
 	/// Reads a single-precision floating-point value from the current position and advances the position by 4 bytes.
 	/// </summary>
 	/// <returns>The single-precision floating-point value at the current position.</returns>
 	public float ReadSingle() => _span.ReadSingle(ref _position, _isBigEndian);
-    
+
 	/// <summary>
 	/// Reads a double-precision floating-point value from the current position and advances the position by 8 bytes.
 	/// </summary>
 	/// <returns>The double-precision floating-point value at the current position.</returns>
 	public double ReadDouble() => _span.ReadDouble(ref _position, _isBigEndian);
-    
+
 	/// <summary>
 	/// Reads a GUID value from the current position and advances the position by 16 bytes.
 	/// </summary>

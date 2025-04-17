@@ -16,7 +16,7 @@ public enum HorizontalAlignment
 	Center,
 
 	/// <summary>
-	///  An element aligned to the right of the layout slot for the parent element.
+	/// An element aligned to the right of the layout slot for the parent element.
 	/// </summary>
 	Right,
 

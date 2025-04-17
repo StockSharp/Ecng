@@ -579,11 +579,6 @@ public class FileLogListener : LogListener
 		return name;
 	}
 
-	//private string DateTimeFormat
-	//{
-	//    get { return SeparateByDates != SeparateByDateModes.None ? TimeFormat : DateFormat + " " + TimeFormat; }
-	//}
-
 	private void WriteMessage(TextWriter writer, LogMessage message)
 	{
 		writer.Write(ToFastDateCharArray(message.Time));

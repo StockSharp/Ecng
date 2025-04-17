@@ -480,7 +480,7 @@ public class ItemsSourceBase : ItemsSourceBase<object>
 			.Concat(type.GetInterfaces())
 			.Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == genericInterfaceType)
 			.Select(i => i.GetGenericArguments()[0])
-		    .FirstOrDefault();
+			.FirstOrDefault();
 	}
 
 	private static Type GetCommonType(Type[] types)

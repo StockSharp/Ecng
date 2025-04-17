@@ -147,25 +147,25 @@ public ref struct SpanWriter
 	/// </summary>
 	/// <param name="value">The character value to write.</param>
 	public void WriteChar(char value) => _span.WriteChar(ref _position, value);
-    
+
 	/// <summary>
 	/// Writes a Half value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The Half value to write.</param>
 	public void WriteHalf(Half value) => _span.WriteHalf(ref _position, value, _isBigEndian);
-    
+
 	/// <summary>
 	/// Writes a single-precision floating-point value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The single-precision floating-point value to write.</param>
 	public void WriteSingle(float value) => _span.WriteSingle(ref _position, value, _isBigEndian);
-    
+
 	/// <summary>
 	/// Writes a double-precision floating-point value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The double-precision floating-point value to write.</param>
 	public void WriteDouble(double value) => _span.WriteDouble(ref _position, value, _isBigEndian);
-    
+
 	/// <summary>
 	/// Writes a GUID value to the span at the current position and advances the position.
 	/// </summary>

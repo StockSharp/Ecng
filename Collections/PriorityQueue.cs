@@ -9,22 +9,22 @@ using System.Linq;
 using Ecng.Common;
 
 /// <summary>
-///  Represents a min priority queue.
+/// Represents a min priority queue.
 /// </summary>
 /// <typeparam name="TElement">Specifies the type of elements in the queue.</typeparam>
 /// <typeparam name="TPriority">Specifies the type of priority associated with enqueued elements.</typeparam>
 /// <remarks>
-///  Implements an array-backed quaternary min-heap. Each element is enqueued with an associated priority
-///  that determines the dequeue order: elements with the lowest priority get dequeued first.
+/// Implements an array-backed quaternary min-heap. Each element is enqueued with an associated priority
+/// that determines the dequeue order: elements with the lowest priority get dequeued first.
 /// </remarks>
 /// <remarks>
-///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class
-///  with the specified custom priority comparer.
+/// Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class
+/// with the specified custom priority comparer.
 /// </remarks>
 /// <param name="subtractAbs">The function that calculates the absolute difference between two priorities.</param>
 /// <param name="comparer">
-///  Custom comparer dictating the ordering of elements.
-///  Uses <see cref="Comparer{T}.Default" /> if the argument is <see langword="null"/>.
+/// Custom comparer dictating the ordering of elements.
+/// Uses <see cref="Comparer{T}.Default" /> if the argument is <see langword="null"/>.
 /// </param>
 [DebuggerDisplay("Count = {Count}")]
 public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPriority> subtractAbs, IComparer<TPriority> comparer) : ICollection<(TPriority, TElement)>, IQueue<(TPriority priority, TElement element)>
@@ -151,7 +151,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	private readonly Func<TPriority, TPriority, TPriority> _subtractAbs = subtractAbs ?? throw new ArgumentNullException(nameof(subtractAbs));
 
 	/// <summary>
-	///  Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class.
+	/// Initializes a new instance of the <see cref="PriorityQueue{TPriority, TElement}"/> class.
 	/// </summary>
 	public PriorityQueue(Func<TPriority, TPriority, TPriority> subtractAbs)
 		: this(subtractAbs, Comparer<TPriority>.Default)
@@ -161,14 +161,14 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	private int _count;
 
 	/// <summary>
-	///  Gets the number of elements contained in the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// Gets the number of elements contained in the <see cref="PriorityQueue{TPriority, TElement}"/>.
 	/// </summary>
 	public int Count => _count;
 
 	private readonly IComparer<TPriority> _comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
 
 	/// <summary>
-	///  Gets the priority comparer used by the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// Gets the priority comparer used by the <see cref="PriorityQueue{TPriority, TElement}"/>.
 	/// </summary>
 	public IComparer<TPriority> Comparer => _comparer;
 
@@ -326,7 +326,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	}
 
 	/// <summary>
-	///  Adds the specified element with associated priority to the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// Adds the specified element with associated priority to the <see cref="PriorityQueue{TPriority, TElement}"/>.
 	/// </summary>
 	/// <param name="priority">The priority with which to associate the new element.</param>
 	/// <param name="element">The element to add to the <see cref="PriorityQueue{TPriority, TElement}"/>.</param>
@@ -343,7 +343,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	}
 
 	/// <summary>
-	///  Returns the minimal element from the <see cref="PriorityQueue{TPriority, TElement}"/> without removing it.
+	/// Returns the minimal element from the <see cref="PriorityQueue{TPriority, TElement}"/> without removing it.
 	/// </summary>
 	/// <exception cref="InvalidOperationException">The <see cref="PriorityQueue{TPriority, TElement}"/> is empty.</exception>
 	/// <returns>The minimal element of the <see cref="PriorityQueue{TPriority, TElement}"/>.</returns>
@@ -356,7 +356,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	}
 
 	/// <summary>
-	///  Removes and returns the minimal element from the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// Removes and returns the minimal element from the <see cref="PriorityQueue{TPriority, TElement}"/>.
 	/// </summary>
 	/// <exception cref="InvalidOperationException">The queue is empty.</exception>
 	/// <returns>The minimal element of the <see cref="PriorityQueue{TPriority, TElement}"/>.</returns>
@@ -373,16 +373,16 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	}
 
 	/// <summary>
-	///  Removes the minimal element and then immediately adds the specified element with associated priority to the <see cref="PriorityQueue{TPriority, TElement}"/>,
+	/// Removes the minimal element and then immediately adds the specified element with associated priority to the <see cref="PriorityQueue{TPriority, TElement}"/>,
 	/// </summary>
 	/// <param name="priority">The priority with which to associate the new element.</param>
 	/// <param name="element">The element to add to the <see cref="PriorityQueue{TPriority, TElement}"/>.</param>
 	/// <exception cref="InvalidOperationException">The queue is empty.</exception>
 	/// <returns>The minimal element removed before performing the enqueue operation.</returns>
 	/// <remarks>
-	///  Implements an extract-then-insert heap operation that is generally more efficient
-	///  than sequencing Dequeue and Enqueue operations: in the worst case scenario only one
-	///  shift-down operation is required.
+	/// Implements an extract-then-insert heap operation that is generally more efficient
+	/// than sequencing Dequeue and Enqueue operations: in the worst case scenario only one
+	/// shift-down operation is required.
 	/// </remarks>
 	public TElement DequeueEnqueue(TPriority priority, TElement element)
 	{
@@ -401,15 +401,15 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	}
 
 	/// <summary>
-	///  Removes the minimal element from the <see cref="PriorityQueue{TPriority, TElement}"/>,
-	///  and copies it to the <paramref name="element"/> parameter,
-	///  and its associated priority to the <paramref name="priority"/> parameter.
+	/// Removes the minimal element from the <see cref="PriorityQueue{TPriority, TElement}"/>,
+	/// and copies it to the <paramref name="element"/> parameter,
+	/// and its associated priority to the <paramref name="priority"/> parameter.
 	/// </summary>
 	/// <param name="element">The removed element.</param>
 	/// <param name="priority">The priority associated with the removed element.</param>
 	/// <returns>
-	///  <see langword="true"/> if the element is successfully removed;
-	///  <see langword="false"/> if the <see cref="PriorityQueue{TPriority, TElement}"/> is empty.
+	/// <see langword="true"/> if the element is successfully removed;
+	/// <see langword="false"/> if the <see cref="PriorityQueue{TPriority, TElement}"/> is empty.
 	/// </returns>
 	public bool TryDequeue(out TElement element, out TPriority priority)
 	{
@@ -425,16 +425,16 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	}
 
 	/// <summary>
-	///  Returns a value that indicates whether there is a minimal element in the <see cref="PriorityQueue{TPriority, TElement}"/>,
-	///  and if one is present, copies it to the <paramref name="element"/> parameter,
-	///  and its associated priority to the <paramref name="priority"/> parameter.
-	///  The element is not removed from the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// Returns a value that indicates whether there is a minimal element in the <see cref="PriorityQueue{TPriority, TElement}"/>,
+	/// and if one is present, copies it to the <paramref name="element"/> parameter,
+	/// and its associated priority to the <paramref name="priority"/> parameter.
+	/// The element is not removed from the <see cref="PriorityQueue{TPriority, TElement}"/>.
 	/// </summary>
 	/// <param name="element">The minimal element in the queue.</param>
 	/// <param name="priority">The priority associated with the minimal element.</param>
 	/// <returns>
-	///  <see langword="true"/> if there is a minimal element;
-	///  <see langword="false"/> if the <see cref="PriorityQueue{TPriority, TElement}"/> is empty.
+	/// <see langword="true"/> if there is a minimal element;
+	/// <see langword="false"/> if the <see cref="PriorityQueue{TPriority, TElement}"/> is empty.
 	/// </returns>
 	public bool TryPeek(out TElement element, out TPriority priority)
 	{
@@ -450,16 +450,16 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	}
 
 	/// <summary>
-	///  Adds the specified element with associated priority to the <see cref="PriorityQueue{TPriority, TElement}"/>,
-	///  and immediately removes the minimal element, returning the result.
+	/// Adds the specified element with associated priority to the <see cref="PriorityQueue{TPriority, TElement}"/>,
+	/// and immediately removes the minimal element, returning the result.
 	/// </summary>
 	/// <param name="priority">The priority with which to associate the new element.</param>
 	/// <param name="element">The element to add to the <see cref="PriorityQueue{TPriority, TElement}"/>.</param>
 	/// <returns>The minimal element removed after the enqueue operation.</returns>
 	/// <remarks>
-	///  Implements an insert-then-extract heap operation that is generally more efficient
-	///  than sequencing Enqueue and Dequeue operations: in the worst case scenario only one
-	///  shift-down operation is required.
+	/// Implements an insert-then-extract heap operation that is generally more efficient
+	/// than sequencing Enqueue and Dequeue operations: in the worst case scenario only one
+	/// shift-down operation is required.
 	/// </remarks>
 	public TElement EnqueueDequeue(TPriority priority, TElement element)
 	{
@@ -476,11 +476,11 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	}
 
 	/// <summary>
-	///  Enqueues a sequence of element/priority pairs to the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// Enqueues a sequence of element/priority pairs to the <see cref="PriorityQueue{TPriority, TElement}"/>.
 	/// </summary>
 	/// <param name="items">The pairs of elements and priorities to add to the queue.</param>
 	/// <exception cref="ArgumentNullException">
-	///  The specified <paramref name="items"/> argument was <see langword="null"/>.
+	/// The specified <paramref name="items"/> argument was <see langword="null"/>.
 	/// </exception>
 	public void EnqueueRange(IEnumerable<(TPriority priority, TElement element)> items)
 	{
@@ -492,13 +492,13 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	}
 
 	/// <summary>
-	///  Enqueues a sequence of elements pairs to the <see cref="PriorityQueue{TPriority, TElement}"/>,
-	///  all associated with the specified priority.
+	/// Enqueues a sequence of elements pairs to the <see cref="PriorityQueue{TPriority, TElement}"/>,
+	/// all associated with the specified priority.
 	/// </summary>
 	/// <param name="elements">The elements to add to the queue.</param>
 	/// <param name="priority">The priority to associate with the new elements.</param>
 	/// <exception cref="ArgumentNullException">
-	///  The specified <paramref name="elements"/> argument was <see langword="null"/>.
+	/// The specified <paramref name="elements"/> argument was <see langword="null"/>.
 	/// </exception>
 	public void EnqueueRange(TPriority priority, IEnumerable<TElement> elements)
 	{
@@ -566,7 +566,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	}
 
 	/// <summary>
-	///  Removes all items from the <see cref="PriorityQueue{TPriority, TElement}"/>.
+	/// Removes all items from the <see cref="PriorityQueue{TPriority, TElement}"/>.
 	/// </summary>
 	public void Clear()
 	{

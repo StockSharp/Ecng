@@ -52,89 +52,96 @@ class DispatcherNotifiableObjectTimer
 /// </summary>
 public class DispatcherNotifiableObject<T> : CustomObjectWrapper<T>
 	where T : class, INotifyPropertyChanged
-    {
+{
 	private static DispatcherNotifiableObjectTimer Timer => DispatcherNotifiableObjectTimer.Instance;
 
+	private TimeSpan _notifyInterval;
+
 	/// <summary>
+	/// Interval between property changed notifications.
 	/// </summary>
 	protected TimeSpan NotifyInterval
-        {
-            get => _notifyInterval;
-            set
-            {
-                _notifyInterval = value;
+	{
+		get => _notifyInterval;
+		set
+		{
+			_notifyInterval = value;
 			Timer.Interval = value;
-            }
-        }
+		}
+	}
 
 	private readonly IDispatcher _dispatcher;
 	private readonly SynchronizedSet<string> _names = [];
-        private DateTime _nextTime;
-        private TimeSpan _notifyInterval;
+	private DateTime _nextTime;
 
-        /// <summary>
-        /// </summary>
-        public DispatcherNotifiableObject(IDispatcher dispatcher, T obj)
+	/// <summary>
+	/// Instance of <see cref="DispatcherNotifiableObject{T}"/>.
+	/// </summary>
+	/// <param name="dispatcher">Dispatcher to use for invoking property changed notifications.</param>
+	/// <param name="obj">Parent object to wrap.</param>
+	public DispatcherNotifiableObject(IDispatcher dispatcher, T obj)
 		: base(obj)
-        {
+	{
 		_dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 		NotifyInterval = TimeSpan.FromMilliseconds(333);
 		Timer.Tick += NotifiableObjectGuiWrapperTimerOnTick;
 
-            Obj.PropertyChanged += (_, args) => _names.Add(args.PropertyName);
-        }
+		Obj.PropertyChanged += (_, args) => _names.Add(args.PropertyName);
+	}
 
-        private void NotifiableObjectGuiWrapperTimerOnTick()
-        {
-            if (IsDisposed) return;
+	private void NotifiableObjectGuiWrapperTimerOnTick()
+	{
+		if (IsDisposed)
+			return;
 
-            var now = DateTime.UtcNow;
-            if (now < _nextTime)
-                return;
+		var now = DateTime.UtcNow;
+		if (now < _nextTime)
+			return;
 
-            var interval = NotifyInterval;
-            if (interval < Timer.Interval)
-                interval = Timer.Interval;
+		var interval = NotifyInterval;
+		if (interval < Timer.Interval)
+			interval = Timer.Interval;
 
-            _nextTime = now + interval;
+		_nextTime = now + interval;
 
-            string[] names;
+		string[] names;
 
-            lock(_names.SyncRoot)
-            {
-                names = [.. _names.Where(NeedToNotify)];
-                _names.Clear();
-            }
+		lock (_names.SyncRoot)
+		{
+			names = [.. _names.Where(NeedToNotify)];
+			_names.Clear();
+		}
 
-            if (names.Length == 0)
-                return;
+		if (names.Length == 0)
+			return;
 
 		_dispatcher.InvokeAsync(() => names.ForEach(OnPropertyChanged));
-        }
+	}
 
-        /// <inheritdoc />
-        protected override void DisposeManaged()
-        {
+	/// <inheritdoc />
+	protected override void DisposeManaged()
+	{
 		Timer.Tick -= NotifiableObjectGuiWrapperTimerOnTick;
 
-            base.DisposeManaged();
-        }
+		base.DisposeManaged();
+	}
 
-        /// <summary>
-        /// </summary>
-        protected virtual bool NeedToNotify(string propName) => true;
+	/// <summary>
+	/// Called when property changed.
+	/// </summary>
+	protected virtual bool NeedToNotify(string propName) => true;
 
-        /// <inheritdoc />
-        protected override IEnumerable<EventDescriptor> OnGetEvents()
-        {
-            var descriptor = TypeDescriptor
+	/// <inheritdoc />
+	protected override IEnumerable<EventDescriptor> OnGetEvents()
+	{
+		var descriptor = TypeDescriptor
 			.GetEvents(this, true)
 			.OfType<EventDescriptor>()
 			.First(ed => ed.Name == nameof(PropertyChanged));
 
-            return
-                base.OnGetEvents()
-                    .Where(ed => ed.Name != nameof(PropertyChanged))
-                    .Concat([descriptor]);
-        }
-    }
+		return
+			base.OnGetEvents()
+				.Where(ed => ed.Name != nameof(PropertyChanged))
+				.Concat([descriptor]);
+	}
+}

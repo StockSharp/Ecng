@@ -319,7 +319,7 @@ public class ObservableCollectionEx<TItem> : IListEx<TItem>, IList, INotifyColle
 
 	private void OnCountPropertyChanged() => OnPropertyChanged("Count");
 
-	// This must agree with Binding.IndexerName.  It is declared separately
+	// This must agree with Binding.IndexerName. It is declared separately
 	// here so as to avoid a dependency on PresentationFramework.dll.
 	private void OnIndexerPropertyChanged() => OnPropertyChanged("Item[]");
 
