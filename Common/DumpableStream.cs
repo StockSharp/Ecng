@@ -31,6 +31,9 @@ public class DumpableStream(Stream underlying) : Stream
 
 	private static byte[] GetDump(AllocationArray<byte> dump)
 	{
+		if (dump.Count == 0)
+			return [];
+
 		var buffer = new byte[dump.Count];
 		Array.Copy(dump.Buffer, 0, buffer, 0, buffer.Length);
 		dump.Count = 0;
