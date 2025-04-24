@@ -1202,7 +1202,7 @@ public enum CurrencyTypes
 	EURT,
 	
 	/// <summary>
-	/// Basic Attention Token.
+	/// Thai baht
 	/// </summary>
 	[EnumMember]
 	[Crypto]
@@ -1419,7 +1419,7 @@ public enum CurrencyTypes
 	MZN,
 
 	/// <summary>
-	/// Mozambican metical.
+	/// Afghan afghani
 	/// </summary>
 	[EnumMember]
 	AFN,
