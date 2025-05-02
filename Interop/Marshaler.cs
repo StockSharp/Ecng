@@ -595,4 +595,22 @@ public unsafe static class Marshaler
 		value.FillString(_ascii, ptr);
 		return native;
 	}
+
+	/// <summary>
+	/// Creates a span from the unmanaged memory pointer.
+	/// </summary>
+	/// <param name="ptr">The unmanaged memory pointer.</param>
+	/// <param name="length">The number of bytes in the span.</param>
+	/// <returns>A <see cref="Span{Byte}"/> representing the unmanaged memory.</returns>
+	public static Span<byte> ToSpan(this IntPtr ptr, int length)
+		=> new(ptr.ToPointer(), length);
+
+	/// <summary>
+	/// Creates a read-only span from the unmanaged memory pointer.
+	/// </summary>
+	/// <param name="ptr">The unmanaged memory pointer.</param>
+	/// <param name="length">The number of bytes in the span.</param>
+	/// <returns>A <see cref="ReadOnlySpan{Byte}"/> representing the unmanaged memory.</returns>
+	public static ReadOnlySpan<byte> ToReadOnlySpan(this IntPtr ptr, int length)
+		=> new(ptr.ToPointer(), length);
 }
