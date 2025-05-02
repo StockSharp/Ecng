@@ -1153,6 +1153,222 @@ public unsafe struct Utf8String32
 }
 
 /// <summary>
+/// Represents a UTF-8 encoded string with a fixed size of 33 bytes.
+/// </summary>
+public unsafe struct Utf8String33
+{
+	private const int _size = 33;
+
+	/// <summary>
+	/// Fixed byte array storing the UTF-8 encoded string.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Implicit conversion from Utf8String33 to <see cref="string"/>.
+	/// </summary>
+	/// <param name="value">The Utf8String33 instance.</param>
+	public static implicit operator string(Utf8String33 value)
+		=> _size.ToUtf8(value.Value);
+
+	/// <summary>
+	/// Explicit conversion from <see cref="string"/> to Utf8String33.
+	/// </summary>
+	/// <param name="value">The string value.</param>
+	public static explicit operator Utf8String33(string value)
+	{
+		var str = new Utf8String33();
+		return str.ToUtf8(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of this instance.
+	/// </summary>
+	/// <returns>The string representation.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents a UTF-8 encoded string with a fixed size of 48 bytes.
+/// </summary>
+public unsafe struct Utf8String48
+{
+	private const int _size = 48;
+
+	/// <summary>
+	/// Fixed byte array storing the UTF-8 encoded string.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Implicit conversion from Utf8String48 to <see cref="string"/>.
+	/// </summary>
+	/// <param name="value">The Utf8String48 instance.</param>
+	public static implicit operator string(Utf8String48 value)
+		=> _size.ToUtf8(value.Value);
+
+	/// <summary>
+	/// Explicit conversion from <see cref="string"/> to Utf8String48.
+	/// </summary>
+	/// <param name="value">The string value.</param>
+	public static explicit operator Utf8String48(string value)
+	{
+		var str = new Utf8String48();
+		return str.ToUtf8(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of this instance.
+	/// </summary>
+	/// <returns>The string representation.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents a UTF-8 encoded string with a fixed size of 64 bytes.
+/// </summary>
+public unsafe struct Utf8String64
+{
+	private const int _size = 64;
+
+	/// <summary>
+	/// Fixed byte array storing the UTF-8 encoded string.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Implicit conversion from Utf8String64 to <see cref="string"/>.
+	/// </summary>
+	/// <param name="value">The Utf8String64 instance.</param>
+	public static implicit operator string(Utf8String64 value)
+		=> _size.ToUtf8(value.Value);
+
+	/// <summary>
+	/// Explicit conversion from <see cref="string"/> to Utf8String64.
+	/// </summary>
+	/// <param name="value">The string value.</param>
+	public static explicit operator Utf8String64(string value)
+	{
+		var str = new Utf8String64();
+		return str.ToUtf8(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of this instance.
+	/// </summary>
+	/// <returns>The string representation.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents a UTF-8 encoded string with a fixed size of 65 bytes.
+/// </summary>
+public unsafe struct Utf8String65
+{
+	private const int _size = 65;
+
+	/// <summary>
+	/// Fixed byte array storing the UTF-8 encoded string.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Implicit conversion from Utf8String65 to <see cref="string"/>.
+	/// </summary>
+	/// <param name="value">The Utf8String65 instance.</param>
+	public static implicit operator string(Utf8String65 value)
+		=> _size.ToUtf8(value.Value);
+
+	/// <summary>
+	/// Explicit conversion from <see cref="string"/> to Utf8String65.
+	/// </summary>
+	/// <param name="value">The string value.</param>
+	public static explicit operator Utf8String65(string value)
+	{
+		var str = new Utf8String65();
+		return str.ToUtf8(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of this instance.
+	/// </summary>
+	/// <returns>The string representation.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents a UTF-8 encoded string with a fixed size of 128 bytes.
+/// </summary>
+public unsafe struct Utf8String128
+{
+	private const int _size = 128;
+
+	/// <summary>
+	/// Fixed byte array storing the UTF-8 encoded string.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Implicit conversion from Utf8String128 to <see cref="string"/>.
+	/// </summary>
+	/// <param name="value">The Utf8String128 instance.</param>
+	public static implicit operator string(Utf8String128 value)
+		=> _size.ToUtf8(value.Value);
+
+	/// <summary>
+	/// Explicit conversion from <see cref="string"/> to Utf8String128.
+	/// </summary>
+	/// <param name="value">The string value.</param>
+	public static explicit operator Utf8String128(string value)
+	{
+		var str = new Utf8String128();
+		return str.ToUtf8(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of this instance.
+	/// </summary>
+	/// <returns>The string representation.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents a UTF-8 encoded string with a fixed size of 129 bytes.
+/// </summary>
+public unsafe struct Utf8String129
+{
+	private const int _size = 129;
+
+	/// <summary>
+	/// Fixed byte array storing the UTF-8 encoded string.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Implicit conversion from Utf8String129 to <see cref="string"/>.
+	/// </summary>
+	/// <param name="value">The Utf8String129 instance.</param>
+	public static implicit operator string(Utf8String129 value)
+		=> _size.ToUtf8(value.Value);
+
+	/// <summary>
+	/// Explicit conversion from <see cref="string"/> to Utf8String129.
+	/// </summary>
+	/// <param name="value">The string value.</param>
+	public static explicit operator Utf8String129(string value)
+	{
+		var str = new Utf8String129();
+		return str.ToUtf8(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of this instance.
+	/// </summary>
+	/// <returns>The string representation.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
 /// Represents a UTF-8 encoded string with a fixed size of 256 bytes.
 /// </summary>
 public unsafe struct Utf8String256
