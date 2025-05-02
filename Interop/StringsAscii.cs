@@ -38,6 +38,80 @@ public unsafe struct AsciiString1
 }
 
 /// <summary>
+/// Represents an ASCII string of length 2.
+/// </summary>
+public unsafe struct AsciiString2
+{
+	private const int _size = 2;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString2"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString2 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString2"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString2"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString2(string value)
+	{
+		var str = new AsciiString2();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 3.
+/// </summary>
+public unsafe struct AsciiString3
+{
+	private const int _size = 3;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString3"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString3 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString3"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString3"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString3(string value)
+	{
+		var str = new AsciiString3();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
 /// Represents an ASCII string of length 4.
 /// </summary>
 public unsafe struct AsciiString4
@@ -64,6 +138,80 @@ public unsafe struct AsciiString4
 	public static explicit operator AsciiString4(string value)
 	{
 		var str = new AsciiString4();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 5.
+/// </summary>
+public unsafe struct AsciiString5
+{
+	private const int _size = 5;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString5"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString5 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString5"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString5"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString5(string value)
+	{
+		var str = new AsciiString5();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 6.
+/// </summary>
+public unsafe struct AsciiString6
+{
+	private const int _size = 6;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString6"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString6 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString6"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString6"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString6(string value)
+	{
+		var str = new AsciiString6();
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -149,6 +297,117 @@ public unsafe struct AsciiString8
 }
 
 /// <summary>
+/// Represents an ASCII string of length 9.
+/// </summary>
+public unsafe struct AsciiString9
+{
+	private const int _size = 9;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString9"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString9 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString9"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString9"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString9(string value)
+	{
+		var str = new AsciiString9();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 10.
+/// </summary>
+public unsafe struct AsciiString10
+{
+	private const int _size = 10;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString10"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString10 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString10"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString10"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString10(string value)
+	{
+		var str = new AsciiString10();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 11.
+/// </summary>
+public unsafe struct AsciiString11
+{
+	private const int _size = 11;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString11"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString11 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString11"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString11"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString11(string value)
+	{
+		var str = new AsciiString11();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
 /// Represents an ASCII string of length 12.
 /// </summary>
 public unsafe struct AsciiString12
@@ -175,6 +434,117 @@ public unsafe struct AsciiString12
 	public static explicit operator AsciiString12(string value)
 	{
 		var str = new AsciiString12();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 13.
+/// </summary>
+public unsafe struct AsciiString13
+{
+	private const int _size = 13;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString13"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString13 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString13"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString13"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString13(string value)
+	{
+		var str = new AsciiString13();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 14.
+/// </summary>
+public unsafe struct AsciiString14
+{
+	private const int _size = 14;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString14"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString14 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString14"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString14"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString14(string value)
+	{
+		var str = new AsciiString14();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 15.
+/// </summary>
+public unsafe struct AsciiString15
+{
+	private const int _size = 15;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString15"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString15 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString15"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString15"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString15(string value)
+	{
+		var str = new AsciiString15();
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -223,6 +593,117 @@ public unsafe struct AsciiString16
 }
 
 /// <summary>
+/// Represents an ASCII string of length 17.
+/// </summary>
+public unsafe struct AsciiString17
+{
+	private const int _size = 17;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString17"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString17 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString17"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString17"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString17(string value)
+	{
+		var str = new AsciiString17();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 18.
+/// </summary>
+public unsafe struct AsciiString18
+{
+	private const int _size = 18;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString18"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString18 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString18"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString18"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString18(string value)
+	{
+		var str = new AsciiString18();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 19.
+/// </summary>
+public unsafe struct AsciiString19
+{
+	private const int _size = 19;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString19"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString19 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString19"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString19"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString19(string value)
+	{
+		var str = new AsciiString19();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
 /// Represents an ASCII string of length 20.
 /// </summary>
 public unsafe struct AsciiString20
@@ -260,6 +741,117 @@ public unsafe struct AsciiString20
 }
 
 /// <summary>
+/// Represents an ASCII string of length 21.
+/// </summary>
+public unsafe struct AsciiString21
+{
+	private const int _size = 21;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString21"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString21 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString21"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString21"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString21(string value)
+	{
+		var str = new AsciiString21();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 22.
+/// </summary>
+public unsafe struct AsciiString22
+{
+	private const int _size = 22;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString22"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString22 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString22"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString22"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString22(string value)
+	{
+		var str = new AsciiString22();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 23.
+/// </summary>
+public unsafe struct AsciiString23
+{
+	private const int _size = 23;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString23"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString23 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString23"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString23"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString23(string value)
+	{
+		var str = new AsciiString23();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
 /// Represents an ASCII string of length 24.
 /// </summary>
 public unsafe struct AsciiString24
@@ -286,6 +878,265 @@ public unsafe struct AsciiString24
 	public static explicit operator AsciiString24(string value)
 	{
 		var str = new AsciiString24();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 25.
+/// </summary>
+public unsafe struct AsciiString25
+{
+	private const int _size = 25;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString25"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString25 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString25"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString25"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString25(string value)
+	{
+		var str = new AsciiString25();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 26.
+/// </summary>
+public unsafe struct AsciiString26
+{
+	private const int _size = 26;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString26"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString26 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString26"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString26"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString26(string value)
+	{
+		var str = new AsciiString26();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 27.
+/// </summary>
+public unsafe struct AsciiString27
+{
+	private const int _size = 27;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString27"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString27 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString27"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString27"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString27(string value)
+	{
+		var str = new AsciiString27();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 28.
+/// </summary>
+public unsafe struct AsciiString28
+{
+	private const int _size = 28;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString28"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString28 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString28"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString28"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString28(string value)
+	{
+		var str = new AsciiString28();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 29.
+/// </summary>
+public unsafe struct AsciiString29
+{
+	private const int _size = 29;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString29"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString29 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString29"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString29"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString29(string value)
+	{
+		var str = new AsciiString29();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 30.
+/// </summary>
+public unsafe struct AsciiString30
+{
+	private const int _size = 30;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString30"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString30 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString30"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString30"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString30(string value)
+	{
+		var str = new AsciiString30();
+		return str.ToAscii(value, str.Value);
+	}
+
+	/// <summary>
+	/// Returns the string representation of the ASCII string.
+	/// </summary>
+	/// <returns>A .NET string containing the ASCII characters.</returns>
+	public override readonly string ToString() => (string)this;
+}
+
+/// <summary>
+/// Represents an ASCII string of length 31.
+/// </summary>
+public unsafe struct AsciiString31
+{
+	private const int _size = 31;
+
+	/// <summary>
+	/// Fixed array storing ASCII bytes.
+	/// </summary>
+	public fixed byte Value[_size];
+
+	/// <summary>
+	/// Converts the given <see cref="AsciiString31"/> to its string representation.
+	/// </summary>
+	/// <param name="value">The ASCII string.</param>
+	public static implicit operator string(AsciiString31 value)
+		=> _size.ToAscii(value.Value);
+
+	/// <summary>
+	/// Creates an <see cref="AsciiString31"/> from a string.
+	/// </summary>
+	/// <param name="value">The string to convert.</param>
+	/// <returns>An instance of <see cref="AsciiString31"/> with the ascii representation.</returns>
+	public static explicit operator AsciiString31(string value)
+	{
+		var str = new AsciiString31();
 		return str.ToAscii(value, str.Value);
 	}
 
