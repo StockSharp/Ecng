@@ -18,7 +18,7 @@ using CoreNativeLib = System.Runtime.InteropServices.NativeLibrary;
 /// <summary>
 /// Provides a collection of extended methods that manipulate and extend the functionality of the <see cref="Marshal"/> class for interoperating with unmanaged memory and libraries.
 /// </summary>
-public static class Marshaler
+public unsafe static class Marshaler
 {
 	/// <summary>
 	/// Marshals data from an unmanaged block of memory to a newly allocated managed object of the specified type.
@@ -382,7 +382,7 @@ public static class Marshaler
 	/// <returns>The decoded managed string, or <c>null</c> if the source is zero.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when <paramref name="encoding"/> is null.</exception>
 	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="maxBytes"/> is negative.</exception>
-	public static unsafe string GetUnsafeString(this Encoding encoding, ref byte srcChar, int maxBytes)
+	public static string GetUnsafeString(this Encoding encoding, ref byte srcChar, int maxBytes)
 	{
 		if (encoding is null)
 			throw new ArgumentNullException(nameof(encoding));
@@ -413,7 +413,7 @@ public static class Marshaler
 	/// <exception cref="ArgumentOutOfRangeException">
 	/// Thrown when <paramref name="maxBytes"/> is negative or the string length exceeds <paramref name="maxBytes"/>.
 	/// </exception>
-	public static unsafe void SetUnsafeString(this Encoding encoding, ref byte tgtChar, int maxBytes, string value)
+	public static void SetUnsafeString(this Encoding encoding, ref byte tgtChar, int maxBytes, string value)
 	{
 		if (encoding is null)
 			throw new ArgumentNullException(nameof(encoding));
@@ -475,7 +475,7 @@ public static class Marshaler
 	/// <param name="value">The managed string to copy.</param>
 	/// <param name="encoding">The encoding to use.</param>
 	/// <param name="ptr">A pointer to the target unmanaged memory.</param>
-	public static unsafe void FillString(this string value, Encoding encoding, byte* ptr)
+	public static void FillString(this string value, Encoding encoding, byte* ptr)
 	{
 		if (value == null)
 			throw new ArgumentNullException(nameof(value));
@@ -504,19 +504,16 @@ public static class Marshaler
 		{
 			using var hdl = new GCHandle<object>(value, GCHandleType.Pinned, null);
 
-			unsafe
+			var array = new byte[attr.Length];
+
+			var b = (byte*)hdl.Value.AddrOfPinnedObject();
+
+			for (var i = 0; i < array.Length; ++i)
 			{
-				var array = new byte[attr.Length];
-
-				var b = (byte*)hdl.Value.AddrOfPinnedObject();
-
-				for (var i = 0; i < array.Length; ++i)
-				{
-					array[i] = *(b + i);
-				}
-
-				value = encoding.GetString(array).Replace("\0", "");
+				array[i] = *(b + i);
 			}
+
+			value = encoding.GetString(array).Replace("\0", "");
 		}
 		else if (value is Enum)
 		{
@@ -548,5 +545,54 @@ public static class Marshaler
 			.GetOrAdd(type, key => key.GetFields())
 			.Select(f => $"{f.Name}={FormatToString(f, f.GetValue(obj), encoding)}")
 			.JoinCommaSpace();
+	}
+
+	private static readonly Encoding _utf8 = Encoding.UTF8;
+	private static readonly Encoding _ascii = Encoding.ASCII;
+
+	/// <summary>
+	/// Converts a pointer to a <see cref="Encoding.UTF8"/> encoded string of a specified size into a managed string.
+	/// </summary>
+	/// <param name="size">The size of the <see cref="Encoding.UTF8"/> encoded string in bytes.</param>
+	/// <param name="ptr">A pointer to the <see cref="Encoding.UTF8"/> encoded string in unmanaged memory.</param>
+	/// <returns>A managed string representation of the <see cref="Encoding.UTF8"/> encoded string.</returns>
+	public static string ToUtf8(this int size, byte* ptr)
+		=> _utf8.GetString(ptr, size).TrimEnd('\0');
+
+	/// <summary>
+	/// Fills a <see cref="Encoding.UTF8"/> encoded unmanaged memory block with the contents of a managed string.
+	/// </summary>
+	/// <typeparam name="T">The type of the native structure or object being modified.</typeparam>
+	/// <param name="native">The native structure or object to return after the operation.</param>
+	/// <param name="value">The managed string to encode and copy into unmanaged memory.</param>
+	/// <param name="ptr">A pointer to the unmanaged memory block to fill.</param>
+	/// <returns>The original native structure or object passed as <paramref name="native"/>.</returns>
+	public static T ToUtf8<T>(this T native, string value, byte* ptr)
+	{
+		value.FillString(_utf8, ptr);
+		return native;
+	}
+
+	/// <summary>
+	/// Converts a pointer to a <see cref="Encoding.ASCII"/> encoded string of a specified size into a managed string.
+	/// </summary>
+	/// <param name="size">The size of the <see cref="Encoding.ASCII"/> encoded string in bytes.</param>
+	/// <param name="ptr">A pointer to the <see cref="Encoding.ASCII"/> encoded string in unmanaged memory.</param>
+	/// <returns>A managed string representation of the <see cref="Encoding.UTF8"/> encoded string.</returns>
+	public static string ToAscii(this int size, byte* ptr)
+		=> _ascii.GetString(ptr, size).TrimEnd('\0');
+
+	/// <summary>
+	/// Fills a <see cref="Encoding.ASCII"/> encoded unmanaged memory block with the contents of a managed string.
+	/// </summary>
+	/// <typeparam name="T">The type of the native structure or object being modified.</typeparam>
+	/// <param name="native">The native structure or object to return after the operation.</param>
+	/// <param name="value">The managed string to encode and copy into unmanaged memory.</param>
+	/// <param name="ptr">A pointer to the unmanaged memory block to fill.</param>
+	/// <returns>The original native structure or object passed as <paramref name="native"/>.</returns>
+	public static T ToAscii<T>(this T native, string value, byte* ptr)
+	{
+		value.FillString(_ascii, ptr);
+		return native;
 	}
 }
