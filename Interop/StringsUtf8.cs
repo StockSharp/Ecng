@@ -1,5 +1,9 @@
 ﻿namespace Ecng.Interop;
 
+using System;
+
+using Ecng.Common;
+
 /// <summary>
 /// Represents a UTF-8 encoded string with a fixed size of 1 byte.
 /// </summary>
@@ -26,6 +30,13 @@ public unsafe struct Utf8String1
 	public static explicit operator Utf8String1(string value)
 	{
 		var str = new Utf8String1();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -62,6 +73,13 @@ public unsafe struct Utf8String2
 	public static explicit operator Utf8String2(string value)
 	{
 		var str = new Utf8String2();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -98,6 +116,13 @@ public unsafe struct Utf8String3
 	public static explicit operator Utf8String3(string value)
 	{
 		var str = new Utf8String3();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -134,6 +159,13 @@ public unsafe struct Utf8String4
 	public static explicit operator Utf8String4(string value)
 	{
 		var str = new Utf8String4();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -170,6 +202,13 @@ public unsafe struct Utf8String5
 	public static explicit operator Utf8String5(string value)
 	{
 		var str = new Utf8String5();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -206,6 +245,13 @@ public unsafe struct Utf8String6
 	public static explicit operator Utf8String6(string value)
 	{
 		var str = new Utf8String6();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -242,6 +288,13 @@ public unsafe struct Utf8String7
 	public static explicit operator Utf8String7(string value)
 	{
 		var str = new Utf8String7();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -278,6 +331,13 @@ public unsafe struct Utf8String8
 	public static explicit operator Utf8String8(string value)
 	{
 		var str = new Utf8String8();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -314,6 +374,13 @@ public unsafe struct Utf8String9
 	public static explicit operator Utf8String9(string value)
 	{
 		var str = new Utf8String9();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -350,6 +417,13 @@ public unsafe struct Utf8String10
 	public static explicit operator Utf8String10(string value)
 	{
 		var str = new Utf8String10();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -386,6 +460,13 @@ public unsafe struct Utf8String11
 	public static explicit operator Utf8String11(string value)
 	{
 		var str = new Utf8String11();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -422,6 +503,13 @@ public unsafe struct Utf8String12
 	public static explicit operator Utf8String12(string value)
 	{
 		var str = new Utf8String12();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -458,6 +546,13 @@ public unsafe struct Utf8String13
 	public static explicit operator Utf8String13(string value)
 	{
 		var str = new Utf8String13();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -494,6 +589,13 @@ public unsafe struct Utf8String14
 	public static explicit operator Utf8String14(string value)
 	{
 		var str = new Utf8String14();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -530,6 +632,13 @@ public unsafe struct Utf8String15
 	public static explicit operator Utf8String15(string value)
 	{
 		var str = new Utf8String15();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -566,6 +675,13 @@ public unsafe struct Utf8String16
 	public static explicit operator Utf8String16(string value)
 	{
 		var str = new Utf8String16();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -602,6 +718,13 @@ public unsafe struct Utf8String17
 	public static explicit operator Utf8String17(string value)
 	{
 		var str = new Utf8String17();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -638,6 +761,13 @@ public unsafe struct Utf8String18
 	public static explicit operator Utf8String18(string value)
 	{
 		var str = new Utf8String18();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -674,6 +804,13 @@ public unsafe struct Utf8String19
 	public static explicit operator Utf8String19(string value)
 	{
 		var str = new Utf8String19();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -710,6 +847,13 @@ public unsafe struct Utf8String20
 	public static explicit operator Utf8String20(string value)
 	{
 		var str = new Utf8String20();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -746,6 +890,13 @@ public unsafe struct Utf8String21
 	public static explicit operator Utf8String21(string value)
 	{
 		var str = new Utf8String21();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -782,6 +933,13 @@ public unsafe struct Utf8String22
 	public static explicit operator Utf8String22(string value)
 	{
 		var str = new Utf8String22();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -818,6 +976,13 @@ public unsafe struct Utf8String23
 	public static explicit operator Utf8String23(string value)
 	{
 		var str = new Utf8String23();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -854,6 +1019,13 @@ public unsafe struct Utf8String24
 	public static explicit operator Utf8String24(string value)
 	{
 		var str = new Utf8String24();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -890,6 +1062,13 @@ public unsafe struct Utf8String25
 	public static explicit operator Utf8String25(string value)
 	{
 		var str = new Utf8String25();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -926,6 +1105,13 @@ public unsafe struct Utf8String26
 	public static explicit operator Utf8String26(string value)
 	{
 		var str = new Utf8String26();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -962,6 +1148,13 @@ public unsafe struct Utf8String27
 	public static explicit operator Utf8String27(string value)
 	{
 		var str = new Utf8String27();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -998,6 +1191,13 @@ public unsafe struct Utf8String28
 	public static explicit operator Utf8String28(string value)
 	{
 		var str = new Utf8String28();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -1034,6 +1234,13 @@ public unsafe struct Utf8String29
 	public static explicit operator Utf8String29(string value)
 	{
 		var str = new Utf8String29();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -1070,6 +1277,13 @@ public unsafe struct Utf8String30
 	public static explicit operator Utf8String30(string value)
 	{
 		var str = new Utf8String30();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -1106,6 +1320,13 @@ public unsafe struct Utf8String31
 	public static explicit operator Utf8String31(string value)
 	{
 		var str = new Utf8String31();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -1142,6 +1363,13 @@ public unsafe struct Utf8String32
 	public static explicit operator Utf8String32(string value)
 	{
 		var str = new Utf8String32();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -1178,6 +1406,13 @@ public unsafe struct Utf8String33
 	public static explicit operator Utf8String33(string value)
 	{
 		var str = new Utf8String33();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -1214,6 +1449,13 @@ public unsafe struct Utf8String48
 	public static explicit operator Utf8String48(string value)
 	{
 		var str = new Utf8String48();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -1250,6 +1492,13 @@ public unsafe struct Utf8String64
 	public static explicit operator Utf8String64(string value)
 	{
 		var str = new Utf8String64();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -1286,6 +1535,13 @@ public unsafe struct Utf8String65
 	public static explicit operator Utf8String65(string value)
 	{
 		var str = new Utf8String65();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -1322,6 +1578,13 @@ public unsafe struct Utf8String128
 	public static explicit operator Utf8String128(string value)
 	{
 		var str = new Utf8String128();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -1358,6 +1621,13 @@ public unsafe struct Utf8String129
 	public static explicit operator Utf8String129(string value)
 	{
 		var str = new Utf8String129();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 
@@ -1394,6 +1664,13 @@ public unsafe struct Utf8String256
 	public static explicit operator Utf8String256(string value)
 	{
 		var str = new Utf8String256();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToUtf8(value, str.Value);
 	}
 

@@ -1,5 +1,9 @@
 ﻿namespace Ecng.Interop;
 
+using System;
+
+using Ecng.Common;
+
 /// <summary>
 /// Represents an ASCII string of length 1.
 /// </summary>
@@ -27,6 +31,13 @@ public unsafe struct AsciiString1
 	public static explicit operator AsciiString1(string value)
 	{
 		var str = new AsciiString1();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -64,6 +75,13 @@ public unsafe struct AsciiString2
 	public static explicit operator AsciiString2(string value)
 	{
 		var str = new AsciiString2();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -101,6 +119,13 @@ public unsafe struct AsciiString3
 	public static explicit operator AsciiString3(string value)
 	{
 		var str = new AsciiString3();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -138,6 +163,13 @@ public unsafe struct AsciiString4
 	public static explicit operator AsciiString4(string value)
 	{
 		var str = new AsciiString4();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -175,6 +207,13 @@ public unsafe struct AsciiString5
 	public static explicit operator AsciiString5(string value)
 	{
 		var str = new AsciiString5();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -212,6 +251,13 @@ public unsafe struct AsciiString6
 	public static explicit operator AsciiString6(string value)
 	{
 		var str = new AsciiString6();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -249,6 +295,13 @@ public unsafe struct AsciiString7
 	public static explicit operator AsciiString7(string value)
 	{
 		var str = new AsciiString7();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -286,6 +339,13 @@ public unsafe struct AsciiString8
 	public static explicit operator AsciiString8(string value)
 	{
 		var str = new AsciiString8();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -323,6 +383,13 @@ public unsafe struct AsciiString9
 	public static explicit operator AsciiString9(string value)
 	{
 		var str = new AsciiString9();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -360,6 +427,13 @@ public unsafe struct AsciiString10
 	public static explicit operator AsciiString10(string value)
 	{
 		var str = new AsciiString10();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -397,6 +471,13 @@ public unsafe struct AsciiString11
 	public static explicit operator AsciiString11(string value)
 	{
 		var str = new AsciiString11();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -434,6 +515,13 @@ public unsafe struct AsciiString12
 	public static explicit operator AsciiString12(string value)
 	{
 		var str = new AsciiString12();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -471,6 +559,13 @@ public unsafe struct AsciiString13
 	public static explicit operator AsciiString13(string value)
 	{
 		var str = new AsciiString13();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -508,6 +603,13 @@ public unsafe struct AsciiString14
 	public static explicit operator AsciiString14(string value)
 	{
 		var str = new AsciiString14();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -545,6 +647,13 @@ public unsafe struct AsciiString15
 	public static explicit operator AsciiString15(string value)
 	{
 		var str = new AsciiString15();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -582,6 +691,13 @@ public unsafe struct AsciiString16
 	public static explicit operator AsciiString16(string value)
 	{
 		var str = new AsciiString16();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -619,6 +735,13 @@ public unsafe struct AsciiString17
 	public static explicit operator AsciiString17(string value)
 	{
 		var str = new AsciiString17();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -656,6 +779,13 @@ public unsafe struct AsciiString18
 	public static explicit operator AsciiString18(string value)
 	{
 		var str = new AsciiString18();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -693,6 +823,13 @@ public unsafe struct AsciiString19
 	public static explicit operator AsciiString19(string value)
 	{
 		var str = new AsciiString19();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -730,6 +867,13 @@ public unsafe struct AsciiString20
 	public static explicit operator AsciiString20(string value)
 	{
 		var str = new AsciiString20();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -767,6 +911,13 @@ public unsafe struct AsciiString21
 	public static explicit operator AsciiString21(string value)
 	{
 		var str = new AsciiString21();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -804,6 +955,13 @@ public unsafe struct AsciiString22
 	public static explicit operator AsciiString22(string value)
 	{
 		var str = new AsciiString22();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -841,6 +999,13 @@ public unsafe struct AsciiString23
 	public static explicit operator AsciiString23(string value)
 	{
 		var str = new AsciiString23();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -878,6 +1043,13 @@ public unsafe struct AsciiString24
 	public static explicit operator AsciiString24(string value)
 	{
 		var str = new AsciiString24();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -915,6 +1087,13 @@ public unsafe struct AsciiString25
 	public static explicit operator AsciiString25(string value)
 	{
 		var str = new AsciiString25();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -952,6 +1131,13 @@ public unsafe struct AsciiString26
 	public static explicit operator AsciiString26(string value)
 	{
 		var str = new AsciiString26();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -989,6 +1175,13 @@ public unsafe struct AsciiString27
 	public static explicit operator AsciiString27(string value)
 	{
 		var str = new AsciiString27();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -1026,6 +1219,13 @@ public unsafe struct AsciiString28
 	public static explicit operator AsciiString28(string value)
 	{
 		var str = new AsciiString28();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -1063,6 +1263,13 @@ public unsafe struct AsciiString29
 	public static explicit operator AsciiString29(string value)
 	{
 		var str = new AsciiString29();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -1100,6 +1307,13 @@ public unsafe struct AsciiString30
 	public static explicit operator AsciiString30(string value)
 	{
 		var str = new AsciiString30();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -1137,6 +1351,13 @@ public unsafe struct AsciiString31
 	public static explicit operator AsciiString31(string value)
 	{
 		var str = new AsciiString31();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -1174,6 +1395,13 @@ public unsafe struct AsciiString32
 	public static explicit operator AsciiString32(string value)
 	{
 		var str = new AsciiString32();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -1211,6 +1439,13 @@ public unsafe struct AsciiString64
 	public static explicit operator AsciiString64(string value)
 	{
 		var str = new AsciiString64();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
@@ -1248,6 +1483,13 @@ public unsafe struct AsciiString128
 	public static explicit operator AsciiString128(string value)
 	{
 		var str = new AsciiString128();
+
+		if (value.IsEmpty())
+			return str;
+
+		if (value.Length > _size)
+			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
+
 		return str.ToAscii(value, str.Value);
 	}
 
