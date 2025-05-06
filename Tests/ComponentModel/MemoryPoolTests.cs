@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Tests.ComponentModel;
 
-using System;
-using System.Drawing;
-using System.Threading.Tasks;
-
 using Ecng.ComponentModel;
 
 [TestClass]

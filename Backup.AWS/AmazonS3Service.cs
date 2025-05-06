@@ -67,7 +67,7 @@ public class AmazonS3Service : Disposable, IBackupService
 		var request = new ListObjectsV2Request
 		{
 			BucketName = _bucket,
-			Prefix = parent != null ? parent.GetFullPath() : null,
+			Prefix = parent?.GetFullPath(),
 		};
 
 		if (!criteria.IsEmpty())
@@ -145,12 +145,12 @@ public class AmazonS3Service : Disposable, IBackupService
 			while (readTotal < objLen)
 			{
 				var expected = (int)(objLen - readTotal).Min(_bufferSize);
-				var actual = await responseStream.ReadAsync(bytes, 0, expected, cancellationToken);
+				var actual = await responseStream.ReadAsync(bytes.AsMemory(0, expected), cancellationToken);
 
 				if (actual == 0)
 					break;
 
-				await stream.WriteAsync(bytes, 0, actual, cancellationToken);
+				await stream.WriteAsync(bytes.AsMemory(0, actual), cancellationToken);
 
 				readTotal += actual;
 

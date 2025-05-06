@@ -101,12 +101,12 @@ public class AmazonGlacierService : Disposable, IBackupService
 		while (readTotal < objLen)
 		{
 			var expected = (int)(objLen - readTotal).Min(_bufferSize);
-			var actual = await webStream.ReadAsync(bytes, 0, expected, cancellationToken);
+			var actual = await webStream.ReadAsync(bytes.AsMemory(0, expected), cancellationToken);
 
 			if (actual == 0)
 				break;
 
-			await stream.WriteAsync(bytes, 0, actual, cancellationToken);
+			await stream.WriteAsync(bytes.AsMemory(0, actual), cancellationToken);
 
 			readTotal += actual;
 
