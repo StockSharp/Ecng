@@ -17,6 +17,16 @@ public ref struct SpanWriter
 	private readonly bool _isBigEndian;
 
 	/// <summary>
+	/// Initializes a new instance of the <see cref="SpanWriter"/> struct.
+	/// </summary>
+	/// <param name="memory">The memory to write data to.</param>
+	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	public SpanWriter(Memory<byte> memory, bool isBigEndian = false)
+		: this(memory.Span, isBigEndian)
+	{
+	}
+
+	/// <summary>
 	/// Initializes a new instance of the <see cref="SpanWriter"/> struct with the specified span.
 	/// </summary>
 	/// <param name="span">The span to write data to.</param>
