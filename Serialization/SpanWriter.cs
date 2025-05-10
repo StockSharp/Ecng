@@ -19,6 +19,16 @@ public ref struct SpanWriter
 	/// <summary>
 	/// Initializes a new instance of the <see cref="SpanWriter"/> struct.
 	/// </summary>
+	/// <param name="buffer">The array to write data to.</param>
+	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	public SpanWriter(byte[] buffer, bool isBigEndian = false)
+		: this(buffer.AsSpan(), isBigEndian)
+	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="SpanWriter"/> struct.
+	/// </summary>
 	/// <param name="memory">The memory to write data to.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
 	public SpanWriter(Memory<byte> memory, bool isBigEndian = false)

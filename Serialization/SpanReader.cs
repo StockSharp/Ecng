@@ -17,6 +17,16 @@ public ref struct SpanReader
 	/// <summary>
 	/// Initializes a new instance of the <see cref="SpanReader"/> struct.
 	/// </summary>
+	/// <param name="buffer">The array of bytes to read from.</param>
+	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	public SpanReader(byte[] buffer, bool isBigEndian = false)
+		: this(buffer.AsSpan(), isBigEndian)
+	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="SpanReader"/> struct.
+	/// </summary>
 	/// <param name="memory">The memory of bytes to read from.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
 	public SpanReader(Memory<byte> memory, bool isBigEndian = false)
