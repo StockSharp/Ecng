@@ -340,6 +340,9 @@ public static class SpanExtensions
 	public static T ReadStruct<T>(this ReadOnlySpan<byte> span, int size, ref int position)
 		where T : struct
 	{
+		if (size == 0)
+			return default;
+
 		var result = MemoryMarshal.Read<T>(span.Slice(position, size));
 		position += size;
 		return result;
@@ -361,6 +364,9 @@ public static class SpanExtensions
 			throw new ArgumentNullException(nameof(array));
 
 		var totalSize = elementSize * count;
+
+		if (totalSize == 0)
+			return;
 
 		var dataSpan = span.Slice(position, totalSize);
 
@@ -669,6 +675,9 @@ public static class SpanExtensions
 	public static void WriteStruct<T>(this Span<byte> span, T value, int size, ref int position)
 		where T : struct
 	{
+		if (size == 0)
+			return;
+
 		MemoryMarshal.Write(span.Slice(position, size), ref value);
 		position += size;
 	}
@@ -688,6 +697,9 @@ public static class SpanExtensions
 			throw new ArgumentNullException(nameof(array));
 
 		var totalSize = elementSize * array.Length;
+
+		if (totalSize == 0)
+			return;
 
 		var targetSpan = span.Slice(position, totalSize);
 
