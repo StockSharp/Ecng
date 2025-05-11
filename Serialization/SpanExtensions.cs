@@ -2,7 +2,6 @@ namespace Ecng.Serialization;
 
 using System;
 using System.Buffers.Binary;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 /// <summary>
@@ -68,10 +67,10 @@ public static class SpanExtensions
 	/// Reads a 16-bit signed integer from the specified read-only span at the current position.
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by 2.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to read from; will be advanced by 2.</param>
 	/// <returns>The 16-bit signed integer read.</returns>
-	public static short ReadInt16(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
+	public static short ReadInt16(this ReadOnlySpan<byte> span, bool isBigEndian, ref int position)
 	{
 		var value = isBigEndian
 			? BinaryPrimitives.ReadInt16BigEndian(span.Slice(position, _shortSize))
@@ -86,11 +85,11 @@ public static class SpanExtensions
 	/// Reads a 16-bit unsigned integer from the specified read-only span at the current position.
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by 2.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to read from; will be advanced by 2.</param>
 	/// <returns>The 16-bit unsigned integer read.</returns>
 	[CLSCompliant(false)]
-	public static ushort ReadUInt16(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
+	public static ushort ReadUInt16(this ReadOnlySpan<byte> span, bool isBigEndian, ref int position)
 	{
 		var value = isBigEndian
 			? BinaryPrimitives.ReadUInt16BigEndian(span.Slice(position, _ushortSize))
@@ -105,10 +104,10 @@ public static class SpanExtensions
 	/// Reads a 32-bit signed integer from the specified read-only span at the current position.
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by 4.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to read from; will be advanced by 4.</param>
 	/// <returns>The 32-bit signed integer read.</returns>
-	public static int ReadInt32(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
+	public static int ReadInt32(this ReadOnlySpan<byte> span, bool isBigEndian, ref int position)
 	{
 		var value = isBigEndian
 			? BinaryPrimitives.ReadInt32BigEndian(span.Slice(position, _intSize))
@@ -123,11 +122,11 @@ public static class SpanExtensions
 	/// Reads a 32-bit unsigned integer from the specified read-only span at the current position.
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by 4.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to read from; will be advanced by 4.</param>
 	/// <returns>The 32-bit unsigned integer read.</returns>
 	[CLSCompliant(false)]
-	public static uint ReadUInt32(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
+	public static uint ReadUInt32(this ReadOnlySpan<byte> span, bool isBigEndian, ref int position)
 	{
 		var value = isBigEndian
 			? BinaryPrimitives.ReadUInt32BigEndian(span.Slice(position, _uintSize))
@@ -142,10 +141,10 @@ public static class SpanExtensions
 	/// Reads a 64-bit signed integer from the specified read-only span at the current position.
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by 8.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to read from; will be advanced by 8.</param>
 	/// <returns>The 64-bit signed integer read.</returns>
-	public static long ReadInt64(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
+	public static long ReadInt64(this ReadOnlySpan<byte> span, bool isBigEndian, ref int position)
 	{
 		var value = isBigEndian
 			? BinaryPrimitives.ReadInt64BigEndian(span.Slice(position, _longSize))
@@ -160,11 +159,11 @@ public static class SpanExtensions
 	/// Reads a 64-bit unsigned integer from the specified read-only span at the current position.
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by 8.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to read from; will be advanced by 8.</param>
 	/// <returns>The 64-bit unsigned integer read.</returns>
 	[CLSCompliant(false)]
-	public static ulong ReadUInt64(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
+	public static ulong ReadUInt64(this ReadOnlySpan<byte> span, bool isBigEndian, ref int position)
 	{
 		var value = isBigEndian
 			? BinaryPrimitives.ReadUInt64BigEndian(span.Slice(position, _ulongSize))
@@ -193,10 +192,10 @@ public static class SpanExtensions
 	/// Reads a half-precision floating-point number from the specified read-only span at the current position.
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by the size of a Half.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to read from; will be advanced by the size of a Half.</param>
 	/// <returns>The Half value read.</returns>
-	public static Half ReadHalf(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
+	public static Half ReadHalf(this ReadOnlySpan<byte> span, bool isBigEndian, ref int position)
 	{
 		var value = isBigEndian
 			? BinaryPrimitives.ReadHalfBigEndian(span.Slice(position, _halfSize))
@@ -211,10 +210,10 @@ public static class SpanExtensions
 	/// Reads a single-precision floating-point number from the specified read-only span at the current position.
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by the size of a float.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to read from; will be advanced by the size of a float.</param>
 	/// <returns>The float value read.</returns>
-	public static float ReadSingle(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
+	public static float ReadSingle(this ReadOnlySpan<byte> span, bool isBigEndian, ref int position)
 	{
 		var value = isBigEndian
 			? BinaryPrimitives.ReadSingleBigEndian(span.Slice(position, _floatSize))
@@ -229,10 +228,10 @@ public static class SpanExtensions
 	/// Reads a double-precision floating-point number from the specified read-only span at the current position.
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by the size of a double.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to read from; will be advanced by the size of a double.</param>
 	/// <returns>The double value read.</returns>
-	public static double ReadDouble(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
+	public static double ReadDouble(this ReadOnlySpan<byte> span, bool isBigEndian, ref int position)
 	{
 		var value = isBigEndian
 			? BinaryPrimitives.ReadDoubleBigEndian(span.Slice(position, _doubleSize))
@@ -261,15 +260,15 @@ public static class SpanExtensions
 	/// Reads a decimal value from the specified read-only span at the current position.
 	/// </summary>
 	/// <param name="span">The read-only span of bytes.</param>
-	/// <param name="position">The position to read from; will be advanced by 16 bytes.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to read from; will be advanced by 16 bytes.</param>
 	/// <returns>The decimal value read.</returns>
-	public static decimal ReadDecimal(this ReadOnlySpan<byte> span, ref int position, bool isBigEndian = false)
+	public static decimal ReadDecimal(this ReadOnlySpan<byte> span, bool isBigEndian, ref int position)
 	{
-		var lo = span.ReadInt32(ref position, isBigEndian);
-		var mid = span.ReadInt32(ref position, isBigEndian);
-		var hi = span.ReadInt32(ref position, isBigEndian);
-		var flags = span.ReadInt32(ref position, isBigEndian);
+		var lo = span.ReadInt32(isBigEndian, ref position);
+		var mid = span.ReadInt32(isBigEndian, ref position);
+		var hi = span.ReadInt32(isBigEndian, ref position);
+		var flags = span.ReadInt32(isBigEndian, ref position);
 		return new(lo, mid, hi, (flags & 0x80000000) != 0, (byte)((flags >> 16) & 0x7F));
 	}
 
@@ -278,12 +277,12 @@ public static class SpanExtensions
 	/// </summary>
 	/// <typeparam name="T">The structure type to read.</typeparam>
 	/// <param name="span">The read-only span of bytes.</param>
+	/// <param name="size">The size of the structure in bytes. This parameter is used to determine how many bytes to read.</param>
 	/// <param name="position">The position to read from; will be advanced by the size of the structure.</param>
 	/// <returns>The structure read from the span.</returns>
-	public static T ReadStruct<T>(this ReadOnlySpan<byte> span, ref int position)
+	public static T ReadStruct<T>(this ReadOnlySpan<byte> span, int size, ref int position)
 		where T : struct
 	{
-		var size = Unsafe.SizeOf<T>();
 		var result = MemoryMarshal.Read<T>(span.Slice(position, size));
 		position += size;
 		return result;
@@ -295,15 +294,15 @@ public static class SpanExtensions
 	/// <typeparam name="T">The structure type to read.</typeparam>
 	/// <param name="span">The read-only span of bytes.</param>
 	/// <param name="array">An array of structures read from the span.</param>
+	/// <param name="elementSize">The size of each structure in bytes.</param>
 	/// <param name="count">The number of elements to read.</param>
 	/// <param name="position">The position to read from; will be advanced by the total size of the array.</param>
-	public static void ReadStructArray<T>(this ReadOnlySpan<byte> span, T[] array, int count, ref int position)
+	public static void ReadStructArray<T>(this ReadOnlySpan<byte> span, T[] array, int elementSize, int count, ref int position)
 		where T : struct
 	{
 		if (array is null)
 			throw new ArgumentNullException(nameof(array));
 
-		var elementSize = Unsafe.SizeOf<T>();
 		var totalSize = elementSize * count;
 
 		var dataSpan = span.Slice(position, totalSize);
@@ -320,9 +319,9 @@ public static class SpanExtensions
 	/// Writes a byte to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 1.</param>
 	/// <param name="value">The byte value to write.</param>
-	public static void WriteByte(this Span<byte> span, ref int position, byte value)
+	/// <param name="position">The position to write to; will be advanced by 1.</param>
+	public static void WriteByte(this Span<byte> span, byte value, ref int position)
 	{
 		span[position] = value;
 		position += _byteSize;
@@ -332,10 +331,10 @@ public static class SpanExtensions
 	/// Writes a signed byte to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 1.</param>
 	/// <param name="value">The sbyte value to write.</param>
+	/// <param name="position">The position to write to; will be advanced by 1.</param>
 	[CLSCompliant(false)]
-	public static void WriteSByte(this Span<byte> span, ref int position, sbyte value)
+	public static void WriteSByte(this Span<byte> span, sbyte value, ref int position)
 	{
 		span[position] = (byte)value;
 		position += _sbyteSize;
@@ -345,9 +344,9 @@ public static class SpanExtensions
 	/// Writes a boolean value to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by the size of a boolean.</param>
 	/// <param name="value">The boolean value to write.</param>
-	public static void WriteBoolean(this Span<byte> span, ref int position, bool value)
+	/// <param name="position">The position to write to; will be advanced by the size of a boolean.</param>
+	public static void WriteBoolean(this Span<byte> span, bool value, ref int position)
 	{
 		span[position] = value ? (byte)1 : (byte)0;
 		position += _boolSize;
@@ -357,10 +356,10 @@ public static class SpanExtensions
 	/// Writes a 16-bit signed integer to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 2.</param>
 	/// <param name="value">The 16-bit signed integer value to write.</param>
 	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
-	public static void WriteInt16(this Span<byte> span, ref int position, short value, bool isBigEndian = false)
+	/// <param name="position">The position to write to; will be advanced by 2.</param>
+	public static void WriteInt16(this Span<byte> span, short value, bool isBigEndian, ref int position)
 	{
 		if (isBigEndian)
 			BinaryPrimitives.WriteInt16BigEndian(span.Slice(position, _shortSize), value);
@@ -374,11 +373,11 @@ public static class SpanExtensions
 	/// Writes a 16-bit unsigned integer to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 2.</param>
 	/// <param name="value">The 16-bit unsigned integer value to write.</param>
 	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to write to; will be advanced by 2.</param>
 	[CLSCompliant(false)]
-	public static void WriteUInt16(this Span<byte> span, ref int position, ushort value, bool isBigEndian = false)
+	public static void WriteUInt16(this Span<byte> span, ushort value, bool isBigEndian, ref int position)
 	{
 		if (isBigEndian)
 			BinaryPrimitives.WriteUInt16BigEndian(span.Slice(position, _ushortSize), value);
@@ -392,10 +391,10 @@ public static class SpanExtensions
 	/// Writes a 32-bit signed integer to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 4.</param>
 	/// <param name="value">The 32-bit signed integer value to write.</param>
 	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
-	public static void WriteInt32(this Span<byte> span, ref int position, int value, bool isBigEndian = false)
+	/// <param name="position">The position to write to; will be advanced by 4.</param>
+	public static void WriteInt32(this Span<byte> span, int value, bool isBigEndian, ref int position)
 	{
 		if (isBigEndian)
 			BinaryPrimitives.WriteInt32BigEndian(span.Slice(position, _intSize), value);
@@ -409,11 +408,11 @@ public static class SpanExtensions
 	/// Writes a 32-bit unsigned integer to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 4.</param>
 	/// <param name="value">The 32-bit unsigned integer value to write.</param>
 	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to write to; will be advanced by 4.</param>
 	[CLSCompliant(false)]
-	public static void WriteUInt32(this Span<byte> span, ref int position, uint value, bool isBigEndian = false)
+	public static void WriteUInt32(this Span<byte> span, uint value, bool isBigEndian, ref int position)
 	{
 		if (isBigEndian)
 			BinaryPrimitives.WriteUInt32BigEndian(span.Slice(position, _uintSize), value);
@@ -427,10 +426,10 @@ public static class SpanExtensions
 	/// Writes a 64-bit signed integer to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 8.</param>
 	/// <param name="value">The 64-bit signed integer value to write.</param>
 	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
-	public static void WriteInt64(this Span<byte> span, ref int position, long value, bool isBigEndian = false)
+	/// <param name="position">The position to write to; will be advanced by 8.</param>
+	public static void WriteInt64(this Span<byte> span, long value, bool isBigEndian, ref int position)
 	{
 		if (isBigEndian)
 			BinaryPrimitives.WriteInt64BigEndian(span.Slice(position, _longSize), value);
@@ -444,11 +443,11 @@ public static class SpanExtensions
 	/// Writes a 64-bit unsigned integer to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 8.</param>
 	/// <param name="value">The 64-bit unsigned integer value to write.</param>
 	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
+	/// <param name="position">The position to write to; will be advanced by 8.</param>
 	[CLSCompliant(false)]
-	public static void WriteUInt64(this Span<byte> span, ref int position, ulong value, bool isBigEndian = false)
+	public static void WriteUInt64(this Span<byte> span, ulong value, bool isBigEndian, ref int position)
 	{
 		if (isBigEndian)
 			BinaryPrimitives.WriteUInt64BigEndian(span.Slice(position, _ulongSize), value);
@@ -463,9 +462,9 @@ public static class SpanExtensions
 	/// Writes a Unicode character to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by the size of a char.</param>
 	/// <param name="value">The char value to write.</param>
-	public static void WriteChar(this Span<byte> span, ref int position, char value)
+	/// <param name="position">The position to write to; will be advanced by the size of a char.</param>
+	public static void WriteChar(this Span<byte> span, char value, ref int position)
 	{
 		BitConverter.TryWriteBytes(span.Slice(position, _charSize), value);
 		position += _charSize;
@@ -475,10 +474,10 @@ public static class SpanExtensions
 	/// Writes a half-precision floating-point number to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by the size of a Half.</param>
 	/// <param name="value">The Half value to write.</param>
 	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
-	public static void WriteHalf(this Span<byte> span, ref int position, Half value, bool isBigEndian = false)
+	/// <param name="position">The position to write to; will be advanced by the size of a Half.</param>
+	public static void WriteHalf(this Span<byte> span, Half value, bool isBigEndian, ref int position)
 	{
 		if (isBigEndian)
 			BinaryPrimitives.WriteHalfBigEndian(span.Slice(position, _halfSize), value);
@@ -492,10 +491,10 @@ public static class SpanExtensions
 	/// Writes a single-precision floating-point number to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by the size of a float.</param>
 	/// <param name="value">The float value to write.</param>
 	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
-	public static void WriteSingle(this Span<byte> span, ref int position, float value, bool isBigEndian = false)
+	/// <param name="position">The position to write to; will be advanced by the size of a float.</param>
+	public static void WriteSingle(this Span<byte> span, float value, bool isBigEndian, ref int position)
 	{
 		if (isBigEndian)
 			BinaryPrimitives.WriteSingleBigEndian(span.Slice(position, _floatSize), value);
@@ -509,10 +508,10 @@ public static class SpanExtensions
 	/// Writes a double-precision floating-point number to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by the size of a double.</param>
 	/// <param name="value">The double value to write.</param>
 	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
-	public static void WriteDouble(this Span<byte> span, ref int position, double value, bool isBigEndian = false)
+	/// <param name="position">The position to write to; will be advanced by the size of a double.</param>
+	public static void WriteDouble(this Span<byte> span, double value, bool isBigEndian, ref int position)
 	{
 		if (isBigEndian)
 			BinaryPrimitives.WriteDoubleBigEndian(span.Slice(position, _doubleSize), value);
@@ -526,9 +525,9 @@ public static class SpanExtensions
 	/// Writes a GUID to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 16 bytes.</param>
 	/// <param name="value">The GUID value to write.</param>
-	public static void WriteGuid(this Span<byte> span, ref int position, Guid value)
+	/// <param name="position">The position to write to; will be advanced by 16 bytes.</param>
+	public static void WriteGuid(this Span<byte> span, Guid value, ref int position)
 	{
 		value.TryWriteBytes(span.Slice(position, 16));
 		position += 16;
@@ -539,16 +538,16 @@ public static class SpanExtensions
 	/// Writes a decimal value to the specified span at the current position.
 	/// </summary>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by 16 bytes.</param>
 	/// <param name="value">The decimal value to write.</param>
 	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
-	public static void WriteDecimal(this Span<byte> span, ref int position, decimal value, bool isBigEndian = false)
+	/// <param name="position">The position to write to; will be advanced by 16 bytes.</param>
+	public static void WriteDecimal(this Span<byte> span, decimal value, bool isBigEndian, ref int position)
 	{
 		var bits = decimal.GetBits(value);
-		span.WriteInt32(ref position, bits[0], isBigEndian);
-		span.WriteInt32(ref position, bits[1], isBigEndian);
-		span.WriteInt32(ref position, bits[2], isBigEndian);
-		span.WriteInt32(ref position, bits[3], isBigEndian);
+		span.WriteInt32(bits[0], isBigEndian, ref position);
+		span.WriteInt32(bits[1], isBigEndian, ref position);
+		span.WriteInt32(bits[2], isBigEndian, ref position);
+		span.WriteInt32(bits[3], isBigEndian, ref position);
 	}
 
 	/// <summary>
@@ -556,13 +555,13 @@ public static class SpanExtensions
 	/// </summary>
 	/// <typeparam name="T">The structure type to write.</typeparam>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by the size of the structure.</param>
 	/// <param name="value">The structure value to write.</param>
+	/// <param name="size">The structure size in bytes. This parameter is used to determine how many bytes to write.</param>
+	/// <param name="position">The position to write to; will be advanced by the size of the structure.</param>
 	[CLSCompliant(false)]
-	public static void WriteStruct<T>(this Span<byte> span, ref int position, T value)
+	public static void WriteStruct<T>(this Span<byte> span, T value, int size, ref int position)
 		where T : struct
 	{
-		var size = Unsafe.SizeOf<T>();
 		MemoryMarshal.Write(span.Slice(position, size), ref value);
 		position += size;
 	}
@@ -572,15 +571,15 @@ public static class SpanExtensions
 	/// </summary>
 	/// <typeparam name="T">The structure type to write.</typeparam>
 	/// <param name="span">The span of bytes.</param>
-	/// <param name="position">The position to write to; will be advanced by the total size of the array.</param>
 	/// <param name="array">The array of structures to write.</param>
-	public static void WriteStructArray<T>(this Span<byte> span, ref int position, T[] array)
+	/// <param name="elementSize">The structure size in bytes. This parameter is used to determine how many bytes to write.</param>
+	/// <param name="position">The position to write to; will be advanced by the total size of the array.</param>
+	public static void WriteStructArray<T>(this Span<byte> span, T[] array, int elementSize, ref int position)
 		where T : struct
 	{
 		if (array == null)
 			throw new ArgumentNullException(nameof(array));
 
-		var elementSize = Unsafe.SizeOf<T>();
 		var totalSize = elementSize * array.Length;
 
 		var targetSpan = span.Slice(position, totalSize);

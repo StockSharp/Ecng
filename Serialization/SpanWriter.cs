@@ -73,77 +73,77 @@ public ref struct SpanWriter
 	/// Writes a byte value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The byte value to write.</param>
-	public void WriteByte(byte value) => _span.WriteByte(ref _position, value);
+	public void WriteByte(byte value) => _span.WriteByte(value, ref _position);
 
 	/// <summary>
 	/// Writes a signed byte value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The signed byte value to write.</param>
 	[CLSCompliant(false)]
-	public void WriteSByte(sbyte value) => _span.WriteSByte(ref _position, value);
+	public void WriteSByte(sbyte value) => _span.WriteSByte(value, ref _position);
 
 	/// <summary>
 	/// Writes a boolean value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The boolean value to write.</param>
-	public void WriteBoolean(bool value) => _span.WriteBoolean(ref _position, value);
+	public void WriteBoolean(bool value) => _span.WriteBoolean(value, ref _position);
 
 	/// <summary>
 	/// Writes a 16-bit integer value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The 16-bit integer value to write.</param>
-	public void WriteInt16(short value) => _span.WriteInt16(ref _position, value, _isBigEndian);
+	public void WriteInt16(short value) => _span.WriteInt16(value, _isBigEndian, ref _position);
 
 	/// <summary>
 	/// Writes an unsigned 16-bit integer value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The unsigned 16-bit integer value to write.</param>
 	[CLSCompliant(false)]
-	public void WriteUInt16(ushort value) => _span.WriteUInt16(ref _position, value, _isBigEndian);
+	public void WriteUInt16(ushort value) => _span.WriteUInt16(value, _isBigEndian, ref _position);
 
 	/// <summary>
 	/// Writes a 32-bit integer value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The 32-bit integer value to write.</param>
-	public void WriteInt32(int value) => _span.WriteInt32(ref _position, value, _isBigEndian);
+	public void WriteInt32(int value) => _span.WriteInt32(value, _isBigEndian, ref _position);
 
 	/// <summary>
 	/// Writes an unsigned 32-bit integer value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The unsigned 32-bit integer value to write.</param>
 	[CLSCompliant(false)]
-	public void WriteUInt32(uint value) => _span.WriteUInt32(ref _position, value, _isBigEndian);
+	public void WriteUInt32(uint value) => _span.WriteUInt32(value, _isBigEndian, ref _position);
 
 	/// <summary>
 	/// Writes a 64-bit integer value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The 64-bit integer value to write.</param>
-	public void WriteInt64(long value) => _span.WriteInt64(ref _position, value, _isBigEndian);
+	public void WriteInt64(long value) => _span.WriteInt64(value, _isBigEndian, ref _position);
 
 	/// <summary>
 	/// Writes an unsigned 64-bit integer value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The unsigned 64-bit integer value to write.</param>
 	[CLSCompliant(false)]
-	public void WriteUInt64(ulong value) => _span.WriteUInt64(ref _position, value, _isBigEndian);
+	public void WriteUInt64(ulong value) => _span.WriteUInt64(value, _isBigEndian, ref _position);
 
 	/// <summary>
 	/// Writes a decimal value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The decimal value to write.</param>
-	public void WriteDecimal(decimal value) => _span.WriteDecimal(ref _position, value, _isBigEndian);
+	public void WriteDecimal(decimal value) => _span.WriteDecimal(value, _isBigEndian, ref _position);
 
 	/// <summary>
 	/// Writes a DateTime value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The DateTime value to write.</param>
-	public void WriteDateTime(DateTime value) => _span.WriteInt64(ref _position, value.Ticks, _isBigEndian);
+	public void WriteDateTime(DateTime value) => _span.WriteInt64(value.Ticks, _isBigEndian, ref _position);
 
 	/// <summary>
 	/// Writes a TimeSpan value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The TimeSpan value to write.</param>
-	public void WriteTimeSpan(TimeSpan value) => _span.WriteInt64(ref _position, value.Ticks, _isBigEndian);
+	public void WriteTimeSpan(TimeSpan value) => _span.WriteInt64(value.Ticks, _isBigEndian, ref _position);
 
 #if NET5_0_OR_GREATER
 	/// <summary>
@@ -166,31 +166,31 @@ public ref struct SpanWriter
 	/// Writes a character value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The character value to write.</param>
-	public void WriteChar(char value) => _span.WriteChar(ref _position, value);
+	public void WriteChar(char value) => _span.WriteChar(value, ref _position);
 
 	/// <summary>
 	/// Writes a Half value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The Half value to write.</param>
-	public void WriteHalf(Half value) => _span.WriteHalf(ref _position, value, _isBigEndian);
+	public void WriteHalf(Half value) => _span.WriteHalf(value, _isBigEndian, ref _position);
 
 	/// <summary>
 	/// Writes a single-precision floating-point value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The single-precision floating-point value to write.</param>
-	public void WriteSingle(float value) => _span.WriteSingle(ref _position, value, _isBigEndian);
+	public void WriteSingle(float value) => _span.WriteSingle(value, _isBigEndian, ref _position);
 
 	/// <summary>
 	/// Writes a double-precision floating-point value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The double-precision floating-point value to write.</param>
-	public void WriteDouble(double value) => _span.WriteDouble(ref _position, value, _isBigEndian);
+	public void WriteDouble(double value) => _span.WriteDouble(value, _isBigEndian, ref _position);
 
 	/// <summary>
 	/// Writes a GUID value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The GUID value to write.</param>
-	public void WriteGuid(Guid value) => _span.WriteGuid(ref _position, value);
+	public void WriteGuid(Guid value) => _span.WriteGuid(value, ref _position);
 #endif
 
 	/// <summary>
@@ -198,18 +198,20 @@ public ref struct SpanWriter
 	/// </summary>
 	/// <typeparam name="T">The type of the structure to write, which must be a value type.</typeparam>
 	/// <param name="value">The structure to write.</param>
-	public void WriteStruct<T>(T value)
+	/// <param name="size">The structure size in bytes. This parameter is used to determine how many bytes to write.</param>
+	public void WriteStruct<T>(T value, int size)
 		where T : struct
-		=> _span.WriteStruct(ref _position, value);
+		=> _span.WriteStruct(value, size, ref _position);
 
 	/// <summary>
 	/// Writes an array of value type structures to the span at the current position and advances the position.
 	/// </summary>
 	/// <typeparam name="T">The type of the structures in the array, which must be a value type.</typeparam>
 	/// <param name="array">The array of structures to write.</param>
-	public void WriteStructArray<T>(T[] array)
+	/// <param name="elementSize">The structure size in bytes. This parameter is used to determine how many bytes to write.</param>
+	public void WriteStructArray<T>(T[] array, int elementSize)
 		where T : struct
-		=> _span.WriteStructArray(ref _position, array);
+		=> _span.WriteStructArray(array, elementSize, ref _position);
 
 	/// <summary>
 	/// Advances the position by the specified count without writing any data.

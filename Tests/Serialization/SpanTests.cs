@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Tests.Serialization;
 
+using System.Runtime.CompilerServices;
 using System.Text;
 
 using Ecng.Serialization;
@@ -223,14 +224,15 @@ public class SpanTests
 	[TestMethod]
 	public void WriteAndReadStruct()
 	{
+		var sizeOf = Unsafe.SizeOf<TestStruct>();
 		Span<byte> buffer = new byte[8];
 		var value = new TestStruct { X = RandomGen.GetInt(), Y = RandomGen.GetInt() };
 		var writer = new SpanWriter(buffer);
-		writer.WriteStruct(value);
+		writer.WriteStruct(value, sizeOf);
 		writer.Position.AssertEqual(8);
 
 		var reader = new SpanReader(buffer);
-		var readValue = reader.ReadStruct<TestStruct>();
+		var readValue = reader.ReadStruct<TestStruct>(sizeOf);
 		readValue.X.AssertEqual(value.X);
 		readValue.Y.AssertEqual(value.Y);
 		reader.Position.AssertEqual(8);
@@ -239,6 +241,7 @@ public class SpanTests
 	[TestMethod]
 	public void WriteAndReadStructArray()
 	{
+		var sizeOf = Unsafe.SizeOf<TestStruct>();
 		Span<byte> buffer = new byte[16];
 		var value = new TestStruct[]
 		{
@@ -246,12 +249,12 @@ public class SpanTests
 			new() { X = RandomGen.GetInt(), Y = RandomGen.GetInt() }
 		};
 		var writer = new SpanWriter(buffer);
-		writer.WriteStructArray(value);
+		writer.WriteStructArray(value, sizeOf);
 		writer.Position.AssertEqual(16);
 
 		var reader = new SpanReader(buffer);
 		var readValue = new TestStruct[2];
-		reader.ReadStructArray(readValue, 2);
+		reader.ReadStructArray(readValue, sizeOf, 2);
 		readValue[0].X.AssertEqual(value[0].X);
 		readValue[0].Y.AssertEqual(value[0].Y);
 		readValue[1].X.AssertEqual(value[1].X);
