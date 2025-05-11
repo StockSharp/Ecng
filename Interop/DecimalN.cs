@@ -324,6 +324,189 @@ public struct Decimal8 : IFormattable
 	public readonly string ToString(string format, IFormatProvider formatProvider)
 		=> ((decimal)this).ToString(format, formatProvider);
 }
+/// <summary>
+/// Represents a decimal value with a fixed exponent of -9.
+/// </summary>
+public struct Decimal9 : IFormattable
+{
+	/// <summary>
+	/// The mantissa component of the decimal number.
+	/// </summary>
+	public long Mantissa;
+
+	/// <summary>
+	/// The fixed exponent value (-9).
+	/// </summary>
+	public const sbyte Exponent = -9;
+
+	/// <summary>
+	/// Implicitly converts a Decimal9 value to a decimal.
+	/// </summary>
+	/// <param name="value">The Decimal9 value.</param>
+	/// <returns>A decimal representing the same value.</returns>
+	public static implicit operator decimal(Decimal9 value)
+		=> value.Mantissa * _priceExponent;
+
+	/// <summary>
+	/// Explicitly converts a decimal to a Decimal9 value.
+	/// </summary>
+	/// <param name="value">The decimal value.</param>
+	/// <returns>A Decimal9 representing the same value.</returns>
+	public static explicit operator Decimal9(decimal value) => new()
+	{
+		Mantissa = (long)(value / _priceExponent),
+	};
+
+	/// <summary>
+	/// The scaling factor for conversion based on the exponent.
+	/// </summary>
+	private static readonly decimal _priceExponent = (decimal)Math.Pow(10, Exponent);
+
+	/// <inheritdoc/>
+	public override readonly string ToString() => ((decimal)this).ToString();
+
+	/// <inheritdoc/>
+	public readonly string ToString(string format, IFormatProvider formatProvider)
+		=> ((decimal)this).ToString(format, formatProvider);
+}
+
+/// <summary>
+/// Represents a decimal value with a fixed exponent of -10.
+/// </summary>
+public struct Decimal10 : IFormattable
+{
+	/// <summary>
+	/// The mantissa component of the decimal number.
+	/// </summary>
+	public long Mantissa;
+
+	/// <summary>
+	/// The fixed exponent value (-10).
+	/// </summary>
+	public const sbyte Exponent = -10;
+
+	/// <summary>
+	/// Implicitly converts a Decimal10 value to a decimal.
+	/// </summary>
+	/// <param name="value">The Decimal10 value.</param>
+	/// <returns>A decimal representing the same value.</returns>
+	public static implicit operator decimal(Decimal10 value)
+		=> value.Mantissa * _priceExponent;
+
+	/// <summary>
+	/// Explicitly converts a decimal to a Decimal10 value.
+	/// </summary>
+	/// <param name="value">The decimal value.</param>
+	/// <returns>A Decimal10 representing the same value.</returns>
+	public static explicit operator Decimal10(decimal value) => new()
+	{
+		Mantissa = (long)(value / _priceExponent),
+	};
+
+	/// <summary>
+	/// The scaling factor for conversion based on the exponent.
+	/// </summary>
+	private static readonly decimal _priceExponent = (decimal)Math.Pow(10, Exponent);
+
+	/// <inheritdoc/>
+	public override readonly string ToString() => ((decimal)this).ToString();
+
+	/// <inheritdoc/>
+	public readonly string ToString(string format, IFormatProvider formatProvider)
+		=> ((decimal)this).ToString(format, formatProvider);
+}
+
+/// <summary>
+/// Represents a decimal value with a fixed exponent of -11.
+/// </summary>
+public struct Decimal11 : IFormattable
+{
+	/// <summary>
+	/// The mantissa component of the decimal number.
+	/// </summary>
+	public long Mantissa;
+
+	/// <summary>
+	/// The fixed exponent value (-11).
+	/// </summary>
+	public const sbyte Exponent = -11;
+
+	/// <summary>
+	/// Implicitly converts a Decimal11 value to a decimal.
+	/// </summary>
+	/// <param name="value">The Decimal11 value.</param>
+	/// <returns>A decimal representing the same value.</returns>
+	public static implicit operator decimal(Decimal11 value)
+		=> value.Mantissa * _priceExponent;
+
+	/// <summary>
+	/// Explicitly converts a decimal to a Decimal11 value.
+	/// </summary>
+	/// <param name="value">The decimal value.</param>
+	/// <returns>A Decimal11 representing the same value.</returns>
+	public static explicit operator Decimal11(decimal value) => new()
+	{
+		Mantissa = (long)(value / _priceExponent),
+	};
+
+	/// <summary>
+	/// The scaling factor for conversion based on the exponent.
+	/// </summary>
+	private static readonly decimal _priceExponent = (decimal)Math.Pow(10, Exponent);
+
+	/// <inheritdoc/>
+	public override readonly string ToString() => ((decimal)this).ToString();
+
+	/// <inheritdoc/>
+	public readonly string ToString(string format, IFormatProvider formatProvider)
+		=> ((decimal)this).ToString(format, formatProvider);
+}
+
+/// <summary>
+/// Represents a decimal value with a fixed exponent of -12.
+/// </summary>
+public struct Decimal12 : IFormattable
+{
+	/// <summary>
+	/// The mantissa component of the decimal number.
+	/// </summary>
+	public long Mantissa;
+
+	/// <summary>
+	/// The fixed exponent value (-12).
+	/// </summary>
+	public const sbyte Exponent = -12;
+
+	/// <summary>
+	/// Implicitly converts a Decimal12 value to a decimal.
+	/// </summary>
+	/// <param name="value">The Decimal12 value.</param>
+	/// <returns>A decimal representing the same value.</returns>
+	public static implicit operator decimal(Decimal12 value)
+		=> value.Mantissa * _priceExponent;
+
+	/// <summary>
+	/// Explicitly converts a decimal to a Decimal12 value.
+	/// </summary>
+	/// <param name="value">The decimal value.</param>
+	/// <returns>A Decimal12 representing the same value.</returns>
+	public static explicit operator Decimal12(decimal value) => new()
+	{
+		Mantissa = (long)(value / _priceExponent),
+	};
+
+	/// <summary>
+	/// The scaling factor for conversion based on the exponent.
+	/// </summary>
+	private static readonly decimal _priceExponent = (decimal)Math.Pow(10, Exponent);
+
+	/// <inheritdoc/>
+	public override readonly string ToString() => ((decimal)this).ToString();
+
+	/// <inheritdoc/>
+	public readonly string ToString(string format, IFormatProvider formatProvider)
+		=> ((decimal)this).ToString(format, formatProvider);
+}
 
 /// <summary>
 /// Represents a decimal number with a variable exponent.
@@ -349,7 +532,7 @@ public struct DecimalN : IFormattable
 	/// </exception>
 	public byte Exponent
 	{
-		get => _exponent;
+		readonly get => _exponent;
 		set
 		{
 			if (value < 0 || value > _defExponent)
