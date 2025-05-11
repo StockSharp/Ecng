@@ -557,7 +557,7 @@ public unsafe static class Marshaler
 	/// <param name="ptr">A pointer to the <see cref="Encoding.UTF8"/> encoded string in unmanaged memory.</param>
 	/// <returns>A managed string representation of the <see cref="Encoding.UTF8"/> encoded string.</returns>
 	public static string ToUtf8(this int size, byte* ptr)
-		=> _utf8.GetString(ptr, size).TrimEnd('\0');
+		=> _utf8.GetString(ptr, size).TrimEnd('\0').TrimEnd();
 
 	/// <summary>
 	/// Fills a <see cref="Encoding.UTF8"/> encoded unmanaged memory block with the contents of a managed string.
@@ -580,7 +580,7 @@ public unsafe static class Marshaler
 	/// <param name="ptr">A pointer to the <see cref="Encoding.ASCII"/> encoded string in unmanaged memory.</param>
 	/// <returns>A managed string representation of the <see cref="Encoding.UTF8"/> encoded string.</returns>
 	public static string ToAscii(this int size, byte* ptr)
-		=> _ascii.GetString(ptr, size).TrimEnd('\0');
+		=> _ascii.GetString(ptr, size).TrimEnd('\0').TrimEnd();
 
 	/// <summary>
 	/// Fills a <see cref="Encoding.ASCII"/> encoded unmanaged memory block with the contents of a managed string.
