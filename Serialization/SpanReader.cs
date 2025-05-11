@@ -1,9 +1,8 @@
 namespace Ecng.Serialization;
 
+using Ecng.Common;
 using System;
-#if NET5_0_OR_GREATER
 using System.Text;
-#endif
 
 /// <summary>
 /// A ref struct that reads primitive types from a span of bytes.
@@ -137,18 +136,19 @@ public ref struct SpanReader
 	/// <returns>The TimeSpan value at the current position.</returns>
 	public TimeSpan ReadTimeSpan() => new(_span.ReadInt64(_isBigEndian, ref _position));
 
-#if NET5_0_OR_GREATER
 	/// <summary>
 	/// Reads a character from the current position and advances the position.
 	/// </summary>
 	/// <returns>The character at the current position.</returns>
 	public char ReadChar() => _span.ReadChar(ref _position);
 
+#if NET5_0_OR_GREATER
 	/// <summary>
 	/// Reads a half-precision floating-point value from the current position and advances the position by 2 bytes.
 	/// </summary>
 	/// <returns>The half-precision floating-point value at the current position.</returns>
 	public Half ReadHalf() => _span.ReadHalf(_isBigEndian, ref _position);
+#endif
 
 	/// <summary>
 	/// Reads a single-precision floating-point value from the current position and advances the position by 4 bytes.
@@ -182,9 +182,16 @@ public ref struct SpanReader
 		if (length == 0)
 			return string.Empty;
 
-		return encoding.GetString(ReadSpan(length));
-	}
+		var span = ReadSpan(length);
+
+		return
+#if NET5_0_OR_GREATER
+			encoding.GetString(span)
+#else
+			encoding.GetString(span.ToArray())
 #endif
+		;
+	}
 
 	/// <summary>
 	/// Reads a structure of type <typeparamref name="T"/> from the current position and advances the position by the size of T.

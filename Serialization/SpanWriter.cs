@@ -1,11 +1,9 @@
 namespace Ecng.Serialization;
 
 using System;
-#if NET5_0_OR_GREATER
 using System.Text;
 
 using Ecng.Common;
-#endif
 
 /// <summary>
 /// Provides functionality for writing primitive data types to a span of bytes.
@@ -145,7 +143,6 @@ public ref struct SpanWriter
 	/// <param name="value">The TimeSpan value to write.</param>
 	public void WriteTimeSpan(TimeSpan value) => _span.WriteInt64(value.Ticks, _isBigEndian, ref _position);
 
-#if NET5_0_OR_GREATER
 	/// <summary>
 	/// Writes a string value to the span at the current position and advances the position.
 	/// </summary>
@@ -159,7 +156,15 @@ public ref struct SpanWriter
 		if (encoding is null)
 			throw new ArgumentNullException(nameof(encoding));
 
-		_position += encoding.GetBytes(value, _span.Slice(_position));
+		var slice = _span.Slice(_position);
+
+#if NET5_0_OR_GREATER
+		_position += encoding.GetBytes(value, slice);
+#else
+		var buffer = encoding.GetBytes(value);
+		buffer.CopyTo(slice);
+		_position += buffer.Length;
+#endif
 	}
 
 	/// <summary>
@@ -168,11 +173,13 @@ public ref struct SpanWriter
 	/// <param name="value">The character value to write.</param>
 	public void WriteChar(char value) => _span.WriteChar(value, ref _position);
 
+#if NET5_0_OR_GREATER
 	/// <summary>
 	/// Writes a Half value to the span at the current position and advances the position.
 	/// </summary>
 	/// <param name="value">The Half value to write.</param>
 	public void WriteHalf(Half value) => _span.WriteHalf(value, _isBigEndian, ref _position);
+#endif
 
 	/// <summary>
 	/// Writes a single-precision floating-point value to the span at the current position and advances the position.
@@ -191,7 +198,6 @@ public ref struct SpanWriter
 	/// </summary>
 	/// <param name="value">The GUID value to write.</param>
 	public void WriteGuid(Guid value) => _span.WriteGuid(value, ref _position);
-#endif
 
 	/// <summary>
 	/// Writes a value type structure to the span at the current position and advances the position.

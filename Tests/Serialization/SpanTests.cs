@@ -347,4 +347,231 @@ public class SpanTests
 		readValue.AssertEqual(value);
 		reader.Position.AssertEqual(16);
 	}
+
+	[TestMethod]
+	public void WriteAndReadSByte()
+	{
+		Span<byte> buffer = new byte[1];
+		var writer = new SpanWriter(buffer);
+		sbyte value = -42;
+		writer.WriteSByte(value);
+		writer.Position.AssertEqual(1);
+		writer.IsFull.AssertTrue();
+
+		var reader = new SpanReader(buffer);
+		var readValue = reader.ReadSByte();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(1);
+		reader.End.AssertTrue();
+	}
+
+	[TestMethod]
+	public void WriteAndReadBoolean()
+	{
+		Span<byte> buffer = new byte[1];
+		var writer = new SpanWriter(buffer);
+		bool value = true;
+		writer.WriteBoolean(value);
+		writer.Position.AssertEqual(1);
+		writer.IsFull.AssertTrue();
+
+		var reader = new SpanReader(buffer);
+		var readValue = reader.ReadBoolean();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(1);
+		reader.End.AssertTrue();
+	}
+
+	[TestMethod]
+	public void WriteAndReadUInt16_LittleEndian()
+	{
+		Span<byte> buffer = new byte[2];
+		var writer = new SpanWriter(buffer);
+		ushort value = 0x1234;
+		writer.WriteUInt16(value);
+		writer.Position.AssertEqual(2);
+
+		var expectedBytes = BitConverter.GetBytes(value);
+		buffer.ToArray().AssertEqual(expectedBytes);
+
+		var reader = new SpanReader(buffer);
+		var readValue = reader.ReadUInt16();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void WriteAndReadUInt16_BigEndian()
+	{
+		Span<byte> buffer = new byte[2];
+		var writer = new SpanWriter(buffer, isBigEndian: true);
+		ushort value = 0x1234;
+		writer.WriteUInt16(value);
+		writer.Position.AssertEqual(2);
+
+		var expectedBytes = BitConverter.IsLittleEndian ? [0x12, 0x34] : BitConverter.GetBytes(value);
+		buffer.ToArray().AssertEqual(expectedBytes);
+
+		var reader = new SpanReader(buffer, isBigEndian: true);
+		var readValue = reader.ReadUInt16();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void WriteAndReadUInt32_LittleEndian()
+	{
+		Span<byte> buffer = new byte[4];
+		var writer = new SpanWriter(buffer);
+		uint value = 0x12345678;
+		writer.WriteUInt32(value);
+		writer.Position.AssertEqual(4);
+
+		var expectedBytes = BitConverter.GetBytes(value);
+		buffer.ToArray().AssertEqual(expectedBytes);
+
+		var reader = new SpanReader(buffer);
+		var readValue = reader.ReadUInt32();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(4);
+	}
+
+	[TestMethod]
+	public void WriteAndReadUInt32_BigEndian()
+	{
+		Span<byte> buffer = new byte[4];
+		var writer = new SpanWriter(buffer, isBigEndian: true);
+		uint value = 0x12345678;
+		writer.WriteUInt32(value);
+		writer.Position.AssertEqual(4);
+
+		var expectedBytes = BitConverter.IsLittleEndian ? [0x12, 0x34, 0x56, 0x78] : BitConverter.GetBytes(value);
+		buffer.ToArray().AssertEqual(expectedBytes);
+
+		var reader = new SpanReader(buffer, isBigEndian: true);
+		var readValue = reader.ReadUInt32();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(4);
+	}
+
+	[TestMethod]
+	public void WriteAndReadUInt64_LittleEndian()
+	{
+		Span<byte> buffer = new byte[8];
+		var writer = new SpanWriter(buffer);
+		ulong value = 0x123456789ABCDEF0;
+		writer.WriteUInt64(value);
+		writer.Position.AssertEqual(8);
+
+		var expectedBytes = BitConverter.GetBytes(value);
+		buffer.ToArray().AssertEqual(expectedBytes);
+
+		var reader = new SpanReader(buffer);
+		var readValue = reader.ReadUInt64();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(8);
+	}
+
+	[TestMethod]
+	public void WriteAndReadUInt64_BigEndian()
+	{
+		Span<byte> buffer = new byte[8];
+		var writer = new SpanWriter(buffer, isBigEndian: true);
+		ulong value = 0x123456789ABCDEF0;
+		writer.WriteUInt64(value);
+		writer.Position.AssertEqual(8);
+
+		var expectedBytes = BitConverter.IsLittleEndian ? [0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0] : BitConverter.GetBytes(value);
+		buffer.ToArray().AssertEqual(expectedBytes);
+
+		var reader = new SpanReader(buffer, isBigEndian: true);
+		var readValue = reader.ReadUInt64();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(8);
+	}
+
+	[TestMethod]
+	public void WriteAndReadChar()
+	{
+		Span<byte> buffer = new byte[2];
+		var writer = new SpanWriter(buffer);
+		char value = 'A';
+		writer.WriteChar(value);
+		writer.Position.AssertEqual(2);
+		writer.IsFull.AssertTrue();
+
+		var reader = new SpanReader(buffer);
+		var readValue = reader.ReadChar();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(2);
+		reader.End.AssertTrue();
+	}
+
+	[TestMethod]
+	public void WriteAndReadHalf_LittleEndian()
+	{
+		Span<byte> buffer = new byte[2];
+		var writer = new SpanWriter(buffer);
+		var value = (Half)123.456f;
+		writer.WriteHalf(value);
+		writer.Position.AssertEqual(2);
+
+		var reader = new SpanReader(buffer);
+		var readValue = reader.ReadHalf();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void WriteAndReadHalf_BigEndian()
+	{
+		Span<byte> buffer = new byte[2];
+		var writer = new SpanWriter(buffer, isBigEndian: true);
+		var value = (Half)123.456f;
+		writer.WriteHalf(value);
+		writer.Position.AssertEqual(2);
+
+		var reader = new SpanReader(buffer, isBigEndian: true);
+		var readValue = reader.ReadHalf();
+		readValue.AssertEqual(value);
+		reader.Position.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void WriteAndReadDouble_LittleEndian()
+	{
+		Span<byte> buffer = new byte[8];
+		var writer = new SpanWriter(buffer);
+		double value = 123.456789;
+		writer.WriteDouble(value);
+		writer.Position.AssertEqual(8);
+
+		var expectedBytes = BitConverter.GetBytes(value);
+		buffer.ToArray().AssertEqual(expectedBytes);
+
+		var reader = new SpanReader(buffer);
+		var readValue = reader.ReadDouble();
+		readValue.AssertEqual(value, 0.0000001);
+		reader.Position.AssertEqual(8);
+	}
+
+	[TestMethod]
+	public void WriteAndReadDouble_BigEndian()
+	{
+		Span<byte> buffer = new byte[8];
+		var writer = new SpanWriter(buffer, isBigEndian: true);
+		double value = 123.456789;
+		writer.WriteDouble(value);
+		writer.Position.AssertEqual(8);
+
+		var expectedBytes = BitConverter.GetBytes(value);
+		if (BitConverter.IsLittleEndian)
+			Array.Reverse(expectedBytes);
+		buffer.ToArray().AssertEqual(expectedBytes);
+
+		var reader = new SpanReader(buffer, isBigEndian: true);
+		var readValue = reader.ReadDouble();
+		readValue.AssertEqual(value, 0.0000001);
+		reader.Position.AssertEqual(8);
+	}
 }
