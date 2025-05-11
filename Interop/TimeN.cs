@@ -28,6 +28,20 @@ public struct Time4Sec : IFormattable
 	public static explicit operator Time4Sec(DateTime value)
 		=> new() { Value = (uint)value.ToUnix() };
 
+	/// <summary>
+	/// Converts the <see cref="Time4Sec"/> value to a <see cref="DateTimeOffset"/>.
+	/// </summary>
+	/// <param name="value">The <see cref="Time4Sec"/> value.</param>
+	public static implicit operator DateTimeOffset(Time4Sec value)
+		=> (DateTime)value;
+
+	/// <summary>
+	/// Converts a <see cref="DateTimeOffset"/> to a <see cref="Time4Sec"/> value.
+	/// </summary>
+	/// <param name="value">The <see cref="DateTimeOffset"/> value.</param>
+	public static explicit operator Time4Sec(DateTimeOffset value)
+		=> (Time4Sec)value.UtcDateTime;
+
 	/// <inheritdoc/>
 	public override readonly string ToString()
 		=> ((DateTime)this).ToString();
@@ -60,6 +74,20 @@ public struct Time8Mls : IFormattable
 	/// <param name="value">The <see cref="DateTime"/> value.</param>
 	public static explicit operator Time8Mls(DateTime value)
 		=> new() { Value = (ulong)value.ToUnix(false) };
+
+	/// <summary>
+	/// Converts the <see cref="Time8Mls"/> value to a <see cref="DateTimeOffset"/>.
+	/// </summary>
+	/// <param name="value">The <see cref="Time8Mls"/> value.</param>
+	public static implicit operator DateTimeOffset(Time8Mls value)
+		=> (DateTime)value;
+
+	/// <summary>
+	/// Converts a <see cref="DateTimeOffset"/> to a <see cref="Time8Mls"/> value.
+	/// </summary>
+	/// <param name="value">The <see cref="DateTimeOffset"/> value.</param>
+	public static explicit operator Time8Mls(DateTimeOffset value)
+		=> (Time8Mls)value.UtcDateTime;
 
 	/// <inheritdoc/>
 	public override readonly string ToString()
@@ -94,6 +122,20 @@ public struct Time8Mcs : IFormattable
 	public static explicit operator Time8Mcs(DateTime value)
 		=> new() { Value = (ulong)value.ToUnixMcs() };
 
+	/// <summary>
+	/// Converts the <see cref="Time8Mcs"/> value to a <see cref="DateTimeOffset"/>.
+	/// </summary>
+	/// <param name="value">The <see cref="Time8Mcs"/> value.</param>
+	public static implicit operator DateTimeOffset(Time8Mcs value)
+		=> (DateTime)value;
+
+	/// <summary>
+	/// Converts a <see cref="DateTimeOffset"/> to a <see cref="Time8Mcs"/> value.
+	/// </summary>
+	/// <param name="value">The <see cref="DateTimeOffset"/> value.</param>
+	public static explicit operator Time8Mcs(DateTimeOffset value)
+		=> (Time8Mcs)value.UtcDateTime;
+
 	/// <inheritdoc/>
 	public override readonly string ToString()
 		=> ((DateTime)this).ToString();
@@ -121,11 +163,25 @@ public struct TimeNano : IFormattable
 		=> TimeHelper.GregorianStart.AddNanoseconds((long)value.Value);
 
 	/// <summary>
-	/// Converts a <see cref="DateTimeOffset"/> to a <see cref="TimeNano"/> value.
+	/// Converts a <see cref="DateTime"/> to a <see cref="TimeNano"/> value.
 	/// </summary>
-	/// <param name="value">The <see cref="DateTimeOffset"/> value.</param>
+	/// <param name="value">The <see cref="DateTime"/> value.</param>
+	public static explicit operator TimeNano(DateTime value)
+		=> new() { Value = (ulong)(value.ToUniversalTime() - TimeHelper.GregorianStart).ToNanoseconds() };
+
+	/// <summary>
+	/// Converts the <see cref="TimeNano"/> value to a <see cref="DateTimeOffset"/>.
+	/// </summary>
+	/// <param name="value">The <see cref="TimeNano"/> value.</param>
+	public static implicit operator DateTimeOffset(TimeNano value)
+		=> (DateTime)value;
+
+	/// <summary>
+	/// Converts a <see cref="DateTime"/> to a <see cref="TimeNano"/> value.
+	/// </summary>
+	/// <param name="value">The <see cref="DateTime"/> value.</param>
 	public static explicit operator TimeNano(DateTimeOffset value)
-		=> new() { Value = (ulong)(value.UtcDateTime - TimeHelper.GregorianStart).ToNanoseconds() };
+		=> (TimeNano)value.UtcDateTime;
 
 	/// <inheritdoc/>
 	public override readonly string ToString()
