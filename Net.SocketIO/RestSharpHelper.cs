@@ -169,7 +169,7 @@ public static class RestSharpHelper
 	/// <param name="throwIfEmptyResponse">Indicates whether to throw an exception if the response is empty.</param>
 	/// <returns>A task representing the asynchronous operation, returning the deserialized response of type T.</returns>
 	public static async Task<T> InvokeAsync<T>(this RestRequest request, Uri url, object caller, Action<string, object[]> logVerbose, CancellationToken token, Func<string, string> contentConverter = null, bool throwIfEmptyResponse = true)
-		=> (await request.InvokeAsync2<T>(url, caller, logVerbose, token, contentConverter, null, throwIfEmptyResponse)).Data;
+		=> (await request.InvokeAsync2<T>(url, caller, logVerbose, token, contentConverter, null, throwIfEmptyResponse).NoWait()).Data;
 
 	/// <summary>
 	/// Asynchronously invokes the RestRequest and returns the full <see cref="RestResponse{T}"/> response.
@@ -243,7 +243,7 @@ Args:
 		var client = GetClient(caller);
 		using var _ = ((AuthenticatorWrapper)client.Options.Authenticator!).RegisterRequest(request, auth);
 
-		var response = await client.ExecuteAsync<object>(request, token);
+		var response = await client.ExecuteAsync<object>(request, token).NoWait();
 
 		if (logVerbose is not null)
 			logVerbose("Response '{0}' (code {1}).", [response.Content, response.StatusCode]);

@@ -57,9 +57,7 @@ public class AmazonGlacierService : Disposable, IBackupService
 	bool IBackupService.CanPartialDownload => true;
 
 	IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, CancellationToken cancellationToken)
-	{
-		throw new NotImplementedException();
-	}
+		=> throw new NotSupportedException();
 
 	Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
 		=> _client.DeleteArchiveAsync(new()
@@ -69,7 +67,7 @@ public class AmazonGlacierService : Disposable, IBackupService
 		}, cancellationToken);
 
 	Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
-		=> throw new NotImplementedException();
+		=> throw new NotSupportedException();
 
 	async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 	{
@@ -87,7 +85,7 @@ public class AmazonGlacierService : Disposable, IBackupService
 			request.Range = $"bytes={offset}-{offset + length}";
 		}
 
-		var response = await _client.GetJobOutputAsync(request, cancellationToken);
+		var response = await _client.GetJobOutputAsync(request, cancellationToken).NoWait();
 
 		using var webStream = response.Body;
 
@@ -101,12 +99,12 @@ public class AmazonGlacierService : Disposable, IBackupService
 		while (readTotal < objLen)
 		{
 			var expected = (int)(objLen - readTotal).Min(_bufferSize);
-			var actual = await webStream.ReadAsync(bytes.AsMemory(0, expected), cancellationToken);
+			var actual = await webStream.ReadAsync(bytes.AsMemory(0, expected), cancellationToken).NoWait();
 
 			if (actual == 0)
 				break;
 
-			await stream.WriteAsync(bytes.AsMemory(0, actual), cancellationToken);
+			await stream.WriteAsync(bytes.AsMemory(0, actual), cancellationToken).NoWait();
 
 			readTotal += actual;
 

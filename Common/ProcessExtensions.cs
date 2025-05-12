@@ -91,7 +91,7 @@ static class ProcessExtensions
 			// exception up to the user
 			if (process.HasExited)
 			{
-				await WaitUntilOutputEOF(cancellationToken).ConfigureAwait(false);
+				await WaitUntilOutputEOF(cancellationToken).NoWait();
 				return;
 			}
 
@@ -114,12 +114,12 @@ static class ProcessExtensions
 				// CASE 1.1 & CASE 3.1: Process exits or is canceled here
 				using (cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken), false))
 				{
-					await tcs.Task.ConfigureAwait(false);
+					await tcs.Task.NoWait();
 				}
 			}
 
 			// Wait until output streams have been drained
-			await WaitUntilOutputEOF(cancellationToken).ConfigureAwait(false);
+			await WaitUntilOutputEOF(cancellationToken).NoWait();
 		}
 		finally
 		{
@@ -133,12 +133,12 @@ static class ProcessExtensions
 
 			//if (process._output is not null)
 			//{
-			//	await process._output.EOF.WaitAsync(cancellationToken).ConfigureAwait(false);
+			//	await process._output.EOF.WaitAsync(cancellationToken).NoWait();
 			//}
 
 			//if (process._error is not null)
 			//{
-			//	await process._error.EOF.WaitAsync(cancellationToken).ConfigureAwait(false);
+			//	await process._error.EOF.WaitAsync(cancellationToken).NoWait();
 			//}
 		}
 	}

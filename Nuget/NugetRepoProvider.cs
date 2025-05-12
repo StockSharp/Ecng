@@ -25,7 +25,7 @@ public class NugetRepoProvider : CachingSourceProvider
 
 			try
 			{
-				await sourceRepository.GetResourceAsync<ServiceIndexResourceV3>(token);
+				await sourceRepository.GetResourceAsync<ServiceIndexResourceV3>(token).NoWait();
 				_log.AddInfoLog("nuget v3 success!");
 				return new PrivatePackageSource(src);
 			}
@@ -84,7 +84,7 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// <returns>Task.</returns>
 	public static async Task<NugetRepoProvider> GetInstanceAsync(string privateUrl, SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy, CancellationToken token)
 	{
-		await PrivatePackageSource.GetAsync(privateUrl, token);
+		await PrivatePackageSource.GetAsync(privateUrl, token).NoWait();
 
 		using (await _instanceLock.LockAsync(token))
 		{
@@ -146,7 +146,7 @@ public class NugetRepoProvider : CachingSourceProvider
 	private async Task InitBaseUrls(CancellationToken cancellationToken)
 	{
 		async Task initBaseUrl(SourceRepository repo)
-			=> _repoUrls.Add((repo, await repo.GetBaseUrl(cancellationToken)));
+			=> _repoUrls.Add((repo, await repo.GetBaseUrl(cancellationToken).NoWait()));
 
 		await initBaseUrl(_nugetRepo);
 		await initBaseUrl(_privateRepo);
@@ -165,7 +165,7 @@ public class NugetRepoProvider : CachingSourceProvider
 	{
 		foreach (var (repo, baseUrl) in _repoUrls)
 		{
-			var resource = await repo.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
+			var resource = await repo.GetResourceAsync<FindPackageByIdResource>(cancellationToken).NoWait();
 
 			var versions = await RetryPolicy.TryRepeat(t =>
 				resource.GetAllVersionsAsync(

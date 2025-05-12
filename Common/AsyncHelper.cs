@@ -136,7 +136,7 @@ public static class AsyncHelper
 		{
 			try
 			{
-				results[i] = await source[i].ConfigureAwait(false);
+				results[i] = await source[i].NoWait();
 			}
 			catch (Exception ex)
 			{
@@ -172,7 +172,7 @@ public static class AsyncHelper
 		{
 			try
 			{
-				await source[i].ConfigureAwait(false);
+				await source[i].NoWait();
 			}
 			catch (Exception ex)
 			{
@@ -352,7 +352,7 @@ public static class AsyncHelper
 	{
 		try
 		{
-			await getTask().ConfigureAwait(false);
+			await getTask().NoWait();
 		}
 		catch (Exception e) when (token.IsCancellationRequested)
 		{
@@ -499,4 +499,38 @@ public static class AsyncHelper
 			yield return item;
 		}
 	}
+
+	/// <summary>
+	/// Configures the awaiter for the specified <see cref="Task"/> to not capture the current synchronization context.
+	/// </summary>
+	/// <param name="task">The task to configure.</param>
+	/// <returns>A configured awaitable for the task.</returns>
+	public static ConfiguredTaskAwaitable NoWait(this Task task)
+		=> task.ConfigureAwait(false);
+
+	/// <summary>
+	/// Configures the awaiter for the specified <see cref="Task{T}"/> to not capture the current synchronization context.
+	/// </summary>
+	/// <typeparam name="T">The type of the result produced by the task.</typeparam>
+	/// <param name="task">The task to configure.</param>
+	/// <returns>A configured awaitable for the task.</returns>
+	public static ConfiguredTaskAwaitable<T> NoWait<T>(this Task<T> task)
+		=> task.ConfigureAwait(false);
+
+	/// <summary>
+	/// Configures the awaiter for the specified <see cref="ValueTask"/> to not capture the current synchronization context.
+	/// </summary>
+	/// <param name="task">The value task to configure.</param>
+	/// <returns>A configured awaitable for the value task.</returns>
+	public static ConfiguredValueTaskAwaitable NoWait(this ValueTask task)
+		=> task.ConfigureAwait(false);
+
+	/// <summary>
+	/// Configures the awaiter for the specified <see cref="ValueTask{T}"/> to not capture the current synchronization context.
+	/// </summary>
+	/// <typeparam name="T">The type of the result produced by the value task.</typeparam>
+	/// <param name="task">The value task to configure.</param>
+	/// <returns>A configured awaitable for the value task.</returns>
+	public static ConfiguredValueTaskAwaitable<T> NoWait<T>(this ValueTask<T> task)
+		=> task.ConfigureAwait(false);
 }

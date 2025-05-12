@@ -261,7 +261,7 @@ public static class CompressionHelper
 
 		using var inputStream = new MemoryStream(input, index ?? 0, count ?? input.Length);
 		using var outputStream = new MemoryStream();
-		await inputStream.CompressAsync<TCompressStream>(outputStream, level, true, bufferSize, cancellationToken);
+		await inputStream.CompressAsync<TCompressStream>(outputStream, level, true, bufferSize, cancellationToken).NoWait();
 		return outputStream.To<byte[]>();
 	}
 
@@ -283,7 +283,7 @@ public static class CompressionHelper
 
 		using var inputStream = new MemoryStream(input, index ?? 0, count ?? input.Length);
 		using var outputStream = new MemoryStream();
-		await inputStream.UncompressAsync<TCompressStream>(outputStream, true, bufferSize, cancellationToken);
+		await inputStream.UncompressAsync<TCompressStream>(outputStream, true, bufferSize, cancellationToken).NoWait();
 		return outputStream.To<byte[]>();
 	}
 
@@ -298,14 +298,14 @@ public static class CompressionHelper
 	/// <param name="bufferSize">The buffer size to use during compression.</param>
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>A task representing the asynchronous compression operation.</returns>
-	public static async Task CompressAsync<TCompressStream>(this Stream input, Stream output, CompressionLevel level = CompressionLevel.Optimal, bool leaveOpen = true, int bufferSize = DefaultBufferSize, CancellationToken cancellationToken = default)
+	public static Task CompressAsync<TCompressStream>(this Stream input, Stream output, CompressionLevel level = CompressionLevel.Optimal, bool leaveOpen = true, int bufferSize = DefaultBufferSize, CancellationToken cancellationToken = default)
 		where TCompressStream : Stream
 	{
 		if (input is null)
 			throw new ArgumentNullException(nameof(input));
 
 		using var compress = (TCompressStream)Activator.CreateInstance(typeof(TCompressStream), output, level, leaveOpen);
-		await input.CopyToAsync(compress, bufferSize, cancellationToken);
+		return input.CopyToAsync(compress, bufferSize, cancellationToken);
 	}
 
 	/// <summary>
@@ -318,13 +318,13 @@ public static class CompressionHelper
 	/// <param name="bufferSize">The buffer size to use during decompression.</param>
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>A task representing the asynchronous decompression operation.</returns>
-	public static async Task UncompressAsync<TCompressStream>(this Stream input, Stream output, bool leaveOpen = true, int bufferSize = DefaultBufferSize, CancellationToken cancellationToken = default)
+	public static Task UncompressAsync<TCompressStream>(this Stream input, Stream output, bool leaveOpen = true, int bufferSize = DefaultBufferSize, CancellationToken cancellationToken = default)
 		where TCompressStream : Stream
 	{
 		if (input is null)
 			throw new ArgumentNullException(nameof(input));
 
 		using var compress = (TCompressStream)Activator.CreateInstance(typeof(TCompressStream), input, CompressionMode.Decompress, leaveOpen);
-		await compress.CopyToAsync(output, bufferSize, cancellationToken);
+		return compress.CopyToAsync(output, bufferSize, cancellationToken);
 	}
 }

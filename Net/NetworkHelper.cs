@@ -838,7 +838,7 @@ public static class NetworkHelper
 
 			try
 			{
-				return await handler(cancellationToken);
+				return await handler(cancellationToken).NoWait();
 			}
 			catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
 			{
@@ -856,7 +856,7 @@ public static class NetworkHelper
 				if (!shouldRetry())
 					throw;
 
-				await policy.GetDelay(attemptNumber).Delay(cancellationToken);
+				await policy.GetDelay(attemptNumber).Delay(cancellationToken).NoWait();
 			}
 		}
 	}

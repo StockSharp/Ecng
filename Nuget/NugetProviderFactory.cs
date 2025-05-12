@@ -23,7 +23,7 @@ public class NugetProviderFactory(ILogReceiver log, SecureString privateNugetTok
 
 			public override async Task<JObject> GetPackageMetadata(PackageIdentity identity, SourceCacheContext cacheContext, NuGet.Common.ILogger log, CancellationToken token)
 			{
-				var results = (await GetPackageMetadata(identity.Id, new VersionRange(identity.Version, true, identity.Version, true), true, true, cacheContext, log, token)).ToArray();
+				var results = (await GetPackageMetadata(identity.Id, new VersionRange(identity.Version, true, identity.Version, true), true, true, cacheContext, log, token).NoWait()).ToArray();
 
 				if (results.Length < 2)
 					return results.SingleOrDefault();
@@ -57,13 +57,13 @@ public class NugetProviderFactory(ILogReceiver log, SecureString privateNugetTok
 		public override async Task<Tuple<bool, INuGetResource>> TryCreate(SourceRepository source, CancellationToken token)
 		{
 			RegistrationResourceV3 regResource = null;
-			var serviceIndex = await source.GetResourceAsync<ServiceIndexResourceV3>(token);
+			var serviceIndex = await source.GetResourceAsync<ServiceIndexResourceV3>(token).NoWait();
 
 			if (serviceIndex != null)
 			{
 				var baseUrl = serviceIndex.GetServiceEntryUri(ServiceTypes.RegistrationsBaseUrl);
 
-				var httpSourceResource = await source.GetResourceAsync<HttpSourceResource>(token);
+				var httpSourceResource = await source.GetResourceAsync<HttpSourceResource>(token).NoWait();
 
 				regResource = new NugetRegistrationResourceV3(_log, httpSourceResource.HttpSource, baseUrl);
 			}
@@ -78,12 +78,12 @@ public class NugetProviderFactory(ILogReceiver log, SecureString privateNugetTok
 		{
 			private readonly SecureString _privateNugetToken = privateNugetToken;
 
-			protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+			protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 			{
 				request.Headers.Remove(ProtocolConstants.ApiKeyHeader);
 				request.Headers.Add(ProtocolConstants.ApiKeyHeader, _privateNugetToken.UnSecure());
 
-				return await base.SendAsync(request, cancellationToken);
+				return base.SendAsync(request, cancellationToken);
 			}
 		}
 
@@ -95,7 +95,7 @@ public class NugetProviderFactory(ILogReceiver log, SecureString privateNugetTok
 
 		public override async Task<Tuple<bool, INuGetResource>> TryCreate(SourceRepository source, CancellationToken token)
 		{
-			var res = await _inner.TryCreate(source, token);
+			var res = await _inner.TryCreate(source, token).NoWait();
 			if (!res.Item1 || !source.PackageSource.Source.ToLowerInvariant().Contains(NugetRepoProvider.PrivateRepoKey))
 				return res;
 

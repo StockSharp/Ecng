@@ -107,7 +107,7 @@ public abstract class RoslynCompiler(string extension) : ICompiler
 				_ => throw new ArgumentOutOfRangeException(severity.To<string>()),
 			};
 
-		var analyzerDiagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
+		var analyzerDiagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken).NoWait();
 		return [.. analyzerDiagnostics.Select(e =>
 		{
 			var lineSpan = e.Location.GetLineSpan();

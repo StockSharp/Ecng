@@ -141,9 +141,9 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 		{
 			var errorText = await response.Content.ReadAsStringAsync(
 #if NET5_0_OR_GREATER
-						cancellationToken
+				cancellationToken
 #endif
-			);
+			).NoWait();
 
 #if NET5_0_OR_GREATER
 			throw new HttpRequestException($"{response.StatusCode} ({(int)response.StatusCode}): {errorText}", null, response.StatusCode);
@@ -252,11 +252,11 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	/// <returns>A task representing the asynchronous operation with the result.</returns>
 	protected async Task<TResult> DoAsync<TResult>(HttpRequestMessage request, CancellationToken cancellationToken)
 	{
-		using var response = await Http.SendAsync(request, cancellationToken);
+		using var response = await Http.SendAsync(request, cancellationToken).NoWait();
 
-		await ValidateResponseAsync(response, cancellationToken);
+		await ValidateResponseAsync(response, cancellationToken).NoWait();
 
-		return await GetResultAsync<TResult>(response, cancellationToken);
+		return await GetResultAsync<TResult>(response, cancellationToken).NoWait();
 	}
 
 	/// <summary>

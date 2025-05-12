@@ -49,9 +49,9 @@ public static class NugetExtensions
 	/// <returns>All versions ordered.</returns>
 	public static async Task<NuGetVersion[]> GetAllVersionsOrderedAsync(this SourceRepository repo, string packageId, ILogger logger, SourceCacheContext cache, CancellationToken token)
 	{
-		var resource = await repo.GetResourceAsync<FindPackageByIdResource>(token);
+		var resource = await repo.GetResourceAsync<FindPackageByIdResource>(token).NoWait();
 
-		return [.. (await resource.GetAllVersionsAsync(packageId, cache, logger, token)).OrderBy(v => v)];
+		return [.. (await resource.GetAllVersionsAsync(packageId, cache, logger, token).NoWait()).OrderBy(v => v)];
 	}
 
 	/// <summary>
@@ -66,7 +66,7 @@ public static class NugetExtensions
 	/// <returns>The last version.</returns>
 	public static async Task<NuGetVersion> GetLastVersionAsync(this SourceRepository repo, string packageId, bool allowPreview, ILogger logger, SourceCacheContext cache, CancellationToken token)
 	{
-		var versions = await repo.GetAllVersionsOrderedAsync(packageId, logger, cache, token);
+		var versions = await repo.GetAllVersionsOrderedAsync(packageId, logger, cache, token).NoWait();
 		Func<NuGetVersion, bool> cond = allowPreview ? _ => true : v => !v.IsPrerelease;
 
 		return versions.LastOrDefault(cond);
@@ -87,7 +87,7 @@ public static class NugetExtensions
 		if (!FloatRange.TryParse(floatingVer, out var range))
 			throw new ArgumentException($"invalid floating version '{floatingVer}'", nameof(floatingVer));
 
-		var versions = await repo.GetAllVersionsOrderedAsync(packageId, logger, cache, token);
+		var versions = await repo.GetAllVersionsOrderedAsync(packageId, logger, cache, token).NoWait();
 
 		return versions.LastOrDefault(range.Satisfies);
 	}
@@ -179,7 +179,7 @@ public static class NugetExtensions
 		if (repo is null)
 			throw new ArgumentNullException(nameof(repo));
 
-		var serviceIndex = await repo.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken)
+		var serviceIndex = await repo.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken).NoWait()
 			?? throw new InvalidOperationException($"ServiceIndexResourceV3 for {repo.PackageSource.Name} is null.");
 
 		var baseUrl = serviceIndex.GetServiceEntryUri(ServiceTypes.PackageBaseAddress)

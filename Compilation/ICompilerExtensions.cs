@@ -88,7 +88,7 @@ public static class ICompilerExtensions
 		if (references is null)
 			throw new ArgumentNullException(nameof(references));
 
-		return [.. (await references.Where(r => r.IsValid).Select(r => r.GetImages(cancellationToken)).WhenAll()).SelectMany(i => i)];
+		return [.. (await references.Where(r => r.IsValid).Select(r => r.GetImages(cancellationToken)).WhenAll().NoWait()).SelectMany(i => i)];
 	}
 
 	/// <summary>

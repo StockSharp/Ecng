@@ -50,7 +50,7 @@ public static class HardwareInfo
 	{
 		using var con = new WmiConnection();
 		var query = con.CreateQuery($"Select * From {table}");
-		var list = await Task.Run(() => query.ToArray(), cancellationToken);
+		var list = await Task.Run(() => query.ToArray(), cancellationToken).NoWait();
 		return list.Select(o => (string)o[field]).FirstOrDefault(f => !f.IsEmptyOrWhiteSpace());
 	}
 
@@ -117,8 +117,8 @@ public static class HardwareInfo
 				if (m.Success)
 					result.Add(m.Groups[1].Value);
 			},
-			errStr => errors.Add(errStr),
-			info => info.EnvironmentVariables["PATH"] = "/bin:/sbin:/usr/bin:/usr/sbin", cancellationToken: cancellationToken);
+			errors.Add,
+			info => info.EnvironmentVariables["PATH"] = "/bin:/sbin:/usr/bin:/usr/sbin", cancellationToken: cancellationToken).NoWait();
 
 		if (res != 0 || errors.Any())
 			throw new InvalidOperationException($"Unable to execute lsblk. Return code {res}.\n{errors.JoinNL()}");

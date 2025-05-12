@@ -217,10 +217,10 @@ public class WebSocketClient : Disposable, IConnection
 			try
 			{
 				_infoLog("Connecting to {0}...", _url);
-				await ws.ConnectAsync(_url, token);
+				await ws.ConnectAsync(_url, token).NoWait();
 
 				if (PostConnect is not null)
-					await PostConnect(reconnect, token);
+					await PostConnect(reconnect, token).NoWait();
 
 				break;
 			}
@@ -229,7 +229,7 @@ public class WebSocketClient : Disposable, IConnection
 				if (attempts > 0 || attempts == -1)
 				{
 					_errorLog("Reconnect failed. Attemps left {0}.", attempts);
-					await ReconnectInterval.Delay(token);
+					await ReconnectInterval.Delay(token).NoWait();
 					continue;
 				}
 
@@ -243,8 +243,8 @@ public class WebSocketClient : Disposable, IConnection
 
 		if (reconnect && !DisableAutoResend && _reConnectCommands.Count > 0)
 		{
-			await ResendTimeout.Delay(token);
-			await ResendAsync(token);
+			await ResendTimeout.Delay(token).NoWait();
+			await ResendAsync(token).NoWait();
 		}
 	}
 
@@ -348,7 +348,7 @@ public class WebSocketClient : Disposable, IConnection
 
 					try
 					{
-						result = await ws.ReceiveAsync(new(buf), token);
+						result = await ws.ReceiveAsync(new(buf), token).NoWait();
 					}
 					catch (Exception ex)
 					{
@@ -392,7 +392,7 @@ public class WebSocketClient : Disposable, IConnection
 						if (_verboseLog is not null)
 							_verboseLog("{0}", Encoding.GetString(processBuf));
 
-						await _process(this, new(Encoding, processBuf), token);
+						await _process(this, new(Encoding, processBuf), token).NoWait();
 
 						errorCount = 0;
 					}
@@ -604,10 +604,10 @@ public class WebSocketClient : Disposable, IConnection
 					_verboseLog("ReSend: '{0}'", Encoding.GetString(buf));
 
 				if (pre is not null)
-					await pre(id, cancellationToken);
+					await pre(id, cancellationToken).NoWait();
 
-				await SendAsync(buf, type, cancellationToken);
-				await ResendInterval.Delay(cancellationToken);
+				await SendAsync(buf, type, cancellationToken).NoWait();
+				await ResendInterval.Delay(cancellationToken).NoWait();
 			}
 			catch (Exception ex)
 			{

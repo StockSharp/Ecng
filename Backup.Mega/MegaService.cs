@@ -39,9 +39,9 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 	{
 		if (!_client.IsLoggedIn)
 		{
-			await _client.LoginAsync(_email, _password.UnSecure(), default, cancellationToken);
+			await _client.LoginAsync(_email, _password.UnSecure(), default, cancellationToken).NoWait();
 
-			_nodes.AddRange(await _client.GetNodesAsync(cancellationToken));
+			_nodes.AddRange(await _client.GetNodesAsync(cancellationToken).NoWait());
 		}
 
 		return _client;
@@ -119,7 +119,7 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 				if (found is null)
 				{
 					needCheck = false;
-					curr = await client.CreateFolderAsync(name, curr, cancellationToken);
+					curr = await client.CreateFolderAsync(name, curr, cancellationToken).NoWait();
 					_nodes.Add(curr);
 				}
 				else
@@ -127,23 +127,23 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 			}
 			else
 			{
-				curr = await client.CreateFolderAsync(name, curr, cancellationToken);
+				curr = await client.CreateFolderAsync(name, curr, cancellationToken).NoWait();
 				_nodes.Add(curr);
 			}
 		}
 	}
 
 	async Task IBackupService.DeleteAsync(BackupEntry entry, CancellationToken cancellationToken)
-		=> await (await EnsureLogin(cancellationToken)).DeleteAsync(Find(entry), cancellationToken: cancellationToken);
+		=> await (await EnsureLogin(cancellationToken)).DeleteAsync(Find(entry), cancellationToken: cancellationToken).NoWait();
 
 	async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 	{
-		var temp = await (await EnsureLogin(cancellationToken)).Download(Find(entry), cancellationToken);
-		await temp.CopyToAsync(stream, cancellationToken);
+		var temp = await (await EnsureLogin(cancellationToken)).Download(Find(entry), cancellationToken).NoWait();
+		await temp.CopyToAsync(stream, cancellationToken).NoWait();
 	}
 
 	async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
-		=> await (await EnsureLogin(cancellationToken)).Upload(stream, entry.Name, entry.Parent is null ? GetRoot() : Find(entry.Parent), cancellationToken: cancellationToken);
+		=> await (await EnsureLogin(cancellationToken)).Upload(stream, entry.Name, entry.Parent is null ? GetRoot() : Find(entry.Parent), cancellationToken: cancellationToken).NoWait();
 
 	async Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
 	{

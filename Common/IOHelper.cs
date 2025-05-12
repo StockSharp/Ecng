@@ -88,7 +88,7 @@ public static class IOHelper
 
 		foreach (var directory in Directory.GetDirectories(sourcePath))
 		{
-			await CopyDirectoryAsync(directory, Path.Combine(destPath, Path.GetFileName(directory)), cancellationToken);
+			await CopyDirectoryAsync(directory, Path.Combine(destPath, Path.GetFileName(directory)), cancellationToken).NoWait();
 		}
 	}
 
@@ -1286,7 +1286,7 @@ public static class IOHelper
 				buffer, offset + totalRead, bytesToRead - totalRead
 #endif
 				, cancellationToken
-			).ConfigureAwait(false);
+			).NoWait();
 
 			if (bytesRead == 0)
 				break;

@@ -75,7 +75,7 @@ public class AmazonS3Service : Disposable, IBackupService
 
 		do
 		{
-			var response = await _client.ListObjectsV2Async(request, cancellationToken);
+			var response = await _client.ListObjectsV2Async(request, cancellationToken).NoWait();
 
 			foreach (var entry in response.S3Objects)
 			{
@@ -137,7 +137,7 @@ public class AmazonS3Service : Disposable, IBackupService
 
 		var prevProgress = -1;
 
-		using (var response = await _client.GetObjectAsync(request, cancellationToken))
+		using (var response = await _client.GetObjectAsync(request, cancellationToken).NoWait())
 		using (var responseStream = response.ResponseStream)
 		{
 			var objLen = response.ContentLength;
@@ -145,12 +145,12 @@ public class AmazonS3Service : Disposable, IBackupService
 			while (readTotal < objLen)
 			{
 				var expected = (int)(objLen - readTotal).Min(_bufferSize);
-				var actual = await responseStream.ReadAsync(bytes.AsMemory(0, expected), cancellationToken);
+				var actual = await responseStream.ReadAsync(bytes.AsMemory(0, expected), cancellationToken).NoWait();
 
 				if (actual == 0)
 					break;
 
-				await stream.WriteAsync(bytes.AsMemory(0, actual), cancellationToken);
+				await stream.WriteAsync(bytes.AsMemory(0, actual), cancellationToken).NoWait();
 
 				readTotal += actual;
 
@@ -185,7 +185,7 @@ public class AmazonS3Service : Disposable, IBackupService
 		{
 			BucketName = _bucket,
 			Key = key,
-		}, cancellationToken);
+		}, cancellationToken).NoWait();
 
 		var filePosition = 0L;
 		var prevProgress = -1;
@@ -205,7 +205,7 @@ public class AmazonS3Service : Disposable, IBackupService
 				//FilePosition = filePosition,
 				InputStream = stream,
 				Key = key
-			}, cancellationToken);
+			}, cancellationToken).NoWait();
 
 			etags.Add(new(partNum, response.ETag));
 
@@ -228,7 +228,7 @@ public class AmazonS3Service : Disposable, IBackupService
 			UploadId = initResponse.UploadId,
 			Key = key,
 			PartETags = etags
-		}, cancellationToken);
+		}, cancellationToken).NoWait();
 
 		if (prevProgress < 100)
 			progress(100);
@@ -245,7 +245,7 @@ public class AmazonS3Service : Disposable, IBackupService
 		{
 			BucketName = _bucket,
 			Key = key,
-		}, cancellationToken);
+		}, cancellationToken).NoWait();
 
 		entry.Size = response.ContentLength;
 	}
@@ -259,7 +259,7 @@ public class AmazonS3Service : Disposable, IBackupService
 			BucketName = _bucket,
 			Key = key,
 			CannedACL = S3CannedACL.PublicRead,
-		}, cancellationToken);
+		}, cancellationToken).NoWait();
 
 		if (response.HttpStatusCode != HttpStatusCode.OK)
 			throw new InvalidOperationException(response.HttpStatusCode.To<string>());
@@ -276,7 +276,7 @@ public class AmazonS3Service : Disposable, IBackupService
 			BucketName = _bucket,
 			Key = key,
 			CannedACL = S3CannedACL.Private,
-		}, cancellationToken);
+		}, cancellationToken).NoWait();
 
 		if (response.HttpStatusCode != HttpStatusCode.OK)
 			throw new InvalidOperationException(response.HttpStatusCode.To<string>());

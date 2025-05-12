@@ -63,7 +63,7 @@ public class YandexDiskService : Disposable, IBackupService
 					Path = path,
 					Offset = offset,
 					Limit = limit,
-				}, cancellationToken);
+				}, cancellationToken).NoWait();
 			}
 			catch (YandexApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
 			{
@@ -96,7 +96,7 @@ public class YandexDiskService : Disposable, IBackupService
 		var info = await _client.MetaInfo.GetInfoAsync(new()
 		{
 			Path = entry.GetFullPath(),
-		}, cancellationToken);
+		}, cancellationToken).NoWait();
 
 		entry.Size = info.Size;
 		entry.LastModified = info.Modified;
@@ -115,14 +115,14 @@ public class YandexDiskService : Disposable, IBackupService
 		if (offset is not null || length is not null)
 			throw new NotSupportedException();
 
-		var file = await _client.Files.DownloadFileAsync(entry.GetFullPath(), cancellationToken);
-		await file.CopyToAsync(stream, cancellationToken);
+		var file = await _client.Files.DownloadFileAsync(entry.GetFullPath(), cancellationToken).NoWait();
+		await file.CopyToAsync(stream, cancellationToken).NoWait();
 	}
 
 	async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
 	{
-		var link = await _client.Files.GetUploadLinkAsync(entry.GetFullPath(), true, cancellationToken);
-		await _client.Files.UploadAsync(link, stream, cancellationToken);
+		var link = await _client.Files.GetUploadLinkAsync(entry.GetFullPath(), true, cancellationToken).NoWait();
+		await _client.Files.UploadAsync(link, stream, cancellationToken).NoWait();
 	}
 
 	async Task IBackupService.CreateFolder(BackupEntry entry, CancellationToken cancellationToken)
@@ -149,19 +149,19 @@ public class YandexDiskService : Disposable, IBackupService
 
 			if (!needCheck)
 			{
-				await _client.Commands.CreateDictionaryAsync(path, cancellationToken);
+				await _client.Commands.CreateDictionaryAsync(path, cancellationToken).NoWait();
 				continue;
 			}
 
 			try
 			{
-				await _client.MetaInfo.GetInfoAsync(new() { Path = path }, cancellationToken);
+				await _client.MetaInfo.GetInfoAsync(new() { Path = path }, cancellationToken).NoWait();
 			}
 			catch (YandexApiException ex)
 			{
 				if (ex.StatusCode == HttpStatusCode.NotFound)
 				{
-					await _client.Commands.CreateDictionaryAsync(path, cancellationToken);
+					await _client.Commands.CreateDictionaryAsync(path, cancellationToken).NoWait();
 					needCheck = false;
 				}
 				else
@@ -172,7 +172,7 @@ public class YandexDiskService : Disposable, IBackupService
 
 	async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 	{
-		var link = await _client.MetaInfo.PublishFolderAsync(entry.GetFullPath(), cancellationToken);
+		var link = await _client.MetaInfo.PublishFolderAsync(entry.GetFullPath(), cancellationToken).NoWait();
 		return link.Href;
 	}
 

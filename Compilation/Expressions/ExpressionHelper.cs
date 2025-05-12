@@ -296,7 +296,7 @@ public class TempExpressionFormula : ExpressionFormula<__result_type>
 
 			if (cache?.TryGet(_lang, sources, refs, out var assemblyBody) != true)
 			{
-				var result = await compiler.Compile("Formula", sources, refs, cancellationToken);
+				var result = await compiler.Compile("Formula", sources, refs, cancellationToken).NoWait();
 
 				assembly = result.GetAssembly(context);
 
