@@ -5,7 +5,7 @@ using Ecng.ComponentModel;
 [TestClass]
 public class MemoryPoolTests
 {
-	private MemoryPool _pool;
+	private ByteMemoryPool _pool;
 
 	[TestInitialize]
 	public void Initialize()
@@ -20,8 +20,8 @@ public class MemoryPoolTests
 	[TestMethod]
 	public void AllocateNewMemory()
 	{
-		var memory = _pool.Allocate(100);
-		memory.Length.AssertEqual(100);
+		using var owner = _pool.Rent(100);
+		owner.Memory.Length.AssertEqual(100);
 		_pool.TotalCount.AssertEqual(0);
 		_pool.TotalBytes.AssertEqual(0);
 	}
@@ -29,19 +29,12 @@ public class MemoryPoolTests
 	[TestMethod]
 	public void AllocateReuseMemory()
 	{
-		var memory1 = _pool.Allocate(200);
-		_pool.Free(memory1);
+		using (var _ = _pool.Rent(200))
+		{
+		}
 
-		var memory2 = _pool.Allocate(200);
-		memory2.Length.AssertEqual(200);
-		_pool.TotalCount.AssertEqual(0);
-		_pool.TotalBytes.AssertEqual(0);
-	}
-
-	[TestMethod]
-	public void FreeEmptyMemory()
-	{
-		_pool.Free(Memory<byte>.Empty);
+		using var owner = _pool.Rent(200);
+		owner.Memory.Length.AssertEqual(200);
 		_pool.TotalCount.AssertEqual(0);
 		_pool.TotalBytes.AssertEqual(0);
 	}
@@ -51,11 +44,12 @@ public class MemoryPoolTests
 	{
 		for (var i = 0; i < _pool.MaxPerLength; i++)
 		{
-			_pool.Free(_pool.Allocate(300));
+			using var _ = _pool.Rent(300);
 		}
 
-		var extraMemory = _pool.Allocate(300);
-		_pool.Free(extraMemory);
+		using (var _ = _pool.Rent(300))
+		{
+		}
 
 		_pool.TotalCount.AssertEqual(1);
 		_pool.TotalBytes.AssertEqual(300);
@@ -70,12 +64,13 @@ public class MemoryPoolTests
 		{
 			for (var i = 0; i < packetsPerSize; i++)
 			{
-				_pool.Free(_pool.Allocate(size));
+				using var _ = _pool.Rent(size);
 			}
 		}
 
-		var extraMemory = _pool.Allocate(100);
-		_pool.Free(extraMemory);
+		using (var _ = _pool.Rent(100))
+		{
+		}
 
 		_pool.TotalCount.AssertEqual(5);
 
@@ -92,7 +87,7 @@ public class MemoryPoolTests
 	{
 		for (var i = 0; i < 1000000; i++)
 		{
-			_pool.Free(_pool.Allocate(RandomGen.GetInt(1, 1000)));
+			using var _ = _pool.Rent(RandomGen.GetInt(1, 1000));
 		}
 
 		_pool.TotalCount.AssertEqual(_pool.MaxCount);
@@ -103,7 +98,7 @@ public class MemoryPoolTests
 	{
 		for (var i = 0; i < 1000; i++)
 		{
-			_pool.Free(_pool.Allocate(i + 1));
+			using var _ = _pool.Rent(i + 1);
 		}
 
 		_pool.TotalCount.AssertEqual(_pool.MaxCount);
@@ -112,8 +107,13 @@ public class MemoryPoolTests
 	[TestMethod]
 	public void Clear()
 	{
-		_pool.Free(_pool.Allocate(100));
-		_pool.Free(_pool.Allocate(200));
+		using (var _ = _pool.Rent(100))
+		{
+		}
+
+		using (var _ = _pool.Rent(200))
+		{
+		}
 
 		_pool.TotalCount.AssertEqual(2);
 		_pool.TotalBytes.AssertEqual(300);
@@ -122,14 +122,21 @@ public class MemoryPoolTests
 
 		_pool.TotalCount.AssertEqual(0);
 		_pool.TotalBytes.AssertEqual(0);
-		_pool.Allocate(100);
+		_pool.Rent(100);
 		_pool.TotalCount.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void AllocateDefaultLength()
+	{
+		using var _ = _pool.Rent(-1);
+		using var __ = _pool.Rent();
 	}
 
 	[TestMethod]
 	public void AllocateNegativeLength()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => _pool.Allocate(-1));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => _pool.Rent(-2));
 	}
 
 	[TestMethod]
@@ -159,8 +166,7 @@ public class MemoryPoolTests
 				for (var j = 0; j < operationsPerThread; j++)
 				{
 					var size = 100 + (j % 3) * 100; // 100, 200, 300
-					var memory = _pool.Allocate(size);
-					_pool.Free(memory);
+					using var memory = _pool.Rent(size);
 				}
 			});
 		}

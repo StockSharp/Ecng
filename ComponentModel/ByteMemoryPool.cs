@@ -2,6 +2,8 @@ namespace Ecng.ComponentModel;
 
 using System;
 using System.Collections.Generic;
+using System.Buffers;
+using System.Threading;
 
 using Ecng.Common;
 using Ecng.Collections;
@@ -10,10 +12,58 @@ using Ecng.Localization;
 /// <summary>
 /// Thread-safe memory pool for reusing <see cref="Memory{T}"/> memories of specific sizes.
 /// </summary>
-public class MemoryPool
+public class ByteMemoryPool : MemoryPool<byte>
 {
+	private struct MemoryOwner(ByteMemoryPool parent, Memory<byte> memory) : IMemoryOwner<byte>
+	{
+		private int _disposed;
+		private readonly ByteMemoryPool _parent = parent ?? throw new ArgumentNullException(nameof(parent));
+
+		public Memory<byte> Memory { get; } = memory;
+
+		void IDisposable.Dispose()
+		{
+			if (Interlocked.Exchange(ref _disposed, 1) != 0)
+				return;
+
+			_parent.Free(Memory);
+		}
+	}
+
 	private readonly SyncObject _lock = new();
 	private readonly Dictionary<int, Queue<Memory<byte>>> _pool = [];
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="ByteMemoryPool"/> class with the specified maximum buffer size.
+	/// </summary>
+	/// <param name="maxBufferSize">The maximum size of the buffer that can be rented from the pool.</param>
+	public ByteMemoryPool(int maxBufferSize = ushort.MaxValue)
+	{
+		if (maxBufferSize < 1)
+			throw new ArgumentOutOfRangeException(nameof(maxBufferSize), maxBufferSize, "Invalid value.".Localize());
+
+		MaxBufferSize = maxBufferSize;
+	}
+
+	/// <inheritdoc />
+	public override int MaxBufferSize { get; }
+
+	private int _defaultSize = FileSizes.KB * 10;
+
+	/// <summary>
+	/// The default size of the memory to rent when no specific size is requested.
+	/// </summary>
+	public int DefaultSize
+	{
+		get => _defaultSize;
+		set
+		{
+			if (value < 1)
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.".Localize());
+
+			_defaultSize = value;
+		}
+	}
 
 	private int _maxPerLength = 100;
 
@@ -63,19 +113,17 @@ public class MemoryPool
 	/// </summary>
 	public long TotalBytes => _totalBytes;
 
-	/// <summary>
-	/// Allocates a memory of the specified size, reusing an existing one if available.
-	/// </summary>
-	/// <param name="length">The size of the memory to allocate.</param>
-	/// <returns>A <see cref="Memory{T}"/> memory of the requested size.</returns>
-	public Memory<byte> Allocate(int length)
+	/// <inheritdoc />
+	public override IMemoryOwner<byte> Rent(int minBufferSize = -1)
 	{
-		if (length < 1)
-			throw new ArgumentOutOfRangeException(nameof(length), length, "Invalid value.".Localize());
+		if (minBufferSize == -1)
+			minBufferSize = DefaultSize;
+		else if (minBufferSize < 1 || minBufferSize > MaxBufferSize)
+			throw new ArgumentOutOfRangeException(nameof(minBufferSize), minBufferSize, "Invalid value.".Localize());
 
 		lock (_lock)
 		{
-			if (_pool.TryGetValue(length, out var bag) && bag.Count > 0)
+			if (_pool.TryGetValue(minBufferSize, out var bag) && bag.Count > 0)
 			{
 				var memory = bag.Dequeue();
 
@@ -83,21 +131,20 @@ public class MemoryPool
 				_totalBytes -= memory.Length;
 
 				if (bag.Count == 0 && _pool.Count > 10000)
-					_pool.Remove(length);
+					_pool.Remove(minBufferSize);
 
-				return memory;
+				return new MemoryOwner(this, memory);
 			}
 		}
 		
-
-		return new(new byte[length]);
+		return new MemoryOwner(this, new(new byte[minBufferSize]));
 	}
 
 	/// <summary>
 	/// Returns a memory to the pool for reuse.
 	/// </summary>
 	/// <param name="memory">The memory to return to the pool.</param>
-	public void Free(Memory<byte> memory)
+	private void Free(Memory<byte> memory)
 	{
 		if (memory.IsEmpty)
 			return;
@@ -133,5 +180,12 @@ public class MemoryPool
 			_totalCount = 0;
 			_totalBytes = 0;
 		}
+	}
+
+	/// <inheritdoc />
+	protected override void Dispose(bool disposing)
+	{
+		if (disposing)
+			Clear();
 	}
 }
