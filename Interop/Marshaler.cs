@@ -477,10 +477,11 @@ public unsafe static class Marshaler
 	/// <param name="ptr">A pointer to the target unmanaged memory.</param>
 	public static void FillString(this string value, Encoding encoding, byte* ptr)
 	{
-		if (value == null)
-			throw new ArgumentNullException(nameof(value));
-		if (encoding == null)
-			throw new ArgumentNullException(nameof(encoding));
+		if (value is null)		throw new ArgumentNullException(nameof(value));
+		if (encoding is null)	throw new ArgumentNullException(nameof(encoding));
+
+		if (value.Length == 0)
+			return;
 
 		fixed (char* s = value)
 			encoding.GetBytes(s, value.Length, ptr, value.Length);
@@ -562,16 +563,10 @@ public unsafe static class Marshaler
 	/// <summary>
 	/// Fills a <see cref="Encoding.UTF8"/> encoded unmanaged memory block with the contents of a managed string.
 	/// </summary>
-	/// <typeparam name="T">The type of the native structure or object being modified.</typeparam>
-	/// <param name="native">The native structure or object to return after the operation.</param>
 	/// <param name="value">The managed string to encode and copy into unmanaged memory.</param>
 	/// <param name="ptr">A pointer to the unmanaged memory block to fill.</param>
-	/// <returns>The original native structure or object passed as <paramref name="native"/>.</returns>
-	public static T ToUtf8<T>(this T native, string value, byte* ptr)
-	{
-		value.FillString(_utf8, ptr);
-		return native;
-	}
+	public static void ToUtf8(this string value, byte* ptr)
+		=> value.FillString(_utf8, ptr);
 
 	/// <summary>
 	/// Converts a pointer to a <see cref="Encoding.ASCII"/> encoded string of a specified size into a managed string.
@@ -585,16 +580,10 @@ public unsafe static class Marshaler
 	/// <summary>
 	/// Fills a <see cref="Encoding.ASCII"/> encoded unmanaged memory block with the contents of a managed string.
 	/// </summary>
-	/// <typeparam name="T">The type of the native structure or object being modified.</typeparam>
-	/// <param name="native">The native structure or object to return after the operation.</param>
 	/// <param name="value">The managed string to encode and copy into unmanaged memory.</param>
 	/// <param name="ptr">A pointer to the unmanaged memory block to fill.</param>
-	/// <returns>The original native structure or object passed as <paramref name="native"/>.</returns>
-	public static T ToAscii<T>(this T native, string value, byte* ptr)
-	{
-		value.FillString(_ascii, ptr);
-		return native;
-	}
+	public static void ToAscii(this string value, byte* ptr)
+		=> value.FillString(_ascii, ptr);
 
 	/// <summary>
 	/// Creates a span from the unmanaged memory pointer.

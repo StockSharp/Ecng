@@ -38,7 +38,8 @@ public unsafe struct AsciiString1
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -82,7 +83,8 @@ public unsafe struct AsciiString2
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -126,7 +128,8 @@ public unsafe struct AsciiString3
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -170,7 +173,8 @@ public unsafe struct AsciiString4
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -214,7 +218,8 @@ public unsafe struct AsciiString5
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -258,7 +263,8 @@ public unsafe struct AsciiString6
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -302,7 +308,8 @@ public unsafe struct AsciiString7
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -346,7 +353,8 @@ public unsafe struct AsciiString8
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -390,7 +398,8 @@ public unsafe struct AsciiString9
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -434,7 +443,8 @@ public unsafe struct AsciiString10
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -478,7 +488,8 @@ public unsafe struct AsciiString11
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -522,7 +533,8 @@ public unsafe struct AsciiString12
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -566,7 +578,8 @@ public unsafe struct AsciiString13
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -610,7 +623,8 @@ public unsafe struct AsciiString14
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -654,7 +668,8 @@ public unsafe struct AsciiString15
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -698,7 +713,8 @@ public unsafe struct AsciiString16
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -742,7 +758,8 @@ public unsafe struct AsciiString17
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -786,7 +803,8 @@ public unsafe struct AsciiString18
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -830,7 +848,8 @@ public unsafe struct AsciiString19
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -874,7 +893,8 @@ public unsafe struct AsciiString20
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -918,7 +938,8 @@ public unsafe struct AsciiString21
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -962,7 +983,8 @@ public unsafe struct AsciiString22
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1006,7 +1028,8 @@ public unsafe struct AsciiString23
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1050,7 +1073,8 @@ public unsafe struct AsciiString24
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1094,7 +1118,8 @@ public unsafe struct AsciiString25
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1138,7 +1163,8 @@ public unsafe struct AsciiString26
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1182,7 +1208,8 @@ public unsafe struct AsciiString27
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1226,7 +1253,8 @@ public unsafe struct AsciiString28
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1270,7 +1298,8 @@ public unsafe struct AsciiString29
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1314,7 +1343,8 @@ public unsafe struct AsciiString30
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1358,7 +1388,8 @@ public unsafe struct AsciiString31
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1402,7 +1433,8 @@ public unsafe struct AsciiString32
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1446,7 +1478,8 @@ public unsafe struct AsciiString64
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1490,7 +1523,8 @@ public unsafe struct AsciiString128
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToAscii(value, str.Value);
+		value.ToAscii(str.Value);
+		return str;
 	}
 
 	/// <summary>

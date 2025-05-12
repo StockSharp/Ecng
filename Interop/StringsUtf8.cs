@@ -37,7 +37,8 @@ public unsafe struct Utf8String1
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -80,7 +81,8 @@ public unsafe struct Utf8String2
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -123,7 +125,8 @@ public unsafe struct Utf8String3
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -166,7 +169,8 @@ public unsafe struct Utf8String4
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -209,7 +213,8 @@ public unsafe struct Utf8String5
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -252,7 +257,8 @@ public unsafe struct Utf8String6
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -295,7 +301,8 @@ public unsafe struct Utf8String7
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -338,7 +345,8 @@ public unsafe struct Utf8String8
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -381,7 +389,8 @@ public unsafe struct Utf8String9
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -424,7 +433,8 @@ public unsafe struct Utf8String10
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -467,7 +477,8 @@ public unsafe struct Utf8String11
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -510,7 +521,8 @@ public unsafe struct Utf8String12
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -553,7 +565,8 @@ public unsafe struct Utf8String13
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -596,7 +609,8 @@ public unsafe struct Utf8String14
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -639,7 +653,8 @@ public unsafe struct Utf8String15
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -682,7 +697,8 @@ public unsafe struct Utf8String16
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -725,7 +741,8 @@ public unsafe struct Utf8String17
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -768,7 +785,8 @@ public unsafe struct Utf8String18
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -811,7 +829,8 @@ public unsafe struct Utf8String19
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -854,7 +873,8 @@ public unsafe struct Utf8String20
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -897,7 +917,8 @@ public unsafe struct Utf8String21
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -940,7 +961,8 @@ public unsafe struct Utf8String22
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -983,7 +1005,8 @@ public unsafe struct Utf8String23
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1026,7 +1049,8 @@ public unsafe struct Utf8String24
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1069,7 +1093,8 @@ public unsafe struct Utf8String25
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1112,7 +1137,8 @@ public unsafe struct Utf8String26
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1155,7 +1181,8 @@ public unsafe struct Utf8String27
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1198,7 +1225,8 @@ public unsafe struct Utf8String28
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1241,7 +1269,8 @@ public unsafe struct Utf8String29
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1284,7 +1313,8 @@ public unsafe struct Utf8String30
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1327,7 +1357,8 @@ public unsafe struct Utf8String31
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1370,7 +1401,8 @@ public unsafe struct Utf8String32
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1413,7 +1445,8 @@ public unsafe struct Utf8String33
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1456,7 +1489,8 @@ public unsafe struct Utf8String48
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1499,7 +1533,8 @@ public unsafe struct Utf8String64
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1542,7 +1577,8 @@ public unsafe struct Utf8String65
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1585,7 +1621,8 @@ public unsafe struct Utf8String128
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1628,7 +1665,8 @@ public unsafe struct Utf8String129
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
@@ -1671,7 +1709,8 @@ public unsafe struct Utf8String256
 		if (value.Length > _size)
 			throw new ArgumentOutOfRangeException(nameof(value), value.Length, "Invalid value.");
 
-		return str.ToUtf8(value, str.Value);
+		value.ToUtf8(str.Value);
+		return str;
 	}
 
 	/// <summary>
