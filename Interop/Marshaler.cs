@@ -475,7 +475,8 @@ public unsafe static class Marshaler
 	/// <param name="value">The managed string to copy.</param>
 	/// <param name="encoding">The encoding to use.</param>
 	/// <param name="ptr">A pointer to the target unmanaged memory.</param>
-	public static void FillString(this string value, Encoding encoding, byte* ptr)
+	/// <param name="bytesCount">The maximum size of the unmanaged memory block in bytes.</param>
+	public static void FillString(this string value, Encoding encoding, byte* ptr, int bytesCount)
 	{
 		if (value is null)		throw new ArgumentNullException(nameof(value));
 		if (encoding is null)	throw new ArgumentNullException(nameof(encoding));
@@ -484,7 +485,7 @@ public unsafe static class Marshaler
 			return;
 
 		fixed (char* s = value)
-			encoding.GetBytes(s, value.Length, ptr, value.Length);
+			encoding.GetBytes(s, value.Length, ptr, bytesCount);
 	}
 
 	/// <summary>
@@ -565,8 +566,17 @@ public unsafe static class Marshaler
 	/// </summary>
 	/// <param name="value">The managed string to encode and copy into unmanaged memory.</param>
 	/// <param name="ptr">A pointer to the unmanaged memory block to fill.</param>
-	public static void ToUtf8(this string value, byte* ptr)
-		=> value.FillString(_utf8, ptr);
+	/// <param name="size">The maximum size of the unmanaged memory block in bytes.</param>
+	public static void ToUtf8(this string value, byte* ptr, int size)
+	{
+		if (value.IsEmpty())
+			return;
+
+		if (_utf8.GetByteCount(value) > size)
+			throw new ArgumentOutOfRangeException(nameof(size), size, "Invalid value.");
+
+		value.FillString(_utf8, ptr, size);
+	}
 
 	/// <summary>
 	/// Converts a pointer to a <see cref="Encoding.ASCII"/> encoded string of a specified size into a managed string.
@@ -582,8 +592,17 @@ public unsafe static class Marshaler
 	/// </summary>
 	/// <param name="value">The managed string to encode and copy into unmanaged memory.</param>
 	/// <param name="ptr">A pointer to the unmanaged memory block to fill.</param>
-	public static void ToAscii(this string value, byte* ptr)
-		=> value.FillString(_ascii, ptr);
+	/// <param name="size">The maximum size of the unmanaged memory block in bytes.</param>
+	public static void ToAscii(this string value, byte* ptr, int size)
+	{
+		if (value.IsEmpty())
+			return;
+
+		if (_ascii.GetByteCount(value) > size)
+			throw new ArgumentOutOfRangeException(nameof(size), size, "Invalid value.");
+
+		value.FillString(_ascii, ptr, size);
+	}
 
 	/// <summary>
 	/// Creates a span from the unmanaged memory pointer.
