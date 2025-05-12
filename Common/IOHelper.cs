@@ -600,44 +600,26 @@ public static class IOHelper
 	/// <returns>The buffer containing the read bytes.</returns>
 	public static byte[] ReadBytes(this Stream stream, byte[] buffer, int len, int pos = 0)
 	{
-		if (stream is null)
-			throw new ArgumentNullException(nameof(stream));
-
-		if (buffer is null)
-			throw new ArgumentNullException(nameof(buffer));
-
-		var totalRead = 0;
-
-		while (totalRead < len)
-		{
-			var read = stream.Read(buffer, pos + totalRead, len - totalRead);
-
-			if (read <= 0)
-				throw new IOException($"Stream returned '{read}' bytes. Expected {len - totalRead} more bytes.");
-
-			totalRead += read;
-		}
-
+		ReadBytes(stream, buffer.AsMemory(pos, len));
 		return buffer;
 	}
 
-#if NET5_0_OR_GREATER
 	/// <summary>
 	/// Reads a specified number of bytes from a stream.
 	/// </summary>
 	/// <param name="stream">The input stream.</param>
 	/// <param name="buffer">The buffer to fill.</param>
-	/// <returns>The buffer containing the read bytes.</returns>
-	public static Memory<byte> ReadBytes(this Stream stream, Memory<byte> buffer)
+	public static void ReadBytes(this Stream stream, Memory<byte> buffer)
 	{
 		if (stream is null)
 			throw new ArgumentNullException(nameof(stream));
 
 		if (buffer.IsEmpty)
-			throw new ArgumentNullException(nameof(buffer));
+			return;
 
 		var totalRead = 0;
 
+#if NET5_0_OR_GREATER
 		while (totalRead < buffer.Length)
 		{
 			var read = stream.Read(buffer[totalRead..].Span);
@@ -647,10 +629,38 @@ public static class IOHelper
 
 			totalRead += read;
 		}
+#else
+		if (MemoryMarshal.TryGetArray<byte>(buffer, out var segment))
+		{
+			while (totalRead < buffer.Length)
+            {
+                var read = stream.Read(segment.Array, segment.Offset + totalRead, buffer.Length - totalRead);
 
-		return buffer;
-	}
+                if (read <= 0)
+					throw new IOException($"Stream returned '{read}' bytes. Expected {buffer.Length - totalRead} more bytes.");
+
+                totalRead += read;
+            }
+		}
+		else
+		{
+			var tempBuffer = new byte[Math.Min(8192, buffer.Length)];
+
+            while (totalRead < buffer.Length)
+            {
+                var bytesToRead = Math.Min(tempBuffer.Length, buffer.Length - totalRead);
+
+                var read = stream.Read(tempBuffer, 0, bytesToRead);
+
+				if (read <= 0)
+					throw new IOException($"Stream returned '{read}' bytes. Expected {buffer.Length - totalRead} more bytes.");
+
+                tempBuffer.AsSpan(0, read).CopyTo(buffer.Span.Slice(totalRead));
+                totalRead += read;
+            }
+		}
 #endif
+	}
 
 	/// <summary>
 	/// Reads a single byte from a stream.
