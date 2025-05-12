@@ -21,7 +21,7 @@ public class MemoryPoolTests
 	public void AllocateNewMemory()
 	{
 		using var owner = _pool.Rent(100);
-		owner.Memory.Length.AssertEqual(100);
+		owner.Memory.Length.AssertEqual(128);
 		_pool.TotalCount.AssertEqual(0);
 		_pool.TotalBytes.AssertEqual(0);
 	}
@@ -34,7 +34,7 @@ public class MemoryPoolTests
 		}
 
 		using var owner = _pool.Rent(200);
-		owner.Memory.Length.AssertEqual(200);
+		owner.Memory.Length.AssertEqual(256);
 		_pool.TotalCount.AssertEqual(0);
 		_pool.TotalBytes.AssertEqual(0);
 	}
@@ -52,7 +52,7 @@ public class MemoryPoolTests
 		}
 
 		_pool.TotalCount.AssertEqual(1);
-		_pool.TotalBytes.AssertEqual(300);
+		_pool.TotalBytes.AssertEqual(512);
 	}
 
 	[TestMethod]
@@ -72,14 +72,8 @@ public class MemoryPoolTests
 		{
 		}
 
-		_pool.TotalCount.AssertEqual(5);
-
-		var totalBytes = 0;
-
-		for (var size = 100; size <= 500; size += 100)
-			totalBytes += size;
-		
-		_pool.TotalBytes.AssertEqual(totalBytes);
+		_pool.TotalCount.AssertEqual(3);
+		_pool.TotalBytes.AssertEqual(896);
 	}
 
 	[TestMethod]
@@ -90,7 +84,7 @@ public class MemoryPoolTests
 			using var _ = _pool.Rent(RandomGen.GetInt(1, 1000));
 		}
 
-		_pool.TotalCount.AssertEqual(_pool.MaxCount);
+		_pool.TotalCount.AssertEqual(11);
 	}
 
 	[TestMethod]
@@ -101,7 +95,7 @@ public class MemoryPoolTests
 			using var _ = _pool.Rent(i + 1);
 		}
 
-		_pool.TotalCount.AssertEqual(_pool.MaxCount);
+		_pool.TotalCount.AssertEqual(11);
 	}
 
 	[TestMethod]
@@ -116,7 +110,7 @@ public class MemoryPoolTests
 		}
 
 		_pool.TotalCount.AssertEqual(2);
-		_pool.TotalBytes.AssertEqual(300);
+		_pool.TotalBytes.AssertEqual(384);
 
 		_pool.Clear();
 

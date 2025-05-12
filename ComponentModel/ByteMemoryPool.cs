@@ -121,9 +121,30 @@ public class ByteMemoryPool : MemoryPool<byte>
 		else if (minBufferSize < 1 || minBufferSize > MaxBufferSize)
 			throw new ArgumentOutOfRangeException(nameof(minBufferSize), minBufferSize, "Invalid value.".Localize());
 
+		static int round(int size)
+		{
+			if (size <= 0)
+				return 1;
+
+			size--;
+
+			size |= size >> 1;
+			size |= size >> 2;
+			size |= size >> 4;
+			size |= size >> 8;
+			size |= size >> 16;
+
+			return size + 1;
+		}
+
+		var size = round(minBufferSize);
+
+		if (size > MaxBufferSize || size < minBufferSize)
+			throw new InvalidOperationException(size.ToString());
+
 		lock (_lock)
 		{
-			if (_pool.TryGetValue(minBufferSize, out var bag) && bag.Count > 0)
+			if (_pool.TryGetValue(size, out var bag) && bag.Count > 0)
 			{
 				var memory = bag.Dequeue();
 
@@ -131,13 +152,13 @@ public class ByteMemoryPool : MemoryPool<byte>
 				_totalBytes -= memory.Length;
 
 				if (bag.Count == 0 && _pool.Count > 10000)
-					_pool.Remove(minBufferSize);
+					_pool.Remove(size);
 
 				return new MemoryOwner(this, memory);
 			}
 		}
 		
-		return new MemoryOwner(this, new(new byte[minBufferSize]));
+		return new MemoryOwner(this, new(new byte[size]));
 	}
 
 	/// <summary>
