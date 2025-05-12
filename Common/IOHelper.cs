@@ -600,20 +600,57 @@ public static class IOHelper
 	/// <returns>The buffer containing the read bytes.</returns>
 	public static byte[] ReadBytes(this Stream stream, byte[] buffer, int len, int pos = 0)
 	{
-		var left = len;
+		if (stream is null)
+			throw new ArgumentNullException(nameof(stream));
 
-		while (left > 0)
+		if (buffer is null)
+			throw new ArgumentNullException(nameof(buffer));
+
+		var totalRead = 0;
+
+		while (totalRead < len)
 		{
-			var read = stream.Read(buffer, pos + (len - left), left);
+			var read = stream.Read(buffer, pos + totalRead, len - totalRead);
 
 			if (read <= 0)
-				throw new IOException($"Stream returned '{read}' bytes.");
+				throw new IOException($"Stream returned '{read}' bytes. Expected {len - totalRead} more bytes.");
 
-			left -= read;
+			totalRead += read;
 		}
 
 		return buffer;
 	}
+
+#if NET5_0_OR_GREATER
+	/// <summary>
+	/// Reads a specified number of bytes from a stream.
+	/// </summary>
+	/// <param name="stream">The input stream.</param>
+	/// <param name="buffer">The buffer to fill.</param>
+	/// <returns>The buffer containing the read bytes.</returns>
+	public static Memory<byte> ReadBytes(this Stream stream, Memory<byte> buffer)
+	{
+		if (stream is null)
+			throw new ArgumentNullException(nameof(stream));
+
+		if (buffer.IsEmpty)
+			throw new ArgumentNullException(nameof(buffer));
+
+		var totalRead = 0;
+
+		while (totalRead < buffer.Length)
+		{
+			var read = stream.Read(buffer[totalRead..].Span);
+
+			if (read <= 0)
+				throw new IOException($"Stream returned '{read}' bytes. Expected {buffer.Length - totalRead} more bytes.");
+
+			totalRead += read;
+		}
+
+		return buffer;
+	}
+#endif
 
 	/// <summary>
 	/// Reads a single byte from a stream.
@@ -1224,4 +1261,42 @@ public static class IOHelper
 	/// <returns>True if both paths are equal; otherwise, false.</returns>
 	public static bool IsPathsEqual(string path1, string path2) => path1.NormalizePath() == path2.NormalizePath();
 
+	/// <summary>
+	/// Reads the specified number of bytes from the stream into the provided buffer.
+	/// </summary>
+	/// <param name="stream">The source stream.</param>
+	/// <param name="buffer">The buffer to store the data.</param>
+	/// <param name="offset">The offset in the buffer.</param>
+	/// <param name="bytesToRead">The number of bytes to read.</param>
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="ValueTask{T}"/></returns>
+	public static async ValueTask<int> ReadFullAsync(this Stream stream, byte[] buffer, int offset, int bytesToRead, CancellationToken cancellationToken)
+	{
+		if (stream is null)
+			throw new ArgumentNullException(nameof(stream));
+
+		var totalRead = 0;
+
+		while (totalRead < bytesToRead)
+		{
+			var bytesRead = await stream.ReadAsync(
+#if NET5_0_OR_GREATER
+				buffer.AsMemory(offset + totalRead, bytesToRead - totalRead)
+#else
+				buffer, offset + totalRead, bytesToRead - totalRead
+#endif
+				, cancellationToken
+			).ConfigureAwait(false);
+
+			if (bytesRead == 0)
+				break;
+
+			totalRead += bytesRead;
+		}
+
+		if (totalRead < bytesToRead)
+			throw new IOException("Connection dropped.");
+
+		return totalRead;
+	}
 }

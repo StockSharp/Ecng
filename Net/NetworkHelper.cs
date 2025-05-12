@@ -116,45 +116,6 @@ public static class NetworkHelper
 	}
 
 	/// <summary>
-	/// Reads the specified number of bytes from the stream into the provided buffer.
-	/// </summary>
-	/// <param name="stream">The source stream.</param>
-	/// <param name="buffer">The buffer to store the data.</param>
-	/// <param name="offset">The offset in the buffer.</param>
-	/// <param name="bytesToRead">The number of bytes to read.</param>
-	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-	/// <returns><see cref="ValueTask{T}"/></returns>
-	public static async ValueTask<int> ReadFullAsync(this Stream stream, byte[] buffer, int offset, int bytesToRead, CancellationToken cancellationToken)
-	{
-		if (stream is null)
-			throw new ArgumentNullException(nameof(stream));
-
-		var totalBytesRead = 0;
-
-		while (totalBytesRead < bytesToRead)
-		{
-			var bytesRead = await stream.ReadAsync(
-#if NET5_0_OR_GREATER
-				buffer.AsMemory(offset + totalBytesRead, bytesToRead - totalBytesRead)
-#else
-				buffer, offset + totalBytesRead, bytesToRead - totalBytesRead
-#endif
-				, cancellationToken
-			).ConfigureAwait(false);
-
-			if (bytesRead == 0)
-				break;
-
-			totalBytesRead += bytesRead;
-		}
-
-		if (totalBytesRead < bytesToRead)
-			throw new IOException("Connection dropped.".Localize());
-
-		return totalBytesRead;
-	}
-
-	/// <summary>
 	/// Waits for data availability on the socket.
 	/// </summary>
 	/// <param name="socket">The socket to wait on.</param>
