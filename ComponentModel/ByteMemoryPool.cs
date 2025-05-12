@@ -16,20 +16,31 @@ public class ByteMemoryPool : MemoryPool<byte>
 {
 	private struct MemoryOwner(ByteMemoryPool parent, Memory<byte> memory) : IMemoryOwner<byte>
 	{
-		private int _disposed;
+		private volatile int _disposed;
 		private readonly ByteMemoryPool _parent = parent ?? throw new ArgumentNullException(nameof(parent));
 
-		public Memory<byte> Memory { get; } = memory;
+		private readonly Memory<byte> _memory = memory;
+		public readonly Memory<byte> Memory
+		{
+			get
+			{
+				if (_disposed != 0)
+					throw new ObjectDisposedException(nameof(MemoryOwner));
+
+				return _memory;
+			}
+		}
 
 		void IDisposable.Dispose()
 		{
 			if (Interlocked.Exchange(ref _disposed, 1) != 0)
 				return;
 
-			_parent.Free(Memory);
+			_parent.Free(_memory);
 		}
 	}
 
+	private volatile bool _disposed;
 	private readonly SyncObject _lock = new();
 	private readonly Dictionary<int, Queue<Memory<byte>>> _pool = [];
 
@@ -123,8 +134,14 @@ public class ByteMemoryPool : MemoryPool<byte>
 
 		static int round(int size)
 		{
-			if (size <= 0)
+			if (size == 1)
 				return 1;
+			else if (size < 1)
+				throw new ArgumentOutOfRangeException(nameof(size), size, "Invalid value.".Localize());
+
+			// Check for potential overflow before operations
+			if (size > (1 << 30))  // Max safe power of 2 for int
+				return int.MaxValue;
 
 			size--;
 
@@ -139,11 +156,16 @@ public class ByteMemoryPool : MemoryPool<byte>
 
 		var size = round(minBufferSize);
 
-		if (size > MaxBufferSize || size < minBufferSize)
+		if (size < minBufferSize)
 			throw new InvalidOperationException(size.ToString());
+		else if (size > MaxBufferSize)
+			size = MaxBufferSize;
 
 		lock (_lock)
 		{
+			if (_disposed)
+				throw new ObjectDisposedException(nameof(ByteMemoryPool));
+
 			if (_pool.TryGetValue(size, out var bag) && bag.Count > 0)
 			{
 				var memory = bag.Dequeue();
@@ -151,7 +173,7 @@ public class ByteMemoryPool : MemoryPool<byte>
 				_totalCount--;
 				_totalBytes -= memory.Length;
 
-				if (bag.Count == 0 && _pool.Count > 10000)
+				if (bag.Count == 0 && _pool.Count > 100)
 					_pool.Remove(size);
 
 				return new MemoryOwner(this, memory);
@@ -172,6 +194,9 @@ public class ByteMemoryPool : MemoryPool<byte>
 
 		lock (_lock)
 		{
+			if (_disposed)
+				return;
+
 			if (_totalCount >= MaxCount)
 				return;
 
@@ -207,6 +232,15 @@ public class ByteMemoryPool : MemoryPool<byte>
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing)
-			Clear();
+		{
+			lock (_lock)
+			{
+				if (_disposed)
+					return;
+
+				_disposed = true;
+				Clear();
+			}
+		}
 	}
 }
