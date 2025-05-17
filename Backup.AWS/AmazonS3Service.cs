@@ -79,9 +79,14 @@ public class AmazonS3Service : Disposable, IBackupService
 
 			foreach (var entry in response.S3Objects)
 			{
+				if (entry.LastModified is null || entry.Size is null)
+					continue;
+
 				var be = GetPath(entry.Key);
-				be.LastModified = entry.LastModified;
-				be.Size = entry.Size;
+
+				be.LastModified = entry.LastModified.Value;
+				be.Size = entry.Size.Value;
+
 				yield return be;
 			}
 
@@ -94,7 +99,7 @@ public class AmazonS3Service : Disposable, IBackupService
 				};
 			}
 
-			if (response.IsTruncated)
+			if (response.IsTruncated == true)
 				request.ContinuationToken = response.NextContinuationToken;
 			else
 				break;
@@ -254,11 +259,11 @@ public class AmazonS3Service : Disposable, IBackupService
 	{
 		var key = entry.GetFullPath();
 
-		var response = await _client.PutACLAsync(new()
+		var response = await _client.PutObjectAclAsync(new()
 		{
 			BucketName = _bucket,
 			Key = key,
-			CannedACL = S3CannedACL.PublicRead,
+			ACL = S3CannedACL.PublicRead,
 		}, cancellationToken).NoWait();
 
 		if (response.HttpStatusCode != HttpStatusCode.OK)
@@ -271,11 +276,11 @@ public class AmazonS3Service : Disposable, IBackupService
 	{
 		var key = entry.GetFullPath();
 
-		var response = await _client.PutACLAsync(new()
+		var response = await _client.PutObjectAclAsync(new()
 		{
 			BucketName = _bucket,
 			Key = key,
-			CannedACL = S3CannedACL.Private,
+			ACL = S3CannedACL.Private,
 		}, cancellationToken).NoWait();
 
 		if (response.HttpStatusCode != HttpStatusCode.OK)
