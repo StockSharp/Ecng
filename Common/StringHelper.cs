@@ -231,7 +231,7 @@ public static class StringHelper
 	public static string[] SplitByLineSeps(this string str, bool removeEmptyEntries = true)
 		// https://stackoverflow.com/a/1547483/8029915
 		=> str.Split(
-			new[] { RN, R, N },
+			[RN, R, N],
 			removeEmptyEntries ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None
 		);
 
@@ -302,7 +302,7 @@ public static class StringHelper
 		if (str.Length == 0)
 			return [];
 
-		return str.Split(new[] { separator }, removeEmptyEntries ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+		return str.Split([separator], removeEmptyEntries ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
 	}
 
 	/// <summary>

@@ -137,7 +137,7 @@ public class ConverterTest
 	public void ArrayCovariance()
 	{
 		var objArr = new object[] { 1, 2, 3 };
-		var longArr = new long[] { 1, 2, 3 };
+		var longArr = new long[] { 1L, 2L, 3L };
 		objArr.To<int[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
 		objArr.To<short[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
 		objArr.To<byte[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
@@ -149,7 +149,7 @@ public class ConverterTest
 	public void EnumerableCovariance()
 	{
 		IEnumerable<object> objArr = new object[] { 1, 2, 3 };
-		IEnumerable<long> longArr = new long[] { 1, 2, 3 };
+		IEnumerable<long> longArr = new long[] { 1L, 2L, 3L };
 		objArr.To<IEnumerable<int>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
 		objArr.To<IEnumerable<short>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
 		objArr.To<IEnumerable<byte>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
