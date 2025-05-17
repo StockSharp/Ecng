@@ -198,8 +198,8 @@ public class JsonTests
 	[TestMethod]
 	public async Task PrimitiveArrayOfArrayOfArray()
 	{
-		await Do(new[] { null, new[] { new[] { 1, 2, 3 }, [4, 5, 6], [7, 8, 9] }, [new[] { -1, -2, -3 }, null, [-4, -5, -6], [-7, -8, -9]] });
-		await Do(new[] { new[] { new[] { "123", "456" }, null, ["789", "000"] }, [new[] { "123", "456" }, ["123", "456"]] });
+		await Do(new[] { null, new[] { new[] { 1, 2, 3 }, [4, 5, 6], [7, 8, 9] }, [[-1, -2, -3], null, [-4, -5, -6], [-7, -8, -9]] });
+		await Do(new[] { new[] { new[] { "123", "456" }, null, ["789", "000"] }, [["123", "456"], ["123", "456"]] });
 	}
 
 	[TestMethod]
@@ -478,7 +478,7 @@ public class JsonTests
 
 		public override TestClassAsync Clone()
 		{
-			return PersistableHelper.CloneAsync(this).Result;
+			return PersistableHelper.CloneAsync(this).AsTask().Result;
 		}
 
 		protected override bool OnEquals(TestClassAsync other)
@@ -980,7 +980,7 @@ public class JsonTests
 
 		object IPersistableAdapter.UnderlyingValue
 		{
-			get => _underlyingValue;
+			readonly get => _underlyingValue;
 			set => _underlyingValue = (Currency)value;
 		}
 
@@ -993,7 +993,7 @@ public class JsonTests
 			};
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+		readonly void IPersistable.Save(SettingsStorage storage)
 		{
 			storage
 				.Set(nameof(_underlyingValue.Type), _underlyingValue.Type)
@@ -1060,24 +1060,21 @@ public class JsonTests
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
 	public void NullDeserializeError1()
 	{
-		((string)null).DeserializeObject<CurrencyTypes>();
+		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).DeserializeObject<CurrencyTypes>());
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
 	public void NullDeserializeError2()
 	{
-		string.Empty.DeserializeObject<CurrencyTypes>();
+		Assert.ThrowsExactly<ArgumentNullException>(() => string.Empty.DeserializeObject<CurrencyTypes>());
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
 	public void NullDeserializeError3()
 	{
-		((JToken)null).DeserializeObject<CurrencyTypes>();
+		Assert.ThrowsExactly<ArgumentNullException>(() => ((JToken)null).DeserializeObject<CurrencyTypes>());
 	}
 
 	[TestMethod]
@@ -1103,12 +1100,11 @@ public class JsonTests
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(InvalidOperationException))]
 	public async Task BomError()
 	{
 		var requestBody = new MemoryStream();
 		await new JsonSerializer<TestClass>().SerializeAsync(new(), requestBody, default);
-		requestBody.To<byte[]>().UTF8().DeserializeObject<TestClass>();
+		Assert.ThrowsExactly<InvalidOperationException>(() => requestBody.To<byte[]>().UTF8().DeserializeObject<TestClass>());
 	}
 
 	[JsonConverter(typeof(JArrayToObjectConverter<OrderBookEntry>))]

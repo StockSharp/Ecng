@@ -55,7 +55,7 @@ public class TimeTest
 			dt = dt.AddNanoseconds(nanoseconds);
 			ns += roundNs;
 			if (ns >= 1000)
-				ns = ns - 1000;
+				ns -= 1000;
 			dt.GetNanoseconds().AssertEqual(ns);
 
 			dt = DateTime.MaxValue - TimeSpan.FromDays(1 + RandomGen.GetDouble());
@@ -63,7 +63,7 @@ public class TimeTest
 			dt = dt.AddNanoseconds(nanoseconds);
 			ns += roundNs;
 			if (ns >= 1000)
-				ns = ns - 1000;
+				ns -= 1000;
 			dt.GetNanoseconds().AssertEqual(ns);
 		}
 	}
@@ -88,11 +88,10 @@ public class TimeTest
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentOutOfRangeException))]
 	public void UnixTimeOutOfRange()
 	{
 		var dt = DateTime.MinValue;
 		dt = dt.UtcKind();
-		dt.ToUnix();
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => dt.ToUnix());
 	}
 }

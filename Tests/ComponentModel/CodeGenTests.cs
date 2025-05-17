@@ -28,7 +28,6 @@ public class CodeGenTests
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(InvalidOperationException))]
 	public void Braces()
 	{
 		var sb = new StringBuilder();
@@ -37,8 +36,19 @@ public class CodeGenTests
 
 		visitor
 			.AddLine("{")
-			.AddLine("}")
 			.AddLine("}");
+
+		Assert.ThrowsExactly<InvalidOperationException>(() => visitor.AddLine("}"));
+	}
+
+	[TestMethod]
+	public void Braces2()
+	{
+		var sb = new StringBuilder();
+
+		ICodeGenVisitor visitor = new StringBuilderCodeGenVisitor(sb);
+
+		Assert.ThrowsExactly<InvalidOperationException>(() => visitor.AddLine("}"));
 	}
 
 	[TestMethod]

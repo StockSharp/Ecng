@@ -33,31 +33,27 @@ public class StringTests
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
 	public void ReplaceIgnoreCaseError()
 	{
-		((string)null).ReplaceIgnoreCase(null, "22");
+		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).ReplaceIgnoreCase(null, "22"));
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
 	public void ReplaceIgnoreCaseError2()
 	{
-		"".ReplaceIgnoreCase(null, "22");
+		Assert.ThrowsExactly<ArgumentNullException>(() => "".ReplaceIgnoreCase(null, "22"));
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
 	public void ReplaceIgnoreCaseError3()
 	{
-		"".ReplaceIgnoreCase("", null);
+		Assert.ThrowsExactly<ArgumentNullException>(() => "".ReplaceIgnoreCase("", null));
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
 	public void ReplaceIgnoreCaseError4()
 	{
-		"11".ReplaceIgnoreCase("11", null);
+		Assert.ThrowsExactly<ArgumentNullException>(() => "11".ReplaceIgnoreCase("11", null));
 	}
 
 	[TestMethod]

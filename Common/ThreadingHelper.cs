@@ -466,7 +466,7 @@ public static class ThreadingHelper
 		/// <summary>
 		/// Exits the lock when disposed.
 		/// </summary>
-		void IDisposable.Dispose()
+		readonly void IDisposable.Dispose()
 		{
 			if (_isRead)
 				_rwLock.ExitReadLock();

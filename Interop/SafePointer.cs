@@ -37,7 +37,7 @@ public struct SafePointer
 	/// <summary>
 	/// Gets the current unmanaged memory pointer.
 	/// </summary>
-	public IntPtr Pointer => _pointer;
+	public readonly IntPtr Pointer => _pointer;
 
 	private void CheckBorder<TStruct>()
 		where TStruct : struct
@@ -45,7 +45,7 @@ public struct SafePointer
 		CheckBorder(typeof(TStruct).SizeOf());
 	}
 
-	private void CheckBorder(int offset)
+	private readonly void CheckBorder(int offset)
 	{
 		if (_size != null && (_origin + offset) > _size.Value)
 			throw new ArgumentOutOfRangeException(nameof(offset));

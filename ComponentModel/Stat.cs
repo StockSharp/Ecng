@@ -77,7 +77,7 @@ public struct StatInfo<TAction>
 	/// Returns a string representation of the statistical information.
 	/// </summary>
 	/// <returns>A string that represents the current stat info.</returns>
-	public override string ToString()
+	public override readonly string ToString()
 	{
 		var sb = new StringBuilder();
 

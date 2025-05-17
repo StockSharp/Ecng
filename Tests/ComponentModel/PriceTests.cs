@@ -36,10 +36,9 @@ public class PriceTests
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(InvalidOperationException))]
 	public void InvalidCast()
 	{
-		((double)3.Percents()).AssertEqual(0);
+		Assert.ThrowsExactly<InvalidOperationException>(() => ((double)3.Percents()).AssertEqual(0));
 	}
 
 	//[TestMethod]
@@ -50,10 +49,9 @@ public class PriceTests
 	//}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentOutOfRangeException))]
 	public void InvalidParse2()
 	{
-		"10н".ToPriceType(true);
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => "10н".ToPriceType(true));
 	}
 
 	[TestMethod]
@@ -66,10 +64,9 @@ public class PriceTests
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentException))]
 	public void InvalidCompare()
 	{
-		(10.Percents() > 10).AssertTrue();
+		Assert.ThrowsExactly<ArgumentException>(() => (10.Percents() > 10).AssertTrue());
 	}
 
 	[TestMethod]
@@ -81,19 +78,17 @@ public class PriceTests
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
 	public void NullCast2()
 	{
 		Price value = null;
-		((decimal)value).AssertNull();
+		Assert.ThrowsExactly<ArgumentNullException>(() => ((decimal)value).AssertNull());
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
 	public void NullCast3()
 	{
 		Price value = null;
-		((double)value).AssertNull();
+		Assert.ThrowsExactly<ArgumentNullException>(() => ((double)value).AssertNull());
 	}
 
 	[TestMethod]
@@ -122,7 +117,7 @@ public class PriceTests
 		Price u1 = null;
 		u1.AssertNull();
 
-		u1 = u1 + 10;
+		u1 += 10;
 		u1.AssertNull();
 
 		u1 = 10 + u1;
@@ -231,11 +226,11 @@ public class PriceTests
 
 	private static Price RandomUnit()
 	{
-		return new(RandomGen.GetInt(-100, 100), RandomGen.GetEnum(new[]
-		{
+		return new(RandomGen.GetInt(-100, 100), RandomGen.GetEnum(
+		[
 			PriceTypes.Absolute,
 			PriceTypes.Percent
-		}));
+		]));
 	}
 
 	[TestMethod]
@@ -246,18 +241,15 @@ public class PriceTests
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
 	public void Empty2()
 	{
-		"".ToPriceType(true).AssertNull();
-		((string)null).ToPriceType().AssertNull();
+		Assert.ThrowsExactly<ArgumentNullException>(() => "".ToPriceType(true).AssertNull());
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(ArgumentNullException))]
 	public void Empty3()
 	{
-		((string)null).ToPriceType(true).AssertNull();
+		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).ToPriceType(true).AssertNull());
 	}
 
 	[TestMethod]

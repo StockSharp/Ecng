@@ -18,43 +18,39 @@ public class CurrencyTests
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(InvalidOperationException))]
 	public void InconsistMath1()
 	{
 		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
 		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-		(v1 * v2).AssertEqual(null);
+		Assert.ThrowsExactly<InvalidOperationException>(() => (v1 * v2).AssertEqual(null));
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(InvalidOperationException))]
 	public void InconsistMath2()
 	{
 		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
 		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-		(v1 - v2).AssertEqual(null);
+		Assert.ThrowsExactly<InvalidOperationException>(() => (v1 - v2).AssertEqual(null));
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(InvalidOperationException))]
 	public void InconsistMath3()
 	{
 		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
 		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-		(v1 + v2).AssertEqual(null);
+		Assert.ThrowsExactly<InvalidOperationException>(() => (v1 + v2).AssertEqual(null));
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(InvalidOperationException))]
 	public void InconsistMath4()
 	{
 		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
 		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-		(v1 / v2).AssertEqual(null);
+		Assert.ThrowsExactly<InvalidOperationException>(() => (v1 / v2).AssertEqual(null));
 	}
 
 	[TestMethod]

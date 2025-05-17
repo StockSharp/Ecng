@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Tests.Compilation;
 
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 
@@ -67,7 +68,7 @@ class Class1
 		[
 			_coreLibPath,
 			typeof(Process).Assembly.Location,
-			typeof(System.ComponentModel.Component).Assembly.Location,
+			typeof(Component).Assembly.Location,
 			"System.Runtime.dll".ToFullRuntimePath(),
 		], StringComparer.InvariantCultureIgnoreCase);
 

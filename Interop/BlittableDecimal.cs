@@ -20,7 +20,7 @@ public struct BlittableDecimal
 	/// </summary>
 	public decimal Value
 	{
-		get => new[] { _bit0, _bit1, _bit2, _bit3 }.To<decimal>();
+		readonly get => new[] { _bit0, _bit1, _bit2, _bit3 }.To<decimal>();
 		set
 		{
 			var bits = value.To<int[]>();

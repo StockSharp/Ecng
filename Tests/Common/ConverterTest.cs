@@ -86,7 +86,7 @@ public class ConverterTest
 		parser.Parse(str).AssertEqual(dt);
 
 		if (format.ContainsIgnoreCase("fffffffff"))
-			str = str.Remove(str.Length - 2) + "00";
+			str = str[..^2] + "00";
 
 		parser.ToString(dt).AssertEqual(str);
 	}
@@ -97,7 +97,7 @@ public class ConverterTest
 		parser.Parse(str).AssertEqual(ts);
 
 		if (format.ContainsIgnoreCase("fffffffff"))
-			str = str.Remove(str.Length - 2) + "00";
+			str = str[..^2] + "00";
 
 		parser.ToString(ts).AssertEqual(str);
 	}
