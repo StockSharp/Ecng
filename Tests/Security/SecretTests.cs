@@ -53,7 +53,7 @@ public class SecretTests
 	public void DecryptReadStreamTest()
 	{
 		var initVectorBytes = "ss14fgty650h8u82".ASCII();
-		var txt = File.ReadAllText("encrypted_config").Base64().Decrypt("qwerty", initVectorBytes, initVectorBytes).UTF8();
+		var txt = File.ReadAllText("Resources\\encrypted_config.bin").Base64().Decrypt("qwerty", initVectorBytes, initVectorBytes).UTF8();
 
 		txt.Length.AssertEqual(65735);
 		txt.UTF8().Md5().AssertEqual("96FB3B2D0226B0A18903E929E1238557");

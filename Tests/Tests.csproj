@@ -7,11 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ContentWithTargetPath Include="Resources\encrypted_config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>encrypted_config</TargetPath>
-    </ContentWithTargetPath>
-    <None Include="Resources\encrypted_config" />
+    <None Include="Resources\**\*.*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
