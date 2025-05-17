@@ -170,4 +170,42 @@ public static class AssertHelper
 		for (var i = 0; i < value.Length; i++)
 			value[i].AssertEqual(expected[i]);
 	}
+
+	/// <summary>
+	/// Asserts that <paramref name="value"/> is greater than <paramref name="expected"/>.
+	/// </summary>
+	/// <typeparam name="T">Type implementing <see cref="IComparable{T}"/>.</typeparam>
+	/// <param name="value">Actual value.</param>
+	/// <param name="expected">Value to compare against.</param>
+	public static void AssertGreater<T>(this T value, T expected)
+		where T : IComparable<T>
+	{
+		(value.CompareTo(expected) > 0).AssertTrue();
+	}
+
+	/// <summary>
+	/// Asserts that <paramref name="value"/> is less than <paramref name="expected"/>.
+	/// </summary>
+	/// <typeparam name="T">Type implementing <see cref="IComparable{T}"/>.</typeparam>
+	/// <param name="value">Actual value.</param>
+	/// <param name="expected">Value to compare against.</param>
+	public static void AssertLess<T>(this T value, T expected)
+		where T : IComparable<T>
+	{
+		(value.CompareTo(expected) < 0).AssertTrue();
+	}
+
+	/// <summary>
+	/// Asserts that <paramref name="value"/> is greater than <paramref name="min"/> and less than <paramref name="max"/>.
+	/// </summary>
+	/// <typeparam name="T">Type implementing <see cref="IComparable{T}"/>.</typeparam>
+	/// <param name="value">Actual value.</param>
+	/// <param name="min">Minimum value (exclusive).</param>
+	/// <param name="max">Maximum value (exclusive).</param>
+	public static void AssertInRange<T>(this T value, T min, T max)
+		where T : IComparable<T>
+	{
+		value.AssertGreater(min);
+		value.AssertLess(max);
+	}
 }
