@@ -102,7 +102,7 @@ public class FSharpCompiler : ICompiler
 			parallelReferenceResolution: null,
 			captureIdentifiersWhenParsing: null,
 			documentSource: null,
-			useSyntaxTreeCache: null,
+			transparentCompilerCacheSizes: null,
 			useTransparentCompiler: null
 		);
 	}
@@ -179,7 +179,7 @@ public class FSharpCompiler : ICompiler
 			diagnostics.Add(ToError(diag));
 		}
 
-		return new AssemblyCompilationResult([.. diagnostics], errorCode == 0 ? stream.To<byte[]>() : null);
+		return new AssemblyCompilationResult([.. diagnostics], errorCode == default ? stream.To<byte[]>() : null);
 	}
 
 	ICompilerContext ICompiler.CreateContext() => new AssemblyLoadContextTracker();
