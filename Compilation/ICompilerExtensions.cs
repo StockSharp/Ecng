@@ -153,6 +153,9 @@ public static class ICompilerExtensions
 	{
 		ArgumentNullException.ThrowIfNull(evtHandler);
 
-		return evtHandler.GetGenericTypeDefinition().FullName == "Microsoft.FSharp.Control.FSharpHandler`1";
+		return evtHandler.IsGenericType &&
+			!evtHandler.IsGenericTypeDefinition &&
+			!evtHandler.IsGenericParameter &&
+			evtHandler.GetGenericTypeDefinition().FullName == "Microsoft.FSharp.Control.FSharpHandler`1";
 	}
 }
