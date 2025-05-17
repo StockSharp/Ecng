@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -134,4 +135,24 @@ public static class ICompilerExtensions
 			Type = CompilationErrorTypes.Error,
 			Message = ex.Message,
 		};
+
+	/// <summary>
+	/// Determines whether the specified event is an F# event.
+	/// </summary>
+	/// <param name="evt">The event information to check.</param>
+	/// <returns><c>true</c> if the event is an F# event; otherwise, <c>false</c>.</returns>
+	public static bool IsFSharp(this EventInfo evt)
+		=> IsFSharpHandler(evt.CheckOnNull(nameof(evt)).EventHandlerType);
+
+	/// <summary>
+	/// Determines whether the specified event handler type is an F# handler.
+	/// </summary>
+	/// <param name="evtHandler">The event handler type to check.</param>
+	/// <returns><c>true</c> if the type is an F# handler; otherwise, <c>false</c>.</returns>
+	public static bool IsFSharpHandler(this Type evtHandler)
+	{
+		ArgumentNullException.ThrowIfNull(evtHandler);
+
+		return evtHandler.GetGenericTypeDefinition().FullName == "Microsoft.FSharp.Control.FSharpHandler`1";
+	}
 }
