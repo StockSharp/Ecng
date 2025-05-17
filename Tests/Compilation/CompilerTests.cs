@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Threading;
 
 using Ecng.Compilation;
+using Ecng.Compilation.FSharp;
+using Ecng.Compilation.Python;
 using Ecng.Compilation.Roslyn;
 
 [TestClass]
@@ -78,5 +80,92 @@ class Class1
 
 		res.Length.AssertEqual(1);
 		res[0].Message.AssertEqual("The symbol 'Process' is banned in this project: Don't use Process");
+	}
+
+	[TestMethod]
+	public async Task CSharpCompileWithWarnings()
+	{
+		ICompiler compiler = new CSharpCompiler();
+		// Unused variable 'x' should produce a warning
+		var code = "class Class1 { void M() { int x = 1; } }";
+		var res = await compiler.Compile("test", [code], [_coreLibPath]);
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
+		// At least one warning expected
+		res.Errors.Any(e => e.Type == CompilationErrorTypes.Warning).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task CSharpCompileMultipleErrors()
+	{
+		ICompiler compiler = new CSharpCompiler();
+		// Two errors: missing semicolon, and undefined variable
+		var code = "class Class1 { void M() { int x = ; y = 2; } }";
+		var res = await compiler.Compile("test", [code], [_coreLibPath]);
+		res.GetAssembly(compiler.CreateContext()).AssertNull();
+		res.HasErrors().AssertTrue();
+		res.Errors.Count().AssertGreater(1);
+	}
+
+	[TestMethod]
+	public async Task CSharpCompilerSimpleSuccess()
+	{
+		ICompiler compiler = new CSharpCompiler();
+		var code = "public class Foo { public int Bar() => 42; }";
+		var res = await compiler.Compile("test", [code], [_coreLibPath]);
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
+		res.HasErrors().AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task CSharpCompilerWarning()
+	{
+		ICompiler compiler = new CSharpCompiler();
+		// Unused variable 'x' should produce a warning
+		var code = "public class Foo { public void Bar() { int x = 1; } }";
+		var res = await compiler.Compile("test", [code], [_coreLibPath]);
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
+		res.Errors.Any(e => e.Type == CompilationErrorTypes.Warning).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task PythonCompileSuccess()
+	{
+		ICompiler compiler = new PythonCompiler();
+		var code = "def foo():\n    return 42";
+		var res = await compiler.Compile("test", [code], []);
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
+		res.HasErrors().AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task PythonCompileError()
+	{
+		ICompiler compiler = new PythonCompiler();
+		// Syntax error: missing colon
+		var code = "def foo()\n    return 42";
+		var res = await compiler.Compile("test", [code], []);
+		res.GetAssembly(compiler.CreateContext()).AssertNull();
+		res.HasErrors().AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task FSharpCompileSuccess()
+	{
+		ICompiler compiler = new FSharpCompiler();
+		var code = "module Foo\nlet bar () = 42";
+		var res = await compiler.Compile("test", [code], []);
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
+		res.HasErrors().AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task FSharpCompileError()
+	{
+		ICompiler compiler = new FSharpCompiler();
+		// Syntax error: missing '='
+		var code = "module Foo\nlet bar () 42";
+		var res = await compiler.Compile("test", [code], []);
+		res.GetAssembly(compiler.CreateContext()).AssertNull();
+		res.HasErrors().AssertTrue();
 	}
 }
