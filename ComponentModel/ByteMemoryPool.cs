@@ -42,8 +42,10 @@ public class ByteMemoryPool : MemoryPool<byte>
 				return false;
 
 			Reason = reason;
-			
-			if (!_parent.Free(_memory))
+
+			var result = _parent.Free(_memory);
+
+			if (result == FreeResult.LimitExceeded)
 				_parent.LimitExceed?.Invoke();
 
 			return true;
@@ -51,6 +53,7 @@ public class ByteMemoryPool : MemoryPool<byte>
 	}
 
 	private volatile bool _disposed;
+	private volatile bool _limitExceeded;
 	private readonly SyncObject _lock = new();
 	private readonly Dictionary<int, Queue<Memory<byte>>> _pool = [];
 
@@ -198,33 +201,57 @@ public class ByteMemoryPool : MemoryPool<byte>
 		return new MemoryOwner(this, new(new byte[size]));
 	}
 
-	private bool Free(Memory<byte> memory)
+	private enum FreeResult
+	{
+		Success,
+		LimitExceeded,
+		OverLimit
+	}
+
+	private FreeResult Free(Memory<byte> memory)
 	{
 		if (memory.IsEmpty)
-			return true;
+			return FreeResult.Success;
 
 		lock (_lock)
 		{
 			if (_disposed)
-				return true;
+				return FreeResult.Success;
 
 			if (_totalCount >= MaxCount)
-				return false;
+			{
+				if (!_limitExceeded)
+				{
+					_limitExceeded = true;
+					return FreeResult.LimitExceeded;
+				}
+
+				return FreeResult.OverLimit;
+			}
 
 			var memLength = memory.Length;
-
 			var bag = _pool.SafeAdd(memLength);
 
 			if (bag.Count >= MaxPerLength)
-				return false;
+			{
+				if (!_limitExceeded)
+				{
+					_limitExceeded = true;
+					return FreeResult.LimitExceeded;
+				}
+
+				return FreeResult.OverLimit;
+			}
 
 			bag.Enqueue(memory);
 
 			_totalCount++;
 			_totalBytes += memory.Length;
+
+			_limitExceeded = false;
 		}
 
-		return true;
+		return FreeResult.Success;
 	}
 
 	/// <summary>
