@@ -41,6 +41,7 @@ public static class ArrayHelper
 	/// <param name="index">The starting index of the subarray.</param>
 	/// <returns>A new array containing the elements from the specified index to the end of the source array.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the array is null.</exception>
+	[Obsolete("Use Span<T>.Slice instead.")]
 	public static T[] Range<T>(this T[] array, int index)
 	{
 		if (array is null)
@@ -57,6 +58,7 @@ public static class ArrayHelper
 	/// <param name="index">The starting index of the subarray.</param>
 	/// <param name="count">The number of elements to include in the subarray.</param>
 	/// <returns>A new array containing the specified range of elements from the source array.</returns>
+	[Obsolete("Use Span<T>.Slice instead.")]
 	public static T[] Range<T>(this T[] array, int index, int count)
 	{
 		var range = new T[count];
@@ -96,6 +98,7 @@ public static class ArrayHelper
 	/// <param name="array">The source array.</param>
 	/// <returns>A new array that is a shallow copy of the source array.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the array is null.</exception>
+	[Obsolete("Use Enumerable<T>.ToArray() instead.")]
 	public static T[] Clone<T>(this T[] array)
 	{
 		if (array is null)
@@ -155,6 +158,7 @@ public static class ArrayHelper
 	/// <param name="source">The source array.</param>
 	/// <returns>A new array containing the same elements as the source array.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the source array is null.</exception>
+	[Obsolete("Use Enumerable<T>.ToArray() instead.")]
 	public static T[] CopyArray<T>(this T[] source)
 	{
 		if (source is null)
@@ -172,6 +176,7 @@ public static class ArrayHelper
 	/// <param name="source">The source collection.</param>
 	/// <returns>A new array containing the elements of the source collection.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the source collection is null.</exception>
+	[Obsolete("Use Enumerable<T>.ToArray() instead.")]
 	public static T[] CopyArray<T>(this ICollection<T> source)
 	{
 		if (source is null)

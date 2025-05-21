@@ -22,5 +22,6 @@ public static class CloneHelper
 	/// <summary>
 	/// Represents a marker helper class indicating that UI-related parts should be excluded during cloning.
 	/// </summary>
+	[Obsolete]
 	public class CloneWithoutUI {}
 }
