@@ -42,7 +42,10 @@ public class ByteMemoryPool : MemoryPool<byte>
 				return false;
 
 			Reason = reason;
-			_parent.Free(_memory);
+			
+			if (!_parent.Free(_memory))
+				_parent.LimitExceed?.Invoke();
+
 			return true;
 		}
 	}
@@ -62,6 +65,11 @@ public class ByteMemoryPool : MemoryPool<byte>
 
 		MaxBufferSize = maxBufferSize;
 	}
+
+	/// <summary>
+	/// The event that is triggered when the memory pool exceeds its limit.
+	/// </summary>
+	public event Action LimitExceed;
 
 	/// <inheritdoc />
 	public override int MaxBufferSize { get; }
@@ -190,35 +198,33 @@ public class ByteMemoryPool : MemoryPool<byte>
 		return new MemoryOwner(this, new(new byte[size]));
 	}
 
-	/// <summary>
-	/// Returns a memory to the pool for reuse.
-	/// </summary>
-	/// <param name="memory">The memory to return to the pool.</param>
-	private void Free(Memory<byte> memory)
+	private bool Free(Memory<byte> memory)
 	{
 		if (memory.IsEmpty)
-			return;
+			return true;
 
 		lock (_lock)
 		{
 			if (_disposed)
-				return;
+				return true;
 
 			if (_totalCount >= MaxCount)
-				return;
+				return false;
 
 			var memLength = memory.Length;
 
 			var bag = _pool.SafeAdd(memLength);
 
 			if (bag.Count >= MaxPerLength)
-				return;
+				return false;
 
 			bag.Enqueue(memory);
 
 			_totalCount++;
 			_totalBytes += memory.Length;
 		}
+
+		return true;
 	}
 
 	/// <summary>
