@@ -1812,62 +1812,26 @@ public static class StringHelper
 	/// </summary>
 	/// <param name="value">The string to hash.</param>
 	/// <returns>An integer hash code computed deterministically.</returns>
-	public static unsafe int GetDeterministicHashCode(this string value)
+	public static int GetDeterministicHashCode(this string value)
 	{
 		if (value is null)
 			throw new ArgumentNullException(nameof(value));
 
-		// decompiled code from .NET FW
-		// reason - make in stable in FW and CORE
-		// https://andrewlock.net/why-is-string-gethashcode-different-each-time-i-run-my-program-in-net-core/
+		var hash1 = 5381;
+		var hash2 = hash1;
+		var i = 0;
+		var len = value.Length;
 
-		fixed (char* str = value)
+		while (i < len)
 		{
-			char* chPtr = str;
-			
-			if (Environment.Is64BitProcess)
-			{
-				int hash1 = 5381;
-                    int hash2 = hash1;
-
-                    int c;
-                    while ((c = chPtr[0]) != 0)
-				{
-                        hash1 = ((hash1 << 5) + hash1) ^ c;
-                        c = chPtr[1];
-
-                        if (c == 0)
-                            break;
-
-                        hash2 = ((hash2 << 5) + hash2) ^ c;
-                        chPtr += 2;
-                    }
-
-                    return hash1 + (hash2 * 1566083941);
-			}
-			else
-			{
-				int num = 352654597;
-				int num2 = num;
-				int* numPtr = (int*)chPtr;
-				int length = value.Length;
-
-				while (length > 2)
-				{
-					num = (((num << 5) + num) + (num >> 27)) ^ numPtr[0];
-					num2 = (((num2 << 5) + num2) + (num2 >> 27)) ^ numPtr[1];
-					numPtr += 2;
-					length -= 4;
-				}
-
-				if (length > 0)
-				{
-					num = (((num << 5) + num) + (num >> 27)) ^ numPtr[0];
-				}
-
-				return (num + (num2 * 1566083941));
-			}
+			hash1 = ((hash1 << 5) + hash1) ^ value[i];
+			if (++i == len)
+				break;
+			hash2 = ((hash2 << 5) + hash2) ^ value[i];
+			++i;
 		}
+
+		return hash1 + (hash2 * 1566083941);
 	}
 
 	/// <summary>
