@@ -14,7 +14,7 @@ using Ecng.Localization;
 /// </summary>
 public class ByteMemoryPool : MemoryPool<byte>
 {
-	private struct MemoryOwner(ByteMemoryPool parent, Memory<byte> memory) : IMemoryOwner<byte>
+	private struct MemoryOwner(ByteMemoryPool parent, Memory<byte> memory) : IMemoryOwner<byte>, IReasonDisposable
 	{
 		private volatile int _disposed;
 		private readonly ByteMemoryPool _parent = parent ?? throw new ArgumentNullException(nameof(parent));
@@ -31,12 +31,19 @@ public class ByteMemoryPool : MemoryPool<byte>
 			}
 		}
 
+		public string Reason { get; private set; }
+
 		void IDisposable.Dispose()
+			=> Dispose(nameof(IDisposable.Dispose));
+
+		public bool Dispose(string reason)
 		{
 			if (Interlocked.Exchange(ref _disposed, 1) != 0)
-				return;
+				return false;
 
+			Reason = reason;
 			_parent.Free(_memory);
+			return true;
 		}
 	}
 
