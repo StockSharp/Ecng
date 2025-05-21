@@ -161,6 +161,14 @@ public static class RandomGen
 		=> GetEnum(Enumerator.GetValues<T>());
 
 	/// <summary>
+	/// Returns a random enum value from the specified enum type.
+	/// </summary>
+	/// <param name="enumType">The enum type.</param>
+	/// <returns>A random enum value.</returns>
+	public static object GetEnum(Type enumType)
+		=> GetElement(Enumerator.GetValues(enumType));
+
+	/// <summary>
 	/// Returns a random enum value from the specified collection of values.
 	/// </summary>
 	/// <typeparam name="T">The enum type.</typeparam>
