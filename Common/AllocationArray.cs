@@ -91,7 +91,7 @@ public class AllocationArray<T> : IEnumerable<T>
 			if (_buffer.Length < value)
 			{
 				if (value > MaxCount)
-					throw new ArgumentOutOfRangeException();
+					throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid value.");
 
 				Resize(value);
 			}
@@ -110,7 +110,7 @@ public class AllocationArray<T> : IEnumerable<T>
 		get
 		{
 			if (index >= Count)
-				throw new ArgumentOutOfRangeException();
+				throw new ArgumentOutOfRangeException(nameof(index), index, "Invalid value.");
 
 			return _buffer[index];
 		}
@@ -153,7 +153,7 @@ public class AllocationArray<T> : IEnumerable<T>
 			return;
 
 		if (newSize > MaxCount)
-			throw new ArgumentOutOfRangeException();
+			throw new ArgumentOutOfRangeException(nameof(newSize), newSize, "Invalid value.");
 
 		Resize(newSize * 2);
 	}

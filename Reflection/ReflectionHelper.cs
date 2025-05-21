@@ -377,7 +377,7 @@ public static class ReflectionHelper
 
 		if (inheritance)
 		{
-			foreach (Type item in type.GetInterfaces().Concat([type] ))
+			foreach (Type item in type.GetInterfaces().Concat([type]))
 			{
 				var allMembers = memberName.IsEmpty() ? item.GetMembers(flags) : item.GetMember(memberName, flags);
 
