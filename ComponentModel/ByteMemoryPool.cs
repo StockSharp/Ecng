@@ -25,7 +25,7 @@ public class ByteMemoryPool : MemoryPool<byte>
 			get
 			{
 				if (_disposed != 0)
-					throw new ObjectDisposedException(nameof(MemoryOwner));
+					throw new ObjectDisposedException(Reason);
 
 				return _memory;
 			}
