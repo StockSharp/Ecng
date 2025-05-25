@@ -9,3 +9,5 @@ global using Ecng.Collections;
 global using Ecng.UnitTesting;
 
 global using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+[assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]
