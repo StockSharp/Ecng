@@ -57,8 +57,9 @@ public class AssemblyLoadContextTracker(Action<Exception> uploadingError = defau
 
 		if (error is not null && _uploadingError is not null)
 			_uploadingError(error);
-		
-		return _context.LoadFromBinary(assembly);
+
+		lock (_lock)
+			return _context.LoadFromBinary(assembly);
 	}
 
 	/// <summary>
