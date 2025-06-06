@@ -91,13 +91,20 @@ public unsafe static class ProcessExtensions
 
 		var (extendedInfoPtr, length) = extendedInfo.StructToPtrEx();
 
-		if (!PInvoke.SetInformationJobObject(jobHandle, JOBOBJECTINFOCLASS.JobObjectExtendedLimitInformation, extendedInfoPtr.ToPointer(), (uint)length))
-			throw new InvalidOperationException($"Unable to set information.  Error: {Marshal.GetLastWin32Error()}");
+		try
+		{
+			if (!PInvoke.SetInformationJobObject(jobHandle, JOBOBJECTINFOCLASS.JobObjectExtendedLimitInformation, extendedInfoPtr.ToPointer(), (uint)length))
+				throw new InvalidOperationException($"Unable to set information.  Error: {Marshal.GetLastWin32Error()}");
 
-		if (!PInvoke.AssignProcessToJobObject(jobHandle, process.SafeHandle))
-			throw new InvalidOperationException("Unable to add the this process to the job");
+			if (!PInvoke.AssignProcessToJobObject(jobHandle, process.SafeHandle))
+				throw new InvalidOperationException("Unable to add the this process to the job");
 
-		return jobHandle;
+			return jobHandle;
+		}
+		finally
+		{
+			extendedInfoPtr.FreeHGlobal();
+		}
 	}
 
 	/// <summary>
@@ -135,12 +142,19 @@ public unsafe static class ProcessExtensions
 
 		var (extendedInfoPtr, length) = extendedInfo.StructToPtrEx();
 
-		if (!PInvoke.SetInformationJobObject(jobHandle, JOBOBJECTINFOCLASS.JobObjectExtendedLimitInformation, extendedInfoPtr.ToPointer(), (uint)length))
-			throw new InvalidOperationException($"Unable to set information.  Error: {Marshal.GetLastWin32Error()}");
+		try
+		{
+			if (!PInvoke.SetInformationJobObject(jobHandle, JOBOBJECTINFOCLASS.JobObjectExtendedLimitInformation, extendedInfoPtr.ToPointer(), (uint)length))
+				throw new InvalidOperationException($"Unable to set information.  Error: {Marshal.GetLastWin32Error()}");
 
-		if (!PInvoke.AssignProcessToJobObject(jobHandle, process.SafeHandle))
-			throw new InvalidOperationException("Unable to add the this process to the job");
+			if (!PInvoke.AssignProcessToJobObject(jobHandle, process.SafeHandle))
+				throw new InvalidOperationException("Unable to add the this process to the job");
 
-		return jobHandle;
+			return jobHandle;
+		}
+		finally
+		{
+			extendedInfoPtr.FreeHGlobal();
+		}
 	}
 }
