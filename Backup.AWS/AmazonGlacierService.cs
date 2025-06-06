@@ -71,9 +71,42 @@ public class AmazonGlacierService : Disposable, IBackupService
 
 	async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 	{
+		if (entry is null)
+			throw new ArgumentNullException(nameof(entry));
+
+		if (stream is null)
+			throw new ArgumentNullException(nameof(stream));
+
+		if (progress is null)
+			throw new ArgumentNullException(nameof(progress));
+
+		var init = await _client.InitiateJobAsync(new()
+		{
+			VaultName = _vaultName,
+			JobParameters = new()
+			{
+				ArchiveId = entry.Name,
+				Type = "archive-retrieval",
+			}
+		}, cancellationToken).NoWait();
+
+		DescribeJobResponse describe;
+
+		do
+		{
+			await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken).NoWait();
+
+			describe = await _client.DescribeJobAsync(new()
+			{
+				JobId = init.JobId,
+				VaultName = _vaultName,
+			}, cancellationToken).NoWait();
+		}
+		while (!describe.Completed);
+
 		GetJobOutputRequest request = new()
 		{
-			//JobId = jobId,
+			JobId = init.JobId,
 			VaultName = _vaultName,
 		};
 
@@ -91,15 +124,12 @@ public class AmazonGlacierService : Disposable, IBackupService
 
 		var bytes = new byte[_bufferSize];
 		var readTotal = 0L;
-
+		var objLen = describe.ArchiveSizeInBytes ?? 0;
 		var prevProgress = -1;
 
-		var objLen = 0L; //TODO
-
-		while (readTotal < objLen)
+		while (true)
 		{
-			var expected = (int)(objLen - readTotal).Min(_bufferSize);
-			var actual = await webStream.ReadAsync(bytes.AsMemory(0, expected), cancellationToken).NoWait();
+			var actual = await webStream.ReadAsync(bytes.AsMemory(0, _bufferSize), cancellationToken).NoWait();
 
 			if (actual == 0)
 				break;
@@ -108,18 +138,44 @@ public class AmazonGlacierService : Disposable, IBackupService
 
 			readTotal += actual;
 
-			var currProgress = (int)(readTotal * 100L / objLen);
-
-			if (currProgress < 100 && prevProgress < currProgress)
+			if (objLen > 0)
 			{
-				progress(currProgress);
-				prevProgress = currProgress;
+				var currProgress = (int)(readTotal * 100L / objLen);
+
+				if (currProgress < 100 && prevProgress < currProgress)
+				{
+					progress(currProgress);
+					prevProgress = currProgress;
+				}
 			}
 		}
+
+		if (objLen > 0 && prevProgress < 100)
+			progress(100);
 	}
 
-	Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
-		=> throw new NotImplementedException();
+	async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
+	{
+		if (entry is null)
+			throw new ArgumentNullException(nameof(entry));
+
+		if (stream is null)
+			throw new ArgumentNullException(nameof(stream));
+
+		if (progress is null)
+			throw new ArgumentNullException(nameof(progress));
+
+		var response = await _client.UploadArchiveAsync(new()
+		{
+			VaultName = _vaultName,
+			ArchiveDescription = entry.GetFullPath(),
+			Body = stream,
+		}, cancellationToken).NoWait();
+
+		entry.Name = response.ArchiveId;
+
+		progress(100);
+	}
 
 	Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
 		=> throw new NotSupportedException();
