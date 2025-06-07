@@ -1534,6 +1534,13 @@ public enum CurrencyTypes
 	/// </summary>
 	[EnumMember]
 	[Crypto]
-	USDE
+	USDE,
+
+	/// <summary>
+	/// Solana.
+	/// </summary>
+	[EnumMember]
+	[Crypto]
+	SOL
 	// ReSharper restore InconsistentNaming
 }
