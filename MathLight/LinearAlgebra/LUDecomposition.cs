@@ -84,6 +84,10 @@ namespace Ecng.MathLight.LinearAlgebra
                     }
                 }
             }
+
+            // singularity check for last diagonal element
+            if (Math.Abs(U[cols - 1, cols - 1]) == 0)
+                throw new ArgumentException("Matrix is singular");
         }
 
 		/// <summary>
