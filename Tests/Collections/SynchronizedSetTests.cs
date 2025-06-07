@@ -2,7 +2,7 @@ namespace Ecng.Tests.Collections;
 
 [TestClass]
 public class SynchronizedSetTests
-	{
+{
 	[TestMethod]
 	public void IndexingAndDuplicates()
 	{
@@ -12,18 +12,20 @@ public class SynchronizedSetTests
 		set.IndexOf(3).AssertEqual(2);
 		set.Remove(2).AssertTrue();
 		set.ThrowIfDuplicate = true;
-		Assert.ThrowsException<InvalidOperationException>(() => set.Add(1));
+		Assert.ThrowsExactly<InvalidOperationException>(() => set.Add(1));
 		set.TryAdd(3).AssertFalse();
 	}
 
 	[TestMethod]
 	public void IndexingDisabled()
 	{
-		var set = new SynchronizedSet<int>();
-		set.Add(1);
-		Assert.ThrowsException<InvalidOperationException>(() => _ = set[0]);
-		Assert.ThrowsException<InvalidOperationException>(() => set.IndexOf(1));
-		Assert.ThrowsException<InvalidOperationException>(() => set.RemoveAt(0));
+		var set = new SynchronizedSet<int>
+		{
+			1
+		};
+		Assert.ThrowsExactly<InvalidOperationException>(() => _ = set[0]);
+		Assert.ThrowsExactly<InvalidOperationException>(() => set.IndexOf(1));
+		Assert.ThrowsExactly<InvalidOperationException>(() => set.RemoveAt(0));
 	}
 
 	[TestMethod]
@@ -77,4 +79,4 @@ public class SynchronizedSetTests
 		removed.AssertEqual(2);
 		set.SequenceEqual([1, 4]).AssertTrue();
 	}
-	}
+}

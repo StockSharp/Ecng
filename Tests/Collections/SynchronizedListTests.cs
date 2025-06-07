@@ -34,7 +34,7 @@ public class SynchronizedListTests
 	public void NullCheck()
 	{
 		var list = new SynchronizedList<string> { CheckNullableItems = true };
-		Assert.ThrowsException<ArgumentNullException>(() => list.AddRange(["a", null]));
+		Assert.ThrowsExactly<ArgumentNullException>(() => list.AddRange(["a", null]));
 	}
 
 	[TestMethod]
@@ -54,7 +54,7 @@ public class SynchronizedListTests
 	public void RemoveRangeBounds()
 	{
 		var list = new SynchronizedList<int>();
-		Assert.ThrowsException<ArgumentOutOfRangeException>(() => list.RemoveRange(-1, 1));
-		Assert.ThrowsException<ArgumentOutOfRangeException>(() => list.RemoveRange(0, 0));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => list.RemoveRange(-1, 1));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => list.RemoveRange(0, 0));
 	}
 }

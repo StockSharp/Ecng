@@ -51,6 +51,6 @@ public class CircularBufferTests
 		buf.PushBack(2);
 		buf.Clear();
 		buf.IsEmpty.AssertTrue();
-		Assert.ThrowsException<InvalidOperationException>(() => buf.PopBack());
+		Assert.ThrowsExactly<InvalidOperationException>(() => buf.PopBack());
 	}
 }

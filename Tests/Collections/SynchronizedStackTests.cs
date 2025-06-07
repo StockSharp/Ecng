@@ -19,17 +19,17 @@ public class SynchronizedStackTests
 	public void EmptyOperations()
 	{
 		var st = new SynchronizedStack<int>();
-		Assert.ThrowsException<InvalidOperationException>(() => st.Pop());
-		Assert.ThrowsException<InvalidOperationException>(() => st.Peek());
+		Assert.ThrowsExactly<InvalidOperationException>(() => st.Pop());
+		Assert.ThrowsExactly<InvalidOperationException>(() => st.Peek());
 	}
 
 	[TestMethod]
 	public void UnsupportedMethods()
 	{
 		var st = new SynchronizedStack<int>();
-		var list = (IList)st;
-		Assert.ThrowsException<NotSupportedException>(() => _ = list[0]);
-		Assert.ThrowsException<NotSupportedException>(() => list.Insert(0, 1));
-		Assert.ThrowsException<NotSupportedException>(() => list.RemoveAt(0));
+		var list = (IList<int>)st;
+		Assert.ThrowsExactly<NotSupportedException>(() => _ = list[0]);
+		Assert.ThrowsExactly<NotSupportedException>(() => list.Insert(0, 1));
+		Assert.ThrowsExactly<NotSupportedException>(() => list.RemoveAt(0));
 	}
 }

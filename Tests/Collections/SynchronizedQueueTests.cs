@@ -19,17 +19,17 @@ public class SynchronizedQueueTests
 	public void EmptyOperations()
 	{
 		var q = new SynchronizedQueue<int>();
-		Assert.ThrowsException<InvalidOperationException>(() => q.Dequeue());
-		Assert.ThrowsException<InvalidOperationException>(() => q.Peek());
+		Assert.ThrowsExactly<InvalidOperationException>(() => q.Dequeue());
+		Assert.ThrowsExactly<InvalidOperationException>(() => q.Peek());
 	}
 
 	[TestMethod]
 	public void UnsupportedMethods()
 	{
 		var q = new SynchronizedQueue<int>();
-		var list = (IList)q;
-		Assert.ThrowsException<NotSupportedException>(() => _ = list[0]);
-		Assert.ThrowsException<NotSupportedException>(() => list.Insert(0, 1));
-		Assert.ThrowsException<NotSupportedException>(() => list.RemoveAt(0));
+		var list = (IList<int>)q;
+		Assert.ThrowsExactly<NotSupportedException>(() => _ = list[0]);
+		Assert.ThrowsExactly<NotSupportedException>(() => list.Insert(0, 1));
+		Assert.ThrowsExactly<NotSupportedException>(() => list.RemoveAt(0));
 	}
 }

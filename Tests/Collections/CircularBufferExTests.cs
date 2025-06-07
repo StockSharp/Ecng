@@ -8,7 +8,7 @@ public class CircularBufferExTests
 	{
 		var buf = new CircularBufferEx<decimal>(3)
 		{
-			Operator = new Ecng.Common.DecimalOperator(),
+			Operator = new DecimalOperator(),
 			MaxComparer = Comparer<decimal>.Default,
 			MinComparer = Comparer<decimal>.Default
 		};
