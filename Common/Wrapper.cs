@@ -85,17 +85,23 @@ public abstract class Wrapper<T> : Equatable<Wrapper<T>>, IDisposable
 	/// <returns>A hash code for the current object.</returns>
 	public override int GetHashCode()
 	{
-		int hash = 0;
+		if (!HasValue)
+			return 0;
 
-		if (HasValue)
+		if (Value is IEnumerable enumerable)
 		{
-			if (Value is ICollection)
-				throw new NotImplementedException();
-			else
-				hash = Value.GetHashCode();
+			unchecked
+			{
+				int hash = 17;
+
+				foreach (var item in enumerable)
+					hash = hash * 31 + (item?.GetHashCode() ?? 0);
+
+				return hash;
+			}
 		}
 
-		return hash;
+		return Value.GetHashCode();
 	}
 
 	#endregion
