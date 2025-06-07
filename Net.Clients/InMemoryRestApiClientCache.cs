@@ -43,7 +43,20 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 		if (method is null)	throw new ArgumentNullException(nameof(method));
 		if (uri is null)	throw new ArgumentNullException(nameof(uri));
 
-		return (method, uri.To<string>().ToLowerInvariant(), null);
+		var builder = new UriBuilder(uri);
+		
+		if (!builder.Query.IsEmpty())
+		{
+			var sortedQuery = builder.Query.Substring(1)
+				.ParseUrl()
+				.ExcludeEmpty()
+				.OrderBy(p => p.key, StringComparer.InvariantCultureIgnoreCase)
+				.ToQueryString(true);
+
+			builder.Query = sortedQuery;
+		}
+
+		return (method, builder.Uri.ToString().ToLowerInvariant(), null);
 	}
 
 	/// <summary>
