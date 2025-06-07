@@ -11,9 +11,10 @@ public class SynchronizedSetTests
 		set[0].AssertEqual(1);
 		set.IndexOf(3).AssertEqual(2);
 		set.Remove(2).AssertTrue();
+		set.TryAdd(3).AssertFalse();
 		set.ThrowIfDuplicate = true;
 		Assert.ThrowsExactly<InvalidOperationException>(() => set.Add(1));
-		set.TryAdd(3).AssertFalse();
+		Assert.ThrowsExactly<InvalidOperationException>(() => set.TryAdd(1));
 	}
 
 	[TestMethod]
@@ -45,7 +46,7 @@ public class SynchronizedSetTests
 	[TestMethod]
 	public void UnionIntersectExceptSymmetric()
 	{
-		var set = new SynchronizedSet<int>();
+		var set = new SynchronizedSet<int>(true);
 		set.AddRange([1, 2, 3]);
 		set.UnionWith([3, 4]);
 		set.OrderBy(t => t).SequenceEqual([1, 2, 3, 4]).AssertTrue();

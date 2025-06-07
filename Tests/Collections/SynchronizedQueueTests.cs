@@ -27,6 +27,7 @@ public class SynchronizedQueueTests
 	public void UnsupportedMethods()
 	{
 		var q = new SynchronizedQueue<int>();
+		q.Enqueue(1);
 		var list = (IList<int>)q;
 		Assert.ThrowsExactly<NotSupportedException>(() => _ = list[0]);
 		Assert.ThrowsExactly<NotSupportedException>(() => list.Insert(0, 1));

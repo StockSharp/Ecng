@@ -26,7 +26,10 @@ public class SynchronizedStackTests
 	[TestMethod]
 	public void UnsupportedMethods()
 	{
-		var st = new SynchronizedStack<int>();
+		var st = new SynchronizedStack<int>
+		{
+			1
+		};
 		var list = (IList<int>)st;
 		Assert.ThrowsExactly<NotSupportedException>(() => _ = list[0]);
 		Assert.ThrowsExactly<NotSupportedException>(() => list.Insert(0, 1));
