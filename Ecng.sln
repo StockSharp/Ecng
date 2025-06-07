@@ -71,6 +71,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MathLight", "MathLight\Math
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backup.Mega", "Backup.Mega\Backup.Mega.csproj", "{6202135C-F945-4047-828B-284E1E00BBEA}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backup.Azure", "Backup.Azure\Backup.Azure.csproj", "{4C6BB5E0-80DA-4104-94D5-B23F4F9DC777}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YandexDisk.Client", "YandexDisk.Client\YandexDisk.Client.csproj", "{5BA2E8AB-3569-4780-BDC6-7920B93A770D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Compilation.FSharp", "Compilation.FSharp\Compilation.FSharp.csproj", "{0EAAABD6-AA1D-4863-9EB9-335A325096CD}"
@@ -213,6 +215,10 @@ Global
 		{6202135C-F945-4047-828B-284E1E00BBEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6202135C-F945-4047-828B-284E1E00BBEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6202135C-F945-4047-828B-284E1E00BBEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C6BB5E0-80DA-4104-94D5-B23F4F9DC777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C6BB5E0-80DA-4104-94D5-B23F4F9DC777}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C6BB5E0-80DA-4104-94D5-B23F4F9DC777}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C6BB5E0-80DA-4104-94D5-B23F4F9DC777}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5BA2E8AB-3569-4780-BDC6-7920B93A770D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5BA2E8AB-3569-4780-BDC6-7920B93A770D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5BA2E8AB-3569-4780-BDC6-7920B93A770D}.Release|Any CPU.ActiveCfg = Release|Any CPU
