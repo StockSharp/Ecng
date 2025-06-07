@@ -94,11 +94,11 @@ public class CryptoAlgorithm : Disposable
 	#region Create
 
 	/// <summary>
-	/// Creates a symmetric cryptographer.
+	/// Creates an asymmetric cryptographer for signature verification.
 	/// </summary>
 	/// <param name="publicKey">The public key.</param>
-	/// <returns>The symmetric cryptographer.</returns>
-	public static CryptoAlgorithm CreateAssymetricVerifier(byte[] publicKey)
+	/// <returns>The asymmetric cryptographer.</returns>
+	public static CryptoAlgorithm CreateAsymmetricVerifier(byte[] publicKey)
 		=> new(new AsymmetricCryptographer(AsymmetricAlgorithm.Create(DefaultAsymmetricAlgoName), publicKey));
 
 	/// <summary>

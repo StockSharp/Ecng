@@ -175,7 +175,7 @@ public static class CryptoHelper
 
 		cryptoStream.Write(plain, 0, plain.Length);
 		cryptoStream.FlushFinalBlock();
-		// Create the final bytes as a concatenation of the random salt bytes, the random iv bytes and the cipher bytes.
+		// Return only the cipher bytes; salt and IV should be stored separately.
 
 		return memoryStream.ToArray();
 	}
@@ -395,7 +395,7 @@ public static class CryptoHelper
 		var buffer = new byte[unencodedBytes.Length + salt.Length];
 
 		Buffer.BlockCopy(unencodedBytes, 0, buffer, 0, unencodedBytes.Length);
-		Buffer.BlockCopy(salt, 0, buffer, unencodedBytes.Length - 1, salt.Length);
+		Buffer.BlockCopy(salt, 0, buffer, unencodedBytes.Length, salt.Length);
 
 		return new Secret(buffer, salt, algo);
 	}
