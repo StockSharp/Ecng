@@ -54,7 +54,7 @@ public class DatabaseConnectionCache : IPersistable
 
 		lock (_connections.SyncRoot)
 		{
-			connection = _connections.FirstOrDefault(p => p.Provider == provider && p.ConnectionString.EqualsIgnoreCase(connectionString));
+			connection = _connections.FirstOrDefault(p => p.Provider.EqualsIgnoreCase(provider) && p.ConnectionString.EqualsIgnoreCase(connectionString));
 
 			if (connection is null)
 			{
@@ -102,7 +102,7 @@ public class DatabaseConnectionCache : IPersistable
 	{
 		_connections.AddRange(storage
 			.GetValue<IEnumerable<DatabaseConnectionPair>>(nameof(Connections))
-			.Where(p => p.Provider != null));
+			.Where(p => !p.Provider.IsEmpty()));
 	}
 
 	/// <summary>

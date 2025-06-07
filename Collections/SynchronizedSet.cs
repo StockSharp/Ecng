@@ -293,7 +293,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	public bool IsProperSupersetOf(IEnumerable<T> other)
 	{
 		lock (SyncRoot)
-			return InnerCollection.Overlaps(other);
+			return InnerCollection.IsProperSupersetOf(other);
 	}
 
 	/// <summary>

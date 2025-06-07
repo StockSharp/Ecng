@@ -142,7 +142,7 @@ public class SynchronizedList<T>(int capacity) : SynchronizedCollection<T, List<
 	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="index"/> is less than -1 or <paramref name="count"/> is less than or equal to zero.</exception>
 	public int RemoveRange(int index, int count)
 	{
-		if (index < -1)
+		if (index < 0)
 			throw new ArgumentOutOfRangeException(nameof(index));
 
 		if (count <= 0)
