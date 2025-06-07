@@ -67,7 +67,7 @@ public class LogManager : Disposable, IPersistable
 	private readonly object _syncRoot = new();
 	private readonly List<LogMessage> _pendingMessages = [];
 	private readonly Timer _flushTimer;
-	private bool _isFlusing;
+	private bool _isFlushing;
 	private readonly bool _asyncMode;
 
 	/// <summary>
@@ -118,7 +118,7 @@ public class LogManager : Disposable, IPersistable
 
 		lock (_syncRoot)
 		{
-			if (_isFlusing)
+			if (_isFlushing)
 				return;
 
 			temp = _pendingMessages.CopyAndClear();
@@ -126,7 +126,7 @@ public class LogManager : Disposable, IPersistable
 			if (temp.Length == 0)
 				return;
 
-			_isFlusing = true;
+			_isFlushing = true;
 		}
 
 		try
@@ -169,7 +169,7 @@ public class LogManager : Disposable, IPersistable
 		finally
 		{
 			lock (_syncRoot)
-				_isFlusing = false;
+				_isFlushing = false;
 		}
 	}
 
