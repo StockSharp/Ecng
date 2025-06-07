@@ -11,7 +11,7 @@ using System.Reflection;
 /// </summary>
 public static class AttributeHelper
 {
-	private static readonly Dictionary<(Type, ICustomAttributeProvider), Attribute> _attrCache = new();
+	private static readonly Dictionary<(Type, ICustomAttributeProvider, bool), Attribute> _attrCache = [];
 
 	/// <summary>
 	/// Gets or sets a value indicating whether attribute caching is enabled.
@@ -45,7 +45,7 @@ public static class AttributeHelper
 		if (!CacheEnabled)
 			return GetAttribute();
 
-		return (TAttribute)_attrCache.SafeAdd(new(typeof(TAttribute), provider),
+		return (TAttribute)_attrCache.SafeAdd(new(typeof(TAttribute), provider, inherit),
 			key => GetAttribute());
 	}
 
