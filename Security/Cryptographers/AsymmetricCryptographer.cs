@@ -30,7 +30,7 @@ public class AsymmetricCryptographer : Disposable
 			if (Value is RSACryptoServiceProvider rsa)
 				return rsa.Encrypt(plainText, false);
 
-			throw new NotImplementedException();
+			throw new NotSupportedException();
 		}
 
 		public byte[] Decrypt(byte[] encryptedText)
@@ -38,7 +38,7 @@ public class AsymmetricCryptographer : Disposable
 			if (Value is RSACryptoServiceProvider rsa)
 				return rsa.Decrypt(encryptedText, false);
 
-			throw new NotImplementedException();
+			throw new NotSupportedException();
 		}
 
 		public byte[] CreateSignature(byte[] data)
