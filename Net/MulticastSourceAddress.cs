@@ -111,7 +111,7 @@ public class MulticastSourceAddress : NotifiableObject, IPersistable
 	/// <returns>A hash code for the current object.</returns>
 	public override int GetHashCode()
 	{
-	return (GroupAddress?.GetHashCode() ?? 0) ^ Port.GetHashCode() ^ (SourceAddress?.GetHashCode() ?? 0);
+		return (GroupAddress?.GetHashCode() ?? 0) ^ Port.GetHashCode() ^ (SourceAddress?.GetHashCode() ?? 0);
 	}
 
 	/// <summary>
