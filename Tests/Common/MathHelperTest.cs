@@ -329,6 +329,35 @@ public class MathHelperTest
 	}
 
 	[TestMethod]
+	public void RoundToNearestNegative()
+	{
+		const double delta = 1e-8;
+
+		(-0.9999).RoundToNearest().AssertEqual(-1, delta);
+		(-0.09999).RoundToNearest().AssertEqual(-0.1, delta);
+		(-0.009999).RoundToNearest().AssertEqual(-0.01, delta);
+		(-0.0009999).RoundToNearest().AssertEqual(-0.001, delta);
+		(-0.00009999).RoundToNearest().AssertEqual(-0.0001, delta);
+		(-0.000009999).RoundToNearest().AssertEqual(-0.00001, delta);
+
+		(-9999.9999).RoundToNearest().AssertEqual(-10000, delta);
+		(-99999.09999).RoundToNearest().AssertEqual(-100000, delta);
+		(-999999.009999).RoundToNearest().AssertEqual(-1000000, delta);
+		(-9999999.0009999).RoundToNearest().AssertEqual(-10000000, delta);
+		(-99999999.00009999).RoundToNearest().AssertEqual(-100000000, delta);
+		(-999999999.000009999).RoundToNearest().AssertEqual(-1000000000, delta);
+		(-9999999999.0000009999).RoundToNearest().AssertEqual(-10000000000, delta);
+	}
+
+	[TestMethod]
+	public void RoundToNearestSpecial()
+	{
+		double.NaN.RoundToNearest().IsNaN().AssertTrue();
+		double.PositiveInfinity.RoundToNearest().IsPositiveInfinity().AssertTrue();
+		double.NegativeInfinity.RoundToNearest().IsNegativeInfinity().AssertTrue();
+	}
+
+	[TestMethod]
 	public void Decimals()
 	{
 		Do.Invariant(() =>

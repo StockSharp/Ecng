@@ -1332,14 +1332,23 @@ public static class MathHelper
 	/// <returns>The rounded value.</returns>
 	public static double RoundToNearest(this double value)
 	{
+		if (value.IsNaN())
+			return double.NaN;
+
+		if (value.IsPositiveInfinity())
+			return double.PositiveInfinity;
+
+		if (value.IsNegativeInfinity())
+			return double.NegativeInfinity;
+
 		if (value == 0)
 			return 0;
 
 		var abs = Math.Abs(value);
 		var exp = Math.Floor(Math.Log10(abs));
 		var pow = Math.Pow(10, exp);
-		var rounded = Math.Round(value / pow) * pow;
-		return rounded;
+		var rounded = Math.Round(abs / pow) * pow;
+		return value > 0 ? rounded : -rounded;
 	}
 
 	/// <summary>
