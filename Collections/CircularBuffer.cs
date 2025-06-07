@@ -255,7 +255,6 @@ public class CircularBuffer<T> : IEnumerable<T>, IList<T>
 	/// <summary>
 	/// Clears the contents of the array. Size = 0, Capacity is unchanged.
 	/// </summary>
-	/// <exception cref="NotImplementedException"></exception>
 	public virtual void Clear()
 	{
 		// to clear we just reset everything.
