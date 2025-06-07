@@ -1332,12 +1332,7 @@ public static class MathHelper
 	/// <returns>The rounded value.</returns>
 	public static double RoundToNearest(this double value)
 	{
-		// TODO: This method rounds to two decimals.
-		const double coef = 100;
-		var result = value * coef;
-		result = result.Round();
-		result = result / coef;
-		return result;
+		return value.Round(2);
 	}
 
 	/// <summary>

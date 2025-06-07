@@ -126,20 +126,26 @@ static class ProcessExtensions
 			process.Exited -= handler;
 		}
 
-		static Task WaitUntilOutputEOF(CancellationToken cancellationToken)
+		async Task WaitUntilOutputEOF(CancellationToken cancellationToken)
 		{
-			// TODO
-			return Task.CompletedTask;
+			var tasks = new List<Task>(2);
 
-			//if (process._output is not null)
-			//{
-			//	await process._output.EOF.WaitAsync(cancellationToken).NoWait();
-			//}
+			if (process.StartInfo.RedirectStandardOutput)
+				tasks.Add(DrainStreamAsync(process.StandardOutput, cancellationToken));
 
-			//if (process._error is not null)
-			//{
-			//	await process._error.EOF.WaitAsync(cancellationToken).NoWait();
-			//}
+			if (process.StartInfo.RedirectStandardError)
+				tasks.Add(DrainStreamAsync(process.StandardError, cancellationToken));
+
+			if (tasks.Count > 0)
+				await Task.WhenAll(tasks).NoWait();
+
+			static async Task DrainStreamAsync(StreamReader reader, CancellationToken token)
+			{
+				var buffer = new char[1024];
+
+				while (!reader.EndOfStream && !token.IsCancellationRequested)
+					await reader.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+			}
 		}
 	}
 }
