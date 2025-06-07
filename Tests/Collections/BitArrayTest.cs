@@ -3,7 +3,7 @@ namespace Ecng.Tests.Collections;
 [TestClass]
 public class BitArrayTest
 {
-	private void Check(List<bool> bools, List<int> ints, List<long> longs, List<decimal> decs)
+	private static void Check(List<bool> bools, List<int> ints, List<long> longs, List<decimal> decs)
 	{
 		var stream = new MemoryStream();
 
@@ -129,8 +129,10 @@ public class BitArrayTest
 	{
 		var stream = new MemoryStream();
 
-		var writer = new BitArrayWriter(stream);
-		writer.WriteDecimal(decimal.MinValue);
+		using (var writer = new BitArrayWriter(stream))
+			writer.WriteDecimal(decimal.MinValue);
+
+		stream.Position = 0;
 
 		var reader = new BitArrayReader(stream);
 		reader.ReadDecimal().AssertEqual(decimal.MinValue);
