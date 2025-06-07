@@ -27,7 +27,7 @@ public class JsonBoolConverter : JsonConverter
 	/// <param name="serializer">The calling serializer.</param>
 	/// <returns>A boolean value where "1" evaluates to true, and any other value to false.</returns>
 	public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-		=> reader.Value.ToString() == "1";
+		=> reader.Value?.ToString() == "1";
 
 	/// <summary>
 	/// Determines whether this converter can convert the specified object type.
