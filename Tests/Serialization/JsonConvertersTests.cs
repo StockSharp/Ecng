@@ -84,7 +84,7 @@ public class JsonConvertersTests
 	}
 
 	[TestMethod]
-	public void JArrayConverter_WriteNotSupported()
+	public void JArrayConverter_Write()
 	{
 		var c1 = new JArrayToObjectConverter();
 		c1.CanWrite.AssertFalse();
@@ -96,7 +96,7 @@ public class JsonConvertersTests
 	}
 
 	[TestMethod]
-	public void JArrayConverter_ReadJson_Object()
+	public void JArrayConverter_Read_Object()
 	{
 		var json = "[123,\"abc\"]";
 		var reader = new JsonTextReader(new StringReader(json));
@@ -109,7 +109,7 @@ public class JsonConvertersTests
 	}
 
 	[TestMethod]
-	public void JArrayConverter_ReadJson_Generic()
+	public void JArrayConverter_Read_Generic()
 	{
 		var json = "[456,\"def\"]";
 		var reader = new JsonTextReader(new StringReader(json));
@@ -165,7 +165,7 @@ public class JsonConvertersTests
 	}
 
 	[TestMethod]
-	public void DateTimeConverters_CanConvert_And_WriteJson()
+	public void DateTimeConverters_Write()
 	{
 		var converters = new JsonConverter[]
 		{

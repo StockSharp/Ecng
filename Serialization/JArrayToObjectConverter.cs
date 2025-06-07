@@ -36,10 +36,7 @@ public class JArrayToObjectConverter : JsonConverter
 		
 		var array = JArray.Load(reader);
 
-		var fields = objectType
-			.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
-			.OrderByDeclaration()
-			.ToArray();
+		var fields = objectType.GetJsonFields();
 		
 		for (var i = 0; i < fields.Length; i++)
 		{
@@ -54,18 +51,35 @@ public class JArrayToObjectConverter : JsonConverter
 	/// <summary>
 	/// Gets a value indicating whether this converter can write JSON.
 	/// </summary>
-	/// <value>Always false because writing is not supported.</value>
-	public override bool CanWrite => false;
+	public override bool CanWrite => true;
 
 	/// <summary>
-	/// Not supported. Throws a <see cref="NotSupportedException"/>.
+	/// Writes the object as a JSON array, mapping fields in declaration order.
 	/// </summary>
 	/// <param name="writer">The JSON writer.</param>
 	/// <param name="value">The object value.</param>
 	/// <param name="serializer">The JSON serializer.</param>
-	/// <exception cref="NotSupportedException">Always thrown because writing is not supported.</exception>
 	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-		=> throw new NotSupportedException();
+	{
+		if (value == null)
+		{
+			writer.WriteNull();
+			return;
+		}
+
+		var type = value.GetType();
+		var fields = type.GetJsonFields();
+
+		writer.WriteStartArray();
+
+		foreach (var field in fields)
+		{
+			var fieldValue = field.GetValue(value);
+			serializer.Serialize(writer, fieldValue);
+		}
+
+		writer.WriteEndArray();
+	}
 }
 
 /// <summary>
@@ -153,16 +167,39 @@ public class JArrayToObjectConverter<T> : JsonConverter
 	/// <summary>
 	/// Gets a value indicating whether this converter can write JSON.
 	/// </summary>
-	/// <value>Always false because writing is not supported.</value>
-	public override bool CanWrite => false;
+	public override bool CanWrite => true;
 
 	/// <summary>
-	/// Not supported. Throws a <see cref="NotSupportedException"/>.
+	/// Writes the object as a JSON array, mapping fields in declaration order.
 	/// </summary>
 	/// <param name="writer">The JSON writer.</param>
 	/// <param name="value">The object value.</param>
 	/// <param name="serializer">The JSON serializer.</param>
-	/// <exception cref="NotSupportedException">Always thrown because writing is not supported.</exception>
 	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-		=> throw new NotSupportedException();
+	{
+		if (value == null)
+		{
+			writer.WriteNull();
+			return;
+		}
+
+		writer.WriteStartArray();
+
+		foreach (var (type, action) in _fields)
+		{
+			var fields = typeof(T).GetJsonFields();
+
+			foreach (var f in fields)
+			{
+				if (f.FieldType == type)
+				{
+					var fieldValue = f.GetValue(value);
+					serializer.Serialize(writer, fieldValue);
+					break;
+				}
+			}
+		}
+
+		writer.WriteEndArray();
+	}
 }

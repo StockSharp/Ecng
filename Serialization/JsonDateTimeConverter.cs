@@ -73,15 +73,16 @@ public class JsonDateTimeConverter(bool isSeconds) : JsonConverter
 
 	/// <summary>
 	/// Writes the JSON representation of the object.
-	/// This method is not supported.
 	/// </summary>
 	/// <param name="writer">The <see cref="JsonWriter"/> to write to.</param>
 	/// <param name="value">The value to convert.</param>
 	/// <param name="serializer">The calling serializer.</param>
-	/// <exception cref="NotSupportedException">Always thrown as this converter does not support writing.</exception>
 	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
 	{
-		throw new NotSupportedException();
+		if (value is not DateTime dt)
+			throw new ArgumentException($"Value must be DateTime, but was {value?.GetType()}");
+
+		writer.WriteRawValue(dt.ToUnix(_isSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 }
 
@@ -121,6 +122,17 @@ public class JsonDateTimeMcsConverter : JsonDateTimeConverter
 	{
 		return value.FromUnixMcs();
 	}
+
+	/// <summary>
+	/// Writes the JSON representation of the object in microseconds.
+	/// </summary>
+	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+	{
+		if (value is not DateTime dt)
+			throw new ArgumentException($"Value must be DateTime, but was {value?.GetType()}");
+
+		writer.WriteRawValue(dt.ToUnixMcs().ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
 }
 
 /// <summary>
@@ -144,5 +156,16 @@ public class JsonDateTimeNanoConverter : JsonDateTimeConverter
 	protected override DateTime Convert(double value)
 	{
 		return TimeHelper.GregorianStart.AddNanoseconds((long)value);
+	}
+
+	/// <summary>
+	/// Writes the JSON representation of the object in nanoseconds.
+	/// </summary>
+	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+	{
+		if (value is not DateTime dt)
+			throw new ArgumentException($"Value must be DateTime, but was {value?.GetType()}");
+
+		writer.WriteRawValue(dt.ToNanoseconds().ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 }

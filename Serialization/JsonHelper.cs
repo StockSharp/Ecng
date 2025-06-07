@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Serialization;
 
 using System;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
 using Ecng.Common;
+using Ecng.Reflection;
 
 /// <summary>
 /// Provides helper methods for JSON serialization and deserialization.
@@ -192,5 +194,12 @@ public static class JsonHelper
 			array = [.. array.Skip(3)];
 
 		return array;
+	}
+
+	internal static FieldInfo[] GetJsonFields(this Type type)
+	{
+		return [.. type
+			.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+			.OrderByDeclaration()];
 	}
 }
