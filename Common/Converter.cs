@@ -417,7 +417,7 @@ public static class Converter
 		AddTypedConverter<Version, string>(input => input.ToString());
 		AddTypedConverter<string, Version>(input => new(input));
 		AddTypedConverter<Encoding, int>(input => input.CodePage);
-		AddTypedConverter<int, Encoding>(input => Encoding.GetEncoding(input));
+		AddTypedConverter<int, Encoding>(Encoding.GetEncoding);
 		AddTypedConverter<CultureInfo, int>(input => input.LCID);
 		AddTypedConverter<int, CultureInfo>(input => new(input));
 		AddTypedConverter<IntPtr, int>(input => input.ToInt32());
