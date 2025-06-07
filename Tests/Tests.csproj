@@ -30,5 +30,6 @@
     <ProjectReference Include="..\Net.Clients\Net.Clients.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
+    <ProjectReference Include="..\MathLight\MathLight.csproj" />
   </ItemGroup>
 </Project>
