@@ -101,6 +101,7 @@
     protected override void Dispose(bool disposing)
     {
       base.Dispose(disposing);
+      _stream.Dispose();
       _encryptor.Dispose();
     }
 

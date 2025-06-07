@@ -245,7 +245,7 @@ public class NugetRepoProvider : CachingSourceProvider
 			}
 
 			var http = repo == _privateRepo ? privateHttp : publicHttp;
-			var nuspec = await RetryPolicy.TryRepeat(t => http.GetNuspecAsync(baseUrl, packageId, foundVersion, t), RetryPolicy.ReadMaxCount, cancellationToken);
+			using var nuspec = await RetryPolicy.TryRepeat(t => http.GetNuspecAsync(baseUrl, packageId, foundVersion, t), RetryPolicy.ReadMaxCount, cancellationToken);
 			var reader = new NuspecReader(nuspec);
 			var groups = reader.GetDependencyGroups().ToDictionary(g => g.TargetFramework);
 

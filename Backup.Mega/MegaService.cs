@@ -138,7 +138,7 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 
 	async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 	{
-		var temp = await (await EnsureLogin(cancellationToken)).Download(Find(entry), cancellationToken).NoWait();
+		using var temp = await (await EnsureLogin(cancellationToken)).Download(Find(entry), cancellationToken).NoWait();
 		await temp.CopyToAsync(stream, cancellationToken).NoWait();
 	}
 
