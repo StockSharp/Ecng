@@ -1,5 +1,6 @@
 namespace Ecng.Data;
 
+using Ecng.Common;
 using Ecng.ComponentModel;
 using Ecng.Serialization;
 
@@ -63,5 +64,34 @@ public class DatabaseConnectionPair : NotifiableObject, IPersistable
 			.Set(nameof(Provider), Provider)
 			.Set(nameof(ConnectionString), ConnectionString)
 			;
+	}
+
+	/// <inheritdoc />
+	public override bool Equals(object obj)
+	{
+		if (obj is null)
+			return false;
+
+		if (ReferenceEquals(this, obj))
+			return true;
+
+		if (obj is not DatabaseConnectionPair other)
+			return false;
+
+		return
+			Provider.EqualsIgnoreCase(other.Provider) &&
+			ConnectionString.EqualsIgnoreCase(other.ConnectionString);
+	}
+
+	/// <inheritdoc />
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			var hash = 17;
+			hash = hash * 23 + (Provider?.GetHashCode() ?? 0);
+			hash = hash * 23 + (ConnectionString?.GetHashCode() ?? 0);
+			return hash;
+		}
 	}
 }
