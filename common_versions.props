@@ -18,5 +18,6 @@
     <YDCVer>1.3.27</YDCVer>
     <WmiLightVer>6.5.2</WmiLightVer>
     <FSharpVer>43.*</FSharpVer>
+    <AzureStorageBlobsVer>12.*</AzureStorageBlobsVer>
   </PropertyGroup>
 </Project>

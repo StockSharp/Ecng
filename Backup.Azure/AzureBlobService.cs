@@ -7,8 +7,8 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Specialized;
+using global::Azure.Storage.Blobs;
+using global::Azure.Storage.Blobs.Specialized;
 
 using Ecng.Common;
 
@@ -33,7 +33,7 @@ public class AzureBlobService : Disposable, IBackupService
 		if (container.IsEmpty())
 			throw new ArgumentNullException(nameof(container));
 
-		_container = new BlobContainerClient(connectionString, container);
+		_container = new(connectionString, container);
 	}
 
 	bool IBackupService.CanFolders => false;
@@ -84,7 +84,7 @@ public class AzureBlobService : Disposable, IBackupService
 	async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 	{
 		var blob = _container.GetBlobClient(entry.GetFullPath());
-		var response = await blob.DownloadAsync(new Azure.HttpRange(offset ?? 0, length), cancellationToken);
+		var response = await blob.DownloadAsync(new(offset ?? 0, length), cancellationToken: cancellationToken);
 		var source = response.Value.Content;
 		var total = response.Value.ContentLength;
 

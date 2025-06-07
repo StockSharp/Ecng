@@ -102,7 +102,7 @@ public class AmazonGlacierService : Disposable, IBackupService
 				VaultName = _vaultName,
 			}, cancellationToken).NoWait();
 		}
-		while (!describe.Completed);
+		while (describe.Completed == false);
 
 		GetJobOutputRequest request = new()
 		{
