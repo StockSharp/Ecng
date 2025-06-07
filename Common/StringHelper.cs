@@ -458,10 +458,13 @@ public static class StringHelper
 	/// <returns>A reduced version of the string.</returns>
 	public static string Reduce(this string s, int count, string endings)
 	{
-		if (endings.IsEmpty())
-			throw new ArgumentNullException(nameof(endings));
+		if (s is null)
+			throw new ArgumentNullException(nameof(s));
 
-		if (count < endings.Length || count >= endings.Length)
+		if (endings.IsEmpty())
+			return s.Substring(0, count);
+
+		if (count < endings.Length)
 			throw new ArgumentOutOfRangeException(nameof(count));
 
 		return s.Substring(0, count - endings.Length) + endings;
