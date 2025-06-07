@@ -1326,13 +1326,20 @@ public static class MathHelper
 	// http://www.java-forums.org/advanced-java/4130-rounding-double-two-decimal-places.html
 
 	/// <summary>
-	/// Rounds the double value to two decimal places.
+	/// Rounds the double value to the nearest significant digit.
 	/// </summary>
 	/// <param name="value">The double value.</param>
 	/// <returns>The rounded value.</returns>
 	public static double RoundToNearest(this double value)
 	{
-		return value.Round(2);
+		if (value == 0)
+			return 0;
+
+		var abs = Math.Abs(value);
+		var exp = Math.Floor(Math.Log10(abs));
+		var pow = Math.Pow(10, exp);
+		var rounded = Math.Round(value / pow) * pow;
+		return rounded;
 	}
 
 	/// <summary>

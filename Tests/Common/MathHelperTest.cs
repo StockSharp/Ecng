@@ -304,27 +304,28 @@ public class MathHelperTest
 	[TestMethod]
 	public void RoundToNearest()
 	{
-		0.9999.RoundToNearest().AssertEqual(1);
-		0.09999.RoundToNearest().AssertEqual(0.1);
-		0.009999.RoundToNearest().AssertEqual(0.01);
+		const double delta = 1e-8;
 
-		// TODO
-		//0.0009999.RoundToNearest().AssertEqual(0.001);
-		//0.00009999.RoundToNearest().AssertEqual(0.0001);
-		//0.000009999.RoundToNearest().AssertEqual(0.00001);
+		0.9999.RoundToNearest().AssertEqual(1, delta);
+		0.09999.RoundToNearest().AssertEqual(0.1, delta);
+		0.009999.RoundToNearest().AssertEqual(0.01, delta);
+		0.0009999.RoundToNearest().AssertEqual(0.001, delta);
+		0.00009999.RoundToNearest().AssertEqual(0.0001, delta);
+		0.000009999.RoundToNearest().AssertEqual(0.00001, delta);
 	}
 
 	[TestMethod]
 	public void RoundToNearestBig()
 	{
-		9999.9999.RoundToNearest().AssertEqual(10000);
-		// TODO
-		//99999.09999.RoundToNearest().AssertEqual(100000);
-		//999999.009999.RoundToNearest().AssertEqual(1000000);
-		//9999999.0009999.RoundToNearest().AssertEqual(10000000);
-		//99999999.00009999.RoundToNearest().AssertEqual(10000000);
-		//999999999.000009999.RoundToNearest().AssertEqual(100000000);
-		//9999999999.0000009999.RoundToNearest().AssertEqual(1000000000);
+		const double delta = 1e-8;
+
+		9999.9999.RoundToNearest().AssertEqual(10000, delta);
+		99999.09999.RoundToNearest().AssertEqual(100000, delta);
+		999999.009999.RoundToNearest().AssertEqual(1000000, delta);
+		9999999.0009999.RoundToNearest().AssertEqual(10000000, delta);
+		99999999.00009999.RoundToNearest().AssertEqual(100000000, delta);
+		999999999.000009999.RoundToNearest().AssertEqual(1000000000, delta);
+		9999999999.0000009999.RoundToNearest().AssertEqual(10000000000, delta);
 	}
 
 	[TestMethod]
@@ -347,11 +348,11 @@ public class MathHelperTest
 			"3.45443".To<decimal>().GetDecimalInfo().EffectiveScale.AssertEqual(5);
 			"3333.45443".To<decimal>().GetDecimalInfo().EffectiveScale.AssertEqual(5);
 
-			//0.0.GetDecimals().AssertEqual(0);
-			//1.0.GetDecimals().AssertEqual(0);
-			//0.1.GetDecimals().AssertEqual(1);
-			//0.0011.GetDecimals().AssertEqual(4);
-			//0.056570006674.GetDecimals().AssertEqual(12);
+			0.0m.GetDecimalInfo().EffectiveScale.AssertEqual(0);
+			1.0m.GetDecimalInfo().EffectiveScale.AssertEqual(0);
+			0.1m.GetDecimalInfo().EffectiveScale.AssertEqual(1);
+			0.0011m.GetDecimalInfo().EffectiveScale.AssertEqual(4);
+			0.056570006674m.GetDecimalInfo().EffectiveScale.AssertEqual(12);
 		});
 	}
 
