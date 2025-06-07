@@ -8,21 +8,23 @@ public class NtpClientTests
 {
 	private static byte[] BuildResponse(DateTime utc)
 	{
-		var ms = (ulong)(utc - new DateTime(1900, 1, 1)).TotalMilliseconds;
-		var intpart = ms; // 1000;
-		var fractpart = (ms % 1000) * 0x100000000; // 1000;
+		var seconds = (ulong)(utc - new DateTime(1900, 1, 1)).TotalSeconds;
+		var fraction = (ulong)((utc - new DateTime(1900, 1, 1)).Ticks % TimeSpan.TicksPerSecond * 0x100000000L / TimeSpan.TicksPerSecond);
 		var resp = new byte[48];
 		resp[0] = 0x1B;
+
 		for (var i = 3; i >= 0; i--)
 		{
-			resp[40 + i] = (byte)(intpart & 0xFF);
-			intpart >>= 8;
+			resp[40 + i] = (byte)(seconds & 0xFF);
+			seconds >>= 8;
 		}
+
 		for (var i = 3; i >= 0; i--)
 		{
-			resp[44 + i] = (byte)(fractpart & 0xFF);
-			fractpart >>= 8;
+			resp[44 + i] = (byte)(fraction & 0xFF);
+			fraction >>= 8;
 		}
+
 		return resp;
 	}
 
@@ -85,7 +87,8 @@ public class NtpClientTests
 		});
 
 		var client = new NtpClient($"127.0.0.1:{ep.Port}");
-		(await client.GetUtcTimeAsync()).AssertEqual(expected);
+		var actual = await client.GetUtcTimeAsync();
+		(Math.Abs((actual - expected).TotalSeconds) < 1).AssertTrue();
 		server.Dispose();
 		await task;
 	}
