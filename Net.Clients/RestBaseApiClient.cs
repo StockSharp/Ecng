@@ -394,7 +394,17 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 	/// <param name="requestUri">The original request URI.</param>
 	/// <returns>The formatted URI string.</returns>
 	protected virtual string FormatRequestUri(string requestUri)
-		=> requestUri.Remove("Async").ToLowerInvariant();
+	{
+		if (requestUri.IsEmpty())
+			return requestUri;
+
+		const string suffix = "Async";
+
+		if (requestUri.EndsWith(suffix, StringComparison.Ordinal))
+			requestUri = requestUri.Substring(0, requestUri.Length - suffix.Length);
+
+		return requestUri.ToLowerInvariant();
+	}
 
 	/// <summary>
 	/// Converts the caller method information into a request URI.
