@@ -46,7 +46,10 @@ public static class QueryableExtensions
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>A <see cref="ValueTask{Boolean}"/> representing the asynchronous operation. The task result contains true if the sequence contains any elements; otherwise, false.</returns>
 	public static async ValueTask<bool> AnyAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
-		=> await source.FirstOrDefaultAsync(cancellationToken) is not null;
+		=> !EqualityComparer<T>.Default.Equals(
+			await source.FirstOrDefaultAsync(cancellationToken),
+			default
+		);
 
 	/// <summary>
 	/// Asynchronously returns the first element of a sequence, or a default value if the sequence contains no elements.
@@ -129,7 +132,7 @@ public static class QueryableExtensions
 			var pi = type.GetProperty(prop, flags);
 
 			if (pi is null)
-				throw new InvalidOperationException($"Type '{type}' doesn't contains {prop} property.");
+				throw new InvalidOperationException($"Type '{type}' doesn't contain property '{prop}'.");
 
 			expr = Expression.Property(expr, pi);
 			type = pi.PropertyType;
