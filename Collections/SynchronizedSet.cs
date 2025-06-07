@@ -242,7 +242,16 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	/// <param name="other">The collection to compare to the current set.</param>
 	public void IntersectWith(IEnumerable<T> other)
 	{
-		throw new NotImplementedException();
+		if (other is null)
+			throw new ArgumentNullException(nameof(other));
+
+		var set = new HashSet<T>(other);
+
+		lock (SyncRoot)
+		{
+			var toRemove = this.Where(x => !set.Contains(x)).ToArray();
+			RemoveRange(toRemove);
+		}
 	}
 
 	/// <summary>
@@ -260,7 +269,19 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	/// <param name="other">The collection to compare to the current set.</param>
 	public void SymmetricExceptWith(IEnumerable<T> other)
 	{
-		throw new NotImplementedException();
+		if (other is null)
+			throw new ArgumentNullException(nameof(other));
+
+		var set = new HashSet<T>(other);
+
+		lock (SyncRoot)
+		{
+			var toRemove = this.Where(set.Contains).ToArray();
+			var toAdd = set.Where(x => !Contains(x)).ToArray();
+
+			RemoveRange(toRemove);
+			AddRange(toAdd);
+		}
 	}
 
 	/// <summary>
@@ -325,7 +346,14 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	/// <returns>True if the sets contain the same elements; otherwise, false.</returns>
 	public bool SetEquals(IEnumerable<T> other)
 	{
-		throw new NotImplementedException();
+		if (other is null)
+			throw new ArgumentNullException(nameof(other));
+
+		lock (SyncRoot)
+		{
+			var set = new HashSet<T>(other);
+			return Count == set.Count && this.All(set.Contains);
+		}
 	}
 
 	/// <summary>
@@ -452,14 +480,29 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	}
 
 	/// <summary>
-	/// Removes a specified number of items starting at the given index. Not yet implemented.
+	/// Removes a specified number of items starting at the given index.
 	/// </summary>
 	/// <param name="index">The starting index.</param>
 	/// <param name="count">The number of items to remove.</param>
 	/// <returns>The number of items removed.</returns>
-	/// <exception cref="NotImplementedException">Always thrown.</exception>
 	public int RemoveRange(int index, int count)
 	{
-		throw new NotImplementedException();
+		if (index < 0 || count < 0 || index + count > Count)
+			throw new ArgumentOutOfRangeException(nameof(index), index, "Invalid value.");
+
+		lock (SyncRoot)
+		{
+			var removed = 0;
+
+			for (int i = 0; i < count; i++)
+			{
+				var item = this.ElementAt(index);
+
+				if (Remove(item))
+					removed++;
+			}
+
+			return removed;
+		}
 	}
 }
