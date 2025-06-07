@@ -166,6 +166,6 @@ public class JsonDateTimeNanoConverter : JsonDateTimeConverter
 		if (value is not DateTime dt)
 			throw new ArgumentException($"Value must be DateTime, but was {value?.GetType()}");
 
-		writer.WriteRawValue(dt.ToNanoseconds().ToString(System.Globalization.CultureInfo.InvariantCulture));
+		writer.WriteRawValue((dt.ToUniversalTime() - TimeHelper.GregorianStart).ToNanoseconds().ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 }

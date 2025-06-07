@@ -21,104 +21,130 @@ public class JsonConvertersTests
 		writer.Flush();
 		sb.ToString().AssertEqual("1");
 
+		var reader = new JsonTextReader(new StringReader(sb.ToString()));
+		reader.Read();
+		((bool)converter.ReadJson(reader, typeof(bool), null, serializer)).AssertTrue();
+
 		converter.CanConvert(typeof(bool)).AssertTrue();
 		converter.CanConvert(typeof(int)).AssertFalse();
-
-		var reader = new JsonTextReader(new StringReader("0"));
-		reader.Read();
-		((bool)converter.ReadJson(reader, typeof(bool), null, serializer)).AssertFalse();
 	}
 
 	[TestMethod]
-	public void DateTimeConverter_ReadSeconds()
+	public void DateTimeSecConverter_ReadWrite()
 	{
 		var converter = new JsonDateTimeConverter();
 		var serializer = JsonSerializer.CreateDefault();
 		var value = 10.0;
+		var dt = TimeHelper.GregorianStart.AddSeconds(value);
 
-		var reader = new JsonTextReader(new StringReader(value.ToString(CultureInfo.InvariantCulture)));
+		var sb = new StringWriter();
+		var writer = new JsonTextWriter(sb);
+		converter.WriteJson(writer, dt, serializer);
+		writer.Flush();
+		var json = sb.ToString();
+
+		var reader = new JsonTextReader(new StringReader(json));
 		reader.Read();
-		var dt = (DateTime)converter.ReadJson(reader, typeof(DateTime), null, serializer);
-		dt.AssertEqual(TimeHelper.GregorianStart.AddSeconds(value));
-
-		Assert.ThrowsExactly<NotSupportedException>(() => converter.WriteJson(new JsonTextWriter(TextWriter.Null), dt, serializer));
+		var dt2 = (DateTime)converter.ReadJson(reader, typeof(DateTime), null, serializer);
+		dt2.AssertEqual(dt);
 	}
 
 	[TestMethod]
-	public void DateTimeMlsConverter_ReadMilliseconds()
+	public void DateTimeMlsConverter_ReadWrite()
 	{
 		var converter = new JsonDateTimeMlsConverter();
 		var serializer = JsonSerializer.CreateDefault();
 		var value = 1500.0;
+		var dt = TimeHelper.GregorianStart.AddMilliseconds(value);
 
-		var reader = new JsonTextReader(new StringReader(value.ToString(CultureInfo.InvariantCulture)));
+		var sb = new StringWriter();
+		var writer = new JsonTextWriter(sb);
+		converter.WriteJson(writer, dt, serializer);
+		writer.Flush();
+		var json = sb.ToString();
+
+		var reader = new JsonTextReader(new StringReader(json));
 		reader.Read();
-		var dt = (DateTime)converter.ReadJson(reader, typeof(DateTime), null, serializer);
-		dt.AssertEqual(TimeHelper.GregorianStart.AddMilliseconds(value));
+		var dt2 = (DateTime)converter.ReadJson(reader, typeof(DateTime), null, serializer);
+		dt2.AssertEqual(dt);
 	}
 
 	[TestMethod]
-	public void DateTimeMcsConverter_ReadMicroseconds()
+	public void DateTimeMcsConverter_ReadWrite()
 	{
 		var converter = new JsonDateTimeMcsConverter();
 		var serializer = JsonSerializer.CreateDefault();
-		var value = 1500.0;
+		var value = 1500L;
+		var dt = TimeHelper.GregorianStart.AddMicroseconds(value);
 
-		var reader = new JsonTextReader(new StringReader(value.ToString(CultureInfo.InvariantCulture)));
+		var sb = new StringWriter();
+		var writer = new JsonTextWriter(sb);
+		converter.WriteJson(writer, dt, serializer);
+		writer.Flush();
+		var json = sb.ToString();
+
+		var reader = new JsonTextReader(new StringReader(json));
 		reader.Read();
-		var dt = (DateTime)converter.ReadJson(reader, typeof(DateTime), null, serializer);
-		dt.AssertEqual(TimeHelper.GregorianStart.AddMicroseconds((long)value));
+		var dt2 = (DateTime)converter.ReadJson(reader, typeof(DateTime), null, serializer);
+		dt2.AssertEqual(dt);
 	}
 
 	[TestMethod]
-	public void DateTimeNanoConverter_ReadNanoseconds()
+	public void DateTimeNanoConverter_ReadWrite()
 	{
 		var converter = new JsonDateTimeNanoConverter();
 		var serializer = JsonSerializer.CreateDefault();
-		var value = 2000.0;
+		var value = 2000L;
+		var dt = TimeHelper.GregorianStart.AddNanoseconds(value);
 
-		var reader = new JsonTextReader(new StringReader(value.ToString(CultureInfo.InvariantCulture)));
-		reader.Read();
-		var dt = (DateTime)converter.ReadJson(reader, typeof(DateTime), null, serializer);
-		dt.AssertEqual(TimeHelper.GregorianStart.AddNanoseconds((long)value));
-	}
+		var sb = new StringWriter();
+		var writer = new JsonTextWriter(sb);
+		converter.WriteJson(writer, dt, serializer);
+		writer.Flush();
+		var json = sb.ToString();
 
-	[TestMethod]
-	public void JArrayConverter_Write()
-	{
-		var c1 = new JArrayToObjectConverter();
-		c1.CanWrite.AssertFalse();
-		Assert.ThrowsExactly<NotSupportedException>(() => c1.WriteJson(new JsonTextWriter(TextWriter.Null), new(), JsonSerializer.CreateDefault()));
-
-		var c2 = new JArrayToObjectConverter<JArrayConvTest>();
-		c2.CanWrite.AssertFalse();
-		Assert.ThrowsExactly<NotSupportedException>(() => c2.WriteJson(new JsonTextWriter(TextWriter.Null), new(), JsonSerializer.CreateDefault()));
-	}
-
-	[TestMethod]
-	public void JArrayConverter_Read_Object()
-	{
-		var json = "[123,\"abc\"]";
 		var reader = new JsonTextReader(new StringReader(json));
 		reader.Read();
+		var dt2 = (DateTime)converter.ReadJson(reader, typeof(DateTime), null, serializer);
+		dt2.AssertEqual(dt);
+	}
+
+	[TestMethod]
+	public void JArrayConverter_WriteRead_Object()
+	{
+		var obj = new JArrayConvTest { X = 123, Y = "abc" };
 		var converter = new JArrayToObjectConverter();
 		var serializer = JsonSerializer.CreateDefault();
-		var obj = (JArrayConvTest)converter.ReadJson(reader, typeof(JArrayConvTest), null, serializer);
-		obj.X.AssertEqual(123);
-		obj.Y.AssertEqual("abc");
+		var sb = new StringWriter();
+		var writer = new JsonTextWriter(sb);
+		converter.WriteJson(writer, obj, serializer);
+		writer.Flush();
+		var json = sb.ToString();
+
+		var reader = new JsonTextReader(new StringReader(json));
+		reader.Read();
+		var obj2 = (JArrayConvTest)converter.ReadJson(reader, typeof(JArrayConvTest), null, serializer);
+		obj2.X.AssertEqual(obj.X);
+		obj2.Y.AssertEqual(obj.Y);
 	}
 
 	[TestMethod]
-	public void JArrayConverter_Read_Generic()
+	public void JArrayConverter_WriteRead_Generic()
 	{
-		var json = "[456,\"def\"]";
-		var reader = new JsonTextReader(new StringReader(json));
-		reader.Read();
+		var obj = new JArrayConvTest { X = 456, Y = "def" };
 		var converter = new JArrayToObjectConverter<JArrayConvTest>();
 		var serializer = JsonSerializer.CreateDefault();
-		var obj = (JArrayConvTest)converter.ReadJson(reader, typeof(JArrayConvTest), null, serializer);
-		obj.X.AssertEqual(456);
-		obj.Y.AssertEqual("def");
+		var sb = new StringWriter();
+		var writer = new JsonTextWriter(sb);
+		converter.WriteJson(writer, obj, serializer);
+		writer.Flush();
+		var json = sb.ToString();
+
+		var reader = new JsonTextReader(new StringReader(json));
+		reader.Read();
+		var obj2 = (JArrayConvTest)converter.ReadJson(reader, typeof(JArrayConvTest), null, serializer);
+		obj2.X.AssertEqual(obj.X);
+		obj2.Y.AssertEqual(obj.Y);
 	}
 
 	[TestMethod]
@@ -161,33 +187,6 @@ public class JsonConvertersTests
 			var readerZero = new JsonTextReader(new StringReader("0"));
 			readerZero.Read();
 			converter.ReadJson(readerZero, typeof(DateTime), null, serializer).AssertNull();
-		}
-	}
-
-	[TestMethod]
-	public void DateTimeConverters_Write()
-	{
-		var converters = new JsonConverter[]
-		{
-			new JsonDateTimeConverter(),
-			new JsonDateTimeMlsConverter(),
-			new JsonDateTimeMcsConverter(),
-			new JsonDateTimeNanoConverter(),
-		};
-
-		foreach (var converter in converters)
-		{
-			converter.CanConvert(typeof(DateTime)).AssertTrue();
-			converter.CanConvert(typeof(string)).AssertFalse();
-			converter.CanConvert(typeof(int)).AssertFalse();
-		}
-
-		var dt = DateTime.UtcNow;
-		foreach (var converter in converters)
-		{
-			var serializer = JsonSerializer.CreateDefault();
-			var writer = new JsonTextWriter(TextWriter.Null);
-			Assert.ThrowsExactly<NotSupportedException>(() => converter.WriteJson(writer, dt, serializer));
 		}
 	}
 
