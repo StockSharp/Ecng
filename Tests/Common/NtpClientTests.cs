@@ -27,7 +27,7 @@ public class NtpClientTests
 	}
 
 	[TestMethod]
-	public void GetUtcTime()
+	public async Task GetUtcTime()
 	{
 		var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
 		var ep = (IPEndPoint)server.Client.LocalEndPoint!;
@@ -41,14 +41,14 @@ public class NtpClientTests
 		});
 
 		var client = new NtpClient(new IPEndPoint(IPAddress.Loopback, ep.Port));
-		var actual = client.GetUtcTime();
+		var actual = await client.GetUtcTimeAsync();
 		server.Dispose();
-		task.Wait();
+		await task;
 		actual.AssertEqual(expected);
 	}
 
 	[TestMethod]
-	public void GetLocalTime()
+	public async Task GetLocalTime()
 	{
 		var zone = TimeZoneInfo.CreateCustomTimeZone("tz", TimeSpan.FromHours(2), "tz", "tz");
 		var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
@@ -64,14 +64,14 @@ public class NtpClientTests
 		});
 
 		var client = new NtpClient(new IPEndPoint(IPAddress.Loopback, ep.Port));
-		var actual = client.GetLocalTime(zone);
+		var actual = await client.GetLocalTimeAsync(zone);
 		server.Dispose();
-		task.Wait();
+		await task;
 		actual.AssertEqual(expected);
 	}
 
 	[TestMethod]
-	public void StringCtor()
+	public async Task StringCtor()
 	{
 		var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
 		var ep = (IPEndPoint)server.Client.LocalEndPoint!;
@@ -85,15 +85,15 @@ public class NtpClientTests
 		});
 
 		var client = new NtpClient($"127.0.0.1:{ep.Port}");
-		client.GetUtcTime().AssertEqual(expected);
+		(await client.GetUtcTimeAsync()).AssertEqual(expected);
 		server.Dispose();
-		task.Wait();
+		await task;
 	}
 
 	[TestMethod]
-	public void LocalTimeNull()
+	public async Task LocalTimeNull()
 	{
 		var client = new NtpClient(new IPEndPoint(IPAddress.Loopback, 1));
-		Assert.ThrowsExactly<ArgumentNullException>(() => client.GetLocalTime(null));
+		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await client.GetLocalTimeAsync(null));
 	}
 }

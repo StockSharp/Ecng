@@ -3,6 +3,10 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Nito.AsyncEx;
 
 /// <summary>
 /// Provides functionality to retrieve time from a remote NTP server.
@@ -19,12 +23,6 @@ public class NtpClient(EndPoint ntpServer)
 	public NtpClient(string ntpServer = "time-a.nist.gov:123")
 		: this(ntpServer.To<EndPoint>())
 	{
-		//var address = Dns.GetHostEntry(ntpServer).AddressList;
-
-		//if (address is null || address.Length == 0)
-		//    throw new ArgumentException(string.Format("Could not resolve ip address from '{0}'.", ntpServer), "ntpServer");
-
-		//_endPoint = new IPEndPoint(address[0], 123);
 	}
 
 	/// <summary>
@@ -35,11 +33,17 @@ public class NtpClient(EndPoint ntpServer)
 	/// <returns>The local time adjusted to the specified time zone.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when <paramref name="info"/> is null.</exception>
 	public DateTime GetLocalTime(TimeZoneInfo info, int timeout = 5000)
+		=> AsyncContext.Run(() => GetLocalTimeAsync(info, timeout));
+
+	/// <summary>
+	/// Retrieves the local time asynchronously based on the specified time zone.
+	/// </summary>
+	public async Task<DateTime> GetLocalTimeAsync(TimeZoneInfo info, int timeout = 5000, CancellationToken cancellationToken = default)
 	{
 		if (info is null)
 			throw new ArgumentNullException(nameof(info));
 
-		var utcTime = GetUtcTime(timeout);
+		var utcTime = await GetUtcTimeAsync(timeout, cancellationToken).ConfigureAwait(false);
 		return utcTime + info.GetUtcOffset(utcTime);
 	}
 
@@ -49,20 +53,39 @@ public class NtpClient(EndPoint ntpServer)
 	/// <param name="timeout">The timeout in milliseconds for the NTP request. Default is 5000ms.</param>
 	/// <returns>The UTC time as provided by the NTP server.</returns>
 	public DateTime GetUtcTime(int timeout = 5000)
+		=> AsyncContext.Run(() => GetUtcTimeAsync(timeout));
+
+	/// <summary>
+	/// Retrieves the UTC time from the NTP server asynchronously.
+	/// </summary>
+	public async Task<DateTime> GetUtcTimeAsync(int timeout = 5000, CancellationToken cancellationToken = default)
 	{
 		using var s = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
 		s.SendTimeout = timeout;
 		s.ReceiveTimeout = timeout;
 
+#if NET5_0_OR_GREATER
+		await s.ConnectAsync(_ntpServer, cancellationToken);
+#else
 		s.Connect(_ntpServer);
+#endif
 
 		var ntpData = new byte[48]; // RFC 2030
 		ntpData[0] = 0x1B;
 		for (var i = 1; i < 48; i++)
 			ntpData[i] = 0;
 
-		s.Send(ntpData);
-		s.Receive(ntpData);
+#if NET5_0_OR_GREATER
+		await s.SendAsync(ntpData, SocketFlags.None, cancellationToken).ConfigureAwait(false);
+		await s.ReceiveAsync(ntpData, SocketFlags.None, cancellationToken).ConfigureAwait(false);
+#else
+		await Task.Run(() =>
+		{
+			s.Send(ntpData);
+			s.Receive(ntpData);
+		}, cancellationToken).ConfigureAwait(false);
+#endif
 
 		const byte offsetTransmitTime = 40;
 		ulong intpart = 0;
