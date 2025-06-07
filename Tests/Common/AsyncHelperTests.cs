@@ -1,11 +1,6 @@
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Ecng.Common;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace Ecng.Tests.Common;
+
+using System.Threading;
 
 [TestClass]
 public class AsyncHelperTests
@@ -16,14 +11,14 @@ public class AsyncHelperTests
 		using var cts = new CancellationTokenSource();
 		var task = Task.Delay(1000).WithCancellation(cts.Token);
 		cts.Cancel();
-		await Assert.ThrowsExceptionAsync<OperationCanceledException>(async () => await task);
+		await Assert.ThrowsExactlyAsync<OperationCanceledException>(async () => await task);
 	}
 
 	[TestMethod]
 	public async Task WhenAllValueTasks()
 	{
-		var res = await AsyncHelper.WhenAll(new[] { new ValueTask<int>(1), new ValueTask<int>(2) });
-		res.AssertEqual(new[] { 1, 2 });
+		var res = await AsyncHelper.WhenAll([new ValueTask<int>(1), new ValueTask<int>(2)]);
+		res.AssertEqual([1, 2]);
 	}
 
 	[TestMethod]
@@ -34,67 +29,67 @@ public class AsyncHelperTests
 	}
 
 	[TestMethod]
-        public async Task CheckNull()
-        {
-                await AsyncHelper.CheckNull((Task)null);
-                await AsyncHelper.CheckNull((ValueTask?)null);
-        }
+	public async Task CheckNull()
+	{
+		await AsyncHelper.CheckNull((Task)null);
+		await AsyncHelper.CheckNull((ValueTask?)null);
+	}
 
-       [TestMethod]
-       public void CreateChildTokenCancel()
-       {
-               using var cts = new CancellationTokenSource();
-               var (childCts, token) = cts.Token.CreateChildToken();
-               cts.Cancel();
-               token.IsCancellationRequested.AssertTrue();
-               childCts.Dispose();
-       }
+	[TestMethod]
+	public void CreateChildTokenCancel()
+	{
+		using var cts = new CancellationTokenSource();
+		var (childCts, token) = cts.Token.CreateChildToken();
+		cts.Cancel();
+		token.IsCancellationRequested.AssertTrue();
+		childCts.Dispose();
+	}
 
-       [TestMethod]
-       public async Task AsValueTaskConversions()
-       {
-               var vt = new ValueTask<int>(4);
-               (await vt.AsValueTask()).AssertEqual(4);
+	[TestMethod]
+	public async Task AsValueTaskConversions()
+	{
+		var vt = new ValueTask<int>(4);
+		await vt.AsValueTask();
 
-               var task = Task.FromResult(5);
-               (await task.AsValueTask()).AssertEqual(5);
-       }
+		var task = Task.FromResult(5);
+		(await task.AsValueTask()).AssertEqual(5);
+	}
 
-       [TestMethod]
-       public async Task WhenAllFailure()
-       {
-               var err = new InvalidOperationException();
-               var tasks = new[] { new ValueTask<int>(Task.FromException<int>(err)) };
-               await Assert.ThrowsExceptionAsync<AggregateException>(async () => await AsyncHelper.WhenAll(tasks));
-       }
+	[TestMethod]
+	public async Task WhenAllFailure()
+	{
+		var err = new InvalidOperationException();
+		var tasks = new[] { new ValueTask<int>(Task.FromException<int>(err)) };
+		await Assert.ThrowsExactlyAsync<AggregateException>(async () => await AsyncHelper.WhenAll(tasks));
+	}
 
-       [TestMethod]
-       public void GetResultAndTcs()
-       {
-               var task = Task.FromResult(6);
-               task.GetResult<int>().AssertEqual(6);
+	[TestMethod]
+	public void GetResultAndTcs()
+	{
+		var task = Task.FromResult(6);
+		task.GetResult<int>().AssertEqual(6);
 
-               var tcs = 7.ToCompleteSource();
-               tcs.Task.Result.AssertEqual(7);
-       }
+		var tcs = 7.ToCompleteSource();
+		tcs.Task.Result.AssertEqual(7);
+	}
 
-       [TestMethod]
-       public async Task TimeoutTokenAndWhenCanceled()
-       {
-               var token = TimeSpan.FromMilliseconds(10).CreateTimeoutToken();
-               await Assert.ThrowsExceptionAsync<TaskCanceledException>(async () => await token.WhenCanceled());
-       }
+	[TestMethod]
+	public async Task TimeoutTokenAndWhenCanceled()
+	{
+		var token = TimeSpan.FromMilliseconds(10).CreateTimeoutToken();
+		await Assert.ThrowsExactlyAsync<TaskCanceledException>(async () => await token.WhenCanceled());
+	}
 
-       [TestMethod]
-       public async Task CatchHandleError()
-       {
-               bool error = false, final = false;
-               await AsyncHelper.CatchHandle(
-                       () => Task.FromException(new InvalidOperationException()),
-                       CancellationToken.None,
-                       e => error = true,
-                       finalizer: () => final = true);
-               error.AssertTrue();
-               final.AssertTrue();
-       }
+	[TestMethod]
+	public async Task CatchHandleError()
+	{
+		bool error = false, final = false;
+		await AsyncHelper.CatchHandle(
+			() => Task.FromException(new InvalidOperationException()),
+			CancellationToken.None,
+			e => error = true,
+			finalizer: () => final = true);
+		error.AssertTrue();
+		final.AssertTrue();
+	}
 }

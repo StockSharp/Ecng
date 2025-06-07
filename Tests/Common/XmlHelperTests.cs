@@ -1,10 +1,7 @@
-using System;
+namespace Ecng.Tests.Common;
+
 using System.Xml;
 using System.Xml.Linq;
-using Ecng.Common;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-namespace Ecng.Tests.Common;
 
 [TestClass]
 public class XmlHelperTests
@@ -15,8 +12,8 @@ public class XmlHelperTests
 		var doc = new XElement("root", new XAttribute("attr", 5), new XElement("child", "10"));
 		doc.GetElementValue<int>("child").AssertEqual(10);
 		doc.GetAttributeValue<int>("attr").AssertEqual(5);
-		doc.GetElementValue<int>("missing", 7).AssertEqual(7);
-		doc.GetAttributeValue<int>("miss", 3).AssertEqual(3);
+		doc.GetElementValue("missing", 7).AssertEqual(7);
+		doc.GetAttributeValue("miss", 3).AssertEqual(3);
 	}
 
 	[TestMethod]
@@ -36,16 +33,16 @@ public class XmlHelperTests
 	}
 
 	[TestMethod]
-        public void XmlString()
-        {
-                "abc".IsXmlString().AssertTrue();
-                "\u0001".IsXmlString().AssertFalse();
-        }
+	public void XmlString()
+	{
+		"abc".IsXmlString().AssertTrue();
+		"\u0001".IsXmlString().AssertFalse();
+	}
 
-       [TestMethod]
-       public void XmlChar()
-       {
-               XmlHelper.IsXmlChar('a').AssertTrue();
-               XmlHelper.IsXmlChar('\u0001').AssertFalse();
-       }
+	[TestMethod]
+	public void XmlChar()
+	{
+		XmlHelper.IsXmlChar('a').AssertTrue();
+		XmlHelper.IsXmlChar('\u0001').AssertFalse();
+	}
 }

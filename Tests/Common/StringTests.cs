@@ -116,6 +116,7 @@ public class StringTests
 		str.Truncate(2).AssertEqual("12...");
 		str.Truncate(0).AssertEqual("...");
 	}
+
 	[TestMethod]
 	public void EmptyChecks()
 	{
@@ -134,45 +135,45 @@ public class StringTests
 	}
 
 	[TestMethod]
-        public void SplitByComma()
-        {
-                "a,b,c".SplitByComma().AssertEqual(new[] { "a", "b", "c" });
-        }
+	public void SplitByComma()
+	{
+		"a,b,c".SplitByComma().AssertEqual(["a", "b", "c"]);
+	}
 
-       [TestMethod]
-       public void WhiteSpaceAndRemove()
-       {
-               "a b\tc".ReplaceWhiteSpaces('_').AssertEqual("a_b_c");
-               "a b c".ReplaceWhiteSpaces().AssertEqual("a b c");
-               "a b".RemoveSpaces().AssertEqual("ab");
-               "hello world".Remove("WORLD", true).AssertEqual("hello ");
-       }
+	[TestMethod]
+	public void WhiteSpaceAndRemove()
+	{
+		"a b\tc".ReplaceWhiteSpaces('_').AssertEqual("a_b_c");
+		"a b c".ReplaceWhiteSpaces().AssertEqual("a b c");
+		"a b".RemoveSpaces().AssertEqual("ab");
+		"hello world".Remove("WORLD", true).AssertEqual("hello ");
+	}
 
-       [TestMethod]
-       public void NumberChecks()
-       {
-               "10".IsNumber(false).AssertTrue();
-               "10.5".IsNumber(true).AssertTrue();
-               "10a".IsNumber(false).AssertFalse();
-               "1.0".IsNumberOnly(true).AssertTrue();
-               "a".IsNumberOnly(false).AssertFalse();
-               '5'.IsDigit().AssertTrue();
-       }
+	[TestMethod]
+	public void NumberChecks()
+	{
+		"10".IsNumber(false).AssertTrue();
+		"10.5".IsNumber(true).AssertTrue();
+		"10a".IsNumber(false).AssertFalse();
+		"1.0".IsNumberOnly(true).AssertTrue();
+		"a".IsNumberOnly(false).AssertFalse();
+		'5'.IsDigit().AssertTrue();
+	}
 
-       [TestMethod]
-       public void ContainsAndIndex()
-       {
-               "Hello".ContainsIgnoreCase("he").AssertTrue();
-               "Hello".StartsWithIgnoreCase("he").AssertTrue();
-               "Hello".EndsWithIgnoreCase("LO").AssertTrue();
-               "hello".IndexOfIgnoreCase("L").AssertEqual(2);
-               "hello".LastIndexOfIgnoreCase("L").AssertEqual(3);
-       }
+	[TestMethod]
+	public void ContainsAndIndex()
+	{
+		"Hello".ContainsIgnoreCase("he").AssertTrue();
+		"Hello".StartsWithIgnoreCase("he").AssertTrue();
+		"Hello".EndsWithIgnoreCase("LO").AssertTrue();
+		"hello".IndexOfIgnoreCase("L").AssertEqual(2);
+		"hello".LastIndexOfIgnoreCase("L").AssertEqual(3);
+	}
 
-       [TestMethod]
-       public void ReverseReduce()
-       {
-               "abc".Reverse().AssertEqual("cba");
-               "abcdef".Reduce(5, "...").AssertEqual("ab...");
-       }
+	[TestMethod]
+	public void ReverseReduce()
+	{
+		"abc".Reverse().AssertEqual("cba");
+		"abcdef".Reduce(5, "...").AssertEqual("ab...");
+	}
 }
