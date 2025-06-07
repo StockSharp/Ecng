@@ -19,7 +19,7 @@ public class HexEncodingTests
 	{
 		var chars = "A1Z!".ToCharArray();
 		var bytes = HexEncoding.GetBytes(chars, 0, chars.Length, out var discarded);
-		discarded.AssertEqual(1);
+		discarded.AssertEqual(2);
 		bytes.Length.AssertEqual(1);
 		bytes[0].AssertEqual((byte)0xA1);
 	}

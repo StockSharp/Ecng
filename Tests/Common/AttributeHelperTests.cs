@@ -7,11 +7,16 @@ using System.ComponentModel;
 [TestClass]
 public class AttributeHelperTests
 {
+	[AttributeUsage(AttributeTargets.Class, Inherited = true)]
+	private class CustomAttribute : Attribute
+	{
+	}
+
 	[Obsolete]
 	[Browsable(false)]
 	private class AttrClass { }
 
-	[Obsolete]
+	[Custom]
 	private class BaseClass { }
 
 	private class DerivedClass : BaseClass { }
@@ -41,13 +46,16 @@ public class AttributeHelperTests
 		type.GetAttributes().Count().AssertEqual(2);
 		type.IsObsolete().AssertTrue();
 		type.IsBrowsable().AssertFalse();
+
+		typeof(DerivedClass).IsObsolete().AssertFalse();
+		typeof(DerivedClass).IsBrowsable().AssertTrue();
 	}
 
 	[TestMethod]
 	public void InheritSearch()
 	{
-		typeof(DerivedClass).GetAttribute<ObsoleteAttribute>().AssertNull();
-		typeof(DerivedClass).GetAttribute<ObsoleteAttribute>(true).AssertNotNull();
+		typeof(DerivedClass).GetAttribute<CustomAttribute>(false).AssertNull();
+		typeof(DerivedClass).GetAttribute<CustomAttribute>(true).AssertNotNull();
 	}
 
 	[TestMethod]
