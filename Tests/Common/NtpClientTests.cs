@@ -99,4 +99,14 @@ public class NtpClientTests
 		var client = new NtpClient(new IPEndPoint(IPAddress.Loopback, 1));
 		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await client.GetLocalTimeAsync(null));
 	}
+
+	[TestMethod]
+	public async Task RealNtpServer()
+	{
+		// This test checks real NTP server connectivity. It is integration, not unit test.
+		var client = new NtpClient(); // default: time-a.nist.gov:123
+		var ntpTime = await client.GetUtcTimeAsync();
+		// Should be within 10 minutes of system UTC time (allowing for clock drift and network delays)
+		(Math.Abs((ntpTime - DateTime.UtcNow).TotalMinutes) < 1).AssertTrue();
+	}
 }

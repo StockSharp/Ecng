@@ -31,5 +31,6 @@
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
     <ProjectReference Include="..\MathLight\MathLight.csproj" />
+    <ProjectReference Include="..\Linq\Linq.csproj" />
   </ItemGroup>
 </Project>
