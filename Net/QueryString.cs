@@ -201,6 +201,7 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 		else
 		{
 			_compiledString = "?" + _queryString
+				.OrderBy(p => p.Key, StringComparer.InvariantCultureIgnoreCase)
 				.Select(p => (Encode(p.Key), Encode(p.Value)))
 				.ToQueryString();
 		}
