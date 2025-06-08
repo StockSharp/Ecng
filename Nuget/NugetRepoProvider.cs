@@ -127,6 +127,8 @@ public class NugetRepoProvider : CachingSourceProvider
 	private readonly List<(SourceRepository repo, Uri baseUrl)> _repoUrls = [];
 
 	private readonly SecureString _authToken;
+	private readonly HttpClient _publicHttp = new();
+	private readonly HttpClient _privateHttp;
 
 	private NugetRepoProvider(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy)
 		: base(new PackageSourceProvider(_settings, GetPackageSources(packagesFolder)))
@@ -141,6 +143,8 @@ public class NugetRepoProvider : CachingSourceProvider
 		_privateRepo = repos.First(r => r.PackageSource.Name.EqualsIgnoreCase(PrivateRepoKey));
 		_nugetRepo = repos.First(r => r.PackageSource.Name.EqualsIgnoreCase(NugetFeedRepoKey));
 		RetryPolicy = retryPolicy ?? throw new ArgumentNullException(nameof(retryPolicy));
+
+		_privateHttp = NugetExtensions.CreatePrivateHttp(_authToken.UnSecure());
 	}
 
 	private async Task InitBaseUrls(CancellationToken cancellationToken)
@@ -202,9 +206,6 @@ public class NugetRepoProvider : CachingSourceProvider
 		if (framework is null)			throw new ArgumentNullException(nameof(framework));
 		if (localFiles is null)			throw new ArgumentNullException(nameof(localFiles));
 
-		var publicHttp = new HttpClient();
-		var privateHttp = NugetExtensions.CreatePrivateHttp(_authToken.UnSecure());
-
 		var fwkComparer = NuGetFrameworkFullComparer.Instance;
 
 		var processedPackageIds = new Dictionary<string, NuGetVersion>(StringComparer.InvariantCultureIgnoreCase);
@@ -244,7 +245,7 @@ public class NugetRepoProvider : CachingSourceProvider
 				return [];
 			}
 
-			var http = repo == _privateRepo ? privateHttp : publicHttp;
+			var http = repo == _privateRepo ? _privateHttp : _publicHttp;
 			using var nuspec = await RetryPolicy.TryRepeat(t => http.GetNuspecAsync(baseUrl, packageId, foundVersion, t), RetryPolicy.ReadMaxCount, cancellationToken);
 			var reader = new NuspecReader(nuspec);
 			var groups = reader.GetDependencyGroups().ToDictionary(g => g.TargetFramework);
