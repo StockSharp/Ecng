@@ -10,10 +10,25 @@ using Ecng.Common;
 /// </summary>
 public class BitArrayReader
 {
+	private const int _tailLen = 2;
+	private const int _bufferSize = FileSizes.KB * 4;
+	private static readonly byte[] _zeroBytes = new byte[_bufferSize];
+	private readonly byte[] _buffer = new byte[_bufferSize];
 	private int _bitOffset;
 	private long _dataOffset;
 	private readonly ulong[] _data;
+	private long _dataShift;
 	private readonly Stream _underlyingStream;
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="BitArrayReader"/> class with the specified underlying stream.
+	/// </summary>
+	/// <param name="underlyingData">The stream to read bit-level data from.</param>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="underlyingData"/> is null.</exception>
+	public BitArrayReader(byte[] underlyingData)
+		: this(new MemoryStream(underlyingData))
+	{
+	}
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="BitArrayReader"/> class with the specified underlying stream.
@@ -23,12 +38,46 @@ public class BitArrayReader
 	public BitArrayReader(Stream underlyingStream)
 	{
 		_underlyingStream = underlyingStream ?? throw new ArgumentNullException(nameof(underlyingStream));
+		_data = new ulong[_buffer.Length / 8];
 
-		// TODO
-		var bytes = underlyingStream.To<byte[]>();
+		FillBuffer(true);
+	}
 
-		_data = new ulong[bytes.Length / 8 + 2];
-		Buffer.BlockCopy(bytes, 0, _data, 0, bytes.Length);
+	private void FillBuffer(bool firstTime)
+	{
+		// Each ulong is 8 bytes; we want to keep the last two ulongs as a "tail" at the buffer start.
+		const int tailSize = _tailLen * 8; // 2 * 8 bytes
+
+		var offset = 0;
+		var len = _buffer.Length;
+
+		if (!firstTime)
+		{
+			// Preserve the last two ulongs from the previous buffer.
+			// This allows reading bits that span across buffer boundaries without any data loss.
+			_data[0] = _data[_data.Length - 2];
+			_data[1] = _data[_data.Length - 1];
+
+			// After copying the tail, new data is loaded right after it.
+			offset = tailSize;
+			len -= tailSize;
+		}
+
+		// Read new bytes from the underlying stream into the temp buffer.
+		var read = _underlyingStream.Read(_buffer, 0, len);
+
+		// Copy new bytes into _data starting right after the preserved tail.
+		Buffer.BlockCopy(_buffer, 0, _data, offset, read);
+
+		// If fewer bytes were read than expected, zero out the rest of the buffer at the byte level.
+		if (read < len)
+		{
+			var start = offset + read;
+			var count = len - read;
+
+			// Fill the remaining region of _data with zero bytes to avoid garbage data.
+			Buffer.BlockCopy(_zeroBytes, 0, _data, start, count);
+		}
 	}
 
 	/// <summary>
@@ -57,7 +106,17 @@ public class BitArrayReader
 	/// <returns>The 64-bit value at the specified offset.</returns>
 	private ulong Get(long offset)
 	{
-		return _data[offset];
+		var idx = offset - _dataShift;
+
+		if (idx >= _data.Length)
+		{
+			FillBuffer(false);
+
+			_dataShift += (_data.Length - _tailLen);
+			idx = offset - _dataShift;
+		}
+
+		return _data[idx];
 	}
 
 	/// <summary>
@@ -310,11 +369,7 @@ public class BitArrayReader
 		var i2 = ReadInt();
 		var i3 = ReadInt();
 		var i4 = ReadInt() << 16;
-		var dec = new[] { i1, i2, i3, i4 }.To<decimal>();
 
-		if (!isPos)
-			dec = -dec;
-
-		return dec;
+		return new(i1, i2, i3, !isPos, (byte)((i4 >> 16) & 0x7F));
 	}
 }

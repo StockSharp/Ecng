@@ -125,6 +125,57 @@ public class BitArrayTest
 	}
 
 	[TestMethod]
+	public void RandomMixedTypes()
+	{
+		var actions = new List<Action<BitArrayWriter, object>>
+		{
+			(w, v) => w.Write((bool)v),
+			(w, v) => w.WriteInt((int)v),
+			(w, v) => w.WriteLong((long)v),
+			(w, v) => w.WriteDecimal((decimal)v)
+		};
+		var readers = new List<Func<BitArrayReader, object>>
+		{
+			r => r.Read(),
+			r => r.ReadInt(),
+			r => r.ReadLong(),
+			r => r.ReadDecimal()
+		};
+
+		var values = new List<(int typeIdx, object value)>();
+
+		for (var i = 0; i < 10000; i++)
+		{
+			var typeIdx = RandomGen.GetInt(0, 3);
+
+			object value = typeIdx switch
+			{
+				0 => RandomGen.GetBool(),
+				1 => RandomGen.GetInt(),
+				2 => (long)RandomGen.GetInt(),
+				3 => RandomGen.GetDecimal(),
+				_ => throw new InvalidOperationException()
+			};
+
+			values.Add((typeIdx, value));
+		}
+
+		var stream = new MemoryStream();
+
+		using (var writer = new BitArrayWriter(stream))
+		{
+			foreach (var (typeIdx, value) in values)
+				actions[typeIdx](writer, value);
+		}
+
+		stream.Position = 0;
+		var reader = new BitArrayReader(stream);
+
+		foreach (var (typeIdx, value) in values)
+			readers[typeIdx](reader).AssertEqual(value);
+	}
+
+	[TestMethod]
 	public void Large2()
 	{
 		var stream = new MemoryStream();
