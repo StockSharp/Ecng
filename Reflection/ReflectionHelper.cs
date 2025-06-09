@@ -911,7 +911,7 @@ public static class ReflectionHelper
 	/// <param name="method">Generic method definition.</param>
 	/// <param name="types">Generic argument types.</param>
 	/// <returns>The constructed generic method.</returns>
-public static MethodInfo Make(this MethodInfo method, params Type[] types)
+	public static MethodInfo Make(this MethodInfo method, params Type[] types)
 	{
 		if (method is null)
 			throw new ArgumentNullException(nameof(method));
@@ -938,7 +938,7 @@ public static MethodInfo Make(this MethodInfo method, params Type[] types)
 	/// <param name="dllName">Assembly file name.</param>
 	/// <returns>True if the file is an assembly; otherwise, false.</returns>
 	public static bool IsAssembly(this string dllName)
-		{
+	{
 		return dllName.VerifyAssembly() != null;
 	}
 
@@ -948,7 +948,7 @@ public static MethodInfo Make(this MethodInfo method, params Type[] types)
 	/// <param name="dllName">Assembly file name.</param>
 	/// <returns>The assembly name or <c>null</c> if the file is not a valid assembly.</returns>
 	public static AssemblyName VerifyAssembly(this string dllName)
-		{
+	{
 		try
 		{
 			return AssemblyName.GetAssemblyName(dllName);
