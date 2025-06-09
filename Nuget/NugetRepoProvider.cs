@@ -126,15 +126,12 @@ public class NugetRepoProvider : CachingSourceProvider
 	private readonly TimeSpan _cacheLen = TimeSpan.FromMinutes(10);
 	private readonly List<(SourceRepository repo, Uri baseUrl)> _repoUrls = [];
 
-	private readonly SecureString _authToken;
 	private readonly HttpClient _publicHttp = new();
 	private readonly HttpClient _privateHttp;
 
 	private NugetRepoProvider(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy)
 		: base(new PackageSourceProvider(_settings, GetPackageSources(packagesFolder)))
 	{
-		_authToken = authToken.ThrowIfEmpty(nameof(authToken));
-		
 		if (!packagesFolder.IsEmpty())
 			Directory.CreateDirectory(packagesFolder);
 
@@ -144,7 +141,7 @@ public class NugetRepoProvider : CachingSourceProvider
 		_nugetRepo = repos.First(r => r.PackageSource.Name.EqualsIgnoreCase(NugetFeedRepoKey));
 		RetryPolicy = retryPolicy ?? throw new ArgumentNullException(nameof(retryPolicy));
 
-		_privateHttp = NugetExtensions.CreatePrivateHttp(_authToken.UnSecure());
+		_privateHttp = NugetExtensions.CreatePrivateHttp(authToken.UnSecure());
 	}
 
 	private async Task InitBaseUrls(CancellationToken cancellationToken)
