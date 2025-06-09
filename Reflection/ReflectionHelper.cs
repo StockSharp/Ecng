@@ -871,10 +871,10 @@ public static class ReflectionHelper
 	private static readonly SynchronizedDictionary<MethodInfo, MemberInfo> _getAccessorOwnerCache = [];
 
 	/// <summary>
-	/// Gets the owner of the accessor method.
+	/// Gets the member that owns the specified accessor method.
 	/// </summary>
-	/// <param name="method"></param>
-	/// <returns></returns>
+	/// <param name="method">Accessor method.</param>
+	/// <returns>The owner member or <c>null</c> if not found.</returns>
 	public static MemberInfo GetAccessorOwner(this MethodInfo method)
 	{
 		if (method is null)
@@ -906,12 +906,12 @@ public static class ReflectionHelper
 	#endregion
 
 	/// <summary>
-	/// Makes the generic method.
+	/// Constructs a generic method with the provided type arguments.
 	/// </summary>
-	/// <param name="method"></param>
-	/// <param name="types"></param>
-	/// <returns></returns>
-	public static MethodInfo Make(this MethodInfo method, params Type[] types)
+	/// <param name="method">Generic method definition.</param>
+	/// <param name="types">Generic argument types.</param>
+	/// <returns>The constructed generic method.</returns>
+public static MethodInfo Make(this MethodInfo method, params Type[] types)
 	{
 		if (method is null)
 			throw new ArgumentNullException(nameof(method));
@@ -920,10 +920,10 @@ public static class ReflectionHelper
 	}
 
 	/// <summary>
-	/// Makes the generic method.
+	/// Determines whether the specified type is a runtime type.
 	/// </summary>
-	/// <param name="type"></param>
-	/// <returns></returns>
+	/// <param name="type">The type to check.</param>
+	/// <returns>True if the type inherits from <see cref="Type"/>; otherwise, false.</returns>
 	public static bool IsRuntimeType(this Type type)
 	{
 		if (type is null)
@@ -933,22 +933,22 @@ public static class ReflectionHelper
 	}
 
 	/// <summary>
-	/// Determines whether the specified type is an assembly.
+	/// Determines whether the specified file contains a valid assembly.
 	/// </summary>
-	/// <param name="dllName"></param>
-	/// <returns></returns>
+	/// <param name="dllName">Assembly file name.</param>
+	/// <returns>True if the file is an assembly; otherwise, false.</returns>
 	public static bool IsAssembly(this string dllName)
-	{
+		{
 		return dllName.VerifyAssembly() != null;
 	}
 
 	/// <summary>
-	/// Verifies the assembly.
+	/// Tries to read the assembly name from the specified file.
 	/// </summary>
-	/// <param name="dllName"></param>
-	/// <returns></returns>
+	/// <param name="dllName">Assembly file name.</param>
+	/// <returns>The assembly name or <c>null</c> if the file is not a valid assembly.</returns>
 	public static AssemblyName VerifyAssembly(this string dllName)
-	{
+		{
 		try
 		{
 			return AssemblyName.GetAssemblyName(dllName);
