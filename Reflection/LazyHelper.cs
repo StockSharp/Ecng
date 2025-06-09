@@ -59,6 +59,15 @@ public static class LazyHelper
 			return lazy;
 		}
 
+		public static void Untrack(Lazy<T> lazy)
+		{
+			if (lazy is null)
+				throw new ArgumentNullException(nameof(lazy));
+
+			_factories.Remove(lazy);
+			_states.Remove(lazy);
+		}
+
 		public static void Reset(Lazy<T> lazy)
 		{
 			if (lazy is null)
@@ -116,4 +125,12 @@ public static class LazyHelper
 	/// <param name="value">Value.</param>
 	public static void SetValue<T>(this Lazy<T> lazy, T value)
 		=> Holder<T>.SetValue(lazy, value);
+
+	/// <summary>
+	/// Stops tracking the lazy.
+	/// </summary>
+	/// <typeparam name="T">The type of the lazy.</typeparam>
+	/// <param name="lazy">The lazy.</param>
+	public static void Untrack<T>(this Lazy<T> lazy)
+		=> Holder<T>.Untrack(lazy);
 }
