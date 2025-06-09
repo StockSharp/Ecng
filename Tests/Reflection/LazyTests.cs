@@ -1,4 +1,4 @@
-﻿namespace Ecng.Tests.ComponentModel;
+﻿namespace Ecng.Tests.Reflection;
 
 using Ecng.Reflection;
 

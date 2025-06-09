@@ -941,6 +941,9 @@ public static class ReflectionHelper
 	/// <returns></returns>
 	public static bool IsRuntimeType(this Type type)
 	{
+		if (type is null)
+			throw new ArgumentNullException(nameof(type));
+
 		return type.BaseType == typeof(Type);
 	}
 
