@@ -565,13 +565,6 @@ public static class Converter
 				else
 					return Enum.ToObject(destinationType, value);
 			}
-			else if (destinationType == typeof(Type[]))
-			{
-				if (value is not IEnumerable<object>)
-					value = new[] { value };
-
-				return ((IEnumerable<object>)value).Select(arg => arg?.GetType() ?? typeof(void)).ToArray();
-			}
 			else if (value is Stream st1 && destinationType == typeof(string))
 			{
 				return st1.To<byte[]>().To<string>();

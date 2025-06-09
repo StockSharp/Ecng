@@ -217,21 +217,6 @@ public static class ReflectionHelper
 
 	#endregion
 
-	#region GetArgTypes
-
-	/// <summary>
-	/// Gets the argument types from the specified argument.
-	/// </summary>
-	/// <typeparam name="TArg">The type of the argument.</typeparam>
-	/// <param name="arg">The argument.</param>
-	/// <returns>An array of argument types.</returns>
-	public static Type[] GetArgTypes<TArg>(TArg arg)
-	{
-		return arg.IsNull() ? Type.EmptyTypes : arg.To<Type[]>();
-	}
-
-	#endregion
-
 	#region GetMember
 
 	/// <summary>
@@ -944,7 +929,7 @@ public static class ReflectionHelper
 		if (type is null)
 			throw new ArgumentNullException(nameof(type));
 
-		return type.BaseType == typeof(Type);
+		return type.BaseType == typeof(TypeInfo);
 	}
 
 	/// <summary>
