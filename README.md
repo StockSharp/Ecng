@@ -24,3 +24,13 @@ All projects within the ECNG System Framework are available as separate NuGet pa
 ## Contribution
 
 Contributions are welcome! If you have improvements or bug fixes, please feel free to fork the repository, make your changes, and submit a pull request.
+
+## Git Hooks
+
+The repository contains a pre-commit hook that runs the unit tests. To enable it, configure Git to use the hooks in the `.githooks` directory:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+After running the command above once, Git will execute the unit tests before each commit is created.
