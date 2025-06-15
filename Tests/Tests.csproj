@@ -15,9 +15,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MsTestSdkVer)" />
     <PackageReference Include="MSTest.TestAdapter" Version="$(MsTestVer)" />
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />
-
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="$(MsExtensionsVer)" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="$(MicrosoftDataSqlClientVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Compilation.FSharp\Compilation.FSharp.csproj" />
