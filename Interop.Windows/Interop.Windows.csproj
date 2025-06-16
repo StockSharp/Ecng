@@ -2,7 +2,7 @@
   <Import Project="..\common.props" />
   <PropertyGroup>
     <RootNamespace>Ecng.Interop</RootNamespace>
-    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
   <ItemGroup>
