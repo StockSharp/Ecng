@@ -18,10 +18,11 @@ public class FastTimeSpanParser
 		Second,
 		Mls,
 		Mcs,
+		Tick,
 		Nano,
 	}
 
-	private readonly Tuple<Parts, string>[] _parts;
+	private readonly (Parts part, string format)[] _parts;
 
 	private readonly int _dayStart;
 	private readonly int _hourStart;
@@ -29,6 +30,7 @@ public class FastTimeSpanParser
 	private readonly int _secondStart;
 	private readonly int _milliStart;
 	private readonly int _microStart;
+	private readonly int _tickStart;
 	private readonly int _nanoStart;
 
 	/// <summary>
@@ -86,6 +88,7 @@ public class FastTimeSpanParser
 			parts.Add(_secondStart, Parts.Second);
 
 		_microStart = -1;
+		_tickStart = -1;
 		_nanoStart = -1;
 
 		if (_milliStart != -1)
@@ -94,22 +97,33 @@ public class FastTimeSpanParser
 
 			var microStart = _milliStart + 3;
 
-			if (template.Length > (microStart + 1) && (template[microStart] == 'f' || template[microStart] == 'F'))
+			bool isValid(int idx)
+				=> template[idx] == 'f' || template[idx] == 'F';
+
+			if (template.Length > (microStart + 2) && isValid(microStart))
 			{
 				_microStart = microStart;
 				parts.Add(_microStart, Parts.Mcs);
 
-				var nanoStart = _microStart + 3;
+				var ticksStart = _microStart + 3;
 
-				if (template.Length > (nanoStart + 1) && (template[nanoStart] == 'f' || template[nanoStart] == 'F'))
+				if (template.Length > ticksStart && isValid(ticksStart))
 				{
-					_nanoStart = nanoStart;
-					parts.Add(_nanoStart, Parts.Nano);
+					_tickStart = ticksStart;
+					parts.Add(_tickStart, Parts.Tick);
+
+					var nanoStart = _tickStart + 1;
+
+					if (template.Length > (nanoStart + 1) && isValid(nanoStart))
+					{
+						_nanoStart = nanoStart;
+						parts.Add(_nanoStart, Parts.Nano);
+					}
 				}
 			}
 		}
 
-		var parts2 = new List<Tuple<Parts, string>>();
+		var parts2 = new List<(Parts, string)>();
 
 		var prevIndex = 0;
 
@@ -118,28 +132,23 @@ public class FastTimeSpanParser
 			if (prevIndex != part.Key)
 			{
 				var len = part.Key - prevIndex;
-				parts2.Add(Tuple.Create(Parts.String, template.Substring(prevIndex, len)));
+				parts2.Add((Parts.String, template.Substring(prevIndex, len)));
 				prevIndex += len;
 			}
 
-			parts2.Add(Tuple.Create(part.Value, (string)null));
+			parts2.Add((part.Value, (string)null));
 
 			prevIndex += part.Value switch
 			{
 				Parts.Mls => 3,
 				Parts.Mcs => 3,
-				Parts.Nano => 3,
+				Parts.Tick => 1,
+				Parts.Nano => 2,
 				_ => 2,
 			};
 		}
 
 		_parts = [.. parts2];
-
-		//TimeHelper.InitBounds(template, 'd', out _dayStart, out _dayLen);
-		//TimeHelper.InitBounds(template, 'h', out _hourStart, out _hourLen);
-		//TimeHelper.InitBounds(template, 'm', out _minuteStart, out _minuteLen);
-		//TimeHelper.InitBounds(template, 's', out _secondStart, out _secondLen);
-		//TimeHelper.InitBounds(template, 'f', out _milliStart, out _milliLen);
 	}
 
 	/// <summary>
@@ -160,19 +169,14 @@ public class FastTimeSpanParser
 
 			var millis = _milliStart == -1 ? 0 : (input[_milliStart] - '0') * 100 + (input[_milliStart + 1] - '0') * 10 + (input[_milliStart + 2] - '0');
 			var micro = _microStart == -1 ? 0 : (input[_microStart] - '0') * 100 + (input[_microStart + 1] - '0') * 10 + (input[_microStart + 2] - '0');
-			var nano = _nanoStart == -1 ? 0 : (input[_nanoStart] - '0') * 100 + (input[_nanoStart + 1] - '0') * 10 + (input[_nanoStart + 2] - '0');
+			var tick = _tickStart == -1 ? 0 : (input[_tickStart] - '0');
+			var nano = _nanoStart == -1 ? 0 : (input[_nanoStart] - '0') * 10 + (input[_nanoStart + 1] - '0');
 
 			var ts = new TimeSpan(days, hours, minutes, seconds, millis);
 
-			if (micro > 0)
-			{
-				ts = ts.AddMicroseconds(micro);
+			var value = micro * 1000L + tick * 100L + nano;
 
-				if (nano > 0)
-					ts = ts.AddNanoseconds(nano);
-			}
-
-			return ts;
+			return ts.AddNanoseconds(value);
 		}
 		catch (Exception ex)
 		{
@@ -191,10 +195,10 @@ public class FastTimeSpanParser
 
 		foreach (var part in _parts)
 		{
-			switch (part.Item1)
+			switch (part.part)
 			{
 				case Parts.String:
-					builder.Append(part.Item2);
+					builder.Append(part.format);
 					break;
 				case Parts.Day:
 					Append(builder, value.Days);
@@ -214,11 +218,14 @@ public class FastTimeSpanParser
 				case Parts.Mcs:
 					Append(builder, value.GetMicroseconds(), 3);
 					break;
+				case Parts.Tick:
+					Append(builder, value.GetNanoseconds() / 100, 1);
+					break;
 				case Parts.Nano:
-					Append(builder, value.GetNanoseconds(), 3);
+					Append(builder, value.GetNanoseconds() % 100, 2);
 					break;
 				default:
-					throw new ArgumentOutOfRangeException();
+					throw new InvalidOperationException(part.part.ToString());
 			}
 		}
 
@@ -227,7 +234,11 @@ public class FastTimeSpanParser
 
 	private static void Append(StringBuilder builder, int value, int size = 2)
 	{
-		if (size == 2)
+		if (size == 1)
+		{
+			builder.Append((char)('0' + value));
+		}
+		else if (size == 2)
 		{
 			builder.Append((char)(value / 10 + '0'));
 			builder.Append((char)(value % 10 + '0'));
