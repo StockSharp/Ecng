@@ -1,8 +1,6 @@
 ﻿namespace Ecng.Tests.Compilation;
 
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Threading;
+using System.Threading
 
 using Ecng.Compilation;
 using Ecng.Compilation.FSharp;
@@ -53,34 +51,34 @@ public class CompilerTests
 		res.HasErrors().AssertTrue();
 	}
 
-	[TestMethod]
-	public async Task BannedSymbols()
-	{
-		var testCode = @"using System.Diagnostics;
+//	[TestMethod]
+//	public async Task BannedSymbols()
+//	{
+//		var testCode = @"using System.Diagnostics;
 
-class Class1
-{
-	public void Method()
-	{
-		Process.GetCurrentProcess().Kill();
-	}
-}";
+//class Class1
+//{
+//	public void Method()
+//	{
+//		Process.GetCurrentProcess().Kill();
+//	}
+//}";
 
-		var refs = new HashSet<string>(
-		[
-			_coreLibPath,
-			typeof(Process).Assembly.Location,
-			typeof(Component).Assembly.Location,
-			"System.Runtime.dll".ToFullRuntimePath(),
-		], StringComparer.InvariantCultureIgnoreCase);
+//		var refs = new HashSet<string>(
+//		[
+//			_coreLibPath,
+//			typeof(Process).Assembly.Location,
+//			typeof(Component).Assembly.Location,
+//			"System.Runtime.dll".ToFullRuntimePath(),
+//		], StringComparer.InvariantCultureIgnoreCase);
 
-		ICompiler compiler = new CSharpCompiler();
-		var (analyzer, settings) = @"T:System.Diagnostics.Process;Don't use Process".ToBannedSymbolsAnalyzer();
-		var res = await compiler.Analyse(analyzer, [settings], "test", [testCode], refs.Select(r => r.ToRef()));
+//		ICompiler compiler = new CSharpCompiler();
+//		var (analyzer, settings) = @"T:System.Diagnostics.Process;Don't use Process".ToBannedSymbolsAnalyzer();
+//		var res = await compiler.Analyse(analyzer, [settings], "test", [testCode], refs.Select(r => r.ToRef()));
 
-		res.Length.AssertEqual(1);
-		res[0].Message.AssertEqual("The symbol 'Process' is banned in this project: Don't use Process");
-	}
+//		res.Length.AssertEqual(1);
+//		res[0].Message.AssertEqual("The symbol 'Process' is banned in this project: Don't use Process");
+//	}
 
 	[TestMethod]
 	public async Task CSharpCompileWithWarnings()

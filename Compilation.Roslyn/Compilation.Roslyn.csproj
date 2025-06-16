@@ -7,7 +7,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(MicrosoftCodeAnalysisVer)" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(MicrosoftCodeAnalysisVer)" />
-    <PackageReference Include="Ecng.Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="$(EcngVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Compilation\Compilation.csproj" />
