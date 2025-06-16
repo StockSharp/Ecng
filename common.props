@@ -1,9 +1,4 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <RepoGitHubPath>..\StockSharp (GitHub)\</RepoGitHubPath>
-  </PropertyGroup>
-
-  <Import Project="$(RepoGitHubPath)common_versions.props" />
   <Import Project="common_versions.props" />
 
   <PropertyGroup>

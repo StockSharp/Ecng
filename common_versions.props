@@ -1,23 +1,28 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
+    <LangVersion>12.0</LangVersion>
+
     <MicrosoftAspNetWebApiClientVer>6.*</MicrosoftAspNetWebApiClientVer>
 
-    <!-- https://github.com/dotnet/runtime/issues/61778 this issue prevents MatLab from loading this library -->
-    <!-- reverted cause other issue happened - https://github.com/dotnet/docfx/issues/9796 -->
-    <!--<EcngSystemComponentModelAnnotationsVer>5.0.0</EcngSystemComponentModelAnnotationsVer>-->
-
+    <MsExtensionsVer>8.*</MsExtensionsVer>
+    <CSharpVer>4.7.0</CSharpVer>
+    <MsTestVer>3.*</MsTestVer>
+    <MsTestSdkVer>17.*</MsTestSdkVer>
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
-    <FluentAssertionsVer>6.*</FluentAssertionsVer>
-    <TaskExtensionsVer>4.5.4</TaskExtensionsVer>
     <NewtonJsonVer>13.0.1</NewtonJsonVer>
     <RestSharpVer>112.0.0</RestSharpVer>
     <NDdeVer>4.0.0</NDdeVer>
     <linq2dbVer>5.2.2</linq2dbVer>
     <NitoVer>5.1.2</NitoVer>
     <CsWin32Ver>0.3.106</CsWin32Ver>
-    <YDCVer>1.3.27</YDCVer>
     <WmiLightVer>6.5.2</WmiLightVer>
     <FSharpVer>43.*</FSharpVer>
     <AzureStorageBlobsVer>12.*</AzureStorageBlobsVer>
+    <AWSSDKVer>4.*</AWSSDKVer>
+    <IronPythonVer>3.4.2</IronPythonVer>
+    <NuGetApiVer>6.14.0</NuGetApiVer>
+
+    <MicrosoftCodeAnalysisVer>4.12.0</MicrosoftCodeAnalysisVer>
+    <MicrosoftCodeAnalysisAnalyzersVer>3.3.4</MicrosoftCodeAnalysisAnalyzersVer>
   </PropertyGroup>
 </Project>
