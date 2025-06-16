@@ -17,7 +17,7 @@ using Ecng.Common;
 /// </summary>
 public static class WindowsGrandAccess
 {
-	private class Token(GenericSecurity wsSecurity, WindowsGrandAccess.GenericSecurity dsSecurity, int? oldWindowStationMaskm, int? oldDesktopMask) : Disposable
+	private class Token(GenericSecurity wsSecurity, GenericSecurity dsSecurity, int? oldWindowStationMaskm, int? oldDesktopMask) : Disposable
 	{
 		private readonly GenericSecurity _wsSecurity = wsSecurity ?? throw new ArgumentNullException(nameof(wsSecurity));
 		private readonly GenericSecurity _dsSecurity = dsSecurity ?? throw new ArgumentNullException(nameof(dsSecurity));
