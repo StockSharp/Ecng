@@ -20,11 +20,11 @@ public class CodeGenTests
 			.AddLine("public int Prop1 { get; set; }")
 			.AddLine("}");
 
-		sb.ToString().AssertEqual(@"class Class1
+		sb.ToString().Replace(StringHelper.RN, StringHelper.N).AssertEqual(@"class Class1
 {
 	public int Prop1 { get; set; }
 }
-");
+".Replace(StringHelper.RN, StringHelper.N));
 	}
 
 	[TestMethod]
