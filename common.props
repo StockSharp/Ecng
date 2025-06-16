@@ -15,7 +15,6 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="
-        '$(MSBuildProjectName)' == 'Tests' or
         '$(MSBuildProjectName)' == 'Interop.Windows'
       ">
     <TargetFrameworks>net6.0-windows</TargetFrameworks>

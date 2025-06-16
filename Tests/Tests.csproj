@@ -4,8 +4,7 @@
     <IsPackable>false</IsPackable>
     <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <TargetFrameworks>net8.0-windows</TargetFrameworks>
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <TargetFrameworks>net8.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +21,7 @@
     <ProjectReference Include="..\Compilation.Python\Compilation.Python.csproj" />
     <ProjectReference Include="..\Compilation.Roslyn\Compilation.Roslyn.csproj" />
     <ProjectReference Include="..\Data.Linq2db\Data.Linq2db.csproj" />
-    <ProjectReference Include="..\Interop.Windows\Interop.Windows.csproj" />
+    <ProjectReference Include="..\Interop\Interop.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />
     <ProjectReference Include="..\Logging\Logging.csproj" />
     <ProjectReference Include="..\Net.Clients\Net.Clients.csproj" />
