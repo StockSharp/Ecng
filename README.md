@@ -2,6 +2,7 @@
 
 [![Build Status](https://github.com/stocksharp/ecng/actions/workflows/dotnet.yml/badge.svg)](https://github.com/stocksharp/ecng/actions/workflows/dotnet.yml)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/stocksharp/ecng/blob/master/LICENSE)
+[![Telegram Chat](https://img.shields.io/badge/Telegram-Chat-blue?logo=telegram)](https://t.me/stocksharpchat)
 
 The ECNG System Framework is a comprehensive collection of system classes designed for the development of connectors under the StockSharp platform. It provides a robust foundation for extending the functionality and performance of applications integrated with StockSharp, offering a wide range of utilities and enhancements for .NET standard types and beyond.
 
