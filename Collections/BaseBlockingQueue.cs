@@ -109,11 +109,20 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	/// <param name="item">The item to add to the queue.</param>
 	/// <param name="force">If true, adds the item regardless of the maximum size; otherwise, waits if the queue is full.</param>
 	public void Enqueue(T item, bool force = false)
+		=> TryEnqueue(item, force);
+
+	/// <summary>
+	/// Attempts to add an item to the queue, optionally forcing the enqueue operation.
+	/// </summary>
+	/// <param name="item">The item to add to the queue.</param>
+	/// <param name="force">If true, adds the item regardless of the maximum size; otherwise, waits if the queue is full.</param>
+	/// <returns><see langword="true"/> if the item was successfully added to the queue; otherwise, <see langword="false"/> if the queue is closed.</returns>
+	public bool TryEnqueue(T item, bool force = false)
 	{
 		lock (SyncRoot)
 		{
 			if (_isClosed)
-				return;
+				return false;
 
 			if (!force && _maxSize != -1)
 			{
@@ -128,6 +137,8 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 				// wake up any blocked dequeue
 				Monitor.PulseAll(SyncRoot);
 			}
+
+			return true;
 		}
 	}
 
