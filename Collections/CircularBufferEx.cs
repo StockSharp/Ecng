@@ -56,7 +56,7 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 	public TItem SumNoFirst => Count == 0 ? default : Operator.Subtract(Sum, this[0]);
 
 	/// <inheritdoc />
-	public override void PushBack(TItem result)
+	public override void PushBack(TItem item)
 	{
 		var op = Operator;
 		var maxComparer = MaxComparer;
@@ -77,25 +77,25 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 				recalcMin = true;
 		}
 
-		base.PushBack(result);
+		base.PushBack(item);
 
 		if (op is not null)
-			Sum = op.Add(Sum, result);
+			Sum = op.Add(Sum, item);
 
 		if (maxComparer is not null)
 		{
 			if (recalcMax)
 				Max.Value = this.Max(maxComparer);
-			else if (!Max.HasValue || maxComparer?.Compare(Max.Value, result) < 0)
-				Max.Value = result;
+			else if (!Max.HasValue || maxComparer?.Compare(Max.Value, item) < 0)
+				Max.Value = item;
 		}
 
 		if (minComparer is not null)
 		{
 			if (recalcMin)
 				Min.Value = this.Min(minComparer);
-			else if (!Min.HasValue || minComparer?.Compare(Min.Value, result) > 0)
-				Min.Value = result;
+			else if (!Min.HasValue || minComparer?.Compare(Min.Value, item) > 0)
+				Min.Value = item;
 		}
 	}
 
@@ -125,9 +125,45 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 	/// <inheritdoc />
 	public override void PushFront(TItem item)
 	{
+		var op = Operator;
+		var maxComparer = MaxComparer;
+		var minComparer = MinComparer;
+
+		var recalcMax = false;
+		var recalcMin = false;
+
+		if (Count == Capacity)
+		{
+			if (op is not null)
+				Sum = op.Subtract(Sum, this[0]);
+
+			if (maxComparer?.Compare(Max.Value, this[0]) == 0)
+				recalcMax = true;
+
+			if (minComparer?.Compare(Min.Value, this[0]) == 0)
+				recalcMin = true;
+		}
+
 		base.PushFront(item);
 
-		RecalculateStats();
+		if (op is not null)
+			Sum = op.Add(Sum, item);
+
+		if (maxComparer is not null)
+		{
+			if (recalcMax)
+				Max.Value = this.Max(maxComparer);
+			else if (!Max.HasValue || maxComparer?.Compare(Max.Value, item) < 0)
+				Max.Value = item;
+		}
+
+		if (minComparer is not null)
+		{
+			if (recalcMin)
+				Min.Value = this.Min(minComparer);
+			else if (!Min.HasValue || minComparer?.Compare(Min.Value, item) > 0)
+				Min.Value = item;
+		}
 	}
 
 	/// <inheritdoc />
