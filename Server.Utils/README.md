@@ -1,4 +1,21 @@
 # Ecng.Server.Utils
 
-Utilities for running and hosting background services or daemons. Includes
-helpers for service lifecycle management.
+Utilities for hosting background services.
+
+## Purpose
+
+Utilities for hosting background services.
+
+## Key Features
+
+- Service path helpers
+- Logging integration
+- Graceful shutdown
+- Timers for maintenance
+
+## Usage Example
+
+```csharp
+using var host = new DaemonHost();
+await host.StartAsync();
+```

@@ -1,4 +1,19 @@
 # Ecng.Serialization
 
-Services for JSON and binary serialization as well as helper interfaces.
-Provides fast converters and extension points for custom formats.
+JSON and binary serializers.
+
+## Purpose
+
+JSON and binary serializers.
+
+## Key Features
+
+- Custom converters
+- Serialize to streams
+- Compact binary format
+
+## Usage Example
+
+```csharp
+var json = serializer.Serialize(obj);
+```

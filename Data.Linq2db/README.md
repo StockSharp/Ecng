@@ -1,5 +1,20 @@
 # Ecng.Data.Linq2db
 
-Adds providers and helpers for the linq2db project, allowing Ecng components to
-work with databases via a lightweight ORM. Simplifies setup of data connections
-and queries.
+Helpers for linq2db.
+
+## Purpose
+
+Helpers for linq2db.
+
+## Key Features
+
+- Simplifies DB connections
+- Reuse mapping configurations
+- Async query helpers
+
+## Usage Example
+
+```csharp
+var db = new LinqToDbService(options);
+var list = await db.Query<MyEntity>().ToListAsync();
+```

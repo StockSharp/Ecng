@@ -1,5 +1,19 @@
 # Ecng.IO
 
-File system helpers, compression utilities, and other input/output
-functionality. Useful for working with files and directories and handling
-archives.
+File system helpers and compression.
+
+## Purpose
+
+File system helpers and compression.
+
+## Key Features
+
+- Async compression utilities
+- Path helpers
+- Temporary file utilities
+
+## Usage Example
+
+```csharp
+var file = Paths.GetTempPath("tmp.txt");
+```

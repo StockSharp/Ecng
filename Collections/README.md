@@ -1,5 +1,20 @@
 # Ecng.Collections
 
-Offers additional collection types and algorithms not found in the base .NET
-library. These structures improve performance and flexibility in specialized
-scenarios.
+Extra collection types and algorithms.
+
+## Purpose
+
+Extra collection types and algorithms.
+
+## Key Features
+
+- Thread-safe collections
+- Structures like circular buffers
+- LRU caches and pools
+
+## Usage Example
+
+```csharp
+var dict = new SynchronizedDictionary<int,string>();
+dict[1] = "A";
+```

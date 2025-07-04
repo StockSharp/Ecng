@@ -1,5 +1,20 @@
 # Ecng.Configuration
 
-Implements a flexible configuration system for reading and writing application
-settings. It supports various sources so your components can be easily
-configured.
+Configuration management utilities.
+
+## Purpose
+
+Configuration management utilities.
+
+## Key Features
+
+- Typed access to settings
+- Load from multiple formats
+- Bind directly to objects
+
+## Usage Example
+
+```csharp
+var cfg = new ConfigurationManager();
+cfg.Load("appsettings.json");
+```

@@ -1,5 +1,21 @@
 # Ecng.ComponentModel
 
-Includes components for property change notification and design-time helpers.
-These are useful for MVVM-style applications and other scenarios requiring
-binding support.
+Property change notifications and design helpers.
+
+## Purpose
+
+Property change notifications and design helpers.
+
+## Key Features
+
+- Simplifies INotifyPropertyChanged
+- Attribute helpers for design-time
+- Unified command base
+
+## Usage Example
+
+```csharp
+class ViewModel : BaseNotifier {
+    public string Text { get; set; }
+}
+```

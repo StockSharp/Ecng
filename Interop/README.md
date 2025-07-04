@@ -1,4 +1,19 @@
 # Ecng.Interop
 
-Cross-platform interop helpers for unmanaged memory and invoking native code.
-Makes calling into C libraries or system APIs much easier.
+Helpers for calling native code.
+
+## Purpose
+
+Helpers for calling native code.
+
+## Key Features
+
+- Load libraries dynamically
+- Marshal structures easily
+- Work with unmanaged memory
+
+## Usage Example
+
+```csharp
+using var buf = new UnmanagedArray<int>(10);
+```
