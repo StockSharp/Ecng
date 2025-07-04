@@ -27,6 +27,12 @@ public class CircularBufferExTests
 		buf.Sum.AssertEqual(0m);
 		buf.Max.HasValue.AssertFalse();
 		buf.Min.HasValue.AssertFalse();
+
+		buf.PushFront(4m);
+		buf.PushFront(2m);
+		buf.Sum.AssertEqual(6m);
+		buf.Max.Value.AssertEqual(4m);
+		buf.Min.Value.AssertEqual(2m);
 	}
 
 	[TestMethod]
@@ -34,7 +40,7 @@ public class CircularBufferExTests
 	{
 		var buf = new CircularBufferEx<int>(2)
 		{
-			Operator = new Ecng.Common.IntOperator(),
+			Operator = new IntOperator(),
 			MaxComparer = Comparer<int>.Default,
 			MinComparer = Comparer<int>.Default
 		};
