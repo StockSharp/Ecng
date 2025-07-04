@@ -416,12 +416,98 @@ public class CircularBuffer<T> : IEnumerable<T>, IList<T>
 
 	#endregion
 
-	int IList<T>.IndexOf(T item) => throw new NotSupportedException();
-	void IList<T>.Insert(int index, T item) => throw new NotSupportedException();
-	void IList<T>.RemoveAt(int index) => throw new NotSupportedException();
+	int IList<T>.IndexOf(T item)
+	{
+		var comparer = EqualityComparer<T>.Default;
+
+		for (int i = 0; i < _count; i++)
+		{
+			if (comparer.Equals(this[i], item))
+				return i;
+		}
+
+		return -1;
+	}
+
+	void IList<T>.Insert(int index, T item)
+	{
+		if (index < 0 || index > _count)
+			throw new ArgumentOutOfRangeException(nameof(index));
+
+		if (IsFull)
+			throw new InvalidOperationException("Buffer is full.");
+
+		if (index == 0)
+		{
+			PushFront(item);
+			return;
+		}
+
+		if (index == _count)
+		{
+			PushBack(item);
+			return;
+		}
+
+		// Shift elements to make space
+		PushBack(this[_count - 1]);
+
+		for (int i = _count - 2; i > index - 1; i--)
+		{
+			this[i] = this[i - 1];
+		}
+		this[index] = item;
+	}
+
+	void IList<T>.RemoveAt(int index)
+	{
+		if (index < 0 || index >= _count)
+			throw new ArgumentOutOfRangeException(nameof(index));
+		if (index == 0)
+		{
+			PopFront();
+			return;
+		}
+		if (index == _count - 1)
+		{
+			PopBack();
+			return;
+		}
+		for (int i = index; i < _count - 1; i++)
+		{
+			this[i] = this[i + 1];
+		}
+		PopBack();
+	}
+
+	bool ICollection<T>.Contains(T item)
+	{
+		return ((IList<T>)this).IndexOf(item) != -1;
+	}
+
+	void ICollection<T>.CopyTo(T[] array, int arrayIndex)
+	{
+		if (array == null)
+			throw new ArgumentNullException(nameof(array));
+
+		if (arrayIndex < 0 || arrayIndex + _count > array.Length)
+			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+
+		for (int i = 0; i < _count; i++)
+			array[arrayIndex + i] = this[i];
+	}
+
+	bool ICollection<T>.Remove(T item)
+	{
+		int idx = ((IList<T>)this).IndexOf(item);
+
+		if (idx == -1)
+			return false;
+
+		((IList<T>)this).RemoveAt(idx);
+		return true;
+	}
+
 	bool ICollection<T>.IsReadOnly => false;
 	void ICollection<T>.Add(T item) => PushBack(item);
-	bool ICollection<T>.Contains(T item) => throw new NotSupportedException();
-	void ICollection<T>.CopyTo(T[] array, int arrayIndex) => throw new NotSupportedException();
-	bool ICollection<T>.Remove(T item) => throw new NotSupportedException();
 }

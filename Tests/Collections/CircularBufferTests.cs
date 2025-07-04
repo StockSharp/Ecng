@@ -53,4 +53,83 @@ public class CircularBufferTests
 		buf.IsEmpty.AssertTrue();
 		Assert.ThrowsExactly<InvalidOperationException>(() => buf.PopBack());
 	}
+
+	[TestMethod]
+	public void CollectionCompatibility()
+	{
+		var icol = (ICollection<int>)new CircularBuffer<int>(5);
+		icol.Add(10);
+		icol.Add(20);
+		icol.Add(30);
+
+		 // ICollection<T>
+		icol.IsReadOnly.AssertFalse();
+		icol.Add(40);
+		icol.ToArray().SequenceEqual([10, 20, 30, 40]).AssertTrue();
+		// Remove, Contains, CopyTo
+		icol.Count.AssertEqual(4);
+		icol.Contains(10).AssertTrue();
+		icol.Remove(10).AssertTrue();
+		icol.Remove(10).AssertFalse();
+		icol.Count.AssertEqual(3);
+		icol.Contains(10).AssertFalse();
+		icol.CopyTo(new int[5], 0);
+
+		// IList<T>
+		var ilist = (IList<int>)icol;
+		ilist.IndexOf(20).AssertEqual(0);
+		ilist.Insert(0, 99);
+		ilist.IndexOf(20).AssertEqual(1);
+		icol.Count.AssertEqual(4);
+		ilist.RemoveAt(0);
+		ilist.IndexOf(20).AssertEqual(0);
+		icol.Count.AssertEqual(3);
+		// get/set by index
+		ilist[0].AssertEqual(20);
+		ilist[0] = 111;
+		ilist[0].AssertEqual(111);
+	}
+	
+	[TestMethod]
+	public void LinqCompatibility()
+	{
+		var buf = new CircularBuffer<int>(5);
+		buf.PushBack(1);
+		buf.PushBack(2);
+		buf.PushBack(3);
+
+		var enu = (IEnumerable<int>)buf;
+
+		// ToArray
+		var arr = enu.ToArray();
+		arr.SequenceEqual([1, 2, 3]).AssertTrue();
+
+		int[] concatArr = [4, 5];
+
+		// Concat
+		var concat = enu.Concat(concatArr);
+		concat.SequenceEqual([1, 2, 3, 4, 5]).AssertTrue();
+
+		// First, Last
+		enu.First().AssertEqual(1);
+		enu.Last().AssertEqual(3);
+
+		// Count, Any
+		enu.Count().AssertEqual(3);
+		enu.Any().AssertTrue();
+
+		enu.Skip(3).Count().AssertEqual(0);
+		enu.Skip(3).Any().AssertFalse();
+
+		enu.Skip(3).Concat(concatArr).Count().AssertEqual(2);
+		enu.Skip(3).Concat(concatArr).Any().AssertTrue();
+
+		enu.Skip(3).Concat(concatArr).ToArray().SequenceEqual(concatArr).AssertTrue();
+
+		// Where, Select
+		var even = enu.Where(x => x % 2 == 0).ToArray();
+		even.SequenceEqual([2]).AssertTrue();
+		var doubled = enu.Select(x => x * 2).ToArray();
+		doubled.SequenceEqual([2, 4, 6]).AssertTrue();
+	}
 }
