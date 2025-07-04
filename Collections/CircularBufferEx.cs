@@ -121,4 +121,73 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 		Max = new();
 		Min = new();
 	}
+
+	/// <inheritdoc />
+	public override void PushFront(TItem item)
+	{
+		base.PushFront(item);
+
+		RecalculateStats();
+	}
+
+	/// <inheritdoc />
+	public override void PopBack()
+	{
+		base.PopBack();
+
+		RecalculateStats();
+	}
+
+	/// <inheritdoc />
+	public override void PopFront()
+	{
+		base.PopFront();
+
+		RecalculateStats();
+	}
+
+	/// <inheritdoc />
+	public override TItem this[int index]
+	{
+		get => base[index];
+		set
+		{
+			base[index] = value;
+			RecalculateStats();
+		}
+	}
+
+	private void RecalculateStats()
+	{
+		var op = Operator;
+		var maxComparer = MaxComparer;
+		var minComparer = MinComparer;
+
+		if (op is not null)
+		{
+			Sum = this.Any() ? this.Aggregate(op.Add) : default;
+		}
+		else
+		{
+			Sum = default;
+		}
+
+		if (maxComparer is not null && this.Any())
+		{
+			Max.Value = this.Max(maxComparer);
+		}
+		else
+		{
+			Max = new();
+		}
+
+		if (minComparer is not null && this.Any())
+		{
+			Min.Value = this.Min(minComparer);
+		}
+		else
+		{
+			Min = new();
+		}
+	}
 }

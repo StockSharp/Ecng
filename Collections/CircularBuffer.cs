@@ -150,7 +150,7 @@ public class CircularBuffer<T> : IEnumerable<T>, IList<T>
 	/// </summary>
 	/// <param name="index">Index of element to access.</param>
 	/// <exception cref="IndexOutOfRangeException">Thrown when index is outside of [; Size[ interval.</exception>
-	public T this[int index]
+	public virtual T this[int index]
 	{
 		get
 		{
@@ -212,7 +212,7 @@ public class CircularBuffer<T> : IEnumerable<T>, IList<T>
 	/// popped to allow for this new element to fit.
 	/// </summary>
 	/// <param name="item">Item to push to the front of the buffer</param>
-	public void PushFront(T item)
+	public virtual void PushFront(T item)
 	{
 		if (IsFull)
 		{
@@ -232,7 +232,7 @@ public class CircularBuffer<T> : IEnumerable<T>, IList<T>
 	/// Removes the element at the back of the buffer. Decreasing the 
 	/// Buffer size by 1.
 	/// </summary>
-	public void PopBack()
+	public virtual void PopBack()
 	{
 		ThrowIfEmpty("Cannot take elements from an empty buffer.");
 		Decrement(ref _end);
@@ -244,7 +244,7 @@ public class CircularBuffer<T> : IEnumerable<T>, IList<T>
 	/// Removes the element at the front of the buffer. Decreasing the 
 	/// Buffer size by 1.
 	/// </summary>
-	public void PopFront()
+	public virtual void PopFront()
 	{
 		ThrowIfEmpty("Cannot take elements from an empty buffer.");
 		_buffer[_start] = default;
@@ -463,20 +463,24 @@ public class CircularBuffer<T> : IEnumerable<T>, IList<T>
 	{
 		if (index < 0 || index >= _count)
 			throw new ArgumentOutOfRangeException(nameof(index));
+
 		if (index == 0)
 		{
 			PopFront();
 			return;
 		}
+
 		if (index == _count - 1)
 		{
 			PopBack();
 			return;
 		}
+
 		for (int i = index; i < _count - 1; i++)
 		{
 			this[i] = this[i + 1];
 		}
+
 		PopBack();
 	}
 

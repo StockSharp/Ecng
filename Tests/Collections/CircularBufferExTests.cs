@@ -46,4 +46,53 @@ public class CircularBufferExTests
 		buf.Max.Value.AssertEqual(3);
 		buf.Min.Value.AssertEqual(3);
 	}
+
+	[TestMethod]
+	public void CollectionCompatibility()
+	{
+		var buf = new CircularBufferEx<decimal>(4)
+		{
+			Operator = new DecimalOperator(),
+			MaxComparer = Comparer<decimal>.Default,
+			MinComparer = Comparer<decimal>.Default
+		};
+		var icol = (ICollection<decimal>)buf;
+		var ilist = (IList<decimal>)buf;
+
+		icol.Add(10);
+		icol.Add(20);
+		icol.Add(30);
+		buf.Sum.AssertEqual(60);
+		buf.Max.Value.AssertEqual(30);
+		buf.Min.Value.AssertEqual(10);
+		buf.SumNoFirst.AssertEqual(50);
+
+		// Remove
+		icol.Remove(20).AssertTrue();
+		buf.Sum.AssertEqual(40);
+		buf.Max.Value.AssertEqual(30);
+		buf.Min.Value.AssertEqual(10);
+		buf.SumNoFirst.AssertEqual(30);
+
+		// Insert
+		ilist.Insert(1, 25);
+		buf.Sum.AssertEqual(65);
+		buf.Max.Value.AssertEqual(30);
+		buf.Min.Value.AssertEqual(10);
+		buf.SumNoFirst.AssertEqual(55);
+
+		// RemoveAt
+		ilist.RemoveAt(0);
+		buf.Sum.AssertEqual(55);
+		buf.Max.Value.AssertEqual(30);
+		buf.Min.Value.AssertEqual(25);
+		buf.SumNoFirst.AssertEqual(30);
+
+		// Set by index
+		ilist[0] = 100;
+		buf.Sum.AssertEqual(130);
+		buf.Max.Value.AssertEqual(100);
+		buf.Min.Value.AssertEqual(30);
+		buf.SumNoFirst.AssertEqual(30);
+	}
 }
