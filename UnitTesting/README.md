@@ -1,4 +1,19 @@
 # Ecng.UnitTesting
 
-Provides additional assertions and helpers for your own tests. Makes writing
-unit tests easier and more expressive.
+Additional assertions for unit tests.
+
+## Purpose
+
+Additional assertions for unit tests.
+
+## Key Features
+
+- More expressive test helpers
+- Compare objects deeply
+- Measure performance
+
+## Usage Example
+
+```csharp
+AssertEx.AreEqualByJson(expected, actual);
+```

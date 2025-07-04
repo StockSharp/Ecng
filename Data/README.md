@@ -1,4 +1,20 @@
 # Ecng.Data
 
-Contains common abstractions for building data access layers. It provides base
-repository helpers and other building blocks for persistence.
+Common abstractions for data access layers.
+
+## Purpose
+
+Common abstractions for data access layers.
+
+## Key Features
+
+- Reusable connection definitions
+- Transaction helpers
+- Connection pools
+
+## Usage Example
+
+```csharp
+var pair = new DatabaseConnectionPair { Provider = provider, ConnectionString = connStr };
+using var conn = pair.CreateConnection();
+```

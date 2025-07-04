@@ -1,4 +1,21 @@
 # Ecng.MathLight
 
-A collection of math utilities and small statistical helpers for quick
-calculations. Provides lightweight numeric functions without heavy dependencies.
+Small math and statistics helpers.
+
+## Purpose
+
+Small math and statistics helpers.
+
+## Key Features
+
+- No heavy dependencies
+- Basic statistics
+- Random helpers
+
+## Usage Example
+
+```csharp
+var stats = new SimpleStatistics();
+stats.Add(1);
+var mean = stats.Mean;
+```

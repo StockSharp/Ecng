@@ -1,4 +1,19 @@
 # Ecng.Reflection
 
-Extensions for working with reflection and dynamically creating or inspecting
-types. Useful for building frameworks and tooling.
+Reflection extensions and dynamic type utilities.
+
+## Purpose
+
+Reflection extensions and dynamic type utilities.
+
+## Key Features
+
+- Simpler attribute retrieval
+- Create instances fast
+- Invoke methods by name
+
+## Usage Example
+
+```csharp
+var attrs = typeof(MyClass).GetAttributes<MyAttribute>();
+```

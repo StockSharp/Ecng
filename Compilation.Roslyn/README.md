@@ -1,4 +1,20 @@
 # Ecng.Compilation.Roslyn
 
-Uses Roslyn APIs to compile C# code on the fly. Allows creation of in-memory
-assemblies or runtime code generation.
+Compile C# code using Roslyn.
+
+## Purpose
+
+Compile C# code using Roslyn.
+
+## Key Features
+
+- Produces in-memory assemblies
+- Add references dynamically
+- Emit to disk or memory
+
+## Usage Example
+
+```csharp
+var compiler = new RoslynCompiler();
+var asm = compiler.CompileSource(source);
+```

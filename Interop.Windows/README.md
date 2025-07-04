@@ -1,4 +1,19 @@
 # Ecng.Interop.Windows
 
-Windows-specific extensions for interacting with native Windows APIs and
-resources. These utilities complement the cross-platform interop layer.
+Windows specific interop helpers.
+
+## Purpose
+
+Windows specific interop helpers.
+
+## Key Features
+
+- Convenient wrappers over WinAPI
+- Device change notifications
+- COM helpers
+
+## Usage Example
+
+```csharp
+DeviceChangeNotifier.Register(windowHandle);
+```

@@ -1,5 +1,19 @@
 # Ecng.Localization
 
-A minimal localization engine along with resource helpers, enabling easy
-translation of text within your applications. Supports multiple cultures without
-external dependencies.
+Simple localization engine.
+
+## Purpose
+
+Simple localization engine.
+
+## Key Features
+
+- Centralized string resources
+- Supports multiple cultures
+- Easy resource overrides
+
+## Usage Example
+
+```csharp
+Localizer.Culture = new CultureInfo("ru-RU");
+```

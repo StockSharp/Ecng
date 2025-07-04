@@ -1,4 +1,20 @@
 # Ecng.Compilation
 
-Helpers and abstractions for dynamic compilation at runtime. Use it to generate
-assemblies or scripts on the fly.
+Dynamic compilation helpers.
+
+## Purpose
+
+Dynamic compilation helpers.
+
+## Key Features
+
+- Compile code at runtime
+- Manage references easily
+- Cache compiled assemblies
+
+## Usage Example
+
+```csharp
+var compiler = new SourceCompiler();
+var asm = compiler.CompileFile("Program.cs");
+```
