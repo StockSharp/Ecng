@@ -20,12 +20,11 @@ public static class CompressionHelper
 	/// Extracts entries from a ZIP archive contained in the specified byte array.
 	/// </summary>
 	/// <param name="input">The byte array containing the ZIP archive.</param>
-	/// <param name="leaveOpen">Whether to leave the underlying stream open.</param>
 	/// <param name="filter">A function to filter entries by name. Only entries returning true will be processed.</param>
 	/// <returns>An enumerable of tuples with the entry name and its content stream.</returns>
-	public static IEnumerable<(string name, Stream body)> Unzip(this byte[] input, bool leaveOpen = false, Func<string, bool> filter = null)
+	public static IEnumerable<(string name, Stream body)> Unzip(this byte[] input, Func<string, bool> filter = null)
 	{
-		return input.To<MemoryStream>().Unzip(leaveOpen, filter);
+		return input.To<MemoryStream>().Unzip(filter: filter);
 	}
 
 	/// <summary>
