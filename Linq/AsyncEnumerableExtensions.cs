@@ -1,7 +1,9 @@
 ﻿namespace Ecng.Linq;
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -66,5 +68,52 @@ public static class AsyncEnumerableExtensions
 			return item;
 
 		return default;
+	}
+
+	private class Grouping<TKey, TSource>(TKey key, IEnumerable<TSource> source) : IGrouping<TKey, TSource>
+	{
+		public TKey Key => key;
+		public IEnumerator<TSource> GetEnumerator() => source.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+	}
+
+	/// <summary>
+	/// Groups the elements of an <see cref="IAsyncEnumerable{T}"/> according to a specified key selector function.
+	/// </summary>
+	/// <typeparam name="TSource">The type of the elements of the source sequence.</typeparam>
+	/// <typeparam name="TKey">The type of the key returned by the key selector function.</typeparam>
+	/// <param name="source">The <see cref="IAsyncEnumerable{T}"/> to group.</param>
+	/// <param name="keySelector">A function to extract the key for each element.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains elements of type <see cref="IGrouping{TKey, TSource}"/></returns>
+	public static async IAsyncEnumerable<IGrouping<TKey, TSource>> GroupByAsync2<TSource, TKey>(this IAsyncEnumerable<TSource> source,	Func<TSource, TKey> keySelector)
+		where TKey : IEquatable<TKey>
+	{
+		List<TSource> group = null;
+		TKey currentKey = default;
+
+		await foreach (var item in source)
+		{
+			var key = keySelector(item);
+
+			if (group == null)
+			{
+				group = [item];
+				currentKey = key;
+			}
+			else if (currentKey.Equals(key))
+			{
+				group.Add(item);
+			}
+			else
+			{
+				yield return new Grouping<TKey, TSource>(currentKey, group);
+
+				group = [item];
+				currentKey = key;
+			}
+		}
+
+		if (group != null)
+			yield return new Grouping<TKey, TSource>(currentKey, group);
 	}
 }
