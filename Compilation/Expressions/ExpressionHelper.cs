@@ -204,7 +204,7 @@ public static class ExpressionHelper
 		{ "max", _prefix + nameof(MathHelper.Max) },
 		{ "min", _prefix + nameof(MathHelper.Min) },
 		{ "pow", _prefix + nameof(MathHelper.Pow) },
-		{ "round", _prefix + nameof(MathHelper.Round) },
+		{ "round", _prefix + nameof(MathHelper.Round4Expression) },
 		{ "sign", _prefix + nameof(MathHelper.Sign) },
 		{ "sin", _prefix + nameof(MathHelper.Sin) },
 		{ "sqrt", _prefix + nameof(MathHelper.Sqrt) },

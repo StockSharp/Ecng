@@ -47,6 +47,17 @@ public static class MathHelper
 	}
 
 	/// <summary>
+	/// Rounds the specified <paramref name="value"/> to a specified number of fractional digits.
+	/// </summary>
+	/// <param name="value">The decimal value.</param>
+	/// <param name="digits">The number of fractional digits (as decimal, will be converted to int).</param>
+	/// <returns>The rounded value.</returns>
+	public static decimal Round4Expression(this decimal value, decimal digits)
+	{
+		return Round(value, (int)digits);
+	}
+
+	/// <summary>
 	/// Returns the smallest integer greater than or equal to the specified <paramref name="value"/>.
 	/// </summary>
 	/// <param name="value">The decimal value.</param>
