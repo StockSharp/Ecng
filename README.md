@@ -1,3 +1,4 @@
+![ECNG Logo](logo.png)
 # ECNG System Framework
 
 [![Build Status](https://github.com/stocksharp/ecng/actions/workflows/dotnet.yml/badge.svg)](https://github.com/stocksharp/ecng/actions/workflows/dotnet.yml)
