@@ -20,12 +20,12 @@ public class CompilerTests
 		[
 			_coreLibPath,
 		]);
-		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
 			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 	}
 
 	[TestMethod]
@@ -91,13 +91,12 @@ public class CompilerTests
 		// Unused variable 'x' should produce a warning
 		var code = "class Class1 { void M() { int x = 1; } }";
 		var res = await compiler.Compile("test", [code], [_coreLibPath]);
-		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
 			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
-		// At least one warning expected
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 		res.Errors.Any(e => e.Type == CompilationErrorTypes.Warning).AssertTrue();
 	}
 
@@ -119,12 +118,12 @@ public class CompilerTests
 		ICompiler compiler = new CSharpCompiler();
 		var code = "public class Foo { public int Bar() => 42; }";
 		var res = await compiler.Compile("test", [code], [_coreLibPath]);
-		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
 			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 	}
 
 	[TestMethod]
@@ -134,12 +133,12 @@ public class CompilerTests
 		// Unused variable 'x' should produce a warning
 		var code = "public class Foo { public void Bar() { int x = 1; } }";
 		var res = await compiler.Compile("test", [code], [_coreLibPath]);
-		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
 			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 		res.Errors.Any(e => e.Type == CompilationErrorTypes.Warning).AssertTrue();
 	}
 
@@ -149,12 +148,12 @@ public class CompilerTests
 		ICompiler compiler = new PythonCompiler();
 		var code = "def foo():\n    return 42";
 		var res = await compiler.Compile("test", [code], []);
-		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
 			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 	}
 
 	[TestMethod]
@@ -174,12 +173,12 @@ public class CompilerTests
 		ICompiler compiler = new FSharpCompiler();
 		var code = "module Foo\nlet bar () = 42";
 		var res = await compiler.Compile("test", [code], []);
-		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
 			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
+		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 	}
 
 	[TestMethod]
