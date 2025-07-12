@@ -21,7 +21,11 @@ public class CompilerTests
 			_coreLibPath,
 		]);
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
-		res.HasErrors().AssertFalse();
+		if (res.HasErrors())
+		{
+			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
+			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+		}
 	}
 
 	[TestMethod]
@@ -88,6 +92,11 @@ public class CompilerTests
 		var code = "class Class1 { void M() { int x = 1; } }";
 		var res = await compiler.Compile("test", [code], [_coreLibPath]);
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
+		if (res.HasErrors())
+		{
+			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
+			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+		}
 		// At least one warning expected
 		res.Errors.Any(e => e.Type == CompilationErrorTypes.Warning).AssertTrue();
 	}
@@ -111,7 +120,11 @@ public class CompilerTests
 		var code = "public class Foo { public int Bar() => 42; }";
 		var res = await compiler.Compile("test", [code], [_coreLibPath]);
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
-		res.HasErrors().AssertFalse();
+		if (res.HasErrors())
+		{
+			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
+			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+		}
 	}
 
 	[TestMethod]
@@ -122,6 +135,11 @@ public class CompilerTests
 		var code = "public class Foo { public void Bar() { int x = 1; } }";
 		var res = await compiler.Compile("test", [code], [_coreLibPath]);
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
+		if (res.HasErrors())
+		{
+			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
+			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+		}
 		res.Errors.Any(e => e.Type == CompilationErrorTypes.Warning).AssertTrue();
 	}
 
@@ -132,7 +150,11 @@ public class CompilerTests
 		var code = "def foo():\n    return 42";
 		var res = await compiler.Compile("test", [code], []);
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
-		res.HasErrors().AssertFalse();
+		if (res.HasErrors())
+		{
+			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
+			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+		}
 	}
 
 	[TestMethod]
@@ -153,7 +175,11 @@ public class CompilerTests
 		var code = "module Foo\nlet bar () = 42";
 		var res = await compiler.Compile("test", [code], []);
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
-		res.HasErrors().AssertFalse();
+		if (res.HasErrors())
+		{
+			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
+			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+		}
 	}
 
 	[TestMethod]
