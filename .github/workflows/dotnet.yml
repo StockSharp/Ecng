@@ -30,13 +30,4 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test Ecng.sln --no-build --configuration Release --verbosity normal
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-${{ matrix.os }}
-          path: |
-            **/TestResults/*.trx
-            **/TestResults/*.xml
+        run: dotnet test Ecng.sln --no-build --configuration Release
