@@ -38,6 +38,12 @@ public class ConverterTest
 	}
 
 	[TestMethod]
+	public void Temp5()
+	{
+		TimeZoneInfo.Utc.To<string>().To<TimeZoneInfo>().AssertEqual(TimeZoneInfo.Utc);
+	}
+
+	[TestMethod]
 	public void TimeZone()
 	{
 		static void _(TimeZoneInfo tz)
