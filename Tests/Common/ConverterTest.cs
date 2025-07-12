@@ -16,31 +16,19 @@ public class ConverterTest
 	[TestMethod]
 	public void Temp()
 	{
-		TimeZoneInfo.Utc.AssertEqual(TimeZoneInfo.Utc);
+		TimeHelper.Moscow.To<string>().To<TimeZoneInfo>().AssertEqual(TimeHelper.Moscow);
 	}
 
 	[TestMethod]
 	public void Temp2()
 	{
-		TimeZoneInfo.Utc.To<string>().AssertEqual("UTC");
+		TimeHelper.Korea.To<string>().To<TimeZoneInfo>().AssertEqual(TimeHelper.Korea);
 	}
 
 	[TestMethod]
 	public void Temp3()
 	{
-		TimeZoneInfo.Utc.AssertEqual(Ecng.Common.TimeZoneConverter.TZConvert.GetTimeZoneInfo("UTC"));
-	}
-
-	[TestMethod]
-	public void Temp4()
-	{
-		TimeZoneInfo.Utc.AssertEqual("UTC".To<TimeZoneInfo>());
-	}
-
-	[TestMethod]
-	public void Temp5()
-	{
-		TimeZoneInfo.Utc.To<string>().To<TimeZoneInfo>().AssertEqual(TimeZoneInfo.Utc);
+		TimeZoneInfo.Local.To<string>().To<TimeZoneInfo>().AssertEqual(TimeZoneInfo.Local);
 	}
 
 	[TestMethod]
