@@ -31,10 +31,10 @@ static class PythonAttrs
 		public override IList<CustomAttributeNamedArgument> NamedArguments { get; } = namedArgs ?? throw new ArgumentNullException(nameof(namedArgs));
 	}
 
-	private const string DocumentationUrl = "documentation_url";
-	private const string DisplayName = "display_name";
-	private const string Description = "__doc__";
-	private const string Icon = "icon";
+	private const string _documentationUrl = "documentation_url";
+	private const string _displayName = "display_name";
+	private const string _description = "__doc__";
+	private const string _icon = "icon";
 
 	private static string TryGetAttr(ObjectOperations ops, object obj, string name)
 		=> ops.TryGetMember(obj, name, out object value) ? value as string : null;
@@ -55,16 +55,16 @@ static class PythonAttrs
 	{
 		var attrs = new List<object>();
 
-		if (TryGetAttr(ops, obj, DocumentationUrl) is string docUrl)
+		if (TryGetAttr(ops, obj, _documentationUrl) is string docUrl)
 			attrs.Add(new DocAttribute(docUrl.Trim()));
 
-		var dispName = TryGetAttr(ops, obj, DisplayName);
-		var desc = TryGetAttr(ops, obj, Description);
+		var dispName = TryGetAttr(ops, obj, _displayName);
+		var desc = TryGetAttr(ops, obj, _description);
 
 		if (!dispName.IsEmpty() || !desc.IsEmpty())
-			attrs.Add(new DisplayAttribute() { Name = dispName, Description = desc });
+			attrs.Add(new DisplayAttribute { Name = dispName, Description = desc });
 
-		if (TryGetAttr(ops, obj, Icon) is string icon)
+		if (TryGetAttr(ops, obj, _icon) is string icon)
 			attrs.Add(new IconAttribute(icon));
 
 		if (TryGetDict(ops, obj, out var dict))
@@ -81,17 +81,17 @@ static class PythonAttrs
 
 	public static object[] GetCustomAttributes(this ObjectOperations ops, IPythonMembersList obj, Type attributeType, bool inherit)
 	{
-		if (attributeType == typeof(DocAttribute) && TryGetAttr(ops, obj, DocumentationUrl) is string docUrl)
+		if (attributeType == typeof(DocAttribute) && TryGetAttr(ops, obj, _documentationUrl) is string docUrl)
 			return [new DocAttribute(docUrl.Trim())];
 		else if (attributeType == typeof(DisplayAttribute))
 		{
-			var dispName = TryGetAttr(ops, obj, DisplayName);
-			var desc = TryGetAttr(ops, obj, Description);
+			var dispName = TryGetAttr(ops, obj, _displayName);
+			var desc = TryGetAttr(ops, obj, _description);
 
 			if (!dispName.IsEmpty() || !desc.IsEmpty())
 				return [new DisplayAttribute() { Name = dispName, Description = desc }];
 		}
-		else if (attributeType == typeof(IconAttribute) && TryGetAttr(ops, obj, Icon) is string icon)
+		else if (attributeType == typeof(IconAttribute) && TryGetAttr(ops, obj, _icon) is string icon)
 			return [new IconAttribute(icon)];
 		else if (TryGetDict(ops, obj, out var dict))
 		{
