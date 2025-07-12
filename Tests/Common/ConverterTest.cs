@@ -32,6 +32,12 @@ public class ConverterTest
 	}
 
 	[TestMethod]
+	public void Temp4()
+	{
+		TimeZoneInfo.Utc.AssertEqual("UTC".To<TimeZoneInfo>());
+	}
+
+	[TestMethod]
 	public void TimeZone()
 	{
 		static void _(TimeZoneInfo tz)
