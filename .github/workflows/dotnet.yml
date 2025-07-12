@@ -7,13 +7,20 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        dotnet-version: ['8.0.x', '9.0.x']
+        
     steps:
       - uses: actions/checkout@v3
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: ${{ matrix.dotnet-version }}
 
       - name: Restore dependencies
         run: dotnet restore
@@ -22,4 +29,13 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test Ecng.sln --no-build --configuration Release
+        run: dotnet test Ecng.sln --no-build --configuration Release --verbosity normal
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.dotnet-version }}
+          path: |
+            **/TestResults/*.trx
+            **/TestResults/*.xml
