@@ -51,7 +51,7 @@ static class PythonAttrs
 		return false;
 	}
 
-	public static object[] GetCustomAttributes(this ObjectOperations ops, object obj, bool inherit)
+	public static object[] GetCustomAttributes(this ObjectOperations ops, object obj)
 	{
 		var attrs = new List<object>();
 
@@ -79,7 +79,7 @@ static class PythonAttrs
 		return [.. attrs];
 	}
 
-	public static object[] GetCustomAttributes(this ObjectOperations ops, IPythonMembersList obj, Type attributeType, bool inherit)
+	public static object[] GetCustomAttributes(this ObjectOperations ops, IPythonMembersList obj, Type attributeType)
 	{
 		if (attributeType == typeof(DocAttribute) && TryGetAttr(ops, obj, _documentationUrl) is string docUrl)
 			return [new DocAttribute(docUrl.Trim())];
@@ -106,7 +106,7 @@ static class PythonAttrs
 	}
 
 	public static IList<CustomAttributeData> GetCustomAttributesData(this ObjectOperations ops, object obj)
-		=> [.. GetCustomAttributes(ops, obj, true).Select(attr =>
+		=> [.. GetCustomAttributes(ops, obj).Select(attr =>
 		{
 			if (attr is DocAttribute doc)
 			{
@@ -174,9 +174,9 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 				public override MethodInfo[] GetOtherMethods(bool nonPublic) => [];
 
 				public override object[] GetCustomAttributes(bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_addFunc, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_addFunc);
 				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_addFunc, attributeType, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_addFunc, attributeType);
 				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 				public override IList<CustomAttributeData> GetCustomAttributesData()
 					=> _declaringType._ops.GetCustomAttributesData(_addFunc);
@@ -258,9 +258,9 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 				public override ICustomAttributeProvider ReturnTypeCustomAttributes => null;
 				public override MethodInfo GetBaseDefinition() => this;
 				public override object[] GetCustomAttributes(bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_function, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_function);
 				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_function, attributeType, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_function, attributeType);
 				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 				public override IList<CustomAttributeData> GetCustomAttributesData()
 					=> _declaringType._ops.GetCustomAttributesData(_function);
@@ -327,10 +327,10 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 				}
 
 				public override object[] GetCustomAttributes(bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_accessor, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_accessor);
 
 				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_accessor, attributeType, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_accessor, attributeType);
 
 				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 				public override IList<CustomAttributeData> GetCustomAttributesData()
@@ -411,9 +411,9 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 				public override ParameterInfo[] GetParameters() => _parameters;
 
 				public override object[] GetCustomAttributes(bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_function, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_function);
 				public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-					=> _declaringType._ops.GetCustomAttributes(_function, attributeType, inherit);
+					=> _declaringType._ops.GetCustomAttributes(_function, attributeType);
 				public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 				public override IList<CustomAttributeData> GetCustomAttributesData()
 					=> _declaringType._ops.GetCustomAttributesData(_function);
@@ -583,10 +583,10 @@ class PythonContext(ScriptEngine engine) : Disposable, ICompilerContext
 			public override bool IsDefined(Type attributeType, bool inherit) => GetCustomAttributes(attributeType, inherit).Any();
 
 			public override object[] GetCustomAttributes(bool inherit)
-				=> _ops.GetCustomAttributes(_pythonType, inherit);
+				=> _ops.GetCustomAttributes(_pythonType);
 
 			public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-				=> _ops.GetCustomAttributes(_pythonType, attributeType, inherit);
+				=> _ops.GetCustomAttributes(_pythonType, attributeType);
 
 			public override IList<CustomAttributeData> GetCustomAttributesData()
 				=> _ops.GetCustomAttributesData(_pythonType);
