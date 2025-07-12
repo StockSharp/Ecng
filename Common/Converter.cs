@@ -19,7 +19,7 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 
-using TimeZoneConverter;
+using Ecng.Common.TimeZoneConverter;
 
 /// <summary>
 /// The converter class.
@@ -842,8 +842,6 @@ public static class Converter
 
 		return true;
 	}
-
-	//private static readonly Dictionary<Tuple<Type, Type>, MethodInfo> _castOperators = new Dictionary<Tuple<Type, Type>, MethodInfo>();
 
 	/// <summary>
 	/// Convert value into a instance of destinationType.
