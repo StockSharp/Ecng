@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Collections.ObjectModel;
 using System.Net;
 using System.Text;
+using System.Data;
 
 using Ecng.ComponentModel;
 
@@ -147,8 +148,15 @@ public class ConverterTest
 	[TestMethod]
 	public void Decimal()
 	{
-		decimal.MinValue.To<int[]>().To<decimal>().AssertEqual(decimal.MinValue);
-		decimal.MaxValue.To<int[]>().To<decimal>().AssertEqual(decimal.MaxValue);
+		static void _(decimal v)
+		{
+			v.To<int[]>().To<decimal>().AssertEqual(v);
+			v.To<byte[]>().To<decimal>().AssertEqual(v);
+		}
+
+		_(decimal.MinValue);
+		_(decimal.MaxValue);
+		_(RandomGen.GetDecimal(8, 8));
 	}
 
 	[TestMethod]
@@ -411,5 +419,71 @@ public class ConverterTest
 		// TimeSpan <-> string
 		var ts = TimeSpan.FromMinutes(5);
 		ts.To<string>().To<TimeSpan>().AssertEqual(ts);
+	}
+
+	[TestMethod]
+	public void ChangeOrder()
+	{
+		// Test that ChangeOrder does not modify the array for little-endian
+		var bytes = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+		var le = bytes.ChangeOrder(4, true);
+		le.SequenceEqual(bytes).AssertTrue();
+
+		// Test that ChangeOrder reverses the array for big-endian
+		var be = bytes.ChangeOrder(4, false);
+		be.SequenceEqual(new byte[] { 0x04, 0x03, 0x02, 0x01 }).AssertTrue();
+	}
+
+	[TestMethod]
+	public void ToRadix()
+	{
+		long value = 255;
+		// Test conversion to binary
+		value.ToRadix(2).AssertEqual("11111111");
+		// Test conversion to octal
+		value.ToRadix(8).AssertEqual("377");
+		// Test conversion to decimal
+		value.ToRadix(10).AssertEqual("255");
+		// Test conversion to hexadecimal
+		value.ToRadix(16).AssertEqual("FF");
+		// Test conversion to base36
+		value.ToRadix(36).AssertEqual("73");
+
+		// Test conversion of negative value to hexadecimal
+		(-255L).ToRadix(16).AssertEqual("-FF");
+		// Test conversion of zero to binary
+		0L.ToRadix(2).AssertEqual("0");
+	}
+
+	[TestMethod]
+	public void DbTypeConversion()
+	{
+		// Test Type <-> DbType round-trip
+		typeof(int).To<DbType>().AssertEqual(DbType.Int32);
+		typeof(string).To<DbType>().AssertEqual(DbType.String);
+		typeof(DateTime).To<DbType>().AssertEqual(DbType.DateTime);
+		typeof(bool).To<DbType>().AssertEqual(DbType.Boolean);
+		typeof(byte[]).To<DbType>().AssertEqual(DbType.Binary);
+		typeof(decimal).To<DbType>().AssertEqual(DbType.Decimal);
+		typeof(Guid).To<DbType>().AssertEqual(DbType.Guid);
+		typeof(double).To<DbType>().AssertEqual(DbType.Double);
+		typeof(float).To<DbType>().AssertEqual(DbType.Single);
+		typeof(long).To<DbType>().AssertEqual(DbType.Int64);
+		typeof(short).To<DbType>().AssertEqual(DbType.Int16);
+		typeof(object).To<DbType>().AssertEqual(DbType.Object);
+
+		// Test DbType <-> Type round-trip
+		DbType.Int32.To<Type>().AssertEqual(typeof(int));
+		DbType.String.To<Type>().AssertEqual(typeof(string));
+		DbType.DateTime.To<Type>().AssertEqual(typeof(DateTime));
+		DbType.Boolean.To<Type>().AssertEqual(typeof(bool));
+		DbType.Binary.To<Type>().AssertEqual(typeof(byte[]));
+		DbType.Decimal.To<Type>().AssertEqual(typeof(decimal));
+		DbType.Guid.To<Type>().AssertEqual(typeof(Guid));
+		DbType.Double.To<Type>().AssertEqual(typeof(double));
+		DbType.Single.To<Type>().AssertEqual(typeof(float));
+		DbType.Int64.To<Type>().AssertEqual(typeof(long));
+		DbType.Int16.To<Type>().AssertEqual(typeof(short));
+		DbType.Object.To<Type>().AssertEqual(typeof(object));
 	}
 }
