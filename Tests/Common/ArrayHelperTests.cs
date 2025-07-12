@@ -49,7 +49,7 @@ public class ArrayHelperTests
 		var arr = new[] { 1, 2, 3 };
 		var clone = arr.Clone();
 		((int[])clone).SequenceEqual(arr).AssertTrue();
-		object.ReferenceEquals(arr, clone).AssertFalse();
+		ReferenceEquals(arr, clone).AssertFalse();
 	}
 
 	[TestMethod]

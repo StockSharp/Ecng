@@ -224,7 +224,7 @@ public class StringTests
 		arr.JoinAnd().AssertEqual("a&b&c");
 		arr.JoinN().AssertEqual("a\nb\nc");
 		arr.JoinRN().AssertEqual("a\r\nb\r\nc");
-		arr.JoinNL().AssertEqual(string.Join(System.Environment.NewLine, arr));
+		arr.JoinNL().AssertEqual(string.Join(Environment.NewLine, arr));
 		arr.Join("-").AssertEqual("a-b-c");
 	}
 
@@ -251,7 +251,7 @@ public class StringTests
 	[TestMethod]
 	public void ToTitleCase_Works()
 	{
-		"hello world".ToTitleCase().AssertEqual(System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase("hello world"));
+		"hello world".ToTitleCase().AssertEqual(CultureInfo.CurrentCulture.TextInfo.ToTitleCase("hello world"));
 	}
 
 	[TestMethod]
@@ -272,8 +272,8 @@ public class StringTests
 	[TestMethod]
 	public void ComparePaths_Works()
 	{
-		var p1 = System.IO.Path.GetFullPath(".");
-		var p2 = System.IO.Path.GetFullPath("./");
+		var p1 = Path.GetFullPath(".");
+		var p2 = Path.GetFullPath("./");
 		p1.ComparePaths(p2).AssertTrue();
 	}
 
@@ -301,8 +301,8 @@ public class StringTests
 		bytes.Digest().AssertEqual("DEADBEEF");
 		bytes.Digest(2).AssertEqual("DEAD");
 		var str = "Hello";
-		System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(str)))).AssertEqual(str); // roundtrip check
-		System.Convert.ToBase64String(bytes).AssertEqual(bytes.Base64());
+		System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(str)))).AssertEqual(str); // roundtrip check
+		Convert.ToBase64String(bytes).AssertEqual(bytes.Base64());
 	}
 
 	[TestMethod]
@@ -327,7 +327,7 @@ public class StringTests
 	public void GetDeterministicHashCode_And_TryToLong()
 	{
 		var s = "test";
-		s.GetDeterministicHashCode().AssertEqual(Ecng.Common.StringHelper.GetDeterministicHashCode(s));
+		s.GetDeterministicHashCode().AssertEqual(StringHelper.GetDeterministicHashCode(s));
 		"12345".TryToLong().AssertEqual(12345L);
 		"notanumber".TryToLong().AssertNull();
 	}
@@ -363,6 +363,6 @@ public class StringTests
 	{
 		var s1 = string.Intern("abc");
 		var s2 = "abc".Intern();
-		object.ReferenceEquals(s1, s2).AssertTrue();
+		ReferenceEquals(s1, s2).AssertTrue();
 	}
 }
