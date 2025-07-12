@@ -1291,8 +1291,8 @@ public static class StringHelper
 	/// <returns>true if the paths are equal; otherwise, false.</returns>
 	public static bool ComparePaths(this string path1, string path2)
 	{
-		// http://stackoverflow.com/questions/2281531/how-can-i-compare-directory-paths-in-c
-		return Path.GetFullPath(path1).TrimEnd('\\').EqualsIgnoreCase(Path.GetFullPath(path2).TrimEnd('\\'));
+		static string normalize(string path) => Path.GetFullPath(path).TrimEnd('\\');
+		return normalize(path1).EqualsIgnoreCase(normalize(path2));
 	}
 
 	/// <summary>

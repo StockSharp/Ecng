@@ -274,7 +274,9 @@ public class StringTests
 	{
 		var p1 = Path.GetFullPath(".");
 		var p2 = Path.GetFullPath("./");
-		p1.ComparePaths(p2).AssertTrue();
+
+		if (!p1.ComparePaths(p2))
+			p1.AssertEqual(p2);
 	}
 
 	[TestMethod]
