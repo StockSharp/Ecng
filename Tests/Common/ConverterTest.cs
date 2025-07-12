@@ -10,6 +10,12 @@ using Ecng.ComponentModel;
 public class ConverterTest
 {
 	[TestMethod]
+	public void Primitive()
+	{
+		TimeZoneInfo.Utc.AssertEqual(TimeZoneInfo.Utc);
+	}
+
+	[TestMethod]
 	public void String2Bool()
 	{
 		1.To<bool>().AssertTrue();
