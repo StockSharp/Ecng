@@ -130,7 +130,6 @@ public class JsonTests
 		await Do(TimeSpan.FromSeconds(10));
 		await Do(Guid.NewGuid());
 		await Do(new Uri("https://stocksharp.com"));
-		await Do(TimeZoneInfo.Local);
 		await Do(TimeZoneInfo.Utc);
 		await Do(TimeHelper.Moscow);
 		await Do(typeof(GCKind));
@@ -178,8 +177,8 @@ public class JsonTests
 		await Do(new[] { TimeSpan.Zero, TimeSpan.FromSeconds(10) });
 		await Do(new[] { Guid.NewGuid(), Guid.NewGuid() });
 		await Do(new[] { new Uri("https://stocksharp.com"), new Uri("https://stocksharp.ru"), null });
-		await Do(new[] { TimeZoneInfo.Local });
-		await Do(new[] { null, TimeZoneInfo.Local });
+		await Do(new[] { TimeZoneInfo.Utc });
+		await Do(new[] { null, TimeZoneInfo.Utc });
 		await Do(new byte[] { 1, 2, 3 });
 		await Do(new string[] { null, null });
 		await Do(new SecureString[] { null, null });

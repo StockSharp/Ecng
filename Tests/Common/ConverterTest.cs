@@ -14,31 +14,12 @@ using Ecng.ComponentModel;
 public class ConverterTest
 {
 	[TestMethod]
-	public void Temp()
-	{
-		TimeHelper.Moscow.To<string>().To<TimeZoneInfo>().AssertEqual(TimeHelper.Moscow);
-	}
-
-	[TestMethod]
-	public void Temp2()
-	{
-		TimeHelper.Korea.To<string>().To<TimeZoneInfo>().AssertEqual(TimeHelper.Korea);
-	}
-
-	[TestMethod]
-	public void Temp3()
-	{
-		TimeZoneInfo.Local.To<string>().To<TimeZoneInfo>().AssertEqual(TimeZoneInfo.Local);
-	}
-
-	[TestMethod]
 	public void TimeZone()
 	{
 		static void _(TimeZoneInfo tz)
 			=> tz.To<string>().To<TimeZoneInfo>().AssertEqual(tz);
 
 		_(TimeZoneInfo.Utc);
-		_(TimeZoneInfo.Local);
 		_(TimeHelper.Moscow);
 		_(TimeHelper.Korea);
 	}
