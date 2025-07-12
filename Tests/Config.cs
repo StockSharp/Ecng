@@ -5,10 +5,10 @@ using System.Net.Http;
 using Ecng.Reflection;
 
 [TestClass]
-public class Config
+public static class Config
 {
 	[AssemblyInitialize]
-	public static void GlobalInitialize(TestContext context)
+	public static void GlobalInitialize(TestContext _)
 	{
 		AttributeHelper.CacheEnabled = false;
 		ReflectionHelper.CacheEnabled = false;
