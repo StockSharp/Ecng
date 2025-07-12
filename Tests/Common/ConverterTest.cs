@@ -14,6 +14,24 @@ using Ecng.ComponentModel;
 public class ConverterTest
 {
 	[TestMethod]
+	public void Temp()
+	{
+		TimeZoneInfo.Utc.AssertEqual(TimeZoneInfo.Utc);
+	}
+
+	[TestMethod]
+	public void Temp2()
+	{
+		TimeZoneInfo.Utc.To<string>().AssertEqual("UTC");
+	}
+
+	[TestMethod]
+	public void Temp3()
+	{
+		TimeZoneInfo.Utc.AssertEqual(Ecng.Common.TimeZoneConverter.TZConvert.GetTimeZoneInfo("UTC"));
+	}
+
+	[TestMethod]
 	public void TimeZone()
 	{
 		static void _(TimeZoneInfo tz)
