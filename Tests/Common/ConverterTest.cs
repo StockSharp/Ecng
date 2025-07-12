@@ -1,5 +1,8 @@
 namespace Ecng.Tests.Common;
 
+using System.Security;
+using System.Collections;
+using System.Globalization;
 using System.Collections.ObjectModel;
 using System.Net;
 using System.Text;
@@ -12,13 +15,13 @@ public class ConverterTest
 	[TestMethod]
 	public void TimeZone()
 	{
-		static void validate(TimeZoneInfo tz)
+		static void _(TimeZoneInfo tz)
 			=> tz.To<string>().To<TimeZoneInfo>().AssertEqual(tz);
 
-		validate(TimeZoneInfo.Utc);
-		validate(TimeZoneInfo.Local);
-		validate(TimeHelper.Moscow);
-		validate(TimeHelper.Korea);
+		_(TimeZoneInfo.Utc);
+		_(TimeZoneInfo.Local);
+		_(TimeHelper.Moscow);
+		_(TimeHelper.Korea);
 	}
 
 	[TestMethod]
@@ -310,7 +313,7 @@ public class ConverterTest
 	}
 
 	[TestMethod]
-	public void EndpointTest()
+	public void Endpoint()
 	{
 		static void _<T>(T e)
 			=> e.To<string>().To<T>().AssertEqual(e);
@@ -318,5 +321,95 @@ public class ConverterTest
 		_(IPEndPoint.Parse("127.0.0.1:443"));
 		_(new DnsEndPoint("google.com", 443));
 		_<EndPoint>(new DnsEndPoint("google.com", 443));
+	}
+
+	[TestMethod]
+	public void MixedTypes()
+	{
+		// bool <-> string
+		true.To<string>().To<bool>().AssertTrue();
+		"false".To<bool>().AssertFalse();
+
+		// int <-> string
+		123.To<string>().To<int>().AssertEqual(123);
+		"456".To<int>().AssertEqual(456);
+
+		// double <-> string
+		1.23.To<string>().To<double>().AssertEqual(1.23);
+		"2.34".To<double>().AssertEqual(2.34);
+
+		// decimal <-> string
+		123.45m.To<string>().To<decimal>().AssertEqual(123.45m);
+		"678.90".To<decimal>().AssertEqual(678.90m);
+
+		// DateTime <-> string
+		var dt = DateTime.UtcNow;
+		dt.To<long>().To<DateTime>().AssertEqual(dt);
+
+		// DateTimeOffset <-> string
+		var dto = DateTimeOffset.UtcNow;
+		dto.To<long>().To<DateTimeOffset>().AssertEqual(dto);
+
+		// Guid <-> string
+		var guid = Guid.NewGuid();
+		guid.To<string>().To<Guid>().AssertEqual(guid);
+
+		// IPAddress <-> string
+		var ip = IPAddress.Parse("127.0.0.1");
+		ip.To<string>().To<IPAddress>().AssertEqual(ip);
+		ip.To<long>().To<IPAddress>().AssertEqual(ip);
+
+		// EndPoint <-> string
+		var ep = new IPEndPoint(ip, 8080);
+		ep.To<string>().To<EndPoint>().AssertEqual(ep);
+
+		// StringBuilder <-> string
+		var sb = new StringBuilder("abc");
+		sb.To<string>().To<StringBuilder>().ToString().AssertEqual("abc");
+
+		// SecureString <-> string
+		var sec = "secret".Secure();
+		sec.To<string>().AssertEqual("secret");
+		"secret".To<SecureString>().UnSecure().AssertEqual("secret");
+
+		// byte[] <-> string
+		const string helloStr = "hello";
+		helloStr.To<byte[]>().To<string>().AssertEqual(helloStr);
+
+		// char[] <-> string
+		var chars = "test".ToCharArray();
+		chars.To<string>().ToCharArray().SequenceEqual(chars).AssertTrue();
+
+		// Enum <-> string
+		PriceTypes.Percent.To<string>().To<PriceTypes>().AssertEqual(PriceTypes.Percent);
+
+		// Type <-> string
+		typeof(int).To<string>().To<Type>().AssertEqual(typeof(int));
+
+		// decimal <-> int[]
+		123.45m.To<int[]>().To<decimal>().AssertEqual(123.45m);
+
+		// BitArray <-> bool[]
+		var bools = new[] { true, false, true };
+		bools.To<BitArray>().To<bool[]>().SequenceEqual(bools).AssertTrue();
+
+		// CultureInfo <-> string
+		var ci = CultureInfo.InvariantCulture;
+		ci.To<string>().To<CultureInfo>().AssertEqual(ci);
+
+		// Encoding <-> int
+		Encoding.UTF8.To<int>().To<Encoding>().AssertEqual(Encoding.UTF8);
+
+		// Guid? <-> string
+		guid.To<string>().To<Guid?>().AssertEqual(guid);
+		string.Empty.To<Guid?>().AssertNull();
+
+		// DateTime? <-> string
+		dt.To<string>().To<DateTime?>()?.ToUniversalTime().AssertEqual(dt.ToUniversalTime());
+		string.Empty.To<DateTime?>().AssertNull();
+
+		// TimeSpan <-> string
+		var ts = TimeSpan.FromMinutes(5);
+		ts.To<string>().To<TimeSpan>().AssertEqual(ts);
 	}
 }
