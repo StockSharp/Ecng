@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+	<MSTest>
+		<Timeout>10000</Timeout>
+	</MSTest>
+</RunSettings>
