@@ -13,6 +13,9 @@ public class BitArrayWriter(Stream underlyingStream) : Disposable
 	private readonly Stream _underlyingStream = underlyingStream ?? throw new ArgumentNullException(nameof(underlyingStream));
 	private int _temp;
 	private int _bitOffset;
+#if NET5_0_OR_GREATER
+	private readonly int[] _decimalBits = new int[4];
+#endif
 
 	/// <summary>
 	/// Flushes the current byte to the underlying stream and resets the buffer.
@@ -175,8 +178,15 @@ public class BitArrayWriter(Stream underlyingStream) : Disposable
 		}
 		else
 			Write(true);
-		
-		var bits = value.To<int[]>();
+
+		int[] bits;
+
+#if NET5_0_OR_GREATER
+		decimal.GetBits(value, _decimalBits);
+		bits = _decimalBits;
+#else
+		bits = value.To<int[]>();
+#endif
 
 		WriteInt(bits[0]);
 		WriteInt(bits[1]);
