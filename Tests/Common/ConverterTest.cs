@@ -10,9 +10,15 @@ using Ecng.ComponentModel;
 public class ConverterTest
 {
 	[TestMethod]
-	public void Primitive()
+	public void TimeZone()
 	{
-		TimeZoneInfo.Utc.AssertEqual(TimeZoneInfo.Utc);
+		static void validate(TimeZoneInfo tz)
+			=> tz.To<string>().To<TimeZoneInfo>().AssertEqual(tz);
+
+		validate(TimeZoneInfo.Utc);
+		validate(TimeZoneInfo.Local);
+		validate(TimeHelper.Moscow);
+		validate(TimeHelper.Korea);
 	}
 
 	[TestMethod]
