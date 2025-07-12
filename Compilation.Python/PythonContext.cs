@@ -53,7 +53,7 @@ static class PythonAttrs
 
 	public static object[] GetCustomAttributes(this ObjectOperations ops, object obj, bool inherit)
 	{
-		var attrs = new List<object>();
+		var attrs = new HashSet<object>();
 
 		if (TryGetAttr(ops, obj, _documentationUrl) is string docUrl)
 			attrs.Add(new DocAttribute(docUrl.Trim()));
@@ -76,6 +76,17 @@ static class PythonAttrs
 			}
 		}
 
+		if (inherit && obj is PythonType pt)
+		{
+			var baseType = pt.GetUnderlyingSystemType();
+
+			while (baseType is not null)
+			{
+				attrs.AddRange(GetCustomAttributes(ops, baseType, inherit));
+				baseType = baseType.BaseType;
+			}
+		}
+
 		return [.. attrs];
 	}
 
@@ -89,7 +100,7 @@ static class PythonAttrs
 			var desc = TryGetAttr(ops, obj, _description);
 
 			if (!dispName.IsEmpty() || !desc.IsEmpty())
-				return [new DisplayAttribute() { Name = dispName, Description = desc }];
+				return [new DisplayAttribute { Name = dispName, Description = desc }];
 		}
 		else if (attributeType == typeof(IconAttribute) && TryGetAttr(ops, obj, _icon) is string icon)
 			return [new IconAttribute(icon)];
@@ -98,6 +109,14 @@ static class PythonAttrs
 			foreach (var (_, value) in dict)
 			{
 				if (value is Attribute attr && attr.GetType().Is(attributeType))
+					return [attr];
+			}
+
+			if (inherit && obj is PythonType pt)
+			{
+				var attr = GetCustomAttributes(ops, obj, inherit).Where(a => a.GetType().Is(attributeType)).FirstOrDefault();
+
+				if (attr != null)
 					return [attr];
 			}
 		}
