@@ -141,6 +141,10 @@ public class CompilerTests
 	[TestMethod]
 	public async Task FSharpCompileSuccess()
 	{
+		// TODO: F# compiler is not available on non-Windows platforms.
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
 		ICompiler compiler = new FSharpCompiler();
 		var code = "module Foo\nlet bar () = 42";
 		var res = await compiler.Compile("test", [code], [_coreLibPath]);
@@ -155,6 +159,10 @@ public class CompilerTests
 	[TestMethod]
 	public async Task FSharpCompileError()
 	{
+		// TODO: F# compiler is not available on non-Windows platforms.
+		if (!OperatingSystemEx.IsWindows())
+			return;
+
 		ICompiler compiler = new FSharpCompiler();
 		// Syntax error: missing '='
 		var code = "module Foo\nlet bar () 42";
