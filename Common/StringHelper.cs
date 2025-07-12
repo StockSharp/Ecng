@@ -1291,7 +1291,7 @@ public static class StringHelper
 	/// <returns>true if the paths are equal; otherwise, false.</returns>
 	public static bool ComparePaths(this string path1, string path2)
 	{
-		static string normalize(string path) => Path.GetFullPath(path).TrimEnd('\\');
+		static string normalize(string path) => Path.GetFullPath(path).TrimEnd('\\').TrimEnd('/');
 		return normalize(path1).EqualsIgnoreCase(normalize(path2));
 	}
 
