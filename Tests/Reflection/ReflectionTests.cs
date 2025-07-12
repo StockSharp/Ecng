@@ -260,8 +260,10 @@ public class ReflectionTests
 	public void TestIsAssemblyVerifyAssembly()
 	{
 		"Ecng.Common.dll".IsAssembly().AssertTrue();
-		"testhost.exe".IsAssembly().AssertFalse();
-		"testhost.exe".VerifyAssembly().AssertNull();
+
+		var nativeDll = "runtimes/win-x64/native/WmiLight.Native.dll";
+		nativeDll.IsAssembly().AssertFalse();
+		nativeDll.VerifyAssembly().AssertNull();
 	}
 
 	[TestMethod]
