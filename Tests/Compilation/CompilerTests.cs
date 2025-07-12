@@ -172,7 +172,7 @@ public class CompilerTests
 	{
 		ICompiler compiler = new FSharpCompiler();
 		var code = "module Foo\nlet bar () = 42";
-		var res = await compiler.Compile("test", [code], []);
+		var res = await compiler.Compile("test", [code], [_coreLibPath]);
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
@@ -187,7 +187,7 @@ public class CompilerTests
 		ICompiler compiler = new FSharpCompiler();
 		// Syntax error: missing '='
 		var code = "module Foo\nlet bar () 42";
-		var res = await compiler.Compile("test", [code], []);
+		var res = await compiler.Compile("test", [code], [_coreLibPath]);
 		res.GetAssembly(compiler.CreateContext()).AssertNull();
 		res.HasErrors().AssertTrue();
 	}
