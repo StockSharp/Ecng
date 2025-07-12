@@ -9,28 +9,23 @@ namespace Ecng.Common.TimeZoneConverter;
 /// </summary>
 public static class TZConvert
 {
-	private static readonly IDictionary<string, string> IanaMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-	private static readonly IDictionary<string, string> WindowsMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-	private static readonly IDictionary<string, string> RailsMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-	private static readonly IDictionary<string, IList<string>> InverseRailsMap = new Dictionary<string, IList<string>>(StringComparer.OrdinalIgnoreCase);
+	private static readonly Dictionary<string, string> _ianaMap = new(StringComparer.OrdinalIgnoreCase);
+	private static readonly Dictionary<string, string> _windowsMap = new(StringComparer.OrdinalIgnoreCase);
+	private static readonly Dictionary<string, string> _railsMap = new(StringComparer.OrdinalIgnoreCase);
+	private static readonly Dictionary<string, IList<string>> _inverseRailsMap = new(StringComparer.OrdinalIgnoreCase);
 
-	private static readonly bool IsWindows = Ecng.Common.OperatingSystemEx.IsWindows();
-
-#if !NETSTANDARD1_1
-	private static readonly Dictionary<string, TimeZoneInfo> SystemTimeZones;
-#endif
+	private static readonly bool _isWindows = OperatingSystemEx.IsWindows();
+	private static readonly Dictionary<string, TimeZoneInfo> _systemTimeZones;
 
 	static TZConvert()
 	{
-		DataLoader.Populate(IanaMap, WindowsMap, RailsMap, InverseRailsMap);
+		DataLoader.Populate(_ianaMap, _windowsMap, _railsMap, _inverseRailsMap);
 
-		KnownIanaTimeZoneNames = new HashSet<string>(IanaMap.Select(x => x.Key));
-		KnownWindowsTimeZoneIds = new HashSet<string>(WindowsMap.Keys.Select(x => x.Split('|')[1]).Distinct());
-		KnownRailsTimeZoneNames = new HashSet<string>(RailsMap.Select(x => x.Key));
+		KnownIanaTimeZoneNames = new HashSet<string>(_ianaMap.Select(x => x.Key));
+		KnownWindowsTimeZoneIds = new HashSet<string>(_windowsMap.Keys.Select(x => x.Split('|')[1]).Distinct());
+		KnownRailsTimeZoneNames = new HashSet<string>(_railsMap.Select(x => x.Key));
 
-#if !NETSTANDARD1_1
-		SystemTimeZones = GetSystemTimeZones();
-#endif
+		_systemTimeZones = GetSystemTimeZones();
 	}
 
 	/// <summary>
@@ -70,7 +65,7 @@ public static class TZConvert
 	/// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
 	public static bool TryIanaToWindows(string ianaTimeZoneName, out string windowsTimeZoneId)
 	{
-		return IanaMap.TryGetValue(ianaTimeZoneName, out windowsTimeZoneId);
+		return _ianaMap.TryGetValue(ianaTimeZoneName, out windowsTimeZoneId);
 	}
 
 	/// <summary>
@@ -115,14 +110,12 @@ public static class TZConvert
 	/// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
 	public static bool TryWindowsToIana(string windowsTimeZoneId, string territoryCode, out string ianaTimeZoneName)
 	{
-		if (WindowsMap.TryGetValue($"{territoryCode}|{windowsTimeZoneId}", out ianaTimeZoneName))
+		if (_windowsMap.TryGetValue($"{territoryCode}|{windowsTimeZoneId}", out ianaTimeZoneName))
 			return true;
 
 		// use the golden zone when not found with a particular region
-		return territoryCode != "001" && WindowsMap.TryGetValue($"001|{windowsTimeZoneId}", out ianaTimeZoneName);
+		return territoryCode != "001" && _windowsMap.TryGetValue($"001|{windowsTimeZoneId}", out ianaTimeZoneName);
 	}
-
-#if !NETSTANDARD1_1
 
 	/// <summary>
 	/// Retrieves a <see cref="TimeZoneInfo"/> object given a valid Windows or IANA time zone identifier,
@@ -135,12 +128,7 @@ public static class TZConvert
 		if (TryGetTimeZoneInfo(windowsOrIanaTimeZoneId, out var timeZoneInfo))
 			return timeZoneInfo;
 
-#if !NETSTANDARD1_3
 		throw new TimeZoneNotFoundException();
-#else
-		// this will also throw, but we can't throw directly because TimeZoneNotFoundException is not available in .NET Standard 1.3
-		return TimeZoneInfo.FindSystemTimeZoneById(windowsOrIanaTimeZoneId);
-#endif
 	}
 
 	/// <summary>
@@ -159,15 +147,14 @@ public static class TZConvert
 		}
 
 		// Try a direct approach 
-		if (SystemTimeZones.TryGetValue(windowsOrIanaTimeZoneId, out timeZoneInfo))
+		if (_systemTimeZones.TryGetValue(windowsOrIanaTimeZoneId, out timeZoneInfo))
 			return true;
 
 		// Convert to the opposite platform and try again
-		return (IsWindows && TryIanaToWindows(windowsOrIanaTimeZoneId, out var tzid) ||
+		return (_isWindows && TryIanaToWindows(windowsOrIanaTimeZoneId, out var tzid) ||
 				TryWindowsToIana(windowsOrIanaTimeZoneId, out tzid)) &&
-			   SystemTimeZones.TryGetValue(tzid, out timeZoneInfo);
+			   _systemTimeZones.TryGetValue(tzid, out timeZoneInfo);
 	}
-#endif
 
 	/// <summary>
 	/// Converts an IANA time zone name to one or more equivalent Rails time zone names.
@@ -192,13 +179,13 @@ public static class TZConvert
 	public static bool TryIanaToRails(string ianaTimeZoneName, out IList<string> railsTimeZoneNames)
 	{
 		// try directly first
-		if (InverseRailsMap.TryGetValue(ianaTimeZoneName, out railsTimeZoneNames))
+		if (_inverseRailsMap.TryGetValue(ianaTimeZoneName, out railsTimeZoneNames))
 			return true;
 
 		// try again with the golden zone
 		return TryIanaToWindows(ianaTimeZoneName, out var windowsTimeZoneId) &&
 			   TryWindowsToIana(windowsTimeZoneId, out var ianaGoldenZone) &&
-			   InverseRailsMap.TryGetValue(ianaGoldenZone, out railsTimeZoneNames);
+			   _inverseRailsMap.TryGetValue(ianaGoldenZone, out railsTimeZoneNames);
 	}
 
 	/// <summary>
@@ -223,7 +210,7 @@ public static class TZConvert
 	/// <returns><c>true</c> if successful, <c>false</c> otherwise.</returns>
 	public static bool TryRailsToIana(string railsTimeZoneName, out string ianaTimeZoneName)
 	{
-		return RailsMap.TryGetValue(railsTimeZoneName, out ianaTimeZoneName);
+		return _railsMap.TryGetValue(railsTimeZoneName, out ianaTimeZoneName);
 	}
 
 	/// <summary>
@@ -306,13 +293,12 @@ public static class TZConvert
 		return false;
 	}
 
-#if !NETSTANDARD1_1
 	private static Dictionary<string, TimeZoneInfo> GetSystemTimeZones()
 	{
 		IEnumerable<TimeZoneInfo> timeZones;
 
 #if NETSTANDARD2_0 || NETSTANDARD1_3
-		if (IsWindows)
+		if (_isWindows)
 			timeZones = TimeZoneInfo.GetSystemTimeZones();
 		else
 			timeZones = GetSystemTimeZonesLinux();
@@ -328,7 +314,7 @@ public static class TZConvert
 		}
 
 #if NETSTANDARD2_0 || NETSTANDARD1_3
-		if (!IsWindows)
+		if (!_isWindows)
 		{
 			const string caSka = "Canada/East-Saskatchewan";
 			// Include special case to resolve deleted link
@@ -369,6 +355,5 @@ public static class TZConvert
 				yield return tzi;
 		}
 	}
-#endif
 #endif
 }
