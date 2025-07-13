@@ -298,10 +298,11 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 	/// </summary>
 	/// <param name="stream">The stream to write to</param>
 	/// <param name="encoding">The text encoding.</param>
-	public CsvFileWriter(Stream stream, Encoding encoding = null) {
-		_writer = encoding != null ?
-			new StreamWriter(stream, encoding) :
-			new StreamWriter(stream);
+	public CsvFileWriter(Stream stream, Encoding encoding = null)
+	{
+		_writer = encoding != null
+			? new(stream, encoding)
+			: new(stream);
 	}
 
 	/// <summary>
@@ -311,7 +312,16 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 	/// <param name="path">The name of the CSV file to write to</param>
 	public CsvFileWriter(string path)
 	{
-		_writer = new StreamWriter(path);
+		_writer = new(path);
+	}
+
+	/// <summary>
+	/// Gets or sets the character used to separate lines in the CSV file.
+	/// </summary>
+	public string LineSeparator
+	{
+		get => _writer.NewLine;
+		set => _writer.NewLine = value;
 	}
 
 	/// <summary>
