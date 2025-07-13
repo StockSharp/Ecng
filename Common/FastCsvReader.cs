@@ -349,7 +349,7 @@ public class FastCsvReader
 
 		long? intPart = null;
 		BigInteger? intPart2 = null;
-		long? fractalPart = null;
+		decimal? fractalPart = null;
 
 		var isNegative = false;
 
@@ -409,17 +409,17 @@ public class FastCsvReader
 			canSkipZero = false;
 			fractalPartSize++;
 
-			fractalPart = (c - '0') * 10.Pow(fractalPartSize - 1) + (fractalPart ?? 0);
+			fractalPart = (decimal)((c - '0') * 10.0.Pow(fractalPartSize - 1)) + (fractalPart ?? 0);
 		}
 
 		decimal? retVal = intPart ?? (decimal?)intPart2;
 
-		if (fractalPart is object)
+		if (fractalPart is decimal f)
 		{
-			if (intPart2 is object)
-				retVal = (decimal)intPart2.Value + (decimal)fractalPart.Value / (long)Math.Pow(10, fractalPartSize);
+			if (intPart2 is BigInteger i2)
+				retVal = (decimal)i2 + f / (decimal)Math.Pow(10, fractalPartSize);
 			else
-				retVal = (intPart ?? 0L) + (decimal)fractalPart.Value / (long)Math.Pow(10, fractalPartSize);
+				retVal = (intPart ?? 0L) + f / (decimal)Math.Pow(10, fractalPartSize);
 		}
 
 		if (retVal > 0 && isNegative)

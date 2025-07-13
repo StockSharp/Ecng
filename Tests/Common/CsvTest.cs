@@ -223,6 +223,27 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 			});
 	}
 
+	[TestMethod]
+	public void BigFractal()
+	{
+		Assert("1;3.3333333333;2;3.3333333333333333;3.3333333333333333333333333333", 1,
+			(i, r) =>
+			{
+				switch (i)
+				{
+					case 0:
+						r.ReadInt().AssertEqual(1);
+						r.ReadDecimal().AssertEqual(3.3333333333m);
+						r.ReadInt().AssertEqual(2);
+						r.ReadDecimal().AssertEqual(3.3333333333333333m);
+						r.ReadDecimal().AssertEqual(3.3333333333333333333333333333m);
+						break;
+					default:
+						throw new InvalidOperationException();
+				}
+			});
+	}
+
 	private static void Assert(string value, int lineCount, Action<int, FastCsvReader> assertLine)
 	{
 		Do.Invariant(() =>
