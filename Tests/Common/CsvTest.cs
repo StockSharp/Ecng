@@ -244,6 +244,23 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 			});
 	}
 
+	[TestMethod]
+	public void SingleDecimal()
+	{
+		Assert("3.3", 1,
+			(i, r) =>
+			{
+				switch (i)
+				{
+					case 0:
+						r.ReadDecimal().AssertEqual(3.3m);
+						break;
+					default:
+						throw new InvalidOperationException();
+				}
+			});
+	}
+
 	private static void Assert(string value, int lineCount, Action<int, FastCsvReader> assertLine)
 	{
 		Do.Invariant(() =>

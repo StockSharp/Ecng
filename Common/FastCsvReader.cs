@@ -230,6 +230,14 @@ public class FastCsvReader
 
 			_columnCount++;
 		}
+		else if (_lineLen > 0)
+		{
+			// If there are no column separators, treat the whole line as a single column
+			var pair = GetColumnPos();
+			pair.First = 0;
+			pair.Second = _lineLen;
+			_columnCount = 1;
+		}
 
 		return _lineLen > 0;
 	}
