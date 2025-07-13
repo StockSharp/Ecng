@@ -78,13 +78,7 @@ static class PythonAttrs
 
 		if (inherit && obj is PythonType pt)
 		{
-			var baseType = pt.GetUnderlyingSystemType();
-
-			while (baseType is not null)
-			{
-				attrs.AddRange(GetCustomAttributes(ops, baseType, inherit));
-				baseType = baseType.BaseType;
-			}
+			attrs.AddRange(pt.GetUnderlyingSystemType().GetCustomAttributes(inherit));
 		}
 
 		return [.. attrs];
