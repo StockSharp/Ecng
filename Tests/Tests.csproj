@@ -9,22 +9,13 @@
 
   <ItemGroup>
     <Compile Remove="Compilation\**" />
-    <Compile Remove="ComponentModel\**" />
-    <Compile Remove="Data\**" />
     <Compile Remove="Interop\**" />
-    <Compile Remove="IO\**" />
     <Compile Remove="Net\**" />
     <EmbeddedResource Remove="Compilation\**" />
-    <EmbeddedResource Remove="ComponentModel\**" />
-    <EmbeddedResource Remove="Data\**" />
     <EmbeddedResource Remove="Interop\**" />
-    <EmbeddedResource Remove="IO\**" />
     <EmbeddedResource Remove="Net\**" />
     <None Remove="Compilation\**" />
-    <None Remove="ComponentModel\**" />
-    <None Remove="Data\**" />
     <None Remove="Interop\**" />
-    <None Remove="IO\**" />
     <None Remove="Net\**" />
   </ItemGroup>
 
