@@ -18,10 +18,6 @@
     <Compile Remove="Localization\**" />
     <Compile Remove="MathLight\**" />
     <Compile Remove="Net\**" />
-    <Compile Remove="Reflection\**" />
-    <Compile Remove="Resources\**" />
-    <Compile Remove="Security\**" />
-    <Compile Remove="Serialization\**" />
     <EmbeddedResource Remove="Collections\**" />
     <EmbeddedResource Remove="Compilation\**" />
     <EmbeddedResource Remove="ComponentModel\**" />
@@ -32,10 +28,6 @@
     <EmbeddedResource Remove="Localization\**" />
     <EmbeddedResource Remove="MathLight\**" />
     <EmbeddedResource Remove="Net\**" />
-    <EmbeddedResource Remove="Reflection\**" />
-    <EmbeddedResource Remove="Resources\**" />
-    <EmbeddedResource Remove="Security\**" />
-    <EmbeddedResource Remove="Serialization\**" />
     <None Remove="Collections\**" />
     <None Remove="Compilation\**" />
     <None Remove="ComponentModel\**" />
@@ -46,10 +38,6 @@
     <None Remove="Localization\**" />
     <None Remove="MathLight\**" />
     <None Remove="Net\**" />
-    <None Remove="Reflection\**" />
-    <None Remove="Resources\**" />
-    <None Remove="Security\**" />
-    <None Remove="Serialization\**" />
   </ItemGroup>
 
   <ItemGroup>
