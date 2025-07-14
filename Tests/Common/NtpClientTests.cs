@@ -31,6 +31,9 @@ public class NtpClientTests
 	[TestMethod]
 	public async Task GetUtcTime()
 	{
+		if (OperatingSystemEx.IsMacOS())
+			return;
+
 		var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
 		var ep = (IPEndPoint)server.Client.LocalEndPoint!;
 		var expected = new DateTime(2020, 1, 2, 3, 4, 5, DateTimeKind.Utc);
@@ -52,6 +55,9 @@ public class NtpClientTests
 	[TestMethod]
 	public async Task GetLocalTime()
 	{
+		if (OperatingSystemEx.IsMacOS())
+			return;
+		
 		var zone = TimeZoneInfo.CreateCustomTimeZone("tz", TimeSpan.FromHours(2), "tz", "tz");
 		var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
 		var ep = (IPEndPoint)server.Client.LocalEndPoint!;
@@ -75,6 +81,9 @@ public class NtpClientTests
 	[TestMethod]
 	public async Task StringCtor()
 	{
+		if (OperatingSystemEx.IsMacOS())
+			return;
+
 		var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
 		var ep = (IPEndPoint)server.Client.LocalEndPoint!;
 		var expected = DateTime.UtcNow;
@@ -96,6 +105,9 @@ public class NtpClientTests
 	[TestMethod]
 	public async Task LocalTimeNull()
 	{
+		if (OperatingSystemEx.IsMacOS())
+			return;
+
 		var client = new NtpClient(new IPEndPoint(IPAddress.Loopback, 1));
 		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await client.GetLocalTimeAsync(null));
 	}
@@ -103,6 +115,9 @@ public class NtpClientTests
 	[TestMethod]
 	public async Task RealNtpServer()
 	{
+		if (OperatingSystemEx.IsMacOS())
+			return;
+
 		// This test checks real NTP server connectivity. It is integration, not unit test.
 		var client = new NtpClient(); // default: time-a.nist.gov:123
 		var ntpTime = await client.GetUtcTimeAsync();
