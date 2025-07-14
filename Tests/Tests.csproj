@@ -8,16 +8,68 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="Resources\**\*.*" />
+    <Compile Remove="Collections\**" />
+    <Compile Remove="Compilation\**" />
+    <Compile Remove="ComponentModel\**" />
+    <Compile Remove="Data\**" />
+    <Compile Remove="Interop\**" />
+    <Compile Remove="IO\**" />
+    <Compile Remove="Linq\**" />
+    <Compile Remove="Localization\**" />
+    <Compile Remove="MathLight\**" />
+    <Compile Remove="Net\**" />
+    <Compile Remove="Reflection\**" />
+    <Compile Remove="Resources\**" />
+    <Compile Remove="Security\**" />
+    <Compile Remove="Serialization\**" />
+    <EmbeddedResource Remove="Collections\**" />
+    <EmbeddedResource Remove="Compilation\**" />
+    <EmbeddedResource Remove="ComponentModel\**" />
+    <EmbeddedResource Remove="Data\**" />
+    <EmbeddedResource Remove="Interop\**" />
+    <EmbeddedResource Remove="IO\**" />
+    <EmbeddedResource Remove="Linq\**" />
+    <EmbeddedResource Remove="Localization\**" />
+    <EmbeddedResource Remove="MathLight\**" />
+    <EmbeddedResource Remove="Net\**" />
+    <EmbeddedResource Remove="Reflection\**" />
+    <EmbeddedResource Remove="Resources\**" />
+    <EmbeddedResource Remove="Security\**" />
+    <EmbeddedResource Remove="Serialization\**" />
+    <None Remove="Collections\**" />
+    <None Remove="Compilation\**" />
+    <None Remove="ComponentModel\**" />
+    <None Remove="Data\**" />
+    <None Remove="Interop\**" />
+    <None Remove="IO\**" />
+    <None Remove="Linq\**" />
+    <None Remove="Localization\**" />
+    <None Remove="MathLight\**" />
+    <None Remove="Net\**" />
+    <None Remove="Reflection\**" />
+    <None Remove="Resources\**" />
+    <None Remove="Security\**" />
+    <None Remove="Serialization\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Compilation\**" />
-    <Compile Remove="Net\**" />
-    <EmbeddedResource Remove="Compilation\**" />
-    <EmbeddedResource Remove="Net\**" />
-    <None Remove="Compilation\**" />
-    <None Remove="Net\**" />
+    <Compile Remove="Common\AllocationArrayTest.cs" />
+    <Compile Remove="Common\ArrayHelperTests.cs" />
+    <Compile Remove="Common\AsyncHelperTests.cs" />
+    <Compile Remove="Common\AttributeHelperTests.cs" />
+    <Compile Remove="Common\CsvTest.cs" />
+    <Compile Remove="Common\CurrencyTests.cs" />
+    <Compile Remove="Common\HexEncodingTests.cs" />
+    <Compile Remove="Common\MathHelperTest.cs" />
+    <Compile Remove="Common\NtpClientTests.cs" />
+    <Compile Remove="Common\NullableTest.cs" />
+    <Compile Remove="Common\RandomTests.cs" />
+    <Compile Remove="Common\SmartFormatTests.cs" />
+    <Compile Remove="Common\StringTests.cs" />
+    <Compile Remove="Common\TimeTest.cs" />
+    <Compile Remove="Common\TupleTests.cs" />
+    <Compile Remove="Common\TypeTests.cs" />
+    <Compile Remove="Common\XmlHelperTests.cs" />
   </ItemGroup>
 
   <ItemGroup>
