@@ -8,13 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Compilation\**" />
     <Compile Remove="Interop\**" />
     <Compile Remove="Net\**" />
-    <EmbeddedResource Remove="Compilation\**" />
     <EmbeddedResource Remove="Interop\**" />
     <EmbeddedResource Remove="Net\**" />
-    <None Remove="Compilation\**" />
     <None Remove="Interop\**" />
     <None Remove="Net\**" />
   </ItemGroup>
