@@ -8,35 +8,23 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Collections\**" />
     <Compile Remove="Compilation\**" />
     <Compile Remove="ComponentModel\**" />
     <Compile Remove="Data\**" />
     <Compile Remove="Interop\**" />
     <Compile Remove="IO\**" />
-    <Compile Remove="Linq\**" />
-    <Compile Remove="Localization\**" />
-    <Compile Remove="MathLight\**" />
     <Compile Remove="Net\**" />
-    <EmbeddedResource Remove="Collections\**" />
     <EmbeddedResource Remove="Compilation\**" />
     <EmbeddedResource Remove="ComponentModel\**" />
     <EmbeddedResource Remove="Data\**" />
     <EmbeddedResource Remove="Interop\**" />
     <EmbeddedResource Remove="IO\**" />
-    <EmbeddedResource Remove="Linq\**" />
-    <EmbeddedResource Remove="Localization\**" />
-    <EmbeddedResource Remove="MathLight\**" />
     <EmbeddedResource Remove="Net\**" />
-    <None Remove="Collections\**" />
     <None Remove="Compilation\**" />
     <None Remove="ComponentModel\**" />
     <None Remove="Data\**" />
     <None Remove="Interop\**" />
     <None Remove="IO\**" />
-    <None Remove="Linq\**" />
-    <None Remove="Localization\**" />
-    <None Remove="MathLight\**" />
     <None Remove="Net\**" />
   </ItemGroup>
 
