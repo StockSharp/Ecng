@@ -8,11 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Interop\**" />
     <Compile Remove="Net\**" />
-    <EmbeddedResource Remove="Interop\**" />
     <EmbeddedResource Remove="Net\**" />
-    <None Remove="Interop\**" />
     <None Remove="Net\**" />
   </ItemGroup>
 
