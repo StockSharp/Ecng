@@ -59,13 +59,7 @@ public static class EntityPropertyHelper
 			if (!names.Add(name))
 				continue;
 
-			var prop = new EntityProperty
-			{
-				Name = name,
-				Parent = parent,
-				DisplayName = pi.GetDisplayName(),
-				Description = pi.GetDescription()
-			};
+			var prop = new EntityProperty(name, pi.GetDisplayName(), pi.GetDescription(), pi.PropertyType, parent);
 
 			var propType = pi.PropertyType;
 

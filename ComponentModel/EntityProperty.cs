@@ -1,34 +1,50 @@
 ﻿namespace Ecng.ComponentModel;
 
+using System;
 using System.Collections.Generic;
+
+using Ecng.Common;
 
 /// <summary>
 /// Represents an entity property with hierarchical structure.
 /// </summary>
-public class EntityProperty
+/// <remarks>
+/// Initializes a new instance of the <see cref="EntityProperty"/> class with the specified parameters.
+/// </remarks>
+/// <param name="name"><see cref="Name"/></param>
+/// <param name="displayName"><see cref="DisplayName"/></param>
+/// <param name="description"><see cref="Description"/></param>
+/// <param name="type"><see cref="Type"/></param>
+/// <param name="parent"><see cref="Parent"/></param>
+public class EntityProperty(string name, string displayName, string description, Type type, EntityProperty parent)
 {
 	/// <summary>
-	/// Gets or sets the unique name of the property.
+	/// Gets the unique name of the property.
 	/// </summary>
-	public string Name { get; set; }
+	public string Name { get; } = name.ThrowIfEmpty(nameof(name));
 
 	/// <summary>
-	/// Gets or sets the display name of the property.
+	/// Gets the display name of the property.
 	/// </summary>
-	public string DisplayName { get; set; }
+	public string DisplayName { get; } = displayName.ThrowIfEmpty(nameof(displayName));
 
 	/// <summary>
-	/// Gets or sets the description of the property.
+	/// Gets the description of the property.
 	/// </summary>
-	public string Description { get; set; }
+	public string Description { get; } = description;
 
 	/// <summary>
-	/// Gets or sets the parent property in the hierarchy.
+	/// Gets the type of the property.
 	/// </summary>
-	public EntityProperty Parent { get; set; }
+	public Type Type { get; } = type ?? throw new ArgumentNullException(nameof(type));
 
 	/// <summary>
-	/// Gets or sets the collection of child properties.
+	/// Gets the parent property in the hierarchy.
+	/// </summary>
+	public EntityProperty Parent { get; } = parent;
+
+	/// <summary>
+	/// Gets the collection of child properties.
 	/// </summary>
 	public IEnumerable<EntityProperty> Properties { get; set; }
 
@@ -42,12 +58,6 @@ public class EntityProperty
 	/// </summary>
 	public string ParentName => Parent is null ? string.Empty : Parent.Name;
 
-	/// <summary>
-	/// Returns a string that represents the current entity property.
-	/// </summary>
-	/// <returns>A string representation of the entity property including its name and full display name.</returns>
-	public override string ToString()
-	{
-		return $"{Name} ({FullDisplayName})";
-	}
+	/// <inheritdoc/>
+	public override string ToString() => $"{Name} ({FullDisplayName})";
 }
