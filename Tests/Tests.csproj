@@ -12,6 +12,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Compilation\**" />
+    <Compile Remove="Net\**" />
+    <EmbeddedResource Remove="Compilation\**" />
+    <EmbeddedResource Remove="Net\**" />
+    <None Remove="Compilation\**" />
+    <None Remove="Net\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MsTestSdkVer)" />
     <PackageReference Include="MSTest.TestAdapter" Version="$(MsTestVer)" />
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />

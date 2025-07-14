@@ -31,8 +31,4 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run tests
-        run: >
-          dotnet test Ecng.sln --no-build --configuration Release
-          --settings Tests/test.runsettings
-          --verbosity diagnostic
-          --logger "console;verbosity=diagnostic"
+        run: dotnet test Ecng.sln --no-build --configuration Release --settings Tests/test.runsettings
