@@ -53,26 +53,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Common\AllocationArrayTest.cs" />
-    <Compile Remove="Common\ArrayHelperTests.cs" />
-    <Compile Remove="Common\AsyncHelperTests.cs" />
-    <Compile Remove="Common\AttributeHelperTests.cs" />
-    <Compile Remove="Common\CsvTest.cs" />
-    <Compile Remove="Common\CurrencyTests.cs" />
-    <Compile Remove="Common\HexEncodingTests.cs" />
-    <Compile Remove="Common\MathHelperTest.cs" />
-    <Compile Remove="Common\NtpClientTests.cs" />
-    <Compile Remove="Common\NullableTest.cs" />
-    <Compile Remove="Common\RandomTests.cs" />
-    <Compile Remove="Common\SmartFormatTests.cs" />
-    <Compile Remove="Common\StringTests.cs" />
-    <Compile Remove="Common\TimeTest.cs" />
-    <Compile Remove="Common\TupleTests.cs" />
-    <Compile Remove="Common\TypeTests.cs" />
-    <Compile Remove="Common\XmlHelperTests.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MsTestSdkVer)" />
     <PackageReference Include="MSTest.TestAdapter" Version="$(MsTestVer)" />
     <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVer)" />
