@@ -3,12 +3,14 @@ namespace Ecng.Interop;
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Net.NetworkInformation;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
+
+using Newtonsoft.Json.Linq;
 
 using Nito.AsyncEx;
 
@@ -80,37 +82,9 @@ public static class HardwareInfo
 		return cpuid + (mbId.IsEmpty() ? netId : mbId);
 	}
 
-	private static async Task<string> GetIdLinuxAsync(CancellationToken cancellationToken)
-	{
-		var macs = GetNetworkMacs();
-		var volId = await GetLinuxVolumeIdAsync(cancellationToken);
-
-		return macs + volId;
-	}
-
-	private static string GetNetworkMacs()
-	{
-		var result = new HashSet<string>();
-		var ifaces = NetworkInterface
-			.GetAllNetworkInterfaces()
-			.Where(i => i.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
-						i.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
-						i.OperationalStatus == OperationalStatus.Up);
-
-		foreach (var iface in ifaces)
-			result.Add(iface.GetPhysicalAddress().ToString().ToLowerInvariant());
-
-		var list = result
-			.OrderBy(s => s)
-			.Where(s => s != "ffffffffffff" && s != "000000000000")
-			.ToList();
-
-		return list.Join(string.Empty);
-	}
-
 	private static readonly Regex _lsblkRegex = new(@"^\s*/\s+([\da-f-]+)\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-	private static async Task<string> GetLinuxVolumeIdAsync(CancellationToken cancellationToken)
+	private static async Task<string> GetIdLinuxAsync(CancellationToken cancellationToken)
 	{
 		var errors = new List<string>();
 		var result = new List<string>();
@@ -135,33 +109,65 @@ public static class HardwareInfo
 
 	private static async Task<string> GetIdMacOSAsync(CancellationToken cancellationToken)
 	{
-		var macs = GetNetworkMacs();
-		var volId = await GetMacOSVolumeIdAsync(cancellationToken);
-
-		return macs + volId;
-	}
-
-	private static async Task<string> GetMacOSVolumeIdAsync(CancellationToken cancellationToken)
-	{
 		var errors = new List<string>();
-		var result = new List<string>();
+		var output = new StringBuilder();
 
-		var res = await IOHelper.ExecuteAsync("diskutil", "info /", str =>
-		{
-			if (!str.ContainsIgnoreCase("Volume UUID:"))
-				return;
-
-			var uuid = str.Split(':')[1].Trim();
-
-			if (!uuid.IsEmpty())
-				result.Add(uuid);
-		},
-		errors.Add,
-		cancellationToken: cancellationToken).NoWait();
+		// Execute system_profiler with JSON output format
+		// -json flag is available since macOS High Sierra (10.13)
+		var res = await IOHelper.ExecuteAsync(
+			"system_profiler",
+			"SPHardwareDataType -json",
+			str => output.AppendLine(str),
+			errors.Add,
+			cancellationToken: cancellationToken).NoWait();
 
 		if (res != 0 || errors.Any())
-			throw new InvalidOperationException($"Unable to execute diskutil. Return code {res}.\n{errors.JoinNL()}");
+		{
+			throw new InvalidOperationException(
+				$"Unable to execute system_profiler. Return code {res}.\n{errors.JoinNL()}");
+		}
 
-		return result.FirstOrDefault()?.Remove("-").ToLowerInvariant();
+		try
+		{
+			// Parse the JSON output
+			var json = JObject.Parse(output.ToString());
+
+			// Navigate through the JSON structure
+			// The path is: SPHardwareDataType[0].platform_UUID
+			var hardwareData = json["SPHardwareDataType"] as JArray;
+			if (hardwareData?.Count > 0)
+			{
+				var platformUuid = hardwareData[0]["platform_UUID"]?.ToString();
+
+				if (!platformUuid.IsEmpty())
+				{
+					return platformUuid.Remove("-").ToLowerInvariant();
+				}
+			}
+
+			// Fallback: try alternative JSON paths that might exist on different macOS versions
+			var alternativePaths = new[]
+			{
+				"SPHardwareDataType[0]._items[0].platform_UUID",
+				"SPHardwareDataType[0].Hardware.platform_UUID"
+			};
+
+			foreach (var path in alternativePaths)
+			{
+				var uuid = json.SelectToken(path)?.ToString();
+				if (!uuid.IsEmpty())
+				{
+					return uuid.Remove("-").ToLowerInvariant();
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			throw new InvalidOperationException(
+				$"Failed to parse system_profiler JSON output: {ex.Message}", ex);
+		}
+
+		throw new InvalidOperationException(
+			"Hardware UUID not found in system_profiler output");
 	}
 }
