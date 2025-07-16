@@ -580,7 +580,7 @@ public static class PersistableHelper
 	public static SettingsStorage ToStorage(this object value, bool isAssemblyQualifiedName = default)
 		=> new SettingsStorage()
 			.Set(_typeKey, value.CheckOnNull().GetType().GetTypeAsString(isAssemblyQualifiedName))
-			.Set(_valueKey, value.To<string>())
+			.Set(_valueKey, value is IPersistable pv ? (object)pv.Save() : value.To<string>())
 		;
 
 	/// <summary>
@@ -593,12 +593,23 @@ public static class PersistableHelper
 		if (storage is null)
 			throw new ArgumentNullException(nameof(storage));
 
-		var value = storage.GetValue<string>(_valueKey).To(storage.GetValue<Type>(_typeKey));
+		var valueType = storage.GetValue<Type>(_typeKey);
 
-		if (value is DateTime dt)
-			value = dt.ToUniversalTime();
+		if (valueType.Is<IPersistable>())
+		{
+			var value = valueType.CreateInstance<IPersistable>();
+			value.Load(storage, _valueKey);
+			return value;
+		}
+		else
+		{
+			var value = storage.GetValue<string>(_valueKey).To(valueType);
 
-		return value;
+			if (value is DateTime dt)
+				value = dt.ToUniversalTime();
+
+			return value;
+		}
 	}
 
 	private static readonly SynchronizedDictionary<Type, (Func<object, SettingsStorage> serialize, Func<SettingsStorage, object> deserialize)> _customSerializers = new();
