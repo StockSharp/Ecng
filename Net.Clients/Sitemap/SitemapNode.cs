@@ -15,6 +15,7 @@ public sealed class SitemapNode
 			throw new ArgumentNullException(nameof(url));
 
 		Url = url;
+		AlternateLinks = [];
 	}
 
 	/// <summary>
@@ -80,6 +81,16 @@ public sealed class SitemapNode
 	/// The URL of the page.
 	/// </value>
 	public string Url { get; }
+
+	/// <summary>
+	/// Gets the collection of alternate language links for this page.
+	/// Used to specify alternate language versions of the same content for multilingual websites.
+	/// These links will be rendered as &lt;xhtml:link&gt; elements in the sitemap XML.
+	/// </summary>
+	/// <value>
+	/// The collection of alternate language links.
+	/// </value>
+	public XhtmlLinkCollection AlternateLinks { get; }
 
 	/// <summary>
 	/// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
