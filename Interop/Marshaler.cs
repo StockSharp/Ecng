@@ -4,10 +4,6 @@ using System;
 using System.ComponentModel;
 using System.Text;
 using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
-using System.Reflection;
-using System.Collections.Concurrent;
-using System.Linq;
 
 using Ecng.Common;
 
@@ -486,67 +482,6 @@ public unsafe static class Marshaler
 
 		fixed (char* s = value)
 			encoding.GetBytes(s, value.Length, ptr, bytesCount);
-	}
-
-	/// <summary>
-	/// Formats a field's value to a string using the specified encoding.
-	/// </summary>
-	/// <param name="f">The field information.</param>
-	/// <param name="value">The value of the field.</param>
-	/// <param name="encoding">The encoding to use when converting byte arrays to strings.</param>
-	/// <returns>The formatted string representation of the field value.</returns>
-	private static object FormatToString(FieldInfo f, object value, Encoding encoding)
-	{
-		if (f is null)
-			throw new ArgumentNullException(nameof(f));
-
-		var attr = f.GetAttribute<FixedBufferAttribute>();
-
-		if (attr != null)
-		{
-			using var hdl = new GCHandle<object>(value, GCHandleType.Pinned, null);
-
-			var array = new byte[attr.Length];
-
-			var b = (byte*)hdl.Value.AddrOfPinnedObject();
-
-			for (var i = 0; i < array.Length; ++i)
-			{
-				array[i] = *(b + i);
-			}
-
-			value = encoding.GetString(array).Replace("\0", "");
-		}
-		else if (value is Enum)
-		{
-			value = value.To<byte>();
-		}
-
-		return value;
-	}
-
-	private static readonly ConcurrentDictionary<Type, FieldInfo[]> _fields = [];
-
-	/// <summary>
-	/// Formats the object's fields and values into a string using the specified encoding.
-	/// </summary>
-	/// <param name="obj">The object whose fields are to be formatted.</param>
-	/// <param name="encoding">The encoding to use for formatting byte arrays.</param>
-	/// <returns>A string representation of the object's fields and values.</returns>
-	public static string FormatToString(this object obj, Encoding encoding)
-	{
-		if (obj is null)
-			throw new ArgumentNullException(nameof(obj));
-
-		if (encoding is null)
-			throw new ArgumentNullException(nameof(encoding));
-
-		var type = obj.GetType();
-
-		return _fields
-			.GetOrAdd(type, key => key.GetFields())
-			.Select(f => $"{f.Name}={FormatToString(f, f.GetValue(obj), encoding)}")
-			.JoinCommaSpace();
 	}
 
 	private static readonly Encoding _utf8 = Encoding.UTF8;
