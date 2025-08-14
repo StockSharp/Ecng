@@ -507,8 +507,10 @@ public unsafe static class Marshaler
 		if (value.IsEmpty())
 			return;
 
-		if (_utf8.GetByteCount(value) > size)
-			throw new ArgumentOutOfRangeException(nameof(size), size, "Invalid value.");
+		var expected = _utf8.GetByteCount(value);
+
+		if (expected > size)
+			throw new ArgumentOutOfRangeException(nameof(size), size, $"Invalid value. Expected {expected}.");
 
 		value.FillString(_utf8, ptr, size);
 	}
@@ -533,8 +535,10 @@ public unsafe static class Marshaler
 		if (value.IsEmpty())
 			return;
 
-		if (_ascii.GetByteCount(value) > size)
-			throw new ArgumentOutOfRangeException(nameof(size), size, "Invalid value.");
+		var expected = _ascii.GetByteCount(value);
+
+		if (expected > size)
+			throw new ArgumentOutOfRangeException(nameof(size), size, $"Invalid value. Expected {expected}.");
 
 		value.FillString(_ascii, ptr, size);
 	}
