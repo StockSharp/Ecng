@@ -25,6 +25,9 @@ public static class JsonHelper
 	/// </summary>
 	public static readonly Encoding UTF8NoBom = new UTF8Encoding(false);
 
+	private static readonly byte[] _utf8Bom = Encoding.UTF8.GetPreamble();
+	private static readonly char _unicodeBomChar = Encoding.UTF8.GetString(_utf8Bom).FirstOrDefault();
+
 	/// <summary>
 	/// Checks that the current token of the JSON reader matches the expected token.
 	/// </summary>
@@ -190,10 +193,42 @@ public static class JsonHelper
 		if (array is null)
 			throw new ArgumentNullException(nameof(array));
 
-		if (array.Length >= 3 && array[0] == 239 && array[1] == 187 && array[2] == 191)
-			array = [.. array.Skip(3)];
+		if (_utf8Bom.Length > 0 && array.Length >= _utf8Bom.Length)
+		{
+			var hasBom = true;
+
+			for (var i = 0; i < _utf8Bom.Length; i++)
+			{
+				if (array[i] != _utf8Bom[i])
+				{
+					hasBom = false;
+					break;
+				}
+			}
+
+			if (hasBom)
+				array = [.. array.Skip(_utf8Bom.Length)];
+		}
 
 		return array;
+	}
+
+	/// <summary>
+	/// Removes a leading Unicode byte order mark (BOM, U+FEFF) from the specified string, if present.
+	/// </summary>
+	/// <param name="str">The input string (can be null or empty).</param>
+	/// <returns>
+	/// The input string without a leading BOM character; if the string is null, empty, or does not start with a BOM, the original value is returned.
+	/// </returns>
+	public static string SkipBom(this string str)
+	{
+		if (str.IsEmpty())
+			return str;
+
+		if (str[0] == _unicodeBomChar)
+			return str.Substring(1);
+
+		return str;
 	}
 
 	internal static FieldInfo[] GetJsonFields(this Type type)
