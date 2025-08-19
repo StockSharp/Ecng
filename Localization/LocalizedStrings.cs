@@ -51,6 +51,12 @@ public static class LocalizedStrings
 	/// <summary>
 	/// </summary>
 	public const string LogLevelDescKey = nameof(LogLevelDesc);
+	/// <summary>
+	/// </summary>
+	public const string PreventWorkKey = nameof(PreventWork);
+	/// <summary>
+	/// </summary>
+	public const string PreventUpgradeKey = nameof(PreventUpgrade);
 
 	/// <summary>
 	/// </summary>
@@ -91,6 +97,12 @@ public static class LocalizedStrings
 	/// <summary>
 	/// </summary>
 	public static string LogLevelDesc => Localize(nameof(LogLevelDesc));
+	/// <summary>
+	/// </summary>
+	public static string PreventWork => Localize(nameof(PreventWork));
+	/// <summary>
+	/// </summary>
+	public static string PreventUpgrade => Localize(nameof(PreventUpgrade));
 
 	/// <summary>
 	/// Localizes the string.
