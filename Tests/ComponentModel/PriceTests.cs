@@ -12,7 +12,7 @@ public class PriceTests
 		{
 			var v = RandomGen.GetInt(-1000, 1000);
 
-			var u = v.To<string>().ToPriceType(true);
+			var u = v.To<string>().ToPriceType();
 			u.AssertEqual(new Price(v, PriceTypes.Absolute));
 			u.ToString().AssertEqual(v.To<string>());
 
@@ -20,14 +20,14 @@ public class PriceTests
 			//u.AssertEqual(new Price(v, PriceTypes.Absolute));
 			//u.ToString().AssertEqual(v.ToString());
 
-			u = (v + "%").ToPriceType(true);
+			u = (v + "%").ToPriceType();
 			u.AssertEqual(new Price(v, PriceTypes.Percent));
 			u.ToString().AssertEqual(v + "%");
 
-			u = (v + "l").ToPriceType(true);
+			u = (v + "l").ToPriceType();
 			u.AssertEqual(new Price(v, PriceTypes.Limit));
 			u.ToString().AssertEqual(v + "l");
-			(v + "l").ToPriceType(true).AssertEqual((v + "L").ToPriceType(true));
+			(v + "l").ToPriceType().AssertEqual((v + "L").ToPriceType());
 
 			//u = v + "%";
 			//u.AssertEqual(new Price(v, PriceTypes.Percent));
@@ -51,7 +51,7 @@ public class PriceTests
 	[TestMethod]
 	public void InvalidParse2()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => "10н".ToPriceType(true));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => "10н".ToPriceType());
 	}
 
 	[TestMethod]
@@ -70,100 +70,14 @@ public class PriceTests
 	}
 
 	[TestMethod]
-	public void NullCast()
-	{
-		Price value = null;
-		((decimal?)value).AssertNull();
-		((double?)value).AssertNull();
-	}
-
-	[TestMethod]
-	public void NullCast2()
-	{
-		Price value = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((decimal)value).AssertNull());
-	}
-
-	[TestMethod]
-	public void NullCast3()
-	{
-		Price value = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((double)value).AssertNull());
-	}
-
-	[TestMethod]
-	public void NullCompare()
-	{
-		Price u1 = null;
-
-		(u1 == null).AssertTrue();
-		(u1 != null).AssertFalse();
-
-		(null == u1).AssertTrue();
-		(null != u1).AssertFalse();
-
-		u1 = 10m;
-
-		(u1 == null).AssertFalse();
-		(u1 != null).AssertTrue();
-
-		(null == u1).AssertFalse();
-		(null != u1).AssertTrue();
-	}
-
-	[TestMethod]
-	public void NullArithmetic()
-	{
-		Price u1 = null;
-		u1.AssertNull();
-
-		u1 += 10;
-		u1.AssertNull();
-
-		u1 = 10 + u1;
-		u1.AssertNull();
-
-		u1 += 10;
-		u1.AssertNull();
-
-		u1 -= u1;
-		u1.AssertNull();
-
-		u1 = -u1;
-		u1.AssertNull();
-
-		u1 *= 10;
-		u1.AssertNull();
-
-		u1 /= 10;
-		u1.AssertNull();
-
-		Price u2 = null;
-
-		u1 *= u2;
-		u1.AssertNull();
-
-		u1 /= u2;
-		u1.AssertNull();
-	}
-
-	[TestMethod]
 	public void Compare()
 	{
 		((Price)10 > 10).AssertFalse();
 		(new Price(10, PriceTypes.Absolute) == 10).AssertTrue();
 		(10 == new Price(10, PriceTypes.Absolute)).AssertTrue();
-		((Price)10 > null).AssertFalse();
-		((Price)10 < null).AssertFalse();
-		((Price)10 == null).AssertFalse();
-		((Price)10 != null).AssertTrue();
 
 		(new Price(10, PriceTypes.Limit) == new Price(10, PriceTypes.Limit)).AssertTrue();
 		new Price(10, PriceTypes.Limit).AssertEqual(new Price(10, PriceTypes.Limit));
-		(new Price(10, PriceTypes.Limit) > null).AssertFalse();
-		(new Price(10, PriceTypes.Limit) < null).AssertFalse();
-		(new Price(10, PriceTypes.Limit) == null).AssertFalse();
-		(new Price(10, PriceTypes.Limit) != null).AssertTrue();
 	}
 
 	[TestMethod]
@@ -243,20 +157,20 @@ public class PriceTests
 	[TestMethod]
 	public void Empty2()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => "".ToPriceType(true).AssertNull());
+		Assert.ThrowsExactly<ArgumentNullException>(() => "".ToPriceType().AssertNull());
 	}
 
 	[TestMethod]
 	public void Empty3()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).ToPriceType(true).AssertNull());
+		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).ToPriceType().AssertNull());
 	}
 
 	[TestMethod]
 	public void NotEquals()
 	{
-		var u1 = "1".ToPriceType(true);
-		var u2 = "1L".ToPriceType(true);
+		var u1 = "1".ToPriceType();
+		var u2 = "1L".ToPriceType();
 		(u1 == u2).AssertFalse();
 		(u1 != u2).AssertTrue();
 		u1.AssertNotEqual(u2);
@@ -265,8 +179,8 @@ public class PriceTests
 	[TestMethod]
 	public void NotEquals2()
 	{
-		var u1 = "1".ToPriceType(true);
-		var u2 = "2".ToPriceType(true);
+		var u1 = "1".ToPriceType();
+		var u2 = "2".ToPriceType();
 		(u1 == u2).AssertFalse();
 		(u1 != u2).AssertTrue();
 	}

@@ -13,17 +13,11 @@ public static class PriceExtensions
 	/// Convert string to <see cref="Price"/>.
 	/// </summary>
 	/// <param name="str">String value of <see cref="Price"/>.</param>
-	/// <param name="throwIfNull">Throw <see cref="ArgumentNullException"/> if the specified string is empty.</param>
 	/// <returns>Object <see cref="Price"/>.</returns>
-	public static Price ToPriceType(this string str, bool throwIfNull = default)
+	public static Price ToPriceType(this string str)
 	{
 		if (str.IsEmpty())
-		{
-			if (throwIfNull)
-				throw new ArgumentNullException(nameof(str));
-
-			return null;
-		}
+			throw new ArgumentNullException(nameof(str));
 
 		Price price = new();
 

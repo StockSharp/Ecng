@@ -14,7 +14,7 @@ using Ecng.Serialization;
 /// </remarks>
 [Serializable]
 [DataContract]
-public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormattable
+public struct Price : IComparable<Price>, IEquatable<Price>, IPersistable, IOperable<Price>, IFormattable
 {
 	static Price()
 	{
@@ -51,19 +51,6 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	public decimal Value { get; set; }
 
 	/// <summary>
-	/// Creates a copy of the current <see cref="Price"/>.
-	/// </summary>
-	/// <returns>A new <see cref="Price"/> instance that is a copy of this instance.</returns>
-	public override Price Clone()
-	{
-		return new()
-		{
-			Type = Type,
-			Value = Value,
-		};
-	}
-
-	/// <summary>
 	/// Compares the current instance with another <see cref="Price"/> object.
 	/// </summary>
 	/// <param name="other">The other <see cref="Price"/> to compare with.</param>
@@ -71,7 +58,7 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	/// A value less than zero if this instance is less than <paramref name="other"/>,
 	/// zero if they are equal, or a value greater than zero if this instance is greater than <paramref name="other"/>.
 	/// </returns>
-	public override int CompareTo(Price other)
+	public readonly int CompareTo(Price other)
 	{
 		if (this == other)
 			return 0;
@@ -83,17 +70,14 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	}
 
 	/// <inheritdoc />
-	public override int GetHashCode() => Type.GetHashCode() ^ Value.GetHashCode();
+	public override readonly int GetHashCode() => Type.GetHashCode() ^ Value.GetHashCode();
 
 	/// <inheritdoc />
-	public override bool Equals(object obj) => base.Equals(obj);
+	public override readonly bool Equals(object obj) => base.Equals(obj);
 
 	/// <inheritdoc />
-	protected override bool OnEquals(Price other)
-		=> EqualsImpl(other);
-
-	private bool EqualsImpl(Price p)
-		=> Type == p.Type && Value == p.Value;
+	public readonly bool Equals(Price other)
+		=> Type == other.Type && Value == other.Value;
 
 	/// <summary>
 	/// Implicitly converts an <see cref="int"/> to a <see cref="Price"/>.
@@ -117,23 +101,7 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
 	public static explicit operator double(Price value)
 	{
-		if (value is null)
-			throw new ArgumentNullException(nameof(value));
-
 		return (double)(decimal)value;
-	}
-
-	/// <summary>
-	/// Explicitly converts a <see cref="Price"/> to a nullable <see cref="double"/>.
-	/// </summary>
-	/// <param name="value">The <see cref="Price"/> to convert.</param>
-	/// <returns>The nullable double representation of the price value, or null if <paramref name="value"/> is null.</returns>
-	public static explicit operator double?(Price value)
-	{
-		if (value is null)
-			return null;
-
-		return (double)value;
 	}
 
 	/// <summary>
@@ -145,26 +113,10 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	/// <exception cref="InvalidOperationException">Thrown when the price type is <see cref="PriceTypes.Percent"/>.</exception>
 	public static explicit operator decimal(Price value)
 	{
-		if (value is null)
-			throw new ArgumentNullException(nameof(value));
-
 		if (value.IsPercent)
 			throw new InvalidOperationException(nameof(PriceTypes.Percent));
 
 		return value.Value;
-	}
-
-	/// <summary>
-	/// Explicitly converts a <see cref="Price"/> to a nullable <see cref="decimal"/>.
-	/// </summary>
-	/// <param name="value">The <see cref="Price"/> to convert.</param>
-	/// <returns>The nullable decimal representation of the price value, or null if <paramref name="value"/> is null.</returns>
-	public static explicit operator decimal?(Price value)
-	{
-		if (value is null)
-			return null;
-
-		return (decimal)value;
 	}
 
 	/// <summary>
@@ -175,13 +127,7 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	/// <returns><c>true</c> if the prices are not equal; otherwise, <c>false</c>.</returns>
 	public static bool operator !=(Price v1, Price v2)
 	{
-		if (v1 is null)
-			return v2 is not null;
-
-		if (v2 is null)
-			return true;
-
-		return !v1.EqualsImpl(v2);
+		return !v1.Equals(v2);
 	}
 
 	/// <summary>
@@ -192,23 +138,11 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	/// <returns><c>true</c> if the prices are equal; otherwise, <c>false</c>.</returns>
 	public static bool operator ==(Price v1, Price v2)
 	{
-		if (v1 is null)
-			return v2 is null;
-
-		if (v2 is null)
-			return false;
-
-		return v1.EqualsImpl(v2);
+		return v1.Equals(v2);
 	}
 
 	private static Price CreateResult(Price v1, Price v2, Func<decimal, decimal, decimal> operation, Func<decimal, decimal, decimal> percentOperation)
 	{
-		if (v1 is null)
-			return null;
-
-		if (v2 is null)
-			return null;
-
 		if (operation is null)
 			throw new ArgumentNullException(nameof(operation));
 
@@ -278,12 +212,6 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 
 	private static bool? MoreThan(Price v1, Price v2)
 	{
-		if (v1 is null)
-			return null;
-
-		if (v2 is null)
-			return null;
-
 		if (v1.Type != v2.Type)
 			throw new ArgumentException($"{v1.Type}!={v2.Type}");
 
@@ -322,10 +250,10 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	/// <returns><c>true</c> if <paramref name="v1"/> is less than or equal to <paramref name="v2"/>; otherwise, <c>false</c>.</returns>
 	public static bool operator <=(Price v1, Price v2) => v1 == v2 || MoreThan(v2, v1) == true;
 
-	Price IOperable<Price>.Add(Price other) => this + other;
-	Price IOperable<Price>.Subtract(Price other) => this - other;
-	Price IOperable<Price>.Multiply(Price other) => this * other;
-	Price IOperable<Price>.Divide(Price other) => this / other;
+	readonly Price IOperable<Price>.Add(Price other) => this + other;
+	readonly Price IOperable<Price>.Subtract(Price other) => this - other;
+	readonly Price IOperable<Price>.Multiply(Price other) => this * other;
+	readonly Price IOperable<Price>.Divide(Price other) => this / other;
 
 	/// <summary>
 	/// Returns a <see cref="Price"/> whose value is the negation of the specified price.
@@ -334,9 +262,6 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 	/// <returns>A new <see cref="Price"/> with the opposite sign.</returns>
 	public static Price operator -(Price v)
 	{
-		if (v is null)
-			return null;
-
 		return new()
 		{
 			Type = v.Type,
@@ -344,14 +269,14 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 		};
 	}
 
-	private bool IsPercent => Type == PriceTypes.Percent;
-	private bool IsLimit => Type == PriceTypes.Limit;
+	private readonly bool IsPercent => Type == PriceTypes.Percent;
+	private readonly bool IsLimit => Type == PriceTypes.Limit;
 
 	/// <inheritdoc />
-	public override string ToString() => ToString(null, null);
+	public override readonly string ToString() => ToString(null, null);
 
 	/// <inheritdoc />
-	public string ToString(string format, IFormatProvider formatProvider)
+	public readonly string ToString(string format, IFormatProvider formatProvider)
 	{
 		var str = Value.ToString(format, formatProvider);
 
@@ -377,7 +302,7 @@ public class Price : Equatable<Price>, IPersistable, IOperable<Price>, IFormatta
 		Value = storage.GetValue<decimal>(nameof(Value));
 	}
 
-	void IPersistable.Save(SettingsStorage storage)
+	readonly void IPersistable.Save(SettingsStorage storage)
 	{
 		storage.Set(nameof(Type), Type.To<string>());
 		storage.Set(nameof(Value), Value);
