@@ -146,22 +146,14 @@ public class PriceTests
 			PriceTypes.Percent
 		]));
 	}
-
 	[TestMethod]
-	public void Empty()
-	{
-		"".ToPriceType().AssertNull();
-		((string)null).ToPriceType().AssertNull();
-	}
-
-	[TestMethod]
-	public void Empty2()
+	public void Empty1()
 	{
 		Assert.ThrowsExactly<ArgumentNullException>(() => "".ToPriceType().AssertNull());
 	}
 
 	[TestMethod]
-	public void Empty3()
+	public void Empty2()
 	{
 		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).ToPriceType().AssertNull());
 	}
