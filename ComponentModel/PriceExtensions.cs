@@ -61,4 +61,11 @@ public static class PriceExtensions
 	/// <param name="value"><see cref="decimal"/> value.</param>
 	/// <returns>Percents.</returns>
 	public static Price Percents(this decimal value) => new(value, PriceTypes.Percent);
+
+	/// <summary>
+	/// Determine whether the specified <see cref="Price"/> is free (zero value).
+	/// </summary>
+	/// <param name="price"><see cref="Price"/></param>
+	/// <returns>Returns <see langword="true"/> if the specified <see cref="Price"/> is free (zero value); otherwise, <see langword="false"/>.</returns>
+	public static bool IsFree(this Price price) => price == default;
 }
