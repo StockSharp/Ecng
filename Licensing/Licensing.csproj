@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\common.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\Collections\Collections.csproj" />
+    <ProjectReference Include="..\Localization\Localization.csproj" />
+  </ItemGroup>
+</Project>

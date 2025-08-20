@@ -1,4 +1,4 @@
-namespace Ecng.ComponentModel;
+namespace Ecng.Licensing;
 
 using System;
 using System.ComponentModel.DataAnnotations;
