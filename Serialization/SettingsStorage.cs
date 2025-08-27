@@ -154,14 +154,16 @@ public class SettingsStorage : SynchronizedDictionary<string, object>
 			if (typeof(SettingsStorage).Is(type))
 				return storage;
 
-			var obj = Activator.CreateInstance(type);
+			var t = type.GetUnderlyingType() ?? type;
+
+			var obj = Activator.CreateInstance(t);
 
 			if (obj is IAsyncPersistable asyncPer)
 				AsyncContext.Run(() => asyncPer.LoadAsync(storage, default));
 			else if (obj is IPersistable per)
 				per.Load(storage);
 			else
-				throw new ArgumentOutOfRangeException(type.To<string>());
+				throw new ArgumentOutOfRangeException(t.To<string>());
 
 			return obj;
 		}
