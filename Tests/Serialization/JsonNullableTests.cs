@@ -34,7 +34,7 @@ public class JsonNullableTests
 			P = storage.GetValue<Price?>(nameof(P));
 		}
 
-		void IPersistable.Save(SettingsStorage storage)
+		readonly void IPersistable.Save(SettingsStorage storage)
 		{
 			storage
 				.Set(nameof(I), I)
