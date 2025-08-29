@@ -136,7 +136,7 @@ public class FastTimeSpanParser
 				prevIndex += len;
 			}
 
-			parts2.Add((part.Value, (string)null));
+			parts2.Add((part.Value, null));
 
 			prevIndex += part.Value switch
 			{

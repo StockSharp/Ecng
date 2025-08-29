@@ -180,6 +180,14 @@ public class FastDateTimeParser
 		_parts = [.. parts2];
 	}
 
+	private static void EnsureSpan(string input, int start, int length)
+	{
+		if (start == -1) return;
+
+		if (start + length > input.Length)
+			throw new FormatException("Input is too short for the expected format segment.");
+	}
+
 	/// <summary>
 	/// Parses the specified input string into a <see cref="DateTime"/> based on the predefined template.
 	/// </summary>
@@ -190,9 +198,36 @@ public class FastDateTimeParser
 	{
 		try
 		{
-			//fixed (char* stringBuffer = input)
-			//{
-			var years = _yearStart == -1 ? DateTime.Now.Year : (_isYearTwoChars ? ((DateTime.Now.Year / 1000) * 1000 + (input[_yearStart] - '0') * 10 + (input[_yearStart + 1] - '0')) : (input[_yearStart] - '0') * 1000 + (input[_yearStart + 1] - '0') * 100 + (input[_yearStart + 2] - '0') * 10 + (input[_yearStart + 3] - '0'));
+			// Basic upfront bounds validation to avoid IndexOutOfRangeException
+			EnsureSpan(input, _yearStart, _yearStart == -1 ? 0 : (_isYearTwoChars ? 2 : 4));
+			EnsureSpan(input, _monthStart, _monthStart == -1 ? 0 : (_isMonthTwoChars ? 2 : 1));
+			EnsureSpan(input, _dayStart, _dayStart == -1 ? 0 : (_isDayTwoChars ? 2 : 1));
+			EnsureSpan(input, _hourStart, _hourStart == -1 ? 0 : 2);
+			EnsureSpan(input, _minuteStart, _minuteStart == -1 ? 0 : 2);
+			EnsureSpan(input, _secondStart, _secondStart == -1 ? 0 : 2);
+			EnsureSpan(input, _milliStart, _milliStart == -1 ? 0 : 3);
+			EnsureSpan(input, _microStart, _microStart == -1 ? 0 : 3);
+			EnsureSpan(input, _tickStart, _tickStart == -1 ? 0 : 1);
+			EnsureSpan(input, _nanoStart, _nanoStart == -1 ? 0 : 2);
+
+			if (_timeZoneStart != -1)
+				EnsureSpan(input, _timeZoneStart, 6); // "+HH:MM" or "-HH:MM"
+
+			int years;
+
+			if (_yearStart == -1)
+				years = DateTime.Now.Year;
+
+			else if (_isYearTwoChars)
+			{
+				var yy = (input[_yearStart] - '0') * 10 + (input[_yearStart + 1] - '0');
+				years = 1900 + yy;
+			}
+			else
+			{
+				years = (input[_yearStart] - '0') * 1000 + (input[_yearStart + 1] - '0') * 100 + (input[_yearStart + 2] - '0') * 10 + (input[_yearStart + 3] - '0');
+			}
+
 			var months = _monthStart == -1 ? DateTime.Now.Month : (_isMonthTwoChars ? (input[_monthStart] - '0') * 10 + (input[_monthStart + 1] - '0') : input[_monthStart] - '0');
 			var days = _dayStart == -1 ? DateTime.Now.Day : (_isDayTwoChars ? (input[_dayStart] - '0') * 10 + (input[_dayStart + 1] - '0') : input[_dayStart] - '0');
 
@@ -210,7 +245,10 @@ public class FastDateTimeParser
 			var value = micro * 1000L + tick * 100L + nano;
 
 			return dt.AddNanoseconds(value);
-			//}
+		}
+		catch (FormatException)
+		{
+			throw;
 		}
 		catch (Exception ex)
 		{
