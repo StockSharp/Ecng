@@ -73,7 +73,7 @@ public struct Price : IComparable<Price>, IEquatable<Price>, IPersistable, IOper
 	public override readonly int GetHashCode() => Type.GetHashCode() ^ Value.GetHashCode();
 
 	/// <inheritdoc />
-	public override readonly bool Equals(object obj) => base.Equals(obj);
+	public override readonly bool Equals(object obj) => obj is Price other && Equals(other);
 
 	/// <inheritdoc />
 	public readonly bool Equals(Price other)
