@@ -506,6 +506,7 @@ public static class ThreadingHelper
 			if (!mutex.WaitOne(1))
 				return false;
 
+			mutex.Dispose();
 			mutex = new Mutex(true, name);
 		}
 		catch (AbandonedMutexException)
