@@ -134,7 +134,7 @@ public class AmazonS3Service : Disposable, IBackupService
 			if (offset is null || length is null)
 				throw new NotSupportedException();
 
-			request.ByteRange = new(offset.Value, offset.Value + length.Value);
+			request.ByteRange = new(offset.Value, offset.Value + length.Value - 1); // inclusive end
 		}
 
 		var bytes = new byte[_bufferSize];

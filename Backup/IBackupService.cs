@@ -27,11 +27,11 @@ public interface IBackupService : IDisposable
 	bool CanPartialDownload { get; }
 
 	/// <summary>
-	/// Is partial upload feature available.
+	/// Create folder on the service.
 	/// </summary>
-	/// <param name="entry"><see cref="BackupEntry"/></param>
-	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-	/// <returns><see cref="Task"/></returns>
+	/// <param name="entry">Folder to create.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>A task that represents the asynchronous operation.</returns>
 	Task CreateFolder(BackupEntry entry, CancellationToken cancellationToken = default);
 
 	/// <summary>

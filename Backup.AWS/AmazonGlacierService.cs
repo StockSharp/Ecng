@@ -115,7 +115,8 @@ public class AmazonGlacierService : Disposable, IBackupService
 			if (offset is null || length is null)
 				throw new NotSupportedException();
 
-			request.Range = $"bytes={offset}-{offset + length}";
+			var end = offset.Value + length.Value - 1; // inclusive end
+			request.Range = $"bytes={offset}-{end}";
 		}
 
 		var response = await _client.GetJobOutputAsync(request, cancellationToken).NoWait();

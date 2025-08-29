@@ -47,7 +47,7 @@ public class YandexDiskService : Disposable, IBackupService
 
 	async IAsyncEnumerable<BackupEntry> IBackupService.FindAsync(BackupEntry parent, string criteria, [EnumeratorCancellation]CancellationToken cancellationToken)
 	{
-		var path = $"{parent?.GetFullPath()}/";
+		var path = parent is null ? "/" : parent.GetFullPath().TrimEnd('/') + "/";
 
 		var offset = 0;
 		var limit = 100;
