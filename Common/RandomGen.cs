@@ -5,14 +5,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+#if !NET6_0_OR_GREATER
+using System.Threading;
+#endif
 
 /// <summary>
 /// Provides methods for generating random values of various types.
 /// </summary>
 public static class RandomGen
 {
-	private static readonly SyncObject _sync = new();
-	private static readonly Random _value = new((int)DateTime.Now.Ticks);
+#if NET6_0_OR_GREATER
+	private static Random Random => Random.Shared;
+#else
+	[ThreadStatic]
+	private static Random _threadRandom;
+	private static long _globalSeed = DateTime.UtcNow.Ticks;
+
+	private static Random CreateRandom()
+		=> new((int)(Interlocked.Increment(ref _globalSeed) ^ Environment.TickCount ^ Thread.CurrentThread.ManagedThreadId ^ (DateTime.UtcNow.Ticks >> 32)));
+
+	private static Random Random => _threadRandom ??= CreateRandom();
+#endif
 
 	/// <summary>
 	/// Returns a random double value between 0.0 and 1.0.
@@ -20,8 +33,7 @@ public static class RandomGen
 	/// <returns>A random double.</returns>
 	public static double GetDouble()
 	{
-		lock (_sync)
-			return _value.NextDouble();
+		return Random.NextDouble();
 	}
 
 	/// <summary>
@@ -42,8 +54,7 @@ public static class RandomGen
 	/// <param name="buffer">The array to fill with random bytes.</param>
 	public static void GetBytes(byte[] buffer)
 	{
-		lock (_sync)
-			_value.NextBytes(buffer);
+		Random.NextBytes(buffer);
 	}
 
 	/// <summary>
@@ -52,8 +63,7 @@ public static class RandomGen
 	/// <returns>A random integer.</returns>
 	public static int GetInt()
 	{
-		lock (_sync)
-			return _value.Next();
+		return Random.Next();
 	}
 
 	/// <summary>
@@ -63,8 +73,7 @@ public static class RandomGen
 	/// <returns>A random integer between 0 and max (inclusive).</returns>
 	public static int GetInt(int max)
 	{
-		lock (_sync)
-			return _value.Next(max + 1);
+		return Random.Next(max);
 	}
 
 	/// <summary>
@@ -75,8 +84,7 @@ public static class RandomGen
 	/// <returns>A random integer between min and max (inclusive).</returns>
 	public static int GetInt(int min, int max)
 	{
-		lock (_sync)
-			return _value.Next(min, max + 1);
+		return Random.Next(min, max);
 	}
 
 	/// <summary>
@@ -117,12 +125,10 @@ public static class RandomGen
 
 		static ulong GetULong()
 		{
-			lock (_sync)
-			{
-				return ((ulong)(uint)_value.Next(1 << 22)) |
-				(((ulong)(uint)_value.Next(1 << 22)) << 22) |
-				(((ulong)(uint)_value.Next(1 << 20)) << 44);
-			}
+			var rng = Random;
+			return ((ulong)(uint)rng.Next(1 << 22)) |
+				(((ulong)(uint)rng.Next(1 << 22)) << 22) |
+				(((ulong)(uint)rng.Next(1 << 20)) << 44);
 		}
 
 		var exclusiveRange = (ulong)(max - min);
