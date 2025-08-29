@@ -213,7 +213,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				if (reader.TokenType == JsonToken.EndArray || reader.TokenType == JsonToken.Null)
 					return null;
 
-				reader.ChechExpectedToken(JsonToken.StartObject);
+				reader.CheckExpectedToken(JsonToken.StartObject);
 
 				var per = type.CreateInstance();
 
@@ -228,7 +228,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 				await reader.ReadWithCheckAsync(cancellationToken);
 
-				reader.ChechExpectedToken(JsonToken.EndObject);
+				reader.CheckExpectedToken(JsonToken.EndObject);
 
 				return per;
 			}
@@ -240,14 +240,14 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			if (reader.TokenType == JsonToken.EndArray || reader.TokenType == JsonToken.Null)
 				return null;
 
-			reader.ChechExpectedToken(JsonToken.StartObject);
+			reader.CheckExpectedToken(JsonToken.StartObject);
 
 			var storage = new SettingsStorage();
 			await FillAsync(storage, reader, cancellationToken);
 
 			//await reader.ReadWithCheckAsync(cancellationToken);
 
-			reader.ChechExpectedToken(JsonToken.EndObject);
+			reader.CheckExpectedToken(JsonToken.EndObject);
 
 			return storage;
 		}
@@ -258,7 +258,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			if (reader.TokenType == JsonToken.EndArray || reader.TokenType == JsonToken.Null)
 				return null;
 
-			reader.ChechExpectedToken(JsonToken.StartArray);
+			reader.CheckExpectedToken(JsonToken.StartArray);
 
 			var itemType = type.GetItemType();
 
@@ -274,7 +274,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				col.Add(item);
 			}
 
-			reader.ChechExpectedToken(JsonToken.EndArray);
+			reader.CheckExpectedToken(JsonToken.EndArray);
 
 			if (!type.IsArray && type != typeof(IEnumerable<>).Make(itemType))
 				return col;
@@ -398,7 +398,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 			if (reader.TokenType == JsonToken.EndObject)
 				break;
 
-			reader.ChechExpectedToken(JsonToken.PropertyName);
+			reader.CheckExpectedToken(JsonToken.PropertyName);
 
 			var propName = (string)reader.Value;
 
@@ -471,7 +471,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 
 		await reader.ReadWithCheckAsync(cancellationToken);
 
-		reader.ChechExpectedToken(JsonToken.PropertyName);
+		reader.CheckExpectedToken(JsonToken.PropertyName);
 
 		if (!((string)reader.Value).EqualsIgnoreCase(name))
 			throw new InvalidOperationException($"{reader.Value} != {name}");

@@ -19,9 +19,8 @@ public interface IAuthorization
 	/// <param name="login">Login.</param>
 	/// <param name="password">Password.</param>
 	/// <param name="clientAddress">Remote network address.</param>
-	/// <returns>Session identifier.</returns>
 	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-	/// <returns><see cref="ValueTask{T}"/></returns>
+	/// <returns>Session identifier.</returns>
 	ValueTask<string> ValidateCredentials(string login, SecureString password, IPAddress clientAddress, CancellationToken cancellationToken);
 }
 

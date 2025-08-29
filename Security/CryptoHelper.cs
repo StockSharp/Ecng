@@ -314,7 +314,7 @@ public static class CryptoHelper
 	}
 
 	/// <summary>
-	/// SHA1 hash.
+	/// SHA256 hash.
 	/// </summary>
 	/// <param name="value">The value to hash.</param>
 	/// <returns>The hash.</returns>

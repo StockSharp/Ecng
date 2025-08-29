@@ -168,21 +168,21 @@ public static class CompressionHelper
 		=> input.Compress<DeflateStream>();
 
 	/// <summary>
-	/// Compresses a segment of a byte array using the Deflate algorithm.
+	/// Decompresses a segment of a byte array using the Deflate algorithm.
 	/// </summary>
-	/// <param name="v">The byte array segment to compress.</param>
-	/// <returns>A compressed byte array.</returns>
+	/// <param name="v">The byte array segment to decompress.</param>
+	/// <returns>A decompressed byte array.</returns>
 	public static byte[] DeflateFrom(this ArraySegment<byte> v)
 		=> v.Array.DeflateFrom(v.Offset, v.Count);
 
 	/// <summary>
-	/// Compresses a portion of a byte array using the Deflate algorithm.
+	/// Decompresses a portion of a byte array using the Deflate algorithm.
 	/// </summary>
-	/// <param name="input">The byte array to compress.</param>
-	/// <param name="index">The starting index from which to begin compression.</param>
-	/// <param name="count">The number of bytes to compress.</param>
-	/// <param name="bufferSize">The buffer size to use during compression.</param>
-	/// <returns>A compressed byte array.</returns>
+	/// <param name="input">The byte array to decompress.</param>
+	/// <param name="index">The starting index from which to begin decompression.</param>
+	/// <param name="count">The number of bytes to decompress.</param>
+	/// <param name="bufferSize">The buffer size to use during decompression.</param>
+	/// <returns>A decompressed byte array.</returns>
 	public static byte[] DeflateFrom(this byte[] input, int? index = default, int? count = default, int bufferSize = DefaultBufferSize)
 		=> input.Uncompress<DeflateStream>(index, count, bufferSize);
 
@@ -273,7 +273,7 @@ public static class CompressionHelper
 	/// <param name="count">The number of bytes to decompress.</param>
 	/// <param name="bufferSize">The buffer size to use during decompression.</param>
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-	/// <returns>A task representing the asynchronous operation, with a decompressed byte array as the result.</returns>
+	/// <returns>A task representing the asynchronous decompression operation, with a decompressed byte array as the result.</returns>
 	public static async Task<byte[]> UncompressAsync<TCompressStream>(this byte[] input, int? index = default, int? count = default, int bufferSize = DefaultBufferSize, CancellationToken cancellationToken = default)
 		where TCompressStream : Stream
 	{

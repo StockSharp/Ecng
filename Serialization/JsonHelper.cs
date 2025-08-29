@@ -34,7 +34,7 @@ public static class JsonHelper
 	/// <param name="reader">The JSON reader.</param>
 	/// <param name="token">The expected JSON token.</param>
 	[Conditional("DEBUG")]
-	public static void ChechExpectedToken(this JsonReader reader, JsonToken token)
+	public static void CheckExpectedToken(this JsonReader reader, JsonToken token)
 	{
 		if (reader.TokenType != token)
 			throw new InvalidOperationException($"{reader.TokenType} != {token}");
