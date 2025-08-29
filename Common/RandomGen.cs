@@ -73,6 +73,9 @@ public static class RandomGen
 	/// <returns>A random integer between 0 and max (inclusive).</returns>
 	public static int GetInt(int max)
 	{
+		if (max < int.MaxValue)
+			max++;
+
 		return Random.Next(max);
 	}
 
@@ -84,6 +87,12 @@ public static class RandomGen
 	/// <returns>A random integer between min and max (inclusive).</returns>
 	public static int GetInt(int min, int max)
 	{
+		if (min > max)
+			throw new ArgumentOutOfRangeException(nameof(min), min, "min > max");
+
+		if (max < int.MaxValue)
+			max++;
+
 		return Random.Next(min, max);
 	}
 
@@ -202,7 +211,10 @@ public static class RandomGen
 	/// <param name="array">The collection of elements.</param>
 	/// <returns>A random element from the collection.</returns>
 	public static T GetElement<T>(IEnumerable<T> array)
-		=> array.ElementAt(GetInt(0, array.Count() - 1));
+	{
+		var tmp = array.ToArray();
+		return tmp[GetInt(0, tmp.Length - 1)];
+	}
 
 	/// <summary>
 	/// Returns a random Base64 encoded string generated from a random salt.

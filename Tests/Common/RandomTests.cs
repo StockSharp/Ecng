@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Tests.Common;
 
+using System.Collections;
+
 [TestClass]
 public class RandomTests
 {
@@ -77,5 +79,46 @@ public class RandomTests
 		{
 			RandomGen.GetEnum(default, max);
 		}
+	}
+
+	private class CountingEnumerable<T>(IEnumerable<T> inner) : IEnumerable<T>
+	{
+		public int GetEnumeratorCalls { get; private set; }
+
+		public IEnumerator<T> GetEnumerator()
+		{
+			GetEnumeratorCalls++;
+			return inner.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+	}
+
+	[TestMethod]
+	public void MaxValue()
+	{
+		RandomGen.GetInt(int.MaxValue);
+	}
+
+	[TestMethod]
+	public void EmptyEnumerable()
+	{
+		var empty = Array.Empty<CurrencyTypes>();
+		Assert.ThrowsExactly<InvalidOperationException>(() => RandomGen.GetEnum(empty));
+	}
+
+	[TestMethod]
+	public void EmptyEnumerable2()
+	{
+		var empty = Array.Empty<int>();
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => RandomGen.GetElement(empty));
+	}
+
+	[TestMethod]
+	public void EnumeratesMultipleTimes()
+	{
+		var source = new CountingEnumerable<int>([1, 2, 3]);
+		RandomGen.GetElement(source);
+		source.GetEnumeratorCalls.AssertEqual(1);
 	}
 }
