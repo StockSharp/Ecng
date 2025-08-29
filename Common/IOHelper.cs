@@ -129,7 +129,7 @@ public static class IOHelper
 	/// <returns>The combined full path.</returns>
 	public static string AddRelative(this string path, string relativePart)
 	{
-		return (path + relativePart).ToFullPath();
+		return Path.Combine(path, relativePart).ToFullPath();
 	}
 
 	/// <summary>
