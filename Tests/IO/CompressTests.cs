@@ -2,6 +2,7 @@
 
 using System.IO;
 using System.IO.Compression;
+using System.Text;
 
 using Ecng.IO;
 
@@ -79,5 +80,51 @@ public class CompressTests
 		await Do<DeflateStream>();
 		await Do<GZipStream>();
 		//await Do<Lzma.LzmaStream>();
+	}
+
+	[TestMethod]
+	public void UsableEntry()
+	{
+		var utf8 = Encoding.UTF8;
+
+		// Build a simple in-memory zip with two files
+		var ms = new MemoryStream();
+
+		using (var a = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+		{
+			void Add(string name, string text)
+			{
+				var entry = a.CreateEntry(name);
+				using var es = entry.Open();
+				var data = utf8.GetBytes(text);
+				es.Write(data, 0, data.Length);
+			}
+
+			Add("a.txt", "hello");
+			Add("b.txt", "world");
+		}
+
+		ms.Position = 0;
+
+		string ReadAll(Stream s)
+		{
+			using var sr = new StreamReader(s, utf8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
+			return sr.ReadToEnd();
+		}
+
+		using var zip = ms.Unzip(leaveOpen: true);
+
+		// Materialize results first (typical pattern), then consume streams later
+		var entries = zip.ToArray();
+
+		entries.Length.AssertEqual(2);
+
+		entries[0].name.EndsWith("a.txt").AssertTrue();
+		ReadAll(entries[0].body).AssertEqual("hello");
+		ReadAll(entries[0].body).AssertEqual(string.Empty);
+
+		entries[1].name.EndsWith("b.txt").AssertTrue();
+		ReadAll(entries[1].body).AssertEqual("world");
+		ReadAll(entries[1].body).AssertEqual(string.Empty);
 	}
 }

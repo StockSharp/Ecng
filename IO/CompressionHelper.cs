@@ -4,12 +4,49 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
 
 using Nito.AsyncEx;
+
+/// <summary>
+/// Disposable enumerable of ZIP entries. Disposing this object releases the underlying ZipArchive.
+/// The consumer must ensure all returned entry streams are no longer needed before disposing this wrapper.
+/// </summary>
+public class ZipEntries : Disposable, IEnumerable<(string name, Stream body)>
+{
+	private readonly ZipArchive _zip;
+	private readonly IEnumerable<ZipArchiveEntry> _entries;
+
+	internal ZipEntries(ZipArchive zip, Func<string, bool> filter)
+	{
+		if (filter is null)
+			throw new ArgumentNullException(nameof(filter));
+
+		_zip = zip ?? throw new ArgumentNullException(nameof(zip));
+		_entries = zip.Entries.Where(e => filter(e.Name));
+	}
+
+	IEnumerator<(string, Stream)> IEnumerable<(string name, Stream body)>.GetEnumerator()
+	{
+		foreach (var entry in _entries)
+			yield return (entry.FullName, entry.Open());
+	}
+
+	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		=> ((IEnumerable<(string, Stream)>)this).GetEnumerator();
+
+	/// <inheritdoc />
+	protected override void DisposeManaged()
+	{
+		base.DisposeManaged();
+
+		_zip.Dispose();
+	}
+}
 
 /// <summary>
 /// Provides helper methods for compressing and decompressing data using various algorithms.
@@ -21,8 +58,8 @@ public static class CompressionHelper
 	/// </summary>
 	/// <param name="input">The byte array containing the ZIP archive.</param>
 	/// <param name="filter">A function to filter entries by name. Only entries returning true will be processed.</param>
-	/// <returns>An enumerable of tuples with the entry name and its content stream.</returns>
-	public static IEnumerable<(string name, Stream body)> Unzip(this byte[] input, Func<string, bool> filter = null)
+	/// <returns>A disposable enumerable of entries.</returns>
+	public static ZipEntries Unzip(this byte[] input, Func<string, bool> filter = null)
 	{
 		return input.To<MemoryStream>().Unzip(filter: filter);
 	}
@@ -33,23 +70,15 @@ public static class CompressionHelper
 	/// <param name="input">The stream containing the ZIP archive.</param>
 	/// <param name="leaveOpen">Whether to leave the underlying stream open after processing.</param>
 	/// <param name="filter">A function to filter entries by name. Only entries returning true will be processed.</param>
-	/// <returns>An enumerable of tuples with the entry full name and its content stream.</returns>
-	public static IEnumerable<(string name, Stream body)> Unzip(this Stream input, bool leaveOpen = false, Func<string, bool> filter = null)
+	/// <returns>A disposable enumerable of entries that must be disposed when finished.</returns>
+	public static ZipEntries Unzip(this Stream input, bool leaveOpen = false, Func<string, bool> filter = null)
 	{
-		using (var zip = new ZipArchive(input, ZipArchiveMode.Read, leaveOpen))
-		{
-			foreach (var entry in zip.Entries)
-			{
-				if (filter?.Invoke(entry.Name) == false)
-					continue;
+		if (input is null)
+			throw new ArgumentNullException(nameof(input));
 
-				using var stream = entry.Open();
-				yield return (entry.FullName, stream);
-			}
-		}
+		filter ??= _ => true;
 
-		if (!leaveOpen)
-			input.Close();
+		return new ZipEntries(new(input, ZipArchiveMode.Read, leaveOpen), filter);
 	}
 
 	/// <summary>
