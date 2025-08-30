@@ -166,13 +166,14 @@ public class CryptoAlgorithm : Disposable
 	/// Computes the hash value of the plaintext.
 	/// </summary>
 	/// <param name="data">The plaintext in which you wish to hash.</param>
+	/// <param name="createHash">A function that creates a <see cref="HashAlgorithm"/> instance to use for hashing.</param>
 	/// <returns>The resulting hash.</returns>
-	public byte[] CreateSignature(byte[] data)
+	public byte[] CreateSignature(byte[] data, Func<HashAlgorithm> createHash)
 	{
 		if (_asymmetric is null)
 			throw new NotSupportedException();
 
-		return _asymmetric.CreateSignature(data);
+		return _asymmetric.CreateSignature(data, createHash);
 	}
 
 	/// <summary>

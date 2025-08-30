@@ -41,11 +41,14 @@ public class AsymmetricCryptographer : Disposable
 			throw new NotSupportedException();
 		}
 
-		public byte[] CreateSignature(byte[] data)
+		public byte[] CreateSignature(byte[] data, Func<HashAlgorithm> createHash)
 		{
 			if (Value is RSACryptoServiceProvider rsa)
 			{
-				using var hash = SHA256.Create();
+				if (createHash is null)
+					throw new ArgumentNullException(nameof(createHash));
+
+				using HashAlgorithm hash = createHash();
 				return rsa.SignData(data, hash);
 			}
 			else if (Value is DSACryptoServiceProvider dsa)
@@ -214,13 +217,14 @@ public class AsymmetricCryptographer : Disposable
 	/// <para>Computes the hash value of the plaintext.</para>
 	/// </summary>
 	/// <param name="data">The plaintext in which you wish to hash.</param>
+	/// <param name="createHash">A function that creates a <see cref="HashAlgorithm"/> instance to use for hashing.</param>
 	/// <returns>The resulting hash.</returns>
-	public byte[] CreateSignature(byte[] data)
+	public byte[] CreateSignature(byte[] data, Func<HashAlgorithm> createHash)
 	{
 		if (_decryptor is null)
 			throw new InvalidOperationException();
 
-		return _decryptor.CreateSignature(data);
+		return _decryptor.CreateSignature(data, createHash);
 	}
 
 	/// <summary>
