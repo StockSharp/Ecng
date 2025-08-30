@@ -3,6 +3,7 @@ namespace Ecng.Common;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Globalization;
 
 /// <summary>
 /// Provides methods to parse and format date and time strings using a fast custom parser.
@@ -221,7 +222,7 @@ public class FastDateTimeParser
 			else if (_isYearTwoChars)
 			{
 				var yy = (input[_yearStart] - '0') * 10 + (input[_yearStart + 1] - '0');
-				years = 1900 + yy;
+				years = CultureInfo.CurrentCulture.Calendar.ToFourDigitYear(yy);
 			}
 			else
 			{
