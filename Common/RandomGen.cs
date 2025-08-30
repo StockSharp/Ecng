@@ -267,10 +267,16 @@ public static class RandomGen
 	/// <exception cref="InvalidOperationException">Thrown when a valid decimal value cannot be generated in 10 attempts.</exception>
 	public static decimal GetDecimal(int integer = 8, int fractional = 8)
 	{
+		if (integer < 1 || integer > 28)
+			throw new ArgumentOutOfRangeException(nameof(integer), integer, "Must be in range 1..28");
+
+		if (fractional < 0 || fractional > 28)
+			throw new ArgumentOutOfRangeException(nameof(fractional), fractional, "Must be in range 0..28");
+
 		for (var k = 0; k < 10; k++)
 		{
 			var i1 = Enumerable.Repeat(9, GetInt(1, integer)).Select(i => GetInt(9).ToString()).Join(string.Empty).To<long>();
-			var i2 = Enumerable.Repeat(9, GetInt(1, fractional)).Select(i => GetInt(9).ToString()).Join(string.Empty).To<long>();
+			var i2 = fractional == 0 ? 0 : Enumerable.Repeat(9, GetInt(1, fractional)).Select(i => GetInt(9).ToString()).Join(string.Empty).To<long>();
 			var value = decimal.Parse(i1 + "." + i2, CultureInfo.InvariantCulture);
 
 			if (value != 0)
