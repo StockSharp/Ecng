@@ -45,7 +45,7 @@ public class AsymmetricCryptographer : Disposable
 		{
 			if (Value is RSACryptoServiceProvider rsa)
 			{
-				using var hash = SHA1.Create();
+				using var hash = SHA256.Create();
 				return rsa.SignData(data, hash);
 			}
 			else if (Value is DSACryptoServiceProvider dsa)
@@ -58,8 +58,19 @@ public class AsymmetricCryptographer : Disposable
 		{
 			if (Value is RSACryptoServiceProvider rsa)
 			{
-				using var hash = SHA1.Create();
-				return rsa.VerifyData(data, hash, signature);
+				try
+				{
+					using var sha256 = SHA256.Create();
+
+					if (rsa.VerifyData(data, sha256, signature))
+						return true;
+				}
+				catch
+				{
+				}
+
+				using var sha1 = SHA1.Create();
+				return rsa.VerifyData(data, sha1, signature);
 			}
 			else if (Value is DSACryptoServiceProvider dsa)
 				return dsa.VerifySignature(data, signature);
@@ -95,7 +106,7 @@ public class AsymmetricCryptographer : Disposable
 	/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
 	/// <param name="privateKey"><para>The private key for the algorithm.</para></param>
 	public AsymmetricCryptographer(AsymmetricAlgorithm algorithm, byte[] publicKey, byte[] privateKey)
-	: this(publicKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, publicKey), privateKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, privateKey))
+		: this(publicKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, publicKey), privateKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, privateKey))
 	{
 	}
 
@@ -105,7 +116,7 @@ public class AsymmetricCryptographer : Disposable
 	/// <param name="algorithm"><para>The qualified assembly name of a <see cref="SymmetricAlgorithm"/>.</para></param>
 	/// <param name="publicKey"><para>The public key for the algorithm.</para></param>
 	public AsymmetricCryptographer(AsymmetricAlgorithm algorithm, byte[] publicKey)
-	: this(publicKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, publicKey), null)
+		: this(publicKey is null ? null : new AsymmetricAlgorithmWrapper(algorithm, publicKey), null)
 	{
 	}
 
@@ -115,7 +126,7 @@ public class AsymmetricCryptographer : Disposable
 	/// <param name="encryptor">The encryptor.</param>
 	/// <param name="decryptor">The decryptor.</param>
 	protected AsymmetricCryptographer(AsymmetricAlgorithm encryptor, AsymmetricAlgorithm decryptor)
-	: this(new AsymmetricAlgorithmWrapper(encryptor), new AsymmetricAlgorithmWrapper(decryptor))
+		: this(new AsymmetricAlgorithmWrapper(encryptor), new AsymmetricAlgorithmWrapper(decryptor))
 	{
 	}
 
