@@ -41,18 +41,17 @@ public class CompilerTests
 	}
 
 	[TestMethod]
-	[ExpectedException(typeof(OperationCanceledException))]
-	public async Task CompileCancel()
+	public Task CompileCancel()
 	{
 		var cts = new CancellationTokenSource();
 		cts.Cancel();
+
 		ICompiler compiler = new CSharpCompiler();
-		var res = await compiler.Compile("test", "class Class1 {",
-		[
-			_coreLibPath,
-		], cts.Token);
-		res.GetAssembly(compiler.CreateContext()).AssertNull();
-		res.HasErrors().AssertTrue();
+		return Assert.ThrowsExactlyAsync<OperationCanceledException>(()
+			=> compiler.Compile("test", "class Class1 {",
+			[
+				_coreLibPath,
+			], cts.Token));
 	}
 
 	[TestMethod]
