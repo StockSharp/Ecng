@@ -87,7 +87,7 @@ public class CryptoAlgorithm : Disposable
 	/// <summary>
 	/// The default hash algorithm name.
 	/// </summary>
-	public const string DefaultHashAlgoName = "SHA";
+	public const string DefaultHashAlgoName = "SHA256";
 
 	#endregion
 
