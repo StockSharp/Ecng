@@ -288,7 +288,7 @@ public static class CryptoHelper
 	/// <returns>The plain text.</returns>
 	public static byte[] DecryptAes(this byte[] cipherText, string passPhrase, byte[] salt, byte[] iv) => TransformAes(false, cipherText, passPhrase, salt, iv);
 
-	private static string Hash(this byte[] value, HashAlgorithm algo)
+	private static string Hash(this byte[] value, Func<HashAlgorithm> createAlgo)
 	{
 		if (value is null)
 			throw new ArgumentNullException(nameof(value));
@@ -296,11 +296,11 @@ public static class CryptoHelper
 		if (value.Length == 0)
 			throw new ArgumentOutOfRangeException(nameof(value));
 
-		if (algo is null)
-			throw new ArgumentNullException(nameof(algo));
+		if (createAlgo is null)
+			throw new ArgumentNullException(nameof(createAlgo));
 
-		using (algo)
-			return algo.ComputeHash(value).Digest();
+		using var algo = createAlgo();
+		return algo.ComputeHash(value).Digest();
 	}
 
 	/// <summary>
@@ -309,9 +309,7 @@ public static class CryptoHelper
 	/// <param name="value">The value to hash.</param>
 	/// <returns>The hash.</returns>
 	public static string Md5(this byte[] value)
-	{
-		return value.Hash(MD5.Create());
-	}
+		=> value.Hash(MD5.Create);
 
 	/// <summary>
 	/// SHA256 hash.
@@ -319,9 +317,7 @@ public static class CryptoHelper
 	/// <param name="value">The value to hash.</param>
 	/// <returns>The hash.</returns>
 	public static string Sha256(this byte[] value)
-	{
-		return value.Hash(SHA256.Create());
-	}
+		=> value.Hash(SHA256.Create);
 
 	/// <summary>
 	/// SHA512 hash.
@@ -329,52 +325,60 @@ public static class CryptoHelper
 	/// <param name="value">The value to hash.</param>
 	/// <returns>The hash.</returns>
 	public static string Sha512(this byte[] value)
-	{
-		return value.Hash(SHA512.Create());
-	}
+		=> value.Hash(SHA512.Create);
+
+	/// <summary>
+	/// The default salt size.
+	/// </summary>
+	public const int DefaultSaltSize = 128;
 
 	/// <summary>
 	/// Validates the password.
 	/// </summary>
 	/// <param name="secret"><see cref="Secret"/></param>
 	/// <param name="password">The password to check.</param>
+	/// <param name="algo">The hash algorithm.</param>
 	/// <returns>Operation result.</returns>
-	public static bool IsValid(this Secret secret, SecureString password)
-		=> secret.IsValid(password.UnSecure());
+	public static bool IsValid(this Secret secret, SecureString password, CryptoAlgorithm algo)
+		=> secret.IsValid(password.UnSecure(), algo);
 
 	/// <summary>
 	/// Validates the password.
 	/// </summary>
 	/// <param name="secret"><see cref="Secret"/></param>
 	/// <param name="password">The password to check.</param>
+	/// <param name="algo">The hash algorithm.</param>
 	/// <returns>Operation result.</returns>
-	public static bool IsValid(this Secret secret, string password)
-		=> secret.Equals(password.CreateSecret(secret));
+	public static bool IsValid(this Secret secret, string password, CryptoAlgorithm algo)
+		=> secret.Equals(password.CreateSecret(secret, algo));
 
 	/// <summary>
 	/// Creates a new <see cref="Secret"/> from the plain text.
 	/// </summary>
 	/// <param name="plainText">The plain text.</param>
+	/// <param name="algo">The hash algorithm.</param>
 	/// <returns><see cref="Secret"/></returns>
-	public static Secret CreateSecret(this SecureString plainText)
-		=> plainText.UnSecure().CreateSecret();
+	public static Secret CreateSecret(this SecureString plainText, CryptoAlgorithm algo)
+		=> plainText.UnSecure().CreateSecret(algo);
 
 	/// <summary>
 	/// Creates a new <see cref="Secret"/> from the plain text.
 	/// </summary>
 	/// <param name="plainText">The plain text.</param>
+	/// <param name="algo">The hash algorithm.</param>
 	/// <returns><see cref="Secret"/></returns>
-	public static Secret CreateSecret(this string plainText)
-		=> plainText.CreateSecret(TypeHelper.GenerateSalt(Secret.DefaultSaltSize));
+	public static Secret CreateSecret(this string plainText, CryptoAlgorithm algo)
+		=> plainText.CreateSecret(TypeHelper.GenerateSalt(DefaultSaltSize), algo);
 
 	/// <summary>
 	/// Creates a new <see cref="Secret"/> from the plain text.
 	/// </summary>
 	/// <param name="plainText">The plain text.</param>
 	/// <param name="secret"><see cref="Secret"/></param>
+	/// <param name="algo">The hash algorithm.</param>
 	/// <returns><see cref="Secret"/></returns>
-	public static Secret CreateSecret(this string plainText, Secret secret)
-		=> plainText.CreateSecret(secret.CheckOnNull(nameof(secret)).Salt, secret.Algo);
+	public static Secret CreateSecret(this string plainText, Secret secret, CryptoAlgorithm algo)
+		=> plainText.CreateSecret(secret.CheckOnNull(nameof(secret)).Salt, algo);
 
 	/// <summary>
 	/// Creates a new <see cref="Secret"/> from the plain text.
@@ -383,7 +387,7 @@ public static class CryptoHelper
 	/// <param name="salt">The salt.</param>
 	/// <param name="algo">The hash algorithm.</param>
 	/// <returns><see cref="Secret"/></returns>
-	public static Secret CreateSecret(this string plainText, byte[] salt, CryptoAlgorithm algo = null)
+	public static Secret CreateSecret(this string plainText, byte[] salt, CryptoAlgorithm algo)
 	{
 		if (plainText.IsEmpty())
 			throw new ArgumentNullException(nameof(plainText));
@@ -391,12 +395,19 @@ public static class CryptoHelper
 		if (salt is null)
 			throw new ArgumentNullException(nameof(salt));
 
+		if (algo is null)
+			throw new ArgumentNullException(nameof(algo));
+
 		var unencodedBytes = plainText.Unicode();
 		var buffer = new byte[unencodedBytes.Length + salt.Length];
 
 		Buffer.BlockCopy(unencodedBytes, 0, buffer, 0, unencodedBytes.Length);
 		Buffer.BlockCopy(salt, 0, buffer, unencodedBytes.Length, salt.Length);
 
-		return new Secret(buffer, salt, algo);
+		return new()
+		{
+			Salt = [.. salt],
+			Hash = algo.Encrypt(buffer),
+		};
 	}
 }

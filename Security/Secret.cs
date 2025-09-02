@@ -1,6 +1,5 @@
 namespace Ecng.Security;
 
-using System;
 using System.Linq;
 
 using Ecng.Common;
@@ -16,30 +15,7 @@ public class Secret : Equatable<Secret>
 	/// </summary>
 	public Secret()
 	{
-		Algo = CreateDefaultAlgo();
 	}
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="Secret"/> class.
-	/// </summary>
-	/// <param name="passwordBytes"></param>
-	/// <param name="salt">The salt.</param>
-	/// <param name="algo">Hash algorithm. Can be <see langword="null"/>.</param>
-	public Secret(byte[] passwordBytes, byte[] salt, CryptoAlgorithm algo = null)
-	{
-		Salt = salt ?? throw new ArgumentNullException(nameof(salt));
-		Algo = algo ?? CreateDefaultAlgo();
-		Hash = passwordBytes ?? throw new ArgumentNullException(nameof(passwordBytes));
-
-		Hash = Algo.Encrypt(Hash);
-	}
-
-	private static CryptoAlgorithm CreateDefaultAlgo() => CryptoAlgorithm.Create(AlgorithmTypes.Hash);
-
-	/// <summary>
-	/// The default salt size.
-	/// </summary>
-	public const int DefaultSaltSize = 128;
 
 	/// <summary>
 	/// Gets or sets the salt.
@@ -52,12 +28,6 @@ public class Secret : Equatable<Secret>
 	/// </summary>
 	/// <value>The hash.</value>
 	public byte[] Hash { get; set; }
-
-	/// <summary>
-	/// Gets the hash algorithm.
-	/// </summary>
-	[Newtonsoft.Json.JsonIgnore]
-	public CryptoAlgorithm Algo { get; }
 
 	/// <inheritdoc />
 	protected override bool OnEquals(Secret other)

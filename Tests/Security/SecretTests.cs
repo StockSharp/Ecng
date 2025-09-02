@@ -10,24 +10,30 @@ public class SecretTests
 	private const string _correctPwd = "mpoi3e/4nn3(&T(*^R";
 	private const string _incorrectPwd = "mpo3e/4nn3(&T(*^R";
 
+	private static CryptoAlgorithm CreateAlgo() => CryptoAlgorithm.Create(AlgorithmTypes.Hash);
+
 	[TestMethod]
 	public void EqualsTest()
 	{
-		var pwd1 = _correctPwd.CreateSecret();
-		var pwd2 = _correctPwd.CreateSecret();
+		var algo = CreateAlgo();
+
+		var pwd1 = _correctPwd.CreateSecret(algo);
+		var pwd2 = _correctPwd.CreateSecret(algo);
 
 		pwd1.Equals(pwd1).AssertTrue();
 		pwd1.Equals(pwd2).AssertFalse();
 
-		pwd1.IsValid(_correctPwd).AssertTrue();
-		pwd2.IsValid(_correctPwd).AssertTrue();
+		pwd1.IsValid(_correctPwd, algo).AssertTrue();
+		pwd2.IsValid(_correctPwd, algo).AssertTrue();
 	}
 
 	[TestMethod]
 	public void NonEqualsTest()
 	{
-		var pwd1 = _correctPwd.CreateSecret();
-		var pwd2 = _incorrectPwd.CreateSecret();
+		var algo = CreateAlgo();
+
+		var pwd1 = _correctPwd.CreateSecret(algo);
+		var pwd2 = _incorrectPwd.CreateSecret(algo);
 
 		pwd1.Equals(pwd2).AssertFalse();
 	}
@@ -35,18 +41,22 @@ public class SecretTests
 	[TestMethod]
 	public void IsValidTest()
 	{
-		_correctPwd.CreateSecret().IsValid(_correctPwd).AssertTrue();
-		_correctPwd.CreateSecret().IsValid(_incorrectPwd).AssertFalse();
+		var algo = CreateAlgo();
+
+		_correctPwd.CreateSecret(algo).IsValid(_correctPwd, algo).AssertTrue();
+		_correctPwd.CreateSecret(algo).IsValid(_incorrectPwd, algo).AssertFalse();
 	}
 
 	[TestMethod]
 	public void SecureStringTest()
 	{
+		var algo = CreateAlgo();
+
 		var correctPwd = _correctPwd.Secure();
 		var incorrectPwd = _incorrectPwd.Secure();
 
-		correctPwd.CreateSecret().IsValid(correctPwd).AssertTrue();
-		correctPwd.CreateSecret().IsValid(incorrectPwd).AssertFalse();
+		correctPwd.CreateSecret(algo).IsValid(correctPwd, algo).AssertTrue();
+		correctPwd.CreateSecret(algo).IsValid(incorrectPwd, algo).AssertFalse();
 	}
 
 	[TestMethod]
@@ -114,30 +124,38 @@ public class SecretTests
 	[TestMethod]
 	public void IsValid_SecureString_ThrowsOnNull()
 	{
-		Secret secret = _correctPwd.CreateSecret();
-		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((System.Security.SecureString)null));
+		var algo = CreateAlgo();
+
+		Secret secret = _correctPwd.CreateSecret(algo);
+		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((System.Security.SecureString)null, algo));
 	}
 
 	[TestMethod]
 	public void IsValid_String_ThrowsOnNull()
 	{
-		Secret secret = _correctPwd.CreateSecret();
-		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((string)null));
+		var algo = CreateAlgo();
+
+		Secret secret = _correctPwd.CreateSecret(algo);
+		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((string)null, algo));
 	}
 
 	[TestMethod]
 	public void CreateSecret_WithSecretArg()
 	{
-		var secret1 = _correctPwd.CreateSecret();
-		var secret2 = _correctPwd.CreateSecret(secret1);
-		secret2.IsValid(_correctPwd).AssertTrue();
+		var algo = CreateAlgo();
+
+		var secret1 = _correctPwd.CreateSecret(algo);
+		var secret2 = _correctPwd.CreateSecret(secret1, algo);
+		secret2.IsValid(_correctPwd, algo).AssertTrue();
 	}
 
 	[TestMethod]
 	public void CreateSecret_ThrowsOnNull()
 	{
+		var algo = CreateAlgo();
+
 		System.Security.SecureString s = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => s.CreateSecret());
+		Assert.ThrowsExactly<ArgumentNullException>(() => s.CreateSecret(algo));
 	}
 
 	[TestMethod]
@@ -153,24 +171,27 @@ public class SecretTests
 	[TestMethod]
 	public void CreateSecret_CopiesSaltAndAlgo()
 	{
-		var salt = TypeHelper.GenerateSalt(Secret.DefaultSaltSize);
+		var salt = TypeHelper.GenerateSalt(CryptoHelper.DefaultSaltSize);
 		var algo = CryptoAlgorithm.Create(AlgorithmTypes.Hash);
 		var secret1 = _correctPwd.CreateSecret(salt, algo);
-		var secret2 = _correctPwd.CreateSecret(secret1);
+		var secret2 = _correctPwd.CreateSecret(secret1, algo);
 		secret2.Salt.AssertEqual(secret1.Salt);
-		(secret2.Algo?.GetType()).AssertEqual(secret1.Algo?.GetType());
 	}
 
 	[TestMethod]
 	public void CreateSecret_EmptyString_Throws()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => "".CreateSecret());
+		var algo = CreateAlgo();
+
+		Assert.ThrowsExactly<ArgumentNullException>(() => "".CreateSecret(algo));
 	}
 
 	[TestMethod]
 	public void CreateSecret_NullString_Throws()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).CreateSecret());
+		var algo = CreateAlgo();
+		
+		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).CreateSecret(algo));
 	}
 
 	[TestMethod]
@@ -182,42 +203,54 @@ public class SecretTests
 	[TestMethod]
 	public void CreateSecret_NullSecret_Throws()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => _correctPwd.CreateSecret((Secret)null));
+		var algo = CreateAlgo();
+
+		Assert.ThrowsExactly<ArgumentNullException>(() => _correctPwd.CreateSecret((Secret)null, algo));
 	}
 
 	[TestMethod]
 	public void CreateSecret_SecureString_Correct()
 	{
+		var algo = CreateAlgo();
+
 		var s = _correctPwd.Secure();
-		var secret = s.CreateSecret();
-		secret.IsValid(_correctPwd).AssertTrue();
+		var secret = s.CreateSecret(algo);
+		secret.IsValid(_correctPwd, algo).AssertTrue();
 	}
 
 	[TestMethod]
 	public void CreateSecret_SecureString_Null_Throws()
 	{
+		var algo = CreateAlgo();
+
 		System.Security.SecureString s = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => s.CreateSecret());
+		Assert.ThrowsExactly<ArgumentNullException>(() => s.CreateSecret(algo));
 	}
 
 	[TestMethod]
 	public void IsValid_NullSecret_Throws()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((Secret)null).IsValid(_correctPwd));
+		var algo = CreateAlgo();
+		
+		Assert.ThrowsExactly<ArgumentNullException>(() => ((Secret)null).IsValid(_correctPwd, algo));
 	}
 
 	[TestMethod]
 	public void IsValid_NullPassword_Throws()
 	{
-		var secret = _correctPwd.CreateSecret();
-		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((string)null));
+		var algo = CreateAlgo();
+
+		var secret = _correctPwd.CreateSecret(algo);
+		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((string)null, algo));
 	}
 
 	[TestMethod]
 	public void IsValid_NullSecureString_Throws()
 	{
-		var secret = _correctPwd.CreateSecret();
-		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((System.Security.SecureString)null));
+		var algo = CreateAlgo();
+
+		var secret = _correctPwd.CreateSecret(algo);
+		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((System.Security.SecureString)null, algo));
 	}
 
 	[TestMethod]
