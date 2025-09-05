@@ -11,4 +11,11 @@ public interface ILocalizer
 	/// <param name="enStr">The string to localize on English.</param>
 	/// <returns>The localized string.</returns>
 	public string Localize(string enStr);
+
+	/// <summary>
+	/// Localizes the string.
+	/// </summary>
+	/// <param name="key">The key of the string to localize.</param>
+	/// <returns>The localized string.</returns>
+	public string LocalizeByKey(string key);
 }

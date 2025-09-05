@@ -18,6 +18,16 @@ public class LocalizeTests
 
 			return enStr;
 		}
+
+		string ILocalizer.LocalizeByKey(string key)
+		{
+			if (key == "Warnings")
+				return "Варнинги";
+			else if (key == "Name")
+				return "Имя";
+
+			return key;
+		}
 	}
 
 	[TestMethod]

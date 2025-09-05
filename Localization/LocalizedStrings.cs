@@ -1,5 +1,7 @@
 ﻿namespace Ecng.Localization;
 
+using System;
+
 using Ecng.Common;
 
 /// <summary>
@@ -7,10 +9,22 @@ using Ecng.Common;
 /// </summary>
 public static class LocalizedStrings
 {
+	private class NullLocalizer : ILocalizer
+	{
+		string ILocalizer.Localize(string enStr) => enStr;
+		string ILocalizer.LocalizeByKey(string key) => key;
+	}
+
+	private static ILocalizer _localizer = new NullLocalizer();
+
 	/// <summary>
 	/// The localizer.
 	/// </summary>
-	public static ILocalizer Localizer { get; set; }
+	public static ILocalizer Localizer
+	{
+		get => _localizer;
+		set => _localizer = value ?? throw new ArgumentNullException(nameof(value));
+	}
 
 	/// <summary>
 	/// </summary>
@@ -60,49 +74,49 @@ public static class LocalizedStrings
 
 	/// <summary>
 	/// </summary>
-	public static string Inherited => Localize(nameof(Inherited));
+	public static string Inherited => LocalizeByKey(InheritedKey);
 	/// <summary>
 	/// </summary>
-	public static string Verbose => Localize(nameof(Verbose));
+	public static string Verbose => LocalizeByKey(VerboseKey);
 	/// <summary>
 	/// </summary>
-	public static string Debug => Localize(nameof(Debug));
+	public static string Debug => LocalizeByKey(DebugKey);
 	/// <summary>
 	/// </summary>
-	public static string Info => Localize(nameof(Info));
+	public static string Info => LocalizeByKey(InfoKey);
 	/// <summary>
 	/// </summary>
-	public static string Warnings => Localize(nameof(Warnings));
+	public static string Warnings => LocalizeByKey(WarningsKey);
 	/// <summary>
 	/// </summary>
-	public static string Errors => Localize(nameof(Errors));
+	public static string Errors => LocalizeByKey(ErrorsKey);
 	/// <summary>
 	/// </summary>
-	public static string Off => Localize(nameof(Off));
+	public static string Off => LocalizeByKey(OffKey);
 	/// <summary>
 	/// </summary>
-	public static string Id => Localize(nameof(Id));
+	public static string Id => LocalizeByKey(IdKey);
 	/// <summary>
 	/// </summary>
-	public static string Logging => Localize(nameof(Logging));
+	public static string Logging => LocalizeByKey(LoggingKey);
 	/// <summary>
 	/// </summary>
-	public static string Name => Localize(nameof(Name));
+	public static string Name => LocalizeByKey(NameKey);
 	/// <summary>
 	/// </summary>
-	public static string LogSourceName => Localize(nameof(LogSourceName));
+	public static string LogSourceName => LocalizeByKey(LogSourceNameKey);
 	/// <summary>
 	/// </summary>
-	public static string LogLevel => Localize(nameof(LogLevel));
+	public static string LogLevel => LocalizeByKey(LogLevelKey);
 	/// <summary>
 	/// </summary>
-	public static string LogLevelDesc => Localize(nameof(LogLevelDesc));
+	public static string LogLevelDesc => LocalizeByKey(LogLevelDescKey);
 	/// <summary>
 	/// </summary>
-	public static string PreventWork => Localize(nameof(PreventWork));
+	public static string PreventWork => LocalizeByKey(PreventWorkKey);
 	/// <summary>
 	/// </summary>
-	public static string PreventUpgrade => Localize(nameof(PreventUpgrade));
+	public static string PreventUpgrade => LocalizeByKey(PreventUpgradeKey);
 
 	/// <summary>
 	/// Localizes the string.
@@ -110,5 +124,13 @@ public static class LocalizedStrings
 	/// <param name="enStr">The string to localize on English.</param>
 	/// <returns>The localized string.</returns>
 	public static string Localize(this string enStr)
-		=> (Localizer?.Localize(enStr)).IsEmpty(enStr);
+		=> Localizer.Localize(enStr);
+
+	/// <summary>
+	/// Localizes the string.
+	/// </summary>
+	/// <param name="key">The key of the string to localize.</param>
+	/// <returns>The localized string.</returns>
+	public static string LocalizeByKey(this string key)
+		=> Localizer.LocalizeByKey(key);
 }
