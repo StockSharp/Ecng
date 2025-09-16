@@ -13,7 +13,7 @@ using Ecng.Serialization;
 /// </summary>
 public class DatabaseConnectionCache : IPersistable
 {
-	private readonly CachedSynchronizedSet<DatabaseConnectionPair> _connections = new();
+	private readonly CachedSynchronizedSet<DatabaseConnectionPair> _connections = [];
 
 	/// <summary>
 	/// Gets all database connection pairs.

@@ -182,7 +182,7 @@ public static class ConfigManager
 	/// </summary>
 	public static event Action<Type, object> ServiceRegistered;
 
-	private static readonly Dictionary<Type, List<Action<object>>> _subscribers = new();
+	private static readonly Dictionary<Type, List<Action<object>>> _subscribers = [];
 
 	/// <summary>
 	/// Subscribes to the service registration event for the specified type.

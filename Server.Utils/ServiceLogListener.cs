@@ -11,18 +11,13 @@ using Ecng.Logging;
 /// <summary>
 /// The logger recording the data to a <see cref="ILogger"/>.
 /// </summary>
-public class ServiceLogListener : ILogListener
+/// <remarks>
+/// Initializes a new instance of the <see cref="ServiceLogListener"/>.
+/// </remarks>
+/// <param name="logger">Logger.</param>
+public class ServiceLogListener(ILogger logger) : ILogListener
 {
-	private readonly ILogger _logger;
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="ServiceLogListener"/>.
-	/// </summary>
-	/// <param name="logger">Logger.</param>
-	public ServiceLogListener(ILogger logger)
-	{
-		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
-	}
+	private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
 	bool ILogListener.CanSave => false;
 

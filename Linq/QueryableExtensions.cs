@@ -130,9 +130,7 @@ public static class QueryableExtensions
 
 		foreach (var prop in propertyName.Split('.'))
 		{
-			var pi = type.GetProperty(prop, flags);
-
-			if (pi is null)
+			var pi = type.GetProperty(prop, flags) ??
 				throw new InvalidOperationException($"Type '{type}' doesn't contain property '{prop}'.");
 
 			expr = Expression.Property(expr, pi);

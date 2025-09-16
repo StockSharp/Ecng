@@ -14,7 +14,7 @@ public static class RestSharpHelper
 	// Private class for wrapping an IAuthenticator.
 	private class AuthenticatorWrapper : IAuthenticator
 	{
-		private readonly SynchronizedDictionary<RestRequest, IAuthenticator> _authenticators = new();
+		private readonly SynchronizedDictionary<RestRequest, IAuthenticator> _authenticators = [];
 
 		private class Holder : Disposable
 		{

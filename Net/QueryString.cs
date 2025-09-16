@@ -249,7 +249,7 @@ public class QueryString : Equatable<QueryString>, IEnumerable<KeyValuePair<stri
 	{
 		return new QueryString(Url)
 		{
-			_queryString = new Dictionary<string, string>(_queryString),
+			_queryString = new(_queryString),
 			_compiledString = _compiledString,
 		};
 	}

@@ -612,7 +612,7 @@ public static class PersistableHelper
 		}
 	}
 
-	private static readonly SynchronizedDictionary<Type, (Func<object, SettingsStorage> serialize, Func<SettingsStorage, object> deserialize)> _customSerializers = new();
+	private static readonly SynchronizedDictionary<Type, (Func<object, SettingsStorage> serialize, Func<SettingsStorage, object> deserialize)> _customSerializers = [];
 
 	/// <summary>
 	/// Registers a custom serializer for a specific type.
