@@ -12,11 +12,31 @@ using Windows.Win32.System.JobObjects;
 using Microsoft.Win32.SafeHandles;
 
 /// <summary>
-/// Provides extension methods for the <see cref="Process"/> class to manage processor affinity, memory limits, and job behavior on Windows.
+/// Provides extension methods for the <see cref="Process"/> class to manage processor affinity, memory limits, and job behavior.
 /// </summary>
 public unsafe static class ProcessExtensions
 {
 #pragma warning disable CA1416 // Validate platform compatibility
+
+	// Linux interop declarations (resolved only if called at runtime on Linux)
+	private const int RLIMIT_AS = 9;              // Virtual memory (address space) limit
+	private const int PR_SET_PDEATHSIG = 1;       // prctl option to set parent-death signal
+	private const int SIGKILL = 9;
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct RLimit
+	{
+		public ulong rlim_cur; // soft limit
+		public ulong rlim_max; // hard limit
+	}
+
+	[DllImport("libc", SetLastError = true)]
+	private static extern int setrlimit(int resource, ref RLimit rlim);
+
+	[DllImport("libc", SetLastError = true)]
+	private static extern int prctl(int option, ulong arg2, ulong arg3, ulong arg4, ulong arg5);
+
+	private static int GetCurrentProcessId() => Process.GetCurrentProcess().Id;
 
 	/// <summary>
 	/// Sets the processor affinity for the process, allowing control over which CPU cores the process can execute on.
@@ -45,7 +65,7 @@ public unsafe static class ProcessExtensions
 	}
 
 	/// <summary>
-	/// Limits the process memory usage by assigning it to a Windows Job Object with a specified process memory limit.
+	/// Limits the process memory usage. Windows: Job Object. Linux: setrlimit(RLIMIT_AS) for current process only.
 	/// </summary>
 	/// <param name="process">The process to limit memory usage for.</param>
 	/// <param name="limit">The maximum allowed memory in bytes.</param>
@@ -54,9 +74,6 @@ public unsafe static class ProcessExtensions
 	/// </returns>
 	/// <exception cref="ArgumentNullException">Thrown when the provided process is null.</exception>
 	/// <exception cref="ArgumentOutOfRangeException">Thrown when the provided limit is less than or equal to zero.</exception>
-	/// <exception cref="PlatformNotSupportedException">
-	/// Thrown when the current operating system is not Windows.
-	/// </exception>
 	/// <exception cref="InvalidOperationException">
 	/// Thrown when setting the job object information or assigning the process to the job object fails.
 	/// </exception>
@@ -64,47 +81,53 @@ public unsafe static class ProcessExtensions
 	{
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
-
 		if (limit <= 0)
 			throw new ArgumentOutOfRangeException(nameof(limit));
 
-		if (!OperatingSystemEx.IsWindows())
+		if (OperatingSystemEx.IsWindows())
 		{
-			// TODO implement for Linux
-			throw new PlatformNotSupportedException();
-		}
+			var jobHandle = PInvoke.CreateJobObject(default, default(string));
 
-		var jobHandle = PInvoke.CreateJobObject(default, default(string));
-
-		var extendedInfo = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION
-		{
-			BasicLimitInformation = new()
+			var extendedInfo = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION
 			{
-				LimitFlags =
-						JOB_OBJECT_LIMIT.JOB_OBJECT_LIMIT_PROCESS_MEMORY |
-						JOB_OBJECT_LIMIT.JOB_OBJECT_LIMIT_BREAKAWAY_OK |
-						JOB_OBJECT_LIMIT.JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK,
-			},
+				BasicLimitInformation = new()
+				{
+					LimitFlags = JOB_OBJECT_LIMIT.JOB_OBJECT_LIMIT_PROCESS_MEMORY |
+							JOB_OBJECT_LIMIT.JOB_OBJECT_LIMIT_BREAKAWAY_OK |
+							JOB_OBJECT_LIMIT.JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK,
+				},
+				ProcessMemoryLimit = (UIntPtr)limit
+			};
 
-			ProcessMemoryLimit = (UIntPtr)limit
-		};
+			var (extendedInfoPtr, length) = extendedInfo.StructToPtrEx();
+			try
+			{
+				if (!PInvoke.SetInformationJobObject(jobHandle, JOBOBJECTINFOCLASS.JobObjectExtendedLimitInformation, extendedInfoPtr.ToPointer(), (uint)length))
+					throw new InvalidOperationException($"Unable to set information. Error: {Marshal.GetLastWin32Error()}");
 
-		var (extendedInfoPtr, length) = extendedInfo.StructToPtrEx();
+				if (!PInvoke.AssignProcessToJobObject(jobHandle, process.SafeHandle))
+					throw new InvalidOperationException("Unable to add the process to the job.");
 
-		try
-		{
-			if (!PInvoke.SetInformationJobObject(jobHandle, JOBOBJECTINFOCLASS.JobObjectExtendedLimitInformation, extendedInfoPtr.ToPointer(), (uint)length))
-				throw new InvalidOperationException($"Unable to set information.  Error: {Marshal.GetLastWin32Error()}");
-
-			if (!PInvoke.AssignProcessToJobObject(jobHandle, process.SafeHandle))
-				throw new InvalidOperationException("Unable to add the this process to the job");
-
-			return jobHandle;
+				return jobHandle;
+			}
+			finally
+			{
+				extendedInfoPtr.FreeHGlobal();
+			}
 		}
-		finally
+		else if (OperatingSystemEx.IsLinux())
 		{
-			extendedInfoPtr.FreeHGlobal();
+			if (process.Id != GetCurrentProcessId())
+				throw new InvalidOperationException("On Linux memory limit can be applied only to current process.");
+
+			var rl = new RLimit { rlim_cur = (ulong)limit, rlim_max = (ulong)limit };
+			if (setrlimit(RLIMIT_AS, ref rl) != 0)
+				throw new InvalidOperationException($"setrlimit failed. errno={Marshal.GetLastWin32Error()}");
+
+			return new SafeFileHandle(IntPtr.Zero, ownsHandle: false);
 		}
+
+		throw new PlatformNotSupportedException();
 	}
 
 	/// <summary>
@@ -116,9 +139,6 @@ public unsafe static class ProcessExtensions
 	/// A <see cref="SafeFileHandle"/> representing the job object that enforces the kill-on-job-close behavior.
 	/// </returns>
 	/// <exception cref="ArgumentNullException">Thrown when the provided process is null.</exception>
-	/// <exception cref="PlatformNotSupportedException">
-	/// Thrown when the current operating system is not Windows.
-	/// </exception>
 	/// <exception cref="InvalidOperationException">
 	/// Thrown when setting the job object information or assigning the process to the job object fails.
 	/// </exception>
@@ -127,34 +147,39 @@ public unsafe static class ProcessExtensions
 		if (process is null)
 			throw new ArgumentNullException(nameof(process));
 
-		if (!OperatingSystemEx.IsWindows())
-			throw new PlatformNotSupportedException();
-
-		var jobHandle = PInvoke.CreateJobObject(default, default(string));
-
-		var extendedInfo = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+		if (OperatingSystemEx.IsWindows())
 		{
-			BasicLimitInformation = new()
+			var jobHandle = PInvoke.CreateJobObject(default, default(string));
+			var extendedInfo = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION
 			{
-				LimitFlags = JOB_OBJECT_LIMIT.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+				BasicLimitInformation = new() { LimitFlags = JOB_OBJECT_LIMIT.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE }
+			};
+
+			var (extendedInfoPtr, length) = extendedInfo.StructToPtrEx();
+			try
+			{
+				if (!PInvoke.SetInformationJobObject(jobHandle, JOBOBJECTINFOCLASS.JobObjectExtendedLimitInformation, extendedInfoPtr.ToPointer(), (uint)length))
+					throw new InvalidOperationException($"Unable to set information. Error: {Marshal.GetLastWin32Error()}");
+				if (!PInvoke.AssignProcessToJobObject(jobHandle, process.SafeHandle))
+					throw new InvalidOperationException("Unable to add the process to the job.");
+				return jobHandle;
 			}
-		};
-
-		var (extendedInfoPtr, length) = extendedInfo.StructToPtrEx();
-
-		try
-		{
-			if (!PInvoke.SetInformationJobObject(jobHandle, JOBOBJECTINFOCLASS.JobObjectExtendedLimitInformation, extendedInfoPtr.ToPointer(), (uint)length))
-				throw new InvalidOperationException($"Unable to set information.  Error: {Marshal.GetLastWin32Error()}");
-
-			if (!PInvoke.AssignProcessToJobObject(jobHandle, process.SafeHandle))
-				throw new InvalidOperationException("Unable to add the this process to the job");
-
-			return jobHandle;
+			finally
+			{
+				extendedInfoPtr.FreeHGlobal();
+			}
 		}
-		finally
+		else if (OperatingSystemEx.IsLinux())
 		{
-			extendedInfoPtr.FreeHGlobal();
+			if (process.Id != GetCurrentProcessId())
+				throw new InvalidOperationException("On Linux child-kill behavior can be set only for current process.");
+
+			if (prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0) != 0)
+				throw new InvalidOperationException($"prctl(PR_SET_PDEATHSIG) failed. errno={Marshal.GetLastWin32Error()}");
+
+			return new SafeFileHandle(IntPtr.Zero, ownsHandle: false);
 		}
+
+		throw new PlatformNotSupportedException();
 	}
 }
