@@ -14,6 +14,22 @@ using Ecng.Localization;
 /// </summary>
 public class ByteMemoryPool : MemoryPool<byte>
 {
+	/// <summary>
+	/// Types of pool limit exceed events reported via <see cref="LimitExceed"/>.
+	/// </summary>
+	public enum LimitTypes
+	{
+		/// <summary>
+		/// Total cached buffers count reached <see cref="MaxCount"/>.
+		/// </summary>
+		Total,
+
+		/// <summary>
+		/// Buffers count for a particular size reached <see cref="MaxPerLength"/>.
+		/// </summary>
+		PerLength,
+	}
+
 	private struct MemoryOwner(ByteMemoryPool parent, Memory<byte> memory) : IMemoryOwner<byte>, IReasonDisposable
 	{
 		private volatile int _disposed;
@@ -43,10 +59,10 @@ public class ByteMemoryPool : MemoryPool<byte>
 
 			Reason = reason;
 
-			var result = _parent.Free(_memory);
+			var (result, limit) = _parent.Free(_memory);
 
-			if (result == FreeResult.LimitExceeded)
-				_parent.LimitExceed?.Invoke();
+			if (limit is LimitTypes l)
+				_parent.LimitExceed?.Invoke(l);
 
 			return true;
 		}
@@ -70,9 +86,9 @@ public class ByteMemoryPool : MemoryPool<byte>
 	}
 
 	/// <summary>
-	/// The event that is triggered when the memory pool exceeds its limit.
+	/// Occurs when the pool cannot cache more buffers due to reaching a limit.
 	/// </summary>
-	public event Action LimitExceed;
+	public event Action<LimitTypes> LimitExceed;
 
 	/// <inheritdoc />
 	public override int MaxBufferSize { get; }
@@ -208,25 +224,25 @@ public class ByteMemoryPool : MemoryPool<byte>
 		OverLimit
 	}
 
-	private FreeResult Free(Memory<byte> memory)
+	private (FreeResult res, LimitTypes? limit) Free(Memory<byte> memory)
 	{
 		if (memory.IsEmpty)
-			return FreeResult.Success;
+			return default;
 
 		lock (_lock)
 		{
 			if (_disposed)
-				return FreeResult.Success;
+				return default;
 
 			if (_totalCount >= MaxCount)
 			{
 				if (!_limitExceeded)
 				{
 					_limitExceeded = true;
-					return FreeResult.LimitExceeded;
+					return (FreeResult.LimitExceeded, LimitTypes.Total);
 				}
 
-				return FreeResult.OverLimit;
+				return (FreeResult.OverLimit, default);
 			}
 
 			var memLength = memory.Length;
@@ -237,10 +253,10 @@ public class ByteMemoryPool : MemoryPool<byte>
 				if (!_limitExceeded)
 				{
 					_limitExceeded = true;
-					return FreeResult.LimitExceeded;
+					return (FreeResult.LimitExceeded, LimitTypes.PerLength);
 				}
 
-				return FreeResult.OverLimit;
+				return (FreeResult.OverLimit, default);
 			}
 
 			bag.Enqueue(memory);
@@ -251,7 +267,7 @@ public class ByteMemoryPool : MemoryPool<byte>
 			_limitExceeded = false;
 		}
 
-		return FreeResult.Success;
+		return default;
 	}
 
 	/// <summary>
