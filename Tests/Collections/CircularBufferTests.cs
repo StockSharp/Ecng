@@ -165,4 +165,33 @@ public class CircularBufferTests
 		cb.Capacity.AreEqual(5);
 		cb.IsFull.AssertFalse();
 	}
+
+	[TestMethod]
+	public void RandomPushBackStress()
+	{
+		const int capacity = 17;
+		const int iterations = 10_000;
+
+		var buf = new CircularBuffer<int>(capacity);
+		var model = new List<int>(capacity);
+
+		for (int i = 0; i < iterations; i++)
+		{
+			var val = RandomGen.GetInt();
+
+			buf.PushBack(val);
+			model.Add(val);
+
+			if (model.Count > capacity)
+				model.RemoveAt(0);
+
+			// basic invariants
+			(buf.Count <= buf.Capacity).AssertTrue();
+			(buf.IsEmpty == (buf.Count == 0)).AssertTrue();
+			(buf.IsFull == (buf.Count == buf.Capacity)).AssertTrue();
+
+			// order check
+			buf.ToArray().SequenceEqual(model).AssertTrue();
+		}
+	}
 }
