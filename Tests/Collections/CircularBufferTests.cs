@@ -132,4 +132,37 @@ public class CircularBufferTests
 		var doubled = enu.Select(x => x * 2).ToArray();
 		doubled.SequenceEqual([2, 4, 6]).AssertTrue();
 	}
+
+	[TestMethod]
+	public void ShrinkCapacity()
+	{
+		var cb = new CircularBuffer<int>(10);
+
+		for (var i = 1; i <= 15; i++)
+			cb.PushBack(i);
+
+		cb.Capacity = 4;
+
+		cb.ToArray().AssertEqual([12, 13, 14, 15]);
+		cb.Count.AreEqual(4);
+		cb.Capacity.AreEqual(4);
+		cb.IsFull.AssertTrue();
+		cb.IsEmpty.AssertFalse();
+	}
+
+	[TestMethod]
+	public void GrowCapacity()
+	{
+		var cb = new CircularBuffer<int>(3);
+		cb.PushBack(1);
+		cb.PushBack(2);
+		cb.PushBack(3); // full: [1,2,3]
+
+		cb.Capacity = 5; // grow
+
+		cb.ToArray().AssertEqual([1, 2, 3]);
+		cb.Count.AreEqual(3);
+		cb.Capacity.AreEqual(5);
+		cb.IsFull.AssertFalse();
+	}
 }

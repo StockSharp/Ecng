@@ -64,8 +64,7 @@ public class CircularBuffer<T> : IEnumerable<T>, IList<T>
 	{
 		if (capacity < 1)
 		{
-			throw new ArgumentException(
-				"Circular buffer cannot have negative or zero capacity.", nameof(capacity));
+			throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "Circular buffer cannot have negative or zero capacity.");
 		}
 		if (items == null)
 		{
@@ -95,7 +94,43 @@ public class CircularBuffer<T> : IEnumerable<T>, IList<T>
 		get => _buffer.Length;
 		set
 		{
-			Array.Resize(ref _buffer, value);
+			if (value < 1)
+				throw new ArgumentOutOfRangeException(nameof(value), value, "Circular buffer cannot have negative or zero capacity.");
+
+			if (value == Capacity)
+				return;
+
+			if (_count == 0)
+			{
+				_buffer = new T[value];
+				_start = _end = 0;
+				return;
+			}
+
+			// materialize logical order once
+			var src = ToArray();
+
+			if (value >= _count)
+			{
+				// grow: keep all items in order
+				var dst = new T[value];
+				Array.Copy(src, 0, dst, 0, _count);
+
+				_buffer = dst;
+				_start = 0;
+				_end = _count % value; // == _count when value > _count, иначе 0 если ровно
+			}
+			else
+			{
+				// shrink: keep the last 'value' items (drop oldest)
+				var dst = new T[value];
+				Array.Copy(src, src.Length - value, dst, 0, value);
+
+				_buffer = dst;
+				_count = value;
+				_start = 0;
+				_end = 0;
+			}
 		}
 	}
 
