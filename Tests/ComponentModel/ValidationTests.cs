@@ -475,4 +475,92 @@ public class ValidationTests
 		attr.IsValid(null).AssertTrue();
 		attr.IsValid(new Price(0m, PriceTypes.Percent)).AssertTrue();
 	}
+
+	[TestMethod]
+	public void TimeSpanStep_Basic()
+	{
+		var attr = new TimeSpanStepAttribute(500); // step 500 ms
+		attr.IsValid(TimeSpan.Zero).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(500)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(1000)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(750)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void TimeSpanStep_Base()
+	{
+		var attr = new TimeSpanStepAttribute(200, 50); // valid ticks at 50ms + n*200ms => 50,250,450...
+		attr.IsValid(TimeSpan.FromMilliseconds(50)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(250)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(450)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(650)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(150)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void TimeSpanStep_NullHandling()
+	{
+		var attr = new TimeSpanStepAttribute(1000);
+		attr.IsValid(null).AssertFalse();
+		attr.DisableNullCheck = true;
+		attr.IsValid(null).AssertTrue();
+	}
+
+	[TestMethod]
+	public void PriceStep_Basic()
+	{
+		var attr = new PriceStepAttribute(0.5m); // 0,0.5,1.0,1.5,...
+		attr.IsValid(new Price(0m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(0.5m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(1.5m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(0.25m, PriceTypes.Absolute)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void PriceStep_Base()
+	{
+		var attr = new PriceStepAttribute(2m, 1m); // 1,3,5...
+		attr.IsValid(new Price(1m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(3m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(5m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(0m, PriceTypes.Absolute)).AssertFalse();
+		attr.IsValid(new Price(2m, PriceTypes.Absolute)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void PriceStep_NullHandling()
+	{
+		var attr = new PriceStepAttribute(1m);
+		attr.IsValid(null).AssertFalse();
+		attr.DisableNullCheck = true;
+		attr.IsValid(null).AssertTrue();
+	}
+
+	[TestMethod]
+	public void TimeSpanStep_StringCtor_Basic()
+	{
+		var attr = new TimeSpanStepAttribute("00:00:00.500"); // step 500 ms
+		attr.IsValid(TimeSpan.Zero).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(500)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(1000)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(750)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void TimeSpanStep_StringCtor_Base()
+	{
+		var attr = new TimeSpanStepAttribute("00:00:00.200", "00:00:00.050"); // 50ms + n*200ms
+		attr.IsValid(TimeSpan.FromMilliseconds(50)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(250)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(450)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(150)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void TimeSpanStep_StringCtor_Invalid()
+	{
+		Assert.ThrowsExactly<ArgumentNullException>(() => new TimeSpanStepAttribute(null));
+		Assert.ThrowsExactly<ArgumentNullException>(() => new TimeSpanStepAttribute(" "));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new TimeSpanStepAttribute("00:00:00")); // zero step
+	}
 }

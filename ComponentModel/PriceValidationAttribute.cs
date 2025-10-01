@@ -1,5 +1,6 @@
 namespace Ecng.ComponentModel;
 
+using System;
 using System.ComponentModel.DataAnnotations;
 
 /// <summary>
@@ -74,4 +75,48 @@ public class PriceNotNegativeAttribute : PriceValidationAttributeBase
 {
 	/// <inheritdoc />
 	protected override bool Validate(decimal value) => value >= 0m;
+}
+
+/// <summary>
+/// Validates that a <see cref="Price"/> value lies on a discrete grid defined by Base + n * Step using <see cref="Price.Value"/>.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+[CLSCompliant(false)]
+public class PriceStepAttribute : ValidationAttribute, IValidator
+{
+	/// <summary>
+	/// Creates a new instance of <see cref="PriceStepAttribute"/>.
+	/// </summary>
+	/// <param name="step">Positive step.</param>
+	/// <param name="baseValue">Base value (default 0).</param>
+	public PriceStepAttribute(decimal step, decimal baseValue = 0)
+	{
+		if (step <= 0)
+			throw new ArgumentOutOfRangeException(nameof(step));
+
+		Step = step;
+		BaseValue = baseValue;
+	}
+
+	/// <summary>Step (>0).</summary>
+	public decimal Step { get; }
+
+	/// <summary>Base value.</summary>
+	public decimal BaseValue { get; }
+
+	/// <inheritdoc />
+	public bool DisableNullCheck { get; set; }
+
+	/// <inheritdoc />
+	public override bool IsValid(object value)
+	{
+		if (value is null)
+			return DisableNullCheck;
+
+		if (value is not Price price)
+			return false;
+
+		var diff = price.Value - BaseValue;
+		return diff % Step == 0m;
+	}
 }
