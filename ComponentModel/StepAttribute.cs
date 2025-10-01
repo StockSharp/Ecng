@@ -41,7 +41,7 @@ public class StepAttribute : ValidationAttribute, IValidator
 		if (value is null)
 			return DisableNullCheck;
 
-		decimal? val;
+		decimal val;
 
 		try
 		{
@@ -52,10 +52,7 @@ public class StepAttribute : ValidationAttribute, IValidator
 			return false;
 		}
 
-		if (val is null)
-			return DisableNullCheck;
-
-		var diff = val.Value - BaseValue;
+		var diff = val - BaseValue;
 		var remainder = diff % Step;
 		return remainder == 0m;
 	}
