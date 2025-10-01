@@ -40,17 +40,27 @@ public class TimeSpanNotNegativeAttribute : ComparableNotNegativeAttribute<TimeS
 public class TimeSpanStepAttribute : ValidationAttribute, IValidator
 {
 	/// <summary>
+	/// Creates a new instance using TimeSpan values.
+	/// </summary>
+	/// <param name="step">Positive step.</param>
+	/// <param name="baseValue">Base offset (default TimeSpan.Zero).</param>
+	public TimeSpanStepAttribute(TimeSpan step, TimeSpan baseValue = default)
+	{
+		if (step <= TimeSpan.Zero)
+			throw new ArgumentOutOfRangeException(nameof(step), "Step must be > 0.");
+
+		StepTicks = step.Ticks;
+		BaseTicks = baseValue.Ticks;
+	}
+
+	/// <summary>
 	/// Creates a new instance using millisecond step/base.
 	/// </summary>
 	/// <param name="stepMilliseconds">Positive step in milliseconds.</param>
 	/// <param name="baseMilliseconds">Base offset in milliseconds (default 0).</param>
 	public TimeSpanStepAttribute(long stepMilliseconds, long baseMilliseconds = 0)
+		: this(TimeSpan.FromMilliseconds(stepMilliseconds), TimeSpan.FromMilliseconds(baseMilliseconds))
 	{
-		if (stepMilliseconds <= 0)
-			throw new ArgumentOutOfRangeException(nameof(stepMilliseconds));
-
-		StepTicks = TimeSpan.FromMilliseconds(stepMilliseconds).Ticks;
-		BaseTicks = TimeSpan.FromMilliseconds(baseMilliseconds).Ticks;
 	}
 
 	/// <summary>
@@ -59,19 +69,8 @@ public class TimeSpanStepAttribute : ValidationAttribute, IValidator
 	/// <param name="step">Positive step (e.g. "00:00:05" or "0:0:5").</param>
 	/// <param name="baseValue">Base offset (default 00:00:00).</param>
 	public TimeSpanStepAttribute(string step, string baseValue = "00:00:00")
+		: this((step.IsEmptyOrWhiteSpace() ? throw new ArgumentNullException(nameof(step)) : step.To<TimeSpan>()), baseValue.To<TimeSpan>())
 	{
-		if (step.IsEmptyOrWhiteSpace())
-			throw new ArgumentNullException(nameof(step));
-
-		var stepTs = step.To<TimeSpan>();
-
-		if (stepTs <= TimeSpan.Zero)
-			throw new ArgumentOutOfRangeException(nameof(step), "Step must be > 0.");
-
-		var baseTs = TimeSpan.Parse(baseValue);
-
-		StepTicks = stepTs.Ticks;
-		BaseTicks = baseTs.Ticks;
 	}
 
 	/// <summary>Step in ticks (always > 0).</summary>
