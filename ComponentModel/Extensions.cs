@@ -497,7 +497,7 @@ public static class Extensions
 		=> SetAttribute(entity, nonBrowsable, () => new BrowsableAttribute(false));
 
 	/// <summary>
-	/// Sets or removes an attribute of type TAttribute for the entity based on the provided value.
+	/// Sets or removes an attribute of type <typeparamref name="TAttribute"/> for the entity based on the provided value.
 	/// </summary>
 	/// <typeparam name="TEntity">The type of the attribute entity.</typeparam>
 	/// <typeparam name="TAttribute">The type of attribute to set.</typeparam>
@@ -605,47 +605,89 @@ public static class Extensions
 		=> entity.Attributes.OfType<DisplayAttribute>().FirstOrDefault();
 
 	/// <summary>
-	/// Helper method to determine if any attribute of type TAttribute on the entity satisfies the condition.
+	/// Helper method to determine if any attribute of type <typeparamref name="TAttribute"/> on the entity satisfies the condition.
 	/// </summary>
 	private static bool IsAny<TEntity, TAttribute>(this TEntity entity, Func<TAttribute, bool> condition)
 		where TEntity : IAttributesEntity
 		=> Attrs<TEntity, TAttribute>(entity).Any(condition);
 
 	/// <summary>
-	/// Helper method to determine if all attributes of type TAttribute on the entity satisfy the condition.
+	/// Helper method to determine if all attributes of type <typeparamref name="TAttribute"/> on the entity satisfy the condition.
 	/// </summary>
 	private static bool IsAll<TEntity, TAttribute>(this TEntity entity, Func<TAttribute, bool> condition)
 		where TEntity : IAttributesEntity
 		=> Attrs<TEntity, TAttribute>(entity).All(condition);
 
 	/// <summary>
-	/// Retrieves all attributes of the specified type TAttribute from the entity.
+	/// Retrieves all attributes of the specified type <typeparamref name="TAttribute"/> from the entity.
 	/// </summary>
 	private static IEnumerable<TAttribute> Attrs<TEntity, TAttribute>(this TEntity entity)
 		where TEntity : IAttributesEntity
 		=> entity.Attributes.OfType<TAttribute>();
 
 	/// <summary>
-	/// Sets a RequiredAttribute as a validator for the entity.
+	/// Sets a <see cref="RequiredAttribute"/> as a validator for the entity.
 	/// </summary>
 	/// <typeparam name="TEntity">The type of the attribute entity.</typeparam>
 	/// <param name="entity">The attribute entity.</param>
 	/// <returns>The updated attribute entity.</returns>
 	public static TEntity SetRequired<TEntity>(this TEntity entity)
 		where TEntity : IAttributesEntity
-		=> entity.SetValidator(new RequiredAttribute());
+		=> entity.ModifyAttributes(true, () => new RequiredAttribute());
 
 	/// <summary>
-	/// Adds a custom validation attribute as a validator for the entity.
+	/// Adds or removes an attribute created by <paramref name="create"/> of type <typeparamref name="TAttr"/>.
 	/// </summary>
-	/// <typeparam name="TEntity">The type of the attribute entity.</typeparam>
-	/// <param name="entity">The attribute entity.</param>
-	/// <param name="validator">The validation attribute to add.</param>
-	/// <returns>The updated attribute entity.</returns>
-	public static TEntity SetValidator<TEntity>(this TEntity entity, ValidationAttribute validator)
+	/// <typeparam name="TEntity">The entity type.</typeparam>
+	/// <typeparam name="TAttr">The attribute type.</typeparam>
+	/// <param name="entity">Target entity.</param>
+	/// <param name="add">True to add attribute; false to remove existing ones.</param>
+	/// <param name="create">Factory for attribute instance (used only when adding).</param>
+	/// <returns>The same entity instance for chaining.</returns>
+	public static TEntity ModifyAttributes<TEntity, TAttr>(this TEntity entity, bool add, Func<TAttr> create)
+		where TEntity : IAttributesEntity
+		where TAttr : Attribute
+		=> ModifyAttributes(entity, add, typeof(TAttr), create);
+
+	/// <summary>
+	/// Adds or removes the specified <paramref name="attribute"/> instance (by its runtime type).
+	/// </summary>
+	/// <typeparam name="TEntity">The entity type.</typeparam>
+	/// <param name="entity">Target entity.</param>
+	/// <param name="add">True to add; false to remove existing with same runtime type.</param>
+	/// <param name="attribute">Attribute instance to add (ignored when remove).</param>
+	/// <returns>The same entity instance for chaining.</returns>
+	public static TEntity ModifyAttributes<TEntity>(this TEntity entity, bool add, Attribute attribute)
+		where TEntity : IAttributesEntity
+		=> ModifyAttributes(entity, add, attribute.GetType(), () => attribute);
+
+	/// <summary>
+	/// Adds or removes attributes of a specific type.
+	/// </summary>
+	/// <typeparam name="TEntity">The entity type.</typeparam>
+	/// <param name="entity">Target entity.</param>
+	/// <param name="add">True to add; false to remove existing.</param>
+	/// <param name="attrType">Attribute type to operate on.</param>
+	/// <param name="create">Factory creating attribute when adding.</param>
+	/// <returns>The same entity instance for chaining.</returns>
+	/// <exception cref="ArgumentNullException">attrType or create is null.</exception>
+	public static TEntity ModifyAttributes<TEntity>(this TEntity entity, bool add, Type attrType, Func<Attribute> create)
 		where TEntity : IAttributesEntity
 	{
-		entity.Attributes.Add(validator);
+		if (entity is null)
+			throw new ArgumentNullException(nameof(entity));
+
+		if (attrType is null)
+			throw new ArgumentNullException(nameof(attrType));
+
+		if (create is null)
+			throw new ArgumentNullException(nameof(create));
+
+		entity.Attributes.RemoveWhere(a => a.GetType().Is(attrType));
+
+		if (add)
+			entity.Attributes.Add(create());
+
 		return entity;
 	}
 
