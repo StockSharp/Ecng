@@ -7,7 +7,6 @@ using Ecng.ComponentModel;
 [TestClass]
 public class ValidationTests
 {
-	#region GreaterThanZero
 	[TestMethod]
 	public void GreaterThanZero_Int()
 	{
@@ -78,9 +77,20 @@ public class ValidationTests
 		attr.DisableNullCheck = true;
 		attr.IsValid(null).AssertTrue();
 	}
-	#endregion
 
-	#region NotNegative
+	[TestMethod]
+	public void GreaterThanZero_TimeSpan()
+	{
+		var attr = new TimeSpanGreaterThanZeroAttribute();
+		attr.IsValid(TimeSpan.FromMilliseconds(1)).AssertTrue();
+		attr.IsValid(TimeSpan.Zero).AssertFalse();
+		attr.IsValid(TimeSpan.FromSeconds(-1)).AssertFalse();
+		attr.IsValid("00:00:01").AssertTrue();
+		attr.IsValid(null).AssertFalse();
+		attr.DisableNullCheck = true;
+		attr.IsValid(null).AssertTrue();
+	}
+
 	[TestMethod]
 	public void NotNegative_Int()
 	{
@@ -144,9 +154,20 @@ public class ValidationTests
 		attr.DisableNullCheck = true;
 		attr.IsValid(null).AssertTrue();
 	}
-	#endregion
 
-	#region NullOrMoreZero ( > 0 or null )
+	[TestMethod]
+	public void NotNegative_TimeSpan()
+	{
+		var attr = new TimeSpanNotNegativeAttribute();
+		attr.IsValid(TimeSpan.Zero).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(1)).AssertTrue();
+		attr.IsValid(TimeSpan.FromSeconds(-1)).AssertFalse();
+		attr.IsValid("00:00:00").AssertTrue();
+		attr.IsValid(null).AssertFalse();
+		attr.DisableNullCheck = true;
+		attr.IsValid(null).AssertTrue();
+	}
+
 	[TestMethod]
 	public void NullOrMoreZero_Int()
 	{
@@ -200,9 +221,18 @@ public class ValidationTests
 		attr.IsValid(0f).AssertFalse();
 		attr.IsValid(-1f).AssertFalse();
 	}
-	#endregion
 
-	#region NullOrNotNegative ( >=0 or null )
+	[TestMethod]
+	public void NullOrMoreZero_TimeSpan()
+	{
+		var attr = new TimeSpanNullOrMoreZeroAttribute();
+		attr.IsValid(null).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(1)).AssertTrue();
+		attr.IsValid(TimeSpan.Zero).AssertFalse();
+		attr.IsValid(TimeSpan.FromSeconds(-1)).AssertFalse();
+		attr.IsValid("00:00:01").AssertTrue();
+	}
+
 	[TestMethod]
 	public void NullOrNotNegative_Int()
 	{
@@ -254,9 +284,18 @@ public class ValidationTests
 		attr.IsValid(10f).AssertTrue();
 		attr.IsValid(-0.1f).AssertFalse();
 	}
-	#endregion
 
-	#region DisableNullCheck_Ignored_For_NullOrAttributes
+	[TestMethod]
+	public void NullOrNotNegative_TimeSpan()
+	{
+		var attr = new TimeSpanNullOrNotNegativeAttribute();
+		attr.IsValid(null).AssertTrue();
+		attr.IsValid(TimeSpan.Zero).AssertTrue();
+		attr.IsValid(TimeSpan.FromMilliseconds(1)).AssertTrue();
+		attr.IsValid(TimeSpan.FromSeconds(-1)).AssertFalse();
+		attr.IsValid("00:00:00").AssertTrue();
+	}
+
 	[TestMethod]
 	public void DisableNullCheck_Ignored_NullOrVariants()
 	{
@@ -264,17 +303,17 @@ public class ValidationTests
 		var a2 = new IntNullOrMoreZeroAttribute();
 		var a3 = new DecimalNullOrMoreZeroAttribute();
 		var a4 = new DoubleNullOrNotNegativeAttribute();
+		var a5 = new TimeSpanNullOrNotNegativeAttribute();
+		var a6 = new TimeSpanNullOrMoreZeroAttribute();
 
-		foreach (var a in new ValidationAttribute[] { a1, a2, a3, a4 })
+		foreach (var a in new ValidationAttribute[] { a1, a2, a3, a4, a5, a6 })
 		{
 			a.IsValid(null).AssertTrue();
 			(a as IValidator).DisableNullCheck = true; // should not change semantics
 			a.IsValid(null).AssertTrue();
 		}
 	}
-	#endregion
 
-	#region ConversionFailure
 	[TestMethod]
 	public void ConversionFailure_ReturnsFalse()
 	{
@@ -282,7 +321,6 @@ public class ValidationTests
 		attr.IsValid("abc").AssertFalse(); // non-convertible string
 		attr.IsValid(new object()).AssertFalse(); // arbitrary object
 	}
-	#endregion
 
 	[TestMethod]
 	public void Step_Basic_PositiveInt()
