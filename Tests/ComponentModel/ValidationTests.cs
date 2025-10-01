@@ -398,8 +398,81 @@ public class ValidationTests
 	{
 		var attr = new StepAttribute(4m, -2m); // -2,2,6,...
 		attr.IsValid(-2).AssertTrue();
+		attr.IsValid(-1).AssertFalse();
 		attr.IsValid(2).AssertTrue();
 		attr.IsValid(6).AssertTrue();
 		attr.IsValid(0).AssertFalse();
+		attr.IsValid(1).AssertFalse();
+	}
+
+	[TestMethod]
+	public void Price_GreaterThanZero()
+	{
+		var attr = new PriceGreaterThanZeroAttribute();
+		attr.IsValid(new Price(1m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(0m, PriceTypes.Absolute)).AssertFalse();
+		attr.IsValid(new Price(-1m, PriceTypes.Absolute)).AssertFalse();
+		attr.IsValid(null).AssertFalse();
+		attr.DisableNullCheck = true;
+		attr.IsValid(null).AssertTrue();
+	}
+
+	[TestMethod]
+	public void Price_NotNegative()
+	{
+		var attr = new PriceNotNegativeAttribute();
+		attr.IsValid(new Price(0m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(10m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(-0.01m, PriceTypes.Absolute)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void Price_NullOrMoreZero()
+	{
+		var attr = new PriceNullOrMoreZeroAttribute();
+		attr.IsValid(null).AssertTrue();
+		attr.IsValid(new Price(1m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(0m, PriceTypes.Absolute)).AssertFalse();
+		attr.IsValid(new Price(-1m, PriceTypes.Absolute)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void Price_NullOrNotNegative()
+	{
+		var attr = new PriceNullOrNotNegativeAttribute();
+		attr.IsValid(null).AssertTrue();
+		attr.IsValid(new Price(0m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(-1m, PriceTypes.Absolute)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void PricePercent_GreaterThanZero()
+	{
+		var attr = new PriceGreaterThanZeroAttribute();
+		attr.IsValid(new Price(10m, PriceTypes.Percent)).AssertTrue();
+	}
+
+	[TestMethod]
+	public void PricePercent_NotNegative()
+	{
+		var attr = new PriceNotNegativeAttribute();
+		attr.IsValid(new Price(0m, PriceTypes.Percent)).AssertTrue();
+		attr.IsValid(new Price(5m, PriceTypes.Percent)).AssertTrue();
+	}
+
+	[TestMethod]
+	public void PricePercent_NullOrMoreZero()
+	{
+		var attr = new PriceNullOrMoreZeroAttribute();
+		attr.IsValid(null).AssertTrue(); // null path
+		attr.IsValid(new Price(5m, PriceTypes.Percent)).AssertTrue();
+	}
+
+	[TestMethod]
+	public void PricePercent_NullOrNotNegative()
+	{
+		var attr = new PriceNullOrNotNegativeAttribute();
+		attr.IsValid(null).AssertTrue();
+		attr.IsValid(new Price(0m, PriceTypes.Percent)).AssertTrue();
 	}
 }
