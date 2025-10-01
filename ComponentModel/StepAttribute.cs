@@ -45,7 +45,7 @@ public class StepAttribute : ValidationAttribute, IValidator
 
 		try
 		{
-			val = value.To<decimal?>();
+			val = value.To<decimal>();
 		}
 		catch
 		{
