@@ -298,4 +298,59 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 
 		Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsExactly<FormatException>(() => parser.Parse(shortInput));
 	}
+
+	[TestMethod]
+	public void ReadBlockSmall()
+	{
+		var separator = StringHelper.N;
+
+		// Create 2 lines long enough so that our fragmenting reader will require
+		// multiple non-zero ReadBlock calls while FastCsvReader tries to fill its buffer.
+		var line1 = new string('A', 4000);
+		var line2 = new string('B', 4000);
+		var csv = line1 + separator + line2 + separator;
+
+		// Force TextReader.ReadBlock to return small chunks each time
+		// so FastCsvReader's inner while loop calls ReadBlock repeatedly
+		// with index=0 and overwrites previous data in its internal buffer.
+		var tr = new FragmentingTextReader(csv, chunkSize: 128);
+		var reader = new FastCsvReader(tr, separator)
+		{
+			ColumnSeparator = ','
+		};
+
+		reader.NextLine().AssertTrue();
+		var first = reader.CurrentLine;
+		reader.NextLine().AssertTrue();
+		var second = reader.CurrentLine;
+
+		// Expect exact lines, but due to the overwrite bug they will not match
+		first.AssertEqual(line1);
+		second.AssertEqual(line2);
+	}
+
+	// A TextReader that deliberately returns small chunks from ReadBlock to reproduce
+	// FastCsvReader's buffer overwrite issue (multiple non-zero ReadBlock calls).
+	private class FragmentingTextReader(string content, int chunkSize) : TextReader
+	{
+		private readonly string _content = content ?? throw new ArgumentNullException(nameof(content));
+		private readonly int _chunkSize = chunkSize > 0 ? chunkSize : throw new ArgumentOutOfRangeException(nameof(chunkSize));
+		private int _pos = 0;
+
+		public override int ReadBlock(char[] buffer, int index, int count)
+		{
+			ArgumentNullException.ThrowIfNull(buffer);
+
+			if (index < 0 || count < 0 || index + count > buffer.Length)
+				throw new ArgumentOutOfRangeException(nameof(index));
+
+			if (_pos >= _content.Length)
+				return 0;
+
+			var toCopy = Math.Min(_chunkSize, Math.Min(count, _content.Length - _pos));
+			_content.CopyTo(_pos, buffer, index, toCopy);
+			_pos += toCopy;
+			return toCopy;
+		}
+	}
 }

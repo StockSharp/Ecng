@@ -137,16 +137,13 @@ public class FastCsvReader
 				_bufferPos = 0;
 				_bufferLen = 0;
 
-				var left = _buffer.Length;
-
-				while (left > 0)
+				while (_bufferLen < _buffer.Length)
 				{
-					var read = Reader.ReadBlock(_buffer, 0, _buffer.Length);
+					var read = Reader.ReadBlock(_buffer, _bufferLen, _buffer.Length - _bufferLen);
 
 					if (read == 0)
 						break;
 
-					left -= read;
 					_bufferLen += read;
 				}
 
@@ -254,7 +251,7 @@ public class FastCsvReader
 			throw new ArgumentOutOfRangeException(nameof(count));
 
 		if ((_columnCurr + count) >= _columnCount)
-			throw new ArgumentException(nameof(count));
+			throw new ArgumentOutOfRangeException(nameof(count), count, "Invalid value.");
 
 		_columnCurr += count;
 	}
