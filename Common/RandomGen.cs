@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 #if !NET6_0_OR_GREATER
 using System.Threading;
 #endif
@@ -27,6 +26,14 @@ public static class RandomGen
 	private static Random Random => _threadRandom ??= CreateRandom();
 #endif
 
+	private static ulong NextUInt64()
+	{
+		var rng = Random;
+		return ((ulong)(uint)rng.Next(1 << 22)) |
+			(((ulong)(uint)rng.Next(1 << 22)) << 22) |
+			(((ulong)(uint)rng.Next(1 << 20)) << 44);
+	}
+
 	/// <summary>
 	/// Returns a random double value between 0.0 and 1.0.
 	/// </summary>
@@ -34,6 +41,80 @@ public static class RandomGen
 	public static double GetDouble()
 	{
 		return Random.NextDouble();
+	}
+
+	/// <summary>
+	/// Returns a random double value between 0.0 and the specified maximum value.
+	/// </summary>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random double between 0.0 and max.</returns>
+	public static double GetDouble(double max)
+	{
+		return GetDouble(0.0, max);
+	}
+
+	/// <summary>
+	/// Returns a random double value between the specified minimum and maximum values.
+	/// </summary>
+	/// <param name="min">The minimum value.</param>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random double between min and max.</returns>
+	public static double GetDouble(double min, double max)
+	{
+		if (double.IsNaN(min))
+			throw new ArgumentOutOfRangeException(nameof(min), min, "Value must be a number.");
+
+		if (double.IsNaN(max))
+			throw new ArgumentOutOfRangeException(nameof(max), max, "Value must be a number.");
+
+		if (double.IsInfinity(min))
+			throw new ArgumentOutOfRangeException(nameof(min), min, "Values must be finite.");
+
+		if (double.IsInfinity(max))
+			throw new ArgumentOutOfRangeException(nameof(max), max, "Values must be finite.");
+
+		if (min > max)
+			throw new ArgumentOutOfRangeException(nameof(min), min, "min > max");
+
+		if (min == max)
+			return min;
+
+		var range = max - min;
+
+		if (double.IsInfinity(range))
+			throw new ArgumentOutOfRangeException(nameof(max), max, "Range is too large.");
+
+		return Random.NextDouble() * range + min;
+	}
+
+	/// <summary>
+	/// Returns a random single-precision floating-point number between 0.0 and 1.0.
+	/// </summary>
+	/// <returns>A random float.</returns>
+	public static float GetFloat()
+	{
+		return (float)GetDouble();
+	}
+
+	/// <summary>
+	/// Returns a random single-precision floating-point number between 0.0 and the specified maximum value.
+	/// </summary>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random float between 0.0 and max.</returns>
+	public static float GetFloat(float max)
+	{
+		return GetFloat(0f, max);
+	}
+
+	/// <summary>
+	/// Returns a random single-precision floating-point number between the specified minimum and maximum values.
+	/// </summary>
+	/// <param name="min">The minimum value.</param>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random float between min and max.</returns>
+	public static float GetFloat(float min, float max)
+	{
+		return (float)GetDouble((double)min, (double)max);
 	}
 
 	/// <summary>
@@ -97,6 +178,209 @@ public static class RandomGen
 	}
 
 	/// <summary>
+	/// Returns a random unsigned integer between 0 and uint.MaxValue.
+	/// </summary>
+	/// <returns>A random unsigned integer.</returns>
+	public static uint GetUInt()
+	{
+		return GetUInt(uint.MinValue, uint.MaxValue);
+	}
+
+	/// <summary>
+	/// Returns a random unsigned integer between 0 and the specified maximum value (inclusive).
+	/// </summary>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random unsigned integer between 0 and max.</returns>
+	public static uint GetUInt(uint max)
+	{
+		return GetUInt(0u, max);
+	}
+
+	/// <summary>
+	/// Returns a random unsigned integer between the specified minimum and maximum values (inclusive).
+	/// </summary>
+	/// <param name="min">The minimum value.</param>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random unsigned integer between min and max.</returns>
+	public static uint GetUInt(uint min, uint max)
+	{
+		return (uint)GetULong(min, max);
+	}
+
+	/// <summary>
+	/// Returns a random unsigned long value between 0 and ulong.MaxValue.
+	/// </summary>
+	/// <returns>A random unsigned long value.</returns>
+	public static ulong GetULong()
+	{
+		return GetULong(ulong.MinValue, ulong.MaxValue);
+	}
+
+	/// <summary>
+	/// Returns a random unsigned long value between 0 and the specified maximum value (inclusive).
+	/// </summary>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random unsigned long value between 0 and max.</returns>
+	public static ulong GetULong(ulong max)
+	{
+		return GetULong(0UL, max);
+	}
+
+	/// <summary>
+	/// Returns a random unsigned long value between the specified minimum and maximum values (inclusive).
+	/// </summary>
+	/// <param name="min">The minimum value.</param>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random unsigned long value between min and max.</returns>
+	public static ulong GetULong(ulong min, ulong max)
+	{
+		if (min > max)
+			throw new ArgumentOutOfRangeException(nameof(min), min, "min > max");
+
+		if (min == max)
+			return min;
+
+		var range = max - min;
+
+		if (range == ulong.MaxValue)
+			return NextUInt64();
+
+		range++;
+
+		var limit = ulong.MaxValue - (ulong.MaxValue % range);
+
+		ulong value;
+
+		do
+		{
+			value = NextUInt64();
+		}
+		while (value >= limit);
+
+		return (value % range) + min;
+	}
+
+	/// <summary>
+	/// Returns a random 16-bit signed integer between short.MinValue and short.MaxValue.
+	/// </summary>
+	/// <returns>A random short value.</returns>
+	public static short GetShort()
+	{
+		return GetShort(short.MinValue, short.MaxValue);
+	}
+
+	/// <summary>
+	/// Returns a random 16-bit signed integer between 0 and the specified maximum value (inclusive).
+	/// </summary>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random short value between 0 and max.</returns>
+	public static short GetShort(short max)
+	{
+		return GetShort((short)0, max);
+	}
+
+	/// <summary>
+	/// Returns a random 16-bit signed integer between the specified minimum and maximum values (inclusive).
+	/// </summary>
+	/// <param name="min">The minimum value.</param>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random short value between min and max.</returns>
+	public static short GetShort(short min, short max)
+	{
+		return (short)GetInt(min, max);
+	}
+
+	/// <summary>
+	/// Returns a random 16-bit unsigned integer between 0 and ushort.MaxValue.
+	/// </summary>
+	/// <returns>A random unsigned short value.</returns>
+	public static ushort GetUShort()
+	{
+		return GetUShort(ushort.MinValue, ushort.MaxValue);
+	}
+
+	/// <summary>
+	/// Returns a random 16-bit unsigned integer between 0 and the specified maximum value (inclusive).
+	/// </summary>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random unsigned short value between 0 and max.</returns>
+	public static ushort GetUShort(ushort max)
+	{
+		return GetUShort(ushort.MinValue, max);
+	}
+
+	/// <summary>
+	/// Returns a random 16-bit unsigned integer between the specified minimum and maximum values (inclusive).
+	/// </summary>
+	/// <param name="min">The minimum value.</param>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random unsigned short value between min and max.</returns>
+	public static ushort GetUShort(ushort min, ushort max)
+	{
+		return (ushort)GetInt(min, max);
+	}
+
+	/// <summary>
+	/// Returns a random byte between 0 and byte.MaxValue.
+	/// </summary>
+	/// <returns>A random byte.</returns>
+	public static byte GetByte()
+	{
+		return GetByte(byte.MinValue, byte.MaxValue);
+	}
+
+	/// <summary>
+	/// Returns a random byte between 0 and the specified maximum value (inclusive).
+	/// </summary>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random byte between 0 and max.</returns>
+	public static byte GetByte(byte max)
+	{
+		return GetByte(byte.MinValue, max);
+	}
+
+	/// <summary>
+	/// Returns a random byte between the specified minimum and maximum values (inclusive).
+	/// </summary>
+	/// <param name="min">The minimum value.</param>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random byte between min and max.</returns>
+	public static byte GetByte(byte min, byte max)
+	{
+		return (byte)GetInt(min, max);
+	}
+
+	/// <summary>
+	/// Returns a random signed byte between sbyte.MinValue and sbyte.MaxValue.
+	/// </summary>
+	/// <returns>A random signed byte.</returns>
+	public static sbyte GetSByte()
+	{
+		return GetSByte(sbyte.MinValue, sbyte.MaxValue);
+	}
+
+	/// <summary>
+	/// Returns a random signed byte between 0 and the specified maximum value (inclusive).
+	/// </summary>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random signed byte between 0 and max.</returns>
+	public static sbyte GetSByte(sbyte max)
+	{
+		return GetSByte((sbyte)0, max);
+	}
+
+	/// <summary>
+	/// Returns a random signed byte between the specified minimum and maximum values (inclusive).
+	/// </summary>
+	/// <param name="min">The minimum value.</param>
+	/// <param name="max">The maximum value.</param>
+	/// <returns>A random signed byte between min and max.</returns>
+	public static sbyte GetSByte(sbyte min, sbyte max)
+	{
+		return (sbyte)GetInt(min, max);
+	}
+
+	/// <summary>
 	/// Returns a random long value between long.MinValue and long.MaxValue.
 	/// </summary>
 	/// <returns>A random long value.</returns>
@@ -110,54 +394,30 @@ public static class RandomGen
 	/// <returns>A random long value between min and max (inclusive).</returns>
 	public static long GetLong(long min, long max)
 	{
-		//if (min >= int.MinValue && max <= int.MaxValue)
-		//	return GetInt((int)min, (int)max);
+		if (min > max)
+			throw new ArgumentOutOfRangeException(nameof(min), min, "min > max");
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static int Log2Ceiling(ulong value)
+		if (min == max)
+			return min;
+
+		var range = (ulong)(max - min);
+
+		if (range == ulong.MaxValue)
+			return unchecked((long)NextUInt64());
+
+		range++;
+
+		var limit = ulong.MaxValue - (ulong.MaxValue % range);
+
+		ulong value;
+
+		do
 		{
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			static int NumberOfSetBits(ulong i)
-			{
-				i -= (i >> 1) & 0x5555555555555555UL;
-				i = (i & 0x3333333333333333UL) + ((i >> 2) & 0x3333333333333333UL);
-				return (int)(unchecked(((i + (i >> 4)) & 0xF0F0F0F0F0F0F0FUL) * 0x101010101010101UL) >> 56);
-			}
-
-			var result = (int)Math.Log(value, 2);
-
-			if (NumberOfSetBits(value) != 1)
-				result++;
-
-			return result;
+			value = NextUInt64();
 		}
+		while (value >= limit);
 
-		static ulong GetULong()
-		{
-			var rng = Random;
-			return ((ulong)(uint)rng.Next(1 << 22)) |
-				(((ulong)(uint)rng.Next(1 << 22)) << 22) |
-				(((ulong)(uint)rng.Next(1 << 20)) << 44);
-		}
-
-		var exclusiveRange = (ulong)(max - min);
-
-		if (exclusiveRange > 1)
-		{
-			// Narrow down to the smallest range [0, 2^bits] that contains maxValue - minValue.
-			// Then repeatedly generate a value in that outer range until we get one within the inner range.
-			var bits = Log2Ceiling(exclusiveRange);
-
-			while (true)
-			{
-				var result = GetULong() >> (sizeof(long) * 8 - bits);
-
-				if (result < exclusiveRange)
-					return (long)result + min;
-			}
-		}
-
-		return min + GetInt((int)exclusiveRange);
+		return (long)(value % range) + min;
 	}
 
 	/// <summary>
@@ -295,7 +555,7 @@ public static class RandomGen
 	/// <returns>A random decimal value between min and max rounded to the specified precision.</returns>
 	public static decimal GetDecimal(decimal min, decimal max, int precision)
 	{
-		var value = GetDouble() * ((double)max - (double)min) + (double)min;
+		var value = GetDouble((double)min, (double)max);
 		return (decimal)value.Round(precision);
 	}
 }
