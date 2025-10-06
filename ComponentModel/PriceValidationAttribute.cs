@@ -120,3 +120,46 @@ public class PriceStepAttribute : ValidationAttribute, IValidator
 		return diff % Step == 0m;
 	}
 }
+
+/// <summary>
+/// Validates that a <see cref="Price"/> value is within the specified range (inclusive).
+/// </summary>
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+[CLSCompliant(false)]
+public class PriceRangeAttribute : ValidationAttribute, IValidator
+{
+	/// <summary>
+	/// Creates a new instance of <see cref="PriceRangeAttribute"/>.
+	/// </summary>
+	/// <param name="minimum">Minimum value (inclusive).</param>
+	/// <param name="maximum">Maximum value (inclusive).</param>
+	public PriceRangeAttribute(decimal minimum, decimal maximum)
+	{
+		if (minimum > maximum)
+			throw new ArgumentOutOfRangeException(nameof(minimum), "Minimum cannot be greater than maximum.");
+
+		Minimum = minimum;
+		Maximum = maximum;
+	}
+
+	/// <summary>Minimum value (inclusive).</summary>
+	public decimal Minimum { get; }
+
+	/// <summary>Maximum value (inclusive).</summary>
+	public decimal Maximum { get; }
+
+	/// <inheritdoc />
+	public bool DisableNullCheck { get; set; }
+
+	/// <inheritdoc />
+	public override bool IsValid(object value)
+	{
+		if (value is null)
+			return DisableNullCheck;
+
+		if (value is not Price price)
+			return false;
+
+		return price.Value >= Minimum && price.Value <= Maximum;
+	}
+}
