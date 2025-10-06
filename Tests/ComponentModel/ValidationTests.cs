@@ -563,4 +563,156 @@ public class ValidationTests
 		Assert.ThrowsExactly<ArgumentNullException>(() => new TimeSpanStepAttribute(" "));
 		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new TimeSpanStepAttribute("00:00:00")); // zero step
 	}
+
+	[TestMethod]
+	public void Range_Int_Basic()
+	{
+		var attr = new RangeAttribute(0, 100);
+		attr.IsValid(0).AssertTrue();
+		attr.IsValid(50).AssertTrue();
+		attr.IsValid(100).AssertTrue();
+		attr.IsValid(-1).AssertFalse();
+		attr.IsValid(101).AssertFalse();
+	}
+
+	[TestMethod]
+	public void Range_Int_Negative()
+	{
+		var attr = new RangeAttribute(-50, 50);
+		attr.IsValid(-50).AssertTrue();
+		attr.IsValid(0).AssertTrue();
+		attr.IsValid(50).AssertTrue();
+		attr.IsValid(-51).AssertFalse();
+		attr.IsValid(51).AssertFalse();
+	}
+
+	[TestMethod]
+	public void Range_Double_Basic()
+	{
+		var attr = new RangeAttribute(0.0, 1.0);
+		attr.IsValid(0.0).AssertTrue();
+		attr.IsValid(0.5).AssertTrue();
+		attr.IsValid(1.0).AssertTrue();
+		attr.IsValid(-0.1).AssertFalse();
+		attr.IsValid(1.1).AssertFalse();
+	}
+
+	[TestMethod]
+	public void Range_Double_Precision()
+	{
+		var attr = new RangeAttribute(0.001, 0.999);
+		attr.IsValid(0.001).AssertTrue();
+		attr.IsValid(0.5).AssertTrue();
+		attr.IsValid(0.999).AssertTrue();
+		attr.IsValid(0.0009).AssertFalse();
+		attr.IsValid(1.0).AssertFalse();
+	}
+
+	[TestMethod]
+	public void Range_String_Numeric()
+	{
+		var attr = new RangeAttribute(typeof(int), "10", "20");
+		attr.IsValid(10).AssertTrue();
+		attr.IsValid(15).AssertTrue();
+		attr.IsValid(20).AssertTrue();
+		attr.IsValid(9).AssertFalse();
+		attr.IsValid(21).AssertFalse();
+		attr.IsValid("15").AssertTrue(); // string conversion
+		attr.IsValid("5").AssertFalse();
+	}
+
+	[TestMethod]
+	public void Range_String_DateTime()
+	{
+		var attr = new RangeAttribute(typeof(DateTime), "2020-01-01", "2020-12-31");
+		attr.IsValid(new DateTime(2020, 1, 1)).AssertTrue();
+		attr.IsValid(new DateTime(2020, 6, 15)).AssertTrue();
+		attr.IsValid(new DateTime(2020, 12, 31)).AssertTrue();
+		attr.IsValid(new DateTime(2019, 12, 31)).AssertFalse();
+		attr.IsValid(new DateTime(2021, 1, 1)).AssertFalse();
+		attr.IsValid("2020-06-15").AssertTrue();
+	}
+
+	[TestMethod]
+	public void Range_Null_Handling()
+	{
+		var attr = new RangeAttribute(1, 10);
+		attr.IsValid(null).AssertTrue(); // RangeAttribute allows null by default
+	}
+
+	[TestMethod]
+	public void Range_InvalidType()
+	{
+		var attr = new RangeAttribute(1, 10);
+		attr.IsValid("not a number").AssertFalse();
+		attr.IsValid(new object()).AssertFalse();
+	}
+
+	[TestMethod]
+	public void Range_Decimal_Boundary()
+	{
+		var attr = new RangeAttribute(typeof(decimal), "0.01", "99.99");
+		attr.IsValid(0.01m).AssertTrue();
+		attr.IsValid(50m).AssertTrue();
+		attr.IsValid(99.99m).AssertTrue();
+		attr.IsValid(0.009m).AssertFalse();
+		attr.IsValid(100m).AssertFalse();
+	}
+
+	[TestMethod]
+	public void PriceRange_Basic()
+	{
+		var attr = new PriceRangeAttribute(1m, 100m);
+		attr.IsValid(new Price(1m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(50m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(100m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(0.5m, PriceTypes.Absolute)).AssertFalse();
+		attr.IsValid(new Price(101m, PriceTypes.Absolute)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void PriceRange_Percent()
+	{
+		var attr = new PriceRangeAttribute(0m, 100m);
+		attr.IsValid(new Price(0m, PriceTypes.Percent)).AssertTrue();
+		attr.IsValid(new Price(50m, PriceTypes.Percent)).AssertTrue();
+		attr.IsValid(new Price(100m, PriceTypes.Percent)).AssertTrue();
+		attr.IsValid(new Price(-1m, PriceTypes.Percent)).AssertFalse();
+		attr.IsValid(new Price(101m, PriceTypes.Percent)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void PriceRange_Negative()
+	{
+		var attr = new PriceRangeAttribute(-50m, 50m);
+		attr.IsValid(new Price(-50m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(0m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(50m, PriceTypes.Absolute)).AssertTrue();
+		attr.IsValid(new Price(-51m, PriceTypes.Absolute)).AssertFalse();
+		attr.IsValid(new Price(51m, PriceTypes.Absolute)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void PriceRange_NullHandling()
+	{
+		var attr = new PriceRangeAttribute(1m, 10m);
+		attr.IsValid(null).AssertFalse();
+		attr.DisableNullCheck = true;
+		attr.IsValid(null).AssertTrue();
+	}
+
+	[TestMethod]
+	public void PriceRange_InvalidType()
+	{
+		var attr = new PriceRangeAttribute(1m, 10m);
+		attr.IsValid(5m).AssertFalse();
+		attr.IsValid("5").AssertFalse();
+		attr.IsValid(new object()).AssertFalse();
+	}
+
+	[TestMethod]
+	public void PriceRange_InvalidConstructor()
+	{
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new PriceRangeAttribute(10m, 1m));
+	}
 }
