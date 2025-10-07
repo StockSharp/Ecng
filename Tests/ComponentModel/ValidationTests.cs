@@ -715,4 +715,150 @@ public class ValidationTests
 	{
 		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new PriceRangeAttribute(10m, 1m));
 	}
+
+	[TestMethod]
+	public void TimeSpanRange_Basic()
+	{
+		var attr = new TimeSpanRangeAttribute(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1));
+		attr.IsValid(TimeSpan.FromSeconds(1)).AssertTrue();
+		attr.IsValid(TimeSpan.FromSeconds(30)).AssertTrue();
+		attr.IsValid(TimeSpan.FromMinutes(1)).AssertTrue();
+		attr.IsValid(TimeSpan.Zero).AssertFalse();
+		attr.IsValid(TimeSpan.FromMinutes(2)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void TimeSpanRange_NullHandling()
+	{
+		var attr = new TimeSpanRangeAttribute(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10));
+		attr.IsValid(null).AssertFalse();
+		attr.DisableNullCheck = true;
+		attr.IsValid(null).AssertTrue();
+	}
+
+	[TestMethod]
+	public void TimeSpanRange_InvalidType()
+	{
+		var attr = new TimeSpanRangeAttribute(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10));
+		attr.IsValid(5).AssertFalse();
+		attr.IsValid("00:00:05").AssertFalse();
+		attr.IsValid(new object()).AssertFalse();
+	}
+
+	[TestMethod]
+	public void TimeSpanRange_InvalidConstructor()
+	{
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new TimeSpanRangeAttribute(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(1)));
+	}
+
+	private sealed class AttrEntity : IAttributesEntity
+	{
+		public IList<Attribute> Attributes { get; } = new List<Attribute>();
+	}
+
+	[TestMethod]
+	public void AttributesEntity_Int_Step_Range()
+	{
+		var e = new AttrEntity();
+		e.Attributes.Add(new StepAttribute(5m));
+		e.Attributes.Add(new RangeAttribute(0, 10));
+
+		e.IsValid(0).AssertTrue();
+		e.IsValid(5).AssertTrue();
+		e.IsValid(10).AssertTrue();
+
+		// inside range but off step
+		e.IsValid(7).AssertFalse();
+
+		// on step but outside range
+		e.IsValid(-5).AssertFalse();
+		e.IsValid(15).AssertFalse();
+	}
+
+	[TestMethod]
+	public void AttributesEntity_Int_Range_And_GreaterThanZero()
+	{
+		var e = new AttrEntity();
+		e.Attributes.Add(new RangeAttribute(0, 10));
+		e.Attributes.Add(new IntGreaterThanZeroAttribute());
+
+		e.IsValid(0).AssertFalse(); // rejected by >0
+		e.IsValid(5).AssertTrue();
+		e.IsValid(11).AssertFalse(); // rejected by range
+		e.IsValid(-1).AssertFalse(); // rejected by both
+	}
+
+	[TestMethod]
+	public void AttributesEntity_TimeSpan_Step_Range_NotNegative()
+	{
+		var e = new AttrEntity();
+		e.Attributes.Add(new TimeSpanStepAttribute(250));
+		e.Attributes.Add(new TimeSpanRangeAttribute(TimeSpan.FromMilliseconds(-250), TimeSpan.FromMilliseconds(1000)));
+		e.Attributes.Add(new TimeSpanNotNegativeAttribute());
+
+		// on grid, in range, non-negative
+		e.IsValid(TimeSpan.Zero).AssertTrue();
+		e.IsValid(TimeSpan.FromMilliseconds(250)).AssertTrue();
+
+		// on grid and in range, but negative -> rejected by NotNegative
+		e.IsValid(TimeSpan.FromMilliseconds(-250)).AssertFalse();
+
+		// on grid but above range
+		e.IsValid(TimeSpan.FromMilliseconds(1250)).AssertFalse();
+
+		// off grid but in range and non-negative
+		e.IsValid(TimeSpan.FromMilliseconds(300)).AssertFalse();
+	}
+
+	[TestMethod]
+	public void AttributesEntity_Price_Step_Range_NotNegative()
+	{
+		var e = new AttrEntity();
+		e.Attributes.Add(new PriceStepAttribute(0.5m));
+		e.Attributes.Add(new PriceRangeAttribute(0m, 2m));
+		e.Attributes.Add(new PriceNotNegativeAttribute());
+
+		var good = new Price(1.0m, PriceTypes.Absolute);
+		e.IsValid(good).AssertTrue();
+
+		var offStep = new Price(1.1m, PriceTypes.Absolute);
+		e.IsValid(offStep).AssertFalse();
+
+		var overRange = new Price(2.5m, PriceTypes.Absolute);
+		e.IsValid(overRange).AssertFalse();
+
+		var negative = new Price(-0.5m, PriceTypes.Absolute);
+		e.IsValid(negative).AssertFalse();
+	}
+
+	[TestMethod]
+	public void AttributesEntity_NullHandling_Int()
+	{
+		var e = new AttrEntity();
+		var step = new StepAttribute(2m);
+		var range = new RangeAttribute(0, 10); // RangeAttribute allows null
+		e.Attributes.Add(step);
+		e.Attributes.Add(range);
+
+		// by default, step rejects null -> whole entity rejects
+		e.IsValid(null).AssertFalse();
+
+		// enable null for step -> all validators pass
+		step.DisableNullCheck = true;
+		e.IsValid(null).AssertTrue();
+	}
+
+	[TestMethod]
+	public void AttributesEntity_NullHandling_Price_Range()
+	{
+		var e = new AttrEntity();
+		var range = new PriceRangeAttribute(0m, 10m) { DisableNullCheck = false };
+		e.Attributes.Add(range);
+
+		// default: PriceRange rejects null
+		e.IsValid(null).AssertFalse();
+
+		range.DisableNullCheck = true;
+		e.IsValid(null).AssertTrue();
+	}
 }

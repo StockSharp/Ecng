@@ -80,33 +80,15 @@ public class PriceNotNegativeAttribute : PriceValidationAttributeBase
 /// <summary>
 /// Validates that a <see cref="Price"/> value lies on a discrete grid defined by Base + n * Step using <see cref="Price.Value"/>.
 /// </summary>
+/// <remarks>
+/// Creates a new instance of <see cref="PriceStepAttribute"/>.
+/// </remarks>
+/// <param name="step">Positive step.</param>
+/// <param name="baseValue">Base value (default 0).</param>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 [CLSCompliant(false)]
-public class PriceStepAttribute : ValidationAttribute, IValidator
+public class PriceStepAttribute(decimal step, decimal baseValue = 0) : StepAttribute(step, baseValue), IValidator
 {
-	/// <summary>
-	/// Creates a new instance of <see cref="PriceStepAttribute"/>.
-	/// </summary>
-	/// <param name="step">Positive step.</param>
-	/// <param name="baseValue">Base value (default 0).</param>
-	public PriceStepAttribute(decimal step, decimal baseValue = 0)
-	{
-		if (step <= 0)
-			throw new ArgumentOutOfRangeException(nameof(step));
-
-		Step = step;
-		BaseValue = baseValue;
-	}
-
-	/// <summary>Step (>0).</summary>
-	public decimal Step { get; }
-
-	/// <summary>Base value.</summary>
-	public decimal BaseValue { get; }
-
-	/// <inheritdoc />
-	public bool DisableNullCheck { get; set; }
-
 	/// <inheritdoc />
 	public override bool IsValid(object value)
 	{
@@ -126,7 +108,7 @@ public class PriceStepAttribute : ValidationAttribute, IValidator
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 [CLSCompliant(false)]
-public class PriceRangeAttribute : ValidationAttribute, IValidator
+public class PriceRangeAttribute : RangeAttribute, IValidator
 {
 	/// <summary>
 	/// Creates a new instance of <see cref="PriceRangeAttribute"/>.
@@ -134,19 +116,20 @@ public class PriceRangeAttribute : ValidationAttribute, IValidator
 	/// <param name="minimum">Minimum value (inclusive).</param>
 	/// <param name="maximum">Maximum value (inclusive).</param>
 	public PriceRangeAttribute(decimal minimum, decimal maximum)
+		: base(typeof(decimal), minimum.ToString(), maximum.ToString())
 	{
 		if (minimum > maximum)
 			throw new ArgumentOutOfRangeException(nameof(minimum), "Minimum cannot be greater than maximum.");
 
-		Minimum = minimum;
-		Maximum = maximum;
+		MinimumDec = minimum;
+		MaximumDec = maximum;
 	}
 
 	/// <summary>Minimum value (inclusive).</summary>
-	public decimal Minimum { get; }
+	public decimal MinimumDec { get; }
 
 	/// <summary>Maximum value (inclusive).</summary>
-	public decimal Maximum { get; }
+	public decimal MaximumDec { get; }
 
 	/// <inheritdoc />
 	public bool DisableNullCheck { get; set; }
@@ -160,6 +143,6 @@ public class PriceRangeAttribute : ValidationAttribute, IValidator
 		if (value is not Price price)
 			return false;
 
-		return price.Value >= Minimum && price.Value <= Maximum;
+		return price.Value >= MinimumDec && price.Value <= MaximumDec;
 	}
 }
