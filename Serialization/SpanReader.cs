@@ -229,7 +229,7 @@ public ref struct SpanReader
 
 		var newPos = _position + count;
 
-		if (newPos > _span.Length)
+		if (newPos < 0 || newPos > _span.Length)
 			throw new ArgumentOutOfRangeException(nameof(count));
 
 		_position = newPos;
