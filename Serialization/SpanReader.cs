@@ -1,6 +1,5 @@
 namespace Ecng.Serialization;
 
-using Ecng.Common;
 using System;
 using System.Text;
 
@@ -12,14 +11,16 @@ public ref struct SpanReader
 	private readonly ReadOnlySpan<byte> _span;
 	private int _position;
 	private readonly bool _isBigEndian;
+	private readonly bool _allowNegativeShift;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="SpanReader"/> struct.
 	/// </summary>
 	/// <param name="buffer">The array of bytes to read from.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
-	public SpanReader(byte[] buffer, bool isBigEndian = false)
-		: this(buffer.AsSpan(), isBigEndian)
+	/// <param name="allowNegativeShift">If true, allows negative Skip to move position backward.</param>
+	public SpanReader(byte[] buffer, bool isBigEndian = false, bool allowNegativeShift = false)
+		: this(buffer.AsSpan(), isBigEndian, allowNegativeShift)
 	{
 	}
 
@@ -28,8 +29,9 @@ public ref struct SpanReader
 	/// </summary>
 	/// <param name="memory">The memory of bytes to read from.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
-	public SpanReader(Memory<byte> memory, bool isBigEndian = false)
-		: this(memory.Span, isBigEndian)
+	/// <param name="allowNegativeShift">If true, allows negative Skip to move position backward.</param>
+	public SpanReader(Memory<byte> memory, bool isBigEndian = false, bool allowNegativeShift = false)
+		: this(memory.Span, isBigEndian, allowNegativeShift)
 	{
 	}
 
@@ -38,11 +40,13 @@ public ref struct SpanReader
 	/// </summary>
 	/// <param name="span">The span of bytes to read from.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
-	public SpanReader(ReadOnlySpan<byte> span, bool isBigEndian = false)
+	/// <param name="allowNegativeShift">If true, allows negative Skip to move position backward.</param>
+	public SpanReader(ReadOnlySpan<byte> span, bool isBigEndian = false, bool allowNegativeShift = false)
 	{
 		_span = span;
 		_position = 0;
 		_isBigEndian = isBigEndian;
+		_allowNegativeShift = allowNegativeShift;
 	}
 
 	/// <summary>
@@ -220,10 +224,15 @@ public ref struct SpanReader
 	/// <exception cref="ArgumentOutOfRangeException">Thrown when count is negative.</exception>
 	public void Skip(int count)
 	{
-		if (count < 0)
+		if (count < 0 && !_allowNegativeShift)
+			throw new ArgumentOutOfRangeException(nameof(count), "Negative shift is not allowed.");
+
+		var newPos = _position + count;
+
+		if (newPos > _span.Length)
 			throw new ArgumentOutOfRangeException(nameof(count));
 
-		_position += count;
+		_position = newPos;
 	}
 
 	/// <summary>

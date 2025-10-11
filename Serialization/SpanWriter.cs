@@ -13,14 +13,16 @@ public ref struct SpanWriter
 	private readonly Span<byte> _span;
 	private int _position;
 	private readonly bool _isBigEndian;
+	private readonly bool _allowNegativeShift;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="SpanWriter"/> struct.
 	/// </summary>
 	/// <param name="buffer">The array to write data to.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
-	public SpanWriter(byte[] buffer, bool isBigEndian = false)
-		: this(buffer.AsSpan(), isBigEndian)
+	/// <param name="allowNegativeShift">If true, allows negative Skip to move position backward.</param>
+	public SpanWriter(byte[] buffer, bool isBigEndian = false, bool allowNegativeShift = false)
+		: this(buffer.AsSpan(), isBigEndian, allowNegativeShift)
 	{
 	}
 
@@ -29,8 +31,9 @@ public ref struct SpanWriter
 	/// </summary>
 	/// <param name="memory">The memory to write data to.</param>
 	/// <param name="isBigEndian">If true, reads in big-endian order; otherwise, little-endian.</param>
-	public SpanWriter(Memory<byte> memory, bool isBigEndian = false)
-		: this(memory.Span, isBigEndian)
+	/// <param name="allowNegativeShift">If true, allows negative Skip to move position backward.</param>
+	public SpanWriter(Memory<byte> memory, bool isBigEndian = false, bool allowNegativeShift = false)
+		: this(memory.Span, isBigEndian, allowNegativeShift)
 	{
 	}
 
@@ -39,11 +42,13 @@ public ref struct SpanWriter
 	/// </summary>
 	/// <param name="span">The span to write data to.</param>
 	/// <param name="isBigEndian">If true, writes in big-endian order; otherwise, little-endian.</param>
-	public SpanWriter(Span<byte> span, bool isBigEndian = false)
+	/// <param name="allowNegativeShift">If true, allows negative Skip to move position backward.</param>
+	public SpanWriter(Span<byte> span, bool isBigEndian = false, bool allowNegativeShift = false)
 	{
 		_span = span;
 		_position = 0;
 		_isBigEndian = isBigEndian;
+		_allowNegativeShift = allowNegativeShift;
 	}
 
 	/// <summary>
@@ -226,10 +231,15 @@ public ref struct SpanWriter
 	/// <exception cref="ArgumentOutOfRangeException">Thrown when count is negative.</exception>
 	public void Skip(int count)
 	{
-		if (count < 0)
+		if (count < 0 && !_allowNegativeShift)
+			throw new ArgumentOutOfRangeException(nameof(count), "Negative shift is not allowed.");
+
+		var newPos = _position + count;
+
+		if (newPos > _span.Length)
 			throw new ArgumentOutOfRangeException(nameof(count));
 
-		_position += count;
+		_position = newPos;
 	}
 
 	/// <summary>

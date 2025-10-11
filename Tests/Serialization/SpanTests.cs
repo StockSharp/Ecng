@@ -574,4 +574,120 @@ public class SpanTests
 		readValue.AssertEqual(value, 0.0000001);
 		reader.Position.AssertEqual(8);
 	}
+
+	[TestMethod]
+	public void Skip_Negative_NotAllowed()
+	{
+		Span<byte> buffer = new byte[2];
+		var writer = new SpanWriter(buffer);
+		try
+		{
+			writer.Skip(-1);
+			Assert.Fail("Expected ArgumentOutOfRangeException for writer.Skip(-1)");
+		}
+		catch (ArgumentOutOfRangeException)
+		{
+			// expected
+		}
+
+		var reader = new SpanReader(buffer);
+		try
+		{
+			reader.Skip(-1);
+			Assert.Fail("Expected ArgumentOutOfRangeException for reader.Skip(-1)");
+		}
+		catch (ArgumentOutOfRangeException)
+		{
+			// expected
+		}
+	}
+
+	[TestMethod]
+	public void Skip_Negative_Allowed_Writer()
+	{
+		Span<byte> buffer = new byte[3];
+		var writer = new SpanWriter(buffer, isBigEndian: false, allowNegativeShift: true);
+		writer.WriteByte(0xAA);
+		writer.WriteByte(0xBB);
+		writer.Position.AssertEqual(2);
+		writer.Skip(-1); // move back to overwrite 0xBB
+		writer.Position.AssertEqual(1);
+		writer.WriteByte(0xCC);
+		writer.Position.AssertEqual(2);
+
+		buffer[0].AssertEqual((byte)0xAA);
+		buffer[1].AssertEqual((byte)0xCC);
+	}
+
+	[TestMethod]
+	public void Skip_Negative_Allowed_Reader()
+	{
+		Span<byte> buffer = [0x11, 0x22];
+		var reader = new SpanReader(buffer, isBigEndian: false, allowNegativeShift: true);
+		var b1 = reader.ReadByte();
+		b1.AssertEqual((byte)0x11);
+		reader.Position.AssertEqual(1);
+		reader.Skip(-1);
+		reader.Position.AssertEqual(0);
+		var b2 = reader.ReadByte();
+		b2.AssertEqual((byte)0x11);
+		reader.Position.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void Skip_Bounds_Writer()
+	{
+		Span<byte> buffer = new byte[2];
+		var writer = new SpanWriter(buffer);
+
+		try
+		{
+			writer.Skip(3);
+			Assert.Fail("Expected ArgumentOutOfRangeException for writer.Skip(3)");
+		}
+		catch (ArgumentOutOfRangeException)
+		{
+			// expected
+		}
+
+		writer = new SpanWriter(buffer, isBigEndian: false, allowNegativeShift: true);
+		writer.Skip(1);
+		try
+		{
+			writer.Skip(-2); // would go to -1
+			Assert.Fail("Expected ArgumentOutOfRangeException for writer.Skip(-2)");
+		}
+		catch (ArgumentOutOfRangeException)
+		{
+			// expected
+		}
+	}
+
+	[TestMethod]
+	public void Skip_Bounds_Reader()
+	{
+		Span<byte> buffer = new byte[2];
+		var reader = new SpanReader(buffer);
+		try
+		{
+			reader.Skip(3);
+			Assert.Fail("Expected ArgumentOutOfRangeException for reader.Skip(3)");
+		}
+		catch (ArgumentOutOfRangeException)
+		{
+			// expected
+		}
+
+		reader = new SpanReader(buffer, isBigEndian: false, allowNegativeShift: true);
+		reader.Skip(1);
+		try
+		{
+			reader.Skip(-2);
+			Assert.Fail("Expected ArgumentOutOfRangeException for reader.Skip(-2)");
+		}
+		catch (ArgumentOutOfRangeException)
+		{
+			// expected
+		}
+	}
 }
