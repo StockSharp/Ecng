@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Common;
 
-using System.IO;
-
 [TestClass]
 public class CsvTest
 {
