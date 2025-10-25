@@ -1,4 +1,4 @@
-namespace Ecng.ComponentModel;
+namespace Ecng.Common;
 
 using System;
 using System.Collections.Generic;

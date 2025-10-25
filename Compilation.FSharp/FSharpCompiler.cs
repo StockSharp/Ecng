@@ -57,7 +57,7 @@ public class FSharpCompiler : ICompiler
 			}
 		}
 
-		private readonly IFileSystem _prev;
+		private readonly global::FSharp.Compiler.IO.IFileSystem _prev;
 
 		public FileSystemContext(Dictionary<string, byte[]> input, MemoryStream output)
 		{
