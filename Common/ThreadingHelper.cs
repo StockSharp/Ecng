@@ -442,7 +442,7 @@ public static class ThreadingHelper
 	/// <summary>
 	/// Provides a disposable wrapper for ReaderWriterLockSlim that enters a lock on creation and exits on disposal.
 	/// </summary>
-	private struct ReaderWriterLockSlimDispose : IDisposable
+	private readonly struct ReaderWriterLockSlimDispose : IDisposable
 	{
 		private readonly ReaderWriterLockSlim _rwLock;
 		private readonly bool _isRead;
