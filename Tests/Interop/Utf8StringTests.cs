@@ -1,12 +1,8 @@
 ﻿namespace Ecng.Tests.Interop;
 
-using System;
 using System.Text;
 
 using Ecng.Interop;
-using Ecng.UnitTesting;
-
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [TestClass]
 public class Utf8StringTests

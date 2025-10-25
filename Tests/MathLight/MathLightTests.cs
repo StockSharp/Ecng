@@ -1,9 +1,7 @@
-﻿using System;
-using System.Linq;
+﻿namespace Ecng.Tests.MathLight;
+
 using Ecng.MathLight;
 using Ecng.MathLight.LinearAlgebra;
-
-namespace Ecng.Tests.MathLight;
 
 [TestClass]
 public class MathLightTests
