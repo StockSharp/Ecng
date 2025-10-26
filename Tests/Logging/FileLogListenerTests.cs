@@ -441,10 +441,16 @@ public class FileLogListenerTests
 
 			var sources = Enumerable.Range(0, 10).Select(i => new DummySource("s" + i)).ToArray();
 
+			// FileLogListener is not thread-safe, serialize calls to WriteMessages from multiple threads.
+			var writeLock = new object();
+
 			Parallel.For(0, 100, i =>
 			{
 				var src = sources[i % sources.Length];
-				listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "p" + i)]);
+				lock (writeLock)
+				{
+					listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "p" + i)]);
+				}
 			});
 
 			// at least some files exist
