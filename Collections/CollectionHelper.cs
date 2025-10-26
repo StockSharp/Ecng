@@ -401,17 +401,24 @@ public static class CollectionHelper
 		if (collection is null)
 			throw new ArgumentNullException(nameof(collection));
 
+#if NETSTANDARD2_0
 		unchecked
 		{
-			var hash = 0;
+			var hash = 17;
 
-			var index = 0;
 			foreach (var item in collection)
-				hash ^= (31 ^ index++) * (item?.GetHashCode() ?? 0);
+				hash = (hash * 31) + (item?.GetHashCode() ?? 0);
 
-			hash %= 2 ^ 32;
 			return hash;
 		}
+#else
+		var hc = new HashCode();
+
+		foreach (var item in collection)
+			hc.Add(item);
+
+		return hc.ToHashCode();
+#endif
 	}
 
 	/// <summary>
