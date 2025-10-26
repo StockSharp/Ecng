@@ -86,7 +86,7 @@ public class MailHelperTests
 		att.AssertNotNull();
 		att.NameEncoding.WebName.AssertEqual(Encoding.UTF8.WebName);
 		att.TransferEncoding.AssertEqual(TransferEncoding.Base64);
-		att.Name.Contains("=?UTF-8?B?").AssertTrue();
+		att.Name.AssertEqual("file.txt");
 
 		// QuotedPrintable encoding
 		using var ms2 = new MemoryStream(data);
