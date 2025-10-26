@@ -22,6 +22,7 @@
     <ProjectReference Include="..\Logging\Logging.csproj" />
     <ProjectReference Include="..\Net.Clients\Net.Clients.csproj" />
     <ProjectReference Include="..\Net.SocketIO\Net.SocketIO.csproj" />
+    <ProjectReference Include="..\Nuget\Nuget.csproj" />
     <ProjectReference Include="..\Serialization\Serialization.csproj" />
     <ProjectReference Include="..\UnitTesting\UnitTesting.csproj" />
     <ProjectReference Include="..\MathLight\MathLight.csproj" />
