@@ -228,7 +228,7 @@ public class WebSocketClient : Disposable, IConnection
 			{
 				if (attempts > 0 || attempts == -1)
 				{
-					_errorLog("Reconnect failed. Attemps left {0}.", attempts);
+					_errorLog("Reconnect failed. Attempts left {0}.", attempts);
 					await ReconnectInterval.Delay(token).NoWait();
 					continue;
 				}
@@ -521,8 +521,9 @@ public class WebSocketClient : Disposable, IConnection
 	/// <param name="subId">The subscription identifier.</param>
 	/// <param name="pre">A pre-send callback function.</param>
 	/// <returns>A task that represents the asynchronous send operation.</returns>
+	/// <exception cref="InvalidOperationException">Thrown if the client is not connected.</exception>
 	public ValueTask SendAsync(object obj, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
-		=> SendAsync(obj, _source.Token, subId, pre);
+		=> SendAsync(obj, _source?.Token ?? throw new InvalidOperationException("Not connected."), subId, pre);
 
 	/// <summary>
 	/// Asynchronously sends an object to the server.
@@ -562,8 +563,9 @@ public class WebSocketClient : Disposable, IConnection
 	/// <param name="subId">The subscription identifier.</param>
 	/// <param name="pre">A pre-send callback function.</param>
 	/// <returns>A task that represents the asynchronous send operation.</returns>
+	/// <exception cref="InvalidOperationException">Thrown if the client is not connected.</exception>
 	public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
-		=> SendAsync(sendBuf, type, _source.Token, subId, pre);
+		=> SendAsync(sendBuf, type, _source?.Token ?? throw new InvalidOperationException("Not connected."), subId, pre);
 
 	/// <summary>
 	/// Asynchronously sends a byte array message to the server.

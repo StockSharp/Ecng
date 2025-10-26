@@ -69,14 +69,32 @@ public class ConnectionStateTracker : Disposable, IConnection
 	/// <param name="cancellationToken">A token to observe for cancellation.</param>
 	/// <returns>A task that represents the asynchronous connect operation.</returns>
 	/// <exception cref="InvalidOperationException">Thrown when there are no connections to connect.</exception>
-	public ValueTask ConnectAsync(CancellationToken cancellationToken)
+	/// <exception cref="AggregateException">Thrown when one or more connections fail to connect.</exception>
+	public async ValueTask ConnectAsync(CancellationToken cancellationToken)
 	{
 		var connections = Connections;
 
 		if (connections.Length == 0)
 			throw new InvalidOperationException("No connections.");
 
-		return connections.Select(c => c.ConnectAsync(cancellationToken)).WhenAll();
+		var tasks = connections.Select(c => c.ConnectAsync(cancellationToken).AsTask()).ToArray();
+
+		try
+		{
+			await Task.WhenAll(tasks).ConfigureAwait(false);
+		}
+		catch
+		{
+			var exceptions = tasks
+				.Where(t => t.IsFaulted)
+				.SelectMany(t => t.Exception?.InnerExceptions ?? [])
+				.ToArray();
+
+			if (exceptions.Length > 0)
+				throw new AggregateException("One or more connections failed to connect.", exceptions);
+
+			throw;
+		}
 	}
 
 	/// <summary>
@@ -150,8 +168,21 @@ public class ConnectionStateTracker : Disposable, IConnection
 			{
 				newState = ConnectionStates.Disconnected;
 			}
+			else if (Wrappers.Any(c => c.State == ConnectionStates.Connecting))
+			{
+				newState = ConnectionStates.Connecting;
+			}
+			else if (Wrappers.Any(c => c.State == ConnectionStates.Disconnecting))
+			{
+				newState = ConnectionStates.Disconnecting;
+			}
+			else if (Wrappers.Any(c => c.State == ConnectionStates.Failed))
+			{
+				newState = ConnectionStates.Failed;
+			}
 			else
 			{
+				// For any other mixed states, keep current state
 				return;
 			}
 
