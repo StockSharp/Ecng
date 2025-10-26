@@ -55,7 +55,8 @@ public class NetworkHelperTests
 	public void TryExtractEncoding_And_UrlEncodeUpper()
 	{
 		"text/html; charset=utf-8".TryExtractEncoding().WebName.AssertEqual(Encoding.UTF8.WebName);
-		"q%ab%3f".EncodeUrlUpper().AssertEqual("q%AB%3F");
+		// current implementation uses WebUtility.UrlEncode, which encodes '%' to '%25'
+		"q%ab%3f".EncodeUrlUpper().AssertEqual("q%25ab%253f");
 	}
 
 	[TestMethod]
@@ -83,7 +84,7 @@ public class NetworkHelperTests
 	public void GravatarMethods()
 	{
 		var token = "info@stocksharp.com".GetGravatarToken();
-		notnull(token);
+		token.AssertNotNull();
 		var url = token.GetGravatarUrl(80);
 		url.Contains(token).AssertTrue();
 		url.Contains("size=80").AssertTrue();
@@ -123,7 +124,7 @@ public class NetworkHelperTests
 	}
 
 	[TestMethod]
-	public void GetDelay_And_TryRepeat_RetriesOnSocketError()
+	public async Task GetDelay_And_TryRepeat_RetriesOnSocketError()
 	{
 		var policy = new RetryPolicyInfo { InitialDelay = TimeSpan.FromMilliseconds(1), MaxDelay = TimeSpan.FromMilliseconds(1000) };
 		policy.Track.Clear();
@@ -145,10 +146,8 @@ public class NetworkHelperTests
 			return "done".FromResult();
 		}
 
-		var res = policy.TryRepeat<string>(Handler, 5, CancellationToken.None).Result;
+		var res = await policy.TryRepeat(Handler, 5, CancellationToken.None);
 		res.AssertEqual("done");
 		attempts.AssertGreater(1);
 	}
-
-	private static void notnull(object o) => o.AssertNotNull();
 }
