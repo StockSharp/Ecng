@@ -328,7 +328,7 @@ public static class LoggingHelper
 	/// <param name="listener">The log listener.</param>
 	/// <param name="message">The log message to write.</param>
 	public static void WriteMessage(this ILogListener listener, LogMessage message)
-		=> listener.CheckOnNull(nameof(message)).WriteMessages([message]);
+		=> listener.CheckOnNull(nameof(listener)).WriteMessages([message]);
 
 	/// <summary>
 	/// Continues the task, observing any errors and optionally executing the specified action.

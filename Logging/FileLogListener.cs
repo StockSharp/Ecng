@@ -335,9 +335,6 @@ public class FileLogListener : LogListener
 				throw new ArgumentOutOfRangeException(nameof(SeparateByDates), SeparateByDates, "Invalid value.".Localize());
 		}
 
-		if (SeparateByDates == SeparateByDateModes.None)
-			return;
-
 		var policy = HistoryPolicy;
 
 		switch (policy)
