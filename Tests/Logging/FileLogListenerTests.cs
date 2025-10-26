@@ -143,19 +143,20 @@ public class FileLogListenerTests
 	{
 		WithTemp(root =>
 		{
-			using var listener = new FileLogListener
+			using (var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				FileName = "single",
 				SeparateByDates = SeparateByDateModes.None
-			};
+			})
+			{
+				var src = new DummySource("src");
+				var msg = new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "hello123");
 
-			var src = new DummySource("src");
-			var msg = new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "hello123");
+				listener.WriteMessages([msg]);
+			}
 
-			listener.WriteMessages([msg]);
-
-			var file = Path.Combine(root, "single" + listener.Extension);
+			var file = Path.Combine(root, "single.txt");
 			File.Exists(file).AssertTrue();
 			var content = ReadAllText(file);
 			content.AssertContains("hello123");
@@ -243,15 +244,16 @@ public class FileLogListenerTests
 			var file = Path.Combine(root, "app" + ".txt");
 			File.WriteAllText(file, "start\n");
 
-			using var listener = new FileLogListener
+			using (var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				FileName = "app",
 				Append = true
-			};
-
-			var src = new DummySource("s");
-			listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "more")]);
+			})
+			{
+				var src = new DummySource("s");
+				listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "more")]);
+			}
 
 			var content = ReadAllText(file);
 			content.AssertContains("start");
@@ -287,16 +289,17 @@ public class FileLogListenerTests
 		WithTemp(root =>
 		{
 			var src = new DummySource("s");
-			using var listener = new FileLogListener
+			using (var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				FileName = "sid",
 				WriteSourceId = true
-			};
+			})
+			{
+				listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "mm")]);
+			}
 
-			listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "mm")]);
-
-			var file = Path.Combine(root, "sid" + listener.Extension);
+			var file = Path.Combine(root, "sid.txt");
 			var content = ReadAllText(file);
 			content.AssertContains(src.Id.ToString());
 		});
