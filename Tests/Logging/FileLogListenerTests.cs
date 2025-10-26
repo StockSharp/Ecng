@@ -63,16 +63,27 @@ public class FileLogListenerTests
 			var src = new DummySource("test");
 			var msg = new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "m");
 
+			var historyDir = Path.Combine(root, "history");
+
 			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				SeparateByDates = SeparateByDateModes.SubDirectories,
 				HistoryPolicy = FileLogHistoryPolicies.Move,
 				HistoryAfter = TimeSpan.FromDays(1),
-				HistoryMove = Path.Combine(root, "history")
+				HistoryMove = historyDir
 			};
 
-			Assert.ThrowsExactly<IOException>(() => listener.WriteMessages([msg]));
+			listener.WriteMessages([msg]);
+
+			var moved1 = Path.Combine(historyDir, Path.GetFileName(dir1));
+			var moved2 = Path.Combine(historyDir, Path.GetFileName(dir2));
+
+			File.Exists(moved1).AssertFalse(); // moved should be directories, not files
+			Directory.Exists(moved1).AssertTrue("First directory was not moved to history.");
+			Directory.Exists(moved2).AssertTrue("Second directory was not moved to history.");
+			Directory.Exists(dir1).AssertFalse();
+			Directory.Exists(dir2).AssertFalse();
 		}
 		finally
 		{

@@ -422,15 +422,23 @@ public class FileLogListener : LogListener
 			}
 			case FileLogHistoryPolicies.Move:
 			{
-				if (isDir)
+				try
 				{
-					foreach (var file in files)
-						Directory.Move(file, HistoryMove);
+					Directory.CreateDirectory(HistoryMove);
+
+					if (isDir)
+					{
+						foreach (var srcDir in files)
+							Directory.Move(srcDir, Path.Combine(HistoryMove, Path.GetFileName(srcDir)));
+					}
+					else
+					{
+						foreach (var file in files)
+							File.Move(file, Path.Combine(HistoryMove, Path.GetFileName(file)));
+					}
 				}
-				else
+				catch
 				{
-					foreach (var file in files)
-						File.Move(file, Path.Combine(HistoryMove, Path.GetFileName(file)));
 				}
 
 				break;
