@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -84,14 +85,21 @@ public static class AsyncEnumerableExtensions
 	/// <typeparam name="TKey">The type of the key returned by the key selector function.</typeparam>
 	/// <param name="source">The <see cref="IAsyncEnumerable{T}"/> to group.</param>
 	/// <param name="keySelector">A function to extract the key for each element.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains elements of type <see cref="IGrouping{TKey, TSource}"/></returns>
-	public static async IAsyncEnumerable<IGrouping<TKey, TSource>> GroupByAsync2<TSource, TKey>(this IAsyncEnumerable<TSource> source,	Func<TSource, TKey> keySelector)
+	public static async IAsyncEnumerable<IGrouping<TKey, TSource>> GroupByAsync2<TSource, TKey>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, [EnumeratorCancellation]CancellationToken cancellationToken)
 		where TKey : IEquatable<TKey>
 	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+
+		if (keySelector is null)
+			throw new ArgumentNullException(nameof(keySelector));
+
 		List<TSource> group = null;
 		TKey currentKey = default;
 
-		await foreach (var item in source)
+		await foreach (var item in source.WithEnforcedCancellation(cancellationToken))
 		{
 			var key = keySelector(item);
 

@@ -52,7 +52,7 @@ public class AsyncEnumerableExtensionsTests
 
 		var groups = new List<IGrouping<int, int>>();
 
-		await foreach (var g in Source().GroupByAsync2(x => x % 2))
+		await foreach (var g in Source().GroupByAsync2(x => x % 2, default))
 		{
 			groups.Add(g);
 		}
