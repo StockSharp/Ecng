@@ -234,7 +234,7 @@ public static class JsonHelper
 	internal static FieldInfo[] GetJsonFields(this Type type)
 	{
 		return [.. type
-			.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+			.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
 			.OrderByDeclaration()];
 	}
 }

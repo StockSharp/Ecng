@@ -1165,4 +1165,48 @@ public class JsonTests
 		entries[1].Price.AssertEqual(3.3);
 		entries[1].Size.AssertEqual(4.4);
 	}
+
+	[JsonConverter(typeof(JArrayToObjectConverter<OB_WithStatic_Generic>))]
+	private class OB_WithStatic_Generic
+	{
+		public double Price { get; set; }
+		public double Size { get; set; }
+		public static double Bias; // must be ignored by converter
+	}
+
+	[JsonConverter(typeof(JArrayToObjectConverter))]
+	private class OB_WithStatic_NonGeneric
+	{
+		public double Price { get; set; }
+		public double Size { get; set; }
+		public static double Bias; // must be ignored by converter
+	}
+
+	[TestMethod]
+	public void JArray_IgnoresStaticFields_Generic()
+	{
+		OB_WithStatic_Generic.Bias = 10.0;
+		var obj = new OB_WithStatic_Generic { Price = 1.1, Size = 2.2 };
+
+		var json = JsonConvert.SerializeObject(obj);
+		var arr = global::Newtonsoft.Json.Linq.JArray.Parse(json);
+
+		arr.Count.AssertEqual(2);
+		arr[0].ToObject<double>().AssertEqual(1.1);
+		arr[1].ToObject<double>().AssertEqual(2.2);
+	}
+
+	[TestMethod]
+	public void JArray_IgnoresStaticFields_NonGeneric()
+	{
+		OB_WithStatic_NonGeneric.Bias = 10.0;
+		var obj = new OB_WithStatic_NonGeneric { Price = 1.1, Size = 2.2 };
+
+		var json = JsonConvert.SerializeObject(obj);
+		var arr = global::Newtonsoft.Json.Linq.JArray.Parse(json);
+
+		arr.Count.AssertEqual(2);
+		arr[0].ToObject<double>().AssertEqual(1.1);
+		arr[1].ToObject<double>().AssertEqual(2.2);
+	}
 }

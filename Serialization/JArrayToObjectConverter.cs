@@ -120,14 +120,13 @@ public class JArrayToObjectConverter<T> : JsonConverter
 		return (Action<T, object>)method.CreateDelegate(typeof(Action<T, object>));
 	}
 
-	private static readonly (Type, Action<T, object>)[] _fields;
+	private static readonly (FieldInfo, Action<T, object>)[] _fields;
 
 	static JArrayToObjectConverter()
 	{
 		_fields = [.. typeof(T)
-			.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
-			.OrderByDeclaration()
-			.Select(f => (f.FieldType, CreateFieldSetter(f)))];
+			.GetJsonFields()
+			.Select(f => (f, CreateFieldSetter(f)))];
 	}
 
 	/// <summary>
@@ -157,8 +156,8 @@ public class JArrayToObjectConverter<T> : JsonConverter
 		{
 			var item = array[i];
 
-			var (type, action) = _fields[i];
-			action(typed, item.ToObject(type));
+			var (f, action) = _fields[i];
+			action(typed, item.ToObject(f.FieldType));
 		}
 
 		return existingValue;
@@ -183,22 +182,10 @@ public class JArrayToObjectConverter<T> : JsonConverter
 			return;
 		}
 
-		var fields = typeof(T).GetJsonFields();
-
 		writer.WriteStartArray();
 
-		foreach (var (type, action) in _fields)
-		{
-			foreach (var f in fields)
-			{
-				if (f.FieldType == type)
-				{
-					var fieldValue = f.GetValue(value);
-					serializer.Serialize(writer, fieldValue);
-					break;
-				}
-			}
-		}
+		foreach (var (f, _) in _fields)
+			serializer.Serialize(writer, f.GetValue(value));
 
 		writer.WriteEndArray();
 	}
