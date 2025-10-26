@@ -71,4 +71,73 @@ public class AsyncEnumerableExtensionsTests
 		groups[5].Key.AssertEqual(0);
 		groups[5].ToArray().SequenceEqual([6]).AssertTrue();
 	}
+
+	private class RefItem
+	{
+		public int Id { get; set; }
+		public string Name { get; set; }
+	}
+
+	private static async IAsyncEnumerable<RefItem> GetAsyncRefData()
+	{
+		await Task.Delay(1);
+		yield return new RefItem { Id = 10, Name = "a" };
+		await Task.Delay(1);
+		yield return new RefItem { Id = 11, Name = "b" };
+	}
+
+	[TestMethod]
+	public async Task ToArrayAsync2_RefType()
+	{
+		var arr = await GetAsyncRefData().ToArrayAsync2(CancellationToken.None);
+		arr.Length.AssertEqual(2);
+		arr[0].Id.AssertEqual(10);
+	}
+
+	[TestMethod]
+	public async Task FirstAsync2_RefType()
+	{
+		var first = await GetAsyncRefData().FirstAsync2(CancellationToken.None);
+		(first?.Id).AssertEqual(10);
+	}
+
+	[TestMethod]
+	public async Task FirstOrDefaultAsync2_RefType_Empty()
+	{
+		static async IAsyncEnumerable<RefItem> Empty()
+		{
+			await Task.CompletedTask;
+			yield break;
+		}
+
+		var first = await Empty().FirstOrDefaultAsync2(CancellationToken.None);
+		(first is null).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task GroupByAsync2_RefType()
+	{
+		static async IAsyncEnumerable<RefItem> Source()
+		{
+			await Task.Delay(1);
+			yield return new RefItem { Id = 1, Name = "x" };
+			await Task.Delay(1);
+			yield return new RefItem { Id = 1, Name = "y" };
+			await Task.Delay(1);
+			yield return new RefItem { Id = 2, Name = "z" };
+		}
+
+		var groups = new List<IGrouping<int, RefItem>>();
+
+		await foreach (var g in Source().GroupByAsync2(i => i.Id, CancellationToken.None))
+		{
+			groups.Add(g);
+		}
+
+		groups.Count.AssertEqual(2);
+		groups[0].Key.AssertEqual(1);
+		groups[0].Count().AssertEqual(2);
+		groups[1].Key.AssertEqual(2);
+		groups[1].Count().AssertEqual(1);
+	}
 }

@@ -184,4 +184,56 @@ public class QueryableExtensionsTests
 		// Expected: true (sequence has an element even if it's default(T))
 		hasAny.AssertTrue();
 	}
+
+	private class RefItem
+	{
+		public int Id { get; set; }
+		public string Name { get; set; }
+	}
+
+	[TestMethod]
+	public async Task FirstOrDefaultAsync_RefType_ReturnsFirst()
+	{
+		var items = new[] { new RefItem { Id = 1, Name = "a" }, new RefItem { Id = 2, Name = "b" } };
+		var query = AsTestQueryable(items);
+		var first = await query.FirstOrDefaultAsync(CancellationToken.None);
+		(first?.Id).AssertEqual(1);
+		(first?.Name).AssertEqual("a");
+	}
+
+	[TestMethod]
+	public async Task FirstOrDefaultAsync_RefType_Empty_ReturnsNull()
+	{
+		var query = AsTestQueryable(Array.Empty<RefItem>());
+		var first = await query.FirstOrDefaultAsync(CancellationToken.None);
+		(first is null).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task CountAsync_RefType()
+	{
+		var items = new[] { new RefItem(), new RefItem(), new RefItem() };
+		var query = AsTestQueryable(items);
+		var count = await query.CountAsync(CancellationToken.None);
+		count.AssertEqual(3L);
+	}
+
+	[TestMethod]
+	public async Task ToArrayAsync_RefType()
+	{
+		var items = new[] { new RefItem { Id = 10 }, new RefItem { Id = 11 } };
+		var query = AsTestQueryable(items);
+		var arr = await query.ToArrayAsync(CancellationToken.None);
+		arr.Length.AssertEqual(2);
+		arr[0].Id.AssertEqual(10);
+	}
+
+	[TestMethod]
+	public async Task AnyAsync_RefType_WithNullElement()
+	{
+		var items = new RefItem[] { null };
+		var query = AsTestQueryable(items);
+		var hasAny = await query.AnyAsync(CancellationToken.None);
+		hasAny.AssertTrue();
+	}
 }
