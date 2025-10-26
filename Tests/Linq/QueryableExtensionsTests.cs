@@ -79,6 +79,14 @@ public class QueryableExtensionsTests
 		public TResult Execute<TResult>(Expression expression)
 			=> ExecuteGeneric<TResult>(expression);
 
+		private static object CreateValueTaskObject(Type resultType, object result)
+		{
+			var vtType = typeof(ValueTask<>).MakeGenericType(resultType);
+			// Prefer the constructor ValueTask<T>(T)
+			var ctor = vtType.GetConstructor([resultType]) ?? throw new InvalidOperationException("Expected ValueTask<T>(T) constructor not found.");
+			return ctor.Invoke([result]);
+		}
+
 		private TRes ExecuteGeneric<TRes>(Expression expression)
 		{
 			if (expression is MethodCallExpression mc && mc.Method.DeclaringType == typeof(QueryableExtensions))
@@ -93,8 +101,8 @@ public class QueryableExtensionsTests
 						.MakeGenericMethod(srcType)
 						.Invoke(null, [src]);
 
-					var vt = Activator.CreateInstance(typeof(ValueTask<>).MakeGenericType(srcType), firstOrDefault)!;
-					return (TRes)vt;
+					var vtObj = CreateValueTaskObject(srcType, firstOrDefault);
+					return (TRes)vtObj;
 				}
 				if (methodName == nameof(QueryableExtensions.CountAsync))
 				{
