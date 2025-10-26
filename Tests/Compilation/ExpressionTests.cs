@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Tests.Compilation;
 
-using System.IO;
-
 using Ecng.Compilation;
 using Ecng.Compilation.Expressions;
 using Ecng.Compilation.Roslyn;

@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Tests.IO;
 
-using System.Threading;
-
 using Ecng.IO.Fossil;
 
 [TestClass]

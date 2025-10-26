@@ -1,7 +1,5 @@
 ﻿namespace Ecng.Tests.Compilation;
 
-using System.Threading;
-
 using Ecng.Compilation;
 using Ecng.Compilation.FSharp;
 using Ecng.Compilation.Python;

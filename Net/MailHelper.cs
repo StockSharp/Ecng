@@ -189,14 +189,6 @@ public static class MailHelper
 		return attachment;
 	}
 
-	/// <summary>
-	/// Splits the encoded attachment name into chunks based on the specified parameters.
-	/// </summary>
-	/// <param name="encodingtoken">The encoding token to use as prefix.</param>
-	/// <param name="softbreak">The soft break token to use.</param>
-	/// <param name="maxChunkLength">The maximum length of each chunk.</param>
-	/// <param name="encoded">The full encoded string to split.</param>
-	/// <returns>The formatted and split encoded attachment name.</returns>
 	private static string SplitEncodedAttachmentName(string encodingtoken, string softbreak, int maxChunkLength, string encoded)
 	{
 		var splitLength = maxChunkLength - encodingtoken.Length - (softbreak.Length * 2);

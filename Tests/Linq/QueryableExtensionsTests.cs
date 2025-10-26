@@ -2,8 +2,6 @@ namespace Ecng.Tests.Linq;
 
 using System.Collections;
 using System.Linq.Expressions;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Ecng.Linq;
 

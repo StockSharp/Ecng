@@ -1,7 +1,6 @@
 namespace Ecng.Tests.Common;
 
 using System.Globalization;
-using System.Threading;
 
 [TestClass]
 public class StringTests

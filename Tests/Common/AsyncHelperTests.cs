@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Common;
 
-using System.Threading;
-
 [TestClass]
 public class AsyncHelperTests
 {
