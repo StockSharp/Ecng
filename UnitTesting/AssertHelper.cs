@@ -1,6 +1,7 @@
 ﻿namespace Ecng.UnitTesting;
 
 using System;
+using System.Collections.Generic;
 using System.Security;
 
 using Ecng.Common;
@@ -193,9 +194,7 @@ public static class AssertHelper
 	/// <param name="message">Error message.</param>
 	public static void AssertGreater<T>(this T value, T expected, string message = null)
 		where T : IComparable<T>
-	{
-		(value.CompareTo(expected) > 0).AssertTrue(message);
-	}
+		=> (value.CompareTo(expected) > 0).AssertTrue(message);
 
 	/// <summary>
 	/// Asserts that <paramref name="value"/> is less than <paramref name="expected"/>.
@@ -206,9 +205,7 @@ public static class AssertHelper
 	/// <param name="message">Error message.</param>
 	public static void AssertLess<T>(this T value, T expected, string message = null)
 		where T : IComparable<T>
-	{
-		(value.CompareTo(expected) < 0).AssertTrue(message);
-	}
+		=> (value.CompareTo(expected) < 0).AssertTrue(message);
 
 	/// <summary>
 	/// Asserts that <paramref name="value"/> is greater than <paramref name="min"/> and less than <paramref name="max"/>.
@@ -224,4 +221,23 @@ public static class AssertHelper
 		value.AssertGreater(min, message);
 		value.AssertLess(max, message);
 	}
+
+	/// <summary>
+	/// Asserts that the sequence contains the specified value.
+	/// </summary>
+	/// <typeparam name="T">Type of elements in the sequence.</typeparam>
+	/// <param name="seq">Sequence to search.</param>
+	/// <param name="value">Value to find.</param>
+	/// <param name="message">Error message.</param>
+	public static void AssertContains<T>(this IEnumerable<T> seq, T value, string message = null)
+		=> Assert.Contains(value, seq, message);
+
+	/// <summary>
+	/// Asserts that the string contains the specified substring.
+	/// </summary>
+	/// <param name="value">String to search.</param>
+	/// <param name="subStr">Substring expected to be present.</param>
+	/// <param name="message">Error message.</param>
+	public static void AssertContains(this string value, string subStr, string message = null)
+		=> Assert.Contains(subStr, value, message);
 }

@@ -38,9 +38,9 @@ public class TransactionFileStreamTests
 				tfs.Write(data, 0, data.Length);
 			}
 
-			Assert.IsTrue(File.Exists(target));
+			File.Exists(target).AssertTrue();
 			ReadAllText(target).AssertEqual("hello");
-			Assert.IsFalse(File.Exists(tmp));
+			File.Exists(tmp).AssertFalse();
 		}
 		finally
 		{
@@ -81,7 +81,7 @@ public class TransactionFileStreamTests
 			}
 
 			ReadAllText(target).AssertEqual("abc");
-			Assert.IsFalse(File.Exists(tmp));
+			File.Exists(tmp).AssertFalse();
 		}
 		finally
 		{
@@ -108,7 +108,7 @@ public class TransactionFileStreamTests
 			}
 
 			ReadAllText(target).AssertEqual("start+end");
-			Assert.IsFalse(File.Exists(tmp));
+			File.Exists(tmp).AssertFalse();
 		}
 		finally
 		{
@@ -135,7 +135,7 @@ public class TransactionFileStreamTests
 			}
 
 			ReadAllText(target).AssertEqual("short");
-			Assert.IsFalse(File.Exists(tmp));
+			File.Exists(tmp).AssertFalse();
 		}
 		finally
 		{

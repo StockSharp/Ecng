@@ -117,8 +117,8 @@ public class FileLogListenerTests
 			var moved1 = Path.Combine(listener.HistoryMove, Path.GetFileName(file1));
 			var moved2 = Path.Combine(listener.HistoryMove, Path.GetFileName(file2));
 
-			Assert.IsTrue(File.Exists(moved1), "First file was not moved to history.");
-			Assert.IsTrue(File.Exists(moved2), "Second file was not moved to history.");
+			File.Exists(moved1).AssertTrue("First file was not moved to history.");
+			File.Exists(moved2).AssertTrue("Second file was not moved to history.");
 		}
 		finally
 		{
@@ -150,9 +150,9 @@ public class FileLogListenerTests
 			listener.WriteMessages([msg]);
 
 			var file = Path.Combine(root, "single" + listener.Extension);
-			Assert.IsTrue(File.Exists(file));
+			File.Exists(file).AssertTrue();
 			var content = ReadAllText(file);
-			Assert.Contains("hello123", content);
+			content.AssertContains("hello123");
 		});
 	}
 
@@ -174,7 +174,7 @@ public class FileLogListenerTests
 
 			var todayPref = DateTime.Today.ToString("yyyy_MM_dd") + "_log" + listener.Extension;
 			var path = Path.Combine(root, todayPref);
-			Assert.IsTrue(File.Exists(path));
+			File.Exists(path).AssertTrue();
 		});
 	}
 
@@ -195,9 +195,9 @@ public class FileLogListenerTests
 			listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "m2")]);
 
 			var sub = Path.Combine(root, DateTime.Today.ToString("yyyy_MM_dd"));
-			Assert.IsTrue(Directory.Exists(sub));
+			Directory.Exists(sub).AssertTrue();
 			var file = Path.Combine(sub, "log" + listener.Extension);
-			Assert.IsTrue(File.Exists(file));
+			File.Exists(file).AssertTrue();
 		});
 	}
 
@@ -224,8 +224,8 @@ public class FileLogListenerTests
 			var f1 = Path.Combine(root, "rot.1" + listener.Extension);
 			var f2 = Path.Combine(root, "rot.2" + listener.Extension);
 
-			Assert.IsTrue(File.Exists(baseFile));
-			Assert.IsTrue(File.Exists(f1) || File.Exists(f2));
+			File.Exists(baseFile).AssertTrue();
+			(File.Exists(f1) || File.Exists(f2)).AssertTrue();
 		});
 	}
 
@@ -248,8 +248,8 @@ public class FileLogListenerTests
 			listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "more")]);
 
 			var content = ReadAllText(file);
-			Assert.Contains("start", content);
-			Assert.Contains("more", content);
+			content.AssertContains("start");
+			content.AssertContains("more");
 		});
 	}
 
@@ -271,7 +271,7 @@ public class FileLogListenerTests
 			listener.WriteMessages([new LogMessage(child, DateTimeOffset.Now, LogLevels.Info, "cmsg")]);
 
 			var file = Path.Combine(root, "parent" + listener.Extension);
-			Assert.IsTrue(File.Exists(file));
+			File.Exists(file).AssertTrue();
 		});
 	}
 
@@ -292,7 +292,7 @@ public class FileLogListenerTests
 
 			var file = Path.Combine(root, "sid" + listener.Extension);
 			var content = ReadAllText(file);
-			Assert.Contains(src.Id.ToString(), content);
+			content.AssertContains(src.Id.ToString());
 		});
 	}
 
@@ -311,7 +311,7 @@ public class FileLogListenerTests
 			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTimeOffset.Now, LogLevels.Info, "x")]);
 
 			var file = Path.Combine(root, "e.logx");
-			Assert.IsTrue(File.Exists(file));
+			File.Exists(file).AssertTrue();
 		});
 	}
 
@@ -331,7 +331,7 @@ public class FileLogListenerTests
 
 			// Expect file created with invalid chars replaced by '_'
 			var expected = new string([.. bad.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)]) + listener.Extension;
-			Assert.IsTrue(File.Exists(Path.Combine(root, expected)));
+			File.Exists(Path.Combine(root, expected)).AssertTrue();
 		});
 	}
 
@@ -353,7 +353,7 @@ public class FileLogListenerTests
 
 			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTimeOffset.Now, LogLevels.Info, "t")]);
 
-			Assert.IsFalse(File.Exists(Path.Combine(root, old)));
+			File.Exists(Path.Combine(root, old)).AssertFalse();
 		});
 	}
 
@@ -377,8 +377,8 @@ public class FileLogListenerTests
 			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTimeOffset.Now, LogLevels.Info, "t")]);
 
 			var zipPath = Path.Combine(root, Path.GetFileNameWithoutExtension(oldPath) + ".zip");
-			Assert.IsTrue(File.Exists(zipPath));
-			Assert.IsFalse(File.Exists(oldPath));
+			File.Exists(zipPath).AssertTrue();
+			File.Exists(oldPath).AssertFalse();
 		});
 	}
 
@@ -404,7 +404,7 @@ public class FileLogListenerTests
 			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTimeOffset.Now, LogLevels.Info, "t")]);
 
 			var moved = Path.Combine(history, Path.GetFileName(oldPath));
-			Assert.IsTrue(File.Exists(moved));
+			File.Exists(moved).AssertTrue();
 		});
 	}
 
@@ -428,7 +428,7 @@ public class FileLogListenerTests
 			});
 
 			// at least some files exist
-			Assert.IsTrue(Directory.EnumerateFiles(root).Any());
+			Directory.EnumerateFiles(root).Any().AssertTrue();
 		});
 	}
 }
