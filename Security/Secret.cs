@@ -64,19 +64,20 @@ public class Secret : Equatable<Secret>
 		return true;
 	}
 
-	private int _hashCode;
+	private int? _hashCode;
 
 	private int EnsureGetHashCode()
-	{
-		if (_hashCode == 0)
-			_hashCode = (Hash?.GetHashCodeEx() ?? 0) ^ (Salt?.GetHashCodeEx() ?? 0);
-
-		return _hashCode;
-	}
+		=> _hashCode ??= (Hash?.GetHashCodeEx() ?? 0) ^ (Salt?.GetHashCodeEx() ?? 0);
 
 	/// <inheritdoc />
 	public override int GetHashCode() => EnsureGetHashCode();
 
 	/// <inheritdoc />
-	public override Secret Clone() => new() { Hash = Hash?.ToArray(), Salt = Salt?.ToArray() };
+	public override Secret Clone()
+		=> new()
+		{
+			Hash = Hash?.ToArray(),
+			Salt = Salt?.ToArray(),
+			_hashCode = _hashCode,
+		};
 }
