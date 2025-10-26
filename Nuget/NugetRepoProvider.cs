@@ -32,9 +32,8 @@ public class NugetRepoProvider : CachingSourceProvider
 			catch (Exception e)
 			{
 				_log.AddWarningLog("nuget v3 service index is not available: {0}", e);
+				throw new InvalidOperationException($"Failed to initialize private NuGet source at {src}. Check connection and credentials.", e);
 			}
-
-			return null;
 		}
 
 		public static async Task GetAsync(string privateUrl, CancellationToken token)
@@ -48,12 +47,9 @@ public class NugetRepoProvider : CachingSourceProvider
 				_tcs ??= tcs;
 
 			if (tcs != _tcs)
-			{
 				await _tcs.Task;
-				return;
-			}
-
-			_tcs.SetResult(await GetImplAsync(privateUrl, token));
+			else
+				_tcs.SetResult(await GetImplAsync(privateUrl, token));
 		}
 
 		private PrivatePackageSource(string addr) : base(addr, PrivateRepoKey) {}
