@@ -49,7 +49,11 @@ public class TextMediaTypeFormatter : MediaTypeFormatter
 	public override async Task<object> ReadFromStreamAsync(Type type, Stream readStream, HttpContent content, IFormatterLogger formatterLogger, CancellationToken cancellationToken)
 	{
 		using var streamReader = new StreamReader(readStream);
-		var str = await streamReader.ReadToEndAsync().NoWait();
+		var str = await streamReader.ReadToEndAsync(
+#if NET7_0_OR_GREATER
+	cancellationToken
+#endif
+		).NoWait();
 
 		if (type == typeof(string))
 			return str;

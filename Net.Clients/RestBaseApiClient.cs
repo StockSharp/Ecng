@@ -312,7 +312,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 				foreach (var (name, value) in parameters)
 				{
 					if (value is not null)
-						url.QueryString.Append(name, value?.ToString().EncodeToHtml());
+						url.QueryString.Append(name, value.ToString().EncodeToHtml());
 				}
 			}
 
@@ -338,7 +338,7 @@ public abstract class RestBaseApiClient(HttpMessageInvoker http, MediaTypeFormat
 				foreach (var (name, value) in parameters)
 				{
 					if (value is not null)
-						url.QueryString.Append(name, value?.ToString().EncodeToHtml());
+						url.QueryString.Append(name, value.ToString().EncodeToHtml());
 				}
 			}
 

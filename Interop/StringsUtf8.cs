@@ -1037,7 +1037,7 @@ public unsafe struct Utf8String28
 }
 
 /// <summary>
-/// Represents a UTF-8 encoded string regarda fixed size of 29 bytes.
+/// Represents a UTF-8 encoded string with a fixed size of 29 bytes.
 /// </summary>
 public unsafe struct Utf8String29
 {
