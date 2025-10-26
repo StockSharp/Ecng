@@ -15,6 +15,7 @@ public class TransactionFileStream : Stream
 	private readonly string _nameTemp;
 
 	private FileStream _temp;
+	private bool _disposed;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="TransactionFileStream"/> class.
@@ -26,12 +27,25 @@ public class TransactionFileStream : Stream
 		_name = name.ThrowIfEmpty(nameof(name));
 		_nameTemp = _name + ".tmp";
 
+		if (mode is FileMode.Create or FileMode.CreateNew)
+		{
+			try
+			{
+				if (File.Exists(_nameTemp))
+					File.Delete(_nameTemp);
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine(ex);
+			}
+		}
+
 		switch (mode)
 		{
 			case FileMode.CreateNew:
 			{
 				if (File.Exists(_name))
-					throw new IOException();
+					throw new IOException($"File '{_name}' already exists.");
 
 				break;
 			}
@@ -50,7 +64,13 @@ public class TransactionFileStream : Stream
 				break;
 			}
 			case FileMode.Truncate:
+			{
+				if (!File.Exists(_name))
+					throw new FileNotFoundException(null, _name);
+
+				File.Copy(_name, _nameTemp, true);
 				break;
+			}
 			case FileMode.Append:
 			{
 				if (File.Exists(_name))
@@ -62,7 +82,18 @@ public class TransactionFileStream : Stream
 				throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
 		}
 
-		_temp = new FileStream(_nameTemp, mode, FileAccess.Write);
+		_temp = new(_nameTemp, mode, FileAccess.Write);
+	}
+
+	private FileStream Temp
+	{
+		get
+		{
+			if (_disposed || _temp is null)
+				throw new ObjectDisposedException(nameof(TransactionFileStream));
+
+			return _temp;
+		}
 	}
 
 	/// <summary>
@@ -72,25 +103,55 @@ public class TransactionFileStream : Stream
 	/// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
 	protected override void Dispose(bool disposing)
 	{
-		if (_temp is null)
+		if (_disposed)
 			return;
 
-		_temp.Dispose();
-		_temp = null;
+		if (disposing)
+		{
+			try
+			{
+				_temp?.Flush(true);
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine(ex);
+			}
 
+			_temp?.Dispose();
+			_temp = null;
+
+			// Commit: atomically replace destination when possible
+			try
+			{
+				if (File.Exists(_name))
+				{
+					// Replace is atomic on Windows and requires destination to exist
+					File.Replace(_nameTemp, _name, null);
+				}
+				else
+				{
+					// Destination doesn't exist - move temp into place
+					if (File.Exists(_nameTemp))
+						File.Move(_nameTemp, _name);
+				}
+			}
+			finally
+			{
+				// Best-effort cleanup of temp
+				try
+				{
+					if (File.Exists(_nameTemp))
+						File.Delete(_nameTemp);
+				}
+				catch (Exception ex)
+				{
+					Trace.WriteLine(ex);
+				}
+			}
+		}
+
+		_disposed = true;
 		base.Dispose(disposing);
-
-		File.Copy(_nameTemp, _name, true);
-
-		// SSD can copy file async
-		try
-		{
-			File.Delete(_nameTemp);
-		}
-		catch (Exception ex)
-		{
-			Trace.WriteLine(ex);
-		}
 	}
 
 	/// <summary>
@@ -98,7 +159,7 @@ public class TransactionFileStream : Stream
 	/// </summary>
 	public override void Flush()
 	{
-		_temp.Flush();
+		Temp.Flush();
 	}
 
 	/// <summary>
@@ -109,7 +170,7 @@ public class TransactionFileStream : Stream
 	/// <returns>The new position within the temporary file stream.</returns>
 	public override long Seek(long offset, SeekOrigin origin)
 	{
-		return _temp.Seek(offset, origin);
+		return Temp.Seek(offset, origin);
 	}
 
 	/// <summary>
@@ -118,7 +179,7 @@ public class TransactionFileStream : Stream
 	/// <param name="value">The desired length of the current stream in bytes.</param>
 	public override void SetLength(long value)
 	{
-		_temp.SetLength(value);
+		Temp.SetLength(value);
 	}
 
 	/// <summary>
@@ -142,7 +203,7 @@ public class TransactionFileStream : Stream
 	/// <param name="count">The number of bytes to be written to the temporary file.</param>
 	public override void Write(byte[] buffer, int offset, int count)
 	{
-		_temp.Write(buffer, offset, count);
+		Temp.Write(buffer, offset, count);
 	}
 
 	/// <summary>
@@ -154,24 +215,24 @@ public class TransactionFileStream : Stream
 	/// <summary>
 	/// Gets a value indicating whether the underlying temporary file stream supports seeking.
 	/// </summary>
-	public override bool CanSeek => _temp.CanSeek;
+	public override bool CanSeek => !_disposed && _temp?.CanSeek == true;
 
 	/// <summary>
 	/// Gets a value indicating whether the underlying temporary file stream supports writing.
 	/// </summary>
-	public override bool CanWrite => _temp.CanWrite;
+	public override bool CanWrite => !_disposed && _temp?.CanWrite == true;
 
 	/// <summary>
 	/// Gets the length in bytes of the underlying temporary file stream.
 	/// </summary>
-	public override long Length => _temp.Length;
+	public override long Length => Temp.Length;
 
 	/// <summary>
 	/// Gets or sets the current position within the underlying temporary file stream.
 	/// </summary>
 	public override long Position
 	{
-		get => _temp.Position;
-		set => _temp.Position = value;
+		get => Temp.Position;
+		set => Temp.Position = value;
 	}
 }
