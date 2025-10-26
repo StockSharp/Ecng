@@ -199,6 +199,7 @@ public class CryptoAlgorithm : Disposable
 	{
 		_symmetric?.Dispose();
 		_asymmetric?.Dispose();
+		_hash?.Dispose();
 	}
 
 	#endregion
