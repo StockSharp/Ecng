@@ -964,4 +964,804 @@ public class CollectionHelperTests
 		// Assert
 		result.AssertFalse();
 	}
+
+	[TestMethod]
+	public void TryGetValue2_ReturnsValueIfExists()
+	{
+		// Arrange
+		var dict = new Dictionary<int, int> { { 1, 100 } };
+
+		// Act
+		var value = dict.TryGetValue2(1);
+
+		// Assert
+		value.AssertEqual(100);
+	}
+
+	[TestMethod]
+	public void TryGetValue2_ReturnsNullIfNotExists()
+	{
+		// Arrange
+		var dict = new Dictionary<int, int> { { 1, 100 } };
+
+		// Act
+		var value = dict.TryGetValue2(5);
+
+		// Assert
+		value.AssertNull();
+	}
+
+	[TestMethod]
+	public void TryGetAndRemove2_ReturnsValueIfExists()
+	{
+		// Arrange
+		var dict = new Dictionary<int, int> { { 1, 100 }, { 2, 200 } };
+
+		// Act
+		var value = dict.TryGetAndRemove2(1);
+
+		// Assert
+		value.AssertEqual(100);
+		dict.ContainsKey(1).AssertFalse();
+	}
+
+	[TestMethod]
+	public void TryGetAndRemove2_ReturnsNullIfNotExists()
+	{
+		// Arrange
+		var dict = new Dictionary<int, int> { { 1, 100 } };
+
+		// Act
+		var value = dict.TryGetAndRemove2(5);
+
+		// Assert
+		value.AssertNull();
+		dict.Count.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void SafeAdd_WithHandler_UsesHandler()
+	{
+		// Arrange
+		var dict = new Dictionary<int, string>();
+
+		// Act
+		var value = dict.SafeAdd(1, key => $"Value_{key}");
+
+		// Assert
+		value.AssertEqual("Value_1");
+		dict[1].AssertEqual("Value_1");
+	}
+
+	[TestMethod]
+	public void SafeAdd_WithHandler_ReturnsExistingValue()
+	{
+		// Arrange
+		var dict = new Dictionary<int, string> { { 1, "existing" } };
+
+		// Act
+		var value = dict.SafeAdd(1, key => $"Value_{key}");
+
+		// Assert
+		value.AssertEqual("existing");
+	}
+
+	[TestMethod]
+	public void SafeAdd_WithHandlerAndFlag_SetsIsNewTrue()
+	{
+		// Arrange
+		var dict = new Dictionary<int, string>();
+
+		// Act
+		var value = dict.SafeAdd(1, key => $"Value_{key}", out var isNew);
+
+		// Assert
+		value.AssertEqual("Value_1");
+		isNew.AssertTrue();
+	}
+
+	[TestMethod]
+	public void SafeAdd_WithHandlerAndFlag_SetsIsNewFalse()
+	{
+		// Arrange
+		var dict = new Dictionary<int, string> { { 1, "existing" } };
+
+		// Act
+		var value = dict.SafeAdd(1, key => $"Value_{key}", out var isNew);
+
+		// Assert
+		value.AssertEqual("existing");
+		isNew.AssertFalse();
+	}
+
+	[TestMethod]
+	public void GetKeys_FindsKeysForValue()
+	{
+		// Arrange
+		var dict = new Dictionary<int, string> { { 1, "one" }, { 2, "two" }, { 3, "one" } };
+
+		// Act
+		var keys = dict.GetKeys("one").ToArray();
+
+		// Assert
+		keys.Length.AssertEqual(2);
+		keys.Contains(1).AssertTrue();
+		keys.Contains(3).AssertTrue();
+	}
+
+	[TestMethod]
+	public void GetKeys_ReturnsEmptyForNonExistingValue()
+	{
+		// Arrange
+		var dict = new Dictionary<int, string> { { 1, "one" } };
+
+		// Act
+		var keys = dict.GetKeys("two").ToArray();
+
+		// Assert
+		keys.Length.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void ToPairSet_CreatesPairSet()
+	{
+		// Arrange
+		var pairs = new[] { new KeyValuePair<int, string>(1, "one"), new KeyValuePair<int, string>(2, "two") };
+
+		// Act
+		var pairSet = pairs.ToPairSet();
+
+		// Assert
+		pairSet.AssertNotNull();
+		pairSet.Count.AssertEqual(2);
+		pairSet[1].AssertEqual("one");
+	}
+
+	[TestMethod]
+	public void CopyTo_CopiesPairsToDictionary()
+	{
+		// Arrange
+		var source = new[] { new KeyValuePair<int, string>(1, "one"), new KeyValuePair<int, string>(2, "two") };
+		var destination = new Dictionary<int, string>();
+
+		// Act
+		source.CopyTo(destination);
+
+		// Assert
+		destination.Count.AssertEqual(2);
+		destination[1].AssertEqual("one");
+		destination[2].AssertEqual("two");
+	}
+
+	[TestMethod]
+	public void SyncGet_AccessesCollectionSafely()
+	{
+		// Arrange
+		var collection = new SynchronizedList<int> { 1, 2, 3 };
+
+		// Act
+		var count = collection.SyncGet(c => c.Count);
+
+		// Assert
+		count.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void SyncDo_ModifiesCollectionSafely()
+	{
+		// Arrange
+		var collection = new SynchronizedList<int> { 1, 2, 3 };
+
+		// Act
+		collection.SyncDo(c => c.Add(4));
+
+		// Assert
+		collection.Count.AssertEqual(4);
+		collection[3].AssertEqual(4);
+	}
+
+	[TestMethod]
+	public void Sync_CreatesSymchronizedList()
+	{
+		// Arrange
+		IList<int> list = [1, 2, 3];
+
+		// Act
+		var syncList = list.Sync();
+
+		// Assert
+		syncList.AssertNotNull();
+		syncList.Count.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void Sync_CreatesSynchronizedDictionary()
+	{
+		// Arrange
+		IDictionary<int, string> dict = new Dictionary<int, string> { { 1, "one" } };
+
+		// Act
+		var syncDict = dict.Sync();
+
+		// Assert
+		syncDict.AssertNotNull();
+		syncDict.Count.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void Sync_CreatesSynchronizedSet()
+	{
+		// Arrange
+		var set = new HashSet<int> { 1, 2, 3 };
+
+		// Act
+		var syncSet = set.Sync();
+
+		// Assert
+		syncSet.AssertNotNull();
+		syncSet.Count.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void WhereWithPrevious_FiltersWithPreviousElement()
+	{
+		// Arrange
+		var collection = new[] { 1, 3, 2, 5, 4 };
+
+		// Act
+		var result = collection.WhereWithPrevious((prev, curr) => curr > prev).ToArray();
+
+		// Assert
+		result.AssertEqual([1, 3, 5]);
+	}
+
+	[TestMethod]
+	public void ToIgnoreCaseSet_CreatesIgnoreCaseSet()
+	{
+		// Arrange
+		var collection = new[] { "Apple", "BANANA", "cherry" };
+
+		// Act
+		var set = collection.ToIgnoreCaseSet();
+
+		// Assert
+		set.Count.AssertEqual(3);
+		set.Contains("apple").AssertTrue();
+		set.Contains("APPLE").AssertTrue();
+	}
+
+	[TestMethod]
+	public void DamerauLevenshteinDistance_CalculatesDistance()
+	{
+		// Arrange
+		var source = new[] { 1, 2, 3, 4 };
+		var target = new[] { 1, 3, 2, 4 };
+
+		// Act
+		var distance = CollectionHelper.DamerauLevenshteinDistance(source, target, 10);
+
+		// Assert
+		distance.AssertGreater(0);
+		distance.AssertLess(10);
+	}
+
+	[TestMethod]
+	public void ToBits_Long_ConvertsToBits()
+	{
+		// Arrange
+		long value = 5L;
+
+		// Act
+		var bits = value.ToBits(3);
+
+		// Assert
+		bits.Length.AssertEqual(3);
+		bits[0].AssertTrue();
+		bits[1].AssertFalse();
+		bits[2].AssertTrue();
+	}
+
+	[TestMethod]
+	public void FromBits2_ConvertsBitsToLong()
+	{
+		// Arrange
+		var bits = new[] { true, false, true };
+
+		// Act
+		var value = bits.FromBits2();
+
+		// Assert
+		value.AssertEqual(5L);
+	}
+
+	[TestMethod]
+	public void Clear_ClearsConcurrentQueue()
+	{
+		// Arrange
+		var queue = new System.Collections.Concurrent.ConcurrentQueue<int>();
+		queue.Enqueue(1);
+		queue.Enqueue(2);
+		queue.Enqueue(3);
+
+		// Act
+		queue.Clear();
+
+		// Assert
+		queue.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void ToDictionary_WithIndexedSelectors()
+	{
+		// Arrange
+		var source = new[] { "a", "b", "c" };
+
+		// Act
+		var dict = source.ToDictionary((s, i) => i, (s, i) => s.ToUpper());
+
+		// Assert
+		dict.Count.AssertEqual(3);
+		dict[0].AssertEqual("A");
+		dict[1].AssertEqual("B");
+		dict[2].AssertEqual("C");
+	}
+
+	[TestMethod]
+	public void AddRange_BitArray_AddsBits()
+	{
+		// Arrange
+		var array = new System.Collections.BitArray(2);
+		array[0] = true;
+		array[1] = false;
+
+		// Act
+		array.AddRange(true, false, true);
+
+		// Assert
+		array.Length.AssertEqual(5);
+		array[2].AssertTrue();
+		array[3].AssertFalse();
+		array[4].AssertTrue();
+	}
+
+	[TestMethod]
+	public void FirstOr_ValueType_ReturnsFirstIfExists()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3 };
+
+		// Act
+		var value = collection.FirstOr();
+
+		// Assert
+		value.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void FirstOr_ValueType_ReturnsNullIfEmpty()
+	{
+		// Arrange
+		var collection = Array.Empty<int>();
+
+		// Act
+		var value = collection.FirstOr();
+
+		// Assert
+		value.AssertNull();
+	}
+
+	[TestMethod]
+	public void IsEmpty_Array_ReturnsTrueForEmpty()
+	{
+		// Arrange
+		var array = Array.Empty<int>();
+
+		// Act
+		var result = array.IsEmpty();
+
+		// Assert
+		result.AssertTrue();
+	}
+
+	[TestMethod]
+	public void IsEmpty_Array_ReturnsFalseForNonEmpty()
+	{
+		// Arrange
+		var array = new[] { 1 };
+
+		// Act
+		var result = array.IsEmpty();
+
+		// Assert
+		result.AssertFalse();
+	}
+
+	[TestMethod]
+	public void IsEmpty_String_ReturnsTrueForEmpty()
+	{
+		// Arrange
+		var str = "";
+
+		// Act
+		var result = str.IsEmpty();
+
+		// Assert
+		result.AssertTrue();
+	}
+
+	[TestMethod]
+	public void IsEmpty_String_ReturnsFalseForNonEmpty()
+	{
+		// Arrange
+		var str = "hello";
+
+		// Act
+		var result = str.IsEmpty();
+
+		// Assert
+		result.AssertFalse();
+	}
+
+	[TestMethod]
+	public async Task SelectManyAsync_FlattensAsync()
+	{
+		// Arrange
+		var source = new[] { 1, 2 };
+
+		// Act
+		var result = await source.SelectManyAsync<int, int>(async x =>
+		{
+			await Task.Delay(10);
+			return [x, x * 10];
+		});
+
+		// Assert
+		result.ToArray().AssertEqual([1, 10, 2, 20]);
+	}
+
+	[TestMethod]
+	public void Permutations_GeneratesPermutations()
+	{
+		// Arrange
+		var keys = new[] { 1, 2 };
+
+		// Act
+		var perms = keys.Permutations(k => new[] { k, k * 10 }).ToArray();
+
+		// Assert
+		perms.Length.AssertEqual(4);
+		perms[0].AssertEqual([1, 2]);
+		perms[1].AssertEqual([1, 20]);
+		perms[2].AssertEqual([10, 2]);
+		perms[3].AssertEqual([10, 20]);
+	}
+
+	[TestMethod]
+	public void ToEx_WithCount_CreatesEnumerableEx()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3 };
+
+		// Act
+		var result = collection.ToEx(3);
+
+		// Assert
+		result.AssertNotNull();
+		result.Count.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void TryDequeue_SynchronizedQueue_DequeuesItemIfExists()
+	{
+		// Arrange
+		var queue = new SynchronizedQueue<string>();
+		queue.Enqueue("one");
+		queue.Enqueue("two");
+
+		// Act
+		var value = queue.TryDequeue();
+
+		// Assert
+		value.AssertEqual("one");
+		queue.Count.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void TryPeek_SynchronizedQueue_PeeksItemIfExists()
+	{
+		// Arrange
+		var queue = new SynchronizedQueue<string>();
+		queue.Enqueue("one");
+		queue.Enqueue("two");
+
+		// Act
+		var value = queue.TryPeek();
+
+		// Assert
+		value.AssertEqual("one");
+		queue.Count.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void TryDequeue2_SynchronizedQueue_DequeuesValueType()
+	{
+		// Arrange
+		var queue = new SynchronizedQueue<int>();
+		queue.Enqueue(1);
+		queue.Enqueue(2);
+		queue.Enqueue(3);
+
+		// Act
+		var value = queue.TryDequeue2();
+
+		// Assert
+		value.AssertEqual(1);
+		queue.Count.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void TryPeek2_SynchronizedQueue_PeeksValueType()
+	{
+		// Arrange
+		var queue = new SynchronizedQueue<int>();
+		queue.Enqueue(1);
+		queue.Enqueue(2);
+		queue.Enqueue(3);
+
+		// Act
+		var value = queue.TryPeek2();
+
+		// Assert
+		value.AssertEqual(1);
+		queue.Count.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void GetKeys_SynchronizedDictionary_FindsKeys()
+	{
+		// Arrange
+		var dict = new SynchronizedDictionary<int, string> { { 1, "one" }, { 2, "one" } };
+
+		// Act
+		var keys = dict.GetKeys("one").ToArray();
+
+		// Assert
+		keys.Length.AssertEqual(2);
+		keys.Contains(1).AssertTrue();
+		keys.Contains(2).AssertTrue();
+	}
+
+	[TestMethod]
+	public void TryGetKey_PairSet_ReturnsKeyIfExists()
+	{
+		// Arrange
+		var pairSet = new PairSet<int, string> { { 1, "one" }, { 2, "two" } };
+
+		// Act
+		var key = pairSet.TryGetKey("one");
+
+		// Assert
+		key.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void TryGetKey_PairSet_ReturnsDefaultIfNotExists()
+	{
+		// Arrange
+		var pairSet = new PairSet<int, string> { { 1, "one" } };
+
+		// Act
+		var key = pairSet.TryGetKey("three");
+
+		// Assert
+		key.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void TryGetKey2_PairSet_ReturnsNullIfNotExists()
+	{
+		// Arrange
+		var pairSet = new PairSet<int, string> { { 1, "one" } };
+
+		// Act
+		var key = pairSet.TryGetKey2("three");
+
+		// Assert
+		key.AssertNull();
+	}
+
+	[TestMethod]
+	public void ToDictionary_FromGrouping_CreatesDict()
+	{
+		// Arrange
+		var items = new[] { 1, 2, 3, 4, 5 };
+		var grouping = items.GroupBy(x => x % 2);
+
+		// Act
+		var dict = grouping.ToDictionary();
+
+		// Assert
+		dict.Count.AssertEqual(2);
+		dict[0].Count().AssertEqual(2); // even numbers
+		dict[1].Count().AssertEqual(3); // odd numbers
+	}
+
+	[TestMethod]
+	public void Batch_WithFunction_TransformsBatches()
+	{
+		// Arrange
+		var items = new[] { 1, 2, 3, 4, 5 };
+
+		// Act
+		var batches = items.Batch(2, batch => batch.Sum(), () => false).ToArray();
+
+		// Assert
+		batches.Length.AssertEqual(3);
+		batches[0].AssertEqual(3);  // 1 + 2
+		batches[1].AssertEqual(7);  // 3 + 4
+		batches[2].AssertEqual(5);  // 5
+	}
+
+	[TestMethod]
+	public void ToBits_Float_ConvertsToBits()
+	{
+		// Arrange
+		float value = 5.0f;
+
+		// Act
+		var bits = value.ToBits(8);
+
+		// Assert
+		bits.Length.AssertEqual(8);
+		bits.AssertNotNull();
+	}
+
+	[TestMethod]
+	public void ToBits_Double_ConvertsToBits()
+	{
+		// Arrange
+		double value = 5.0;
+
+		// Act
+		var bits = value.ToBits(8);
+
+		// Assert
+		bits.Length.AssertEqual(8);
+		bits.AssertNotNull();
+	}
+
+	[TestMethod]
+	public void ToBits_IntWithStartBit_ConvertsToBits()
+	{
+		// Arrange
+		var value = 15; // 1111 in binary
+
+		// Act
+		var bits = value.ToBits(1, 3); // Get bits 1-3
+
+		// Assert
+		bits.Length.AssertEqual(3);
+		bits[0].AssertTrue();  // bit 1
+		bits[1].AssertTrue();  // bit 2
+		bits[2].AssertTrue();  // bit 3
+	}
+
+	[TestMethod]
+	public void FromBits_WithStartBit_ConvertsBitsToInt()
+	{
+		// Arrange
+		var bits = new[] { true, false, true, false, true };
+
+		// Act
+		var value = bits.FromBits(1);
+
+		// Assert
+		value.AssertGreater(0); // Verify it works and returns a value
+	}
+
+	[TestMethod]
+	public void FromBits2_WithStartBit_ConvertsBitsToLong()
+	{
+		// Arrange
+		var bits = new[] { true, false, true, false, true };
+
+		// Act
+		var value = bits.FromBits2(1);
+
+		// Assert
+		value.AssertGreater(0L); // Verify it works and returns a value
+	}
+
+	[TestMethod]
+	public void SafeAdd_WithDefaultActivator_CreatesNewValue()
+	{
+		// Arrange
+		var dict = new Dictionary<int, List<int>>();
+
+		// Act
+		var value = dict.SafeAdd(1, out var isNew);
+
+		// Assert
+		value.AssertNotNull();
+		isNew.AssertTrue();
+		dict[1].AssertEqual(value);
+	}
+
+	[TestMethod]
+	public void ToPairSet_WithComparer_CreatesPairSet()
+	{
+		// Arrange
+		var pairs = new[] { new KeyValuePair<string, int>("one", 1), new KeyValuePair<string, int>("two", 2) };
+
+		// Act
+		var pairSet = pairs.ToPairSet(StringComparer.OrdinalIgnoreCase);
+
+		// Assert
+		pairSet.Count.AssertEqual(2);
+		pairSet["ONE"].AssertEqual(1); // case-insensitive lookup
+		pairSet["TWO"].AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void ToPairSet_WithIndexedSelectors_CreatesPairSet()
+	{
+		// Arrange
+		var items = new[] { "a", "b", "c" };
+
+		// Act
+		var pairSet = items.ToPairSet((s, i) => i, (s, i) => s.ToUpper());
+
+		// Assert
+		pairSet.Count.AssertEqual(3);
+		pairSet[0].AssertEqual("A");
+		pairSet[1].AssertEqual("B");
+		pairSet[2].AssertEqual("C");
+	}
+
+	[TestMethod]
+	public void TypedAs_ConvertsNonGenericDictionary()
+	{
+		// Arrange
+		System.Collections.IDictionary dict = new System.Collections.Hashtable
+		{
+			{ 1, "one" },
+			{ 2, "two" }
+		};
+
+		// Act
+		var typedDict = dict.TypedAs<int, string>();
+
+		// Assert
+		typedDict.AssertNotNull();
+		typedDict[1].AssertEqual("one");
+		typedDict[2].AssertEqual("two");
+	}
+
+	[TestMethod]
+	public void OrderBy_WithoutComparer_SortsAscending()
+	{
+		// Arrange
+		var collection = new[] { 5, 2, 8, 1, 9 };
+
+		// Act
+		var result = collection.OrderBy().ToArray();
+
+		// Assert
+		result.AssertEqual([1, 2, 5, 8, 9]);
+	}
+
+	[TestMethod]
+	public void ToDictionary_WithComparer_CreatesDict()
+	{
+		// Arrange
+		var pairs = new[] { new KeyValuePair<string, int>("one", 1), new KeyValuePair<string, int>("two", 2) };
+
+		// Act
+		var dict = CollectionHelper.ToDictionary(pairs, StringComparer.OrdinalIgnoreCase);
+
+		// Assert
+		dict.Count.AssertEqual(2);
+		dict["ONE"].AssertEqual(1);
+		dict["TWO"].AssertEqual(2);
+	}
 }
