@@ -146,7 +146,7 @@ public static class ThreadingHelper
 
 		timer.Change(start, interval);
 
-		lock(_intervals)
+		lock (_intervals)
 			_intervals[timer] = interval;
 
 		return timer;

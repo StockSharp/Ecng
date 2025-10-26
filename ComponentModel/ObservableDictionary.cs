@@ -587,7 +587,7 @@ public class ObservableDictionary<TKey, TValue> :
 	{
 		if (array == null)
 		{
-			throw new ArgumentNullException(nameof(index), "CopyTo() failed:  array parameter was null");
+			throw new ArgumentNullException(nameof(array), "CopyTo() failed:  array parameter was null");
 		}
 		if ((index < 0) || (index > array.Length))
 		{
@@ -595,7 +595,7 @@ public class ObservableDictionary<TKey, TValue> :
 		}
 		if ((array.Length - index) < _keyedEntryCollection.Count)
 		{
-			throw new ArgumentException("CopyTo() failed:  supplied array was too small", nameof(index));
+			throw new ArgumentException("CopyTo() failed:  supplied array was too small", nameof(array));
 		}
 
 		foreach (DictionaryEntry entry in _keyedEntryCollection)

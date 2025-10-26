@@ -65,7 +65,7 @@ public interface IDebugger : IPersistable, IDisposable
 	event Action<object> Error;
 
 	/// <summary>
-	/// The event of the bock changed.
+	/// The event of the block changed.
 	/// </summary>
 	event Action<object> BlockChanged;
 
