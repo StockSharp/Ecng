@@ -563,7 +563,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <param name="pre">A pre-send callback function.</param>
 	/// <returns>A task that represents the asynchronous send operation.</returns>
 	public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
-		=> SendAsync(sendBuf, type, _source.Token, subId, pre);
+		=> SendAsync(sendBuf, type, _source?.Token ?? throw new InvalidOperationException("Connection was not established."), subId, pre);
 
 	/// <summary>
 	/// Asynchronously sends a byte array message to the server.
