@@ -1,5 +1,9 @@
 namespace Ecng.Drawing;
 
+using System.ComponentModel.DataAnnotations;
+
+using Ecng.Localization;
+
 /// <summary>
 /// Drawing styles.
 /// </summary>
@@ -8,66 +12,66 @@ public enum DrawStyles
 	/// <summary>
 	/// Line.
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.Line2Key)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.Line2Key)]
 	Line,
 
 	/// <summary>
 	/// Line (no gaps).
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.NoGapLineKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.NoGapLineKey)]
 	NoGapLine,
 
 	/// <summary>
 	/// Stepped line.
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.StepLineKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.StepLineKey)]
 	StepLine,
 
 	/// <summary>
 	/// Band.
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.BandKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.BandKey)]
 	Band,
 
 	/// <summary>
 	/// The range with a single value.
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.BandOneValueKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.BandOneValueKey)]
 	BandOneValue,
 
 	/// <summary>
 	/// Dot.
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.DotStyleKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.DotStyleKey)]
 	Dot,
 
 	/// <summary>
 	/// Histogram.
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.HistogramKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.HistogramKey)]
 	Histogram,
 
 	/// <summary>
 	/// Bubble.
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.BubbleKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.BubbleKey)]
 	Bubble,
 
 	/// <summary>
 	/// Stacked bar chart.
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.StackedBarKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.StackedBarKey)]
 	StackedBar,
 
 	/// <summary>
 	/// Dashed line.
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.DashedLineKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.DashedLineKey)]
 	DashedLine,
 
 	/// <summary>
 	/// Area.
 	/// </summary>
-	//[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.AreaKey)]
+	[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.AreaKey)]
 	Area,
 }

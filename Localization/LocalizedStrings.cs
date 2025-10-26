@@ -71,6 +71,39 @@ public static class LocalizedStrings
 	/// <summary>
 	/// </summary>
 	public const string PreventUpgradeKey = nameof(PreventUpgrade);
+	/// <summary>
+	/// </summary>
+	public const string Line2Key = nameof(Line2);
+	/// <summary>
+	/// </summary>
+	public const string NoGapLineKey = nameof(NoGapLine);
+	/// <summary>
+	/// </summary>
+	public const string StepLineKey = nameof(StepLine);
+	/// <summary>
+	/// </summary>
+	public const string BandKey = nameof(Band);
+	/// <summary>
+	/// </summary>
+	public const string BandOneValueKey = nameof(BandOneValue);
+	/// <summary>
+	/// </summary>
+	public const string DotStyleKey = nameof(DotStyle);
+	/// <summary>
+	/// </summary>
+	public const string HistogramKey = nameof(Histogram);
+	/// <summary>
+	/// </summary>
+	public const string BubbleKey = nameof(Bubble);
+	/// <summary>
+	/// </summary>
+	public const string StackedBarKey = nameof(StackedBar);
+	/// <summary>
+	/// </summary>
+	public const string DashedLineKey = nameof(DashedLine);
+	/// <summary>
+	/// </summary>
+	public const string AreaKey = nameof(Area);
 
 	/// <summary>
 	/// </summary>
@@ -117,6 +150,39 @@ public static class LocalizedStrings
 	/// <summary>
 	/// </summary>
 	public static string PreventUpgrade => LocalizeByKey(PreventUpgradeKey);
+	/// <summary>
+	/// </summary>
+	public static string Line2 => LocalizeByKey(Line2Key);
+	/// <summary>
+	/// </summary>
+	public static string NoGapLine => LocalizeByKey(NoGapLineKey);
+	/// <summary>
+	/// </summary>
+	public static string StepLine => LocalizeByKey(StepLineKey);
+	/// <summary>
+	/// </summary>
+	public static string Band => LocalizeByKey(BandKey);
+	/// <summary>
+	/// </summary>
+	public static string BandOneValue => LocalizeByKey(BandOneValueKey);
+	/// <summary>
+	/// </summary>
+	public static string DotStyle => LocalizeByKey(DotStyleKey);
+	/// <summary>
+	/// </summary>
+	public static string Histogram => LocalizeByKey(HistogramKey);
+	/// <summary>
+	/// </summary>
+	public static string Bubble => LocalizeByKey(BubbleKey);
+	/// <summary>
+	/// </summary>
+	public static string StackedBar => LocalizeByKey(StackedBarKey);
+	/// <summary>
+	/// </summary>
+	public static string DashedLine => LocalizeByKey(DashedLineKey);
+	/// <summary>
+	/// </summary>
+	public static string Area => LocalizeByKey(AreaKey);
 
 	/// <summary>
 	/// Localizes the string.
