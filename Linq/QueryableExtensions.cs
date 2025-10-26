@@ -47,10 +47,13 @@ public static class QueryableExtensions
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>A <see cref="ValueTask{Boolean}"/> representing the asynchronous operation. The task result contains true if the sequence contains any elements; otherwise, false.</returns>
 	public static async ValueTask<bool> AnyAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
-		=> !EqualityComparer<T>.Default.Equals(
-			await source.FirstOrDefaultAsync(cancellationToken),
-			default
-		);
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+
+		var count = await source.CountAsync(cancellationToken);
+		return count > 0;
+	}
 
 	/// <summary>
 	/// Asynchronously returns the first element of a sequence, or a default value if the sequence contains no elements.
