@@ -196,7 +196,7 @@ public class FileLogListener : LogListener
 	private string _extension = ".txt";
 
 	/// <summary>
-	/// Extension of log files. The default value is 'txt'.
+	/// Extension of log files. The default value is '.txt'.
 	/// </summary>
 	public string Extension
 	{
@@ -374,7 +374,7 @@ public class FileLogListener : LogListener
 					files.Add(dirName);
 			}
 			else
-				files.AddRange(Directory.GetFiles(LogDirectory, $"{dateStr}_*.{Extension}"));
+				files.AddRange(Directory.GetFiles(LogDirectory, $"{dateStr}_*{Extension}"));
 		}
 
 		if (files.Count == 0)
