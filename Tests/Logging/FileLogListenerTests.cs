@@ -31,7 +31,13 @@ public class FileLogListenerTests
 		}
 		finally
 		{
-			try { if (Directory.Exists(root)) Directory.Delete(root, true); } catch { }
+			try
+			{
+				if (Directory.Exists(root))
+					Directory.Delete(root, true);
+			}
+			catch
+			{ }
 		}
 	}
 
@@ -43,15 +49,6 @@ public class FileLogListenerTests
 		try
 		{
 			Directory.CreateDirectory(root);
-
-			var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				SeparateByDates = SeparateByDateModes.SubDirectories,
-				HistoryPolicy = FileLogHistoryPolicies.Move,
-				HistoryAfter = TimeSpan.FromDays(1),
-				HistoryMove = Path.Combine(root, "history")
-			};
 
 			// create two dated subdirectories older than HistoryAfter (yesterday and day before)
 			var yesterday = DateTime.Today.AddDays(-1);
@@ -65,6 +62,15 @@ public class FileLogListenerTests
 			// create a simple message to trigger TryDoHistoryPolicy via WriteMessages
 			var src = new DummySource("test");
 			var msg = new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "m");
+
+			using var listener = new FileLogListener
+			{
+				LogDirectory = root,
+				SeparateByDates = SeparateByDateModes.SubDirectories,
+				HistoryPolicy = FileLogHistoryPolicies.Move,
+				HistoryAfter = TimeSpan.FromDays(1),
+				HistoryMove = Path.Combine(root, "history")
+			};
 
 			Assert.ThrowsExactly<IOException>(() => listener.WriteMessages([msg]));
 		}
@@ -89,20 +95,11 @@ public class FileLogListenerTests
 		{
 			Directory.CreateDirectory(root);
 
-			var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				SeparateByDates = SeparateByDateModes.FileName,
-				HistoryPolicy = FileLogHistoryPolicies.Move,
-				HistoryAfter = TimeSpan.FromDays(1),
-				HistoryMove = Path.Combine(root, "history")
-			};
-
 			var yesterday = DateTime.Today.AddDays(-1);
 			var dayBefore = DateTime.Today.AddDays(-2);
 
-			var file1 = Path.Combine(root, yesterday.ToString("yyyy_MM_dd") + "_log" + listener.Extension);
-			var file2 = Path.Combine(root, dayBefore.ToString("yyyy_MM_dd") + "_log" + listener.Extension);
+			var file1 = Path.Combine(root, yesterday.ToString("yyyy_MM_dd") + "_log.txt");
+			var file2 = Path.Combine(root, dayBefore.ToString("yyyy_MM_dd") + "_log.txt");
 
 			File.WriteAllText(file1, "a");
 			File.WriteAllText(file2, "b");
@@ -111,6 +108,15 @@ public class FileLogListenerTests
 			var msg = new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "m");
 
 			// Should not throw
+			using var listener = new FileLogListener
+			{
+				LogDirectory = root,
+				SeparateByDates = SeparateByDateModes.FileName,
+				HistoryPolicy = FileLogHistoryPolicies.Move,
+				HistoryAfter = TimeSpan.FromDays(1),
+				HistoryMove = Path.Combine(root, "history")
+			};
+
 			listener.WriteMessages([msg]);
 
 			// verify files moved into history folder
@@ -137,7 +143,7 @@ public class FileLogListenerTests
 	{
 		WithTemp(root =>
 		{
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				FileName = "single",
@@ -161,7 +167,7 @@ public class FileLogListenerTests
 	{
 		WithTemp(root =>
 		{
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				FileName = "log",
@@ -183,7 +189,7 @@ public class FileLogListenerTests
 	{
 		WithTemp(root =>
 		{
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				FileName = "log",
@@ -206,18 +212,18 @@ public class FileLogListenerTests
 	{
 		WithTemp(root =>
 		{
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				FileName = "rot",
-				MaxLength =100, // small
-				MaxCount =2
+				MaxLength = 100, // small
+				MaxCount = 2
 			};
 
 			var src = new DummySource("s");
-			for (var i =0; i <200; i++)
+			for (var i = 0; i < 200; i++)
 			{
-				listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, new string('x',20))]);
+				listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, new string('x', 20))]);
 			}
 
 			var baseFile = Path.Combine(root, "rot" + listener.Extension);
@@ -237,7 +243,7 @@ public class FileLogListenerTests
 			var file = Path.Combine(root, "app" + ".txt");
 			File.WriteAllText(file, "start\n");
 
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				FileName = "app",
@@ -261,7 +267,7 @@ public class FileLogListenerTests
 			var parent = new DummySource("parent") { IsRoot = true };
 			var child = new DummySource("child") { Parent = parent };
 
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				SeparateByDates = SeparateByDateModes.None,
@@ -281,7 +287,7 @@ public class FileLogListenerTests
 		WithTemp(root =>
 		{
 			var src = new DummySource("s");
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				FileName = "sid",
@@ -301,7 +307,7 @@ public class FileLogListenerTests
 	{
 		WithTemp(root =>
 		{
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				FileName = "e",
@@ -321,7 +327,7 @@ public class FileLogListenerTests
 		WithTemp(root =>
 		{
 			var bad = "bad:name*?";
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				FileName = bad
@@ -340,7 +346,7 @@ public class FileLogListenerTests
 	{
 		WithTemp(root =>
 		{
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				SeparateByDates = SeparateByDateModes.FileName,
@@ -362,7 +368,7 @@ public class FileLogListenerTests
 	{
 		WithTemp(root =>
 		{
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				SeparateByDates = SeparateByDateModes.FileName,
@@ -388,7 +394,7 @@ public class FileLogListenerTests
 		WithTemp(root =>
 		{
 			var history = Path.Combine(root, "history");
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				SeparateByDates = SeparateByDateModes.FileName,
@@ -413,15 +419,15 @@ public class FileLogListenerTests
 	{
 		WithTemp(root =>
 		{
-			var listener = new FileLogListener
+			using var listener = new FileLogListener
 			{
 				LogDirectory = root,
 				SeparateByDates = SeparateByDateModes.FileName
 			};
 
-			var sources = Enumerable.Range(0,10).Select(i => new DummySource("s" + i)).ToArray();
+			var sources = Enumerable.Range(0, 10).Select(i => new DummySource("s" + i)).ToArray();
 
-			Parallel.For(0,100, i =>
+			Parallel.For(0, 100, i =>
 			{
 				var src = sources[i % sources.Length];
 				listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "p" + i)]);
