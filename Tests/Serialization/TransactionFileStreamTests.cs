@@ -35,7 +35,7 @@ public class TransactionFileStreamTests
 			using (var tfs = new TransactionFileStream(target, FileMode.CreateNew))
 			{
 				var data = Encoding.UTF8.GetBytes("hello");
-				tfs.Write(data,0, data.Length);
+				tfs.Write(data, 0, data.Length);
 			}
 
 			Assert.IsTrue(File.Exists(target));
@@ -44,8 +44,10 @@ public class TransactionFileStreamTests
 		}
 		finally
 		{
-			if (File.Exists(target)) File.Delete(target);
-			if (File.Exists(tmp)) File.Delete(tmp);
+			if (File.Exists(target))
+				File.Delete(target);
+			if (File.Exists(tmp))
+				File.Delete(tmp);
 		}
 	}
 
@@ -60,7 +62,8 @@ public class TransactionFileStreamTests
 		finally
 		{
 			var tmp = target + ".tmp";
-			if (File.Exists(tmp)) File.Delete(tmp);
+			if (File.Exists(tmp))
+				File.Delete(tmp);
 		}
 	}
 
@@ -74,7 +77,7 @@ public class TransactionFileStreamTests
 			using (var tfs = new TransactionFileStream(target, FileMode.OpenOrCreate))
 			{
 				var data = Encoding.UTF8.GetBytes("abc");
-				tfs.Write(data,0, data.Length);
+				tfs.Write(data, 0, data.Length);
 			}
 
 			ReadAllText(target).AssertEqual("abc");
@@ -82,8 +85,10 @@ public class TransactionFileStreamTests
 		}
 		finally
 		{
-			if (File.Exists(target)) File.Delete(target);
-			if (File.Exists(tmp)) File.Delete(tmp);
+			if (File.Exists(target))
+				File.Delete(target);
+			if (File.Exists(tmp))
+				File.Delete(tmp);
 		}
 	}
 
@@ -99,7 +104,7 @@ public class TransactionFileStreamTests
 			using (var tfs = new TransactionFileStream(target, FileMode.Append))
 			{
 				var data = Encoding.UTF8.GetBytes("+end");
-				tfs.Write(data,0, data.Length);
+				tfs.Write(data, 0, data.Length);
 			}
 
 			ReadAllText(target).AssertEqual("start+end");
@@ -107,8 +112,10 @@ public class TransactionFileStreamTests
 		}
 		finally
 		{
-			if (File.Exists(target)) File.Delete(target);
-			if (File.Exists(tmp)) File.Delete(tmp);
+			if (File.Exists(target))
+				File.Delete(target);
+			if (File.Exists(tmp))
+				File.Delete(tmp);
 		}
 	}
 
@@ -124,7 +131,7 @@ public class TransactionFileStreamTests
 			using (var tfs = new TransactionFileStream(target, FileMode.Truncate))
 			{
 				var data = Encoding.UTF8.GetBytes("short");
-				tfs.Write(data,0, data.Length);
+				tfs.Write(data, 0, data.Length);
 			}
 
 			ReadAllText(target).AssertEqual("short");
@@ -132,8 +139,10 @@ public class TransactionFileStreamTests
 		}
 		finally
 		{
-			if (File.Exists(target)) File.Delete(target);
-			if (File.Exists(tmp)) File.Delete(tmp);
+			if (File.Exists(target))
+				File.Delete(target);
+			if (File.Exists(tmp))
+				File.Delete(tmp);
 		}
 	}
 
@@ -145,8 +154,8 @@ public class TransactionFileStreamTests
 
 		stream.Dispose();
 
-		Assert.ThrowsExactly<ObjectDisposedException>(() => stream.Write(new byte[] {1 },0,1));
+		Assert.ThrowsExactly<ObjectDisposedException>(() => stream.Write(new byte[] { 1 }, 0, 1));
 		Assert.ThrowsExactly<ObjectDisposedException>(() => { var _ = stream.Length; });
-		Assert.ThrowsExactly<ObjectDisposedException>(() => { stream.Position =0; });
+		Assert.ThrowsExactly<ObjectDisposedException>(() => { stream.Position = 0; });
 	}
 }
