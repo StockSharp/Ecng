@@ -641,7 +641,7 @@ public static class SpanExtensions
 #if NET5_0_OR_GREATER
 		value.TryWriteBytes(slice);
 #else
-		value.To<byte[]>().CopyTo(span);
+		value.To<byte[]>().CopyTo(slice);
 #endif
 
 		position += 16;

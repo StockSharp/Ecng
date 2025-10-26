@@ -153,19 +153,19 @@ public static class MailHelper
 			TransferEncoding = transferEncoding
 		};
 
-		string tranferEncodingMarker;
+		string transferEncodingMarker;
 		string encodingMarker;
 		int maxChunkLength;
 
 		switch (transferEncoding)
 		{
 			case TransferEncoding.Base64:
-				tranferEncodingMarker = "B";
+				transferEncodingMarker = "B";
 				encodingMarker = "UTF-8";
 				maxChunkLength = 30;
 				break;
 			case TransferEncoding.QuotedPrintable:
-				tranferEncodingMarker = "Q";
+				transferEncodingMarker = "Q";
 				encodingMarker = "ISO-8859-1";
 				maxChunkLength = 76;
 				break;
@@ -175,7 +175,7 @@ public static class MailHelper
 
 		attachment.NameEncoding = Encoding.GetEncoding(encodingMarker);
 
-		var encodingtoken = $"=?{encodingMarker}?{tranferEncodingMarker}?";
+		var encodingtoken = $"=?{encodingMarker}?{transferEncodingMarker}?";
 
 		const string softbreak = "?=";
 

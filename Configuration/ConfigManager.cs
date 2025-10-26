@@ -78,6 +78,9 @@ public static class ConfigManager
 	/// </summary>
 	public static Configuration InnerConfig { get; }
 
+	private static Configuration SafeInnerConfig()
+		=> InnerConfig ?? throw new InvalidOperationException("Configuration file is not available.");
+
 	#region GetSection
 
 	/// <summary>
@@ -95,7 +98,9 @@ public static class ConfigManager
 	/// <param name="sectionType">The type of the configuration section.</param>
 	/// <returns>The configuration section instance or null.</returns>
 	public static ConfigurationSection GetSection(Type sectionType)
-		=> _sections.ContainsKey(sectionType) ? _sections[sectionType] : null;
+		=> _sections.TryGetValue(sectionType, out var section)
+		? section
+		: null;
 
 	/// <summary>
 	/// Returns the configuration section of type T specified by the section name.
@@ -113,7 +118,7 @@ public static class ConfigManager
 	/// <param name="sectionName">The name of the configuration section.</param>
 	/// <returns>The configuration section instance.</returns>
 	public static ConfigurationSection GetSection(string sectionName)
-		=> InnerConfig.GetSection(sectionName);
+		=> SafeInnerConfig().GetSection(sectionName);
 
 	#endregion
 
@@ -134,8 +139,8 @@ public static class ConfigManager
 	/// <param name="sectionGroupType">The type of the configuration section group.</param>
 	/// <returns>The configuration section group instance or null.</returns>
 	public static ConfigurationSectionGroup GetGroup(Type sectionGroupType)
-		=> _sectionGroups.ContainsKey(sectionGroupType)
-			? _sectionGroups[sectionGroupType]
+		=> _sectionGroups.TryGetValue(sectionGroupType, out var group)
+			? group
 			: null;
 
 	/// <summary>
@@ -154,7 +159,7 @@ public static class ConfigManager
 	/// <param name="sectionName">The name of the configuration section group.</param>
 	/// <returns>The configuration section group instance.</returns>
 	public static ConfigurationSectionGroup GetGroup(string sectionName)
-		=> InnerConfig.GetSectionGroup(sectionName);
+		=> SafeInnerConfig().GetSectionGroup(sectionName);
 
 	#endregion
 
@@ -214,14 +219,15 @@ public static class ConfigManager
 			subscriber(service);
 	}
 
-	private static Dictionary<string, object> GetDict<T>() => GetDict(typeof(T));
+	private static Dictionary<string, object> GetDict<T>()
+		=> GetDict(typeof(T));
 
 	private static Dictionary<string, object> GetDict(Type type)
 	{
 		if (_services.TryGetValue(type, out var dict))
 			return dict;
 
-		dict = new Dictionary<string, object>(StringComparer.InvariantCultureIgnoreCase);
+		dict = new(StringComparer.InvariantCultureIgnoreCase);
 		_services.Add(type, dict);
 		return dict;
 	}

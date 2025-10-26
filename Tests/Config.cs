@@ -15,4 +15,7 @@ public static class Config
 	}
 
 	public static readonly HttpClient HttpClient = new();
+
+	public static string GetTempPath(string folderName)
+		=> Path.Combine(IOHelper.CreateTempDir(), folderName);
 }

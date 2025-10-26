@@ -7,7 +7,8 @@ public class FileSystemTests
 {
 	private static void WithLocalFs(Action<IFileSystem, string> action)
 	{
-		var root = Path.Combine(Path.GetTempPath(), "EcngFsTests_" + Guid.NewGuid().ToString("N"));
+		var root = Config.GetTempPath("Fs");
+
 		try
 		{
 			Directory.CreateDirectory(root);
