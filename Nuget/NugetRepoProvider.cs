@@ -16,7 +16,8 @@ public class NugetRepoProvider : CachingSourceProvider
 
 		static PrivatePackageSource() => _log.Parent = LogManager.Instance.Application;
 
-		public static PrivatePackageSource Instance => _tcs?.Task.Result;
+		public static Task<PrivatePackageSource> GetInstance()
+			=> _tcs?.Task ?? throw new InvalidOperationException("Private package source is not initialized. Call GetAsync method first.");
 
 		private static async Task<PrivatePackageSource> GetImplAsync(string src, CancellationToken token)
 		{
@@ -82,11 +83,14 @@ public class NugetRepoProvider : CachingSourceProvider
 	{
 		await PrivatePackageSource.GetAsync(privateUrl, token).NoWait();
 
+		if (!packagesFolder.IsEmpty())
+			Directory.CreateDirectory(packagesFolder);
+
 		using (await _instanceLock.LockAsync(token))
 		{
 			if (_instance is null)
 			{
-				_instance = new(authToken, packagesFolder, retryPolicy);
+				_instance = new(authToken, await GetPackageSources(packagesFolder), retryPolicy);
 				await _instance.InitBaseUrls(token);
 			}
 		}
@@ -125,12 +129,9 @@ public class NugetRepoProvider : CachingSourceProvider
 	private readonly HttpClient _publicHttp = new();
 	private readonly HttpClient _privateHttp;
 
-	private NugetRepoProvider(SecureString authToken, string packagesFolder, RetryPolicyInfo retryPolicy)
-		: base(new PackageSourceProvider(_settings, GetPackageSources(packagesFolder)))
+	private NugetRepoProvider(SecureString authToken, IEnumerable<PackageSource> sources, RetryPolicyInfo retryPolicy)
+		: base(new PackageSourceProvider(_settings, sources))
 	{
-		if (!packagesFolder.IsEmpty())
-			Directory.CreateDirectory(packagesFolder);
-
 		var repos = GetRepositories().ToArray();
 
 		_privateRepo = repos.First(r => r.PackageSource.Name.EqualsIgnoreCase(PrivateRepoKey));
@@ -294,24 +295,16 @@ public class NugetRepoProvider : CachingSourceProvider
 		);
 	}
 
-	private static PackageSource[] GetPackageSources(string packagesFolder)
+	private static async Task<IEnumerable<PackageSource>> GetPackageSources(string packagesFolder)
 	{
-		if (packagesFolder.IsEmpty())
-		{
-			return
-			[
-				new PackageSource(NuGetConstants.V3FeedUrl, NugetFeedRepoKey),
-				PrivatePackageSource.Instance,
-			];
-		}
-		else
-		{
-			return
-			[
-				new FeedTypePackageSource(packagesFolder, FeedType.FileSystemV2),
-				new PackageSource(NuGetConstants.V3FeedUrl, NugetFeedRepoKey),
-				PrivatePackageSource.Instance,
-			];
-		}
+		var sources = new List<PackageSource>();
+
+		if (!packagesFolder.IsEmpty())
+			sources.Add(new FeedTypePackageSource(packagesFolder, FeedType.FileSystemV2));
+
+		sources.Add(new PackageSource(NuGetConstants.V3FeedUrl, NugetFeedRepoKey));
+		sources.Add(await PrivatePackageSource.GetInstance());
+
+		return sources;
 	}
 }
