@@ -810,7 +810,7 @@ public static class NetworkHelper
 		var delay = (policy.InitialDelay.Ticks * 2.Pow(attemptNumber - 1)).To<TimeSpan>();
 		var jitter = RandomGen.GetDouble() * delay.TotalMilliseconds * 0.1;
 
-		return TimeSpan.FromMilliseconds(delay.TotalMilliseconds + jitter).Max(policy.MaxDelay);
+		return TimeSpan.FromMilliseconds(delay.TotalMilliseconds + jitter).Min(policy.MaxDelay);
 	}
 
 	/// <summary>
