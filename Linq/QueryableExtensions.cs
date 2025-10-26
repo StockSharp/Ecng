@@ -192,6 +192,7 @@ public static class QueryableExtensions
 
 	#region Helper methods to obtain MethodInfo in a safe way
 
+#pragma warning disable IDE0060
 	/// <summary>
 	/// Retrieves the <see cref="MethodInfo"/> for the specified delegate.
 	/// </summary>
@@ -355,7 +356,7 @@ public static class QueryableExtensions
 	/// <returns>The <see cref="MethodInfo"/> of the delegate.</returns>
 	public static MethodInfo GetMethodInfo<T1, T2, T3, T4, T5, T6>(Action<T1, T2, T3, T4, T5, T6> f, T1 unused1, T2 unused2, T3 unused3, T4 unused4, T5 unused5, T6 unused6)
 		=> f.Method;
-#pragma warning restore IDE0051 // Remove unused private members
+#pragma warning restore IDE0060
 
 	#endregion
 }
