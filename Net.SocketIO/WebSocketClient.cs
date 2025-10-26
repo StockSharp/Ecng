@@ -458,10 +458,10 @@ public class WebSocketClient : Disposable, IConnection
 
 			_ws = null;
 
-			var expected = _disconnectionStates.TryGetAndRemove(source);
+			var expected = _disconnectionStates.TryGetAndRemove2(source);
 			_infoLog("websocket disconnected, {0}", $"expected={expected}, attempts={attempts}");
 
-			if (expected)
+			if (expected == true)
 				RaiseStateChanged(ConnectionStates.Disconnected);
 			else
 			{
@@ -522,7 +522,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <param name="pre">A pre-send callback function.</param>
 	/// <returns>A task that represents the asynchronous send operation.</returns>
 	public ValueTask SendAsync(object obj, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
-		=> SendAsync(obj, _source.Token, subId, pre);
+		=> SendAsync(obj, _source?.Token ?? throw new InvalidOperationException("Connection was not established."), subId, pre);
 
 	/// <summary>
 	/// Asynchronously sends an object to the server.

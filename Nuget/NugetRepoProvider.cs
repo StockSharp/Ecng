@@ -16,7 +16,7 @@ public class NugetRepoProvider : CachingSourceProvider
 
 		static PrivatePackageSource() => _log.Parent = LogManager.Instance.Application;
 
-		public static PrivatePackageSource Instance => _tcs.Task.Result;
+		public static PrivatePackageSource Instance => _tcs?.Task.Result;
 
 		private static async Task<PrivatePackageSource> GetImplAsync(string src, CancellationToken token)
 		{

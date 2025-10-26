@@ -301,9 +301,11 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				value = await reader.ReadAsBytesAsync(cancellationToken);
 			else if (type == typeof(SecureString))
 			{
-				value = SecureStringEncryptor.Instance.Decrypt(EncryptedAsByteArray
+				var bytes = EncryptedAsByteArray
 					? await reader.ReadAsBytesAsync(cancellationToken)
-					: (await reader.ReadAsStringAsync(cancellationToken))?.Base64());
+					: (await reader.ReadAsStringAsync(cancellationToken))?.Base64();
+
+				value = bytes is null ? null : SecureStringEncryptor.Instance.Decrypt(bytes);
 			}
 			else if (type.TryGetAdapterType(out var adapterType))
 			{

@@ -241,7 +241,7 @@ Args:
 		}
 
 		var client = GetClient(caller);
-		using var _ = ((AuthenticatorWrapper)client.Options.Authenticator!).RegisterRequest(request, auth);
+		using var _ = ((AuthenticatorWrapper)client.Options.Authenticator).RegisterRequest(request, auth);
 
 		var response = await client.ExecuteAsync<object>(request, token).NoWait();
 

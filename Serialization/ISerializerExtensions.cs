@@ -27,7 +27,7 @@ public static class ISerializerExtensions
 	/// <returns>A byte array containing the serialized data.</returns>
 	public static byte[] Serialize(this ISerializer serializer, object graph)
 	{
-		var stream = new MemoryStream();
+		using var stream = new MemoryStream();
 		serializer.CheckOnNull(nameof(serializer)).Serialize(graph, stream);
 		return stream.To<byte[]>();
 	}

@@ -126,10 +126,10 @@ public class ConnectionStateTracker : Disposable, IConnection
 	/// </summary>
 	private void UpdateOverallState()
 	{
+		ConnectionStates newState;
+
 		lock (_currStateLock)
 		{
-			ConnectionStates newState;
-
 			if (Wrappers.All(c => c.State == ConnectionStates.Connected))
 			{
 				newState = ConnectionStates.Connected;
@@ -161,6 +161,6 @@ public class ConnectionStateTracker : Disposable, IConnection
 			_currState = newState;
 		}
 		
-		StateChanged?.Invoke(_currState);
+		StateChanged?.Invoke(newState);
 	}
 }

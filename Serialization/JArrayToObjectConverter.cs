@@ -183,12 +183,12 @@ public class JArrayToObjectConverter<T> : JsonConverter
 			return;
 		}
 
+		var fields = typeof(T).GetJsonFields();
+
 		writer.WriteStartArray();
 
 		foreach (var (type, action) in _fields)
 		{
-			var fields = typeof(T).GetJsonFields();
-
 			foreach (var f in fields)
 			{
 				if (f.FieldType == type)
