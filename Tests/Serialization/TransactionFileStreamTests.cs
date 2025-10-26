@@ -34,7 +34,7 @@ public class TransactionFileStreamTests
 		{
 			using (var tfs = new TransactionFileStream(target, FileMode.CreateNew))
 			{
-				var data = Encoding.UTF8.GetBytes("hello");
+				var data = "hello".UTF8();
 				tfs.Write(data, 0, data.Length);
 			}
 
@@ -76,7 +76,7 @@ public class TransactionFileStreamTests
 		{
 			using (var tfs = new TransactionFileStream(target, FileMode.OpenOrCreate))
 			{
-				var data = Encoding.UTF8.GetBytes("abc");
+				var data = "abc".UTF8();
 				tfs.Write(data, 0, data.Length);
 			}
 
@@ -103,7 +103,7 @@ public class TransactionFileStreamTests
 
 			using (var tfs = new TransactionFileStream(target, FileMode.Append))
 			{
-				var data = Encoding.UTF8.GetBytes("+end");
+				var data = "+end".UTF8();
 				tfs.Write(data, 0, data.Length);
 			}
 
@@ -130,7 +130,7 @@ public class TransactionFileStreamTests
 
 			using (var tfs = new TransactionFileStream(target, FileMode.Truncate))
 			{
-				var data = Encoding.UTF8.GetBytes("short");
+				var data = "short".UTF8();
 				tfs.Write(data, 0, data.Length);
 			}
 

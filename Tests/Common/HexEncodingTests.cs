@@ -11,7 +11,7 @@ public class HexEncodingTests
 		var hex = "48656C6C6F";
 		var enc = new HexEncoding();
 		var bytes = enc.GetBytes(hex);
-		Encoding.ASCII.GetString(bytes).AssertEqual("Hello");
+		bytes.ASCII().AssertEqual("Hello");
 		enc.GetString(bytes).AssertEqual(hex);
 	}
 	[TestMethod]

@@ -7,8 +7,6 @@ using Ecng.Interop;
 [TestClass]
 public class Utf8StringTests
 {
-	private readonly Encoding _utf8 = Encoding.UTF8;
-
 	[TestMethod]
 	public void WriteAndReadUtf8String1()
 	{
@@ -16,7 +14,7 @@ public class Utf8StringTests
 		var str1 = (Utf8String1)value;
 		unsafe
 		{
-			var expectedBytes = _utf8.GetBytes(value);
+			var expectedBytes = value.UTF8();
 			for (var i = 0; i < 1; i++)
 				str1.Value[i].AssertEqual(expectedBytes[i]);
 		}
@@ -31,7 +29,7 @@ public class Utf8StringTests
 		var str16 = (Utf8String16)value;
 		unsafe
 		{
-			var expectedBytes = _utf8.GetBytes(value);
+			var expectedBytes = value.UTF8();
 			for (var i = 0; i < expectedBytes.Length; i++)
 				str16.Value[i].AssertEqual(expectedBytes[i]);
 			for (var i = expectedBytes.Length; i < 16; i++)
@@ -48,7 +46,7 @@ public class Utf8StringTests
 		var str32 = (Utf8String32)value;
 		unsafe
 		{
-			var expectedBytes = _utf8.GetBytes(value);
+			var expectedBytes = value.UTF8();
 			for (var i = 0; i < expectedBytes.Length; i++)
 				str32.Value[i].AssertEqual(expectedBytes[i]);
 			for (var i = expectedBytes.Length; i < 32; i++)
@@ -103,7 +101,7 @@ public class Utf8StringTests
 		var str64 = (Utf8String64)value;
 		unsafe
 		{
-			var expectedBytes = _utf8.GetBytes(value);
+			var expectedBytes = value.UTF8();
 			for (var i = 0; i < expectedBytes.Length; i++)
 				str64.Value[i].AssertEqual(expectedBytes[i]);
 			for (var i = expectedBytes.Length; i < 64; i++)
@@ -120,7 +118,7 @@ public class Utf8StringTests
 		var str19 = (Utf8String19)value;
 		unsafe
 		{
-			var expectedBytes = _utf8.GetBytes(value);
+			var expectedBytes = value.UTF8();
 			for (var i = 0; i < expectedBytes.Length; i++)
 				str19.Value[i].AssertEqual(expectedBytes[i]);
 		}

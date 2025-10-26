@@ -84,8 +84,6 @@ public class CompressTests
 	[TestMethod]
 	public void UsableEntry()
 	{
-		var utf8 = Encoding.UTF8;
-
 		// Build a simple in-memory zip with two files
 		var ms = new MemoryStream();
 
@@ -95,7 +93,7 @@ public class CompressTests
 			{
 				var entry = a.CreateEntry(name);
 				using var es = entry.Open();
-				var data = utf8.GetBytes(text);
+				var data = text.UTF8();
 				es.Write(data, 0, data.Length);
 			}
 
@@ -107,7 +105,7 @@ public class CompressTests
 
 		string ReadAll(Stream s)
 		{
-			using var sr = new StreamReader(s, utf8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
+			using var sr = new StreamReader(s, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
 			return sr.ReadToEnd();
 		}
 

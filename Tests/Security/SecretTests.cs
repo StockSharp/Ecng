@@ -256,9 +256,9 @@ public class SecretTests
 	[TestMethod]
 	public void EncryptDecryptAes_RandomData()
 	{
-		var plain = System.Text.Encoding.UTF8.GetBytes("random data");
-		var salt = System.Text.Encoding.ASCII.GetBytes("salt123456789012");
-		var iv = System.Text.Encoding.ASCII.GetBytes("iv12345678901234");
+		var plain = "random data".UTF8();
+		var salt = "salt123456789012".ASCII();
+		var iv = "iv12345678901234".ASCII();
 		var pass = "password";
 		var encrypted = plain.EncryptAes(pass, salt, iv);
 		var decrypted = encrypted.DecryptAes(pass, salt, iv);

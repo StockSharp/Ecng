@@ -31,7 +31,7 @@ public class FileSystemTests
 	private static void WriteAll(IFileSystem fs, string path, string content)
 	{
 		using var s = fs.OpenWrite(path);
-		var bytes = Encoding.UTF8.GetBytes(content);
+		var bytes = content.UTF8();
 		s.Write(bytes,0, bytes.Length);
 	}
 
@@ -40,7 +40,7 @@ public class FileSystemTests
 		using var s = fs.OpenRead(path);
 		using var ms = new MemoryStream();
 		s.CopyTo(ms);
-		return Encoding.UTF8.GetString(ms.ToArray());
+		return ms.ToArray().UTF8();
 	}
 
 	private static void RunContract(IFileSystem fs, string root)
@@ -56,7 +56,7 @@ public class FileSystemTests
 
 		using (var s = fs.OpenWrite(file1, append: true))
 		{
-			var bytes = Encoding.UTF8.GetBytes("!");
+			var bytes = "!".UTF8();
 			s.Write(bytes,0, bytes.Length);
 		}
 		ReadAll(fs, file1).AssertEqual("hello!");
@@ -125,7 +125,7 @@ public class FileSystemTests
 		WriteAll(fs, file1, "hello");
 		using (var s = fs.OpenWrite(file1, append: true))
 		{
-			var bytes = Encoding.UTF8.GetBytes("!");
+			var bytes = "!".UTF8();
 			s.Write(bytes,0, bytes.Length);
 		}
 

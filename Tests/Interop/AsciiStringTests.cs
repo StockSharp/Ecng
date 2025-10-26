@@ -7,8 +7,6 @@ using Ecng.Interop;
 [TestClass]
 public class AsciiStringTests
 {
-	private readonly Encoding _ascii = Encoding.ASCII;
-
 	[TestMethod]
 	public void WriteAndReadAsciiString1()
 	{
@@ -16,7 +14,7 @@ public class AsciiStringTests
 		var str1 = (AsciiString1)value;
 		unsafe
 		{
-			var expectedBytes = _ascii.GetBytes(value);
+			var expectedBytes = value.ASCII();
 			for (var i = 0; i < 1; i++)
 				str1.Value[i].AssertEqual(expectedBytes[i]);
 		}
@@ -31,7 +29,7 @@ public class AsciiStringTests
 		var str16 = (AsciiString16)value;
 		unsafe
 		{
-			var expectedBytes = _ascii.GetBytes(value);
+			var expectedBytes = value.ASCII();
 			for (var i = 0; i < value.Length; i++)
 				str16.Value[i].AssertEqual(expectedBytes[i]);
 			for (var i = value.Length; i < 16; i++)
@@ -48,7 +46,7 @@ public class AsciiStringTests
 		var str32 = (AsciiString32)value;
 		unsafe
 		{
-			var expectedBytes = _ascii.GetBytes(value);
+			var expectedBytes = value.ASCII();
 			for (var i = 0; i < value.Length; i++)
 				str32.Value[i].AssertEqual(expectedBytes[i]);
 			for (var i = value.Length; i < 32; i++)
@@ -103,7 +101,7 @@ public class AsciiStringTests
 		var str64 = (AsciiString64)value;
 		unsafe
 		{
-			var expectedBytes = _ascii.GetBytes(value);
+			var expectedBytes = value.ASCII();
 			for (var i = 0; i < value.Length; i++)
 				str64.Value[i].AssertEqual(expectedBytes[i]);
 			for (var i = value.Length; i < 64; i++)
@@ -120,11 +118,11 @@ public class AsciiStringTests
 		var str16 = (AsciiString16)value;
 		unsafe
 		{
-			var expectedBytes = _ascii.GetBytes(value); // Non-ASCII characters are replaced with '?'
+			var expectedBytes = value.ASCII(); // Non-ASCII characters are replaced with '?'
 			for (var i = 0; i < value.Length; i++)
 				str16.Value[i].AssertEqual(expectedBytes[i]);
 		}
 		string result = str16;
-		result.AssertEqual(_ascii.GetString(_ascii.GetBytes(value))); // Expect ASCII-encoded string
+		result.AssertEqual(value.ASCII().ASCII()); // Expect ASCII-encoded string
 	}
 }
