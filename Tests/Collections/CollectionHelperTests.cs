@@ -270,4 +270,698 @@ public class CollectionHelperTests
 		result.Count.AssertEqual(6);
 		result.ToArray().AssertEqual([1, 2, 3, 4, 5, 6]);
 	}
+
+	[TestMethod]
+	public void RemoveWhere_RemovesMatchingItems()
+	{
+		// Arrange
+		var collection = new List<int> { 1, 2, 3, 4, 5, 6 };
+
+		// Act
+		var removed = collection.RemoveWhere(x => x % 2 == 0).ToArray();
+
+		// Assert
+		removed.AssertEqual([2, 4, 6]);
+		collection.ToArray().AssertEqual([1, 3, 5]);
+	}
+
+	[TestMethod]
+	public void RemoveWhere2_RemovesAndCountsItems()
+	{
+		// Arrange
+		var list = new List<int> { 1, 2, 3, 4, 5, 6 };
+
+		// Act
+		var count = list.RemoveWhere2(x => x > 3);
+
+		// Assert
+		count.AssertEqual(3);
+		list.ToArray().AssertEqual([1, 2, 3]);
+	}
+
+	[TestMethod]
+	public void CopyAndClear_CopiesAndEmptiesCollection()
+	{
+		// Arrange
+		var collection = new List<int> { 1, 2, 3 };
+
+		// Act
+		var copy = collection.CopyAndClear();
+
+		// Assert
+		copy.AssertEqual([1, 2, 3]);
+		collection.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void GetAndRemove_GetsValueAndRemovesKey()
+	{
+		// Arrange
+		var dict = new Dictionary<int, string> { { 1, "one" }, { 2, "two" } };
+
+		// Act
+		var value = dict.GetAndRemove(1);
+
+		// Assert
+		value.AssertEqual("one");
+		dict.ContainsKey(1).AssertFalse();
+		dict.Count.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void TryGetAndRemove_ReturnsValueIfExists()
+	{
+		// Arrange
+		var dict = new Dictionary<int, string> { { 1, "one" }, { 2, "two" } };
+
+		// Act
+		var success = dict.TryGetAndRemove(1, out var value);
+
+		// Assert
+		success.AssertTrue();
+		value.AssertEqual("one");
+		dict.ContainsKey(1).AssertFalse();
+	}
+
+	[TestMethod]
+	public void TryGetAndRemove_ReturnsFalseIfNotExists()
+	{
+		// Arrange
+		var dict = new Dictionary<int, string> { { 1, "one" } };
+
+		// Act
+		var success = dict.TryGetAndRemove(5, out var value);
+
+		// Assert
+		success.AssertFalse();
+		value.AssertNull();
+		dict.Count.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void SafeAdd_CreatesNewValueIfNotExists()
+	{
+		// Arrange
+		var dict = new Dictionary<int, List<int>>();
+
+		// Act
+		var list = dict.SafeAdd(1);
+
+		// Assert
+		list.AssertNotNull();
+		dict[1].AssertEqual(list);
+	}
+
+	[TestMethod]
+	public void SafeAdd_ReturnsExistingValueIfExists()
+	{
+		// Arrange
+		var existing = new List<int> { 1, 2, 3 };
+		var dict = new Dictionary<int, List<int>> { { 1, existing } };
+
+		// Act
+		var list = dict.SafeAdd(1);
+
+		// Assert
+		list.AssertEqual(existing);
+	}
+
+	[TestMethod]
+	public void TryGetValue_ReturnsValueIfExists()
+	{
+		// Arrange
+		var dict = new Dictionary<int, string> { { 1, "one" } };
+
+		// Act
+		var value = dict.TryGetValue(1);
+
+		// Assert
+		value.AssertEqual("one");
+	}
+
+	[TestMethod]
+	public void TryGetValue_ReturnsDefaultIfNotExists()
+	{
+		// Arrange
+		var dict = new Dictionary<int, string> { { 1, "one" } };
+
+		// Act
+		var value = dict.TryGetValue(5);
+
+		// Assert
+		value.AssertNull();
+	}
+
+	[TestMethod]
+	public void TryDequeue_DequeuesItemIfExists()
+	{
+		// Arrange
+		var queue = new Queue<string>(["one", "two", "three"]);
+
+		// Act
+		var value = queue.TryDequeue();
+
+		// Assert
+		value.AssertEqual("one");
+		queue.Count.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void TryDequeue_ReturnsNullIfEmpty()
+	{
+		// Arrange
+		var queue = new Queue<string>();
+
+		// Act
+		var value = queue.TryDequeue();
+
+		// Assert
+		value.AssertNull();
+	}
+
+	[TestMethod]
+	public void TryDequeue2_DequeuesValueTypeIfExists()
+	{
+		// Arrange
+		var queue = new Queue<int>([1, 2, 3]);
+
+		// Act
+		var value = queue.TryDequeue2();
+
+		// Assert
+		value.AssertEqual(1);
+		queue.Count.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void TryDequeue2_ReturnsNullIfEmpty()
+	{
+		// Arrange
+		var queue = new Queue<int>();
+
+		// Act
+		var value = queue.TryDequeue2();
+
+		// Assert
+		value.AssertNull();
+	}
+
+	[TestMethod]
+	public void TryPeek_PeeksItemIfExists()
+	{
+		// Arrange
+		var queue = new Queue<string>(["one", "two", "three"]);
+
+		// Act
+		var value = queue.TryPeek();
+
+		// Assert
+		value.AssertEqual("one");
+		queue.Count.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void TryPeek_ReturnsNullIfEmpty()
+	{
+		// Arrange
+		var queue = new Queue<string>();
+
+		// Act
+		var value = queue.TryPeek();
+
+		// Assert
+		value.AssertNull();
+	}
+
+	[TestMethod]
+	public void TryPeek2_PeeksValueTypeIfExists()
+	{
+		// Arrange
+		var queue = new Queue<int>([1, 2, 3]);
+
+		// Act
+		var value = queue.TryPeek2();
+
+		// Assert
+		value.AssertEqual(1);
+		queue.Count.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void TryPeek2_ReturnsNullIfEmpty()
+	{
+		// Arrange
+		var queue = new Queue<int>();
+
+		// Act
+		var value = queue.TryPeek2();
+
+		// Assert
+		value.AssertNull();
+	}
+
+	[TestMethod]
+	public void FirstOr_ReturnsFirstIfExists()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3 };
+
+		// Act
+		var value = collection.FirstOr(99);
+
+		// Assert
+		value.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void FirstOr_ReturnsAlternateIfEmpty()
+	{
+		// Arrange
+		var collection = Array.Empty<int>();
+
+		// Act
+		var value = collection.FirstOr(99);
+
+		// Assert
+		value.AssertEqual(99);
+	}
+
+	[TestMethod]
+	public void IsEmpty_ReturnsTrueForEmptyCollection()
+	{
+		// Arrange
+		var collection = new List<int>();
+
+		// Act
+		var result = collection.IsEmpty();
+
+		// Assert
+		result.AssertTrue();
+	}
+
+	[TestMethod]
+	public void IsEmpty_ReturnsFalseForNonEmptyCollection()
+	{
+		// Arrange
+		var collection = new List<int> { 1 };
+
+		// Act
+		var result = collection.IsEmpty();
+
+		// Assert
+		result.AssertFalse();
+	}
+
+	[TestMethod]
+	public void ForEach_ExecutesActionForEachItem()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3 };
+		var sum = 0;
+
+		// Act
+		collection.ForEach(x => sum += x);
+
+		// Assert
+		sum.AssertEqual(6);
+	}
+
+	[TestMethod]
+	public void Batch_SplitsIntoChunks()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3, 4, 5, 6, 7 };
+
+		// Act
+		var batches = collection.Batch(3).ToArray();
+
+		// Assert
+		batches.Length.AssertEqual(3);
+		batches[0].AssertEqual([1, 2, 3]);
+		batches[1].AssertEqual([4, 5, 6]);
+		batches[2].AssertEqual([7]);
+	}
+
+	[TestMethod]
+	public void WhereNotNull_FiltersNullValues()
+	{
+		// Arrange
+		var collection = new string[] { "a", null, "b", null, "c" };
+
+		// Act
+		var result = collection.WhereNotNull().ToArray();
+
+		// Assert
+		result.AssertEqual(["a", "b", "c"]);
+	}
+
+	[TestMethod]
+	public void ToSet_CreatesHashSet()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 2, 3, 3, 3 };
+
+		// Act
+		var set = collection.ToSet();
+
+		// Assert
+		set.Count.AssertEqual(3);
+		set.SetEquals([1, 2, 3]).AssertTrue();
+	}
+
+	[TestMethod]
+	public void HasNullItem_ReturnsTrueIfContainsNull()
+	{
+		// Arrange
+		var collection = new string[] { "a", null, "b" };
+
+		// Act
+		var result = collection.HasNullItem();
+
+		// Assert
+		result.AssertTrue();
+	}
+
+	[TestMethod]
+	public void HasNullItem_ReturnsFalseIfNoNull()
+	{
+		// Arrange
+		var collection = new[] { "a", "b", "c" };
+
+		// Act
+		var result = collection.HasNullItem();
+
+		// Assert
+		result.AssertFalse();
+	}
+
+	[TestMethod]
+	public void OrderByDescending_SortsDescending()
+	{
+		// Arrange
+		var collection = new[] { 5, 2, 8, 1, 9 };
+
+		// Act
+		var result = collection.OrderByDescending().ToArray();
+
+		// Assert
+		result.AssertEqual([9, 8, 5, 2, 1]);
+	}
+
+	[TestMethod]
+	public void SelectMany_FlattensNestedCollections()
+	{
+		// Arrange
+		var nested = new[] { [1, 2], [3, 4], new[] { 5 } };
+
+		// Act
+		var result = nested.SelectMany().ToArray();
+
+		// Assert
+		result.AssertEqual([1, 2, 3, 4, 5]);
+	}
+
+	[TestMethod]
+	public void LastOr_ReturnsLastIfExists()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3 };
+
+		// Act
+		var value = collection.LastOr();
+
+		// Assert
+		value.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void LastOr_ReturnsNullIfEmpty()
+	{
+		// Arrange
+		var collection = Array.Empty<int>();
+
+		// Act
+		var value = collection.LastOr();
+
+		// Assert
+		value.AssertNull();
+	}
+
+	[TestMethod]
+	public void ElementAtOr_ReturnsElementIfExists()
+	{
+		// Arrange
+		var collection = new[] { 10, 20, 30 };
+
+		// Act
+		var value = collection.ElementAtOr(1);
+
+		// Assert
+		value.AssertEqual(20);
+	}
+
+	[TestMethod]
+	public void ElementAtOr_ReturnsNullIfOutOfRange()
+	{
+		// Arrange
+		var collection = new[] { 10, 20, 30 };
+
+		// Act
+		var value = collection.ElementAtOr(10);
+
+		// Assert
+		value.AssertNull();
+	}
+
+	[TestMethod]
+	public void ElementAtFromEnd_ReturnsElementFromEnd()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3, 4, 5 };
+
+		// Act
+		var value = collection.ElementAtFromEnd(1);
+
+		// Assert
+		value.AssertEqual(4);
+	}
+
+	[TestMethod]
+	public void ElementAtFromEndOrDefault_ReturnsDefaultIfOutOfRange()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3 };
+
+		// Act
+		var value = collection.ElementAtFromEndOrDefault(10);
+
+		// Assert
+		value.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void SkipLast_SkipsLastElements()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3, 4, 5 };
+
+		// Act
+		var result = collection.SkipLast(2).ToArray();
+
+		// Assert
+		result.AssertEqual([1, 2, 3]);
+	}
+
+	[TestMethod]
+	public void SingleWhenOnly_ReturnsSingleElement()
+	{
+		// Arrange
+		var collection = new[] { 42 };
+
+		// Act
+		var value = collection.SingleWhenOnly();
+
+		// Assert
+		value.AssertEqual(42);
+	}
+
+	[TestMethod]
+	public void SingleWhenOnly_ReturnsDefaultIfMultiple()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3 };
+
+		// Act
+		var value = collection.SingleWhenOnly();
+
+		// Assert
+		value.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Append2_AppendsElement()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3 };
+
+		// Act
+		var result = collection.Append2(4).ToArray();
+
+		// Assert
+		result.AssertEqual([1, 2, 3, 4]);
+	}
+
+	[TestMethod]
+	public void Count2_CountsNonGenericEnumerable()
+	{
+		// Arrange
+		System.Collections.IEnumerable collection = new System.Collections.ArrayList { 1, 2, 3 };
+
+		// Act
+		var count = collection.Count2();
+
+		// Assert
+		count.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void ToTuple_ConvertsPairToTuple()
+	{
+		// Arrange
+		var pair = new KeyValuePair<int, string>(1, "one");
+
+		// Act
+		var tuple = pair.ToTuple();
+
+		// Assert
+		tuple.Item1.AssertEqual(1);
+		tuple.Item2.AssertEqual("one");
+	}
+
+	[TestMethod]
+	public void ToPair_ConvertsTupleToPair()
+	{
+		// Arrange
+		var tuple = new Tuple<int, string>(1, "one");
+
+		// Act
+		var pair = tuple.ToPair();
+
+		// Assert
+		pair.Key.AssertEqual(1);
+		pair.Value.AssertEqual("one");
+	}
+
+	[TestMethod]
+	public void ToPair_ConvertsValueTupleToPair()
+	{
+		// Arrange
+		var tuple = (key: 1, value: "one");
+
+		// Act
+		var pair = tuple.ToPair();
+
+		// Assert
+		pair.Key.AssertEqual(1);
+		pair.Value.AssertEqual("one");
+	}
+
+	[TestMethod]
+	public void ToDictionary_FromKeyValuePairs()
+	{
+		// Arrange
+		var pairs = new[] { new KeyValuePair<int, string>(1, "one"), new KeyValuePair<int, string>(2, "two") };
+
+		// Act
+		var dict = CollectionHelper.ToDictionary(pairs);
+
+		// Assert
+		dict.Count.AssertEqual(2);
+		dict[1].AssertEqual("one");
+		dict[2].AssertEqual("two");
+	}
+
+	[TestMethod]
+	public void ToDictionary_FromTuples()
+	{
+		// Arrange
+		var tuples = new[] { new Tuple<int, string>(1, "one"), new Tuple<int, string>(2, "two") };
+
+		// Act
+		var dict = tuples.ToDictionary();
+
+		// Assert
+		dict.Count.AssertEqual(2);
+		dict[1].AssertEqual("one");
+		dict[2].AssertEqual("two");
+	}
+
+	[TestMethod]
+	public void ToBits_ConvertsIntToBits()
+	{
+		// Arrange
+		var value = 5; // 101 in binary
+
+		// Act
+		var bits = value.ToBits(3);
+
+		// Assert
+		bits.Length.AssertEqual(3);
+		bits[0].AssertTrue();  // bit 0
+		bits[1].AssertFalse(); // bit 1
+		bits[2].AssertTrue();  // bit 2
+	}
+
+	[TestMethod]
+	public void FromBits_ConvertsBitsToInt()
+	{
+		// Arrange
+		var bits = new[] { true, false, true }; // 101 in binary = 5
+
+		// Act
+		var value = bits.FromBits();
+
+		// Assert
+		value.AssertEqual(5);
+	}
+
+	[TestMethod]
+	public void ToEx_CreatesEnumerableEx()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3 };
+
+		// Act
+		var result = collection.ToEx();
+
+		// Assert
+		result.AssertNotNull();
+		result.ToArray().AssertEqual([1, 2, 3]);
+	}
+
+	[TestMethod]
+	public void IsEmpty_WithPredicate_ReturnsTrueIfNoMatch()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3 };
+
+		// Act
+		var result = collection.IsEmpty(x => x > 10);
+
+		// Assert
+		result.AssertTrue();
+	}
+
+	[TestMethod]
+	public void IsEmpty_WithPredicate_ReturnsFalseIfHasMatch()
+	{
+		// Arrange
+		var collection = new[] { 1, 2, 3 };
+
+		// Act
+		var result = collection.IsEmpty(x => x > 2);
+
+		// Assert
+		result.AssertFalse();
+	}
 }
