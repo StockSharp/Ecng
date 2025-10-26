@@ -134,7 +134,7 @@ public class License
 	public byte[] Body { get; }
 
 	/// <summary>
-	/// Body with no signatute.
+	/// Body with no signature.
 	/// </summary>
 	public byte[] BodyWithoutSignature { get; }
 

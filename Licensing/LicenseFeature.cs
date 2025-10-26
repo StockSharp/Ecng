@@ -55,5 +55,5 @@ public class LicenseFeature(License license, string name, DateTime expirationDat
 	public long? OneApp { get; } = oneApp;
 
 	/// <inheritdoc />
-	public override string ToString() => $"{Name} ({HardwareId}{Account})";
+	public override string ToString() => $"{Name} (HDD={HardwareId} A={Account})";
 }
