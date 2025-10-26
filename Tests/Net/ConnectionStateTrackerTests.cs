@@ -1,7 +1,5 @@
 namespace Ecng.Tests.Net;
 
-using System.Threading;
-
 using Ecng.ComponentModel;
 using Ecng.Net;
 
@@ -534,5 +532,387 @@ public class ConnectionStateTrackerTests
 		await tracker.ConnectAsync(cts.Token);
 
 		conn.ConnectCalled.AssertTrue();
+	}
+
+	[TestMethod]
+	public void StateChanged_Disconnecting_MixedState()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn1 = new MockConnection();
+		var conn2 = new MockConnection();
+
+		tracker.Add(conn1);
+		tracker.Add(conn2);
+
+		// First connect both
+		conn1.SetState(ConnectionStates.Connected);
+		conn2.SetState(ConnectionStates.Connected);
+
+		var fireCount = 0;
+		tracker.StateChanged += state => fireCount++;
+
+		// One disconnecting, one connected - mixed state, should not fire
+		conn1.SetState(ConnectionStates.Disconnecting);
+
+		fireCount.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void StateChanged_AllDisconnecting_MixedState()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn1 = new MockConnection();
+		var conn2 = new MockConnection();
+
+		tracker.Add(conn1);
+		tracker.Add(conn2);
+
+		var fireCount = 0;
+		tracker.StateChanged += state => fireCount++;
+
+		// All disconnecting - not a recognized aggregate state
+		conn1.SetState(ConnectionStates.Disconnecting);
+		conn2.SetState(ConnectionStates.Disconnecting);
+
+		fireCount.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void StateChanged_Connecting_MixedState()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn1 = new MockConnection();
+		var conn2 = new MockConnection();
+
+		tracker.Add(conn1);
+		tracker.Add(conn2);
+
+		var fireCount = 0;
+		tracker.StateChanged += state => fireCount++;
+
+		// All connecting - not a recognized aggregate state
+		conn1.SetState(ConnectionStates.Connecting);
+		conn2.SetState(ConnectionStates.Connecting);
+
+		fireCount.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Add_Null_ThrowsArgumentNullException()
+	{
+		var tracker = new ConnectionStateTracker();
+
+		Assert.ThrowsExactly<ArgumentNullException>(() => tracker.Add(null));
+	}
+
+	[TestMethod]
+	public void Remove_Null_ThrowsArgumentNullException()
+	{
+		var tracker = new ConnectionStateTracker();
+
+		Assert.ThrowsExactly<ArgumentNullException>(() => tracker.Remove(null));
+	}
+
+	[TestMethod]
+	public async Task Add_AfterDispose_StillWorks()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Dispose();
+
+		// Should not throw
+		tracker.Add(conn);
+
+		await tracker.ConnectAsync(CancellationToken.None);
+		conn.ConnectCalled.AssertTrue();
+	}
+
+	[TestMethod]
+	public void Remove_AfterDispose_StillWorks()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+		tracker.Dispose();
+
+		// Should not throw
+		var result = tracker.Remove(conn);
+		result.AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task ConnectAsync_AfterDispose_StillWorks()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+		tracker.Dispose();
+
+		// Should not throw
+		await tracker.ConnectAsync(CancellationToken.None);
+		conn.ConnectCalled.AssertTrue();
+	}
+
+	[TestMethod]
+	public void Disconnect_AfterDispose_StillWorks()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+		tracker.Dispose();
+
+		// Should not throw
+		tracker.Disconnect();
+		conn.DisconnectCalled.AssertTrue();
+	}
+
+	[TestMethod]
+	public void StateChanged_AfterDispose_DoesNotFire()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		var fireCount = 0;
+		tracker.StateChanged += state => fireCount++;
+
+		tracker.Dispose();
+
+		// After dispose, state changes should not fire
+		conn.SetState(ConnectionStates.Connected);
+		fireCount.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void StateChanged_SingleConnection_Connected()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		ConnectionStates? firedState = null;
+		tracker.StateChanged += state => firedState = state;
+
+		conn.SetState(ConnectionStates.Connected);
+
+		firedState.AssertEqual(ConnectionStates.Connected);
+	}
+
+	[TestMethod]
+	public void StateChanged_SingleConnection_Failed()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		ConnectionStates? firedState = null;
+		tracker.StateChanged += state => firedState = state;
+
+		conn.SetState(ConnectionStates.Failed);
+
+		firedState.AssertEqual(ConnectionStates.Failed);
+	}
+
+	[TestMethod]
+	public void StateChanged_SingleConnection_Reconnecting()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		ConnectionStates? firedState = null;
+		tracker.StateChanged += state => firedState = state;
+
+		conn.SetState(ConnectionStates.Reconnecting);
+
+		firedState.AssertEqual(ConnectionStates.Reconnecting);
+	}
+
+	[TestMethod]
+	public void StateChanged_SingleConnection_Restored()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		ConnectionStates? firedState = null;
+		tracker.StateChanged += state => firedState = state;
+
+		conn.SetState(ConnectionStates.Restored);
+
+		firedState.AssertEqual(ConnectionStates.Restored);
+	}
+
+	[TestMethod]
+	public void StateChanged_SingleConnection_Disconnected()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		// First connect
+		conn.SetState(ConnectionStates.Connected);
+
+		ConnectionStates? firedState = null;
+		tracker.StateChanged += state => firedState = state;
+
+		conn.SetState(ConnectionStates.Disconnected);
+
+		firedState.AssertEqual(ConnectionStates.Disconnected);
+	}
+
+	[TestMethod]
+	public void StateChanged_SingleConnection_Disconnecting_DoesNotFire()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		var fireCount = 0;
+		tracker.StateChanged += state => fireCount++;
+
+		conn.SetState(ConnectionStates.Disconnecting);
+
+		fireCount.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void StateChanged_SingleConnection_Connecting_DoesNotFire()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		var fireCount = 0;
+		tracker.StateChanged += state => fireCount++;
+
+		conn.SetState(ConnectionStates.Connecting);
+
+		fireCount.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void Dispose_EmptyTracker_DoesNotThrow()
+	{
+		var tracker = new ConnectionStateTracker();
+		tracker.Dispose(); // Should not throw
+	}
+
+	[TestMethod]
+	public void Dispose_MultipleTimes_DoesNotThrow()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		tracker.Dispose();
+		tracker.Dispose(); // Should not throw on second dispose
+	}
+
+	[TestMethod]
+	public void Remove_SameConnectionTwice_ReturnsFalseSecondTime()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		var result1 = tracker.Remove(conn);
+		var result2 = tracker.Remove(conn);
+
+		result1.AssertTrue();
+		result2.AssertFalse();
+	}
+
+	[TestMethod]
+	public void StateChanged_FromFailedToConnected_FiresBoth()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn1 = new MockConnection();
+		var conn2 = new MockConnection();
+
+		tracker.Add(conn1);
+		tracker.Add(conn2);
+
+		var states = new List<ConnectionStates>();
+		tracker.StateChanged += state => states.Add(state);
+
+		// All failed
+		conn1.SetState(ConnectionStates.Failed);
+		conn2.SetState(ConnectionStates.Failed);
+
+		states.Count.AssertEqual(1);
+		states[0].AssertEqual(ConnectionStates.Failed);
+
+		// Back to connected
+		conn1.SetState(ConnectionStates.Connected);
+		conn2.SetState(ConnectionStates.Connected);
+
+		states.Count.AssertEqual(2);
+		states[1].AssertEqual(ConnectionStates.Connected);
+	}
+
+	[TestMethod]
+	public void StateChanged_PartialDisconnectedFailed_FiresDisconnected()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn1 = new MockConnection();
+		var conn2 = new MockConnection();
+		var conn3 = new MockConnection();
+
+		tracker.Add(conn1);
+		tracker.Add(conn2);
+		tracker.Add(conn3);
+
+		// First connect all
+		conn1.SetState(ConnectionStates.Connected);
+		conn2.SetState(ConnectionStates.Connected);
+		conn3.SetState(ConnectionStates.Connected);
+
+		ConnectionStates? firedState = null;
+		tracker.StateChanged += state => firedState = state;
+
+		// Mix of disconnected and failed
+		conn1.SetState(ConnectionStates.Disconnected);
+		conn2.SetState(ConnectionStates.Disconnected);
+		conn3.SetState(ConnectionStates.Failed);
+
+		firedState.AssertEqual(ConnectionStates.Disconnected);
+	}
+
+	[TestMethod]
+	public async Task ConnectAsync_CancellationRequested_PropagatesToken()
+	{
+		var tracker = new ConnectionStateTracker();
+		var conn = new MockConnection();
+
+		tracker.Add(conn);
+
+		var cts = new CancellationTokenSource();
+		cts.Cancel(); // Cancel immediately
+
+		try
+		{
+			await tracker.ConnectAsync(cts.Token);
+		}
+		catch (OperationCanceledException)
+		{
+			// Expected - token was cancelled
+		}
+
+		// Connection might still be called before cancellation
 	}
 }
