@@ -28,19 +28,11 @@ public static class CurrencyHelper
 	/// <param name="currency"><see cref="CurrencyTypes"/></param>
 	/// <returns>The currency symbol.</returns>
 	public static string GetPrefix(this CurrencyTypes currency)
-		=> currency switch
-		{
-			CurrencyTypes.USD => "$",
-			CurrencyTypes.EUR => "€",
-			CurrencyTypes.RUB => "₽",
-			CurrencyTypes.GBP => "£",
-			CurrencyTypes.JPY or CurrencyTypes.CNY => "¥",
-			CurrencyTypes.THB => "฿",
-			CurrencyTypes.BTC => "₿",
-			CurrencyTypes.CHF => "₣",
-			CurrencyTypes.INR => "₹",
-			CurrencyTypes.AED => "د.إ",
-			CurrencyTypes.KRW => "₩",
-			_ => currency.ToString(),
-		};	
+	{
+		var attr = currency.GetAttributeOfType<CurrencyPrefixAttribute>();
+		if (attr != null)
+			return attr.Prefix;
+
+		return currency.ToString();
+	}
 }

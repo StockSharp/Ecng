@@ -104,6 +104,7 @@ public enum CurrencyTypes
 	/// Argentina, Pesos.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("$")]
 	ARS,
 
 	/// <summary>
@@ -116,6 +117,7 @@ public enum CurrencyTypes
 	/// Australia, Dollars.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("$")]
 	AUD,
 
 	/// <summary>
@@ -176,12 +178,14 @@ public enum CurrencyTypes
 	/// Brazil, Brazil Real.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("R$")]
 	BRL,
 
 	/// <summary>
 	/// United Kingdom, Pounds sterling.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("£")]
 	GBP,
 
 	/// <summary>
@@ -218,6 +222,7 @@ public enum CurrencyTypes
 	/// Canada, Dollars.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("$")]
 	CAD,
 
 	/// <summary>
@@ -236,12 +241,14 @@ public enum CurrencyTypes
 	/// Chile, Pesos.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("$")]
 	CLP,
 
 	/// <summary>
 	/// China, Yuan Renminbi.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("¥")]
 	CNY,
 
 	/// <summary>
@@ -254,6 +261,7 @@ public enum CurrencyTypes
 	/// Colombia, Pesos.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("$")]
 	COP,
 
 	/// <summary>
@@ -296,6 +304,7 @@ public enum CurrencyTypes
 	/// Denmark, Kroner.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("kr")]
 	DKK,
 
 	/// <summary>
@@ -344,6 +353,7 @@ public enum CurrencyTypes
 	/// Euro Member Countries, Euro.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("€")]
 	EUR,
 
 	/// <summary>
@@ -410,12 +420,14 @@ public enum CurrencyTypes
 	/// Hong Kong, Dollars.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("$")]
 	HKD,
 
 	/// <summary>
 	/// Hungary, Forint.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("Ft")]
 	HUF,
 
 	/// <summary>
@@ -428,6 +440,7 @@ public enum CurrencyTypes
 	/// India, Rupees.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("₹")]
 	INR,
 
 	/// <summary>
@@ -458,6 +471,7 @@ public enum CurrencyTypes
 	/// Japan, Yen.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("¥")]
 	JPY,
 
 	/// <summary>
@@ -482,6 +496,7 @@ public enum CurrencyTypes
 	/// Korea (South), Won.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("₩")]
 	KRW,
 
 	/// <summary>
@@ -590,6 +605,7 @@ public enum CurrencyTypes
 	/// Mexico, Pesos.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("$")]
 	MXN,
 
 	/// <summary>
@@ -644,6 +660,7 @@ public enum CurrencyTypes
 	/// New Zealand, Dollars.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("$")]
 	NZD,
 
 	/// <summary>
@@ -668,6 +685,7 @@ public enum CurrencyTypes
 	/// Norway, Krone.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("kr")]
 	NOK,
 
 	/// <summary>
@@ -746,6 +764,7 @@ public enum CurrencyTypes
 	/// Russia, Abkhazia, South Ossetia, Russian rouble.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("₽")]
 	RUB,
 
 	/// <summary>
@@ -788,6 +807,7 @@ public enum CurrencyTypes
 	/// Singapore, Dollars.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("$")]
 	SGD,
 
 	/// <summary>
@@ -818,6 +838,7 @@ public enum CurrencyTypes
 	/// South Africa, Rand.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("R")]
 	ZAR,
 
 	/// <summary>
@@ -854,12 +875,14 @@ public enum CurrencyTypes
 	/// Sweden, Kronor.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("kr")]
 	SEK,
 
 	/// <summary>
 	/// Switzerland, Francs.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("₣")]
 	CHF,
 
 	/// <summary>
@@ -884,6 +907,7 @@ public enum CurrencyTypes
 	/// Thailand, Baht.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("฿")]
 	THB,
 
 	/// <summary>
@@ -914,12 +938,14 @@ public enum CurrencyTypes
 	/// United States of America, Dollars.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("$")]
 	USD,
 
 	/// <summary>
 	/// United Arab Emirates, Dirhams.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("د.إ")]
 	AED,
 
 	/// <summary>
@@ -999,6 +1025,7 @@ public enum CurrencyTypes
 	/// </summary>
 	[EnumMember]
 	[Crypto]
+	[CurrencyPrefix("₿")]
 	BTC,
 
 	/// <summary>
