@@ -12,7 +12,7 @@ public class CircularBufferTests
 		buf.PushBack(3);
 		buf.IsFull.AssertTrue();
 		buf.PushBack(4);
-		buf.ToArray().SequenceEqual([2, 3, 4]).AssertTrue();
+		buf.AssertEqual(new int[] { 2, 3, 4 });
 	}
 
 	[TestMethod]
@@ -38,7 +38,7 @@ public class CircularBufferTests
 		buf.PopFront();
 		buf.PushBack(4);
 		buf.PushBack(5);
-		buf.ToArray().SequenceEqual([2, 3, 4, 5]).AssertTrue();
+		buf.AssertEqual(new int[] { 2, 3, 4, 5 });
 		var total = buf.ToArraySegments().Sum(s => s.Count);
 		total.AssertEqual(4);
 	}
@@ -65,7 +65,7 @@ public class CircularBufferTests
 		 // ICollection<T>
 		icol.IsReadOnly.AssertFalse();
 		icol.Add(40);
-		icol.ToArray().SequenceEqual([10, 20, 30, 40]).AssertTrue();
+		icol.AssertEqual([10, 20, 30, 40]);
 		// Remove, Contains, CopyTo
 		icol.Count.AssertEqual(4);
 		icol.Contains(10).AssertTrue();
@@ -102,13 +102,13 @@ public class CircularBufferTests
 
 		// ToArray
 		var arr = enu.ToArray();
-		arr.SequenceEqual([1, 2, 3]).AssertTrue();
+		arr.AssertEqual([1, 2, 3]);
 
 		int[] concatArr = [4, 5];
 
 		// Concat
 		var concat = enu.Concat(concatArr);
-		concat.SequenceEqual([1, 2, 3, 4, 5]).AssertTrue();
+		concat.AssertEqual([1, 2, 3, 4, 5]);
 
 		// First, Last
 		enu.First().AssertEqual(1);
@@ -124,13 +124,13 @@ public class CircularBufferTests
 		enu.Skip(3).Concat(concatArr).Count().AssertEqual(2);
 		enu.Skip(3).Concat(concatArr).Any().AssertTrue();
 
-		enu.Skip(3).Concat(concatArr).ToArray().SequenceEqual(concatArr).AssertTrue();
+		enu.Skip(3).Concat(concatArr).AssertEqual(concatArr);
 
 		// Where, Select
 		var even = enu.Where(x => x % 2 == 0).ToArray();
-		even.SequenceEqual([2]).AssertTrue();
+		even.AssertEqual([2]);
 		var doubled = enu.Select(x => x * 2).ToArray();
-		doubled.SequenceEqual([2, 4, 6]).AssertTrue();
+		doubled.AssertEqual([2, 4, 6]);
 	}
 
 	[TestMethod]
@@ -191,7 +191,7 @@ public class CircularBufferTests
 			(buf.IsFull == (buf.Count == buf.Capacity)).AssertTrue();
 
 			// order check
-			buf.ToArray().SequenceEqual(model).AssertTrue();
+			buf.AssertEqual(model);
 		}
 	}
 }
