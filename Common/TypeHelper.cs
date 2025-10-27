@@ -13,21 +13,6 @@ using System.Runtime.CompilerServices;
 /// </summary>
 public static class TypeHelper
 {
-	private static readonly FieldInfo _remoteStackTraceString;
-
-	static TypeHelper()
-	{
-		// Get the _remoteStackTraceString of the Exception class
-		_remoteStackTraceString = typeof(Exception)
-			.GetField("_remoteStackTraceString",
-				BindingFlags.Instance | BindingFlags.NonPublic); // MS.Net
-
-		if (_remoteStackTraceString is null)
-			_remoteStackTraceString = typeof(Exception)
-			.GetField("remote_stack_trace",
-				BindingFlags.Instance | BindingFlags.NonPublic); // Mono
-	}
-
 	private static readonly Type _enumType = typeof(Enum);
 
 	/// <summary>
@@ -100,17 +85,17 @@ public static class TypeHelper
 			throw new ArgumentNullException(nameof(type));
 
 		return (
-					type.IsPrimitive ||
-					type.IsEnum() ||
-					type == typeof(decimal) ||
-					type == typeof(string) ||
-					type == typeof(DateTime) ||
-					type == typeof(DateTimeOffset) ||
-					type == typeof(Guid) ||
-					type == typeof(byte[]) ||
-					type == typeof(TimeSpan) ||
-					type == typeof(TimeZoneInfo)
-				);
+			type.IsPrimitive ||
+			type.IsEnum() ||
+			type == typeof(decimal) ||
+			type == typeof(string) ||
+			type == typeof(DateTime) ||
+			type == typeof(DateTimeOffset) ||
+			type == typeof(Guid) ||
+			type == typeof(byte[]) ||
+			type == typeof(TimeSpan) ||
+			type == typeof(TimeZoneInfo)
+		);
 	}
 
 	/// <summary>
@@ -284,6 +269,7 @@ public static class TypeHelper
 	/// Determines if the current environment is .NET 4.5 or newer.
 	/// </summary>
 	/// <returns>Returns true if .NET 4.5 or newer is running.</returns>
+	[Obsolete]
 	public static bool IsNet45OrNewer()
 	{
 		// Class "ReflectionContext" exists from .NET 4.5 onwards.
@@ -322,12 +308,11 @@ public static class TypeHelper
 	/// Throws the specified exception while preserving the original stack trace.
 	/// </summary>
 	/// <param name="ex">The exception to throw.</param>
+	[Obsolete]
 	public static void Throw(this Exception ex)
 	{
 		if (ex is null)
 			throw new ArgumentNullException(nameof(ex));
-
-		_remoteStackTraceString.SetValue(ex, ex.StackTrace + Environment.NewLine);
 
 		throw ex;
 	}
