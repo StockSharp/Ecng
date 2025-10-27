@@ -17,6 +17,9 @@ public static class Watch
 	/// </returns>
 	public static TimeSpan Do(Action action)
 	{
+		if (action is null)
+			throw new ArgumentNullException(nameof(action));
+
 		var watch = Stopwatch.StartNew();
 		action();
 		watch.Stop();
