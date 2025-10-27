@@ -1686,17 +1686,17 @@ public static class StringHelper
 		=> encoding.CheckOnNull(nameof(encoding)).GetString(buffer.Array, buffer.Offset, buffer.Count);
 
 	/// <summary>
-	/// Converts the string to a SecureString.
+	/// Converts the string to a <see cref="SecureString"/>.
 	/// </summary>
 	/// <param name="str">The input string.</param>
-	/// <returns>The SecureString equivalent of the input string.</returns>
+	/// <returns>The <see cref="SecureString"/> equivalent of the input string.</returns>
 	public static SecureString Secure(this string str)
 		=> str?.ToCharArray().TypedTo<char[], SecureString>();
 
 	/// <summary>
-	/// Converts the SecureString to an unsecured string.
+	/// Converts the <see cref="SecureString"/> to an unsecured string.
 	/// </summary>
-	/// <param name="str">The SecureString.</param>
+	/// <param name="str">The <see cref="SecureString"/>.</param>
 	/// <returns>The unsecured string equivalent.</returns>
 	public static string UnSecure(this SecureString str)
 	{
@@ -1709,6 +1709,20 @@ public static class StringHelper
 		{
 			return Marshal.PtrToStringBSTR(bstr);
 		}
+	}
+
+	/// <summary>
+	/// Makes the <see cref="SecureString"/> read-only.
+	/// </summary>
+	/// <param name="str">The <see cref="SecureString"/>.</param>
+	/// <returns>The read-only <see cref="SecureString"/>.</returns>
+	public static SecureString ReadOnly(this SecureString str)
+	{
+		if (str is null)
+			throw new ArgumentNullException(nameof(str));
+
+		str.MakeReadOnly();
+		return str;
 	}
 
 	/// <summary>
