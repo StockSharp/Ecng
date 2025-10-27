@@ -234,7 +234,7 @@ public class NugetExtensionsTests
 		var logger = NullLogger.Instance;
 
 		// Act
-		var versions = await repo.GetAllVersionsOrderedAsync("Newtonsoft.Json", logger, cache, CancellationToken.None);
+		var versions = await repo.GetAllVersionsOrderedAsync("Ecng.Common", logger, cache, CancellationToken.None);
 
 		// Assert
 		versions.AssertNotNull();
@@ -256,12 +256,12 @@ public class NugetExtensionsTests
 		var logger = NullLogger.Instance;
 
 		// Act
-		var version = await repo.GetLastVersionAsync("Newtonsoft.Json", allowPreview: false, logger, cache, CancellationToken.None);
+		var version = await repo.GetLastVersionAsync("Ecng.Common", allowPreview: false, logger, cache, CancellationToken.None);
 
 		// Assert
 		version.AssertNotNull();
 		version.IsPrerelease.AssertFalse();
-		(version.Major >= 13).AssertTrue(); // Newtonsoft.Json is at least v13
+		(version.Major >= 1).AssertTrue();
 	}
 
 	[TestMethod]
@@ -273,11 +273,11 @@ public class NugetExtensionsTests
 		var logger = NullLogger.Instance;
 
 		// Act
-		var version = await repo.GetLastVersionAsync("Newtonsoft.Json", allowPreview: true, logger, cache, CancellationToken.None);
+		var version = await repo.GetLastVersionAsync("Ecng.Common", allowPreview: true, logger, cache, CancellationToken.None);
 
 		// Assert
 		version.AssertNotNull();
-		(version.Major >= 13).AssertTrue();
+		(version.Major >= 1).AssertTrue();
 	}
 
 	[TestMethod]
@@ -288,12 +288,12 @@ public class NugetExtensionsTests
 		var cache = new SourceCacheContext();
 		var logger = NullLogger.Instance;
 
-		// Act - get latest 13.* version
-		var version = await repo.GetLastVersionInFloatingRangeAsync("Newtonsoft.Json", "13.*", logger, cache, CancellationToken.None);
+		// Act - get latest 1.* version
+		var version = await repo.GetLastVersionInFloatingRangeAsync("Ecng.Common", "1.*", logger, cache, CancellationToken.None);
 
 		// Assert
 		version.AssertNotNull();
-		version.Major.AssertEqual(13);
+		version.Major.AssertEqual(1);
 	}
 
 	[TestMethod]
@@ -306,7 +306,7 @@ public class NugetExtensionsTests
 
 		// Act & Assert
 		return Assert.ThrowsExactlyAsync<ArgumentException>(() =>
-			repo.GetLastVersionInFloatingRangeAsync("Newtonsoft.Json", "invalid-range", logger, cache, CancellationToken.None));
+			repo.GetLastVersionInFloatingRangeAsync("Ecng.Common", "invalid-range", logger, cache, CancellationToken.None));
 	}
 
 	[TestMethod]
@@ -345,7 +345,7 @@ public class NugetExtensionsTests
 
 		var resource = await repo.GetResourceAsync<FindPackageByIdResource>(CancellationToken.None);
 		using var packageStream = new MemoryStream();
-		await resource.CopyNupkgToStreamAsync("Newtonsoft.Json", new NuGetVersion("13.0.1"), packageStream, cache, logger, CancellationToken.None);
+		await resource.CopyNupkgToStreamAsync("Ecng.Common", new NuGetVersion("1.0.0"), packageStream, cache, logger, CancellationToken.None);
 		packageStream.Position = 0;
 
 		// Act
