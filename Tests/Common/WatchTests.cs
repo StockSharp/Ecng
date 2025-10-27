@@ -4,7 +4,7 @@ namespace Ecng.Tests.Common;
 public class WatchTests
 {
 	[TestMethod]
-	public void Do_NullAction_ThrowsArgumentNullException()
+	public void NullAction()
 	{
 		// Arrange
 		Action action = null;
@@ -14,7 +14,7 @@ public class WatchTests
 	}
 
 	[TestMethod]
-	public void Do_ValidAction_ReturnsElapsedTime()
+	public void ValidAction()
 	{
 		// Arrange
 		var executed = false;
@@ -34,7 +34,7 @@ public class WatchTests
 	}
 
 	[TestMethod]
-	public void Do_EmptyAction_ReturnsVerySmallElapsedTime()
+	public void EmptyAction()
 	{
 		// Arrange
 		static void action()
@@ -49,7 +49,7 @@ public class WatchTests
 	}
 
 	[TestMethod]
-	public void Do_ActionThrowsException_PropagatesException()
+	public void ActionThrowsException()
 	{
 		// Arrange
 		var expectedException = new InvalidOperationException("test exception");
@@ -61,7 +61,7 @@ public class WatchTests
 	}
 
 	[TestMethod]
-	public void Do_ActionWith100msDelay_ReturnsApproximately100ms()
+	public void ActionWith100msDelay()
 	{
 		// Arrange
 		static void action() => Thread.Sleep(100);
@@ -70,7 +70,7 @@ public class WatchTests
 		var elapsed = Watch.Do(action);
 
 		// Assert
-		(elapsed.TotalMilliseconds >= 100).AssertTrue();
-		(elapsed.TotalMilliseconds <= 200).AssertTrue(); // Allow some tolerance
+		(elapsed.TotalMilliseconds >= 100).AssertTrue("more 100");
+		(elapsed.TotalMilliseconds <= 200).AssertTrue("less 200"); // Allow some tolerance
 	}
 }
