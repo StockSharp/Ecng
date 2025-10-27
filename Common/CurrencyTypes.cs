@@ -459,6 +459,7 @@ public enum CurrencyTypes
 	/// Israel, New Shekels.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("₪")]
 	ILS,
 
 	/// <summary>
@@ -734,6 +735,7 @@ public enum CurrencyTypes
 	/// Peru, Nuevos Soles.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("S/")]
 	PEN,
 
 	/// <summary>
@@ -752,6 +754,7 @@ public enum CurrencyTypes
 	/// Poland, Zlotych.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("zł")]
 	PLN,
 
 	/// <summary>
@@ -982,6 +985,7 @@ public enum CurrencyTypes
 	/// Viet Nam, Dong.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("₫")]
 	VND,
 
 	/// <summary>
