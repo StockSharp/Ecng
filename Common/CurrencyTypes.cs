@@ -298,6 +298,7 @@ public enum CurrencyTypes
 	/// Czech Republic, Koruny.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("Kč")]
 	CZK,
 
 	/// <summary>
@@ -1016,6 +1017,7 @@ public enum CurrencyTypes
 	/// Turkey, Northern Cyprus, Turkish lira.
 	/// </summary>
 	[EnumMember]
+	[CurrencyPrefix("₺")]
 	TRY,
 
 	/// <summary>
