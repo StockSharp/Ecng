@@ -154,7 +154,7 @@ public class TransactionFileStreamTests
 
 		stream.Dispose();
 
-		Assert.ThrowsExactly<ObjectDisposedException>(() => stream.Write(new byte[] { 1 }, 0, 1));
+		Assert.ThrowsExactly<ObjectDisposedException>(() => stream.Write([1], 0, 1));
 		Assert.ThrowsExactly<ObjectDisposedException>(() => { var _ = stream.Length; });
 		Assert.ThrowsExactly<ObjectDisposedException>(() => { stream.Position = 0; });
 	}
