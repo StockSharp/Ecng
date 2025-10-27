@@ -687,7 +687,7 @@ public static class ReflectionHelper
 		if (param is null)
 			throw new ArgumentNullException(nameof(param));
 
-		return param.IsOut || param.ParameterType.IsByRef;
+		return param.IsOut || (param.ParameterType.IsByRef && !param.IsIn);
 	}
 
 	#endregion

@@ -185,7 +185,7 @@ public class ReflectionTests
 		refParam.IsOutput().AssertTrue();
 
 		var inParam = typeof(Sample).GetMethod(nameof(Sample.MethodIn)).GetParameters()[0];
-		inParam.IsOutput().AssertTrue();
+		inParam.IsOutput().AssertFalse();
 
 		var valueParam = typeof(Sample).GetMethod(nameof(Sample.Method)).GetParameters().FirstOrDefault();
 		valueParam.IsOutput().AssertFalse();
