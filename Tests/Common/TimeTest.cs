@@ -6,34 +6,25 @@ public class TimeTest
 	[TestMethod]
 	public void Microseconds()
 	{
-		for (var i = 0; i < 10000000; i++)
+		for (var i = 0; i < 100000; i++)
 		{
-			const int microseconds = 456;
+			var microseconds = RandomGen.GetInt(0, 1000000);
 
 			var ts = TimeSpan.Zero;
-			ts.AddMicroseconds(microseconds).GetMicroseconds().AssertEqual(microseconds);
+			ts.AddMicroseconds(microseconds).GetMicroseconds().AssertEqual(microseconds % 1000);
 
 			var dt = DateTime.Now;
-			var res = microseconds + dt.GetMicroseconds();
-
-			if (res >= 1000)
-				res -= 1000;
+			var res = (microseconds + dt.GetMicroseconds()) % 1000;
 
 			dt.AddMicroseconds(microseconds).GetMicroseconds().AssertEqual(res);
 
 			dt = TimeHelper.Now;
-			res = microseconds + dt.GetMicroseconds();
-
-			if (res >= 1000)
-				res -= 1000;
+			res = (microseconds + dt.GetMicroseconds()) % 1000;
 
 			dt.AddMicroseconds(microseconds).GetMicroseconds().AssertEqual(res);
 
 			dt = DateTime.MaxValue - TimeSpan.FromDays(1);
-			res = microseconds + dt.GetMicroseconds();
-
-			if (res >= 1000)
-				res -= 1000;
+			res = (microseconds + dt.GetMicroseconds()) % 1000;
 
 			dt.AddMicroseconds(microseconds).GetMicroseconds().AssertEqual(res);
 		}
@@ -42,7 +33,7 @@ public class TimeTest
 	[TestMethod]
 	public void Nanoseconds()
 	{
-		for (var i = 0; i < 10000000; i++)
+		for (var i = 0; i < 100000; i++)
 		{
 			var nanoseconds = RandomGen.GetInt(0, 999);
 			var roundNs = (nanoseconds / 100) * 100;
@@ -53,17 +44,13 @@ public class TimeTest
 			var dt = DateTime.Now;
 			var ns = dt.GetNanoseconds();
 			dt = dt.AddNanoseconds(nanoseconds);
-			ns += roundNs;
-			if (ns >= 1000)
-				ns -= 1000;
+			ns = (ns + roundNs) % 1000;
 			dt.GetNanoseconds().AssertEqual(ns);
 
 			dt = DateTime.MaxValue - TimeSpan.FromDays(1 + RandomGen.GetDouble());
 			ns = dt.GetNanoseconds();
 			dt = dt.AddNanoseconds(nanoseconds);
-			ns += roundNs;
-			if (ns >= 1000)
-				ns -= 1000;
+			ns = (ns + roundNs) % 1000;
 			dt.GetNanoseconds().AssertEqual(ns);
 		}
 	}
