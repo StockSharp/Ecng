@@ -104,7 +104,7 @@ public enum CurrencyTypes
 	/// Argentina, Pesos.
 	/// </summary>
 	[EnumMember]
-	[CurrencyPrefix("$")]
+	[CurrencyPrefix("AR$")]
 	ARS,
 
 	/// <summary>
@@ -117,7 +117,7 @@ public enum CurrencyTypes
 	/// Australia, Dollars.
 	/// </summary>
 	[EnumMember]
-	[CurrencyPrefix("$")]
+	[CurrencyPrefix("A$")]
 	AUD,
 
 	/// <summary>
@@ -222,7 +222,7 @@ public enum CurrencyTypes
 	/// Canada, Dollars.
 	/// </summary>
 	[EnumMember]
-	[CurrencyPrefix("$")]
+	[CurrencyPrefix("CA$")]
 	CAD,
 
 	/// <summary>
@@ -241,7 +241,7 @@ public enum CurrencyTypes
 	/// Chile, Pesos.
 	/// </summary>
 	[EnumMember]
-	[CurrencyPrefix("$")]
+	[CurrencyPrefix("CL$")]
 	CLP,
 
 	/// <summary>
@@ -261,7 +261,7 @@ public enum CurrencyTypes
 	/// Colombia, Pesos.
 	/// </summary>
 	[EnumMember]
-	[CurrencyPrefix("$")]
+	[CurrencyPrefix("COL$")]
 	COP,
 
 	/// <summary>
@@ -420,7 +420,7 @@ public enum CurrencyTypes
 	/// Hong Kong, Dollars.
 	/// </summary>
 	[EnumMember]
-	[CurrencyPrefix("$")]
+	[CurrencyPrefix("HK$")]
 	HKD,
 
 	/// <summary>
@@ -606,7 +606,7 @@ public enum CurrencyTypes
 	/// Mexico, Pesos.
 	/// </summary>
 	[EnumMember]
-	[CurrencyPrefix("$")]
+	[CurrencyPrefix("MX$")]
 	MXN,
 
 	/// <summary>
@@ -661,7 +661,7 @@ public enum CurrencyTypes
 	/// New Zealand, Dollars.
 	/// </summary>
 	[EnumMember]
-	[CurrencyPrefix("$")]
+	[CurrencyPrefix("NZ$")]
 	NZD,
 
 	/// <summary>
@@ -810,7 +810,7 @@ public enum CurrencyTypes
 	/// Singapore, Dollars.
 	/// </summary>
 	[EnumMember]
-	[CurrencyPrefix("$")]
+	[CurrencyPrefix("S$")]
 	SGD,
 
 	/// <summary>
