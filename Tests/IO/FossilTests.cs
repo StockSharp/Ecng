@@ -3,12 +3,12 @@
 using Ecng.IO.Fossil;
 
 [TestClass]
-public class FossilTests
+public class FossilTests : BaseTestClass
 {
 	[TestMethod]
 	public async Task Diff()
 	{
-		var token = CancellationToken.None;
+		var token = CancellationToken;
 
 		var bytes1 = RandomGen.GetBytes(FileSizes.MB);
 		var bytes2 = RandomGen.GetBytes(FileSizes.MB);

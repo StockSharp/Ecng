@@ -8,7 +8,7 @@ using System.Text;
 using Ecng.Net;
 
 [TestClass]
-public class NetworkHelperTests
+public class NetworkHelperTests : BaseTestClass
 {
 	[TestMethod]
 	public void EndPoint_HostPort_Setters()
@@ -146,7 +146,7 @@ public class NetworkHelperTests
 			return "done".FromResult();
 		}
 
-		var res = await policy.TryRepeat(Handler, 5, CancellationToken.None);
+		var res = await policy.TryRepeat(Handler, 5, CancellationToken);
 		res.AssertEqual("done");
 		attempts.AssertGreater(1);
 	}

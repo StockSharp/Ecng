@@ -12,7 +12,7 @@ using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
 [TestClass]
-public class NugetExtensionsTests
+public class NugetExtensionsTests : BaseTestClass
 {
 	[TestMethod]
 	public void Increment_ValidVersion_ReturnsIncrementedPatch()
@@ -183,7 +183,7 @@ public class NugetExtensionsTests
 		var version = new NuGetVersion("1.0.0");
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken.None));
+		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
 	}
 
 	[TestMethod]
@@ -196,7 +196,7 @@ public class NugetExtensionsTests
 		var version = new NuGetVersion("1.0.0");
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken.None));
+		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
 	}
 
 	[TestMethod]
@@ -209,7 +209,7 @@ public class NugetExtensionsTests
 		var version = new NuGetVersion("1.0.0");
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken.None));
+		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
 	}
 
 	[TestMethod]
@@ -222,7 +222,7 @@ public class NugetExtensionsTests
 		NuGetVersion version = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken.None));
+		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
 	}
 
 	[TestMethod]
@@ -234,7 +234,7 @@ public class NugetExtensionsTests
 		var logger = NullLogger.Instance;
 
 		// Act
-		var versions = await repo.GetAllVersionsOrderedAsync("Ecng.Common", logger, cache, CancellationToken.None);
+		var versions = await repo.GetAllVersionsOrderedAsync("Ecng.Common", logger, cache, CancellationToken);
 
 		// Assert
 		versions.AssertNotNull();
@@ -256,7 +256,7 @@ public class NugetExtensionsTests
 		var logger = NullLogger.Instance;
 
 		// Act
-		var version = await repo.GetLastVersionAsync("Ecng.Common", allowPreview: false, logger, cache, CancellationToken.None);
+		var version = await repo.GetLastVersionAsync("Ecng.Common", allowPreview: false, logger, cache, CancellationToken);
 
 		// Assert
 		version.AssertNotNull();
@@ -273,7 +273,7 @@ public class NugetExtensionsTests
 		var logger = NullLogger.Instance;
 
 		// Act
-		var version = await repo.GetLastVersionAsync("Ecng.Common", allowPreview: true, logger, cache, CancellationToken.None);
+		var version = await repo.GetLastVersionAsync("Ecng.Common", allowPreview: true, logger, cache, CancellationToken);
 
 		// Assert
 		version.AssertNotNull();
@@ -289,7 +289,7 @@ public class NugetExtensionsTests
 		var logger = NullLogger.Instance;
 
 		// Act - get latest 1.* version
-		var version = await repo.GetLastVersionInFloatingRangeAsync("Ecng.Common", "1.*", logger, cache, CancellationToken.None);
+		var version = await repo.GetLastVersionInFloatingRangeAsync("Ecng.Common", "1.*", logger, cache, CancellationToken);
 
 		// Assert
 		version.AssertNotNull();
@@ -306,7 +306,7 @@ public class NugetExtensionsTests
 
 		// Act & Assert
 		return Assert.ThrowsExactlyAsync<ArgumentException>(() =>
-			repo.GetLastVersionInFloatingRangeAsync("Ecng.Common", "invalid-range", logger, cache, CancellationToken.None));
+			repo.GetLastVersionInFloatingRangeAsync("Ecng.Common", "invalid-range", logger, cache, CancellationToken));
 	}
 
 	[TestMethod]
@@ -316,7 +316,7 @@ public class NugetExtensionsTests
 		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
 
 		// Act
-		var baseUrl = await repo.GetBaseUrl(CancellationToken.None);
+		var baseUrl = await repo.GetBaseUrl(CancellationToken);
 
 		// Assert
 		baseUrl.AssertNotNull();
@@ -332,7 +332,7 @@ public class NugetExtensionsTests
 
 		// Act & Assert
 		return Assert.ThrowsExactlyAsync<ArgumentNullException>(() =>
-			repo.GetBaseUrl(CancellationToken.None));
+			repo.GetBaseUrl(CancellationToken));
 	}
 
 	[TestMethod]
@@ -343,9 +343,9 @@ public class NugetExtensionsTests
 		var cache = new SourceCacheContext();
 		var logger = NullLogger.Instance;
 
-		var resource = await repo.GetResourceAsync<FindPackageByIdResource>(CancellationToken.None);
+		var resource = await repo.GetResourceAsync<FindPackageByIdResource>(CancellationToken);
 		using var packageStream = new MemoryStream();
-		await resource.CopyNupkgToStreamAsync("Ecng.Common", new NuGetVersion("1.0.0"), packageStream, cache, logger, CancellationToken.None);
+		await resource.CopyNupkgToStreamAsync("Ecng.Common", new NuGetVersion("1.0.0"), packageStream, cache, logger, CancellationToken);
 		packageStream.Position = 0;
 
 		// Act

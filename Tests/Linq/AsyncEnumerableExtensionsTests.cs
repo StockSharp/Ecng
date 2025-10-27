@@ -3,7 +3,7 @@
 using Ecng.Linq;
 
 [TestClass]
-public class AsyncEnumerableExtensionsTests
+public class AsyncEnumerableExtensionsTests : BaseTestClass
 {
 	private static async IAsyncEnumerable<int> GetAsyncData()
 	{
@@ -17,7 +17,7 @@ public class AsyncEnumerableExtensionsTests
 	[TestMethod]
 	public async Task ToArrayAsync2()
 	{
-		var arr = await GetAsyncData().ToArrayAsync2(CancellationToken.None);
+		var arr = await GetAsyncData().ToArrayAsync2(CancellationToken);
 		arr.Length.AssertEqual(3);
 		arr[0].AssertEqual(1);
 	}
@@ -25,14 +25,14 @@ public class AsyncEnumerableExtensionsTests
 	[TestMethod]
 	public async Task FirstAsync2()
 	{
-		var first = await GetAsyncData().FirstAsync2(CancellationToken.None);
+		var first = await GetAsyncData().FirstAsync2(CancellationToken);
 		first.AssertEqual(1);
 	}
 
 	[TestMethod]
 	public async Task FirstOrDefaultAsync2()
 	{
-		var first = await GetAsyncData().FirstOrDefaultAsync2(CancellationToken.None);
+		var first = await GetAsyncData().FirstOrDefaultAsync2(CancellationToken);
 		first.AssertEqual(1);
 	}
 
@@ -87,7 +87,7 @@ public class AsyncEnumerableExtensionsTests
 	[TestMethod]
 	public async Task ToArrayAsync2_RefType()
 	{
-		var arr = await GetAsyncRefData().ToArrayAsync2(CancellationToken.None);
+		var arr = await GetAsyncRefData().ToArrayAsync2(CancellationToken);
 		arr.Length.AssertEqual(2);
 		arr[0].Id.AssertEqual(10);
 	}
@@ -95,7 +95,7 @@ public class AsyncEnumerableExtensionsTests
 	[TestMethod]
 	public async Task FirstAsync2_RefType()
 	{
-		var first = await GetAsyncRefData().FirstAsync2(CancellationToken.None);
+		var first = await GetAsyncRefData().FirstAsync2(CancellationToken);
 		(first?.Id).AssertEqual(10);
 	}
 
@@ -108,7 +108,7 @@ public class AsyncEnumerableExtensionsTests
 			yield break;
 		}
 
-		var first = await Empty().FirstOrDefaultAsync2(CancellationToken.None);
+		var first = await Empty().FirstOrDefaultAsync2(CancellationToken);
 		(first is null).AssertTrue();
 	}
 
@@ -127,7 +127,7 @@ public class AsyncEnumerableExtensionsTests
 
 		var groups = new List<IGrouping<int, RefItem>>();
 
-		await foreach (var g in Source().GroupByAsync2(i => i.Id, CancellationToken.None))
+		await foreach (var g in Source().GroupByAsync2(i => i.Id, CancellationToken))
 		{
 			groups.Add(g);
 		}

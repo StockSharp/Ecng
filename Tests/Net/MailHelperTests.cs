@@ -7,14 +7,14 @@ using System.Text;
 using Ecng.Net;
 
 [TestClass]
-public class MailHelperTests
+public class MailHelperTests : BaseTestClass
 {
 	[TestMethod]
 	public Task Send_Null_Throws()
 	{
 		MailMessage msg = null;
 		Assert.ThrowsExactly<ArgumentNullException>(() => msg.Send());
-		return Assert.ThrowsExactlyAsync<ArgumentNullException>(() => msg.SendAsync(CancellationToken.None));
+		return Assert.ThrowsExactlyAsync<ArgumentNullException>(() => msg.SendAsync(CancellationToken));
 	}
 
 	[TestMethod]
@@ -56,13 +56,13 @@ public class MailHelperTests
 		// '+' in local part is accepted by MailAddress but disallowed by the regex used here
 		"user+tag@example.com".IsEmailValid().AssertFalse();
 
-		// quoted local-part — accepted by MailAddress but rejected by regex
+		// quoted local-part пїЅ accepted by MailAddress but rejected by regex
 		"\"quoted@local\"@example.com".IsEmailValid().AssertFalse();
 
 		// display name form is parsed by MailAddress but overall string doesn't match regex
 		"John Doe <john@example.com>".IsEmailValid().AssertFalse();
 
-		// domain as literal IP — MailAddress accepts but regex does not
+		// domain as literal IP пїЅ MailAddress accepts but regex does not
 		"user@[192.168.0.1]".IsEmailValid().AssertFalse();
 
 		// multi-level domain should be OK
@@ -90,7 +90,7 @@ public class MailHelperTests
 
 		// QuotedPrintable encoding
 		using var ms2 = new MemoryStream(data);
-		var attQ = MailHelper.CreateAttachment(ms2, "имя_файла_с_юникодом.txt", System.Net.Mime.TransferEncoding.QuotedPrintable);
+		var attQ = MailHelper.CreateAttachment(ms2, "пїЅпїЅпїЅ_пїЅпїЅпїЅпїЅпїЅ_пїЅ_пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.txt", System.Net.Mime.TransferEncoding.QuotedPrintable);
 		attQ.AssertNotNull();
 		attQ.TransferEncoding.AssertEqual(TransferEncoding.QuotedPrintable);
 		attQ.NameEncoding.WebName.AssertEqual(Encoding.GetEncoding("ISO-8859-1").WebName);

@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using Ecng.Linq;
 
 [TestClass]
-public class QueryableExtensionsTests
+public class QueryableExtensionsTests : BaseTestClass
 {
 	// Minimal in-memory IQueryable provider that understands our QueryableExtensions methods
 	private interface ITestAsyncQueryable
@@ -153,7 +153,7 @@ public class QueryableExtensionsTests
 	public async Task FirstOrDefaultAsync_Empty_ReturnsDefault()
 	{
 		var query = AsTestQueryable(Array.Empty<int>());
-		var val = await query.FirstOrDefaultAsync(CancellationToken.None);
+		var val = await query.FirstOrDefaultAsync(CancellationToken);
 		val.AssertEqual(default);
 	}
 
@@ -161,7 +161,7 @@ public class QueryableExtensionsTests
 	public async Task CountAsync_ReturnsCorrectValue()
 	{
 		var query = AsTestQueryable([1, 2, 3]);
-		var count = await query.CountAsync(CancellationToken.None);
+		var count = await query.CountAsync(CancellationToken);
 		count.AssertEqual(3L);
 	}
 
@@ -169,7 +169,7 @@ public class QueryableExtensionsTests
 	public async Task ToArrayAsync_ReturnsArray()
 	{
 		var query = AsTestQueryable([1, 2, 3]);
-		var arr = await query.ToArrayAsync(CancellationToken.None);
+		var arr = await query.ToArrayAsync(CancellationToken);
 		arr.AssertEqual([1, 2, 3]);
 	}
 
@@ -186,7 +186,7 @@ public class QueryableExtensionsTests
 	public async Task AnyAsync_NonEmptyWithDefaultValue()
 	{
 		var query = AsTestQueryable([0]);
-		var hasAny = await query.AnyAsync(CancellationToken.None);
+		var hasAny = await query.AnyAsync(CancellationToken);
 		// Expected: true (sequence has an element even if it's default(T))
 		hasAny.AssertTrue();
 	}
@@ -202,7 +202,7 @@ public class QueryableExtensionsTests
 	{
 		var items = new[] { new RefItem { Id = 1, Name = "a" }, new RefItem { Id = 2, Name = "b" } };
 		var query = AsTestQueryable(items);
-		var first = await query.FirstOrDefaultAsync(CancellationToken.None);
+		var first = await query.FirstOrDefaultAsync(CancellationToken);
 		(first?.Id).AssertEqual(1);
 		(first?.Name).AssertEqual("a");
 	}
@@ -211,7 +211,7 @@ public class QueryableExtensionsTests
 	public async Task FirstOrDefaultAsync_RefType_Empty_ReturnsNull()
 	{
 		var query = AsTestQueryable(Array.Empty<RefItem>());
-		var first = await query.FirstOrDefaultAsync(CancellationToken.None);
+		var first = await query.FirstOrDefaultAsync(CancellationToken);
 		(first is null).AssertTrue();
 	}
 
@@ -220,7 +220,7 @@ public class QueryableExtensionsTests
 	{
 		var items = new[] { new RefItem(), new RefItem(), new RefItem() };
 		var query = AsTestQueryable(items);
-		var count = await query.CountAsync(CancellationToken.None);
+		var count = await query.CountAsync(CancellationToken);
 		count.AssertEqual(3L);
 	}
 
@@ -229,7 +229,7 @@ public class QueryableExtensionsTests
 	{
 		var items = new[] { new RefItem { Id = 10 }, new RefItem { Id = 11 } };
 		var query = AsTestQueryable(items);
-		var arr = await query.ToArrayAsync(CancellationToken.None);
+		var arr = await query.ToArrayAsync(CancellationToken);
 		arr.Length.AssertEqual(2);
 		arr[0].Id.AssertEqual(10);
 	}
@@ -239,7 +239,7 @@ public class QueryableExtensionsTests
 	{
 		var items = new RefItem[] { null };
 		var query = AsTestQueryable(items);
-		var hasAny = await query.AnyAsync(CancellationToken.None);
+		var hasAny = await query.AnyAsync(CancellationToken);
 		hasAny.AssertTrue();
 	}
 }

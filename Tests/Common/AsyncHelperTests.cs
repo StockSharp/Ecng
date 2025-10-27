@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Common;
 
 [TestClass]
-public class AsyncHelperTests
+public class AsyncHelperTests : BaseTestClass
 {
 	[TestMethod]
 	public async Task WithCancellationCancel()
@@ -84,7 +84,7 @@ public class AsyncHelperTests
 		bool error = false, final = false;
 		await AsyncHelper.CatchHandle(
 			() => Task.FromException(new InvalidOperationException()),
-			CancellationToken.None,
+			CancellationToken,
 			e => error = true,
 			finalizer: () => final = true);
 		error.AssertTrue();

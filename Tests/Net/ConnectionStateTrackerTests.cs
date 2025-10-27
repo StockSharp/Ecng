@@ -4,7 +4,7 @@ using Ecng.ComponentModel;
 using Ecng.Net;
 
 [TestClass]
-public class ConnectionStateTrackerTests
+public class ConnectionStateTrackerTests : BaseTestClass
 {
 	private class MockConnection : IConnection
 	{
@@ -44,7 +44,7 @@ public class ConnectionStateTrackerTests
 		tracker.Add(conn);
 
 		// Verify connection is tracked (will test via ConnectAsync)
-		await tracker.ConnectAsync(CancellationToken.None);
+		await tracker.ConnectAsync(CancellationToken);
 		conn.ConnectCalled.AssertTrue();
 	}
 
@@ -60,7 +60,7 @@ public class ConnectionStateTrackerTests
 		tracker.Add(conn2);
 		tracker.Add(conn3);
 
-		await tracker.ConnectAsync(CancellationToken.None);
+		await tracker.ConnectAsync(CancellationToken);
 
 		conn1.ConnectCalled.AssertTrue();
 		conn2.ConnectCalled.AssertTrue();
@@ -101,7 +101,7 @@ public class ConnectionStateTrackerTests
 		tracker.Add(conn2);
 		tracker.Remove(conn1);
 
-		await tracker.ConnectAsync(CancellationToken.None);
+		await tracker.ConnectAsync(CancellationToken);
 
 		conn1.ConnectCalled.AssertFalse();
 		conn2.ConnectCalled.AssertTrue();
@@ -113,7 +113,7 @@ public class ConnectionStateTrackerTests
 		var tracker = new ConnectionStateTracker();
 
 		return Assert.ThrowsExactlyAsync<InvalidOperationException>(()
-			=> tracker.ConnectAsync(CancellationToken.None).AsTask());
+			=> tracker.ConnectAsync(CancellationToken).AsTask());
 	}
 
 	[TestMethod]
@@ -128,7 +128,7 @@ public class ConnectionStateTrackerTests
 		tracker.Add(conn2);
 		tracker.Add(conn3);
 
-		await tracker.ConnectAsync(CancellationToken.None);
+		await tracker.ConnectAsync(CancellationToken);
 
 		conn1.ConnectCalled.AssertTrue();
 		conn2.ConnectCalled.AssertTrue();
@@ -624,7 +624,7 @@ public class ConnectionStateTrackerTests
 		// Should not throw
 		tracker.Add(conn);
 
-		await tracker.ConnectAsync(CancellationToken.None);
+		await tracker.ConnectAsync(CancellationToken);
 		conn.ConnectCalled.AssertTrue();
 	}
 
@@ -652,7 +652,7 @@ public class ConnectionStateTrackerTests
 		tracker.Dispose();
 
 		// Should not throw
-		await tracker.ConnectAsync(CancellationToken.None);
+		await tracker.ConnectAsync(CancellationToken);
 		conn.ConnectCalled.AssertTrue();
 	}
 
