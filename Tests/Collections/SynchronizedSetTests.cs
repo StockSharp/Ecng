@@ -38,9 +38,9 @@ public class SynchronizedSetTests
 		set.AddedRange += items => added.AddRange(items);
 		set.RemovedRange += items => removed.AddRange(items);
 		set.AddRange([1, 2, 3]);
-		added.SequenceEqual([1, 2, 3]).AssertTrue();
+		added.AssertEqual([1, 2, 3]);
 		set.RemoveRange([1, 3]);
-		removed.SequenceEqual([1, 3]).AssertTrue();
+		removed.AssertEqual([1, 3]);
 	}
 
 	[TestMethod]
@@ -49,13 +49,13 @@ public class SynchronizedSetTests
 		var set = new SynchronizedSet<int>(true);
 		set.AddRange([1, 2, 3]);
 		set.UnionWith([3, 4]);
-		set.OrderBy(t => t).SequenceEqual([1, 2, 3, 4]).AssertTrue();
+		set.OrderBy(t => t).AssertEqual(new int[] { 1, 2, 3, 4 });
 		set.IntersectWith([2, 4]);
-		set.OrderBy(t => t).SequenceEqual([2, 4]).AssertTrue();
+		set.OrderBy(t => t).AssertEqual(new int[] { 2, 4 });
 		set.ExceptWith([4]);
-		set.SequenceEqual([2]).AssertTrue();
+		set.AssertEqual([2]);
 		set.SymmetricExceptWith([2, 3]);
-		set.OrderBy(t => t).SequenceEqual([3]).AssertTrue();
+		set.OrderBy(t => t).AssertEqual(new int[] { 3 });
 	}
 
 	[TestMethod]
@@ -78,6 +78,6 @@ public class SynchronizedSetTests
 		set.AddRange([1, 2, 3, 4]);
 		var removed = set.RemoveRange(1, 2);
 		removed.AssertEqual(2);
-		set.SequenceEqual([1, 4]).AssertTrue();
+		set.AssertEqual([1, 4]);
 	}
 }

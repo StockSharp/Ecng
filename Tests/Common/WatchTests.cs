@@ -10,7 +10,7 @@ public class WatchTests
 		Action action = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => Watch.Do(action));
+		Assert.ThrowsExactly<ArgumentNullException>(() => Watch.Do(action), "expected ArgumentNullException when action is null");
 	}
 
 	[TestMethod]
@@ -28,9 +28,9 @@ public class WatchTests
 		var elapsed = Watch.Do(action);
 
 		// Assert
-		executed.AssertTrue();
-		(elapsed.TotalMilliseconds >= 10).AssertTrue();
-		(elapsed.TotalMilliseconds < 1000).AssertTrue();
+		executed.AssertTrue("action was not executed");
+		(elapsed.TotalMilliseconds >= 10).AssertTrue("elapsed.TotalMilliseconds should be >=10");
+		(elapsed.TotalMilliseconds < 1000).AssertTrue("elapsed.TotalMilliseconds should be <1000");
 	}
 
 	[TestMethod]
@@ -44,8 +44,8 @@ public class WatchTests
 		var elapsed = Watch.Do(action);
 
 		// Assert
-		(elapsed.TotalMilliseconds >= 0).AssertTrue();
-		(elapsed.TotalSeconds < 1).AssertTrue();
+		(elapsed.TotalMilliseconds >= 0).AssertTrue("elapsed.TotalMilliseconds should be >=0");
+		(elapsed.TotalSeconds < 1).AssertTrue("elapsed.TotalSeconds should be <1");
 	}
 
 	[TestMethod]
@@ -56,8 +56,8 @@ public class WatchTests
 		void action() => throw expectedException;
 
 		// Act & Assert
-		var thrown = Assert.ThrowsExactly<InvalidOperationException>(() => Watch.Do(action));
-		thrown.Message.AssertEqual("test exception");
+		var thrown = Assert.ThrowsExactly<InvalidOperationException>(() => Watch.Do(action), "ActionThrowsException: expected InvalidOperationException");
+		thrown.Message.AssertEqual("test exception", "exception message mismatch");
 	}
 
 	[TestMethod]
@@ -70,7 +70,7 @@ public class WatchTests
 		var elapsed = Watch.Do(action);
 
 		// Assert
-		(elapsed.TotalMilliseconds >= 100).AssertTrue("more 100");
-		(elapsed.TotalMilliseconds <= 200).AssertTrue("less 200"); // Allow some tolerance
+		(elapsed.TotalMilliseconds >= 100).AssertTrue("elapsed should be >=100 ms");
+		(elapsed.TotalMilliseconds <= 200).AssertTrue("elapsed should be <=200 ms"); // Allow some tolerance
 	}
 }

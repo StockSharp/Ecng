@@ -92,20 +92,17 @@ public class FileSystemTests
 
 		fs.EnumerateFiles(root, "*.txt", SearchOption.TopDirectoryOnly)
 			.Select(Path.GetFileName)
-			.SequenceEqual(["a.txt"])
-			.AssertTrue();
+			.AssertEqual(["a.txt"]);
 
 		fs.EnumerateFiles(root, "*.txt", SearchOption.AllDirectories)
 			.Select(Path.GetFileName)
 			.OrderBy(s => s)
-			.SequenceEqual(["a.txt", "c.txt", "d.txt", "file.txt", "moved.txt"])
-			.AssertTrue();
+			.AssertEqual(new string[] { "a.txt", "c.txt", "d.txt", "file.txt", "moved.txt" });
 
 		fs.EnumerateDirectories(root)
 			.Select(Path.GetFileName)
 			.OrderBy(s => s)
-			.SequenceEqual(["dir1", "dirA", "dirB"])
-			.AssertTrue();
+			.AssertEqual(new string[] { "dir1", "dirA", "dirB" });
 
 		// recursive delete
 		fs.DeleteDirectory(dirA, recursive: true);
@@ -207,12 +204,12 @@ public class FileSystemTests
 				var s1 = TakeSnapshot(lfs, lroot);
 				var s2 = TakeSnapshot(mfs, mroot);
 
-				s1.Dirs.SequenceEqual(s2.Dirs).AssertTrue();
-				s1.Files.SequenceEqual(s2.Files).AssertTrue();
+				s1.Dirs.AssertEqual(s2.Dirs);
+				s1.Files.AssertEqual(s2.Files);
 
 				foreach (var rel in s1.Files)
 				{
-					s1.Content[rel].SequenceEqual(s2.Content[rel]).AssertTrue();
+					s1.Content[rel].AssertEqual(s2.Content[rel]);
 				}
 			});
 		});

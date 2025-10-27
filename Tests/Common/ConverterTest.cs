@@ -163,11 +163,11 @@ public class ConverterTest
 	{
 		var objArr = new object[] { 1, 2, 3 };
 		var longArr = new long[] { 1L, 2L, 3L };
-		objArr.To<int[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<short[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<byte[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<long[]>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<long[]>().To<int[]>().To<long[]>().SequenceEqual(longArr).AssertTrue();
+		objArr.To<int[]>().To<long[]>().AssertEqual(longArr);
+		objArr.To<short[]>().To<long[]>().AssertEqual(longArr);
+		objArr.To<byte[]>().To<long[]>().AssertEqual(longArr);
+		objArr.To<long[]>().AssertEqual(longArr);
+		objArr.To<long[]>().To<int[]>().To<long[]>().AssertEqual(longArr);
 	}
 
 	[TestMethod]
@@ -175,11 +175,11 @@ public class ConverterTest
 	{
 		IEnumerable<object> objArr = new object[] { 1, 2, 3 };
 		IEnumerable<long> longArr = new long[] { 1L, 2L, 3L };
-		objArr.To<IEnumerable<int>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<IEnumerable<short>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<IEnumerable<byte>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<IEnumerable<long>>().To<IEnumerable<int>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
+		objArr.To<IEnumerable<int>>().To<IEnumerable<long>>().AssertEqual(longArr);
+		objArr.To<IEnumerable<short>>().To<IEnumerable<long>>().AssertEqual(longArr);
+		objArr.To<IEnumerable<byte>>().To<IEnumerable<long>>().AssertEqual(longArr);
+		objArr.To<IEnumerable<long>>().AssertEqual(longArr);
+		objArr.To<IEnumerable<long>>().To<IEnumerable<int>>().To<IEnumerable<long>>().AssertEqual(longArr);
 	}
 
 	[TestMethod]
@@ -187,11 +187,11 @@ public class ConverterTest
 	{
 		var objArr = new object[] { 1, 2, 3 };
 		var longArr = new long[] { 1, 2, 3 };
-		objArr.To<IEnumerable<int>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<IEnumerable<short>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<IEnumerable<byte>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
-		objArr.To<IEnumerable<long>>().To<IEnumerable<int>>().To<IEnumerable<long>>().SequenceEqual(longArr).AssertTrue();
+		objArr.To<IEnumerable<int>>().To<IEnumerable<long>>().AssertEqual(longArr);
+		objArr.To<IEnumerable<short>>().To<IEnumerable<long>>().AssertEqual(longArr);
+		objArr.To<IEnumerable<byte>>().To<IEnumerable<long>>().AssertEqual(longArr);
+		objArr.To<IEnumerable<long>>().AssertEqual(longArr);
+		objArr.To<IEnumerable<long>>().To<IEnumerable<int>>().To<IEnumerable<long>>().AssertEqual(longArr);
 	}
 
 	[TestMethod]
@@ -385,7 +385,7 @@ public class ConverterTest
 
 		// char[] <-> string
 		var chars = "test".ToCharArray();
-		chars.To<string>().ToCharArray().SequenceEqual(chars).AssertTrue();
+		chars.To<string>().ToCharArray().AssertEqual(chars);
 
 		// Enum <-> string
 		PriceTypes.Percent.To<string>().To<PriceTypes>().AssertEqual(PriceTypes.Percent);
@@ -398,7 +398,7 @@ public class ConverterTest
 
 		// BitArray <-> bool[]
 		var bools = new[] { true, false, true };
-		bools.To<BitArray>().To<bool[]>().SequenceEqual(bools).AssertTrue();
+		bools.To<BitArray>().To<bool[]>().AssertEqual(bools);
 
 		// CultureInfo <-> string
 		var ci = CultureInfo.InvariantCulture;
@@ -426,11 +426,11 @@ public class ConverterTest
 		// Test that ChangeOrder does not modify the array for little-endian
 		var bytes = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 		var le = bytes.ChangeOrder(4, true);
-		le.SequenceEqual(bytes).AssertTrue();
+		le.AssertEqual(bytes);
 
 		// Test that ChangeOrder reverses the array for big-endian
 		var be = bytes.ChangeOrder(4, false);
-		be.SequenceEqual(new byte[] { 0x04, 0x03, 0x02, 0x01 }).AssertTrue();
+		be.AssertEqual([0x04, 0x03, 0x02, 0x01]);
 	}
 
 	[TestMethod]

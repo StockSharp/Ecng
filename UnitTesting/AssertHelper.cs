@@ -1,6 +1,7 @@
 ﻿namespace Ecng.UnitTesting;
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Security;
 
@@ -94,6 +95,8 @@ public static class AssertHelper
 	{
 		if (value is SecureString str)
 			str.IsEqualTo(expected.To<SecureString>()).AssertTrue(message);
+		else if (value is IEnumerable enu1)
+			enu1.AssertEqual((IEnumerable)expected, message);
 		else
 			Assert.AreEqual(expected, value, message);
 	}
@@ -163,13 +166,12 @@ public static class AssertHelper
 	}
 
 	/// <summary>
-	/// Asserts that two arrays are equal by comparing their lengths and elements.
+	/// Asserts that two enumerables are equal by comparing their elements.
 	/// </summary>
-	/// <typeparam name="T">The type of the array elements.</typeparam>
-	/// <param name="value">The actual array to be tested. Can be null.</param>
-	/// <param name="expected">The expected array. If <paramref name="value"/> is null, then <paramref name="expected"/> must also be null.</param>
+	/// <param name="value">The actual collection to be tested. Can be null.</param>
+	/// <param name="expected">The expected collection. If <paramref name="value"/> is null, then <paramref name="expected"/> must also be null.</param>
 	/// <param name="message">Error message.</param>
-	public static void AssertEqual<T>(this T[] value, T[] expected, string message = null)
+	public static void AssertEqual(this IEnumerable value, IEnumerable expected, string message = null)
 	{
 		if (value is null)
 		{
@@ -179,10 +181,21 @@ public static class AssertHelper
 
 		expected.AssertNotNull(message);
 
-		value.Length.AssertEqual(expected.Length, message);
+		var enum1 = value.GetEnumerator();
+		var enum2 = expected.GetEnumerator();
 
-		for (var i = 0; i < value.Length; i++)
-			value[i].AssertEqual(expected[i], message);
+		while (true)
+		{
+			var move1 = enum1.MoveNext();
+			var move2 = enum2.MoveNext();
+
+			move1.AssertEqual(move2, message);
+
+			if (!move1)
+				break;
+
+			enum1.Current.AssertEqual(enum2.Current, message);
+		}
 	}
 
 	/// <summary>

@@ -194,17 +194,17 @@ public class StringTests
 	[TestMethod]
 	public void SplitBySepAndVariants()
 	{
-		"a|b|c".SplitBySep("|").SequenceEqual(["a", "b", "c"]).AssertTrue();
-		"a\rb\rc".SplitByR().SequenceEqual(["a", "b", "c"]).AssertTrue();
-		"a\nb\nc".SplitByN().SequenceEqual(["a", "b", "c"]).AssertTrue();
-		"a\r\nb\r\nc".SplitByRN().SequenceEqual(["a", "b", "c"]).AssertTrue();
-		"a.b.c".SplitByDot().SequenceEqual(["a", "b", "c"]).AssertTrue();
-		"a;b;c".SplitByDotComma().SequenceEqual(["a", "b", "c"]).AssertTrue();
-		"a:b:c".SplitByColon().SequenceEqual(["a", "b", "c"]).AssertTrue();
-		"a b c".SplitBySpace().SequenceEqual(["a", "b", "c"]).AssertTrue();
-		"a=b=c".SplitByEqual().SequenceEqual(["a", "b", "c"]).AssertTrue();
-		"a\tb\tc".SplitByTab().SequenceEqual(["a", "b", "c"]).AssertTrue();
-		"a@b@c".SplitByAt().SequenceEqual(["a", "b", "c"]).AssertTrue();
+		"a|b|c".SplitBySep("|").AssertEqual(["a", "b", "c"]);
+		"a\rb\rc".SplitByR().AssertEqual(["a", "b", "c"]);
+		"a\nb\nc".SplitByN().AssertEqual(["a", "b", "c"]);
+		"a\r\nb\r\nc".SplitByRN().AssertEqual(["a", "b", "c"]);
+		"a.b.c".SplitByDot().AssertEqual(["a", "b", "c"]);
+		"a;b;c".SplitByDotComma().AssertEqual(["a", "b", "c"]);
+		"a:b:c".SplitByColon().AssertEqual(["a", "b", "c"]);
+		"a b c".SplitBySpace().AssertEqual(["a", "b", "c"]);
+		"a=b=c".SplitByEqual().AssertEqual(["a", "b", "c"]);
+		"a\tb\tc".SplitByTab().AssertEqual(["a", "b", "c"]);
+		"a@b@c".SplitByAt().AssertEqual(["a", "b", "c"]);
 	}
 
 	[TestMethod]
@@ -311,10 +311,10 @@ public class StringTests
 	public void EncodingHelpers()
 	{
 		var str = "Hello";
-		str.ASCII().SequenceEqual(System.Text.Encoding.ASCII.GetBytes(str)).AssertTrue();
-		str.UTF8().SequenceEqual(System.Text.Encoding.UTF8.GetBytes(str)).AssertTrue();
-		str.Unicode().SequenceEqual(System.Text.Encoding.Unicode.GetBytes(str)).AssertTrue();
-		str.Cyrillic().SequenceEqual(System.Text.Encoding.GetEncoding(1251).GetBytes(str)).AssertTrue();
+		str.ASCII().AssertEqual(System.Text.Encoding.ASCII.GetBytes(str));
+		str.UTF8().AssertEqual(System.Text.Encoding.UTF8.GetBytes(str));
+		str.Unicode().AssertEqual(System.Text.Encoding.Unicode.GetBytes(str));
+		str.Cyrillic().AssertEqual(System.Text.Encoding.GetEncoding(1251).GetBytes(str));
 	}
 
 	[TestMethod]
@@ -322,7 +322,7 @@ public class StringTests
 	{
 		var bytes = new byte[] { 0b10101010, 0b01010101 };
 		var bitStr = bytes.ToBitString();
-		bitStr.ToByteArray().SequenceEqual(bytes).AssertTrue();
+		bitStr.ToByteArray().AssertEqual(bytes);
 	}
 
 	[TestMethod]
@@ -409,7 +409,7 @@ public class StringTests
 	[TestMethod]
 	public void SplitByLength_Works()
 	{
-		"abcdef".SplitByLength(2).SequenceEqual(["ab", "cd", "ef"]).AssertTrue();
+		"abcdef".SplitByLength(2).AssertEqual(["ab", "cd", "ef"]);
 	}
 
 	[TestMethod]
@@ -433,7 +433,7 @@ public class StringTests
 	{
 		var bytes = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
 		var s = Convert.ToBase64String(bytes);
-		s.Base64().SequenceEqual(bytes).AssertTrue();
+		s.Base64().AssertEqual(bytes);
 	}
 
 	[TestMethod]
@@ -486,9 +486,9 @@ public class StringTests
 	[TestMethod]
 	public void SplitByLineSeps_And_SplitLines_And_SplitObsolete()
 	{
-		"a\r\nb\nc\r".SplitByLineSeps().SequenceEqual(["a", "b", "c"]).AssertTrue();
-		"a\nb".SplitByN().SequenceEqual(["a", "b"]).AssertTrue();
-		"a|b|c".SplitBySep("|", false).SequenceEqual(["a", "b", "c"]).AssertTrue();
+		"a\r\nb\nc\r".SplitByLineSeps().AssertEqual(["a", "b", "c"]);
+		"a\nb".SplitByN().AssertEqual(["a", "b"]);
+		"a|b|c".SplitBySep("|", false).AssertEqual(["a", "b", "c"]);
 	}
 
 	[TestMethod]
@@ -505,7 +505,7 @@ public class StringTests
 	{
 		var bytes = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
 		var hex = bytes.Hex();
-		hex.Hex().SequenceEqual(bytes).AssertTrue();
+		hex.Hex().AssertEqual(bytes);
 	}
 
 	[TestMethod]
@@ -513,10 +513,10 @@ public class StringTests
 	{
 		var items = new[] { "a", "A", "b", "B", "b" };
 		var dups = items.Duplicates().Select(x => x.ToLower()).OrderBy(x => x).ToArray();
-		dups.SequenceEqual(["a", "b"]).AssertTrue();
+		dups.AssertEqual(["a", "b"]);
 
 		dups = [.. items.Duplicates(StringComparer.Ordinal).Select(x => x.ToLower()).OrderBy(x => x)];
-		dups.SequenceEqual(["b"]).AssertTrue();
+		dups.AssertEqual(["b"]);
 	}
 
 	[TestMethod]

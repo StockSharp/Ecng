@@ -170,7 +170,7 @@ public class QueryableExtensionsTests
 	{
 		var query = AsTestQueryable([1, 2, 3]);
 		var arr = await query.ToArrayAsync(CancellationToken.None);
-		arr.SequenceEqual([1, 2, 3]).AssertTrue();
+		arr.AssertEqual([1, 2, 3]);
 	}
 
 	// TODO
@@ -179,7 +179,7 @@ public class QueryableExtensionsTests
 	//{
 	//	var query = AsTestQueryable([1, 2, 3, 4]);
 	//	var skipped = query.SkipLong(2).Cast<int>().ToArray();
-	//	skipped.SequenceEqual([3, 4]).AssertTrue();
+	//	skipped.AssertEqual([3, 4]);
 	//}
 
 	[TestMethod]

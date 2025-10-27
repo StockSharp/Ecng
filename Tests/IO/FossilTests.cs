@@ -15,6 +15,6 @@ public class FossilTests
 
 		var delta = await Delta.Create(bytes1, bytes2, token);
 
-		(await Delta.Apply(bytes1, delta, token)).SequenceEqual(bytes2).AssertTrue();
+		(await Delta.Apply(bytes1, delta, token)).AssertEqual(bytes2);
 	}
 }

@@ -9,11 +9,11 @@ public class SynchronizedListTests
 		var list = new SynchronizedList<int>();
 		list.AddRange(Enumerable.Range(1, 5));
 		list.Count.AssertEqual(5);
-		list.GetRange(1, 3).SequenceEqual([2, 3, 4]).AssertTrue();
+		list.GetRange(1, 3).AssertEqual([2, 3, 4]);
 		list.RemoveRange([1, 2]);
-		list.ToArray().SequenceEqual([3, 4, 5]).AssertTrue();
+		list.ToArray().AssertEqual([3, 4, 5]);
 		list.RemoveRange(1, 2).AssertEqual(2);
-		list.ToArray().SequenceEqual([3]).AssertTrue();
+		list.ToArray().AssertEqual([3]);
 	}
 
 	[TestMethod]
@@ -25,9 +25,9 @@ public class SynchronizedListTests
 		list.AddedRange += items => added.AddRange(items);
 		list.RemovedRange += items => removed.AddRange(items);
 		list.AddRange([1, 2, 3]);
-		added.SequenceEqual([1, 2, 3]).AssertTrue();
+		added.AssertEqual([1, 2, 3]);
 		list.RemoveRange([1, 3]);
-		removed.SequenceEqual([1, 3]).AssertTrue();
+		removed.AssertEqual([1, 3]);
 	}
 
 	[TestMethod]
@@ -47,7 +47,7 @@ public class SynchronizedListTests
 		list[2].AssertEqual(3);
 		list.IndexOf(3).AssertEqual(2);
 		list.RemoveAt(1);
-		list.ToArray().SequenceEqual([1, 3]).AssertTrue();
+		list.ToArray().AssertEqual([1, 3]);
 	}
 
 	[TestMethod]

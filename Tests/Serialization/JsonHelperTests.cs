@@ -31,7 +31,7 @@ public class JsonHelperTests
 
 		// When BOM exists, a new array is returned with payload only
 		ReferenceEquals(input, result).AssertFalse();
-		result.SequenceEqual(_payload).AssertTrue();
+		result.AssertEqual(_payload);
 	}
 
 	[TestMethod]
@@ -39,7 +39,7 @@ public class JsonHelperTests
 	{
 		var result = _payload.SkipBom();
 		ReferenceEquals(_payload, result).AssertTrue();
-		result.SequenceEqual(_payload).AssertTrue();
+		result.AssertEqual(_payload);
 	}
 
 	[TestMethod]
@@ -73,7 +73,7 @@ public class JsonHelperTests
 
 		var result = bytes.SkipBom();
 		ReferenceEquals(bytes, result).AssertFalse();
-		result.SequenceEqual(_payload).AssertTrue();
+		result.AssertEqual(_payload);
 	}
 
 	[TestMethod]

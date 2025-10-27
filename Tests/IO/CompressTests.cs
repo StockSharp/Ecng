@@ -13,9 +13,9 @@ public class CompressTests
 	{
 		var bytes = RandomGen.GetBytes(FileSizes.MB);
 
-		bytes.DeflateTo().DeflateFrom().SequenceEqual(bytes).AssertTrue();
-		bytes.Compress<DeflateStream>().DeflateFrom().SequenceEqual(bytes).AssertTrue();
-		bytes.Compress<DeflateStream>().Uncompress<DeflateStream>().SequenceEqual(bytes).AssertTrue();
+		bytes.DeflateTo().DeflateFrom().AssertEqual(bytes);
+		bytes.Compress<DeflateStream>().DeflateFrom().AssertEqual(bytes);
+		bytes.Compress<DeflateStream>().Uncompress<DeflateStream>().AssertEqual(bytes);
 	}
 
 	[TestMethod]
@@ -23,7 +23,7 @@ public class CompressTests
 	{
 		var bytes = RandomGen.GetBytes(FileSizes.MB);
 
-		bytes.Compress<GZipStream>().Uncompress<GZipStream>().SequenceEqual(bytes).AssertTrue();
+		bytes.Compress<GZipStream>().Uncompress<GZipStream>().AssertEqual(bytes);
 	}
 
 	[TestMethod]

@@ -120,7 +120,7 @@ public class NetworkHelperTests
 		var reversed = src.ToArray();
 		// force isLittleEndian opposite to system
 		var result = reversed.ChangeOrder(4, !BitConverter.IsLittleEndian);
-		result.SequenceEqual(new byte[] { 4, 3, 2, 1 }).AssertTrue();
+		result.AssertEqual([4, 3, 2, 1]);
 	}
 
 	[TestMethod]

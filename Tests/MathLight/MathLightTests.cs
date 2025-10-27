@@ -83,9 +83,9 @@ public class MathLightTests
 
 		// GetRow/GetColumn
 		var row = a.GetRow(1).ToArray();
-		row.SequenceEqual([3.0, 4.0]).AssertTrue();
+		row.AssertEqual([3.0, 4.0]);
 		var col = a.GetColumn(0).ToArray();
-		col.SequenceEqual([1.0, 3.0]).AssertTrue();
+		col.AssertEqual([1.0, 3.0]);
 
 		// Large matrix
 		int n = 50;

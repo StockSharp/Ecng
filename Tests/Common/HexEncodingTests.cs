@@ -50,7 +50,7 @@ public class HexEncodingTests
 
 		var bytes = new byte[2];
 		enc.GetBytes(chars, 0, chars.Length, bytes, 0).AssertEqual(2);
-		bytes.SequenceEqual([(byte)0xA1, (byte)0xB2]).AssertTrue();
+		bytes.AssertEqual([(byte)0xA1, (byte)0xB2]);
 
 		var charCnt = enc.GetCharCount(bytes, 0, bytes.Length);
 		charCnt.AssertEqual(4);
@@ -69,6 +69,6 @@ public class HexEncodingTests
 
 		var bytes = HexEncoding.GetBytes("A1Z".ToCharArray(), 0, 3, out var discard);
 		discard.AssertEqual(1);
-		bytes.SequenceEqual([(byte)0xA1]).AssertTrue();
+		bytes.AssertEqual([(byte)0xA1]);
 	}
 }

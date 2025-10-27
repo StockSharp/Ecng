@@ -57,17 +57,17 @@ public class AsyncEnumerableExtensionsTests
 
 		groups.Count.AssertEqual(6);
 		groups[0].Key.AssertEqual(1 % 2);
-		groups[0].ToArray().SequenceEqual([1]).AssertTrue();
+		groups[0].AssertEqual(new int[] { 1 });
 		groups[1].Key.AssertEqual(0);
-		groups[1].ToArray().SequenceEqual([2]).AssertTrue();
+		groups[1].AssertEqual(new int[] { 2 });
 		groups[2].Key.AssertEqual(1);
-		groups[2].ToArray().SequenceEqual([3]).AssertTrue();
+		groups[2].AssertEqual(new int[] { 3 });
 		groups[3].Key.AssertEqual(0);
-		groups[3].ToArray().SequenceEqual([4]).AssertTrue();
+		groups[3].AssertEqual(new int[] { 4 });
 		groups[4].Key.AssertEqual(1);
-		groups[4].ToArray().SequenceEqual([5]).AssertTrue();
+		groups[4].AssertEqual(new int[] { 5 });
 		groups[5].Key.AssertEqual(0);
-		groups[5].ToArray().SequenceEqual([6]).AssertTrue();
+		groups[5].AssertEqual(new int[] { 6 });
 	}
 
 	private class RefItem

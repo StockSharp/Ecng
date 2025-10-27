@@ -48,7 +48,7 @@ public class ArrayHelperTests
 	{
 		var arr = new[] { 1, 2, 3 };
 		var clone = arr.Clone();
-		((int[])clone).SequenceEqual(arr).AssertTrue();
+		((int[])clone).AssertEqual(arr);
 		ReferenceEquals(arr, clone).AssertFalse();
 	}
 
@@ -57,7 +57,7 @@ public class ArrayHelperTests
 	{
 		var arr = new[] { 1, 2, 3 };
 		var rev = arr.Reverse();
-		rev.SequenceEqual([3, 2, 1]).AssertTrue();
+		rev.AssertEqual([3, 2, 1]);
 	}
 
 	[TestMethod]
@@ -66,7 +66,7 @@ public class ArrayHelperTests
 		var a = new[] { 1, 2 };
 		var b = new[] { 3, 4 };
 		var c = a.Concat(b);
-		c.SequenceEqual([1, 2, 3, 4]).AssertTrue();
+		c.AssertEqual([1, 2, 3, 4]);
 	}
 
 	[TestMethod]
