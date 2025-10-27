@@ -1,4 +1,4 @@
-﻿namespace Ecng.Common;
+namespace Ecng.Common;
 
 using System;
 using System.Linq;
@@ -22,35 +22,24 @@ public class RandomArray<T>
 	public RandomArray(int count)
 	{
 		Count = count;
+		_data = new T[count];
 
-		_data = [.. Enumerable.Repeat<T>(default, count)];
-
-		if (typeof(T) == typeof(double))
-		{
-			for (var i = 0; i < _data.Length; i++)
-				_data[i] = RandomGen.GetDouble().To<T>();
-		}
-		else if (typeof(T) == typeof(int))
-		{
-			for (var i = 0; i < _data.Length; i++)
-				_data[i] = RandomGen.GetInt().To<T>();
-		}
-		else if (typeof(T) == typeof(bool))
-		{
-			for (var i = 0; i < _data.Length; i++)
-				_data[i] = RandomGen.GetBool().To<T>();
-		}
-		else if (typeof(T).IsEnum)
-		{
-			for (var i = 0; i < _data.Length; i++)
-				_data[i] = RandomGen.GetEnum<T>();
-		}
-		else if (typeof(T) == typeof(byte))
+		// Special case for byte - optimize by using GetBytes
+		if (typeof(T) == typeof(byte))
 		{
 			RandomGen.GetBytes(count).CopyTo(_data, 0);
+			return;
 		}
-		else
-			throw new NotSupportedException();
+
+		// Special case for enums
+		if (typeof(T).IsEnum)
+		{
+			FillArray(() => RandomGen.GetEnum<T>());
+			return;
+		}
+
+		var generator = GetValueGenerator();
+		FillArray(generator);
 	}
 
 	/// <summary>
@@ -72,27 +61,12 @@ public class RandomArray<T>
 
 		_data = [.. Enumerable.Repeat(min, count)];
 
-		if (min.CompareTo(max) != 0)
-		{
-			if (typeof(T) == typeof(int))
-			{
-				var minInt = min.To<int>();
-				var maxInt = max.To<int>();
+		// If min == max, array is already filled with constant value
+		if (min.CompareTo(max) == 0)
+			return;
 
-				for (var i = 0; i < _data.Length; i++)
-					_data[i] = RandomGen.GetInt(minInt, maxInt).To<T>();
-			}
-			else if (typeof(T) == typeof(TimeSpan))
-			{
-				var minTimeSpan = min.To<TimeSpan>();
-				var maxTimeSpan = max.To<TimeSpan>();
-
-				for (var i = 0; i < _data.Length; i++)
-					_data[i] = RandomGen.GetTime(minTimeSpan, maxTimeSpan).To<T>();
-			}
-			else
-				throw new NotSupportedException();
-		}
+		var generator = GetRangedValueGenerator(min, max);
+		FillArray(generator);
 	}
 
 	/// <summary>
@@ -125,5 +99,145 @@ public class RandomArray<T>
 
 			return next;
 		}
+	}
+
+	private void FillArray(Func<T> generator)
+	{
+		for (var i = 0; i < _data.Length; i++)
+			_data[i] = generator();
+	}
+
+	private static Func<T> GetValueGenerator()
+	{
+		var type = typeof(T);
+
+		if (type == typeof(double))
+			return () => RandomGen.GetDouble().To<T>();
+		if (type == typeof(float))
+			return () => RandomGen.GetFloat().To<T>();
+		if (type == typeof(decimal))
+			return () => RandomGen.GetDecimal(0, 1, 8).To<T>();
+		if (type == typeof(int))
+			return () => RandomGen.GetInt().To<T>();
+		if (type == typeof(long))
+			return () => RandomGen.GetLong().To<T>();
+		if (type == typeof(short))
+			return () => RandomGen.GetShort().To<T>();
+		if (type == typeof(uint))
+			return () => RandomGen.GetUInt().To<T>();
+		if (type == typeof(ulong))
+			return () => RandomGen.GetULong().To<T>();
+		if (type == typeof(ushort))
+			return () => RandomGen.GetUShort().To<T>();
+		if (type == typeof(sbyte))
+			return () => RandomGen.GetSByte().To<T>();
+		if (type == typeof(char))
+			return () => ((char)RandomGen.GetInt(32, 127)).To<T>(); // Printable ASCII characters
+		if (type == typeof(bool))
+			return () => RandomGen.GetBool().To<T>();
+
+		throw new NotSupportedException($"Type {type.Name} is not supported for random generation.");
+	}
+
+	private static Func<T> GetRangedValueGenerator(T min, T max)
+	{
+		var type = typeof(T);
+
+		if (type == typeof(int))
+		{
+			var minVal = min.To<int>();
+			var maxVal = max.To<int>();
+			return () => RandomGen.GetInt(minVal, maxVal).To<T>();
+		}
+
+		if (type == typeof(long))
+		{
+			var minVal = min.To<long>();
+			var maxVal = max.To<long>();
+			return () => RandomGen.GetLong(minVal, maxVal).To<T>();
+		}
+
+		if (type == typeof(short))
+		{
+			var minVal = min.To<short>();
+			var maxVal = max.To<short>();
+			return () => RandomGen.GetShort(minVal, maxVal).To<T>();
+		}
+
+		if (type == typeof(byte))
+		{
+			var minVal = min.To<byte>();
+			var maxVal = max.To<byte>();
+			return () => ((byte)RandomGen.GetInt(minVal, maxVal)).To<T>();
+		}
+
+		if (type == typeof(sbyte))
+		{
+			var minVal = min.To<sbyte>();
+			var maxVal = max.To<sbyte>();
+			return () => RandomGen.GetSByte(minVal, maxVal).To<T>();
+		}
+
+		if (type == typeof(uint))
+		{
+			var minVal = min.To<uint>();
+			var maxVal = max.To<uint>();
+			return () => RandomGen.GetUInt(minVal, maxVal).To<T>();
+		}
+
+		if (type == typeof(ulong))
+		{
+			var minVal = min.To<ulong>();
+			var maxVal = max.To<ulong>();
+			return () => RandomGen.GetULong(minVal, maxVal).To<T>();
+		}
+
+		if (type == typeof(ushort))
+		{
+			var minVal = min.To<ushort>();
+			var maxVal = max.To<ushort>();
+			return () => RandomGen.GetUShort(minVal, maxVal).To<T>();
+		}
+
+		if (type == typeof(double))
+		{
+			var minVal = min.To<double>();
+			var maxVal = max.To<double>();
+			return () => RandomGen.GetDouble(minVal, maxVal).To<T>();
+		}
+
+		if (type == typeof(float))
+		{
+			var minVal = min.To<float>();
+			var maxVal = max.To<float>();
+			return () => RandomGen.GetFloat(minVal, maxVal).To<T>();
+		}
+
+		if (type == typeof(decimal))
+		{
+			var minVal = min.To<decimal>();
+			var maxVal = max.To<decimal>();
+			return () => RandomGen.GetDecimal(minVal, maxVal, 8).To<T>();
+		}
+
+		if (type == typeof(TimeSpan))
+		{
+			var minVal = min.To<TimeSpan>();
+			var maxVal = max.To<TimeSpan>();
+			return () => RandomGen.GetTime(minVal, maxVal).To<T>();
+		}
+
+		if (type == typeof(DateTime))
+		{
+			var minVal = min.To<DateTime>();
+			var maxVal = max.To<DateTime>();
+			return () =>
+			{
+				var ticks = minVal.Ticks + (long)(RandomGen.GetDouble() * (maxVal.Ticks - minVal.Ticks));
+				return new DateTime(ticks).UtcKind().To<T>();
+			};
+		}
+
+		throw new NotSupportedException($"Type {type.Name} is not supported for ranged random generation.");
 	}
 }
