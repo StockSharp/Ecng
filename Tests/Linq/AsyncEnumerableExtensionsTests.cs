@@ -9,7 +9,7 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 	{
 		for (int i = 1; i <= 3; i++)
 		{
-			await Task.Delay(1);
+			await Task.Delay(1, CancellationToken.None);
 			yield return i;
 		}
 	}
@@ -43,7 +43,7 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 		{
 			for (int i = 1; i <= 6; i++)
 			{
-				await Task.Delay(1);
+				await Task.Delay(1, CancellationToken.None);
 				yield return i;
 			}
 		}
@@ -78,9 +78,9 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 
 	private static async IAsyncEnumerable<RefItem> GetAsyncRefData()
 	{
-		await Task.Delay(1);
+		await Task.Delay(1, CancellationToken.None);
 		yield return new RefItem { Id = 10, Name = "a" };
-		await Task.Delay(1);
+		await Task.Delay(1, CancellationToken.None);
 		yield return new RefItem { Id = 11, Name = "b" };
 	}
 
@@ -117,11 +117,11 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 	{
 		static async IAsyncEnumerable<RefItem> Source()
 		{
-			await Task.Delay(1);
+			await Task.Delay(1, CancellationToken.None);
 			yield return new RefItem { Id = 1, Name = "x" };
-			await Task.Delay(1);
+			await Task.Delay(1, CancellationToken.None);
 			yield return new RefItem { Id = 1, Name = "y" };
-			await Task.Delay(1);
+			await Task.Delay(1, CancellationToken.None);
 			yield return new RefItem { Id = 2, Name = "z" };
 		}
 

@@ -6,7 +6,7 @@ using System.Text;
 using Ecng.IO;
 
 [TestClass]
-public class CompressTests
+public class CompressTests : BaseTestClass
 {
 	[TestMethod]
 	public void Deflate()
@@ -72,9 +72,11 @@ public class CompressTests
 	{
 		var bytes = RandomGen.GetBytes(FileSizes.MB);
 
+		var token = CancellationToken;
+
 		async Task Do<TCompress>()
 			where TCompress : Stream
-			=> (await (await bytes.CompressAsync<TCompress>()).UncompressAsync<TCompress>()).SequenceEqual(bytes).AssertTrue();
+			=> (await (await bytes.CompressAsync<TCompress>(cancellationToken: token)).UncompressAsync<TCompress>(cancellationToken: token)).SequenceEqual(bytes).AssertTrue();
 
 		await Do<DeflateStream>();
 		await Do<GZipStream>();

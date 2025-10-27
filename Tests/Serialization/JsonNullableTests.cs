@@ -4,7 +4,7 @@ using Ecng.Serialization;
 using Ecng.ComponentModel;
 
 [TestClass]
-public class JsonNullableTests
+public class JsonNullableTests : BaseTestClass
 {
 	private struct NullableHolder : IEquatable<NullableHolder>, IPersistable
 	{
@@ -42,13 +42,13 @@ public class JsonNullableTests
 		}
 	}
 
-	private static async Task<T> Roundtrip<T>(T value)
+	private async Task<T> Roundtrip<T>(T value)
 	{
 		var ser = new JsonSerializer<T>();
 		await using var ms = new MemoryStream();
-		await ser.SerializeAsync(value, ms, default);
+		await ser.SerializeAsync(value, ms, CancellationToken);
 		ms.Position = 0;
-		return await ser.DeserializeAsync(ms, default);
+		return await ser.DeserializeAsync(ms, CancellationToken);
 	}
 
 	[TestMethod]
@@ -99,9 +99,9 @@ public class JsonNullableTests
 
 		var ser = new JsonSerializer<SettingsStorage>();
 		await using var ms = new MemoryStream();
-		await ser.SerializeAsync(storage, ms, default);
+		await ser.SerializeAsync(storage, ms, CancellationToken);
 		ms.Position = 0;
-		var storage2 = await ser.DeserializeAsync(ms, default);
+		var storage2 = await ser.DeserializeAsync(ms, CancellationToken);
 
 		storage2.GetValue<int?>("I").AssertEqual(7);
 		storage2.GetValue<int?>("I_null").AssertNull();

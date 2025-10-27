@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Security;
 
 [TestClass]
-public class StringTests
+public class StringTests : BaseTestClass
 {
 	[TestMethod]
 	public void ReplaceIgnoreCase()
@@ -87,7 +87,7 @@ public class StringTests
 	public async Task SmartFormatAsync()
 	{
 		var template = @"{PropSync} <> {PropAsync} <> {PropAsync2}";
-		var res = await template.PutExAsync([new SmartFormatObj()], default);
+		var res = await template.PutExAsync([new SmartFormatObj()], CancellationToken);
 		res.AssertEqual("1 <> 2 <> 3");
 	}
 
@@ -95,7 +95,7 @@ public class StringTests
 	public async Task SmartFormatComplexAsync()
 	{
 		var template = @"{ComplexProp.PropAsync} == {ComplexPropAsync.PropAsync}";
-		var res = await template.PutExAsync([new SmartFormatObj()], default);
+		var res = await template.PutExAsync([new SmartFormatObj()], CancellationToken);
 		res.AssertEqual("2 == 2");
 	}
 
@@ -103,7 +103,7 @@ public class StringTests
 	public async Task SmartFormatComplex2Async()
 	{
 		var template = @"{ComplexProp.PropAsync2} == {ComplexPropAsync.PropAsync2}";
-		var res = await template.PutExAsync([new SmartFormatObj()], default);
+		var res = await template.PutExAsync([new SmartFormatObj()], CancellationToken);
 		res.AssertEqual("3 == 3");
 	}
 

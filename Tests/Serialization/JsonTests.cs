@@ -10,9 +10,9 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 
 [TestClass]
-public class JsonTests
+public class JsonTests : BaseTestClass
 {
-	private static async Task<T> Do<T>(T value, bool fillMode = false, bool enumAsString = false, bool encryptedAsByteArray = false, NullValueHandling nullValueHandling = NullValueHandling.Include, CancellationToken token = default)
+	private async Task<T> Do<T>(T value, bool fillMode = false, bool enumAsString = false, bool encryptedAsByteArray = false, NullValueHandling nullValueHandling = NullValueHandling.Include)
 	{
 		var ser = new JsonSerializer<T>
 		{
@@ -23,12 +23,12 @@ public class JsonTests
 		};
 
 		var stream = new MemoryStream();
-		await ser.SerializeAsync(value, stream, token);
+		await ser.SerializeAsync(value, stream, CancellationToken);
 		stream.Position = 0;
 
 		var needCast = value is SettingsStorage;
 
-		var actual = await ser.DeserializeAsync(stream, token);
+		var actual = await ser.DeserializeAsync(stream, CancellationToken);
 
 		void CheckValue(object actual, object expected)
 		{
@@ -1092,7 +1092,7 @@ public class JsonTests
 	public async Task Bom()
 	{
 		var requestBody = new MemoryStream();
-		await new JsonSerializer<TestClass> { Encoding = JsonHelper.UTF8NoBom }.SerializeAsync(new(), requestBody, default);
+		await new JsonSerializer<TestClass> { Encoding = JsonHelper.UTF8NoBom }.SerializeAsync(new(), requestBody, CancellationToken);
 		requestBody.To<byte[]>().UTF8().DeserializeObject<TestClass>();
 	}
 
@@ -1100,7 +1100,7 @@ public class JsonTests
 	public async Task BomError()
 	{
 		var requestBody = new MemoryStream();
-		await new JsonSerializer<TestClass>().SerializeAsync(new(), requestBody, default);
+		await new JsonSerializer<TestClass>().SerializeAsync(new(), requestBody, CancellationToken);
 		Assert.ThrowsExactly<InvalidOperationException>(() => requestBody.To<byte[]>().UTF8().DeserializeObject<TestClass>());
 	}
 

@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Collections;
 
 [TestClass]
-public class CollectionHelperTests
+public class CollectionHelperTests : BaseTestClass
 {
 	[TestMethod]
 	public void GetHashCodeEx_Distribution_NotCollapsed()
@@ -1411,7 +1411,7 @@ public class CollectionHelperTests
 		// Act
 		var result = await source.SelectManyAsync<int, int>(async x =>
 		{
-			await Task.Delay(10);
+			await Task.Delay(10, CancellationToken);
 			return [x, x * 10];
 		});
 

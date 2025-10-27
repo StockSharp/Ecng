@@ -7,7 +7,7 @@ public class AsyncHelperTests : BaseTestClass
 	public async Task WithCancellationCancel()
 	{
 		using var cts = new CancellationTokenSource();
-		var task = Task.Delay(1000).WithCancellation(cts.Token);
+		var task = Task.Delay(1000, CancellationToken).WithCancellation(cts.Token);
 		cts.Cancel();
 		await Assert.ThrowsExactlyAsync<OperationCanceledException>(async () => await task);
 	}

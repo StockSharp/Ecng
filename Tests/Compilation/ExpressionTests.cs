@@ -7,7 +7,7 @@ using Ecng.Compilation.Roslyn;
 using Nito.AsyncEx;
 
 [TestClass]
-public class ExpressionTests
+public class ExpressionTests : BaseTestClass
 {
 	private static readonly ICompiler _compiler = new CSharpCompiler();
 	private static readonly ICompilerContext _context = _compiler.CreateContext();

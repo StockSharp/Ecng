@@ -6,7 +6,7 @@ using Ecng.Compilation.Python;
 using Ecng.Compilation.Roslyn;
 
 [TestClass]
-public class CompilerTests
+public class CompilerTests : BaseTestClass
 {
 	private static readonly string _coreLibPath = typeof(object).Assembly.Location;
 
@@ -17,7 +17,7 @@ public class CompilerTests
 		var res = await compiler.Compile("test", "class Class1 {}",
 		[
 			_coreLibPath,
-		]);
+		], CancellationToken);
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
@@ -33,7 +33,7 @@ public class CompilerTests
 		var res = await compiler.Compile("test", "class Class1 {",
 		[
 			_coreLibPath,
-		]);
+		], CancellationToken);
 		res.GetAssembly(compiler.CreateContext()).AssertNull();
 		res.HasErrors().AssertTrue();
 	}
@@ -58,7 +58,7 @@ public class CompilerTests
 		ICompiler compiler = new CSharpCompiler();
 		// Unused variable 'x' should produce a warning
 		var code = "class Class1 { void M() { int x = 1; } }";
-		var res = await compiler.Compile("test", [code], [_coreLibPath]);
+		var res = await compiler.Compile("test", [code], [_coreLibPath], CancellationToken);
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
@@ -74,7 +74,7 @@ public class CompilerTests
 		ICompiler compiler = new CSharpCompiler();
 		// Two errors: missing semicolon, and undefined variable
 		var code = "class Class1 { void M() { int x = ; y = 2; } }";
-		var res = await compiler.Compile("test", [code], [_coreLibPath]);
+		var res = await compiler.Compile("test", [code], [_coreLibPath], CancellationToken);
 		res.GetAssembly(compiler.CreateContext()).AssertNull();
 		res.HasErrors().AssertTrue();
 		res.Errors.Count().AssertGreater(1);
@@ -85,7 +85,7 @@ public class CompilerTests
 	{
 		ICompiler compiler = new CSharpCompiler();
 		var code = "public class Foo { public int Bar() => 42; }";
-		var res = await compiler.Compile("test", [code], [_coreLibPath]);
+		var res = await compiler.Compile("test", [code], [_coreLibPath], CancellationToken);
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
@@ -100,7 +100,7 @@ public class CompilerTests
 		ICompiler compiler = new CSharpCompiler();
 		// Unused variable 'x' should produce a warning
 		var code = "public class Foo { public void Bar() { int x = 1; } }";
-		var res = await compiler.Compile("test", [code], [_coreLibPath]);
+		var res = await compiler.Compile("test", [code], [_coreLibPath], CancellationToken);
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
@@ -115,7 +115,7 @@ public class CompilerTests
 	{
 		ICompiler compiler = new PythonCompiler();
 		var code = "def foo():\n    return 42";
-		var res = await compiler.Compile("test", [code], []);
+		var res = await compiler.Compile("test", [code], [], CancellationToken);
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
@@ -130,7 +130,7 @@ public class CompilerTests
 		ICompiler compiler = new PythonCompiler();
 		// Syntax error: missing colon
 		var code = "def foo()\n    return 42";
-		var res = await compiler.Compile("test", [code], []);
+		var res = await compiler.Compile("test", [code], [], CancellationToken);
 		res.GetAssembly(compiler.CreateContext()).AssertNull();
 		res.HasErrors().AssertTrue();
 	}
@@ -144,7 +144,7 @@ public class CompilerTests
 
 		ICompiler compiler = new FSharpCompiler();
 		var code = "module Foo\nlet bar () = 42";
-		var res = await compiler.Compile("test", [code], [_coreLibPath]);
+		var res = await compiler.Compile("test", [code], [_coreLibPath], CancellationToken);
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
@@ -163,7 +163,7 @@ public class CompilerTests
 		ICompiler compiler = new FSharpCompiler();
 		// Syntax error: missing '='
 		var code = "module Foo\nlet bar () 42";
-		var res = await compiler.Compile("test", [code], [_coreLibPath]);
+		var res = await compiler.Compile("test", [code], [_coreLibPath], CancellationToken);
 		res.GetAssembly(compiler.CreateContext()).AssertNull();
 		res.HasErrors().AssertTrue();
 	}

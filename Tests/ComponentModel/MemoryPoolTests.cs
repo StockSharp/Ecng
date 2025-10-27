@@ -3,7 +3,7 @@
 using Ecng.ComponentModel;
 
 [TestClass]
-public class MemoryPoolTests
+public class MemoryPoolTests : BaseTestClass
 {
 	private ByteMemoryPool _pool;
 
@@ -151,6 +151,8 @@ public class MemoryPoolTests
 		const int threadCount = 10;
 		const int operationsPerThread = 100;
 
+		var token = CancellationToken;
+
 		var tasks = new Task[threadCount];
 
 		for (var i = 0; i < threadCount; i++)
@@ -162,10 +164,10 @@ public class MemoryPoolTests
 					var size = 100 + (j % 3) * 100; // 100, 200, 300
 					using var memory = _pool.Rent(size);
 				}
-			});
+			}, token);
 		}
 
-		Task.WaitAll(tasks);
+		Task.WaitAll(tasks, token);
 
 		(_pool.TotalCount < 10).AssertTrue();
 	}
