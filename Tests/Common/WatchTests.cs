@@ -70,7 +70,7 @@ public class WatchTests
 		var elapsed = Watch.Do(action);
 
 		// Assert
-		(elapsed.TotalMilliseconds >= 100).AssertTrue("elapsed should be >=100 ms");
-		(elapsed.TotalMilliseconds <= 200).AssertTrue("elapsed should be <=200 ms"); // Allow some tolerance
+		(elapsed.TotalMilliseconds >= 100).AssertTrue($"elapsed should be >=100 ms but {(int)elapsed.TotalMilliseconds}");
+		(elapsed.TotalMilliseconds <= 200).AssertTrue($"elapsed should be <=200 ms but {(int)elapsed.TotalMilliseconds}");
 	}
 }
