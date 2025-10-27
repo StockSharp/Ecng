@@ -3,7 +3,7 @@ namespace Ecng.Tests.Common;
 using System.Text;
 
 [TestClass]
-public class CsvFileTests
+public class CsvFileTests : BaseTestClass
 {
 	[TestMethod]
 	public void WriteAndRead_SimpleRow_Sync()
@@ -22,7 +22,7 @@ public class CsvFileTests
 		using var reader = new CsvFileReader(ms, "\n");
 		reader.Delimiter = ',';
 		var cols = new List<string>();
-		Assert.IsTrue(reader.ReadRow(cols));
+		reader.ReadRow(cols).AssertTrue();
 		cols.Count.AssertEqual(3);
 		cols[0].AssertEqual("col1");
 		cols[1].AssertEqual("col2");
@@ -32,6 +32,8 @@ public class CsvFileTests
 	[TestMethod]
 	public async Task WriteAndRead_QuotedMultiline_Async()
 	{
+		var ct = CancellationToken;
+
 		using var ms = new MemoryStream();
 		using var writer = new CsvFileWriter(ms, Encoding.UTF8);
 		writer.Delimiter = ',';
@@ -40,8 +42,8 @@ public class CsvFileTests
 		var multi = "line1\nline2";
 		var quoteInside = "he said \"hello\"";
 
-		await writer.WriteRowAsync(["a", multi, quoteInside]);
-		await writer.FlushAsync().ConfigureAwait(false);
+		await writer.WriteRowAsync(["a", multi, quoteInside], ct);
+		await writer.FlushAsync(ct).ConfigureAwait(false);
 
 		ms.Position = 0;
 
@@ -49,7 +51,7 @@ public class CsvFileTests
 		reader.Delimiter = ',';
 
 		var cols = new List<string>();
-		Assert.IsTrue(await reader.ReadRowAsync(cols));
+		(await reader.ReadRowAsync(cols, ct)).AssertTrue();
 		cols.Count.AssertEqual(3);
 		cols[0].AssertEqual("a");
 		cols[1].AssertEqual(multi);
@@ -67,13 +69,13 @@ public class CsvFileTests
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.NoColumns);
 			r.Delimiter = ',';
 			var cols = new List<string>();
-			Assert.IsTrue(r.ReadRow(cols));
+			r.ReadRow(cols).AssertTrue();
 			cols.AssertEqual(new[] { "a", "b" });
-			Assert.IsTrue(r.ReadRow(cols));
+			r.ReadRow(cols).AssertTrue();
 			cols.Count.AssertEqual(0);
-			Assert.IsTrue(r.ReadRow(cols));
+			r.ReadRow(cols).AssertTrue();
 			cols.AssertEqual(new[] { " c", "d" });
-			Assert.IsFalse(r.ReadRow(cols));
+			r.ReadRow(cols).AssertFalse();
 		}
 
 		// EmptyColumn
@@ -82,14 +84,14 @@ public class CsvFileTests
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.EmptyColumn);
 			r.Delimiter = ',';
 			var cols = new List<string>();
-			Assert.IsTrue(r.ReadRow(cols));
+			r.ReadRow(cols).AssertTrue();
 			cols.AssertEqual(new[] { "a", "b" });
-			Assert.IsTrue(r.ReadRow(cols));
+			r.ReadRow(cols).AssertTrue();
 			cols.Count.AssertEqual(1);
 			cols[0].AssertEqual(string.Empty);
-			Assert.IsTrue(r.ReadRow(cols));
+			r.ReadRow(cols).AssertTrue();
 			cols.AssertEqual(new[] { " c", "d" });
-			Assert.IsFalse(r.ReadRow(cols));
+			r.ReadRow(cols).AssertFalse();
 		}
 
 		// Ignore
@@ -98,11 +100,11 @@ public class CsvFileTests
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.Ignore);
 			r.Delimiter = ',';
 			var cols = new List<string>();
-			Assert.IsTrue(r.ReadRow(cols));
+			r.ReadRow(cols).AssertTrue();
 			cols.AssertEqual(new[] { "a", "b" });
-			Assert.IsTrue(r.ReadRow(cols));
+			r.ReadRow(cols).AssertTrue();
 			cols.AssertEqual(new[] { " c", "d" });
-			Assert.IsFalse(r.ReadRow(cols));
+			r.ReadRow(cols).AssertFalse();
 		}
 
 		// EndOfFile
@@ -111,9 +113,9 @@ public class CsvFileTests
 			using var r = new CsvFileReader(ms, "\n", EmptyLineBehavior.EndOfFile);
 			r.Delimiter = ',';
 			var cols = new List<string>();
-			Assert.IsTrue(r.ReadRow(cols));
+			r.ReadRow(cols).AssertTrue();
 			cols.AssertEqual(new[] { "a", "b" });
-			Assert.IsFalse(r.ReadRow(cols));
+			r.ReadRow(cols).AssertFalse();
 		}
 	}
 
@@ -163,6 +165,8 @@ public class CsvFileTests
 	[TestMethod]
 	public async Task LargeWriteRead_Async()
 	{
+		var token = CancellationToken;
+
 		const int rows = 2000;
 		const int colsCount = 10;
 		const int cellSize = 200; // ~4MB total
@@ -177,9 +181,9 @@ public class CsvFileTests
 			var arr = new string[colsCount];
 			for (int c = 0; c < colsCount; c++)
 				arr[c] = $"R{r}C{c}_" + new string((char)('a' + (c % 26)), cellSize);
-			await writer.WriteRowAsync(arr).ConfigureAwait(false);
+			await writer.WriteRowAsync(arr, token).ConfigureAwait(false);
 		}
-		await writer.FlushAsync().ConfigureAwait(false);
+		await writer.FlushAsync(token).ConfigureAwait(false);
 
 		ms.Position = 0;
 
@@ -187,7 +191,7 @@ public class CsvFileTests
 		reader.Delimiter = ',';
 		var cols = new List<string>();
 		int ri = 0;
-		while (await reader.ReadRowAsync(cols).ConfigureAwait(false))
+		while (await reader.ReadRowAsync(cols, token).ConfigureAwait(false))
 		{
 			if (ri % 500 == 0)
 			{
