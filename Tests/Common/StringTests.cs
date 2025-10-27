@@ -501,17 +501,21 @@ public class StringTests
 	}
 
 	[TestMethod]
-	public void Hex_Roundtrip_And_Duplicates()
+	public void Hex()
 	{
 		var bytes = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
 		var hex = bytes.Hex();
 		hex.Hex().SequenceEqual(bytes).AssertTrue();
+	}
 
+	[TestMethod]
+	public void Duplicates()
+	{
 		var items = new[] { "a", "A", "b", "B", "b" };
 		var dups = items.Duplicates().Select(x => x.ToLower()).OrderBy(x => x).ToArray();
 		dups.SequenceEqual(["a", "b"]).AssertTrue();
 
-		dups = items.Duplicates(StringComparer.Ordinal).Select(x => x.ToLower()).OrderBy(x => x).ToArray();
+		dups = [.. items.Duplicates(StringComparer.Ordinal).Select(x => x.ToLower()).OrderBy(x => x)];
 		dups.SequenceEqual(["b"]).AssertTrue();
 	}
 

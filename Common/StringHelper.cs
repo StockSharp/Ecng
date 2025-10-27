@@ -1466,8 +1466,8 @@ public static class StringHelper
 	/// <param name="items">The collection of strings.</param>
 	/// <param name="comparer">The string comparer to use for determining duplicates.</param>
 	/// <returns>An enumerable collection of duplicate strings.</returns>
-	public static IEnumerable<string> Duplicates(this IEnumerable<string> items, StringComparer comparer)
-		=> items.GroupBy(s => s, s => comparer).Where(g => g.Count() > 1).Select(g => g.Key);
+	public static IEnumerable<string> Duplicates(this IEnumerable<string> items, IEqualityComparer<string> comparer)
+		=> items.GroupBy(s => s, comparer).Where(g => g.Count() > 1).Select(g => g.Key);
 
 	/// <summary>
 	/// Gets the default encoding bytes for the string.
