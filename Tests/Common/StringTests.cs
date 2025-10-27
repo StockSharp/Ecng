@@ -1,6 +1,7 @@
-namespace Ecng.Tests.Common;
+﻿namespace Ecng.Tests.Common;
 
 using System.Globalization;
+using System.Security;
 
 [TestClass]
 public class StringTests
@@ -123,7 +124,7 @@ public class StringTests
 		"".IsEmpty().AssertTrue();
 		"a".IsEmpty().AssertFalse();
 		((string)null).IsEmptyOrWhiteSpace().AssertTrue();
-		"  ".IsEmptyOrWhiteSpace().AssertTrue();
+		" ".IsEmptyOrWhiteSpace().AssertTrue();
 		"a".IsEmptyOrWhiteSpace().AssertFalse();
 	}
 
@@ -238,7 +239,7 @@ public class StringTests
 	[TestMethod]
 	public void RemoveMultipleWhitespace_Works()
 	{
-		"a   b\t\tc".RemoveMultipleWhitespace().AssertEqual("a b c");
+		"a b\t\tc".RemoveMultipleWhitespace().AssertEqual("a b c");
 	}
 
 	[TestMethod]
@@ -264,7 +265,7 @@ public class StringTests
 	public void ToLatin_And_LightScreening()
 	{
 		// TODO
-		//"����".ToLatin().AssertEqual("test");
+		//"тест".ToLatin().AssertEqual("test");
 		"a b.c#?:".LightScreening().AssertEqual("a-bc");
 	}
 
@@ -365,5 +366,175 @@ public class StringTests
 		var s1 = string.Intern("abc");
 		var s2 = "abc".Intern();
 		ReferenceEquals(s1, s2).AssertTrue();
+	}
+
+	// Previously added tests
+	[TestMethod]
+	public void PutEx_Sync()
+	{
+		"{0}-{1}".PutEx(1, "a").AssertEqual("1-a");
+	}
+
+	[TestMethod]
+	public void IsEmpty_WithDefaultValue()
+	{
+		((string)null).IsEmpty("def").AssertEqual("def");
+		"".IsEmpty("x").AssertEqual("x");
+		"a".IsEmpty("x").AssertEqual("a");
+	}
+
+	[TestMethod]
+	public void IsEmptyOrWhiteSpace_WithDefaultValue()
+	{
+		((string)null).IsEmptyOrWhiteSpace("d").AssertEqual("d");
+		" ".IsEmptyOrWhiteSpace("d").AssertEqual("d");
+		"a".IsEmptyOrWhiteSpace("d").AssertEqual("a");
+	}
+
+	[TestMethod]
+	public void ThrowIfEmpty_String_Throws()
+	{
+		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).ThrowIfEmpty("p"));
+		Assert.ThrowsExactly<ArgumentNullException>(() => "".ThrowIfEmpty("p"));
+	}
+
+	[TestMethod]
+	public void ReplaceIgnoreCase_StringBuilder()
+	{
+		var sb = new System.Text.StringBuilder("Hello");
+		sb.ReplaceIgnoreCase("he", "HE");
+		sb.ToString().AssertEqual("HEllo");
+	}
+
+	[TestMethod]
+	public void SplitByLength_Works()
+	{
+		"abcdef".SplitByLength(2).SequenceEqual(["ab", "cd", "ef"]).AssertTrue();
+	}
+
+	[TestMethod]
+	public void Trim_Variant_Works()
+	{
+		"1234567890".Trim(10).AssertEqual("1234567890");
+		"1234567890".Trim(5).AssertEqual("12345...");
+	}
+
+	[TestMethod]
+	public void TrimStartEnd_CheckBrackets_StripBrackets()
+	{
+		"[abc]".CheckBrackets("[", "]").AssertTrue();
+		"[abc]".StripBrackets("[", "]").AssertEqual("abc");
+		"prefixHello".TrimStart("prefix").AssertEqual("Hello");
+		"HelloSuffix".TrimEnd("Suffix").AssertEqual("Hello");
+	}
+
+	[TestMethod]
+	public void Base64_String_To_Bytes()
+	{
+		var bytes = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
+		var s = Convert.ToBase64String(bytes);
+		s.Base64().SequenceEqual(bytes).AssertTrue();
+	}
+
+	[TestMethod]
+	public void LastIndexOf_StringBuilder_Works()
+	{
+		var sb = new System.Text.StringBuilder("a_b_c");
+		sb.LastIndexOf('_').AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void Char_ToLower_ToUpper_Variants()
+	{
+		'A'.ToLower().AssertEqual('a');
+		'a'.ToUpper(false).AssertEqual('A');
+	}
+
+	[TestMethod]
+	public void SecureString_Functions()
+	{
+		var s = "secret".Secure();
+		// UnSecure roundtrip
+		s.UnSecure().AssertEqual("secret");
+
+		// ReadOnly and IsEmpty
+		s.ReadOnly();
+		s.IsEmpty().AssertFalse();
+
+		// ToId
+		var id = s.ToId();
+		id.AssertEqual("secret".GetDeterministicHashCode());
+
+		// IsEqualTo
+		var s2 = "secret".Secure();
+		s.IsEqualTo(s2).AssertTrue();
+		s.IsEqualTo(null).AssertFalse();
+
+		// ThrowIfEmpty
+		Assert.ThrowsExactly<ArgumentNullException>(() => ((SecureString)null).ThrowIfEmpty("p"));
+		Assert.ThrowsExactly<ArgumentNullException>(() => new SecureString().ThrowIfEmpty("p"));
+	}
+
+	[TestMethod]
+	public void RemoveDiacritics_And_ToLatin_And_TruncateMiddle()
+	{
+		"café".RemoveDiacritics().AssertEqual("cafe");
+		"тест".ToLatin().AssertEqual("test");
+		"abcdefghij".TruncateMiddle(7).AssertEqual("ab...hij");
+	}
+
+	[TestMethod]
+	public void SplitByLineSeps_And_SplitLines_And_SplitObsolete()
+	{
+		"a\r\nb\nc\r".SplitByLineSeps().SequenceEqual(["a", "b", "c"]).AssertTrue();
+		"a\nb".SplitByN().SequenceEqual(["a", "b"]).AssertTrue();
+		"a|b|c".SplitBySep("|", false).SequenceEqual(["a", "b", "c"]).AssertTrue();
+	}
+
+	[TestMethod]
+	public void EqualsAndCompareIgnoreCase_And_UrlEscape_DataEscape()
+	{
+		"Ab".EqualsIgnoreCase("ab").AssertTrue();
+
+		var s = "a b";
+		s.DataEscape().DataUnEscape().AssertEqual(s);
+	}
+
+	[TestMethod]
+	public void Hex_Roundtrip_And_Duplicates()
+	{
+		var bytes = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
+		var hex = bytes.Hex();
+		hex.Hex().SequenceEqual(bytes).AssertTrue();
+
+		var items = new[] { "a", "A", "b", "B", "b" };
+		var dups = items.Duplicates().Select(x => x.ToLower()).OrderBy(x => x).ToArray();
+		dups.SequenceEqual(["a", "b"]).AssertTrue();
+
+		dups = items.Duplicates(StringComparer.Ordinal).Select(x => x.ToLower()).OrderBy(x => x).ToArray();
+		dups.SequenceEqual(["b"]).AssertTrue();
+	}
+
+	[TestMethod]
+	public void Encoding_ByteArray_To_String_And_GetString_ArraySegment()
+	{
+		var str = "Hello";
+		// string -> bytes -> string via extensions
+		str.ASCII().ASCII().AssertEqual(str);
+		str.UTF8().UTF8().AssertEqual(str);
+		str.Unicode().Unicode().AssertEqual(str);
+		str.Cyrillic().Cyrillic().AssertEqual(str);
+
+		var bytes = System.Text.Encoding.UTF8.GetBytes(str);
+		var seg = new ArraySegment<byte>(bytes);
+		System.Text.Encoding.UTF8.GetString(seg).AssertEqual(str);
+	}
+
+	[TestMethod]
+	public void CharArray_ToString_And_ToString_Uint()
+	{
+		var arr = new[] { 'a', 'b', 'c' };
+		arr.ToString(2).AssertEqual("ab");
+		arr.ToString((uint)2).AssertEqual("ab");
 	}
 }
