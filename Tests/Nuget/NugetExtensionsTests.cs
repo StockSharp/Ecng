@@ -4,8 +4,11 @@ using System.Net.Http;
 
 using Ecng.Nuget;
 
+using NuGet.Common;
 using NuGet.Frameworks;
+using NuGet.Packaging;
 using NuGet.Protocol;
+using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
 [TestClass]
@@ -220,5 +223,137 @@ public class NugetExtensionsTests
 
 		// Act & Assert
 		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken.None));
+	}
+
+	[TestMethod]
+	public async Task GetAllVersionsOrderedAsync_RealPackage_ReturnsOrderedVersions()
+	{
+		// Arrange
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+		var cache = new SourceCacheContext();
+		var logger = NullLogger.Instance;
+
+		// Act
+		var versions = await repo.GetAllVersionsOrderedAsync("Newtonsoft.Json", logger, cache, CancellationToken.None);
+
+		// Assert
+		versions.AssertNotNull();
+		(versions.Length > 0).AssertTrue();
+
+		// Verify ordering
+		for (int i = 1; i < versions.Length; i++)
+		{
+			(versions[i] >= versions[i - 1]).AssertTrue();
+		}
+	}
+
+	[TestMethod]
+	public async Task GetLastVersionAsync_RealPackage_WithoutPrerelease_ReturnsStableVersion()
+	{
+		// Arrange
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+		var cache = new SourceCacheContext();
+		var logger = NullLogger.Instance;
+
+		// Act
+		var version = await repo.GetLastVersionAsync("Newtonsoft.Json", allowPreview: false, logger, cache, CancellationToken.None);
+
+		// Assert
+		version.AssertNotNull();
+		version.IsPrerelease.AssertFalse();
+		(version.Major >= 13).AssertTrue(); // Newtonsoft.Json is at least v13
+	}
+
+	[TestMethod]
+	public async Task GetLastVersionAsync_RealPackage_WithPrerelease_ReturnsAnyVersion()
+	{
+		// Arrange
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+		var cache = new SourceCacheContext();
+		var logger = NullLogger.Instance;
+
+		// Act
+		var version = await repo.GetLastVersionAsync("Newtonsoft.Json", allowPreview: true, logger, cache, CancellationToken.None);
+
+		// Assert
+		version.AssertNotNull();
+		(version.Major >= 13).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task GetLastVersionInFloatingRangeAsync_ValidRange_ReturnsVersionInRange()
+	{
+		// Arrange
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+		var cache = new SourceCacheContext();
+		var logger = NullLogger.Instance;
+
+		// Act - get latest 13.* version
+		var version = await repo.GetLastVersionInFloatingRangeAsync("Newtonsoft.Json", "13.*", logger, cache, CancellationToken.None);
+
+		// Assert
+		version.AssertNotNull();
+		version.Major.AssertEqual(13);
+	}
+
+	[TestMethod]
+	public Task GetLastVersionInFloatingRangeAsync_InvalidRange_ThrowsArgumentException()
+	{
+		// Arrange
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+		var cache = new SourceCacheContext();
+		var logger = NullLogger.Instance;
+
+		// Act & Assert
+		return Assert.ThrowsExactlyAsync<ArgumentException>(() =>
+			repo.GetLastVersionInFloatingRangeAsync("Newtonsoft.Json", "invalid-range", logger, cache, CancellationToken.None));
+	}
+
+	[TestMethod]
+	public async Task GetBaseUrl_ValidRepository_ReturnsUrlWithTrailingSlash()
+	{
+		// Arrange
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+
+		// Act
+		var baseUrl = await repo.GetBaseUrl(CancellationToken.None);
+
+		// Assert
+		baseUrl.AssertNotNull();
+		baseUrl.ToString().AssertContains("nuget.org");
+		baseUrl.ToString().EndsWith('/').AssertTrue();
+	}
+
+	[TestMethod]
+	public Task GetBaseUrl_NullRepository_ThrowsArgumentNullException()
+	{
+		// Arrange
+		SourceRepository repo = null;
+
+		// Act & Assert
+		return Assert.ThrowsExactlyAsync<ArgumentNullException>(() =>
+			repo.GetBaseUrl(CancellationToken.None));
+	}
+
+	[TestMethod]
+	public async Task GetTargetFrameworks_RealPackage_ReturnsFrameworks()
+	{
+		// Arrange
+		var repo = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+		var cache = new SourceCacheContext();
+		var logger = NullLogger.Instance;
+
+		var resource = await repo.GetResourceAsync<FindPackageByIdResource>(CancellationToken.None);
+		using var packageStream = new MemoryStream();
+		await resource.CopyNupkgToStreamAsync("Newtonsoft.Json", new NuGetVersion("13.0.1"), packageStream, cache, logger, CancellationToken.None);
+		packageStream.Position = 0;
+
+		// Act
+		using var reader = new PackageArchiveReader(packageStream);
+		var frameworks = reader.GetTargetFrameworks();
+
+		// Assert
+		frameworks.AssertNotNull();
+		(frameworks.Length > 0).AssertTrue();
 	}
 }
