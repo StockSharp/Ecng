@@ -49,7 +49,7 @@ public class AsyncHelperTests : BaseTestClass
 		var vt = new ValueTask<int>(4);
 		await vt.AsValueTask();
 
-		var task = Task.FromResult(5);
+		var task = 5.FromResult();
 		(await task.AsValueTask()).AssertEqual(5);
 	}
 
@@ -64,7 +64,7 @@ public class AsyncHelperTests : BaseTestClass
 	[TestMethod]
 	public void GetResultAndTcs()
 	{
-		var task = Task.FromResult(6);
+		var task = 6.FromResult();
 		task.GetResult<int>().AssertEqual(6);
 
 		var tcs = 7.ToCompleteSource();
