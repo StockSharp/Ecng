@@ -539,6 +539,60 @@ public static class IOHelper
 	}
 
 	/// <summary>
+	/// Asynchronously retrieves the directories within the specified path matching the search pattern.
+	/// This method emulates async behavior by running the synchronous enumeration on the thread-pool.
+	/// </summary>
+	/// <param name="path">The root directory to search.</param>
+	/// <param name="searchPattern">The search pattern.</param>
+	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
+	/// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
+	/// <returns>A task producing an enumerable of matching directory paths.</returns>
+	public static Task<IEnumerable<string>> GetDirectoriesAsync(
+		string path,
+		string searchPattern = "*",
+		SearchOption searchOption = SearchOption.TopDirectoryOnly,
+		CancellationToken cancellationToken = default)
+	{
+		if (!Directory.Exists(path))
+			return Enumerable.Empty<string>().FromResult();
+
+		return Task.Run(() =>
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			var arr = Directory.GetDirectories(path, searchPattern, searchOption);
+			cancellationToken.ThrowIfCancellationRequested();
+			return (IEnumerable<string>)arr;
+		}, cancellationToken);
+	}
+
+	/// <summary>
+	/// Asynchronously retrieves the files within the specified path matching the search pattern.
+	/// This method emulates async behavior by running the synchronous enumeration on the thread-pool.
+	/// </summary>
+	/// <param name="path">The root directory to search.</param>
+	/// <param name="searchPattern">The search pattern.</param>
+	/// <param name="searchOption">Search option to determine whether to search subdirectories.</param>
+	/// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
+	/// <returns>A task producing an enumerable of matching file paths.</returns>
+	public static Task<IEnumerable<string>> GetFilesAsync(
+		string path,
+		string searchPattern = "*",
+		SearchOption searchOption = SearchOption.TopDirectoryOnly,
+		CancellationToken cancellationToken = default)
+	{
+		if (!Directory.Exists(path))
+			return Enumerable.Empty<string>().FromResult();
+
+		return Task.Run(() =>
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			var arr = Directory.GetFiles(path, searchPattern, searchOption);
+			cancellationToken.ThrowIfCancellationRequested();
+			return (IEnumerable<string>)arr;
+		}, cancellationToken);
+	}
+
+	/// <summary>
 	/// Gets the timestamp of the specified assembly.
 	/// </summary>
 	/// <param name="assembly">The assembly.</param>
