@@ -37,7 +37,7 @@ public static class Do
 			throw new ArgumentNullException(nameof(funcAsync));
 
 		using (ThreadingHelper.WithInvariantCulture())
-			return await funcAsync().ConfigureAwait(false);
+			return await funcAsync().NoWait();
 	}
 
 	/// <summary>
@@ -51,6 +51,6 @@ public static class Do
 			throw new ArgumentNullException(nameof(actionAsync));
 
 		using (ThreadingHelper.WithInvariantCulture())
-			await actionAsync().ConfigureAwait(false);
+			await actionAsync().NoWait();
 	}
 }

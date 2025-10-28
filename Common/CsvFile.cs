@@ -164,7 +164,7 @@ public class CsvFileReader : CsvFileCommon, IDisposable
 			cancellationToken
 #else
 #endif
-		).ConfigureAwait(false);
+		).NoWait();
 		_currPos = 0;
 
 		if (CurrLine is null)
@@ -192,7 +192,7 @@ public class CsvFileReader : CsvFileCommon, IDisposable
 			cancellationToken.ThrowIfCancellationRequested();
 			
 			if (_currPos < CurrLine.Length && CurrLine[_currPos] == Quote)
-				column = await ReadQuotedColumnAsync(cancellationToken).ConfigureAwait(false);
+				column = await ReadQuotedColumnAsync(cancellationToken).NoWait();
 			else
 				column = ReadUnquotedColumn();
 			
@@ -234,7 +234,7 @@ public class CsvFileReader : CsvFileCommon, IDisposable
 			cancellationToken
 #else
 #endif
-				).ConfigureAwait(false);
+				).NoWait();
 				
 				_currPos = 0;
 
@@ -363,7 +363,7 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 					, cancellationToken
 #else
 #endif
-				).ConfigureAwait(false);
+				).NoWait();
 			}
 
 			await _writer.WriteAsync(Encode(c ?? string.Empty)
@@ -371,12 +371,12 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 			, cancellationToken
 #else
 #endif
-			).ConfigureAwait(false);
+			).NoWait();
 
 			i++;
 		}
 
-		await _writer.WriteLineAsync().ConfigureAwait(false);
+		await _writer.WriteLineAsync().NoWait();
 	}
 
 	/// <summary>

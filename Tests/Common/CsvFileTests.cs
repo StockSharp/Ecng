@@ -43,7 +43,7 @@ public class CsvFileTests : BaseTestClass
 		var quoteInside = "he said \"hello\"";
 
 		await writer.WriteRowAsync(["a", multi, quoteInside], ct);
-		await writer.FlushAsync(ct).ConfigureAwait(false);
+		await writer.FlushAsync(ct).NoWait();
 
 		ms.Position = 0;
 
@@ -181,9 +181,9 @@ public class CsvFileTests : BaseTestClass
 			var arr = new string[colsCount];
 			for (int c = 0; c < colsCount; c++)
 				arr[c] = $"R{r}C{c}_" + new string((char)('a' + (c % 26)), cellSize);
-			await writer.WriteRowAsync(arr, token).ConfigureAwait(false);
+			await writer.WriteRowAsync(arr, token).NoWait();
 		}
-		await writer.FlushAsync(token).ConfigureAwait(false);
+		await writer.FlushAsync(token).NoWait();
 
 		ms.Position = 0;
 
@@ -191,7 +191,7 @@ public class CsvFileTests : BaseTestClass
 		reader.Delimiter = ',';
 		var cols = new List<string>();
 		int ri = 0;
-		while (await reader.ReadRowAsync(cols, token).ConfigureAwait(false))
+		while (await reader.ReadRowAsync(cols, token).NoWait())
 		{
 			if (ri % 500 == 0)
 			{

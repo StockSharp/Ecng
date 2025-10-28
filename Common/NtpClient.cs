@@ -43,7 +43,7 @@ public class NtpClient(EndPoint ntpServer)
 		if (info is null)
 			throw new ArgumentNullException(nameof(info));
 
-		var utcTime = await GetUtcTimeAsync(timeout, cancellationToken).ConfigureAwait(false);
+		var utcTime = await GetUtcTimeAsync(timeout, cancellationToken).NoWait();
 		return utcTime + info.GetUtcOffset(utcTime);
 	}
 
@@ -77,14 +77,14 @@ public class NtpClient(EndPoint ntpServer)
 			ntpData[i] = 0;
 
 #if NET5_0_OR_GREATER
-		await s.SendAsync(ntpData, SocketFlags.None, cancellationToken).ConfigureAwait(false);
-		await s.ReceiveAsync(ntpData, SocketFlags.None, cancellationToken).ConfigureAwait(false);
+		await s.SendAsync(ntpData, SocketFlags.None, cancellationToken).NoWait();
+		await s.ReceiveAsync(ntpData, SocketFlags.None, cancellationToken).NoWait();
 #else
 		await Task.Run(() =>
 		{
 			s.Send(ntpData);
 			s.Receive(ntpData);
-		}, cancellationToken).ConfigureAwait(false);
+		}, cancellationToken).NoWait();
 #endif
 
 		const byte offsetTransmitTime = 40;

@@ -146,7 +146,7 @@ static class ProcessExtensions
 				var buffer = new char[1024];
 
 				while (!reader.EndOfStream && !token.IsCancellationRequested)
-					await reader.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+					await reader.ReadAsync(buffer, 0, buffer.Length).NoWait();
 			}
 		}
 	}
