@@ -32,10 +32,7 @@ public class EmailLogListener : LogListener
 	/// To create the email client.
 	/// </summary>
 	/// <returns>The email client.</returns>
-	protected virtual SmtpClient CreateClient()
-	{
-		return new SmtpClient();
-	}
+	protected virtual SmtpClient CreateClient() => new();
 
 	/// <summary>
 	/// To create a header.
@@ -75,23 +72,24 @@ public class EmailLogListener : LogListener
 			{
 				try
 				{
-					using (var email = CreateClient())
+					using var email = CreateClient();
+
+					while (true)
 					{
-						while (true)
-						{
-							if (!_queue.TryDequeue(out var m))
-								break;
+						if (!_queue.TryDequeue(out var m))
+							break;
 
-							email.Send(From, To, m.subj, m.body);
-						}
+						email.Send(From, To, m.subj, m.body);
 					}
-
-					lock (_queue.SyncRoot)
-						_isThreadStarted = false;
 				}
 				catch (Exception ex)
 				{
 					Trace.WriteLine(ex);
+				}
+				finally
+				{
+					lock (_queue.SyncRoot)
+						_isThreadStarted = false;
 				}
 			}).Name("Email log queue").Launch();
 		}
