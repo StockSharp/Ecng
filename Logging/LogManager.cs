@@ -163,7 +163,7 @@ public class LogManager : Disposable, IPersistable
 		}
 		catch (Exception ex)
 		{
-			Debug.WriteLine(ex);
+			Trace.WriteLine(ex);
 		}
 		finally
 		{
@@ -229,18 +229,33 @@ public class LogManager : Disposable, IPersistable
 		if (message == null)
 			throw new ArgumentNullException(nameof(message));
 
+		var callFlush = false;
+		var callImmediate = false;
+
 		lock (_syncRoot)
 		{
 			_pendingMessages.Add(message);
 
 			if (!_asyncMode)
-				Flush();
+				callFlush = true;
 			else
 			{
 				// mika: force flush in case too many messages
 				if (_pendingMessages.Count > 1000000)
-					ImmediateFlush();
+					callImmediate = true;
 			}
+		}
+
+		try
+		{
+			if (callFlush)
+				Flush();
+			else if (callImmediate)
+				ImmediateFlush();
+		}
+		catch (Exception ex)
+		{
+			Trace.WriteLine(ex);
 		}
 	}
 
