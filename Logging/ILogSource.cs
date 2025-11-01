@@ -122,6 +122,35 @@ public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
 			if (value == this)
 				throw new ArgumentException($"Cyclic dependency detected for {this}.", nameof(value));
 
+			if (value != null)
+			{
+				var slow = value;
+				var fast = value;
+
+				while (true)
+				{
+					if (ReferenceEquals(slow, this))
+						throw new ArgumentException($"Cyclic dependency detected for {this}.", nameof(value));
+
+					if (ReferenceEquals(fast, this))
+						throw new ArgumentException($"Cyclic dependency detected for {this}.", nameof(value));
+
+					if (fast?.Parent == this)
+						throw new ArgumentException($"Cyclic dependency detected for {this}.", nameof(value));
+
+					// end if chain terminates
+					if (fast == null || fast.Parent == null)
+						break;
+
+					// advance pointers
+					slow = slow.Parent;
+					fast = fast.Parent.Parent;
+
+					if (ReferenceEquals(slow, fast))
+						throw new ArgumentException($"Cyclic dependency detected for {this}.", nameof(value));
+				}
+			}
+
 			_parent = value;
 
 			if (_parent == null)
