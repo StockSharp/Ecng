@@ -1,6 +1,5 @@
 namespace Ecng.Logging;
 
-using System.Collections;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -265,37 +264,6 @@ public static class LoggingHelper
 		{
 			ex.LogError();
 		}
-	}
-
-	/// <summary>
-	/// Safely converts each element of an enumerable collection using a specified converter function.
-	/// Logs any exceptions that occur during conversion.
-	/// </summary>
-	/// <typeparam name="T1">The type of the elements in the source enumerable.</typeparam>
-	/// <typeparam name="T2">The type of the elements in the resulting array.</typeparam>
-	/// <param name="from">The source enumerable.</param>
-	/// <param name="func">The converter function.</param>
-	/// <returns>An array containing the converted elements.</returns>
-	public static T2[] SafeAdd<T1, T2>(this IEnumerable from, Func<T1, T2> func)
-	{
-		if (from == null)
-			throw new ArgumentNullException(nameof(from));
-
-		var list = new List<T2>();
-
-		foreach (T1 item in from)
-		{
-			try
-			{
-				list.Add(func(item));
-			}
-			catch (Exception e)
-			{
-				e.LogError();
-			}
-		}
-
-		return [.. list];
 	}
 
 	/// <summary>
