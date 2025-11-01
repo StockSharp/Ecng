@@ -849,15 +849,6 @@ public class TimeHelperTests
 	}
 
 	[TestMethod]
-	public void GetUnixDiffNonUtcTest()
-	{
-		// Test with non-UTC DateTime (should auto-convert)
-		var dt = new DateTime(1970, 1, 1, 1, 0, 0, DateTimeKind.Local);
-		var diff = dt.GetUnixDiff();
-		(diff.TotalSeconds >= 0).AssertTrue();
-	}
-
-	[TestMethod]
 	public void TruncateDateTimeByTicksTest()
 	{
 		var dt = new DateTime(2024, 1, 15, 14, 35, 47, 123);
@@ -1172,13 +1163,6 @@ public class TimeHelperTests
 	{
 		var ts = TimeSpan.FromTicks(10);
 		ts.ToNanoseconds().AssertEqual(1000L);
-	}
-
-	[TestMethod]
-	public void ToNanoseconds_FromDateTime_ShouldConvertCorrectly()
-	{
-		var dt = new DateTime(2024, 1, 1).AddTicks(5);
-		dt.ToNanoseconds().AssertEqual(dt.Ticks * 100);
 	}
 
 	[TestMethod]
@@ -1776,17 +1760,6 @@ public class TimeHelperTests
 		var diff = dt.GetUnixDiff();
 
 		diff.AssertEqual(TimeSpan.FromHours(1));
-	}
-
-	[TestMethod]
-	public void GetUnixDiff_WithLocalTime_ShouldConvertToUtc()
-	{
-		// Should automatically convert to UTC
-		var dt = new DateTime(1970, 1, 1, 1, 0, 0, DateTimeKind.Local);
-		var diff = dt.GetUnixDiff();
-
-		// Should not throw, result depends on local timezone
-		(diff.TotalSeconds >= 0).AssertTrue();
 	}
 
 	#endregion

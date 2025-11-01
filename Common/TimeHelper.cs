@@ -243,6 +243,7 @@ public static class TimeHelper
 	/// <summary>
 	/// Converts a <see cref="DateTime"/> to the total number of nanoseconds.
 	/// </summary>
+	[Obsolete("Use ToNanoseconds extension method for TimeSpan instead.")]
 	public static long ToNanoseconds(this DateTime dt)
 	{
 		return TicksToNanoseconds(dt.Ticks);
