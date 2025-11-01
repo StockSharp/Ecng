@@ -7,7 +7,7 @@ using System.Net.Mail;
 /// </summary>
 public class EmailLogListener : LogListener
 {
-	private readonly BlockingQueue<Tuple<string, string>> _queue = new();
+	private readonly BlockingQueue<(string subj, string body)> _queue = new();
 
 	private bool _isThreadStarted;
 
@@ -62,7 +62,7 @@ public class EmailLogListener : LogListener
 			return;
 		}
 
-		_queue.Enqueue(Tuple.Create(GetSubject(message), message.Message));
+		_queue.Enqueue((GetSubject(message), message.Message));
 
 		lock (_queue.SyncRoot)
 		{
@@ -82,7 +82,7 @@ public class EmailLogListener : LogListener
 							if (!_queue.TryDequeue(out var m))
 								break;
 
-							email.Send(From, To, m.Item1, m.Item2);
+							email.Send(From, To, m.subj, m.body);
 						}
 					}
 
