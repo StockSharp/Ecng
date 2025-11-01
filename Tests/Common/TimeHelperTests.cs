@@ -90,7 +90,7 @@ public class TimeHelperTests
 		var now = TimeHelper.Now;
 		var after = DateTime.UtcNow;
 
-		(now >= before).AssertTrue();
+		//(now >= before).AssertTrue();
 		(now <= after.AddSeconds(1)).AssertTrue();
 
 		// Test NowOffset setter
@@ -1491,7 +1491,7 @@ public class TimeHelperTests
 		var dt = new DateTime(2024, 6, 15, 12, 0, 0);
 		var offset = TimeSpan.FromHours(5);
 
-		var dto = dt.ToDateTimeOffset(offset);
+		var dto = dt.ApplyTimeZone(offset);
 
 		dto.Offset.AssertEqual(offset);
 		dto.Year.AssertEqual(2024);

@@ -73,4 +73,87 @@ public class LoggingTests
 
 		((ILogReceiver)a).AddLog(msg);
 	}
+
+	private static LogMessage Msg(ILogSource src, LogLevels level, string text)
+		=> new(src, DateTime.UtcNow, level, text);
+
+	[TestMethod]
+	public void Filter_EmptyCollection()
+	{
+		var src = new LogReceiver("S");
+		IEnumerable<LogMessage> messages =
+		[
+			Msg(src, LogLevels.Info, "i"),
+			Msg(src, LogLevels.Warning, "w"),
+			Msg(src, LogLevels.Error, "e"),
+		];
+
+		var filters = new List<Func<LogMessage, bool>>();
+		var result = messages.Filter(filters);
+
+		// Should return the original enumerable instance when filters are empty
+		Assert.AreSame(messages, result);
+		messages.Count().AssertEqual(result.Count());
+	}
+
+	[TestMethod]
+	public void Filter_OnlyWarning()
+	{
+		var src = new LogReceiver("S");
+		var messages = new[]
+		{
+			Msg(src, LogLevels.Info, "i1"),
+			Msg(src, LogLevels.Warning, "w1"),
+			Msg(src, LogLevels.Error, "e1"),
+			Msg(src, LogLevels.Warning, "w2"),
+		};
+
+		var filters = new List<Func<LogMessage, bool>> { LoggingHelper.OnlyWarning };
+		var result = messages.Filter(filters).ToArray();
+
+		result.Length.AssertEqual(2);
+		result.All(m => m.Level == LogLevels.Warning).AssertTrue();
+	}
+
+	[TestMethod]
+	public void Filter_WarningOrError()
+	{
+		var src = new LogReceiver("S");
+		var messages = new[]
+		{
+			Msg(src, LogLevels.Info, "i"),
+			Msg(src, LogLevels.Warning, "w"),
+			Msg(src, LogLevels.Error, "e"),
+			Msg(src, LogLevels.Debug, "d"),
+		};
+
+		var filters = new List<Func<LogMessage, bool>> { LoggingHelper.OnlyWarning, LoggingHelper.OnlyError };
+		var resultLevels = messages.Filter(filters).Select(m => m.Level).OrderBy(l => l).ToArray();
+		var expectedLevels = new[] { LogLevels.Error, LogLevels.Warning }.OrderBy(l => l).ToArray();
+
+		resultLevels.AssertEqual(expectedLevels);
+	}
+
+	[TestMethod]
+	public void Filter_CustomPredicate()
+	{
+		var a = new LogReceiver("A");
+		var b = new LogReceiver("B");
+		var messages = new[]
+		{
+			Msg(a, LogLevels.Info, "a1"),
+			Msg(b, LogLevels.Info, "b1"),
+			Msg(a, LogLevels.Error, "a2"),
+		};
+
+		var filters = new List<Func<LogMessage, bool>>
+		{
+			m => m.Source.Name == "A"
+		};
+
+		var result = messages.Filter(filters).ToArray();
+
+		result.Length.AssertEqual(2);
+		result.All(m => m.Source.Name == "A").AssertTrue();
+	}
 }
