@@ -25,7 +25,8 @@ public class FileLogListenerTests
 
 	private static void WithTemp(Action<string> action, string sub = null)
 	{
-		var root = Tests.Config.GetTempPath(sub ?? Guid.NewGuid().ToString());
+		var root = Config.GetTempPath(sub ?? Guid.NewGuid().ToString());
+
 		try
 		{
 			Directory.CreateDirectory(root);
