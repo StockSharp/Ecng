@@ -57,6 +57,19 @@ public abstract class LogListener : Disposable, ILogListener
 	/// <inheritdoc />
 	public virtual bool CanSave { get; }
 
+	/// <summary>
+	/// To convert message time to local time.
+	/// </summary>
+	public bool IsLocalTime { get; set; }
+
+	/// <summary>
+	/// To convert message time to local time.
+	/// </summary>
+	/// <param name="time">A time to convert.</param>
+	/// <returns>Converted time.</returns>
+	protected virtual DateTime ConvertToLocalTime(DateTime time)
+		=> IsLocalTime ? time.ToLocalTime() : time;
+
 	/// <inheritdoc />
 	public void WriteMessages(IEnumerable<LogMessage> messages)
 	{
@@ -87,8 +100,9 @@ public abstract class LogListener : Disposable, ILogListener
 	/// <param name="storage">Settings storage.</param>
 	public virtual void Load(SettingsStorage storage)
 	{
-		DateFormat = storage.GetValue<string>(nameof(DateFormat));
-		TimeFormat = storage.GetValue<string>(nameof(TimeFormat));
+		DateFormat = storage.GetValue(nameof(DateFormat), DateFormat);
+		TimeFormat = storage.GetValue(nameof(TimeFormat), TimeFormat);
+		IsLocalTime = storage.GetValue(nameof(IsLocalTime), IsLocalTime);
 	}
 
 	/// <summary>
@@ -97,7 +111,10 @@ public abstract class LogListener : Disposable, ILogListener
 	/// <param name="storage">Settings storage.</param>
 	public virtual void Save(SettingsStorage storage)
 	{
-		storage.SetValue(nameof(DateFormat), DateFormat);
-		storage.SetValue(nameof(TimeFormat), TimeFormat);
+		storage
+			.Set(nameof(DateFormat), DateFormat)
+			.Set(nameof(TimeFormat), TimeFormat)
+			.Set(nameof(IsLocalTime), IsLocalTime)
+		;
 	}
 }

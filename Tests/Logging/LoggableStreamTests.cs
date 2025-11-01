@@ -17,7 +17,8 @@ public class LoggableStreamTests : BaseTestClass
 		public string Name { get; set; } = "TestReceiver";
 		public ILogSource Parent { get; set; }
 		public event Action<ILogSource> ParentRemoved { add { } remove { } }
-		public DateTimeOffset CurrentTime => DateTimeOffset.Now;
+		public DateTimeOffset CurrentTime => CurrentTimeUtc;
+		public DateTime CurrentTimeUtc => DateTime.UtcNow;
 		public bool IsRoot { get; set; }
 		public event Action<LogMessage> Log { add { } remove { } }
 
@@ -26,11 +27,11 @@ public class LoggableStreamTests : BaseTestClass
 			Messages.Add(message);
 		}
 
-		public void LogVerbose(string format, params object[] args) => AddLog(new LogMessage(this, DateTimeOffset.Now, LogLevels.Debug, string.Format(format, args)));
-		public void LogDebug(string format, params object[] args) => AddLog(new LogMessage(this, DateTimeOffset.Now, LogLevels.Debug, string.Format(format, args)));
-		public void LogInfo(string format, params object[] args) => AddLog(new LogMessage(this, DateTimeOffset.Now, LogLevels.Info, string.Format(format, args)));
-		public void LogWarning(string format, params object[] args) => AddLog(new LogMessage(this, DateTimeOffset.Now, LogLevels.Warning, string.Format(format, args)));
-		public void LogError(string format, params object[] args) => AddLog(new LogMessage(this, DateTimeOffset.Now, LogLevels.Error, string.Format(format, args)));
+		public void LogVerbose(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Debug, string.Format(format, args)));
+		public void LogDebug(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Debug, string.Format(format, args)));
+		public void LogInfo(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Info, string.Format(format, args)));
+		public void LogWarning(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Warning, string.Format(format, args)));
+		public void LogError(string format, params object[] args) => AddLog(new LogMessage(this, DateTime.UtcNow, LogLevels.Error, string.Format(format, args)));
 
 		public void Dispose() { }
 	}
@@ -42,7 +43,8 @@ public class LoggableStreamTests : BaseTestClass
 		public ILogSource Parent { get; set; }
 		public event Action<ILogSource> ParentRemoved { add { } remove { } }
 		public LogLevels LogLevel { get; set; } = LogLevels.Debug;
-		public DateTimeOffset CurrentTime => DateTimeOffset.Now;
+		public DateTimeOffset CurrentTime => CurrentTimeUtc;
+		public DateTime CurrentTimeUtc => DateTime.UtcNow;
 		public bool IsRoot { get; set; }
 		public event Action<LogMessage> Log { add { } remove { } }
 

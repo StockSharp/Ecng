@@ -28,7 +28,7 @@ public class TraceSource : BaseLogSource
 			if (level == null)
 				return;
 
-			_source.RaiseLog(new LogMessage(_source, TimeHelper.NowWithOffset, level.Value, message));
+			_source.RaiseLog(new LogMessage(_source, TimeHelper.Now, level.Value, message));
 		}
 
 		public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string format, params object[] args)
@@ -38,7 +38,7 @@ public class TraceSource : BaseLogSource
 			if (level == null)
 				return;
 
-			_source.RaiseLog(new LogMessage(_source, TimeHelper.NowWithOffset, level.Value, format, args));
+			_source.RaiseLog(new LogMessage(_source, TimeHelper.Now, level.Value, format, args));
 		}
 
 		private static LogLevels? ToEcng(TraceEventType eventType)
@@ -57,7 +57,7 @@ public class TraceSource : BaseLogSource
 
 	private void RaiseDebugLog(string message)
 	{
-		RaiseLog(new LogMessage(this, TimeHelper.NowWithOffset, LogLevels.Debug, message));
+		RaiseLog(new LogMessage(this, TimeHelper.Now, LogLevels.Debug, message));
 	}
 
 	private readonly TraceListenerEx _listenerEx;

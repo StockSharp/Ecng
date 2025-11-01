@@ -39,7 +39,7 @@ public static class SitemapGenerator
 				xmlns + "sitemap",
 				new XElement(xmlns + "loc", sitemap),
 					new XElement(xmlns + "lastmod",
-						DateTime.Now.ToLocalTime().ToString(_timeFormat)));
+						DateTime.UtcNow.ToString(_timeFormat)));
 
 			root.Add(sitemapElement);
 		}

@@ -46,7 +46,7 @@ public class LogManager : Disposable, IPersistable
 		private readonly SyncObject _syncRoot = new();
 
 		public DisposeLogMessage()
-			: base(new ApplicationReceiver(), DateTimeOffset.MinValue, LogLevels.Off, string.Empty)
+			: base(new ApplicationReceiver(), DateTime.MinValue, LogLevels.Off, string.Empty)
 		{
 			IsDispose = true;
 		}
@@ -110,6 +110,7 @@ public class LogManager : Disposable, IPersistable
 	/// <summary>
 	/// Local time zone to convert all incoming messages. Not use in case of <see langword="null"/>.
 	/// </summary>
+	[Obsolete("Use ILogListener.IsLocalTime property.")]
 	public TimeZoneInfo LocalTimeZone { get; set; }
 
 	private void Flush()
@@ -153,8 +154,6 @@ public class LogManager : Disposable, IPersistable
 
 				if (message.IsDispose)
 					disposeMessage = (DisposeLogMessage)message;
-				else if (LocalTimeZone != null)
-					message.Time = message.Time.Convert(LocalTimeZone);
 			}
 
 			if (messages.Count > 0)
@@ -298,9 +297,6 @@ public class LogManager : Disposable, IPersistable
 			return s.LoadEntire<ILogListener>();
 		}));
 
-		if (storage.Contains(nameof(LocalTimeZone)))
-			LocalTimeZone = storage.GetValue<TimeZoneInfo>(nameof(LocalTimeZone));
-
 		if (storage.Contains(nameof(Application)) && Application is IPersistable appPers)
 			appPers.Load(storage, nameof(Application));
 	}
@@ -314,9 +310,6 @@ public class LogManager : Disposable, IPersistable
 		storage.SetValue(nameof(FlushInterval), FlushInterval);
 		//storage.SetValue(nameof(MaxMessageCount), MaxMessageCount);
 		storage.SetValue(nameof(Listeners), Listeners.Where(l => l.CanSave).Select(l => l.SaveEntire(false)).ToArray());
-
-		if (LocalTimeZone != null)
-			storage.SetValue(nameof(LocalTimeZone), LocalTimeZone);
 
 		if (Application is IPersistable appPers)
 			storage.SetValue(nameof(Application), appPers.Save());

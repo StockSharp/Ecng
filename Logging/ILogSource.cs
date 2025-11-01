@@ -39,7 +39,13 @@ public interface ILogSource : IDisposable
 	/// <summary>
 	/// Current time, which will be passed to the <see cref="LogMessage.Time"/>.
 	/// </summary>
+	[Obsolete("Use CurrentTimeUtc instead.")]
 	DateTimeOffset CurrentTime { get; }
+
+	/// <summary>
+	/// Current time, which will be passed to the <see cref="LogMessage.TimeUtc"/>.
+	/// </summary>
+	DateTime CurrentTimeUtc { get; }
 
 	/// <summary>
 	/// Whether the source is the root (even if <see cref="ILogSource.Parent"/> is not equal to <see langword="null" />).
@@ -137,7 +143,12 @@ public abstract class BaseLogSource : Disposable, ILogSource, IPersistable
 
 	/// <inheritdoc />
 	[Browsable(false)]
-	public virtual DateTimeOffset CurrentTime => TimeHelper.NowWithOffset;
+	[Obsolete("Use CurrentTimeUtc instead.")]
+	public virtual DateTimeOffset CurrentTime => CurrentTimeUtc;
+
+	/// <inheritdoc />
+	[Browsable(false)]
+	public virtual DateTime CurrentTimeUtc => TimeHelper.Now;
 
 	/// <inheritdoc />
 	[Browsable(false)]

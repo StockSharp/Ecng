@@ -14,8 +14,10 @@ public class FileLogListenerTests
 		public ILogSource Parent { get; set; }
 		public event Action<ILogSource> ParentRemoved { add { } remove { } }
 		public LogLevels LogLevel { get; set; } = LogLevels.Info;
-		public DateTimeOffset CurrentTime => DateTimeOffset.Now;
+		public DateTimeOffset CurrentTime => CurrentTimeUtc;
+		public DateTime CurrentTimeUtc => DateTime.UtcNow;
 		public bool IsRoot { get; set; }
+
 		public event Action<LogMessage> Log { add { } remove { } }
 	}
 
@@ -61,7 +63,7 @@ public class FileLogListenerTests
 
 			// create a simple message to trigger TryDoHistoryPolicy via WriteMessages
 			var src = new DummySource("test");
-			var msg = new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "m");
+			var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m");
 
 			var historyDir = Path.Combine(root, "history");
 
@@ -116,7 +118,7 @@ public class FileLogListenerTests
 			File.WriteAllText(file2, "b");
 
 			var src = new DummySource("test");
-			var msg = new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "m");
+			var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m");
 
 			// Should not throw
 			using var listener = new FileLogListener
@@ -162,7 +164,7 @@ public class FileLogListenerTests
 			})
 			{
 				var src = new DummySource("src");
-				var msg = new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "hello123");
+				var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "hello123");
 
 				listener.WriteMessages([msg]);
 			}
@@ -188,7 +190,7 @@ public class FileLogListenerTests
 			};
 
 			var src = new DummySource("s");
-			listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "m1")]);
+			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m1")]);
 
 			var todayPref = DateTime.Today.ToString("yyyy_MM_dd") + "_log" + listener.Extension;
 			var path = Path.Combine(root, todayPref);
@@ -210,7 +212,7 @@ public class FileLogListenerTests
 			};
 
 			var src = new DummySource("s");
-			listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "m2")]);
+			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m2")]);
 
 			var sub = Path.Combine(root, DateTime.Today.ToString("yyyy_MM_dd"));
 			Directory.Exists(sub).AssertTrue();
@@ -235,7 +237,7 @@ public class FileLogListenerTests
 			var src = new DummySource("s");
 			for (var i = 0; i < 200; i++)
 			{
-				listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, new string('x', 20))]);
+				listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, new string('x', 20))]);
 			}
 
 			var baseFile = Path.Combine(root, "rot" + listener.Extension);
@@ -263,7 +265,7 @@ public class FileLogListenerTests
 			})
 			{
 				var src = new DummySource("s");
-				listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "more")]);
+				listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "more")]);
 			}
 
 			var content = ReadAllText(file);
@@ -287,7 +289,7 @@ public class FileLogListenerTests
 				WriteChildDataToRootFile = true
 			};
 
-			listener.WriteMessages([new LogMessage(child, DateTimeOffset.Now, LogLevels.Info, "cmsg")]);
+			listener.WriteMessages([new LogMessage(child, DateTime.UtcNow, LogLevels.Info, "cmsg")]);
 
 			var file = Path.Combine(root, "parent" + listener.Extension);
 			File.Exists(file).AssertTrue();
@@ -307,7 +309,7 @@ public class FileLogListenerTests
 				WriteSourceId = true
 			})
 			{
-				listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "mm")]);
+				listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "mm")]);
 			}
 
 			var file = Path.Combine(root, "sid.txt");
@@ -328,7 +330,7 @@ public class FileLogListenerTests
 				Extension = ".logx"
 			};
 
-			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTimeOffset.Now, LogLevels.Info, "x")]);
+			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "x")]);
 
 			var file = Path.Combine(root, "e.logx");
 			File.Exists(file).AssertTrue();
@@ -347,7 +349,7 @@ public class FileLogListenerTests
 				FileName = bad
 			};
 
-			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTimeOffset.Now, LogLevels.Info, "z")]);
+			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "z")]);
 
 			// Expect file created with invalid chars replaced by '_'
 			var expected = new string([.. bad.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)]) + listener.Extension;
@@ -371,7 +373,7 @@ public class FileLogListenerTests
 			var old = DateTime.Today.AddDays(-2).ToString("yyyy_MM_dd") + "_log" + listener.Extension;
 			File.WriteAllText(Path.Combine(root, old), "old");
 
-			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTimeOffset.Now, LogLevels.Info, "t")]);
+			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "t")]);
 
 			File.Exists(Path.Combine(root, old)).AssertFalse();
 		});
@@ -394,7 +396,7 @@ public class FileLogListenerTests
 			var oldPath = Path.Combine(root, oldName);
 			File.WriteAllText(oldPath, "old");
 
-			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTimeOffset.Now, LogLevels.Info, "t")]);
+			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "t")]);
 
 			var zipPath = Path.Combine(root, Path.GetFileNameWithoutExtension(oldPath) + ".zip");
 			File.Exists(zipPath).AssertTrue();
@@ -421,7 +423,7 @@ public class FileLogListenerTests
 			var oldPath = Path.Combine(root, oldName);
 			File.WriteAllText(oldPath, "old");
 
-			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTimeOffset.Now, LogLevels.Info, "t")]);
+			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "t")]);
 
 			var moved = Path.Combine(history, Path.GetFileName(oldPath));
 			File.Exists(moved).AssertTrue();
@@ -449,7 +451,7 @@ public class FileLogListenerTests
 				var src = sources[i % sources.Length];
 				lock (writeLock)
 				{
-					listener.WriteMessages([new LogMessage(src, DateTimeOffset.Now, LogLevels.Info, "p" + i)]);
+					listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "p" + i)]);
 				}
 			});
 

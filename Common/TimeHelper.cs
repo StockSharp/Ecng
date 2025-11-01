@@ -16,7 +16,7 @@ public static class TimeHelper
 
 	static TimeHelper()
 	{
-		_start = DateTime.Now;
+		_start = DateTime.UtcNow;
 		_timer = Stopwatch.StartNew();
 
 		NowOffset = TimeSpan.Zero;

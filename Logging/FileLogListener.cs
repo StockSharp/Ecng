@@ -586,7 +586,7 @@ public class FileLogListener : LogListener
 
 	private void WriteMessage(TextWriter writer, LogMessage message)
 	{
-		writer.Write(ToFastDateCharArray(message.Time));
+		writer.Write(ToFastDateCharArray(ConvertToLocalTime(message.TimeUtc)));
 		writer.Write("|");
 		writer.Write("{0, -7}".Put(message.Level == LogLevels.Info ? string.Empty : message.Level.ToString()));
 		writer.Write("|");
@@ -603,7 +603,7 @@ public class FileLogListener : LogListener
 	}
 
 	// http://ramblings.markstarmer.co.uk/2011/07/efficiency-datetime-tostringstring/
-	private char[] ToFastDateCharArray(DateTimeOffset time)
+	private char[] ToFastDateCharArray(DateTime time)
 	{
 		var hasDate = SeparateByDates == SeparateByDateModes.None;
 

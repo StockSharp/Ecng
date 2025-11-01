@@ -20,7 +20,7 @@ public class LogMessage
 	/// <param name="level">The level of the log message.</param>
 	/// <param name="message">Text message.</param>
 	/// <param name="args">Text message settings. Used if a message is the format string. For details, see <see cref="string.Format(string,object[])"/>.</param>
-	public LogMessage(ILogSource source, DateTimeOffset time, LogLevels level, string message, params object[] args)
+	public LogMessage(ILogSource source, DateTime time, LogLevels level, string message, params object[] args)
 		: this(source, time, level, () => message.Put(args))
 	{
 	}
@@ -32,11 +32,11 @@ public class LogMessage
 	/// <param name="time">Message creating time.</param>
 	/// <param name="level">The level of the log message.</param>
 	/// <param name="getMessage">The function returns the text for <see cref="LogMessage.Message"/>.</param>
-	public LogMessage(ILogSource source, DateTimeOffset time, LogLevels level, Func<string> getMessage)
+	public LogMessage(ILogSource source, DateTime time, LogLevels level, Func<string> getMessage)
 	{
 		Source = source ?? throw new ArgumentNullException(nameof(source));
 		_getMessage = getMessage ?? throw new ArgumentNullException(nameof(getMessage));
-		Time = time;
+		TimeUtc = time;
 		Level = level;
 	}
 
@@ -48,7 +48,17 @@ public class LogMessage
 	/// <summary>
 	/// Message creating time.
 	/// </summary>
-	public DateTimeOffset Time { get; set; }
+	[Obsolete("Use TimeUtc instead.")]
+	public DateTimeOffset Time
+	{
+		get => TimeUtc;
+		set => TimeUtc = value.UtcDateTime;
+	}
+
+	/// <summary>
+	/// Message creating time.
+	/// </summary>
+	public DateTime TimeUtc { get; set; }
 
 	/// <summary>
 	/// The level of the log message.
@@ -93,5 +103,5 @@ public class LogMessage
 	}
 
 	/// <inheritdoc />
-	public override string ToString() => $"{Time} {Message}";
+	public override string ToString() => $"{TimeUtc} {Message}";
 }

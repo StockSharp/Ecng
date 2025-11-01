@@ -47,7 +47,7 @@ public class EmailLogListener : LogListener
 		if (message == null)
 			throw new ArgumentNullException(nameof(message));
 
-		return message.Source.Name + " " + message.Level + " " + message.Time.ToString(TimeFormat);
+		return message.Source.Name + " " + message.Level + " " + ConvertToLocalTime(message.TimeUtc).ToString(TimeFormat);
 	}
 
 	/// <summary>

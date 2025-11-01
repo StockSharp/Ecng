@@ -66,7 +66,7 @@ public class MillisecondIncrementalIdGenerator : IncrementalIdGenerator
 	/// </summary>
 	public MillisecondIncrementalIdGenerator()
 	{
-		Current = (long)(DateTime.Now - DateTime.Today).TotalMilliseconds;
+		Current = (long)(DateTime.UtcNow - DateTime.Today).TotalMilliseconds;
 	}
 }
 
@@ -111,7 +111,7 @@ public class MillisecondIdGenerator : IdGenerator
 	/// </summary>
 	public MillisecondIdGenerator()
 	{
-		_start = DateTime.Now;
+		_start = DateTime.UtcNow;
 	}
 
 	/// <summary>
@@ -120,7 +120,7 @@ public class MillisecondIdGenerator : IdGenerator
 	/// <returns>The number of milliseconds elapsed.</returns>
 	public override long GetNextId()
 	{
-		return (long)(DateTime.Now - _start).TotalMilliseconds;
+		return (long)(DateTime.UtcNow - _start).TotalMilliseconds;
 	}
 }
 
