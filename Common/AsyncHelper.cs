@@ -533,4 +533,13 @@ public static class AsyncHelper
 	/// <returns>A configured awaitable for the value task.</returns>
 	public static ConfiguredValueTaskAwaitable<T> NoWait<T>(this ValueTask<T> task)
 		=> task.ConfigureAwait(false);
+
+	/// <summary>
+	/// Configures the awaiter for the specified <see cref="IAsyncEnumerable{T}"/> to not capture the current synchronization context.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements in the asynchronous enumerable.</typeparam>
+	/// <param name="enumerable">The asynchronous enumerable to configure.</param>
+	/// <returns>A configured cancellable asynchronous enumerable.</returns>
+	public static ConfiguredCancelableAsyncEnumerable<T> NoWait<T>(this IAsyncEnumerable<T> enumerable)
+		=> enumerable.ConfigureAwait(false);
 }
