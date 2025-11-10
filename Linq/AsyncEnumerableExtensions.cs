@@ -124,4 +124,26 @@ public static class AsyncEnumerableExtensions
 		if (group != null)
 			yield return new Grouping<TKey, TSource>(currentKey, group);
 	}
+
+	/// <summary>
+	/// Converts a synchronous <see cref="IEnumerable{T}"/> to an asynchronous <see cref="IAsyncEnumerable{T}"/>.
+	/// </summary>
+	/// <typeparam name="T">The type of the elements.</typeparam>
+	/// <param name="source">The source enumerable.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that yields items from the source sequence.</returns>
+	public static async IAsyncEnumerable<T> ToAsyncEnumerable2<T>(this IEnumerable<T> source, [EnumeratorCancellation] CancellationToken cancellationToken)
+	{
+		if (source is null)
+			throw new ArgumentNullException(nameof(source));
+
+		await Task.Yield();
+		cancellationToken.ThrowIfCancellationRequested();
+
+		foreach (var item in source)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			yield return item;
+		}
+	}
 }

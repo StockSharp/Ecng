@@ -138,4 +138,35 @@ public class AsyncEnumerableExtensionsTests : BaseTestClass
 		groups[1].Key.AssertEqual(2);
 		groups[1].Count().AssertEqual(1);
 	}
+
+	// NEW TESTS FOR ToAsyncEnumerable2
+
+	[TestMethod]
+	public async Task ToAsyncEnumerable2_Ints()
+	{
+		var source = new[] { 1, 2, 3 };
+		var arr = await source.ToAsyncEnumerable2(CancellationToken).ToArrayAsync2(CancellationToken);
+		arr.AssertEqual(source);
+	}
+
+	[TestMethod]
+	public async Task ToAsyncEnumerable2_RefType()
+	{
+		var source = new[] { new RefItem { Id = 1, Name = "a" }, new RefItem { Id = 2, Name = "b" } };
+		var list = new List<RefItem>();
+		await foreach (var item in source.ToAsyncEnumerable2(CancellationToken))
+			list.Add(item);
+		list.Count.AssertEqual(2);
+		list[0].Id.AssertEqual(1);
+		list[1].Name.AssertEqual("b");
+	}
+
+	[TestMethod]
+	public async Task ToAsyncEnumerable2_Cancel()
+	{
+		using var cts = new CancellationTokenSource();
+		cts.Cancel();
+		var asyncEnu = new[] { 1 }.ToAsyncEnumerable2(cts.Token);
+		await Assert.ThrowsExactlyAsync<OperationCanceledException>(async () => { await foreach (var _ in asyncEnu) { } });
+	}
 }
