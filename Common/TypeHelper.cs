@@ -205,6 +205,7 @@ public static class TypeHelper
 	/// </summary>
 	/// <typeparam name="TEntity">The type to instantiate.</typeparam>
 	/// <returns>Returns the newly created uninitialized instance.</returns>
+	[Obsolete]
 	public static TEntity CreateUnitialized<TEntity>()
 	{
 		return (TEntity)typeof(TEntity).CreateUnitialized();
@@ -215,11 +216,9 @@ public static class TypeHelper
 	/// </summary>
 	/// <param name="type">The type to instantiate.</param>
 	/// <returns>Returns the newly created uninitialized instance.</returns>
+	[Obsolete]
 	public static object CreateUnitialized(this Type type)
 	{
-		if (type is null)
-			throw new ArgumentNullException(nameof(type));
-
 		return FormatterServices.GetUninitializedObject(type);
 	}
 

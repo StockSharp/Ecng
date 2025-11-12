@@ -867,21 +867,6 @@ public class CollectionHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void ToDictionary_FromKeyValuePairs()
-	{
-		// Arrange
-		var pairs = new[] { new KeyValuePair<int, string>(1, "one"), new KeyValuePair<int, string>(2, "two") };
-
-		// Act
-		var dict = CollectionHelper.ToDictionary(pairs);
-
-		// Assert
-		dict.Count.AssertEqual(2);
-		dict[1].AssertEqual("one");
-		dict[2].AssertEqual("two");
-	}
-
-	[TestMethod]
 	public void ToDictionary_FromTuples()
 	{
 		// Arrange

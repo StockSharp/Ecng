@@ -678,7 +678,14 @@ public static class SpanExtensions
 		if (size == 0)
 			return;
 
-		MemoryMarshal.Write(span.Slice(position, size), ref value);
+		MemoryMarshal.Write(span.Slice(position, size),
+#if NET8_0_OR_GREATER
+			in
+#else
+			ref
+#endif
+		value);
+
 		position += size;
 	}
 
@@ -705,7 +712,13 @@ public static class SpanExtensions
 
 		for (var i = 0; i < array.Length; i++)
 		{
-			MemoryMarshal.Write(targetSpan.Slice(i * elementSize, elementSize), ref array[i]);
+			MemoryMarshal.Write(targetSpan.Slice(i * elementSize, elementSize),
+#if NET8_0_OR_GREATER
+			in
+#else
+			ref
+#endif
+			array[i]);
 		}
 
 		position += totalSize;

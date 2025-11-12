@@ -614,8 +614,8 @@ public static class IOHelper
 	{
 		var b = new byte[2048];
 
-		using (var s = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-			s.Read(b, 0, b.Length);
+		using (var s = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+			s.ReadBytes(b, b.Length);
 
 		const int peHeaderOffset = 60;
 		const int linkerTimestampOffset = 8;

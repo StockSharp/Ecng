@@ -53,14 +53,6 @@ public class ArrayHelperTests
 	}
 
 	[TestMethod]
-	public void ReverseArray()
-	{
-		var arr = new[] { 1, 2, 3 };
-		var rev = arr.Reverse();
-		rev.AssertEqual([3, 2, 1]);
-	}
-
-	[TestMethod]
 	public void ConcatArrays()
 	{
 		var a = new[] { 1, 2 };

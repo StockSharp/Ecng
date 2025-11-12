@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// Utility class for common array operations.
@@ -107,6 +108,7 @@ public static class ArrayHelper
 		return (T[])array.Clone();
 	}
 
+#if !NET8_0_OR_GREATER
 	/// <summary>
 	/// Returns a reversed copy of the specified array.
 	/// </summary>
@@ -116,13 +118,9 @@ public static class ArrayHelper
 	/// <exception cref="ArgumentNullException">Thrown when the array is null.</exception>
 	public static T[] Reverse<T>(this T[] array)
 	{
-		if (array is null)
-			throw new ArgumentNullException(nameof(array));
-
-		var clone = (T[])array.Clone();
-		Array.Reverse(clone);
-		return clone;
+		return [.. Enumerable.Reverse(array)];
 	}
+#endif
 
 	/// <summary>
 	/// Concatenates two arrays into a single new array.

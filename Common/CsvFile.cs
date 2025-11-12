@@ -360,7 +360,7 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 			{
 				await _writer.WriteAsync(Delimiter.ToString()
 #if NET7_0_OR_GREATER
-					, cancellationToken
+					.AsMemory(), cancellationToken
 #else
 #endif
 				).NoWait();
@@ -368,7 +368,7 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 
 			await _writer.WriteAsync(Encode(c ?? string.Empty)
 #if NET7_0_OR_GREATER
-			, cancellationToken
+				.AsMemory(), cancellationToken
 #else
 #endif
 			).NoWait();

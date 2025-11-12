@@ -788,6 +788,7 @@ public static class CollectionHelper
 		return dictionary.Cast<DictionaryEntry>().ToDictionary(item => item.Key.To<TKey>(), item => item.Value.To<TValue>());
 	}
 
+#if NET8_0_OR_GREATER == false
 	/// <summary>
 	/// Converts a sequence of key-value pairs to a dictionary using the default equality comparer.
 	/// </summary>
@@ -799,6 +800,7 @@ public static class CollectionHelper
 	{
 		return source.ToDictionary(pair => pair.Key, pair => pair.Value);
 	}
+#endif
 
 	/// <summary>
 	/// Converts a sequence of key-value pairs to a dictionary with a specified equality comparer.
