@@ -5,7 +5,6 @@
     <MicrosoftAspNetWebApiClientVer>6.*</MicrosoftAspNetWebApiClientVer>
 
     <MsExtensionsVer>8.*</MsExtensionsVer>
-    <CSharpVer>4.7.0</CSharpVer>
     <MsTestVer>4.*</MsTestVer>
     <MsTestSdkVer>17.*</MsTestSdkVer>
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
