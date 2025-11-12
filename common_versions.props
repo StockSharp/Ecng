@@ -1,10 +1,17 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('netstandard')) OR $(TargetFramework.StartsWith('net6'))">
     <LangVersion>12.0</LangVersion>
+    <MsExtensionsVer>8.*</MsExtensionsVer>
+  </PropertyGroup>
 
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net10'))">
+    <LangVersion>14.0</LangVersion>
+    <MsExtensionsVer>10.*</MsExtensionsVer>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <MicrosoftAspNetWebApiClientVer>6.*</MicrosoftAspNetWebApiClientVer>
 
-    <MsExtensionsVer>8.*</MsExtensionsVer>
     <MsTestVer>4.*</MsTestVer>
     <MsTestSdkVer>17.*</MsTestSdkVer>
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>

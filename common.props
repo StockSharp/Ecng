@@ -2,7 +2,7 @@
   <Import Project="common_versions.props" />
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net6.0;net10.0</TargetFrameworks>
 
     <AssemblyTitle>Ecng.$(MSBuildProjectName)</AssemblyTitle>
     <Product>Ecng system framework</Product>
@@ -17,7 +17,13 @@
   <PropertyGroup Condition="
         '$(MSBuildProjectName)' == 'Interop.Windows'
       ">
-    <TargetFrameworks>net6.0-windows</TargetFrameworks>
+    <TargetFrameworks>net6.0-windows;net10.0-windows</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="
+        '$(MSBuildProjectName)' == 'Tests'
+      ">
+    <TargetFrameworks>net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup Condition="
@@ -25,7 +31,7 @@
         $(MSBuildProjectName.StartsWith('Compilation')) or
         '$(MSBuildProjectName)' == 'Nuget'
       ">
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup Condition="
