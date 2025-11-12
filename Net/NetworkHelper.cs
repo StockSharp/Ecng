@@ -228,7 +228,11 @@ public static class NetworkHelper
 			ssl.AuthenticateAsClient(targetHost);
 		else
 		{
+#if NET8_0_OR_GREATER
+			var cert = X509CertificateLoader.LoadPkcs12FromFile(sslCertificate, sslCertificatePassword.UnSecure());
+#else
 			var cert = new X509Certificate2(sslCertificate, sslCertificatePassword);
+#endif
 			ssl.AuthenticateAsClient(targetHost, [cert], sslProtocol, checkCertificateRevocation);
 		}
 
