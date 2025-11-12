@@ -6,11 +6,11 @@
 
     <MsExtensionsVer>8.*</MsExtensionsVer>
     <CSharpVer>4.7.0</CSharpVer>
-    <MsTestVer>3.*</MsTestVer>
+    <MsTestVer>4.*</MsTestVer>
     <MsTestSdkVer>17.*</MsTestSdkVer>
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
-    <NewtonJsonVer>13.0.1</NewtonJsonVer>
-    <RestSharpVer>112.0.0</RestSharpVer>
+    <NewtonJsonVer>13.*</NewtonJsonVer>
+    <RestSharpVer>112.*</RestSharpVer>
     <NDdeVer>4.0.0</NDdeVer>
     <linq2dbVer>5.2.2</linq2dbVer>
     <NitoVer>5.1.2</NitoVer>
@@ -19,10 +19,10 @@
     <FSharpVer>43.*</FSharpVer>
     <AzureStorageBlobsVer>12.*</AzureStorageBlobsVer>
     <AWSSDKVer>4.*</AWSSDKVer>
-    <IronPythonVer>3.4.2</IronPythonVer>
+    <IronPythonVer>3.*</IronPythonVer>
     <NuGetApiVer>6.14.0</NuGetApiVer>
 
-    <MicrosoftCodeAnalysisVer>4.12.0</MicrosoftCodeAnalysisVer>
-    <MicrosoftCodeAnalysisAnalyzersVer>3.3.4</MicrosoftCodeAnalysisAnalyzersVer>
+    <MicrosoftCodeAnalysisVer>4.*</MicrosoftCodeAnalysisVer>
+    <MicrosoftCodeAnalysisAnalyzersVer>3.*</MicrosoftCodeAnalysisAnalyzersVer>
   </PropertyGroup>
 </Project>
