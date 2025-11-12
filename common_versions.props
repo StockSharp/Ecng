@@ -2,18 +2,26 @@
   <PropertyGroup Condition="$(TargetFramework.StartsWith('netstandard')) OR $(TargetFramework.StartsWith('net6'))">
     <LangVersion>12.0</LangVersion>
     <MsExtensionsVer>8.*</MsExtensionsVer>
+    <MicrosoftCodeAnalysisVer>4.12.0</MicrosoftCodeAnalysisVer>
+    <MicrosoftCodeAnalysisAnalyzersVer>3.3.4</MicrosoftCodeAnalysisAnalyzersVer>
+    <FSharpVer>43.9.300</FSharpVer>
+    <MsTestVer>3.11.1</MsTestVer>
+    <MsTestSdkVer>17.13.0</MsTestSdkVer>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(TargetFramework.StartsWith('net10'))">
     <LangVersion>14.0</LangVersion>
     <MsExtensionsVer>10.*</MsExtensionsVer>
+    <MicrosoftCodeAnalysisVer>4.*</MicrosoftCodeAnalysisVer>
+    <MicrosoftCodeAnalysisAnalyzersVer>3.*</MicrosoftCodeAnalysisAnalyzersVer>
+    <FSharpVer>43.*</FSharpVer>
+    <MsTestVer>4.*</MsTestVer>
+    <MsTestSdkVer>18.*</MsTestSdkVer>
   </PropertyGroup>
 
   <PropertyGroup>
     <MicrosoftAspNetWebApiClientVer>6.*</MicrosoftAspNetWebApiClientVer>
 
-    <MsTestVer>4.*</MsTestVer>
-    <MsTestSdkVer>17.*</MsTestSdkVer>
     <SystemReflectionEmitLightweightVer>4.7.0</SystemReflectionEmitLightweightVer>
     <NewtonJsonVer>13.*</NewtonJsonVer>
     <RestSharpVer>112.*</RestSharpVer>
@@ -22,13 +30,9 @@
     <NitoVer>5.1.2</NitoVer>
     <CsWin32Ver>0.3.106</CsWin32Ver>
     <WmiLightVer>6.5.2</WmiLightVer>
-    <FSharpVer>43.*</FSharpVer>
     <AzureStorageBlobsVer>12.*</AzureStorageBlobsVer>
     <AWSSDKVer>4.*</AWSSDKVer>
     <IronPythonVer>3.*</IronPythonVer>
     <NuGetApiVer>6.14.0</NuGetApiVer>
-
-    <MicrosoftCodeAnalysisVer>4.*</MicrosoftCodeAnalysisVer>
-    <MicrosoftCodeAnalysisAnalyzersVer>3.*</MicrosoftCodeAnalysisAnalyzersVer>
   </PropertyGroup>
 </Project>
