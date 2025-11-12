@@ -74,6 +74,7 @@ public class CryptoAlgorithm : Disposable
 
 	#region Public Constants
 
+#if NET10_0_OR_GREATER == false
 	/// <summary>
 	/// The default symmetric algorithm name.
 	/// </summary>
@@ -88,6 +89,7 @@ public class CryptoAlgorithm : Disposable
 	/// The default hash algorithm name.
 	/// </summary>
 	public const string DefaultHashAlgoName = "SHA256";
+#endif
 
 	#endregion
 
@@ -99,7 +101,11 @@ public class CryptoAlgorithm : Disposable
 	/// <param name="publicKey">The public key.</param>
 	/// <returns>The asymmetric cryptographer.</returns>
 	public static CryptoAlgorithm CreateAsymmetricVerifier(byte[] publicKey)
+#if NET10_0_OR_GREATER
+		=> new(new AsymmetricCryptographer(RSA.Create(), publicKey));
+#else
 		=> new(new AsymmetricCryptographer(AsymmetricAlgorithm.Create(DefaultAsymmetricAlgoName), publicKey));
+#endif
 
 	/// <summary>
 	/// Creates a symmetric cryptographer.
@@ -109,6 +115,15 @@ public class CryptoAlgorithm : Disposable
 	/// <returns><see cref="CryptoAlgorithm"/></returns>
 	public static CryptoAlgorithm Create(AlgorithmTypes type, params byte[][] keys)
 	{
+#if NET10_0_OR_GREATER
+		return type switch
+		{
+			AlgorithmTypes.Symmetric => new(new SymmetricCryptographer(Aes.Create(), keys[0])),
+			AlgorithmTypes.Asymmetric => new(new AsymmetricCryptographer(RSA.Create(), keys[0], keys[1])),
+			AlgorithmTypes.Hash => new(keys.Length == 0 ? new HashCryptographer(SHA256.Create()) : new HashCryptographer(SHA256.Create(), keys[0])),
+			_ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown type."),
+		};
+#else
 		return type switch
 		{
 			AlgorithmTypes.Symmetric => new(new SymmetricCryptographer(SymmetricAlgorithm.Create(DefaultSymmetricAlgoName), keys[0])),
@@ -116,6 +131,7 @@ public class CryptoAlgorithm : Disposable
 			AlgorithmTypes.Hash => new(keys.Length == 0 ? new HashCryptographer(HashAlgorithm.Create(DefaultHashAlgoName)) : new HashCryptographer(HashAlgorithm.Create(DefaultHashAlgoName), keys[0])),
 			_ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown type."),
 		};
+#endif
 	}
 
 	#endregion

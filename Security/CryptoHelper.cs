@@ -163,9 +163,12 @@ public static class CryptoHelper
 		if (iv?.Length > 16)
 			iv = [.. iv.Take(16)];
 
+#if NET10_0_OR_GREATER
+		var keyBytes = Rfc2898DeriveBytes.Pbkdf2(passPhrase, salt, _derivationIterations, HashAlgorithmName.SHA1, _keySize / 8);
+#else
 		using var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations);
-
 		var keyBytes = password.GetBytes(_keySize / 8);
+#endif
 
 		using var symmetricKey = CreateRijndaelManaged();
 
@@ -218,9 +221,12 @@ public static class CryptoHelper
 		if (iv?.Length > 16)
 			iv = [.. iv.Take(16)];
 
+#if NET10_0_OR_GREATER
+		var keyBytes = Rfc2898DeriveBytes.Pbkdf2(passPhrase, salt, _derivationIterations, HashAlgorithmName.SHA1, _keySize / 8);
+#else
 		using var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations);
-
 		var keyBytes = password.GetBytes(_keySize / 8);
+#endif
 
 		using var symmetricKey = CreateRijndaelManaged();
 
@@ -239,9 +245,12 @@ public static class CryptoHelper
 		if (passPhrase.IsEmpty())
 			throw new ArgumentNullException(nameof(passPhrase));
 
+#if NET10_0_OR_GREATER
+		var keyBytes = Rfc2898DeriveBytes.Pbkdf2(passPhrase, salt, _derivationIterations, HashAlgorithmName.SHA1, _keySize / 8);
+#else
 		using var password = new Rfc2898DeriveBytes(passPhrase, salt, _derivationIterations);
-
 		var keyBytes = password.GetBytes(_keySize / 8);
+#endif
 
 		using var aes = Aes.Create();
 
