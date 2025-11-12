@@ -1,5 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
+  <ItemGroup>
+    <PackageReference Include="MegaApiClient" Version="1.*" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Backup\Backup.csproj" />
   </ItemGroup>
