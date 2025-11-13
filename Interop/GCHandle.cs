@@ -1,3 +1,4 @@
+#if NET10_0_OR_GREATER == false
 namespace Ecng.Interop;
 
 using System;
@@ -67,3 +68,4 @@ public class GCHandle<T>(GCHandle handle) : Wrapper<GCHandle>(handle)
 		throw new NotSupportedException();
 	}
 }
+#endif
