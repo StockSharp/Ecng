@@ -19,7 +19,7 @@ public class AsymmetricCryptographer : Disposable
 
 		private static AsymmetricAlgorithm CreateAlgo(AsymmetricAlgorithm algorithm, byte[] key)
 		{
-			if (algorithm is RSACryptoServiceProvider rsa)
+			if (algorithm is RSA rsa)
 				rsa.ImportParameters(key.ToRsa());
 
 			return algorithm;
@@ -27,58 +27,74 @@ public class AsymmetricCryptographer : Disposable
 
 		public byte[] Encrypt(byte[] plainText)
 		{
-			if (Value is RSACryptoServiceProvider rsa)
-				return rsa.Encrypt(plainText, false);
+			if (Value is RSA rsa)
+				return rsa.Encrypt(plainText, RSAEncryptionPadding.Pkcs1);
 
-			throw new NotSupportedException();
+			throw new NotSupportedException($"Encryption is not supported for algorithm type {Value.GetType().Name}");
 		}
 
 		public byte[] Decrypt(byte[] encryptedText)
 		{
-			if (Value is RSACryptoServiceProvider rsa)
-				return rsa.Decrypt(encryptedText, false);
+			if (Value is RSA rsa)
+				return rsa.Decrypt(encryptedText, RSAEncryptionPadding.Pkcs1);
 
-			throw new NotSupportedException();
+			throw new NotSupportedException($"Decryption is not supported for algorithm type {Value.GetType().Name}");
 		}
 
 		public byte[] CreateSignature(byte[] data, Func<HashAlgorithm> createHash)
 		{
-			if (Value is RSACryptoServiceProvider rsa)
+			if (Value is RSA rsa)
 			{
 				if (createHash is null)
 					throw new ArgumentNullException(nameof(createHash));
 
 				using HashAlgorithm hash = createHash();
-				return rsa.SignData(data, hash);
+				var hashAlgoName = hash switch
+				{
+					SHA256 => HashAlgorithmName.SHA256,
+					SHA384 => HashAlgorithmName.SHA384,
+					SHA512 => HashAlgorithmName.SHA512,
+					SHA1 => HashAlgorithmName.SHA1,
+					MD5 => HashAlgorithmName.MD5,
+					_ => throw new NotSupportedException($"Hash algorithm {hash.GetType().Name} is not supported")
+				};
+
+				return rsa.SignData(data, hashAlgoName, RSASignaturePadding.Pkcs1);
 			}
 			else if (Value is DSACryptoServiceProvider dsa)
 				return dsa.SignData(data);
 			else
-				throw new NotSupportedException();
+				throw new NotSupportedException($"Signature creation is not supported for algorithm type {Value.GetType().Name}");
 		}
 
 		public bool VerifySignature(byte[] data, byte[] signature)
 		{
-			if (Value is RSACryptoServiceProvider rsa)
+			if (Value is RSA rsa)
 			{
+				// Try SHA256 first (most common)
 				try
 				{
-					using var sha256 = SHA256.Create();
-
-					if (rsa.VerifyData(data, sha256, signature))
+					if (rsa.VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
 						return true;
 				}
 				catch
 				{
 				}
 
-				using var sha1 = SHA1.Create();
-				return rsa.VerifyData(data, sha1, signature);
+				// Fallback to SHA1 for backward compatibility
+				try
+				{
+					return rsa.VerifyData(data, signature, HashAlgorithmName.SHA1, RSASignaturePadding.Pkcs1);
+				}
+				catch
+				{
+					return false;
+				}
 			}
-			else if (Value is DSACryptoServiceProvider dsa)
+			else if (Value is DSA dsa)
 				return dsa.VerifySignature(data, signature);
 			else
-				throw new NotSupportedException();
+				throw new NotSupportedException($"Signature verification is not supported for algorithm type {Value.GetType().Name}");
 		}
 
 		public override Wrapper<AsymmetricAlgorithm> Clone()
