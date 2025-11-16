@@ -998,6 +998,9 @@ public static class IOHelper
 	/// </summary>
 	/// <param name="stream">The MemoryStream to retrieve the buffer from.</param>
 	/// <returns>An ArraySegment containing the actual data from the MemoryStream.</returns>
+#if !NETSTANDARD2_0
+	[Obsolete("Use Span/Memory overloads instead.")]
+#endif
 	public static ArraySegment<byte> GetActualBuffer(this MemoryStream stream)
 	{
 		if (stream is null)
