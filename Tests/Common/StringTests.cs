@@ -541,4 +541,131 @@ public class StringTests : BaseTestClass
 		arr.ToString(2).AssertEqual("ab");
 		arr.ToString((uint)2).AssertEqual("ab");
 	}
+
+	[TestMethod]
+	public void Span_UTF8_Encoding_And_Decoding()
+	{
+		var str = "Hello World";
+
+		// String to bytes
+		var bytes = str.UTF8();
+
+		// Bytes to string via ReadOnlySpan
+		ReadOnlySpan<byte> byteSpan = bytes;
+		byteSpan.UTF8().AssertEqual(str);
+
+		// Encoding to destination span
+		ReadOnlySpan<char> charSpan = str.ToCharArray();
+		Span<byte> destination = new byte[100];
+		var count = charSpan.UTF8(destination);
+		count.AssertEqual(bytes.Length);
+		destination.Slice(0, count).ToArray().AssertEqual(bytes);
+	}
+
+	[TestMethod]
+	public void Span_ASCII_Encoding_And_Decoding()
+	{
+		var str = "Hello";
+
+		// String to bytes
+		var bytes = str.ASCII();
+
+		// Bytes to string via ReadOnlySpan
+		ReadOnlySpan<byte> byteSpan = bytes;
+		byteSpan.ASCII().AssertEqual(str);
+
+		// Encoding to destination span
+		ReadOnlySpan<char> charSpan = str.ToCharArray();
+		Span<byte> destination = new byte[100];
+		var count = charSpan.ASCII(destination);
+		count.AssertEqual(bytes.Length);
+		destination.Slice(0, count).ToArray().AssertEqual(bytes);
+	}
+
+	[TestMethod]
+	public void Span_Unicode_Encoding_And_Decoding()
+	{
+		var str = "Hello";
+
+		// String to bytes
+		var bytes = str.Unicode();
+
+		// Bytes to string via ReadOnlySpan
+		ReadOnlySpan<byte> byteSpan = bytes;
+		byteSpan.Unicode().AssertEqual(str);
+
+		// Encoding to destination span
+		ReadOnlySpan<char> charSpan = str.ToCharArray();
+		Span<byte> destination = new byte[100];
+		var count = charSpan.Unicode(destination);
+		count.AssertEqual(bytes.Length);
+		destination.Slice(0, count).ToArray().AssertEqual(bytes);
+	}
+
+	[TestMethod]
+	public void Span_Default_Encoding_And_Decoding()
+	{
+		var str = "Hello";
+
+		// String to bytes
+		var bytes = str.Default();
+
+		// Bytes to string via ReadOnlySpan
+		ReadOnlySpan<byte> byteSpan = bytes;
+		byteSpan.Default().AssertEqual(str);
+
+		// Encoding to destination span
+		ReadOnlySpan<char> charSpan = str.ToCharArray();
+		Span<byte> destination = new byte[100];
+		var count = charSpan.Default(destination);
+		count.AssertEqual(bytes.Length);
+		destination.Slice(0, count).ToArray().AssertEqual(bytes);
+	}
+
+	[TestMethod]
+	public void Span_Cyrillic_Encoding_And_Decoding()
+	{
+		var str = "Hello";
+
+		// String to bytes
+		var bytes = str.Cyrillic();
+
+		// Bytes to string via ReadOnlySpan
+		ReadOnlySpan<byte> byteSpan = bytes;
+		byteSpan.Cyrillic().AssertEqual(str);
+
+		// Encoding to destination span
+		ReadOnlySpan<char> charSpan = str.ToCharArray();
+		Span<byte> destination = new byte[100];
+		var count = charSpan.Cyrillic(destination);
+		count.AssertEqual(bytes.Length);
+		destination.Slice(0, count).ToArray().AssertEqual(bytes);
+	}
+
+	[TestMethod]
+	public void Span_RussianText_UTF8()
+	{
+		var str = "Привет мир";
+
+		// String to bytes
+		var bytes = str.UTF8();
+
+		// Bytes to string via ReadOnlySpan
+		ReadOnlySpan<byte> byteSpan = bytes;
+		byteSpan.UTF8().AssertEqual(str);
+	}
+
+	[TestMethod]
+	public void Span_EmptyString_Encoding()
+	{
+		var str = "";
+
+		// UTF8
+		ReadOnlySpan<byte> utf8Bytes = str.UTF8();
+		utf8Bytes.UTF8().AssertEqual(str);
+
+		// ASCII
+		ReadOnlySpan<byte> asciiBytes = str.ASCII();
+		asciiBytes.ASCII().AssertEqual(str);
+	}
 }

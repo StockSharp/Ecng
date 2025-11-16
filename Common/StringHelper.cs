@@ -1494,6 +1494,7 @@ public static class StringHelper
 	/// </summary>
 	/// <param name="v">The ArraySegment of bytes.</param>
 	/// <returns>The decoded string.</returns>
+	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
 	public static string Default(this ArraySegment<byte> v) => v.Array.Default(v.Offset, v.Count);
 	/// <summary>
 	/// Gets the string from a byte array using the default encoding with a specified count.
@@ -1530,6 +1531,7 @@ public static class StringHelper
 	/// </summary>
 	/// <param name="v">The ArraySegment of bytes.</param>
 	/// <returns>The decoded string.</returns>
+	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
 	public static string ASCII(this ArraySegment<byte> v) => v.Array.ASCII(v.Offset, v.Count);
 	/// <summary>
 	/// Gets the string from a byte array using ASCII encoding with a specified count.
@@ -1566,6 +1568,7 @@ public static class StringHelper
 	/// </summary>
 	/// <param name="v">The ArraySegment of bytes.</param>
 	/// <returns>The decoded string.</returns>
+	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
 	public static string UTF8(this ArraySegment<byte> v) => v.Array.UTF8(v.Offset, v.Count);
 	/// <summary>
 	/// Gets the string from a byte array using UTF8 encoding with a specified count.
@@ -1602,6 +1605,7 @@ public static class StringHelper
 	/// </summary>
 	/// <param name="v">The ArraySegment of bytes.</param>
 	/// <returns>The decoded string.</returns>
+	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
 	public static string Unicode(this ArraySegment<byte> v) => v.Array.Unicode(v.Offset, v.Count);
 	/// <summary>
 	/// Gets the string from a byte array using Unicode encoding with a specified count.
@@ -1638,6 +1642,7 @@ public static class StringHelper
 	/// </summary>
 	/// <param name="v">The ArraySegment of bytes.</param>
 	/// <returns>The decoded string.</returns>
+	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
 	public static string Cyrillic(this ArraySegment<byte> v) => v.Array.Cyrillic(v.Offset, v.Count);
 	/// <summary>
 	/// Gets the string from a byte array using Windows Cyrillic encoding with a specified count.
@@ -1674,6 +1679,7 @@ public static class StringHelper
 	/// </summary>
 	/// <param name="v">The ArraySegment of bytes.</param>
 	/// <returns>The decoded hexadecimal string.</returns>
+	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
 	public static string Hex(this ArraySegment<byte> v) => v.Array.Hex(v.Offset, v.Count);
 	/// <summary>
 	/// Gets the string from a byte array using hexadecimal encoding with a specified count.
@@ -1691,8 +1697,87 @@ public static class StringHelper
 	/// <param name="encoding">The encoding to use.</param>
 	/// <param name="buffer">The ArraySegment of bytes.</param>
 	/// <returns>The decoded string.</returns>
+	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
 	public static string GetString(this Encoding encoding, ArraySegment<byte> buffer)
 		=> encoding.CheckOnNull(nameof(encoding)).GetString(buffer.Array, buffer.Offset, buffer.Count);
+
+#if !NETSTANDARD2_0
+	/// <summary>
+	/// Gets the string from a span of bytes using UTF8 encoding.
+	/// </summary>
+	/// <param name="v">The span of bytes.</param>
+	/// <returns>The UTF8 decoded string.</returns>
+	public static string UTF8(this ReadOnlySpan<byte> v) => Encoding.UTF8.GetString(v);
+
+	/// <summary>
+	/// Encodes a span of characters into a span of bytes using UTF8 encoding.
+	/// </summary>
+	/// <param name="v">The span of characters to encode.</param>
+	/// <param name="destination">The destination span to write the encoded bytes.</param>
+	/// <returns>The number of bytes written to the destination.</returns>
+	public static int UTF8(this ReadOnlySpan<char> v, Span<byte> destination) => Encoding.UTF8.GetBytes(v, destination);
+
+	/// <summary>
+	/// Gets the string from a span of bytes using ASCII encoding.
+	/// </summary>
+	/// <param name="v">The span of bytes.</param>
+	/// <returns>The ASCII decoded string.</returns>
+	public static string ASCII(this ReadOnlySpan<byte> v) => Encoding.ASCII.GetString(v);
+
+	/// <summary>
+	/// Encodes a span of characters into a span of bytes using ASCII encoding.
+	/// </summary>
+	/// <param name="v">The span of characters to encode.</param>
+	/// <param name="destination">The destination span to write the encoded bytes.</param>
+	/// <returns>The number of bytes written to the destination.</returns>
+	public static int ASCII(this ReadOnlySpan<char> v, Span<byte> destination) => Encoding.ASCII.GetBytes(v, destination);
+
+	/// <summary>
+	/// Gets the string from a span of bytes using Unicode encoding.
+	/// </summary>
+	/// <param name="v">The span of bytes.</param>
+	/// <returns>The Unicode decoded string.</returns>
+	public static string Unicode(this ReadOnlySpan<byte> v) => Encoding.Unicode.GetString(v);
+
+	/// <summary>
+	/// Encodes a span of characters into a span of bytes using Unicode encoding.
+	/// </summary>
+	/// <param name="v">The span of characters to encode.</param>
+	/// <param name="destination">The destination span to write the encoded bytes.</param>
+	/// <returns>The number of bytes written to the destination.</returns>
+	public static int Unicode(this ReadOnlySpan<char> v, Span<byte> destination) => Encoding.Unicode.GetBytes(v, destination);
+
+	/// <summary>
+	/// Gets the string from a span of bytes using the default encoding.
+	/// </summary>
+	/// <param name="v">The span of bytes.</param>
+	/// <returns>The decoded string.</returns>
+	public static string Default(this ReadOnlySpan<byte> v) => Encoding.Default.GetString(v);
+
+	/// <summary>
+	/// Encodes a span of characters into a span of bytes using the default encoding.
+	/// </summary>
+	/// <param name="v">The span of characters to encode.</param>
+	/// <param name="destination">The destination span to write the encoded bytes.</param>
+	/// <returns>The number of bytes written to the destination.</returns>
+	public static int Default(this ReadOnlySpan<char> v, Span<byte> destination) => Encoding.Default.GetBytes(v, destination);
+
+	/// <summary>
+	/// Gets the string from a span of bytes using Windows Cyrillic encoding.
+	/// </summary>
+	/// <param name="v">The span of bytes.</param>
+	/// <returns>The decoded string.</returns>
+	public static string Cyrillic(this ReadOnlySpan<byte> v) => WindowsCyrillic.GetString(v);
+
+	/// <summary>
+	/// Encodes a span of characters into a span of bytes using Windows Cyrillic encoding.
+	/// </summary>
+	/// <param name="v">The span of characters to encode.</param>
+	/// <param name="destination">The destination span to write the encoded bytes.</param>
+	/// <returns>The number of bytes written to the destination.</returns>
+	public static int Cyrillic(this ReadOnlySpan<char> v, Span<byte> destination) => WindowsCyrillic.GetBytes(v, destination);
+
+#endif
 
 	/// <summary>
 	/// Converts the string to a <see cref="SecureString"/>.
@@ -1768,6 +1853,7 @@ public static class StringHelper
 	/// <param name="buffer">The byte array segment.</param>
 	/// <param name="separator">The character separator between byte bits.</param>
 	/// <returns>A string representing the bits of the bytes.</returns>
+	[Obsolete("Use ReadOnlySpan<byte> overload instead for better performance.")]
 	public static string ToBitString(this ArraySegment<byte> buffer, char separator = ' ')
 		=> buffer.Array.ToBitString(buffer.Offset, buffer.Count, separator);
 
