@@ -3,6 +3,8 @@ namespace Ecng.Interop.Dde;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 
 using Ecng.Collections;
 using Ecng.Common;
@@ -16,12 +18,12 @@ using NDde.Server;
 public class XlsDdeServer(string service, Action<string, IList<IList<object>>> poke, Action<Exception> error) : DdeServer(service)
 {
 	/// <summary>
-	/// Private helper class that dispatches events on dedicated threads.
+	/// Private helper class that dispatches events on dedicated tasks.
 	/// </summary>
 	private class EventDispatcher(Action<Exception> errorHandler) : Disposable
 	{
 		private readonly Action<Exception> _errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
-		private readonly SynchronizedDictionary<string, BlockingQueue<Action>> _events = [];
+		private readonly SynchronizedDictionary<string, Channel<Action>> _events = [];
 
 		/// <summary>
 		/// Adds an event to be executed.
@@ -42,9 +44,9 @@ public class XlsDdeServer(string service, Action<string, IList<IList<object>>> p
 			if (evt is null)
 				throw new ArgumentNullException(nameof(evt));
 
-			var queue = _events.SafeAdd(syncToken, CreateNewThreadQueuePair);
+			var channel = _events.SafeAdd(syncToken, CreateNewTaskChannelPair);
 
-			queue.Enqueue(() =>
+			channel.Writer.TryWrite(() =>
 			{
 				try
 				{
@@ -57,39 +59,38 @@ public class XlsDdeServer(string service, Action<string, IList<IList<object>>> p
 			});
 		}
 
-		private static BlockingQueue<Action> CreateNewThreadQueuePair(string syncToken)
+		private static Channel<Action> CreateNewTaskChannelPair(string syncToken)
 		{
-			var queue = new BlockingQueue<Action>();
+			var channel = Channel.CreateUnbounded<Action>();
 
-			ThreadingHelper
-				.Thread(() =>
+			_ = Task.Factory.StartNew(async () =>
+			{
+				var reader = channel.Reader;
+
+				while (await reader.WaitToReadAsync().NoWait())
 				{
-					while (!queue.IsClosed)
+					while (reader.TryRead(out var evt))
 					{
-						if (!queue.TryDequeue(out var evt))
-							break;
-
 						evt();
 					}
-				})
-				.Name("EventDispatcher thread #" + syncToken)
-				.Start();
+				}
+			}, TaskCreationOptions.LongRunning);
 
-			return queue;
+			return channel;
 		}
 
 		/// <summary>
-		/// Disposes the managed resources by closing all event queues.
+		/// Disposes the managed resources by completing all event channels.
 		/// </summary>
 		protected override void DisposeManaged()
 		{
-			_events.SyncDo(d => d.ForEach(p => p.Value.Close()));
+			_events.SyncDo(d => d.ForEach(p => p.Value.Writer.Complete()));
 			base.DisposeManaged();
 		}
 	}
 
 	private readonly SyncObject _registerWait = new();
-	private Timer _adviseTimer;
+	private ControllablePeriodicTimer _adviseTimer;
 	private readonly EventDispatcher _dispather = new(error);
 	private readonly Action<string, IList<IList<object>>> _poke = poke ?? throw new ArgumentNullException(nameof(poke));
 	private readonly Action<Exception> _error = error ?? throw new ArgumentNullException(nameof(error));
@@ -105,33 +106,30 @@ public class XlsDdeServer(string service, Action<string, IList<IList<object>>> p
 
 		lock (regLock)
 		{
-			ThreadingHelper
-				.Thread(() =>
+			_ = Task.Factory.StartNew(() =>
+			{
+				try
 				{
-					try
-					{
-						Register();
-						regLock.Pulse();
+					Register();
+					regLock.Pulse();
 
-						_registerWait.Wait();
-					}
-					catch (Exception ex)
-					{
-						error = ex;
-						regLock.Pulse();
-					}
-				})
-				.Name("Dde thread")
-				.Launch();
+					_registerWait.Wait();
+				}
+				catch (Exception ex)
+				{
+					error = ex;
+					regLock.Pulse();
+				}
+			}, TaskCreationOptions.LongRunning);
 
 			Monitor.Wait(regLock);
 		}
 
 		if (error != null)
-			throw new InvalidOperationException("Ошибка запуска DDE сервера.", error);
+			throw new InvalidOperationException("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ DDE пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.", error);
 
 		// Create a timer that will be used to advise clients of new data.
-		_adviseTimer = ThreadingHelper.Timer(() =>
+		_adviseTimer = AsyncHelper.CreatePeriodicTimer(async () =>
 		{
 			try
 			{
@@ -142,8 +140,10 @@ public class XlsDdeServer(string service, Action<string, IList<IList<object>>> p
 			{
 				_error(ex);
 			}
-		})
-		.Interval(TimeSpan.FromSeconds(1));
+
+			await Task.CompletedTask;
+		});
+		_adviseTimer.Start(TimeSpan.FromSeconds(1));
 	}
 
 	/// <summary>

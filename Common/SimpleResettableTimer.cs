@@ -7,6 +7,7 @@ using System.Threading;
 /// Represents a simple timer that can be reset.
 /// When the timer period elapses without a reset, the <see cref="Elapsed"/> event is invoked.
 /// </summary>
+[Obsolete("Use Tasks instead.")]
 public class SimpleResettableTimer(TimeSpan period) : IDisposable
 {
 	private readonly SyncObject _sync = new();

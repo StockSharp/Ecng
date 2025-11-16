@@ -66,7 +66,7 @@ public class LogManager : Disposable, IPersistable
 
 	private readonly object _syncRoot = new();
 	private readonly List<LogMessage> _pendingMessages = [];
-	private readonly Timer _flushTimer;
+	private readonly ControllablePeriodicTimer _flushTimer;
 	private bool _isFlushing;
 	private readonly bool _asyncMode;
 
@@ -102,7 +102,7 @@ public class LogManager : Disposable, IPersistable
 		if (!_asyncMode)
 			return;
 
-		_flushTimer = ThreadingHelper.Timer(Flush);
+		_flushTimer = AsyncHelper.CreatePeriodicTimer(Flush);
 
 		FlushInterval = TimeSpan.FromMilliseconds(500);
 	}
@@ -211,7 +211,7 @@ public class LogManager : Disposable, IPersistable
 	/// </summary>
 	public TimeSpan FlushInterval
 	{
-		get => _flushTimer?.Interval() ?? TimeSpan.MaxValue;
+		get => _flushTimer?.Interval ?? TimeSpan.MaxValue;
 		set
 		{
 			if (!_asyncMode)
@@ -220,7 +220,10 @@ public class LogManager : Disposable, IPersistable
 			if (value < TimeSpan.FromMilliseconds(1))
 				throw new ArgumentOutOfRangeException(nameof(value), value, "Cannot be less than 1 millisecond.");
 
-			_flushTimer.Interval(value);
+			if (_flushTimer.IsRunning)
+				_flushTimer.ChangeInterval(value);
+			else
+				_flushTimer.Start(value);
 		}
 	}
 
@@ -261,7 +264,8 @@ public class LogManager : Disposable, IPersistable
 
 	private void ImmediateFlush()
 	{
-		_flushTimer.Change(TimeSpan.Zero, FlushInterval);
+		_flushTimer.Stop();
+		_flushTimer.Start(FlushInterval, TimeSpan.Zero);
 	}
 
 	/// <summary>

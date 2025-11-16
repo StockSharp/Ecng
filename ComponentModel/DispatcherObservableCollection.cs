@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 using Ecng.Collections;
 using Ecng.Common;
@@ -290,9 +291,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 			_isTimerStarted = true;
 		}
 
-		ThreadingHelper
-			.Timer(OnFlush)
-			.Interval(TimeSpan.FromMilliseconds(300), new TimeSpan(-1));
+		_ = Task.Delay(TimeSpan.FromMilliseconds(300)).ContinueWith(_ => OnFlush(), TaskScheduler.Default);
 	}
 
 	private void OnFlush()

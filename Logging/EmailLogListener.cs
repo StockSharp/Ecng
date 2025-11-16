@@ -1,21 +1,24 @@
 namespace Ecng.Logging;
 
 using System.Net.Mail;
+using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 
 /// <summary>
 /// The logger sending data to the email.
 /// </summary>
 public class EmailLogListener : LogListener
 {
-	private readonly BlockingQueue<(string subj, string body)> _queue = new();
-
-	private bool _isThreadStarted;
+	private readonly Channel<(string subj, string body)> _channel = Channel.CreateUnbounded<(string subj, string body)>();
+	private readonly Task _processingTask;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="EmailLogListener"/>.
 	/// </summary>
 	public EmailLogListener()
 	{
+		_processingTask = Task.Run(ProcessMessagesAsync);
 	}
 
 	/// <summary>
@@ -48,6 +51,37 @@ public class EmailLogListener : LogListener
 	}
 
 	/// <summary>
+	/// Processes messages from the channel asynchronously.
+	/// </summary>
+	private async Task ProcessMessagesAsync()
+	{
+		try
+		{
+			using var email = CreateClient();
+			var reader = _channel.Reader;
+
+			while (await reader.WaitToReadAsync().NoWait())
+			{
+				while (reader.TryRead(out var message))
+				{
+					try
+					{
+						email.Send(From, To, message.subj, message.body);
+					}
+					catch (Exception ex)
+					{
+						Trace.WriteLine(ex);
+					}
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			Trace.WriteLine(ex);
+		}
+	}
+
+	/// <summary>
 	/// To add a message in a queue for sending.
 	/// </summary>
 	/// <param name="message">Message.</param>
@@ -59,40 +93,7 @@ public class EmailLogListener : LogListener
 			return;
 		}
 
-		_queue.Enqueue((GetSubject(message), message.Message));
-
-		lock (_queue.SyncRoot)
-		{
-			if (_isThreadStarted)
-				return;
-
-			_isThreadStarted = true;
-
-			ThreadingHelper.Thread(() =>
-			{
-				try
-				{
-					using var email = CreateClient();
-
-					while (true)
-					{
-						if (!_queue.TryDequeue(out var m))
-							break;
-
-						email.Send(From, To, m.subj, m.body);
-					}
-				}
-				catch (Exception ex)
-				{
-					Trace.WriteLine(ex);
-				}
-				finally
-				{
-					lock (_queue.SyncRoot)
-						_isThreadStarted = false;
-				}
-			}).Name("Email log queue").Launch();
-		}
+		_channel.Writer.TryWrite((GetSubject(message), message.Message));
 	}
 
 	/// <inheritdoc />
@@ -124,7 +125,17 @@ public class EmailLogListener : LogListener
 	/// </summary>
 	protected override void DisposeManaged()
 	{
-		_queue.Close();
+		_channel.Writer.Complete();
+
+		try
+		{
+			_processingTask.Wait(TimeSpan.FromSeconds(5));
+		}
+		catch (Exception ex)
+		{
+			Trace.WriteLine(ex);
+		}
+
 		base.DisposeManaged();
 	}
 }

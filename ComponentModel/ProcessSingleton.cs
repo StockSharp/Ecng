@@ -2,6 +2,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 using Ecng.Common;
 using Ecng.Security;
@@ -69,7 +70,7 @@ public static class ProcessSingleton
 			var started = new ManualResetEvent(false);
 
 			// Mutex must be released from the same thread it was captured; launching a dedicated thread ensures correctness.
-			ThreadingHelper.Thread(() =>
+			_ = Task.Factory.StartNew(() =>
 			{
 				Mutex mutex;
 
@@ -99,9 +100,7 @@ public static class ProcessSingleton
 				{
 					_stopped.Set();
 				}
-			})
-			.Name("process_singleton")
-			.Launch();
+			}, TaskCreationOptions.LongRunning);
 
 			started.WaitOne();
 			if (error != null)

@@ -275,7 +275,7 @@ public class DelayAction : Disposable
 
 	private readonly Action<Exception> _errorHandler;
 
-	private Timer _flushTimer;
+	private ControllablePeriodicTimer _flushTimer;
 	private bool _isFlushing;
 
 	private readonly CachedSynchronizedList<IGroup> _groups = [];
@@ -312,7 +312,7 @@ public class DelayAction : Disposable
 				if (_flushTimer is null)
 					return;
 
-				_flushTimer.Interval(_flushInterval);
+				_flushTimer.ChangeInterval(_flushInterval);
 			}
 		}
 	}
@@ -372,9 +372,8 @@ public class DelayAction : Disposable
 		{
 			if (!_isFlushing && _flushTimer is null)
 			{
-				_flushTimer = ThreadingHelper
-					.TimerInvariant(OnFlush)
-					.Interval(_flushInterval);
+				_flushTimer = AsyncHelper.CreatePeriodicTimer(() => Do.Invariant(OnFlush));
+				_flushTimer.Start(_flushInterval);
 			}
 		}
 	}

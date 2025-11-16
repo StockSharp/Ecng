@@ -6,6 +6,7 @@ using System;
 /// Represents a timer that can be reset and activated repeatedly.
 /// The timer executes the Elapsed event periodically based on the specified period.
 /// </summary>
+[Obsolete("Use Tasks instead.")]
 public class ResettableTimer(TimeSpan period, string name) : Disposable
 {
 	private readonly SyncObject _sync = new();

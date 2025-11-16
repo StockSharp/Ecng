@@ -542,4 +542,185 @@ public static class AsyncHelper
 	/// <returns>A configured cancellable asynchronous enumerable.</returns>
 	public static ConfiguredCancelableAsyncEnumerable<T> NoWait<T>(this IAsyncEnumerable<T> enumerable)
 		=> enumerable.ConfigureAwait(false);
+
+	/// <summary>
+	/// Starts a periodic timer that executes the specified action at the given interval.
+	/// </summary>
+	/// <param name="handler">The action to be executed periodically.</param>
+	/// <param name="interval">The interval between timer executions.</param>
+	/// <param name="cancellationToken">Optional cancellation token to stop the timer.</param>
+	/// <returns>A Task representing the timer operation.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if handler is null.</exception>
+	public static Task StartPeriodicTimer(Action handler, TimeSpan interval, CancellationToken cancellationToken = default)
+	{
+		if (handler is null)
+			throw new ArgumentNullException(nameof(handler));
+
+		return StartPeriodicTimer(() =>
+		{
+			handler();
+			return Task.CompletedTask;
+		}, interval, cancellationToken);
+	}
+
+	/// <summary>
+	/// Starts a periodic timer that executes the specified action with one argument at the given interval.
+	/// </summary>
+	/// <typeparam name="T">The type of the argument.</typeparam>
+	/// <param name="handler">The action to be executed periodically.</param>
+	/// <param name="arg">The argument passed to the action.</param>
+	/// <param name="interval">The interval between timer executions.</param>
+	/// <param name="cancellationToken">Optional cancellation token to stop the timer.</param>
+	/// <returns>A Task representing the timer operation.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if handler is null.</exception>
+	public static Task StartPeriodicTimer<T>(Action<T> handler, T arg, TimeSpan interval, CancellationToken cancellationToken = default)
+	{
+		if (handler is null)
+			throw new ArgumentNullException(nameof(handler));
+
+		return StartPeriodicTimer(() =>
+		{
+			handler(arg);
+			return Task.CompletedTask;
+		}, interval, cancellationToken);
+	}
+
+	/// <summary>
+	/// Starts a periodic timer that executes the specified asynchronous function at the given interval.
+	/// </summary>
+	/// <param name="handler">The asynchronous function to be executed periodically.</param>
+	/// <param name="interval">The interval between timer executions.</param>
+	/// <param name="cancellationToken">Optional cancellation token to stop the timer.</param>
+	/// <returns>A Task representing the timer operation.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if handler is null.</exception>
+	public static Task StartPeriodicTimer(Func<Task> handler, TimeSpan interval, CancellationToken cancellationToken = default)
+	{
+		if (handler is null)
+			throw new ArgumentNullException(nameof(handler));
+
+		return StartPeriodicTimerCore(handler, interval, TimeSpan.Zero, cancellationToken);
+	}
+
+	/// <summary>
+	/// Starts a periodic timer that executes the specified action at the given interval with an initial delay.
+	/// </summary>
+	/// <param name="handler">The action to be executed periodically.</param>
+	/// <param name="start">The delay before the first execution.</param>
+	/// <param name="interval">The interval between timer executions.</param>
+	/// <param name="cancellationToken">Optional cancellation token to stop the timer.</param>
+	/// <returns>A Task representing the timer operation.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if handler is null.</exception>
+	public static Task StartPeriodicTimer(Action handler, TimeSpan start, TimeSpan interval, CancellationToken cancellationToken = default)
+	{
+		if (handler is null)
+			throw new ArgumentNullException(nameof(handler));
+
+		return StartPeriodicTimer(() =>
+		{
+			handler();
+			return Task.CompletedTask;
+		}, start, interval, cancellationToken);
+	}
+
+	/// <summary>
+	/// Starts a periodic timer that executes the specified asynchronous function at the given interval with an initial delay.
+	/// </summary>
+	/// <param name="handler">The asynchronous function to be executed periodically.</param>
+	/// <param name="start">The delay before the first execution.</param>
+	/// <param name="interval">The interval between timer executions.</param>
+	/// <param name="cancellationToken">Optional cancellation token to stop the timer.</param>
+	/// <returns>A Task representing the timer operation.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if handler is null.</exception>
+	public static Task StartPeriodicTimer(Func<Task> handler, TimeSpan start, TimeSpan interval, CancellationToken cancellationToken = default)
+	{
+		if (handler is null)
+			throw new ArgumentNullException(nameof(handler));
+
+		return StartPeriodicTimerCore(handler, interval, start, cancellationToken);
+	}
+
+	/// <summary>
+	/// Core implementation for the periodic timer.
+	/// </summary>
+	/// <param name="handler">The asynchronous function to be executed periodically.</param>
+	/// <param name="interval">The interval between timer executions.</param>
+	/// <param name="initialDelay">The delay before the first execution.</param>
+	/// <param name="cancellationToken">Cancellation token to stop the timer.</param>
+	/// <returns>A Task representing the timer operation.</returns>
+	private static async Task StartPeriodicTimerCore(Func<Task> handler, TimeSpan interval, TimeSpan initialDelay, CancellationToken cancellationToken)
+	{
+#if NETSTANDARD2_0
+		// Use our custom PeriodicTimer for .NET Standard 2.0
+		using var timer = new PeriodicTimer(interval);
+#else
+		// Use System.Threading.PeriodicTimer for .NET 6+
+		using var timer = new System.Threading.PeriodicTimer(interval);
+#endif
+
+		// Wait for initial delay if specified
+		if (initialDelay > TimeSpan.Zero)
+			await initialDelay.Delay(cancellationToken).NoWait();
+
+		while (!cancellationToken.IsCancellationRequested)
+		{
+			try
+			{
+				await handler().NoWait();
+			}
+			catch when (cancellationToken.IsCancellationRequested)
+			{
+				// Timer was cancelled during handler execution, exit gracefully
+				break;
+			}
+			catch
+			{
+				// Allow exceptions from handler to propagate
+				throw;
+			}
+
+			// Wait for the next tick
+			try
+			{
+				if (!await timer.WaitForNextTickAsync(cancellationToken).NoWait())
+					break;
+			}
+			catch (OperationCanceledException)
+			{
+				// Timer was cancelled, exit gracefully
+				break;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Creates a periodic timer that can be started, stopped, and have its interval changed.
+	/// </summary>
+	/// <param name="handler">The action to be executed periodically.</param>
+	/// <returns>A ControllablePeriodicTimer instance.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if handler is null.</exception>
+	public static ControllablePeriodicTimer CreatePeriodicTimer(Action handler)
+	{
+		if (handler is null)
+			throw new ArgumentNullException(nameof(handler));
+
+		return new ControllablePeriodicTimer(() =>
+		{
+			handler();
+			return Task.CompletedTask;
+		});
+	}
+
+	/// <summary>
+	/// Creates a periodic timer that can be started, stopped, and have its interval changed.
+	/// </summary>
+	/// <param name="handler">The asynchronous function to be executed periodically.</param>
+	/// <returns>A ControllablePeriodicTimer instance.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if handler is null.</exception>
+	public static ControllablePeriodicTimer CreatePeriodicTimer(Func<Task> handler)
+	{
+		if (handler is null)
+			throw new ArgumentNullException(nameof(handler));
+
+		return new ControllablePeriodicTimer(handler);
+	}
 }
