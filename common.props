@@ -29,7 +29,8 @@
   <PropertyGroup Condition="
         $(MSBuildProjectName.StartsWith('Backup')) or 
         $(MSBuildProjectName.StartsWith('Compilation')) or
-        '$(MSBuildProjectName)' == 'Nuget'
+        '$(MSBuildProjectName)' == 'Nuget' or
+        '$(MSBuildProjectName)' == 'Net.SocketIO'
       ">
     <TargetFrameworks>net6.0;net10.0</TargetFrameworks>
   </PropertyGroup>

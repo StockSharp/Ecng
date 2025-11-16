@@ -1,6 +1,8 @@
 ﻿namespace Ecng.Net;
 
 using System.Net.WebSockets;
+using System.Runtime.InteropServices;
+using System.Buffers;
 
 using Ecng.Reflection;
 using Ecng.Localization;
@@ -158,6 +160,12 @@ public class WebSocketClient : Disposable, IConnection
 	/// Occurs before processing received data.
 	/// </summary>
 	public event Func<ArraySegment<byte>, byte[], int> PreProcess;
+
+	/// <summary>
+	/// Occurs before processing received data.
+	/// Input: original buffer (<see cref="ReadOnlyMemory{T}"/>), output: destination buffer (<see cref="Memory{T}"/>) returns processed length.
+	/// </summary>
+	public event Func<ReadOnlyMemory<byte>, Memory<byte>, int> PreProcess2;
 
 	/// <summary>
 	/// Connects to the server synchronously.
@@ -318,11 +326,14 @@ public class WebSocketClient : Disposable, IConnection
 		{
 			var token = source.Token;
 
-			var buf = new byte[BufferSize];
-			var responseBody = new MemoryStream();
+			Memory<byte> recvMem = new byte[BufferSize];
+			var responseBuffer = new ArrayBufferWriter<byte>(BufferSize);
 
-			var preProcess = PreProcess;
+			var preProcess = PreProcess; // legacy
 			var preProcessBuf = preProcess != null ? new byte[BufferSizeUncompress] : null;
+
+			var preProcess2 = PreProcess2; // new Memory-based
+			var preProcess2Mem = preProcess2 != null ? new byte[BufferSizeUncompress] : Memory<byte>.Empty;
 
 			var errorCount = 0;
 
@@ -344,11 +355,11 @@ public class WebSocketClient : Disposable, IConnection
 					if (ws is null)
 						break;
 
-					WebSocketReceiveResult result;
+					ValueWebSocketReceiveResult result;
 
 					try
 					{
-						result = await ws.ReceiveAsync(new(buf), token).NoWait();
+						result = await ws.ReceiveAsync(recvMem, token).NoWait();
 					}
 					catch (Exception ex)
 					{
@@ -361,38 +372,45 @@ public class WebSocketClient : Disposable, IConnection
 						break;
 					}
 
-					if (result.CloseStatus != null)
+					if (result.MessageType == WebSocketMessageType.Close)
 					{
-						_infoLog("Socket closed with status {0}.", result.CloseStatus);
+						_infoLog("Socket closed by peer.", null);
 
 						needClose = false;
 						break;
 					}
 
-					responseBody.Write(buf, 0, result.Count);
+					responseBuffer.Write(recvMem.Span[..result.Count]);
 
 					if (!result.EndOfMessage)
 						continue;
 
-					if (responseBody.Length == 0)
+					if (responseBuffer.WrittenCount == 0)
 						continue;
-
-					var processBuf = responseBody.GetActualBuffer();
 
 					try
 					{
-						responseBody.Position = 0;
+						// Memory-based path primary
+						var roMem = responseBuffer.WrittenMemory;
 
-						if (preProcessBuf != null)
+						if (preProcess2 != null)
 						{
-							var count = preProcess(processBuf, preProcessBuf);
-							processBuf = new(preProcessBuf, 0, count);
+							var count = preProcess2(roMem, preProcess2Mem);
+							roMem = preProcess2Mem[..count];
+						}
+						else if (preProcessBuf != null && preProcess != null)
+						{
+							if (!MemoryMarshal.TryGetArray(roMem, out var seg))
+								seg = new(roMem.ToArray());
+
+							var count = preProcess(seg, preProcessBuf);
+							roMem = new(preProcessBuf, 0, count);
 						}
 
 						if (_verboseLog is not null)
-							_verboseLog("{0}", Encoding.GetString(processBuf));
+							_verboseLog("{0}", Encoding.GetString(roMem.Span));
 
-						await _process(this, new(Encoding, processBuf), token).NoWait();
+						await _process(this, new(Encoding, roMem), token).NoWait();
 
 						errorCount = 0;
 					}
@@ -401,7 +419,7 @@ public class WebSocketClient : Disposable, IConnection
 						if (token.IsCancellationRequested)
 							break;
 
-						_error(new InvalidOperationException($"Error parsing string '{Encoding.GetString(processBuf)}'.", ex));
+						_error(new InvalidOperationException($"Error parsing string '{Encoding.GetString(responseBuffer.WrittenSpan)}'.", ex));
 
 						if (++errorCount < maxParsingErrors)
 							continue;
@@ -410,7 +428,7 @@ public class WebSocketClient : Disposable, IConnection
 					}
 					finally
 					{
-						responseBody.SetLength(0);
+						responseBuffer.Clear();
 					}
 				}
 				catch (AggregateException ex)
