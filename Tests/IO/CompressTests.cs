@@ -83,6 +83,92 @@ public class CompressTests : BaseTestClass
 		//await Do<Lzma.LzmaStream>();
 	}
 
+#if !NETSTANDARD2_0
+	[TestMethod]
+	public void GZipSpan()
+	{
+		var str = "Hello world from Span test! This is a longer string to compress and decompress using ReadOnlySpan.";
+		var compressed = str.UTF8().Compress<GZipStream>();
+
+		// Test UnGZip(ReadOnlySpan<byte>)
+		ReadOnlySpan<byte> compressedSpan = compressed;
+		var decompressed = compressedSpan.UnGZip();
+		decompressed.AssertEqual(str);
+	}
+
+	[TestMethod]
+	public void GZipSpanToBuffer()
+	{
+		var bytes = RandomGen.GetBytes(FileSizes.KB);
+		var rangeCount = 100;
+		var compressed = bytes.Compress<GZipStream>(count: rangeCount);
+		var destination = new byte[rangeCount * 2];
+
+		// Test UnGZip(ReadOnlySpan<byte>, Span<byte>)
+		ReadOnlySpan<byte> compressedSpan = compressed;
+		var count = compressedSpan.UnGZip(destination);
+		count.AssertEqual(rangeCount);
+		bytes.Take(count).SequenceEqual(destination.Take(rangeCount)).AssertTrue();
+	}
+
+	[TestMethod]
+	public void DeflateSpan()
+	{
+		var str = "Testing Deflate compression with ReadOnlySpan! This should work properly now.";
+		var compressed = str.UTF8().Compress<DeflateStream>();
+
+		// Test UnDeflate(ReadOnlySpan<byte>)
+		ReadOnlySpan<byte> compressedSpan = compressed;
+		var decompressed = compressedSpan.UnDeflate();
+		decompressed.AssertEqual(str);
+	}
+
+	[TestMethod]
+	public void DeflateSpanToBuffer()
+	{
+		var bytes = RandomGen.GetBytes(FileSizes.KB);
+		var rangeCount = 100;
+		var compressed = bytes.Compress<DeflateStream>(count: rangeCount);
+		var destination = new byte[rangeCount * 2];
+
+		// Test UnDeflate(ReadOnlySpan<byte>, Span<byte>)
+		ReadOnlySpan<byte> compressedSpan = compressed;
+		var count = compressedSpan.UnDeflate(destination);
+		count.AssertEqual(rangeCount);
+		bytes.Take(count).SequenceEqual(destination.Take(rangeCount)).AssertTrue();
+	}
+
+	[TestMethod]
+	public void DeflateFromSpan()
+	{
+		var bytes = RandomGen.GetBytes(FileSizes.KB);
+		var compressed = bytes.DeflateTo();
+
+		// Test DeflateFrom(ReadOnlySpan<byte>)
+		ReadOnlySpan<byte> compressedSpan = compressed;
+		var decompressed = compressedSpan.DeflateFrom();
+		decompressed.SequenceEqual(bytes).AssertTrue();
+	}
+
+	[TestMethod]
+	public async Task CompressMemoryAsync()
+	{
+		var bytes = RandomGen.GetBytes(FileSizes.MB);
+		var token = CancellationToken;
+
+		// Test CompressAsync(ReadOnlyMemory<byte>)
+		ReadOnlyMemory<byte> bytesMemory = bytes;
+		var compressed = await bytesMemory.CompressAsync<GZipStream>(cancellationToken: token);
+		var decompressed = await compressed.UncompressAsync<GZipStream>(cancellationToken: token);
+		decompressed.SequenceEqual(bytes).AssertTrue();
+
+		// Test with DeflateStream
+		var compressedDeflate = await bytesMemory.CompressAsync<DeflateStream>(cancellationToken: token);
+		var decompressedDeflate = await compressedDeflate.UncompressAsync<DeflateStream>(cancellationToken: token);
+		decompressedDeflate.SequenceEqual(bytes).AssertTrue();
+	}
+#endif
+
 	[TestMethod]
 	public void UsableEntry()
 	{
