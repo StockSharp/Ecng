@@ -3,6 +3,10 @@
 using System;
 using System.Threading;
 
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
+
 /// <summary>
 /// Represents a simple timer that can be reset.
 /// When the timer period elapses without a reset, the <see cref="Elapsed"/> event is invoked.

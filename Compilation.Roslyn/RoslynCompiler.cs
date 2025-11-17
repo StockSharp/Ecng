@@ -35,9 +35,9 @@ public abstract class RoslynCompiler(string extension) : ICompiler
 	{
 		AppDomain.CurrentDomain.AssemblyResolve += (_, args) =>
 		{
-			if (_redirects.ContainsKey(args.Name))
+			if (_redirects.TryGetValue(args.Name, out var v))
 			{
-				var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _redirects[args.Name]);
+				var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, v);
 				return Assembly.LoadFrom(path);
 			}
 
