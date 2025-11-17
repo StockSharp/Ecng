@@ -4,6 +4,10 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
+
 /// <summary>
 /// Provides various mathematical helper methods and extension methods for numeric types.
 /// </summary>

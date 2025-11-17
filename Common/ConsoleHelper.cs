@@ -3,6 +3,10 @@
 using System;
 using System.Security;
 
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
+
 /// <summary>
 /// Provides helper methods for writing colored messages to the console and reading secure passwords.
 /// </summary>

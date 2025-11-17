@@ -17,6 +17,10 @@ using System.Reflection;
 using SmartFormat;
 using SmartFormat.Core.Extensions;
 
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
+
 /// <summary>
 /// Provides helper methods for string operations.
 /// </summary>

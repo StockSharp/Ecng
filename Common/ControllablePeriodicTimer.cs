@@ -4,6 +4,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
+
 /// <summary>
 /// Represents a controllable periodic timer that can be started, stopped, and have its interval changed.
 /// </summary>
@@ -14,7 +18,7 @@ public sealed class ControllablePeriodicTimer : IDisposable
 	private IDisposable _timer;
 	private Task _runningTask;
 	private TimeSpan _interval;
-	private readonly object _lock = new();
+	private readonly SyncObject _lock = new();
 
 	/// <summary>
 	/// Initializes a new instance of the ControllablePeriodicTimer class.

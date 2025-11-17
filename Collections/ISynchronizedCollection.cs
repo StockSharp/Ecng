@@ -1,7 +1,12 @@
 namespace Ecng.Collections;
 
 using System.Collections.Generic;
+
 using Ecng.Common;
+
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
 
 /// <summary>
 /// Represents a collection that can be synchronized using a <see cref="SyncObject"/>.

@@ -1,6 +1,7 @@
 ﻿namespace Ecng.Common;
 
 using System;
+using System.Threading;
 
 /// <summary>
 /// Represents a timer that can be reset and activated repeatedly.
@@ -9,8 +10,13 @@ using System;
 [Obsolete("Use Tasks instead.")]
 public class ResettableTimer(TimeSpan period, string name) : Disposable
 {
+#if NETSTANDARD2_0 || NET6_0
 	private readonly SyncObject _sync = new();
 	private readonly SyncObject _finish = new();
+#else
+	private readonly System.Threading.Lock _sync = new();
+	private readonly object _finish = new();
+#endif
 	private bool _isActivated;
 	private bool _isFinished = true;
 	private bool _isCancelled;
@@ -66,7 +72,12 @@ public class ResettableTimer(TimeSpan period, string name) : Disposable
 			}
 			finally
 			{
+#if NETSTANDARD2_0 || NET6_0
 				_finish.PulseAll();
+#else
+				lock (_finish)
+					Monitor.PulseAll(_finish);
+#endif
 			}
 		}).Name(_name).Launch();
 	}
@@ -95,7 +106,11 @@ public class ResettableTimer(TimeSpan period, string name) : Disposable
 		lock (_finish)
 		{
 			Activate();
+#if NETSTANDARD2_0 || NET6_0
 			_finish.Wait();
+#else
+			Monitor.Wait(_finish);
+#endif
 		}
 	}
 

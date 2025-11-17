@@ -9,6 +9,10 @@ using Ecng.Common;
 using Ecng.Collections;
 using Ecng.Localization;
 
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
+
 /// <summary>
 /// Thread-safe memory pool for reusing <see cref="Memory{T}"/> memories of specific sizes.
 /// </summary>

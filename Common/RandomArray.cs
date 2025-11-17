@@ -2,6 +2,11 @@ namespace Ecng.Common;
 
 using System;
 using System.Linq;
+using System.Threading;
+
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
 
 /// <summary>
 /// Provides functionality to generate a random array of values of type T.

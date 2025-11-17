@@ -9,6 +9,10 @@ using System.Xml.Serialization;
 
 #endregion
 
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
+
 /// <summary>
 /// Interface for disposable objects that can be disposed with a reason.
 /// </summary>

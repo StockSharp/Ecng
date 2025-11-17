@@ -5,6 +5,10 @@ using System.Collections.Generic;
 
 using Ecng.Common;
 
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
+
 /// <summary>
 /// Represents a thread-safe linked list that provides synchronization for its operations.
 /// </summary>
@@ -12,7 +16,6 @@ using Ecng.Common;
 public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 {
 	private readonly LinkedList<T> _inner = new();
-
 	private readonly SyncObject _syncRoot = new();
 
 	/// <summary>

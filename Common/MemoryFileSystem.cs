@@ -6,6 +6,10 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
+
 /// <summary>
 /// In-memory implementation of <see cref="IFileSystem"/> useful for tests and environments without disk access.
 /// Thread-safe for basic operations.
@@ -23,7 +27,7 @@ public class MemoryFileSystem : IFileSystem
 	}
 
 	private readonly Node _root = new() { IsDirectory = true, Children = new(StringComparer.OrdinalIgnoreCase), CreatedUtc = DateTime.UtcNow, UpdatedUtc = DateTime.UtcNow };
-	private readonly object _lock = new();
+	private readonly SyncObject _lock = new();
 
 	private static string[] Split(string path)
 	{

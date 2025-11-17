@@ -1,4 +1,5 @@
-﻿namespace Ecng.Common;
+﻿#if NETSTANDARD2_0 || NET6_0
+namespace Ecng.Common;
 
 using System;
 using System.Threading;
@@ -143,3 +144,4 @@ public class SyncObject
 			: Monitor.Wait(this, timeOut.Value);
 	}
 }
+#endif

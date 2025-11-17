@@ -4,10 +4,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Collections;
 using Ecng.Common;
+
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
 
 /// <summary>
 /// The class represents a synchronized collection that can be used in WPF applications.

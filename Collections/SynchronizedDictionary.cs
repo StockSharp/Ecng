@@ -6,6 +6,10 @@ using System.Collections.Generic;
 
 using Ecng.Common;
 
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
+
 /// <summary>
 /// Represents a thread-safe dictionary that provides synchronization for its operations.
 /// </summary>
