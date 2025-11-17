@@ -9,6 +9,10 @@ using System.Threading;
 using Ecng.Collections;
 using Ecng.Common;
 
+#if NET10_0
+using SyncObject = object;
+#endif
+
 /// <summary>
 /// Provides delayed action execution with batching support.
 /// </summary>
@@ -177,7 +181,7 @@ public class DelayAction : Disposable
 					lock (_syncObject)
 					{
 						_isProcessed = true;
-						_syncObject.Pulse();
+						Monitor.Pulse(_syncObject);
 					}
 				};
 				CanBatch = true;
@@ -196,7 +200,7 @@ public class DelayAction : Disposable
 				lock (_syncObject)
 				{
 					if (!_isProcessed)
-						_syncObject.Wait();
+						Monitor.Wait(_syncObject);
 				}
 
 				if (_err != null)

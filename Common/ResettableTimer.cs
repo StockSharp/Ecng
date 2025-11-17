@@ -3,6 +3,10 @@
 using System;
 using System.Threading;
 
+#if NET10_0
+using SyncObject = object;
+#endif
+
 /// <summary>
 /// Represents a timer that can be reset and activated repeatedly.
 /// The timer executes the Elapsed event periodically based on the specified period.
@@ -10,13 +14,8 @@ using System.Threading;
 [Obsolete("Use Tasks instead.")]
 public class ResettableTimer(TimeSpan period, string name) : Disposable
 {
-#if NETSTANDARD2_0 || NET6_0
 	private readonly SyncObject _sync = new();
 	private readonly SyncObject _finish = new();
-#else
-	private readonly System.Threading.Lock _sync = new();
-	private readonly object _finish = new();
-#endif
 	private bool _isActivated;
 	private bool _isFinished = true;
 	private bool _isCancelled;

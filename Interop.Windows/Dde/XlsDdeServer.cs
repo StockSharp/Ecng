@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 using Ecng.Collections;
 using Ecng.Common;
 
+#if NET10_0
+using SyncObject = object;
+#endif
+
 using NDde.Server;
 
 /// <summary>
@@ -111,14 +115,17 @@ public class XlsDdeServer(string service, Action<string, IList<IList<object>>> p
 				try
 				{
 					Register();
-					regLock.Pulse();
+					lock (regLock)
+						Monitor.Pulse(regLock);
 
-					_registerWait.Wait();
+					lock (_registerWait)
+						Monitor.Wait(_registerWait);
 				}
 				catch (Exception ex)
 				{
 					error = ex;
-					regLock.Pulse();
+					lock (regLock)
+						Monitor.Pulse(regLock);
 				}
 			}, TaskCreationOptions.LongRunning);
 
@@ -178,7 +185,8 @@ public class XlsDdeServer(string service, Action<string, IList<IList<object>>> p
 			if (!_adviseTimer.IsNull())
 				_adviseTimer.Dispose();
 
-			_registerWait.Pulse();
+			lock (_registerWait)
+				Monitor.Pulse(_registerWait);
 		}
 
 		base.Dispose(disposing);
