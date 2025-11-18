@@ -225,7 +225,9 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	/// <inheritdoc cref="ICollection{T}" />
 	public override int Count => _syncCopy.Count;
 
+#pragma warning disable CS9216
 	object ICollection.SyncRoot => SyncRoot;
+#pragma warning restore CS9216
 
 	bool ICollection.IsSynchronized => true;
 

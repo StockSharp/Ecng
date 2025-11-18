@@ -47,7 +47,7 @@ public class LogManager : Disposable, IPersistable
 
 	private sealed class DisposeLogMessage : LogMessage
 	{
-		private readonly SyncObject _syncRoot = new();
+		private readonly object _syncRoot = new();
 		private bool _processed;
 
 		public DisposeLogMessage()

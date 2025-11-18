@@ -9,10 +9,6 @@ using System.Threading.Tasks;
 using Ecng.Collections;
 using Ecng.Common;
 
-#if NET10_0
-using SyncObject = System.Threading.Lock;
-#endif
-
 using NDde.Server;
 
 /// <summary>
@@ -93,7 +89,7 @@ public class XlsDdeServer(string service, Action<string, IList<IList<object>>> p
 		}
 	}
 
-	private readonly SyncObject _registerWait = new();
+	private readonly object _registerWait = new();
 	private ControllablePeriodicTimer _adviseTimer;
 	private readonly EventDispatcher _dispather = new(error);
 	private readonly Action<string, IList<IList<object>>> _poke = poke ?? throw new ArgumentNullException(nameof(poke));
@@ -106,7 +102,7 @@ public class XlsDdeServer(string service, Action<string, IList<IList<object>>> p
 	{
 		Exception error = null;
 
-		var regLock = new SyncObject();
+		var regLock = new object();
 
 		lock (regLock)
 		{

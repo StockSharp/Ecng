@@ -1010,7 +1010,7 @@ public static class CollectionHelper
 
 		if (!dictionary.TryGetValue(key, out var value))
 		{
-			var syncObj = (dictionary as ISynchronizedCollection)?.SyncRoot ?? (object)dictionary;
+			var syncObj = (dictionary as ISynchronizedCollection)?.SyncRoot ?? new();
 
 			lock (syncObj)
 			{
@@ -1140,7 +1140,7 @@ public static class CollectionHelper
 		if (handler is null)
 			throw new ArgumentNullException(nameof(handler));
 
-		var syncObj = (dictionary as ISynchronizedCollection)?.SyncRoot ?? (object)dictionary;
+		var syncObj = (dictionary as ISynchronizedCollection)?.SyncRoot ?? new();
 
 		TaskCompletionSource<TValue> source;
 

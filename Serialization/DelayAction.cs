@@ -9,10 +9,6 @@ using System.Threading;
 using Ecng.Collections;
 using Ecng.Common;
 
-#if NET10_0
-using SyncObject = System.Threading.Lock;
-#endif
-
 /// <summary>
 /// Provides delayed action execution with batching support.
 /// </summary>
@@ -157,7 +153,7 @@ public class DelayAction : Disposable
 
 		private class FlushItem : Item<object>
 		{
-			private readonly SyncObject _syncObject = new();
+			private readonly object _syncObject = new();
 			private bool _isProcessed;
 			private Exception _err;
 
