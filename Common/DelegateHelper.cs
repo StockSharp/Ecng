@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
 using System.Linq;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Provides helper methods for working with delegates.
@@ -49,17 +50,17 @@ public static class DelegateHelper
 		if (error is null)
 			throw new ArgumentNullException(nameof(error));
 
-		Do(() => action.BeginInvoke(result =>
+		_ = Task.Run(() =>
 		{
 			try
 			{
-				action.EndInvoke(result);
+				action();
 			}
 			catch (Exception ex)
 			{
 				error(ex);
 			}
-		}, null), error);
+		});
 	}
 
 	//// The following methods are commented out.
