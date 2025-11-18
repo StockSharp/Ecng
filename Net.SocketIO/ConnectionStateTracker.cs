@@ -1,9 +1,5 @@
 ﻿namespace Ecng.Net;
 
-#if NET10_0
-using SyncObject = System.Object;
-#endif
-
 /// <summary>
 /// Tracks the connection states of multiple IConnection instances and aggregates their overall state.
 /// </summary>

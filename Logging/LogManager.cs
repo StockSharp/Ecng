@@ -2,10 +2,6 @@ namespace Ecng.Logging;
 
 using System.Threading;
 
-#if NET10_0
-using SyncObject = System.Object;
-#endif
-
 /// <summary>
 /// Messages logging manager that monitors the <see cref="ILogSource.Log"/> event and forwards messages to the <see cref="LogManager.Listeners"/>.
 /// </summary>

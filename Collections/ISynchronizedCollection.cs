@@ -4,10 +4,6 @@ using System.Collections.Generic;
 
 using Ecng.Common;
 
-#if NET10_0
-using SyncObject = System.Object;
-#endif
-
 /// <summary>
 /// Represents a collection that can be synchronized using a <see cref="SyncObject"/>.
 /// </summary>

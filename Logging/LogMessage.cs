@@ -1,11 +1,5 @@
 namespace Ecng.Logging;
 
-using System.Threading;
-
-#if NET10_0
-using SyncObject = System.Object;
-#endif
-
 /// <summary>
 /// A debug message.
 /// </summary>

@@ -6,10 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-#if NET10_0
-using SyncObject = System.Object;
-#endif
-
 /// <summary>
 /// In-memory implementation of <see cref="IFileSystem"/> useful for tests and environments without disk access.
 /// Thread-safe for basic operations.

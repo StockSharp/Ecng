@@ -7,10 +7,6 @@ using System.Threading;
 
 using Ecng.Common;
 
-#if NET10_0
-using SyncObject = System.Object;
-#endif
-
 // http://stackoverflow.com/questions/530211/creating-a-blocking-queuet-in-net
 /// <summary>
 /// Abstract base class for a blocking queue implementation with a generic type and an inner collection.

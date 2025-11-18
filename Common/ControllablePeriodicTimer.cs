@@ -4,10 +4,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-#if NET10_0
-using SyncObject = System.Object;
-#endif
-
 /// <summary>
 /// Represents a controllable periodic timer that can be started, stopped, and have its interval changed.
 /// </summary>

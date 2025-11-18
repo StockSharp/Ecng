@@ -4,13 +4,8 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
-using System.Threading;
 
 using Ecng.Common;
-
-#if NET10_0
-using SyncObject = System.Object;
-#endif
 
 /// <summary>
 /// Provides tracking functionality for AssemblyLoadContext instances when loading assemblies dynamically.

@@ -6,13 +6,8 @@ using System.Collections.Specialized;
 using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 
 using Ecng.Common;
-
-#if NET10_0
-using SyncObject = System.Object;
-#endif
 
 /// <summary>
 /// Provides access to application configuration sections, groups, and services.

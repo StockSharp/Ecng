@@ -6,14 +6,9 @@ using System.Diagnostics;
 using System.Net;
 using System.Linq;
 using System.Text;
-using System.Threading;
 
 using Ecng.Common;
 using Ecng.Collections;
-
-#if NET10_0
-using SyncObject = System.Object;
-#endif
 
 /// <summary>
 /// Contains statistical information related to actions.
