@@ -4,7 +4,7 @@ using System;
 using System.Security;
 
 #if NET10_0
-using SyncObject = System.Threading.Lock;
+using SyncObject = System.Object;
 #endif
 
 /// <summary>

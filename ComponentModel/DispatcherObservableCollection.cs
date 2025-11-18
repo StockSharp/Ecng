@@ -11,7 +11,7 @@ using Ecng.Collections;
 using Ecng.Common;
 
 #if NET10_0
-using SyncObject = System.Threading.Lock;
+using SyncObject = System.Object;
 #endif
 
 /// <summary>
@@ -225,9 +225,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	/// <inheritdoc cref="ICollection{T}" />
 	public override int Count => _syncCopy.Count;
 
-#pragma warning disable CS9216
 	object ICollection.SyncRoot => SyncRoot;
-#pragma warning restore CS9216
 
 	bool ICollection.IsSynchronized => true;
 
