@@ -214,10 +214,12 @@ public class FastDateTimeParser
 			if (_timeZoneStart != -1)
 				EnsureSpan(input, _timeZoneStart, 6); // "+HH:MM" or "-HH:MM"
 
+			var now = DateTime.UtcNow;
+
 			int years;
 
 			if (_yearStart == -1)
-				years = DateTime.Now.Year;
+				years = now.Year;
 
 			else if (_isYearTwoChars)
 			{
@@ -229,8 +231,8 @@ public class FastDateTimeParser
 				years = (input[_yearStart] - '0') * 1000 + (input[_yearStart + 1] - '0') * 100 + (input[_yearStart + 2] - '0') * 10 + (input[_yearStart + 3] - '0');
 			}
 
-			var months = _monthStart == -1 ? DateTime.Now.Month : (_isMonthTwoChars ? (input[_monthStart] - '0') * 10 + (input[_monthStart + 1] - '0') : input[_monthStart] - '0');
-			var days = _dayStart == -1 ? DateTime.Now.Day : (_isDayTwoChars ? (input[_dayStart] - '0') * 10 + (input[_dayStart + 1] - '0') : input[_dayStart] - '0');
+			var months = _monthStart == -1 ? now.Month : (_isMonthTwoChars ? (input[_monthStart] - '0') * 10 + (input[_monthStart + 1] - '0') : input[_monthStart] - '0');
+			var days = _dayStart == -1 ? now.Day : (_isDayTwoChars ? (input[_dayStart] - '0') * 10 + (input[_dayStart + 1] - '0') : input[_dayStart] - '0');
 
 			var hours = _hourStart == -1 ? 0 : (input[_hourStart] - '0') * 10 + (input[_hourStart + 1] - '0');
 			var minutes = _minuteStart == -1 ? 0 : (input[_minuteStart] - '0') * 10 + (input[_minuteStart + 1] - '0');
