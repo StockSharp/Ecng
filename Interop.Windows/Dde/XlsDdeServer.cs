@@ -10,7 +10,7 @@ using Ecng.Collections;
 using Ecng.Common;
 
 #if NET10_0
-using SyncObject = object;
+using SyncObject = System.Threading.Lock;
 #endif
 
 using NDde.Server;

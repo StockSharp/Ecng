@@ -8,7 +8,7 @@ using System.Threading;
 using Ecng.Common;
 
 #if NET10_0
-using SyncObject = object;
+using SyncObject = System.Threading.Lock;
 #endif
 
 // http://stackoverflow.com/questions/530211/creating-a-blocking-queuet-in-net

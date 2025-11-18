@@ -2,6 +2,10 @@ namespace Ecng.Logging;
 
 using System.Threading;
 
+#if NET10_0
+using SyncObject = System.Threading.Lock;
+#endif
+
 /// <summary>
 /// Messages logging manager that monitors the <see cref="ILogSource.Log"/> event and forwards messages to the <see cref="LogManager.Listeners"/>.
 /// </summary>
@@ -44,6 +48,7 @@ public class LogManager : Disposable, IPersistable
 	private sealed class DisposeLogMessage : LogMessage
 	{
 		private readonly SyncObject _syncRoot = new();
+		private bool _processed;
 
 		public DisposeLogMessage()
 			: base(new ApplicationReceiver(), DateTime.MinValue, LogLevels.Off, string.Empty)
@@ -53,18 +58,28 @@ public class LogManager : Disposable, IPersistable
 
 		public void Wait()
 		{
-			_syncRoot.WaitSignal();
+			lock (_syncRoot)
+			{
+				if (!_processed)
+					Monitor.Wait(_syncRoot);
+
+				_processed = false;
+			}
 		}
 
 		public void Pulse()
 		{
-			_syncRoot.PulseSignal();
+			lock (_syncRoot)
+			{
+				_processed = true;
+				Monitor.Pulse(_syncRoot);
+			}
 		}
 	}
 
 	private static readonly DisposeLogMessage _disposeMessage = new();
 
-	private readonly object _syncRoot = new();
+	private readonly SyncObject _syncRoot = new();
 	private readonly List<LogMessage> _pendingMessages = [];
 	private readonly ControllablePeriodicTimer _flushTimer;
 	private bool _isFlushing;
