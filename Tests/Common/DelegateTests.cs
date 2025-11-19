@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Common;
+using Ecng.UnitTesting;
 
 [TestClass]
 public class DelegateTests : BaseTestClass
