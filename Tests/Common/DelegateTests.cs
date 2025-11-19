@@ -371,19 +371,13 @@ public class DelegateTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void GetInvocationList_ReturnsEmptyForNull()
+	public void GetInvocationList_ThrowsForNull()
 	{
 		// Arrange
 		Action<int> action = null;
 
-		// Act
-		var list = action.GetInvocationList();
-
-		// Assert
-		var count = 0;
-		foreach (var _ in list)
-			count++;
-		count.AssertEqual(0);
+		// Act & Assert
+		Assert.ThrowsExactly<NullReferenceException>(() => action.GetInvocationList());
 	}
 
 	#endregion
