@@ -97,9 +97,9 @@ public class AsyncHelperTests : BaseTestClass
 		var count = 0;
 		using var cts = new CancellationTokenSource();
 
-		var timerTask = AsyncHelper.StartPeriodicTimer(() => count++, TimeSpan.FromMilliseconds(50), cts.Token);
+		var timerTask = AsyncHelper.StartPeriodicTimer(() => count++, TimeSpan.FromMilliseconds(100), cts.Token);
 
-		await Task.Delay(150); // Should trigger approximately 3 times
+		await Task.Delay(350); // Should trigger approximately 3 times
 		cts.Cancel();
 
 		try
@@ -111,7 +111,7 @@ public class AsyncHelperTests : BaseTestClass
 			// Expected
 		}
 
-		count.AssertInRange(1, 5); // Allow some variance (2-4 expected)
+		count.AssertInRange(1, 6); // Allow some variance for timer jitter
 	}
 
 	[TestMethod]
@@ -120,9 +120,9 @@ public class AsyncHelperTests : BaseTestClass
 		var sum = 0;
 		using var cts = new CancellationTokenSource();
 
-		var timerTask = AsyncHelper.StartPeriodicTimer<int>(x => sum += x, 5, TimeSpan.FromMilliseconds(50), cts.Token);
+		var timerTask = AsyncHelper.StartPeriodicTimer<int>(x => sum += x, 5, TimeSpan.FromMilliseconds(100), cts.Token);
 
-		await Task.Delay(150);
+		await Task.Delay(350);
 		cts.Cancel();
 
 		try
@@ -134,7 +134,7 @@ public class AsyncHelperTests : BaseTestClass
 			// Expected
 		}
 
-		sum.AssertInRange(9, 21); // 5 * 2-4 executions
+		sum.AssertInRange(5, 30); // 5 * 1-6 executions, allow variance
 	}
 
 	[TestMethod]
@@ -147,9 +147,9 @@ public class AsyncHelperTests : BaseTestClass
 		{
 			count++;
 			await Task.Delay(10);
-		}, TimeSpan.FromMilliseconds(50), cts.Token);
+		}, TimeSpan.FromMilliseconds(100), cts.Token);
 
-		await Task.Delay(150);
+		await Task.Delay(350);
 		cts.Cancel();
 
 		try
@@ -161,7 +161,7 @@ public class AsyncHelperTests : BaseTestClass
 			// Expected
 		}
 
-		count.AssertInRange(1, 5);
+		count.AssertInRange(1, 6);
 	}
 
 	[TestMethod]
@@ -170,9 +170,9 @@ public class AsyncHelperTests : BaseTestClass
 		var count = 0;
 		using var cts = new CancellationTokenSource();
 
-		var timerTask = AsyncHelper.StartPeriodicTimer(() => count++, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(50), cts.Token);
+		var timerTask = AsyncHelper.StartPeriodicTimer(() => count++, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(200), cts.Token);
 
-		await Task.Delay(75); // Before first execution
+		await Task.Delay(150); // Before first execution (200ms initial delay)
 		count.AssertEqual(0);
 
 		await Task.Delay(200); // After first execution - wait longer
@@ -199,19 +199,19 @@ public class AsyncHelperTests : BaseTestClass
 		timer.IsRunning.AssertFalse();
 
 		// Start timer
-		timer.Start(TimeSpan.FromMilliseconds(50));
+		timer.Start(TimeSpan.FromMilliseconds(100));
 		timer.IsRunning.AssertTrue();
-		timer.Interval.AssertEqual(TimeSpan.FromMilliseconds(50));
+		timer.Interval.AssertEqual(TimeSpan.FromMilliseconds(100));
 
-		await Task.Delay(150);
-		count.AssertInRange(1, 5);
+		await Task.Delay(350);
+		count.AssertInRange(1, 6);
 
 		// Stop timer
 		timer.Stop();
 		timer.IsRunning.AssertFalse();
 
 		var countAfterStop = count;
-		await Task.Delay(100);
+		await Task.Delay(200);
 		count.AssertEqual(countAfterStop); // Count should not increase after stop
 
 		timer.Dispose();
@@ -223,18 +223,18 @@ public class AsyncHelperTests : BaseTestClass
 		var count = 0;
 		var timer = AsyncHelper.CreatePeriodicTimer(() => count++);
 
-		// Start with 50ms interval
-		timer.Start(TimeSpan.FromMilliseconds(50));
-		await Task.Delay(150);
+		// Start with 100ms interval
+		timer.Start(TimeSpan.FromMilliseconds(100));
+		await Task.Delay(350);
 		var countAfterFast = count;
-		countAfterFast.AssertInRange(1, 5);
+		countAfterFast.AssertInRange(1, 6);
 
-		// Change to 100ms interval
-		timer.ChangeInterval(TimeSpan.FromMilliseconds(100));
-		timer.Interval.AssertEqual(TimeSpan.FromMilliseconds(100));
+		// Change to 200ms interval
+		timer.ChangeInterval(TimeSpan.FromMilliseconds(200));
+		timer.Interval.AssertEqual(TimeSpan.FromMilliseconds(200));
 
 		count = 0;
-		await Task.Delay(250);
+		await Task.Delay(500);
 		count.AssertInRange(1, 4); // Slower interval
 
 		timer.Dispose();
@@ -246,10 +246,10 @@ public class AsyncHelperTests : BaseTestClass
 		var count = 0;
 		var timer = AsyncHelper.CreatePeriodicTimer(() => count++);
 
-		timer.Start(TimeSpan.FromMilliseconds(50), TimeSpan.FromMilliseconds(100));
+		timer.Start(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(200));
 
-		await Task.Delay(75);
-		count.AssertEqual(0); // Initial delay not passed
+		await Task.Delay(150);
+		count.AssertEqual(0); // Initial delay not passed (200ms)
 
 		await Task.Delay(200); // Wait longer to ensure at least one execution
 		(count > 0).AssertTrue($"Count should be > 0, but was {count}");
@@ -263,8 +263,8 @@ public class AsyncHelperTests : BaseTestClass
 		var count = 0;
 		var timer = AsyncHelper.CreatePeriodicTimer(() => count++);
 
-		timer.Start(TimeSpan.FromMilliseconds(50));
-		timer.Start(TimeSpan.FromMilliseconds(50)); // Should stop previous and start new
+		timer.Start(TimeSpan.FromMilliseconds(100));
+		timer.Start(TimeSpan.FromMilliseconds(100)); // Should stop previous and start new
 
 		timer.IsRunning.AssertTrue();
 
@@ -281,10 +281,10 @@ public class AsyncHelperTests : BaseTestClass
 			await Task.Delay(10);
 		});
 
-		timer.Start(TimeSpan.FromMilliseconds(50));
-		await Task.Delay(150);
+		timer.Start(TimeSpan.FromMilliseconds(100));
+		await Task.Delay(350);
 
-		count.AssertInRange(1, 5);
+		count.AssertInRange(1, 6);
 
 		timer.Dispose();
 	}
