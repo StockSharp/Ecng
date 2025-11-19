@@ -5,17 +5,8 @@ using System.Text.RegularExpressions;
 
 namespace HPSocket.Sdk
 {
-#if NET7_0_OR_GREATER
-    internal static partial class Sys
-    {
-        [GeneratedRegex(@"^(?=^.{3,255}$)[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$", RegexOptions.IgnoreCase)]
-        private static partial Regex DomainRegex();
-#else
     internal static class Sys
     {
-        private static readonly Regex _domainRegex = new Regex(@"^(?=^.{3,255}$)[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static Regex DomainRegex() => _domainRegex;
-#endif
         /// <summary>
         /// 获取 hp socket版本号
         /// </summary>
@@ -44,7 +35,8 @@ namespace HPSocket.Sdk
                 return true;
             }
 
-            if (DomainRegex().IsMatch(host))
+            var reg = new Regex(@"^(?=^.{3,255}$)[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$", RegexOptions.IgnoreCase);
+            if (reg.IsMatch(host))
             {
                 type = IpAddressType.Domain;
                 return true;
