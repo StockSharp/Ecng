@@ -10,7 +10,7 @@ using System.Web;
 /// <summary>
 /// Provides helper methods to send emails and to manage mail attachments.
 /// </summary>
-public static class MailHelper
+public static partial class MailHelper
 {
 	/// <summary>
 	/// Sends the specified <see cref="MailMessage"/> synchronously.
@@ -84,7 +84,8 @@ public static class MailHelper
 		return message;
 	}
 
-	private static readonly Regex _emailRegex1 = new(@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,10})+)$", RegexOptions.Compiled | RegexOptions.Singleline);
+	[GeneratedRegex(@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,10})+)$", RegexOptions.Singleline)]
+	private static partial Regex EmailRegex();
 
 	/// <summary>
 	/// Validates whether the specified email address string is in a correct format.
@@ -98,7 +99,7 @@ public static class MailHelper
 		try
 		{
 			new MailAddress(email);
-			return _emailRegex1.IsMatch(email)/* && _emailRegex2.IsMatch(email)*/;
+			return EmailRegex().IsMatch(email)/* && _emailRegex2.IsMatch(email)*/;
 		}
 		catch (FormatException)
 		{

@@ -562,7 +562,7 @@ public class FastCsvReader
 	/// </summary>
 	/// <param name="format">The date and time format string.</param>
 	/// <returns>The DateTime value read from the column.</returns>
-	public DateTime ReadDateTime(string format)
+	public DateTime ReadDateTime([StringSyntax(StringSyntaxAttribute.DateTimeFormat)] string format)
 	{
 		return ReadNullableDateTime(format).Value;
 	}
@@ -572,7 +572,7 @@ public class FastCsvReader
 	/// </summary>
 	/// <param name="format">The date and time format string.</param>
 	/// <returns>A nullable DateTime value read from the column, or null if the column is empty.</returns>
-	public DateTime? ReadNullableDateTime(string format)
+	public DateTime? ReadNullableDateTime([StringSyntax(StringSyntaxAttribute.DateTimeFormat)] string format)
 	{
 		var str = ReadString();
 
@@ -584,7 +584,7 @@ public class FastCsvReader
 	/// </summary>
 	/// <param name="format">The time span format string.</param>
 	/// <returns>The TimeSpan value read from the column.</returns>
-	public TimeSpan ReadTimeSpan(string format)
+	public TimeSpan ReadTimeSpan([StringSyntax(StringSyntaxAttribute.TimeSpanFormat)] string format)
 	{
 		return ReadNullableTimeSpan(format).Value;
 	}
@@ -594,7 +594,7 @@ public class FastCsvReader
 	/// </summary>
 	/// <param name="format">The time span format string.</param>
 	/// <returns>A nullable TimeSpan value read from the column, or null if the column is empty.</returns>
-	public TimeSpan? ReadNullableTimeSpan(string format)
+	public TimeSpan? ReadNullableTimeSpan([StringSyntax(StringSyntaxAttribute.TimeSpanFormat)] string format)
 	{
 		var str = ReadString();
 

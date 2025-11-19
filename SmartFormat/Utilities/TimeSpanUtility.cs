@@ -343,12 +343,12 @@ namespace SmartFormat.Utilities
         _Range = RangeMilliSeconds | RangeSeconds | RangeMinutes | RangeHours | RangeDays | RangeWeeks
     }
 
-    internal static class TimeSpanFormatOptionsConverter
+    internal static partial class TimeSpanFormatOptionsConverter
     {
-        private static readonly Regex parser =
-            new Regex(
-                @"\b(w|week|weeks|d|day|days|h|hour|hours|m|minute|minutes|s|second|seconds|ms|millisecond|milliseconds|auto|short|fill|full|abbr|noabbr|less|noless)\b",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        [GeneratedRegex(
+            @"\b(w|week|weeks|d|day|days|h|hour|hours|m|minute|minutes|s|second|seconds|ms|millisecond|milliseconds|auto|short|fill|full|abbr|noabbr|less|noless)\b",
+            RegexOptions.IgnoreCase)]
+        private static partial Regex Parser();
 
         public static TimeSpanFormatOptions Merge(this TimeSpanFormatOptions left, TimeSpanFormatOptions right)
         {
@@ -386,7 +386,7 @@ namespace SmartFormat.Utilities
             formatOptionsString = formatOptionsString.ToLower();
 
             var t = TimeSpanFormatOptions.InheritDefaults;
-            foreach (Match m in parser.Matches(formatOptionsString))
+            foreach (Match m in Parser().Matches(formatOptionsString))
                 switch (m.Value)
                 {
                     case "w":

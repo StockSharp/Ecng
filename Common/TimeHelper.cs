@@ -500,7 +500,7 @@ public static class TimeHelper
 	/// <summary>
 	/// Attempts to convert a string to a <see cref="DateTime"/> using the provided format.
 	/// </summary>
-	public static DateTime? TryToDateTime(this string value, string format, CultureInfo ci = null)
+	public static DateTime? TryToDateTime(this string value, [StringSyntax(StringSyntaxAttribute.DateTimeFormat)] string format, CultureInfo ci = null)
 	{
 		if (value.IsEmpty())
 			return null;
@@ -511,7 +511,7 @@ public static class TimeHelper
 	/// <summary>
 	/// Converts a string to a <see cref="DateTime"/> using the provided format.
 	/// </summary>
-	public static DateTime ToDateTime(this string value, string format, CultureInfo ci = null)
+	public static DateTime ToDateTime(this string value, [StringSyntax(StringSyntaxAttribute.DateTimeFormat)] string format, CultureInfo ci = null)
 	{
 		try
 		{
@@ -526,7 +526,7 @@ public static class TimeHelper
 	/// <summary>
 	/// Formats a <see cref="DateTime"/> to a string using the provided format.
 	/// </summary>
-	public static string FromDateTime(this DateTime dt, string format, CultureInfo ci = null)
+	public static string FromDateTime(this DateTime dt, [StringSyntax(StringSyntaxAttribute.DateTimeFormat)] string format, CultureInfo ci = null)
 	{
 		return dt.ToString(format, ci ?? CultureInfo.InvariantCulture);
 	}
@@ -534,7 +534,7 @@ public static class TimeHelper
 	/// <summary>
 	/// Attempts to convert a string to a <see cref="TimeSpan"/> using the provided format.
 	/// </summary>
-	public static TimeSpan? TryToTimeSpan(this string value, string format, CultureInfo ci = null)
+	public static TimeSpan? TryToTimeSpan(this string value, [StringSyntax(StringSyntaxAttribute.TimeSpanFormat)] string format, CultureInfo ci = null)
 	{
 		if (value.IsEmpty())
 			return null;
@@ -545,7 +545,7 @@ public static class TimeHelper
 	/// <summary>
 	/// Converts a string to a <see cref="TimeSpan"/> using the provided format.
 	/// </summary>
-	public static TimeSpan ToTimeSpan(this string value, string format, CultureInfo ci = null)
+	public static TimeSpan ToTimeSpan(this string value, [StringSyntax(StringSyntaxAttribute.TimeSpanFormat)] string format, CultureInfo ci = null)
 	{
 		try
 		{
@@ -560,7 +560,7 @@ public static class TimeHelper
 	/// <summary>
 	/// Formats a <see cref="TimeSpan"/> to a string using the provided format.
 	/// </summary>
-	public static string FromTimeSpan(this TimeSpan ts, string format, CultureInfo ci = null)
+	public static string FromTimeSpan(this TimeSpan ts, [StringSyntax(StringSyntaxAttribute.TimeSpanFormat)] string format, CultureInfo ci = null)
 	{
 		return ts.ToString(format, ci ?? CultureInfo.InvariantCulture);
 	}
@@ -568,7 +568,7 @@ public static class TimeHelper
 	/// <summary>
 	/// Attempts to convert a string to a <see cref="DateTimeOffset"/> using the provided format.
 	/// </summary>
-	public static DateTimeOffset? TryToDateTimeOffset(this string value, string format, CultureInfo ci = null)
+	public static DateTimeOffset? TryToDateTimeOffset(this string value, [StringSyntax(StringSyntaxAttribute.DateTimeFormat)] string format, CultureInfo ci = null)
 	{
 		if (value.IsEmpty())
 			return null;
@@ -579,7 +579,7 @@ public static class TimeHelper
 	/// <summary>
 	/// Converts a string to a <see cref="DateTimeOffset"/> using the provided format.
 	/// </summary>
-	public static DateTimeOffset ToDateTimeOffset(this string value, string format, CultureInfo ci = null)
+	public static DateTimeOffset ToDateTimeOffset(this string value, [StringSyntax(StringSyntaxAttribute.DateTimeFormat)] string format, CultureInfo ci = null)
 	{
 		try
 		{
@@ -613,7 +613,7 @@ public static class TimeHelper
 	/// <summary>
 	/// Formats a <see cref="DateTimeOffset"/> to a string using the provided format.
 	/// </summary>
-	public static string FromDateTimeOffset(this DateTimeOffset dto, string format, CultureInfo ci = null)
+	public static string FromDateTimeOffset(this DateTimeOffset dto, [StringSyntax(StringSyntaxAttribute.DateTimeFormat)] string format, CultureInfo ci = null)
 	{
 		return dto.ToString(format, ci ?? CultureInfo.InvariantCulture);
 	}

@@ -19,7 +19,7 @@ using WmiLight;
 /// <summary>
 /// Provides methods to generate a hardware-based identifier.
 /// </summary>
-public static class HardwareInfo
+public static partial class HardwareInfo
 {
 	/// <summary>
 	/// Gets the hardware identifier.
@@ -82,7 +82,8 @@ public static class HardwareInfo
 		return cpuid + (mbId.IsEmpty() ? netId : mbId);
 	}
 
-	private static readonly Regex _lsblkRegex = new(@"^\s*/\s+([\da-f-]+)\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+	[GeneratedRegex(@"^\s*/\s+([\da-f-]+)\s*$", RegexOptions.IgnoreCase)]
+	private static partial Regex LsblkRegex();
 
 	private static async Task<string> GetIdLinuxAsync(CancellationToken cancellationToken)
 	{
@@ -91,7 +92,7 @@ public static class HardwareInfo
 
 		var res = await IOHelper.ExecuteAsync("lsblk", "-r -o MOUNTPOINT,UUID", str =>
 		{
-			var m = _lsblkRegex.Match(str);
+			var m = LsblkRegex().Match(str);
 			if (m.Success)
 				result.Add(m.Groups[1].Value);
 		},
