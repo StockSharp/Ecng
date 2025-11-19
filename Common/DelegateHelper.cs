@@ -42,6 +42,7 @@ public static class DelegateHelper
 	/// <param name="action">The action to execute asynchronously.</param>
 	/// <param name="error">The action to handle exceptions.</param>
 	/// <exception cref="ArgumentNullException">Thrown when action or error is null.</exception>
+	[Obsolete("Use Task.Run with try-catch directly for better async control and awaitable results.")]
 	public static void DoAsync(this Action action, Action<Exception> error)
 	{
 		if (action is null)
