@@ -170,12 +170,13 @@ public class AsyncHelperTests : BaseTestClass
 		var count = 0;
 		using var cts = new CancellationTokenSource();
 
-		var timerTask = AsyncHelper.StartPeriodicTimer(() => count++, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(200), cts.Token);
+		// StartPeriodicTimer(handler, start, interval) - start is initial delay
+		var timerTask = AsyncHelper.StartPeriodicTimer(() => count++, TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(100), cts.Token);
 
-		await Task.Delay(150); // Before first execution (200ms initial delay)
+		await Task.Delay(100); // Before first execution (200ms initial delay)
 		count.AssertEqual(0);
 
-		await Task.Delay(200); // After first execution - wait longer
+		await Task.Delay(200); // After initial delay passed (total 300ms > 200ms)
 		(count > 0).AssertTrue($"Count should be > 0, but was {count}");
 
 		cts.Cancel();
@@ -246,12 +247,13 @@ public class AsyncHelperTests : BaseTestClass
 		var count = 0;
 		var timer = AsyncHelper.CreatePeriodicTimer(() => count++);
 
-		timer.Start(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(200));
+		// Start(interval, start) - start is initial delay
+		timer.Start(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(300));
 
 		await Task.Delay(150);
-		count.AssertEqual(0); // Initial delay not passed (200ms)
+		count.AssertEqual(0); // Initial delay not passed (300ms)
 
-		await Task.Delay(200); // Wait longer to ensure at least one execution
+		await Task.Delay(300); // Wait longer to ensure at least one execution (total 450ms > 300ms)
 		(count > 0).AssertTrue($"Count should be > 0, but was {count}");
 
 		timer.Dispose();
