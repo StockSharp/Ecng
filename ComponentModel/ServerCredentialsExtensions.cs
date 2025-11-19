@@ -7,10 +7,20 @@ using Ecng.Common;
 /// <summary>
 /// Extensions for validating login values used by <see cref="ServerCredentials"/> and elsewhere.
 /// </summary>
+#if NET7_0_OR_GREATER
 public static partial class ServerCredentialsExtensions
 {
 	[GeneratedRegex(@"^(?=.{3,64}$)[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$", RegexOptions.CultureInvariant)]
 	private static partial Regex UserNameRegex();
+#else
+public static class ServerCredentialsExtensions
+{
+	private static readonly Regex _userNameRegex = new(
+		@"^(?=.{3,64}$)[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$",
+		RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+	private static Regex UserNameRegex() => _userNameRegex;
+#endif
 
 	/// <summary>
 	/// Validates that the given login string satisfies the specified <paramref name="asEmail"/>.

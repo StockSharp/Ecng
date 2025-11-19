@@ -12,12 +12,23 @@ using SmartFormat.Net.Utilities;
 
 namespace SmartFormat.Extensions
 {
+#if NET7_0_OR_GREATER
     public partial class ConditionalFormatter : IFormatter
     {
         [GeneratedRegex(@"^  (?:   ([&/]?)   ([<>=!]=?)   ([0-9.-]+)   )+   \?",
             //   Description:      and/or    comparator     value
             RegexOptions.IgnorePatternWhitespace)]
         private static partial Regex ComplexConditionPattern();
+#else
+    public class ConditionalFormatter : IFormatter
+    {
+        private static readonly Regex _complexConditionPattern
+            = new Regex(@"^  (?:   ([&/]?)   ([<>=!]=?)   ([0-9.-]+)   )+   \?",
+                //   Description:      and/or    comparator     value
+                RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+
+        private static Regex ComplexConditionPattern() => _complexConditionPattern;
+#endif
 
         public string[] Names { get; set; } = {"conditional", "cond", ""};
 
