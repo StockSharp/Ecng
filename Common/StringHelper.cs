@@ -20,8 +20,53 @@ using SmartFormat.Core.Extensions;
 /// <summary>
 /// Provides helper methods for string operations.
 /// </summary>
+#if NET7_0_OR_GREATER
+public static partial class StringHelper
+{
+	[GeneratedRegex(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$")]
+	private static partial Regex EmailValidationRegex();
+
+	[GeneratedRegex(@"^(https?://)"
+		+ "?(([0-9a-z_!~*'().&=+$%-]+: )?[0-9a-z_!~*'().&=+$%-]+@)?" //user@
+		+ @"(([0-9]{1,3}\.){3}[0-9]{1,3}" // IP- 199.194.52.184
+		+ "|" // allows either IP or domain
+		+ @"([0-9a-z_!~*'()-]+\.)*" // tertiary domain(s)- www.
+		+ @"([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]" // second level domain
+		+ @"(\.[a-z]{2,6})?)" // first level domain- .com or .museum is optional
+		+ "(:[0-9]{1,5})?" // port number- :80
+		+ "((/?)|" // a slash isn't required if there is no file name
+		+ "(/[0-9a-z_!~*'().;?:@&=+$,%#-]+)+/?)$")]
+	private static partial Regex UrlValidationRegex();
+
+	[GeneratedRegex(@"\.|\$|\^|\{|\[|\(|\||\)|\*|\+|\?|\\")]
+	private static partial Regex LikeEscapeRegex();
+
+	[GeneratedRegex(@"\s+")]
+	private static partial Regex WhitespaceRegex();
+#else
 public static class StringHelper
 {
+	private static readonly Regex _emailValidationRegex = new(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$", RegexOptions.Compiled);
+	private static Regex EmailValidationRegex() => _emailValidationRegex;
+
+	private static readonly Regex _urlValidationRegex = new(@"^(https?://)"
+		+ "?(([0-9a-z_!~*'().&=+$%-]+: )?[0-9a-z_!~*'().&=+$%-]+@)?" //user@
+		+ @"(([0-9]{1,3}\.){3}[0-9]{1,3}" // IP- 199.194.52.184
+		+ "|" // allows either IP or domain
+		+ @"([0-9a-z_!~*'()-]+\.)*" // tertiary domain(s)- www.
+		+ @"([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]" // second level domain
+		+ @"(\.[a-z]{2,6})?)" // first level domain- .com or .museum is optional
+		+ "(:[0-9]{1,5})?" // port number- :80
+		+ "((/?)|" // a slash isn't required if there is no file name
+		+ "(/[0-9a-z_!~*'().;?:@&=+$,%#-]+)+/?)$", RegexOptions.Compiled);
+	private static Regex UrlValidationRegex() => _urlValidationRegex;
+
+	private static readonly Regex _likeEscapeRegex = new(@"\.|\$|\^|\{|\[|\(|\||\)|\*|\+|\?|\\", RegexOptions.Compiled);
+	private static Regex LikeEscapeRegex() => _likeEscapeRegex;
+
+	private static readonly Regex _whitespaceRegex = new(@"\s+", RegexOptions.Compiled);
+	private static Regex WhitespaceRegex() => _whitespaceRegex;
+#endif
 	private class DictionarySourceEx : ISource
 	{
 		private readonly SyncObject _sync = new();
@@ -414,7 +459,7 @@ public static class StringHelper
 	/// <returns>True if the email address is valid; otherwise, false.</returns>
 	public static bool IsValidEmailAddress(this string email)
 	{
-		return new Regex(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$").IsMatch(email);
+		return EmailValidationRegex().IsMatch(email);
 	}
 
 	/// <summary>
@@ -424,17 +469,7 @@ public static class StringHelper
 	/// <returns>True if the URL is valid; otherwise, false.</returns>
 	public static bool IsValidUrl(this string url)
 	{
-		const string strRegex = "^(https?://)"
-								+ "?(([0-9a-z_!~*'().&=+$%-]+: )?[0-9a-z_!~*'().&=+$%-]+@)?" //user@
-								+ @"(([0-9]{1,3}\.){3}[0-9]{1,3}" // IP- 199.194.52.184
-								+ "|" // allows either IP or domain
-								+ @"([0-9a-z_!~*'()-]+\.)*" // tertiary domain(s)- www.
-								+ @"([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]" // second level domain
-								+ @"(\.[a-z]{2,6})?)" // first level domain- .com or .museum is optional
-								+ "(:[0-9]{1,5})?" // port number- :80
-								+ "((/?)|" // a slash isn't required if there is no file name
-								+ "(/[0-9a-z_!~*'().;?:@&=+$,%#-]+)+/?)$";
-		return new Regex(strRegex).IsMatch(url);
+		return UrlValidationRegex().IsMatch(url);
 	}
 
 	/// <summary>
@@ -1309,7 +1344,7 @@ public static class StringHelper
 		if (ignoreCase)
 			option = RegexOptions.IgnoreCase;
 
-		return new Regex(@"\A" + new Regex(@"\.|\$|\^|\{|\[|\(|\||\)|\*|\+|\?|\\").Replace(toFind, ch => @"\" + ch).Replace('_', '.').Replace("%", ".*") + @"\z", option).IsMatch(toSearch);
+		return new Regex(@"\A" + LikeEscapeRegex().Replace(toFind, ch => @"\" + ch).Replace('_', '.').Replace("%", ".*") + @"\z", option).IsMatch(toSearch);
 	}
 
 	/// <summary>
@@ -2037,8 +2072,7 @@ public static class StringHelper
 			return result;
 		}
 
-		var r = new Regex(@"\s+");
-		return r.Replace(text, @" ");
+		return WhitespaceRegex().Replace(text, @" ");
 	}
 
 	/// <summary>
