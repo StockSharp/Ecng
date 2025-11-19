@@ -1,6 +1,7 @@
 namespace Ecng.Common;
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Numerics;
 using System.Text;
