@@ -159,6 +159,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <summary>
 	/// Occurs before processing received data.
 	/// </summary>
+	[Obsolete("Use PreProcess2 event instead.")]
 	public event Func<ArraySegment<byte>, byte[], int> PreProcess;
 
 	/// <summary>
