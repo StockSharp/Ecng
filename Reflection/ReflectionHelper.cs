@@ -3,6 +3,7 @@ namespace Ecng.Reflection;
 using System;
 using System.ComponentModel;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
@@ -111,7 +112,7 @@ public static class ReflectionHelper
 
 	#region GetGenericType
 
-	private static readonly SynchronizedDictionary<(Type, Type), Type> _genericTypeCache = [];
+	private static readonly ConcurrentDictionary<(Type, Type), Type> _genericTypeCache = new();
 
 	/// <summary>
 	/// Gets the generic type from the target type based on the provided generic type definition.
@@ -530,7 +531,7 @@ public static class ReflectionHelper
 
 	#region IsAbstract
 
-	private static readonly SynchronizedDictionary<MemberInfo, bool> _isAbstractCache = [];
+	private static readonly ConcurrentDictionary<MemberInfo, bool> _isAbstractCache = new();
 
 	/// <summary>
 	/// Determines whether the specified member is abstract.
@@ -559,7 +560,7 @@ public static class ReflectionHelper
 
 	#region IsVirtual
 
-	private static readonly SynchronizedDictionary<MemberInfo, bool> _isVirtualCache = [];
+	private static readonly ConcurrentDictionary<MemberInfo, bool> _isVirtualCache = new();
 
 	/// <summary>
 	/// Determines whether the specified member is virtual.
@@ -719,7 +720,7 @@ public static class ReflectionHelper
 
 	#region IsCollection
 
-	private static readonly SynchronizedDictionary<Type, bool> _isCollectionCache = [];
+	private static readonly ConcurrentDictionary<Type, bool> _isCollectionCache = new();
 
 	/// <summary>
 	/// Determines whether the specified type is a collection.
@@ -746,7 +747,7 @@ public static class ReflectionHelper
 
 	#region IsStatic
 
-	private static readonly SynchronizedDictionary<MemberInfo, bool> _isStaticCache = [];
+	private static readonly ConcurrentDictionary<MemberInfo, bool> _isStaticCache = new();
 
 	/// <summary>
 	/// Determines whether the specified member is static.
@@ -799,7 +800,7 @@ public static class ReflectionHelper
 		}
 	}
 
-	private static readonly SynchronizedDictionary<Type, Type> _getItemTypeCache = [];
+	private static readonly ConcurrentDictionary<Type, Type> _getItemTypeCache = new();
 
 	/// <summary>
 	/// Gets the item type for a collection type.
@@ -868,7 +869,7 @@ public static class ReflectionHelper
 
 	#region GetAccessorOwner
 
-	private static readonly SynchronizedDictionary<MethodInfo, MemberInfo> _getAccessorOwnerCache = [];
+	private static readonly ConcurrentDictionary<MethodInfo, MemberInfo> _getAccessorOwnerCache = new();
 
 	/// <summary>
 	/// Gets the member that owns the specified accessor method.
@@ -978,12 +979,12 @@ public static class ReflectionHelper
 		_isVirtualCache.Clear();
 	}
 
-	private static TValue GetFromCache<TKey, TValue>(this SynchronizedDictionary<TKey, TValue> cache, TKey key, Func<TKey, TValue> createValue)
+	private static TValue GetFromCache<TKey, TValue>(this ConcurrentDictionary<TKey, TValue> cache, TKey key, Func<TKey, TValue> createValue)
 	{
 		if (!CacheEnabled)
 			return createValue(key);
 
-		return cache.SafeAdd(key, createValue);
+		return cache.GetOrAdd(key, createValue);
 	}
 
 	/// <summary>
