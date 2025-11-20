@@ -1,7 +1,7 @@
 namespace Ecng.Security;
 
 using System;
-using System.Linq;
+using System.Buffers;
 using System.IO;
 using System.Security.Cryptography;
 using System.Security;
@@ -104,8 +104,8 @@ public static class CryptoHelper
 	/// </summary>
 	public static RSAParameters GenerateRsa()
 	{
-		using var provider = new RSACryptoServiceProvider();
-		return provider.ExportParameters(true);
+		using var rsa = RSA.Create();
+		return rsa.ExportParameters(true);
 	}
 
 	#endregion
@@ -161,7 +161,7 @@ public static class CryptoHelper
 			throw new ArgumentNullException(nameof(passPhrase));
 
 		if (iv?.Length > 16)
-			iv = [.. iv.Take(16)];
+			iv = iv.AsSpan(0, 16).ToArray();
 
 #if NET10_0_OR_GREATER
 		var keyBytes = Rfc2898DeriveBytes.Pbkdf2(passPhrase, salt, _derivationIterations, HashAlgorithmName.SHA1, _keySize / 8);
@@ -185,21 +185,28 @@ public static class CryptoHelper
 
 	private static byte[] ReadStream(this CryptoStream stream, int maxLen)
 	{
-		var buffer = new byte[maxLen];
-		var offset = 0;
-
-		while (offset < maxLen)
+		var buffer = ArrayPool<byte>.Shared.Rent(maxLen);
+		try
 		{
-			var numRead = stream.Read(buffer, offset, maxLen - offset);
-			if (numRead == 0)
-				break;
+			var offset = 0;
 
-			offset += numRead;
+			while (offset < maxLen)
+			{
+				var numRead = stream.Read(buffer, offset, maxLen - offset);
+				if (numRead == 0)
+					break;
+
+				offset += numRead;
+			}
+
+			var result = new byte[offset];
+			Buffer.BlockCopy(buffer, 0, result, 0, offset);
+			return result;
 		}
-
-		Array.Resize(ref buffer, offset);
-
-		return buffer;
+		finally
+		{
+			ArrayPool<byte>.Shared.Return(buffer, clearArray: true);
+		}
 	}
 
 	/// <summary>
@@ -219,7 +226,7 @@ public static class CryptoHelper
 			throw new ArgumentNullException(nameof(passPhrase));
 
 		if (iv?.Length > 16)
-			iv = [.. iv.Take(16)];
+			iv = iv.AsSpan(0, 16).ToArray();
 
 #if NET10_0_OR_GREATER
 		var keyBytes = Rfc2898DeriveBytes.Pbkdf2(passPhrase, salt, _derivationIterations, HashAlgorithmName.SHA1, _keySize / 8);
@@ -312,13 +319,30 @@ public static class CryptoHelper
 		return algo.ComputeHash(value).Digest();
 	}
 
+	private static void ValidateHashInput(byte[] value)
+	{
+		if (value is null)
+			throw new ArgumentNullException(nameof(value));
+
+		if (value.Length == 0)
+			throw new ArgumentOutOfRangeException(nameof(value));
+	}
+
 	/// <summary>
 	/// MD5 hash.
 	/// </summary>
 	/// <param name="value">The value to hash.</param>
 	/// <returns>The hash.</returns>
 	public static string Md5(this byte[] value)
-		=> value.Hash(MD5.Create);
+	{
+		ValidateHashInput(value);
+#if NET6_0_OR_GREATER
+		return MD5.HashData(value).Digest();
+#else
+		using var algo = MD5.Create();
+		return algo.ComputeHash(value).Digest();
+#endif
+	}
 
 	/// <summary>
 	/// SHA256 hash.
@@ -326,7 +350,15 @@ public static class CryptoHelper
 	/// <param name="value">The value to hash.</param>
 	/// <returns>The hash.</returns>
 	public static string Sha256(this byte[] value)
-		=> value.Hash(SHA256.Create);
+	{
+		ValidateHashInput(value);
+#if NET6_0_OR_GREATER
+		return SHA256.HashData(value).Digest();
+#else
+		using var algo = SHA256.Create();
+		return algo.ComputeHash(value).Digest();
+#endif
+	}
 
 	/// <summary>
 	/// SHA512 hash.
@@ -334,7 +366,15 @@ public static class CryptoHelper
 	/// <param name="value">The value to hash.</param>
 	/// <returns>The hash.</returns>
 	public static string Sha512(this byte[] value)
-		=> value.Hash(SHA512.Create);
+	{
+		ValidateHashInput(value);
+#if NET6_0_OR_GREATER
+		return SHA512.HashData(value).Digest();
+#else
+		using var algo = SHA512.Create();
+		return algo.ComputeHash(value).Digest();
+#endif
+	}
 
 	/// <summary>
 	/// The default salt size.

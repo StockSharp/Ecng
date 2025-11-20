@@ -123,7 +123,11 @@ public class SymmetricCryptographer : Disposable
 		if (bytes is null)
 			return;
 
-		bytes.Clear();
+#if NET6_0_OR_GREATER
+		CryptographicOperations.ZeroMemory(bytes);
+#else
+		Array.Clear(bytes, 0, bytes.Length);
+#endif
 	}
 
 	private int IVLength

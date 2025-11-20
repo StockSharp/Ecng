@@ -43,26 +43,31 @@ public class AsymmetricCryptographer : Disposable
 
 		public byte[] CreateSignature(byte[] data, Func<HashAlgorithm> createHash)
 		{
-			if (Value is RSA rsa)
+			if (createHash is null)
+				throw new ArgumentNullException(nameof(createHash));
+
+			using HashAlgorithm hash = createHash();
+			var hashAlgoName = hash switch
 			{
-				if (createHash is null)
-					throw new ArgumentNullException(nameof(createHash));
+				SHA256 => HashAlgorithmName.SHA256,
+				SHA384 => HashAlgorithmName.SHA384,
+				SHA512 => HashAlgorithmName.SHA512,
+				SHA1 => HashAlgorithmName.SHA1,
+				MD5 => HashAlgorithmName.MD5,
+				_ => throw new NotSupportedException($"Hash algorithm {hash.GetType().Name} is not supported")
+			};
 
-				using HashAlgorithm hash = createHash();
-				var hashAlgoName = hash switch
-				{
-					SHA256 => HashAlgorithmName.SHA256,
-					SHA384 => HashAlgorithmName.SHA384,
-					SHA512 => HashAlgorithmName.SHA512,
-					SHA1 => HashAlgorithmName.SHA1,
-					MD5 => HashAlgorithmName.MD5,
-					_ => throw new NotSupportedException($"Hash algorithm {hash.GetType().Name} is not supported")
-				};
-
+			if (Value is RSA rsa)
 				return rsa.SignData(data, hashAlgoName, RSASignaturePadding.Pkcs1);
+			else if (Value is DSA dsa)
+			{
+#if NET6_0_OR_GREATER
+				return dsa.SignData(data, hashAlgoName);
+#else
+				var hashValue = hash.ComputeHash(data);
+				return dsa.CreateSignature(hashValue);
+#endif
 			}
-			else if (Value is DSACryptoServiceProvider dsa)
-				return dsa.SignData(data);
 			else
 				throw new NotSupportedException($"Signature creation is not supported for algorithm type {Value.GetType().Name}");
 		}
@@ -92,7 +97,34 @@ public class AsymmetricCryptographer : Disposable
 				}
 			}
 			else if (Value is DSA dsa)
-				return dsa.VerifySignature(data, signature);
+			{
+#if NET6_0_OR_GREATER
+				// Try SHA256 first (most common)
+				try
+				{
+					if (dsa.VerifyData(data, signature, HashAlgorithmName.SHA256))
+						return true;
+				}
+				catch
+				{
+				}
+
+				// Fallback to SHA1 for backward compatibility
+				try
+				{
+					return dsa.VerifyData(data, signature, HashAlgorithmName.SHA1);
+				}
+				catch
+				{
+					return false;
+				}
+#else
+				// .NET Standard 2.0: use SHA1 hash manually
+				using var sha1 = SHA1.Create();
+				var hashValue = sha1.ComputeHash(data);
+				return dsa.VerifySignature(hashValue, signature);
+#endif
+			}
 			else
 				throw new NotSupportedException($"Signature verification is not supported for algorithm type {Value.GetType().Name}");
 		}
