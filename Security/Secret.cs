@@ -1,6 +1,7 @@
 namespace Ecng.Security;
 
 using System.Linq;
+using System.Security.Cryptography;
 
 using Ecng.Common;
 using Ecng.Collections;
@@ -44,8 +45,13 @@ public class Secret : Equatable<Secret>
 		{
 			if (other.Hash is null)
 				return false;
+#if NET6_0_OR_GREATER
+			else if (!CryptographicOperations.FixedTimeEquals(Hash, other.Hash))
+				return false;
+#else
 			else if (!Hash.SequenceEqual(other.Hash))
 				return false;
+#endif
 		}
 
 		if (Salt is null)
@@ -57,8 +63,13 @@ public class Secret : Equatable<Secret>
 		{
 			if (other.Salt is null)
 				return false;
+#if NET6_0_OR_GREATER
+			else if (!CryptographicOperations.FixedTimeEquals(Salt, other.Salt))
+				return false;
+#else
 			else if (!Salt.SequenceEqual(other.Salt))
 				return false;
+#endif
 		}
 
 		return true;
