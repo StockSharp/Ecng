@@ -74,7 +74,7 @@ internal sealed class StringSyntaxAttribute : Attribute
 	public StringSyntaxAttribute(string syntax)
 	{
 		Syntax = syntax;
-		Arguments = Array.Empty<object?>();
+		Arguments = [];
 	}
 
 	/// <summary>
@@ -82,7 +82,7 @@ internal sealed class StringSyntaxAttribute : Attribute
 	/// </summary>
 	/// <param name="syntax">The syntax identifier.</param>
 	/// <param name="arguments">Optional arguments associated with the specific syntax employed.</param>
-	public StringSyntaxAttribute(string syntax, params object?[] arguments)
+	public StringSyntaxAttribute(string syntax, params object[] arguments)
 	{
 		Syntax = syntax;
 		Arguments = arguments;
@@ -96,6 +96,6 @@ internal sealed class StringSyntaxAttribute : Attribute
 	/// <summary>
 	/// Gets optional arguments associated with the specific syntax employed.
 	/// </summary>
-	public object?[] Arguments { get; }
+	public object[] Arguments { get; }
 }
 #endif
