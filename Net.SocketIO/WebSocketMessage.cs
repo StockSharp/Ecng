@@ -13,21 +13,21 @@ using System.Runtime.InteropServices;
 /// <param name="memory">The message bytes.</param>
 public readonly struct WebSocketMessage(Encoding encoding, ReadOnlyMemory<byte> memory)
 {
-    /// <summary>
-    /// Gets the encoding used to decode the message.
-    /// </summary>
-    public Encoding Encoding { get; } = encoding ?? throw new ArgumentNullException(nameof(encoding));
+	/// <summary>
+	/// Gets the encoding used to decode the message.
+	/// </summary>
+	public Encoding Encoding { get; } = encoding ?? throw new ArgumentNullException(nameof(encoding));
 
-    /// <summary>
-    /// Gets the message bytes as read-only memory (primary storage).
-    /// </summary>
-    public ReadOnlyMemory<byte> Memory { get; } = memory;
+	/// <summary>
+	/// Gets the message bytes as read-only memory (primary storage).
+	/// </summary>
+	public ReadOnlyMemory<byte> Memory { get; } = memory;
 
-    /// <summary>
-    /// Converts the message buffer into a string using the associated encoding.
-    /// </summary>
-    /// <returns>The message as a string.</returns>
-    public string AsString()
+	/// <summary>
+	/// Converts the message buffer into a string using the associated encoding.
+	/// </summary>
+	/// <returns>The message as a string.</returns>
+	public string AsString()
 		=> Encoding.GetString(Memory.Span);
 
 	/// <summary>
