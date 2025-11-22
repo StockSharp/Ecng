@@ -127,24 +127,81 @@ public static class AsyncEnumerable
 	}
 
 	/// <summary>
+	/// Returns an empty <see cref="IAsyncEnumerable{T}"/> that has the specified type argument.
+	/// </summary>
+	/// <typeparam name="TResult">The type of the elements of the sequence.</typeparam>
+	/// <returns>An empty <see cref="IAsyncEnumerable{T}"/> whose type argument is <typeparamref name="TResult"/>.</returns>
+	public static IAsyncEnumerable<TResult> Empty<TResult>() => EmptyAsyncEnumerable<TResult>.Instance;
+
+	private class EmptyAsyncEnumerable<TResult> : IAsyncEnumerable<TResult>, IAsyncEnumerator<TResult>
+	{
+		public static readonly EmptyAsyncEnumerable<TResult> Instance = new();
+
+		IAsyncEnumerator<TResult> IAsyncEnumerable<TResult>.GetAsyncEnumerator(CancellationToken cancellationToken) => this;
+
+		ValueTask<bool> IAsyncEnumerator<TResult>.MoveNextAsync() => default;
+		TResult IAsyncEnumerator<TResult>.Current => default;
+
+		ValueTask IAsyncDisposable.DisposeAsync() => default;
+	}
+
+	/// <summary>
 	/// Converts a synchronous <see cref="IEnumerable{T}"/> to an asynchronous <see cref="IAsyncEnumerable{T}"/>.
 	/// </summary>
-	/// <typeparam name="T">The type of the elements.</typeparam>
+	/// <typeparam name="TSource">The type of the elements.</typeparam>
 	/// <param name="source">The source enumerable.</param>
-	/// <param name="cancellationToken">The cancellation token.</param>
-	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that yields items from the source sequence.</returns>
-	public static async IAsyncEnumerable<T> ToAsyncEnumerable<T>(this IEnumerable<T> source, [EnumeratorCancellation] CancellationToken cancellationToken)
+	/// <returns>An <see cref="IAsyncEnumerable{TSource}"/> that yields items from the source sequence.</returns>
+	public static IAsyncEnumerable<TSource> ToAsyncEnumerable<TSource>(this IEnumerable<TSource> source)
 	{
 		if (source is null)
 			throw new ArgumentNullException(nameof(source));
 
-		await Task.Yield();
-		cancellationToken.ThrowIfCancellationRequested();
-
-		foreach (var item in source)
+		return source switch
 		{
-			cancellationToken.ThrowIfCancellationRequested();
-			yield return item;
+			TSource[] array => array.Length == 0 ? Empty<TSource>() : FromArray(array),
+			List<TSource> list => FromList(list),
+			IList<TSource> list => FromIList(list),
+			_ when source == Enumerable.Empty<TSource>() => Empty<TSource>(),
+			_ => FromIterator(source),
+		};
+
+		static async IAsyncEnumerable<TSource> FromArray(TSource[] source)
+		{
+			for (var i = 0; ; i++)
+			{
+				var localI = i;
+				var localSource = source;
+				if ((uint)localI >= (uint)localSource.Length)
+				{
+					break;
+				}
+				yield return localSource[localI];
+			}
+		}
+
+		static async IAsyncEnumerable<TSource> FromList(List<TSource> source)
+		{
+			for (var i = 0; i < source.Count; i++)
+			{
+				yield return source[i];
+			}
+		}
+
+		static async IAsyncEnumerable<TSource> FromIList(IList<TSource> source)
+		{
+			var count = source.Count;
+			for (var i = 0; i < count; i++)
+			{
+				yield return source[i];
+			}
+		}
+
+		static async IAsyncEnumerable<TSource> FromIterator(IEnumerable<TSource> source)
+		{
+			foreach (var element in source)
+			{
+				yield return element;
+			}
 		}
 	}
 }
