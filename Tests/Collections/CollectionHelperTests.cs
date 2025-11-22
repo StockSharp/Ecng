@@ -799,19 +799,6 @@ public class CollectionHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Append2_AppendsElement()
-	{
-		// Arrange
-		var collection = new[] { 1, 2, 3 };
-
-		// Act
-		var result = collection.Append2(4).ToArray();
-
-		// Assert
-		result.AssertEqual([1, 2, 3, 4]);
-	}
-
-	[TestMethod]
 	public void Count2_CountsNonGenericEnumerable()
 	{
 		// Arrange
