@@ -1,9 +1,9 @@
-﻿namespace Ecng.Linq;
+﻿#if NET10_0_OR_GREATER == false
+namespace System.Linq;
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +13,7 @@ using Ecng.Common;
 /// <summary>
 /// The extensions for <see cref="IAsyncEnumerable{T}"/>.
 /// </summary>
-public static class AsyncEnumerableExtensions
+public static class AsyncEnumerable
 {
 	/// <summary>
 	/// Converts the <see cref="IAsyncEnumerable{T}"/> to the array.
@@ -22,7 +22,7 @@ public static class AsyncEnumerableExtensions
 	/// <param name="enu">The enumeration.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>The array of the elements of the <see cref="IAsyncEnumerable{T}"/>.</returns>
-	public static async ValueTask<T[]> ToArrayAsync2<T>(this IAsyncEnumerable<T> enu, CancellationToken cancellationToken)
+	public static async ValueTask<T[]> ToArrayAsync<T>(this IAsyncEnumerable<T> enu, CancellationToken cancellationToken)
 	{
 		if (enu is null)
 			throw new ArgumentNullException(nameof(enu));
@@ -42,7 +42,7 @@ public static class AsyncEnumerableExtensions
 	/// <param name="enu">The enumeration.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>The first element of the <see cref="IAsyncEnumerable{T}"/>.</returns>
-	public static async ValueTask<T> FirstAsync2<T>(this IAsyncEnumerable<T> enu, CancellationToken cancellationToken)
+	public static async ValueTask<T> FirstAsync<T>(this IAsyncEnumerable<T> enu, CancellationToken cancellationToken)
 	{
 		if (enu is null)
 			throw new ArgumentNullException(nameof(enu));
@@ -60,7 +60,7 @@ public static class AsyncEnumerableExtensions
 	/// <param name="enu">The enumeration.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>The first element of the <see cref="IAsyncEnumerable{T}"/> or the default value if the enumeration is empty.</returns>
-	public static async ValueTask<T> FirstOrDefaultAsync2<T>(this IAsyncEnumerable<T> enu, CancellationToken cancellationToken)
+	public static async ValueTask<T> FirstOrDefaultAsync<T>(this IAsyncEnumerable<T> enu, CancellationToken cancellationToken)
 	{
 		if (enu is null)
 			throw new ArgumentNullException(nameof(enu));
@@ -87,7 +87,8 @@ public static class AsyncEnumerableExtensions
 	/// <param name="keySelector">A function to extract the key for each element.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that contains elements of type <see cref="IGrouping{TKey, TSource}"/></returns>
-	public static async IAsyncEnumerable<IGrouping<TKey, TSource>> GroupByAsync2<TSource, TKey>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, [EnumeratorCancellation]CancellationToken cancellationToken)
+	[Obsolete("This method assumes that the source is ordered by the key.")]
+	public static async IAsyncEnumerable<IGrouping<TKey, TSource>> GroupByAsync<TSource, TKey>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, [EnumeratorCancellation]CancellationToken cancellationToken)
 		where TKey : IEquatable<TKey>
 	{
 		if (source is null)
@@ -132,7 +133,7 @@ public static class AsyncEnumerableExtensions
 	/// <param name="source">The source enumerable.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>An <see cref="IAsyncEnumerable{T}"/> that yields items from the source sequence.</returns>
-	public static async IAsyncEnumerable<T> ToAsyncEnumerable2<T>(this IEnumerable<T> source, [EnumeratorCancellation] CancellationToken cancellationToken)
+	public static async IAsyncEnumerable<T> ToAsyncEnumerable<T>(this IEnumerable<T> source, [EnumeratorCancellation] CancellationToken cancellationToken)
 	{
 		if (source is null)
 			throw new ArgumentNullException(nameof(source));
@@ -147,3 +148,4 @@ public static class AsyncEnumerableExtensions
 		}
 	}
 }
+#endif
