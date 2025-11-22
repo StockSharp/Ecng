@@ -9,6 +9,7 @@ using Ecng.Collections;
 /// <summary>
 /// Lazy helper.
 /// </summary>
+[Obsolete("Use ResettableLazy<T> from Ecng.Common instead.")]
 public static class LazyHelper
 {
 	private static readonly SynchronizedDictionary<object, Delegate> _factories = [];
@@ -106,6 +107,7 @@ public static class LazyHelper
 	/// <typeparam name="T">The type of the lazy.</typeparam>
 	/// <param name="lazy">The lazy.</param>
 	/// <returns>The lazy.</returns>
+	[Obsolete("Use ResettableLazy<T> from Ecng.Common instead.")]
 	public static Lazy<T> Track<T>(this Lazy<T> lazy)
 		=> Holder<T>.Track(lazy);
 
@@ -114,6 +116,7 @@ public static class LazyHelper
 	/// </summary>
 	/// <typeparam name="T">The type of the lazy.</typeparam>
 	/// <param name="lazy">The lazy.</param>
+	[Obsolete("Use ResettableLazy<T> from Ecng.Common instead.")]
 	public static void Reset<T>(this Lazy<T> lazy)
 		=> Holder<T>.Reset(lazy);
 
@@ -123,6 +126,7 @@ public static class LazyHelper
 	/// <typeparam name="T">The type of the lazy.</typeparam>
 	/// <param name="lazy">The lazy.</param>
 	/// <param name="value">Value.</param>
+	[Obsolete("Use ResettableLazy<T> from Ecng.Common instead.")]
 	public static void SetValue<T>(this Lazy<T> lazy, T value)
 		=> Holder<T>.SetValue(lazy, value);
 
@@ -131,6 +135,7 @@ public static class LazyHelper
 	/// </summary>
 	/// <typeparam name="T">The type of the lazy.</typeparam>
 	/// <param name="lazy">The lazy.</param>
+	[Obsolete("Use ResettableLazy<T> from Ecng.Common instead.")]
 	public static void Untrack<T>(this Lazy<T> lazy)
 		=> Holder<T>.Untrack(lazy);
 }
