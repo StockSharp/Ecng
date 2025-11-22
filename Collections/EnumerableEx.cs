@@ -1,4 +1,5 @@
-﻿namespace System.Linq;
+﻿#if NETSTANDARD2_0
+namespace System.Linq;
 
 using System;
 using System.Collections.Generic;
@@ -117,3 +118,4 @@ public static class EnumerableEx
 		return max;
 	}
 }
+#endif
