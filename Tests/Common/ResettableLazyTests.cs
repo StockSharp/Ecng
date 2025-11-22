@@ -101,7 +101,7 @@ public class ResettableLazyTests
 	public void ToStringNotCreated()
 	{
 		var lazy = new ResettableLazy<int>(() => 42);
-		lazy.ToString().AssertEqual("Value is not created.");
+		lazy.ToString().AssertEqual("<not initialized>");
 	}
 
 	[TestMethod]

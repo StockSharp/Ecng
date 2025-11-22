@@ -153,5 +153,5 @@ public class ResettableLazy<T>
 	/// Returns a string that represents the current object.
 	/// </summary>
 	public override string ToString()
-		=> _isValueCreated ? _value?.ToString() : "Value is not created.";
+		=> _isValueCreated ? (_value?.ToString() ?? string.Empty) : "<not initialized>";
 }
