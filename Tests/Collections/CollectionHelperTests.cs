@@ -1380,10 +1380,12 @@ public class CollectionHelperTests : BaseTestClass
 		// Arrange
 		var source = new[] { 1, 2 };
 
+		var delay = TimeSpan.FromMilliseconds(10);
+
 		// Act
 		var result = await source.SelectManyAsync<int, int>(async x =>
 		{
-			await Task.Delay(10, CancellationToken);
+			await delay.Delay(CancellationToken);
 			return [x, x * 10];
 		});
 

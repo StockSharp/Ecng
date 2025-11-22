@@ -6,11 +6,13 @@ using Ecng.Linq;
 [TestClass]
 public class AsyncEnumerableTests : BaseTestClass
 {
-	private static async IAsyncEnumerable<int> GetAsyncData()
+	private static readonly TimeSpan _1mls = TimeSpan.FromMilliseconds(1);
+
+	private async IAsyncEnumerable<int> GetAsyncData()
 	{
 		for (int i = 1; i <= 3; i++)
 		{
-			await Task.Delay(1, CancellationToken.None);
+			await _1mls.Delay(CancellationToken);
 			yield return i;
 		}
 	}
@@ -43,11 +45,11 @@ public class AsyncEnumerableTests : BaseTestClass
 		public string Name { get; set; }
 	}
 
-	private static async IAsyncEnumerable<RefItem> GetAsyncRefData()
+	private async IAsyncEnumerable<RefItem> GetAsyncRefData()
 	{
-		await Task.Delay(1, CancellationToken.None);
+		await _1mls.Delay(CancellationToken);
 		yield return new RefItem { Id = 10, Name = "a" };
-		await Task.Delay(1, CancellationToken.None);
+		await _1mls.Delay(CancellationToken);
 		yield return new RefItem { Id = 11, Name = "b" };
 	}
 
@@ -92,8 +94,10 @@ public class AsyncEnumerableTests : BaseTestClass
 	{
 		var source = new[] { new RefItem { Id = 1, Name = "a" }, new RefItem { Id = 2, Name = "b" } };
 		var list = new List<RefItem>();
+
 		await foreach (var item in source.ToAsyncEnumerable(CancellationToken))
 			list.Add(item);
+
 		list.Count.AssertEqual(2);
 		list[0].Id.AssertEqual(1);
 		list[1].Name.AssertEqual("b");
