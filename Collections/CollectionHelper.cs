@@ -2176,6 +2176,7 @@ public static class CollectionHelper
 	/// <param name="values">The sequence to append to.</param>
 	/// <param name="value">The value to append.</param>
 	/// <returns>An enumerable with the value appended.</returns>
+	[Obsolete("Use Enumerable.Append instead.")]
 	public static IEnumerable<T> Append2<T>(this IEnumerable<T> values, T value)
 		=> Enumerable.Append(values, value);
 
