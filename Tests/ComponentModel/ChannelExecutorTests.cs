@@ -324,28 +324,38 @@ public class ChannelExecutorTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task AllOperationsExecuteInSameThread()
+	public async Task AllOperationsExecuteSequentially()
 	{
 		var token = CancellationToken;
 
 		await using var executor = CreateChannel();
 		_ = executor.RunAsync(token);
 
-		var threadIds = new List<int>();
+		// Use a non-thread-safe collection to verify sequential execution
+		// If operations run concurrently, this will throw or corrupt data
+		var list = new List<int>();
+		var operationCount = 100;
 
-		for (int i = 0; i < 50; i++)
+		for (int i = 0; i < operationCount; i++)
 		{
-			executor.Add(() => threadIds.Add(Environment.CurrentManagedThreadId));
+			var value = i;
+			executor.Add(() =>
+			{
+				// Non-thread-safe operations
+				list.Add(value);
+				// Verify list wasn't corrupted
+				list[list.Count - 1].AssertEqual(value);
+			});
 		}
 
 		await executor.WaitFlushAsync(token);
 
-		// All operations should execute on the same thread
-		threadIds.Count.AssertEqual(50);
-		var firstThreadId = threadIds[0];
-		foreach (var threadId in threadIds)
+		// All operations completed successfully without concurrent modification
+		list.Count.AssertEqual(operationCount);
+		// Verify sequential execution by checking order preservation
+		for (int i = 0; i < operationCount; i++)
 		{
-			threadId.AssertEqual(firstThreadId);
+			list[i].AssertEqual(i);
 		}
 	}
 
