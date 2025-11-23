@@ -12,6 +12,7 @@ using Ecng.Common;
 /// <summary>
 /// Provides delayed action execution with batching support.
 /// </summary>
+[Obsolete("Use Channels instead.")]
 public class DelayAction : Disposable
 {
 	/// <summary>
