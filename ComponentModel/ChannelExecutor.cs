@@ -27,10 +27,10 @@ public class ChannelExecutor : IAsyncDisposable
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ChannelExecutor"/>.
 	/// </summary>
-	/// <param name="errorHandler">Error handler for unhandled exceptions. If null, exceptions are ignored.</param>
-	public ChannelExecutor(Action<Exception> errorHandler = null)
+	/// <param name="errorHandler">Error handler for unhandled exceptions.</param>
+	public ChannelExecutor(Action<Exception> errorHandler)
 	{
-		_errorHandler = errorHandler;
+		_errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
 		_channel = Channel.CreateUnbounded<Operation>(new UnboundedChannelOptions
 		{
 			SingleReader = true,
@@ -68,14 +68,14 @@ public class ChannelExecutor : IAsyncDisposable
 				catch (Exception ex)
 				{
 					operation.CompletionSource?.TrySetException(ex);
-					_errorHandler?.Invoke(ex);
+					_errorHandler(ex);
 				}
 			}
 		}
 		catch (Exception ex)
 		{
 			if (!cancellationToken.IsCancellationRequested)
-				_errorHandler?.Invoke(ex);
+				_errorHandler(ex);
 		}
 	}
 
