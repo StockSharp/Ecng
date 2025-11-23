@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
+using Ecng.Common;
+
 /// <summary>
 /// Extension methods for <see cref="ChannelReader{T}"/>.
 /// </summary>
@@ -24,7 +26,7 @@ public static class ChannelReaderExtensions
 		if (reader is null)
 			throw new ArgumentNullException(nameof(reader));
 
-		while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+		while (await reader.WaitToReadAsync(cancellationToken).NoWait())
 		{
 			while (reader.TryRead(out var item))
 			{

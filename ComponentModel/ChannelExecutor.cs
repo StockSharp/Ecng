@@ -58,7 +58,7 @@ public class ChannelExecutor : IAsyncDisposable
 	{
 		try
 		{
-			await foreach (var operation in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+			await foreach (var operation in _channel.Reader.ReadAllAsync(cancellationToken).NoWait())
 			{
 				try
 				{
@@ -127,7 +127,7 @@ public class ChannelExecutor : IAsyncDisposable
 		{
 			Action = () => { },
 			CompletionSource = tcs
-		}, cancellationToken).ConfigureAwait(false);
+		}, cancellationToken).NoWait();
 
 		await tcs.Task.NoWait();
 	}

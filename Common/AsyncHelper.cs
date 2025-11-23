@@ -755,14 +755,5 @@ public static class AsyncHelper
 			throw new TimeoutException();
 		}
 	}
-
-	/// <summary>
-	/// Gets a <see cref="Task"/> that will complete when this <see cref="Task"/> completes or when the specified timeout expires.
-	/// </summary>
-	/// <param name="task">The task to wait on for completion.</param>
-	/// <param name="timeout">The timeout after which the <see cref="Task"/> should be faulted with a <see cref="TimeoutException"/> if it hasn't otherwise completed.</param>
-	/// <returns>The <see cref="Task"/> representing the asynchronous wait. It may or may not be the same instance as the current instance.</returns>
-	public static Task WaitAsync(this Task task, TimeSpan timeout)
-		=> WaitAsync(task, timeout, CancellationToken.None);
 #endif
 }
