@@ -462,7 +462,7 @@ public class ChannelExecutorTests : BaseTestClass
 		// Operation should have completed
 		executed.AssertTrue();
 		// And it should have taken at least 100ms
-		Assert.IsTrue(elapsed.TotalMilliseconds >= 90); // Small tolerance for timing
+		elapsed.TotalMilliseconds.AssertGreater(89); // Small tolerance for timing
 	}
 
 	[TestMethod]
