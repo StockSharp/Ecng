@@ -439,4 +439,130 @@ public class ChannelExecutorTests : BaseTestClass
 		failedOps.AssertEqual(50); // 10% of 500
 		errors.Count.AssertEqual(50);
 	}
+
+	[TestMethod]
+	public async Task AddAndWaitAsync_WaitsForCompletion()
+	{
+		var token = CancellationToken;
+
+		await using var executor = CreateChannel();
+		_ = executor.RunAsync(token);
+
+		var executed = false;
+		var startTime = DateTime.UtcNow;
+
+		await executor.AddAndWaitAsync(() =>
+		{
+			Thread.Sleep(100);
+			executed = true;
+		}, token);
+
+		var elapsed = DateTime.UtcNow - startTime;
+
+		// Operation should have completed
+		executed.AssertTrue();
+		// And it should have taken at least 100ms
+		Assert.IsTrue(elapsed.TotalMilliseconds >= 90); // Small tolerance for timing
+	}
+
+	[TestMethod]
+	public async Task AddAndWaitAsync_WithException()
+	{
+		var token = CancellationToken;
+
+		var errors = new List<Exception>();
+		await using var executor = new ChannelExecutor(ex => errors.Add(ex));
+		_ = executor.RunAsync(token);
+
+		var expectedException = new InvalidOperationException("Test error");
+
+		// AddAndWaitAsync should propagate the exception through the Task
+		var thrownException = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+			await executor.AddAndWaitAsync(() => throw expectedException, token));
+
+		// Exception is propagated to both errorHandler and through TaskCompletionSource
+		thrownException.AssertEqual(expectedException);
+
+		// Give errorHandler time to process
+		await Task.Delay(10, token);
+		errors.Count.AssertEqual(1);
+		errors[0].AssertEqual(expectedException);
+	}
+
+	[TestMethod]
+	public async Task AddAndWaitAsync_MultipleSequential()
+	{
+		var token = CancellationToken;
+
+		await using var executor = CreateChannel();
+		_ = executor.RunAsync(token);
+
+		var counter = 0;
+
+		// Each AddAndWaitAsync should wait for its operation to complete before returning
+		await executor.AddAndWaitAsync(() => counter++, token);
+		counter.AssertEqual(1);
+
+		await executor.AddAndWaitAsync(() => counter++, token);
+		counter.AssertEqual(2);
+
+		await executor.AddAndWaitAsync(() => counter++, token);
+		counter.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public async Task AddAndWaitAsync_ParallelCalls()
+	{
+		var token = CancellationToken;
+
+		await using var executor = CreateChannel();
+		_ = executor.RunAsync(token);
+
+		var counter = 0;
+		var tasks = new List<Task>();
+
+		// Multiple threads calling AddAndWaitAsync in parallel
+		for (int i = 0; i < 10; i++)
+		{
+			tasks.Add(Task.Run(async () =>
+			{
+				await executor.AddAndWaitAsync(() =>
+				{
+					Thread.Sleep(10);
+					Interlocked.Increment(ref counter);
+				}, token);
+			}, token));
+		}
+
+		await tasks.WhenAll();
+
+		counter.AssertEqual(10);
+	}
+
+	[TestMethod]
+	public async Task AddAndWaitAsync_WithCancellation()
+	{
+		var token = CancellationToken;
+
+		await using var executor = CreateChannel();
+		_ = executor.RunAsync(token);
+
+		var cts = new CancellationTokenSource();
+		cts.Cancel();
+
+		await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+			await executor.AddAndWaitAsync(() => { }, cts.Token));
+	}
+
+	[TestMethod]
+	public async Task AddAndWaitAsync_NullActionThrows()
+	{
+		var token = CancellationToken;
+
+		await using var executor = CreateChannel();
+		_ = executor.RunAsync(token);
+
+		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () =>
+			await executor.AddAndWaitAsync(null, token));
+	}
 }

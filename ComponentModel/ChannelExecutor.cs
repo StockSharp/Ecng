@@ -115,6 +115,28 @@ public class ChannelExecutor : IAsyncDisposable
 	}
 
 	/// <summary>
+	/// Add operation to the execution queue and wait for it to complete.
+	/// </summary>
+	/// <param name="action">Operation to execute.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>Task that completes when the operation has been executed.</returns>
+	public async Task AddAndWaitAsync(Action action, CancellationToken cancellationToken = default)
+	{
+		if (action == null)
+			throw new ArgumentNullException(nameof(action));
+
+		var tcs = new TaskCompletionSource<bool>();
+
+		await _channel.Writer.WriteAsync(new Operation
+		{
+			Action = action,
+			CompletionSource = tcs
+		}, cancellationToken).NoWait();
+
+		await tcs.Task.NoWait();
+	}
+
+	/// <summary>
 	/// Wait for all pending operations to complete.
 	/// </summary>
 	/// <param name="cancellationToken">Cancellation token.</param>
