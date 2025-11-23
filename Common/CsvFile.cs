@@ -159,12 +159,7 @@ public class CsvFileReader : CsvFileCommon, IDisposable
 			throw new ArgumentNullException(nameof(columns));
 
 	ReadNextLineAsync:
-		CurrLine = await _reader.ReadLineAsync(
-#if NET7_0_OR_GREATER
-			cancellationToken
-#else
-#endif
-		).NoWait();
+		CurrLine = await _reader.ReadLineAsync(cancellationToken).NoWait();
 		_currPos = 0;
 
 		if (CurrLine is null)
@@ -229,12 +224,7 @@ public class CsvFileReader : CsvFileCommon, IDisposable
 
 			while (_currPos == CurrLine.Length)
 			{
-				CurrLine = await _reader.ReadLineAsync(
-#if NET7_0_OR_GREATER
-			cancellationToken
-#else
-#endif
-				).NoWait();
+				CurrLine = await _reader.ReadLineAsync(cancellationToken).NoWait();
 				
 				_currPos = 0;
 
@@ -360,18 +350,16 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 			{
 				await _writer.WriteAsync(Delimiter.ToString()
 #if NET7_0_OR_GREATER
-					.AsMemory(), cancellationToken
-#else
+					.AsMemory()
 #endif
-				).NoWait();
+				, cancellationToken).NoWait();
 			}
 
 			await _writer.WriteAsync(Encode(c ?? string.Empty)
 #if NET7_0_OR_GREATER
-				.AsMemory(), cancellationToken
-#else
+				.AsMemory()
 #endif
-			).NoWait();
+			, cancellationToken).NoWait();
 
 			i++;
 		}
@@ -388,12 +376,7 @@ public class CsvFileWriter : CsvFileCommon, IDisposable
 	{
 		// StreamWriter's FlushAsync does not accept a CancellationToken in .NET Standard2.0;
 		// the token is provided for API symmetry.
-		return _writer.FlushAsync(
-#if NET8_0_OR_GREATER
-			cancellationToken
-#else
-#endif
-		);
+		return _writer.FlushAsync(cancellationToken);
 	}
 
 	/// <summary>
