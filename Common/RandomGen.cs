@@ -141,12 +141,7 @@ public static class RandomGen
 	/// <param name="max">The maximum value.</param>
 	/// <returns>A random integer between 0 and max (inclusive).</returns>
 	public static int GetInt(int max)
-	{
-		if (max < int.MaxValue)
-			max++;
-
-		return Random.Next(max);
-	}
+		=> GetInt(0, max);
 
 	/// <summary>
 	/// Returns a random integer between the specified minimum and maximum values (inclusive).
