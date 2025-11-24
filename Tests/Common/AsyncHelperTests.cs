@@ -99,7 +99,7 @@ public class AsyncHelperTests : BaseTestClass
 
 		var timerTask = AsyncHelper.StartPeriodicTimer(() => count++, TimeSpan.FromMilliseconds(100), cts.Token);
 
-		await Task.Delay(350); // Should trigger approximately 3 times
+		await Task.Delay(350, CancellationToken); // Should trigger approximately 3 times
 		cts.Cancel();
 
 		try
@@ -122,7 +122,7 @@ public class AsyncHelperTests : BaseTestClass
 
 		var timerTask = AsyncHelper.StartPeriodicTimer<int>(x => sum += x, 5, TimeSpan.FromMilliseconds(100), cts.Token);
 
-		await Task.Delay(350);
+		await Task.Delay(350, CancellationToken);
 		cts.Cancel();
 
 		try
@@ -146,10 +146,10 @@ public class AsyncHelperTests : BaseTestClass
 		var timerTask = AsyncHelper.StartPeriodicTimer(async () =>
 		{
 			count++;
-			await Task.Delay(10);
+			await Task.Delay(10, CancellationToken);
 		}, TimeSpan.FromMilliseconds(100), cts.Token);
 
-		await Task.Delay(350);
+		await Task.Delay(350, CancellationToken);
 		cts.Cancel();
 
 		try
@@ -173,10 +173,10 @@ public class AsyncHelperTests : BaseTestClass
 		// StartPeriodicTimer(handler, start, interval) - start is initial delay
 		var timerTask = AsyncHelper.StartPeriodicTimer(() => count++, TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(100), cts.Token);
 
-		await Task.Delay(100); // Before first execution (200ms initial delay)
+		await Task.Delay(100, CancellationToken); // Before first execution (200ms initial delay)
 		count.AssertEqual(0);
 
-		await Task.Delay(200); // After initial delay passed (total 300ms > 200ms)
+		await Task.Delay(200, CancellationToken); // After initial delay passed (total 300ms > 200ms)
 		(count > 0).AssertTrue($"Count should be > 0, but was {count}");
 
 		cts.Cancel();
@@ -204,7 +204,7 @@ public class AsyncHelperTests : BaseTestClass
 		timer.IsRunning.AssertTrue();
 		timer.Interval.AssertEqual(TimeSpan.FromMilliseconds(100));
 
-		await Task.Delay(350);
+		await Task.Delay(350, CancellationToken);
 		count.AssertInRange(1, 6);
 
 		// Stop timer
@@ -212,7 +212,7 @@ public class AsyncHelperTests : BaseTestClass
 		timer.IsRunning.AssertFalse();
 
 		var countAfterStop = count;
-		await Task.Delay(200);
+		await Task.Delay(200, CancellationToken);
 		count.AssertEqual(countAfterStop); // Count should not increase after stop
 
 		timer.Dispose();
@@ -226,7 +226,7 @@ public class AsyncHelperTests : BaseTestClass
 
 		// Start with 100ms interval
 		timer.Start(TimeSpan.FromMilliseconds(100));
-		await Task.Delay(450); // Increased delay for more reliable timing
+		await Task.Delay(450, CancellationToken); // Increased delay for more reliable timing
 		var countAfterFast = Interlocked.CompareExchange(ref count, 0, 0);
 		// With 100ms interval over 450ms, expect 2-6 ticks (tolerance for system load)
 		(countAfterFast >= 1).AssertTrue($"Expected at least 1 tick, got {countAfterFast}");
@@ -236,7 +236,7 @@ public class AsyncHelperTests : BaseTestClass
 		timer.Interval.AssertEqual(TimeSpan.FromMilliseconds(300));
 
 		Interlocked.Exchange(ref count, 0);
-		await Task.Delay(700); // 700ms should give 1-3 ticks at 300ms interval
+		await Task.Delay(700, CancellationToken); // 700ms should give 1-3 ticks at 300ms interval
 		var countAfterSlow = Interlocked.CompareExchange(ref count, 0, 0);
 
 		// Verify that slower interval produces fewer ticks
@@ -257,10 +257,10 @@ public class AsyncHelperTests : BaseTestClass
 		// Start(interval, start) - start is initial delay
 		timer.Start(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(300));
 
-		await Task.Delay(150);
+		await Task.Delay(150, CancellationToken);
 		count.AssertEqual(0); // Initial delay not passed (300ms)
 
-		await Task.Delay(300); // Wait longer to ensure at least one execution (total 450ms > 300ms)
+		await Task.Delay(300, CancellationToken); // Wait longer to ensure at least one execution (total 450ms > 300ms)
 		(count > 0).AssertTrue($"Count should be > 0, but was {count}");
 
 		timer.Dispose();
@@ -287,11 +287,11 @@ public class AsyncHelperTests : BaseTestClass
 		var timer = AsyncHelper.CreatePeriodicTimer(async () =>
 		{
 			count++;
-			await Task.Delay(10);
+			await Task.Delay(10, CancellationToken);
 		});
 
 		timer.Start(TimeSpan.FromMilliseconds(100));
-		await Task.Delay(350);
+		await Task.Delay(350, CancellationToken);
 
 		count.AssertInRange(1, 6);
 
