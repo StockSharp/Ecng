@@ -1,0 +1,18 @@
+<license>
+  <ver>2.0</ver>
+  <id>123</id>
+  <issuedTo>some@email.com</issuedTo>
+  <issuedDate>638992181964870000</issuedDate>
+  <expirationDate>20301231 11:32:32</expirationDate>
+  <account></account>
+  <hardwareId></hardwareId>
+  <features></features>
+  <expireAction>PreventWork</expireAction>
+  <platforms>
+    <platform name="WINDOWS">
+      <feature name="feature1" expire="638683653467270000" expireAction="PreventWork" hardwareId="BFEBFBFF000306D4C07529701BLG926AF" app="false" oneApp="" account="" />
+      <feature name="feature2" expire="20301231 11:32:32" expireAction="PreventWork" hardwareId="BFEBFBFF000306D4C07529701BLG926AF" app="false" oneApp="" account="" />
+    </platform>
+  </platforms>
+  <signature>MTIzNDU=</signature>
+</license>

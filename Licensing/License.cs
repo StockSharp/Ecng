@@ -32,7 +32,13 @@ public class License
 
 		var issuedDateStr = xml.GetElementValue<string>("issuedDate");
 
-		IssuedDate = (long.TryParse(issuedDateStr, out var issuedDate) ? issuedDate.To<DateTime>() : issuedDateStr.ToDateTime(_dateFormat)).UtcKind();
+		static DateTime toDate(string expireStr)
+			=> (long.TryParse(expireStr, out var l)
+				? l.To<DateTime>()
+				: expireStr.ToDateTime(_dateFormat)
+			).UtcKind();
+
+		IssuedDate = toDate(issuedDateStr);
 
 		var platformsElem = xml.Element("platforms");
 
@@ -43,7 +49,7 @@ public class License
 				Features.Add(platformElem.GetAttributeValue<string>("name").To<OSPlatform>(),
 					[.. platformElem.Elements("feature").Select(featureElem => new LicenseFeature(this,
 						featureElem.GetAttributeValue<string>("name"),
-						featureElem.GetAttributeValue<long>("expire").To<DateTime>().UtcKind(),
+						toDate(featureElem.GetAttributeValue<string>("expire")),
 						featureElem.GetAttributeValue<LicenseExpireActions>("expireAction"),
 						featureElem.GetAttributeValue<string>("hardwareId"),
 						featureElem.GetAttributeValue<string>("account"),
@@ -54,7 +60,7 @@ public class License
 		{
 			var expirationDateStr = xml.GetElementValue<string>("expirationDate");
 
-			var expDate = (long.TryParse(expirationDateStr, out var expirationDate) ? expirationDate.To<DateTime>() : expirationDateStr.ToDateTime(_dateFormat)).UtcKind();
+			var expDate = toDate(expirationDateStr);
 			var hddId = xml.GetElementValue("hardwareId", string.Empty);
 			var account = xml.GetElementValue("account", string.Empty);
 			var expAction = xml.GetElementValue("expireAction", LicenseExpireActions.PreventWork);
