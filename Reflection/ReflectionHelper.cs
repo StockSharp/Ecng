@@ -848,21 +848,35 @@ public static class ReflectionHelper
 	/// </summary>
 	public const string RemovePrefix = "remove_";
 
+	private static bool TryGetAccessorName(string memberName, string prefix, out string retVal)
+	{
+		retVal = default;
+
+		if (!memberName.StartsWith(prefix, StringComparison.Ordinal))
+			return false;
+
+		retVal = memberName.Substring(prefix.Length);
+		return true;
+	}
+
 	#region MakePropertyName
 
 	/// <summary>
 	/// Makes the property name from the accessor name.
 	/// </summary>
 	/// <param name="accessorName">The accessor name.</param>
-	/// <returns>
-	/// The property name.</returns>
+	/// <returns>The property name.</returns>
 	public static string MakePropertyName(this string accessorName)
 	{
-		return accessorName.ThrowIfEmpty(nameof(accessorName))
-						.Remove(GetPrefix)
-						.Remove(SetPrefix)
-						.Remove(AddPrefix)
-						.Remove(RemovePrefix);
+		accessorName = accessorName.ThrowIfEmpty(nameof(accessorName));
+
+		if (TryGetAccessorName(accessorName, GetPrefix, out var v) ||
+			TryGetAccessorName(accessorName, SetPrefix, out v) ||
+			TryGetAccessorName(accessorName, AddPrefix, out v) ||
+			TryGetAccessorName(accessorName, RemovePrefix, out v))
+			return v;
+
+		return accessorName;
 	}
 
 	#endregion
@@ -881,23 +895,21 @@ public static class ReflectionHelper
 		if (method is null)
 			throw new ArgumentNullException(nameof(method));
 
-		return _getAccessorOwnerCache.GetFromCache(method, delegate
+		return _getAccessorOwnerCache.GetFromCache(method, _ =>
 		{
 			var flags = method.IsStatic ? AllStaticMembers : AllInstanceMembers;
 
-			if (method.Name.Contains(GetPrefix) || method.Name.Contains(SetPrefix))
-			{
-				var name = MakePropertyName(method.Name);
+			var methodName = method.Name;
 
+			if (TryGetAccessorName(methodName, GetPrefix, out var name) || TryGetAccessorName(methodName, SetPrefix, out name))
+			{
 				return GetMembers<PropertyInfo>(method.ReflectedType, flags, true, name, default)
 					.FirstOrDefault(property => property.GetGetMethod(true) == method || property.GetSetMethod(true) == method);
 			}
-			else if (method.Name.Contains(AddPrefix) || method.Name.Contains(RemovePrefix))
+			else if (TryGetAccessorName(methodName, AddPrefix, out name) || TryGetAccessorName(methodName, RemovePrefix, out name))
 			{
-				var name = MakePropertyName(method.Name);
-
 				return GetMembers<EventInfo>(method.ReflectedType, flags, true, name, default)
-					.FirstOrDefault(@event => @event.GetAddMethod(true) == method || @event.GetRemoveMethod(true) == method);
+					.FirstOrDefault(evt => evt.GetAddMethod(true) == method || evt.GetRemoveMethod(true) == method);
 			}
 
 			return null;

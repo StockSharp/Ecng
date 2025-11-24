@@ -56,6 +56,7 @@ public class ReflectionTests
 		public void MethodIn(in int x) { }
 		public void MethodParams(params int[] items) { }
 		public void Method(int x) { }
+		public void Target_get_NotAccessor() { }
 #pragma warning restore IDE0060 // Remove unused parameter
 #pragma warning restore CA1822 // Mark members as static
 
@@ -75,13 +76,13 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestGetInvokeMethod()
+	public void GetInvokeMethod()
 	{
 		typeof(Action).GetInvokeMethod().Name.AssertEqual("Invoke");
 	}
 
 	[TestMethod]
-	public void TestIsParams()
+	public void IsParams()
 	{
 		var param = typeof(Sample).GetMethod(nameof(Sample.MethodParams)).GetParameters()[0];
 		param.IsParams().AssertTrue();
@@ -91,7 +92,7 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestGetParameterTypes()
+	public void GetParameterTypes()
 	{
 		var method = typeof(Sample).GetMethod(nameof(Sample.MethodRef));
 		var types = method.GetParameterTypes();
@@ -104,7 +105,7 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestGetGenericTypeAndArg()
+	public void GetGenericTypeAndArg()
 	{
 		var listType = typeof(List<string>);
 		var genType = listType.GetGenericType(typeof(List<>));
@@ -113,14 +114,14 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestGetIndexer()
+	public void GetIndexer()
 	{
 		var prop = typeof(Sample).GetIndexer(typeof(int));
 		prop.Name.AssertEqual("Item");
 	}
 
 	[TestMethod]
-	public void TestGetIndexers()
+	public void GetIndexers()
 	{
 		var props = typeof(Sample).GetIndexers(typeof(int));
 		props.Length.AssertGreater(0);
@@ -128,7 +129,7 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestGetMemberAndGetMembers()
+	public void GetMemberAndGetMembers()
 	{
 		typeof(Sample).GetMember<ConstructorInfo>().MemberType.AssertEqual(MemberTypes.Constructor);
 		typeof(Sample).GetMember<PropertyInfo>(nameof(Sample.Value)).Name.AssertEqual("Value");
@@ -136,7 +137,7 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestFilterMembers()
+	public void FilterMembers()
 	{
 		var props = typeof(Sample).GetMembers<PropertyInfo>();
 		var filtered = ReflectionHelper.FilterMembers(props, null, typeof(int));
@@ -144,7 +145,7 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestIsAbstractIsVirtualIsOverloadable()
+	public void IsAbstractIsVirtualIsOverloadable()
 	{
 		var prop = typeof(Sample).GetProperty(nameof(Sample.Value));
 		prop.IsAbstract().AssertFalse();
@@ -153,7 +154,7 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestIsIndexer()
+	public void IsIndexer()
 	{
 		var prop = typeof(Sample).GetProperty("Item");
 		prop.IsIndexer().AssertTrue();
@@ -161,7 +162,7 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestGetIndexerTypes()
+	public void GetIndexerTypes()
 	{
 		var prop = typeof(Sample).GetProperty("Item");
 		var idxTypes = prop.GetIndexerTypes();
@@ -169,14 +170,14 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestMemberIs()
+	public void MemberIs()
 	{
 		var prop = typeof(Sample).GetProperty(nameof(Sample.Value));
 		prop.MemberIs(MemberTypes.Property).AssertTrue();
 	}
 
 	[TestMethod]
-	public void TestIsOutput()
+	public void IsOutput()
 	{
 		var outParam = typeof(Sample).GetMethod(nameof(Sample.MethodOut)).GetParameters()[0];
 		outParam.IsOutput().AssertTrue();
@@ -192,14 +193,14 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestGetMemberType()
+	public void GetMemberType()
 	{
 		var prop = typeof(Sample).GetProperty(nameof(Sample.Value));
 		prop.GetMemberType().AssertEqual(typeof(int));
 	}
 
 	[TestMethod]
-	public void TestIsCollection()
+	public void IsCollection()
 	{
 		typeof(List<int>).IsCollection().AssertTrue();
 		typeof(int[]).IsCollection().AssertTrue();
@@ -207,45 +208,49 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestIsStatic()
+	public void IsStatic()
 	{
 		typeof(Sample).GetProperty(nameof(Sample.StaticValue)).IsStatic().AssertTrue();
 		typeof(Sample).GetProperty(nameof(Sample.Value)).IsStatic().AssertFalse();
 	}
 
 	[TestMethod]
-	public void TestGetItemType()
+	public void GetItemType()
 	{
 		var arr = new[] { 1, 2, 3 };
 		arr.GetType().GetItemType().AssertEqual(typeof(int));
 	}
 
 	[TestMethod]
-	public void TestMakePropertyName()
+	public void MakePropertyName()
 	{
 		"get_X".MakePropertyName().AssertEqual("X");
 		"set_X".MakePropertyName().AssertEqual("X");
 		"add_X".MakePropertyName().AssertEqual("X");
 		"remove_X".MakePropertyName().AssertEqual("X");
+		"get_Target_get_NotAccessor".MakePropertyName().AssertEqual("Target_get_NotAccessor");
 	}
 
 	[TestMethod]
-	public void TestGetAccessorOwner()
+	public void GetAccessorOwner()
 	{
 		var prop = typeof(Sample).GetProperty(nameof(Sample.Value));
 		var method = prop.GetGetMethod();
 		method.GetAccessorOwner().AssertEqual(prop);
+
+		var fakeAccessor = typeof(Sample).GetMethod(nameof(Sample.Target_get_NotAccessor));
+		fakeAccessor.GetAccessorOwner().AssertNull();
 	}
 
 	[TestMethod]
-	public void TestMake()
+	public void Make()
 	{
 		var method = typeof(List<>).GetMethod("Add");
 		method.IsGenericMethodDefinition.AssertFalse();
 	}
 
 	[TestMethod]
-	public void TestIsRuntimeType()
+	public void IsRuntimeType()
 	{
 		// True only for System.RuntimeType (i.e. typeof(string).GetType())
 		var runtimeType = typeof(string).GetType();
@@ -257,7 +262,7 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestIsAssemblyVerifyAssembly()
+	public void IsAssemblyVerifyAssembly()
 	{
 		"Ecng.Common.dll".IsAssembly().AssertTrue();
 
@@ -267,13 +272,13 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestClearCache()
+	public void ClearCache()
 	{
 		ReflectionHelper.ClearCache();
 	}
 
 	[TestMethod]
-	public void TestFindImplementationsIsRequiredTypeTryFindType()
+	public void FindImplementationsIsRequiredTypeTryFindType()
 	{
 		var list = new[] { typeof(List<int>), typeof(string) };
 		var found = list.TryFindType(t => t == typeof(List<int>), "List`1");
@@ -283,21 +288,21 @@ public class ReflectionTests
 	}
 
 	[TestMethod]
-	public void TestOrderByDeclaration()
+	public void OrderByDeclaration()
 	{
 		var props = typeof(Sample).GetProperties();
 		props.OrderByDeclaration().Count().AssertEqual(props.Length);
 	}
 
 	[TestMethod]
-	public void TestIsModifiable()
+	public void IsModifiable()
 	{
 		var prop = typeof(Sample).GetProperty(nameof(Sample.Value));
 		prop.IsModifiable().AssertTrue();
 	}
 
 	[TestMethod]
-	public void TestIsMatch()
+	public void IsMatch()
 	{
 		var prop = typeof(Sample).GetProperty(nameof(Sample.Value));
 		prop.IsMatch(BindingFlags.Public | BindingFlags.Instance).AssertTrue();
