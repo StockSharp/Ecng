@@ -1,9 +1,9 @@
 #if NETSTANDARD2_0
-namespace Ecng.Common;
+namespace System.Threading;
 
-using System;
-using System.Threading;
 using System.Threading.Tasks;
+
+using Ecng.Common;
 
 /// <summary>
 /// Provides a periodic timer for .NET Standard 2.0 that mimics System.Threading.PeriodicTimer behavior.
