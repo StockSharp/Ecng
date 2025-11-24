@@ -160,19 +160,12 @@ public class ChannelExecutor : IAsyncDisposable
 		// Complete the channel to signal no more items
 		_channel.Writer.Complete();
 
-		// Cancel the processing task
-		_internalCts?.Cancel();
-
 		// Wait for processing to complete with timeout
 		if (_processingTask != null)
 		{
 			try
 			{
-				await _processingTask.WaitAsync(TimeSpan.FromSeconds(5)).NoWait();
-			}
-			catch (TimeoutException)
-			{
-				// Ignore timeout - processing task will be abandoned
+				await _processingTask.NoWait();
 			}
 			catch (OperationCanceledException)
 			{

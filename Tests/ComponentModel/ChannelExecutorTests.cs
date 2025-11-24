@@ -575,4 +575,27 @@ public class ChannelExecutorTests : BaseTestClass
 		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () =>
 			await executor.AddAndWaitAsync(null, token));
 	}
+
+	[TestMethod]
+	public async Task DisposeDoesNotCancelLongRunningOperation()
+	{
+		var token = CancellationToken;
+		var counter = 0;
+
+		await using (var executor = CreateChannel())
+		{
+			_ = executor.RunAsync(token);
+
+			executor.Add(() =>
+			{
+				Thread.Sleep(TimeSpan.FromSeconds(6));
+				Interlocked.Increment(ref counter);
+			});
+
+			executor.Add(() => Interlocked.Increment(ref counter));
+		}
+
+		// Both operations should still complete even though the first exceeds the default timeout
+		counter.AssertEqual(2);
+	}
 }
