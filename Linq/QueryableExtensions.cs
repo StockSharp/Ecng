@@ -27,17 +27,12 @@ public static class QueryableExtensions
 	/// <param name="count">The number of elements to skip.</param>
 	/// <returns>An <see cref="IQueryable{T}"/> that contains the elements that occur after the specified number of elements.</returns>
 	public static IQueryable<T> SkipLong<T>(this IQueryable<T> source, long count)
-	{
-		if (source is null)
-			throw new ArgumentNullException(nameof(source));
-
-		return source.Provider.CreateQuery<T>(
+		=> source.CheckOnNull(nameof(source)).Provider.CreateQuery<T>(
 			Expression.Call(
 				null,
 				GetMethodInfo(SkipLong, source, count),
 				[source.Expression, Expression.Constant(count)]
 				));
-	}
 
 	/// <summary>
 	/// Asynchronously determines whether a sequence contains any elements.
@@ -47,13 +42,7 @@ public static class QueryableExtensions
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>A <see cref="ValueTask{Boolean}"/> representing the asynchronous operation. The task result contains true if the sequence contains any elements; otherwise, false.</returns>
 	public static async ValueTask<bool> AnyAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
-	{
-		if (source is null)
-			throw new ArgumentNullException(nameof(source));
-
-		var count = await source.CountAsync(cancellationToken);
-		return count > 0;
-	}
+		=> await source.CheckOnNull(nameof(source)).CountAsync(cancellationToken) > 0;
 
 	/// <summary>
 	/// Asynchronously returns the first element of a sequence, or a default value if the sequence contains no elements.
@@ -63,7 +52,7 @@ public static class QueryableExtensions
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>A <see cref="ValueTask{T}"/> representing the asynchronous operation. The task result contains the first element in the sequence or a default value if no element is found.</returns>
 	public static ValueTask<T> FirstOrDefaultAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
-		=> source.Provider.Execute<ValueTask<T>>(
+		=> source.CheckOnNull(nameof(source)).Provider.Execute<ValueTask<T>>(
 				Expression.Call(
 					null,
 					GetMethodInfo(FirstOrDefaultAsync, source, cancellationToken),
@@ -162,17 +151,12 @@ public static class QueryableExtensions
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>A <see cref="ValueTask{Long}"/> representing the asynchronous operation. The task result contains the count of elements.</returns>
 	public static ValueTask<long> CountAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
-	{
-		if (source is null)
-			throw new ArgumentNullException(nameof(source));
-
-		return source.Provider.Execute<ValueTask<long>>(
+		=> source.CheckOnNull(nameof(source)).Provider.Execute<ValueTask<long>>(
 			Expression.Call(
 				null,
 				GetMethodInfo(CountAsync, source, cancellationToken),
 				[source.Expression, Expression.Constant(cancellationToken)]
 				));
-	}
 
 	/// <summary>
 	/// Asynchronously creates an array from a sequence.
@@ -182,16 +166,11 @@ public static class QueryableExtensions
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>A <see cref="ValueTask{T}"/> representing the asynchronous operation. The task result contains an array that holds the elements from the sequence.</returns>
 	public static ValueTask<T[]> ToArrayAsync<T>(this IQueryable<T> source, CancellationToken cancellationToken)
-	{
-		if (source is null)
-			throw new ArgumentNullException(nameof(source));
-
-		return source.Provider.Execute<ValueTask<T[]>>(Expression.Call(null, GetMethodInfo(ToArrayAsync, source, cancellationToken),
+		=> source.CheckOnNull(nameof(source)).Provider.Execute<ValueTask<T[]>>(Expression.Call(null, GetMethodInfo(ToArrayAsync, source, cancellationToken),
 		[
 			source.Expression,
 			Expression.Constant(cancellationToken)
 		]));
-	}
 
 	#region Helper methods to obtain MethodInfo in a safe way
 
