@@ -260,12 +260,12 @@ public class CompressTests : BaseTestClass
 			var buffer = new byte[bufferSize];
 			while (true)
 			{
-				var read = await ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false);
+				var read = await ReadAsync(buffer, 0, buffer.Length, cancellationToken).NoWait();
 				if (read == 0)
 					break;
 				// Small delay to ensure method returns before all writes complete
-				await Task.Delay(50, cancellationToken).ConfigureAwait(false);
-				await destination.WriteAsync(buffer, 0, read, cancellationToken).ConfigureAwait(false);
+				await Task.Delay(50, cancellationToken).NoWait();
+				await destination.WriteAsync(buffer, 0, read, cancellationToken).NoWait();
 			}
 		}
 	}
@@ -302,10 +302,10 @@ public class CompressTests : BaseTestClass
 		public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
 		{
 			// Small delay to let method return to caller and allow premature dispose
-			await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+			await Task.Delay(50, cancellationToken).NoWait();
 			if (_disposed)
 				throw new ObjectDisposedException(nameof(TestCompressStream));
-			await _output.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).ConfigureAwait(false);
+			await _output.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).NoWait();
 		}
 
 		protected override void Dispose(bool disposing)
@@ -342,10 +342,10 @@ public class CompressTests : BaseTestClass
 		public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
 		{
 			// Small delay to let method return to caller and allow premature dispose
-			await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+			await Task.Delay(50, cancellationToken).NoWait();
 			if (_disposed)
 				throw new ObjectDisposedException(nameof(TestDecompressStream));
-			return await _input.ReadAsync(buffer.AsMemory(offset, count), cancellationToken).ConfigureAwait(false);
+			return await _input.ReadAsync(buffer.AsMemory(offset, count), cancellationToken).NoWait();
 		}
 
 		public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
@@ -360,14 +360,14 @@ public class CompressTests : BaseTestClass
 			var buffer = new byte[bufferSize];
 			while (true)
 			{
-				var read = await ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken).ConfigureAwait(false);
+				var read = await ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken).NoWait();
 				if (read == 0)
 					break;
 				// Small delay to ensure method returns before all writes complete
-				await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+				await Task.Delay(50, cancellationToken).NoWait();
 				if (_disposed)
 					throw new ObjectDisposedException(nameof(TestDecompressStream));
-				await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+				await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken).NoWait();
 			}
 		}
 

@@ -1,5 +1,8 @@
 ﻿#if NETSTANDARD2_0
 namespace System.Threading.Tasks;
+
+using Ecng.Common;
+
 /// <summary>
 /// Provides extension methods for <see cref="Task"/>.
 /// </summary>
@@ -20,11 +23,11 @@ public static class TaskExtensions
 		using var timeoutCts = new CancellationTokenSource(timeout);
 		using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken);
 
-		var completedTask = await Task.WhenAny(task, Task.Delay(Timeout.Infinite, linkedCts.Token)).ConfigureAwait(false);
+		var completedTask = await Task.WhenAny(task, Task.Delay(Timeout.Infinite, linkedCts.Token)).NoWait();
 
 		if (completedTask == task)
 		{
-			await task.ConfigureAwait(false);
+			await task.NoWait();
 		}
 		else if (cancellationToken.IsCancellationRequested)
 		{
