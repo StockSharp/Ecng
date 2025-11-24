@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Common;
 
 [TestClass]
-public class WatchTests
+public class WatchTests : BaseTestClass
 {
 	[TestMethod]
 	public void NullAction()
@@ -70,6 +70,252 @@ public class WatchTests
 		var elapsed = Watch.Do(action);
 
 		// Assert
+		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed should be >=90 ms but {(int)elapsed.TotalMilliseconds}");
+		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed should be <=1000 ms but {(int)elapsed.TotalMilliseconds}");
+	}
+
+	[TestMethod]
+	public async Task NullAsyncAction()
+	{
+		// Arrange
+		Func<Task> func = null;
+
+		// Act & Assert
+		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await Watch.DoAsync(func), "expected ArgumentNullException when func is null");
+	}
+
+	[TestMethod]
+	public async Task ValidAsyncAction()
+	{
+		// Arrange
+		var executed = false;
+		async Task action()
+		{
+			await Task.Delay(10, CancellationToken);
+			executed = true;
+		}
+
+		// Act
+		var elapsed = await Watch.DoAsync(action);
+
+		// Assert
+		executed.AssertTrue("action was not executed");
+		(elapsed.TotalMilliseconds >= 10).AssertTrue("elapsed.TotalMilliseconds should be >=10");
+		(elapsed.TotalMilliseconds < 1000).AssertTrue("elapsed.TotalMilliseconds should be <1000");
+	}
+
+	[TestMethod]
+	public async Task EmptyAsyncAction()
+	{
+		// Arrange
+		static Task action() => Task.CompletedTask;
+
+		// Act
+		var elapsed = await Watch.DoAsync(action);
+
+		// Assert
+		(elapsed.TotalMilliseconds >= 0).AssertTrue("elapsed.TotalMilliseconds should be >=0");
+		(elapsed.TotalSeconds < 1).AssertTrue("elapsed.TotalSeconds should be <1");
+	}
+
+	[TestMethod]
+	public async Task AsyncActionThrowsException()
+	{
+		// Arrange
+		var expectedException = new InvalidOperationException("test async exception");
+		Task action() => throw expectedException;
+
+		// Act & Assert
+		var thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await Watch.DoAsync(action), "AsyncActionThrowsException: expected InvalidOperationException");
+		thrown.Message.AssertEqual("test async exception", "exception message mismatch");
+	}
+
+	[TestMethod]
+	public async Task AsyncActionWith100msDelay()
+	{
+		// Arrange
+		Task action() => Task.Delay(100, CancellationToken);
+
+		// Act
+		var elapsed = await Watch.DoAsync(action);
+
+		// Assert
+		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed should be >=90 ms but {(int)elapsed.TotalMilliseconds}");
+		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed should be <=1000 ms but {(int)elapsed.TotalMilliseconds}");
+	}
+
+	[TestMethod]
+	public async Task NullTypedTaskFunc()
+	{
+		// Arrange
+		Func<Task<int>> func = null;
+
+		// Act & Assert
+		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await Watch.DoAsync(func), "expected ArgumentNullException when func is null");
+	}
+
+	[TestMethod]
+	public async Task ValidTypedTaskFunc()
+	{
+		// Arrange
+		async Task<int> func()
+		{
+			await Task.Delay(50, CancellationToken);
+			return 42;
+		}
+
+		// Act
+		var (result, elapsed) = await Watch.DoAsync(func);
+
+		// Assert
+		result.AssertEqual(42, "result should be 42");
+		(elapsed.TotalMilliseconds >= 40).AssertTrue("elapsed.TotalMilliseconds should be >=40");
+		(elapsed.TotalMilliseconds < 1000).AssertTrue("elapsed.TotalMilliseconds should be <1000");
+	}
+
+	[TestMethod]
+	public async Task TypedTaskFuncThrowsException()
+	{
+		// Arrange
+		var expectedException = new InvalidOperationException("test typed task exception");
+		Task<string> func() => throw expectedException;
+
+		// Act & Assert
+		var thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await Watch.DoAsync(func), "TypedTaskFuncThrowsException: expected InvalidOperationException");
+		thrown.Message.AssertEqual("test typed task exception", "exception message mismatch");
+	}
+
+	[TestMethod]
+	public async Task NullValueTaskFunc()
+	{
+		// Arrange
+		Func<ValueTask> func = null;
+
+		// Act & Assert
+		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await Watch.DoAsync(func), "expected ArgumentNullException when func is null");
+	}
+
+	[TestMethod]
+	public async Task ValidValueTaskFunc()
+	{
+		// Arrange
+		var executed = false;
+		async ValueTask action()
+		{
+			await Task.Delay(50, CancellationToken);
+			executed = true;
+		}
+
+		// Act
+		var elapsed = await Watch.DoAsync(action);
+
+		// Assert
+		executed.AssertTrue("action was not executed");
+		(elapsed.TotalMilliseconds >= 40).AssertTrue("elapsed.TotalMilliseconds should be >=40");
+		(elapsed.TotalMilliseconds < 1000).AssertTrue("elapsed.TotalMilliseconds should be <1000");
+	}
+
+	[TestMethod]
+	public async Task ValueTaskFuncThrowsException()
+	{
+		// Arrange
+		var expectedException = new InvalidOperationException("test valuetask exception");
+		ValueTask action() => throw expectedException;
+
+		// Act & Assert
+		var thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await Watch.DoAsync(action), "ValueTaskFuncThrowsException: expected InvalidOperationException");
+		thrown.Message.AssertEqual("test valuetask exception", "exception message mismatch");
+	}
+
+	[TestMethod]
+	public async Task NullTypedValueTaskFunc()
+	{
+		// Arrange
+		Func<ValueTask<string>> func = null;
+
+		// Act & Assert
+		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await Watch.DoAsync(func), "expected ArgumentNullException when func is null");
+	}
+
+	[TestMethod]
+	public async Task ValidTypedValueTaskFunc()
+	{
+		// Arrange
+		async ValueTask<string> func()
+		{
+			await Task.Delay(50, CancellationToken);
+			return "test result";
+		}
+
+		// Act
+		var (result, elapsed) = await Watch.DoAsync(func);
+
+		// Assert
+		result.AssertEqual("test result", "result should be 'test result'");
+		(elapsed.TotalMilliseconds >= 40).AssertTrue("elapsed.TotalMilliseconds should be >=40");
+		(elapsed.TotalMilliseconds < 1000).AssertTrue("elapsed.TotalMilliseconds should be <1000");
+	}
+
+	[TestMethod]
+	public async Task TypedValueTaskFuncThrowsException()
+	{
+		// Arrange
+		var expectedException = new InvalidOperationException("test typed valuetask exception");
+		ValueTask<bool> func() => throw expectedException;
+
+		// Act & Assert
+		var thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await Watch.DoAsync(func), "TypedValueTaskFuncThrowsException: expected InvalidOperationException");
+		thrown.Message.AssertEqual("test typed valuetask exception", "exception message mismatch");
+	}
+
+	[TestMethod]
+	public async Task TypedTaskWith100msDelay()
+	{
+		// Arrange
+		async Task<double> func()
+		{
+			await Task.Delay(100, CancellationToken);
+			return 3.14;
+		}
+
+		// Act
+		var (result, elapsed) = await Watch.DoAsync(func);
+
+		// Assert
+		result.AssertEqual(3.14, "result should be 3.14");
+		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed should be >=90 ms but {(int)elapsed.TotalMilliseconds}");
+		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed should be <=1000 ms but {(int)elapsed.TotalMilliseconds}");
+	}
+
+	[TestMethod]
+	public async Task ValueTaskWith100msDelay()
+	{
+		// Arrange
+		ValueTask action() => new(Task.Delay(100, CancellationToken));
+
+		// Act
+		var elapsed = await Watch.DoAsync(action);
+
+		// Assert
+		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed should be >=90 ms but {(int)elapsed.TotalMilliseconds}");
+		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed should be <=1000 ms but {(int)elapsed.TotalMilliseconds}");
+	}
+
+	[TestMethod]
+	public async Task TypedValueTaskWith100msDelay()
+	{
+		// Arrange
+		async ValueTask<int> func()
+		{
+			await Task.Delay(100, CancellationToken);
+			return 123;
+		}
+
+		// Act
+		var (result, elapsed) = await Watch.DoAsync(func);
+
+		// Assert
+		result.AssertEqual(123, "result should be 123");
 		(elapsed.TotalMilliseconds >= 100).AssertTrue($"elapsed should be >=100 ms but {(int)elapsed.TotalMilliseconds}");
 		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed should be <=1000 ms but {(int)elapsed.TotalMilliseconds}");
 	}
