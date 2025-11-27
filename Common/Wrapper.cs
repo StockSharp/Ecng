@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 #endregion
 
@@ -16,6 +17,9 @@ using System.Linq;
 [Serializable]
 public abstract class Wrapper<T> : Equatable<Wrapper<T>>, IDisposable
 {
+	[NonSerialized]
+	private readonly Lock _lock = new();
+
 	#region Wrapper.ctor()
 
 	/// <summary>
@@ -118,7 +122,7 @@ public abstract class Wrapper<T> : Equatable<Wrapper<T>>, IDisposable
 	/// </summary>
 	public void Dispose()
 	{
-		lock (this)
+		using (_lock.EnterScope())
 		{
 			if (!IsDisposed)
 			{
