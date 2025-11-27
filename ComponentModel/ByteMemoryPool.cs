@@ -70,7 +70,7 @@ public class ByteMemoryPool : MemoryPool<byte>
 
 	private volatile bool _disposed;
 	private volatile bool _limitExceeded;
-	private readonly SyncObject _lock = new();
+	private readonly Lock _lock = new();
 	private readonly Dictionary<int, Queue<Memory<byte>>> _pool = [];
 
 	/// <summary>
@@ -195,7 +195,7 @@ public class ByteMemoryPool : MemoryPool<byte>
 		else if (size > MaxBufferSize)
 			size = MaxBufferSize;
 
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			if (_disposed)
 				throw new ObjectDisposedException(nameof(ByteMemoryPool));
@@ -229,7 +229,7 @@ public class ByteMemoryPool : MemoryPool<byte>
 		if (memory.IsEmpty)
 			return default;
 
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			if (_disposed)
 				return default;
@@ -275,7 +275,7 @@ public class ByteMemoryPool : MemoryPool<byte>
 	/// </summary>
 	public void Clear()
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			_pool.Clear();
 
@@ -289,7 +289,7 @@ public class ByteMemoryPool : MemoryPool<byte>
 	{
 		if (disposing)
 		{
-			lock (_lock)
+			using (_lock.EnterScope())
 			{
 				if (_disposed)
 					return;

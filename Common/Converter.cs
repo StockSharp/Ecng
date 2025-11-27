@@ -30,6 +30,7 @@ public static class Converter
 	private static readonly Dictionary<string, Type> _sharpAliases = [];
 	private static readonly Dictionary<Type, string> _sharpAliasesByValue = [];
 	private static readonly Dictionary<string, Type> _typeCache = [];
+	private static readonly Lock _typeCacheLock = new();
 
 	private static readonly Dictionary<(Type, Type), Delegate> _typedConverters = [];
 	private static readonly Dictionary<(Type, Type), Func<object, object>> _typedConverters2 = [];
@@ -169,7 +170,7 @@ public static class Converter
 			if (_typeCache.TryGetValue(key, out type))
 				return type;
 
-			lock (_typeCache)
+			using (_typeCacheLock.EnterScope())
 			{
 				if (_typeCache.TryGetValue(key, out type))
 					return type;

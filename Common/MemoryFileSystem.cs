@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Text.RegularExpressions;
 
 /// <summary>
@@ -23,7 +24,7 @@ public class MemoryFileSystem : IFileSystem
 	}
 
 	private readonly Node _root = new() { IsDirectory = true, Children = new(StringComparer.OrdinalIgnoreCase), CreatedUtc = DateTime.UtcNow, UpdatedUtc = DateTime.UtcNow };
-	private readonly SyncObject _lock = new();
+	private readonly Lock _lock = new();
 
 	private static string[] Split(string path)
 	{
@@ -81,7 +82,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public bool FileExists(string path)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var node = GetNode(path);
 			return node != null && !node.IsDirectory;
@@ -91,7 +92,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public bool DirectoryExists(string path)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var node = GetNode(path);
 			return node != null && node.IsDirectory;
@@ -101,7 +102,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public Stream OpenRead(string path)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var node = GetNode(path) ?? throw new FileNotFoundException(path);
 			if (node.IsDirectory)
@@ -113,7 +114,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public Stream OpenWrite(string path, bool append = false)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var dir = Traverse(path, createDirs: true, forFile: true, out var fileName);
 			if (!dir.IsDirectory)
@@ -168,7 +169,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public void CreateDirectory(string path)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var node = Traverse(path, createDirs: true, forFile: false, out _);
 			if (node != null && !node.IsDirectory)
@@ -179,7 +180,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public void DeleteDirectory(string path, bool recursive = false)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			if (path.IsEmpty() || path == Path.DirectorySeparatorChar.ToString())
 				throw new IOException("Cannot delete root.");
@@ -208,7 +209,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public void DeleteFile(string path)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var parts = Split(path);
 			if (parts.Length == 0)
@@ -227,7 +228,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public void MoveFile(string sourceFileName, string destFileName, bool overwrite = false)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			if (!FileExists(sourceFileName))
 				throw new FileNotFoundException(sourceFileName);
@@ -245,7 +246,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public void CopyFile(string sourceFileName, string destFileName, bool overwrite = false)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			if (!FileExists(sourceFileName))
 				throw new FileNotFoundException(sourceFileName);
@@ -260,7 +261,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public IEnumerable<string> EnumerateFiles(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var node = GetNode(path) ?? throw new DirectoryNotFoundException(path);
 			if (!node.IsDirectory)
@@ -288,7 +289,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public IEnumerable<string> EnumerateDirectories(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var node = GetNode(path) ?? throw new DirectoryNotFoundException(path);
 			if (!node.IsDirectory)
@@ -316,7 +317,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public DateTime GetCreationTimeUtc(string path)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var node = GetNode(path) ?? throw new FileNotFoundException(path);
 			return node.CreatedUtc;
@@ -326,7 +327,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public DateTime GetLastWriteTimeUtc(string path)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var node = GetNode(path) ?? throw new FileNotFoundException(path);
 			return node.UpdatedUtc;
@@ -336,7 +337,7 @@ public class MemoryFileSystem : IFileSystem
 	/// <inheritdoc />
 	public long GetFileLength(string path)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var node = GetNode(path) ?? throw new FileNotFoundException(path);
 			if (node.IsDirectory)

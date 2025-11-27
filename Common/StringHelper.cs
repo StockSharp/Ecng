@@ -69,7 +69,7 @@ public static class StringHelper
 #endif
 	private class DictionarySourceEx : ISource
 	{
-		private readonly SyncObject _sync = new();
+		private readonly Lock _sync = new();
 		private readonly Dictionary<Type, Type> _genericTypes = [];
 		private readonly Dictionary<string, object> _keys = [];
 
@@ -82,7 +82,7 @@ public static class StringHelper
 
 			Type type;
 
-			lock (_sync)
+			using (_sync.EnterScope())
 			{
 				if (!_genericTypes.TryGetValue(dictType, out type))
 				{
@@ -97,7 +97,7 @@ public static class StringHelper
 			object key;
 			var text = selectorInfo.SelectorText;
 
-			lock (_sync)
+			using (_sync.EnterScope())
 			{
 				if (!_keys.TryGetValue(text, out key))
 				{

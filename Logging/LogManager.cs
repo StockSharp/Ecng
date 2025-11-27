@@ -75,7 +75,7 @@ public class LogManager : Disposable, IPersistable
 
 	private static readonly DisposeLogMessage _disposeMessage = new();
 
-	private readonly SyncObject _syncRoot = new();
+	private readonly Lock _syncRoot = new();
 	private readonly List<LogMessage> _pendingMessages = [];
 	private readonly ControllablePeriodicTimer _flushTimer;
 	private bool _isFlushing;
@@ -128,7 +128,7 @@ public class LogManager : Disposable, IPersistable
 	{
 		LogMessage[] temp;
 
-		lock (_syncRoot)
+		using (_syncRoot.EnterScope())
 		{
 			if (_isFlushing)
 				return;
@@ -178,7 +178,7 @@ public class LogManager : Disposable, IPersistable
 		}
 		finally
 		{
-			lock (_syncRoot)
+			using (_syncRoot.EnterScope())
 				_isFlushing = false;
 		}
 	}
@@ -246,7 +246,7 @@ public class LogManager : Disposable, IPersistable
 		var callFlush = false;
 		var callImmediate = false;
 
-		lock (_syncRoot)
+		using (_syncRoot.EnterScope())
 		{
 			_pendingMessages.Add(message);
 
@@ -293,7 +293,7 @@ public class LogManager : Disposable, IPersistable
 
 		if (_asyncMode)
 		{
-			lock (_syncRoot)
+			using (_syncRoot.EnterScope())
 			{
 				if (ClearPendingOnDispose)
 					_pendingMessages.Clear();

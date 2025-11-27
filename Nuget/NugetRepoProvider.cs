@@ -13,6 +13,7 @@ public class NugetRepoProvider : CachingSourceProvider
 	{
 		private static TaskCompletionSource<PrivatePackageSource> _tcs;
 		private static readonly LogReceiver _log = new(nameof(PrivatePackageSource));
+		private static readonly Lock _tcsLock = new();
 
 		static PrivatePackageSource() => _log.Parent = LogManager.Instance.Application;
 
@@ -44,7 +45,7 @@ public class NugetRepoProvider : CachingSourceProvider
 
 			var tcs = new TaskCompletionSource<PrivatePackageSource>();
 
-			lock (_log)
+			using (_tcsLock.EnterScope())
 				_tcs ??= tcs;
 
 			if (tcs != _tcs)

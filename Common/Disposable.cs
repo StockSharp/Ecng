@@ -3,6 +3,7 @@ namespace Ecng.Common;
 #region Using Directives
 
 using System;
+using System.Threading;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Xml.Serialization;
@@ -36,7 +37,7 @@ public interface IReasonDisposable : IDisposable
 [Serializable]
 public abstract class Disposable : IReasonDisposable
 {
-	private readonly SyncObject _lock = new();
+	private readonly Lock _lock = new();
 
 	enum DisposeState : byte
 	{
@@ -83,7 +84,7 @@ public abstract class Disposable : IReasonDisposable
 
 	bool IReasonDisposable.Dispose(string reason)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			if (IsDisposeStarted)
 				return false;

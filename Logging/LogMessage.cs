@@ -1,5 +1,7 @@
 namespace Ecng.Logging;
 
+using System.Threading;
+
 /// <summary>
 /// A debug message.
 /// </summary>
@@ -65,7 +67,7 @@ public class LogMessage
 	/// </summary>
 	public LogLevels Level { get; }
 
-	private readonly SyncObject _messageLock = new();
+	private readonly Lock _messageLock = new();
 
 	private string _message;
 
@@ -79,7 +81,7 @@ public class LogMessage
 			if (_message != null)
 				return _message;
 
-			lock (_messageLock)
+			using (_messageLock.EnterScope())
 			{
 				if (_getMessage != null)
 				{

@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Threading;
 
 using Ecng.Common;
 
@@ -13,7 +14,7 @@ using Ecng.Common;
 /// </summary>
 public class AssemblyLoadContextTracker(Action<Exception> uploadingError = default) : Disposable, ICompilerContext
 {
-	private readonly SyncObject _lock = new();
+	private readonly Lock _lock = new();
 	private readonly Action<Exception> _uploadingError = uploadingError;
 	private AssemblyLoadContext _context;
 	private byte[] _assembly;
@@ -34,7 +35,7 @@ public class AssemblyLoadContextTracker(Action<Exception> uploadingError = defau
 
 		Exception error = null;
 
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			if (_assembly is null)
 			{
@@ -58,7 +59,7 @@ public class AssemblyLoadContextTracker(Action<Exception> uploadingError = defau
 		if (error is not null && _uploadingError is not null)
 			_uploadingError(error);
 
-		lock (_lock)
+		using (_lock.EnterScope())
 			return _context.LoadFromBinary(assembly);
 	}
 
@@ -67,7 +68,7 @@ public class AssemblyLoadContextTracker(Action<Exception> uploadingError = defau
 	/// </summary>
 	public void Unload()
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			if (_context is null)
 				return;

@@ -14,7 +14,7 @@ public sealed class ControllablePeriodicTimer : IDisposable
 	private IDisposable _timer;
 	private Task _runningTask;
 	private TimeSpan _interval;
-	private readonly SyncObject _lock = new();
+	private readonly Lock _lock = new();
 
 	/// <summary>
 	/// Initializes a new instance of the ControllablePeriodicTimer class.
@@ -32,7 +32,7 @@ public sealed class ControllablePeriodicTimer : IDisposable
 	{
 		get
 		{
-			lock (_lock)
+			using (_lock.EnterScope())
 				return _interval;
 		}
 	}
@@ -44,7 +44,7 @@ public sealed class ControllablePeriodicTimer : IDisposable
 	{
 		get
 		{
-			lock (_lock)
+			using (_lock.EnterScope())
 				return _cts != null && !_cts.IsCancellationRequested;
 		}
 	}
@@ -57,7 +57,7 @@ public sealed class ControllablePeriodicTimer : IDisposable
 	/// <returns>The ControllablePeriodicTimer instance for method chaining.</returns>
 	public ControllablePeriodicTimer Start(TimeSpan interval, TimeSpan? start = null)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			Stop();
 
@@ -121,7 +121,7 @@ public sealed class ControllablePeriodicTimer : IDisposable
 	/// </summary>
 	public void Stop()
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			if (_cts != null)
 			{
@@ -143,7 +143,7 @@ public sealed class ControllablePeriodicTimer : IDisposable
 	/// <returns>The ControllablePeriodicTimer instance for method chaining.</returns>
 	public ControllablePeriodicTimer ChangeInterval(TimeSpan interval)
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			if (IsRunning)
 			{

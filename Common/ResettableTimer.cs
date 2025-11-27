@@ -10,7 +10,7 @@ using System.Threading;
 [Obsolete("Use Tasks instead.")]
 public class ResettableTimer(TimeSpan period, string name) : Disposable
 {
-	private readonly object _sync = new();
+	private readonly Lock _sync = new();
 	private readonly object _finish = new();
 	private bool _isActivated;
 	private bool _isFinished = true;
@@ -31,7 +31,7 @@ public class ResettableTimer(TimeSpan period, string name) : Disposable
 	/// </summary>
 	public void Activate()
 	{
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			_isActivated = true;
 
@@ -48,7 +48,7 @@ public class ResettableTimer(TimeSpan period, string name) : Disposable
 			{
 				while (!IsDisposed)
 				{
-					lock (_sync)
+					using (_sync.EnterScope())
 					{
 						_isCancelled = false;
 
@@ -79,7 +79,7 @@ public class ResettableTimer(TimeSpan period, string name) : Disposable
 	/// </summary>
 	public void Cancel()
 	{
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			if (_isFinished)
 				return;

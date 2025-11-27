@@ -201,7 +201,7 @@ public static class IOHelper
 		if (priority is not null)
 			process.PriorityClass = priority.Value;
 
-		var locker = new object();
+		var locker = new Lock();
 
 		if (input)
 		{
@@ -219,7 +219,7 @@ public static class IOHelper
 
 				if (!str.IsEmptyOrWhiteSpace())
 				{
-					lock (locker)
+					using (locker.EnterScope())
 						action(str);
 				}
 

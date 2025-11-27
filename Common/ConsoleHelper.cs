@@ -2,6 +2,7 @@
 
 using System;
 using System.Security;
+using System.Threading;
 
 /// <summary>
 /// Provides helper methods for writing colored messages to the console and reading secure passwords.
@@ -74,7 +75,7 @@ public static class ConsoleHelper
 		ConsoleWithColor(() => Console.WriteLine(message), color);
 	}
 
-	private static readonly SyncObject _lock = new();
+	private static readonly Lock _lock = new();
 
 	/// <summary>
 	/// Executes the provided action while displaying console output in the specified color.
@@ -87,7 +88,7 @@ public static class ConsoleHelper
 		if (handler is null)
 			throw new ArgumentNullException(nameof(handler));
 
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var prevColor = Console.ForegroundColor;
 

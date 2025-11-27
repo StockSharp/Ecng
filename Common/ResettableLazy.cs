@@ -11,7 +11,7 @@ public class ResettableLazy<T>
 {
 	private readonly Func<T> _valueFactory;
 	private readonly LazyThreadSafetyMode _mode;
-	private readonly object _lock;
+	private readonly Lock _lock;
 
 	private T _value;
 	private volatile bool _isValueCreated;
@@ -36,7 +36,7 @@ public class ResettableLazy<T>
 		_mode = mode;
 
 		if (mode != LazyThreadSafetyMode.None)
-			_lock = new object();
+			_lock = new Lock();
 	}
 
 	/// <summary>
@@ -73,7 +73,7 @@ public class ResettableLazy<T>
 			{
 				var value = _valueFactory();
 
-				lock (_lock)
+				using (_lock.EnterScope())
 				{
 					if (!_isValueCreated)
 					{
@@ -88,7 +88,7 @@ public class ResettableLazy<T>
 			case LazyThreadSafetyMode.ExecutionAndPublication:
 			default:
 			{
-				lock (_lock)
+				using (_lock.EnterScope())
 				{
 					if (!_isValueCreated)
 					{
@@ -114,7 +114,7 @@ public class ResettableLazy<T>
 		}
 		else
 		{
-			lock (_lock)
+			using (_lock.EnterScope())
 			{
 				_value = default;
 				_isValueCreated = false;
@@ -135,7 +135,7 @@ public class ResettableLazy<T>
 		}
 		else
 		{
-			lock (_lock)
+			using (_lock.EnterScope())
 			{
 				_value = value;
 				_isValueCreated = true;

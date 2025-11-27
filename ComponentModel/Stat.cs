@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Ecng.Common;
 using Ecng.Collections;
@@ -180,7 +181,7 @@ public class Stat<TAction>
 	private readonly Collections.PriorityQueue<TimeSpan, TAction> _longests = new((p1, p2) => (p1 - p2).Abs(), new BackwardComparer<TimeSpan>());
 	private readonly Dictionary<Stopwatch, (IPAddress, TAction)> _pendings = [];
 	private readonly Dictionary<IPAddress, RefTriple<HashSet<Stopwatch>, long, TimeSpan>> _allWatches = [];
-	private readonly SyncObject _sync = new();
+	private readonly Lock _sync = new();
 
 	/// <summary>
 	/// Retrieves statistical information with support for paging.
@@ -190,7 +191,7 @@ public class Stat<TAction>
 	/// <returns>A <see cref="StatInfo{TAction}"/> structure containing the current statistics.</returns>
 	public StatInfo<TAction> GetInfo(int skip, int take)
 	{
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			return new()
 			{
@@ -236,7 +237,7 @@ public class Stat<TAction>
 
 		var watch = Stopwatch.StartNew();
 
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			_pendings.Add(watch, new(address, action));
 			var tuple = _allWatches.SafeAdd(address, key => new([], default, default));
@@ -266,7 +267,7 @@ public class Stat<TAction>
 		var elapsed = watch.Elapsed;
 		var addr = item.Address;
 
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			_pendings.Remove(watch);
 
@@ -299,7 +300,7 @@ public class Stat<TAction>
 	/// </summary>
 	public void Clear()
 	{
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			_aggressiveIp = default;
 			_aggressiveTime = default;

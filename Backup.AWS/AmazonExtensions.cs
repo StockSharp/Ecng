@@ -1,6 +1,7 @@
 namespace Ecng.Backup.Amazon;
 
 using System;
+using System.Threading;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -16,6 +17,7 @@ using Ecng.Common;
 public static class AmazonExtensions
 {
 	private static RegionEndpoint[] _endpoints;
+	private static readonly Lock _lock = new();
 
 	/// <summary>
 	/// All regions.
@@ -24,7 +26,7 @@ public static class AmazonExtensions
 	{
 		get
 		{
-			lock (typeof(AmazonExtensions))
+			using (_lock.EnterScope())
 			{
 				_endpoints ??= [.. typeof(RegionEndpoint)
 						.GetFields(BindingFlags.Static | BindingFlags.Public)

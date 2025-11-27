@@ -161,6 +161,7 @@ public class RandomArrayTests
 		// Arrange
 		var randomArray = new RandomArray<int>(1000);
 		var exceptions = new List<Exception>();
+		var exLock = new Lock();
 
 		// Act - access from multiple threads
 		Parallel.For(0, 100, i =>
@@ -174,7 +175,7 @@ public class RandomArrayTests
 			}
 			catch (Exception ex)
 			{
-				lock (exceptions)
+				using (exLock.EnterScope())
 				{
 					exceptions.Add(ex);
 				}

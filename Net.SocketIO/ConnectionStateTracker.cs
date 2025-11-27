@@ -55,7 +55,7 @@ public class ConnectionStateTracker : Disposable, IConnection
 	}
 
 	private readonly CachedSynchronizedDictionary<IConnection, ConnectionWrapper> _connections = [];
-	private readonly SyncObject _currStateLock = new();
+	private readonly Lock _currStateLock = new();
 	private ConnectionStates _currState = ConnectionStates.Disconnected;
 
 	/// <summary>
@@ -128,7 +128,7 @@ public class ConnectionStateTracker : Disposable, IConnection
 	{
 		ConnectionStates newState;
 
-		lock (_currStateLock)
+		using (_currStateLock.EnterScope())
 		{
 			if (Wrappers.All(c => c.State == ConnectionStates.Connected))
 			{

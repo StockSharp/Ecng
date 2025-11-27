@@ -10,7 +10,7 @@ using System.Threading;
 [Obsolete("Use Tasks instead.")]
 public class SimpleResettableTimer(TimeSpan period) : IDisposable
 {
-	private readonly SyncObject _sync = new();
+	private readonly Lock _sync = new();
 	private readonly TimeSpan _period = period;
 
 	private Timer _timer;
@@ -27,7 +27,7 @@ public class SimpleResettableTimer(TimeSpan period) : IDisposable
 	/// </summary>
 	public void Reset()
 	{
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			if (_timer is null)
 			{
@@ -44,7 +44,7 @@ public class SimpleResettableTimer(TimeSpan period) : IDisposable
 	{
 		var elapsed = false;
 
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			if (!_changed)
 			{
@@ -70,7 +70,7 @@ public class SimpleResettableTimer(TimeSpan period) : IDisposable
 	/// </summary>
 	public void Flush()
 	{
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			if (_timer is null)
 				return;
@@ -85,7 +85,7 @@ public class SimpleResettableTimer(TimeSpan period) : IDisposable
 	/// </summary>
 	public void Dispose()
 	{
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			if (_timer is null)
 				return;

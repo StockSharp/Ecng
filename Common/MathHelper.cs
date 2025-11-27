@@ -1,6 +1,7 @@
 namespace Ecng.Common;
 
 using System;
+using System.Threading;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -1447,7 +1448,7 @@ public static class MathHelper
 		};
 	}
 
-	private static readonly SyncObject _syncObject = new();
+	private static readonly Lock _syncObject = new();
 	private static readonly Dictionary<decimal, int> _decimalsCache = [];
 
 	/// <summary>
@@ -1459,7 +1460,7 @@ public static class MathHelper
 	{
 		int decimals;
 
-		lock (_syncObject)
+		using (_syncObject.EnterScope())
 		{
 			if (_decimalsCache.TryGetValue(value, out decimals))
 				return decimals;
@@ -1467,7 +1468,7 @@ public static class MathHelper
 
 		decimals = value.GetDecimalInfo().EffectiveScale;
 
-		lock (_syncObject)
+		using (_syncObject.EnterScope())
 		{
 			if (!_decimalsCache.ContainsKey(value))
 			{

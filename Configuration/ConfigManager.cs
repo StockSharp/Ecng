@@ -6,6 +6,7 @@ using System.Collections.Specialized;
 using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 
 using Ecng.Common;
 
@@ -17,7 +18,7 @@ public static class ConfigManager
 	private static readonly Dictionary<Type, ConfigurationSection> _sections = [];
 	private static readonly Dictionary<Type, ConfigurationSectionGroup> _sectionGroups = [];
 
-	private static readonly SyncObject _sync = new();
+	private static readonly Lock _sync = new();
 	private static readonly Dictionary<Type, Dictionary<string, object>> _services = [];
 
 	#region ConfigManager.cctor()
@@ -248,7 +249,7 @@ public static class ConfigManager
 	/// <param name="service">The service instance.</param>
 	public static void RegisterService<T>(string name, T service)
 	{
-		lock (_sync)
+		using (_sync.EnterScope())
 			GetDict<T>()[name] = service;
 
 		RaiseServiceRegistered(typeof(T), service);
@@ -270,7 +271,7 @@ public static class ConfigManager
 	/// <returns>True if the service is registered; otherwise, false.</returns>
 	public static bool IsServiceRegistered<T>(string name)
 	{
-		lock (_sync)
+		using (_sync.EnterScope())
 			return GetDict<T>().ContainsKey(name);
 	}
 
@@ -316,7 +317,7 @@ public static class ConfigManager
 	/// <returns>The service instance.</returns>
 	public static T GetService<T>(string name)
 	{
-		lock (_sync)
+		using (_sync.EnterScope())
 		{
 			var dict = GetDict<T>();
 
@@ -340,7 +341,7 @@ public static class ConfigManager
 	/// <returns>An enumerable of service instances.</returns>
 	public static IEnumerable<T> GetServices<T>()
 	{
-		lock (_sync)
+		using (_sync.EnterScope())
 			return [.. GetDict<T>().Values.Cast<T>().Distinct()];
 	}
 }

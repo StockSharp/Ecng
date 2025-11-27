@@ -2,6 +2,7 @@ namespace Ecng.Common;
 
 using System;
 using System.Linq;
+using System.Threading;
 
 /// <summary>
 /// Provides functionality to generate a random array of values of type T.
@@ -10,7 +11,7 @@ using System.Linq;
 public class RandomArray<T>
 	where T : struct, IComparable<T>
 {
-	private readonly SyncObject _lock = new();
+	private readonly Lock _lock = new();
 	private readonly T[] _data;
 	private int _index;
 
@@ -90,7 +91,7 @@ public class RandomArray<T>
 	/// <returns>A random element of type T from the array.</returns>
 	public T Next()
 	{
-		lock (_lock)
+		using (_lock.EnterScope())
 		{
 			var next = _data[_index++];
 

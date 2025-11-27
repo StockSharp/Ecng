@@ -112,6 +112,7 @@ public static class ThreadingHelper
 	}
 
 	private static readonly Dictionary<Timer, TimeSpan> _intervals = [];
+	private static readonly Lock _intervalsLock = new();
 
 	/// <summary>
 	/// Gets the interval associated with the specified timer.
@@ -121,7 +122,7 @@ public static class ThreadingHelper
 	[Obsolete("This class is obsolete. Use Task-based asynchronous programming (System.Threading.Tasks.Task) instead of Thread and Timer for better performance and maintainability.")]
 	public static TimeSpan Interval(this Timer timer)
 	{
-		lock (_intervals)
+		using (_intervalsLock.EnterScope())
 		{
 			_intervals.TryGetValue(timer, out var interval);
 			return interval;
@@ -155,7 +156,7 @@ public static class ThreadingHelper
 
 		timer.Change(start, interval);
 
-		lock (_intervals)
+		using (_intervalsLock.EnterScope())
 			_intervals[timer] = interval;
 
 		return timer;
