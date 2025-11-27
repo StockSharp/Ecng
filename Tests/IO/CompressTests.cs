@@ -235,7 +235,7 @@ public class CompressTests : BaseTestClass
 
 	private sealed class TestInputStream(byte[] data) : Stream
 	{
-		private readonly MemoryStream _ms = new MemoryStream(data);
+		private readonly MemoryStream _ms = new(data);
 
         public override bool CanRead => _ms.CanRead;
 		public override bool CanSeek => _ms.CanSeek;

@@ -7,7 +7,7 @@ namespace System.Threading;
 /// </summary>
 public sealed class Lock
 {
-	private readonly object _sync = new object();
+	private readonly object _sync = new();
 
 	private int _ownerThreadId;
 	private int _recursionCount;
