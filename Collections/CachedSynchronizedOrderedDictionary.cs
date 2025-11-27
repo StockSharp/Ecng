@@ -47,7 +47,7 @@ public class CachedSynchronizedOrderedDictionary<TKey, TValue> : SynchronizedOrd
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				return _cachedKeys ??= [.. Keys];
 		}
 	}
@@ -64,7 +64,7 @@ public class CachedSynchronizedOrderedDictionary<TKey, TValue> : SynchronizedOrd
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				return _cachedValues ??= [.. Values];
 		}
 	}
@@ -81,7 +81,7 @@ public class CachedSynchronizedOrderedDictionary<TKey, TValue> : SynchronizedOrd
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				return _cachedPairs ??= [.. this];
 		}
 	}
@@ -95,7 +95,7 @@ public class CachedSynchronizedOrderedDictionary<TKey, TValue> : SynchronizedOrd
 	{
 		set
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 			{
 				var isKey = false;
 
@@ -116,7 +116,7 @@ public class CachedSynchronizedOrderedDictionary<TKey, TValue> : SynchronizedOrd
 	/// <param name="value">The value of the element to add.</param>
 	public override void Add(TKey key, TValue value)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 		{
 			base.Add(key, value);
 
@@ -131,7 +131,7 @@ public class CachedSynchronizedOrderedDictionary<TKey, TValue> : SynchronizedOrd
 	/// <returns><c>true</c> if the element is successfully found and removed; otherwise, <c>false</c>.</returns>
 	public override bool Remove(TKey key)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 		{
 			if (base.Remove(key))
 			{
@@ -149,7 +149,7 @@ public class CachedSynchronizedOrderedDictionary<TKey, TValue> : SynchronizedOrd
 	/// </summary>
 	public override void Clear()
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 		{
 			base.Clear();
 

@@ -77,7 +77,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <returns>An enumerator that can be used to iterate through the dictionary.</returns>
 	public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return _inner.GetEnumerator();
 	}
 
@@ -104,7 +104,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// </summary>
 	public virtual void Clear()
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			_inner.Clear();
 	}
 
@@ -125,7 +125,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
 	public virtual void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			_inner.CopyTo(array, arrayIndex);
 	}
 
@@ -146,7 +146,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				return _inner.Count;
 		}
 	}
@@ -163,7 +163,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <returns><c>true</c> if the dictionary contains an element with the specified key; otherwise, <c>false</c>.</returns>
 	public virtual bool ContainsKey(TKey key)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return _inner.ContainsKey(key);
 	}
 
@@ -174,7 +174,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <param name="value">The value of the element to add.</param>
 	public virtual void Add(TKey key, TValue value)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			_inner.Add(key, value);
 	}
 
@@ -185,7 +185,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <returns><c>true</c> if the element is successfully found and removed; otherwise, <c>false</c>.</returns>
 	public virtual bool Remove(TKey key)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return _inner.Remove(key);
 	}
 
@@ -197,7 +197,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <returns><c>true</c> if the dictionary contains an element with the specified key; otherwise, <c>false</c>.</returns>
 	public virtual bool TryGetValue(TKey key, out TValue value)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return _inner.TryGetValue(key, out value);
 	}
 
@@ -210,12 +210,12 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				return _inner[key];
 		}
 		set
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				_inner[key] = value;
 		}
 	}
@@ -227,7 +227,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				return _inner.Keys;
 		}
 	}
@@ -239,7 +239,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				return _inner.Values;
 		}
 	}

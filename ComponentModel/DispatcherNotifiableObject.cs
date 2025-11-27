@@ -106,7 +106,7 @@ public class DispatcherNotifiableObject<T> : CustomObjectWrapper<T>
 
 		string[] names;
 
-		lock (_names.SyncRoot)
+		using (_names.SyncRoot.EnterScope())
 		{
 			names = [.. _names.Where(NeedToNotify)];
 			_names.Clear();

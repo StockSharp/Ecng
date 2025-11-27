@@ -52,7 +52,7 @@ public class DatabaseConnectionCache : IPersistable
 		var isNew = false;
 		DatabaseConnectionPair connection;
 
-		lock (_connections.SyncRoot)
+		using (_connections.SyncRoot.EnterScope())
 		{
 			connection = _connections.FirstOrDefault(p => p.Provider.EqualsIgnoreCase(provider) && p.ConnectionString.EqualsIgnoreCase(connectionString));
 

@@ -30,7 +30,7 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				return base.Count;
 		}
 	}
@@ -44,12 +44,12 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				return base[index];
 		}
 		set
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				base[index] = value;
 		}
 	}
@@ -60,7 +60,7 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	/// <param name="item">The item to add to the collection.</param>
 	public override void Add(TItem item)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			base.Add(item);
 	}
 
@@ -69,7 +69,7 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	/// </summary>
 	public override void Clear()
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			base.Clear();
 	}
 
@@ -80,7 +80,7 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	/// <returns><c>true</c> if the item was successfully removed; otherwise, <c>false</c>.</returns>
 	public override bool Remove(TItem item)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return base.Remove(item);
 	}
 
@@ -90,7 +90,7 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	/// <param name="index">The zero-based index of the item to remove.</param>
 	public override void RemoveAt(int index)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			base.RemoveAt(index);
 	}
 
@@ -101,7 +101,7 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	/// <param name="item">The item to insert into the collection.</param>
 	public override void Insert(int index, TItem item)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			base.Insert(index, item);
 	}
 
@@ -112,7 +112,7 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	/// <returns>The index of the item if found in the collection; otherwise, -1.</returns>
 	public override int IndexOf(TItem item)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return OnIndexOf(item);
 	}
 
@@ -123,7 +123,7 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	/// <returns><c>true</c> if the item is found in the collection; otherwise, <c>false</c>.</returns>
 	public override bool Contains(TItem item)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return base.Contains(item);
 	}
 
@@ -140,7 +140,7 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	/// <returns>An enumerator that can be used to iterate through the collection.</returns>
 	public override IEnumerator<TItem> GetEnumerator()
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return InnerCollection.GetEnumerator();
 	}
 }

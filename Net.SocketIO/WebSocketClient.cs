@@ -644,7 +644,7 @@ public class WebSocketClient : Disposable, IConnection
 	{
 		subId = subId.Abs();
 
-		lock (_reConnectCommands.SyncRoot)
+		using (_reConnectCommands.SyncRoot.EnterScope())
 			_reConnectCommands.RemoveWhere(t => t.subId == subId);
 	}
 

@@ -53,7 +53,7 @@ public abstract class SynchronizedKeyedCollection<TKey, TValue> : KeyedCollectio
 	{
 		set
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				base[key] = value;
 		}
 	}
@@ -63,7 +63,7 @@ public abstract class SynchronizedKeyedCollection<TKey, TValue> : KeyedCollectio
 	/// </summary>
 	public override void Clear()
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			base.Clear();
 	}
 
@@ -74,7 +74,7 @@ public abstract class SynchronizedKeyedCollection<TKey, TValue> : KeyedCollectio
 	/// <returns><c>true</c> if the element is successfully found and removed; otherwise, <c>false</c>.</returns>
 	public override bool Remove(TKey key)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return base.Remove(key);
 	}
 }

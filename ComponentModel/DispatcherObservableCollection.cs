@@ -287,7 +287,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 		if (item == null)
 			throw new ArgumentNullException(nameof(item));
 
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 		{
 			_pendingActions.Enqueue(item);
 
@@ -308,7 +308,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 
 		try
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 			{
 				pendingActions = [.. _pendingActions];
 				_pendingActions.Clear();

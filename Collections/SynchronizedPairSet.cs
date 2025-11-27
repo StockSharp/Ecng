@@ -51,7 +51,7 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 	/// <param name="value">The value to insert.</param>
 	public override void Add(TKey key, TValue value)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			base.Add(key, value);
 	}
 
@@ -66,7 +66,7 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (SyncRoot.EnterScope())
 				return _values[value];
 		}
 	}
@@ -108,7 +108,7 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 	/// <param name="value">The value to associate with the key.</param>
 	public void SetKey(TKey key, TValue value)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 		{
 			Remove(key);
 
@@ -126,7 +126,7 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 	/// <param name="value">The new value.</param>
 	public void SetValue(TKey key, TValue value)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			this[key] = value;
 	}
 
@@ -193,7 +193,7 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 	/// <returns><c>true</c> if the pair was added; otherwise <c>false</c>.</returns>
 	public bool TryAdd(TKey key, TValue value)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 		{
 			if (ContainsKey(key) || _values.ContainsKey(value))
 				return false;
@@ -210,7 +210,7 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 	/// <returns>The key if found; otherwise the default.</returns>
 	public TKey TryGetKey(TValue value)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return _values.TryGetValue(value);
 	}
 
@@ -222,7 +222,7 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 	/// <returns><c>true</c> if the key was found; otherwise <c>false</c>.</returns>
 	public bool TryGetKey(TValue value, out TKey key)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return _values.TryGetValue(value, out key);
 	}
 
@@ -234,7 +234,7 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 	/// <returns><c>true</c> if the key was removed successfully; otherwise <c>false</c>.</returns>
 	public bool TryGetKeyAndRemove(TValue value, out TKey key)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 		{
 			if (!_values.TryGetAndRemove(value, out key))
 				return false;
@@ -250,7 +250,7 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 	/// <returns><c>true</c> if the item was removed; otherwise <c>false</c>.</returns>
 	public bool RemoveByValue(TValue value)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return _values.ContainsKey(value) && Remove(_values[value]);
 	}
 
@@ -261,7 +261,7 @@ public class SynchronizedPairSet<TKey, TValue> : SynchronizedKeyedCollection<TKe
 	/// <returns><c>true</c> if the value is found; otherwise <c>false</c>.</returns>
 	public bool ContainsValue(TValue value)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return _values.ContainsKey(value);
 	}
 }

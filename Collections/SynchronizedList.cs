@@ -101,7 +101,7 @@ public class SynchronizedList<T>(int capacity) : SynchronizedCollection<T, List<
 	/// <exception cref="ArgumentNullException">Thrown when an item is null and <see cref="BaseCollection{TItem,TCollection}.CheckNullableItems"/> is true.</exception>
 	public void AddRange(IEnumerable<T> items)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 		{
 			var filteredItems = items.Where(t =>
 			{
@@ -123,7 +123,7 @@ public class SynchronizedList<T>(int capacity) : SynchronizedCollection<T, List<
 	/// <param name="items">The items to remove.</param>
 	public void RemoveRange(IEnumerable<T> items)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 		{
 			var filteredItems = items.Where(OnRemoving).ToArray();
 			InnerCollection.RemoveRange(filteredItems);
@@ -148,7 +148,7 @@ public class SynchronizedList<T>(int capacity) : SynchronizedCollection<T, List<
 		if (count <= 0)
 			throw new ArgumentOutOfRangeException(nameof(count));
 
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 		{
 			var realCount = Count;
 			realCount -= index;
@@ -165,7 +165,7 @@ public class SynchronizedList<T>(int capacity) : SynchronizedCollection<T, List<
 	/// <returns>An enumerable containing the specified range of items.</returns>
 	public IEnumerable<T> GetRange(int index, int count)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return InnerCollection.GetRange(index, count);
 	}
 }

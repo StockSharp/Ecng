@@ -163,7 +163,7 @@ public static class CollectionHelper
 
 		if (collection is ISynchronizedCollection sync)
 		{
-			lock (sync.SyncRoot)
+			using (sync.SyncRoot.EnterScope())
 				InternalTryAdd();
 		}
 		else
@@ -196,7 +196,7 @@ public static class CollectionHelper
 
 		if (collection is ISynchronizedCollection sync)
 		{
-			lock (sync.SyncRoot)
+			using (sync.SyncRoot.EnterScope())
 				return InternalTryAdd();
 		}
 
@@ -229,7 +229,7 @@ public static class CollectionHelper
 
 		if (dict is ISynchronizedCollection sync)
 		{
-			lock (sync.SyncRoot)
+			using (sync.SyncRoot.EnterScope())
 				return InternalTryAdd();
 		}
 
@@ -450,7 +450,7 @@ public static class CollectionHelper
 
 		if (items is not ISynchronizedCollection sync) return InternalCopyAndClear();
 
-		lock (sync.SyncRoot)
+		using (sync.SyncRoot.EnterScope())
 			return InternalCopyAndClear();
 	}
 
@@ -473,7 +473,7 @@ public static class CollectionHelper
 
 		if (dict is not ISynchronizedCollection sync) return InternalGetAndRemove();
 
-		lock (sync.SyncRoot)
+		using (sync.SyncRoot.EnterScope())
 			return InternalGetAndRemove();
 	}
 
@@ -526,7 +526,7 @@ public static class CollectionHelper
 
 		if (dict is ISynchronizedCollection sync)
 		{
-			lock (sync.SyncRoot)
+			using (sync.SyncRoot.EnterScope())
 				return InternalTryGetAndRemove(out value);
 		}
 
@@ -1270,7 +1270,7 @@ public static class CollectionHelper
 		if (func is null)
 			throw new ArgumentNullException(nameof(func));
 
-		lock (collection.SyncRoot)
+		using (collection.SyncRoot.EnterScope())
 			return func(collection);
 	}
 
@@ -1290,7 +1290,7 @@ public static class CollectionHelper
 		if (action is null)
 			throw new ArgumentNullException(nameof(action));
 
-		lock (collection.SyncRoot)
+		using (collection.SyncRoot.EnterScope())
 			action(collection);
 	}
 
@@ -1304,7 +1304,7 @@ public static class CollectionHelper
 	/// <returns>An enumerable of keys associated with the specified value.</returns>
 	public static IEnumerable<TKey> GetKeys<TKey, TValue>(this SynchronizedDictionary<TKey, TValue> dictionary, TValue value)
 	{
-		lock (dictionary.SyncRoot)
+		using (dictionary.SyncRoot.EnterScope())
 			return ((IDictionary<TKey, TValue>)dictionary).GetKeys(value);
 	}
 
@@ -1341,7 +1341,7 @@ public static class CollectionHelper
 	public static T TryDequeue<T>(this SynchronizedQueue<T> queue)
 		where T : class
 	{
-		lock (queue.SyncRoot)
+		using (queue.SyncRoot.EnterScope())
 			return queue.IsEmpty() ? null : queue.Dequeue();
 	}
 
@@ -1354,7 +1354,7 @@ public static class CollectionHelper
 	public static T? TryDequeue2<T>(this SynchronizedQueue<T> queue)
 		where T : struct
 	{
-		lock (queue.SyncRoot)
+		using (queue.SyncRoot.EnterScope())
 			return queue.IsEmpty() ? (T?)null : queue.Dequeue();
 	}
 
@@ -1391,7 +1391,7 @@ public static class CollectionHelper
 	public static T TryPeek<T>(this SynchronizedQueue<T> queue)
 		where T : class
 	{
-		lock (queue.SyncRoot)
+		using (queue.SyncRoot.EnterScope())
 			return queue.IsEmpty() ? null : queue.Peek();
 	}
 
@@ -1404,7 +1404,7 @@ public static class CollectionHelper
 	public static T? TryPeek2<T>(this SynchronizedQueue<T> queue)
 		where T : struct
 	{
-		lock (queue.SyncRoot)
+		using (queue.SyncRoot.EnterScope())
 			return queue.IsEmpty() ? (T?)null : queue.Peek();
 	}
 

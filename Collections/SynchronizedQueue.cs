@@ -23,7 +23,7 @@ public class SynchronizedQueue<T> : SynchronizedCollection<T, QueueEx<T>>
 	/// <param name="item">The item to enqueue.</param>
 	public void Enqueue(T item)
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			InnerCollection.Enqueue(item);
 	}
 
@@ -33,7 +33,7 @@ public class SynchronizedQueue<T> : SynchronizedCollection<T, QueueEx<T>>
 	/// <returns>The item that was removed from the queue.</returns>
 	public T Dequeue()
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return InnerCollection.Dequeue();
 	}
 
@@ -43,7 +43,7 @@ public class SynchronizedQueue<T> : SynchronizedCollection<T, QueueEx<T>>
 	/// <returns>The item at the beginning of the queue.</returns>
 	public T Peek()
 	{
-		lock (SyncRoot)
+		using (SyncRoot.EnterScope())
 			return InnerCollection.Peek();
 	}
 
