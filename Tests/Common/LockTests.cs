@@ -126,7 +126,11 @@ public class LockTests
 			// Exit once, still held
 			l.Exit();
 
-			couldEnter = l.TryEnter(50);
+			// Another thread still should not be able to enter
+			couldEnter = false;
+			done = new ManualResetEventSlim();
+			Task.Run(() => { couldEnter = l.TryEnter(50); done.Set(); });
+			done.Wait();
 			couldEnter.AssertFalse();
 		}
 
