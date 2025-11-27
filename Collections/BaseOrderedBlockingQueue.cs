@@ -1,4 +1,5 @@
-﻿namespace Ecng.Collections;
+﻿#if !NET9_0_OR_GREATER
+namespace Ecng.Collections;
 
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,6 @@ using System.Collections.Generic;
 /// <typeparam name="TSort">The type used to determine the sort order of elements.</typeparam>
 /// <typeparam name="TValue">The type of the values stored in the queue.</typeparam>
 /// <typeparam name="TCollection">The type of the inner collection, which must implement <see cref="ICollection{T}"/> and <see cref="IQueue{T}"/> for tuples of <typeparamref name="TSort"/> and <typeparamref name="TValue"/>.</typeparam>
-[Obsolete("Use Channels instead.")]
 public abstract class BaseOrderedBlockingQueue<TSort, TValue, TCollection>(TCollection collection) :
 	BaseBlockingQueue<(TSort sort, TValue elem), TCollection>(collection)
 	where TCollection : ICollection<(TSort, TValue)>, IQueue<(TSort, TValue)>
@@ -63,3 +63,4 @@ public abstract class BaseOrderedBlockingQueue<TSort, TValue, TCollection>(TColl
 	protected override (TSort, TValue) OnPeek()
 		=> InnerCollection.Peek();
 }
+#endif

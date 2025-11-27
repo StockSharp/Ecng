@@ -1,4 +1,5 @@
-﻿namespace Ecng.Collections;
+﻿#if !NET9_0_OR_GREATER
+namespace Ecng.Collections;
 
 using System;
 using System.Collections;
@@ -13,7 +14,6 @@ using Ecng.Common;
 /// </summary>
 /// <typeparam name="T">The type of elements in the queue.</typeparam>
 /// <typeparam name="TF">The type of the inner collection, which must implement <see cref="ICollection{T}"/>.</typeparam>
-[Obsolete("Use Channels instead.")]
 public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchronizedCollection<T>, IBlockingQueue<T>
 	where TF : ICollection<T>
 {
@@ -333,3 +333,4 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 		return GetEnumerator();
 	}
 }
+#endif

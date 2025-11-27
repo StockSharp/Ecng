@@ -3,7 +3,11 @@
 using System;
 using System.Collections.Generic;
 
+#if NET9_0_OR_GREATER
+using SyncObject = System.Threading.Lock;
+#else
 using Ecng.Common;
+#endif
 
 /// <summary>
 /// Represents a thread-safe collection that provides synchronization for its operations.
@@ -17,7 +21,7 @@ public abstract class SynchronizedCollection<TItem, TCollection>(TCollection inn
 	/// <summary>
 	/// Gets the synchronization root object used to synchronize access to the collection.
 	/// </summary>
-	public SyncObject SyncRoot { get; } = new SyncObject();
+	public SyncObject SyncRoot { get; } = new();
 
 	/// <summary>
 	/// Gets the number of elements contained in the collection.

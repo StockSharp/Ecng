@@ -2,7 +2,11 @@ namespace Ecng.Collections;
 
 using System.Collections.Generic;
 
+#if NET9_0_OR_GREATER
+using SyncObject = System.Threading.Lock;
+#else
 using Ecng.Common;
+#endif
 
 /// <summary>
 /// Represents a collection that can be synchronized using a <see cref="SyncObject"/>.

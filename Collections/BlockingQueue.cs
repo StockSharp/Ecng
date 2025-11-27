@@ -1,4 +1,5 @@
-﻿namespace Ecng.Collections;
+﻿#if !NET9_0_OR_GREATER
+namespace Ecng.Collections;
 
 using System;
 
@@ -45,3 +46,4 @@ public sealed class BlockingQueue<T> : BaseBlockingQueue<T, QueueEx<T>>
 		return InnerCollection.Peek();
 	}
 }
+#endif

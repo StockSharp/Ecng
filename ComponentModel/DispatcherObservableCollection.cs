@@ -4,11 +4,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 using Ecng.Collections;
 using Ecng.Common;
+
+#if NET9_0_OR_GREATER
+using SyncObject = System.Threading.Lock;
+#endif
 
 /// <summary>
 /// The class represents a synchronized collection that can be used in WPF applications.
@@ -221,7 +224,9 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	/// <inheritdoc cref="ICollection{T}" />
 	public override int Count => _syncCopy.Count;
 
+#pragma warning disable CS9216
 	object ICollection.SyncRoot => SyncRoot;
+#pragma warning restore CS9216
 
 	bool ICollection.IsSynchronized => true;
 

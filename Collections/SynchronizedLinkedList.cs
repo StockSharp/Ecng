@@ -3,7 +3,11 @@
 using System.Collections;
 using System.Collections.Generic;
 
+#if NET9_0_OR_GREATER
+using SyncObject = System.Threading.Lock;
+#else
 using Ecng.Common;
+#endif
 
 /// <summary>
 /// Represents a thread-safe linked list that provides synchronization for its operations.
