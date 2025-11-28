@@ -25,8 +25,6 @@ public interface IConvertibleObservableCollection<TItem> : IListEx<TItem>
 /// </summary>
 /// <typeparam name="TItem">Original item type.</typeparam>
 /// <typeparam name="TDisplay">Display item type.</typeparam>
-/// <remarks>
-/// </remarks>
 public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDisplay> collection, Func<TItem, TDisplay> converter) : BaseObservableCollection, IConvertibleObservableCollection<TItem>
 	where TDisplay : class
 {
@@ -43,6 +41,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	private object SyncRoot => ((ICollection)_collection).SyncRoot;
 
 	/// <summary>
+	/// Gets all original items in the collection.
 	/// </summary>
 	public TItem[] Items
 	{
@@ -63,15 +62,19 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	}
 
 	/// <summary>
+	/// Occurs when a range of items is added to the collection.
 	/// </summary>
 	public event Action<IEnumerable<TItem>> AddedRange;
 
 	/// <summary>
+	/// Occurs when a range of items is removed from the collection.
 	/// </summary>
 	public event Action<IEnumerable<TItem>> RemovedRange;
 
 	/// <summary>
+	/// Adds a range of items to the collection.
 	/// </summary>
+	/// <param name="items">Items to add.</param>
 	public void AddRange(IEnumerable<TItem> items)
 	{
 		var arr = items.ToArray();
@@ -105,7 +108,9 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	}
 
 	/// <summary>
+	/// Removes a range of items from the collection.
 	/// </summary>
+	/// <param name="items">Items to remove.</param>
 	public void RemoveRange(IEnumerable<TItem> items)
 	{
 		var arr = items.ToArray();
@@ -132,7 +137,11 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	}
 
 	/// <summary>
+	/// Removes a range of items starting at the specified index.
 	/// </summary>
+	/// <param name="index">Starting index.</param>
+	/// <param name="count">Number of items to remove.</param>
+	/// <returns>Number of items removed.</returns>
 	public override int RemoveRange(int index, int count)
 	{
 		lock (SyncRoot)
@@ -144,6 +153,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	}
 
 	/// <summary>
+	/// Removes all items from the collection.
 	/// </summary>
 	public void Clear()
 	{

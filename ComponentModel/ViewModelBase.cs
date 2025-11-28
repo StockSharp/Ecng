@@ -17,21 +17,32 @@ public abstract class ViewModelBase : Disposable, INotifyPropertyChanged
 	public event PropertyChangedEventHandler PropertyChanged;
 
 	/// <summary>
+	/// Raises the PropertyChanged event.
 	/// </summary>
+	/// <param name="name">Property name.</param>
 	protected virtual void OnPropertyChanged([CallerMemberName] string name = null)
 	{
 		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 	}
 
 	/// <summary>
+	/// Raises the PropertyChanged event using expression.
 	/// </summary>
+	/// <typeparam name="T">Property type.</typeparam>
+	/// <param name="selectorExpression">Property selector expression.</param>
 	protected void OnPropertyChanged<T>(Expression<Func<T>> selectorExpression)
 	{
 		OnPropertyChanged(PropertyName(selectorExpression));
 	}
 
 	/// <summary>
+	/// Sets field value and raises PropertyChanged if value changed.
 	/// </summary>
+	/// <typeparam name="T">Field type.</typeparam>
+	/// <param name="field">Field reference.</param>
+	/// <param name="value">New value.</param>
+	/// <param name="selectorExpression">Property selector expression.</param>
+	/// <returns>True if value was changed.</returns>
 	protected bool SetField<T>(ref T field, T value, Expression<Func<T>> selectorExpression)
 	{
 		return SetField(ref field, value, PropertyName(selectorExpression));
@@ -51,7 +62,11 @@ public abstract class ViewModelBase : Disposable, INotifyPropertyChanged
 	}
 
 	/// <summary>
+	/// Gets property name from expression.
 	/// </summary>
+	/// <typeparam name="T">Property type.</typeparam>
+	/// <param name="property">Property expression.</param>
+	/// <returns>Property name.</returns>
 	public static string PropertyName<T>(Expression<Func<T>> property)
 	{
 		var lambda = (LambdaExpression)property;

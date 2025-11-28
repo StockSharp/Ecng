@@ -25,11 +25,16 @@ public abstract class BaseObservableCollection
 	}
 
 	/// <summary>
+	/// Gets the number of elements in the collection.
 	/// </summary>
 	public abstract int Count { get; }
 
 	/// <summary>
+	/// Removes a range of elements from the collection.
 	/// </summary>
+	/// <param name="index">Starting index.</param>
+	/// <param name="count">Number of elements to remove.</param>
+	/// <returns>Number of elements removed.</returns>
 	public abstract int RemoveRange(int index, int count);
 
 	/// <summary>

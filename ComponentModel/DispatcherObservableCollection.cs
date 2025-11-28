@@ -376,6 +376,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	}
 
 	/// <summary>
+	/// Gets the synchronization root object.
 	/// </summary>
 	public SyncObject SyncRoot => _syncCopy.SyncRoot;
 }
