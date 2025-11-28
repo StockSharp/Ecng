@@ -1,3 +1,4 @@
+#if !NET9_0_OR_GREATER
 namespace Ecng.Collections;
 
 using System.Collections;
@@ -21,3 +22,4 @@ public interface IEnumerableEx : IEnumerable
 public interface IEnumerableEx<out T> : IEnumerable<T>, IEnumerableEx
 {
 }
+#endif

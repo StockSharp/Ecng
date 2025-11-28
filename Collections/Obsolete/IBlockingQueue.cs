@@ -1,4 +1,5 @@
-﻿namespace Ecng.Collections;
+﻿#if !NET9_0_OR_GREATER
+namespace Ecng.Collections;
 
 /// <summary>
 /// Represents a blocking queue interface for managing items in a thread-safe manner.
@@ -78,3 +79,4 @@ public interface IBlockingQueue<T>
 	/// </summary>
 	void Clear();
 }
+#endif
