@@ -1,7 +1,6 @@
 ﻿#if !NET9_0_OR_GREATER
 namespace Ecng.Collections;
 
-using System;
 using System.Collections.Generic;
 
 /// <summary>
