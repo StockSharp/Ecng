@@ -7,6 +7,7 @@ using System.Collections.Specialized;
 using System.Linq;
 
 using Ecng.Collections;
+using Ecng.Common;
 
 /// <summary>
 /// Collection which maps items to another type to display.
@@ -40,6 +41,8 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 
 	private object SyncRoot => ((ICollection)_collection).SyncRoot;
 
+	private SyncScope EnterScope() => new(SyncRoot);
+
 	/// <summary>
 	/// Gets all original items in the collection.
 	/// </summary>
@@ -47,7 +50,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (EnterScope())
 				return [.. _convertedValues.Keys.Cast<TItem>()];
 		}
 	}
@@ -57,7 +60,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	/// </summary>
 	public TDisplay TryGet(TItem item)
 	{
-		lock (SyncRoot)
+		using (EnterScope())
 			return _convertedValues.Contains(item) ? ((KVPair)_convertedValues[item]!).Display : default;
 	}
 
@@ -80,7 +83,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 		var arr = items.ToArray();
 		var added = new List<TItem>();
 
-		lock (SyncRoot)
+		using (EnterScope())
 		{
 			var converted = new List<TDisplay>();
 
@@ -88,7 +91,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 			{
 				var display = _converter(item);
 
-				if(_convertedValues.Contains(item))
+				if (_convertedValues.Contains(item))
 					continue;
 
 				_convertedValues.Add(item, new KVPair(item, display));
@@ -115,7 +118,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	{
 		var arr = items.ToArray();
 
-		lock (SyncRoot)
+		using (EnterScope())
 		{
 			var converted = new List<TDisplay>();
 
@@ -144,7 +147,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	/// <returns>Number of items removed.</returns>
 	public override int RemoveRange(int index, int count)
 	{
-		lock (SyncRoot)
+		using (EnterScope())
 		{
 			var items = _convertedValues.Keys.Cast<TItem>().Skip(index).Take(count).ToArray();
 			RemoveRange(items);
@@ -159,7 +162,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	{
 		TItem[] removedItems;
 
-		lock (SyncRoot)
+		using (EnterScope())
 		{
 			removedItems = [.. _convertedValues.Keys.Cast<TItem>()];
 
@@ -178,7 +181,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	/// </returns>
 	public IEnumerator<TItem> GetEnumerator()
 	{
-		lock (SyncRoot)
+		using (EnterScope())
 			return _convertedValues.Keys.Cast<TItem>().GetEnumerator();
 	}
 
@@ -188,7 +191,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	/// <param name="item">The object to add to the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param><exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.</exception>
 	public void Add(TItem item)
 	{
-		lock (SyncRoot)
+		using (EnterScope())
 		{
 			var display = _converter(item);
 			_convertedValues.Add(item, new KVPair(item, display));
@@ -207,7 +210,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	/// <param name="item">The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param><exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.</exception>
 	public bool Remove(TItem item)
 	{
-		lock (SyncRoot)
+		using (EnterScope())
 		{
 			var display = TryGet(item);
 
@@ -230,7 +233,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (EnterScope())
 				return _convertedValues.Count;
 		}
 	}
@@ -252,7 +255,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	/// <param name="item">The object to locate in the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param>
 	public bool Contains(TItem item)
 	{
-		lock (SyncRoot)
+		using (EnterScope())
 			return _convertedValues.Contains(item);
 	}
 
@@ -262,7 +265,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	/// <param name="array">The one-dimensional <see cref="T:System.Array"/> that is the destination of the elements copied from <see cref="T:System.Collections.Generic.ICollection`1"/>. The <see cref="T:System.Array"/> must have zero-based indexing.</param><param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param><exception cref="T:System.ArgumentNullException"><paramref name="array"/> is null.</exception><exception cref="T:System.ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0.</exception><exception cref="T:System.ArgumentException">The number of elements in the source <see cref="T:System.Collections.Generic.ICollection`1"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
 	public void CopyTo(TItem[] array, int arrayIndex)
 	{
-		lock (SyncRoot)
+		using (EnterScope())
 			_convertedValues.Keys.CopyTo(array, arrayIndex);
 	}
 
@@ -290,7 +293,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 		if (_collection is not IList<TDisplay> coll)
 			throw new NotSupportedException($"base collection must implement IList<{typeof(TDisplay).Name}>");
 
-		lock (SyncRoot)
+		using (EnterScope())
 		{
 			var pair = new KVPair(item, _converter(item));
 			_convertedValues.Insert(index, item, pair);
@@ -307,7 +310,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 		if (_collection is not IList<TDisplay> coll)
 			throw new NotSupportedException($"base collection must implement IList<{typeof(TDisplay).Name}>");
 
-		lock (SyncRoot)
+		using (EnterScope())
 		{
 			_convertedValues.RemoveAt(index);
 			coll.RemoveAt(index);
@@ -322,7 +325,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 		if (_collection is not IList<TDisplay> coll)
 			throw new NotSupportedException($"base collection must implement IList<{typeof(TDisplay).Name}>");
 
-		lock (SyncRoot)
+		using (EnterScope())
 		{
 			for (var i = _convertedValues.Count - 1; i >= 0; --i)
 			{
@@ -347,7 +350,7 @@ public class ConvertibleObservableCollection<TItem, TDisplay>(ICollection<TDispl
 	{
 		get
 		{
-			lock (SyncRoot)
+			using (EnterScope())
 				return ((KVPair)_convertedValues[index]!).Item;
 		}
 		set => throw new NotSupportedException();

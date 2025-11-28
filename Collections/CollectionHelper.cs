@@ -1010,9 +1010,10 @@ public static class CollectionHelper
 
 		if (!dictionary.TryGetValue(key, out var value))
 		{
-			var syncObj = (dictionary as ISynchronizedCollection)?.SyncRoot ?? (object)dictionary;
+			var l = (dictionary as ISynchronizedCollection)?.SyncRoot;
+			SyncScope syncObj = l is null ? new(dictionary) : new(l);
 
-			lock (syncObj)
+			using (syncObj)
 			{
 				if (!dictionary.TryGetValue(key, out value))
 				{
@@ -1140,11 +1141,11 @@ public static class CollectionHelper
 		if (handler is null)
 			throw new ArgumentNullException(nameof(handler));
 
-		var syncObj = (dictionary as ISynchronizedCollection)?.SyncRoot ?? (object)dictionary;
+		var l = (dictionary as ISynchronizedCollection)?.SyncRoot;
 
 		TaskCompletionSource<TValue> source;
 
-		lock (syncObj)
+		using (l is null ? new SyncScope(dictionary) : new(l))
 		{
 			if (dictionary.TryGetValue(key, out source))
 				return source.Task;
@@ -1152,11 +1153,11 @@ public static class CollectionHelper
 			source = new();
 			dictionary.Add(key, source);
 		}
-
+		
 		void remove()
 		{
-			lock (syncObj)
-				dictionary.Remove(key);
+			using SyncScope syncObj = l is null ? new(dictionary) : new(l);
+			dictionary.Remove(key);
 		}
 
 		try
