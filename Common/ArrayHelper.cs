@@ -2,7 +2,9 @@
 
 using System;
 using System.Collections.Generic;
+#if !NET8_0_OR_GREATER
 using System.Linq;
+#endif
 
 /// <summary>
 /// Utility class for common array operations.
