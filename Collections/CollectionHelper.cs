@@ -1534,8 +1534,10 @@ public static class CollectionHelper
 		if (source is ICollection col2)
 			return col2.Count == 0;
 
+#if !NET9_0_OR_GREATER
 		if (source is IEnumerableEx ex)
 			return ex.Count == 0;
+#endif
 
 		return !source.Any();
 	}
@@ -1822,6 +1824,7 @@ public static class CollectionHelper
 
 	#endregion
 
+#if !NET9_0_OR_GREATER
 	/// <summary>
 	/// A private implementation of <see cref="IEnumerableEx{T}"/> that wraps an enumerable with a predefined count.
 	/// </summary>
@@ -1873,6 +1876,7 @@ public static class CollectionHelper
 	{
 		return new EnumerableEx<T>(values, count);
 	}
+#endif
 
 	/// <summary>
 	/// Converts a list to a synchronized list, or returns it if already synchronized.
