@@ -1,12 +1,14 @@
 #if !NET9_0_OR_GREATER
 namespace Ecng.Collections;
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
 /// Extended version of <see cref="IEnumerable"/> that provides the total number of elements.
 /// </summary>
+[Obsolete]
 public interface IEnumerableEx : IEnumerable
 {
 	/// <summary>
@@ -19,6 +21,7 @@ public interface IEnumerableEx : IEnumerable
 /// Extended version of <see cref="IEnumerable{T}"/> that provides the total number of elements.
 /// </summary>
 /// <typeparam name="T">The type of the element.</typeparam>
+[Obsolete]
 public interface IEnumerableEx<out T> : IEnumerable<T>, IEnumerableEx
 {
 }

@@ -1,10 +1,13 @@
 ﻿#if !NET9_0_OR_GREATER
 namespace Ecng.Collections;
 
+using System;
+
 /// <summary>
 /// Represents a blocking queue interface for managing items in a thread-safe manner.
 /// </summary>
 /// <typeparam name="T">The type of elements in the queue.</typeparam>
+[Obsolete("Use Channels instead.")]
 public interface IBlockingQueue<T>
 {
 	/// <summary>

@@ -1,10 +1,13 @@
 ﻿#if !NET9_0_OR_GREATER
 namespace Ecng.Collections;
 
+using System;
+
 /// <summary>
 /// Represents a thread-safe blocking queue implementation for storing and retrieving items of type <typeparamref name="T"/>.
 /// </summary>
 /// <typeparam name="T">The type of elements in the queue.</typeparam>
+[Obsolete("Use Channels instead.")]
 public sealed class BlockingQueue<T> : BaseBlockingQueue<T, QueueEx<T>>
 {
 	/// <summary>
