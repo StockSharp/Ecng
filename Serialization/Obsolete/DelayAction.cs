@@ -257,7 +257,7 @@ public class DelayAction : Disposable
 			if (item is null)
 				throw new ArgumentNullException(nameof(item));
 
-			using (_actions.SyncRoot.EnterScope())
+			using (_actions.EnterScope())
 				_actions.Add(item);
 
 			_parent.TryCreateTimer();
@@ -308,7 +308,7 @@ public class DelayAction : Disposable
 		{
 			_flushInterval = value;
 
-			using (_groups.SyncRoot.EnterScope())
+			using (_groups.EnterScope())
 			{
 				if (_flushTimer is null)
 					return;
@@ -369,7 +369,7 @@ public class DelayAction : Disposable
 
 	private void TryCreateTimer()
 	{
-		using (_groups.SyncRoot.EnterScope())
+		using (_groups.EnterScope())
 		{
 			if (!_isFlushing && _flushTimer is null)
 			{
@@ -388,7 +388,7 @@ public class DelayAction : Disposable
 		{
 			IGroup[] groups;
 
-			using (_groups.SyncRoot.EnterScope())
+			using (_groups.EnterScope())
 			{
 				if (_isFlushing)
 					return;
@@ -444,7 +444,7 @@ public class DelayAction : Disposable
 			}
 			finally
 			{
-				using (_groups.SyncRoot.EnterScope())
+				using (_groups.EnterScope())
 				{
 					_isFlushing = false;
 

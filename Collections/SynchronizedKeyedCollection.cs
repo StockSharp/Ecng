@@ -5,8 +5,10 @@ using System.Collections.Generic;
 
 #if NET9_0_OR_GREATER
 using SyncObject = System.Threading.Lock;
+using LockScope = System.Threading.Lock.Scope;
 #else
 using Ecng.Common;
+using LockScope = Ecng.Common.SyncObject.Scope;
 #endif
 
 /// <summary>
@@ -45,6 +47,12 @@ public abstract class SynchronizedKeyedCollection<TKey, TValue> : KeyedCollectio
 	public SyncObject SyncRoot => SyncDict.SyncRoot;
 
 	/// <summary>
+	/// Enters a synchronized scope for thread-safe operations on the collection.
+	/// </summary>
+	/// <returns>A <see cref="LockScope"/> that represents the synchronized scope.</returns>
+	public LockScope EnterScope() => CollectionHelper.EnterScope(this);
+
+	/// <summary>
 	/// Gets or sets the value associated with the specified key.
 	/// </summary>
 	/// <param name="key">The key of the value to get or set.</param>
@@ -53,7 +61,7 @@ public abstract class SynchronizedKeyedCollection<TKey, TValue> : KeyedCollectio
 	{
 		set
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				base[key] = value;
 		}
 	}
@@ -63,7 +71,7 @@ public abstract class SynchronizedKeyedCollection<TKey, TValue> : KeyedCollectio
 	/// </summary>
 	public override void Clear()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			base.Clear();
 	}
 
@@ -74,7 +82,7 @@ public abstract class SynchronizedKeyedCollection<TKey, TValue> : KeyedCollectio
 	/// <returns><c>true</c> if the element is successfully found and removed; otherwise, <c>false</c>.</returns>
 	public override bool Remove(TKey key)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return base.Remove(key);
 	}
 }

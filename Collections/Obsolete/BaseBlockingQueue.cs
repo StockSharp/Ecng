@@ -47,6 +47,12 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	public SyncObject SyncRoot { get; } = new();
 
 	/// <summary>
+	/// Enters a synchronized scope for thread-safe operations on the collection.
+	/// </summary>
+	/// <returns>A <see cref="SyncObject.Scope"/> that represents the synchronized scope.</returns>
+	public SyncObject.Scope EnterScope() => CollectionHelper.EnterScope(this);
+
+	/// <summary>
 	/// Gets the current number of items in the queue.
 	/// </summary>
 	public int Count => InnerCollection.Count;
@@ -63,7 +69,7 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	/// </summary>
 	public void Close()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			_isClosed = true;
 			Monitor.PulseAll(SyncRoot);
@@ -75,7 +81,7 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	/// </summary>
 	public void Open()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			_isClosed = false;
 		}
@@ -97,7 +103,7 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	/// </summary>
 	public void WaitUntilEmpty()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			while (InnerCollection.Count > 0 && !_isClosed)
 				Monitor.Wait(SyncRoot);
@@ -120,7 +126,7 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	/// <returns><see langword="true"/> if the item was successfully added to the queue; otherwise, <see langword="false"/> if the queue is closed.</returns>
 	public bool TryEnqueue(T item, bool force = false)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			if (_isClosed)
 				return false;
@@ -203,7 +209,7 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	/// <returns>True if an item was dequeued; otherwise, false.</returns>
 	public bool TryDequeue(out T value, bool exitOnClose = true, bool block = true)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			if (!WaitWhileEmpty(exitOnClose, block))
 			{
@@ -242,7 +248,7 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	/// <returns>True if an item was peeked; otherwise, false.</returns>
 	public bool TryPeek(out T value, bool exitOnClose = true, bool block = true)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			if (!WaitWhileEmpty(exitOnClose, block))
 			{
@@ -261,7 +267,7 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	/// </summary>
 	public void Clear()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			InnerCollection.Clear();
 			Monitor.PulseAll(SyncRoot);
@@ -300,7 +306,7 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	/// <returns>True if the item is found; otherwise, false.</returns>
 	bool ICollection<T>.Contains(T item)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return InnerCollection.Contains(item);
 	}
 
@@ -311,7 +317,7 @@ public abstract class BaseBlockingQueue<T, TF>(TF innerCollection) : ISynchroniz
 	/// <param name="arrayIndex">The zero-based index in the array at which copying begins.</param>
 	void ICollection<T>.CopyTo(T[] array, int arrayIndex)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			InnerCollection.CopyTo(array, arrayIndex);
 	}
 

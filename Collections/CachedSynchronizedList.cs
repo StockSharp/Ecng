@@ -34,7 +34,7 @@ public class CachedSynchronizedList<T> : SynchronizedList<T>
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _cache ??= [.. this];
 		}
 	}

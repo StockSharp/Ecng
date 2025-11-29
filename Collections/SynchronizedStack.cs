@@ -23,7 +23,7 @@ public class SynchronizedStack<T> : SynchronizedCollection<T, StackEx<T>>
 	/// <param name="item">The item to add.</param>
 	public void Push(T item)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			InnerCollection.Push(item);
 	}
 
@@ -33,7 +33,7 @@ public class SynchronizedStack<T> : SynchronizedCollection<T, StackEx<T>>
 	/// <returns>The item removed from the top.</returns>
 	public T Pop()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return InnerCollection.Pop();
 	}
 
@@ -43,7 +43,7 @@ public class SynchronizedStack<T> : SynchronizedCollection<T, StackEx<T>>
 	/// <returns>The item at the top.</returns>
 	public T Peek()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return InnerCollection.Peek();
 	}
 

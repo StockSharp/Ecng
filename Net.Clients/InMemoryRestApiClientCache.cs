@@ -101,7 +101,7 @@ public class InMemoryRestApiClientCache : IRestApiClientCache
 			return;
 		}
 
-		using (Cache.SyncRoot.EnterScope())
+		using (Cache.EnterScope())
 		{
 			var keys = Cache.Keys.Where(p => (method is null || p.method == method) && (uriLike.IsEmpty() || p.uri.Like(uriLike, op))).ToArray();
 

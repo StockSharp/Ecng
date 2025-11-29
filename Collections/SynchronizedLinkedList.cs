@@ -5,8 +5,10 @@ using System.Collections.Generic;
 
 #if NET9_0_OR_GREATER
 using SyncObject = System.Threading.Lock;
+using LockScope = System.Threading.Lock.Scope;
 #else
 using Ecng.Common;
+using LockScope = Ecng.Common.SyncObject.Scope;
 #endif
 
 /// <summary>
@@ -24,13 +26,19 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	public SyncObject SyncRoot => _syncRoot;
 
 	/// <summary>
+	/// Enters a synchronized scope for thread-safe operations on the collection.
+	/// </summary>
+	/// <returns>A <see cref="LockScope"/> that represents the synchronized scope.</returns>
+	public LockScope EnterScope() => CollectionHelper.EnterScope(this);
+
+	/// <summary>
 	/// Gets the first node of the linked list.
 	/// </summary>
 	public virtual LinkedListNode<T> First
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _inner.First;
 		}
 	}
@@ -42,7 +50,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _inner.Last;
 		}
 	}
@@ -54,7 +62,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <param name="value">The value to add to the linked list.</param>
 	public virtual void AddBefore(LinkedListNode<T> node, T value)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.AddBefore(node, value);
 	}
 
@@ -65,7 +73,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <param name="newNode">The new node to add.</param>
 	public virtual void AddBefore(LinkedListNode<T> node, LinkedListNode<T> newNode)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.AddBefore(node, newNode);
 	}
 
@@ -75,7 +83,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <param name="value">The value to add to the linked list.</param>
 	public virtual void AddFirst(T value)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.AddFirst(value);
 	}
 
@@ -85,7 +93,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <param name="node">The new node to add.</param>
 	public virtual void AddFirst(LinkedListNode<T> node)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.AddFirst(node);
 	}
 
@@ -95,7 +103,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <param name="value">The value to add to the linked list.</param>
 	public virtual void AddLast(T value)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.AddLast(value);
 	}
 
@@ -105,7 +113,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <param name="node">The new node to add.</param>
 	public virtual void AddLast(LinkedListNode<T> node)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.AddLast(node);
 	}
 
@@ -115,7 +123,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <param name="node">The node to remove.</param>
 	public virtual void Remove(LinkedListNode<T> node)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.Remove(node);
 	}
 
@@ -124,7 +132,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// </summary>
 	public virtual void RemoveFirst()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.RemoveFirst();
 	}
 
@@ -133,7 +141,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// </summary>
 	public virtual void RemoveLast()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.RemoveLast();
 	}
 
@@ -144,7 +152,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <returns>The first node that contains the specified value, if found; otherwise, <c>null</c>.</returns>
 	public virtual LinkedListNode<T> Find(T value)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return _inner.Find(value);
 	}
 
@@ -155,7 +163,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <returns>The last node that contains the specified value, if found; otherwise, <c>null</c>.</returns>
 	public virtual LinkedListNode<T> FindLast(T value)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return _inner.FindLast(value);
 	}
 
@@ -165,7 +173,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <returns>An enumerator that can be used to iterate through the linked list.</returns>
 	public IEnumerator<T> GetEnumerator()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return _inner.GetEnumerator();
 	}
 
@@ -184,7 +192,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <param name="item">The item to add to the linked list.</param>
 	void ICollection<T>.Add(T item)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			((ICollection<T>)_inner).Add(item);
 	}
 
@@ -193,7 +201,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// </summary>
 	public void Clear()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.Clear();
 	}
 
@@ -204,7 +212,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <returns><c>true</c> if the value is found in the linked list; otherwise, <c>false</c>.</returns>
 	public bool Contains(T item)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return _inner.Contains(item);
 	}
 
@@ -215,7 +223,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
 	public void CopyTo(T[] array, int arrayIndex)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.CopyTo(array, arrayIndex);
 	}
 
@@ -226,7 +234,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	/// <returns><c>true</c> if the value was successfully removed; otherwise, <c>false</c>.</returns>
 	public bool Remove(T item)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return _inner.Remove(item);
 	}
 
@@ -237,7 +245,7 @@ public class SynchronizedLinkedList<T> : ISynchronizedCollection<T>
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _inner.Count;
 		}
 	}

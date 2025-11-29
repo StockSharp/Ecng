@@ -9,16 +9,16 @@ using System.Threading;
 /// </summary>
 public class SyncObject
 {
-    /// <summary>
-    /// A disposable scope that exits the synchronization block when disposed.
-    /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of the <see cref="Scope"/> struct.
-    /// </remarks>
-    /// <param name="owner">The <see cref="SyncObject"/> instance that owns this scope.</param>
-    public readonly struct Scope(SyncObject owner) : IDisposable
+	/// <summary>
+	/// A disposable scope that exits the synchronization block when disposed.
+	/// </summary>
+	/// <remarks>
+	/// Initializes a new instance of the <see cref="Scope"/> struct.
+	/// </remarks>
+	/// <param name="owner">The <see cref="SyncObject"/> instance that owns this scope.</param>
+	public readonly struct Scope(SyncObject owner) : IDisposable
 	{
-        void IDisposable.Dispose() => Monitor.Exit(owner);
+		void IDisposable.Dispose() => Monitor.Exit(owner);
 	}
 
 	/// <summary>

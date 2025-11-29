@@ -47,7 +47,7 @@ public class CachedSynchronizedPairSet<TKey, TValue> : SynchronizedPairSet<TKey,
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _cachedKeys ??= [.. Keys];
 		}
 	}
@@ -64,7 +64,7 @@ public class CachedSynchronizedPairSet<TKey, TValue> : SynchronizedPairSet<TKey,
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _cachedValues ??= [.. Values];
 		}
 	}
@@ -81,7 +81,7 @@ public class CachedSynchronizedPairSet<TKey, TValue> : SynchronizedPairSet<TKey,
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _cachedPairs ??= [.. this];
 		}
 	}
@@ -95,7 +95,7 @@ public class CachedSynchronizedPairSet<TKey, TValue> : SynchronizedPairSet<TKey,
 	{
 		set
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 			{
 				var isKey = false;
 
@@ -116,7 +116,7 @@ public class CachedSynchronizedPairSet<TKey, TValue> : SynchronizedPairSet<TKey,
 	/// <param name="value">The value of the element to add.</param>
 	public override void Add(TKey key, TValue value)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			base.Add(key, value);
 
@@ -131,7 +131,7 @@ public class CachedSynchronizedPairSet<TKey, TValue> : SynchronizedPairSet<TKey,
 	/// <returns><c>true</c> if the element is successfully found and removed; otherwise, <c>false</c>.</returns>
 	public override bool Remove(TKey key)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			if (base.Remove(key))
 			{
@@ -149,7 +149,7 @@ public class CachedSynchronizedPairSet<TKey, TValue> : SynchronizedPairSet<TKey,
 	/// </summary>
 	public override void Clear()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			base.Clear();
 

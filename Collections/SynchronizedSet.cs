@@ -247,7 +247,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 
 		var set = new HashSet<T>(other);
 
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			var toRemove = this.Where(x => !set.Contains(x)).ToArray();
 			RemoveRange(toRemove);
@@ -274,7 +274,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 
 		var set = new HashSet<T>(other);
 
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			var toRemove = this.Where(set.Contains).ToArray();
 			var toAdd = set.Where(x => !Contains(x)).ToArray();
@@ -291,7 +291,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	/// <returns>True if the set is a subset of other; otherwise, false.</returns>
 	public bool IsSubsetOf(IEnumerable<T> other)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return InnerCollection.IsSubsetOf(other);
 	}
 
@@ -302,7 +302,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	/// <returns>True if the set is a superset of other; otherwise, false.</returns>
 	public bool IsSupersetOf(IEnumerable<T> other)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return InnerCollection.IsSupersetOf(other);
 	}
 
@@ -313,7 +313,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	/// <returns>True if the set is a proper superset of other; otherwise, false.</returns>
 	public bool IsProperSupersetOf(IEnumerable<T> other)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return InnerCollection.IsProperSupersetOf(other);
 	}
 
@@ -324,7 +324,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	/// <returns>True if the set is a proper subset of other; otherwise, false.</returns>
 	public bool IsProperSubsetOf(IEnumerable<T> other)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return InnerCollection.IsProperSubsetOf(other);
 	}
 
@@ -335,7 +335,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	/// <returns>True if the sets overlap; otherwise, false.</returns>
 	public bool Overlaps(IEnumerable<T> other)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return InnerCollection.Overlaps(other);
 	}
 
@@ -349,7 +349,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 		if (other is null)
 			throw new ArgumentNullException(nameof(other));
 
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			var set = new HashSet<T>(other);
 			return Count == set.Count && this.All(set.Contains);
@@ -375,7 +375,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	/// <returns>True if the item was added; otherwise, false.</returns>
 	public bool TryAdd(T item)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			if (InnerCollection.Contains(item))
 			{
@@ -422,7 +422,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	/// <param name="items">The items to add.</param>
 	public void AddRange(IEnumerable<T> items)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			var filteredItems = items.Where(t =>
 			{
@@ -456,7 +456,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 	/// <param name="items">The items to remove.</param>
 	public void RemoveRange(IEnumerable<T> items)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			var filteredItems = items.Where(OnRemoving).ToArray();
 			InnerCollection.RemoveRange(filteredItems);
@@ -490,7 +490,7 @@ public class SynchronizedSet<T> : SynchronizedCollection<T, ISet<T>>, ISet<T>, I
 		if (index < 0 || count < 0 || index + count > Count)
 			throw new ArgumentOutOfRangeException(nameof(index), index, "Invalid value.");
 
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			var removed = 0;
 

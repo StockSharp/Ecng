@@ -6,8 +6,10 @@ using System.Collections.Generic;
 
 #if NET9_0_OR_GREATER
 using SyncObject = System.Threading.Lock;
+using LockScope = System.Threading.Lock.Scope;
 #else
 using Ecng.Common;
+using LockScope = Ecng.Common.SyncObject.Scope;
 #endif
 
 /// <summary>
@@ -59,7 +61,13 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <summary>
 	/// Gets the synchronization root object used to synchronize access to the dictionary.
 	/// </summary>
-	public SyncObject SyncRoot { get; } = new SyncObject();
+	public SyncObject SyncRoot { get; } = new();
+
+	/// <summary>
+	/// Enters a synchronized scope for thread-safe operations on the collection.
+	/// </summary>
+	/// <returns>A <see cref="LockScope"/> that represents the synchronized scope.</returns>
+	public LockScope EnterScope() => CollectionHelper.EnterScope(this);
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="SynchronizedDictionary{TKey, TValue}"/> class with the specified inner dictionary.
@@ -77,7 +85,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <returns>An enumerator that can be used to iterate through the dictionary.</returns>
 	public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return _inner.GetEnumerator();
 	}
 
@@ -104,7 +112,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// </summary>
 	public virtual void Clear()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.Clear();
 	}
 
@@ -125,7 +133,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
 	public virtual void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.CopyTo(array, arrayIndex);
 	}
 
@@ -146,7 +154,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _inner.Count;
 		}
 	}
@@ -163,7 +171,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <returns><c>true</c> if the dictionary contains an element with the specified key; otherwise, <c>false</c>.</returns>
 	public virtual bool ContainsKey(TKey key)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return _inner.ContainsKey(key);
 	}
 
@@ -174,7 +182,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <param name="value">The value of the element to add.</param>
 	public virtual void Add(TKey key, TValue value)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			_inner.Add(key, value);
 	}
 
@@ -185,7 +193,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <returns><c>true</c> if the element is successfully found and removed; otherwise, <c>false</c>.</returns>
 	public virtual bool Remove(TKey key)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return _inner.Remove(key);
 	}
 
@@ -197,7 +205,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	/// <returns><c>true</c> if the dictionary contains an element with the specified key; otherwise, <c>false</c>.</returns>
 	public virtual bool TryGetValue(TKey key, out TValue value)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 			return _inner.TryGetValue(key, out value);
 	}
 
@@ -210,12 +218,12 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _inner[key];
 		}
 		set
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				_inner[key] = value;
 		}
 	}
@@ -227,7 +235,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _inner.Keys;
 		}
 	}
@@ -239,7 +247,7 @@ public class SynchronizedDictionary<TKey, TValue> : ISynchronizedCollection<KeyV
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _inner.Values;
 		}
 	}

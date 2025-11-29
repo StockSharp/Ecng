@@ -85,7 +85,7 @@ public class CachedSynchronizedSet<T> : SynchronizedSet<T>
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _cache ??= [.. this];
 		}
 	}

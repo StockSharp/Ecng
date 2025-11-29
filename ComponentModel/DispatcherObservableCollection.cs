@@ -11,6 +11,9 @@ using Ecng.Common;
 
 #if NET9_0_OR_GREATER
 using SyncObject = System.Threading.Lock;
+using LockScope = System.Threading.Lock.Scope;
+#else
+using LockScope = Ecng.Common.SyncObject.Scope;
 #endif
 
 /// <summary>
@@ -287,7 +290,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 		if (item == null)
 			throw new ArgumentNullException(nameof(item));
 
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			_pendingActions.Enqueue(item);
 
@@ -308,7 +311,7 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 
 		try
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 			{
 				pendingActions = [.. _pendingActions];
 				_pendingActions.Clear();
@@ -379,4 +382,10 @@ public class DispatcherObservableCollection<TItem>(IDispatcher dispatcher, IList
 	/// Gets the synchronization root object.
 	/// </summary>
 	public SyncObject SyncRoot => _syncCopy.SyncRoot;
+
+	/// <summary>
+	/// Enters a synchronized scope for thread-safe operations on the collection.
+	/// </summary>
+	/// <returns>A <see cref="LockScope"/> that represents the synchronized scope.</returns>
+	public LockScope EnterScope() => CollectionHelper.EnterScope(this);
 }

@@ -56,7 +56,7 @@ public class CachedSynchronizedDictionary<TKey, TValue> : SynchronizedDictionary
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _cachedKeys ??= [.. Keys];
 		}
 	}
@@ -73,7 +73,7 @@ public class CachedSynchronizedDictionary<TKey, TValue> : SynchronizedDictionary
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _cachedValues ??= [.. Values];
 		}
 	}
@@ -90,7 +90,7 @@ public class CachedSynchronizedDictionary<TKey, TValue> : SynchronizedDictionary
 	{
 		get
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 				return _cachedPairs ??= [.. this];
 		}
 	}
@@ -104,7 +104,7 @@ public class CachedSynchronizedDictionary<TKey, TValue> : SynchronizedDictionary
 	{
 		set
 		{
-			using (SyncRoot.EnterScope())
+			using (EnterScope())
 			{
 				var isKey = false;
 
@@ -125,7 +125,7 @@ public class CachedSynchronizedDictionary<TKey, TValue> : SynchronizedDictionary
 	/// <param name="value">The value of the element to add.</param>
 	public override void Add(TKey key, TValue value)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			base.Add(key, value);
 
@@ -140,7 +140,7 @@ public class CachedSynchronizedDictionary<TKey, TValue> : SynchronizedDictionary
 	/// <returns><c>true</c> if the element is successfully found and removed; otherwise, <c>false</c>.</returns>
 	public override bool Remove(TKey key)
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			if (base.Remove(key))
 			{
@@ -158,7 +158,7 @@ public class CachedSynchronizedDictionary<TKey, TValue> : SynchronizedDictionary
 	/// </summary>
 	public override void Clear()
 	{
-		using (SyncRoot.EnterScope())
+		using (EnterScope())
 		{
 			base.Clear();
 

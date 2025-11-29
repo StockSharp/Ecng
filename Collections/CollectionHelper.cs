@@ -11,6 +11,12 @@ using Nito.AsyncEx;
 
 using Ecng.Common;
 
+#if NET9_0_OR_GREATER
+using LockScope = System.Threading.Lock.Scope;
+#else
+using LockScope = Ecng.Common.SyncObject.Scope;
+#endif
+
 /// <summary>
 /// Provides extension methods and helper utilities for working with collections.
 /// </summary>
@@ -163,7 +169,7 @@ public static class CollectionHelper
 
 		if (collection is ISynchronizedCollection sync)
 		{
-			using (sync.SyncRoot.EnterScope())
+			using (sync.EnterScope())
 				InternalTryAdd();
 		}
 		else
@@ -196,7 +202,7 @@ public static class CollectionHelper
 
 		if (collection is ISynchronizedCollection sync)
 		{
-			using (sync.SyncRoot.EnterScope())
+			using (sync.EnterScope())
 				return InternalTryAdd();
 		}
 
@@ -229,7 +235,7 @@ public static class CollectionHelper
 
 		if (dict is ISynchronizedCollection sync)
 		{
-			using (sync.SyncRoot.EnterScope())
+			using (sync.EnterScope())
 				return InternalTryAdd();
 		}
 
@@ -450,7 +456,7 @@ public static class CollectionHelper
 
 		if (items is not ISynchronizedCollection sync) return InternalCopyAndClear();
 
-		using (sync.SyncRoot.EnterScope())
+		using (sync.EnterScope())
 			return InternalCopyAndClear();
 	}
 
@@ -473,7 +479,7 @@ public static class CollectionHelper
 
 		if (dict is not ISynchronizedCollection sync) return InternalGetAndRemove();
 
-		using (sync.SyncRoot.EnterScope())
+		using (sync.EnterScope())
 			return InternalGetAndRemove();
 	}
 
@@ -526,7 +532,7 @@ public static class CollectionHelper
 
 		if (dict is ISynchronizedCollection sync)
 		{
-			using (sync.SyncRoot.EnterScope())
+			using (sync.EnterScope())
 				return InternalTryGetAndRemove(out value);
 		}
 
@@ -1254,6 +1260,14 @@ public static class CollectionHelper
 	#endregion
 
 	/// <summary>
+	/// Enters a synchronized scope for thread-safe operations on the collection.
+	/// </summary>
+	/// <param name="collection"><see cref="ISynchronizedCollection"/></param>
+	/// <returns>A <see cref="LockScope"/> that represents the synchronized scope.</returns>
+	public static LockScope EnterScope(this ISynchronizedCollection collection)
+		=> collection.CheckOnNull(nameof(collection)).SyncRoot.EnterScope();
+
+	/// <summary>
 	/// Executes a function on a synchronized collection with thread-safe access.
 	/// </summary>
 	/// <typeparam name="TCollection">The type of the synchronized collection.</typeparam>
@@ -1271,7 +1285,7 @@ public static class CollectionHelper
 		if (func is null)
 			throw new ArgumentNullException(nameof(func));
 
-		using (collection.SyncRoot.EnterScope())
+		using (collection.EnterScope())
 			return func(collection);
 	}
 
@@ -1291,7 +1305,7 @@ public static class CollectionHelper
 		if (action is null)
 			throw new ArgumentNullException(nameof(action));
 
-		using (collection.SyncRoot.EnterScope())
+		using (collection.EnterScope())
 			action(collection);
 	}
 
@@ -1305,7 +1319,7 @@ public static class CollectionHelper
 	/// <returns>An enumerable of keys associated with the specified value.</returns>
 	public static IEnumerable<TKey> GetKeys<TKey, TValue>(this SynchronizedDictionary<TKey, TValue> dictionary, TValue value)
 	{
-		using (dictionary.SyncRoot.EnterScope())
+		using (dictionary.EnterScope())
 			return ((IDictionary<TKey, TValue>)dictionary).GetKeys(value);
 	}
 
@@ -1342,7 +1356,7 @@ public static class CollectionHelper
 	public static T TryDequeue<T>(this SynchronizedQueue<T> queue)
 		where T : class
 	{
-		using (queue.SyncRoot.EnterScope())
+		using (queue.EnterScope())
 			return queue.IsEmpty() ? null : queue.Dequeue();
 	}
 
@@ -1355,7 +1369,7 @@ public static class CollectionHelper
 	public static T? TryDequeue2<T>(this SynchronizedQueue<T> queue)
 		where T : struct
 	{
-		using (queue.SyncRoot.EnterScope())
+		using (queue.EnterScope())
 			return queue.IsEmpty() ? (T?)null : queue.Dequeue();
 	}
 
@@ -1392,7 +1406,7 @@ public static class CollectionHelper
 	public static T TryPeek<T>(this SynchronizedQueue<T> queue)
 		where T : class
 	{
-		using (queue.SyncRoot.EnterScope())
+		using (queue.EnterScope())
 			return queue.IsEmpty() ? null : queue.Peek();
 	}
 
@@ -1405,7 +1419,7 @@ public static class CollectionHelper
 	public static T? TryPeek2<T>(this SynchronizedQueue<T> queue)
 		where T : struct
 	{
-		using (queue.SyncRoot.EnterScope())
+		using (queue.EnterScope())
 			return queue.IsEmpty() ? (T?)null : queue.Peek();
 	}
 
