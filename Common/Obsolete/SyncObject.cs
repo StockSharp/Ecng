@@ -1,5 +1,4 @@
-﻿#if !NET9_0_OR_GREATER
-namespace Ecng.Common;
+﻿namespace Ecng.Common;
 
 using System;
 using System.Threading;
@@ -9,6 +8,7 @@ using System.Threading;
 /// </summary>
 public class SyncObject
 {
+#if !NET9_0_OR_GREATER
 	/// <summary>
 	/// A disposable scope that exits the synchronization block when disposed.
 	/// </summary>
@@ -29,9 +29,6 @@ public class SyncObject
 		Monitor.Enter(this);
 		return new Scope(this);
 	}
-
-	private bool _processed;
-	private object _state;
 
 	/// <summary>
 	/// Attempts to enter the synchronization block, with an optional timeout.
@@ -58,26 +55,15 @@ public class SyncObject
 	{
 		Monitor.Exit(this);
 	}
+#endif
 
 	/// <summary>
 	/// Sends a pulse to a single waiting thread.
 	/// </summary>
 	public void Pulse()
 	{
-		Pulse(null);
-	}
-
-	/// <summary>
-	/// Sends a pulse to a single waiting thread and sets the optional state.
-	/// </summary>
-	/// <param name="state">An optional state object to pass along with the pulse.</param>
-	public void Pulse(object state)
-	{
 		lock (this)
-		{
-			_state = state;
 			Monitor.Pulse(this);
-		}
 	}
 
 	/// <summary>
@@ -85,34 +71,8 @@ public class SyncObject
 	/// </summary>
 	public void PulseAll()
 	{
-		PulseAll(null);
-	}
-
-	/// <summary>
-	/// Sends a pulse to all waiting threads and sets the optional state.
-	/// </summary>
-	/// <param name="state">An optional state object to pass along with the pulse.</param>
-	public void PulseAll(object state)
-	{
 		lock (this)
-		{
-			_state = state;
 			Monitor.PulseAll(this);
-		}
-	}
-
-	/// <summary>
-	/// Signals a waiting thread by sending a pulse along with setting the processed flag.
-	/// </summary>
-	/// <param name="state">An optional state object to pass along with the pulse.</param>
-	public void PulseSignal(object state = null)
-	{
-		lock (this)
-		{
-			_processed = true;
-			_state = state;
-			Monitor.Pulse(this);
-		}
 	}
 
 	/// <summary>
@@ -123,46 +83,10 @@ public class SyncObject
 	public bool Wait(TimeSpan? timeOut = null)
 	{
 		lock (this)
-			return WaitInternal(timeOut);
-	}
-
-	/// <summary>
-	/// Waits for a signal with an optional timeout.
-	/// </summary>
-	/// <param name="timeOut">The timeout duration. If null, waits indefinitely.</param>
-	/// <returns>true if the signal was received; otherwise, false (in case of timeout).</returns>
-	public bool WaitSignal(TimeSpan? timeOut = null)
-	{
-		return WaitSignal(timeOut, out _);
-	}
-
-	/// <summary>
-	/// Waits for a signal with an optional timeout and outputs the state associated with the signal.
-	/// </summary>
-	/// <param name="timeOut">The timeout duration. If null, waits indefinitely.</param>
-	/// <param name="state">The state object passed by the signaling call.</param>
-	/// <returns>true if a signal was received; otherwise, false (in case of timeout).</returns>
-	public bool WaitSignal(TimeSpan? timeOut, out object state)
-	{
-		lock (this)
 		{
-			var result = _processed || WaitInternal(timeOut);
-			_processed = false;
-			state = _state;
-			return result;
+			return timeOut is null
+				? Monitor.Wait(this)
+				: Monitor.Wait(this, timeOut.Value);
 		}
 	}
-
-	/// <summary>
-	/// Waits internally for a pulse with an optional timeout.
-	/// </summary>
-	/// <param name="timeOut">The timeout duration. If null, waits indefinitely.</param>
-	/// <returns>true if the pulse was received; otherwise, false (in case of timeout).</returns>
-	private bool WaitInternal(TimeSpan? timeOut)
-	{
-		return timeOut is null
-			? Monitor.Wait(this)
-			: Monitor.Wait(this, timeOut.Value);
-	}
 }
-#endif
