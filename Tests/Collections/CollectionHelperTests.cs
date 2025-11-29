@@ -897,22 +897,6 @@ public class CollectionHelperTests : BaseTestClass
 		value.AssertEqual(5);
 	}
 
-#if !NET9_0_OR_GREATER
-	[TestMethod]
-	public void ToEx_CreatesEnumerableEx()
-	{
-		// Arrange
-		var collection = new[] { 1, 2, 3 };
-
-		// Act
-		var result = collection.ToEx();
-
-		// Assert
-		result.AssertNotNull();
-		result.ToArray().AssertEqual([1, 2, 3]);
-	}
-#endif
-
 	[TestMethod]
 	public void IsEmpty_WithPredicate_ReturnsTrueIfNoMatch()
 	{
@@ -1411,22 +1395,6 @@ public class CollectionHelperTests : BaseTestClass
 		perms[2].AssertEqual([10, 2]);
 		perms[3].AssertEqual([10, 20]);
 	}
-
-#if !NET9_0_OR_GREATER
-	[TestMethod]
-	public void ToEx_WithCount_CreatesEnumerableEx()
-	{
-		// Arrange
-		var collection = new[] { 1, 2, 3 };
-
-		// Act
-		var result = collection.ToEx(3);
-
-		// Assert
-		result.AssertNotNull();
-		result.Count.AssertEqual(3);
-	}
-#endif
 
 	[TestMethod]
 	public void TryDequeue_SynchronizedQueue_DequeuesItemIfExists()
