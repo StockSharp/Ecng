@@ -1843,7 +1843,8 @@ public static class CollectionHelper
 	/// A private implementation of <see cref="IEnumerableEx{T}"/> that wraps an enumerable with a predefined count.
 	/// </summary>
 	/// <typeparam name="T">The type of elements in the enumerable.</typeparam>
-	private sealed class EnumerableEx<T> : SimpleEnumerable<T>, IEnumerableEx<T>
+	[Obsolete]
+	private class EnumerableEx<T> : SimpleEnumerable<T>, IEnumerableEx<T>
 	{
 		private readonly int _count;
 
@@ -1874,6 +1875,7 @@ public static class CollectionHelper
 	/// <typeparam name="T">The type of elements in the enumerable.</typeparam>
 	/// <param name="values">The enumerable to convert.</param>
 	/// <returns>An <see cref="IEnumerableEx{T}"/> with the specified count.</returns>
+	[Obsolete]
 	public static IEnumerableEx<T> ToEx<T>(this IEnumerable<T> values)
 	{
 		return values.ToEx(values.Count());
@@ -1886,6 +1888,7 @@ public static class CollectionHelper
 	/// <param name="values">The enumerable to convert.</param>
 	/// <param name="count">The predefined count of elements.</param>
 	/// <returns>An <see cref="IEnumerableEx{T}"/> with the specified count.</returns>
+	[Obsolete]
 	public static IEnumerableEx<T> ToEx<T>(this IEnumerable<T> values, int count)
 	{
 		return new EnumerableEx<T>(values, count);
