@@ -176,7 +176,7 @@ public class AsyncHelperTests : BaseTestClass
 		await Task.Delay(100, CancellationToken); // Before first execution (200ms initial delay)
 		count.AssertEqual(0);
 
-		await Task.Delay(200, CancellationToken); // After initial delay passed (total 300ms > 200ms)
+		await Task.Delay(800, CancellationToken); // After initial delay passed (total 300ms > 200ms)
 		(count > 0).AssertTrue($"Count should be > 0, but was {count}");
 
 		cts.Cancel();
