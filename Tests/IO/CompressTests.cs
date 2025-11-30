@@ -271,7 +271,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	// Helper test stream that simulates delayed async writes and fails if disposed early
+#pragma warning disable CS9113 // Parameter is unread.
 	private sealed class TestCompressStream(Stream output, CompressionLevel level, bool leaveOpen) : Stream
+#pragma warning restore CS9113 // Parameter is unread.
 	{
 		private readonly Stream _output = output ?? throw new ArgumentNullException(nameof(output));
 		private readonly bool _leaveOpen = leaveOpen;
@@ -318,7 +320,9 @@ public class CompressTests : BaseTestClass
 	}
 
 	// Helper test stream that simulates delayed async reads and fails if disposed early
+#pragma warning disable CS9113 // Parameter is unread.
 	private sealed class TestDecompressStream(Stream input, CompressionMode mode, bool leaveOpen) : Stream
+#pragma warning restore CS9113 // Parameter is unread.
 	{
 		private readonly Stream _input = input ?? throw new ArgumentNullException(nameof(input));
 		private readonly bool _leaveOpen = leaveOpen;
