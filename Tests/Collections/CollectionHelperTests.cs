@@ -1710,4 +1710,225 @@ public class CollectionHelperTests : BaseTestClass
 		dict["ONE"].AssertEqual(1);
 		dict["TWO"].AssertEqual(2);
 	}
+
+	#region DuckTyping Tests
+
+	[TestMethod]
+	public void DuckTypingCollection_Add_ConvertsAndAddsToSource()
+	{
+		// Arrange
+		var numbers = new List<int> { 1, 2, 3 };
+		var strings = numbers.AsDuckTypedCollection(
+			n => n.ToString(),
+			s => int.Parse(s)
+		);
+
+		// Act
+		strings.Add("42");
+
+		// Assert
+		numbers.Count.AssertEqual(4);
+		numbers[3].AssertEqual(42);
+	}
+
+	[TestMethod]
+	public void DuckTypingCollection_Remove_ConvertsAndRemovesFromSource()
+	{
+		// Arrange
+		var numbers = new List<int> { 1, 2, 3 };
+		var strings = numbers.AsDuckTypedCollection(
+			n => n.ToString(),
+			s => int.Parse(s)
+		);
+
+		// Act
+		var result = strings.Remove("2");
+
+		// Assert
+		result.AssertTrue();
+		numbers.Count.AssertEqual(2);
+		numbers.Contains(2).AssertFalse();
+	}
+
+	[TestMethod]
+	public void DuckTypingCollection_Contains_ConvertsAndChecks()
+	{
+		// Arrange
+		var numbers = new List<int> { 1, 2, 3 };
+		var strings = numbers.AsDuckTypedCollection(
+			n => n.ToString(),
+			s => int.Parse(s)
+		);
+
+		// Act & Assert
+		strings.Contains("2").AssertTrue();
+		strings.Contains("42").AssertFalse();
+	}
+
+	[TestMethod]
+	public void DuckTypingCollection_Clear_ClearsSource()
+	{
+		// Arrange
+		var numbers = new List<int> { 1, 2, 3 };
+		var strings = numbers.AsDuckTypedCollection(
+			n => n.ToString(),
+			s => int.Parse(s)
+		);
+
+		// Act
+		strings.Clear();
+
+		// Assert
+		numbers.Count.AssertEqual(0);
+		strings.Count.AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void DuckTypingCollection_Count_ReflectsSourceCount()
+	{
+		// Arrange
+		var numbers = new List<int> { 1, 2, 3 };
+		var strings = numbers.AsDuckTypedCollection(
+			n => n.ToString(),
+			s => int.Parse(s)
+		);
+
+		// Assert
+		strings.Count.AssertEqual(3);
+	}
+
+	[TestMethod]
+	public void DuckTypingCollection_IsReadOnly_ReflectsSourceReadOnly()
+	{
+		// Arrange
+		var numbers = new List<int> { 1, 2, 3 };
+		var strings = numbers.AsDuckTypedCollection(
+			n => n.ToString(),
+			s => int.Parse(s)
+		);
+
+		// Assert
+		strings.IsReadOnly.AssertFalse();
+	}
+
+	[TestMethod]
+	public void DuckTypingCollection_Enumeration_ConvertsElements()
+	{
+		// Arrange
+		var numbers = new List<int> { 1, 2, 3 };
+		var strings = numbers.AsDuckTypedCollection(
+			n => n.ToString(),
+			s => int.Parse(s)
+		);
+
+		// Act
+		var result = strings.ToList();
+
+		// Assert
+		result.Count.AssertEqual(3);
+		result[0].AssertEqual("1");
+		result[1].AssertEqual("2");
+		result[2].AssertEqual("3");
+	}
+
+	[TestMethod]
+	public void DuckTypingCollection_CopyTo_ConvertsAndCopies()
+	{
+		// Arrange
+		var numbers = new List<int> { 1, 2, 3 };
+		var strings = numbers.AsDuckTypedCollection(
+			n => n.ToString(),
+			s => int.Parse(s)
+		);
+		var array = new string[5];
+
+		// Act
+		strings.CopyTo(array, 1);
+
+		// Assert
+		array[0].AssertNull();
+		array[1].AssertEqual("1");
+		array[2].AssertEqual("2");
+		array[3].AssertEqual("3");
+		array[4].AssertNull();
+	}
+
+	[TestMethod]
+	public void DuckTypingCollection_ComplexTypeConversion_Works()
+	{
+		// Arrange
+		var people = new List<(string Name, int Age)>
+		{
+			("Alice", 30),
+			("Bob", 25),
+			("Charlie", 35)
+		};
+
+		var nameAges = people.AsDuckTypedCollection(
+			p => $"{p.Name}:{p.Age}",
+			s =>
+			{
+				var parts = s.Split(':');
+				return (parts[0], int.Parse(parts[1]));
+			}
+		);
+
+		// Act
+		nameAges.Add("David:40");
+		var hasAlice = nameAges.Contains("Alice:30");
+
+		// Assert
+		people.Count.AssertEqual(4);
+		people[3].Name.AssertEqual("David");
+		people[3].Age.AssertEqual(40);
+		hasAlice.AssertTrue();
+	}
+
+	[TestMethod]
+	public void DuckTypingCollection_NullSource_ThrowsException()
+	{
+		// Act & Assert
+		Assert.ThrowsExactly<ArgumentNullException>(() =>
+		{
+			CollectionHelper.AsDuckTypedCollection<int, string>(
+				null,
+				n => n.ToString(),
+				s => int.Parse(s)
+			);
+		});
+	}
+
+	[TestMethod]
+	public void DuckTypingCollection_NullSourceToTarget_ThrowsException()
+	{
+		// Arrange
+		var numbers = new List<int>();
+
+		// Act & Assert
+		Assert.ThrowsExactly<ArgumentNullException>(() =>
+		{
+			numbers.AsDuckTypedCollection<int, string>(
+				null,
+				s => int.Parse(s)
+			);
+		});
+	}
+
+	[TestMethod]
+	public void DuckTypingCollection_NullTargetToSource_ThrowsException()
+	{
+		// Arrange
+		var numbers = new List<int>();
+
+		// Act & Assert
+		Assert.ThrowsExactly<ArgumentNullException>(() =>
+		{
+			numbers.AsDuckTypedCollection<int, string>(
+				n => n.ToString(),
+				null
+			);
+		});
+	}
+
+	#endregion
 }

@@ -2378,4 +2378,39 @@ public static class CollectionHelper
 	public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> enu)
 		where T : struct
 		=> enu.Where(x => x is not null).Select(x => x.Value);
+
+	#region Duck Typing
+
+	/// <summary>
+	/// Creates a collection adapter that converts between <see cref="ICollection{TSource}"/> and <see cref="ICollection{TTarget}"/> using duck typing.
+	/// </summary>
+	/// <typeparam name="TSource">The source element type.</typeparam>
+	/// <typeparam name="TTarget">The target element type.</typeparam>
+	/// <param name="source">The source collection to wrap.</param>
+	/// <param name="sourceToTarget">Function to convert from source type to target type.</param>
+	/// <param name="targetToSource">Function to convert from target type to source type.</param>
+	/// <returns>An <see cref="ICollection{TTarget}"/> adapter around the source collection.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
+	/// <remarks>
+	/// This method allows working with collections of different element types by providing conversion functions.
+	/// The adapter performs conversions on-the-fly when accessing or modifying elements.
+	/// </remarks>
+	/// <example>
+	/// <code>
+	/// ICollection&lt;int&gt; numbers = new List&lt;int&gt; { 1, 2, 3 };
+	/// ICollection&lt;string&gt; strings = numbers.AsDuckTypedCollection(
+	///     n => n.ToString(),
+	///     s => int.Parse(s)
+	/// );
+	/// </code>
+	/// </example>
+	public static ICollection<TTarget> AsDuckTypedCollection<TSource, TTarget>(
+		this ICollection<TSource> source,
+		Func<TSource, TTarget> sourceToTarget,
+		Func<TTarget, TSource> targetToSource)
+	{
+		return new DuckTypingCollection<TSource, TTarget>(source, sourceToTarget, targetToSource);
+	}
+
+	#endregion
 }
