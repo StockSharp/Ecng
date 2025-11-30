@@ -48,7 +48,9 @@ public class ReflectionTests
 		public int Value { get; set; }
 		public int this[int i] { get => i; set { } }
 		public static int StaticValue { get; set; }
+#pragma warning disable CS0067
 		public event EventHandler TestEvent;
+#pragma warning restore CS0067
 #pragma warning disable CA1822 // Mark members as static
 #pragma warning disable IDE0060 // Remove unused parameter
 		public void MethodRef(ref int x) { }
