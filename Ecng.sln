@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.3.32811.315
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{340C3BD6-6951-4224-8E35-49D2C67A2680}"
 	ProjectSection(SolutionItems) = preProject
@@ -84,6 +84,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Localization", "Localization\Localization.csproj", "{67E1B2C9-483E-4E8D-9617-C4AF7DC1EDC3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Licensing", "Licensing\Licensing.csproj", "{CEA3EEAD-CD18-C58A-74C5-9E1AD56D6E8F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.Windows", "Tests.Windows\Tests.Windows.csproj", "{FF361E65-8CF8-EE25-ABE9-2BE6D7B5D712}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -243,6 +245,10 @@ Global
 		{CEA3EEAD-CD18-C58A-74C5-9E1AD56D6E8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CEA3EEAD-CD18-C58A-74C5-9E1AD56D6E8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CEA3EEAD-CD18-C58A-74C5-9E1AD56D6E8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF361E65-8CF8-EE25-ABE9-2BE6D7B5D712}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF361E65-8CF8-EE25-ABE9-2BE6D7B5D712}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF361E65-8CF8-EE25-ABE9-2BE6D7B5D712}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF361E65-8CF8-EE25-ABE9-2BE6D7B5D712}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -32,3 +32,7 @@ jobs:
 
       - name: Run tests
         run: dotnet test Ecng.sln --no-build --configuration Release --settings Tests/test.runsettings
+
+      - name: Run Windows-specific tests
+        if: runner.os == 'Windows'
+        run: dotnet test Tests.Windows/Tests.Windows.csproj --no-build --configuration Release
