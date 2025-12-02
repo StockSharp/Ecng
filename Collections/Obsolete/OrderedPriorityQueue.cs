@@ -217,9 +217,8 @@ public class OrderedPriorityQueue<TPriority, TValue> : ICollection<KeyValuePair<
 		{
 			var queueItem = queue.Dequeue();
 
-			if (items.Contains(queueItem))
+			if (items.Remove(queueItem))
 			{
-				items.Remove(queueItem);
 				Count--;
 				continue;
 			}
@@ -261,4 +260,16 @@ public class OrderedPriorityQueue<TPriority, TValue> : ICollection<KeyValuePair<
 
 	void IQueue<KeyValuePair<TPriority, TValue>>.Enqueue(KeyValuePair<TPriority, TValue> item) =>
 		Enqueue(item.Key, item.Value);
+
+    bool IQueue<KeyValuePair<TPriority, TValue>>.TryDequeue(out KeyValuePair<TPriority, TValue> item)
+	{
+		if (IsEmpty)
+		{
+			item = default;
+			return false;
+		}
+
+		item = Dequeue();
+		return true;
+	}
 }

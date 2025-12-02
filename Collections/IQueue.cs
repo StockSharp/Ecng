@@ -23,4 +23,14 @@ public interface IQueue<T>
 	/// </summary>
 	/// <param name="item">The item to add to the queue.</param>
 	void Enqueue(T item);
+
+	/// <summary>
+	/// Removes the item from the queue.
+	/// </summary>
+	/// <param name="item">The removed item.</param>
+	/// <returns>
+	/// <see langword="true"/> if the item is successfully removed;
+	/// <see langword="false"/> if the <see cref="IQueue{T}"/> is empty.
+	/// </returns>
+	public bool TryDequeue(out T item);
 }

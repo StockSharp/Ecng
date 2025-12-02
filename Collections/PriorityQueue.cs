@@ -580,7 +580,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 		private readonly PriorityQueue<TPriority, TElement> _queue;
 		private LinkedListNode<Node> _current;
 		private IEnumerator<TElement> _currentEnum;
-		private int _currVer;
+		private readonly int _currVer;
 
 		public Enumerator(PriorityQueue<TPriority, TElement> queue)
 		{
@@ -640,4 +640,15 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<(TPriority, TElement)>)this).GetEnumerator();
 
 	void IQueue<(TPriority priority, TElement element)>.Enqueue((TPriority, TElement) item) => Enqueue(item.Item1, item.Item2);
+    bool IQueue<(TPriority priority, TElement element)>.TryDequeue(out (TPriority priority, TElement element) item)
+	{
+		if (TryDequeue(out var element, out var priority))
+		{
+			item = (priority, element);
+			return true;
+		}
+
+		item = default;
+		return false;
+	}
 }
