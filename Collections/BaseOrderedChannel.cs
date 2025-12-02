@@ -44,7 +44,7 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 	/// </summary>
 	/// <param name="collection">Inner collection.</param>
 	/// <param name="maxSize">Maximum queue size. Use -1 for unbounded.</param>
-	public BaseOrderedChannel(TCollection collection, int maxSize)
+	protected BaseOrderedChannel(TCollection collection, int maxSize)
 	{
 		_collection = collection ?? throw new ArgumentNullException(nameof(collection));
 
@@ -130,9 +130,7 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 	/// </summary>
 	/// <param name="sort">The sort with which to associate the new value.</param>
 	/// <param name="value">The value to add to the queue.</param>
-	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-	/// <returns><see cref="ValueTask"/></returns>
-	protected async ValueTask Enqueue(TSort sort, TValue value, CancellationToken cancellationToken)
+	protected void Enqueue(TSort sort, TValue value)
 	{
 		if (value is null)
 			throw new ArgumentNullException(nameof(value));
@@ -152,18 +150,11 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 		try
 		{
 			if (!channel.Writer.TryWrite((sort, value)))
-				await channel.Writer.WriteAsync((sort, value), cancellationToken);
+				AsyncHelper.Run(() => channel.Writer.WriteAsync((sort, value)));
 		}
 		catch (ChannelClosedException)
 		{
 			// Queue was closed concurrently; value is dropped by design.
-		}
-		catch
-		{
-			if (cancellationToken.IsCancellationRequested)
-				return;
-
-			throw;
 		}
 	}
 
@@ -191,7 +182,7 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 				}
 
 				if (_collection.TryDequeue(out var t))
-					return t.Item2;
+					return t.value;
 			}
 
 			if (channel is null)
@@ -215,7 +206,7 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 				using (_sync.EnterScope())
 				{
 					if (_collection.TryDequeue(out var t))
-						return t.Item2;
+						return t.value;
 				}
 
 				throw;
