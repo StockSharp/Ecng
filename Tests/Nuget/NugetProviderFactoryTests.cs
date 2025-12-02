@@ -57,6 +57,6 @@ public class NugetProviderFactoryTests
 
 		// Assert
 		providers.AssertNotNull();
-		(providers.Length > 0).AssertTrue();
+		(providers.Length > 0).AssertTrue($"providers.Length={providers.Length} should be >0");
 	}
 }

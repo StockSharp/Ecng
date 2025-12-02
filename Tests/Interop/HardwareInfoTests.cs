@@ -8,6 +8,7 @@ public class HardwareInfoTests : BaseTestClass
 	[TestMethod]
 	public async Task HddId()
 	{
-		((await HardwareInfo.GetIdAsync(CancellationToken)).Length > 10).AssertTrue();
+		var id = await HardwareInfo.GetIdAsync(CancellationToken);
+		(id.Length > 10).AssertTrue($"id={id.} Length should be > 10");
 	}
 }

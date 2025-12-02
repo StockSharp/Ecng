@@ -238,7 +238,7 @@ public class NugetExtensionsTests : BaseTestClass
 
 		// Assert
 		versions.AssertNotNull();
-		(versions.Length > 0).AssertTrue();
+		(versions.Length > 0).AssertTrue($"versions.Length={versions.Length} should be >0");
 
 		// Verify ordering
 		for (int i = 1; i < versions.Length; i++)
@@ -354,6 +354,6 @@ public class NugetExtensionsTests : BaseTestClass
 
 		// Assert
 		frameworks.AssertNotNull();
-		(frameworks.Length > 0).AssertTrue();
+		(frameworks.Length > 0).AssertTrue($"frameworks.Length={frameworks.Length} should be >0");
 	}
 }

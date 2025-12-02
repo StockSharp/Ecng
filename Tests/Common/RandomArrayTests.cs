@@ -16,7 +16,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 10; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 0 && value <= 1).AssertTrue();
+			(value >= 0 && value <= 1).AssertTrue($"value={value} should be >=0 and <=1");
 		}
 	}
 
@@ -69,7 +69,7 @@ public class RandomArrayTests
 
 		// Verify we can get values
 		var value = randomArray.Next();
-		(value >= 0 && value <= 255).AssertTrue();
+		(value >= 0 && value <= 255).AssertTrue($"value={value} should be >=0 and <=255");
 	}
 
 	[TestMethod]
@@ -87,7 +87,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 100; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 10 && value <= 20).AssertTrue();
+			(value >= 10 && value <= 20).AssertTrue($"value={value} should be >=10 and <=20");
 		}
 	}
 
@@ -110,7 +110,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= min && value <= max).AssertTrue();
+			(value >= min && value <= max).AssertTrue($"value={value} should be >={min} and <={max}");
 		}
 	}
 
@@ -200,7 +200,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 10; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 0 && value <= 1).AssertTrue();
+			(value >= 0 && value <= 1).AssertTrue($"value={value} should be >=0 and <=1");
 		}
 	}
 
@@ -216,7 +216,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 10; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 0 && value <= 1).AssertTrue();
+			(value >= 0 && value <= 1).AssertTrue($"value={value} should be >=0 and <=1");
 		}
 	}
 
@@ -243,7 +243,7 @@ public class RandomArrayTests
 		randomArray.Count.AssertEqual(50);
 
 		var value = randomArray.Next();
-		(value >= short.MinValue && value <= short.MaxValue).AssertTrue();
+		(value >= short.MinValue && value <= short.MaxValue).AssertTrue($"value={value} should be >={short.MinValue} and <={short.MaxValue}");
 	}
 
 	[TestMethod]
@@ -256,7 +256,7 @@ public class RandomArrayTests
 		randomArray.Count.AssertEqual(50);
 
 		var value = randomArray.Next();
-		(value >= 0).AssertTrue();
+		(value >= 0).AssertTrue($"value={value} should be >=0");
 	}
 
 	[TestMethod]
@@ -269,7 +269,7 @@ public class RandomArrayTests
 		randomArray.Count.AssertEqual(50);
 
 		var value = randomArray.Next();
-		(value >= 0).AssertTrue();
+		(value >= 0).AssertTrue($"value={value} should be >=0");
 	}
 
 	[TestMethod]
@@ -282,7 +282,7 @@ public class RandomArrayTests
 		randomArray.Count.AssertEqual(50);
 
 		var value = randomArray.Next();
-		(value >= 0 && value <= ushort.MaxValue).AssertTrue();
+		(value >= 0 && value <= ushort.MaxValue).AssertTrue($"value={value} should be >=0 and <={ushort.MaxValue}");
 	}
 
 	[TestMethod]
@@ -295,7 +295,7 @@ public class RandomArrayTests
 		randomArray.Count.AssertEqual(50);
 
 		var value = randomArray.Next();
-		(value >= sbyte.MinValue && value <= sbyte.MaxValue).AssertTrue();
+		(value >= sbyte.MinValue && value <= sbyte.MaxValue).AssertTrue($"value={value} should be >={sbyte.MinValue} and <={sbyte.MaxValue}");
 	}
 
 	[TestMethod]
@@ -308,7 +308,7 @@ public class RandomArrayTests
 		randomArray.Count.AssertEqual(50);
 
 		var value = randomArray.Next();
-		(value >= 32 && value <= 127).AssertTrue(); // Printable ASCII
+		(value >= 32 && value <= 127).AssertTrue($"value={(int)value} should be >=32 and <=127"); // Printable ASCII
 	}
 
 	// Tests for ranged constructors with all types
@@ -325,7 +325,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 100 && value <= 200).AssertTrue();
+			(value >= 100 && value <= 200).AssertTrue($"value={value} should be >=100 and <=200");
 		}
 	}
 
@@ -341,7 +341,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 10 && value <= 100).AssertTrue();
+			(value >= 10 && value <= 100).AssertTrue($"value={value} should be >=10 and <=100");
 		}
 	}
 
@@ -357,7 +357,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 10 && value <= 250).AssertTrue();
+			(value >= 10 && value <= 250).AssertTrue($"value={value} should be >=10 and <=250");
 		}
 	}
 
@@ -373,7 +373,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= -50 && value <= 50).AssertTrue();
+			(value >= -50 && value <= 50).AssertTrue($"value={value} should be >=-50 and <=50");
 		}
 	}
 
@@ -389,7 +389,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 100 && value <= 1000).AssertTrue();
+			(value >= 100 && value <= 1000).AssertTrue($"value={value} should be >=100 and <=1000");
 		}
 	}
 
@@ -405,7 +405,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 1000 && value <= 10000).AssertTrue();
+			(value >= 1000 && value <= 10000).AssertTrue($"value={value} should be >=1000 and <=10000");
 		}
 	}
 
@@ -421,7 +421,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 100 && value <= 1000).AssertTrue();
+			(value >= 100 && value <= 1000).AssertTrue($"value={value} should be >=100 and <=1000");
 		}
 	}
 
@@ -437,7 +437,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 10.5 && value <= 20.5).AssertTrue();
+			(value >= 10.5 && value <= 20.5).AssertTrue($"value={value} should be >=10.5 and <=20.5");
 		}
 	}
 
@@ -453,7 +453,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 5.5f && value <= 15.5f).AssertTrue();
+			(value >= 5.5f && value <= 15.5f).AssertTrue($"value={value} should be >=5.5 and <=15.5");
 		}
 	}
 
@@ -469,7 +469,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= 100.5m && value <= 200.5m).AssertTrue();
+			(value >= 100.5m && value <= 200.5m).AssertTrue($"value={value} should be >=100.5 and <=200.5");
 		}
 	}
 
@@ -489,7 +489,7 @@ public class RandomArrayTests
 		for (int i = 0; i < 50; i++)
 		{
 			var value = randomArray.Next();
-			(value >= min && value <= max).AssertTrue();
+			(value >= min && value <= max).AssertTrue($"value={value} should be >={min} and <={max}");
 		}
 	}
 }

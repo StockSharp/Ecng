@@ -25,7 +25,8 @@ public class MathLightTests
 	public void Normal_CumulativeDistribution_Zero()
 	{
 		var cdf = Normal.CumulativeDistribution(0);
-		(Math.Abs(cdf - 0.5) < 1e-6).AssertTrue();
+		var diff = Math.Abs(cdf - 0.5);
+		(diff < 1e-6).AssertTrue($"diff={diff} should be <1e-6");
 	}
 
 	[TestMethod]
@@ -33,8 +34,8 @@ public class MathLightTests
 	{
 		var cdf1 = Normal.CumulativeDistribution(1);
 		var cdfm1 = Normal.CumulativeDistribution(-1);
-		(cdf1 > 0.5 && cdf1 < 1).AssertTrue();
-		(cdfm1 < 0.5 && cdfm1 > 0).AssertTrue();
+		(cdf1 > 0.5 && cdf1 < 1).AssertTrue($"cdf1={cdf1} should be >0.5 and <1");
+		(cdfm1 < 0.5 && cdfm1 > 0).AssertTrue($"cdfm1={cdfm1} should be <0.5 and >0");
 	}
 
 	[TestMethod]
@@ -42,7 +43,8 @@ public class MathLightTests
 	{
 		Normal.CumulativeDistribution(double.PositiveInfinity).AssertEqual(1);
 		Normal.CumulativeDistribution(double.NegativeInfinity).AssertEqual(0);
-		(double.IsNaN(Normal.CumulativeDistribution(double.NaN))).AssertTrue();
+		var nanResult = Normal.CumulativeDistribution(double.NaN);
+		(double.IsNaN(nanResult)).AssertTrue($"nanResult should be NaN, but was {nanResult}");
 	}
 
 	[TestMethod]
@@ -51,7 +53,8 @@ public class MathLightTests
 		var x = 1.23;
 		var cdf = Normal.CumulativeDistribution(x);
 		var cdfNeg = Normal.CumulativeDistribution(-x);
-		(Math.Abs((cdf + cdfNeg) - 1) < 1e-10).AssertTrue();
+		var symDiff = Math.Abs((cdf + cdfNeg) - 1);
+		(symDiff < 1e-10).AssertTrue($"symDiff={symDiff} should be <1e-10");
 	}
 
 	[TestMethod]
@@ -138,13 +141,16 @@ public class MathLightTests
 		var x = Enumerable.Range(0, 10).Select(i => (double)i).ToArray();
 		var y = Enumerable.Repeat(5.0, 10).ToArray();
 		var pf = new PolyFit(x, y, 0);
-		((pf.Coeff[0] - 5).Abs() < 1e-10).AssertTrue();
+		var coeff0Diff = (pf.Coeff[0] - 5).Abs();
+		(coeff0Diff < 1e-10).AssertTrue($"coeff0Diff={coeff0Diff} should be <1e-10");
 
 		// Линейная функция
 		var y2 = x.Select(v => 2 * v + 1).ToArray();
 		var pf2 = new PolyFit(x, y2, 1);
-		((pf2.Coeff[0] - 1).Abs() < 1e-10).AssertTrue();
-		((pf2.Coeff[1] - 2).Abs() < 1e-10).AssertTrue();
+		var pf2Coeff0Diff = (pf2.Coeff[0] - 1).Abs();
+		(pf2Coeff0Diff < 1e-10).AssertTrue($"pf2Coeff0Diff={pf2Coeff0Diff} should be <1e-10");
+		var pf2Coeff1Diff = (pf2.Coeff[1] - 2).Abs();
+		(pf2Coeff1Diff < 1e-10).AssertTrue($"pf2Coeff1Diff={pf2Coeff1Diff} should be <1e-10");
 	}
 
 	[TestMethod]
@@ -154,18 +160,24 @@ public class MathLightTests
 		var x = Enumerable.Range(-5, 11).Select(i => (double)i).ToArray();
 		var y = x.Select(v => 1 - 2 * v + 0.5 * v * v - 0.1 * v * v * v).ToArray();
 		var pf = new PolyFit(x, y, 3);
-		((pf.Coeff[0] - 1).Abs() < 1e-8).AssertTrue();
-		((pf.Coeff[1] + 2).Abs() < 1e-8).AssertTrue();
-		((pf.Coeff[2] - 0.5).Abs() < 1e-8).AssertTrue();
-		((pf.Coeff[3] + 0.1).Abs() < 1e-8).AssertTrue();
+		var c0Diff = (pf.Coeff[0] - 1).Abs();
+		(c0Diff < 1e-8).AssertTrue($"c0Diff={c0Diff} should be <1e-8");
+		var c1Diff = (pf.Coeff[1] + 2).Abs();
+		(c1Diff < 1e-8).AssertTrue($"c1Diff={c1Diff} should be <1e-8");
+		var c2Diff = (pf.Coeff[2] - 0.5).Abs();
+		(c2Diff < 1e-8).AssertTrue($"c2Diff={c2Diff} should be <1e-8");
+		var c3Diff = (pf.Coeff[3] + 0.1).Abs();
+		(c3Diff < 1e-8).AssertTrue($"c3Diff={c3Diff} should be <1e-8");
 
 		// Шумовые данные (аппроксимация тренда)
 		var rnd = new Random(42);
 		var x2 = Enumerable.Range(0, 100).Select(i => (double)i).ToArray();
 		var y2 = x2.Select(v => 3 * v - 7 + rnd.NextDouble() * 0.1).ToArray();
 		var pf2 = new PolyFit(x2, y2, 1);
-		((pf2.Coeff[1] - 3).Abs() < 0.01).AssertTrue();
-		((pf2.Coeff[0] + 7).Abs() < 0.1).AssertTrue();
+		var pf2C1Diff = (pf2.Coeff[1] - 3).Abs();
+		(pf2C1Diff < 0.01).AssertTrue($"pf2C1Diff={pf2C1Diff} should be <0.01");
+		var pf2C0Diff = (pf2.Coeff[0] + 7).Abs();
+		(pf2C0Diff < 0.1).AssertTrue($"pf2C0Diff={pf2C0Diff} should be <0.1");
 	}
 
 	[TestMethod]
@@ -182,8 +194,10 @@ public class MathLightTests
 	{
 		Normal.CumulativeDistribution(100).AssertEqual(1);
 		Normal.CumulativeDistribution(-100).AssertEqual(0);
-		(Normal.CumulativeDistribution(10) > 0.9999).AssertTrue();
-		(Normal.CumulativeDistribution(-10) < 0.0001).AssertTrue();
+		var cdf10 = Normal.CumulativeDistribution(10);
+		(cdf10 > 0.9999).AssertTrue($"cdf10={cdf10} should be >0.9999");
+		var cdfMinus10 = Normal.CumulativeDistribution(-10);
+		(cdfMinus10 < 0.0001).AssertTrue($"cdfMinus10={cdfMinus10} should be <0.0001");
 	}
 
 	[TestMethod]
@@ -192,6 +206,6 @@ public class MathLightTests
 		var z = Enumerable.Range(-100, 201).Select(i => i / 10.0).ToArray();
 		var cdf = z.Select(Normal.CumulativeDistribution).ToArray();
 		for (int i = 1; i < cdf.Length; i++)
-			(cdf[i] >= cdf[i - 1]).AssertTrue();
+			(cdf[i] >= cdf[i - 1]).AssertTrue($"cdf[{i}]={cdf[i]} should be >= cdf[{i - 1}]={cdf[i - 1]}");
 	}
 }

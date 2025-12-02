@@ -71,7 +71,9 @@ public class TimeHelperTests
 		var dt = DateTime.Now.ToUniversalTime();
 		var res = dt.ToUnix().FromUnix();
 		res.Kind.AssertEqual(DateTimeKind.Utc);
-		((dt - res).TotalMilliseconds < 1).AssertTrue();
+
+		var diffMls = (dt - res).TotalMilliseconds;
+		(diffMls < 1).AssertTrue($"(dt - res).TotalMilliseconds={diffMls} should be <1");
 	}
 
 	[TestMethod]
@@ -91,7 +93,8 @@ public class TimeHelperTests
 		var after = DateTime.UtcNow;
 
 		//(now >= before).AssertTrue();
-		(now <= after.AddSeconds(1)).AssertTrue();
+		var afterPlusOne = after.AddSeconds(1);
+		(now <= afterPlusOne).AssertTrue($"now={now} should be <={afterPlusOne}");
 
 		// Test NowOffset setter
 		var offset = TimeSpan.FromHours(3);
@@ -100,8 +103,9 @@ public class TimeHelperTests
 		var expectedMin = DateTime.UtcNow + offset;
 		var expectedMax = DateTime.UtcNow + offset + TimeSpan.FromSeconds(1);
 
-		(nowWithOffset >= expectedMin.AddSeconds(-1)).AssertTrue();
-		(nowWithOffset <= expectedMax).AssertTrue();
+		var minMinusOne = expectedMin.AddSeconds(-1);
+		(nowWithOffset >= minMinusOne).AssertTrue($"nowWithOffset={nowWithOffset} should be >={minMinusOne}");
+		(nowWithOffset <= expectedMax).AssertTrue($"nowWithOffset={nowWithOffset} should be <={expectedMax}");
 
 		// Reset offset
 		TimeHelper.NowOffset = TimeSpan.Zero;
@@ -548,7 +552,7 @@ public class TimeHelperTests
 	{
 		var dt = new DateTime(1970, 1, 1, 0, 0, 0, 100, DateTimeKind.Utc);
 		var unix = dt.ToUnix(false);
-		(unix >= 100.0 && unix < 101.0).AssertTrue();
+		(unix >= 100.0 && unix < 101.0).AssertTrue($"unix={unix} should be >=100.0 and <101.0");
 	}
 
 	[TestMethod]
@@ -583,9 +587,9 @@ public class TimeHelperTests
 		var nowS = TimeHelper.UnixNowS;
 		var nowMls = TimeHelper.UnixNowMls;
 
-		(nowS > 0).AssertTrue();
-		(nowMls > 0).AssertTrue();
-		(nowMls > nowS).AssertTrue(); // Milliseconds should be larger number
+		(nowS > 0).AssertTrue($"UnixNowS={nowS} should be >0");
+		(nowMls > 0).AssertTrue($"UnixNowMls={nowMls} should be >0");
+		(nowMls > nowS).AssertTrue($"UnixNowMls={nowMls} should be >UnixNowS={nowS}"); // Milliseconds should be larger number
 	}
 
 	[TestMethod]
@@ -650,7 +654,8 @@ public class TimeHelperTests
 		var phase = dt.GetLunarPhase();
 
 		// Just verify it returns a valid phase (0-7)
-		((int)phase >= 0 && (int)phase <= 7).AssertTrue();
+		var phaseInt = (int)phase;
+		(phaseInt >= 0 && phaseInt <= 7).AssertTrue($"phase={(int)phase} should be >=0 and <=7");
 	}
 
 	[TestMethod]
@@ -661,7 +666,7 @@ public class TimeHelperTests
 		var julian = dt.ToJulianDate();
 
 		// Julian date for Jan 1, 2000 at noon is approximately 2451545
-		(julian > 2451544 && julian < 2451546).AssertTrue();
+		(julian > 2451544 && julian < 2451546).AssertTrue($"julian={julian} should be >2451544 and <2451546");
 	}
 
 	[TestMethod]
@@ -805,7 +810,7 @@ public class TimeHelperTests
 	{
 		var dt = new DateTime(2024, 1, 15);
 		var week = dt.GetIso8601WeekOfYear(System.Globalization.CultureInfo.InvariantCulture);
-		(week >= 1 && week <= 53).AssertTrue();
+		(week >= 1 && week <= 53).AssertTrue($"week={week} should be >=1 and <=53");
 	}
 
 	[TestMethod]
@@ -821,7 +826,7 @@ public class TimeHelperTests
 	{
 		var ts = TimeSpan.FromMilliseconds(1.234);
 		var microseconds = ts.GetMicroseconds();
-		(microseconds >= 0 && microseconds < 1000).AssertTrue();
+		(microseconds >= 0 && microseconds < 1000).AssertTrue($"microseconds={microseconds} should be >=0 and <1000");
 	}
 
 	[TestMethod]
@@ -829,7 +834,7 @@ public class TimeHelperTests
 	{
 		var dt = new DateTime(2024, 1, 15, 14, 30, 0).AddTicks(12345);
 		var microseconds = dt.GetMicroseconds();
-		(microseconds >= 0 && microseconds < 1000).AssertTrue();
+		(microseconds >= 0 && microseconds < 1000).AssertTrue($"microseconds={microseconds} should be >=0 and <1000");
 	}
 
 	[TestMethod]
@@ -861,7 +866,8 @@ public class TimeHelperTests
 	{
 		var ts = TimeSpan.FromMilliseconds(1234.567);
 		var truncated = ts.Truncate(TimeSpan.TicksPerMillisecond);
-		(truncated.TotalMilliseconds >= 1234.0 && truncated.TotalMilliseconds < 1235.0).AssertTrue();
+		var totalMls = truncated.TotalMilliseconds;
+		(totalMls >= 1234.0 && totalMls < 1235.0).AssertTrue($"truncated.TotalMilliseconds={totalMls} should be >=1234.0 and <1235.0");
 	}
 
 	[TestMethod]
@@ -883,8 +889,10 @@ public class TimeHelperTests
 		var after = DateTime.UtcNow;
 
 		// Now should be between before and after (with some tolerance)
-		(now >= before.AddSeconds(-1)).AssertTrue();
-		(now <= after.AddSeconds(1)).AssertTrue();
+		var beforeMinusOne = before.AddSeconds(-1);
+		(now >= beforeMinusOne).AssertTrue($"now={now} should be >={beforeMinusOne}");
+		var afterPlusOne = after.AddSeconds(1);
+		(now <= afterPlusOne).AssertTrue($"now={now} should be <={afterPlusOne}");
 	}
 
 	[TestMethod]
@@ -1060,7 +1068,7 @@ public class TimeHelperTests
 		// Should return only the microseconds component (0-999)
 		var ts = TimeSpan.FromTicks(12345); // 1234.5 microseconds
 		var result = ts.GetMicroseconds();
-		(result >= 0 && result < 1000).AssertTrue();
+		(result >= 0 && result < 1000).AssertTrue($"result={result} should be >=0 and <1000");
 		// 12345 ticks = 1234 microseconds, component = 234
 		result.AssertEqual(234);
 	}
@@ -1071,7 +1079,7 @@ public class TimeHelperTests
 		var dt = new DateTime(2024, 1, 1, 0, 0, 0);
 		dt = dt.AddTicks(12345);
 		var result = dt.GetMicroseconds();
-		(result >= 0 && result < 1000).AssertTrue();
+		(result >= 0 && result < 1000).AssertTrue($"result={result} should be >=0 and <1000");
 		result.AssertEqual(234);
 	}
 
@@ -1621,7 +1629,7 @@ public class TimeHelperTests
 
 		// Dec 31, 2024 is Tuesday - should be week 1 of next year or last week
 		var week = new DateTime(2024, 12, 31).GetIso8601WeekOfYear();
-		(week >= 1 && week <= 53).AssertTrue();
+		(week >= 1 && week <= 53).AssertTrue($"week={week} should be >=1 and <=53");
 	}
 
 	#endregion
@@ -1745,12 +1753,12 @@ public class TimeHelperTests
 		var nowMls = TimeHelper.UnixNowMls;
 
 		// Should be positive and reasonable (after year 2020)
-		(nowS > 1577836800).AssertTrue(); // Jan 1, 2020 in seconds
-		(nowMls > 1577836800000).AssertTrue(); // Jan 1, 2020 in milliseconds
+		(nowS > 1577836800).AssertTrue($"UnixNowS={nowS} should be >1577836800"); // Jan 1, 2020 in seconds
+		(nowMls > 1577836800000).AssertTrue($"UnixNowMls={nowMls} should be >1577836800000"); // Jan 1, 2020 in milliseconds
 
 		// Milliseconds should be ~1000x seconds
 		var ratio = nowMls / nowS;
-		(ratio > 900 && ratio < 1100).AssertTrue();
+		(ratio > 900 && ratio < 1100).AssertTrue($"ratio={ratio} (nowMls/nowS) should be >900 and <1100");
 	}
 
 	[TestMethod]
@@ -1866,7 +1874,7 @@ public class TimeHelperTests
 		var jd = dt.ToJulianDate();
 
 		// Should be close to 2451545
-		(jd > 2451544 && jd < 2451546).AssertTrue();
+		(jd > 2451544 && jd < 2451546).AssertTrue($"jd={jd} should be >2451544 and <2451546");
 	}
 
 	[TestMethod]
@@ -1876,7 +1884,8 @@ public class TimeHelperTests
 		var phase = dt.GetLunarPhase();
 
 		// Should return a value between 0 and 7 (8 phases)
-		((int)phase >= 0 && (int)phase <= 7).AssertTrue();
+		var phaseInt = (int)phase;
+		(phaseInt >= 0 && phaseInt <= 7).AssertTrue($"phase={(int)phase} should be >=0 and <=7");
 	}
 
 	#endregion

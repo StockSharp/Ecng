@@ -23,28 +23,28 @@ public class RandomTests
 		for (int i = 0; i < 10000; i++)
 		{
 			var byteValue = RandomGen.GetByte();
-			(byteValue >= byte.MinValue && byteValue <= byte.MaxValue).AssertTrue();
+			(byteValue >= byte.MinValue && byteValue <= byte.MaxValue).AssertTrue($"byteValue={byteValue} should be >={byte.MinValue} and <={byte.MaxValue}");
 
 			var byteRange = RandomGen.GetByte(10, 20);
-			(byteRange >= 10 && byteRange <= 20).AssertTrue();
+			(byteRange >= 10 && byteRange <= 20).AssertTrue($"byteRange={byteRange} should be >=10 and <=20");
 
 			var ushortValue = RandomGen.GetUShort();
-			(ushortValue >= ushort.MinValue && ushortValue <= ushort.MaxValue).AssertTrue();
+			(ushortValue >= ushort.MinValue && ushortValue <= ushort.MaxValue).AssertTrue($"ushortValue={ushortValue} should be >={ushort.MinValue} and <={ushort.MaxValue}");
 
 			var ushortRange = RandomGen.GetUShort(100, 200);
-			(ushortRange >= 100 && ushortRange <= 200).AssertTrue();
+			(ushortRange >= 100 && ushortRange <= 200).AssertTrue($"ushortRange={ushortRange} should be >=100 and <=200");
 
 			var uintValue = RandomGen.GetUInt();
-			(uintValue >= uint.MinValue && uintValue <= uint.MaxValue).AssertTrue();
+			(uintValue >= uint.MinValue && uintValue <= uint.MaxValue).AssertTrue($"uintValue={uintValue} should be >={uint.MinValue} and <={uint.MaxValue}");
 
 			var uintRange = RandomGen.GetUInt(50u, 75u);
-			(uintRange >= 50u && uintRange <= 75u).AssertTrue();
+			(uintRange >= 50u && uintRange <= 75u).AssertTrue($"uintRange={uintRange} should be >=50 and <=75");
 
 			var ulongValue = RandomGen.GetULong();
-			(ulongValue >= ulong.MinValue && ulongValue <= ulong.MaxValue).AssertTrue();
+			(ulongValue >= ulong.MinValue && ulongValue <= ulong.MaxValue).AssertTrue($"ulongValue={ulongValue} should be >={ulong.MinValue} and <={ulong.MaxValue}");
 
 			var nearMax = RandomGen.GetULong(ulong.MaxValue - 1024, ulong.MaxValue);
-			(nearMax >= ulong.MaxValue - 1024 && nearMax <= ulong.MaxValue).AssertTrue();
+			(nearMax >= ulong.MaxValue - 1024 && nearMax <= ulong.MaxValue).AssertTrue($"nearMax={nearMax} should be >={ulong.MaxValue - 1024} and <={ulong.MaxValue}");
 		}
 	}
 
@@ -54,16 +54,16 @@ public class RandomTests
 		for (int i = 0; i < 10000; i++)
 		{
 			var shortValue = RandomGen.GetShort();
-			(shortValue >= short.MinValue && shortValue <= short.MaxValue).AssertTrue();
+			(shortValue >= short.MinValue && shortValue <= short.MaxValue).AssertTrue($"shortValue={shortValue} should be >={short.MinValue} and <={short.MaxValue}");
 
 			var shortRange = RandomGen.GetShort(-1234, 4321);
-			(shortRange >= -1234 && shortRange <= 4321).AssertTrue();
+			(shortRange >= -1234 && shortRange <= 4321).AssertTrue($"shortRange={shortRange} should be >=-1234 and <=4321");
 
 			var sbyteValue = RandomGen.GetSByte();
-			(sbyteValue >= sbyte.MinValue && sbyteValue <= sbyte.MaxValue).AssertTrue();
+			(sbyteValue >= sbyte.MinValue && sbyteValue <= sbyte.MaxValue).AssertTrue($"sbyteValue={sbyteValue} should be >={sbyte.MinValue} and <={sbyte.MaxValue}");
 
 			var sbyteRange = RandomGen.GetSByte(-8, 8);
-			(sbyteRange >= -8 && sbyteRange <= 8).AssertTrue();
+			(sbyteRange >= -8 && sbyteRange <= 8).AssertTrue($"sbyteRange={sbyteRange} should be >=-8 and <=8");
 		}
 	}
 
@@ -90,13 +90,13 @@ public class RandomTests
 		for (int i = 0; i < 10000; i++)
 		{
 			var unit = RandomGen.GetDouble();
-			(unit >= 0 && unit < 1).AssertTrue();
+			(unit >= 0 && unit < 1).AssertTrue($"unit={unit} should be >=0 and <1");
 
 			var upTo = RandomGen.GetDouble(100.0);
-			(upTo >= 0 && upTo <= 100.0).AssertTrue();
+			(upTo >= 0 && upTo <= 100.0).AssertTrue($"upTo={upTo} should be >=0 and <=100.0");
 
 			var ranged = RandomGen.GetDouble(min, max);
-			(ranged >= min && ranged <= max).AssertTrue();
+			(ranged >= min && ranged <= max).AssertTrue($"ranged={ranged} should be >={min} and <={max}");
 		}
 
 		RandomGen.GetDouble(42.0, 42.0).AssertEqual(42.0);
@@ -111,13 +111,13 @@ public class RandomTests
 		for (int i = 0; i < 10000; i++)
 		{
 			var unit = RandomGen.GetFloat();
-			(unit >= 0f && unit < 1f).AssertTrue();
+			(unit >= 0f && unit < 1f).AssertTrue($"unit={unit} should be >=0 and <1");
 
 			var upTo = RandomGen.GetFloat(10f);
-			(upTo >= 0f && upTo <= 10f).AssertTrue();
+			(upTo >= 0f && upTo <= 10f).AssertTrue($"upTo={upTo} should be >=0 and <=10");
 
 			var ranged = RandomGen.GetFloat(min, max);
-			(ranged >= min && ranged <= max).AssertTrue();
+			(ranged >= min && ranged <= max).AssertTrue($"ranged={ranged} should be >={min} and <={max}");
 		}
 
 		RandomGen.GetFloat(7f, 7f).AssertEqual(7f);
