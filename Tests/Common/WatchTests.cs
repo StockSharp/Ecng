@@ -29,8 +29,10 @@ public class WatchTests : BaseTestClass
 
 		// Assert
 		executed.AssertTrue("action was not executed");
-		(elapsed.TotalMilliseconds >= 10).AssertTrue("elapsed.TotalMilliseconds should be >=10");
-		(elapsed.TotalMilliseconds < 1000).AssertTrue("elapsed.TotalMilliseconds should be <1000");
+
+		var totalMls = elapsed.TotalMilliseconds;
+		(totalMls >= 10).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=10");
+		(totalMls < 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <1000");
 	}
 
 	[TestMethod]
@@ -44,8 +46,10 @@ public class WatchTests : BaseTestClass
 		var elapsed = Watch.Do(action);
 
 		// Assert
-		(elapsed.TotalMilliseconds >= 0).AssertTrue("elapsed.TotalMilliseconds should be >=0");
-		(elapsed.TotalSeconds < 1).AssertTrue("elapsed.TotalSeconds should be <1");
+		var totalMls = elapsed.TotalMilliseconds;
+		var totalSec = elapsed.TotalSeconds;
+		(totalMls >= 0).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=0");
+		(totalSec < 1).AssertTrue($"elapsed.TotalSeconds={totalSec} should be <1");
 	}
 
 	[TestMethod]
@@ -70,8 +74,9 @@ public class WatchTests : BaseTestClass
 		var elapsed = Watch.Do(action);
 
 		// Assert
-		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed should be >=90 ms but {(int)elapsed.TotalMilliseconds}");
-		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed should be <=1000 ms but {(int)elapsed.TotalMilliseconds}");
+		var totalMls = (int)elapsed.TotalMilliseconds;
+		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=90 ms");
+		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <=1000 ms");
 	}
 
 	[TestMethod]
@@ -100,8 +105,10 @@ public class WatchTests : BaseTestClass
 
 		// Assert
 		executed.AssertTrue("action was not executed");
-		(elapsed.TotalMilliseconds >= 10).AssertTrue("elapsed.TotalMilliseconds should be >=10");
-		(elapsed.TotalMilliseconds < 1000).AssertTrue("elapsed.TotalMilliseconds should be <1000");
+
+		var totalMls = elapsed.TotalMilliseconds;
+		(totalMls >= 10).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=10");
+		(totalMls < 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <1000");
 	}
 
 	[TestMethod]
@@ -114,8 +121,10 @@ public class WatchTests : BaseTestClass
 		var elapsed = await Watch.DoAsync(action);
 
 		// Assert
-		(elapsed.TotalMilliseconds >= 0).AssertTrue("elapsed.TotalMilliseconds should be >=0");
-		(elapsed.TotalSeconds < 1).AssertTrue("elapsed.TotalSeconds should be <1");
+		var totalMls = elapsed.TotalMilliseconds;
+		var totalSec = elapsed.TotalSeconds;
+		(totalMls >= 0).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=0");
+		(totalSec < 1).AssertTrue($"elapsed.TotalSeconds={totalSec} should be <1");
 	}
 
 	[TestMethod]
@@ -140,8 +149,9 @@ public class WatchTests : BaseTestClass
 		var elapsed = await Watch.DoAsync(action);
 
 		// Assert
-		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed should be >=90 ms but {(int)elapsed.TotalMilliseconds}");
-		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed should be <=1000 ms but {(int)elapsed.TotalMilliseconds}");
+		var totalMls = (int)elapsed.TotalMilliseconds;
+		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=90 ms");
+		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <=1000 ms");
 	}
 
 	[TestMethod]
@@ -169,8 +179,10 @@ public class WatchTests : BaseTestClass
 
 		// Assert
 		result.AssertEqual(42, "result should be 42");
-		(elapsed.TotalMilliseconds >= 40).AssertTrue("elapsed.TotalMilliseconds should be >=40");
-		(elapsed.TotalMilliseconds < 1000).AssertTrue("elapsed.TotalMilliseconds should be <1000");
+
+		var totalMls = elapsed.TotalMilliseconds;
+		(totalMls >= 40).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=40");
+		(totalMls < 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <1000");
 	}
 
 	[TestMethod]
@@ -211,8 +223,10 @@ public class WatchTests : BaseTestClass
 
 		// Assert
 		executed.AssertTrue("action was not executed");
-		(elapsed.TotalMilliseconds >= 40).AssertTrue("elapsed.TotalMilliseconds should be >=40");
-		(elapsed.TotalMilliseconds < 1000).AssertTrue("elapsed.TotalMilliseconds should be <1000");
+
+		var totalMls = elapsed.TotalMilliseconds;
+		(totalMls >= 40).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=40");
+		(totalMls < 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <1000");
 	}
 
 	[TestMethod]
@@ -252,8 +266,10 @@ public class WatchTests : BaseTestClass
 
 		// Assert
 		result.AssertEqual("test result", "result should be 'test result'");
-		(elapsed.TotalMilliseconds >= 40).AssertTrue("elapsed.TotalMilliseconds should be >=40");
-		(elapsed.TotalMilliseconds < 1000).AssertTrue("elapsed.TotalMilliseconds should be <1000");
+
+		var totalMls = elapsed.TotalMilliseconds;
+		(totalMls >= 40).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=40");
+		(totalMls < 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <1000");
 	}
 
 	[TestMethod]
@@ -283,8 +299,10 @@ public class WatchTests : BaseTestClass
 
 		// Assert
 		result.AssertEqual(3.14, "result should be 3.14");
-		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed should be >=90 ms but {(int)elapsed.TotalMilliseconds}");
-		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed should be <=1000 ms but {(int)elapsed.TotalMilliseconds}");
+
+		var totalMls = (int)elapsed.TotalMilliseconds;
+		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=90 ms");
+		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <=1000 ms");
 	}
 
 	[TestMethod]
@@ -297,8 +315,9 @@ public class WatchTests : BaseTestClass
 		var elapsed = await Watch.DoAsync(action);
 
 		// Assert
-		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed should be >=90 ms but {(int)elapsed.TotalMilliseconds}");
-		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed should be <=1000 ms but {(int)elapsed.TotalMilliseconds}");
+		var totalMls = (int)elapsed.TotalMilliseconds;
+		(elapsed.TotalMilliseconds >= 90).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=90 ms");
+		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <=1000 ms");
 	}
 
 	[TestMethod]
@@ -316,7 +335,9 @@ public class WatchTests : BaseTestClass
 
 		// Assert
 		result.AssertEqual(123, "result should be 123");
-		(elapsed.TotalMilliseconds >= 100).AssertTrue($"elapsed should be >=100 ms but {(int)elapsed.TotalMilliseconds}");
-		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed should be <=1000 ms but {(int)elapsed.TotalMilliseconds}");
+
+		var totalMls = (int)elapsed.TotalMilliseconds;
+		(elapsed.TotalMilliseconds >= 100).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be >=100 ms");
+		(elapsed.TotalMilliseconds <= 1000).AssertTrue($"elapsed.TotalMilliseconds={totalMls} should be <=1000 ms");
 	}
 }
