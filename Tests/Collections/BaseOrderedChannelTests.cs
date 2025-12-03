@@ -10,9 +10,15 @@ public class BaseOrderedChannelTests : BaseTestClass
 	/// Test implementation of BaseOrderedChannel for testing purposes.
 	/// Uses PriorityQueue for sorting by integer priority.
 	/// </summary>
-	private class TestOrderedChannel(int maxSize) : BaseOrderedChannel<int, string, Ecng.Collections.PriorityQueue<int, string>>(new Ecng.Collections.PriorityQueue<int, string>((a, b) => Math.Abs(a - b), Comparer<int>.Default), maxSize)
+	private class TestOrderedChannel : BaseOrderedChannel<int, string, Ecng.Collections.PriorityQueue<int, string>>
 	{
-        public void Add(int priority, string value) => Enqueue(priority, value);
+		public TestOrderedChannel(int maxSize = -1)
+			: base(new Ecng.Collections.PriorityQueue<int, string>((a, b) => Math.Abs(a - b), Comparer<int>.Default), maxSize)
+		{
+		}
+
+		public async ValueTask Add(int priority, string value, CancellationToken cancellationToken = default)
+			=> await Enqueue(priority, value, cancellationToken);
 	}
 
 	[TestMethod]
@@ -64,13 +70,15 @@ public class BaseOrderedChannelTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Enqueue_WhenClosed_DropsValue()
+	public async Task Enqueue_WhenClosed_DropsValue()
 	{
+		var token = CancellationToken;
+
 		// Arrange
 		var queue = CreateQueue();
 
 		// Act - enqueue without opening
-		queue.Add(1, "test");
+		await queue.Add(1, "test", token);
 
 		// Assert - value should be dropped
 		queue.Count.AssertEqual(0);
@@ -86,7 +94,7 @@ public class BaseOrderedChannelTests : BaseTestClass
 		queue.Open();
 
 		// Act
-		queue.Add(1, "first");
+		await queue.Add(1, "first", token);
 		var result = await queue.DequeueAsync(token);
 
 		// Assert
@@ -104,9 +112,9 @@ public class BaseOrderedChannelTests : BaseTestClass
 		queue.Open();
 
 		// Act - enqueue in non-sorted order
-		queue.Add(3, "third");
-		queue.Add(1, "first");
-		queue.Add(2, "second");
+		await queue.Add(3, "third", token);
+		await queue.Add(1, "first", token);
+		await queue.Add(2, "second", token);
 
 		await Task.Delay(100, token); // Allow time for sorting
 
@@ -129,9 +137,9 @@ public class BaseOrderedChannelTests : BaseTestClass
 		var queue = CreateQueue();
 		queue.Open();
 
-		queue.Add(1, "first");
-		queue.Add(2, "second");
-		queue.Add(3, "third");
+		await queue.Add(1, "first", token);
+		await queue.Add(2, "second", token);
+		await queue.Add(3, "third", token);
 
 		await Task.Delay(100, token); // Allow time for items to be queued
 
@@ -167,9 +175,9 @@ public class BaseOrderedChannelTests : BaseTestClass
 		var queue = CreateQueue();
 		queue.Open();
 
-		queue.Add(1, "first");
-		queue.Add(2, "second");
-		queue.Add(3, "third");
+		await queue.Add(1, "first", token);
+		await queue.Add(2, "second", token);
+		await queue.Add(3, "third", token);
 
 		await Task.Delay(100, token); // Allow time for items to be queued
 
@@ -188,12 +196,12 @@ public class BaseOrderedChannelTests : BaseTestClass
 		// Arrange
 		var queue = CreateQueue();
 		queue.Open();
-		queue.Add(1, "first");
+		await queue.Add(1, "first", token);
 		queue.Close();
 
 		// Act
 		queue.Open();
-		queue.Add(2, "second");
+		await queue.Add(2, "second", token);
 		var result = await queue.DequeueAsync(token);
 
 		// Assert
@@ -211,10 +219,10 @@ public class BaseOrderedChannelTests : BaseTestClass
 		queue.Open();
 
 		// Act - try to add 3 items to queue with max size 2
-		queue.Add(1, "first");
-		queue.Add(2, "second");
+		await queue.Add(1, "first", token);
+		await queue.Add(2, "second", token);
 
-		var writeTask = Task.Run(() => queue.Add(3, "third"), token); // This should block
+		var writeTask = Task.Run(async () => await queue.Add(3, "third", token), token); // This should block
 
 		// Wait a bit to see if it completes (it shouldn't)
 		var completed = await Task.WhenAny(writeTask, Task.Delay(500, token)) == writeTask;
@@ -241,11 +249,11 @@ public class BaseOrderedChannelTests : BaseTestClass
 		// Act & Assert
 		queue.Count.AssertEqual(0);
 
-		queue.Add(1, "first");
+		await queue.Add(1, "first", token);
 		await Task.Delay(50, token);
 
-		queue.Add(2, "second");
-		queue.Add(3, "third");
+		await queue.Add(2, "second", token);
+		await queue.Add(3, "third", token);
 		await Task.Delay(100, token);
 
 		// Dequeue all
