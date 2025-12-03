@@ -24,7 +24,14 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 	private Channel<(TSort sort, TValue value)> _channel;
 	private bool _isClosed;
 
-	/// <inheritdoc />
+	/// <summary>
+	/// Gets the number of items in the sorted collection.
+	/// </summary>
+	/// <remarks>
+	/// Note: This property only returns the count of items in the internal sorted collection.
+	/// It does not include items that are currently in the channel but have not yet been read into the collection.
+	/// The actual total number of items may be higher during concurrent operations.
+	/// </remarks>
 	public int Count
 	{
 		get
@@ -130,7 +137,9 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 	/// </summary>
 	/// <param name="sort">The sort with which to associate the new value.</param>
 	/// <param name="value">The value to add to the queue.</param>
-	protected void Enqueue(TSort sort, TValue value)
+	/// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+	/// <returns><see cref="ValueTask"/></returns>
+	protected async ValueTask Enqueue(TSort sort, TValue value, CancellationToken cancellationToken = default)
 	{
 		if (value is null)
 			throw new ArgumentNullException(nameof(value));
@@ -150,11 +159,18 @@ public abstract class BaseOrderedChannel<TSort, TValue, TCollection>
 		try
 		{
 			if (!channel.Writer.TryWrite((sort, value)))
-				AsyncHelper.Run(() => channel.Writer.WriteAsync((sort, value)));
+				await channel.Writer.WriteAsync((sort, value), cancellationToken);
 		}
 		catch (ChannelClosedException)
 		{
 			// Queue was closed concurrently; value is dropped by design.
+		}
+		catch
+		{
+			if (cancellationToken.IsCancellationRequested)
+				return;
+
+			throw;
 		}
 	}
 
