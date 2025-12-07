@@ -1,4 +1,4 @@
-﻿namespace Ecng.Common;
+namespace Ecng.Common;
 
 using System;
 using System.Collections.Generic;
@@ -657,6 +657,19 @@ public static class AsyncHelper
 
 		while (!cancellationToken.IsCancellationRequested)
 		{
+			// Wait for the next tick first
+			try
+			{
+				if (!await timer.WaitForNextTickAsync(cancellationToken).NoWait())
+					break;
+			}
+			catch (OperationCanceledException)
+			{
+				// Timer was cancelled, exit gracefully
+				break;
+			}
+
+			// Then execute handler
 			try
 			{
 				await handler().NoWait();
@@ -670,18 +683,6 @@ public static class AsyncHelper
 			{
 				// Allow exceptions from handler to propagate
 				throw;
-			}
-
-			// Wait for the next tick
-			try
-			{
-				if (!await timer.WaitForNextTickAsync(cancellationToken).NoWait())
-					break;
-			}
-			catch (OperationCanceledException)
-			{
-				// Timer was cancelled, exit gracefully
-				break;
 			}
 		}
 	}

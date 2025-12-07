@@ -81,6 +81,18 @@ public sealed class ControllablePeriodicTimer : IDisposable
 
 					while (!_cts.Token.IsCancellationRequested)
 					{
+						// Wait for the next tick first
+						try
+						{
+							if (!await timer.WaitForNextTickAsync(_cts.Token).NoWait())
+								break;
+						}
+						catch (OperationCanceledException)
+						{
+							break;
+						}
+
+						// Then execute handler
 						try
 						{
 							await _handler().NoWait();
@@ -92,17 +104,6 @@ public sealed class ControllablePeriodicTimer : IDisposable
 						catch
 						{
 							throw;
-						}
-
-						// Wait for the next tick
-						try
-						{
-							if (!await timer.WaitForNextTickAsync(_cts.Token).NoWait())
-								break;
-						}
-						catch (OperationCanceledException)
-						{
-							break;
 						}
 					}
 				}
