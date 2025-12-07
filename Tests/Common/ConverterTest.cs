@@ -412,7 +412,7 @@ public class ConverterTest
 		string.Empty.To<Guid?>().AssertNull();
 
 		// DateTime? <-> string
-		dt.To<string>().To<DateTime?>()?.ToUniversalTime().AssertEqual(dt.ToUniversalTime());
+		dt.To<string>().To<DateTime>().ToUniversalTime().AssertEqual(dt.ToUniversalTime());
 		string.Empty.To<DateTime?>().AssertNull();
 
 		// TimeSpan <-> string

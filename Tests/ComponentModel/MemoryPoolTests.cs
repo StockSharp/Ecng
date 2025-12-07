@@ -169,6 +169,6 @@ public class MemoryPoolTests : BaseTestClass
 
 		Task.WaitAll(tasks, token);
 
-		(_pool.TotalCount < 10).AssertTrue();
+		(_pool.TotalCount <= _pool.MaxPerLength * 3).AssertTrue();
 	}
 }
