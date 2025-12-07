@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Collections;
 
 [TestClass]
-public class SynchronizedQueueTests
+public class SynchronizedQueueTests : BaseTestClass
 {
 	[TestMethod]
 	public void BasicOperations()
@@ -19,8 +19,8 @@ public class SynchronizedQueueTests
 	public void EmptyOperations()
 	{
 		var q = new SynchronizedQueue<int>();
-		Assert.ThrowsExactly<InvalidOperationException>(() => q.Dequeue());
-		Assert.ThrowsExactly<InvalidOperationException>(() => q.Peek());
+		ThrowsExactly<InvalidOperationException>(() => q.Dequeue());
+		ThrowsExactly<InvalidOperationException>(() => q.Peek());
 	}
 
 	[TestMethod]
@@ -29,8 +29,8 @@ public class SynchronizedQueueTests
 		var q = new SynchronizedQueue<int>();
 		q.Enqueue(1);
 		var list = (IList<int>)q;
-		Assert.ThrowsExactly<NotSupportedException>(() => _ = list[0]);
-		Assert.ThrowsExactly<NotSupportedException>(() => list.Insert(0, 1));
-		Assert.ThrowsExactly<NotSupportedException>(() => list.RemoveAt(0));
+		ThrowsExactly<NotSupportedException>(() => _ = list[0]);
+		ThrowsExactly<NotSupportedException>(() => list.Insert(0, 1));
+		ThrowsExactly<NotSupportedException>(() => list.RemoveAt(0));
 	}
 }

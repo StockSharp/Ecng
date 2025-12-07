@@ -52,7 +52,7 @@ public class DelegateTests : BaseTestClass
 		Action<Exception> errorHandler = ex => { };
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => action.Do(errorHandler));
+		ThrowsExactly<ArgumentNullException>(() => action.Do(errorHandler));
 	}
 
 	[TestMethod]
@@ -63,7 +63,7 @@ public class DelegateTests : BaseTestClass
 		Action<Exception> errorHandler = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => action.Do(errorHandler));
+		ThrowsExactly<ArgumentNullException>(() => action.Do(errorHandler));
 	}
 
 	#endregion
@@ -134,7 +134,7 @@ public class DelegateTests : BaseTestClass
 		Action<Exception> errorHandler = ex => { };
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => action.DoAsync(errorHandler));
+		ThrowsExactly<ArgumentNullException>(() => action.DoAsync(errorHandler));
 	}
 
 	[TestMethod]
@@ -145,7 +145,7 @@ public class DelegateTests : BaseTestClass
 		Action<Exception> errorHandler = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => action.DoAsync(errorHandler));
+		ThrowsExactly<ArgumentNullException>(() => action.DoAsync(errorHandler));
 	}
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -369,7 +369,7 @@ public class DelegateTests : BaseTestClass
 		Action<int> action = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<NullReferenceException>(() => action.GetInvocationList());
+		ThrowsExactly<NullReferenceException>(() => action.GetInvocationList());
 	}
 
 	#endregion

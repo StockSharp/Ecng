@@ -35,25 +35,25 @@ public class StringTests : BaseTestClass
 	[TestMethod]
 	public void ReplaceIgnoreCaseError()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).ReplaceIgnoreCase(null, "22"));
+		ThrowsExactly<ArgumentNullException>(() => ((string)null).ReplaceIgnoreCase(null, "22"));
 	}
 
 	[TestMethod]
 	public void ReplaceIgnoreCaseError2()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => "".ReplaceIgnoreCase(null, "22"));
+		ThrowsExactly<ArgumentNullException>(() => "".ReplaceIgnoreCase(null, "22"));
 	}
 
 	[TestMethod]
 	public void ReplaceIgnoreCaseError3()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => "".ReplaceIgnoreCase("", null));
+		ThrowsExactly<ArgumentNullException>(() => "".ReplaceIgnoreCase("", null));
 	}
 
 	[TestMethod]
 	public void ReplaceIgnoreCaseError4()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => "11".ReplaceIgnoreCase("11", null));
+		ThrowsExactly<ArgumentNullException>(() => "11".ReplaceIgnoreCase("11", null));
 	}
 
 	[TestMethod]
@@ -187,8 +187,8 @@ public class StringTests : BaseTestClass
 
 		"".Reduce(0, "").AssertEqual("");
 
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).Reduce(0, "..."));
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => "abcdef".Reduce(0, "..."));
+		ThrowsExactly<ArgumentNullException>(() => ((string)null).Reduce(0, "..."));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => "abcdef".Reduce(0, "..."));
 	}
 
 	[TestMethod]
@@ -394,8 +394,8 @@ public class StringTests : BaseTestClass
 	[TestMethod]
 	public void ThrowIfEmpty_String_Throws()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).ThrowIfEmpty("p"));
-		Assert.ThrowsExactly<ArgumentNullException>(() => "".ThrowIfEmpty("p"));
+		ThrowsExactly<ArgumentNullException>(() => ((string)null).ThrowIfEmpty("p"));
+		ThrowsExactly<ArgumentNullException>(() => "".ThrowIfEmpty("p"));
 	}
 
 	[TestMethod]
@@ -471,8 +471,8 @@ public class StringTests : BaseTestClass
 		s.IsEqualTo(null).AssertFalse();
 
 		// ThrowIfEmpty
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((SecureString)null).ThrowIfEmpty("p"));
-		Assert.ThrowsExactly<ArgumentNullException>(() => new SecureString().ThrowIfEmpty("p"));
+		ThrowsExactly<ArgumentNullException>(() => ((SecureString)null).ThrowIfEmpty("p"));
+		ThrowsExactly<ArgumentNullException>(() => new SecureString().ThrowIfEmpty("p"));
 	}
 
 	[TestMethod]

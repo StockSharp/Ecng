@@ -112,7 +112,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 	{
 		var tracker = new ConnectionStateTracker();
 
-		return Assert.ThrowsExactlyAsync<InvalidOperationException>(()
+		return ThrowsExactlyAsync<InvalidOperationException>(()
 			=> tracker.ConnectAsync(CancellationToken).AsTask());
 	}
 
@@ -453,7 +453,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 		tracker.Add(conn);
 
 		// Adding same connection twice should throw ArgumentException
-		Assert.ThrowsExactly<ArgumentException>(() => tracker.Add(conn));
+		ThrowsExactly<ArgumentException>(() => tracker.Add(conn));
 	}
 
 	[TestMethod]
@@ -602,7 +602,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 	{
 		var tracker = new ConnectionStateTracker();
 
-		Assert.ThrowsExactly<ArgumentNullException>(() => tracker.Add(null));
+		ThrowsExactly<ArgumentNullException>(() => tracker.Add(null));
 	}
 
 	[TestMethod]
@@ -610,7 +610,7 @@ public class ConnectionStateTrackerTests : BaseTestClass
 	{
 		var tracker = new ConnectionStateTracker();
 
-		Assert.ThrowsExactly<ArgumentNullException>(() => tracker.Remove(null));
+		ThrowsExactly<ArgumentNullException>(() => tracker.Remove(null));
 	}
 
 	[TestMethod]

@@ -1,10 +1,10 @@
-п»їnamespace Ecng.Tests.Common;
+namespace Ecng.Tests.Common;
 
 [TestClass]
-public class MathHelperTest
+public class MathHelperTest : BaseTestClass
 {
-	const double deltad = 0.00001d;
-	const float  deltaf = 0.00001f;
+	const double _deltad = 0.00001d;
+	const float  _deltaf = 0.00001f;
 
 	[TestMethod]
 	public void Floor()
@@ -13,10 +13,10 @@ public class MathHelperTest
 		(-0.5).Floor().AssertEqual(-1);
 
 		( 10.1).Floor(0.2).AssertEqual(10);
-		(-10.1).Floor(0.2).AssertEqual(-10.2d, deltad);
+		(-10.1).Floor(0.2).AssertEqual(-10.2d, _deltad);
 
-		( 10.1f).Floor(0.2f).AssertEqual(10f, deltaf);
-		(-10.1f).Floor(0.2f).AssertEqual(-10.2f, deltaf);
+		( 10.1f).Floor(0.2f).AssertEqual(10f, _deltaf);
+		(-10.1f).Floor(0.2f).AssertEqual(-10.2f, _deltaf);
 
 		( 11).Floor(2).AssertEqual(10);
 		(-11).Floor(2).AssertEqual(-12);
@@ -444,7 +444,7 @@ public class MathHelperTest
 				throw new OverflowException("Mantissa exceeds long range.");
 
 			mantissa = combined.To<long>();
-			exponent = -fractionalPart.Length; // Р­РєСЃРїРѕРЅРµРЅС‚Р° = -scale
+			exponent = -fractionalPart.Length; // Экспонента = -scale
 		}
 		else
 		{
@@ -500,11 +500,11 @@ public class MathHelperTest
 		var info = value.GetDecimalInfo();
 		var (parsedMantissa, parsedExponent) = ParseDecimalToMantissaExponent(value);
 
-		// РЎСЂР°РІРЅРµРЅРёРµ СЃ GetDecimalInfo
+		// Сравнение с GetDecimalInfo
 		info.Mantissa.AssertEqual(parsedMantissa);
 		info.Exponent.AssertEqual(parsedExponent);
 
-		// РџСЂРѕРІРµСЂРєР° РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ Р·РЅР°С‡РµРЅРёСЏ
+		// Проверка восстановления значения
 		var reconstructed = MathHelper.ToDecimal(info.Mantissa, info.Exponent);
 		reconstructed.AssertEqual(value);
 
@@ -516,6 +516,6 @@ public class MathHelperTest
 	public void TestOverflowMantissa()
 	{
 		var value = 9999999999999999999999999999m;
-		Assert.ThrowsExactly<OverflowException>(() => value.GetDecimalInfo());
+		ThrowsExactly<OverflowException>(() => value.GetDecimalInfo());
 	}
 }

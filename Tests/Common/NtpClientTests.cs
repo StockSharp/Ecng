@@ -109,13 +109,13 @@ public class NtpClientTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task LocalTimeNull()
+	public Task LocalTimeNull()
 	{
 		if (OperatingSystemEx.IsMacOS())
-			return;
+			return Task.CompletedTask;
 
 		var client = new NtpClient(new IPEndPoint(IPAddress.Loopback, 1));
-		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await client.GetLocalTimeAsync(null, cancellationToken: CancellationToken));
+		return ThrowsExactlyAsync<ArgumentNullException>(() => client.GetLocalTimeAsync(null, cancellationToken: CancellationToken));
 	}
 
 	[TestMethod]

@@ -1,10 +1,10 @@
-﻿namespace Ecng.Tests.ComponentModel;
+namespace Ecng.Tests.ComponentModel;
 
 using Ecng.ComponentModel;
 using Ecng.Serialization;
 
 [TestClass]
-public class RangeTests
+public class RangeTests : BaseTestClass
 {
 	[TestMethod]
 	public void Parse()
@@ -90,7 +90,7 @@ public class RangeTests
 	public void IsEmpty_NullRange_Throws()
 	{
 		Range<int> range = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => range.IsEmpty());
+		ThrowsExactly<ArgumentNullException>(() => range.IsEmpty());
 	}
 
 	[TestMethod]
@@ -407,14 +407,14 @@ public class RangeTests
 	public void ToStorage_NullRange_Throws()
 	{
 		Range<int> range = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => range.ToStorage());
+		ThrowsExactly<ArgumentNullException>(() => range.ToStorage());
 	}
 
 	[TestMethod]
 	public void ToRange_NullStorage_Throws()
 	{
 		SettingsStorage storage = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => storage.ToRange<int>());
+		ThrowsExactly<ArgumentNullException>(() => storage.ToRange<int>());
 	}
 
 	#endregion

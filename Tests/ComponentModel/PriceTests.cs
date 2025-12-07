@@ -1,9 +1,9 @@
-п»їnamespace Ecng.Tests.ComponentModel;
+namespace Ecng.Tests.ComponentModel;
 
 using Ecng.ComponentModel;
 
 [TestClass]
-public class PriceTests
+public class PriceTests : BaseTestClass
 {
 	[TestMethod]
 	public void Parse()
@@ -38,20 +38,20 @@ public class PriceTests
 	[TestMethod]
 	public void InvalidCast()
 	{
-		Assert.ThrowsExactly<InvalidOperationException>(() => ((double)3.Percents()).AssertEqual(0));
+		ThrowsExactly<InvalidOperationException>(() => ((double)3.Percents()).AssertEqual(0));
 	}
 
 	//[TestMethod]
-	//[ExpectedException(typeof(ArgumentException), "Р•РґРёРЅРёС†Р° РёР·РјРµСЂРµРЅРёСЏ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ 'Step' С‚Р°Рє РєР°Рє РЅРµ РїРµСЂРµРґР°РЅР° РёРЅС„РѕСЂРјР°С†РёСЏ РѕР± РёРЅСЃС‚СЂСѓРјРµРЅС‚Рµ.")]
+	//[ExpectedException(typeof(ArgumentException), "Единица измерения не может быть 'Step' так как не передана информация об инструменте.")]
 	//public void InvalidParse()
 	//{
-	//    "10С€".ToPriceType(true);
+	//    "10ш".ToPriceType(true);
 	//}
 
 	[TestMethod]
 	public void InvalidParse2()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => "10РЅ".ToPriceType());
+		ThrowsExactly<ArgumentOutOfRangeException>(() => "10н".ToPriceType());
 	}
 
 	[TestMethod]
@@ -66,7 +66,7 @@ public class PriceTests
 	[TestMethod]
 	public void InvalidCompare()
 	{
-		Assert.ThrowsExactly<ArgumentException>(() => (10.Percents() > 10).AssertTrue());
+		ThrowsExactly<ArgumentException>(() => (10.Percents() > 10).AssertTrue());
 	}
 
 	[TestMethod]
@@ -149,13 +149,13 @@ public class PriceTests
 	[TestMethod]
 	public void Empty1()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => "".ToPriceType().AssertNull());
+		ThrowsExactly<ArgumentNullException>(() => "".ToPriceType().AssertNull());
 	}
 
 	[TestMethod]
 	public void Empty2()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).ToPriceType().AssertNull());
+		ThrowsExactly<ArgumentNullException>(() => ((string)null).ToPriceType().AssertNull());
 	}
 
 	[TestMethod]

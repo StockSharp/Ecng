@@ -1,11 +1,9 @@
-ï»¿namespace Ecng.Tests.Interop;
-
-using System.Text;
+namespace Ecng.Tests.Interop;
 
 using Ecng.Interop;
 
 [TestClass]
-public class AsciiStringTests
+public class AsciiStringTests : BaseTestClass
 {
 	[TestMethod]
 	public void WriteAndReadAsciiString1()
@@ -88,7 +86,7 @@ public class AsciiStringTests
 	public void WriteStringTooLongForAsciiString16()
 	{
 		var value = "This string is too long for AsciiString16!";
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
+		ThrowsExactly<ArgumentOutOfRangeException>(() =>
 		{
 			var s = (AsciiString16)value;
 		});
@@ -114,7 +112,7 @@ public class AsciiStringTests
 	[TestMethod]
 	public void WriteAndReadNonAsciiCharacters()
 	{
-		var value = "HelloÂ©World"; // Contains non-ASCII character Â©
+		var value = "Hello©World"; // Contains non-ASCII character ©
 		var str16 = (AsciiString16)value;
 		unsafe
 		{

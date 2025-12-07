@@ -1,4 +1,4 @@
-﻿namespace Ecng.Tests.ComponentModel;
+namespace Ecng.Tests.ComponentModel;
 
 using Ecng.ComponentModel;
 
@@ -130,19 +130,19 @@ public class MemoryPoolTests : BaseTestClass
 	[TestMethod]
 	public void AllocateNegativeLength()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => _pool.Rent(-2));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => _pool.Rent(-2));
 	}
 
 	[TestMethod]
 	public void MaxPerLengthZero()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => _pool.MaxPerLength = 0);
+		ThrowsExactly<ArgumentOutOfRangeException>(() => _pool.MaxPerLength = 0);
 	}
 
 	[TestMethod]
 	public void MaxCountZero()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => _pool.MaxCount = 0);
+		ThrowsExactly<ArgumentOutOfRangeException>(() => _pool.MaxCount = 0);
 	}
 
 	[TestMethod]

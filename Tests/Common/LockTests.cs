@@ -1,12 +1,7 @@
 namespace Ecng.Tests.Common;
 
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
 [TestClass]
-public class LockTests
+public class LockTests : BaseTestClass
 {
 	[TestMethod]
 	public void EnterExit_MutualExclusion()
@@ -100,7 +95,7 @@ public class LockTests
 	public void Exit_WithoutOwnership_Throws()
 	{
 		var l = new System.Threading.Lock();
-		Assert.ThrowsExactly<SynchronizationLockException>(() => l.Exit());
+		ThrowsExactly<SynchronizationLockException>(() => l.Exit());
 	}
 
 	[TestMethod]

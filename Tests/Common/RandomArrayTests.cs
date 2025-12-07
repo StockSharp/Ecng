@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Common;
 
 [TestClass]
-public class RandomArrayTests
+public class RandomArrayTests : BaseTestClass
 {
 	[TestMethod]
 	public void Count_Doubles()
@@ -118,7 +118,7 @@ public class RandomArrayTests
 	public void MinGreaterThanMax_ThrowsArgumentException()
 	{
 		// Arrange & Act & Assert
-		Assert.ThrowsExactly<ArgumentException>(() => new RandomArray<int>(20, 10, 100));
+		ThrowsExactly<ArgumentException>(() => new RandomArray<int>(20, 10, 100));
 	}
 
 	[TestMethod]

@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Common;
 
 [TestClass]
-public class ArrayHelperTests
+public class ArrayHelperTests : BaseTestClass
 {
 	[TestMethod]
 	public void ClearArray()
@@ -65,14 +65,14 @@ public class ArrayHelperTests
 	public void ClearThrowsOnNull()
 	{
 		int[] arr = null;
-		Assert.ThrowsExactly<ArgumentNullException>(arr.Clear);
+		ThrowsExactly<ArgumentNullException>(arr.Clear);
 	}
 
 	[TestMethod]
 	public void ConcatThrowsOnNull()
 	{
 		int[] a = null, b = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => a.Concat([]));
-		Assert.ThrowsExactly<ArgumentNullException>(() => Array.Empty<int>().Concat(b));
+		ThrowsExactly<ArgumentNullException>(() => a.Concat([]));
+		ThrowsExactly<ArgumentNullException>(() => Array.Empty<int>().Concat(b));
 	}
 }

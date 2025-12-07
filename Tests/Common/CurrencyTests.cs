@@ -1,7 +1,7 @@
-﻿namespace Ecng.Tests.Common;
+namespace Ecng.Tests.Common;
 
 [TestClass]
-public class CurrencyTests
+public class CurrencyTests : BaseTestClass
 {
 	[TestMethod]
 	public void CheckCrypto()
@@ -23,7 +23,7 @@ public class CurrencyTests
 		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
 		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-		Assert.ThrowsExactly<InvalidOperationException>(() => (v1 * v2).AssertEqual(null));
+		ThrowsExactly<InvalidOperationException>(() => (v1 * v2).AssertEqual(null));
 	}
 
 	[TestMethod]
@@ -32,7 +32,7 @@ public class CurrencyTests
 		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
 		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-		Assert.ThrowsExactly<InvalidOperationException>(() => (v1 - v2).AssertEqual(null));
+		ThrowsExactly<InvalidOperationException>(() => (v1 - v2).AssertEqual(null));
 	}
 
 	[TestMethod]
@@ -41,7 +41,7 @@ public class CurrencyTests
 		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
 		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-		Assert.ThrowsExactly<InvalidOperationException>(() => (v1 + v2).AssertEqual(null));
+		ThrowsExactly<InvalidOperationException>(() => (v1 + v2).AssertEqual(null));
 	}
 
 	[TestMethod]
@@ -50,7 +50,7 @@ public class CurrencyTests
 		var v1 = 10m.ToCurrency(CurrencyTypes.USD);
 		var v2 = 1.8m.ToCurrency(CurrencyTypes.EUR);
 
-		Assert.ThrowsExactly<InvalidOperationException>(() => (v1 / v2).AssertEqual(null));
+		ThrowsExactly<InvalidOperationException>(() => (v1 / v2).AssertEqual(null));
 	}
 
 	[TestMethod]

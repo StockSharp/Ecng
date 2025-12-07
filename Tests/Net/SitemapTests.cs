@@ -6,7 +6,7 @@ using System.Xml.Linq;
 using Ecng.Net.Sitemap;
 
 [TestClass]
-public class SitemapTests
+public class SitemapTests : BaseTestClass
 {
 	#region SitemapNode Basic Tests
 
@@ -27,8 +27,8 @@ public class SitemapTests
 	[TestMethod]
 	public void Node_Constructor_EmptyUrl_ThrowsArgumentNullException()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => new SitemapNode(""));
-		Assert.ThrowsExactly<ArgumentNullException>(() => new SitemapNode(null));
+		ThrowsExactly<ArgumentNullException>(() => new SitemapNode(""));
+		ThrowsExactly<ArgumentNullException>(() => new SitemapNode(null));
 	}
 
 	[TestMethod]
@@ -54,10 +54,10 @@ public class SitemapTests
 	{
 		var node = new SitemapNode("https://example.com");
 
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => node.Priority = -0.1);
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => node.Priority = 1.1);
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => node.Priority = -1.0);
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => node.Priority = 2.0);
+		ThrowsExactly<ArgumentOutOfRangeException>(() => node.Priority = -0.1);
+		ThrowsExactly<ArgumentOutOfRangeException>(() => node.Priority = 1.1);
+		ThrowsExactly<ArgumentOutOfRangeException>(() => node.Priority = -1.0);
+		ThrowsExactly<ArgumentOutOfRangeException>(() => node.Priority = 2.0);
 	}
 
 	[TestMethod]
@@ -128,15 +128,15 @@ public class SitemapTests
 	[TestMethod]
 	public void XhtmlLink_Constructor_InvalidHref_ThrowsException()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => new XhtmlLink(null, "fr"));
-		Assert.ThrowsExactly<ArgumentNullException>(() => new XhtmlLink("", "fr"));
+		ThrowsExactly<ArgumentNullException>(() => new XhtmlLink(null, "fr"));
+		ThrowsExactly<ArgumentNullException>(() => new XhtmlLink("", "fr"));
 	}
 
 	[TestMethod]
 	public void XhtmlLink_Constructor_InvalidHreflang_ThrowsException()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => new XhtmlLink("https://example.com", null));
-		Assert.ThrowsExactly<ArgumentNullException>(() => new XhtmlLink("https://example.com", ""));
+		ThrowsExactly<ArgumentNullException>(() => new XhtmlLink("https://example.com", null));
+		ThrowsExactly<ArgumentNullException>(() => new XhtmlLink("https://example.com", ""));
 	}
 
 	[TestMethod]
@@ -723,7 +723,7 @@ public class SitemapTests
 	[TestMethod]
 	public void Count_ExceedsMaximum_ThrowsArgumentOutOfRangeException()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => 
+		ThrowsExactly<ArgumentOutOfRangeException>(() => 
 			SitemapGenerator.CheckSitemapCount(SitemapGenerator.MaximumSitemapCount + 1));
 	}
 
@@ -738,7 +738,7 @@ public class SitemapTests
 	[TestMethod]
 	public void DocumentSize_ExceedsMaximum_ThrowsArgumentOutOfRangeException()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => 
+		ThrowsExactly<ArgumentOutOfRangeException>(() => 
 			SitemapGenerator.CheckDocumentSize(SitemapGenerator.MaximumSitemapSizeInBytes));
 	}
 
@@ -752,7 +752,7 @@ public class SitemapTests
 			nodes.Add(new SitemapNode($"https://example.com/page{i}"));
 		}
 
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => 
+		ThrowsExactly<ArgumentOutOfRangeException>(() => 
 			SitemapGenerator.GenerateSitemap(nodes));
 	}
 

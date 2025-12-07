@@ -1,11 +1,11 @@
-﻿namespace Ecng.Tests.ComponentModel;
+namespace Ecng.Tests.ComponentModel;
 
 using System.Text;
 
 using Ecng.ComponentModel;
 
 [TestClass]
-public class CodeGenTests
+public class CodeGenTests : BaseTestClass
 {
 	[TestMethod]
 	public void CodeGen()
@@ -38,7 +38,7 @@ public class CodeGenTests
 			.AddLine("{")
 			.AddLine("}");
 
-		Assert.ThrowsExactly<InvalidOperationException>(() => visitor.AddLine("}"));
+		ThrowsExactly<InvalidOperationException>(() => visitor.AddLine("}"));
 	}
 
 	[TestMethod]
@@ -48,7 +48,7 @@ public class CodeGenTests
 
 		ICodeGenVisitor visitor = new StringBuilderCodeGenVisitor(sb);
 
-		Assert.ThrowsExactly<InvalidOperationException>(() => visitor.AddLine("}"));
+		ThrowsExactly<InvalidOperationException>(() => visitor.AddLine("}"));
 	}
 
 	[TestMethod]

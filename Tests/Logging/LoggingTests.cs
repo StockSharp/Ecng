@@ -3,7 +3,7 @@ namespace Ecng.Tests.Logging;
 using Ecng.Logging;
 
 [TestClass]
-public class LoggingTests
+public class LoggingTests : BaseTestClass
 {
 	private class GuardedReceiver : BaseLogReceiver
 	{
@@ -47,7 +47,7 @@ public class LoggingTests
 
 		// Act: close the cycle C -> A (should be blocked by proper cycle detection)
 		// Current implementation allows this and does not throw.
-		Assert.ThrowsExactly<ArgumentException>(() => c.Parent = a);
+		ThrowsExactly<ArgumentException>(() => c.Parent = a);
 
 		// Assert: cycle is created (reproduces the bug)
 		a.Parent.AssertSame(b);
@@ -67,7 +67,7 @@ public class LoggingTests
 		b.Parent = c;
 
 		// create cycle
-		Assert.ThrowsExactly<ArgumentException>(() => c.Parent = a);
+		ThrowsExactly<ArgumentException>(() => c.Parent = a);
 
 		var msg = new LogMessage(a, DateTime.UtcNow, LogLevels.Info, "x");
 
@@ -92,7 +92,7 @@ public class LoggingTests
 		var result = messages.Filter(filters);
 
 		// Should return the original enumerable instance when filters are empty
-		Assert.AreSame(messages, result);
+		result.AssertSame(messages);
 		messages.Count().AssertEqual(result.Count());
 	}
 

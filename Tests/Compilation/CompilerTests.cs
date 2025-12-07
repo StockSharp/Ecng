@@ -1,4 +1,4 @@
-﻿namespace Ecng.Tests.Compilation;
+namespace Ecng.Tests.Compilation;
 
 using Ecng.Compilation;
 using Ecng.Compilation.FSharp;
@@ -21,7 +21,7 @@ public class CompilerTests : BaseTestClass
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
-			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+			Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 	}
@@ -45,7 +45,7 @@ public class CompilerTests : BaseTestClass
 		cts.Cancel();
 
 		ICompiler compiler = new CSharpCompiler();
-		return Assert.ThrowsExactlyAsync<OperationCanceledException>(()
+		return ThrowsExactlyAsync<OperationCanceledException>(()
 			=> compiler.Compile("test", "class Class1 {",
 			[
 				_coreLibPath,
@@ -62,7 +62,7 @@ public class CompilerTests : BaseTestClass
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
-			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+			Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 		res.Errors.Any(e => e.Type == CompilationErrorTypes.Warning).AssertTrue();
@@ -89,7 +89,7 @@ public class CompilerTests : BaseTestClass
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
-			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+			Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 	}
@@ -104,7 +104,7 @@ public class CompilerTests : BaseTestClass
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
-			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+			Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 		res.Errors.Any(e => e.Type == CompilationErrorTypes.Warning).AssertTrue();
@@ -119,7 +119,7 @@ public class CompilerTests : BaseTestClass
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
-			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+			Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 	}
@@ -148,7 +148,7 @@ public class CompilerTests : BaseTestClass
 		if (res.HasErrors())
 		{
 			var errors = res.Errors.Select(e => $"{e.Type}: {e.Message}").ToArray();
-			Assert.Fail($"Compilation errors:\n{errors.JoinNL()}");
+			Fail($"Compilation errors:\n{errors.JoinNL()}");
 		}
 		res.GetAssembly(compiler.CreateContext()).AssertNotNull();
 	}

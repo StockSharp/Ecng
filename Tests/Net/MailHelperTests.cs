@@ -13,8 +13,8 @@ public class MailHelperTests : BaseTestClass
 	public Task Send_Null_Throws()
 	{
 		MailMessage msg = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => msg.Send());
-		return Assert.ThrowsExactlyAsync<ArgumentNullException>(() => msg.SendAsync(CancellationToken));
+		ThrowsExactly<ArgumentNullException>(() => msg.Send());
+		return ThrowsExactlyAsync<ArgumentNullException>(() => msg.SendAsync(CancellationToken));
 	}
 
 	[TestMethod]
@@ -40,7 +40,7 @@ public class MailHelperTests : BaseTestClass
 		"plainaddress".IsEmailValid().AssertFalse();
 
 		string email = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => email.IsEmailValid());
+		ThrowsExactly<ArgumentNullException>(() => email.IsEmailValid());
 	}
 
 	[TestMethod]
@@ -112,7 +112,7 @@ public class MailHelperTests : BaseTestClass
 	public void ToAttachment_EmptyFileName_Throws()
 	{
 		using var ms = new MemoryStream("x".UTF8());
-		Assert.ThrowsExactly<ArgumentNullException>(() => MailHelper.ToAttachment("", ms));
+		ThrowsExactly<ArgumentNullException>(() => MailHelper.ToAttachment("", ms));
 	}
 
 	[TestMethod]
@@ -120,7 +120,7 @@ public class MailHelperTests : BaseTestClass
 	{
 		using var ms = new MemoryStream("x".UTF8());
 		// SevenBit is not supported by CreateAttachment switch -> should throw
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => MailHelper.CreateAttachment(ms, "a.txt", System.Net.Mime.TransferEncoding.SevenBit));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => MailHelper.CreateAttachment(ms, "a.txt", System.Net.Mime.TransferEncoding.SevenBit));
 	}
 
 	[TestMethod]
@@ -141,6 +141,6 @@ public class MailHelperTests : BaseTestClass
 	{
 		MailMessage msg = null;
 		using var ms = new MemoryStream("x".UTF8());
-		Assert.ThrowsExactly<ArgumentNullException>(() => MailHelper.Attach(msg, "file.txt", ms));
+		ThrowsExactly<ArgumentNullException>(() => MailHelper.Attach(msg, "file.txt", ms));
 	}
 }

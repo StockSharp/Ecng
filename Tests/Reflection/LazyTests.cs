@@ -4,7 +4,7 @@ namespace Ecng.Tests.Reflection;
 using Ecng.Reflection;
 
 [TestClass]
-public class LazyTests
+public class LazyTests : BaseTestClass
 {
 	[TestMethod]
 	public void TrackReset()
@@ -42,7 +42,7 @@ public class LazyTests
 		lazy.Reset();
 		lazy.Value.AssertEqual(2);
 		lazy.Untrack();
-		Assert.ThrowsExactly<KeyNotFoundException>(() => lazy.Reset());
+		ThrowsExactly<KeyNotFoundException>(() => lazy.Reset());
 		lazy.Value.AssertEqual(2);
 	}
 }

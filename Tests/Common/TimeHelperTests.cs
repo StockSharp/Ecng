@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Common;
 
 [TestClass]
-public class TimeHelperTests
+public class TimeHelperTests : BaseTestClass
 {
 	[TestMethod]
 	public void Microseconds()
@@ -81,7 +81,7 @@ public class TimeHelperTests
 	{
 		var dt = DateTime.MinValue;
 		dt = dt.UtcKind();
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => dt.ToUnix());
+		ThrowsExactly<ArgumentOutOfRangeException>(() => dt.ToUnix());
 	}
 
 	[TestMethod]
@@ -287,7 +287,7 @@ public class TimeHelperTests
 		var start = new DateTime(2024, 1, 1);
 		var end = new DateTime(2024, 1, 5);
 
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
+		ThrowsExactly<ArgumentOutOfRangeException>(() =>
 			start.Range(end, TimeSpan.Zero).ToList());
 	}
 
@@ -373,7 +373,7 @@ public class TimeHelperTests
 	[TestMethod]
 	public void ToDateTimeInvalidTest()
 	{
-		Assert.ThrowsExactly<InvalidCastException>(() =>
+		ThrowsExactly<InvalidCastException>(() =>
 			"invalid".ToDateTime("yyyy-MM-dd"));
 	}
 
@@ -494,7 +494,7 @@ public class TimeHelperTests
 	public void ApplyTimeZoneNullTest()
 	{
 		var dt = new DateTime(2024, 1, 15, 14, 30, 0);
-		Assert.ThrowsExactly<ArgumentNullException>(() => dt.ApplyTimeZone((TimeZoneInfo)null));
+		ThrowsExactly<ArgumentNullException>(() => dt.ApplyTimeZone((TimeZoneInfo)null));
 	}
 
 	[TestMethod]
@@ -604,7 +604,7 @@ public class TimeHelperTests
 	[TestMethod]
 	public void IsDateTimeNullTest()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((Type)null).IsDateTime());
+		ThrowsExactly<ArgumentNullException>(() => ((Type)null).IsDateTime());
 	}
 
 	[TestMethod]
@@ -709,7 +709,7 @@ public class TimeHelperTests
 	public void ToDateTimeOffsetNullZoneTest()
 	{
 		var dt = new DateTime(2024, 1, 15, 14, 30, 0);
-		Assert.ThrowsExactly<ArgumentNullException>(() => dt.ToDateTimeOffset((TimeZoneInfo)null));
+		ThrowsExactly<ArgumentNullException>(() => dt.ToDateTimeOffset((TimeZoneInfo)null));
 	}
 
 	[TestMethod]
@@ -1305,7 +1305,7 @@ public class TimeHelperTests
 		var start = new DateTime(2024, 1, 1);
 		var end = new DateTime(2024, 1, 5);
 
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
+		ThrowsExactly<ArgumentOutOfRangeException>(() =>
 			start.Range(end, TimeSpan.Zero).ToList());
 	}
 
@@ -1315,7 +1315,7 @@ public class TimeHelperTests
 		var start = new DateTime(2024, 1, 1);
 		var end = new DateTime(2024, 1, 5);
 
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
+		ThrowsExactly<ArgumentOutOfRangeException>(() =>
 			start.Range(end, TimeSpan.FromDays(-1)).ToList());
 	}
 
@@ -1437,10 +1437,10 @@ public class TimeHelperTests
 	[TestMethod]
 	public void ToDateTime_WithInvalidString_ShouldThrowInvalidCastException()
 	{
-		Assert.ThrowsExactly<InvalidCastException>(() =>
+		ThrowsExactly<InvalidCastException>(() =>
 			"not-a-date".ToDateTime("yyyy-MM-dd"));
 
-		Assert.ThrowsExactly<InvalidCastException>(() =>
+		ThrowsExactly<InvalidCastException>(() =>
 			"2024-13-01".ToDateTime("yyyy-MM-dd")); // Invalid month
 	}
 
@@ -1519,7 +1519,7 @@ public class TimeHelperTests
 	public void ToDateTimeOffset_WithNullZone_ShouldThrow()
 	{
 		var dt = new DateTime(2024, 6, 15, 12, 0, 0);
-		Assert.ThrowsExactly<ArgumentNullException>(() =>
+		ThrowsExactly<ArgumentNullException>(() =>
 			dt.ToDateTimeOffset((TimeZoneInfo)null));
 	}
 
@@ -1555,7 +1555,7 @@ public class TimeHelperTests
 	public void ApplyTimeZone_WithNullZone_ShouldThrow()
 	{
 		var dt = new DateTime(2024, 6, 15, 12, 0, 0);
-		Assert.ThrowsExactly<ArgumentNullException>(() =>
+		ThrowsExactly<ArgumentNullException>(() =>
 			dt.ApplyTimeZone((TimeZoneInfo)null));
 	}
 
@@ -1675,7 +1675,7 @@ public class TimeHelperTests
 	public void ToUnix_BeforeGregorianStart_ShouldThrow()
 	{
 		var dt = new DateTime(1969, 12, 31, 23, 59, 59, DateTimeKind.Utc);
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => dt.ToUnix());
+		ThrowsExactly<ArgumentOutOfRangeException>(() => dt.ToUnix());
 	}
 
 	[TestMethod]
@@ -1792,7 +1792,7 @@ public class TimeHelperTests
 	[TestMethod]
 	public void IsDateTime_WithNull_ShouldThrow()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() =>
+		ThrowsExactly<ArgumentNullException>(() =>
 			((Type)null).IsDateTime());
 	}
 

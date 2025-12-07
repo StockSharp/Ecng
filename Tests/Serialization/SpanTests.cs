@@ -1,4 +1,4 @@
-﻿namespace Ecng.Tests.Serialization;
+namespace Ecng.Tests.Serialization;
 
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -6,7 +6,7 @@ using System.Text;
 using Ecng.Serialization;
 
 [TestClass]
-public class SpanTests
+public class SpanTests : BaseTestClass
 {
 	private struct TestStruct
 	{
@@ -583,7 +583,7 @@ public class SpanTests
 		try
 		{
 			writer.Skip(-1);
-			Assert.Fail("Expected ArgumentOutOfRangeException for writer.Skip(-1)");
+			Fail("Expected ArgumentOutOfRangeException for writer.Skip(-1)");
 		}
 		catch (ArgumentOutOfRangeException)
 		{
@@ -594,7 +594,7 @@ public class SpanTests
 		try
 		{
 			reader.Skip(-1);
-			Assert.Fail("Expected ArgumentOutOfRangeException for reader.Skip(-1)");
+			Fail("Expected ArgumentOutOfRangeException for reader.Skip(-1)");
 		}
 		catch (ArgumentOutOfRangeException)
 		{
@@ -643,7 +643,7 @@ public class SpanTests
 		try
 		{
 			writer.Skip(3);
-			Assert.Fail("Expected ArgumentOutOfRangeException for writer.Skip(3)");
+			Fail("Expected ArgumentOutOfRangeException for writer.Skip(3)");
 		}
 		catch (ArgumentOutOfRangeException)
 		{
@@ -655,7 +655,7 @@ public class SpanTests
 		try
 		{
 			writer.Skip(-2); // would go to -1
-			Assert.Fail("Expected ArgumentOutOfRangeException for writer.Skip(-2)");
+			Fail("Expected ArgumentOutOfRangeException for writer.Skip(-2)");
 		}
 		catch (ArgumentOutOfRangeException)
 		{
@@ -671,7 +671,7 @@ public class SpanTests
 		try
 		{
 			reader.Skip(3);
-			Assert.Fail("Expected ArgumentOutOfRangeException for reader.Skip(3)");
+			Fail("Expected ArgumentOutOfRangeException for reader.Skip(3)");
 		}
 		catch (ArgumentOutOfRangeException)
 		{
@@ -683,7 +683,7 @@ public class SpanTests
 		try
 		{
 			reader.Skip(-2);
-			Assert.Fail("Expected ArgumentOutOfRangeException for reader.Skip(-2)");
+			Fail("Expected ArgumentOutOfRangeException for reader.Skip(-2)");
 		}
 		catch (ArgumentOutOfRangeException)
 		{

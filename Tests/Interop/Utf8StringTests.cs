@@ -1,11 +1,9 @@
 ﻿namespace Ecng.Tests.Interop;
 
-using System.Text;
-
 using Ecng.Interop;
 
 [TestClass]
-public class Utf8StringTests
+public class Utf8StringTests : BaseTestClass
 {
 	[TestMethod]
 	public void WriteAndReadUtf8String1()
@@ -88,7 +86,7 @@ public class Utf8StringTests
 	public void WriteStringTooLongForUtf8String16()
 	{
 		var value = "This string is too long for Utf8String16!";
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
+		ThrowsExactly<ArgumentOutOfRangeException>(() =>
 		{
 			var s = (Utf8String16)value;
 		});

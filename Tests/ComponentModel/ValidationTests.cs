@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using Ecng.ComponentModel;
 
 [TestClass]
-public class ValidationTests
+public class ValidationTests : BaseTestClass
 {
 	[TestMethod]
 	public void GreaterThanZero_Int()
@@ -379,8 +379,8 @@ public class ValidationTests
 	[TestMethod]
 	public void Step_NegativeStepRejected()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new StepAttribute(0m));
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new StepAttribute(-1m));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => new StepAttribute(0m));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => new StepAttribute(-1m));
 	}
 
 	[TestMethod]
@@ -559,9 +559,9 @@ public class ValidationTests
 	[TestMethod]
 	public void TimeSpanStep_StringCtor_Invalid()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => new TimeSpanStepAttribute(null));
-		Assert.ThrowsExactly<ArgumentNullException>(() => new TimeSpanStepAttribute(" "));
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new TimeSpanStepAttribute("00:00:00")); // zero step
+		ThrowsExactly<ArgumentNullException>(() => new TimeSpanStepAttribute(null));
+		ThrowsExactly<ArgumentNullException>(() => new TimeSpanStepAttribute(" "));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => new TimeSpanStepAttribute("00:00:00")); // zero step
 	}
 
 	[TestMethod]
@@ -713,7 +713,7 @@ public class ValidationTests
 	[TestMethod]
 	public void PriceRange_InvalidConstructor()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new PriceRangeAttribute(10m, 1m));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => new PriceRangeAttribute(10m, 1m));
 	}
 
 	[TestMethod]
@@ -748,7 +748,7 @@ public class ValidationTests
 	[TestMethod]
 	public void TimeSpanRange_InvalidConstructor()
 	{
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new TimeSpanRangeAttribute(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(1)));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => new TimeSpanRangeAttribute(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(1)));
 	}
 
 	private sealed class AttrEntity : IAttributesEntity

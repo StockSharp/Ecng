@@ -1888,7 +1888,7 @@ public class CollectionHelperTests : BaseTestClass
 	public void DuckTypingCollection_NullSource_ThrowsException()
 	{
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() =>
+		ThrowsExactly<ArgumentNullException>(() =>
 		{
 			CollectionHelper.AsDuckTypedCollection<int, string>(
 				null,
@@ -1905,7 +1905,7 @@ public class CollectionHelperTests : BaseTestClass
 		var numbers = new List<int>();
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() =>
+		ThrowsExactly<ArgumentNullException>(() =>
 		{
 			numbers.AsDuckTypedCollection<int, string>(
 				null,
@@ -1921,7 +1921,7 @@ public class CollectionHelperTests : BaseTestClass
 		var numbers = new List<int>();
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() =>
+		ThrowsExactly<ArgumentNullException>(() =>
 		{
 			numbers.AsDuckTypedCollection<int, string>(
 				n => n.ToString(),

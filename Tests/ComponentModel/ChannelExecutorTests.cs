@@ -100,7 +100,7 @@ public class ChannelExecutorTests : BaseTestClass
 		var cts = new CancellationTokenSource();
 		cts.Cancel();
 
-		await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+		await ThrowsAsync<OperationCanceledException>(async () =>
 			await executor.AddAsync(() => { }, cts.Token));
 	}
 
@@ -141,7 +141,7 @@ public class ChannelExecutorTests : BaseTestClass
 
 		await executor.WaitFlushAsync(token);
 
-		Assert.IsTrue(executed);
+		executed.AssertTrue();
 	}
 
 	[TestMethod]
@@ -173,7 +173,7 @@ public class ChannelExecutorTests : BaseTestClass
 		await using var executor = CreateChannel();
 		_ = executor.RunAsync(token);
 
-		await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
+		await ThrowsExactlyAsync<InvalidOperationException>(async () =>
 			await executor.RunAsync(token));
 	}
 
@@ -224,8 +224,8 @@ public class ChannelExecutorTests : BaseTestClass
 		await using var executor = CreateChannel();
 		_ = executor.RunAsync(token);
 
-		Assert.ThrowsExactly<ArgumentNullException>(() => executor.Add(null));
-		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await executor.AddAsync(null, token));
+		ThrowsExactly<ArgumentNullException>(() => executor.Add(null));
+		await ThrowsExactlyAsync<ArgumentNullException>(async () => await executor.AddAsync(null, token));
 	}
 
 	[TestMethod]
@@ -237,7 +237,7 @@ public class ChannelExecutorTests : BaseTestClass
 		_ = executor.RunAsync(token);
 		await executor.DisposeAsync();
 
-		Assert.ThrowsExactly<InvalidOperationException>(() =>
+		ThrowsExactly<InvalidOperationException>(() =>
 			executor.Add(() => { }));
 	}
 
@@ -290,7 +290,7 @@ public class ChannelExecutorTests : BaseTestClass
 		var cts = new CancellationTokenSource();
 		cts.Cancel();
 
-		await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+		await ThrowsAsync<OperationCanceledException>(async () =>
 			await executor.WaitFlushAsync(cts.Token));
 	}
 
@@ -487,7 +487,7 @@ public class ChannelExecutorTests : BaseTestClass
 		var expectedException = new InvalidOperationException("Test error");
 
 		// AddAndWaitAsync should propagate the exception through the Task
-		var thrownException = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+		var thrownException = await ThrowsAsync<InvalidOperationException>(async () =>
 			await executor.AddAndWaitAsync(() => throw expectedException, token));
 
 		// Exception is propagated to both errorHandler and through TaskCompletionSource
@@ -560,7 +560,7 @@ public class ChannelExecutorTests : BaseTestClass
 		var cts = new CancellationTokenSource();
 		cts.Cancel();
 
-		await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+		await ThrowsAsync<OperationCanceledException>(async () =>
 			await executor.AddAndWaitAsync(() => { }, cts.Token));
 	}
 
@@ -572,7 +572,7 @@ public class ChannelExecutorTests : BaseTestClass
 		await using var executor = CreateChannel();
 		_ = executor.RunAsync(token);
 
-		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () =>
+		await ThrowsExactlyAsync<ArgumentNullException>(async () =>
 			await executor.AddAndWaitAsync(null, token));
 	}
 

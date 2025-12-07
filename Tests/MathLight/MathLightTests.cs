@@ -1,10 +1,10 @@
-п»їnamespace Ecng.Tests.MathLight;
+namespace Ecng.Tests.MathLight;
 
 using Ecng.MathLight;
 using Ecng.MathLight.LinearAlgebra;
 
 [TestClass]
-public class MathLightTests
+public class MathLightTests : BaseTestClass
 {
 	[TestMethod]
 	public void Normal_Evaluate_Basic()
@@ -18,7 +18,7 @@ public class MathLightTests
 	public void Normal_Evaluate_EmptyOrNull()
 	{
 		Normal.Evaluate(5).AssertEqual(0);
-		Assert.ThrowsExactly<ArgumentNullException>(() => Normal.Evaluate(1, null));
+		ThrowsExactly<ArgumentNullException>(() => Normal.Evaluate(1, null));
 	}
 
 	[TestMethod]
@@ -104,47 +104,47 @@ public class MathLightTests
 	[TestMethod]
 	public void Matrix_EdgeCases_And_Exceptions()
 	{
-		// РќРµСЃРѕРІРјРµСЃС‚РёРјС‹Рµ СЂР°Р·РјРµСЂС‹ РґР»СЏ Product
+		// Несовместимые размеры для Product
 		double[,] a = new double[2, 3];
 		double[,] b = new double[4, 2];
-		Assert.ThrowsExactly<ArgumentException>(() => a.Product(b));
+		ThrowsExactly<ArgumentException>(() => a.Product(b));
 
-		// Identity РЅР° РЅРµ РєРІР°РґСЂР°С‚РЅРѕР№ РјР°С‚СЂРёС†Рµ
+		// Identity на не квадратной матрице
 		var m = new double[2, 3];
-		Assert.ThrowsExactly<ArgumentException>(m.Identity);
+		ThrowsExactly<ArgumentException>(m.Identity);
 
-		// GetRow/GetColumn РІРЅРµ РґРёР°РїР°Р·РѕРЅР°
+		// GetRow/GetColumn вне диапазона
 		var mat = new double[2, 2];
-		Assert.ThrowsExactly<ArgumentException>(() => mat.GetRow(-1).ToArray());
-		Assert.ThrowsExactly<ArgumentException>(() => mat.GetColumn(2).ToArray());
+		ThrowsExactly<ArgumentException>(() => mat.GetRow(-1).ToArray());
+		ThrowsExactly<ArgumentException>(() => mat.GetColumn(2).ToArray());
 	}
 
 	[TestMethod]
 	public void LUDecomposition_SingularMatrix_Throws()
 	{
-		// РЎРёРЅРіСѓР»СЏСЂРЅР°СЏ РјР°С‚СЂРёС†Р° (РЅСѓР»РµРІР°СЏ СЃС‚СЂРѕРєР°)
+		// Сингулярная матрица (нулевая строка)
 		double[,] m = { { 1, 2 }, { 0, 0 } };
-		Assert.ThrowsExactly<ArgumentException>(() => new LUDecomposition(m));
+		ThrowsExactly<ArgumentException>(() => new LUDecomposition(m));
 	}
 
 	[TestMethod]
 	public void LUDecomposition_NonSquare_Throws()
 	{
 		double[,] m = new double[2, 3];
-		Assert.ThrowsExactly<ArgumentException>(() => new LUDecomposition(m));
+		ThrowsExactly<ArgumentException>(() => new LUDecomposition(m));
 	}
 
 	[TestMethod]
 	public void PolyFit_Constant_And_Linear()
 	{
-		// РљРѕРЅСЃС‚Р°РЅС‚Р°
+		// Константа
 		var x = Enumerable.Range(0, 10).Select(i => (double)i).ToArray();
 		var y = Enumerable.Repeat(5.0, 10).ToArray();
 		var pf = new PolyFit(x, y, 0);
 		var coeff0Diff = (pf.Coeff[0] - 5).Abs();
 		(coeff0Diff < 1e-10).AssertTrue($"coeff0Diff={coeff0Diff} should be <1e-10");
 
-		// Р›РёРЅРµР№РЅР°СЏ С„СѓРЅРєС†РёСЏ
+		// Линейная функция
 		var y2 = x.Select(v => 2 * v + 1).ToArray();
 		var pf2 = new PolyFit(x, y2, 1);
 		var pf2Coeff0Diff = (pf2.Coeff[0] - 1).Abs();
@@ -156,7 +156,7 @@ public class MathLightTests
 	[TestMethod]
 	public void PolyFit_Cubic_And_Noisy()
 	{
-		// РљСѓР±РёС‡РµСЃРєР°СЏ С„СѓРЅРєС†РёСЏ
+		// Кубическая функция
 		var x = Enumerable.Range(-5, 11).Select(i => (double)i).ToArray();
 		var y = x.Select(v => 1 - 2 * v + 0.5 * v * v - 0.1 * v * v * v).ToArray();
 		var pf = new PolyFit(x, y, 3);
@@ -169,7 +169,7 @@ public class MathLightTests
 		var c3Diff = (pf.Coeff[3] + 0.1).Abs();
 		(c3Diff < 1e-8).AssertTrue($"c3Diff={c3Diff} should be <1e-8");
 
-		// РЁСѓРјРѕРІС‹Рµ РґР°РЅРЅС‹Рµ (Р°РїРїСЂРѕРєСЃРёРјР°С†РёСЏ С‚СЂРµРЅРґР°)
+		// Шумовые данные (аппроксимация тренда)
 		var rnd = new Random(42);
 		var x2 = Enumerable.Range(0, 100).Select(i => (double)i).ToArray();
 		var y2 = x2.Select(v => 3 * v - 7 + rnd.NextDouble() * 0.1).ToArray();

@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Collections;
 
 [TestClass]
-public class SynchronizedStackTests
+public class SynchronizedStackTests : BaseTestClass
 {
 	[TestMethod]
 	public void BasicOperations()
@@ -19,8 +19,8 @@ public class SynchronizedStackTests
 	public void EmptyOperations()
 	{
 		var st = new SynchronizedStack<int>();
-		Assert.ThrowsExactly<InvalidOperationException>(() => st.Pop());
-		Assert.ThrowsExactly<InvalidOperationException>(() => st.Peek());
+		ThrowsExactly<InvalidOperationException>(() => st.Pop());
+		ThrowsExactly<InvalidOperationException>(() => st.Peek());
 	}
 
 	[TestMethod]
@@ -31,8 +31,8 @@ public class SynchronizedStackTests
 			1
 		};
 		var list = (IList<int>)st;
-		Assert.ThrowsExactly<NotSupportedException>(() => _ = list[0]);
-		Assert.ThrowsExactly<NotSupportedException>(() => list.Insert(0, 1));
-		Assert.ThrowsExactly<NotSupportedException>(() => list.RemoveAt(0));
+		ThrowsExactly<NotSupportedException>(() => _ = list[0]);
+		ThrowsExactly<NotSupportedException>(() => list.Insert(0, 1));
+		ThrowsExactly<NotSupportedException>(() => list.RemoveAt(0));
 	}
 }

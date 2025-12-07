@@ -4,12 +4,12 @@ namespace Ecng.Tests.Common;
 public class AsyncHelperTests : BaseTestClass
 {
 	[TestMethod]
-	public async Task WithCancellationCancel()
+	public Task WithCancellationCancel()
 	{
 		using var cts = new CancellationTokenSource();
 		var task = TimeSpan.FromSeconds(1).Delay(CancellationToken).WithCancellation(cts.Token);
 		cts.Cancel();
-		await Assert.ThrowsExactlyAsync<OperationCanceledException>(async () => await task);
+		return ThrowsExactlyAsync<OperationCanceledException>(() => task);
 	}
 
 	[TestMethod]
@@ -54,11 +54,11 @@ public class AsyncHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task WhenAllFailure()
+	public Task WhenAllFailure()
 	{
 		var err = new InvalidOperationException();
 		var tasks = new[] { new ValueTask<int>(Task.FromException<int>(err)) };
-		await Assert.ThrowsExactlyAsync<AggregateException>(async () => await AsyncHelper.WhenAll(tasks));
+		return ThrowsExactlyAsync<AggregateException>(() => tasks.WhenAll().AsTask());
 	}
 
 	[TestMethod]
@@ -72,10 +72,10 @@ public class AsyncHelperTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task TimeoutTokenAndWhenCanceled()
+	public Task TimeoutTokenAndWhenCanceled()
 	{
 		var token = TimeSpan.FromMilliseconds(10).CreateTimeoutToken();
-		await Assert.ThrowsExactlyAsync<TaskCanceledException>(async () => await token.WhenCanceled());
+		return ThrowsExactlyAsync<TaskCanceledException>(() => token.WhenCanceled());
 	}
 
 	[TestMethod]

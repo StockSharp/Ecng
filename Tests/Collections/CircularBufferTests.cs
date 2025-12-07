@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Collections;
 
 [TestClass]
-public class CircularBufferTests
+public class CircularBufferTests : BaseTestClass
 {
 	[TestMethod]
 	public void AppendOverCapacity()
@@ -51,7 +51,7 @@ public class CircularBufferTests
 		buf.PushBack(2);
 		buf.Clear();
 		buf.IsEmpty.AssertTrue();
-		Assert.ThrowsExactly<InvalidOperationException>(() => buf.PopBack());
+		ThrowsExactly<InvalidOperationException>(() => buf.PopBack());
 	}
 
 	[TestMethod]

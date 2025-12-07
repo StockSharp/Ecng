@@ -3,7 +3,7 @@ namespace Ecng.Tests.Common;
 using Nito.AsyncEx;
 
 [TestClass]
-public class ResettableLazyTests
+public class ResettableLazyTests : BaseTestClass
 {
 	[TestMethod]
 	public void Reset()
@@ -123,7 +123,7 @@ public class ResettableLazyTests
 	[TestMethod]
 	public void NullFactoryThrows()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => new ResettableLazy<int>(null));
+		ThrowsExactly<ArgumentNullException>(() => new ResettableLazy<int>(null));
 	}
 
 	[TestMethod]
@@ -177,7 +177,7 @@ public class ResettableLazyTests
 			return invokeCount;
 		});
 
-		Assert.ThrowsExactly<InvalidOperationException>(() => _ = lazy.Value);
+		ThrowsExactly<InvalidOperationException>(() => _ = lazy.Value);
 		lazy.IsValueCreated.AssertFalse();
 
 		lazy.Reset();

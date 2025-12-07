@@ -89,8 +89,8 @@ public class NetworkHelperTests : BaseTestClass
 		url.Contains(token).AssertTrue();
 		url.Contains("size=80").AssertTrue();
 
-		Assert.ThrowsExactly<ArgumentNullException>(() => "".GetGravatarToken());
-		Assert.ThrowsExactly<ArgumentNullException>(() => "".GetGravatarUrl(10));
+		ThrowsExactly<ArgumentNullException>(() => "".GetGravatarToken());
+		ThrowsExactly<ArgumentNullException>(() => "".GetGravatarUrl(10));
 	}
 
 	[TestMethod]
@@ -182,8 +182,8 @@ public class NetworkHelperTests : BaseTestClass
 	[TestMethod]
 	public void IsNetworkPath_EmptyOrNull()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => string.Empty.IsNetworkPath());
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).IsNetworkPath());
+		ThrowsExactly<ArgumentNullException>(() => string.Empty.IsNetworkPath());
+		ThrowsExactly<ArgumentNullException>(() => ((string)null).IsNetworkPath());
 	}
 
 	[TestMethod]
@@ -208,7 +208,7 @@ public class NetworkHelperTests : BaseTestClass
 	public void IsNetworkPath_ShortPath()
 	{
 		// Paths shorter than 3 characters throw ArgumentOutOfRangeException
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => "C:".IsNetworkPath());
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => "ab".IsNetworkPath());
+		ThrowsExactly<ArgumentOutOfRangeException>(() => "C:".IsNetworkPath());
+		ThrowsExactly<ArgumentOutOfRangeException>(() => "ab".IsNetworkPath());
 	}
 }

@@ -5,7 +5,7 @@ using System.Text;
 using Ecng.Serialization;
 
 [TestClass]
-public class TransactionFileStreamTests
+public class TransactionFileStreamTests : BaseTestClass
 {
 	private static string NewTempFilePath()
 	{
@@ -57,7 +57,7 @@ public class TransactionFileStreamTests
 		var target = NewTempFilePath();
 		try
 		{
-			Assert.ThrowsExactly<FileNotFoundException>(() => new TransactionFileStream(target, FileMode.Open));
+			ThrowsExactly<FileNotFoundException>(() => new TransactionFileStream(target, FileMode.Open));
 		}
 		finally
 		{
@@ -154,8 +154,8 @@ public class TransactionFileStreamTests
 
 		stream.Dispose();
 
-		Assert.ThrowsExactly<ObjectDisposedException>(() => stream.Write([1], 0, 1));
-		Assert.ThrowsExactly<ObjectDisposedException>(() => { var _ = stream.Length; });
-		Assert.ThrowsExactly<ObjectDisposedException>(() => { stream.Position = 0; });
+		ThrowsExactly<ObjectDisposedException>(() => stream.Write([1], 0, 1));
+		ThrowsExactly<ObjectDisposedException>(() => { var _ = stream.Length; });
+		ThrowsExactly<ObjectDisposedException>(() => { stream.Position = 0; });
 	}
 }

@@ -1,11 +1,11 @@
-Ôªønamespace Ecng.Tests.Security;
+namespace Ecng.Tests.Security;
 
 using System.IO;
 
 using Ecng.Security;
 
 [TestClass]
-public class SecretTests
+public class SecretTests : BaseTestClass
 {
 	private const string _correctPwd = "mpoi3e/4nn3(&T(*^R";
 	private const string _incorrectPwd = "mpo3e/4nn3(&T(*^R";
@@ -117,8 +117,8 @@ public class SecretTests
 	{
 		var salt = "salt123456789012".ASCII();
 		var iv = "iv12345678901234".ASCII();
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((byte[])null).Encrypt("pass", salt, iv));
-		Assert.ThrowsExactly<ArgumentNullException>(() => "data".UTF8().Encrypt(null, salt, iv));
+		ThrowsExactly<ArgumentNullException>(() => ((byte[])null).Encrypt("pass", salt, iv));
+		ThrowsExactly<ArgumentNullException>(() => "data".UTF8().Encrypt(null, salt, iv));
 	}
 
 	[TestMethod]
@@ -127,7 +127,7 @@ public class SecretTests
 		var algo = CreateAlgo();
 
 		Secret secret = _correctPwd.CreateSecret(algo);
-		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((System.Security.SecureString)null, algo));
+		ThrowsExactly<ArgumentNullException>(() => secret.IsValid((System.Security.SecureString)null, algo));
 	}
 
 	[TestMethod]
@@ -136,7 +136,7 @@ public class SecretTests
 		var algo = CreateAlgo();
 
 		Secret secret = _correctPwd.CreateSecret(algo);
-		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((string)null, algo));
+		ThrowsExactly<ArgumentNullException>(() => secret.IsValid((string)null, algo));
 	}
 
 	[TestMethod]
@@ -155,14 +155,14 @@ public class SecretTests
 		var algo = CreateAlgo();
 
 		System.Security.SecureString s = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => s.CreateSecret(algo));
+		ThrowsExactly<ArgumentNullException>(() => s.CreateSecret(algo));
 	}
 
 	[TestMethod]
 	public void Md5_Sha256_Sha512_Correctness()
 	{
 		var data = "abc".UTF8();
-		// –ü—Ä–æ–≤–µ—Ä–∫–∞ –∫–æ—Ä—Ä–µ–∫—Ç–Ω–æ—Å—Ç–∏ —Ö—ç—à–µ–π
+		// œÓ‚ÂÍ‡ ÍÓÂÍÚÌÓÒÚË ı˝¯ÂÈ
 		data.Md5().AssertEqual("900150983CD24FB0D6963F7D28E17F72");
 		data.Sha256().AssertEqual("BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD");
 		data.Sha512().AssertEqual("DDAF35A193617ABACC417349AE20413112E6FA4E89A97EA20A9EEEE64B55D39A2192992A274FC1A836BA3C23A3FEEBBD454D4423643CE80E2A9AC94FA54CA49F");
@@ -183,7 +183,7 @@ public class SecretTests
 	{
 		var algo = CreateAlgo();
 
-		Assert.ThrowsExactly<ArgumentNullException>(() => "".CreateSecret(algo));
+		ThrowsExactly<ArgumentNullException>(() => "".CreateSecret(algo));
 	}
 
 	[TestMethod]
@@ -191,13 +191,13 @@ public class SecretTests
 	{
 		var algo = CreateAlgo();
 		
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).CreateSecret(algo));
+		ThrowsExactly<ArgumentNullException>(() => ((string)null).CreateSecret(algo));
 	}
 
 	[TestMethod]
 	public void CreateSecret_NullSalt_Throws()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => _correctPwd.CreateSecret(null));
+		ThrowsExactly<ArgumentNullException>(() => _correctPwd.CreateSecret(null));
 	}
 
 	[TestMethod]
@@ -205,7 +205,7 @@ public class SecretTests
 	{
 		var algo = CreateAlgo();
 
-		Assert.ThrowsExactly<ArgumentNullException>(() => _correctPwd.CreateSecret((Secret)null, algo));
+		ThrowsExactly<ArgumentNullException>(() => _correctPwd.CreateSecret((Secret)null, algo));
 	}
 
 	[TestMethod]
@@ -224,7 +224,7 @@ public class SecretTests
 		var algo = CreateAlgo();
 
 		System.Security.SecureString s = null;
-		Assert.ThrowsExactly<ArgumentNullException>(() => s.CreateSecret(algo));
+		ThrowsExactly<ArgumentNullException>(() => s.CreateSecret(algo));
 	}
 
 	[TestMethod]
@@ -232,7 +232,7 @@ public class SecretTests
 	{
 		var algo = CreateAlgo();
 		
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((Secret)null).IsValid(_correctPwd, algo));
+		ThrowsExactly<ArgumentNullException>(() => ((Secret)null).IsValid(_correctPwd, algo));
 	}
 
 	[TestMethod]
@@ -241,7 +241,7 @@ public class SecretTests
 		var algo = CreateAlgo();
 
 		var secret = _correctPwd.CreateSecret(algo);
-		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((string)null, algo));
+		ThrowsExactly<ArgumentNullException>(() => secret.IsValid((string)null, algo));
 	}
 
 	[TestMethod]
@@ -250,7 +250,7 @@ public class SecretTests
 		var algo = CreateAlgo();
 
 		var secret = _correctPwd.CreateSecret(algo);
-		Assert.ThrowsExactly<ArgumentNullException>(() => secret.IsValid((System.Security.SecureString)null, algo));
+		ThrowsExactly<ArgumentNullException>(() => secret.IsValid((System.Security.SecureString)null, algo));
 	}
 
 	[TestMethod]
@@ -270,7 +270,7 @@ public class SecretTests
 	{
 		var salt = "salt123456789012".ASCII();
 		var iv = "iv12345678901234".ASCII();
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((byte[])null).Encrypt("pass", salt, iv));
+		ThrowsExactly<ArgumentNullException>(() => ((byte[])null).Encrypt("pass", salt, iv));
 	}
 
 	[TestMethod]
@@ -278,13 +278,13 @@ public class SecretTests
 	{
 		var salt = "salt123456789012".ASCII();
 		var iv = "iv12345678901234".ASCII();
-		Assert.ThrowsExactly<ArgumentNullException>(() => "data".UTF8().Encrypt(null, salt, iv));
+		ThrowsExactly<ArgumentNullException>(() => "data".UTF8().Encrypt(null, salt, iv));
 	}
 
 	[TestMethod]
 	public void ToRsa_Null_Throws()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((byte[])null).ToRsa());
+		ThrowsExactly<ArgumentNullException>(() => ((byte[])null).ToRsa());
 	}
 
 	[TestMethod]

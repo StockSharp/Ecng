@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Common;
 
 [TestClass]
-public class NullableHelperTests
+public class NullableHelperTests : BaseTestClass
 {
 	[TestMethod]
 	public void GetUnderlyingType_NullableType_ReturnsUnderlyingType()
@@ -36,7 +36,7 @@ public class NullableHelperTests
 		Type type = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => type.IsNullable());
+		ThrowsExactly<ArgumentNullException>(() => type.IsNullable());
 	}
 
 	[TestMethod]
@@ -190,7 +190,7 @@ public class NullableHelperTests
 		string value = "test";
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() =>
+		ThrowsExactly<ArgumentNullException>(() =>
 			value.Convert<string, int>(null, () => 0));
 	}
 
@@ -201,7 +201,7 @@ public class NullableHelperTests
 		string value = "test";
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() =>
+		ThrowsExactly<ArgumentNullException>(() =>
 			value.Convert<string, int>(v => v.Length, null));
 	}
 

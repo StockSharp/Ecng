@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Common;
 
 [TestClass]
-public class AllocationArrayTest
+public class AllocationArrayTest : BaseTestClass
 {
 	[TestMethod]
 	public void Test()
@@ -92,8 +92,8 @@ public class AllocationArrayTest
 		{
 			MaxCount = 5
 		};
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => arr.Count = 10);
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => arr[10] = 1);
+		ThrowsExactly<ArgumentOutOfRangeException>(() => arr.Count = 10);
+		ThrowsExactly<ArgumentOutOfRangeException>(() => arr[10] = 1);
 	}
 
 	[TestMethod]
@@ -103,9 +103,9 @@ public class AllocationArrayTest
 		{
 			1
 		};
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => arr.RemoveRange(-1, 1));
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => arr.RemoveRange(0, 0));
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => arr.RemoveRange(0, 2));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => arr.RemoveRange(-1, 1));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => arr.RemoveRange(0, 0));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => arr.RemoveRange(0, 2));
 	}
 
 	[TestMethod]

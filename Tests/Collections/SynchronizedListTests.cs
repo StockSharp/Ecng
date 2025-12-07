@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Collections;
 
 [TestClass]
-public class SynchronizedListTests
+public class SynchronizedListTests : BaseTestClass
 {
 	[TestMethod]
 	public void RangeOperations()
@@ -34,7 +34,7 @@ public class SynchronizedListTests
 	public void NullCheck()
 	{
 		var list = new SynchronizedList<string> { CheckNullableItems = true };
-		Assert.ThrowsExactly<ArgumentNullException>(() => list.AddRange(["a", null]));
+		ThrowsExactly<ArgumentNullException>(() => list.AddRange(["a", null]));
 	}
 
 	[TestMethod]
@@ -54,7 +54,7 @@ public class SynchronizedListTests
 	public void RemoveRangeBounds()
 	{
 		var list = new SynchronizedList<int>();
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => list.RemoveRange(-1, 1));
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => list.RemoveRange(0, 0));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => list.RemoveRange(-1, 1));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => list.RemoveRange(0, 0));
 	}
 }

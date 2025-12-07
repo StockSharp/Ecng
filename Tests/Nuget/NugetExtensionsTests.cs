@@ -37,7 +37,7 @@ public class NugetExtensionsTests : BaseTestClass
 		NuGetVersion version = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => version.Increment());
+		ThrowsExactly<ArgumentNullException>(() => version.Increment());
 	}
 
 	[TestMethod]
@@ -65,7 +65,7 @@ public class NugetExtensionsTests : BaseTestClass
 		NuGetVersion version = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => version.WithSuffix("beta"));
+		ThrowsExactly<ArgumentNullException>(() => version.WithSuffix("beta"));
 	}
 
 	[TestMethod]
@@ -75,7 +75,7 @@ public class NugetExtensionsTests : BaseTestClass
 		var version = new NuGetVersion("1.2.3");
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => version.WithSuffix(""));
+		ThrowsExactly<ArgumentNullException>(() => version.WithSuffix(""));
 	}
 
 	[TestMethod]
@@ -85,7 +85,7 @@ public class NugetExtensionsTests : BaseTestClass
 		var version = new NuGetVersion("1.2.3");
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => version.WithSuffix(null));
+		ThrowsExactly<ArgumentNullException>(() => version.WithSuffix(null));
 	}
 
 	[TestMethod]
@@ -183,7 +183,7 @@ public class NugetExtensionsTests : BaseTestClass
 		var version = new NuGetVersion("1.0.0");
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
+		ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
 	}
 
 	[TestMethod]
@@ -196,7 +196,7 @@ public class NugetExtensionsTests : BaseTestClass
 		var version = new NuGetVersion("1.0.0");
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
+		ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
 	}
 
 	[TestMethod]
@@ -209,7 +209,7 @@ public class NugetExtensionsTests : BaseTestClass
 		var version = new NuGetVersion("1.0.0");
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
+		ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
 	}
 
 	[TestMethod]
@@ -222,7 +222,7 @@ public class NugetExtensionsTests : BaseTestClass
 		NuGetVersion version = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
+		ThrowsExactly<ArgumentNullException>(() => http.GetNuspecAsync(baseUrl, packageId, version, CancellationToken));
 	}
 
 	[TestMethod]
@@ -305,7 +305,7 @@ public class NugetExtensionsTests : BaseTestClass
 		var logger = NullLogger.Instance;
 
 		// Act & Assert
-		return Assert.ThrowsExactlyAsync<ArgumentException>(() =>
+		return ThrowsExactlyAsync<ArgumentException>(() =>
 			repo.GetLastVersionInFloatingRangeAsync("Ecng.Common", "invalid-range", logger, cache, CancellationToken));
 	}
 
@@ -331,7 +331,7 @@ public class NugetExtensionsTests : BaseTestClass
 		SourceRepository repo = null;
 
 		// Act & Assert
-		return Assert.ThrowsExactlyAsync<ArgumentNullException>(() =>
+		return ThrowsExactlyAsync<ArgumentNullException>(() =>
 			repo.GetBaseUrl(CancellationToken));
 	}
 

@@ -1,13 +1,11 @@
 namespace Ecng.Tests.Serialization;
 
-using System.Globalization;
-
 using Ecng.Serialization;
 
 using Newtonsoft.Json;
 
 [TestClass]
-public class JsonConvertersTests
+public class JsonConvertersTests : BaseTestClass
 {
 	[TestMethod]
 	public void BoolConverter_ReadWrite()
@@ -181,7 +179,7 @@ public class JsonConvertersTests
 			// string value
 			var readerStr = new JsonTextReader(new StringReader("\"notanumber\""));
 			readerStr.Read();
-			Assert.Throws<JsonReaderException>(() => converter.ReadJson(readerStr, typeof(DateTime), null, serializer));
+			Throws<JsonReaderException>(() => converter.ReadJson(readerStr, typeof(DateTime), null, serializer));
 
 			// zero value
 			var readerZero = new JsonTextReader(new StringReader("0"));

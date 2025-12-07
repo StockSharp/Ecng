@@ -10,7 +10,7 @@ public class WatchTests : BaseTestClass
 		Action action = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => Watch.Do(action), "expected ArgumentNullException when action is null");
+		ThrowsExactly<ArgumentNullException>(() => Watch.Do(action), "expected ArgumentNullException when action is null");
 	}
 
 	[TestMethod]
@@ -60,7 +60,7 @@ public class WatchTests : BaseTestClass
 		void action() => throw expectedException;
 
 		// Act & Assert
-		var thrown = Assert.ThrowsExactly<InvalidOperationException>(() => Watch.Do(action), "ActionThrowsException: expected InvalidOperationException");
+		var thrown = ThrowsExactly<InvalidOperationException>(() => Watch.Do(action), "ActionThrowsException: expected InvalidOperationException");
 		thrown.Message.AssertEqual("test exception", "exception message mismatch");
 	}
 
@@ -80,13 +80,13 @@ public class WatchTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task NullAsyncAction()
+	public Task NullAsyncAction()
 	{
 		// Arrange
 		Func<Task> func = null;
 
 		// Act & Assert
-		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await Watch.DoAsync(func), "expected ArgumentNullException when func is null");
+		return ThrowsExactlyAsync<ArgumentNullException>(() => Watch.DoAsync(func), "expected ArgumentNullException when func is null");
 	}
 
 	[TestMethod]
@@ -135,7 +135,7 @@ public class WatchTests : BaseTestClass
 		Task action() => throw expectedException;
 
 		// Act & Assert
-		var thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await Watch.DoAsync(action), "AsyncActionThrowsException: expected InvalidOperationException");
+		var thrown = await ThrowsExactlyAsync<InvalidOperationException>(() => Watch.DoAsync(action), "AsyncActionThrowsException: expected InvalidOperationException");
 		thrown.Message.AssertEqual("test async exception", "exception message mismatch");
 	}
 
@@ -155,13 +155,13 @@ public class WatchTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task NullTypedTaskFunc()
+	public Task NullTypedTaskFunc()
 	{
 		// Arrange
 		Func<Task<int>> func = null;
 
 		// Act & Assert
-		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await Watch.DoAsync(func), "expected ArgumentNullException when func is null");
+		return ThrowsExactlyAsync<ArgumentNullException>(() => Watch.DoAsync(func), "expected ArgumentNullException when func is null");
 	}
 
 	[TestMethod]
@@ -193,7 +193,7 @@ public class WatchTests : BaseTestClass
 		Task<string> func() => throw expectedException;
 
 		// Act & Assert
-		var thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await Watch.DoAsync(func), "TypedTaskFuncThrowsException: expected InvalidOperationException");
+		var thrown = await ThrowsExactlyAsync<InvalidOperationException>(() => Watch.DoAsync(func), "TypedTaskFuncThrowsException: expected InvalidOperationException");
 		thrown.Message.AssertEqual("test typed task exception", "exception message mismatch");
 	}
 
@@ -204,7 +204,7 @@ public class WatchTests : BaseTestClass
 		Func<ValueTask> func = null;
 
 		// Act & Assert
-		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await Watch.DoAsync(func), "expected ArgumentNullException when func is null");
+		await ThrowsExactlyAsync<ArgumentNullException>(() => Watch.DoAsync(func).AsTask(), "expected ArgumentNullException when func is null");
 	}
 
 	[TestMethod]
@@ -237,7 +237,7 @@ public class WatchTests : BaseTestClass
 		ValueTask action() => throw expectedException;
 
 		// Act & Assert
-		var thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await Watch.DoAsync(action), "ValueTaskFuncThrowsException: expected InvalidOperationException");
+		var thrown = await ThrowsExactlyAsync<InvalidOperationException>(() => Watch.DoAsync(action).AsTask(), "ValueTaskFuncThrowsException: expected InvalidOperationException");
 		thrown.Message.AssertEqual("test valuetask exception", "exception message mismatch");
 	}
 
@@ -248,7 +248,7 @@ public class WatchTests : BaseTestClass
 		Func<ValueTask<string>> func = null;
 
 		// Act & Assert
-		await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await Watch.DoAsync(func), "expected ArgumentNullException when func is null");
+		await ThrowsExactlyAsync<ArgumentNullException>(() => Watch.DoAsync(func).AsTask(), "expected ArgumentNullException when func is null");
 	}
 
 	[TestMethod]
@@ -280,7 +280,7 @@ public class WatchTests : BaseTestClass
 		ValueTask<bool> func() => throw expectedException;
 
 		// Act & Assert
-		var thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await Watch.DoAsync(func), "TypedValueTaskFuncThrowsException: expected InvalidOperationException");
+		var thrown = await ThrowsExactlyAsync<InvalidOperationException>(() => Watch.DoAsync(func).AsTask(), "TypedValueTaskFuncThrowsException: expected InvalidOperationException");
 		thrown.Message.AssertEqual("test typed valuetask exception", "exception message mismatch");
 	}
 

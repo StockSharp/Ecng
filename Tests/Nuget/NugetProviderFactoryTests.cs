@@ -6,7 +6,7 @@ using Ecng.Logging;
 using Ecng.Nuget;
 
 [TestClass]
-public class NugetProviderFactoryTests
+public class NugetProviderFactoryTests : BaseTestClass
 {
 	[TestMethod]
 	public void Constructor_NullLog_ThrowsArgumentNullException()
@@ -16,7 +16,7 @@ public class NugetProviderFactoryTests
 		var token = "t".Secure().ReadOnly();
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => new NugetProviderFactory(log, token));
+		ThrowsExactly<ArgumentNullException>(() => new NugetProviderFactory(log, token));
 	}
 
 	[TestMethod]
@@ -27,7 +27,7 @@ public class NugetProviderFactoryTests
 		SecureString token = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => new NugetProviderFactory(log, token));
+		ThrowsExactly<ArgumentNullException>(() => new NugetProviderFactory(log, token));
 	}
 
 	[TestMethod]

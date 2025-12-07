@@ -5,7 +5,7 @@ using System.ComponentModel;
 #pragma warning disable CS0612 // Type or member is obsolete
 
 [TestClass]
-public class AttributeHelperTests
+public class AttributeHelperTests : BaseTestClass
 {
 	[AttributeUsage(AttributeTargets.Class, Inherited = true)]
 	private class CustomAttribute : Attribute
@@ -61,8 +61,8 @@ public class AttributeHelperTests
 	[TestMethod]
 	public void NullProvider()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => AttributeHelper.GetAttribute<ObsoleteAttribute>(null));
-		Assert.ThrowsExactly<ArgumentNullException>(() => AttributeHelper.GetAttributes<ObsoleteAttribute>(null).ToArray());
-		Assert.ThrowsExactly<ArgumentNullException>(() => AttributeHelper.GetAttributes(null).ToArray());
+		ThrowsExactly<ArgumentNullException>(() => AttributeHelper.GetAttribute<ObsoleteAttribute>(null));
+		ThrowsExactly<ArgumentNullException>(() => AttributeHelper.GetAttributes<ObsoleteAttribute>(null).ToArray());
+		ThrowsExactly<ArgumentNullException>(() => AttributeHelper.GetAttributes(null).ToArray());
 	}
 }

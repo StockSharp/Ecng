@@ -3,7 +3,7 @@ namespace Ecng.Tests.Common;
 using System.Dynamic;
 
 [TestClass]
-public class TypeHelperTests
+public class TypeHelperTests : BaseTestClass
 {
 	private enum TestEnum
 	{
@@ -24,7 +24,7 @@ public class TypeHelperTests
 		Type type = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => type.CreateInstance());
+		ThrowsExactly<ArgumentNullException>(() => type.CreateInstance());
 	}
 
 	[TestMethod]
@@ -62,7 +62,7 @@ public class TypeHelperTests
 		Type type = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => type.Make(typeof(int)));
+		ThrowsExactly<ArgumentNullException>(() => type.Make(typeof(int)));
 	}
 
 	[TestMethod]
@@ -352,7 +352,7 @@ public class TypeHelperTests
 		string value = null;
 
 		// Act & Assert
-		Assert.ThrowsExactly<ArgumentNullException>(() => value.CheckOnNull());
+		ThrowsExactly<ArgumentNullException>(() => value.CheckOnNull());
 	}
 
 	[TestMethod]

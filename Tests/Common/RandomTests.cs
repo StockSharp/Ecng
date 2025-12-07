@@ -3,7 +3,7 @@ namespace Ecng.Tests.Common;
 using System.Collections;
 
 [TestClass]
-public class RandomTests
+public class RandomTests : BaseTestClass
 {
 	[TestMethod]
 	public void Int()
@@ -200,14 +200,14 @@ public class RandomTests
 	public void EmptyEnumerable()
 	{
 		var empty = Array.Empty<CurrencyTypes>();
-		Assert.ThrowsExactly<InvalidOperationException>(() => RandomGen.GetEnum(empty));
+		ThrowsExactly<InvalidOperationException>(() => RandomGen.GetEnum(empty));
 	}
 
 	[TestMethod]
 	public void EmptyEnumerable2()
 	{
 		var empty = Array.Empty<int>();
-		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => RandomGen.GetElement(empty));
+		ThrowsExactly<ArgumentOutOfRangeException>(() => RandomGen.GetElement(empty));
 	}
 
 	[TestMethod]

@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Common;
 
 [TestClass]
-public class CsvTest
+public class CsvTest : BaseTestClass
 {
 	[TestMethod]
 	public void DoubleQuotes()
@@ -294,7 +294,7 @@ AGRO@TQBR;ГДР ROS AGRO PLC ORD SHS;AGRO;;;TQBR;@TQBR;0;;1;0;Stock;;;;;RUB;;;;
 		var parser = new FastDateTimeParser("yyyy-MM-dd HH:mm:ss.fff");
 		var shortInput = "2024-01-02 03:04:0"; // too short for seconds+millis
 
-		Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsExactly<FormatException>(() => parser.Parse(shortInput));
+		ThrowsExactly<FormatException>(() => parser.Parse(shortInput));
 	}
 
 	[TestMethod]

@@ -1,7 +1,7 @@
 namespace Ecng.Tests.Collections;
 
 [TestClass]
-public class SynchronizedSetTests
+public class SynchronizedSetTests : BaseTestClass
 {
 	[TestMethod]
 	public void IndexingAndDuplicates()
@@ -13,8 +13,8 @@ public class SynchronizedSetTests
 		set.Remove(2).AssertTrue();
 		set.TryAdd(3).AssertFalse();
 		set.ThrowIfDuplicate = true;
-		Assert.ThrowsExactly<InvalidOperationException>(() => set.Add(1));
-		Assert.ThrowsExactly<InvalidOperationException>(() => set.TryAdd(1));
+		ThrowsExactly<InvalidOperationException>(() => set.Add(1));
+		ThrowsExactly<InvalidOperationException>(() => set.TryAdd(1));
 	}
 
 	[TestMethod]
@@ -24,9 +24,9 @@ public class SynchronizedSetTests
 		{
 			1
 		};
-		Assert.ThrowsExactly<InvalidOperationException>(() => _ = set[0]);
-		Assert.ThrowsExactly<InvalidOperationException>(() => set.IndexOf(1));
-		Assert.ThrowsExactly<InvalidOperationException>(() => set.RemoveAt(0));
+		ThrowsExactly<InvalidOperationException>(() => _ = set[0]);
+		ThrowsExactly<InvalidOperationException>(() => set.IndexOf(1));
+		ThrowsExactly<InvalidOperationException>(() => set.RemoveAt(0));
 	}
 
 	[TestMethod]

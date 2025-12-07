@@ -1,4 +1,4 @@
-﻿#if NET10_0_OR_GREATER == false
+#if NET10_0_OR_GREATER == false
 namespace Ecng.Tests.Linq;
 
 using System.Runtime.CompilerServices;
@@ -115,12 +115,12 @@ public class AsyncEnumerableTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task ToAsyncEnumerable2_Cancel()
+	public Task ToAsyncEnumerable2_Cancel()
 	{
 		using var cts = new CancellationTokenSource();
 		cts.Cancel();
 		var asyncEnu = new[] { 1 }.ToAsyncEnumerable().WithEnforcedCancellation(cts.Token);
-		await Assert.ThrowsExactlyAsync<OperationCanceledException>(async () => { await foreach (var _ in asyncEnu) { } });
+		return ThrowsExactlyAsync<OperationCanceledException>(async () => { await foreach (var _ in asyncEnu) { } });
 	}
 
 	[TestMethod]
@@ -206,11 +206,11 @@ public class AsyncEnumerableTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task FirstAsync2_ThrowsOnEmpty()
+	public Task FirstAsync2_ThrowsOnEmpty()
 	{
 		var token = CancellationToken;
 		var empty = AsyncEnumerable.Empty<int>();
-		await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await empty.FirstAsync(token));
+		return ThrowsExactlyAsync<InvalidOperationException>(() => empty.FirstAsync(token).AsTask());
 	}
 
 	[TestMethod]
@@ -274,20 +274,20 @@ public class AsyncEnumerableTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public async Task SingleAsync2_ThrowsOnEmpty()
+	public Task SingleAsync2_ThrowsOnEmpty()
 	{
 		var token = CancellationToken;
-		await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
-			await AsyncEnumerable.Empty<int>().SingleAsync(token));
+		return ThrowsExactlyAsync<InvalidOperationException>(() =>
+			AsyncEnumerable.Empty<int>().SingleAsync(token).AsTask());
 	}
 
 	[TestMethod]
-	public async Task SingleAsync2_ThrowsOnMultiple()
+	public Task SingleAsync2_ThrowsOnMultiple()
 	{
 		var token = CancellationToken;
 		
-		await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
-			await GetAsyncData(token).SingleAsync(token));
+		return ThrowsExactlyAsync<InvalidOperationException>(() =>
+			GetAsyncData(token).SingleAsync(token).AsTask());
 	}
 
 	[TestMethod]

@@ -1,9 +1,7 @@
 namespace Ecng.Tests.Common;
 
-using System.Text;
-
 [TestClass]
-public class HexEncodingTests
+public class HexEncodingTests : BaseTestClass
 {
 	[TestMethod]
 	public void ConvertRoundTrip()
@@ -37,7 +35,7 @@ public class HexEncodingTests
 		var enc = new HexEncoding();
 		enc.GetByteCount("A1").AssertEqual(1);
 		enc.GetByteCount("A1Z").AssertEqual(1);
-		Assert.ThrowsExactly<ArgumentNullException>(() => enc.GetByteCount((string)null));
+		ThrowsExactly<ArgumentNullException>(() => enc.GetByteCount((string)null));
 	}
 
 	[TestMethod]

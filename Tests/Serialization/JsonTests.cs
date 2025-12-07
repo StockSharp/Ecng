@@ -1,4 +1,4 @@
-﻿namespace Ecng.Tests.Serialization;
+namespace Ecng.Tests.Serialization;
 
 using System.Collections;
 using System.Security;
@@ -1059,19 +1059,19 @@ public class JsonTests : BaseTestClass
 	[TestMethod]
 	public void NullDeserializeError1()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((string)null).DeserializeObject<CurrencyTypes>());
+		ThrowsExactly<ArgumentNullException>(() => ((string)null).DeserializeObject<CurrencyTypes>());
 	}
 
 	[TestMethod]
 	public void NullDeserializeError2()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => string.Empty.DeserializeObject<CurrencyTypes>());
+		ThrowsExactly<ArgumentNullException>(() => string.Empty.DeserializeObject<CurrencyTypes>());
 	}
 
 	[TestMethod]
 	public void NullDeserializeError3()
 	{
-		Assert.ThrowsExactly<ArgumentNullException>(() => ((JToken)null).DeserializeObject<CurrencyTypes>());
+		ThrowsExactly<ArgumentNullException>(() => ((JToken)null).DeserializeObject<CurrencyTypes>());
 	}
 
 	[TestMethod]
@@ -1101,7 +1101,7 @@ public class JsonTests : BaseTestClass
 	{
 		var requestBody = new MemoryStream();
 		await new JsonSerializer<TestClass>().SerializeAsync(new(), requestBody, CancellationToken);
-		Assert.ThrowsExactly<InvalidOperationException>(() => requestBody.To<byte[]>().UTF8().DeserializeObject<TestClass>());
+		ThrowsExactly<InvalidOperationException>(() => requestBody.To<byte[]>().UTF8().DeserializeObject<TestClass>());
 	}
 
 	[JsonConverter(typeof(JArrayToObjectConverter<OrderBookEntry>))]
