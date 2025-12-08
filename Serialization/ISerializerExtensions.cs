@@ -63,7 +63,7 @@ public static class ISerializerExtensions
 	/// <returns>An object of type T.</returns>
 	public static T Deserialize<T>(this ISerializer<T> serializer, byte[] data)
 	{
-		var stream = new MemoryStream(data);
+		using var stream = new MemoryStream(data);
 		return serializer.CheckOnNull(nameof(serializer)).Deserialize(stream);
 	}
 
@@ -85,7 +85,7 @@ public static class ISerializerExtensions
 	/// <returns>The deserialized object.</returns>
 	public static object Deserialize(this ISerializer serializer, byte[] data)
 	{
-		var stream = new MemoryStream(data);
+		using var stream = new MemoryStream(data);
 		return serializer.CheckOnNull(nameof(serializer)).Deserialize(stream);
 	}
 

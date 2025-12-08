@@ -12,11 +12,8 @@ class SecureStringEncryptor
 	private static readonly Lazy<SecureStringEncryptor> _instance = new(() => new());
 	public static SecureStringEncryptor Instance => _instance.Value;
 
-	private readonly SecureString _key = "RClVEDn0O3EUsKqym1qd".Secure();
-	private readonly byte[] _salt = "3hj67-!3".To<byte[]>();
-
-	public SecureString Key { get; set; }
-	public byte[] Entropy { get; set; }
+	public SecureString Key { get; set; } = "RClVEDn0O3EUsKqym1qd".Secure();
+	public byte[] Entropy { get; set; } = "3hj67-!3".To<byte[]>();
 
 	public SecureString Decrypt(byte[] source)
 	{
@@ -26,7 +23,7 @@ class SecureStringEncryptor
 		try
 		{
 			if (Scope<ContinueOnExceptionContext>.Current?.Value.DoNotEncrypt != true)
-				source = source.DecryptAes(_key.UnSecure(), _salt, _salt);
+				source = source.DecryptAes(Key.UnSecure(), Entropy, Entropy);
 
 			return source.To<string>().Secure();
 		}
@@ -49,6 +46,6 @@ class SecureStringEncryptor
 		if (Scope<ContinueOnExceptionContext>.Current?.Value.DoNotEncrypt == true)
 			return plainText;
 
-		return plainText.EncryptAes(_key.UnSecure(), _salt, _salt);
+		return plainText.EncryptAes(Key.UnSecure(), Entropy, Entropy);
 	}
 }

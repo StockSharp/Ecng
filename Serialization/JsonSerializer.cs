@@ -200,7 +200,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				var per = type.CreateInstance();
 
 				if (per is IAsyncPersistable asyncPer)
-					await asyncPer.LoadAsync(storage, default);
+					await asyncPer.LoadAsync(storage, cancellationToken);
 				else
 					((IPersistable)per).Load(storage);
 
@@ -220,7 +220,7 @@ public class JsonSerializer<T> : Serializer<T>, IJsonSerializer
 				var storage = new SettingsStorage(reader, GetValueFromReaderAsync);
 
 				if (per is IAsyncPersistable asyncPer)
-					await asyncPer.LoadAsync(storage, default);
+					await asyncPer.LoadAsync(storage, cancellationToken);
 				else
 					((IPersistable)per).Load(storage);
 
