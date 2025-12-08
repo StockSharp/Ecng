@@ -577,7 +577,7 @@ public static class MathHelper
 	/// <returns>The smaller float value.</returns>
 	public static float Max(this float value1, float value2)
 	{
-		return Math.Min(value1, value2);
+		return Math.Max(value1, value2);
 	}
 
 	/// <summary>
@@ -1210,14 +1210,14 @@ public static class MathHelper
 	}
 
 	/// <summary>
-	/// Determines whether the bit at the specified 1-based index in the byte is set.
+	/// Determines whether the bit at the specified zero-based index in the byte is set.
 	/// </summary>
 	/// <param name="value">The byte value.</param>
-	/// <param name="index">The 1-based index of the bit to test.</param>
+	/// <param name="index">The zero-based index of the bit to test.</param>
 	/// <returns><c>true</c> if the specified bit is set; otherwise, <c>false</c>.</returns>
 	public static bool GetBit(this byte value, int index)
 	{
-		return (value & (1 << index - 1)) != 0;
+		return (value & (1 << index)) != 0;
 	}
 
 	/// <summary>
@@ -1265,7 +1265,7 @@ public static class MathHelper
 	/// Extracts the normalized mantissa and exponent from the double value.
 	/// </summary>
 	/// <param name="value">The double value.</param>
-	/// <param name="mantissa">The extracted mantissa.</param>
+	/// <param name="mantissa">The extracted mantissa (negative for negative values).</param>
 	/// <param name="exponent">The extracted exponent.</param>
 	public static void ExtractMantissaExponent(this double value, out long mantissa, out int exponent)
 	{
@@ -1298,9 +1298,6 @@ public static class MathHelper
 
 		if (mantissa == 0)
 		{
-			if (negative)
-				mantissa = -0;
-
 			exponent = 0;
 			return;
 		}
@@ -1311,6 +1308,10 @@ public static class MathHelper
 			mantissa >>= 1;
 			exponent++;
 		}
+
+		// Apply sign to mantissa
+		if (negative)
+			mantissa = -mantissa;
 	}
 
 	/// <summary>
