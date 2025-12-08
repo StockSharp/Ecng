@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using CG.Web.MegaApiClient;
 
 using Ecng.Common;
+using Ecng.Collections;
 
 using Nito.AsyncEx;
 
@@ -22,10 +23,17 @@ using Nito.AsyncEx;
 /// <param name="password">Password.</param>
 public class MegaService(string email, SecureString password) : Disposable, IBackupService
 {
+	private class ProgressHandler(Action<int> progress) : IProgress<double>
+	{
+		private readonly Action<int> _progress = progress ?? throw new ArgumentNullException(nameof(progress));
+
+		void IProgress<double>.Report(double value) => _progress((int)value);
+	}
+
 	private readonly MegaApiClient _client = new();
 	private readonly string _email = email.ThrowIfEmpty(nameof(email));
 	private readonly SecureString _password = password ?? throw new ArgumentNullException(nameof(password));
-	private readonly List<INode> _nodes = [];
+	private readonly CachedSynchronizedList<INode> _nodes = [];
 
 	/// <inheritdoc />
 	protected override void DisposeManaged()
@@ -81,14 +89,14 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 		return curr;
 	}
 
-	private INode GetRoot() => _nodes.First(n => n.Type == NodeType.Root);
+	private INode GetRoot() => _nodes.Cache.First(n => n.Type == NodeType.Root);
 
 	private IEnumerable<INode> GetChild(INode parent)
 	{
 		if (parent is null)
 			throw new ArgumentNullException(nameof(parent));
 
-		return _nodes.Where(n => n.ParentId == parent.Id);
+		return _nodes.Cache.Where(n => n.ParentId == parent.Id);
 	}
 
 	async Task IBackupService.CreateFolder(BackupEntry entry, CancellationToken cancellationToken)
@@ -139,18 +147,29 @@ public class MegaService(string email, SecureString password) : Disposable, IBac
 
 	async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 	{
-		using var temp = await (await EnsureLogin(cancellationToken)).DownloadAsync(Find(entry), cancellationToken: cancellationToken).NoWait();
+		ArgumentNullException.ThrowIfNull(entry);
+		ArgumentNullException.ThrowIfNull(stream);
+		ArgumentNullException.ThrowIfNull(progress);
+
+		using var temp = await (await EnsureLogin(cancellationToken)).DownloadAsync(Find(entry), new ProgressHandler(progress), cancellationToken).NoWait();
 		await temp.CopyToAsync(stream, cancellationToken).NoWait();
 	}
 
 	async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
-		=> await (await EnsureLogin(cancellationToken)).UploadAsync(stream, entry.Name, entry.Parent is null ? GetRoot() : Find(entry.Parent), cancellationToken: cancellationToken).NoWait();
+	{
+		ArgumentNullException.ThrowIfNull(entry);
+		ArgumentNullException.ThrowIfNull(stream);
+		ArgumentNullException.ThrowIfNull(progress);
+
+		await (await EnsureLogin(cancellationToken)).UploadAsync(stream, entry.Name, entry.Parent is null ? GetRoot() : Find(entry.Parent), new ProgressHandler(progress), cancellationToken: cancellationToken).NoWait();
+	}
 
 	async Task IBackupService.FillInfoAsync(BackupEntry entry, CancellationToken cancellationToken)
 	{
 		await EnsureLogin(cancellationToken);
 
 		var node = Find(entry);
+
 		entry.LastModified = node.ModificationDate ?? default;
 		entry.Size = node.Size;
 	}
