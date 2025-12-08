@@ -51,8 +51,12 @@ public static class AsyncHelper
 	/// <returns>A tuple containing the newly created CancellationTokenSource and the linked CancellationToken.</returns>
 	public static (CancellationTokenSource cts, CancellationToken token) CreateChildToken(this CancellationToken token, TimeSpan? delay = null)
 	{
-		var cts = delay == null ? new CancellationTokenSource() : new CancellationTokenSource(delay.Value);
-		return (cts, CancellationTokenSource.CreateLinkedTokenSource(cts.Token, token).Token);
+		var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+		
+		if (delay != null)
+			cts.CancelAfter(delay.Value);
+		
+		return (cts, cts.Token);
 	}
 
 	/// <summary>
@@ -221,7 +225,21 @@ public static class AsyncHelper
 	/// </summary>
 	/// <param name="timeout">The timeout after which the token is canceled.</param>
 	/// <returns>A CancellationToken that is canceled after the timeout.</returns>
+	/// <remarks>Warning: The underlying CancellationTokenSource is not disposed. Use <see cref="CreateTimeout"/> instead.</remarks>
+	[Obsolete("Use CreateTimeout instead to properly dispose the CancellationTokenSource.")]
 	public static CancellationToken CreateTimeoutToken(this TimeSpan timeout) => new CancellationTokenSource(timeout).Token;
+
+	/// <summary>
+	/// Creates a cancellation token source that will be canceled after the specified timeout.
+	/// </summary>
+	/// <param name="timeout">The timeout after which the token is canceled.</param>
+	/// <returns>A tuple containing the CancellationTokenSource and its Token.
+	/// The caller is responsible for disposing the returned CancellationTokenSource.</returns>
+	public static (CancellationTokenSource cts, CancellationToken token) CreateTimeout(this TimeSpan timeout)
+	{
+		var cts = new CancellationTokenSource(timeout);
+		return (cts, cts.Token);
+	}
 
 	/// <summary>
 	/// Returns a <see cref="ValueTask"/> that completes when the provided task is not null.
