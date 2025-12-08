@@ -4,7 +4,6 @@ using System;
 using System.Threading;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 using global::Amazon;
 
@@ -16,27 +15,12 @@ using Ecng.Common;
 [CLSCompliant(false)]
 public static class AmazonExtensions
 {
-	private static RegionEndpoint[] _endpoints;
-	private static readonly Lock _lock = new();
-
 	/// <summary>
 	/// All regions.
 	/// </summary>
+	[Obsolete("Use RegionEndpoint.EnumerableAllRegions instead.")]
 	public static IEnumerable<RegionEndpoint> Endpoints
-	{
-		get
-		{
-			using (_lock.EnterScope())
-			{
-				_endpoints ??= [.. typeof(RegionEndpoint)
-						.GetFields(BindingFlags.Static | BindingFlags.Public)
-						.Where(f => f.FieldType == typeof(RegionEndpoint))
-						.Select(f => (RegionEndpoint)f.GetValue(null))];
-			}
-
-			return _endpoints;
-		}
-	}
+		=> RegionEndpoint.EnumerableAllRegions;
 
 	/// <summary>
 	/// Get region by name.
@@ -48,7 +32,7 @@ public static class AmazonExtensions
 		if (name.IsEmpty())
 			throw new ArgumentNullException(nameof(name));
 
-		var region = Endpoints.FirstOrDefault(e =>
+		var region = RegionEndpoint.EnumerableAllRegions.FirstOrDefault(e =>
 			e.SystemName.EqualsIgnoreCase(name) ||
 			e.SystemName.Remove("-").EqualsIgnoreCase(name) ||
 			e.DisplayName.EqualsIgnoreCase(name));

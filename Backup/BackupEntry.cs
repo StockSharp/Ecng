@@ -48,7 +48,7 @@ public class BackupEntry
 		var path = Name;
 
 		if (path.IsEmpty())
-			throw new InvalidOperationException();
+			throw new InvalidOperationException("Entry name is empty.");
 
 		if (Parent is not null)
 			path = Parent.GetFullPath() + $"/{path}";
