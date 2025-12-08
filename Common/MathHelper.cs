@@ -569,12 +569,11 @@ public static class MathHelper
 	}
 
 	/// <summary>
-	/// Returns the smaller of two float values. 
-	/// Note: Implementation calls Math.Min.
+	/// Returns the maximum of two float values.
 	/// </summary>
 	/// <param name="value1">The first float value.</param>
 	/// <param name="value2">The second float value.</param>
-	/// <returns>The smaller float value.</returns>
+	/// <returns>The larger float value.</returns>
 	public static float Max(this float value1, float value2)
 	{
 		return Math.Max(value1, value2);
