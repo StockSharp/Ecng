@@ -648,12 +648,12 @@ public static class ReflectionHelper
 		if (property is null)
 			throw new ArgumentNullException(nameof(property));
 
-		var accessor = property.GetGetMethod(true) ?? property.GetSetMethod(true);
+		var indexParams = property.GetIndexParameters();
 
-		if (accessor is null)
-			throw new ArgumentException("No any accessors.", nameof(property));
+		if (indexParams.Length == 0)
+			throw new ArgumentException("Property is not an indexer.", nameof(property));
 
-		return accessor.GetParameterTypes().Select(t => t.type);
+		return indexParams.Select(p => p.ParameterType);
 	}
 
 	#endregion
