@@ -1,5 +1,7 @@
 namespace Ecng.Nuget;
 
+using System.Collections.Concurrent;
+
 using Ecng.Net;
 
 using Nito.AsyncEx;
@@ -123,7 +125,7 @@ public class NugetRepoProvider : CachingSourceProvider
 	private readonly SourceRepository _privateRepo;
 	private readonly SourceRepository _nugetRepo;
 	private readonly FrameworkReducer _fwkReducer = new();
-	private readonly Dictionary<PackageIdentity, (DateTime till, (PackageIdentity id, SourceRepository repo)[] deps)> _depsCache = [];
+	private readonly ConcurrentDictionary<PackageIdentity, (DateTime till, (PackageIdentity id, SourceRepository repo)[] deps)> _depsCache = [];
 	private readonly TimeSpan _cacheLen = TimeSpan.FromMinutes(10);
 	private readonly List<(SourceRepository repo, Uri baseUrl)> _repoUrls = [];
 
@@ -162,6 +164,9 @@ public class NugetRepoProvider : CachingSourceProvider
 	/// <returns>Found version, repository and base url.</returns>
 	public async Task<(NuGetVersion version, SourceRepository repo, Uri baseUrl)> TryFindVersion(string packageId, VersionRange versionRange, SourceCacheContext cache, ILogger logger, CancellationToken cancellationToken)
 	{
+        if (packageId.IsEmpty())
+			throw new ArgumentNullException(nameof(packageId));
+
 		foreach (var (repo, baseUrl) in _repoUrls)
 		{
 			var resource = await repo.GetResourceAsync<FindPackageByIdResource>(cancellationToken).NoWait();
@@ -231,7 +236,7 @@ public class NugetRepoProvider : CachingSourceProvider
 				if (depsCache.till > DateTime.UtcNow)
 					return depsCache.deps;
 
-				_depsCache.Remove(foundId);
+				_depsCache.TryRemove(foundId, out _);
 			}
 
 			if (!cycledIds.Add(foundId))
