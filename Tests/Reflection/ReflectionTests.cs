@@ -1120,7 +1120,7 @@ public class ReflectionTests : BaseTestClass
 	[TestMethod]
 	public void FindImplementations_FindsTypes()
 	{
-		var assembly = typeof(ReflectionHelperExtendedTests).Assembly;
+		var assembly = typeof(ReflectionTests).Assembly;
 		var implementations = assembly.FindImplementations<IDisposable>(showNonPublic: true);
 		// Should find some disposable types
 		implementations.AssertNotNull();
