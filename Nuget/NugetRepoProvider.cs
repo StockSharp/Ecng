@@ -53,7 +53,16 @@ public class NugetRepoProvider : CachingSourceProvider
 			if (tcs != _tcs)
 				await _tcs.Task;
 			else
-				_tcs.SetResult(await GetImplAsync(privateUrl, token));
+			{
+				try
+				{
+					_tcs.SetResult(await GetImplAsync(privateUrl, token));
+				}
+				catch (Exception ex)
+				{
+					_tcs.SetException(ex);
+				}
+			}
 		}
 
 		private PrivatePackageSource(string addr) : base(addr, PrivateRepoKey) {}
