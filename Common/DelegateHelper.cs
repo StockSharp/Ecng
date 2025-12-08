@@ -169,6 +169,7 @@ public static class DelegateHelper
 	/// </summary>
 	/// <typeparam name="TDelegate">The type of the delegate.</typeparam>
 	/// <param name="source">The delegate from which all delegates are removed.</param>
+	[Obsolete("This method does not work as expected because delegates are immutable. Use 'myDelegate = null;' instead.")]
 	public static void RemoveAllDelegates<TDelegate>(this TDelegate source)
 	{
 		foreach (var item in source.GetInvocationList())

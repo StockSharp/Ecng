@@ -376,6 +376,7 @@ public class DelegateTests : BaseTestClass
 
 	#region RemoveAllDelegates Tests
 
+#pragma warning disable CS0618 // Type or member is obsolete
 	[TestMethod]
 	public void RemoveAllDelegates_RemovesAllFromInvocationList()
 	{
@@ -393,6 +394,7 @@ public class DelegateTests : BaseTestClass
 		combined();
 		callCount.AssertEqual(2);
 	}
+#pragma warning restore CS0618 // Type or member is obsolete
 
 	#endregion
 }
