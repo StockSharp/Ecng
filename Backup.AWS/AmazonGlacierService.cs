@@ -52,6 +52,23 @@ public class AmazonGlacierService : Disposable, IBackupService
 		_client = new AmazonGlacierClient(_credentials, _endpoint);
 	}
 
+	private TimeSpan _jobTimeOut = TimeSpan.FromMinutes(10);
+
+	/// <summary>
+	/// Job timeout.
+	/// </summary>
+	public TimeSpan JobTimeOut
+	{
+		get => _jobTimeOut;
+		set
+		{
+			if (value <= TimeSpan.Zero)
+				throw new ArgumentOutOfRangeException(nameof(value), "Job timeout must be positive.");
+
+			_jobTimeOut = value;
+		}
+	}
+
 	bool IBackupService.CanFolders => false;
 	bool IBackupService.CanPublish => false;
 	bool IBackupService.CanPartialDownload => true;
@@ -90,17 +107,25 @@ public class AmazonGlacierService : Disposable, IBackupService
 			}
 		}, cancellationToken).NoWait();
 
+		var left = JobTimeOut;
+		var interval = TimeSpan.FromMinutes(1);
+
 		DescribeJobResponse describe;
 
 		do
 		{
-			await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken).NoWait();
+			await interval.Delay(cancellationToken).NoWait();
 
 			describe = await _client.DescribeJobAsync(new()
 			{
 				JobId = init.JobId,
 				VaultName = _vaultName,
 			}, cancellationToken).NoWait();
+
+			left -= interval;
+
+			if (left <= TimeSpan.Zero)
+				throw new TimeoutException("Timed out waiting for Amazon Glacier job to complete.");
 		}
 		while (describe.Completed == false);
 
