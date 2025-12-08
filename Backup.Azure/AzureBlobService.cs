@@ -83,7 +83,11 @@ public class AzureBlobService : Disposable, IBackupService
 
 	async Task IBackupService.DownloadAsync(BackupEntry entry, Stream stream, long? offset, long? length, Action<int> progress, CancellationToken cancellationToken)
 	{
-		var blob = _container.GetBlobClient(entry.GetFullPath());
+        ArgumentNullException.ThrowIfNull(entry);
+        ArgumentNullException.ThrowIfNull(stream);
+        ArgumentNullException.ThrowIfNull(progress);
+
+        var blob = _container.GetBlobClient(entry.GetFullPath());
 		var response = await blob.DownloadAsync(new(offset ?? 0, length), cancellationToken: cancellationToken);
 		var source = response.Value.Content;
 		var total = response.Value.ContentLength;
@@ -117,6 +121,10 @@ public class AzureBlobService : Disposable, IBackupService
 
 	async Task IBackupService.UploadAsync(BackupEntry entry, Stream stream, Action<int> progress, CancellationToken cancellationToken)
 	{
+		ArgumentNullException.ThrowIfNull(entry);
+		ArgumentNullException.ThrowIfNull(stream);
+		ArgumentNullException.ThrowIfNull(progress);
+
 		var blob = _container.GetBlockBlobClient(entry.GetFullPath());
 		var buffer = new byte[_bufferSize];
 		var uploaded = 0L;

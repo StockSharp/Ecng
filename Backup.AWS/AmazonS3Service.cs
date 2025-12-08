@@ -253,6 +253,7 @@ public class AmazonS3Service : Disposable, IBackupService
 		}, cancellationToken).NoWait();
 
 		entry.Size = response.ContentLength;
+		entry.LastModified = response.LastModified ?? default;
 	}
 
 	async Task<string> IBackupService.PublishAsync(BackupEntry entry, CancellationToken cancellationToken)
