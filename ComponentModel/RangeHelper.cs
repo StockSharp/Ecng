@@ -16,12 +16,10 @@ public static class RangeHelper
 	/// <summary>
 	/// Determines whether the specified range is empty, meaning it has no defined minimum or maximum value.
 	/// </summary>
-	/// <typeparam name="T">The type of the range values. Must implement IComparable&lt;T&gt;.</typeparam>
 	/// <param name="range">The range to check.</param>
 	/// <returns>true if the range has no minimum and maximum value; otherwise, false.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the range is null.</exception>
-	public static bool IsEmpty<T>(this Range<T> range)
-		where T : IComparable<T>
+	public static bool IsEmpty(this IRange range)
 	{
 		if (range is null)
 			throw new ArgumentNullException(nameof(range));
@@ -71,7 +69,7 @@ public static class RangeHelper
 	public static IEnumerable<Range<DateTimeOffset>> Exclude(this Range<DateTimeOffset> from, Range<DateTimeOffset> excludingRange)
 	{
 		return new Range<long>(from.Min.UtcTicks, from.Max.UtcTicks)
-			.Exclude(new Range<long>(excludingRange.Min.UtcTicks, excludingRange.Max.UtcTicks))
+			.Exclude(new(excludingRange.Min.UtcTicks, excludingRange.Max.UtcTicks))
 			.Select(r => new Range<DateTimeOffset>(r.Min.To<DateTimeOffset>(), r.Max.To<DateTimeOffset>()));
 	}
 
@@ -84,7 +82,7 @@ public static class RangeHelper
 	public static IEnumerable<Range<DateTime>> Exclude(this Range<DateTime> from, Range<DateTime> excludingRange)
 	{
 		return new Range<long>(from.Min.Ticks, from.Max.Ticks)
-			.Exclude(new Range<long>(excludingRange.Min.Ticks, excludingRange.Max.Ticks))
+			.Exclude(new(excludingRange.Min.Ticks, excludingRange.Max.Ticks))
 			.Select(r => new Range<DateTime>(r.Min.To<DateTime>(), r.Max.To<DateTime>()));
 	}
 
@@ -108,17 +106,17 @@ public static class RangeHelper
 			if (from.Contains(intersectedRange))
 			{
 				if (from.Min != intersectedRange.Min)
-					yield return new Range<long>(from.Min, intersectedRange.Min - 1);
+					yield return new(from.Min, intersectedRange.Min - 1);
 
 				if (from.Max != intersectedRange.Max)
-					yield return new Range<long>(intersectedRange.Max + 1, from.Max);
+					yield return new(intersectedRange.Max + 1, from.Max);
 			}
 			else
 			{
 				if (from.Min < intersectedRange.Min)
-					yield return new Range<long>(from.Min, intersectedRange.Min);
+					yield return new(from.Min, intersectedRange.Min);
 				else
-					yield return new Range<long>(intersectedRange.Max, from.Max);
+					yield return new(intersectedRange.Max, from.Max);
 			}
 		}
 	}
@@ -172,32 +170,30 @@ public static class RangeHelper
 		{
 			if (date != nextDate)
 			{
-				yield return new Range<long>(beginDate, nextDate - 1);
+				yield return new(beginDate, nextDate - 1);
 				beginDate = date;
 			}
 
 			nextDate = date + step;
 		}
 
-		yield return new Range<long>(beginDate, nextDate - 1);
+		yield return new(beginDate, nextDate - 1);
 	}
 
 	/// <summary>
 	/// Converts the range to a SettingsStorage object for serialization.
 	/// </summary>
-	/// <typeparam name="T">The type of the range values. Must implement IComparable&lt;T&gt;.</typeparam>
 	/// <param name="range">The range to convert.</param>
 	/// <returns>A SettingsStorage object containing the range data.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the range is null.</exception>
-	public static SettingsStorage ToStorage<T>(this Range<T> range)
-		where T : IComparable<T>
+	public static SettingsStorage ToStorage(this IRange range)
 	{
 		if (range is null)
 			throw new ArgumentNullException(nameof(range));
 
 		return new SettingsStorage()
-			.Set(nameof(range.Min), range.HasMinValue ? (object)range.Min : null)
-			.Set(nameof(range.Max), range.HasMaxValue ? (object)range.Max : null);
+			.Set(nameof(range.Min), range.HasMinValue ? range.Min : null)
+			.Set(nameof(range.Max), range.HasMaxValue ? range.Max : null);
 	}
 
 	/// <summary>
