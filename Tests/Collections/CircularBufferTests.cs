@@ -200,7 +200,7 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_PushBack_Sum()
 	{
-		var buf = new CircularBufferEx<int>(3);
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new IntOperator();
 #endif
@@ -223,7 +223,7 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_PushFront_Sum()
 	{
-		var buf = new CircularBufferEx<int>(3);
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new IntOperator();
 #endif
@@ -247,9 +247,9 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_Max()
 	{
-		var buf = new CircularBufferEx<int>(3);
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Max };
 #if !NET7_0_OR_GREATER
-		buf.MaxComparer = Comparer<int>.Default;
+		buf.Operator = new IntOperator();
 #endif
 
 		buf.PushBack(5);
@@ -273,9 +273,9 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_PushFront_Max()
 	{
-		var buf = new CircularBufferEx<int>(3);
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Max };
 #if !NET7_0_OR_GREATER
-		buf.MaxComparer = Comparer<int>.Default;
+		buf.Operator = new IntOperator();
 #endif
 
 		buf.PushFront(5);
@@ -302,12 +302,10 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_PushBack_Min()
 	{
-		var buf = new CircularBufferEx<int>(3)
-		{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Min };
 #if !NET7_0_OR_GREATER
-			MinComparer = Comparer<int>.Default
+		buf.Operator = new IntOperator();
 #endif
-		};
 
 		buf.PushBack(5);
 		buf.Min.Value.AssertEqual(5);
@@ -330,12 +328,10 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_PushFront_Min()
 	{
-		var buf = new CircularBufferEx<int>(3)
-		{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Min };
 #if !NET7_0_OR_GREATER
-			MinComparer = Comparer<int>.Default
+		buf.Operator = new IntOperator();
 #endif
-		};
 
 		buf.PushFront(5);
 		buf.Min.Value.AssertEqual(5);
@@ -361,7 +357,7 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_SumNoFirst()
 	{
-		var buf = new CircularBufferEx<int>(3);
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new IntOperator();
 #endif
@@ -377,7 +373,7 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_SumNoFirst_Empty()
 	{
-		var buf = new CircularBufferEx<int>(3);
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new IntOperator();
 #endif
@@ -387,11 +383,9 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_Clear()
 	{
-		var buf = new CircularBufferEx<int>(3);
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.All };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new IntOperator();
-		buf.MinComparer = Comparer<int>.Default;
-		buf.MaxComparer = Comparer<int>.Default;
 #endif
 
 		buf.PushBack(1);
@@ -409,10 +403,9 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_PopBack()
 	{
-		var buf = new CircularBufferEx<int>(3);
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum | CircularBufferStats.Max };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new IntOperator();
-		buf.MaxComparer = Comparer<int>.Default;
 #endif
 
 		buf.PushBack(1);
@@ -429,10 +422,9 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_PopFront()
 	{
-		var buf = new CircularBufferEx<int>(3);
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum | CircularBufferStats.Max };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new IntOperator();
-		buf.MaxComparer = Comparer<int>.Default;
 #endif
 
 		buf.PushBack(1);
@@ -448,10 +440,9 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_IndexerSet()
 	{
-		var buf = new CircularBufferEx<int>(3);
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum | CircularBufferStats.Max };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new IntOperator();
-		buf.MaxComparer = Comparer<int>.Default;
 #endif
 
 		buf.PushBack(1);
@@ -468,10 +459,9 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CircularBufferEx_CapacityChange()
 	{
-		var buf = new CircularBufferEx<int>(5);
+		var buf = new CircularBufferEx<int>(5) { Stats = CircularBufferStats.Sum | CircularBufferStats.Max };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new IntOperator();
-		buf.MaxComparer = Comparer<int>.Default;
 #endif
 
 		buf.PushBack(1);
@@ -483,17 +473,16 @@ public class CircularBufferTests : BaseTestClass
 		// After capacity change, buffer is cleared
 		buf.Sum.AssertEqual(0);
 		buf.Max.HasValue.AssertFalse();
+		buf.Min.HasValue.AssertFalse();
 		buf.Count.AssertEqual(0);
 	}
 
 	[TestMethod]
 	public void CircularBufferEx_WithDecimal()
 	{
-		var buf = new CircularBufferEx<decimal>(3);
+		var buf = new CircularBufferEx<decimal>(3) { Stats = CircularBufferStats.All };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new DecimalOperator();
-		buf.MinComparer = Comparer<decimal>.Default;
-		buf.MaxComparer = Comparer<decimal>.Default;
 #endif
 
 		buf.PushBack(1.5m);
@@ -505,41 +494,30 @@ public class CircularBufferTests : BaseTestClass
 		buf.Min.Value.AssertEqual(1.5m);
 	}
 
-#if !NET7_0_OR_GREATER
 	[TestMethod]
-	public void CircularBufferEx_NoOperator_SumIsDefault()
+	public void CircularBufferEx_DefaultStats_None()
 	{
 		var buf = new CircularBufferEx<int>(3);
+#if !NET7_0_OR_GREATER
+		// No Operator set
+#endif
 
 		buf.PushBack(1);
 		buf.PushBack(2);
 
 		buf.Sum.AssertEqual(0);
-	}
-
-	[TestMethod]
-	public void CircularBufferEx_NoComparer_MaxMinHasNoValue()
-	{
-		var buf = new CircularBufferEx<int>(3);
-
-		buf.PushBack(1);
-		buf.PushBack(2);
-
 		buf.Max.HasValue.AssertFalse();
 		buf.Min.HasValue.AssertFalse();
 	}
-#endif
 
 	#endregion
 
 	[TestMethod]
 	public void StatsComputation()
 	{
-		var buf = new CircularBufferEx<decimal>(3);
+		var buf = new CircularBufferEx<decimal>(3) { Stats = CircularBufferStats.All };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new DecimalOperator();
-		buf.MaxComparer = Comparer<decimal>.Default;
-		buf.MinComparer = Comparer<decimal>.Default;
 #endif
 		buf.PushBack(1m);
 		buf.PushBack(2m);
@@ -567,11 +545,9 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CapacityReset()
 	{
-		var buf = new CircularBufferEx<int>(2);
+		var buf = new CircularBufferEx<int>(2) { Stats = CircularBufferStats.All };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new IntOperator();
-		buf.MaxComparer = Comparer<int>.Default;
-		buf.MinComparer = Comparer<int>.Default;
 #endif
 		buf.PushBack(1);
 		buf.PushBack(2);
@@ -585,11 +561,9 @@ public class CircularBufferTests : BaseTestClass
 	[TestMethod]
 	public void CollectionCompatibilityEx()
 	{
-		var buf = new CircularBufferEx<decimal>(4);
+		var buf = new CircularBufferEx<decimal>(4) { Stats = CircularBufferStats.All };
 #if !NET7_0_OR_GREATER
 		buf.Operator = new DecimalOperator();
-		buf.MaxComparer = Comparer<decimal>.Default;
-		buf.MinComparer = Comparer<decimal>.Default;
 #endif
 		var icol = (ICollection<decimal>)buf;
 		var ilist = (IList<decimal>)buf;
@@ -630,4 +604,254 @@ public class CircularBufferTests : BaseTestClass
 		buf.Min.Value.AssertEqual(30);
 		buf.SumNoFirst.AssertEqual(30);
 	}
+	
+	#region CircularBufferEx Stats Mask Tests
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_SumOnly()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Sum };
+#if !NET7_0_OR_GREATER
+		buf.Operator = new IntOperator();
+#endif
+
+		buf.PushBack(1);
+		buf.PushBack(2);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(6);
+		buf.Max.HasValue.AssertFalse();
+		buf.Min.HasValue.AssertFalse();
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_MinMaxOnly()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.Min | CircularBufferStats.Max };
+#if !NET7_0_OR_GREATER
+		buf.Operator = new IntOperator();
+#endif
+
+		buf.PushBack(1);
+		buf.PushBack(5);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(0); // Not calculated
+		buf.Max.Value.AssertEqual(5);
+		buf.Min.Value.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_None()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.None };
+#if !NET7_0_OR_GREATER
+		buf.Operator = new IntOperator();
+#endif
+
+		buf.PushBack(1);
+		buf.PushBack(5);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(0);
+		buf.Max.HasValue.AssertFalse();
+		buf.Min.HasValue.AssertFalse();
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_All()
+	{
+		var buf = new CircularBufferEx<int>(3) { Stats = CircularBufferStats.All };
+#if !NET7_0_OR_GREATER
+		buf.Operator = new IntOperator();
+#endif
+
+		buf.PushBack(1);
+		buf.PushBack(5);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(9);
+		buf.Max.Value.AssertEqual(5);
+		buf.Min.Value.AssertEqual(1);
+	}
+
+#if !NET7_0_OR_GREATER
+	[TestMethod]
+	public void CircularBufferEx_BackwardCompatibility_OperatorOnly()
+	{
+		// Old code that sets only Operator should calculate Sum
+#pragma warning disable CS0618 // Type or member is obsolete
+		var buf = new CircularBufferEx<int>(3) { Operator = new IntOperator() };
+#pragma warning restore CS0618
+
+		buf.PushBack(1);
+		buf.PushBack(2);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(6);
+		buf.Max.HasValue.AssertFalse(); // No MaxComparer set
+		buf.Min.HasValue.AssertFalse(); // No MinComparer set
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_BackwardCompatibility_AllComparers()
+	{
+		// Old code that sets all comparers
+#pragma warning disable CS0618 // Type or member is obsolete
+		var buf = new CircularBufferEx<int>(3)
+		{
+			Operator = new IntOperator(),
+			MaxComparer = Comparer<int>.Default,
+			MinComparer = Comparer<int>.Default
+		};
+#pragma warning restore CS0618
+
+		buf.PushBack(1);
+		buf.PushBack(5);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(9);
+		buf.Max.Value.AssertEqual(5);
+		buf.Min.Value.AssertEqual(1);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_BackwardCompatibility_OperatorAsComparer()
+	{
+        // Old code that uses Operator as comparer fallback
+#pragma warning disable CS0618 // Type or member is obsolete
+        var buf = new CircularBufferEx<int>(3)
+        {
+            Operator = new IntOperator(),
+            MaxComparer = null, // Explicitly null, should use Operator
+            MinComparer = null, // Explicitly null, should use Operator
+#pragma warning restore CS0618
+
+            // Stats not set - should infer from properties
+            Stats = CircularBufferStats.All
+        };
+
+        buf.PushBack(1);
+		buf.PushBack(5);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(9);
+		buf.Max.Value.AssertEqual(5); // Uses Operator as comparer
+		buf.Min.Value.AssertEqual(1); // Uses Operator as comparer
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_StatsOverridesProperties()
+	{
+        // When Stats is explicitly set, it overrides property-based inference
+#pragma warning disable CS0618 // Type or member is obsolete
+        var buf = new CircularBufferEx<int>(3)
+        {
+            Operator = new IntOperator(),
+            MaxComparer = Comparer<int>.Default,
+            MinComparer = Comparer<int>.Default,
+#pragma warning restore CS0618
+
+            Stats = CircularBufferStats.Sum // Only Sum, ignore Max/Min
+        };
+
+        buf.PushBack(1);
+		buf.PushBack(5);
+		buf.PushBack(3);
+
+		buf.Sum.AssertEqual(9);
+		buf.Max.HasValue.AssertFalse(); // Not calculated due to Stats
+		buf.Min.HasValue.AssertFalse(); // Not calculated due to Stats
+	}
+#endif
+
+	#endregion
+
+#if !NET7_0_OR_GREATER
+	[TestMethod]
+	public void CircularBufferEx_Stats_AutoSetByOperator()
+	{
+		var buf = new CircularBufferEx<int>(3);
+		buf.Stats.AssertEqual(CircularBufferStats.None);
+
+		buf.Operator = new IntOperator();
+		buf.Stats.AssertEqual(CircularBufferStats.Sum);
+
+		buf.Operator = null;
+		buf.Stats.AssertEqual(CircularBufferStats.None);
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_AutoSetByMinComparer()
+	{
+#pragma warning disable CS0618
+		var buf = new CircularBufferEx<int>(3);
+		buf.Stats.AssertEqual(CircularBufferStats.None);
+
+		buf.MinComparer = Comparer<int>.Default;
+		buf.Stats.AssertEqual(CircularBufferStats.Min);
+
+		buf.MinComparer = null;
+		buf.Stats.AssertEqual(CircularBufferStats.None);
+#pragma warning restore CS0618
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_AutoSetByMaxComparer()
+	{
+#pragma warning disable CS0618
+		var buf = new CircularBufferEx<int>(3);
+		buf.Stats.AssertEqual(CircularBufferStats.None);
+
+		buf.MaxComparer = Comparer<int>.Default;
+		buf.Stats.AssertEqual(CircularBufferStats.Max);
+
+		buf.MaxComparer = null;
+		buf.Stats.AssertEqual(CircularBufferStats.None);
+#pragma warning restore CS0618
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_AutoSetCombination()
+	{
+#pragma warning disable CS0618
+        var buf = new CircularBufferEx<int>(3)
+        {
+            Operator = new IntOperator()
+        };
+        buf.Stats.AssertEqual(CircularBufferStats.Sum);
+
+		buf.MinComparer = Comparer<int>.Default;
+		buf.Stats.AssertEqual(CircularBufferStats.Sum | CircularBufferStats.Min);
+
+		buf.MaxComparer = Comparer<int>.Default;
+		buf.Stats.AssertEqual(CircularBufferStats.All);
+
+		buf.Operator = null;
+		buf.Stats.AssertEqual(CircularBufferStats.Min | CircularBufferStats.Max);
+#pragma warning restore CS0618
+	}
+
+	[TestMethod]
+	public void CircularBufferEx_Stats_ExplicitOverridesAuto()
+	{
+        var buf = new CircularBufferEx<int>(3)
+        {
+            Operator = new IntOperator()
+        };
+        buf.Stats.AssertEqual(CircularBufferStats.Sum);
+
+		// Explicitly set Stats - now setters should not change it
+		buf.Stats = CircularBufferStats.Max;
+		buf.Stats.AssertEqual(CircularBufferStats.Max);
+
+#pragma warning disable CS0618
+		buf.MinComparer = Comparer<int>.Default; // Should NOT add Min to Stats
+#pragma warning restore CS0618
+		buf.Stats.AssertEqual(CircularBufferStats.Max); // Still Max only
+
+		buf.Operator = null; // Should NOT remove Sum from Stats
+		buf.Stats.AssertEqual(CircularBufferStats.Max); // Still Max only
+	}
+#endif
 }

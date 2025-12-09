@@ -1,5 +1,6 @@
 ﻿namespace Ecng.Collections;
 
+using System;
 using System.Linq;
 #if NET7_0_OR_GREATER
 using System.Numerics;
@@ -10,6 +11,38 @@ using System.Collections.Generic;
 using Ecng.Common;
 
 /// <summary>
+/// Specifies which statistics to calculate in <see cref="CircularBufferEx{TItem}"/>.
+/// </summary>
+[Flags]
+public enum CircularBufferStats
+{
+	/// <summary>
+	/// No statistics calculated.
+	/// </summary>
+	None = 0,
+
+	/// <summary>
+	/// Calculate sum of elements.
+	/// </summary>
+	Sum = 1,
+
+	/// <summary>
+	/// Calculate minimum value.
+	/// </summary>
+	Min = 2,
+
+	/// <summary>
+	/// Calculate maximum value.
+	/// </summary>
+	Max = 4,
+
+	/// <summary>
+	/// Calculate all statistics.
+	/// </summary>
+	All = Sum | Min | Max
+}
+
+/// <summary>
 /// <see cref="CircularBuffer{TItem}"/> with additional features.
 /// </summary>
 /// <typeparam name="TItem">The type of elements in the buffer.</typeparam>
@@ -18,6 +51,11 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 	where TItem : INumber<TItem>
 #endif
 {
+	private CircularBufferStats _stats;
+#if !NET7_0_OR_GREATER
+	private bool _statsExplicitlySet;
+#endif
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="CircularBufferEx{TItem}"/>.
 	/// </summary>
@@ -28,23 +66,96 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 		Clear();
 	}
 
+	/// <summary>
+	/// Specifies which statistics to calculate.
+	/// </summary>
+	public CircularBufferStats Stats
+	{
+		get => _stats;
+		set
+		{
+			_stats = value;
 #if !NET7_0_OR_GREATER
+			_statsExplicitlySet = true;
+#endif
+		}
+	}
+
+	private bool CalcSum => (_stats & CircularBufferStats.Sum) != 0;
+	private bool CalcMin => (_stats & CircularBufferStats.Min) != 0;
+	private bool CalcMax => (_stats & CircularBufferStats.Max) != 0;
+
+#if !NET7_0_OR_GREATER
+	private IOperator<TItem> _operator;
+
 	/// <summary>
 	/// Operator for arithmetic operations.
 	/// </summary>
-	public IOperator<TItem> Operator { get; set; }
+	public IOperator<TItem> Operator
+	{
+		get => _operator;
+		set
+        {
+            _operator = value;
 
-	/// <summary>
-	/// Comparer for calculating <see cref="Max"/>.
-	/// If not set, <see cref="Operator"/> will be used.
-	/// </summary>
-	public IComparer<TItem> MaxComparer { get; set; }
+            if (_statsExplicitlySet)
+                return;
+
+            if (value is not null)
+                _stats |= CircularBufferStats.Sum;
+            else
+                _stats &= ~CircularBufferStats.Sum;
+        }
+    }
+
+	private IComparer<TItem> _minComparer;
 
 	/// <summary>
 	/// Comparer for calculating <see cref="Min"/>.
-	/// If not set, <see cref="Operator"/> will be used.
 	/// </summary>
-	public IComparer<TItem> MinComparer { get; set; }
+	[Obsolete("Use Stats property with CircularBufferStats.Min flag instead.")]
+	public IComparer<TItem> MinComparer
+	{
+		get => _minComparer;
+		set
+        {
+            _minComparer = value;
+
+            if (_statsExplicitlySet)
+                return;
+
+            if (value is not null)
+                _stats |= CircularBufferStats.Min;
+            else
+                _stats &= ~CircularBufferStats.Min;
+        }
+    }
+
+	private IComparer<TItem> _maxComparer;
+
+	/// <summary>
+	/// Comparer for calculating <see cref="Max"/>.
+	/// </summary>
+	[Obsolete("Use Stats property with CircularBufferStats.Max flag instead.")]
+	public IComparer<TItem> MaxComparer
+	{
+		get => _maxComparer;
+		set
+        {
+            _maxComparer = value;
+
+            if (_statsExplicitlySet)
+                return;
+
+            if (value is not null)
+                _stats |= CircularBufferStats.Max;
+            else
+                _stats &= ~CircularBufferStats.Max;
+        }
+    }
+
+	private IComparer<TItem> GetMinComparer() => _minComparer ?? _operator;
+	private IComparer<TItem> GetMaxComparer() => _maxComparer ?? _operator;
 #endif
 
 	/// <summary>
@@ -75,19 +186,14 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 #if NET7_0_OR_GREATER
 			return Sum - this[0];
 #else
-			return Operator.Subtract(Sum, this[0]);
+			return Subtract(Sum, this[0]);
 #endif
 		}
 	}
 
-#if NET7_0_OR_GREATER
-	private static TItem Add(TItem a, TItem b) => a + b;
-	private static TItem Subtract(TItem a, TItem b) => a - b;
-	private static int Compare(TItem a, TItem b) => a.CompareTo(b);
-#else
-	private TItem Add(TItem a, TItem b) => Operator.Add(a, b);
-	private TItem Subtract(TItem a, TItem b) => Operator.Subtract(a, b);
-	private int Compare(TItem a, TItem b) => Operator?.Compare(a, b) ?? Comparer<TItem>.Default.Compare(a, b);
+#if !NET7_0_OR_GREATER
+	private TItem Add(TItem a, TItem b) => _operator.Add(a, b);
+	private TItem Subtract(TItem a, TItem b) => _operator.Subtract(a, b);
 #endif
 
 	/// <inheritdoc />
@@ -100,34 +206,52 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 		{
 			var removed = this[0];
 
+			if (CalcSum)
+			{
 #if NET7_0_OR_GREATER
-			Sum -= removed;
+				Sum -= removed;
 #else
-			if (Operator is not null)
-				Sum = Subtract(Sum, removed);
+				if (_operator is not null)
+					Sum = Subtract(Sum, removed);
 #endif
+			}
 
+			if (CalcMax)
+			{
 #if NET7_0_OR_GREATER
-			if (Max.HasValue && Max.Value == removed)
-				recalcMax = true;
-			if (Min.HasValue && Min.Value == removed)
-				recalcMin = true;
+				if (Max.HasValue && Max.Value == removed)
+					recalcMax = true;
 #else
-			if (Max.HasValue && MaxComparer?.Compare(Max.Value, removed) == 0)
-				recalcMax = true;
-			if (Min.HasValue && MinComparer?.Compare(Min.Value, removed) == 0)
-				recalcMin = true;
+				var maxComparer = GetMaxComparer();
+				if (Max.HasValue && maxComparer?.Compare(Max.Value, removed) == 0)
+					recalcMax = true;
 #endif
+			}
+
+			if (CalcMin)
+			{
+#if NET7_0_OR_GREATER
+				if (Min.HasValue && Min.Value == removed)
+					recalcMin = true;
+#else
+				var minComparer = GetMinComparer();
+				if (Min.HasValue && minComparer?.Compare(Min.Value, removed) == 0)
+					recalcMin = true;
+#endif
+			}
 		}
 
 		base.PushBack(item);
 
+		if (CalcSum)
+		{
 #if NET7_0_OR_GREATER
-		Sum += item;
+			Sum += item;
 #else
-		if (Operator is not null)
-			Sum = Add(Sum, item);
+			if (_operator is not null)
+				Sum = Add(Sum, item);
 #endif
+		}
 
 		UpdateMaxMin(item, recalcMax, recalcMin);
 	}
@@ -143,70 +267,99 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 			var lastIndex = Count - 1;
 			var removed = this[lastIndex];
 
+			if (CalcSum)
+			{
 #if NET7_0_OR_GREATER
-			Sum -= removed;
+				Sum -= removed;
 #else
-			if (Operator is not null)
-				Sum = Subtract(Sum, removed);
+				if (_operator is not null)
+					Sum = Subtract(Sum, removed);
 #endif
+			}
 
+			if (CalcMax)
+			{
 #if NET7_0_OR_GREATER
-			if (Max.HasValue && Max.Value == removed)
-				recalcMax = true;
-			if (Min.HasValue && Min.Value == removed)
-				recalcMin = true;
+				if (Max.HasValue && Max.Value == removed)
+					recalcMax = true;
 #else
-			if (Max.HasValue && MaxComparer?.Compare(Max.Value, removed) == 0)
-				recalcMax = true;
-			if (Min.HasValue && MinComparer?.Compare(Min.Value, removed) == 0)
-				recalcMin = true;
+				var maxComparer = GetMaxComparer();
+
+				if (Max.HasValue && maxComparer?.Compare(Max.Value, removed) == 0)
+					recalcMax = true;
 #endif
+			}
+
+			if (CalcMin)
+			{
+#if NET7_0_OR_GREATER
+				if (Min.HasValue && Min.Value == removed)
+					recalcMin = true;
+#else
+				var minComparer = GetMinComparer();
+
+				if (Min.HasValue && minComparer?.Compare(Min.Value, removed) == 0)
+					recalcMin = true;
+#endif
+			}
 		}
 
 		base.PushFront(item);
 
+		if (CalcSum)
+		{
 #if NET7_0_OR_GREATER
-		Sum += item;
+			Sum += item;
 #else
-		if (Operator is not null)
-			Sum = Add(Sum, item);
+			if (_operator is not null)
+				Sum = Add(Sum, item);
 #endif
+		}
 
 		UpdateMaxMin(item, recalcMax, recalcMin);
 	}
 
 	private void UpdateMaxMin(TItem item, bool recalcMax, bool recalcMin)
 	{
+		if (CalcMax)
+		{
 #if NET7_0_OR_GREATER
-		if (recalcMax)
-			Max.Value = this.Max();
-		else if (!Max.HasValue || item > Max.Value)
-			Max.Value = item;
-
-		if (recalcMin)
-			Min.Value = this.Min();
-		else if (!Min.HasValue || item < Min.Value)
-			Min.Value = item;
-#else
-		var maxComparer = MaxComparer;
-		var minComparer = MinComparer;
-
-		if (maxComparer is not null)
-		{
 			if (recalcMax)
-				Max.Value = this.Max(maxComparer);
-			else if (!Max.HasValue || maxComparer.Compare(Max.Value, item) < 0)
+				Max.Value = this.Max();
+			else if (!Max.HasValue || item > Max.Value)
 				Max.Value = item;
+#else
+			var maxComparer = GetMaxComparer();
+
+			if (maxComparer is not null)
+			{
+				if (recalcMax)
+					Max.Value = this.Max(maxComparer);
+				else if (!Max.HasValue || maxComparer.Compare(Max.Value, item) < 0)
+					Max.Value = item;
+			}
+#endif
 		}
 
-		if (minComparer is not null)
+		if (CalcMin)
 		{
+#if NET7_0_OR_GREATER
 			if (recalcMin)
-				Min.Value = this.Min(minComparer);
-			else if (!Min.HasValue || minComparer.Compare(Min.Value, item) > 0)
+				Min.Value = this.Min();
+			else if (!Min.HasValue || item < Min.Value)
 				Min.Value = item;
-		}
+#else
+			var minComparer = GetMinComparer();
+
+			if (minComparer is not null)
+			{
+				if (recalcMin)
+					Min.Value = this.Min(minComparer);
+				else if (!Min.HasValue || minComparer.Compare(Min.Value, item) > 0)
+					Min.Value = item;
+			}
 #endif
+		}
 	}
 
 	/// <inheritdoc />
@@ -269,41 +422,56 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 			return;
 		}
 
-#if NET7_0_OR_GREATER
-		Sum = this.Aggregate(TItem.Zero, (acc, x) => acc + x);
-		Max.Value = this.Max();
-		Min.Value = this.Min();
-#else
-		var op = Operator;
-		var maxComparer = MaxComparer;
-		var minComparer = MinComparer;
-
-		if (op is not null)
+		if (CalcSum)
 		{
-			Sum = this.Aggregate(op.Add);
+#if NET7_0_OR_GREATER
+			Sum = this.Aggregate(TItem.Zero, (acc, x) => acc + x);
+#else
+			if (_operator is not null)
+				Sum = this.Aggregate(Add);
+			else
+				Sum = default;
+#endif
 		}
 		else
 		{
 			Sum = default;
 		}
 
-		if (maxComparer is not null)
+		if (CalcMax)
 		{
-			Max.Value = this.Max(maxComparer);
+#if NET7_0_OR_GREATER
+			Max.Value = this.Max();
+#else
+			var maxComparer = GetMaxComparer();
+
+			if (maxComparer is not null)
+				Max.Value = this.Max(maxComparer);
+			else
+				Max = new();
+#endif
 		}
 		else
 		{
 			Max = new();
 		}
 
-		if (minComparer is not null)
+		if (CalcMin)
 		{
-			Min.Value = this.Min(minComparer);
+#if NET7_0_OR_GREATER
+			Min.Value = this.Min();
+#else
+			var minComparer = GetMinComparer();
+
+			if (minComparer is not null)
+				Min.Value = this.Min(minComparer);
+			else
+				Min = new();
+#endif
 		}
 		else
 		{
 			Min = new();
 		}
-#endif
 	}
 }
