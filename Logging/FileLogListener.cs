@@ -437,8 +437,9 @@ public class FileLogListener : LogListener
 							File.Move(file, Path.Combine(HistoryMove, Path.GetFileName(file)));
 					}
 				}
-				catch
+				catch (Exception ex)
 				{
+					Trace.WriteLine(ex);
 				}
 
 				break;
@@ -605,13 +606,13 @@ public class FileLogListener : LogListener
 	// http://ramblings.markstarmer.co.uk/2011/07/efficiency-datetime-tostringstring/
 	private char[] ToFastDateCharArray(DateTime time)
 	{
-		var hasDate = SeparateByDates == SeparateByDateModes.None;
+		var includeDateInLog = SeparateByDates == SeparateByDateModes.None;
 
-		var timeChars = new char[12 + (hasDate ? 11 : 0)];
+		var timeChars = new char[12 + (includeDateInLog ? 11 : 0)];
 
 		var offset = 0;
 
-		if (hasDate)
+		if (includeDateInLog)
 		{
 			var year = time.Year;
 			var month = time.Month;

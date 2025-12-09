@@ -73,7 +73,7 @@ public class LogManager : Disposable, IPersistable
 		}
 	}
 
-	private static readonly DisposeLogMessage _disposeMessage = new();
+	private readonly DisposeLogMessage _disposeMessage = new();
 
 	private readonly Lock _syncRoot = new();
 	private readonly List<LogMessage> _pendingMessages = [];

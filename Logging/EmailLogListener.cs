@@ -12,6 +12,7 @@ public class EmailLogListener : LogListener
 {
 	private readonly Channel<(string subj, string body)> _channel = Channel.CreateUnbounded<(string subj, string body)>();
 	private readonly Task _processingTask;
+	private readonly CancellationTokenSource _cts = new();
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="EmailLogListener"/>.
@@ -55,29 +56,40 @@ public class EmailLogListener : LogListener
 	/// </summary>
 	private async Task ProcessMessagesAsync()
 	{
+		var token = _cts.Token;
+
 		try
 		{
-			using var email = CreateClient();
 			var reader = _channel.Reader;
 
-			while (await reader.WaitToReadAsync().NoWait())
+			while (await reader.WaitToReadAsync(token).NoWait())
 			{
 				while (reader.TryRead(out var message))
 				{
+					if (token.IsCancellationRequested)
+						break;
+
 					try
 					{
-						email.Send(From, To, message.subj, message.body);
+						using var email = CreateClient();
+						await email.SendMailAsync(From, To, message.subj, message.body
+#if NET6_0_OR_GREATER
+							, token
+#endif
+						);
 					}
 					catch (Exception ex)
 					{
-						Trace.WriteLine(ex);
+						if (!token.IsCancellationRequested)
+							Trace.WriteLine(ex);
 					}
 				}
 			}
 		}
 		catch (Exception ex)
 		{
-			Trace.WriteLine(ex);
+			if (!token.IsCancellationRequested)
+				Trace.WriteLine(ex);
 		}
 	}
 
@@ -92,6 +104,9 @@ public class EmailLogListener : LogListener
 			Dispose();
 			return;
 		}
+
+		if (From.IsEmpty() || To.IsEmpty())
+			return;
 
 		_channel.Writer.TryWrite((GetSubject(message), message.Message));
 	}
@@ -125,6 +140,7 @@ public class EmailLogListener : LogListener
 	/// </summary>
 	protected override void DisposeManaged()
 	{
+		_cts.Cancel();
 		_channel.Writer.Complete();
 
 		try
@@ -135,6 +151,8 @@ public class EmailLogListener : LogListener
 		{
 			Trace.WriteLine(ex);
 		}
+
+		_cts.Dispose();
 
 		base.DisposeManaged();
 	}
