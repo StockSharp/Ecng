@@ -744,12 +744,19 @@ public class TimeSpanOperator : BaseOperator<TimeSpan>
 /// </summary>
 public class DateTimeOperator : BaseOperator<DateTime>
 {
+	private static void ValidateKind(DateTime first, DateTime second)
+	{
+		if (first.Kind != second.Kind)
+			throw new ArgumentException($"DateTime.Kind mismatch: {first.Kind} vs {second.Kind}. Both values must have the same Kind.");
+	}
+
 	/// <summary>
 	/// Adds two DateTime values by adding their ticks.
 	/// </summary>
 	public override DateTime Add(DateTime first, DateTime second)
 	{
-		return new DateTime(first.Ticks + second.Ticks);
+		ValidateKind(first, second);
+		return new DateTime(first.Ticks + second.Ticks, first.Kind);
 	}
 
 	/// <summary>
@@ -757,7 +764,8 @@ public class DateTimeOperator : BaseOperator<DateTime>
 	/// </summary>
 	public override DateTime Subtract(DateTime first, DateTime second)
 	{
-		return new DateTime(first.Ticks - second.Ticks);
+		ValidateKind(first, second);
+		return new DateTime(first.Ticks - second.Ticks, first.Kind);
 	}
 
 	/// <summary>
@@ -765,7 +773,8 @@ public class DateTimeOperator : BaseOperator<DateTime>
 	/// </summary>
 	public override DateTime Multiply(DateTime first, DateTime second)
 	{
-		return new DateTime(first.Ticks * second.Ticks);
+		ValidateKind(first, second);
+		return new DateTime(first.Ticks * second.Ticks, first.Kind);
 	}
 
 	/// <summary>
@@ -773,7 +782,8 @@ public class DateTimeOperator : BaseOperator<DateTime>
 	/// </summary>
 	public override DateTime Divide(DateTime first, DateTime second)
 	{
-		return new DateTime(first.Ticks / second.Ticks);
+		ValidateKind(first, second);
+		return new DateTime(first.Ticks / second.Ticks, first.Kind);
 	}
 
 	/// <summary>

@@ -363,40 +363,44 @@ public class OperatorTests : BaseTestClass
 	public void DateTimeOperator_Add()
 	{
 		var op = new DateTimeOperator();
-		var dt1 = new DateTime(100);
-		var dt2 = new DateTime(50);
+		var dt1 = new DateTime(100, DateTimeKind.Utc);
+		var dt2 = new DateTime(50, DateTimeKind.Utc);
 		var result = op.Add(dt1, dt2);
 		result.Ticks.AssertEqual(150);
+		result.Kind.AssertEqual(DateTimeKind.Utc);
 	}
 
 	[TestMethod]
 	public void DateTimeOperator_Subtract()
 	{
 		var op = new DateTimeOperator();
-		var dt1 = new DateTime(100);
-		var dt2 = new DateTime(30);
+		var dt1 = new DateTime(100, DateTimeKind.Local);
+		var dt2 = new DateTime(30, DateTimeKind.Local);
 		var result = op.Subtract(dt1, dt2);
 		result.Ticks.AssertEqual(70);
+		result.Kind.AssertEqual(DateTimeKind.Local);
 	}
 
 	[TestMethod]
 	public void DateTimeOperator_Multiply()
 	{
 		var op = new DateTimeOperator();
-		var dt1 = new DateTime(10);
-		var dt2 = new DateTime(5);
+		var dt1 = new DateTime(10, DateTimeKind.Utc);
+		var dt2 = new DateTime(5, DateTimeKind.Utc);
 		var result = op.Multiply(dt1, dt2);
 		result.Ticks.AssertEqual(50);
+		result.Kind.AssertEqual(DateTimeKind.Utc);
 	}
 
 	[TestMethod]
 	public void DateTimeOperator_Divide()
 	{
 		var op = new DateTimeOperator();
-		var dt1 = new DateTime(100);
-		var dt2 = new DateTime(10);
+		var dt1 = new DateTime(100, DateTimeKind.Utc);
+		var dt2 = new DateTime(10, DateTimeKind.Utc);
 		var result = op.Divide(dt1, dt2);
 		result.Ticks.AssertEqual(10);
+		result.Kind.AssertEqual(DateTimeKind.Utc);
 	}
 
 	[TestMethod]
@@ -408,6 +412,30 @@ public class OperatorTests : BaseTestClass
 		(op.Compare(dt1, dt2) < 0).AssertTrue();
 		(op.Compare(dt2, dt1) > 0).AssertTrue();
 		op.Compare(dt1, dt1).AssertEqual(0);
+	}
+
+	[TestMethod]
+	public void DateTimeOperator_KindMismatch_Throws()
+	{
+		var op = new DateTimeOperator();
+		var dt1 = new DateTime(100, DateTimeKind.Utc);
+		var dt2 = new DateTime(50, DateTimeKind.Local);
+
+		ThrowsExactly<ArgumentException>(() => op.Add(dt1, dt2));
+		ThrowsExactly<ArgumentException>(() => op.Subtract(dt1, dt2));
+		ThrowsExactly<ArgumentException>(() => op.Multiply(dt1, dt2));
+		ThrowsExactly<ArgumentException>(() => op.Divide(dt1, dt2));
+	}
+
+	[TestMethod]
+	public void DateTimeOperator_UnspecifiedKind_Works()
+	{
+		var op = new DateTimeOperator();
+		var dt1 = new DateTime(100); // Unspecified
+		var dt2 = new DateTime(50);  // Unspecified
+		var result = op.Add(dt1, dt2);
+		result.Ticks.AssertEqual(150);
+		result.Kind.AssertEqual(DateTimeKind.Unspecified);
 	}
 
 	#endregion
