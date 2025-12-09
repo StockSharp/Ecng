@@ -22,6 +22,7 @@ public static class MailHelper
 	/// <param name="message">The mail message to send.</param>
 	/// <param name="dispose">If set to <c>true</c>, disposes the mail message after sending.</param>
 	/// <exception cref="ArgumentNullException">Thrown if <paramref name="message"/> is null.</exception>
+	[Obsolete("Synchronous sending is obsolete. Use SendAsync instead.")]
 	public static void Send(this MailMessage message, bool dispose = true)
 	{
 		if (message is null)
@@ -41,6 +42,7 @@ public static class MailHelper
 	/// <param name="cancellationToken">A cancellation token to cancel the asynchronous send operation.</param>
 	/// <returns>A task that represents the asynchronous send operation.</returns>
 	/// <exception cref="ArgumentNullException">Thrown if <paramref name="message"/> is null.</exception>
+	[Obsolete("Use SendMailAsync extension method of SmtpClient instead.")]
 	public static async Task SendAsync(this MailMessage message, CancellationToken cancellationToken = default)
 	{
 		if (message is null)

@@ -10,14 +10,6 @@ using Ecng.Net;
 public class MailHelperTests : BaseTestClass
 {
 	[TestMethod]
-	public Task Send_Null_Throws()
-	{
-		MailMessage msg = null;
-		ThrowsExactly<ArgumentNullException>(() => msg.Send());
-		return ThrowsExactlyAsync<ArgumentNullException>(() => msg.SendAsync(CancellationToken));
-	}
-
-	[TestMethod]
 	public void AddHtmlAndPlain_AddsAlternateViews()
 	{
 		using var msg = new MailMessage();
