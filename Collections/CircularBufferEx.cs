@@ -134,13 +134,15 @@ public class CircularBufferEx<TItem> : CircularBuffer<TItem>
 
 		if (Count == Capacity)
 		{
-			if (op is not null)
-				Sum = op.Subtract(Sum, this[0]);
+			var lastIndex = Count - 1;
 
-			if (maxComparer?.Compare(Max.Value, this[0]) == 0)
+			if (op is not null)
+				Sum = op.Subtract(Sum, this[lastIndex]);
+
+			if (maxComparer?.Compare(Max.Value, this[lastIndex]) == 0)
 				recalcMax = true;
 
-			if (minComparer?.Compare(Min.Value, this[0]) == 0)
+			if (minComparer?.Compare(Min.Value, this[lastIndex]) == 0)
 				recalcMin = true;
 		}
 
