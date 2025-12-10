@@ -3,8 +3,8 @@ namespace Ecng.Logging;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
-using System.Threading;
 
+using Ecng.Common;
 using Ecng.Localization;
 
 /// <summary>
@@ -73,7 +73,7 @@ public class FileLogListener : LogListener
 			_digitChars[i] = (char)(i + '0');
 	}
 
-	private class StreamWriterEx(string path, bool append, Encoding encoding) : StreamWriter(path, append, encoding)
+	private class StreamWriterEx(Stream stream, Encoding encoding, string path) : StreamWriter(stream, encoding)
 	{
 		public string Path { get; } = path;
 	}
@@ -84,7 +84,17 @@ public class FileLogListener : LogListener
 	/// To create <see cref="FileLogListener"/>. For each <see cref="ILogSource"/> a separate file with a name equal to <see cref="ILogSource.Name"/> will be created.
 	/// </summary>
 	public FileLogListener()
+		: this(new LocalFileSystem())
 	{
+	}
+
+	/// <summary>
+	/// To create <see cref="FileLogListener"/> with custom file system.
+	/// </summary>
+	/// <param name="fileSystem">The file system to use for file operations.</param>
+	public FileLogListener(IFileSystem fileSystem)
+	{
+		FileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
 	}
 
 	/// <summary>
@@ -92,6 +102,17 @@ public class FileLogListener : LogListener
 	/// </summary>
 	/// <param name="fileName">The name of a text file to which messages from the event <see cref="ILogSource.Log"/> will be recorded.</param>
 	public FileLogListener(string fileName)
+		: this(new LocalFileSystem(), fileName)
+	{
+	}
+
+	/// <summary>
+	/// To create <see cref="FileLogListener"/> with custom file system. All messages from the <see cref="ILogSource.Log"/> will be recorded to the file <paramref name="fileName" />.
+	/// </summary>
+	/// <param name="fileSystem">The file system to use for file operations.</param>
+	/// <param name="fileName">The name of a text file to which messages from the event <see cref="ILogSource.Log"/> will be recorded.</param>
+	public FileLogListener(IFileSystem fileSystem, string fileName)
+		: this(fileSystem)
 	{
 		if (fileName.IsEmpty())
 			throw new ArgumentNullException(nameof(fileName));
@@ -109,6 +130,11 @@ public class FileLogListener : LogListener
 		if (!info.DirectoryName.IsEmpty())
 			LogDirectory = info.DirectoryName;
 	}
+
+	/// <summary>
+	/// The file system used for file operations.
+	/// </summary>
+	public IFileSystem FileSystem { get; }
 
 	private string _fileName;
 
@@ -187,7 +213,7 @@ public class FileLogListener : LogListener
 			if (value.IsEmpty())
 				throw new ArgumentNullException(nameof(value));
 
-			Directory.CreateDirectory(value);
+			FileSystem.CreateDirectory(value);
 
 			_logDirectory = value;
 		}
@@ -300,7 +326,7 @@ public class FileLogListener : LogListener
 				break;
 			case SeparateByDateModes.SubDirectories:
 				dirName = Path.Combine(dirName, date.ToString(DirectoryDateFormat));
-				Directory.CreateDirectory(dirName);
+				FileSystem.CreateDirectory(dirName);
 				break;
 			default:
 				throw new ArgumentOutOfRangeException(nameof(SeparateByDates), SeparateByDates, "Invalid value.".Localize());
@@ -316,9 +342,7 @@ public class FileLogListener : LogListener
 	/// <param name="fileName">The name of the text file to which messages from the event <see cref="ILogSource.Log"/> will be recorded.</param>
 	/// <returns>A text writer.</returns>
 	private StreamWriterEx OnCreateWriter(string fileName)
-	{
-		return new StreamWriterEx(fileName, Append, Encoding);
-	}
+		=> new(FileSystem.OpenWrite(fileName, Append), Encoding, fileName);
 
 	private bool _triedHistoryPolicy;
 
@@ -354,7 +378,7 @@ public class FileLogListener : LogListener
 				if (HistoryMove.IsEmpty())
 					throw new InvalidOperationException("HistoryMove is null.");
 
-				Directory.CreateDirectory(HistoryMove);
+				FileSystem.CreateDirectory(HistoryMove);
 
 				break;
 			}
@@ -384,11 +408,11 @@ public class FileLogListener : LogListener
 			{
 				var dirName = Path.Combine(LogDirectory, dateStr);
 
-				if (Directory.Exists(dirName))
+				if (FileSystem.DirectoryExists(dirName))
 					files.Add(dirName);
 			}
 			else
-				files.AddRange(Directory.GetFiles(LogDirectory, $"{dateStr}_*{Extension}"));
+				files.AddRange(FileSystem.EnumerateFiles(LogDirectory, $"{dateStr}_*{Extension}"));
 		}
 
 		return files;
@@ -410,14 +434,14 @@ public class FileLogListener : LogListener
 		}
 	}
 
-	private static void DeleteHistoryFiles(List<string> files, bool isDir)
+	private void DeleteHistoryFiles(List<string> files, bool isDir)
 	{
 		foreach (var file in files)
 		{
 			if (isDir)
-				Directory.Delete(file, true);
+				FileSystem.DeleteDirectory(file, true);
 			else
-				File.Delete(file);
+				FileSystem.DeleteFile(file);
 		}
 	}
 
@@ -425,18 +449,39 @@ public class FileLogListener : LogListener
 	{
 		foreach (var file in files)
 		{
-			if (isDir)
-			{
-				ZipFile.CreateFromDirectory(file, Path.Combine(LogDirectory, $"{Path.GetFileName(file)}.zip"), HistoryCompressionLevel, false);
-				Directory.Delete(file, true);
-			}
-			else
-			{
-				using (var zipFile = new ZipArchive(File.Open(Path.Combine(LogDirectory, $"{Path.GetFileNameWithoutExtension(file)}.zip"), FileMode.Create), ZipArchiveMode.Create))
-					zipFile.CreateEntryFromFile(file, Path.GetFileName(file), HistoryCompressionLevel);
+			var zipFilePath = Path.Combine(LogDirectory, $"{Path.GetFileNameWithoutExtension(file)}.zip");
 
-				File.Delete(file);
+			using (var zipStream = FileSystem.OpenWrite(zipFilePath))
+			using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Create))
+			{
+				if (isDir)
+				{
+					foreach (var subFile in FileSystem.EnumerateFiles(file, "*", SearchOption.AllDirectories))
+					{
+						var relativePath = subFile.Substring(file.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+						var entry = zipArchive.CreateEntry(relativePath, HistoryCompressionLevel);
+						
+						using var entryStream = entry.Open();
+						using var sourceStream = FileSystem.OpenRead(subFile);
+						
+						sourceStream.CopyTo(entryStream);
+					}
+				}
+				else
+				{
+					var entry = zipArchive.CreateEntry(Path.GetFileName(file), HistoryCompressionLevel);
+					
+					using var entryStream = entry.Open();
+					using var sourceStream = FileSystem.OpenRead(file);
+					
+					sourceStream.CopyTo(entryStream);
+				}
 			}
+
+			if (isDir)
+				FileSystem.DeleteDirectory(file, true);
+			else
+				FileSystem.DeleteFile(file);
 		}
 	}
 
@@ -444,16 +489,16 @@ public class FileLogListener : LogListener
 	{
 		try
 		{
-			Directory.CreateDirectory(HistoryMove);
+			FileSystem.CreateDirectory(HistoryMove);
 
 			foreach (var file in files)
 			{
 				var destPath = Path.Combine(HistoryMove, Path.GetFileName(file));
 
 				if (isDir)
-					Directory.Move(file, destPath);
+					FileSystem.MoveDirectory(file, destPath);
 				else
-					File.Move(file, destPath);
+					FileSystem.MoveFile(file, destPath);
 			}
 		}
 		catch (Exception ex)
@@ -475,7 +520,7 @@ public class FileLogListener : LogListener
 		}
 
 		var date = SeparateByDates != SeparateByDateModes.None
-			? DateTime.Today /*message.Time.Date*/ // pyh: ÑÐ¼ÑƒÐ»ÑÑ†Ð¸Ñ Ð³Ð¾Ð´Ð° Ð´Ð°Ð½Ð½Ñ‹Ñ… Ð¿Ñ€Ð¾Ð¸ÑÑ…Ð¾Ð´Ð¸Ñ‚ Ð·Ð° 5 ÑÐµÐºÑƒÐ½Ð´. ÐÐ° Ð²Ñ‹Ñ…Ð¾Ð´Ðµ 365 Ñ„Ð°Ð¹Ð»Ð¾Ð² Ð»Ð¾Ð³Ð°? Ð‘Ñ€ÐµÐ´.
+			? DateTime.Today /*message.Time.Date*/ // pyh: ýìóëÿöèÿ ãîäà äàííûõ ïðîèñõîäèò çà 5 ñåêóíä. Íà âûõîäå 365 ôàéëîâ ëîãà? Áðåä.
 			: default;
 
 		string prevFileName = null;
@@ -544,17 +589,17 @@ public class FileLogListener : LogListener
 
 					var maxIndex = 0;
 
-					while (File.Exists(GetRollingFileName(fileName, maxIndex + 1)))
+					while (FileSystem.FileExists(GetRollingFileName(fileName, maxIndex + 1)))
 					{
 						maxIndex++;
 					}
 
 					for (var i = maxIndex; i > 0; i--)
 					{
-						File.Move(GetRollingFileName(fileName, i), GetRollingFileName(fileName, i + 1));
+						FileSystem.MoveFile(GetRollingFileName(fileName, i), GetRollingFileName(fileName, i + 1));
 					}
 
-					File.Move(fileName, GetRollingFileName(fileName, 1));
+					FileSystem.MoveFile(fileName, GetRollingFileName(fileName, 1));
 
 					if (MaxCount > 0)
 					{
@@ -562,7 +607,7 @@ public class FileLogListener : LogListener
 
 						for (var i = MaxCount; i <= maxIndex; i++)
 						{
-							File.Delete(GetRollingFileName(fileName, i));
+							FileSystem.DeleteFile(GetRollingFileName(fileName, i));
 						}
 					}
 

@@ -2,6 +2,7 @@ namespace Ecng.Tests.Logging;
 
 using System.Text;
 
+using Ecng.Common;
 using Ecng.Logging;
 
 [TestClass]
@@ -21,413 +22,386 @@ public class FileLogListenerTests
 		public event Action<LogMessage> Log { add { } remove { } }
 	}
 
-	private static string ReadAllText(string path) => File.ReadAllText(path, Encoding.UTF8);
-
-	private static void WithTemp(Action<string> action, string sub = null)
+	private static string ReadAllText(IFileSystem fs, string path)
 	{
-		var root = Config.GetTempPath(sub ?? Guid.NewGuid().ToString());
+		using var stream = fs.OpenRead(path);
+		using var reader = new StreamReader(stream, Encoding.UTF8);
+		return reader.ReadToEnd();
+	}
 
-		try
-		{
-			Directory.CreateDirectory(root);
-			action(root);
-		}
-		finally
-		{
-			try
-			{
-				if (Directory.Exists(root))
-					Directory.Delete(root, true);
-			}
-			catch
-			{ }
-		}
+	private static void WriteAllText(IFileSystem fs, string path, string content)
+	{
+		using var stream = fs.OpenWrite(path);
+		using var writer = new StreamWriter(stream, Encoding.UTF8);
+		writer.Write(content);
 	}
 
 	[TestMethod]
 	public void TryDoHistoryPolicy_MoveDirectories()
 	{
-		var root = Config.GetTempPath("FileLogListener_MoveDirs");
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+		fs.CreateDirectory(root);
 
-		try
+		// create two dated subdirectories older than HistoryAfter (yesterday and day before)
+		var yesterday = DateTime.Today.AddDays(-1);
+		var dayBefore = DateTime.Today.AddDays(-2);
+
+		var dir1 = Path.Combine(root, yesterday.ToString("yyyy_MM_dd"));
+		var dir2 = Path.Combine(root, dayBefore.ToString("yyyy_MM_dd"));
+		fs.CreateDirectory(dir1);
+		fs.CreateDirectory(dir2);
+
+		// Add a file to each directory so they're not empty
+		WriteAllText(fs, Path.Combine(dir1, "test.txt"), "test1");
+		WriteAllText(fs, Path.Combine(dir2, "test.txt"), "test2");
+
+		// create a simple message to trigger TryDoHistoryPolicy via WriteMessages
+		var src = new DummySource("test");
+		var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m");
+
+		var historyDir = Path.Combine(root, "history");
+
+		using var listener = new FileLogListener(fs)
 		{
-			Directory.CreateDirectory(root);
+			LogDirectory = root,
+			SeparateByDates = SeparateByDateModes.SubDirectories,
+			HistoryPolicy = FileLogHistoryPolicies.Move,
+			HistoryAfter = TimeSpan.FromDays(1),
+			HistoryMove = historyDir
+		};
 
-			// create two dated subdirectories older than HistoryAfter (yesterday and day before)
-			var yesterday = DateTime.Today.AddDays(-1);
-			var dayBefore = DateTime.Today.AddDays(-2);
+		listener.WriteMessages([msg]);
 
-			var dir1 = Path.Combine(root, yesterday.ToString("yyyy_MM_dd"));
-			var dir2 = Path.Combine(root, dayBefore.ToString("yyyy_MM_dd"));
-			Directory.CreateDirectory(dir1);
-			Directory.CreateDirectory(dir2);
+		var moved1 = Path.Combine(historyDir, Path.GetFileName(dir1));
+		var moved2 = Path.Combine(historyDir, Path.GetFileName(dir2));
 
-			// create a simple message to trigger TryDoHistoryPolicy via WriteMessages
-			var src = new DummySource("test");
-			var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m");
-
-			var historyDir = Path.Combine(root, "history");
-
-			using var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				SeparateByDates = SeparateByDateModes.SubDirectories,
-				HistoryPolicy = FileLogHistoryPolicies.Move,
-				HistoryAfter = TimeSpan.FromDays(1),
-				HistoryMove = historyDir
-			};
-
-			listener.WriteMessages([msg]);
-
-			var moved1 = Path.Combine(historyDir, Path.GetFileName(dir1));
-			var moved2 = Path.Combine(historyDir, Path.GetFileName(dir2));
-
-			File.Exists(moved1).AssertFalse(); // moved should be directories, not files
-			Directory.Exists(moved1).AssertTrue("First directory was not moved to history.");
-			Directory.Exists(moved2).AssertTrue("Second directory was not moved to history.");
-			Directory.Exists(dir1).AssertFalse();
-			Directory.Exists(dir2).AssertFalse();
-		}
-		finally
-		{
-			try
-			{
-				if (Directory.Exists(root))
-					Directory.Delete(root, true);
-			}
-			catch
-			{ }
-		}
+		fs.DirectoryExists(moved1).AssertTrue("First directory was not moved to history.");
+		fs.DirectoryExists(moved2).AssertTrue("Second directory was not moved to history.");
+		fs.DirectoryExists(dir1).AssertFalse();
+		fs.DirectoryExists(dir2).AssertFalse();
 	}
 
 	[TestMethod]
 	public void TryDoHistoryPolicy_MoveFiles()
 	{
-		var root = Config.GetTempPath("FileLogListener_MoveFiles");
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+		fs.CreateDirectory(root);
 
-		try
+		var yesterday = DateTime.Today.AddDays(-1);
+		var dayBefore = DateTime.Today.AddDays(-2);
+
+		var file1 = Path.Combine(root, yesterday.ToString("yyyy_MM_dd") + "_log.txt");
+		var file2 = Path.Combine(root, dayBefore.ToString("yyyy_MM_dd") + "_log.txt");
+
+		WriteAllText(fs, file1, "a");
+		WriteAllText(fs, file2, "b");
+
+		var src = new DummySource("test");
+		var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m");
+
+		var historyPath = Path.Combine(root, "history");
+
+		using var listener = new FileLogListener(fs)
 		{
-			Directory.CreateDirectory(root);
+			LogDirectory = root,
+			SeparateByDates = SeparateByDateModes.FileName,
+			HistoryPolicy = FileLogHistoryPolicies.Move,
+			HistoryAfter = TimeSpan.FromDays(1),
+			HistoryMove = historyPath
+		};
 
-			var yesterday = DateTime.Today.AddDays(-1);
-			var dayBefore = DateTime.Today.AddDays(-2);
+		listener.WriteMessages([msg]);
 
-			var file1 = Path.Combine(root, yesterday.ToString("yyyy_MM_dd") + "_log.txt");
-			var file2 = Path.Combine(root, dayBefore.ToString("yyyy_MM_dd") + "_log.txt");
+		// verify files moved into history folder
+		var moved1 = Path.Combine(historyPath, Path.GetFileName(file1));
+		var moved2 = Path.Combine(historyPath, Path.GetFileName(file2));
 
-			File.WriteAllText(file1, "a");
-			File.WriteAllText(file2, "b");
-
-			var src = new DummySource("test");
-			var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m");
-
-			// Should not throw
-			using var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				SeparateByDates = SeparateByDateModes.FileName,
-				HistoryPolicy = FileLogHistoryPolicies.Move,
-				HistoryAfter = TimeSpan.FromDays(1),
-				HistoryMove = Path.Combine(root, "history")
-			};
-
-			listener.WriteMessages([msg]);
-
-			// verify files moved into history folder
-			var moved1 = Path.Combine(listener.HistoryMove, Path.GetFileName(file1));
-			var moved2 = Path.Combine(listener.HistoryMove, Path.GetFileName(file2));
-
-			File.Exists(moved1).AssertTrue("First file was not moved to history.");
-			File.Exists(moved2).AssertTrue("Second file was not moved to history.");
-		}
-		finally
-		{
-			try
-			{
-				if (Directory.Exists(root))
-					Directory.Delete(root, true);
-			}
-			catch
-			{ }
-		}
+		fs.FileExists(moved1).AssertTrue("First file was not moved to history.");
+		fs.FileExists(moved2).AssertTrue("Second file was not moved to history.");
 	}
 
 	[TestMethod]
 	public void WritesToSingleFile_WhenSeparateByDatesNone()
 	{
-		WithTemp(root =>
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+
+		using (var listener = new FileLogListener(fs)
 		{
-			using (var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				FileName = "single",
-				SeparateByDates = SeparateByDateModes.None
-			})
-			{
-				var src = new DummySource("src");
-				var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "hello123");
+			LogDirectory = root,
+			FileName = "single",
+			SeparateByDates = SeparateByDateModes.None
+		})
+		{
+			var src = new DummySource("src");
+			var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "hello123");
 
-				listener.WriteMessages([msg]);
-			}
+			listener.WriteMessages([msg]);
+		}
 
-			var file = Path.Combine(root, "single.txt");
-			File.Exists(file).AssertTrue();
-			var content = ReadAllText(file);
-			content.AssertContains("hello123");
-		});
+		var file = Path.Combine(root, "single.txt");
+		fs.FileExists(file).AssertTrue();
+		var content = ReadAllText(fs, file);
+		content.AssertContains("hello123");
 	}
 
 	[TestMethod]
 	public void CreatesDatePrefixedFile_WhenSeparateByDatesFileName()
 	{
-		WithTemp(root =>
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+
+		using var listener = new FileLogListener(fs)
 		{
-			using var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				FileName = "log",
-				SeparateByDates = SeparateByDateModes.FileName,
-				DirectoryDateFormat = "yyyy_MM_dd"
-			};
+			LogDirectory = root,
+			FileName = "log",
+			SeparateByDates = SeparateByDateModes.FileName,
+			DirectoryDateFormat = "yyyy_MM_dd"
+		};
 
-			var src = new DummySource("s");
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m1")]);
+		var src = new DummySource("s");
+		listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m1")]);
 
-			var todayPref = DateTime.Today.ToString("yyyy_MM_dd") + "_log" + listener.Extension;
-			var path = Path.Combine(root, todayPref);
-			File.Exists(path).AssertTrue();
-		});
+		var todayPref = DateTime.Today.ToString("yyyy_MM_dd") + "_log" + listener.Extension;
+		var path = Path.Combine(root, todayPref);
+		fs.FileExists(path).AssertTrue();
 	}
 
 	[TestMethod]
 	public void CreatesSubdirectory_WhenSeparateByDatesSubDirectories()
 	{
-		WithTemp(root =>
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+
+		using var listener = new FileLogListener(fs)
 		{
-			using var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				FileName = "log",
-				SeparateByDates = SeparateByDateModes.SubDirectories,
-				DirectoryDateFormat = "yyyy_MM_dd"
-			};
+			LogDirectory = root,
+			FileName = "log",
+			SeparateByDates = SeparateByDateModes.SubDirectories,
+			DirectoryDateFormat = "yyyy_MM_dd"
+		};
 
-			var src = new DummySource("s");
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m2")]);
+		var src = new DummySource("s");
+		listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m2")]);
 
-			var sub = Path.Combine(root, DateTime.Today.ToString("yyyy_MM_dd"));
-			Directory.Exists(sub).AssertTrue();
-			var file = Path.Combine(sub, "log" + listener.Extension);
-			File.Exists(file).AssertTrue();
-		});
+		var sub = Path.Combine(root, DateTime.Today.ToString("yyyy_MM_dd"));
+		fs.DirectoryExists(sub).AssertTrue();
+		var file = Path.Combine(sub, "log" + listener.Extension);
+		fs.FileExists(file).AssertTrue();
 	}
 
 	[TestMethod]
 	public void RotationBySizeAndCount_CreatesRollingFiles()
 	{
-		WithTemp(root =>
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+
+		using var listener = new FileLogListener(fs)
 		{
-			using var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				FileName = "rot",
-				MaxLength = 100, // small
-				MaxCount = 2
-			};
+			LogDirectory = root,
+			FileName = "rot",
+			MaxLength = 100, // small
+			MaxCount = 2
+		};
 
-			var src = new DummySource("s");
-			for (var i = 0; i < 200; i++)
-			{
-				listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, new string('x', 20))]);
-			}
+		var src = new DummySource("s");
+		for (var i = 0; i < 200; i++)
+		{
+			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, new string('x', 20))]);
+		}
 
-			var baseFile = Path.Combine(root, "rot" + listener.Extension);
-			var f1 = Path.Combine(root, "rot.1" + listener.Extension);
-			var f2 = Path.Combine(root, "rot.2" + listener.Extension);
+		var baseFile = Path.Combine(root, "rot" + listener.Extension);
+		var f1 = Path.Combine(root, "rot.1" + listener.Extension);
+		var f2 = Path.Combine(root, "rot.2" + listener.Extension);
 
-			File.Exists(baseFile).AssertTrue();
-			(File.Exists(f1) || File.Exists(f2)).AssertTrue();
-		});
+		fs.FileExists(baseFile).AssertTrue();
+		(fs.FileExists(f1) || fs.FileExists(f2)).AssertTrue();
 	}
 
 	[TestMethod]
 	public void AppendMode_AppendsToExistingFile()
 	{
-		WithTemp(root =>
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+		fs.CreateDirectory(root);
+
+		var file = Path.Combine(root, "app.txt");
+		WriteAllText(fs, file, "start\n");
+
+		using (var listener = new FileLogListener(fs)
 		{
-			var file = Path.Combine(root, "app" + ".txt");
-			File.WriteAllText(file, "start\n");
+			LogDirectory = root,
+			FileName = "app",
+			Append = true
+		})
+		{
+			var src = new DummySource("s");
+			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "more")]);
+		}
 
-			using (var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				FileName = "app",
-				Append = true
-			})
-			{
-				var src = new DummySource("s");
-				listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "more")]);
-			}
-
-			var content = ReadAllText(file);
-			content.AssertContains("start");
-			content.AssertContains("more");
-		});
+		var content = ReadAllText(fs, file);
+		content.AssertContains("start");
+		content.AssertContains("more");
 	}
 
 	[TestMethod]
 	public void WriteChildDataToRootFile_UsesParentName()
 	{
-		WithTemp(root =>
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+
+		var parent = new DummySource("parent") { IsRoot = true };
+		var child = new DummySource("child") { Parent = parent };
+
+		using var listener = new FileLogListener(fs)
 		{
-			var parent = new DummySource("parent") { IsRoot = true };
-			var child = new DummySource("child") { Parent = parent };
+			LogDirectory = root,
+			SeparateByDates = SeparateByDateModes.None,
+			WriteChildDataToRootFile = true
+		};
 
-			using var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				SeparateByDates = SeparateByDateModes.None,
-				WriteChildDataToRootFile = true
-			};
+		listener.WriteMessages([new LogMessage(child, DateTime.UtcNow, LogLevels.Info, "cmsg")]);
 
-			listener.WriteMessages([new LogMessage(child, DateTime.UtcNow, LogLevels.Info, "cmsg")]);
-
-			var file = Path.Combine(root, "parent" + listener.Extension);
-			File.Exists(file).AssertTrue();
-		});
+		var file = Path.Combine(root, "parent" + listener.Extension);
+		fs.FileExists(file).AssertTrue();
 	}
 
 	[TestMethod]
 	public void WriteSourceId_IncludesSourceIdInLog()
 	{
-		WithTemp(root =>
-		{
-			var src = new DummySource("s");
-			using (var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				FileName = "sid",
-				WriteSourceId = true
-			})
-			{
-				listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "mm")]);
-			}
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
 
-			var file = Path.Combine(root, "sid.txt");
-			var content = ReadAllText(file);
-			content.AssertContains(src.Id.ToString());
-		});
+		var src = new DummySource("s");
+		using (var listener = new FileLogListener(fs)
+		{
+			LogDirectory = root,
+			FileName = "sid",
+			WriteSourceId = true
+		})
+		{
+			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "mm")]);
+		}
+
+		var file = Path.Combine(root, "sid.txt");
+		var content = ReadAllText(fs, file);
+		content.AssertContains(src.Id.ToString());
 	}
 
 	[TestMethod]
 	public void CustomExtension_IsApplied()
 	{
-		WithTemp(root =>
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+
+		using var listener = new FileLogListener(fs)
 		{
-			using var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				FileName = "e",
-				Extension = ".logx"
-			};
+			LogDirectory = root,
+			FileName = "e",
+			Extension = ".logx"
+		};
 
-			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "x")]);
+		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "x")]);
 
-			var file = Path.Combine(root, "e.logx");
-			File.Exists(file).AssertTrue();
-		});
+		var file = Path.Combine(root, "e.logx");
+		fs.FileExists(file).AssertTrue();
 	}
 
 	[TestMethod]
 	public void GetFileName_SanitizesInvalidChars()
 	{
-		WithTemp(root =>
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+
+		var bad = "bad:name*?";
+		using var listener = new FileLogListener(fs)
 		{
-			var bad = "bad:name*?";
-			using var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				FileName = bad
-			};
+			LogDirectory = root,
+			FileName = bad
+		};
 
-			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "z")]);
+		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "z")]);
 
-			// Expect file created with invalid chars replaced by '_'
-			var expected = new string([.. bad.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)]) + listener.Extension;
-			File.Exists(Path.Combine(root, expected)).AssertTrue();
-		});
+		// Expect file created with invalid chars replaced by '_'
+		var expected = new string([.. bad.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)]) + listener.Extension;
+		fs.FileExists(Path.Combine(root, expected)).AssertTrue();
 	}
 
 	[TestMethod]
 	public void HistoryPolicy_Delete_RemovesOldFiles()
 	{
-		WithTemp(root =>
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+		fs.CreateDirectory(root);
+
+		using var listener = new FileLogListener(fs)
 		{
-			using var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				SeparateByDates = SeparateByDateModes.FileName,
-				HistoryPolicy = FileLogHistoryPolicies.Delete,
-				HistoryAfter = TimeSpan.FromDays(1)
-			};
+			LogDirectory = root,
+			SeparateByDates = SeparateByDateModes.FileName,
+			HistoryPolicy = FileLogHistoryPolicies.Delete,
+			HistoryAfter = TimeSpan.FromDays(1)
+		};
 
-			var old = DateTime.Today.AddDays(-2).ToString("yyyy_MM_dd") + "_log" + listener.Extension;
-			File.WriteAllText(Path.Combine(root, old), "old");
+		var old = DateTime.Today.AddDays(-2).ToString("yyyy_MM_dd") + "_log" + listener.Extension;
+		WriteAllText(fs, Path.Combine(root, old), "old");
 
-			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "t")]);
+		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "t")]);
 
-			File.Exists(Path.Combine(root, old)).AssertFalse();
-		});
+		fs.FileExists(Path.Combine(root, old)).AssertFalse();
 	}
 
 	[TestMethod]
 	public void HistoryPolicy_Compression_CreatesZipAndDeletesOriginal()
 	{
-		WithTemp(root =>
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+		fs.CreateDirectory(root);
+
+		using var listener = new FileLogListener(fs)
 		{
-			using var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				SeparateByDates = SeparateByDateModes.FileName,
-				HistoryPolicy = FileLogHistoryPolicies.Compression,
-				HistoryAfter = TimeSpan.FromDays(1)
-			};
+			LogDirectory = root,
+			SeparateByDates = SeparateByDateModes.FileName,
+			HistoryPolicy = FileLogHistoryPolicies.Compression,
+			HistoryAfter = TimeSpan.FromDays(1)
+		};
 
-			var oldName = DateTime.Today.AddDays(-2).ToString("yyyy_MM_dd") + "_log" + listener.Extension;
-			var oldPath = Path.Combine(root, oldName);
-			File.WriteAllText(oldPath, "old");
+		var oldName = DateTime.Today.AddDays(-2).ToString("yyyy_MM_dd") + "_log" + listener.Extension;
+		var oldPath = Path.Combine(root, oldName);
+		WriteAllText(fs, oldPath, "old");
 
-			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "t")]);
+		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "t")]);
 
-			var zipPath = Path.Combine(root, Path.GetFileNameWithoutExtension(oldPath) + ".zip");
-			File.Exists(zipPath).AssertTrue();
-			File.Exists(oldPath).AssertFalse();
-		});
+		var zipPath = Path.Combine(root, Path.GetFileNameWithoutExtension(oldPath) + ".zip");
+		fs.FileExists(zipPath).AssertTrue();
+		fs.FileExists(oldPath).AssertFalse();
 	}
 
 	[TestMethod]
 	public void HistoryPolicy_Move_FilesMovedToHistory()
 	{
-		WithTemp(root =>
+		var fs = new MemoryFileSystem();
+		var root = "/logs";
+		fs.CreateDirectory(root);
+
+		var history = Path.Combine(root, "history");
+		using var listener = new FileLogListener(fs)
 		{
-			var history = Path.Combine(root, "history");
-			using var listener = new FileLogListener
-			{
-				LogDirectory = root,
-				SeparateByDates = SeparateByDateModes.FileName,
-				HistoryPolicy = FileLogHistoryPolicies.Move,
-				HistoryAfter = TimeSpan.FromDays(1),
-				HistoryMove = history
-			};
+			LogDirectory = root,
+			SeparateByDates = SeparateByDateModes.FileName,
+			HistoryPolicy = FileLogHistoryPolicies.Move,
+			HistoryAfter = TimeSpan.FromDays(1),
+			HistoryMove = history
+		};
 
-			var oldName = DateTime.Today.AddDays(-2).ToString("yyyy_MM_dd") + "_log" + listener.Extension;
-			var oldPath = Path.Combine(root, oldName);
-			File.WriteAllText(oldPath, "old");
+		var oldName = DateTime.Today.AddDays(-2).ToString("yyyy_MM_dd") + "_log" + listener.Extension;
+		var oldPath = Path.Combine(root, oldName);
+		WriteAllText(fs, oldPath, "old");
 
-			listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "t")]);
+		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "t")]);
 
-			var moved = Path.Combine(history, Path.GetFileName(oldPath));
-			File.Exists(moved).AssertTrue();
-		});
+		var moved = Path.Combine(history, Path.GetFileName(oldPath));
+		fs.FileExists(moved).AssertTrue();
 	}
 }
