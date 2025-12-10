@@ -68,6 +68,13 @@ public interface IFileSystem
 	void MoveFile(string sourceFileName, string destFileName, bool overwrite = false);
 
 	/// <summary>
+	/// Moves a directory to a new location.
+	/// </summary>
+	/// <param name="sourceDirName">Source directory path.</param>
+	/// <param name="destDirName">Destination directory path.</param>
+	void MoveDirectory(string sourceDirName, string destDirName);
+
+	/// <summary>
 	/// Copies a file to a new location.
 	/// </summary>
 	/// <param name="sourceFileName">Source file path.</param>

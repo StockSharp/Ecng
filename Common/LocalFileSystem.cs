@@ -51,6 +51,17 @@ public class LocalFileSystem : IFileSystem
 	}
 
 	/// <inheritdoc />
+	public void MoveDirectory(string sourceDirName, string destDirName)
+	{
+		var parentDir = Path.GetDirectoryName(destDirName);
+
+		if (!parentDir.IsEmpty() && !Directory.Exists(parentDir))
+			Directory.CreateDirectory(parentDir);
+
+		Directory.Move(sourceDirName, destDirName);
+	}
+
+	/// <inheritdoc />
 	public void CopyFile(string sourceFileName, string destFileName, bool overwrite = false)
 	{
 		var dir = Path.GetDirectoryName(destFileName);

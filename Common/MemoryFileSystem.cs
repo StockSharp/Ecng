@@ -244,6 +244,49 @@ public class MemoryFileSystem : IFileSystem
 	}
 
 	/// <inheritdoc />
+	public void MoveDirectory(string sourceDirName, string destDirName)
+	{
+		using (_lock.EnterScope())
+		{
+			var sourceParts = Split(sourceDirName);
+			var destParts = Split(destDirName);
+
+			if (sourceParts.Length == 0)
+				throw new IOException("Cannot move root directory.");
+
+			// Find source node and its parent
+			var sourceParent = _root;
+			for (int i = 0; i < sourceParts.Length - 1; i++)
+			{
+				if (!sourceParent.IsDirectory || sourceParent.Children == null || !sourceParent.Children.TryGetValue(sourceParts[i], out var next))
+					throw new DirectoryNotFoundException(sourceDirName);
+				sourceParent = next;
+			}
+
+			var sourceNodeName = sourceParts[sourceParts.Length - 1];
+			if (sourceParent.Children == null || !sourceParent.Children.TryGetValue(sourceNodeName, out var sourceNode))
+				throw new DirectoryNotFoundException(sourceDirName);
+
+			if (!sourceNode.IsDirectory)
+				throw new IOException("Source path is not a directory.");
+
+			// Create destination parent directories
+			var destParent = Traverse(destDirName, createDirs: true, forFile: true, out var destNodeName);
+			if (destParent == null || !destParent.IsDirectory)
+				throw new IOException("Cannot create destination directory.");
+
+			destParent.Children ??= new(StringComparer.OrdinalIgnoreCase);
+
+			if (destParent.Children.ContainsKey(destNodeName))
+				throw new IOException("Destination directory already exists.");
+
+			// Move the node
+			destParent.Children[destNodeName] = sourceNode;
+			sourceParent.Children.Remove(sourceNodeName);
+		}
+	}
+
+	/// <inheritdoc />
 	public void CopyFile(string sourceFileName, string destFileName, bool overwrite = false)
 	{
 		using (_lock.EnterScope())

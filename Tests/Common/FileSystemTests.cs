@@ -1,9 +1,7 @@
 namespace Ecng.Tests.Common;
 
-using System.Text;
-
 [TestClass]
-public class FileSystemTests
+public class FileSystemTests : BaseTestClass
 {
 	private static void WithLocalFs(Action<IFileSystem, string> action)
 	{
@@ -103,6 +101,25 @@ public class FileSystemTests
 			.Select(Path.GetFileName)
 			.OrderBy(s => s)
 			.AssertEqual(new string[] { "dir1", "dirA", "dirB" });
+
+		// MoveDirectory test
+		var dirToMove = Path.Combine(root, "dirToMove");
+		fs.CreateDirectory(dirToMove);
+		WriteAll(fs, Path.Combine(dirToMove, "inner.txt"), "inner content");
+		var subDir = Path.Combine(dirToMove, "sub");
+		fs.CreateDirectory(subDir);
+		WriteAll(fs, Path.Combine(subDir, "nested.txt"), "nested content");
+
+		var movedDir = Path.Combine(root, "movedDir");
+		fs.MoveDirectory(dirToMove, movedDir);
+
+		fs.DirectoryExists(dirToMove).AssertFalse();
+		fs.DirectoryExists(movedDir).AssertTrue();
+		fs.FileExists(Path.Combine(movedDir, "inner.txt")).AssertTrue();
+		ReadAll(fs, Path.Combine(movedDir, "inner.txt")).AssertEqual("inner content");
+		fs.DirectoryExists(Path.Combine(movedDir, "sub")).AssertTrue();
+		fs.FileExists(Path.Combine(movedDir, "sub", "nested.txt")).AssertTrue();
+		ReadAll(fs, Path.Combine(movedDir, "sub", "nested.txt")).AssertEqual("nested content");
 
 		// recursive delete
 		fs.DeleteDirectory(dirA, recursive: true);
@@ -212,6 +229,123 @@ public class FileSystemTests
 					s1.Content[rel].AssertEqual(s2.Content[rel]);
 				}
 			});
+		});
+	}
+
+	[TestMethod]
+	public void MoveDirectory_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var sourceDir = Path.Combine(root, "source");
+			fs.CreateDirectory(sourceDir);
+			WriteAll(fs, Path.Combine(sourceDir, "file1.txt"), "content1");
+			
+			var subDir = Path.Combine(sourceDir, "subdir");
+			fs.CreateDirectory(subDir);
+			WriteAll(fs, Path.Combine(subDir, "file2.txt"), "content2");
+
+			var destDir = Path.Combine(root, "dest");
+			fs.MoveDirectory(sourceDir, destDir);
+
+			fs.DirectoryExists(sourceDir).AssertFalse();
+			fs.DirectoryExists(destDir).AssertTrue();
+			fs.FileExists(Path.Combine(destDir, "file1.txt")).AssertTrue();
+			ReadAll(fs, Path.Combine(destDir, "file1.txt")).AssertEqual("content1");
+			fs.DirectoryExists(Path.Combine(destDir, "subdir")).AssertTrue();
+			fs.FileExists(Path.Combine(destDir, "subdir", "file2.txt")).AssertTrue();
+			ReadAll(fs, Path.Combine(destDir, "subdir", "file2.txt")).AssertEqual("content2");
+		});
+	}
+
+	[TestMethod]
+	public void MoveDirectory_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var sourceDir = Path.Combine(root, "source");
+			fs.CreateDirectory(sourceDir);
+			WriteAll(fs, Path.Combine(sourceDir, "file1.txt"), "content1");
+			
+			var subDir = Path.Combine(sourceDir, "subdir");
+			fs.CreateDirectory(subDir);
+			WriteAll(fs, Path.Combine(subDir, "file2.txt"), "content2");
+
+			var destDir = Path.Combine(root, "dest");
+			fs.MoveDirectory(sourceDir, destDir);
+
+			fs.DirectoryExists(sourceDir).AssertFalse();
+			fs.DirectoryExists(destDir).AssertTrue();
+			fs.FileExists(Path.Combine(destDir, "file1.txt")).AssertTrue();
+			ReadAll(fs, Path.Combine(destDir, "file1.txt")).AssertEqual("content1");
+			fs.DirectoryExists(Path.Combine(destDir, "subdir")).AssertTrue();
+			fs.FileExists(Path.Combine(destDir, "subdir", "file2.txt")).AssertTrue();
+			ReadAll(fs, Path.Combine(destDir, "subdir", "file2.txt")).AssertEqual("content2");
+		});
+	}
+
+	[TestMethod]
+	public void MoveDirectory_ToNestedPath_Local()
+	{
+		WithLocalFs((fs, root) =>
+		{
+			var sourceDir = Path.Combine(root, "source");
+			fs.CreateDirectory(sourceDir);
+			WriteAll(fs, Path.Combine(sourceDir, "test.txt"), "test");
+
+			// Move to a path where parent doesn't exist yet
+			var destDir = Path.Combine(root, "level1", "level2", "dest");
+			fs.MoveDirectory(sourceDir, destDir);
+
+			fs.DirectoryExists(sourceDir).AssertFalse();
+			fs.DirectoryExists(destDir).AssertTrue();
+			fs.FileExists(Path.Combine(destDir, "test.txt")).AssertTrue();
+		});
+	}
+
+	[TestMethod]
+	public void MoveDirectory_ToNestedPath_Memory()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var sourceDir = Path.Combine(root, "source");
+			fs.CreateDirectory(sourceDir);
+			WriteAll(fs, Path.Combine(sourceDir, "test.txt"), "test");
+
+			// Move to a path where parent doesn't exist yet
+			var destDir = Path.Combine(root, "level1", "level2", "dest");
+			fs.MoveDirectory(sourceDir, destDir);
+
+			fs.DirectoryExists(sourceDir).AssertFalse();
+			fs.DirectoryExists(destDir).AssertTrue();
+			fs.FileExists(Path.Combine(destDir, "test.txt")).AssertTrue();
+		});
+	}
+
+	[TestMethod]
+	public void MoveDirectory_NonExistentSource_Throws()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var sourceDir = Path.Combine(root, "nonexistent");
+			var destDir = Path.Combine(root, "dest");
+
+			ThrowsExactly<DirectoryNotFoundException>(() => fs.MoveDirectory(sourceDir, destDir));
+		});
+	}
+
+	[TestMethod]
+	public void MoveDirectory_DestinationExists_Throws()
+	{
+		WithMemoryFs((fs, root) =>
+		{
+			var sourceDir = Path.Combine(root, "source");
+			fs.CreateDirectory(sourceDir);
+			
+			var destDir = Path.Combine(root, "dest");
+			fs.CreateDirectory(destDir);
+
+			ThrowsExactly<IOException>(() => fs.MoveDirectory(sourceDir, destDir));
 		});
 	}
 }
