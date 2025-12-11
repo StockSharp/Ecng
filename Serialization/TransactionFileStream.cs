@@ -14,7 +14,8 @@ public class TransactionFileStream : Stream
 	private readonly string _name;
 	private readonly string _nameTemp;
 
-	private FileStream _temp;
+	private readonly IFileSystem _fs;
+	private Stream _temp;
 	private bool _disposed;
 
 	/// <summary>
@@ -23,7 +24,19 @@ public class TransactionFileStream : Stream
 	/// <param name="name">The name of the target file.</param>
 	/// <param name="mode">The file mode that specifies the type of operations to be performed on the file.</param>
 	public TransactionFileStream(string name, FileMode mode)
+		: this(new LocalFileSystem(), name, mode)
 	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="TransactionFileStream"/> class.
+	/// </summary>
+	/// <param name="fileSystem"><see cref="IFileSystem"/></param>
+	/// <param name="name">The name of the target file.</param>
+	/// <param name="mode">The file mode that specifies the type of operations to be performed on the file.</param>
+	public TransactionFileStream(IFileSystem fileSystem, string name, FileMode mode)
+	{
+		_fs = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
 		_name = name.ThrowIfEmpty(nameof(name));
 		_nameTemp = _name + ".tmp";
 
@@ -31,8 +44,8 @@ public class TransactionFileStream : Stream
 		{
 			try
 			{
-				if (File.Exists(_nameTemp))
-					File.Delete(_nameTemp);
+				if (_fs.FileExists(_nameTemp))
+					_fs.DeleteFile(_nameTemp);
 			}
 			catch (Exception ex)
 			{
@@ -40,52 +53,62 @@ public class TransactionFileStream : Stream
 			}
 		}
 
+		var preload = false;
+
 		switch (mode)
 		{
 			case FileMode.CreateNew:
 			{
-				if (File.Exists(_name))
+				if (_fs.FileExists(_name))
 					throw new IOException($"File '{_name}' already exists.");
-
 				break;
 			}
 			case FileMode.Create:
 				break;
 			case FileMode.Open:
 			{
-				File.Copy(_name, _nameTemp, true);
+				if (!_fs.FileExists(_name))
+					throw new FileNotFoundException(null, _name);
+				preload = true;
 				break;
 			}
 			case FileMode.OpenOrCreate:
 			{
-				if (File.Exists(_name))
-					File.Copy(_name, _nameTemp, true);
-
+				if (_fs.FileExists(_name))
+					preload = true;
 				break;
 			}
 			case FileMode.Truncate:
 			{
-				if (!File.Exists(_name))
+				if (!_fs.FileExists(_name))
 					throw new FileNotFoundException(null, _name);
-
-				File.Copy(_name, _nameTemp, true);
 				break;
 			}
 			case FileMode.Append:
 			{
-				if (File.Exists(_name))
-					File.Copy(_name, _nameTemp, true);
-
+				if (_fs.FileExists(_name))
+					_fs.CopyFile(_name, _nameTemp, true);
 				break;
 			}
 			default:
 				throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
 		}
 
-		_temp = new(_nameTemp, mode, FileAccess.Write);
+		var append = mode == FileMode.Append;
+		_temp = _fs.OpenWrite(_nameTemp, append);
+
+		if (preload)
+		{
+			// write original data into temp and reset position to 0 so writes start from beginning
+			using (var rs = _fs.OpenRead(_name))
+			{
+				rs.CopyTo(_temp);
+			}
+			_temp.Seek(0, SeekOrigin.Begin);
+		}
 	}
 
-	private FileStream Temp
+	private Stream Temp
 	{
 		get
 		{
@@ -110,7 +133,7 @@ public class TransactionFileStream : Stream
 		{
 			try
 			{
-				_temp?.Flush(true);
+				_temp?.Flush();
 			}
 			catch (Exception ex)
 			{
@@ -123,16 +146,10 @@ public class TransactionFileStream : Stream
 			// Commit: atomically replace destination when possible
 			try
 			{
-				if (File.Exists(_name))
+				if (_fs.FileExists(_nameTemp))
 				{
-					// Replace is atomic on Windows and requires destination to exist
-					File.Replace(_nameTemp, _name, null);
-				}
-				else
-				{
-					// Destination doesn't exist - move temp into place
-					if (File.Exists(_nameTemp))
-						File.Move(_nameTemp, _name);
+					// move temp into place (overwrite allowed)
+					_fs.MoveFile(_nameTemp, _name, overwrite: true);
 				}
 			}
 			finally
@@ -140,8 +157,8 @@ public class TransactionFileStream : Stream
 				// Best-effort cleanup of temp
 				try
 				{
-					if (File.Exists(_nameTemp))
-						File.Delete(_nameTemp);
+					if (_fs.FileExists(_nameTemp))
+						_fs.DeleteFile(_nameTemp);
 				}
 				catch (Exception ex)
 				{
