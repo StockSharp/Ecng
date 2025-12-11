@@ -599,7 +599,7 @@ public class WebSocketClient : Disposable, IConnection
 			return default;
 
 		if (subId > 0)
-			_reConnectCommands.Add((subId, sendBuf.ToArray(), type, pre));
+			_reConnectCommands.Add((subId, sendBuf, type, pre));
 		else if (subId < 0) // unsubscribe
 			RemoveResend(subId);
 

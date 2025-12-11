@@ -262,7 +262,7 @@ Args:
 			if (logVerbose is not null)
 				logVerbose("failed to complete request: status={0}, msg={1}, err={2}", [response.ResponseStatus, response.ErrorMessage, response.ErrorException]);
 
-			throw new InvalidOperationException($"failed to complete request (err={response.StatusCode}): {response.Content}");
+			throw new InvalidOperationException($"failed to complete request (err={response.StatusCode}): {response.Content?.Truncate(1000)}");
 		}
 
 		if (response.StatusCode != HttpStatusCode.OK)
