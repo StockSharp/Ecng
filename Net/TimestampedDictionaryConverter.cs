@@ -3,6 +3,7 @@ namespace Ecng.Net;
 /// <summary>
 /// Represents a collection of keys and values.
 /// </summary>
+[Obsolete("No supported anymore. Will be removed in future versions.")]
 public class TimestampedDictionaryConverter : JsonConverter
 {
 	/// <inheritdoc />

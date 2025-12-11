@@ -7,6 +7,7 @@ namespace Ecng.Net;
 /// <typeparam name="TKey">The type of the keys in the dictionary.</typeparam>
 /// <typeparam name="TValue">The type of the values in the dictionary.</typeparam>
 [JsonConverter(typeof(TimestampedDictionaryConverter))]
+[Obsolete("No supported anymore. Will be removed in future versions.")]
 public class TimestampedDictionary<TKey, TValue> : Dictionary<TKey, TValue>
 {
 	/// <summary>
