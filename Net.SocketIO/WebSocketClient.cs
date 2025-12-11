@@ -237,7 +237,7 @@ public class WebSocketClient : Disposable, IConnection
 			{
 				if (attempts > 0 || attempts == -1)
 				{
-					_errorLog("Reconnect failed. Attemps left {0}.", attempts);
+					_errorLog("Reconnect failed. Attempts left {0}.", attempts);
 					await ReconnectInterval.Delay(token).NoWait();
 					continue;
 				}
@@ -460,8 +460,13 @@ public class WebSocketClient : Disposable, IConnection
 
 			try
 			{
-				if (needClose)
-					_ws?.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, default).Wait((int)DisconnectTimeout.TotalMilliseconds);
+				if (needClose && _ws is ClientWebSocket ws)
+				{
+					var (cts, t) = DisconnectTimeout.CreateTimeout();
+
+					using (cts)
+						await ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, t);
+				}
 			}
 			catch (Exception ex)
 			{
