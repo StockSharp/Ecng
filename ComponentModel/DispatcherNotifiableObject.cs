@@ -1,50 +1,12 @@
 ﻿namespace Ecng.ComponentModel;
 
 using System;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
 using Ecng.Collections;
-
-class DispatcherNotifiableObjectTimer
-{
-	private readonly TimeSpan _minInterval = TimeSpan.FromMilliseconds(100);
-	private TimeSpan _interval = TimeSpan.FromMilliseconds(1000);
-
-	public event Action Tick;
-
-	public TimeSpan Interval
-	{
-		get => _interval;
-		set
-		{
-			if (value > _interval)
-				return;
-
-			if (value < _minInterval)
-				value = _minInterval;
-
-			_interval = value;
-		}
-	}
-
-	public DispatcherNotifiableObjectTimer() => Task.Run(TimerTask);
-
-	private async Task TimerTask()
-	{
-		while (true)
-		{
-			await Task.Delay(_interval);
-			Tick?.Invoke();
-		}
-		// ReSharper disable once FunctionNeverReturns
-	}
-
-	private static readonly Lazy<DispatcherNotifiableObjectTimer> _instance = new(true);
-	public static DispatcherNotifiableObjectTimer Instance => _instance.Value;
-}
+using Ecng.Common;
 
 /// <summary>
 /// Forward <see cref="INotifyPropertyChanged"/> notifications to dispatcher thread.
@@ -53,56 +15,32 @@ class DispatcherNotifiableObjectTimer
 public class DispatcherNotifiableObject<T> : CustomObjectWrapper<T>
 	where T : class, INotifyPropertyChanged
 {
-	private static DispatcherNotifiableObjectTimer Timer => DispatcherNotifiableObjectTimer.Instance;
-
-	private TimeSpan _notifyInterval;
-
-	/// <summary>
-	/// Interval between property changed notifications.
-	/// </summary>
-	protected TimeSpan NotifyInterval
-	{
-		get => _notifyInterval;
-		set
-		{
-			_notifyInterval = value;
-			Timer.Interval = value;
-		}
-	}
-
 	private readonly IDispatcher _dispatcher;
-	private readonly SynchronizedSet<string> _names = [];
-	private DateTime _nextTime;
+    private readonly IDisposable _subscription;
+    private readonly SynchronizedSet<string> _names = [];
 
 	/// <summary>
 	/// Instance of <see cref="DispatcherNotifiableObject{T}"/>.
 	/// </summary>
 	/// <param name="dispatcher">Dispatcher to use for invoking property changed notifications.</param>
 	/// <param name="obj">Parent object to wrap.</param>
-	public DispatcherNotifiableObject(IDispatcher dispatcher, T obj)
+	/// <param name="interval">Interval between property changed notifications.</param>
+	public DispatcherNotifiableObject(IDispatcher dispatcher, T obj, TimeSpan interval)
 		: base(obj)
 	{
 		_dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
-		NotifyInterval = TimeSpan.FromMilliseconds(333);
-		Timer.Tick += NotifiableObjectGuiWrapperTimerOnTick;
+		_subscription = _dispatcher.InvokePeriodically(TimerOnTick, interval);
 
-		Obj.PropertyChanged += (_, args) => _names.Add(args.PropertyName);
+		Obj.PropertyChanged += ObjOnPropertyChanged;
 	}
 
-	private void NotifiableObjectGuiWrapperTimerOnTick()
+    private void ObjOnPropertyChanged(object sender, PropertyChangedEventArgs e)
+		=> _names.Add(e.PropertyName);
+
+	private void TimerOnTick()
 	{
 		if (IsDisposed)
 			return;
-
-		var now = DateTime.UtcNow;
-		if (now < _nextTime)
-			return;
-
-		var interval = NotifyInterval;
-		if (interval < Timer.Interval)
-			interval = Timer.Interval;
-
-		_nextTime = now + interval;
 
 		string[] names;
 
@@ -115,13 +53,14 @@ public class DispatcherNotifiableObject<T> : CustomObjectWrapper<T>
 		if (names.Length == 0)
 			return;
 
-		_dispatcher.InvokeAsync(() => names.ForEach(OnPropertyChanged));
+		names.ForEach(OnPropertyChanged);
 	}
 
 	/// <inheritdoc />
 	protected override void DisposeManaged()
 	{
-		Timer.Tick -= NotifiableObjectGuiWrapperTimerOnTick;
+		Obj.PropertyChanged -= ObjOnPropertyChanged;
+		_subscription.Dispose();
 
 		base.DisposeManaged();
 	}
