@@ -77,12 +77,28 @@ public class FileLogListener : LogListener
 			_digitChars[i] = (char)(i + '0');
 	}
 
-	private class StreamWriterEx(Stream stream, Encoding encoding, string path) : StreamWriter(stream, encoding)
+	private class StreamWriterEx : StreamWriter
 	{
-		public string Path { get; } = path;
+		public string Path { get; }
+		public long EstimatedLength { get; set; }
+
+		public StreamWriterEx(Stream stream, Encoding encoding, string path)
+			: base(stream, encoding)
+		{
+			Path = path;
+
+			try
+			{
+				EstimatedLength = BaseStream.Position;
+			}
+			catch
+			{
+				EstimatedLength = 0;
+			}
+		}
 	}
 
-	private readonly SynchronizedPairSet<(string fimeName, DateTime date), StreamWriterEx> _writers = [];
+	private readonly SynchronizedPairSet<(string fileName, DateTime date), StreamWriterEx> _writers = [];
 
 	/// <summary>
 	/// To create <see cref="FileLogListener"/>. For each <see cref="ILogSource"/> a separate file with a name equal to <see cref="ILogSource.Name"/> will be created.
@@ -585,7 +601,27 @@ public class FileLogListener : LogListener
 				{
 					await WriteMessage(writer, message, cancellationToken).NoWait();
 
-					if (MaxLength <= 0 || writer.BaseStream.Position < MaxLength)
+					if (MaxLength <= 0)
+						continue;
+
+					// estimate added bytes to avoid flushing each message
+					var addedBytes = writer.Encoding.GetByteCount(message.Message ?? string.Empty) + 80; // approx overhead
+					writer.EstimatedLength += addedBytes;
+
+					if (writer.EstimatedLength < MaxLength)
+						continue;
+
+					// reached threshold — flush and check exact position
+					await writer.FlushAsync(cancellationToken).NoWait();
+
+					// sync EstimatedLength with actual position
+					try
+					{
+						writer.EstimatedLength = writer.BaseStream.Position;
+					}
+					catch { }
+
+					if (writer.EstimatedLength < MaxLength)
 						continue;
 
 					var fileName = writer.Path;
