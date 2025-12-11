@@ -77,6 +77,6 @@ public sealed class XhtmlLink
 	/// <returns>A hash code for this instance.</returns>
 	public override int GetHashCode()
 	{
-		return Hreflang?.ToLowerInvariant().GetHashCode() ?? 0;
+		return Hreflang.ToLowerInvariant().GetHashCode();
 	}
 }
