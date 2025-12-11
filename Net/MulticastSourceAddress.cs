@@ -59,17 +59,34 @@ public class MulticastSourceAddress : NotifiableObject, IPersistable
 		get => _port;
 		set
 		{
+			if (_port == value)
+				return;
+
 			NotifyChanging();
 			_port = value;
 			NotifyChanged();
 		}
 	}
 
+	private bool _isEnabled;
+
 	/// <summary>
 	/// Gets or sets a value indicating whether the configuration is enabled.
 	/// </summary>
 	[Display(Name = "Enabled", Description = "Is configuration enabled.", Order = 3)]
-	public bool IsEnabled { get; set; }
+	public bool IsEnabled
+	{
+		get => _isEnabled;
+		set
+		{
+			if (_isEnabled == value)
+				return;
+
+			NotifyChanging();
+			_isEnabled = value;
+			NotifyChanged();
+		}
+	}
 
 	/// <summary>
 	/// Loads settings from the specified SettingsStorage.
