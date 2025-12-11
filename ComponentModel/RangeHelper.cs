@@ -106,17 +106,17 @@ public static class RangeHelper
 			if (from.Contains(intersectedRange))
 			{
 				if (from.Min != intersectedRange.Min)
-					yield return new(from.Min, intersectedRange.Min - 1);
+					yield return new Range<long>(from.Min, intersectedRange.Min - 1);
 
 				if (from.Max != intersectedRange.Max)
-					yield return new(intersectedRange.Max + 1, from.Max);
+					yield return new Range<long>(intersectedRange.Max + 1, from.Max);
 			}
 			else
 			{
 				if (from.Min < intersectedRange.Min)
-					yield return new(from.Min, intersectedRange.Min);
+					yield return new Range<long>(from.Min, intersectedRange.Min);
 				else
-					yield return new(intersectedRange.Max, from.Max);
+					yield return new Range<long>(intersectedRange.Max, from.Max);
 			}
 		}
 	}
