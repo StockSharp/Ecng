@@ -17,6 +17,7 @@ using System.Runtime.Serialization;
 /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
 [Serializable]
+[Obsolete]
 public class ObservableDictionary<TKey, TValue> :
 	IDictionary<TKey, TValue>,
 	IDictionary,
