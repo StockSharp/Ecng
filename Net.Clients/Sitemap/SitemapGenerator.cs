@@ -95,7 +95,7 @@ public static class SitemapGenerator
 			if (sitemapNode.LastModified is not null)
 			{
 				urlElement.Add(new XElement(xmlns + "lastmod",
-					sitemapNode.LastModified.Value.ToLocalTime().ToString(_timeFormat)));
+					sitemapNode.LastModified.Value.ToUniversalTime().ToString(_timeFormat)));
 			}
 
 			if (sitemapNode.Frequency is not null)
