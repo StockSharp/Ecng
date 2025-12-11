@@ -95,9 +95,12 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange
 
 	#endregion
 
-	#region Length
+	/// <summary>
+	/// Gets or sets the operator used for arithmetic operations within the range.
+	/// </summary>
+	public IOperator<T> Operator { get; set; }
 
-	private static IOperator<T> _operator;
+	#region Length
 
 	/// <summary>
 	/// Gets the difference between the maximum and minimum values of the range.
@@ -112,10 +115,9 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange
 				return MaxValue;
 			else
 			{
-				if (_operator is null)
-					_operator = OperatorRegistry.GetOperator<T>();
+				Operator ??= OperatorRegistry.GetOperator<T>();
 
-				return _operator.Subtract(Max, Min);
+				return Operator.Subtract(Max, Min);
 			}
 		}
 	}
@@ -261,7 +263,15 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange
 	/// <inheritdoc/>
 	public override Range<T> Clone()
 	{
-		return new Range<T>(Min, Max);
+		var result = new Range<T> { Operator = Operator };
+
+		if (HasMinValue)
+			result.Min = Min;
+
+		if (HasMaxValue)
+			result.Max = Max;
+
+		return result;
 	}
 
 	/// <summary>

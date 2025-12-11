@@ -417,5 +417,37 @@ public class RangeTests : BaseTestClass
 		ThrowsExactly<ArgumentNullException>(() => storage.ToRange<int>());
 	}
 
+	[TestMethod]
+	public void Clone_EmptyAndPartialRanges_PreservesState()
+	{
+		// empty range
+		var empty = new Range<int>();
+		var clonedEmpty = empty.Clone();
+		clonedEmpty.IsEmpty().AssertTrue();
+		clonedEmpty.HasMinValue.AssertFalse();
+		clonedEmpty.HasMaxValue.AssertFalse();
+
+		// min-only
+		var minOnly = new Range<int> { Min = 5 };
+		var clonedMinOnly = minOnly.Clone();
+		clonedMinOnly.HasMinValue.AssertTrue();
+		clonedMinOnly.HasMaxValue.AssertFalse();
+		clonedMinOnly.Min.AssertEqual(5);
+
+		// max-only
+		var maxOnly = new Range<int> { Max = 10 };
+		var clonedMaxOnly = maxOnly.Clone();
+		clonedMaxOnly.HasMinValue.AssertFalse();
+		clonedMaxOnly.HasMaxValue.AssertTrue();
+		clonedMaxOnly.Max.AssertEqual(10);
+
+		// full
+		var full = new Range<int>(1, 2);
+		var clonedFull = full.Clone();
+		clonedFull.HasMinValue.AssertTrue();
+		clonedFull.HasMaxValue.AssertTrue();
+		clonedFull.AssertEqual(full);
+	}
+
 	#endregion
 }
