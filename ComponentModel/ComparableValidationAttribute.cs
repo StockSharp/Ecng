@@ -2,6 +2,7 @@
 
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 using Ecng.Common;
 
@@ -31,8 +32,9 @@ public abstract class ComparableValidationAttribute<T> : ValidationAttribute, IV
 		{
 			return Validate(value.To<T?>(), DisableNullCheck);
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			Trace.WriteLine(ex);
 			return false;
 		}
 	}

@@ -172,7 +172,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	/// </summary>
 	public IComparer<TPriority> Comparer => _comparer;
 
-	private void ChechCount()
+	private void CheckCount()
 	{
 		if (_count == 0)
 		{
@@ -349,7 +349,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	/// <returns>The minimal element of the <see cref="PriorityQueue{TPriority, TElement}"/>.</returns>
 	public (TPriority priority, TElement element) Peek()
 	{
-		ChechCount();
+		CheckCount();
 
 		var best = _nodes.First.Value;
 		return (best.Priority, best.Peek());
@@ -362,7 +362,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	/// <returns>The minimal element of the <see cref="PriorityQueue{TPriority, TElement}"/>.</returns>
 	public (TPriority priority, TElement element) Dequeue()
 	{
-		ChechCount();
+		CheckCount();
 
 		var t = DequeueInternal();
 
@@ -386,7 +386,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	/// </remarks>
 	public TElement DequeueEnqueue(TPriority priority, TElement element)
 	{
-		ChechCount();
+		CheckCount();
 
 		var best = _nodes.First.Value;
 		var retVal = best.Dequeue();
@@ -626,6 +626,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 		void IEnumerator.Reset()
 		{
 			_current = null;
+			_currentEnum?.Dispose();
 			_currentEnum = null;
 		}
 	}
@@ -640,7 +641,7 @@ public class PriorityQueue<TPriority, TElement>(Func<TPriority, TPriority, TPrio
 	IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<(TPriority, TElement)>)this).GetEnumerator();
 
 	void IQueue<(TPriority priority, TElement element)>.Enqueue((TPriority, TElement) item) => Enqueue(item.Item1, item.Item2);
-    bool IQueue<(TPriority priority, TElement element)>.TryDequeue(out (TPriority priority, TElement element) item)
+	bool IQueue<(TPriority priority, TElement element)>.TryDequeue(out (TPriority priority, TElement element) item)
 	{
 		if (TryDequeue(out var element, out var priority))
 		{
