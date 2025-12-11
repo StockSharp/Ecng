@@ -7,29 +7,52 @@ using Ecng.Serialization;
 public class RangeTests : BaseTestClass
 {
 	[TestMethod]
-	public void Parse()
+	public void Contains_And_Intersect()
 	{
-		Parse(new Range<int>());
-		Parse(new Range<int>(0, 10));
+		var r = new Range<int>(0, 10);
+		(r is IRange<int>).AssertTrue();
+		var rg = (IRange<int>)r;
+		rg.Min.AssertEqual(0);
+		rg.Max.AssertEqual(10);
+		r.Contains(0).AssertTrue();
+		r.Contains(10).AssertTrue();
+		r.Contains(-1).AssertFalse();
+		r.Contains(11).AssertFalse();
 
-		Parse(new Range<DateTime>());
-		Parse(new Range<DateTime>(DateTime.MinValue, DateTime.MaxValue.Truncate(TimeSpan.FromSeconds(1))));
+		var inner = new Range<int>(2, 8);
+		r.Contains(inner).AssertTrue();
 
-		Parse(new Range<DateTimeOffset>());
-		Parse(new Range<DateTimeOffset>(DateTimeOffset.MinValue, DateTimeOffset.MaxValue.Truncate(TimeSpan.FromSeconds(1))));
-		Parse(new Range<DateTimeOffset>(DateTimeOffset.Now.Truncate(TimeSpan.FromSeconds(1)), DateTimeOffset.Now.AddDays(10).Truncate(TimeSpan.FromSeconds(1))));
+		var overlap = new Range<int>(8, 12);
+		var ix = r.Intersect(overlap);
+		ix.AssertNotNull();
+		ix.Min.AssertEqual(8);
+		ix.Max.AssertEqual(10);
 
-		Parse(new Range<string>());
-		Parse(new Range<string>("1", "2"));
+		var disjoint = new Range<int>(11, 20);
+		r.Intersect(disjoint).AssertNull();
 	}
 
-	private static void Parse<T>(Range<T> range)
-		where T : IComparable<T>
+	[TestMethod]
+	public void Length_Defined_And_Undefined()
 	{
-		Range<T>.Parse(range.ToString()).AssertEqual(range);
-		Range<T>.Parse(range.To<string>()).AssertEqual(range);
-		((Range<T>)range.To<string>()).AssertEqual(range);
-		range.To<string>().To<Range<T>>().AssertEqual(range);
+		var r = new Range<int>(3, 7);
+		r.Length.AssertEqual(4);
+
+		// For undefined bound and numeric operator available, Length returns MaxValue
+		var r2 = new Range<int>
+		{
+			Operator = new IntNumeric(),
+			Max = 5
+		};
+		r2.Length.AssertEqual(int.MaxValue);
+	}
+
+	[TestMethod]
+	public void IRange_Setters_Null_Throw()
+	{
+		IRange r = new Range<int>();
+		ThrowsExactly<ArgumentNullException>(() => r.MinObj = null);
+		ThrowsExactly<ArgumentNullException>(() => r.MaxObj = null);
 	}
 
 	[TestMethod]

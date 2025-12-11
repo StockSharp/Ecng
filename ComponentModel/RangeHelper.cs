@@ -183,17 +183,18 @@ public static class RangeHelper
 	/// <summary>
 	/// Converts the range to a SettingsStorage object for serialization.
 	/// </summary>
+	/// <typeparam name="T">The type of the range values. Must implement IComparable&lt;T&gt;.</typeparam>
 	/// <param name="range">The range to convert.</param>
 	/// <returns>A SettingsStorage object containing the range data.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the range is null.</exception>
-	public static SettingsStorage ToStorage(this IRange range)
+	public static SettingsStorage ToStorage<T>(this IRange<T> range)
 	{
 		if (range is null)
 			throw new ArgumentNullException(nameof(range));
 
 		return new SettingsStorage()
-			.Set(nameof(range.Min), range.HasMinValue ? range.Min : null)
-			.Set(nameof(range.Max), range.HasMaxValue ? range.Max : null);
+			.Set(nameof(range.Min), range.HasMinValue ? (object)range.Min : null)
+			.Set(nameof(range.Max), range.HasMaxValue ? (object)range.Max : null);
 	}
 
 	/// <summary>

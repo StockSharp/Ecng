@@ -6,47 +6,17 @@ using System.ComponentModel;
 using Ecng.Common;
 
 /// <summary>
-/// Represents a range with a minimum and maximum value.
-/// </summary>
-public interface IRange
-{
-	/// <summary>
-	/// Gets a value indicating whether this instance has a minimum value.
-	/// </summary>
-	bool HasMinValue { get; }
-
-	/// <summary>
-	/// Gets a value indicating whether this instance has a maximum value.
-	/// </summary>
-	bool HasMaxValue { get; }
-
-	/// <summary>
-	/// Gets or sets the minimum value of the range.
-	/// </summary>
-	object Min { get; set; }
-
-	/// <summary>
-	/// Gets or sets the maximum value of the range.
-	/// </summary>
-	object Max { get; set; }
-}
-
-/// <summary>
 /// Represents a generic range defined by a minimum and maximum value.
 /// </summary>
 /// <typeparam name="T">The type of the range values. Must implement IComparable&lt;T&gt;.</typeparam>
 [Serializable]
-public class Range<T> : Equatable<Range<T>>, IConvertible, IRange
+public class Range<T> : Equatable<Range<T>>, IConvertible, IRange<T>
 	where T : IComparable<T>
 {
 	/// <summary>
 	/// Initializes static members of the <see cref="Range{T}"/> class.
 	/// </summary>
-	static Range()
-	{
-		MinValue = default;
-		MaxValue = default;
-	}
+	static Range() { }
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="Range{T}"/> class.
@@ -66,34 +36,16 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange
 	}
 
 	/// <summary>
-	/// Represents the smallest possible value of type <typeparamref name="T"/>.
-	/// </summary>
-	public static readonly T MinValue;
-
-	/// <summary>
-	/// Represents the largest possible value of type <typeparamref name="T"/>.
-	/// </summary>
-	public static readonly T MaxValue;
-
-	#region HasMinValue
-
-	/// <summary>
 	/// Gets a value indicating whether the range has a specified minimum value.
 	/// </summary>
 	[Browsable(false)]
 	public bool HasMinValue => _min.HasValue;
-
-	#endregion
-
-	#region HasMaxValue
 
 	/// <summary>
 	/// Gets a value indicating whether the range has a specified maximum value.
 	/// </summary>
 	[Browsable(false)]
 	public bool HasMaxValue => _max.HasValue;
-
-	#endregion
 
 	/// <summary>
 	/// Gets or sets the operator used for arithmetic operations within the range.
@@ -104,21 +56,18 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange
 
 	/// <summary>
 	/// Gets the difference between the maximum and minimum values of the range.
-	/// Returns <see cref="MaxValue"/> if either bound is not defined.
 	/// </summary>
 	[Browsable(false)]
 	public T Length
 	{
 		get
 		{
-			if (!HasMinValue || !HasMaxValue)
-				return MaxValue;
-			else
-			{
-				Operator ??= OperatorRegistry.GetOperator<T>();
+			Operator ??= OperatorRegistry.GetOperator<T>();
 
+			if (HasMinValue && HasMaxValue)
 				return Operator.Subtract(Max, Min);
-			}
+
+			throw new InvalidOperationException("Length is undefined.");
 		}
 	}
 
@@ -176,52 +125,6 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange
 
 	#endregion
 
-	#region Parse
-
-	/// <summary>
-	/// Defines an explicit conversion of a string representation to a <see cref="Range{T}"/>.
-	/// </summary>
-	/// <param name="str">The string representation of the range.</param>
-	public static explicit operator Range<T>(string str)
-	{
-		return Parse(str);
-	}
-
-	/// <summary>
-	/// Parses the specified string representation and returns a new <see cref="Range{T}"/> instance.
-	/// </summary>
-	/// <param name="value">The string representation of the range.</param>
-	/// <returns>A new instance of <see cref="Range{T}"/> representing the parsed range.</returns>
-	/// <exception cref="ArgumentNullException">Thrown if the input string is empty.</exception>
-	/// <exception cref="ArgumentOutOfRangeException">Thrown if the string length is less than 3.</exception>
-	public static Range<T> Parse(string value)
-	{
-		if (value.IsEmpty())
-			throw new ArgumentNullException(nameof(value));
-
-		if (value.Length < 3)
-			throw new ArgumentOutOfRangeException(nameof(value));
-
-		value = value.Substring(1, value.Length - 2);
-
-		value = value.Remove("Min:");
-
-		var part1 = value.Substring(0, value.IndexOf("Max:") - 1);
-		var part2 = value.Substring(value.IndexOf("Max:") + 4);
-
-		var range = new Range<T>();
-
-		if (!part1.IsEmpty() && part1 != "null")
-			range.Min = part1.To<T>();
-		
-		if (!part2.IsEmpty() && part2 != "null")
-			range.Max = part2.To<T>();
-		
-		return range;
-	}
-
-	#endregion
-
 	#region Object Members
 
 	/// <inheritdoc/>
@@ -242,23 +145,37 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange
 
 	/// <inheritdoc/>
 	protected override bool OnEquals(Range<T> other)
-	{
-		return _min == other._min && _max == other._max;
-	}
+		=> _min == other._min && _max == other._max;
 
 	#endregion
 
-	object IRange.Min
+	object IRange.MinObj
 	{
 		get => HasMinValue ? Min : null;
-		set => Min = (T)value;
+		set
+		{
+			if (value is null)
+				throw new ArgumentNullException(nameof(value));
+			Min = (T)value;
+		}
 	}
 
-	object IRange.Max
+	object IRange.MaxObj
 	{
 		get => HasMaxValue ? Max : null;
-		set => Max = (T)value;
+		set
+		{
+			if (value is null)
+				throw new ArgumentNullException(nameof(value));
+			Max = (T)value;
+		}
 	}
+
+	/// <inheritdoc />
+	T IRange<T>.Min => Min;
+
+	/// <inheritdoc />
+	T IRange<T>.Max => Max;
 
 	/// <inheritdoc/>
 	public override Range<T> Clone()
