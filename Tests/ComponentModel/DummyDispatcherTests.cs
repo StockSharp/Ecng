@@ -207,5 +207,197 @@ public class DummyDispatcherTests : BaseTestClass
         // Timer should continue despite exception
         (counter >= 3).AssertTrue();
     }
+
+    [TestMethod]
+    public async Task InvokePeriodically_RemoveLastAction_TimerStops()
+    {
+        // When the last action is removed, the timer should be disposed
+        // and no more ticks should occur
+        IDispatcher d = new DummyDispatcher();
+
+        var counter = 0;
+        var sub = d.InvokePeriodically(() => Interlocked.Increment(ref counter), TimeSpan.FromMilliseconds(50));
+
+        // Wait for a few ticks
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (counter < 3 && sw.Elapsed < TimeSpan.FromSeconds(2))
+            await Task.Delay(10, CancellationToken);
+
+        (counter >= 3).AssertTrue();
+
+        // Remove the last (and only) action
+        var counterBefore = counter;
+        sub.Dispose();
+
+        // Wait and verify no more ticks
+        await Task.Delay(200, CancellationToken);
+        counter.AssertEqual(counterBefore);
+    }
+
+    [TestMethod]
+    public async Task InvokePeriodically_AddRemoveAddRemove_IntervalsChange()
+    {
+        // Test actively adding and removing actions with different intervals
+        // to verify interval recalculation works correctly
+        IDispatcher d = new DummyDispatcher();
+
+        var counter1 = 0;
+        var counter2 = 0;
+        var counter3 = 0;
+
+        // Add first action with 200ms interval
+        var sub1 = d.InvokePeriodically(() => Interlocked.Increment(ref counter1), TimeSpan.FromMilliseconds(200));
+
+        // Wait for it to tick
+        await Task.Delay(450, CancellationToken);
+        (counter1 >= 2).AssertTrue();
+
+        // Add faster action with 50ms interval - timer should speed up
+        var sub2 = d.InvokePeriodically(() => Interlocked.Increment(ref counter2), TimeSpan.FromMilliseconds(50));
+
+        await Task.Delay(200, CancellationToken);
+        (counter2 >= 3).AssertTrue();
+
+        // Remove fast action - timer should slow down to 200ms
+        var c1Before = counter1;
+        sub2.Dispose();
+
+        await Task.Delay(150, CancellationToken);
+        // counter1 should not have increased much (200ms interval)
+        (counter1 - c1Before <= 1).AssertTrue();
+
+        // Add even faster action with 30ms interval
+        var sub3 = d.InvokePeriodically(() => Interlocked.Increment(ref counter3), TimeSpan.FromMilliseconds(30));
+
+        await Task.Delay(150, CancellationToken);
+        (counter3 >= 4).AssertTrue();
+
+        // Remove all
+        sub3.Dispose();
+        sub1.Dispose();
+
+        // Verify everything stopped
+        var finalC1 = counter1;
+        var finalC3 = counter3;
+        await Task.Delay(200, CancellationToken);
+
+        counter1.AssertEqual(finalC1);
+        counter3.AssertEqual(finalC3);
+    }
+
+    [TestMethod]
+    public async Task InvokePeriodically_ReaddAfterRemoveAll_TimerRestarts()
+    {
+        // After removing all actions (timer disposed), adding a new action
+        // should create a new timer
+        IDispatcher d = new DummyDispatcher();
+
+        var counter1 = 0;
+        var counter2 = 0;
+
+        // Add and remove first action
+        var sub1 = d.InvokePeriodically(() => Interlocked.Increment(ref counter1), TimeSpan.FromMilliseconds(50));
+
+        await Task.Delay(150, CancellationToken);
+        (counter1 >= 2).AssertTrue();
+
+        sub1.Dispose();
+
+        // Timer should be disposed now, counter should stop
+        var c1After = counter1;
+        await Task.Delay(150, CancellationToken);
+        counter1.AssertEqual(c1After);
+
+        // Add new action - timer should restart
+        var sub2 = d.InvokePeriodically(() => Interlocked.Increment(ref counter2), TimeSpan.FromMilliseconds(50));
+
+        await Task.Delay(200, CancellationToken);
+        (counter2 >= 3).AssertTrue();
+
+        sub2.Dispose();
+    }
+
+    [TestMethod]
+    public async Task InvokePeriodically_ThreeActions_DifferentIntervals()
+    {
+        // Test three actions with different intervals running simultaneously
+        IDispatcher d = new DummyDispatcher();
+
+        var fast = 0;   // 40ms
+        var medium = 0; // 100ms
+        var slow = 0;   // 200ms
+
+        using var subFast = d.InvokePeriodically(() => Interlocked.Increment(ref fast), TimeSpan.FromMilliseconds(40));
+        using var subMedium = d.InvokePeriodically(() => Interlocked.Increment(ref medium), TimeSpan.FromMilliseconds(100));
+        using var subSlow = d.InvokePeriodically(() => Interlocked.Increment(ref slow), TimeSpan.FromMilliseconds(200));
+
+        // Wait 500ms
+        await Task.Delay(500, CancellationToken);
+
+        // In 500ms:
+        // fast (40ms): ~12 ticks
+        // medium (100ms): ~5 ticks
+        // slow (200ms): ~2 ticks
+        (fast >= 10).AssertTrue();
+        (medium >= 4).AssertTrue();
+        (slow >= 2).AssertTrue();
+
+        // Verify ratio roughly matches (fast should be ~2.5x medium, medium ~2.5x slow)
+        (fast > medium).AssertTrue();
+        (medium > slow).AssertTrue();
+    }
+
+    [TestMethod]
+    public async Task InvokePeriodically_RemoveMiddleInterval_RecalculatesToFastest()
+    {
+        // When removing the middle interval, timer should stay at fastest
+        IDispatcher d = new DummyDispatcher();
+
+        var fast = 0;
+        var medium = 0;
+        var slow = 0;
+
+        using var subFast = d.InvokePeriodically(() => Interlocked.Increment(ref fast), TimeSpan.FromMilliseconds(30));
+        var subMedium = d.InvokePeriodically(() => Interlocked.Increment(ref medium), TimeSpan.FromMilliseconds(100));
+        using var subSlow = d.InvokePeriodically(() => Interlocked.Increment(ref slow), TimeSpan.FromMilliseconds(300));
+
+        await Task.Delay(200, CancellationToken);
+
+        // Remove medium
+        subMedium.Dispose();
+
+        var fastBefore = fast;
+        await Task.Delay(150, CancellationToken);
+
+        // Fast should continue at same rate (30ms interval)
+        (fast - fastBefore >= 4).AssertTrue();
+    }
+
+    [TestMethod]
+    public async Task InvokePeriodically_RemoveFastestInterval_SlowsDown()
+    {
+        // When removing the fastest interval, timer should slow down
+        IDispatcher d = new DummyDispatcher();
+
+        var fast = 0;
+        var slow = 0;
+
+        var subFast = d.InvokePeriodically(() => Interlocked.Increment(ref fast), TimeSpan.FromMilliseconds(30));
+        using var subSlow = d.InvokePeriodically(() => Interlocked.Increment(ref slow), TimeSpan.FromMilliseconds(300));
+
+        await Task.Delay(150, CancellationToken);
+        (fast >= 4).AssertTrue();
+
+        // Remove fast action
+        subFast.Dispose();
+        var slowBefore = slow;
+
+        // Wait 400ms - with 300ms interval, should get ~1 tick
+        await Task.Delay(400, CancellationToken);
+
+        // Slow should have ticked ~1-2 times (300ms interval)
+        var slowTicks = slow - slowBefore;
+        (slowTicks >= 1 && slowTicks <= 2).AssertTrue();
+    }
 }
 
