@@ -7,6 +7,7 @@ using Ecng.Serialization;
 [TestClass]
 public class TransactionFileStreamTests : BaseTestClass
 {
+	#region Helper Methods
 	private static string NewTempFilePath()
 	{
 		var dir = Config.GetTempPath(nameof(TransactionFileStreamTests));
@@ -23,6 +24,10 @@ public class TransactionFileStreamTests : BaseTestClass
 	{
 		return File.ReadAllText(path, Encoding.UTF8);
 	}
+
+	#endregion
+
+	#region LocalFileSystem Tests
 
 	[TestMethod]
 	public void CreateNew_CommitAndCleanup()
@@ -520,4 +525,297 @@ public class TransactionFileStreamTests : BaseTestClass
 				File.Delete(tmp);
 		}
 	}
+
+	#endregion
+
+	#region MemoryFileSystem Tests
+
+	private static string ReadAllText(MemoryFileSystem fs, string path)
+	{
+		using var stream = fs.OpenRead(path);
+		using var reader = new StreamReader(stream, Encoding.UTF8);
+		return reader.ReadToEnd();
+	}
+
+	private static void WriteAllText(MemoryFileSystem fs, string path, string content)
+	{
+		using var stream = fs.OpenWrite(path);
+		var bytes = content.UTF8();
+		stream.Write(bytes, 0, bytes.Length);
+	}
+
+	[TestMethod]
+	public void MemoryFs_CreateNew_CommitAndCleanup()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.CreateNew))
+		{
+			var data = "hello".UTF8();
+			tfs.Write(data, 0, data.Length);
+		}
+
+		fs.FileExists(target).AssertTrue();
+		ReadAllText(fs, target).AssertEqual("hello");
+		fs.FileExists(tmp).AssertFalse();
+	}
+
+	[TestMethod]
+	public void MemoryFs_CreateNew_ExistingFile_Throws()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+
+		WriteAllText(fs, target, "existing");
+
+		ThrowsExactly<IOException>(() => new TransactionFileStream(fs, target, FileMode.CreateNew));
+	}
+
+	[TestMethod]
+	public void MemoryFs_Create_OverwritesExisting()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		WriteAllText(fs, target, "old-content");
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.Create))
+		{
+			var data = "new".UTF8();
+			tfs.Write(data, 0, data.Length);
+		}
+
+		ReadAllText(fs, target).AssertEqual("new");
+		fs.FileExists(tmp).AssertFalse();
+	}
+
+	[TestMethod]
+	public void MemoryFs_Open_NonExisting_Throws()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+
+		ThrowsExactly<FileNotFoundException>(() => new TransactionFileStream(fs, target, FileMode.Open));
+	}
+
+	[TestMethod]
+	public void MemoryFs_Open_ExistingFile_PreservesAndOverwrites()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		WriteAllText(fs, target, "original");
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.Open))
+		{
+			var data = "NEW".UTF8();
+			tfs.Write(data, 0, data.Length);
+			tfs.SetLength(data.Length);
+		}
+
+		ReadAllText(fs, target).AssertEqual("NEW");
+		fs.FileExists(tmp).AssertFalse();
+	}
+
+	[TestMethod]
+	public void MemoryFs_OpenOrCreate_CreatesNew()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.OpenOrCreate))
+		{
+			var data = "created".UTF8();
+			tfs.Write(data, 0, data.Length);
+		}
+
+		ReadAllText(fs, target).AssertEqual("created");
+		fs.FileExists(tmp).AssertFalse();
+	}
+
+	[TestMethod]
+	public void MemoryFs_OpenOrCreate_ExistingFile_PreservesContent()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		WriteAllText(fs, target, "existing");
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.OpenOrCreate))
+		{
+			// Write at beginning, then truncate
+			var data = "XX".UTF8();
+			tfs.Write(data, 0, data.Length);
+			tfs.SetLength(data.Length);
+		}
+
+		ReadAllText(fs, target).AssertEqual("XX");
+		fs.FileExists(tmp).AssertFalse();
+	}
+
+	[TestMethod]
+	public void MemoryFs_Truncate_NonExisting_Throws()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+
+		ThrowsExactly<FileNotFoundException>(() => new TransactionFileStream(fs, target, FileMode.Truncate));
+	}
+
+	[TestMethod]
+	public void MemoryFs_Truncate_Existing_ReplacesContent()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		WriteAllText(fs, target, "very-long-content");
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.Truncate))
+		{
+			var data = "short".UTF8();
+			tfs.Write(data, 0, data.Length);
+		}
+
+		ReadAllText(fs, target).AssertEqual("short");
+		fs.FileExists(tmp).AssertFalse();
+	}
+
+	[TestMethod]
+	public void MemoryFs_Append_NonExisting_CreatesFile()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.Append))
+		{
+			var data = "new-file".UTF8();
+			tfs.Write(data, 0, data.Length);
+		}
+
+		ReadAllText(fs, target).AssertEqual("new-file");
+		fs.FileExists(tmp).AssertFalse();
+	}
+
+	[TestMethod]
+	public void MemoryFs_Append_ExistingFile_AppendsContent()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+		var tmp = target + ".tmp";
+
+		WriteAllText(fs, target, "start");
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.Append))
+		{
+			var data = "+end".UTF8();
+			tfs.Write(data, 0, data.Length);
+		}
+
+		ReadAllText(fs, target).AssertEqual("start+end");
+		fs.FileExists(tmp).AssertFalse();
+	}
+
+	[TestMethod]
+	public void MemoryFs_Dispose_CommitsChanges()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+
+		var tfs = new TransactionFileStream(fs, target, FileMode.Create);
+		var data = "test".UTF8();
+		tfs.Write(data, 0, data.Length);
+
+		// Before dispose, target should not exist (only tmp)
+		fs.FileExists(target).AssertFalse();
+
+		tfs.Dispose();
+
+		// After dispose, target should exist
+		fs.FileExists(target).AssertTrue();
+		ReadAllText(fs, target).AssertEqual("test");
+	}
+
+	[TestMethod]
+	public void MemoryFs_NullFileSystem_Throws()
+	{
+		ThrowsExactly<ArgumentNullException>(() => new TransactionFileStream(null, "/file.txt", FileMode.Create));
+	}
+
+	[TestMethod]
+	public void MemoryFs_EmptyName_Throws()
+	{
+		var fs = new MemoryFileSystem();
+		ThrowsExactly<ArgumentNullException>(() => new TransactionFileStream(fs, "", FileMode.Create));
+	}
+
+	[TestMethod]
+	public void MemoryFs_SeekAndPosition()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+
+		using var tfs = new TransactionFileStream(fs, target, FileMode.Create);
+		var data = "hello world".UTF8();
+		tfs.Write(data, 0, data.Length);
+
+		tfs.Position.AssertEqual(11);
+
+		tfs.Seek(0, SeekOrigin.Begin);
+		tfs.Position.AssertEqual(0);
+
+		tfs.Seek(5, SeekOrigin.Begin);
+		tfs.Position.AssertEqual(5);
+	}
+
+	[TestMethod]
+	public void MemoryFs_SetLength()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+
+		using (var tfs = new TransactionFileStream(fs, target, FileMode.Create))
+		{
+			var data = "hello world".UTF8();
+			tfs.Write(data, 0, data.Length);
+			tfs.SetLength(5);
+			tfs.Length.AssertEqual(5);
+		}
+
+		ReadAllText(fs, target).AssertEqual("hello");
+	}
+
+	[TestMethod]
+	public void MemoryFs_MultipleDispose_NoException()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+
+		var tfs = new TransactionFileStream(fs, target, FileMode.Create);
+		tfs.Dispose();
+		tfs.Dispose(); // Should not throw
+	}
+
+	[TestMethod]
+	public void MemoryFs_AfterDispose_ThrowsObjectDisposed()
+	{
+		var fs = new MemoryFileSystem();
+		var target = "/data/file.txt";
+
+		var tfs = new TransactionFileStream(fs, target, FileMode.Create);
+		tfs.Dispose();
+
+		ThrowsExactly<ObjectDisposedException>(() => tfs.Write([1], 0, 1));
+		ThrowsExactly<ObjectDisposedException>(() => { var _ = tfs.Length; });
+		ThrowsExactly<ObjectDisposedException>(() => { tfs.Position = 0; });
+	}
+
+	#endregion
 }
