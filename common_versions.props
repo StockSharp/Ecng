@@ -33,6 +33,6 @@
     <AzureStorageBlobsVer>12.*</AzureStorageBlobsVer>
     <AWSSDKVer>4.*</AWSSDKVer>
     <IronPythonVer>3.*</IronPythonVer>
-    <NuGetApiVer>6.14.0</NuGetApiVer>
+    <NuGetApiVer>7.0.1</NuGetApiVer>
   </PropertyGroup>
 </Project>
