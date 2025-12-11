@@ -11,7 +11,7 @@ using System.Text;
 using System.Web;
 using System.Reflection;
 
-using Ecng.Localization;
+using System.Diagnostics;
 
 /// <summary>
 /// Provides various network helper extension methods.
@@ -60,8 +60,9 @@ public static class NetworkHelper
 			// get local IP addresses
 			localIPs = Dns.GetHostAddresses(Dns.GetHostName());
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			Trace.WriteLine(ex);
 			return false;
 		}
 
@@ -75,6 +76,7 @@ public static class NetworkHelper
 	/// <param name="socket">The socket to check.</param>
 	/// <param name="timeOut">The timeout in microseconds.</param>
 	/// <returns><c>true</c> if the socket is connected; otherwise, <c>false</c>.</returns>
+	[Obsolete("Use different approach to check socket connectivity.")]
 	public static bool IsConnected(this Socket socket, int timeOut = 1)
 	{
 		if (socket is null)
@@ -97,6 +99,7 @@ public static class NetworkHelper
 	/// <param name="buffer">The buffer to store the data.</param>
 	/// <param name="offset">The offset in the buffer.</param>
 	/// <param name="len">The number of bytes to read.</param>
+	[Obsolete("Use async methods with CancellationToken instead.")]
 	public static void Read(this Socket socket, byte[] buffer, int offset, int len)
 	{
 		if (socket is null)
@@ -121,6 +124,7 @@ public static class NetworkHelper
 	/// <param name="socket">The socket to wait on.</param>
 	/// <param name="timeOut">The timeout in microseconds.</param>
 	/// <returns><c>true</c> if data is available; otherwise, <c>false</c>.</returns>
+	[Obsolete("Use different approach to check socket data availability.")]
 	public static bool Wait(this Socket socket, int timeOut)
 	{
 		if (socket is null)
@@ -240,10 +244,11 @@ public static class NetworkHelper
 	}
 
 	/// <summary>
-	/// Connects the TcpClient to the specified endpoint.
+	/// Connects the <see cref="TcpClient"/> to the specified endpoint.
 	/// </summary>
-	/// <param name="client">The TcpClient instance.</param>
+	/// <param name="client">The <see cref="TcpClient"/> instance.</param>
 	/// <param name="address">The endpoint to connect to.</param>
+	[Obsolete("Use async methods with CancellationToken instead.")]
 	public static void Connect(this TcpClient client, EndPoint address)
 	{
 		if (client is null)
@@ -361,8 +366,9 @@ public static class NetworkHelper
 
 			return Encoding.GetEncoding(charset);
 		}
-		catch
+		catch (Exception ex)
 		{
+			Trace.WriteLine(ex);
 			return null;
 		}
 	}
@@ -618,10 +624,6 @@ public static class NetworkHelper
 		return null;
 	}
 
-	// TODO can remove when .net standard 2.1 will be applied
-	private static ConstructorInfo _ctorWithStatusCode;
-	private static bool _initialized;
-
 	/// <summary>
 	/// Creates an HttpRequestException for the specified HTTP status code and message.
 	/// </summary>
@@ -630,16 +632,11 @@ public static class NetworkHelper
 	/// <returns>An instance of HttpRequestException.</returns>
 	public static HttpRequestException CreateHttpRequestException(this HttpStatusCode code, string message)
 	{
-		if (!_initialized)
-		{
-			_ctorWithStatusCode = typeof(HttpRequestException).GetConstructors().FirstOrDefault(c => c.GetParameters().Any(p => p.ParameterType == typeof(HttpStatusCode?)));
-			_initialized = true;
-		}
-
-		if (_ctorWithStatusCode is null)
-			return new HttpRequestException($"{(int)code} ({code}): {message}");
-		else
-			return (HttpRequestException)_ctorWithStatusCode.Invoke([message, null, code]);
+#if NET5_0_OR_GREATER
+		return new(message, null, code);
+#else
+		return new($"{(int)code} ({code}): {message}");
+#endif
 	}
 
 	/// <summary>
@@ -772,7 +769,14 @@ public static class NetworkHelper
 	/// </summary>
 	/// <param name="client">The HttpClient instance.</param>
 	public static void ApplyChromeAgent(this HttpClient client)
-		=> client.CheckOnNull(nameof(client)).DefaultRequestHeaders.Add(HttpHeaders.UserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36");
+	{
+		if (client is null)
+			throw new ArgumentNullException(nameof(client));
+
+		var ua = client.DefaultRequestHeaders.UserAgent;
+		ua.Clear();
+		ua.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36");
+	}
 
 	/// <summary>
 	/// Sets a bearer token for authorization on the HttpClient.
