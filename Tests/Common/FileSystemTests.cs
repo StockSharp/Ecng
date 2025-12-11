@@ -341,11 +341,115 @@ public class FileSystemTests : BaseTestClass
 		{
 			var sourceDir = Path.Combine(root, "source");
 			fs.CreateDirectory(sourceDir);
-			
+
 			var destDir = Path.Combine(root, "dest");
 			fs.CreateDirectory(destDir);
 
 			ThrowsExactly<IOException>(() => fs.MoveDirectory(sourceDir, destDir));
+		});
+	}
+
+	[TestMethod]
+	public void CopyFile_OverwriteExisting_Local()
+	{
+		// Test that CopyFile with overwrite=true REPLACES the destination content,
+		// not appends to it.
+		WithLocalFs((fs, root) =>
+		{
+			var source = Path.Combine(root, "source.txt");
+			var dest = Path.Combine(root, "dest.txt");
+
+			// Create source with "NEW"
+			WriteAll(fs, source, "NEW");
+
+			// Create destination with "OLD_CONTENT" (longer than source)
+			WriteAll(fs, dest, "OLD_CONTENT");
+
+			// Copy with overwrite - should REPLACE, not append
+			fs.CopyFile(source, dest, overwrite: true);
+
+			// Destination should contain only "NEW", not "OLD_CONTENTNEW"
+			ReadAll(fs, dest).AssertEqual("NEW");
+		});
+	}
+
+	[TestMethod]
+	public void CopyFile_OverwriteExisting_Memory()
+	{
+		// Test that CopyFile with overwrite=true REPLACES the destination content,
+		// not appends to it.
+		//
+		WithMemoryFs((fs, root) =>
+		{
+			var source = Path.Combine(root, "source.txt");
+			var dest = Path.Combine(root, "dest.txt");
+
+			// Create source with "NEW"
+			WriteAll(fs, source, "NEW");
+
+			// Create destination with "OLD_CONTENT" (longer than source)
+			WriteAll(fs, dest, "OLD_CONTENT");
+
+			// Copy with overwrite - should REPLACE, not append
+			fs.CopyFile(source, dest, overwrite: true);
+
+			// Destination should contain only "NEW", not "OLD_CONTENTNEW"
+			ReadAll(fs, dest).AssertEqual("NEW");
+		});
+	}
+
+	[TestMethod]
+	public void MoveFile_OverwriteExisting_Local()
+	{
+		// Test that MoveFile with overwrite=true REPLACES the destination content,
+		// not appends to it.
+		WithLocalFs((fs, root) =>
+		{
+			var source = Path.Combine(root, "source.txt");
+			var dest = Path.Combine(root, "dest.txt");
+
+			// Create source with "NEW"
+			WriteAll(fs, source, "NEW");
+
+			// Create destination with "OLD_CONTENT" (longer than source)
+			WriteAll(fs, dest, "OLD_CONTENT");
+
+			// Move with overwrite - should REPLACE, not append
+			fs.MoveFile(source, dest, overwrite: true);
+
+			// Source should be deleted
+			fs.FileExists(source).AssertFalse();
+
+			// Destination should contain only "NEW", not "OLD_CONTENTNEW"
+			ReadAll(fs, dest).AssertEqual("NEW");
+		});
+	}
+
+	[TestMethod]
+	public void MoveFile_OverwriteExisting_Memory()
+	{
+		// Test that MoveFile with overwrite=true REPLACES the destination content,
+		// not appends to it.
+		//
+		WithMemoryFs((fs, root) =>
+		{
+			var source = Path.Combine(root, "source.txt");
+			var dest = Path.Combine(root, "dest.txt");
+
+			// Create source with "NEW"
+			WriteAll(fs, source, "NEW");
+
+			// Create destination with "OLD_CONTENT" (longer than source)
+			WriteAll(fs, dest, "OLD_CONTENT");
+
+			// Move with overwrite - should REPLACE, not append
+			fs.MoveFile(source, dest, overwrite: true);
+
+			// Source should be deleted
+			fs.FileExists(source).AssertFalse();
+
+			// Destination should contain only "NEW", not "OLD_CONTENTNEW"
+			ReadAll(fs, dest).AssertEqual("NEW");
 		});
 	}
 }

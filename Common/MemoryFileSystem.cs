@@ -234,8 +234,13 @@ public class MemoryFileSystem : IFileSystem
 				throw new FileNotFoundException(sourceFileName);
 			if (!overwrite && FileExists(destFileName))
 				throw new IOException("Destination file exists.");
+
+			// Delete destination first if overwriting, then copy source content
+			if (overwrite && FileExists(destFileName))
+				DeleteFile(destFileName);
+
 			using (var src = OpenRead(sourceFileName))
-			using (var dst = OpenWrite(destFileName, overwrite))
+			using (var dst = OpenWrite(destFileName, append: false))
 			{
 				src.CopyTo(dst);
 			}
@@ -295,8 +300,13 @@ public class MemoryFileSystem : IFileSystem
 				throw new FileNotFoundException(sourceFileName);
 			if (!overwrite && FileExists(destFileName))
 				throw new IOException("Destination file exists.");
+
+			// Delete destination first if overwriting
+			if (overwrite && FileExists(destFileName))
+				DeleteFile(destFileName);
+
 			using var src = OpenRead(sourceFileName);
-			using var dst = OpenWrite(destFileName, overwrite);
+			using var dst = OpenWrite(destFileName, append: false);
 			src.CopyTo(dst);
 		}
 	}
