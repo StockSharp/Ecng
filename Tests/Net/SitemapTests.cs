@@ -239,7 +239,7 @@ public class SitemapTests : BaseTestClass
 
 		var lastModElement = urlElement.Element(xmlns + "lastmod");
 		lastModElement.AssertNotNull();
-		lastModElement.Value.AssertEqual(lastModified.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:sszzz"));
+		lastModElement.Value.AssertEqual(lastModified.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:sszzz"));
 
 		var changeFreqElement = urlElement.Element(xmlns + "changefreq");
 		changeFreqElement.AssertNotNull();
