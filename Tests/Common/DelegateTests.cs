@@ -372,6 +372,75 @@ public class DelegateTests : BaseTestClass
 		ThrowsExactly<NullReferenceException>(() => action.GetInvocationList());
 	}
 
+	[TestMethod]
+	public void GetInvocationList_InvocationOrderIsPreserved()
+	{
+		// Arrange
+		var results = new System.Collections.Generic.List<int>();
+		Action<int> first = _ => results.Add(1);
+		Action<int> second = _ => results.Add(2);
+		var combined = first.AddDelegate(second);
+
+		// Act
+		var list = combined.GetInvocationList();
+		foreach (var d in list)
+			d.DynamicInvoke(0);
+
+		// Assert - order must be preserved
+		results.Count.AssertEqual(2);
+		results[0].AssertEqual(1);
+		results[1].AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void GetInvocationList_SameDelegateAddedTwice_ReturnsTwoEntries()
+	{
+		// Arrange
+		var count = 0;
+		Action increment = () => count++;
+		var combined = increment.AddDelegate(increment);
+
+		// Act
+		var list = combined.GetInvocationList();
+		var items = 0;
+		foreach (var d in list)
+		{
+			items++;
+			d.DynamicInvoke();
+		}
+
+		// Assert
+		items.AssertEqual(2);
+		count.AssertEqual(2);
+	}
+
+	[TestMethod]
+	public void GetInvocationList_DelegatesAreBoundToCorrectTargets()
+	{
+		// Arrange
+		var t1 = new Target();
+		var t2 = new Target();
+
+		Action<int> a1 = t1.Add;
+		Action<int> a2 = t2.Add;
+		var combined = a1.AddDelegate(a2);
+
+		// Act
+		var list = combined.GetInvocationList();
+		foreach (var d in list)
+			d.DynamicInvoke(3);
+
+		// Assert
+		t1.Sum.AssertEqual(3);
+		t2.Sum.AssertEqual(3);
+	}
+
+	private class Target
+	{
+		public int Sum;
+		public void Add(int value) => Sum += value;
+	}
+
 	#endregion
 
 	#region RemoveAllDelegates Tests
