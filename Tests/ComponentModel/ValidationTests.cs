@@ -753,7 +753,7 @@ public class ValidationTests : BaseTestClass
 
 	private sealed class AttrEntity : IAttributesEntity
 	{
-		public IList<Attribute> Attributes { get; } = new List<Attribute>();
+		public IList<Attribute> Attributes { get; } = [];
 	}
 
 	[TestMethod]
