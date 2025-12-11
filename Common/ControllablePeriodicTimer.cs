@@ -93,10 +93,6 @@ public sealed class ControllablePeriodicTimer(Func<Task> handler) : IDisposable
 						{
 							break;
 						}
-						catch
-						{
-							throw;
-						}
 					}
 				}
 				catch (OperationCanceledException)
