@@ -26,7 +26,7 @@ public class ExpressionTests : BaseTestClass
 	[TestMethod]
 	public void Cache()
 	{
-		var cache = new InMemoryCompilerCache(TimeSpan.MaxValue);
+		var cache = new CompilerCache(new MemoryFileSystem(), "compiler-cache", TimeSpan.MaxValue);
 		cache.Init();
 
 		var formula = Compile("RI@FORTS - SBER@TQBR", cache);

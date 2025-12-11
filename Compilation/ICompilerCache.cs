@@ -58,18 +58,25 @@ public interface ICompilerCache
 }
 
 /// <summary>
-/// An in-memory implementation of <see cref="ICompilerCache"/> that stores compiled assemblies in memory.
+/// A unified implementation of <see cref="ICompilerCache"/> that stores compiled assemblies using an injected file system.
 /// </summary>
-public class InMemoryCompilerCache : ICompilerCache
+public class CompilerCache : ICompilerCache
 {
 	private readonly SynchronizedDictionary<string, (DateTime till, byte[] assembly)> _cache = [];
+	private readonly IFileSystem _fileSystem;
+	private readonly string _path;
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="InMemoryCompilerCache"/> class with a specified timeout.
+	/// Initializes a new instance of the <see cref="CompilerCache"/> class with a specified timeout.
 	/// </summary>
+	/// <param name="fileSystem">The file system to use for storing cached assemblies.</param>
+	/// <param name="path">The path where cached assemblies will be stored.</param>
 	/// <param name="timeout">Cache timeout.</param>
-	public InMemoryCompilerCache(TimeSpan timeout)
+	public CompilerCache(IFileSystem fileSystem, string path, TimeSpan timeout)
 	{
+		_fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+		_path = path.IsEmpty(Directory.GetCurrentDirectory());
+
 		if (timeout <= TimeSpan.Zero)
 			throw new ArgumentOutOfRangeException(nameof(timeout), timeout, "Must be positive");
 
@@ -148,108 +155,30 @@ public class InMemoryCompilerCache : ICompilerCache
 
 	/// <inheritdoc />
 	public virtual void Add(string ext, IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly)
-		=> Set(GetKey(ext, sources, refs), assembly);
-
-	/// <inheritdoc />
-	public virtual bool Remove(string ext, IEnumerable<string> sources, IEnumerable<string> refs)
-		=> Remove(GetKey(ext, sources, refs));
-
-	/// <inheritdoc />
-	public virtual bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly)
-		=> TryGet(GetKey(ext, sources, refs), out assembly);
-
-	/// <inheritdoc />
-	public virtual void Clear() => _cache.Clear();
-
-	/// <inheritdoc />
-	public virtual void Init() { }
-}
-
-/// <summary>
-/// A file-based implementation of <see cref="InMemoryCompilerCache"/> that persists cached assemblies to disk.
-/// </summary>
-public class FileCompilerCache(string path, TimeSpan timeout) : InMemoryCompilerCache(timeout)
-{
-	private readonly string _path = path.IsEmpty(Directory.GetCurrentDirectory());
-
-	/// <summary>
-	/// Initializes the file-based cache by ensuring the directory exists and loading valid cached files.
-	/// </summary>
-	public override void Init()
 	{
-		base.Init();
-
-		Directory.CreateDirectory(_path);
-
-		var till = DateTime.UtcNow;
-
-		foreach (var fileName in Directory.GetFiles(_path, $"*{FileExts.Bin}"))
-		{
-			if ((till - File.GetLastWriteTimeUtc(fileName)) > Timeout)
-			{
-				File.Delete(fileName);
-				continue;
-			}
-
-			Set(Path.GetFileNameWithoutExtension(fileName), File.ReadAllBytes(fileName));
-		}
-	}
-
-	/// <summary>
-	/// Generates the full path for a cache file based on the key.
-	/// </summary>
-	/// <param name="key">The cache key.</param>
-	/// <returns>The full file path corresponding to the key.</returns>
-	private string GetFileName(string key)
-		=> Path.Combine(_path, $"{key}{FileExts.Bin}");
-
-	/// <summary>
-	/// Adds a compiled assembly to the file-based cache and persists it on disk.
-	/// </summary>
-	/// <param name="ext">The file extension used in key generation.</param>
-	/// <param name="sources">The source code files.</param>
-	/// <param name="refs">The referenced assemblies.</param>
-	/// <param name="assembly">The compiled assembly bytes to cache.</param>
-	/// <exception cref="ArgumentNullException">Thrown when assembly is null.</exception>
-	public override void Add(string ext, IEnumerable<string> sources, IEnumerable<string> refs, byte[] assembly)
-	{
-		if (assembly is null)
-			throw new ArgumentNullException(nameof(assembly));
-
 		var key = GetKey(ext, sources, refs);
 		var fileName = GetFileName(key);
 
-		File.WriteAllBytes(fileName, assembly);
+		using (var s = _fileSystem.OpenWrite(fileName))
+			s.Write(assembly ?? throw new ArgumentNullException(nameof(assembly)), 0, assembly.Length);
+
 		Set(key, assembly);
 	}
 
-	/// <summary>
-	/// Removes a cached assembly from both the file system and the in-memory cache.
-	/// </summary>
-	/// <param name="ext">The file extension used in key generation.</param>
-	/// <param name="sources">The source code files.</param>
-	/// <param name="refs">The referenced assemblies.</param>
-	/// <returns>true if the assembly was removed; otherwise, false.</returns>
-	public override bool Remove(string ext, IEnumerable<string> sources, IEnumerable<string> refs)
+	/// <inheritdoc />
+	public virtual bool Remove(string ext, IEnumerable<string> sources, IEnumerable<string> refs)
 	{
 		var key = GetKey(ext, sources, refs);
 		var fileName = GetFileName(key);
 
-		if (File.Exists(fileName))
-			File.Delete(fileName);
+		if (_fileSystem.FileExists(fileName))
+			_fileSystem.DeleteFile(fileName);
 
 		return Remove(key);
 	}
 
-	/// <summary>
-	/// Tries to retrieve a cached assembly from the in-memory cache or from disk if not present in memory.
-	/// </summary>
-	/// <param name="ext">The file extension used in key generation.</param>
-	/// <param name="sources">The source code files.</param>
-	/// <param name="refs">The referenced assemblies.</param>
-	/// <param name="assembly">When this method returns, contains the cached assembly if found; otherwise, null.</param>
-	/// <returns>true if the assembly was retrieved; otherwise, false.</returns>
-	public override bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly)
+	/// <inheritdoc />
+	public virtual bool TryGet(string ext, IEnumerable<string> sources, IEnumerable<string> refs, out byte[] assembly)
 	{
 		var key = GetKey(ext, sources, refs);
 
@@ -258,22 +187,61 @@ public class FileCompilerCache(string path, TimeSpan timeout) : InMemoryCompiler
 
 		var fileName = GetFileName(key);
 
-		if (!File.Exists(fileName))
+		if (!_fileSystem.FileExists(fileName))
 			return false;
 
-		assembly = File.ReadAllBytes(fileName);
+		using (var stream = _fileSystem.OpenRead(fileName))
+		using (var ms = new MemoryStream())
+		{
+			stream.CopyTo(ms);
+			assembly = ms.ToArray();
+		}
+
 		Set(key, assembly);
 		return true;
 	}
 
-	/// <summary>
-	/// Clears the in-memory cache and deletes all cached files from disk.
-	/// </summary>
-	public override void Clear()
+	/// <inheritdoc />
+	public virtual void Clear()
 	{
-		base.Clear();
-
-		if (Directory.Exists(_path))
-			Directory.Delete(_path, true);
+		_cache.Clear();
+		if (_fileSystem.DirectoryExists(_path))
+			_fileSystem.DeleteDirectory(_path, true);
 	}
+
+	/// <inheritdoc />
+	public virtual void Init()
+	{
+		_fileSystem.CreateDirectory(_path);
+
+		var till = DateTime.UtcNow;
+
+		foreach (var fileName in _fileSystem.EnumerateFiles(_path, "*.bin"))
+		{
+			if ((till - _fileSystem.GetLastWriteTimeUtc(fileName)) > Timeout)
+			{
+				_fileSystem.DeleteFile(fileName);
+				continue;
+			}
+
+			var key = Path.GetFileNameWithoutExtension(fileName);
+
+			using var stream = _fileSystem.OpenRead(fileName);
+			using var ms = new MemoryStream();
+
+			stream.CopyTo(ms);
+			Set(key, ms.ToArray());
+		}
+	}
+
+	private string GetFileName(string key)
+		=> Path.Combine(_path, $"{key}.bin");
+}
+
+/// <summary>
+/// Backward-compatible wrapper for legacy usage; uses local file system under the hood.
+/// </summary>
+public class FileCompilerCache(string path, TimeSpan timeout)
+	: CompilerCache(new LocalFileSystem(), path, timeout)
+{
 }
