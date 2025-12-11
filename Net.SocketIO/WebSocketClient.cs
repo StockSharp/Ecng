@@ -180,7 +180,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// </summary>
 	/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
 	/// <returns>A task that represents the asynchronous connect operation.</returns>
-	public ValueTask ConnectAsync(CancellationToken cancellationToken)
+	public async ValueTask ConnectAsync(CancellationToken cancellationToken)
 	{
 		RaiseStateChanged(ConnectionStates.Connecting);
 
@@ -192,7 +192,8 @@ public class WebSocketClient : Disposable, IConnection
 
 		_disconnectionStates[source] = false;
 
-		return ConnectImpl(source, false, 0, cancellationToken == default ? source.Token : cancellationToken);
+		using var linked = CancellationTokenSource.CreateLinkedTokenSource(source.Token, cancellationToken);
+		await ConnectImpl(source, false, 0, linked.Token);
 	}
 
 	private void RaiseStateChanged(ConnectionStates state)
@@ -242,6 +243,8 @@ public class WebSocketClient : Disposable, IConnection
 					continue;
 				}
 
+				try { _ws?.Dispose(); } catch { }
+				_ws = null;
 				throw;
 			}
 		}
@@ -275,7 +278,7 @@ public class WebSocketClient : Disposable, IConnection
 	/// <summary>
 	/// Gets a value indicating whether the client is connected.
 	/// </summary>
-	public bool IsConnected => _ws != null;
+	public bool IsConnected => _ws?.State == WebSocketState.Open;
 
 	/// <summary>
 	/// Disconnects from the server.
@@ -290,6 +293,8 @@ public class WebSocketClient : Disposable, IConnection
 
 		_disconnectionStates[_source] = true;
 		_source.Cancel();
+		try { _source.Dispose(); } catch { }
+		_source = null;
 		
 		_reConnectCommands.Clear();
 	}
@@ -601,7 +606,10 @@ public class WebSocketClient : Disposable, IConnection
 	public ValueTask SendAsync(byte[] sendBuf, WebSocketMessageType type, CancellationToken cancellationToken, long subId = default, Func<long, CancellationToken, ValueTask> pre = default)
 	{
 		if (_ws is not ClientWebSocket ws)
-			return default;
+			throw new InvalidOperationException("WebSocket is not connected.");
+
+		if (ws.State != WebSocketState.Open)
+			throw new InvalidOperationException("WebSocket is not open.");
 
 		if (subId > 0)
 			_reConnectCommands.Add((subId, sendBuf, type, pre));
@@ -681,16 +689,42 @@ public class WebSocketClient : Disposable, IConnection
 	/// <returns>A task that represents the asynchronous operation.</returns>
 	public ValueTask SendOpCode(byte code = 0x9 /* ping */)
 	{
-		_innerSocketField ??= typeof(ClientWebSocket).GetMember<FieldInfo>("_innerWebSocket");
-		var handle = _innerSocketField.GetValue(_ws);
+		if (_ws is not ClientWebSocket ws || ws.State != WebSocketState.Open)
+			throw new InvalidOperationException("WebSocket is not connected.");
 
-		_socketProp ??= handle.GetType().GetMember<PropertyInfo>("WebSocket");
-		var socket = (WebSocket)_socketProp.GetValue(handle);
+		try
+		{
+			_innerSocketField ??= typeof(ClientWebSocket).GetMember<FieldInfo>("_innerWebSocket");
+			if (_innerSocketField is null)
+				throw new NotSupportedException("Inner web socket field not found.");
 
-		_opCodeEnum ??= typeof(WebSocket).Assembly.GetType("System.Net.WebSockets.ManagedWebSocket+MessageOpcode");
-		var opCode = Enum.ToObject(_opCodeEnum, code);
+			var handle = _innerSocketField.GetValue(ws) ?? throw new NotSupportedException("Inner web socket handle is null.");
 
-		_sendMethod ??= socket.GetType().GetMember<MethodInfo>("SendFrameLockAcquiredNonCancelableAsync");
-		return (ValueTask)_sendMethod.Invoke(socket, [opCode, true, true, ReadOnlyMemory<byte>.Empty]);
+			_socketProp ??= handle.GetType().GetMember<PropertyInfo>("WebSocket");
+			if (_socketProp is null)
+				throw new NotSupportedException("WebSocket property not found.");
+
+			var socket = (WebSocket)_socketProp.GetValue(handle) ?? throw new NotSupportedException("Managed WebSocket instance is null.");
+
+			_opCodeEnum ??= typeof(WebSocket).Assembly.GetType("System.Net.WebSockets.ManagedWebSocket+MessageOpcode");
+			if (_opCodeEnum is null)
+				throw new NotSupportedException("MessageOpcode enum type not found.");
+
+			var opCode = Enum.ToObject(_opCodeEnum, code);
+
+			_sendMethod ??= socket.GetType().GetMember<MethodInfo>("SendFrameLockAcquiredNonCancelableAsync");
+			if (_sendMethod is null)
+				throw new NotSupportedException("SendFrameLockAcquiredNonCancelableAsync method not found.");
+
+			return (ValueTask)_sendMethod.Invoke(socket, [opCode, true, true, ReadOnlyMemory<byte>.Empty]);
+		}
+		catch (NotSupportedException)
+		{
+			throw;
+		}
+		catch (Exception ex)
+		{
+			throw new NotSupportedException("Sending custom opcode is not supported on this platform/runtime.", ex);
+		}
 	}
 }
