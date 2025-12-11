@@ -94,6 +94,10 @@ public class Url : Uri, ICloneable<Url>
 	/// <returns>A new <see cref="Url"/> that is a copy of this instance.</returns>
 	public Url Clone()
 	{
-		return new Url(this);
+		return new Url(this)
+		{
+			KeepDefaultPage = KeepDefaultPage,
+			Encode = Encode,
+		};
 	}
 }
