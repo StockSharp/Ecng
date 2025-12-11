@@ -78,13 +78,30 @@ public class ObservableCollectionEx<TItem> : IListEx<TItem>, IList, INotifyColle
 	{
 		var arr = items.ToArray();
 
+		if (arr.Length == 0)
+			return;
+
 		if (arr.Length > 10000 || arr.Length > Count * 0.1)
 		{
-			var temp = new HashSet<TItem>(_items);
-			temp.RemoveRange(arr);
+			var toRemove = new HashSet<TItem>(arr);
+			var removed = new List<TItem>();
 
-			Clear();
-			AddRange(temp);
+			for (var i = _items.Count - 1; i >= 0; i--)
+			{
+				if (toRemove.Contains(_items[i]))
+				{
+					removed.Add(_items[i]);
+					_items.RemoveAt(i);
+				}
+			}
+
+			if (removed.Count > 0)
+			{
+				OnCountPropertyChanged();
+				OnIndexerPropertyChanged();
+				OnCollectionReset();
+				_removedRange?.Invoke(removed);
+			}
 		}
 		else
 			arr.ForEach(i => Remove(i));
@@ -167,11 +184,16 @@ public class ObservableCollectionEx<TItem> : IListEx<TItem>, IList, INotifyColle
 	/// </summary>
 	public virtual void Clear()
 	{
-		_items.Clear();
+		if (_items.Count == 0)
+			return;
+
+		var removed = _items.CopyAndClear();
 
 		OnCountPropertyChanged();
 		OnIndexerPropertyChanged();
 		OnCollectionReset();
+
+		_removedRange?.Invoke(removed);
 	}
 
 	int IList.IndexOf(object value)
@@ -211,10 +233,10 @@ public class ObservableCollectionEx<TItem> : IListEx<TItem>, IList, INotifyColle
 
 	void ICollection.CopyTo(Array array, int index)
 	{
-		if (array is not TItem[] items)
-			items = [.. array.Cast<TItem>()];
-
-		CopyTo(items, index);
+		if (array is TItem[] items)
+			CopyTo(items, index);
+		else
+			((ICollection)_items).CopyTo(array, index);
 	}
 
 	/// <summary>
@@ -224,7 +246,7 @@ public class ObservableCollectionEx<TItem> : IListEx<TItem>, IList, INotifyColle
 
 	object ICollection.SyncRoot => this;
 
-	bool ICollection.IsSynchronized => true;
+	bool ICollection.IsSynchronized => false;
 
 	/// <summary>
 	/// Gets a value indicating whether the collection is read-only.
@@ -317,7 +339,7 @@ public class ObservableCollectionEx<TItem> : IListEx<TItem>, IList, INotifyColle
 		evt?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 	}
 
-	private void OnCountPropertyChanged() => OnPropertyChanged("Count");
+	private void OnCountPropertyChanged() => OnPropertyChanged(nameof(Count));
 
 	// This must agree with Binding.IndexerName. It is declared separately
 	// here so as to avoid a dependency on PresentationFramework.dll.
