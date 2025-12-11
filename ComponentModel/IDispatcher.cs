@@ -67,12 +67,9 @@ public class DummyDispatcher : IDispatcher
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
 
-		PeriodicEntry entry;
-
 		using (_periodicLock.EnterScope())
 		{
-			entry = new PeriodicEntry(action, interval);
-			_periodicActions.Add(entry);
+			_periodicActions.Add(new(action, interval));
 
 			// determine minimal interval among registered actions
 			var minInterval = _periodicActions.Min(e => e.Interval);
@@ -80,7 +77,7 @@ public class DummyDispatcher : IDispatcher
 			if (_periodicTimer == null)
 			{
 				_periodicInterval = minInterval;
-				_periodicTimer = new ControllablePeriodicTimer(async () =>
+				_periodicTimer = new ControllablePeriodicTimer(() =>
 				{
 					PeriodicEntry[] toRun;
 					using (_periodicLock.EnterScope())
@@ -99,7 +96,7 @@ public class DummyDispatcher : IDispatcher
 						e.NextRun = now + e.Interval;
 					}
 
-					await Task.CompletedTask;
+					return Task.CompletedTask;
 				});
 
 				_periodicTimer.Start(_periodicInterval);
@@ -130,6 +127,16 @@ public class DummyDispatcher : IDispatcher
 				_periodicTimer.Dispose();
 				_periodicTimer = null;
 				_periodicInterval = TimeSpan.Zero;
+			}
+			else if (_periodicActions.Count > 0 && _periodicTimer != null)
+			{
+				// Recalculate interval - it may increase if a fast action was removed
+				var minInterval = _periodicActions.Min(e => e.Interval);
+				if (minInterval != _periodicInterval)
+				{
+					_periodicInterval = minInterval;
+					_periodicTimer.ChangeInterval(minInterval);
+				}
 			}
 		}
 	}
