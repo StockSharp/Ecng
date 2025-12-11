@@ -177,6 +177,12 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange<T>
 	/// <inheritdoc />
 	T IRange<T>.Max => Max;
 
+	/// <inheritdoc />
+	bool IRange<T>.Contains(T value) => Contains(value);
+
+	/// <inheritdoc />
+	IRange<T> IRange<T>.SubRange(T min, T max) => SubRange(min, max);
+
 	/// <inheritdoc/>
 	public override Range<T> Clone()
 	{
@@ -191,13 +197,8 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange<T>
 		return result;
 	}
 
-	/// <summary>
-	/// Determines whether the current range completely contains another range.
-	/// </summary>
-	/// <param name="range">The range to check against.</param>
-	/// <returns>true if the range is contained; otherwise, false.</returns>
-	/// <exception cref="ArgumentNullException">Thrown if the provided range is null.</exception>
-	public bool Contains(Range<T> range)
+	/// <inheritdoc />
+	public bool Contains(IRange<T> range)
 	{
 		if (range is null)
 			throw new ArgumentNullException(nameof(range));
@@ -205,21 +206,14 @@ public class Range<T> : Equatable<Range<T>>, IConvertible, IRange<T>
 		return Contains(range.Min) && Contains(range.Max);
 	}
 
-	/// <summary>
-	/// Returns the intersection of the current range with another range.
-	/// </summary>
-	/// <param name="range">The range with which to intersect.</param>
-	/// <returns>
-	/// A new <see cref="Range{T}"/> representing the overlap between the two ranges, or null if there is no intersection.
-	/// </returns>
-	/// <exception cref="ArgumentNullException">Thrown if the provided range is null.</exception>
-	public Range<T> Intersect(Range<T> range)
+	/// <inheritdoc />
+	public IRange<T> Intersect(IRange<T> range)
 	{
 		if (range is null)
 			throw new ArgumentNullException(nameof(range));
 
 		if (Contains(range))
-			return range.Clone();
+			return range.TypedClone();
 		else if (range.Contains(this))
 			return Clone();
 		else

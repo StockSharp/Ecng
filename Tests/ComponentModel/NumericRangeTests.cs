@@ -22,6 +22,9 @@ public class NumericRangeTests : BaseTestClass
 		ix.AssertNotNull();
 		ix.Value.Min.AssertEqual(3);
 		ix.Value.Max.AssertEqual(4);
+		var sub = ((IRange<int>)r).SubRange(2, 3);
+		sub.Min.AssertEqual(2);
+		sub.Max.AssertEqual(3);
 	}
 
 	[TestMethod]

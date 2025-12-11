@@ -33,7 +33,7 @@ public static class RangeHelper
 	/// <typeparam name="T">The type of the range values. Must implement IComparable&lt;T&gt;.</typeparam>
 	/// <param name="ranges">The collection of ranges to join.</param>
 	/// <returns>A collection of combined ranges.</returns>
-	public static IEnumerable<Range<T>> JoinRanges<T>(this IEnumerable<Range<T>> ranges)
+	public static IEnumerable<IRange<T>> JoinRanges<T>(this IEnumerable<IRange<T>> ranges)
 		where T : IComparable<T>
 	{
 		var orderedRanges = ranges.OrderBy(r => r.Min).ToList();
@@ -66,10 +66,10 @@ public static class RangeHelper
 	/// <param name="from">The original DateTimeOffset range.</param>
 	/// <param name="excludingRange">The DateTimeOffset range to exclude.</param>
 	/// <returns>A collection of remaining DateTimeOffset ranges after exclusion.</returns>
-	public static IEnumerable<Range<DateTimeOffset>> Exclude(this Range<DateTimeOffset> from, Range<DateTimeOffset> excludingRange)
+	public static IEnumerable<IRange<DateTimeOffset>> Exclude(this IRange<DateTimeOffset> from, Range<DateTimeOffset> excludingRange)
 	{
 		return new Range<long>(from.Min.UtcTicks, from.Max.UtcTicks)
-			.Exclude(new(excludingRange.Min.UtcTicks, excludingRange.Max.UtcTicks))
+			.Exclude(new Range<long>(excludingRange.Min.UtcTicks, excludingRange.Max.UtcTicks))
 			.Select(r => new Range<DateTimeOffset>(r.Min.To<DateTimeOffset>(), r.Max.To<DateTimeOffset>()));
 	}
 
@@ -82,7 +82,7 @@ public static class RangeHelper
 	public static IEnumerable<Range<DateTime>> Exclude(this Range<DateTime> from, Range<DateTime> excludingRange)
 	{
 		return new Range<long>(from.Min.Ticks, from.Max.Ticks)
-			.Exclude(new(excludingRange.Min.Ticks, excludingRange.Max.Ticks))
+			.Exclude(new Range<long>(excludingRange.Min.Ticks, excludingRange.Max.Ticks))
 			.Select(r => new Range<DateTime>(r.Min.To<DateTime>(), r.Max.To<DateTime>()));
 	}
 
@@ -92,7 +92,7 @@ public static class RangeHelper
 	/// <param name="from">The original long range.</param>
 	/// <param name="excludingRange">The long range to exclude.</param>
 	/// <returns>A collection of remaining long ranges after exclusion.</returns>
-	public static IEnumerable<Range<long>> Exclude(this Range<long> from, Range<long> excludingRange)
+	public static IEnumerable<IRange<long>> Exclude(this IRange<long> from, IRange<long> excludingRange)
 	{
 		var intersectedRange = from.Intersect(excludingRange);
 
@@ -128,7 +128,7 @@ public static class RangeHelper
 	/// <param name="from">The start boundary.</param>
 	/// <param name="to">The end boundary.</param>
 	/// <returns>A collection of DateTimeOffset ranges.</returns>
-	public static IEnumerable<Range<DateTimeOffset>> GetRanges(this IEnumerable<DateTimeOffset> dates, DateTimeOffset from, DateTimeOffset to)
+	public static IEnumerable<IRange<DateTimeOffset>> GetRanges(this IEnumerable<DateTimeOffset> dates, DateTimeOffset from, DateTimeOffset to)
 	{
 		return dates.Select(d => d.To<long>())
 			.GetRanges(from.UtcTicks, to.UtcTicks)

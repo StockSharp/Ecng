@@ -69,7 +69,25 @@ public readonly struct NumericRange<TNumber> : IRange<TNumber>
 		var min = TNumber.Max(Min, other.Min);
 		var max = TNumber.Min(Max, other.Max);
 
-		return min <= max ? new(min, max) : null;
+		return min <= max ? new NumericRange<TNumber>(min, max) : null;
+	}
+
+	/// <summary>
+	/// Creates a sub-range from the current range with the specified bounds.
+	/// </summary>
+	/// <param name="min">The minimum bound of the sub-range.</param>
+	/// <param name="max">The maximum bound of the sub-range.</param>
+	/// <returns>The sub-range within the current range.</returns>
+	/// <exception cref="ArgumentException">Thrown if a bound is outside of the current range.</exception>
+	public NumericRange<TNumber> SubRange(TNumber min, TNumber max)
+	{
+		if (!Contains(min))
+			throw new ArgumentException("Not in range.", nameof(min));
+
+		if (!Contains(max))
+			throw new ArgumentException("Not in range.", nameof(max));
+
+		return new(min, max);
 	}
 
 	/// <summary>
@@ -81,6 +99,13 @@ public readonly struct NumericRange<TNumber> : IRange<TNumber>
 	// IRange<TNumber>
 	TNumber IRange<TNumber>.Min => Min;
 	TNumber IRange<TNumber>.Max => Max;
+	
+	bool IRange<TNumber>.Contains(TNumber value) => Contains(value);
+	IRange<TNumber> IRange<TNumber>.SubRange(TNumber min, TNumber max) => SubRange(min, max);
+	IRange<TNumber> IRange<TNumber>.Intersect(IRange<TNumber> range) => Intersect((NumericRange<TNumber>)range);
+	bool IRange<TNumber>.Contains(IRange<TNumber> range) => Contains((NumericRange<TNumber>)range);
+	
+	object ICloneable.Clone() => new NumericRange<TNumber>(Min, Max);
 
 	// IRange (non-generic)
 	bool IRange.HasMinValue => true;

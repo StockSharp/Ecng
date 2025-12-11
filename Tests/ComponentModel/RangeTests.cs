@@ -28,6 +28,11 @@ public class RangeTests : BaseTestClass
 		ix.Min.AssertEqual(8);
 		ix.Max.AssertEqual(10);
 
+		// SubRange via interface
+		var sub = ((IRange<int>)r).SubRange(2, 5);
+		sub.Min.AssertEqual(2);
+		sub.Max.AssertEqual(5);
+
 		var disjoint = new Range<int>(11, 20);
 		r.Intersect(disjoint).AssertNull();
 	}
@@ -44,7 +49,8 @@ public class RangeTests : BaseTestClass
 			Operator = new IntNumeric(),
 			Max = 5
 		};
-		r2.Length.AssertEqual(int.MaxValue);
+		var len = 0;
+		ThrowsExactly<InvalidOperationException>(() => len = r2.Length);
 	}
 
 	[TestMethod]
