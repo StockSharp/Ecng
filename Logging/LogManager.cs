@@ -1,6 +1,9 @@
 namespace Ecng.Logging;
 
 using System.Threading;
+using System.Threading.Tasks;
+
+using Nito.AsyncEx;
 
 /// <summary>
 /// Messages logging manager that monitors the <see cref="ILogSource.Log"/> event and forwards messages to the <see cref="LogManager.Listeners"/>.
@@ -113,7 +116,7 @@ public class LogManager : Disposable, IPersistable
 		if (!_asyncMode)
 			return;
 
-		_flushTimer = AsyncHelper.CreatePeriodicTimer(Flush);
+		_flushTimer = AsyncHelper.CreatePeriodicTimer(FlushAsync);
 
 		FlushInterval = TimeSpan.FromMilliseconds(500);
 	}
@@ -124,7 +127,7 @@ public class LogManager : Disposable, IPersistable
 	[Obsolete("Use ILogListener.IsLocalTime property.")]
 	public TimeZoneInfo LocalTimeZone { get; set; }
 
-	private void Flush()
+	private async Task FlushAsync()
 	{
 		LogMessage[] temp;
 
@@ -168,7 +171,24 @@ public class LogManager : Disposable, IPersistable
 			}
 
 			if (messages.Count > 0)
-				_listeners.Cache.ForEach(l => l.WriteMessages(messages));
+			{
+				var listeners = _listeners.Cache;
+
+				await listeners.Select(async listener =>
+				{
+					try
+					{
+						if (listener is IAsyncLogListener all)
+							await all.WriteMessagesAsync(messages);
+						else
+							listener.WriteMessages(messages);
+					}
+					catch (Exception ex)
+					{
+						Trace.WriteLine(ex);
+					}
+				}).WhenAll();
+			}
 
 			disposeMessage?.Pulse();
 		}
@@ -263,7 +283,7 @@ public class LogManager : Disposable, IPersistable
 		try
 		{
 			if (callFlush)
-				Flush();
+				_ = FlushAsync();
 			else if (callImmediate)
 				ImmediateFlush();
 		}

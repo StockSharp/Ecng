@@ -3,9 +3,13 @@ namespace Ecng.Logging;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Ecng.Common;
 using Ecng.Localization;
+
+using Nito.AsyncEx;
 
 /// <summary>
 /// Modes of log files splitting by date.
@@ -78,7 +82,7 @@ public class FileLogListener : LogListener
 		public string Path { get; } = path;
 	}
 
-	private readonly SynchronizedPairSet<(string, DateTime), StreamWriterEx> _writers = [];
+	private readonly SynchronizedPairSet<(string fimeName, DateTime date), StreamWriterEx> _writers = [];
 
 	/// <summary>
 	/// To create <see cref="FileLogListener"/>. For each <see cref="ILogSource"/> a separate file with a name equal to <see cref="ILogSource.Name"/> will be created.
@@ -508,10 +512,12 @@ public class FileLogListener : LogListener
 	}
 
 	/// <inheritdoc />
-	protected override void OnWriteMessages(IEnumerable<LogMessage> messages)
+	protected override async ValueTask OnWriteMessagesAsync(IEnumerable<LogMessage> messages, CancellationToken cancellationToken = default)
 	{
 		if (IsDisposed)
 			return;
+
+		await Task.Yield();
 
 		if (!_triedHistoryPolicy)
 		{
@@ -528,7 +534,7 @@ public class FileLogListener : LogListener
 
 		var isDisposing = false;
 
-		foreach (var group in messages.GroupBy(m =>
+		await messages.GroupBy(m =>
 		{
 			if (m.IsDispose)
 			{
@@ -547,7 +553,7 @@ public class FileLogListener : LogListener
 			{
 				if (_writers.Count > 0 && date != default)
 				{
-					var outOfDate = _writers.Where(p => p.Key.Item2 < date).ToArray();
+					var outOfDate = _writers.Where(p => p.Key.date < date).ToArray();
 
 					if (outOfDate.Length > 0)
 					{
@@ -565,19 +571,19 @@ public class FileLogListener : LogListener
 			prevFileName = fileName;
 			prevWriter = writer;
 			return writer;
-		}))
+		})
+		.Where(g => g.Key != null)
+		.Select(async g =>
 		{
-			var writer = group.Key;
+			await Task.Yield();
 
-			// dispose message
-			if (writer is null)
-				continue;
+			var writer = g.Key;
 
 			try
 			{
-				foreach (var message in group)
+				foreach (var message in g)
 				{
-					WriteMessage(writer, message);
+					await WriteMessage(writer, message, cancellationToken).NoWait();
 
 					if (MaxLength <= 0 || writer.BaseStream.Position < MaxLength)
 						continue;
@@ -617,9 +623,9 @@ public class FileLogListener : LogListener
 			}
 			finally
 			{
-				writer.Flush();
+				await writer.FlushAsync(cancellationToken).NoWait();
 			}
-		}
+		}).WhenAll();
 
 		if (isDisposing)
 			Dispose();
@@ -647,7 +653,7 @@ public class FileLogListener : LogListener
 	}
 
 #if NET6_0_OR_GREATER
-	private void WriteMessage(TextWriter writer, LogMessage message)
+	private Task WriteMessage(TextWriter writer, LogMessage message, CancellationToken cancellationToken)
 	{
 		var includeDateInLog = SeparateByDates == SeparateByDateModes.None;
 		var bufferSize = (includeDateInLog ? (_maxDateChars + 1) : 0) + _maxTimeChars;
@@ -686,7 +692,7 @@ public class FileLogListener : LogListener
 			writer.Write('|');
 		}
 
-		writer.WriteLine(message.Message);
+		return writer.WriteLineAsync(message.Message.AsMemory(), cancellationToken);
 	}
 
 	private static void WritePadded(TextWriter writer, string value, int width)
@@ -743,7 +749,7 @@ public class FileLogListener : LogListener
 		return offset + _maxTimeChars;
 	}
 #else
-	private void WriteMessage(TextWriter writer, LogMessage message)
+	private Task WriteMessage(TextWriter writer, LogMessage message, CancellationToken cancellationToken)
 	{
 		writer.Write(ToFastDateCharArray(ConvertToLocalTime(message.TimeUtc)));
 		writer.Write("|");
@@ -758,7 +764,7 @@ public class FileLogListener : LogListener
 			writer.Write("|");
 		}
 
-		writer.WriteLine(message.Message);
+		return writer.WriteLineAsync(message.Message, cancellationToken);
 	}
 
 	// http://ramblings.markstarmer.co.uk/2011/07/efficiency-datetime-tostringstring/

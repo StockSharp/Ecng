@@ -4,7 +4,6 @@ using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using Ecng.Common;
 using Ecng.Logging;
 
 [TestClass]
@@ -76,7 +75,7 @@ public class FileLogListenerTests : BaseTestClass
 	#region Exact Format Tests
 
 	[TestMethod]
-	public void LogLine_ExactFormat_WithDate()
+	public async Task LogLine_ExactFormat_WithDate()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -90,7 +89,7 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.None // Date included in content
 		})
 		{
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Warning, "TestMessage")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Warning, "TestMessage")], CancellationToken);
 		}
 
 		var lines = ReadAllLines(fs, Path.Combine(root, "exact.txt"));
@@ -120,7 +119,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LogLine_ExactFormat_WithoutDate()
+	public async Task LogLine_ExactFormat_WithoutDate()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -134,7 +133,7 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.FileName // Date NOT in content
 		})
 		{
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Error, "ErrMsg")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Error, "ErrMsg")], CancellationToken);
 		}
 
 		var todayFile = DateTime.Today.ToString("yyyy_MM_dd") + "_nodate.txt";
@@ -163,7 +162,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LogLine_ExactFormat_InfoLevelEmpty()
+	public async Task LogLine_ExactFormat_InfoLevelEmpty()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -177,7 +176,7 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.None
 		})
 		{
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "InfoMessage")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "InfoMessage")], CancellationToken);
 		}
 
 		var lines = ReadAllLines(fs, Path.Combine(root, "info.txt"));
@@ -189,7 +188,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LogLine_ExactFormat_WithSourceId()
+	public async Task LogLine_ExactFormat_WithSourceId()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -204,7 +203,7 @@ public class FileLogListenerTests : BaseTestClass
 			WriteSourceId = true
 		})
 		{
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Debug, "Msg")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Debug, "Msg")], CancellationToken);
 		}
 
 		var lines = ReadAllLines(fs, Path.Combine(root, "srcid.txt"));
@@ -224,7 +223,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LogLine_DateFormat_Correct()
+	public async Task LogLine_DateFormat_Correct()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -239,7 +238,7 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.None
 		})
 		{
-			listener.WriteMessages([new LogMessage(src, msgTime, LogLevels.Info, "X")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, msgTime, LogLevels.Info, "X")], CancellationToken);
 		}
 
 		var lines = ReadAllLines(fs, Path.Combine(root, "date.txt"));
@@ -252,7 +251,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LogLine_DateFormat_WithLocalTime()
+	public async Task LogLine_DateFormat_WithLocalTime()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -268,7 +267,7 @@ public class FileLogListenerTests : BaseTestClass
 			IsLocalTime = true
 		})
 		{
-			listener.WriteMessages([new LogMessage(src, msgTime, LogLevels.Info, "X")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, msgTime, LogLevels.Info, "X")], CancellationToken);
 		}
 
 		var lines = ReadAllLines(fs, Path.Combine(root, "local.txt"));
@@ -282,7 +281,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LogLine_TimeOnlyFormat_Correct()
+	public async Task LogLine_TimeOnlyFormat_Correct()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -297,7 +296,7 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.FileName
 		})
 		{
-			listener.WriteMessages([new LogMessage(src, msgTime, LogLevels.Info, "X")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, msgTime, LogLevels.Info, "X")], CancellationToken);
 		}
 
 		var todayFile = DateTime.Today.ToString("yyyy_MM_dd") + "_time.txt";
@@ -311,7 +310,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LogLine_AllLevels_CorrectPadding()
+	public async Task LogLine_AllLevels_CorrectPadding()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -328,9 +327,11 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.None
 		})
 		{
+			var token = CancellationToken;
+
 			foreach (var level in levels)
 			{
-				listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, level, $"Msg{level}")]);
+				await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, level, $"Msg{level}")], token);
 			}
 		}
 
@@ -346,7 +347,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LogLine_LongSourceName_NotTruncated()
+	public async Task LogLine_LongSourceName_NotTruncated()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -360,7 +361,7 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.None
 		})
 		{
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "M")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "M")], CancellationToken);
 		}
 
 		var lines = ReadAllLines(fs, Path.Combine(root, "long.txt"));
@@ -371,7 +372,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LogLine_ShortSourceName_PaddedTo10()
+	public async Task LogLine_ShortSourceName_PaddedTo10()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -385,7 +386,7 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.None
 		})
 		{
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "M")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "M")], CancellationToken);
 		}
 
 		var lines = ReadAllLines(fs, Path.Combine(root, "short.txt"));
@@ -396,7 +397,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void LogLine_MultipleMessages_ExactOrder()
+	public async Task LogLine_MultipleMessages_ExactOrder()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -411,11 +412,11 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.None
 		})
 		{
-			listener.WriteMessages([
+			await listener.WriteMessagesAsync([
 				new LogMessage(src, baseTime, LogLevels.Info, "First"),
 				new LogMessage(src, baseTime.AddSeconds(1), LogLevels.Warning, "Second"),
 				new LogMessage(src, baseTime.AddSeconds(2), LogLevels.Error, "Third")
-			]);
+			], CancellationToken);
 		}
 
 		var lines = ReadAllLines(fs, Path.Combine(root, "multi.txt"));
@@ -440,7 +441,7 @@ public class FileLogListenerTests : BaseTestClass
 	#region Basic Write Tests
 
 	[TestMethod]
-	public void WritesToSingleFile_WhenSeparateByDatesNone()
+	public async Task WritesToSingleFile_WhenSeparateByDatesNone()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -455,7 +456,7 @@ public class FileLogListenerTests : BaseTestClass
 			var src = new DummySource("src");
 			var msg = new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "hello123");
 
-			listener.WriteMessages([msg]);
+			await listener.WriteMessagesAsync([msg], CancellationToken);
 		}
 
 		var file = Path.Combine(root, "single.txt");
@@ -465,7 +466,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void WriteMessages_CorrectFormat_ContainsAllFields()
+	public async Task WriteMessages_CorrectFormat_ContainsAllFields()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -480,7 +481,7 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.None
 		})
 		{
-			listener.WriteMessages([new LogMessage(src, messageTime, LogLevels.Warning, "Test message content")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, messageTime, LogLevels.Warning, "Test message content")], CancellationToken);
 		}
 
 		var content = ReadAllText(fs, Path.Combine(root, "format.txt"));
@@ -493,7 +494,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void WriteMessages_MultipleMessages_CorrectOrder()
+	public async Task WriteMessages_MultipleMessages_CorrectOrder()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -507,11 +508,11 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.None
 		})
 		{
-			listener.WriteMessages([
+			await listener.WriteMessagesAsync([
 				new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "First"),
 				new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "Second"),
 				new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "Third")
-			]);
+			], CancellationToken);
 		}
 
 		var lines = ReadAllLines(fs, Path.Combine(root, "order.txt"));
@@ -524,7 +525,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void WriteMessages_DifferentLogLevels_CorrectlyFormatted()
+	public async Task WriteMessages_DifferentLogLevels_CorrectlyFormatted()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -538,12 +539,12 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.None
 		})
 		{
-			listener.WriteMessages([
+			await listener.WriteMessagesAsync([
 				new LogMessage(src, DateTime.UtcNow, LogLevels.Debug, "debug msg"),
 				new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "info msg"),
 				new LogMessage(src, DateTime.UtcNow, LogLevels.Warning, "warning msg"),
 				new LogMessage(src, DateTime.UtcNow, LogLevels.Error, "error msg")
-			]);
+			], CancellationToken);
 		}
 
 		var content = ReadAllText(fs, Path.Combine(root, "levels.txt"));
@@ -559,7 +560,7 @@ public class FileLogListenerTests : BaseTestClass
 	#region SeparateByDates Tests
 
 	[TestMethod]
-	public void CreatesDatePrefixedFile_WhenSeparateByDatesFileName()
+	public async Task CreatesDatePrefixedFile_WhenSeparateByDatesFileName()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -573,7 +574,7 @@ public class FileLogListenerTests : BaseTestClass
 		};
 
 		var src = new DummySource("s");
-		listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m1")]);
+		await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m1")], CancellationToken);
 
 		var todayPref = DateTime.Today.ToString("yyyy_MM_dd") + "_log" + listener.Extension;
 		var path = Path.Combine(root, todayPref);
@@ -581,7 +582,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void CreatesSubdirectory_WhenSeparateByDatesSubDirectories()
+	public async Task CreatesSubdirectory_WhenSeparateByDatesSubDirectories()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -595,7 +596,7 @@ public class FileLogListenerTests : BaseTestClass
 		};
 
 		var src = new DummySource("s");
-		listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m2")]);
+		await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "m2")], CancellationToken);
 
 		var sub = Path.Combine(root, DateTime.Today.ToString("yyyy_MM_dd"));
 		fs.DirectoryExists(sub).AssertTrue();
@@ -604,7 +605,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void SeparateByDatesFileName_DoesNotIncludeDateInContent()
+	public async Task SeparateByDatesFileName_DoesNotIncludeDateInContent()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -617,7 +618,7 @@ public class FileLogListenerTests : BaseTestClass
 		})
 		{
 			var src = new DummySource("s");
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "test")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "test")], CancellationToken);
 		}
 
 		var todayPref = DateTime.Today.ToString("yyyy_MM_dd") + "_log.txt";
@@ -638,7 +639,7 @@ public class FileLogListenerTests : BaseTestClass
 	#region Rolling (MaxLength/MaxCount) Tests
 
 	[TestMethod]
-	public void Rolling_CreatesRollingFiles_WhenMaxLengthExceeded()
+	public async Task Rolling_CreatesRollingFiles_WhenMaxLengthExceeded()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -651,12 +652,14 @@ public class FileLogListenerTests : BaseTestClass
 			MaxCount = 3
 		};
 
+		var token = CancellationToken;
+
 		var src = new DummySource("s");
 
 		// Write enough to trigger multiple rollovers
 		for (var i = 0; i < 50; i++)
 		{
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, $"Message number {i:D3}")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, $"Message number {i:D3}")], token);
 		}
 
 		var baseFile = Path.Combine(root, "rot.txt");
@@ -668,7 +671,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Rolling_RespectMaxCount_DeletesOldFiles()
+	public async Task Rolling_RespectMaxCount_DeletesOldFiles()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -681,12 +684,14 @@ public class FileLogListenerTests : BaseTestClass
 			MaxCount = 2
 		};
 
+		var token = CancellationToken;
+
 		var src = new DummySource("s");
 
 		// Write many messages to force multiple rollovers
 		for (var i = 0; i < 100; i++)
 		{
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, $"Msg{i:D3}")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, $"Msg{i:D3}")], token);
 		}
 
 		var baseFile = Path.Combine(root, "rot.txt");
@@ -700,7 +705,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Rolling_NewestDataInBaseFile()
+	public async Task Rolling_NewestDataInBaseFile()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -715,10 +720,12 @@ public class FileLogListenerTests : BaseTestClass
 		{
 			var src = new DummySource("s");
 
+			var token = CancellationToken;
+
 			// Write messages with identifiable content
 			for (var i = 1; i <= 10; i++)
 			{
-				listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, $"MSG_{i:D3}")]);
+				await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, $"MSG_{i:D3}")], token);
 			}
 		}
 
@@ -733,7 +740,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void Rolling_NoRollingWhenMaxLengthZero()
+	public async Task Rolling_NoRollingWhenMaxLengthZero()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -746,11 +753,13 @@ public class FileLogListenerTests : BaseTestClass
 			MaxCount = 2
 		};
 
+		var token = CancellationToken;
+
 		var src = new DummySource("s");
 
 		for (var i = 0; i < 100; i++)
 		{
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, $"Message {i}")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, $"Message {i}")], token);
 		}
 
 		var baseFile = Path.Combine(root, "noroll.txt");
@@ -765,7 +774,7 @@ public class FileLogListenerTests : BaseTestClass
 	#region History Policy - Delete Tests
 
 	[TestMethod]
-	public void HistoryPolicy_Delete_RemovesOldFiles()
+	public async Task HistoryPolicy_Delete_RemovesOldFiles()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -788,14 +797,14 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryAfter = TimeSpan.FromDays(1)
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "new")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "new")], CancellationToken);
 
 		fs.FileExists(oldFile1).AssertFalse("Old file 1 should be deleted");
 		fs.FileExists(oldFile2).AssertFalse("Old file 2 should be deleted");
 	}
 
 	[TestMethod]
-	public void HistoryPolicy_Delete_RemovesOldDirectories()
+	public async Task HistoryPolicy_Delete_RemovesOldDirectories()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -814,13 +823,13 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryAfter = TimeSpan.FromDays(1)
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "new")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "new")], CancellationToken);
 
 		fs.DirectoryExists(oldDir).AssertFalse("Old directory should be deleted");
 	}
 
 	[TestMethod]
-	public void HistoryPolicy_Delete_KeepsRecentFiles()
+	public async Task HistoryPolicy_Delete_KeepsRecentFiles()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -842,7 +851,7 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryAfter = TimeSpan.FromDays(1)
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "new")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "new")], CancellationToken);
 
 		fs.FileExists(todayFile).AssertTrue("Today's file should be kept");
 		fs.FileExists(oldFile).AssertFalse("Old file should be deleted");
@@ -853,7 +862,7 @@ public class FileLogListenerTests : BaseTestClass
 	#region History Policy - Compression Tests
 
 	[TestMethod]
-	public void HistoryPolicy_Compression_CreatesZipAndDeletesOriginal()
+	public async Task HistoryPolicy_Compression_CreatesZipAndDeletesOriginal()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -872,7 +881,7 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryAfter = TimeSpan.FromDays(1)
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")], CancellationToken);
 
 		var zipPath = Path.Combine(root, twoDaysAgo.ToString("yyyy_MM_dd") + "_log.zip");
 
@@ -881,7 +890,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void HistoryPolicy_Compression_ZipContainsCorrectContent()
+	public async Task HistoryPolicy_Compression_ZipContainsCorrectContent()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -901,7 +910,7 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryAfter = TimeSpan.FromDays(1)
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")], CancellationToken);
 
 		var zipPath = Path.Combine(root, twoDaysAgo.ToString("yyyy_MM_dd") + "_log.zip");
 		var zipContents = ReadZipContents(fs, zipPath);
@@ -912,7 +921,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void HistoryPolicy_Compression_DirectoryToZip()
+	public async Task HistoryPolicy_Compression_DirectoryToZip()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -933,7 +942,7 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryAfter = TimeSpan.FromDays(1)
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")], CancellationToken);
 
 		var zipPath = Path.Combine(root, twoDaysAgo.ToString("yyyy_MM_dd") + ".zip");
 
@@ -947,7 +956,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void HistoryPolicy_Compression_MultipleFiles()
+	public async Task HistoryPolicy_Compression_MultipleFiles()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -970,7 +979,7 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryAfter = TimeSpan.FromDays(1)
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")], CancellationToken);
 
 		var zip1 = Path.Combine(root, twoDaysAgo.ToString("yyyy_MM_dd") + "_log.zip");
 		var zip2 = Path.Combine(root, threeDaysAgo.ToString("yyyy_MM_dd") + "_log.zip");
@@ -986,7 +995,7 @@ public class FileLogListenerTests : BaseTestClass
 	#region History Policy - Move Tests
 
 	[TestMethod]
-	public void HistoryPolicy_Move_FilesMovedToHistory()
+	public async Task HistoryPolicy_Move_FilesMovedToHistory()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1007,7 +1016,7 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryMove = history
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")], CancellationToken);
 
 		var movedPath = Path.Combine(history, oldName);
 
@@ -1018,7 +1027,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void HistoryPolicy_Move_DirectoriesMovedToHistory()
+	public async Task HistoryPolicy_Move_DirectoriesMovedToHistory()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1040,7 +1049,7 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryMove = history
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")], CancellationToken);
 
 		var movedDir = Path.Combine(history, oldDirName);
 
@@ -1049,7 +1058,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void HistoryPolicy_Move_PreservesContent()
+	public async Task HistoryPolicy_Move_PreservesContent()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1075,7 +1084,7 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryMove = history
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "trigger")], CancellationToken);
 
 		var movedDir = Path.Combine(history, oldDirName);
 
@@ -1084,7 +1093,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void TryDoHistoryPolicy_MoveDirectories()
+	public async Task TryDoHistoryPolicy_MoveDirectories()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1112,7 +1121,7 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryMove = historyDir
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("test"), DateTime.UtcNow, LogLevels.Info, "m")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("test"), DateTime.UtcNow, LogLevels.Info, "m")], CancellationToken);
 
 		var moved1 = Path.Combine(historyDir, Path.GetFileName(dir1));
 		var moved2 = Path.Combine(historyDir, Path.GetFileName(dir2));
@@ -1124,7 +1133,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void TryDoHistoryPolicy_MoveFiles()
+	public async Task TryDoHistoryPolicy_MoveFiles()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1150,7 +1159,7 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryMove = historyPath
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("test"), DateTime.UtcNow, LogLevels.Info, "m")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("test"), DateTime.UtcNow, LogLevels.Info, "m")], CancellationToken);
 
 		var moved1 = Path.Combine(historyPath, Path.GetFileName(file1));
 		var moved2 = Path.Combine(historyPath, Path.GetFileName(file2));
@@ -1164,7 +1173,7 @@ public class FileLogListenerTests : BaseTestClass
 	#region History Policy - None Tests
 
 	[TestMethod]
-	public void HistoryPolicy_None_DoesNothing()
+	public async Task HistoryPolicy_None_DoesNothing()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1182,7 +1191,7 @@ public class FileLogListenerTests : BaseTestClass
 			HistoryAfter = TimeSpan.FromDays(1)
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "new")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "new")], CancellationToken);
 
 		fs.FileExists(oldFile).AssertTrue("Old file should NOT be touched when HistoryPolicy=None");
 	}
@@ -1192,7 +1201,7 @@ public class FileLogListenerTests : BaseTestClass
 	#region Append Mode Tests
 
 	[TestMethod]
-	public void AppendMode_AppendsToExistingFile()
+	public async Task AppendMode_AppendsToExistingFile()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1209,7 +1218,7 @@ public class FileLogListenerTests : BaseTestClass
 		})
 		{
 			var src = new DummySource("s");
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "more")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "more")], CancellationToken);
 		}
 
 		var content = ReadAllText(fs, file);
@@ -1218,7 +1227,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void AppendMode_False_OverwritesFile()
+	public async Task AppendMode_False_OverwritesFile()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1235,7 +1244,7 @@ public class FileLogListenerTests : BaseTestClass
 		})
 		{
 			var src = new DummySource("s");
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "new content")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "new content")], CancellationToken);
 		}
 
 		var content = ReadAllText(fs, file);
@@ -1248,7 +1257,7 @@ public class FileLogListenerTests : BaseTestClass
 	#region Source Name Tests
 
 	[TestMethod]
-	public void WriteChildDataToRootFile_UsesParentName()
+	public async Task WriteChildDataToRootFile_UsesParentName()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1263,14 +1272,14 @@ public class FileLogListenerTests : BaseTestClass
 			WriteChildDataToRootFile = true
 		};
 
-		listener.WriteMessages([new LogMessage(child, DateTime.UtcNow, LogLevels.Info, "cmsg")]);
+		await listener.WriteMessagesAsync([new LogMessage(child, DateTime.UtcNow, LogLevels.Info, "cmsg")], CancellationToken);
 
 		var file = Path.Combine(root, "parent" + listener.Extension);
 		fs.FileExists(file).AssertTrue();
 	}
 
 	[TestMethod]
-	public void WriteChildDataToRootFile_False_UsesChildName()
+	public async Task WriteChildDataToRootFile_False_UsesChildName()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1285,7 +1294,7 @@ public class FileLogListenerTests : BaseTestClass
 			WriteChildDataToRootFile = false
 		};
 
-		listener.WriteMessages([new LogMessage(child, DateTime.UtcNow, LogLevels.Info, "cmsg")]);
+		await listener.WriteMessagesAsync([new LogMessage(child, DateTime.UtcNow, LogLevels.Info, "cmsg")], CancellationToken);
 
 		var childFile = Path.Combine(root, "child" + listener.Extension);
 		var parentFile = Path.Combine(root, "parent" + listener.Extension);
@@ -1295,7 +1304,7 @@ public class FileLogListenerTests : BaseTestClass
 	}
 
 	[TestMethod]
-	public void WriteSourceId_IncludesSourceIdInLog()
+	public async Task WriteSourceId_IncludesSourceIdInLog()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1308,7 +1317,7 @@ public class FileLogListenerTests : BaseTestClass
 			WriteSourceId = true
 		})
 		{
-			listener.WriteMessages([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "mm")]);
+			await listener.WriteMessagesAsync([new LogMessage(src, DateTime.UtcNow, LogLevels.Info, "mm")], CancellationToken);
 		}
 
 		var file = Path.Combine(root, "sid.txt");
@@ -1321,7 +1330,7 @@ public class FileLogListenerTests : BaseTestClass
 	#region Extension and Filename Tests
 
 	[TestMethod]
-	public void CustomExtension_IsApplied()
+	public async Task CustomExtension_IsApplied()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1333,14 +1342,14 @@ public class FileLogListenerTests : BaseTestClass
 			Extension = ".logx"
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "x")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "x")], CancellationToken);
 
 		var file = Path.Combine(root, "e.logx");
 		fs.FileExists(file).AssertTrue();
 	}
 
 	[TestMethod]
-	public void GetFileName_SanitizesInvalidChars()
+	public async Task GetFileName_SanitizesInvalidChars()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1352,14 +1361,14 @@ public class FileLogListenerTests : BaseTestClass
 			FileName = bad
 		};
 
-		listener.WriteMessages([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "z")]);
+		await listener.WriteMessagesAsync([new LogMessage(new DummySource("s"), DateTime.UtcNow, LogLevels.Info, "z")], CancellationToken);
 
 		var expected = new string([.. bad.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)]) + listener.Extension;
 		fs.FileExists(Path.Combine(root, expected)).AssertTrue();
 	}
 
 	[TestMethod]
-	public void MultipleSourcesCreateSeparateFiles()
+	public async Task MultipleSourcesCreateSeparateFiles()
 	{
 		var fs = new MemoryFileSystem();
 		var root = "/logs";
@@ -1373,10 +1382,10 @@ public class FileLogListenerTests : BaseTestClass
 			SeparateByDates = SeparateByDateModes.None
 		})
 		{
-			listener.WriteMessages([
+			await listener.WriteMessagesAsync([
 				new LogMessage(src1, DateTime.UtcNow, LogLevels.Info, "from source 1"),
 				new LogMessage(src2, DateTime.UtcNow, LogLevels.Info, "from source 2")
-			]);
+			], CancellationToken);
 		}
 
 		var file1 = Path.Combine(root, "Source1.txt");

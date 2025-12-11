@@ -1,9 +1,12 @@
 namespace Ecng.Logging;
 
+using System.Threading;
+using System.Threading.Tasks;
+
 /// <summary>
 /// The base class that monitors the event <see cref="ILogSource.Log"/> and saves to some storage.
 /// </summary>
-public abstract class LogListener : Disposable, ILogListener
+public abstract class LogListener : Disposable, ILogListener, IAsyncLogListener
 {
 	/// <summary>
 	/// Initialize <see cref="LogListener"/>.
@@ -90,6 +93,23 @@ public abstract class LogListener : Disposable, ILogListener
 	/// </summary>
 	/// <param name="message">A debug message.</param>
 	protected virtual void OnWriteMessage(LogMessage message)
+	{
+		throw new NotSupportedException();
+	}
+
+	/// <inheritdoc />
+	public virtual ValueTask WriteMessagesAsync(IEnumerable<LogMessage> messages, CancellationToken cancellationToken = default)
+	{
+		return OnWriteMessagesAsync(messages.Filter(Filters), cancellationToken);
+	}
+
+	/// <summary>
+	/// To record messages asynchronously.
+	/// </summary>
+	/// <param name="messages">Debug messages.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>A task that represents the asynchronous write operation.</returns>
+	protected virtual ValueTask OnWriteMessagesAsync(IEnumerable<LogMessage> messages, CancellationToken cancellationToken = default)
 	{
 		throw new NotSupportedException();
 	}

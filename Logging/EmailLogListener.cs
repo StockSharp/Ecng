@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 /// </summary>
 public class EmailLogListener : LogListener
 {
-	private readonly Channel<(string subj, string body)> _channel = Channel.CreateUnbounded<(string subj, string body)>();
+	private readonly Channel<(string from, string to, string subj, string body)> _channel = Channel.CreateBounded<(string, string, string, string)>(10);
 	private readonly Task _processingTask;
 	private readonly CancellationTokenSource _cts = new();
 
@@ -19,7 +19,7 @@ public class EmailLogListener : LogListener
 	/// </summary>
 	public EmailLogListener()
 	{
-		_processingTask = Task.Run(ProcessMessagesAsync);
+		_processingTask = ProcessMessagesAsync(_cts.Token);
 	}
 
 	/// <summary>
@@ -43,21 +43,22 @@ public class EmailLogListener : LogListener
 	/// </summary>
 	/// <param name="message">A debug message.</param>
 	/// <returns>Header.</returns>
-	protected virtual string GetSubject(LogMessage message)
+	protected virtual (string from, string to, string subj, string body) GetInfo(LogMessage message)
 	{
 		if (message == null)
 			throw new ArgumentNullException(nameof(message));
 
-		return message.Source.Name + " " + message.Level + " " + ConvertToLocalTime(message.TimeUtc).ToString(TimeFormat);
+		var from = From.ThrowIfEmpty(nameof(From));
+		var to = To.ThrowIfEmpty(nameof(To));
+		var subj = $"[{message.Source.Name}] ({message.Level}) {ConvertToLocalTime(message.TimeUtc).ToString(TimeFormat)}";
+		return (from, to, subj, message.Message);
 	}
 
 	/// <summary>
 	/// Processes messages from the channel asynchronously.
 	/// </summary>
-	private async Task ProcessMessagesAsync()
+	private async Task ProcessMessagesAsync(CancellationToken token)
 	{
-		var token = _cts.Token;
-
 		try
 		{
 			var reader = _channel.Reader;
@@ -72,7 +73,7 @@ public class EmailLogListener : LogListener
 					try
 					{
 						using var email = CreateClient();
-						await email.SendMailAsync(From, To, message.subj, message.body
+						await email.SendMailAsync(message.from, message.to, message.subj, message.body
 #if NET6_0_OR_GREATER
 							, token
 #endif
@@ -93,28 +94,21 @@ public class EmailLogListener : LogListener
 		}
 	}
 
-	/// <summary>
-	/// To add a message in a queue for sending.
-	/// </summary>
-	/// <param name="message">Message.</param>
-	private void EnqueueMessage(LogMessage message)
+	/// <inheritdoc />
+	protected override ValueTask OnWriteMessagesAsync(IEnumerable<LogMessage> messages, CancellationToken cancellationToken = default)
 	{
-		if (message.IsDispose)
+		foreach (var message in messages)
 		{
-			Dispose();
-			return;
+			if (message.IsDispose)
+			{
+				Dispose();
+				return default;
+			}
+
+			_channel.Writer.TryWrite(GetInfo(message));
 		}
 
-		if (From.IsEmpty() || To.IsEmpty())
-			return;
-
-		_channel.Writer.TryWrite((GetSubject(message), message.Message));
-	}
-
-	/// <inheritdoc />
-	protected override void OnWriteMessage(LogMessage message)
-	{
-		EnqueueMessage(message);
+		return default;
 	}
 
 	/// <inheritdoc />
