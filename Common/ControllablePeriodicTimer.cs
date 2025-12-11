@@ -7,23 +7,18 @@ using System.Threading.Tasks;
 /// <summary>
 /// Represents a controllable periodic timer that can be started, stopped, and have its interval changed.
 /// </summary>
-public sealed class ControllablePeriodicTimer : IDisposable
+/// <remarks>
+/// Initializes a new instance of the ControllablePeriodicTimer class.
+/// </remarks>
+/// <param name="handler">The asynchronous function to be executed periodically.</param>
+public sealed class ControllablePeriodicTimer(Func<Task> handler) : IDisposable
 {
-	private readonly Func<Task> _handler;
+	private readonly Func<Task> _handler = handler;
 	private CancellationTokenSource _cts;
-	private IDisposable _timer;
+	private PeriodicTimer _timer;
 	private Task _runningTask;
 	private TimeSpan _interval;
 	private readonly Lock _lock = new();
-
-	/// <summary>
-	/// Initializes a new instance of the ControllablePeriodicTimer class.
-	/// </summary>
-	/// <param name="handler">The asynchronous function to be executed periodically.</param>
-	internal ControllablePeriodicTimer(Func<Task> handler)
-	{
-		_handler = handler;
-	}
 
 	/// <summary>
 	/// Gets the current interval between timer executions.
@@ -62,14 +57,11 @@ public sealed class ControllablePeriodicTimer : IDisposable
 			Stop();
 
 			_interval = interval;
-			_cts = new CancellationTokenSource();
+			_cts = new();
 
-#if NETSTANDARD2_0
-			var timer = new PeriodicTimer(interval);
-#else
-			var timer = new System.Threading.PeriodicTimer(interval);
-#endif
-			_timer = timer;
+			var token = _cts.Token;
+
+			_timer = new(interval);
 
 			_runningTask = Task.Run(async () =>
 			{
@@ -77,14 +69,14 @@ public sealed class ControllablePeriodicTimer : IDisposable
 				{
 					// Wait for initial delay if specified
 					if (start.HasValue && start.Value > TimeSpan.Zero)
-						await start.Value.Delay(_cts.Token).NoWait();
+						await start.Value.Delay(token).NoWait();
 
-					while (!_cts.Token.IsCancellationRequested)
+					while (!token.IsCancellationRequested)
 					{
 						// Wait for the next tick first
 						try
 						{
-							if (!await timer.WaitForNextTickAsync(_cts.Token).NoWait())
+							if (!await _timer.WaitForNextTickAsync(token).NoWait())
 								break;
 						}
 						catch (OperationCanceledException)
@@ -97,7 +89,7 @@ public sealed class ControllablePeriodicTimer : IDisposable
 						{
 							await _handler().NoWait();
 						}
-						catch when (_cts.Token.IsCancellationRequested)
+						catch when (token.IsCancellationRequested)
 						{
 							break;
 						}
@@ -111,7 +103,7 @@ public sealed class ControllablePeriodicTimer : IDisposable
 				{
 					// Expected when stopping
 				}
-			}, _cts.Token);
+			}, token);
 		}
 
 		return this;
