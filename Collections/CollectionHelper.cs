@@ -2415,4 +2415,30 @@ public static class CollectionHelper
 	}
 
 	#endregion
+
+	/// <summary>
+	/// Boolean indicating if <see cref="ICircularBuffer{T}"/> is at full capacity.
+	/// Adding more elements when the buffer is full will
+	/// cause elements to be removed from the other end
+	/// of the buffer.
+	/// </summary>
+	/// <typeparam name="T">The type of elements in the buffer.</typeparam>
+	/// <param name="buffer"><see cref="ICircularBuffer{T}"/></param>
+	/// <returns>True if the buffer is full; otherwise, false.</returns>
+	public static bool IsFull<T>(this ICircularBuffer<T> buffer)
+	{
+		if (buffer is null)
+			throw new ArgumentNullException(nameof(buffer));
+
+		return buffer.Count == buffer.Capacity;
+	}
+
+	/// <summary>
+	/// Boolean indicating if the <see cref="ICircularBuffer{T}"/> is empty.
+	/// </summary>
+	/// <typeparam name="T">The type of elements in the buffer.</typeparam>
+	/// <param name="buffer"><see cref="ICircularBuffer{T}"/></param>
+	/// <returns>True if the buffer is empty; otherwise, false.</returns>
+	public static bool IsEmpty<T>(this ICircularBuffer<T> buffer)
+		=> buffer.CheckOnNull(nameof(buffer)).Count == 0;
 }

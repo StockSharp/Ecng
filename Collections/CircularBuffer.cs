@@ -17,7 +17,7 @@ using System.Collections.Generic;
 /// http://www.boost.org/doc/libs/1_53_0/libs/circular_buffer/doc/circular_buffer.html
 /// because I liked their interface.
 /// </summary>
-public class CircularBuffer<T> : IList<T>
+public class CircularBuffer<T> : ICircularBuffer<T>
 {
 	private T[] _buffer;
 
@@ -85,10 +85,7 @@ public class CircularBuffer<T> : IList<T>
 		_end = _count == capacity ? 0 : _count;
 	}
 
-	/// <summary>
-	/// Maximum capacity of the buffer. Elements pushed into the buffer after
-	/// maximum capacity is reached (IsFull = true), will remove an element.
-	/// </summary>
+	/// <inheritdoc />
 	public virtual int Capacity
 	{
 		get => _buffer.Length;
@@ -134,62 +131,29 @@ public class CircularBuffer<T> : IList<T>
 		}
 	}
 
-	/// <summary>
-	/// Boolean indicating if Circular is at full capacity.
-	/// Adding more elements when the buffer is full will
-	/// cause elements to be removed from the other end
-	/// of the buffer.
-	/// </summary>
-	public bool IsFull
-	{
-		get
-		{
-			return Count == Capacity;
-		}
-	}
-
-	/// <summary>
-	/// True if has no elements.
-	/// </summary>
-	public bool IsEmpty => Count == 0;
-
-	/// <summary>
-	/// Current buffer size (the number of elements that the buffer has).
-	/// </summary>
+	/// <inheritdoc />
 	public int Count => _count;
 
-	/// <summary>
-	/// Element at the front of the buffer - this[0].
-	/// </summary>
-	/// <returns>The value of the element of type T at the front of the buffer.</returns>
+	/// <inheritdoc />
 	public T Front()
 	{
 		ThrowIfEmpty();
 		return _buffer[_start];
 	}
 
-	/// <summary>
-	/// Element at the back of the buffer - this[Size - 1].
-	/// </summary>
-	/// <returns>The value of the element of type T at the back of the buffer.</returns>
+	/// <inheritdoc />
 	public T Back()
 	{
 		ThrowIfEmpty();
 		return _buffer[(_end != 0 ? _end : Capacity) - 1];
 	}
 
-	/// <summary>
-	/// Index access to elements in buffer.
-	/// Index does not loop around like when adding elements,
-	/// valid interval is [0;Size[
-	/// </summary>
-	/// <param name="index">Index of element to access.</param>
-	/// <exception cref="IndexOutOfRangeException">Thrown when index is outside of [; Size[ interval.</exception>
+	/// <inheritdoc />
 	public virtual T this[int index]
 	{
 		get
 		{
-			if (IsEmpty)
+			if (this.IsEmpty())
 			{
 				throw new IndexOutOfRangeException(string.Format("Cannot access index {0}. Buffer is empty", index));
 			}
@@ -202,7 +166,7 @@ public class CircularBuffer<T> : IList<T>
 		}
 		set
 		{
-			if (IsEmpty)
+			if (this.IsEmpty())
 			{
 				throw new IndexOutOfRangeException(string.Format("Cannot access index {0}. Buffer is empty", index));
 			}
@@ -215,17 +179,10 @@ public class CircularBuffer<T> : IList<T>
 		}
 	}
 
-	/// <summary>
-	/// Pushes a new element to the back of the buffer. Back()/this[Size-1]
-	/// will now return this element.
-	/// 
-	/// When the buffer is full, the element at Front()/this[0] will be 
-	/// popped to allow for this new element to fit.
-	/// </summary>
-	/// <param name="item">Item to push to the back of the buffer</param>
+	/// <inheritdoc />
 	public virtual void PushBack(T item)
 	{
-		if (IsFull)
+		if (this.IsFull())
 		{
 			_buffer[_end] = item;
 			Increment(ref _end);
@@ -239,17 +196,10 @@ public class CircularBuffer<T> : IList<T>
 		}
 	}
 
-	/// <summary>
-	/// Pushes a new element to the front of the buffer. Front()/this[0]
-	/// will now return this element.
-	/// 
-	/// When the buffer is full, the element at Back()/this[Size-1] will be 
-	/// popped to allow for this new element to fit.
-	/// </summary>
-	/// <param name="item">Item to push to the front of the buffer</param>
+	/// <inheritdoc />
 	public virtual void PushFront(T item)
 	{
-		if (IsFull)
+		if (this.IsFull())
 		{
 			Decrement(ref _start);
 			_end = _start;
@@ -263,10 +213,7 @@ public class CircularBuffer<T> : IList<T>
 		}
 	}
 
-	/// <summary>
-	/// Removes the element at the back of the buffer. Decreasing the 
-	/// Buffer size by 1.
-	/// </summary>
+	/// <inheritdoc />
 	public virtual void PopBack()
 	{
 		ThrowIfEmpty("Cannot take elements from an empty buffer.");
@@ -275,10 +222,7 @@ public class CircularBuffer<T> : IList<T>
 		--_count;
 	}
 
-	/// <summary>
-	/// Removes the element at the front of the buffer. Decreasing the 
-	/// Buffer size by 1.
-	/// </summary>
+	/// <inheritdoc />
 	public virtual void PopFront()
 	{
 		ThrowIfEmpty("Cannot take elements from an empty buffer.");
@@ -287,9 +231,7 @@ public class CircularBuffer<T> : IList<T>
 		--_count;
 	}
 
-	/// <summary>
-	/// Clears the contents of the array. Size = 0, Capacity is unchanged.
-	/// </summary>
+	/// <inheritdoc />
 	public virtual void Clear()
 	{
 		// to clear we just reset everything.
@@ -361,7 +303,7 @@ public class CircularBuffer<T> : IList<T>
 
 	private void ThrowIfEmpty(string message = "Cannot access an empty buffer.")
 	{
-		if (IsEmpty)
+		if (this.IsEmpty())
 		{
 			throw new InvalidOperationException(message);
 		}
@@ -419,7 +361,7 @@ public class CircularBuffer<T> : IList<T>
 
 	private ArraySegment<T> ArrayOne()
 	{
-		if (IsEmpty)
+		if (this.IsEmpty())
 		{
 			return new([]);
 		}
@@ -435,7 +377,7 @@ public class CircularBuffer<T> : IList<T>
 
 	private ArraySegment<T> ArrayTwo()
 	{
-		if (IsEmpty)
+		if (this.IsEmpty())
 		{
 			return new([]);
 		}
@@ -469,7 +411,7 @@ public class CircularBuffer<T> : IList<T>
 		if (index < 0 || index > _count)
 			throw new ArgumentOutOfRangeException(nameof(index));
 
-		if (IsFull)
+		if (this.IsFull())
 			throw new InvalidOperationException("Buffer is full.");
 
 		if (index == 0)

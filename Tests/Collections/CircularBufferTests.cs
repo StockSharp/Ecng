@@ -264,7 +264,7 @@ public class CircularBufferTests : BaseTestClass
 		buf.PushBack(1);
 		buf.PushBack(2);
 		buf.PushBack(3);
-		buf.IsFull.AssertTrue();
+		buf.IsFull().AssertTrue();
 		buf.PushBack(4);
 		buf.AssertEqual(new int[] { 2, 3, 4 });
 	}
@@ -279,7 +279,7 @@ public class CircularBufferTests : BaseTestClass
 		buf.Front().AssertEqual(0);
 		buf.PopBack();
 		buf.PopFront();
-		buf.IsEmpty.AssertTrue();
+		buf.IsEmpty().AssertTrue();
 	}
 
 	[TestMethod]
@@ -304,7 +304,7 @@ public class CircularBufferTests : BaseTestClass
 		buf.PushBack(1);
 		buf.PushBack(2);
 		buf.Clear();
-		buf.IsEmpty.AssertTrue();
+		buf.IsEmpty().AssertTrue();
 		ThrowsExactly<InvalidOperationException>(() => buf.PopBack());
 	}
 
@@ -400,8 +400,8 @@ public class CircularBufferTests : BaseTestClass
 		cb.ToArray().AssertEqual([12, 13, 14, 15]);
 		cb.Count.AreEqual(4);
 		cb.Capacity.AreEqual(4);
-		cb.IsFull.AssertTrue();
-		cb.IsEmpty.AssertFalse();
+		cb.IsFull().AssertTrue();
+		cb.IsEmpty().AssertFalse();
 	}
 
 	[TestMethod]
@@ -417,7 +417,7 @@ public class CircularBufferTests : BaseTestClass
 		cb.ToArray().AssertEqual([1, 2, 3]);
 		cb.Count.AreEqual(3);
 		cb.Capacity.AreEqual(5);
-		cb.IsFull.AssertFalse();
+		cb.IsFull().AssertFalse();
 	}
 
 	[TestMethod]
@@ -441,8 +441,8 @@ public class CircularBufferTests : BaseTestClass
 
 			// basic invariants
 			(buf.Count <= buf.Capacity).AssertTrue();
-			(buf.IsEmpty == (buf.Count == 0)).AssertTrue();
-			(buf.IsFull == (buf.Count == buf.Capacity)).AssertTrue();
+			(buf.IsEmpty() == (buf.Count == 0)).AssertTrue();
+			(buf.IsFull() == (buf.Count == buf.Capacity)).AssertTrue();
 
 			// order check
 			buf.AssertEqual(model);
