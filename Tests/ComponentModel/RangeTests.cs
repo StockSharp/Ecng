@@ -43,10 +43,10 @@ public class RangeTests : BaseTestClass
 		var r = new Range<int>(3, 7);
 		r.Length.AssertEqual(4);
 
-		// For undefined bound and numeric operator available, Length returns MaxValue
+		// For undefined bound and int operator available, Length returns MaxValue
 		var r2 = new Range<int>
 		{
-			Operator = new IntNumeric(),
+			Operator = new IntOperator(),
 			Max = 5
 		};
 		var len = 0;
