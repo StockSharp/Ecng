@@ -295,6 +295,10 @@ public class WebSocketClient : Disposable, IConnection
 		_source.Cancel();
 		try { _source.Dispose(); } catch { }
 		_source = null;
+
+		// Immediately make further sends fail deterministically
+		try { _ws?.Dispose(); } catch { }
+		_ws = null;
 		
 		_reConnectCommands.Clear();
 	}
