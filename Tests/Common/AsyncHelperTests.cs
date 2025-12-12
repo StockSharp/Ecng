@@ -74,23 +74,17 @@ public class AsyncHelperTests : BaseTestClass
 	[TestMethod]
 	public async Task TimeoutTokenAndWhenCanceled()
 	{
-		var (cts, token) = TimeSpan.FromMilliseconds(10).CreateTimeout();
-		using (cts)
-		{
-			await ThrowsExactlyAsync<TaskCanceledException>(() => token.WhenCanceled());
-		}
+		using var cts = TimeSpan.FromMilliseconds(10).CreateTimeout();
+		await ThrowsExactlyAsync<TaskCanceledException>(() => cts.Token.WhenCanceled());
 	}
 
 	[TestMethod]
 	public async Task CreateTimeout_CancelsAfterDelay()
 	{
-		var (cts, token) = TimeSpan.FromMilliseconds(50).CreateTimeout();
-		using (cts)
-		{
-			token.IsCancellationRequested.AssertFalse();
-			await Task.Delay(100, CancellationToken);
-			token.IsCancellationRequested.AssertTrue();
-		}
+		using var cts = TimeSpan.FromMilliseconds(50).CreateTimeout();
+		cts.Token.IsCancellationRequested.AssertFalse();
+		await Task.Delay(100, CancellationToken);
+		cts.Token.IsCancellationRequested.AssertTrue();
 	}
 
 	[TestMethod]

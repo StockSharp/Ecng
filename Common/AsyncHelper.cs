@@ -235,11 +235,8 @@ public static class AsyncHelper
 	/// <param name="timeout">The timeout after which the token is canceled.</param>
 	/// <returns>A tuple containing the CancellationTokenSource and its Token.
 	/// The caller is responsible for disposing the returned CancellationTokenSource.</returns>
-	public static (CancellationTokenSource cts, CancellationToken token) CreateTimeout(this TimeSpan timeout)
-	{
-		var cts = new CancellationTokenSource(timeout);
-		return (cts, cts.Token);
-	}
+	public static CancellationTokenSource CreateTimeout(this TimeSpan timeout)
+		=> new(timeout);
 
 	/// <summary>
 	/// Returns a <see cref="ValueTask"/> that completes when the provided task is not null.

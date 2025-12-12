@@ -471,10 +471,8 @@ public class WebSocketClient : Disposable, IConnection
 			{
 				if (needClose && _ws is ClientWebSocket ws)
 				{
-					var (cts, t) = DisconnectTimeout.CreateTimeout();
-
-					using (cts)
-						await ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, t);
+					using var cts = DisconnectTimeout.CreateTimeout();
+					await ws.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, cts.Token);
 				}
 			}
 			catch (Exception ex)
