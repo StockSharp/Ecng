@@ -10,9 +10,9 @@ using Ecng.Common;
 /// </summary>
 public sealed class PeriodicTimer : IDisposable
 {
-	private readonly TimeSpan _period;
+	private readonly Lock _sync = new();
 	private readonly CancellationTokenSource _disposeCts = new();
-	private DateTimeOffset? _nextTick;
+	private DateTime? _nextTick;
 	private bool _disposed;
 
 	/// <summary>
@@ -25,8 +25,13 @@ public sealed class PeriodicTimer : IDisposable
 		if (period <= TimeSpan.Zero)
 			throw new ArgumentOutOfRangeException(nameof(period));
 
-		_period = period;
+		Period = period;
 	}
+
+	/// <summary>
+	/// Gets the period between ticks.
+	/// </summary>
+	public TimeSpan Period { get; }
 
 	/// <summary>
 	/// Waits for the next tick of the timer.
@@ -38,28 +43,37 @@ public sealed class PeriodicTimer : IDisposable
 		if (_disposed)
 			return false;
 
+		using (_sync.EnterScope())
+		{
+			// Initialize next tick on first call
+			if (_nextTick == null)
+				_nextTick = DateTime.UtcNow + Period;
+		}
+
 		using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _disposeCts.Token);
 
 		try
 		{
-			var now = DateTimeOffset.UtcNow;
-
-			// Initialize next tick on first call
-			if (_nextTick == null)
-				_nextTick = now + _period;
-
-			var delay = _nextTick.Value - now;
+			TimeSpan delay;
+			using (_sync.EnterScope())
+			{
+				delay = _nextTick.Value - DateTime.UtcNow;
+			}
 
 			if (delay > TimeSpan.Zero)
 				await delay.Delay(linkedCts.Token).NoWait();
 
-			// Schedule next tick
-			_nextTick = _nextTick.Value + _period;
+			// Schedule next tick relative to current time to reduce drift
+			using (_sync.EnterScope())
+			{
+				_nextTick = DateTime.UtcNow + Period;
+			}
+
 			return true;
 		}
 		catch (OperationCanceledException)
 		{
-			return !_disposed && !cancellationToken.IsCancellationRequested;
+			return false;
 		}
 	}
 
